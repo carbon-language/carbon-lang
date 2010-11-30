@@ -11,6 +11,7 @@
 #define CLANG_CODEGEN_CGRECORDLAYOUT_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/DerivedTypes.h"
 #include "clang/AST/Decl.h"
 namespace llvm {
   class raw_ostream;
@@ -173,11 +174,11 @@ class CGRecordLayout {
 
 private:
   /// The LLVM type corresponding to this record layout.
-  const llvm::StructType *LLVMType;
+  llvm::PATypeHolder LLVMType;
 
   /// The LLVM type for the non-virtual part of this record layout, used for
   /// laying out the record as a base.
-  const llvm::StructType *NonVirtualBaseLLVMType;
+  llvm::PATypeHolder NonVirtualBaseLLVMType;
 
   /// Map from (non-bit-field) struct field to the corresponding llvm struct
   /// type field no. This info is populated by record builder.
@@ -204,11 +205,11 @@ public:
 
   /// \brief Return the LLVM type associated with this record.
   const llvm::StructType *getLLVMType() const {
-    return LLVMType;
+    return cast<llvm::StructType>(LLVMType.get());
   }
 
   const llvm::StructType *getNonVirtualBaseLLVMType() const {
-      return NonVirtualBaseLLVMType;
+    return cast<llvm::StructType>(NonVirtualBaseLLVMType.get());
   }
 
   /// \brief Check whether this struct can be C++ zero-initialized
