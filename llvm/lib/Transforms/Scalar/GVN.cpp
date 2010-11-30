@@ -1045,8 +1045,6 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
   // If the load and store don't overlap at all, the store doesn't provide
   // anything to the load.  In this case, they really don't alias at all, AA
   // must have gotten confused.
-  // FIXME: Investigate cases where this bails out, e.g. rdar://7238614. Then
-  // remove this check, as it is duplicated with what we have below.
   uint64_t LoadSize = TD.getTypeSizeInBits(LoadTy);
   
   if ((WriteSizeInBits & 7) | (LoadSize & 7))
