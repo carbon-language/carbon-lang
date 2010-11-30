@@ -79,3 +79,69 @@ define void @test7(i32 *%p, i8 *%q, i8* noalias %r) {
 ; CHECK: @test7
 ; CHECK-NEXT: call void @llvm.memcpy
 }
+
+; Do not delete stores that are only partially killed.
+define i32 @test8() {
+        %V = alloca i32
+        store i32 1234567, i32* %V
+        %V2 = bitcast i32* %V to i8*
+        store i8 0, i8* %V2
+        %X = load i32* %V
+        ret i32 %X
+        
+; CHECK: @test8
+; CHECK: store i32 1234567
+}
+
+
+; Test for byval handling.
+%struct.x = type { i32, i32, i32, i32 }
+define void @test9(%struct.x* byval  %a) nounwind  {
+	%tmp2 = getelementptr %struct.x* %a, i32 0, i32 0
+	store i32 1, i32* %tmp2, align 4
+	ret void
+; CHECK: @test9
+; CHECK-NEXT: ret void
+}
+
+; va_arg has fuzzy dependence, the store shouldn't be zapped.
+define double @test10(i8* %X) {
+        %X_addr = alloca i8*
+        store i8* %X, i8** %X_addr
+        %tmp.0 = va_arg i8** %X_addr, double
+        ret double %tmp.0
+; CHECK: @test10
+; CHECK: store
+}
+
+
+; DSE should delete the dead trampoline.
+declare i8* @llvm.init.trampoline(i8*, i8*, i8*)
+declare void @test11f()
+define void @test11() {
+; CHECK: @test11
+	%storage = alloca [10 x i8], align 16		; <[10 x i8]*> [#uses=1]
+; CHECK-NOT: alloca
+	%cast = getelementptr [10 x i8]* %storage, i32 0, i32 0		; <i8*> [#uses=1]
+	%tramp = call i8* @llvm.init.trampoline( i8* %cast, i8* bitcast (void ()* @test11f to i8*), i8* null )		; <i8*> [#uses=1]
+; CHECK-NOT: trampoline
+	ret void
+; CHECK: ret void
+}
+
+
+; PR2599 - load -> store to same address.
+define void @test12({ i32, i32 }* %x) nounwind  {
+	%tmp4 = getelementptr { i32, i32 }* %x, i32 0, i32 0
+	%tmp5 = load i32* %tmp4, align 4
+	%tmp7 = getelementptr { i32, i32 }* %x, i32 0, i32 1
+	%tmp8 = load i32* %tmp7, align 4
+	%tmp17 = sub i32 0, %tmp8
+	store i32 %tmp5, i32* %tmp4, align 4
+	store i32 %tmp17, i32* %tmp7, align 4
+	ret void
+; CHECK: @test12
+; CHECK-NOT: tmp5
+; CHECK: ret void
+}
+

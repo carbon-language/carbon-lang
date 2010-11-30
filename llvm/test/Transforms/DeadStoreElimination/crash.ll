@@ -1,4 +1,4 @@
-; RUN: opt < %s -dse -S
+; RUN: opt < %s -basicaa -dse -S
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i386-apple-darwin10.0"
@@ -54,4 +54,21 @@ dead:
   store i32 4, i32* %P2
   store i32 4, i32* %Q2
   br label %dead
+}
+
+
+; PR3141
+%struct.ada__tags__dispatch_table = type { [1 x i32] }
+%struct.f393a00_1__object = type { %struct.ada__tags__dispatch_table*, i8 }
+%struct.f393a00_2__windmill = type { %struct.f393a00_1__object, i16 }
+
+define void @test4(%struct.f393a00_2__windmill* %a, %struct.f393a00_2__windmill* %b) {
+entry:
+	%t = alloca %struct.f393a00_2__windmill		; <%struct.f393a00_2__windmill*> [#uses=1]
+	%0 = getelementptr %struct.f393a00_2__windmill* %t, i32 0, i32 0, i32 0		; <%struct.ada__tags__dispatch_table**> [#uses=1]
+	%1 = load %struct.ada__tags__dispatch_table** null, align 4		; <%struct.ada__tags__dispatch_table*> [#uses=1]
+	%2 = load %struct.ada__tags__dispatch_table** %0, align 8		; <%struct.ada__tags__dispatch_table*> [#uses=1]
+	store %struct.ada__tags__dispatch_table* %2, %struct.ada__tags__dispatch_table** null, align 4
+	store %struct.ada__tags__dispatch_table* %1, %struct.ada__tags__dispatch_table** null, align 4
+	ret void
 }
