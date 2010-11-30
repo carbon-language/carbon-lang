@@ -71,6 +71,15 @@ TEST(Support, Path) {
     }
     outs() << "]\n";
 
+    outs() << "    Reverse Iteration: [";
+    for (sys::path::reverse_iterator ci = sys::path::rbegin(*i),
+                                     ce = sys::path::rend(*i);
+                                     ci != ce;
+                                     ++ci) {
+      outs() << *ci << ',';
+    }
+    outs() << "]\n";
+
     StringRef res;
     SmallString<16> temp_store;
     if (error_code ec = sys::path::root_path(*i, res))
@@ -82,6 +91,9 @@ TEST(Support, Path) {
     if (error_code ec = sys::path::root_directory(*i, res))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    root_directory: " << res << '\n';
+    if (error_code ec = sys::path::parent_path(*i, res))
+      ASSERT_FALSE(ec.message().c_str());
+    outs() << "    parent_path: " << res << '\n';
 
     temp_store = *i;
     if (error_code ec = sys::path::make_absolute(temp_store))

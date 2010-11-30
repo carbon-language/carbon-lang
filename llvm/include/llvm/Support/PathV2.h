@@ -81,15 +81,20 @@ public:
   typedef value_type *pointer;
   typedef std::bidirectional_iterator_tag iterator_category;
 
-  reference operator*() const;
-  pointer   operator->() const;
+  reference operator*() const { return Component; }
+  pointer   operator->() const { return &Component; }
   const_iterator &operator++();    // preincrement
   const_iterator &operator++(int); // postincrement
   const_iterator &operator--();    // predecrement
   const_iterator &operator--(int); // postdecrement
   bool operator==(const const_iterator &RHS) const;
   bool operator!=(const const_iterator &RHS) const;
+
+  /// @brief Difference in bytes between this and RHS.
+  ptrdiff_t operator-(const const_iterator &RHS) const;
 };
+
+typedef std::reverse_iterator<const_iterator> reverse_iterator;
 
 /// @brief Get begin iterator over \a path.
 /// @param path Input path.
@@ -100,6 +105,20 @@ const_iterator begin(const StringRef &path);
 /// @param path Input path.
 /// @returns Iterator initialized to the end of \a path.
 const_iterator end(const StringRef &path);
+
+/// @brief Get reverse begin iterator over \a path.
+/// @param path Input path.
+/// @returns Iterator initialized with the first reverse component of \a path.
+inline reverse_iterator rbegin(const StringRef &path) {
+  return reverse_iterator(end(path));
+}
+
+/// @brief Get reverse end iterator over \a path.
+/// @param path Input path.
+/// @returns Iterator initialized to the reverse end of \a path.
+inline reverse_iterator rend(const StringRef &path) {
+  return reverse_iterator(begin(path));
+}
 
 /// @}
 /// @name Lexical Modifiers

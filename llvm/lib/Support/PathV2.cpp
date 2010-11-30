@@ -82,6 +82,78 @@ namespace {
 
     return StringRef();
   }
+
+  size_t filename_pos(const StringRef &str) {
+    if (str.size() == 2 &&
+        is_separator(str[0]) &&
+        is_separator(str[1]))
+      return 0;
+
+    if (str.size() > 0 && is_separator(str[str.size() - 1]))
+      return str.size() - 1;
+
+    size_t pos = str.find_last_of(separators, str.size() - 1);
+
+#ifdef LLVM_ON_WIN32
+    if (pos == StringRef::npos)
+      pos = str.find_last_of(':', str.size() - 2);
+#endif
+
+    if (pos == StringRef::npos ||
+        (pos == 1 && is_separator(str[0])))
+      return 0;
+
+    return pos + 1;
+  }
+
+  size_t root_dir_start(const StringRef &str) {
+    // case "c:/"
+#ifdef LLVM_ON_WIN32
+    if (str.size() > 2 &&
+        str[1] == ':' &&
+        is_separator(str[2]))
+      return 2;
+#endif
+
+    // case "//"
+    if (str.size() == 2 &&
+        is_separator(str[0]) &&
+        str[0] == str[1])
+      return StringRef::npos;
+
+    // case "//net"
+    if (str.size() > 3 &&
+        is_separator(str[0]) &&
+        str[0] == str[1] &&
+        !is_separator(str[2])) {
+      return str.find_first_of(separators, 2);
+    }
+
+    // case "/"
+    if (str.size() > 0 && is_separator(str[0]))
+      return 0;
+
+    return StringRef::npos;
+  }
+
+  size_t parent_path_end(const StringRef &path) {
+    size_t end_pos = filename_pos(path);
+
+    bool filename_was_sep = path.size() > 0 && is_separator(path[end_pos]);
+
+    // Skip separators except for root dir.
+    size_t root_dir_pos = root_dir_start(StringRef(path.begin(), end_pos));
+
+    while(end_pos > 0 &&
+          (end_pos - 1) != root_dir_pos &&
+          is_separator(path[end_pos - 1]))
+      --end_pos;
+
+    if (end_pos == 1 && root_dir_pos == 0 && filename_was_sep)
+      return StringRef::npos;
+
+    return end_pos;
+  }
 }
 
 namespace llvm {
@@ -101,14 +173,6 @@ const_iterator end(const StringRef &path) {
   i.Path      = path;
   i.Position  = path.size();
   return i;
-}
-
-const_iterator::reference const_iterator::operator*() const {
-  return Component;
-}
-
-const_iterator::pointer const_iterator::operator->() const {
-  return &Component;
 }
 
 const_iterator &const_iterator::operator++() {
@@ -166,6 +230,36 @@ const_iterator &const_iterator::operator++() {
   return *this;
 }
 
+const_iterator &const_iterator::operator--() {
+  // If we're at the end and the previous char was a '/', return '.'.
+  if (Position == Path.size() &&
+      Path.size() > 1 &&
+      is_separator(Path[Position - 1])
+#ifdef LLVM_ON_WIN32
+      && Path[Position - 2] != ':'
+#endif
+      ) {
+    --Position;
+    Component = ".";
+    return *this;
+  }
+
+  // Skip separators unless it's the root directory.
+  size_t root_dir_pos = root_dir_start(Path);
+  size_t end_pos = Position;
+
+  while(end_pos > 0 &&
+        (end_pos - 1) != root_dir_pos &&
+        is_separator(Path[end_pos - 1]))
+    --end_pos;
+
+  // Find next separator.
+  size_t start_pos = filename_pos(StringRef(Path.begin(), end_pos));
+  Component = StringRef(Path.begin() + start_pos, end_pos - start_pos);
+  Position = start_pos;
+  return *this;
+}
+
 bool const_iterator::operator==(const const_iterator &RHS) const {
   return Path.begin() == RHS.Path.begin() &&
          Position == RHS.Position;
@@ -173,6 +267,10 @@ bool const_iterator::operator==(const const_iterator &RHS) const {
 
 bool const_iterator::operator!=(const const_iterator &RHS) const {
   return !(*this == RHS);
+}
+
+ptrdiff_t const_iterator::operator-(const const_iterator &RHS) const {
+  return Position - RHS.Position;
 }
 
 error_code root_path(const StringRef &path, StringRef &result) {
@@ -394,6 +492,15 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
 
   llvm_unreachable("All rootName and rootDirectory combinations should have "
                    "occurred above!");
+}
+
+error_code parent_path(const StringRef &path, StringRef &result) {
+  size_t end_pos = parent_path_end(path);
+  if (end_pos == StringRef::npos)
+    result = StringRef();
+  else
+    result = StringRef(path.data(), end_pos);
+  return make_error_code(errc::success);
 }
 
 }
