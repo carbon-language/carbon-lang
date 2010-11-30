@@ -1870,8 +1870,8 @@ def : T2Pat<(adde       rGPR:$src, t2_so_imm_not:$imm),
 
 // Select Bytes -- for disassembly only
 
-def t2SEL : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), NoItinerary, "sel",
-                "\t$dst, $a, $b", []> {
+def t2SEL : T2ThreeReg<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                NoItinerary, "sel", "\t$Rd, $Rn, $Rm", []> {
   let Inst{31-27} = 0b11111;
   let Inst{26-24} = 0b010;
   let Inst{23} = 0b1;
@@ -2005,7 +2005,8 @@ class T2SatI<dag oops, dag iops, InstrItinClass itin,
   let Inst{7-6}   = sh{1-0};
 }
 
-def t2SSAT: T2I<(outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn, shift_imm:$sh),
+def t2SSAT: T2SatI<
+                (outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn, shift_imm:$sh),
                 NoItinerary, "ssat", "\t$Rd, $sat_imm, $Rn$sh",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
@@ -2014,7 +2015,8 @@ def t2SSAT: T2I<(outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn, shift_imm:$sh),
   let Inst{15} = 0;
 }
 
-def t2SSAT16: T2I<(outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn), NoItinerary,
+def t2SSAT16: T2SatI<
+                   (outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn), NoItinerary,
                    "ssat16", "\t$Rd, $sat_imm, $Rn",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
@@ -2026,8 +2028,9 @@ def t2SSAT16: T2I<(outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn), NoItinerary,
   let Inst{7-6} = 0b00;    // imm2 = '00'
 }
 
-def t2USAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, shift_imm:$sh),
-                NoItinerary, "usat", "\t$dst, $bit_pos, $a$sh",
+def t2USAT: T2SatI<
+                (outs rGPR:$Rd), (ins i32imm:$sat_imm, rGPR:$Rn, shift_imm:$sh),
+                NoItinerary, "usat", "\t$Rd, $sat_imm, $Rn$sh",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1110;
@@ -2035,8 +2038,9 @@ def t2USAT: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a, shift_imm:$sh),
   let Inst{15} = 0;
 }
 
-def t2USAT16: T2I<(outs rGPR:$dst), (ins i32imm:$bit_pos, rGPR:$a), NoItinerary,
-                   "usat16", "\t$dst, $bit_pos, $a",
+def t2USAT16: T2SatI<
+                    (outs rGPR:$dst), (ins i32imm:$sat_imm, rGPR:$Rn), NoItinerary,
+                   "usat16", "\t$dst, $sat_imm, $Rn",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1110;
@@ -3077,6 +3081,13 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{31-27} = 0b11110;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
+  
+  bits<20> target;
+  let Inst{26} = target{19};
+  let Inst{11} = target{18};
+  let Inst{13} = target{17};
+  let Inst{21-16} = target{16-11};
+  let Inst{10-0} = target{10-0};
 }
 
 
@@ -3170,6 +3181,9 @@ def t2DBG : T2I<(outs),(ins i32imm:$opt), NoItinerary, "dbg", "\t$opt",
   let Inst{12} = 0;
   let Inst{10-8} = 0b000;
   let Inst{7-4} = 0b1111;
+  
+  bits<4> opt;
+  let Inst{3-0} = opt{3-0};
 }
 
 // Secure Monitor Call is a system instruction -- for disassembly only
