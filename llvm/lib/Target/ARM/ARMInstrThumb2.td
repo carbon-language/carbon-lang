@@ -146,6 +146,11 @@ def t2am_imm8_offset : Operand<i32>,
   string EncoderMethod = "getT2AddrModeImm8OffsetOpValue";
 }
 
+def t2am_imm12_offset : Operand<i32> {
+  string EncoderMethod = "getT2AddrModeImm12OffsetOpValue";
+}
+
+
 // t2addrmode_imm8s4  := reg +/- (imm8 << 2)
 def t2addrmode_imm8s4 : Operand<i32> {
   let PrintMethod = "printT2AddrModeImm8s4Operand";
@@ -1539,6 +1544,10 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{21} = write;
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
+    
+    bits<16> addr;
+    let Inst{19-16} = addr{15-12}; // Rn
+    let Inst{11-0}  = addr{11-0};  // imm12
   }
 
   def i8 : T2Ii8<(outs), (ins t2addrmode_imm8:$addr), IIC_Preload, opc,
@@ -1552,6 +1561,10 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
     let Inst{11-8} = 0b1100;
+    
+    bits<13> addr;
+    let Inst{19-16} = addr{12-9}; // Rn
+    let Inst{7-0}   = addr{7-0};  // imm8
   }
 
   def s : T2Iso<(outs), (ins t2addrmode_so_reg:$addr), IIC_Preload, opc,
@@ -1565,10 +1578,15 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
     let Inst{11-6} = 0000000;
+    
+    bits<10> addr;
+    let Inst{19-16} = addr{9-6}; // Rn
+    let Inst{3-0}   = addr{5-2}; // Rm
+    let Inst{5-4}   = addr{1-0}; // imm2
   }
 
   let isCodeGenOnly = 1 in
-  def pci : T2Ipc<(outs), (ins i32imm:$addr), IIC_Preload, opc,
+  def pci : T2Ipc<(outs), (ins t2am_imm12_offset:$addr), IIC_Preload, opc,
                 "\t$addr",
                []> {
     let Inst{31-25} = 0b1111100;
@@ -1579,6 +1597,10 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{20} = 1;
     let Inst{19-16} = 0b1111; // Rn = 0b1111
     let Inst{15-12} = 0b1111;
+    
+    bits<13> addr;
+    let Inst{23}   = addr{12};
+    let Inst{11-0} = addr{11-0};
   }
 }
 
