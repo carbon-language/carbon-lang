@@ -66,8 +66,6 @@ namespace {
     bool handleEndBlock(BasicBlock &BB);
     void RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
                                SmallPtrSet<Value*, 16> &DeadStackObjects);
-    void DeleteDeadInstruction(Instruction *I,
-                               SmallPtrSet<Value*, 16> *deadPointers = 0);
     
 
     // getAnalysisUsage - We require post dominance frontiers (aka Control
@@ -92,6 +90,53 @@ INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(DSE, "dse", "Dead Store Elimination", false, false)
 
 FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
+
+//===----------------------------------------------------------------------===//
+// Helper functions
+//===----------------------------------------------------------------------===//
+
+/// DeleteDeadInstruction - Delete this instruction.  Before we do, go through
+/// and zero out all the operands of this instruction.  If any of them become
+/// dead, delete them and the computation tree that feeds them.
+///
+/// If ValueSet is non-null, remove any deleted instructions from it as well.
+///
+static void DeleteDeadInstruction(Instruction *I,
+                                  MemoryDependenceAnalysis &MD,
+                                  SmallPtrSet<Value*, 16> *ValueSet = 0) {
+  SmallVector<Instruction*, 32> NowDeadInsts;
+  
+  NowDeadInsts.push_back(I);
+  --NumFastOther;
+  
+  // Before we touch this instruction, remove it from memdep!
+  do {
+    Instruction *DeadInst = NowDeadInsts.pop_back_val();
+    ++NumFastOther;
+    
+    // This instruction is dead, zap it, in stages.  Start by removing it from
+    // MemDep, which needs to know the operands and needs it to be in the
+    // function.
+    MD.removeInstruction(DeadInst);
+    
+    for (unsigned op = 0, e = DeadInst->getNumOperands(); op != e; ++op) {
+      Value *Op = DeadInst->getOperand(op);
+      DeadInst->setOperand(op, 0);
+      
+      // If this operand just became dead, add it to the NowDeadInsts list.
+      if (!Op->use_empty()) continue;
+      
+      if (Instruction *OpI = dyn_cast<Instruction>(Op))
+        if (isInstructionTriviallyDead(OpI))
+          NowDeadInsts.push_back(OpI);
+    }
+    
+    DeadInst->eraseFromParent();
+    
+    if (ValueSet) ValueSet->erase(DeadInst);
+  } while (!NowDeadInsts.empty());
+}
+
 
 /// hasMemoryWrite - Does this instruction write some memory?  This only returns
 /// true for things that we can analyze with other helpers below.
@@ -177,21 +222,18 @@ static bool isRemovable(Instruction *I) {
   }
 }
 
-/// getPointerOperand - Return the pointer that is being written to.
-static Value *getPointerOperand(Instruction *I) {
-  assert(hasMemoryWrite(I));
+/// getStoredPointerOperand - Return the pointer that is being written to.
+static Value *getStoredPointerOperand(Instruction *I) {
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return SI->getPointerOperand();
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
-    return MI->getArgOperand(0);
+    return MI->getDest();
 
   IntrinsicInst *II = cast<IntrinsicInst>(I);
   switch (II->getIntrinsicID()) {
   default: assert(false && "Unexpected intrinsic!");
   case Intrinsic::init_trampoline:
     return II->getArgOperand(0);
-  case Intrinsic::lifetime_end:
-    return II->getArgOperand(1);
   }
 }
 
@@ -243,6 +285,11 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
   return true;
 }
 
+
+//===----------------------------------------------------------------------===//
+// DSE Pass
+//===----------------------------------------------------------------------===//
+
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
   bool MadeChange = false;
   
@@ -280,7 +327,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           // in case we need it.
           WeakVH NextInst(BBI);
           
-          DeleteDeadInstruction(SI);
+          DeleteDeadInstruction(SI, *MD);
           
           if (NextInst == 0)  // Next instruction deleted.
             BBI = BB.begin();
@@ -318,7 +365,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // store to 'Loc' then we can remove it.
       if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, *AA)) {
         // Delete the store and now-dead instructions that feed it.
-        DeleteDeadInstruction(DepWrite);
+        DeleteDeadInstruction(DepWrite, *MD);
         ++NumFastStores;
         MadeChange = true;
         
@@ -367,7 +414,8 @@ bool DSE::HandleFree(CallInst *F) {
     if (!hasMemoryWrite(Dependency) || !isRemovable(Dependency))
       return false;
   
-    Value *DepPointer = getPointerOperand(Dependency)->getUnderlyingObject();
+    Value *DepPointer =
+      getStoredPointerOperand(Dependency)->getUnderlyingObject();
 
     // Check for aliasing.
     if (AA->alias(F->getArgOperand(0), 1, DepPointer, 1) !=
@@ -375,7 +423,7 @@ bool DSE::HandleFree(CallInst *F) {
       return false;
   
     // DCE instructions only used to calculate that store
-    DeleteDeadInstruction(Dependency);
+    DeleteDeadInstruction(Dependency, *MD);
     ++NumFastStores;
 
     // Inst's old Dependency is now deleted. Compute the next dependency,
@@ -422,14 +470,13 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     // If we find a store, check to see if it points into a dead stack value.
     if (hasMemoryWrite(BBI) && isRemovable(BBI)) {
       // See through pointer-to-pointer bitcasts
-      Value *Pointer = getPointerOperand(BBI)->getUnderlyingObject();
+      Value *Pointer = getStoredPointerOperand(BBI)->getUnderlyingObject();
 
-      // Alloca'd pointers or byval arguments (which are functionally like
-      // alloca's) are valid candidates for removal.
+      // Stores to stack values are valid candidates for removal.
       if (DeadStackObjects.count(Pointer)) {
         // DCE instructions only used to calculate that store.
         Instruction *Dead = BBI++;
-        DeleteDeadInstruction(Dead, &DeadStackObjects);
+        DeleteDeadInstruction(Dead, *MD, &DeadStackObjects);
         ++NumFastStores;
         MadeChange = true;
         continue;
@@ -439,7 +486,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     // Remove any dead non-memory-mutating instructions.
     if (isInstructionTriviallyDead(BBI)) {
       Instruction *Inst = BBI++;
-      DeleteDeadInstruction(Inst, &DeadStackObjects);
+      DeleteDeadInstruction(Inst, *MD, &DeadStackObjects);
       ++NumFastOther;
       MadeChange = true;
       continue;
@@ -551,47 +598,5 @@ void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
   for (SmallVector<Value*, 16>::iterator I = NowLive.begin(), E = NowLive.end();
        I != E; ++I)
     DeadStackObjects.erase(*I);
-}
-
-/// DeleteDeadInstruction - Delete this instruction.  Before we do, go through
-/// and zero out all the operands of this instruction.  If any of them become
-/// dead, delete them and the computation tree that feeds them.
-///
-/// If ValueSet is non-null, remove any deleted instructions from it as well.
-///
-void DSE::DeleteDeadInstruction(Instruction *I,
-                                SmallPtrSet<Value*, 16> *ValueSet) {
-  SmallVector<Instruction*, 32> NowDeadInsts;
-  
-  NowDeadInsts.push_back(I);
-  --NumFastOther;
-
-  // Before we touch this instruction, remove it from memdep!
-  do {
-    Instruction *DeadInst = NowDeadInsts.pop_back_val();
-    
-    ++NumFastOther;
-    
-    // This instruction is dead, zap it, in stages.  Start by removing it from
-    // MemDep, which needs to know the operands and needs it to be in the
-    // function.
-    MD->removeInstruction(DeadInst);
-    
-    for (unsigned op = 0, e = DeadInst->getNumOperands(); op != e; ++op) {
-      Value *Op = DeadInst->getOperand(op);
-      DeadInst->setOperand(op, 0);
-      
-      // If this operand just became dead, add it to the NowDeadInsts list.
-      if (!Op->use_empty()) continue;
-      
-      if (Instruction *OpI = dyn_cast<Instruction>(Op))
-        if (isInstructionTriviallyDead(OpI))
-          NowDeadInsts.push_back(OpI);
-    }
-    
-    DeadInst->eraseFromParent();
-    
-    if (ValueSet) ValueSet->erase(DeadInst);
-  } while (!NowDeadInsts.empty());
 }
 
