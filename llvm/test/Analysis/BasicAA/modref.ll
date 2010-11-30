@@ -85,11 +85,11 @@ define void @test3a(i8* %P, i8 %X) {
   %Y = add i8 %X, 1     ;; Dead, because the only use (the store) is dead.
   
   %P2 = getelementptr i8* %P, i32 2
-  store i8 %Y, i8* %P2  ;; FIXME: Killed by llvm.lifetime.end, should be zapped.
-; CHECK-NOT: store
+  store i8 %Y, i8* %P2
+; CHECK-NEXT: call void @llvm.lifetime.end
   call void @llvm.lifetime.end(i64 10, i8* %P)
   ret void
-; CHECK: ret void
+; CHECK-NEXT: ret void
 }
 
 @G1 = external global i32
