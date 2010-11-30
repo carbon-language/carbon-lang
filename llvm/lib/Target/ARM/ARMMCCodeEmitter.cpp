@@ -185,8 +185,6 @@ public:
     SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getT2AddrModeImm12OffsetOpValue(const MCInst &MI, unsigned OpNum,
     SmallVectorImpl<MCFixup> &Fixups) const;
-  unsigned getT2AddrModeImm12OpValue(const MCInst &MI, unsigned OpNum,
-    SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getSORegOpValue - Return an encoded so_reg shifted register value.
   unsigned getSORegOpValue(const MCInst &MI, unsigned Op,
@@ -742,19 +740,6 @@ getT2AddrModeImm12OffsetOpValue(const MCInst &MI, unsigned OpNum,
   else
     Value |= 4096; // Set the ADD bit
   Value |= tmp & 4095;
-  return Value;
-}
-
-unsigned ARMMCCodeEmitter::
-getT2AddrModeImm12OpValue(const MCInst &MI, unsigned OpNum,
-                         SmallVectorImpl<MCFixup> &Fixups) const {
-  const MCOperand &MO1 = MI.getOperand(OpNum);
-  const MCOperand &MO2 = MI.getOperand(OpNum+1);
-
-  // FIXME: Needs fixup support.
-  unsigned Value = getARMRegisterNumbering(MO1.getReg());
-  Value <<= 12;
-  Value |= MO2.getImm() & 4095;
   return Value;
 }
 

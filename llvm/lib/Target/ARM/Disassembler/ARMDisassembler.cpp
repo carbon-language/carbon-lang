@@ -350,36 +350,6 @@ static unsigned decodeThumbSideEffect(bool IsThumb2, unsigned &insn) {
   return decodeThumbInstruction(insn);
 }
 
-static inline bool Thumb2PreloadOpcodeNoPCI(unsigned Opcode) {
-  switch (Opcode) {
-  default:
-    return false;
-  case ARM::t2PLDi12:   case ARM::t2PLDi8:
-  case ARM::t2PLDs:
-  case ARM::t2PLDWi12:  case ARM::t2PLDWi8:
-  case ARM::t2PLDWs:
-  case ARM::t2PLIi12:   case ARM::t2PLIi8:
-  case ARM::t2PLIs:
-    return true;
-  }
-}
-
-static inline unsigned T2Morph2Preload2PCI(unsigned Opcode) {
-  switch (Opcode) {
-  default:
-    return 0;
-  case ARM::t2PLDi12:   case ARM::t2PLDi8:
-  case ARM::t2PLDs:
-    return ARM::t2PLDpci;
-  case ARM::t2PLDWi12:  case ARM::t2PLDWi8:
-  case ARM::t2PLDWs:
-    return ARM::t2PLDWpci;
-  case ARM::t2PLIi12:   case ARM::t2PLIi8:
-  case ARM::t2PLIs:
-    return ARM::t2PLIpci;
-  }
-}
-
 //
 // Public interface for the disassembler
 //
@@ -485,11 +455,6 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
   // sharing between the regular ARM instructions and the 32-bit wide Thumb2
   // instructions as well.
   unsigned Opcode = decodeThumbSideEffect(IsThumb2, insn);
-
-  // A8.6.117/119/120/121.
-  // PLD/PLDW/PLI instructions with Rn==15 is transformed to the pci variant.
-  if (Thumb2PreloadOpcodeNoPCI(Opcode) && slice(insn, 19, 16) == 15)
-    Opcode = T2Morph2Preload2PCI(Opcode);
 
   ARMFormat Format = ARMFormats[Opcode];
   Size = IsThumb2 ? 4 : 2;
