@@ -805,6 +805,8 @@ namespace llvm {
                   const SmallVectorImpl<SDValue> &OutVals,
                   DebugLoc dl, SelectionDAG &DAG) const;
 
+    virtual bool isUsedByReturnOnly(SDNode *N) const;
+
     virtual bool
       CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
                      const SmallVectorImpl<ISD::OutputArg> &Outs,

@@ -1338,6 +1338,23 @@ X86TargetLowering::LowerReturn(SDValue Chain,
                      MVT::Other, &RetOps[0], RetOps.size());
 }
 
+bool X86TargetLowering::isUsedByReturnOnly(SDNode *N) const {
+  if (N->getNumValues() != 1)
+    return false;
+  if (!N->hasNUsesOfValue(1, 0))
+    return false;
+
+  SDNode *Copy = *N->use_begin();
+  if (Copy->getOpcode() != ISD::CopyToReg)
+    return false;
+  for (SDNode::use_iterator UI = Copy->use_begin(), UE = Copy->use_end();
+       UI != UE; ++UI)
+    if (UI->getOpcode() != X86ISD::RET_FLAG)
+      return false;
+
+  return true;
+}
+
 /// LowerCallResult - Lower the result values of a call into the
 /// appropriate copies out of appropriate physical registers.
 ///
@@ -2142,17 +2159,19 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     unsigned char OpFlags = 0;
 
-    // On ELF targets, in either X86-64 or X86-32 mode, direct calls to external
-    // symbols should go through the PLT.
-    if (Subtarget->isTargetELF() &&
-        getTargetMachine().getRelocationModel() == Reloc::PIC_) {
-      OpFlags = X86II::MO_PLT;
-    } else if (Subtarget->isPICStyleStubAny() &&
-               Subtarget->getDarwinVers() < 9) {
-      // PC-relative references to external symbols should go through $stub,
-      // unless we're building with the leopard linker or later, which
-      // automatically synthesizes these stubs.
-      OpFlags = X86II::MO_DARWIN_STUB;
+    if (!isTailCall) {
+      // On ELF targets, in either X86-64 or X86-32 mode, direct calls to
+      // external symbols should go through the PLT.
+      if (Subtarget->isTargetELF() &&
+          getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+        OpFlags = X86II::MO_PLT;
+      } else if (Subtarget->isPICStyleStubAny() &&
+                 Subtarget->getDarwinVers() < 9) {
+        // PC-relative references to external symbols should go through $stub,
+        // unless we're building with the leopard linker or later, which
+        // automatically synthesizes these stubs.
+        OpFlags = X86II::MO_DARWIN_STUB;
+      }
     }
 
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(),

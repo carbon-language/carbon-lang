@@ -1258,6 +1258,13 @@ public:
     return SDValue();    // this is here to silence compiler errors
   }
 
+  /// isUsedByReturnOnly - Return true if result of the specified node is used
+  /// by a return node only. This is used to determine whether it is possible
+  /// to codegen a libcall as tail call at legalization time.
+  virtual bool isUsedByReturnOnly(SDNode *N) const {
+    return false;
+  }
+
   /// LowerOperationWrapper - This callback is invoked by the type legalizer
   /// to legalize nodes with an illegal operand type but legal result types.
   /// It replaces the LowerOperation callback in the type Legalizer.

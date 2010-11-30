@@ -374,16 +374,19 @@ void ARMFrameInfo::emitEpilogue(MachineFunction &MF,
     MachineOperand &JumpTarget = MBBI->getOperand(0);
 
     // Jump to label or value in register.
-    if (RetOpcode == ARM::TCRETURNdi) {
-      BuildMI(MBB, MBBI, dl,
-            TII.get(STI.isThumb() ? ARM::TAILJMPdt : ARM::TAILJMPd)).
-        addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
-                         JumpTarget.getTargetFlags());
-    } else if (RetOpcode == ARM::TCRETURNdiND) {
-      BuildMI(MBB, MBBI, dl,
-            TII.get(STI.isThumb() ? ARM::TAILJMPdNDt : ARM::TAILJMPdND)).
-        addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
-                         JumpTarget.getTargetFlags());
+    if (RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNdiND) {
+      unsigned TCOpcode = (RetOpcode == ARM::TCRETURNdi)
+        ? (STI.isThumb() ? ARM::TAILJMPdt : ARM::TAILJMPd)
+        : (STI.isThumb() ? ARM::TAILJMPdNDt : ARM::TAILJMPdND);
+      MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(TCOpcode));
+      if (JumpTarget.isGlobal())
+        MIB.addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
+                             JumpTarget.getTargetFlags());
+      else {
+        assert(JumpTarget.isSymbol());
+        MIB.addExternalSymbol(JumpTarget.getSymbolName(),
+                              JumpTarget.getTargetFlags());
+      }
     } else if (RetOpcode == ARM::TCRETURNri) {
       BuildMI(MBB, MBBI, dl, TII.get(ARM::TAILJMPr)).
         addReg(JumpTarget.getReg(), RegState::Kill);

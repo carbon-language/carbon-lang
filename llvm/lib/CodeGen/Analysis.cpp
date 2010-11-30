@@ -19,6 +19,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
@@ -283,3 +284,20 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
   return true;
 }
 
+bool llvm::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
+                                const TargetLowering &TLI) {
+  const Function *F = DAG.getMachineFunction().getFunction();
+
+  // Conservatively require the attributes of the call to match those of
+  // the return. Ignore noalias because it doesn't affect the call sequence.
+  unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
+  if (CallerRetAttr & ~Attribute::NoAlias)
+    return false;
+
+  // It's not safe to eliminate the sign / zero extension of the return value.
+  if ((CallerRetAttr & Attribute::ZExt) || (CallerRetAttr & Attribute::SExt))
+    return false;
+
+  // Check if the only use is a function return node.
+  return TLI.isUsedByReturnOnly(Node);
+}

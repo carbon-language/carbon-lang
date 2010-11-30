@@ -23,8 +23,10 @@
 
 namespace llvm {
 
-class TargetLowering;
 class GlobalVariable;
+class TargetLowering;
+class SDNode;
+class SelectionDAG;
 
 /// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
 /// of insertvalue or extractvalue indices that identify a member, return
@@ -73,6 +75,9 @@ ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred);
 ///
 /// This function only tests target-independent requirements.
 bool isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
+                          const TargetLowering &TLI);
+
+bool isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
                           const TargetLowering &TLI);
 
 } // End llvm namespace

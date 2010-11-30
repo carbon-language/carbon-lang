@@ -712,10 +712,17 @@ void X86FrameInfo::emitEpilogue(MachineFunction &MF,
 
     // Jump to label or value in register.
     if (RetOpcode == X86::TCRETURNdi || RetOpcode == X86::TCRETURNdi64) {
-      BuildMI(MBB, MBBI, DL, TII.get((RetOpcode == X86::TCRETURNdi)
-                                     ? X86::TAILJMPd : X86::TAILJMPd64)).
-        addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
-                         JumpTarget.getTargetFlags());
+      MachineInstrBuilder MIB =
+        BuildMI(MBB, MBBI, DL, TII.get((RetOpcode == X86::TCRETURNdi)
+                                       ? X86::TAILJMPd : X86::TAILJMPd64));
+      if (JumpTarget.isGlobal())
+        MIB.addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
+                             JumpTarget.getTargetFlags());
+      else {
+        assert(JumpTarget.isSymbol());
+        MIB.addExternalSymbol(JumpTarget.getSymbolName(),
+                              JumpTarget.getTargetFlags());
+      }
     } else if (RetOpcode == X86::TCRETURNmi || RetOpcode == X86::TCRETURNmi64) {
       MachineInstrBuilder MIB =
         BuildMI(MBB, MBBI, DL, TII.get((RetOpcode == X86::TCRETURNmi)

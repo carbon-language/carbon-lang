@@ -1,8 +1,5 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin -march=arm | FileCheck %s -check-prefix=CHECKV4
-; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin -mattr=+v5t | FileCheck %s -check-prefix=CHECKV5
-; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi\
-; RUN:   -relocation-model=pic | FileCheck %s -check-prefix=CHECKELF
-; XFAIL: *
+; RUN: llc < %s -mtriple=armv6-apple-darwin -mattr=+vfp2 -arm-tail-calls | FileCheck %s -check-prefix=CHECKV6
+; RUN: llc < %s -mtriple=armv6-linux-gnueabi -relocation-model=pic -mattr=+vfp2 -arm-tail-calls | FileCheck %s -check-prefix=CHECKELF
 
 @t = weak global i32 ()* null           ; <i32 ()**> [#uses=1]
 
@@ -10,40 +7,59 @@ declare void @g(i32, i32, i32, i32)
 
 define void @t1() {
 ; CHECKELF: t1:
-; CHECKELF: PLT
+; CHECKELF: bl g(PLT)
         call void @g( i32 1, i32 2, i32 3, i32 4 )
         ret void
 }
 
 define void @t2() {
-; CHECKV4: t2:
-; CHECKV4: bx r0 @ TAILCALL
-; CHECKV5: t2:
-; CHECKV5: bx r0 @ TAILCALL
+; CHECKV6: t2:
+; CHECKV6: bx r0 @ TAILCALL
         %tmp = load i32 ()** @t         ; <i32 ()*> [#uses=1]
         %tmp.upgrd.2 = tail call i32 %tmp( )            ; <i32> [#uses=0]
         ret void
 }
 
-define i32* @t3(i32, i32, i32*, i32*, i32*) nounwind {
-; CHECKV4: t3:
-; CHECKV4: bx r{{.*}}
-BB0:
-  %5 = inttoptr i32 %0 to i32*                    ; <i32*> [#uses=1]
-  %t35 = volatile load i32* %5                    ; <i32> [#uses=1]
-  %6 = inttoptr i32 %t35 to i32**                 ; <i32**> [#uses=1]
-  %7 = getelementptr i32** %6, i32 86             ; <i32**> [#uses=1]
-  %8 = load i32** %7                              ; <i32*> [#uses=1]
-  %9 = bitcast i32* %8 to i32* (i32, i32*, i32, i32*, i32*, i32*)* ; <i32* (i32, i32*, i32, i32*, i32*, i32*)*> [#uses=1]
-  %10 = call i32* %9(i32 %0, i32* null, i32 %1, i32* %2, i32* %3, i32* %4) ; <i32*> [#uses=1]
-  ret i32* %10
-}
-
-define void @t4() {
-; CHECKV4: t4:
-; CHECKV4: b _t2  @ TAILCALL
-; CHECKV5: t4:
-; CHECKV5: b _t2  @ TAILCALL
+define void @t3() {
+; CHECKV6: t3:
+; CHECKV6: b _t2  @ TAILCALL
+; CHECKELF: t3:
+; CHECKELF: b t2(PLT) @ TAILCALL
         tail call void @t2( )            ; <i32> [#uses=0]
         ret void
+}
+
+; Sibcall optimization of expanded libcalls. rdar://8707777
+define double @t4(double %a) nounwind readonly ssp {
+entry:
+; CHECKV6: t4:
+; CHECKV6: b _sin @ TAILCALL
+; CHECKELF: t4:
+; CHECKELF: b sin(PLT) @ TAILCALL
+  %0 = tail call double @sin(double %a) nounwind readonly ; <double> [#uses=1]
+  ret double %0
+}
+
+define float @t5(float %a) nounwind readonly ssp {
+entry:
+; CHECKV6: t5:
+; CHECKV6: b _sinf @ TAILCALL
+; CHECKELF: t5:
+; CHECKELF: b sinf(PLT) @ TAILCALL
+  %0 = tail call float @sinf(float %a) nounwind readonly ; <float> [#uses=1]
+  ret float %0
+}
+
+declare float @sinf(float) nounwind readonly
+
+declare double @sin(double) nounwind readonly
+
+define i32 @t6(i32 %a, i32 %b) nounwind readnone {
+entry:
+; CHECKV6: t6:
+; CHECKV6: b ___divsi3 @ TAILCALL
+; CHECKELF: t6:
+; CHECKELF: b __aeabi_idiv(PLT) @ TAILCALL
+  %0 = sdiv i32 %a, %b
+  ret i32 %0
 }

@@ -1519,30 +1519,13 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // whether LR is going to be used.  Probably the right approach is to
   // generate the tail call here and turn it back into CALL/RET in
   // emitEpilogue if LR is used.
-  if (Subtarget->isThumb1Only())
-    return false;
-
-  // For the moment, we can only do this to functions defined in this
-  // compilation, or to indirect calls.  A Thumb B to an ARM function,
-  // or vice versa, is not easily fixed up in the linker unlike BL.
-  // (We could do this by loading the address of the callee into a register;
-  // that is an extra instruction over the direct call and burns a register
-  // as well, so is not likely to be a win.)
-
-  // It might be safe to remove this restriction on non-Darwin.
 
   // Thumb1 PIC calls to external symbols use BX, so they can be tail calls,
   // but we need to make sure there are enough registers; the only valid
   // registers are the 4 used for parameters.  We don't currently do this
   // case.
-  if (isa<ExternalSymbolSDNode>(Callee))
-      return false;
-
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    const GlobalValue *GV = G->getGlobal();
-    if (GV->isDeclaration() || GV->isWeakForLinker())
-      return false;
-  }
+  if (Subtarget->isThumb1Only())
+    return false;
 
   // If the calling conventions do not match, then we'd better make sure the
   // results are returned in the same way as what the caller expects.
@@ -1718,6 +1701,58 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
     result = DAG.getNode(ARMISD::RET_FLAG, dl, MVT::Other, Chain);
 
   return result;
+}
+
+bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N) const {
+  if (N->getNumValues() != 1)
+    return false;
+  if (!N->hasNUsesOfValue(1, 0))
+    return false;
+
+  unsigned NumCopies = 0;
+  SDNode* Copies[2];
+  SDNode *Use = *N->use_begin();
+  if (Use->getOpcode() == ISD::CopyToReg) {
+    Copies[NumCopies++] = Use;
+  } else if (Use->getOpcode() == ARMISD::VMOVRRD) {
+    // f64 returned in a pair of GPRs.
+    for (SDNode::use_iterator UI = Use->use_begin(), UE = Use->use_end();
+         UI != UE; ++UI) {
+      if (UI->getOpcode() != ISD::CopyToReg)
+        return false;
+      Copies[UI.getUse().getResNo()] = *UI;
+      ++NumCopies;
+    }
+  } else if (Use->getOpcode() == ISD::BITCAST) {
+    // f32 returned in a single GPR.
+    if (!Use->hasNUsesOfValue(1, 0))
+      return false;
+    Use = *Use->use_begin();
+    if (Use->getOpcode() != ISD::CopyToReg || !Use->hasNUsesOfValue(1, 0))
+      return false;
+    Copies[NumCopies++] = Use;
+  } else {
+    return false;
+  }
+
+  if (NumCopies != 1 && NumCopies != 2)
+    return false;
+  for (unsigned i = 0; i < NumCopies; ++i) {
+    SDNode *Copy = Copies[i];
+    for (SDNode::use_iterator UI = Copy->use_begin(), UE = Copy->use_end();
+         UI != UE; ++UI) {
+      if (UI->getOpcode() == ISD::CopyToReg) {
+        SDNode *Use = *UI;
+        if (Use == Copies[0] || Use == Copies[1])
+          continue;
+        return false;
+      }
+      if (UI->getOpcode() != ARMISD::RET_FLAG)
+        return false;
+    }
+  }
+
+  return true;
 }
 
 // ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as

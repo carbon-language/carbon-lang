@@ -11,13 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Analysis/DebugInfo.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
@@ -1948,11 +1949,19 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
 
   // Splice the libcall in wherever FindInputOutputChains tells us to.
   const Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
+
+  // isTailCall may be true since the callee does not reference caller stack
+  // frame. Check if it's in the right position.
+  bool isTailCall = isInTailCallPosition(DAG, Node, TLI);
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
-                    0, TLI.getLibcallCallingConv(LC), false,
+                    0, TLI.getLibcallCallingConv(LC), isTailCall,
                     /*isReturnValueUsed=*/true,
                     Callee, Args, DAG, Node->getDebugLoc());
+
+  if (!CallInfo.second.getNode())
+    // It's a tailcall, return the chain (which is the DAG root).
+    return DAG.getRoot();
 
   // Legalize the call sequence, starting with the chain.  This will advance
   // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
@@ -1988,7 +1997,7 @@ SelectionDAGLegalize::ExpandChainLibCall(RTLIB::Libcall LC,
   const Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
-                    0, TLI.getLibcallCallingConv(LC), false,
+                    0, TLI.getLibcallCallingConv(LC), /*isTailCall=*/false,
                     /*isReturnValueUsed=*/true,
                     Callee, Args, DAG, Node->getDebugLoc());
 
@@ -2558,7 +2567,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     TargetLowering::ArgListTy Args;
     std::pair<SDValue, SDValue> CallResult =
       TLI.LowerCallTo(Node->getOperand(0), Type::getVoidTy(*DAG.getContext()),
-                      false, false, false, false, 0, CallingConv::C, false,
+                      false, false, false, false, 0, CallingConv::C,
+                      /*isTailCall=*/false,
                       /*isReturnValueUsed=*/true,
                       DAG.getExternalSymbol("__sync_synchronize",
                                             TLI.getPointerTy()),
@@ -2609,7 +2619,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     TargetLowering::ArgListTy Args;
     std::pair<SDValue, SDValue> CallResult =
       TLI.LowerCallTo(Node->getOperand(0), Type::getVoidTy(*DAG.getContext()),
-                      false, false, false, false, 0, CallingConv::C, false,
+                      false, false, false, false, 0, CallingConv::C,
+                      /*isTailCall=*/false,
                       /*isReturnValueUsed=*/true,
                       DAG.getExternalSymbol("abort", TLI.getPointerTy()),
                       Args, DAG, dl);

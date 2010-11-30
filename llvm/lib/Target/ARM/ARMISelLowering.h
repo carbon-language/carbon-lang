@@ -421,6 +421,8 @@ namespace llvm {
                   const SmallVectorImpl<SDValue> &OutVals,
                   DebugLoc dl, SelectionDAG &DAG) const;
 
+    virtual bool isUsedByReturnOnly(SDNode *N) const;
+
     SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
                       SDValue &ARMcc, SelectionDAG &DAG, DebugLoc dl) const;
     SDValue getVFPCmp(SDValue LHS, SDValue RHS,
