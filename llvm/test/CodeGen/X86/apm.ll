@@ -1,7 +1,7 @@
 ; RUN: llc < %s -o - -march=x86-64 | FileCheck %s
 ; PR8573
 
-; CHECK: _foo:
+; CHECK: foo:
 ; CHECK: leaq    (%rdi), %rax
 ; CHECK-NEXT: movl    %esi, %ecx
 ; CHECK-NEXT: monitor
@@ -13,7 +13,7 @@ entry:
 
 declare void @llvm.x86.sse3.monitor(i8*, i32, i32) nounwind
 
-; CHECK: _bar:
+; CHECK: bar:
 ; CHECK: movl    %edi, %ecx
 ; CHECK-NEXT: movl    %esi, %eax
 ; CHECK-NEXT: mwait
