@@ -1160,6 +1160,47 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
   return 0;
 }
 
+/// GetPointerBaseWithConstantOffset - Analyze the specified pointer to see if
+/// it can be expressed as a base pointer plus a constant offset.  Return the
+/// base and offset to the caller.
+Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
+                                              const TargetData &TD) {
+  Operator *PtrOp = dyn_cast<Operator>(Ptr);
+  if (PtrOp == 0) return Ptr;
+  
+  // Just look through bitcasts.
+  if (PtrOp->getOpcode() == Instruction::BitCast)
+    return GetPointerBaseWithConstantOffset(PtrOp->getOperand(0), Offset, TD);
+  
+  // If this is a GEP with constant indices, we can look through it.
+  GEPOperator *GEP = dyn_cast<GEPOperator>(PtrOp);
+  if (GEP == 0 || !GEP->hasAllConstantIndices()) return Ptr;
+  
+  gep_type_iterator GTI = gep_type_begin(GEP);
+  for (User::op_iterator I = GEP->idx_begin(), E = GEP->idx_end(); I != E;
+       ++I, ++GTI) {
+    ConstantInt *OpC = cast<ConstantInt>(*I);
+    if (OpC->isZero()) continue;
+    
+    // Handle a struct and array indices which add their offset to the pointer.
+    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+      Offset += TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+    } else {
+      uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
+      Offset += OpC->getSExtValue()*Size;
+    }
+  }
+  
+  // Re-sign extend from the pointer size if needed to get overflow edge cases
+  // right.
+  unsigned PtrSize = TD.getPointerSizeInBits();
+  if (PtrSize < 64)
+    Offset = (Offset << (64-PtrSize)) >> (64-PtrSize);
+  
+  return GetPointerBaseWithConstantOffset(GEP->getPointerOperand(), Offset, TD);
+}
+
+
 /// GetConstantStringInfo - This function computes the length of a
 /// null-terminated C string pointed to by V.  If successful, it returns true
 /// and returns the string in Str.  If unsuccessful, it returns false.

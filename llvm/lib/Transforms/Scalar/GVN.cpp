@@ -17,21 +17,12 @@
 
 #define DEBUG_TYPE "gvn"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Operator.h"
-#include "llvm/Value.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
@@ -40,6 +31,16 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Analysis/PHITransAddr.h"
+#include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
@@ -47,11 +48,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/IRBuilder.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include <list>
 using namespace llvm;
 
@@ -962,47 +958,6 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
   return new BitCastInst(StoredVal, LoadedTy, "bitcast", InsertPt);
 }
 
-/// GetBaseWithConstantOffset - Analyze the specified pointer to see if it can
-/// be expressed as a base pointer plus a constant offset.  Return the base and
-/// offset to the caller.
-static Value *GetBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
-                                        const TargetData &TD) {
-  Operator *PtrOp = dyn_cast<Operator>(Ptr);
-  if (PtrOp == 0) return Ptr;
-  
-  // Just look through bitcasts.
-  if (PtrOp->getOpcode() == Instruction::BitCast)
-    return GetBaseWithConstantOffset(PtrOp->getOperand(0), Offset, TD);
-  
-  // If this is a GEP with constant indices, we can look through it.
-  GEPOperator *GEP = dyn_cast<GEPOperator>(PtrOp);
-  if (GEP == 0 || !GEP->hasAllConstantIndices()) return Ptr;
-  
-  gep_type_iterator GTI = gep_type_begin(GEP);
-  for (User::op_iterator I = GEP->idx_begin(), E = GEP->idx_end(); I != E;
-       ++I, ++GTI) {
-    ConstantInt *OpC = cast<ConstantInt>(*I);
-    if (OpC->isZero()) continue;
-    
-    // Handle a struct and array indices which add their offset to the pointer.
-    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
-      Offset += TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
-    } else {
-      uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
-      Offset += OpC->getSExtValue()*Size;
-    }
-  }
-  
-  // Re-sign extend from the pointer size if needed to get overflow edge cases
-  // right.
-  unsigned PtrSize = TD.getPointerSizeInBits();
-  if (PtrSize < 64)
-    Offset = (Offset << (64-PtrSize)) >> (64-PtrSize);
-  
-  return GetBaseWithConstantOffset(GEP->getPointerOperand(), Offset, TD);
-}
-
-
 /// AnalyzeLoadFromClobberingWrite - This function is called when we have a
 /// memdep query of a load that ends up being a clobbering memory write (store,
 /// memset, memcpy, memmove).  This means that the write *may* provide bits used
@@ -1021,9 +976,8 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
     return -1;
   
   int64_t StoreOffset = 0, LoadOffset = 0;
-  Value *StoreBase = GetBaseWithConstantOffset(WritePtr, StoreOffset, TD);
-  Value *LoadBase = 
-    GetBaseWithConstantOffset(LoadPtr, LoadOffset, TD);
+  Value *StoreBase = GetPointerBaseWithConstantOffset(WritePtr, StoreOffset,TD);
+  Value *LoadBase = GetPointerBaseWithConstantOffset(LoadPtr, LoadOffset, TD);
   if (StoreBase != LoadBase)
     return -1;
   

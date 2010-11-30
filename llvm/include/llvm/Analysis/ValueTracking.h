@@ -97,6 +97,12 @@ namespace llvm {
     return FindInsertedValue(V, &Idxs[0], &Idxs[1], InsertBefore);
   }
   
+  /// GetPointerBaseWithConstantOffset - Analyze the specified pointer to see if
+  /// it can be expressed as a base pointer plus a constant offset.  Return the
+  /// base and offset to the caller.
+  Value *GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
+                                          const TargetData &TD);
+  
   /// GetConstantStringInfo - This function computes the length of a
   /// null-terminated C string pointed to by V.  If successful, it returns true
   /// and returns the string in Str.  If unsuccessful, it returns false.  If
