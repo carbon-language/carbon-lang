@@ -1101,6 +1101,7 @@ int inspect_cursor_at(int argc, const char **argv) {
   CursorSourceLocation *Locations = 0;
   unsigned NumLocations = 0, Loc;
   unsigned Repeats = 1;
+  unsigned I;
   
   /* Count the number of locations. */
   while (strstr(argv[NumLocations+1], "-cursor-at=") == argv[NumLocations+1])
@@ -1140,7 +1141,7 @@ int inspect_cursor_at(int argc, const char **argv) {
     return -1;
   }
 
-  for (unsigned I = 0; I != Repeats; ++I) {
+  for (I = 0; I != Repeats; ++I) {
     if (Repeats > 1 &&
         clang_reparseTranslationUnit(TU, num_unsaved_files, unsaved_files, 
                                      clang_defaultReparseOptions(TU))) {
