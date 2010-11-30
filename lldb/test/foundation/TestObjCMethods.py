@@ -23,6 +23,7 @@ class FoundationTestCase(TestBase):
         self.buildDwarf()
         self.break_on_objc_methods()
 
+    @unittest2.skip("rdar://problem/8711052")
     #@unittest2.expectedFailure
     # rdar://problem/8542091
     # rdar://problem/8492646
@@ -31,6 +32,7 @@ class FoundationTestCase(TestBase):
         self.buildDsym()
         self.data_type_and_expr_objc()
 
+    @unittest2.skip("rdar://problem/8711052")
     #@unittest2.expectedFailure
     # rdar://problem/8542091
     # rdar://problem/8492646
