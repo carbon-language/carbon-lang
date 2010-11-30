@@ -145,3 +145,23 @@ define void @test12({ i32, i32 }* %x) nounwind  {
 ; CHECK: ret void
 }
 
+
+; %P doesn't escape, the DEAD instructions should be removed.
+declare void @test13f()
+define i32* @test13() {
+        %p = tail call i8* @malloc(i32 4)
+        %P = bitcast i8* %p to i32*
+        %DEAD = load i32* %P
+        %DEAD2 = add i32 %DEAD, 1
+        store i32 %DEAD2, i32* %P
+        call void @test13f( )
+        store i32 0, i32* %P
+        ret i32* %P
+; CHECK: @test13()
+; CHECK-NEXT: malloc
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: call void
+}
+
+declare noalias i8* @malloc(i32)
+
