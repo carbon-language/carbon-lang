@@ -27,11 +27,20 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+static cl::opt<std::string>
+OptPTXVersion("ptx-version", cl::desc("Set PTX version"),
+           cl::init("1.4"));
+
+static cl::opt<std::string>
+OptPTXTarget("ptx-target", cl::desc("Set GPU target (comma-separated list)"),
+           cl::init("sm_10"));
 
 namespace {
 class PTXAsmPrinter : public AsmPrinter {
@@ -40,6 +49,8 @@ public:
     : AsmPrinter(TM, Streamer) {}
 
   const char *getPassName() const { return "PTX Assembly Printer"; }
+
+  virtual void EmitStartOfAsmFile(Module &M);
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -83,6 +94,13 @@ static const char *getInstructionTypeName(const MachineInstr *MI) {
 
   llvm_unreachable("No reg operand found in instruction!");
   return NULL;
+}
+
+void PTXAsmPrinter::EmitStartOfAsmFile(Module &M)
+{
+  OutStreamer.EmitRawText(Twine("\t.version " + OptPTXVersion));
+  OutStreamer.EmitRawText(Twine("\t.target " + OptPTXTarget));
+  OutStreamer.AddBlankLine();
 }
 
 bool PTXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
