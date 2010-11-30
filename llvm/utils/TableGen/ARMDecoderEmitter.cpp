@@ -1543,8 +1543,9 @@ protected:
   TARGET_NAME_t TargetName;
 };
 
-bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
-    const CodeGenInstruction &CGI, TARGET_NAME_t TN) {
+bool ARMDecoderEmitter::
+ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
+                                  TARGET_NAME_t TN) {
   const Record &Def = *CGI.TheDef;
   const StringRef Name = Def.getName();
   uint8_t Form = getByteField(Def, "Form");
