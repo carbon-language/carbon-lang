@@ -191,6 +191,7 @@ static bool isStoreAtLeastAsWideAs(Instruction *I1, Instruction *I2,
          I1Size >= I2Size;
 }
 
+
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
   TD = getAnalysisIfAvailable<TargetData>();
@@ -239,7 +240,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
         }
       }
     }
-     
+
     if (!InstDep.isDef()) {
       // If this is a may-aliased store that is clobbering the store value, we
       // can keep searching past it for another must-aliased pointer that stores
@@ -250,12 +251,16 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // we can remove the first store to P even though we don't know if P and Q
       // alias.
       if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-        AliasAnalysis::Location Loc =
-          getAnalysis<AliasAnalysis>().getLocation(SI);
-        while (InstDep.isClobber() && isa<StoreInst>(InstDep.getInst()) &&
-               InstDep.getInst() != &BB.front())
-          InstDep = MD.getPointerDependencyFrom(Loc, false, InstDep.getInst(),
-                                                &BB);
+        AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+        AliasAnalysis::Location Loc = AA.getLocation(SI);
+        while (InstDep.isClobber() && InstDep.getInst() != &BB.front()) {
+          // Can't look past this instruction if it might read 'Loc'.
+          if (AA.getModRefInfo(InstDep.getInst(), Loc) & AliasAnalysis::Ref)
+            break;
+          
+          InstDep = MD.getPointerDependencyFrom(Loc, false,
+                                                InstDep.getInst(), &BB);
+        }
       }
     }
     

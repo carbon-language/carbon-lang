@@ -703,6 +703,8 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
         if (isNoAlias(Location(Dest, Len), Loc))
           return NoModRef;
       }
+      // We know that memset doesn't load anything.
+      Min = Mod;
       break;
     case Intrinsic::atomic_cmp_swap:
     case Intrinsic::atomic_swap:
