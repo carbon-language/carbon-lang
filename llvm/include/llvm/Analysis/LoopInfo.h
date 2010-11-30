@@ -32,6 +32,7 @@
 #define LLVM_ANALYSIS_LOOP_INFO_H
 
 #include "llvm/Pass.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallVector.h"
@@ -629,7 +630,7 @@ private:
 template<class BlockT, class LoopT>
 class LoopInfoBase {
   // BBMap - Mapping of basic blocks to the inner most loop they occur in
-  std::map<BlockT *, LoopT *> BBMap;
+  DenseMap<BlockT *, LoopT *> BBMap;
   std::vector<LoopT *> TopLevelLoops;
   friend class LoopBase<BlockT, LoopT>;
 
@@ -660,7 +661,7 @@ public:
   /// block is in no loop (for example the entry node), null is returned.
   ///
   LoopT *getLoopFor(const BlockT *BB) const {
-    typename std::map<BlockT *, LoopT *>::const_iterator I=
+    typename DenseMap<BlockT *, LoopT *>::const_iterator I=
       BBMap.find(const_cast<BlockT*>(BB));
     return I != BBMap.end() ? I->second : 0;
   }
@@ -728,7 +729,7 @@ public:
   /// including all of the Loop objects it is nested in and our mapping from
   /// BasicBlocks to loops.
   void removeBlock(BlockT *BB) {
-    typename std::map<BlockT *, LoopT *>::iterator I = BBMap.find(BB);
+    typename DenseMap<BlockT *, LoopT *>::iterator I = BBMap.find(BB);
     if (I != BBMap.end()) {
       for (LoopT *L = I->second; L; L = L->getParentLoop())
         L->removeBlockFromLoop(BB);
@@ -922,7 +923,7 @@ public:
     for (unsigned i = 0; i < TopLevelLoops.size(); ++i)
       TopLevelLoops[i]->print(OS);
   #if 0
-    for (std::map<BasicBlock*, LoopT*>::const_iterator I = BBMap.begin(),
+    for (DenseMap<BasicBlock*, LoopT*>::const_iterator I = BBMap.begin(),
            E = BBMap.end(); I != E; ++I)
       OS << "BB '" << I->first->getName() << "' level = "
          << I->second->getLoopDepth() << "\n";
