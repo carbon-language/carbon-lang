@@ -1230,14 +1230,12 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   }
 
   // ARMV4 only
-  // FIXME: This should be a pseudo.
-  def MOVPCRX : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "mov\tpc, $dst",
-                  [(brind GPR:$dst)]>,
-              Requires<[IsARM, NoV4T]> {
-    bits<4> dst;
-    let Inst{31-4} = 0b1110000110100000111100000000;
-    let Inst{3-0}   = dst;
-  }
+  // FIXME: We would really like to define this as a vanilla ARMPat like:
+  // ARMPat<(brind GPR:$dst), (MOVr PC, GPR:$dst)>
+  // With that, however, we can't set isBranch, isTerminator, etc..
+  def MOVPCRX : ARMPseudoInst<(outs), (ins GPR:$dst),
+                    Size4Bytes, IIC_Br, [(brind GPR:$dst)]>,
+                    Requires<[IsARM, NoV4T]>;
 }
 
 // All calls clobber the non-callee saved registers. SP is marked as
