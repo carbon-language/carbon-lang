@@ -9445,7 +9445,7 @@ X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
 
 MachineBasicBlock *
 X86TargetLowering::EmitMonitor(MachineInstr *MI, MachineBasicBlock *BB) const {
-  assert((Subtarget->hasSSE3()) && "Target must have SSE3 features enabled");
+  assert(Subtarget->hasSSE3() && "Target must have SSE3 features enabled");
   
   DebugLoc dl = MI->getDebugLoc();
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
@@ -9455,7 +9455,7 @@ X86TargetLowering::EmitMonitor(MachineInstr *MI, MachineBasicBlock *BB) const {
   unsigned MemReg = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
   MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(MemOpc), MemReg);
   for (int i = 0; i < X86::AddrNumOperands; ++i)
-    (*MIB).addOperand(MI->getOperand(i));
+    MIB.addOperand(MI->getOperand(i));
   
   unsigned ValOps = X86::AddrNumOperands;
   BuildMI(*BB, MI, dl, TII->get(TargetOpcode::COPY), X86::ECX)
@@ -9472,7 +9472,7 @@ X86TargetLowering::EmitMonitor(MachineInstr *MI, MachineBasicBlock *BB) const {
 
 MachineBasicBlock *
 X86TargetLowering::EmitMwait(MachineInstr *MI, MachineBasicBlock *BB) const {
-  assert((Subtarget->hasSSE3()) && "Target must have SSE3 features enabled");
+  assert(Subtarget->hasSSE3() && "Target must have SSE3 features enabled");
   
   DebugLoc dl = MI->getDebugLoc();
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
