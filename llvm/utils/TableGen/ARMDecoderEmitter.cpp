@@ -1570,10 +1570,6 @@ bool ARMDecoderEmitter::ARMDEBackend::populateInstruction(
         Name.find("CMNz") != std::string::npos */)
       return false;
 
-    // Ignore pseudo instructions.
-    if (Name == "BXr9" || Name == "BMOVPCRX" || Name == "BMOVPCRXr9")
-      return false;
-
     // Tail calls are other patterns that generate existing instructions.
     if (Name == "TCRETURNdi" || Name == "TCRETURNdiND" ||
         Name == "TCRETURNri" || Name == "TCRETURNriND" ||
