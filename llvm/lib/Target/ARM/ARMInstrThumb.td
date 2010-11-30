@@ -1241,14 +1241,24 @@ def tMOVCCi : T1pIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMOVi,
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 let neverHasSideEffects = 1, isReMaterializable = 1 in
-def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label, pred:$p), IIC_iALUi,
-                    "adr${p}\t$dst, #$label", []>,
-                T1Encoding<{1,0,1,0,0,?}>; // A6.2 & A8.6.10
+def tLEApcrel : T1I<(outs tGPR:$Rd), (ins i32imm:$label, pred:$p), IIC_iALUi,
+                    "adr${p}\t$Rd, #$label", []>,
+                T1Encoding<{1,0,1,0,0,?}> {
+  // A6.2 & A8.6.10
+  bits<3> Rd;
+  let Inst{10-8} = Rd;
+  // FIXME: Add label encoding/fixup
+}
 
-def tLEApcrelJT : T1I<(outs tGPR:$dst),
+def tLEApcrelJT : T1I<(outs tGPR:$Rd),
                       (ins i32imm:$label, nohash_imm:$id, pred:$p),
-                      IIC_iALUi, "adr${p}\t$dst, #${label}_${id}", []>,
-                  T1Encoding<{1,0,1,0,0,?}>; // A6.2 & A8.6.10
+                      IIC_iALUi, "adr${p}\t$Rd, #${label}_${id}", []>,
+                  T1Encoding<{1,0,1,0,0,?}> {
+  // A6.2 & A8.6.10
+  bits<3> Rd;
+  let Inst{10-8} = Rd;
+  // FIXME: Add label encoding/fixup
+}
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions
