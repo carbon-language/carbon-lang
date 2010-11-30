@@ -111,9 +111,9 @@ static bool hasMemoryWrite(Instruction *I) {
   return false;
 }
 
-/// isElidable - If the value of this instruction and the memory it writes to is
-/// unused, may we delete this instrtction?
-static bool isElidable(Instruction *I) {
+/// isRemovable - If the value of this instruction and the memory it writes to
+/// is unused, may we delete this instruction?
+static bool isRemovable(Instruction *I) {
   assert(hasMemoryWrite(I));
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
     return II->getIntrinsicID() != Intrinsic::lifetime_end;
@@ -192,6 +192,7 @@ static bool isStoreAtLeastAsWideAs(Instruction *I1, Instruction *I2,
 
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   TD = getAnalysisIfAvailable<TargetData>();
 
   bool MadeChange = false;
@@ -238,7 +239,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
         }
       }
     }
-
+    
     if (!InstDep.isDef()) {
       // If this is a may-aliased store that is clobbering the store value, we
       // can keep searching past it for another must-aliased pointer that stores
@@ -249,7 +250,6 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // we can remove the first store to P even though we don't know if P and Q
       // alias.
       if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-        AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
         AliasAnalysis::Location Loc = AA.getLocation(SI);
         while (InstDep.isClobber() && InstDep.getInst() != &BB.front()) {
           // Can't look past this instruction if it might read 'Loc'.
@@ -266,19 +266,21 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // long as this store is at least as big as it.
     if (InstDep.isDef() && hasMemoryWrite(InstDep.getInst())) {
       Instruction *DepStore = InstDep.getInst();
-      if (isStoreAtLeastAsWideAs(Inst, DepStore, TD) && isElidable(DepStore)) {
-        // Delete the store and now-dead instructions that feed it.
-        DeleteDeadInstruction(DepStore);
-        ++NumFastStores;
-        MadeChange = true;
-
-        // DeleteDeadInstruction can delete the current instruction in loop
-        // cases, reset BBI.
-        BBI = Inst;
-        if (BBI != BB.begin())
-          --BBI;
+      if (!isRemovable(DepStore) ||
+          !isStoreAtLeastAsWideAs(Inst, DepStore, TD))
         continue;
-      }
+        
+      // Delete the store and now-dead instructions that feed it.
+      DeleteDeadInstruction(DepStore);
+      ++NumFastStores;
+      MadeChange = true;
+
+      // DeleteDeadInstruction can delete the current instruction in loop
+      // cases, reset BBI.
+      BBI = Inst;
+      if (BBI != BB.begin())
+        --BBI;
+      continue;
     }
   }
   
@@ -301,7 +303,7 @@ bool DSE::HandleFree(CallInst *F) {
     if (Dep.isNonLocal()) return false;
     
     Instruction *Dependency = Dep.getInst();
-    if (!hasMemoryWrite(Dependency) || !isElidable(Dependency))
+    if (!hasMemoryWrite(Dependency) || !isRemovable(Dependency))
       return false;
   
     Value *DepPointer = getPointerOperand(Dependency)->getUnderlyingObject();
@@ -359,7 +361,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     
     // If we find a store whose pointer is dead.
     if (hasMemoryWrite(BBI)) {
-      if (isElidable(BBI)) {
+      if (isRemovable(BBI)) {
         // See through pointer-to-pointer bitcasts
         Value *pointerOperand = getPointerOperand(BBI)->getUnderlyingObject();
 
