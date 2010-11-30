@@ -1230,6 +1230,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   }
 
   // ARMV4 only
+  // FIXME: This should be a pseudo.
   def MOVPCRX : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "mov\tpc, $dst",
                   [(brind GPR:$dst)]>,
               Requires<[IsARM, NoV4T]> {
@@ -1278,25 +1279,14 @@ let isCall = 1,
 
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
-  // FIXME: x2 insn patterns like this need to be pseudo instructions.
-  def BX_CALL : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
-                  IIC_Br, "mov\tlr, pc\n\tbx\t$func",
-                  [(ARMcall_nolink tGPR:$func)]>,
-           Requires<[IsARM, HasV4T, IsNotDarwin]> {
-    bits<4> func;
-    let Inst{27-4} = 0b000100101111111111110001;
-    let Inst{3-0}   = func;
-  }
+  def BX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
+                   Size8Bytes, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
+                   Requires<[IsARM, HasV4T, IsNotDarwin]>;
 
   // ARMv4
-  def BMOVPCRX_CALL : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
-                 IIC_Br, "mov\tlr, pc\n\tmov\tpc, $func",
-                 [(ARMcall_nolink tGPR:$func)]>,
-           Requires<[IsARM, NoV4T, IsNotDarwin]> {
-    bits<4> func;
-    let Inst{27-4} = 0b000110100000111100000000;
-    let Inst{3-0}   = func;
-  }
+  def BMOVPCRX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
+                   Size8Bytes, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
+                   Requires<[IsARM, NoV4T, IsNotDarwin]>;
 }
 
 let isCall = 1,
@@ -1335,24 +1325,14 @@ let isCall = 1,
 
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
-  def BXr9_CALL : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
-                  IIC_Br, "mov\tlr, pc\n\tbx\t$func",
-                  [(ARMcall_nolink tGPR:$func)]>,
-             Requires<[IsARM, HasV4T, IsDarwin]> {
-    bits<4> func;
-    let Inst{27-4} = 0b000100101111111111110001;
-    let Inst{3-0}   = func;
-  }
+  def BXr9_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
+                  Size8Bytes, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
+                  Requires<[IsARM, HasV4T, IsDarwin]>;
 
   // ARMv4
-  def BMOVPCRXr9_CALL : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
-                 IIC_Br, "mov\tlr, pc\n\tmov\tpc, $func",
-                 [(ARMcall_nolink tGPR:$func)]>,
-           Requires<[IsARM, NoV4T, IsDarwin]> {
-    bits<4> func;
-    let Inst{27-4} = 0b000110100000111100000000;
-    let Inst{3-0}   = func;
-  }
+  def BMOVPCRXr9_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
+                  Size8Bytes, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
+                  Requires<[IsARM, NoV4T, IsDarwin]>;
 }
 
 // Tail calls.

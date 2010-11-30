@@ -806,6 +806,56 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
+  case ARM::BXr9_CALL:
+  case ARM::BX_CALL: {
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::MOVr);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::LR));
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      // Add predicate operands.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // Add 's' bit operand (always reg0 for this)
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::BX);
+      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    return;
+  }
+  case ARM::BMOVPCRXr9_CALL:
+  case ARM::BMOVPCRX_CALL: {
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::MOVr);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::LR));
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      // Add predicate operands.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // Add 's' bit operand (always reg0 for this)
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::MOVr);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+      // Add predicate operands.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      // Add 's' bit operand (always reg0 for this)
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    return;
+  }
   case ARM::tPICADD: {
     // This is a pseudo op for a label + instruction sequence, which looks like:
     // LPC0:
@@ -978,6 +1028,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Add predicate operands.
     TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
     TmpInst.addOperand(MCOperand::CreateReg(0));
+    // Add 's' bit operand (always reg0 for this)
+    if (Opc == ARM::MOVr)
+      TmpInst.addOperand(MCOperand::CreateReg(0));
     OutStreamer.EmitInstruction(TmpInst);
 
     // Make sure the Thumb jump table is 4-byte aligned.

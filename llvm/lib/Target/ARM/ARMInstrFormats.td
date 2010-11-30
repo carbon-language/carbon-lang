@@ -352,10 +352,6 @@ class ABXI<bits<4> opcod, dag oops, dag iops, InstrItinClass itin,
        asm, "", pattern> {
   let Inst{27-24} = opcod;
 }
-class ABXIx2<dag oops, dag iops, InstrItinClass itin,
-             string asm, list<dag> pattern>
-  : XI<oops, iops, AddrModeNone, Size8Bytes, IndexModeNone, Pseudo, itin,
-       asm, "", pattern>;
 
 // BR_JT instructions
 class JTI<dag oops, dag iops, InstrItinClass itin,
@@ -428,11 +424,6 @@ class AXI1<bits<4> opcod, dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{24-21} = opcod;
   let Inst{27-26} = 0b00;
 }
-class AI1x2<dag oops, dag iops, Format f, InstrItinClass itin,
-            string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode1, Size8Bytes, IndexModeNone, f, itin,
-      opc, asm, "", pattern>;
-
 
 // loads
 
@@ -1019,10 +1010,6 @@ class T2XI<dag oops, dag iops, InstrItinClass itin,
 class T2JTI<dag oops, dag iops, InstrItinClass itin,
             string asm, list<dag> pattern>
   : Thumb2XI<oops, iops, AddrModeNone, SizeSpecial, itin, asm, "", pattern>;
-
-class T2Ix2<dag oops, dag iops, InstrItinClass itin,
-            string opc, string asm, list<dag> pattern>
-  : Thumb2I<oops, iops, AddrModeNone, Size8Bytes, itin, opc, asm, "", pattern>;
 
 // Two-address instructions
 class T2XIt<dag oops, dag iops, InstrItinClass itin,
