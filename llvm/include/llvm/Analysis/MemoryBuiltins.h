@@ -74,6 +74,10 @@ Value *getMallocArraySize(CallInst *CI, const TargetData *TD,
 
 /// isFreeCall - Returns non-null if the value is a call to the builtin free()
 const CallInst *isFreeCall(const Value *I);
+  
+static inline CallInst *isFreeCall(Value *I) {
+  return const_cast<CallInst*>(isFreeCall((const Value*)I));
+}
 
 } // End llvm namespace
 

@@ -58,9 +58,7 @@ namespace {
     }
     
     bool runOnBasicBlock(BasicBlock &BB);
-    bool handleFreeWithNonTrivialDependency(const CallInst *F,
-                                            Instruction *Inst,
-                                            MemDepResult Dep);
+    bool HandleFree(CallInst *F);
     bool handleEndBlock(BasicBlock &BB);
     bool RemoveUndeadPointers(Value *Ptr, uint64_t killPointerSize,
                               BasicBlock::iterator &BBI,
@@ -124,7 +122,7 @@ static bool isElidable(Instruction *I) {
   return true;
 }
 
-/// getPointerOperand - Return the pointer that is being clobbered.
+/// getPointerOperand - Return the pointer that is being written to.
 static Value *getPointerOperand(Instruction *I) {
   assert(doesClobberMemory(I));
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
@@ -202,8 +200,14 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ) {
     Instruction *Inst = BBI++;
     
-    // If we find a store or a free, get its memory dependence.
-    if (!doesClobberMemory(Inst) && !isFreeCall(Inst))
+    // Handle 'free' calls specially.
+    if (CallInst *F = isFreeCall(Inst)) {
+      MadeChange |= HandleFree(F);
+      continue;
+    }
+    
+    // If we find a store, get its memory dependence.
+    if (!doesClobberMemory(Inst))
       continue;
 
     MemDepResult InstDep = MD.getDependency(Inst);
@@ -211,13 +215,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // Ignore non-local store liveness.
     // FIXME: cross-block DSE would be fun. :)
     if (InstDep.isNonLocal()) continue;
-  
-    // Handle frees whose dependencies are non-trivial.
-    if (const CallInst *F = isFreeCall(Inst)) {
-      MadeChange |= handleFreeWithNonTrivialDependency(F, Inst, InstDep);
-      continue;
-    }
-
+     
     // If we're storing the same value back to a pointer that we just
     // loaded from, then the store can be removed.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
@@ -292,24 +290,25 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   return MadeChange;
 }
 
-/// handleFreeWithNonTrivialDependency - Handle frees of entire structures whose
-/// dependency is a store to a field of that structure.
-bool DSE::handleFreeWithNonTrivialDependency(const CallInst *F,
-                                             Instruction *Inst,
-                                             MemDepResult Dep) {
+/// HandleFree - Handle frees of entire structures whose dependency is a store
+/// to a field of that structure.
+bool DSE::HandleFree(CallInst *F) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
-  
+
+  MemDepResult Dep = MD.getDependency(F);
   do {
+    if (Dep.isNonLocal()) return false;
+    
     Instruction *Dependency = Dep.getInst();
-    if (!Dependency || !doesClobberMemory(Dependency) || !isElidable(Dependency))
+    if (!doesClobberMemory(Dependency) || !isElidable(Dependency))
       return false;
   
     Value *DepPointer = getPointerOperand(Dependency)->getUnderlyingObject();
 
     // Check for aliasing.
     if (AA.alias(F->getArgOperand(0), 1, DepPointer, 1) !=
-           AliasAnalysis::MustAlias)
+          AliasAnalysis::MustAlias)
       return false;
   
     // DCE instructions only used to calculate that store
@@ -321,8 +320,9 @@ bool DSE::handleFreeWithNonTrivialDependency(const CallInst *F,
     //    s[0] = 0;
     //    s[1] = 0; // This has just been deleted.
     //    free(s);
-    Dep = MD.getDependency(Inst);
+    Dep = MD.getDependency(F);
   } while (!Dep.isNonLocal());
+  
   return true;
 }
 
