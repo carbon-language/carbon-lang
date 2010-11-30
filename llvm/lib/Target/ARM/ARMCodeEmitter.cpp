@@ -235,8 +235,10 @@ namespace {
       const { return 0;}
     uint32_t getAddrMode3OffsetOpValue(const MachineInstr &MI, unsigned OpIdx)
       const { return 0;}
-    uint32_t getAddrMode3OpValue(const MachineInstr &MI, unsigned Op) const
-      { return 0; }
+    uint32_t getAddrMode3OpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
+    uint32_t getAddrModeS4OpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
     uint32_t getAddrMode5OpValue(const MachineInstr &MI, unsigned Op) const {
       // {17-13} = reg
       // {12}    = (U)nsigned (add == '1', sub == '0')

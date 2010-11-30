@@ -74,6 +74,11 @@ def t_imm_s4 : Operand<i32> {
 
 // Define Thumb specific addressing modes.
 
+def MemModeThumbAsmOperand : AsmOperandClass {
+  let Name = "MemModeThumb";
+  let SuperClasses = [];
+}
+
 // t_addrmode_rr := reg + reg
 //
 def t_addrmode_rr : Operand<i32>,
@@ -87,8 +92,10 @@ def t_addrmode_rr : Operand<i32>,
 //
 def t_addrmode_s4 : Operand<i32>,
                     ComplexPattern<i32, 3, "SelectThumbAddrModeS4", []> {
+  string EncoderMethod = "getAddrModeS4OpValue";
   let PrintMethod = "printThumbAddrModeS4Operand";
   let MIOperandInfo = (ops tGPR:$base, i32imm:$offsimm, tGPR:$offsreg);
+  let ParserMatchClass = MemModeThumbAsmOperand;
 }
 
 // t_addrmode_s2 := reg + reg
@@ -489,8 +496,7 @@ def tSVC : T1pI<(outs), (ins i32imm:$imm), IIC_Br,
   let Inst{7-0}   = imm;
 }
 
-// A8.6.16 B: Encoding T1
-// If Inst{11-8} == 0b1110 then UNDEFINED
+// The assembler uses 0xDEFE for a trap instruction.
 let isBarrier = 1, isTerminator = 1 in
 def tTRAP : TI<(outs), (ins), IIC_Br, 
                "trap", [(trap)]>, Encoding16 {
@@ -505,12 +511,26 @@ let canFoldAsLoad = 1, isReMaterializable = 1 in
 def tLDR : T1pI4<(outs tGPR:$Rt), (ins t_addrmode_s4:$addr), IIC_iLoad_r,
                  "ldr", "\t$Rt, $addr",
                  [(set tGPR:$Rt, (load t_addrmode_s4:$addr))]>,
-           T1LdSt<0b100>;
+           T1LdSt<0b100> {
+  // A8.6.60
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{8-6} = addr{5-3};    // Rm
+  let Inst{5-3} = addr{2-0};    // Rn
+  let Inst{2-0} = Rt;
+}
 
-def tLDRi: T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoad_r,
-               "ldr", "\t$dst, $addr",
+def tLDRi: T1pI4<(outs tGPR:$Rt), (ins t_addrmode_s4:$addr), IIC_iLoad_r,
+               "ldr", "\t$Rt, $addr",
                []>,
-           T1LdSt4Imm<{1,?,?}>;
+           T1LdSt4Imm<{1,?,?}> {
+  // A8.6.57
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{10-6} = addr{7-3};   // imm5
+  let Inst{5-3}  = addr{2-0};   // Rn
+  let Inst{2-0}  = Rt;
+}
 
 def tLDRB : T1pI1<(outs tGPR:$dst), (ins t_addrmode_s1:$addr), IIC_iLoad_bh_r,
                 "ldrb", "\t$dst, $addr",

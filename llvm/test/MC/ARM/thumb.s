@@ -32,3 +32,6 @@
 @ CHECK: uxth	r3, r6               @ encoding: [0xb3,0xb2]
 	uxtb	r3, r6
 	uxth	r3, r6
+
+@ CHECK: ldr	r3, [r1, r2]         @ encoding: [0x8b,0x58]
+	ldr	r3, [r1, r2]

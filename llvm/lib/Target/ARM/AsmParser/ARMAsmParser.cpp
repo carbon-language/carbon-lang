@@ -222,15 +222,29 @@ public:
     if (!isMemory() || Mem.OffsetIsReg || Mem.OffsetRegShifted ||
         Mem.Writeback || Mem.Negative)
       return false;
+
     // If there is an offset expression, make sure it's valid.
-    if (!Mem.Offset)
-      return true;
+    if (!Mem.Offset) return true;
+
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
-    if (!CE)
-      return false;
+    if (!CE) return false;
+
     // The offset must be a multiple of 4 in the range 0-1020.
     int64_t Value = CE->getValue();
     return ((Value & 0x3) == 0 && Value <= 1020 && Value >= -1020);
+  }
+  bool isMemModeThumb() const {
+    if (!isMemory() || (!Mem.OffsetIsReg && !Mem.Offset) || Mem.Writeback)
+      return false;
+
+    if (!Mem.Offset) return true;
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+    if (!CE) return false;
+
+    // The offset must be a multiple of 4 in the range 0-124.
+    uint64_t Value = CE->getValue();
+    return ((Value & 0x3) == 0 && Value <= 124);
   }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
@@ -299,6 +313,21 @@ public:
                                                                -Offset)));
     } else {
       Inst.addOperand(MCOperand::CreateImm(0));
+    }
+  }
+
+  void addMemModeThumbOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 3 && isMemModeThumb() && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+
+    if (Mem.Offset) {
+      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+      assert(CE && "Non-constant mode offset operand!");
+      Inst.addOperand(MCOperand::CreateImm(CE->getValue() / 4));
+      Inst.addOperand(MCOperand::CreateReg(0));
+    } else {
+      Inst.addOperand(MCOperand::CreateImm(0));
+      Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
     }
   }
 
@@ -592,8 +621,8 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     int OffsetRegNum;
     bool OffsetRegShifted;
     enum ShiftType ShiftType;
-    const MCExpr *ShiftAmount;
-    const MCExpr *Offset;
+    const MCExpr *ShiftAmount = 0;
+    const MCExpr *Offset = 0;
     if (ParseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType, ShiftAmount,
                              Offset, OffsetIsReg, OffsetRegNum, E))
       return true;

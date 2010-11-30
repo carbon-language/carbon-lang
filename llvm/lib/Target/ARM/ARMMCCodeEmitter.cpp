@@ -136,6 +136,10 @@ public:
   uint32_t getAddrMode3OpValue(const MCInst &MI, unsigned OpIdx,
                                SmallVectorImpl<MCFixup> &Fixups) const;
 
+  /// getAddrModeS4OpValue - Return encoding for t_addrmode_s4 operands.
+  uint32_t getAddrModeS4OpValue(const MCInst &MI, unsigned OpIdx,
+                                SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getAddrMode5OpValue - Return encoding info for 'reg +/- imm8' operand.
   uint32_t getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
                                SmallVectorImpl<MCFixup> &Fixups) const;
@@ -538,6 +542,26 @@ getAddrMode3OpValue(const MCInst &MI, unsigned OpIdx,
   if (!isImm)
     Imm8 = getARMRegisterNumbering(MO1.getReg());
   return (Rn << 9) | Imm8 | (isAdd << 8) | (isImm << 13);
+}
+
+/// getAddrModeS4OpValue - Return encoding for t_addrmode_s4 operands.
+uint32_t ARMMCCodeEmitter::
+getAddrModeS4OpValue(const MCInst &MI, unsigned OpIdx,
+                     SmallVectorImpl<MCFixup> &Fixups) const {
+  // [Rn, Rm]
+  //   {5-3} = Rm
+  //   {2-0} = Rn
+  //
+  // [Rn, #imm]
+  //   {7-3} = imm5
+  //   {2-0} = Rn
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
+  const MCOperand &MO2 = MI.getOperand(OpIdx + 2);
+  unsigned Rn = getARMRegisterNumbering(MO.getReg());
+  unsigned Imm5 = MO1.getImm();
+  unsigned Rm = getARMRegisterNumbering(MO2.getReg());
+  return (Rm << 3) | (Imm5 << 3) | Rn;
 }
 
 /// getAddrMode5OpValue - Return encoding info for 'reg +/- imm12' operand.
