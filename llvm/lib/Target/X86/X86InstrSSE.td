@@ -3640,10 +3640,21 @@ def : Pat<(v16i8 (palign:$src3 VR128:$src1, VR128:$src2)),
 //===---------------------------------------------------------------------===//
 
 // Thread synchronization
-def MONITOR : I<0x01, MRM_C8, (outs), (ins), "monitor",
-                [(int_x86_sse3_monitor EAX, ECX, EDX)]>,TB, Requires<[HasSSE3]>;
-def MWAIT   : I<0x01, MRM_C9, (outs), (ins), "mwait",
-                [(int_x86_sse3_mwait ECX, EAX)]>, TB, Requires<[HasSSE3]>;
+let usesCustomInserter = 1 in {
+def MONITOR : I<0, Pseudo, (outs), (ins i32mem:$src1, GR32:$src2, GR32:$src3),
+                "# MONITORrrr PSUEDO",
+                [(int_x86_sse3_monitor addr:$src1, GR32:$src2, GR32:$src3)]>;
+def MWAIT : I<0, Pseudo, (outs), (ins GR32:$src1, GR32:$src2),
+                "# MWAITrr PSEUDO",
+                [(int_x86_sse3_mwait GR32:$src1, GR32:$src2)]>;
+}
+
+let Uses = [EAX, ECX, EDX] in
+def MONITORrrr : I<0x01, MRM_C8, (outs), (ins), "monitor", []>, TB,
+                 Requires<[HasSSE3]>;
+let Uses = [ECX, EAX] in
+def MWAITrr   : I<0x01, MRM_C9, (outs), (ins), "mwait", []>, TB,
+                Requires<[HasSSE3]>;
 
 //===---------------------------------------------------------------------===//
 // Non-Instruction Patterns

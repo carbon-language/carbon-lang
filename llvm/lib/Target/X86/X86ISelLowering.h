@@ -821,6 +821,13 @@ namespace llvm {
     MachineBasicBlock *EmitPCMP(MachineInstr *BInstr, MachineBasicBlock *BB,
                                 unsigned argNum, bool inMem) const;
 
+    /// Utility functions to emit monitor and mwait instructions. These
+    /// need to make sure that the arguments to the intrinsic are in the
+    /// correct registers.
+    MachineBasicBlock *EmitMonitor(MachineInstr *MI, MachineBasicBlock *BB)
+      const;
+    MachineBasicBlock *EmitMwait(MachineInstr *MI, MachineBasicBlock *BB) const;
+
     /// Utility function to emit atomic bitwise operations (and, or, xor).
     /// It takes the bitwise instruction to expand, the associated machine basic
     /// block, and the associated X86 opcodes for reg/reg and reg/imm.
