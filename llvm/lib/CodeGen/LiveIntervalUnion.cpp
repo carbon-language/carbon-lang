@@ -156,7 +156,7 @@ void LiveIntervalUnion::verify(LiveVirtRegBitSet& VisitedVRegs) {
 //
 // This design assumes only a fast mechanism for intersecting a single live
 // virtual register segment with a set of LiveIntervalUnion segments.  This may
-// be ok since most VIRTREGs have very few segments.  If we had a data
+// be ok since most virtual registers have very few segments.  If we had a data
 // structure that optimizd MxN intersection of segments, then we would bypass
 // the loop that advances within the LiveInterval.
 //
