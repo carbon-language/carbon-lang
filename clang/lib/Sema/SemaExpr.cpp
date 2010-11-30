@@ -246,28 +246,22 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
 
 void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
   DefaultFunctionArrayConversion(E);
-  
-  // C++ [conv.lval]p1:
-  //   A glvalue of a non-function, non-array type T can be
-  //   converted to a prvalue.
-  if (E->isGLValue()) {
+
+  QualType Ty = E->getType();
+  assert(!Ty.isNull() && "DefaultFunctionArrayLvalueConversion - missing type");
+  if (!Ty->isDependentType() && Ty.hasQualifiers() &&
+      (!getLangOptions().CPlusPlus || !Ty->isRecordType()) &&
+      E->isLValue()) {
     // C++ [conv.lval]p1:
-    //   [...] If T is a non-class type, the type of the prvalue is the
+    //   [...] If T is a non-class type, the type of the rvalue is the
     //   cv-unqualified version of T. Otherwise, the type of the
-    //   rvalue is T.
+    //   rvalue is T
     //
     // C99 6.3.2.1p2:
     //   If the lvalue has qualified type, the value has the unqualified
     //   version of the type of the lvalue; otherwise, the value has the
     //   type of the lvalue.
-    QualType T = E->getType();
-    assert(!T.isNull() && "r-value conversion on typeless expression?");
-    
-    if (T.hasQualifiers() && !T->isDependentType() &&
-        (!getLangOptions().CPlusPlus || !T->isRecordType()))
-      T = T.getUnqualifiedType();
-    
-    ImpCastExprToType(E, T, CK_LValueToRValue);
+    ImpCastExprToType(E, Ty.getUnqualifiedType(), CK_NoOp);
   }
 }
 
@@ -277,43 +271,36 @@ void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
 /// sometimes surpressed. For example, the array->pointer conversion doesn't
 /// apply if the array is an argument to the sizeof or address (&) operators.
 /// In these instances, this routine should *not* be called.
-Expr *Sema::UsualUnaryConversions(Expr *&E) {
-  // First, convert to an r-value.
-  DefaultFunctionArrayLvalueConversion(E);
-  
-  QualType Ty = E->getType();
+Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
+  QualType Ty = Expr->getType();
   assert(!Ty.isNull() && "UsualUnaryConversions - missing type");
-  
-  // Try to perform integral promotions if the object has a theoretically
-  // promotable type.
-  if (Ty->isIntegralOrUnscopedEnumerationType()) {
-    // C99 6.3.1.1p2:
-    //
-    //   The following may be used in an expression wherever an int or
-    //   unsigned int may be used:
-    //     - an object or expression with an integer type whose integer
-    //       conversion rank is less than or equal to the rank of int
-    //       and unsigned int.
-    //     - A bit-field of type _Bool, int, signed int, or unsigned int.
-    //
-    //   If an int can represent all values of the original type, the
-    //   value is converted to an int; otherwise, it is converted to an
-    //   unsigned int. These are called the integer promotions. All
-    //   other types are unchanged by the integer promotions.
-  
-    QualType PTy = Context.isPromotableBitField(E);
-    if (!PTy.isNull()) {
-      ImpCastExprToType(E, PTy, CK_IntegralCast);
-      return E;
-    }
-    if (Ty->isPromotableIntegerType()) {
-      QualType PT = Context.getPromotedIntegerType(Ty);
-      ImpCastExprToType(E, PT, CK_IntegralCast);
-      return E;
-    }
+
+  // C99 6.3.1.1p2:
+  //
+  //   The following may be used in an expression wherever an int or
+  //   unsigned int may be used:
+  //     - an object or expression with an integer type whose integer
+  //       conversion rank is less than or equal to the rank of int
+  //       and unsigned int.
+  //     - A bit-field of type _Bool, int, signed int, or unsigned int.
+  //
+  //   If an int can represent all values of the original type, the
+  //   value is converted to an int; otherwise, it is converted to an
+  //   unsigned int. These are called the integer promotions. All
+  //   other types are unchanged by the integer promotions.
+  QualType PTy = Context.isPromotableBitField(Expr);
+  if (!PTy.isNull()) {
+    ImpCastExprToType(Expr, PTy, CK_IntegralCast);
+    return Expr;
+  }
+  if (Ty->isPromotableIntegerType()) {
+    QualType PT = Context.getPromotedIntegerType(Ty);
+    ImpCastExprToType(Expr, PT, CK_IntegralCast);
+    return Expr;
   }
 
-  return E;
+  DefaultFunctionArrayLvalueConversion(Expr);
+  return Expr;
 }
 
 /// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that

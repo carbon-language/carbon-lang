@@ -2650,7 +2650,6 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       Dst.Add(*I);
     return;
 
-  case CK_LValueToRValue:
   case CK_NoOp:
   case CK_FunctionToPointerDecay:
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {

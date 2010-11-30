@@ -1101,10 +1101,6 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   case CK_ToUnion:
     llvm_unreachable("scalar cast to non-scalar value");
     break;
-      
-  case CK_LValueToRValue:
-    assert(CGF.getContext().hasSameUnqualifiedType(E->getType(), DestTy));
-    return Visit(const_cast<Expr*>(E));
 
   case CK_IntegralToPointer: {
     Value *Src = Visit(const_cast<Expr*>(E));
