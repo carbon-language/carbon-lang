@@ -36,3 +36,19 @@ define i32 @test3(double %__x) {
   %tmp.7 = zext i1 %tmp.6 to i32
   ret i32 %tmp.7
 }
+
+; PR6043
+define void @test4(i8* %P) {
+; CHECK: @test4
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: store double
+
+  store i8 19, i8* %P  ;; dead
+  %A = getelementptr i8* %P, i32 3
+  
+  store i8 42, i8* %A  ;; dead
+  
+  %Q = bitcast i8* %P to double*
+  store double 0.0, double* %Q
+  ret void
+}

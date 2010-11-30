@@ -102,6 +102,11 @@ namespace llvm {
   /// base and offset to the caller.
   Value *GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
                                           const TargetData &TD);
+  static inline const Value *
+  GetPointerBaseWithConstantOffset(const Value *Ptr, int64_t &Offset,
+                                   const TargetData &TD) {
+    return GetPointerBaseWithConstantOffset(const_cast<Value*>(Ptr), Offset,TD);
+  }
   
   /// GetConstantStringInfo - This function computes the length of a
   /// null-terminated C string pointed to by V.  If successful, it returns true

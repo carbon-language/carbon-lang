@@ -28,6 +28,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
@@ -260,28 +261,60 @@ static uint64_t getPointerSize(Value *V, AliasAnalysis &AA) {
 static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
                                 const AliasAnalysis::Location &Earlier,
                                 AliasAnalysis &AA) {
-  const Value *P1 = Later.Ptr->stripPointerCasts();
-  const Value *P2 = Earlier.Ptr->stripPointerCasts();
+  const Value *P1 = Earlier.Ptr->stripPointerCasts();
+  const Value *P2 = Later.Ptr->stripPointerCasts();
   
-  // Make sure that the start pointers are the same.
-  if (P1 != P2)
-    return false;
-
-  // If we don't know the sizes of either access, then we can't do a comparison.
-  if (Later.Size == AliasAnalysis::UnknownSize ||
-      Earlier.Size == AliasAnalysis::UnknownSize) {
-    // If we have no TargetData information around, then the size of the store
-    // is inferrable from the pointee type.  If they are the same type, then we
-    // know that the store is safe.
-    if (AA.getTargetData() == 0)
-      return Later.Ptr->getType() == Earlier.Ptr->getType();
-    return false;
+  // If the start pointers are the same, we just have to compare sizes to see if
+  // the later store was larger than the earlier store.
+  if (P1 == P2) {
+    // If we don't know the sizes of either access, then we can't do a
+    // comparison.
+    if (Later.Size == AliasAnalysis::UnknownSize ||
+        Earlier.Size == AliasAnalysis::UnknownSize) {
+      // If we have no TargetData information around, then the size of the store
+      // is inferrable from the pointee type.  If they are the same type, then
+      // we know that the store is safe.
+      if (AA.getTargetData() == 0)
+        return Later.Ptr->getType() == Earlier.Ptr->getType();
+      return false;
+    }
+    
+    // Make sure that the Later size is >= the Earlier size.
+    if (Later.Size < Earlier.Size)
+      return false;
+    return true;
   }
   
-  // Make sure that the Later size is >= the Earlier size.
-  if (Later.Size < Earlier.Size)
+  // Otherwise, we have to have size information, and the later store has to be
+  // larger than the earlier one.
+  if (Later.Size == AliasAnalysis::UnknownSize ||
+      Earlier.Size == AliasAnalysis::UnknownSize ||
+      Later.Size <= Earlier.Size ||
+      AA.getTargetData() == 0)
     return false;
   
+  const TargetData &TD = *AA.getTargetData();
+  
+  // Okay, we have stores to two completely different pointers.  Try to
+  // decompose the pointer into a "base + constant_offset" form.  If the base
+  // pointers are equal, then we can reason about the two stores.
+  int64_t Off1 = 0, Off2 = 0;
+  const Value *BP1 = GetPointerBaseWithConstantOffset(P1, Off1, TD);
+  const Value *BP2 = GetPointerBaseWithConstantOffset(P2, Off2, TD);
+  
+  // If the base pointers still differ, we have two completely different stores.
+  if (BP1 != BP2)
+    return false;
+  
+  // Otherwise, we might have a situation like:
+  //  store i16 -> P + 1 Byte
+  //  store i32 -> P
+  // In this case, we see if the later store completely overlaps all bytes
+  // stored by the previous store.
+  if (Off1 < Off2 ||                       // Earlier starts before Later.
+      Off1+Earlier.Size > Off2+Later.Size) // Earlier goes beyond Later.
+    return false;
+  // Otherwise, we have complete overlap.
   return true;
 }
 
