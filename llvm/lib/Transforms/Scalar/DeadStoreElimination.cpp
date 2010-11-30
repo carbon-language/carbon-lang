@@ -400,104 +400,88 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
   bool MadeChange = false;
   
   // Pointers alloca'd in this function are dead in the end block
-  SmallPtrSet<Value*, 64> deadPointers;
+  SmallPtrSet<Value*, 64> DeadPointers;
   
   // Find all of the alloca'd pointers in the entry block.
   BasicBlock *Entry = BB.getParent()->begin();
   for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
-      deadPointers.insert(AI);
+      DeadPointers.insert(AI);
   
   // Treat byval arguments the same, stores to them are dead at the end of the
   // function.
   for (Function::arg_iterator AI = BB.getParent()->arg_begin(),
        AE = BB.getParent()->arg_end(); AI != AE; ++AI)
     if (AI->hasByValAttr())
-      deadPointers.insert(AI);
+      DeadPointers.insert(AI);
   
   // Scan the basic block backwards
   for (BasicBlock::iterator BBI = BB.end(); BBI != BB.begin(); ){
     --BBI;
     
-    // If we find a store whose pointer is dead.
-    if (hasMemoryWrite(BBI)) {
-      if (isRemovable(BBI)) {
-        // See through pointer-to-pointer bitcasts
-        Value *pointerOperand = getPointerOperand(BBI)->getUnderlyingObject();
+    // If we find a store, check to see if it points into a dead stack value.
+    if (hasMemoryWrite(BBI) && isRemovable(BBI)) {
+      // See through pointer-to-pointer bitcasts
+      Value *Pointer = getPointerOperand(BBI)->getUnderlyingObject();
 
-        // Alloca'd pointers or byval arguments (which are functionally like
-        // alloca's) are valid candidates for removal.
-        if (deadPointers.count(pointerOperand)) {
-          // DCE instructions only used to calculate that store.
-          Instruction *Dead = BBI;
-          ++BBI;
-          DeleteDeadInstruction(Dead, &deadPointers);
-          ++NumFastStores;
-          MadeChange = true;
-          continue;
-        }
-      }
-      
-      // Because a memcpy or memmove is also a load, we can't skip it if we
-      // didn't remove it.
-      if (!isa<MemTransferInst>(BBI))
+      // Alloca'd pointers or byval arguments (which are functionally like
+      // alloca's) are valid candidates for removal.
+      if (DeadPointers.count(Pointer)) {
+        // DCE instructions only used to calculate that store.
+        Instruction *Dead = BBI++;
+        DeleteDeadInstruction(Dead, &DeadPointers);
+        ++NumFastStores;
+        MadeChange = true;
         continue;
+      }
     }
     
-    Value *killPointer = 0;
-    uint64_t killPointerSize = AliasAnalysis::UnknownSize;
+    // Remove any dead non-memory-mutating instructions.
+    if (isInstructionTriviallyDead(BBI)) {
+      Instruction *Inst = BBI++;
+      DeleteDeadInstruction(Inst, &DeadPointers);
+      ++NumFastOther;
+      MadeChange = true;
+      continue;
+    }
+    
+    if (AllocaInst *A = dyn_cast<AllocaInst>(BBI)) {
+      DeadPointers.erase(A);
+      continue;
+    }
+    
+    
+    Value *KillPointer = 0;
+    uint64_t KillPointerSize = AliasAnalysis::UnknownSize;
     
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst *L = dyn_cast<LoadInst>(BBI)) {
-      // However, if this load is unused and not volatile, we can go ahead and
-      // remove it, and not have to worry about it making our pointer undead!
-      if (L->use_empty() && !L->isVolatile()) {
-        ++BBI;
-        DeleteDeadInstruction(L, &deadPointers);
-        ++NumFastOther;
-        MadeChange = true;
-        continue;
-      }
-      
-      killPointer = L->getPointerOperand();
+      KillPointer = L->getPointerOperand();
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(BBI)) {
-      killPointer = V->getOperand(0);
-    } else if (isa<MemTransferInst>(BBI) &&
-               isa<ConstantInt>(cast<MemTransferInst>(BBI)->getLength())) {
-      killPointer = cast<MemTransferInst>(BBI)->getSource();
-      killPointerSize = cast<ConstantInt>(
-                       cast<MemTransferInst>(BBI)->getLength())->getZExtValue();
-    } else if (AllocaInst *A = dyn_cast<AllocaInst>(BBI)) {
-      deadPointers.erase(A);
-      
-      // Dead alloca's can be DCE'd when we reach them
-      if (A->use_empty()) {
-        ++BBI;
-        DeleteDeadInstruction(A, &deadPointers);
-        ++NumFastOther;
-        MadeChange = true;
-      }
-      
-      continue;
+      KillPointer = V->getOperand(0);
+    } else if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(BBI)) {
+      KillPointer = cast<MemTransferInst>(BBI)->getSource();
+      if (ConstantInt *Len = dyn_cast<ConstantInt>(MTI->getLength()))
+        KillPointerSize = Len->getZExtValue();
     } else if (CallSite CS = cast<Value>(BBI)) {
-      // If this call does not access memory, it can't
-      // be undeadifying any of our pointers.
+      // If this call does not access memory, it can't be loading any of our
+      // pointers.
       if (AA->doesNotAccessMemory(CS))
         continue;
       
-      unsigned modRef = 0;
-      unsigned other = 0;
+      unsigned NumModRef = 0;
+      unsigned NumOther = 0;
       
       // Remove any pointers made undead by the call from the dead set
       std::vector<Value*> dead;
-      for (SmallPtrSet<Value*, 64>::iterator I = deadPointers.begin(),
-           E = deadPointers.end(); I != E; ++I) {
+      for (SmallPtrSet<Value*, 64>::iterator I = DeadPointers.begin(),
+           E = DeadPointers.end(); I != E; ++I) {
         // HACK: if we detect that our AA is imprecise, it's not
         // worth it to scan the rest of the deadPointers set.  Just
         // assume that the AA will return ModRef for everything, and
         // go ahead and bail.
-        if (modRef >= 16 && other == 0) {
-          deadPointers.clear();
+        if (NumModRef >= 16 && NumOther == 0) {
+          DeadPointers.clear();
           return MadeChange;
         }
         
@@ -506,9 +490,9 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
           AA->getModRefInfo(CS, *I, getPointerSize(*I, *AA));
         
         if (A == AliasAnalysis::ModRef)
-          ++modRef;
+          ++NumModRef;
         else
-          ++other;
+          ++NumOther;
         
         if (A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref)
           dead.push_back(*I);
@@ -516,27 +500,19 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
       for (std::vector<Value*>::iterator I = dead.begin(), E = dead.end();
            I != E; ++I)
-        deadPointers.erase(*I);
+        DeadPointers.erase(*I);
       
       continue;
-    } else if (isInstructionTriviallyDead(BBI)) {
-      // For any non-memory-affecting non-terminators, DCE them as we reach them
-      Instruction *Inst = BBI;
-      ++BBI;
-      DeleteDeadInstruction(Inst, &deadPointers);
-      ++NumFastOther;
-      MadeChange = true;
+    } else {
+      // Not a loading instruction.
       continue;
     }
-    
-    if (!killPointer)
-      continue;
 
-    killPointer = killPointer->getUnderlyingObject();
+    KillPointer = KillPointer->getUnderlyingObject();
 
     // Deal with undead pointers
-    MadeChange |= RemoveUndeadPointers(killPointer, killPointerSize, BBI,
-                                       deadPointers);
+    MadeChange |= RemoveUndeadPointers(KillPointer, KillPointerSize, BBI,
+                                       DeadPointers);
   }
   
   return MadeChange;
@@ -546,11 +522,11 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 /// undead when scanning for dead stores to alloca's.
 bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
                                BasicBlock::iterator &BBI,
-                               SmallPtrSet<Value*, 64> &deadPointers) {
+                               SmallPtrSet<Value*, 64> &DeadPointers) {
   // If the kill pointer can be easily reduced to an alloca,
   // don't bother doing extraneous AA queries.
-  if (deadPointers.count(killPointer)) {
-    deadPointers.erase(killPointer);
+  if (DeadPointers.count(killPointer)) {
+    DeadPointers.erase(killPointer);
     return false;
   }
   
@@ -562,8 +538,8 @@ bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
   
   SmallVector<Value*, 16> undead;
   
-  for (SmallPtrSet<Value*, 64>::iterator I = deadPointers.begin(),
-       E = deadPointers.end(); I != E; ++I) {
+  for (SmallPtrSet<Value*, 64>::iterator I = DeadPointers.begin(),
+       E = DeadPointers.end(); I != E; ++I) {
     // See if this pointer could alias it
     AliasAnalysis::AliasResult A = AA->alias(*I, getPointerSize(*I, *AA),
                                              killPointer, killPointerSize);
@@ -574,7 +550,7 @@ bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
 
       // Remove it!
       ++BBI;
-      DeleteDeadInstruction(S, &deadPointers);
+      DeleteDeadInstruction(S, &DeadPointers);
       ++NumFastStores;
       MadeChange = true;
 
@@ -587,7 +563,7 @@ bool DSE::RemoveUndeadPointers(Value *killPointer, uint64_t killPointerSize,
 
   for (SmallVector<Value*, 16>::iterator I = undead.begin(), E = undead.end();
        I != E; ++I)
-    deadPointers.erase(*I);
+    DeadPointers.erase(*I);
   
   return MadeChange;
 }
