@@ -152,12 +152,27 @@ getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
 /// isRemovable - If the value of this instruction and the memory it writes to
 /// is unused, may we delete this instruction?
 static bool isRemovable(Instruction *I) {
-  assert(hasMemoryWrite(I));
-  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
-    return II->getIntrinsicID() != Intrinsic::lifetime_end;
+  // Don't remove volatile stores.
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return !SI->isVolatile();
-  return true;
+  
+  IntrinsicInst *II = cast<IntrinsicInst>(I);
+  switch (II->getIntrinsicID()) {
+  default: assert(0 && "doesn't pass 'hasMemoryWrite' predicate");
+  case Intrinsic::lifetime_end:
+    // Never remove dead lifetime_end's, e.g. because it is followed by a
+    // free.
+    return false;
+  case Intrinsic::init_trampoline:
+    // Always safe to remove init_trampoline.
+    return true;
+    
+  case Intrinsic::memset:
+  case Intrinsic::memmove:
+  case Intrinsic::memcpy:
+    // Don't remove volatile memory intrinsics.
+    return !cast<MemIntrinsic>(II)->isVolatile();
+  }
 }
 
 /// getPointerOperand - Return the pointer that is being written to.

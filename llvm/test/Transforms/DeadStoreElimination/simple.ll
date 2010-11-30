@@ -1,6 +1,12 @@
 ; RUN: opt < %s -basicaa -dse -S | FileCheck %s
 target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
 
+declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+declare void @llvm.memset.i64(i8*, i8, i64, i32)
+declare void @llvm.memcpy.i64(i8*, i8*, i64, i32)
+declare i8* @llvm.init.trampoline(i8*, i8*, i8*)
+
 define void @test1(i32* %Q, i32* %P) {
         %DEAD = load i32* %Q
         store i32 %DEAD, i32* %P
@@ -54,9 +60,6 @@ define void @test5(i32* %Q) {
 ; CHECK-NEXT: volatile load
 ; CHECK-NEXT: ret void
 }
-
-declare void @llvm.memset.i64(i8*, i8, i64, i32)
-declare void @llvm.memcpy.i64(i8*, i8*, i64, i32)
 
 ; Should delete store of 10 even though memset is a may-store to P (P and Q may
 ; alias).
@@ -116,7 +119,6 @@ define double @test10(i8* %X) {
 
 
 ; DSE should delete the dead trampoline.
-declare i8* @llvm.init.trampoline(i8*, i8*, i8*)
 declare void @test11f()
 define void @test11() {
 ; CHECK: @test11
@@ -210,3 +212,13 @@ define void @test17(i8* %P, i8* %Q) nounwind ssp {
 ; CHECK-NEXT: ret
 }
 
+; Should not delete the volatile memset.
+define void @test17v(i8* %P, i8* %Q) nounwind ssp {
+  tail call void @llvm.memset.p0i8.i64(i8* %P, i8 42, i64 8, i32 1, i1 true)
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
+  ret void
+; CHECK: @test17v
+; CHECK-NEXT: call void @llvm.memset
+; CHECK-NEXT: call void @llvm.memcpy
+; CHECK-NEXT: ret
+}
