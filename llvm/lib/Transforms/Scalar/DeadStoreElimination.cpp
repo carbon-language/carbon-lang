@@ -64,8 +64,7 @@ namespace {
     bool runOnBasicBlock(BasicBlock &BB);
     bool HandleFree(CallInst *F);
     bool handleEndBlock(BasicBlock &BB);
-    bool RemoveAccessedObjects(Value *Ptr, uint64_t killPointerSize,
-                               BasicBlock::iterator &BBI,
+    void RemoveAccessedObjects(Value *Ptr, uint64_t killPointerSize,
                                SmallPtrSet<Value*, 16> &deadPointers);
     void DeleteDeadInstruction(Instruction *I,
                                SmallPtrSet<Value*, 16> *deadPointers = 0);
@@ -514,8 +513,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
     // Remove any allocas from the DeadPointer set that are loaded, as this
     // makes any stores above the access live.
-    MadeChange |= RemoveAccessedObjects(KillPointer, KillPointerSize, BBI,
-                                        DeadStackObjects);
+    RemoveAccessedObjects(KillPointer, KillPointerSize, DeadStackObjects);
 
     // If all of the allocas were clobbered by the access then we're not going
     // to find anything else to process.
@@ -529,53 +527,34 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 /// RemoveAccessedObjects - Check to see if the specified location may alias any
 /// of the stack objects in the DeadStackObjects set.  If so, they become live
 /// because the location is being loaded.
-bool DSE::RemoveAccessedObjects(Value *KillPointer, uint64_t KillPointerSize,
-                                BasicBlock::iterator &BBI,
+void DSE::RemoveAccessedObjects(Value *KillPointer, uint64_t KillPointerSize,
                                 SmallPtrSet<Value*, 16> &DeadStackObjects) {
   Value *UnderlyingPointer = KillPointer->getUnderlyingObject();
 
   // A constant can't be in the dead pointer set.
   if (isa<Constant>(UnderlyingPointer))
-    return false;
+    return;
   
   // If the kill pointer can be easily reduced to an alloca, don't bother doing
   // extraneous AA queries.
-  if (DeadStackObjects.count(UnderlyingPointer)) {
+  if (isa<AllocaInst>(UnderlyingPointer) || isa<Argument>(UnderlyingPointer)) {
     DeadStackObjects.erase(UnderlyingPointer);
-    return false;
+    return;
   }
   
-  bool MadeChange = false;
   SmallVector<Value*, 16> NowLive;
-  
   for (SmallPtrSet<Value*, 16>::iterator I = DeadStackObjects.begin(),
        E = DeadStackObjects.end(); I != E; ++I) {
     // See if this pointer could alias it
     AliasAnalysis::AliasResult A = AA->alias(*I, getPointerSize(*I, *AA),
                                              KillPointer, KillPointerSize);
-
-    // If it must-alias and a store, we can delete it
-    if (isa<StoreInst>(BBI) && A == AliasAnalysis::MustAlias) {
-      StoreInst *S = cast<StoreInst>(BBI);
-
-      // Remove it!
-      ++BBI;
-      DeleteDeadInstruction(S, &DeadStackObjects);
-      ++NumFastStores;
-      MadeChange = true;
-
-      continue;
-
-      // Otherwise, it is undead
-    } else if (A != AliasAnalysis::NoAlias)
+    if (A != AliasAnalysis::NoAlias)
       NowLive.push_back(*I);
   }
 
   for (SmallVector<Value*, 16>::iterator I = NowLive.begin(), E = NowLive.end();
        I != E; ++I)
     DeadStackObjects.erase(*I);
-  
-  return MadeChange;
 }
 
 /// DeleteDeadInstruction - Delete this instruction.  Before we do, go through
