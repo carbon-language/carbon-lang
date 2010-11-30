@@ -34,3 +34,23 @@ define i32 @test3(i32* %g_addr) nounwind {
   %tmp3 = load i32* @g, align 4
   ret i32 %tmp3
 }
+
+
+define void @test4(i32* %Q) {
+        %a = load i32* %Q
+        volatile store i32 %a, i32* %Q
+        ret void
+; CHECK: @test4
+; CHECK-NEXT: load i32
+; CHECK-NEXT: volatile store
+; CHECK-NEXT: ret void
+}
+
+define void @test5(i32* %Q) {
+        %a = volatile load i32* %Q
+        store i32 %a, i32* %Q
+        ret void
+; CHECK: @test5
+; CHECK-NEXT: volatile load
+; CHECK-NEXT: ret void
+}

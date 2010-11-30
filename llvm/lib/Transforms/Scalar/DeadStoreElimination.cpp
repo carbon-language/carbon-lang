@@ -222,7 +222,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       if (LoadInst *DepLoad = dyn_cast<LoadInst>(InstDep.getInst())) {
         if (SI->getPointerOperand() == DepLoad->getPointerOperand() &&
-            SI->getOperand(0) == DepLoad) {
+            SI->getOperand(0) == DepLoad && !SI->isVolatile()) {
           // DeleteDeadInstruction can delete the current instruction.  Save BBI
           // in case we need it.
           WeakVH NextInst(BBI);
