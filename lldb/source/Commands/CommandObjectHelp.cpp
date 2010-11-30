@@ -74,6 +74,7 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
         
         if (cmd_obj != NULL)
         {
+            StringList matches;
             bool all_okay = true;
             CommandObject *sub_cmd_obj = cmd_obj;
             // Loop down through sub_command dictionaries until we find the command object that corresponds
@@ -81,17 +82,22 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
             for (int i = 1; i < argc && all_okay; ++i)
             {
                 std::string sub_command = command.GetArgumentAtIndex(i);
+                matches.Clear();
                 if (! sub_cmd_obj->IsMultiwordObject ())
                 {
                     all_okay = false;
                 }
                 else
                 {
-                    pos = ((CommandObjectMultiword *) sub_cmd_obj)->m_subcommand_dict.find (sub_command);
-                    if (pos != ((CommandObjectMultiword *) sub_cmd_obj)->m_subcommand_dict.end())
-                        sub_cmd_obj = pos->second.get();
-                    else
+                    CommandObject *found_cmd;
+                    found_cmd = ((CommandObjectMultiword *) sub_cmd_obj)->GetSubcommandObject(sub_command.c_str(), 
+                                                                                              &matches);
+                    if (found_cmd == NULL)
                         all_okay = false;
+                    else if (matches.GetSize() != 1)
+                        all_okay = false;
+                    else
+                        sub_cmd_obj = found_cmd;
                 }
             }
             
@@ -99,9 +105,25 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
             {
                 std::string cmd_string;
                 command.GetCommandString (cmd_string);
-                result.AppendErrorWithFormat
-                ("'%s' is not a known command.\nTry 'help' to see a current list of commands.\n",
-                 cmd_string.c_str());
+                if (matches.GetSize() < 2)
+                {
+                    result.AppendErrorWithFormat("'%s' is not a known command.\n"
+                                                 "Try 'help' to see a current list of commands.\n",
+                                                 cmd_string.c_str());
+                }
+                else 
+                {
+                    StreamString s;
+                    s.Printf ("ambiguous command %s", cmd_string.c_str());
+                    size_t num_matches = matches.GetSize();
+                    for (size_t match_idx = 0; match_idx < num_matches; match_idx++)
+                    {
+                        s.Printf ("\n\t%s", matches.GetStringAtIndex(match_idx));
+                    }
+                    s.Printf ("\n");
+                    result.AppendError(s.GetData());
+                }
+
                 result.SetStatus (eReturnStatusFailed);
             }
             else
