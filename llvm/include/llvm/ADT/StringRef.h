@@ -256,6 +256,18 @@ namespace llvm {
     /// Note: O(size() + Chars.size())
     size_type find_first_not_of(StringRef Chars, size_t From = 0) const;
 
+    /// find_last_of - Find the last character in the string that is \arg C, or
+    /// npos if not found.
+    size_type find_last_of(char C, size_t From = npos) const {
+      return rfind(C, From);
+    }
+
+    /// find_last_of - Find the last character in the string that is in \arg C,
+    /// or npos if not found.
+    ///
+    /// Note: O(size() + Chars.size())
+    size_type find_last_of(StringRef Chars, size_t From = npos) const;
+
     /// @}
     /// @name Helpful Algorithms
     /// @{

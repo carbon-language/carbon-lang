@@ -200,6 +200,21 @@ StringRef::size_type StringRef::find_first_not_of(StringRef Chars,
   return npos;
 }
 
+/// find_last_of - Find the last character in the string that is in \arg C,
+/// or npos if not found.
+///
+/// Note: O(size() + Chars.size())
+StringRef::size_type StringRef::find_last_of(StringRef Chars,
+                                             size_t From) const {
+  std::bitset<1 << CHAR_BIT> CharBits;
+  for (size_type i = 0; i != Chars.size(); ++i)
+    CharBits.set((unsigned char)Chars[i]);
+
+  for (size_type i = min(From, Length) - 1, e = -1; i != e; --i)
+    if (CharBits.test((unsigned char)Data[i]))
+      return i;
+  return npos;
+}
 
 //===----------------------------------------------------------------------===//
 // Helpful Algorithms
