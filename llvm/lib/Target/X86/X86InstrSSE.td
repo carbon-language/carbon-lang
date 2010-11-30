@@ -3641,11 +3641,9 @@ def : Pat<(v16i8 (palign:$src3 VR128:$src1, VR128:$src2)),
 
 // Thread synchronization
 let usesCustomInserter = 1 in {
-def MONITOR : I<0, Pseudo, (outs), (ins i32mem:$src1, GR32:$src2, GR32:$src3),
-                "# MONITORrrr PSUEDO",
+def MONITOR : PseudoI<(outs), (ins i32mem:$src1, GR32:$src2, GR32:$src3),
                 [(int_x86_sse3_monitor addr:$src1, GR32:$src2, GR32:$src3)]>;
-def MWAIT : I<0, Pseudo, (outs), (ins GR32:$src1, GR32:$src2),
-                "# MWAITrr PSEUDO",
+def MWAIT : PseudoI<(outs), (ins GR32:$src1, GR32:$src2),
                 [(int_x86_sse3_mwait GR32:$src1, GR32:$src2)]>;
 }
 
@@ -4907,12 +4905,12 @@ def : Pat<(v2i64 (X86pcmpgtq VR128:$src1, (memop addr:$src2))),
 
 // Packed Compare Implicit Length Strings, Return Mask
 multiclass pseudo_pcmpistrm<string asm> {
-  def REG : Ii8<0, Pseudo, (outs VR128:$dst),
-    (ins VR128:$src1, VR128:$src2, i8imm:$src3), !strconcat(asm, "rr PSEUDO"),
+  def REG : PseudoI<(outs VR128:$dst),
+                    (ins VR128:$src1, VR128:$src2, i8imm:$src3),
     [(set VR128:$dst, (int_x86_sse42_pcmpistrm128 VR128:$src1, VR128:$src2,
                                                   imm:$src3))]>;
-  def MEM : Ii8<0, Pseudo, (outs VR128:$dst),
-    (ins VR128:$src1, i128mem:$src2, i8imm:$src3), !strconcat(asm, "rm PSEUDO"),
+  def MEM : PseudoI<(outs VR128:$dst),
+                    (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
     [(set VR128:$dst, (int_x86_sse42_pcmpistrm128
                        VR128:$src1, (load addr:$src2), imm:$src3))]>;
 }
@@ -4943,12 +4941,12 @@ let Defs = [XMM0, EFLAGS] in {
 
 // Packed Compare Explicit Length Strings, Return Mask
 multiclass pseudo_pcmpestrm<string asm> {
-  def REG : Ii8<0, Pseudo, (outs VR128:$dst),
-    (ins VR128:$src1, VR128:$src3, i8imm:$src5), !strconcat(asm, "rr PSEUDO"),
+  def REG : PseudoI<(outs VR128:$dst),
+                    (ins VR128:$src1, VR128:$src3, i8imm:$src5),
     [(set VR128:$dst, (int_x86_sse42_pcmpestrm128
                        VR128:$src1, EAX, VR128:$src3, EDX, imm:$src5))]>;
-  def MEM : Ii8<0, Pseudo, (outs VR128:$dst),
-    (ins VR128:$src1, i128mem:$src3, i8imm:$src5), !strconcat(asm, "rm PSEUDO"),
+  def MEM : PseudoI<(outs VR128:$dst),
+                    (ins VR128:$src1, i128mem:$src3, i8imm:$src5),
     [(set VR128:$dst, (int_x86_sse42_pcmpestrm128
                        VR128:$src1, EAX, (load addr:$src3), EDX, imm:$src5))]>;
 }

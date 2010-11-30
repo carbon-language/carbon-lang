@@ -168,6 +168,11 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{37}    = has3DNow0F0FOpcode;
 }
 
+class PseudoI<dag oops, dag iops, list<dag> pattern>
+  : X86Inst<0, Pseudo, NoImm, oops, iops, "", GenericDomain> {
+  let Pattern = pattern;
+}
+
 class I<bits<8> o, Format f, dag outs, dag ins, string asm,
         list<dag> pattern, Domain d = GenericDomain>
   : X86Inst<o, f, NoImm, outs, ins, asm, d> {
