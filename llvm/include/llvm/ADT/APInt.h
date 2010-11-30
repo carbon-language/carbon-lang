@@ -379,12 +379,17 @@ public:
   /// @{
   /// @brief Gets maximum unsigned value of APInt for specific bit width.
   static APInt getMaxValue(unsigned numBits) {
-    return APInt(numBits, 0).set();
+    APInt API(numBits, 0);
+    API.set();
+    return API;
   }
 
   /// @brief Gets maximum signed value of APInt for a specific bit width.
   static APInt getSignedMaxValue(unsigned numBits) {
-    return APInt(numBits, 0).set().clear(numBits - 1);
+    APInt API(numBits, 0);
+    API.set();
+    API.clear(numBits - 1);
+    return API;
   }
 
   /// @brief Gets minimum unsigned value of APInt for a specific bit width.
@@ -394,7 +399,9 @@ public:
 
   /// @brief Gets minimum signed value of APInt for a specific bit width.
   static APInt getSignedMinValue(unsigned numBits) {
-    return APInt(numBits, 0).set(numBits - 1);
+    APInt API(numBits, 0);
+    API.set(numBits - 1);
+    return API;
   }
 
   /// getSignBit - This is just a wrapper function of getSignedMinValue(), and
@@ -407,7 +414,9 @@ public:
   /// @returns the all-ones value for an APInt of the specified bit-width.
   /// @brief Get the all-ones value.
   static APInt getAllOnesValue(unsigned numBits) {
-    return APInt(numBits, 0).set();
+    APInt API(numBits, 0);
+    API.set();
+    return API;
   }
 
   /// @returns the '0' value for an APInt of the specified bit-width.
@@ -1035,51 +1044,49 @@ public:
   /// @name Bit Manipulation Operators
   /// @{
   /// @brief Set every bit to 1.
-  APInt &set() {
-    if (isSingleWord()) {
+  void set() {
+    if (isSingleWord())
       VAL = -1ULL;
-      return clearUnusedBits();
+    else {
+      // Set all the bits in all the words.
+      for (unsigned i = 0; i < getNumWords(); ++i)
+	pVal[i] = -1ULL;
     }
-
-    // Set all the bits in all the words.
-    for (unsigned i = 0; i < getNumWords(); ++i)
-      pVal[i] = -1ULL;
     // Clear the unused ones
-    return clearUnusedBits();
+    clearUnusedBits();
   }
 
   /// Set the given bit to 1 whose position is given as "bitPosition".
   /// @brief Set a given bit to 1.
-  APInt &set(unsigned bitPosition);
+  void set(unsigned bitPosition);
 
   /// @brief Set every bit to 0.
-  APInt &clear() {
+  void clear() {
     if (isSingleWord())
       VAL = 0;
     else
       memset(pVal, 0, getNumWords() * APINT_WORD_SIZE);
-    return *this;
   }
 
   /// Set the given bit to 0 whose position is given as "bitPosition".
   /// @brief Set a given bit to 0.
-  APInt &clear(unsigned bitPosition);
+  void clear(unsigned bitPosition);
 
   /// @brief Toggle every bit to its opposite value.
-  APInt &flip() {
-    if (isSingleWord()) {
+  void flip() {
+    if (isSingleWord())
       VAL ^= -1ULL;
-      return clearUnusedBits();
+    else {
+      for (unsigned i = 0; i < getNumWords(); ++i)
+        pVal[i] ^= -1ULL;
     }
-    for (unsigned i = 0; i < getNumWords(); ++i)
-      pVal[i] ^= -1ULL;
-    return clearUnusedBits();
+    clearUnusedBits();
   }
 
   /// Toggle a given bit to its opposite value whose position is given
   /// as "bitPosition".
   /// @brief Toggles a given bit to its opposite value.
-  APInt& flip(unsigned bitPosition);
+  void flip(unsigned bitPosition);
 
   /// @}
   /// @name Value Characterization Functions

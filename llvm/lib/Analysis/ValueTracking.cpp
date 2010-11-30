@@ -875,8 +875,9 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
       // Turn Op0 << Op1 into Op0 * 2^Op1
       APInt Op1Int = Op1CI->getValue();
       uint64_t BitToSet = Op1Int.getLimitedValue(Op1Int.getBitWidth() - 1);
-      Op1 = ConstantInt::get(V->getContext(), 
-                             APInt(Op1Int.getBitWidth(), 0).set(BitToSet));
+      APInt API(Op1Int.getBitWidth(), 0);
+      API.set(BitToSet);
+      Op1 = ConstantInt::get(V->getContext(), API);
     }
 
     Value *Mul0 = NULL;

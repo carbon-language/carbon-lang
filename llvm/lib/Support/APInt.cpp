@@ -584,22 +584,20 @@ bool APInt::slt(const APInt& RHS) const {
     return lhs.ult(rhs);
 }
 
-APInt& APInt::set(unsigned bitPosition) {
+void APInt::set(unsigned bitPosition) {
   if (isSingleWord())
     VAL |= maskBit(bitPosition);
   else
     pVal[whichWord(bitPosition)] |= maskBit(bitPosition);
-  return *this;
 }
 
 /// Set the given bit to 0 whose position is given as "bitPosition".
 /// @brief Set a given bit to 0.
-APInt& APInt::clear(unsigned bitPosition) {
+void APInt::clear(unsigned bitPosition) {
   if (isSingleWord())
     VAL &= ~maskBit(bitPosition);
   else
     pVal[whichWord(bitPosition)] &= ~maskBit(bitPosition);
-  return *this;
 }
 
 /// @brief Toggle every bit to its opposite value.
@@ -607,11 +605,10 @@ APInt& APInt::clear(unsigned bitPosition) {
 /// Toggle a given bit to its opposite value whose position is given
 /// as "bitPosition".
 /// @brief Toggles a given bit to its opposite value.
-APInt& APInt::flip(unsigned bitPosition) {
+void APInt::flip(unsigned bitPosition) {
   assert(bitPosition < BitWidth && "Out of the bit-width range!");
   if ((*this)[bitPosition]) clear(bitPosition);
   else set(bitPosition);
-  return *this;
 }
 
 unsigned APInt::getBitsNeeded(StringRef str, uint8_t radix) {
