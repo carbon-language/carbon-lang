@@ -55,16 +55,27 @@ define void @test5(i32* %Q) {
 ; CHECK-NEXT: ret void
 }
 
-declare void @llvm.memset.i32(i8*, i8, i32, i32)
+declare void @llvm.memset.i64(i8*, i8, i64, i32)
+declare void @llvm.memcpy.i64(i8*, i8*, i64, i32)
 
 ; Should delete store of 10 even though memset is a may-store to P (P and Q may
 ; alias).
 define void @test6(i32 *%p, i8 *%q) {
   store i32 10, i32* %p, align 4       ;; dead.
-  call void @llvm.memset.i32(i8* %q, i8 42, i32 900, i32 1)
+  call void @llvm.memset.i64(i8* %q, i8 42, i64 900, i32 1)
   store i32 30, i32* %p, align 4
   ret void
 ; CHECK: @test6
 ; CHECK-NEXT: call void @llvm.memset
 }
 
+; Should delete store of 10 even though memcpy is a may-store to P (P and Q may
+; alias).
+define void @test7(i32 *%p, i8 *%q, i8* noalias %r) {
+  store i32 10, i32* %p, align 4       ;; dead.
+  call void @llvm.memcpy.i64(i8* %q, i8* %r, i64 900, i32 1)
+  store i32 30, i32* %p, align 4
+  ret void
+; CHECK: @test7
+; CHECK-NEXT: call void @llvm.memcpy
+}

@@ -687,10 +687,15 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
         Len = LenCI->getZExtValue();
       Value *Dest = II->getArgOperand(0);
       Value *Src = II->getArgOperand(1);
+      // If it can't overlap the source dest, then it doesn't modref the loc.
       if (isNoAlias(Location(Dest, Len), Loc)) {
         if (isNoAlias(Location(Src, Len), Loc))
           return NoModRef;
+        // If it can't overlap the dest, then worst case it reads the loc.
         Min = Ref;
+      } else if (isNoAlias(Location(Src, Len), Loc)) {
+        // If it can't overlap the source, then worst case it mutates the loc.
+        Min = Mod;
       }
       break;
     }
