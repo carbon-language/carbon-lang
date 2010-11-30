@@ -26,6 +26,7 @@
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Symbol/TaggedASTType.h"
+#include "lldb/Target/Process.h"
 
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 
@@ -44,6 +45,8 @@ namespace lldb_private
 class ClangUserExpression : public ClangExpression
 {
 public:
+    typedef lldb::SharedPtr<ClangUserExpression>::Type ClangUserExpressionSP;
+
     //------------------------------------------------------------------
     /// Constructor
     ///
@@ -100,18 +103,25 @@ public:
     ///     If true, and the execution stops before completion, we unwind the
     ///     function call, and return the program state to what it was before the
     ///     execution.  If false, we leave the program in the stopped state.
+    /// @param[in] shared_ptr_to_me
+    ///     This is a shared pointer to this ClangUserExpression.  This is
+    ///     needed because Execute can push a thread plan that will hold onto
+    ///     the ClangUserExpression for an unbounded period of time.  So you
+    ///     need to give the thread plan a reference to this object that can 
+    ///     keep it alive.
     /// 
     /// @param[in] result
     ///     A pointer to direct at the persistent variable in which the
     ///     expression's result is stored.
     ///
     /// @return
-    ///     True on success; false otherwise.
+    ///     A Process::Execution results value.
     //------------------------------------------------------------------
-    bool
+    Process::ExecutionResults
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
              bool discard_on_error,
+             ClangUserExpressionSP &shared_ptr_to_me,
              ClangExpressionVariable *&result);
              
     ThreadPlan *
@@ -222,12 +232,19 @@ public:
     /// @param[in] expr_prefix
     ///     If non-NULL, a C string containing translation-unit level
     ///     definitions to be included when the expression is parsed.
+    ///
+    /// @param[in/out] result_valobj_sp
+    ///      If execution is successful, the result valobj is placed here.
+    ///
+    /// @result
+    ///      A Process::ExecutionResults value.  eExecutionCompleted for success.
     //------------------------------------------------------------------
-    static lldb::ValueObjectSP
+    static Process::ExecutionResults
     Evaluate (ExecutionContext &exe_ctx, 
               bool discard_on_error,
               const char *expr_cstr,
-              const char *expr_prefix);
+              const char *expr_prefix,
+              lldb::ValueObjectSP &result_valobj_sp);
 
 private:
     //------------------------------------------------------------------

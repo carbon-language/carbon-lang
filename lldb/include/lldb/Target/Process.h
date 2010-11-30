@@ -255,6 +255,17 @@ public:
         eBroadcastInternalStateControlResume = (1<<2)
     };
 
+    // We can execute Thread Plans on one thread with various fall-back modes (try other threads after timeout, etc.)
+    // This enum gives the result of thread plan executions.
+    typedef enum ExecutionResults
+    {
+        eExecutionSetupError,
+        eExecutionCompleted,
+        eExecutionDiscarded,
+        eExecutionInterrupted,
+        eExecutionTimedOut
+    } ExecutionResults;
+        
     //------------------------------------------------------------------
     /// A notification structure that can be used by clients to listen
     /// for changes in a process's lifetime.
@@ -1019,8 +1030,12 @@ public:
     //------------------------------------------------------------------
     /// Halts a running process.
     ///
-    /// DoHalt should consume any process events that were delivered in
-    /// the process of implementing the halt.
+    /// DoHalt must produce one and only one stop StateChanged event if it actually
+    /// stops the process.  If the stop happens through some natural event (for
+    /// instance a SIGSTOP), then forwarding that event will do.  Otherwise, you must 
+    /// generate the event manually.  Note also, the private event thread is stopped when 
+    /// DoHalt is run to prevent the events generated while halting to trigger
+    /// other state changes before the halt is complete.
     ///
     /// @param[out] caused_stop
     ///     If true, then this Halt caused the stop, otherwise, the 
@@ -1167,6 +1182,18 @@ public:
     //------------------------------------------------------------------
     lldb::StateType
     GetState ();
+    
+    ExecutionResults
+    RunThreadPlan (ExecutionContext &exe_ctx,    
+                    lldb::ThreadPlanSP &thread_plan_sp,
+                    bool stop_others,
+                    bool try_all_threads,
+                    bool discard_on_error,
+                    uint32_t single_thread_timeout_usec,
+                    Stream &errors);
+
+    static const char *
+    ExecutionResultAsCString (ExecutionResults result);
 
 protected:
     friend class CommandObjectProcessLaunch;

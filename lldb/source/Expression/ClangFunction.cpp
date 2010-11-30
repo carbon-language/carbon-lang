@@ -275,7 +275,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         
     Error error;
     using namespace clang;
-    ExecutionResults return_value = eExecutionSetupError;
+    Process::ExecutionResults return_value = Process::eExecutionSetupError;
 
     Process *process = exe_ctx.process;
 
@@ -439,13 +439,13 @@ ClangFunction::DeallocateFunctionResults (ExecutionContext &exe_ctx, lldb::addr_
     exe_ctx.process->DeallocateMemory(args_addr);
 }
 
-ClangFunction::ExecutionResults
+Process::ExecutionResults
 ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, Value &results)
 {
     return ExecuteFunction (exe_ctx, errors, 1000, true, results);
 }
 
-ClangFunction::ExecutionResults
+Process::ExecutionResults
 ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, bool stop_others, Value &results)
 {
     const bool try_all_threads = false;
@@ -453,7 +453,7 @@ ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, bool s
     return ExecuteFunction (exe_ctx, NULL, errors, stop_others, NULL, try_all_threads, discard_on_error, results);
 }
 
-ClangFunction::ExecutionResults
+Process::ExecutionResults
 ClangFunction::ExecuteFunction(
         ExecutionContext &exe_ctx, 
         Stream &errors, 
@@ -468,7 +468,7 @@ ClangFunction::ExecuteFunction(
 }
 
 // This is the static function
-ClangFunction::ExecutionResults 
+Process::ExecutionResults 
 ClangFunction::ExecuteFunction (
         ExecutionContext &exe_ctx, 
         lldb::addr_t function_address, 
@@ -480,259 +480,19 @@ ClangFunction::ExecuteFunction (
         Stream &errors,
         lldb::addr_t *this_arg)
 {
-    // Save this value for restoration of the execution context after we run
-    uint32_t tid = exe_ctx.thread->GetIndexID();
-    
-    // N.B. Running the target may unset the currently selected thread and frame.  We don't want to do that either, 
-    // so we should arrange to reset them as well.
-    
-    lldb::ThreadSP selected_thread_sp = exe_ctx.process->GetThreadList().GetSelectedThread();
-    lldb::StackFrameSP selected_frame_sp;
-    
-    uint32_t selected_tid; 
-    if (selected_thread_sp != NULL)
-    {
-        selected_tid = selected_thread_sp->GetIndexID();
-        selected_frame_sp = selected_thread_sp->GetSelectedFrame();
-    }
-    else
-    {
-        selected_tid = LLDB_INVALID_THREAD_ID;
-    }
-
-    ClangFunction::ExecutionResults return_value = eExecutionSetupError;
     lldb::ThreadPlanSP call_plan_sp(ClangFunction::GetThreadPlanToCallFunction(exe_ctx, function_address, void_arg, 
                                                                                errors, stop_others, discard_on_error, 
                                                                                this_arg));
-    
-    ThreadPlanCallFunction *call_plan_ptr = static_cast<ThreadPlanCallFunction *> (call_plan_sp.get());
-    
     if (call_plan_sp == NULL)
-        return eExecutionSetupError;
+        return Process::eExecutionSetupError;
     
     call_plan_sp->SetPrivate(true);
-    exe_ctx.thread->QueueThreadPlan(call_plan_sp, true);
     
-    Listener listener("ClangFunction temporary listener");
-    exe_ctx.process->HijackProcessEvents(&listener);
-    
-    Error resume_error = exe_ctx.process->Resume ();
-    if (!resume_error.Success())
-    {
-        errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
-        exe_ctx.process->RestoreProcessEvents();
-        return eExecutionSetupError;
-    }
-    
-    // We need to call the function synchronously, so spin waiting for it to return.
-    // If we get interrupted while executing, we're going to lose our context, and
-    // won't be able to gather the result at this point.
-    // We set the timeout AFTER the resume, since the resume takes some time and we
-    // don't want to charge that to the timeout.
-    
-    TimeValue* timeout_ptr = NULL;
-    TimeValue real_timeout;
-    
-    if (single_thread_timeout_usec != 0)
-    {
-        real_timeout = TimeValue::Now();
-        real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
-        timeout_ptr = &real_timeout;
-    }
-    
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    while (1)
-    {
-        lldb::EventSP event_sp;
-        lldb::StateType stop_state = lldb::eStateInvalid;
-        // Now wait for the process to stop again:
-        bool got_event = listener.WaitForEvent (timeout_ptr, event_sp);
-        
-        if (!got_event)
-        {
-            // Right now this is the only way to tell we've timed out...
-            // We should interrupt the process here...
-            // Not really sure what to do if Halt fails here...
-            if (log)
-                if (try_all_threads)
-                    log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.",
-                                 single_thread_timeout_usec);
-                else
-                    log->Printf ("Running function with timeout: %d timed out, abandoning execution.", 
-                                 single_thread_timeout_usec);
-            
-            if (exe_ctx.process->Halt().Success())
-            {
-                timeout_ptr = NULL;
-                if (log)
-                    log->Printf ("Halt succeeded.");
-                    
-                // Between the time that we got the timeout and the time we halted, but target
-                // might have actually completed the plan.  If so, we're done.  Note, I call WFE here with a short 
-                // timeout to 
-                got_event = listener.WaitForEvent(NULL, event_sp);
-                
-                if (got_event)
-                {
-                    stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
-                    if (log)
-                    {
-                        log->Printf ("Stopped with event: %s", StateAsCString(stop_state));
-                        if (stop_state == lldb::eStateStopped && Process::ProcessEventData::GetInterruptedFromEvent(event_sp.get()))
-                            log->Printf ("    Event was the Halt interruption event.");
-                    }
-                    
-                    if (exe_ctx.thread->IsThreadPlanDone (call_plan_sp.get()))
-                    {
-                        if (log)
-                            log->Printf ("Even though we timed out, the call plan was done.  Exiting wait loop.");
-                        return_value = eExecutionCompleted;
-                        break;
-                    }
-
-                    if (try_all_threads 
-                        && (stop_state == lldb::eStateStopped && Process::ProcessEventData::GetInterruptedFromEvent (event_sp.get())))
-                    {
-                        
-                        call_plan_ptr->SetStopOthers (false);
-                        if (log)
-                            log->Printf ("About to resume.");
-
-                        exe_ctx.process->Resume();
-                        continue;
-                    }
-                    else
-                    {
-                        exe_ctx.process->RestoreProcessEvents ();
-                        return eExecutionInterrupted;
-                    }
-                }
-            }
-        }
-        
-        stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
-        if (log)
-            log->Printf("Got event: %s.", StateAsCString(stop_state));
-        
-        if (stop_state == lldb::eStateRunning || stop_state == lldb::eStateStepping)
-            continue;
-        
-        if (exe_ctx.thread->IsThreadPlanDone (call_plan_sp.get()))
-        {
-            return_value = eExecutionCompleted;
-            break;
-        }
-        else if (exe_ctx.thread->WasThreadPlanDiscarded (call_plan_sp.get()))
-        {
-            return_value = eExecutionDiscarded;
-            break;
-        }
-        else
-        {
-            if (log)
-            {
-                StreamString s;
-                event_sp->Dump (&s);
-                StreamString ts;
-
-                const char *event_explanation;                
-                
-                do 
-                {
-                    const Process::ProcessEventData *event_data = Process::ProcessEventData::GetEventDataFromEvent (event_sp.get());
-
-                    if (!event_data)
-                    {
-                        event_explanation = "<no event data>";
-                        break;
-                    }
-                    
-                    Process *process = event_data->GetProcessSP().get();
-
-                    if (!process)
-                    {
-                        event_explanation = "<no process>";
-                        break;
-                    }
-                    
-                    ThreadList &thread_list = process->GetThreadList();
-                    
-                    uint32_t num_threads = thread_list.GetSize();
-                    uint32_t thread_index;
-                    
-                    ts.Printf("<%u threads> ", num_threads);
-                    
-                    for (thread_index = 0;
-                         thread_index < num_threads;
-                         ++thread_index)
-                    {
-                        Thread *thread = thread_list.GetThreadAtIndex(thread_index).get();
-                        
-                        if (!thread)
-                        {
-                            ts.Printf("<?> ");
-                            continue;
-                        }
-                        
-                        ts.Printf("<");
-                        RegisterContext *register_context = thread->GetRegisterContext();
-                        
-                        if (register_context)
-                            ts.Printf("[ip 0x%llx] ", register_context->GetPC());
-                        else
-                            ts.Printf("[ip unknown] ");
-                        
-                        lldb::StopInfoSP stop_info_sp = thread->GetStopInfo();
-                        if (stop_info_sp)
-                        {
-                            const char *stop_desc = stop_info_sp->GetDescription();
-                            if (stop_desc)
-                                ts.PutCString (stop_desc);
-                        }
-                        ts.Printf(">");
-                    }
-                    
-                    event_explanation = ts.GetData();
-                } while (0);
-                
-                if (log)
-                    log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
-            }
-            
-            if (discard_on_error && call_plan_sp)
-            {
-                exe_ctx.thread->DiscardThreadPlansUpToPlan (call_plan_sp);
-            }
-            return_value = eExecutionInterrupted;
-            break;
-        }
-    }
-    
-    if (exe_ctx.process)
-        exe_ctx.process->RestoreProcessEvents ();
-            
-    // Thread we ran the function in may have gone away because we ran the target
-    // Check that it's still there.
-    exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByIndexID(tid, true).get();
-    if (exe_ctx.thread)
-        exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex(0).get();
-    
-    // Also restore the current process'es selected frame & thread, since this function calling may
-    // be done behind the user's back.
-    
-    if (selected_tid != LLDB_INVALID_THREAD_ID)
-    {
-        if (exe_ctx.process->GetThreadList().SetSelectedThreadByIndexID (selected_tid))
-        {
-            // We were able to restore the selected thread, now restore the frame:
-            exe_ctx.process->GetThreadList().GetSelectedThread()->SetSelectedFrame(selected_frame_sp.get());
-        }
-    }
-    
-    return return_value;
+    return exe_ctx.process->RunThreadPlan (exe_ctx, call_plan_sp, stop_others, try_all_threads, discard_on_error,
+                                            single_thread_timeout_usec, errors);
 }  
 
-ClangFunction::ExecutionResults
+Process::ExecutionResults
 ClangFunction::ExecuteFunction(
         ExecutionContext &exe_ctx, 
         lldb::addr_t *args_addr_ptr, 
@@ -744,7 +504,7 @@ ClangFunction::ExecuteFunction(
         Value &results)
 {
     using namespace clang;
-    ExecutionResults return_value = eExecutionSetupError;
+    Process::ExecutionResults return_value = Process::eExecutionSetupError;
     
     lldb::addr_t args_addr;
     
@@ -754,12 +514,12 @@ ClangFunction::ExecuteFunction(
         args_addr = LLDB_INVALID_ADDRESS;
         
     if (CompileFunction(errors) != 0)
-        return eExecutionSetupError;
+        return Process::eExecutionSetupError;
     
     if (args_addr == LLDB_INVALID_ADDRESS)
     {
         if (!InsertFunction(exe_ctx, args_addr, errors))
-            return eExecutionSetupError;
+            return Process::eExecutionSetupError;
     }
     
     return_value = ClangFunction::ExecuteFunction(exe_ctx, m_wrapper_function_addr, args_addr, stop_others, 
@@ -768,7 +528,7 @@ ClangFunction::ExecuteFunction(
     if (args_addr_ptr != NULL)
         *args_addr_ptr = args_addr;
     
-    if (return_value != eExecutionCompleted)
+    if (return_value != Process::eExecutionCompleted)
         return return_value;
 
     FetchFunctionResults(exe_ctx, args_addr, results);
@@ -776,7 +536,7 @@ ClangFunction::ExecuteFunction(
     if (args_addr_ptr == NULL)
         DeallocateFunctionResults(exe_ctx, args_addr);
         
-    return eExecutionCompleted;
+    return Process::eExecutionCompleted;
 }
 
 clang::ASTConsumer *

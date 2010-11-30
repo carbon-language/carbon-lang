@@ -168,9 +168,12 @@ ThreadPlanRunToAddress::ValidatePlan (Stream *error)
         if (m_break_ids[i] == LLDB_INVALID_BREAK_ID)
         {
             all_bps_good = false;
-            error->Printf ("Could not set breakpoint for address: ");
-            error->Address (m_addresses[i], sizeof (addr_t));
-            error->Printf ("\n");
+            if (error)
+            {
+                error->Printf ("Could not set breakpoint for address: ");
+                error->Address (m_addresses[i], sizeof (addr_t));
+                error->Printf ("\n");
+            }
         }
     }
     return all_bps_good;

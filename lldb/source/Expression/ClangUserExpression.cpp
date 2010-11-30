@@ -33,6 +33,8 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/ThreadPlan.h"
+#include "lldb/Target/ThreadPlanCallUserExpression.h"
 
 using namespace lldb_private;
 
@@ -318,6 +320,9 @@ ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
     
     PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr);
     
+    // FIXME: This should really return a ThreadPlanCallUserExpression, in order to make sure that we don't release the
+    // ClangUserExpression resources before the thread plan finishes execution in the target.  But because we are 
+    // forcing unwind_on_error to be true here, in practical terms that can't happen.  
     return ClangFunction::GetThreadPlanToCallFunction (exe_ctx, 
                                         m_jit_addr, 
                                         struct_address, 
@@ -342,10 +347,11 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
     return true;
 }        
 
-bool
+Process::ExecutionResults
 ClangUserExpression::Execute (Stream &error_stream,
                               ExecutionContext &exe_ctx,
                               bool discard_on_error,
+                              ClangUserExpression::ClangUserExpressionSP &shared_ptr_to_me,
                               ClangExpressionVariable *&result)
 {
     if (m_dwarf_opcodes.get())
@@ -354,7 +360,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         error_stream.Printf("We don't currently support executing DWARF expressions");
         
-        return false;
+        return Process::eExecutionSetupError;
     }
     else if (m_jit_addr != LLDB_INVALID_ADDRESS)
     {
@@ -366,50 +372,46 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         const bool stop_others = true;
         const bool try_all_threads = true;
-        ClangFunction::ExecutionResults execution_result = 
-        ClangFunction::ExecuteFunction (exe_ctx, 
-                                        m_jit_addr, 
-                                        struct_address, 
-                                        stop_others,
-                                        try_all_threads,
-                                        discard_on_error, 
-                                        10000000, 
-                                        error_stream,
-                                        (m_needs_object_ptr ? &object_ptr : NULL));
         
-        if (execution_result != ClangFunction::eExecutionCompleted)
+        Address wrapper_address (NULL, m_jit_addr);
+        lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (*(exe_ctx.thread), wrapper_address, struct_address, 
+                                                                               stop_others, discard_on_error, 
+                                                                               (m_needs_object_ptr ? &object_ptr : NULL),
+                                                                               shared_ptr_to_me));
+        if (call_plan_sp == NULL || !call_plan_sp->ValidatePlan (NULL))
+            return Process::eExecutionSetupError;
+    
+        call_plan_sp->SetPrivate(true);
+    
+        uint32_t single_thread_timeout_usec = 10000000;
+        Process::ExecutionResults execution_result = 
+           exe_ctx.process->RunThreadPlan (exe_ctx, call_plan_sp, stop_others, try_all_threads, discard_on_error,
+                                           single_thread_timeout_usec, error_stream);
+
+        if (execution_result == Process::eExecutionInterrupted)
         {
-            const char *result_name;
-            
-            switch (execution_result)
-            {
-                case ClangFunction::eExecutionCompleted:
-                    result_name = "eExecutionCompleted";
-                    break;
-                case ClangFunction::eExecutionDiscarded:
-                    result_name = "eExecutionDiscarded";
-                    break;
-                case ClangFunction::eExecutionInterrupted:
-                    result_name = "eExecutionInterrupted";
-                    break;
-                case ClangFunction::eExecutionSetupError:
-                    result_name = "eExecutionSetupError";
-                    break;
-                case ClangFunction::eExecutionTimedOut:
-                    result_name = "eExecutionTimedOut";
-                    break;
-            }
-            
-            error_stream.Printf ("Couldn't execute function; result was %s\n", result_name);
-            return false;
+            if (discard_on_error)
+                error_stream.Printf ("Expression execution was interrupted.  The process has been returned to the state before execution.");
+            else
+                error_stream.Printf ("Expression execution was interrupted.  The process has been left at the point where it was interrupted.");
+
+            return execution_result;
+        }
+        else if (execution_result != Process::eExecutionCompleted)
+        {
+            error_stream.Printf ("Couldn't execute function; result was %s\n", Process::ExecutionResultAsCString (execution_result));
+            return execution_result;
         }
         
-        return FinalizeJITExecution (error_stream, exe_ctx, result);
+        if  (FinalizeJITExecution (error_stream, exe_ctx, result))
+            return Process::eExecutionCompleted;
+        else
+            return Process::eExecutionSetupError;
     }
     else
     {
         error_stream.Printf("Expression can't be run; neither DWARF nor a JIT compiled function is present");
-        return false;
+        return Process::eExecutionSetupError;
     }
 }
 
@@ -422,18 +424,24 @@ ClangUserExpression::DwarfOpcodeStream ()
     return *m_dwarf_opcodes.get();
 }
 
-lldb::ValueObjectSP
+Process::ExecutionResults
 ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, 
                                bool discard_on_error,
                                const char *expr_cstr,
-                               const char *expr_prefix)
+                               const char *expr_prefix,
+                               lldb::ValueObjectSP &result_valobj_sp)
 {
     Error error;
-    lldb::ValueObjectSP result_valobj_sp;
+    Process::ExecutionResults execution_results = Process::eExecutionSetupError;
     
     if (exe_ctx.process == NULL)
-        return result_valobj_sp;
-
+    {
+        error.SetErrorString ("Must have a process to evaluate expressions.");
+            
+        result_valobj_sp.reset (new ValueObjectConstResult (error));
+        return Process::eExecutionSetupError;
+    }
+    
     if (!exe_ctx.process->GetDynamicCheckers())
     {
         DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
@@ -448,17 +456,17 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                 error.SetErrorString (install_errors.GetString().c_str());
             
             result_valobj_sp.reset (new ValueObjectConstResult (error));
-            return result_valobj_sp;
+            return Process::eExecutionSetupError;
         }
             
         exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
     }
     
-    ClangUserExpression user_expression (expr_cstr, expr_prefix);
-    
+    ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix));
+
     StreamString error_stream;
     
-    if (!user_expression.Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL)))
+    if (!user_expression_sp->Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL)))
     {
         if (error_stream.GetString().empty())
             error.SetErrorString ("expression failed to parse, unknown error");
@@ -471,7 +479,12 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
 
         error_stream.GetString().clear();
 
-        if (!user_expression.Execute (error_stream, exe_ctx, discard_on_error, expr_result))
+        execution_results = user_expression_sp->Execute (error_stream, 
+                                                         exe_ctx, 
+                                                         discard_on_error, 
+                                                         user_expression_sp, 
+                                                         expr_result);
+        if (execution_results != Process::eExecutionCompleted)
         {
             if (error_stream.GetString().empty())
                 error.SetErrorString ("expression failed to execute, unknown error");
@@ -499,5 +512,5 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     if (result_valobj_sp.get() == NULL)
         result_valobj_sp.reset (new ValueObjectConstResult (error));
 
-    return result_valobj_sp;
+    return execution_results;
 }

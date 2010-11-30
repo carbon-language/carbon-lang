@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "CommandObjectThread.h" // For DisplayThreadInfo.
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/InputReader.h"
@@ -242,7 +243,8 @@ CommandObjectExpression::EvaluateExpression
     if (m_exe_ctx.target)
         prefix = m_exe_ctx.target->GetExpressionPrefixContentsAsCString();
     
-    lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (m_exe_ctx, m_options.unwind_on_error, expr, prefix));
+    lldb::ValueObjectSP result_valobj_sp;
+    Process::ExecutionResults execution_results = ClangUserExpression::Evaluate (m_exe_ctx, m_options.unwind_on_error, expr, prefix, result_valobj_sp);
     assert (result_valobj_sp.get());
     if (result_valobj_sp->GetError().Success())
     {
@@ -267,6 +269,16 @@ CommandObjectExpression::EvaluateExpression
     else
     {
         error_stream.PutCString(result_valobj_sp->GetError().AsCString());
+        // If we've been interrupted, display state information.
+        if (execution_results == Process::eExecutionInterrupted && !m_options.unwind_on_error)
+        {
+            if (m_exe_ctx.thread)
+                lldb_private::DisplayThreadInfo (m_interpreter, result->GetOutputStream(), m_exe_ctx.thread, false, true);
+            else
+            {
+                lldb_private::DisplayThreadsInfo (m_interpreter, &m_exe_ctx, *result, true, true); 
+            }
+        }
         if (result)
             result->SetStatus (eReturnStatusFailed);
     }

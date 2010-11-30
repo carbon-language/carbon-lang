@@ -64,7 +64,10 @@ ThreadPlanTestCondition::ValidatePlan (Stream *error)
 void 
 ThreadPlanTestCondition::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
-
+    if (m_expression)
+        s->Printf("Thread plan to test condition: \"%s\".", m_expression->GetUserText());
+    else
+        s->Printf("Thread plan to test unspecified condition.");
 }
 
 bool 

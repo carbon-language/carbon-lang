@@ -577,7 +577,7 @@ SBFrame::EvaluateExpression (const char *expr)
         if (exe_ctx.target)
             prefix = exe_ctx.target->GetExpressionPrefixContentsAsCString();
         
-        *expr_result = ClangUserExpression::Evaluate (exe_ctx, discard_on_error, expr, prefix);
+        ClangUserExpression::Evaluate (exe_ctx, discard_on_error, expr, prefix, *expr_result);
     }
     
     if (log)

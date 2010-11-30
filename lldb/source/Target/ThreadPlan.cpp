@@ -133,6 +133,13 @@ ThreadPlan::StopOthers ()
         return prev_plan->StopOthers();
 }
 
+void
+ThreadPlan::SetStopOthers (bool new_value)
+{
+	// SetStopOthers doesn't work up the hierarchy.  You have to set the 
+    // explicit ThreadPlan you want to affect.
+}
+
 bool
 ThreadPlan::WillResume (StateType resume_state, bool current_plan)
 {

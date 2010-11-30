@@ -21,9 +21,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Expression/ClangExpression.h"
-
-// Right now, this is just a toy.  It calls a set function, with fixed
-// values.
+#include "lldb/Target/Process.h"
 
 namespace lldb_private
 {
@@ -68,15 +66,6 @@ class ClangFunction : public ClangExpression
 {
     friend class ASTStructExtractor;
 public:
-    enum ExecutionResults
-    {
-        eExecutionSetupError,
-        eExecutionCompleted,
-        eExecutionDiscarded,
-        eExecutionInterrupted,
-        eExecutionTimedOut
-    };
-        
 	//------------------------------------------------------------------
 	/// Constructor
     ///
@@ -275,15 +264,16 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
 	//------------------------------------------------------------------
-    static ExecutionResults ExecuteFunction (ExecutionContext &exe_ctx, 
-                                             lldb::addr_t function_address, 
-                                             lldb::addr_t &void_arg, 
-                                             bool stop_others, 
-                                             bool try_all_threads,
-                                             bool discard_on_error,
-                                             uint32_t single_thread_timeout_usec, 
-                                             Stream &errors,
-                                             lldb::addr_t* this_arg = 0);
+    static Process::ExecutionResults 
+    ExecuteFunction (ExecutionContext &exe_ctx, 
+                     lldb::addr_t function_address, 
+                     lldb::addr_t &void_arg, 
+                     bool stop_others, 
+                     bool try_all_threads,
+                     bool discard_on_error,
+                     uint32_t single_thread_timeout_usec, 
+                     Stream &errors,
+                     lldb::addr_t* this_arg = 0);
     
     //------------------------------------------------------------------
     /// Run the function this ClangFunction was created with.
@@ -304,9 +294,10 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    ExecutionResults ExecuteFunction(ExecutionContext &exe_ctx, 
-                                     Stream &errors, 
-                                     Value &results);
+    Process::ExecutionResults 
+    ExecuteFunction(ExecutionContext &exe_ctx, 
+                     Stream &errors, 
+                     Value &results);
     
     //------------------------------------------------------------------
     /// Run the function this ClangFunction was created with.
@@ -329,9 +320,10 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    ExecutionResults ExecuteFunction(ExecutionContext &exe_ctx, 
-                                     Stream &errors, bool stop_others, 
-                                     Value &results);
+    Process::ExecutionResults 
+    ExecuteFunction(ExecutionContext &exe_ctx, 
+                     Stream &errors, bool stop_others, 
+                     Value &results);
     
     //------------------------------------------------------------------
     /// Run the function this ClangFunction was created with.
@@ -358,11 +350,12 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    ExecutionResults ExecuteFunction(ExecutionContext &exe_ctx, 
-                                     Stream &errors, 
-                                     uint32_t single_thread_timeout_usec, 
-                                     bool try_all_threads, 
-                                     Value &results);
+    Process::ExecutionResults 
+    ExecuteFunction(ExecutionContext &exe_ctx, 
+                    Stream &errors, 
+                    uint32_t single_thread_timeout_usec, 
+                    bool try_all_threads, 
+                    Value &results);
     
     //------------------------------------------------------------------
     /// Run the function this ClangFunction was created with.
@@ -397,14 +390,15 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    ExecutionResults ExecuteFunction(ExecutionContext &exe_ctx, 
-                                     lldb::addr_t *args_addr_ptr, 
-                                     Stream &errors, 
-                                     bool stop_others, 
-                                     uint32_t single_thread_timeout_usec,
-                                     bool try_all_threads,
-                                     bool discard_on_error, 
-                                     Value &results);
+    Process::ExecutionResults 
+    ExecuteFunction(ExecutionContext &exe_ctx, 
+                    lldb::addr_t *args_addr_ptr, 
+                    Stream &errors, 
+                    bool stop_others, 
+                    uint32_t single_thread_timeout_usec,
+                    bool try_all_threads,
+                    bool discard_on_error, 
+                    Value &results);
     
     //------------------------------------------------------------------
     /// [static] Get a thread plan to run a function.

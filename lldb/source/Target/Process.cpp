@@ -524,7 +524,8 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                 image_spec.GetPath(path, sizeof(path));
                 expr.Printf("dlopen (\"%s\", 2)", path);
                 const char *prefix = "extern \"C\" void* dlopen (const char *path, int mode);\n";
-                lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (exe_ctx, unwind_on_error, expr.GetData(), prefix));
+                lldb::ValueObjectSP result_valobj_sp;
+                ClangUserExpression::Evaluate (exe_ctx, unwind_on_error, expr.GetData(), prefix, result_valobj_sp);
                 if (result_valobj_sp->GetError().Success())
                 {
                     Scalar scalar;
@@ -588,7 +589,8 @@ Process::UnloadImage (uint32_t image_token)
                         StreamString expr;
                         expr.Printf("dlclose ((void *)0x%llx)", image_addr);
                         const char *prefix = "extern \"C\" int dlclose(void* handle);\n";
-                        lldb::ValueObjectSP result_valobj_sp (ClangUserExpression::Evaluate (exe_ctx, unwind_on_error, expr.GetData(), prefix));
+                        lldb::ValueObjectSP result_valobj_sp;
+                        ClangUserExpression::Evaluate (exe_ctx, unwind_on_error, expr.GetData(), prefix, result_valobj_sp);
                         if (result_valobj_sp->GetError().Success())
                         {
                             Scalar scalar;
@@ -1502,7 +1504,8 @@ Process::Halt ()
 
         // Post any event we might have consumed. If all goes well, we will have
         // stopped the process, intercepted the event and set the interrupted
-        // bool in the event.
+        // bool in the event.  Post it to the private event queue and that will end up
+        // correctly setting the state.
         if (event_sp)
             m_private_state_broadcaster.BroadcastEvent(event_sp);
 
@@ -2279,6 +2282,284 @@ Process::UpdateInstanceName ()
         GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
                                                                   sstr.GetData());
     }
+}
+
+Process::ExecutionResults
+Process::RunThreadPlan (ExecutionContext &exe_ctx,
+                        lldb::ThreadPlanSP &thread_plan_sp,        
+                        bool stop_others,
+                        bool try_all_threads,
+                        bool discard_on_error,
+                        uint32_t single_thread_timeout_usec,
+                        Stream &errors)
+{
+    ExecutionResults return_value = eExecutionSetupError;
+    
+    // Save this value for restoration of the execution context after we run
+    uint32_t tid = exe_ctx.thread->GetIndexID();
+
+    // N.B. Running the target may unset the currently selected thread and frame.  We don't want to do that either, 
+    // so we should arrange to reset them as well.
+    
+    lldb::ThreadSP selected_thread_sp = exe_ctx.process->GetThreadList().GetSelectedThread();
+    lldb::StackFrameSP selected_frame_sp;
+    
+    uint32_t selected_tid; 
+    if (selected_thread_sp != NULL)
+    {
+        selected_tid = selected_thread_sp->GetIndexID();
+        selected_frame_sp = selected_thread_sp->GetSelectedFrame();
+    }
+    else
+    {
+        selected_tid = LLDB_INVALID_THREAD_ID;
+    }
+
+    exe_ctx.thread->QueueThreadPlan(thread_plan_sp, true);
+    
+    Listener listener("ClangFunction temporary listener");
+    exe_ctx.process->HijackProcessEvents(&listener);
+    
+    Error resume_error = exe_ctx.process->Resume ();
+    if (!resume_error.Success())
+    {
+        errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
+        exe_ctx.process->RestoreProcessEvents();
+        return Process::eExecutionSetupError;
+    }
+    
+    // We need to call the function synchronously, so spin waiting for it to return.
+    // If we get interrupted while executing, we're going to lose our context, and
+    // won't be able to gather the result at this point.
+    // We set the timeout AFTER the resume, since the resume takes some time and we
+    // don't want to charge that to the timeout.
+    
+    TimeValue* timeout_ptr = NULL;
+    TimeValue real_timeout;
+    
+    if (single_thread_timeout_usec != 0)
+    {
+        real_timeout = TimeValue::Now();
+        real_timeout.OffsetWithMicroSeconds(single_thread_timeout_usec);
+        timeout_ptr = &real_timeout;
+    }
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    while (1)
+    {
+        lldb::EventSP event_sp;
+        lldb::StateType stop_state = lldb::eStateInvalid;
+        // Now wait for the process to stop again:
+        bool got_event = listener.WaitForEvent (timeout_ptr, event_sp);
+        
+        if (!got_event)
+        {
+            // Right now this is the only way to tell we've timed out...
+            // We should interrupt the process here...
+            // Not really sure what to do if Halt fails here...
+            if (log)
+                if (try_all_threads)
+                    log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.",
+                                 single_thread_timeout_usec);
+                else
+                    log->Printf ("Running function with timeout: %d timed out, abandoning execution.", 
+                                 single_thread_timeout_usec);
+            
+            if (exe_ctx.process->Halt().Success())
+            {
+                timeout_ptr = NULL;
+                if (log)
+                    log->Printf ("Halt succeeded.");
+                    
+                // Between the time that we got the timeout and the time we halted, but target
+                // might have actually completed the plan.  If so, we're done.  Note, I call WFE here with a short 
+                // timeout to 
+                got_event = listener.WaitForEvent(NULL, event_sp);
+                
+                if (got_event)
+                {
+                    stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+                    if (log)
+                    {
+                        log->Printf ("Stopped with event: %s", StateAsCString(stop_state));
+                        if (stop_state == lldb::eStateStopped && Process::ProcessEventData::GetInterruptedFromEvent(event_sp.get()))
+                            log->Printf ("    Event was the Halt interruption event.");
+                    }
+                    
+                    if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
+                    {
+                        if (log)
+                            log->Printf ("Even though we timed out, the call plan was done.  Exiting wait loop.");
+                        return_value = Process::eExecutionCompleted;
+                        break;
+                    }
+
+                    if (try_all_threads 
+                        && (stop_state == lldb::eStateStopped && Process::ProcessEventData::GetInterruptedFromEvent (event_sp.get())))
+                    {
+                        
+                        thread_plan_sp->SetStopOthers (false);
+                        if (log)
+                            log->Printf ("About to resume.");
+
+                        exe_ctx.process->Resume();
+                        continue;
+                    }
+                    else
+                    {
+                        exe_ctx.process->RestoreProcessEvents ();
+                        return Process::eExecutionInterrupted;
+                    }
+                }
+            }
+        }
+        
+        stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
+        if (log)
+            log->Printf("Got event: %s.", StateAsCString(stop_state));
+        
+        if (stop_state == lldb::eStateRunning || stop_state == lldb::eStateStepping)
+            continue;
+        
+        if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
+        {
+            return_value = Process::eExecutionCompleted;
+            break;
+        }
+        else if (exe_ctx.thread->WasThreadPlanDiscarded (thread_plan_sp.get()))
+        {
+            return_value = Process::eExecutionDiscarded;
+            break;
+        }
+        else
+        {
+            if (log)
+            {
+                StreamString s;
+                event_sp->Dump (&s);
+                StreamString ts;
+
+                const char *event_explanation;                
+                
+                do 
+                {
+                    const Process::ProcessEventData *event_data = Process::ProcessEventData::GetEventDataFromEvent (event_sp.get());
+
+                    if (!event_data)
+                    {
+                        event_explanation = "<no event data>";
+                        break;
+                    }
+                    
+                    Process *process = event_data->GetProcessSP().get();
+
+                    if (!process)
+                    {
+                        event_explanation = "<no process>";
+                        break;
+                    }
+                    
+                    ThreadList &thread_list = process->GetThreadList();
+                    
+                    uint32_t num_threads = thread_list.GetSize();
+                    uint32_t thread_index;
+                    
+                    ts.Printf("<%u threads> ", num_threads);
+                    
+                    for (thread_index = 0;
+                         thread_index < num_threads;
+                         ++thread_index)
+                    {
+                        Thread *thread = thread_list.GetThreadAtIndex(thread_index).get();
+                        
+                        if (!thread)
+                        {
+                            ts.Printf("<?> ");
+                            continue;
+                        }
+                        
+                        ts.Printf("<");
+                        RegisterContext *register_context = thread->GetRegisterContext();
+                        
+                        if (register_context)
+                            ts.Printf("[ip 0x%llx] ", register_context->GetPC());
+                        else
+                            ts.Printf("[ip unknown] ");
+                        
+                        lldb::StopInfoSP stop_info_sp = thread->GetStopInfo();
+                        if (stop_info_sp)
+                        {
+                            const char *stop_desc = stop_info_sp->GetDescription();
+                            if (stop_desc)
+                                ts.PutCString (stop_desc);
+                        }
+                        ts.Printf(">");
+                    }
+                    
+                    event_explanation = ts.GetData();
+                } while (0);
+                
+                if (log)
+                    log->Printf("Execution interrupted: %s %s", s.GetData(), event_explanation);
+            }
+            
+            if (discard_on_error && thread_plan_sp)
+            {
+                exe_ctx.thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
+            }
+            return_value = Process::eExecutionInterrupted;
+            break;
+        }
+    }
+    
+    if (exe_ctx.process)
+        exe_ctx.process->RestoreProcessEvents ();
+            
+    // Thread we ran the function in may have gone away because we ran the target
+    // Check that it's still there.
+    exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByIndexID(tid, true).get();
+    if (exe_ctx.thread)
+        exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex(0).get();
+    
+    // Also restore the current process'es selected frame & thread, since this function calling may
+    // be done behind the user's back.
+    
+    if (selected_tid != LLDB_INVALID_THREAD_ID)
+    {
+        if (exe_ctx.process->GetThreadList().SetSelectedThreadByIndexID (selected_tid))
+        {
+            // We were able to restore the selected thread, now restore the frame:
+            exe_ctx.process->GetThreadList().GetSelectedThread()->SetSelectedFrame(selected_frame_sp.get());
+        }
+    }
+    
+    return return_value;
+}
+
+const char *
+Process::ExecutionResultAsCString (ExecutionResults result)
+{
+    const char *result_name;
+    
+    switch (result)
+    {
+        case Process::eExecutionCompleted:
+            result_name = "eExecutionCompleted";
+            break;
+        case Process::eExecutionDiscarded:
+            result_name = "eExecutionDiscarded";
+            break;
+        case Process::eExecutionInterrupted:
+            result_name = "eExecutionInterrupted";
+            break;
+        case Process::eExecutionSetupError:
+            result_name = "eExecutionSetupError";
+            break;
+        case Process::eExecutionTimedOut:
+            result_name = "eExecutionTimedOut";
+            break;
+    }
+    return result_name;
 }
 
 //--------------------------------------------------------------

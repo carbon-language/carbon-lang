@@ -292,20 +292,20 @@ CommandObjectCall::Execute
             }
         }
         
-        ClangFunction::ExecutionResults return_status;
+        Process::ExecutionResults return_status;
         Value return_value;
         
         bool stop_others = true;
         return_status = clang_fun.ExecuteFunction(exe_ctx, errors, stop_others, NULL, return_value);
 
         // Now figure out what to do with the return value.
-        if (return_status == ClangFunction::eExecutionSetupError)
+        if (return_status == Process::eExecutionSetupError)
         {
             result.AppendErrorWithFormat("Error setting up function execution: '%s'.\n", errors.GetData());
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
-        else if (return_status != ClangFunction::eExecutionCompleted)
+        else if (return_status != Process::eExecutionCompleted)
         {
             result.AppendWarningWithFormat("Interrupted while calling function: '%s'.\n", errors.GetData());
             result.SetStatus(eReturnStatusSuccessFinishNoResult);

@@ -82,6 +82,11 @@ namespace lldb_private {
 //  Next the "StopOthers" method of all the threads are polled, and if one thread's Current plan
 //  returns "true" then only that thread gets to run.  If more than one returns "true" the threads that want to run solo
 //  get run one by one round robin fashion.  Otherwise all are let to run.
+//
+//  Note, the way StopOthers is implemented, the base class implementation just asks the previous plan.  So if your plan
+//  has no opinion about whether it should run stopping others or not, just don't implement StopOthers, and the parent
+//  will be asked.
+//
 //  Finally, for each thread that is running, it run state is set to the return of RunState from the
 //  thread's Current plan.
 //
@@ -240,6 +245,7 @@ public:
     ///
     /// @param[in] error
     ///    A stream to which to print some reason why the plan could not be created.
+    ///    Can be NULL.
     ///
     /// @return
     ///   \b true if the plan should be queued, \b false otherwise.
@@ -281,6 +287,9 @@ public:
     virtual lldb::Vote
     ShouldReportRun (Event *event_ptr);
 
+    virtual void
+    SetStopOthers (bool new_value);
+    
     virtual bool
     StopOthers ();
 
