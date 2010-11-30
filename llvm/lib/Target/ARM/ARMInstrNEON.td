@@ -871,9 +871,9 @@ def VLD2DUPd16Pseudo : VLDQPseudo<IIC_VLD2dup>;
 def VLD2DUPd32Pseudo : VLDQPseudo<IIC_VLD2dup>;
 
 // ...with double-spaced registers (not used for codegen):
-def VLD2DUPd8Q  : VLD2DUP<{0,0,1,?}, "8">;
-def VLD2DUPd16Q : VLD2DUP<{0,1,1,?}, "16">;
-def VLD2DUPd32Q : VLD2DUP<{1,0,1,?}, "32">;
+def VLD2DUPd8x2  : VLD2DUP<{0,0,1,?}, "8">;
+def VLD2DUPd16x2 : VLD2DUP<{0,1,1,?}, "16">;
+def VLD2DUPd32x2 : VLD2DUP<{1,0,1,?}, "32">;
 
 // ...with address register writeback:
 class VLD2DUPWB<bits<4> op7_4, string Dt>
@@ -887,9 +887,9 @@ def VLD2DUPd8_UPD  : VLD2DUPWB<{0,0,0,0}, "8">;
 def VLD2DUPd16_UPD : VLD2DUPWB<{0,1,0,?}, "16">;
 def VLD2DUPd32_UPD : VLD2DUPWB<{1,0,0,?}, "32">;
 
-def VLD2DUPd8Q_UPD  : VLD2DUPWB<{0,0,1,0}, "8">;
-def VLD2DUPd16Q_UPD : VLD2DUPWB<{0,1,1,?}, "16">;
-def VLD2DUPd32Q_UPD : VLD2DUPWB<{1,0,1,?}, "32">;
+def VLD2DUPd8x2_UPD  : VLD2DUPWB<{0,0,1,0}, "8">;
+def VLD2DUPd16x2_UPD : VLD2DUPWB<{0,1,1,?}, "16">;
+def VLD2DUPd32x2_UPD : VLD2DUPWB<{1,0,1,?}, "32">;
 
 def VLD2DUPd8Pseudo_UPD  : VLDQWBPseudo<IIC_VLD2dupu>;
 def VLD2DUPd16Pseudo_UPD : VLDQWBPseudo<IIC_VLD2dupu>;
@@ -913,9 +913,9 @@ def VLD3DUPd16Pseudo : VLDQQPseudo<IIC_VLD3dup>;
 def VLD3DUPd32Pseudo : VLDQQPseudo<IIC_VLD3dup>;
 
 // ...with double-spaced registers (not used for codegen):
-def VLD3DUPd8T  : VLD3DUP<{0,0,1,?}, "8">;
-def VLD3DUPd16T : VLD3DUP<{0,1,1,?}, "16">;
-def VLD3DUPd32T : VLD3DUP<{1,0,1,?}, "32">;
+def VLD3DUPd8x2  : VLD3DUP<{0,0,1,?}, "8">;
+def VLD3DUPd16x2 : VLD3DUP<{0,1,1,?}, "16">;
+def VLD3DUPd32x2 : VLD3DUP<{1,0,1,?}, "32">;
 
 // ...with address register writeback:
 class VLD3DUPWB<bits<4> op7_4, string Dt>
@@ -930,9 +930,9 @@ def VLD3DUPd8_UPD  : VLD3DUPWB<{0,0,0,0}, "8">;
 def VLD3DUPd16_UPD : VLD3DUPWB<{0,1,0,?}, "16">;
 def VLD3DUPd32_UPD : VLD3DUPWB<{1,0,0,?}, "32">;
 
-def VLD3DUPd8T_UPD  : VLD3DUPWB<{0,0,1,0}, "8">;
-def VLD3DUPd16T_UPD : VLD3DUPWB<{0,1,1,?}, "16">;
-def VLD3DUPd32T_UPD : VLD3DUPWB<{1,0,1,?}, "32">;
+def VLD3DUPd8x2_UPD  : VLD3DUPWB<{0,0,1,0}, "8">;
+def VLD3DUPd16x2_UPD : VLD3DUPWB<{0,1,1,?}, "16">;
+def VLD3DUPd32x2_UPD : VLD3DUPWB<{1,0,1,?}, "32">;
 
 def VLD3DUPd8Pseudo_UPD  : VLDQQWBPseudo<IIC_VLD3dupu>;
 def VLD3DUPd16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD3dupu>;
