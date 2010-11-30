@@ -1177,19 +1177,17 @@ def PICSTRB : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
-let neverHasSideEffects = 1 in {
-let isReMaterializable = 1 in
+let neverHasSideEffects = 1, isReMaterializable = 1 in
 // FIXME: We want one cannonical LEApcrel instruction and to express one or
 // both of these as pseudo-instructions that get expanded to it.
 def LEApcrel : AXI1<0, (outs GPR:$Rd), (ins i32imm:$label, pred:$p),
                     MiscFrm, IIC_iALUi,
-                    "adr$p\t$Rd, #$label", []>;
+                    "adr${p}\t$Rd, #$label", []>;
 
-} // neverHasSideEffects
 def LEApcrelJT : AXI1<0b0100, (outs GPR:$Rd),
                            (ins i32imm:$label, nohash_imm:$id, pred:$p),
                       MiscFrm, IIC_iALUi,
-                      "adr$p\t$Rd, #${label}_${id}", []> {
+                      "adr${p}\t$Rd, #${label}_${id}", []> {
   bits<4> p;
   bits<4> Rd;
   let Inst{31-28} = p;
