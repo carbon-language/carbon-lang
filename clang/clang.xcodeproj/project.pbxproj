@@ -227,13 +227,13 @@
 		90FD6D83103C3D49005F5B73 /* Program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D77103C3D49005F5B73 /* Program.cpp */; };
 		90FD6D85103C3D49005F5B73 /* SelectorMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D7A103C3D49005F5B73 /* SelectorMap.cpp */; };
 		90FD6DB6103D977E005F5B73 /* index-test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6DB5103D977E005F5B73 /* index-test.cpp */; };
+		BB5C372912A5057500259F53 /* DumpXML.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BB5C372812A5057500259F53 /* DumpXML.cpp */; };
 		BDF87CF70FD746F300BBF872 /* SemaTemplateDeduction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BDF87CF60FD746F300BBF872 /* SemaTemplateDeduction.cpp */; };
 		BF89C3E211595818001C2D68 /* AnalysisBasedWarnings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3E111595818001C2D68 /* AnalysisBasedWarnings.cpp */; };
 		BF89C3E91159594A001C2D68 /* SemaObjCProperty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3E81159594A001C2D68 /* SemaObjCProperty.cpp */; };
 		BF89C3F911595A01001C2D68 /* SemaType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3F811595A01001C2D68 /* SemaType.cpp */; };
 		BF89C3FB11595A37001C2D68 /* SemaCodeComplete.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3FA11595A37001C2D68 /* SemaCodeComplete.cpp */; };
 		BF89C3FD11595A5D001C2D68 /* SemaExceptionSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3FC11595A5D001C2D68 /* SemaExceptionSpec.cpp */; };
-		BF9FEDF91225E67B003A8B71 /* Action.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEDF81225E67B003A8B71 /* Action.cpp */; };
 		BF9FEDFB1225E6A9003A8B71 /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEDFA1225E6A9003A8B71 /* AttributeList.cpp */; };
 		BF9FEDFD1225E6C6003A8B71 /* DeclSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEDFC1225E6C6003A8B71 /* DeclSpec.cpp */; };
 		BF9FEDFF1225E6DD003A8B71 /* TargetAttributesSema.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF9FEDFE1225E6DD003A8B71 /* TargetAttributesSema.cpp */; };
@@ -770,6 +770,7 @@
 		90FD6D90103C3D80005F5B73 /* TypeXML.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = TypeXML.def; path = clang/Frontend/TypeXML.def; sourceTree = "<group>"; };
 		90FD6D91103C3D80005F5B73 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = clang/Frontend/Utils.h; sourceTree = "<group>"; };
 		90FD6DB5103D977E005F5B73 /* index-test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "index-test.cpp"; path = "tools/index-test/index-test.cpp"; sourceTree = "<group>"; };
+		BB5C372812A5057500259F53 /* DumpXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DumpXML.cpp; path = /Volumes/Data/llvm/tools/clang/lib/AST/DumpXML.cpp; sourceTree = "<absolute>"; };
 		BD59A948121496B9003A5A02 /* AnalysisBasedWarnings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisBasedWarnings.h; path = clang/Sema/AnalysisBasedWarnings.h; sourceTree = "<group>"; };
 		BD59A949121496B9003A5A02 /* CodeCompleteConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodeCompleteConsumer.h; path = clang/Sema/CodeCompleteConsumer.h; sourceTree = "<group>"; };
 		BD59A94A121496B9003A5A02 /* CXXFieldCollector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CXXFieldCollector.h; path = clang/Sema/CXXFieldCollector.h; sourceTree = "<group>"; };
@@ -847,7 +848,6 @@
 		BF9FEDF51225E5D5003A8B71 /* MacroBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MacroBuilder.h; sourceTree = "<group>"; };
 		BF9FEDF61225E5FB003A8B71 /* Version.inc.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Version.inc.in; sourceTree = "<group>"; };
 		BF9FEDF71225E613003A8B71 /* DiagnosticCategories.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = DiagnosticCategories.td; sourceTree = "<group>"; };
-		BF9FEDF81225E67B003A8B71 /* Action.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Action.cpp; path = lib/Sema/Action.cpp; sourceTree = "<group>"; };
 		BF9FEDFA1225E6A9003A8B71 /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = lib/Sema/AttributeList.cpp; sourceTree = "<group>"; };
 		BF9FEDFC1225E6C6003A8B71 /* DeclSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSpec.cpp; path = lib/Sema/DeclSpec.cpp; sourceTree = "<group>"; };
 		BF9FEDFE1225E6DD003A8B71 /* TargetAttributesSema.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TargetAttributesSema.cpp; path = lib/Sema/TargetAttributesSema.cpp; sourceTree = "<group>"; };
@@ -1498,7 +1498,6 @@
 				BF9FEDFE1225E6DD003A8B71 /* TargetAttributesSema.cpp */,
 				BF9FEDFC1225E6C6003A8B71 /* DeclSpec.cpp */,
 				BF9FEDFA1225E6A9003A8B71 /* AttributeList.cpp */,
-				BF9FEDF81225E67B003A8B71 /* Action.cpp */,
 				BF89C3E111595818001C2D68 /* AnalysisBasedWarnings.cpp */,
 				1A6B6CD110693FC900BB4A8F /* CodeCompleteConsumer.cpp */,
 				352712500DAFE54700C76352 /* IdentifierResolver.cpp */,
@@ -1720,6 +1719,7 @@
 				1ABD23BE1182449800A48E65 /* DeclObjC.cpp */,
 				1ABD23BF1182449800A48E65 /* DeclPrinter.cpp */,
 				1ABD23C01182449800A48E65 /* DeclTemplate.cpp */,
+				BB5C372812A5057500259F53 /* DumpXML.cpp */,
 				1ABD23C11182449800A48E65 /* Expr.cpp */,
 				1ABD23C21182449800A48E65 /* ExprConstant.cpp */,
 				1ABD23C31182449800A48E65 /* ExprCXX.cpp */,
@@ -2301,7 +2301,6 @@
 				57AA9250121C8B9400B4AA6C /* ASTReader.cpp in Sources */,
 				57AA9251121C8B9400B4AA6C /* ASTReaderDecl.cpp in Sources */,
 				57AA9252121C8B9400B4AA6C /* ASTReaderStmt.cpp in Sources */,
-				BF9FEDF91225E67B003A8B71 /* Action.cpp in Sources */,
 				BF9FEDFB1225E6A9003A8B71 /* AttributeList.cpp in Sources */,
 				BF9FEDFD1225E6C6003A8B71 /* DeclSpec.cpp in Sources */,
 				BF9FEDFF1225E6DD003A8B71 /* TargetAttributesSema.cpp in Sources */,
@@ -2406,6 +2405,7 @@
 				1AC1AD441299A287006FBC77 /* ValueManager.cpp in Sources */,
 				1AC1AD451299A287006FBC77 /* VLASizeChecker.cpp in Sources */,
 				1A3D2C4E12A2CD3D0088C44A /* CGCXXABI.cpp in Sources */,
+				BB5C372912A5057500259F53 /* DumpXML.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
