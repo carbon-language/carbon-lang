@@ -49,6 +49,8 @@ public:
       { "fixup_arm_pcrel_12",     1,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_vfp_pcrel_12", 1,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_branch",       1,      24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_movt_hi16",    0,      16,   0 },
+      { "fixup_arm_movw_lo16",    0,      16,   0 },
     };
 
     if (Kind < FirstTargetFixupKind)
