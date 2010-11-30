@@ -1844,6 +1844,7 @@ def : MnemonicAlias<"stm", "stmia">;
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
+// FIXME: Should be a pseudo-instruction.
 def LDMIA_RET : AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
                                       reglist:$regs, variable_ops),
                      IndexModeUpd, LdStMulFrm, IIC_iLoad_mBr,
