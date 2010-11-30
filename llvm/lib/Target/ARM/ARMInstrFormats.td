@@ -899,7 +899,6 @@ class T1LoadStore<bits<4> opA, bits<3> opB> : Encoding16 {
   let Inst{15-12} = opA;
   let Inst{11-9}  = opB;
 }
-class T1LdSt<bits<3> opB>     : T1LoadStore<0b0101, opB>;
 class T1LdStSP<bits<3> opB>   : T1LoadStore<0b1001, opB>; // SP relative
 
 // Helper classes to encode Thumb1 loads and stores. For immediates, the
@@ -908,13 +907,11 @@ class T1LdStSP<bits<3> opB>   : T1LoadStore<0b1001, opB>; // SP relative
 //   0b0110 => Immediate, 4 bytes
 //   0b1000 => Immediate, 2 bytes
 //   0b0111 => Immediate, 1 byte
-class T1LdStImm<bits<4> opA, bits<3> opB> : T1LoadStore<opA, opB>;
-
 class T1pIEncode<bits<3> opcode, dag oops, dag iops, AddrMode am,
                  InstrItinClass itin, string opc, string asm,
                  list<dag> pattern>
   : Thumb1pI<oops, iops, am, Size2Bytes, itin, opc, asm, "", pattern>,
-    T1LdSt<opcode> {
+    T1LoadStore<0b0101, opcode> {
   bits<3> Rt;
   bits<8> addr;
   let Inst{8-6} = addr{5-3};    // Rm
@@ -925,7 +922,7 @@ class T1pIEncodeImm<bits<4> opA, bit opB, dag oops, dag iops, AddrMode am,
                     InstrItinClass itin, string opc, string asm,
                     list<dag> pattern>
   : Thumb1pI<oops, iops, am, Size2Bytes, itin, opc, asm, "", pattern>,
-    T1LdStImm<opA, {opB,?,?}> {
+    T1LoadStore<opA, {opB,?,?}> {
   bits<3> Rt;
   bits<8> addr;
   let Inst{10-6} = addr{7-3};   // imm5
