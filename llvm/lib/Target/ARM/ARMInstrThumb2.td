@@ -143,6 +143,7 @@ def t2am_imm8_offset : Operand<i32>,
                        ComplexPattern<i32, 1, "SelectT2AddrModeImm8Offset",
                                       [], [SDNPWantRoot]> {
   let PrintMethod = "printT2AddrModeImm8OffsetOperand";
+  string EncoderMethod = "getT2AddrModeImm8OffsetOpValue";
 }
 
 // t2addrmode_imm8s4  := reg +/- (imm8 << 2)
@@ -917,7 +918,7 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{20} = 0; // !load
     
     bits<4> Rt;
-    let Inst{19-16} = Rt{3-0};
+    let Inst{15-12} = Rt{3-0};
     
     bits<16> addr;
     let Inst{19-16} = addr{15-12}; // Rn
@@ -936,7 +937,7 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{8} = 0; // The W bit.
     
     bits<4> Rt;
-    let Inst{19-16} = Rt{3-0};
+    let Inst{15-12} = Rt{3-0};
     
     bits<13> addr;
     let Inst{19-16} = addr{12-9}; // Rn
@@ -1319,61 +1320,75 @@ def : T2Pat<(extloadi16 (ARMWrapper tconstpool:$addr)),
 //        not via pattern.
 
 // Indexed loads
+
+class T2Iidxld<bit signed, bits<2> opcod, bit pre,
+                 dag oops, dag iops,
+                 AddrMode am, IndexMode im, InstrItinClass itin,
+                 string opc, string asm, string cstr, list<dag> pattern>
+  : T2Iidxldst<signed, opcod, 1, pre, oops,
+               iops, am,im,itin, opc, asm, cstr, pattern>;
+class T2Iidxst<bit signed, bits<2> opcod, bit pre,
+                 dag oops, dag iops,
+                 AddrMode am, IndexMode im, InstrItinClass itin,
+                 string opc, string asm, string cstr, list<dag> pattern>
+  : T2Iidxldst<signed, opcod, 0, pre, oops,
+               iops, am,im,itin, opc, asm, cstr, pattern>;
+
 let mayLoad = 1, neverHasSideEffects = 1 in {
-def t2LDR_PRE  : T2Iidxldst<0, 0b10, 1, 1, (outs GPR:$dst, GPR:$base_wb),
+def t2LDR_PRE  : T2Iidxld<0, 0b10, 1, (outs GPR:$Rt, GPR:$Rn),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_iu,
-                            "ldr", "\t$dst, $addr!", "$addr.base = $base_wb",
+                            "ldr", "\t$Rt, $addr!", "$addr.base = $Rn",
                             []>;
 
-def t2LDR_POST : T2Iidxldst<0, 0b10, 1, 0, (outs GPR:$dst, GPR:$base_wb),
+def t2LDR_POST : T2Iidxld<0, 0b10, 0, (outs GPR:$Rt, GPR:$Rn),
                             (ins GPR:$base, t2am_imm8_offset:$offset),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_iu,
-                          "ldr", "\t$dst, [$base], $offset", "$base = $base_wb",
+                          "ldr", "\t$Rt, [$Rn], $offset", "$base = $Rn",
                             []>;
 
-def t2LDRB_PRE : T2Iidxldst<0, 0b00, 1, 1, (outs GPR:$dst, GPR:$base_wb),
+def t2LDRB_PRE : T2Iidxld<0, 0b00, 1, (outs GPR:$Rt, GPR:$Rn),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_bh_iu,
-                            "ldrb", "\t$dst, $addr!", "$addr.base = $base_wb",
+                            "ldrb", "\t$Rt, $addr!", "$addr.base = $Rn",
                             []>;
-def t2LDRB_POST : T2Iidxldst<0, 0b00, 1, 0, (outs GPR:$dst, GPR:$base_wb),
+def t2LDRB_POST : T2Iidxld<0, 0b00, 0, (outs GPR:$Rt, GPR:$Rn),
                             (ins GPR:$base, t2am_imm8_offset:$offset),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
-                         "ldrb", "\t$dst, [$base], $offset", "$base = $base_wb",
+                         "ldrb", "\t$Rt, [$Rn], $offset", "$base = $Rn",
                             []>;
 
-def t2LDRH_PRE : T2Iidxldst<0, 0b01, 1, 1, (outs GPR:$dst, GPR:$base_wb),
+def t2LDRH_PRE : T2Iidxld<0, 0b01, 1, (outs GPR:$Rt, GPR:$Rn),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_bh_iu,
-                            "ldrh", "\t$dst, $addr!", "$addr.base = $base_wb",
+                            "ldrh", "\t$Rt, $addr!", "$addr.base = $Rn",
                             []>;
-def t2LDRH_POST : T2Iidxldst<0, 0b01, 1, 0, (outs GPR:$dst, GPR:$base_wb),
+def t2LDRH_POST : T2Iidxld<0, 0b01, 0, (outs GPR:$Rt, GPR:$Rn),
                             (ins GPR:$base, t2am_imm8_offset:$offset),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
-                         "ldrh", "\t$dst, [$base], $offset", "$base = $base_wb",
+                         "ldrh", "\t$Rt, [$Rn], $offset", "$base = $Rn",
                             []>;
 
-def t2LDRSB_PRE : T2Iidxldst<1, 0b00, 1, 1, (outs GPR:$dst, GPR:$base_wb),
+def t2LDRSB_PRE : T2Iidxld<1, 0b00, 1, (outs GPR:$Rt, GPR:$Rn),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_bh_iu,
-                            "ldrsb", "\t$dst, $addr!", "$addr.base = $base_wb",
+                            "ldrsb", "\t$Rt, $addr!", "$addr.base = $Rn",
                             []>;
-def t2LDRSB_POST : T2Iidxldst<1, 0b00, 1, 0, (outs GPR:$dst, GPR:$base_wb),
+def t2LDRSB_POST : T2Iidxld<1, 0b00, 0, (outs GPR:$Rt, GPR:$Rn),
                             (ins GPR:$base, t2am_imm8_offset:$offset),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
-                        "ldrsb", "\t$dst, [$base], $offset", "$base = $base_wb",
+                        "ldrsb", "\t$Rt, [$Rn], $offset", "$base = $Rn",
                             []>;
 
-def t2LDRSH_PRE : T2Iidxldst<1, 0b01, 1, 1, (outs GPR:$dst, GPR:$base_wb),
+def t2LDRSH_PRE : T2Iidxld<1, 0b01, 1, (outs GPR:$Rt, GPR:$Rn),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iLoad_bh_iu,
-                            "ldrsh", "\t$dst, $addr!", "$addr.base = $base_wb",
+                            "ldrsh", "\t$Rt, $addr!", "$addr.base = $Rn",
                             []>;
-def t2LDRSH_POST : T2Iidxldst<1, 0b01, 1, 0, (outs GPR:$dst, GPR:$base_wb),
+def t2LDRSH_POST : T2Iidxld<1, 0b01, 0, (outs GPR:$dst, GPR:$Rn),
                             (ins GPR:$base, t2am_imm8_offset:$offset),
                             AddrModeT2_i8, IndexModePost, IIC_iLoad_bh_iu,
-                        "ldrsh", "\t$dst, [$base], $offset", "$base = $base_wb",
+                        "ldrsh", "\t$dst, [$Rn], $offset", "$base = $Rn",
                             []>;
 } // mayLoad = 1, neverHasSideEffects = 1
 
@@ -1415,47 +1430,47 @@ def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
                IIC_iStore_d_r, "strd", "\t$src1, $addr", []>;
 
 // Indexed stores
-def t2STR_PRE  : T2Iidxldst<0, 0b10, 0, 1, (outs GPR:$base_wb),
-                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+def t2STR_PRE  : T2Iidxst<0, 0b10, 1, (outs GPR:$base_wb),
+                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
-                         "str", "\t$src, [$base, $offset]!", "$base = $base_wb",
+                         "str", "\t$Rt, [$Rn, $addr]!", "$Rn = $base_wb",
              [(set GPR:$base_wb,
-                   (pre_store GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+                   (pre_store GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STR_POST : T2Iidxldst<0, 0b10, 0, 0, (outs GPR:$base_wb),
-                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+def t2STR_POST : T2Iidxst<0, 0b10, 0, (outs GPR:$base_wb),
+                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_iu,
-                          "str", "\t$src, [$base], $offset", "$base = $base_wb",
+                          "str", "\t$Rt, [$Rn], $addr", "$Rn = $base_wb",
              [(set GPR:$base_wb,
-                  (post_store GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+                  (post_store GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRH_PRE  : T2Iidxldst<0, 0b01, 0, 1, (outs GPR:$base_wb),
-                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+def t2STRH_PRE  : T2Iidxst<0, 0b01, 1, (outs GPR:$base_wb),
+                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
-                        "strh", "\t$src, [$base, $offset]!", "$base = $base_wb",
+                        "strh", "\t$Rt, [$Rn, $addr]!", "$Rn = $base_wb",
         [(set GPR:$base_wb,
-              (pre_truncsti16 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+              (pre_truncsti16 GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRH_POST : T2Iidxldst<0, 0b01, 0, 0, (outs GPR:$base_wb),
-                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+def t2STRH_POST : T2Iidxst<0, 0b01, 0, (outs GPR:$base_wb),
+                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_bh_iu,
-                         "strh", "\t$src, [$base], $offset", "$base = $base_wb",
+                         "strh", "\t$Rt, [$Rn], $addr", "$Rn = $base_wb",
        [(set GPR:$base_wb,
-             (post_truncsti16 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+             (post_truncsti16 GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRB_PRE  : T2Iidxldst<0, 0b00, 0, 1, (outs GPR:$base_wb),
-                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+def t2STRB_PRE  : T2Iidxst<0, 0b00, 1, (outs GPR:$base_wb),
+                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_bh_iu,
-                        "strb", "\t$src, [$base, $offset]!", "$base = $base_wb",
+                        "strb", "\t$Rt, [$Rn, $addr]!", "$Rn = $base_wb",
          [(set GPR:$base_wb,
-               (pre_truncsti8 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+               (pre_truncsti8 GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRB_POST : T2Iidxldst<0, 0b00, 0, 0, (outs GPR:$base_wb),
-                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+def t2STRB_POST : T2Iidxst<0, 0b00, 0, (outs GPR:$base_wb),
+                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_bh_iu,
-                         "strb", "\t$src, [$base], $offset", "$base = $base_wb",
+                         "strb", "\t$Rt, [$Rn], $addr", "$Rn = $base_wb",
         [(set GPR:$base_wb,
-              (post_truncsti8 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+              (post_truncsti8 GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
 
 // STRT, STRBT, STRHT all have offset mode (PUW=0b110) and are for disassembly
 // only.

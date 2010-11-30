@@ -1050,6 +1050,15 @@ class T2Iidxldst<bit signed, bits<2> opcod, bit load, bit pre,
   // (P, W) = (1, 1) Pre-indexed or (0, 1) Post-indexed
   let Inst{10}    = pre; // The P bit.
   let Inst{8}     = 1; // The W bit.
+  
+  bits<9> addr;
+  let Inst{7-0} = addr{7-0};
+  let Inst{9}   = addr{8}; // Sign bit 
+  
+  bits<4> Rt;
+  bits<4> Rn;
+  let Inst{15-12} = Rt{3-0};
+  let Inst{19-16} = Rn{3-0};
 }
 
 // Tv5Pat - Same as Pat<>, but requires V5T Thumb mode.

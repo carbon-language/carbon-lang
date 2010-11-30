@@ -115,3 +115,18 @@
 @ CHECK: ldr.w	r0, [r0, r1, lsl #2]    @ encoding: [0x21,0x00,0x50,0xf8]
   ldr.w	r0, [r0, r1, lsl #2]
 
+@ CHECK: str	r1, [r0, #16]!          @ encoding: [0x10,0x1f,0x40,0xf8]
+  str	r1, [r0, #16]!
+@ CHECK: strh	r1, [r0, #8]!           @ encoding: [0x08,0x1f,0x20,0xf8]
+  strh	r1, [r0, #8]!
+@ CHECK: strh	r2, [r0], #-4           @ encoding: [0x04,0x29,0x20,0xf8]
+  strh	r2, [r0], #-4
+@ CHECK: str	r2, [r0], #-4           @ encoding: [0x04,0x29,0x40,0xf8]
+  str	r2, [r0], #-4
+
+@ CHECK: ldr	r2, [r0, #16]!          @ encoding: [0x10,0x2f,0x50,0xf8]
+  ldr	r2, [r0, #16]!
+@ CHECK: ldr	r2, [r0, #-64]!         @ encoding: [0x40,0x2d,0x50,0xf8]
+  ldr	r2, [r0, #-64]!
+@ CHECK: ldrsb	r2, [r0, #4]!           @ encoding: [0x04,0x2f,0x10,0xf9]
+  ldrsb	r2, [r0, #4]!
