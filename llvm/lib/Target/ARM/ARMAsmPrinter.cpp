@@ -18,6 +18,7 @@
 #include "ARMAddressingModes.h"
 #include "ARMConstantPoolValue.h"
 #include "InstPrinter/ARMInstPrinter.h"
+#include "ARMAsmPrinter.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMTargetMachine.h"
 #include "ARMTargetObjectFile.h"
@@ -26,7 +27,6 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
@@ -53,15 +53,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
 using namespace llvm;
-
-namespace llvm {
-  namespace ARM {
-    enum DW_ISA {
-      DW_ISA_ARM_thumb = 1,
-      DW_ISA_ARM_arm = 2
-    };
-  }
-}
 
 namespace {
 
@@ -144,91 +135,20 @@ namespace {
     }
   };
 
-  class ARMAsmPrinter : public AsmPrinter {
-
-    /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
-    /// make the right decision when printing asm code for different targets.
-    const ARMSubtarget *Subtarget;
-
-    /// AFI - Keep a pointer to ARMFunctionInfo for the current
-    /// MachineFunction.
-    ARMFunctionInfo *AFI;
-
-    /// MCP - Keep a pointer to constantpool entries of the current
-    /// MachineFunction.
-    const MachineConstantPool *MCP;
-
-  public:
-    explicit ARMAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-      : AsmPrinter(TM, Streamer), AFI(NULL), MCP(NULL) {
-      Subtarget = &TM.getSubtarget<ARMSubtarget>();
-    }
-
-    virtual const char *getPassName() const {
-      return "ARM Assembly Printer";
-    }
-
-    void printOperand(const MachineInstr *MI, int OpNum, raw_ostream &O,
-                      const char *Modifier = 0);
-
-    virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
-                                 unsigned AsmVariant, const char *ExtraCode,
-                                 raw_ostream &O);
-    virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNum,
-                                       unsigned AsmVariant,
-                                       const char *ExtraCode, raw_ostream &O);
-
-    void EmitJumpTable(const MachineInstr *MI);
-    void EmitJump2Table(const MachineInstr *MI);
-    virtual void EmitInstruction(const MachineInstr *MI);
-    bool runOnMachineFunction(MachineFunction &F);
-
-    virtual void EmitConstantPool() {} // we emit constant pools customly!
-    virtual void EmitFunctionEntryLabel();
-    void EmitStartOfAsmFile(Module &M);
-    void EmitEndOfAsmFile(Module &M);
-
-  private:
-    // Helpers for EmitStartOfAsmFile() and EmitEndOfAsmFile()
-    void emitAttributes();
-
-    // Helper for ELF .o only
-    void emitARMAttributeSection();
-
-  public:
-    void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
-
-    MachineLocation getDebugValueLocation(const MachineInstr *MI) const {
-      MachineLocation Location;
-      assert(MI->getNumOperands() == 4 && "Invalid no. of machine operands!");
-      // Frame address.  Currently handles register +- offset only.
-      if (MI->getOperand(0).isReg() && MI->getOperand(1).isImm())
-        Location.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
-      else {
-        DEBUG(dbgs() << "DBG_VALUE instruction ignored! " << *MI << "\n");
-      }
-      return Location;
-    }
-
-    virtual unsigned getISAEncoding() {
-      // ARM/Darwin adds ISA to the DWARF info for each function.
-      if (!Subtarget->isTargetDarwin())
-        return 0;
-      return Subtarget->isThumb() ?
-        llvm::ARM::DW_ISA_ARM_thumb : llvm::ARM::DW_ISA_ARM_arm;
-    }
-
-    MCSymbol *GetARMSetPICJumpTableLabel2(unsigned uid, unsigned uid2,
-                                          const MachineBasicBlock *MBB) const;
-    MCSymbol *GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const;
-
-    MCSymbol *GetARMSJLJEHLabel(void) const;
-
-    /// EmitMachineConstantPoolValue - Print a machine constantpool value to
-    /// the .s file.
-    virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
-  };
 } // end of anonymous namespace
+
+MachineLocation ARMAsmPrinter::
+getDebugValueLocation(const MachineInstr *MI) const {
+  MachineLocation Location;
+  assert(MI->getNumOperands() == 4 && "Invalid no. of machine operands!");
+  // Frame address.  Currently handles register +- offset only.
+  if (MI->getOperand(0).isReg() && MI->getOperand(1).isImm())
+    Location.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
+  else {
+    DEBUG(dbgs() << "DBG_VALUE instruction ignored! " << *MI << "\n");
+  }
+  return Location;
+}
 
 void ARMAsmPrinter::EmitFunctionEntryLabel() {
   if (AFI->isThumbFunction()) {

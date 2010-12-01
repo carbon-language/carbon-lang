@@ -29,7 +29,7 @@ class formatted_raw_ostream;
 class MCCodeEmitter;
 class TargetAsmBackend;
 class MachineInstr;
-class AsmPrinter;
+class ARMAsmPrinter;
 class MCInst;
 
 MCCodeEmitter *createARMMCCodeEmitter(const Target &,
@@ -55,8 +55,8 @@ FunctionPass *createThumb2SizeReductionPass();
 extern Target TheARMTarget, TheThumbTarget;
 
 void LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
-                                  AsmPrinter &AP);
-  
+                                  ARMAsmPrinter &AP);
+
 } // end namespace llvm;
 
 #endif

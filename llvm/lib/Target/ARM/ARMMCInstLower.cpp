@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
-#include "llvm/CodeGen/AsmPrinter.h"
+#include "ARMAsmPrinter.h"
 #include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/MC/MCExpr.h"
@@ -23,7 +23,7 @@ using namespace llvm;
 
 
 static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
-                              AsmPrinter &Printer) {
+                              ARMAsmPrinter &Printer) {
   MCContext &Ctx = Printer.OutContext;
   const MCExpr *Expr;
   switch (MO.getTargetFlags()) {
@@ -51,7 +51,7 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
 }
 
 void llvm::LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
-                                        AsmPrinter &AP) {
+                                        ARMAsmPrinter &AP) {
   OutMI.setOpcode(MI->getOpcode());
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
