@@ -24,8 +24,6 @@ class HelpCommandTestCase(TestBase):
         self.expect("help",
             startstr = 'The following is a list of built-in, permanent debugger commands')
 
-    @unittest2.expectedFailure
-    # rdar://problem/8713425
     def test_help_image_dump_symtab_should_not_crash(self):
         """Command 'help image dump symtab' should not crash lldb."""
         self.expect("help image dump symtab",
