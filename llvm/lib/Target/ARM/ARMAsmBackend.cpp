@@ -134,7 +134,7 @@ void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
                                   uint64_t Value) const {
   uint32_t Mask = 0;
   // Fixme: 2 for Thumb
-  int NumBytes = 4; 
+  unsigned NumBytes = 4; 
   Value = adjustFixupValue(Fixup.getKind(), Value);
 
   switch (Fixup.getKind()) {
