@@ -1737,6 +1737,8 @@ bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N) const {
 
   if (NumCopies != 1 && NumCopies != 2)
     return false;
+
+  bool HasRet = false;
   for (unsigned i = 0; i < NumCopies; ++i) {
     SDNode *Copy = Copies[i];
     for (SDNode::use_iterator UI = Copy->use_begin(), UE = Copy->use_end();
@@ -1749,10 +1751,11 @@ bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N) const {
       }
       if (UI->getOpcode() != ARMISD::RET_FLAG)
         return false;
+      HasRet = true;
     }
   }
 
-  return true;
+  return HasRet;
 }
 
 // ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as

@@ -1339,22 +1339,25 @@ X86TargetLowering::LowerReturn(SDValue Chain,
 }
 
 bool X86TargetLowering::isUsedByReturnOnly(SDNode *N) const {
-  // Temporarily disabled.
-  return false;
   if (N->getNumValues() != 1)
     return false;
   if (!N->hasNUsesOfValue(1, 0))
     return false;
 
   SDNode *Copy = *N->use_begin();
-  if (Copy->getOpcode() != ISD::CopyToReg)
+  if (Copy->getOpcode() != ISD::CopyToReg &&
+      Copy->getOpcode() != ISD::FP_EXTEND)
     return false;
+
+  bool HasRet = false;
   for (SDNode::use_iterator UI = Copy->use_begin(), UE = Copy->use_end();
-       UI != UE; ++UI)
+       UI != UE; ++UI) {
     if (UI->getOpcode() != X86ISD::RET_FLAG)
       return false;
+    HasRet = true;
+  }
 
-  return true;
+  return HasRet;
 }
 
 /// LowerCallResult - Lower the result values of a call into the
@@ -2161,19 +2164,17 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     unsigned char OpFlags = 0;
 
-    if (!isTailCall) {
-      // On ELF targets, in either X86-64 or X86-32 mode, direct calls to
-      // external symbols should go through the PLT.
-      if (Subtarget->isTargetELF() &&
-          getTargetMachine().getRelocationModel() == Reloc::PIC_) {
-        OpFlags = X86II::MO_PLT;
-      } else if (Subtarget->isPICStyleStubAny() &&
-                 Subtarget->getDarwinVers() < 9) {
-        // PC-relative references to external symbols should go through $stub,
-        // unless we're building with the leopard linker or later, which
-        // automatically synthesizes these stubs.
-        OpFlags = X86II::MO_DARWIN_STUB;
-      }
+    // On ELF targets, in either X86-64 or X86-32 mode, direct calls to
+    // external symbols should go through the PLT.
+    if (Subtarget->isTargetELF() &&
+        getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+      OpFlags = X86II::MO_PLT;
+    } else if (Subtarget->isPICStyleStubAny() &&
+               Subtarget->getDarwinVers() < 9) {
+      // PC-relative references to external symbols should go through $stub,
+      // unless we're building with the leopard linker or later, which
+      // automatically synthesizes these stubs.
+      OpFlags = X86II::MO_DARWIN_STUB;
     }
 
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(),
