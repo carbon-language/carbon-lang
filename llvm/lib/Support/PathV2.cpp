@@ -531,6 +531,28 @@ error_code replace_extension(SmallVectorImpl<char> &path,
   return make_error_code(errc::success);
 }
 
+error_code native(const Twine &path, SmallVectorImpl<char> &result) {
+  // Clear result.
+  result.set_size(0);
+#ifdef LLVM_ON_WIN32
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+  result.reserve(p.size());
+  for (StringRef::const_iterator i = p.begin(),
+                                 e = p.end();
+                                 i != e;
+                                 ++i) {
+    if (*i == '/')
+      result.push_back('\\');
+    else
+      result.push_back(*i);
+  }
+#else
+  path.toVector(result);
+#endif
+  return make_error_code(errc::success);
+}
+
 }
 }
 }

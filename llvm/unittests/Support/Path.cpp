@@ -107,6 +107,9 @@ TEST(Support, Path) {
     if (error_code ec = sys::path::replace_extension(temp_store, "ext"))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    replace_extension: " << temp_store << '\n';
+    if (error_code ec = sys::path::native(*i, temp_store))
+      ASSERT_FALSE(ec.message().c_str());
+    outs() << "    native: " << temp_store << '\n';
 
     outs().flush();
   }
