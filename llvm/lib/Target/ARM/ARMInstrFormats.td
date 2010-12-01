@@ -1010,6 +1010,15 @@ class T2Ii8s4<bit P, bit W, bit load, dag oops, dag iops, InstrItinClass itin,
   let Inst{22}    = 1;
   let Inst{21}    = W;
   let Inst{20}    = load;
+  
+  bits<4> Rt;
+  bits<4> Rt2;
+  bits<13> addr;
+  let Inst{15-12} = Rt{3-0};
+  let Inst{11-8}  = Rt2{3-0};
+  let Inst{19-16} = addr{12-9};
+  let Inst{23}    = addr{8};
+  let Inst{7-0}   = addr{7-0};
 }
 
 class T2sI<dag oops, dag iops, InstrItinClass itin,

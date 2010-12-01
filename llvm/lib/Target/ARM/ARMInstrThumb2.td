@@ -149,6 +149,7 @@ def t2am_imm8_offset : Operand<i32>,
 // t2addrmode_imm8s4  := reg +/- (imm8 << 2)
 def t2addrmode_imm8s4 : Operand<i32> {
   let PrintMethod = "printT2AddrModeImm8s4Operand";
+  string EncoderMethod = "getT2AddrModeImm8s4OpValue";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -1263,17 +1264,11 @@ defm t2LDRSH : T2I_ld<1, 0b01, "ldrsh", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
 defm t2LDRSB : T2I_ld<1, 0b00, "ldrsb", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
                       UnOpFrag<(sextloadi8  node:$Src)>>;
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in { // $dst doesn't exist in asmstring?
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 // Load doubleword
-def t2LDRDi8  : T2Ii8s4<1, 0, 1, (outs rGPR:$dst1, rGPR:$dst2),
+def t2LDRDi8  : T2Ii8s4<1, 0, 1, (outs rGPR:$Rt, rGPR:$Rt2),
                         (ins t2addrmode_imm8s4:$addr),
-                        IIC_iLoad_d_i, "ldrd", "\t$dst1, $addr", []>;
-def t2LDRDpci : T2Ii8s4<1, 0, 1, (outs rGPR:$dst1, rGPR:$dst2),
-                        (ins i32imm:$addr), IIC_iLoad_d_i,
-                       "ldrd", "\t$dst1, $addr", []> {
-  let Inst{19-16} = 0b1111; // Rn
-}
+                        IIC_iLoad_d_i, "ldrd", "\t$Rt, $Rt2, $addr", []>;
 } // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
 
 // zextload i1 -> zextload i8
@@ -1431,11 +1426,10 @@ defm t2STRH:T2I_st<0b01,"strh", IIC_iStore_bh_i, IIC_iStore_bh_si,
                    BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 // Store doubleword
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in  // $src2 doesn't exist in asm string
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
 def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
-                       (ins GPR:$src1, GPR:$src2, t2addrmode_imm8s4:$addr),
-               IIC_iStore_d_r, "strd", "\t$src1, $addr", []>;
+                       (ins GPR:$Rt, GPR:$Rt2, t2addrmode_imm8s4:$addr),
+               IIC_iStore_d_r, "strd", "\t$Rt, $Rt2, $addr", []>;
 
 // Indexed stores
 def t2STR_PRE  : T2Iidxst<0, 0b10, 1, (outs GPR:$base_wb),
@@ -1509,21 +1503,21 @@ def t2STRHT  : T2IstT<0b01, "strht", IIC_iStore_bh_i>;
 // ldrd / strd pre / post variants
 // For disassembly only.
 
-def t2LDRD_PRE  : T2Ii8s4<1, 1, 1, (outs GPR:$dst1, GPR:$dst2),
+def t2LDRD_PRE  : T2Ii8s4<1, 1, 1, (outs GPR:$Rt, GPR:$Rt2),
                  (ins GPR:$base, t2am_imm8s4_offset:$imm), IIC_iLoad_d_ru,
-                 "ldrd", "\t$dst1, $dst2, [$base, $imm]!", []>;
+                 "ldrd", "\t$Rt, $Rt2, [$base, $imm]!", []>;
 
-def t2LDRD_POST : T2Ii8s4<0, 1, 1, (outs GPR:$dst1, GPR:$dst2),
+def t2LDRD_POST : T2Ii8s4<0, 1, 1, (outs GPR:$Rt, GPR:$Rt2),
                  (ins GPR:$base, t2am_imm8s4_offset:$imm), IIC_iLoad_d_ru,
-                 "ldrd", "\t$dst1, $dst2, [$base], $imm", []>;
+                 "ldrd", "\t$Rt, $Rt2, [$base], $imm", []>;
 
 def t2STRD_PRE  : T2Ii8s4<1, 1, 0, (outs),
-                 (ins GPR:$src1, GPR:$src2, GPR:$base, t2am_imm8s4_offset:$imm),
-                 IIC_iStore_d_ru, "strd", "\t$src1, $src2, [$base, $imm]!", []>;
+                 (ins GPR:$Rt, GPR:$Rt2, GPR:$base, t2am_imm8s4_offset:$imm),
+                 IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, [$base, $imm]!", []>;
 
 def t2STRD_POST : T2Ii8s4<0, 1, 0, (outs),
-                 (ins GPR:$src1, GPR:$src2, GPR:$base, t2am_imm8s4_offset:$imm),
-                 IIC_iStore_d_ru, "strd", "\t$src1, $src2, [$base], $imm", []>;
+                 (ins GPR:$Rt, GPR:$Rt2, GPR:$base, t2am_imm8s4_offset:$imm),
+                 IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, [$base], $imm", []>;
 
 // T2Ipl (Preload Data/Instruction) signals the memory system of possible future
 // data/instruction access.  These are for disassembly only.

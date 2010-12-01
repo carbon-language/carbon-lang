@@ -253,9 +253,6 @@ static unsigned T2Morph2LoadLiteral(unsigned Opcode) {
   default:
     return Opcode; // Return unmorphed opcode.
 
-  case ARM::t2LDRDi8:
-    return ARM::t2LDRDpci;
-
   case ARM::t2LDR_POST:   case ARM::t2LDR_PRE:
   case ARM::t2LDRi12:     case ARM::t2LDRi8:
   case ARM::t2LDRs:       case ARM::t2LDRT:

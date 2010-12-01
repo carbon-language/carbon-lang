@@ -63,7 +63,7 @@
 # CHECK:	ssat	r0, #17, r12
 0x0c 0xf3 0x10 0x00
 
-# CHECK:	strd	r0, [r7, #64]
+# CHECK:	strd	r0, r1, [r7, #64]
 0xc7 0xe9 0x10 0x01
 
 # CHECK:	sub	sp, #60

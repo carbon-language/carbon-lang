@@ -47,7 +47,7 @@ public:
     const static MCFixupKindInfo Infos[] = {
       // name                     offset  bits  flags
       { "fixup_arm_pcrel_12",     1,      24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_vfp_pcrel_10", 1,      24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_pcrel_10",     1,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_branch",       1,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_movt_hi16",    0,      16,   0 },
       { "fixup_arm_movw_lo16",    0,      16,   0 },
@@ -89,6 +89,12 @@ public:
   /// operand.
   uint32_t getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
                                    SmallVectorImpl<MCFixup> &Fixups) const;
+
+  /// getT2AddrModeImm8s4OpValue - Return encoding info for 'reg +/- imm8<<2'
+  /// operand.
+  uint32_t getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
+                                   SmallVectorImpl<MCFixup> &Fixups) const;
+
 
   /// getLdStSORegOpValue - Return encoding info for 'reg +/- reg shop imm'
   /// operand as needed by load/store instructions.
@@ -422,6 +428,40 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
   return Binary;
 }
 
+/// getT2AddrModeImm8s4OpValue - Return encoding info for
+/// 'reg +/- imm8<<2' operand.
+uint32_t ARMMCCodeEmitter::
+getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
+                        SmallVectorImpl<MCFixup> &Fixups) const {
+  // {17-13} = reg
+  // {12}    = (U)nsigned (add == '1', sub == '0')
+  // {11-0}  = imm8
+  unsigned Reg, Imm8;
+  bool isAdd = true;
+  // If The first operand isn't a register, we have a label reference.
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  if (!MO.isReg()) {
+    Reg = getARMRegisterNumbering(ARM::PC);   // Rn is PC.
+    Imm8 = 0;
+    isAdd = false ; // 'U' bit is set as part of the fixup.
+
+    assert(MO.isExpr() && "Unexpected machine operand type!");
+    const MCExpr *Expr = MO.getExpr();
+    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_10);
+    Fixups.push_back(MCFixup::Create(0, Expr, Kind));
+
+    ++MCNumCPRelocations;
+  } else
+    isAdd = EncodeAddrModeOpValues(MI, OpIdx, Reg, Imm8, Fixups);
+
+  uint32_t Binary = (Imm8 >> 2) & 0xff;
+  // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
+  if (isAdd)
+    Binary |= (1 << 9);
+  Binary |= (Reg << 9);
+  return Binary;
+}
+
 uint32_t ARMMCCodeEmitter::
 getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
                   SmallVectorImpl<MCFixup> &Fixups) const {
@@ -613,7 +653,7 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
 
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
-    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_vfp_pcrel_10);
+    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_12);
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 
     ++MCNumCPRelocations;
