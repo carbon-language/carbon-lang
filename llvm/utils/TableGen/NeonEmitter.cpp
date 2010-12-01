@@ -337,7 +337,7 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   // returning structs of 2, 3, or 4 vectors which are returned in a sret-like
   // fashion, storing them to a pointer arg.
   if (ret) {
-    if (mod == '2' || mod == '3' || mod == '4')
+    if (mod >= '2' && mod <= '4')
       return "vv*";
     if (mod == 'f' || (ck != ClassB && type == 'f'))
       return quad ? "V4f" : "V2f";
@@ -704,7 +704,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
 
   // If this builtin returns a struct 2, 3, or 4 vectors, pass it as an implicit
   // sret-like argument.
-  bool sret = (proto[0] == '2' || proto[0] == '3' || proto[0] == '4');
+  bool sret = (proto[0] >= '2' && proto[0] <= '4');
 
   // If this builtin takes an immediate argument, we need to #define it rather
   // than use a standard declaration, so that SemaChecking can range check
@@ -755,7 +755,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     
     // Handle multiple-vector values specially, emitting each subvector as an
     // argument to the __builtin.
-    if (proto[i] == '2' || proto[i] == '3' || proto[i] == '4') {
+    if (proto[i] >= '2' && proto[i] <= '4') {
       for (unsigned vi = 0, ve = proto[i] - '0'; vi != ve; ++vi) {
         s += args + ".val[" + utostr(vi) + "]";
         if ((vi + 1) < ve)
@@ -1131,7 +1131,7 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
       
       // Builtins that return a struct of multiple vectors have an extra
       // leading arg for the struct return.
-      if (Proto[0] == '2' || Proto[0] == '3' || Proto[0] == '4')
+      if (Proto[0] >= '2' && Proto[0] <= '4')
         ++immidx;
       
       // Add one to the index for each argument until we reach the immediate 
