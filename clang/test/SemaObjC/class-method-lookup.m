@@ -20,7 +20,7 @@
     [self rootInstanceMethod];            /* class is searched for an instance method  */
     [MyIntermediate rootInstanceMethod];  /* with the same name.                       */
 
-    [self instanceMethod];// expected-warning {{'-instanceMethod' not found (return type defaults to 'id')}}
+    [self instanceMethod];// expected-warning {{'+instanceMethod' not found (return type defaults to 'id')}}
     [MyDerived instanceMethod];// expected-warning {{'+instanceMethod' not found (return type defaults to 'id')}}
 }
 @end

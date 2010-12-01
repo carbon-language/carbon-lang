@@ -35,7 +35,7 @@ id objc_getClass(const char *s);
 @implementation Derived
 + (int) class_func1
 {
-   int i = (size_t)[self class_func0];       // expected-warning {{method '-class_func0' not found (return type defaults to 'id')}}
+   int i = (size_t)[self class_func0];       // expected-warning {{method '+class_func0' not found (return type defaults to 'id')}}
    return i + (size_t)[super class_func0];   // expected-warning {{method '+class_func0' not found (return type defaults to 'id')}}
 }
 + (int) class_func2

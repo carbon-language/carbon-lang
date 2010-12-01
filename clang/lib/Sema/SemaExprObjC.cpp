@@ -1075,7 +1075,9 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   Expr **Args = reinterpret_cast<Expr **>(ArgsIn.release());
   QualType ReturnType;
   ExprValueKind VK = VK_RValue;
-  if (CheckMessageArgumentTypes(Args, NumArgs, Sel, Method, false,
+  bool ClassMessage = (ReceiverType->isObjCClassType() ||
+                       ReceiverType->isObjCQualifiedClassType());
+  if (CheckMessageArgumentTypes(Args, NumArgs, Sel, Method, ClassMessage,
                                 LBracLoc, RBracLoc, ReturnType, VK))
     return ExprError();
   

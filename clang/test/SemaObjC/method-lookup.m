@@ -22,7 +22,7 @@ typedef int NSInteger;
 static NSMutableArray * recentCompletions = ((void *)0);
 + (float) factorForRecentCompletion:(NSString *) completion
 {
-    for (NSObject<PBXCompletionItem> * item in [self completionItems]) // expected-warning{{method '-completionItems' not found (return type defaults to 'id')}}
+    for (NSObject<PBXCompletionItem> * item in [self completionItems]) // expected-warning{{method '+completionItems' not found (return type defaults to 'id')}}
     {
         if ([item respondsToSelector:@selector(setPriority:)])
         {
