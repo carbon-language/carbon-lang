@@ -1179,7 +1179,10 @@ def PICSTRB : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 // assembler.
 let neverHasSideEffects = 1, isReMaterializable = 1 in
 // FIXME: We want one cannonical LEApcrel instruction and to express one or
-// both of these as pseudo-instructions that get expanded to it.
+// both of these as pseudo-instructions that get expanded to it. In particular,
+// the cannonical "adr" pattern should take a single label operand, and the
+// JT version should be a pseudo that when lowered to MC, xforms the insn
+// to the canonical form referencing the correct symbol.
 def LEApcrel : AXI1<0, (outs GPR:$Rd), (ins i32imm:$label, pred:$p),
                     MiscFrm, IIC_iALUi,
                     "adr${p}\t$Rd, #$label", []>;
