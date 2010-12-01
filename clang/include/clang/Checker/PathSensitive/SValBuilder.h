@@ -31,36 +31,36 @@ protected:
 public:
   // FIXME: Make these protected again one RegionStoreManager correctly
   // handles loads from differening bound value types.
-  virtual SVal EvalCastNL(NonLoc val, QualType castTy) = 0;
-  virtual SVal EvalCastL(Loc val, QualType castTy) = 0;
+  virtual SVal evalCastNL(NonLoc val, QualType castTy) = 0;
+  virtual SVal evalCastL(Loc val, QualType castTy) = 0;
 
 public:
   SValBuilder(ValueManager &valMgr) : ValMgr(valMgr) {}
   virtual ~SValBuilder() {}
 
-  SVal EvalCast(SVal V, QualType castTy, QualType originalType);
+  SVal evalCast(SVal V, QualType castTy, QualType originalType);
   
-  virtual SVal EvalMinus(NonLoc val) = 0;
+  virtual SVal evalMinus(NonLoc val) = 0;
 
-  virtual SVal EvalComplement(NonLoc val) = 0;
+  virtual SVal evalComplement(NonLoc val) = 0;
 
-  virtual SVal EvalBinOpNN(const GRState *state, BinaryOperator::Opcode Op,
+  virtual SVal evalBinOpNN(const GRState *state, BinaryOperator::Opcode Op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy) = 0;
 
-  virtual SVal EvalBinOpLL(const GRState *state, BinaryOperator::Opcode Op,
+  virtual SVal evalBinOpLL(const GRState *state, BinaryOperator::Opcode Op,
                            Loc lhs, Loc rhs, QualType resultTy) = 0;
 
-  virtual SVal EvalBinOpLN(const GRState *state, BinaryOperator::Opcode Op,
+  virtual SVal evalBinOpLN(const GRState *state, BinaryOperator::Opcode Op,
                            Loc lhs, NonLoc rhs, QualType resultTy) = 0;
 
-  /// getKnownValue - Evaluates a given SVal. If the SVal has only one possible
+  /// getKnownValue - evaluates a given SVal. If the SVal has only one possible
   ///  (integer) value, that value is returned. Otherwise, returns NULL.
   virtual const llvm::APSInt *getKnownValue(const GRState *state, SVal V) = 0;
   
-  SVal EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
+  SVal evalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
                  SVal L, SVal R, QualType T);
   
-  DefinedOrUnknownSVal EvalEQ(const GRState *ST, DefinedOrUnknownSVal L,
+  DefinedOrUnknownSVal evalEQ(const GRState *ST, DefinedOrUnknownSVal L,
                               DefinedOrUnknownSVal R);
 };
 

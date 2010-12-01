@@ -225,9 +225,9 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
   }
   
   if (const Loc *L = dyn_cast<Loc>(&V))
-    return ValMgr.getSValBuilder().EvalCastL(*L, castTy);
+    return ValMgr.getSValBuilder().evalCastL(*L, castTy);
   else if (const NonLoc *NL = dyn_cast<NonLoc>(&V))
-    return ValMgr.getSValBuilder().EvalCastNL(*NL, castTy);
+    return ValMgr.getSValBuilder().evalCastNL(*NL, castTy);
   
   return V;
 }

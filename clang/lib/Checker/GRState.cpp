@@ -251,27 +251,27 @@ const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
   nonloc::ConcreteInt Min = BVF.getMinValue(IndexTy);
 
   // Adjust the index.
-  SVal NewIdx = SV.EvalBinOpNN(this, BO_Add,
+  SVal newIdx = SV.evalBinOpNN(this, BO_Add,
                                cast<NonLoc>(Idx), Min, IndexTy);
-  if (NewIdx.isUnknownOrUndef())
+  if (newIdx.isUnknownOrUndef())
     return this;
 
   // Adjust the upper bound.
-  SVal NewBound = SV.EvalBinOpNN(this, BO_Add,
+  SVal NewBound = SV.evalBinOpNN(this, BO_Add,
                                  cast<NonLoc>(UpperBound), Min, IndexTy);
   if (NewBound.isUnknownOrUndef())
     return this;
 
   // Build the actual comparison.
-  SVal InBound = SV.EvalBinOpNN(this, BO_LT,
-                                cast<NonLoc>(NewIdx), cast<NonLoc>(NewBound),
+  SVal inBound = SV.evalBinOpNN(this, BO_LT,
+                                cast<NonLoc>(newIdx), cast<NonLoc>(NewBound),
                                 Ctx.IntTy);
-  if (InBound.isUnknownOrUndef())
+  if (inBound.isUnknownOrUndef())
     return this;
 
   // Finally, let the constraint manager take care of it.
   ConstraintManager &CM = SM.getConstraintManager();
-  return CM.Assume(this, cast<DefinedSVal>(InBound), Assumption);
+  return CM.Assume(this, cast<DefinedSVal>(inBound), Assumption);
 }
 
 const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {

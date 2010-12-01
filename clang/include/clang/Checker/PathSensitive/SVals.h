@@ -489,7 +489,7 @@ public:
   }
 
   // Transfer functions for binary/unary operations on ConcreteInts.
-  SVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
+  SVal evalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                  const ConcreteInt& R) const;
 
   // Implement isa<T> support.

@@ -41,7 +41,7 @@ public:
 
   void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
   void PreVisitObjCMessageExpr(CheckerContext &C, const ObjCMessageExpr *ME);
-  bool EvalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME);
+  bool evalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME);
 
 private:
   bool PreVisitProcessArg(CheckerContext &C, const Expr *Ex,
@@ -244,7 +244,7 @@ void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
         return;
 }
 
-bool CallAndMessageChecker::EvalNilReceiver(CheckerContext &C,
+bool CallAndMessageChecker::evalNilReceiver(CheckerContext &C,
                                             const ObjCMessageExpr *ME) {
   HandleNilReceiver(C, C.getState(), ME);
   return true; // Nil receiver is not handled elsewhere.

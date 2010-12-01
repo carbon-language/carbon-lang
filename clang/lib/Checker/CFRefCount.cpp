@@ -1710,7 +1710,7 @@ public:
 
   // Calls.
 
-  void EvalSummary(ExplodedNodeSet& Dst,
+  void evalSummary(ExplodedNodeSet& Dst,
                    GRExprEngine& Eng,
                    GRStmtNodeBuilder& Builder,
                    const Expr* Ex,
@@ -1720,28 +1720,28 @@ public:
                    ConstExprIterator arg_beg, ConstExprIterator arg_end,
                    ExplodedNode* Pred, const GRState *state);
 
-  virtual void EvalCall(ExplodedNodeSet& Dst,
+  virtual void evalCall(ExplodedNodeSet& Dst,
                         GRExprEngine& Eng,
                         GRStmtNodeBuilder& Builder,
                         const CallExpr* CE, SVal L,
                         ExplodedNode* Pred);
 
 
-  virtual void EvalObjCMessageExpr(ExplodedNodeSet& Dst,
+  virtual void evalObjCMessageExpr(ExplodedNodeSet& Dst,
                                    GRExprEngine& Engine,
                                    GRStmtNodeBuilder& Builder,
                                    const ObjCMessageExpr* ME,
                                    ExplodedNode* Pred,
                                    const GRState *state);
   // Stores.
-  virtual void EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val);
+  virtual void evalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val);
 
   // End-of-path.
 
-  virtual void EvalEndPath(GRExprEngine& Engine,
+  virtual void evalEndPath(GRExprEngine& Engine,
                            GREndPathNodeBuilder& Builder);
 
-  virtual void EvalDeadSymbols(ExplodedNodeSet& Dst,
+  virtual void evalDeadSymbols(ExplodedNodeSet& Dst,
                                GRExprEngine& Engine,
                                GRStmtNodeBuilder& Builder,
                                ExplodedNode* Pred,
@@ -1754,7 +1754,7 @@ public:
                           SymbolRef Sym, RefVal V, bool &stop);
   // Return statements.
 
-  virtual void EvalReturn(ExplodedNodeSet& Dst,
+  virtual void evalReturn(ExplodedNodeSet& Dst,
                           GRExprEngine& Engine,
                           GRStmtNodeBuilder& Builder,
                           const ReturnStmt* S,
@@ -1762,7 +1762,7 @@ public:
 
   // Assumptions.
 
-  virtual const GRState *EvalAssume(const GRState* state, SVal condition,
+  virtual const GRState *evalAssume(const GRState* state, SVal condition,
                                     bool assumption);
 };
 
@@ -2494,7 +2494,7 @@ static QualType GetReturnType(const Expr* RetE, ASTContext& Ctx) {
   return RetTy;
 }
 
-void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
+void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
                              GRExprEngine& Eng,
                              GRStmtNodeBuilder& Builder,
                              const Expr* Ex,
@@ -2756,7 +2756,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
 }
 
 
-void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
+void CFRefCount::evalCall(ExplodedNodeSet& Dst,
                           GRExprEngine& Eng,
                           GRStmtNodeBuilder& Builder,
                           const CallExpr* CE, SVal L,
@@ -2777,11 +2777,11 @@ void CFRefCount::EvalCall(ExplodedNodeSet& Dst,
   }
 
   assert(Summ);
-  EvalSummary(Dst, Eng, Builder, CE, 0, *Summ, L.getAsRegion(),
+  evalSummary(Dst, Eng, Builder, CE, 0, *Summ, L.getAsRegion(),
               CE->arg_begin(), CE->arg_end(), Pred, Builder.GetState(Pred));
 }
 
-void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
+void CFRefCount::evalObjCMessageExpr(ExplodedNodeSet& Dst,
                                      GRExprEngine& Eng,
                                      GRStmtNodeBuilder& Builder,
                                      const ObjCMessageExpr* ME,
@@ -2793,7 +2793,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
       : Summaries.getClassMethodSummary(ME);
 
   assert(Summ && "RetainSummary is null");
-  EvalSummary(Dst, Eng, Builder, ME,
+  evalSummary(Dst, Eng, Builder, ME,
               InstanceReceiver(ME, Pred->getLocationContext()), *Summ, NULL,
               ME->arg_begin(), ME->arg_end(), Pred, state);
 }
@@ -2813,7 +2813,7 @@ public:
 } // end anonymous namespace
 
 
-void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
+void CFRefCount::evalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
   // Are we storing to something that causes the value to "escape"?
   bool escapes = false;
 
@@ -2852,7 +2852,7 @@ void CFRefCount::EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
 
  // Return statements.
 
-void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
+void CFRefCount::evalReturn(ExplodedNodeSet& Dst,
                             GRExprEngine& Eng,
                             GRStmtNodeBuilder& Builder,
                             const ReturnStmt* S,
@@ -2994,14 +2994,14 @@ void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
 
 // Assumptions.
 
-const GRState* CFRefCount::EvalAssume(const GRState *state,
+const GRState* CFRefCount::evalAssume(const GRState *state,
                                       SVal Cond, bool Assumption) {
 
-  // FIXME: We may add to the interface of EvalAssume the list of symbols
+  // FIXME: We may add to the interface of evalAssume the list of symbols
   //  whose assumptions have changed.  For now we just iterate through the
   //  bindings and check if any of the tracked symbols are NULL.  This isn't
   //  too bad since the number of symbols we will track in practice are
-  //  probably small and EvalAssume is only called at branches and a few
+  //  probably small and evalAssume is only called at branches and a few
   //  other places.
   RefBindings B = state->get<RefBindings>();
 
@@ -3270,7 +3270,7 @@ CFRefCount::ProcessLeaks(const GRState * state,
   return N;
 }
 
-void CFRefCount::EvalEndPath(GRExprEngine& Eng,
+void CFRefCount::evalEndPath(GRExprEngine& Eng,
                              GREndPathNodeBuilder& Builder) {
 
   const GRState *state = Builder.getState();
@@ -3297,7 +3297,7 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   ProcessLeaks(state, Leaked, Bd, Eng, Pred);
 }
 
-void CFRefCount::EvalDeadSymbols(ExplodedNodeSet& Dst,
+void CFRefCount::evalDeadSymbols(ExplodedNodeSet& Dst,
                                  GRExprEngine& Eng,
                                  GRStmtNodeBuilder& Builder,
                                  ExplodedNode* Pred,

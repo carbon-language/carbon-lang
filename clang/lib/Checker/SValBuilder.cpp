@@ -18,7 +18,7 @@
 using namespace clang;
 
 
-SVal SValBuilder::EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
+SVal SValBuilder::evalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
                           SVal L, SVal R, QualType T) {
 
   if (L.isUndef() || R.isUndef())
@@ -29,9 +29,9 @@ SVal SValBuilder::EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
 
   if (isa<Loc>(L)) {
     if (isa<Loc>(R))
-      return EvalBinOpLL(ST, Op, cast<Loc>(L), cast<Loc>(R), T);
+      return evalBinOpLL(ST, Op, cast<Loc>(L), cast<Loc>(R), T);
 
-    return EvalBinOpLN(ST, Op, cast<Loc>(L), cast<NonLoc>(R), T);
+    return evalBinOpLN(ST, Op, cast<Loc>(L), cast<NonLoc>(R), T);
   }
 
   if (isa<Loc>(R)) {
@@ -40,21 +40,21 @@ SVal SValBuilder::EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
     assert(Op == BO_Add);
 
     // Commute the operands.
-    return EvalBinOpLN(ST, Op, cast<Loc>(R), cast<NonLoc>(L), T);
+    return evalBinOpLN(ST, Op, cast<Loc>(R), cast<NonLoc>(L), T);
   }
 
-  return EvalBinOpNN(ST, Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
+  return evalBinOpNN(ST, Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
 }
 
-DefinedOrUnknownSVal SValBuilder::EvalEQ(const GRState *ST,
+DefinedOrUnknownSVal SValBuilder::evalEQ(const GRState *ST,
                                        DefinedOrUnknownSVal L,
                                        DefinedOrUnknownSVal R) {
-  return cast<DefinedOrUnknownSVal>(EvalBinOp(ST, BO_EQ, L, R,
+  return cast<DefinedOrUnknownSVal>(evalBinOp(ST, BO_EQ, L, R,
                                               ValMgr.getContext().IntTy));
 }
 
 // FIXME: should rewrite according to the cast kind.
-SVal SValBuilder::EvalCast(SVal val, QualType castTy, QualType originalTy) {
+SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
   if (val.isUnknownOrUndef() || castTy == originalTy)
     return val;
 
@@ -72,11 +72,11 @@ SVal SValBuilder::EvalCast(SVal val, QualType castTy, QualType originalTy) {
   
   // Check for casts from integers to integers.
   if (castTy->isIntegerType() && originalTy->isIntegerType())
-    return EvalCastNL(cast<NonLoc>(val), castTy);
+    return evalCastNL(cast<NonLoc>(val), castTy);
 
   // Check for casts from pointers to integers.
   if (castTy->isIntegerType() && Loc::IsLocType(originalTy))
-    return EvalCastL(cast<Loc>(val), castTy);
+    return evalCastL(cast<Loc>(val), castTy);
 
   // Check for casts from integers to pointers.
   if (Loc::IsLocType(castTy) && originalTy->isIntegerType()) {
@@ -115,7 +115,7 @@ SVal SValBuilder::EvalCast(SVal val, QualType castTy, QualType originalTy) {
     // need the original decayed type.
     //    QualType elemTy = cast<ArrayType>(originalTy)->getElementType();
     //    QualType pointerTy = C.getPointerType(elemTy);
-    return EvalCastL(cast<Loc>(val), castTy);
+    return evalCastL(cast<Loc>(val), castTy);
   }
 
   // Check for casts from a region to a specific type.
@@ -157,13 +157,13 @@ SVal SValBuilder::EvalCast(SVal val, QualType castTy, QualType originalTy) {
 
     // Delegate to store manager to get the result of casting a region to a
     // different type.  If the MemRegion* returned is NULL, this expression
-    // evaluates to UnknownVal.
+    // Evaluates to UnknownVal.
     R = storeMgr.CastRegion(R, castTy);
     return R ? SVal(loc::MemRegionVal(R)) : UnknownVal();
   }
 
 DispatchCast:
   // All other cases.
-  return isa<Loc>(val) ? EvalCastL(cast<Loc>(val), castTy)
-                       : EvalCastNL(cast<NonLoc>(val), castTy);
+  return isa<Loc>(val) ? evalCastL(cast<Loc>(val), castTy)
+                       : evalCastNL(cast<NonLoc>(val), castTy);
 }

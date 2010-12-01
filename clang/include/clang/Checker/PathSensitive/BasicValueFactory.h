@@ -179,7 +179,7 @@ public:
     return SValListFactory.add(X, L);
   }
 
-  const llvm::APSInt* EvaluateAPSInt(BinaryOperator::Opcode Op,
+  const llvm::APSInt* evalAPSInt(BinaryOperator::Opcode Op,
                                      const llvm::APSInt& V1,
                                      const llvm::APSInt& V2);
 

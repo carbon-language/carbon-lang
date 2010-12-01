@@ -48,7 +48,7 @@ public:
     return &x;
   }
   
-  virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
+  virtual bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
   virtual void PreVisitCallExpr(CheckerContext &C, const CallExpr *CE);
 
 private:
@@ -62,7 +62,7 @@ void clang::RegisterChrootChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new ChrootChecker());
 }
 
-bool ChrootChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
+bool ChrootChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);

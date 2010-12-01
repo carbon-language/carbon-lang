@@ -89,7 +89,7 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
     // FIXME: Do more checking and actual emit an error. At least performing
     // the cast avoids some assertion failures elsewhere.
     SValBuilder &svalBuilder = C.getSValBuilder();
-    V = svalBuilder.EvalCast(V, expectedResultTy, actualResultTy);
+    V = svalBuilder.evalCast(V, expectedResultTy, actualResultTy);
     C.GenerateNode(state->BindExpr(CE, V));
   }
 }

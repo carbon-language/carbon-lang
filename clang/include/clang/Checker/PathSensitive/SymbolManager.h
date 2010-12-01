@@ -458,7 +458,7 @@ public:
 
   /// isDead - Returns whether or not a symbol has been confirmed dead. This
   ///  should only be called once all marking of dead symbols has completed.
-  ///  (For checkers, this means only in the EvalDeadSymbols callback.)
+  ///  (For checkers, this means only in the evalDeadSymbols callback.)
   bool isDead(SymbolRef sym) const {
     return TheDead.count(sym);
   }

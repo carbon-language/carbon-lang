@@ -227,7 +227,7 @@ public:
   /// For DerivedToBase casts, create a CXXBaseObjectRegion and return it.
   virtual SVal evalDerivedToBase(SVal derived, QualType basePtrType);
 
-  SVal EvalBinOp(BinaryOperator::Opcode Op,Loc L, NonLoc R, QualType resultTy);
+  SVal evalBinOp(BinaryOperator::Opcode Op,Loc L, NonLoc R, QualType resultTy);
 
   Store getInitialStore(const LocationContext *InitLoc) {
     return RBFactory.getEmptyMap().getRoot();
@@ -819,7 +819,7 @@ SVal RegionStoreManager::evalDerivedToBase(SVal derived, QualType basePtrType) {
 // Pointer arithmetic.
 //===----------------------------------------------------------------------===//
 
-SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
+SVal RegionStoreManager::evalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
                                    QualType resultTy) {
   // Assume the base location is MemRegionVal.
   if (!isa<loc::MemRegionVal>(L))
@@ -1307,7 +1307,7 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
           if (const IntegerLiteral *IL =
               dyn_cast<IntegerLiteral>(Init->IgnoreParenCasts())) {
             const nonloc::ConcreteInt &V = ValMgr.makeIntVal(IL);
-            return ValMgr.getSValBuilder().EvalCast(V, Init->getType(),
+            return ValMgr.getSValBuilder().evalCast(V, Init->getType(),
                                                     IL->getType());
           }
       }

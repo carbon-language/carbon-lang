@@ -101,7 +101,7 @@ static void CheckOpen(CheckerContext &C, UnixAPIChecker &UC,
   NonLoc ocreateFlag =
     cast<NonLoc>(C.getValueManager().makeIntVal(UC.Val_O_CREAT.getValue(),
                                                 oflagsEx->getType()));
-  SVal maskedFlagsUC = C.getSValBuilder().EvalBinOpNN(state, BO_And,
+  SVal maskedFlagsUC = C.getSValBuilder().evalBinOpNN(state, BO_And,
                                                       oflags, ocreateFlag,
                                                       oflagsEx->getType());
   if (maskedFlagsUC.isUnknownOrUndef())

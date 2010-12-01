@@ -142,7 +142,7 @@ BasicValueFactory::getLazyCompoundValData(const void *store,
 }
 
 const llvm::APSInt*
-BasicValueFactory::EvaluateAPSInt(BinaryOperator::Opcode Op,
+BasicValueFactory::evalAPSInt(BinaryOperator::Opcode Op,
                              const llvm::APSInt& V1, const llvm::APSInt& V2) {
 
   switch (Op) {

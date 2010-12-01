@@ -19,23 +19,23 @@ using namespace clang;
 namespace {
 class SimpleSValBuilder : public SValBuilder {
 protected:
-  virtual SVal EvalCastNL(NonLoc val, QualType castTy);
-  virtual SVal EvalCastL(Loc val, QualType castTy);
+  virtual SVal evalCastNL(NonLoc val, QualType castTy);
+  virtual SVal evalCastL(Loc val, QualType castTy);
 
 public:
   SimpleSValBuilder(ValueManager &valMgr) : SValBuilder(valMgr) {}
   virtual ~SimpleSValBuilder() {}
 
-  virtual SVal EvalMinus(NonLoc val);
-  virtual SVal EvalComplement(NonLoc val);
-  virtual SVal EvalBinOpNN(const GRState *state, BinaryOperator::Opcode op,
+  virtual SVal evalMinus(NonLoc val);
+  virtual SVal evalComplement(NonLoc val);
+  virtual SVal evalBinOpNN(const GRState *state, BinaryOperator::Opcode op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy);
-  virtual SVal EvalBinOpLL(const GRState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLL(const GRState *state, BinaryOperator::Opcode op,
                            Loc lhs, Loc rhs, QualType resultTy);
-  virtual SVal EvalBinOpLN(const GRState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLN(const GRState *state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy);
 
-  /// getKnownValue - Evaluates a given SVal. If the SVal has only one possible
+  /// getKnownValue - evaluates a given SVal. If the SVal has only one possible
   ///  (integer) value, that value is returned. Otherwise, returns NULL.
   virtual const llvm::APSInt *getKnownValue(const GRState *state, SVal V);
   
@@ -52,7 +52,7 @@ SValBuilder *clang::createSimpleSValBuilder(ValueManager &valMgr) {
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-SVal SimpleSValBuilder::EvalCastNL(NonLoc val, QualType castTy) {
+SVal SimpleSValBuilder::evalCastNL(NonLoc val, QualType castTy) {
 
   bool isLocType = Loc::IsLocType(castTy);
 
@@ -104,7 +104,7 @@ SVal SimpleSValBuilder::EvalCastNL(NonLoc val, QualType castTy) {
     return ValMgr.makeIntVal(i);
 }
 
-SVal SimpleSValBuilder::EvalCastL(Loc val, QualType castTy) {
+SVal SimpleSValBuilder::evalCastL(Loc val, QualType castTy) {
 
   // Casts from pointers -> pointers, just return the lval.
   //
@@ -142,7 +142,7 @@ SVal SimpleSValBuilder::EvalCastL(Loc val, QualType castTy) {
 // Transfer function for unary operators.
 //===----------------------------------------------------------------------===//
 
-SVal SimpleSValBuilder::EvalMinus(NonLoc val) {
+SVal SimpleSValBuilder::evalMinus(NonLoc val) {
   switch (val.getSubKind()) {
   case nonloc::ConcreteIntKind:
     return cast<nonloc::ConcreteInt>(val).evalMinus(ValMgr);
@@ -151,7 +151,7 @@ SVal SimpleSValBuilder::EvalMinus(NonLoc val) {
   }
 }
 
-SVal SimpleSValBuilder::EvalComplement(NonLoc X) {
+SVal SimpleSValBuilder::evalComplement(NonLoc X) {
   switch (X.getSubKind()) {
   case nonloc::ConcreteIntKind:
     return cast<nonloc::ConcreteInt>(X).evalComplement(ValMgr);
@@ -254,11 +254,11 @@ SVal SimpleSValBuilder::MakeSymIntVal(const SymExpr *LHS,
   }
 
   // Idempotent ops (like a*1) can still change the type of an expression.
-  // Wrap the LHS up in a NonLoc again and let EvalCastNL do the dirty work.
+  // Wrap the LHS up in a NonLoc again and let evalCastNL do the dirty work.
   if (isIdempotent) {
     if (SymbolRef LHSSym = dyn_cast<SymbolData>(LHS))
-      return EvalCastNL(nonloc::SymbolVal(LHSSym), resultTy);
-    return EvalCastNL(nonloc::SymExprVal(LHS), resultTy);
+      return evalCastNL(nonloc::SymbolVal(LHSSym), resultTy);
+    return evalCastNL(nonloc::SymExprVal(LHS), resultTy);
   }
 
   // If we reach this point, the expression cannot be simplified.
@@ -266,7 +266,7 @@ SVal SimpleSValBuilder::MakeSymIntVal(const SymExpr *LHS,
   return ValMgr.makeNonLoc(LHS, op, RHS, resultTy);
 }
 
-SVal SimpleSValBuilder::EvalBinOpNN(const GRState *state,
+SVal SimpleSValBuilder::evalBinOpNN(const GRState *state,
                                   BinaryOperator::Opcode op,
                                   NonLoc lhs, NonLoc rhs,
                                   QualType resultTy)  {
@@ -288,7 +288,7 @@ SVal SimpleSValBuilder::EvalBinOpNN(const GRState *state,
         return ValMgr.makeIntVal(0, resultTy);
       case BO_Or:
       case BO_And:
-        return EvalCastNL(lhs, resultTy);
+        return evalCastNL(lhs, resultTy);
     }
 
   while (1) {
@@ -299,7 +299,7 @@ SVal SimpleSValBuilder::EvalBinOpNN(const GRState *state,
       Loc lhsL = cast<nonloc::LocAsInteger>(lhs).getLoc();
       switch (rhs.getSubKind()) {
         case nonloc::LocAsIntegerKind:
-          return EvalBinOpLL(state, op, lhsL,
+          return evalBinOpLL(state, op, lhsL,
                              cast<nonloc::LocAsInteger>(rhs).getLoc(),
                              resultTy);
         case nonloc::ConcreteIntKind: {
@@ -308,7 +308,7 @@ SVal SimpleSValBuilder::EvalBinOpNN(const GRState *state,
           llvm::APSInt i = cast<nonloc::ConcreteInt>(rhs).getValue();
           i.setIsUnsigned(true);
           i.extOrTrunc(Ctx.getTypeSize(Ctx.VoidPtrTy));
-          return EvalBinOpLL(state, op, lhsL, ValMgr.makeLoc(i), resultTy);
+          return evalBinOpLL(state, op, lhsL, ValMgr.makeLoc(i), resultTy);
         }
         default:
           switch (op) {
@@ -402,9 +402,9 @@ SVal SimpleSValBuilder::EvalBinOpNN(const GRState *state,
 
           const llvm::APSInt *newRHS;
           if (lop == op)
-            newRHS = BVF.EvaluateAPSInt(BO_Add, first, second);
+            newRHS = BVF.evalAPSInt(BO_Add, first, second);
           else
-            newRHS = BVF.EvaluateAPSInt(BO_Sub, first, second);
+            newRHS = BVF.evalAPSInt(BO_Sub, first, second);
           return MakeSymIntVal(symIntExpr->getLHS(), lop, *newRHS, resultTy);
         }
       }
@@ -515,13 +515,13 @@ SVal SimpleSValBuilder::EvalBinOpNN(const GRState *state,
 }
 
 // FIXME: all this logic will change if/when we have MemRegion::getLocation().
-SVal SimpleSValBuilder::EvalBinOpLL(const GRState *state,
+SVal SimpleSValBuilder::evalBinOpLL(const GRState *state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, Loc rhs,
                                   QualType resultTy) {
   // Only comparisons and subtractions are valid operations on two pointers.
   // See [C99 6.5.5 through 6.5.14] or [C++0x 5.6 through 5.15].
-  // However, if a pointer is casted to an integer, EvalBinOpNN may end up
+  // However, if a pointer is casted to an integer, evalBinOpNN may end up
   // calling this function with another operation (PR7527). We don't attempt to
   // model this for now, but it could be useful, particularly when the
   // "location" is actually an integer value that's been passed through a void*.
@@ -559,7 +559,7 @@ SVal SimpleSValBuilder::EvalBinOpLL(const GRState *state,
       default:
         break;
       case BO_Sub:
-        return EvalCastL(lhs, resultTy);
+        return evalCastL(lhs, resultTy);
       case BO_EQ:
       case BO_LE:
       case BO_LT:
@@ -593,9 +593,9 @@ SVal SimpleSValBuilder::EvalBinOpLL(const GRState *state,
     // If both operands are constants, just perform the operation.
     if (loc::ConcreteInt *rInt = dyn_cast<loc::ConcreteInt>(&rhs)) {
       BasicValueFactory &BVF = ValMgr.getBasicValueFactory();
-      SVal ResultVal = cast<loc::ConcreteInt>(lhs).EvalBinOp(BVF, op, *rInt);
+      SVal ResultVal = cast<loc::ConcreteInt>(lhs).evalBinOp(BVF, op, *rInt);
       if (Loc *Result = dyn_cast<Loc>(&ResultVal))
-        return EvalCastL(*Result, resultTy);
+        return evalCastL(*Result, resultTy);
       else
         return UnknownVal();
     }
@@ -640,7 +640,7 @@ SVal SimpleSValBuilder::EvalBinOpLL(const GRState *state,
         default:
           break;
         case BO_Sub:
-          return EvalCastL(lhs, resultTy);
+          return evalCastL(lhs, resultTy);
         case BO_EQ:
         case BO_LT:
         case BO_LE:
@@ -705,7 +705,7 @@ SVal SimpleSValBuilder::EvalBinOpLL(const GRState *state,
         NonLoc *LeftIndex = dyn_cast<NonLoc>(&LeftIndexVal);
         if (!LeftIndex)
           return UnknownVal();
-        LeftIndexVal = EvalCastNL(*LeftIndex, resultTy);
+        LeftIndexVal = evalCastNL(*LeftIndex, resultTy);
         LeftIndex = dyn_cast<NonLoc>(&LeftIndexVal);
         if (!LeftIndex)
           return UnknownVal();
@@ -715,14 +715,14 @@ SVal SimpleSValBuilder::EvalBinOpLL(const GRState *state,
         NonLoc *RightIndex = dyn_cast<NonLoc>(&RightIndexVal);
         if (!RightIndex)
           return UnknownVal();
-        RightIndexVal = EvalCastNL(*RightIndex, resultTy);
+        RightIndexVal = evalCastNL(*RightIndex, resultTy);
         RightIndex = dyn_cast<NonLoc>(&RightIndexVal);
         if (!RightIndex)
           return UnknownVal();
 
         // Actually perform the operation.
-        // EvalBinOpNN expects the two indexes to already be the right type.
-        return EvalBinOpNN(state, op, *LeftIndex, *RightIndex, resultTy);
+        // evalBinOpNN expects the two indexes to already be the right type.
+        return evalBinOpNN(state, op, *LeftIndex, *RightIndex, resultTy);
       }
 
       // If the element indexes aren't comparable, see if the raw offsets are.
@@ -812,7 +812,7 @@ SVal SimpleSValBuilder::EvalBinOpLL(const GRState *state,
   }
 }
 
-SVal SimpleSValBuilder::EvalBinOpLN(const GRState *state,
+SVal SimpleSValBuilder::evalBinOpLN(const GRState *state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, NonLoc rhs, QualType resultTy) {
   // Special case: 'rhs' is an integer that has the same width as a pointer and
@@ -829,7 +829,7 @@ SVal SimpleSValBuilder::EvalBinOpLN(const GRState *state,
         if (x->isSigned())
           x = &ValMgr.getBasicValueFactory().getValue(*x, true);
 
-        return EvalBinOpLL(state, op, lhs, loc::ConcreteInt(*x), resultTy);
+        return evalBinOpLL(state, op, lhs, loc::ConcreteInt(*x), resultTy);
       }
     }
   }
@@ -868,7 +868,7 @@ SVal SimpleSValBuilder::EvalBinOpLN(const GRState *state,
   
 
   // Delegate remaining pointer arithmetic to the StoreManager.
-  return state->getStateManager().getStoreManager().EvalBinOp(op, lhs,
+  return state->getStateManager().getStoreManager().evalBinOp(op, lhs,
                                                               rhs, resultTy);
 }
 

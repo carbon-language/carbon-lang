@@ -207,20 +207,20 @@ private:
       _PostVisit(C, S);
   }
 
-  bool GR_EvalNilReceiver(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
+  bool GR_evalNilReceiver(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
                           GRExprEngine &Eng, const ObjCMessageExpr *ME,
                           ExplodedNode *Pred, const GRState *state, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, ProgramPoint::PostStmtKind,
                      0, ME, state);
-    return EvalNilReceiver(C, ME);
+    return evalNilReceiver(C, ME);
   }
 
-  bool GR_EvalCallExpr(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
+  bool GR_evalCallExpr(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
                        GRExprEngine &Eng, const CallExpr *CE,
                        ExplodedNode *Pred, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, ProgramPoint::PostStmtKind,
                      0, CE);
-    return EvalCallExpr(C, CE);
+    return evalCallExpr(C, CE);
   }
 
   // FIXME: Remove the 'tag' option.
@@ -250,12 +250,12 @@ private:
     VisitLocation(C, S, location);
   }
 
-  void GR_EvalDeadSymbols(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
+  void GR_evalDeadSymbols(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
                           GRExprEngine &Eng, const Stmt *S, ExplodedNode *Pred,
                           SymbolReaper &SymReaper, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, 
                      ProgramPoint::PostPurgeDeadSymbolsKind, 0, S);
-    EvalDeadSymbols(C, SymReaper);
+    evalDeadSymbols(C, SymReaper);
   }
 
 public:
@@ -265,8 +265,8 @@ public:
   virtual void VisitLocation(CheckerContext &C, const Stmt *S, SVal location) {}
   virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
                             SVal location, SVal val) {}
-  virtual void EvalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper) {}
-  virtual void EvalEndPath(GREndPathNodeBuilder &B, void *tag,
+  virtual void evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper) {}
+  virtual void evalEndPath(GREndPathNodeBuilder &B, void *tag,
                            GRExprEngine &Eng) {}
 
   virtual void MarkLiveSymbols(const GRState *state, SymbolReaper &SymReaper) {}
@@ -275,15 +275,15 @@ public:
                                     GRExprEngine &Eng,
                                     const Stmt *Condition, void *tag) {}
 
-  virtual bool EvalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME) {
+  virtual bool evalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME) {
     return false;
   }
 
-  virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
+  virtual bool evalCallExpr(CheckerContext &C, const CallExpr *CE) {
     return false;
   }
 
-  virtual const GRState *EvalAssume(const GRState *state, SVal Cond, 
+  virtual const GRState *evalAssume(const GRState *state, SVal Cond, 
                                     bool Assumption, bool *respondsToCallback) {
     *respondsToCallback = false;
     return state;

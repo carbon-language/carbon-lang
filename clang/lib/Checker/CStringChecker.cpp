@@ -29,10 +29,10 @@ public:
   {}
   static void *getTag() { static int tag; return &tag; }
 
-  bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
+  bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
   void PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS);
   void MarkLiveSymbols(const GRState *state, SymbolReaper &SR);
-  void EvalDeadSymbols(CheckerContext &C, SymbolReaper &SR);
+  void evalDeadSymbols(CheckerContext &C, SymbolReaper &SR);
   bool WantsRegionChangeUpdate(const GRState *state);
 
   const GRState *EvalRegionChanges(const GRState *state,
@@ -42,20 +42,20 @@ public:
 
   typedef void (CStringChecker::*FnCheck)(CheckerContext &, const CallExpr *);
 
-  void EvalMemcpy(CheckerContext &C, const CallExpr *CE);
-  void EvalMemmove(CheckerContext &C, const CallExpr *CE);
-  void EvalBcopy(CheckerContext &C, const CallExpr *CE);
-  void EvalCopyCommon(CheckerContext &C, const GRState *state,
+  void evalMemcpy(CheckerContext &C, const CallExpr *CE);
+  void evalMemmove(CheckerContext &C, const CallExpr *CE);
+  void evalBcopy(CheckerContext &C, const CallExpr *CE);
+  void evalCopyCommon(CheckerContext &C, const GRState *state,
                       const Expr *Size, const Expr *Source, const Expr *Dest,
                       bool Restricted = false);
 
-  void EvalMemcmp(CheckerContext &C, const CallExpr *CE);
+  void evalMemcmp(CheckerContext &C, const CallExpr *CE);
 
-  void EvalStrlen(CheckerContext &C, const CallExpr *CE);
+  void evalStrlen(CheckerContext &C, const CallExpr *CE);
 
-  void EvalStrcpy(CheckerContext &C, const CallExpr *CE);
-  void EvalStpcpy(CheckerContext &C, const CallExpr *CE);
-  void EvalStrcpyCommon(CheckerContext &C, const CallExpr *CE, bool ReturnEnd);
+  void evalStrcpy(CheckerContext &C, const CallExpr *CE);
+  void evalStpcpy(CheckerContext &C, const CallExpr *CE);
+  void evalStrcpyCommon(CheckerContext &C, const CallExpr *CE, bool ReturnEnd);
 
   // Utility methods
   std::pair<const GRState*, const GRState*>
@@ -125,7 +125,7 @@ CStringChecker::AssumeZero(CheckerContext &C, const GRState *state, SVal V,
   SValBuilder &SV = ValMgr.getSValBuilder();
 
   DefinedOrUnknownSVal Zero = ValMgr.makeZeroVal(Ty);
-  DefinedOrUnknownSVal ValIsZero = SV.EvalEQ(state, *Val, Zero);
+  DefinedOrUnknownSVal ValIsZero = SV.evalEQ(state, *Val, Zero);
 
   return state->Assume(ValIsZero);
 }
@@ -265,13 +265,13 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
 
   // Compute the offset of the last element to be accessed: size-1.
   NonLoc One = cast<NonLoc>(VM.makeIntVal(1, SizeTy));
-  NonLoc LastOffset = cast<NonLoc>(SV.EvalBinOpNN(state, BO_Sub,
+  NonLoc LastOffset = cast<NonLoc>(SV.evalBinOpNN(state, BO_Sub,
                                                   *Length, One, SizeTy));
 
   // Check that the first buffer is sufficently long.
-  SVal BufStart = SV.EvalCast(BufVal, PtrTy, FirstBuf->getType());
+  SVal BufStart = SV.evalCast(BufVal, PtrTy, FirstBuf->getType());
   if (Loc *BufLoc = dyn_cast<Loc>(&BufStart)) {
-    SVal BufEnd = SV.EvalBinOpLN(state, BO_Add, *BufLoc,
+    SVal BufEnd = SV.evalBinOpLN(state, BO_Add, *BufLoc,
                                  LastOffset, PtrTy);
     state = CheckLocation(C, state, FirstBuf, BufEnd, FirstIsDestination);
 
@@ -287,9 +287,9 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
     if (!state)
       return NULL;
 
-    BufStart = SV.EvalCast(BufVal, PtrTy, SecondBuf->getType());
+    BufStart = SV.evalCast(BufVal, PtrTy, SecondBuf->getType());
     if (Loc *BufLoc = dyn_cast<Loc>(&BufStart)) {
-      SVal BufEnd = SV.EvalBinOpLN(state, BO_Add, *BufLoc,
+      SVal BufEnd = SV.evalBinOpLN(state, BO_Add, *BufLoc,
                                    LastOffset, PtrTy);
       state = CheckLocation(C, state, SecondBuf, BufEnd);
     }
@@ -330,7 +330,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
     return state;
 
   // Are the two values the same?
-  DefinedOrUnknownSVal EqualTest = SV.EvalEQ(state, *FirstLoc, *SecondLoc);
+  DefinedOrUnknownSVal EqualTest = SV.evalEQ(state, *FirstLoc, *SecondLoc);
   llvm::tie(stateTrue, stateFalse) = state->Assume(EqualTest);
 
   if (stateTrue && !stateFalse) {
@@ -345,7 +345,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
 
   // Which value comes first?
   QualType CmpTy = Ctx.IntTy;
-  SVal Reverse = SV.EvalBinOpLL(state, BO_GT,
+  SVal Reverse = SV.evalBinOpLL(state, BO_GT,
                                 *FirstLoc, *SecondLoc, CmpTy);
   DefinedOrUnknownSVal *ReverseTest = dyn_cast<DefinedOrUnknownSVal>(&Reverse);
   if (!ReverseTest)
@@ -379,20 +379,20 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
   // Convert the first buffer's start address to char*.
   // Bail out if the cast fails.
   QualType CharPtrTy = Ctx.getPointerType(Ctx.CharTy);
-  SVal FirstStart = SV.EvalCast(*FirstLoc, CharPtrTy, First->getType());
+  SVal FirstStart = SV.evalCast(*FirstLoc, CharPtrTy, First->getType());
   Loc *FirstStartLoc = dyn_cast<Loc>(&FirstStart);
   if (!FirstStartLoc)
     return state;
 
   // Compute the end of the first buffer. Bail out if THAT fails.
-  SVal FirstEnd = SV.EvalBinOpLN(state, BO_Add,
+  SVal FirstEnd = SV.evalBinOpLN(state, BO_Add,
                                  *FirstStartLoc, *Length, CharPtrTy);
   Loc *FirstEndLoc = dyn_cast<Loc>(&FirstEnd);
   if (!FirstEndLoc)
     return state;
 
   // Is the end of the first buffer past the start of the second buffer?
-  SVal Overlap = SV.EvalBinOpLL(state, BO_GT,
+  SVal Overlap = SV.evalBinOpLL(state, BO_GT,
                                 *FirstEndLoc, *SecondLoc, CmpTy);
   DefinedOrUnknownSVal *OverlapTest = dyn_cast<DefinedOrUnknownSVal>(&Overlap);
   if (!OverlapTest)
@@ -647,10 +647,10 @@ bool CStringChecker::SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
 }
 
 //===----------------------------------------------------------------------===//
-// Evaluation of individual function calls.
+// evaluation of individual function calls.
 //===----------------------------------------------------------------------===//
 
-void CStringChecker::EvalCopyCommon(CheckerContext &C, const GRState *state,
+void CStringChecker::evalCopyCommon(CheckerContext &C, const GRState *state,
                                     const Expr *Size, const Expr *Dest,
                                     const Expr *Source, bool Restricted) {
   // See if the size argument is zero.
@@ -685,30 +685,30 @@ void CStringChecker::EvalCopyCommon(CheckerContext &C, const GRState *state,
 }
 
 
-void CStringChecker::EvalMemcpy(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalMemcpy(CheckerContext &C, const CallExpr *CE) {
   // void *memcpy(void *restrict dst, const void *restrict src, size_t n);
   // The return value is the address of the destination buffer.
   const Expr *Dest = CE->getArg(0);
   const GRState *state = C.getState();
   state = state->BindExpr(CE, state->getSVal(Dest));
-  EvalCopyCommon(C, state, CE->getArg(2), Dest, CE->getArg(1), true);
+  evalCopyCommon(C, state, CE->getArg(2), Dest, CE->getArg(1), true);
 }
 
-void CStringChecker::EvalMemmove(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalMemmove(CheckerContext &C, const CallExpr *CE) {
   // void *memmove(void *dst, const void *src, size_t n);
   // The return value is the address of the destination buffer.
   const Expr *Dest = CE->getArg(0);
   const GRState *state = C.getState();
   state = state->BindExpr(CE, state->getSVal(Dest));
-  EvalCopyCommon(C, state, CE->getArg(2), Dest, CE->getArg(1));
+  evalCopyCommon(C, state, CE->getArg(2), Dest, CE->getArg(1));
 }
 
-void CStringChecker::EvalBcopy(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalBcopy(CheckerContext &C, const CallExpr *CE) {
   // void bcopy(const void *src, void *dst, size_t n);
-  EvalCopyCommon(C, C.getState(), CE->getArg(2), CE->getArg(1), CE->getArg(0));
+  evalCopyCommon(C, C.getState(), CE->getArg(2), CE->getArg(1), CE->getArg(0));
 }
 
-void CStringChecker::EvalMemcmp(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) {
   // int memcmp(const void *s1, const void *s2, size_t n);
   const Expr *Left = CE->getArg(0);
   const Expr *Right = CE->getArg(1);
@@ -744,7 +744,7 @@ void CStringChecker::EvalMemcmp(CheckerContext &C, const CallExpr *CE) {
     DefinedOrUnknownSVal RV = cast<DefinedOrUnknownSVal>(state->getSVal(Right));
 
     // See if they are the same.
-    DefinedOrUnknownSVal SameBuf = SV.EvalEQ(state, LV, RV);
+    DefinedOrUnknownSVal SameBuf = SV.evalEQ(state, LV, RV);
     const GRState *StSameBuf, *StNotSameBuf;
     llvm::tie(StSameBuf, StNotSameBuf) = state->Assume(SameBuf);
 
@@ -775,7 +775,7 @@ void CStringChecker::EvalMemcmp(CheckerContext &C, const CallExpr *CE) {
   }
 }
 
-void CStringChecker::EvalStrlen(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalStrlen(CheckerContext &C, const CallExpr *CE) {
   // size_t strlen(const char *s);
   const GRState *state = C.getState();
   const Expr *Arg = CE->getArg(0);
@@ -806,17 +806,17 @@ void CStringChecker::EvalStrlen(CheckerContext &C, const CallExpr *CE) {
   }
 }
 
-void CStringChecker::EvalStrcpy(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalStrcpy(CheckerContext &C, const CallExpr *CE) {
   // char *strcpy(char *restrict dst, const char *restrict src);
-  EvalStrcpyCommon(C, CE, /* ReturnEnd = */ false);
+  evalStrcpyCommon(C, CE, /* ReturnEnd = */ false);
 }
 
-void CStringChecker::EvalStpcpy(CheckerContext &C, const CallExpr *CE) {
+void CStringChecker::evalStpcpy(CheckerContext &C, const CallExpr *CE) {
   // char *stpcpy(char *restrict dst, const char *restrict src);
-  EvalStrcpyCommon(C, CE, /* ReturnEnd = */ true);
+  evalStrcpyCommon(C, CE, /* ReturnEnd = */ true);
 }
 
-void CStringChecker::EvalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
+void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
                                       bool ReturnEnd) {
   const GRState *state = C.getState();
 
@@ -852,7 +852,7 @@ void CStringChecker::EvalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
     if (NonLoc *KnownStrLen = dyn_cast<NonLoc>(&StrLen)) {
       SValBuilder &SV = C.getSValBuilder();
 
-      SVal LastElement = SV.EvalBinOpLN(state, BO_Add,
+      SVal LastElement = SV.evalBinOpLN(state, BO_Add,
                                         *DstRegVal, *KnownStrLen,
                                         Dst->getType());
 
@@ -894,7 +894,7 @@ void CStringChecker::EvalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
 // The driver method, and other Checker callbacks.
 //===----------------------------------------------------------------------===//
 
-bool CStringChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
+bool CStringChecker::evalCallExpr(CheckerContext &C, const CallExpr *CE) {
   // Get the callee.  All the functions we care about are C functions
   // with simple identifiers.
   const GRState *state = C.getState();
@@ -912,22 +912,22 @@ bool CStringChecker::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   if (Name.startswith("__builtin_"))
     Name = Name.substr(10);
 
-  FnCheck EvalFunction = llvm::StringSwitch<FnCheck>(Name)
-    .Cases("memcpy", "__memcpy_chk", &CStringChecker::EvalMemcpy)
-    .Cases("memcmp", "bcmp", &CStringChecker::EvalMemcmp)
-    .Cases("memmove", "__memmove_chk", &CStringChecker::EvalMemmove)
-    .Cases("strcpy", "__strcpy_chk", &CStringChecker::EvalStrcpy)
-    .Cases("stpcpy", "__stpcpy_chk", &CStringChecker::EvalStpcpy)
-    .Case("strlen", &CStringChecker::EvalStrlen)
-    .Case("bcopy", &CStringChecker::EvalBcopy)
+  FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
+    .Cases("memcpy", "__memcpy_chk", &CStringChecker::evalMemcpy)
+    .Cases("memcmp", "bcmp", &CStringChecker::evalMemcmp)
+    .Cases("memmove", "__memmove_chk", &CStringChecker::evalMemmove)
+    .Cases("strcpy", "__strcpy_chk", &CStringChecker::evalStrcpy)
+    .Cases("stpcpy", "__stpcpy_chk", &CStringChecker::evalStpcpy)
+    .Case("strlen", &CStringChecker::evalStrlen)
+    .Case("bcopy", &CStringChecker::evalBcopy)
     .Default(NULL);
 
   // If the callee isn't a string function, let another checker handle it.
-  if (!EvalFunction)
+  if (!evalFunction)
     return false;
 
   // Check and evaluate the call.
-  (this->*EvalFunction)(C, CE);
+  (this->*evalFunction)(C, CE);
   return true;
 }
 
@@ -1034,7 +1034,7 @@ void CStringChecker::MarkLiveSymbols(const GRState *state, SymbolReaper &SR) {
   }
 }
 
-void CStringChecker::EvalDeadSymbols(CheckerContext &C, SymbolReaper &SR) {
+void CStringChecker::evalDeadSymbols(CheckerContext &C, SymbolReaper &SR) {
   if (!SR.hasDeadSymbols())
     return;
 

@@ -22,10 +22,10 @@ namespace {
 class OSAtomicChecker : public Checker {
 public:
   static void *getTag() { static int tag = 0; return &tag; }
-  virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
+  virtual bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
 
 private:
-  bool EvalOSAtomicCompareAndSwap(CheckerContext &C, const CallExpr *CE);
+  bool evalOSAtomicCompareAndSwap(CheckerContext &C, const CallExpr *CE);
 };
 
 }
@@ -34,7 +34,7 @@ void clang::RegisterOSAtomicChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new OSAtomicChecker());
 }
 
-bool OSAtomicChecker::EvalCallExpr(CheckerContext &C,const CallExpr *CE) {
+bool OSAtomicChecker::evalCallExpr(CheckerContext &C,const CallExpr *CE) {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
@@ -52,13 +52,13 @@ bool OSAtomicChecker::EvalCallExpr(CheckerContext &C,const CallExpr *CE) {
   // Check for compare and swap.
   if (FName.startswith("OSAtomicCompareAndSwap") ||
       FName.startswith("objc_atomicCompareAndSwap"))
-    return EvalOSAtomicCompareAndSwap(C, CE);
+    return evalOSAtomicCompareAndSwap(C, CE);
 
   // FIXME: Other atomics.
   return false;
 }
 
-bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C, 
+bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C, 
                                                  const CallExpr *CE) {
   // Not enough arguments to match OSAtomicCompareAndSwap?
   if (CE->getNumArgs() != 3)
@@ -112,7 +112,7 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
       dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
     LoadTy = TR->getValueType();
   }
-  Engine.EvalLoad(Tmp, theValueExpr, C.getPredecessor(), 
+  Engine.evalLoad(Tmp, theValueExpr, C.getPredecessor(), 
                   state, location, OSAtomicLoadTag, LoadTy);
 
   if (Tmp.empty()) {
@@ -145,7 +145,7 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
     SValBuilder &svalBuilder = Engine.getSValBuilder();
 
     // Perform the comparison.
-    DefinedOrUnknownSVal Cmp = svalBuilder.EvalEQ(stateLoad,theValueVal,oldValueVal);
+    DefinedOrUnknownSVal Cmp = svalBuilder.evalEQ(stateLoad,theValueVal,oldValueVal);
 
     const GRState *stateEqual = stateLoad->Assume(Cmp, true);
 
@@ -158,10 +158,10 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
       // Handle implicit value casts.
       if (const TypedRegion *R =
           dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
-        val = svalBuilder.EvalCast(val,R->getValueType(), newValueExpr->getType());
+        val = svalBuilder.evalCast(val,R->getValueType(), newValueExpr->getType());
       }
 
-      Engine.EvalStore(TmpStore, NULL, theValueExpr, N, 
+      Engine.evalStore(TmpStore, NULL, theValueExpr, N, 
                        stateEqual, location, val, OSAtomicStoreTag);
 
       if (TmpStore.empty()) {

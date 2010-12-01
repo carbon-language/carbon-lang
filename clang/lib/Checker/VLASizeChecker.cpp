@@ -110,21 +110,21 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   ValueManager &ValMgr = C.getValueManager();
   SValBuilder &SV = ValMgr.getSValBuilder();
   QualType SizeTy = Ctx.getSizeType();
-  NonLoc ArrayLength = cast<NonLoc>(SV.EvalCast(sizeD, SizeTy, SE->getType()));
+  NonLoc ArrayLength = cast<NonLoc>(SV.evalCast(sizeD, SizeTy, SE->getType()));
 
   // Get the element size.
   CharUnits EleSize = Ctx.getTypeSizeInChars(VLA->getElementType());
   SVal EleSizeVal = ValMgr.makeIntVal(EleSize.getQuantity(), SizeTy);
 
   // Multiply the array length by the element size.
-  SVal ArraySizeVal = SV.EvalBinOpNN(state, BO_Mul, ArrayLength,
+  SVal ArraySizeVal = SV.evalBinOpNN(state, BO_Mul, ArrayLength,
                                      cast<NonLoc>(EleSizeVal), SizeTy);
 
   // Finally, Assume that the array's extent matches the given size.
   const LocationContext *LC = C.getPredecessor()->getLocationContext();
   DefinedOrUnknownSVal Extent = state->getRegion(VD, LC)->getExtent(ValMgr);
   DefinedOrUnknownSVal ArraySize = cast<DefinedOrUnknownSVal>(ArraySizeVal);
-  DefinedOrUnknownSVal SizeIsKnown = SV.EvalEQ(state, Extent, ArraySize);
+  DefinedOrUnknownSVal SizeIsKnown = SV.evalEQ(state, Extent, ArraySize);
   state = state->Assume(SizeIsKnown, true);
 
   // Assume should not fail at this point.
