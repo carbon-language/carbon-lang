@@ -1,4 +1,4 @@
-//===- ARMInstrThumb.td - Thumb support for ARM ---------------------------===//
+//===- ARMInstrThumb.td - Thumb support for ARM ------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -50,9 +50,9 @@ def imm8_255_neg : PatLeaf<(i32 imm), [{
   return Val >= 8 && Val < 256;
 }], imm_neg_XFORM>;
 
-// Break imm's up into two pieces: an immediate + a left shift.
-// This uses thumb_immshifted to match and thumb_immshifted_val and
-// thumb_immshifted_shamt to get the val/shift pieces.
+// Break imm's up into two pieces: an immediate + a left shift. This uses
+// thumb_immshifted to match and thumb_immshifted_val and thumb_immshifted_shamt
+// to get the val/shift pieces.
 def thumb_immshifted : PatLeaf<(imm), [{
   return ARM_AM::isThumbImmShiftedVal((unsigned)N->getZExtValue());
 }]>;
@@ -208,10 +208,11 @@ def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
 
 // Change Processor State is a system instruction -- for disassembly only.
 // The singleton $opt operand contains the following information:
-// opt{4-0} = mode ==> don't care
-// opt{5} = changemode ==> 0 (false for 16-bit Thumb instr)
-// opt{8-6} = AIF from Inst{2-0}
-// opt{10-9} = 1:imod from Inst{4} with 0b10 as enable and 0b11 as disable
+// 
+//   opt{4-0} = mode ==> don't care
+//   opt{5} = changemode ==> 0 (false for 16-bit Thumb instr)
+//   opt{8-6} = AIF from Inst{2-0}
+//   opt{10-9} = 1:imod from Inst{4} with 0b10 as enable and 0b11 as disable
 //
 // The opt{4-0} and opt{5} sub-fields are to accommodate 32-bit Thumb and ARM
 // CPS which has more options.
@@ -351,9 +352,9 @@ def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
   let Inst{7-0} = regs{7-0};
 }
 
-// All calls clobber the non-callee saved registers. SP is marked as
-// a use to prevent stack-pointer assignments that appear immediately
-// before calls from potentially appearing dead.
+// All calls clobber the non-callee saved registers. SP is marked as a use to
+// prevent stack-pointer assignments that appear immediately before calls from
+// potentially appearing dead.
 let isCall = 1,
   // On non-Darwin platforms R9 is callee-saved.
   Defs = [R0,  R1,  R2,  R3,  R12, LR,
@@ -435,12 +436,11 @@ let isCall = 1,
               Requires<[IsThumb, IsThumb1Only, IsDarwin]>;
 }
 
-let isBranch = 1, isTerminator = 1 in {
-  let isBarrier = 1 in {
-    let isPredicable = 1 in
-    def tB   : T1I<(outs), (ins brtarget:$target), IIC_Br,
-                   "b\t$target", [(br bb:$target)]>,
-               T1Encoding<{1,1,1,0,0,?}>;
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
+  let isPredicable = 1 in
+  def tB   : T1I<(outs), (ins brtarget:$target), IIC_Br,
+                 "b\t$target", [(br bb:$target)]>,
+             T1Encoding<{1,1,1,0,0,?}>;
 
   // Far jump
   let Defs = [LR] in
@@ -452,7 +452,6 @@ let isBranch = 1, isTerminator = 1 in {
                       Size2Bytes, IIC_Br,
                       [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]> {
     list<Predicate> Predicates = [IsThumb, IsThumb1Only];
-  }
   }
 }
 
@@ -857,10 +856,11 @@ def tBIC :                      // A8.6.20
 let isCompare = 1, Defs = [CPSR] in {
 //FIXME: Disable CMN, as CCodes are backwards from compare expectations
 //       Compare-to-zero still works out, just not the relationals
-//def tCMN : T1pI<(outs), (ins tGPR:$lhs, tGPR:$rhs), IIC_iCMPr,
-//                "cmn", "\t$lhs, $rhs",
-//                [(ARMcmp tGPR:$lhs, (ineg tGPR:$rhs))]>,
-//           T1DataProcessing<0b1011>;
+//def tCMN :                     // A8.6.33
+//  T1pIDPEncode<0b1011, (outs), (ins tGPR:$lhs, tGPR:$rhs),
+//               IIC_iCMPr,
+//               "cmn", "\t$lhs, $rhs",
+//               [(ARMcmp tGPR:$lhs, (ineg tGPR:$rhs))]>;
 
 def tCMNz :                     // A8.6.33
   T1pIDPEncode<0b1011, (outs), (ins tGPR:$Rn, tGPR:$Rm),
@@ -1009,7 +1009,7 @@ def tMOVgpr2gpr  : T1I<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
                    T1Special<{1,0,?,?}>;
 } // neverHasSideEffects
 
-// multiply register
+// Multiply register
 let isCommutable = 1 in
 def tMUL :                      // A8.6.105 T1
   T1sItDPEncode<0b1101, (outs tGPR:$Rdn), (ins tGPR:$Rn, tGPR:$Rm),
@@ -1214,18 +1214,20 @@ def tTPsoft : TIx2<0b11110, 0b11, 1, (outs), (ins), IIC_Br,
   let Inst = 0xf7fffffe;
 }
 
+//===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics
-//   eh_sjlj_setjmp() is an instruction sequence to store the return
-//   address and save #0 in R0 for the non-longjmp case.
-//   Since by its nature we may be coming from some other function to get
-//   here, and we're using the stack frame for the containing function to
-//   save/restore registers, we can't keep anything live in regs across
-//   the eh_sjlj_setjmp(), else it will almost certainly have been tromped upon
-//   when we get here from a longjmp(). We force everthing out of registers
-//   except for our own input by listing the relevant registers in Defs. By
-//   doing so, we also cause the prologue/epilogue code to actively preserve
-//   all of the callee-saved resgisters, which is exactly what we want.
-//   $val is a scratch register for our use.
+// 
+
+// eh_sjlj_setjmp() is an instruction sequence to store the return address and
+// save #0 in R0 for the non-longjmp case.  Since by its nature we may be coming
+// from some other function to get here, and we're using the stack frame for the
+// containing function to save/restore registers, we can't keep anything live in
+// regs across the eh_sjlj_setjmp(), else it will almost certainly have been
+// tromped upon when we get here from a longjmp(). We force everthing out of
+// registers except for our own input by listing the relevant registers in
+// Defs. By doing so, we also cause the prologue/epilogue code to actively
+// preserve all of the callee-saved resgisters, which is exactly what we want.
+// $val is a scratch register for our use.
 let Defs = [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12 ],
     hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1 in
 def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
@@ -1324,7 +1326,7 @@ def : T1Pat<(i32 imm0_255_comp:$src),
 // scheduling.
 let isReMaterializable = 1 in
 def tLDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
-                   NoItinerary,
+                             NoItinerary,
                [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
                Requires<[IsThumb, IsThumb1Only]>;
