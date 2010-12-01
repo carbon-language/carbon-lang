@@ -34,3 +34,14 @@ A *f(B* b) {
 
 }
 
+// Don't crash on a derived-to-base conversion of an r-value
+// aggregate.
+namespace test3 {
+  struct A {};
+  struct B : A {};
+
+  void foo(A a);
+  void test() {
+    foo(B());
+  }
+}
