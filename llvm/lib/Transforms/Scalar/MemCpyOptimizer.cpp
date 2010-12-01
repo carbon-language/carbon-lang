@@ -814,7 +814,8 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
 
   // Find out what feeds this byval argument.
   Value *ByValArg = CS.getArgument(ArgNo);
-  uint64_t ByValSize = TD->getTypeAllocSize(ByValArg->getType());
+  const Type *ByValTy =cast<PointerType>(ByValArg->getType())->getElementType();
+  uint64_t ByValSize = TD->getTypeAllocSize(ByValTy);
   MemDepResult DepInfo =
     MD->getPointerDependencyFrom(AliasAnalysis::Location(ByValArg, ByValSize),
                                  true, CS.getInstruction(),

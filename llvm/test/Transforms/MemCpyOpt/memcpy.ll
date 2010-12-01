@@ -77,3 +77,26 @@ define void @test4(i8 *%P) {
 
 declare void @test4a(i8* byval align 1)
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+
+%struct.S = type { i128, [4 x i8]}
+
+@sS = external global %struct.S, align 16
+
+declare void @test5a(%struct.S* byval align 16) nounwind ssp
+
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+
+; rdar://8713376 - This memcpy can't be eliminated.
+define i32 @test5(i32 %x) nounwind ssp {
+entry:
+  %y = alloca %struct.S, align 16
+  %tmp = bitcast %struct.S* %y to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp, i8* bitcast (%struct.S* @sS to i8*), i64 32, i32 16, i1 false)
+  %a = getelementptr %struct.S* %y, i64 0, i32 1, i64 0
+  store i8 4, i8* %a
+  call void @test5a(%struct.S* byval align 16 %y)
+  ret i32 0
+  ; CHECK: @test5(
+  ; CHECK: store i8 4
+  ; CHECK: call void @test5a(%struct.S* byval align 16 %y)
+}
