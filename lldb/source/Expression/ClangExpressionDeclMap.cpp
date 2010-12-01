@@ -576,10 +576,11 @@ ClangExpressionDeclMap::DoMaterialize
     {
         ClangExpressionVariable &member (m_struct_members.VariableAtIndex(member_index));
         
-        if (!member.m_parser_vars.get())
-            return false;
+        ClangExpressionVariable *entity = NULL;
         
-        ClangExpressionVariable *entity = m_found_entities.GetVariable(member.m_parser_vars->m_named_decl);
+        if (member.m_parser_vars.get())
+            entity = m_found_entities.GetVariable(member.m_parser_vars->m_named_decl);
+        
         ClangExpressionVariable *persistent_variable = m_persistent_vars->GetVariable(member.m_name);
         
         if (entity)
