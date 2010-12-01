@@ -1,4 +1,4 @@
-//===- ARMInstrFormats.td - ARM Instruction Formats --*- tablegen -*---------=//
+//===- ARMInstrFormats.td - ARM Instruction Formats ----------*- tablegen -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -71,7 +71,7 @@ def NVTBLFrm      : Format<41>;
 
 // Misc flags.
 
-// the instruction has a Rn register operand.
+// The instruction has an Rn register operand.
 // UnaryDP - Indicates this is a unary data processing instruction, i.e.
 // it doesn't have a Rn operand.
 class UnaryDP    { bit isUnaryDataProc = 1; }
@@ -135,7 +135,6 @@ def NeonDomain    : Domain<2>; // Instructions in Neon domain only
 def VFPNeonDomain : Domain<3>; // Instructions in both VFP & Neon domains
 
 //===----------------------------------------------------------------------===//
-
 // ARM special operands.
 //
 
@@ -185,7 +184,6 @@ def neg_zero : Operand<i32> {
 }
 
 //===----------------------------------------------------------------------===//
-
 // ARM Instruction templates.
 //
 
@@ -754,11 +752,8 @@ class ARMV6Pat<dag pattern, dag result> : Pat<pattern, result> {
 }
 
 //===----------------------------------------------------------------------===//
-//
 // Thumb Instruction Format Definitions.
 //
-
-// TI - Thumb instruction.
 
 class ThumbI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
              InstrItinClass itin, string asm, string cstr, list<dag> pattern>
@@ -770,6 +765,7 @@ class ThumbI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   list<Predicate> Predicates = [IsThumb];
 }
 
+// TI - Thumb instruction.
 class TI<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern>
   : ThumbI<oops, iops, AddrModeNone, Size2Bytes, itin, asm, "", pattern>;
 
@@ -1297,8 +1293,8 @@ class ASuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
   let Inst{4}     = opcod5;
 }
 
-// Single precision unary, if no NEON
-// Same as ASuI except not available if NEON is enabled
+// Single precision unary, if no NEON. Same as ASuI except not available if
+// NEON is enabled.
 class ASuIn<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
             bit opcod5, dag oops, dag iops, InstrItinClass itin, string opc,
             string asm, list<dag> pattern>
@@ -1332,8 +1328,8 @@ class ASbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops, dag iops,
   let Inst{4}     = op4;
 }
 
-// Single precision binary, if no NEON
-// Same as ASbI except not available if NEON is enabled
+// Single precision binary, if no NEON. Same as ASbI except not available if
+// NEON is enabled.
 class ASbIn<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
             dag iops, InstrItinClass itin, string opc, string asm,
             list<dag> pattern>
