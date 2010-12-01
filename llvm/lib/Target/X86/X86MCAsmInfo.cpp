@@ -67,6 +67,20 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
   SupportsDebugInformation = true;
   DwarfUsesInlineInfoSection = true;
 
+  // Disable debugging information for older targets that do not support
+  // .loc and are broken by regressions in .debug_line entries.
+  if (Triple.getOS() == Triple::Darwin) {
+    switch (Triple.getDarwinMajorNumber()) {
+    case 7:
+    case 8:
+    case 9:
+      SupportsDebugInformation = false;
+      break;
+    default:
+      break;
+    }
+  }
+
   // Exceptions handling
   ExceptionsType = ExceptionHandling::Dwarf;
 }
