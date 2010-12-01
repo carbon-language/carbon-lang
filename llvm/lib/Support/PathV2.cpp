@@ -370,24 +370,6 @@ error_code root_directory(const StringRef &path, StringRef &result) {
   return make_error_code(errc::success);
 }
 
-error_code has_root_name(const Twine &path, bool &result) {
-  SmallString<128> storage;
-  StringRef p = path.toStringRef(storage);
-
-  if (error_code ec = root_name(p, p)) return ec;
-  result = !p.empty();
-  return make_error_code(errc::success);
-}
-
-error_code has_root_directory(const Twine &path, bool &result) {
-  SmallString<128> storage;
-  StringRef p = path.toStringRef(storage);
-
-  if (error_code ec = root_directory(p, p)) return ec;
-  result = !p.empty();
-  return make_error_code(errc::success);
-}
-
 error_code relative_path(const StringRef &path, StringRef &result) {
   StringRef root;
   if (error_code ec = root_path(path, root)) return ec;
@@ -587,6 +569,76 @@ error_code extension(const StringRef &path, StringRef &result) {
     else
       result = StringRef(fname.begin() + pos, fname.size() - pos);
 
+  return make_error_code(errc::success);
+}
+
+error_code has_root_name(const Twine &path, bool &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  if (error_code ec = root_name(p, p)) return ec;
+
+  result = !p.empty();
+  return make_error_code(errc::success);
+}
+
+error_code has_root_directory(const Twine &path, bool &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  if (error_code ec = root_directory(p, p)) return ec;
+
+  result = !p.empty();
+  return make_error_code(errc::success);
+}
+
+error_code has_root_path(const Twine &path, bool &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  if (error_code ec = root_path(p, p)) return ec;
+
+  result = !p.empty();
+  return make_error_code(errc::success);
+}
+
+error_code has_filename(const Twine &path, bool &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  if (error_code ec = filename(p, p)) return ec;
+
+  result = !p.empty();
+  return make_error_code(errc::success);
+}
+
+error_code has_parent_path(const Twine &path, bool &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  if (error_code ec = parent_path(p, p)) return ec;
+
+  result = !p.empty();
+  return make_error_code(errc::success);
+}
+
+error_code has_stem(const Twine &path, bool &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  if (error_code ec = stem(p, p)) return ec;
+
+  result = !p.empty();
+  return make_error_code(errc::success);
+}
+
+error_code has_extension(const Twine &path, bool &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  if (error_code ec = extension(p, p)) return ec;
+
+  result = !p.empty();
   return make_error_code(errc::success);
 }
 

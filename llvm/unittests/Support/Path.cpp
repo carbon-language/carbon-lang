@@ -96,13 +96,21 @@ TEST(Support, Path) {
     }
     outs() << "]\n";
 
+    bool      bres;
     StringRef sfres;
+    TEST_PATH(has_root_path, *i, bres);
     TEST_PATH(root_path, *i, sfres);
+    TEST_PATH(has_root_name, *i, bres);
     TEST_PATH(root_name, *i, sfres);
+    TEST_PATH(has_root_directory, *i, bres);
     TEST_PATH(root_directory, *i, sfres);
+    TEST_PATH(has_parent_path, *i, bres);
     TEST_PATH(parent_path, *i, sfres);
+    TEST_PATH(has_filename, *i, bres);
     TEST_PATH(filename, *i, sfres);
+    TEST_PATH(has_stem, *i, bres);
     TEST_PATH(stem, *i, sfres);
+    TEST_PATH(has_extension, *i, bres);
     TEST_PATH(extension, *i, sfres);
 
     SmallString<16> temp_store;
