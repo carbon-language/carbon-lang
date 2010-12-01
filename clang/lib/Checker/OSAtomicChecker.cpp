@@ -142,10 +142,10 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
     DefinedOrUnknownSVal oldValueVal =
       cast<DefinedOrUnknownSVal>(oldValueVal_untested);
 
-    SValuator &SVator = Engine.getSValuator();
+    SValBuilder &svalBuilder = Engine.getSValBuilder();
 
     // Perform the comparison.
-    DefinedOrUnknownSVal Cmp = SVator.EvalEQ(stateLoad,theValueVal,oldValueVal);
+    DefinedOrUnknownSVal Cmp = svalBuilder.EvalEQ(stateLoad,theValueVal,oldValueVal);
 
     const GRState *stateEqual = stateLoad->Assume(Cmp, true);
 
@@ -158,7 +158,7 @@ bool OSAtomicChecker::EvalOSAtomicCompareAndSwap(CheckerContext &C,
       // Handle implicit value casts.
       if (const TypedRegion *R =
           dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
-        val = SVator.EvalCast(val,R->getValueType(), newValueExpr->getType());
+        val = svalBuilder.EvalCast(val,R->getValueType(), newValueExpr->getType());
       }
 
       Engine.EvalStore(TmpStore, NULL, theValueExpr, N, 

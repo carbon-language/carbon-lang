@@ -121,7 +121,7 @@ const GRState *SimpleConstraintManager::Assume(const GRState *state,
 
 static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
   // FIXME: This should probably be part of BinaryOperator, since this isn't
-  // the only place it's used. (This code was copied from SimpleSValuator.cpp.)
+  // the only place it's used. (This code was copied from SimpleSValBuilder.cpp.)
   switch (op) {
   default:
     assert(false && "Invalid opcode.");

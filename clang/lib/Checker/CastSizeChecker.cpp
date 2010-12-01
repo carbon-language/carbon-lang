@@ -60,8 +60,8 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
   ValueManager &ValMgr = C.getValueManager();
   SVal Extent = SR->getExtent(ValMgr);
 
-  SValuator &SVator = ValMgr.getSValuator();
-  const llvm::APSInt *ExtentInt = SVator.getKnownValue(state, Extent);
+  SValBuilder &svalBuilder = ValMgr.getSValBuilder();
+  const llvm::APSInt *ExtentInt = svalBuilder.getKnownValue(state, Extent);
   if (!ExtentInt)
     return;
 

@@ -21,7 +21,7 @@
 #include "clang/Checker/PathSensitive/SVals.h"
 #include "clang/Checker/PathSensitive/BasicValueFactory.h"
 #include "clang/Checker/PathSensitive/SymbolManager.h"
-#include "clang/Checker/PathSensitive/SValuator.h"
+#include "clang/Checker/PathSensitive/SValBuilder.h"
 #include "clang/AST/ExprCXX.h"
 
 namespace llvm { class BumpPtrAllocator; }
@@ -38,8 +38,8 @@ class ValueManager {
   /// SymMgr - Object that manages the symbol information.
   SymbolManager SymMgr;
 
-  /// SVator - SValuator object that creates SVals from expressions.
-  llvm::OwningPtr<SValuator> SVator;
+  /// svalBuilder - SValBuilder object that creates SVals from expressions.
+  llvm::OwningPtr<SValBuilder> svalBuilder;
 
   MemRegionManager MemMgr;
 
@@ -57,7 +57,7 @@ public:
                  ArrayIndexTy(context.IntTy),
                  ArrayIndexWidth(context.getTypeSize(ArrayIndexTy)) {
     // FIXME: Generalize later.
-    SVator.reset(clang::CreateSimpleSValuator(*this));
+    svalBuilder.reset(clang::createSimpleSValBuilder(*this));
   }
 
   // Accessors to submanagers.
@@ -73,7 +73,7 @@ public:
   SymbolManager &getSymbolManager() { return SymMgr; }
   const SymbolManager &getSymbolManager() const { return SymMgr; }
 
-  SValuator &getSValuator() { return *SVator.get(); }
+  SValBuilder &getSValBuilder() { return *svalBuilder.get(); }
 
   MemRegionManager &getRegionManager() { return MemMgr; }
   const MemRegionManager &getRegionManager() const { return MemMgr; }

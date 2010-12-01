@@ -122,7 +122,7 @@ CStringChecker::AssumeZero(CheckerContext &C, const GRState *state, SVal V,
     return std::pair<const GRState*, const GRState *>(state, state);
 
   ValueManager &ValMgr = C.getValueManager();
-  SValuator &SV = ValMgr.getSValuator();
+  SValBuilder &SV = ValMgr.getSValBuilder();
 
   DefinedOrUnknownSVal Zero = ValMgr.makeZeroVal(Ty);
   DefinedOrUnknownSVal ValIsZero = SV.EvalEQ(state, *Val, Zero);
@@ -245,7 +245,7 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
     return NULL;
 
   ValueManager &VM = C.getValueManager();
-  SValuator &SV = VM.getSValuator();
+  SValBuilder &SV = VM.getSValBuilder();
   ASTContext &Ctx = C.getASTContext();
 
   QualType SizeTy = Size->getType();
@@ -313,7 +313,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
     return NULL;
 
   ValueManager &VM = state->getStateManager().getValueManager();
-  SValuator &SV = VM.getSValuator();
+  SValBuilder &SV = VM.getSValBuilder();
   ASTContext &Ctx = VM.getContext();
   const GRState *stateTrue, *stateFalse;
 
@@ -716,7 +716,7 @@ void CStringChecker::EvalMemcmp(CheckerContext &C, const CallExpr *CE) {
 
   const GRState *state = C.getState();
   ValueManager &ValMgr = C.getValueManager();
-  SValuator &SV = ValMgr.getSValuator();
+  SValBuilder &SV = ValMgr.getSValBuilder();
 
   // See if the size argument is zero.
   SVal SizeVal = state->getSVal(Size);
@@ -850,7 +850,7 @@ void CStringChecker::EvalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
   if (loc::MemRegionVal *DstRegVal = dyn_cast<loc::MemRegionVal>(&DstVal)) {
     // If the length is known, we can check for an overflow.
     if (NonLoc *KnownStrLen = dyn_cast<NonLoc>(&StrLen)) {
-      SValuator &SV = C.getSValuator();
+      SValBuilder &SV = C.getSValBuilder();
 
       SVal LastElement = SV.EvalBinOpLN(state, BO_Add,
                                         *DstRegVal, *KnownStrLen,

@@ -1,4 +1,4 @@
-// SValuator.h - Construction of SVals from evaluating expressions -*- C++ -*---
+// SValBuilder.h - Construction of SVals from evaluating expressions -*- C++ -*-
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SValuator, a class that defines the interface for
+//  This file defines SValBuilder, a class that defines the interface for
 //  "symbolical evaluators" which construct an SVal from an expression.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_SVALUATOR
-#define LLVM_CLANG_ANALYSIS_SVALUATOR
+#ifndef LLVM_CLANG_ANALYSIS_SVALBUILDER
+#define LLVM_CLANG_ANALYSIS_SVALBUILDER
 
 #include "clang/AST/Expr.h"
 #include "clang/Checker/PathSensitive/SVals.h"
@@ -23,7 +23,7 @@ namespace clang {
 class GRState;
 class ValueManager;
 
-class SValuator {
+class SValBuilder {
   friend class ValueManager;
 protected:
   ValueManager &ValMgr;
@@ -35,8 +35,8 @@ public:
   virtual SVal EvalCastL(Loc val, QualType castTy) = 0;
 
 public:
-  SValuator(ValueManager &valMgr) : ValMgr(valMgr) {}
-  virtual ~SValuator() {}
+  SValBuilder(ValueManager &valMgr) : ValMgr(valMgr) {}
+  virtual ~SValBuilder() {}
 
   SVal EvalCast(SVal V, QualType castTy, QualType originalType);
   
@@ -64,7 +64,7 @@ public:
                               DefinedOrUnknownSVal R);
 };
 
-SValuator* CreateSimpleSValuator(ValueManager &valMgr);
+SValBuilder* createSimpleSValBuilder(ValueManager &valMgr);
 
 } // end clang namespace
 #endif

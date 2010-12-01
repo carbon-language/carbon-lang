@@ -108,7 +108,7 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
 
   // Convert the array length to size_t.
   ValueManager &ValMgr = C.getValueManager();
-  SValuator &SV = ValMgr.getSValuator();
+  SValBuilder &SV = ValMgr.getSValBuilder();
   QualType SizeTy = Ctx.getSizeType();
   NonLoc ArrayLength = cast<NonLoc>(SV.EvalCast(sizeD, SizeTy, SE->getType()));
 

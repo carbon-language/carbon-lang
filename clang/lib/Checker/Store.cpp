@@ -225,9 +225,9 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
   }
   
   if (const Loc *L = dyn_cast<Loc>(&V))
-    return ValMgr.getSValuator().EvalCastL(*L, castTy);
+    return ValMgr.getSValBuilder().EvalCastL(*L, castTy);
   else if (const NonLoc *NL = dyn_cast<NonLoc>(&V))
-    return ValMgr.getSValuator().EvalCastNL(*NL, castTy);
+    return ValMgr.getSValBuilder().EvalCastNL(*NL, castTy);
   
   return V;
 }
@@ -309,7 +309,7 @@ SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset,
 
   // Only allow non-integer offsets if the base region has no offset itself.
   // FIXME: This is a somewhat arbitrary restriction. We should be using
-  // SValuator here to add the two offsets without checking their types.
+  // SValBuilder here to add the two offsets without checking their types.
   if (!isa<nonloc::ConcreteInt>(Offset)) {
     if (isa<ElementRegion>(BaseRegion->StripCasts()))
       return UnknownVal();

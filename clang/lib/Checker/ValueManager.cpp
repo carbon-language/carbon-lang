@@ -67,7 +67,7 @@ SVal ValueManager::convertToArrayIndex(SVal V) {
       return V;
   }
 
-  return SVator->EvalCastNL(cast<NonLoc>(V), ArrayIndexTy);
+  return svalBuilder->EvalCastNL(cast<NonLoc>(V), ArrayIndexTy);
 }
 
 DefinedOrUnknownSVal 

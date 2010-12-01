@@ -1,4 +1,4 @@
-// SValuator.cpp - Basic class for all SValuator implementations --*- C++ -*--//
+// SValBuilder.cpp - Basic class for all SValBuilder implementations -*- C++ -*-
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,18 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SValuator, the base class for all (complete) SValuator
+//  This file defines SValBuilder, the base class for all (complete) SValBuilder
 //  implementations.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/SValuator.h"
+#include "clang/Checker/PathSensitive/SValBuilder.h"
 #include "clang/Checker/PathSensitive/GRState.h"
 
 using namespace clang;
 
 
-SVal SValuator::EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
+SVal SValBuilder::EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
                           SVal L, SVal R, QualType T) {
 
   if (L.isUndef() || R.isUndef())
@@ -46,7 +46,7 @@ SVal SValuator::EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
   return EvalBinOpNN(ST, Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
 }
 
-DefinedOrUnknownSVal SValuator::EvalEQ(const GRState *ST,
+DefinedOrUnknownSVal SValBuilder::EvalEQ(const GRState *ST,
                                        DefinedOrUnknownSVal L,
                                        DefinedOrUnknownSVal R) {
   return cast<DefinedOrUnknownSVal>(EvalBinOp(ST, BO_EQ, L, R,
@@ -54,7 +54,7 @@ DefinedOrUnknownSVal SValuator::EvalEQ(const GRState *ST,
 }
 
 // FIXME: should rewrite according to the cast kind.
-SVal SValuator::EvalCast(SVal val, QualType castTy, QualType originalTy) {
+SVal SValBuilder::EvalCast(SVal val, QualType castTy, QualType originalTy) {
   if (val.isUnknownOrUndef() || castTy == originalTy)
     return val;
 

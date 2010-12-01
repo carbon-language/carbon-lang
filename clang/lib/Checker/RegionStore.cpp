@@ -756,8 +756,8 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
                                                            const MemRegion *R,
                                                            QualType EleTy) {
   SVal Size = cast<SubRegion>(R)->getExtent(ValMgr);
-  SValuator &SVator = ValMgr.getSValuator();
-  const llvm::APSInt *SizeInt = SVator.getKnownValue(state, Size);
+  SValBuilder &svalBuilder = ValMgr.getSValBuilder();
+  const llvm::APSInt *SizeInt = svalBuilder.getKnownValue(state, Size);
   if (!SizeInt)
     return UnknownVal();
 
@@ -911,7 +911,7 @@ SVal RegionStoreManager::EvalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
   //  (b) 0 + symbolic index
   if (Base) {
     if (nonloc::ConcreteInt *Offset = dyn_cast<nonloc::ConcreteInt>(&R)) {
-      // FIXME: Should use SValuator here.
+      // FIXME: Should use SValBuilder here.
       SVal NewIdx =
         Base->evalBinOp(ValMgr, Op,
                 cast<nonloc::ConcreteInt>(ValMgr.convertToArrayIndex(*Offset)));
@@ -1307,8 +1307,8 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
           if (const IntegerLiteral *IL =
               dyn_cast<IntegerLiteral>(Init->IgnoreParenCasts())) {
             const nonloc::ConcreteInt &V = ValMgr.makeIntVal(IL);
-            return ValMgr.getSValuator().EvalCast(V, Init->getType(),
-                                                  IL->getType());
+            return ValMgr.getSValBuilder().EvalCast(V, Init->getType(),
+                                                    IL->getType());
           }
       }
 

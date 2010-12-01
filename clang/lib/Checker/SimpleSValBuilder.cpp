@@ -1,4 +1,4 @@
-// SimpleSValuator.cpp - A basic SValuator ------------------------*- C++ -*--//
+// SimpleSValBuilder.cpp - A basic SValBuilder -----------------------*- C++ -*-
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,24 +7,24 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines SimpleSValuator, a basic implementation of SValuator.
+//  This file defines SimpleSValBuilder, a basic implementation of SValBuilder.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/SValuator.h"
+#include "clang/Checker/PathSensitive/SValBuilder.h"
 #include "clang/Checker/PathSensitive/GRState.h"
 
 using namespace clang;
 
 namespace {
-class SimpleSValuator : public SValuator {
+class SimpleSValBuilder : public SValBuilder {
 protected:
   virtual SVal EvalCastNL(NonLoc val, QualType castTy);
   virtual SVal EvalCastL(Loc val, QualType castTy);
 
 public:
-  SimpleSValuator(ValueManager &valMgr) : SValuator(valMgr) {}
-  virtual ~SimpleSValuator() {}
+  SimpleSValBuilder(ValueManager &valMgr) : SValBuilder(valMgr) {}
+  virtual ~SimpleSValBuilder() {}
 
   virtual SVal EvalMinus(NonLoc val);
   virtual SVal EvalComplement(NonLoc val);
@@ -44,15 +44,15 @@ public:
 };
 } // end anonymous namespace
 
-SValuator *clang::CreateSimpleSValuator(ValueManager &valMgr) {
-  return new SimpleSValuator(valMgr);
+SValBuilder *clang::createSimpleSValBuilder(ValueManager &valMgr) {
+  return new SimpleSValBuilder(valMgr);
 }
 
 //===----------------------------------------------------------------------===//
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-SVal SimpleSValuator::EvalCastNL(NonLoc val, QualType castTy) {
+SVal SimpleSValBuilder::EvalCastNL(NonLoc val, QualType castTy) {
 
   bool isLocType = Loc::IsLocType(castTy);
 
@@ -104,7 +104,7 @@ SVal SimpleSValuator::EvalCastNL(NonLoc val, QualType castTy) {
     return ValMgr.makeIntVal(i);
 }
 
-SVal SimpleSValuator::EvalCastL(Loc val, QualType castTy) {
+SVal SimpleSValBuilder::EvalCastL(Loc val, QualType castTy) {
 
   // Casts from pointers -> pointers, just return the lval.
   //
@@ -142,7 +142,7 @@ SVal SimpleSValuator::EvalCastL(Loc val, QualType castTy) {
 // Transfer function for unary operators.
 //===----------------------------------------------------------------------===//
 
-SVal SimpleSValuator::EvalMinus(NonLoc val) {
+SVal SimpleSValBuilder::EvalMinus(NonLoc val) {
   switch (val.getSubKind()) {
   case nonloc::ConcreteIntKind:
     return cast<nonloc::ConcreteInt>(val).evalMinus(ValMgr);
@@ -151,7 +151,7 @@ SVal SimpleSValuator::EvalMinus(NonLoc val) {
   }
 }
 
-SVal SimpleSValuator::EvalComplement(NonLoc X) {
+SVal SimpleSValBuilder::EvalComplement(NonLoc X) {
   switch (X.getSubKind()) {
   case nonloc::ConcreteIntKind:
     return cast<nonloc::ConcreteInt>(X).evalComplement(ValMgr);
@@ -191,7 +191,7 @@ static BinaryOperator::Opcode ReverseComparison(BinaryOperator::Opcode op) {
   }
 }
 
-SVal SimpleSValuator::MakeSymIntVal(const SymExpr *LHS,
+SVal SimpleSValBuilder::MakeSymIntVal(const SymExpr *LHS,
                                     BinaryOperator::Opcode op,
                                     const llvm::APSInt &RHS,
                                     QualType resultTy) {
@@ -266,7 +266,7 @@ SVal SimpleSValuator::MakeSymIntVal(const SymExpr *LHS,
   return ValMgr.makeNonLoc(LHS, op, RHS, resultTy);
 }
 
-SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
+SVal SimpleSValBuilder::EvalBinOpNN(const GRState *state,
                                   BinaryOperator::Opcode op,
                                   NonLoc lhs, NonLoc rhs,
                                   QualType resultTy)  {
@@ -515,7 +515,7 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
 }
 
 // FIXME: all this logic will change if/when we have MemRegion::getLocation().
-SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
+SVal SimpleSValBuilder::EvalBinOpLL(const GRState *state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, Loc rhs,
                                   QualType resultTy) {
@@ -812,7 +812,7 @@ SVal SimpleSValuator::EvalBinOpLL(const GRState *state,
   }
 }
 
-SVal SimpleSValuator::EvalBinOpLN(const GRState *state,
+SVal SimpleSValBuilder::EvalBinOpLN(const GRState *state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, NonLoc rhs, QualType resultTy) {
   // Special case: 'rhs' is an integer that has the same width as a pointer and
@@ -872,7 +872,7 @@ SVal SimpleSValuator::EvalBinOpLN(const GRState *state,
                                                               rhs, resultTy);
 }
 
-const llvm::APSInt *SimpleSValuator::getKnownValue(const GRState *state,
+const llvm::APSInt *SimpleSValBuilder::getKnownValue(const GRState *state,
                                                    SVal V) {
   if (V.isUnknownOrUndef())
     return NULL;

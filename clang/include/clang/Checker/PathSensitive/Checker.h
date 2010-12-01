@@ -91,8 +91,8 @@ public:
     return Eng.getValueManager();
   }
 
-  SValuator &getSValuator() {
-    return Eng.getSValuator();
+  SValBuilder &getSValBuilder() {
+    return Eng.getSValBuilder();
   }
 
   ExplodedNode *GenerateNode(bool autoTransition = true) {

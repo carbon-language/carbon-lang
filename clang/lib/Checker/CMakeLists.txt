@@ -66,10 +66,10 @@ add_clang_library(clangChecker
   RegionStore.cpp
   ReturnPointerRangeChecker.cpp
   ReturnUndefChecker.cpp
+  SValBuilder.cpp
   SVals.cpp
-  SValuator.cpp
   SimpleConstraintManager.cpp
-  SimpleSValuator.cpp
+  SimpleSValBuilder.cpp
   StackAddrLeakChecker.cpp
   Store.cpp
   StreamChecker.cpp

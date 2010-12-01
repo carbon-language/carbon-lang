@@ -413,8 +413,8 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
   DefinedSVal Zero = cast<DefinedSVal>(ValMgr.makeZeroVal(Arg->getType()));
 
   // Make an expression asserting that they're equal.
-  SValuator &SVator = ValMgr.getSValuator();
-  DefinedOrUnknownSVal ArgIsNull = SVator.EvalEQ(state, Zero, *DefArgVal);
+  SValBuilder &svalBuilder = ValMgr.getSValBuilder();
+  DefinedOrUnknownSVal ArgIsNull = svalBuilder.EvalEQ(state, Zero, *DefArgVal);
 
   // Are they equal?
   const GRState *stateTrue, *stateFalse;

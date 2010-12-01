@@ -241,9 +241,9 @@ const GRState *MallocChecker::MallocMemAux(CheckerContext &C,
   DefinedOrUnknownSVal Extent = R->getExtent(ValMgr);
   DefinedOrUnknownSVal DefinedSize = cast<DefinedOrUnknownSVal>(Size);
 
-  SValuator &SVator = ValMgr.getSValuator();
+  SValBuilder &svalBuilder = ValMgr.getSValBuilder();
   DefinedOrUnknownSVal ExtentMatchesSize =
-    SVator.EvalEQ(state, Extent, DefinedSize);
+    svalBuilder.EvalEQ(state, Extent, DefinedSize);
   state = state->Assume(ExtentMatchesSize, true);
 
   SymbolRef Sym = RetVal.getAsLocSymbol();
@@ -504,9 +504,9 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
   DefinedOrUnknownSVal Arg0Val=cast<DefinedOrUnknownSVal>(state->getSVal(Arg0));
 
   ValueManager &ValMgr = C.getValueManager();
-  SValuator &SVator = C.getSValuator();
+  SValBuilder &svalBuilder = C.getSValBuilder();
 
-  DefinedOrUnknownSVal PtrEQ = SVator.EvalEQ(state, Arg0Val, ValMgr.makeNull());
+  DefinedOrUnknownSVal PtrEQ = svalBuilder.EvalEQ(state, Arg0Val, ValMgr.makeNull());
 
   // If the ptr is NULL, the call is equivalent to malloc(size).
   if (const GRState *stateEqual = state->Assume(PtrEQ, true)) {
@@ -527,7 +527,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
     const Expr *Arg1 = CE->getArg(1);
     DefinedOrUnknownSVal Arg1Val = 
       cast<DefinedOrUnknownSVal>(stateNotEqual->getSVal(Arg1));
-    DefinedOrUnknownSVal SizeZero = SVator.EvalEQ(stateNotEqual, Arg1Val,
+    DefinedOrUnknownSVal SizeZero = svalBuilder.EvalEQ(stateNotEqual, Arg1Val,
                                       ValMgr.makeIntValWithPtrWidth(0, false));
 
     if (const GRState *stateSizeZero = stateNotEqual->Assume(SizeZero, true)) {
@@ -552,11 +552,11 @@ void MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   
   ValueManager &ValMgr = C.getValueManager();
-  SValuator &SVator = C.getSValuator();
+  SValBuilder &svalBuilder = C.getSValBuilder();
 
   SVal Count = state->getSVal(CE->getArg(0));
   SVal EleSize = state->getSVal(CE->getArg(1));
-  SVal TotalSize = SVator.EvalBinOp(state, BO_Mul, Count, EleSize,
+  SVal TotalSize = svalBuilder.EvalBinOp(state, BO_Mul, Count, EleSize,
                                     ValMgr.getContext().getSizeType());
   
   SVal Zero = ValMgr.makeZeroVal(ValMgr.getContext().CharTy);

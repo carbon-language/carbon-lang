@@ -326,7 +326,7 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)
              *this),
     SymMgr(StateMgr.getSymbolManager()),
     ValMgr(StateMgr.getValueManager()),
-    SVator(ValMgr.getSValuator()),
+    svalBuilder(ValMgr.getSValBuilder()),
     EntryNode(NULL), CurrentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
@@ -1597,7 +1597,7 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
 
     do {
       nonloc::ConcreteInt CaseVal(getBasicVals().getValue(V1.Val.getInt()));
-      DefinedOrUnknownSVal Res = SVator.EvalEQ(DefaultSt ? DefaultSt : state,
+      DefinedOrUnknownSVal Res = svalBuilder.EvalEQ(DefaultSt ? DefaultSt : state,
                                                CondV, CaseVal);
 
       // Now "assume" that the case matches.
@@ -2691,12 +2691,12 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   case CK_AnyPointerToBlockPointerCast:
   
   case CK_ObjCObjectLValueCast: {
-    // Delegate to SValuator to process.
+    // Delegate to SValBuilder to process.
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
       ExplodedNode* N = *I;
       const GRState* state = GetState(N);
       SVal V = state->getSVal(Ex);
-      V = SVator.EvalCast(V, T, ExTy);
+      V = svalBuilder.EvalCast(V, T, ExTy);
       state = state->BindExpr(CastE, V);
       MakeNode(Dst, CastE, N, state);
     }
@@ -3268,12 +3268,12 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         // propagate that constraint.
         if (Loc::IsLocType(U->getType())) {
           DefinedOrUnknownSVal Constraint =
-            SVator.EvalEQ(state, V2, ValMgr.makeZeroVal(U->getType()));
+            svalBuilder.EvalEQ(state, V2, ValMgr.makeZeroVal(U->getType()));
 
           if (!state->Assume(Constraint, true)) {
             // It isn't feasible for the original value to be null.
             // Propagate this constraint.
-            Constraint = SVator.EvalEQ(state, SymVal,
+            Constraint = svalBuilder.EvalEQ(state, SymVal,
                                        ValMgr.makeZeroVal(U->getType()));
 
 
@@ -3516,10 +3516,10 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         QualType RTy = getContext().getCanonicalType(RHS->getType());
 
         // Promote LHS.
-        V = SVator.EvalCast(V, CLHSTy, LTy);
+        V = svalBuilder.EvalCast(V, CLHSTy, LTy);
 
         // Compute the result of the operation.
-        SVal Result = SVator.EvalCast(EvalBinOp(state, Op, V, RightV, CTy),
+        SVal Result = svalBuilder.EvalCast(EvalBinOp(state, Op, V, RightV, CTy),
                                       B->getType(), CTy);
 
         // EXPERIMENTAL: "Conjured" symbols.
@@ -3538,12 +3538,12 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
           LHSVal = ValMgr.getConjuredSymbolVal(NULL, B->getRHS(), LTy, Count);
 
           // However, we need to convert the symbol to the computation type.
-          Result = SVator.EvalCast(LHSVal, CTy, LTy);
+          Result = svalBuilder.EvalCast(LHSVal, CTy, LTy);
         }
         else {
           // The left-hand side may bind to a different value then the
           // computation type.
-          LHSVal = SVator.EvalCast(Result, LTy, CTy);
+          LHSVal = svalBuilder.EvalCast(Result, LTy, CTy);
         }
 
         EvalStore(Tmp3, B, LHS, *I4, state->BindExpr(B, Result),

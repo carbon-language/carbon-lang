@@ -53,8 +53,8 @@ class GRExprEngine : public GRSubEngine {
   /// ValMgr - Object that manages/creates SVals.
   ValueManager &ValMgr;
 
-  /// SVator - SValuator object that creates SVals from expressions.
-  SValuator &SVator;
+  /// svalBuilder - SValBuilder object that creates SVals from expressions.
+  SValBuilder &svalBuilder;
 
   /// EntryNode - The immediate predecessor node.
   ExplodedNode* EntryNode;
@@ -136,7 +136,7 @@ public:
 
   virtual AnalysisManager &getAnalysisManager() { return AMgr; }
 
-  SValuator &getSValuator() { return SVator; }
+  SValBuilder &getSValBuilder() { return svalBuilder; }
 
   GRTransferFuncs& getTF() { return *TF; }
 
@@ -484,28 +484,28 @@ public:
                          const Expr *Ex);
 
   SVal EvalMinus(SVal X) {
-    return X.isValid() ? SVator.EvalMinus(cast<NonLoc>(X)) : X;
+    return X.isValid() ? svalBuilder.EvalMinus(cast<NonLoc>(X)) : X;
   }
 
   SVal EvalComplement(SVal X) {
-    return X.isValid() ? SVator.EvalComplement(cast<NonLoc>(X)) : X;
+    return X.isValid() ? svalBuilder.EvalComplement(cast<NonLoc>(X)) : X;
   }
 
 public:
 
   SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode op,
                  NonLoc L, NonLoc R, QualType T) {
-    return SVator.EvalBinOpNN(state, op, L, R, T);
+    return svalBuilder.EvalBinOpNN(state, op, L, R, T);
   }
 
   SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode op,
                  NonLoc L, SVal R, QualType T) {
-    return R.isValid() ? SVator.EvalBinOpNN(state,op,L, cast<NonLoc>(R), T) : R;
+    return R.isValid() ? svalBuilder.EvalBinOpNN(state,op,L, cast<NonLoc>(R), T) : R;
   }
 
   SVal EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
                  SVal LHS, SVal RHS, QualType T) {
-    return SVator.EvalBinOp(ST, Op, LHS, RHS, T);
+    return svalBuilder.EvalBinOp(ST, Op, LHS, RHS, T);
   }
   
 protected:

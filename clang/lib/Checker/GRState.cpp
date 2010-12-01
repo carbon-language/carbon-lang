@@ -238,10 +238,10 @@ const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
 
   // Build an expression for 0 <= Idx < UpperBound.
   // This is the same as Idx + MIN < UpperBound + MIN, if overflow is allowed.
-  // FIXME: This should probably be part of SValuator.
+  // FIXME: This should probably be part of SValBuilder.
   GRStateManager &SM = getStateManager();
   ValueManager &VM = SM.getValueManager();
-  SValuator &SV = VM.getSValuator();
+  SValBuilder &SV = VM.getSValBuilder();
   ASTContext &Ctx = VM.getContext();
 
   // Get the offset: the minimum value of the array index type.
