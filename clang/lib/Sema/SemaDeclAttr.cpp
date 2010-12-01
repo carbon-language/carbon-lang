@@ -651,7 +651,8 @@ static void HandleWeakRefAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     }
     // GCC will accept anything as the argument of weakref. Should we
     // check for an existing decl?
-    d->addAttr(::new (S.Context) AliasAttr(Attr.getLoc(), S.Context, Str->getString()));
+    d->addAttr(::new (S.Context) AliasAttr(Attr.getLoc(), S.Context,
+                                           Str->getString()));
   }
 
   d->addAttr(::new (S.Context) WeakRefAttr(Attr.getLoc(), S.Context));
@@ -676,7 +677,8 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   // FIXME: check if target symbol exists in current file
 
-  d->addAttr(::new (S.Context) AliasAttr(Attr.getLoc(), S.Context, Str->getString()));
+  d->addAttr(::new (S.Context) AliasAttr(Attr.getLoc(), S.Context,
+                                         Str->getString()));
 }
 
 static void HandleNakedAttr(Decl *d, const AttributeList &Attr,
@@ -779,10 +781,11 @@ static void HandleVecReturnAttr(Decl *d, const AttributeList &Attr,
 /*
   Returning a Vector Class in Registers
   
-  According to the PPU ABI specifications, a class with a single member of vector type is returned in
-  memory when used as the return value of a function. This results in inefficient code when implementing
-  vector classes. To return the value in a single vector register, add the vecreturn attribute to the class
-  definition. This attribute is also applicable to struct types.
+  According to the PPU ABI specifications, a class with a single member of 
+  vector type is returned in memory when used as the return value of a function.
+  This results in inefficient code when implementing vector classes. To return
+  the value in a single vector register, add the vecreturn attribute to the
+  class definition. This attribute is also applicable to struct types.
   
   Example:
   
@@ -822,7 +825,8 @@ static void HandleVecReturnAttr(Decl *d, const AttributeList &Attr,
     return;
   }
 
-  for (RecordDecl::field_iterator iter = record->field_begin(); iter != record->field_end(); iter++) {
+  for (RecordDecl::field_iterator iter = record->field_begin();
+       iter != record->field_end(); iter++) {
     if ((count == 1) || !iter->getType()->isVectorType()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_vecreturn_only_vector_member);
       return;
@@ -907,7 +911,8 @@ static void HandleConstructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) ConstructorAttr(Attr.getLoc(), S.Context, priority));
+  d->addAttr(::new (S.Context) ConstructorAttr(Attr.getLoc(), S.Context,
+                                               priority));
 }
 
 static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -937,7 +942,8 @@ static void HandleDestructorAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) DestructorAttr(Attr.getLoc(), S.Context, priority));
+  d->addAttr(::new (S.Context) DestructorAttr(Attr.getLoc(), S.Context,
+                                              priority));
 }
 
 static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -970,7 +976,8 @@ static void HandleUnavailableAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   int noArgs = Attr.getNumArgs();
   if (noArgs > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << "0 or 1";
+    S.Diag(Attr.getLoc(),
+           diag::err_attribute_wrong_number_arguments) << "0 or 1";
     return;
   }
   // Handle the case where unavailable attribute has a text message.
@@ -1171,7 +1178,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     QualType Ty = V->getType();
     if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
       const FunctionType *FT = Ty->isFunctionPointerType() ? getFunctionType(d)
-        : Ty->getAs<BlockPointerType>()->getPointeeType()->getAs<FunctionType>();
+       : Ty->getAs<BlockPointerType>()->getPointeeType()->getAs<FunctionType>();
       if (!cast<FunctionProtoType>(FT)->isVariadic()) {
         int m = Ty->isFunctionPointerType() ? 0 : 1;
         S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic) << m;
@@ -1187,7 +1194,8 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       << Attr.getName() << 6 /*function, method or block */;
     return;
   }
-  d->addAttr(::new (S.Context) SentinelAttr(Attr.getLoc(), S.Context, sentinel, nullPos));
+  d->addAttr(::new (S.Context) SentinelAttr(Attr.getLoc(), S.Context, sentinel,
+                                            nullPos));
 }
 
 static void HandleWarnUnusedResult(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -1333,7 +1341,8 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  D->addAttr(::new (S.Context) SectionAttr(Attr.getLoc(), S.Context, SE->getString()));
+  D->addAttr(::new (S.Context) SectionAttr(Attr.getLoc(), S.Context,
+                                           SE->getString()));
 }
 
 
@@ -1580,7 +1589,8 @@ static void HandleInitPriorityAttr(Decl *d, const AttributeList &Attr,
     Attr.setInvalid();
     return;
   }
-  d->addAttr(::new (S.Context) InitPriorityAttr(Attr.getLoc(), S.Context, prioritynum));
+  d->addAttr(::new (S.Context) InitPriorityAttr(Attr.getLoc(), S.Context,
+                                                prioritynum));
 }
 
 /// Handle __attribute__((format(type,idx,firstarg))) attributes based on
@@ -1806,7 +1816,8 @@ static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) <<"annotate";
     return;
   }
-  d->addAttr(::new (S.Context) AnnotateAttr(Attr.getLoc(), S.Context, SE->getString()));
+  d->addAttr(::new (S.Context) AnnotateAttr(Attr.getLoc(), S.Context,
+                                            SE->getString()));
 }
 
 static void HandleAlignedAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -2075,7 +2086,8 @@ static void HandleNoInstrumentFunctionAttr(Decl *d, const AttributeList &Attr,
     return;
   }
 
-  d->addAttr(::new (S.Context) NoInstrumentFunctionAttr(Attr.getLoc(), S.Context));
+  d->addAttr(::new (S.Context) NoInstrumentFunctionAttr(Attr.getLoc(),
+                                                        S.Context));
 }
 
 static void HandleConstantAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -2400,16 +2412,20 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
       assert(0 && "invalid ownership attribute");
       return;
     case AttributeList::AT_cf_returns_not_retained:
-      d->addAttr(::new (S.Context) CFReturnsNotRetainedAttr(Attr.getLoc(), S.Context));
+      d->addAttr(::new (S.Context) CFReturnsNotRetainedAttr(Attr.getLoc(),
+                                                            S.Context));
       return;
     case AttributeList::AT_ns_returns_not_retained:
-      d->addAttr(::new (S.Context) NSReturnsNotRetainedAttr(Attr.getLoc(), S.Context));
+      d->addAttr(::new (S.Context) NSReturnsNotRetainedAttr(Attr.getLoc(),
+                                                            S.Context));
       return;
     case AttributeList::AT_cf_returns_retained:
-      d->addAttr(::new (S.Context) CFReturnsRetainedAttr(Attr.getLoc(), S.Context));
+      d->addAttr(::new (S.Context) CFReturnsRetainedAttr(Attr.getLoc(),
+                                                         S.Context));
       return;
     case AttributeList::AT_ns_returns_retained:
-      d->addAttr(::new (S.Context) NSReturnsRetainedAttr(Attr.getLoc(), S.Context));
+      d->addAttr(::new (S.Context) NSReturnsRetainedAttr(Attr.getLoc(),
+                                                         S.Context));
       return;
   };
 }
@@ -2553,7 +2569,8 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
 
 /// ProcessDeclAttributeList - Apply all the decl attributes in the specified
 /// attribute list to the specified decl, ignoring any type attributes.
-void Sema::ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AttrList) {
+void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
+                                    const AttributeList *AttrList) {
   for (const AttributeList* l = AttrList; l; l = l->getNext()) {
     ProcessDeclAttribute(S, D, *l, *this);
   }
