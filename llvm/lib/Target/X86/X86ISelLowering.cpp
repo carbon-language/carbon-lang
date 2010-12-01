@@ -9459,8 +9459,6 @@ X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
 
 MachineBasicBlock *
 X86TargetLowering::EmitMonitor(MachineInstr *MI, MachineBasicBlock *BB) const {
-  assert(Subtarget->hasSSE3() && "Target must have SSE3 features enabled");
-  
   DebugLoc dl = MI->getDebugLoc();
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   
@@ -9486,8 +9484,6 @@ X86TargetLowering::EmitMonitor(MachineInstr *MI, MachineBasicBlock *BB) const {
 
 MachineBasicBlock *
 X86TargetLowering::EmitMwait(MachineInstr *MI, MachineBasicBlock *BB) const {
-  assert(Subtarget->hasSSE3() && "Target must have SSE3 features enabled");
-  
   DebugLoc dl = MI->getDebugLoc();
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   
