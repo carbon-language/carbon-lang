@@ -380,15 +380,15 @@ public:
   /// @brief Gets maximum unsigned value of APInt for specific bit width.
   static APInt getMaxValue(unsigned numBits) {
     APInt API(numBits, 0);
-    API.set();
+    API.setAllBits();
     return API;
   }
 
   /// @brief Gets maximum signed value of APInt for a specific bit width.
   static APInt getSignedMaxValue(unsigned numBits) {
     APInt API(numBits, 0);
-    API.set();
-    API.clear(numBits - 1);
+    API.setAllBits();
+    API.clearBit(numBits - 1);
     return API;
   }
 
@@ -400,7 +400,7 @@ public:
   /// @brief Gets minimum signed value of APInt for a specific bit width.
   static APInt getSignedMinValue(unsigned numBits) {
     APInt API(numBits, 0);
-    API.set(numBits - 1);
+    API.setBit(numBits - 1);
     return API;
   }
 
@@ -415,7 +415,7 @@ public:
   /// @brief Get the all-ones value.
   static APInt getAllOnesValue(unsigned numBits) {
     APInt API(numBits, 0);
-    API.set();
+    API.setAllBits();
     return API;
   }
 
@@ -533,7 +533,7 @@ public:
   /// @brief Unary bitwise complement operator.
   APInt operator~() const {
     APInt Result(*this);
-    Result.flip();
+    Result.flipAllBits();
     return Result;
   }
 
@@ -1044,7 +1044,7 @@ public:
   /// @name Bit Manipulation Operators
   /// @{
   /// @brief Set every bit to 1.
-  void set() {
+  void setAllBits() {
     if (isSingleWord())
       VAL = -1ULL;
     else {
@@ -1058,10 +1058,10 @@ public:
 
   /// Set the given bit to 1 whose position is given as "bitPosition".
   /// @brief Set a given bit to 1.
-  void set(unsigned bitPosition);
+  void setBit(unsigned bitPosition);
 
   /// @brief Set every bit to 0.
-  void clear() {
+  void clearAllBits() {
     if (isSingleWord())
       VAL = 0;
     else
@@ -1070,10 +1070,10 @@ public:
 
   /// Set the given bit to 0 whose position is given as "bitPosition".
   /// @brief Set a given bit to 0.
-  void clear(unsigned bitPosition);
+  void clearBit(unsigned bitPosition);
 
   /// @brief Toggle every bit to its opposite value.
-  void flip() {
+  void flipAllBits() {
     if (isSingleWord())
       VAL ^= -1ULL;
     else {
@@ -1086,7 +1086,7 @@ public:
   /// Toggle a given bit to its opposite value whose position is given
   /// as "bitPosition".
   /// @brief Toggles a given bit to its opposite value.
-  void flip(unsigned bitPosition);
+  void flipBit(unsigned bitPosition);
 
   /// @}
   /// @name Value Characterization Functions

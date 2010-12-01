@@ -292,7 +292,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CTTZ(SDNode *N) {
   // value was zero.  This can be handled by setting the bit just off
   // the top of the original type.
   APInt TopBit(NVT.getSizeInBits(), 0);
-  TopBit.set(OVT.getSizeInBits());
+  TopBit.setBit(OVT.getSizeInBits());
   Op = DAG.getNode(ISD::OR, dl, NVT, Op, DAG.getConstant(TopBit, NVT));
   return DAG.getNode(ISD::CTTZ, dl, NVT, Op);
 }

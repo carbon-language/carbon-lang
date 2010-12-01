@@ -134,7 +134,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FABS(SDNode *N) {
 
   // Mask = ~(1 << (Size-1))
   APInt API = APInt::getAllOnesValue(Size);
-  API.clear(Size-1);
+  API.clearBit(Size-1);
   SDValue Mask = DAG.getConstant(API, NVT);
   SDValue Op = GetSoftenedFloat(N->getOperand(0));
   return DAG.getNode(ISD::AND, N->getDebugLoc(), NVT, Op, Mask);

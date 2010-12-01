@@ -160,8 +160,8 @@ static void ComputeSignedMinMaxValuesFromKnownBits(const APInt& KnownZero,
   Max = KnownOne|UnknownBits;
   
   if (UnknownBits.isNegative()) { // Sign bit is unknown
-    Min.set(Min.getBitWidth()-1);
-    Max.clear(Max.getBitWidth()-1);
+    Min.setBit(Min.getBitWidth()-1);
+    Max.clearBit(Max.getBitWidth()-1);
   }
 }
 

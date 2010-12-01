@@ -69,14 +69,14 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   // Null and aggregate-zero are all-zeros.
   if (isa<ConstantPointerNull>(V) ||
       isa<ConstantAggregateZero>(V)) {
-    KnownOne.clear();
+    KnownOne.clearAllBits();
     KnownZero = Mask;
     return;
   }
   // Handle a constant vector by taking the intersection of the known bits of
   // each element.
   if (ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
-    KnownZero.set(); KnownOne.set();
+    KnownZero.setAllBits(); KnownOne.setAllBits();
     for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
       APInt KnownZero2(BitWidth, 0), KnownOne2(BitWidth, 0);
       ComputeMaskedBits(CV->getOperand(i), Mask, KnownZero2, KnownOne2,
@@ -103,15 +103,15 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
       KnownZero = Mask & APInt::getLowBitsSet(BitWidth,
                                               CountTrailingZeros_32(Align));
     else
-      KnownZero.clear();
-    KnownOne.clear();
+      KnownZero.clearAllBits();
+    KnownOne.clearAllBits();
     return;
   }
   // A weak GlobalAlias is totally unknown. A non-weak GlobalAlias has
   // the bits of its aliasee.
   if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
     if (GA->mayBeOverridden()) {
-      KnownZero.clear(); KnownOne.clear();
+      KnownZero.clearAllBits(); KnownOne.clearAllBits();
     } else {
       ComputeMaskedBits(GA->getAliasee(), Mask, KnownZero, KnownOne,
                         TD, Depth+1);
@@ -119,7 +119,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     return;
   }
 
-  KnownZero.clear(); KnownOne.clear();   // Start out not knowing anything.
+  KnownZero.clearAllBits(); KnownOne.clearAllBits();   // Start out not knowing anything.
 
   if (Depth == MaxDepth || Mask == 0)
     return;  // Limit search depth.
@@ -185,7 +185,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     // Also compute a conserative estimate for high known-0 bits.
     // More trickiness is possible, but this is sufficient for the
     // interesting case of alignment computation.
-    KnownOne.clear();
+    KnownOne.clearAllBits();
     unsigned TrailZ = KnownZero.countTrailingOnes() +
                       KnownZero2.countTrailingOnes();
     unsigned LeadZ =  std::max(KnownZero.countLeadingOnes() +
@@ -208,8 +208,8 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                       AllOnes, KnownZero2, KnownOne2, TD, Depth+1);
     unsigned LeadZ = KnownZero2.countLeadingOnes();
 
-    KnownOne2.clear();
-    KnownZero2.clear();
+    KnownOne2.clearAllBits();
+    KnownZero2.clearAllBits();
     ComputeMaskedBits(I->getOperand(1),
                       AllOnes, KnownZero2, KnownOne2, TD, Depth+1);
     unsigned RHSUnknownLeadingOnes = KnownOne2.countLeadingZeros();
@@ -474,7 +474,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
 
     unsigned Leaders = std::max(KnownZero.countLeadingOnes(),
                                 KnownZero2.countLeadingOnes());
-    KnownOne.clear();
+    KnownOne.clearAllBits();
     KnownZero = APInt::getHighBitsSet(BitWidth, Leaders) & Mask;
     break;
   }
@@ -876,7 +876,7 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
       APInt Op1Int = Op1CI->getValue();
       uint64_t BitToSet = Op1Int.getLimitedValue(Op1Int.getBitWidth() - 1);
       APInt API(Op1Int.getBitWidth(), 0);
-      API.set(BitToSet);
+      API.setBit(BitToSet);
       Op1 = ConstantInt::get(V->getContext(), API);
     }
 

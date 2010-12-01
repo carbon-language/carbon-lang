@@ -1654,7 +1654,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     // Also compute a conserative estimate for high known-0 bits.
     // More trickiness is possible, but this is sufficient for the
     // interesting case of alignment computation.
-    KnownOne.clear();
+    KnownOne.clearAllBits();
     unsigned TrailZ = KnownZero.countTrailingOnes() +
                       KnownZero2.countTrailingOnes();
     unsigned LeadZ =  std::max(KnownZero.countLeadingOnes() +
@@ -1677,8 +1677,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
                       AllOnes, KnownZero2, KnownOne2, Depth+1);
     unsigned LeadZ = KnownZero2.countLeadingOnes();
 
-    KnownOne2.clear();
-    KnownZero2.clear();
+    KnownOne2.clearAllBits();
+    KnownZero2.clearAllBits();
     ComputeMaskedBits(Op.getOperand(1),
                       AllOnes, KnownZero2, KnownOne2, Depth+1);
     unsigned RHSUnknownLeadingOnes = KnownOne2.countLeadingZeros();
@@ -1833,7 +1833,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   case ISD::CTPOP: {
     unsigned LowBits = Log2_32(BitWidth)+1;
     KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
-    KnownOne.clear();
+    KnownOne.clearAllBits();
     return;
   }
   case ISD::LOAD: {
@@ -2032,7 +2032,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
 
     uint32_t Leaders = std::max(KnownZero.countLeadingOnes(),
                                 KnownZero2.countLeadingOnes());
-    KnownOne.clear();
+    KnownOne.clearAllBits();
     KnownZero = APInt::getHighBitsSet(BitWidth, Leaders) & Mask;
     return;
   }

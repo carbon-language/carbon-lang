@@ -57,7 +57,7 @@ TEST(APIntTest, i33_Count) {
 
 TEST(APIntTest, i65_Count) {
   APInt i65minus(65, 0, true);
-  i65minus.set(64);
+  i65minus.setBit(64);
   EXPECT_EQ(0u, i65minus.countLeadingZeros());
   EXPECT_EQ(1u, i65minus.countLeadingOnes());
   EXPECT_EQ(65u, i65minus.getActiveBits());
