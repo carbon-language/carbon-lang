@@ -94,6 +94,7 @@ public:
                                   // smallest integer type with enough room.
 
   unsigned OpenCL            : 1; // OpenCL C99 language extensions.
+  unsigned CUDA              : 1; // CUDA C++ language extensions.
 
   unsigned AssumeSaneOperatorNew : 1; // Whether to add __attribute__((malloc))
                                       // to the declaration of C++'s new
@@ -157,7 +158,7 @@ public:
     RTTI = 1;
     LaxVectorConversions = 1;
     HeinousExtensions = 0;
-    AltiVec = OpenCL = StackProtector = 0;
+    AltiVec = OpenCL = CUDA = StackProtector = 0;
 
     SymbolVisibility = (unsigned) DefaultVisibility;
 
