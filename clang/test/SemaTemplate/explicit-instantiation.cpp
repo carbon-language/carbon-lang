@@ -84,6 +84,10 @@ namespace explicit_instantiation_after_implicit_instantiation {
   template struct X0<1>;
 }
 
+template<typename> struct X3 { };
+inline template struct X3<int>; // expected-warning{{ignoring 'inline' keyword on explicit template instantiation}}
+static template struct X3<float>; // expected-warning{{ignoring 'static' keyword on explicit template instantiation}}
+
 namespace PR7622 { // expected-note{{to match this}}
   template<typename,typename=int>
   struct basic_streambuf;

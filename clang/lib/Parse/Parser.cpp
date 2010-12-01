@@ -525,12 +525,38 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
       return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);
     }
 
-  case tok::kw_inline:
-    if (getLang().CPlusPlus && NextToken().is(tok::kw_namespace)) {
-      // Inline namespaces. Allowed as an extension even in C++03.
+  case tok::kw_static:
+    // Parse (then ignore) 'static' prior to a template instantiation. This is
+    // a GCC extension that we intentionally do not support.
+    if (getLang().CPlusPlus && NextToken().is(tok::kw_template)) {
+      Diag(ConsumeToken(), diag::warn_static_inline_explicit_inst_ignored)
+        << 0;
       SourceLocation DeclEnd;
       StmtVector Stmts(Actions);
-      return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);
+      return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);  
+    }
+    goto dont_know;
+      
+  case tok::kw_inline:
+    if (getLang().CPlusPlus) {
+      tok::TokenKind NextKind = NextToken().getKind();
+      
+      // Inline namespaces. Allowed as an extension even in C++03.
+      if (NextKind == tok::kw_namespace) {
+        SourceLocation DeclEnd;
+        StmtVector Stmts(Actions);
+        return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);
+      }
+      
+      // Parse (then ignore) 'inline' prior to a template instantiation. This is
+      // a GCC extension that we intentionally do not support.
+      if (NextKind == tok::kw_template) {
+        Diag(ConsumeToken(), diag::warn_static_inline_explicit_inst_ignored)
+          << 1;
+        SourceLocation DeclEnd;
+        StmtVector Stmts(Actions);
+        return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);  
+      }
     }
     goto dont_know;
 
