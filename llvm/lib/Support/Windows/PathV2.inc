@@ -104,8 +104,8 @@ error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
   // Get arguments.
   SmallString<128> from_storage;
   SmallString<128> to_storage;
-  StringRef f = from.toStringRef(from_storage);
-  StringRef t = to.toStringRef(to_storage);
+  StringRef f = from.toNullTerminatedStringRef(from_storage);
+  StringRef t = to.toNullTerminatedStringRef(to_storage);
 
   // Convert to utf-16.
   SmallVector<wchar_t, 128> wide_from;
