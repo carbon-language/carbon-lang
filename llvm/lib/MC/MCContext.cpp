@@ -57,19 +57,41 @@ MCContext::~MCContext() {
 MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name) {
   assert(!Name.empty() && "Normal symbols cannot be unnamed!");
 
-  // Determine whether this is an assembler temporary or normal label.
-  bool isTemporary = Name.startswith(MAI.getPrivateGlobalPrefix());
-
   // Do the lookup and get the entire StringMapEntry.  We want access to the
   // key if we are creating the entry.
   StringMapEntry<MCSymbol*> &Entry = Symbols.GetOrCreateValue(Name);
-  if (Entry.getValue()) return Entry.getValue();
+  MCSymbol *Sym = Entry.getValue();
+
+  if (Sym)
+    return Sym;
+
+  Sym = CreateSymbol(Name);
+  Entry.setValue(Sym);
+  return Sym;
+}
+
+MCSymbol *MCContext::CreateSymbol(StringRef Name) {
+  // Determine whether this is an assembler temporary or normal label.
+  bool isTemporary = Name.startswith(MAI.getPrivateGlobalPrefix());
+
+  StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
+  if (NameEntry->getValue()) {
+    assert(isTemporary && "Cannot rename non temporary symbols");
+    SmallString<128> NewName;
+    do {
+      Twine T = Name + Twine(NextUniqueID++);
+      T.toVector(NewName);
+      StringRef foo = NewName;
+      NameEntry = &UsedNames.GetOrCreateValue(foo);
+    } while (NameEntry->getValue());
+  }
+  NameEntry->setValue(true);
 
   // Ok, the entry doesn't already exist.  Have the MCSymbol object itself refer
-  // to the copy of the string that is embedded in the StringMapEntry.
-  MCSymbol *Result = new (*this) MCSymbol(Entry.getKey(), isTemporary);
-  Entry.setValue(Result);
-  return Result; 
+  // to the copy of the string that is embedded in the UsedNames entry.
+  MCSymbol *Result = new (*this) MCSymbol(NameEntry->getKey(), isTemporary);
+
+  return Result;
 }
 
 MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
@@ -79,8 +101,11 @@ MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
 }
 
 MCSymbol *MCContext::CreateTempSymbol() {
-  return GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix()) +
-                           "tmp" + Twine(NextUniqueID++));
+  SmallString<128> NameSV;
+  Twine Name = Twine(MAI.getPrivateGlobalPrefix()) + "tmp" +
+    Twine(NextUniqueID++);
+  Name.toVector(NameSV);
+  return CreateSymbol(NameSV);
 }
 
 unsigned MCContext::NextInstance(int64_t LocalLabelVal) {

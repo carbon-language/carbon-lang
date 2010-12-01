@@ -45,6 +45,10 @@ namespace llvm {
     /// Symbols - Bindings of names to symbols.
     StringMap<MCSymbol*> Symbols;
 
+    /// UsedNames - Keeps tracks of names that were used both for used declared
+    /// and artificial symbols.
+    StringMap<bool> UsedNames;
+
     /// NextUniqueID - The next ID to dole out to an unnamed assembler temporary
     /// symbol.
     unsigned NextUniqueID;
@@ -91,6 +95,9 @@ namespace llvm {
     BumpPtrAllocator Allocator;
 
     void *MachOUniquingMap, *ELFUniquingMap, *COFFUniquingMap;
+
+    MCSymbol *CreateSymbol(StringRef Name);
+
   public:
     explicit MCContext(const MCAsmInfo &MAI);
     ~MCContext();
