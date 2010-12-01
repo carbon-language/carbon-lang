@@ -717,7 +717,7 @@ private:
 
   /// Compute the effective fragment size assuming it is layed out at the given
   /// \arg SectionAddress and \arg FragmentOffset.
-  uint64_t ComputeFragmentSize(MCAsmLayout &Layout, const MCFragment &F,
+  uint64_t ComputeFragmentSize(const MCFragment &F,
                                uint64_t SectionAddress,
                                uint64_t FragmentOffset) const;
 

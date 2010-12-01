@@ -336,8 +336,7 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
   return IsResolved;
 }
 
-uint64_t MCAssembler::ComputeFragmentSize(MCAsmLayout &Layout,
-                                          const MCFragment &F,
+uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F,
                                           uint64_t SectionAddress,
                                           uint64_t FragmentOffset) const {
   switch (F.getKind()) {
@@ -410,7 +409,7 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
 
   // Compute fragment offset and size.
   F->Offset = Address - StartAddress;
-  F->EffectiveSize = getAssembler().ComputeFragmentSize(*this, *F, StartAddress,
+  F->EffectiveSize = getAssembler().ComputeFragmentSize(*F, StartAddress,
                                                         F->Offset);
   LastValidFragment = F;
 
