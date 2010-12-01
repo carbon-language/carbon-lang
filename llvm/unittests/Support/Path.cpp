@@ -13,6 +13,22 @@
 
 using namespace llvm;
 
+#define TEST_OUT(func, result) outs() << "    " #func ": " << result << '\n';
+
+#define TEST_PATH_(header, func, funcname, output) \
+  header; \
+  if (error_code ec = sys::path::func) \
+    ASSERT_FALSE(ec.message().c_str()); \
+  TEST_OUT(funcname, output)
+
+#define TEST_PATH(func, ipath, res) TEST_PATH_(, func(ipath, res), func, res);
+
+#define TEST_PATH_SMALLVEC(func, ipath, inout) \
+  TEST_PATH_(inout = ipath, func(inout), func, inout)
+
+#define TEST_PATH_SMALLVEC_P(func, ipath, inout, param) \
+  TEST_PATH_(inout = ipath, func(inout, param), func, inout)
+
 namespace {
 
 TEST(Support, Path) {
@@ -80,56 +96,26 @@ TEST(Support, Path) {
     }
     outs() << "]\n";
 
-    StringRef res;
-    SmallString<16> temp_store;
-    if (error_code ec = sys::path::root_path(*i, res))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    root_path: " << res << '\n';
-    if (error_code ec = sys::path::root_name(*i, res))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    root_name: " << res << '\n';
-    if (error_code ec = sys::path::root_directory(*i, res))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    root_directory: " << res << '\n';
-    if (error_code ec = sys::path::parent_path(*i, res))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    parent_path: " << res << '\n';
-    if (error_code ec = sys::path::filename(*i, res))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    filename: " << res << '\n';
-    if (error_code ec = sys::path::stem(*i, res))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    stem: " << res << '\n';
-    if (error_code ec = sys::path::extension(*i, res))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    stem: " << res << '\n';
+    StringRef sfres;
+    TEST_PATH(root_path, *i, sfres);
+    TEST_PATH(root_name, *i, sfres);
+    TEST_PATH(root_directory, *i, sfres);
+    TEST_PATH(parent_path, *i, sfres);
+    TEST_PATH(filename, *i, sfres);
+    TEST_PATH(stem, *i, sfres);
+    TEST_PATH(extension, *i, sfres);
 
-    temp_store = *i;
-    if (error_code ec = sys::path::make_absolute(temp_store))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    make_absolute: " << temp_store << '\n';
-    temp_store = *i;
-    if (error_code ec = sys::path::remove_filename(temp_store))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    remove_filename: " << temp_store << '\n';
-    temp_store = *i;
-    if (error_code ec = sys::path::replace_extension(temp_store, "ext"))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    replace_extension: " << temp_store << '\n';
-    StringRef stem, ext;
-    if (error_code ec = sys::path::stem(
-      StringRef(temp_store.begin(), temp_store.size()), stem))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    stem: " << stem << '\n';
-    if (error_code ec = sys::path::extension(
-      StringRef(temp_store.begin(), temp_store.size()), ext))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    extension: " << ext << '\n';
-    EXPECT_EQ(*(--sys::path::end(
-      StringRef(temp_store.begin(), temp_store.size()))), (stem + ext).str());
-    if (error_code ec = sys::path::native(*i, temp_store))
-      ASSERT_FALSE(ec.message().c_str());
-    outs() << "    native: " << temp_store << '\n';
+    SmallString<16> temp_store;
+    TEST_PATH_SMALLVEC(make_absolute, *i, temp_store);
+    TEST_PATH_SMALLVEC(remove_filename, *i, temp_store);
+
+    TEST_PATH_SMALLVEC_P(replace_extension, *i, temp_store, "ext");
+    StringRef filename(temp_store.begin(), temp_store.size()), stem, ext;
+    TEST_PATH(stem, filename, stem);
+    TEST_PATH(extension, filename, ext);
+    EXPECT_EQ(*(--sys::path::end(filename)), (stem + ext).str());
+
+    TEST_PATH_(, native(*i, temp_store), native, temp_store);
 
     outs().flush();
   }
