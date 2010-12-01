@@ -3298,7 +3298,8 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
 
-  if (!Args.hasArg(options::OPT_nostdlib)) {
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
     const char *crt1 = NULL;
     if (!Args.hasArg(options::OPT_shared)){
       if (Args.hasArg(options::OPT_pie))
@@ -3384,15 +3385,17 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-lgcc");
     }
 
-    const char *crtend;
-    if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_pie))
-      crtend = "crtendS.o";
-    else
-      crtend = "crtend.o";
 
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtend)));
+    if (!Args.hasArg(options::OPT_nostartfiles)) {
+      const char *crtend;
+      if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_pie))
+        crtend = "crtendS.o";
+      else
+        crtend = "crtend.o";
 
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtend)));
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
+    }
   }
 
   if (Args.hasArg(options::OPT_use_gold_plugin)) {
