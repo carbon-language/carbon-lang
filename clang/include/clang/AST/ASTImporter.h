@@ -125,6 +125,10 @@ namespace clang {
     /// context, or NULL if an error occurred.
     NestedNameSpecifier *Import(NestedNameSpecifier *FromNNS);
     
+    /// \brief Import the goven template name from the "from" context into the
+    /// "to" context.
+    TemplateName Import(TemplateName From);
+    
     /// \brief Import the given source location from the "from" context into
     /// the "to" context.
     ///
@@ -150,7 +154,7 @@ namespace clang {
     /// into the "to" context.
     ///
     /// \returns the equivalent identifier in the "to" context.
-    IdentifierInfo *Import(IdentifierInfo *FromId);
+    IdentifierInfo *Import(const IdentifierInfo *FromId);
 
     /// \brief Import the given Objective-C selector from the "from"
     /// context into the "to" context.
