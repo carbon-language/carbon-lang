@@ -1339,6 +1339,8 @@ X86TargetLowering::LowerReturn(SDValue Chain,
 }
 
 bool X86TargetLowering::isUsedByReturnOnly(SDNode *N) const {
+  // Temporarily disabled.
+  return false;
   if (N->getNumValues() != 1)
     return false;
   if (!N->hasNUsesOfValue(1, 0))

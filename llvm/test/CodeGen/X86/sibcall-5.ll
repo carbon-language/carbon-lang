@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
+; XFAIL: *
 
 ; Sibcall optimization of expanded libcalls.
 ; rdar://8707777
