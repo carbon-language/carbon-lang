@@ -97,6 +97,9 @@ TEST(Support, Path) {
     if (error_code ec = sys::path::filename(*i, res))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    filename: " << res << '\n';
+    if (error_code ec = sys::path::stem(*i, res))
+      ASSERT_FALSE(ec.message().c_str());
+    outs() << "    stem: " << res << '\n';
 
     temp_store = *i;
     if (error_code ec = sys::path::make_absolute(temp_store))
@@ -110,6 +113,10 @@ TEST(Support, Path) {
     if (error_code ec = sys::path::replace_extension(temp_store, "ext"))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    replace_extension: " << temp_store << '\n';
+    if (error_code ec = sys::path::stem(
+      StringRef(temp_store.begin(), temp_store.size()), res))
+      ASSERT_FALSE(ec.message().c_str());
+    outs() << "    stem: " << res << '\n';
     if (error_code ec = sys::path::native(*i, temp_store))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    native: " << temp_store << '\n';

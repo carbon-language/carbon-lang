@@ -558,6 +558,22 @@ error_code filename(const StringRef &path, StringRef &result) {
   return make_error_code(errc::success);
 }
 
+error_code stem(const StringRef &path, StringRef &result) {
+  StringRef fname;
+  if (error_code ec = filename(path, fname)) return ec;
+  size_t pos = fname.find_last_of('.');
+  if (pos == StringRef::npos)
+    result = fname;
+  else
+    if ((fname.size() == 1 && fname == ".") ||
+        (fname.size() == 2 && fname == ".."))
+      result = fname;
+    else
+      result = StringRef(fname.begin(), pos);
+
+  return make_error_code(errc::success);
+}
+
 }
 }
 }
