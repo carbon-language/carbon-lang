@@ -507,6 +507,54 @@ namespace {
   };
 }
 
+
+/// canEmitInitWithFewStoresAfterMemset - Decide whether we can emit the
+/// non-zero parts of the specified initializer with equal or fewer than
+/// NumStores scalar stores.
+static bool canEmitInitWithFewStoresAfterMemset(llvm::Constant *Init,
+                                                unsigned &NumStores) {
+  // Zero never requires any extra stores.
+  if (isa<llvm::ConstantAggregateZero>(Init)) return true;
+  
+  // Anything else is hard and scary.
+  return false;
+}
+
+/// emitStoresForInitAfterMemset - For inits that
+/// canEmitInitWithFewStoresAfterMemset returned true for, emit the scalar
+/// stores that would be required.
+static void emitStoresForInitAfterMemset(llvm::Constant *Init, llvm::Value *Loc,
+                                         CGBuilderTy &Builder) {
+  // Zero doesn't require any stores.
+  if (isa<llvm::ConstantAggregateZero>(Init)) return;
+  
+  
+  assert(0 && "Unknown value type!");
+}
+
+
+/// shouldUseMemSetPlusStoresToInitialize - Decide whether we should use memset
+/// plus some stores to initialize a local variable instead of using a memcpy
+/// from a constant global.  It is beneficial to use memset if the global is all
+/// zeros, or mostly zeros and large.
+static bool shouldUseMemSetPlusStoresToInitialize(llvm::Constant *Init,
+                                                  uint64_t GlobalSize) {
+  // If a global is all zeros, always use a memset.
+  if (isa<llvm::ConstantAggregateZero>(Init)) return true;
+
+
+  // If a non-zero global is <= 32 bytes, always use a memcpy.  If it is large,
+  // do it if it will require 6 or fewer scalar stores.
+  // TODO: Should budget depends on the size?  Avoiding a large global warrants
+  // plopping in more stores.
+  unsigned StoreBudget = 6;
+  uint64_t SizeLimit = 32;
+  
+  return GlobalSize > SizeLimit && 
+         canEmitInitWithFewStoresAfterMemset(Init, StoreBudget);
+}
+
+
 /// EmitLocalVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
@@ -680,7 +728,7 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
       flag |= BLOCK_FIELD_IS_WEAK;
 
     int isa = 0;
-    if (flag&BLOCK_FIELD_IS_WEAK)
+    if (flag & BLOCK_FIELD_IS_WEAK)
       isa = 1;
     V = Builder.CreateIntToPtr(Builder.getInt32(isa), PtrToInt8Ty, "isa");
     Builder.CreateStore(V, isa_field);
@@ -735,11 +783,20 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
       
       llvm::Value *NotVolatile = Builder.getFalse();
 
-      // If the initializer is all zeros, codegen with memset.
-      if (isa<llvm::ConstantAggregateZero>(Init)) {
-        llvm::Value *Zero = Builder.getInt8(0);
-        Builder.CreateCall5(CGM.getMemSetFn(Loc->getType(), SizeVal->getType()),
-                            Loc, Zero, SizeVal, AlignVal, NotVolatile);
+      // If the initializer is all or mostly zeros, codegen with memset then do
+      // a few stores afterward.
+      if (shouldUseMemSetPlusStoresToInitialize(Init, 
+                      CGM.getTargetData().getTypeAllocSize(Init->getType()))) {
+        const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
+        llvm::Value *MemSetDest = Loc;
+        if (MemSetDest->getType() != BP)
+          MemSetDest = Builder.CreateBitCast(MemSetDest, BP, "tmp");
+        
+        Builder.CreateCall5(CGM.getMemSetFn(BP, SizeVal->getType()),
+                            MemSetDest, Builder.getInt8(0), SizeVal, AlignVal,
+                            NotVolatile);
+        emitStoresForInitAfterMemset(Init, Loc, Builder);
+        
       } else {
         // Otherwise, create a temporary global with the initializer then 
         // memcpy from the global to the alloca.
@@ -754,6 +811,10 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
         if (SrcPtr->getType() != BP)
           SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
 
+        const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
+        if (Loc->getType() != BP)
+          Loc = Builder.CreateBitCast(Loc, BP, "tmp");
+        
         Builder.CreateCall5(CGM.getMemCpyFn(Loc->getType(), SrcPtr->getType(),
                                             SizeVal->getType()),
                             Loc, SrcPtr, SizeVal, AlignVal, NotVolatile);
