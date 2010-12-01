@@ -195,19 +195,12 @@ StringRef Path::GetDLLSuffix() {
   return &(LTDL_SHLIB_EXT[1]);
 }
 
-bool
+void
 Path::appendSuffix(StringRef suffix) {
   if (!suffix.empty()) {
-    std::string save(path);
     path.append(".");
     path.append(suffix);
-    if (!isValid()) {
-      path = save;
-      return false;
-    }
   }
-
-  return true;
 }
 
 bool
