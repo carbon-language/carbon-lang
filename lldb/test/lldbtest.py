@@ -461,7 +461,10 @@ class TestBase(unittest2.TestCase):
 
         if ("LLDB_WAIT_BETWEEN_TEST_CASES" in os.environ and
             os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] == 'YES'):
-            time.sleep(1.0)
+            waitTime = 1.0
+            if "LLDB_TIME_WAIT_BETWEEN_TEST_CASES" in os.environ:
+                waitTime = float(os.environ["LLDB_TIME_WAIT_BETWEEN_TEST_CASES"])
+            time.sleep(waitTime)
 
         if "LLDB_MAX_LAUNCH_COUNT" in os.environ:
             self.maxLaunchCount = int(os.environ["LLDB_MAX_LAUNCH_COUNT"])
