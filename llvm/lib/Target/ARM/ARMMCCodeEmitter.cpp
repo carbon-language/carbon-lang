@@ -658,7 +658,7 @@ getAddrModeS1OpValue(const MCInst &MI, unsigned OpIdx,
   return getAddrModeSOpValue(MI, OpIdx, 1);
 }
 
-/// getAddrMode5OpValue - Return encoding info for 'reg +/- imm12' operand.
+/// getAddrMode5OpValue - Return encoding info for 'reg +/- imm10' operand.
 uint32_t ARMMCCodeEmitter::
 getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
                     SmallVectorImpl<MCFixup> &Fixups) const {
@@ -676,7 +676,7 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
 
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
-    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_12);
+    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_10);
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 
     ++MCNumCPRelocations;
