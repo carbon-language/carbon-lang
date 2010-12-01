@@ -38,48 +38,6 @@ public:
   unsigned getPointerSize() const {
     return 4;
   }
-
-protected:
-  static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
-    switch (Kind) {
-    default:
-      llvm_unreachable("Unknown fixup kind!");
-    case FK_Data_4:
-    case ARM::fixup_arm_movt_hi16:
-    case ARM::fixup_arm_movw_lo16:
-      return Value;
-    case ARM::fixup_arm_pcrel_12: {
-      bool isAdd = true;
-      // ARM PC-relative values are offset by 8.
-      Value -= 8;
-      if ((int64_t)Value < 0) {
-        Value = -Value;
-        isAdd = false;
-      }
-      assert ((Value < 4096) && "Out of range pc-relative fixup value!");
-      Value |= isAdd << 23;
-      return Value;
-    }
-    case ARM::fixup_arm_branch:
-      // These values don't encode the low two bits since they're always zero.
-      // Offset by 8 just as above.
-      return (Value - 8) >> 2;
-    case ARM::fixup_arm_pcrel_10: {
-      // Offset by 8 just as above.
-      Value = Value - 8;
-      bool isAdd = true;
-      if ((int64_t)Value < 0) {
-        Value = -Value;
-        isAdd = false;
-      }
-      // These values don't encode the low two bits since they're always zero.
-      Value >>= 2;
-      assert ((Value < 256) && "Out of range pc-relative fixup value!");
-      Value |= isAdd << 23;
-      return Value;
-    }
-    }
-  }
 };
 } // end anonymous namespace
 
@@ -99,6 +57,47 @@ bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
   for (uint64_t i = 0; i != Count; ++i)
     OW->Write8(0);
   return true;
+}
+
+static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
+  switch (Kind) {
+  default:
+    llvm_unreachable("Unknown fixup kind!");
+  case FK_Data_4:
+  case ARM::fixup_arm_movt_hi16:
+  case ARM::fixup_arm_movw_lo16:
+    return Value;
+  case ARM::fixup_arm_pcrel_12: {
+    bool isAdd = true;
+    // ARM PC-relative values are offset by 8.
+    Value -= 8;
+    if ((int64_t)Value < 0) {
+      Value = -Value;
+      isAdd = false;
+    }
+    assert ((Value < 4096) && "Out of range pc-relative fixup value!");
+    Value |= isAdd << 23;
+    return Value;
+  }
+  case ARM::fixup_arm_branch:
+    // These values don't encode the low two bits since they're always zero.
+    // Offset by 8 just as above.
+    return (Value - 8) >> 2;
+  case ARM::fixup_arm_pcrel_10: {
+    // Offset by 8 just as above.
+    Value = Value - 8;
+    bool isAdd = true;
+    if ((int64_t)Value < 0) {
+      Value = -Value;
+      isAdd = false;
+    }
+    // These values don't encode the low two bits since they're always zero.
+    Value >>= 2;
+    assert ((Value < 256) && "Out of range pc-relative fixup value!");
+    Value |= isAdd << 23;
+    return Value;
+  }
+  }
 }
 
 namespace {
