@@ -49,8 +49,12 @@ CommandObjectMultiword::GetSubcommandSP (const char *sub_cmd, StringList *matche
     if (!m_subcommand_dict.empty())
     {
         pos = m_subcommand_dict.find (sub_cmd);
-        if (pos != m_subcommand_dict.end())
+        if (pos != m_subcommand_dict.end()) {
+            // An exact match; append the sub_cmd to the 'matches' string list.
+            if (matches)
+                matches->AppendString(sub_cmd);
             return_cmd_sp = pos->second;
+        }
         else
         {
 
