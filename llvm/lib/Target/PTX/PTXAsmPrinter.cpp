@@ -130,20 +130,21 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
 }
 
 void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  SmallString<128> sstr;
-  raw_svector_ostream OS(sstr);
+  std::string str;
+  str.reserve(64);
+
+  // Write instruction to str
+  raw_string_ostream OS(str);
   printInstruction(MI, OS);
   OS << ';';
+  OS.flush();
 
   // Replace "%type" if found
-  StringRef strref = OS.str();
   size_t pos;
-  if ((pos = strref.find("%type")) != StringRef::npos) {
-    std::string str = strref;
+  if ((pos = str.find("%type")) != std::string::npos)
     str.replace(pos, /*strlen("%type")==*/5, getInstructionTypeName(MI));
-    strref = StringRef(str);
-  }
 
+  StringRef strref = StringRef(str);
   OutStreamer.EmitRawText(strref);
 }
 
