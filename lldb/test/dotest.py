@@ -45,6 +45,13 @@ class _WritelnDecorator(object):
 # The test suite.
 suite = unittest2.TestSuite()
 
+# The blacklist is optional (-b blacklistFile) and allows a central place to skip
+# testclass's and/or testclass.testmethod's.
+blacklist = None
+
+# The dictionary as a result of sourcing blacklistFile.
+blacklistConfig = {}
+
 # The config file is optional.
 configFile = None
 
@@ -103,6 +110,7 @@ def usage():
 Usage: dotest.py [option] [args]
 where options:
 -h   : print this help message and exit (also --help)
+-b   : read a blacklist file specified after this option
 -c   : read a config file specified after this option
        (see also lldb-trunk/example/test/usage-config)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
@@ -219,6 +227,8 @@ def parseOptionsAndInitTestdirs():
     '-h/--help as the first option prints out usage info and exit the program.
     """
 
+    global blacklist
+    global blacklistConfig
     global configFile
     global count
     global delay
@@ -244,6 +254,19 @@ def parseOptionsAndInitTestdirs():
 
         if sys.argv[index].find('-h') != -1:
             usage()
+        elif sys.argv[index].startswith('-b'):
+            # Increment by 1 to fetch the blacklist file name option argument.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            blacklistFile = sys.argv[index]
+            if not os.path.isfile(blacklistFile):
+                print "Blacklist file:", blacklistFile, "does not exist!"
+                usage()
+            index += 1
+            # Now read the blacklist contents and assign it to blacklist.
+            execfile(blacklistFile, globals(), blacklistConfig)
+            blacklist = blacklistConfig.get('blacklist')
         elif sys.argv[index].startswith('-c'):
             # Increment by 1 to fetch the config file name option argument.
             index += 1
@@ -592,6 +615,9 @@ atexit.register(lambda: lldb.SBDebugger.Terminate())
 
 # Create a singleton SBDebugger in the lldb namespace.
 lldb.DBG = lldb.SBDebugger.Create()
+
+# And put the blacklist in the lldb namespace, to be used by lldb.TestBase.
+lldb.blacklist = blacklist
 
 # Turn on lldb loggings if necessary.
 lldbLoggings()

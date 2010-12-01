@@ -451,6 +451,13 @@ class TestBase(unittest2.TestCase):
         #import traceback
         #traceback.print_stack()
 
+        className = self.__class__.__name__
+        classAndMethodName = "%s.%s" % (className, self._testMethodName)
+        if className in lldb.blacklist:
+            self.skipTest(lldb.blacklist.get(className))
+        elif classAndMethodName in lldb.blacklist:
+            self.skipTest(lldb.blacklist.get(classAndMethodName))
+
         if ("LLDB_WAIT_BETWEEN_TEST_CASES" in os.environ and
             os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] == 'YES'):
             time.sleep(1.0)
