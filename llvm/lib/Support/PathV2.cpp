@@ -503,6 +503,14 @@ error_code parent_path(const StringRef &path, StringRef &result) {
   return make_error_code(errc::success);
 }
 
+error_code remove_filename(SmallVectorImpl<char> &path) {
+  size_t end_pos = parent_path_end(StringRef(path.begin(), path.size()));
+  if (end_pos == StringRef::npos)
+    return make_error_code(errc::success);
+  path.set_size(end_pos);
+  return make_error_code(errc::success);
+}
+
 }
 }
 }

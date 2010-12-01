@@ -140,7 +140,7 @@ error_code make_absolute(SmallVectorImpl<char> &path);
 /// @brief Remove the last component from \a path if it exists.
 ///
 /// directory/filename.cpp => directory/
-/// directory/             => directory/
+/// directory/             => directory
 ///
 /// @param path A path that is modified to not have a file component.
 /// @returns errc::success if \a path's file name has been removed (or there was
