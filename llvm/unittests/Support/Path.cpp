@@ -21,7 +21,7 @@ using namespace llvm;
     ASSERT_FALSE(ec.message().c_str()); \
   TEST_OUT(funcname, output)
 
-#define TEST_PATH(func, ipath, res) TEST_PATH_(, func(ipath, res), func, res);
+#define TEST_PATH(func, ipath, res) TEST_PATH_(;, func(ipath, res), func, res);
 
 #define TEST_PATH_SMALLVEC(func, ipath, inout) \
   TEST_PATH_(inout = ipath, func(inout), func, inout)
@@ -125,7 +125,7 @@ TEST(Support, Path) {
     TEST_PATH(extension, filename, ext);
     EXPECT_EQ(*(--sys::path::end(filename)), (stem + ext).str());
 
-    TEST_PATH_(, native(*i, temp_store), native, temp_store);
+    TEST_PATH_(;, native(*i, temp_store), native, temp_store);
 
     outs().flush();
   }
