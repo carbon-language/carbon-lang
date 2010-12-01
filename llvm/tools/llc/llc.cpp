@@ -96,6 +96,8 @@ FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
 cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
                        cl::desc("Do not verify input module"));
 
+cl::opt<bool> DisableDotLoc("disable-dot-loc", cl::Hidden,
+                            cl::desc("Do not use .loc entries"));
 
 static cl::opt<bool>
 DisableRedZone("disable-red-zone",
@@ -273,6 +275,9 @@ int main(int argc, char **argv) {
     target(TheTarget->createTargetMachine(TheTriple.getTriple(), FeaturesStr));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
+
+  if (DisableDotLoc)
+    Target.setMCUseLoc(false);
 
   // Figure out where we are going to send the output...
   OwningPtr<tool_output_file> Out
