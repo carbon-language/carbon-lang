@@ -1,4 +1,4 @@
-//===--- HostInfo.cpp - Host specific information -----------------------*-===//
+//===--- HostInfo.cpp - Host specific information -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
