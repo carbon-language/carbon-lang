@@ -5673,64 +5673,72 @@ static vector short __ATTRS_o_ai
 vec_splat(vector short a, unsigned char b)
 { 
   b *= 2;
+  unsigned char b1=b+1;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1));
+    (b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1));
 }
 
 static vector unsigned short __ATTRS_o_ai
 vec_splat(vector unsigned short a, unsigned char b)
 { 
   b *= 2;
+  unsigned char b1=b+1;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1));
+    (b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1));
 }
 
 static vector bool short __ATTRS_o_ai
 vec_splat(vector bool short a, unsigned char b)
 { 
   b *= 2;
+  unsigned char b1=b+1;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1));
+    (b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1));
 }
 
 static vector pixel __ATTRS_o_ai
 vec_splat(vector pixel a, unsigned char b)
 { 
   b *= 2;
+  unsigned char b1=b+1;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1));
+    (b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1));
 }
 
 static vector int __ATTRS_o_ai
 vec_splat(vector int a, unsigned char b)
 { 
   b *= 4;
+  unsigned char b1=b+1, b2=b+2, b3=b+3;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3));
+    (b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3));
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_splat(vector unsigned int a, unsigned char b)
 { 
   b *= 4;
+  unsigned char b1=b+1, b2=b+2, b3=b+3;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3));
+    (b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3));
 }
 
 static vector bool int __ATTRS_o_ai
 vec_splat(vector bool int a, unsigned char b)
 { 
   b *= 4;
+  unsigned char b1=b+1, b2=b+2, b3=b+3;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3));
+    (b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3));
 }
 
 static vector float __ATTRS_o_ai
 vec_splat(vector float a, unsigned char b)
 { 
   b *= 4;
+  unsigned char b1=b+1, b2=b+2, b3=b+3;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3));
+    (b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3));
 }
 
 /* vec_vspltb */
@@ -5763,32 +5771,36 @@ static vector short __ATTRS_o_ai
 vec_vsplth(vector short a, unsigned char b)
 {
   b *= 2;
+  unsigned char b1=b+1;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1));
+    (b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1));
 }
 
 static vector unsigned short __ATTRS_o_ai
 vec_vsplth(vector unsigned short a, unsigned char b)
 {
   b *= 2;
+  unsigned char b1=b+1;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1));
+    (b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1));
 }
 
 static vector bool short __ATTRS_o_ai
 vec_vsplth(vector bool short a, unsigned char b)
 {
   b *= 2;
+  unsigned char b1=b+1;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1));
+    (b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1));
 }
 
 static vector pixel __ATTRS_o_ai
 vec_vsplth(vector pixel a, unsigned char b)
 {
   b *= 2;
+  unsigned char b1=b+1;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1, b, b+1));
+    (b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1, b, b1));
 }
 
 /* vec_vspltw */
@@ -5799,32 +5811,36 @@ static vector int __ATTRS_o_ai
 vec_vspltw(vector int a, unsigned char b)
 {
   b *= 4;
+  unsigned char b1=b+1, b2=b+2, b3=b+3;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3));
+    (b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3));
 }
 
 static vector unsigned int __ATTRS_o_ai
 vec_vspltw(vector unsigned int a, unsigned char b)
 {
   b *= 4;
+  unsigned char b1=b+1, b2=b+2, b3=b+3;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3));
+    (b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3));
 }
 
 static vector bool int __ATTRS_o_ai
 vec_vspltw(vector bool int a, unsigned char b)
 {
   b *= 4;
+  unsigned char b1=b+1, b2=b+2, b3=b+3;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3));
+    (b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3));
 }
 
 static vector float __ATTRS_o_ai
 vec_vspltw(vector float a, unsigned char b)
 {
   b *= 4;
+  unsigned char b1=b+1, b2=b+2, b3=b+3;
   return vec_perm(a, a, (vector unsigned char)
-    (b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3, b, b+1, b+2, b+3));
+    (b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3, b, b1, b2, b3));
 }
 
 /* vec_splat_s8 */
