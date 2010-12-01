@@ -3022,6 +3022,27 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (NewVD->getLinkage() == ExternalLinkage && !DC->isRecord())
     AddPushedVisibilityAttribute(NewVD);
 
+
+  // For variables declared as __block which require copy construction,
+  // must capture copy initialization expression here.
+  if (getLangOptions().CPlusPlus && NewVD->hasAttr<BlocksAttr>()) {
+    QualType T = NewVD->getType();
+    if (!T->isDependentType() && !T->isReferenceType() &&
+        T->getAs<RecordType>() && !T->isUnionType()) {
+      Expr *E = new (Context) DeclRefExpr(NewVD, T,
+                                          VK_LValue, SourceLocation());
+      ExprResult Res = PerformCopyInitialization(
+                          InitializedEntity::InitializeBlock(NewVD->getLocation(), 
+                                                      T, false),
+                                                      SourceLocation(),
+                                                      Owned(E));
+      if (!Res.isInvalid()) {
+        Res = MaybeCreateCXXExprWithTemporaries(Res.get());
+        Expr *Init = Res.takeAs<Expr>();
+        Context.setBlockVarCopyInits(NewVD, Init);
+      }
+    }
+  }
   MarkUnusedFileScopedDecl(NewVD);
 
   return NewVD;

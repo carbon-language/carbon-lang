@@ -1008,6 +1008,20 @@ void ASTContext::setObjCImplementation(ObjCCategoryDecl *CatD,
   ObjCImpls[CatD] = ImplD;
 }
 
+/// \brief Get the copy initialization expression of VarDecl,or NULL if 
+/// none exists.
+Expr *ASTContext::getBlockVarCopyInits(VarDecl*VD) {
+  llvm::DenseMap<VarDecl*, Expr*>::iterator
+  I = BlockVarCopyInits.find(VD);
+  return (I != BlockVarCopyInits.end()) ? cast<Expr>(I->second) : 0;
+}
+
+/// \brief Set the copy inialization expression of a block var decl.
+void ASTContext::setBlockVarCopyInits(VarDecl*VD, Expr* Init) {
+  assert(VD && Init && "Passed null params");
+  BlockVarCopyInits[VD] = Init;
+}
+
 /// \brief Allocate an uninitialized TypeSourceInfo.
 ///
 /// The caller should initialize the memory held by TypeSourceInfo using

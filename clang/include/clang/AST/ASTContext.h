@@ -129,6 +129,9 @@ class ASTContext {
   /// \brief Mapping from ObjCContainers to their ObjCImplementations.
   llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*> ObjCImpls;
 
+  /// \brief Mapping from __block VarDecls to their copy initialization expr.
+  llvm::DenseMap<VarDecl*, Expr*> BlockVarCopyInits;
+    
   /// \brief Representation of a "canonical" template template parameter that
   /// is used in canonical template names.
   class CanonicalTemplateTemplateParm : public llvm::FoldingSetNode {
@@ -1358,6 +1361,12 @@ public:
   /// \brief Set the implementation of ObjCCategoryDecl.
   void setObjCImplementation(ObjCCategoryDecl *CatD,
                              ObjCCategoryImplDecl *ImplD);
+  
+  /// \brief Set the copy inialization expression of a block var decl.
+  void setBlockVarCopyInits(VarDecl*VD, Expr* Init);
+  /// \brief Get the copy initialization expression of VarDecl,or NULL if 
+  /// none exists.
+  Expr *getBlockVarCopyInits(VarDecl*VD);
 
   /// \brief Allocate an uninitialized TypeSourceInfo.
   ///
