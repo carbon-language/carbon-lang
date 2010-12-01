@@ -307,9 +307,22 @@ void DeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
 }
 
 void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
-  Out << "enum " << D << " {\n";
-  VisitDeclContext(D);
-  Indent() << "}";
+  Out << "enum ";
+  if (D->isScoped())
+    Out << "class ";
+  Out << D;
+
+  if (D->isFixed()) {
+    std::string Underlying;
+    D->getIntegerType().getAsStringInternal(Underlying, Policy);
+    Out << " : " << Underlying;
+  }
+
+  if (D->isDefinition()) {
+    Out << " {\n";
+    VisitDeclContext(D);
+    Indent() << "}";
+  }
 }
 
 void DeclPrinter::VisitRecordDecl(RecordDecl *D) {
