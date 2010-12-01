@@ -249,9 +249,12 @@ public:
   unsigned NEONThumb2DataIPostEncoder(const MCInst &MI,
                                       unsigned EncodedValue) const;
   unsigned NEONThumb2LoadStorePostEncoder(const MCInst &MI,
-                                      unsigned EncodedValue) const;
+                                          unsigned EncodedValue) const;
   unsigned NEONThumb2DupPostEncoder(const MCInst &MI,
-                                      unsigned EncodedValue) const;
+                                    unsigned EncodedValue) const;
+
+  unsigned VFPThumb2PostEncoder(const MCInst &MI,
+                                unsigned EncodedValue) const;
 
   void EmitByte(unsigned char C, raw_ostream &OS) const {
     OS << (char)C;
@@ -324,7 +327,16 @@ unsigned ARMMCCodeEmitter::NEONThumb2DupPostEncoder(const MCInst &MI,
   return EncodedValue;
 }
 
-
+/// VFPThumb2PostEncoder - Post-process encoded VFP instructions and rewrite
+/// them to their Thumb2 form if we are currently in Thumb2 mode.
+unsigned ARMMCCodeEmitter::
+VFPThumb2PostEncoder(const MCInst &MI, unsigned EncodedValue) const {
+  if (TM.getSubtarget<ARMSubtarget>().isThumb2()) {
+    EncodedValue &= 0x0FFFFFFF;
+    EncodedValue |= 0xE0000000;
+  }
+  return EncodedValue;
+}
 
 /// getMachineOpValue - Return binary encoding of operand. If the machine
 /// operand requires relocation, record the relocation and return zero.

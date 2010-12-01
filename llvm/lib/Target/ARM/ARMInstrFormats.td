@@ -1101,6 +1101,7 @@ class VFPI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, "${p}", asm);
   let Pattern = pattern;
+  let PostEncoderMethod = "VFPThumb2PostEncoder";
   list<Predicate> Predicates = [HasVFP2];
 }
 
@@ -1115,13 +1116,16 @@ class VFPXI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let InOperandList = iops;
   let AsmString = asm;
   let Pattern = pattern;
+  let PostEncoderMethod = "VFPThumb2PostEncoder";
   list<Predicate> Predicates = [HasVFP2];
 }
 
 class VFPAI<dag oops, dag iops, Format f, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>
   : VFPI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, itin,
-         opc, asm, "", pattern>;
+         opc, asm, "", pattern> {
+  let PostEncoderMethod = "VFPThumb2PostEncoder";
+}
 
 // ARM VFP addrmode5 loads and stores
 class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
