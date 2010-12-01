@@ -43,7 +43,7 @@ ifeq ($(HOST_OS),Darwin)
     LLVMLibsOptions += -Wl,-compatibility_version,1
 
     # Don't link with default libraries.
-    LLVMLibsOptions += -nodefaultlibs -lSupport
+    LLVMLibsOptions += -nodefaultlibs
 
     # Reexport libc++abi.
     LLVMLibsOptions += -Wl,-reexport_library,/usr/lib/libc++abi.dylib
