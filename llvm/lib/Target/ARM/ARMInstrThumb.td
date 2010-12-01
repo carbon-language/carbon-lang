@@ -514,54 +514,54 @@ def tTRAP : TI<(outs), (ins), IIC_Br,
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in
 def tLDR :                      // A8.6.60
-  T1pIEncode<0b100, (outs tGPR:$Rt), (ins t_addrmode_s4:$addr),
-             AddrModeT1_4, IIC_iLoad_r,
-             "ldr", "\t$Rt, $addr",
-             [(set tGPR:$Rt, (load t_addrmode_s4:$addr))]>;
+  T1pILdStEncode<0b100, (outs tGPR:$Rt), (ins t_addrmode_s4:$addr),
+                 AddrModeT1_4, IIC_iLoad_r,
+                 "ldr", "\t$Rt, $addr",
+                 [(set tGPR:$Rt, (load t_addrmode_s4:$addr))]>;
 
 def tLDRi:                      // A8.6.57
-  T1pIEncodeImm<0b0110, 1, (outs tGPR:$Rt), (ins t_addrmode_s4:$addr),
-                AddrModeT1_4, IIC_iLoad_r,
-                "ldr", "\t$Rt, $addr",
-                []>;
+  T1pILdStEncodeImm<0b0110, 1, (outs tGPR:$Rt), (ins t_addrmode_s4:$addr),
+                    AddrModeT1_4, IIC_iLoad_r,
+                    "ldr", "\t$Rt, $addr",
+                    []>;
 
 def tLDRB :                     // A8.6.64
-  T1pIEncode<0b110, (outs tGPR:$Rt), (ins t_addrmode_s1:$addr),
-             AddrModeT1_1, IIC_iLoad_bh_r,
-             "ldrb", "\t$Rt, $addr",
-             [(set tGPR:$Rt, (zextloadi8 t_addrmode_s1:$addr))]>;
+  T1pILdStEncode<0b110, (outs tGPR:$Rt), (ins t_addrmode_s1:$addr),
+                 AddrModeT1_1, IIC_iLoad_bh_r,
+                 "ldrb", "\t$Rt, $addr",
+                 [(set tGPR:$Rt, (zextloadi8 t_addrmode_s1:$addr))]>;
 
 def tLDRBi :                    // A8.6.61
-  T1pIEncodeImm<0b0111, 1, (outs tGPR:$dst), (ins t_addrmode_s1:$addr),
-                AddrModeT1_1, IIC_iLoad_bh_r,
-                "ldrb", "\t$dst, $addr",
-                []>;
+  T1pILdStEncodeImm<0b0111, 1, (outs tGPR:$dst), (ins t_addrmode_s1:$addr),
+                    AddrModeT1_1, IIC_iLoad_bh_r,
+                    "ldrb", "\t$dst, $addr",
+                    []>;
 
 def tLDRH :                     // A8.6.76
-  T1pIEncode<0b101, (outs tGPR:$dst), (ins t_addrmode_s2:$addr),
-             AddrModeT1_2, IIC_iLoad_bh_r,
-             "ldrh", "\t$dst, $addr",
-             [(set tGPR:$dst, (zextloadi16 t_addrmode_s2:$addr))]>;
+  T1pILdStEncode<0b101, (outs tGPR:$dst), (ins t_addrmode_s2:$addr),
+                 AddrModeT1_2, IIC_iLoad_bh_r,
+                 "ldrh", "\t$dst, $addr",
+                 [(set tGPR:$dst, (zextloadi16 t_addrmode_s2:$addr))]>;
 
 def tLDRHi:                     // A8.6.73
-  T1pIEncodeImm<0b1000, 1, (outs tGPR:$dst), (ins t_addrmode_s2:$addr),
-                AddrModeT1_2, IIC_iLoad_bh_r,
-                "ldrh", "\t$dst, $addr",
-                []>;
+  T1pILdStEncodeImm<0b1000, 1, (outs tGPR:$dst), (ins t_addrmode_s2:$addr),
+                    AddrModeT1_2, IIC_iLoad_bh_r,
+                    "ldrh", "\t$dst, $addr",
+                    []>;
 
 let AddedComplexity = 10 in
 def tLDRSB :                    // A8.6.80
-  T1pIEncode<0b011, (outs tGPR:$dst), (ins t_addrmode_rr:$addr),
-             AddrModeT1_1, IIC_iLoad_bh_r,
-             "ldrsb", "\t$dst, $addr",
-             [(set tGPR:$dst, (sextloadi8 t_addrmode_rr:$addr))]>;
+  T1pILdStEncode<0b011, (outs tGPR:$dst), (ins t_addrmode_rr:$addr),
+                 AddrModeT1_1, IIC_iLoad_bh_r,
+                 "ldrsb", "\t$dst, $addr",
+                 [(set tGPR:$dst, (sextloadi8 t_addrmode_rr:$addr))]>;
 
 let AddedComplexity = 10 in
 def tLDRSH :                    // A8.6.84
-  T1pIEncode<0b111, (outs tGPR:$dst), (ins t_addrmode_rr:$addr),
-             AddrModeT1_2, IIC_iLoad_bh_r,
-             "ldrsh", "\t$dst, $addr",
-             [(set tGPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
+  T1pILdStEncode<0b111, (outs tGPR:$dst), (ins t_addrmode_rr:$addr),
+                 AddrModeT1_2, IIC_iLoad_bh_r,
+                 "ldrsh", "\t$dst, $addr",
+                 [(set tGPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
 
 let canFoldAsLoad = 1 in
 def tLDRspi : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
@@ -597,40 +597,40 @@ def tLDRcp  : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoad_i,
               T1LdStSP<{1,?,?}>;
 
 def tSTR :                      // A8.6.194
-  T1pIEncode<0b000, (outs), (ins tGPR:$src, t_addrmode_s4:$addr),
-             AddrModeT1_4, IIC_iStore_r,
-             "str", "\t$src, $addr",
-             [(store tGPR:$src, t_addrmode_s4:$addr)]>;
+  T1pILdStEncode<0b000, (outs), (ins tGPR:$src, t_addrmode_s4:$addr),
+                 AddrModeT1_4, IIC_iStore_r,
+                 "str", "\t$src, $addr",
+                 [(store tGPR:$src, t_addrmode_s4:$addr)]>;
 
 def tSTRi :                     // A8.6.192
-  T1pIEncodeImm<0b0110, 0, (outs), (ins tGPR:$src, t_addrmode_s4:$addr),
-                AddrModeT1_4, IIC_iStore_r,
-                "str", "\t$src, $addr",
-                []>;
+  T1pILdStEncodeImm<0b0110, 0, (outs), (ins tGPR:$src, t_addrmode_s4:$addr),
+                    AddrModeT1_4, IIC_iStore_r,
+                    "str", "\t$src, $addr",
+                    []>;
 
 def tSTRB :                     // A8.6.197
-  T1pIEncode<0b010, (outs), (ins tGPR:$src, t_addrmode_s1:$addr),
-             AddrModeT1_1, IIC_iStore_bh_r,
-             "strb", "\t$src, $addr",
-             [(truncstorei8 tGPR:$src, t_addrmode_s1:$addr)]>;
+  T1pILdStEncode<0b010, (outs), (ins tGPR:$src, t_addrmode_s1:$addr),
+                 AddrModeT1_1, IIC_iStore_bh_r,
+                 "strb", "\t$src, $addr",
+                 [(truncstorei8 tGPR:$src, t_addrmode_s1:$addr)]>;
 
 def tSTRBi :                    // A8.6.195
-  T1pIEncodeImm<0b0111, 0, (outs), (ins tGPR:$src, t_addrmode_s1:$addr),
-                AddrModeT1_1, IIC_iStore_bh_r,
-                "strb", "\t$src, $addr",
-                []>;
+  T1pILdStEncodeImm<0b0111, 0, (outs), (ins tGPR:$src, t_addrmode_s1:$addr),
+                    AddrModeT1_1, IIC_iStore_bh_r,
+                    "strb", "\t$src, $addr",
+                    []>;
 
 def tSTRH :                     // A8.6.207
-  T1pIEncode<0b001, (outs), (ins tGPR:$src, t_addrmode_s2:$addr),
-             AddrModeT1_2, IIC_iStore_bh_r,
-             "strh", "\t$src, $addr",
-             [(truncstorei16 tGPR:$src, t_addrmode_s2:$addr)]>;
+  T1pILdStEncode<0b001, (outs), (ins tGPR:$src, t_addrmode_s2:$addr),
+                 AddrModeT1_2, IIC_iStore_bh_r,
+                 "strh", "\t$src, $addr",
+                 [(truncstorei16 tGPR:$src, t_addrmode_s2:$addr)]>;
 
 def tSTRHi :                    // A8.6.205
-  T1pIEncodeImm<0b1000, 0, (outs), (ins tGPR:$src, t_addrmode_s2:$addr),
-                AddrModeT1_2, IIC_iStore_bh_r,
-                "strh", "\t$src, $addr",
-                []>;
+  T1pILdStEncodeImm<0b1000, 0, (outs), (ins tGPR:$src, t_addrmode_s2:$addr),
+                    AddrModeT1_2, IIC_iStore_bh_r,
+                    "strh", "\t$src, $addr",
+                    []>;
 
 def tSTRspi : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
                    "str", "\t$src, $addr",

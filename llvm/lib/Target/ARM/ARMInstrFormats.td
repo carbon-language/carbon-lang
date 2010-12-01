@@ -907,9 +907,9 @@ class T1LdStSP<bits<3> opB>   : T1LoadStore<0b1001, opB>; // SP relative
 //   0b0110 => Immediate, 4 bytes
 //   0b1000 => Immediate, 2 bytes
 //   0b0111 => Immediate, 1 byte
-class T1pIEncode<bits<3> opcode, dag oops, dag iops, AddrMode am,
-                 InstrItinClass itin, string opc, string asm,
-                 list<dag> pattern>
+class T1pILdStEncode<bits<3> opcode, dag oops, dag iops, AddrMode am,
+                     InstrItinClass itin, string opc, string asm,
+                     list<dag> pattern>
   : Thumb1pI<oops, iops, am, Size2Bytes, itin, opc, asm, "", pattern>,
     T1LoadStore<0b0101, opcode> {
   bits<3> Rt;
@@ -918,9 +918,9 @@ class T1pIEncode<bits<3> opcode, dag oops, dag iops, AddrMode am,
   let Inst{5-3} = addr{2-0};    // Rn
   let Inst{2-0} = Rt;
 }
-class T1pIEncodeImm<bits<4> opA, bit opB, dag oops, dag iops, AddrMode am,
-                    InstrItinClass itin, string opc, string asm,
-                    list<dag> pattern>
+class T1pILdStEncodeImm<bits<4> opA, bit opB, dag oops, dag iops, AddrMode am,
+                        InstrItinClass itin, string opc, string asm,
+                        list<dag> pattern>
   : Thumb1pI<oops, iops, am, Size2Bytes, itin, opc, asm, "", pattern>,
     T1LoadStore<opA, {opB,?,?}> {
   bits<3> Rt;
