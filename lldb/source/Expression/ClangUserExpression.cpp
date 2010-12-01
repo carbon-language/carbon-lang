@@ -324,12 +324,12 @@ ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
     // ClangUserExpression resources before the thread plan finishes execution in the target.  But because we are 
     // forcing unwind_on_error to be true here, in practical terms that can't happen.  
     return ClangFunction::GetThreadPlanToCallFunction (exe_ctx, 
-                                        m_jit_addr, 
-                                        struct_address, 
-                                        error_stream,
-                                        true,
-                                        true, 
-                                        (m_needs_object_ptr ? &object_ptr : NULL));
+                                                       m_jit_addr, 
+                                                       struct_address, 
+                                                       error_stream,
+                                                       true,
+                                                       true, 
+                                                       (m_needs_object_ptr ? &object_ptr : NULL));
 }
 
 bool
