@@ -15,7 +15,6 @@ class UniversalTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
 
-    @unittest2.expectedFailure
     # rdar://problem/8689814 test failure: test/macosx/universal (the i386 slice does not break?)
     @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4]=='i386',
                           "requires Darwin & i386")
