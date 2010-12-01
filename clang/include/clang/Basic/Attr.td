@@ -170,6 +170,26 @@ def Constructor : Attr {
   let Args = [IntArgument<"Priority">];
 }
 
+def CUDAConstant : Attr {
+  let Spellings = ["constant"];
+}
+
+def CUDADevice : Attr {
+  let Spellings = ["device"];
+}
+
+def CUDAGlobal : Attr {
+  let Spellings = ["global"];
+}
+
+def CUDAHost : Attr {
+  let Spellings = ["host"];
+}
+
+def CUDAShared : Attr {
+  let Spellings = ["shared"];
+}
+
 def Deprecated : Attr {
   let Spellings = ["deprecated"];
   let Args = [StringArgument<"Message">];

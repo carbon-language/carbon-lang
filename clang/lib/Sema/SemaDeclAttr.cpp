@@ -2078,6 +2078,106 @@ static void HandleNoInstrumentFunctionAttr(Decl *d, const AttributeList &Attr,
   d->addAttr(::new (S.Context) NoInstrumentFunctionAttr(Attr.getLoc(), S.Context));
 }
 
+static void HandleConstantAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (S.LangOpts.CUDA) {
+    // check the attribute arguments.
+    if (Attr.getNumArgs() != 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      return;
+    }
+
+    if (!isa<VarDecl>(d)) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+        << Attr.getName() << 12 /*variable*/;
+      return;
+    }
+
+    d->addAttr(::new (S.Context) CUDAConstantAttr(Attr.getLoc(), S.Context));
+  } else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "constant";
+  }
+}
+
+static void HandleDeviceAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (S.LangOpts.CUDA) {
+    // check the attribute arguments.
+    if (Attr.getNumArgs() != 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      return;
+    }
+
+    if (!isa<FunctionDecl>(d) && !isa<VarDecl>(d)) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+        << Attr.getName() << 2 /*variable and function*/;
+      return;
+    }
+
+    d->addAttr(::new (S.Context) CUDADeviceAttr(Attr.getLoc(), S.Context));
+  } else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "device";
+  }
+}
+
+static void HandleGlobalAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (S.LangOpts.CUDA) {
+    // check the attribute arguments.
+    if (Attr.getNumArgs() != 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      return;
+    }
+
+    if (!isa<FunctionDecl>(d)) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+        << Attr.getName() << 0 /*function*/;
+      return;
+    }
+
+    d->addAttr(::new (S.Context) CUDAGlobalAttr(Attr.getLoc(), S.Context));
+  } else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "global";
+  }
+}
+
+static void HandleHostAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (S.LangOpts.CUDA) {
+    // check the attribute arguments.
+    if (Attr.getNumArgs() != 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      return;
+    }
+
+    if (!isa<FunctionDecl>(d)) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+        << Attr.getName() << 0 /*function*/;
+      return;
+    }
+
+    d->addAttr(::new (S.Context) CUDAHostAttr(Attr.getLoc(), S.Context));
+  } else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "host";
+  }
+}
+
+static void HandleSharedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (S.LangOpts.CUDA) {
+    // check the attribute arguments.
+    if (Attr.getNumArgs() != 0) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      return;
+    }
+
+    if (!isa<VarDecl>(d)) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+        << Attr.getName() << 12 /*variable*/;
+      return;
+    }
+
+    d->addAttr(::new (S.Context) CUDASharedAttr(Attr.getLoc(), S.Context));
+  } else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "shared";
+  }
+}
+
 static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
@@ -2358,17 +2458,21 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_base_check:  HandleBaseCheckAttr   (D, Attr, S); break;
   case AttributeList::AT_carries_dependency:
                                       HandleDependencyAttr  (D, Attr, S); break;
+  case AttributeList::AT_constant:    HandleConstantAttr    (D, Attr, S); break;
   case AttributeList::AT_constructor: HandleConstructorAttr (D, Attr, S); break;
   case AttributeList::AT_deprecated:  HandleDeprecatedAttr  (D, Attr, S); break;
   case AttributeList::AT_destructor:  HandleDestructorAttr  (D, Attr, S); break;
+  case AttributeList::AT_device:      HandleDeviceAttr      (D, Attr, S); break;
   case AttributeList::AT_ext_vector_type:
     HandleExtVectorTypeAttr(scope, D, Attr, S);
     break;
   case AttributeList::AT_final:       HandleFinalAttr       (D, Attr, S); break;
   case AttributeList::AT_format:      HandleFormatAttr      (D, Attr, S); break;
   case AttributeList::AT_format_arg:  HandleFormatArgAttr   (D, Attr, S); break;
+  case AttributeList::AT_global:      HandleGlobalAttr      (D, Attr, S); break;
   case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr   (D, Attr, S); break;
   case AttributeList::AT_hiding:      HandleHidingAttr      (D, Attr, S); break;
+  case AttributeList::AT_host:        HandleHostAttr        (D, Attr, S); break;
   case AttributeList::AT_mode:        HandleModeAttr        (D, Attr, S); break;
   case AttributeList::AT_malloc:      HandleMallocAttr      (D, Attr, S); break;
   case AttributeList::AT_may_alias:   HandleMayAliasAttr    (D, Attr, S); break;
@@ -2381,6 +2485,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_noreturn:    HandleNoReturnAttr    (D, Attr, S); break;
   case AttributeList::AT_nothrow:     HandleNothrowAttr     (D, Attr, S); break;
   case AttributeList::AT_override:    HandleOverrideAttr    (D, Attr, S); break;
+  case AttributeList::AT_shared:      HandleSharedAttr      (D, Attr, S); break;
   case AttributeList::AT_vecreturn:   HandleVecReturnAttr   (D, Attr, S); break;
 
   // Checker-specific.
