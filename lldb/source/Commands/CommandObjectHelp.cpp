@@ -94,7 +94,7 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                                                                                               &matches);
                     if (found_cmd == NULL)
                         all_okay = false;
-                    else if (matches.GetSize() != 1)
+                    else if (matches.GetSize() > 1)
                         all_okay = false;
                     else
                         sub_cmd_obj = found_cmd;
