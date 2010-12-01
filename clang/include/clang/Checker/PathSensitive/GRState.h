@@ -156,30 +156,30 @@ public:
   // could satisfy all the constraints).  This is the principal mechanism
   // for modeling path-sensitivity in GRExprEngine/GRState.
   //
-  // Various "Assume" methods form the interface for adding constraints to
-  // symbolic values.  A call to "Assume" indicates an assumption being placed
-  // on one or symbolic values.  Assume methods take the following inputs:
+  // Various "assume" methods form the interface for adding constraints to
+  // symbolic values.  A call to 'assume' indicates an assumption being placed
+  // on one or symbolic values.  'assume' methods take the following inputs:
   //
   //  (1) A GRState object representing the current state.
   //
-  //  (2) The assumed constraint (which is specific to a given "Assume" method).
+  //  (2) The assumed constraint (which is specific to a given "assume" method).
   //
   //  (3) A binary value "Assumption" that indicates whether the constraint is
   //      assumed to be true or false.
   //
-  // The output of "Assume*" is a new GRState object with the added constraints.
+  // The output of "assume*" is a new GRState object with the added constraints.
   // If no new state is feasible, NULL is returned.
   //
 
-  const GRState *Assume(DefinedOrUnknownSVal cond, bool assumption) const;
+  const GRState *assume(DefinedOrUnknownSVal cond, bool assumption) const;
 
   /// This method assumes both "true" and "false" for 'cond', and
   ///  returns both corresponding states.  It's shorthand for doing
-  ///  'Assume' twice.
+  ///  'assume' twice.
   std::pair<const GRState*, const GRState*>
-  Assume(DefinedOrUnknownSVal cond) const;
+  assume(DefinedOrUnknownSVal cond) const;
 
-  const GRState *AssumeInBound(DefinedOrUnknownSVal idx,
+  const GRState *assumeInBound(DefinedOrUnknownSVal idx,
                                DefinedOrUnknownSVal upperBound,
                                bool assumption) const;
 
@@ -603,21 +603,21 @@ inline const VarRegion* GRState::getRegion(const VarDecl *D,
   return getStateManager().getRegionManager().getVarRegion(D, LC);
 }
 
-inline const GRState *GRState::Assume(DefinedOrUnknownSVal Cond,
+inline const GRState *GRState::assume(DefinedOrUnknownSVal Cond,
                                       bool Assumption) const {
   if (Cond.isUnknown())
     return this;
   
-  return getStateManager().ConstraintMgr->Assume(this, cast<DefinedSVal>(Cond),
+  return getStateManager().ConstraintMgr->assume(this, cast<DefinedSVal>(Cond),
                                                  Assumption);
 }
   
 inline std::pair<const GRState*, const GRState*>
-GRState::Assume(DefinedOrUnknownSVal Cond) const {
+GRState::assume(DefinedOrUnknownSVal Cond) const {
   if (Cond.isUnknown())
     return std::make_pair(this, this);
   
-  return getStateManager().ConstraintMgr->AssumeDual(this,
+  return getStateManager().ConstraintMgr->assumeDual(this,
                                                      cast<DefinedSVal>(Cond));
 }
 

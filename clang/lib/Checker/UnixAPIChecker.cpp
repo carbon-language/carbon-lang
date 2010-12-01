@@ -110,7 +110,7 @@ static void CheckOpen(CheckerContext &C, UnixAPIChecker &UC,
 
   // Check if maskedFlags is non-zero.
   const GRState *trueState, *falseState;
-  llvm::tie(trueState, falseState) = state->Assume(maskedFlags);
+  llvm::tie(trueState, falseState) = state->assume(maskedFlags);
 
   // Only emit an error if the value of 'maskedFlags' is properly
   // constrained;
@@ -195,7 +195,7 @@ static void CheckMallocZero(CheckerContext &C, UnixAPIChecker &UC,
     return;
   
   const GRState *trueState, *falseState;
-  llvm::tie(trueState, falseState) = state->Assume(cast<DefinedSVal>(argVal));
+  llvm::tie(trueState, falseState) = state->assume(cast<DefinedSVal>(argVal));
   
   // Is the value perfectly constrained to zero?
   if (falseState && !trueState) {

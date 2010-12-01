@@ -59,7 +59,7 @@ public:
 
   // Utility methods
   std::pair<const GRState*, const GRState*>
-  AssumeZero(CheckerContext &C, const GRState *state, SVal V, QualType Ty);
+  assumeZero(CheckerContext &C, const GRState *state, SVal V, QualType Ty);
 
   const GRState *SetCStringLength(const GRState *state, const MemRegion *MR,
                                   SVal StrLen);
@@ -115,7 +115,7 @@ void clang::RegisterCStringChecker(GRExprEngine &Eng) {
 //===----------------------------------------------------------------------===//
 
 std::pair<const GRState*, const GRState*>
-CStringChecker::AssumeZero(CheckerContext &C, const GRState *state, SVal V,
+CStringChecker::assumeZero(CheckerContext &C, const GRState *state, SVal V,
                            QualType Ty) {
   DefinedSVal *Val = dyn_cast<DefinedSVal>(&V);
   if (!Val)
@@ -127,7 +127,7 @@ CStringChecker::AssumeZero(CheckerContext &C, const GRState *state, SVal V,
   DefinedOrUnknownSVal Zero = ValMgr.makeZeroVal(Ty);
   DefinedOrUnknownSVal ValIsZero = SV.evalEQ(state, *Val, Zero);
 
-  return state->Assume(ValIsZero);
+  return state->assume(ValIsZero);
 }
 
 const GRState *CStringChecker::CheckNonNull(CheckerContext &C,
@@ -138,7 +138,7 @@ const GRState *CStringChecker::CheckNonNull(CheckerContext &C,
     return NULL;
 
   const GRState *stateNull, *stateNonNull;
-  llvm::tie(stateNull, stateNonNull) = AssumeZero(C, state, l, S->getType());
+  llvm::tie(stateNull, stateNonNull) = assumeZero(C, state, l, S->getType());
 
   if (stateNull && !stateNonNull) {
     ExplodedNode *N = C.GenerateSink(stateNull);
@@ -195,8 +195,8 @@ const GRState *CStringChecker::CheckLocation(CheckerContext &C,
   // Get the index of the accessed element.
   DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(ER->getIndex());
 
-  const GRState *StInBound = state->AssumeInBound(Idx, Size, true);
-  const GRState *StOutBound = state->AssumeInBound(Idx, Size, false);
+  const GRState *StInBound = state->assumeInBound(Idx, Size, true);
+  const GRState *StOutBound = state->assumeInBound(Idx, Size, false);
   if (StOutBound && !StInBound) {
     ExplodedNode *N = C.GenerateSink(StOutBound);
     if (!N)
@@ -331,7 +331,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
 
   // Are the two values the same?
   DefinedOrUnknownSVal EqualTest = SV.evalEQ(state, *FirstLoc, *SecondLoc);
-  llvm::tie(stateTrue, stateFalse) = state->Assume(EqualTest);
+  llvm::tie(stateTrue, stateFalse) = state->assume(EqualTest);
 
   if (stateTrue && !stateFalse) {
     // If the values are known to be equal, that's automatically an overlap.
@@ -339,7 +339,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
     return NULL;
   }
 
-  // Assume the two expressions are not equal.
+  // assume the two expressions are not equal.
   assert(stateFalse);
   state = stateFalse;
 
@@ -351,7 +351,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
   if (!ReverseTest)
     return state;
 
-  llvm::tie(stateTrue, stateFalse) = state->Assume(*ReverseTest);
+  llvm::tie(stateTrue, stateFalse) = state->assume(*ReverseTest);
 
   if (stateTrue) {
     if (stateFalse) {
@@ -398,7 +398,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
   if (!OverlapTest)
     return state;
 
-  llvm::tie(stateTrue, stateFalse) = state->Assume(*OverlapTest);
+  llvm::tie(stateTrue, stateFalse) = state->assume(*OverlapTest);
 
   if (stateTrue && !stateFalse) {
     // Overlap!
@@ -406,7 +406,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
     return NULL;
   }
 
-  // Assume the two expressions don't overlap.
+  // assume the two expressions don't overlap.
   assert(stateFalse);
   return stateFalse;
 }
@@ -658,7 +658,7 @@ void CStringChecker::evalCopyCommon(CheckerContext &C, const GRState *state,
   QualType SizeTy = Size->getType();
 
   const GRState *StZeroSize, *StNonZeroSize;
-  llvm::tie(StZeroSize, StNonZeroSize) = AssumeZero(C, state, SizeVal, SizeTy);
+  llvm::tie(StZeroSize, StNonZeroSize) = assumeZero(C, state, SizeVal, SizeTy);
 
   // If the size is zero, there won't be any actual memory access.
   if (StZeroSize)
@@ -723,7 +723,7 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) {
   QualType SizeTy = Size->getType();
 
   const GRState *StZeroSize, *StNonZeroSize;
-  llvm::tie(StZeroSize, StNonZeroSize) = AssumeZero(C, state, SizeVal, SizeTy);
+  llvm::tie(StZeroSize, StNonZeroSize) = assumeZero(C, state, SizeVal, SizeTy);
 
   // If the size can be zero, the result will be 0 in that case, and we don't
   // have to check either of the buffers.
@@ -746,7 +746,7 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) {
     // See if they are the same.
     DefinedOrUnknownSVal SameBuf = SV.evalEQ(state, LV, RV);
     const GRState *StSameBuf, *StNotSameBuf;
-    llvm::tie(StSameBuf, StNotSameBuf) = state->Assume(SameBuf);
+    llvm::tie(StSameBuf, StNotSameBuf) = state->assume(SameBuf);
 
     // If the two arguments might be the same buffer, we know the result is zero,
     // and we only need to check one size.

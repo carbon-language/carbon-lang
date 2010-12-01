@@ -418,7 +418,7 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
 
   // Are they equal?
   const GRState *stateTrue, *stateFalse;
-  llvm::tie(stateTrue, stateFalse) = state->Assume(ArgIsNull);
+  llvm::tie(stateTrue, stateFalse) = state->assume(ArgIsNull);
 
   if (stateTrue && !stateFalse) {
     ExplodedNode *N = C.GenerateSink(stateTrue);

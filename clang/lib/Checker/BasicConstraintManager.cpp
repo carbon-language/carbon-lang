@@ -53,27 +53,27 @@ public:
     : SimpleConstraintManager(subengine), 
       ISetFactory(statemgr.getAllocator()) {}
 
-  const GRState* AssumeSymNE(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymNE(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymEQ(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymEQ(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymLT(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymLT(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymGT(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymGT(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymGE(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymGE(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymLE(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymLE(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
@@ -102,7 +102,7 @@ ConstraintManager* clang::CreateBasicConstraintManager(GRStateManager& statemgr,
 
 
 const GRState*
-BasicConstraintManager::AssumeSymNE(const GRState *state, SymbolRef sym,
+BasicConstraintManager::assumeSymNE(const GRState *state, SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // First, determine if sym == X, where X+Adjustment != V.
@@ -122,7 +122,7 @@ BasicConstraintManager::AssumeSymNE(const GRState *state, SymbolRef sym,
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymEQ(const GRState *state, SymbolRef sym,
+BasicConstraintManager::assumeSymEQ(const GRState *state, SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // First, determine if sym == X, where X+Adjustment != V.
@@ -143,7 +143,7 @@ BasicConstraintManager::AssumeSymEQ(const GRState *state, SymbolRef sym,
 
 // The logic for these will be handled in another ConstraintManager.
 const GRState*
-BasicConstraintManager::AssumeSymLT(const GRState *state, SymbolRef sym,
+BasicConstraintManager::assumeSymLT(const GRState *state, SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // Is 'V' the smallest possible value?
@@ -153,11 +153,11 @@ BasicConstraintManager::AssumeSymLT(const GRState *state, SymbolRef sym,
   }
 
   // FIXME: For now have assuming x < y be the same as assuming sym != V;
-  return AssumeSymNE(state, sym, V, Adjustment);
+  return assumeSymNE(state, sym, V, Adjustment);
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymGT(const GRState *state, SymbolRef sym,
+BasicConstraintManager::assumeSymGT(const GRState *state, SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // Is 'V' the largest possible value?
@@ -167,11 +167,11 @@ BasicConstraintManager::AssumeSymGT(const GRState *state, SymbolRef sym,
   }
 
   // FIXME: For now have assuming x > y be the same as assuming sym != V;
-  return AssumeSymNE(state, sym, V, Adjustment);
+  return assumeSymNE(state, sym, V, Adjustment);
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymGE(const GRState *state, SymbolRef sym,
+BasicConstraintManager::assumeSymGE(const GRState *state, SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // Reject a path if the value of sym is a constant X and !(X+Adj >= V).
@@ -199,7 +199,7 @@ BasicConstraintManager::AssumeSymGE(const GRState *state, SymbolRef sym,
 }
 
 const GRState*
-BasicConstraintManager::AssumeSymLE(const GRState *state, SymbolRef sym,
+BasicConstraintManager::assumeSymLE(const GRState *state, SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // Reject a path if the value of sym is a constant X and !(X+Adj <= V).

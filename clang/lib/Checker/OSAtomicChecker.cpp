@@ -147,7 +147,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
     // Perform the comparison.
     DefinedOrUnknownSVal Cmp = svalBuilder.evalEQ(stateLoad,theValueVal,oldValueVal);
 
-    const GRState *stateEqual = stateLoad->Assume(Cmp, true);
+    const GRState *stateEqual = stateLoad->assume(Cmp, true);
 
     // Were they equal?
     if (stateEqual) {
@@ -188,7 +188,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
     }
 
     // Were they not equal?
-    if (const GRState *stateNotEqual = stateLoad->Assume(Cmp, false)) {
+    if (const GRState *stateNotEqual = stateLoad->assume(Cmp, false)) {
       // Check for 'void' return type if we have a bogus function prototype.
       SVal Res = UnknownVal();
       QualType T = CE->getType();

@@ -55,22 +55,22 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
   return true;
 }
 
-const GRState *SimpleConstraintManager::Assume(const GRState *state,
+const GRState *SimpleConstraintManager::assume(const GRState *state,
                                                DefinedSVal Cond,
                                                bool Assumption) {
   if (isa<NonLoc>(Cond))
-    return Assume(state, cast<NonLoc>(Cond), Assumption);
+    return assume(state, cast<NonLoc>(Cond), Assumption);
   else
-    return Assume(state, cast<Loc>(Cond), Assumption);
+    return assume(state, cast<Loc>(Cond), Assumption);
 }
 
-const GRState *SimpleConstraintManager::Assume(const GRState *state, Loc cond,
+const GRState *SimpleConstraintManager::assume(const GRState *state, Loc cond,
                                                bool assumption) {
-  state = AssumeAux(state, cond, assumption);
+  state = assumeAux(state, cond, assumption);
   return SU.ProcessAssume(state, cond, assumption);
 }
 
-const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
+const GRState *SimpleConstraintManager::assumeAux(const GRState *state,
                                                   Loc Cond, bool Assumption) {
 
   BasicValueFactory &BasicVals = state->getBasicVals();
@@ -91,9 +91,9 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
       if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(SubR)) {
         const llvm::APSInt &zero = BasicVals.getZeroWithPtrWidth();
         if (Assumption)
-          return AssumeSymNE(state, SymR->getSymbol(), zero, zero);
+          return assumeSymNE(state, SymR->getSymbol(), zero, zero);
         else
-          return AssumeSymEQ(state, SymR->getSymbol(), zero, zero);
+          return assumeSymEQ(state, SymR->getSymbol(), zero, zero);
       }
       SubR = dyn_cast<SubRegion>(SubR->getSuperRegion());
     }
@@ -112,10 +112,10 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
   } // end switch
 }
 
-const GRState *SimpleConstraintManager::Assume(const GRState *state,
+const GRState *SimpleConstraintManager::assume(const GRState *state,
                                                NonLoc cond,
                                                bool assumption) {
-  state = AssumeAux(state, cond, assumption);
+  state = assumeAux(state, cond, assumption);
   return SU.ProcessAssume(state, cond, assumption);
 }
 
@@ -134,7 +134,7 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
   }
 }
 
-const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
+const GRState *SimpleConstraintManager::assumeAux(const GRState *state,
                                                   NonLoc Cond,
                                                   bool Assumption) {
 
@@ -159,9 +159,9 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
     QualType T =  SymMgr.getType(sym);
     const llvm::APSInt &zero = BasicVals.getValue(0, T);
     if (Assumption)
-      return AssumeSymNE(state, sym, zero, zero);
+      return assumeSymNE(state, sym, zero, zero);
     else
-      return AssumeSymEQ(state, sym, zero, zero);
+      return assumeSymEQ(state, sym, zero, zero);
   }
 
   case nonloc::SymExprValKind: {
@@ -179,14 +179,14 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
       QualType T = SymMgr.getType(SE);
       const llvm::APSInt &zero = BasicVals.getValue(0, T);
       op = (Assumption ? BO_NE : BO_EQ);
-      return AssumeSymRel(state, SE, op, zero);
+      return assumeSymRel(state, SE, op, zero);
     }
 
     // From here on out, op is the real comparison we'll be testing.
     if (!Assumption)
       op = NegateComparison(op);
   
-    return AssumeSymRel(state, SE->getLHS(), op, SE->getRHS());
+    return assumeSymRel(state, SE->getLHS(), op, SE->getRHS());
   }
 
   case nonloc::ConcreteIntKind: {
@@ -196,12 +196,12 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
   }
 
   case nonloc::LocAsIntegerKind:
-    return AssumeAux(state, cast<nonloc::LocAsInteger>(Cond).getLoc(),
+    return assumeAux(state, cast<nonloc::LocAsInteger>(Cond).getLoc(),
                      Assumption);
   } // end switch
 }
 
-const GRState *SimpleConstraintManager::AssumeSymRel(const GRState *state,
+const GRState *SimpleConstraintManager::assumeSymRel(const GRState *state,
                                                      const SymExpr *LHS,
                                                      BinaryOperator::Opcode op,
                                                      const llvm::APSInt& Int) {
@@ -273,26 +273,26 @@ const GRState *SimpleConstraintManager::AssumeSymRel(const GRState *state,
 
   switch (op) {
   default:
-    // No logic yet for other operators.  Assume the constraint is feasible.
+    // No logic yet for other operators.  assume the constraint is feasible.
     return state;
 
   case BO_EQ:
-    return AssumeSymEQ(state, Sym, ConvertedInt, Adjustment);
+    return assumeSymEQ(state, Sym, ConvertedInt, Adjustment);
 
   case BO_NE:
-    return AssumeSymNE(state, Sym, ConvertedInt, Adjustment);
+    return assumeSymNE(state, Sym, ConvertedInt, Adjustment);
 
   case BO_GT:
-    return AssumeSymGT(state, Sym, ConvertedInt, Adjustment);
+    return assumeSymGT(state, Sym, ConvertedInt, Adjustment);
 
   case BO_GE:
-    return AssumeSymGE(state, Sym, ConvertedInt, Adjustment);
+    return assumeSymGE(state, Sym, ConvertedInt, Adjustment);
 
   case BO_LT:
-    return AssumeSymLT(state, Sym, ConvertedInt, Adjustment);
+    return assumeSymLT(state, Sym, ConvertedInt, Adjustment);
 
   case BO_LE:
-    return AssumeSymLE(state, Sym, ConvertedInt, Adjustment);
+    return assumeSymLE(state, Sym, ConvertedInt, Adjustment);
   } // end switch
 }
 

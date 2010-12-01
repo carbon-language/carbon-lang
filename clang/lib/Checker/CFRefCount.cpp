@@ -1283,7 +1283,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
 
   // Look for methods that return an owned object.
   if (cocoa::isCocoaObjectRef(RetTy)) {
-    // EXPERIMENTAL: Assume the Cocoa conventions for all objects returned
+    // EXPERIMENTAL: assume the Cocoa conventions for all objects returned
     //  by instance methods.
     RetEffect E = cocoa::followsFundamentalRule(S)
                   ? ObjCAllocRetE : RetEffect::MakeNotOwned(RetEffect::ObjC);
@@ -2725,7 +2725,7 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
 #if 0
       if (RE.getKind() == RetEffect::OwnedAllocatedSymbol) {
         bool isFeasible;
-        state = state.Assume(loc::SymbolVal(Sym), true, isFeasible);
+        state = state.assume(loc::SymbolVal(Sym), true, isFeasible);
         assert(isFeasible && "Cannot assume fresh symbol is non-null.");
       }
 #endif

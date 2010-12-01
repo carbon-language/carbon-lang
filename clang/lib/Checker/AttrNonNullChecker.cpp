@@ -91,7 +91,7 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
 
     ConstraintManager &CM = C.getConstraintManager();
     const GRState *stateNotNull, *stateNull;
-    llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, *DV);
+    llvm::tie(stateNotNull, stateNull) = CM.assumeDual(state, *DV);
 
     if (stateNull && !stateNotNull) {
       // Generate an error node.  Check for a null node in case

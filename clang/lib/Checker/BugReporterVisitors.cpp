@@ -252,14 +252,14 @@ public:
 
     // Check if in the previous state it was feasible for this constraint
     // to *not* be true.
-    if (PrevN->getState()->Assume(Constraint, !Assumption)) {
+    if (PrevN->getState()->assume(Constraint, !Assumption)) {
 
       isSatisfied = true;
 
       // As a sanity check, make sure that the negation of the constraint
       // was infeasible in the current state.  If it is feasible, we somehow
       // missed the transition point.
-      if (N->getState()->Assume(Constraint, !Assumption))
+      if (N->getState()->assume(Constraint, !Assumption))
         return NULL;
 
       // We found the transition point for the constraint.  We now need to
@@ -400,7 +400,7 @@ public:
     const DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&V);
     if (!DV)
       return 0;
-    state = state->Assume(*DV, true);
+    state = state->assume(*DV, true);
     if (state)
       return 0;
 

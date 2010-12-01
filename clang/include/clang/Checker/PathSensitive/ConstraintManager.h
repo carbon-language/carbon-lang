@@ -31,13 +31,13 @@ class SVal;
 class ConstraintManager {
 public:
   virtual ~ConstraintManager();
-  virtual const GRState *Assume(const GRState *state, DefinedSVal Cond,
+  virtual const GRState *assume(const GRState *state, DefinedSVal Cond,
                                 bool Assumption) = 0;
 
-  std::pair<const GRState*, const GRState*> AssumeDual(const GRState *state,
+  std::pair<const GRState*, const GRState*> assumeDual(const GRState *state,
                                                        DefinedSVal Cond) {
-    return std::make_pair(Assume(state, Cond, true),
-                          Assume(state, Cond, false));
+    return std::make_pair(assume(state, Cond, true),
+                          assume(state, Cond, false));
   }
 
   virtual const llvm::APSInt* getSymVal(const GRState *state,

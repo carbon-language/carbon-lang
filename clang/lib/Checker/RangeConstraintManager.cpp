@@ -208,27 +208,27 @@ public:
   RangeConstraintManager(GRSubEngine &subengine)
     : SimpleConstraintManager(subengine) {}
 
-  const GRState* AssumeSymNE(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymNE(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymEQ(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymEQ(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymLT(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymLT(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymGT(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymGT(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymGE(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymGE(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AssumeSymLE(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymLE(const GRState* state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
@@ -293,7 +293,7 @@ RangeConstraintManager::GetRange(const GRState *state, SymbolRef sym) {
 }
 
 //===------------------------------------------------------------------------===
-// AssumeSymX methods: public interface for RangeConstraintManager.
+// assumeSymX methods: public interface for RangeConstraintManager.
 //===------------------------------------------------------------------------===/
 
 // The syntax for ranges below is mathematical, using [x, y] for closed ranges
@@ -305,7 +305,7 @@ RangeConstraintManager::GetRange(const GRState *state, SymbolRef sym) {
 // UINT_MAX, 0, 1, and 2.
 
 const GRState*
-RangeConstraintManager::AssumeSymNE(const GRState* state, SymbolRef sym,
+RangeConstraintManager::assumeSymNE(const GRState* state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();
@@ -322,7 +322,7 @@ RangeConstraintManager::AssumeSymNE(const GRState* state, SymbolRef sym,
 }
 
 const GRState*
-RangeConstraintManager::AssumeSymEQ(const GRState* state, SymbolRef sym,
+RangeConstraintManager::assumeSymEQ(const GRState* state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   // [Int-Adjustment, Int-Adjustment]
@@ -333,7 +333,7 @@ RangeConstraintManager::AssumeSymEQ(const GRState* state, SymbolRef sym,
 }
 
 const GRState*
-RangeConstraintManager::AssumeSymLT(const GRState* state, SymbolRef sym,
+RangeConstraintManager::assumeSymLT(const GRState* state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();
@@ -354,7 +354,7 @@ RangeConstraintManager::AssumeSymLT(const GRState* state, SymbolRef sym,
 }
 
 const GRState*
-RangeConstraintManager::AssumeSymGT(const GRState* state, SymbolRef sym,
+RangeConstraintManager::assumeSymGT(const GRState* state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();
@@ -375,7 +375,7 @@ RangeConstraintManager::AssumeSymGT(const GRState* state, SymbolRef sym,
 }
 
 const GRState*
-RangeConstraintManager::AssumeSymGE(const GRState* state, SymbolRef sym,
+RangeConstraintManager::assumeSymGE(const GRState* state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();
@@ -397,7 +397,7 @@ RangeConstraintManager::AssumeSymGE(const GRState* state, SymbolRef sym,
 }
 
 const GRState*
-RangeConstraintManager::AssumeSymLE(const GRState* state, SymbolRef sym,
+RangeConstraintManager::assumeSymLE(const GRState* state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();

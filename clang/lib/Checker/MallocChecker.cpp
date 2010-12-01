@@ -244,7 +244,7 @@ const GRState *MallocChecker::MallocMemAux(CheckerContext &C,
   SValBuilder &svalBuilder = ValMgr.getSValBuilder();
   DefinedOrUnknownSVal ExtentMatchesSize =
     svalBuilder.evalEQ(state, Extent, DefinedSize);
-  state = state->Assume(ExtentMatchesSize, true);
+  state = state->assume(ExtentMatchesSize, true);
 
   SymbolRef Sym = RetVal.getAsLocSymbol();
   assert(Sym);
@@ -288,7 +288,7 @@ const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
   // FIXME: Technically using 'Assume' here can result in a path
   //  bifurcation.  In such cases we need to return two states, not just one.
   const GRState *notNullState, *nullState;
-  llvm::tie(notNullState, nullState) = state->Assume(location);
+  llvm::tie(notNullState, nullState) = state->assume(location);
 
   // The explicit NULL case, no operation is performed.
   if (nullState && !notNullState)
@@ -509,7 +509,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
   DefinedOrUnknownSVal PtrEQ = svalBuilder.evalEQ(state, Arg0Val, ValMgr.makeNull());
 
   // If the ptr is NULL, the call is equivalent to malloc(size).
-  if (const GRState *stateEqual = state->Assume(PtrEQ, true)) {
+  if (const GRState *stateEqual = state->assume(PtrEQ, true)) {
     // Hack: set the NULL symbolic region to released to suppress false warning.
     // In the future we should add more states for allocated regions, e.g., 
     // CheckedNull, CheckedNonNull.
@@ -523,20 +523,20 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) {
     C.addTransition(stateMalloc);
   }
 
-  if (const GRState *stateNotEqual = state->Assume(PtrEQ, false)) {
+  if (const GRState *stateNotEqual = state->assume(PtrEQ, false)) {
     const Expr *Arg1 = CE->getArg(1);
     DefinedOrUnknownSVal Arg1Val = 
       cast<DefinedOrUnknownSVal>(stateNotEqual->getSVal(Arg1));
     DefinedOrUnknownSVal SizeZero = svalBuilder.evalEQ(stateNotEqual, Arg1Val,
                                       ValMgr.makeIntValWithPtrWidth(0, false));
 
-    if (const GRState *stateSizeZero = stateNotEqual->Assume(SizeZero, true)) {
+    if (const GRState *stateSizeZero = stateNotEqual->assume(SizeZero, true)) {
       const GRState *stateFree = FreeMemAux(C, CE, stateSizeZero, 0, false);
       if (stateFree)
         C.addTransition(stateFree->BindExpr(CE, UndefinedVal(), true));
     }
 
-    if (const GRState *stateSizeNotZero=stateNotEqual->Assume(SizeZero,false)) {
+    if (const GRState *stateSizeNotZero=stateNotEqual->assume(SizeZero,false)) {
       const GRState *stateFree = FreeMemAux(C, CE, stateSizeNotZero, 0, false);
       if (stateFree) {
         // FIXME: We should copy the content of the original buffer.
@@ -697,7 +697,7 @@ void MallocChecker::PreVisitBind(CheckerContext &C,
     if (const RefState *RS = state->get<RegionState>(Sym)) {
       // If ptr is NULL, no operation is performed.
       const GRState *notNullState, *nullState;
-      llvm::tie(notNullState, nullState) = state->Assume(l);
+      llvm::tie(notNullState, nullState) = state->assume(l);
 
       // Generate a transition for 'nullState' to record the assumption
       // that the state was null.

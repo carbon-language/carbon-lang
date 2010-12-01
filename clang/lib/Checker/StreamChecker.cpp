@@ -233,7 +233,7 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) {
   // Bifurcate the state into two: one with a valid FILE* pointer, the other
   // with a NULL.
   const GRState *stateNotNull, *stateNull;
-  llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, RetVal);
+  llvm::tie(stateNotNull, stateNull) = CM.assumeDual(state, RetVal);
   
   if (SymbolRef Sym = RetVal.getAsSymbol()) {
     // if RetVal is not NULL, set the symbol's state to Opened.
@@ -347,7 +347,7 @@ const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
 
   ConstraintManager &CM = C.getConstraintManager();
   const GRState *stateNotNull, *stateNull;
-  llvm::tie(stateNotNull, stateNull) = CM.AssumeDual(state, *DV);
+  llvm::tie(stateNotNull, stateNull) = CM.assumeDual(state, *DV);
 
   if (!stateNotNull && stateNull) {
     if (ExplodedNode *N = C.GenerateSink(stateNull)) {

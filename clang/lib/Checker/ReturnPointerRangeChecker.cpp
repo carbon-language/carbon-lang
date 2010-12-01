@@ -65,8 +65,8 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
     = C.getStoreManager().getSizeInElements(state, ER->getSuperRegion(),
                                            ER->getValueType());
 
-  const GRState *StInBound = state->AssumeInBound(Idx, NumElements, true);
-  const GRState *StOutBound = state->AssumeInBound(Idx, NumElements, false);
+  const GRState *StInBound = state->assumeInBound(Idx, NumElements, true);
+  const GRState *StOutBound = state->assumeInBound(Idx, NumElements, false);
   if (StOutBound && !StInBound) {
     ExplodedNode *N = C.GenerateSink(StOutBound);
 

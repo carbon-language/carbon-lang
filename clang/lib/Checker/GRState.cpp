@@ -230,7 +230,7 @@ const GRState *GRState::bindExprAndLocation(const Stmt *S, SVal location,
   return getStateManager().getPersistentState(NewSt);
 }
 
-const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
+const GRState *GRState::assumeInBound(DefinedOrUnknownSVal Idx,
                                       DefinedOrUnknownSVal UpperBound,
                                       bool Assumption) const {
   if (Idx.isUnknown() || UpperBound.isUnknown())
@@ -271,7 +271,7 @@ const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
 
   // Finally, let the constraint manager take care of it.
   ConstraintManager &CM = SM.getConstraintManager();
-  return CM.Assume(this, cast<DefinedSVal>(inBound), Assumption);
+  return CM.assume(this, cast<DefinedSVal>(inBound), Assumption);
 }
 
 const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {

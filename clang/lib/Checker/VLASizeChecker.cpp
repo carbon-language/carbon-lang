@@ -83,7 +83,7 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   DefinedSVal sizeD = cast<DefinedSVal>(sizeV);
 
   const GRState *stateNotZero, *stateZero;
-  llvm::tie(stateNotZero, stateZero) = state->Assume(sizeD);
+  llvm::tie(stateNotZero, stateZero) = state->assume(sizeD);
 
   if (stateZero && !stateNotZero) {
     ExplodedNode* N = C.GenerateSink(stateZero);
@@ -120,12 +120,12 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   SVal ArraySizeVal = SV.evalBinOpNN(state, BO_Mul, ArrayLength,
                                      cast<NonLoc>(EleSizeVal), SizeTy);
 
-  // Finally, Assume that the array's extent matches the given size.
+  // Finally, assume that the array's extent matches the given size.
   const LocationContext *LC = C.getPredecessor()->getLocationContext();
   DefinedOrUnknownSVal Extent = state->getRegion(VD, LC)->getExtent(ValMgr);
   DefinedOrUnknownSVal ArraySize = cast<DefinedOrUnknownSVal>(ArraySizeVal);
   DefinedOrUnknownSVal SizeIsKnown = SV.evalEQ(state, Extent, ArraySize);
-  state = state->Assume(SizeIsKnown, true);
+  state = state->assume(SizeIsKnown, true);
 
   // Assume should not fail at this point.
   assert(state);

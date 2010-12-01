@@ -392,7 +392,7 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
       if (!Constraint)
         break;
 
-      if (const GRState *newState = state->Assume(*Constraint, true))
+      if (const GRState *newState = state->assume(*Constraint, true))
         state = newState;
 
       break;
@@ -407,7 +407,7 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
 
       if (const Loc *LV = dyn_cast<Loc>(&V)) {
         // Assume that the pointer value in 'self' is non-null.
-        state = state->Assume(*LV, true);
+        state = state->assume(*LV, true);
         assert(state && "'self' cannot be null");
       }
     }
@@ -458,13 +458,14 @@ const GRState *GRExprEngine::ProcessAssume(const GRState *state, SVal cond,
 
       state = C->evalAssume(state, cond, assumption, &respondsToCallback);
 
-      // Check if we're building the cache of checkers that care about Assumes.
+      // Check if we're building the cache of checkers that care about
+      // assumptions.
       if (NewCO.get() && respondsToCallback)
         NewCO->push_back(*I);
     }
 
     // If we got through all the checkers, and we built a list of those that
-    // care about Assumes, save it.
+    // care about assumptions, save it.
     if (NewCO.get())
       CO_Ref = NewCO.take();
   }
@@ -1450,7 +1451,7 @@ void GRExprEngine::ProcessBranch(const Stmt* Condition, const Stmt* Term,
 
   // Process the true branch.
   if (builder.isFeasible(true)) {
-    if (const GRState *state = PrevState->Assume(V, true))
+    if (const GRState *state = PrevState->assume(V, true))
       builder.generateNode(MarkBranch(state, Term, true), true);
     else
       builder.markInfeasible(true);
@@ -1458,7 +1459,7 @@ void GRExprEngine::ProcessBranch(const Stmt* Condition, const Stmt* Term,
 
   // Process the false branch.
   if (builder.isFeasible(false)) {
-    if (const GRState *state = PrevState->Assume(V, false))
+    if (const GRState *state = PrevState->assume(V, false))
       builder.generateNode(MarkBranch(state, Term, false), false);
     else
       builder.markInfeasible(false);
@@ -1601,7 +1602,7 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
                                                CondV, CaseVal);
 
       // Now "assume" that the case matches.
-      if (const GRState* stateNew = state->Assume(Res, true)) {
+      if (const GRState* stateNew = state->assume(Res, true)) {
         builder.generateCaseStmtNode(I, stateNew);
 
         // If CondV evaluates to a constant, then we know that this
@@ -1614,7 +1615,7 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
       // Now "assume" that the case doesn't match.  Add this state
       // to the default state (if it is feasible).
       if (DefaultSt) {
-        if (const GRState *stateNew = DefaultSt->Assume(Res, false)) {
+        if (const GRState *stateNew = DefaultSt->assume(Res, false)) {
           defaultIsFeasible = true;
           DefaultSt = stateNew;
         }
@@ -1731,11 +1732,11 @@ void GRExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode* Pred,
     // value later when necessary.  We don't have the machinery in place for
     // this right now, and since most logical expressions are used for branches,
     // the payoff is not likely to be large.  Instead, we do eager evaluation.
-    if (const GRState *newState = state->Assume(XD, true))
+    if (const GRState *newState = state->assume(XD, true))
       MakeNode(Dst, B, Pred,
                newState->BindExpr(B, ValMgr.makeIntVal(1U, B->getType())));
 
-    if (const GRState *newState = state->Assume(XD, false))
+    if (const GRState *newState = state->assume(XD, false))
       MakeNode(Dst, B, Pred,
                newState->BindExpr(B, ValMgr.makeIntVal(0U, B->getType())));
   }
@@ -2263,7 +2264,7 @@ void GRExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
     SVal V = state->getSVal(Ex);
     if (nonloc::SymExprVal *SEV = dyn_cast<nonloc::SymExprVal>(&V)) {
       // First assume that the condition is true.
-      if (const GRState *stateTrue = state->Assume(*SEV, true)) {
+      if (const GRState *stateTrue = state->assume(*SEV, true)) {
         stateTrue = stateTrue->BindExpr(Ex,
                                         ValMgr.makeIntVal(1U, Ex->getType()));
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex,
@@ -2272,7 +2273,7 @@ void GRExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
       }
 
       // Next, assume that the condition is false.
-      if (const GRState *stateFalse = state->Assume(*SEV, false)) {
+      if (const GRState *stateFalse = state->assume(*SEV, false)) {
         stateFalse = stateFalse->BindExpr(Ex,
                                           ValMgr.makeIntVal(0U, Ex->getType()));
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag,
@@ -2509,7 +2510,7 @@ void GRExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
         cast<DefinedOrUnknownSVal>(state->getSVal(Receiver));
 
       const GRState *notNilState, *nilState;
-      llvm::tie(notNilState, nilState) = state->Assume(receiverVal);
+      llvm::tie(notNilState, nilState) = state->assume(receiverVal);
 
       // There are three cases: can be nil or non-nil, must be nil, must be
       // non-nil. We handle must be nil, and merge the rest two into non-nil.
@@ -3270,14 +3271,14 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
           DefinedOrUnknownSVal Constraint =
             svalBuilder.evalEQ(state, V2, ValMgr.makeZeroVal(U->getType()));
 
-          if (!state->Assume(Constraint, true)) {
+          if (!state->assume(Constraint, true)) {
             // It isn't feasible for the original value to be null.
             // Propagate this constraint.
             Constraint = svalBuilder.evalEQ(state, SymVal,
                                        ValMgr.makeZeroVal(U->getType()));
 
 
-            state = state->Assume(Constraint, false);
+            state = state->assume(Constraint, false);
             assert(state);
           }
         }

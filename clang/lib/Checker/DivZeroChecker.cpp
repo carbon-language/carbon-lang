@@ -61,7 +61,7 @@ void DivZeroChecker::PreVisitBinaryOperator(CheckerContext &C,
   // Check for divide by zero.
   ConstraintManager &CM = C.getConstraintManager();
   const GRState *stateNotZero, *stateZero;
-  llvm::tie(stateNotZero, stateZero) = CM.AssumeDual(C.getState(), *DV);
+  llvm::tie(stateNotZero, stateZero) = CM.assumeDual(C.getState(), *DV);
 
   if (stateZero && !stateNotZero) {
     if (ExplodedNode *N = C.GenerateSink(stateZero)) {

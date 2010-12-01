@@ -106,13 +106,13 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
   if (isTryLock) {
       // Bifurcate the state, and allow a mode where the lock acquisition fails.
     const GRState *lockFail;
-    llvm::tie(lockFail, lockSucc) = state->Assume(retVal);    
+    llvm::tie(lockFail, lockSucc) = state->assume(retVal);    
     assert(lockFail && lockSucc);
     C.addTransition(C.GenerateNode(CE, lockFail));
   }
   else {
       // Assume that the return value was 0.
-    lockSucc = state->Assume(retVal, false);
+    lockSucc = state->assume(retVal, false);
     assert(lockSucc);
   }
   
