@@ -94,6 +94,9 @@ TEST(Support, Path) {
     if (error_code ec = sys::path::parent_path(*i, res))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    parent_path: " << res << '\n';
+    if (error_code ec = sys::path::filename(*i, res))
+      ASSERT_FALSE(ec.message().c_str());
+    outs() << "    filename: " << res << '\n';
 
     temp_store = *i;
     if (error_code ec = sys::path::make_absolute(temp_store))

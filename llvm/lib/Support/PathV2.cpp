@@ -553,6 +553,11 @@ error_code native(const Twine &path, SmallVectorImpl<char> &result) {
   return make_error_code(errc::success);
 }
 
+error_code filename(const StringRef &path, StringRef &result) {
+  result = *(--end(path));
+  return make_error_code(errc::success);
+}
+
 }
 }
 }
