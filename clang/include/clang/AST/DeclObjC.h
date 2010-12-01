@@ -459,7 +459,11 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
 
   bool ForwardDecl:1; // declared with @class.
   bool InternalInterface:1; // true - no @interface for @implementation
-
+  
+  /// \brief Indicates that the contents of this Objective-C class will be
+  /// completed by the external AST source when required.
+  mutable bool ExternallyCompleted : 1;
+  
   SourceLocation ClassLoc; // location of the class identifier.
   SourceLocation SuperClassLoc; // location of the super class identifier.
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
@@ -467,6 +471,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
                     SourceLocation CLoc, bool FD, bool isInternal);
 
+  void LoadExternalDefinition() const;
 public:
   static ObjCInterfaceDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation atLoc,
@@ -474,7 +479,16 @@ public:
                                    SourceLocation ClassLoc = SourceLocation(),
                                    bool ForwardDecl = false,
                                    bool isInternal = false);
+  
+  /// \brief Indicate that this Objective-C class is complete, but that
+  /// the external AST source will be responsible for filling in its contents
+  /// when a complete class is required.
+  void setExternallyCompleted();
+  
   const ObjCProtocolList &getReferencedProtocols() const {
+    if (ExternallyCompleted)
+      LoadExternalDefinition();
+    
     return ReferencedProtocols;
   }
 
@@ -494,29 +508,47 @@ public:
   typedef ObjCProtocolList::iterator protocol_iterator;
   
   protocol_iterator protocol_begin() const {
+    if (ExternallyCompleted)
+      LoadExternalDefinition();
+
     return ReferencedProtocols.begin();
   }
   protocol_iterator protocol_end() const {
+    if (ExternallyCompleted)
+      LoadExternalDefinition();
+
     return ReferencedProtocols.end();
   }
 
   typedef ObjCProtocolList::loc_iterator protocol_loc_iterator;
 
   protocol_loc_iterator protocol_loc_begin() const { 
+    if (ExternallyCompleted)
+      LoadExternalDefinition();
+
     return ReferencedProtocols.loc_begin(); 
   }
 
   protocol_loc_iterator protocol_loc_end() const { 
+    if (ExternallyCompleted)
+      LoadExternalDefinition();
+
     return ReferencedProtocols.loc_end(); 
   }
   
   typedef ObjCList<ObjCProtocolDecl>::iterator all_protocol_iterator;
   
   all_protocol_iterator all_referenced_protocol_begin() const {
+    if (ExternallyCompleted)
+      LoadExternalDefinition();
+
     return AllReferencedProtocols.empty() ? protocol_begin()
       : AllReferencedProtocols.begin();
   }
   all_protocol_iterator all_referenced_protocol_end() const {
+    if (ExternallyCompleted)
+      LoadExternalDefinition();
+
     return AllReferencedProtocols.empty() ? protocol_end() 
       : AllReferencedProtocols.end();
   }
@@ -551,10 +583,22 @@ public:
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
 
-  ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
+  ObjCInterfaceDecl *getSuperClass() const { 
+    if (ExternallyCompleted)
+      LoadExternalDefinition();
+
+    return SuperClass; 
+  }
+  
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
 
-  ObjCCategoryDecl* getCategoryList() const { return CategoryList; }
+  ObjCCategoryDecl* getCategoryList() const { 
+    if (ExternallyCompleted)
+      LoadExternalDefinition();
+
+    return CategoryList; 
+  }
+  
   void setCategoryList(ObjCCategoryDecl *category) {
     CategoryList = category;
   }

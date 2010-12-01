@@ -147,6 +147,14 @@ public:
   /// an incomplete type.
   virtual void CompleteType(TagDecl *Tag) {}
 
+  /// \brief Gives the external AST source an opportunity to complete an
+  /// incomplete Objective-C class.
+  ///
+  /// This routine will only be invoked if the "externally completed" bit is
+  /// set on the ObjCInterfaceDecl via the function 
+  /// \c ObjCInterfaceDecl::setExternallyCompleted().
+  virtual void CompleteType(ObjCInterfaceDecl *Class) { }
+  
   /// \brief Notify ExternalASTSource that we started deserialization of
   /// a decl or type so until FinishedDeserializing is called there may be
   /// decls that are initializing. Must be paired with FinishedDeserializing.

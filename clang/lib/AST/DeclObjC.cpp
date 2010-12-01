@@ -153,6 +153,9 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
 ObjCPropertyDecl *
 ObjCInterfaceDecl::FindPropertyVisibleInPrimaryClass(
                                             IdentifierInfo *PropertyId) const {
+  if (ExternallyCompleted)
+    LoadExternalDefinition();
+
   if (ObjCPropertyDecl *PD =
       ObjCPropertyDecl::findPropertyDecl(cast<DeclContext>(this), PropertyId))
     return PD;
@@ -171,6 +174,9 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
                               ObjCProtocolDecl *const* ExtList, unsigned ExtNum,
                               ASTContext &C)
 {
+  if (ExternallyCompleted)
+    LoadExternalDefinition();
+
   if (AllReferencedProtocols.empty() && ReferencedProtocols.empty()) {
     AllReferencedProtocols.set(ExtList, ExtNum, C);
     return;
@@ -269,6 +275,9 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
                                                 bool isInstance) const {
   const ObjCInterfaceDecl* ClassDecl = this;
   ObjCMethodDecl *MethodDecl = 0;
+
+  if (ExternallyCompleted)
+    LoadExternalDefinition();
 
   while (ClassDecl != NULL) {
     if ((MethodDecl = ClassDecl->getMethod(Sel, isInstance)))
@@ -443,11 +452,29 @@ ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
   : ObjCContainerDecl(ObjCInterface, DC, atLoc, Id),
     TypeForDecl(0), SuperClass(0),
     CategoryList(0), IvarList(0), 
-    ForwardDecl(FD), InternalInterface(isInternal),
+    ForwardDecl(FD), InternalInterface(isInternal), ExternallyCompleted(false),
     ClassLoc(CLoc) {
 }
 
+void ObjCInterfaceDecl::LoadExternalDefinition() const {
+  assert(ExternallyCompleted && "Class is not externally completed");
+  ExternallyCompleted = false;
+  getASTContext().getExternalSource()->CompleteType(
+                                        const_cast<ObjCInterfaceDecl *>(this));
+}
+
+void ObjCInterfaceDecl::setExternallyCompleted() {
+  assert(getASTContext().getExternalSource() && 
+         "Class can't be externally completed without an external source");
+  assert(!ForwardDecl && 
+         "Forward declarations can't be externally completed");
+  ExternallyCompleted = true;
+}
+
 ObjCImplementationDecl *ObjCInterfaceDecl::getImplementation() const {
+  if (ExternallyCompleted)
+    LoadExternalDefinition();
+
   return getASTContext().getObjCImplementation(
                                           const_cast<ObjCInterfaceDecl*>(this));
 }
@@ -506,6 +533,9 @@ ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
 ///
 ObjCCategoryDecl *
 ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
+  if (ExternallyCompleted)
+    LoadExternalDefinition();
+
   for (ObjCCategoryDecl *Category = getCategoryList();
        Category; Category = Category->getNextClassCategory())
     if (Category->getIdentifier() == CategoryId)
