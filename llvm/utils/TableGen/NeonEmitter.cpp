@@ -160,6 +160,10 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
     case 'n':
       type = Widen(type);
       break;
+    case 'i':
+      type = 'i';
+      scal = true;
+      break;
     case 'l':
       type = 'l';
       scal = true;
@@ -699,8 +703,6 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
 // Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
 static std::string GenBuiltin(const std::string &name, const std::string &proto,
                               StringRef typestr, ClassKind ck) {
-  bool quad;
-  unsigned nElts = GetNumElements(typestr, quad);
   char arg = 'a';
   std::string s;
 
@@ -757,10 +759,23 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     // Wrap macro arguments in parenthesis.
     if (define)
       args = "(" + args + ")";
-    
+
+    bool argQuad = false;
+    bool argPoly = false;
+    bool argUsgn = false;
+    bool argScalar = false;
+    bool dummy = false;
+    char argType = ClassifyType(typestr, argQuad, argPoly, argUsgn);
+    argType = ModType(proto[i], argType, argQuad, argPoly, argUsgn, argScalar,
+                      dummy, dummy);
+
     // Handle multiple-vector values specially, emitting each subvector as an
     // argument to the __builtin.
     if (proto[i] >= '2' && proto[i] <= '4') {
+      // Check if an explicit cast is needed.
+      if (argType != 'c' || argPoly || argUsgn)
+        args = (argQuad ? "(int8x16_t)" : "(int8x8_t)") + args;
+
       for (unsigned vi = 0, ve = proto[i] - '0'; vi != ve; ++vi) {
         s += args + ".val[" + utostr(vi) + "]";
         if ((vi + 1) < ve)
@@ -772,8 +787,19 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
       continue;
     }
     
-    if (splat && (i + 1) == e) 
-      s += Duplicate(nElts, typestr, args);
+    // Check if an explicit cast is needed.
+    if (!argScalar &&
+        ((ck == ClassB && argType != 'c') || argPoly || argUsgn)) {
+      std::string argTypeStr = "c";
+      if (ck != ClassB)
+        argTypeStr = argType;
+      if (argQuad)
+        argTypeStr = "Q" + argTypeStr;
+      args = "(" + TypeString('d', argTypeStr) + ")" + args;
+    }
+    
+    if (splat && (i + 1) == e)
+      s += Duplicate(GetNumElements(typestr, argQuad), typestr, args);
     else
       s += args;
     if ((i + 1) < e)
