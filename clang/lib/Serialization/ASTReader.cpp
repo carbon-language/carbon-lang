@@ -131,6 +131,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
                           diag::warn_pch_stack_protector);
   PARSE_LANGOPT_BENIGN(InstantiationDepth);
   PARSE_LANGOPT_IMPORTANT(OpenCL, diag::warn_pch_opencl);
+  PARSE_LANGOPT_IMPORTANT(CUDA, diag::warn_pch_cuda);
   PARSE_LANGOPT_BENIGN(CatchUndefined);
   PARSE_LANGOPT_IMPORTANT(ElideConstructors, diag::warn_pch_elide_constructors);
   PARSE_LANGOPT_BENIGN(SpellChecking);
@@ -2626,6 +2627,7 @@ bool ASTReader::ParseLanguageOptions(
                                    Record[Idx++]);
     PARSE_LANGOPT(InstantiationDepth);
     PARSE_LANGOPT(OpenCL);
+    PARSE_LANGOPT(CUDA);
     PARSE_LANGOPT(CatchUndefined);
     // FIXME: Missing ElideConstructors?!
   #undef PARSE_LANGOPT

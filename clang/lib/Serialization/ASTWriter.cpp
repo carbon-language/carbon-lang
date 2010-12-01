@@ -888,6 +888,7 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.getStackProtectorMode());
   Record.push_back(LangOpts.InstantiationDepth);
   Record.push_back(LangOpts.OpenCL);
+  Record.push_back(LangOpts.CUDA);
   Record.push_back(LangOpts.CatchUndefined);
   Record.push_back(LangOpts.ElideConstructors);
   Record.push_back(LangOpts.SpellChecking);

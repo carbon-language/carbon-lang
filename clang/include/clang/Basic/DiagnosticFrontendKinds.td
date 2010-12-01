@@ -156,6 +156,9 @@ def warn_pch_altivec : Error<
 def warn_pch_opencl : Error<
     "OpenCL language extensions were %select{disabled|enabled}0 in PCH file "
     "but are currently %select{disabled|enabled}1">;
+def warn_pch_cuda : Error<
+    "CUDA language extensions were %select{disabled|enabled}0 in PCH file "
+    "but are currently %select{disabled|enabled}1">;
 def warn_pch_elide_constructors : Error<
     "Elidable copy constructors were %select{disabled|enabled}0 in PCH file "
     "but are currently %select{disabled|enabled}1">;
