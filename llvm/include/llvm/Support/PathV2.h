@@ -218,14 +218,6 @@ error_code current_path(SmallVectorImpl<char> &result);
 
 // The following are purely lexical.
 
-/// @brief Is the current path valid?
-///
-/// @param path Input path.
-/// @param result Set to true if the path is valid, false if it is not.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_valid(const Twine &path, bool &result);
-
 /// @brief Get root name.
 ///
 /// //net/hello => //net
