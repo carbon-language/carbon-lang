@@ -558,9 +558,8 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
             // Create a flag that is used to indicate when the NRVO was applied
             // to this variable. Set it to zero to indicate that NRVO was not 
             // applied.
-            const llvm::Type *BoolTy = llvm::Type::getInt1Ty(VMContext);
-            llvm::Value *Zero = llvm::ConstantInt::get(BoolTy, 0);
-            NRVOFlag = CreateTempAlloca(BoolTy, "nrvo");            
+            llvm::Value *Zero = Builder.getFalse();
+            NRVOFlag = CreateTempAlloca(Zero->getType(), "nrvo");            
             Builder.CreateStore(Zero, NRVOFlag);
             
             // Record the NRVO flag for this variable.
@@ -683,19 +682,16 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
     int isa = 0;
     if (flag&BLOCK_FIELD_IS_WEAK)
       isa = 1;
-    V = llvm::ConstantInt::get(Int32Ty, isa);
-    V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "isa");
+    V = Builder.CreateIntToPtr(Builder.getInt32(isa), PtrToInt8Ty, "isa");
     Builder.CreateStore(V, isa_field);
 
     Builder.CreateStore(DeclPtr, forwarding_field);
 
-    V = llvm::ConstantInt::get(Int32Ty, flags);
-    Builder.CreateStore(V, flags_field);
+    Builder.CreateStore(Builder.getInt32(flags), flags_field);
 
     const llvm::Type *V1;
     V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
-    V = llvm::ConstantInt::get(Int32Ty,
-                               CGM.GetTargetTypeStoreSize(V1).getQuantity());
+    V = Builder.getInt32(CGM.GetTargetTypeStoreSize(V1).getQuantity());
     Builder.CreateStore(V, size_field);
 
     if (flags & BLOCK_HAS_COPY_DISPOSE) {
@@ -728,25 +724,20 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
       llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), Ty,this);
       assert(Init != 0 && "Wasn't a simple constant init?");
       
-      llvm::Value *AlignVal = 
-      llvm::ConstantInt::get(Int32Ty, Align.getQuantity());
-      const llvm::Type *IntPtr =
-      llvm::IntegerType::get(VMContext, LLVMPointerWidth);
+      llvm::Value *AlignVal = Builder.getInt32(Align.getQuantity());
       llvm::Value *SizeVal =
-      llvm::ConstantInt::get(IntPtr, 
+      llvm::ConstantInt::get(CGF.IntPtrTy, 
                              getContext().getTypeSizeInChars(Ty).getQuantity());
       
       const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
       if (Loc->getType() != BP)
         Loc = Builder.CreateBitCast(Loc, BP, "tmp");
       
-      llvm::Value *NotVolatile =
-        llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), 0);
+      llvm::Value *NotVolatile = Builder.getFalse();
 
       // If the initializer is all zeros, codegen with memset.
       if (isa<llvm::ConstantAggregateZero>(Init)) {
-        llvm::Value *Zero =
-          llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), 0);
+        llvm::Value *Zero = Builder.getInt8(0);
         Builder.CreateCall5(CGM.getMemSetFn(Loc->getType(), SizeVal->getType()),
                             Loc, Zero, SizeVal, AlignVal, NotVolatile);
       } else {
