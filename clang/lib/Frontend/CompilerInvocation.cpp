@@ -302,6 +302,7 @@ static const char *getInputKindName(InputKind Kind) {
   case IK_ObjC:              return "objective-c";
   case IK_ObjCXX:            return "objective-c++";
   case IK_OpenCL:            return "cl";
+  case IK_CUDA:              return "cuda";
   case IK_PreprocessedC:     return "cpp-output";
   case IK_PreprocessedCXX:   return "c++-cpp-output";
   case IK_PreprocessedObjC:  return "objective-c-cpp-output";
@@ -1113,6 +1114,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       .Case("cl", IK_OpenCL)
       .Case("c", IK_C)
       .Case("cl", IK_OpenCL)
+      .Case("cuda", IK_CUDA)
       .Case("c++", IK_CXX)
       .Case("objective-c", IK_ObjC)
       .Case("objective-c++", IK_ObjCXX)
@@ -1254,6 +1256,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     case IK_OpenCL:
       LangStd = LangStandard::lang_opencl;
       break;
+    case IK_CUDA:
+      LangStd = LangStandard::lang_cuda;
+      break;
     case IK_Asm:
     case IK_C:
     case IK_PreprocessedC:
@@ -1288,6 +1293,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     Opts.CXXOperatorNames = 1;
     Opts.LaxVectorConversions = 1;
   }
+
+  if (LangStd == LangStandard::lang_cuda)
+    Opts.CUDA = 1;
 
   // OpenCL and C++ both have bool, true, false keywords.
   Opts.Bool = Opts.OpenCL || Opts.CPlusPlus;
