@@ -5961,7 +5961,10 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                 T = QualType(EnumUnderlying.get<const Type*>(), 0);
 
             if (!Context.hasSameUnqualifiedType(T, PrevEnum->getIntegerType())) {
-              Diag(KWLoc, diag::err_enum_redeclare_type_mismatch);
+              Diag(NameLoc.isValid() ? NameLoc : KWLoc, 
+                   diag::err_enum_redeclare_type_mismatch)
+                << T
+                << PrevEnum->getIntegerType();
               Diag(PrevTagDecl->getLocation(), diag::note_previous_use);
               return PrevTagDecl;
             }

@@ -879,7 +879,7 @@ def ext_enumerator_too_large : ExtWarn<
 def err_enumerator_wrapped : Error<
   "enumerator value %0 is not representable in the underlying type %1">;
 def err_enum_redeclare_type_mismatch : Error<
-  "enumeration redeclared with different underlying type">;
+  "enumeration redeclared with different underlying type %0 (was %1)">;
 def err_enum_redeclare_fixed_mismatch : Error<
   "enumeration previously declared with %select{non|}0fixed underlying type">;
 def err_enum_redeclare_scoped_mismatch : Error<
