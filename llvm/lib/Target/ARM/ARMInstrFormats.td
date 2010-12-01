@@ -861,7 +861,7 @@ class T1pI<dag oops, dag iops, InstrItinClass itin,
 class T1pIt<dag oops, dag iops, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>
   : Thumb1pI<oops, iops, AddrModeNone, Size2Bytes, itin, opc, asm,
-             "$lhs = $dst", pattern>;
+             "$Rn = $Rdn", pattern>;
 
 class T1pIs<dag oops, dag iops,
             InstrItinClass itin, string opc, string asm, list<dag> pattern>

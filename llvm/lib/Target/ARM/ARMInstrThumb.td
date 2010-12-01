@@ -790,15 +790,15 @@ def tADDrr :                    // A8.6.6 T1
                 [(set tGPR:$Rd, (add tGPR:$Rn, tGPR:$Rm))]>;
 
 let neverHasSideEffects = 1 in
-def tADDhirr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
-                     "add", "\t$dst, $rhs", []>,
+def tADDhirr : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPR:$Rm), IIC_iALUr,
+                     "add", "\t$Rdn, $Rm", []>,
                T1Special<{0,0,?,?}> {
   // A8.6.6 T2
-  bits<4> dst;
-  bits<4> rhs;
-  let Inst{6-3} = rhs;
-  let Inst{7}   = dst{3};
-  let Inst{2-0} = dst{2-0};
+  bits<4> Rdn;
+  bits<4> Rm;
+  let Inst{7}   = Rdn{3};
+  let Inst{6-3} = Rm;
+  let Inst{2-0} = Rdn{2-0};
 }
 
 // AND register
@@ -1192,24 +1192,24 @@ let usesCustomInserter = 1 in  // Expanded after instruction selection.
 
 // 16-bit movcc in IT blocks for Thumb2.
 let neverHasSideEffects = 1 in {
-def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iCMOVr,
-                    "mov", "\t$dst, $rhs", []>,
+def tMOVCCr : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPR:$Rm), IIC_iCMOVr,
+                    "mov", "\t$Rdn, $Rm", []>,
               T1Special<{1,0,?,?}> {
-  bits<4> rhs;
-  bits<4> dst;
-  let Inst{7}   = dst{3};
-  let Inst{6-3} = rhs;
-  let Inst{2-0} = dst{2-0};
+  bits<4> Rdn;
+  bits<4> Rm;
+  let Inst{7}   = Rdn{3};
+  let Inst{6-3} = Rm;
+  let Inst{2-0} = Rdn{2-0};
 }
 
 let isMoveImm = 1 in
-def tMOVCCi : T1pIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMOVi,
-                    "mov", "\t$dst, $rhs", []>,
+def tMOVCCi : T1pIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, i32imm:$Rm), IIC_iCMOVi,
+                    "mov", "\t$Rdn, $Rm", []>,
               T1General<{1,0,0,?,?}> {
-  bits<8> rhs;
-  bits<3> dst;
-  let Inst{10-8} = dst;
-  let Inst{7-0}  = rhs;
+  bits<3> Rdn;
+  bits<8> Rm;
+  let Inst{10-8} = Rdn;
+  let Inst{7-0}  = Rm;
 }
 
 } // neverHasSideEffects
