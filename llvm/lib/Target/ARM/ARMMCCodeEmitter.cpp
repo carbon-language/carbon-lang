@@ -47,7 +47,7 @@ public:
     const static MCFixupKindInfo Infos[] = {
       // name                     offset  bits  flags
       { "fixup_arm_pcrel_12",     1,      24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_vfp_pcrel_12", 1,      24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_vfp_pcrel_10", 1,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_branch",       1,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_movt_hi16",    0,      16,   0 },
       { "fixup_arm_movw_lo16",    0,      16,   0 },
@@ -613,7 +613,7 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
 
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
-    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_vfp_pcrel_12);
+    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_vfp_pcrel_10);
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 
     ++MCNumCPRelocations;

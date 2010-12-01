@@ -64,7 +64,7 @@ protected:
       // These values don't encode the low two bits since they're always zero.
       // Offset by 8 just as above.
       return (Value - 8) >> 2;
-    case ARM::fixup_arm_vfp_pcrel_12: {
+    case ARM::fixup_arm_vfp_pcrel_10: {
       // Offset by 8 just as above.
       Value = Value - 8;
       bool isAdd = true;
@@ -202,7 +202,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   default: llvm_unreachable("Unknown fixup kind!");
   case FK_Data_4: return 4;
   case ARM::fixup_arm_pcrel_12: return 3;
-  case ARM::fixup_arm_vfp_pcrel_12: return 3;
+  case ARM::fixup_arm_vfp_pcrel_10: return 3;
   case ARM::fixup_arm_branch: return 3;
   }
 }

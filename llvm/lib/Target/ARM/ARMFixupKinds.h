@@ -17,10 +17,10 @@ namespace ARM {
 enum Fixups {
   // fixup_arm_pcrel_12 - 12-bit PC relative relocation for symbol addresses
   fixup_arm_pcrel_12 = FirstTargetFixupKind,
-  // fixup_arm_vfp_pcrel_12 - 12-bit PC relative relocation for symbol addresses
+  // fixup_arm_vfp_pcrel_10 - 10-bit PC relative relocation for symbol addresses
   // used in VFP instructions where the lower 2 bits are not encoded (so it's
   // encoded as an 8-bit immediate).
-  fixup_arm_vfp_pcrel_12,
+  fixup_arm_vfp_pcrel_10,
   // fixup_arm_brnach - 24-bit PC relative relocation for direct branch
   // instructions.
   fixup_arm_branch,
