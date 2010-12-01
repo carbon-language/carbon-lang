@@ -30,6 +30,19 @@ class HelpCommandTestCase(TestBase):
             substrs = ['image dump symtab',
                        'sort-order'])
 
+    def test_help_image_du_sym_is_ambiguous(self):
+        """Command 'help image du sym' is ambiguous and spits out the list of candidates."""
+        self.expect("help image du sym",
+                    COMMAND_FAILED_AS_EXPECTED, error=True,
+            substrs = ['error: ambiguous command image du sym',
+                       'symfile',
+                       'symtab'])
+
+    def test_help_image_du_line_should_work(self):
+        """Command 'help image du line' is not ambiguous and should work."""
+        self.expect("help image du line",
+            substrs = ['Dump the debug symbol file for one or more executable images'])
+
 
 if __name__ == '__main__':
     import atexit
