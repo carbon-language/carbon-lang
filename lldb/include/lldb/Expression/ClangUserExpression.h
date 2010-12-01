@@ -272,6 +272,7 @@ private:
     bool                                        m_cplusplus;            ///< True if the expression is compiled as a C++ member function (true if it was parsed when exe_ctx was in a C++ method).
     bool                                        m_objectivec;           ///< True if the expression is compiled as an Objective-C method (true if it was parsed when exe_ctx was in an Objective-C method).
     bool                                        m_needs_object_ptr;     ///< True if "this" or "self" must be looked up and passed in.  False if the expression doesn't really use them and they can be NULL.
+    bool                                        m_const_object;         ///< True if "this" is const.
 };
     
 } // namespace lldb_private

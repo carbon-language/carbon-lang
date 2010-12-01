@@ -47,6 +47,7 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_cplusplus(false),
     m_objectivec(false),
     m_needs_object_ptr(false),
+    m_const_object(false),
     m_desired_type(NULL, NULL)
 {
 }
@@ -73,10 +74,31 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
     if (!vars)
         return;
     
-    if (vars->FindVariable(ConstString("this")).get())
-        m_cplusplus = true;
-    else if (vars->FindVariable(ConstString("self")).get())
+    lldb::VariableSP this_var(vars->FindVariable(ConstString("this")));
+    lldb::VariableSP self_var(vars->FindVariable(ConstString("self")));
+    
+    if (this_var.get())
+    {
+        Type *this_type = this_var->GetType();
+        
+        lldb::clang_type_t pointer_target_type;
+        
+        if (ClangASTContext::IsPointerType(this_type->GetClangType(),
+                                           &pointer_target_type))
+        {
+            TypeFromUser target_ast_type(pointer_target_type, this_type->GetClangAST());
+            
+            if (target_ast_type.IsDefined())
+                m_cplusplus = true;
+            
+            if (target_ast_type.IsConst())
+                m_const_object = true;
+        }
+    }
+    else if (self_var.get())
+    {
         m_objectivec = true;
+    }
 }
 
 // This is a really nasty hack, meant to fix Objective-C expressions of the form
@@ -141,12 +163,13 @@ ClangUserExpression::Parse (Stream &error_stream,
         m_transformed_stream.Printf("%s                                     \n"
                                     "typedef unsigned short unichar;        \n"
                                     "void                                   \n"
-                                    "$__lldb_class::%s(void *$__lldb_arg)   \n"
+                                    "$__lldb_class::%s(void *$__lldb_arg) %s\n"
                                     "{                                      \n"
                                     "    %s;                                \n" 
                                     "}                                      \n",
                                     m_expr_prefix.c_str(),
                                     FunctionName(),
+                                    (m_const_object ? "const" : ""),
                                     m_expr_text.c_str());
         
         m_needs_object_ptr = true;

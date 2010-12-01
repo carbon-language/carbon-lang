@@ -812,7 +812,6 @@ ClangASTType::IsDefined()
     return ClangASTType::IsDefined (m_type);
 }
 
-
 bool
 ClangASTType::IsDefined (clang_type_t clang_type)
 {
@@ -836,6 +835,20 @@ ClangASTType::IsDefined (clang_type_t clang_type)
         }
     }
     return true;
+}
+
+bool
+ClangASTType::IsConst()
+{
+    return ClangASTType::IsConst (m_type);
+}
+
+bool
+ClangASTType::IsConst (lldb::clang_type_t clang_type)
+{
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
+    
+    return qual_type.isConstQualified();
 }
 
 void

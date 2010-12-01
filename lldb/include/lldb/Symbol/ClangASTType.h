@@ -197,6 +197,12 @@ public:
     IsDefined (lldb::clang_type_t opaque_clang_qual_type);
 
     bool
+    IsConst();
+    
+    static bool
+    IsConst (lldb::clang_type_t opaque_clang_qual_type);
+    
+    bool
     SetValueFromScalar (const Scalar &value,
                         Stream &strm);
 
