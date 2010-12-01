@@ -511,6 +511,26 @@ error_code remove_filename(SmallVectorImpl<char> &path) {
   return make_error_code(errc::success);
 }
 
+error_code replace_extension(SmallVectorImpl<char> &path,
+                             const Twine &extension) {
+  StringRef p(path.begin(), path.size());
+  SmallString<32> ext_storage;
+  StringRef ext = extension.toStringRef(ext_storage);
+
+  // Erase existing extension.
+  size_t pos = p.find_last_of('.');
+  if (pos != StringRef::npos && pos >= filename_pos(p))
+    path.set_size(pos);
+
+  // Append '.' if needed.
+  if (ext.size() > 0 && ext[0] != '.')
+    path.push_back('.');
+
+  // Append extension.
+  path.append(ext.begin(), ext.end());
+  return make_error_code(errc::success);
+}
+
 }
 }
 }

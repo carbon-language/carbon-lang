@@ -103,6 +103,10 @@ TEST(Support, Path) {
     if (error_code ec = sys::path::remove_filename(temp_store))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    remove_filename: " << temp_store << '\n';
+    temp_store = *i;
+    if (error_code ec = sys::path::replace_extension(temp_store, "ext"))
+      ASSERT_FALSE(ec.message().c_str());
+    outs() << "    replace_extension: " << temp_store << '\n';
 
     outs().flush();
   }
