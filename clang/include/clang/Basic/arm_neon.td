@@ -52,7 +52,10 @@ class Inst <string p, string t, Op o> {
   bit isShift = 0;
 }
 
-// Used to generate Builtins.def
+// Used to generate Builtins.def:
+// SInst: Instruction with signed/unsigned suffix (e.g., "s8", "u8", "p8")
+// IInst: Instruction with generic integer suffix (e.g., "i8")
+// WInst: Instruction with only bit size suffix (e.g., "8")
 class SInst<string p, string t> : Inst<p, t, OP_NONE> {}
 class IInst<string p, string t> : Inst<p, t, OP_NONE> {}
 class WInst<string p, string t> : Inst<p, t, OP_NONE> {}
