@@ -56,10 +56,10 @@ enum OpKind {
 
 enum ClassKind {
   ClassNone,
-  ClassI,
-  ClassS,
-  ClassW,
-  ClassB
+  ClassI,           // generic integer instruction, e.g., "i8" suffix
+  ClassS,           // signed/unsigned/poly, e.g., "s8", "u8" or "p8" suffix
+  ClassW,           // width-specific instruction, e.g., "8" suffix
+  ClassB            // bitcast arguments with enum argument to specify type
 };
 
 namespace llvm {

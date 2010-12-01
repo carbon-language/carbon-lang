@@ -293,9 +293,9 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   bool pntr = false;
   
   if (mod == 'v')
-    return "v";
+    return "v"; // void
   if (mod == 'i')
-    return "i";
+    return "i"; // int
   
   // base type to get the type string for.
   char type = ClassifyType(typestr, quad, poly, usgn);
@@ -303,11 +303,13 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   // Based on the modifying character, change the type and width if necessary.
   type = ModType(mod, type, quad, poly, usgn, scal, cnst, pntr);
 
+  // All pointers are void* pointers.  Change type to 'v' now.
   if (pntr) {
     usgn = false;
     poly = false;
     type = 'v';
   }
+  // Treat half-float ('h') types as unsigned short ('s') types.
   if (type == 'h') {
     type = 's';
     usgn = true;
@@ -320,7 +322,7 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
     if (usgn)
       s.push_back('U');
     
-    if (type == 'l')
+    if (type == 'l') // 64-bit long
       s += "LLi";
     else
       s.push_back(type);
@@ -338,7 +340,7 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   // fashion, storing them to a pointer arg.
   if (ret) {
     if (mod >= '2' && mod <= '4')
-      return "vv*";
+      return "vv*"; // void result with void* first argument
     if (mod == 'f' || (ck != ClassB && type == 'f'))
       return quad ? "V4f" : "V2f";
     if (ck != ClassB && type == 's')
@@ -711,9 +713,9 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   // the immediate passed by the user.
   bool define = proto.find('i') != std::string::npos;
 
-  // If all types are the same size, bitcasting the args will take care 
-  // of arg checking.  The actual signedness etc. will be taken care of with
-  // special enums.
+  // Check if the prototype has a scalar operand with the type of the vector
+  // elements.  If not, bitcasting the args will take care of arg checking.
+  // The actual signedness etc. will be taken care of with special enums.
   if (proto.find('s') == std::string::npos)
     ck = ClassB;
 
@@ -736,6 +738,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   
   s += "__builtin_neon_";
   if (splat) {
+    // Call the non-splat builtin: chop off the "_n" suffix from the name.
     std::string vname(name, 0, name.size()-2);
     s += MangleName(vname, typestr, ck);
   } else {
@@ -750,6 +753,8 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     std::string args = std::string(&arg, 1);
+
+    // Wrap macro arguments in parenthesis.
     if (define)
       args = "(" + args + ")";
     
