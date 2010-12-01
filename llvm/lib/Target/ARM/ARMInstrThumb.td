@@ -708,6 +708,26 @@ def tPUSH : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
 //  Arithmetic Instructions.
 //
 
+// Helper classes for encoding T1pI patterns:
+class T1pIDPEncode<bits<4> opA, dag oops, dag iops, InstrItinClass itin,
+                   string opc, string asm, list<dag> pattern>
+    : T1pI<oops, iops, itin, opc, asm, pattern>,
+      T1DataProcessing<opA> {
+  bits<3> Rm;
+  bits<3> Rn;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rn;
+}
+class T1pIMiscEncode<bits<7> opA, dag oops, dag iops, InstrItinClass itin,
+                     string opc, string asm, list<dag> pattern>
+    : T1pI<oops, iops, itin, opc, asm, pattern>,
+      T1Misc<opA> {
+  bits<3> Rm;
+  bits<3> Rd;
+  let Inst{5-3} = Rm;
+  let Inst{2-0} = Rd;
+}
+
 // Helper classes for encoding T1sI patterns:
 class T1sIDPEncode<bits<4> opA, dag oops, dag iops, InstrItinClass itin,
                    string opc, string asm, list<dag> pattern>
@@ -841,17 +861,14 @@ let isCompare = 1, Defs = [CPSR] in {
 //                "cmn", "\t$lhs, $rhs",
 //                [(ARMcmp tGPR:$lhs, (ineg tGPR:$rhs))]>,
 //           T1DataProcessing<0b1011>;
-def tCMNz : T1pI<(outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iCMPr,
-                 "cmn", "\t$Rn, $Rm",
-                 [(ARMcmpZ tGPR:$Rn, (ineg tGPR:$Rm))]>,
-            T1DataProcessing<0b1011> {
-  // A8.6.33
-  bits<3> Rm;
-  bits<3> Rn;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rn;
-}
-}
+
+def tCMNz :                     // A8.6.33
+  T1pIDPEncode<0b1011, (outs), (ins tGPR:$Rn, tGPR:$Rm),
+               IIC_iCMPr,
+               "cmn", "\t$Rn, $Rm",
+               [(ARMcmpZ tGPR:$Rn, (ineg tGPR:$Rm))]>;
+
+} // isCompare = 1, Defs = [CPSR]
 
 // CMP immediate
 let isCompare = 1, Defs = [CPSR] in {
@@ -877,26 +894,16 @@ def tCMPzi8 : T1pI<(outs), (ins tGPR:$Rn, i32imm:$imm8), IIC_iCMPi,
 }
 
 // CMP register
-def tCMPr : T1pI<(outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iCMPr,
-                 "cmp", "\t$Rn, $Rm",
-                 [(ARMcmp tGPR:$Rn, tGPR:$Rm)]>,
-            T1DataProcessing<0b1010> {
-  // A8.6.36 T1
-  bits<3> Rm;
-  bits<3> Rn;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rn;
-}
-def tCMPzr : T1pI<(outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iCMPr,
-                  "cmp", "\t$Rn, $Rm",
-                  [(ARMcmpZ tGPR:$Rn, tGPR:$Rm)]>,
-             T1DataProcessing<0b1010> {
-  // A8.6.36 T1
-  bits<3> Rm;
-  bits<3> Rn;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rn;
-}
+def tCMPr :                     // A8.6.36 T1
+  T1pIDPEncode<0b1010, (outs), (ins tGPR:$Rn, tGPR:$Rm),
+               IIC_iCMPr,
+               "cmp", "\t$Rn, $Rm",
+               [(ARMcmp tGPR:$Rn, tGPR:$Rm)]>;
+
+def tCMPzr :                    // A8.6.36 T1
+  T1pIDPEncode<0b1010, (outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iCMPr,
+               "cmp", "\t$Rn, $Rm",
+               [(ARMcmpZ tGPR:$Rn, tGPR:$Rm)]>;
 
 def tCMPhir : T1pI<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_iCMPr,
                    "cmp", "\t$Rn, $Rm", []>,
@@ -1025,48 +1032,33 @@ def tORR :                      // A8.6.114
                 [(set tGPR:$Rdn, (or tGPR:$Rn, tGPR:$Rm))]>;
 
 // Swaps
-def tREV : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
-                "rev", "\t$Rd, $Rm",
-                [(set tGPR:$Rd, (bswap tGPR:$Rm))]>,
-                Requires<[IsThumb, IsThumb1Only, HasV6]>,
-           T1Misc<{1,0,1,0,0,0,?}> {
-  // A8.6.134
-  bits<3> Rm;
-  bits<3> Rd;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rd;
-}
+def tREV :                      // A8.6.134
+  T1pIMiscEncode<{1,0,1,0,0,0,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
+                 IIC_iUNAr,
+                 "rev", "\t$Rd, $Rm",
+                 [(set tGPR:$Rd, (bswap tGPR:$Rm))]>,
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
-def tREV16 : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
-                  "rev16", "\t$Rd, $Rm",
+def tREV16 :                    // A8.6.135
+  T1pIMiscEncode<{1,0,1,0,0,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
+                 IIC_iUNAr,
+                 "rev16", "\t$Rd, $Rm",
              [(set tGPR:$Rd,
                    (or (and (srl tGPR:$Rm, (i32 8)), 0xFF),
                        (or (and (shl tGPR:$Rm, (i32 8)), 0xFF00),
                            (or (and (srl tGPR:$Rm, (i32 8)), 0xFF0000),
                                (and (shl tGPR:$Rm, (i32 8)), 0xFF000000)))))]>,
-                Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{1,0,1,0,0,1,?}> {
-  // A8.6.135
-  bits<3> Rm;
-  bits<3> Rd;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rd;
-}
+                Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
-def tREVSH : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
-                  "revsh", "\t$Rd, $Rm",
-                  [(set tGPR:$Rd,
-                        (sext_inreg
-                          (or (srl (and tGPR:$Rm, 0xFF00), (i32 8)),
-                              (shl tGPR:$Rm, (i32 8))), i16))]>,
-                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{1,0,1,0,1,1,?}> {
-  // A8.6.136
-  bits<3> Rm;
-  bits<3> Rd;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rd;
-}
+def tREVSH :                    // A8.6.136
+  T1pIMiscEncode<{1,0,1,0,1,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
+                 IIC_iUNAr,
+                 "revsh", "\t$Rd, $Rm",
+                 [(set tGPR:$Rd,
+                       (sext_inreg
+                         (or (srl (and tGPR:$Rm, 0xFF00), (i32 8)),
+                             (shl tGPR:$Rm, (i32 8))), i16))]>,
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
 // Rotate right register
 def tROR :                      // A8.6.139
@@ -1116,70 +1108,43 @@ def tSUBrr :                    // A8.6.212
 // TODO: A7-96: STMIA - store multiple.
 
 // Sign-extend byte
-def tSXTB  : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
-                  "sxtb", "\t$Rd, $Rm",
-                  [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i8))]>,
-                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{0,0,1,0,0,1,?}> {
-  // A8.6.222
-  bits<3> Rm;
-  bits<3> Rd;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rd;
-}
+def tSXTB :                     // A8.6.222
+  T1pIMiscEncode<{0,0,1,0,0,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
+                 IIC_iUNAr,
+                 "sxtb", "\t$Rd, $Rm",
+                 [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i8))]>,
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
-// sign-extend short
-def tSXTH  : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
-                  "sxth", "\t$Rd, $Rm",
-                  [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i16))]>,
-                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{0,0,1,0,0,0,?}> {
-  // A8.6.224
-  bits<3> Rm;
-  bits<3> Rd;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rd;
-}
+// Sign-extend short
+def tSXTH :                     // A8.6.224
+  T1pIMiscEncode<{0,0,1,0,0,0,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
+                 IIC_iUNAr,
+                 "sxth", "\t$Rd, $Rm",
+                 [(set tGPR:$Rd, (sext_inreg tGPR:$Rm, i16))]>,
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
-// test
+// Test
 let isCompare = 1, isCommutable = 1, Defs = [CPSR] in
-def tTST  : T1pI<(outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iTSTr,
-                 "tst", "\t$Rn, $Rm",
-                 [(ARMcmpZ (and_su tGPR:$Rn, tGPR:$Rm), 0)]>,
-            T1DataProcessing<0b1000> {
-  // A8.6.230
-  bits<3> Rm;
-  bits<3> Rn;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rn;
-}
+def tTST :                      // A8.6.230
+  T1pIDPEncode<0b1000, (outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iTSTr,
+               "tst", "\t$Rn, $Rm",
+               [(ARMcmpZ (and_su tGPR:$Rn, tGPR:$Rm), 0)]>;
 
-// zero-extend byte
-def tUXTB  : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
-                  "uxtb", "\t$Rd, $Rm",
-                  [(set tGPR:$Rd, (and tGPR:$Rm, 0xFF))]>,
-                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{0,0,1,0,1,1,?}> {
-  // A8.6.262
-  bits<3> Rm;
-  bits<3> Rd;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rd;
-}
+// Zero-extend byte
+def tUXTB :                     // A8.6.262
+  T1pIMiscEncode<{0,0,1,0,1,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
+                 IIC_iUNAr,
+                 "uxtb", "\t$Rd, $Rm",
+                 [(set tGPR:$Rd, (and tGPR:$Rm, 0xFF))]>,
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
-// zero-extend short
-def tUXTH  : T1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iUNAr,
-                  "uxth", "\t$Rd, $Rm",
-                  [(set tGPR:$Rd, (and tGPR:$Rm, 0xFFFF))]>,
-                  Requires<[IsThumb, IsThumb1Only, HasV6]>,
-             T1Misc<{0,0,1,0,1,0,?}> {
-  // A8.6.264
-  bits<3> Rm;
-  bits<3> Rd;
-  let Inst{5-3} = Rm;
-  let Inst{2-0} = Rd;
-}
-
+// Zero-extend short
+def tUXTH :                     // A8.6.264
+  T1pIMiscEncode<{0,0,1,0,1,0,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
+                 IIC_iUNAr,
+                 "uxth", "\t$Rd, $Rm",
+                 [(set tGPR:$Rd, (and tGPR:$Rm, 0xFFFF))]>,
+                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
 // Conditional move tMOVCCr - Used to implement the Thumb SELECT_CC operation.
 // Expanded after instruction selection into a branch sequence.
