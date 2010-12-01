@@ -100,6 +100,9 @@ TEST(Support, Path) {
     if (error_code ec = sys::path::stem(*i, res))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    stem: " << res << '\n';
+    if (error_code ec = sys::path::extension(*i, res))
+      ASSERT_FALSE(ec.message().c_str());
+    outs() << "    stem: " << res << '\n';
 
     temp_store = *i;
     if (error_code ec = sys::path::make_absolute(temp_store))
@@ -113,10 +116,17 @@ TEST(Support, Path) {
     if (error_code ec = sys::path::replace_extension(temp_store, "ext"))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    replace_extension: " << temp_store << '\n';
+    StringRef stem, ext;
     if (error_code ec = sys::path::stem(
-      StringRef(temp_store.begin(), temp_store.size()), res))
+      StringRef(temp_store.begin(), temp_store.size()), stem))
       ASSERT_FALSE(ec.message().c_str());
-    outs() << "    stem: " << res << '\n';
+    outs() << "    stem: " << stem << '\n';
+    if (error_code ec = sys::path::extension(
+      StringRef(temp_store.begin(), temp_store.size()), ext))
+      ASSERT_FALSE(ec.message().c_str());
+    outs() << "    extension: " << ext << '\n';
+    EXPECT_EQ(*(--sys::path::end(
+      StringRef(temp_store.begin(), temp_store.size()))), (stem + ext).str());
     if (error_code ec = sys::path::native(*i, temp_store))
       ASSERT_FALSE(ec.message().c_str());
     outs() << "    native: " << temp_store << '\n';

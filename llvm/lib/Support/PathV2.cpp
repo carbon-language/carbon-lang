@@ -574,6 +574,22 @@ error_code stem(const StringRef &path, StringRef &result) {
   return make_error_code(errc::success);
 }
 
+error_code extension(const StringRef &path, StringRef &result) {
+  StringRef fname;
+  if (error_code ec = filename(path, fname)) return ec;
+  size_t pos = fname.find_last_of('.');
+  if (pos == StringRef::npos)
+    result = StringRef();
+  else
+    if ((fname.size() == 1 && fname == ".") ||
+        (fname.size() == 2 && fname == ".."))
+      result = StringRef();
+    else
+      result = StringRef(fname.begin() + pos, fname.size() - pos);
+
+  return make_error_code(errc::success);
+}
+
 }
 }
 }
