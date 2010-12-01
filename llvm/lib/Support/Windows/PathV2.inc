@@ -18,6 +18,36 @@
 
 #include "Windows.h"
 
+using namespace llvm;
+
+namespace {
+  error_code UTF8ToUTF16(const StringRef &utf8,
+                               SmallVectorImpl<wchar_t> &utf16) {
+    int len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                                    utf8.begin(), utf8.size(),
+                                    utf16.begin(), 0);
+
+    if (len == 0)
+      return make_error_code(windows_error(::GetLastError()));
+
+    utf16.reserve(len + 1);
+    utf16.set_size(len);
+
+    len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+                                    utf8.begin(), utf8.size(),
+                                    utf16.begin(), utf16.size());
+
+    if (len == 0)
+      return make_error_code(windows_error(::GetLastError()));
+
+    // Make utf16 null terminated.
+    utf16.push_back(0);
+    utf16.pop_back();
+
+    return make_error_code(errc::success);
+  }
+}
+
 namespace llvm {
 namespace sys  {
 namespace path {
@@ -67,5 +97,32 @@ retry_cur_dir:
 }
 
 } // end namespace path
+
+namespace fs {
+
+error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
+  // Get arguments.
+  SmallString<128> from_storage;
+  SmallString<128> to_storage;
+  StringRef f = from.toStringRef(from_storage);
+  StringRef t = to.toStringRef(to_storage);
+
+  // Convert to utf-16.
+  SmallVector<wchar_t, 128> wide_from;
+  SmallVector<wchar_t, 128> wide_to;
+  if (error_code ec = UTF8ToUTF16(f, wide_from)) return ec;
+  if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
+
+  // Copy the file.
+  BOOL res = ::CopyFileW(wide_from.begin(), wide_to.begin(),
+                         copt != copy_option::overwrite_if_exists);
+
+  if (res == 0)
+    return make_error_code(windows_error(::GetLastError()));
+
+  return make_error_code(errc::success);
+}
+
+} // end namespace fs
 } // end namespace sys
 } // end namespace llvm

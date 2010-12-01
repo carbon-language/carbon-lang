@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/PathV2.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cctype>
 
@@ -666,9 +667,13 @@ error_code is_relative(const Twine &path, bool &result) {
   return ec;
 }
 
-}
-}
-}
+} // end namespace path
+
+namespace fs {
+
+} // end namespace fs
+} // end namespace sys
+} // end namespace llvm
 
 // Include the truly platform-specific parts.
 #if defined(LLVM_ON_UNIX)
