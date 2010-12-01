@@ -726,6 +726,21 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
+  case ARM::LEApcrelJT: {
+    unsigned JTI = MI->getOperand(1).getIndex();
+    unsigned Id = MI->getOperand(2).getImm();
+    MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, Id);
+    const MCExpr *SymbolExpr = MCSymbolRefExpr::Create(JTISymbol, OutContext);
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::ADRadd);
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    TmpInst.addOperand(MCOperand::CreateExpr(SymbolExpr));
+    // Add predicate operands.
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
   case ARM::MOVPCRX: {
     MCInst TmpInst;
     TmpInst.setOpcode(ARM::MOVr);

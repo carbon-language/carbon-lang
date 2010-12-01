@@ -338,6 +338,11 @@ def pclabel : Operand<i32> {
   let PrintMethod = "printPCLabel";
 }
 
+// ADR instruction labels.
+def adrlabel : Operand<i32> {
+  let EncoderMethod = "getAdrLabelOpValue";
+}
+
 def neon_vcvt_imm32 : Operand<i32> {
   let EncoderMethod = "getNEONVcvtImm32OpValue";
 }
@@ -1178,28 +1183,39 @@ def PICSTRB : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 let neverHasSideEffects = 1, isReMaterializable = 1 in
-// FIXME: We want one cannonical LEApcrel instruction and to express one or
-// both of these as pseudo-instructions that get expanded to it. In particular,
-// the cannonical "adr" pattern should take a single label operand, and the
-// JT version should be a pseudo that when lowered to MC, xforms the insn
-// to the canonical form referencing the correct symbol.
-def LEApcrel : AXI1<0, (outs GPR:$Rd), (ins i32imm:$label, pred:$p),
-                    MiscFrm, IIC_iALUi,
-                    "adr${p}\t$Rd, #$label", []>;
-
-def LEApcrelJT : AXI1<0b0100, (outs GPR:$Rd),
-                           (ins i32imm:$label, nohash_imm:$id, pred:$p),
-                      MiscFrm, IIC_iALUi,
-                      "adr${p}\t$Rd, #${label}_${id}", []> {
-  bits<4> p;
+// The 'adr' mnemonic encodes differently if the label is before or after
+// the instruction.
+def ADRadd : AI1<0b0100, (outs GPR:$Rd), (ins adrlabel:$label),
+                 MiscFrm, IIC_iALUi, "adr", "\t$Rd, #$label", []> {
   bits<4> Rd;
-  let Inst{31-28} = p;
+  bits<12> label;
   let Inst{27-25} = 0b001;
   let Inst{20} = 0;
   let Inst{19-16} = 0b1111;
   let Inst{15-12} = Rd;
-  // FIXME: Add label encoding/fixup
+  let Inst{11-0} = label;
 }
+def ADRsub : AI1<0b0010, (outs GPR:$Rd), (ins adrlabel:$label),
+                 MiscFrm, IIC_iALUi, "adr", "\t$Rd, #$label", []> {
+  bits<4> Rd;
+  bits<12> label;
+  let Inst{27-25} = 0b001;
+  let Inst{20} = 0;
+  let Inst{19-16} = 0b1111;
+  let Inst{15-12} = Rd;
+  let Inst{11-0} = label;
+}
+
+// FIXME: This should be a pseudo lowered to one of the above at MC lowering
+// time. It may be interesting determining which of the two. Perhaps a fixup
+// will be needed to do so? That would be kinda fugly.
+def LEApcrel : AXI1<0, (outs GPR:$Rd), (ins i32imm:$label, pred:$p),
+                    MiscFrm, IIC_iALUi,
+                    "adr${p}\t$Rd, #$label", []>;
+
+def LEApcrelJT : ARMPseudoInst<(outs GPR:$Rd),
+                      (ins i32imm:$label, nohash_imm:$id, pred:$p),
+                      Size4Bytes, IIC_iALUi, []>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.

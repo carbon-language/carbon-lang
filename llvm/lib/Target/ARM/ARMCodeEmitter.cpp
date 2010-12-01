@@ -167,6 +167,8 @@ namespace {
       const { return 0; }
     unsigned NEONThumb2DupPostEncoder(const MachineInstr &MI,unsigned Val) 
       const { return 0; }
+    unsigned getAdrLabelOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
     unsigned getBranchTargetOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getCCOutOpValue(const MachineInstr &MI, unsigned Op)

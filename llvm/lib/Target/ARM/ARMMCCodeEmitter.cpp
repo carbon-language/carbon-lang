@@ -85,6 +85,11 @@ public:
   uint32_t getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                   SmallVectorImpl<MCFixup> &Fixups) const;
 
+  /// getAdrLabelOpValue - Return encoding info for 12-bit immediate
+  /// ADR label target.
+  uint32_t getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
   /// operand.
   uint32_t getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
@@ -389,6 +394,24 @@ getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
   assert (MO.isExpr() && "Unexpected branch target type!");
   const MCExpr *Expr = MO.getExpr();
   MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_branch);
+  Fixups.push_back(MCFixup::Create(0, Expr, Kind));
+
+  // All of the information is in the fixup.
+  return 0;
+}
+
+/// getAdrLabelOpValue - Return encoding info for 12-bit immediate
+/// ADR label target.
+uint32_t ARMMCCodeEmitter::
+getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
+                   SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpIdx);
+
+  // If the destination is an immediate, we have nothing to do.
+  if (MO.isImm()) return MO.getImm();
+  assert (MO.isExpr() && "Unexpected branch target type!");
+  const MCExpr *Expr = MO.getExpr();
+  MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_12);
   Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 
   // All of the information is in the fixup.
