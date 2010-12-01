@@ -19,6 +19,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/AST/TypeVisitor.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -34,8 +35,6 @@ bool QualType::isConstant(QualType T, ASTContext &Ctx) {
 
   return false;
 }
-
-Type::~Type() { }
 
 unsigned ConstantArrayType::getNumAddressingBits(ASTContext &Context,
                                                  QualType ElementType,
@@ -827,9 +826,6 @@ bool Type::isSpecifierType() const {
   }
 }
 
-TypeWithKeyword::~TypeWithKeyword() {
-}
-
 ElaboratedTypeKeyword
 TypeWithKeyword::getKeywordForTypeSpec(unsigned TypeSpec) {
   switch (TypeSpec) {
@@ -909,10 +905,6 @@ TypeWithKeyword::getKeywordName(ElaboratedTypeKeyword Keyword) {
   llvm_unreachable("Unknown elaborated type keyword.");
   return "";
 }
-
-ElaboratedType::~ElaboratedType() {}
-DependentNameType::~DependentNameType() {}
-DependentTemplateSpecializationType::~DependentTemplateSpecializationType() {}
 
 DependentTemplateSpecializationType::DependentTemplateSpecializationType(
                          ElaboratedTypeKeyword Keyword,
@@ -1005,8 +997,6 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   llvm_unreachable("Invalid builtin type.");
   return 0;
 }
-
-void FunctionType::ANCHOR() {} // Key function for FunctionType.
 
 QualType QualType::getNonLValueExprType(ASTContext &Context) const {
   if (const ReferenceType *RefType = getTypePtr()->getAs<ReferenceType>())
@@ -1318,154 +1308,194 @@ void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getBaseType(), qual_begin(), getNumProtocols());
 }
 
-void Type::ensureCachedProperties() const {
-  if (!TypeBits.isCacheValid()) {
-    CachedProperties Result = getCachedProperties();
-    TypeBits.CacheValidAndVisibility = Result.getVisibility() + 1U;
-    assert(TypeBits.isCacheValid() &&
-           TypeBits.getVisibility() == Result.getVisibility());
-    TypeBits.CachedLinkage = Result.getLinkage();
-    TypeBits.CachedLocalOrUnnamed = Result.hasLocalOrUnnamedType();
-  }  
+namespace {
+
+/// \brief The cached properties of a type.
+class CachedProperties {
+  char linkage;
+  char visibility;
+  bool local;
+  
+public:
+  CachedProperties(Linkage linkage, Visibility visibility, bool local)
+    : linkage(linkage), visibility(visibility), local(local) {}
+  
+  Linkage getLinkage() const { return (Linkage) linkage; }
+  Visibility getVisibility() const { return (Visibility) visibility; }
+  bool hasLocalOrUnnamedType() const { return local; }
+  
+  friend CachedProperties merge(CachedProperties L, CachedProperties R) {
+    return CachedProperties(minLinkage(L.getLinkage(), R.getLinkage()),
+                            minVisibility(L.getVisibility(), R.getVisibility()),
+                         L.hasLocalOrUnnamedType() | R.hasLocalOrUnnamedType());
+  }
+};
 }
 
-/// \brief Determine the linkage of this type.
-Linkage Type::getLinkage() const {
-  if (this != CanonicalType.getTypePtr())
-    return CanonicalType->getLinkage();
+static CachedProperties computeCachedProperties(const Type *T);
 
-  ensureCachedProperties();
-  return TypeBits.getLinkage();
+namespace clang {
+/// The type-property cache.  This is templated so as to be
+/// instantiated at an internal type to prevent unnecessary symbol
+/// leakage.
+template <class Private> class TypePropertyCache {
+public:
+  static CachedProperties get(QualType T) {
+    return get(T.getTypePtr());
+  }
+
+  static CachedProperties get(const Type *T) {
+    ensure(T);
+    return CachedProperties(T->TypeBits.getLinkage(),
+                            T->TypeBits.getVisibility(),
+                            T->TypeBits.hasLocalOrUnnamedType());
+  }
+
+  static void ensure(const Type *T) {
+    // If the cache is valid, we're okay.
+    if (T->TypeBits.isCacheValid()) return;
+
+    // If this type is non-canonical, ask its canonical type for the
+    // relevant information.
+    if (QualType(T, 0) != T->CanonicalType) {
+      const Type *CT = T->CanonicalType.getTypePtr();
+      ensure(CT);
+      T->TypeBits.CacheValidAndVisibility =
+        CT->TypeBits.CacheValidAndVisibility;
+      T->TypeBits.CachedLinkage = CT->TypeBits.CachedLinkage;
+      T->TypeBits.CachedLocalOrUnnamed = CT->TypeBits.CachedLocalOrUnnamed;
+      return;
+    }
+
+    // Compute the cached properties and then set the cache.
+    CachedProperties Result = computeCachedProperties(T);
+    T->TypeBits.CacheValidAndVisibility = Result.getVisibility() + 1U;
+    assert(T->TypeBits.isCacheValid() &&
+           T->TypeBits.getVisibility() == Result.getVisibility());
+    T->TypeBits.CachedLinkage = Result.getLinkage();
+    T->TypeBits.CachedLocalOrUnnamed = Result.hasLocalOrUnnamedType();
+  }
+};
 }
 
-/// \brief Determine the linkage of this type.
-Visibility Type::getVisibility() const {
-  if (this != CanonicalType.getTypePtr())
-    return CanonicalType->getVisibility();
+// Instantiate the friend template at a private class.  In a
+// reasonable implementation, these symbols will be internal.
+// It is terrible that this is the best way to accomplish this.
+namespace { class Private {}; }
+typedef TypePropertyCache<Private> Cache;
 
-  ensureCachedProperties();
-  return TypeBits.getVisibility();
-}
+static CachedProperties computeCachedProperties(const Type *T) {
+  switch (T->getTypeClass()) {
+#define TYPE(Class,Base)
+#define NON_CANONICAL_TYPE(Class,Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    llvm_unreachable("didn't expect a non-canonical type here");
 
-bool Type::hasUnnamedOrLocalType() const {
-  if (this != CanonicalType.getTypePtr())
-    return CanonicalType->hasUnnamedOrLocalType();
-
-  ensureCachedProperties();
-  return TypeBits.hasLocalOrUnnamedType();
-}
-
-std::pair<Linkage,Visibility> Type::getLinkageAndVisibility() const {
-  if (this != CanonicalType.getTypePtr())
-    return CanonicalType->getLinkageAndVisibility();
-
-  ensureCachedProperties();
-  return std::make_pair(TypeBits.getLinkage(), TypeBits.getVisibility());
-}
-
-
-Type::CachedProperties Type::getCachedProperties(const Type *T) {
-  T = T->CanonicalType.getTypePtr();
-  T->ensureCachedProperties();
-  return CachedProperties(T->TypeBits.getLinkage(),
-                          T->TypeBits.getVisibility(),
-                          T->TypeBits.hasLocalOrUnnamedType());
-}
-
-void Type::ClearLinkageCache() {
-  if (this != CanonicalType.getTypePtr())
-    CanonicalType->ClearLinkageCache();
-  else
-    TypeBits.CacheValidAndVisibility = 0;
-}
-
-Type::CachedProperties Type::getCachedProperties() const { 
-  // Treat dependent types as external.
-  if (isDependentType())
+#define TYPE(Class,Base)
+#define DEPENDENT_TYPE(Class,Base) case Type::Class:
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class,Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    // Treat dependent types as external.
+    assert(T->isDependentType());
     return CachedProperties(ExternalLinkage, DefaultVisibility, false);
+
+  case Type::Builtin:
+    // C++ [basic.link]p8:
+    //   A type is said to have linkage if and only if:
+    //     - it is a fundamental type (3.9.1); or
+    return CachedProperties(ExternalLinkage, DefaultVisibility, false);
+
+  case Type::Record:
+  case Type::Enum: {
+    const TagDecl *Tag = cast<TagType>(T)->getDecl();
+
+    // C++ [basic.link]p8:
+    //     - it is a class or enumeration type that is named (or has a name
+    //       for linkage purposes (7.1.3)) and the name has linkage; or
+    //     -  it is a specialization of a class template (14); or
+    NamedDecl::LinkageInfo LV = Tag->getLinkageAndVisibility();
+    bool IsLocalOrUnnamed =
+      Tag->getDeclContext()->isFunctionOrMethod() ||
+      (!Tag->getIdentifier() && !Tag->getTypedefForAnonDecl());
+    return CachedProperties(LV.linkage(), LV.visibility(), IsLocalOrUnnamed);
+  }
+
+    // C++ [basic.link]p8:
+    //   - it is a compound type (3.9.2) other than a class or enumeration, 
+    //     compounded exclusively from types that have linkage; or
+  case Type::Complex:
+    return Cache::get(cast<ComplexType>(T)->getElementType());
+  case Type::Pointer:
+    return Cache::get(cast<PointerType>(T)->getPointeeType());
+  case Type::BlockPointer:
+    return Cache::get(cast<BlockPointerType>(T)->getPointeeType());
+  case Type::LValueReference:
+  case Type::RValueReference:
+    return Cache::get(cast<ReferenceType>(T)->getPointeeType());
+  case Type::MemberPointer: {
+    const MemberPointerType *MPT = cast<MemberPointerType>(T);
+    return merge(Cache::get(MPT->getClass()),
+                 Cache::get(MPT->getPointeeType()));
+  }
+  case Type::ConstantArray:
+  case Type::IncompleteArray:
+  case Type::VariableArray:
+    return Cache::get(cast<ArrayType>(T)->getElementType());
+  case Type::Vector:
+  case Type::ExtVector:
+    return Cache::get(cast<VectorType>(T)->getElementType());
+  case Type::FunctionNoProto:
+    return Cache::get(cast<FunctionType>(T)->getResultType());
+  case Type::FunctionProto: {
+    const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
+    CachedProperties result = Cache::get(FPT->getResultType());
+    for (FunctionProtoType::arg_type_iterator ai = FPT->arg_type_begin(),
+           ae = FPT->arg_type_end(); ai != ae; ++ai)
+      result = merge(result, Cache::get(*ai));
+    return result;
+  }
+  case Type::ObjCInterface: {
+    NamedDecl::LinkageInfo LV =
+      cast<ObjCInterfaceType>(T)->getDecl()->getLinkageAndVisibility();
+    return CachedProperties(LV.linkage(), LV.visibility(), false);
+  }
+  case Type::ObjCObject:
+    return Cache::get(cast<ObjCObjectType>(T)->getBaseType());
+  case Type::ObjCObjectPointer:
+    return Cache::get(cast<ObjCObjectPointerType>(T)->getPointeeType());
+  }
+
+  llvm_unreachable("unhandled type class");
 
   // C++ [basic.link]p8:
   //   Names not covered by these rules have no linkage.
   return CachedProperties(NoLinkage, DefaultVisibility, false);
 }
 
-Type::CachedProperties BuiltinType::getCachedProperties() const {
-  // C++ [basic.link]p8:
-  //   A type is said to have linkage if and only if:
-  //     - it is a fundamental type (3.9.1); or
-  return CachedProperties(ExternalLinkage, DefaultVisibility, false);
+/// \brief Determine the linkage of this type.
+Linkage Type::getLinkage() const {
+  Cache::ensure(this);
+  return TypeBits.getLinkage();
 }
 
-Type::CachedProperties TagType::getCachedProperties() const {
-  // C++ [basic.link]p8:
-  //     - it is a class or enumeration type that is named (or has a name for
-  //       linkage purposes (7.1.3)) and the name has linkage; or
-  //     -  it is a specialization of a class template (14); or
-
-  NamedDecl::LinkageInfo LV = getDecl()->getLinkageAndVisibility();
-  bool IsLocalOrUnnamed =
-    getDecl()->getDeclContext()->isFunctionOrMethod() ||
-                        (!getDecl()->getIdentifier() &&
-                         !getDecl()->getTypedefForAnonDecl());
-  return CachedProperties(LV.linkage(), LV.visibility(), IsLocalOrUnnamed);
+/// \brief Determine the linkage of this type.
+Visibility Type::getVisibility() const {
+  Cache::ensure(this);
+  return TypeBits.getVisibility();
 }
 
-// C++ [basic.link]p8:
-//   - it is a compound type (3.9.2) other than a class or enumeration, 
-//     compounded exclusively from types that have linkage; or
-Type::CachedProperties ComplexType::getCachedProperties() const {
-  return Type::getCachedProperties(ElementType);
+bool Type::hasUnnamedOrLocalType() const {
+  Cache::ensure(this);
+  return TypeBits.hasLocalOrUnnamedType();
 }
 
-Type::CachedProperties PointerType::getCachedProperties() const {
-  return Type::getCachedProperties(PointeeType);
+std::pair<Linkage,Visibility> Type::getLinkageAndVisibility() const {
+  Cache::ensure(this);
+  return std::make_pair(TypeBits.getLinkage(), TypeBits.getVisibility());
 }
 
-Type::CachedProperties BlockPointerType::getCachedProperties() const {
-  return Type::getCachedProperties(PointeeType);
-}
-
-Type::CachedProperties ReferenceType::getCachedProperties() const {
-  return Type::getCachedProperties(PointeeType);
-}
-
-Type::CachedProperties MemberPointerType::getCachedProperties() const {
-  return merge(Type::getCachedProperties(Class),
-               Type::getCachedProperties(PointeeType));
-}
-
-Type::CachedProperties ArrayType::getCachedProperties() const {
-  return Type::getCachedProperties(ElementType);
-}
-
-Type::CachedProperties VectorType::getCachedProperties() const {
-  return Type::getCachedProperties(ElementType);
-}
-
-Type::CachedProperties FunctionNoProtoType::getCachedProperties() const {
-  return Type::getCachedProperties(getResultType());
-}
-
-Type::CachedProperties FunctionProtoType::getCachedProperties() const {
-  CachedProperties Cached = Type::getCachedProperties(getResultType());
-  for (arg_type_iterator A = arg_type_begin(), AEnd = arg_type_end();
-       A != AEnd; ++A) {
-    Cached = merge(Cached, Type::getCachedProperties(*A));
-  }
-  return Cached;
-}
-
-Type::CachedProperties ObjCInterfaceType::getCachedProperties() const {
-  NamedDecl::LinkageInfo LV = getDecl()->getLinkageAndVisibility();
-  return CachedProperties(LV.linkage(), LV.visibility(), false);
-}
-
-Type::CachedProperties ObjCObjectType::getCachedProperties() const {
-  if (const ObjCInterfaceType *T = getBaseType()->getAs<ObjCInterfaceType>())
-    return Type::getCachedProperties(T);
-  return CachedProperties(ExternalLinkage, DefaultVisibility, false);
-}
-
-Type::CachedProperties ObjCObjectPointerType::getCachedProperties() const {
-  return Type::getCachedProperties(PointeeType);
+void Type::ClearLinkageCache() {
+  TypeBits.CacheValidAndVisibility = 0;
+  if (QualType(this, 0) != CanonicalType)
+    CanonicalType->TypeBits.CacheValidAndVisibility = 0;
 }

@@ -789,6 +789,7 @@ private:
   /// Bitfields required by the Type class.
   class TypeBitfields {
     friend class Type;
+    template <class T> friend class TypePropertyCache;
 
     /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
     unsigned TC : 8;
@@ -954,36 +955,9 @@ private:
     TypeBits.FromAST = V;
   }
 
-  void ensureCachedProperties() const;
+  template <class T> friend class TypePropertyCache;
 
 protected:
-  /// \brief Compute the cached properties of this type.
-  class CachedProperties {
-    char linkage;
-    char visibility;
-    bool local;
-
-  public:
-    CachedProperties(Linkage linkage, Visibility visibility, bool local)
-      : linkage(linkage), visibility(visibility), local(local) {}
-
-    Linkage getLinkage() const { return (Linkage) linkage; }
-    Visibility getVisibility() const { return (Visibility) visibility; }
-    bool hasLocalOrUnnamedType() const { return local; }
-
-    friend CachedProperties merge(CachedProperties L, CachedProperties R) {
-      return CachedProperties(minLinkage(L.getLinkage(), R.getLinkage()),
-                         minVisibility(L.getVisibility(), R.getVisibility()),
-                      L.hasLocalOrUnnamedType() | R.hasLocalOrUnnamedType());
-    }
-  };
-
-  virtual CachedProperties getCachedProperties() const;
-  static CachedProperties getCachedProperties(QualType T) {
-    return getCachedProperties(T.getTypePtr());
-  }
-  static CachedProperties getCachedProperties(const Type *T);
-
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
   Type(TypeClass tc, QualType Canonical, bool Dependent, bool VariablyModified)
@@ -996,7 +970,6 @@ protected:
     TypeBits.CachedLinkage = NoLinkage;
     TypeBits.FromAST = false;
   }
-  virtual ~Type();
   friend class ASTContext;
 
   void setDependent(bool D = true) { TypeBits.Dependent = D; }
@@ -1336,9 +1309,6 @@ public:
     ObjCSel    // This represents the ObjC 'SEL' type.
   };
 
-protected:
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
   BuiltinType(Kind K)
     : Type(Builtin, QualType(), /*Dependent=*/(K == Dependent),
@@ -1392,9 +1362,6 @@ class ComplexType : public Type, public llvm::FoldingSetNode {
   }
   friend class ASTContext;  // ASTContext creates these.
 
-protected:
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
   QualType getElementType() const { return ElementType; }
 
@@ -1424,9 +1391,6 @@ class PointerType : public Type, public llvm::FoldingSetNode {
   }
   friend class ASTContext;  // ASTContext creates these.
 
-protected:
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
 
   QualType getPointeeType() const { return PointeeType; }
@@ -1457,9 +1421,6 @@ class BlockPointerType : public Type, public llvm::FoldingSetNode {
     PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
-  
-protected:
-  virtual CachedProperties getCachedProperties() const;
   
 public:
 
@@ -1495,8 +1456,6 @@ protected:
     ReferenceTypeBits.SpelledAsLValue = SpelledAsLValue;
     ReferenceTypeBits.InnerRef = Referencee->isReferenceType();
   }
-  
-  virtual CachedProperties getCachedProperties() const;
   
 public:
   bool isSpelledAsLValue() const { return ReferenceTypeBits.SpelledAsLValue; }
@@ -1579,9 +1538,6 @@ class MemberPointerType : public Type, public llvm::FoldingSetNode {
   }
   friend class ASTContext; // ASTContext creates these.
   
-protected:
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
   QualType getPointeeType() const { return PointeeType; }
 
@@ -1649,8 +1605,6 @@ protected:
 
   friend class ASTContext;  // ASTContext creates these.
 
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
   QualType getElementType() const { return ElementType; }
   ArraySizeModifier getSizeModifier() const {
@@ -1954,8 +1908,6 @@ protected:
   }
   friend class ASTContext;  // ASTContext creates these.
   
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
 
   QualType getElementType() const { return ElementType; }
@@ -2057,8 +2009,6 @@ public:
 /// class of FunctionNoProtoType and FunctionProtoType.
 ///
 class FunctionType : public Type {
-  virtual void ANCHOR(); // Key function for FunctionType.
-
   // The type returned by the function.
   QualType ResultType;
 
@@ -2183,9 +2133,6 @@ class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
                    Info) {}
   friend class ASTContext;  // ASTContext creates these.
   
-protected:
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
   // No additional state past what FunctionType provides.
 
@@ -2239,9 +2186,6 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
 
   friend class ASTContext;  // ASTContext creates these.
 
-protected:
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
   unsigned getNumArgs() const { return NumArgs; }
   QualType getArgType(unsigned i) const {
@@ -2482,8 +2426,6 @@ class TagType : public Type {
 protected:
   TagType(TypeClass TC, const TagDecl *D, QualType can);
 
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
   TagDecl *getDecl() const;
 
@@ -2857,8 +2799,6 @@ protected:
   }
 
 public:
-  virtual ~TypeWithKeyword(); // pin vtable to Type.cpp
-
   ElaboratedTypeKeyword getKeyword() const {
     return static_cast<ElaboratedTypeKeyword>(TypeWithKeywordBits.Keyword);
   }
@@ -2983,8 +2923,6 @@ class DependentNameType : public TypeWithKeyword, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these
 
 public:
-  virtual ~DependentNameType();
-
   /// \brief Retrieve the qualification on this type.
   NestedNameSpecifier *getQualifier() const { return NNS; }
 
@@ -3051,8 +2989,6 @@ class DependentTemplateSpecializationType :
   friend class ASTContext;  // ASTContext creates these
 
 public:
-  virtual ~DependentTemplateSpecializationType();
-
   NestedNameSpecifier *getQualifier() const { return NNS; }
   const IdentifierInfo *getIdentifier() const { return Name; }
 
@@ -3144,9 +3080,6 @@ protected:
     ObjCObjectTypeBits.NumProtocols = 0;
   }
 
-protected:
-  CachedProperties getCachedProperties() const; // key function
-  
 public:
   /// getBaseType - Gets the base type of this object type.  This is
   /// always (possibly sugar for) one of:
@@ -3254,9 +3187,6 @@ class ObjCInterfaceType : public ObjCObjectType {
       Decl(const_cast<ObjCInterfaceDecl*>(D)) {}
   friend class ASTContext;  // ASTContext creates these.
 
-protected:
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
   /// getDecl - Get the declaration of this interface.
   ObjCInterfaceDecl *getDecl() const { return Decl; }
@@ -3306,9 +3236,6 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
       PointeeType(Pointee) {}
   friend class ASTContext;  // ASTContext creates these.
 
-protected:
-  virtual CachedProperties getCachedProperties() const;
-  
 public:
   /// getPointeeType - Gets the type pointed to by this ObjC pointer.
   /// The result will always be an ObjCObjectType or sugar thereof.
