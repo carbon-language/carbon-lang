@@ -113,6 +113,8 @@ class GenericTester(TestBase):
         # Now iterate through the golden list, comparing against the output from
         # 'expr var'.
         for var, val in gl:
+            # Don't overwhelm the expression mechanism.
+            time.sleep(1.0)
             self.runCmd("expression %s" % var)
             output = self.res.GetOutput()
             
