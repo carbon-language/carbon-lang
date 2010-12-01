@@ -52,9 +52,12 @@ public:
     static void
     RegisterArchPlugin (const DNBArchPluginInfo &arch_info);
 
-    static void
-    SetDefaultArchitecture (uint32_t cpu_type);
+    static uint32_t
+    GetArchitecture ();
 
+    static bool
+    SetArchitecture (uint32_t cpu_type);
+    
     virtual bool            GetRegisterValue (int set, int reg, DNBRegisterValue *value) = 0;
     virtual bool            SetRegisterValue (int set, int reg, const DNBRegisterValue *value) = 0;
     virtual nub_size_t      GetRegisterContext (void *buf, nub_size_t buf_len) = 0;

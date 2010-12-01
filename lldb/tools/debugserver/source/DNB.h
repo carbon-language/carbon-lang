@@ -28,6 +28,8 @@ typedef bool (*DNBShouldCancelCallback) (void *);
 void            DNBInitialize ();
 void            DNBTerminate ();
 
+nub_bool_t      DNBSetArchitecture      (const char *arch);
+
 //----------------------------------------------------------------------
 // Process control
 //----------------------------------------------------------------------

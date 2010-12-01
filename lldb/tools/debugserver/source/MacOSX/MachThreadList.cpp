@@ -230,9 +230,9 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update)
                 is_64_bit = true;
         }
         if (is_64_bit)
-            DNBArchProtocol::SetDefaultArchitecture(CPU_TYPE_X86_64);
+            DNBArchProtocol::SetArchitecture(CPU_TYPE_X86_64);
         else
-            DNBArchProtocol::SetDefaultArchitecture(CPU_TYPE_I386);
+            DNBArchProtocol::SetArchitecture(CPU_TYPE_I386);
     }
 #endif
     

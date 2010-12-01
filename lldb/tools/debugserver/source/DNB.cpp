@@ -2019,3 +2019,18 @@ void
 DNBTerminate()
 {
 }
+
+nub_bool_t
+DNBSetArchitecture (const char *arch)
+{
+    if (arch && arch[0])
+    {
+        if (strcasecmp (arch, "i386") == 0)
+            return DNBArchProtocol::SetArchitecture (CPU_TYPE_I386);
+        else if (strcasecmp (arch, "x86_64") == 0)
+            return DNBArchProtocol::SetArchitecture (CPU_TYPE_X86_64);
+        else if (strstr (arch, "arm") == arch)
+            return DNBArchProtocol::SetArchitecture (CPU_TYPE_ARM);
+    }
+    return false;
+}

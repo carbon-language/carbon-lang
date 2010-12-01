@@ -886,6 +886,10 @@ main (int argc, char *argv[])
         arch_name.assign ("arm");
 #endif
     }
+    else
+    {
+        DNBSetArchitecture (arch_name.c_str());
+    }
 
     if (arch_name.empty())
     {
@@ -897,6 +901,8 @@ main (int argc, char *argv[])
     argv += optind;
 
     g_remoteSP.reset (new RNBRemote (use_native_registers, arch_name.c_str()));
+    
+    
 
     RNBRemote *remote = g_remoteSP.get();
     if (remote == NULL)

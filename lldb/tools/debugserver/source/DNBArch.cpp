@@ -22,13 +22,13 @@
 typedef std::map<uint32_t, DNBArchPluginInfo> CPUPluginInfoMap;
 
 #if defined (__i386__)
-uint32_t g_current_cpu_type = CPU_TYPE_I386;
+static uint32_t g_current_cpu_type = CPU_TYPE_I386;
 #elif defined (__x86_64__)
-uint32_t g_current_cpu_type = CPU_TYPE_X86_64;
+static uint32_t g_current_cpu_type = CPU_TYPE_X86_64;
 #elif defined (__arm__) 
-uint32_t g_current_cpu_type = CPU_TYPE_ARM;
+static uint32_t g_current_cpu_type = CPU_TYPE_ARM;
 #else
-uint32_t g_current_cpu_type = 0;
+static uint32_t g_current_cpu_type = 0;
 #endif
 
 CPUPluginInfoMap g_arch_plugins;
@@ -43,12 +43,20 @@ GetArchInfo ()
     return NULL;
 }
 
-void
-DNBArchProtocol::SetDefaultArchitecture (uint32_t cpu_type)
+
+uint32_t
+DNBArchProtocol::GetArchitecture ()
 {
-    DNBLogThreadedIf (LOG_PROCESS, "DNBArchProtocol::SetDefaultArchitecture (cpu_type=0x%8.8x)", cpu_type);
+    return g_current_cpu_type;
+}
+
+bool
+DNBArchProtocol::SetArchitecture (uint32_t cpu_type)
+{
     g_current_cpu_type = cpu_type;
-    assert (g_arch_plugins.find(g_current_cpu_type) != g_arch_plugins.end());
+    bool result = g_arch_plugins.find(g_current_cpu_type) != g_arch_plugins.end();
+    DNBLogThreadedIf (LOG_PROCESS, "DNBArchProtocol::SetDefaultArchitecture (cpu_type=0x%8.8x) => %i", cpu_type, result);
+    return result;
 }
 
 void

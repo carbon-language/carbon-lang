@@ -254,7 +254,6 @@ private:
     DNBCallbackCopyExecutableImageInfos
                                 m_image_infos_callback;
     void *                      m_image_infos_baton;
-    DNBArchPluginInfo           m_arch_plugin_info;
 };
 
 

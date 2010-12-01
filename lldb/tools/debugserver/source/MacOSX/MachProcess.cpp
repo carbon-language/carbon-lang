@@ -115,7 +115,6 @@ MachProcess::MachProcess() :
     m_image_infos_baton(NULL)
 {
     DNBLogThreadedIf(LOG_PROCESS | LOG_VERBOSE, "%s", __PRETTY_FUNCTION__);
-    bzero(&m_arch_plugin_info, sizeof(m_arch_plugin_info));
 }
 
 MachProcess::~MachProcess()
@@ -1517,7 +1516,7 @@ MachProcess::LaunchForDebug
 
     case eLaunchFlavorPosixSpawn:
         m_pid = MachProcess::PosixSpawnChildForPTraceDebugging (path, 
-                                                                m_arch_plugin_info.cpu_type,
+                                                                DNBArchProtocol::GetArchitecture (),
                                                                 argv, 
                                                                 envp, 
                                                                 stdio_path, 
