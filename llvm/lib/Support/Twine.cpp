@@ -30,6 +30,18 @@ StringRef Twine::toStringRef(SmallVectorImpl<char> &Out) const {
   return StringRef(Out.data(), Out.size());
 }
 
+StringRef Twine::toNullTerminatedStringRef(SmallVectorImpl<char> &Out) const {
+  if (isSingleStringRef()) {
+    StringRef sr = getSingleStringRef();
+    if (*(sr.begin() + sr.size()) == 0)
+      return sr;
+  }
+  toVector(Out);
+  Out.push_back(0);
+  Out.pop_back();
+  return StringRef(Out.data(), Out.size());
+}
+
 void Twine::printOneChild(raw_ostream &OS, const void *Ptr,
                           NodeKind Kind) const {
   switch (Kind) {

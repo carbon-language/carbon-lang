@@ -382,6 +382,14 @@ namespace llvm {
     /// SmallVector and a StringRef to the SmallVector's data is returned.
     StringRef toStringRef(SmallVectorImpl<char> &Out) const;
 
+    /// toNullTerminatedStringRef - This returns the twine as a single null
+    /// terminated StringRef if it can be represented as such. Otherwise the
+    /// twine is written into the given SmallVector and a StringRef to the
+    /// SmallVector's data is returned.
+    ///
+    /// The returned StringRef's size does not include the null terminator.
+    StringRef toNullTerminatedStringRef(SmallVectorImpl<char> &Out) const;
+
     /// print - Write the concatenated string represented by this twine to the
     /// stream \arg OS.
     void print(raw_ostream &OS) const;

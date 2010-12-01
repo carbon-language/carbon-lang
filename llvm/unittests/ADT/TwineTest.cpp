@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -67,6 +68,13 @@ TEST(TwineTest, Concat) {
             repr(Twine("a").concat(Twine("b")).concat(Twine("c"))));
   EXPECT_EQ("(Twine cstring:\"a\" rope:(Twine cstring:\"b\" cstring:\"c\"))",
             repr(Twine("a").concat(Twine("b").concat(Twine("c")))));
+}
+
+TEST(TwineTest, toNullTerminatedStringRef) {
+  SmallString<8> storage;
+  EXPECT_EQ(0, *Twine("hello").toNullTerminatedStringRef(storage).end());
+  EXPECT_EQ(0,
+           *Twine(StringRef("hello")).toNullTerminatedStringRef(storage).end());
 }
 
   // I suppose linking in the entire code generator to add a unit test to check
