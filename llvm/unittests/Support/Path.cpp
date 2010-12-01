@@ -112,6 +112,8 @@ TEST(Support, Path) {
     TEST_PATH(stem, *i, sfres);
     TEST_PATH(has_extension, *i, bres);
     TEST_PATH(extension, *i, sfres);
+    TEST_PATH(is_absolute, *i, bres);
+    TEST_PATH(is_relative, *i, bres);
 
     SmallString<16> temp_store;
     TEST_PATH_SMALLVEC(make_absolute, *i, temp_store);

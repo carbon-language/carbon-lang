@@ -642,6 +642,30 @@ error_code has_extension(const Twine &path, bool &result) {
   return make_error_code(errc::success);
 }
 
+error_code is_absolute(const Twine &path, bool &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  bool rootDir = false,
+       rootName = false;
+  if (error_code ec = has_root_directory(p, rootDir)) return ec;
+#ifdef LLVM_ON_WIN32
+  if (error_code ec = has_root_name(p, rootName)) return ec;
+#else
+  rootName = true;
+#endif
+
+  result = rootDir && rootName;
+  return make_error_code(errc::success);
+}
+
+error_code is_relative(const Twine &path, bool &result) {
+  bool res;
+  error_code ec = is_absolute(path, res);
+  result = !res;
+  return ec;
+}
+
 }
 }
 }
