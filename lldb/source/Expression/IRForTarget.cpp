@@ -844,6 +844,9 @@ bool
 IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+        log->Printf("MaybeHandleVariable (%s)\n", PrintValue(llvm_value_ptr).c_str());
 
     if (ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(llvm_value_ptr))
     {
@@ -854,7 +857,8 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
         case Instruction::GetElementPtr:
         case Instruction::BitCast:
             Value *s = constant_expr->getOperand(0);
-            MaybeHandleVariable(llvm_module, s);
+            if (!MaybeHandleVariable(llvm_module, s))
+                return false;
         }
     }
     if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(llvm_value_ptr))
@@ -909,6 +913,13 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
                                                         value_alignment))
             return false;
     }
+    else if (llvm::Function *function = dyn_cast<llvm::Function>(llvm_value_ptr))
+    {
+        if (log)
+            log->Printf("Function pointers aren't handled right now");
+        
+        return false;
+    }
     
     return true;
 }
@@ -916,7 +927,10 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
 bool
 IRForTarget::MaybeHandleCallArguments (Module &llvm_module, CallInst *Old)
 {
-    // lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+        log->Printf("MaybeHandleCallArguments(%s)", PrintValue(Old).c_str());
     
     for (unsigned op_index = 0, num_ops = Old->getNumArgOperands();
          op_index < num_ops;
@@ -945,11 +959,11 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
             fun = dyn_cast<Function>(const_expr->getOperand(0));
             
             if (!fun)
-                return true;
+                return false;
         }
         else
         {
-            return true;
+            return false;
         }
     }
     
@@ -1064,6 +1078,9 @@ IRForTarget::ResolveCalls(Module &llvm_module, BasicBlock &basic_block)
         CallInst *call = dyn_cast<CallInst>(&inst);
         
         if (call && !MaybeHandleCall(llvm_module, call))
+            return false;
+        
+        if (call && !MaybeHandleCallArguments(llvm_module, call))
             return false;
     }
     
