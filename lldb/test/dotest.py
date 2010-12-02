@@ -551,7 +551,7 @@ def lldbLoggings():
         else:
             lldb_log_option = "event process expr state"
         ci.HandleCommand(
-            "log enable -T -p -f " + os.environ["LLDB_LOG"] + " lldb " + lldb_log_option,
+            "log enable -T -n -f " + os.environ["LLDB_LOG"] + " lldb " + lldb_log_option,
             res)
         if not res.Succeeded():
             raise Exception('log enable failed (check LLDB_LOG env variable.')
@@ -563,7 +563,7 @@ def lldbLoggings():
         else:
             gdb_remote_log_option = "packets process"
         ci.HandleCommand(
-            "log enable -T -p -f " + os.environ["GDB_REMOTE_LOG"] + " process.gdb-remote "
+            "log enable -T -n -f " + os.environ["GDB_REMOTE_LOG"] + " process.gdb-remote "
             + gdb_remote_log_option,
             res)
         if not res.Succeeded():
