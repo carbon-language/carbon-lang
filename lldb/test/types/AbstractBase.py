@@ -114,7 +114,15 @@ class GenericTester(TestBase):
         # 'expr var'.
         for var, val in gl:
             # Don't overwhelm the expression mechanism.
-            time.sleep(1.0)
+            # This slows down the test suite quite a bit, to enable it, define
+            # the environment variable LLDB_TYPES_EXPR_TIME_WAIT.  For example:
+            #
+            #     export LLDB_TYPES_EXPR_TIME_WAIT=0.5
+            #
+            # causes a 0.5 second delay between 'expression' commands.
+            if "LLDB_TYPES_EXPR_TIME_WAIT" in os.environ:
+                time.sleep(float(os.environ["LLDB_TYPES_EXPR_TIME_WAIT"]))
+
             self.runCmd("expression %s" % var)
             output = self.res.GetOutput()
             
