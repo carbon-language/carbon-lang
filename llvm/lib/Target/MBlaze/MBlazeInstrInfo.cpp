@@ -234,6 +234,36 @@ unsigned MBlazeInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   return 2;
 }
 
+bool MBlazeInstrInfo::ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
+  assert(Cond.size() == 2 && "Invalid MBlaze branch opcode!");
+  switch (Cond[0].getImm()) {
+  default:            return true;
+  case MBlaze::BEQ:   Cond[0].setImm(MBlaze::BNE); return false;
+  case MBlaze::BNE:   Cond[0].setImm(MBlaze::BEQ); return false;
+  case MBlaze::BGT:   Cond[0].setImm(MBlaze::BLE); return false;
+  case MBlaze::BGE:   Cond[0].setImm(MBlaze::BLT); return false;
+  case MBlaze::BLT:   Cond[0].setImm(MBlaze::BGE); return false;
+  case MBlaze::BLE:   Cond[0].setImm(MBlaze::BGT); return false;
+  case MBlaze::BEQI:  Cond[0].setImm(MBlaze::BNEI); return false;
+  case MBlaze::BNEI:  Cond[0].setImm(MBlaze::BEQI); return false;
+  case MBlaze::BGTI:  Cond[0].setImm(MBlaze::BLEI); return false;
+  case MBlaze::BGEI:  Cond[0].setImm(MBlaze::BLTI); return false;
+  case MBlaze::BLTI:  Cond[0].setImm(MBlaze::BGEI); return false;
+  case MBlaze::BLEI:  Cond[0].setImm(MBlaze::BGTI); return false;
+  case MBlaze::BEQD:  Cond[0].setImm(MBlaze::BNED); return false;
+  case MBlaze::BNED:  Cond[0].setImm(MBlaze::BEQD); return false;
+  case MBlaze::BGTD:  Cond[0].setImm(MBlaze::BLED); return false;
+  case MBlaze::BGED:  Cond[0].setImm(MBlaze::BLTD); return false;
+  case MBlaze::BLTD:  Cond[0].setImm(MBlaze::BGED); return false;
+  case MBlaze::BLED:  Cond[0].setImm(MBlaze::BGTD); return false;
+  case MBlaze::BEQID: Cond[0].setImm(MBlaze::BNEID); return false;
+  case MBlaze::BNEID: Cond[0].setImm(MBlaze::BEQID); return false;
+  case MBlaze::BGTID: Cond[0].setImm(MBlaze::BLEID); return false;
+  case MBlaze::BGEID: Cond[0].setImm(MBlaze::BLTID); return false;
+  case MBlaze::BLTID: Cond[0].setImm(MBlaze::BGEID); return false;
+  case MBlaze::BLEID: Cond[0].setImm(MBlaze::BGTID); return false;
+  }
+}
 
 /// getGlobalBaseReg - Return a virtual register initialized with the
 /// the global base register value. Output instructions required to
