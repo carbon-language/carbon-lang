@@ -738,6 +738,39 @@ static uint64_t GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
   if (ILE == 0 || !CGF.getTypes().isZeroInitializable(ILE->getType()))
     return CGF.getContext().getTypeSize(E->getType())/8;
   
+  // InitListExprs for structs have to be handled carefully.  If there are
+  // reference members, we need to consider the size of the reference, not the
+  // referencee.  InitListExprs for unions and arrays can't have references.
+  if (!E->getType()->isUnionType() && !E->getType()->isArrayType()) {
+    RecordDecl *SD = E->getType()->getAs<RecordType>()->getDecl();
+    uint64_t NumNonZeroBytes = 0;
+    
+    unsigned ILEElement = 0;
+    for (RecordDecl::field_iterator Field = SD->field_begin(),
+         FieldEnd = SD->field_end(); Field != FieldEnd; ++Field) {
+      // We're done once we hit the flexible array member or run out of
+      // InitListExpr elements.
+      if (Field->getType()->isIncompleteArrayType() ||
+          ILEElement == ILE->getNumInits())
+        break;
+      if (Field->isUnnamedBitfield())
+        continue;
+
+      const Expr *E = ILE->getInit(ILEElement++);
+      
+      // Reference values are always non-null and have the width of a pointer.
+      if (Field->getType()->isReferenceType()) {
+        NumNonZeroBytes += CGF.getContext().Target.getPointerWidth(0);
+        continue;
+      }      
+      
+      NumNonZeroBytes += GetNumNonZeroBytesInInit(E, CGF);
+    }
+    
+    return NumNonZeroBytes;
+  }
+  
+  
   uint64_t NumNonZeroBytes = 0;
   for (unsigned i = 0, e = ILE->getNumInits(); i != e; ++i)
     NumNonZeroBytes += GetNumNonZeroBytesInInit(ILE->getInit(i), CGF);

@@ -138,3 +138,16 @@ namespace zeroinit {
   // CHECK-NEXT: call void @_ZN8zeroinit2X2IiEC2Ev
   // CHECK-NEXT: ret void
 }
+
+namespace PR8726 {
+class C;
+struct S {
+  const C &c1;
+  int i;
+  const C &c2;
+};
+void f(const C& c) {
+  S s = {c, 42, c};
+}
+
+}
