@@ -497,25 +497,18 @@ public:
     LookupResult &Results;
     LookupResult::iterator I;
     bool Changed;
-#ifndef NDEBUG
     bool CalledDone;
-#endif
     
     friend class LookupResult;
     Filter(LookupResult &Results)
-      : Results(Results), I(Results.begin()), Changed(false)
-#ifndef NDEBUG
-      , CalledDone(false)
-#endif
+      : Results(Results), I(Results.begin()), Changed(false), CalledDone(false)
     {}
 
   public:
-#ifndef NDEBUG
     ~Filter() {
       assert(CalledDone &&
              "LookupResult::Filter destroyed without done() call");
     }
-#endif
 
     bool hasNext() const {
       return I != Results.end();
@@ -546,10 +539,8 @@ public:
     }
 
     void done() {
-#ifndef NDEBUG
       assert(!CalledDone && "done() called twice");
       CalledDone = true;
-#endif
 
       if (Changed)
         Results.resolveKindAfterFilter();
@@ -578,11 +569,7 @@ private:
   void configure();
 
   // Sanity checks.
-#ifndef NDEBUG
   void sanity() const;
-#else
-  void sanity() const {}
-#endif
 
   bool sanityCheckUnresolved() const {
     for (iterator I = begin(), E = end(); I != E; ++I)

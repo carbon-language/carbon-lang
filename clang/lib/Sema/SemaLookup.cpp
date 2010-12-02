@@ -292,7 +292,6 @@ void LookupResult::configure() {
   }
 }
 
-#ifndef NDEBUG
 void LookupResult::sanity() const {
   assert(ResultKind != NotFound || Decls.size() == 0);
   assert(ResultKind != Found || Decls.size() == 1);
@@ -307,7 +306,6 @@ void LookupResult::sanity() const {
                              (Ambiguity == AmbiguousBaseSubobjectTypes ||
                               Ambiguity == AmbiguousBaseSubobjects)));
 }
-#endif
 
 // Necessary because CXXBasePaths is not complete in Sema.h
 void LookupResult::deletePaths(CXXBasePaths *Paths) {
