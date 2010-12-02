@@ -283,42 +283,15 @@ private:
     } Template;
   };
 
-#ifndef NDEBUG
-  enum Kind {
-    K_None,
-    K_TypeSourceInfo,
-    K_Expression,
-    K_Template
-  } Kind;
-#endif
-
 public:
-  TemplateArgumentLocInfo()
-    : Expression(0)
-#ifndef NDEBUG
-      , Kind(K_None) 
-#endif
-    {}
+  TemplateArgumentLocInfo() : Expression(0) {}
   
-  TemplateArgumentLocInfo(TypeSourceInfo *TInfo)
-    : Declarator(TInfo)
-#ifndef NDEBUG
-      , Kind(K_TypeSourceInfo) 
-#endif
-    {}
+  TemplateArgumentLocInfo(TypeSourceInfo *TInfo) : Declarator(TInfo) {}
   
-  TemplateArgumentLocInfo(Expr *E)
-    : Expression(E)
-#ifndef NDEBUG
-      , Kind(K_Expression) 
-#endif
-    {}
+  TemplateArgumentLocInfo(Expr *E) : Expression(E) {}
   
   TemplateArgumentLocInfo(SourceRange QualifierRange, 
                           SourceLocation TemplateNameLoc)
-#ifndef NDEBUG
-    : Kind(K_Template)
-#endif
   {
     Template.QualifierRange[0] = QualifierRange.getBegin().getRawEncoding();
     Template.QualifierRange[1] = QualifierRange.getEnd().getRawEncoding();
@@ -326,49 +299,22 @@ public:
   }
 
   TypeSourceInfo *getAsTypeSourceInfo() const {
-    assert(Kind == K_TypeSourceInfo);
     return Declarator;
   }
 
   Expr *getAsExpr() const {
-    assert(Kind == K_Expression);
     return Expression;
   }
 
   SourceRange getTemplateQualifierRange() const {
-    assert(Kind == K_Template);
     return SourceRange(
                 SourceLocation::getFromRawEncoding(Template.QualifierRange[0]),
                 SourceLocation::getFromRawEncoding(Template.QualifierRange[1]));
   }
   
   SourceLocation getTemplateNameLoc() const {
-    assert(Kind == K_Template);
     return SourceLocation::getFromRawEncoding(Template.TemplateNameLoc);
   }
-  
-#ifndef NDEBUG
-  void validateForArgument(const TemplateArgument &Arg) {
-    switch (Arg.getKind()) {
-    case TemplateArgument::Type:
-      assert(Kind == K_TypeSourceInfo);
-      break;
-    case TemplateArgument::Expression:
-    case TemplateArgument::Declaration:
-      assert(Kind == K_Expression);
-      break;
-    case TemplateArgument::Template:
-      assert(Kind == K_Template);
-      break;
-    case TemplateArgument::Integral:
-    case TemplateArgument::Pack:
-      assert(Kind == K_None);
-      break;
-    case TemplateArgument::Null:
-      llvm_unreachable("source info for null template argument?");
-    }
-  }
-#endif
 };
 
 /// Location wrapper for a TemplateArgument.  TemplateArgument is to

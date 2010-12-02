@@ -1013,9 +1013,6 @@ public:
     return getTypePtr()->getNumArgs();
   }
   void setArgLocInfo(unsigned i, TemplateArgumentLocInfo AI) {
-#ifndef NDEBUG
-    AI.validateForArgument(getTypePtr()->getArg(i));
-#endif
     getArgInfos()[i] = AI;
   }
   TemplateArgumentLocInfo getArgLocInfo(unsigned i) const {
@@ -1061,34 +1058,8 @@ public:
                                 const TemplateArgument *Args,
                                 TemplateArgumentLocInfo *ArgInfos,
                                 SourceLocation Loc) {
-    for (unsigned i = 0, e = NumArgs; i != e; ++i) {
-      TemplateArgumentLocInfo Info;
-#ifndef NDEBUG
-      // If asserts are enabled, be sure to initialize the argument
-      // loc with the right kind of pointer.
-      switch (Args[i].getKind()) {
-      case TemplateArgument::Expression:
-      case TemplateArgument::Declaration:
-        Info = TemplateArgumentLocInfo((Expr*) 0);
-        break;
-
-      case TemplateArgument::Type:
-        Info = TemplateArgumentLocInfo((TypeSourceInfo*) 0);
-        break;
-
-      case TemplateArgument::Template:
-        Info = TemplateArgumentLocInfo(SourceRange(Loc), Loc);
-        break;
-          
-      case TemplateArgument::Integral:
-      case TemplateArgument::Pack:
-      case TemplateArgument::Null:
-        // K_None is fine.
-        break;
-      }
-#endif
-      ArgInfos[i] = Info;
-    }
+    for (unsigned i = 0, e = NumArgs; i != e; ++i)
+      ArgInfos[i] = TemplateArgumentLocInfo();
   }
 
   unsigned getExtraLocalDataSize() const {
@@ -1384,9 +1355,6 @@ public:
   }
 
   void setArgLocInfo(unsigned i, TemplateArgumentLocInfo AI) {
-#ifndef NDEBUG
-    AI.validateForArgument(getTypePtr()->getArg(i));
-#endif
     getArgInfos()[i] = AI;
   }
   TemplateArgumentLocInfo getArgLocInfo(unsigned i) const {
