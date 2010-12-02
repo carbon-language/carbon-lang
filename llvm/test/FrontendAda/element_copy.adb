@@ -1,4 +1,4 @@
--- RUN: %llvmgcc -S -O2 %s -I%p/Support -o - | grep 6899714
+-- RUN: %llvmgcc -S -O2 %s -I%p/Support -o - | grep 105 | count 2
 package body Element_Copy is
    function F return VariableSizedField is
       X : VariableSizedField;
