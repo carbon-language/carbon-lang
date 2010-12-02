@@ -837,10 +837,10 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{23} = 1;
     let Inst{22-21} = opcod;
     let Inst{20} = 1; // load
-    
+
     bits<4> Rt;
     let Inst{15-12} = Rt{3-0};
-    
+
     bits<17> addr;
     let Inst{19-16} = addr{16-13}; // Rn
     let Inst{23}    = addr{12};    // U
@@ -859,10 +859,10 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     // Offset: index==TRUE, wback==FALSE
     let Inst{10} = 1; // The P bit.
     let Inst{8} = 0; // The W bit.
-    
+
     bits<4> Rt;
     let Inst{15-12} = Rt{3-0};
-    
+
     bits<13> addr;
     let Inst{19-16} = addr{12-9}; // Rn
     let Inst{9}     = addr{8};    // U
@@ -878,10 +878,10 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{22-21} = opcod;
     let Inst{20} = 1; // load
     let Inst{11-6} = 0b000000;
-    
+
     bits<4> Rt;
     let Inst{15-12} = Rt{3-0};
-    
+
     bits<10> addr;
     let Inst{19-16} = addr{9-6}; // Rn
     let Inst{3-0}   = addr{5-2}; // Rm
@@ -900,7 +900,7 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{22-21} = opcod;
     let Inst{20} = 1; // load
     let Inst{19-16} = 0b1111; // Rn
-    
+
     bits<4> Rt;
     bits<12> addr;
     let Inst{15-12} = Rt{3-0};
@@ -918,10 +918,10 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{26-23} = 0b0001;
     let Inst{22-21} = opcod;
     let Inst{20} = 0; // !load
-    
+
     bits<4> Rt;
     let Inst{15-12} = Rt{3-0};
-    
+
     bits<17> addr;
     let Inst{19-16} = addr{16-13}; // Rn
     let Inst{23}    = addr{12};    // U
@@ -938,10 +938,10 @@ multiclass T2I_st<bits<2> opcod, string opc,
     // Offset: index==TRUE, wback==FALSE
     let Inst{10} = 1; // The P bit.
     let Inst{8} = 0; // The W bit.
-    
+
     bits<4> Rt;
     let Inst{15-12} = Rt{3-0};
-    
+
     bits<13> addr;
     let Inst{19-16} = addr{12-9}; // Rn
     let Inst{9}     = addr{8};    // U
@@ -955,10 +955,10 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{22-21} = opcod;
     let Inst{20} = 0; // !load
     let Inst{11-6} = 0b000000;
-    
+
     bits<4> Rt;
     let Inst{15-12} = Rt{3-0};
-    
+
     bits<10> addr;
     let Inst{19-16}   = addr{9-6}; // Rn
     let Inst{3-0} = addr{5-2}; // Rm
@@ -1403,7 +1403,7 @@ class T2IldT<bit signed, bits<2> type, string opc, InstrItinClass ii>
   let Inst{20} = 1; // load
   let Inst{11} = 1;
   let Inst{10-8} = 0b110; // PUW.
-  
+
   bits<4> Rt;
   bits<13> addr;
   let Inst{15-12} = Rt{3-0};
@@ -1488,7 +1488,7 @@ class T2IstT<bits<2> type, string opc, InstrItinClass ii>
   let Inst{20} = 0; // store
   let Inst{11} = 1;
   let Inst{10-8} = 0b110; // PUW
-  
+
   bits<4> Rt;
   bits<13> addr;
   let Inst{15-12} = Rt{3-0};
@@ -1534,7 +1534,7 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{21} = write;
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
-    
+
     bits<17> addr;
     let Inst{19-16} = addr{16-13}; // Rn
     let Inst{23}    = addr{12};    // U
@@ -1552,7 +1552,7 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
     let Inst{11-8} = 0b1100;
-    
+
     bits<13> addr;
     let Inst{19-16} = addr{12-9}; // Rn
     let Inst{7-0}   = addr{7-0};  // imm8
@@ -1569,7 +1569,7 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{20} = 1;
     let Inst{15-12} = 0b1111;
     let Inst{11-6} = 0000000;
-    
+
     bits<10> addr;
     let Inst{19-16} = addr{9-6}; // Rn
     let Inst{3-0}   = addr{5-2}; // Rm
@@ -3054,7 +3054,7 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{31-27} = 0b11110;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
-  
+
   bits<20> target;
   let Inst{26} = target{19};
   let Inst{11} = target{18};
@@ -3088,7 +3088,7 @@ def t2BXJ : T2I<(outs), (ins rGPR:$func), NoItinerary, "bxj", "\t$func",
   let Inst{25-20} = 0b111100;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
-  
+
   bits<4> func;
   let Inst{19-16} = func{3-0};
 }
@@ -3106,24 +3106,24 @@ def t2CPS : T2XI<(outs),(ins cps_opt:$opt), NoItinerary, "cps$opt",
   let Inst{25-20} = 0b111010;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
-  
+
   bits<11> opt;
-  
+
   // mode number
   let Inst{4-0} = opt{4-0};
-  
+
   // M flag
   let Inst{8} = opt{5};
-  
+
   // F flag
   let Inst{5} = opt{6};
-  
+
   // I flag
   let Inst{6} = opt{7};
-  
+
   // A flag
   let Inst{7} = opt{8};
-  
+
   // imod flag
   let Inst{10-9} = opt{10-9};
 }
@@ -3154,7 +3154,7 @@ def t2DBG : T2I<(outs),(ins i32imm:$opt), NoItinerary, "dbg", "\t$opt",
   let Inst{12} = 0;
   let Inst{10-8} = 0b000;
   let Inst{7-4} = 0b1111;
-  
+
   bits<4> opt;
   let Inst{3-0} = opt{3-0};
 }
@@ -3166,17 +3166,17 @@ def t2SMC : T2I<(outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
   let Inst{31-27} = 0b11110;
   let Inst{26-20} = 0b1111111;
   let Inst{15-12} = 0b1000;
-  
+
   bits<4> opt;
   let Inst{19-16} = opt{3-0};
 }
 
-class T2SRS<bits<12> op31_20, 
+class T2SRS<bits<12> op31_20,
            dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
   let Inst{31-20} = op31_20{11-0};
-  
+
   bits<5> mode;
   let Inst{4-0} = mode{4-0};
 }
@@ -3201,7 +3201,7 @@ class T2RFE<bits<12> op31_20, dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
   let Inst{31-20} = op31_20{11-0};
-  
+
   bits<4> Rn;
   let Inst{19-16} = Rn{3-0};
 }
