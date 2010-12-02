@@ -547,103 +547,101 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   std::string ts = TypeString(proto[0], typestr);
   std::string s;
   if (op == OpHi || op == OpLo) {
-    s = "union { " + ts + " r; double d; } u; u.d";
+    s = "union { " + ts + " r; double d; } u; u.d = ";
   } else {
-    s = ts + " r; r";
+    s = "return ";
   }
   
-  s += " = ";
-
   switch(op) {
   case OpAdd:
-    s += "a + b";
+    s += "a + b;";
     break;
   case OpSub:
-    s += "a - b";
+    s += "a - b;";
     break;
   case OpMulN:
-    s += "a * " + Duplicate(nElts, typestr, "b");
+    s += "a * " + Duplicate(nElts, typestr, "b") + ";";
     break;
   case OpMul:
-    s += "a * b";
+    s += "a * b;";
     break;
   case OpMlaN:
-    s += "a + (b * " + Duplicate(nElts, typestr, "c") + ")";
+    s += "a + (b * " + Duplicate(nElts, typestr, "c") + ");";
     break;
   case OpMla:
-    s += "a + (b * c)";
+    s += "a + (b * c);";
     break;
   case OpMlsN:
-    s += "a - (b * " + Duplicate(nElts, typestr, "c") + ")";
+    s += "a - (b * " + Duplicate(nElts, typestr, "c") + ");";
     break;
   case OpMls:
-    s += "a - (b * c)";
+    s += "a - (b * c);";
     break;
   case OpEq:
-    s += "(" + ts + ")(a == b)";
+    s += "(" + ts + ")(a == b);";
     break;
   case OpGe:
-    s += "(" + ts + ")(a >= b)";
+    s += "(" + ts + ")(a >= b);";
     break;
   case OpLe:
-    s += "(" + ts + ")(a <= b)";
+    s += "(" + ts + ")(a <= b);";
     break;
   case OpGt:
-    s += "(" + ts + ")(a > b)";
+    s += "(" + ts + ")(a > b);";
     break;
   case OpLt:
-    s += "(" + ts + ")(a < b)";
+    s += "(" + ts + ")(a < b);";
     break;
   case OpNeg:
-    s += " -a";
+    s += " -a;";
     break;
   case OpNot:
-    s += " ~a";
+    s += " ~a;";
     break;
   case OpAnd:
-    s += "a & b";
+    s += "a & b;";
     break;
   case OpOr:
-    s += "a | b";
+    s += "a | b;";
     break;
   case OpXor:
-    s += "a ^ b";
+    s += "a ^ b;";
     break;
   case OpAndNot:
-    s += "a & ~b";
+    s += "a & ~b;";
     break;
   case OpOrNot:
-    s += "a | ~b";
+    s += "a | ~b;";
     break;
   case OpCast:
-    s += "(" + ts + ")a";
+    s += "(" + ts + ")a;";
     break;
   case OpConcat:
     s += "(" + ts + ")__builtin_shufflevector((int64x1_t)a";
-    s += ", (int64x1_t)b, 0, 1)";
+    s += ", (int64x1_t)b, 0, 1);";
     break;
   case OpHi:
-    s += "(((float64x2_t)a)[1])";
+    s += "(((float64x2_t)a)[1]);";
     break;
   case OpLo:
-    s += "(((float64x2_t)a)[0])";
+    s += "(((float64x2_t)a)[0]);";
     break;
   case OpDup:
-    s += Duplicate(nElts, typestr, "a");
+    s += Duplicate(nElts, typestr, "a") + ";";
     break;
   case OpSelect:
     // ((0 & 1) | (~0 & 2))
     s += "(" + ts + ")";
     ts = TypeString(proto[1], typestr);
     s += "((a & (" + ts + ")b) | ";
-    s += "(~a & (" + ts + ")c))";
+    s += "(~a & (" + ts + ")c));";
     break;
   case OpRev16:
     s += "__builtin_shufflevector(a, a";
     for (unsigned i = 2; i <= nElts; i += 2)
       for (unsigned j = 0; j != 2; ++j)
         s += ", " + utostr(i - j - 1);
-    s += ")";
+    s += ");";
     break;
   case OpRev32: {
     unsigned WordElts = nElts >> (1 + (int)quad);
@@ -651,7 +649,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     for (unsigned i = WordElts; i <= nElts; i += WordElts)
       for (unsigned j = 0; j != WordElts; ++j)
         s += ", " + utostr(i - j - 1);
-    s += ")";
+    s += ");";
     break;
   }
   case OpRev64: {
@@ -660,7 +658,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     for (unsigned i = DblWordElts; i <= nElts; i += DblWordElts)
       for (unsigned j = 0; j != DblWordElts; ++j)
         s += ", " + utostr(i - j - 1);
-    s += ")";
+    s += ");";
     break;
   }
   default:
@@ -668,9 +666,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   }
   if (op == OpHi || op == OpLo)
-    s += "; return u.r;";
-  else
-    s += "; return r;";
+    s += " return u.r;";
   return s;
 }
 
@@ -761,7 +757,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     } else if (sret) {
       s += ts + " r; ";
     } else {
-      s += ts + " r; r = (" + ts + ")";
+      s += "return (" + ts + ")";
     }
   }
   
@@ -842,13 +838,11 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   
   s += ");";
 
-  if (proto[0] != 'v') {
-    if (define) {
-      if (sret)
-        s += " r;";
-    } else {
+  if (proto[0] != 'v' && sret) {
+    if (define)
+      s += " r;";
+    else
       s += " return r;";
-    }
   }
   return s;
 }
