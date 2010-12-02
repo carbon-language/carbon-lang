@@ -1,4 +1,4 @@
-; RUN: llc -O0 < %s - | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-apple-darwin10 < %s - | FileCheck %s
 ; Radar 8286101
 ; CHECK: .file   2 "<stdin>"
 
