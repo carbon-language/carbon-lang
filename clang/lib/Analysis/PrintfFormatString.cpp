@@ -200,7 +200,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
 
   if (k == ConversionSpecifier::InvalidSpecifier) {
     // Assume the conversion takes one argument.
-    return !H.HandleInvalidPrintfConversionSpecifier(FS, Beg, I - Beg);
+    return !H.HandleInvalidPrintfConversionSpecifier(FS, Start, I - Start);
   }
   return PrintfSpecifierResult(Start, FS);
 }
