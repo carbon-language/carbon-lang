@@ -35,7 +35,7 @@ class MemRegionManager;
 class MemSpaceRegion;
 class LocationContext;
 class StackFrameContext;
-class ValueManager;
+class SValBuilder;
 class VarRegion;
 class CodeTextRegion;
 
@@ -295,7 +295,7 @@ public:
   }
 
   /// getExtent - Returns the size of the region in bytes.
-  virtual DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const {
+  virtual DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const {
     return UnknownVal();
   }
 
@@ -330,7 +330,7 @@ public:
 
   bool isBoundable() const { return true; }
 
-  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
+  DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
@@ -543,7 +543,7 @@ public:
 
   bool isBoundable() const { return true; }
 
-  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
+  DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
@@ -579,7 +579,7 @@ public:
     return Str->getType();
   }
 
-  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
+  DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const;
 
   bool isBoundable() const { return false; }
 
@@ -640,7 +640,7 @@ public:
   const Decl* getDecl() const { return D; }
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
-  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
+  DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const;
 
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
@@ -726,7 +726,7 @@ public:
     return getDecl()->getType();
   }
 
-  DefinedOrUnknownSVal getExtent(ValueManager& ValMgr) const;
+  DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const;
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const FieldDecl* FD,
                             const MemRegion* superRegion) {

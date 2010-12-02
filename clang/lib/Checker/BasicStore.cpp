@@ -150,10 +150,10 @@ SVal BasicStoreManager::LazyRetrieve(Store store, const TypedRegion *R) {
     // FIXME: Copy-and-pasted from RegionStore.cpp.
     if (BindingsTy::data_type *Val = B.lookup(MS)) {
       if (SymbolRef parentSym = Val->getAsSymbol())
-        return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+        return svalBuilder.getDerivedRegionValueSymbolVal(parentSym, R);
 
       if (Val->isZeroConstant())
-        return ValMgr.makeZeroVal(T);
+        return svalBuilder.makeZeroVal(T);
 
       if (Val->isUnknownOrUndef())
         return *Val;
@@ -164,7 +164,7 @@ SVal BasicStoreManager::LazyRetrieve(Store store, const TypedRegion *R) {
 
   if (VR->hasGlobalsOrParametersStorage() ||
       isa<UnknownSpaceRegion>(VR->getMemorySpace()))
-    return ValMgr.getRegionValueSymbolVal(R);
+    return svalBuilder.getRegionValueSymbolVal(R);
 
   return UndefinedVal();
 }
@@ -349,7 +349,7 @@ Store BasicStoreManager::RemoveDeadBindings(Store store,
     const MemRegion* R = I.getKey();
 
     if (!Marked.count(R)) {
-      store = Remove(store, ValMgr.makeLoc(R));
+      store = Remove(store, svalBuilder.makeLoc(R));
       SVal X = I.getData();
 
       for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
@@ -376,8 +376,8 @@ Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl,
         if (DR->getDecl() == SelfDecl) {
           const ObjCIvarRegion *IVR = MRMgr.getObjCIvarRegion(IV->getDecl(),
                                                          SelfRegion);
-          SVal X = ValMgr.getRegionValueSymbolVal(IVR);
-          St = Bind(St, ValMgr.makeLoc(IVR), X);
+          SVal X = svalBuilder.getRegionValueSymbolVal(IVR);
+          St = Bind(St, svalBuilder.makeLoc(IVR), X);
         }
       }
     }
@@ -408,9 +408,9 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
           // SelfRegion?  (i.e., it implements MD->getClassInterface()).
           const VarRegion *VR = MRMgr.getVarRegion(PD, InitLoc);
           const MemRegion *SelfRegion =
-            ValMgr.getRegionValueSymbolVal(VR).getAsRegion();
+            svalBuilder.getRegionValueSymbolVal(VR).getAsRegion();
           assert(SelfRegion);
-          St = Bind(St, ValMgr.makeLoc(VR), loc::MemRegionVal(SelfRegion));
+          St = Bind(St, svalBuilder.makeLoc(VR), loc::MemRegionVal(SelfRegion));
           // Scan the method for ivar references.  While this requires an
           // entire AST scan, the cost should not be high in practice.
           St = scanForIvars(MD->getBody(), PD, SelfRegion, St);
@@ -422,10 +422,10 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(InitLoc->getDecl())) {
     // For C++ methods add symbolic region for 'this' in initial stack frame.
     QualType ThisT = MD->getThisType(StateMgr.getContext());
-    MemRegionManager &RegMgr = ValMgr.getRegionManager();
+    MemRegionManager &RegMgr = svalBuilder.getRegionManager();
     const CXXThisRegion *ThisR = RegMgr.getCXXThisRegion(ThisT, InitLoc);
-    SVal ThisV = ValMgr.getRegionValueSymbolVal(ThisR);
-    St = Bind(St, ValMgr.makeLoc(ThisR), ThisV);
+    SVal ThisV = svalBuilder.getRegionValueSymbolVal(ThisR);
+    St = Bind(St, svalBuilder.makeLoc(ThisR), ThisV);
   }
 
   return St;
@@ -477,7 +477,7 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
     QualType T = VD->getType();
     // BasicStore only supports scalars.
     if ((T->isScalarType() || T->isReferenceType()) &&
-        ValMgr.getSymbolManager().canSymbolicate(T)) {
+        svalBuilder.getSymbolManager().canSymbolicate(T)) {
       SVal V = InitVal ? *InitVal : UndefinedVal();
       store = Bind(store, loc::MemRegionVal(VR), V);
     }
@@ -555,7 +555,7 @@ Store BasicStoreManager::InvalidateRegions(Store store,
     // use to derive the bindings for all non-static globals.
     const GlobalsSpaceRegion *GS = MRMgr.getGlobalsRegion();
     SVal V =
-      ValMgr.getConjuredSymbolVal(/* SymbolTag = */ (void*) GS, E,
+      svalBuilder.getConjuredSymbolVal(/* SymbolTag = */ (void*) GS, E,
                                   /* symbol type, doesn't matter */ Ctx.IntTy,
                                   Count);
 
@@ -587,7 +587,7 @@ Store BasicStoreManager::InvalidateRegion(Store store,
   }
 
   QualType T = cast<TypedRegion>(R)->getValueType();
-  SVal V = ValMgr.getConjuredSymbolVal(R, E, T, Count);
+  SVal V = svalBuilder.getConjuredSymbolVal(R, E, T, Count);
   return Bind(store, loc::MemRegionVal(R), V);
 }
 

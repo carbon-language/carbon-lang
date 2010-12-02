@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Checker/PathSensitive/MemRegion.h"
-#include "clang/Checker/PathSensitive/ValueManager.h"
+#include "clang/Checker/PathSensitive/SValBuilder.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/AST/CharUnits.h"
@@ -176,22 +176,22 @@ const StackFrameContext *VarRegion::getStackFrame() const {
 // Region extents.
 //===----------------------------------------------------------------------===//
 
-DefinedOrUnknownSVal DeclRegion::getExtent(ValueManager& ValMgr) const {
-  ASTContext& Ctx = ValMgr.getContext();
+DefinedOrUnknownSVal DeclRegion::getExtent(SValBuilder &svalBuilder) const {
+  ASTContext& Ctx = svalBuilder.getContext();
   QualType T = getDesugaredValueType();
 
   if (isa<VariableArrayType>(T))
-    return nonloc::SymbolVal(ValMgr.getSymbolManager().getExtentSymbol(this));
+    return nonloc::SymbolVal(svalBuilder.getSymbolManager().getExtentSymbol(this));
   if (isa<IncompleteArrayType>(T))
     return UnknownVal();
 
   CharUnits Size = Ctx.getTypeSizeInChars(T);
   QualType SizeTy = Ctx.getSizeType();
-  return ValMgr.makeIntVal(Size.getQuantity(), SizeTy);
+  return svalBuilder.makeIntVal(Size.getQuantity(), SizeTy);
 }
 
-DefinedOrUnknownSVal FieldRegion::getExtent(ValueManager& ValMgr) const {
-  DefinedOrUnknownSVal Extent = DeclRegion::getExtent(ValMgr);
+DefinedOrUnknownSVal FieldRegion::getExtent(SValBuilder &svalBuilder) const {
+  DefinedOrUnknownSVal Extent = DeclRegion::getExtent(svalBuilder);
 
   // A zero-length array at the end of a struct often stands for dynamically-
   // allocated extra memory.
@@ -205,17 +205,17 @@ DefinedOrUnknownSVal FieldRegion::getExtent(ValueManager& ValMgr) const {
   return Extent;
 }
 
-DefinedOrUnknownSVal AllocaRegion::getExtent(ValueManager& ValMgr) const {
-  return nonloc::SymbolVal(ValMgr.getSymbolManager().getExtentSymbol(this));
+DefinedOrUnknownSVal AllocaRegion::getExtent(SValBuilder &svalBuilder) const {
+  return nonloc::SymbolVal(svalBuilder.getSymbolManager().getExtentSymbol(this));
 }
 
-DefinedOrUnknownSVal SymbolicRegion::getExtent(ValueManager& ValMgr) const {
-  return nonloc::SymbolVal(ValMgr.getSymbolManager().getExtentSymbol(this));
+DefinedOrUnknownSVal SymbolicRegion::getExtent(SValBuilder &svalBuilder) const {
+  return nonloc::SymbolVal(svalBuilder.getSymbolManager().getExtentSymbol(this));
 }
 
-DefinedOrUnknownSVal StringRegion::getExtent(ValueManager& ValMgr) const {
-  QualType SizeTy = ValMgr.getContext().getSizeType();
-  return ValMgr.makeIntVal(getStringLiteral()->getByteLength()+1, SizeTy);
+DefinedOrUnknownSVal StringRegion::getExtent(SValBuilder &svalBuilder) const {
+  QualType SizeTy = svalBuilder.getContext().getSizeType();
+  return svalBuilder.makeIntVal(getStringLiteral()->getByteLength()+1, SizeTy);
 }
 
 QualType CXXBaseObjectRegion::getValueType() const {

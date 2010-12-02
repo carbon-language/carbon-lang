@@ -457,7 +457,7 @@ protected:
 
   RegionStoreManager &RM;
   ASTContext &Ctx;
-  ValueManager &ValMgr;
+  SValBuilder &svalBuilder;
 
   RegionBindings B;
   
@@ -466,7 +466,8 @@ protected:
 public:
   ClusterAnalysis(RegionStoreManager &rm, GRStateManager &StateMgr,
                   RegionBindings b, const bool includeGlobals)
-    : RM(rm), Ctx(StateMgr.getContext()), ValMgr(StateMgr.getValueManager()),
+    : RM(rm), Ctx(StateMgr.getContext()),
+      svalBuilder(StateMgr.getSValBuilder()),
       B(b), includeGlobals(includeGlobals) {}
 
   RegionBindings getRegionBindings() const { return B; }
@@ -662,7 +663,7 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
     // Invalidate the region by setting its default value to
     // conjured symbol. The type of the symbol is irrelavant.
     DefinedOrUnknownSVal V =
-      ValMgr.getConjuredSymbolVal(baseR, Ex, Ctx.IntTy, Count);
+      svalBuilder.getConjuredSymbolVal(baseR, Ex, Ctx.IntTy, Count);
     B = RM.addBinding(B, baseR, BindingKey::Default, V);
     return;
   }
@@ -677,7 +678,7 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   if (T->isStructureType()) {
     // Invalidate the region by setting its default value to
     // conjured symbol. The type of the symbol is irrelavant.
-    DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(baseR, Ex, Ctx.IntTy,
+    DefinedOrUnknownSVal V = svalBuilder.getConjuredSymbolVal(baseR, Ex, Ctx.IntTy,
                                                          Count);
     B = RM.addBinding(B, baseR, BindingKey::Default, V);
     return;
@@ -686,7 +687,7 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
       // Set the default value of the array to conjured symbol.
     DefinedOrUnknownSVal V =
-    ValMgr.getConjuredSymbolVal(baseR, Ex, AT->getElementType(), Count);
+    svalBuilder.getConjuredSymbolVal(baseR, Ex, AT->getElementType(), Count);
     B = RM.addBinding(B, baseR, BindingKey::Default, V);
     return;
   }
@@ -701,7 +702,7 @@ void InvalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   }
   
 
-  DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(baseR, Ex, T, Count);
+  DefinedOrUnknownSVal V = svalBuilder.getConjuredSymbolVal(baseR, Ex, T, Count);
   assert(SymbolManager::canSymbolicate(T) || V.isUnknown());
   B = RM.addBinding(B, baseR, BindingKey::Direct, V);
 }
@@ -734,7 +735,7 @@ Store RegionStoreManager::InvalidateRegions(Store store,
     // use to derive the bindings for all non-static globals.
     const GlobalsSpaceRegion *GS = MRMgr.getGlobalsRegion();
     SVal V =
-      ValMgr.getConjuredSymbolVal(/* SymbolTag = */ (void*) GS, Ex,
+      svalBuilder.getConjuredSymbolVal(/* SymbolTag = */ (void*) GS, Ex,
                                   /* symbol type, doesn't matter */ Ctx.IntTy,
                                   Count);
     B = addBinding(B, BindingKey::Make(GS, BindingKey::Default), V);
@@ -755,8 +756,7 @@ Store RegionStoreManager::InvalidateRegions(Store store,
 DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
                                                            const MemRegion *R,
                                                            QualType EleTy) {
-  SVal Size = cast<SubRegion>(R)->getExtent(ValMgr);
-  SValBuilder &svalBuilder = ValMgr.getSValBuilder();
+  SVal Size = cast<SubRegion>(R)->getExtent(svalBuilder);
   const llvm::APSInt *SizeInt = svalBuilder.getKnownValue(state, Size);
   if (!SizeInt)
     return UnknownVal();
@@ -775,7 +775,7 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
   // If a variable is reinterpreted as a type that doesn't fit into a larger
   // type evenly, round it down.
   // This is a signed value, since it's used in arithmetic with signed indices.
-  return ValMgr.makeIntVal(RegionSize / EleSize, false);
+  return svalBuilder.makeIntVal(RegionSize / EleSize, false);
 }
 
 //===----------------------------------------------------------------------===//
@@ -803,7 +803,7 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   ArrayType *AT = cast<ArrayType>(T);
   T = AT->getElementType();
 
-  NonLoc ZeroIdx = ValMgr.makeZeroArrayIndex();
+  NonLoc ZeroIdx = svalBuilder.makeZeroArrayIndex();
   return loc::MemRegionVal(MRMgr.getElementRegion(T, ZeroIdx, ArrayR, Ctx));
 }
 
@@ -853,14 +853,14 @@ SVal RegionStoreManager::evalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
       else
         EleTy = T->getAs<ObjCObjectPointerType>()->getPointeeType();
 
-      const NonLoc &ZeroIdx = ValMgr.makeZeroArrayIndex();
+      const NonLoc &ZeroIdx = svalBuilder.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, Ctx);
       break;
     }
     case MemRegion::AllocaRegionKind: {
       const AllocaRegion *AR = cast<AllocaRegion>(MR);
       QualType EleTy = Ctx.CharTy; // Create an ElementRegion of bytes.
-      NonLoc ZeroIdx = ValMgr.makeZeroArrayIndex();
+      NonLoc ZeroIdx = svalBuilder.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, Ctx);
       break;
     }
@@ -913,8 +913,8 @@ SVal RegionStoreManager::evalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
     if (nonloc::ConcreteInt *Offset = dyn_cast<nonloc::ConcreteInt>(&R)) {
       // FIXME: Should use SValBuilder here.
       SVal NewIdx =
-        Base->evalBinOp(ValMgr, Op,
-                cast<nonloc::ConcreteInt>(ValMgr.convertToArrayIndex(*Offset)));
+        Base->evalBinOp(svalBuilder, Op,
+                cast<nonloc::ConcreteInt>(svalBuilder.convertToArrayIndex(*Offset)));
 
       if (!isa<NonLoc>(NewIdx))
         return UnknownVal();
@@ -922,13 +922,13 @@ SVal RegionStoreManager::evalBinOp(BinaryOperator::Opcode Op, Loc L, NonLoc R,
       const MemRegion* NewER =
         MRMgr.getElementRegion(ER->getElementType(), cast<NonLoc>(NewIdx),
                                ER->getSuperRegion(), Ctx);
-      return ValMgr.makeLoc(NewER);
+      return svalBuilder.makeLoc(NewER);
     }
     if (0 == Base->getValue()) {
       const MemRegion* NewER =
         MRMgr.getElementRegion(ER->getElementType(), R,
                                ER->getSuperRegion(), Ctx);
-      return ValMgr.makeLoc(NewER);
+      return svalBuilder.makeLoc(NewER);
     }
   }
 
@@ -1069,7 +1069,7 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   }
 
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolVal(R);
+  return svalBuilder.getRegionValueSymbolVal(R);
 }
 
 std::pair<Store, const MemRegion *>
@@ -1127,7 +1127,7 @@ SVal RegionStoreManager::RetrieveElement(Store store,
       // the only time such an access would be made is if a string literal was
       // used to initialize a larger array.
       char c = (i >= byteLength) ? '\0' : Str->getString()[i];
-      return ValMgr.makeIntVal(c, T);
+      return svalBuilder.makeIntVal(c, T);
     }
   }
   
@@ -1150,7 +1150,7 @@ SVal RegionStoreManager::RetrieveElement(Store store,
         if (Ctx.getTypeSizeInChars(baseT) >= Ctx.getTypeSizeInChars(elemT)) {
           if (const Optional<SVal> &V = getDirectBinding(B, superR)) {
             if (SymbolRef parentSym = V->getAsSymbol())
-              return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+              return svalBuilder.getDerivedRegionValueSymbolVal(parentSym, R);
 
             if (V->isUnknownOrUndef())
               return *V;
@@ -1185,10 +1185,10 @@ RegionStoreManager::RetrieveDerivedDefaultValue(RegionBindings B,
 
   if (const Optional<SVal> &D = getDefaultBinding(B, superR)) {
     if (SymbolRef parentSym = D->getAsSymbol())
-      return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+      return svalBuilder.getDerivedRegionValueSymbolVal(parentSym, R);
 
     if (D->isZeroConstant())
-      return ValMgr.makeZeroVal(Ty);
+      return svalBuilder.makeZeroVal(Ty);
 
     if (D->isUnknownOrUndef())
       return *D;
@@ -1254,7 +1254,7 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
   }
 
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolVal(R);
+  return svalBuilder.getRegionValueSymbolVal(R);
 }
 
 SVal RegionStoreManager::RetrieveObjCIvar(Store store, const ObjCIvarRegion* R){
@@ -1270,7 +1270,7 @@ SVal RegionStoreManager::RetrieveObjCIvar(Store store, const ObjCIvarRegion* R){
   // Check if the super region has a default binding.
   if (const Optional<SVal> &V = getDefaultBinding(B, superR)) {
     if (SymbolRef parentSym = V->getAsSymbol())
-      return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+      return svalBuilder.getDerivedRegionValueSymbolVal(parentSym, R);
 
     // Other cases: give up.
     return UnknownVal();
@@ -1294,7 +1294,7 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
 
   if (isa<UnknownSpaceRegion>(MS) ||
       isa<StackArgumentsSpaceRegion>(MS))
-    return ValMgr.getRegionValueSymbolVal(R);
+    return svalBuilder.getRegionValueSymbolVal(R);
 
   if (isa<GlobalsSpaceRegion>(MS)) {
     if (isa<NonStaticGlobalSpaceRegion>(MS)) {
@@ -1306,22 +1306,21 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
         if (Init)
           if (const IntegerLiteral *IL =
               dyn_cast<IntegerLiteral>(Init->IgnoreParenCasts())) {
-            const nonloc::ConcreteInt &V = ValMgr.makeIntVal(IL);
-            return ValMgr.getSValBuilder().evalCast(V, Init->getType(),
-                                                    IL->getType());
+            const nonloc::ConcreteInt &V = svalBuilder.makeIntVal(IL);
+            return svalBuilder.evalCast(V, Init->getType(), IL->getType());
           }
       }
 
       if (const Optional<SVal> &V = RetrieveDerivedDefaultValue(B, MS, R, CT))
         return V.getValue();
 
-      return ValMgr.getRegionValueSymbolVal(R);
+      return svalBuilder.getRegionValueSymbolVal(R);
     }
 
     if (T->isIntegerType())
-      return ValMgr.makeIntVal(0, T);
+      return svalBuilder.makeIntVal(0, T);
     if (T->isPointerType())
-      return ValMgr.makeNull();
+      return svalBuilder.makeNull();
 
     return UnknownVal();
   }
@@ -1331,18 +1330,18 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
 
 SVal RegionStoreManager::RetrieveLazySymbol(const TypedRegion *R) {
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolVal(R);
+  return svalBuilder.getRegionValueSymbolVal(R);
 }
 
 SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
   QualType T = R->getValueType();
   assert(T->isStructureOrClassType());
-  return ValMgr.makeLazyCompoundVal(store, R);
+  return svalBuilder.makeLazyCompoundVal(store, R);
 }
 
 SVal RegionStoreManager::RetrieveArray(Store store, const TypedRegion * R) {
   assert(Ctx.getAsConstantArrayType(R->getValueType()));
-  return ValMgr.makeLazyCompoundVal(store, R);
+  return svalBuilder.makeLazyCompoundVal(store, R);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1411,7 +1410,7 @@ Store RegionStoreManager::BindDecl(Store store, const VarRegion *VR,
   if (T->isStructureOrClassType())
     return BindStruct(store, VR, InitVal);
 
-  return Bind(store, ValMgr.makeLoc(VR), InitVal);
+  return Bind(store, svalBuilder.makeLoc(VR), InitVal);
 }
 
 // FIXME: this method should be merged into Bind().
@@ -1431,13 +1430,13 @@ Store RegionStoreManager::setImplicitDefaultValue(Store store,
   SVal V;
 
   if (Loc::IsLocType(T))
-    V = ValMgr.makeNull();
+    V = svalBuilder.makeNull();
   else if (T->isIntegerType())
-    V = ValMgr.makeZeroVal(T);
+    V = svalBuilder.makeZeroVal(T);
   else if (T->isStructureOrClassType() || T->isArrayType()) {
     // Set the default value to a zero constant when it is a structure
     // or array.  The type doesn't really matter.
-    V = ValMgr.makeZeroVal(Ctx.IntTy);
+    V = svalBuilder.makeZeroVal(Ctx.IntTy);
   }
   else {
     return store;
@@ -1462,7 +1461,7 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
 
     // Treat the string as a lazy compound value.
     nonloc::LazyCompoundVal LCV =
-      cast<nonloc::LazyCompoundVal>(ValMgr.makeLazyCompoundVal(store, S));
+      cast<nonloc::LazyCompoundVal>(svalBuilder.makeLazyCompoundVal(store, S));
     return CopyLazyBindings(LCV, store, R);
   }
 
@@ -1484,7 +1483,7 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
     if (VI == VE)
       break;
 
-    const NonLoc &Idx = ValMgr.makeArrayIndex(i);
+    const NonLoc &Idx = svalBuilder.makeArrayIndex(i);
     const ElementRegion *ER = MRMgr.getElementRegion(ElementTy, Idx, R, Ctx);
 
     if (ElementTy->isStructureOrClassType())
@@ -1492,7 +1491,7 @@ Store RegionStoreManager::BindArray(Store store, const TypedRegion* R,
     else if (ElementTy->isArrayType())
       store = BindArray(store, ER, *VI);
     else
-      store = Bind(store, ValMgr.makeLoc(ER), *VI);
+      store = Bind(store, svalBuilder.makeLoc(ER), *VI);
   }
 
   // If the init list is shorter than the array length, set the
@@ -1548,13 +1547,13 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
     else if (FTy->isStructureOrClassType())
       store = BindStruct(store, FR, *VI);
     else
-      store = Bind(store, ValMgr.makeLoc(FR), *VI);
+      store = Bind(store, svalBuilder.makeLoc(FR), *VI);
   }
 
   // There may be fewer values in the initialize list than the fields of struct.
   if (FI != FE) {
     RegionBindings B = GetRegionBindings(store);
-    B = addBinding(B, R, BindingKey::Default, ValMgr.makeIntVal(0, false));
+    B = addBinding(B, R, BindingKey::Default, svalBuilder.makeIntVal(0, false));
     store = B.getRoot();
   }
 
@@ -1832,7 +1831,8 @@ Store RegionStoreManager::EnterStackFrame(const GRState *state,
     // Copy the arg expression value to the arg variables.
     for (; AI != AE; ++AI, ++PI) {
       SVal ArgVal = state->getSVal(*AI);
-      store = Bind(store, ValMgr.makeLoc(MRMgr.getVarRegion(*PI,frame)),ArgVal);
+      store = Bind(store,
+                   svalBuilder.makeLoc(MRMgr.getVarRegion(*PI,frame)), ArgVal);
     }
   } else if (const CXXConstructExpr *CE =
                dyn_cast<CXXConstructExpr>(frame->getCallSite())) {
@@ -1842,7 +1842,8 @@ Store RegionStoreManager::EnterStackFrame(const GRState *state,
     // Copy the arg expression value to the arg variables.
     for (; AI != AE; ++AI, ++PI) {
       SVal ArgVal = state->getSVal(*AI);
-      store = Bind(store, ValMgr.makeLoc(MRMgr.getVarRegion(*PI,frame)),ArgVal);
+      store = Bind(store,
+                   svalBuilder.makeLoc(MRMgr.getVarRegion(*PI,frame)), ArgVal);
     }
   } else
     assert(isa<CXXDestructorDecl>(frame->getDecl()));

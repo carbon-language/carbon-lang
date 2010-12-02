@@ -74,12 +74,12 @@ const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
                                                  const StackFrameContext *SFC) {
   Type *T = D->getTypeForDecl();
   QualType PT = getContext().getPointerType(QualType(T, 0));
-  return ValMgr.getRegionManager().getCXXThisRegion(PT, SFC);
+  return svalBuilder.getRegionManager().getCXXThisRegion(PT, SFC);
 }
 
 const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXMethodDecl *decl,
                                             const StackFrameContext *frameCtx) {
-  return ValMgr.getRegionManager().
+  return svalBuilder.getRegionManager().
                     getCXXThisRegion(decl->getThisType(getContext()), frameCtx);
 }
 
@@ -95,7 +95,7 @@ void GRExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
     SVal V = state->getSVal(Ex);
 
     const MemRegion *R =
-      ValMgr.getRegionManager().getCXXTempObjectRegion(Ex,
+      svalBuilder.getRegionManager().getCXXTempObjectRegion(Ex,
                                                    Pred->getLocationContext());
 
     state = state->bindLoc(loc::MemRegionVal(R), V);
@@ -108,7 +108,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
                                          ExplodedNode *Pred,
                                          ExplodedNodeSet &Dst, bool asLValue) {
   if (!Dest)
-    Dest = ValMgr.getRegionManager().getCXXTempObjectRegion(E,
+    Dest = svalBuilder.getRegionManager().getCXXTempObjectRegion(E,
                                                     Pred->getLocationContext());
 
   if (E->isElidable()) {
@@ -267,9 +267,9 @@ void GRExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   }
 
   unsigned Count = Builder->getCurrentBlockCount();
-  DefinedOrUnknownSVal SymVal = getValueManager().getConjuredSymbolVal(NULL,CNE,
-                                                         CNE->getType(), Count);
-  const MemRegion *NewReg = cast<loc::MemRegionVal>(SymVal).getRegion();
+  DefinedOrUnknownSVal symVal =
+    svalBuilder.getConjuredSymbolVal(NULL, CNE, CNE->getType(), Count);
+  const MemRegion *NewReg = cast<loc::MemRegionVal>(symVal).getRegion();
 
   QualType ObjTy = CNE->getType()->getAs<PointerType>()->getPointeeType();
 
@@ -323,7 +323,7 @@ void GRExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
   // Get the this object region from StoreManager.
   const MemRegion *R =
-    ValMgr.getRegionManager().getCXXThisRegion(
+    svalBuilder.getRegionManager().getCXXThisRegion(
                                   getContext().getCanonicalType(TE->getType()),
                                                Pred->getLocationContext());
 

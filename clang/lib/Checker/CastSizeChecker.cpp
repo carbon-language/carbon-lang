@@ -57,28 +57,27 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
   if (SR == 0)
     return;
 
-  ValueManager &ValMgr = C.getValueManager();
-  SVal Extent = SR->getExtent(ValMgr);
-
-  SValBuilder &svalBuilder = ValMgr.getSValBuilder();
-  const llvm::APSInt *ExtentInt = svalBuilder.getKnownValue(state, Extent);
-  if (!ExtentInt)
+  SValBuilder &svalBuilder = C.getSValBuilder();
+  SVal extent = SR->getExtent(svalBuilder);
+  const llvm::APSInt *extentInt = svalBuilder.getKnownValue(state, extent);
+  if (!extentInt)
     return;
 
-  CharUnits RegionSize = CharUnits::fromQuantity(ExtentInt->getSExtValue());
-  CharUnits TypeSize = C.getASTContext().getTypeSizeInChars(ToPointeeTy);
-  
+  CharUnits regionSize = CharUnits::fromQuantity(extentInt->getSExtValue());
+  CharUnits typeSize = C.getASTContext().getTypeSizeInChars(ToPointeeTy);
+
   // Ignore void, and a few other un-sizeable types.
-  if (TypeSize.isZero())
+  if (typeSize.isZero())
     return;
-  
-  if (RegionSize % TypeSize != 0) {
-    if (ExplodedNode *N = C.GenerateSink()) {
+
+  if (regionSize % typeSize != 0) {
+    if (ExplodedNode *errorNode = C.GenerateSink()) {
       if (!BT)
         BT = new BuiltinBug("Cast region with wrong size.",
                             "Cast a region whose size is not a multiple of the"
                             " destination type size.");
-      RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(), N);
+      RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(),
+                                               errorNode);
       R->addRange(CE->getSourceRange());
       C.EmitReport(R);
     }

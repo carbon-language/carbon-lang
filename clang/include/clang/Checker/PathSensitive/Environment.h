@@ -14,17 +14,14 @@
 #ifndef LLVM_CLANG_ANALYSIS_ENVIRONMENT_H
 #define LLVM_CLANG_ANALYSIS_ENVIRONMENT_H
 
-// For using typedefs in StoreManager. Should find a better place for these
-// typedefs.
 #include "clang/Checker/PathSensitive/Store.h"
-
 #include "clang/Checker/PathSensitive/SVals.h"
 #include "llvm/ADT/ImmutableMap.h"
 
 namespace clang {
 
 class EnvironmentManager;
-class ValueManager;
+class SValBuilder;
 class LiveVariables;
 
 /// Environment - An immutable map from Stmts to their current
@@ -55,12 +52,12 @@ public:
 
   /// GetSVal - Fetches the current binding of the expression in the
   ///  Environment.
-  SVal GetSVal(const Stmt* Ex, ValueManager& ValMgr) const;
+  SVal getSVal(const Stmt* Ex, SValBuilder& svalBuilder) const;
 
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.
-  static void Profile(llvm::FoldingSetNodeID& ID, const Environment* E) {
-    E->ExprBindings.Profile(ID);
+  static void Profile(llvm::FoldingSetNodeID& ID, const Environment* env) {
+    env->ExprBindings.Profile(ID);
   }
 
   /// Profile - Used to profile the contents of this object for inclusion

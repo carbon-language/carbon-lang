@@ -50,9 +50,6 @@ class GRExprEngine : public GRSubEngine {
   /// SymMgr - Object that manages the symbol information.
   SymbolManager& SymMgr;
 
-  /// ValMgr - Object that manages/creates SVals.
-  ValueManager &ValMgr;
-
   /// svalBuilder - SValBuilder object that creates SVals from expressions.
   SValBuilder &svalBuilder;
 
@@ -246,16 +243,13 @@ public:
     return StateMgr.getConstraintManager();
   }
 
-  // FIXME: Remove when we migrate over to just using ValueManager.
+  // FIXME: Remove when we migrate over to just using SValBuilder.
   BasicValueFactory& getBasicVals() {
     return StateMgr.getBasicVals();
   }
   const BasicValueFactory& getBasicVals() const {
     return StateMgr.getBasicVals();
   }
-
-  ValueManager &getValueManager() { return ValMgr; }
-  const ValueManager &getValueManager() const { return ValMgr; }
 
   // FIXME: Remove when we migrate over to just using ValueManager.
   SymbolManager& getSymbolManager() { return SymMgr; }

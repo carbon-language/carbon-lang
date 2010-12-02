@@ -111,7 +111,7 @@ SVal FlatStoreManager::RetrieveRegionWithNoBinding(const MemRegion *R,
   if (R->hasStackNonParametersStorage())
     return UndefinedVal();
   else
-    return ValMgr.getRegionValueSymbolVal(cast<TypedRegion>(R));
+    return svalBuilder.getRegionValueSymbolVal(cast<TypedRegion>(R));
 }
 
 Store FlatStoreManager::Bind(Store store, Loc L, SVal val) {
@@ -149,7 +149,7 @@ SVal FlatStoreManager::ArrayToPointer(Loc Array) {
 
 Store FlatStoreManager::BindDecl(Store store, const VarRegion *VR, 
                                  SVal initVal) {
-  return Bind(store, ValMgr.makeLoc(VR), initVal);
+  return Bind(store, svalBuilder.makeLoc(VR), initVal);
 }
 
 Store FlatStoreManager::BindDeclWithNoInit(Store store, const VarRegion *VR) {

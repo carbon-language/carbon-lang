@@ -17,7 +17,7 @@
 #include "clang/Checker/PathSensitive/ConstraintManager.h"
 #include "clang/Checker/PathSensitive/Environment.h"
 #include "clang/Checker/PathSensitive/Store.h"
-#include "clang/Checker/PathSensitive/ValueManager.h"
+#include "clang/Checker/PathSensitive/SValBuilder.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Casting.h"
@@ -426,8 +426,8 @@ private:
   ///  a particular function.  This is used to unique states.
   llvm::FoldingSet<GRState> StateSet;
 
-  /// ValueMgr - Object that manages the data for all created SVals.
-  ValueManager ValueMgr;
+  /// Object that manages the data for all created SVals.
+  llvm::OwningPtr<SValBuilder> svalBuilder;
 
   /// Alloc - A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator &Alloc;
@@ -441,7 +441,7 @@ public:
     : Eng(subeng),
       EnvMgr(alloc),
       GDMFactory(alloc),
-      ValueMgr(alloc, Ctx, *this),
+      svalBuilder(createSimpleSValBuilder(alloc, Ctx, *this)),
       Alloc(alloc) {
     StoreMgr.reset((*CreateStoreManager)(*this));
     ConstraintMgr.reset((*CreateConstraintManager)(*this, subeng));
@@ -451,33 +451,34 @@ public:
 
   const GRState *getInitialState(const LocationContext *InitLoc);
 
-  ASTContext &getContext() { return ValueMgr.getContext(); }
-  const ASTContext &getContext() const { return ValueMgr.getContext(); }
+  ASTContext &getContext() { return svalBuilder->getContext(); }
+  const ASTContext &getContext() const { return svalBuilder->getContext(); }
 
   BasicValueFactory &getBasicVals() {
-    return ValueMgr.getBasicValueFactory();
+    return svalBuilder->getBasicValueFactory();
   }
   const BasicValueFactory& getBasicVals() const {
-    return ValueMgr.getBasicValueFactory();
+    return svalBuilder->getBasicValueFactory();
+  }
+
+  SValBuilder &getSValBuilder() {
+    return *svalBuilder;
   }
 
   SymbolManager &getSymbolManager() {
-    return ValueMgr.getSymbolManager();
+    return svalBuilder->getSymbolManager();
   }
   const SymbolManager &getSymbolManager() const {
-    return ValueMgr.getSymbolManager();
+    return svalBuilder->getSymbolManager();
   }
-
-  ValueManager &getValueManager() { return ValueMgr; }
-  const ValueManager &getValueManager() const { return ValueMgr; }
 
   llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
 
   MemRegionManager& getRegionManager() {
-    return ValueMgr.getRegionManager();
+    return svalBuilder->getRegionManager();
   }
   const MemRegionManager& getRegionManager() const {
-    return ValueMgr.getRegionManager();
+    return svalBuilder->getRegionManager();
   }
 
   StoreManager& getStoreManager() { return *StoreMgr; }
@@ -658,7 +659,7 @@ inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
 }
 
 inline SVal GRState::getSVal(const Stmt* Ex) const {
-  return Env.GetSVal(Ex, getStateManager().ValueMgr);
+  return Env.getSVal(Ex, *getStateManager().svalBuilder);
 }
 
 inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {

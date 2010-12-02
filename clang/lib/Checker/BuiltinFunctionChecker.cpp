@@ -67,13 +67,11 @@ bool BuiltinFunctionChecker::evalCallExpr(CheckerContext &C,const CallExpr *CE){
     DefinedOrUnknownSVal Size =
       cast<DefinedOrUnknownSVal>(state->getSVal(*(CE->arg_begin())));
 
-    ValueManager& ValMgr = C.getValueManager();
-    DefinedOrUnknownSVal Extent = R->getExtent(ValMgr);
-
-    SValBuilder& svalBuilder = ValMgr.getSValBuilder();
-    DefinedOrUnknownSVal ExtentMatchesSizeArg =
+    SValBuilder& svalBuilder = C.getSValBuilder();
+    DefinedOrUnknownSVal Extent = R->getExtent(svalBuilder);
+    DefinedOrUnknownSVal extentMatchesSizeArg =
       svalBuilder.evalEQ(state, Extent, Size);
-    state = state->assume(ExtentMatchesSizeArg, true);
+    state = state->assume(extentMatchesSizeArg, true);
 
     C.GenerateNode(state->BindExpr(CE, loc::MemRegionVal(R)));
     return true;

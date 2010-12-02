@@ -224,9 +224,9 @@ void StreamChecker::Tmpfile(CheckerContext &C, const CallExpr *CE) {
 void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) {
   const GRState *state = C.getState();
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
-  ValueManager &ValMgr = C.getValueManager();
-  DefinedSVal RetVal = cast<DefinedSVal>(ValMgr.getConjuredSymbolVal(0, CE, 
-                                                                     Count));
+  SValBuilder &svalBuilder = C.getSValBuilder();
+  DefinedSVal RetVal =
+    cast<DefinedSVal>(svalBuilder.getConjuredSymbolVal(0, CE, Count));
   state = state->BindExpr(CE, RetVal);
   
   ConstraintManager &CM = C.getConstraintManager();

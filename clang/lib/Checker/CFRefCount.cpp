@@ -2686,8 +2686,8 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
 
       if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
-        ValueManager &ValMgr = Eng.getValueManager();
-        SVal X = ValMgr.getConjuredSymbolVal(NULL, Ex, T, Count);
+        SValBuilder &svalBuilder = Eng.getSValBuilder();
+        SVal X = svalBuilder.getConjuredSymbolVal(NULL, Ex, T, Count);
         state = state->BindExpr(Ex, X, false);
       }
 
@@ -2713,12 +2713,12 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
     case RetEffect::OwnedAllocatedSymbol:
     case RetEffect::OwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      ValueManager &ValMgr = Eng.getValueManager();
-      SymbolRef Sym = ValMgr.getConjuredSymbol(Ex, Count);
-      QualType RetT = GetReturnType(Ex, ValMgr.getContext());
+      SValBuilder &svalBuilder = Eng.getSValBuilder();
+      SymbolRef Sym = svalBuilder.getConjuredSymbol(Ex, Count);
+      QualType RetT = GetReturnType(Ex, svalBuilder.getContext());
       state = state->set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(),
                                                             RetT));
-      state = state->BindExpr(Ex, ValMgr.makeLoc(Sym), false);
+      state = state->BindExpr(Ex, svalBuilder.makeLoc(Sym), false);
 
       // FIXME: Add a flag to the checker where allocations are assumed to
       // *not fail.
@@ -2736,12 +2736,12 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
     case RetEffect::GCNotOwnedSymbol:
     case RetEffect::NotOwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      ValueManager &ValMgr = Eng.getValueManager();
-      SymbolRef Sym = ValMgr.getConjuredSymbol(Ex, Count);
-      QualType RetT = GetReturnType(Ex, ValMgr.getContext());
+      SValBuilder &svalBuilder = Eng.getSValBuilder();
+      SymbolRef Sym = svalBuilder.getConjuredSymbol(Ex, Count);
+      QualType RetT = GetReturnType(Ex, svalBuilder.getContext());
       state = state->set<RefBindings>(Sym, RefVal::makeNotOwned(RE.getObjKind(),
                                                                RetT));
-      state = state->BindExpr(Ex, ValMgr.makeLoc(Sym), false);
+      state = state->BindExpr(Ex, svalBuilder.makeLoc(Sym), false);
       break;
     }
   }
@@ -3431,7 +3431,7 @@ void RetainReleaseChecker::PostVisitBlockExpr(CheckerContext &C,
   // and in implicit increment/decrement of a retain count.
   llvm::SmallVector<const MemRegion*, 10> Regions;
   const LocationContext *LC = C.getPredecessor()->getLocationContext();
-  MemRegionManager &MemMgr = C.getValueManager().getRegionManager();
+  MemRegionManager &MemMgr = C.getSValBuilder().getRegionManager();
 
   for ( ; I != E; ++I) {
     const VarRegion *VR = *I;

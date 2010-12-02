@@ -426,8 +426,8 @@ public:
     return BR.getStateManager();
   }
 
-  ValueManager& getValueManager() {
-    return getStateManager().getValueManager();
+  SValBuilder& getSValBuilder() {
+    return getStateManager().getSValBuilder();
   }
 
   ASTContext& getASTContext() {

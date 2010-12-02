@@ -409,12 +409,11 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
     return;
 
   // Get a NULL value.
-  ValueManager &ValMgr = C.getValueManager();
-  DefinedSVal Zero = cast<DefinedSVal>(ValMgr.makeZeroVal(Arg->getType()));
+  SValBuilder &svalBuilder = C.getSValBuilder();
+  DefinedSVal zero = cast<DefinedSVal>(svalBuilder.makeZeroVal(Arg->getType()));
 
   // Make an expression asserting that they're equal.
-  SValBuilder &svalBuilder = ValMgr.getSValBuilder();
-  DefinedOrUnknownSVal ArgIsNull = svalBuilder.evalEQ(state, Zero, *DefArgVal);
+  DefinedOrUnknownSVal ArgIsNull = svalBuilder.evalEQ(state, zero, *DefArgVal);
 
   // Are they equal?
   const GRState *stateTrue, *stateFalse;

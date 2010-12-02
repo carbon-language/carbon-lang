@@ -18,8 +18,8 @@
 using namespace clang;
 
 StoreManager::StoreManager(GRStateManager &stateMgr)
-  : ValMgr(stateMgr.getValueManager()), StateMgr(stateMgr),
-    MRMgr(ValMgr.getRegionManager()), Ctx(stateMgr.getContext()) {}
+  : svalBuilder(stateMgr.getSValBuilder()), StateMgr(stateMgr),
+    MRMgr(svalBuilder.getRegionManager()), Ctx(stateMgr.getContext()) {}
 
 Store StoreManager::EnterStackFrame(const GRState *state,
                                     const StackFrameContext *frame) {
@@ -28,8 +28,8 @@ Store StoreManager::EnterStackFrame(const GRState *state,
 
 const MemRegion *StoreManager::MakeElementRegion(const MemRegion *Base,
                                               QualType EleTy, uint64_t index) {
-  NonLoc idx = ValMgr.makeArrayIndex(index);
-  return MRMgr.getElementRegion(EleTy, idx, Base, ValMgr.getContext());
+  NonLoc idx = svalBuilder.makeArrayIndex(index);
+  return MRMgr.getElementRegion(EleTy, idx, Base, svalBuilder.getContext());
 }
 
 // FIXME: Merge with the implementation of the same method in MemRegion.cpp
@@ -45,7 +45,7 @@ static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
 
 const ElementRegion *StoreManager::GetElementZeroRegion(const MemRegion *R, 
                                                         QualType T) {
-  NonLoc idx = ValMgr.makeZeroArrayIndex();
+  NonLoc idx = svalBuilder.makeZeroArrayIndex();
   assert(!T.isNull());
   return MRMgr.getElementRegion(T, idx, R, Ctx);
 }
@@ -212,7 +212,7 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
   if (castTy.isNull())
     return V;
   
-  ASTContext &Ctx = ValMgr.getContext();
+  ASTContext &Ctx = svalBuilder.getContext();
 
   if (performTestOnly) {  
     // Automatically translate references to pointers.
@@ -220,14 +220,14 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
     if (const ReferenceType *RT = T->getAs<ReferenceType>())
       T = Ctx.getPointerType(RT->getPointeeType());
     
-    assert(ValMgr.getContext().hasSameUnqualifiedType(castTy, T));
+    assert(svalBuilder.getContext().hasSameUnqualifiedType(castTy, T));
     return V;
   }
   
   if (const Loc *L = dyn_cast<Loc>(&V))
-    return ValMgr.getSValBuilder().evalCastL(*L, castTy);
+    return svalBuilder.evalCastL(*L, castTy);
   else if (const NonLoc *NL = dyn_cast<NonLoc>(&V))
-    return ValMgr.getSValBuilder().evalCastNL(*NL, castTy);
+    return svalBuilder.evalCastNL(*NL, castTy);
   
   return V;
 }
@@ -284,7 +284,7 @@ SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset,
   const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);
 
   // Convert the offset to the appropriate size and signedness.
-  Offset = cast<NonLoc>(ValMgr.convertToArrayIndex(Offset));
+  Offset = cast<NonLoc>(svalBuilder.convertToArrayIndex(Offset));
 
   if (!ElemR) {
     //
@@ -323,7 +323,7 @@ SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset,
   assert(BaseIdxI.isSigned());
 
   // Compute the new index.
-  nonloc::ConcreteInt NewIdx(ValMgr.getBasicValueFactory().getValue(BaseIdxI +
+  nonloc::ConcreteInt NewIdx(svalBuilder.getBasicValueFactory().getValue(BaseIdxI +
                                                                     OffI));
 
   // Construct the new ElementRegion.

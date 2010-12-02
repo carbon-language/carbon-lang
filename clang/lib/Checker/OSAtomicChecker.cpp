@@ -182,7 +182,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
         SVal Res = UnknownVal();
         QualType T = CE->getType();
         if (!T->isVoidType())
-          Res = Engine.getValueManager().makeTruthVal(true, T);
+          Res = Engine.getSValBuilder().makeTruthVal(true, T);
         C.GenerateNode(stateNew->BindExpr(CE, Res), predNew);
       }
     }
@@ -193,7 +193,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
       SVal Res = UnknownVal();
       QualType T = CE->getType();
       if (!T->isVoidType())
-        Res = Engine.getValueManager().makeTruthVal(false, CE->getType());
+        Res = Engine.getSValBuilder().makeTruthVal(false, CE->getType());
       C.GenerateNode(stateNotEqual->BindExpr(CE, Res), N);
     }
   }

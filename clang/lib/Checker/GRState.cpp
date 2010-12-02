@@ -240,31 +240,32 @@ const GRState *GRState::assumeInBound(DefinedOrUnknownSVal Idx,
   // This is the same as Idx + MIN < UpperBound + MIN, if overflow is allowed.
   // FIXME: This should probably be part of SValBuilder.
   GRStateManager &SM = getStateManager();
-  ValueManager &VM = SM.getValueManager();
-  SValBuilder &SV = VM.getSValBuilder();
-  ASTContext &Ctx = VM.getContext();
+  SValBuilder &svalBuilder = SM.getSValBuilder();
+  ASTContext &Ctx = svalBuilder.getContext();
 
   // Get the offset: the minimum value of the array index type.
-  BasicValueFactory &BVF = VM.getBasicValueFactory();
-  // FIXME: This should be using ValueManager::ArrayIndexTy...somehow.
-  QualType IndexTy = Ctx.IntTy;
-  nonloc::ConcreteInt Min = BVF.getMinValue(IndexTy);
+  BasicValueFactory &BVF = svalBuilder.getBasicValueFactory();
+  // FIXME: This should be using ValueManager::ArrayindexTy...somehow.
+  QualType indexTy = Ctx.IntTy;
+  nonloc::ConcreteInt Min = BVF.getMinValue(indexTy);
 
   // Adjust the index.
-  SVal newIdx = SV.evalBinOpNN(this, BO_Add,
-                               cast<NonLoc>(Idx), Min, IndexTy);
+  SVal newIdx = svalBuilder.evalBinOpNN(this, BO_Add,
+                                        cast<NonLoc>(Idx), Min, indexTy);
   if (newIdx.isUnknownOrUndef())
     return this;
 
   // Adjust the upper bound.
-  SVal NewBound = SV.evalBinOpNN(this, BO_Add,
-                                 cast<NonLoc>(UpperBound), Min, IndexTy);
-  if (NewBound.isUnknownOrUndef())
+  SVal newBound =
+    svalBuilder.evalBinOpNN(this, BO_Add, cast<NonLoc>(UpperBound),
+                            Min, indexTy);
+
+  if (newBound.isUnknownOrUndef())
     return this;
 
   // Build the actual comparison.
-  SVal inBound = SV.evalBinOpNN(this, BO_LT,
-                                cast<NonLoc>(newIdx), cast<NonLoc>(NewBound),
+  SVal inBound = svalBuilder.evalBinOpNN(this, BO_LT,
+                                cast<NonLoc>(newIdx), cast<NonLoc>(newBound),
                                 Ctx.IntTy);
   if (inBound.isUnknownOrUndef())
     return this;

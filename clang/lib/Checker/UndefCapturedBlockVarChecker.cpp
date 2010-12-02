@@ -76,7 +76,7 @@ UndefCapturedBlockVarChecker::PostVisitBlockExpr(CheckerContext &C,
 
     // Get the VarRegion associated with VD in the local stack frame.
     const LocationContext *LC = C.getPredecessor()->getLocationContext();
-    VR = C.getValueManager().getRegionManager().getVarRegion(VD, LC);
+    VR = C.getSValBuilder().getRegionManager().getVarRegion(VD, LC);
 
     if (state->getSVal(VR).isUndef())
       if (ExplodedNode *N = C.GenerateSink()) {

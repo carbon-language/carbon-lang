@@ -87,10 +87,6 @@ public:
     return getBugReporter().getSourceManager();
   }
 
-  ValueManager &getValueManager() {
-    return Eng.getValueManager();
-  }
-
   SValBuilder &getSValBuilder() {
     return Eng.getSValBuilder();
   }

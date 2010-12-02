@@ -82,7 +82,6 @@ add_clang_library(clangChecker
   UnixAPIChecker.cpp
   UnreachableCodeChecker.cpp
   VLASizeChecker.cpp
-  ValueManager.cpp
   )
 
 add_dependencies(clangChecker ClangAttrClasses ClangAttrList ClangDeclNodes

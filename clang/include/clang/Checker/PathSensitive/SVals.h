@@ -37,7 +37,7 @@ class MemRegion;
 class TypedRegion;
 class MemRegionManager;
 class GRStateManager;
-class ValueManager;
+class SValBuilder;
 
 /// SVal - This represents a symbolic expression, which can be either
 ///  an L-value or an R-value.
@@ -321,12 +321,12 @@ public:
   }
 
   // Transfer functions for binary/unary operations on ConcreteInts.
-  SVal evalBinOp(ValueManager &ValMgr, BinaryOperator::Opcode Op,
+  SVal evalBinOp(SValBuilder &svalBuilder, BinaryOperator::Opcode Op,
                  const ConcreteInt& R) const;
 
-  ConcreteInt evalComplement(ValueManager &ValMgr) const;
+  ConcreteInt evalComplement(SValBuilder &svalBuilder) const;
 
-  ConcreteInt evalMinus(ValueManager &ValMgr) const;
+  ConcreteInt evalMinus(SValBuilder &svalBuilder) const;
 
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
@@ -340,7 +340,7 @@ public:
 };
 
 class LocAsInteger : public NonLoc {
-  friend class clang::ValueManager;
+  friend class clang::SValBuilder;
 
   LocAsInteger(const std::pair<SVal, uintptr_t>& data) :
     NonLoc(LocAsIntegerKind, &data) {
@@ -374,7 +374,7 @@ public:
 };
 
 class CompoundVal : public NonLoc {
-  friend class clang::ValueManager;
+  friend class clang::SValBuilder;
 
   CompoundVal(const CompoundValData* D) : NonLoc(CompoundValKind, D) {}
 
@@ -397,7 +397,7 @@ public:
 };
 
 class LazyCompoundVal : public NonLoc {
-  friend class clang::ValueManager;
+  friend class clang::SValBuilder;
 
   LazyCompoundVal(const LazyCompoundValData *D)
     : NonLoc(LazyCompoundValKind, D) {}

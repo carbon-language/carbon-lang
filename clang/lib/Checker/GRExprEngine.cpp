@@ -325,8 +325,7 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)
              mgr.getConstraintManagerCreator(), G.getAllocator(),
              *this),
     SymMgr(StateMgr.getSymbolManager()),
-    ValMgr(StateMgr.getValueManager()),
-    svalBuilder(ValMgr.getSValBuilder()),
+    svalBuilder(StateMgr.getSValBuilder()),
     EntryNode(NULL), CurrentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", getContext())),
@@ -383,7 +382,7 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
 
       SVal V = state->getSVal(loc::MemRegionVal(R));
       SVal Constraint_untested = evalBinOp(state, BO_GT, V,
-                                           ValMgr.makeZeroVal(T),
+                                           svalBuilder.makeZeroVal(T),
                                            getContext().IntTy);
 
       DefinedOrUnknownSVal *Constraint =
@@ -835,7 +834,7 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       break;
 
     case Stmt::GNUNullExprClass: {
-      MakeNode(Dst, S, Pred, GetState(Pred)->BindExpr(S, ValMgr.makeNull()));
+      MakeNode(Dst, S, Pred, GetState(Pred)->BindExpr(S, svalBuilder.makeNull()));
       break;
     }
 
@@ -1732,17 +1731,17 @@ void GRExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode* Pred,
     // the payoff is not likely to be large.  Instead, we do eager evaluation.
     if (const GRState *newState = state->assume(XD, true))
       MakeNode(Dst, B, Pred,
-               newState->BindExpr(B, ValMgr.makeIntVal(1U, B->getType())));
+               newState->BindExpr(B, svalBuilder.makeIntVal(1U, B->getType())));
 
     if (const GRState *newState = state->assume(XD, false))
       MakeNode(Dst, B, Pred,
-               newState->BindExpr(B, ValMgr.makeIntVal(0U, B->getType())));
+               newState->BindExpr(B, svalBuilder.makeIntVal(0U, B->getType())));
   }
   else {
     // We took the LHS expression.  Depending on whether we are '&&' or
     // '||' we know what the value of the expression is via properties of
     // the short-circuiting.
-    X = ValMgr.makeIntVal(B->getOpcode() == BO_LAnd ? 0U : 1U,
+    X = svalBuilder.makeIntVal(B->getOpcode() == BO_LAnd ? 0U : 1U,
                           B->getType());
     MakeNode(Dst, B, Pred, state->BindExpr(B, X));
   }
@@ -1758,7 +1757,7 @@ void GRExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
   ExplodedNodeSet Tmp;
 
   CanQualType T = getContext().getCanonicalType(BE->getType());
-  SVal V = ValMgr.getBlockPointer(BE->getBlockDecl(), T,
+  SVal V = svalBuilder.getBlockPointer(BE->getBlockDecl(), T,
                                   Pred->getLocationContext());
 
   MakeNode(Tmp, BE, Pred, GetState(Pred)->BindExpr(BE, V),
@@ -1809,13 +1808,13 @@ void GRExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
   } else if (const EnumConstantDecl* ED = dyn_cast<EnumConstantDecl>(D)) {
     assert(!asLValue && "EnumConstantDecl does not have lvalue.");
 
-    SVal V = ValMgr.makeIntVal(ED->getInitVal());
+    SVal V = svalBuilder.makeIntVal(ED->getInitVal());
     MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V));
     return;
 
   } else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
     // This code is valid regardless of the value of 'isLValue'.
-    SVal V = ValMgr.getFunctionPointer(FD);
+    SVal V = svalBuilder.getFunctionPointer(FD);
     MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V),
              ProgramPoint::PostLValueKind);
     return;
@@ -2264,7 +2263,7 @@ void GRExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
       // First assume that the condition is true.
       if (const GRState *stateTrue = state->assume(*SEV, true)) {
         stateTrue = stateTrue->BindExpr(Ex,
-                                        ValMgr.makeIntVal(1U, Ex->getType()));
+                                        svalBuilder.makeIntVal(1U, Ex->getType()));
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex,
                                 &EagerlyAssumeTag, Pred->getLocationContext()),
                                       stateTrue, Pred));
@@ -2273,7 +2272,7 @@ void GRExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
       // Next, assume that the condition is false.
       if (const GRState *stateFalse = state->assume(*SEV, false)) {
         stateFalse = stateFalse->BindExpr(Ex,
-                                          ValMgr.makeIntVal(0U, Ex->getType()));
+                                          svalBuilder.makeIntVal(0U, Ex->getType()));
         Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag,
                                                    Pred->getLocationContext()),
                                       stateFalse, Pred));
@@ -2394,11 +2393,11 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
     const GRState *state = GetState(Pred);
 
     // Handle the case where the container still has elements.
-    SVal TrueV = ValMgr.makeTruthVal(1);
+    SVal TrueV = svalBuilder.makeTruthVal(1);
     const GRState *hasElems = state->BindExpr(S, TrueV);
 
     // Handle the case where the container has no elements.
-    SVal FalseV = ValMgr.makeTruthVal(0);
+    SVal FalseV = svalBuilder.makeTruthVal(0);
     const GRState *noElems = state->BindExpr(S, FalseV);
 
     if (loc::MemRegionVal* MV = dyn_cast<loc::MemRegionVal>(&ElementV))
@@ -2410,11 +2409,11 @@ void GRExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
         assert(Loc::IsLocType(T));
         unsigned Count = Builder->getCurrentBlockCount();
         SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
-        SVal V = ValMgr.makeLoc(Sym);
+        SVal V = svalBuilder.makeLoc(Sym);
         hasElems = hasElems->bindLoc(ElementV, V);
 
         // Bind the location to 'nil' on the false branch.
-        SVal nilV = ValMgr.makeIntVal(0, T);
+        SVal nilV = svalBuilder.makeIntVal(0, T);
         noElems = noElems->bindLoc(ElementV, nilV);
       }
 
@@ -2800,7 +2799,7 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
       if ((InitVal.isUnknown() ||
           !getConstraintManager().canReasonAbout(InitVal)) &&
           !VD->getType()->isReferenceType()) {
-        InitVal = ValMgr.getConjuredSymbolVal(NULL, InitEx,
+        InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx,
                                                Builder->getCurrentBlockCount());
       }
 
@@ -2832,7 +2831,7 @@ void GRExprEngine::VisitCondInit(const VarDecl *VD, const Stmt *S,
     // UnknownVal.
     if (InitVal.isUnknown() ||
         !getConstraintManager().canReasonAbout(InitVal)) {
-      InitVal = ValMgr.getConjuredSymbolVal(NULL, InitEx,
+      InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx,
                                             Builder->getCurrentBlockCount());
     }
 
@@ -2870,7 +2869,7 @@ void GRExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
     // Handle base case where the initializer has no elements.
     // e.g: static int* myArray[] = {};
     if (NumInitElements == 0) {
-      SVal V = ValMgr.makeCompoundVal(T, StartVals);
+      SVal V = svalBuilder.makeCompoundVal(T, StartVals);
       MakeNode(Dst, E, Pred, state->BindExpr(E, V));
       return;
     }
@@ -2904,7 +2903,7 @@ void GRExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
 
         if (NewItr == ItrEnd) {
           // Now we have a list holding all init values. Make CompoundValData.
-          SVal V = ValMgr.makeCompoundVal(T, NewVals);
+          SVal V = svalBuilder.makeCompoundVal(T, NewVals);
 
           // Make final state and node.
           MakeNode(Dst, E, *NI, state->BindExpr(E, V));
@@ -2974,7 +2973,7 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr* Ex,
         }
 
         // The result is the extent of the VLA.
-        SVal Extent = cast<SubRegion>(MR)->getExtent(ValMgr);
+        SVal Extent = cast<SubRegion>(MR)->getExtent(svalBuilder);
         MakeNode(Dst, Ex, *I, state->BindExpr(Ex, Extent));
       }
 
@@ -2997,7 +2996,7 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr* Ex,
 
   MakeNode(Dst, Ex, Pred,
            GetState(Pred)->BindExpr(Ex,
-              ValMgr.makeIntVal(amt.getQuantity(), Ex->getType())));
+              svalBuilder.makeIntVal(amt.getQuantity(), Ex->getType())));
 }
 
 void GRExprEngine::VisitOffsetOfExpr(const OffsetOfExpr* OOE, 
@@ -3008,7 +3007,7 @@ void GRExprEngine::VisitOffsetOfExpr(const OffsetOfExpr* OOE,
     assert(IV.getBitWidth() == getContext().getTypeSize(OOE->getType()));
     assert(OOE->getType()->isIntegerType());
     assert(IV.isSigned() == OOE->getType()->isSignedIntegerType());
-    SVal X = ValMgr.makeIntVal(IV);
+    SVal X = svalBuilder.makeIntVal(IV);
     MakeNode(Dst, OOE, Pred, GetState(Pred)->BindExpr(OOE, X));
     return;
   }
@@ -3086,7 +3085,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
 
         // For all other types, UO_Imag returns 0.
         const GRState* state = GetState(*I);
-        SVal X = ValMgr.makeZeroVal(Ex->getType());
+        SVal X = svalBuilder.makeZeroVal(Ex->getType());
         MakeNode(Dst, U, *I, state->BindExpr(U, X));
       }
 
@@ -3189,7 +3188,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
             SVal Result;
 
             if (isa<Loc>(V)) {
-              Loc X = ValMgr.makeNull();
+              Loc X = svalBuilder.makeNull();
               Result = evalBinOp(state, BO_EQ, cast<Loc>(V), X,
                                  U->getType());
             }
@@ -3249,16 +3248,16 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       SVal RHS;
 
       if (U->getType()->isAnyPointerType())
-        RHS = ValMgr.makeIntValWithPtrWidth(1, false);
+        RHS = svalBuilder.makeIntValWithPtrWidth(1, false);
       else
-        RHS = ValMgr.makeIntVal(1, U->getType());
+        RHS = svalBuilder.makeIntVal(1, U->getType());
 
       SVal Result = evalBinOp(state, Op, V2, RHS, U->getType());
 
       // Conjure a new symbol if necessary to recover precision.
       if (Result.isUnknown() || !getConstraintManager().canReasonAbout(Result)){
         DefinedOrUnknownSVal SymVal =
-          ValMgr.getConjuredSymbolVal(NULL, Ex,
+          svalBuilder.getConjuredSymbolVal(NULL, Ex,
                                       Builder->getCurrentBlockCount());
         Result = SymVal;
 
@@ -3267,13 +3266,13 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         // propagate that constraint.
         if (Loc::IsLocType(U->getType())) {
           DefinedOrUnknownSVal Constraint =
-            svalBuilder.evalEQ(state, V2, ValMgr.makeZeroVal(U->getType()));
+            svalBuilder.evalEQ(state, V2, svalBuilder.makeZeroVal(U->getType()));
 
           if (!state->assume(Constraint, true)) {
             // It isn't feasible for the original value to be null.
             // Propagate this constraint.
             Constraint = svalBuilder.evalEQ(state, SymVal,
-                                       ValMgr.makeZeroVal(U->getType()));
+                                       svalBuilder.makeZeroVal(U->getType()));
 
 
             state = state->assume(Constraint, false);
@@ -3441,7 +3440,7 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         if (RightV.isUnknown() ||!getConstraintManager().canReasonAbout(RightV))
         {
           unsigned Count = Builder->getCurrentBlockCount();
-          RightV = ValMgr.getConjuredSymbolVal(NULL, B->getRHS(), Count);
+          RightV = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), Count);
         }
 
         SVal ExprVal = asLValue ? LeftV : RightV;
@@ -3528,7 +3527,7 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
           // The symbolic value is actually for the type of the left-hand side
           // expression, not the computation type, as this is the value the
           // LValue on the LHS will bind to.
-          LHSVal = ValMgr.getConjuredSymbolVal(NULL, B->getRHS(), LTy, Count);
+          LHSVal = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), LTy, Count);
 
           // However, we need to convert the symbol to the computation type.
           Result = svalBuilder.evalCast(LHSVal, CTy, LTy);
