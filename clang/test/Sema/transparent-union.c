@@ -2,6 +2,7 @@
 typedef union {
   int *ip;
   float *fp;
+  long *__restrict rlp;
 } TU __attribute__((transparent_union));
 
 void f(TU); // expected-note{{passing argument to parameter here}}
@@ -25,6 +26,9 @@ void fip(int *i) {}
 
 void ffp(TU);
 void ffp(float *f) {}
+
+void flp(TU);
+void flp(long *l) {}
 
 void fvp(TU); // expected-note{{previous declaration is here}}
 void fvp(void *p) {} // expected-error{{conflicting types}}
