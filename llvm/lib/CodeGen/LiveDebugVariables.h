@@ -31,6 +31,7 @@ public:
   static char ID; // Pass identification, replacement for typeid
 
   LiveDebugVariables();
+  ~LiveDebugVariables();
 
   /// renameRegister - Move any user variables in OldReg to NewReg:SubIdx.
   /// @param OldReg Old virtual register that is going away.
@@ -45,9 +46,8 @@ public:
 
 private:
 
-  /// runOnMachineFunction - Analyze and remove DBG_VALUE instructions.
   virtual bool runOnMachineFunction(MachineFunction &);
-
+  virtual void releaseMemory();
   virtual void getAnalysisUsage(AnalysisUsage &) const;
 
 };

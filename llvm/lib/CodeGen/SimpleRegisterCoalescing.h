@@ -21,7 +21,7 @@
 
 namespace llvm {
   class SimpleRegisterCoalescing;
-  class LiveVariables;
+  class LiveDebugVariables;
   class TargetRegisterInfo;
   class TargetInstrInfo;
   class VirtRegMap;
@@ -44,6 +44,7 @@ namespace llvm {
     const TargetRegisterInfo* tri_;
     const TargetInstrInfo* tii_;
     LiveIntervals *li_;
+    LiveDebugVariables *ldv_;
     const MachineLoopInfo* loopInfo;
     AliasAnalysis *AA;
     

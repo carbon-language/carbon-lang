@@ -773,6 +773,20 @@ namespace llvm {
   };
 
 
+  // Specialize IntervalMapInfo for half-open slot index intervals.
+  template <typename> struct IntervalMapInfo;
+  template <> struct IntervalMapInfo<SlotIndex> {
+    static inline bool startLess(const SlotIndex &x, const SlotIndex &a) {
+      return x < a;
+    }
+    static inline bool stopLess(const SlotIndex &b, const SlotIndex &x) {
+      return b <= x;
+    }
+    static inline bool adjacent(const SlotIndex &a, const SlotIndex &b) {
+      return a == b;
+    }
+  };
+
 }
 
 #endif // LLVM_CODEGEN_LIVEINDEX_H 
