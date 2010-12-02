@@ -3,6 +3,7 @@ typedef union {
   int *ip;
   float *fp;
   long *__restrict rlp;
+  void *vpa[1];
 } TU __attribute__((transparent_union));
 
 void f(TU); // expected-note{{passing argument to parameter here}}
@@ -38,6 +39,9 @@ void fsp(short *s) {} // expected-error{{conflicting types}}
 
 void fi(TU); // expected-note{{previous declaration is here}}
 void fi(int i) {} // expected-error{{conflicting types}}
+
+void fvpp(TU); // expected-note{{previous declaration is here}}
+void fvpp(void **v) {} // expected-error{{conflicting types}}
 
 /* FIXME: we'd like to just use an "int" here and align it differently
    from the normal "int", but if we do so we lose the alignment

@@ -4736,7 +4736,7 @@ QualType ASTContext::mergeTransparentUnionType(QualType T, QualType SubType,
     if (UD->hasAttr<TransparentUnionAttr>()) {
       for (RecordDecl::field_iterator it = UD->field_begin(),
            itend = UD->field_end(); it != itend; ++it) {
-        QualType ET = getCanonicalParamType(it->getType());
+        QualType ET = it->getType().getUnqualifiedType();
         QualType MT = mergeTypes(ET, SubType, OfBlockPointer, Unqualified);
         if (!MT.isNull())
           return MT;
