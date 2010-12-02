@@ -3515,6 +3515,18 @@ ExprResult Sema::ActOnNoexceptExpr(SourceLocation KeyLoc, SourceLocation,
 ExprResult Sema::ActOnFinishFullExpr(Expr *FullExpr) {
   if (!FullExpr) return ExprError();
 
+  // C99 6.3.2.1:
+  //   [Except in specific positions,] an lvalue that does not have
+  //   array type is converted to the value stored in the
+  //   designated object (and is no longer an lvalue).
+  // This rule does not apply in C++;  however, in ObjC++, we do want
+  // to do lvalue-to-rvalue conversion on top-level ObjCProperty
+  // l-values.
+  if (!FullExpr->isRValue() &&
+      (!getLangOptions().CPlusPlus ||
+       FullExpr->getObjectKind() == OK_ObjCProperty))
+    DefaultFunctionArrayLvalueConversion(FullExpr);
+
   CheckImplicitConversions(FullExpr);
   return MaybeCreateCXXExprWithTemporaries(FullExpr);
 }
