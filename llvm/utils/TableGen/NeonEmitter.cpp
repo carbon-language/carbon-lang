@@ -734,7 +734,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     } else if (sret) {
       s += ts + " r; ";
     } else {
-      s += ts + " r; r = ";
+      s += ts + " r; r = (" + ts + ")";
     }
   }
   
