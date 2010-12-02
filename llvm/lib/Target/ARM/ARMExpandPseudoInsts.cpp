@@ -755,13 +755,14 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         break;
       }
 
+      bool isThumb =
+        (Opcode == ARM::t2MOVi32imm || Opcode == ARM::t2MOVCCi32imm);
+
       LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                     TII->get(Opcode == ARM::MOVi32imm ?
-                              ARM::MOVi16 : ARM::t2MOVi16),
+                     TII->get(isThumb ? ARM::t2MOVi16 : ARM::MOVi16),
                      DstReg);
       HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                     TII->get(Opcode == ARM::MOVi32imm ?
-                              ARM::MOVTi16 : ARM::t2MOVTi16))
+                     TII->get(isThumb ? ARM::t2MOVTi16 : ARM::MOVTi16))
         .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
         .addReg(DstReg);
 
