@@ -303,6 +303,10 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     completeAttrs();
     pop();
   }
+  void visitDeclRef(llvm::StringRef Name, Decl *D) {
+    TemporaryContainer C(*this, Name);
+    if (D) visitDeclRef(D);
+  }
 
   void dispatch(const TemplateArgument &A) {
     switch (A.getKind()) {
@@ -490,6 +494,10 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   // CXXConstructorDecl ?
   // CXXDestructorDecl ?
   // CXXConversionDecl ?
+
+  void dispatch(CXXBaseOrMemberInitializer *Init) {
+    // TODO
+  }
 
   // FieldDecl
   void visitFieldDeclAttrs(FieldDecl *D) {
@@ -706,6 +714,155 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   // UnresolvedUsingTypenameDecl ?
   // StaticAssertDecl ?
 
+  // ObjCImplDecl
+  void visitObjCImplDeclChildren(ObjCImplDecl *D) {
+    visitDeclRef(D->getClassInterface());
+  }
+  void visitObjCImplDeclAsContext(ObjCImplDecl *D) {
+    visitDeclContext(D);
+  }
+
+  // ObjCClassDecl
+  void visitObjCClassDeclChildren(ObjCClassDecl *D) {
+    for (ObjCClassDecl::iterator I = D->begin(), E = D->end(); I != E; ++I)
+      visitDeclRef(I->getInterface());
+  }
+
+  // ObjCInterfaceDecl
+  void visitCategoryList(ObjCCategoryDecl *D) {
+    if (!D) return;
+
+    TemporaryContainer C(*this, "categories");
+    for (; D; D = D->getNextClassCategory())
+      visitDeclRef(D);
+  }
+  void visitObjCInterfaceDeclAttrs(ObjCInterfaceDecl *D) {
+    setPointer("typeptr", D->getTypeForDecl());
+    setFlag("forward_decl", D->isForwardDecl());
+    setFlag("implicit_interface", D->isImplicitInterfaceDecl());
+  }
+  void visitObjCInterfaceDeclChildren(ObjCInterfaceDecl *D) {
+    visitDeclRef("super", D->getSuperClass());
+    visitDeclRef("implementation", D->getImplementation());
+    if (D->protocol_begin() != D->protocol_end()) {
+      TemporaryContainer C(*this, "protocols");
+      for (ObjCInterfaceDecl::protocol_iterator
+             I = D->protocol_begin(), E = D->protocol_end(); I != E; ++I)
+        visitDeclRef(*I);
+    }
+    visitCategoryList(D->getCategoryList());
+  }
+  void visitObjCInterfaceDeclAsContext(ObjCInterfaceDecl *D) {
+    visitDeclContext(D);
+  }
+
+  // ObjCCategoryDecl
+  void visitObjCCategoryDeclAttrs(ObjCCategoryDecl *D) {
+    setFlag("extension", D->IsClassExtension());
+    setFlag("synth_bitfield", D->hasSynthBitfield());
+  }
+  void visitObjCCategoryDeclChildren(ObjCCategoryDecl *D) {
+    visitDeclRef("interface", D->getClassInterface());
+    visitDeclRef("implementation", D->getImplementation());
+    if (D->protocol_begin() != D->protocol_end()) {
+      TemporaryContainer C(*this, "protocols");
+      for (ObjCCategoryDecl::protocol_iterator
+             I = D->protocol_begin(), E = D->protocol_end(); I != E; ++I)
+        visitDeclRef(*I);
+    }
+  }
+  void visitObjCCategoryDeclAsContext(ObjCCategoryDecl *D) {
+    visitDeclContext(D);
+  }
+
+  // ObjCCategoryImplDecl
+  void visitObjCCategoryImplDeclAttrs(ObjCCategoryImplDecl *D) {
+    set("identifier", D->getName());
+  }
+  void visitObjCCategoryImplDeclChildren(ObjCCategoryImplDecl *D) {
+    visitDeclRef(D->getCategoryDecl());
+  }
+
+  // ObjCImplementationDecl
+  void visitObjCImplementationDeclAttrs(ObjCImplementationDecl *D) {
+    setFlag("synth_bitfield", D->hasSynthBitfield());
+    set("identifier", D->getName());
+  }
+  void visitObjCImplementationDeclChildren(ObjCImplementationDecl *D) {
+    visitDeclRef("super", D->getSuperClass());
+    if (D->init_begin() != D->init_end()) {
+      TemporaryContainer C(*this, "initializers");
+      for (ObjCImplementationDecl::init_iterator
+             I = D->init_begin(), E = D->init_end(); I != E; ++I)
+        dispatch(*I);
+    }
+  }
+
+  // ObjCForwardProtocolDecl
+  void visitObjCForwardProtocolDeclChildren(ObjCForwardProtocolDecl *D) {
+    for (ObjCForwardProtocolDecl::protocol_iterator
+           I = D->protocol_begin(), E = D->protocol_end(); I != E; ++I)
+      visitDeclRef(*I);
+  }
+
+  // ObjCProtocolDecl
+  void visitObjCProtocolDeclAttrs(ObjCProtocolDecl *D) {
+    setFlag("forward_decl", D->isForwardDecl());
+  }
+  void visitObjCProtocolDeclChildren(ObjCProtocolDecl *D) {
+    if (D->protocol_begin() != D->protocol_end()) {
+      TemporaryContainer C(*this, "protocols");
+      for (ObjCInterfaceDecl::protocol_iterator
+             I = D->protocol_begin(), E = D->protocol_end(); I != E; ++I)
+        visitDeclRef(*I);
+    }
+  }
+  void visitObjCProtocolDeclAsContext(ObjCProtocolDecl *D) {
+    visitDeclContext(D);
+  }
+
+  // ObjCMethodDecl
+  void visitObjCMethodDeclAttrs(ObjCMethodDecl *D) {
+    // decl qualifier?
+    // implementation control?
+
+    setFlag("instance", D->isInstanceMethod());
+    setFlag("variadic", D->isVariadic());
+    setFlag("synthesized", D->isSynthesized());
+    setFlag("defined", D->isDefined());
+  }
+  void visitObjCMethodDeclChildren(ObjCMethodDecl *D) {
+    dispatch(D->getResultType());
+    for (ObjCMethodDecl::param_iterator
+           I = D->param_begin(), E = D->param_end(); I != E; ++I)
+      dispatch(*I);
+    if (D->isThisDeclarationADefinition())
+      dispatch(D->getBody());
+  }
+
+  // ObjCIvarDecl
+  void setAccessControl(llvm::StringRef prop, ObjCIvarDecl::AccessControl AC) {
+    switch (AC) {
+    case ObjCIvarDecl::None: return set(prop, "none");
+    case ObjCIvarDecl::Private: return set(prop, "private");
+    case ObjCIvarDecl::Protected: return set(prop, "protected");
+    case ObjCIvarDecl::Public: return set(prop, "public");
+    case ObjCIvarDecl::Package: return set(prop, "package");
+    }
+  }
+  void visitObjCIvarDeclAttrs(ObjCIvarDecl *D) {
+    setFlag("synthesize", D->getSynthesize());
+    setAccessControl("access", D->getAccessControl());
+  }
+
+  // ObjCCompatibleAliasDecl
+  void visitObjCCompatibleAliasDeclChildren(ObjCCompatibleAliasDecl *D) {
+    visitDeclRef(D->getClassInterface());
+  }
+
+  // FIXME: ObjCPropertyDecl
+  // FIXME: ObjCPropertyImplDecl
+
   //---- Types -----------------------------------------------------//
   void dispatch(TypeLoc TL) {
     dispatch(TL.getType()); // for now
@@ -839,7 +996,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   void dispatch(Stmt *S) {
     // FIXME: this is not really XML at all
     push("Stmt");
-    out << '\n';
+    out << ">\n";
     Stack.back().State = NS_Children; // explicitly become non-lazy
     S->dump(out, Context.getSourceManager());
     out << '\n';
