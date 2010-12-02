@@ -1178,7 +1178,7 @@ Driver::MainLoop ()
     // However, you don't need to do anything with the characters, since editline will dump these
     // unconsumed characters after printing the prompt again in el_gets.
 
-    SBCommunication master_out_comm("driver.editline");
+    SBCommunication master_out_comm("driver.editline", false);
     master_out_comm.AdoptFileDesriptor(m_editline_pty.GetMasterFileDescriptor(), false);
     master_out_comm.SetReadThreadBytesReceivedCallback(Driver::MasterThreadBytesReceived, this);
 

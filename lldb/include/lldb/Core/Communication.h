@@ -109,7 +109,7 @@ public:
     ///     broadcaster name can be updated after the connect function
     ///     is called.
     //------------------------------------------------------------------
-    Communication(const char * broadcaster_name);
+    Communication(const char * broadcaster_name, bool close_on_eof);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -340,6 +340,9 @@ private:
     //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (Communication);
 
+    bool
+    CloseOnEOF ();
+
 protected:
     std::auto_ptr<Connection> m_connection_ap; ///< The connection that is current in use by this communications class.
     lldb::thread_t m_read_thread; ///< The read thread handle in case we need to cancel the thread.
@@ -348,6 +351,7 @@ protected:
     Mutex m_bytes_mutex; ///< A mutex to protect multi-threaded access to the cached bytes.
     ReadThreadBytesReceived m_callback;
     void *m_callback_baton;
+    bool m_close_on_eof;
 
     size_t
     ReadFromConnection (void *dst, 

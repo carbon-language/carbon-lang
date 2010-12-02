@@ -24,8 +24,8 @@ SBCommunication::SBCommunication() :
 {
 }
 
-SBCommunication::SBCommunication(const char * broadcaster_name) :
-    m_opaque (new Communication (broadcaster_name)),
+SBCommunication::SBCommunication(const char * broadcaster_name, bool close_on_eof) :
+    m_opaque (new Communication (broadcaster_name, close_on_eof)),
     m_opaque_owned (true)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));

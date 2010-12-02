@@ -25,7 +25,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------
-Communication::Communication(const char *name) :
+Communication::Communication(const char *name, bool close_on_eof) :
     Broadcaster (name),
     m_connection_ap (),
     m_read_thread (LLDB_INVALID_HOST_THREAD),
@@ -33,7 +33,8 @@ Communication::Communication(const char *name) :
     m_bytes(),
     m_bytes_mutex (Mutex::eMutexTypeRecursive),
     m_callback (NULL),
-    m_callback_baton (NULL)
+    m_callback_baton (NULL),
+    m_close_on_eof (close_on_eof)
 
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT | LIBLLDB_LOG_COMMUNICATION,
@@ -265,7 +266,8 @@ Communication::AppendBytesToCache (const uint8_t * bytes, size_t len, bool broad
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
                                  "%p Communication::AppendBytesToCache (src = %p, src_len = %zu, broadcast = %i)",
                                  this, bytes, len, broadcast);
-    if (bytes == NULL || len == 0)
+    if ((bytes == NULL || len == 0)
+        && (status != eConnectionStatusEndOfFile))
         return;
     if (m_callback)
     {
@@ -289,6 +291,11 @@ Communication::ReadFromConnection (void *dst, size_t dst_len, ConnectionStatus &
     return 0;
 }
 
+bool
+Communication::CloseOnEOF ()
+{
+    return m_close_on_eof;
+}
 
 bool
 Communication::ReadThreadIsRunning ()
@@ -320,14 +327,21 @@ Communication::ReadThread (void *p)
             size_t bytes_read = comm->ReadFromConnection (buf, sizeof(buf), status, &error);
             if (bytes_read > 0)
                 comm->AppendBytesToCache (buf, bytes_read, true, status);
+            else if ((bytes_read == 0)
+                    && status == eConnectionStatusEndOfFile)
+            {
+                if (comm->CloseOnEOF ())
+                    comm->Disconnect ();
+                comm->AppendBytesToCache (buf, bytes_read, true, status);
+            }
         }
 
         switch (status)
         {
         case eConnectionStatusSuccess:
+        case eConnectionStatusEndOfFile:
             break;
 
-        case eConnectionStatusEndOfFile:
         case eConnectionStatusNoConnection:     // No connection
         case eConnectionStatusLostConnection:   // Lost connection while connected to a valid connection
             done = true;

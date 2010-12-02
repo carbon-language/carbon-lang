@@ -96,7 +96,7 @@ Process::Process(Target &target, Listener &listener) :
     m_addr_byte_size (0),
     m_abi_sp (),
     m_process_input_reader (),
-    m_stdio_communication ("lldb.process.stdio"),
+    m_stdio_communication ("lldb.process.stdio", true),
     m_stdio_communication_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data ()
 {

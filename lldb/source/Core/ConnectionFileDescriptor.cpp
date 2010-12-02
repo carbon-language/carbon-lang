@@ -156,8 +156,8 @@ ConnectionFileDescriptor::Read (void *dst, size_t dst_len, ConnectionStatus &sta
     ssize_t bytes_read = ::read (m_fd, dst, dst_len);
     if (bytes_read == 0)
     {
-        error.SetErrorStringWithFormat("End-of-file.\n");
-        status = eConnectionStatusLostConnection;
+        error.Clear(); // End-of-file.  Do not automatically close; pass along for the end-of-file handlers.
+        status = eConnectionStatusEndOfFile;
     }
     else if (bytes_read < 0)
     {

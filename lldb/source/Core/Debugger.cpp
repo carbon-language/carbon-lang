@@ -166,7 +166,7 @@ Debugger::FindTargetWithProcessID (lldb::pid_t pid)
 Debugger::Debugger () :
     UserID (g_unique_id++),
     DebuggerInstanceSettings (*GetSettingsController()),
-    m_input_comm("debugger.input"),
+    m_input_comm("debugger.input", false),
     m_input_file (),
     m_output_file (),
     m_error_file (),
