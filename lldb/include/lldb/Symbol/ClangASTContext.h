@@ -75,9 +75,6 @@ public:
     clang::FileManager *
     getFileManager();
     
-    clang::FileSystemOptions *
-    getFileSystemOptions();
-    
     clang::SourceManager *
     getSourceManager();
 

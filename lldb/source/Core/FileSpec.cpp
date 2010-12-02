@@ -19,8 +19,8 @@
 #include <fstream>
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/System/Path.h"
-#include "llvm/System/Program.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/Program.h"
 
 #include "lldb/Core/FileSpec.h"
 #include "lldb/Core/DataBufferHeap.h"

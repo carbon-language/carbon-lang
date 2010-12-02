@@ -54,9 +54,9 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/DynamicLibrary.h"
-#include "llvm/System/Host.h"
-#include "llvm/System/Signals.h"
+#include "llvm/Support/DynamicLibrary.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
 
@@ -243,11 +243,11 @@ ClangExpressionParser::ClangExpressionParser(const char *target_triple,
     
     // 5. Set up the source management objects inside the compiler
     
-    m_file_manager.reset(new clang::FileManager());
-    m_file_system_options.reset(new clang::FileSystemOptions());
+    clang::FileSystemOptions file_system_options;
+    m_file_manager.reset(new clang::FileManager(file_system_options));
     
     if (!m_compiler->hasSourceManager())
-        m_compiler->createSourceManager(*m_file_manager.get(), *m_file_system_options.get());
+        m_compiler->createSourceManager(*m_file_manager.get());
     
     m_compiler->createFileManager();
     m_compiler->createPreprocessor();

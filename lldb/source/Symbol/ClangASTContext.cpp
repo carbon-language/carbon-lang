@@ -356,23 +356,18 @@ clang::FileManager *
 ClangASTContext::getFileManager()
 {
     if (m_file_manager_ap.get() == NULL)
-        m_file_manager_ap.reset(new clang::FileManager());
+    {
+        clang::FileSystemOptions file_system_options;
+        m_file_manager_ap.reset(new clang::FileManager(file_system_options));
+    }
     return m_file_manager_ap.get();
-}
-
-clang::FileSystemOptions *
-ClangASTContext::getFileSystemOptions()
-{
-    if (m_file_system_options_ap.get() == NULL)
-        m_file_system_options_ap.reset(new clang::FileSystemOptions());
-    return m_file_system_options_ap.get();
 }
 
 clang::SourceManager *
 ClangASTContext::getSourceManager()
 {
     if (m_source_manager_ap.get() == NULL)
-        m_source_manager_ap.reset(new clang::SourceManager(*getDiagnostic(), *getFileManager(), *getFileSystemOptions()));
+        m_source_manager_ap.reset(new clang::SourceManager(*getDiagnostic(), *getFileManager()));
     return m_source_manager_ap.get();
 }
 
@@ -748,33 +743,33 @@ private:
 };
 
 clang_type_t
-ClangASTContext::CopyType (ASTContext *dest_context, 
-                           ASTContext *source_context,
+ClangASTContext::CopyType (ASTContext *dst_ast, 
+                           ASTContext *src_ast,
                            clang_type_t clang_type)
 {
     // null_client's ownership is transferred to diagnostics
-    FileManager file_manager;
     FileSystemOptions file_system_options;
-    ASTImporter importer(*dest_context, file_manager, file_system_options,
-                         *source_context, file_manager, file_system_options);
+    FileManager file_manager (file_system_options);
+    ASTImporter importer(*dst_ast, file_manager,
+                         *src_ast, file_manager);
     
-    QualType src = QualType::getFromOpaquePtr(clang_type);
-    QualType dst = importer.Import(src);
+    QualType src (QualType::getFromOpaquePtr(clang_type));
+    QualType dst (importer.Import(src));
     
     return dst.getAsOpaquePtr();
 }
 
 
 clang::Decl *
-ClangASTContext::CopyDecl (ASTContext *dest_context, 
-                           ASTContext *source_context,
+ClangASTContext::CopyDecl (ASTContext *dst_ast, 
+                           ASTContext *src_ast,
                            clang::Decl *source_decl)
 {
     // null_client's ownership is transferred to diagnostics
-    FileManager file_manager;
     FileSystemOptions file_system_options;
-    ASTImporter importer(*dest_context, file_manager, file_system_options,
-                         *source_context, file_manager, file_system_options);
+    FileManager file_manager (file_system_options);
+    ASTImporter importer(*dst_ast, file_manager,
+                         *src_ast, file_manager);
     
     return importer.Import(source_decl);
 }
