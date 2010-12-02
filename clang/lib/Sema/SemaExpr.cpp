@@ -5461,6 +5461,13 @@ Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
 
   if (lhsType->isVectorType() || rhsType->isVectorType()) {
     if (lhsType->isVectorType() && rhsType->isVectorType()) {
+      // Allow assignments of an AltiVec vector type to an equivalent GCC
+      // vector type and vice versa
+      if (Context.areCompatibleVectorTypes(lhsType, rhsType)) {
+        Kind = CK_BitCast;
+        return Compatible;
+      }
+
       // If we are allowing lax vector conversions, and LHS and RHS are both
       // vectors, the total size only needs to be the same. This is a bitcast;
       // no bits are changed but the result type is different.
@@ -5468,13 +5475,6 @@ Sema::CheckAssignmentConstraints(QualType lhsType, Expr *&rhs,
           (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType))) {
         Kind = CK_BitCast;
         return IncompatibleVectors;
-      }
-
-      // Allow assignments of an AltiVec vector type to an equivalent GCC
-      // vector type and vice versa
-      if (Context.areCompatibleVectorTypes(lhsType, rhsType)) {
-        Kind = CK_BitCast;
-        return Compatible;
       }
     }
     return Incompatible;
