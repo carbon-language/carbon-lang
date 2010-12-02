@@ -549,9 +549,9 @@ def lldbLoggings():
         if ("LLDB_LOG_OPTION" in os.environ):
             lldb_log_option = os.environ["LLDB_LOG_OPTION"]
         else:
-            lldb_log_option = "event process"
+            lldb_log_option = "event process expr"
         ci.HandleCommand(
-            "log enable -f " + os.environ["LLDB_LOG"] + " lldb " + lldb_log_option,
+            "log enable -T -f " + os.environ["LLDB_LOG"] + " lldb " + lldb_log_option,
             res)
         if not res.Succeeded():
             raise Exception('log enable failed (check LLDB_LOG env variable.')
@@ -561,9 +561,9 @@ def lldbLoggings():
         if ("GDB_REMOTE_LOG_OPTION" in os.environ):
             gdb_remote_log_option = os.environ["GDB_REMOTE_LOG_OPTION"]
         else:
-            gdb_remote_log_option = "packets"
+            gdb_remote_log_option = "packets process"
         ci.HandleCommand(
-            "log enable -f " + os.environ["GDB_REMOTE_LOG"] + " process.gdb-remote "
+            "log enable -T -f " + os.environ["GDB_REMOTE_LOG"] + " process.gdb-remote "
             + gdb_remote_log_option,
             res)
         if not res.Succeeded():
