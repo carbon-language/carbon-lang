@@ -1,6 +1,6 @@
-// RUN: %clang -emit-llvm -S -o %t %s
-// RUN: grep '@x = common global' %t
-// RUN: %clang -fno-common -emit-llvm -S -o %t %s
-// RUN: grep '@x = global' %t
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-DEFAULT
+// RUN: %clang_cc1 %s -fno-common -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-NOCOMMON
 
+// CHECK-DEFAULT: @x = common global
+// CHECK-NOCOMMON: @x = global
 int x;
