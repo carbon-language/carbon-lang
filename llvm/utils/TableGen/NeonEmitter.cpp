@@ -611,9 +611,10 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   case OpSelect:
     // ((0 & 1) | (~0 & 2))
+    s += "(" + ts + ")";
     ts = TypeString(proto[1], typestr);
-    s += "(a & (" + ts + ")b) | ";
-    s += "(~a & (" + ts + ")c)";
+    s += "((a & (" + ts + ")b) | ";
+    s += "(~a & (" + ts + ")c))";
     break;
   case OpRev16:
     s += "__builtin_shufflevector(a, a";
