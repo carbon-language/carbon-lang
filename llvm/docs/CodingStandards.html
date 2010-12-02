@@ -51,6 +51,7 @@
         </ol></li>
       <li><a href="#micro">The Low-Level Issues</a>
         <ol>
+          <li><a href="#ll_naming">Name Types, Functions, Variables, and Enumerators Properly</a></li>
           <li><a href="#ll_assert">Assert Liberally</a></li>
           <li><a href="#ll_ns_std">Do not use '<tt>using namespace std</tt>'</a></li>
           <li><a href="#ll_virtual_anch">Provide a virtual method anchor for
@@ -805,6 +806,72 @@ locality.</p>
   <a name="micro">The Low-Level Issues</a>
 </div>
 <!-- ======================================================================= -->
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="ll_naming">Name Types, Functions, Variables, and Enumerators Properly</a>
+</div>
+
+<div class="doc_text">
+<p>Poorly-chosen names mislead the reader and cause bugs.  We cannot
+stress enough how important it is to use <em>descriptive</em> names.
+Pick names that match the semantics and role of the underlying
+entities, within reason.  Avoid abbreviations unless they are well
+known.</p>
+
+<p>In general, names of types, functions, variables, and enumerators
+should be in camel case (e.g. <tt>TextFileReader</tt>
+and <tt>isLValue()</tt>).  Type names (including classes, structs,
+enums, typedefs, etc) should be nouns and start with an upper-case
+letter (e.g. <tt>TextFileReader</tt>).  Function names should be verb
+phrases (as they represent actions) and start with a lower-case letter
+(e.g. a predicate may be named <tt>isFoo()</tt> or <tt>hasBar()</tt>,
+while the name of a command-like function should be imperative,
+like <tt>openFile()</tt>).</p>
+
+<p>Enumerators and public member variables should start with an
+upper-case letter, just like types.  Unless the enumerators are
+defined in their own small namespace or inside a class, they should
+have a prefix.  For example, <tt>enum ValueKind { ... };</tt> may
+contain enumerators like
+<tt>VK_Argument</tt>, <tt>VK_BasicBlock</tt>, etc.  Enumerators that
+are just convenience constants are exempt from the requirement for a
+prefix.  For instance:</p>
+<div class="doc_code">
+<pre>
+enum {
+  MaxSize = 42,
+  Density = 12
+};
+</pre>
+</div>
+
+<p>As an exception, classes that mimic STL classes can have member names
+in STL's style of lower-case words separated by underscores
+(e.g. <tt>begin()</tt>, <tt>push_back()</tt>, and <tt>empty()</tt>).</p>
+
+<p>Here are some examples of bad and good names:</p>
+<div class="doc_code">
+<pre>
+class VehicleMaker {
+  ...
+  Factory&lt;Tire&gt; f;            // Bad -- abbreviation and non-descriptive.
+  Factory&lt;Tire&gt; factory;      // Better.
+  Factory&lt;Tire&gt; tireFactory;  // Even better -- if VehicleMaker has more than one
+                              // kind of factories.
+};
+
+Vehicle MakeVehicle(VehicleType Type) {
+  VehicleMaker m;  // Might be OK if having a short life-span.
+  Tire tmp1 = m.makeTire();  // Bad -- 'tmp1' provides no information.
+  Light headlight = m.makeLight("head");  // Good -- descriptive.
+  ...
+}
+</pre>
+</div>
+
+</div>
 
 
 <!-- _______________________________________________________________________ -->
