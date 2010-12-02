@@ -696,6 +696,9 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(const CoalescerPair &CP) {
   unsigned DstReg = CP.getDstReg();
   unsigned SubIdx = CP.getSubIdx();
 
+  // Update LiveDebugVariables.
+  ldv_->renameRegister(SrcReg, DstReg, SubIdx);
+
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(SrcReg);
        MachineInstr *UseMI = I.skipInstruction();) {
     // A PhysReg copy that won't be coalesced can perhaps be rematerialized
@@ -1779,6 +1782,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   }
 
   DEBUG(dump());
+  DEBUG(ldv_->dump());
   return true;
 }
 

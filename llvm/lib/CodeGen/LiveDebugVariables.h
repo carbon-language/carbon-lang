@@ -44,6 +44,9 @@ public:
   /// that happened during register allocation.
   void emitDebugValues();
 
+  /// dump - Print data structures to dbgs().
+  void dump();
+
 private:
 
   virtual bool runOnMachineFunction(MachineFunction &);

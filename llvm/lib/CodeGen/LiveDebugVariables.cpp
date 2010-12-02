@@ -241,6 +241,10 @@ public:
   /// collecting all their def points.
   void computeIntervals(LiveIntervals &LIS, MachineDominatorTree &MDT);
 
+  /// renameRegister - Update locations to rewrite OldReg as NewReg:SubIdx.
+  void renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx,
+                      const TargetRegisterInfo *TRI);
+
   void print(raw_ostream&, const TargetRegisterInfo*);
 };
 } // namespace
@@ -268,6 +272,9 @@ class LDVImpl {
 
   /// getUserValue - Find or create a UserValue.
   UserValue *getUserValue(const MDNode *Var, unsigned Offset);
+
+  /// lookupVirtReg - Find the EC leader for VirtReg or null.
+  UserValue *lookupVirtReg(unsigned VirtReg);
 
   /// mapVirtReg - Map virtual register to an equivalence class.
   void mapVirtReg(unsigned VirtReg, UserValue *EC);
@@ -299,6 +306,9 @@ public:
     virtRegMap.clear();
     userVarMap.clear();
   }
+
+  /// renameRegister - Replace all references to OldReg wiht NewReg:SubIdx.
+  void renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx);
 
   void print(raw_ostream&);
 };
@@ -377,6 +387,12 @@ void LDVImpl::mapVirtReg(unsigned VirtReg, UserValue *EC) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) && "Only map VirtRegs");
   UserValue *&Leader = virtRegMap[VirtReg];
   Leader = UserValue::merge(Leader, EC);
+}
+
+UserValue *LDVImpl::lookupVirtReg(unsigned VirtReg) {
+  if (UserValue *UV = virtRegMap.lookup(VirtReg))
+    return UV->getLeader();
+  return 0;
 }
 
 bool LDVImpl::handleDebugValue(MachineInstr *MI, SlotIndex Idx) {
@@ -551,3 +567,36 @@ LiveDebugVariables::~LiveDebugVariables() {
   if (pImpl)
     delete static_cast<LDVImpl*>(pImpl);
 }
+
+void UserValue::
+renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx,
+               const TargetRegisterInfo *TRI) {
+  for (unsigned i = 0, e = locations.size(); i != e; ++i) {
+    Location &Loc = locations[i];
+    if (Loc.Kind != OldReg)
+      continue;
+    Loc.Kind = NewReg;
+    if (SubIdx && Loc.Data.SubIdx)
+      Loc.Data.SubIdx = TRI->composeSubRegIndices(SubIdx, Loc.Data.SubIdx);
+  }
+}
+
+void LDVImpl::
+renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx) {
+  for (UserValue *UV = lookupVirtReg(OldReg); UV; UV = UV->getNext())
+    UV->renameRegister(OldReg, NewReg, SubIdx, TRI);
+}
+
+void LiveDebugVariables::
+renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx) {
+  if (pImpl)
+    static_cast<LDVImpl*>(pImpl)->renameRegister(OldReg, NewReg, SubIdx);
+}
+
+#ifndef NDEBUG
+void LiveDebugVariables::dump() {
+  if (pImpl)
+    static_cast<LDVImpl*>(pImpl)->print(dbgs());
+}
+#endif
+
