@@ -58,3 +58,15 @@ struct a7 {
 };
 
 struct a7 test7 = { .b = 0, .v = "bar" };
+
+
+// PR279 comment #3
+char test8(int X) {
+  char str[100000] = "abc"; // tail should be memset.
+  return str[X];
+// CHECK: @test8(
+// CHECK: call void @llvm.memset
+// CHECK: store i8 97
+// CHECK: store i8 98
+// CHECK: store i8 99
+}

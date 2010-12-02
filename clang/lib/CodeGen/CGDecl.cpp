@@ -513,8 +513,25 @@ namespace {
 /// NumStores scalar stores.
 static bool canEmitInitWithFewStoresAfterMemset(llvm::Constant *Init,
                                                 unsigned &NumStores) {
-  // Zero never requires any extra stores.
-  if (isa<llvm::ConstantAggregateZero>(Init)) return true;
+  // Zero and Undef never requires any extra stores.
+  if (isa<llvm::ConstantAggregateZero>(Init) ||
+      isa<llvm::ConstantPointerNull>(Init) ||
+      isa<llvm::UndefValue>(Init))
+    return true;
+  if (isa<llvm::ConstantInt>(Init) || isa<llvm::ConstantFP>(Init) ||
+      isa<llvm::ConstantVector>(Init) || isa<llvm::BlockAddress>(Init) ||
+      isa<llvm::ConstantExpr>(Init))
+    return Init->isNullValue() || NumStores--;
+
+  // See if we can emit each element.
+  if (isa<llvm::ConstantArray>(Init) || isa<llvm::ConstantStruct>(Init)) {
+    for (unsigned i = 0, e = Init->getNumOperands(); i != e; ++i) {
+      llvm::Constant *Elt = cast<llvm::Constant>(Init->getOperand(i));
+      if (!canEmitInitWithFewStoresAfterMemset(Elt, NumStores))
+        return false;
+    }
+    return true;
+  }
   
   // Anything else is hard and scary.
   return false;
@@ -526,10 +543,30 @@ static bool canEmitInitWithFewStoresAfterMemset(llvm::Constant *Init,
 static void emitStoresForInitAfterMemset(llvm::Constant *Init, llvm::Value *Loc,
                                          CGBuilderTy &Builder) {
   // Zero doesn't require any stores.
-  if (isa<llvm::ConstantAggregateZero>(Init)) return;
+  if (isa<llvm::ConstantAggregateZero>(Init) ||
+      isa<llvm::ConstantPointerNull>(Init) ||
+      isa<llvm::UndefValue>(Init))
+    return;
   
+  if (isa<llvm::ConstantInt>(Init) || isa<llvm::ConstantFP>(Init) ||
+      isa<llvm::ConstantVector>(Init) || isa<llvm::BlockAddress>(Init) ||
+      isa<llvm::ConstantExpr>(Init)) {
+    if (!Init->isNullValue())
+      Builder.CreateStore(Init, Loc);
+    return;
+  }
   
-  assert(0 && "Unknown value type!");
+  assert((isa<llvm::ConstantStruct>(Init) || isa<llvm::ConstantArray>(Init)) &&
+         "Unknown value type!");
+  
+  for (unsigned i = 0, e = Init->getNumOperands(); i != e; ++i) {
+    llvm::Constant *Elt = cast<llvm::Constant>(Init->getOperand(i));
+    if (Elt->isNullValue()) continue;
+    
+    // Otherwise, get a pointer to the element and emit it.
+    emitStoresForInitAfterMemset(Elt, Builder.CreateConstGEP2_32(Loc, 0, i),
+                                 Builder);
+  }
 }
 
 
@@ -778,8 +815,6 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
                              getContext().getTypeSizeInChars(Ty).getQuantity());
       
       const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
-      if (Loc->getType() != BP)
-        Loc = Builder.CreateBitCast(Loc, BP, "tmp");
       
       llvm::Value *NotVolatile = Builder.getFalse();
 
