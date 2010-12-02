@@ -3,12 +3,12 @@
 
 void bar(id(^)(void));
 void foo(id <NSObject>(^objectCreationBlock)(void)) {
-    return bar(objectCreationBlock); // expected-warning{{incompatible pointer types converting 'id<NSObject> (^)()' to type 'id (^)()'}}
+    return bar(objectCreationBlock); // expected-warning{{incompatible pointer types passing 'id<NSObject> (^)()' to parameter of type 'id (^)()'}}
 }
 
 void bar2(id(*)(void));
 void foo2(id <NSObject>(*objectCreationBlock)(void)) {
-    return bar2(objectCreationBlock); // expected-warning{{incompatible pointer types converting 'id<NSObject> (*)()' to type 'id (*)()'}}
+    return bar2(objectCreationBlock); // expected-warning{{incompatible pointer types passing 'id<NSObject> (*)()' to parameter of type 'id (*)()'}}
 }
 
 void bar3(id(*)()); // expected-note{{candidate function}}
