@@ -497,11 +497,42 @@ void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
   EmitNullInitializationToLValue(CGF.MakeAddrLValue(Slot.getAddr(), T), T);
 }
 
+/// isSimpleZero - If emitting this value will obviously just cause a store of
+/// zero to memory, return true.  This can return false if uncertain, so it just
+/// handles simple cases.
+static bool isSimpleZero(const Expr *E, CodeGenFunction &CGF) {
+  // (0)
+  if (const ParenExpr *PE = dyn_cast<ParenExpr>(E))
+    return isSimpleZero(PE->getSubExpr(), CGF);
+  // 0
+  if (const IntegerLiteral *IL = dyn_cast<IntegerLiteral>(E))
+    return IL->getValue() == 0;
+  // +0.0
+  if (const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(E))
+    return FL->getValue().isPosZero();
+  // int()
+  if ((isa<ImplicitValueInitExpr>(E) || isa<CXXScalarValueInitExpr>(E)) &&
+      CGF.getTypes().isZeroInitializable(E->getType()))
+    return true;
+  // (int*)0 - Null pointer expressions.
+  if (const CastExpr *ICE = dyn_cast<CastExpr>(E))
+    return ICE->getCastKind() == CK_NullToPointer;
+  // '\0'
+  if (const CharacterLiteral *CL = dyn_cast<CharacterLiteral>(E))
+    return CL->getValue() == 0;
+  
+  // Otherwise, hard case: conservatively return false.
+  return false;
+}
+
+
 void 
 AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV, QualType T) {
   // FIXME: Ignore result?
   // FIXME: Are initializers affected by volatile?
-  if (isa<ImplicitValueInitExpr>(E)) {
+  if (Dest.isZeroed() && isSimpleZero(E, CGF)) {
+    // Storing "i32 0" to a zero'd memory location is a noop.
+  } else if (isa<ImplicitValueInitExpr>(E)) {
     EmitNullInitializationToLValue(LV, T);
   } else if (T->isReferenceType()) {
     RValue RV = CGF.EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0);
@@ -509,13 +540,19 @@ AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV, QualType T) {
   } else if (T->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
   } else if (CGF.hasAggregateLLVMType(T)) {
-    CGF.EmitAggExpr(E, AggValueSlot::forAddr(LV.getAddress(), false, true));
+    CGF.EmitAggExpr(E, AggValueSlot::forAddr(LV.getAddress(), false, true,
+                                             false, Dest.isZeroed()));
   } else {
     CGF.EmitStoreThroughLValue(CGF.EmitAnyExpr(E), LV, T);
   }
 }
 
 void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
+  // If the destination slot is already zeroed out before the aggregate is
+  // copied into it, we don't have to emit any zeros here.
+  if (Dest.isZeroed() && CGF.getTypes().isZeroInitializable(T))
+    return;
+  
   if (!CGF.hasAggregateLLVMType(T)) {
     // For non-aggregates, we can store zero
     llvm::Value *Null = llvm::Constant::getNullValue(CGF.ConvertType(T));
@@ -573,13 +610,27 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     // FIXME: were we intentionally ignoring address spaces and GC attributes?
 
     for (uint64_t i = 0; i != NumArrayElements; ++i) {
+      // If we're done emitting initializers and the destination is known-zeroed
+      // then we're done.
+      if (i == NumInitElements &&
+          Dest.isZeroed() &&
+          CGF.getTypes().isZeroInitializable(ElementType))
+        break;
+
       llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
       LValue LV = CGF.MakeAddrLValue(NextVal, ElementType);
+      
       if (i < NumInitElements)
         EmitInitializationToLValue(E->getInit(i), LV, ElementType);
-
       else
         EmitNullInitializationToLValue(LV, ElementType);
+      
+      // If the GEP didn't get used because of a dead zero init or something
+      // else, clean it up for -O0 builds and general tidiness.
+      if (llvm::GetElementPtrInst *GEP =
+            dyn_cast<llvm::GetElementPtrInst>(NextVal))
+        if (GEP->use_empty())
+          GEP->eraseFromParent();
     }
     return;
   }
@@ -612,13 +663,13 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
     // FIXME: volatility
     FieldDecl *Field = E->getInitializedFieldInUnion();
-    LValue FieldLoc = CGF.EmitLValueForFieldInitialization(DestPtr, Field, 0);
 
+    LValue FieldLoc = CGF.EmitLValueForFieldInitialization(DestPtr, Field, 0);
     if (NumInitElements) {
       // Store the initializer into the field
       EmitInitializationToLValue(E->getInit(0), FieldLoc, Field->getType());
     } else {
-      // Default-initialize to null
+      // Default-initialize to null.
       EmitNullInitializationToLValue(FieldLoc, Field->getType());
     }
 
@@ -638,10 +689,16 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     if (Field->isUnnamedBitfield())
       continue;
 
+    // Don't emit GEP before a noop store of zero.
+    if (CurInitVal == NumInitElements && Dest.isZeroed() &&
+        CGF.getTypes().isZeroInitializable(E->getType()))
+      break;
+    
     // FIXME: volatility
     LValue FieldLoc = CGF.EmitLValueForFieldInitialization(DestPtr, *Field, 0);
     // We never generate write-barries for initialized fields.
     FieldLoc.setNonGC(true);
+    
     if (CurInitVal < NumInitElements) {
       // Store the initializer into the field.
       EmitInitializationToLValue(E->getInit(CurInitVal++), FieldLoc,
@@ -650,12 +707,83 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       // We're out of initalizers; default-initialize to null
       EmitNullInitializationToLValue(FieldLoc, Field->getType());
     }
+    
+    // If the GEP didn't get used because of a dead zero init or something
+    // else, clean it up for -O0 builds and general tidiness.
+    if (FieldLoc.isSimple())
+      if (llvm::GetElementPtrInst *GEP =
+            dyn_cast<llvm::GetElementPtrInst>(FieldLoc.getAddress()))
+        if (GEP->use_empty())
+          GEP->eraseFromParent();
   }
 }
 
 //===----------------------------------------------------------------------===//
 //                        Entry Points into this File
 //===----------------------------------------------------------------------===//
+
+/// GetNumNonZeroBytesInInit - Get an approximate count of the number of
+/// non-zero bytes that will be stored when outputting the initializer for the
+/// specified initializer expression.
+static uint64_t GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
+  if (const ParenExpr *PE = dyn_cast<ParenExpr>(E))
+    return GetNumNonZeroBytesInInit(PE->getSubExpr(), CGF);
+
+  // 0 and 0.0 won't require any non-zero stores!
+  if (isSimpleZero(E, CGF)) return 0;
+
+  // If this is an initlist expr, sum up the size of sizes of the (present)
+  // elements.  If this is something weird, assume the whole thing is non-zero.
+  const InitListExpr *ILE = dyn_cast<InitListExpr>(E);
+  if (ILE == 0 || !CGF.getTypes().isZeroInitializable(ILE->getType()))
+    return CGF.getContext().getTypeSize(E->getType())/8;
+  
+  uint64_t NumNonZeroBytes = 0;
+  for (unsigned i = 0, e = ILE->getNumInits(); i != e; ++i)
+    NumNonZeroBytes += GetNumNonZeroBytesInInit(ILE->getInit(i), CGF);
+  return NumNonZeroBytes;
+}
+
+/// CheckAggExprForMemSetUse - If the initializer is large and has a lot of
+/// zeros in it, emit a memset and avoid storing the individual zeros.
+///
+static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
+                                     CodeGenFunction &CGF) {
+  // If the slot is already known to be zeroed, nothing to do.  Don't mess with
+  // volatile stores.
+  if (Slot.isZeroed() || Slot.isVolatile() || Slot.getAddr() == 0) return;
+  
+  // If the type is 16-bytes or smaller, prefer individual stores over memset.
+  std::pair<uint64_t, unsigned> TypeInfo =
+    CGF.getContext().getTypeInfo(E->getType());
+  if (TypeInfo.first/8 <= 16)
+    return;
+
+  // Check to see if over 3/4 of the initializer are known to be zero.  If so,
+  // we prefer to emit memset + individual stores for the rest.
+  uint64_t NumNonZeroBytes = GetNumNonZeroBytesInInit(E, CGF);
+  if (NumNonZeroBytes*4 > TypeInfo.first/8)
+    return;
+  
+  // Okay, it seems like a good idea to use an initial memset, emit the call.
+  llvm::Constant *SizeVal = CGF.Builder.getInt64(TypeInfo.first/8);
+  llvm::ConstantInt *AlignVal = CGF.Builder.getInt32(TypeInfo.second/8);
+
+  llvm::Value *Loc = Slot.getAddr();
+  const llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  
+  Loc = CGF.Builder.CreateBitCast(Loc, BP);
+  CGF.Builder.CreateCall5(CGF.CGM.getMemSetFn(Loc->getType(),
+                                              SizeVal->getType()),
+                          Loc, CGF.Builder.getInt8(0), SizeVal, AlignVal,
+                          CGF.Builder.getFalse());
+  
+  // Tell the AggExprEmitter that the slot is known zero.
+  Slot.setZeroed();
+}
+
+
+
 
 /// EmitAggExpr - Emit the computation of the specified expression of aggregate
 /// type.  The result is computed into DestPtr.  Note that if DestPtr is null,
@@ -670,20 +798,20 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot,
                                   bool IgnoreResult) {
   assert(E && hasAggregateLLVMType(E->getType()) &&
          "Invalid aggregate expression to emit");
-  assert((Slot.getAddr() != 0 || Slot.isIgnored())
-         && "slot has bits but no address");
+  assert((Slot.getAddr() != 0 || Slot.isIgnored()) &&
+         "slot has bits but no address");
 
-  AggExprEmitter(*this, Slot, IgnoreResult)
-    .Visit(const_cast<Expr*>(E));
+  // Optimize the slot if possible.
+  CheckAggExprForMemSetUse(Slot, E, *this);
+ 
+  AggExprEmitter(*this, Slot, IgnoreResult).Visit(const_cast<Expr*>(E));
 }
 
 LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
   assert(hasAggregateLLVMType(E->getType()) && "Invalid argument!");
   llvm::Value *Temp = CreateMemTemp(E->getType());
   LValue LV = MakeAddrLValue(Temp, E->getType());
-  AggValueSlot Slot
-    = AggValueSlot::forAddr(Temp, LV.isVolatileQualified(), false);
-  EmitAggExpr(E, Slot);
+  EmitAggExpr(E, AggValueSlot::forAddr(Temp, LV.isVolatileQualified(), false));
   return LV;
 }
 

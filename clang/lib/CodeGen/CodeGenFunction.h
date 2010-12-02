@@ -1662,8 +1662,7 @@ public:
                                   const BlockDeclRefExpr *BDRE);
 
   RValue EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
-                                    AggValueSlot Slot
-                                      = AggValueSlot::ignored());
+                                    AggValueSlot Slot =AggValueSlot::ignored());
 
   void EmitCXXThrowExpr(const CXXThrowExpr *E);
 

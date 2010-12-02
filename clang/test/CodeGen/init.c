@@ -70,3 +70,33 @@ char test8(int X) {
 // CHECK: store i8 98
 // CHECK: store i8 99
 }
+
+void bar(void*);
+
+// PR279
+int test9(int X) {
+  int Arr[100] = { X };     // Should use memset
+  bar(Arr);
+// CHECK: @test9
+// CHECK: call void @llvm.memset
+// CHECK-NOT: store i32 0
+// CHECK: call void @bar
+}
+
+struct a {
+  int a, b, c, d, e, f, g, h, i, j, k, *p;
+};
+
+struct b {
+  struct a a,b,c,d,e,f,g;
+};
+
+int test10(int X) {
+  struct b S = { .a.a = X, .d.e = X, .f.e = 0, .f.f = 0, .f.p = 0 };
+  bar(&S);
+
+  // CHECK: @test10
+  // CHECK: call void @llvm.memset
+  // CHECK-NOT: store i32 0
+  // CHECK: call void @bar
+}

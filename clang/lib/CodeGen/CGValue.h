@@ -336,6 +336,11 @@ class AggValueSlot {
   bool VolatileFlag : 1;
   bool LifetimeFlag : 1;
   bool RequiresGCollection : 1;
+  
+  /// IsZeroed - This is set to true if the destination is known to be zero
+  /// before the assignment into it.  This means that zero fields don't need to
+  /// be set.
+  bool IsZeroed : 1;
 
 public:
   /// ignored - Returns an aggregate value slot indicating that the
@@ -343,7 +348,7 @@ public:
   static AggValueSlot ignored() {
     AggValueSlot AV;
     AV.Addr = 0;
-    AV.VolatileFlag = AV.LifetimeFlag = AV.RequiresGCollection = 0;
+    AV.VolatileFlag = AV.LifetimeFlag = AV.RequiresGCollection = AV.IsZeroed =0;
     return AV;
   }
 
@@ -357,17 +362,19 @@ public:
   ///   somewhere that ObjC GC calls should be emitted for
   static AggValueSlot forAddr(llvm::Value *Addr, bool Volatile,
                               bool LifetimeExternallyManaged,
-                              bool RequiresGCollection=false) {
+                              bool RequiresGCollection = false,
+                              bool IsZeroed = false) {
     AggValueSlot AV;
     AV.Addr = Addr;
     AV.VolatileFlag = Volatile;
     AV.LifetimeFlag = LifetimeExternallyManaged;
     AV.RequiresGCollection = RequiresGCollection;
+    AV.IsZeroed = IsZeroed;
     return AV;
   }
 
   static AggValueSlot forLValue(LValue LV, bool LifetimeExternallyManaged,
-                                bool RequiresGCollection=false) {
+                                bool RequiresGCollection = false) {
     return forAddr(LV.getAddress(), LV.isVolatileQualified(),
                    LifetimeExternallyManaged, RequiresGCollection);
   }
@@ -399,6 +406,10 @@ public:
     return RValue::getAggregate(getAddr(), isVolatile());
   }
   
+  void setZeroed(bool V = true) { IsZeroed = V; }
+  bool isZeroed() const {
+    return IsZeroed;
+  }
 };
 
 }  // end namespace CodeGen

@@ -696,8 +696,7 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
 
     // Get the element type.
     const llvm::Type *LElemTy = ConvertTypeForMem(Ty);
-    const llvm::Type *LElemPtrTy =
-      llvm::PointerType::get(LElemTy, Ty.getAddressSpace());
+    const llvm::Type *LElemPtrTy = LElemTy->getPointerTo(Ty.getAddressSpace());
 
     llvm::Value *VLASize = EmitVLASize(Ty);
 
@@ -860,7 +859,7 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
     } else if (Init->getType()->isAnyComplexType()) {
       EmitComplexExprIntoAddr(Init, Loc, isVolatile);
     } else {
-      EmitAggExpr(Init, AggValueSlot::forAddr(Loc, isVolatile, true));
+      EmitAggExpr(Init, AggValueSlot::forAddr(Loc, isVolatile, true, false));
     }
   }
 
