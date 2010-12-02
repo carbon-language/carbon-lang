@@ -294,12 +294,20 @@ static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout, bool InSet,
   if (Layout && A && B) {
     const MCSymbol &SA = A->getSymbol();
     const MCSymbol &SB = B->getSymbol();
-    const MCObjectFormat &F =
-      Layout->getAssembler().getBackend().getObjectFormat();
+    const MCAssembler &Asm = Layout->getAssembler();
+    const MCObjectFormat &F = Asm.getBackend().getObjectFormat();
     if (SA.isDefined() && SB.isDefined() && F.isAbsolute(InSet, SA, SB)) {
-      const MCAssembler &Asm = Layout->getAssembler();
       MCSymbolData &AD = Asm.getSymbolData(A->getSymbol());
       MCSymbolData &BD = Asm.getSymbolData(B->getSymbol());
+
+      if (AD.getFragment() == BD.getFragment()) {
+        Res = MCValue::get(+ AD.getOffset()
+                           - BD.getOffset()
+                           + LHS.getConstant()
+                           + RHS_Cst);
+        return true;
+      }
+
       Res = MCValue::get(+ Layout->getSymbolAddress(&AD)
                          - Layout->getSymbolAddress(&BD)
                          + LHS.getConstant()
