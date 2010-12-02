@@ -459,23 +459,11 @@ void  MCELFStreamer::fixSymbolsInTLSFixups(const MCExpr *expr) {
 }
 
 void MCELFStreamer::EmitInstToFragment(const MCInst &Inst) {
-  MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
+  this->MCObjectStreamer::EmitInstToFragment(Inst);
+  MCInstFragment &F = *cast<MCInstFragment>(getCurrentFragment());
 
-  // Add the fixups and data.
-  //
-  // FIXME: Revisit this design decision when relaxation is done, we may be
-  // able to get away with not storing any extra data in the MCInst.
-  SmallVector<MCFixup, 4> Fixups;
-  SmallString<256> Code;
-  raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
-  VecOS.flush();
-
-  for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
-    fixSymbolsInTLSFixups(Fixups[i].getValue());
-
-  IF->getCode() = Code;
-  IF->getFixups() = Fixups;
+  for (unsigned i = 0, e = F.getFixups().size(); i != e; ++i)
+    fixSymbolsInTLSFixups(F.getFixups()[i].getValue());
 }
 
 void MCELFStreamer::EmitInstToData(const MCInst &Inst) {

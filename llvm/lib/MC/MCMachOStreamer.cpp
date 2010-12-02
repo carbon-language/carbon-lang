@@ -31,7 +31,6 @@ namespace {
 
 class MCMachOStreamer : public MCObjectStreamer {
 private:
-  virtual void EmitInstToFragment(const MCInst &Inst);
   virtual void EmitInstToData(const MCInst &Inst);
 
 public:
@@ -339,23 +338,6 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
 void MCMachOStreamer::EmitValueToOffset(const MCExpr *Offset,
                                         unsigned char Value) {
   new MCOrgFragment(*Offset, Value, getCurrentSectionData());
-}
-
-void MCMachOStreamer::EmitInstToFragment(const MCInst &Inst) {
-  MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
-
-  // Add the fixups and data.
-  //
-  // FIXME: Revisit this design decision when relaxation is done, we may be
-  // able to get away with not storing any extra data in the MCInst.
-  SmallVector<MCFixup, 4> Fixups;
-  SmallString<256> Code;
-  raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
-  VecOS.flush();
-
-  IF->getCode() = Code;
-  IF->getFixups() = Fixups;
 }
 
 void MCMachOStreamer::EmitInstToData(const MCInst &Inst) {

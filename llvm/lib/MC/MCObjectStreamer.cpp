@@ -172,6 +172,13 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
   EmitInstToFragment(Inst);
 }
 
+void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
+  MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
+
+  raw_svector_ostream VecOS(IF->getCode());
+  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups());
+}
+
 void MCObjectStreamer::Finish() {
   getAssembler().Finish();
 }
