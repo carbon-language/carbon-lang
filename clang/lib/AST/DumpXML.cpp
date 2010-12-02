@@ -262,7 +262,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     if (Name.isIdentifier())
       return set("name", Name.getAsIdentifierInfo()->getName());
 
-    set("name", "<unsupported>");
+    set("name", Name.getAsString());
   }
 
   class TemporaryContainer {
