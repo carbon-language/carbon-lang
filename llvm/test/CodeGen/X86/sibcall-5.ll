@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin8 | FileCheck %s --check-prefix=X32
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s --check-prefix=X64
+; RUN: llc < %s -mtriple=i386-apple-darwin8 -mattr=+sse2  | FileCheck %s --check-prefix=X32
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+sse2 | FileCheck %s --check-prefix=X64
 
 ; Sibcall optimization of expanded libcalls.
 ; rdar://8707777
