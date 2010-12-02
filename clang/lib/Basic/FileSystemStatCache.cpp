@@ -29,7 +29,7 @@ using namespace clang;
 #endif
 
 /// FileSystemStatCache::get - Get the 'stat' information for the specified
-/// path, using the cache to accellerate it if possible.  This returns true if
+/// path, using the cache to accelerate it if possible.  This returns true if
 /// the path does not exist or false if it exists.
 ///
 /// If FileDescriptor is non-null, then this lookup should only return success

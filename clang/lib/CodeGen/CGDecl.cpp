@@ -291,8 +291,7 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   // FIXME: It is really dangerous to store this in the map; if anyone
   // RAUW's the GV uses of this constant will be invalid.
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
-  const llvm::Type *LPtrTy =
-    llvm::PointerType::get(LTy, D.getType().getAddressSpace());
+  const llvm::Type *LPtrTy = LTy->getPointerTo(D.getType().getAddressSpace());
   DMEntry = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
 
   // Emit global variable debug descriptor for static vars.
@@ -815,6 +814,8 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
                              getContext().getTypeSizeInChars(Ty).getQuantity());
       
       const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
+      if (Loc->getType() != BP)
+        Loc = Builder.CreateBitCast(Loc, BP, "tmp");
       
       llvm::Value *NotVolatile = Builder.getFalse();
 
@@ -823,14 +824,14 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
       if (shouldUseMemSetPlusStoresToInitialize(Init, 
                       CGM.getTargetData().getTypeAllocSize(Init->getType()))) {
         const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
-        llvm::Value *MemSetDest = Loc;
-        if (MemSetDest->getType() != BP)
-          MemSetDest = Builder.CreateBitCast(MemSetDest, BP, "tmp");
         
         Builder.CreateCall5(CGM.getMemSetFn(BP, SizeVal->getType()),
-                            MemSetDest, Builder.getInt8(0), SizeVal, AlignVal,
+                            Loc, Builder.getInt8(0), SizeVal, AlignVal,
                             NotVolatile);
-        emitStoresForInitAfterMemset(Init, Loc, Builder);
+        if (!Init->isNullValue()) {
+          Loc = Builder.CreateBitCast(Loc, Init->getType()->getPointerTo());
+          emitStoresForInitAfterMemset(Init, Loc, Builder);
+        }
         
       } else {
         // Otherwise, create a temporary global with the initializer then 
@@ -846,10 +847,6 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
         if (SrcPtr->getType() != BP)
           SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
 
-        const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
-        if (Loc->getType() != BP)
-          Loc = Builder.CreateBitCast(Loc, BP, "tmp");
-        
         Builder.CreateCall5(CGM.getMemCpyFn(Loc->getType(), SrcPtr->getType(),
                                             SizeVal->getType()),
                             Loc, SrcPtr, SizeVal, AlignVal, NotVolatile);
