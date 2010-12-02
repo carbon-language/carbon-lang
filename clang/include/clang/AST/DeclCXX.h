@@ -410,10 +410,6 @@ class CXXRecordDecl : public RecordDecl {
   llvm::PointerUnion<ClassTemplateDecl*, MemberSpecializationInfo*>
     TemplateOrInstantiation;
 
-#ifndef NDEBUG
-  void CheckConversionFunction(NamedDecl *D);
-#endif
-  
   friend class DeclContext;
   
   /// \brief Notify the class that member has been added.

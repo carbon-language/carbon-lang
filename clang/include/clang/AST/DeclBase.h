@@ -234,11 +234,7 @@ protected:
   unsigned IdentifierNamespace : 15;
 
 private:
-#ifndef NDEBUG
   void CheckAccessDeclContext() const;
-#else
-  void CheckAccessDeclContext() const { }
-#endif
 
 protected:
 
@@ -299,11 +295,15 @@ public:
 
   void setAccess(AccessSpecifier AS) {
     Access = AS;
+#ifndef NDEBUG
     CheckAccessDeclContext();
+#endif
   }
 
   AccessSpecifier getAccess() const {
+#ifndef NDEBUG
     CheckAccessDeclContext();
+#endif
     return AccessSpecifier(Access);
   }
 

@@ -424,8 +424,8 @@ SourceLocation Decl::getBodyRBrace() const {
   return SourceLocation();
 }
 
-#ifndef NDEBUG
 void Decl::CheckAccessDeclContext() const {
+#ifndef NDEBUG
   // Suppress this check if any of the following hold:
   // 1. this is the translation unit (and thus has no parent)
   // 2. this is a template parameter (and thus doesn't belong to its context)
@@ -449,9 +449,9 @@ void Decl::CheckAccessDeclContext() const {
 
   assert(Access != AS_none &&
          "Access specifier is AS_none inside a record decl");
+#endif
 }
 
-#endif
 
 //===----------------------------------------------------------------------===//
 // DeclContext Implementation

@@ -726,20 +726,6 @@ const UnresolvedSetImpl *CXXRecordDecl::getVisibleConversionFunctions() {
   return &data().VisibleConversions;
 }
 
-#ifndef NDEBUG
-void CXXRecordDecl::CheckConversionFunction(NamedDecl *ConvDecl) {
-  assert(ConvDecl->getDeclContext() == this &&
-         "conversion function does not belong to this record");
-
-  ConvDecl = ConvDecl->getUnderlyingDecl();
-  if (FunctionTemplateDecl *Temp = dyn_cast<FunctionTemplateDecl>(ConvDecl)) {
-    assert(isa<CXXConversionDecl>(Temp->getTemplatedDecl()));
-  } else {
-    assert(isa<CXXConversionDecl>(ConvDecl));
-  }
-}
-#endif
-
 void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {
   // This operation is O(N) but extremely rare.  Sema only uses it to
   // remove UsingShadowDecls in a class that were followed by a direct
