@@ -418,11 +418,6 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
 
-  if (AnalyzeOnly && NoOutput) {
-    errs() << argv[0] << ": analyze mode conflicts with no-output mode.\n";
-    return 1;
-  }
-  
   // Enable debug stream buffering.
   EnableDebugBuffering = true;
 
@@ -443,6 +438,11 @@ int main(int argc, char **argv) {
   
   cl::ParseCommandLineOptions(argc, argv,
     "llvm .bc -> .bc modular optimizer and analysis printer\n");
+
+  if (AnalyzeOnly && NoOutput) {
+    errs() << argv[0] << ": analyze mode conflicts with no-output mode.\n";
+    return 1;
+  }
 
   // Allocate a full target machine description only if necessary.
   // FIXME: The choice of target should be controllable on the command line.
