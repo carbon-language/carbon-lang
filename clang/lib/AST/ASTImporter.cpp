@@ -1694,7 +1694,7 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To) {
          ++Base1) {
       QualType T = Importer.Import(Base1->getType());
       if (T.isNull())
-        return false;
+        return true;
       
       Bases.push_back(
                     new (Importer.getToContext()) 
@@ -1710,7 +1710,7 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To) {
   
   ImportDeclContext(From);
   To->completeDefinition();
-  return true;
+  return false;
 }
 
 TemplateParameterList *ASTNodeImporter::ImportTemplateParameterList(
