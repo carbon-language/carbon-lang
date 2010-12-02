@@ -147,7 +147,8 @@ public:
 
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
-  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
+  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace,
+                         bool UseSet = false);
 
   virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
 
@@ -495,7 +496,7 @@ void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
 }
 
 void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
-                              unsigned AddrSpace) {
+                              unsigned AddrSpace, bool UseSet) {
   assert(CurSection && "Cannot emit contents before setting section!");
   const char *Directive = 0;
   switch (Size) {
@@ -521,6 +522,14 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
   }
 
   assert(Directive && "Invalid size for machine code value!");
+  if (UseSet && MAI.hasSetDirective()) {
+    MCSymbol *SetLabel = getContext().CreateTempSymbol();
+    EmitAssignment(SetLabel, Value);
+    OS << Directive << *SetLabel;
+    EmitEOL();
+    return;
+  }
+
   OS << Directive << *Value;
   EmitEOL();
 }

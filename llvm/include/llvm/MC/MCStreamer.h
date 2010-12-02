@@ -242,7 +242,7 @@ namespace llvm {
     /// @param Size - The size of the integer (in bytes) to emit. This must
     /// match a native machine width.
     virtual void EmitValue(const MCExpr *Value, unsigned Size,
-                           unsigned AddrSpace = 0) = 0;
+                           unsigned AddrSpace = 0, bool UseSet = false) = 0;
 
     /// EmitIntValue - Special case of EmitValue that avoids the client having
     /// to pass in a MCExpr for constant integers.

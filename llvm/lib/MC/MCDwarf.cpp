@@ -256,7 +256,7 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
   // The first 4 bytes is the total length of the information for this
   // compilation unit (not including these 4 bytes for the length).
   MCOS->EmitValue(MakeStartMinusEndExpr(MCOS, LineStartSym, LineEndSym, 4),
-                  4, 0);
+                  4, 0, true /*UseSet*/);
 
   // Next 2 bytes is the Version, which is Dwarf 2.
   MCOS->EmitIntValue(2, 2);
@@ -270,7 +270,7 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
   // length of the prologue.
   MCOS->EmitValue(MakeStartMinusEndExpr(MCOS, LineStartSym, ProEndSym,
                                         (4 + 2 + 4)),
-                  4, 0);
+                  4, 0, true /*UseSet*/);
 
   // Parameters of the state machine, are next.
   MCOS->EmitIntValue(DWARF2_LINE_MIN_INSN_LENGTH, 1);

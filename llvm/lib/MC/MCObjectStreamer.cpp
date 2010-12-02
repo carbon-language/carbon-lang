@@ -77,7 +77,7 @@ const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
 }
 
 void MCObjectStreamer::EmitValue(const MCExpr *Value, unsigned Size,
-                                 unsigned AddrSpace) {
+                                 unsigned AddrSpace, bool UseSet) {
   assert(AddrSpace == 0 && "Address space must be 0!");
   MCDataFragment *DF = getOrCreateDataFragment();
 

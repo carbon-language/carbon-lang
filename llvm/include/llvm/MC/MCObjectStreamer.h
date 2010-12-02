@@ -60,7 +60,8 @@ public:
   /// @{
 
   virtual void EmitLabel(MCSymbol *Symbol);
-  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
+  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace,
+                         bool UseSet = false);
   virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
   virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
