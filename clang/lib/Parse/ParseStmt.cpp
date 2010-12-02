@@ -1215,10 +1215,12 @@ StmtResult Parser::ParseReturnStatement(AttributeList *Attr) {
 
 /// FuzzyParseMicrosoftAsmStatement. When -fms-extensions is enabled, this
 /// routine is called to skip/ignore tokens that comprise the MS asm statement.
-StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
+StmtResult Parser::FuzzyParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
+  SourceLocation EndLoc;
   if (Tok.is(tok::l_brace)) {
     unsigned short savedBraceCount = BraceCount;
     do {
+      EndLoc = Tok.getLocation();
       ConsumeAnyToken();
     } while (BraceCount > savedBraceCount && Tok.isNot(tok::eof));
   } else {
@@ -1228,6 +1230,7 @@ StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
     SourceLocation TokLoc = Tok.getLocation();
     unsigned LineNo = SrcMgr.getInstantiationLineNumber(TokLoc);
     do {
+      EndLoc = TokLoc;
       ConsumeAnyToken();
       TokLoc = Tok.getLocation();
     } while ((SrcMgr.getInstantiationLineNumber(TokLoc) == LineNo) &&
@@ -1243,10 +1246,10 @@ StmtResult Parser::FuzzyParseMicrosoftAsmStatement() {
   ExprVector Constraints(Actions);
   ExprVector Exprs(Actions);
   ExprVector Clobbers(Actions);
-  return Actions.ActOnAsmStmt(Tok.getLocation(), true, true, 0, 0, 0,
+  return Actions.ActOnAsmStmt(AsmLoc, true, true, 0, 0, 0,
                               move_arg(Constraints), move_arg(Exprs),
                               AsmString.take(), move_arg(Clobbers),
-                              Tok.getLocation(), true);
+                              EndLoc, true);
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.
@@ -1282,7 +1285,7 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
 
   if (getLang().Microsoft && Tok.isNot(tok::l_paren) && !isTypeQualifier()) {
     msAsm = true;
-    return FuzzyParseMicrosoftAsmStatement();
+    return FuzzyParseMicrosoftAsmStatement(AsmLoc);
   }
   DeclSpec DS;
   SourceLocation Loc = Tok.getLocation();

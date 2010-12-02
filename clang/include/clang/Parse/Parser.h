@@ -1210,7 +1210,7 @@ private:
   StmtResult ParseBreakStatement(AttributeList *Attr);
   StmtResult ParseReturnStatement(AttributeList *Attr);
   StmtResult ParseAsmStatement(bool &msAsm);
-  StmtResult FuzzyParseMicrosoftAsmStatement();
+  StmtResult FuzzyParseMicrosoftAsmStatement(SourceLocation AsmLoc);
   bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
                            llvm::SmallVectorImpl<ExprTy *> &Constraints,
                            llvm::SmallVectorImpl<ExprTy *> &Exprs);
