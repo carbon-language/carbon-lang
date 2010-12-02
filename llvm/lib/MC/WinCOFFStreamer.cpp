@@ -72,7 +72,6 @@ public:
                                    unsigned ValueSize, unsigned MaxBytesToEmit);
   virtual void EmitCodeAlignment(unsigned ByteAlignment,
                                  unsigned MaxBytesToEmit);
-  virtual void EmitValueToOffset(const MCExpr *Offset, unsigned char Value);
   virtual void EmitFileDirective(StringRef Filename);
   virtual void EmitInstruction(const MCInst &Instruction);
   virtual void Finish();
@@ -355,11 +354,6 @@ void WinCOFFStreamer::EmitCodeAlignment(unsigned ByteAlignment,
   // Update the maximum alignment on the current section if necessary.
   if (ByteAlignment > getCurrentSectionData()->getAlignment())
     getCurrentSectionData()->setAlignment(ByteAlignment);
-}
-
-void WinCOFFStreamer::EmitValueToOffset(const MCExpr *Offset,
-                                        unsigned char Value) {
-  llvm_unreachable("not implemented");
 }
 
 void WinCOFFStreamer::EmitFileDirective(StringRef Filename) {

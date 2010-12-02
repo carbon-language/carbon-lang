@@ -78,8 +78,6 @@ public:
                                     unsigned MaxBytesToEmit = 0);
   virtual void EmitCodeAlignment(unsigned ByteAlignment,
                                  unsigned MaxBytesToEmit = 0);
-  virtual void EmitValueToOffset(const MCExpr *Offset,
-                                 unsigned char Value = 0);
 
   virtual void EmitFileDirective(StringRef Filename) {
     // FIXME: Just ignore the .file; it isn't important enough to fail the
@@ -333,11 +331,6 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
   // Update the maximum alignment on the current section if necessary.
   if (ByteAlignment > getCurrentSectionData()->getAlignment())
     getCurrentSectionData()->setAlignment(ByteAlignment);
-}
-
-void MCMachOStreamer::EmitValueToOffset(const MCExpr *Offset,
-                                        unsigned char Value) {
-  new MCOrgFragment(*Offset, Value, getCurrentSectionData());
 }
 
 void MCMachOStreamer::EmitInstToData(const MCInst &Inst) {

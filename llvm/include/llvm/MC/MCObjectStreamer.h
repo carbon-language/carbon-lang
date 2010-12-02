@@ -67,6 +67,7 @@ public:
   virtual void SwitchSection(const MCSection *Section);
   virtual void EmitInstruction(const MCInst &Inst);
   virtual void EmitInstToFragment(const MCInst &Inst);
+  virtual void EmitValueToOffset(const MCExpr *Offset, unsigned char Value);
   virtual void Finish();
 
   /// @}

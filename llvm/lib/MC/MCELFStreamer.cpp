@@ -129,8 +129,6 @@ public:
                                     unsigned MaxBytesToEmit = 0);
   virtual void EmitCodeAlignment(unsigned ByteAlignment,
                                  unsigned MaxBytesToEmit = 0);
-  virtual void EmitValueToOffset(const MCExpr *Offset,
-                                 unsigned char Value = 0);
 
   virtual void EmitFileDirective(StringRef Filename);
 
@@ -397,13 +395,6 @@ void MCELFStreamer::EmitCodeAlignment(unsigned ByteAlignment,
   // Update the maximum alignment on the current section if necessary.
   if (ByteAlignment > getCurrentSectionData()->getAlignment())
     getCurrentSectionData()->setAlignment(ByteAlignment);
-}
-
-void MCELFStreamer::EmitValueToOffset(const MCExpr *Offset,
-                                        unsigned char Value) {
-  // TODO: This is exactly the same as MCMachOStreamer. Consider merging into
-  // MCObjectStreamer.
-  new MCOrgFragment(*Offset, Value, getCurrentSectionData());
 }
 
 // Add a symbol for the file name of this module. This is the second

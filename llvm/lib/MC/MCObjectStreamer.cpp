@@ -179,6 +179,11 @@ void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
   getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups());
 }
 
+void MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
+                                        unsigned char Value) {
+  new MCOrgFragment(*Offset, Value, getCurrentSectionData());
+}
+
 void MCObjectStreamer::Finish() {
   getAssembler().Finish();
 }
