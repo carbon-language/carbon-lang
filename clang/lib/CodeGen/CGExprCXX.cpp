@@ -344,8 +344,7 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
 void
 CodeGenFunction::EmitSynthesizedCXXCopyCtor(llvm::Value *Dest, 
                                             llvm::Value *Src,
-                                            const BlockDeclRefExpr *BDRE) {
-  const Expr *Exp = BDRE->getCopyConstructorExpr();
+                                            const Expr *Exp) {
   if (const CXXExprWithTemporaries *E = dyn_cast<CXXExprWithTemporaries>(Exp))
     Exp = E->getSubExpr();
   assert(isa<CXXConstructExpr>(Exp) && 

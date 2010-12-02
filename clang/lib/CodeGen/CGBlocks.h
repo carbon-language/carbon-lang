@@ -189,13 +189,16 @@ public:
   llvm::Constant *BuildDestroyHelper(const llvm::StructType *,
                                      std::vector<HelperInfo> *);
 
-  llvm::Constant *GeneratebyrefCopyHelperFunction(const llvm::Type *, int flag);
-  llvm::Constant *GeneratebyrefDestroyHelperFunction(const llvm::Type *T, int);
+  llvm::Constant *GeneratebyrefCopyHelperFunction(const llvm::Type *, int flag,
+                                                  const VarDecl *BD);
+  llvm::Constant *GeneratebyrefDestroyHelperFunction(const llvm::Type *T, 
+                                                     int flag, 
+                                                     const VarDecl *BD);
 
   llvm::Constant *BuildbyrefCopyHelper(const llvm::Type *T, int flag,
-                                       unsigned Align);
+                                       unsigned Align, const VarDecl *BD);
   llvm::Constant *BuildbyrefDestroyHelper(const llvm::Type *T, int flag,
-                                          unsigned Align);
+                                          unsigned Align, const VarDecl *BD);
 
   void BuildBlockRelease(llvm::Value *DeclPtr, int flag = BLOCK_FIELD_IS_BYREF);
 

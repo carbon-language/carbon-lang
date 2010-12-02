@@ -756,6 +756,9 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
                Ty->isObjCObjectPointerType()) {
       flag |= BLOCK_FIELD_IS_OBJECT;
       flags |= BLOCK_HAS_COPY_DISPOSE;
+    } else if (getContext().getBlockVarCopyInits(&D)) {
+        flag |= BLOCK_HAS_CXX_OBJ;
+        flags |= BLOCK_HAS_COPY_DISPOSE;
     }
 
     // FIXME: Someone double check this.
@@ -781,12 +784,12 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
       SynthesizeCopyDisposeHelpers = true;
       llvm::Value *copy_helper = Builder.CreateStructGEP(DeclPtr, 4);
       Builder.CreateStore(BuildbyrefCopyHelper(DeclPtr->getType(), flag, 
-                                               Align.getQuantity()),
+                                               Align.getQuantity(), &D),
                           copy_helper);
 
       llvm::Value *destroy_helper = Builder.CreateStructGEP(DeclPtr, 5);
       Builder.CreateStore(BuildbyrefDestroyHelper(DeclPtr->getType(), flag,
-                                                  Align.getQuantity()),
+                                                  Align.getQuantity(), &D),
                           destroy_helper);
     }
   }

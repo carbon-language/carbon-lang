@@ -1010,8 +1010,8 @@ void ASTContext::setObjCImplementation(ObjCCategoryDecl *CatD,
 
 /// \brief Get the copy initialization expression of VarDecl,or NULL if 
 /// none exists.
-Expr *ASTContext::getBlockVarCopyInits(VarDecl*VD) {
-  llvm::DenseMap<VarDecl*, Expr*>::iterator
+Expr *ASTContext::getBlockVarCopyInits(const VarDecl*VD) {
+  llvm::DenseMap<const VarDecl*, Expr*>::iterator
   I = BlockVarCopyInits.find(VD);
   return (I != BlockVarCopyInits.end()) ? cast<Expr>(I->second) : 0;
 }

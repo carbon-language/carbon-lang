@@ -1000,29 +1000,16 @@ GenerateCopyHelperFunction(const llvm::StructType *T,
         llvm::Value *Srcv = SrcObj;
         Srcv = Builder.CreateStructGEP(Srcv, index);
         llvm::Value *Dstv;
-        if (NoteForHelper[i].cxxvar_import) {
-          if (NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF) {
-            const ValueDecl *VD = NoteForHelper[i].cxxvar_import->getDecl();
-            const llvm::Type *PtrStructTy
-              = llvm::PointerType::get(CGF.BuildByRefType(VD), 0);
-            Srcv = Builder.CreateLoad(Srcv);
-            Srcv = Builder.CreateBitCast(Srcv, PtrStructTy);
-            Srcv = Builder.CreateStructGEP(Srcv, CGF.getByRefValueLLVMField(VD),
-                                        VD->getNameAsString());
-
-            Dstv = Builder.CreateBitCast(DstObj, PtrStructTy);
-            Dstv = Builder.CreateStructGEP(Dstv, CGF.getByRefValueLLVMField(VD),
-                                           VD->getNameAsString());
-            CGF.EmitSynthesizedCXXCopyCtor(Dstv, Srcv, 
-                                           NoteForHelper[i].cxxvar_import);
-          }
-          else {
-            Srcv = Builder.CreateBitCast(Srcv,
-                                         llvm::PointerType::get(PtrToInt8Ty, 0));
-            Dstv = Builder.CreateStructGEP(DstObj, index);
-            CGF.EmitSynthesizedCXXCopyCtor(Dstv, Srcv, 
-                                           NoteForHelper[i].cxxvar_import);
-          }
+        if (NoteForHelper[i].cxxvar_import &&
+            (NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF) == 0) {
+          // Note that cxx objects declared as __block require a
+          // different API. They are copy constructed in their own copy
+          // helper functions (see GeneratebyrefCopyHelperFunction).
+          Srcv = Builder.CreateBitCast(Srcv,
+                                       llvm::PointerType::get(PtrToInt8Ty, 0));
+          Dstv = Builder.CreateStructGEP(DstObj, index);
+          CGF.EmitSynthesizedCXXCopyCtor(Dstv, Srcv, 
+                                         NoteForHelper[i].cxxvar_import->getCopyConstructorExpr());
         }
         else {
           Srcv = Builder.CreateBitCast(Srcv,
@@ -1099,23 +1086,13 @@ GenerateDestroyHelperFunction(const llvm::StructType* T,
         Srcv = Builder.CreateStructGEP(Srcv, index);
         Srcv = Builder.CreateBitCast(Srcv,
                                      llvm::PointerType::get(PtrToInt8Ty, 0));
-        if (NoteForHelper[i].cxxvar_import) {
+        if (NoteForHelper[i].cxxvar_import &&
+            (NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF) == 0) {
           const BlockDeclRefExpr *BDRE = NoteForHelper[i].cxxvar_import;
           const Expr *E = BDRE->getCopyConstructorExpr();
           QualType ClassTy = E->getType();
           QualType PtrClassTy = getContext().getPointerType(ClassTy);
           const llvm::Type *t = CGM.getTypes().ConvertType(PtrClassTy);
-          
-          if (NoteForHelper[i].flag & BLOCK_FIELD_IS_BYREF) {
-            const ValueDecl *VD = NoteForHelper[i].cxxvar_import->getDecl();
-            const llvm::Type *PtrStructTy
-              = llvm::PointerType::get(CGF.BuildByRefType(VD), 0);
-            Srcv = Builder.CreateLoad(Srcv);
-            Srcv = Builder.CreateBitCast(Srcv, PtrStructTy);
-            Srcv = Builder.CreateStructGEP(Srcv, CGF.getByRefValueLLVMField(VD),
-                                           VD->getNameAsString());
-            
-          }
           Srcv = Builder.CreateBitCast(Srcv, t);
           CGF.PushDestructorCleanup(ClassTy, Srcv);
         }
@@ -1144,7 +1121,8 @@ llvm::Constant *BlockFunction::BuildDestroyHelper(const llvm::StructType *T,
 }
 
 llvm::Constant *BlockFunction::
-GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
+GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag, 
+                                const VarDecl *BD) {
   QualType R = getContext().VoidTy;
 
   FunctionArgList Args;
@@ -1172,10 +1150,10 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   // internal linkage.
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
-                           "__Block_byref_id_object_copy_", &CGM.getModule());
+                           "__Block_byref_object_copy_", &CGM.getModule());
 
   IdentifierInfo *II
-    = &CGM.getContext().Idents.get("__Block_byref_id_object_copy_");
+    = &CGM.getContext().Idents.get("__Block_byref_object_copy_");
 
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
@@ -1190,22 +1168,30 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   V = Builder.CreateBitCast(V, llvm::PointerType::get(T, 0));
   V = Builder.CreateLoad(V);
   V = Builder.CreateStructGEP(V, 6, "x");
-  llvm::Value *DstObj = Builder.CreateBitCast(V, PtrToInt8Ty);
+  llvm::Value *DstObj = V;
 
   // src->x
   V = CGF.GetAddrOfLocalVar(Src);
   V = Builder.CreateLoad(V);
   V = Builder.CreateBitCast(V, T);
   V = Builder.CreateStructGEP(V, 6, "x");
-  V = Builder.CreateBitCast(V, llvm::PointerType::get(PtrToInt8Ty, 0));
-  llvm::Value *SrcObj = Builder.CreateLoad(V);
-
-  flag |= BLOCK_BYREF_CALLER;
-
-  llvm::Value *N = llvm::ConstantInt::get(CGF.Int32Ty, flag);
-  llvm::Value *F = CGM.getBlockObjectAssign();
-  Builder.CreateCall3(F, DstObj, SrcObj, N);
-
+  
+  if (flag & BLOCK_HAS_CXX_OBJ) {
+    assert (BD && "VarDecl is null - GeneratebyrefCopyHelperFunction");
+    llvm::Value *SrcObj = V;
+    CGF.EmitSynthesizedCXXCopyCtor(DstObj, SrcObj, 
+                                   getContext().getBlockVarCopyInits(BD));
+  }
+  else {
+    DstObj = Builder.CreateBitCast(DstObj, PtrToInt8Ty);
+    V = Builder.CreateBitCast(V, llvm::PointerType::get(PtrToInt8Ty, 0));
+    llvm::Value *SrcObj = Builder.CreateLoad(V);
+    flag |= BLOCK_BYREF_CALLER;
+    llvm::Value *N = llvm::ConstantInt::get(CGF.Int32Ty, flag);
+    llvm::Value *F = CGM.getBlockObjectAssign();
+    Builder.CreateCall3(F, DstObj, SrcObj, N);
+  }
+  
   CGF.FinishFunction();
 
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
@@ -1213,7 +1199,8 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
 
 llvm::Constant *
 BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
-                                                  int flag) {
+                                                  int flag,
+                                                  const VarDecl *BD) {
   QualType R = getContext().VoidTy;
 
   FunctionArgList Args;
@@ -1235,11 +1222,11 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   // internal linkage.
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
-                           "__Block_byref_id_object_dispose_",
+                           "__Block_byref_object_dispose_",
                            &CGM.getModule());
 
   IdentifierInfo *II
-    = &CGM.getContext().Idents.get("__Block_byref_id_object_dispose_");
+    = &CGM.getContext().Idents.get("__Block_byref_object_dispose_");
 
   FunctionDecl *FD = FunctionDecl::Create(getContext(),
                                           getContext().getTranslationUnitDecl(),
@@ -1253,18 +1240,28 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   V = Builder.CreateBitCast(V, llvm::PointerType::get(T, 0));
   V = Builder.CreateLoad(V);
   V = Builder.CreateStructGEP(V, 6, "x");
-  V = Builder.CreateBitCast(V, llvm::PointerType::get(PtrToInt8Ty, 0));
-  V = Builder.CreateLoad(V);
+  if (flag & BLOCK_HAS_CXX_OBJ) {
+    EHScopeStack::stable_iterator CleanupDepth = CGF.EHStack.stable_begin();
+    assert (BD && "VarDecl is null - GeneratebyrefDestroyHelperFunction");
+    QualType ClassTy = BD->getType();
+    CGF.PushDestructorCleanup(ClassTy, V);
+    CGF.PopCleanupBlocks(CleanupDepth);
+  }
+  else {
+    V = Builder.CreateBitCast(V, llvm::PointerType::get(PtrToInt8Ty, 0));
+    V = Builder.CreateLoad(V);
 
-  flag |= BLOCK_BYREF_CALLER;
-  BuildBlockRelease(V, flag);
+    flag |= BLOCK_BYREF_CALLER;
+    BuildBlockRelease(V, flag);
+  }
   CGF.FinishFunction();
 
   return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
 llvm::Constant *BlockFunction::BuildbyrefCopyHelper(const llvm::Type *T,
-                                                    int Flag, unsigned Align) {
+                                                    int Flag, unsigned Align,
+                                                    const VarDecl *BD) {
   // All alignments below that of pointer alignment collapse down to just
   // pointer alignment, as we always have at least that much alignment to begin
   // with.
@@ -1277,12 +1274,14 @@ llvm::Constant *BlockFunction::BuildbyrefCopyHelper(const llvm::Type *T,
   llvm::Constant *&Entry = CGM.AssignCache[Kind];
   if (Entry)
     return Entry;
-  return Entry = CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction(T, Flag);
+  return Entry = 
+           CodeGenFunction(CGM).GeneratebyrefCopyHelperFunction(T, Flag, BD);
 }
 
 llvm::Constant *BlockFunction::BuildbyrefDestroyHelper(const llvm::Type *T,
                                                        int Flag,
-                                                       unsigned Align) {
+                                                       unsigned Align,
+                                                       const VarDecl *BD) {
   // All alignments below that of pointer alignment collpase down to just
   // pointer alignment, as we always have at least that much alignment to begin
   // with.
@@ -1295,7 +1294,8 @@ llvm::Constant *BlockFunction::BuildbyrefDestroyHelper(const llvm::Type *T,
   llvm::Constant *&Entry = CGM.DestroyCache[Kind];
   if (Entry)
     return Entry;
-  return Entry=CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction(T, Flag);
+  return Entry = 
+           CodeGenFunction(CGM).GeneratebyrefDestroyHelperFunction(T, Flag, BD);
 }
 
 void BlockFunction::BuildBlockRelease(llvm::Value *V, int flag) {

@@ -130,7 +130,7 @@ class ASTContext {
   llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*> ObjCImpls;
 
   /// \brief Mapping from __block VarDecls to their copy initialization expr.
-  llvm::DenseMap<VarDecl*, Expr*> BlockVarCopyInits;
+  llvm::DenseMap<const VarDecl*, Expr*> BlockVarCopyInits;
     
   /// \brief Representation of a "canonical" template template parameter that
   /// is used in canonical template names.
@@ -1366,7 +1366,7 @@ public:
   void setBlockVarCopyInits(VarDecl*VD, Expr* Init);
   /// \brief Get the copy initialization expression of VarDecl,or NULL if 
   /// none exists.
-  Expr *getBlockVarCopyInits(VarDecl*VD);
+  Expr *getBlockVarCopyInits(const VarDecl*VD);
 
   /// \brief Allocate an uninitialized TypeSourceInfo.
   ///

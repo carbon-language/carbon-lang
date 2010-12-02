@@ -1659,7 +1659,7 @@ public:
   void EmitCXXConstructExpr(const CXXConstructExpr *E, AggValueSlot Dest);
   
   void EmitSynthesizedCXXCopyCtor(llvm::Value *Dest, llvm::Value *Src,
-                                  const BlockDeclRefExpr *BDRE);
+                                  const Expr *Exp);
 
   RValue EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
                                     AggValueSlot Slot =AggValueSlot::ignored());
