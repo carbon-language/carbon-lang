@@ -727,7 +727,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     if (define) {
       if (sret)
         s += "({ " + ts + " r; ";
-      else if (proto[0] != 's')
+      else
         s += "(" + ts + ")";
     } else if (sret) {
       s += ts + " r; ";
