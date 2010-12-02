@@ -177,11 +177,11 @@ namespace llvm {
 
     bool isValidDwarfFileNumber(unsigned FileNumber);
 
-    bool hasDwarfFiles(void) {
-      return MCDwarfFiles.size() != 0;
+    bool hasDwarfFiles() const {
+      return !MCDwarfFiles.empty();
     }
-    bool hasDwarfLines(void) {
-      return MCLineSectionOrder.size() != 0;
+    bool hasDwarfLines() const {
+      return !MCLineSectionOrder.empty();
     }
 
     const std::vector<MCDwarfFile *> &getMCDwarfFiles() {
