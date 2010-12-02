@@ -1415,7 +1415,7 @@ Process::Resume ()
     // Tell the process it is about to resume before the thread list
     if (error.Success())
     {
-        // Now let the thread list know we are about to resume to it
+        // Now let the thread list know we are about to resume so it
         // can let all of our threads know that they are about to be
         // resumed. Threads will each be called with
         // Thread::WillResume(StateType) where StateType contains the state
