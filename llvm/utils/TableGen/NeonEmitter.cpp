@@ -481,6 +481,28 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
   return s;
 }
 
+// Generate the local temporaries used to provide type checking for macro
+// arguments.
+static std::string GenMacroLocals(const std::string &proto, StringRef typestr) {
+  char arg = 'a';
+  std::string s;
+  
+  for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
+    // Do not create a temporary for an immediate argument.
+    // That would defeat the whole point of using a macro!
+    if (proto[i] == 'i') continue;
+
+    s += TypeString(proto[i], typestr) + " __";
+    s.push_back(arg);
+    s += " = (";
+    s.push_back(arg);
+    s += "); ";
+  }
+  
+  s += "\\\n  ";
+  return s;
+}
+
 static std::string Duplicate(unsigned nElts, StringRef typestr, 
                              const std::string &a) {
   std::string s;
@@ -706,7 +728,6 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
 // Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
 static std::string GenBuiltin(const std::string &name, const std::string &proto,
                               StringRef typestr, ClassKind ck) {
-  char arg = 'a';
   std::string s;
 
   // If this builtin returns a struct 2, 3, or 4 vectors, pass it as an implicit
@@ -723,6 +744,11 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   // The actual signedness etc. will be taken care of with special enums.
   if (proto.find('s') == std::string::npos)
     ck = ClassB;
+
+  // Macro arguments are not type-checked like inline function arguments, so
+  // assign them to local temporaries to get the right type checking.
+  if (define)
+    s += GenMacroLocals(proto, typestr);
 
   if (proto[0] != 'v') {
     std::string ts = TypeString(proto[0], typestr);
@@ -756,12 +782,13 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   if (sret)
     s += "&r, ";
   
+  char arg = 'a';
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     std::string args = std::string(&arg, 1);
 
-    // Wrap macro arguments in parenthesis.
-    if (define)
-      args = "(" + args + ")";
+    // For macros, use the local temporaries instead of the macro arguments.
+    if (define && proto[i] != 'i')
+      args = "__" + args;
 
     bool argQuad = false;
     bool argPoly = false;
