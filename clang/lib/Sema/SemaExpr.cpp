@@ -3538,9 +3538,9 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         ExprObjectKind OK = (VK == VK_RValue ? OK_Ordinary : OK_ObjCProperty);
 
         // FIXME: we must check that the setter has property type.
-        return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter,
-                                                  PType, VK, OK,
-                                                  Setter, MemberLoc, BaseExpr));
+        return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
+                                                       PType, VK, OK,
+                                                       MemberLoc, BaseExpr));
       }
       return ExprError(Diag(MemberLoc, diag::err_property_not_found)
                        << MemberName << BaseType);
@@ -3726,10 +3726,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
           VK = VK_RValue;
         ExprObjectKind OK = (VK == VK_RValue ? OK_Ordinary : OK_ObjCProperty);
 
-        return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(OMD, PType,
-                                                                   VK, OK, SMD,
-                                                                   MemberLoc, 
-                                                                   BaseExpr));
+        return Owned(new (Context) ObjCPropertyRefExpr(OMD, SMD, PType, VK, OK,
+                                                       MemberLoc, BaseExpr));
       }
     }
 
@@ -6683,17 +6681,18 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
 static bool IsReadonlyProperty(Expr *E, Sema &S) {
   if (E->getStmtClass() == Expr::ObjCPropertyRefExprClass) {
     const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(E);
-    if (ObjCPropertyDecl *PDecl = PropExpr->getProperty()) {
-      QualType BaseType = PropExpr->isSuperReceiver() ? 
-                            PropExpr->getSuperType() :  
+    if (PropExpr->isImplicitProperty()) return false;
+
+    ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
+    QualType BaseType = PropExpr->isSuperReceiver() ? 
+                            PropExpr->getSuperReceiverType() :  
                             PropExpr->getBase()->getType();
       
-      if (const ObjCObjectPointerType *OPT =
-            BaseType->getAsObjCInterfacePointerType())
-        if (ObjCInterfaceDecl *IFace = OPT->getInterfaceDecl())
-          if (S.isPropertyReadonly(PDecl, IFace))
-            return true;
-    }
+    if (const ObjCObjectPointerType *OPT =
+          BaseType->getAsObjCInterfacePointerType())
+      if (ObjCInterfaceDecl *IFace = OPT->getInterfaceDecl())
+        if (S.isPropertyReadonly(PDecl, IFace))
+          return true;
   }
   return false;
 }
@@ -6970,20 +6969,18 @@ static QualType CheckIncrementDecrementOperand(Sema &S, Expr *Op,
 
 void Sema::ConvertPropertyAssignment(Expr *LHS, Expr *&RHS, QualType& LHSTy) {
   bool copyInit = false;
-  if (const ObjCImplicitSetterGetterRefExpr *OISGE = 
-      dyn_cast<ObjCImplicitSetterGetterRefExpr>(LHS)) {
-    // If using property-dot syntax notation for assignment, and there is a
-    // setter, RHS expression is being passed to the setter argument. So,
-    // type conversion (and comparison) is RHS to setter's argument type.
-    if (const ObjCMethodDecl *SetterMD = OISGE->getSetterMethod()) {
-      ObjCMethodDecl::param_iterator P = SetterMD->param_begin();
-      LHSTy = (*P)->getType();
+  if (const ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(LHS)) {
+    if (PRE->isImplicitProperty()) {
+      // If using property-dot syntax notation for assignment, and there is a
+      // setter, RHS expression is being passed to the setter argument. So,
+      // type conversion (and comparison) is RHS to setter's argument type.
+      if (const ObjCMethodDecl *SetterMD = PRE->getImplicitPropertySetter()) {
+        ObjCMethodDecl::param_iterator P = SetterMD->param_begin();
+        LHSTy = (*P)->getType();
+      }
     }
     copyInit = (getLangOptions().CPlusPlus && LHSTy->isRecordType());
   } 
-  else 
-      copyInit = (getLangOptions().CPlusPlus && isa<ObjCPropertyRefExpr>(LHS) &&
-                  LHSTy->isRecordType());
   if (copyInit) {
     InitializedEntity Entity = 
     InitializedEntity::InitializeParameter(Context, LHSTy);
@@ -7614,9 +7611,8 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
                             BinaryOperatorKind Opc,
                             Expr *lhs, Expr *rhs) {
   if (getLangOptions().CPlusPlus &&
-      ((!isa<ObjCImplicitSetterGetterRefExpr>(lhs) && 
-        !isa<ObjCPropertyRefExpr>(lhs))
-        || rhs->isTypeDependent() || Opc != BO_Assign) &&
+      (!isa<ObjCPropertyRefExpr>(lhs)
+       || rhs->isTypeDependent() || Opc != BO_Assign) &&
       (lhs->getType()->isOverloadableType() ||
        rhs->getType()->isOverloadableType())) {
     // Find all of the overloaded operators visible from this

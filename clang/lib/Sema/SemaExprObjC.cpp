@@ -439,12 +439,14 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
       VK = VK_RValue, OK = OK_Ordinary;
 
     if (Super)
-      return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
-                                    VK, OK, Setter, MemberLoc,
-                                    SuperLoc, SuperType));
+      return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
+                                                     PType, VK, OK,
+                                                     MemberLoc,
+                                                     SuperLoc, SuperType));
     else
-      return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
-                                    VK, OK, Setter, MemberLoc, BaseExpr));
+      return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
+                                                     PType, VK, OK,
+                                                     MemberLoc, BaseExpr));
 
   }
 
@@ -566,9 +568,10 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
 
     ExprObjectKind OK = (VK == VK_RValue ? OK_Ordinary : OK_ObjCProperty);
 
-    return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(
-                                  Getter, PType, VK, OK, Setter,
-                                  propertyNameLoc, IFace, receiverNameLoc));
+    return Owned(new (Context) ObjCPropertyRefExpr(Getter, Setter,
+                                                   PType, VK, OK,
+                                                   propertyNameLoc,
+                                                   receiverNameLoc, IFace));
   }
   return ExprError(Diag(propertyNameLoc, diag::err_property_not_found)
                      << &propertyName << Context.getObjCInterfaceType(IFace));

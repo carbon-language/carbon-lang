@@ -104,7 +104,6 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::PredefinedExprClass:
     // Property references are lvalues
   case Expr::ObjCPropertyRefExprClass:
-  case Expr::ObjCImplicitSetterGetterRefExprClass:
     // C++ [expr.typeid]p1: The result of a typeid expression is an lvalue of...
   case Expr::CXXTypeidExprClass:
     // Unresolved lookups get classified as lvalues.
@@ -195,8 +194,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
       Cl::Kinds K = ClassifyInternal(Ctx, Op);
       if (K != Cl::CL_LValue) return K;
 
-      if (isa<ObjCPropertyRefExpr>(Op) ||
-          isa<ObjCImplicitSetterGetterRefExpr>(Op))
+      if (isa<ObjCPropertyRefExpr>(Op))
         return Cl::CL_SubObjCPropertySetting;
       return Cl::CL_LValue;
     }
@@ -368,8 +366,7 @@ static Cl::Kinds ClassifyMemberExpr(ASTContext &Ctx, const MemberExpr *E) {
       return Cl::CL_LValue;
     // ObjC property accesses are not lvalues, but get special treatment.
     Expr *Base = E->getBase()->IgnoreParens();
-    if (isa<ObjCPropertyRefExpr>(Base) ||
-        isa<ObjCImplicitSetterGetterRefExpr>(Base))
+    if (isa<ObjCPropertyRefExpr>(Base))
       return Cl::CL_SubObjCPropertySetting;
     return ClassifyInternal(Ctx, Base);
   }
@@ -395,8 +392,7 @@ static Cl::Kinds ClassifyMemberExpr(ASTContext &Ctx, const MemberExpr *E) {
     if (E->isArrow())
       return Cl::CL_LValue;
     Expr *Base = E->getBase()->IgnoreParenImpCasts();
-    if (isa<ObjCPropertyRefExpr>(Base) ||
-        isa<ObjCImplicitSetterGetterRefExpr>(Base))
+    if (isa<ObjCPropertyRefExpr>(Base))
       return Cl::CL_SubObjCPropertySetting;
     return ClassifyInternal(Ctx, E->getBase());
   }
@@ -498,9 +494,8 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
 
   // Assignment to a property in ObjC is an implicit setter access. But a
   // setter might not exist.
-  if (const ObjCImplicitSetterGetterRefExpr *Expr =
-        dyn_cast<ObjCImplicitSetterGetterRefExpr>(E)) {
-    if (Expr->getSetterMethod() == 0)
+  if (const ObjCPropertyRefExpr *Expr = dyn_cast<ObjCPropertyRefExpr>(E)) {
+    if (Expr->isImplicitProperty() && Expr->getImplicitPropertySetter() == 0)
       return Cl::CM_NoSetterProperty;
   }
 
@@ -517,8 +512,7 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
 
   // Records with any const fields (recursively) are not modifiable.
   if (const RecordType *R = CT->getAs<RecordType>()) {
-    assert((isa<ObjCImplicitSetterGetterRefExpr>(E) ||
-            isa<ObjCPropertyRefExpr>(E) ||
+    assert((isa<ObjCPropertyRefExpr>(E) ||
             !Ctx.getLangOptions().CPlusPlus) &&
            "C++ struct assignment should be resolved by the "
            "copy assignment operator.");

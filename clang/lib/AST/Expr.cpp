@@ -1338,21 +1338,11 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     return false;
   }
 
-  case ObjCImplicitSetterGetterRefExprClass: {   // Dot syntax for message send.
-#if 0
-    const ObjCImplicitSetterGetterRefExpr *Ref =
-      cast<ObjCImplicitSetterGetterRefExpr>(this);
-    // FIXME: We really want the location of the '.' here.
-    Loc = Ref->getLocation();
-    R1 = SourceRange(Ref->getLocation(), Ref->getLocation());
-    if (Ref->getBase())
-      R2 = Ref->getBase()->getSourceRange();
-#else
+  case ObjCPropertyRefExprClass:
     Loc = getExprLoc();
     R1 = getSourceRange();
-#endif
     return true;
-  }
+
   case StmtExprClass: {
     // Statement exprs don't logically have side effects themselves, but are
     // sometimes used in macros in ways that give them a type that is unused.
@@ -1635,7 +1625,6 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     // specs.
   case ObjCMessageExprClass:
   case ObjCPropertyRefExprClass:
-  case ObjCImplicitSetterGetterRefExprClass:
     return CT_Can;
 
     // Many other things have subexpressions, so we have to test those.
@@ -1838,8 +1827,7 @@ bool Expr::isTemporaryObject(ASTContext &C, const CXXRecordDecl *TempTy) const {
   // Temporaries are by definition pr-values of class type.
   if (!E->Classify(C).isPRValue()) {
     // In this context, property reference is a message call and is pr-value.
-    if (!isa<ObjCPropertyRefExpr>(E) && 
-        !isa<ObjCImplicitSetterGetterRefExpr>(E))
+    if (!isa<ObjCPropertyRefExpr>(E))
       return false;
   }
 
@@ -2537,31 +2525,17 @@ Stmt::child_iterator ObjCIvarRefExpr::child_end() { return &Base+1; }
 // ObjCPropertyRefExpr
 Stmt::child_iterator ObjCPropertyRefExpr::child_begin()
 { 
-  if (BaseExprOrSuperType.is<Stmt*>()) {
+  if (Receiver.is<Stmt*>()) {
     // Hack alert!
-    return reinterpret_cast<Stmt**> (&BaseExprOrSuperType);
+    return reinterpret_cast<Stmt**> (&Receiver);
   }
   return child_iterator(); 
 }
 
 Stmt::child_iterator ObjCPropertyRefExpr::child_end()
-{ return BaseExprOrSuperType.is<Stmt*>() ? 
-          reinterpret_cast<Stmt**> (&BaseExprOrSuperType)+1 : 
+{ return Receiver.is<Stmt*>() ? 
+          reinterpret_cast<Stmt**> (&Receiver)+1 : 
           child_iterator(); 
-}
-
-// ObjCImplicitSetterGetterRefExpr
-Stmt::child_iterator ObjCImplicitSetterGetterRefExpr::child_begin() {
-  // If this is accessing a class member or super, skip that entry.
-  // Technically, 2nd condition is sufficient. But I want to be verbose
-  if (isSuperReceiver() || !Base)
-    return child_iterator();
-  return &Base;
-}
-Stmt::child_iterator ObjCImplicitSetterGetterRefExpr::child_end() {
-  if (isSuperReceiver() || !Base)
-    return child_iterator();
-  return &Base+1;
 }
 
 // ObjCIsaExpr

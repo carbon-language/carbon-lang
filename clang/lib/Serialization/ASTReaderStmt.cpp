@@ -127,8 +127,6 @@ namespace clang {
     void VisitObjCProtocolExpr(ObjCProtocolExpr *E);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *E);
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
-    void VisitObjCImplicitSetterGetterRefExpr(
-                            ObjCImplicitSetterGetterRefExpr *E);
     void VisitObjCMessageExpr(ObjCMessageExpr *E);
     void VisitObjCIsaExpr(ObjCIsaExpr *E);
 
@@ -849,31 +847,31 @@ void ASTStmtReader::VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
 
 void ASTStmtReader::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   VisitExpr(E);
-  E->setProperty(cast<ObjCPropertyDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setLocation(ReadSourceLocation(Record, Idx));
-  E->SuperLoc = ReadSourceLocation(Record, Idx);
-  if (E->isSuperReceiver()) {
-    QualType T = Reader.GetType(Record[Idx++]);
-    E->BaseExprOrSuperType = T.getTypePtr();
+  bool Implicit = Record[Idx++] != 0;
+  if (Implicit) {
+    ObjCMethodDecl *Getter =
+      cast<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++]));
+    ObjCMethodDecl *Setter =
+      cast<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++]));
+    E->setImplicitProperty(Getter, Setter);
+  } else {
+    E->setExplicitProperty(
+                      cast<ObjCPropertyDecl>(Reader.GetDecl(Record[Idx++])));
   }
-  else
-    E->setBase(Reader.ReadSubExpr());
-}
-
-void ASTStmtReader::VisitObjCImplicitSetterGetterRefExpr(
-                                      ObjCImplicitSetterGetterRefExpr *E) {
-  VisitExpr(E);
-  E->setGetterMethod(
-                 cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setSetterMethod(
-                 cast_or_null<ObjCMethodDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setInterfaceDecl(
-              cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
-  E->setBase(Reader.ReadSubExpr());
   E->setLocation(ReadSourceLocation(Record, Idx));
-  E->setClassLoc(ReadSourceLocation(Record, Idx));
-  E->SuperLoc = ReadSourceLocation(Record, Idx);
-  E->SuperTy = Reader.GetType(Record[Idx++]);
+  E->setReceiverLocation(ReadSourceLocation(Record, Idx));
+  switch (Record[Idx++]) {
+  case 0:
+    E->setBase(Reader.ReadSubExpr());
+    break;
+  case 1:
+    E->setSuperReceiver(Reader.GetType(Record[Idx++]));
+    break;
+  case 2:
+    E->setClassReceiver(
+                     cast<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
+    break;
+  }
 }
 
 void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
@@ -1639,7 +1637,7 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       S = new (Context) ObjCPropertyRefExpr(Empty);
       break;
     case EXPR_OBJC_KVC_REF_EXPR:
-      S = new (Context) ObjCImplicitSetterGetterRefExpr(Empty);
+      llvm_unreachable("mismatching AST file");
       break;
     case EXPR_OBJC_MESSAGE_EXPR:
       S = ObjCMessageExpr::CreateEmpty(*Context,

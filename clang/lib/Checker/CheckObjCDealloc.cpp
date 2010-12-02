@@ -76,8 +76,8 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
   if (BinaryOperator* BO = dyn_cast<BinaryOperator>(S))
     if (BO->isAssignmentOp())
       if (ObjCPropertyRefExpr* PRE =
-         dyn_cast<ObjCPropertyRefExpr>(BO->getLHS()->IgnoreParenCasts()))
-          if (PRE->getProperty() == PD)
+           dyn_cast<ObjCPropertyRefExpr>(BO->getLHS()->IgnoreParenCasts()))
+        if (PRE->isExplicitProperty() && PRE->getExplicitProperty() == PD)
             if (BO->getRHS()->isNullPointerConstant(Ctx, 
                                             Expr::NPC_ValueDependentIsNull)) {
               // This is only a 'release' if the property kind is not

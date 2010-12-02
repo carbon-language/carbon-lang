@@ -2612,7 +2612,7 @@ static Decl *getDeclFromExpr(Stmt *E) {
   if (ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(E))
     return RE->getDecl();
   if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(E))
-    return PRE->getProperty();
+    return PRE->isExplicitProperty() ? PRE->getExplicitProperty() : 0;
       
   if (CallExpr *CE = dyn_cast<CallExpr>(E))
     return getDeclFromExpr(CE->getCallee());

@@ -1891,39 +1891,20 @@ public:
                                               /*TemplateArgs=*/0);
   }
   
-  /// \brief Build a new Objective-C implicit setter/getter reference 
-  /// expression.
+  /// \brief Build a new Objective-C property reference expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
-  /// Subclasses may override this routine to provide different behavior.  
-  ExprResult RebuildObjCImplicitSetterGetterRefExpr(
-                                                        ObjCMethodDecl *Getter,
-                                                        QualType T,
-                                                        ObjCMethodDecl *Setter,
-                                                        SourceLocation NameLoc,
-                                                        Expr *Base,
-                                                        SourceLocation SuperLoc,
-                                                        QualType SuperTy, 
-                                                        bool Super) {
-    // Since these expressions can only be value-dependent, we do not need to
-    // perform semantic analysis again.
-    if (Super)
-      return Owned(
-        new (getSema().Context) ObjCImplicitSetterGetterRefExpr(Getter, T,
-                                                                VK_LValue,
-                                                                OK_Ordinary,
-                                                                Setter,
-                                                                NameLoc,
-                                                                SuperLoc,
-                                                                SuperTy));
-    else
-      return Owned(
-        new (getSema().Context) ObjCImplicitSetterGetterRefExpr(Getter, T,
-                                                                VK_LValue,
-                                                                OK_Ordinary,
-                                                                Setter,
-                                                                NameLoc,
-                                                                Base));
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildObjCPropertyRefExpr(Expr *Base, QualType T,
+                                        ObjCMethodDecl *Getter,
+                                        ObjCMethodDecl *Setter,
+                                        SourceLocation PropertyLoc) {
+    // Since these expressions can only be value-dependent, we do not
+    // need to perform semantic analysis again.
+    return Owned(
+      new (getSema().Context) ObjCPropertyRefExpr(Getter, Setter, T,
+                                                  VK_LValue, OK_ObjCProperty,
+                                                  PropertyLoc, Base));
   }
 
   /// \brief Build a new Objective-C "isa" expression.
@@ -6222,9 +6203,9 @@ TreeTransform<Derived>::TransformObjCIvarRefExpr(ObjCIvarRefExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-  // 'super' never changes. Property never changes. Just retain the existing
-  // expression.
-  if (E->isSuperReceiver())
+  // 'super' and types never change. Property never changes. Just
+  // retain the existing expression.
+  if (!E->isObjectReceiver())
     return SemaRef.Owned(E);
   
   // Transform the base expression.
@@ -6238,47 +6219,17 @@ TreeTransform<Derived>::TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
   if (!getDerived().AlwaysRebuild() &&
       Base.get() == E->getBase())
     return SemaRef.Owned(E);
-  
-  return getDerived().RebuildObjCPropertyRefExpr(Base.get(), E->getProperty(),
-                                                 E->getLocation());
-}
 
-template<typename Derived>
-ExprResult
-TreeTransform<Derived>::TransformObjCImplicitSetterGetterRefExpr(
-                                          ObjCImplicitSetterGetterRefExpr *E) {
-  // If this implicit setter/getter refers to super, it cannot have any
-  // dependent parts. Just retain the existing declaration.
-  if (E->isSuperReceiver())
-    return SemaRef.Owned(E);
-  
-  // If this implicit setter/getter refers to class methods, it cannot have any
-  // dependent parts. Just retain the existing declaration.
-  if (E->getInterfaceDecl())
-    return SemaRef.Owned(E);
-  
-  // Transform the base expression.
-  ExprResult Base = getDerived().TransformExpr(E->getBase());
-  if (Base.isInvalid())
-    return ExprError();
-  
-  // We don't need to transform the getters/setters; they will never change.
-  
-  // If nothing changed, just retain the existing expression.
-  if (!getDerived().AlwaysRebuild() &&
-      Base.get() == E->getBase())
-    return SemaRef.Owned(E);
-  
-  return getDerived().RebuildObjCImplicitSetterGetterRefExpr(
-                                                          E->getGetterMethod(),
-                                                          E->getType(),
-                                                          E->getSetterMethod(),
-                                                          E->getLocation(),
-                                                          Base.get(),
-                                                          E->getSuperLocation(), 
-                                                          E->getSuperType(),
-                                                          E->isSuperReceiver());
-                                                             
+  if (E->isExplicitProperty())
+    return getDerived().RebuildObjCPropertyRefExpr(Base.get(),
+                                                   E->getExplicitProperty(),
+                                                   E->getLocation());
+
+  return getDerived().RebuildObjCPropertyRefExpr(Base.get(),
+                                                 E->getType(),
+                                                 E->getImplicitPropertyGetter(),
+                                                 E->getImplicitPropertySetter(),
+                                                 E->getLocation());
 }
 
 template<typename Derived>

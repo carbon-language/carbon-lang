@@ -866,22 +866,15 @@ void StmtProfiler::VisitObjCIvarRefExpr(ObjCIvarRefExpr *S) {
 
 void StmtProfiler::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *S) {
   VisitExpr(S);
-  VisitDecl(S->getProperty());
-  if (S->isSuperReceiver()) {
-    ID.AddBoolean(S->isSuperReceiver());
-    VisitType(S->getSuperType());
+  if (S->isImplicitProperty()) {
+    VisitDecl(S->getImplicitPropertyGetter());
+    VisitDecl(S->getImplicitPropertySetter());
+  } else {
+    VisitDecl(S->getExplicitProperty());
   }
-}
-
-void StmtProfiler::VisitObjCImplicitSetterGetterRefExpr(
-                                  ObjCImplicitSetterGetterRefExpr *S) {
-  VisitExpr(S);
-  VisitDecl(S->getGetterMethod());
-  VisitDecl(S->getSetterMethod());
-  VisitDecl(S->getInterfaceDecl());
   if (S->isSuperReceiver()) {
     ID.AddBoolean(S->isSuperReceiver());
-    VisitType(S->getSuperType());
+    VisitType(S->getSuperReceiverType());
   }
 }
 

@@ -115,7 +115,6 @@ public:
     EmitAggLoadOfLValue(E);
   }
   void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
-  void VisitObjCImplicitSetterGetterRefExpr(ObjCImplicitSetterGetterRefExpr *E);
 
   void VisitConditionalOperator(const ConditionalOperator *CO);
   void VisitChooseExpr(const ChooseExpr *CE);
@@ -350,12 +349,6 @@ void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 }
 
 void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-  RValue RV = CGF.EmitObjCPropertyGet(E, getReturnValueSlot());
-  EmitGCMove(E, RV);
-}
-
-void AggExprEmitter::VisitObjCImplicitSetterGetterRefExpr(
-                                   ObjCImplicitSetterGetterRefExpr *E) {
   RValue RV = CGF.EmitObjCPropertyGet(E, getReturnValueSlot());
   EmitGCMove(E, RV);
 }

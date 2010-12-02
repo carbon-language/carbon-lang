@@ -516,20 +516,10 @@ void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
     OS << ".";
   }
 
-  OS << Node->getProperty()->getName();
-}
-
-void StmtPrinter::VisitObjCImplicitSetterGetterRefExpr(
-                                        ObjCImplicitSetterGetterRefExpr *Node) {
-  if (Node->isSuperReceiver())
-    OS << "super.";
-  else if (Node->getBase()) {
-    PrintExpr(Node->getBase());
-    OS << ".";
-  }
-  if (Node->getGetterMethod())
-    OS << Node->getGetterMethod();
-
+  if (Node->isImplicitProperty())
+    OS << Node->getImplicitPropertyGetter()->getSelector().getAsString();
+  else
+    OS << Node->getExplicitProperty()->getName();
 }
 
 void StmtPrinter::VisitPredefinedExpr(PredefinedExpr *Node) {

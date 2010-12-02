@@ -160,7 +160,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::ObjCEncodeExprClass:       
   case Stmt::ObjCSelectorExprClass:   
   case Stmt::ObjCProtocolExprClass:   
-  case Stmt::ObjCImplicitSetterGetterRefExprClass: 
   case Stmt::ObjCIsaExprClass:       
   case Stmt::ShuffleVectorExprClass: 
   case Stmt::BlockExprClass:  
@@ -189,7 +188,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::CXXConstructExprClass:  
   case Stmt::CXXTemporaryObjectExprClass:
     // FIXME: CXXUnresolvedConstructExpr
-    // FIXME: ObjCImplicitSetterGetterRefExpr?
     K = CXCursor_CallExpr;
     break;
       

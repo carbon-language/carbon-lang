@@ -14,14 +14,13 @@
 #ifndef LLVM_CLANG_AST_EXPROBJC_H
 #define LLVM_CLANG_AST_EXPROBJC_H
 
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
 
 namespace clang {
   class IdentifierInfo;
   class ASTContext;
-  class ObjCMethodDecl;
-  class ObjCPropertyDecl;
 
 /// ObjCStringLiteral, used for Objective-C string literals
 /// i.e. @"foo".
@@ -229,17 +228,20 @@ public:
 ///
 class ObjCPropertyRefExpr : public Expr {
 private:
-  ObjCPropertyDecl *AsProperty;
+  /// If the bool is true, this is an implicit property reference; the
+  /// pointer is an (optional) ObjCMethodDecl and Setter may be set.
+  /// if the bool is false, this is an explicit property reference;
+  /// the pointer is an ObjCPropertyDecl and Setter is always null.
+  llvm::PointerIntPair<NamedDecl*, 1, bool> PropertyOrGetter;
+  ObjCMethodDecl *Setter;
+
   SourceLocation IdLoc;
   
   /// \brief When the receiver in property access is 'super', this is
-  /// the location of the 'super' keyword.
-  SourceLocation SuperLoc;
-  
-  /// \brief When the receiver in property access is 'super', this is
-  /// the type associated with 'super' keyword. A null type indicates
-  /// that this is not a 'super' receiver.
-  llvm::PointerUnion<Stmt*, Type*> BaseExprOrSuperType;
+  /// the location of the 'super' keyword.  When it's an interface,
+  /// this is that interface.
+  SourceLocation ReceiverLoc;
+  llvm::PointerUnion3<Stmt*, Type*, ObjCInterfaceDecl*> Receiver;
   
 public:
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
@@ -247,44 +249,103 @@ public:
                       SourceLocation l, Expr *base)
     : Expr(ObjCPropertyRefExprClass, t, VK, OK,
            /*TypeDependent=*/false, base->isValueDependent()),
-      AsProperty(PD), IdLoc(l), BaseExprOrSuperType(base) {
+      PropertyOrGetter(PD, false), Setter(0),
+      IdLoc(l), ReceiverLoc(), Receiver(base) {
   }
   
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
                       ExprValueKind VK, ExprObjectKind OK,
                       SourceLocation l, SourceLocation sl, QualType st)
-  : Expr(ObjCPropertyRefExprClass, t, VK, OK,
-         /*TypeDependent=*/false, false), 
-    AsProperty(PD), IdLoc(l), SuperLoc(sl), 
-    BaseExprOrSuperType(st.getTypePtr()) {
+    : Expr(ObjCPropertyRefExprClass, t, VK, OK,
+           /*TypeDependent=*/false, false),
+      PropertyOrGetter(PD, false), Setter(0),
+      IdLoc(l), ReceiverLoc(sl), Receiver(st.getTypePtr()) {
+  }
+
+  ObjCPropertyRefExpr(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter,
+                      QualType T, ExprValueKind VK, ExprObjectKind OK,
+                      SourceLocation IdLoc, Expr *Base)
+    : Expr(ObjCPropertyRefExprClass, T, VK, OK, false,
+           Base->isValueDependent()),
+      PropertyOrGetter(Getter, true), Setter(Setter),
+      IdLoc(IdLoc), ReceiverLoc(), Receiver(Base) {
+  }
+
+  ObjCPropertyRefExpr(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter,
+                      QualType T, ExprValueKind VK, ExprObjectKind OK,
+                      SourceLocation IdLoc,
+                      SourceLocation SuperLoc, QualType SuperTy)
+    : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false),
+      PropertyOrGetter(Getter, true), Setter(Setter),
+      IdLoc(IdLoc), ReceiverLoc(SuperLoc), Receiver(SuperTy.getTypePtr()) {
+  }
+
+  ObjCPropertyRefExpr(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter,
+                      QualType T, ExprValueKind VK, ExprObjectKind OK,
+                      SourceLocation IdLoc,
+                      SourceLocation ReceiverLoc, ObjCInterfaceDecl *Receiver)
+    : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false),
+      PropertyOrGetter(Getter, true), Setter(Setter),
+      IdLoc(IdLoc), ReceiverLoc(ReceiverLoc), Receiver(Receiver) {
   }
 
   explicit ObjCPropertyRefExpr(EmptyShell Empty)
     : Expr(ObjCPropertyRefExprClass, Empty) {}
 
-  ObjCPropertyDecl *getProperty() const { return AsProperty; }
+  bool isImplicitProperty() const { return PropertyOrGetter.getInt(); }
+  bool isExplicitProperty() const { return !PropertyOrGetter.getInt(); }
+
+  ObjCPropertyDecl *getExplicitProperty() const {
+    assert(!isImplicitProperty());
+    return cast<ObjCPropertyDecl>(PropertyOrGetter.getPointer());
+  }
+
+  ObjCMethodDecl *getImplicitPropertyGetter() const {
+    assert(isImplicitProperty());
+    return cast_or_null<ObjCMethodDecl>(PropertyOrGetter.getPointer());
+  }
+
+  ObjCMethodDecl *getImplicitPropertySetter() const {
+    assert(isImplicitProperty());
+    return Setter;
+  }
+
+  Selector getGetterSelector() const {
+    if (isImplicitProperty())
+      return getImplicitPropertyGetter()->getSelector();
+    return getExplicitProperty()->getGetterName();
+  }
+
+  Selector getSetterSelector() const {
+    if (isImplicitProperty())
+      return getImplicitPropertySetter()->getSelector();
+    return getExplicitProperty()->getSetterName();
+  }
 
   const Expr *getBase() const { 
-    return cast<Expr>(BaseExprOrSuperType.get<Stmt*>()); 
+    return cast<Expr>(Receiver.get<Stmt*>()); 
   }
   Expr *getBase() { 
-    return cast<Expr>(BaseExprOrSuperType.get<Stmt*>()); 
+    return cast<Expr>(Receiver.get<Stmt*>()); 
   }
 
   SourceLocation getLocation() const { return IdLoc; }
   
-  SourceLocation getSuperLocation() const { return SuperLoc; }
-  QualType getSuperType() const { 
-    Type *t = BaseExprOrSuperType.get<Type*>();
-    return QualType(t, 0); 
+  SourceLocation getReceiverLocation() const { return ReceiverLoc; }
+  QualType getSuperReceiverType() const { 
+    return QualType(Receiver.get<Type*>(), 0); 
   }
-  bool isSuperReceiver() const { return BaseExprOrSuperType.is<Type*>(); }
+  ObjCInterfaceDecl *getClassReceiver() const {
+    return Receiver.get<ObjCInterfaceDecl*>();
+  }
+  bool isObjectReceiver() const { return Receiver.is<Stmt*>(); }
+  bool isSuperReceiver() const { return Receiver.is<Type*>(); }
+  bool isClassReceiver() const { return Receiver.is<ObjCInterfaceDecl*>(); }
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(
-                  (BaseExprOrSuperType.is<Stmt*>() ? getBase()->getLocStart() 
-                                                   : getSuperLocation()), 
-                  IdLoc);
+    return SourceRange((isObjectReceiver() ? getBase()->getLocStart()
+                                           : getReceiverLocation()), 
+                       IdLoc);
   }
 
   static bool classof(const Stmt *T) {
@@ -297,125 +358,22 @@ public:
   virtual child_iterator child_end();
 private:
   friend class ASTStmtReader;
-  void setProperty(ObjCPropertyDecl *D) { AsProperty = D; }
-  void setBase(Expr *base) { BaseExprOrSuperType = base; }
+  void setExplicitProperty(ObjCPropertyDecl *D) {
+    PropertyOrGetter.setPointer(D);
+    PropertyOrGetter.setInt(false);
+    Setter = 0;
+  }
+  void setImplicitProperty(ObjCMethodDecl *Getter, ObjCMethodDecl *Setter) {
+    PropertyOrGetter.setPointer(Getter);
+    PropertyOrGetter.setInt(true);
+    this->Setter = Setter;
+  }
+  void setBase(Expr *Base) { Receiver = Base; }
+  void setSuperReceiver(QualType T) { Receiver = T.getTypePtr(); }
+  void setClassReceiver(ObjCInterfaceDecl *D) { Receiver = D; }
+
   void setLocation(SourceLocation L) { IdLoc = L; }
-  void setSuperLocation(SourceLocation Loc) { SuperLoc = Loc; }
-  void setSuperType(QualType T) { BaseExprOrSuperType = T.getTypePtr(); }
-};
-
-/// ObjCImplicitSetterGetterRefExpr - A dot-syntax expression to access two
-/// methods; one to set a value to an 'ivar' (Setter) and the other to access
-/// an 'ivar' (Setter).
-/// An example for use of this AST is:
-/// @code
-///  @interface Test { }
-///  - (Test *)crash;
-///  - (void)setCrash: (Test*)value;
-/// @end
-/// void  foo(Test *p1, Test *p2)
-/// {
-///    p2.crash  = p1.crash; // Uses ObjCImplicitSetterGetterRefExpr AST
-/// }
-/// @endcode
-class ObjCImplicitSetterGetterRefExpr : public Expr {
-  /// Setter - Setter method user declared for setting its 'ivar' to a value
-  ObjCMethodDecl *Setter;
-  /// Getter - Getter method user declared for accessing 'ivar' it controls.
-  ObjCMethodDecl *Getter;
-  /// Location of the member in the dot syntax notation. This is location
-  /// of the getter method.
-  SourceLocation MemberLoc;
-  // FIXME: Swizzle these into a single pointer.
-  Stmt *Base;
-  ObjCInterfaceDecl *InterfaceDecl;
-  /// \brief Location of the receiver class in the dot syntax notation
-  /// used to call a class method setter/getter.
-  SourceLocation ClassLoc;
-
-  /// \brief When the receiver in dot-syntax expression is 'super',
-  /// this is the location of the 'super' keyword.
-  SourceLocation SuperLoc;
-  
-  /// \brief When the receiver in dot-syntax expression is 'super', this is
-  /// the type associated with 'super' keyword.
-  QualType SuperTy;
-  
-public:
-  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter, QualType t,
-                                  ExprValueKind VK, ExprObjectKind OK,
-                                  ObjCMethodDecl *setter,
-                                  SourceLocation l, Expr *base)
-    : Expr(ObjCImplicitSetterGetterRefExprClass, t, VK, OK,
-           /*TypeDependent=*/false, base->isValueDependent()),
-      Setter(setter), Getter(getter), MemberLoc(l), Base(base),
-      InterfaceDecl(0), ClassLoc(SourceLocation()) {}
-  
-  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter, QualType t,
-                                  ExprValueKind VK, ExprObjectKind OK,
-                                  ObjCMethodDecl *setter,
-                                  SourceLocation l,
-                                  SourceLocation sl, 
-                                  QualType st)
-  : Expr(ObjCImplicitSetterGetterRefExprClass, t, VK, OK,
-         /*TypeDependent=*/false, false),
-    Setter(setter), Getter(getter), MemberLoc(l),
-    Base(0), InterfaceDecl(0), ClassLoc(SourceLocation()), 
-    SuperLoc(sl), SuperTy(st) {
-  }
-  
-  ObjCImplicitSetterGetterRefExpr(ObjCMethodDecl *getter, QualType t,
-                                  ExprValueKind VK, ExprObjectKind OK,
-                                  ObjCMethodDecl *setter,
-                 SourceLocation l, ObjCInterfaceDecl *C, SourceLocation CL)
-    : Expr(ObjCImplicitSetterGetterRefExprClass, t, VK, OK, false, false),
-      Setter(setter), Getter(getter), MemberLoc(l), Base(0), InterfaceDecl(C),
-      ClassLoc(CL) {}
-  explicit ObjCImplicitSetterGetterRefExpr(EmptyShell Empty)
-           : Expr(ObjCImplicitSetterGetterRefExprClass, Empty){}
-
-  ObjCMethodDecl *getGetterMethod() const { return Getter; }
-  ObjCMethodDecl *getSetterMethod() const { return Setter; }
-  ObjCInterfaceDecl *getInterfaceDecl() const { return InterfaceDecl; }
-  void setGetterMethod(ObjCMethodDecl *D) { Getter = D; }
-  void setSetterMethod(ObjCMethodDecl *D) { Setter = D; }
-  void setInterfaceDecl(ObjCInterfaceDecl *D) { InterfaceDecl = D; }
-
-  virtual SourceRange getSourceRange() const {
-    if (isSuperReceiver())
-      return SourceRange(getSuperLocation(), MemberLoc);
-    if (Base)
-      return SourceRange(getBase()->getLocStart(), MemberLoc);
-    return SourceRange(ClassLoc, MemberLoc);
-  }
-  const Expr *getBase() const { return cast_or_null<Expr>(Base); }
-  Expr *getBase() { return cast_or_null<Expr>(Base); }
-  void setBase(Expr *base) { Base = base; }
-
-  SourceLocation getLocation() const { return MemberLoc; }
-  void setLocation(SourceLocation L) { MemberLoc = L; }
-  SourceLocation getClassLoc() const { return ClassLoc; }
-  void setClassLoc(SourceLocation L) { ClassLoc = L; }
-  
-  SourceLocation getSuperLocation() const { return SuperLoc; }
-  QualType getSuperType() const { return SuperTy; }
-  /// \brief When the receiver in dot-syntax expression is 'super', this
-  /// method returns true if both Base expression and Interface are null.
-  bool isSuperReceiver() const { return InterfaceDecl == 0 && Base == 0; }
-
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ObjCImplicitSetterGetterRefExprClass;
-  }
-  static bool classof(const ObjCImplicitSetterGetterRefExpr *) { return true; }
-
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-  
-private:
-  friend class ASTStmtReader;
-  void setSuperLocation(SourceLocation Loc) { SuperLoc = Loc; }
-  void setSuperType(QualType T) { SuperTy = T; }
+  void setReceiverLocation(SourceLocation Loc) { ReceiverLoc = Loc; }
 };
 
 /// \brief An expression that sends a message to the given Objective-C

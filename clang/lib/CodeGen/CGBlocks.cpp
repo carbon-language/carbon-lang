@@ -131,13 +131,6 @@ static void CollectBlockDeclRefInfo(const Stmt *S, CGBlockInfo &Info) {
     if (PE->isSuperReceiver())
       Info.NeedsObjCSelf = true;
   }
-  else if (const ObjCImplicitSetterGetterRefExpr *IE = 
-           dyn_cast<ObjCImplicitSetterGetterRefExpr>(S)) {
-    // Getter/setter uses may also cause implicit super references,
-    // which we can check for with:
-    if (IE->isSuperReceiver())
-      Info.NeedsObjCSelf = true;
-  }
   else if (isa<CXXThisExpr>(S))
     Info.CXXThisRef = cast<CXXThisExpr>(S);
 }

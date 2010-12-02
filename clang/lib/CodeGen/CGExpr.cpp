@@ -549,8 +549,6 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitObjCIvarRefLValue(cast<ObjCIvarRefExpr>(E));
   case Expr::ObjCPropertyRefExprClass:
     return EmitObjCPropertyRefLValue(cast<ObjCPropertyRefExpr>(E));
-  case Expr::ObjCImplicitSetterGetterRefExprClass:
-    return EmitObjCKVCRefLValue(cast<ObjCImplicitSetterGetterRefExpr>(E));
   case Expr::StmtExprClass:
     return EmitStmtExprLValue(cast<StmtExpr>(E));
   case Expr::UnaryOperatorClass:
@@ -1569,10 +1567,9 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     const PointerType *PTy =
       BaseExpr->getType()->getAs<PointerType>();
     BaseQuals = PTy->getPointeeType().getQualifiers();
-  } else if (isa<ObjCPropertyRefExpr>(BaseExpr->IgnoreParens()) ||
-             isa<ObjCImplicitSetterGetterRefExpr>(
-               BaseExpr->IgnoreParens())) {
-    RValue RV = EmitObjCPropertyGet(BaseExpr);
+  } else if (ObjCPropertyRefExpr *PRE
+               = dyn_cast<ObjCPropertyRefExpr>(BaseExpr->IgnoreParens())) {
+    RValue RV = EmitObjCPropertyGet(PRE);
     BaseValue = RV.getAggregateAddr();
     BaseQuals = BaseExpr->getType().getQualifiers();
   } else {
@@ -1796,7 +1793,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
         RValue RV = 
           LV.isPropertyRef() ? EmitLoadOfPropertyRefLValue(LV, QT) 
                              : EmitLoadOfKVCRefLValue(LV, QT);
-        assert(!RV.isScalar() && "EmitCastLValue-scalar cast of property ref");
+        assert(RV.isAggregate());
         llvm::Value *V = RV.getAggregateAddr();
         return MakeAddrLValue(V, QT);
       }
@@ -2107,16 +2104,12 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
 
 LValue
 CodeGenFunction::EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E) {
-  // This is a special l-value that just issues sends when we load or store
-  // through it.
-  return LValue::MakePropertyRef(E, E->getType().getCVRQualifiers());
-}
+  // This is a special l-value that just issues sends when we load or
+  // store through it.
 
-LValue CodeGenFunction::EmitObjCKVCRefLValue(
-                                const ObjCImplicitSetterGetterRefExpr *E) {
-  // This is a special l-value that just issues sends when we load or store
-  // through it.
-  return LValue::MakeKVCRef(E, E->getType().getCVRQualifiers());
+  if (E->isImplicitProperty())
+    return LValue::MakeKVCRef(E, E->getType().getCVRQualifiers());
+  return LValue::MakePropertyRef(E, E->getType().getCVRQualifiers());
 }
 
 LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {

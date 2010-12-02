@@ -172,8 +172,6 @@ namespace  {
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
     void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node);
-    void VisitObjCImplicitSetterGetterRefExpr(
-                                          ObjCImplicitSetterGetterRefExpr *Node);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
   };
 }
@@ -607,27 +605,19 @@ void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
 
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   DumpExpr(Node);
-  if (Node->isSuperReceiver())
-    OS << " Kind=PropertyRef Property=\"" << Node->getProperty() << '"'
-    << " super";
-  else
-    OS << " Kind=PropertyRef Property=\"" << Node->getProperty() << '"';
-}
+  if (Node->isImplicitProperty()) {
+    OS << " Kind=MethodRef Getter=\""
+       << Node->getImplicitPropertyGetter()->getSelector().getAsString()
+       << "\" Setter=\"";
+    if (ObjCMethodDecl *Setter = Node->getImplicitPropertySetter())
+      OS << Setter->getSelector().getAsString();
+    else
+      OS << "(null)";
+    OS << "\"";
+  } else {
+    OS << " Kind=PropertyRef Property=\"" << Node->getExplicitProperty() << '"';
+  }
 
-void StmtDumper::VisitObjCImplicitSetterGetterRefExpr(
-                                        ObjCImplicitSetterGetterRefExpr *Node) {
-  DumpExpr(Node);
-
-  ObjCMethodDecl *Getter = Node->getGetterMethod();
-  ObjCMethodDecl *Setter = Node->getSetterMethod();
-  OS << " Kind=MethodRef Getter=\""
-     << Getter->getSelector().getAsString()
-     << "\" Setter=\"";
-  if (Setter)
-    OS << Setter->getSelector().getAsString();
-  else
-    OS << "(null)";
-  OS << "\"";
   if (Node->isSuperReceiver())
     OS << " super";
 }

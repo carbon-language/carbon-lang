@@ -25,7 +25,6 @@ namespace llvm {
 
 namespace clang {
   class ObjCPropertyRefExpr;
-  class ObjCImplicitSetterGetterRefExpr;
 
 namespace CodeGen {
   class CGBitFieldInfo;
@@ -129,9 +128,6 @@ class LValue {
 
     // Obj-C property reference expression
     const ObjCPropertyRefExpr *PropertyRefExpr;
-
-    // ObjC 'implicit' property reference expression
-    const ObjCImplicitSetterGetterRefExpr *KVCRefExpr;
   };
 
   // 'const' is unused here
@@ -255,9 +251,9 @@ public:
   }
 
   // 'implicit' property ref lvalue
-  const ObjCImplicitSetterGetterRefExpr *getKVCRefExpr() const {
+  const ObjCPropertyRefExpr *getKVCRefExpr() const {
     assert(isKVCRef());
-    return KVCRefExpr;
+    return PropertyRefExpr;
   }
 
   static LValue MakeAddr(llvm::Value *V, QualType T, unsigned Alignment,
@@ -321,11 +317,11 @@ public:
     return R;
   }
 
-  static LValue MakeKVCRef(const ObjCImplicitSetterGetterRefExpr *E,
+  static LValue MakeKVCRef(const ObjCPropertyRefExpr *E,
                            unsigned CVR) {
     LValue R;
     R.LVType = KVCRef;
-    R.KVCRefExpr = E;
+    R.PropertyRefExpr = E;
     R.Initialize(Qualifiers::fromCVRMask(CVR));
     return R;
   }

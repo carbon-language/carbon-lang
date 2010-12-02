@@ -89,13 +89,10 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   // we might want to make a more specific diagnostic.  Check for one of these
   // cases now.
   unsigned DiagID = diag::warn_unused_expr;
-  E = E->IgnoreParens();
-  if (isa<ObjCImplicitSetterGetterRefExpr>(E))
-    DiagID = diag::warn_unused_property_expr;
-  
   if (const CXXExprWithTemporaries *Temps = dyn_cast<CXXExprWithTemporaries>(E))
     E = Temps->getSubExpr();
-      
+
+  E = E->IgnoreParens();
   if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
     if (E->getType()->isVoidType())
       return;
@@ -116,13 +113,14 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
         return;
       }
     }        
-  }
-  else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
+  } else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
     const ObjCMethodDecl *MD = ME->getMethodDecl();
     if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
       Diag(Loc, diag::warn_unused_call) << R1 << R2 << "warn_unused_result";
       return;
     }
+  } else if (isa<ObjCPropertyRefExpr>(E)) {
+    DiagID = diag::warn_unused_property_expr;
   } else if (const CXXFunctionalCastExpr *FC
                                        = dyn_cast<CXXFunctionalCastExpr>(E)) {
     if (isa<CXXConstructExpr>(FC->getSubExpr()) ||

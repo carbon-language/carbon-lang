@@ -1230,30 +1230,24 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
   SourceLocation SuperLocation;
   // Synthesize a ObjCMessageExpr from a ObjCPropertyRefExpr or ObjCImplicitSetterGetterRefExpr.
   // This allows us to reuse all the fun and games in SynthMessageExpr().
-  if (ObjCPropertyRefExpr *PropRefExpr = dyn_cast<ObjCPropertyRefExpr>(BinOp->getLHS())) {
-    ObjCPropertyDecl *PDecl = PropRefExpr->getProperty();
-    OMD = PDecl->getSetterMethodDecl();
-    Ty = PDecl->getType();
-    Sel = PDecl->getSetterName();
-    Super = PropRefExpr->isSuperReceiver();
-    if (!Super)
-      Receiver = PropRefExpr->getBase();
-    else {
-      SuperTy = PropRefExpr->getSuperType();
-      SuperLocation = PropRefExpr->getSuperLocation();
+  if (ObjCPropertyRefExpr *PropRefExpr =
+        dyn_cast<ObjCPropertyRefExpr>(BinOp->getLHS())) {
+    if (PropRefExpr->isExplicitProperty()) {
+      ObjCPropertyDecl *PDecl = PropRefExpr->getExplicitProperty();
+      OMD = PDecl->getSetterMethodDecl();
+      Ty = PDecl->getType();
+      Sel = PDecl->getSetterName();
+    } else {
+      OMD = PropRefExpr->getImplicitPropertySetter();
+      Sel = OMD->getSelector();
+      Ty = PropRefExpr->getType();
     }
-  }
-  else if (ObjCImplicitSetterGetterRefExpr *ImplicitRefExpr = 
-           dyn_cast<ObjCImplicitSetterGetterRefExpr>(BinOp->getLHS())) {
-    OMD = ImplicitRefExpr->getSetterMethod();
-    Sel = OMD->getSelector();
-    Ty = ImplicitRefExpr->getType();
-    Super = ImplicitRefExpr->isSuperReceiver();
-    if (!Super)
-      Receiver = ImplicitRefExpr->getBase();
-    else {
-      SuperTy = ImplicitRefExpr->getSuperType();
-      SuperLocation = ImplicitRefExpr->getSuperLocation();
+    Super = PropRefExpr->isSuperReceiver();
+    if (!Super) {
+      Receiver = PropRefExpr->getBase();
+    } else {
+      SuperTy = PropRefExpr->getSuperReceiverType();
+      SuperLocation = PropRefExpr->getReceiverLocation();
     }
   }
   
@@ -1314,29 +1308,22 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
   SourceLocation SuperLocation;
   if (ObjCPropertyRefExpr *PropRefExpr = 
         dyn_cast<ObjCPropertyRefExpr>(PropOrGetterRefExpr)) {
-    ObjCPropertyDecl *PDecl = PropRefExpr->getProperty();
-    OMD = PDecl->getGetterMethodDecl();
-    Ty = PDecl->getType();
-    Sel = PDecl->getGetterName();
+    if (PropRefExpr->isExplicitProperty()) {
+      ObjCPropertyDecl *PDecl = PropRefExpr->getExplicitProperty();
+      OMD = PDecl->getGetterMethodDecl();
+      Ty = PDecl->getType();
+      Sel = PDecl->getGetterName();
+    } else {
+      OMD = PropRefExpr->getImplicitPropertyGetter();
+      Sel = OMD->getSelector();
+      Ty = PropRefExpr->getType();
+    }
     Super = PropRefExpr->isSuperReceiver();
     if (!Super)
       Receiver = PropRefExpr->getBase();
     else {
-      SuperTy = PropRefExpr->getSuperType();
-      SuperLocation = PropRefExpr->getSuperLocation();
-    }
-  }
-  else if (ObjCImplicitSetterGetterRefExpr *ImplicitRefExpr = 
-            dyn_cast<ObjCImplicitSetterGetterRefExpr>(PropOrGetterRefExpr)) {
-    OMD = ImplicitRefExpr->getGetterMethod();
-    Sel = OMD->getSelector();
-    Ty = ImplicitRefExpr->getType();
-    Super = ImplicitRefExpr->isSuperReceiver();
-    if (!Super)
-      Receiver = ImplicitRefExpr->getBase();
-    else {
-      SuperTy = ImplicitRefExpr->getSuperType();
-      SuperLocation = ImplicitRefExpr->getSuperLocation();
+      SuperTy = PropRefExpr->getSuperReceiverType();
+      SuperLocation = PropRefExpr->getReceiverLocation();
     }
   }
   
@@ -1376,8 +1363,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
     PropParentMap = new ParentMap(CurrentBody);
 
   Stmt *Parent = PropParentMap->getParent(PropOrGetterRefExpr);
-  if (Parent && (isa<ObjCPropertyRefExpr>(Parent) ||
-                 isa<ObjCImplicitSetterGetterRefExpr>(Parent))) {
+  if (Parent && isa<ObjCPropertyRefExpr>(Parent)) {
     // We stash away the ReplacingStmt since actually doing the
     // replacement/rewrite won't work for nested getters (e.g. obj.p.i)
     PropGetters[PropOrGetterRefExpr] = ReplacingStmt;
@@ -5495,9 +5481,8 @@ void RewriteObjC::CollectPropertySetters(Stmt *S) {
 
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
     if (BinOp->isAssignmentOp()) {
-        if (isa<ObjCPropertyRefExpr>(BinOp->getLHS()) || 
-            isa<ObjCImplicitSetterGetterRefExpr>(BinOp->getLHS()))
-          PropSetters[BinOp->getLHS()] = BinOp;
+      if (isa<ObjCPropertyRefExpr>(BinOp->getLHS()))
+        PropSetters[BinOp->getLHS()] = BinOp;
     }
   }
 }
@@ -5539,8 +5524,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
       // setter messaging. This involvs the RHS too. Do not attempt to rewrite
       // RHS again.
       if (Expr *Exp = dyn_cast<Expr>(S))
-        if (isa<ObjCPropertyRefExpr>(Exp) || 
-            isa<ObjCImplicitSetterGetterRefExpr>(Exp)) {
+        if (isa<ObjCPropertyRefExpr>(Exp)) {
           if (PropSetters[Exp]) {
             ++CI;
             continue;
@@ -5577,7 +5561,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
     return RewriteAtEncode(AtEncode);
 
-  if (isa<ObjCPropertyRefExpr>(S) || isa<ObjCImplicitSetterGetterRefExpr>(S)) {
+  if (isa<ObjCPropertyRefExpr>(S)) {
     Expr *PropOrImplicitRefExpr = dyn_cast<Expr>(S);
     assert(PropOrImplicitRefExpr && "Property or implicit setter/getter is null");
     
