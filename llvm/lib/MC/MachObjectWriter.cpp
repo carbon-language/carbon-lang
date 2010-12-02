@@ -31,7 +31,12 @@ using namespace llvm::object;
 // FIXME: this has been copied from (or to) X86AsmBackend.cpp
 static unsigned getFixupKindLog2Size(unsigned Kind) {
   switch (Kind) {
-  default: llvm_unreachable("invalid fixup kind!");
+  // FIXME: Until ARM has it's own relocation stuff spun off, it comes
+  // through here and we don't want it to puke all over. Any reasonable
+  // values will only come when ARM relocation support gets added, at which
+  // point this will be X86 only again and the llvm_unreachable can be
+  // re-enabled.
+  default: return 0;// llvm_unreachable("invalid fixup kind!");
   case FK_PCRel_1:
   case FK_Data_1: return 0;
   case FK_PCRel_2:

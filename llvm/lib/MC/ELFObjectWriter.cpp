@@ -408,7 +408,7 @@ namespace {
       case FK_PCRel_1:
       case FK_PCRel_2:
       case FK_PCRel_4:
-      case ARM::fixup_arm_pcrel_12:
+      case ARM::fixup_arm_ldst_pcrel_12:
       case ARM::fixup_arm_pcrel_10:
       case ARM::fixup_arm_branch:
         return true;
@@ -1456,8 +1456,9 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
   } else {
     switch ((unsigned)Fixup.getKind()) {
     default: llvm_unreachable("invalid fixup kind!");
-    case ARM::fixup_arm_pcrel_12:
+    case ARM::fixup_arm_ldst_pcrel_12:
     case ARM::fixup_arm_pcrel_10:
+    case ARM::fixup_arm_adr_pcrel_12:
       assert(0 && "Unimplemented"); break;
     case ARM::fixup_arm_branch:
       return ELF::R_ARM_CALL; break;

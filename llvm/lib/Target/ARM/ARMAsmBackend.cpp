@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetAsmBackend.h"
 #include "ARM.h"
+#include "ARMAddressingModes.h"
 #include "ARMFixupKinds.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
@@ -21,6 +21,7 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
@@ -67,7 +68,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case ARM::fixup_arm_movt_hi16:
   case ARM::fixup_arm_movw_lo16:
     return Value;
-  case ARM::fixup_arm_pcrel_12: {
+  case ARM::fixup_arm_ldst_pcrel_12: {
     bool isAdd = true;
     // ARM PC-relative values are offset by 8.
     Value -= 8;
@@ -78,6 +79,19 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     assert ((Value < 4096) && "Out of range pc-relative fixup value!");
     Value |= isAdd << 23;
     return Value;
+  }
+  case ARM::fixup_arm_adr_pcrel_12: {
+    // ARM PC-relative values are offset by 8.
+    Value -= 8;
+    unsigned opc = 4; // bits {24-21}. Default to add: 0b0100
+    if ((int64_t)Value < 0) {
+      Value = -Value;
+      opc = 2; // 0b0010
+    }
+    assert(ARM_AM::getSOImmVal(Value) != -1 &&
+           "Out of range pc-relative fixup value!");
+    // Encode the immediate and shift the opcode into place.
+    return ARM_AM::getSOImmVal(Value) | (opc << 21);
   }
   case ARM::fixup_arm_branch:
     // These values don't encode the low two bits since they're always zero.
@@ -200,8 +214,9 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
   default: llvm_unreachable("Unknown fixup kind!");
   case FK_Data_4: return 4;
-  case ARM::fixup_arm_pcrel_12: return 3;
+  case ARM::fixup_arm_ldst_pcrel_12: return 3;
   case ARM::fixup_arm_pcrel_10: return 3;
+  case ARM::fixup_arm_adr_pcrel_12: return 3;
   case ARM::fixup_arm_branch: return 3;
   }
 }

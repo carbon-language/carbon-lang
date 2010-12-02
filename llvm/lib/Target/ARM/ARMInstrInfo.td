@@ -1184,8 +1184,9 @@ def PICSTRB : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 // assembler.
 let neverHasSideEffects = 1, isReMaterializable = 1 in
 // The 'adr' mnemonic encodes differently if the label is before or after
-// the instruction.
-def ADRadd : AI1<0b0100, (outs GPR:$Rd), (ins adrlabel:$label),
+// the instruction. The {24-21} opcode bits are set by the fixup, as we don't
+// know until then which form of the instruction will be used.
+def ADR : AI1<0, (outs GPR:$Rd), (ins adrlabel:$label),
                  MiscFrm, IIC_iALUi, "adr", "\t$Rd, #$label", []> {
   bits<4> Rd;
   bits<12> label;
@@ -1195,23 +1196,8 @@ def ADRadd : AI1<0b0100, (outs GPR:$Rd), (ins adrlabel:$label),
   let Inst{15-12} = Rd;
   let Inst{11-0} = label;
 }
-def ADRsub : AI1<0b0010, (outs GPR:$Rd), (ins adrlabel:$label),
-                 MiscFrm, IIC_iALUi, "adr", "\t$Rd, #$label", []> {
-  bits<4> Rd;
-  bits<12> label;
-  let Inst{27-25} = 0b001;
-  let Inst{20} = 0;
-  let Inst{19-16} = 0b1111;
-  let Inst{15-12} = Rd;
-  let Inst{11-0} = label;
-}
-
-// FIXME: This should be a pseudo lowered to one of the above at MC lowering
-// time. It may be interesting determining which of the two. Perhaps a fixup
-// will be needed to do so? That would be kinda fugly.
-def LEApcrel : AXI1<0, (outs GPR:$Rd), (ins i32imm:$label, pred:$p),
-                    MiscFrm, IIC_iALUi,
-                    "adr${p}\t$Rd, #$label", []>;
+def LEApcrel : ARMPseudoInst<(outs GPR:$Rd), (ins i32imm:$label, pred:$p),
+                    Size4Bytes, IIC_iALUi, []>;
 
 def LEApcrelJT : ARMPseudoInst<(outs GPR:$Rd),
                       (ins i32imm:$label, nohash_imm:$id, pred:$p),

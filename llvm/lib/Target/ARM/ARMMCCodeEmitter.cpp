@@ -45,12 +45,13 @@ public:
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
-      // name                     offset  bits  flags
-      { "fixup_arm_pcrel_12",     1,      24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_pcrel_10",     1,      24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_branch",       1,      24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_movt_hi16",    0,      16,   0 },
-      { "fixup_arm_movw_lo16",    0,      16,   0 },
+      // name                       off   bits  flags
+      { "fixup_arm_ldst_pcrel_12",  1,    24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_pcrel_10",       1,    24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_adr_pcrel_12",   1,    24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_branch",         1,    24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_movt_hi16",      0,    16,   0 },
+      { "fixup_arm_movw_lo16",      0,    16,   0 },
     };
 
     if (Kind < FirstTargetFixupKind)
@@ -418,14 +419,10 @@ uint32_t ARMMCCodeEmitter::
 getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
                    SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand &MO = MI.getOperand(OpIdx);
-
-  // If the destination is an immediate, we have nothing to do.
-  if (MO.isImm()) return MO.getImm();
-  assert (MO.isExpr() && "Unexpected branch target type!");
+  assert (MO.isExpr() && "Unexpected adr target type!");
   const MCExpr *Expr = MO.getExpr();
-  MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_12);
+  MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_adr_pcrel_12);
   Fixups.push_back(MCFixup::Create(0, Expr, Kind));
-
   // All of the information is in the fixup.
   return 0;
 }
@@ -448,7 +445,7 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
 
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
-    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_12);
+    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_ldst_pcrel_12);
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 
     ++MCNumCPRelocations;
