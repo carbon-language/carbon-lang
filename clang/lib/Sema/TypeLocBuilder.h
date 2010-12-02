@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_TYPELOCBUILDER_H
-#define LLVM_CLANG_AST_TYPELOCBUILDER_H
+#ifndef LLVM_CLANG_SEMA_TYPELOCBUILDER_H
+#define LLVM_CLANG_SEMA_TYPELOCBUILDER_H
 
 #include "clang/AST/TypeLoc.h"
 #include "llvm/ADT/SmallVector.h"
