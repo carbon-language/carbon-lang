@@ -130,5 +130,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("global", AT_global)
     .Case("host", AT_host)
     .Case("shared", AT_shared)
+    .Case("common", AT_common)
+    .Case("nocommon", AT_nocommon)
     .Default(UnknownAttribute);
 }

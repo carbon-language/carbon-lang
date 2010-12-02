@@ -161,6 +161,10 @@ def Cleanup : Attr {
   let Args = [FunctionArgument<"FunctionDecl">];
 }
 
+def Common : Attr {
+  let Spellings = ["common"];
+}
+
 def Const : Attr {
   let Spellings = ["const"];
 }
@@ -272,6 +276,10 @@ def MSP430Interrupt : Attr {
 
 def Naked : Attr {
   let Spellings = ["naked"];
+}
+
+def NoCommon : Attr {
+  let Spellings = ["nocommon"];
 }
 
 def NoDebug : Attr {

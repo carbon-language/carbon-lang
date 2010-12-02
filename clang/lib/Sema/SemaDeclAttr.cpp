@@ -743,6 +743,16 @@ static void HandleMayAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) MayAliasAttr(Attr.getLoc(), S.Context));
 }
 
+static void HandleNoCommonAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  assert(Attr.isInvalid() == false);
+  d->addAttr(::new (S.Context) NoCommonAttr(Attr.getLoc(), S.Context));
+}
+
+static void HandleCommonAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  assert(Attr.isInvalid() == false);
+  d->addAttr(::new (S.Context) CommonAttr(Attr.getLoc(), S.Context));
+}
+
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   /* Diagnostics (if any) was emitted by Sema::ProcessFnAttr(). */
   assert(Attr.isInvalid() == false);
@@ -2474,6 +2484,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_base_check:  HandleBaseCheckAttr   (D, Attr, S); break;
   case AttributeList::AT_carries_dependency:
                                       HandleDependencyAttr  (D, Attr, S); break;
+  case AttributeList::AT_common:      HandleCommonAttr      (D, Attr, S); break;
   case AttributeList::AT_constant:    HandleConstantAttr    (D, Attr, S); break;
   case AttributeList::AT_constructor: HandleConstructorAttr (D, Attr, S); break;
   case AttributeList::AT_deprecated:  HandleDeprecatedAttr  (D, Attr, S); break;
@@ -2492,6 +2503,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_mode:        HandleModeAttr        (D, Attr, S); break;
   case AttributeList::AT_malloc:      HandleMallocAttr      (D, Attr, S); break;
   case AttributeList::AT_may_alias:   HandleMayAliasAttr    (D, Attr, S); break;
+  case AttributeList::AT_nocommon:    HandleNoCommonAttr    (D, Attr, S); break;
   case AttributeList::AT_nonnull:     HandleNonNullAttr     (D, Attr, S); break;
   case AttributeList::AT_ownership_returns:
   case AttributeList::AT_ownership_takes:

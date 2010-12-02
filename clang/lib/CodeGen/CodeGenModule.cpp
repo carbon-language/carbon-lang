@@ -1214,7 +1214,9 @@ CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D,
     // FIXME: It seems like we can provide more specific linkage here
     // (LinkOnceODR, WeakODR).
     return llvm::GlobalVariable::WeakAnyLinkage;
-  else if (!getLangOptions().CPlusPlus && !CodeGenOpts.NoCommon &&
+  else if (!getLangOptions().CPlusPlus && 
+           ((!CodeGenOpts.NoCommon && !D->getAttr<NoCommonAttr>()) ||
+             D->getAttr<CommonAttr>()) &&
            !D->hasExternalStorage() && !D->getInit() &&
            !D->getAttr<SectionAttr>() && !D->isThreadSpecified()) {
     // Thread local vars aren't considered common linkage.
