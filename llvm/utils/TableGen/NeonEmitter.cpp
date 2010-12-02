@@ -325,6 +325,8 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
 
     if (usgn)
       s.push_back('U');
+    else if (type == 'c')
+      s.push_back('S'); // make chars explicitly signed
     
     if (type == 'l') // 64-bit long
       s += "LLi";
@@ -354,16 +356,16 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
     if (ck != ClassB && type == 'l')
       return quad ? "V2LLi" : "V1LLi";
     
-    return quad ? "V16c" : "V8c";
+    return quad ? "V16Sc" : "V8Sc";
   }    
 
   // Non-return array types are passed as individual vectors.
   if (mod == '2')
-    return quad ? "V16cV16c" : "V8cV8c";
+    return quad ? "V16ScV16Sc" : "V8ScV8Sc";
   if (mod == '3')
-    return quad ? "V16cV16cV16c" : "V8cV8cV8c";
+    return quad ? "V16ScV16ScV16Sc" : "V8ScV8ScV8Sc";
   if (mod == '4')
-    return quad ? "V16cV16cV16cV16c" : "V8cV8cV8cV8c";
+    return quad ? "V16ScV16ScV16ScV16Sc" : "V8ScV8ScV8ScV8Sc";
 
   if (mod == 'f' || (ck != ClassB && type == 'f'))
     return quad ? "V4f" : "V2f";
@@ -374,7 +376,7 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   if (ck != ClassB && type == 'l')
     return quad ? "V2LLi" : "V1LLi";
   
-  return quad ? "V16c" : "V8c";
+  return quad ? "V16Sc" : "V8Sc";
 }
 
 /// MangleName - Append a type or width suffix to a base neon function name, 
