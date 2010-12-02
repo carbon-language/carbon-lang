@@ -425,7 +425,7 @@ def error_ivar_in_superclass_use : Error<
 def error_weak_property : Error<
   "existing ivar %1 for __weak property %0 must be __weak">;
 def error_strong_property : Error<
-  "existing ivar %1 for a __strong property %0 must be garbage collectable">;
+  "property %0 must be declared __weak to match existing ivar %1 with __weak attribute">;
 def error_dynamic_property_ivar_decl : Error<
   "dynamic property can not have ivar specification">;
 def error_duplicate_ivar_use : Error<
