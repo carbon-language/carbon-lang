@@ -618,26 +618,6 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
   assert(OW->getStream().tell() - Start == Layout.getSectionFileSize(SD));
 }
 
-void MCAssembler::AddSectionToTheEnd(const MCObjectWriter &Writer,
-                                     MCSectionData &SD, MCAsmLayout &Layout) {
-  // Create dummy fragments and assign section ordinals.
-  unsigned SectionIndex = size();
-  SD.setOrdinal(SectionIndex);
-
-  // Assign layout order indices to sections and fragments.
-  const MCFragment &Last = *Layout.getSectionOrder().back()->rbegin();
-  unsigned FragmentIndex = Last.getLayoutOrder() + 1;
-
-  SD.setLayoutOrder(Layout.getSectionOrder().size());
-  for (MCSectionData::iterator it2 = SD.begin(),
-         ie2 = SD.end(); it2 != ie2; ++it2) {
-    it2->setLayoutOrder(FragmentIndex++);
-  }
-  Layout.getSectionOrder().push_back(&SD);
-
-  Layout.LayoutSection(&SD);
-}
-
 void MCAssembler::Finish(MCObjectWriter *Writer) {
   DEBUG_WITH_TYPE("mc-dump", {
       llvm::errs() << "assembler backend - pre-layout\n--\n";

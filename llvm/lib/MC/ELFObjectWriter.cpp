@@ -982,8 +982,6 @@ void ELFObjectWriter::WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
     MCDataFragment *F = new MCDataFragment(&RelaSD);
 
     WriteRelocationsFragment(Asm, F, &SD);
-
-    Asm.AddSectionToTheEnd(*this, RelaSD, Layout);
   }
 }
 
@@ -1091,14 +1089,11 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
   MCDataFragment *ShndxF = NULL;
   if (NeedsSymtabShndx) {
     ShndxF = new MCDataFragment(SymtabShndxSD);
-    Asm.AddSectionToTheEnd(*this, *SymtabShndxSD, Layout);
   }
   WriteSymbolTable(F, ShndxF, Asm, Layout, SectionIndexMap);
-  Asm.AddSectionToTheEnd(*this, SymtabSD, Layout);
 
   F = new MCDataFragment(&StrtabSD);
   F->getContents().append(StringTable.begin(), StringTable.end());
-  Asm.AddSectionToTheEnd(*this, StrtabSD, Layout);
 
   F = new MCDataFragment(&ShstrtabSD);
 
@@ -1130,8 +1125,6 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
     F->getContents() += Name;
     F->getContents() += '\x00';
   }
-
-  Asm.AddSectionToTheEnd(*this, ShstrtabSD, Layout);
 }
 
 bool ELFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
@@ -1220,13 +1213,6 @@ void ELFObjectWriter::CreateGroupSections(MCAssembler &Asm,
     MCDataFragment *F = new MCDataFragment(&Data);
     String32(*F, NumGroups + Index);
   }
-
-  for (RevGroupMapTy::const_iterator i = RevGroupMap.begin(),
-         e = RevGroupMap.end(); i != e; ++i) {
-    const MCSectionELF *Group = i->second;
-    MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
-    Asm.AddSectionToTheEnd(*this, Data, Layout);
-  }
 }
 
 void ELFObjectWriter::WriteSection(MCAssembler &Asm,
@@ -1299,6 +1285,45 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
                    Alignment, Section.getEntrySize());
 }
 
+static bool IsELFMetaDataSection(const MCSectionData &SD) {
+  return SD.getAddress() == ~UINT64_C(0) &&
+    !SD.getSection().isVirtualSection();
+}
+
+static uint64_t DataSectionSize(const MCSectionData &SD) {
+  uint64_t Ret = 0;
+  for (MCSectionData::const_iterator i = SD.begin(), e = SD.end(); i != e;
+       ++i) {
+    const MCFragment &F = *i;
+    assert(F.getKind() == MCFragment::FT_Data);
+    Ret += cast<MCDataFragment>(F).getContents().size();
+  }
+  return Ret;
+}
+
+static uint64_t GetSectionFileSize(const MCAsmLayout &Layout,
+                                   const MCSectionData &SD) {
+  if (IsELFMetaDataSection(SD))
+    return DataSectionSize(SD);
+  return Layout.getSectionFileSize(&SD);
+}
+
+static uint64_t GetSectionSize(const MCAsmLayout &Layout,
+                                   const MCSectionData &SD) {
+  if (IsELFMetaDataSection(SD))
+    return DataSectionSize(SD);
+  return Layout.getSectionSize(&SD);
+}
+
+static void WriteDataSectionData(ELFObjectWriter *W, const MCSectionData &SD) {
+  for (MCSectionData::const_iterator i = SD.begin(), e = SD.end(); i != e;
+       ++i) {
+    const MCFragment &F = *i;
+    assert(F.getKind() == MCFragment::FT_Data);
+    W->WriteBytes(cast<MCDataFragment>(F).getContents().str());
+  }
+}
+
 void ELFObjectWriter::WriteObject(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) {
   GroupMapTy GroupMap;
@@ -1342,9 +1367,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     FileOff = RoundUpToAlignment(FileOff, SD.getAlignment());
 
     // Get the size of the section in the output file (including padding).
-    uint64_t Size = Layout.getSectionFileSize(&SD);
-
-    FileOff += Size;
+    FileOff += GetSectionFileSize(Layout, SD);
   }
 
   FileOff = RoundUpToAlignment(FileOff, NaturalAlignment);
@@ -1368,9 +1391,12 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     // Remember the offset into the file for this section.
     SectionOffsetMap[&Section] = FileOff;
 
-    FileOff += Layout.getSectionFileSize(&SD);
+    FileOff += GetSectionFileSize(Layout, SD);
 
-    Asm.WriteSectionData(&SD, Layout, this);
+    if (IsELFMetaDataSection(SD))
+      WriteDataSectionData(this, SD);
+    else
+      Asm.WriteSectionData(&SD, Layout, this);
   }
 
   uint64_t Padding = OffsetToAlignment(FileOff, NaturalAlignment);
@@ -1396,8 +1422,10 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     else
       GroupSymbolIndex = getSymbolIndexInSymbolTable(Asm, GroupMap[&Section]);
 
+    uint64_t Size = GetSectionSize(Layout, SD);
+
     WriteSection(Asm, SectionIndexMap, GroupSymbolIndex,
-                 SectionOffsetMap[&Section], Layout.getSectionSize(&SD),
+                 SectionOffsetMap[&Section], Size,
                  SD.getAlignment(), Section);
   }
 }

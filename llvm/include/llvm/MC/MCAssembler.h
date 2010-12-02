@@ -481,6 +481,8 @@ public:
   unsigned getLayoutOrder() const { return LayoutOrder; }
   void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
+  uint64_t getAddress() const { return Address; }
+
   /// @name Fragment Access
   /// @{
 
@@ -756,9 +758,6 @@ public:
   // FIXME: Should MCAssembler always have a reference to the object writer?
   void WriteSectionData(const MCSectionData *Section, const MCAsmLayout &Layout,
                         MCObjectWriter *OW) const;
-
-  void AddSectionToTheEnd(const MCObjectWriter &Writer, MCSectionData &SD,
-                          MCAsmLayout &Layout);
 
 public:
   /// Construct a new assembler instance.
