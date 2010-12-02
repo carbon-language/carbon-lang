@@ -32,6 +32,7 @@ struct nothrow_t {};
 extern const nothrow_t nothrow;
 typedef void (*new_handler)();
 new_handler set_new_handler(new_handler new_p) throw();
+new_handler get_new_handler() throw();
 
 }  // std
 
@@ -85,6 +86,7 @@ struct _LIBCPP_VISIBLE nothrow_t {};
 extern _LIBCPP_VISIBLE const nothrow_t nothrow;
 typedef void (*new_handler)();
 _LIBCPP_VISIBLE new_handler set_new_handler(new_handler) throw();
+_LIBCPP_VISIBLE new_handler get_new_handler() throw();
 
 }  // std
 

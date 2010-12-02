@@ -130,9 +130,13 @@ const nothrow_t nothrow = {};
 new_handler
 set_new_handler(new_handler handler) throw()
 {
-    new_handler r = __new_handler;
-    __new_handler = handler;
-    return r;
+    return __sync_lock_test_and_set(&__new_handler, handler);
+}
+
+new_handler
+get_new_handler() throw()
+{
+    return __sync_fetch_and_add(&__new_handler, (new_handler)0);
 }
 
 bad_alloc::bad_alloc() throw()

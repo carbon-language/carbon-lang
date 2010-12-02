@@ -2297,12 +2297,16 @@ future<_R&>::share()
     return shared_future<_R&>(_STD::move(*this));
 }
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
 inline _LIBCPP_INLINE_VISIBILITY
 shared_future<void>
 future<void>::share()
 {
     return shared_future<void>(_STD::move(*this));
 }
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 _LIBCPP_END_NAMESPACE_STD
 

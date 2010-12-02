@@ -40,10 +40,12 @@ public:
 
 typedef void (*unexpected_handler)();
 unexpected_handler set_unexpected(unexpected_handler  f ) throw();
+unexpected_handler get_unexpected() throw();
 void unexpected [[noreturn]] ();
 
 typedef void (*terminate_handler)();
 terminate_handler set_terminate(terminate_handler  f ) throw();
+terminate_handler get_terminate() throw();
 void terminate [[noreturn]] ();
 
 bool uncaught_exception() throw();
@@ -102,10 +104,12 @@ public:
 
 typedef void (*unexpected_handler)();
 _LIBCPP_VISIBLE unexpected_handler set_unexpected(unexpected_handler) throw();
+_LIBCPP_VISIBLE unexpected_handler get_unexpected() throw();
 _LIBCPP_VISIBLE void unexpected();
 
 typedef void (*terminate_handler)();
 _LIBCPP_VISIBLE terminate_handler set_terminate(terminate_handler) throw();
+_LIBCPP_VISIBLE terminate_handler get_terminate() throw();
 _LIBCPP_VISIBLE void terminate() __attribute__((__noreturn__));
 
 _LIBCPP_VISIBLE bool uncaught_exception() throw();

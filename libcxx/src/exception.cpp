@@ -26,9 +26,13 @@
 std::unexpected_handler
 std::set_unexpected(std::unexpected_handler func) throw()
 {
-    std::terminate_handler old = __unexpected_handler;
-    __unexpected_handler = func;
-    return old;
+    return __sync_lock_test_and_set(&__unexpected_handler, func);
+}
+
+std::unexpected_handler
+std::get_unexpected() throw()
+{
+    return __sync_fetch_and_add(&__unexpected_handler, (std::unexpected_handler)0);
 }
 
 void
@@ -42,9 +46,13 @@ std::unexpected()
 std::terminate_handler
 std::set_terminate(std::terminate_handler func) throw()
 {
-    std::terminate_handler old = __terminate_handler;
-    __terminate_handler = func;
-    return old;
+    return __sync_lock_test_and_set(&__terminate_handler, func);
+}
+
+std::terminate_handler
+std::get_terminate() throw()
+{
+    return __sync_fetch_and_add(&__terminate_handler, (std::terminate_handler)0);
 }
 
 void
