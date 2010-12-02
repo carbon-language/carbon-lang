@@ -790,8 +790,11 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
       continue;
     }
     
+    if (splat && (i + 1) == e)
+      args = Duplicate(GetNumElements(typestr, argQuad), typestr, args);
+
     // Check if an explicit cast is needed.
-    if (!argScalar &&
+    if ((splat || !argScalar) &&
         ((ck == ClassB && argType != 'c') || argPoly || argUsgn)) {
       std::string argTypeStr = "c";
       if (ck != ClassB)
@@ -801,10 +804,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
       args = "(" + TypeString('d', argTypeStr) + ")" + args;
     }
     
-    if (splat && (i + 1) == e)
-      s += Duplicate(GetNumElements(typestr, argQuad), typestr, args);
-    else
-      s += args;
+    s += args;
     if ((i + 1) < e)
       s += ", ";
   }
