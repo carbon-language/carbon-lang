@@ -729,7 +729,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
     
     if (define) {
       if (sret)
-        s += "({ " + ts + " r; ";
+        s += ts + " r; ";
       else
         s += "(" + ts + ")";
     } else if (sret) {
@@ -813,15 +813,12 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   if (ck == ClassB)
     s += ", " + utostr(GetNeonEnum(proto, typestr));
   
-  if (define)
-    s += ")";
-  else
-    s += ");";
+  s += ");";
 
   if (proto[0] != 'v') {
     if (define) {
       if (sret)
-        s += "; r; })";
+        s += " r;";
     } else {
       s += " return r;";
     }
@@ -953,9 +950,9 @@ void NeonEmitter::run(raw_ostream &OS) {
       
       // Definition.
       if (define)
-        OS << " ";
+        OS << " __extension__ ({ \\\n  ";
       else
-        OS << " { ";
+        OS << " { \\\n  ";
       
       if (k != OpNone) {
         OS << GenOpString(k, Proto, TypeVec[ti]);
@@ -969,7 +966,9 @@ void NeonEmitter::run(raw_ostream &OS) {
           throw TGError(R->getLoc(), "Builtin has no class kind");
         OS << GenBuiltin(name, Proto, TypeVec[ti], ck);
       }
-      if (!define)
+      if (define)
+        OS << " })";
+      else
         OS << " }";
       OS << "\n";
     }
