@@ -4739,7 +4739,7 @@ def : N3VSPat<NEONfmax, VMAXfd_sfp>;
 
 // Vector Minimum used for single-precision FP
 let neverHasSideEffects = 1 in
-def VMINfd_sfp : N3V<0, 0, 0b00, 0b1111, 0, 0, (outs DPR_VFP2:$Vd),
+def VMINfd_sfp : N3V<0, 0, 0b10, 0b1111, 0, 0, (outs DPR_VFP2:$Vd),
                      (ins DPR_VFP2:$Vn, DPR_VFP2:$Vm), N3RegFrm, IIC_VBIND,
                      "vmin", "f32", "$Vd, $Vn, $Vm", "", []>;
 def : N3VSPat<NEONfmin, VMINfd_sfp>;
