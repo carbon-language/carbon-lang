@@ -77,7 +77,7 @@ HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix,
 }
 
 PathDiagnosticClient*
-clang::CreateHTMLDiagnosticClient(const std::string& prefix,
+clang::createHTMLDiagnosticClient(const std::string& prefix,
                                   const Preprocessor &PP) {
   return new HTMLDiagnostics(prefix, PP);
 }
