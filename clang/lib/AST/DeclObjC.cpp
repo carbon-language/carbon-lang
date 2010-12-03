@@ -311,14 +311,16 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
   return NULL;
 }
 
-ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateInstanceMethod(
-                                   const Selector &Sel) {
+ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateMethod(
+                                   const Selector &Sel,
+                                   bool Instance) {
   ObjCMethodDecl *Method = 0;
   if (ObjCImplementationDecl *ImpDecl = getImplementation())
-    Method = ImpDecl->getInstanceMethod(Sel);
+    Method = Instance ? ImpDecl->getInstanceMethod(Sel) 
+                      : ImpDecl->getClassMethod(Sel);
   
   if (!Method && getSuperClass())
-    return getSuperClass()->lookupPrivateInstanceMethod(Sel);
+    return getSuperClass()->lookupPrivateMethod(Sel, Instance);
   return Method;
 }
 

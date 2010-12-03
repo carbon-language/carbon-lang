@@ -402,7 +402,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
 
   // If this reference is in an @implementation, check for 'private' methods.
   if (!Getter)
-    Getter = IFace->lookupPrivateInstanceMethod(Sel);
+    Getter = IFace->lookupPrivateMethod(Sel);
 
   // Look through local category implementations associated with the class.
   if (!Getter)
@@ -421,7 +421,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   if (!Setter) {
     // If this reference is in an @implementation, also check for 'private'
     // methods.
-    Setter = IFace->lookupPrivateInstanceMethod(SetterSel);
+    Setter = IFace->lookupPrivateMethod(SetterSel);
   }
   // Look through local category implementations associated with the class.
   if (!Setter)

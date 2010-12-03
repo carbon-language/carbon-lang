@@ -3498,12 +3498,13 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     if (ObjCMethodDecl *MD = getCurMethodDecl()) {
       ObjCInterfaceDecl *IFace = MD->getClassInterface();
       ObjCMethodDecl *Getter;
-      // FIXME: need to also look locally in the implementation.
       if ((Getter = IFace->lookupClassMethod(Sel))) {
         // Check the use of this method.
         if (DiagnoseUseOfDecl(Getter, MemberLoc))
           return ExprError();
       }
+      else
+        Getter = IFace->lookupPrivateMethod(Sel, false);
       // If we found a getter then this may be a valid dot-reference, we
       // will look for the matching setter, in case it is needed.
       Selector SetterSel =
@@ -3513,7 +3514,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
       if (!Setter) {
         // If this reference is in an @implementation, also check for 'private'
         // methods.
-        Setter = IFace->lookupPrivateInstanceMethod(SetterSel);
+        Setter = IFace->lookupPrivateMethod(SetterSel, false);
       }
       // Look through local category implementations associated with the class.
       if (!Setter)

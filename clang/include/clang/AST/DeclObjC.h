@@ -639,7 +639,7 @@ public:
   ObjCInterfaceDecl *lookupInheritedClass(const IdentifierInfo *ICName);
   
   // Lookup a method in the classes implementation hierarchy.
-  ObjCMethodDecl *lookupPrivateInstanceMethod(const Selector &Sel);
+  ObjCMethodDecl *lookupPrivateMethod(const Selector &Sel, bool Instance=true);
 
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); } // '@'interface
