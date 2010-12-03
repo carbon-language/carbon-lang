@@ -21,6 +21,7 @@ static int g_verbose = 0;
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <mach/mach.h>
 #include <pthread.h>
@@ -166,7 +167,27 @@ _DNBLogThreaded (const char *format, ...)
 
         if (arg_msg != NULL)
         {
-            _DNBLog (DNBLOG_FLAG_THREADED, "%u [%4.4x/%4.4x]: %s", ++g_message_id, getpid(), mach_thread_self(), arg_msg);
+            static struct timeval g_timeval = { 0 , 0 };
+            static struct timeval tv;
+            static struct timeval delta;
+            gettimeofday(&tv, NULL);
+            if (g_timeval.tv_sec == 0)
+            {
+                delta.tv_sec = 0;
+                delta.tv_usec = 0;
+            }
+            else
+            {
+                timersub (&tv, &g_timeval, &delta);
+            }
+            g_timeval = tv;
+            _DNBLog (DNBLOG_FLAG_THREADED, "%u +%u.%06u sec [%4.4x/%4.4x]: %s", 
+                     ++g_message_id, 
+                     delta.tv_sec, 
+                     delta.tv_usec,             
+                     getpid(), 
+                     mach_thread_self(), 
+                     arg_msg);
             free (arg_msg);
         }
     }
@@ -191,7 +212,27 @@ _DNBLogThreadedIf (uint32_t log_bit, const char *format, ...)
 
         if (arg_msg != NULL)
         {
-            _DNBLog (DNBLOG_FLAG_THREADED, "%u [%4.4x/%4.4x]: %s", ++g_message_id, getpid(), mach_thread_self(), arg_msg);
+            static struct timeval g_timeval = { 0 , 0 };
+            static struct timeval tv;
+            static struct timeval delta;
+            gettimeofday(&tv, NULL);
+            if (g_timeval.tv_sec == 0)
+            {
+                delta.tv_sec = 0;
+                delta.tv_usec = 0;
+            }
+            else
+            {
+                timersub (&tv, &g_timeval, &delta);
+            }
+            g_timeval = tv;
+            _DNBLog (DNBLOG_FLAG_THREADED, "%u +%u.%06u sec [%4.4x/%4.4x]: %s", 
+                     ++g_message_id, 
+                     delta.tv_sec, 
+                     delta.tv_usec, 
+                     getpid(), 
+                     mach_thread_self(), 
+                     arg_msg);
             free (arg_msg);
         }
     }

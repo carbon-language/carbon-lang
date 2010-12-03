@@ -199,13 +199,13 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
         log->Printf ("GDBRemoteCommunication::%s ()", __FUNCTION__);
 
     Mutex::Locker locker(m_sequence_mutex);
-//    ScopedValueChanger<bool> restore_running_to_false (m_is_running, false);
     StateType state = eStateRunning;
 
     if (SendPacket(payload, packet_length) == 0)
         state = eStateInvalid;
 
-    m_is_running.SetValue (true, eBroadcastAlways);
+    BroadcastEvent(eBroadcastBitRunPacketSent, NULL);
+    m_is_running.SetValue (true, eBroadcastNever);
 
     while (state == eStateRunning)
     {
@@ -357,7 +357,7 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
     if (log)
         log->Printf ("GDBRemoteCommunication::%s () => %s", __FUNCTION__, StateAsCString(state));
     response.SetFilePos(0);
-    m_is_running.SetValue (false, eBroadcastOnChange);
+    m_is_running.SetValue (false, eBroadcastAlways);
     return state;
 }
 
@@ -857,17 +857,4 @@ GDBRemoteCommunication::DeallocateMemory (addr_t addr, uint32_t timeout_seconds)
     }
     return false;
 }
-
-bool
-GDBRemoteCommunication::WaitForIsRunning (uint32_t timeout_sec)
-{
-    TimeValue timeout;
-    if (timeout_sec)
-    {
-        timeout = TimeValue::Now();
-        timeout.OffsetWithSeconds (timeout_sec);
-    }
-    return m_is_running.WaitForValueEqualTo (true, &timeout, NULL);
-}
-    
 

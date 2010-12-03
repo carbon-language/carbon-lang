@@ -34,6 +34,10 @@ class GDBRemoteCommunication :
     public lldb_private::Communication
 {
 public:
+    enum
+    {
+        eBroadcastBitRunPacketSent = kLoUserBroadcastBit
+    };
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -201,9 +205,6 @@ public:
     {
         return m_is_running.GetValue();
     }
-    
-    bool
-    WaitForIsRunning (uint32_t timeout_sec);
     
     bool
     GetHostInfo (uint32_t timeout_seconds);

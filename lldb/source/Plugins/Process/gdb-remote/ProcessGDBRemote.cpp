@@ -878,10 +878,20 @@ ProcessGDBRemote::DoResume ()
 {
     Error error;
     ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::Resume()");
-    m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (m_continue_packet.GetData(), m_continue_packet.GetSize()));
-    const uint32_t timedout_sec = 1;
-    if (m_gdb_comm.WaitForIsRunning (timedout_sec) == false)
-        error.SetErrorString("Resume timed out.");
+    
+    Listener listener ("gdb-remote.resume-packet-sent");
+    if (listener.StartListeningForEvents (&m_gdb_comm, GDBRemoteCommunication::eBroadcastBitRunPacketSent))
+    {
+        EventSP event_sp;
+        TimeValue timeout;
+        timeout = TimeValue::Now();
+        timeout.OffsetWithSeconds (5);
+        m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (m_continue_packet.GetData(), m_continue_packet.GetSize()));
+
+        if (listener.WaitForEvent (&timeout, event_sp) == false)
+            error.SetErrorString("Resume timed out.");
+    }
+
     return error;
 }
 
@@ -1206,7 +1216,7 @@ ProcessGDBRemote::DoDestroy ()
     SetExitStatus(-1, "process killed");
 
     StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse("k", response, 2, false))
+    if (m_gdb_comm.SendPacketAndWaitForResponse("k", response, 1, false))
     {
         log = ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS);
         if (log)

@@ -9,10 +9,13 @@
 
 #include "lldb/Host/Host.h"
 
+#include <execinfo.h>
 #include <libproc.h>
+#include <stdio.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Communication.h"
@@ -771,4 +774,34 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
     }
       
     return true;
+}
+
+
+void
+Host::Backtrace (Stream &strm, uint32_t max_frames)
+{
+    char backtrace_path[] = "/tmp/lldb-backtrace-tmp-XXXXXX";
+    int backtrace_fd = ::mkstemp (backtrace_path);
+    if (backtrace_fd != -1)
+    {
+        std::vector<void *> frame_buffer (max_frames, NULL);
+        int count = ::backtrace (&frame_buffer[0], frame_buffer.size());
+        ::backtrace_symbols_fd (&frame_buffer[0], count, backtrace_fd);
+        
+        const off_t buffer_size = ::lseek(backtrace_fd, 0, SEEK_CUR);
+
+        if (::lseek(backtrace_fd, 0, SEEK_SET) == 0)
+        {
+            char *buffer = (char *)::malloc (buffer_size);
+            if (buffer)
+            {
+                ssize_t bytes_read = ::read (backtrace_fd, buffer, buffer_size);
+                if (bytes_read > 0)
+                    strm.Write(buffer, bytes_read);
+                ::free (buffer);
+            }
+        }
+        ::close (backtrace_fd);
+        ::unlink (backtrace_path);
+    }
 }

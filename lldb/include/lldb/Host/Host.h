@@ -315,7 +315,6 @@ public:
     static void
     SetCrashDescription (const char *description);
 
-
     static uint32_t
     ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids);
     
@@ -339,6 +338,8 @@ public:
     static bool
     OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no);
 
+    static void
+    Backtrace (Stream &strm, uint32_t max_frames);
 };
 
 } // namespace lldb_private
