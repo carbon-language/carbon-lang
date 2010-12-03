@@ -1486,7 +1486,8 @@ CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
 CommandObjectBreakpointModify::CommandObjectBreakpointModify (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "breakpoint modify", 
-                   "Modify the options on a breakpoint or set of breakpoints in the executable.", 
+                   "Modify the options on a breakpoint or set of breakpoints in the executable.  "
+                   "If no breakpoint is specified, acts on the last created breakpoint.", 
                    NULL)
 {
     CommandArgumentEntry arg;
