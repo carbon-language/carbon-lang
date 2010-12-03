@@ -152,6 +152,8 @@ public:
 
   virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace,
                          bool UseSet = false);
+  virtual void EmitIntValue(uint64_t Value, unsigned Size,
+                            unsigned AddrSpace = 0);
 
   virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
 
@@ -502,6 +504,11 @@ void MCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   OS << ' ';
   PrintQuotedString(Data, OS);
   EmitEOL();
+}
+
+void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
+                                 unsigned AddrSpace) {
+  EmitValue(MCConstantExpr::Create(Value, getContext()), Size, AddrSpace);
 }
 
 void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,

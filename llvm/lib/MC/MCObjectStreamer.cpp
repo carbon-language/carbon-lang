@@ -83,16 +83,14 @@ void MCObjectStreamer::EmitValue(const MCExpr *Value, unsigned Size,
 
   // Avoid fixups when possible.
   int64_t AbsValue;
-  if (AddValueSymbols(Value)->EvaluateAsAbsolute(AbsValue)) {
-    // FIXME: Endianness assumption.
-    for (unsigned i = 0; i != Size; ++i)
-      DF->getContents().push_back(uint8_t(AbsValue >> (i * 8)));
-  } else {
-    DF->addFixup(MCFixup::Create(DF->getContents().size(),
-                                 AddValueSymbols(Value),
-                                 MCFixup::getKindForSize(Size, false)));
-    DF->getContents().resize(DF->getContents().size() + Size, 0);
+  if (AddValueSymbols(Value)->EvaluateAsAbsolute(AbsValue, &getAssembler())) {
+    EmitIntValue(AbsValue, Size, AddrSpace);
+    return;
   }
+  DF->addFixup(MCFixup::Create(DF->getContents().size(),
+                               AddValueSymbols(Value),
+                               MCFixup::getKindForSize(Size, false)));
+  DF->getContents().resize(DF->getContents().size() + Size, 0);
 }
 
 void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
