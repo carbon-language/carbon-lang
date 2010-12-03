@@ -201,6 +201,25 @@ error_code create_directory(const Twine &path, bool &existed) {
   return make_error_code(errc::success);
 }
 
+error_code create_hard_link(const Twine &to, const Twine &from) {
+  // Get arguments.
+  SmallString<128> from_storage;
+  SmallString<128> to_storage;
+  StringRef f = from.toStringRef(from_storage);
+  StringRef t = to.toStringRef(to_storage);
+
+  // Convert to utf-16.
+  SmallVector<wchar_t, 128> wide_from;
+  SmallVector<wchar_t, 128> wide_to;
+  if (error_code ec = UTF8ToUTF16(f, wide_from)) return ec;
+  if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
+
+  if (!::CreateHardLinkW(wide_from.begin(), wide_to.begin(), NULL))
+    return make_error_code(windows_error(::GetLastError()));
+
+  return make_error_code(errc::success);
+}
+
 error_code exists(const Twine &path, bool &result) {
   SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
