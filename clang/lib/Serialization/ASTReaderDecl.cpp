@@ -383,7 +383,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   // FunctionDecl's body is handled last at ASTDeclReader::Visit,
   // after everything else is read.
 
-  FD->setStorageClass((StorageClass)Record[Idx++]);
+  FD->SClass = (StorageClass)Record[Idx++];
   FD->setStorageClassAsWritten((StorageClass)Record[Idx++]);
   FD->setInlineSpecified(Record[Idx++]);
   FD->setVirtualAsWritten(Record[Idx++]);
@@ -650,7 +650,7 @@ void ASTDeclReader::VisitIndirectFieldDecl(IndirectFieldDecl *FD) {
 void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VisitDeclaratorDecl(VD);
   VisitRedeclarable(VD);
-  VD->setStorageClass((StorageClass)Record[Idx++]);
+  VD->SClass = (StorageClass)Record[Idx++];
   VD->setStorageClassAsWritten((StorageClass)Record[Idx++]);
   VD->setThreadSpecified(Record[Idx++]);
   VD->setCXXDirectInitializer(Record[Idx++]);

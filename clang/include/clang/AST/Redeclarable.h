@@ -109,26 +109,8 @@ public:
   
   /// \brief Set the previous declaration. If PrevDecl is NULL, set this as the
   /// first and only declaration.
-  void setPreviousDeclaration(decl_type *PrevDecl) {
-    decl_type *First;
-
-    if (PrevDecl) {
-      // Point to previous. Make sure that this is actually the most recent
-      // redeclaration, or we can build invalid chains. If the most recent
-      // redeclaration is invalid, it won't be PrevDecl, but we want it anyway.
-      RedeclLink = PreviousDeclLink(llvm::cast<decl_type>(
-                                      PrevDecl->getMostRecentDeclaration()));
-      First = PrevDecl->getFirstDeclaration();
-      assert(First->RedeclLink.NextIsLatest() && "Expected first");
-    } else {
-      // Make this first.
-      First = static_cast<decl_type*>(this);
-    }
-
-    // First one will point to this one as latest.
-    First->RedeclLink = LatestDeclLink(static_cast<decl_type*>(this));
-  }
-
+  void setPreviousDeclaration(decl_type *PrevDecl);
+  
   /// \brief Iterates through all the redeclarations of the same decl.
   class redecl_iterator {
     /// Current - The current declaration.
