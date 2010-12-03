@@ -2754,6 +2754,9 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (
     if (curr_cu == NULL || die == NULL || !type_name)
         return type_sp;
 
+    if (!m_indexed)
+        Index ();
+
     const dw_tag_t type_tag = die->Tag();
     std::vector<NameToDIE::Info> die_info_array;
     const size_t num_matches = m_type_index.Find (type_name, die_info_array);
