@@ -46,10 +46,10 @@
 # CHECK:	pkhbt	r2, r4, r6
 0xc4 0xea 0x06 0x02
 
-# CHECK:	pop	{r2, r4, r6, r8, r10, r12}
+# CHECK:	pop.w	{r2, r4, r6, r8, r10, r12}
 0xbd 0xe8 0x54 0x15
 
-# CHECK:	push	{r2, r4, r6, r8, r10, r12}
+# CHECK:	push.w	{r2, r4, r6, r8, r10, r12}
 0x2d 0xe9 0x54 0x15
 
 # CHECK:	rsbs	r0, r0, #0

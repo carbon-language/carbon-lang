@@ -67,6 +67,8 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
       MI->getOperand(0).getReg() == ARM::SP) {
     O << '\t' << "push";
     printPredicateOperand(MI, 2, O);
+    if (Opcode == ARM::t2STMDB_UPD)
+      O << ".w";
     O << '\t';
     printRegisterList(MI, 4, O);
     return;
@@ -77,6 +79,8 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
       MI->getOperand(0).getReg() == ARM::SP) {
     O << '\t' << "pop";
     printPredicateOperand(MI, 2, O);
+    if (Opcode == ARM::t2LDMIA_UPD)
+      O << ".w";
     O << '\t';
     printRegisterList(MI, 4, O);
     return;
