@@ -3737,11 +3737,10 @@ struct DOTGraphTraits<ExplodedNode*> :
       }
     }
 
-    Out << "\\|StateID: " << (void*) N->getState() << "\\|";
-
     const GRState *state = N->getState();
+    Out << "\\|StateID: " << (void*) state
+        << " NodeID: " << (void*) N << "\\|";
     state->printDOT(Out, *N->getLocationContext()->getCFG());
-
     Out << "\\l";
     return Out.str();
   }
