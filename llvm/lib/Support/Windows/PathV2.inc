@@ -341,6 +341,71 @@ error_code exists(const Twine &path, bool &result) {
   return make_error_code(errc::success);
 }
 
+error_code equivalent(const Twine &A, const Twine &B, bool &result) {
+  // Get arguments.
+  SmallString<128> a_storage;
+  SmallString<128> b_storage;
+  StringRef a = A.toStringRef(a_storage);
+  StringRef b = B.toStringRef(b_storage);
+
+  // Convert to utf-16.
+  SmallVector<wchar_t, 128> wide_a;
+  SmallVector<wchar_t, 128> wide_b;
+  if (error_code ec = UTF8ToUTF16(a, wide_a)) return ec;
+  if (error_code ec = UTF8ToUTF16(b, wide_b)) return ec;
+
+  AutoHandle HandleB(
+    ::CreateFileW(wide_b.begin(),
+                  0,
+                  FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                  0,
+                  OPEN_EXISTING,
+                  FILE_FLAG_BACKUP_SEMANTICS,
+                  0));
+
+  AutoHandle HandleA(
+    ::CreateFileW(wide_a.begin(),
+                  0,
+                  FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                  0,
+                  OPEN_EXISTING,
+                  FILE_FLAG_BACKUP_SEMANTICS,
+                  0));
+
+  // If both handles are invalid, it's an error.
+  if (HandleA == INVALID_HANDLE_VALUE &&
+      HandleB == INVALID_HANDLE_VALUE)
+    return make_error_code(windows_error(::GetLastError()));
+
+  // If only one is invalid, it's false.
+  if (HandleA == INVALID_HANDLE_VALUE &&
+      HandleB == INVALID_HANDLE_VALUE) {
+    result = false;
+    return make_error_code(errc::success);
+  }
+
+  // Get file information.
+  BY_HANDLE_FILE_INFORMATION InfoA, InfoB;
+  if (!::GetFileInformationByHandle(HandleA, &InfoA))
+    return make_error_code(windows_error(::GetLastError()));
+  if (!::GetFileInformationByHandle(HandleB, &InfoB))
+    return make_error_code(windows_error(::GetLastError()));
+
+  // See if it's all the same.
+  result =
+    InfoA.dwVolumeSerialNumber           == InfoB.dwVolumeSerialNumber &&
+    InfoA.nFileIndexHigh                 == InfoB.nFileIndexHigh &&
+    InfoA.nFileIndexLow                  == InfoB.nFileIndexLow &&
+    InfoA.nFileSizeHigh                  == InfoB.nFileSizeHigh &&
+    InfoA.nFileSizeLow                   == InfoB.nFileSizeLow &&
+    InfoA.ftLastWriteTime.dwLowDateTime  ==
+      InfoB.ftLastWriteTime.dwLowDateTime &&
+    InfoA.ftLastWriteTime.dwHighDateTime ==
+      InfoB.ftLastWriteTime.dwHighDateTime;
+
+  return make_error_code(errc::success);
+}
+
 error_code unique_file(const Twine &model, int &result_fd,
                              SmallVectorImpl<char> &result_path) {
   // Use result_path as temp storage.

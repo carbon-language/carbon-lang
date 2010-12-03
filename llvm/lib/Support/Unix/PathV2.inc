@@ -238,6 +238,31 @@ error_code exists(const Twine &path, bool &result) {
   return make_error_code(errc::success);
 }
 
+error_code equivalent(const Twine &A, const Twine &B, bool &result) {
+  // Get arguments.
+  SmallString<128> a_storage;
+  SmallString<128> b_storage;
+  StringRef a = A.toNullTerminatedStringRef(a_storage);
+  StringRef b = B.toNullTerminatedStringRef(b_storage);
+
+  struct stat stat_a, stat_b;
+  int error_b = ::stat(b.begin(), &stat_b);
+  int error_a = ::stat(a.begin(), &stat_a);
+
+  // If both are invalid, it's an error. If only one is, the result is false.
+  if (error_a != 0 || error_b != 0) {
+    if (error_a == error_b)
+      return error_code(errno, system_category());
+    result = false;
+  } else {
+    result =
+      stat_a.st_dev == stat_b.st_dev &&
+      stat_a.st_ino == stat_b.st_ino;
+  }
+
+  return make_error_code(errc::success);
+}
+
 error_code unique_file(const Twine &model, int &result_fd,
                              SmallVectorImpl<char> &result_path) {
   SmallString<128> Model;
