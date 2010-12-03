@@ -79,11 +79,11 @@ NodeRef Path::getRightSibling(unsigned Level) const {
 
   // Go up the tree until we can go right.
   unsigned l = Level - 1;
-  while (l && atLastBranch(l))
+  while (l && atLastEntry(l))
     --l;
 
   // We can't go right.
-  if (atLastBranch(l))
+  if (atLastEntry(l))
     return NodeRef();
 
   // NR is the subtree containing our right sibling.
@@ -100,7 +100,7 @@ void Path::moveRight(unsigned Level) {
 
   // Go up the tree until we can go right.
   unsigned l = Level - 1;
-  while (l && atLastBranch(l))
+  while (l && atLastEntry(l))
     --l;
 
   // NR is the subtree containing our right sibling. If we hit end(), we have

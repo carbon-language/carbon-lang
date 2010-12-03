@@ -14,8 +14,7 @@ using namespace llvm;
 
 namespace {
 
-typedef IntervalMap<unsigned, unsigned> UUMap;
-typedef IntervalMap<unsigned, unsigned, 4> UU4Map;
+typedef IntervalMap<unsigned, unsigned, 4> UUMap;
 
 // Empty map tests
 TEST(IntervalMapTest, EmptyMap) {
@@ -99,6 +98,40 @@ TEST(IntervalMapTest, SingleEntryMap) {
   EXPECT_TRUE(I == map.begin());
   EXPECT_FALSE(I == map.end());
 
+  // Change the value.
+  I.setValue(2);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(100u, I.start());
+  EXPECT_EQ(150u, I.stop());
+  EXPECT_EQ(2u, I.value());
+
+  // Grow the bounds.
+  I.setStart(0);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(0u, I.start());
+  EXPECT_EQ(150u, I.stop());
+  EXPECT_EQ(2u, I.value());
+
+  I.setStop(200);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(0u, I.start());
+  EXPECT_EQ(200u, I.stop());
+  EXPECT_EQ(2u, I.value());
+
+  // Shrink the bounds.
+  I.setStart(150);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(150u, I.start());
+  EXPECT_EQ(200u, I.stop());
+  EXPECT_EQ(2u, I.value());
+
+  I.setStop(160);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(150u, I.start());
+  EXPECT_EQ(160u, I.stop());
+  EXPECT_EQ(2u, I.value());
+
+  // Erase last elem.
   I.erase();
   EXPECT_TRUE(map.empty());
   EXPECT_EQ(0, std::distance(map.begin(), map.end()));
@@ -160,6 +193,18 @@ TEST(IntervalMapTest, RootCoalescing) {
   EXPECT_EQ(1, std::distance(map.begin(), map.end()));
   EXPECT_EQ(90u, map.start());
   EXPECT_EQ(200u, map.stop());
+
+  // Add non-coalescing, then trigger coalescing with setValue.
+  map.insert(80, 89, 2);
+  map.insert(201, 210, 2);
+  EXPECT_EQ(3, std::distance(map.begin(), map.end()));
+  (++map.begin()).setValue(2);
+  EXPECT_EQ(1, std::distance(map.begin(), map.end()));
+  I = map.begin();
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(80u, I.start());
+  EXPECT_EQ(210u, I.stop());
+  EXPECT_EQ(2u, I.value());
 }
 
 // Flat multi-coalescing tests.
@@ -324,11 +369,78 @@ TEST(IntervalMapTest, Branched) {
   EXPECT_EQ(20u, I.start());
   EXPECT_EQ(25u, I.stop());
 
+  // Change value, no coalescing.
+  I.setValue(0);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(20u, I.start());
+  EXPECT_EQ(25u, I.stop());
+  EXPECT_EQ(0u, I.value());
+
+  // Close the gap right, no coalescing.
+  I.setStop(29);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(20u, I.start());
+  EXPECT_EQ(29u, I.stop());
+  EXPECT_EQ(0u, I.value());
+
+  // Change value, no coalescing.
+  I.setValue(2);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(20u, I.start());
+  EXPECT_EQ(29u, I.stop());
+  EXPECT_EQ(2u, I.value());
+
+  // Change value, now coalescing.
+  I.setValue(3);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(20u, I.start());
+  EXPECT_EQ(35u, I.stop());
+  EXPECT_EQ(3u, I.value());
+
+  // Close the gap, now coalescing.
+  I.setValue(4);
+  ASSERT_TRUE(I.valid());
+  I.setStop(39);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(20u, I.start());
+  EXPECT_EQ(45u, I.stop());
+  EXPECT_EQ(4u, I.value());
+
   // advanceTo another node.
   I.advanceTo(200);
   ASSERT_TRUE(I.valid());
   EXPECT_EQ(200u, I.start());
   EXPECT_EQ(205u, I.stop());
+
+  // Close the gap left, no coalescing.
+  I.setStart(196);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(196u, I.start());
+  EXPECT_EQ(205u, I.stop());
+  EXPECT_EQ(20u, I.value());
+
+  // Change value, no coalescing.
+  I.setValue(0);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(196u, I.start());
+  EXPECT_EQ(205u, I.stop());
+  EXPECT_EQ(0u, I.value());
+
+  // Change value, now coalescing.
+  I.setValue(19);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(190u, I.start());
+  EXPECT_EQ(205u, I.stop());
+  EXPECT_EQ(19u, I.value());
+
+  // Close the gap, now coalescing.
+  I.setValue(18);
+  ASSERT_TRUE(I.valid());
+  I.setStart(186);
+  ASSERT_TRUE(I.valid());
+  EXPECT_EQ(180u, I.start());
+  EXPECT_EQ(205u, I.stop());
+  EXPECT_EQ(18u, I.value());
 
   // Erase from the front.
   I = map.begin();
@@ -348,8 +460,8 @@ TEST(IntervalMapTest, Branched) {
 
 // Branched, high, non-coalescing tests.
 TEST(IntervalMapTest, Branched2) {
-  UU4Map::Allocator allocator;
-  UU4Map map(allocator);
+  UUMap::Allocator allocator;
+  UUMap map(allocator);
 
   // Insert enough intervals to force a height >= 2 tree.
   for (unsigned i = 1; i < 1000; ++i)
@@ -369,7 +481,7 @@ TEST(IntervalMapTest, Branched2) {
   }
 
   // Forward iteration.
-  UU4Map::iterator I = map.begin();
+  UUMap::iterator I = map.begin();
   for (unsigned i = 1; i < 1000; ++i) {
     ASSERT_TRUE(I.valid());
     EXPECT_EQ(10*i, I.start());
@@ -416,8 +528,8 @@ TEST(IntervalMapTest, Branched2) {
 
 // Random insertions, coalescing to a single interval.
 TEST(IntervalMapTest, RandomCoalescing) {
-  UU4Map::Allocator allocator;
-  UU4Map map(allocator);
+  UUMap::Allocator allocator;
+  UUMap map(allocator);
 
   // This is a poor PRNG with maximal period:
   // x_n = 5 x_{n-1} + 1 mod 2^N

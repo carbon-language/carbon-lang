@@ -904,10 +904,10 @@ public:
     return true;
   }
 
-  /// atLastBranch - Return true if the path is at the last branch of the node
-  /// at Level.
+  /// atLastEntry - Return true if the path is at the last entry of the node at
+  /// Level.
   /// @param Level Node to examine.
-  bool atLastBranch(unsigned Level) const {
+  bool atLastEntry(unsigned Level) const {
     return path[Level].offset == path[Level].size - 1;
   }
 
@@ -1365,6 +1365,27 @@ protected:
   void treeFind(KeyT x);
   void treeAdvanceTo(KeyT x);
 
+  /// unsafeStart - Writable access to start() for iterator.
+  KeyT &unsafeStart() const {
+    assert(valid() && "Cannot access invalid iterator");
+    return branched() ? path.leaf<Leaf>().start(path.leafOffset()) :
+                        path.leaf<RootLeaf>().start(path.leafOffset());
+  }
+
+  /// unsafeStop - Writable access to stop() for iterator.
+  KeyT &unsafeStop() const {
+    assert(valid() && "Cannot access invalid iterator");
+    return branched() ? path.leaf<Leaf>().stop(path.leafOffset()) :
+                        path.leaf<RootLeaf>().stop(path.leafOffset());
+  }
+
+  /// unsafeValue - Writable access to value() for iterator.
+  ValT &unsafeValue() const {
+    assert(valid() && "Cannot access invalid iterator");
+    return branched() ? path.leaf<Leaf>().value(path.leafOffset()) :
+                        path.leaf<RootLeaf>().value(path.leafOffset());
+  }
+
 public:
   /// const_iterator - Create an iterator that isn't pointing anywhere.
   const_iterator() : map(0) {}
@@ -1373,29 +1394,15 @@ public:
   bool valid() const { return path.valid(); }
 
   /// start - Return the beginning of the current interval.
-  const KeyT &start() const {
-    assert(valid() && "Cannot access invalid iterator");
-    return branched() ? path.leaf<Leaf>().start(path.leafOffset()) :
-                        path.leaf<RootLeaf>().start(path.leafOffset());
-  }
+  const KeyT &start() const { return unsafeStart(); }
 
   /// stop - Return the end of the current interval.
-  const KeyT &stop() const {
-    assert(valid() && "Cannot access invalid iterator");
-    return branched() ? path.leaf<Leaf>().stop(path.leafOffset()) :
-                        path.leaf<RootLeaf>().stop(path.leafOffset());
-  }
+  const KeyT &stop() const { return unsafeStop(); }
 
   /// value - Return the mapped value at the current interval.
-  const ValT &value() const {
-    assert(valid() && "Cannot access invalid iterator");
-    return branched() ? path.leaf<Leaf>().value(path.leafOffset()) :
-                        path.leaf<RootLeaf>().value(path.leafOffset());
-  }
+  const ValT &value() const { return unsafeValue(); }
 
-  const ValT &operator*() const {
-    return value();
-  }
+  const ValT &operator*() const { return value(); }
 
   bool operator==(const const_iterator &RHS) const {
     assert(map == RHS.map && "Cannot compare iterators from different maps");
@@ -1554,9 +1561,49 @@ class IntervalMap<KeyT, ValT, N, Traits>::iterator : public const_iterator {
   void treeInsert(KeyT a, KeyT b, ValT y);
   void eraseNode(unsigned Level);
   void treeErase(bool UpdateRoot = true);
+  bool canCoalesceLeft(KeyT Start, ValT x);
+  bool canCoalesceRight(KeyT Stop, ValT x);
+
 public:
   /// iterator - Create null iterator.
   iterator() {}
+
+  /// setStart - Move the start of the current interval.
+  /// This may cause coalescing with the previous interval.
+  /// @param a New start key, must not overlap the previous interval.
+  void setStart(KeyT a);
+
+  /// setStop - Move the end of the current interval.
+  /// This may cause coalescing with the following interval.
+  /// @param b New stop key, must not overlap the following interval.
+  void setStop(KeyT b);
+
+  /// setValue - Change the mapped value of the current interval.
+  /// This may cause coalescing with the previous and following intervals.
+  /// @param x New value.
+  void setValue(ValT x);
+
+  /// setStartUnchecked - Move the start of the current interval without
+  /// checking for coalescing or overlaps.
+  /// This should only be used when it is known that coalescing is not required.
+  /// @param a New start key.
+  void setStartUnchecked(KeyT a) { this->unsafeStart() = a; }
+
+  /// setStopUnchecked - Move the end of the current interval without checking
+  /// for coalescing or overlaps.
+  /// This should only be used when it is known that coalescing is not required.
+  /// @param b New stop key.
+  void setStopUnchecked(KeyT b) {
+    this->unsafeStop() = b;
+    // Update keys in branch nodes as well.
+    if (this->path.atLastEntry(this->path.height()))
+      setNodeStop(this->path.height(), b);
+  }
+
+  /// setValueUnchecked - Change the mapped value of the current interval
+  /// without checking for coalescing.
+  /// @param x New value.
+  void setValueUnchecked(ValT x) { this->unsafeValue() = x; }
 
   /// insert - Insert mapping [a;b] -> y before the current position.
   void insert(KeyT a, KeyT b, ValT y);
@@ -1588,6 +1635,62 @@ public:
 
 };
 
+/// canCoalesceLeft - Can the current interval coalesce to the left after
+/// changing start or value?
+/// @param Start New start of current interval.
+/// @param Value New value for current interval.
+/// @return True when updating the current interval would enable coalescing.
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+bool IntervalMap<KeyT, ValT, N, Traits>::
+iterator::canCoalesceLeft(KeyT Start, ValT Value) {
+  using namespace IntervalMapImpl;
+  Path &P = this->path;
+  if (!this->branched()) {
+    unsigned i = P.leafOffset();
+    RootLeaf &Node = P.leaf<RootLeaf>();
+    return i && Node.value(i-1) == Value &&
+                Traits::adjacent(Node.stop(i-1), Start);
+  }
+  // Branched.
+  if (unsigned i = P.leafOffset()) {
+    Leaf &Node = P.leaf<Leaf>();
+    return Node.value(i-1) == Value && Traits::adjacent(Node.stop(i-1), Start);
+  } else if (NodeRef NR = P.getLeftSibling(P.height())) {
+    unsigned i = NR.size() - 1;
+    Leaf &Node = NR.get<Leaf>();
+    return Node.value(i) == Value && Traits::adjacent(Node.stop(i), Start);
+  }
+  return false;
+}
+
+/// canCoalesceRight - Can the current interval coalesce to the right after
+/// changing stop or value?
+/// @param Stop New stop of current interval.
+/// @param Value New value for current interval.
+/// @return True when updating the current interval would enable coalescing.
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+bool IntervalMap<KeyT, ValT, N, Traits>::
+iterator::canCoalesceRight(KeyT Stop, ValT Value) {
+  using namespace IntervalMapImpl;
+  Path &P = this->path;
+  unsigned i = P.leafOffset() + 1;
+  if (!this->branched()) {
+    if (i >= P.leafSize())
+      return false;
+    RootLeaf &Node = P.leaf<RootLeaf>();
+    return Node.value(i) == Value && Traits::adjacent(Stop, Node.start(i));
+  }
+  // Branched.
+  if (i < P.leafSize()) {
+    Leaf &Node = P.leaf<Leaf>();
+    return Node.value(i) == Value && Traits::adjacent(Stop, Node.start(i));
+  } else if (NodeRef NR = P.getRightSibling(P.height())) {
+    Leaf &Node = NR.get<Leaf>();
+    return Node.value(0) == Value && Traits::adjacent(Stop, Node.start(0));
+  }
+  return false;
+}
+
 /// setNodeStop - Update the stop key of the current node at level and above.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>
 void IntervalMap<KeyT, ValT, N, Traits>::
@@ -1599,11 +1702,59 @@ iterator::setNodeStop(unsigned Level, KeyT Stop) {
   // Update nodes pointing to the current node.
   while (--Level) {
     P.node<Branch>(Level).stop(P.offset(Level)) = Stop;
-    if (!P.atLastBranch(Level))
+    if (!P.atLastEntry(Level))
       return;
   }
   // Update root separately since it has a different layout.
   P.node<RootBranch>(Level).stop(P.offset(Level)) = Stop;
+}
+
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+void IntervalMap<KeyT, ValT, N, Traits>::
+iterator::setStart(KeyT a) {
+  assert(Traits::stopLess(a, this->stop()) && "Cannot move start beyond stop");
+  KeyT &CurStart = this->unsafeStart();
+  if (!Traits::startLess(a, CurStart) || !canCoalesceLeft(a, this->value())) {
+    CurStart = a;
+    return;
+  }
+  // Coalesce with the interval to the left.
+  --*this;
+  a = this->start();
+  erase();
+  setStartUnchecked(a);
+}
+
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+void IntervalMap<KeyT, ValT, N, Traits>::
+iterator::setStop(KeyT b) {
+  assert(Traits::stopLess(this->start(), b) && "Cannot move stop beyond start");
+  if (Traits::startLess(b, this->stop()) ||
+      !canCoalesceRight(b, this->value())) {
+    setStopUnchecked(b);
+    return;
+  }
+  // Coalesce with interval to the right.
+  KeyT a = this->start();
+  erase();
+  setStartUnchecked(a);
+}
+
+template <typename KeyT, typename ValT, unsigned N, typename Traits>
+void IntervalMap<KeyT, ValT, N, Traits>::
+iterator::setValue(ValT x) {
+  setValueUnchecked(x);
+  if (canCoalesceRight(this->stop(), x)) {
+    KeyT a = this->start();
+    erase();
+    setStartUnchecked(a);
+  }
+  if (canCoalesceLeft(this->start(), x)) {
+    --*this;
+    KeyT a = this->start();
+    erase();
+    setStartUnchecked(a);
+  }
 }
 
 /// insertNode - insert a node before the current path at level.
@@ -1650,7 +1801,7 @@ iterator::insertNode(unsigned Level, IntervalMapImpl::NodeRef Node, KeyT Stop) {
   }
   P.node<Branch>(Level).insert(P.offset(Level), P.size(Level), Node, Stop);
   P.setSize(Level, P.size(Level) + 1);
-  if (P.atLastBranch(Level))
+  if (P.atLastEntry(Level))
     setNodeStop(Level, Stop);
   P.reset(Level + 1);
   return SplitRoot;
