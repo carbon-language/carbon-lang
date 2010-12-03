@@ -386,14 +386,6 @@ error_code status_known(const Twine &path, bool &result);
 ///          platform specific error_code.
 error_code symlink_status(const Twine &path, file_status &result);
 
-/// @brief Get the temporary directory.
-///
-/// @param result Set to the temporary directory.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-/// @see unique_file
-error_code temp_directory_path(SmallVectorImpl<char> &result);
-
 /// @brief Generate a unique path and open it as a file.
 ///
 /// Generates a unique path suitable for a temporary file and then opens it as a
