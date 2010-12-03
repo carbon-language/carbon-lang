@@ -867,9 +867,7 @@ GDBRemoteCommunication::WaitForIsRunning (uint32_t timeout_sec)
         timeout = TimeValue::Now();
         timeout.OffsetWithSeconds (timeout_sec);
     }
-    bool timed_out = false;
-    m_is_running.WaitForValueEqualTo (true, &timeout, &timed_out);
-    return timed_out;
+    return m_is_running.WaitForValueEqualTo (true, &timeout, NULL);
 }
     
 
