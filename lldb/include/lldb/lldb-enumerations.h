@@ -55,7 +55,8 @@ typedef enum StepType
 typedef enum LaunchFlags
 {
     eLaunchFlagNone         = 0u,
-    eLaunchFlagDisableASLR  = (1u << 0)  ///< Disable Address Space Layout Randomization
+    eLaunchFlagDisableASLR  = (1u << 0),  ///< Disable Address Space Layout Randomization
+    eLaunchFlagDisableSTDIO = (1u << 1)   /// Disable stdio for inferior process (e.g. for a GUI app)
 } LaunchFlags;
     
 //----------------------------------------------------------------------

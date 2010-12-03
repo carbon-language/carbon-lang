@@ -62,6 +62,7 @@ public:
                 case 'i':   stdin_path  = option_arg;   break;
                 case 'o':   stdout_path = option_arg;   break;
                 case 'p':   plugin_name = option_arg;   break;
+                case 'n':   no_stdio = true;            break;
                 case 't':   
                     if (option_arg && option_arg[0])
                         tty_name.assign (option_arg);
@@ -86,6 +87,7 @@ public:
             stdout_path.clear();
             stderr_path.clear();
             plugin_name.clear();
+            no_stdio = false;
         }
 
         const lldb::OptionDefinition*
@@ -102,6 +104,7 @@ public:
 
         bool stop_at_entry;
         bool in_new_tty;
+        bool no_stdio;
         std::string tty_name;
         std::string stderr_path;
         std::string stdin_path;
@@ -214,6 +217,18 @@ public:
         if (process->GetDisableASLR())
             launch_flags |= eLaunchFlagDisableASLR;
     
+        if (m_options.no_stdio)
+            launch_flags |= eLaunchFlagDisableSTDIO;
+        else if (!m_options.in_new_tty
+                 && m_options.stdin_path.empty()
+                 && m_options.stdout_path.empty()
+                 && m_options.stderr_path.empty())
+        {
+            // Only use the settings value if the user hasn't specified any options that would override it.
+            if (process->GetDisableSTDIO())
+                launch_flags |= eLaunchFlagDisableSTDIO;
+        }
+        
         const char **inferior_argv = launch_args.GetArgumentCount() ? launch_args.GetConstArgumentVector() : NULL;
         const char **inferior_envp = environment.GetArgumentCount() ? environment.GetConstArgumentVector() : NULL;
 
@@ -320,21 +335,24 @@ protected:
 
 #define SET1 LLDB_OPT_SET_1
 #define SET2 LLDB_OPT_SET_2
+#define SET3 LLDB_OPT_SET_3
 
 lldb::OptionDefinition
 CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
 {
-{ SET1 | SET2, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,    "Stop at the entry point of the program when launching a process."},
-{ SET1       , false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
-{ SET1       , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
-{ SET1       , false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
-{ SET1 | SET2, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
-{        SET2, false, "tty",           't', optional_argument, NULL, 0, eArgTypePath,    "Start the process in a terminal. If <path> is specified, look for a terminal whose name contains <path>, else start the process in a new terminal."},
-{ 0,           false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
+{ SET1 | SET2 | SET3, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,    "Stop at the entry point of the program when launching a process."},
+{ SET1              , false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
+{ SET1              , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
+{ SET1              , false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
+{ SET1 | SET2 | SET3, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,  "Name of the process plugin you want to use."},
+{        SET2       , false, "tty",           't', optional_argument, NULL, 0, eArgTypePath,    "Start the process in a terminal. If <path> is specified, look for a terminal whose name contains <path>, else start the process in a new terminal."},
+{               SET3, false, "no-stdio",      'n', no_argument,       NULL, 0, eArgTypeNone,    "Do not set up for terminal I/O to go to running process."},
+{ 0,                  false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
 };
 
 #undef SET1
 #undef SET2
+#undef SET3
 
 //-------------------------------------------------------------------------
 // CommandObjectProcessAttach

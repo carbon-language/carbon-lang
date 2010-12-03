@@ -2600,7 +2600,8 @@ ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner,
     m_output_path (),
     m_error_path (),
     m_plugin (),
-    m_disable_aslr (true)
+    m_disable_aslr (true),
+    m_disable_stdio (false)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for ProcessInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -2629,7 +2630,8 @@ ProcessInstanceSettings::ProcessInstanceSettings (const ProcessInstanceSettings 
     m_output_path (rhs.m_output_path),
     m_error_path (rhs.m_error_path),
     m_plugin (rhs.m_plugin),
-    m_disable_aslr (rhs.m_disable_aslr)
+    m_disable_aslr (rhs.m_disable_aslr),
+    m_disable_stdio (rhs.m_disable_stdio)
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
@@ -2655,6 +2657,7 @@ ProcessInstanceSettings::operator= (const ProcessInstanceSettings &rhs)
         m_error_path = rhs.m_error_path;
         m_plugin = rhs.m_plugin;
         m_disable_aslr = rhs.m_disable_aslr;
+        m_disable_stdio = rhs.m_disable_stdio;
     }
 
     return *this;
@@ -2685,6 +2688,8 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
         UserSettingsController::UpdateEnumVariable (entry.enum_values, (int *) &m_plugin, value, err);
     else if (var_name == DisableASLRVarName())
         UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, err);
+    else if (var_name == DisableSTDIOVarName ())
+        UserSettingsController::UpdateBooleanVariable (op, m_disable_stdio, value, err);
 }
 
 void
@@ -2703,6 +2708,7 @@ ProcessInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &n
     m_error_path = new_process_settings->m_error_path;
     m_plugin = new_process_settings->m_plugin;
     m_disable_aslr = new_process_settings->m_disable_aslr;
+    m_disable_stdio = new_process_settings->m_disable_stdio;
 }
 
 bool
@@ -2751,6 +2757,13 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     else if (var_name == DisableASLRVarName())
     {
         if (m_disable_aslr)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
+    }
+    else if (var_name == DisableSTDIOVarName())
+    {
+        if (m_disable_stdio)
             value.AppendString ("true");
         else
             value.AppendString ("false");
@@ -2834,6 +2847,13 @@ ProcessInstanceSettings::DisableASLRVarName ()
     return disable_aslr_var_name;
 }
 
+const ConstString &
+ProcessInstanceSettings::DisableSTDIOVarName ()
+{
+    static ConstString disable_stdio_var_name ("disable-stdio");
+    
+    return disable_stdio_var_name;
+}
 
 //--------------------------------------------------
 // SettingsController Variable Tables
@@ -2864,8 +2884,9 @@ Process::SettingsController::instance_settings_table[] =
     { "input-path",  eSetVarTypeString,      "/dev/stdin",  NULL,       false,  false,  "The file/path to be used by the executable program for reading its input." },
     { "output-path", eSetVarTypeString,      "/dev/stdout", NULL,       false,  false,  "The file/path to be used by the executable program for writing its output." },
     { "error-path",  eSetVarTypeString,      "/dev/stderr", NULL,       false,  false,  "The file/path to be used by the executable program for writings its error messages." },
-    { "plugin",      eSetVarTypeEnum,        NULL         , g_plugins,  false,  false,  "The plugin to be used to run the process." },
-    { "disable-aslr", eSetVarTypeBoolean,       "true",        NULL,       false,  false, "Disable Address Space Layout Randomization (ASLR)" },
+    { "plugin",      eSetVarTypeEnum,        NULL         , g_plugins,  false,  false,  "The plugin to be used to run the process." }, 
+    { "disable-aslr", eSetVarTypeBoolean,       "true",     NULL,       false,  false,  "Disable Address Space Layout Randomization (ASLR)" },
+    { "disable-stdio",eSetVarTypeBoolean,       "false",    NULL,       false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
     {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
 };
 

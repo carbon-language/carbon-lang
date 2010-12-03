@@ -151,7 +151,7 @@ RNBRunLoopGetStartModeFromRemote (RNBRemoteSP &remoteSP)
 // or crash process state.
 //----------------------------------------------------------------------
 RNBRunLoopMode
-RNBRunLoopLaunchInferior (RNBRemoteSP &remote, const char *stdio_path)
+RNBRunLoopLaunchInferior (RNBRemoteSP &remote, const char *stdio_path, bool no_stdio)
 {
     RNBContext& ctx = remote->Context();
 
@@ -209,6 +209,7 @@ RNBRunLoopLaunchInferior (RNBRemoteSP &remote, const char *stdio_path)
                                           &inferior_argv[0],
                                           &inferior_envp[0],
                                           stdio_path,
+                                          no_stdio,
                                           launch_flavor,
                                           g_disable_aslr,
                                           launch_err_str,
@@ -656,6 +657,7 @@ static struct option g_long_options[] =
     { "waitfor-duration",   required_argument,  NULL,               'd' },  // The time in seconds to wait for a process to show up by name
     { "native-regs",        no_argument,        NULL,               'r' },  // Specify to use the native registers instead of the gdb defaults for the architecture.
     { "stdio-path",         required_argument,  NULL,               's' },  // Set the STDIO path to be used when launching applications
+    { "no-stdio",           no_argument,        NULL,               'n' },  // Do not set up any stdio (perhaps the program is a GUI program)
     { "setsid",             no_argument,        NULL,               'S' },  // call setsid() to make debugserver run in its own sessions
     { "disable-aslr",       no_argument,        NULL,               'D' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
     { NULL,                 0,                  NULL,               0   }
@@ -698,6 +700,7 @@ main (int argc, char *argv[])
     std::string arch_name;
     useconds_t waitfor_interval = 1000;     // Time in usecs between process lists polls when waiting for a process by name, default 1 msec.
     useconds_t waitfor_duration = 0;        // Time in seconds to wait for a process by name, 0 means wait forever.
+    bool no_stdio = false;
 
 #if !defined (DNBLOG_ENABLED)
     compile_options += "(no-logging) ";
@@ -705,7 +708,7 @@ main (int argc, char *argv[])
 
     RNBRunLoopMode start_mode = eRNBRunLoopModeExit;
 
-    while ((ch = getopt_long(argc, argv, "a:A:d:gi:vktl:f:w:x:rs:", g_long_options, &long_option_index)) != -1)
+    while ((ch = getopt_long(argc, argv, "a:A:d:gi:vktl:f:w:x:rs:n", g_long_options, &long_option_index)) != -1)
     {
         DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
                     ch, (uint8_t)ch,
@@ -856,6 +859,10 @@ main (int argc, char *argv[])
                 stdio_path = optarg;
                 break;
 
+            case 'n':
+                no_stdio = true;
+                break;
+                
             case 'S':
                 // Put debugserver into a new session. Terminals group processes
                 // into sessions and when a special terminal key sequences
@@ -1208,7 +1215,7 @@ main (int argc, char *argv[])
                 break;
 
             case eRNBRunLoopModeInferiorLaunching:
-                mode = RNBRunLoopLaunchInferior (g_remoteSP, stdio_path.empty() ? NULL : stdio_path.c_str());
+                mode = RNBRunLoopLaunchInferior (g_remoteSP, stdio_path.empty() ? NULL : stdio_path.c_str(), no_stdio);
 
                 if (mode == eRNBRunLoopModeInferiorExecuting)
                 {

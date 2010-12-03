@@ -1495,6 +1495,7 @@ MachProcess::LaunchForDebug
     char const *argv[],
     char const *envp[],
     const char *stdio_path,
+    bool no_stdio,
     nub_launch_flavor_t launch_flavor,
     int disable_aslr,
     DNBError &launch_err
@@ -1519,7 +1520,8 @@ MachProcess::LaunchForDebug
                                                                 DNBArchProtocol::GetArchitecture (),
                                                                 argv, 
                                                                 envp, 
-                                                                stdio_path, 
+                                                                stdio_path,
+                                                                no_stdio, 
                                                                 this, 
                                                                 disable_aslr, 
                                                                 launch_err);
@@ -1533,7 +1535,7 @@ MachProcess::LaunchForDebug
             if (app_ext != NULL)
             {
                 std::string app_bundle_path(path, app_ext + strlen(".app"));
-                return SBLaunchForDebug (app_bundle_path.c_str(), argv, envp, launch_err);
+                return SBLaunchForDebug (app_bundle_path.c_str(), argv, envp, no_stdio, launch_err);
             }
         }
         break;
@@ -1609,6 +1611,7 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     char const *argv[],
     char const *envp[],
     const char *stdio_path,
+    bool no_stdio,
     MachProcess* process,
     int disable_aslr,
     DNBError& err
@@ -1665,7 +1668,7 @@ MachProcess::PosixSpawnChildForPTraceDebugging
     pid_t pid = INVALID_NUB_PROCESS;
     if (file_actions_valid)
     {
-        if (stdio_path == NULL)
+        if (stdio_path == NULL && !no_stdio)
         {
             pty_error = pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY);
             if (pty_error == PseudoTerminal::success)
@@ -1675,7 +1678,25 @@ MachProcess::PosixSpawnChildForPTraceDebugging
                 stdio_path = "/dev/null";
         }
 
-        if (stdio_path != NULL)
+		// if no_stdio, then do open file actions, opening /dev/null.
+        if (no_stdio)
+        {
+            err.SetError( ::posix_spawn_file_actions_addopen (&file_actions, STDIN_FILENO, "/dev/null", 
+                                                              O_RDONLY | O_NOCTTY, 0), DNBError::POSIX);
+            if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
+                err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDIN_FILENO, path=/dev/null)");
+            
+            err.SetError( ::posix_spawn_file_actions_addopen (&file_actions, STDOUT_FILENO, "/dev/null", 
+                                                              O_WRONLY | O_NOCTTY, 0), DNBError::POSIX);
+            if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
+                err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDOUT_FILENO, path=/dev/null)");
+            
+            err.SetError( ::posix_spawn_file_actions_addopen (&file_actions, STDERR_FILENO, "/dev/null", 
+                                                              O_RDWR | O_NOCTTY, 0), DNBError::POSIX);
+            if (err.Fail() || DNBLogCheckLogBit (LOG_PROCESS))
+                err.LogThreaded ("::posix_spawn_file_actions_addopen (&file_actions, filedes=STDERR_FILENO, path=/dev/null)");
+        }
+        else if (stdio_path != NULL)
         {
             int slave_fd_err = open (stdio_path, O_RDWR, 0);
             int slave_fd_in = open (stdio_path, O_RDONLY, 0);
@@ -1807,7 +1828,7 @@ MachProcess::ForkChildForPTraceDebugging
 #if defined (__arm__)
 
 pid_t
-MachProcess::SBLaunchForDebug (const char *path, char const *argv[], char const *envp[], DNBError &launch_err)
+MachProcess::SBLaunchForDebug (const char *path, char const *argv[], char const *envp[], bool no_stdio, DNBError &launch_err)
 {
     // Clear out and clean up from any current state
     Clear();
@@ -1816,7 +1837,7 @@ MachProcess::SBLaunchForDebug (const char *path, char const *argv[], char const 
 
     // Fork a child process for debugging
     SetState(eStateLaunching);
-    m_pid = MachProcess::SBForkChildForPTraceDebugging(path, argv, envp, this, launch_err);
+    m_pid = MachProcess::SBForkChildForPTraceDebugging(path, argv, envp, no_stdio, this, launch_err);
     if (m_pid != 0)
     {
         m_flags |= eMachProcessFlagsUsingSBS;
@@ -1892,7 +1913,7 @@ CopyBundleIDForPath (const char *app_bundle_path, DNBError &err_str)
 }
 
 pid_t
-MachProcess::SBForkChildForPTraceDebugging (const char *app_bundle_path, char const *argv[], char const *envp[], MachProcess* process, DNBError &launch_err)
+MachProcess::SBForkChildForPTraceDebugging (const char *app_bundle_path, char const *argv[], char const *envp[], bool no_stdio, MachProcess* process, DNBError &launch_err)
 {
     DNBLogThreadedIf(LOG_PROCESS, "%s( '%s', argv, %p)", __FUNCTION__, app_bundle_path, process);
     CFAllocatorRef alloc = kCFAllocatorDefault;
@@ -1961,18 +1982,21 @@ MachProcess::SBForkChildForPTraceDebugging (const char *app_bundle_path, char co
     CFString stdio_path;
 
     PseudoTerminal pty;
-    PseudoTerminal::Error pty_err = pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY);
-    if (pty_err == PseudoTerminal::success)
+    if (!no_stdio)
     {
-        const char* slave_name = pty.SlaveName();
-        DNBLogThreadedIf(LOG_PROCESS, "%s() successfully opened master pty, slave is %s", __FUNCTION__, slave_name);
-        if (slave_name && slave_name[0])
+        PseudoTerminal::Error pty_err = pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY);
+        if (pty_err == PseudoTerminal::success)
         {
-            ::chmod (slave_name, S_IRWXU | S_IRWXG | S_IRWXO);
-            stdio_path.SetFileSystemRepresentation (slave_name);
+            const char* slave_name = pty.SlaveName();
+            DNBLogThreadedIf(LOG_PROCESS, "%s() successfully opened master pty, slave is %s", __FUNCTION__, slave_name);
+            if (slave_name && slave_name[0])
+            {
+                ::chmod (slave_name, S_IRWXU | S_IRWXG | S_IRWXO);
+                stdio_path.SetFileSystemRepresentation (slave_name);
+            }
         }
     }
-
+    
     if (stdio_path.get() == NULL)
     {
         stdio_path.SetFileSystemRepresentation ("/dev/null");

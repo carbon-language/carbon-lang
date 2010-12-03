@@ -176,6 +176,7 @@ DNBProcessLaunch (const char *path,
                   char const *argv[],
                   const char *envp[],
                   const char *stdio_path,
+                  bool no_stdio,
                   nub_launch_flavor_t launch_flavor,
                   int disable_aslr,
                   char *err_str,
@@ -198,7 +199,7 @@ DNBProcessLaunch (const char *path,
     if (processSP.get())
     {
         DNBError launch_err;
-        pid_t pid = processSP->LaunchForDebug(path, argv, envp, stdio_path, launch_flavor, disable_aslr, launch_err);
+        pid_t pid = processSP->LaunchForDebug(path, argv, envp, stdio_path, no_stdio, launch_flavor, disable_aslr, launch_err);
         if (err_str)
         {
             *err_str = '\0';

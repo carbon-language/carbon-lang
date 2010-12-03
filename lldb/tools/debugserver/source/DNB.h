@@ -33,7 +33,7 @@ nub_bool_t      DNBSetArchitecture      (const char *arch);
 //----------------------------------------------------------------------
 // Process control
 //----------------------------------------------------------------------
-nub_process_t   DNBProcessLaunch        (const char *path, char const *argv[], const char *envp[], const char *stdio_path, nub_launch_flavor_t launch_flavor, int disable_aslr, char *err_str, size_t err_len) DNB_EXPORT;
+nub_process_t   DNBProcessLaunch        (const char *path, char const *argv[], const char *envp[], const char *stdio_path, bool no_stdio, nub_launch_flavor_t launch_flavor, int disable_aslr, char *err_str, size_t err_len) DNB_EXPORT;
 nub_process_t   DNBProcessAttach        (nub_process_t pid, struct timespec *timeout, char *err_str, size_t err_len) DNB_EXPORT;
 nub_process_t   DNBProcessAttachByName  (const char *name, struct timespec *timeout, char *err_str, size_t err_len) DNB_EXPORT;
 nub_process_t   DNBProcessAttachWait    (const char *wait_name, nub_launch_flavor_t launch_flavor, struct timespec *timeout, useconds_t interval, char *err_str, size_t err_len, DNBShouldCancelCallback should_cancel = NULL, void *callback_data = NULL) DNB_EXPORT;

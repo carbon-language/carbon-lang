@@ -176,6 +176,18 @@ public:
     {
         m_disable_aslr = b;
     }
+    
+    bool
+    GetDisableSTDIO () const
+    {
+        return m_disable_stdio;
+    }
+    
+    void
+    SetDisableSTDIO (bool b)
+    {
+        m_disable_stdio = b;
+    }
 
 protected:
 
@@ -207,7 +219,9 @@ protected:
     static const ConstString &
     DisableASLRVarName();
 
-
+    static const ConstString &
+    DisableSTDIOVarName ();
+    
 private:
 
     typedef std::map<std::string, std::string> dictionary;
@@ -218,6 +232,7 @@ private:
     std::string m_error_path;
     ProcessPlugins m_plugin;
     bool m_disable_aslr;
+    bool m_disable_stdio;
 };
 
 

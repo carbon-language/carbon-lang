@@ -404,7 +404,7 @@ ProcessGDBRemote::DoLaunch
                                              launch_process,
                                              LLDB_INVALID_PROCESS_ID,
                                              NULL, false,
-                                             (launch_flags & eLaunchFlagDisableASLR) != 0,
+                                             launch_flags,
                                              inferior_arch);
             if (error.Fail())
                 return error;
@@ -424,7 +424,7 @@ ProcessGDBRemote::DoLaunch
                                              launch_process,
                                              LLDB_INVALID_PROCESS_ID,
                                              NULL, false,
-                                             (launch_flags & eLaunchFlagDisableASLR) != 0,
+                                             launch_flags,
                                              inferior_arch);
             if (error.Fail())
                 return error;
@@ -647,7 +647,7 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
                                          LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
                                          NULL,                      // Don't send any attach by process name option to debugserver
                                          false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
-                                         false,                     // disable_aslr
+                                         0,                         // launch_flags
                                          arch_spec);
         
         if (error.Fail())
@@ -749,7 +749,7 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
                                          LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
                                          NULL,                      // Don't send any attach by process name option to debugserver
                                          false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
-                                         false,                     // disable_aslr
+                                         0,                         // launch_flags
                                          arch_spec);
         if (error.Fail())
         {
@@ -1659,11 +1659,13 @@ ProcessGDBRemote::StartDebugserverProcess
     lldb::pid_t attach_pid,         // If inferior inferior_argv == NULL, and attach_pid != LLDB_INVALID_PROCESS_ID send this pid as an argument to debugserver
     const char *attach_name,        // Wait for the next process to launch whose basename matches "attach_name"
     bool wait_for_launch,           // Wait for the process named "attach_name" to launch
-    bool disable_aslr,              // Disable ASLR
+    uint32_t launch_flags,          // Launch flags
     ArchSpec& inferior_arch         // The arch of the inferior that we will launch
 )
 {
     Error error;
+    bool disable_aslr = (launch_flags & eLaunchFlagDisableASLR) != 0;
+    bool no_stdio = (launch_flags & eLaunchFlagDisableSTDIO) != 0;
     if (m_debugserver_pid == LLDB_INVALID_PROCESS_ID)
     {
         // If we locate debugserver, keep that located version around
@@ -1744,7 +1746,7 @@ ProcessGDBRemote::StartDebugserverProcess
             char arg_cstr[PATH_MAX];
 
             lldb_utility::PseudoTerminal pty;
-            if (launch_process && stdio_path == NULL && m_local_debugserver)
+            if (launch_process && stdio_path == NULL && m_local_debugserver && !no_stdio)
             {
                 if (pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, NULL, 0))
                     stdio_path = pty.GetSlaveName (NULL, 0);
@@ -1767,6 +1769,10 @@ ProcessGDBRemote::StartDebugserverProcess
             {
                 debugserver_args.AppendArgument("--stdio-path");
                 debugserver_args.AppendArgument(stdio_path);
+            }
+            else if (launch_process && no_stdio)
+            {
+                debugserver_args.AppendArgument("--no-stdio");
             }
 
             const char *env_debugserver_log_file = getenv("LLDB_DEBUGSERVER_LOG_FILE");
@@ -1859,7 +1865,7 @@ ProcessGDBRemote::StartDebugserverProcess
             if (error.Fail() || log)
                 error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", m_debugserver_pid, debugserver_path, NULL, &attr, inferior_argv, inferior_envp);
 
-            if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
+            if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID && !no_stdio)
             {
                 if (pty.GetMasterFileDescriptor() != lldb_utility::PseudoTerminal::invalid_fd)
                     SetUpProcessInputReader (pty.ReleaseMasterFileDescriptor());
