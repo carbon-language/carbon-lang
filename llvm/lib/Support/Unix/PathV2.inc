@@ -186,6 +186,20 @@ error_code create_symlink(const Twine &to, const Twine &from) {
   return make_error_code(errc::success);
 }
 
+error_code remove(const Twine &path, bool &existed) {
+  SmallString<128> path_storage;
+  StringRef p = path.toNullTerminatedStringRef(path_storage);
+
+  if (::remove(p.begin()) == -1) {
+    if (errno != ENOENT)
+      return error_code(errno, system_category());
+    existed = false;
+  } else
+    existed = true;
+
+  return make_error_code(errc::success);
+}
+
 error_code exists(const Twine &path, bool &result) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);

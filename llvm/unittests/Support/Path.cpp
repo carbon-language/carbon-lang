@@ -128,7 +128,8 @@ TEST(Support, Path) {
   EXPECT_TRUE(TempFileExists);
 
   ::close(FileDescriptor);
-  ::remove(TempPath.c_str());
+  ASSERT_FALSE(fs::remove(Twine(TempPath), TempFileExists));
+  EXPECT_TRUE(TempFileExists);
 
   ASSERT_FALSE(fs::exists(Twine(TempPath), TempFileExists));
   EXPECT_FALSE(TempFileExists);

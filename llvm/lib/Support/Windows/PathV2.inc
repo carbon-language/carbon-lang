@@ -252,6 +252,25 @@ error_code create_symlink(const Twine &to, const Twine &from) {
   return make_error_code(errc::success);
 }
 
+error_code remove(const Twine &path, bool &existed) {
+  SmallString<128> path_storage;
+  SmallVector<wchar_t, 128> path_utf16;
+
+  if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
+                                  path_utf16))
+    return ec;
+
+  if (!::DeleteFileW(path_utf16.begin())) {
+    error_code ec = make_error_code(windows_error(::GetLastError()));
+    if (ec != make_error_code(windows_error::file_not_found))
+      return ec;
+    existed = false;
+  } else
+    existed = true;
+
+  return make_error_code(errc::success);
+}
+
 error_code exists(const Twine &path, bool &result) {
   SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
