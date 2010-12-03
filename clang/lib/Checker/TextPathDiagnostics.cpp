@@ -20,7 +20,7 @@ using namespace llvm;
 
 namespace {
 
-/// \brief Simple path diagnostic client used for outputting as text
+/// \brief Simple path diagnostic client used for outputting as diagnostic notes
 /// the sequence of events.
 class TextPathDiagnostics : public PathDiagnosticClient {
   const std::string OutputFile;
@@ -58,14 +58,6 @@ void TextPathDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
 
   if (D->empty()) {
     delete D;
-    return;
-  }
-
-  // Open the file.
-  std::string ErrMsg;
-  llvm::raw_fd_ostream o(OutputFile.c_str(), ErrMsg);
-  if (!ErrMsg.empty()) {
-    llvm::errs() << "warning: could not create file: " << OutputFile << '\n';
     return;
   }
 

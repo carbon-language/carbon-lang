@@ -108,6 +108,10 @@ public:
         case PD_##NAME: PD = CREATEFN(OutDir, PP); break;
 #include "clang/Frontend/Analyses.def"
       }
+    } else if (Opts.AnalysisDiagOpt == PD_TEXT) {
+      // Create the text client even without a specified output file since
+      // it just uses diagnostic notes.
+      PD = createTextPathDiagnosticClient("", PP);
     }
 
     // Create the analyzer component creators.
