@@ -125,7 +125,8 @@ namespace {
     { ARM::t2LDMIA_RET,0,         ARM::tPOP_RET, 0,   0,    1,   1,  1,1, 1 },
     { ARM::t2LDMIA_UPD,ARM::tLDMIA_UPD,ARM::tPOP,0,   0,    1,   1,  1,1, 1 },
     // ARM::t2STM (with no basereg writeback) has no Thumb1 equivalent
-    { ARM::t2STMIA_UPD,ARM::tSTMIA_UPD,ARM::tPUSH,0,  0,    1,   1,  1,1, 1 },
+    { ARM::t2STMIA_UPD,ARM::tSTMIA_UPD, 0,       0,   0,    1,   1,  1,1, 1 },
+    { ARM::t2STMDB_UPD, 0,        ARM::tPUSH,    0,   0,    1,   1,  1,1, 1 },
   };
 
   class Thumb2SizeReduce : public MachineFunctionPass {
