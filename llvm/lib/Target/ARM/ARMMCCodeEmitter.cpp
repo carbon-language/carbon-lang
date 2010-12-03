@@ -995,6 +995,7 @@ getAddrMode6OffsetOpValue(const MCInst &MI, unsigned Op,
 void ARMMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
+  const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
   // Pseudo instructions don't get encoded.
   const TargetInstrDesc &Desc = TII.get(MI.getOpcode());
   uint64_t TSFlags = Desc.TSFlags;
@@ -1007,7 +1008,14 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case ARMII::Size2Bytes: Size = 2; break;
   case ARMII::Size4Bytes: Size = 4; break;
   }
-  EmitConstant(getBinaryCodeForInstr(MI, Fixups), Size, OS);
+  uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
+  // Thumb 32-bit wide instructions need to be have the high order halfword
+  // emitted first.
+  if (Subtarget.isThumb() && Size == 4) {
+    EmitConstant(Binary >> 16, 2, OS);
+    EmitConstant(Binary & 0xffff, 2, OS);
+  } else
+    EmitConstant(Binary, Size, OS);
   ++MCNumEmitted;  // Keep track of the # of mi's emitted.
 }
 
