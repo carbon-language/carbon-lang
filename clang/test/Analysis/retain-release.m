@@ -1386,3 +1386,27 @@ void r8272168() {
 }
 @end
 
+// <rdar://problem/8724287> - This test case previously crashed because
+// of a bug in BugReporter.
+extern const void *CFDictionaryGetValue(CFDictionaryRef theDict, const void *key);
+typedef struct __CFError * CFErrorRef;
+extern const CFStringRef kCFErrorUnderlyingErrorKey;
+extern CFDictionaryRef CFErrorCopyUserInfo(CFErrorRef err);
+
+static void rdar_8724287(CFErrorRef error)
+{
+    CFErrorRef error_to_dump;
+
+    error_to_dump = error;
+    while (error_to_dump != ((void*)0)) {
+        CFDictionaryRef info;
+
+        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line 1404 and stored into 'info'}}
+
+        if (info != ((void*)0)) {
+        }
+
+        error_to_dump = (CFErrorRef) CFDictionaryGetValue(info, kCFErrorUnderlyingErrorKey);
+    }
+}
+
