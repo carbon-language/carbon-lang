@@ -25,6 +25,8 @@
 
 namespace llvm {
 
+class VirtRegMap;
+
 class LiveDebugVariables : public MachineFunctionPass {
   void *pImpl;
 public:
@@ -42,7 +44,8 @@ public:
 
   /// emitDebugValues - Emit new DBG_VALUE instructions reflecting the changes
   /// that happened during register allocation.
-  void emitDebugValues();
+  /// @param VRM Rename virtual registers according to map.
+  void emitDebugValues(VirtRegMap *VRM);
 
   /// dump - Print data structures to dbgs().
   void dump();

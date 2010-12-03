@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
+#include "LiveDebugVariables.h"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
 #include "Spiller.h"
@@ -91,6 +92,7 @@ namespace {
   struct RALinScan : public MachineFunctionPass {
     static char ID;
     RALinScan() : MachineFunctionPass(ID) {
+      initializeLiveDebugVariablesPass(*PassRegistry::getPassRegistry());
       initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
       initializeStrongPHIEliminationPass(*PassRegistry::getPassRegistry());
       initializeRegisterCoalescerAnalysisGroup(
@@ -212,6 +214,8 @@ namespace {
       AU.addPreserved<MachineLoopInfo>();
       AU.addRequired<VirtRegMap>();
       AU.addPreserved<VirtRegMap>();
+      AU.addRequired<LiveDebugVariables>();
+      AU.addPreserved<LiveDebugVariables>();
       AU.addRequiredID(MachineDominatorsID);
       AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -531,6 +535,9 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
 
   // Rewrite spill code and update the PhysRegsUsed set.
   rewriter_->runOnMachineFunction(*mf_, *vrm_, li_);
+
+  // Write out new DBG_VALUE instructions.
+  getAnalysis<LiveDebugVariables>().emitDebugValues(vrm_);
 
   assert(unhandled_.empty() && "Unhandled live intervals remain!");
 

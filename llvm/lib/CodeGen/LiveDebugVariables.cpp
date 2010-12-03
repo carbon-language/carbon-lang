@@ -21,16 +21,19 @@
 
 #define DEBUG_TYPE "livedebug"
 #include "LiveDebugVariables.h"
+#include "VirtRegMap.h"
 #include "llvm/Constants.h"
 #include "llvm/Metadata.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
@@ -111,6 +114,21 @@ struct Location {
     }
   }
 
+  /// addOperand - Add this location as a machine operand to MI.
+  MachineInstrBuilder addOperand(MachineInstrBuilder MI) const {
+    switch (Kind) {
+    case locImm:
+      return MI.addImm(Data.ImmVal);
+    case locFPImm:
+      return MI.addFPImm(Data.CFP);
+    default:
+      if (isFrameIndex())
+        return MI.addFrameIndex(getFrameIndex());
+      else
+        return MI.addReg(Kind);  // reg and undef.
+    }
+  }
+
   bool operator==(const Location &RHS) const {
     if (Kind != RHS.Kind)
       return false;
@@ -134,6 +152,11 @@ struct Location {
 
   /// isReg - is this a register location?
   bool isReg() const { return Kind && Kind < locImm; }
+
+  /// isFrameIndex - is this a frame index location?
+  bool isFrameIndex() const { return Kind > locFPImm; }
+
+  int getFrameIndex() const { return ~Kind; }
 
   void print(raw_ostream&, const TargetRegisterInfo*);
 };
@@ -164,6 +187,14 @@ class UserValue {
 
   /// Map of slot indices where this value is live.
   LocMap locInts;
+
+  /// insertDebugValue - Insert a DBG_VALUE into MBB at Idx for LocNo.
+  void insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx, unsigned LocNo,
+                        LiveIntervals &LIS, const TargetInstrInfo &TII);
+
+  /// insertDebugKill - Insert an undef DBG_VALUE into MBB at Idx.
+  void insertDebugKill(MachineBasicBlock *MBB, SlotIndex Idx,
+                       LiveIntervals &LIS, const TargetInstrInfo &TII);
 
 public:
   /// UserValue - Create a new UserValue.
@@ -245,6 +276,14 @@ public:
   void renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx,
                       const TargetRegisterInfo *TRI);
 
+  /// rewriteLocations - Rewrite virtual register locations according to the
+  /// provided virtual register map.
+  void rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI);
+
+  /// emitDebugVariables - Recreate DBG_VALUE instruction from data structures.
+  void emitDebugValues(VirtRegMap *VRM,
+                       LiveIntervals &LIS, const TargetInstrInfo &TRI);
+
   void print(raw_ostream&, const TargetRegisterInfo*);
 };
 } // namespace
@@ -309,6 +348,9 @@ public:
 
   /// renameRegister - Replace all references to OldReg wiht NewReg:SubIdx.
   void renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx);
+
+  /// emitDebugVariables - Recreate DBG_VALUE instruction from data structures.
+  void emitDebugValues(VirtRegMap *VRM);
 
   void print(raw_ostream&);
 };
@@ -602,6 +644,144 @@ renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx) {
   if (pImpl)
     static_cast<LDVImpl*>(pImpl)->renameRegister(OldReg, NewReg, SubIdx);
 }
+
+void
+UserValue::rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI) {
+  // Iterate over locations in reverse makes it easier to handle coalescing.
+  for (unsigned i = locations.size(); i ; --i) {
+    unsigned LocNo = i-1;
+    Location &Loc = locations[LocNo];
+    // Only virtual registers are rewritten.
+    if (!Loc.isReg() || !TargetRegisterInfo::isVirtualRegister(Loc.Kind))
+      continue;
+    unsigned VirtReg = Loc.Kind;
+    if (VRM.isAssignedReg(VirtReg)) {
+      unsigned PhysReg = VRM.getPhys(VirtReg);
+      if (Loc.Data.SubIdx)
+        PhysReg = TRI.getSubReg(PhysReg, Loc.Data.SubIdx);
+      Loc.Kind = PhysReg;
+      Loc.Data.SubIdx = 0;
+    } else if (VRM.getStackSlot(VirtReg) != VirtRegMap::NO_STACK_SLOT) {
+      Loc.Kind = ~VRM.getStackSlot(VirtReg);
+      // FIXME: Translate SubIdx to a stackslot offset.
+      Loc.Data.Offset = 0;
+    } else {
+      Loc.Kind = Location::locUndef;
+    }
+  }
+  DEBUG(print(dbgs(), &TRI));
+}
+
+/// findInsertLocation - Find an iterator and DebugLoc for inserting a DBG_VALUE
+/// instruction.
+static MachineBasicBlock::iterator
+findInsertLocation(MachineBasicBlock *MBB, SlotIndex Idx, DebugLoc &DL,
+                   LiveIntervals &LIS) {
+  SlotIndex Start = LIS.getMBBStartIdx(MBB);
+  Idx = Idx.getBaseIndex();
+
+  // Try to find an insert location by going backwards from Idx.
+  MachineInstr *MI;
+  while (!(MI = LIS.getInstructionFromIndex(Idx))) {
+    // We've reached the beginning of MBB.
+    if (Idx == Start) {
+      MachineBasicBlock::iterator I = MBB->SkipPHIsAndLabels(MBB->begin());
+      if (I != MBB->end())
+        DL = I->getDebugLoc();
+      return I;
+    }
+    Idx = Idx.getPrevIndex();
+  }
+  // We found an instruction. The insert point is after the instr.
+  DL = MI->getDebugLoc();
+  return llvm::next(MachineBasicBlock::iterator(MI));
+}
+
+void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
+                                 unsigned LocNo,
+                                 LiveIntervals &LIS,
+                                 const TargetInstrInfo &TII) {
+  DebugLoc DL;
+  MachineBasicBlock::iterator I = findInsertLocation(MBB, Idx, DL, LIS);
+  Location &Loc = locations[LocNo];
+
+  // Frame index locations may require a target callback.
+  if (Loc.isFrameIndex()) {
+    MachineInstr *MI = TII.emitFrameIndexDebugValue(*MBB->getParent(),
+                                          Loc.getFrameIndex(),
+                                          offset, variable, DL);
+    if (MI) {
+      MBB->insert(I, MI);
+      return;
+    }
+  }
+  // This is not a frame index, or the target is happy with a standard FI.
+  Loc.addOperand(BuildMI(*MBB, I, DL, TII.get(TargetOpcode::DBG_VALUE)))
+    .addImm(offset).addMetadata(variable);
+}
+
+void UserValue::insertDebugKill(MachineBasicBlock *MBB, SlotIndex Idx,
+                               LiveIntervals &LIS, const TargetInstrInfo &TII) {
+  DebugLoc DL;
+  MachineBasicBlock::iterator I = findInsertLocation(MBB, Idx, DL, LIS);
+  BuildMI(*MBB, I, DL, TII.get(TargetOpcode::DBG_VALUE)).addReg(0)
+    .addImm(offset).addMetadata(variable);
+}
+
+void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,
+                                const TargetInstrInfo &TII) {
+  MachineFunction::iterator MFEnd = VRM->getMachineFunction().end();
+
+  for (LocMap::const_iterator I = locInts.begin(); I.valid();) {
+    SlotIndex Start = I.start();
+    SlotIndex Stop = I.stop();
+    unsigned LocNo = I.value();
+    DEBUG(dbgs() << "\t[" << Start << ';' << Stop << "):" << LocNo);
+    MachineFunction::iterator MBB = LIS.getMBBFromIndex(Start);
+    SlotIndex MBBEnd = LIS.getMBBEndIdx(MBB);
+
+    DEBUG(dbgs() << " BB#" << MBB->getNumber() << '-' << MBBEnd);
+    insertDebugValue(MBB, Start, LocNo, LIS, TII);
+
+    // This interval may span multiple basic blocks.
+    // Insert a DBG_VALUE into each one.
+    while(Stop > MBBEnd) {
+      // Move to the next block.
+      Start = MBBEnd;
+      if (++MBB == MFEnd)
+        break;
+      MBBEnd = LIS.getMBBEndIdx(MBB);
+      DEBUG(dbgs() << " BB#" << MBB->getNumber() << '-' << MBBEnd);
+      insertDebugValue(MBB, Start, LocNo, LIS, TII);
+    }
+    DEBUG(dbgs() << '\n');
+    if (MBB == MFEnd)
+      break;
+
+    ++I;
+    if (Stop == MBBEnd)
+      continue;
+    // The current interval ends before MBB.
+    // Insert a kill if there is a gap.
+    if (!I.valid() || I.start() > Stop)
+      insertDebugKill(MBB, Stop, LIS, TII);
+  }
+}
+
+void LDVImpl::emitDebugValues(VirtRegMap *VRM) {
+  DEBUG(dbgs() << "********** EMITTING LIVE DEBUG VARIABLES **********\n");
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+  for (unsigned i = 0, e = userValues.size(); i != e; ++i) {
+    userValues[i]->rewriteLocations(*VRM, *TRI);
+    userValues[i]->emitDebugValues(VRM, *LIS, *TII);
+  }
+}
+
+void LiveDebugVariables::emitDebugValues(VirtRegMap *VRM) {
+  if (pImpl)
+    static_cast<LDVImpl*>(pImpl)->emitDebugValues(VRM);
+}
+
 
 #ifndef NDEBUG
 void LiveDebugVariables::dump() {
