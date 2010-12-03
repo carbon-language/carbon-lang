@@ -209,7 +209,7 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     
     // make unique temp .o file to put generated object file
     sys::PathWithStatus uniqueObjPath("lto-llvm.o");
-    if ( uniqueObjPath.createTemporaryFileOnDisk(true, &errMsg) ) {
+    if ( uniqueObjPath.createTemporaryFileOnDisk(false, &errMsg) ) {
         uniqueAsmPath.eraseFromDisk();
         return NULL;
     }
