@@ -583,8 +583,18 @@ renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx,
 
 void LDVImpl::
 renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx) {
-  for (UserValue *UV = lookupVirtReg(OldReg); UV; UV = UV->getNext())
+  UserValue *UV = lookupVirtReg(OldReg);
+  if (!UV)
+    return;
+
+  if (TargetRegisterInfo::isVirtualRegister(NewReg))
+    mapVirtReg(NewReg, UV);
+  virtRegMap.erase(OldReg);
+
+  do {
     UV->renameRegister(OldReg, NewReg, SubIdx, TRI);
+    UV = UV->getNext();
+  } while (UV);
 }
 
 void LiveDebugVariables::
