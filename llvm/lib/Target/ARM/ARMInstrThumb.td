@@ -328,7 +328,9 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
 
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
-  def tBRIND : TI<(outs), (ins GPR:$Rm), IIC_Br, "mov\tpc, $Rm",
+  def tBRIND : TI<(outs), (ins GPR:$Rm),
+                  IIC_Br,
+                  "mov\tpc, $Rm",
                   [(brind GPR:$Rm)]>,
                T1Special<{1,0,?,?}> {
     // A8.6.97
@@ -364,10 +366,17 @@ let isCall = 1,
   Uses = [SP] in {
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
-                  (outs), (ins i32imm:$func, variable_ops), IIC_Br,
+                  (outs), (ins bltarget:$func, variable_ops), IIC_Br,
                   "bl\t$func",
                   [(ARMtcall tglobaladdr:$func)]>,
-             Requires<[IsThumb, IsNotDarwin]>;
+             Requires<[IsThumb, IsNotDarwin]> {
+    bits<24> func;
+    let Inst{26}    = func{23};
+    let Inst{25-16} = func{20-11};
+    let Inst{13}    = func{22};
+    let Inst{11}    = func{21};
+    let Inst{10-0}  = func{10-0};
+  }
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi : TIx2<0b11110, 0b11, 0,
@@ -403,10 +412,17 @@ let isCall = 1,
   Uses = [R7, SP] in {
   // Also used for Thumb2
   def tBLr9 : TIx2<0b11110, 0b11, 1,
-                   (outs), (ins pred:$p, i32imm:$func, variable_ops), IIC_Br,
+                   (outs), (ins pred:$p, bltarget:$func, variable_ops), IIC_Br,
                    "bl${p}\t$func",
                    [(ARMtcall tglobaladdr:$func)]>,
-              Requires<[IsThumb, IsDarwin]>;
+              Requires<[IsThumb, IsDarwin]> {
+    bits<24> func;
+    let Inst{26}    = func{23};
+    let Inst{25-16} = func{20-11};
+    let Inst{13}    = func{22};
+    let Inst{11}    = func{21};
+    let Inst{10-0}  = func{10-0};
+  }
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi_r9 : TIx2<0b11110, 0b11, 0,
@@ -988,25 +1004,58 @@ def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins i32imm:$imm8), IIC_iMOVi,
 
 let neverHasSideEffects = 1 in {
 // FIXME: Make this predicable.
-def tMOVr       : T1I<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMOVr,
-                      "mov\t$dst, $src", []>,
-                  T1Special<0b1000>;
+def tMOVr       : T1I<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
+                      "mov\t$Rd, $Rm", []>,
+                  T1Special<0b1000> {
+  // A8.6.97
+  bits<4> Rd;
+  bits<4> Rm;
+  let Inst{7}   = Rd{3};
+  let Inst{6-3} = Rm;
+  let Inst{2-0} = Rd{2-0};
+}
 let Defs = [CPSR] in
-def tMOVSr      : T1I<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMOVr,
-                       "movs\t$dst, $src", []>, Encoding16 {
+def tMOVSr      : T1I<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
+                      "movs\t$Rd, $Rm", []>, Encoding16 {
+  // A8.6.97
+  bits<3> Rd;
+  bits<3> Rm;
   let Inst{15-6} = 0b0000000000;
+  let Inst{5-3}  = Rm;
+  let Inst{2-0}  = Rd;
 }
 
 // FIXME: Make these predicable.
-def tMOVgpr2tgpr : T1I<(outs tGPR:$dst), (ins GPR:$src), IIC_iMOVr,
-                       "mov\t$dst, $src", []>,
-                   T1Special<{1,0,0,?}>;
-def tMOVtgpr2gpr : T1I<(outs GPR:$dst), (ins tGPR:$src), IIC_iMOVr,
-                       "mov\t$dst, $src", []>,
-                   T1Special<{1,0,?,0}>;
-def tMOVgpr2gpr  : T1I<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
-                       "mov\t$dst, $src", []>,
-                   T1Special<{1,0,?,?}>;
+def tMOVgpr2tgpr : T1I<(outs tGPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
+                       "mov\t$Rd, $Rm", []>,
+                   T1Special<{1,0,0,?}> {
+  // A8.6.97
+  bits<4> Rd;
+  bits<4> Rm;
+  let Inst{7}   = Rd{3};
+  let Inst{6-3} = Rm;
+  let Inst{2-0} = Rd{2-0};
+}
+def tMOVtgpr2gpr : T1I<(outs GPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
+                       "mov\t$Rd, $Rm", []>,
+                   T1Special<{1,0,?,0}> {
+  // A8.6.97
+  bits<4> Rd;
+  bits<4> Rm;
+  let Inst{7}   = Rd{3};
+  let Inst{6-3} = Rm;
+  let Inst{2-0} = Rd{2-0};
+}
+def tMOVgpr2gpr  : T1I<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
+                       "mov\t$Rd, $Rm", []>,
+                   T1Special<{1,0,?,?}> {
+  // A8.6.97
+  bits<4> Rd;
+  bits<4> Rm;
+  let Inst{7}   = Rd{3};
+  let Inst{6-3} = Rm;
+  let Inst{2-0} = Rd{2-0};
+}
 } // neverHasSideEffects
 
 // Multiply register
