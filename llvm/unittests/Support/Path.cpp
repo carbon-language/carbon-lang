@@ -7,11 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/PathV2.h"
 
 #include "gtest/gtest.h"
 
 using namespace llvm;
+using namespace llvm::sys;
 
 #define TEST_OUT(func, result) outs() << "    " #func ": " << result << '\n';
 
@@ -131,6 +133,22 @@ TEST(Support, Path) {
 
     outs().flush();
   }
+
+  int FileDescriptor;
+  SmallString<64> TempPath;
+  if (error_code ec = sys::fs::unique_file("%%-%%-%%-%%.temp",
+                                            FileDescriptor, TempPath))
+    ASSERT_FALSE(ec.message().c_str());
+
+  bool TempFileExists;
+  ASSERT_FALSE(sys::fs::exists(Twine(TempPath), TempFileExists));
+  EXPECT_TRUE(TempFileExists);
+
+  ::close(FileDescriptor);
+  ::remove(TempPath.begin());
+
+  ASSERT_FALSE(fs::exists(Twine(TempPath), TempFileExists));
+  EXPECT_FALSE(TempFileExists);
 }
 
 } // anonymous namespace

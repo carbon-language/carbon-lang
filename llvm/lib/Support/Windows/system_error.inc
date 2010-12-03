@@ -96,6 +96,7 @@ _system_error_category::default_error_condition(int ev) const {
   MAP_ERR_TO_COND(ERROR_OPERATION_ABORTED,   operation_canceled);
   MAP_ERR_TO_COND(ERROR_OUTOFMEMORY,         not_enough_memory);
   MAP_ERR_TO_COND(ERROR_PATH_NOT_FOUND,      no_such_file_or_directory);
+  MAP_ERR_TO_COND(ERROR_BAD_NETPATH,         no_such_file_or_directory);
   MAP_ERR_TO_COND(ERROR_READ_FAULT,          io_error);
   MAP_ERR_TO_COND(ERROR_RETRY,               resource_unavailable_try_again);
   MAP_ERR_TO_COND(ERROR_SEEK,                io_error);

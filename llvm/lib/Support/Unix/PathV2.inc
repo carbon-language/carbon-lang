@@ -23,9 +23,11 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-#if HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#if HAVE_STDIO_H
+#include <stdio.h>
 #endif
+
+using namespace llvm;
 
 namespace {
   struct AutoFD {
@@ -45,6 +47,24 @@ namespace {
 
     operator int() const {return FileDescriptor;}
   };
+
+  error_code TempDir(SmallVectorImpl<char> &result) {
+    // FIXME: Don't use TMPDIR if program is SUID or SGID enabled.
+    const char *dir = 0;
+    (dir = std::getenv("TMPDIR" )) ||
+    (dir = std::getenv("TMP"    )) ||
+    (dir = std::getenv("TEMP"   )) ||
+    (dir = std::getenv("TEMPDIR")) ||
+#ifdef P_tmpdir
+    (dir = P_tmpdir) ||
+#endif
+    (dir = "/tmp");
+
+    result.set_size(0);
+    StringRef d(dir);
+    result.append(d.begin(), d.end());
+    return make_error_code(errc::success);
+  }
 }
 
 namespace llvm {
@@ -123,6 +143,113 @@ error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
   if (sz_read < 0)
     return error_code(errno, system_category());
 
+  return make_error_code(errc::success);
+}
+
+error_code exists(const Twine &path, bool &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toNullTerminatedStringRef(path_storage);
+
+  struct stat status;
+  if (::stat(p.begin(), &status) == -1) {
+    if (errno != ENOENT)
+      return error_code(errno, system_category());
+    result = false;
+  } else
+    result = true;
+
+  return make_error_code(errc::success);
+}
+
+error_code unique_file(const Twine &model, int &result_fd,
+                             SmallVectorImpl<char> &result_path) {
+  SmallString<128> Model;
+  model.toVector(Model);
+  // Null terminate.
+  Model.c_str();
+
+  // Make model absolute by prepending a temp directory if it's not already.
+  bool absolute;
+  if (error_code ec = path::is_absolute(Twine(Model), absolute)) return ec;
+  if (!absolute) {
+    SmallString<128> TDir;
+    if (error_code ec = TempDir(TDir)) return ec;
+    if (error_code ec = path::append(TDir, Twine(Model))) return ec;
+    Model.swap(TDir);
+  }
+
+  // Replace '%' with random chars. From here on, DO NOT modify model. It may be
+  // needed if the randomly chosen path already exists.
+  SmallString<128> RandomPath;
+  RandomPath.reserve(Model.size() + 1);
+  ::srand(::time(NULL));
+
+retry_random_path:
+  // This is opened here instead of above to make it easier to track when to
+  // close it. Collisions should be rare enough for the possible extra syscalls
+  // not to matter.
+  FILE *RandomSource = ::fopen("/dev/urandom", "r");
+  RandomPath.set_size(0);
+  for (SmallVectorImpl<char>::const_iterator i = Model.begin(),
+                                             e = Model.end(); i != e; ++i) {
+    if (*i == '%') {
+      char val = 0;
+      if (RandomSource)
+        val = fgetc(RandomSource);
+      else
+        val = ::rand();
+      RandomPath.push_back("0123456789abcdef"[val & 15]);
+    } else
+      RandomPath.push_back(*i);
+  }
+
+  if (RandomSource)
+    ::fclose(RandomSource);
+
+  // Try to open + create the file.
+rety_open_create:
+  int RandomFD = ::open(RandomPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
+  if (RandomFD == -1) {
+    // If the file existed, try again, otherwise, error.
+    if (errno == EEXIST)
+      goto retry_random_path;
+    // The path prefix doesn't exist.
+    if (errno == ENOENT) {
+      StringRef p(RandomPath.begin(), RandomPath.size());
+      SmallString<64> dir_to_create;
+      for (path::const_iterator i = path::begin(p),
+                                e = --path::end(p); i != e; ++i) {
+        if (error_code ec = path::append(dir_to_create, *i)) return ec;
+        bool Exists;
+        if (error_code ec = exists(Twine(dir_to_create), Exists)) return ec;
+        if (!Exists) {
+          // Don't try to create network paths.
+          if (i->size() > 2 && (*i)[0] == '/' &&
+                               (*i)[1] == '/' &&
+                               (*i)[2] != '/')
+            return error_code(ENOENT, system_category());
+          if (::mkdir(dir_to_create.c_str(), 0700) == -1)
+            return error_code(errno, system_category());
+        }
+      }
+      goto rety_open_create;
+    }
+    return error_code(errno, system_category());
+  }
+
+    // Make the path absolute.
+  char real_path_buff[PATH_MAX + 1];
+  if (realpath(RandomPath.c_str(), real_path_buff) == NULL) {
+    ::close(RandomFD);
+    ::unlink(RandomPath.c_str());
+    return error_code(errno, system_category());
+  }
+
+  result_path.set_size(0);
+  StringRef d(real_path_buff);
+  result_path.append(d.begin(), d.end());
+
+  result_fd = RandomFD;
   return make_error_code(errc::success);
 }
 

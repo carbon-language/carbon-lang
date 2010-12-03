@@ -390,19 +390,21 @@ error_code symlink_status(const Twine &path, file_status &result);
 ///
 /// Generates a unique path suitable for a temporary file and then opens it as a
 /// file. The name is based on \a model with '%' replaced by a random char in
-/// [0-9a-f].
+/// [0-9a-f]. If \a model is not an absolute path, a suitable temporary
+/// directory will be prepended.
 ///
 /// This is an atomic operation. Either the file is created and opened, or the
 /// file system is left untouched.
 ///
-/// clang-%%-%%-%%-%%-%%.s => <current-directory>/clang-a0-b1-c2-d3-e4.s
+/// clang-%%-%%-%%-%%-%%.s => /tmp/clang-a0-b1-c2-d3-e4.s
 ///
 /// @param model Name to base unique path off of.
-/// @param result Set to the opened file.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-/// @see temp_directory_path
-error_code unique_file(const Twine &model, void* i_have_not_decided_the_ty_yet);
+/// @param result_fs Set to the opened file's file descriptor.
+/// @param result_path Set to the opened file's absolute path.
+/// @results errc::success if result_{fd,path} have been successfully set,
+///          otherwise a platform specific error_code.
+error_code unique_file(const Twine &model, int &result_fd,
+                             SmallVectorImpl<char> &result_path);
 
 /// @brief Canonicalize path.
 ///
