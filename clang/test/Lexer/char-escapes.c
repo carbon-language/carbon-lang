@@ -19,3 +19,4 @@ int test['\(' == 40 ? 1 : -1]; // expected-warning {{non-standard escape}}
 int test['\{' == 123 ? 1 : -1]; // expected-warning {{non-standard escape}}
 int test['\[' == 91 ? 1 : -1]; // expected-warning {{non-standard escape}}
 int test['\%' == 37 ? 1 : -1]; // expected-warning {{non-standard escape}}
+const char *format = "abc \m def"; // expected-warning{{unknown escape sequence '\m'}}

@@ -151,7 +151,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     if (Diags == 0)
       break;
       
-    if (isgraph(ThisTokBuf[0]))
+    if (isgraph(ResultChar))
       Diags->Report(Loc, diag::ext_unknown_escape)
         << std::string()+(char)ResultChar;
     else
