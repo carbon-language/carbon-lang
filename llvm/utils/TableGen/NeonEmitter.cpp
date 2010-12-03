@@ -523,6 +523,15 @@ static std::string Duplicate(unsigned nElts, StringRef typestr,
   return s;
 }
 
+static std::string SplatLane(unsigned nElts, const std::string &vec,
+                             const std::string &lane) {
+  std::string s = "__builtin_shufflevector(" + vec + ", " + vec;
+  for (unsigned i = 0; i < nElts; ++i)
+    s += ", " + lane;
+  s += ")";
+  return s;
+}
+
 static unsigned GetNumElements(StringRef typestr, bool &quad) {
   quad = false;
   bool dummy = false;
@@ -572,17 +581,26 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpMulN:
     s += "__a * " + Duplicate(nElts, typestr, "__b") + ";";
     break;
+  case OpMulLane:
+    s += "__a * " + SplatLane(nElts, "__b", "__c") + ";";
+    break;
   case OpMul:
     s += "__a * __b;";
     break;
   case OpMlaN:
     s += "__a + (__b * " + Duplicate(nElts, typestr, "__c") + ");";
     break;
+  case OpMlaLane:
+    s += "__a + (__b * " + SplatLane(nElts, "__c", "__d") + ");";
+    break;
   case OpMla:
     s += "__a + (__b * __c);";
     break;
   case OpMlsN:
     s += "__a - (__b * " + Duplicate(nElts, typestr, "__c") + ");";
+    break;
+  case OpMlsLane:
+    s += "__a - (__b * " + SplatLane(nElts, "__c", "__d") + ");";
     break;
   case OpMls:
     s += "__a - (__b * __c);";
