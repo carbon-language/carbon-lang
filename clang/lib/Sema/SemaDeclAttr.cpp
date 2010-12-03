@@ -745,12 +745,20 @@ static void HandleMayAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
 static void HandleNoCommonAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   assert(Attr.isInvalid() == false);
-  d->addAttr(::new (S.Context) NoCommonAttr(Attr.getLoc(), S.Context));
+  if (isa<VarDecl>(d))
+    d->addAttr(::new (S.Context) NoCommonAttr(Attr.getLoc(), S.Context));
+  else
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 12 /* variable */;
 }
 
 static void HandleCommonAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   assert(Attr.isInvalid() == false);
-  d->addAttr(::new (S.Context) CommonAttr(Attr.getLoc(), S.Context));
+  if (isa<VarDecl>(d))
+    d->addAttr(::new (S.Context) CommonAttr(Attr.getLoc(), S.Context));
+  else
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 12 /* variable */;
 }
 
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
