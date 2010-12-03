@@ -188,6 +188,11 @@ class UserValue {
   /// Map of slot indices where this value is live.
   LocMap locInts;
 
+  /// coalesceLocation - After LocNo was changed, check if it has become
+  /// identical to another location, and coalesce them. This may cause LocNo or
+  /// a later location to be erased, but no earlier location will be erased.
+  void coalesceLocation(unsigned LocNo);
+
   /// insertDebugValue - Insert a DBG_VALUE into MBB at Idx for LocNo.
   void insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx, unsigned LocNo,
                         LiveIntervals &LIS, const TargetInstrInfo &TII);
@@ -409,6 +414,30 @@ void LDVImpl::print(raw_ostream &OS) {
     userValues[i]->print(OS, TRI);
 }
 
+void UserValue::coalesceLocation(unsigned LocNo) {
+  unsigned KeepLoc = std::find(locations.begin(), locations.begin() + LocNo,
+                               locations[LocNo]) - locations.begin();
+  unsigned EraseLoc = LocNo;
+  if (KeepLoc == LocNo) {
+    EraseLoc = std::find(locations.begin() + LocNo + 1, locations.end(),
+                         locations[LocNo]) - locations.begin();
+    // No matches.
+    if (EraseLoc == locations.size())
+      return;
+  }
+  assert(KeepLoc < EraseLoc);
+  locations.erase(locations.begin() + EraseLoc);
+
+  // Rewrite values.
+  for (LocMap::iterator I = locInts.begin(); I.valid(); ++I) {
+    unsigned v = I.value();
+    if (v == EraseLoc)
+      I.setValue(KeepLoc);      // Coalesce when possible.
+    else if (v > EraseLoc)
+      I.setValueUnchecked(v-1); // Avoid coalescing with untransformed values.
+  }
+}
+
 UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset) {
   UserValue *&Leader = userVarMap[Var];
   if (Leader) {
@@ -613,13 +642,15 @@ LiveDebugVariables::~LiveDebugVariables() {
 void UserValue::
 renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx,
                const TargetRegisterInfo *TRI) {
-  for (unsigned i = 0, e = locations.size(); i != e; ++i) {
-    Location &Loc = locations[i];
+  for (unsigned i = locations.size(); i; --i) {
+    unsigned LocNo = i - 1;
+    Location &Loc = locations[LocNo];
     if (Loc.Kind != OldReg)
       continue;
     Loc.Kind = NewReg;
     if (SubIdx && Loc.Data.SubIdx)
       Loc.Data.SubIdx = TRI->composeSubRegIndices(SubIdx, Loc.Data.SubIdx);
+    coalesceLocation(LocNo);
   }
 }
 
@@ -668,6 +699,7 @@ UserValue::rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI) {
     } else {
       Loc.Kind = Location::locUndef;
     }
+    coalesceLocation(LocNo);
   }
   DEBUG(print(dbgs(), &TRI));
 }
