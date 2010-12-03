@@ -931,8 +931,8 @@ def tCMPhir : T1pI<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_iCMPr,
   let Inst{6-3} = Rm;
   let Inst{2-0} = Rn{2-0};
 }
-def tCMPzhir : T1pI<(outs), (ins GPR:$lhs, GPR:$rhs), IIC_iCMPr,
-                    "cmp", "\t$lhs, $rhs", []>,
+def tCMPzhir : T1pI<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_iCMPr,
+                    "cmp", "\t$Rn, $Rm", []>,
                T1Special<{0,1,?,?}> {
   // A8.6.36 T2
   bits<4> Rm;
