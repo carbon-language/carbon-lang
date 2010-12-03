@@ -1450,8 +1450,7 @@ class ExtractValueInst : public UnaryInstruction {
   /// getIndexedType - Returns the type of the element that would be extracted
   /// with an extractvalue instruction with the specified parameters.
   ///
-  /// Null is returned if the indices are invalid for the specified
-  /// pointer type.
+  /// Null is returned if the indices are invalid for the specified type.
   ///
   static const Type *getIndexedType(const Type *Agg,
                                     const unsigned *Idx, unsigned NumIdx);
@@ -1534,8 +1533,7 @@ public:
   /// getIndexedType - Returns the type of the element that would be extracted
   /// with an extractvalue instruction with the specified parameters.
   ///
-  /// Null is returned if the indices are invalid for the specified
-  /// pointer type.
+  /// Null is returned if the indices are invalid for the specified type.
   ///
   template<typename RandomAccessIterator>
   static const Type *getIndexedType(const Type *Ptr,
