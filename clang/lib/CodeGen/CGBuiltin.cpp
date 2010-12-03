@@ -1537,6 +1537,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateBitCast(Ops[0], QTy);
     return Builder.CreateTrunc(Ops[0], Ty, "vmovn");
   }
+  case ARM::BI__builtin_neon_vmul_v:
+    assert(poly && "vmul builtin only supported for polynomial types");
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmulp, &Ty, 1),
+                        Ops, "vmul");
   case ARM::BI__builtin_neon_vmull_lane_v: {
     const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
     Ops[1] = Builder.CreateBitCast(Ops[1], DTy);

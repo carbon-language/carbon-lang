@@ -111,7 +111,8 @@ def VRADDHN : IInst<"vraddhn", "dww", "csiUcUsUi">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.2 Multiplication
-def VMUL     : Inst<"vmul", "ddd", "csifUcUsUiPcQcQsQiQfQUcQUsQUiQPc", OP_MUL>;
+def VMUL     : Inst<"vmul", "ddd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_MUL>;
+def VMULP    : SInst<"vmul", "ddd", "PcQPc">;
 def VMLA     : Inst<"vmla", "dddd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_MLA>;
 def VMLAL    : SInst<"vmlal", "wwdd", "csiUcUsUi">;
 def VMLS     : Inst<"vmls", "dddd", "csifUcUsUiQcQsQiQfQUcQUsQUi", OP_MLS>;
