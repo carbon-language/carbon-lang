@@ -15,22 +15,6 @@
 using namespace llvm;
 using namespace llvm::sys;
 
-#define TEST_OUT(func, result) outs() << "    " #func ": " << result << '\n';
-
-#define TEST_PATH_(header, func, funcname, output) \
-  header; \
-  if (error_code ec = sys::path::func) \
-    ASSERT_FALSE(ec.message().c_str()); \
-  TEST_OUT(funcname, output)
-
-#define TEST_PATH(func, ipath, res) TEST_PATH_(;, func(ipath, res), func, res);
-
-#define TEST_PATH_SMALLVEC(func, ipath, inout) \
-  TEST_PATH_(inout = ipath, func(inout), func, inout)
-
-#define TEST_PATH_SMALLVEC_P(func, ipath, inout, param) \
-  TEST_PATH_(inout = ipath, func(inout, param), func, inout)
-
 namespace {
 
 TEST(Support, Path) {
@@ -80,14 +64,12 @@ TEST(Support, Path) {
                                                   e = paths.end();
                                                   i != e;
                                                   ++i) {
-    outs() << *i << " =>\n    Iteration: [";
     for (sys::path::const_iterator ci = sys::path::begin(*i),
                                    ce = sys::path::end(*i);
                                    ci != ce;
                                    ++ci) {
-      outs() << *ci << ',';
+      ASSERT_FALSE(ci->empty());
     }
-    outs() << "]\n";
 
 #if 0 // Valgrind is whining about this.
     outs() << "    Reverse Iteration: [";
@@ -102,43 +84,44 @@ TEST(Support, Path) {
 
     bool      bres;
     StringRef sfres;
-    TEST_PATH(has_root_path, *i, bres);
-    TEST_PATH(root_path, *i, sfres);
-    TEST_PATH(has_root_name, *i, bres);
-    TEST_PATH(root_name, *i, sfres);
-    TEST_PATH(has_root_directory, *i, bres);
-    TEST_PATH(root_directory, *i, sfres);
-    TEST_PATH(has_parent_path, *i, bres);
-    TEST_PATH(parent_path, *i, sfres);
-    TEST_PATH(has_filename, *i, bres);
-    TEST_PATH(filename, *i, sfres);
-    TEST_PATH(has_stem, *i, bres);
-    TEST_PATH(stem, *i, sfres);
-    TEST_PATH(has_extension, *i, bres);
-    TEST_PATH(extension, *i, sfres);
-    TEST_PATH(is_absolute, *i, bres);
-    TEST_PATH(is_relative, *i, bres);
+    ASSERT_FALSE(path::has_root_path(*i, bres));
+    ASSERT_FALSE(path::root_path(*i, sfres));
+    ASSERT_FALSE(path::has_root_name(*i, bres));
+    ASSERT_FALSE(path::root_name(*i, sfres));
+    ASSERT_FALSE(path::has_root_directory(*i, bres));
+    ASSERT_FALSE(path::root_directory(*i, sfres));
+    ASSERT_FALSE(path::has_parent_path(*i, bres));
+    ASSERT_FALSE(path::parent_path(*i, sfres));
+    ASSERT_FALSE(path::has_filename(*i, bres));
+    ASSERT_FALSE(path::filename(*i, sfres));
+    ASSERT_FALSE(path::has_stem(*i, bres));
+    ASSERT_FALSE(path::stem(*i, sfres));
+    ASSERT_FALSE(path::has_extension(*i, bres));
+    ASSERT_FALSE(path::extension(*i, sfres));
+    ASSERT_FALSE(path::is_absolute(*i, bres));
+    ASSERT_FALSE(path::is_relative(*i, bres));
 
     SmallString<16> temp_store;
-    TEST_PATH_SMALLVEC(make_absolute, *i, temp_store);
-    TEST_PATH_SMALLVEC(remove_filename, *i, temp_store);
+    temp_store = *i;
+    ASSERT_FALSE(path::make_absolute(temp_store));
+    temp_store = *i;
+    ASSERT_FALSE(path::remove_filename(temp_store));
 
-    TEST_PATH_SMALLVEC_P(replace_extension, *i, temp_store, "ext");
+    temp_store = *i;
+    ASSERT_FALSE(path::replace_extension(temp_store, "ext"));
     StringRef filename(temp_store.begin(), temp_store.size()), stem, ext;
-    TEST_PATH(stem, filename, stem);
-    TEST_PATH(extension, filename, ext);
+    ASSERT_FALSE(path::stem(filename, stem));
+    ASSERT_FALSE(path::extension(filename, ext));
     EXPECT_EQ(*(--sys::path::end(filename)), (stem + ext).str());
 
-    TEST_PATH_(;, native(*i, temp_store), native, temp_store);
+    ASSERT_FALSE(path::native(*i, temp_store));
 
     outs().flush();
   }
 
   int FileDescriptor;
   SmallString<64> TempPath;
-  if (error_code ec = sys::fs::unique_file("%%-%%-%%-%%.temp",
-                                            FileDescriptor, TempPath))
-    ASSERT_FALSE(ec.message().c_str());
+  ASSERT_FALSE(fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
 
   bool TempFileExists;
   ASSERT_FALSE(sys::fs::exists(Twine(TempPath), TempFileExists));
