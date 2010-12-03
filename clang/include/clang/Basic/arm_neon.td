@@ -23,6 +23,9 @@ def OP_MLS   : Op;
 def OP_MUL_N : Op;
 def OP_MLA_N : Op;
 def OP_MLS_N : Op;
+def OP_MUL_LN: Op;
+def OP_MLA_LN: Op;
+def OP_MLS_LN: Op;
 def OP_EQ    : Op;
 def OP_GE    : Op;
 def OP_LE    : Op;
@@ -282,13 +285,14 @@ def VTBX4 : WInst<"dd4t", "UccPc">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.25 Operations with a scalar value
-def VMLA_LANE     : IInst<"ddddi", "siUsUifQsQiQUsQUiQf">;
+def VMLA_LANE     : Inst<"ddddi",  "siUsUifQsQiQUsQUiQf", OP_MLA_LN>;
 def VMLAL_LANE    : SInst<"wwddi", "siUsUi">;
 def VQDMLAL_LANE  : SInst<"wwddi", "si">; 
-def VMLS_LANE     : IInst<"ddddi", "siUsUifQsQiQUsQUiQf">;
+def VMLS_LANE     : Inst<"ddddi",  "siUsUifQsQiQUsQUiQf", OP_MLS_LN>;
 def VMLSL_LANE    : SInst<"wwddi", "siUsUi">;
 def VQDMLSL_LANE  : SInst<"wwddi", "si">;
 def VMUL_N        : Inst<"dds",    "sifUsUiQsQiQfQUsQUi", OP_MUL_N>;
+def VMUL_LANE     : Inst<"dddi",   "sifUsUiQsQiQfQUsQUi", OP_MUL_LN>;
 def VMULL_N       : SInst<"wda",   "siUsUi">;
 def VMULL_LANE    : SInst<"wddi",  "siUsUi">;
 def VQDMULL_N     : SInst<"wda",   "si">;
