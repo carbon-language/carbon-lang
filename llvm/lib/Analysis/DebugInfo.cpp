@@ -1161,7 +1161,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
 static void fixupObjcLikeName(std::string &Str) {
   for (size_t i = 0, e = Str.size(); i < e; ++i) {
     char C = Str[i];
-    if (C == '[' || C == ']' || C == ' ' || C == ':')
+    if (C == '[' || C == ']' || C == ' ' || C == ':' || C == '+')
       Str[i] = '.';
   }
 }
