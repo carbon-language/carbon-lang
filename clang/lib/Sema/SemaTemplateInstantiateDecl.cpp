@@ -540,8 +540,8 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   EnumDecl *Enum = EnumDecl::Create(SemaRef.Context, Owner,
                                     D->getLocation(), D->getIdentifier(),
                                     D->getTagKeywordLoc(),
-                                    /*PrevDecl=*/0,
-                                    D->isScoped(), D->isFixed());
+                                    /*PrevDecl=*/0, D->isScoped(),
+                                    D->isScopedUsingClassTag(), D->isFixed());
   if (D->isFixed()) {
     if (TypeSourceInfo* TI = D->getIntegerTypeSourceInfo()) {
       // If we have type source information for the underlying type, it means it

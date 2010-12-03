@@ -1980,11 +1980,13 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   }
 
   bool IsScopedEnum = false;
+  bool IsScopedUsingClassTag = false;
 
-  if (getLang().CPlusPlus0x && (Tok.is(tok::kw_class)
-                                || Tok.is(tok::kw_struct))) {
-    ConsumeToken();
+  if (getLang().CPlusPlus0x &&
+      (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct))) {
     IsScopedEnum = true;
+    IsScopedUsingClassTag = Tok.is(tok::kw_class);
+    ConsumeToken();
   }
 
   // Must have either 'enum name' or 'enum {...}'.
@@ -2009,6 +2011,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     // declaration of a scoped enumeration.
     Diag(Tok, diag::err_scoped_enum_missing_identifier);
     IsScopedEnum = false;
+    IsScopedUsingClassTag = false;
   }
 
   TypeResult BaseType;
@@ -2103,7 +2106,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
                                    AS,
                                    MultiTemplateParamsArg(Actions),
                                    Owned, IsDependent, IsScopedEnum,
-                                   BaseType);
+                                   IsScopedUsingClassTag, BaseType);
 
   if (IsDependent) {
     // This enum has a dependent nested-name-specifier. Handle it as a 

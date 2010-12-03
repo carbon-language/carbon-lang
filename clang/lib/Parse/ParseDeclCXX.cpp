@@ -1002,7 +1002,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     TagOrTempResult = Actions.ActOnTag(getCurScope(), TagType, TUK, StartLoc,
                                        SS, Name, NameLoc, AttrList, AS,
                                        TParams, Owned, IsDependent, false,
-                                       clang::TypeResult());
+                                       false, clang::TypeResult());
 
     // If ActOnTag said the type was dependent, try again with the
     // less common call.

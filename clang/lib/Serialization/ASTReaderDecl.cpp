@@ -242,6 +242,7 @@ void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
   ED->setNumPositiveBits(Record[Idx++]);
   ED->setNumNegativeBits(Record[Idx++]);
   ED->IsScoped = Record[Idx++];
+  ED->IsScopedUsingClassTag = Record[Idx++];
   ED->IsFixed = Record[Idx++];
   ED->setInstantiationOfMemberEnum(
                          cast_or_null<EnumDecl>(Reader.GetDecl(Record[Idx++])));

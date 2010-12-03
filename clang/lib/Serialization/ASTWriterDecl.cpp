@@ -190,6 +190,7 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
   Record.push_back(D->getNumPositiveBits());
   Record.push_back(D->getNumNegativeBits());
   Record.push_back(D->isScoped());
+  Record.push_back(D->isScopedUsingClassTag());
   Record.push_back(D->isFixed());
   Writer.AddDeclRef(D->getInstantiatedFromMemberEnum(), Record);
   Code = serialization::DECL_ENUM;

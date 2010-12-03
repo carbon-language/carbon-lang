@@ -5172,7 +5172,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   Decl *TagD = ActOnTag(S, TagSpec, Sema::TUK_Reference,
                         KWLoc, SS, Name, NameLoc, Attr, AS_none,
                         MultiTemplateParamsArg(*this, 0, 0),
-                        Owned, IsDependent, false,
+                        Owned, IsDependent, false, false,
                         TypeResult());
   assert(!IsDependent && "explicit instantiation of dependent name not yet handled");
 

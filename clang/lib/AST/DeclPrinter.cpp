@@ -308,8 +308,12 @@ void DeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
 
 void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
   Out << "enum ";
-  if (D->isScoped())
-    Out << "class ";
+  if (D->isScoped()) {
+    if (D->isScopedUsingClassTag())
+      Out << "class ";
+    else
+      Out << "struct ";
+  }
   Out << D;
 
   if (D->isFixed()) {

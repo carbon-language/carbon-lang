@@ -1925,16 +1925,17 @@ void TagDecl::setQualifierInfo(NestedNameSpecifier *Qualifier,
 
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                            IdentifierInfo *Id, SourceLocation TKL,
-                           EnumDecl *PrevDecl, bool IsScoped, bool IsFixed) {
+                           EnumDecl *PrevDecl, bool IsScoped,
+                           bool IsScopedUsingClassTag, bool IsFixed) {
   EnumDecl *Enum = new (C) EnumDecl(DC, L, Id, PrevDecl, TKL,
-                                    IsScoped, IsFixed);
+                                    IsScoped, IsScopedUsingClassTag, IsFixed);
   C.getTypeDeclType(Enum, PrevDecl);
   return Enum;
 }
 
 EnumDecl *EnumDecl::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) EnumDecl(0, SourceLocation(), 0, 0, SourceLocation(),
-                          false, false);
+                          false, false, false);
 }
 
 void EnumDecl::completeDefinition(QualType NewType,

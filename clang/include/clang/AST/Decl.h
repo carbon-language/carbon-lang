@@ -1964,9 +1964,14 @@ protected:
   unsigned NumPositiveBits : 8;
   unsigned NumNegativeBits : 8;
 
-  /// IsScoped - True if this is tag declaration is a scoped enumeration. Only
+  /// IsScoped - True if this tag declaration is a scoped enumeration. Only
   /// possible in C++0x mode.
   bool IsScoped : 1;
+  /// IsScopedUsingClassTag - If this tag declaration is a scoped enum,
+  /// then this is true if the scoped enum was declared using the class
+  /// tag, false if it was declared with the struct tag. No meaning is
+  /// associated if this tag declaration is not a scoped enum.
+  bool IsScopedUsingClassTag : 1;
 
   /// IsFixed - True if this is an enumeration with fixed underlying type. Only
   /// possible in C++0x mode.
@@ -2189,12 +2194,14 @@ class EnumDecl : public TagDecl {
 
   EnumDecl(DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation TKL,
-           bool Scoped, bool Fixed)
+           bool Scoped, bool ScopedUsingClassTag, bool Fixed)
     : TagDecl(Enum, TTK_Enum, DC, L, Id, PrevDecl, TKL), InstantiatedFrom(0) {
+      assert(Scoped || !ScopedUsingClassTag);
       IntegerType = (const Type*)0;
       NumNegativeBits = 0;
       NumPositiveBits = 0;
       IsScoped = Scoped;
+      IsScopedUsingClassTag = ScopedUsingClassTag;
       IsFixed = Fixed;
     }
 public:
@@ -2215,7 +2222,8 @@ public:
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
                           SourceLocation L, IdentifierInfo *Id,
                           SourceLocation TKL, EnumDecl *PrevDecl,
-                          bool IsScoped, bool IsFixed);
+                          bool IsScoped, bool IsScopedUsingClassTag,
+                          bool IsFixed);
   static EnumDecl *Create(ASTContext &C, EmptyShell Empty);
 
   /// completeDefinition - When created, the EnumDecl corresponds to a
@@ -2304,6 +2312,11 @@ public:
   /// \brief Returns true if this is a C++0x scoped enumeration.
   bool isScoped() const {
     return IsScoped;
+  }
+
+  /// \brief Returns true if this is a C++0x scoped enumeration.
+  bool isScopedUsingClassTag() const {
+    return IsScopedUsingClassTag;
   }
 
   /// \brief Returns true if this is a C++0x enumeration with fixed underlying
