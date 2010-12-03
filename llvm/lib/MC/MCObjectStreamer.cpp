@@ -115,11 +115,21 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
 
 void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value,
                                         unsigned AddrSpace) {
+  int64_t IntValue;
+  if (Value->EvaluateAsAbsolute(IntValue, &getAssembler())) {
+    EmitULEB128IntValue(IntValue, AddrSpace);
+    return;
+  }
   new MCLEBFragment(*Value, false, getCurrentSectionData());
 }
 
 void MCObjectStreamer::EmitSLEB128Value(const MCExpr *Value,
                                         unsigned AddrSpace) {
+  int64_t IntValue;
+  if (Value->EvaluateAsAbsolute(IntValue, &getAssembler())) {
+    EmitSLEB128IntValue(IntValue, AddrSpace);
+    return;
+  }
   new MCLEBFragment(*Value, true, getCurrentSectionData());
 }
 

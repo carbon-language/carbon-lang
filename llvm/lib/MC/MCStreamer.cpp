@@ -52,13 +52,19 @@ void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
 /// EmitULEB128Value - Special case of EmitULEB128Value that avoids the
 /// client having to pass in a MCExpr for constant integers.
 void MCStreamer::EmitULEB128IntValue(uint64_t Value, unsigned AddrSpace) {
-  EmitULEB128Value(MCConstantExpr::Create(Value, getContext()), AddrSpace);
+  SmallString<32> Tmp;
+  raw_svector_ostream OSE(Tmp);
+  MCObjectWriter::EncodeULEB128(Value, OSE);
+  EmitBytes(OSE.str(), AddrSpace);
 }
 
 /// EmitSLEB128Value - Special case of EmitSLEB128Value that avoids the
 /// client having to pass in a MCExpr for constant integers.
 void MCStreamer::EmitSLEB128IntValue(int64_t Value, unsigned AddrSpace) {
-  EmitSLEB128Value(MCConstantExpr::Create(Value, getContext()), AddrSpace);
+  SmallString<32> Tmp;
+  raw_svector_ostream OSE(Tmp);
+  MCObjectWriter::EncodeSLEB128(Value, OSE);
+  EmitBytes(OSE.str(), AddrSpace);
 }
 
 void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
