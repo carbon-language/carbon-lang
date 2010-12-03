@@ -327,6 +327,9 @@
 /* Define to 1 if you have the `setenv' function. */
 #cmakedefine HAVE_SETENV ${HAVE_SETENV}
 
+/* Define to 1 if you have the `_chsize_s' function. */
+#cmakedefine HAVE__CHSIZE_S ${HAVE__CHSIZE_S}
+
 /* Define to 1 if you have the `setjmp' function. */
 #undef HAVE_SETJMP
 
