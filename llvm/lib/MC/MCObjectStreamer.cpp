@@ -179,6 +179,30 @@ void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
   getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups());
 }
 
+void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
+                                                const MCSymbol *LastLabel,
+                                                const MCSymbol *Label) {
+  if (!LastLabel) {
+    int PointerSize = getAssembler().getBackend().getPointerSize();
+    EmitDwarfSetLineAddr(LineDelta, Label, PointerSize);
+    return;
+  }
+  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+  const MCExpr *LabelRef =
+    MCSymbolRefExpr::Create(Label, Variant, getContext());
+  const MCExpr *LastLabelRef =
+    MCSymbolRefExpr::Create(LastLabel, Variant, getContext());
+  const MCExpr *AddrDelta =
+    MCBinaryExpr::Create(MCBinaryExpr::Sub, LabelRef, LastLabelRef,
+                         getContext());
+  int64_t Res;
+  if (AddrDelta->EvaluateAsAbsolute(Res, &getAssembler())) {
+    MCDwarfLineAddr::Emit(this, LineDelta, Res);
+    return;
+  }
+  new MCDwarfLineAddrFragment(LineDelta, *AddrDelta, getCurrentSectionData());
+}
+
 void MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
                                         unsigned char Value) {
   new MCOrgFragment(*Offset, Value, getCurrentSectionData());

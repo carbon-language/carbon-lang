@@ -357,10 +357,7 @@ void MCMachOStreamer::Finish() {
                                          "__debug_line",
                                          MCSectionMachO::S_ATTR_DEBUG,
                                          0, SectionKind::getDataRelLocal());
-    MCSectionData &DLS =
-      getAssembler().getOrCreateSectionData(*DwarfLineSection);
-    int PointerSize = getAssembler().getBackend().getPointerSize();
-    MCDwarfFileTable::Emit(this, DwarfLineSection, &DLS, PointerSize);
+    MCDwarfFileTable::Emit(this, DwarfLineSection);
   }
 
   // We have to set the fragment atom associations so we can relax properly for

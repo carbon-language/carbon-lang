@@ -121,6 +121,9 @@ public:
 
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
+  virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
+                                        const MCSymbol *LastLabel,
+                                        const MCSymbol *Label);
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
 
@@ -296,6 +299,12 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
 void MCAsmStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
   OS << ".weakref " << *Alias << ", " << *Symbol;
   EmitEOL();
+}
+
+void MCAsmStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
+                                             const MCSymbol *LastLabel,
+                                             const MCSymbol *Label) {
+  EmitDwarfSetLineAddr(LineDelta, Label, PointerSize);
 }
 
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
@@ -885,10 +894,9 @@ void MCAsmStreamer::EmitRawText(StringRef String) {
 
 void MCAsmStreamer::Finish() {
   // Dump out the dwarf file & directory tables and line tables.
-  if (getContext().hasDwarfFiles() && TLOF) {
-    MCDwarfFileTable::Emit(this, TLOF->getDwarfLineSection(), NULL,
-                           PointerSize, TLOF->getTextSection());
-  }
+  if (getContext().hasDwarfFiles() && TLOF)
+    MCDwarfFileTable::Emit(this, TLOF->getDwarfLineSection(),
+                           TLOF->getTextSection());
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,

@@ -484,10 +484,7 @@ void MCELFStreamer::Finish() {
     const MCSection *DwarfLineSection =
       getContext().getELFSection(".debug_line", 0, 0,
                                  SectionKind::getDataRelLocal());
-    MCSectionData &DLS =
-      getAssembler().getOrCreateSectionData(*DwarfLineSection);
-    int PointerSize = getAssembler().getBackend().getPointerSize();
-    MCDwarfFileTable::Emit(this, DwarfLineSection, &DLS, PointerSize);
+    MCDwarfFileTable::Emit(this, DwarfLineSection);
   }
 
   for (std::vector<LocalCommon>::const_iterator i = LocalCommons.begin(),

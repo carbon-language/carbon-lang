@@ -237,7 +237,24 @@ void MCTargetExpr::Anchor() {}
 
 /* *** */
 
-bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout) const {
+bool MCExpr::EvaluateAsAbsolute(int64_t &Res) const {
+  return EvaluateAsAbsolute(Res, 0, 0);
+}
+
+bool MCExpr::EvaluateAsAbsolute(int64_t &Res,
+                                const MCAsmLayout *Layout) const {
+  if (Layout)
+    return EvaluateAsAbsolute(Res, &Layout->getAssembler(), Layout);
+  else
+    return EvaluateAsAbsolute(Res, 0, 0);
+}
+
+bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm) const {
+  return EvaluateAsAbsolute(Res, Asm, 0);
+}
+
+bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
+                                const MCAsmLayout *Layout) const {
   MCValue Value;
 
   // Fast path constants.
@@ -246,7 +263,8 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout) const {
     return true;
   }
 
-  if (!EvaluateAsRelocatable(Value, Layout) || !Value.isAbsolute()) {
+  if (!EvaluateAsRelocatableImpl(Value, Asm, Layout, false) ||
+      !Value.isAbsolute()) {
     // EvaluateAsAbsolute is defined to return the "current value" of
     // the expression if we are given a Layout object, even in cases
     // when the value is not fixed.
@@ -268,7 +286,9 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout) const {
   return true;
 }
 
-static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout, bool InSet,
+static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout,
+                                const MCAssembler *Asm,
+                                bool InSet,
                                 const MCValue &LHS,const MCSymbolRefExpr *RHS_A,
                                 const MCSymbolRefExpr *RHS_B, int64_t RHS_Cst,
                                 MCValue &Res) {
@@ -291,14 +311,15 @@ static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout, bool InSet,
   // Absolutize symbol differences between defined symbols when we have a
   // layout object and the target requests it.
 
-  if (Layout && A && B) {
+  assert(!(Layout && !Asm));
+
+  if ((Layout || Asm) && A && B) {
     const MCSymbol &SA = A->getSymbol();
     const MCSymbol &SB = B->getSymbol();
-    const MCAssembler &Asm = Layout->getAssembler();
-    const MCObjectFormat &F = Asm.getBackend().getObjectFormat();
+    const MCObjectFormat &F = Asm->getBackend().getObjectFormat();
     if (SA.isDefined() && SB.isDefined() && F.isAbsolute(InSet, SA, SB)) {
-      MCSymbolData &AD = Asm.getSymbolData(A->getSymbol());
-      MCSymbolData &BD = Asm.getSymbolData(B->getSymbol());
+      MCSymbolData &AD = Asm->getSymbolData(A->getSymbol());
+      MCSymbolData &BD = Asm->getSymbolData(B->getSymbol());
 
       if (AD.getFragment() == BD.getFragment()) {
         Res = MCValue::get(+ AD.getOffset()
@@ -308,14 +329,15 @@ static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout, bool InSet,
         return true;
       }
 
-      Res = MCValue::get(+ Layout->getSymbolAddress(&AD)
-                         - Layout->getSymbolAddress(&BD)
-                         + LHS.getConstant()
-                         + RHS_Cst);
-      return true;
+      if (Layout) {
+        Res = MCValue::get(+ Layout->getSymbolAddress(&AD)
+                           - Layout->getSymbolAddress(&BD)
+                           + LHS.getConstant()
+                           + RHS_Cst);
+        return true;
+      }
     }
   }
-
 
   Res = MCValue::get(A, B, LHS.getConstant() + RHS_Cst);
   return true;
@@ -323,10 +345,15 @@ static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout, bool InSet,
 
 bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
                                    const MCAsmLayout *Layout) const {
-  return EvaluateAsRelocatableImpl(Res, Layout, false);
+  if (Layout)
+    return EvaluateAsRelocatableImpl(Res, &Layout->getAssembler(), Layout,
+                                     false);
+  else
+    return EvaluateAsRelocatableImpl(Res, 0, 0, false);
 }
 
 bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
+                                       const MCAssembler *Asm,
                                        const MCAsmLayout *Layout,
                                        bool InSet) const {
   ++stats::MCExprEvaluate;
@@ -345,7 +372,8 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
 
     // Evaluate recursively if this is a variable.
     if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None) {
-      bool Ret = Sym.getVariableValue()->EvaluateAsRelocatableImpl(Res, Layout,
+      bool Ret = Sym.getVariableValue()->EvaluateAsRelocatableImpl(Res, Asm,
+                                                                   Layout,
                                                                    true);
       // If we failed to simplify this to a constant, let the target
       // handle it.
@@ -361,7 +389,8 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     const MCUnaryExpr *AUE = cast<MCUnaryExpr>(this);
     MCValue Value;
 
-    if (!AUE->getSubExpr()->EvaluateAsRelocatableImpl(Value, Layout, InSet))
+    if (!AUE->getSubExpr()->EvaluateAsRelocatableImpl(Value, Asm, Layout,
+                                                      InSet))
       return false;
 
     switch (AUE->getOpcode()) {
@@ -394,8 +423,10 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     const MCBinaryExpr *ABE = cast<MCBinaryExpr>(this);
     MCValue LHSValue, RHSValue;
 
-    if (!ABE->getLHS()->EvaluateAsRelocatableImpl(LHSValue, Layout, InSet) ||
-        !ABE->getRHS()->EvaluateAsRelocatableImpl(RHSValue, Layout, InSet))
+    if (!ABE->getLHS()->EvaluateAsRelocatableImpl(LHSValue, Asm, Layout,
+                                                  InSet) ||
+        !ABE->getRHS()->EvaluateAsRelocatableImpl(RHSValue, Asm, Layout,
+                                                  InSet))
       return false;
 
     // We only support a few operations on non-constant expressions, handle
@@ -406,13 +437,13 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
         return false;
       case MCBinaryExpr::Sub:
         // Negate RHS and add.
-        return EvaluateSymbolicAdd(Layout, InSet, LHSValue,
+        return EvaluateSymbolicAdd(Layout, Asm, InSet, LHSValue,
                                    RHSValue.getSymB(), RHSValue.getSymA(),
                                    -RHSValue.getConstant(),
                                    Res);
 
       case MCBinaryExpr::Add:
-        return EvaluateSymbolicAdd(Layout, InSet, LHSValue,
+        return EvaluateSymbolicAdd(Layout, Asm, InSet, LHSValue,
                                    RHSValue.getSymA(), RHSValue.getSymB(),
                                    RHSValue.getConstant(),
                                    Res);

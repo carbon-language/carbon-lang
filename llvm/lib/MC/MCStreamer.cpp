@@ -30,6 +30,17 @@ raw_ostream &MCStreamer::GetCommentOS() {
   return nulls();
 }
 
+void MCStreamer::EmitDwarfSetLineAddr(int64_t LineDelta,
+                                      const MCSymbol *Label, int PointerSize) {
+  // emit the sequence to set the address
+  EmitIntValue(dwarf::DW_LNS_extended_op, 1);
+  EmitULEB128IntValue(PointerSize + 1);
+  EmitIntValue(dwarf::DW_LNE_set_address, 1);
+  EmitSymbolValue(Label, PointerSize);
+
+  // emit the sequence for the LineDelta (from 1) and a zero address delta.
+  MCDwarfLineAddr::Emit(this, LineDelta, 0);
+}
 
 /// EmitIntValue - Special case of EmitValue that avoids the client having to
 /// pass in a MCExpr for constant integers.

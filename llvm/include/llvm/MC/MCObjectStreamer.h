@@ -69,6 +69,9 @@ public:
   virtual void EmitInstruction(const MCInst &Inst);
   virtual void EmitInstToFragment(const MCInst &Inst);
   virtual void EmitValueToOffset(const MCExpr *Offset, unsigned char Value);
+  virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
+                                        const MCSymbol *LastLabel,
+                                        const MCSymbol *Label);
   virtual void Finish();
 
   /// @}

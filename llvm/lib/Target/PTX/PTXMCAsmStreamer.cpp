@@ -118,6 +118,10 @@ public:
 
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
 
+  virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
+                                        const MCSymbol *LastLabel,
+                                        const MCSymbol *Label);
+
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
 
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
@@ -261,6 +265,12 @@ void PTXMCAsmStreamer::EmitWeakReference(MCSymbol *Alias,
                                          const MCSymbol *Symbol) {
   OS << ".weakref " << *Alias << ", " << *Symbol;
   EmitEOL();
+}
+
+void PTXMCAsmStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
+                                                const MCSymbol *LastLabel,
+                                                const MCSymbol *Label) {
+  report_fatal_error("Unimplemented.");
 }
 
 void PTXMCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,

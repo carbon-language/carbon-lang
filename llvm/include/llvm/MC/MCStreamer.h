@@ -351,6 +351,13 @@ namespace llvm {
                                        unsigned Isa,
                                        unsigned Discriminator);
 
+    virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
+                                          const MCSymbol *LastLabel,
+                                          const MCSymbol *Label) = 0;
+
+    void EmitDwarfSetLineAddr(int64_t LineDelta, const MCSymbol *Label,
+                              int PointerSize);
+
     virtual bool EmitCFIStartProc();
     virtual bool EmitCFIEndProc();
     virtual bool EmitCFIDefCfaOffset(int64_t Offset);

@@ -16,6 +16,7 @@
 namespace llvm {
 class MCAsmInfo;
 class MCAsmLayout;
+class MCAssembler;
 class MCContext;
 class MCSymbol;
 class MCValue;
@@ -43,7 +44,8 @@ private:
 protected:
   explicit MCExpr(ExprKind _Kind) : Kind(_Kind) {}
 
-  bool EvaluateAsRelocatableImpl(MCValue &Res, const MCAsmLayout *Layout,
+  bool EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
+                                 const MCAsmLayout *Layout,
                                  bool InSet) const;
 public:
   /// @name Accessors
@@ -69,7 +71,11 @@ public:
   /// values. If not given, then only non-symbolic expressions will be
   /// evaluated.
   /// @result - True on success.
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout = 0) const;
+  bool EvaluateAsAbsolute(int64_t &Res) const;
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm) const;
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout) const;
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
+                          const MCAsmLayout *Layout) const;
 
   /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
   /// value, i.e. an expression of the fixed form (a - b + constant).

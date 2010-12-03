@@ -84,6 +84,13 @@ public:
     return Child->EmitWeakReference(Alias, Symbol);
   }
 
+  virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
+                                        const MCSymbol *LastLabel,
+                                        const MCSymbol *Label) {
+    LogCall("EmitDwarfAdvanceLineAddr");
+    return Child->EmitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label);
+  }
+
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {
     LogCall("EmitSymbolAttribute");
     return Child->EmitSymbolAttribute(Symbol, Attribute);
