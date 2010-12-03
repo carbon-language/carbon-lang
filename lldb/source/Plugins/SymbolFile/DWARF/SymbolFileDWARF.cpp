@@ -2025,20 +2025,52 @@ SymbolFileDWARF::FindFunctions
             curr_cu->ExtractDIEsIfNeeded (false);
 
         die = curr_cu->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
+        
+        const DWARFDebugInfoEntry* inlined_die = NULL;
+        if (die->Tag() == DW_TAG_inlined_subroutine)
+        {
+            inlined_die = die;
+            
+            while ((die = die->GetParent()) != NULL)
+            {
+                if (die->Tag() == DW_TAG_subprogram)
+                    break;
+            }
+        }
+        assert (die->Tag() == DW_TAG_subprogram);
         if (GetFunction (curr_cu, die, sc))
         {
-            // We found the function, so we should find the line table
-            // and line table entry as well
-            LineTable *line_table = sc.comp_unit->GetLineTable();
-            if (line_table == NULL)
+            Address addr;
+            // Parse all blocks if needed
+            if (inlined_die)
             {
-                if (ParseCompileUnitLineTable(sc))
-                    line_table = sc.comp_unit->GetLineTable();
+                sc.block = sc.function->GetBlock (true).FindBlockByID (inlined_die->GetOffset());
+                assert (sc.block != NULL);
+                if (sc.block->GetStartAddress (addr) == false)
+                    addr.Clear();
             }
-            if (line_table != NULL)
-                line_table->FindLineEntryByAddress (sc.function->GetAddressRange().GetBaseAddress(), sc.line_entry);
+            else 
+            {
+                sc.block = NULL;
+                addr = sc.function->GetAddressRange().GetBaseAddress();
+            }
 
-            sc_list.Append(sc);
+            if (addr.IsValid())
+            {
+            
+                // We found the function, so we should find the line table
+                // and line table entry as well
+                LineTable *line_table = sc.comp_unit->GetLineTable();
+                if (line_table == NULL)
+                {
+                    if (ParseCompileUnitLineTable(sc))
+                        line_table = sc.comp_unit->GetLineTable();
+                }
+                if (line_table != NULL)
+                    line_table->FindLineEntryByAddress (addr, sc.line_entry);
+
+                sc_list.Append(sc);
+            }
         }
     }
 }
