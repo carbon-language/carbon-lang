@@ -880,10 +880,8 @@ ProcessGDBRemote::DoResume ()
     ProcessGDBRemoteLog::LogIf (GDBR_LOG_PROCESS, "ProcessGDBRemote::Resume()");
     m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (m_continue_packet.GetData(), m_continue_packet.GetSize()));
     const uint32_t timedout_sec = 1;
-    if (m_gdb_comm.WaitForIsRunning (timedout_sec))
-    {
+    if (m_gdb_comm.WaitForIsRunning (timedout_sec) == false)
         error.SetErrorString("Resume timed out.");
-    }
     return error;
 }
 
