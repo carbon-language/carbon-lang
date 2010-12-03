@@ -1850,12 +1850,10 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
     ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning, TmpStr);
   }        
 
-  switch (End-Beg) {
-    default: assert(0 && "Don't handle this many ranges yet!");
-    case 0: Diag.Report(L, ErrorDiag); break;
-    case 1: Diag.Report(L, ErrorDiag) << Beg[0]; break;
-    case 2: Diag.Report(L, ErrorDiag) << Beg[0] << Beg[1]; break;
-    case 3: Diag.Report(L, ErrorDiag) << Beg[0] << Beg[1] << Beg[2]; break;
+  {
+    DiagnosticBuilder diagBuilder = Diag.Report(L, ErrorDiag);
+    for (const SourceRange *I = Beg; I != End; ++I)
+      diagBuilder << *I;
   }
 
   // Emit a full diagnostic for the path if we have a PathDiagnosticClient.
