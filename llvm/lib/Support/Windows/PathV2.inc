@@ -23,6 +23,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+// MinGW doesn't define this.
+#ifndef _ERRNO_T_DEFINED
+#define _ERRNO_T_DEFINED
+typedef int errno_t;
+#endif
+
 using namespace llvm;
 
 namespace {
