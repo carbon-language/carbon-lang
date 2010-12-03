@@ -173,6 +173,19 @@ error_code create_hard_link(const Twine &to, const Twine &from) {
   return make_error_code(errc::success);
 }
 
+error_code create_symlink(const Twine &to, const Twine &from) {
+  // Get arguments.
+  SmallString<128> from_storage;
+  SmallString<128> to_storage;
+  StringRef f = from.toNullTerminatedStringRef(from_storage);
+  StringRef t = to.toNullTerminatedStringRef(to_storage);
+
+  if (::symlink(t.begin(), f.begin()) == -1)
+    return error_code(errno, system_category());
+
+  return make_error_code(errc::success);
+}
+
 error_code exists(const Twine &path, bool &result) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
