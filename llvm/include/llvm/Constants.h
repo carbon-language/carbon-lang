@@ -266,8 +266,8 @@ public:
   inline const APFloat& getValueAPF() const { return Val; }
 
   /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  Don't depend on == for doubles to tell us it's zero, it
-  /// considers -0.0 to be null as well as 0.0.  :(
+  /// getNullValue.  For ConstantFP, this is +0.0, but not -0.0.  To handle the
+  /// two the same, use isZero().
   virtual bool isNullValue() const;
   
   /// isNegativeZeroValue - Return true if the value is what would be returned 
