@@ -324,7 +324,8 @@ def VQDMLSL_N    : SInst<"vqdmlsl_n", "wwda", "si">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.26 Vector Extract
-def VEXT : WInst<"vext", "dddi", "cUcPcsUsPsiUilUlQcQUcQPcQsQUsQPsQiQUiQlQUl">;
+def VEXT : WInst<"vext", "dddi",
+                 "cUcPcsUsPsiUilUlfQcQUcQPcQsQUsQPsQiQUiQlQUlQf">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.27 Reverse vector elements (sdap endianness)
