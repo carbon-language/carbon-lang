@@ -55,7 +55,7 @@ static void PrintCurStackTrace(raw_ostream &OS) {
 }
 
 // Integrate with crash reporter libraries.
-#if defined (__APPLE__) && defined (HAVE_CRASHREPORTERCLIENT_H)
+#if defined (__APPLE__) && HAVE_CRASHREPORTERCLIENT_H
 //  If any clients of llvm try to link to libCrashReporterClient.a themselves,
 //  only one crash info struct will be used.
 extern "C" {
@@ -64,7 +64,7 @@ struct crashreporter_annotations_t gCRAnnotations
         __attribute__((section("__DATA," CRASHREPORTER_ANNOTATIONS_SECTION))) 
         = { CRASHREPORTER_ANNOTATIONS_VERSION, 0, 0, 0, 0 };
 }
-#elif defined (__APPLE__)
+#elif defined (__APPLE__) && HAVE_CRASHREPORTER_INFO
 static const char *__crashreporter_info__ = 0;
 asm(".desc ___crashreporter_info__, 0x10");
 #endif
@@ -86,11 +86,11 @@ static void CrashHandler(void *) {
   }
   
   if (!TmpStr.empty()) {
-#ifndef HAVE_CRASHREPORTERCLIENT_H
-    __crashreporter_info__ = strdup(std::string(TmpStr.str()).c_str());
-#else
+#ifdef HAVE_CRASHREPORTERCLIENT_H
     // Cast to void to avoid warning.
     (void)CRSetCrashLogMessage(std::string(TmpStr.str()).c_str());
+#elif HAVE_CRASHREPORTER_INFO 
+    __crashreporter_info__ = strdup(std::string(TmpStr.str()).c_str());
 #endif
     errs() << TmpStr.str();
   }

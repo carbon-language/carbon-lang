@@ -773,12 +773,12 @@ HAVE_PTHREAD
 HUGE_VAL_SANITY
 MMAP_FILE
 LLVMCC_EMITIR_FLAG
-LLVMCC_DISABLEOPT_FLAGS
 LLVMCC1
 LLVMCC1PLUS
 LLVMGCCDIR
 LLVMGCC_LANGS
 LLVMGCC_DRAGONEGG
+LLVMCC_DISABLEOPT_FLAGS
 SHLIBEXT
 SHLIBPATH_VAR
 LLVM_PREFIX
@@ -11518,7 +11518,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11525 "configure"
+#line 11521 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17419,6 +17419,75 @@ fi
 done
 
 
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+const char *__crashreporter_info__;
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  darwin_crashreport = yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	darwin_crashreport = no
+fi
+
+rm -f core conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+{ echo "$as_me:$LINENO: result: $darwin_crashreport" >&5
+echo "${ECHO_T}$darwin_crashreport" >&6; }
+if test "x$darwin_crashreport = xyes"
+then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_CRASHREPORTER_INFO 1
+_ACEOF
+
+fi
 
 
 
@@ -21839,12 +21908,12 @@ HAVE_PTHREAD!$HAVE_PTHREAD$ac_delim
 HUGE_VAL_SANITY!$HUGE_VAL_SANITY$ac_delim
 MMAP_FILE!$MMAP_FILE$ac_delim
 LLVMCC_EMITIR_FLAG!$LLVMCC_EMITIR_FLAG$ac_delim
-LLVMCC_DISABLEOPT_FLAGS!$LLVMCC_DISABLEOPT_FLAGS$ac_delim
 LLVMCC1!$LLVMCC1$ac_delim
 LLVMCC1PLUS!$LLVMCC1PLUS$ac_delim
 LLVMGCCDIR!$LLVMGCCDIR$ac_delim
 LLVMGCC_LANGS!$LLVMGCC_LANGS$ac_delim
 LLVMGCC_DRAGONEGG!$LLVMGCC_DRAGONEGG$ac_delim
+LLVMCC_DISABLEOPT_FLAGS!$LLVMCC_DISABLEOPT_FLAGS$ac_delim
 SHLIBEXT!$SHLIBEXT$ac_delim
 SHLIBPATH_VAR!$SHLIBPATH_VAR$ac_delim
 LLVM_PREFIX!$LLVM_PREFIX$ac_delim
