@@ -4139,7 +4139,7 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
           ExprValueKind VK = Expr::getValueKindForType(FPT->getResultType());
 
           CXXMemberCallExpr *TheCall
-            = new (Context) CXXMemberCallExpr(Context, BO, Args,
+            = new (Context) CXXMemberCallExpr(Context, Fn, Args,
                                               NumArgs, ResultTy, VK,
                                               RParenLoc);
 
