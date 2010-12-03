@@ -671,6 +671,21 @@ error_code is_relative(const Twine &path, bool &result) {
 
 namespace fs {
 
+error_code create_directories(const Twine &path, bool &existed) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  StringRef parent;
+  bool parent_exists;
+  if (error_code ec = path::parent_path(p, parent)) return ec;
+  if (error_code ec = fs::exists(parent, parent_exists)) return ec;
+
+  if (!parent_exists)
+    return create_directories(parent, existed);
+
+  return create_directory(p, existed);
+}
+
 } // end namespace fs
 } // end namespace sys
 } // end namespace llvm

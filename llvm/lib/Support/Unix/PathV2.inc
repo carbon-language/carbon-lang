@@ -146,6 +146,20 @@ error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
   return make_error_code(errc::success);
 }
 
+error_code create_directory(const Twine &path, bool &existed) {
+  SmallString<128> path_storage;
+  StringRef p = path.toNullTerminatedStringRef(path_storage);
+
+  if (::mkdir(p.begin(), 0700) == -1) {
+    if (errno != EEXIST)
+      return error_code(errno, system_category());
+    existed = true;
+  } else
+    existed = false;
+
+  return make_error_code(errc::success);
+}
+
 error_code exists(const Twine &path, bool &result) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
