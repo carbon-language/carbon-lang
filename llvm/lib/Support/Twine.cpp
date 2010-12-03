@@ -31,10 +31,18 @@ StringRef Twine::toStringRef(SmallVectorImpl<char> &Out) const {
 }
 
 StringRef Twine::toNullTerminatedStringRef(SmallVectorImpl<char> &Out) const {
-  if (isSingleStringRef()) {
-    StringRef sr = getSingleStringRef();
-    if (*(sr.begin() + sr.size()) == 0)
-      return sr;
+  if (isUnary()) {
+    switch (getLHSKind()) {
+    case CStringKind:
+      // Already null terminated, yay!
+      return StringRef(static_cast<const char*>(LHS));
+    case StdStringKind: {
+        const std::string *str = static_cast<const std::string*>(LHS);
+        return StringRef(str->c_str(), str->size());
+      }
+    default:
+      break;
+    }
   }
   toVector(Out);
   Out.push_back(0);
