@@ -309,6 +309,9 @@ public:
 #ifdef DB_PTHREAD_LOG_EVENTS
         printf("%s (value = 0x%8.8x, abstime = %p), m_value = 0x%8.8x", __FUNCTION__, value, abstime, m_value);
 #endif
+        if (timed_out)
+            *timed_out = false;
+
         while (err == 0 && m_value != value)
         {
             err = m_condition.Wait (m_mutex.GetMutex(), abstime, timed_out);
