@@ -366,16 +366,12 @@ let isCall = 1,
   Uses = [SP] in {
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
-                  (outs), (ins bltarget:$func, variable_ops), IIC_Br,
+                  (outs), (ins i32imm:$func, variable_ops), IIC_Br,
                   "bl\t$func",
                   [(ARMtcall tglobaladdr:$func)]>,
              Requires<[IsThumb, IsNotDarwin]> {
-    bits<24> func;
-    let Inst{26}    = func{23};
-    let Inst{25-16} = func{20-11};
-    let Inst{13}    = func{22};
-    let Inst{11}    = func{21};
-    let Inst{10-0}  = func{10-0};
+    let Inst{13} = 1;
+    let Inst{11} = 1;
   }
 
   // ARMv5T and above, also used for Thumb2
@@ -383,7 +379,10 @@ let isCall = 1,
                    (outs), (ins i32imm:$func, variable_ops), IIC_Br,
                    "blx\t$func",
                    [(ARMcall tglobaladdr:$func)]>,
-              Requires<[IsThumb, HasV5T, IsNotDarwin]>;
+              Requires<[IsThumb, HasV5T, IsNotDarwin]> {
+    let Inst{13} = 1;
+    let Inst{11} = 1;
+  }
 
   // Also used for Thumb2
   def tBLXr : TI<(outs), (ins GPR:$func, variable_ops), IIC_Br,
@@ -413,16 +412,12 @@ let isCall = 1,
   Uses = [R7, SP] in {
   // Also used for Thumb2
   def tBLr9 : TIx2<0b11110, 0b11, 1,
-                   (outs), (ins pred:$p, bltarget:$func, variable_ops), IIC_Br,
+                   (outs), (ins pred:$p, i32imm:$func, variable_ops), IIC_Br,
                    "bl${p}\t$func",
                    [(ARMtcall tglobaladdr:$func)]>,
               Requires<[IsThumb, IsDarwin]> {
-    bits<24> func;
-    let Inst{26}    = func{23};
-    let Inst{25-16} = func{20-11};
-    let Inst{13}    = func{22};
-    let Inst{11}    = func{21};
-    let Inst{10-0}  = func{10-0};
+    let Inst{13} = 1;
+    let Inst{11} = 1;
   }
 
   // ARMv5T and above, also used for Thumb2
@@ -430,7 +425,10 @@ let isCall = 1,
                       (outs), (ins pred:$p, i32imm:$func, variable_ops), IIC_Br,
                       "blx${p}\t$func",
                       [(ARMcall tglobaladdr:$func)]>,
-                 Requires<[IsThumb, HasV5T, IsDarwin]>;
+                 Requires<[IsThumb, HasV5T, IsDarwin]> {
+    let Inst{13} = 1;
+    let Inst{11} = 1;
+  }
 
   // Also used for Thumb2
   def tBLXr_r9 : TI<(outs), (ins pred:$p, GPR:$func, variable_ops), IIC_Br,
