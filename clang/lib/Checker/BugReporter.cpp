@@ -1343,8 +1343,7 @@ void BugReporter::FlushReports() {
 static std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
                  std::pair<ExplodedNode*, unsigned> >
 MakeReportGraph(const ExplodedGraph* G,
-                const ExplodedNode** NStart,
-                const ExplodedNode** NEnd) {
+                llvm::SmallVectorImpl<const ExplodedNode*> &nodes) {
 
   // Create the trimmed graph.  It will contain the shortest paths from the
   // error nodes to the root.  In the new graph we should only have one
@@ -1354,7 +1353,8 @@ MakeReportGraph(const ExplodedGraph* G,
   InterExplodedGraphMap* NMap;
 
   llvm::DenseMap<const void*, const void*> InverseMap;
-  llvm::tie(GTrim, NMap) = G->Trim(NStart, NEnd, &InverseMap);
+  llvm::tie(GTrim, NMap) = G->Trim(nodes.data(), nodes.data() + nodes.size(),
+                                   &InverseMap);
 
   // Create owning pointers for GTrim and NMap just to ensure that they are
   // released when this function exists.
@@ -1369,12 +1369,13 @@ MakeReportGraph(const ExplodedGraph* G,
   typedef llvm::DenseMap<const ExplodedNode*, unsigned> IndexMapTy;
   IndexMapTy IndexMap;
 
-  for (const ExplodedNode** I = NStart; I != NEnd; ++I)
-    if (const ExplodedNode *N = NMap->getMappedNode(*I)) {
-      unsigned NodeIndex = (I - NStart) / sizeof(*I);
+  for (unsigned nodeIndex = 0 ; nodeIndex < nodes.size(); ++nodeIndex) {
+    const ExplodedNode *originalNode = nodes[nodeIndex];
+    if (const ExplodedNode *N = NMap->getMappedNode(originalNode)) {
       WS.push(N);
-      IndexMap[*I] = NodeIndex;
+      IndexMap[originalNode] = nodeIndex;
     }
+  }
 
   assert(!WS.empty() && "No error node found in the trimmed graph.");
 
@@ -1567,25 +1568,24 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 }
 
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                                           BugReportEquivClass& EQ,
-                       llvm::SmallVectorImpl<const ExplodedNode *> &Nodes) {
+                        llvm::SmallVectorImpl<BugReport *> &bugReports) {
 
-
-  assert(!Nodes.empty());
+  assert(!bugReports.empty());
+  llvm::SmallVector<const ExplodedNode *, 10> errorNodes;
+  for (llvm::SmallVectorImpl<BugReport*>::iterator I = bugReports.begin(),
+    E = bugReports.end(); I != E; ++I) {
+      errorNodes.push_back((*I)->getErrorNode());
+  }
 
   // Construct a new graph that contains only a single path from the error
   // node to a root.
   const std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
   std::pair<ExplodedNode*, unsigned> >&
-    GPair = MakeReportGraph(&getGraph(), &Nodes[0],
-                            Nodes.data() + Nodes.size());
+    GPair = MakeReportGraph(&getGraph(), errorNodes);
 
   // Find the BugReport with the original location.
-  BugReport *R = 0;
-  unsigned i = 0;
-  for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I, ++i)
-    if (i == GPair.second.second) { R = *I; break; }
-
+  assert(GPair.second.second < bugReports.size());
+  BugReport *R = bugReports[GPair.second.second];
   assert(R && "No original report found for sliced graph.");
 
   llvm::OwningPtr<ExplodedGraph> ReportGraph(GPair.first.first);
@@ -1654,21 +1654,22 @@ struct FRIEC_WLItem {
 
 static BugReport *
 FindReportInEquivalenceClass(BugReportEquivClass& EQ,
-                             llvm::SmallVectorImpl<const ExplodedNode*> &Nodes) {
+                             llvm::SmallVectorImpl<BugReport*> &bugReports) {
 
   BugReportEquivClass::iterator I = EQ.begin(), E = EQ.end();
   assert(I != E);
   BugReport *R = *I;
   BugType& BT = R->getBugType();
 
-  // If we don't need to suppress any of the nodes because they are post-dominated
-  // by a sink, simply add all the nodes in the equivalence class to 'Nodes'.
+  // If we don't need to suppress any of the nodes because they are
+  // post-dominated by a sink, simply add all the nodes in the equivalence class
+  // to 'Nodes'.  Any of the reports will serve as a "representative" report.
   if (!BT.isSuppressOnSink()) {
     for (BugReportEquivClass::iterator I=EQ.begin(), E=EQ.end(); I!=E; ++I) {
       const ExplodedNode* N = I->getErrorNode();
       if (N) {
         R = *I;
-        Nodes.push_back(N);
+        bugReports.push_back(R);
       }
     }
     return R;
@@ -1680,26 +1681,24 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
   // DFS traversal of the ExplodedGraph to find a non-sink node.  We could write
   // this as a recursive function, but we don't want to risk blowing out the
   // stack for very long paths.
-  BugReport *ExampleReport = 0;
+  BugReport *exampleReport = 0;
 
   for (; I != E; ++I) {
     R = *I;
-    const ExplodedNode *N = R->getErrorNode();
+    const ExplodedNode *errorNode = R->getErrorNode();
 
-    if (!N)
+    if (!errorNode)
       continue;
-
-    if (N->isSink()) {
+    if (errorNode->isSink()) {
       assert(false &&
            "BugType::isSuppressSink() should not be 'true' for sink end nodes");
       return 0;
     }
-
     // No successors?  By definition this nodes isn't post-dominated by a sink.
-    if (N->succ_empty()) {
-      Nodes.push_back(N);
-      if (!ExampleReport)
-        ExampleReport = R;
+    if (errorNode->succ_empty()) {
+      bugReports.push_back(R);
+      if (!exampleReport)
+        exampleReport = R;
       continue;
     }
 
@@ -1710,8 +1709,8 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
     llvm::DenseMap<const ExplodedNode *, unsigned> Visited;
     
     DFSWorkList WL;
-    WL.push_back(N);
-    Visited[N] = 1;
+    WL.push_back(errorNode);
+    Visited[errorNode] = 1;
     
     while (!WL.empty()) {
       WLItem &WI = WL.back();
@@ -1723,9 +1722,9 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
         if (Succ->succ_empty()) {
           // If we found an end-of-path node that is not a sink.
           if (!Succ->isSink()) {
-            Nodes.push_back(N);
-            if (!ExampleReport)
-              ExampleReport = R;
+            bugReports.push_back(R);
+            if (!exampleReport)
+              exampleReport = R;
             WL.clear();
             break;
           }
@@ -1751,7 +1750,7 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
 
   // ExampleReport will be NULL if all the nodes in the equivalence class
   // were post-dominated by sinks.
-  return ExampleReport;
+  return exampleReport;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1798,44 +1797,45 @@ static bool IsCachedDiagnostic(BugReport *R, PathDiagnostic *PD) {
 }
 
 void BugReporter::FlushReport(BugReportEquivClass& EQ) {
-  llvm::SmallVector<const ExplodedNode*, 10> Nodes;
-  BugReport *R = FindReportInEquivalenceClass(EQ, Nodes);
-
-  if (!R)
+  llvm::SmallVector<BugReport*, 10> bugReports;
+  BugReport *exampleReport = FindReportInEquivalenceClass(EQ, bugReports);
+  if (!exampleReport)
     return;
   
   PathDiagnosticClient* PD = getPathDiagnosticClient();
 
   // FIXME: Make sure we use the 'R' for the path that was actually used.
   // Probably doesn't make a difference in practice.
-  BugType& BT = R->getBugType();
+  BugType& BT = exampleReport->getBugType();
 
   llvm::OwningPtr<PathDiagnostic>
-    D(new PathDiagnostic(R->getBugType().getName(),
+    D(new PathDiagnostic(exampleReport->getBugType().getName(),
                          !PD || PD->useVerboseDescription()
-                         ? R->getDescription() : R->getShortDescription(),
+                         ? exampleReport->getDescription() 
+                         : exampleReport->getShortDescription(),
                          BT.getCategory()));
 
-  if (!Nodes.empty())
-    GeneratePathDiagnostic(*D.get(), EQ, Nodes);
+  if (!bugReports.empty())
+    GeneratePathDiagnostic(*D.get(), bugReports);
 
-  if (IsCachedDiagnostic(R, D.get()))
+  if (IsCachedDiagnostic(exampleReport, D.get()))
     return;
   
   // Get the meta data.
-  std::pair<const char**, const char**> Meta = R->getExtraDescriptiveText();
+  std::pair<const char**, const char**> Meta =
+    exampleReport->getExtraDescriptiveText();
   for (const char** s = Meta.first; s != Meta.second; ++s)
     D->addMeta(*s);
 
   // Emit a summary diagnostic to the regular Diagnostics engine.
   const SourceRange *Beg = 0, *End = 0;
-  R->getRanges(Beg, End);
-  Diagnostic& Diag = getDiagnostic();
-  FullSourceLoc L(R->getLocation(), getSourceManager());
+  exampleReport->getRanges(Beg, End);
+  Diagnostic &Diag = getDiagnostic();
+  FullSourceLoc L(exampleReport->getLocation(), getSourceManager());
   
   // Search the description for '%', as that will be interpretted as a
   // format character by FormatDiagnostics.
-  llvm::StringRef desc = R->getShortDescription();
+  llvm::StringRef desc = exampleReport->getShortDescription();
   unsigned ErrorDiag;
   {
     llvm::SmallString<512> TmpStr;
@@ -1862,7 +1862,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
 
   if (D->empty()) {
     PathDiagnosticPiece* piece =
-      new PathDiagnosticEventPiece(L, R->getDescription());
+      new PathDiagnosticEventPiece(L, exampleReport->getDescription());
 
     for ( ; Beg != End; ++Beg) piece->addRange(*Beg);
     D->push_back(piece);

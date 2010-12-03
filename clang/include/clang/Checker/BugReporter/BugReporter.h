@@ -310,9 +310,8 @@ public:
 
   SourceManager& getSourceManager() { return D.getSourceManager(); }
 
-  virtual void GeneratePathDiagnostic(PathDiagnostic& PD,
-                                      BugReportEquivClass& EQ,
-               llvm::SmallVectorImpl<const ExplodedNode*> &Nodes) {}
+  virtual void GeneratePathDiagnostic(PathDiagnostic& pathDiagnostic,
+        llvm::SmallVectorImpl<BugReport *> &bugReports) {}
 
   void Register(BugType *BT);
 
@@ -373,9 +372,8 @@ public:
   ///  engine.
   GRStateManager &getStateManager();
 
-  virtual void GeneratePathDiagnostic(PathDiagnostic& PD,
-                                      BugReportEquivClass& R,
-                     llvm::SmallVectorImpl<const ExplodedNode*> &Nodes);
+  virtual void GeneratePathDiagnostic(PathDiagnostic &pathDiagnostic,
+                     llvm::SmallVectorImpl<BugReport*> &bugReports);
 
   void addNotableSymbol(SymbolRef Sym) {
     NotableSymbols.insert(Sym);
