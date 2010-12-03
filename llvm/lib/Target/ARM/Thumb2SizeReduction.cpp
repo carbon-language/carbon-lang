@@ -106,19 +106,19 @@ namespace {
 
     // FIXME: Clean this up after splitting each Thumb load / store opcode
     // into multiple ones.
-    { ARM::t2LDRi12,ARM::tLDR,    ARM::tLDRspi,  5,   8,    1,   0,  0,0, 1 },
+    { ARM::t2LDRi12,ARM::tLDRi,   ARM::tLDRspi,  5,   8,    1,   0,  0,0, 1 },
     { ARM::t2LDRs,  ARM::tLDR,    0,             0,   0,    1,   0,  0,0, 1 },
-    { ARM::t2LDRBi12,ARM::tLDRB,  0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRBi12,ARM::tLDRBi, 0,             5,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRBs, ARM::tLDRB,   0,             0,   0,    1,   0,  0,0, 1 },
-    { ARM::t2LDRHi12,ARM::tLDRH,  0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRHi12,ARM::tLDRHi, 0,             5,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRHs, ARM::tLDRH,   0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRSBs,ARM::tLDRSB,  0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRSHs,ARM::tLDRSH,  0,             0,   0,    1,   0,  0,0, 1 },
-    { ARM::t2STRi12,ARM::tSTR,    ARM::tSTRspi,  5,   8,    1,   0,  0,0, 1 },
+    { ARM::t2STRi12,ARM::tSTRi,   ARM::tSTRspi,  5,   8,    1,   0,  0,0, 1 },
     { ARM::t2STRs,  ARM::tSTR,    0,             0,   0,    1,   0,  0,0, 1 },
-    { ARM::t2STRBi12,ARM::tSTRB,  0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRBi12,ARM::tSTRBi, 0,             5,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRBs, ARM::tSTRB,   0,             0,   0,    1,   0,  0,0, 1 },
-    { ARM::t2STRHi12,ARM::tSTRH,  0,             5,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRHi12,ARM::tSTRHi, 0,             5,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRHs, ARM::tSTRH,   0,             0,   0,    1,   0,  0,0, 1 },
 
     { ARM::t2LDMIA, ARM::tLDMIA,  0,             0,   0,    1,   1,  1,1, 1 },
