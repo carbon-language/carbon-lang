@@ -1358,7 +1358,9 @@ CommandObjectBreakpointModify::CommandOptions::CommandOptions() :
     Options (),
     m_ignore_count (0),
     m_thread_id(LLDB_INVALID_THREAD_ID),
+    m_thread_id_passed(false),
     m_thread_index (UINT32_MAX),
+    m_thread_index_passed(false),
     m_thread_name(),
     m_queue_name(),
     m_condition (),
@@ -1426,9 +1428,19 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
         break;
         case 't' :
         {
-            m_thread_id = Args::StringToUInt64(optarg, LLDB_INVALID_THREAD_ID, 0);
-            if (m_thread_id == LLDB_INVALID_THREAD_ID)
-               error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", optarg);
+            if (optarg[0] == '\0')
+            {
+                m_thread_id = LLDB_INVALID_THREAD_ID;
+                m_thread_id_passed = true;
+            }
+            else
+            {
+                m_thread_id = Args::StringToUInt64(optarg, LLDB_INVALID_THREAD_ID, 0);
+                if (m_thread_id == LLDB_INVALID_THREAD_ID)
+                   error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", optarg);
+                else
+                    m_thread_id_passed = true;
+            }
         }
         break;
         case 'T':
@@ -1447,10 +1459,19 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
             break;
         case 'x':
         {
-            m_thread_index = Args::StringToUInt32 (optarg, UINT32_MAX, 0);
-            if (m_thread_id == UINT32_MAX)
-               error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", optarg);
-            
+            if (optarg[0] == '\n')
+            {
+                m_thread_index = UINT32_MAX;
+                m_thread_index_passed = true;
+            }
+            else
+            {
+                m_thread_index = Args::StringToUInt32 (optarg, UINT32_MAX, 0);
+                if (m_thread_id == UINT32_MAX)
+                   error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", optarg);
+                else
+                    m_thread_index_passed = true;
+            }
         }
         break;
         default:
@@ -1468,7 +1489,9 @@ CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
 
     m_ignore_count = 0;
     m_thread_id = LLDB_INVALID_THREAD_ID;
+    m_thread_id_passed = false;
     m_thread_index = UINT32_MAX;
+    m_thread_index_passed = false;
     m_thread_name.clear();
     m_queue_name.clear();
     m_condition.clear();
@@ -1487,7 +1510,8 @@ CommandObjectBreakpointModify::CommandObjectBreakpointModify (CommandInterpreter
     CommandObject (interpreter,
                    "breakpoint modify", 
                    "Modify the options on a breakpoint or set of breakpoints in the executable.  "
-                   "If no breakpoint is specified, acts on the last created breakpoint.", 
+                   "If no breakpoint is specified, acts on the last created breakpoint.  "
+                   "With the exception of -e, -d and -i, passing an empty argument clears the modification.", 
                    NULL)
 {
     CommandArgumentEntry arg;
@@ -1558,10 +1582,10 @@ CommandObjectBreakpointModify::Execute
                     BreakpointLocation *location = bp->FindLocationByID (cur_bp_id.GetLocationID()).get();
                     if (location)
                     {
-                        if (m_options.m_thread_id != LLDB_INVALID_THREAD_ID)
+                        if (m_options.m_thread_id_passed)
                             location->SetThreadID (m_options.m_thread_id);
                             
-                        if (m_options.m_thread_index != UINT32_MAX)
+                        if (m_options.m_thread_index_passed)
                             location->GetLocationOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
                         
                         if (m_options.m_name_passed)
@@ -1582,10 +1606,10 @@ CommandObjectBreakpointModify::Execute
                 }
                 else
                 {
-                    if (m_options.m_thread_id != LLDB_INVALID_THREAD_ID)
+                    if (m_options.m_thread_id_passed)
                         bp->SetThreadID (m_options.m_thread_id);
                         
-                    if (m_options.m_thread_index != UINT32_MAX)
+                    if (m_options.m_thread_index_passed)
                         bp->GetOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
                     
                     if (m_options.m_name_passed)

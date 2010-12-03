@@ -164,7 +164,9 @@ public:
 
         uint32_t m_ignore_count;
         lldb::tid_t m_thread_id;
+        bool m_thread_id_passed;
         uint32_t m_thread_index;
+        bool m_thread_index_passed;
         std::string m_thread_name;
         std::string m_queue_name;
         std::string m_condition;
