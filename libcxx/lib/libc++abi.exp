@@ -26,6 +26,15 @@ ___cxa_vec_new2
 ___cxa_vec_new3
 ___dynamic_cast
 ___gxx_personality_v0
+__ZTIDi
+__ZTIDn
+__ZTIDs
+__ZTIPDi
+__ZTIPDn
+__ZTIPDs
+__ZTIPKDi
+__ZTIPKDn
+__ZTIPKDs
 __ZTSPm
 __ZTSPl
 __ZTSPj
