@@ -77,6 +77,25 @@ class BreakpointConditionsTestCase(TestBase):
             patterns = ["frame #0.*main.c:%d" % self.line1,
                         "frame #1.*main.c:%d" % self.line2])
 
+        # Test that "breakpoint modify -c ''" clears the condition for the last
+        # created breakpoint, so that when the breakpoint hits, val == 1.
+        self.runCmd("process kill")
+        self.runCmd("breakpoint modify -c ''")
+        self.expect("breakpoint list", BREAKPOINT_STATE_CORRECT, matching=False,
+            substrs = ["Condition:"])
+
+        # Now run the program again.
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The process should be stopped at this point.
+        self.expect("process status", PROCESS_STOPPED,
+            patterns = ['Process .* stopped'])
+
+        # 'frame variable -t val' should return 1 since it is the first breakpoint hit.
+        self.expect("frame variable -t val", VARIABLES_DISPLAYED_CORRECTLY,
+            startstr = '(int) val = 1')
+
+
     def breakpoint_conditions_python(self):
         """Use Python APIs to set breakpoint conditions."""
         exe = os.path.join(os.getcwd(), "a.out")
