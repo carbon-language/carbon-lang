@@ -861,7 +861,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
                 return false;
         }
     }
-    if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(llvm_value_ptr))
+    else if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(llvm_value_ptr))
     {
         clang::NamedDecl *named_decl = DeclForGlobalValue(llvm_module, global_variable);
         
