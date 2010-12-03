@@ -642,8 +642,12 @@ static unsigned getAddrModeSOpValue(const MCInst &MI, unsigned OpIdx,
   const MCOperand &MO2 = MI.getOperand(OpIdx + 2);
   unsigned Rn = getARMRegisterNumbering(MO.getReg());
   unsigned Imm5 = (MO1.getImm() / Scale) & 0x1f;
-  unsigned Rm = getARMRegisterNumbering(MO2.getReg());
-  return (Rm << 3) | (Imm5 << 3) | Rn;
+
+  if (MO2.getReg() != 0)
+    // Is an immediate.
+    Imm5 = getARMRegisterNumbering(MO2.getReg());
+
+  return (Imm5 << 3) | Rn;
 }
 
 /// getAddrModeS4OpValue - Return encoding for t_addrmode_s4 operands.
