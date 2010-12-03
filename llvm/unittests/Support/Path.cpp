@@ -128,11 +128,10 @@ TEST(Support, Path) {
   EXPECT_TRUE(TempFileExists);
 
   ::close(FileDescriptor);
-  ::remove(TempPath.begin());
+  ::remove(TempPath.c_str());
 
   ASSERT_FALSE(fs::exists(Twine(TempPath), TempFileExists));
-  // FIXME: This is returning true on some systems...
-  // EXPECT_FALSE(TempFileExists);
+  EXPECT_FALSE(TempFileExists);
 }
 
 } // anonymous namespace
