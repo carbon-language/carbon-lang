@@ -297,17 +297,14 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
   }
 
   if (TextSection && MCLineSectionOrder.begin() == MCLineSectionOrder.end()) {
-    // Emit dummy entry if line table is empty.
+    // The darwin9 linker has a bug (see PR8715). For for 32-bit architectures
+    // it requires:  
+    // total_length >= prologue_length + 10
+    // We are 4 bytes short, since we have total_length = 51 and
+    // prologue_length = 45
 
-    MCOS->SwitchSection(TextSection);
-    MCSymbol *SectionEnd = MCOS->getContext().CreateTempSymbol();
-    // Set the value of the symbol, as we are at the end of the section.
-    MCOS->EmitLabel(SectionEnd);
-
-    // Switch back the the dwarf line section.
-    MCOS->SwitchSection(DwarfLineSection);
-
-    MCOS->EmitDwarfAdvanceLineAddr(INT64_MAX, NULL, SectionEnd);
+    // The regular end_sequence should be sufficient.
+    MCDwarfLineAddr::Emit(MCOS, INT64_MAX, 0);
   }
 
   // This is the end of the section, so set the value of the symbol at the end
