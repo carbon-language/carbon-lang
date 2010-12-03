@@ -308,7 +308,7 @@ class LDVImpl {
 
   /// Map virtual register to eq class leader.
   typedef DenseMap<unsigned, UserValue*> VRMap;
-  VRMap virtRegMap;
+  VRMap virtRegToEqClass;
 
   /// Map user variable to eq class leader.
   typedef DenseMap<const MDNode *, UserValue*> UVMap;
@@ -347,7 +347,7 @@ public:
   void clear() {
     DeleteContainerPointers(userValues);
     userValues.clear();
-    virtRegMap.clear();
+    virtRegToEqClass.clear();
     userVarMap.clear();
   }
 
@@ -456,12 +456,12 @@ UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset) {
 
 void LDVImpl::mapVirtReg(unsigned VirtReg, UserValue *EC) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) && "Only map VirtRegs");
-  UserValue *&Leader = virtRegMap[VirtReg];
+  UserValue *&Leader = virtRegToEqClass[VirtReg];
   Leader = UserValue::merge(Leader, EC);
 }
 
 UserValue *LDVImpl::lookupVirtReg(unsigned VirtReg) {
-  if (UserValue *UV = virtRegMap.lookup(VirtReg))
+  if (UserValue *UV = virtRegToEqClass.lookup(VirtReg))
     return UV->getLeader();
   return 0;
 }
@@ -662,7 +662,7 @@ renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx) {
 
   if (TargetRegisterInfo::isVirtualRegister(NewReg))
     mapVirtReg(NewReg, UV);
-  virtRegMap.erase(OldReg);
+  virtRegToEqClass.erase(OldReg);
 
   do {
     UV->renameRegister(OldReg, NewReg, SubIdx, TRI);
