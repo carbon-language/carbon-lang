@@ -393,6 +393,7 @@ let isCall = 1,
               T1Special<{1,1,1,?}>; // A6.2.3 & A8.6.24;
 
   // ARMv4T
+  // FIXME: Should be a pseudo.
   let isCodeGenOnly = 1 in
   def tBX : TIx2<{?,?,?,?,?}, {?,?}, ?,
                   (outs), (ins tGPR:$func, variable_ops), IIC_Br,
@@ -445,6 +446,7 @@ let isCall = 1,
 
   // ARMv4T
   let isCodeGenOnly = 1 in
+  // FIXME: Should be a pseudo.
   def tBXr9 : TIx2<{?,?,?,?,?}, {?,?}, ?,
                    (outs), (ins tGPR:$func, variable_ops), IIC_Br,
                    "mov\tlr, pc\n\tbx\t$func",
