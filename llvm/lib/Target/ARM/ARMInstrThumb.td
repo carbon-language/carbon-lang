@@ -416,13 +416,14 @@ let isCall = 1,
                    "bl${p}\t$func",
                    [(ARMtcall tglobaladdr:$func)]>,
               Requires<[IsThumb, IsDarwin]> {
-    let Inst{13} = 1;
-    let Inst{11} = 1;
+    let Inst{13}    = 1;
+    let Inst{11}    = 1;
   }
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi_r9 : TIx2<0b11110, 0b11, 0,
-                      (outs), (ins pred:$p, i32imm:$func, variable_ops), IIC_Br,
+                      (outs), (ins pred:$p, i32imm:$func, variable_ops),
+                      IIC_Br,
                       "blx${p}\t$func",
                       [(ARMcall tglobaladdr:$func)]>,
                  Requires<[IsThumb, HasV5T, IsDarwin]> {
@@ -547,9 +548,9 @@ def tLDRB :                     // A8.6.64
                  [(set tGPR:$Rt, (zextloadi8 t_addrmode_s1:$addr))]>;
 
 def tLDRBi :                    // A8.6.61
-  T1pILdStEncodeImm<0b0111, 1, (outs tGPR:$dst), (ins t_addrmode_s1:$addr),
+  T1pILdStEncodeImm<0b0111, 1, (outs tGPR:$Rt), (ins t_addrmode_s1:$addr),
                     AddrModeT1_1, IIC_iLoad_bh_r,
-                    "ldrb", "\t$dst, $addr",
+                    "ldrb", "\t$Rt, $addr",
                     []>;
 
 def tLDRH :                     // A8.6.76
@@ -559,9 +560,9 @@ def tLDRH :                     // A8.6.76
                  [(set tGPR:$dst, (zextloadi16 t_addrmode_s2:$addr))]>;
 
 def tLDRHi:                     // A8.6.73
-  T1pILdStEncodeImm<0b1000, 1, (outs tGPR:$dst), (ins t_addrmode_s2:$addr),
+  T1pILdStEncodeImm<0b1000, 1, (outs tGPR:$Rt), (ins t_addrmode_s2:$addr),
                     AddrModeT1_2, IIC_iLoad_bh_r,
-                    "ldrh", "\t$dst, $addr",
+                    "ldrh", "\t$Rt, $addr",
                     []>;
 
 let AddedComplexity = 10 in
@@ -618,9 +619,9 @@ def tSTR :                      // A8.6.194
                  [(store tGPR:$src, t_addrmode_s4:$addr)]>;
 
 def tSTRi :                     // A8.6.192
-  T1pILdStEncodeImm<0b0110, 0, (outs), (ins tGPR:$src, t_addrmode_s4:$addr),
+  T1pILdStEncodeImm<0b0110, 0, (outs), (ins tGPR:$Rt, t_addrmode_s4:$addr),
                     AddrModeT1_4, IIC_iStore_r,
-                    "str", "\t$src, $addr",
+                    "str", "\t$Rt, $addr",
                     []>;
 
 def tSTRB :                     // A8.6.197
@@ -630,9 +631,9 @@ def tSTRB :                     // A8.6.197
                  [(truncstorei8 tGPR:$src, t_addrmode_s1:$addr)]>;
 
 def tSTRBi :                    // A8.6.195
-  T1pILdStEncodeImm<0b0111, 0, (outs), (ins tGPR:$src, t_addrmode_s1:$addr),
+  T1pILdStEncodeImm<0b0111, 0, (outs), (ins tGPR:$Rt, t_addrmode_s1:$addr),
                     AddrModeT1_1, IIC_iStore_bh_r,
-                    "strb", "\t$src, $addr",
+                    "strb", "\t$Rt, $addr",
                     []>;
 
 def tSTRH :                     // A8.6.207
@@ -642,9 +643,9 @@ def tSTRH :                     // A8.6.207
                  [(truncstorei16 tGPR:$src, t_addrmode_s2:$addr)]>;
 
 def tSTRHi :                    // A8.6.205
-  T1pILdStEncodeImm<0b1000, 0, (outs), (ins tGPR:$src, t_addrmode_s2:$addr),
+  T1pILdStEncodeImm<0b1000, 0, (outs), (ins tGPR:$Rt, t_addrmode_s2:$addr),
                     AddrModeT1_2, IIC_iStore_bh_r,
-                    "strh", "\t$src, $addr",
+                    "strh", "\t$Rt, $addr",
                     []>;
 
 def tSTRspi : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
