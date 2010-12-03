@@ -968,7 +968,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   // Unique the return+pattern types, and assign them.
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
-    std::string name = LowercaseString(R->getName());
+    std::string name = R->getValueAsString("Name");
     std::string Proto = R->getValueAsString("Prototype");
     std::string Types = R->getValueAsString("Types");
     
@@ -1081,7 +1081,7 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     if (R->getSuperClasses().size() < 2)
       throw TGError(R->getLoc(), "Builtin has no class kind");
     
-    std::string name = LowercaseString(R->getName());
+    std::string name = R->getValueAsString("Name");
     ClassKind ck = ClassMap[R->getSuperClasses()[1]];
     
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
@@ -1108,7 +1108,7 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     
     std::string Proto = R->getValueAsString("Prototype");
     std::string Types = R->getValueAsString("Types");
-    std::string name = LowercaseString(R->getName());
+    std::string name = R->getValueAsString("Name");
     
     // Functions with 'a' (the splat code) in the type prototype should not get
     // their own builtin as they use the non-splat variant.
@@ -1161,7 +1161,7 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     if (k != OpNone)
       continue;
     
-    std::string name = LowercaseString(R->getName());
+    std::string name = R->getValueAsString("Name");
     std::string Proto = R->getValueAsString("Prototype");
     std::string Types = R->getValueAsString("Types");
     
