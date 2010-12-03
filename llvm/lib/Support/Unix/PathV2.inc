@@ -200,6 +200,19 @@ error_code remove(const Twine &path, bool &existed) {
   return make_error_code(errc::success);
 }
 
+error_code rename(const Twine &from, const Twine &to) {
+  // Get arguments.
+  SmallString<128> from_storage;
+  SmallString<128> to_storage;
+  StringRef f = from.toNullTerminatedStringRef(from_storage);
+  StringRef t = to.toNullTerminatedStringRef(to_storage);
+
+  if (::rename(f.begin(), t.begin()) == -1)
+    return error_code(errno, system_category());
+
+  return make_error_code(errc::success);
+}
+
 error_code exists(const Twine &path, bool &result) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
