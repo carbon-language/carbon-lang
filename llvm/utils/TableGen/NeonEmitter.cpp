@@ -468,9 +468,14 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
   s += "(";
   
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
-    if (!define) {
-      s += TypeString(proto[i], typestr);
-      s.push_back(' ');
+    if (define) {
+      // Immediate macro arguments are used directly instead of being assigned
+      // to local temporaries; prepend an underscore prefix to make their
+      // names consistent with the local temporaries.
+      if (proto[i] == 'i')
+        s += "__";
+    } else {
+      s += TypeString(proto[i], typestr) + " __";
     }
     s.push_back(arg);
     if ((i + 1) < e)
@@ -481,8 +486,8 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
   return s;
 }
 
-// Generate the local temporaries used to provide type checking for macro
-// arguments.
+// Macro arguments are not type-checked like inline function arguments, so
+// assign them to local temporaries to get the right type checking.
 static std::string GenMacroLocals(const std::string &proto, StringRef typestr) {
   char arg = 'a';
   std::string s;
@@ -544,100 +549,105 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   bool quad;
   unsigned nElts = GetNumElements(typestr, quad);
   
+  // If this builtin takes an immediate argument, we need to #define it rather
+  // than use a standard declaration, so that SemaChecking can range check
+  // the immediate passed by the user.
+  bool define = proto.find('i') != std::string::npos;
+
   std::string ts = TypeString(proto[0], typestr);
   std::string s;
   if (op == OpHi || op == OpLo) {
     s = "union { " + ts + " r; double d; } u; u.d = ";
-  } else {
+  } else if (!define) {
     s = "return ";
   }
   
   switch(op) {
   case OpAdd:
-    s += "a + b;";
+    s += "__a + __b;";
     break;
   case OpSub:
-    s += "a - b;";
+    s += "__a - __b;";
     break;
   case OpMulN:
-    s += "a * " + Duplicate(nElts, typestr, "b") + ";";
+    s += "__a * " + Duplicate(nElts, typestr, "__b") + ";";
     break;
   case OpMul:
-    s += "a * b;";
+    s += "__a * __b;";
     break;
   case OpMlaN:
-    s += "a + (b * " + Duplicate(nElts, typestr, "c") + ");";
+    s += "__a + (__b * " + Duplicate(nElts, typestr, "__c") + ");";
     break;
   case OpMla:
-    s += "a + (b * c);";
+    s += "__a + (__b * __c);";
     break;
   case OpMlsN:
-    s += "a - (b * " + Duplicate(nElts, typestr, "c") + ");";
+    s += "__a - (__b * " + Duplicate(nElts, typestr, "__c") + ");";
     break;
   case OpMls:
-    s += "a - (b * c);";
+    s += "__a - (__b * __c);";
     break;
   case OpEq:
-    s += "(" + ts + ")(a == b);";
+    s += "(" + ts + ")(__a == __b);";
     break;
   case OpGe:
-    s += "(" + ts + ")(a >= b);";
+    s += "(" + ts + ")(__a >= __b);";
     break;
   case OpLe:
-    s += "(" + ts + ")(a <= b);";
+    s += "(" + ts + ")(__a <= __b);";
     break;
   case OpGt:
-    s += "(" + ts + ")(a > b);";
+    s += "(" + ts + ")(__a > __b);";
     break;
   case OpLt:
-    s += "(" + ts + ")(a < b);";
+    s += "(" + ts + ")(__a < __b);";
     break;
   case OpNeg:
-    s += " -a;";
+    s += " -__a;";
     break;
   case OpNot:
-    s += " ~a;";
+    s += " ~__a;";
     break;
   case OpAnd:
-    s += "a & b;";
+    s += "__a & __b;";
     break;
   case OpOr:
-    s += "a | b;";
+    s += "__a | __b;";
     break;
   case OpXor:
-    s += "a ^ b;";
+    s += "__a ^ __b;";
     break;
   case OpAndNot:
-    s += "a & ~b;";
+    s += "__a & ~__b;";
     break;
   case OpOrNot:
-    s += "a | ~b;";
+    s += "__a | ~__b;";
     break;
   case OpCast:
-    s += "(" + ts + ")a;";
+    s += "(" + ts + ")__a;";
     break;
   case OpConcat:
-    s += "(" + ts + ")__builtin_shufflevector((int64x1_t)a";
-    s += ", (int64x1_t)b, 0, 1);";
+    s += "(" + ts + ")__builtin_shufflevector((int64x1_t)__a";
+    s += ", (int64x1_t)__b, 0, 1);";
     break;
   case OpHi:
-    s += "(((float64x2_t)a)[1]);";
+    s += "(((float64x2_t)__a)[1]);";
     break;
   case OpLo:
-    s += "(((float64x2_t)a)[0]);";
+    s += "(((float64x2_t)__a)[0]);";
     break;
   case OpDup:
-    s += Duplicate(nElts, typestr, "a") + ";";
+    s += Duplicate(nElts, typestr, "__a") + ";";
     break;
   case OpSelect:
     // ((0 & 1) | (~0 & 2))
     s += "(" + ts + ")";
     ts = TypeString(proto[1], typestr);
-    s += "((a & (" + ts + ")b) | ";
-    s += "(~a & (" + ts + ")c));";
+    s += "((__a & (" + ts + ")__b) | ";
+    s += "(~__a & (" + ts + ")__c));";
     break;
   case OpRev16:
-    s += "__builtin_shufflevector(a, a";
+    s += "__builtin_shufflevector(__a, __a";
     for (unsigned i = 2; i <= nElts; i += 2)
       for (unsigned j = 0; j != 2; ++j)
         s += ", " + utostr(i - j - 1);
@@ -645,7 +655,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   case OpRev32: {
     unsigned WordElts = nElts >> (1 + (int)quad);
-    s += "__builtin_shufflevector(a, a";
+    s += "__builtin_shufflevector(__a, __a";
     for (unsigned i = WordElts; i <= nElts; i += WordElts)
       for (unsigned j = 0; j != WordElts; ++j)
         s += ", " + utostr(i - j - 1);
@@ -654,7 +664,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   }
   case OpRev64: {
     unsigned DblWordElts = nElts >> (int)quad;
-    s += "__builtin_shufflevector(a, a";
+    s += "__builtin_shufflevector(__a, __a";
     for (unsigned i = DblWordElts; i <= nElts; i += DblWordElts)
       for (unsigned j = 0; j != DblWordElts; ++j)
         s += ", " + utostr(i - j - 1);
@@ -665,8 +675,11 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     throw "unknown OpKind!";
     break;
   }
-  if (op == OpHi || op == OpLo)
-    s += " return u.r;";
+  if (op == OpHi || op == OpLo) {
+    if (!define)
+      s += " return";
+    s += " u.r;";
+  }
   return s;
 }
 
@@ -741,11 +754,6 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   if (proto.find('s') == std::string::npos)
     ck = ClassB;
 
-  // Macro arguments are not type-checked like inline function arguments, so
-  // assign them to local temporaries to get the right type checking.
-  if (define)
-    s += GenMacroLocals(proto, typestr);
-
   if (proto[0] != 'v') {
     std::string ts = TypeString(proto[0], typestr);
     
@@ -782,9 +790,8 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     std::string args = std::string(&arg, 1);
 
-    // For macros, use the local temporaries instead of the macro arguments.
-    if (define && proto[i] != 'i')
-      args = "__" + args;
+    // Use the local temporaries instead of the macro arguments.
+    args = "__" + args;
 
     bool argQuad = false;
     bool argPoly = false;
@@ -970,10 +977,12 @@ void NeonEmitter::run(raw_ostream &OS) {
       OS << GenArgs(Proto, TypeVec[ti]);
       
       // Definition.
-      if (define)
+      if (define) {
         OS << " __extension__ ({ \\\n  ";
-      else
+        OS << GenMacroLocals(Proto, TypeVec[ti]);
+      } else {
         OS << " { \\\n  ";
+      }
       
       if (k != OpNone) {
         OS << GenOpString(k, Proto, TypeVec[ti]);
