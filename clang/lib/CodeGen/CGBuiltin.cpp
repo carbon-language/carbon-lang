@@ -1172,6 +1172,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   bool quad = type & 0x10;
   bool poly = (type & 0x7) == 5 || (type & 0x7) == 6;
   bool splat = false;
+  bool rightShift = false;
 
   const llvm::VectorType *VTy = GetNeonType(VMContext, type & 0x7, quad);
   const llvm::Type *Ty = VTy;
@@ -1737,10 +1738,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       return Builder.CreateAShr(Ops[0], Ops[1], "vshr_n");
   case ARM::BI__builtin_neon_vsri_n_v:
   case ARM::BI__builtin_neon_vsriq_n_v:
-    poly = true;
+    rightShift = true;
   case ARM::BI__builtin_neon_vsli_n_v:
   case ARM::BI__builtin_neon_vsliq_n_v:
-    Ops[2] = EmitNeonShiftVector(Ops[2], Ty, poly);
+    Ops[2] = EmitNeonShiftVector(Ops[2], Ty, rightShift);
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vshiftins, &Ty, 1),
                         Ops, "vsli_n");
   case ARM::BI__builtin_neon_vsra_n_v:
