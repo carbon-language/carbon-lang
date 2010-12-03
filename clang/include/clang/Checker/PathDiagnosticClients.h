@@ -28,5 +28,9 @@ PathDiagnosticClient*
 createPlistDiagnosticClient(const std::string& prefix, const Preprocessor &PP,
                             PathDiagnosticClient *SubPD = 0);
 
+PathDiagnosticClient*
+createTextPathDiagnosticClient(const std::string& prefix,
+                               const Preprocessor &PP);
+
 } // end clang namespace
 #endif

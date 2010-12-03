@@ -74,6 +74,7 @@ add_clang_library(clangChecker
   Store.cpp
   StreamChecker.cpp
   SymbolManager.cpp
+  TextPathDiagnostics.cpp
   UndefBranchChecker.cpp
   UndefCapturedBlockVarChecker.cpp
   UndefResultChecker.cpp
