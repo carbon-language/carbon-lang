@@ -1731,13 +1731,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
         Name == "tSpill" || Name == "tLDRcp" || Name == "tRestore" ||
         Name == "t2LEApcrelJT" || Name == "t2MOVCCi16")
       return false;
-
-    // tMOVgpr2tgpr, tMOVgpr2gpr, and tMOVtgpr2gpr are used by the code
-    // generator for special kinds of moves, but are encoded the same. Safely
-    // ignore them here.
-    if (Name == "tMOVgpr2tgpr" || Name == "tMOVgpr2gpr" ||
-        Name == "tMOVtgpr2gpr")
-      return false;
   }
 
   // Dumps the instruction encoding format.
