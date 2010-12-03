@@ -64,6 +64,9 @@ config = {}
 # Delay startup in order for the debugger to attach.
 delay = False
 
+# By default, failfast is False.  Use '-F' to overwrite it.
+failfast = False
+
 # The filter (testclass.testmethod) used to admit tests into our test suite.
 filterspec = None
 
@@ -114,6 +117,7 @@ where options:
 -c   : read a config file specified after this option
        (see also lldb-trunk/example/test/usage-config)
 -d   : delay startup for 10 seconds (in order for the debugger to attach)
+-F   : failfast, stop the test suite on the first error/failure
 -f   : specify a filter, which consists of the test class name, a dot, followed by
        the test method, to only admit such test into the test suite
        e.g., -f 'ClassTypesTestCase.test_with_dwarf_and_python_api'
@@ -232,6 +236,7 @@ def parseOptionsAndInitTestdirs():
     global configFile
     global count
     global delay
+    global failfast
     global filterspec
     global fs4all
     global ignore
@@ -279,6 +284,9 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-d'):
             delay = True
+            index += 1
+        elif sys.argv[index].startswith('-F'):
+            failfast = True
             index += 1
         elif sys.argv[index].startswith('-f'):
             # Increment by 1 to fetch the filter spec.
@@ -780,7 +788,9 @@ for ia in range(len(archs) if iterArchs else 1):
 
         # Invoke the test runner.
         if count == 1:
-            result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
+            result = unittest2.TextTestRunner(stream=sys.stderr,
+                                              verbosity=verbose,
+                                              failfast=failfast,
                                               resultclass=LLDBTestResult).run(suite)
         else:
             # We are invoking the same test suite more than once.  In this case,
@@ -788,7 +798,9 @@ for ia in range(len(archs) if iterArchs else 1):
             # not enforced.
             LLDBTestResult.__ignore_singleton__ = True
             for i in range(count):
-                result = unittest2.TextTestRunner(stream=sys.stderr, verbosity=verbose,
+                result = unittest2.TextTestRunner(stream=sys.stderr,
+                                                  verbosity=verbose,
+                                                  failfast=failfast,
                                                   resultclass=LLDBTestResult).run(suite)
         
 
