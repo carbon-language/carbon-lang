@@ -71,17 +71,27 @@ public:
     /// Constructor
     ///
     /// Initializes class variabes.
-    ///
-    /// @param[in] exe_ctx
-    ///     The execution context to use when finding types for variables.
-    ///     Also used to find a "scratch" AST context to store result types.
     //------------------------------------------------------------------
-    ClangExpressionDeclMap(ExecutionContext *exe_ctx);
+    ClangExpressionDeclMap();
     
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
     ~ClangExpressionDeclMap();
+    
+    //------------------------------------------------------------------
+    /// Enable the state needed for parsing and IR transformation.
+    ///
+    /// @param[in] exe_ctx
+    ///     The execution context to use when finding types for variables.
+    ///     Also used to find a "scratch" AST context to store result types.
+    //------------------------------------------------------------------
+    void WillParse(ExecutionContext &exe_ctx);
+    
+    //------------------------------------------------------------------
+    /// Disable the state needed for parsing and IR transformation.
+    //------------------------------------------------------------------
+    void DidParse();
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Get a new result variable name of the form
@@ -270,7 +280,7 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool Materialize(ExecutionContext *exe_ctx,
+    bool Materialize(ExecutionContext &exe_ctx,
                      lldb::addr_t &struct_address,
                      Error &error);
     
@@ -292,7 +302,7 @@ public:
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     bool GetObjectPointer(lldb::addr_t &object_ptr,
-                          ExecutionContext *exe_ctx,
+                          ExecutionContext &exe_ctx,
                           Error &error);
     
     //------------------------------------------------------------------
@@ -313,7 +323,7 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool DumpMaterializedStruct(ExecutionContext *exe_ctx,
+    bool DumpMaterializedStruct(ExecutionContext &exe_ctx,
                                 Stream &s,
                                 Error &error);
     
@@ -334,7 +344,7 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool Dematerialize(ExecutionContext *exe_ctx,
+    bool Dematerialize(ExecutionContext &exe_ctx,
                        ClangExpressionVariable *&result,
                        Error &error);
     
@@ -356,37 +366,153 @@ public:
     //------------------------------------------------------------------
     void GetDecls (NameSearchContext &context,
                    const ConstString &name);
-                   
+    
+    //------------------------------------------------------------------
+    /// [Used by ClangASTSource] Report whether a $__lldb variable has
+    /// been searched for yet.  This is the trigger for beginning to 
+    /// actually look for externally-defined names.  (Names that come
+    /// before this are typically the names of built-ins that don't need
+    /// to be looked up.)
+    ///
+    /// @return
+    ///     True if a $__lldb variable has been found.
+    //------------------------------------------------------------------
     bool
     GetLookupsEnabled ()
     {
-        return m_enable_lookups;
+        assert(m_parser_vars.get());
+        return m_parser_vars->m_enable_lookups;
     }
     
+    //------------------------------------------------------------------
+    /// [Used by ClangASTSource] Indicate that a $__lldb variable has
+    /// been found.
+    //------------------------------------------------------------------
     void
-    SetLookupsEnabled (bool b)
+    SetLookupsEnabled ()
     {
-        m_enable_lookups = b;
+        assert(m_parser_vars.get());
+        m_parser_vars->m_enable_lookups = true;
     }
 
 private:
-    ClangExpressionVariableStore    m_found_entities;       ///< All entities that were looked up for the parser.
-    ClangExpressionVariableList     m_struct_members;       ///< All entities that need to be placed in the struct.
+    ClangExpressionVariableStore    m_found_entities;           ///< All entities that were looked up for the parser.
+    ClangExpressionVariableList     m_struct_members;           ///< All entities that need to be placed in the struct.
     
-    ExecutionContext            m_exe_ctx;                  ///< The execution context where this expression was first defined.  It determines types for all the external variables, even if the expression is re-used.
-    SymbolContext               m_sym_ctx;                  ///< [owned by ClangExpressionDeclMap] The symbol context where this expression was first defined.
-    ClangPersistentVariables   *m_persistent_vars;          ///< The list of persistent variables to use when resolving symbols in the expression and when creating new ones (like the result).
-    off_t                       m_struct_alignment;         ///< The alignment of the struct in bytes.
-    size_t                      m_struct_size;              ///< The size of the struct in bytes.
-    bool                        m_struct_laid_out;          ///< True if the struct has been laid out and the layout is valid (that is, no new fields have been added since).
-    bool                        m_enable_lookups;           ///< Set to true during expression evaluation if we have found the first "$__lldb" name.
-    lldb::addr_t                m_allocated_area;           ///< The base of the memory allocated for the struct.  Starts on a potentially unaligned address and may therefore be larger than the struct.
-    lldb::addr_t                m_materialized_location;    ///< The address at which the struct is placed.  Falls inside the allocated area.
-    ConstString                 m_result_name;              ///< The name of the result variable ($1, for example)
-    TypeFromUser                m_object_pointer_type;      ///< The type of the "this" variable, if one exists.
+    //----------------------------------------------------------------------
+    /// The following values should not live beyond parsing
+    //----------------------------------------------------------------------
+    struct ParserVars {
+        ParserVars() :
+            m_exe_ctx(NULL),
+            m_sym_ctx(),
+            m_persistent_vars(NULL),
+            m_enable_lookups(false),
+            m_ignore_lookups(false)
+        {
+        }
+        
+        ExecutionContext           *m_exe_ctx;          ///< The execution context to use when parsing.
+        SymbolContext               m_sym_ctx;          ///< The symbol context to use in finding variables and types.
+        ClangPersistentVariables   *m_persistent_vars;  ///< The persistent variables for the process.
+        bool                        m_enable_lookups;   ///< Set to true during parsing if we have found the first "$__lldb" name.
+        bool                        m_ignore_lookups;   ///< True during an import when we should be ignoring type lookups.
+    };
     
-    bool                        m_ignore_lookups;           ///< True during an import when we should be ignoring type lookups.
-      
+    std::auto_ptr<ParserVars> m_parser_vars;
+    
+    //----------------------------------------------------------------------
+    /// Activate parser-specific variables
+    //----------------------------------------------------------------------
+    void EnableParserVars()
+    {
+        if (!m_parser_vars.get())
+            m_parser_vars.reset(new struct ParserVars);
+    }
+    
+    //----------------------------------------------------------------------
+    /// Deallocate parser-specific variables
+    //----------------------------------------------------------------------
+    void DisableParserVars()
+    {
+        m_parser_vars.reset();
+    }
+    
+    //----------------------------------------------------------------------
+    /// The following values contain layout information for the materialized
+    /// struct, but are not specific to a single materialization
+    //----------------------------------------------------------------------
+    struct StructVars {
+        StructVars() :
+            m_struct_alignment(0),
+            m_struct_size(0),
+            m_struct_laid_out(false),
+            m_result_name(),
+            m_object_pointer_type(NULL, NULL)
+        {
+        }
+        
+        off_t                       m_struct_alignment;         ///< The alignment of the struct in bytes.
+        size_t                      m_struct_size;              ///< The size of the struct in bytes.
+        bool                        m_struct_laid_out;          ///< True if the struct has been laid out and the layout is valid (that is, no new fields have been added since).
+        ConstString                 m_result_name;              ///< The name of the result variable ($1, for example)
+        TypeFromUser                m_object_pointer_type;      ///< The type of the "this" variable, if one exists
+    };
+    
+    std::auto_ptr<StructVars> m_struct_vars;
+    
+    //----------------------------------------------------------------------
+    /// Activate struct variables
+    //----------------------------------------------------------------------
+    void EnableStructVars()
+    {
+        if (!m_struct_vars.get())
+            m_struct_vars.reset(new struct StructVars);
+    }
+    
+    //----------------------------------------------------------------------
+    /// Deallocate struct variables
+    //----------------------------------------------------------------------
+    void DisableStructVars()
+    {
+        m_struct_vars.reset();
+    }
+    
+    //----------------------------------------------------------------------
+    /// The following values refer to a specific materialization of the
+    /// structure in a process
+    //----------------------------------------------------------------------
+    struct MaterialVars {
+        MaterialVars() :
+            m_allocated_area(NULL),
+            m_materialized_location(NULL)
+        {
+        }
+        
+        Process                    *m_process;                  ///< The process that the struct is materialized into.
+        lldb::addr_t                m_allocated_area;           ///< The base of the memory allocated for the struct.  Starts on a potentially unaligned address and may therefore be larger than the struct.
+        lldb::addr_t                m_materialized_location;    ///< The address at which the struct is placed.  Falls inside the allocated area.
+    };
+    
+    std::auto_ptr<MaterialVars> m_material_vars;
+    
+    //----------------------------------------------------------------------
+    /// Activate materialization-specific variables
+    //----------------------------------------------------------------------
+    void EnableMaterialVars()
+    {
+        if (!m_material_vars.get())
+            m_material_vars.reset(new struct MaterialVars);
+    }
+    
+    //----------------------------------------------------------------------
+    /// Deallocate materialization-specific variables
+    //----------------------------------------------------------------------
+    void DisableMaterialVars()
+    {
+        m_material_vars.reset();
+    }
+    
     //------------------------------------------------------------------
     /// Given a stack frame, find a variable that matches the given name and 
     /// type.  We need this for expression re-use; we may not always get the
@@ -544,9 +670,14 @@ private:
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     bool DoMaterialize (bool dematerialize,
-                        ExecutionContext *exe_ctx,
+                        ExecutionContext &exe_ctx,
                         ClangExpressionVariable **result,
                         Error &err);
+    
+    //------------------------------------------------------------------
+    /// Clean up the state required to dematerialize the variable.
+    //------------------------------------------------------------------
+    void DidDematerialize ();
 
     //------------------------------------------------------------------
     /// Actually do the task of materializing or dematerializing a persistent

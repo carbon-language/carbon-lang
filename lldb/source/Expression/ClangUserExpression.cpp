@@ -225,7 +225,9 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     m_desired_type = desired_type;
     
-    m_expr_decl_map.reset(new ClangExpressionDeclMap(&exe_ctx));
+    m_expr_decl_map.reset(new ClangExpressionDeclMap());
+    
+    m_expr_decl_map->WillParse(exe_ctx);
     
     ClangExpressionParser parser(target_triple.GetCString(), *this);
     
@@ -234,6 +236,9 @@ ClangUserExpression::Parse (Stream &error_stream,
     if (num_errors)
     {
         error_stream.Printf ("error: %d errors parsing expression\n", num_errors);
+        
+        m_expr_decl_map->DidParse();
+        
         return false;
     }
     
@@ -254,6 +259,8 @@ ClangUserExpression::Parse (Stream &error_stream,
         if (log)
             log->Printf("Code can be interpreted.");
         
+        m_expr_decl_map->DidParse();
+        
         return true;
     }
     
@@ -266,6 +273,8 @@ ClangUserExpression::Parse (Stream &error_stream,
     lldb::addr_t jit_end;
     
     Error jit_error = parser.MakeJIT (m_jit_addr, jit_end, exe_ctx);
+    
+    m_expr_decl_map->DidParse();
     
     if (jit_error.Success())
     {
@@ -292,13 +301,13 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
         Error materialize_error;
         
         
-        if (m_needs_object_ptr && !(m_expr_decl_map->GetObjectPointer(object_ptr, &exe_ctx, materialize_error)))
+        if (m_needs_object_ptr && !(m_expr_decl_map->GetObjectPointer(object_ptr, exe_ctx, materialize_error)))
         {
             error_stream.Printf("Couldn't get required object pointer: %s\n", materialize_error.AsCString());
             return false;
         }
                 
-        if (!m_expr_decl_map->Materialize(&exe_ctx, struct_address, materialize_error))
+        if (!m_expr_decl_map->Materialize(exe_ctx, struct_address, materialize_error))
         {
             error_stream.Printf("Couldn't materialize struct: %s\n", materialize_error.AsCString());
             return false;
@@ -319,7 +328,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             
             if (struct_address)
             {
-                if (!m_expr_decl_map->DumpMaterializedStruct(&exe_ctx, args, dump_error))
+                if (!m_expr_decl_map->DumpMaterializedStruct(exe_ctx, args, dump_error))
                 {
                     log->Printf("Couldn't extract variable values : %s", dump_error.AsCString("unknown error"));
                 }
@@ -362,7 +371,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
 {
     Error expr_error;
     
-    if (!m_expr_decl_map->Dematerialize(&exe_ctx, result, expr_error))
+    if (!m_expr_decl_map->Dematerialize(exe_ctx, result, expr_error))
     {
         error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
         return false;

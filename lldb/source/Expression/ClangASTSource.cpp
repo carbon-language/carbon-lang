@@ -83,7 +83,7 @@ DeclContext::lookup_result ClangASTSource::FindExternalVisibleDeclsByName
         // any lookups so we can avoid lookup up all of the builtin types.
         if (!decl_name.empty() && decl_name[0] == '$')
         {
-            m_decl_map.SetLookupsEnabled (true);
+            m_decl_map.SetLookupsEnabled ();
         }
         else
         {               

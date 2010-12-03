@@ -99,7 +99,9 @@ ClangUtilityFunction::Install (Stream &error_stream,
     // Parse the expression
     //
     
-    m_expr_decl_map.reset(new ClangExpressionDeclMap(&exe_ctx));
+    m_expr_decl_map.reset(new ClangExpressionDeclMap());
+    
+    m_expr_decl_map->WillParse(exe_ctx);
         
     ClangExpressionParser parser(target_triple.GetCString(), *this);
     
@@ -119,6 +121,8 @@ ClangUtilityFunction::Install (Stream &error_stream,
     //
         
     Error jit_error = parser.MakeJIT (m_jit_begin, m_jit_end, exe_ctx);
+    
+    m_expr_decl_map->DidParse();
     
     m_expr_decl_map.reset();
     
