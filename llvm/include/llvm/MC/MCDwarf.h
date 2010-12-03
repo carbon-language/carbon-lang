@@ -209,7 +209,8 @@ namespace llvm {
     // This emits the Dwarf file and the line tables.
     //
     static void Emit(MCStreamer *MCOS, const MCSection *DwarfLineSection,
-                     MCSectionData *DLS, int PointerSize);
+                     MCSectionData *DLS, int PointerSize,
+                     const MCSection *TextSection = NULL);
   };
 
   class MCDwarfLineAddr {

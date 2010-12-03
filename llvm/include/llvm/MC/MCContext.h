@@ -180,9 +180,6 @@ namespace llvm {
     bool hasDwarfFiles() const {
       return !MCDwarfFiles.empty();
     }
-    bool hasDwarfLines() const {
-      return !MCLineSectionOrder.empty();
-    }
 
     const std::vector<MCDwarfFile *> &getMCDwarfFiles() {
       return MCDwarfFiles;

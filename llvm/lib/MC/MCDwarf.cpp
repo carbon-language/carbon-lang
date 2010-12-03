@@ -241,7 +241,8 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
 void MCDwarfFileTable::Emit(MCStreamer *MCOS,
                             const MCSection *DwarfLineSection,
                             MCSectionData *DLS,
-                            int PointerSize) {
+                            int PointerSize,
+                            const MCSection *TextSection) {
   // Switch to the section where the table will be emitted into.
   MCOS->SwitchSection(DwarfLineSection);
 
@@ -337,6 +338,23 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
     // Now delete the MCLineSections that were created in MCLineEntry::Make()
     // and used to emit the line table.
     delete Line;
+  }
+
+  if (TextSection && MCLineSectionOrder.begin() == MCLineSectionOrder.end()) {
+    // Emit dummy entry if line table is empty.
+
+    MCOS->SwitchSection(TextSection);
+    MCSymbol *SectionEnd = MCOS->getContext().CreateTempSymbol();
+    // Set the value of the symbol, as we are at the end of the section.
+    MCOS->EmitLabel(SectionEnd);
+
+    // Switch back the the dwarf line section.
+    MCOS->SwitchSection(DwarfLineSection);
+
+    // emit the sequence to set the address
+    EmitDwarfSetAddress(MCOS, SectionEnd, PointerSize);
+    // emit the sequence for the LineDelta (from 1) and a zero address delta.
+    MCDwarfLineAddr::Emit(MCOS, INT64_MAX, 0);
   }
 
   // This is the end of the section, so set the value of the symbol at the end
