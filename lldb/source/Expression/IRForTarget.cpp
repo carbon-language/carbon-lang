@@ -913,7 +913,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
                                                         value_alignment))
             return false;
     }
-    else if (llvm::Function *function = dyn_cast<llvm::Function>(llvm_value_ptr))
+    else if (dyn_cast<llvm::Function>(llvm_value_ptr))
     {
         if (log)
             log->Printf("Function pointers aren't handled right now");
