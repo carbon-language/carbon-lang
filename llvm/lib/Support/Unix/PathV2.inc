@@ -213,6 +213,16 @@ error_code rename(const Twine &from, const Twine &to) {
   return make_error_code(errc::success);
 }
 
+error_code resize_file(const Twine &path, uint64_t size) {
+  SmallString<128> path_storage;
+  StringRef p = path.toNullTerminatedStringRef(path_storage);
+
+  if (::truncate(p.begin(), size) == -1)
+    return error_code(errno, system_category());
+
+  return make_error_code(errc::success);
+}
+
 error_code exists(const Twine &path, bool &result) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);

@@ -18,7 +18,10 @@
 
 #include "Windows.h"
 #include <WinCrypt.h>
+#include <fcntl.h>
 #include <io.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 using namespace llvm;
 
@@ -288,6 +291,22 @@ error_code rename(const Twine &from, const Twine &to) {
     return make_error_code(windows_error(::GetLastError()));
 
   return make_error_code(errc::success);
+}
+
+error_code resize_file(const Twine &path, uint64_t size) {
+  SmallString<128> path_storage;
+  SmallVector<wchar_t, 128> path_utf16;
+
+  if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
+                                  path_utf16))
+    return ec;
+
+  int fd = ::_wopen(path_utf16.begin(), O_BINARY, S_IREAD | S_IWRITE);
+  if (fd == -1)
+    return error_code(errno, generic_category());
+  errno_t error = ::_chsize_s(fd, size);
+  ::close(fd);
+  return error_code(error, generic_category());
 }
 
 error_code exists(const Twine &path, bool &result) {
