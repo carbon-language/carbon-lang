@@ -38,7 +38,7 @@ public:
     return "TextPathDiagnostics";
   }
 
-  PathGenerationScheme getGenerationScheme() const { return Extensive; }
+  PathGenerationScheme getGenerationScheme() const { return Minimal; }
   bool supportsLogicalOpControlFlow() const { return true; }
   bool supportsAllBlockEdges() const { return true; }
   virtual bool useVerboseDescription() const { return true; }
@@ -62,11 +62,8 @@ void TextPathDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
   }
 
   for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I) {
-    if (isa<PathDiagnosticEventPiece>(*I)) {
-      PathDiagnosticEventPiece &event = cast<PathDiagnosticEventPiece>(*I);
-      unsigned diagID = Diag.getDiagnosticIDs()->getCustomDiagID(
-                                        DiagnosticIDs::Note, event.getString());
-      Diag.Report(event.getLocation().asLocation(), diagID);
-    }
+    unsigned diagID = Diag.getDiagnosticIDs()->getCustomDiagID(
+                                           DiagnosticIDs::Note, I->getString());
+    Diag.Report(I->getLocation().asLocation(), diagID);
   }
 }
