@@ -1010,8 +1010,8 @@ def tMOVr       : T1I<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
   // A8.6.97
   bits<4> Rd;
   bits<4> Rm;
-  let Inst{7}   = Rd{3};
-  let Inst{6-3} = Rm;
+  // Bits {7-6} are encoded by the T1Special value.
+  let Inst{5-3} = Rm{2-0};
   let Inst{2-0} = Rd{2-0};
 }
 let Defs = [CPSR] in
@@ -1032,7 +1032,7 @@ def tMOVgpr2tgpr : T1I<(outs tGPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
   // A8.6.97
   bits<4> Rd;
   bits<4> Rm;
-  let Inst{7}   = Rd{3};
+  // Bit {7} is encoded by the T1Special value.
   let Inst{6-3} = Rm;
   let Inst{2-0} = Rd{2-0};
 }
@@ -1042,8 +1042,9 @@ def tMOVtgpr2gpr : T1I<(outs GPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
   // A8.6.97
   bits<4> Rd;
   bits<4> Rm;
+  // Bit {6} is encoded by the T1Special value.
   let Inst{7}   = Rd{3};
-  let Inst{6-3} = Rm;
+  let Inst{5-3} = Rm{2-0};
   let Inst{2-0} = Rd{2-0};
 }
 def tMOVgpr2gpr  : T1I<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
