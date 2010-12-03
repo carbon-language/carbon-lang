@@ -70,7 +70,7 @@ namespace {
     { ARM::t2CMPri, ARM::tCMPi8,  0,             8,   0,    1,   0,  2,0, 0 },
     { ARM::t2CMPrr, ARM::tCMPhir, 0,             0,   0,    0,   0,  2,0, 0 },
     { ARM::t2CMPzri,ARM::tCMPzi8, 0,             8,   0,    1,   0,  2,0, 0 },
-    { ARM::t2CMPzrr,ARM::tCMPzhir,0,             0,   0,    0,   0,  2,0, 0 },
+    { ARM::t2CMPzrr,ARM::tCMPzhir,0,             0,   0,    0,   0,  2,0, 1 },
     { ARM::t2EORrr, 0,            ARM::tEOR,     0,   0,    0,   1,  0,0, 0 },
     // FIXME: adr.n immediate offset must be multiple of 4.
     //{ ARM::t2LEApcrelJT,ARM::tLEApcrelJT, 0,     0,   0,    1,   0,  1,0, 0 },
@@ -457,6 +457,18 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
     if (MI->getOperand(1).isImm())
       return ReduceToNarrow(MBB, MI, Entry, LiveCPSR);
     break;
+  case ARM::t2CMPzrr: {
+    // Try to reduce to the lo-reg only version first. Why there are two
+    // versions of the instruction is a mystery.
+    // It would be nice to just have two entries in the master table that
+    // are prioritized, but the table assumes a unique entry for each
+    // source insn opcode. So for now, we hack a local entry record to use.
+    static const ReduceEntry NarrowEntry =
+      { ARM::t2CMPzrr,ARM::tCMPzr, 0, 0, 0, 1, 1,2, 0, 1 };
+    if (ReduceToNarrow(MBB, MI, NarrowEntry, LiveCPSR))
+      return true;
+    return ReduceToNarrow(MBB, MI, Entry, LiveCPSR);
+  }
   }
   return false;
 }
