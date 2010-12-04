@@ -1382,9 +1382,8 @@ public:
   RValue EmitLoadOfLValue(LValue V, QualType LVType);
   RValue EmitLoadOfExtVectorElementLValue(LValue V, QualType LVType);
   RValue EmitLoadOfBitfieldLValue(LValue LV, QualType ExprType);
-  RValue EmitLoadOfPropertyRefLValue(LValue LV, QualType ExprType);
-  RValue EmitLoadOfKVCRefLValue(LValue LV, QualType ExprType);
-
+  RValue EmitLoadOfPropertyRefLValue(LValue LV,
+                                 ReturnValueSlot Return = ReturnValueSlot());
 
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
   /// lvalue, where both are guaranteed to the have the same type, and that type
@@ -1392,8 +1391,7 @@ public:
   void EmitStoreThroughLValue(RValue Src, LValue Dst, QualType Ty);
   void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst,
                                                 QualType Ty);
-  void EmitStoreThroughPropertyRefLValue(RValue Src, LValue Dst, QualType Ty);
-  void EmitStoreThroughKVCRefLValue(RValue Src, LValue Dst, QualType Ty);
+  void EmitStoreThroughPropertyRefLValue(RValue Src, LValue Dst);
 
   /// EmitStoreThroughLValue - Store Src into Dst with same constraints as
   /// EmitStoreThroughLValue.
@@ -1544,11 +1542,8 @@ public:
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
   RValue EmitObjCMessageExpr(const ObjCMessageExpr *E,
                              ReturnValueSlot Return = ReturnValueSlot());
-  RValue EmitObjCPropertyGet(const ObjCPropertyRefExpr *E,
-                             ReturnValueSlot Return = ReturnValueSlot());
   RValue EmitObjCSuperPropertyGet(const Expr *Exp, const Selector &S,
                                   ReturnValueSlot Return = ReturnValueSlot());
-  void EmitObjCPropertySet(const ObjCPropertyRefExpr *E, RValue Src);
   void EmitObjCSuperPropertySet(const Expr *E, const Selector &S, RValue Src);
 
 

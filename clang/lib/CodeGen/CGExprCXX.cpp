@@ -124,11 +124,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     This = EmitScalarExpr(ME->getBase());
   else {
     LValue BaseLV = EmitLValue(ME->getBase());
-    if (BaseLV.isPropertyRef() || BaseLV.isKVCRef()) {
+    if (BaseLV.isPropertyRef()) {
       QualType QT = ME->getBase()->getType();
-      RValue RV = 
-        BaseLV.isPropertyRef() ? EmitLoadOfPropertyRefLValue(BaseLV, QT)
-          : EmitLoadOfKVCRefLValue(BaseLV, QT);
+      RValue RV = EmitLoadOfPropertyRefLValue(BaseLV);
       This = RV.isScalar() ? RV.getScalarVal() : RV.getAggregateAddr();
     }
     else
@@ -242,13 +240,10 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
              "EmitCXXOperatorMemberCallExpr - user declared copy assignment");
       LValue LV = EmitLValue(E->getArg(0));
       llvm::Value *This;
-      if (LV.isPropertyRef() || LV.isKVCRef()) {
+      if (LV.isPropertyRef()) {
         AggValueSlot Slot = CreateAggTemp(E->getArg(1)->getType());
         EmitAggExpr(E->getArg(1), Slot);
-        if (LV.isPropertyRef())
-          EmitObjCPropertySet(LV.getPropertyRefExpr(), Slot.asRValue());
-        else
-          EmitObjCPropertySet(LV.getKVCRefExpr(), Slot.asRValue());
+        EmitStoreThroughPropertyRefLValue(Slot.asRValue(), LV);
         return RValue::getAggregate(0, false);
       }
       else
@@ -267,11 +262,9 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
                                    FPT->isVariadic());
   LValue LV = EmitLValue(E->getArg(0));
   llvm::Value *This;
-  if (LV.isPropertyRef() || LV.isKVCRef()) {
+  if (LV.isPropertyRef()) {
     QualType QT = E->getArg(0)->getType();
-    RValue RV = 
-      LV.isPropertyRef() ? EmitLoadOfPropertyRefLValue(LV, QT)
-                         : EmitLoadOfKVCRefLValue(LV, QT);
+    RValue RV = EmitLoadOfPropertyRefLValue(LV);
     assert (!RV.isScalar() && "EmitCXXOperatorMemberCallExpr");
     This = RV.getAggregateAddr();
   }

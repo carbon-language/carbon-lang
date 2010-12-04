@@ -1127,9 +1127,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     if (E->Classify(CGF.getContext()).isGLValue()) {
       LValue LV = CGF.EmitLValue(E);
       if (LV.isPropertyRef())
-        CGF.EmitLoadOfPropertyRefLValue(LV, E->getType());
-      else if (LV.isKVCRef())
-        CGF.EmitLoadOfKVCRefLValue(LV, E->getType());
+        CGF.EmitLoadOfPropertyRefLValue(LV);
     }
     else
       CGF.EmitAnyExpr(E, AggValueSlot::ignored(), true);
@@ -1583,7 +1581,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
     return RHS;
 
   // Objective-C property assignment never reloads the value following a store.
-  if (LHS.isPropertyRef() || LHS.isKVCRef())
+  if (LHS.isPropertyRef())
     return RHS;
 
   // If the lvalue is non-volatile, return the computed value of the assignment.
@@ -2183,7 +2181,7 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     return RHS;
 
   // Objective-C property assignment never reloads the value following a store.
-  if (LHS.isPropertyRef() || LHS.isKVCRef())
+  if (LHS.isPropertyRef())
     return RHS;
 
   // If the lvalue is non-volatile, return the computed value of the assignment.

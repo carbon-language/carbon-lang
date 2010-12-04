@@ -528,8 +528,9 @@ RValue CodeGenFunction::EmitObjCSuperPropertyGet(const Expr *Exp,
 
 }
 
-RValue CodeGenFunction::EmitObjCPropertyGet(const ObjCPropertyRefExpr *E,
-                                            ReturnValueSlot Return) {
+RValue CodeGenFunction::EmitLoadOfPropertyRefLValue(LValue LV,
+                                                    ReturnValueSlot Return) {
+  const ObjCPropertyRefExpr *E = LV.getPropertyRefExpr();
   QualType ResultType;
   Selector S;
   if (E->isExplicitProperty()) {
@@ -545,14 +546,9 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const ObjCPropertyRefExpr *E,
   if (E->isSuperReceiver())
     return EmitObjCSuperPropertyGet(E, S, Return);
 
-  llvm::Value *Receiver;
-  const ObjCInterfaceDecl *ReceiverClass = 0;
-  if (E->isClassReceiver()) {
-    ReceiverClass = E->getClassReceiver();
-    Receiver = CGM.getObjCRuntime().GetClass(Builder, ReceiverClass);
-  } else {
-    Receiver = EmitScalarExpr(E->getBase());
-  }
+  llvm::Value *Receiver = LV.getPropertyRefBaseAddr();
+  const ObjCInterfaceDecl *ReceiverClass
+    = (E->isClassReceiver() ? E->getClassReceiver() : 0);
   return CGM.getObjCRuntime().
              GenerateMessageSend(*this, Return, ResultType, S,
                                  Receiver, CallArgList(), ReceiverClass);
@@ -579,8 +575,9 @@ void CodeGenFunction::EmitObjCSuperPropertySet(const Expr *Exp,
   return;
 }
 
-void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
-                                          RValue Src) {
+void CodeGenFunction::EmitStoreThroughPropertyRefLValue(RValue Src,
+                                                        LValue Dst) {
+  const ObjCPropertyRefExpr *E = Dst.getPropertyRefExpr();
   Selector S = E->getSetterSelector();
   QualType ArgType;
   if (E->isImplicitProperty()) {
@@ -596,14 +593,9 @@ void CodeGenFunction::EmitObjCPropertySet(const ObjCPropertyRefExpr *E,
     return;
   }
 
-  const ObjCInterfaceDecl *ReceiverClass = 0;
-  llvm::Value *Receiver;
-  if (E->isClassReceiver()) {
-    ReceiverClass = E->getClassReceiver();
-    Receiver = CGM.getObjCRuntime().GetClass(Builder, ReceiverClass);
-  } else {
-    Receiver = EmitScalarExpr(E->getBase());
-  }
+  llvm::Value *Receiver = Dst.getPropertyRefBaseAddr();
+  const ObjCInterfaceDecl *ReceiverClass
+    = (E->isClassReceiver() ? E->getClassReceiver() : 0);
 
   CallArgList Args;
   Args.push_back(std::make_pair(Src, ArgType));

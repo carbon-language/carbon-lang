@@ -108,10 +108,8 @@ class LValue {
     VectorElt,    // This is a vector element l-value (V[i]), use getVector*
     BitField,     // This is a bitfield l-value, use getBitfield*.
     ExtVectorElt, // This is an extended vector subset, use getExtVectorComp
-    PropertyRef,  // This is an Objective-C property reference, use
+    PropertyRef   // This is an Objective-C property reference, use
                   // getPropertyRefExpr
-    KVCRef        // This is an objective-c 'implicit' property ref,
-                  // use getKVCRefExpr
   } LVType;
 
   llvm::Value *V;
@@ -177,7 +175,6 @@ public:
   bool isBitField() const { return LVType == BitField; }
   bool isExtVectorElt() const { return LVType == ExtVectorElt; }
   bool isPropertyRef() const { return LVType == PropertyRef; }
-  bool isKVCRef() const { return LVType == KVCRef; }
 
   bool isVolatileQualified() const { return Quals.hasVolatile(); }
   bool isRestrictQualified() const { return Quals.hasRestrict(); }
@@ -245,14 +242,12 @@ public:
   }
 
   // property ref lvalue
+  llvm::Value *getPropertyRefBaseAddr() const {
+    assert(isPropertyRef());
+    return V;
+  }
   const ObjCPropertyRefExpr *getPropertyRefExpr() const {
     assert(isPropertyRef());
-    return PropertyRefExpr;
-  }
-
-  // 'implicit' property ref lvalue
-  const ObjCPropertyRefExpr *getKVCRefExpr() const {
-    assert(isKVCRef());
     return PropertyRefExpr;
   }
 
@@ -309,20 +304,12 @@ public:
   // the lvalue. However, this complicates the code a bit, and I haven't figured
   // out how to make it go wrong yet.
   static LValue MakePropertyRef(const ObjCPropertyRefExpr *E,
-                                unsigned CVR) {
+                                llvm::Value *Base) {
     LValue R;
     R.LVType = PropertyRef;
+    R.V = Base;
     R.PropertyRefExpr = E;
-    R.Initialize(Qualifiers::fromCVRMask(CVR));
-    return R;
-  }
-
-  static LValue MakeKVCRef(const ObjCPropertyRefExpr *E,
-                           unsigned CVR) {
-    LValue R;
-    R.LVType = KVCRef;
-    R.PropertyRefExpr = E;
-    R.Initialize(Qualifiers::fromCVRMask(CVR));
+    R.Initialize(Qualifiers());
     return R;
   }
 };

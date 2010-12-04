@@ -64,11 +64,8 @@ public:
     if (LV.isSimple())
       return EmitLoadOfComplex(LV.getAddress(), LV.isVolatileQualified());
 
-    if (LV.isPropertyRef())
-      return CGF.EmitObjCPropertyGet(LV.getPropertyRefExpr()).getComplexVal();
-
-    assert(LV.isKVCRef() && "Unknown LValue type!");
-    return CGF.EmitObjCPropertyGet(LV.getKVCRefExpr()).getComplexVal();
+    assert(LV.isPropertyRef() && "Unknown LValue type!");
+    return CGF.EmitLoadOfPropertyRefLValue(LV).getComplexVal();
   }
 
   /// EmitLoadOfComplex - Given a pointer to a complex value, emit code to load
@@ -531,11 +528,7 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
   // We know the LHS is a complex lvalue.
   ComplexPairTy LHSComplexPair;
   if (LHS.isPropertyRef())
-    LHSComplexPair =
-      CGF.EmitObjCPropertyGet(LHS.getPropertyRefExpr()).getComplexVal();
-  else if (LHS.isKVCRef())
-    LHSComplexPair =
-      CGF.EmitObjCPropertyGet(LHS.getKVCRefExpr()).getComplexVal();
+    LHSComplexPair = CGF.EmitLoadOfPropertyRefLValue(LHS).getComplexVal();
   else
     LHSComplexPair = EmitLoadOfComplex(LHS.getAddress(),
                                        LHS.isVolatileQualified());
@@ -551,10 +544,7 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
 
   // Store the result value into the LHS lvalue.
   if (LHS.isPropertyRef())
-    CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(),
-                            RValue::getComplex(Result));
-  else if (LHS.isKVCRef())
-    CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), RValue::getComplex(Result));
+    CGF.EmitStoreThroughPropertyRefLValue(RValue::getComplex(Result), LHS);
   else
     EmitStoreOfComplex(Result, LHS.getAddress(), LHS.isVolatileQualified());
 
@@ -573,7 +563,7 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
     return Val;
 
   // Objective-C property assignment never reloads the value following a store.
-  if (LV.isPropertyRef() || LV.isKVCRef())
+  if (LV.isPropertyRef())
     return Val;
 
   // If the lvalue is non-volatile, return the computed value of the assignment.
@@ -599,9 +589,7 @@ LValue ComplexExprEmitter::EmitBinAssignLValue(const BinaryOperator *E,
 
   // Store the result value into the LHS lvalue.
   if (LHS.isPropertyRef())
-    CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(), RValue::getComplex(Val));
-  else if (LHS.isKVCRef())
-    CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), RValue::getComplex(Val));
+    CGF.EmitStoreThroughPropertyRefLValue(RValue::getComplex(Val), LHS);
   else
     EmitStoreOfComplex(Val, LHS.getAddress(), LHS.isVolatileQualified());
 
@@ -617,7 +605,7 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     return Val;
 
   // Objective-C property assignment never reloads the value following a store.
-  if (LV.isPropertyRef() || LV.isKVCRef())
+  if (LV.isPropertyRef())
     return Val;
 
   // If the lvalue is non-volatile, return the computed value of the assignment.

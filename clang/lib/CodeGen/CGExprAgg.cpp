@@ -349,7 +349,8 @@ void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 }
 
 void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-  RValue RV = CGF.EmitObjCPropertyGet(E, getReturnValueSlot());
+  RValue RV = CGF.EmitLoadOfPropertyRefLValue(CGF.EmitObjCPropertyRefLValue(E),
+                                              getReturnValueSlot());
   EmitGCMove(E, RV);
 }
 
@@ -388,11 +389,7 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   if (LHS.isPropertyRef()) {
     AggValueSlot Slot = EnsureSlot(E->getRHS()->getType());
     CGF.EmitAggExpr(E->getRHS(), Slot);
-    CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(), Slot.asRValue());
-  } else if (LHS.isKVCRef()) {
-    AggValueSlot Slot = EnsureSlot(E->getRHS()->getType());
-    CGF.EmitAggExpr(E->getRHS(), Slot);
-    CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), Slot.asRValue());
+    CGF.EmitStoreThroughPropertyRefLValue(Slot.asRValue(), LHS);
   } else {
     bool GCollection = false;
     if (CGF.getContext().getLangOptions().getGCMode())

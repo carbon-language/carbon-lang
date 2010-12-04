@@ -195,11 +195,9 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
   if (E->isLValue()) {
     // Emit the expression as an lvalue.
     LValue LV = CGF.EmitLValue(E);
-    if (LV.isPropertyRef() || LV.isKVCRef()) {
+    if (LV.isPropertyRef()) {
       QualType QT = E->getType();
-      RValue RV = 
-        LV.isPropertyRef() ? CGF.EmitLoadOfPropertyRefLValue(LV, QT) 
-                           : CGF.EmitLoadOfKVCRefLValue(LV, QT);
+      RValue RV = CGF.EmitLoadOfPropertyRefLValue(LV);
       assert(RV.isScalar() && "EmitExprForReferenceBinding");
       return RV.getScalarVal();
     }
@@ -671,11 +669,8 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
   if (LV.isBitField())
     return EmitLoadOfBitfieldLValue(LV, ExprType);
 
-  if (LV.isPropertyRef())
-    return EmitLoadOfPropertyRefLValue(LV, ExprType);
-
-  assert(LV.isKVCRef() && "Unknown LValue type!");
-  return EmitLoadOfKVCRefLValue(LV, ExprType);
+  assert(LV.isPropertyRef() && "Unknown LValue type!");
+  return EmitLoadOfPropertyRefLValue(LV);
 }
 
 RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
@@ -750,16 +745,6 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
   return RValue::get(Res);
 }
 
-RValue CodeGenFunction::EmitLoadOfPropertyRefLValue(LValue LV,
-                                                    QualType ExprType) {
-  return EmitObjCPropertyGet(LV.getPropertyRefExpr());
-}
-
-RValue CodeGenFunction::EmitLoadOfKVCRefLValue(LValue LV,
-                                               QualType ExprType) {
-  return EmitObjCPropertyGet(LV.getKVCRefExpr());
-}
-
 // If this is a reference to a subset of the elements of a vector, create an
 // appropriate shufflevector.
 RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
@@ -820,11 +805,8 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     if (Dst.isBitField())
       return EmitStoreThroughBitfieldLValue(Src, Dst, Ty);
 
-    if (Dst.isPropertyRef())
-      return EmitStoreThroughPropertyRefLValue(Src, Dst, Ty);
-
-    assert(Dst.isKVCRef() && "Unknown LValue type");
-    return EmitStoreThroughKVCRefLValue(Src, Dst, Ty);
+    assert(Dst.isPropertyRef() && "Unknown LValue type");
+    return EmitStoreThroughPropertyRefLValue(Src, Dst);
   }
 
   if (Dst.isObjCWeak() && !Dst.isNonGC()) {
@@ -967,18 +949,6 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     if (AI.AccessAlignment)
       Store->setAlignment(AI.AccessAlignment);
   }
-}
-
-void CodeGenFunction::EmitStoreThroughPropertyRefLValue(RValue Src,
-                                                        LValue Dst,
-                                                        QualType Ty) {
-  EmitObjCPropertySet(Dst.getPropertyRefExpr(), Src);
-}
-
-void CodeGenFunction::EmitStoreThroughKVCRefLValue(RValue Src,
-                                                   LValue Dst,
-                                                   QualType Ty) {
-  EmitObjCPropertySet(Dst.getKVCRefExpr(), Src);
 }
 
 void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
@@ -1569,7 +1539,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     BaseQuals = PTy->getPointeeType().getQualifiers();
   } else if (ObjCPropertyRefExpr *PRE
                = dyn_cast<ObjCPropertyRefExpr>(BaseExpr->IgnoreParens())) {
-    RValue RV = EmitObjCPropertyGet(PRE);
+    RValue RV = EmitLoadOfPropertyRefLValue(EmitObjCPropertyRefLValue(PRE));
     BaseValue = RV.getAggregateAddr();
     BaseQuals = BaseExpr->getType().getQualifiers();
   } else {
@@ -1788,11 +1758,9 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_NoOp:
     if (!E->getSubExpr()->isRValue() || E->getType()->isRecordType()) {
       LValue LV = EmitLValue(E->getSubExpr());
-      if (LV.isPropertyRef() || LV.isKVCRef()) {
+      if (LV.isPropertyRef()) {
         QualType QT = E->getSubExpr()->getType();
-        RValue RV = 
-          LV.isPropertyRef() ? EmitLoadOfPropertyRefLValue(LV, QT) 
-                             : EmitLoadOfKVCRefLValue(LV, QT);
+        RValue RV = EmitLoadOfPropertyRefLValue(LV);
         assert(RV.isAggregate());
         llvm::Value *V = RV.getAggregateAddr();
         return MakeAddrLValue(V, QT);
@@ -1861,11 +1829,9 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     
     LValue LV = EmitLValue(E->getSubExpr());
     llvm::Value *This;
-    if (LV.isPropertyRef() || LV.isKVCRef()) {
+    if (LV.isPropertyRef()) {
       QualType QT = E->getSubExpr()->getType();
-      RValue RV = 
-        LV.isPropertyRef() ? EmitLoadOfPropertyRefLValue(LV, QT)
-                           : EmitLoadOfKVCRefLValue(LV, QT);
+      RValue RV = EmitLoadOfPropertyRefLValue(LV);
       assert (!RV.isScalar() && "EmitCastLValue");
       This = RV.getAggregateAddr();
     }
@@ -2107,9 +2073,15 @@ CodeGenFunction::EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E) {
   // This is a special l-value that just issues sends when we load or
   // store through it.
 
-  if (E->isImplicitProperty())
-    return LValue::MakeKVCRef(E, E->getType().getCVRQualifiers());
-  return LValue::MakePropertyRef(E, E->getType().getCVRQualifiers());
+  // For certain base kinds, we need to emit the base immediately.
+  llvm::Value *Base;
+  if (E->isSuperReceiver())
+    Base = 0;
+  else if (E->isClassReceiver())
+    Base = CGM.getObjCRuntime().GetClass(Builder, E->getClassReceiver());
+  else
+    Base = EmitScalarExpr(E->getBase());
+  return LValue::MakePropertyRef(E, Base);
 }
 
 LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
