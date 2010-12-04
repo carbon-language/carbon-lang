@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
+
+// TODO: actually test most of this instead of just emitting it
 
 int printf(const char *, ...);
 
@@ -50,3 +52,28 @@ int printf(const char *, ...);
   return 10;
 }
 @end
+
+// Test that compound operations only compute the base once.
+// CHECK: define void @test2
+A *test2_helper(void);
+void test2() {
+  // CHECK:      [[BASE:%.*]] = call [[A:%.*]]* @test2_helper()
+  // CHECK-NEXT: [[SEL:%.*]] = load i8**
+  // CHECK-NEXT: [[BASETMP:%.*]] = bitcast [[A]]* [[BASE]] to i8*
+  // CHECK-NEXT: [[LD:%.*]] = call i32 bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i32 (i8*, i8*)*)(i8* [[BASETMP]], i8* [[SEL]])
+  // CHECK-NEXT: [[ADD:%.*]] = add nsw i32 [[LD]], 1
+  // CHECK-NEXT: [[SEL:%.*]] = load i8**
+  // CHECK-NEXT: [[BASETMP:%.*]] = bitcast [[A]]* [[BASE]] to i8*
+  // CHECK-NEXT: call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i32)*)(i8* [[BASETMP]], i8* [[SEL]], i32 [[ADD]])
+  test2_helper().dyn++;
+
+  // CHECK:      [[BASE:%.*]] = call [[A]]* @test2_helper()
+  // CHECK-NEXT: [[SEL:%.*]] = load i8**
+  // CHECK-NEXT: [[BASETMP:%.*]] = bitcast [[A]]* [[BASE]] to i8*
+  // CHECK-NEXT: [[LD:%.*]] = call i32 bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i32 (i8*, i8*)*)(i8* [[BASETMP]], i8* [[SEL]])
+  // CHECK-NEXT: [[ADD:%.*]] = mul nsw i32 [[LD]], 10
+  // CHECK-NEXT: [[SEL:%.*]] = load i8**
+  // CHECK-NEXT: [[BASETMP:%.*]] = bitcast [[A]]* [[BASE]] to i8*
+  // CHECK-NEXT: call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i32)*)(i8* [[BASETMP]], i8* [[SEL]], i32 [[ADD]])
+  test2_helper().dyn *= 10;
+}

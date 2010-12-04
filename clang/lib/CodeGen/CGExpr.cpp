@@ -2068,22 +2068,6 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
   return LV;
 }
 
-LValue
-CodeGenFunction::EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E) {
-  // This is a special l-value that just issues sends when we load or
-  // store through it.
-
-  // For certain base kinds, we need to emit the base immediately.
-  llvm::Value *Base;
-  if (E->isSuperReceiver())
-    Base = 0;
-  else if (E->isClassReceiver())
-    Base = CGM.getObjCRuntime().GetClass(Builder, E->getClassReceiver());
-  else
-    Base = EmitScalarExpr(E->getBase());
-  return LValue::MakePropertyRef(E, Base);
-}
-
 LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
   // Can only get l-value for message expression returning aggregate type
   RValue RV = EmitAnyExprToTemp(E);

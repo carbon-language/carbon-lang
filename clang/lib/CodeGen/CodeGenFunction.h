@@ -1542,10 +1542,6 @@ public:
   llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
   RValue EmitObjCMessageExpr(const ObjCMessageExpr *E,
                              ReturnValueSlot Return = ReturnValueSlot());
-  RValue EmitObjCSuperPropertyGet(const Expr *Exp, const Selector &S,
-                                  ReturnValueSlot Return = ReturnValueSlot());
-  void EmitObjCSuperPropertySet(const Expr *E, const Selector &S, RValue Src);
-
 
   /// EmitReferenceBindingToExpr - Emits a reference binding to the passed in
   /// expression. Will emit a temporary variable if E is not an LValue.
