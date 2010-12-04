@@ -413,8 +413,10 @@ static Cl::Kinds ClassifyBinaryOp(ASTContext &Ctx, const BinaryOperator *E) {
   assert(Ctx.getLangOptions().CPlusPlus &&
          "This is only relevant for C++.");
   // C++ [expr.ass]p1: All [...] return an lvalue referring to the left operand.
+  // Except we override this for writes to ObjC properties.
   if (E->isAssignmentOp())
-    return Cl::CL_LValue;
+    return (E->getLHS()->getObjectKind() == OK_ObjCProperty
+              ? Cl::CL_PRValue : Cl::CL_LValue);
 
   // C++ [expr.comma]p1: the result is of the same value category as its right
   //   operand, [...].
@@ -468,9 +470,10 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
   if (Kind == Cl::CL_PRValue) {
     // For the sake of better diagnostics, we want to specifically recognize
     // use of the GCC cast-as-lvalue extension.
-    if (const CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(E->IgnoreParens())){
-      if (CE->getSubExpr()->Classify(Ctx).isLValue()) {
-        Loc = CE->getLParenLoc();
+    if (const ExplicitCastExpr *CE =
+          dyn_cast<ExplicitCastExpr>(E->IgnoreParens())) {
+      if (CE->getSubExpr()->IgnoreParenImpCasts()->isLValue()) {
+        Loc = CE->getExprLoc();
         return Cl::CM_LValueCast;
       }
     }

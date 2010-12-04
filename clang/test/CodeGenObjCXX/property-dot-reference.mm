@@ -36,3 +36,24 @@ void f1(A *a) {
   f0([a target]);
 }
 
+@interface Test2
+@property (readonly) int myProperty;
+- (int) myProperty;
+- (double) myGetter;
+@end
+void test2() {
+    Test2 *obj;
+    (void) obj.myProperty; 
+    (void) obj.myGetter; 
+    static_cast<void>(obj.myProperty);
+    static_cast<void>(obj.myGetter);
+    void(obj.myProperty);
+    void(obj.myGetter);
+}
+// CHECK: define void @_Z5test2v()
+// CHECK: call i32 bitcast
+// CHECK: call double bitcast
+// CHECK: call i32 bitcast
+// CHECK: call double bitcast
+// CHECK: call i32 bitcast
+// CHECK: call double bitcast

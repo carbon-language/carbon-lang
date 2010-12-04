@@ -30,7 +30,7 @@ namespace rdar8020920 {
     unsigned long long bitfield : e0;
 
     void f(int j) {
-      bitfield + j;
+      bitfield + j; // expected-warning {{expression result unused}}
     }
   };
 }

@@ -2104,8 +2104,8 @@ do {
 void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
   bool EmitWarning = true;
 
-  Expr* LeftExprSansParen = lex->IgnoreParens();
-  Expr* RightExprSansParen = rex->IgnoreParens();
+  Expr* LeftExprSansParen = lex->IgnoreParenImpCasts();
+  Expr* RightExprSansParen = rex->IgnoreParenImpCasts();
 
   // Special case: check for x == x (which is OK).
   // Do not emit warnings for such cases.

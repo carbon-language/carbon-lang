@@ -284,6 +284,9 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 }
 
 bool Sema::isSelfExpr(Expr *RExpr) {
+  if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(RExpr))
+    if (ICE->getCastKind() == CK_LValueToRValue)
+      RExpr = ICE->getSubExpr();
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(RExpr))
     if (DRE->getDecl()->getIdentifier() == &Context.Idents.get("self"))
       return true;

@@ -92,7 +92,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   if (const CXXExprWithTemporaries *Temps = dyn_cast<CXXExprWithTemporaries>(E))
     E = Temps->getSubExpr();
 
-  E = E->IgnoreParens();
+  E = E->IgnoreParenImpCasts();
   if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
     if (E->getType()->isVoidType())
       return;
@@ -952,6 +952,17 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
                                      RParenLoc));
 }
 
+/// In an Objective C collection iteration statement:
+///   for (x in y)
+/// x can be an arbitrary l-value expression.  Bind it up as a
+/// full-expression.
+StmtResult Sema::ActOnForEachLValueExpr(Expr *E) {
+  CheckImplicitConversions(E);
+  ExprResult Result = MaybeCreateCXXExprWithTemporaries(E);
+  if (Result.isInvalid()) return StmtError();
+  return Owned(static_cast<Stmt*>(Result.get()));
+}
+
 StmtResult
 Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
                                  SourceLocation LParenLoc,
@@ -1228,6 +1239,10 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       unsigned D = diag::ext_return_has_expr;
       if (RetValExp->getType()->isVoidType())
         D = diag::ext_return_has_void_expr;
+      else {
+        IgnoredValueConversions(RetValExp);
+        ImpCastExprToType(RetValExp, Context.VoidTy, CK_ToVoid);
+      }
 
       // return (some void expression); is legal in C++.
       if (D != diag::ext_return_has_void_expr ||

@@ -1755,6 +1755,21 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_Dependent:
     llvm_unreachable("dependent cast kind in IR gen!");
 
+  case CK_GetObjCProperty: {
+    LValue LV = EmitLValue(E->getSubExpr());
+    assert(LV.isPropertyRef());
+    RValue RV = EmitLoadOfPropertyRefLValue(LV);
+
+    // Property is an aggregate r-value.
+    if (RV.isAggregate()) {
+      return MakeAddrLValue(RV.getAggregateAddr(), E->getType());
+    }
+
+    // Implicit property returns an l-value.
+    assert(RV.isScalar());
+    return MakeAddrLValue(RV.getScalarVal(), E->getSubExpr()->getType());
+  }
+
   case CK_NoOp:
     if (!E->getSubExpr()->isRValue() || E->getType()->isRecordType()) {
       LValue LV = EmitLValue(E->getSubExpr());

@@ -1,5 +1,9 @@
 // RUN: %clang_cc1 -rewrite-objc %s -o -
 
+// Fariborz approved this being xfail'ed during the addition
+// of explicit lvalue-to-rvalue conversions.
+// XFAIL: *
+
 @interface Foo {
     int i;
     int rrrr;

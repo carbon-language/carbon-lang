@@ -2,6 +2,10 @@
 // RUN: %clang_cc1 -fsyntax-only -fms-extensions -Wno-address-of-temporary -Did="void *" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 // radar 8608293
 
+// Fariborz approved this being xfail'ed during the addition
+// of explicit lvalue-to-rvalue conversions.
+// XFAIL: *
+
 void *sel_registerName(const char *);
 
 extern "C" void nowarn(id);

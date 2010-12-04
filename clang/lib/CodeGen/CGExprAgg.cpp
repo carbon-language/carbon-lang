@@ -282,8 +282,16 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
   }
 
+  case CK_GetObjCProperty: {
+    LValue LV = CGF.EmitLValue(E->getSubExpr());
+    assert(LV.isPropertyRef());
+    RValue RV = CGF.EmitLoadOfPropertyRefLValue(LV, getReturnValueSlot());
+    EmitGCMove(E, RV);
+    break;
+  }
+
+  case CK_LValueToRValue: // hope for downstream optimization
   case CK_NoOp:
-  case CK_LValueToRValue:
   case CK_UserDefinedConversion:
   case CK_ConstructorConversion:
     assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),
@@ -349,9 +357,8 @@ void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 }
 
 void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-  RValue RV = CGF.EmitLoadOfPropertyRefLValue(CGF.EmitObjCPropertyRefLValue(E),
-                                              getReturnValueSlot());
-  EmitGCMove(E, RV);
+  llvm_unreachable("direct property access not surrounded by "
+                   "lvalue-to-rvalue cast");
 }
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {

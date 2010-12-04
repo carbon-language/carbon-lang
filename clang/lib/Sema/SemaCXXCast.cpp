@@ -516,6 +516,7 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
   if (DestType->isVoidType()) {
+    Self.IgnoredValueConversions(SrcExpr);
     Kind = CK_ToVoid;
     return;
   }
@@ -1371,6 +1372,7 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
   if (CastTy->isVoidType()) {
+    IgnoredValueConversions(CastExpr);    
     Kind = CK_ToVoid;
     return false;
   }

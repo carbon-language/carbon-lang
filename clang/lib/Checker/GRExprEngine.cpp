@@ -778,6 +778,10 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
                                 S->getLocStart(),
                                 "Error evaluating statement");
 
+  // Expressions to ignore.
+  if (const Expr *Ex = dyn_cast<Expr>(S))
+    S = Ex->IgnoreParenLValueCasts();
+  
   // FIXME: add metadata to the CFG so that we can disable
   //  this check when we KNOW that there is no block-level subexpression.
   //  The motivation is that this check requires a hashtable lookup.
@@ -814,7 +818,9 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       MakeNode(Dst, S, Pred, GetState(Pred));
       break;
     }
-
+      
+    case Stmt::ParenExprClass:
+      llvm_unreachable("ParenExprs already handled.");
     // Cases that should never be evaluated simply because they shouldn't
     // appear in the CFG.
     case Stmt::BreakStmtClass:
@@ -1039,10 +1045,6 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       break;
     }
 
-    case Stmt::ParenExprClass:
-      Visit(cast<ParenExpr>(S)->getSubExpr()->IgnoreParens(), Pred, Dst);
-      break;
-
     case Stmt::ReturnStmtClass:
       VisitReturnStmt(cast<ReturnStmt>(S), Pred, Dst);
       break;
@@ -1113,8 +1115,8 @@ void GRExprEngine::VisitLValue(const Expr* Ex, ExplodedNode* Pred,
                                 Ex->getLocStart(),
                                 "Error evaluating statement");
 
-
-  Ex = Ex->IgnoreParens();
+  // Expressions to ignore.
+  Ex = Ex->IgnoreParenLValueCasts();
 
   if (Ex != CurrentStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(Ex)){
     Dst.Add(Pred);
@@ -2661,6 +2663,7 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
     }
     return;
 
+  case CK_GetObjCProperty:
   case CK_Dependent:
   case CK_ArrayToPointerDecay:
   case CK_BitCast:

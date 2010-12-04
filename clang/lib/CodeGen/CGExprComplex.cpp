@@ -108,6 +108,7 @@ public:
     return EmitLoadOfLValue(E);
   }
   ComplexPairTy VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+    assert(E->getObjectKind() == OK_Ordinary);
     return EmitLoadOfLValue(E);
   }
   ComplexPairTy VisitObjCMessageExpr(ObjCMessageExpr *E) {
@@ -333,7 +334,21 @@ ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
 
 ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op, 
                                            QualType DestTy) {
-  // FIXME: this should be based off of the CastKind.
+  switch (CK) {
+  case CK_GetObjCProperty: {
+    LValue LV = CGF.EmitLValue(Op);
+    assert(LV.isPropertyRef() && "Unknown LValue type!");
+    return CGF.EmitLoadOfPropertyRefLValue(LV).getComplexVal();
+  }
+
+  case CK_NoOp:
+  case CK_LValueToRValue:
+    return Visit(Op);
+
+  // TODO: do all of these
+  default:
+    break;
+  }
 
   // Two cases here: cast from (complex to complex) and (scalar to complex).
   if (Op->getType()->isAnyComplexType())

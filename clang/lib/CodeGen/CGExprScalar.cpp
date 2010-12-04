@@ -237,6 +237,8 @@ public:
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
+    assert(E->getObjectKind() == OK_Ordinary &&
+           "reached property reference without lvalue-to-rvalue");
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E) {
@@ -1097,9 +1099,18 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   case CK_ToUnion:
     llvm_unreachable("scalar cast to non-scalar value");
     break;
+
+  case CK_GetObjCProperty: {
+    assert(CGF.getContext().hasSameUnqualifiedType(E->getType(), DestTy));
+    assert(E->isLValue() && E->getObjectKind() == OK_ObjCProperty &&
+           "CK_GetObjCProperty for non-lvalue or non-ObjCProperty");
+    RValue RV = CGF.EmitLoadOfLValue(CGF.EmitLValue(E), E->getType());
+    return RV.getScalarVal();
+  }
       
   case CK_LValueToRValue:
     assert(CGF.getContext().hasSameUnqualifiedType(E->getType(), DestTy));
+    assert(E->isGLValue() && "lvalue-to-rvalue applied to r-value!");
     return Visit(const_cast<Expr*>(E));
 
   case CK_IntegralToPointer: {
@@ -1124,11 +1135,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
   }
   case CK_ToVoid: {
-    if (E->Classify(CGF.getContext()).isGLValue()) {
-      LValue LV = CGF.EmitLValue(E);
-      if (LV.isPropertyRef())
-        CGF.EmitLoadOfPropertyRefLValue(LV);
-    }
+    if (!E->isRValue())
+      CGF.EmitLValue(E);
     else
       CGF.EmitAnyExpr(E, AggValueSlot::ignored(), true);
     return 0;

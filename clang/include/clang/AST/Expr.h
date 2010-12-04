@@ -39,6 +39,7 @@ namespace clang {
   class CXXBaseSpecifier;
   class CXXOperatorCallExpr;
   class CXXMemberCallExpr;
+  class ObjCPropertyRefExpr;
   class TemplateArgumentLoc;
   class TemplateArgumentListInfo;
 
@@ -312,6 +313,10 @@ public:
     return const_cast<Expr*>(this)->getBitField();
   }
 
+  /// \brief If this expression is an l-value for an Objective C
+  /// property, find the underlying property reference expression.
+  const ObjCPropertyRefExpr *getObjCProperty() const;
+
   /// \brief Returns whether this expression refers to a vector element.
   bool refersToVectorElement() const;
   
@@ -455,6 +460,14 @@ public:
 
   const Expr *IgnoreParenImpCasts() const {
     return const_cast<Expr*>(this)->IgnoreParenImpCasts();
+  }
+  
+  /// Ignore parentheses and lvalue casts.  Strip off any ParenExpr and
+  /// CastExprs that represent lvalue casts, returning their operand.
+  Expr *IgnoreParenLValueCasts();
+  
+  const Expr *IgnoreParenLValueCasts() const {
+    return const_cast<Expr*>(this)->IgnoreParenLValueCasts();
   }
 
   /// IgnoreParenNoopCasts - Ignore parentheses and casts that do not change the
@@ -2056,6 +2069,7 @@ private:
 
     case CK_Dependent:
     case CK_LValueToRValue:
+    case CK_GetObjCProperty:
     case CK_NoOp:
     case CK_PointerToBoolean:
     case CK_IntegralToBoolean:

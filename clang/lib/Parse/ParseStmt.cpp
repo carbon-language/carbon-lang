@@ -1032,13 +1032,19 @@ StmtResult Parser::ParseForStatement(AttributeList *Attr) {
   } else {
     Value = ParseExpression();
 
+    ForEach = isTokIdentifier_in();
+
     // Turn the expression into a stmt.
-    if (!Value.isInvalid())
-      FirstPart = Actions.ActOnExprStmt(Actions.MakeFullExpr(Value.get()));
+    if (!Value.isInvalid()) {
+      if (ForEach)
+        FirstPart = Actions.ActOnForEachLValueExpr(Value.get());
+      else
+        FirstPart = Actions.ActOnExprStmt(Actions.MakeFullExpr(Value.get()));
+    }
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
-    } else if ((ForEach = isTokIdentifier_in())) {
+    } else if (ForEach) {
       ConsumeToken(); // consume 'in'
       
       if (Tok.is(tok::code_completion)) {

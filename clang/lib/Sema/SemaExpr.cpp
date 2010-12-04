@@ -251,6 +251,24 @@ void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
   //   A glvalue of a non-function, non-array type T can be
   //   converted to a prvalue.
   if (E->isGLValue()) {
+    QualType T = E->getType();
+    assert(!T.isNull() && "r-value conversion on typeless expression?");
+
+    // Create a load out of an ObjCProperty l-value, if necessary.
+    if (E->getObjectKind() == OK_ObjCProperty) {
+      ConvertPropertyForRValue(E);
+      if (!E->isGLValue())
+        return;
+    }
+
+    // We don't want to throw lvalue-to-rvalue casts on top of
+    // expressions of certain types in C++.
+    if (getLangOptions().CPlusPlus &&
+        (E->getType() == Context.OverloadTy ||
+         T->isDependentType() ||
+         T->isRecordType()))
+      return;
+
     // C++ [conv.lval]p1:
     //   [...] If T is a non-class type, the type of the prvalue is the
     //   cv-unqualified version of T. Otherwise, the type of the
@@ -259,15 +277,12 @@ void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
     // C99 6.3.2.1p2:
     //   If the lvalue has qualified type, the value has the unqualified
     //   version of the type of the lvalue; otherwise, the value has the
-    //   type of the lvalue.
-    QualType T = E->getType();
-    assert(!T.isNull() && "r-value conversion on typeless expression?");
-    
-    if (T.hasQualifiers() && !T->isDependentType() &&
-        (!getLangOptions().CPlusPlus || !T->isRecordType()))
+    //   type of the lvalue.    
+    if (T.hasQualifiers())
       T = T.getUnqualifiedType();
-    
-    ImpCastExprToType(E, T, CK_LValueToRValue);
+
+    E = ImplicitCastExpr::Create(Context, T, CK_LValueToRValue,
+                                 E, 0, VK_RValue);
   }
 }
 
@@ -2649,6 +2664,10 @@ static QualType CheckRealImagOperand(Sema &S, Expr *&V, SourceLocation Loc,
   if (V->isTypeDependent())
     return S.Context.DependentTy;
 
+  // _Real and _Imag are only l-values for normal l-values.
+  if (V->getObjectKind() != OK_Ordinary)
+    S.DefaultFunctionArrayLvalueConversion(V);
+
   // These operators return the element type of a complex type.
   if (const ComplexType *CT = V->getType()->getAs<ComplexType>())
     return CT->getElementType();
@@ -3351,6 +3370,11 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
     return ExprError();
   }
 
+  // Perform a property load on the base regardless of whether we
+  // actually need it for the declaration.
+  if (BaseExpr->getObjectKind() == OK_ObjCProperty)
+    ConvertPropertyForRValue(BaseExpr);
+
   if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl))
     return BuildFieldReferenceExpr(*this, BaseExpr, IsArrow,
                                    SS, FD, FoundDecl, MemberNameInfo);
@@ -3359,7 +3383,7 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
     // We may have found a field within an anonymous union or struct
     // (C++ [class.union]).
     return BuildAnonymousStructUnionMemberReference(MemberLoc, FD,
-                                                     BaseExpr, OpLoc);
+                                                    BaseExpr, OpLoc);
 
   if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl)) {
     MarkDeclarationReferenced(MemberLoc, Var);
@@ -3694,6 +3718,10 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   // Handle properties on 'id' and qualified "id".
   if (!IsArrow && (BaseType->isObjCIdType() ||
                    BaseType->isObjCQualifiedIdType())) {
+    // This actually uses the base as an r-value.
+    DefaultFunctionArrayLvalueConversion(BaseExpr);
+    assert(Context.hasSameUnqualifiedType(BaseType, BaseExpr->getType()));
+
     const ObjCObjectPointerType *QIdTy = BaseType->getAs<ObjCObjectPointerType>();
     IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
 
@@ -3743,9 +3771,12 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   // pointer to a (potentially qualified) interface type.
   if (!IsArrow)
     if (const ObjCObjectPointerType *OPT =
-          BaseType->getAsObjCInterfacePointerType())
+          BaseType->getAsObjCInterfacePointerType()) {
+      // This actually uses the base as an r-value.
+      DefaultFunctionArrayLvalueConversion(BaseExpr);      
       return HandleExprPropertyRefExpr(OPT, BaseExpr, MemberName, MemberLoc,
                                        SourceLocation(), QualType(), false);
+    }
 
   // Handle the following exceptional case (*Obj).isa.
   if (!IsArrow &&
@@ -4024,8 +4055,8 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
         Param? InitializedEntity::InitializeParameter(Context, Param)
              : InitializedEntity::InitializeParameter(Context, ProtoArgType);
       ExprResult ArgE = PerformCopyInitialization(Entity,
-                                                        SourceLocation(),
-                                                        Owned(Arg));
+                                                  SourceLocation(),
+                                                  Owned(Arg));
       if (ArgE.isInvalid())
         return true;
 
@@ -4532,15 +4563,18 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType,
   // We only support r-value casts in C.
   VK = VK_RValue;
 
-  DefaultFunctionArrayLvalueConversion(castExpr);
-
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
   // type needs to be scalar.
   if (castType->isVoidType()) {
+    // We don't necessarily do lvalue-to-rvalue conversions on this.
+    IgnoredValueConversions(castExpr);
+
     // Cast to void allows any expr type.
     Kind = CK_ToVoid;
     return false;
   }
+
+  DefaultFunctionArrayLvalueConversion(castExpr);
 
   if (RequireCompleteType(TyR.getBegin(), castType,
                           diag::err_typecheck_cast_to_incomplete))
@@ -5713,7 +5747,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
 
     // FIXME: Currently, we fall through and treat C++ classes like C
     // structures.
-  }
+  }  
 
   // C99 6.5.16.1p1: the left operand is a pointer and the right is
   // a null pointer constant.
@@ -6201,8 +6235,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     // obvious cases in the definition of the template anyways. The idea is to
     // warn when the typed comparison operator will always evaluate to the same
     // result.
-    Expr *LHSStripped = lex->IgnoreParens();
-    Expr *RHSStripped = rex->IgnoreParens();
+    Expr *LHSStripped = lex->IgnoreParenImpCasts();
+    Expr *RHSStripped = rex->IgnoreParenImpCasts();
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LHSStripped)) {
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RHSStripped)) {
         if (DRL->getDecl() == DRR->getDecl() &&
@@ -6782,7 +6816,8 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
   if (CompoundType.isNull()) {
     QualType LHSTy(LHSType);
     // Simple assignment "x = y".
-    ConvertPropertyAssignment(LHS, RHS, LHSTy);
+    if (LHS->getObjectKind() == OK_ObjCProperty)
+      ConvertPropertyForLValue(LHS, RHS, LHSTy);
     ConvTy = CheckSingleAssignmentConstraints(LHSTy, RHS);
     // Special case of NSObject attributes on c-style pointer types.
     if (ConvTy == IncompatiblePointer &&
@@ -6857,7 +6892,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
 }
 
 // C99 6.5.17
-static QualType CheckCommaOperands(Sema &S, Expr *LHS, Expr *&RHS,
+static QualType CheckCommaOperands(Sema &S, Expr *&LHS, Expr *&RHS,
                                    SourceLocation Loc) {
   S.DiagnoseUnusedExprResult(LHS);
 
@@ -6873,11 +6908,12 @@ static QualType CheckCommaOperands(Sema &S, Expr *LHS, Expr *&RHS,
   // C's comma performs lvalue conversion (C99 6.3.2.1) on both its
   // operands, but not unary promotions.
   // C++'s comma does not do any conversions at all (C++ [expr.comma]p1).
-  if (!S.getLangOptions().CPlusPlus) {
-    S.DefaultFunctionArrayLvalueConversion(LHS);
-    if (!LHS->getType()->isVoidType())
-      S.RequireCompleteType(Loc, LHS->getType(), diag::err_incomplete_type);
 
+  // So we treat the LHS as a ignored value, and in C++ we allow the
+  // containing site to determine what should be done with the RHS.
+  S.IgnoredValueConversions(LHS);
+
+  if (!S.getLangOptions().CPlusPlus) {
     S.DefaultFunctionArrayLvalueConversion(RHS);
     if (!RHS->getType()->isVoidType())
       S.RequireCompleteType(Loc, RHS->getType(), diag::err_incomplete_type);
@@ -6971,21 +7007,47 @@ static QualType CheckIncrementDecrementOperand(Sema &S, Expr *Op,
   }
 }
 
-void Sema::ConvertPropertyAssignment(Expr *LHS, Expr *&RHS, QualType& LHSTy) {
-  bool copyInit = false;
-  if (const ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(LHS)) {
-    if (PRE->isImplicitProperty()) {
-      // If using property-dot syntax notation for assignment, and there is a
-      // setter, RHS expression is being passed to the setter argument. So,
-      // type conversion (and comparison) is RHS to setter's argument type.
-      if (const ObjCMethodDecl *SetterMD = PRE->getImplicitPropertySetter()) {
-        ObjCMethodDecl::param_iterator P = SetterMD->param_begin();
-        LHSTy = (*P)->getType();
+void Sema::ConvertPropertyForRValue(Expr *&E) {
+  assert(E->getValueKind() == VK_LValue &&
+         E->getObjectKind() == OK_ObjCProperty);
+  const ObjCPropertyRefExpr *PRE = E->getObjCProperty();
+
+  ExprValueKind VK = VK_RValue;
+  if (PRE->isImplicitProperty()) {
+    QualType Result = PRE->getImplicitPropertyGetter()->getResultType();
+    VK = Expr::getValueKindForType(Result);
+  }
+
+  E = ImplicitCastExpr::Create(Context, E->getType(), CK_GetObjCProperty,
+                               E, 0, VK);
+}
+
+void Sema::ConvertPropertyForLValue(Expr *&LHS, Expr *&RHS, QualType &LHSTy) {
+  assert(LHS->getValueKind() == VK_LValue &&
+         LHS->getObjectKind() == OK_ObjCProperty);
+  const ObjCPropertyRefExpr *PRE = LHS->getObjCProperty();
+
+  if (PRE->isImplicitProperty()) {
+    // If using property-dot syntax notation for assignment, and there is a
+    // setter, RHS expression is being passed to the setter argument. So,
+    // type conversion (and comparison) is RHS to setter's argument type.
+    if (const ObjCMethodDecl *SetterMD = PRE->getImplicitPropertySetter()) {
+      ObjCMethodDecl::param_iterator P = SetterMD->param_begin();
+      LHSTy = (*P)->getType();
+
+    // Otherwise, if the getter returns an l-value, just call that.
+    } else {
+      QualType Result = PRE->getImplicitPropertyGetter()->getResultType();
+      ExprValueKind VK = Expr::getValueKindForType(Result);
+      if (VK == VK_LValue) {
+        LHS = ImplicitCastExpr::Create(Context, LHS->getType(),
+                                       CK_GetObjCProperty, LHS, 0, VK);
+        return;
       }
     }
-    copyInit = (getLangOptions().CPlusPlus && LHSTy->isRecordType());
-  } 
-  if (copyInit) {
+  }
+
+  if (getLangOptions().CPlusPlus && LHSTy->isRecordType()) {
     InitializedEntity Entity = 
     InitializedEntity::InitializeParameter(Context, LHSTy);
     Expr *Arg = RHS;
@@ -7318,7 +7380,8 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   switch (Opc) {
   case BO_Assign:
     ResultTy = CheckAssignmentOperands(lhs, rhs, OpLoc, QualType());
-    if (getLangOptions().CPlusPlus) {
+    if (getLangOptions().CPlusPlus &&
+        lhs->getObjectKind() != OK_ObjCProperty) {
       VK = lhs->getValueKind();
       OK = lhs->getObjectKind();
     }
@@ -7418,7 +7481,7 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     return Owned(new (Context) BinaryOperator(lhs, rhs, Opc, ResultTy,
                                               VK, OK, OpLoc));
 
-  if (getLangOptions().CPlusPlus) {
+  if (getLangOptions().CPlusPlus && lhs->getObjectKind() != OK_ObjCProperty) {
     VK = VK_LValue;
     OK = lhs->getObjectKind();
   }
@@ -7824,8 +7887,11 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
       LastStmt = Label->getSubStmt();
     }
     if (Expr *LastExpr = dyn_cast<Expr>(LastStmt)) {
-      DefaultFunctionArrayLvalueConversion(LastExpr);
-      Ty = LastExpr->getType();
+      // Do function/array conversion on the last expression, but not
+      // lvalue-to-rvalue.  However, initialize an unqualified type.
+      DefaultFunctionArrayConversion(LastExpr);
+      Ty = LastExpr->getType().getUnqualifiedType();
+
       if (!Ty->isDependentType() && !LastExpr->isTypeDependent()) {
         ExprResult Res = PerformCopyInitialization(
                             InitializedEntity::InitializeResult(LPLoc, 
@@ -8971,18 +9037,15 @@ bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
       return Diag(E->getLocStart(), diag::err_invalid_use_of_bound_member_func)
         << E->getSourceRange();
 
-    DefaultFunctionArrayLvalueConversion(E);
-
     QualType T = E->getType();
 
-    if (getLangOptions().CPlusPlus) {
-      if (CheckCXXBooleanCondition(E)) // C++ 6.4p4
-        return true;
-    } else if (!T->isScalarType()) { // C99 6.8.4.1p1
-      Diag(Loc, diag::err_typecheck_statement_requires_scalar)
-        << T << E->getSourceRange();
-      return true;
-    }
+    if (getLangOptions().CPlusPlus)
+      return CheckCXXBooleanCondition(E); // C++ 6.4p4
+
+    DefaultFunctionArrayLvalueConversion(E);
+    if (!T->isScalarType()) // C99 6.8.4.1p1
+      return Diag(Loc, diag::err_typecheck_statement_requires_scalar)
+               << T << E->getSourceRange();
   }
 
   return false;

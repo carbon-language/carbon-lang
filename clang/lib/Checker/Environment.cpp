@@ -53,7 +53,8 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
         QualType CT = C->getType();
         if (CT->isVoidType())
           return UnknownVal();
-        if (C->getCastKind() == CK_NoOp) {
+        if (C->getCastKind() == CK_NoOp ||
+            C->getCastKind() == CK_LValueToRValue) { // temporary workaround
           E = C->getSubExpr();
           continue;
         }

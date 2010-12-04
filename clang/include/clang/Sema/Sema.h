@@ -1579,6 +1579,7 @@ public:
                                    SourceLocation StartLoc,
                                    SourceLocation EndLoc);
   void ActOnForEachDeclStmt(DeclGroupPtrTy Decl);
+  StmtResult ActOnForEachLValueExpr(Expr *E);
   StmtResult ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
                                    SourceLocation DotDotDotLoc, Expr *RHSVal,
                                    SourceLocation ColonLoc);
@@ -3984,6 +3985,11 @@ public:
                          ExprValueKind VK = VK_RValue,
                          const CXXCastPath *BasePath = 0);
 
+  /// IgnoredValueConversions - Given that an expression's result is
+  /// syntactically ignored, perform any conversions that are
+  /// required.
+  void IgnoredValueConversions(Expr *&expr);
+
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1).
   Expr *UsualUnaryConversions(Expr *&expr);
@@ -4190,7 +4196,8 @@ public:
   QualType CheckAssignmentOperands( // C99 6.5.16.[1,2]
     Expr *lex, Expr *&rex, SourceLocation OpLoc, QualType convertedType);
   
-  void ConvertPropertyAssignment(Expr *LHS, Expr *&RHS, QualType& LHSTy);
+  void ConvertPropertyForRValue(Expr *&E);
+  void ConvertPropertyForLValue(Expr *&LHS, Expr *&RHS, QualType& LHSTy);
                                    
   QualType CheckConditionalOperands( // C99 6.5.15
     Expr *&cond, Expr *&lhs, Expr *&rhs, Expr *&save,

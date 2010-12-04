@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wno-unused-value -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -Wno-return-type -Wno-unused-value -emit-llvm %s -o - | FileCheck %s
 
 // CHECK: @i = common global [[INT:i[0-9]+]] 0
 volatile int i, j, k;
@@ -300,4 +300,14 @@ void test() {
   printf("s is at %p\n", &(s = s1));
   printf("s.x is at %p\n", &((s = s1).x));
 #endif
+}
+
+extern volatile enum X x;
+// CHECK: define void @test1()
+void test1() {
+  // CHECK-NEXT: :
+  // CHECK-NEXT: ret void
+  x;
+  (void) x;
+  return x;
 }

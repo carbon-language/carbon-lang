@@ -7,8 +7,8 @@ void f() {
 
   // Expressions.
   T(a)->m = 7;
-  int(a)++; // expected-error {{expression is not assignable}}
-  __extension__ int(a)++; // expected-error {{expression is not assignable}}
+  int(a)++; // expected-error {{assignment to cast is illegal}}
+  __extension__ int(a)++; // expected-error {{assignment to cast is illegal}}
   __typeof(int)(a,5)<<a; // expected-error {{excess elements in scalar initializer}}
   void(a), ++a;
   if (int(a)+1) {}

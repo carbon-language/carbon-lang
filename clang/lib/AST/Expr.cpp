@@ -824,6 +824,8 @@ const char *CastExpr::getCastKindName() const {
     return "LValueBitCast";
   case CK_LValueToRValue:
     return "LValueToRValue";
+  case CK_GetObjCProperty:
+    return "GetObjCProperty";
   case CK_NoOp:
     return "NoOp";
   case CK_BaseToDerived:
@@ -1722,6 +1724,24 @@ Expr *Expr::IgnoreParenCasts() {
   }
 }
 
+Expr *Expr::IgnoreParenLValueCasts() {
+  Expr *E = this;
+  while (E) {
+    if (ParenExpr *P = dyn_cast<ParenExpr>(E)) {
+      E = P->getSubExpr();
+      continue;
+    }
+    if (CastExpr *P = dyn_cast<CastExpr>(E)) {
+      if (P->getCastKind() == CK_LValueToRValue) {
+        E = P->getSubExpr();
+        continue;
+      }
+    }
+    break;
+  }
+  return E;
+}
+  
 Expr *Expr::IgnoreParenImpCasts() {
   Expr *E = this;
   while (true) {
@@ -2043,12 +2063,34 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx,
   return isIntegerConstantExpr(Result, Ctx) && Result == 0;
 }
 
+/// \brief If this expression is an l-value for an Objective C
+/// property, find the underlying property reference expression.
+const ObjCPropertyRefExpr *Expr::getObjCProperty() const {
+  const Expr *E = this;
+  while (true) {
+    assert((E->getValueKind() == VK_LValue &&
+            E->getObjectKind() == OK_ObjCProperty) &&
+           "expression is not a property reference");
+    E = E->IgnoreParenCasts();
+    if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+      if (BO->getOpcode() == BO_Comma) {
+        E = BO->getRHS();
+        continue;
+      }
+    }
+
+    break;
+  }
+
+  return cast<ObjCPropertyRefExpr>(E);
+}
+
 FieldDecl *Expr::getBitField() {
   Expr *E = this->IgnoreParens();
 
   while (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
-    if (ICE->getValueKind() != VK_RValue &&
-        ICE->getCastKind() == CK_NoOp)
+    if (ICE->getCastKind() == CK_LValueToRValue ||
+        (ICE->getValueKind() != VK_RValue && ICE->getCastKind() == CK_NoOp))
       E = ICE->getSubExpr()->IgnoreParens();
     else
       break;

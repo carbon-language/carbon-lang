@@ -59,6 +59,7 @@ void DereferenceChecker::AddDerefSource(llvm::raw_ostream &os,
                                      llvm::SmallVectorImpl<SourceRange> &Ranges,
                                         const Expr *Ex,
                                         bool loadedFrom) {
+  Ex = Ex->IgnoreParenLValueCasts();
   switch (Ex->getStmtClass()) {
     default:
       return;
