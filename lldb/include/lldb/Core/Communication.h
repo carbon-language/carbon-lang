@@ -109,7 +109,7 @@ public:
     ///     broadcaster name can be updated after the connect function
     ///     is called.
     //------------------------------------------------------------------
-    Communication(const char * broadcaster_name, bool close_on_eof);
+    Communication(const char * broadcaster_name);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -334,14 +334,24 @@ public:
     static const char *
     ConnectionStatusAsCString (lldb::ConnectionStatus status);
 
+    bool
+    GetCloseOnEOF () const
+    { 
+        return m_close_on_eof;
+    }
+
+    void
+    SetCloseOnEOF (bool b)
+    { 
+        m_close_on_eof = b;
+    }
+
 private:
     //------------------------------------------------------------------
     // For Communication only
     //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (Communication);
 
-    bool
-    CloseOnEOF ();
 
 protected:
     std::auto_ptr<Connection> m_connection_ap; ///< The connection that is current in use by this communications class.

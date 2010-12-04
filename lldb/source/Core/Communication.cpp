@@ -25,7 +25,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------
-Communication::Communication(const char *name, bool close_on_eof) :
+Communication::Communication(const char *name) :
     Broadcaster (name),
     m_connection_ap (),
     m_read_thread (LLDB_INVALID_HOST_THREAD),
@@ -34,7 +34,7 @@ Communication::Communication(const char *name, bool close_on_eof) :
     m_bytes_mutex (Mutex::eMutexTypeRecursive),
     m_callback (NULL),
     m_callback_baton (NULL),
-    m_close_on_eof (close_on_eof)
+    m_close_on_eof (true)
 
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT | LIBLLDB_LOG_COMMUNICATION,
@@ -288,12 +288,6 @@ Communication::ReadFromConnection (void *dst, size_t dst_len, ConnectionStatus &
     if (m_connection_ap.get())
         return m_connection_ap->Read (dst, dst_len, status, error_ptr);
     return 0;
-}
-
-bool
-Communication::CloseOnEOF ()
-{
-    return m_close_on_eof;
 }
 
 bool

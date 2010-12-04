@@ -32,7 +32,7 @@ using namespace lldb_private;
 // GDBRemoteCommunication constructor
 //----------------------------------------------------------------------
 GDBRemoteCommunication::GDBRemoteCommunication() :
-    Communication("gdb-remote.packets", true),
+    Communication("gdb-remote.packets"),
     m_send_acks (true),
     m_rx_packet_listener ("gdbremote.rx_packet"),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),

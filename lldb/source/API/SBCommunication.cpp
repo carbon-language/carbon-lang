@@ -24,8 +24,8 @@ SBCommunication::SBCommunication() :
 {
 }
 
-SBCommunication::SBCommunication(const char * broadcaster_name, bool close_on_eof) :
-    m_opaque (new Communication (broadcaster_name, close_on_eof)),
+SBCommunication::SBCommunication(const char * broadcaster_name) :
+    m_opaque (new Communication (broadcaster_name)),
     m_opaque_owned (true)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -41,6 +41,21 @@ SBCommunication::~SBCommunication()
         delete m_opaque;
     m_opaque = NULL;
     m_opaque_owned = false;
+}
+
+bool
+SBCommunication::GetCloseOnEOF ()
+{
+    if (m_opaque)
+        return m_opaque->GetCloseOnEOF ();
+    return false;
+}
+
+void
+SBCommunication::SetCloseOnEOF (bool b)
+{
+    if (m_opaque)
+        m_opaque->SetCloseOnEOF (b);
 }
 
 ConnectionStatus

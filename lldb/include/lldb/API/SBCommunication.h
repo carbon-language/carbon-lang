@@ -30,7 +30,7 @@ public:
     typedef void (*ReadThreadBytesReceived) (void *baton, const void *src, size_t src_len);
 
     SBCommunication ();
-    SBCommunication (const char * broadcaster_name, bool close_on_eof);
+    SBCommunication (const char * broadcaster_name);
    ~SBCommunication ();
 
 
@@ -57,6 +57,12 @@ public:
 
     bool
     IsConnected () const;
+
+    bool
+    GetCloseOnEOF ();
+
+    void
+    SetCloseOnEOF (bool b);
 
     size_t
     Read (void *dst,
