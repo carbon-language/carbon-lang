@@ -296,7 +296,7 @@ public:
   /// @returns true if this APInt is positive.
   /// @brief Determine if this APInt Value is positive.
   bool isStrictlyPositive() const {
-    return isNonNegative() && (*this) != 0;
+    return isNonNegative() && !!*this;
   }
 
   /// This checks to see if the value has all bits of the APInt are set or not.
@@ -324,15 +324,14 @@ public:
   /// value for the APInt's bit width.
   /// @brief Determine if this is the smallest unsigned value.
   bool isMinValue() const {
-    return countPopulation() == 0;
+    return !*this;
   }
 
   /// This checks to see if the value of this APInt is the minimum signed
   /// value for the APInt's bit width.
   /// @brief Determine if this is the smallest signed value.
   bool isMinSignedValue() const {
-    return BitWidth == 1 ? VAL == 1 :
-                           isNegative() && countPopulation() == 1;
+    return BitWidth == 1 ? VAL == 1 : isNegative() && isPowerOf2();
   }
 
   /// @brief Check if this APInt has an N-bits unsigned integer value.
@@ -355,7 +354,11 @@ public:
   }
 
   /// @returns true if the argument APInt value is a power of two > 0.
-  bool isPowerOf2() const;
+  bool isPowerOf2() const {
+    if (isSingleWord())
+      return isPowerOf2_64(VAL);
+    return countPopulationSlowCase() == 1;
+  }
 
   /// isSignBit - Return true if this is the value returned by getSignBit.
   bool isSignBit() const { return isMinSignedValue(); }
@@ -363,7 +366,7 @@ public:
   /// This converts the APInt to a boolean value as a test against zero.
   /// @brief Boolean conversion function.
   bool getBoolValue() const {
-    return *this != 0;
+    return !!*this;
   }
 
   /// getLimitedValue - If this value is smaller than the specified limit,

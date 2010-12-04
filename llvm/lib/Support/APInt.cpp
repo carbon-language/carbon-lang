@@ -759,10 +759,6 @@ APInt APInt::getLoBits(unsigned numBits) const {
                         BitWidth - numBits);
 }
 
-bool APInt::isPowerOf2() const {
-  return (!!*this) && !(*this & (*this - APInt(BitWidth,1)));
-}
-
 unsigned APInt::countLeadingZerosSlowCase() const {
   // Treat the most significand word differently because it might have
   // meaningless bits set beyond the precision.
