@@ -2356,10 +2356,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
       return getConstant(APInt(Val).zextOrTrunc(VT.getSizeInBits()), VT);
     case ISD::UINT_TO_FP:
     case ISD::SINT_TO_FP: {
-      const uint64_t zero[] = {0, 0};
       // No compile time operations on ppcf128.
       if (VT == MVT::ppcf128) break;
-      APFloat apf = APFloat(APInt(VT.getSizeInBits(), 2, zero));
+      APFloat apf(APInt::getNullValue(VT.getSizeInBits()));
       (void)apf.convertFromAPInt(Val,
                                  Opcode==ISD::SINT_TO_FP,
                                  APFloat::rmNearestTiesToEven);

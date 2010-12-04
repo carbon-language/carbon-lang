@@ -2679,8 +2679,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     SDValue True, False;
     EVT VT =  Node->getOperand(0).getValueType();
     EVT NVT = Node->getValueType(0);
-    const uint64_t zero[] = {0, 0};
-    APFloat apf = APFloat(APInt(VT.getSizeInBits(), 2, zero));
+    APFloat apf(APInt::getNullValue(VT.getSizeInBits()));
     APInt x = APInt::getSignBit(NVT.getSizeInBits());
     (void)apf.convertFromAPInt(x, false, APFloat::rmNearestTiesToEven);
     Tmp1 = DAG.getConstantFP(apf, VT);

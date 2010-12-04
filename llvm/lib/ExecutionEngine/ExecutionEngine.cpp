@@ -564,8 +564,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       else if (CE->getType()->isDoubleTy())
         GV.DoubleVal = GV.IntVal.roundToDouble();
       else if (CE->getType()->isX86_FP80Ty()) {
-        const uint64_t zero[] = {0, 0};
-        APFloat apf = APFloat(APInt(80, 2, zero));
+        APFloat apf = APFloat::getZero(APFloat::x87DoubleExtended);
         (void)apf.convertFromAPInt(GV.IntVal,
                                    false,
                                    APFloat::rmNearestTiesToEven);
@@ -580,8 +579,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       else if (CE->getType()->isDoubleTy())
         GV.DoubleVal = GV.IntVal.signedRoundToDouble();
       else if (CE->getType()->isX86_FP80Ty()) {
-        const uint64_t zero[] = { 0, 0};
-        APFloat apf = APFloat(APInt(80, 2, zero));
+        APFloat apf = APFloat::getZero(APFloat::x87DoubleExtended);
         (void)apf.convertFromAPInt(GV.IntVal,
                                    true,
                                    APFloat::rmNearestTiesToEven);
