@@ -1361,12 +1361,20 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
 
   if (!PropParentMap)
     PropParentMap = new ParentMap(CurrentBody);
-
+  bool NestedPropertyRef = false;
   Stmt *Parent = PropParentMap->getParent(PropOrGetterRefExpr);
-  if (Parent && isa<ObjCPropertyRefExpr>(Parent)) {
+  ImplicitCastExpr*ICE=0;
+  if (Parent)
+    if ((ICE = dyn_cast<ImplicitCastExpr>(Parent))) {
+      assert((ICE->getCastKind() == CK_GetObjCProperty)
+             && "RewritePropertyOrImplicitGetter");
+      Parent = PropParentMap->getParent(Parent);
+      NestedPropertyRef = (Parent && isa<ObjCPropertyRefExpr>(Parent));
+    }
+  if (NestedPropertyRef) {
     // We stash away the ReplacingStmt since actually doing the
     // replacement/rewrite won't work for nested getters (e.g. obj.p.i)
-    PropGetters[PropOrGetterRefExpr] = ReplacingStmt;
+    PropGetters[ICE] = ReplacingStmt;
     // NOTE: We don't want to call MsgExpr->Destroy(), as it holds references
     // to things that stay around.
     Context->Deallocate(MsgExpr);
