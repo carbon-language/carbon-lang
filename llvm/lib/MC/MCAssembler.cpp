@@ -122,10 +122,6 @@ void MCAsmLayout::ReplaceFragment(MCFragment *Src, MCFragment *Dst) {
   // Set the data fragment's layout data.
   Dst->setParent(Src->getParent());
   Dst->setAtom(Src->getAtom());
-  Dst->setLayoutOrder(Src->getLayoutOrder());
-
-  if (LastValidFragment == Src)
-    LastValidFragment = Dst;
 
   Dst->Offset = Src->Offset;
   Dst->EffectiveSize = Src->EffectiveSize;
@@ -136,15 +132,7 @@ void MCAsmLayout::ReplaceFragment(MCFragment *Src, MCFragment *Dst) {
 
 void MCAsmLayout::CoalesceFragments(MCFragment *Src, MCFragment *Dst) {
   assert(Src->getPrevNode() == Dst);
-
-  if (isFragmentUpToDate(Src)) {
-    if (LastValidFragment == Src)
-      LastValidFragment = Dst;
-    Dst->EffectiveSize += Src->EffectiveSize;
-  } else {
-    // We don't know the effective size of Src, so we have to invalidate Dst.
-    Invalidate(Dst);
-  }
+  Dst->EffectiveSize += Src->EffectiveSize;
   // Remove Src, but don't delete it yet.
   Src->getParent()->getFragmentList().remove(Src);
 }
@@ -907,6 +895,10 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
   // cheap (we will mostly end up eliminating fragments and appending on to data
   // fragments), so the extra complexity downstream isn't worth it. Evaluate
   // this assumption.
+
+  // The layout is done. Mark every fragment as valid.
+  Layout.getFragmentOffset(&*Layout.getSectionOrder().back()->rbegin());
+
   unsigned FragmentIndex = 0;
   for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i) {
     MCSectionData &SD = *Layout.getSectionOrder()[i];
