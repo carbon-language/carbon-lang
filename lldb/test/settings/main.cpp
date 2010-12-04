@@ -30,10 +30,27 @@ main(int argc, char const *argv[])
             outfile << "argv[3] matches\n";
     }
 
+    // For passing environment vars from the debugger to the launched process.
     if (::getenv("MY_ENV_VAR")) {
         std::string MY_ENV_VAR(getenv("MY_ENV_VAR"));
         if ("YES" == MY_ENV_VAR) {
             outfile << "Environment variable 'MY_ENV_VAR' successfully passed.\n";
+        }
+    }
+
+
+    // For passing host environment vars to the launched process.
+    if (::getenv("MY_HOST_ENV_VAR1")) {
+        std::string MY_HOST_ENV_VAR1(getenv("MY_HOST_ENV_VAR1"));
+        if ("VAR1" == MY_HOST_ENV_VAR1) {
+            outfile << "The host environment variable 'MY_HOST_ENV_VAR1' successfully passed.\n";
+        }
+    }
+
+    if (::getenv("MY_HOST_ENV_VAR2")) {
+        std::string MY_HOST_ENV_VAR2(getenv("MY_HOST_ENV_VAR2"));
+        if ("VAR2" == MY_HOST_ENV_VAR2) {
+            outfile << "The host environment variable 'MY_HOST_ENV_VAR2' successfully passed.\n";
         }
     }
 

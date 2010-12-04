@@ -108,6 +108,31 @@ class SettingsCommandTestCase(TestBase):
                        "argv[3] matches",
                        "Environment variable 'MY_ENV_VAR' successfully passed."])
 
+    def test_pass_host_env_vars(self):
+        """Test that the host env vars are passed to the launched process."""
+        self.buildDefault()
+
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # By default, inherit-env is 'true'.
+        self.expect('settings show target.process.inherit-env', "Default inherit-env is 'true'",
+            startstr = "target.process.inherit-env (boolean) = 'true'")
+
+        # Set some host environment variables now.
+        os.environ["MY_HOST_ENV_VAR1"] = "VAR1"
+        os.environ["MY_HOST_ENV_VAR2"] = "VAR2"
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # Read the output file produced by running the program.
+        with open('output.txt', 'r') as f:
+            output = f.read()
+
+        self.expect(output, exe=False,
+            substrs = ["The host environment variable 'MY_HOST_ENV_VAR1' successfully passed.",
+                       "The host environment variable 'MY_HOST_ENV_VAR2' successfully passed."])
+
     @unittest2.expectedFailure
     # rdar://problem/8435794
     # settings set target.process.output-path does not seem to work
