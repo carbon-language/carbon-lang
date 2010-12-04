@@ -436,8 +436,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           CXXBaseOrMemberInitializer * BMInitializer = (*B);
           if (B != CDecl->init_begin())
             Out << ", ";
-          if (BMInitializer->isMemberInitializer()) {
-            FieldDecl *FD = BMInitializer->getMember();
+          if (BMInitializer->isAnyMemberInitializer()) {
+            FieldDecl *FD = BMInitializer->getAnyMember();
             Out << FD;
           } else {
             Out << QualType(BMInitializer->getBaseClass(),

@@ -217,6 +217,12 @@ public:
     return InitializedEntity(Member, Parent);
   }
   
+  /// \brief Create the initialization entity for a member subobject.
+  static InitializedEntity InitializeMember(IndirectFieldDecl *Member,
+                                      const InitializedEntity *Parent = 0) {
+    return InitializedEntity(Member->getAnonField(), Parent);
+  }
+
   /// \brief Create the initialization entity for an array element.
   static InitializedEntity InitializeElement(ASTContext &Context, 
                                              unsigned Index, 

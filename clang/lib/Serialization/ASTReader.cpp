@@ -4270,18 +4270,21 @@ ASTReader::ReadCXXBaseOrMemberInitializers(PerFileData &F,
       TypeSourceInfo *BaseClassInfo = 0;
       bool IsBaseVirtual = false;
       FieldDecl *Member = 0;
+      IndirectFieldDecl *IndirectMember = 0;
 
       bool IsBaseInitializer = Record[Idx++];
       if (IsBaseInitializer) {
         BaseClassInfo = GetTypeSourceInfo(F, Record, Idx);
         IsBaseVirtual = Record[Idx++];
       } else {
-        Member = cast<FieldDecl>(GetDecl(Record[Idx++]));
+        bool IsIndirectMemberInitializer = Record[Idx++];
+        if (IsIndirectMemberInitializer)
+          IndirectMember = cast<IndirectFieldDecl>(GetDecl(Record[Idx++]));
+        else
+          Member = cast<FieldDecl>(GetDecl(Record[Idx++]));
       }
       SourceLocation MemberLoc = ReadSourceLocation(F, Record, Idx);
       Expr *Init = ReadExpr(F);
-      FieldDecl *AnonUnionMember
-          = cast_or_null<FieldDecl>(GetDecl(Record[Idx++]));
       SourceLocation LParenLoc = ReadSourceLocation(F, Record, Idx);
       SourceLocation RParenLoc = ReadSourceLocation(F, Record, Idx);
       bool IsWritten = Record[Idx++];
@@ -4302,8 +4305,14 @@ ASTReader::ReadCXXBaseOrMemberInitializers(PerFileData &F,
                                                      IsBaseVirtual, LParenLoc,
                                                      Init, RParenLoc);
       } else if (IsWritten) {
-        BOMInit = new (C) CXXBaseOrMemberInitializer(C, Member, MemberLoc,
-                                                     LParenLoc, Init, RParenLoc);
+        if (Member)
+          BOMInit = new (C) CXXBaseOrMemberInitializer(C, Member, MemberLoc,
+                                                       LParenLoc, Init,
+                                                       RParenLoc);
+        else 
+          BOMInit = new (C) CXXBaseOrMemberInitializer(C, IndirectMember,
+                                                       MemberLoc, LParenLoc,
+                                                       Init, RParenLoc);
       } else {
         BOMInit = CXXBaseOrMemberInitializer::Create(C, Member, MemberLoc,
                                                      LParenLoc, Init, RParenLoc,
@@ -4313,7 +4322,6 @@ ASTReader::ReadCXXBaseOrMemberInitializers(PerFileData &F,
 
       if (IsWritten)
         BOMInit->setSourceOrder(SourceOrderOrNumArrayIndices);
-      BOMInit->setAnonUnionMember(AnonUnionMember);
       BaseOrMemberInitializers[i] = BOMInit;
     }
   }

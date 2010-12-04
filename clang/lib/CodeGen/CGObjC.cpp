@@ -432,7 +432,7 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
   if (ctor) {
     for (unsigned I = 0, E = IvarInitializers.size(); I != E; ++I) {
       CXXBaseOrMemberInitializer *IvarInit = IvarInitializers[I];
-      FieldDecl *Field = IvarInit->getMember();
+      FieldDecl *Field = IvarInit->getAnyMember();
       QualType FieldType = Field->getType();
       ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
       LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
@@ -448,7 +448,7 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
   } else {
     // dtor
     for (size_t i = IvarInitializers.size(); i > 0; --i) {
-      FieldDecl *Field = IvarInitializers[i - 1]->getMember();
+      FieldDecl *Field = IvarInitializers[i - 1]->getAnyMember();
       QualType FieldType = Field->getType();
       const ConstantArrayType *Array = 
         getContext().getAsConstantArrayType(FieldType);

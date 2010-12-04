@@ -512,21 +512,21 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
                                   CXXBaseOrMemberInitializer *MemberInit,
                                   const CXXConstructorDecl *Constructor,
                                   FunctionArgList &Args) {
-  assert(MemberInit->isMemberInitializer() &&
+  assert(MemberInit->isAnyMemberInitializer() &&
          "Must have member initializer!");
   
   // non-static data member initializers.
-  FieldDecl *Field = MemberInit->getMember();
+  FieldDecl *Field = MemberInit->getAnyMember();
   QualType FieldType = CGF.getContext().getCanonicalType(Field->getType());
 
   llvm::Value *ThisPtr = CGF.LoadCXXThis();
   LValue LHS;
   
   // If we are initializing an anonymous union field, drill down to the field.
-  if (MemberInit->getAnonUnionMember()) {
-    Field = MemberInit->getAnonUnionMember();
-    LHS = CGF.EmitLValueForAnonRecordField(ThisPtr, Field, 0);
-    FieldType = Field->getType();
+  if (MemberInit->isIndirectMemberInitializer()) {
+    LHS = CGF.EmitLValueForAnonRecordField(ThisPtr,
+                                           MemberInit->getIndirectMember(), 0);
+    FieldType = MemberInit->getIndirectMember()->getAnonField()->getType();
   } else {
     LHS = CGF.EmitLValueForFieldInitialization(ThisPtr, Field, 0);
   }

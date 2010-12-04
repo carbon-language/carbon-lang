@@ -1070,16 +1070,16 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
     if (Result.first != Result.second) {
       Member = dyn_cast<FieldDecl>(*Result.first);
     
-	  // Handle anonymous union case.
-	  if (!Member)
-      if (IndirectFieldDecl* IndirectField
-          = dyn_cast<IndirectFieldDecl>(*Result.first))
-        Member = IndirectField->getAnonField();
-    }
-
-    if (Member)
-      return BuildMemberInitializer(Member, (Expr**)Args, NumArgs, IdLoc,
+      if (Member)
+        return BuildMemberInitializer(Member, (Expr**)Args, NumArgs, IdLoc,
                                     LParenLoc, RParenLoc);
+      // Handle anonymous union case.
+      if (IndirectFieldDecl* IndirectField
+            = dyn_cast<IndirectFieldDecl>(*Result.first))
+         return BuildMemberInitializer(IndirectField, (Expr**)Args,
+                                       NumArgs, IdLoc,
+                                       LParenLoc, RParenLoc);
+    }
   }
   // It didn't name a member, so see if it names a class.
   QualType BaseType;
@@ -1195,8 +1195,10 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
 /// uninitialized field was used an updates the SourceLocation parameter; false
 /// otherwise.
 static bool InitExprContainsUninitializedFields(const Stmt *S,
-                                                const FieldDecl *LhsField,
+                                                const ValueDecl *LhsField,
                                                 SourceLocation *L) {
+  assert(isa<FieldDecl>(LhsField) || isa<IndirectFieldDecl>(LhsField));
+
   if (isa<CallExpr>(S)) {
     // Do not descend into function calls or constructors, as the use
     // of an uninitialized field may be valid. One would have to inspect
@@ -1257,11 +1259,15 @@ static bool InitExprContainsUninitializedFields(const Stmt *S,
   return false;
 }
 
+template <typename T>
 MemInitResult
-Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
+Sema::BuildMemberInitializer(T *Member, Expr **Args,
                              unsigned NumArgs, SourceLocation IdLoc,
                              SourceLocation LParenLoc,
                              SourceLocation RParenLoc) {
+  assert((isa<FieldDecl>(Member) || isa<IndirectFieldDecl>(Member)) ||
+         "Member must be a FieldDecl or IndirectFieldDecl");
+
   if (Member->isInvalidDecl())
     return true;
   
@@ -1750,26 +1756,12 @@ struct BaseAndFieldInfo {
 };
 }
 
-static void RecordFieldInitializer(BaseAndFieldInfo &Info,
-                                   FieldDecl *Top, FieldDecl *Field,
-                                   CXXBaseOrMemberInitializer *Init) {
-  // If the member doesn't need to be initialized, Init will still be null.
-  if (!Init)
-    return;
-
-  Info.AllToInit.push_back(Init);
-  if (Field != Top) {
-    Init->setMember(Top);
-    Init->setAnonUnionMember(Field);
-  }
-}
-
 static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
                                     FieldDecl *Top, FieldDecl *Field) {
 
   // Overwhelmingly common case: we have a direct initializer for this field.
   if (CXXBaseOrMemberInitializer *Init = Info.AllBaseFields.lookup(Field)) {
-    RecordFieldInitializer(Info, Top, Field, Init);
+    Info.AllToInit.push_back(Init);
     return false;
   }
 
@@ -1789,7 +1781,7 @@ static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
       for (RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
            EA = FieldClassDecl->field_end(); FA != EA; FA++) {
         if (CXXBaseOrMemberInitializer *Init = Info.AllBaseFields.lookup(*FA)) {
-          RecordFieldInitializer(Info, Top, *FA, Init);
+          Info.AllToInit.push_back(Init);
 
           // Once we've initialized a field of an anonymous union, the union
           // field in the class is also initialized, so exit immediately.
@@ -1826,7 +1818,9 @@ static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
   if (BuildImplicitMemberInitializer(Info.S, Info.Ctor, Info.IIK, Field, Init))
     return true;
 
-  RecordFieldInitializer(Info, Top, Field, Init);
+  if (Init)
+    Info.AllToInit.push_back(Init);
+
   return false;
 }
                                
@@ -1866,7 +1860,7 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     if (Member->isBaseInitializer())
       Info.AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
     else
-      Info.AllBaseFields[Member->getMember()] = Member;
+      Info.AllBaseFields[Member->getAnyMember()] = Member;
   }
 
   // Keep track of the direct virtual bases.
@@ -1965,21 +1959,14 @@ static void *GetKeyForBase(ASTContext &Context, QualType BaseType) {
 }
 
 static void *GetKeyForMember(ASTContext &Context,
-                             CXXBaseOrMemberInitializer *Member,
-                             bool MemberMaybeAnon = false) {
-  if (!Member->isMemberInitializer())
+                             CXXBaseOrMemberInitializer *Member) {
+  if (!Member->isAnyMemberInitializer())
     return GetKeyForBase(Context, QualType(Member->getBaseClass(), 0));
     
   // For fields injected into the class via declaration of an anonymous union,
   // use its anonymous union class declaration as the unique key.
-  FieldDecl *Field = Member->getMember();
-
-  // After SetBaseOrMemberInitializers call, Field is the anonymous union
-  // data member of the class. Data member used in the initializer list is
-  // in AnonUnionMember field.
-  if (MemberMaybeAnon && Field->isAnonymousStructOrUnion())
-    Field = Member->getAnonUnionMember();
-  
+  FieldDecl *Field = Member->getAnyMember();
+ 
   // If the field is a member of an anonymous struct or union, our key
   // is the anonymous record decl that's a direct child of the class.
   RecordDecl *RD = Field->getParent();
@@ -2042,7 +2029,7 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
   CXXBaseOrMemberInitializer *PrevInit = 0;
   for (unsigned InitIndex = 0; InitIndex != NumInits; ++InitIndex) {
     CXXBaseOrMemberInitializer *Init = Inits[InitIndex];
-    void *InitKey = GetKeyForMember(SemaRef.Context, Init, true);
+    void *InitKey = GetKeyForMember(SemaRef.Context, Init);
 
     // Scan forward to try to find this initializer in the idealized
     // initializers list.
@@ -2058,13 +2045,13 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
         SemaRef.Diag(PrevInit->getSourceLocation(),
                      diag::warn_initializer_out_of_order);
 
-      if (PrevInit->isMemberInitializer())
-        D << 0 << PrevInit->getMember()->getDeclName();
+      if (PrevInit->isAnyMemberInitializer())
+        D << 0 << PrevInit->getAnyMember()->getDeclName();
       else
         D << 1 << PrevInit->getBaseClassInfo()->getType();
       
-      if (Init->isMemberInitializer())
-        D << 0 << Init->getMember()->getDeclName();
+      if (Init->isAnyMemberInitializer())
+        D << 0 << Init->getAnyMember()->getDeclName();
       else
         D << 1 << Init->getBaseClassInfo()->getType();
 
@@ -2115,7 +2102,7 @@ typedef llvm::DenseMap<RecordDecl*, UnionEntry> RedundantUnionMap;
 bool CheckRedundantUnionInit(Sema &S,
                              CXXBaseOrMemberInitializer *Init,
                              RedundantUnionMap &Unions) {
-  FieldDecl *Field = Init->getMember();
+  FieldDecl *Field = Init->getAnyMember();
   RecordDecl *Parent = Field->getParent();
   if (!Parent->isAnonymousStructOrUnion())
     return false;
@@ -2182,8 +2169,8 @@ void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
     // Set the source order index.
     Init->setSourceOrder(i);
 
-    if (Init->isMemberInitializer()) {
-      FieldDecl *Field = Init->getMember();
+    if (Init->isAnyMemberInitializer()) {
+      FieldDecl *Field = Init->getAnyMember();
       if (CheckRedundantInit(*this, Init, Members[Field]) ||
           CheckRedundantUnionInit(*this, Init, MemberUnions))
         HadError = true;

@@ -1108,9 +1108,9 @@ public:
 /// };
 /// @endcode
 class CXXBaseOrMemberInitializer {
-  /// \brief Either the base class name (stored as a TypeSourceInfo*) or the
-  /// field being initialized.
-  llvm::PointerUnion<TypeSourceInfo *, FieldDecl *> BaseOrMember;
+  /// \brief Either the base class name (stored as a TypeSourceInfo*), an normal
+  /// field (FieldDecl) or an anonymous field (IndirectFieldDecl*) being initialized.
+  llvm::PointerUnion3<TypeSourceInfo *, FieldDecl *, IndirectFieldDecl *> BaseOrMember;
   
   /// \brief The source location for the field name.
   SourceLocation MemberLocation;
@@ -1118,26 +1118,6 @@ class CXXBaseOrMemberInitializer {
   /// \brief The argument used to initialize the base or member, which may
   /// end up constructing an object (when multiple arguments are involved).
   Stmt *Init;
-
-  /// \brief Stores either the constructor to call to initialize this base or
-  /// member (a CXXConstructorDecl pointer), or stores the anonymous union of
-  /// which the initialized value is a member.
-  ///
-  /// When the value is a FieldDecl pointer, 'BaseOrMember' is class's
-  /// anonymous union data member, this field holds the FieldDecl for the
-  /// member of the anonymous union being initialized.
-  /// @code
-  /// struct X {
-  ///   X() : au_i1(123) {}
-  ///   union {
-  ///     int au_i1;
-  ///     float au_f1;
-  ///   };
-  /// };
-  /// @endcode
-  /// In above example, BaseOrMember holds the field decl. for anonymous union
-  /// and AnonUnionMember holds field decl for au_i1.
-  FieldDecl *AnonUnionMember;
   
   /// LParenLoc - Location of the left paren of the ctor-initializer.
   SourceLocation LParenLoc;
@@ -1152,6 +1132,7 @@ class CXXBaseOrMemberInitializer {
   /// IsWritten - Whether or not the initializer is explicitly written
   /// in the sources.
   bool IsWritten : 1;
+
   /// SourceOrderOrNumArrayIndices - If IsWritten is true, then this
   /// number keeps track of the textual order of this initializer in the
   /// original sources, counting from 0; otherwise, if IsWritten is false,
@@ -1184,6 +1165,14 @@ public:
                              Expr *Init,
                              SourceLocation R);
 
+  explicit
+  CXXBaseOrMemberInitializer(ASTContext &Context,
+                             IndirectFieldDecl *Member,
+                             SourceLocation MemberLoc,
+                             SourceLocation L,
+                             Expr *Init,
+                             SourceLocation R);
+
   /// \brief Creates a new member initializer that optionally contains 
   /// array indices used to describe an elementwise initialization.
   static CXXBaseOrMemberInitializer *Create(ASTContext &Context,
@@ -1202,6 +1191,14 @@ public:
   /// isMemberInitializer - Returns true when this initializer is
   /// initializing a non-static data member.
   bool isMemberInitializer() const { return BaseOrMember.is<FieldDecl*>(); }
+
+  bool isAnyMemberInitializer() const { 
+    return isMemberInitializer() || isIndirectMemberInitializer();
+  }
+
+  bool isIndirectMemberInitializer() const {
+    return BaseOrMember.is<IndirectFieldDecl*>();
+  }
 
   /// If this is a base class initializer, returns the type of the 
   /// base class with location information. Otherwise, returns an NULL
@@ -1234,14 +1231,24 @@ public:
     else
       return 0;
   }
+  FieldDecl *getAnyMember() const {
+    if (isMemberInitializer())
+      return BaseOrMember.get<FieldDecl*>();
+    else if (isIndirectMemberInitializer())
+      return BaseOrMember.get<IndirectFieldDecl*>()->getAnonField();
+    else
+      return 0;
+  }
+
+  IndirectFieldDecl *getIndirectMember() const {
+    if (isIndirectMemberInitializer())
+      return BaseOrMember.get<IndirectFieldDecl*>();
+    else
+      return 0;
+  }
 
   SourceLocation getMemberLocation() const { 
     return MemberLocation;
-  }
-
-  void setMember(FieldDecl *Member) {
-    assert(isMemberInitializer());
-    BaseOrMember = Member;
   }
   
   /// \brief Determine the source location of the initializer.
@@ -1273,15 +1280,7 @@ public:
     IsWritten = true;
     SourceOrderOrNumArrayIndices = static_cast<unsigned>(pos);
   }
-  
-  FieldDecl *getAnonUnionMember() const {
-    return AnonUnionMember;
-  }
-  void setAnonUnionMember(FieldDecl *anonMember) {
-    AnonUnionMember = anonMember;
-  }
 
-  
   SourceLocation getLParenLoc() const { return LParenLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
 

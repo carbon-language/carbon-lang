@@ -3608,7 +3608,8 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
       InitializedBases.insert(
         Context.getCanonicalType(QualType(Initializers[I]->getBaseClass(), 0)));
     else
-      InitializedFields.insert(cast<FieldDecl>(Initializers[I]->getMember()));
+      InitializedFields.insert(cast<FieldDecl>(
+                               Initializers[I]->getAnyMember()));
   }
   
   // Add completions for base classes.
@@ -3670,8 +3671,8 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
     if (!InitializedFields.insert(cast<FieldDecl>(Field->getCanonicalDecl()))) {
       SawLastInitializer
         = NumInitializers > 0 && 
-          Initializers[NumInitializers - 1]->isMemberInitializer() &&
-          Initializers[NumInitializers - 1]->getMember() == *Field;
+          Initializers[NumInitializers - 1]->isAnyMemberInitializer() &&
+          Initializers[NumInitializers - 1]->getAnyMember() == *Field;
       continue;
     }
     

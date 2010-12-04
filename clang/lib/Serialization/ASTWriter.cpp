@@ -3255,11 +3255,15 @@ void ASTWriter::AddCXXBaseOrMemberInitializers(
       AddTypeSourceInfo(Init->getBaseClassInfo(), Record);
       Record.push_back(Init->isBaseVirtual());
     } else {
-      AddDeclRef(Init->getMember(), Record);
+      Record.push_back(Init->isIndirectMemberInitializer());
+      if (Init->isIndirectMemberInitializer())
+        AddDeclRef(Init->getIndirectMember(), Record);
+      else
+        AddDeclRef(Init->getMember(), Record);
     }
+
     AddSourceLocation(Init->getMemberLocation(), Record);
     AddStmt(Init->getInit());
-    AddDeclRef(Init->getAnonUnionMember(), Record);
     AddSourceLocation(Init->getLParenLoc(), Record);
     AddSourceLocation(Init->getRParenLoc(), Record);
     Record.push_back(Init->isWritten());

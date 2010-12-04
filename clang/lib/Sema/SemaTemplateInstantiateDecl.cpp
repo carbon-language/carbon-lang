@@ -2341,18 +2341,23 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                                      Init->getRParenLoc(),
                                      New->getParent());
     } else if (Init->isMemberInitializer()) {
-      FieldDecl *Member;
-
-      // Is this an anonymous union?
-      if (FieldDecl *UnionInit = Init->getAnonUnionMember())
-        Member = cast<FieldDecl>(FindInstantiatedDecl(Init->getMemberLocation(),
-                                                      UnionInit, TemplateArgs));
-      else
-        Member = cast<FieldDecl>(FindInstantiatedDecl(Init->getMemberLocation(),
-                                                      Init->getMember(),
-                                                      TemplateArgs));
+      FieldDecl *Member = cast<FieldDecl>(FindInstantiatedDecl(
+                                                     Init->getMemberLocation(),
+                                                     Init->getMember(),
+                                                     TemplateArgs));
 
       NewInit = BuildMemberInitializer(Member, (Expr **)NewArgs.data(),
+                                       NewArgs.size(),
+                                       Init->getSourceLocation(),
+                                       Init->getLParenLoc(),
+                                       Init->getRParenLoc());
+    } else if (Init->isIndirectMemberInitializer()) {
+      IndirectFieldDecl *IndirectMember =
+         cast<IndirectFieldDecl>(FindInstantiatedDecl(
+                                 Init->getMemberLocation(),
+                                 Init->getIndirectMember(), TemplateArgs));
+
+      NewInit = BuildMemberInitializer(IndirectMember, (Expr **)NewArgs.data(),
                                        NewArgs.size(),
                                        Init->getSourceLocation(),
                                        Init->getLParenLoc(),

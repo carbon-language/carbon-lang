@@ -740,8 +740,8 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
       // Visit the initializers in source order
       for (unsigned I = 0, N = WrittenInits.size(); I != N; ++I) {
         CXXBaseOrMemberInitializer *Init = WrittenInits[I];
-        if (Init->isMemberInitializer()) {
-          if (Visit(MakeCursorMemberRef(Init->getMember(), 
+        if (Init->isAnyMemberInitializer()) {
+          if (Visit(MakeCursorMemberRef(Init->getAnyMember(),
                                         Init->getMemberLocation(), TU)))
             return true;
         } else if (TypeSourceInfo *BaseInfo = Init->getBaseClassInfo()) {

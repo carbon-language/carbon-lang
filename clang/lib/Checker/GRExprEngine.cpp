@@ -687,7 +687,7 @@ void GRExprEngine::ProcessInitializer(const CFGInitializer Init,
   ExplodedNode *Pred = builder.getBasePredecessor();
   const LocationContext *LC = Pred->getLocationContext();
 
-  if (BMI->isMemberInitializer()) {
+  if (BMI->isAnyMemberInitializer()) {
     ExplodedNodeSet Dst;
 
     // Evaluate the initializer.
@@ -697,7 +697,7 @@ void GRExprEngine::ProcessInitializer(const CFGInitializer Init,
       ExplodedNode *Pred = *I;
       const GRState *state = Pred->getState();
 
-      const FieldDecl *FD = BMI->getMember();
+      const FieldDecl *FD = BMI->getAnyMember();
       const RecordDecl *RD = FD->getParent();
       const CXXThisRegion *ThisR = getCXXThisRegion(cast<CXXRecordDecl>(RD),
                            cast<StackFrameContext>(LC));
