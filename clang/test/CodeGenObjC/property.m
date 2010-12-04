@@ -77,3 +77,15 @@ void test2() {
   // CHECK-NEXT: call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i32)*)(i8* [[BASETMP]], i8* [[SEL]], i32 [[ADD]])
   test2_helper().dyn *= 10;
 }
+
+// Test aggregate initialization from property reads.
+// Not crashing is good enough for the property-specific test.
+struct test3_struct { int x,y,z; };
+struct test3_nested { struct test3_struct t; };
+@interface test3_object
+@property struct test3_struct s;
+@end
+void test3(test3_object *p) {
+  struct test3_struct array[1] = { p.s };
+  struct test3_nested agg = { p.s };
+}
