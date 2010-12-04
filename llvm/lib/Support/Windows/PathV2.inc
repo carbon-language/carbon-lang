@@ -70,7 +70,7 @@ namespace {
   error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
                                SmallVectorImpl<char> &utf8) {
     // Get length.
-    int len = ::WideCharToMultiByte(CP_UTF8, NULL,
+    int len = ::WideCharToMultiByte(CP_UTF8, 0,
                                     utf16, utf16_len,
                                     utf8.begin(), 0,
                                     NULL, NULL);
@@ -82,7 +82,7 @@ namespace {
     utf8.set_size(len);
 
     // Now do the actual conversion.
-    len = ::WideCharToMultiByte(CP_UTF8, NULL,
+    len = ::WideCharToMultiByte(CP_UTF8, 0,
                                 utf16, utf16_len,
                                 utf8.data(), utf8.size(),
                                 NULL, NULL);
@@ -151,7 +151,7 @@ retry_cur_dir:
   // Find out how much space we need. Sadly, this function doesn't return the
   // size needed unless you tell it the result size is 0, which means you
   // _always_ have to call it twice.
-  len = ::WideCharToMultiByte(CP_UTF8, NULL,
+  len = ::WideCharToMultiByte(CP_UTF8, 0,
                               cur_path.data(), cur_path.size(),
                               result.data(), 0,
                               NULL, NULL);
@@ -162,7 +162,7 @@ retry_cur_dir:
   result.reserve(len);
   result.set_size(len);
   // Now do the actual conversion.
-  len = ::WideCharToMultiByte(CP_UTF8, NULL,
+  len = ::WideCharToMultiByte(CP_UTF8, 0,
                               cur_path.data(), cur_path.size(),
                               result.data(), result.size(),
                               NULL, NULL);
@@ -255,7 +255,7 @@ error_code create_symlink(const Twine &to, const Twine &from) {
   if (error_code ec = UTF8ToUTF16(f, wide_from)) return ec;
   if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
 
-  if (!create_symbolic_link_api(wide_from.begin(), wide_to.begin(), NULL))
+  if (!create_symbolic_link_api(wide_from.begin(), wide_to.begin(), 0))
     return make_error_code(windows_error(::GetLastError()));
 
   return make_error_code(errc::success);
@@ -460,7 +460,7 @@ error_code unique_file(const Twine &model, int &result_fd,
                                         NULL,
                                         NULL,
                                         PROV_RSA_FULL,
-                                        NULL);
+                                        0);
   if (!success)
     return make_error_code(windows_error(::GetLastError()));
 
