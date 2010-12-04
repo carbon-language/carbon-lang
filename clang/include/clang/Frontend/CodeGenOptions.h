@@ -75,6 +75,7 @@ public:
   unsigned UnitAtATime       : 1; /// Unused. For mirroring GCC optimization
                                   /// selection.
   unsigned UnrollLoops       : 1; /// Control whether loops are unrolled.
+  unsigned UnsafeFPMath      : 1; /// Allow unsafe floating point optzns.
   unsigned UnwindTables      : 1; /// Emit unwind tables.
   unsigned VerifyModule      : 1; /// Control whether the module should be run
                                   /// through the LLVM Verifier.
@@ -139,6 +140,7 @@ public:
     TimePasses = 0;
     UnitAtATime = 1;
     UnrollLoops = 0;
+    UnsafeFPMath = 0;
     UnwindTables = 0;
     VerifyModule = 1;
 

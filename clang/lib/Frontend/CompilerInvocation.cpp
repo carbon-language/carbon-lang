@@ -903,6 +903,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.RelaxAll = Args.hasArg(OPT_mrelax_all);
   Opts.OmitLeafFramePointer = Args.hasArg(OPT_momit_leaf_frame_pointer);
   Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
+  Opts.UnsafeFPMath = Args.hasArg(OPT_cl_unsafe_math_optimizations);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = Args.getLastArgValue(OPT_mrelocation_model, "pic");
 

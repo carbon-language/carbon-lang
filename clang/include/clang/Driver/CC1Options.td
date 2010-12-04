@@ -603,3 +603,5 @@ def cl_single_precision_constant : Flag<"-cl-single-precision-constant">,
   HelpText<"OpenCL only. Treat double precision floating-point constant as single precision constant.">;
 def cl_finite_math_only : Flag<"-cl-finite-math-only">,
   HelpText<"OpenCL only. Allow floating-point optimizations that assume arguments and results are not NaNs or +-Inf.">;
+def cl_unsafe_math_optimizations : Flag<"-cl-unsafe-math-optimizations">,
+  HelpText<"OpenCL only. Allow unsafe floating-point optimizations.  Also implies -cl-no-signed-zeros and -cl-mad-enable">;

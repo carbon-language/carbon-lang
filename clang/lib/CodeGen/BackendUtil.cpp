@@ -186,6 +186,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   llvm::NoInfsFPMath = CodeGenOpts.NoInfsFPMath;
   llvm::NoNaNsFPMath = CodeGenOpts.NoNaNsFPMath;
   NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;
+  llvm::UnsafeFPMath = CodeGenOpts.UnsafeFPMath;
   llvm::UseSoftFloat = CodeGenOpts.SoftFloat;
   UnwindTablesMandatory = CodeGenOpts.UnwindTables;
 
