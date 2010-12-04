@@ -46,6 +46,8 @@ function(llvm_process_sources OUT_VAR)
   if( NOT LLVM_REQUIRES_RTTI )
     if( CMAKE_COMPILER_IS_GNUCXX )
       add_definitions( -fno-rtti )
+    elseif( MSVC )
+      add_definitions( /GR- )
     endif()
   endif()
 
