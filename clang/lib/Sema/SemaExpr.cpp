@@ -2394,6 +2394,9 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
     bool isExact = (result == APFloat::opOK);
     Res = FloatingLiteral::Create(Context, Val, isExact, Ty, Tok.getLocation());
 
+    if (getLangOptions().SinglePrecisionConstants && Ty == Context.DoubleTy)
+      ImpCastExprToType(Res, Context.FloatTy, CK_FloatingCast);
+
   } else if (!Literal.isIntegerLiteral()) {
     return ExprError();
   } else {

@@ -599,3 +599,5 @@ def H : Flag<"-H">,
 
 def cl_opt_disable : Flag<"-cl-opt-disable">,
   HelpText<"OpenCL only. This option disables all optimizations. The default is optimizations are enabled.">;
+def cl_single_precision_constant : Flag<"-cl-single-precision-constant">,
+  HelpText<"OpenCL only. Treat double precision floating-point constant as single precision constant.">;
