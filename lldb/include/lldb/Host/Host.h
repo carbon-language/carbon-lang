@@ -340,6 +340,9 @@ public:
 
     static void
     Backtrace (Stream &strm, uint32_t max_frames);
+    
+    static size_t
+    GetEnvironment (StringList &env);
 };
 
 } // namespace lldb_private

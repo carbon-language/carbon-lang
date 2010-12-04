@@ -1045,7 +1045,7 @@ Thread::SettingsController::CreateInstanceSettings (const char *instance_name)
 //--------------------------------------------------------------
 
 ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, bool live_instance, const char *name) :
-    InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance), 
+    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance), 
     m_avoid_regexp_ap (),
     m_trace_enabled (false)
 {

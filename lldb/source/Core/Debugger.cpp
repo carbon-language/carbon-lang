@@ -1318,7 +1318,7 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
     bool live_instance,
     const char *name
 ) :
-    InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance),
+    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
     m_term_width (80),
     m_prompt (),
     m_frame_format (),

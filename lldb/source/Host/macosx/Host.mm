@@ -9,6 +9,7 @@
 
 #include "lldb/Host/Host.h"
 
+#include <crt_externs.h>
 #include <execinfo.h>
 #include <libproc.h>
 #include <stdio.h>
@@ -804,4 +805,16 @@ Host::Backtrace (Stream &strm, uint32_t max_frames)
         ::close (backtrace_fd);
         ::unlink (backtrace_path);
     }
+}
+
+size_t
+Host::GetEnvironment (StringList &env)
+{
+    char **host_env = *_NSGetEnviron();
+    char *env_entry;
+    size_t i;
+    for (i=0; (env_entry = host_env[i]) != NULL; ++i)
+        env.AppendString(env_entry);
+    return i;
+        
 }

@@ -938,9 +938,13 @@ Target::SettingsController::GetGlobalVariable (const ConstString &var_name,
 // class TargetInstanceSettings
 //--------------------------------------------------------------
 
-TargetInstanceSettings::TargetInstanceSettings (UserSettingsController &owner, bool live_instance, 
-                                                const char *name) :
-    InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance)
+TargetInstanceSettings::TargetInstanceSettings
+(
+    UserSettingsController &owner, 
+    bool live_instance, 
+    const char *name
+) :
+    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.

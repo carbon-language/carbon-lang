@@ -409,6 +409,14 @@ Host::Backtrace (Stream &strm, uint32_t max_frames)
     // TODO: Is there a way to backtrace the current process on linux?
 }
 
+
+size_t
+Host::GetEnvironment (StringList &env)
+{
+    // TODO: Is there a way to the host environment for this process on linux?
+    return 0;
+}
+
 #endif
 
 struct HostThreadCreateInfo

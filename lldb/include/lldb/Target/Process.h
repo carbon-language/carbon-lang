@@ -88,19 +88,11 @@ public:
         m_run_args = args;
     }
 
+    void
+    GetHostEnvironmentIfNeeded ();
+
     size_t
-    GetEnvironmentAsArgs (Args &env) const
-    {
-        dictionary::const_iterator pos, end = m_env_vars.end();
-        for (pos = m_env_vars.begin(); pos != end; ++pos)
-        {
-            std::string env_var_equal_value (pos->first);
-            env_var_equal_value.append(1, '=');
-            env_var_equal_value.append (pos->second);
-            env.AppendArgument (env_var_equal_value.c_str());
-        }
-        return env.GetArgumentCount();
-    }
+    GetEnvironmentAsArgs (Args &env);
 
     const char *
     GetStandardInputPath () const
@@ -205,6 +197,9 @@ protected:
     EnvVarsVarName ();
 
     static const ConstString &
+    InheritHostEnvVarName ();
+
+    static const ConstString &
     InputPathVarName ();
 
     static const ConstString &
@@ -233,6 +228,8 @@ private:
     ProcessPlugins m_plugin;
     bool m_disable_aslr;
     bool m_disable_stdio;
+    bool m_inherit_host_env;
+    bool m_got_host_env;
 };
 
 

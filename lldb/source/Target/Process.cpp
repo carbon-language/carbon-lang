@@ -358,6 +358,51 @@ Process::GetExitStatus ()
     return -1;
 }
 
+
+void
+Process::ProcessInstanceSettings::GetHostEnvironmentIfNeeded ()
+{
+    if (m_inherit_host_env && !m_got_host_env)
+    {
+        m_got_host_env = true;
+        StringList host_env;
+        const size_t host_env_count = Host::GetEnvironment (host_env);
+        for (size_t idx=0; idx<host_env_count; idx++)
+        {
+            const char *env_entry = host_env.GetStringAtIndex (idx);
+            if (env_entry)
+            {
+                char *equal_pos = ::strchr(env_entry, '=');
+                if (equal_pos)
+                {
+                    std::string key (env_entry, equal_pos - env_entry);
+                    std::string value (equal_pos + 1);
+                    if (m_env_vars.find (key) == m_env_vars.end())
+                        m_env_vars[key] = value;
+                }
+            }
+        }
+    }
+}
+
+
+size_t
+Process::ProcessInstanceSettings::GetEnvironmentAsArgs (Args &env)
+{
+    GetHostEnvironmentIfNeeded ();
+
+    dictionary::const_iterator pos, end = m_env_vars.end();
+    for (pos = m_env_vars.begin(); pos != end; ++pos)
+    {
+        std::string env_var_equal_value (pos->first);
+        env_var_equal_value.append(1, '=');
+        env_var_equal_value.append (pos->second);
+        env.AppendArgument (env_var_equal_value.c_str());
+    }
+    return env.GetArgumentCount();
+}
+
+
 const char *
 Process::GetExitDescription ()
 {
@@ -2569,7 +2614,8 @@ Process::ExecutionResultAsCString (ExecutionResults result)
 Process::SettingsController::SettingsController () :
     UserSettingsController ("process", Target::GetSettingsController())
 {
-    m_default_settings.reset (new ProcessInstanceSettings (*this, false,
+    m_default_settings.reset (new ProcessInstanceSettings (*this, 
+                                                           false,
                                                            InstanceSettings::GetDefaultName().AsCString()));
 }
 
@@ -2591,9 +2637,13 @@ Process::SettingsController::CreateInstanceSettings (const char *instance_name)
 // class ProcessInstanceSettings
 //--------------------------------------------------------------
 
-ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner, bool live_instance, 
-                                                  const char *name) :
-    InstanceSettings (owner, (name == NULL ? InstanceSettings::InvalidName().AsCString() : name), live_instance), 
+ProcessInstanceSettings::ProcessInstanceSettings
+(
+    UserSettingsController &owner, 
+    bool live_instance, 
+    const char *name
+) :
+    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance), 
     m_run_args (),
     m_env_vars (),
     m_input_path (),
@@ -2601,7 +2651,9 @@ ProcessInstanceSettings::ProcessInstanceSettings (UserSettingsController &owner,
     m_error_path (),
     m_plugin (),
     m_disable_aslr (true),
-    m_disable_stdio (false)
+    m_disable_stdio (false),
+    m_inherit_host_env (true),
+    m_got_host_env (false)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for ProcessInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -2658,6 +2710,7 @@ ProcessInstanceSettings::operator= (const ProcessInstanceSettings &rhs)
         m_plugin = rhs.m_plugin;
         m_disable_aslr = rhs.m_disable_aslr;
         m_disable_stdio = rhs.m_disable_stdio;
+        m_inherit_host_env = rhs.m_inherit_host_env;
     }
 
     return *this;
@@ -2677,7 +2730,10 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
     if (var_name == RunArgsVarName())
         UserSettingsController::UpdateStringArrayVariable (op, index_value, m_run_args, value, err);
     else if (var_name == EnvVarsVarName())
+    {
+        GetHostEnvironmentIfNeeded ();
         UserSettingsController::UpdateDictionaryVariable (op, index_value, m_env_vars, value, err);
+    }
     else if (var_name == InputPathVarName())
         UserSettingsController::UpdateStringVariable (op, m_input_path, value, err);
     else if (var_name == OutputPathVarName())
@@ -2686,6 +2742,8 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
         UserSettingsController::UpdateStringVariable (op, m_error_path, value, err);
     else if (var_name == PluginVarName())
         UserSettingsController::UpdateEnumVariable (entry.enum_values, (int *) &m_plugin, value, err);
+    else if (var_name == InheritHostEnvVarName())
+        UserSettingsController::UpdateBooleanVariable (op, m_inherit_host_env, value, err);
     else if (var_name == DisableASLRVarName())
         UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, err);
     else if (var_name == DisableSTDIOVarName ())
@@ -2727,6 +2785,8 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     }
     else if (var_name == EnvVarsVarName())
     {
+        GetHostEnvironmentIfNeeded ();
+
         if (m_env_vars.size() > 0)
         {
             std::map<std::string, std::string>::iterator pos;
@@ -2807,6 +2867,14 @@ ProcessInstanceSettings::EnvVarsVarName ()
 }
 
 const ConstString &
+ProcessInstanceSettings::InheritHostEnvVarName ()
+{
+    static ConstString g_name ("inherit-env");
+
+    return g_name;
+}
+
+const ConstString &
 ProcessInstanceSettings::InputPathVarName ()
 {
   static ConstString input_path_var_name ("input-path");
@@ -2878,16 +2946,17 @@ Process::SettingsController::g_plugins[] =
 SettingEntry
 Process::SettingsController::instance_settings_table[] =
 {
-  //{ "var-name",    var-type,              "default",      enum-table, init'd, hidden, "help-text"},
-    { "run-args",    eSetVarTypeArray,       NULL,          NULL,       false,  false,  "A list containing all the arguments to be passed to the executable when it is run." },
-    { "env-vars",    eSetVarTypeDictionary,  NULL,          NULL,       false,  false,  "A list of all the environment variables to be passed to the executable's environment, and their values." },
-    { "input-path",  eSetVarTypeString,      "/dev/stdin",  NULL,       false,  false,  "The file/path to be used by the executable program for reading its input." },
-    { "output-path", eSetVarTypeString,      "/dev/stdout", NULL,       false,  false,  "The file/path to be used by the executable program for writing its output." },
-    { "error-path",  eSetVarTypeString,      "/dev/stderr", NULL,       false,  false,  "The file/path to be used by the executable program for writings its error messages." },
-    { "plugin",      eSetVarTypeEnum,        NULL         , g_plugins,  false,  false,  "The plugin to be used to run the process." }, 
-    { "disable-aslr", eSetVarTypeBoolean,       "true",     NULL,       false,  false,  "Disable Address Space Layout Randomization (ASLR)" },
-    { "disable-stdio",eSetVarTypeBoolean,       "false",    NULL,       false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
-    {  NULL, eSetVarTypeNone, NULL, NULL, 0, 0, NULL }
+  //{ "var-name",       var-type,              "default",       enum-table, init'd, hidden, "help-text"},
+    { "run-args",       eSetVarTypeArray,       NULL,           NULL,       false,  false,  "A list containing all the arguments to be passed to the executable when it is run." },
+    { "env-vars",       eSetVarTypeDictionary,  NULL,           NULL,       false,  false,  "A list of all the environment variables to be passed to the executable's environment, and their values." },
+    { "inherit-env",    eSetVarTypeBoolean,     "true",         NULL,       false,  false,  "Inherit the environment from the process that is running LLDB." },
+    { "input-path",     eSetVarTypeString,      "/dev/stdin",   NULL,       false,  false,  "The file/path to be used by the executable program for reading its input." },
+    { "output-path",    eSetVarTypeString,      "/dev/stdout",  NULL,       false,  false,  "The file/path to be used by the executable program for writing its output." },
+    { "error-path",     eSetVarTypeString,      "/dev/stderr",  NULL,       false,  false,  "The file/path to be used by the executable program for writings its error messages." },
+    { "plugin",         eSetVarTypeEnum,        NULL         ,  g_plugins,  false,  false,  "The plugin to be used to run the process." }, 
+    { "disable-aslr",   eSetVarTypeBoolean,     "true",         NULL,       false,  false,  "Disable Address Space Layout Randomization (ASLR)" },
+    { "disable-stdio",  eSetVarTypeBoolean,     "false",        NULL,       false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
+    {  NULL,            eSetVarTypeNone,        NULL,           NULL,       false,  false,  NULL }
 };
 
 
