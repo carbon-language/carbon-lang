@@ -152,17 +152,17 @@ void f14(struct s14 *a) {
 }
 
 // CHECK: define void @f15
-void f15(void *v, const void *cv, volatile void *vv) {
-  extern void f15_helper(void);
-  f15_helper();
-  // CHECK: call void @f15_helper()
-  // FIXME: no loads from i8* should occur here at all!
-  *v; *v, *v; v ? *v : *v;
-  *cv; *cv, *cv; v ? *cv : *cv;
-  *vv; *vv, *vv; vv ? *vv : *vv;
-  // CHECK: volatile load i8*
-  // CHECK: volatile load i8*
-  // CHECK: volatile load i8*
-  // CHECK-NOT: load i8* %
+void f15() {
+  extern void f15_start(void);
+  f15_start();
+  // CHECK: call void @f15_start()
+
+  extern void *f15_v(void);
+  extern const void *f15_cv(void);
+  extern volatile void *f15_vv(void);
+  *f15_v(); *f15_v(), *f15_v(); f15_v() ? *f15_v() : *f15_v();
+  *f15_cv(); *f15_cv(), *f15_cv(); f15_cv() ? *f15_cv() : *f15_cv();
+  *f15_vv(); *f15_vv(), *f15_vv(); f15_vv() ? *f15_vv() : *f15_vv();
+  // CHECK-NOT: load
   // CHECK: ret void
 }

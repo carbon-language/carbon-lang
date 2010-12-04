@@ -312,7 +312,11 @@ public:
     // value as the "address".
     return EmitLValue(E->getSubExpr()).getAddress();
   }
-  Value *VisitUnaryDeref(const Expr *E) { return EmitLoadOfLValue(E); }
+  Value *VisitUnaryDeref(const UnaryOperator *E) {
+    if (E->getType()->isVoidType())
+      return Visit(E->getSubExpr()); // the actual value should be unused
+    return EmitLoadOfLValue(E);
+  }
   Value *VisitUnaryPlus(const UnaryOperator *E) {
     // This differs from gcc, though, most likely due to a bug in gcc.
     TestAndClearIgnoreResultAssign();
