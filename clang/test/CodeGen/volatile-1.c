@@ -305,7 +305,9 @@ void test() {
 extern volatile enum X x;
 // CHECK: define void @test1()
 void test1() {
-  // CHECK-NEXT: :
+  extern void test1_helper(void);
+  test1_helper();
+  // CHECK: call void @test1_helper()
   // CHECK-NEXT: ret void
   x;
   (void) x;
