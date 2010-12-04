@@ -1239,8 +1239,8 @@ BugReport::getEndPath(BugReporterContext& BRC,
   if (!S)
     return NULL;
 
-  const SourceRange *Beg, *End;
-  getRanges(Beg, End);
+  BugReport::ranges_iterator Beg, End;
+  llvm::tie(Beg, End) = getRanges();
   PathDiagnosticLocation L(S, BRC.getSourceManager());
 
   // Only add the statement itself as a range if we didn't specify any
@@ -1254,15 +1254,15 @@ BugReport::getEndPath(BugReporterContext& BRC,
   return P;
 }
 
-void BugReport::getRanges(const SourceRange*& beg, const SourceRange*& end) {
+std::pair<BugReport::ranges_iterator, BugReport::ranges_iterator>
+BugReport::getRanges() const {
   if (const Expr* E = dyn_cast_or_null<Expr>(getStmt())) {
     R = E->getSourceRange();
     assert(R.isValid());
-    beg = &R;
-    end = beg+1;
+    return std::make_pair(&R, &R+1);
   }
   else
-    beg = end = 0;
+    return std::make_pair(ranges_iterator(), ranges_iterator());
 }
 
 SourceLocation BugReport::getLocation() const {
@@ -1828,8 +1828,8 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
     D->addMeta(*s);
 
   // Emit a summary diagnostic to the regular Diagnostics engine.
-  const SourceRange *Beg = 0, *End = 0;
-  exampleReport->getRanges(Beg, End);
+  BugReport::ranges_iterator Beg, End;
+  llvm::tie(Beg, End) = exampleReport->getRanges();
   Diagnostic &Diag = getDiagnostic();
   FullSourceLoc L(exampleReport->getLocation(), getSourceManager());
   
@@ -1852,7 +1852,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
 
   {
     DiagnosticBuilder diagBuilder = Diag.Report(L, ErrorDiag);
-    for (const SourceRange *I = Beg; I != End; ++I)
+    for (BugReport::ranges_iterator I = Beg; I != End; ++I)
       diagBuilder << *I;
   }
 

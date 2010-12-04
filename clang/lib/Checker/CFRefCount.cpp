@@ -1941,15 +1941,15 @@ namespace {
 
     virtual ~CFRefReport() {}
 
-    CFRefBug& getBugType() {
+    CFRefBug& getBugType() const {
       return (CFRefBug&) RangedBugReport::getBugType();
     }
 
-    virtual void getRanges(const SourceRange*& beg, const SourceRange*& end) {
+    virtual std::pair<ranges_iterator, ranges_iterator> getRanges() const {
       if (!getBugType().isLeak())
-        RangedBugReport::getRanges(beg, end);
+        return RangedBugReport::getRanges();
       else
-        beg = end = 0;
+        return std::make_pair(ranges_iterator(), ranges_iterator());
     }
 
     SymbolRef getSymbol() const { return Sym; }

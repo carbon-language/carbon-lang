@@ -62,7 +62,7 @@ protected:
   std::string ShortDescription;
   std::string Description;
   const ExplodedNode *ErrorNode;
-  SourceRange R;
+  mutable SourceRange R;
 
 protected:
   friend class BugReporter;
@@ -126,8 +126,10 @@ public:
   ///  This location is used by clients rendering diagnostics.
   virtual SourceLocation getLocation() const;
 
+  typedef const SourceRange *ranges_iterator;
+
   /// getRanges - Returns the source ranges associated with this bug.
-  virtual void getRanges(const SourceRange*& beg, const SourceRange*& end);
+  virtual std::pair<ranges_iterator, ranges_iterator> getRanges() const;
 
   virtual PathDiagnosticPiece* VisitNode(const ExplodedNode* N,
                                          const ExplodedNode* PrevN,
@@ -192,7 +194,7 @@ public:
 
 // FIXME: Collapse this with the default BugReport class.
 class RangedBugReport : public BugReport {
-  std::vector<SourceRange> Ranges;
+  llvm::SmallVector<SourceRange, 4> Ranges;
 public:
   RangedBugReport(BugType& D, llvm::StringRef description,
                   ExplodedNode *errornode)
@@ -210,17 +212,8 @@ public:
     Ranges.push_back(R);
   }
 
-  // FIXME: Move this out of line.
-  void getRanges(const SourceRange*& beg, const SourceRange*& end) {
-
-    if (Ranges.empty()) {
-      beg = NULL;
-      end = NULL;
-    }
-    else {
-      beg = &Ranges[0];
-      end = beg + Ranges.size();
-    }
+  virtual std::pair<ranges_iterator, ranges_iterator> getRanges() const {
+    return std::make_pair(Ranges.begin(), Ranges.end());
   }
 };
 
