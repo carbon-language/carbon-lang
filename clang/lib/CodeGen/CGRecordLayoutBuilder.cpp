@@ -106,6 +106,9 @@ private:
   /// Returns false if the operation failed because the struct is not packed.
   bool LayoutFields(const RecordDecl *D);
 
+  /// Layout a single base, virtual or non-virtual
+  void LayoutBase(const CXXRecordDecl *BaseDecl, uint64_t BaseOffset);
+
   /// LayoutVirtualBase - layout a single virtual base.
   void LayoutVirtualBase(const CXXRecordDecl *BaseDecl, uint64_t BaseOffset);
 
@@ -490,6 +493,21 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
     AppendPadding(Layout.getSize() / 8, Align);
 }
 
+void CGRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *BaseDecl,
+                                       uint64_t BaseOffset) {
+  CheckZeroInitializable(BaseDecl);
+
+  const ASTRecordLayout &Layout = 
+    Types.getContext().getASTRecordLayout(BaseDecl);
+  
+  uint64_t NonVirtualSize = Layout.getNonVirtualSize();
+  
+  AppendPadding(BaseOffset / 8, 1);
+  
+  // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
+  AppendBytes(NonVirtualSize / 8);
+}
+
 void
 CGRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *BaseDecl,
                                          uint64_t BaseOffset) {
@@ -504,13 +522,12 @@ CGRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *BaseDecl,
 
   uint64_t NonVirtualSize = Layout.getNonVirtualSize();
 
-  // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
   AppendPadding(BaseOffset / 8, 1);
   
-  // FIXME: Add the vbase field info.
-
+  // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
   AppendBytes(NonVirtualSize / 8);
 
+  // FIXME: Add the vbase field info.
 }
 
 /// LayoutVirtualBases - layout the non-virtual bases of a record decl.
@@ -548,20 +565,10 @@ void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *BaseDecl,
   if (BaseDecl->isEmpty())
     return;
 
-  CheckZeroInitializable(BaseDecl);
-  
-  const ASTRecordLayout &Layout = 
-    Types.getContext().getASTRecordLayout(BaseDecl);
+  LayoutBase(BaseDecl, BaseOffset);
 
-  uint64_t NonVirtualSize = Layout.getNonVirtualSize();
-
-  // FIXME: Actually use a better type than [sizeof(BaseDecl) x i8] when we can.
-  AppendPadding(BaseOffset / 8, 1);
-  
   // Append the base field.
-  LLVMNonVirtualBases.push_back(LLVMBaseInfo(BaseDecl, FieldTypes.size()));
-
-  AppendBytes(NonVirtualSize / 8);
+  LLVMNonVirtualBases.push_back(LLVMBaseInfo(BaseDecl, FieldTypes.size() - 1));
 }
 
 void
