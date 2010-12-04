@@ -60,7 +60,10 @@ public:
   /// value l-value, this method emits the address of the l-value, then loads
   /// and returns the result.
   ComplexPairTy EmitLoadOfLValue(const Expr *E) {
-    LValue LV = CGF.EmitLValue(E);
+    return EmitLoadOfLValue(CGF.EmitLValue(E));
+  }
+
+  ComplexPairTy EmitLoadOfLValue(LValue LV) {
     if (LV.isSimple())
       return EmitLoadOfComplex(LV.getAddress(), LV.isVolatileQualified());
 
@@ -71,6 +74,16 @@ public:
   /// EmitLoadOfComplex - Given a pointer to a complex value, emit code to load
   /// the real and imaginary pieces.
   ComplexPairTy EmitLoadOfComplex(llvm::Value *SrcPtr, bool isVolatile);
+
+  /// EmitStoreThroughLValue - Given an l-value of complex type, store
+  /// a complex number into it.
+  void EmitStoreThroughLValue(ComplexPairTy Val, LValue LV) {
+    if (LV.isSimple())
+      return EmitStoreOfComplex(Val, LV.getAddress(), LV.isVolatileQualified());
+
+    assert(LV.isPropertyRef() && "Unknown LValue type!");
+    CGF.EmitStoreThroughPropertyRefLValue(RValue::getComplex(Val), LV);
+  }
 
   /// EmitStoreOfComplex - Store the specified real/imag parts into the
   /// specified value pointer.
@@ -540,13 +553,9 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
   OpInfo.RHS = Visit(E->getRHS());
   
   LValue LHS = CGF.EmitLValue(E->getLHS());
-  // We know the LHS is a complex lvalue.
-  ComplexPairTy LHSComplexPair;
-  if (LHS.isPropertyRef())
-    LHSComplexPair = CGF.EmitLoadOfPropertyRefLValue(LHS).getComplexVal();
-  else
-    LHSComplexPair = EmitLoadOfComplex(LHS.getAddress(),
-                                       LHS.isVolatileQualified());
+
+  // Load from the l-value.
+  ComplexPairTy LHSComplexPair = EmitLoadOfLValue(LHS);
   
   OpInfo.LHS = EmitComplexToComplexCast(LHSComplexPair, LHSTy, OpInfo.Ty);
 
@@ -558,10 +567,7 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
   Val = Result;
 
   // Store the result value into the LHS lvalue.
-  if (LHS.isPropertyRef())
-    CGF.EmitStoreThroughPropertyRefLValue(RValue::getComplex(Result), LHS);
-  else
-    EmitStoreOfComplex(Result, LHS.getAddress(), LHS.isVolatileQualified());
+  EmitStoreThroughLValue(Result, LHS);
 
   return LHS;
 }
@@ -603,10 +609,7 @@ LValue ComplexExprEmitter::EmitBinAssignLValue(const BinaryOperator *E,
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
   // Store the result value into the LHS lvalue.
-  if (LHS.isPropertyRef())
-    CGF.EmitStoreThroughPropertyRefLValue(RValue::getComplex(Val), LHS);
-  else
-    EmitStoreOfComplex(Val, LHS.getAddress(), LHS.isVolatileQualified());
+  EmitStoreThroughLValue(Val, LHS);
 
   return LHS;
 }

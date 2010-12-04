@@ -195,13 +195,6 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
   if (E->isLValue()) {
     // Emit the expression as an lvalue.
     LValue LV = CGF.EmitLValue(E);
-    if (LV.isPropertyRef()) {
-      QualType QT = E->getType();
-      RValue RV = CGF.EmitLoadOfPropertyRefLValue(LV);
-      assert(RV.isScalar() && "EmitExprForReferenceBinding");
-      return RV.getScalarVal();
-    }
-    
     if (LV.isSimple())
       return LV.getAddress();
     
@@ -1537,11 +1530,6 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     const PointerType *PTy =
       BaseExpr->getType()->getAs<PointerType>();
     BaseQuals = PTy->getPointeeType().getQualifiers();
-  } else if (ObjCPropertyRefExpr *PRE
-               = dyn_cast<ObjCPropertyRefExpr>(BaseExpr->IgnoreParens())) {
-    RValue RV = EmitLoadOfPropertyRefLValue(EmitObjCPropertyRefLValue(PRE));
-    BaseValue = RV.getAggregateAddr();
-    BaseQuals = BaseExpr->getType().getQualifiers();
   } else {
     LValue BaseLV = EmitLValue(BaseExpr);
     if (BaseLV.isNonGC())
@@ -1771,17 +1759,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   }
 
   case CK_NoOp:
-    if (!E->getSubExpr()->isRValue() || E->getType()->isRecordType()) {
-      LValue LV = EmitLValue(E->getSubExpr());
-      if (LV.isPropertyRef()) {
-        QualType QT = E->getSubExpr()->getType();
-        RValue RV = EmitLoadOfPropertyRefLValue(LV);
-        assert(RV.isAggregate());
-        llvm::Value *V = RV.getAggregateAddr();
-        return MakeAddrLValue(V, QT);
-      }
-      return LV;
-    }
+    if (!E->getSubExpr()->isRValue() || E->getType()->isRecordType())
+      return EmitLValue(E->getSubExpr());
     // Fall through to synthesize a temporary.
 
   case CK_LValueToRValue:
@@ -1843,15 +1822,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
       cast<CXXRecordDecl>(DerivedClassTy->getDecl());
     
     LValue LV = EmitLValue(E->getSubExpr());
-    llvm::Value *This;
-    if (LV.isPropertyRef()) {
-      QualType QT = E->getSubExpr()->getType();
-      RValue RV = EmitLoadOfPropertyRefLValue(LV);
-      assert (!RV.isScalar() && "EmitCastLValue");
-      This = RV.getAggregateAddr();
-    }
-    else
-      This = LV.getAddress();
+    llvm::Value *This = LV.getAddress();
     
     // Perform the derived-to-base conversion
     llvm::Value *Base = 

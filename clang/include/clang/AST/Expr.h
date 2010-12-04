@@ -2395,12 +2395,23 @@ public:
   static bool isLogicalOp(Opcode Opc) { return Opc == BO_LAnd || Opc==BO_LOr; }
   bool isLogicalOp() const { return isLogicalOp(getOpcode()); }
 
-  bool isAssignmentOp() const { return Opc >= BO_Assign && Opc <= BO_OrAssign; }
-  bool isCompoundAssignmentOp() const {
+  static bool isAssignmentOp(Opcode Opc) {
+    return Opc >= BO_Assign && Opc <= BO_OrAssign;
+  }
+  bool isAssignmentOp() const { return isAssignmentOp(getOpcode()); }
+
+  static bool isCompoundAssignmentOp(Opcode Opc) {
     return Opc > BO_Assign && Opc <= BO_OrAssign;
   }
-  bool isShiftAssignOp() const {
+  bool isCompoundAssignmentOp() const {
+    return isCompoundAssignmentOp(getOpcode());
+  }
+
+  static bool isShiftAssignOp(Opcode Opc) {
     return Opc == BO_ShlAssign || Opc == BO_ShrAssign;
+  }
+  bool isShiftAssignOp() const {
+    return isShiftAssignOp(getOpcode());
   }
 
   static bool classof(const Stmt *S) {

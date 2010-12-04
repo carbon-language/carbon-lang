@@ -23,6 +23,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/DenseSet.h"
@@ -7081,6 +7082,9 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   // TODO: provide better source location info.
   DeclarationNameInfo OpNameInfo(OpName, OpLoc);
 
+  if (Input->getObjectKind() == OK_ObjCProperty)
+    ConvertPropertyForRValue(Input);
+
   Expr *Args[2] = { Input, 0 };
   unsigned NumArgs = 1;
 
@@ -7292,10 +7296,38 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                                                    OpLoc));
   }
 
-  // If this is the .* operator, which is not overloadable, just
-  // create a built-in binary operator.
-  if (Opc == BO_PtrMemD)
-    return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
+  // Always do property rvalue conversions on the RHS.
+  if (Args[1]->getObjectKind() == OK_ObjCProperty)
+    ConvertPropertyForRValue(Args[1]);
+
+  // The LHS is more complicated.
+  if (Args[0]->getObjectKind() == OK_ObjCProperty) {
+
+    // There's a tension for assignment operators between primitive
+    // property assignment and the overloaded operators.
+    if (BinaryOperator::isAssignmentOp(Opc)) {
+      const ObjCPropertyRefExpr *PRE = LHS->getObjCProperty();
+
+      // Is the property "logically" settable?
+      bool Settable = (PRE->isExplicitProperty() ||
+                       PRE->getImplicitPropertySetter());
+
+      // To avoid gratuitously inventing semantics, use the primitive
+      // unless it isn't.  Thoughts in case we ever really care:
+      // - If the property isn't logically settable, we have to
+      //   load and hope.
+      // - If the property is settable and this is simple assignment,
+      //   we really should use the primitive.
+      // - If the property is settable, then we could try overloading
+      //   on a generic lvalue of the appropriate type;  if it works
+      //   out to a builtin candidate, we would do that same operation
+      //   on the property, and otherwise just error.
+      if (Settable)
+        return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
+    }
+
+    ConvertPropertyForRValue(Args[0]);
+  }
 
   // If this is the assignment operator, we only perform overload resolution
   // if the left-hand side is a class or enumeration type. This is actually
@@ -7304,6 +7336,11 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   // problems. So we do it this way, which pretty much follows what GCC does.
   // Note that we go the traditional code path for compound assignment forms.
   if (Opc == BO_Assign && !Args[0]->getType()->isOverloadableType())
+    return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
+
+  // If this is the .* operator, which is not overloadable, just
+  // create a built-in binary operator.
+  if (Opc == BO_PtrMemD)
     return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 
   // Build an empty overload set.
@@ -7495,6 +7532,11 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
                                                    VK_RValue,
                                                    RLoc));
   }
+
+  if (Args[0]->getObjectKind() == OK_ObjCProperty)
+    ConvertPropertyForRValue(Args[0]);
+  if (Args[1]->getObjectKind() == OK_ObjCProperty)
+    ConvertPropertyForRValue(Args[1]);
 
   // Build an empty overload set.
   OverloadCandidateSet CandidateSet(LLoc);
@@ -7766,6 +7808,9 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                                    SourceLocation LParenLoc,
                                    Expr **Args, unsigned NumArgs,
                                    SourceLocation RParenLoc) {
+  if (Object->getObjectKind() == OK_ObjCProperty)
+    ConvertPropertyForRValue(Object);
+
   assert(Object->getType()->isRecordType() && "Requires object type argument");
   const RecordType *Record = Object->getType()->getAs<RecordType>();
 
@@ -8016,6 +8061,9 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
 ExprResult
 Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   assert(Base->getType()->isRecordType() && "left-hand side must have class type");
+
+  if (Base->getObjectKind() == OK_ObjCProperty)
+    ConvertPropertyForRValue(Base);
 
   SourceLocation Loc = Base->getExprLoc();
 

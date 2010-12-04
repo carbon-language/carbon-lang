@@ -122,16 +122,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   llvm::Value *This;
   if (ME->isArrow())
     This = EmitScalarExpr(ME->getBase());
-  else {
-    LValue BaseLV = EmitLValue(ME->getBase());
-    if (BaseLV.isPropertyRef()) {
-      QualType QT = ME->getBase()->getType();
-      RValue RV = EmitLoadOfPropertyRefLValue(BaseLV);
-      This = RV.isScalar() ? RV.getScalarVal() : RV.getAggregateAddr();
-    }
-    else
-      This = BaseLV.getAddress();
-  }
+  else
+    This = EmitLValue(ME->getBase()).getAddress();
 
   if (MD->isTrivial()) {
     if (isa<CXXDestructorDecl>(MD)) return RValue::get(0);
@@ -233,22 +225,14 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
                                                ReturnValueSlot ReturnValue) {
   assert(MD->isInstance() &&
          "Trying to emit a member call expr on a static method!");
+  LValue LV = EmitLValue(E->getArg(0));
+  llvm::Value *This = LV.getAddress();
+
   if (MD->isCopyAssignmentOperator()) {
     const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(MD->getDeclContext());
     if (ClassDecl->hasTrivialCopyAssignment()) {
       assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
              "EmitCXXOperatorMemberCallExpr - user declared copy assignment");
-      LValue LV = EmitLValue(E->getArg(0));
-      llvm::Value *This;
-      if (LV.isPropertyRef()) {
-        AggValueSlot Slot = CreateAggTemp(E->getArg(1)->getType());
-        EmitAggExpr(E->getArg(1), Slot);
-        EmitStoreThroughPropertyRefLValue(Slot.asRValue(), LV);
-        return RValue::getAggregate(0, false);
-      }
-      else
-        This = LV.getAddress();
-      
       llvm::Value *Src = EmitLValue(E->getArg(1)).getAddress();
       QualType Ty = E->getType();
       EmitAggregateCopy(This, Src, Ty);
@@ -260,17 +244,6 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   const llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
-  LValue LV = EmitLValue(E->getArg(0));
-  llvm::Value *This;
-  if (LV.isPropertyRef()) {
-    QualType QT = E->getArg(0)->getType();
-    RValue RV = EmitLoadOfPropertyRefLValue(LV);
-    assert (!RV.isScalar() && "EmitCXXOperatorMemberCallExpr");
-    This = RV.getAggregateAddr();
-  }
-  else
-    This = LV.getAddress();
-
   llvm::Value *Callee;
   if (MD->isVirtual() && !canDevirtualizeMemberFunctionCalls(E->getArg(0), MD))
     Callee = BuildVirtualCall(MD, This, Ty);
