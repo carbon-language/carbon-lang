@@ -774,8 +774,12 @@ using namespace clang::driver::cc1options;
 
 static unsigned getOptimizationLevel(ArgList &Args, InputKind IK,
                                      Diagnostic &Diags) {
+  unsigned DefaultOpt = 0;
+  if (IK == IK_OpenCL && !Args.hasArg(OPT_cl_opt_disable))
+    DefaultOpt = 2;
   // -Os implies -O2
-  return Args.hasArg(OPT_Os) ? 2 : Args.getLastArgIntValue(OPT_O, 0, Diags);
+  return Args.hasArg(OPT_Os) ? 2 :
+    Args.getLastArgIntValue(OPT_O, DefaultOpt, Diags);
 }
 
 static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,

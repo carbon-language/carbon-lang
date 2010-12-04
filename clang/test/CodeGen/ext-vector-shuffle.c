@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 %s -x cl -emit-llvm -o - | not grep 'extractelement'
-// RUN: %clang_cc1 %s -x cl -emit-llvm -o - | not grep 'insertelement'
-// RUN: %clang_cc1 %s -x cl -emit-llvm -o - | grep 'shufflevector'
+// RUN: %clang_cc1 %s -x cl -cl-opt-disable -emit-llvm -o - | not grep 'extractelement'
+// RUN: %clang_cc1 %s -x cl -cl-opt-disable -emit-llvm -o - | not grep 'insertelement'
+// RUN: %clang_cc1 %s -x cl -cl-opt-disable -emit-llvm -o - | grep 'shufflevector'
 
 typedef __attribute__(( ext_vector_type(2) )) float float2;
 typedef __attribute__(( ext_vector_type(4) )) float float4;
