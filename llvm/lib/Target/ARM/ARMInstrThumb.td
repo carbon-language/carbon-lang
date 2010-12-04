@@ -475,10 +475,13 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 // FIXME: should be able to write a pattern for ARMBrcond, but can't use
 // a two-value operand where a dag node expects two operands. :(
 let isBranch = 1, isTerminator = 1 in
-  def tBcc : T1I<(outs), (ins brtarget:$target, pred:$cc), IIC_Br,
-                 "b$cc\t$target",
+  def tBcc : T1I<(outs), (ins brtarget:$target, pred:$p), IIC_Br,
+                 "b${p}\t$target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>,
-             T1Encoding<{1,1,0,1,?,?}>;
+             T1Encoding<{1,1,0,1,?,?}> {
+  bits<4> p;
+  let Inst{11-8} = p;
+}
 
 // Compare and branch on zero / non-zero
 let isBranch = 1, isTerminator = 1 in {
