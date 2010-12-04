@@ -19,6 +19,7 @@
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/HeaderSearchOptions.h"
+#include "clang/Frontend/LangStandard.h"
 #include "clang/Frontend/PreprocessorOptions.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
 #include "llvm/ADT/StringRef.h"
@@ -106,6 +107,25 @@ public:
   /// passing to CreateFromArgs.
   void toArgs(std::vector<std::string> &Res);
 
+  /// setLangDefaults - Set language defaults for the given input language and
+  /// language standard in this CompilerInvocation.
+  ///
+  /// \param IK - The input language.
+  /// \param LangStd - The input language standard.
+  void setLangDefaults(InputKind IK,
+                  LangStandard::Kind LangStd = LangStandard::lang_unspecified) {
+    setLangDefaults(LangOpts, IK, LangStd);
+  }
+
+  /// setLangDefaults - Set language defaults for the given input language and
+  /// language standard in the given LangOptions object.
+  ///
+  /// \param LangOpts - The LangOptions object to set up.
+  /// \param IK - The input language.
+  /// \param LangStd - The input language standard.
+  static void setLangDefaults(LangOptions &Opts, InputKind IK,
+                   LangStandard::Kind LangStd = LangStandard::lang_unspecified);
+  
   /// @}
   /// @name Option Subgroups
   /// @{

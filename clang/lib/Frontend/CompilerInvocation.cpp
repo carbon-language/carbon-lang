@@ -1218,10 +1218,8 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   // FIXME: Need options for the various environment variables!
 }
 
-static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
-                          Diagnostic &Diags) {
-  // FIXME: Cleanup per-file based stuff.
-
+void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
+                                         LangStandard::Kind LangStd) {
   // Set some properties which depend soley on the input kind; it would be nice
   // to move these to the language standard, and have the driver resolve the
   // input kind + language standard.
@@ -1232,18 +1230,6 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
              IK == IK_PreprocessedObjC ||
              IK == IK_PreprocessedObjCXX) {
     Opts.ObjC1 = Opts.ObjC2 = 1;
-  }
-
-  LangStandard::Kind LangStd = LangStandard::lang_unspecified;
-  if (const Arg *A = Args.getLastArg(OPT_std_EQ)) {
-    LangStd = llvm::StringSwitch<LangStandard::Kind>(A->getValue(Args))
-#define LANGSTANDARD(id, name, desc, features) \
-      .Case(name, LangStandard::lang_##id)
-#include "clang/Frontend/LangStandards.def"
-      .Default(LangStandard::lang_unspecified);
-    if (LangStd == LangStandard::lang_unspecified)
-      Diags.Report(diag::err_drv_invalid_value)
-        << A->getAsString(Args) << A->getValue(Args);
   }
 
   if (LangStd == LangStandard::lang_unspecified) {
@@ -1300,16 +1286,43 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   // OpenCL and C++ both have bool, true, false keywords.
   Opts.Bool = Opts.OpenCL || Opts.CPlusPlus;
 
+  Opts.GNUKeywords = Opts.GNUMode;
+  Opts.CXXOperatorNames = Opts.CPlusPlus;
+
+  // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
+  // is specified, or -std is set to a conforming mode.
+  Opts.Trigraphs = !Opts.GNUMode;
+
+  Opts.DollarIdents = !Opts.AsmPreprocessor;
+}
+
+static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
+                          Diagnostic &Diags) {
+  // FIXME: Cleanup per-file based stuff.
+  LangStandard::Kind LangStd = LangStandard::lang_unspecified;
+  if (const Arg *A = Args.getLastArg(OPT_std_EQ)) {
+    LangStd = llvm::StringSwitch<LangStandard::Kind>(A->getValue(Args))
+#define LANGSTANDARD(id, name, desc, features) \
+      .Case(name, LangStandard::lang_##id)
+#include "clang/Frontend/LangStandards.def"
+      .Default(LangStandard::lang_unspecified);
+    if (LangStd == LangStandard::lang_unspecified)
+      Diags.Report(diag::err_drv_invalid_value)
+        << A->getAsString(Args) << A->getValue(Args);
+  }
+
+  CompilerInvocation::setLangDefaults(Opts, IK, LangStd);
+
   // We abuse '-f[no-]gnu-keywords' to force overriding all GNU-extension
   // keywords. This behavior is provided by GCC's poorly named '-fasm' flag,
   // while a subset (the non-C++ GNU keywords) is provided by GCC's
   // '-fgnu-keywords'. Clang conflates the two for simplicity under the single
   // name, as it doesn't seem a useful distinction.
   Opts.GNUKeywords = Args.hasFlag(OPT_fgnu_keywords, OPT_fno_gnu_keywords,
-                                  Opts.GNUMode);
+                                  Opts.GNUKeywords);
 
-  if (Opts.CPlusPlus)
-    Opts.CXXOperatorNames = !Args.hasArg(OPT_fno_operator_names);
+  if (Args.hasArg(OPT_fno_operator_names))
+    Opts.CXXOperatorNames = 0;
 
   if (Args.hasArg(OPT_fobjc_gc_only))
     Opts.setGCMode(LangOptions::GCOnly);
@@ -1350,15 +1363,12 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   else if (Args.hasArg(OPT_fwrapv))
     Opts.setSignedOverflowBehavior(LangOptions::SOB_Defined);
 
-  // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
-  // is specified, or -std is set to a conforming mode.
-  Opts.Trigraphs = !Opts.GNUMode;
   if (Args.hasArg(OPT_trigraphs))
     Opts.Trigraphs = 1;
 
   Opts.DollarIdents = Args.hasFlag(OPT_fdollars_in_identifiers,
                                    OPT_fno_dollars_in_identifiers,
-                                   !Opts.AsmPreprocessor);
+                                   Opts.DollarIdents);
   Opts.PascalStrings = Args.hasArg(OPT_fpascal_strings);
   Opts.Microsoft = Args.hasArg(OPT_fms_extensions);
   Opts.MSCVersion = Args.getLastArgIntValue(OPT_fmsc_version, 0, Diags);
