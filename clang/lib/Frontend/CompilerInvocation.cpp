@@ -1322,6 +1322,13 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
         << A->getAsString(Args) << A->getValue(Args);
   }
 
+  if (const Arg *A = Args.getLastArg(OPT_cl_std_EQ)) {
+    if (strcmp(A->getValue(Args), "CL1.1") != 0) {
+      Diags.Report(diag::err_drv_invalid_value)
+        << A->getAsString(Args) << A->getValue(Args);
+    }
+  }
+
   CompilerInvocation::setLangDefaults(Opts, IK, LangStd);
 
   // We abuse '-f[no-]gnu-keywords' to force overriding all GNU-extension
