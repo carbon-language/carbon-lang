@@ -37,6 +37,8 @@ namespace {
   const char      prefered_separator = '/';
 #endif
 
+  const llvm::error_code success;
+
   StringRef find_first_component(const StringRef  &path) {
     // Look for this first component in the following order.
     // * empty (in this case we return an empty string)

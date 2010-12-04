@@ -427,6 +427,54 @@ error_code file_size(const Twine &path, uint64_t &result) {
   return make_error_code(errc::success);
 }
 
+error_code status(const Twine &path, file_status &result) {
+  SmallString<128> path_storage;
+  SmallVector<wchar_t, 128> path_utf16;
+
+  if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
+                                  path_utf16))
+    return ec;
+
+  DWORD attr = ::GetFileAttributesW(path_utf16.begin());
+  if (attr == INVALID_FILE_ATTRIBUTES)
+    goto handle_status_error;
+
+  // Handle reparse points.
+  if (attr & FILE_ATTRIBUTE_REPARSE_POINT) {
+    AutoHandle h(
+      ::CreateFileW(path_utf16.begin(),
+                    0, // Attributes only.
+                    FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    NULL,
+                    OPEN_EXISTING,
+                    FILE_FLAG_BACKUP_SEMANTICS,
+                    0));
+    if (h == INVALID_HANDLE_VALUE)
+      goto handle_status_error;
+  }
+
+  if (attr & FILE_ATTRIBUTE_DIRECTORY)
+    result = file_status(file_type::directory_file);
+  else
+    result = file_status(file_type::regular_file);
+
+  return success;
+
+handle_status_error:
+  error_code ec = windows_error(::GetLastError());
+  if (ec == windows_error::file_not_found ||
+      ec == windows_error::path_not_found)
+    result = file_status(file_type::file_not_found);
+  else if (ec == windows_error::sharing_violation)
+    result = file_status(file_type::type_unknown);
+  else {
+    result = file_status(file_type::status_error);
+    return ec;
+  }
+
+  return success;
+}
+
 error_code unique_file(const Twine &model, int &result_fd,
                              SmallVectorImpl<char> &result_path) {
   // Use result_path as temp storage.

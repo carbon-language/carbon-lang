@@ -277,6 +277,38 @@ error_code file_size(const Twine &path, uint64_t &result) {
   return make_error_code(errc::success);
 }
 
+error_code status(const Twine &path, file_status &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toNullTerminatedStringRef(path_storage);
+
+  struct stat status;
+  if (::stat(p.begin(), &status) != 0) {
+    error_code ec(errno, system_category());
+    if (ec == errc::no_such_file_or_directory)
+      result = file_status(file_type::file_not_found);
+    else
+      result = file_status(file_type::status_error);
+    return ec;
+  }
+
+  if (S_ISDIR(status.st_mode))
+    result = file_status(file_type::directory_file);
+  else if (S_ISREG(status.st_mode))
+    result = file_status(file_type::regular_file);
+  else if (S_ISBLK(status.st_mode))
+    result = file_status(file_type::block_file);
+  else if (S_ISCHR(status.st_mode))
+    result = file_status(file_type::character_file);
+  else if (S_ISFIFO(status.st_mode))
+    result = file_status(file_type::fifo_file);
+  else if (S_ISSOCK(status.st_mode))
+    result = file_status(file_type::socket_file);
+  else
+    result = file_status(file_type::type_unknown);
+
+  return success;
+}
+
 error_code unique_file(const Twine &model, int &result_fd,
                              SmallVectorImpl<char> &result_path) {
   SmallString<128> Model;

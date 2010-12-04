@@ -91,11 +91,13 @@ struct space_info {
 class file_status
 {
   // implementation defined status field.
+  file_type Type;
 public:
-  explicit file_status(file_type v=file_type::status_error);
+  explicit file_status(file_type v=file_type::status_error)
+    : Type(v) {}
 
-  file_type type() const;
-  void type(file_type v);
+  file_type type() const { return Type; }
+  void type(file_type v) { Type = v; }
 };
 
 /// @}
