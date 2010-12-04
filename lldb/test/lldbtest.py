@@ -141,6 +141,8 @@ BACKTRACE_DISPLAYED_CORRECTLY = "Backtrace displayed correctly"
 
 BREAKPOINT_CREATED = "Breakpoint created successfully"
 
+BREAKPOINT_STATE_CORRECT = "Breakpoint state is correct"
+
 BREAKPOINT_PENDING_CREATED = "Pending breakpoint created successfully"
 
 BREAKPOINT_HIT_ONCE = "Breakpoint resolved with hit cout = 1"
