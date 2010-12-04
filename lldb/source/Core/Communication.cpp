@@ -266,8 +266,7 @@ Communication::AppendBytesToCache (const uint8_t * bytes, size_t len, bool broad
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
                                  "%p Communication::AppendBytesToCache (src = %p, src_len = %zu, broadcast = %i)",
                                  this, bytes, len, broadcast);
-    if ((bytes == NULL || len == 0)
-        && (status != eConnectionStatusEndOfFile))
+    if (bytes == NULL || len == 0)
         return;
     if (m_callback)
     {
@@ -327,21 +326,14 @@ Communication::ReadThread (void *p)
             size_t bytes_read = comm->ReadFromConnection (buf, sizeof(buf), status, &error);
             if (bytes_read > 0)
                 comm->AppendBytesToCache (buf, bytes_read, true, status);
-            else if ((bytes_read == 0)
-                    && status == eConnectionStatusEndOfFile)
-            {
-                if (comm->CloseOnEOF ())
-                    comm->Disconnect ();
-                comm->AppendBytesToCache (buf, bytes_read, true, status);
-            }
         }
 
         switch (status)
         {
         case eConnectionStatusSuccess:
-        case eConnectionStatusEndOfFile:
             break;
 
+        case eConnectionStatusEndOfFile:
         case eConnectionStatusNoConnection:     // No connection
         case eConnectionStatusLostConnection:   // Lost connection while connected to a valid connection
             done = true;
