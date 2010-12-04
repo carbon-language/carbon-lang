@@ -379,15 +379,12 @@ public:
   /// @{
   /// @brief Gets maximum unsigned value of APInt for specific bit width.
   static APInt getMaxValue(unsigned numBits) {
-    APInt API(numBits, 0);
-    API.setAllBits();
-    return API;
+    return getAllOnesValue(numBits);
   }
 
   /// @brief Gets maximum signed value of APInt for a specific bit width.
   static APInt getSignedMaxValue(unsigned numBits) {
-    APInt API(numBits, 0);
-    API.setAllBits();
+    APInt API = getAllOnesValue(numBits);
     API.clearBit(numBits - 1);
     return API;
   }
@@ -414,9 +411,7 @@ public:
   /// @returns the all-ones value for an APInt of the specified bit-width.
   /// @brief Get the all-ones value.
   static APInt getAllOnesValue(unsigned numBits) {
-    APInt API(numBits, 0);
-    API.setAllBits();
-    return API;
+    return APInt(numBits, -1ULL, true);
   }
 
   /// @returns the '0' value for an APInt of the specified bit-width.
