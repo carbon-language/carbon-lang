@@ -47,3 +47,10 @@ static void f12(void);
 
 // PR7923
 static void unused(void) { unused(); }  // expected-warning{{unused}}
+
+// rdar://8728293
+static void cleanupMalloc(char * const * const allocation) { }
+void f13(void) {
+  char * const __attribute__((cleanup(cleanupMalloc))) a;
+  (void)a;
+}

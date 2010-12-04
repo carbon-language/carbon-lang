@@ -1450,6 +1450,7 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   d->addAttr(::new (S.Context) CleanupAttr(Attr.getLoc(), S.Context, FD));
+  FD->setUsed();
 }
 
 /// Handle __attribute__((format_arg((idx)))) attribute based on
