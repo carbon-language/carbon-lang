@@ -263,6 +263,20 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   return make_error_code(errc::success);
 }
 
+error_code file_size(const Twine &path, uint64_t &result) {
+  SmallString<128> path_storage;
+  StringRef p = path.toNullTerminatedStringRef(path_storage);
+
+  struct stat status;
+  if (::stat(p.begin(), &status) == -1)
+    return error_code(errno, system_category());
+  if (!S_ISREG(status.st_mode))
+    return error_code(EPERM, system_category());
+
+  result = status.st_size;
+  return make_error_code(errc::success);
+}
+
 error_code unique_file(const Twine &model, int &result_fd,
                              SmallVectorImpl<char> &result_path) {
   SmallString<128> Model;
