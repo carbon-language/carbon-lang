@@ -531,9 +531,9 @@ LinkageInfo NamedDecl::getLinkageAndVisibility() const {
   if (HasLinkageAndVisibilityCached) {
 #ifndef NDEBUG
     LinkageInfo LI = getLVForDecl(this, LVFlags());
-    assert(LI.visibility() == CachedVisibility);
+    assert(LI.visibility() == Visibility(CachedVisibility));
     assert(LI.visibilityExplicit() == CachedVisibilityIsExplicit);
-    assert(LI.linkage() == CachedLinkage);
+    assert(LI.linkage() == Linkage(CachedLinkage));
 #endif
     return LinkageInfo(Linkage(CachedLinkage), Visibility(CachedVisibility),
                        CachedVisibilityIsExplicit);
@@ -930,7 +930,7 @@ VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
 
 void VarDecl::setStorageClass(StorageClass SC) {
   assert(isLegalForVariable(SC));
-  if (SClass != SC)
+  if (getStorageClass() != SC)
     ClearLinkageAndVisibilityCache();
   
   SClass = SC;
@@ -1341,7 +1341,7 @@ FunctionDecl *FunctionDecl::getCanonicalDecl() {
 
 void FunctionDecl::setStorageClass(StorageClass SC) {
   assert(isLegalForFunction(SC));
-  if (SClass != SC)
+  if (getStorageClass() != SC)
     ClearLinkageAndVisibilityCache();
   
   SClass = SC;
