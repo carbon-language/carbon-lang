@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting arm_neon.h, which includes
-// a declaration and definition of each function specified by the ARM NEON 
+// a declaration and definition of each function specified by the ARM NEON
 // compiler interface.  See ARM document DUI0348B.
 //
 //===----------------------------------------------------------------------===//
@@ -66,12 +66,12 @@ enum ClassKind {
 };
 
 namespace llvm {
-  
+
   class NeonEmitter : public TableGenBackend {
     RecordKeeper &Records;
     StringMap<OpKind> OpMap;
     DenseMap<Record*, ClassKind> ClassMap;
-    
+
   public:
     NeonEmitter(RecordKeeper &R) : Records(R) {
       OpMap["OP_NONE"]  = OpNone;
@@ -115,14 +115,14 @@ namespace llvm {
       ClassMap[II] = ClassI;
       ClassMap[WI] = ClassW;
     }
-    
+
     // run - Emit arm_neon.h.inc
     void run(raw_ostream &o);
 
     // runHeader - Emit all the __builtin prototypes used in arm_neon.h
     void runHeader(raw_ostream &o);
   };
-  
+
 } // End llvm namespace
 
 #endif
