@@ -348,7 +348,7 @@ uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F,
     return cast<MCInstFragment>(F).getInstSize();
 
   case MCFragment::FT_LEB:
-    return cast<MCLEBFragment>(F).getSize();
+    return cast<MCLEBFragment>(F).getContents().size();
 
   case MCFragment::FT_Align: {
     const MCAlignFragment &AF = cast<MCAlignFragment>(F);
@@ -370,7 +370,7 @@ uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F,
     return cast<MCOrgFragment>(F).getSize();
 
   case MCFragment::FT_Dwarf:
-    return cast<MCDwarfLineAddrFragment>(F).getSize();
+    return cast<MCDwarfLineAddrFragment>(F).getContents().size();
   }
 
   assert(0 && "invalid fragment kind");
@@ -522,20 +522,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   case MCFragment::FT_LEB: {
     MCLEBFragment &LF = cast<MCLEBFragment>(F);
-
-    // FIXME: It is probably better if we don't call EvaluateAsAbsolute in
-    // here.
-    int64_t Value;
-    bool IsAbs = LF.getValue().EvaluateAsAbsolute(Value, &Layout);
-    assert(IsAbs);
-    (void) IsAbs;
-    SmallString<32> Tmp;
-    raw_svector_ostream OSE(Tmp);
-    if (LF.isSigned())
-      MCObjectWriter::EncodeSLEB128(Value, OSE);
-    else
-      MCObjectWriter::EncodeULEB128(Value, OSE);
-    OW->WriteBytes(OSE.str());
+    OW->WriteBytes(LF.getContents().str());
     break;
   }
 
@@ -550,15 +537,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   case MCFragment::FT_Dwarf: {
     const MCDwarfLineAddrFragment &OF = cast<MCDwarfLineAddrFragment>(F);
-
-    // The AddrDelta is really unsigned and it can only increase.
-    int64_t AddrDelta;
-    OF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, &Layout);
-
-    int64_t LineDelta;
-    LineDelta = OF.getLineDelta();
-
-    MCDwarfLineAddr::Write(OW, LineDelta, (uint64_t)AddrDelta);
+    OW->WriteBytes(OF.getContents().str());
     break;
   }
   }
@@ -830,29 +809,34 @@ bool MCAssembler::RelaxOrg(const MCObjectWriter &Writer,
 bool MCAssembler::RelaxLEB(const MCObjectWriter &Writer,
                            MCAsmLayout &Layout,
                            MCLEBFragment &LF) {
-  int64_t Value;
+  int64_t Value = 0;
+  uint64_t OldSize = LF.getContents().size();
   LF.getValue().EvaluateAsAbsolute(Value, &Layout);
-  SmallString<32> Tmp;
-  raw_svector_ostream OSE(Tmp);
+  SmallString<8> &Data = LF.getContents();
+  Data.clear();
+  raw_svector_ostream OSE(Data);
   if (LF.isSigned())
     MCObjectWriter::EncodeSLEB128(Value, OSE);
   else
     MCObjectWriter::EncodeULEB128(Value, OSE);
-  uint64_t OldSize = LF.getSize();
-  LF.setSize(OSE.GetNumBytesInBuffer());
-  return OldSize != LF.getSize();
+  OSE.flush();
+  return OldSize != LF.getContents().size();
 }
 
 bool MCAssembler::RelaxDwarfLineAddr(const MCObjectWriter &Writer,
 				     MCAsmLayout &Layout,
 				     MCDwarfLineAddrFragment &DF) {
-  int64_t AddrDelta;
+  int64_t AddrDelta = 0;
+  uint64_t OldSize = DF.getContents().size();
   DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, &Layout);
   int64_t LineDelta;
   LineDelta = DF.getLineDelta();
-  uint64_t OldSize = DF.getSize();
-  DF.setSize(MCDwarfLineAddr::ComputeSize(LineDelta, AddrDelta));
-  return OldSize != DF.getSize();  
+  SmallString<8> &Data = DF.getContents();
+  Data.clear();
+  raw_svector_ostream OSE(Data);
+  MCDwarfLineAddr::Encode(LineDelta, AddrDelta, OSE);
+  OSE.flush();
+  return OldSize != Data.size();
 }
 
 bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,

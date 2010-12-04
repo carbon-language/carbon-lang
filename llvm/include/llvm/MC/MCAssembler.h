@@ -352,13 +352,11 @@ class MCLEBFragment : public MCFragment {
   /// IsSigned - True if this is a sleb128, false if uleb128.
   bool IsSigned;
 
-  /// Size - The current size estimate.
-  uint64_t Size;
-
+  SmallString<8> Contents;
 public:
   MCLEBFragment(const MCExpr &Value_, bool IsSigned_, MCSectionData *SD)
     : MCFragment(FT_LEB, SD),
-      Value(&Value_), IsSigned(IsSigned_), Size(1) {}
+      Value(&Value_), IsSigned(IsSigned_) { Contents.push_back(0); }
 
   /// @name Accessors
   /// @{
@@ -367,9 +365,8 @@ public:
 
   bool isSigned() const { return IsSigned; }
 
-  uint64_t getSize() const { return Size; }
-
-  void setSize(uint64_t Size_) { Size = Size_; }
+  SmallString<8> &getContents() { return Contents; }
+  const SmallString<8> &getContents() const { return Contents; }
 
   /// @}
 
@@ -388,14 +385,13 @@ class MCDwarfLineAddrFragment : public MCFragment {
   /// make up the address delta between two .loc dwarf directives.
   const MCExpr *AddrDelta;
 
-  /// Size - The current size estimate.
-  uint64_t Size;
+  SmallString<8> Contents;
 
 public:
   MCDwarfLineAddrFragment(int64_t _LineDelta, const MCExpr &_AddrDelta,
                       MCSectionData *SD = 0)
     : MCFragment(FT_Dwarf, SD),
-      LineDelta(_LineDelta), AddrDelta(&_AddrDelta), Size(1) {}
+      LineDelta(_LineDelta), AddrDelta(&_AddrDelta) { Contents.push_back(0); }
 
   /// @name Accessors
   /// @{
@@ -404,9 +400,8 @@ public:
 
   const MCExpr &getAddrDelta() const { return *AddrDelta; }
 
-  uint64_t getSize() const { return Size; }
-
-  void setSize(uint64_t Size_) { Size = Size_; }
+  SmallString<8> &getContents() { return Contents; }
+  const SmallString<8> &getContents() const { return Contents; }
 
   /// @}
 

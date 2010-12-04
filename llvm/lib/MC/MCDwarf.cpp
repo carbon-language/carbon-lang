@@ -320,14 +320,6 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
   MCOS->EmitLabel(LineEndSym);
 }
 
-/// Utility function to compute the size of the encoding.
-uint64_t MCDwarfLineAddr::ComputeSize(int64_t LineDelta, uint64_t AddrDelta) {
-  SmallString<256> Tmp;
-  raw_svector_ostream OS(Tmp);
-  MCDwarfLineAddr::Encode(LineDelta, AddrDelta, OS);
-  return OS.GetNumBytesInBuffer();
-}
-
 /// Utility function to write the encoding to an object writer.
 void MCDwarfLineAddr::Write(MCObjectWriter *OW, int64_t LineDelta,
                             uint64_t AddrDelta) {

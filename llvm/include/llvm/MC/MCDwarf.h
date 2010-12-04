@@ -220,9 +220,6 @@ namespace llvm {
     static void Emit(MCStreamer *MCOS,
                      int64_t LineDelta,uint64_t AddrDelta);
 
-    /// Utility function to compute the size of the encoding.
-    static uint64_t ComputeSize(int64_t LineDelta, uint64_t AddrDelta);
-
     /// Utility function to write the encoding to an object writer.
     static void Write(MCObjectWriter *OW,
                       int64_t LineDelta, uint64_t AddrDelta);
