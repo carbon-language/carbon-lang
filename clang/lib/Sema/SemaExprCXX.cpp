@@ -3549,8 +3549,9 @@ void Sema::IgnoredValueConversions(Expr *&E) {
   }
 
   DefaultFunctionArrayLvalueConversion(E);
-  RequireCompleteType(E->getExprLoc(), E->getType(),
-                      diag::err_incomplete_type);
+  if (!E->getType()->isVoidType())
+    RequireCompleteType(E->getExprLoc(), E->getType(),
+                        diag::err_incomplete_type);
 }
 
 ExprResult Sema::ActOnFinishFullExpr(Expr *FullExpr) {

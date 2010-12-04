@@ -269,6 +269,13 @@ void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
          T->isRecordType()))
       return;
 
+    // The C standard is actually really unclear on this point, and
+    // DR106 tells us what the result should be but not why.  It's
+    // generally best to say that void just doesn't undergo
+    // lvalue-to-rvalue at all.
+    if (T->isVoidType())
+      return;
+
     // C++ [conv.lval]p1:
     //   [...] If T is a non-class type, the type of the prvalue is the
     //   cv-unqualified version of T. Otherwise, the type of the
