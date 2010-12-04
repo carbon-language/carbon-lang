@@ -36,8 +36,9 @@ operator new(std::size_t size) throw (std::bad_alloc)
     {
         // If malloc fails and there is a new_handler,
         // call it to try free up memory.
-        if (__new_handler)
-            __new_handler();
+        std::new_handler nh = get_new_handler();
+        if (nh)
+            nh();
         else
 #ifndef _LIBCPP_NO_EXCEPTIONS
             throw std::bad_alloc();
