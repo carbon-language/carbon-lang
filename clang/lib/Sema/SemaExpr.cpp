@@ -9037,12 +9037,12 @@ bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
       return Diag(E->getLocStart(), diag::err_invalid_use_of_bound_member_func)
         << E->getSourceRange();
 
-    QualType T = E->getType();
-
     if (getLangOptions().CPlusPlus)
       return CheckCXXBooleanCondition(E); // C++ 6.4p4
 
     DefaultFunctionArrayLvalueConversion(E);
+
+    QualType T = E->getType();
     if (!T->isScalarType()) // C99 6.8.4.1p1
       return Diag(Loc, diag::err_typecheck_statement_requires_scalar)
                << T << E->getSourceRange();

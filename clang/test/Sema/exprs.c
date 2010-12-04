@@ -157,3 +157,12 @@ void test21(volatile struct Test21 *ptr) {
   (test21_help(), *ptr); // expected-error {{incomplete type 'struct Test21' where a complete type is required}}
   (*ptr, test21_help()); // expected-error {{incomplete type 'struct Test21' where a complete type is required}}
 }
+
+// Make sure we do function/array decay.
+void test22() {
+  if ("help")
+    (void) 0;
+
+  if (test22)
+    (void) 0;
+}

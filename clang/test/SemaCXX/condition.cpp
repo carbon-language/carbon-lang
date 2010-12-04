@@ -42,3 +42,12 @@ void test2() {
   if (int *ip = ip) {
   }
 }
+
+// Make sure we do function/array decay.
+void test3() {
+  if ("help")
+    (void) 0;
+
+  if (test3)
+    (void) 0;
+}
