@@ -1724,15 +1724,23 @@ Expr *Expr::IgnoreParenCasts() {
   }
 }
 
+/// IgnoreParenLValueCasts - Ignore parentheses and lvalue-to-rvalue
+/// casts.  This is intended purely as a temporary workaround for code
+/// that hasn't yet been rewritten to do the right thing about those
+/// casts, and may disappear along with the last internal use.
 Expr *Expr::IgnoreParenLValueCasts() {
   Expr *E = this;
-  while (E) {
+  while (true) {
     if (ParenExpr *P = dyn_cast<ParenExpr>(E)) {
       E = P->getSubExpr();
       continue;
-    }
-    if (CastExpr *P = dyn_cast<CastExpr>(E)) {
+    } else if (CastExpr *P = dyn_cast<CastExpr>(E)) {
       if (P->getCastKind() == CK_LValueToRValue) {
+        E = P->getSubExpr();
+        continue;
+      }
+    } else if (UnaryOperator* P = dyn_cast<UnaryOperator>(E)) {
+      if (P->getOpcode() == UO_Extension) {
         E = P->getSubExpr();
         continue;
       }
