@@ -1719,8 +1719,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
         // the initial standard conversion sequence converts the source type to
         // the implicit object parameter of the conversion function.
         BeforeToType = Context.getTagDeclType(Conv->getParent());
-      } else if (const CXXConstructorDecl *Ctor = 
-                  dyn_cast<CXXConstructorDecl>(FD)) {
+      } else {
+        const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(FD);
         CastKind = CK_ConstructorConversion;
         // Do no conversion if dealing with ... for the first conversion.
         if (!ICS.UserDefined.EllipsisConversion) {
@@ -1730,8 +1730,6 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
           BeforeToType = Ctor->getParamDecl(0)->getType().getNonReferenceType();
         }
       }    
-      else
-        assert(0 && "Unknown conversion function kind!");
       // Watch out for elipsis conversion.
       if (!ICS.UserDefined.EllipsisConversion) {
         if (PerformImplicitConversion(From, BeforeToType, 
