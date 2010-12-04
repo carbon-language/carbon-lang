@@ -2814,6 +2814,13 @@ ProcessInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     {
         value.AppendString (UserSettingsController::EnumToString (entry.enum_values, (int) m_plugin));
     }
+    else if (var_name == InheritHostEnvVarName())
+    {
+        if (m_inherit_host_env)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
+    }
     else if (var_name == DisableASLRVarName())
     {
         if (m_disable_aslr)
