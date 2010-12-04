@@ -183,6 +183,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
     llvm::FloatABIType = llvm::FloatABI::Default;
   }
 
+  llvm::LessPreciseFPMADOption = CodeGenOpts.LessPreciseFPMAD;
   llvm::NoInfsFPMath = CodeGenOpts.NoInfsFPMath;
   llvm::NoNaNsFPMath = CodeGenOpts.NoNaNsFPMath;
   NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;

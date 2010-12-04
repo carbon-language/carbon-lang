@@ -607,3 +607,5 @@ def cl_unsafe_math_optimizations : Flag<"-cl-unsafe-math-optimizations">,
   HelpText<"OpenCL only. Allow unsafe floating-point optimizations.  Also implies -cl-no-signed-zeros and -cl-mad-enable">;
 def cl_fast_relaxed_math : Flag<"-cl-fast-relaxed-math">,
   HelpText<"OpenCL only. Sets -cl-finite-math-only and -cl-unsafe-math-optimizations, and defines __FAST_RELAXED_MATH__">;
+def cl_mad_enable : Flag<"-cl-mad-enable">,
+  HelpText<"OpenCL only. Enable less precise MAD instructions to be generated.">;
