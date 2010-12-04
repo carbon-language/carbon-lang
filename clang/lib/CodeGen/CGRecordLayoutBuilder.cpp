@@ -136,7 +136,8 @@ private:
 
   /// AppendPadding - Appends enough padding bytes so that the total
   /// struct size is a multiple of the field alignment.
-  void AppendPadding(uint64_t FieldOffsetInBytes, unsigned FieldAlignment);
+  void AppendPadding(uint64_t FieldOffsetInBytes,
+                     unsigned FieldAlignmentInBytes);
 
   /// getByteArrayType - Returns a byte array type with the given number of
   /// elements.
@@ -325,7 +326,7 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
     assert(FieldOffset % 8 == 0 && "Field offset not aligned correctly");
 
     // Append padding if necessary.
-    AppendBytes((FieldOffset - NextFieldOffset) / 8);
+    AppendPadding(FieldOffset / 8, 1);
 
     NumBytesToAppend =
       llvm::RoundUpToAlignment(FieldSize, 8) / 8;
@@ -393,13 +394,7 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
     return false;
   }
 
-  if (AlignedNextFieldOffsetInBytes < FieldOffsetInBytes) {
-    // Even with alignment, the field offset is not at the right place,
-    // insert padding.
-    uint64_t PaddingInBytes = FieldOffsetInBytes - NextFieldOffsetInBytes;
-
-    AppendBytes(PaddingInBytes);
-  }
+  AppendPadding(FieldOffsetInBytes, TypeAlignment);
 
   // Now append the field.
   LLVMFields.push_back(LLVMFieldInfo(D, FieldTypes.size()));
@@ -713,13 +708,13 @@ void CGRecordLayoutBuilder::AppendField(uint64_t FieldOffsetInBytes,
 }
 
 void CGRecordLayoutBuilder::AppendPadding(uint64_t FieldOffsetInBytes,
-                                          unsigned FieldAlignment) {
+                                          unsigned FieldAlignmentInBytes) {
   assert(NextFieldOffsetInBytes <= FieldOffsetInBytes &&
          "Incorrect field layout!");
 
   // Round up the field offset to the alignment of the field type.
   uint64_t AlignedNextFieldOffsetInBytes =
-    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, FieldAlignment);
+    llvm::RoundUpToAlignment(NextFieldOffsetInBytes, FieldAlignmentInBytes);
 
   if (AlignedNextFieldOffsetInBytes < FieldOffsetInBytes) {
     // Even with alignment, the field offset is not at the right place,
