@@ -772,6 +772,12 @@ using namespace clang::driver::cc1options;
 
 //
 
+static unsigned getOptimizationLevel(ArgList &Args, InputKind IK,
+                                     Diagnostic &Diags) {
+  // -Os implies -O2
+  return Args.hasArg(OPT_Os) ? 2 : Args.getLastArgIntValue(OPT_O, 0, Diags);
+}
+
 static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
                               Diagnostic &Diags) {
   using namespace cc1options;
@@ -849,19 +855,15 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.IdempotentOps = Args.hasArg(OPT_analysis_WarnIdempotentOps);
 }
 
-static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
+static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                              Diagnostic &Diags) {
   using namespace cc1options;
-  // -Os implies -O2
-  if (Args.hasArg(OPT_Os))
-    Opts.OptimizationLevel = 2;
-  else {
-    Opts.OptimizationLevel = Args.getLastArgIntValue(OPT_O, 0, Diags);
-    if (Opts.OptimizationLevel > 3) {
-      Diags.Report(diag::err_drv_invalid_value)
-        << Args.getLastArg(OPT_O)->getAsString(Args) << Opts.OptimizationLevel;
-      Opts.OptimizationLevel = 3;
-    }
+
+  Opts.OptimizationLevel = getOptimizationLevel(Args, IK, Diags);
+  if (Opts.OptimizationLevel > 3) {
+    Diags.Report(diag::err_drv_invalid_value)
+      << Args.getLastArg(OPT_O)->getAsString(Args) << Opts.OptimizationLevel;
+    Opts.OptimizationLevel = 3;
   }
 
   // We must always run at least the always inlining pass.
@@ -1415,8 +1417,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.OptimizeSize = 0;
 
   // FIXME: Eliminate this dependency.
-  unsigned Opt =
-    Args.hasArg(OPT_Os) ? 2 : Args.getLastArgIntValue(OPT_O, 0, Diags);
+  unsigned Opt = getOptimizationLevel(Args, IK, Diags);
   Opts.Optimize = Opt != 0;
 
   // This is the __NO_INLINE__ define, which just depends on things like the
@@ -1570,11 +1571,12 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
     Diags.Report(diag::err_drv_unknown_argument) << (*it)->getAsString(*Args);
 
   ParseAnalyzerArgs(Res.getAnalyzerOpts(), *Args, Diags);
-  ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, Diags);
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *Args);
   ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, Diags);
   ParseFileSystemArgs(Res.getFileSystemOpts(), *Args);
+  // FIXME: We shouldn't have to pass the DashX option around here
   InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
+  ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags);
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
   if (DashX != IK_AST && DashX != IK_LLVM_IR)
     ParseLangArgs(Res.getLangOpts(), *Args, DashX, Diags);
