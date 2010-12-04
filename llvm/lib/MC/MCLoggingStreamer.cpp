@@ -154,8 +154,7 @@ public:
     return Child->EmitBytes(Data, AddrSpace);
   }
 
-  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace,
-                         bool UseSet = false){
+  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace){
     LogCall("EmitValue");
     return Child->EmitValue(Value, Size, AddrSpace);
   }

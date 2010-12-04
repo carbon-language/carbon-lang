@@ -17,7 +17,7 @@ _c:
 // CHECK-NEXT:  ('offset', 452)
 // CHECK-NEXT:  ('alignment', 0)
 // CHECK-NEXT:  ('reloc_offset', 496)
-// CHECK-NEXT:  ('num_reloc', 4)
+// CHECK-NEXT:  ('num_reloc', 2)
 // CHECK-NEXT:  ('flags', 0x2000000)
 // CHECK-NEXT:  ('reserved1', 0)
 // CHECK-NEXT:  ('reserved2', 0)

@@ -147,8 +147,7 @@ public:
 
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
-  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace,
-                         bool UseSet = false);
+  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
   virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
   virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
   virtual void EmitGPRel32Value(const MCExpr *Value);
@@ -361,7 +360,7 @@ void PTXMCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
 }
 
 void PTXMCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
-                                 unsigned AddrSpace, bool UseSet) {
+                                 unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
   const char *Directive = 0;
   switch (Size) {

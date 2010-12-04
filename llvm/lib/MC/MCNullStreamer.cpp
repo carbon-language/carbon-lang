@@ -69,7 +69,7 @@ namespace {
     virtual void EmitBytes(StringRef Data, unsigned AddrSpace) {}
 
     virtual void EmitValue(const MCExpr *Value, unsigned Size,
-                           unsigned AddrSpace, bool UseSet = false) {}
+                           unsigned AddrSpace) {}
     virtual void EmitULEB128Value(const MCExpr *Value,
                                   unsigned AddrSpace = 0) {}
     virtual void EmitSLEB128Value(const MCExpr *Value,

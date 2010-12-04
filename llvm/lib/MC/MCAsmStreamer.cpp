@@ -44,6 +44,8 @@ class MCAsmStreamer : public MCStreamer {
   unsigned IsVerboseAsm : 1;
   unsigned ShowInst : 1;
 
+  bool needsSet(const MCExpr *Value);
+
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
                 bool isLittleEndian, bool isVerboseAsm,
@@ -150,8 +152,7 @@ public:
 
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
-  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace,
-                         bool UseSet = false);
+  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
   virtual void EmitIntValue(uint64_t Value, unsigned Size,
                             unsigned AddrSpace = 0);
 
@@ -511,8 +512,34 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
   EmitValue(MCConstantExpr::Create(Value, getContext()), Size, AddrSpace);
 }
 
+static bool hasSymbolDifference(const MCExpr *Value) {
+  switch (Value->getKind()) {
+  case MCExpr::Target: llvm_unreachable("Can't handle target exprs yet!");
+  case MCExpr::Constant:
+  case MCExpr::SymbolRef:
+    return false;
+  case MCExpr::Unary:
+    return hasSymbolDifference(cast<MCUnaryExpr>(Value)->getSubExpr());
+  case MCExpr::Binary: {
+    const MCBinaryExpr *BE = cast<MCBinaryExpr>(Value);
+    if (BE->getOpcode() == MCBinaryExpr::Sub &&
+	BE->getLHS()->getKind() == MCExpr::SymbolRef &&
+	BE->getRHS()->getKind() == MCExpr::SymbolRef)
+      return true;
+    return hasSymbolDifference(BE->getLHS()) ||
+      hasSymbolDifference(BE->getRHS());
+  }
+  }
+  llvm_unreachable("Switch covers all cases");
+}
+
+bool MCAsmStreamer::needsSet(const MCExpr *Value) {
+  return getContext().getAsmInfo().needsSetToChangeDiffSize() &&
+    hasSymbolDifference(Value);
+}
+
 void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
-                              unsigned AddrSpace, bool UseSet) {
+                              unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
   const char *Directive = 0;
   switch (Size) {
@@ -538,7 +565,7 @@ void MCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
   }
 
   assert(Directive && "Invalid size for machine code value!");
-  if (UseSet && MAI.hasSetDirective()) {
+  if (needsSet(Value)) {
     MCSymbol *SetLabel = getContext().CreateTempSymbol();
     EmitAssignment(SetLabel, Value);
     OS << Directive << *SetLabel;
