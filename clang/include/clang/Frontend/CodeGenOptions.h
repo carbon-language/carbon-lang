@@ -59,6 +59,8 @@ public:
   unsigned MergeAllConstants : 1; /// Merge identical constants.
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
+  unsigned NoInfsFPMath      : 1; /// Assume FP arguments, results not +-Inf.
+  unsigned NoNaNsFPMath      : 1; /// Assume FP arguments, results not NaN.
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
   unsigned ObjCDispatchMethod : 2; /// Method of Objective-C dispatch to use.
   unsigned OmitLeafFramePointer : 1; /// Set when -momit-leaf-frame-pointer is
@@ -123,6 +125,8 @@ public:
     MergeAllConstants = 1;
     NoCommon = 0;
     NoImplicitFloat = 0;
+    NoInfsFPMath = 0;
+    NoNaNsFPMath = 0;
     NoZeroInitializedInBSS = 0;
     ObjCDispatchMethod = Legacy;
     OmitLeafFramePointer = 0;

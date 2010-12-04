@@ -601,3 +601,5 @@ def cl_opt_disable : Flag<"-cl-opt-disable">,
   HelpText<"OpenCL only. This option disables all optimizations. The default is optimizations are enabled.">;
 def cl_single_precision_constant : Flag<"-cl-single-precision-constant">,
   HelpText<"OpenCL only. Treat double precision floating-point constant as single precision constant.">;
+def cl_finite_math_only : Flag<"-cl-finite-math-only">,
+  HelpText<"OpenCL only. Allow floating-point optimizations that assume arguments and results are not NaNs or +-Inf.">;

@@ -183,6 +183,8 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
     llvm::FloatABIType = llvm::FloatABI::Default;
   }
 
+  llvm::NoInfsFPMath = CodeGenOpts.NoInfsFPMath;
+  llvm::NoNaNsFPMath = CodeGenOpts.NoNaNsFPMath;
   NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;
   llvm::UseSoftFloat = CodeGenOpts.SoftFloat;
   UnwindTablesMandatory = CodeGenOpts.UnwindTables;
