@@ -708,8 +708,12 @@ public:
   const error_category& category() const {return *_cat_;}
   std::string message() const;
 
-  // explicit
-  operator bool() const {return _val_ != 0;}
+  typedef void (*unspecified_bool_type)();
+  static void unspecified_bool_true() {}
+
+  operator unspecified_bool_type() const { // true if error
+    return _val_ == 0 ? 0 : unspecified_bool_true;
+  }
 };
 
 inline error_condition make_error_condition(errc _e) {
@@ -767,8 +771,12 @@ public:
 
   std::string message() const;
 
-  // explicit
-  operator bool() const {return _val_ != 0;}
+  typedef void (*unspecified_bool_type)();
+  static void unspecified_bool_true() {}
+
+  operator unspecified_bool_type() const { // true if error
+    return _val_ == 0 ? 0 : unspecified_bool_true;
+  }
 };
 
 inline error_code make_error_code(errc _e) {
