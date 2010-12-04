@@ -58,7 +58,7 @@ namespace {
     { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  0,0, 0 },
     { ARM::t2ADDrr, ARM::tADDrr,  ARM::tADDhirr, 0,   0,    1,   0,  0,1, 0 },
     // Note: immediate scale is 4.
-    { ARM::t2ADDrSPi,ARM::tADDrSPi,0,            8,   0,    1,   0,  1,0, 0 },
+    { ARM::t2ADDrSPi,ARM::tADDrSPi,0,            8,   0,    1,   0,  1,0, 1 },
     { ARM::t2ADDSri,ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  2,2, 1 },
     { ARM::t2ADDSrr,ARM::tADDrr,  0,             0,   0,    1,   0,  2,0, 1 },
     { ARM::t2ANDrr, 0,            ARM::tAND,     0,   0,    0,   1,  0,0, 0 },
@@ -467,6 +467,13 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
       { ARM::t2CMPzrr,ARM::tCMPzr, 0, 0, 0, 1, 1,2, 0, 1 };
     if (ReduceToNarrow(MBB, MI, NarrowEntry, LiveCPSR))
       return true;
+    return ReduceToNarrow(MBB, MI, Entry, LiveCPSR);
+  }
+  case ARM::t2ADDrSPi: {
+    static const ReduceEntry NarrowEntry =
+      { ARM::t2ADDrSPi,ARM::tADDspi, 0, 7, 0, 1, 0, 1, 0, 1 };
+    if (MI->getOperand(0).getReg() == ARM::SP)
+      return ReduceToNarrow(MBB, MI, NarrowEntry, LiveCPSR);
     return ReduceToNarrow(MBB, MI, Entry, LiveCPSR);
   }
   }
