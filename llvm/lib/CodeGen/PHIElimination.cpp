@@ -100,7 +100,7 @@ bool llvm::PHIElimination::EliminatePHINodes(MachineFunction &MF,
 
   // Get an iterator to the first instruction after the last PHI node (this may
   // also be the end of the basic block).
-  MachineBasicBlock::iterator AfterPHIsIt = SkipPHIsAndLabels(MBB, MBB.begin());
+  MachineBasicBlock::iterator AfterPHIsIt = MBB.SkipPHIsAndLabels(MBB.begin());
 
   while (MBB.front().isPHI())
     LowerAtomicPHINode(MBB, AfterPHIsIt);
@@ -164,7 +164,7 @@ llvm::PHIElimination::FindCopyInsertPoint(MachineBasicBlock &MBB,
   }
 
   // Make sure the copy goes after any phi nodes however.
-  return SkipPHIsAndLabels(MBB, InsertPoint);
+  return MBB.SkipPHIsAndLabels(InsertPoint);
 }
 
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
