@@ -23,6 +23,9 @@ include "llvm/Target/Target.td"
 def FeatureCMOV    : SubtargetFeature<"cmov","HasCMov", "true",
                                       "Enable conditional move instructions">;
 
+def FeaturePOPCNT   : SubtargetFeature<"popcnt", "HasPOPCNT", "true",
+                                       "Support POPCNT instruction">;
+
 
 def FeatureMMX     : SubtargetFeature<"mmx","X86SSELevel", "MMX",
                                       "Enable MMX instructions">;
@@ -45,7 +48,7 @@ def FeatureSSE41   : SubtargetFeature<"sse41", "X86SSELevel", "SSE41",
                                       [FeatureSSSE3]>;
 def FeatureSSE42   : SubtargetFeature<"sse42", "X86SSELevel", "SSE42",
                                       "Enable SSE 4.2 instructions",
-                                      [FeatureSSE41]>;
+                                      [FeatureSSE41, FeaturePOPCNT]>;
 def Feature3DNow   : SubtargetFeature<"3dnow", "X863DNowLevel", "ThreeDNow",
                                       "Enable 3DNow! instructions">;
 def Feature3DNowA  : SubtargetFeature<"3dnowa", "X863DNowLevel", "ThreeDNowA",
@@ -63,7 +66,8 @@ def FeatureFastUAMem : SubtargetFeature<"fast-unaligned-mem",
                                         "IsUAMemFast", "true",
                                         "Fast unaligned memory access">;
 def FeatureSSE4A   : SubtargetFeature<"sse4a", "HasSSE4A", "true",
-                                      "Support SSE 4a instructions">;
+                                      "Support SSE 4a instructions",
+                                      [FeaturePOPCNT]>;
 
 def FeatureAVX     : SubtargetFeature<"avx", "HasAVX", "true",
                                       "Enable AVX instructions">;

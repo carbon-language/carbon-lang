@@ -65,6 +65,9 @@ protected:
   ///
   bool HasX86_64;
 
+  /// HasPOPCNT - True if the processor supports POPCNT.
+  bool HasPOPCNT;
+
   /// HasSSE4A - True if the processor supports SSE4A instructions.
   bool HasSSE4A;
 
@@ -150,6 +153,7 @@ public:
   bool hasSSE4A() const { return HasSSE4A; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
+  bool hasPOPCNT() const { return HasPOPCNT; }
   bool hasAVX() const { return HasAVX; }
   bool hasAES() const { return HasAES; }
   bool hasCLMUL() const { return HasCLMUL; }

@@ -4603,22 +4603,25 @@ defm VTESTPDY : avx_bittest<0x0F, "vtestpd", VR256, f256mem, memopv4f64, v4f64>;
 //===----------------------------------------------------------------------===//
 
 def POPCNT16rr : I<0xB8, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
-                   "popcnt{w}\t{$src, $dst|$dst, $src}", []>, OpSize, XS;
-let mayLoad = 1 in
+                   "popcnt{w}\t{$src, $dst|$dst, $src}",
+                   [(set GR16:$dst, (ctpop GR16:$src))]>, OpSize, XS;
 def POPCNT16rm : I<0xB8, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
-                   "popcnt{w}\t{$src, $dst|$dst, $src}", []>, OpSize, XS;
+                   "popcnt{w}\t{$src, $dst|$dst, $src}",
+                   [(set GR16:$dst, (ctpop (loadi16 addr:$src)))]>, OpSize, XS;
 
 def POPCNT32rr : I<0xB8, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
-                   "popcnt{l}\t{$src, $dst|$dst, $src}", []>, XS;
-let mayLoad = 1 in
+                   "popcnt{l}\t{$src, $dst|$dst, $src}",
+                   [(set GR32:$dst, (ctpop GR32:$src))]>, XS;
 def POPCNT32rm : I<0xB8, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
-                   "popcnt{l}\t{$src, $dst|$dst, $src}", []>, XS;
+                   "popcnt{l}\t{$src, $dst|$dst, $src}",
+                   [(set GR32:$dst, (ctpop (loadi32 addr:$src)))]>, XS;
 
 def POPCNT64rr : RI<0xB8, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
-                    "popcnt{q}\t{$src, $dst|$dst, $src}", []>, XS;
-let mayLoad = 1 in
+                    "popcnt{q}\t{$src, $dst|$dst, $src}",
+                    [(set GR64:$dst, (ctpop GR64:$src))]>, XS;
 def POPCNT64rm : RI<0xB8, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
-                    "popcnt{q}\t{$src, $dst|$dst, $src}", []>, XS;
+                    "popcnt{q}\t{$src, $dst|$dst, $src}",
+                    [(set GR64:$dst, (ctpop (loadi64 addr:$src)))]>, XS;
 
 
 

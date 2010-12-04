@@ -285,19 +285,25 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::FREM             , MVT::f80  , Expand);
   setOperationAction(ISD::FLT_ROUNDS_      , MVT::i32  , Custom);
 
-  setOperationAction(ISD::CTPOP            , MVT::i8   , Expand);
   setOperationAction(ISD::CTTZ             , MVT::i8   , Custom);
   setOperationAction(ISD::CTLZ             , MVT::i8   , Custom);
-  setOperationAction(ISD::CTPOP            , MVT::i16  , Expand);
   setOperationAction(ISD::CTTZ             , MVT::i16  , Custom);
   setOperationAction(ISD::CTLZ             , MVT::i16  , Custom);
-  setOperationAction(ISD::CTPOP            , MVT::i32  , Expand);
   setOperationAction(ISD::CTTZ             , MVT::i32  , Custom);
   setOperationAction(ISD::CTLZ             , MVT::i32  , Custom);
   if (Subtarget->is64Bit()) {
-    setOperationAction(ISD::CTPOP          , MVT::i64  , Expand);
     setOperationAction(ISD::CTTZ           , MVT::i64  , Custom);
     setOperationAction(ISD::CTLZ           , MVT::i64  , Custom);
+  }
+
+  if (Subtarget->hasPOPCNT()) {
+    setOperationAction(ISD::CTPOP          , MVT::i8   , Promote);
+  } else {
+    setOperationAction(ISD::CTPOP          , MVT::i8   , Expand);
+    setOperationAction(ISD::CTPOP          , MVT::i16  , Expand);
+    setOperationAction(ISD::CTPOP          , MVT::i32  , Expand);
+    if (Subtarget->is64Bit())
+      setOperationAction(ISD::CTPOP        , MVT::i64  , Expand);
   }
 
   setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
