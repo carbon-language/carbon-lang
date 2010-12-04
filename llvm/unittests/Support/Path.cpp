@@ -119,18 +119,53 @@ TEST(Support, Path) {
     outs().flush();
   }
 
+  // Create a temp file.
   int FileDescriptor;
   SmallString<64> TempPath;
   ASSERT_FALSE(fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
 
+  // Make sure it exists.
   bool TempFileExists;
   ASSERT_FALSE(sys::fs::exists(Twine(TempPath), TempFileExists));
   EXPECT_TRUE(TempFileExists);
 
+  // Create another temp tile.
+  int FD2;
+  SmallString<64> TempPath2;
+  ASSERT_FALSE(fs::unique_file("%%-%%-%%-%%.temp", FD2, TempPath2));
+  ASSERT_NE(TempPath.str(), TempPath2.str());
+
+  // Try to copy the first to the second.
+  EXPECT_EQ(fs::copy_file(Twine(TempPath), Twine(TempPath2)), errc::file_exists);
+
+  ::close(FD2);
+  // Try again with the proper options.
+  ASSERT_FALSE(fs::copy_file(Twine(TempPath), Twine(TempPath2),
+                             fs::copy_option::overwrite_if_exists));
+  // Remove Temp2.
+  ASSERT_FALSE(fs::remove(Twine(TempPath2), TempFileExists));
+  EXPECT_TRUE(TempFileExists);
+
+  // Make sure Temp2 doesn't exist.
+  ASSERT_FALSE(fs::exists(Twine(TempPath2), TempFileExists));
+  EXPECT_FALSE(TempFileExists);
+
+  // Create a hard link to Temp1.
+  ASSERT_FALSE(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));
+  bool equal;
+  ASSERT_FALSE(fs::equivalent(Twine(TempPath), Twine(TempPath2), equal));
+  EXPECT_TRUE(equal);
+
+  // Remove Temp1.
   ::close(FileDescriptor);
   ASSERT_FALSE(fs::remove(Twine(TempPath), TempFileExists));
   EXPECT_TRUE(TempFileExists);
 
+  // Remove the hard link.
+  ASSERT_FALSE(fs::remove(Twine(TempPath2), TempFileExists));
+  EXPECT_TRUE(TempFileExists);
+
+  // Make sure Temp1 doesn't exist.
   ASSERT_FALSE(fs::exists(Twine(TempPath), TempFileExists));
   EXPECT_FALSE(TempFileExists);
 }
