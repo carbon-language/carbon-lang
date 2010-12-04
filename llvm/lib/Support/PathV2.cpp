@@ -400,7 +400,7 @@ error_code append(SmallVectorImpl<char> &path, const Twine &a,
                                                   i != e; ++i) {
     bool path_has_sep = !path.empty() && is_separator(path[path.size() - 1]);
     bool component_has_sep = !i->empty() && is_separator((*i)[0]);
-    bool is_root_name;
+    bool is_root_name = false;
     if (error_code ec = has_root_name(*i, is_root_name)) return ec;
 
     if (path_has_sep) {
@@ -427,7 +427,7 @@ error_code append(SmallVectorImpl<char> &path, const Twine &a,
 error_code make_absolute(SmallVectorImpl<char> &path) {
   StringRef p(path.data(), path.size());
 
-  bool rootName, rootDirectory;
+  bool rootName = false, rootDirectory = false;
   if (error_code ec = has_root_name(p, rootName)) return ec;
   if (error_code ec = has_root_directory(p, rootDirectory)) return ec;
 
