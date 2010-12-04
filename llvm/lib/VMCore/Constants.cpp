@@ -40,22 +40,25 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 // Constructor to create a '0' constant of arbitrary type...
-static const uint64_t zero[2] = {0, 0};
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID:
     return ConstantInt::get(Ty, 0);
   case Type::FloatTyID:
-    return ConstantFP::get(Ty->getContext(), APFloat(APInt(32, 0)));
+    return ConstantFP::get(Ty->getContext(),
+                           APFloat::getZero(APFloat::IEEEsingle));
   case Type::DoubleTyID:
-    return ConstantFP::get(Ty->getContext(), APFloat(APInt(64, 0)));
+    return ConstantFP::get(Ty->getContext(),
+                           APFloat::getZero(APFloat::IEEEdouble));
   case Type::X86_FP80TyID:
-    return ConstantFP::get(Ty->getContext(), APFloat(APInt(80, 2, zero)));
+    return ConstantFP::get(Ty->getContext(),
+                           APFloat::getZero(APFloat::x87DoubleExtended));
   case Type::FP128TyID:
     return ConstantFP::get(Ty->getContext(),
-                           APFloat(APInt(128, 2, zero), true));
+                           APFloat::getZero(APFloat::IEEEquad));
   case Type::PPC_FP128TyID:
-    return ConstantFP::get(Ty->getContext(), APFloat(APInt(128, 2, zero)));
+    return ConstantFP::get(Ty->getContext(),
+                           APFloat::getZero(APFloat::PPCDoubleDouble));
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:

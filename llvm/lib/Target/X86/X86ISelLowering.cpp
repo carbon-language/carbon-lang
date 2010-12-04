@@ -521,13 +521,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
     {
-      bool ignored;
-      APFloat TmpFlt(+0.0);
-      TmpFlt.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
-                     &ignored);
+      APFloat TmpFlt = APFloat::getZero(APFloat::x87DoubleExtended);
       addLegalFPImmediate(TmpFlt);  // FLD0
       TmpFlt.changeSign();
       addLegalFPImmediate(TmpFlt);  // FLD0/FCHS
+
+      bool ignored;
       APFloat TmpFlt2(+1.0);
       TmpFlt2.convert(APFloat::x87DoubleExtended, APFloat::rmNearestTiesToEven,
                       &ignored);
