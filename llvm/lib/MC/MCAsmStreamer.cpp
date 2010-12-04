@@ -896,8 +896,7 @@ void MCAsmStreamer::EmitRawText(StringRef String) {
 void MCAsmStreamer::Finish() {
   // Dump out the dwarf file & directory tables and line tables.
   if (getContext().hasDwarfFiles() && TLOF)
-    MCDwarfFileTable::Emit(this, TLOF->getDwarfLineSection(),
-                           TLOF->getTextSection());
+    MCDwarfFileTable::Emit(this, TLOF->getDwarfLineSection());
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,

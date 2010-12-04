@@ -23,6 +23,7 @@ MCAsmInfo::MCAsmInfo() {
   HasMachoZeroFillDirective = false;
   HasMachoTBSSDirective = false;
   HasStaticCtorDtorReferenceInStaticMode = false;
+  LinkerRequiresNonEmptyDwarfLines = false;
   MaxInstLength = 4;
   PCSymbol = "$";
   SeparatorChar = ';';

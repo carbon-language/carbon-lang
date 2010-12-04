@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCStreamer.h"
@@ -198,8 +199,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
 // This emits the Dwarf file and the line tables.
 //
 void MCDwarfFileTable::Emit(MCStreamer *MCOS,
-                            const MCSection *DwarfLineSection,
-                            const MCSection *TextSection) {
+                            const MCSection *DwarfLineSection) {
   // Switch to the section where the table will be emitted into.
   MCOS->SwitchSection(DwarfLineSection);
 
@@ -296,7 +296,8 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
     delete Line;
   }
 
-  if (TextSection && MCLineSectionOrder.begin() == MCLineSectionOrder.end()) {
+  if (MCOS->getContext().getAsmInfo().getLinkerRequiresNonEmptyDwarfLines()
+      && MCLineSectionOrder.begin() == MCLineSectionOrder.end()) {
     // The darwin9 linker has a bug (see PR8715). For for 32-bit architectures
     // it requires:  
     // total_length >= prologue_length + 10

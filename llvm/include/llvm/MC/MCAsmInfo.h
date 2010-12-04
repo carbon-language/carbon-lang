@@ -51,6 +51,11 @@ namespace llvm {
     /// emitted in Static relocation model.
     bool HasStaticCtorDtorReferenceInStaticMode;  // Default is false.
 
+    /// LinkerRequiresNonEmptyDwarfLines - True if the linker has a bug and
+    /// requires that the debug_line section be of a minimum size. In practice
+    /// such a linker requires a non empty line sequence if a file is present.
+    bool LinkerRequiresNonEmptyDwarfLines; // Default to false.
+
     /// MaxInstLength - This is the maximum possible length of an instruction,
     /// which is needed to compute the size of an inline asm.
     unsigned MaxInstLength;                  // Defaults to 4.
@@ -321,6 +326,9 @@ namespace llvm {
     bool hasMachoTBSSDirective() const { return HasMachoTBSSDirective; }
     bool hasStaticCtorDtorReferenceInStaticMode() const {
       return HasStaticCtorDtorReferenceInStaticMode;
+    }
+    bool getLinkerRequiresNonEmptyDwarfLines() const {
+      return LinkerRequiresNonEmptyDwarfLines;
     }
     unsigned getMaxInstLength() const {
       return MaxInstLength;

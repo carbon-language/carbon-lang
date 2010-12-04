@@ -37,6 +37,9 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   HasMachoZeroFillDirective = true;  // Uses .zerofill
   HasMachoTBSSDirective = true; // Uses .tbss
   HasStaticCtorDtorReferenceInStaticMode = true;
+
+  // FIXME: Darwin 10 and newer don't need this.
+  LinkerRequiresNonEmptyDwarfLines = true;
   
   HiddenVisibilityAttr = MCSA_PrivateExtern;
   // Doesn't support protected visibility.
