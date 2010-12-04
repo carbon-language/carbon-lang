@@ -469,6 +469,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (FEOpts.ProgramAction == frontend::RunAnalysis)
     Builder.defineMacro("__clang_analyzer__");
 
+  if (LangOpts.FastRelaxedMath)
+    Builder.defineMacro("__FAST_RELAXED_MATH__");
+
   // Get other target #defines.
   TI.getTargetDefines(LangOpts, Builder);
 }

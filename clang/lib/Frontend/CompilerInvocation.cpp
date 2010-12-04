@@ -898,12 +898,14 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.FloatABI = Args.getLastArgValue(OPT_mfloat_abi);
   Opts.HiddenWeakVTables = Args.hasArg(OPT_fhidden_weak_vtables);
   Opts.LimitFloatPrecision = Args.getLastArgValue(OPT_mlimit_float_precision);
-  Opts.NoInfsFPMath = Opts.NoNaNsFPMath = Args.hasArg(OPT_cl_finite_math_only);
+  Opts.NoInfsFPMath = Opts.NoNaNsFPMath = Args.hasArg(OPT_cl_finite_math_only)||
+                                          Args.hasArg(OPT_cl_fast_relaxed_math);
   Opts.NoZeroInitializedInBSS = Args.hasArg(OPT_mno_zero_initialized_in_bss);
   Opts.RelaxAll = Args.hasArg(OPT_mrelax_all);
   Opts.OmitLeafFramePointer = Args.hasArg(OPT_momit_leaf_frame_pointer);
   Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
-  Opts.UnsafeFPMath = Args.hasArg(OPT_cl_unsafe_math_optimizations);
+  Opts.UnsafeFPMath = Args.hasArg(OPT_cl_unsafe_math_optimizations) ||
+                      Args.hasArg(OPT_cl_fast_relaxed_math);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = Args.getLastArgValue(OPT_mrelocation_model, "pic");
 
@@ -1421,6 +1423,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.SpellChecking = !Args.hasArg(OPT_fno_spell_checking);
   Opts.NoBitFieldTypeAlign = Args.hasArg(OPT_fno_bitfield_type_align);
   Opts.SinglePrecisionConstants = Args.hasArg(OPT_cl_single_precision_constant);
+  Opts.FastRelaxedMath = Args.hasArg(OPT_cl_fast_relaxed_math);
   Opts.OptimizeSize = 0;
 
   // FIXME: Eliminate this dependency.

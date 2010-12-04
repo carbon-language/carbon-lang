@@ -113,6 +113,8 @@ public:
   unsigned SinglePrecisionConstants : 1; // Whether to treat double-precision
                                          // floating point constants as
                                          // single precision constants.
+  unsigned FastRelaxedMath : 1; // OpenCL fast relaxed math (on its own,
+                                // defines __FAST_RELAXED_MATH__).
   // FIXME: This is just a temporary option, for testing purposes.
   unsigned NoBitFieldTypeAlign : 1;
 
@@ -200,6 +202,7 @@ public:
     DumpVTableLayouts = 0;
     SpellChecking = 1;
     SinglePrecisionConstants = 0;
+    FastRelaxedMath = 0;
     NoBitFieldTypeAlign = 0;
   }
 
