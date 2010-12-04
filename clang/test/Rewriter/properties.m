@@ -2,6 +2,7 @@
 
 // Fariborz approved this being xfail'ed during the addition
 // of explicit lvalue-to-rvalue conversions.
+// RUN: false
 // XFAIL: *
 
 @interface Foo {
