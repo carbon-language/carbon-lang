@@ -293,28 +293,28 @@ error_code root_path(const StringRef &path, StringRef &result) {
       if ((++pos != e) && is_separator((*pos)[0])) {
         // {C:/,//net/}, so get the first two components.
         result = StringRef(path.begin(), b->size() + pos->size());
-        return make_error_code(errc::success);
+        return success;
       } else {
         // just {C:,//net}, return the first component.
         result = *b;
-        return make_error_code(errc::success);
+        return success;
       }
     }
 
     // POSIX style root directory.
     if (is_separator((*b)[0])) {
       result = *b;
-      return make_error_code(errc::success);
+      return success;
     }
 
     // No root_path.
     result = StringRef();
-    return make_error_code(errc::success);
+    return success;
   }
 
   // No path :(.
   result = StringRef();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code root_name(const StringRef &path, StringRef &result) {
@@ -332,13 +332,13 @@ error_code root_name(const StringRef &path, StringRef &result) {
     if (has_net || has_drive) {
       // just {C:,//net}, return the first component.
       result = *b;
-      return make_error_code(errc::success);
+      return success;
     }
   }
 
   // No path or no name.
   result = StringRef();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code root_directory(const StringRef &path, StringRef &result) {
@@ -358,26 +358,26 @@ error_code root_directory(const StringRef &path, StringRef &result) {
         // {C:,//net}, skip to the next component.
         (++pos != e) && is_separator((*pos)[0])) {
       result = *pos;
-      return make_error_code(errc::success);
+      return success;
     }
 
     // POSIX style root directory.
     if (!has_net && is_separator((*b)[0])) {
       result = *b;
-      return make_error_code(errc::success);
+      return success;
     }
   }
 
   // No path or no root.
   result = StringRef();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code relative_path(const StringRef &path, StringRef &result) {
   StringRef root;
   if (error_code ec = root_path(path, root)) return ec;
   result = StringRef(path.begin() + root.size(), path.size() - root.size());
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code append(SmallVectorImpl<char> &path, const Twine &a,
@@ -421,7 +421,7 @@ error_code append(SmallVectorImpl<char> &path, const Twine &a,
     path.append(i->begin(), i->end());
   }
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code make_absolute(SmallVectorImpl<char> &path) {
@@ -433,7 +433,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
 
   // Already absolute.
   if (rootName && rootDirectory)
-    return make_error_code(errc::success);
+    return success;
 
   // All of the following conditions will need the current directory.
   SmallString<128> current_dir;
@@ -445,7 +445,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
     if (error_code ec = append(current_dir, p)) return ec;
     // Set path to the result.
     path.swap(current_dir);
-    return make_error_code(errc::success);
+    return success;
   }
 
   if (!rootName && rootDirectory) {
@@ -455,7 +455,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
     if (error_code ec = append(curDirRootName, p)) return ec;
     // Set path to the result.
     path.swap(curDirRootName);
-    return make_error_code(errc::success);
+    return success;
   }
 
   if (rootName && !rootDirectory) {
@@ -472,7 +472,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
     if (error_code ec = append(res, pRootName, bRootDirectory,
                                     bRelativePath, pRelativePath)) return ec;
     path.swap(res);
-    return make_error_code(errc::success);
+    return success;
   }
 
   llvm_unreachable("All rootName and rootDirectory combinations should have "
@@ -485,15 +485,15 @@ error_code parent_path(const StringRef &path, StringRef &result) {
     result = StringRef();
   else
     result = StringRef(path.data(), end_pos);
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code remove_filename(SmallVectorImpl<char> &path) {
   size_t end_pos = parent_path_end(StringRef(path.begin(), path.size()));
   if (end_pos == StringRef::npos)
-    return make_error_code(errc::success);
+    return success;
   path.set_size(end_pos);
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code replace_extension(SmallVectorImpl<char> &path,
@@ -513,7 +513,7 @@ error_code replace_extension(SmallVectorImpl<char> &path,
 
   // Append extension.
   path.append(ext.begin(), ext.end());
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code native(const Twine &path, SmallVectorImpl<char> &result) {
@@ -535,12 +535,12 @@ error_code native(const Twine &path, SmallVectorImpl<char> &result) {
 #else
   path.toVector(result);
 #endif
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code filename(const StringRef &path, StringRef &result) {
   result = *(--end(path));
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code stem(const StringRef &path, StringRef &result) {
@@ -556,7 +556,7 @@ error_code stem(const StringRef &path, StringRef &result) {
     else
       result = StringRef(fname.begin(), pos);
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code extension(const StringRef &path, StringRef &result) {
@@ -572,7 +572,7 @@ error_code extension(const StringRef &path, StringRef &result) {
     else
       result = StringRef(fname.begin() + pos, fname.size() - pos);
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code has_root_name(const Twine &path, bool &result) {
@@ -582,7 +582,7 @@ error_code has_root_name(const Twine &path, bool &result) {
   if (error_code ec = root_name(p, p)) return ec;
 
   result = !p.empty();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code has_root_directory(const Twine &path, bool &result) {
@@ -592,7 +592,7 @@ error_code has_root_directory(const Twine &path, bool &result) {
   if (error_code ec = root_directory(p, p)) return ec;
 
   result = !p.empty();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code has_root_path(const Twine &path, bool &result) {
@@ -602,7 +602,7 @@ error_code has_root_path(const Twine &path, bool &result) {
   if (error_code ec = root_path(p, p)) return ec;
 
   result = !p.empty();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code has_filename(const Twine &path, bool &result) {
@@ -612,7 +612,7 @@ error_code has_filename(const Twine &path, bool &result) {
   if (error_code ec = filename(p, p)) return ec;
 
   result = !p.empty();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code has_parent_path(const Twine &path, bool &result) {
@@ -622,7 +622,7 @@ error_code has_parent_path(const Twine &path, bool &result) {
   if (error_code ec = parent_path(p, p)) return ec;
 
   result = !p.empty();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code has_stem(const Twine &path, bool &result) {
@@ -632,7 +632,7 @@ error_code has_stem(const Twine &path, bool &result) {
   if (error_code ec = stem(p, p)) return ec;
 
   result = !p.empty();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code has_extension(const Twine &path, bool &result) {
@@ -642,7 +642,7 @@ error_code has_extension(const Twine &path, bool &result) {
   if (error_code ec = extension(p, p)) return ec;
 
   result = !p.empty();
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code is_absolute(const Twine &path, bool &result) {
@@ -659,7 +659,7 @@ error_code is_absolute(const Twine &path, bool &result) {
 #endif
 
   result = rootDir && rootName;
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code is_relative(const Twine &path, bool &result) {

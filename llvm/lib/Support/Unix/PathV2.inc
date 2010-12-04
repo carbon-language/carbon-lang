@@ -63,7 +63,7 @@ namespace {
     result.set_size(0);
     StringRef d(dir);
     result.append(d.begin(), d.end());
-    return make_error_code(errc::success);
+    return success;
   }
 }
 
@@ -80,7 +80,7 @@ error_code current_path(SmallVectorImpl<char> &result) {
     return error_code(errno, system_category());
 
   result.set_size(strlen(result.data()));
-  return make_error_code(errc::success);
+  return success;
 }
 
 } // end namespace path
@@ -143,7 +143,7 @@ error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
   if (sz_read < 0)
     return error_code(errno, system_category());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code create_directory(const Twine &path, bool &existed) {
@@ -151,13 +151,13 @@ error_code create_directory(const Twine &path, bool &existed) {
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   if (::mkdir(p.begin(), 0700) == -1) {
-    if (errno != EEXIST)
+    if (errno != errc::file_exists)
       return error_code(errno, system_category());
     existed = true;
   } else
     existed = false;
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code create_hard_link(const Twine &to, const Twine &from) {
@@ -170,7 +170,7 @@ error_code create_hard_link(const Twine &to, const Twine &from) {
   if (::link(t.begin(), f.begin()) == -1)
     return error_code(errno, system_category());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code create_symlink(const Twine &to, const Twine &from) {
@@ -183,7 +183,7 @@ error_code create_symlink(const Twine &to, const Twine &from) {
   if (::symlink(t.begin(), f.begin()) == -1)
     return error_code(errno, system_category());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code remove(const Twine &path, bool &existed) {
@@ -191,13 +191,13 @@ error_code remove(const Twine &path, bool &existed) {
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   if (::remove(p.begin()) == -1) {
-    if (errno != ENOENT)
+    if (errno != errc::no_such_file_or_directory)
       return error_code(errno, system_category());
     existed = false;
   } else
     existed = true;
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code rename(const Twine &from, const Twine &to) {
@@ -210,7 +210,7 @@ error_code rename(const Twine &from, const Twine &to) {
   if (::rename(f.begin(), t.begin()) == -1)
     return error_code(errno, system_category());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code resize_file(const Twine &path, uint64_t size) {
@@ -220,7 +220,7 @@ error_code resize_file(const Twine &path, uint64_t size) {
   if (::truncate(p.begin(), size) == -1)
     return error_code(errno, system_category());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code exists(const Twine &path, bool &result) {
@@ -229,13 +229,13 @@ error_code exists(const Twine &path, bool &result) {
 
   struct stat status;
   if (::stat(p.begin(), &status) == -1) {
-    if (errno != ENOENT)
+    if (errno != errc::no_such_file_or_directory)
       return error_code(errno, system_category());
     result = false;
   } else
     result = true;
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code equivalent(const Twine &A, const Twine &B, bool &result) {
@@ -260,7 +260,7 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
       stat_a.st_ino == stat_b.st_ino;
   }
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code file_size(const Twine &path, uint64_t &result) {
@@ -271,10 +271,10 @@ error_code file_size(const Twine &path, uint64_t &result) {
   if (::stat(p.begin(), &status) == -1)
     return error_code(errno, system_category());
   if (!S_ISREG(status.st_mode))
-    return error_code(EPERM, system_category());
+    return make_error_code(errc::operation_not_permitted);
 
   result = status.st_size;
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code status(const Twine &path, file_status &result) {
@@ -359,10 +359,10 @@ rety_open_create:
   int RandomFD = ::open(RandomPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
   if (RandomFD == -1) {
     // If the file existed, try again, otherwise, error.
-    if (errno == EEXIST)
+    if (errno == errc::file_exists)
       goto retry_random_path;
     // The path prefix doesn't exist.
-    if (errno == ENOENT) {
+    if (errno == errc::no_such_file_or_directory) {
       StringRef p(RandomPath.begin(), RandomPath.size());
       SmallString<64> dir_to_create;
       for (path::const_iterator i = path::begin(p),
@@ -375,7 +375,7 @@ rety_open_create:
           if (i->size() > 2 && (*i)[0] == '/' &&
                                (*i)[1] == '/' &&
                                (*i)[2] != '/')
-            return error_code(ENOENT, system_category());
+            return make_error_code(errc::no_such_file_or_directory);
           if (::mkdir(dir_to_create.c_str(), 0700) == -1)
             return error_code(errno, system_category());
         }
@@ -385,7 +385,7 @@ rety_open_create:
     return error_code(errno, system_category());
   }
 
-    // Make the path absolute.
+   // Make the path absolute.
   char real_path_buff[PATH_MAX + 1];
   if (realpath(RandomPath.c_str(), real_path_buff) == NULL) {
     ::close(RandomFD);
@@ -398,7 +398,7 @@ rety_open_create:
   result_path.append(d.begin(), d.end());
 
   result_fd = RandomFD;
-  return make_error_code(errc::success);
+  return success;
 }
 
 } // end namespace fs

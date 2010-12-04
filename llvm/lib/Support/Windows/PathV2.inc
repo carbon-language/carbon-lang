@@ -48,7 +48,7 @@ namespace {
                                     utf16.begin(), 0);
 
     if (len == 0)
-      return make_error_code(windows_error(::GetLastError()));
+      return windows_error(::GetLastError());
 
     utf16.reserve(len + 1);
     utf16.set_size(len);
@@ -58,13 +58,13 @@ namespace {
                                     utf16.begin(), utf16.size());
 
     if (len == 0)
-      return make_error_code(windows_error(::GetLastError()));
+      return windows_error(::GetLastError());
 
     // Make utf16 null terminated.
     utf16.push_back(0);
     utf16.pop_back();
 
-    return make_error_code(errc::success);
+    return success;
   }
 
   error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
@@ -76,7 +76,7 @@ namespace {
                                     NULL, NULL);
 
     if (len == 0)
-      return make_error_code(windows_error(::GetLastError()));
+      return windows_error(::GetLastError());
 
     utf8.reserve(len);
     utf8.set_size(len);
@@ -88,13 +88,13 @@ namespace {
                                 NULL, NULL);
 
     if (len == 0)
-      return make_error_code(windows_error(::GetLastError()));
+      return windows_error(::GetLastError());
 
     // Make utf8 null terminated.
     utf8.push_back(0);
     utf8.pop_back();
 
-    return make_error_code(errc::success);
+    return success;
   }
 
   error_code TempDir(SmallVectorImpl<wchar_t> &result) {
@@ -102,7 +102,7 @@ namespace {
     DWORD len = ::GetTempPathW(result.capacity(), result.begin());
 
     if (len == 0)
-      return make_error_code(windows_error(::GetLastError()));
+      return windows_error(::GetLastError());
 
     if (len > result.capacity()) {
       result.reserve(len);
@@ -110,7 +110,7 @@ namespace {
     }
 
     result.set_size(len);
-    return make_error_code(errc::success);
+    return success;
   }
 
   struct AutoCryptoProvider {
@@ -136,7 +136,7 @@ retry_cur_dir:
 
   // A zero return value indicates a failure other than insufficient space.
   if (len == 0)
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
 
   // If there's insufficient space, the len returned is larger than the len
   // given.
@@ -167,9 +167,9 @@ retry_cur_dir:
                               result.data(), result.size(),
                               NULL, NULL);
   if (len == 0)
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 } // end namespace path
@@ -194,9 +194,9 @@ error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
                          copt != copy_option::overwrite_if_exists);
 
   if (res == 0)
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code create_directory(const Twine &path, bool &existed) {
@@ -208,15 +208,15 @@ error_code create_directory(const Twine &path, bool &existed) {
     return ec;
 
   if (!::CreateDirectoryW(path_utf16.begin(), NULL)) {
-    error_code ec = make_error_code(windows_error(::GetLastError()));
-    if (ec == make_error_code(windows_error::already_exists))
+    error_code ec = windows_error(::GetLastError());
+    if (ec == windows_error::already_exists)
       existed = true;
     else
       return ec;
   } else
     existed = false;
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code create_hard_link(const Twine &to, const Twine &from) {
@@ -233,9 +233,9 @@ error_code create_hard_link(const Twine &to, const Twine &from) {
   if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
 
   if (!::CreateHardLinkW(wide_from.begin(), wide_to.begin(), NULL))
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code create_symlink(const Twine &to, const Twine &from) {
@@ -256,9 +256,9 @@ error_code create_symlink(const Twine &to, const Twine &from) {
   if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
 
   if (!create_symbolic_link_api(wide_from.begin(), wide_to.begin(), 0))
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code remove(const Twine &path, bool &existed) {
@@ -270,14 +270,14 @@ error_code remove(const Twine &path, bool &existed) {
     return ec;
 
   if (!::DeleteFileW(path_utf16.begin())) {
-    error_code ec = make_error_code(windows_error(::GetLastError()));
-    if (ec != make_error_code(windows_error::file_not_found))
+    error_code ec = windows_error(::GetLastError());
+    if (ec != windows_error::file_not_found)
       return ec;
     existed = false;
   } else
     existed = true;
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code rename(const Twine &from, const Twine &to) {
@@ -294,9 +294,9 @@ error_code rename(const Twine &from, const Twine &to) {
   if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
 
   if (!::MoveFileW(wide_from.begin(), wide_to.begin()))
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code resize_file(const Twine &path, uint64_t size) {
@@ -332,13 +332,13 @@ error_code exists(const Twine &path, bool &result) {
   if (attributes == INVALID_FILE_ATTRIBUTES) {
     // See if the file didn't actually exist.
     error_code ec = make_error_code(windows_error(::GetLastError()));
-    if (ec != error_code(windows_error::file_not_found) &&
-        ec != error_code(windows_error::path_not_found))
+    if (ec != windows_error::file_not_found &&
+        ec != windows_error::path_not_found)
       return ec;
     result = false;
   } else
     result = true;
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code equivalent(const Twine &A, const Twine &B, bool &result) {
@@ -375,21 +375,21 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   // If both handles are invalid, it's an error.
   if (HandleA == INVALID_HANDLE_VALUE &&
       HandleB == INVALID_HANDLE_VALUE)
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
 
   // If only one is invalid, it's false.
   if (HandleA == INVALID_HANDLE_VALUE &&
       HandleB == INVALID_HANDLE_VALUE) {
     result = false;
-    return make_error_code(errc::success);
+    return success;
   }
 
   // Get file information.
   BY_HANDLE_FILE_INFORMATION InfoA, InfoB;
   if (!::GetFileInformationByHandle(HandleA, &InfoA))
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
   if (!::GetFileInformationByHandle(HandleB, &InfoB))
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
 
   // See if it's all the same.
   result =
@@ -403,7 +403,7 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
     InfoA.ftLastWriteTime.dwHighDateTime ==
       InfoB.ftLastWriteTime.dwHighDateTime;
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code file_size(const Twine &path, uint64_t &result) {
@@ -418,13 +418,13 @@ error_code file_size(const Twine &path, uint64_t &result) {
   if (!::GetFileAttributesExW(path_utf16.begin(),
                               ::GetFileExInfoStandard,
                               &FileData))
-    return make_error_code(windows_error(::GetLastError()));
+    return windows_error(::GetLastError());
 
   result =
     (uint64_t(FileData.nFileSizeHigh) << (sizeof(FileData.nFileSizeLow) * 8))
     + FileData.nFileSizeLow;
 
-  return make_error_code(errc::success);
+  return success;
 }
 
 error_code status(const Twine &path, file_status &result) {
@@ -504,13 +504,12 @@ error_code unique_file(const Twine &model, int &result_fd,
 
   // Get a Crypto Provider for CryptGenRandom.
   AutoCryptoProvider CryptoProvider;
-  BOOL success = ::CryptAcquireContextW(&CryptoProvider.CryptoProvider,
-                                        NULL,
-                                        NULL,
-                                        PROV_RSA_FULL,
-                                        0);
-  if (!success)
-    return make_error_code(windows_error(::GetLastError()));
+  if (!::CryptAcquireContextW(&CryptoProvider.CryptoProvider,
+                              NULL,
+                              NULL,
+                              PROV_RSA_FULL,
+                              0))
+    return windows_error(::GetLastError());
 
 retry_random_path:
   random_path_utf16.set_size(0);
@@ -520,7 +519,7 @@ retry_random_path:
     if (*i == L'%') {
       BYTE val = 0;
       if (!::CryptGenRandom(CryptoProvider, 1, &val))
-          return make_error_code(windows_error(::GetLastError()));
+          return windows_error(::GetLastError());
       random_path_utf16.push_back("0123456789abcdef"[val & 15]);
     }
     else
@@ -543,11 +542,11 @@ retry_create_file:
                                         NULL);
   if (TempFileHandle == INVALID_HANDLE_VALUE) {
     // If the file existed, try again, otherwise, error.
-    error_code ec = make_error_code(windows_error(::GetLastError()));
-    if (ec == error_code(windows_error::file_exists))
+    error_code ec = windows_error(::GetLastError());
+    if (ec == windows_error::file_exists)
       goto retry_random_path;
     // Check for non-existing parent directories.
-    if (ec == error_code(windows_error::path_not_found)) {
+    if (ec == windows_error::path_not_found) {
       // Create the directories using result_path as temp storage.
       if (error_code ec = UTF16ToUTF8(random_path_utf16.begin(),
                                       random_path_utf16.size(), result_path))
@@ -570,7 +569,7 @@ retry_create_file:
 
           // Create the directory.
           if (!::CreateDirectoryW(dir_to_create_utf16.begin(), NULL))
-            return make_error_code(windows_error(::GetLastError()));
+            return windows_error(::GetLastError());
         }
       }
       goto retry_create_file;
@@ -593,11 +592,11 @@ retry_create_file:
     ::DeleteFileW(random_path_utf16.begin());
     // MSDN doesn't say anything about _open_osfhandle setting errno or
     // GetLastError(), so just return invalid_handle.
-    return make_error_code(windows_error::invalid_handle);
+    return windows_error::invalid_handle;
   }
 
   result_fd = fd;
-  return make_error_code(errc::success);
+  return success;
 }
 } // end namespace fs
 } // end namespace sys
