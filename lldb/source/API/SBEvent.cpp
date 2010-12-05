@@ -68,7 +68,11 @@ SBEvent::GetDataFlavor ()
 {
     Event *lldb_event = get();
     if (lldb_event)
-        return lldb_event->GetData()->GetFlavor().AsCString();
+    {
+        EventData *event_data = lldb_event->GetData();
+        if (event_data)
+            return lldb_event->GetData()->GetFlavor().AsCString();
+    }
     return NULL;
 }
 
