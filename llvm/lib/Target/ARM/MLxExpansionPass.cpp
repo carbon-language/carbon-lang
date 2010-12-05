@@ -51,7 +51,6 @@ namespace {
     const TargetRegisterInfo *TRI;
     MachineRegisterInfo *MRI;
 
-    unsigned HazardLimit;
     unsigned MIIdx;
     MachineInstr* LastMIs[4];
 
@@ -186,7 +185,7 @@ bool MLxExpansion::FindMLxHazard(MachineInstr *MI) const {
       continue;
 
     if (TII->canCauseFpMLxStall(NextMI->getOpcode()))
-        return true;
+      return true;
 
     // Look for VMLx RAW hazard.
     if (hasRAWHazard(getDefReg(MI), NextMI))
