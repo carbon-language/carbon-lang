@@ -138,10 +138,6 @@ public:
     Profile(ID, this);
   }
 
-  SVal LookupExpr(Expr* E) const {
-    return Env.LookupExpr(E);
-  }
-
   BasicValueFactory &getBasicVals() const;
   SymbolManager &getSymbolManager() const;
 
