@@ -189,3 +189,9 @@ SBBroadcaster::operator != (const SBBroadcaster &rhs) const
 {
     return m_opaque_ptr != rhs.m_opaque_ptr;
 }
+
+bool
+SBBroadcaster::operator < (const SBBroadcaster &rhs) const
+{
+    return m_opaque_ptr < rhs.m_opaque_ptr;
+}
