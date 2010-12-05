@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 | FileCheck %s
 ; PR5757
 
 %0 = type { i64, i32 }
