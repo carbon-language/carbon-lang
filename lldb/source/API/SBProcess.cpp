@@ -716,7 +716,7 @@ uint32_t
 SBProcess::LoadImage (lldb::SBFileSpec &sb_image_spec, lldb::SBError &sb_error)
 {
     if (m_opaque_sp)
-        m_opaque_sp->LoadImage (*sb_image_spec, sb_error.ref());
+        return m_opaque_sp->LoadImage (*sb_image_spec, sb_error.ref());
     return LLDB_INVALID_IMAGE_TOKEN;
 }
     
