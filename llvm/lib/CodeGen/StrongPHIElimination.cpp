@@ -19,28 +19,16 @@
 using namespace llvm;
 
 namespace {
-class StrongPHIElimination : public MachineFunctionPass {
-public:
-  static char ID; // Pass identification, replacement for typeid
-  StrongPHIElimination() : MachineFunctionPass(ID) {
-    initializeStrongPHIEliminationPass(*PassRegistry::getPassRegistry());
-  }
+  class StrongPHIElimination : public MachineFunctionPass {
+  public:
+    static char ID; // Pass identification, replacement for typeid
+    StrongPHIElimination() : MachineFunctionPass(ID) {
+      initializeStrongPHIEliminationPass(*PassRegistry::getPassRegistry());
+    }
 
-private:
-  bool runOnMachineFunction(MachineFunction &Fn) {
-    llvm_unreachable("Strong phi elimination is not implemented");
-  }
-    
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesCFG();
-    AU.addRequired<MachineDominatorTree>();
-    AU.addRequired<SlotIndexes>();
-    AU.addPreserved<SlotIndexes>();
-    AU.addRequired<LiveIntervals>();
-    AU.addPreserved<LiveIntervals>();
-    MachineFunctionPass::getAnalysisUsage(AU);
-  }
-};
+    virtual void getAnalysisUsage(AnalysisUsage&) const;
+    bool runOnMachineFunction(MachineFunction&);
+  };
 } // namespace
 
 char StrongPHIElimination::ID = 0;
@@ -54,3 +42,16 @@ INITIALIZE_PASS_END(StrongPHIElimination, "strong-phi-node-elimination",
 
 char &llvm::StrongPHIEliminationID = StrongPHIElimination::ID;
 
+void StrongPHIElimination::getAnalysisUsage(AnalysisUsage& AU) const {
+  AU.setPreservesCFG();
+  AU.addRequired<MachineDominatorTree>();
+  AU.addRequired<SlotIndexes>();
+  AU.addPreserved<SlotIndexes>();
+  AU.addRequired<LiveIntervals>();
+  AU.addPreserved<LiveIntervals>();
+  MachineFunctionPass::getAnalysisUsage(AU);
+}
+
+bool StrongPHIElimination::runOnMachineFunction(MachineFunction& Fn) {
+  llvm_unreachable("Strong phi elimination is not implemented");
+}
