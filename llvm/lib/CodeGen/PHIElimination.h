@@ -55,14 +55,6 @@ namespace llvm {
     bool SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB,
                        LiveVariables &LV, MachineLoopInfo *MLI);
 
-    /// FindCopyInsertPoint - Find a safe place in MBB to insert a copy from
-    /// SrcReg when following the CFG edge to SuccMBB. This needs to be after
-    /// any def of SrcReg, but before any subsequent point where control flow
-    /// might jump out of the basic block.
-    MachineBasicBlock::iterator FindCopyInsertPoint(MachineBasicBlock &MBB,
-                                                    MachineBasicBlock &SuccMBB,
-                                                    unsigned SrcReg);
-
     typedef std::pair<unsigned, unsigned> BBVRegPair;
     typedef DenseMap<BBVRegPair, unsigned> VRegPHIUse;
 
