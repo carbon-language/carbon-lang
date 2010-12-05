@@ -1424,6 +1424,8 @@ int ShuffleVectorInst::getMaskValue(unsigned i) const {
 void InsertValueInst::init(Value *Agg, Value *Val, const unsigned *Idx, 
                            unsigned NumIdx, const Twine &Name) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
+  assert(ExtractValueInst::getIndexedType(Agg->getType(), Idx, Idx + NumIdx) ==
+         Val->getType() && "Inserted value must match indexed type!");
   Op<0>() = Agg;
   Op<1>() = Val;
 
@@ -1434,6 +1436,8 @@ void InsertValueInst::init(Value *Agg, Value *Val, const unsigned *Idx,
 void InsertValueInst::init(Value *Agg, Value *Val, unsigned Idx, 
                            const Twine &Name) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
+  assert(ExtractValueInst::getIndexedType(Agg->getType(), Idx) == Val->getType()
+         && "Inserted value must match indexed type!");
   Op<0>() = Agg;
   Op<1>() = Val;
 
@@ -1506,13 +1510,26 @@ ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
 const Type* ExtractValueInst::getIndexedType(const Type *Agg,
                                              const unsigned *Idxs,
                                              unsigned NumIdx) {
-  unsigned CurIdx = 0;
-  for (; CurIdx != NumIdx; ++CurIdx) {
-    const CompositeType *CT = dyn_cast<CompositeType>(Agg);
-    if (!CT || CT->isPointerTy() || CT->isVectorTy()) return 0;
+  for (unsigned CurIdx = 0; CurIdx != NumIdx; ++CurIdx) {
     unsigned Index = Idxs[CurIdx];
-    if (!CT->indexValid(Index)) return 0;
-    Agg = CT->getTypeAtIndex(Index);
+    // We can't use CompositeType::indexValid(Index) here.
+    // indexValid() always returns true for arrays because getelementptr allows
+    // out-of-bounds indices. Since we don't allow those for extractvalue and
+    // insertvalue we need to check array indexing manually.
+    // Since the only other types we can index into are struct types it's just
+    // as easy to check those manually as well.
+    if (const ArrayType *AT = dyn_cast<ArrayType>(Agg)) {
+      if (Index >= AT->getNumElements())
+        return 0;
+    } else if (const StructType *ST = dyn_cast<StructType>(Agg)) {
+      if (Index >= ST->getNumElements())
+        return 0;
+    } else {
+      // Not a valid type to index into.
+      return 0;
+    }
+
+    Agg = cast<CompositeType>(Agg)->getTypeAtIndex(Index);
 
     // If the new type forwards to another type, then it is in the middle
     // of being refined to another type (and hence, may have dropped all
@@ -1521,7 +1538,7 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
     if (const Type *Ty = Agg->getForwardedType())
       Agg = Ty;
   }
-  return CurIdx == NumIdx ? Agg : 0;
+  return Agg;
 }
 
 const Type* ExtractValueInst::getIndexedType(const Type *Agg,
