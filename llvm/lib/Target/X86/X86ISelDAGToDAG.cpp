@@ -1600,7 +1600,32 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       return RetVal;
     break;
   }
-
+  case X86ISD::UMUL: {
+    SDValue N0 = Node->getOperand(0);
+    SDValue N1 = Node->getOperand(1);
+    
+    unsigned LoReg, HiReg;
+    switch (NVT.getSimpleVT().SimpleTy) {
+    default: llvm_unreachable("Unsupported VT!");
+    case MVT::i8:  LoReg = X86::AL;  HiReg = X86::AH;  Opc = X86::MUL8r; break;
+    case MVT::i16: LoReg = X86::AX;  HiReg = X86::DX;  Opc = X86::MUL16r; break;
+    case MVT::i32: LoReg = X86::EAX; HiReg = X86::EDX; Opc = X86::MUL32r; break;
+    case MVT::i64: LoReg = X86::RAX; HiReg = X86::RDX; Opc = X86::MUL64r; break;
+    }
+    
+    SDValue InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, LoReg,
+                                          N0, SDValue()).getValue(1);
+    
+    SDVTList VTs = CurDAG->getVTList(NVT, NVT, MVT::i32);
+    SDValue Ops[] = {N1, InFlag};
+    SDNode *CNode = CurDAG->getMachineNode(Opc, dl, VTs, Ops, 2);
+    
+    ReplaceUses(SDValue(Node, 0), SDValue(CNode, 0));
+    ReplaceUses(SDValue(Node, 1), SDValue(CNode, 1));
+    ReplaceUses(SDValue(Node, 2), SDValue(CNode, 2));
+    return NULL;
+  }
+      
   case ISD::SMUL_LOHI:
   case ISD::UMUL_LOHI: {
     SDValue N0 = Node->getOperand(0);
@@ -1653,11 +1678,12 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         CurDAG->getMachineNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
                                array_lengthof(Ops));
       InFlag = SDValue(CNode, 1);
+
       // Update the chain.
       ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
     } else {
-      InFlag =
-        SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Flag, N1, InFlag), 0);
+      SDNode *CNode = CurDAG->getMachineNode(Opc, dl, MVT::Flag, N1, InFlag);
+      InFlag = SDValue(CNode, 0);
     }
 
     // Prevent use of AH in a REX instruction by referencing AX instead.
@@ -1696,7 +1722,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       ReplaceUses(SDValue(Node, 1), Result);
       DEBUG(dbgs() << "=> "; Result.getNode()->dump(CurDAG); dbgs() << '\n');
     }
-
+    
     return NULL;
   }
 

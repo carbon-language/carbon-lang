@@ -60,11 +60,12 @@ def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src),
 
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX], neverHasSideEffects = 1 in
 def MUL32r : I<0xF7, MRM4r, (outs),  (ins GR32:$src),
-               "mul{l}\t$src",
-               []>; // EAX,EDX = EAX*GR32
+               "mul{l}\t$src",   // EAX,EDX = EAX*GR32
+               [/*(set EAX, EDX, EFLAGS, (X86umul_flag EAX, GR32:$src))*/]>;
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX], neverHasSideEffects = 1 in
 def MUL64r : RI<0xF7, MRM4r, (outs), (ins GR64:$src),
-                "mul{q}\t$src", []>;         // RAX,RDX = RAX*GR64
+                "mul{q}\t$src",          // RAX,RDX = RAX*GR64
+                [/*(set RAX, RDX, EFLAGS, (X86umul_flag RAX, GR64:$src))*/]>;
 
 let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def MUL8m  : I<0xF6, MRM4m, (outs), (ins i8mem :$src),

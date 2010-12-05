@@ -200,9 +200,11 @@ namespace llvm {
       PCMPEQB, PCMPEQW, PCMPEQD, PCMPEQQ,
       PCMPGTB, PCMPGTW, PCMPGTD, PCMPGTQ,
 
-      // ADD, SUB, SMUL, UMUL, etc. - Arithmetic operations with FLAGS results.
-      ADD, SUB, SMUL, UMUL,
+      // ADD, SUB, SMUL, etc. - Arithmetic operations with FLAGS results.
+      ADD, SUB, SMUL,
       INC, DEC, OR, XOR, AND,
+      
+      UMUL, // LOW, HI, FLAGS = umul LHS, RHS
 
       // MUL_IMM - X86 specific multiply by immediate.
       MUL_IMM,

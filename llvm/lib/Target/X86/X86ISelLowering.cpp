@@ -948,6 +948,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::SSUBO, MVT::i32, Custom);
   setOperationAction(ISD::USUBO, MVT::i32, Custom);
   setOperationAction(ISD::SMULO, MVT::i32, Custom);
+  setOperationAction(ISD::UMULO, MVT::i32, Custom);
 
   // Only custom-lower 64-bit SADDO and friends on 64-bit because we don't
   // handle type legalization for these operations here.
@@ -961,6 +962,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SSUBO, MVT::i64, Custom);
     setOperationAction(ISD::USUBO, MVT::i64, Custom);
     setOperationAction(ISD::SMULO, MVT::i64, Custom);
+    setOperationAction(ISD::UMULO, MVT::i64, Custom);
   }
 
   if (!Subtarget->is64Bit()) {
@@ -7042,7 +7044,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       return NewSetCC;
   }
 
-  // Look for "(setcc) == / != 1" to avoid unncessary setcc.
+  // Look for "(setcc) == / != 1" to avoid unnecessary setcc.
   if (Op0.getOpcode() == X86ISD::SETCC &&
       Op1.getOpcode() == ISD::Constant &&
       (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
@@ -8446,8 +8448,7 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
   SDValue RHS = N->getOperand(1);
   unsigned BaseOp = 0;
   unsigned Cond = 0;
-  DebugLoc dl = Op.getDebugLoc();
-
+  DebugLoc DL = Op.getDebugLoc();
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Unknown ovf instruction!");
   case ISD::SADDO:
@@ -8486,19 +8487,29 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
     BaseOp = X86ISD::SMUL;
     Cond = X86::COND_O;
     break;
-  case ISD::UMULO:
-    BaseOp = X86ISD::UMUL;
-    Cond = X86::COND_B;
-    break;
+  case ISD::UMULO: { // i64, i8 = umulo lhs, rhs --> i64, i64, i32 umul lhs,rhs
+    SDVTList VTs = DAG.getVTList(N->getValueType(0), N->getValueType(0),
+                                 MVT::i32);
+    SDValue Sum = DAG.getNode(X86ISD::UMUL, DL, VTs, LHS, RHS);
+    
+    SDValue SetCC =
+      DAG.getNode(X86ISD::SETCC, DL, MVT::i8,
+                  DAG.getConstant(X86::COND_O, MVT::i32),
+                  SDValue(Sum.getNode(), 2));
+    
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SetCC);
+    return Sum;
+  }
   }
 
   // Also sets EFLAGS.
   SDVTList VTs = DAG.getVTList(N->getValueType(0), MVT::i32);
-  SDValue Sum = DAG.getNode(BaseOp, dl, VTs, LHS, RHS);
+  SDValue Sum = DAG.getNode(BaseOp, DL, VTs, LHS, RHS);
 
   SDValue SetCC =
-    DAG.getNode(X86ISD::SETCC, dl, N->getValueType(1),
-                DAG.getConstant(Cond, MVT::i32), SDValue(Sum.getNode(), 1));
+    DAG.getNode(X86ISD::SETCC, DL, N->getValueType(1),
+                DAG.getConstant(Cond, MVT::i32),
+                SDValue(Sum.getNode(), 1));
 
   DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SetCC);
   return Sum;
