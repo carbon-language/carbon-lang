@@ -247,7 +247,7 @@ const GRState *GRState::assumeInBound(DefinedOrUnknownSVal Idx,
   BasicValueFactory &BVF = svalBuilder.getBasicValueFactory();
   // FIXME: This should be using ValueManager::ArrayindexTy...somehow.
   QualType indexTy = Ctx.IntTy;
-  nonloc::ConcreteInt Min = BVF.getMinValue(indexTy);
+  nonloc::ConcreteInt Min(BVF.getMinValue(indexTy));
 
   // Adjust the index.
   SVal newIdx = svalBuilder.evalBinOpNN(this, BO_Add,

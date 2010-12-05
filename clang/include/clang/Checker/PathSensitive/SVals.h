@@ -62,14 +62,14 @@ protected:
   unsigned Kind;
 
 protected:
-  SVal(const void* d, bool isLoc, unsigned ValKind)
+  explicit SVal(const void* d, bool isLoc, unsigned ValKind)
   : Data(d), Kind((isLoc ? LocKind : NonLocKind) | (ValKind << BaseBits)) {}
 
   explicit SVal(BaseKind k, const void* D = NULL)
     : Data(D), Kind(k) {}
 
 public:
-  SVal() : Data(0), Kind(0) {}
+  explicit SVal() : Data(0), Kind(0) {}
   ~SVal() {}
 
   /// BufferTy - A temporary buffer to hold a set of SVals.
@@ -207,7 +207,7 @@ public:
   
 class UnknownVal : public DefinedOrUnknownSVal {
 public:
-  UnknownVal() : DefinedOrUnknownSVal(UnknownKind) {}
+  explicit UnknownVal() : DefinedOrUnknownSVal(UnknownKind) {}
   
   static inline bool classof(const SVal *V) {
     return V->getBaseKind() == UnknownKind;
@@ -222,7 +222,7 @@ private:
   bool isUnknownOrUndef() const;
   bool isValid() const;  
 protected:
-  DefinedSVal(const void* d, bool isLoc, unsigned ValKind)
+  explicit DefinedSVal(const void* d, bool isLoc, unsigned ValKind)
     : DefinedOrUnknownSVal(d, isLoc, ValKind) {}
 public:
   // Implement isa<T> support.
@@ -233,7 +233,8 @@ public:
 
 class NonLoc : public DefinedSVal {
 protected:
-  NonLoc(unsigned SubKind, const void* d) : DefinedSVal(d, false, SubKind) {}
+  explicit NonLoc(unsigned SubKind, const void* d)
+    : DefinedSVal(d, false, SubKind) {}
 
 public:
   void dumpToStream(llvm::raw_ostream& Out) const;
@@ -246,14 +247,13 @@ public:
 
 class Loc : public DefinedSVal {
 protected:
-  Loc(unsigned SubKind, const void* D)
+  explicit Loc(unsigned SubKind, const void* D)
   : DefinedSVal(const_cast<void*>(D), true, SubKind) {}
 
 public:
   void dumpToStream(llvm::raw_ostream& Out) const;
 
   Loc(const Loc& X) : DefinedSVal(X.Data, true, X.getSubKind()) {}
-  Loc& operator=(const Loc& X) { memcpy(this, &X, sizeof(Loc)); return *this; }
 
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
@@ -295,7 +295,7 @@ public:
 
 class SymExprVal : public NonLoc {
 public:
-  SymExprVal(const SymExpr *SE)
+  explicit SymExprVal(const SymExpr *SE)
     : NonLoc(SymExprValKind, reinterpret_cast<const void*>(SE)) {}
 
   const SymExpr *getSymbolicExpression() const {
@@ -314,7 +314,7 @@ public:
 
 class ConcreteInt : public NonLoc {
 public:
-  ConcreteInt(const llvm::APSInt& V) : NonLoc(ConcreteIntKind, &V) {}
+  explicit ConcreteInt(const llvm::APSInt& V) : NonLoc(ConcreteIntKind, &V) {}
 
   const llvm::APSInt& getValue() const {
     return *static_cast<const llvm::APSInt*>(Data);
@@ -342,7 +342,7 @@ public:
 class LocAsInteger : public NonLoc {
   friend class clang::SValBuilder;
 
-  LocAsInteger(const std::pair<SVal, uintptr_t>& data) :
+  explicit LocAsInteger(const std::pair<SVal, uintptr_t>& data) :
     NonLoc(LocAsIntegerKind, &data) {
       assert (isa<Loc>(data.first));
     }
@@ -376,7 +376,7 @@ public:
 class CompoundVal : public NonLoc {
   friend class clang::SValBuilder;
 
-  CompoundVal(const CompoundValData* D) : NonLoc(CompoundValKind, D) {}
+  explicit CompoundVal(const CompoundValData* D) : NonLoc(CompoundValKind, D) {}
 
 public:
   const CompoundValData* getValue() const {
@@ -399,7 +399,7 @@ public:
 class LazyCompoundVal : public NonLoc {
   friend class clang::SValBuilder;
 
-  LazyCompoundVal(const LazyCompoundValData *D)
+  explicit LazyCompoundVal(const LazyCompoundValData *D)
     : NonLoc(LazyCompoundValKind, D) {}
 public:
   const LazyCompoundValData *getCVData() const {
@@ -429,7 +429,7 @@ enum Kind { GotoLabelKind, MemRegionKind, ConcreteIntKind };
 
 class GotoLabel : public Loc {
 public:
-  GotoLabel(LabelStmt* Label) : Loc(GotoLabelKind, Label) {}
+  explicit GotoLabel(LabelStmt* Label) : Loc(GotoLabelKind, Label) {}
 
   const LabelStmt* getLabel() const {
     return static_cast<const LabelStmt*>(Data);
@@ -448,7 +448,7 @@ public:
 
 class MemRegionVal : public Loc {
 public:
-  MemRegionVal(const MemRegion* r) : Loc(MemRegionKind, r) {}
+  explicit MemRegionVal(const MemRegion* r) : Loc(MemRegionKind, r) {}
 
   const MemRegion* getRegion() const {
     return static_cast<const MemRegion*>(Data);
@@ -482,7 +482,7 @@ public:
 
 class ConcreteInt : public Loc {
 public:
-  ConcreteInt(const llvm::APSInt& V) : Loc(ConcreteIntKind, &V) {}
+  explicit ConcreteInt(const llvm::APSInt& V) : Loc(ConcreteIntKind, &V) {}
 
   const llvm::APSInt& getValue() const {
     return *static_cast<const llvm::APSInt*>(Data);
