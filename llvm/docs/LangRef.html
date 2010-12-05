@@ -4131,6 +4131,14 @@ Instruction</a> </div>
    <a href="#t_array">array</a> type.  The operands are constant indices to
    specify which value to extract in a similar manner as indices in a
    '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.</p>
+   <p>The major differences to <tt>getelementptr</tt> indexing are:</p>
+     <ul>
+       <li>Since the value being indexed is not a pointer, the first index is
+           omitted and assumed to be zero.</li>
+       <li>At least one index must be specified.</li>
+       <li>Not only struct indices but also array indices must be in
+           bounds.</li>
+     </ul>
 
 <h5>Semantics:</h5>
 <p>The result is the value at the position in the aggregate specified by the
@@ -4165,7 +4173,7 @@ Instruction</a> </div>
    <a href="#t_array">array</a> type.  The second operand is a first-class
    value to insert.  The following operands are constant indices indicating
    the position at which to insert the value in a similar manner as indices in a
-   '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.  The
+   '<tt><a href="#i_extractvalue">extractvalue</a></tt>' instruction.  The
    value to insert must have the same type as the value identified by the
    indices.</p>
 
