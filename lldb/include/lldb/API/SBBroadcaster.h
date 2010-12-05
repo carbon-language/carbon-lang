@@ -34,6 +34,9 @@ public:
     IsValid () const;
 
     void
+    Clear ();
+
+    void
     BroadcastEventByType (uint32_t event_type, bool unique = false);
 
     void

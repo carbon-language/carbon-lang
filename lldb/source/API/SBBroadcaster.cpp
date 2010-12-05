@@ -170,6 +170,13 @@ SBBroadcaster::IsValid () const
     return m_opaque_ptr != NULL;
 }
 
+void
+SBBroadcaster::Clear ()
+{
+    m_opaque_sp.reset();
+    m_opaque_ptr = NULL;
+}
+
 bool
 SBBroadcaster::operator == (const SBBroadcaster &rhs) const
 {
