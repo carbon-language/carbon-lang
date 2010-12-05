@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "phielim"
 #include "PHIElimination.h"
+#include "PHIEliminationUtils.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -121,51 +122,7 @@ static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
   return true;
 }
 
-// FindCopyInsertPoint - Find a safe place in MBB to insert a copy from SrcReg
-// when following the CFG edge to SuccMBB. This needs to be after any def of
-// SrcReg, but before any subsequent point where control flow might jump out of
-// the basic block.
-MachineBasicBlock::iterator
-llvm::PHIElimination::FindCopyInsertPoint(MachineBasicBlock &MBB,
-                                          MachineBasicBlock &SuccMBB,
-                                          unsigned SrcReg) {
-  // Handle the trivial case trivially.
-  if (MBB.empty())
-    return MBB.begin();
 
-  // Usually, we just want to insert the copy before the first terminator
-  // instruction. However, for the edge going to a landing pad, we must insert
-  // the copy before the call/invoke instruction.
-  if (!SuccMBB.isLandingPad())
-    return MBB.getFirstTerminator();
-
-  // Discover any defs/uses in this basic block.
-  SmallPtrSet<MachineInstr*, 8> DefUsesInMBB;
-  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(SrcReg),
-         RE = MRI->reg_end(); RI != RE; ++RI) {
-    MachineInstr *DefUseMI = &*RI;
-    if (DefUseMI->getParent() == &MBB)
-      DefUsesInMBB.insert(DefUseMI);
-  }
-
-  MachineBasicBlock::iterator InsertPoint;
-  if (DefUsesInMBB.empty()) {
-    // No defs.  Insert the copy at the start of the basic block.
-    InsertPoint = MBB.begin();
-  } else if (DefUsesInMBB.size() == 1) {
-    // Insert the copy immediately after the def/use.
-    InsertPoint = *DefUsesInMBB.begin();
-    ++InsertPoint;
-  } else {
-    // Insert the copy immediately after the last def/use.
-    InsertPoint = MBB.end();
-    while (!DefUsesInMBB.count(&*--InsertPoint)) {}
-    ++InsertPoint;
-  }
-
-  // Make sure the copy goes after any phi nodes however.
-  return MBB.SkipPHIsAndLabels(InsertPoint);
-}
 
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
 /// under the assuption that it needs to be lowered in a way that supports
@@ -294,7 +251,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     // Find a safe location to insert the copy, this may be the first terminator
     // in the block (or end()).
     MachineBasicBlock::iterator InsertPos =
-      FindCopyInsertPoint(opBlock, MBB, SrcReg);
+      findPHICopyInsertPoint(&opBlock, &MBB, SrcReg);
 
     // Insert the copy.
     if (!reusedIncoming && IncomingReg)

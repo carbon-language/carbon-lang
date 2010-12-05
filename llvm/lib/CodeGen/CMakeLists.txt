@@ -50,6 +50,7 @@ add_llvm_library(LLVMCodeGen
   OcamlGC.cpp
   OptimizePHIs.cpp
   PHIElimination.cpp
+  PHIEliminationUtils.cpp
   Passes.cpp
   PeepholeOptimizer.cpp
   PostRAHazardRecognizer.cpp
