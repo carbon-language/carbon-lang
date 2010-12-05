@@ -43,7 +43,7 @@ entry:
 	%iftmp.0.0 = select i1 %0, float 4.200000e+01, float 2.300000e+01		; <float> [#uses=1]
 	ret float %iftmp.0.0
 ; CHECK: test3:
-; CHECK: movss	({{.*}},4), %xmm0
+; CHECK: movss	{{.*}},4), %xmm0
 }
 
 define signext i8 @test4(i8* nocapture %P, double %F) nounwind readonly {
