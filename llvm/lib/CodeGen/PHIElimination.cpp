@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "phielim"
-#include "PHIElimination.h"
 #include "PHIEliminationUtils.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
@@ -35,6 +34,54 @@
 #include <map>
 using namespace llvm;
 
+namespace {
+  class PHIElimination : public MachineFunctionPass {
+    MachineRegisterInfo *MRI; // Machine register information
+
+  public:
+    static char ID; // Pass identification, replacement for typeid
+    PHIElimination() : MachineFunctionPass(ID) {
+      initializePHIEliminationPass(*PassRegistry::getPassRegistry());
+    }
+
+    virtual bool runOnMachineFunction(MachineFunction &Fn);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+
+  private:
+    /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions
+    /// in predecessor basic blocks.
+    ///
+    bool EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB);
+    void LowerAtomicPHINode(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator AfterPHIsIt);
+
+    /// analyzePHINodes - Gather information about the PHI nodes in
+    /// here. In particular, we want to map the number of uses of a virtual
+    /// register which is used in a PHI node. We map that to the BB the
+    /// vreg is coming from. This is used later to determine when the vreg
+    /// is killed in the BB.
+    ///
+    void analyzePHINodes(const MachineFunction& Fn);
+
+    /// Split critical edges where necessary for good coalescer performance.
+    bool SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB,
+                       LiveVariables &LV, MachineLoopInfo *MLI);
+
+    typedef std::pair<unsigned, unsigned> BBVRegPair;
+    typedef DenseMap<BBVRegPair, unsigned> VRegPHIUse;
+
+    VRegPHIUse VRegPHIUseCount;
+
+    // Defs of PHI sources which are implicit_def.
+    SmallPtrSet<MachineInstr*, 4> ImpDefs;
+
+    // Map reusable lowered PHI node -> incoming join register.
+    typedef DenseMap<MachineInstr*, unsigned,
+                     MachineInstrExpressionTrait> LoweredPHIMap;
+    LoweredPHIMap LoweredPHIs;
+  };
+}
+
 STATISTIC(NumAtomic, "Number of atomic phis lowered");
 STATISTIC(NumReused, "Number of reused lowered phis");
 
@@ -42,16 +89,16 @@ char PHIElimination::ID = 0;
 INITIALIZE_PASS(PHIElimination, "phi-node-elimination",
                 "Eliminate PHI nodes for register allocation", false, false)
 
-char &llvm::PHIEliminationID = PHIElimination::ID;
+char& llvm::PHIEliminationID = PHIElimination::ID;
 
-void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
+void PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();
   AU.addPreserved<MachineDominatorTree>();
   AU.addPreserved<MachineLoopInfo>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &MF) {
+bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
 
   bool Changed = false;
@@ -94,7 +141,7 @@ bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &MF) {
 /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions in
 /// predecessor basic blocks.
 ///
-bool llvm::PHIElimination::EliminatePHINodes(MachineFunction &MF,
+bool PHIElimination::EliminatePHINodes(MachineFunction &MF,
                                              MachineBasicBlock &MBB) {
   if (MBB.empty() || !MBB.front().isPHI())
     return false;   // Quick exit for basic blocks without PHIs.
@@ -129,7 +176,7 @@ static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
 /// atomic execution of PHIs.  This lowering method is always correct all of the
 /// time.
 ///
-void llvm::PHIElimination::LowerAtomicPHINode(
+void PHIElimination::LowerAtomicPHINode(
                                       MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator AfterPHIsIt) {
   ++NumAtomic;
@@ -328,7 +375,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 /// used in a PHI node. We map that to the BB the vreg is coming from. This is
 /// used later to determine when the vreg is killed in the BB.
 ///
-void llvm::PHIElimination::analyzePHINodes(const MachineFunction& MF) {
+void PHIElimination::analyzePHINodes(const MachineFunction& MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I)
     for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
@@ -338,7 +385,7 @@ void llvm::PHIElimination::analyzePHINodes(const MachineFunction& MF) {
                                      BBI->getOperand(i).getReg())];
 }
 
-bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
+bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
                                          MachineBasicBlock &MBB,
                                          LiveVariables &LV,
                                          MachineLoopInfo *MLI) {
