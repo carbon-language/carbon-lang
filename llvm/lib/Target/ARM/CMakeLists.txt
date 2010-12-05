@@ -43,6 +43,7 @@ add_llvm_target(ARMCodeGen
   ARMSubtarget.cpp
   ARMTargetMachine.cpp
   ARMTargetObjectFile.cpp
+  MLxExpansionPass.cpp
   NEONMoveFix.cpp
   Thumb1InstrInfo.cpp
   Thumb1FrameInfo.cpp
