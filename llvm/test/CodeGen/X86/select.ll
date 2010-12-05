@@ -178,4 +178,26 @@ define i64 @test11a(i64 %x, i64 %y) nounwind readnone ssp noredzone {
 }
 
 
+declare noalias i8* @_Znam(i64) noredzone
+
+define noalias i8* @test12(i64 %count) nounwind ssp noredzone {
+entry:
+  %A = tail call { i64, i1 } @llvm.umul.with.overflow.i64(i64 %count, i64 4)
+  %B = extractvalue { i64, i1 } %A, 1
+  %C = extractvalue { i64, i1 } %A, 0
+  %D = select i1 %B, i64 -1, i64 %C
+  %call = tail call noalias i8* @_Znam(i64 %D) nounwind noredzone
+  ret i8* %call
+; CHECK: test12:
+; CHECK: mulq
+; CHECK: movq $-1, %rdi
+; CHECK: cmovnoq	%rax, %rdi
+; CHECK: jmp	__Znam
+}
+
+declare { i64, i1 } @llvm.umul.with.overflow.i64(i64, i64) nounwind readnone
+
+
+
+
 

@@ -7207,6 +7207,9 @@ static bool isX86LogicalCmp(SDValue Op) {
        Opc == X86ISD::AND))
     return true;
 
+  if (Op.getResNo() == 2 && Opc == X86ISD::UMUL)
+    return true;
+    
   return false;
 }
 
