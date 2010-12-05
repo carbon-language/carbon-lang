@@ -55,12 +55,6 @@ namespace llvm {
     bool SplitPHIEdges(MachineFunction &MF, MachineBasicBlock &MBB,
                        LiveVariables &LV, MachineLoopInfo *MLI);
 
-    /// SplitCriticalEdge - Split a critical edge from A to B by
-    /// inserting a new MBB. Update branches in A and PHI instructions
-    /// in B. Return the new block.
-    MachineBasicBlock *SplitCriticalEdge(MachineBasicBlock *A,
-                                         MachineBasicBlock *B);
-
     /// FindCopyInsertPoint - Find a safe place in MBB to insert a copy from
     /// SrcReg when following the CFG edge to SuccMBB. This needs to be after
     /// any def of SrcReg, but before any subsequent point where control flow
