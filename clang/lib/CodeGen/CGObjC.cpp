@@ -386,8 +386,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                    FunctionType::ExtInfo()),
              GetCopyStructFn, ReturnValueSlot(), Args);
   } else if (PID->getSetterCXXAssignment()) {
-    EmitAnyExpr(PID->getSetterCXXAssignment(), AggValueSlot::ignored(), true);
-                
+    EmitIgnoredExpr(PID->getSetterCXXAssignment());
   } else {
     // FIXME: Find a clean way to avoid AST node creation.
     SourceLocation Loc = PD->getLocation();

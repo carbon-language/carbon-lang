@@ -362,7 +362,7 @@ void AggExprEmitter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
 }
 
 void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
-  CGF.EmitAnyExpr(E->getLHS(), AggValueSlot::ignored(), true);
+  CGF.EmitIgnoredExpr(E->getLHS());
   Visit(E->getRHS());
 }
 
@@ -547,7 +547,7 @@ AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV, QualType T) {
     CGF.EmitAggExpr(E, AggValueSlot::forAddr(LV.getAddress(), false, true,
                                              false, Dest.isZeroed()));
   } else {
-    CGF.EmitStoreThroughLValue(CGF.EmitAnyExpr(E), LV, T);
+    CGF.EmitStoreThroughLValue(RValue::get(CGF.EmitScalarExpr(E)), LV, T);
   }
 }
 

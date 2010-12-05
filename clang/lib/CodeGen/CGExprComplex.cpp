@@ -634,7 +634,7 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
-  CGF.EmitStmt(E->getLHS());
+  CGF.EmitIgnoredExpr(E->getLHS());
   CGF.EnsureInsertPoint();
   return Visit(E->getRHS());
 }
@@ -764,14 +764,15 @@ ComplexPairTy CodeGenFunction::LoadComplexFromAddr(llvm::Value *SrcAddr,
 }
 
 LValue CodeGenFunction::EmitComplexAssignmentLValue(const BinaryOperator *E) {
+  assert(E->getOpcode() == BO_Assign);
   ComplexPairTy Val; // ignored
+  return ComplexExprEmitter(*this).EmitBinAssignLValue(E, Val);
+}
 
+LValue CodeGenFunction::
+EmitComplexCompoundAssignmentLValue(const CompoundAssignOperator *E) {
   ComplexPairTy(ComplexExprEmitter::*Op)(const ComplexExprEmitter::BinOpInfo &);
-
   switch (E->getOpcode()) {
-  case BO_Assign:
-    return ComplexExprEmitter(*this).EmitBinAssignLValue(E, Val);
-
   case BO_MulAssign: Op = &ComplexExprEmitter::EmitBinMul; break;
   case BO_DivAssign: Op = &ComplexExprEmitter::EmitBinDiv; break;
   case BO_SubAssign: Op = &ComplexExprEmitter::EmitBinSub; break;
@@ -782,6 +783,6 @@ LValue CodeGenFunction::EmitComplexAssignmentLValue(const BinaryOperator *E) {
     Op = 0;
   }
 
-  return ComplexExprEmitter(*this).EmitCompoundAssignLValue(
-                                   cast<CompoundAssignOperator>(E), Op, Val);
+  ComplexPairTy Val; // ignored
+  return ComplexExprEmitter(*this).EmitCompoundAssignLValue(E, Op, Val);
 }

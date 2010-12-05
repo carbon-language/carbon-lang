@@ -78,6 +78,16 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   return EmitComplexToScalarConversion(EmitComplexExpr(E), E->getType(),BoolTy);
 }
 
+/// EmitIgnoredExpr - Emit code to compute the specified expression,
+/// ignoring the result.
+void CodeGenFunction::EmitIgnoredExpr(const Expr *E) {
+  if (E->isRValue())
+    return (void) EmitAnyExpr(E, AggValueSlot::ignored(), true);
+
+  // Just emit it as an l-value and drop the result.
+  EmitLValue(E);
+}
+
 /// EmitAnyExpr - Emit code to compute the specified expression which
 /// can have any type.  The result is returned as an RValue struct.
 /// If this is an aggregate expression, AggSlot indicates where the
@@ -500,7 +510,9 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::BinaryOperatorClass:
     return EmitBinaryOperatorLValue(cast<BinaryOperator>(E));
   case Expr::CompoundAssignOperatorClass:
-    return EmitCompoundAssignOperatorLValue(cast<CompoundAssignOperator>(E));
+    if (!E->getType()->isAnyComplexType())
+      return EmitCompoundAssignmentLValue(cast<CompoundAssignOperator>(E));
+    return EmitComplexCompoundAssignmentLValue(cast<CompoundAssignOperator>(E));
   case Expr::CallExprClass:
   case Expr::CXXMemberCallExprClass:
   case Expr::CXXOperatorCallExprClass:
@@ -1227,9 +1239,22 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   case UO_Real:
   case UO_Imag: {
     LValue LV = EmitLValue(E->getSubExpr());
+    assert(LV.isSimple() && "real/imag on non-ordinary l-value");
+    llvm::Value *Addr = LV.getAddress();
+
+    // real and imag are valid on scalars.  This is a faster way of
+    // testing that.
+    if (!cast<llvm::PointerType>(Addr->getType())
+           ->getElementType()->isStructTy()) {
+      assert(E->getSubExpr()->getType()->isArithmeticType());
+      return LV;
+    }
+
+    assert(E->getSubExpr()->getType()->isAnyComplexType());
+
     unsigned Idx = E->getOpcode() == UO_Imag;
     return MakeAddrLValue(Builder.CreateStructGEP(LV.getAddress(),
-                                                    Idx, "idx"),
+                                                  Idx, "idx"),
                           ExprTy);
   }
   case UO_PreInc:
@@ -1914,7 +1939,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
 LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   // Comma expressions just emit their LHS then their RHS as an l-value.
   if (E->getOpcode() == BO_Comma) {
-    EmitAnyExpr(E->getLHS());
+    EmitIgnoredExpr(E->getLHS());
     EnsureInsertPoint();
     return EmitLValue(E->getRHS());
   }
@@ -1923,14 +1948,9 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
       E->getOpcode() == BO_PtrMemI)
     return EmitPointerToDataMemberBinaryExpr(E);
 
-  assert(E->isAssignmentOp() && "unexpected binary l-value");
+  assert(E->getOpcode() == BO_Assign && "unexpected binary l-value");
   
   if (!hasAggregateLLVMType(E->getType())) {
-    if (E->isCompoundAssignmentOp())
-      return EmitCompoundAssignOperatorLValue(cast<CompoundAssignOperator>(E));
-
-    assert(E->getOpcode() == BO_Assign && "unexpected binary l-value");
-
     // Emit the LHS as an l-value.
     LValue LV = EmitLValue(E->getLHS());
     // Store the value through the l-value.
@@ -1941,9 +1961,6 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   if (E->getType()->isAnyComplexType())
     return EmitComplexAssignmentLValue(E);
 
-  // The compound assignment operators are not used for aggregates.
-  assert(E->getOpcode() == BO_Assign && "aggregate compound assignment?");
-  
   return EmitAggExprToLValue(E);
 }
 

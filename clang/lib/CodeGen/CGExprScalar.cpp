@@ -1139,10 +1139,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
   }
   case CK_ToVoid: {
-    if (!E->isRValue())
-      CGF.EmitLValue(E);
-    else
-      CGF.EmitAnyExpr(E, AggValueSlot::ignored(), true);
+    CGF.EmitIgnoredExpr(E);
     return 0;
   }
   case CK_VectorSplat: {
@@ -1464,7 +1461,7 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
       } else {
         // C99 6.5.3.4p2: If the argument is an expression of type
         // VLA, it is evaluated.
-        CGF.EmitAnyExpr(E->getArgumentExpr());
+        CGF.EmitIgnoredExpr(E->getArgumentExpr());
       }
 
       return CGF.GetVLASize(VAT);
@@ -2308,7 +2305,7 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
 }
 
 Value *ScalarExprEmitter::VisitBinComma(const BinaryOperator *E) {
-  CGF.EmitStmt(E->getLHS());
+  CGF.EmitIgnoredExpr(E->getLHS());
   CGF.EnsureInsertPoint();
   return Visit(E->getRHS());
 }
@@ -2578,7 +2575,7 @@ LValue CodeGenFunction::EmitObjCIsaExpr(const ObjCIsaExpr *E) {
 }
 
 
-LValue CodeGenFunction::EmitCompoundAssignOperatorLValue(
+LValue CodeGenFunction::EmitCompoundAssignmentLValue(
                                             const CompoundAssignOperator *E) {
   ScalarExprEmitter Scalar(*this);
   Value *Result = 0;

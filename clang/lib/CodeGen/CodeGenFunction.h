@@ -1048,6 +1048,9 @@ public:
   /// expression and compare the result against zero, returning an Int1Ty value.
   llvm::Value *EvaluateExprAsBool(const Expr *E);
 
+  /// EmitIgnoredExpr - Emit an expression in a context which ignores the result.
+  void EmitIgnoredExpr(const Expr *E);
+
   /// EmitAnyExpr - Emit code to compute the specified expression which can have
   /// any type.  The result is returned as an RValue struct.  If this is an
   /// aggregate expression, the aggloc/agglocvolatile arguments indicate where
@@ -1404,10 +1407,11 @@ public:
 
   /// Emit an l-value for an assignment (simple or compound) of complex type.
   LValue EmitComplexAssignmentLValue(const BinaryOperator *E);
+  LValue EmitComplexCompoundAssignmentLValue(const CompoundAssignOperator *E);
 
   // Note: only availabe for agg return types
   LValue EmitBinaryOperatorLValue(const BinaryOperator *E);
-  LValue EmitCompoundAssignOperatorLValue(const CompoundAssignOperator *E);
+  LValue EmitCompoundAssignmentLValue(const CompoundAssignOperator *E);
   // Note: only available for agg return types
   LValue EmitCallExprLValue(const CallExpr *E);
   // Note: only available for agg return types

@@ -69,13 +69,27 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   EmitStopPoint(S);
 
   switch (S->getStmtClass()) {
-  default:
-    // Must be an expression in a stmt context.  Emit the value (to get
-    // side-effects) and ignore the result.
-    if (!isa<Expr>(S))
-      ErrorUnsupported(S, "statement");
+  case Stmt::NoStmtClass:
+  case Stmt::CXXCatchStmtClass:
+  case Stmt::SwitchCaseClass:
+    llvm_unreachable("invalid statement class to emit generically");
+  case Stmt::NullStmtClass:
+  case Stmt::CompoundStmtClass:
+  case Stmt::DeclStmtClass:
+  case Stmt::LabelStmtClass:
+  case Stmt::GotoStmtClass:
+  case Stmt::BreakStmtClass:
+  case Stmt::ContinueStmtClass:
+  case Stmt::DefaultStmtClass:
+  case Stmt::CaseStmtClass:
+    llvm_unreachable("should have emitted these statements as simple");
 
-    EmitAnyExpr(cast<Expr>(S), AggValueSlot::ignored(), true);
+#define STMT(Type, Base)
+#define ABSTRACT_STMT(Op)
+#define EXPR(Type, Base) \
+  case Stmt::Type##Class:
+#include "clang/AST/StmtNodes.inc"
+    EmitIgnoredExpr(cast<Expr>(S));
 
     // Expression emitters don't handle unreachable blocks yet, so look for one
     // explicitly here. This handles the common case of a call to a noreturn
@@ -87,6 +101,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
       }
     }
     break;
+
   case Stmt::IndirectGotoStmtClass:
     EmitIndirectGotoStmt(cast<IndirectGotoStmt>(*S)); break;
 

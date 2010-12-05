@@ -22,9 +22,8 @@ void test() {
 
   asm("nop"); // CHECK: call void asm
 
-  // FIXME: should not load
+  // should not load
   i;
-  // CHECK-NEXT: volatile load [[INT]]* @i
 
   (float)(ci);
   // CHECK-NEXT: volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
@@ -47,7 +46,6 @@ void test() {
   // CHECK-NEXT: [[T:%.*]] = volatile load [[INT]]* @j
   // CHECK-NEXT: volatile store [[INT]] [[T]], [[INT]]* @i
 
-  // FIXME: extra load at end!
   ci+=ci;
   // CHECK-NEXT: [[R1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
   // CHECK-NEXT: [[I1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
@@ -58,8 +56,6 @@ void test() {
   // CHECK-NEXT: [[I:%.*]] = add [[INT]] [[I2]], [[I1]]
   // CHECK-NEXT: volatile store [[INT]] [[R]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
   // CHECK-NEXT: volatile store [[INT]] [[I]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
-  // CHECK-NEXT: [[R1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: [[I1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
 
   // Note that C++ requires an extra volatile load over C from the LHS of the '+'.
   (ci += ci) + ci;
@@ -112,9 +108,7 @@ void test() {
   // CHECK-NEXT: add [[INT]]
   // CHECK-NEXT: add [[INT]]
 
-  // FIXME: should not load
   __real i;
-  // CHECK-NEXT: volatile load
 
   +ci;
   // CHECK-NEXT: volatile load
@@ -149,31 +143,28 @@ void test() {
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: volatile store
 
-  // FIXME: shouldn't get these extra loads here, or the phi
+  // FIXME: the phi-equivalent is unnecessary
   k ? (i=i) : (j=j);
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: icmp
   // CHECK-NEXT: br i1
   // CHECK: volatile load
   // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: store [[INT]]* @i
   // CHECK-NEXT: br label
   // CHECK: volatile load
   // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: store [[INT]]* @j
   // CHECK-NEXT: br label
-  // CHECK: phi
+  // CHECK: load [[INT]]**
 
   (void)(i,(i=i));
   // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
   // CHECK-NEXT: volatile store
 
-  // FIXME: should not load k
   i=i,k;
   // CHECK-NEXT: volatile load [[INT]]* @i
   // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @i
-  // CHECK-NEXT: volatile load [[INT]]* @k
 
   (i=j,k=j);
   // CHECK-NEXT: volatile load [[INT]]* @j
@@ -181,16 +172,11 @@ void test() {
   // CHECK-NEXT: volatile load [[INT]]* @j
   // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @k
 
-  // FIXME: should not load 'k'
   (i=j,k);
   // CHECK-NEXT: volatile load [[INT]]* @j
   // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @i
-  // CHECK-NEXT: volatile load [[INT]]* @k
 
-  // FIXME: should not load either
   (i,j);
-  // CHECK-NEXT: volatile load [[INT]]* @i
-  // CHECK-NEXT: volatile load [[INT]]* @j
 
   // Extra load in C++.
   i=c=k;
@@ -207,10 +193,7 @@ void test() {
   // CHECK-NEXT: add nsw [[INT]]
   // CHECK-NEXT: volatile store
 
-  // FIXME: should not load!
   ci;
-  // CHECK-NEXT: volatile load {{.*}} @ci, i32 0, i32 0
-  // CHECK-NEXT: volatile load {{.*}} @ci, i32 0, i32 1
 
   asm("nop"); // CHECK-NEXT: call void asm
 
@@ -225,18 +208,14 @@ void test() {
   // CHECK-NEXT: icmp ne
   // CHECK-NEXT: or i1
 
-  // FIXME: should not load!
   ci=ci;
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: volatile store
   // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
 
   asm("nop"); // CHECK-NEXT: call void asm
 
-  // FIXME: should not load at end
   // Extra load in C++.
   ci=ci=ci;
   // CHECK-NEXT: volatile load
@@ -247,8 +226,6 @@ void test() {
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: volatile store
   // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
 
   __imag ci = __imag ci = __imag ci;
   // CHECK-NEXT: [[T:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
@@ -261,7 +238,6 @@ void test() {
   // CHECK-NEXT: volatile store
 
   __imag i;
-  // CHECK-NEXT: volatile load
   
   // ============================================================
   // FIXME: Test cases we get wrong.
@@ -338,13 +314,11 @@ void test() {
 
   // A use. gcc treats this a not a use, that's probably a bug due to tree
   // folding ignoring volatile.
-  // FIXME: extra load at end
   __real (ci=ci);
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: volatile store
   // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
 
   // A use.
   i + 0;
@@ -367,17 +341,15 @@ void test() {
   // CHECK-NEXT: volatile load
   // CHECK-NEXT: add
 
-  // FIXME: extra load of 'i'
   (i,j)=k;
   // CHECK-NEXT: volatile load [[INT]]* @k
-  // CHECK-NEXT: volatile load [[INT]]* @i
   // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @j
 
-  // FIXME: extra load of 'j'
   (j=k,i)=i;
-  // CHECK-NEXT: volatile load [[INT]]* @i
   // CHECK-NEXT: volatile load [[INT]]* @k
   // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @j
-  // CHECK-NEXT: volatile load [[INT]]* @j
+  // CHECK-NEXT: volatile load [[INT]]* @i
   // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @i
+
+  // CHECK-NEXT: ret void
 }

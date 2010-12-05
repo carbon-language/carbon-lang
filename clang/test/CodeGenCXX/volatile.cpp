@@ -27,8 +27,6 @@ namespace test1 {
   // CHECK: define void @_ZN5test14testEv()
   void test() {
     // CHECK:      [[TMP:%.*]] = load i32** @_ZN5test11xE, align 8
-    // *** FIXME: no! bad! should not be loaded! ***
-    // CHECK-NEXT: [[TMP1:%.*]] = volatile load i32* [[TMP]]
     // CHECK-NEXT: ret void
     *x;
   }
