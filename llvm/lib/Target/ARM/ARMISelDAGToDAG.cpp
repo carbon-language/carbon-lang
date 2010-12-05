@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "arm-isel"
 #include "ARM.h"
+#include "ARMBaseInstrInfo.h"
 #include "ARMAddressingModes.h"
 #include "ARMTargetMachine.h"
 #include "llvm/CallingConv.h"
@@ -41,6 +42,11 @@ DisableShifterOp("disable-shifter-op", cl::Hidden,
   cl::desc("Disable isel of shifter-op"),
   cl::init(false));
 
+static cl::opt<bool>
+CheckVMLxHazard("check-vmlx-hazard", cl::Hidden,
+  cl::desc("Check fp vmla / vmls hazard at isel time"),
+  cl::init(false));
+
 //===--------------------------------------------------------------------===//
 /// ARMDAGToDAGISel - ARM specific code to select ARM machine
 /// instructions for SelectionDAG operations.
@@ -54,6 +60,7 @@ enum AddrMode2Type {
 
 class ARMDAGToDAGISel : public SelectionDAGISel {
   ARMBaseTargetMachine &TM;
+  const ARMBaseInstrInfo *TII;
 
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
   /// make the right decision when generating code for different targets.
@@ -63,7 +70,8 @@ public:
   explicit ARMDAGToDAGISel(ARMBaseTargetMachine &tm,
                            CodeGenOpt::Level OptLevel)
     : SelectionDAGISel(tm, OptLevel), TM(tm),
-    Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
+      TII(static_cast<const ARMBaseInstrInfo*>(TM.getInstrInfo())),
+      Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
   }
 
   virtual const char *getPassName() const {
@@ -78,6 +86,8 @@ public:
 
   SDNode *Select(SDNode *N);
 
+
+  bool hasNoVMLxHazardUse(SDNode *N) const;
   bool isShifterOpProfitable(const SDValue &Shift,
                              ARM_AM::ShiftOpc ShOpcVal, unsigned ShAmt);
   bool SelectShifterOperandReg(SDValue N, SDValue &A,
@@ -272,6 +282,50 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
          isInt32Immediate(N->getOperand(1).getNode(), Imm);
 }
 
+/// hasNoVMLxHazardUse - Return true if it's desirable to select a FP MLA / MLS
+/// node. VFP / NEON fp VMLA / VMLS instructions have special RAW hazards (at
+/// least on current ARM implementations) which should be avoidded.
+bool ARMDAGToDAGISel::hasNoVMLxHazardUse(SDNode *N) const {
+  if (OptLevel == CodeGenOpt::None)
+    return true;
+
+  if (!CheckVMLxHazard)
+    return true;
+
+  if (!Subtarget->isCortexA8() && !Subtarget->isCortexA9())
+    return true;
+
+  if (!N->hasOneUse())
+    return false;
+
+  SDNode *Use = *N->use_begin();
+  if (Use->getOpcode() == ISD::CopyToReg)
+    return true;
+  if (Use->isMachineOpcode()) {
+    const TargetInstrDesc &TID = TII->get(Use->getMachineOpcode());
+    if (TID.mayStore())
+      return true;
+    unsigned Opcode = TID.getOpcode();
+    if (Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
+      return true;
+    // vmlx feeding into another vmlx. We actually want to unfold
+    // the use later in the MLxExpansion pass. e.g.
+    // vmla
+    // vmla (stall 8 cycles)
+    //
+    // vmul (5 cycles)
+    // vadd (5 cycles)
+    // vmla
+    // This adds up to about 18 - 19 cycles.
+    //
+    // vmla
+    // vmul (stall 4 cycles)
+    // vadd adds up to about 14 cycles.
+    return TII->isFpMLxInstruction(Opcode);
+  }
+
+  return false;
+}
 
 bool ARMDAGToDAGISel::isShifterOpProfitable(const SDValue &Shift,
                                             ARM_AM::ShiftOpc ShOpcVal,

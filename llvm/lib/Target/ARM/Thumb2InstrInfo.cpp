@@ -17,7 +17,6 @@
 #include "ARMAddressingModes.h"
 #include "ARMGenInstrInfo.inc"
 #include "ARMMachineFunctionInfo.h"
-#include "Thumb2HazardRecognizer.h"
 #include "Thumb2InstrInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -173,11 +172,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
 
   ARMBaseInstrInfo::loadRegFromStackSlot(MBB, I, DestReg, FI, RC, TRI);
-}
-
-ScheduleHazardRecognizer *Thumb2InstrInfo::
-CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II) const {
-  return (ScheduleHazardRecognizer *)new Thumb2HazardRecognizer(II);
 }
 
 void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,

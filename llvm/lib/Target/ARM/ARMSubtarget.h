@@ -57,9 +57,9 @@ protected:
   /// determine if NEON should actually be used.
   bool UseNEONForSinglePrecisionFP;
 
-  /// SlowVMLx - If the VFP2 instructions are available, indicates whether
-  /// the VML[AS] instructions are slow (if so, don't use them).
-  bool SlowVMLx;
+  /// SlowFPVMLx - If the VFP2 / NEON instructions are available, indicates
+  /// whether the FP VML[AS] instructions are slow (if so, don't use them).
+  bool SlowFPVMLx;
 
   /// SlowFPBrcc - True if floating point compare + branch is slow.
   bool SlowFPBrcc;
@@ -176,7 +176,7 @@ protected:
   bool hasDivide() const { return HasHardwareDivide; }
   bool hasT2ExtractPack() const { return HasT2ExtractPack; }
   bool hasDataBarrier() const { return HasDataBarrier; }
-  bool useVMLx() const {return hasVFP2() && !SlowVMLx; }
+  bool useFPVMLx() const { return !SlowFPVMLx; }
   bool isFPBrccSlow() const { return SlowFPBrcc; }
   bool isFPOnlySP() const { return FPOnlySP; }
   bool prefers32BitThumb() const { return Pref32BitThumb; }

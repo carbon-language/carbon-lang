@@ -46,14 +46,11 @@ def FeatureSlowFPBrcc : SubtargetFeature<"slow-fp-brcc", "SlowFPBrcc", "true",
 def FeatureVFPOnlySP : SubtargetFeature<"fp-only-sp", "FPOnlySP", "true",
                           "Floating point unit supports single precision only">;
 
-// Some processors have multiply-accumulate instructions that don't
-// play nicely with other VFP instructions, and it's generally better
+// Some processors have FP multiply-accumulate instructions that don't
+// play nicely with other VFP / NEON instructions, and it's generally better
 // to just not use them.
-// FIXME: Currently, this is only flagged for Cortex-A8. It may be true for
-// others as well. We should do more benchmarking and confirm one way or
-// the other.
-def FeatureHasSlowVMLx : SubtargetFeature<"vmlx", "SlowVMLx", "true",
-                                          "Disable VFP MAC instructions">;
+def FeatureHasSlowFPVMLx : SubtargetFeature<"slowfpvmlx", "SlowFPVMLx", "true",
+                                         "Disable VFP / NEON MAC instructions">;
 // Some processors benefit from using NEON instructions for scalar
 // single-precision FP operations.
 def FeatureNEONForFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
@@ -150,26 +147,29 @@ def : ProcNoItin<"iwmmxt",          [ArchV5TE]>;
 // V6 Processors.
 def : Processor<"arm1136j-s",       ARMV6Itineraries, [ArchV6]>;
 def : Processor<"arm1136jf-s",      ARMV6Itineraries, [ArchV6, FeatureVFP2,
-                                                       FeatureHasSlowVMLx]>;
+                                                       FeatureHasSlowFPVMLx]>;
 def : Processor<"arm1176jz-s",      ARMV6Itineraries, [ArchV6]>;
-def : Processor<"arm1176jzf-s",     ARMV6Itineraries, [ArchV6, FeatureVFP2]>;
+def : Processor<"arm1176jzf-s",     ARMV6Itineraries, [ArchV6, FeatureVFP2,
+                                                       FeatureHasSlowFPVMLx]>;
 def : Processor<"mpcorenovfp",      ARMV6Itineraries, [ArchV6]>;
-def : Processor<"mpcore",           ARMV6Itineraries, [ArchV6, FeatureVFP2]>;
+def : Processor<"mpcore",           ARMV6Itineraries, [ArchV6, FeatureVFP2,
+                                                       FeatureHasSlowFPVMLx]>;
 
 // V6M Processors.
 def : Processor<"cortex-m0",        ARMV6Itineraries, [ArchV6M]>;
 
 // V6T2 Processors.
 def : Processor<"arm1156t2-s",      ARMV6Itineraries, [ArchV6T2]>;
-def : Processor<"arm1156t2f-s",     ARMV6Itineraries, [ArchV6T2, FeatureVFP2]>;
+def : Processor<"arm1156t2f-s",     ARMV6Itineraries, [ArchV6T2, FeatureVFP2,
+                                                       FeatureHasSlowFPVMLx]>;
 
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
                                     [ArchV7A, ProcA8,
-                                     FeatureHasSlowVMLx, FeatureT2XtPk]>;
+                                     FeatureHasSlowFPVMLx, FeatureT2XtPk]>;
 def : Processor<"cortex-a9",        CortexA9Itineraries,
                                     [ArchV7A, ProcA9,
-                                     FeatureHasSlowVMLx, FeatureT2XtPk]>;
+                                     FeatureHasSlowFPVMLx, FeatureT2XtPk]>;
 
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [ArchV7M]>;

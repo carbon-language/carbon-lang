@@ -1907,7 +1907,7 @@ class N3VQIntSh<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
 // Multiply-Add/Sub operations: single-, double- and quad-register.
 class N3VSMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
                 InstrItinClass itin, string OpcodeStr, string Dt,
-                ValueType Ty, SDNode MulOp, SDNode OpNode>
+                ValueType Ty, SDPatternOperator MulOp, SDNode OpNode>
   : N3V<op24, op23, op21_20, op11_8, 0, op4,
         (outs DPR_VFP2:$Vd),
         (ins DPR_VFP2:$src1, DPR_VFP2:$Vn, DPR_VFP2:$Vm), N3RegFrm, itin,
@@ -1915,7 +1915,7 @@ class N3VSMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
 
 class N3VDMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
                 InstrItinClass itin, string OpcodeStr, string Dt,
-                ValueType Ty, SDNode MulOp, SDNode OpNode>
+                ValueType Ty, SDPatternOperator MulOp, SDPatternOperator OpNode>
   : N3V<op24, op23, op21_20, op11_8, 0, op4,
         (outs DPR:$Vd), (ins DPR:$src1, DPR:$Vn, DPR:$Vm), N3RegFrm, itin,
         OpcodeStr, Dt, "$Vd, $Vn, $Vm", "$src1 = $Vd",
@@ -1924,7 +1924,7 @@ class N3VDMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
 
 class N3VDMulOpSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                   string OpcodeStr, string Dt,
-                  ValueType Ty, SDNode MulOp, SDNode ShOp>
+                  ValueType Ty, SDPatternOperator MulOp, SDPatternOperator ShOp>
   : N3V<0, 1, op21_20, op11_8, 1, 0,
         (outs DPR:$Vd),
         (ins DPR:$src1, DPR:$Vn, DPR_VFP2:$Vm, nohash_imm:$lane),
@@ -1951,7 +1951,7 @@ class N3VDMulOpSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
 
 class N3VQMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
                 InstrItinClass itin, string OpcodeStr, string Dt, ValueType Ty,
-                SDNode MulOp, SDNode OpNode>
+                SDPatternOperator MulOp, SDPatternOperator OpNode>
   : N3V<op24, op23, op21_20, op11_8, 1, op4,
         (outs QPR:$Vd), (ins QPR:$src1, QPR:$Vn, QPR:$Vm), N3RegFrm, itin,
         OpcodeStr, Dt, "$Vd, $Vn, $Vm", "$src1 = $Vd",
@@ -1959,7 +1959,7 @@ class N3VQMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
                              (Ty (MulOp QPR:$Vn, QPR:$Vm)))))]>;
 class N3VQMulOpSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                   string OpcodeStr, string Dt, ValueType ResTy, ValueType OpTy,
-                  SDNode MulOp, SDNode ShOp>
+                  SDPatternOperator MulOp, SDPatternOperator ShOp>
   : N3V<1, 1, op21_20, op11_8, 1, 0,
         (outs QPR:$Vd),
         (ins QPR:$src1, QPR:$Vn, DPR_VFP2:$Vm, nohash_imm:$lane),
@@ -3282,15 +3282,19 @@ defm VQDMULLsl: N3VLIntSL_HS<0, 0b1011, IIC_VMULi16D,
 defm VMLA     : N3VMulOp_QHS<0, 0, 0b1001, 0, IIC_VMACi16D, IIC_VMACi32D,
                              IIC_VMACi16Q, IIC_VMACi32Q, "vmla", "i", add>;
 def  VMLAfd   : N3VDMulOp<0, 0, 0b00, 0b1101, 1, IIC_VMACD, "vmla", "f32",
-                          v2f32, fmul, fadd>;
+                          v2f32, fmul_su, fadd_mlx>,
+                Requires<[HasNEON, UseFPVMLx]>;
 def  VMLAfq   : N3VQMulOp<0, 0, 0b00, 0b1101, 1, IIC_VMACQ, "vmla", "f32",
-                          v4f32, fmul, fadd>;
+                          v4f32, fmul_su, fadd_mlx>,
+                Requires<[HasNEON, UseFPVMLx]>;
 defm VMLAsl   : N3VMulOpSL_HS<0b0000, IIC_VMACi16D, IIC_VMACi32D,
                               IIC_VMACi16Q, IIC_VMACi32Q, "vmla", "i", add>;
 def  VMLAslfd : N3VDMulOpSL<0b10, 0b0001, IIC_VMACD, "vmla", "f32",
-                            v2f32, fmul, fadd>;
+                            v2f32, fmul_su, fadd_mlx>,
+                Requires<[HasNEON, UseFPVMLx]>;
 def  VMLAslfq : N3VQMulOpSL<0b10, 0b0001, IIC_VMACQ, "vmla", "f32",
-                            v4f32, v2f32, fmul, fadd>;
+                            v4f32, v2f32, fmul_su, fadd_mlx>,
+                Requires<[HasNEON, UseFPVMLx]>;
 
 def : Pat<(v8i16 (add (v8i16 QPR:$src1),
                   (mul (v8i16 QPR:$src2),
@@ -3308,14 +3312,15 @@ def : Pat<(v4i32 (add (v4i32 QPR:$src1),
                                       (DSubReg_i32_reg imm:$lane))),
                               (SubReg_i32_lane imm:$lane)))>;
 
-def : Pat<(v4f32 (fadd (v4f32 QPR:$src1),
-                  (fmul (v4f32 QPR:$src2),
+def : Pat<(v4f32 (fadd_mlx (v4f32 QPR:$src1),
+                  (fmul_su (v4f32 QPR:$src2),
                         (v4f32 (NEONvduplane (v4f32 QPR:$src3), imm:$lane))))),
           (v4f32 (VMLAslfq (v4f32 QPR:$src1),
                            (v4f32 QPR:$src2),
                            (v2f32 (EXTRACT_SUBREG QPR:$src3,
                                    (DSubReg_i32_reg imm:$lane))),
-                           (SubReg_i32_lane imm:$lane)))>;
+                           (SubReg_i32_lane imm:$lane)))>,
+          Requires<[HasNEON, UseFPVMLx]>;
 
 //   VMLAL    : Vector Multiply Accumulate Long (Q += D * D)
 defm VMLALs   : N3VLMulOp_QHS<0,1,0b1000,0, IIC_VMACi16D, IIC_VMACi32D,
@@ -3335,15 +3340,19 @@ defm VQDMLALsl: N3VLInt3SL_HS<0, 0b0011, "vqdmlal", "s", int_arm_neon_vqdmlal>;
 defm VMLS     : N3VMulOp_QHS<1, 0, 0b1001, 0, IIC_VMACi16D, IIC_VMACi32D,
                              IIC_VMACi16Q, IIC_VMACi32Q, "vmls", "i", sub>;
 def  VMLSfd   : N3VDMulOp<0, 0, 0b10, 0b1101, 1, IIC_VMACD, "vmls", "f32",
-                          v2f32, fmul, fsub>;
+                          v2f32, fmul_su, fsub_mlx>,
+                Requires<[HasNEON, UseFPVMLx]>;
 def  VMLSfq   : N3VQMulOp<0, 0, 0b10, 0b1101, 1, IIC_VMACQ, "vmls", "f32",
-                          v4f32, fmul, fsub>;
+                          v4f32, fmul_su, fsub_mlx>,
+                Requires<[HasNEON, UseFPVMLx]>;
 defm VMLSsl   : N3VMulOpSL_HS<0b0100, IIC_VMACi16D, IIC_VMACi32D,
                               IIC_VMACi16Q, IIC_VMACi32Q, "vmls", "i", sub>;
 def  VMLSslfd : N3VDMulOpSL<0b10, 0b0101, IIC_VMACD, "vmls", "f32",
-                            v2f32, fmul, fsub>;
+                            v2f32, fmul_su, fsub_mlx>,
+                Requires<[HasNEON, UseFPVMLx]>;
 def  VMLSslfq : N3VQMulOpSL<0b10, 0b0101, IIC_VMACQ, "vmls", "f32",
-                            v4f32, v2f32, fmul, fsub>;
+                            v4f32, v2f32, fmul_su, fsub_mlx>,
+                Requires<[HasNEON, UseFPVMLx]>;
 
 def : Pat<(v8i16 (sub (v8i16 QPR:$src1),
                   (mul (v8i16 QPR:$src2),
@@ -3361,13 +3370,14 @@ def : Pat<(v4i32 (sub (v4i32 QPR:$src1),
                                       (DSubReg_i32_reg imm:$lane))),
                               (SubReg_i32_lane imm:$lane)))>;
 
-def : Pat<(v4f32 (fsub (v4f32 QPR:$src1),
-                  (fmul (v4f32 QPR:$src2),
+def : Pat<(v4f32 (fsub_mlx (v4f32 QPR:$src1),
+                  (fmul_su (v4f32 QPR:$src2),
                         (v4f32 (NEONvduplane (v4f32 QPR:$src3), imm:$lane))))),
           (v4f32 (VMLSslfq (v4f32 QPR:$src1), (v4f32 QPR:$src2),
                            (v2f32 (EXTRACT_SUBREG QPR:$src3,
                                    (DSubReg_i32_reg imm:$lane))),
-                           (SubReg_i32_lane imm:$lane)))>;
+                           (SubReg_i32_lane imm:$lane)))>,
+          Requires<[HasNEON, UseFPVMLx]>;
 
 //   VMLSL    : Vector Multiply Subtract Long (Q -= D * D)
 defm VMLSLs   : N3VLMulOp_QHS<0,1,0b1010,0, IIC_VMACi16D, IIC_VMACi32D,
@@ -4706,15 +4716,17 @@ def : N3VSPat<fmul, VMULfd_sfp>;
 // vml[as].f32 can cause 4-8 cycle stalls in following ASIMD instructions, so
 // we want to avoid them for now. e.g., alternating vmla/vadd instructions.
 
-//let neverHasSideEffects = 1 in
-//def VMLAfd_sfp : N3VSMulOp<0,0,0b00,0b1101,1, IIC_VMACD, "vmla", "f32",
-//                           v2f32, fmul, fadd>;
-//def : N3VSMulOpPat<fmul, fadd, VMLAfd_sfp>;
+let neverHasSideEffects = 1 in
+def VMLAfd_sfp : N3VSMulOp<0,0,0b00,0b1101,1, IIC_VMACD, "vmla", "f32",
+                           v2f32, fmul_su, fadd>;
+def : N3VSMulOpPat<fmul, fadd, VMLAfd_sfp>,
+      Requires<[HasNEON, UseNEONForFP, UseFPVMLx]>;
 
-//let neverHasSideEffects = 1 in
-//def VMLSfd_sfp : N3VSMulOp<0,0,0b10,0b1101,1, IIC_VMACD, "vmls", "f32",
-//                           v2f32, fmul, fsub>;
-//def : N3VSMulOpPat<fmul, fsub, VMLSfd_sfp>;
+let neverHasSideEffects = 1 in
+def VMLSfd_sfp : N3VSMulOp<0,0,0b10,0b1101,1, IIC_VMACD, "vmls", "f32",
+                           v2f32, fmul_su, fsub>;
+def : N3VSMulOpPat<fmul, fsub, VMLSfd_sfp>,
+      Requires<[HasNEON, UseNEONForFP, UseFPVMLx]>;
 
 // Vector Absolute used for single-precision FP
 let neverHasSideEffects = 1 in

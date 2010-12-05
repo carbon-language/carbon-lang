@@ -15,6 +15,7 @@
 #include "ARM.h"
 #include "ARMAddressingModes.h"
 #include "ARMConstantPoolValue.h"
+#include "ARMHazardRecognizer.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
 #include "ARMGenInstrInfo.inc"
@@ -40,9 +41,58 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
+
+/// ARM_MLxEntry - Record information about MLA / MLS instructions.
+struct ARM_MLxEntry {
+  unsigned MLxOpc;     // MLA / MLS opcode
+  unsigned MulOpc;     // Expanded multiplication opcode
+  unsigned AddSubOpc;  // Expanded add / sub opcode
+  bool NegAcc;         // True if the acc is negated before the add / sub.
+  bool HasLane;        // True if instruction has an extra "lane" operand.
+};
+
+static const ARM_MLxEntry ARM_MLxTable[] = {
+  // MLxOpc,          MulOpc,           AddSubOpc,       NegAcc, HasLane
+  // fp scalar ops
+  { ARM::VMLAS,       ARM::VMULS,       ARM::VADDS,      false,  false },
+  { ARM::VMLSS,       ARM::VMULS,       ARM::VSUBS,      false,  false },
+  { ARM::VMLAD,       ARM::VMULD,       ARM::VADDD,      false,  false },
+  { ARM::VMLSD,       ARM::VMULD,       ARM::VSUBD,      false,  false },
+  { ARM::VMLAfd_sfp,  ARM::VMULfd_sfp,  ARM::VADDfd_sfp, false,  false },
+  { ARM::VMLSfd_sfp,  ARM::VMULfd_sfp,  ARM::VSUBfd_sfp, false,  false },
+  { ARM::VNMLAS,      ARM::VNMULS,      ARM::VSUBS,      true,   false },
+  { ARM::VNMLSS,      ARM::VMULS,       ARM::VSUBS,      true,   false },
+  { ARM::VNMLAD,      ARM::VNMULD,      ARM::VSUBD,      true,   false },
+  { ARM::VNMLSD,      ARM::VMULD,       ARM::VSUBD,      true,   false },
+
+  // fp SIMD ops
+  { ARM::VMLAfd,      ARM::VMULfd,      ARM::VADDfd,     false,  false },
+  { ARM::VMLSfd,      ARM::VMULfd,      ARM::VSUBfd,     false,  false },
+  { ARM::VMLAfq,      ARM::VMULfq,      ARM::VADDfq,     false,  false },
+  { ARM::VMLSfq,      ARM::VMULfq,      ARM::VSUBfq,     false,  false },
+  { ARM::VMLAslfd,    ARM::VMULslfd,    ARM::VADDfd,     false,  true  },
+  { ARM::VMLSslfd,    ARM::VMULslfd,    ARM::VSUBfd,     false,  true  },
+  { ARM::VMLAslfq,    ARM::VMULslfq,    ARM::VADDfq,     false,  true  },
+  { ARM::VMLSslfq,    ARM::VMULslfq,    ARM::VSUBfq,     false,  true  },
+};
+
 ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
   : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
     Subtarget(STI) {
+  for (unsigned i = 0, e = array_lengthof(ARM_MLxTable); i != e; ++i) {
+    if (!MLxEntryMap.insert(std::make_pair(ARM_MLxTable[i].MLxOpc, i)).second)
+      assert(false && "Duplicated entries?");
+    MLxHazardOpcodes.insert(ARM_MLxTable[i].AddSubOpc);
+    MLxHazardOpcodes.insert(ARM_MLxTable[i].MulOpc);
+  }
+}
+
+ScheduleHazardRecognizer *ARMBaseInstrInfo::
+CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II) const {
+  if (Subtarget.isThumb2() || Subtarget.hasVFP2())
+    return (ScheduleHazardRecognizer *)
+      new ARMHazardRecognizer(II, *this, getRegisterInfo(), Subtarget);
+  return TargetInstrInfoImpl::CreateTargetPostRAHazardRecognizer(II);
 }
 
 MachineInstr *
@@ -196,7 +246,6 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   MFI->insert(MBBI, NewMIs[0]);
   return NewMIs[0];
 }
-
 
 // Branch analysis.
 bool
@@ -2195,4 +2244,20 @@ hasLowDefLatency(const InstrItineraryData *ItinData,
     return (DefCycle != -1 && DefCycle <= 2);
   }
   return false;
+}
+
+bool
+ARMBaseInstrInfo::isFpMLxInstruction(unsigned Opcode, unsigned &MulOpc,
+                                     unsigned &AddSubOpc,
+                                     bool &NegAcc, bool &HasLane) const {
+  DenseMap<unsigned, unsigned>::const_iterator I = MLxEntryMap.find(Opcode);
+  if (I == MLxEntryMap.end())
+    return false;
+
+  const ARM_MLxEntry &Entry = ARM_MLxTable[I->second];
+  MulOpc = Entry.MulOpc;
+  AddSubOpc = Entry.AddSubOpc;
+  NegAcc = Entry.NegAcc;
+  HasLane = Entry.HasLane;
+  return true;
 }

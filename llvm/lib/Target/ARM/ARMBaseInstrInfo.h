@@ -17,6 +17,8 @@
 #include "ARM.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
   class ARMSubtarget;
@@ -191,9 +193,11 @@ namespace ARMII {
 
 class ARMBaseInstrInfo : public TargetInstrInfoImpl {
   const ARMSubtarget &Subtarget;
+
 protected:
   // Can be only subclassed.
   explicit ARMBaseInstrInfo(const ARMSubtarget &STI);
+
 public:
   // Return the non-pre/post incrementing version of 'Opc'. Return 0
   // if there is not such an opcode.
@@ -206,7 +210,9 @@ public:
   virtual const ARMBaseRegisterInfo &getRegisterInfo() const =0;
   const ARMSubtarget &getSubtarget() const { return Subtarget; }
 
-public:
+  ScheduleHazardRecognizer *
+  CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II) const;
+
   // Branch analysis.
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,
@@ -393,6 +399,38 @@ private:
                              const MachineInstr *UseMI, unsigned UseIdx) const;
   bool hasLowDefLatency(const InstrItineraryData *ItinData,
                         const MachineInstr *DefMI, unsigned DefIdx) const;
+
+private:
+  /// Modeling special VFP / NEON fp MLA / MLS hazards.
+
+  /// MLxEntryMap - Map fp MLA / MLS to the corresponding entry in the internal
+  /// MLx table.
+  DenseMap<unsigned, unsigned> MLxEntryMap;
+
+  /// MLxHazardOpcodes - Set of add / sub and multiply opcodes that would cause
+  /// stalls when scheduled together with fp MLA / MLS opcodes.
+  SmallSet<unsigned, 16> MLxHazardOpcodes;
+
+public:
+  /// isFpMLxInstruction - Return true if the specified opcode is a fp MLA / MLS
+  /// instruction.
+  bool isFpMLxInstruction(unsigned Opcode) const {
+    return MLxEntryMap.count(Opcode);
+  }
+
+  /// isFpMLxInstruction - This version also returns the multiply opcode and the
+  /// addition / subtraction opcode to expand to. Return true for 'HasLane' for
+  /// the MLX instructions with an extra lane operand.
+  bool isFpMLxInstruction(unsigned Opcode, unsigned &MulOpc,
+                          unsigned &AddSubOpc, bool &NegAcc,
+                          bool &HasLane) const;
+
+  /// canCauseFpMLxStall - Return true if an instruction of the specified opcode
+  /// will cause stalls when scheduled after (within 4-cycle window) a fp
+  /// MLA / MLS instruction.
+  bool canCauseFpMLxStall(unsigned Opcode) const {
+    return MLxHazardOpcodes.count(Opcode);
+  }
 };
 
 static inline

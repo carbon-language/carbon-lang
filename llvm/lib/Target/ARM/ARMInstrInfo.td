@@ -175,7 +175,7 @@ def IsNotDarwin      : Predicate<"!Subtarget->isTargetDarwin()">;
 // FIXME: Eventually this will be just "hasV6T2Ops".
 def UseMovt          : Predicate<"Subtarget->useMovt()">;
 def DontUseMovt      : Predicate<"!Subtarget->useMovt()">;
-def UseVMLx          : Predicate<"Subtarget->useVMLx()">;
+def UseFPVMLx        : Predicate<"Subtarget->useFPVMLx()">;
 
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.
@@ -277,6 +277,21 @@ def and_su : PatFrag<(ops node:$lhs, node:$rhs), (and node:$lhs, node:$rhs), [{
 // An 'xor' node with a single use.
 def xor_su : PatFrag<(ops node:$lhs, node:$rhs), (xor node:$lhs, node:$rhs), [{
   return N->hasOneUse();
+}]>;
+
+// An 'fmul' node with a single use.
+def fmul_su : PatFrag<(ops node:$lhs, node:$rhs), (fmul node:$lhs, node:$rhs),[{
+  return N->hasOneUse();
+}]>;
+
+// An 'fadd' node which checks for single non-hazardous use.
+def fadd_mlx : PatFrag<(ops node:$lhs, node:$rhs),(fadd node:$lhs, node:$rhs),[{
+  return hasNoVMLxHazardUse(N);
+}]>;
+
+// An 'fsub' node which checks for single non-hazardous use.
+def fsub_mlx : PatFrag<(ops node:$lhs, node:$rhs),(fsub node:$lhs, node:$rhs),[{
+  return hasNoVMLxHazardUse(N);
 }]>;
 
 //===----------------------------------------------------------------------===//
