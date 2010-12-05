@@ -153,5 +153,29 @@ define i64 @test10(i64 %x, i64 %y) nounwind readnone ssp noredzone {
 
 
 
+define i64 @test11(i64 %x, i64 %y) nounwind readnone ssp noredzone {
+  %cmp = icmp eq i64 %x, 0
+  %cond = select i1 %cmp, i64 %y, i64 -1
+  ret i64 %cond
+; CHECK: test11:
+; CHECK: cmpq	$1, %rdi
+; CHECK: sbbq	%rax, %rax
+; CHECK: notq %rax
+; CHECK: orq	%rsi, %rax
+; CHECK: ret
+}
+
+define i64 @test11a(i64 %x, i64 %y) nounwind readnone ssp noredzone {
+  %cmp = icmp ne i64 %x, 0
+  %cond = select i1 %cmp, i64 -1, i64 %y
+  ret i64 %cond
+; CHECK: test11a:
+; CHECK: cmpq	$1, %rdi
+; CHECK: sbbq	%rax, %rax
+; CHECK: notq %rax
+; CHECK: orq	%rsi, %rax
+; CHECK: ret
+}
+
 
 

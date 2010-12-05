@@ -7213,6 +7213,11 @@ static bool isZero(SDValue V) {
   return C && C->isNullValue();
 }
 
+static bool isAllOnes(SDValue V) {
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
+  return C && C->isAllOnesValue();
+}
+
 SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   bool addTest = true;
   SDValue Cond  = Op.getOperand(0);
@@ -7228,26 +7233,31 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // (select (x == 0), -1, y) -> (sign_bit (x - 1)) | y
+  // (select (x == 0), y, -1) -> ~(sign_bit (x - 1)) | y
   // (select (x != 0), y, -1) -> (sign_bit (x - 1)) | y
+  // (select (x != 0), -1, y) -> ~(sign_bit (x - 1)) | y
   if (Cond.getOpcode() == X86ISD::SETCC &&
-      Cond.getOperand(1).getOpcode() == X86ISD::CMP) {
+      Cond.getOperand(1).getOpcode() == X86ISD::CMP &&
+      isZero(Cond.getOperand(1).getOperand(1))) {
     SDValue Cmp = Cond.getOperand(1);
     
     unsigned CondCode =cast<ConstantSDNode>(Cond.getOperand(0))->getZExtValue();
     
-    ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Op1);
-    ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(Op2);
-    if ((N1C && N1C->isAllOnesValue() && CondCode == X86::COND_E) ||
-        (N2C && N2C->isAllOnesValue() && CondCode == X86::COND_NE)) {
-      SDValue Y = CondCode == X86::COND_NE ? Op1 : Op2;
+    if ((isAllOnes(Op1) || isAllOnes(Op2)) && 
+        (CondCode == X86::COND_E || CondCode == X86::COND_NE)) {
+      SDValue Y = isAllOnes(Op2) ? Op1 : Op2;
 
       SDValue CmpOp0 = Cmp.getOperand(0);
       Cmp = DAG.getNode(X86ISD::CMP, DL, MVT::i32,
                         CmpOp0, DAG.getConstant(1, CmpOp0.getValueType()));
       
-      SDValue Res = 
+      SDValue Res =   // Res = 0 or -1.
         DAG.getNode(X86ISD::SETCC_CARRY, DL, Op.getValueType(),
                     DAG.getConstant(X86::COND_B, MVT::i8), Cmp);
+      
+      if (isAllOnes(Op1) != (CondCode == X86::COND_E))
+        Res = DAG.getNOT(DL, Res, Res.getValueType());
+      
       ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(Op2);
       if (N2C == 0 || !N2C->isNullValue())
         Res = DAG.getNode(ISD::OR, DL, Res.getValueType(), Res, Y);
