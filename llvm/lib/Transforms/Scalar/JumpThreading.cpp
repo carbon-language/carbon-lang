@@ -45,6 +45,10 @@ Threshold("jump-threading-threshold",
           cl::init(6), cl::Hidden);
 
 namespace {
+  // These are at global scope so static functions can use them too.
+  typedef SmallVectorImpl<std::pair<Constant*, BasicBlock*> > PredValueInfo;
+  typedef SmallVector<std::pair<Constant*, BasicBlock*>, 8> PredValueInfoTy;
+
   /// This pass performs 'jump threading', which looks at blocks that have
   /// multiple predecessors and multiple successors.  If one or more of the
   /// predecessors of the block can be proven to always jump to one of the
@@ -103,9 +107,6 @@ namespace {
                     BasicBlock *SuccBB);
     bool DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
                                   const SmallVectorImpl<BasicBlock *> &PredBBs);
-
-    typedef SmallVectorImpl<std::pair<ConstantInt*,
-                                      BasicBlock*> > PredValueInfo;
 
     bool ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,
                                          PredValueInfo &Result);
@@ -272,15 +273,27 @@ void JumpThreading::FindLoopHeaders(Function &F) {
     LoopHeaders.insert(const_cast<BasicBlock*>(Edges[i].second));
 }
 
+/// getKnownConstant - Helper method to determine if we can thread over a
+/// terminator with the given value as its condition, and if so what value to
+/// use for that.
+/// Returns null if Val is null or not an appropriate constant.
+static Constant *getKnownConstant(Value *Val) {
+  if (!Val)
+    return 0;
+
+  // Undef is "known" enough.
+  if (UndefValue *U = dyn_cast<UndefValue>(Val))
+    return U;
+
+  return dyn_cast<ConstantInt>(Val);
+}
+
 // Helper method for ComputeValueKnownInPredecessors.  If Value is a
-// ConstantInt, push it.  If it's an undef, push 0.  Otherwise, do nothing.
-static void PushConstantIntOrUndef(SmallVectorImpl<std::pair<ConstantInt*,
-                                                        BasicBlock*> > &Result,
-                              Constant *Value, BasicBlock* BB){
-  if (ConstantInt *FoldedCInt = dyn_cast<ConstantInt>(Value))
-    Result.push_back(std::make_pair(FoldedCInt, BB));
-  else if (isa<UndefValue>(Value))
-    Result.push_back(std::make_pair((ConstantInt*)0, BB));
+// ConstantInt or undef, push it.  Otherwise, do nothing.
+static void PushKnownConstantOrUndef(PredValueInfo &Result, Constant *Value,
+                                     BasicBlock *BB) {
+  if (Constant *KC = getKnownConstant(Value))
+    Result.push_back(std::make_pair(KC, BB));
 }
 
 /// ComputeValueKnownInPredecessors - Given a basic block BB and a value V, see
@@ -303,12 +316,10 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
   // stack pops back out again.
   RecursionSetRemover remover(RecursionSet, std::make_pair(V, BB));
 
-  // If V is a constantint, then it is known in all predecessors.
-  if (isa<ConstantInt>(V) || isa<UndefValue>(V)) {
-    ConstantInt *CI = dyn_cast<ConstantInt>(V);
-
+  // If V is a constant, then it is known in all predecessors.
+  if (Constant *KC = getKnownConstant(V)) {
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-      Result.push_back(std::make_pair(CI, *PI));
+      Result.push_back(std::make_pair(KC, *PI));
 
     return true;
   }
@@ -336,11 +347,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       // If the value is known by LazyValueInfo to be a constant in a
       // predecessor, use that information to try to thread this block.
       Constant *PredCst = LVI->getConstantOnEdge(V, P, BB);
-      if (PredCst == 0 ||
-          (!isa<ConstantInt>(PredCst) && !isa<UndefValue>(PredCst)))
-        continue;
-
-      Result.push_back(std::make_pair(dyn_cast<ConstantInt>(PredCst), P));
+      if (Constant *KC = getKnownConstant(PredCst))
+        Result.push_back(std::make_pair(KC, P));
     }
 
     return !Result.empty();
@@ -350,22 +358,21 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
       Value *InVal = PN->getIncomingValue(i);
-      if (isa<ConstantInt>(InVal) || isa<UndefValue>(InVal)) {
-        ConstantInt *CI = dyn_cast<ConstantInt>(InVal);
-        Result.push_back(std::make_pair(CI, PN->getIncomingBlock(i)));
+      if (Constant *KC = getKnownConstant(InVal)) {
+        Result.push_back(std::make_pair(KC, PN->getIncomingBlock(i)));
       } else {
         Constant *CI = LVI->getConstantOnEdge(InVal,
                                               PN->getIncomingBlock(i), BB);
         // LVI returns null is no value could be determined.
         if (!CI) continue;
-        PushConstantIntOrUndef(Result, CI, PN->getIncomingBlock(i));
+        PushKnownConstantOrUndef(Result, CI, PN->getIncomingBlock(i));
       }
     }
 
     return !Result.empty();
   }
 
-  SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> LHSVals, RHSVals;
+  PredValueInfoTy LHSVals, RHSVals;
 
   // Handle some boolean conditions.
   if (I->getType()->getPrimitiveSizeInBits() == 1) {
@@ -390,13 +397,15 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       // Scan for the sentinel.  If we find an undef, force it to the
       // interesting value: x|undef -> true and x&undef -> false.
       for (unsigned i = 0, e = LHSVals.size(); i != e; ++i)
-        if (LHSVals[i].first == InterestingVal || LHSVals[i].first == 0) {
+        if (LHSVals[i].first == InterestingVal ||
+            isa<UndefValue>(LHSVals[i].first)) {
           Result.push_back(LHSVals[i]);
           Result.back().first = InterestingVal;
           LHSKnownBBs.insert(LHSVals[i].second);
         }
       for (unsigned i = 0, e = RHSVals.size(); i != e; ++i)
-        if (RHSVals[i].first == InterestingVal || RHSVals[i].first == 0) {
+        if (RHSVals[i].first == InterestingVal ||
+            isa<UndefValue>(RHSVals[i].first)) {
           // If we already inferred a value for this block on the LHS, don't
           // re-add it.
           if (!LHSKnownBBs.count(RHSVals[i].second)) {
@@ -418,9 +427,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
 
       // Invert the known values.
       for (unsigned i = 0, e = Result.size(); i != e; ++i)
-        if (Result[i].first)
-          Result[i].first =
-            cast<ConstantInt>(ConstantExpr::getNot(Result[i].first));
+        Result[i].first = ConstantExpr::getNot(Result[i].first);
 
       return true;
     }
@@ -428,16 +435,15 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
   // Try to simplify some other binary operator values.
   } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(BO->getOperand(1))) {
-      SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> LHSVals;
+      PredValueInfoTy LHSVals;
       ComputeValueKnownInPredecessors(BO->getOperand(0), BB, LHSVals);
 
       // Try to use constant folding to simplify the binary operator.
       for (unsigned i = 0, e = LHSVals.size(); i != e; ++i) {
         Constant *V = LHSVals[i].first;
-        if (V == 0) V = UndefValue::get(BO->getType());
         Constant *Folded = ConstantExpr::get(BO->getOpcode(), V, CI);
 
-        PushConstantIntOrUndef(Result, Folded, LHSVals[i].second);
+        PushKnownConstantOrUndef(Result, Folded, LHSVals[i].second);
       }
     }
 
@@ -469,7 +475,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
         }
 
         if (Constant *ConstRes = dyn_cast<Constant>(Res))
-          PushConstantIntOrUndef(Result, ConstRes, PredBB);
+          PushKnownConstantOrUndef(Result, ConstRes, PredBB);
       }
 
       return !Result.empty();
@@ -494,7 +500,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
             continue;
 
           Constant *ResC = ConstantInt::get(Cmp->getType(), Res);
-          Result.push_back(std::make_pair(cast<ConstantInt>(ResC), P));
+          Result.push_back(std::make_pair(ResC, P));
         }
 
         return !Result.empty();
@@ -503,15 +509,14 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       // Try to find a constant value for the LHS of a comparison,
       // and evaluate it statically if we can.
       if (Constant *CmpConst = dyn_cast<Constant>(Cmp->getOperand(1))) {
-        SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> LHSVals;
+        PredValueInfoTy LHSVals;
         ComputeValueKnownInPredecessors(I->getOperand(0), BB, LHSVals);
 
         for (unsigned i = 0, e = LHSVals.size(); i != e; ++i) {
           Constant *V = LHSVals[i].first;
-          if (V == 0) V = UndefValue::get(CmpConst->getType());
           Constant *Folded = ConstantExpr::getCompare(Cmp->getPredicate(),
                                                       V, CmpConst);
-          PushConstantIntOrUndef(Result, Folded, LHSVals[i].second);
+          PushKnownConstantOrUndef(Result, Folded, LHSVals[i].second);
         }
 
         return !Result.empty();
@@ -521,10 +526,9 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
 
   // If all else fails, see if LVI can figure out a constant value for us.
   Constant *CI = LVI->getConstant(V, BB);
-  ConstantInt *CInt = dyn_cast_or_null<ConstantInt>(CI);
-  if (CInt) {
+  if (Constant *KC = getKnownConstant(CI)) {
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-      Result.push_back(std::make_pair(CInt, *PI));
+      Result.push_back(std::make_pair(KC, *PI));
   }
 
   return !Result.empty();
@@ -598,17 +602,6 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   else
     return false; // Must be an invoke.
 
-  // If the terminator of this block is branching on a constant, simplify the
-  // terminator to an unconditional branch.  This can occur due to threading in
-  // other blocks.
-  if (isa<ConstantInt>(Condition)) {
-    DEBUG(dbgs() << "  In block '" << BB->getName()
-          << "' folding terminator: " << *BB->getTerminator() << '\n');
-    ++NumFolds;
-    ConstantFoldTerminator(BB);
-    return true;
-  }
-
   // If the terminator is branching on an undef, we can pick any of the
   // successors to branch to.  Let GetBestDestForJumpOnUndef decide.
   if (isa<UndefValue>(Condition)) {
@@ -625,6 +618,17 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
           << "' folding undef terminator: " << *BBTerm << '\n');
     BranchInst::Create(BBTerm->getSuccessor(BestSucc), BBTerm);
     BBTerm->eraseFromParent();
+    return true;
+  }
+
+  // If the terminator of this block is branching on a constant, simplify the
+  // terminator to an unconditional branch.  This can occur due to threading in
+  // other blocks.
+  if (getKnownConstant(Condition)) {
+    DEBUG(dbgs() << "  In block '" << BB->getName()
+          << "' folding terminator: " << *BB->getTerminator() << '\n');
+    ++NumFolds;
+    ConstantFoldTerminator(BB);
     return true;
   }
 
@@ -1090,7 +1094,7 @@ bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB) {
   if (LoopHeaders.count(BB))
     return false;
 
-  SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> PredValues;
+  PredValueInfoTy PredValues;
   if (!ComputeValueKnownInPredecessors(Cond, BB, PredValues))
     return false;
 
@@ -1099,13 +1103,9 @@ bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB) {
 
   DEBUG(dbgs() << "IN BB: " << *BB;
         for (unsigned i = 0, e = PredValues.size(); i != e; ++i) {
-          dbgs() << "  BB '" << BB->getName() << "': FOUND condition = ";
-          if (PredValues[i].first)
-            dbgs() << *PredValues[i].first;
-          else
-            dbgs() << "UNDEF";
-          dbgs() << " for pred '" << PredValues[i].second->getName()
-          << "'.\n";
+          dbgs() << "  BB '" << BB->getName() << "': FOUND condition = "
+            << *PredValues[i].first
+            << " for pred '" << PredValues[i].second->getName() << "'.\n";
         });
 
   // Decide what we want to thread through.  Convert our list of known values to
@@ -1128,16 +1128,16 @@ bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB) {
     if (isa<IndirectBrInst>(Pred->getTerminator()))
       continue;
 
-    ConstantInt *Val = PredValues[i].first;
+    Constant *Val = PredValues[i].first;
 
     BasicBlock *DestBB;
-    if (Val == 0)      // Undef.
+    if (isa<UndefValue>(Val))
       DestBB = 0;
     else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
-      DestBB = BI->getSuccessor(Val->isZero());
+      DestBB = BI->getSuccessor(cast<ConstantInt>(Val)->isZero());
     else {
       SwitchInst *SI = cast<SwitchInst>(BB->getTerminator());
-      DestBB = SI->getSuccessor(SI->findCaseValue(Val));
+      DestBB = SI->getSuccessor(SI->findCaseValue(cast<ConstantInt>(Val)));
     }
 
     // If we have exactly one destination, remember it for efficiency below.
@@ -1254,7 +1254,7 @@ bool JumpThreading::ProcessBranchOnXOR(BinaryOperator *BO) {
   //    %Y = icmp ne i32 %A, %B
   //    br i1 %Z, ...
 
-  SmallVector<std::pair<ConstantInt*, BasicBlock*>, 8> XorOpValues;
+  PredValueInfoTy XorOpValues;
   bool isLHS = true;
   if (!ComputeValueKnownInPredecessors(BO->getOperand(0), BB, XorOpValues)) {
     assert(XorOpValues.empty());
@@ -1270,8 +1270,10 @@ bool JumpThreading::ProcessBranchOnXOR(BinaryOperator *BO) {
   // predecessors can be of the set true, false, or undef.
   unsigned NumTrue = 0, NumFalse = 0;
   for (unsigned i = 0, e = XorOpValues.size(); i != e; ++i) {
-    if (!XorOpValues[i].first) continue;  // Ignore undefs for the count.
-    if (XorOpValues[i].first->isZero())
+    if (isa<UndefValue>(XorOpValues[i].first))
+      // Ignore undefs for the count.
+      continue;
+    if (cast<ConstantInt>(XorOpValues[i].first)->isZero())
       ++NumFalse;
     else
       ++NumTrue;
@@ -1288,7 +1290,9 @@ bool JumpThreading::ProcessBranchOnXOR(BinaryOperator *BO) {
   // factor this once and clone it once.
   SmallVector<BasicBlock*, 8> BlocksToFoldInto;
   for (unsigned i = 0, e = XorOpValues.size(); i != e; ++i) {
-    if (XorOpValues[i].first != SplitVal && XorOpValues[i].first != 0) continue;
+    if (XorOpValues[i].first != SplitVal &&
+        !isa<UndefValue>(XorOpValues[i].first))
+      continue;
 
     BlocksToFoldInto.push_back(XorOpValues[i].second);
   }
