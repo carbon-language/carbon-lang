@@ -86,6 +86,7 @@ define x86_fp80 @test7(i32 %tmp8) nounwind {
         %tmp9 = icmp sgt i32 %tmp8, -1          ; <i1> [#uses=1]
         %retval = select i1 %tmp9, x86_fp80 0xK4005B400000000000000, x86_fp80 0xK40078700000000000000
         ret x86_fp80 %retval
+; CHECK: test7:
 ; CHECK: leaq
 ; CHECK: fldt (%r{{.}}x,%r{{.}}x)
 }
@@ -96,4 +97,61 @@ define void @test8(i1 %c, <6 x i32>* %dst.addr, <6 x i32> %src1,<6 x i32> %src2)
 	%val = sub <6 x i32> %x, < i32 1, i32 1, i32 1, i32 1, i32 1, i32 1 >
 	store <6 x i32> %val, <6 x i32>* %dst.addr
 	ret void
+        
+; CHECK: test8:
 }
+
+
+;; Test integer select between values and constants.
+
+define i64 @test9(i64 %x, i64 %y) nounwind readnone ssp noredzone {
+  %cmp = icmp ne i64 %x, 0
+  %cond = select i1 %cmp, i64 %y, i64 -1
+  ret i64 %cond
+; CHECK: test9:
+; CHECK: cmpq	$1, %rdi
+; CHECK: sbbq	%rax, %rax
+; CHECK: orq	%rsi, %rax
+; CHECK: ret
+}
+
+;; Same as test9
+define i64 @test9a(i64 %x, i64 %y) nounwind readnone ssp noredzone {
+  %cmp = icmp eq i64 %x, 0
+  %cond = select i1 %cmp, i64 -1, i64 %y
+  ret i64 %cond
+; CHECK: test9a:
+; CHECK: cmpq	$1, %rdi
+; CHECK: sbbq	%rax, %rax
+; CHECK: orq	%rsi, %rax
+; CHECK: ret
+}
+
+define i64 @test9b(i64 %x, i64 %y) nounwind readnone ssp noredzone {
+  %cmp = icmp eq i64 %x, 0
+  %A = sext i1 %cmp to i64
+  %cond = or i64 %y, %A
+  ret i64 %cond
+; CHECK: test9b:
+; CHECK: cmpq	$1, %rdi
+; CHECK: sbbq	%rax, %rax
+; CHECK: orq	%rsi, %rax
+; CHECK: ret
+}
+
+;; Select between -1 and 1.
+define i64 @test10(i64 %x, i64 %y) nounwind readnone ssp noredzone {
+  %cmp = icmp eq i64 %x, 0
+  %cond = select i1 %cmp, i64 -1, i64 1
+  ret i64 %cond
+; CHECK: test10:
+; CHECK: cmpq	$1, %rdi
+; CHECK: sbbq	%rax, %rax
+; CHECK: orq	$1, %rax
+; CHECK: ret
+}
+
+
+
+
+

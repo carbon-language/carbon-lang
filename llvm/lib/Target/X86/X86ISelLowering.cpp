@@ -7208,10 +7208,17 @@ static bool isX86LogicalCmp(SDValue Op) {
   return false;
 }
 
+static bool isZero(SDValue V) {
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
+  return C && C->isNullValue();
+}
+
 SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   bool addTest = true;
   SDValue Cond  = Op.getOperand(0);
-  DebugLoc dl = Op.getDebugLoc();
+  SDValue Op1 = Op.getOperand(1);
+  SDValue Op2 = Op.getOperand(2);
+  DebugLoc DL = Op.getDebugLoc();
   SDValue CC;
 
   if (Cond.getOpcode() == ISD::SETCC) {
@@ -7220,30 +7227,35 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       Cond = NewCond;
   }
 
-  // (select (x == 0), -1, 0) -> (sign_bit (x - 1))
-  SDValue Op1 = Op.getOperand(1);
-  SDValue Op2 = Op.getOperand(2);
+  // (select (x == 0), -1, y) -> (sign_bit (x - 1)) | y
+  // (select (x != 0), y, -1) -> (sign_bit (x - 1)) | y
   if (Cond.getOpcode() == X86ISD::SETCC &&
-      cast<ConstantSDNode>(Cond.getOperand(0))->getZExtValue() == X86::COND_E) {
+      Cond.getOperand(1).getOpcode() == X86ISD::CMP) {
     SDValue Cmp = Cond.getOperand(1);
-    if (Cmp.getOpcode() == X86ISD::CMP) {
-      ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Op1);
+    
+    unsigned CondCode =cast<ConstantSDNode>(Cond.getOperand(0))->getZExtValue();
+    
+    ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Op1);
+    ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(Op2);
+    if ((N1C && N1C->isAllOnesValue() && CondCode == X86::COND_E) ||
+        (N2C && N2C->isAllOnesValue() && CondCode == X86::COND_NE)) {
+      SDValue Y = CondCode == X86::COND_NE ? Op1 : Op2;
+
+      SDValue CmpOp0 = Cmp.getOperand(0);
+      Cmp = DAG.getNode(X86ISD::CMP, DL, MVT::i32,
+                        CmpOp0, DAG.getConstant(1, CmpOp0.getValueType()));
+      
+      SDValue Res = 
+        DAG.getNode(X86ISD::SETCC_CARRY, DL, Op.getValueType(),
+                    DAG.getConstant(X86::COND_B, MVT::i8), Cmp);
       ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(Op2);
-      ConstantSDNode *RHSC =
-        dyn_cast<ConstantSDNode>(Cmp.getOperand(1).getNode());
-      if (N1C && N1C->isAllOnesValue() &&
-          N2C && N2C->isNullValue() &&
-          RHSC && RHSC->isNullValue()) {
-        SDValue CmpOp0 = Cmp.getOperand(0);
-        Cmp = DAG.getNode(X86ISD::CMP, dl, MVT::i32,
-                          CmpOp0, DAG.getConstant(1, CmpOp0.getValueType()));
-        return DAG.getNode(X86ISD::SETCC_CARRY, dl, Op.getValueType(),
-                           DAG.getConstant(X86::COND_B, MVT::i8), Cmp);
-      }
+      if (N2C == 0 || !N2C->isNullValue())
+        Res = DAG.getNode(ISD::OR, DL, Res.getValueType(), Res, Y);
+      return Res;
     }
   }
 
-  // Look pass (and (setcc_carry (cmp ...)), 1).
+  // Look past (and (setcc_carry (cmp ...)), 1).
   if (Cond.getOpcode() == ISD::AND &&
       Cond.getOperand(0).getOpcode() == X86ISD::SETCC_CARRY) {
     ConstantSDNode *C = dyn_cast<ConstantSDNode>(Cond.getOperand(1));
@@ -7281,7 +7293,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     // We know the result of AND is compared against zero. Try to match
     // it to BT.
     if (Cond.getOpcode() == ISD::AND && Cond.hasOneUse()) {
-      SDValue NewSetCC = LowerToBT(Cond, ISD::SETNE, dl, DAG);
+      SDValue NewSetCC = LowerToBT(Cond, ISD::SETNE, DL, DAG);
       if (NewSetCC.getNode()) {
         CC = NewSetCC.getOperand(0);
         Cond = NewSetCC.getOperand(1);
@@ -7299,7 +7311,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   // condition is true.
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
   SDValue Ops[] = { Op2, Op1, CC, Cond };
-  return DAG.getNode(X86ISD::CMOV, dl, VTs, Ops, array_lengthof(Ops));
+  return DAG.getNode(X86ISD::CMOV, DL, VTs, Ops, array_lengthof(Ops));
 }
 
 // isAndOrOfSingleUseSetCCs - Return true if node is an ISD::AND or
