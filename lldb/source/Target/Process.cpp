@@ -2182,7 +2182,7 @@ Process::AppendSTDOUT (const char * s, size_t len)
     Mutex::Locker locker (m_stdio_communication_mutex);
     m_stdout_data.append (s, len);
     
-    BroadcastEventIfUnique (eBroadcastBitSTDOUT);
+    BroadcastEventIfUnique (eBroadcastBitSTDOUT, new ProcessEventData (GetTarget().GetProcessSP(), GetState()));
 }
 
 void
