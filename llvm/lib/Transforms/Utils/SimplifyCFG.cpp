@@ -374,6 +374,8 @@ static void EraseTerminatorInstAndDCECond(TerminatorInst *TI) {
   } else if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
     if (BI->isConditional())
       Cond = dyn_cast<Instruction>(BI->getCondition());
+  } else if (IndirectBrInst *IBI = dyn_cast<IndirectBrInst>(TI)) {
+    Cond = dyn_cast<Instruction>(IBI->getAddress());
   }
 
   TI->eraseFromParent();
@@ -1718,6 +1720,71 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   return true;
 }
 
+// SimplifyIndirectBrOnSelect - Replaces
+//   (indirectbr (select cond, blockaddress(@fn, BlockA),
+//                             blockaddress(@fn, BlockB)))
+// with
+//   (br cond, BlockA, BlockB).
+static bool SimplifyIndirectBrOnSelect(IndirectBrInst *IBI, SelectInst *SI) {
+  // Check that both operands of the select are block addresses.
+  BlockAddress *TBA = dyn_cast<BlockAddress>(SI->getTrueValue());
+  BlockAddress *FBA = dyn_cast<BlockAddress>(SI->getFalseValue());
+  if (!TBA || !FBA)
+    return false;
+
+  // Extract the actual blocks.
+  BasicBlock *TrueBB = TBA->getBasicBlock();
+  BasicBlock *FalseBB = FBA->getBasicBlock();
+
+  // Remove any superfluous successor edges from the CFG.
+  // First, figure out which successors to preserve.
+  // If TrueBB and FalseBB are equal, only try to preserve one copy of that
+  // successor.
+  BasicBlock *KeepEdge1 = TrueBB;
+  BasicBlock *KeepEdge2 = TrueBB != FalseBB ? FalseBB : 0;
+
+  // Then remove the rest.
+  for (unsigned I = 0, E = IBI->getNumSuccessors(); I != E; ++I) {
+    BasicBlock *Succ = IBI->getSuccessor(I);
+    // Make sure only to keep exactly one copy of each edge.
+    if (Succ == KeepEdge1)
+      KeepEdge1 = 0;
+    else if (Succ == KeepEdge2)
+      KeepEdge2 = 0;
+    else
+      Succ->removePredecessor(IBI->getParent());
+  }
+
+  // Insert an appropriate new terminator.
+  if ((KeepEdge1 == 0) && (KeepEdge2 == 0)) {
+    if (TrueBB == FalseBB)
+      // We were only looking for one successor, and it was present.
+      // Create an unconditional branch to it.
+      BranchInst::Create(TrueBB, IBI);
+    else
+      // We found both of the successors we were looking for.
+      // Create a conditional branch sharing the condition of the select.
+      BranchInst::Create(TrueBB, FalseBB, SI->getCondition(), IBI);
+  } else if (KeepEdge1 && (KeepEdge2 || TrueBB == FalseBB)) {
+    // Neither of the selected blocks were successors, so this
+    // indirectbr must be unreachable.
+    new UnreachableInst(IBI->getContext(), IBI);
+  } else {
+    // One of the selected values was a successor, but the other wasn't.
+    // Insert an unconditional branch to the one that was found;
+    // the edge to the one that wasn't must be unreachable.
+    if (KeepEdge1 == 0)
+      // Only TrueBB was found.
+      BranchInst::Create(TrueBB, IBI);
+    else
+      // Only FalseBB was found.
+      BranchInst::Create(FalseBB, IBI);
+  }
+
+  EraseTerminatorInstAndDCECond(IBI);
+  return true;
+}
+
 bool SimplifyCFGOpt::run(BasicBlock *BB) {
   bool Changed = false;
   Function *Fn = BB->getParent();
@@ -2072,13 +2139,16 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     if (IBI->getNumDestinations() == 0) {
       // If the indirectbr has no successors, change it to unreachable.
       new UnreachableInst(IBI->getContext(), IBI);
-      IBI->eraseFromParent();
+      EraseTerminatorInstAndDCECond(IBI);
       Changed = true;
     } else if (IBI->getNumDestinations() == 1) {
       // If the indirectbr has one successor, change it to a direct branch.
       BranchInst::Create(IBI->getDestination(0), IBI);
-      IBI->eraseFromParent();
+      EraseTerminatorInstAndDCECond(IBI);
       Changed = true;
+    } else if (SelectInst *SI = dyn_cast<SelectInst>(IBI->getAddress())) {
+      if (SimplifyIndirectBrOnSelect(IBI, SI))
+        return SimplifyCFG(BB) | true;
     }
   }
 
