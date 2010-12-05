@@ -17,6 +17,15 @@
 
 using namespace clang;
 
+SVal Environment::lookupExpr(const Stmt* E) const {
+  const SVal* X = ExprBindings.lookup(E);
+  if (X) {
+    SVal V = *X;
+    return V;
+  }
+  return UnknownVal();
+}
+
 SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
   for (;;) {
     switch (E->getStmtClass()) {
@@ -75,7 +84,7 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
     };
     break;
   }
-  return LookupExpr(E);
+  return lookupExpr(E);
 }
 
 Environment EnvironmentManager::bindExpr(Environment Env, const Stmt *S,

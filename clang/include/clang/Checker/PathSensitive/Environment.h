@@ -40,15 +40,13 @@ private:
   Environment(BindingsTy eb)
     : ExprBindings(eb) {}
 
+  SVal lookupExpr(const Stmt* E) const;
+
 public:
   typedef BindingsTy::iterator iterator;
   iterator begin() const { return ExprBindings.begin(); }
   iterator end() const { return ExprBindings.end(); }
 
-  SVal LookupExpr(const Stmt* E) const {
-    const SVal* X = ExprBindings.lookup(E);
-    return X ? *X : UnknownVal();
-  }
 
   /// GetSVal - Fetches the current binding of the expression in the
   ///  Environment.
