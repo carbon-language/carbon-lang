@@ -69,7 +69,7 @@ Test_NSString (const char *program)
     printf("[str length] = %zu\n", (size_t)[str length]);
     printf("[str description] = %s\n", [[str description] UTF8String]);
     id str_id = str;
-    // Expressions to test here:
+    // Expressions to test here for NSString:
     // expression (char *)sel_getName(sel)
     // expression [str length]
     // expression [id length]
@@ -98,7 +98,7 @@ Test_NSArray ()
 {
     NSArray *array1 = [NSArray arrayWithObjects: @"array1 object1", @"array1 object2", @"array1 object3", nil];
     NSArray *array2 = [NSArray arrayWithObjects: array1, @"array2 object2", @"array2 object3", nil];
-    // Expressions to test here:
+    // Expressions to test here for NSArray:
     // expression [array1 count]
     // expression array1.count
     // expression [array2 count]
