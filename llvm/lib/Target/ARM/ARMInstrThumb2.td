@@ -888,8 +888,24 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{5-4}   = addr{1-0}; // imm
   }
 
-  def pci : tPseudoInst<(outs GPR:$Rt), (ins i32imm:$addr), Size4Bytes, iis,
-                      [(set GPR:$Rt, (opnode (ARMWrapper tconstpool:$addr)))]>;
+  // FIXME: Is the pci variant actually needed?
+  def pci : T2Ipc <(outs GPR:$Rt), (ins i32imm:$addr), iii,
+                   opc, ".w\t$Rt, $addr",
+                   [(set GPR:$Rt, (opnode (ARMWrapper tconstpool:$addr)))]> {
+    let isReMaterializable = 1;
+    let Inst{31-27} = 0b11111;
+    let Inst{26-25} = 0b00;
+    let Inst{24} = signed;
+    let Inst{23} = ?; // add = (U == '1')
+    let Inst{22-21} = opcod;
+    let Inst{20} = 1; // load
+    let Inst{19-16} = 0b1111; // Rn
+
+    bits<4> Rt;
+    bits<12> addr;
+    let Inst{15-12} = Rt{3-0};
+    let Inst{11-0}  = addr{11-0};
+  }
 }
 
 /// T2I_st - Defines a set of (op r, {imm12|imm8|so_reg}) store patterns.
