@@ -75,7 +75,8 @@ InlinedArrayAllocasTy;
 /// inline this call site we attempt to reuse already available allocas or add
 /// any new allocas to the set if not possible.
 static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
-                                 InlinedArrayAllocasTy &InlinedArrayAllocas) {
+                                 InlinedArrayAllocasTy &InlinedArrayAllocas,
+                                 int InlineHistory) {
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
 
@@ -92,7 +93,6 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
            !Caller->hasFnAttr(Attribute::StackProtectReq))
     Caller->addFnAttr(Attribute::StackProtect);
 
-  
   // Look at all of the allocas that we inlined through this call site.  If we
   // have already inlined other allocas through other calls into this function,
   // then we know that they have disjoint lifetimes and that we can merge them.
@@ -115,6 +115,21 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
   // Because we don't have this information, we do this simple and useful hack.
   //
   SmallPtrSet<AllocaInst*, 16> UsedAllocas;
+  
+  // When processing our SCC, check to see if CS was inlined from some other
+  // call site.  For example, if we're processing "A" in this code:
+  //   A() { B() }
+  //   B() { x = alloca ... C() }
+  //   C() { y = alloca ... }
+  // Assume that C was not inlined into B initially, and so we're processing A
+  // and decide to inline B into A.  Doing this makes an alloca available for
+  // reuse and makes a callsite (C) available for inlining.  When we process
+  // the C call site we don't want to do any alloca merging between X and Y
+  // because their scopes are not disjoint.  We could make this smarter by
+  // keeping track of the inline history for each alloca in the
+  // InlinedArrayAllocas but this isn't likely to be a significant win.
+  if (InlineHistory != -1)  // Only do merging for top-level call sites in SCC.
+    return true;
   
   // Loop over all the allocas we have so far and see if they can be merged with
   // a previously inlined alloca.  If not, remember that we had it.
@@ -419,7 +434,8 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
           continue;
 
         // Attempt to inline the function.
-        if (!InlineCallIfPossible(CS, InlineInfo, InlinedArrayAllocas))
+        if (!InlineCallIfPossible(CS, InlineInfo, InlinedArrayAllocas,
+                                  InlineHistoryID))
           continue;
         ++NumInlined;
         
