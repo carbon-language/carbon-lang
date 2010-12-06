@@ -290,7 +290,7 @@ private:
   CFGBlock *VisitBlockExpr(BlockExpr* E, AddStmtChoice asc);
   CFGBlock *VisitBreakStmt(BreakStmt *B);
   CFGBlock *VisitCXXCatchStmt(CXXCatchStmt *S);
-  CFGBlock *VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E,
+  CFGBlock *VisitExprWithCleanups(ExprWithCleanups *E,
       AddStmtChoice asc);
   CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
   CFGBlock *VisitCXXTryStmt(CXXTryStmt *S);
@@ -555,11 +555,11 @@ CFGBlock *CFGBuilder::addInitializer(CXXBaseOrMemberInitializer *I) {
   if (Init) {
     if (FieldDecl *FD = I->getAnyMember())
       IsReference = FD->getType()->isReferenceType();
-    HasTemporaries = isa<CXXExprWithTemporaries>(Init);
+    HasTemporaries = isa<ExprWithCleanups>(Init);
 
     if (BuildOpts.AddImplicitDtors && HasTemporaries) {
       // Generate destructors for temporaries in initialization expression.
-      VisitForTemporaryDtors(cast<CXXExprWithTemporaries>(Init)->getSubExpr(),
+      VisitForTemporaryDtors(cast<ExprWithCleanups>(Init)->getSubExpr(),
           IsReference);
     }
   }
@@ -572,7 +572,7 @@ CFGBlock *CFGBuilder::addInitializer(CXXBaseOrMemberInitializer *I) {
     if (HasTemporaries)
       // For expression with temporaries go directly to subexpression to omit
       // generating destructors for the second time.
-      return Visit(cast<CXXExprWithTemporaries>(Init)->getSubExpr(), asc);
+      return Visit(cast<ExprWithCleanups>(Init)->getSubExpr(), asc);
     return Visit(Init, asc);
   }
 
@@ -839,8 +839,8 @@ tryAgain:
     case Stmt::CXXCatchStmtClass:
       return VisitCXXCatchStmt(cast<CXXCatchStmt>(S));
 
-    case Stmt::CXXExprWithTemporariesClass:
-      return VisitCXXExprWithTemporaries(cast<CXXExprWithTemporaries>(S), asc);
+    case Stmt::ExprWithCleanupsClass:
+      return VisitExprWithCleanups(cast<ExprWithCleanups>(S), asc);
 
     case Stmt::CXXBindTemporaryExprClass:
       return VisitCXXBindTemporaryExpr(cast<CXXBindTemporaryExpr>(S), asc);
@@ -1322,11 +1322,11 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt* DS) {
   Expr *Init = VD->getInit();
   if (Init) {
     IsReference = VD->getType()->isReferenceType();
-    HasTemporaries = isa<CXXExprWithTemporaries>(Init);
+    HasTemporaries = isa<ExprWithCleanups>(Init);
 
     if (BuildOpts.AddImplicitDtors && HasTemporaries) {
       // Generate destructors for temporaries in initialization expression.
-      VisitForTemporaryDtors(cast<CXXExprWithTemporaries>(Init)->getSubExpr(),
+      VisitForTemporaryDtors(cast<ExprWithCleanups>(Init)->getSubExpr(),
           IsReference);
     }
   }
@@ -1339,7 +1339,7 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt* DS) {
     if (HasTemporaries)
       // For expression with temporaries go directly to subexpression to omit
       // generating destructors for the second time.
-      Visit(cast<CXXExprWithTemporaries>(Init)->getSubExpr(), asc);
+      Visit(cast<ExprWithCleanups>(Init)->getSubExpr(), asc);
     else
       Visit(Init, asc);
   }
@@ -2411,7 +2411,7 @@ CFGBlock* CFGBuilder::VisitCXXCatchStmt(CXXCatchStmt* CS) {
   return CatchBlock;
 }
 
-CFGBlock *CFGBuilder::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E,
+CFGBlock *CFGBuilder::VisitExprWithCleanups(ExprWithCleanups *E,
     AddStmtChoice asc) {
   if (BuildOpts.AddImplicitDtors) {
     // If adding implicit destructors visit the full expression for adding

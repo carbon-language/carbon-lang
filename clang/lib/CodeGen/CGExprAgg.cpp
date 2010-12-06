@@ -125,7 +125,7 @@ public:
   }
   void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
   void VisitCXXConstructExpr(const CXXConstructExpr *E);
-  void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
+  void VisitExprWithCleanups(ExprWithCleanups *E);
   void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   void VisitCXXTypeidExpr(CXXTypeidExpr *E) { EmitAggLoadOfLValue(E); }
 
@@ -487,8 +487,8 @@ AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   CGF.EmitCXXConstructExpr(E, Slot);
 }
 
-void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
-  CGF.EmitCXXExprWithTemporaries(E, Dest);
+void AggExprEmitter::VisitExprWithCleanups(ExprWithCleanups *E) {
+  CGF.EmitExprWithCleanups(E, Dest);
 }
 
 void AggExprEmitter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {

@@ -1176,15 +1176,14 @@ Expr *ParmVarDecl::getDefaultArg() {
          "Default argument is not yet instantiated!");
   
   Expr *Arg = getInit();
-  if (CXXExprWithTemporaries *E = dyn_cast_or_null<CXXExprWithTemporaries>(Arg))
+  if (ExprWithCleanups *E = dyn_cast_or_null<ExprWithCleanups>(Arg))
     return E->getSubExpr();
 
   return Arg;
 }
 
 unsigned ParmVarDecl::getNumDefaultArgTemporaries() const {
-  if (const CXXExprWithTemporaries *E = 
-        dyn_cast<CXXExprWithTemporaries>(getInit()))
+  if (const ExprWithCleanups *E = dyn_cast<ExprWithCleanups>(getInit()))
     return E->getNumTemporaries();
 
   return 0;
@@ -1194,7 +1193,7 @@ CXXTemporary *ParmVarDecl::getDefaultArgTemporary(unsigned i) {
   assert(getNumDefaultArgTemporaries() && 
          "Default arguments does not have any temporaries!");
 
-  CXXExprWithTemporaries *E = cast<CXXExprWithTemporaries>(getInit());
+  ExprWithCleanups *E = cast<ExprWithCleanups>(getInit());
   return E->getTemporary(i);
 }
 

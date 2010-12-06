@@ -311,7 +311,7 @@ void
 CodeGenFunction::EmitSynthesizedCXXCopyCtor(llvm::Value *Dest, 
                                             llvm::Value *Src,
                                             const Expr *Exp) {
-  if (const CXXExprWithTemporaries *E = dyn_cast<CXXExprWithTemporaries>(Exp))
+  if (const ExprWithCleanups *E = dyn_cast<ExprWithCleanups>(Exp))
     Exp = E->getSubExpr();
   assert(isa<CXXConstructExpr>(Exp) && 
          "EmitSynthesizedCXXCopyCtor - unknown copy ctor expr");

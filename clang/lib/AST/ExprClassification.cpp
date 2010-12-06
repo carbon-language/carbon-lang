@@ -255,9 +255,9 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::CXXBindTemporaryExprClass:
     return ClassifyInternal(Ctx, cast<CXXBindTemporaryExpr>(E)->getSubExpr());
 
-    // And the temporary lifetime guard.
-  case Expr::CXXExprWithTemporariesClass:
-    return ClassifyInternal(Ctx, cast<CXXExprWithTemporaries>(E)->getSubExpr());
+    // And the cleanups guard.
+  case Expr::ExprWithCleanupsClass:
+    return ClassifyInternal(Ctx, cast<ExprWithCleanups>(E)->getSubExpr());
 
     // Casts depend completely on the target type. All casts work the same.
   case Expr::CStyleCastExprClass:

@@ -1407,8 +1407,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   case CXXBindTemporaryExprClass:
     return (cast<CXXBindTemporaryExpr>(this)
             ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
-  case CXXExprWithTemporariesClass:
-    return (cast<CXXExprWithTemporaries>(this)
+  case ExprWithCleanupsClass:
+    return (cast<ExprWithCleanups>(this)
             ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
   }
 }
@@ -1643,7 +1643,7 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   case ParenListExprClass:
   case VAArgExprClass:
   case CXXDefaultArgExprClass:
-  case CXXExprWithTemporariesClass:
+  case ExprWithCleanupsClass:
   case ObjCIvarRefExprClass:
   case ObjCIsaExprClass:
   case ShuffleVectorExprClass:

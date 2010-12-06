@@ -203,7 +203,7 @@ public:
             if (isa<CXXConstructExpr>(E))
               return;
 
-            if (isa<CXXExprWithTemporaries>(E))
+            if (isa<ExprWithCleanups>(E))
               return;
             
             // A dead initialization is a variable that is dead after it

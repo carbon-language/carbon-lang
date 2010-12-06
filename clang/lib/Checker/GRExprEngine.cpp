@@ -797,7 +797,7 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::CXXCatchStmtClass:
     case Stmt::CXXDefaultArgExprClass:
     case Stmt::CXXDependentScopeMemberExprClass:
-    case Stmt::CXXExprWithTemporariesClass:
+    case Stmt::ExprWithCleanupsClass:
     case Stmt::CXXNullPtrLiteralExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
     case Stmt::CXXTemporaryObjectExprClass:
@@ -1154,8 +1154,8 @@ void GRExprEngine::VisitLValue(const Expr* Ex, ExplodedNode* Pred,
       break;
     }
 
-    case Stmt::CXXExprWithTemporariesClass: {
-      const CXXExprWithTemporaries *expr = cast<CXXExprWithTemporaries>(Ex);
+    case Stmt::ExprWithCleanupsClass: {
+      const ExprWithCleanups *expr = cast<ExprWithCleanups>(Ex);
       VisitLValue(expr->getSubExpr(), Pred, Dst);
       break;
     }

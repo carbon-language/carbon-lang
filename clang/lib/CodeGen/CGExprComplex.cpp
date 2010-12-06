@@ -177,8 +177,8 @@ public:
   ComplexPairTy VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     return Visit(DAE->getExpr());
   }
-  ComplexPairTy VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
-    return CGF.EmitCXXExprWithTemporaries(E).getComplexVal();
+  ComplexPairTy VisitExprWithCleanups(ExprWithCleanups *E) {
+    return CGF.EmitExprWithCleanups(E).getComplexVal();
   }
   ComplexPairTy VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
     assert(E->getType()->isAnyComplexType() && "Expected complex type!");

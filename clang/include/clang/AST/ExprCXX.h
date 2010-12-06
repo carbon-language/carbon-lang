@@ -1879,21 +1879,26 @@ public:
   friend class ASTStmtWriter;
 };
 
-class CXXExprWithTemporaries : public Expr {
+/// Represents an expression --- generally a full-expression --- which
+/// introduces cleanups to be run at the end of the sub-expression's
+/// evaluation.  The most common source of expression-introduced
+/// cleanups is temporary objects in C++, but several other C++
+/// expressions can create cleanups.
+class ExprWithCleanups : public Expr {
   Stmt *SubExpr;
 
   CXXTemporary **Temps;
   unsigned NumTemps;
 
-  CXXExprWithTemporaries(ASTContext &C, Expr *SubExpr, CXXTemporary **Temps,
-                         unsigned NumTemps);
-
+  ExprWithCleanups(ASTContext &C, Expr *SubExpr,
+                   CXXTemporary **Temps, unsigned NumTemps);
+  
 public:
-  CXXExprWithTemporaries(EmptyShell Empty)
-    : Expr(CXXExprWithTemporariesClass, Empty),
+  ExprWithCleanups(EmptyShell Empty)
+    : Expr(ExprWithCleanupsClass, Empty),
       SubExpr(0), Temps(0), NumTemps(0) {}
                          
-  static CXXExprWithTemporaries *Create(ASTContext &C, Expr *SubExpr,
+  static ExprWithCleanups *Create(ASTContext &C, Expr *SubExpr,
                                         CXXTemporary **Temps, 
                                         unsigned NumTemps);
 
@@ -1905,7 +1910,7 @@ public:
     return Temps[i];
   }
   const CXXTemporary *getTemporary(unsigned i) const {
-    return const_cast<CXXExprWithTemporaries*>(this)->getTemporary(i);
+    return const_cast<ExprWithCleanups*>(this)->getTemporary(i);
   }
   void setTemporary(unsigned i, CXXTemporary *T) {
     assert(i < NumTemps && "Index out of range");
@@ -1922,9 +1927,9 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == CXXExprWithTemporariesClass;
+    return T->getStmtClass() == ExprWithCleanupsClass;
   }
-  static bool classof(const CXXExprWithTemporaries *) { return true; }
+  static bool classof(const ExprWithCleanups *) { return true; }
 
   // Iterators
   virtual child_iterator child_begin();

@@ -139,7 +139,7 @@ namespace clang {
     void VisitCXXDeleteExpr(CXXDeleteExpr *E);
     void VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
 
-    void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
+    void VisitExprWithCleanups(ExprWithCleanups *E);
     void VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
     void VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
     void VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
@@ -1156,14 +1156,14 @@ void ASTStmtWriter::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   Code = serialization::EXPR_CXX_PSEUDO_DESTRUCTOR;
 }
 
-void ASTStmtWriter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
+void ASTStmtWriter::VisitExprWithCleanups(ExprWithCleanups *E) {
   VisitExpr(E);
   Record.push_back(E->getNumTemporaries());
   for (unsigned i = 0, e = E->getNumTemporaries(); i != e; ++i)
     Writer.AddCXXTemporary(E->getTemporary(i), Record);
   
   Writer.AddStmt(E->getSubExpr());
-  Code = serialization::EXPR_CXX_EXPR_WITH_TEMPORARIES;
+  Code = serialization::EXPR_EXPR_WITH_CLEANUPS;
 }
 
 void

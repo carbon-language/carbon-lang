@@ -1960,8 +1960,8 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     mangleExpression(cast<CXXBindTemporaryExpr>(E)->getSubExpr());
     break;
 
-  case Expr::CXXExprWithTemporariesClass:
-    mangleExpression(cast<CXXExprWithTemporaries>(E)->getSubExpr(), Arity);
+  case Expr::ExprWithCleanupsClass:
+    mangleExpression(cast<ExprWithCleanups>(E)->getSubExpr(), Arity);
     break;
 
   case Expr::FloatingLiteralClass: {

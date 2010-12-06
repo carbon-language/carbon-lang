@@ -3080,7 +3080,7 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
   return Owned(CXXBindTemporaryExpr::Create(Context, Temp, E));
 }
 
-Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr) {
+Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
   assert(SubExpr && "sub expression can't be null!");
 
   unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
@@ -3088,9 +3088,9 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr) {
   if (ExprTemporaries.size() == FirstTemporary)
     return SubExpr;
 
-  Expr *E = CXXExprWithTemporaries::Create(Context, SubExpr,
-                                           &ExprTemporaries[FirstTemporary],
-                                       ExprTemporaries.size() - FirstTemporary);
+  Expr *E = ExprWithCleanups::Create(Context, SubExpr,
+                                     &ExprTemporaries[FirstTemporary],
+                                     ExprTemporaries.size() - FirstTemporary);
   ExprTemporaries.erase(ExprTemporaries.begin() + FirstTemporary,
                         ExprTemporaries.end());
 
@@ -3098,11 +3098,11 @@ Expr *Sema::MaybeCreateCXXExprWithTemporaries(Expr *SubExpr) {
 }
 
 ExprResult 
-Sema::MaybeCreateCXXExprWithTemporaries(ExprResult SubExpr) {
+Sema::MaybeCreateExprWithCleanups(ExprResult SubExpr) {
   if (SubExpr.isInvalid())
     return ExprError();
   
-  return Owned(MaybeCreateCXXExprWithTemporaries(SubExpr.takeAs<Expr>()));
+  return Owned(MaybeCreateExprWithCleanups(SubExpr.take()));
 }
 
 FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
@@ -3121,7 +3121,7 @@ FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
   return E;
 }
 
-Stmt *Sema::MaybeCreateCXXStmtWithTemporaries(Stmt *SubStmt) {
+Stmt *Sema::MaybeCreateStmtWithCleanups(Stmt *SubStmt) {
   assert(SubStmt && "sub statement can't be null!");
 
   unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
@@ -3138,7 +3138,7 @@ Stmt *Sema::MaybeCreateCXXStmtWithTemporaries(Stmt *SubStmt) {
                                                       SourceLocation());
   Expr *E = new (Context) StmtExpr(CompStmt, Context.VoidTy, SourceLocation(),
                                    SourceLocation());
-  return MaybeCreateCXXExprWithTemporaries(E);
+  return MaybeCreateExprWithCleanups(E);
 }
 
 ExprResult
@@ -3559,11 +3559,11 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FullExpr) {
 
   IgnoredValueConversions(FullExpr);
   CheckImplicitConversions(FullExpr);
-  return MaybeCreateCXXExprWithTemporaries(FullExpr);
+  return MaybeCreateExprWithCleanups(FullExpr);
 }
 
 StmtResult Sema::ActOnFinishFullStmt(Stmt *FullStmt) {
   if (!FullStmt) return StmtError();
 
-  return MaybeCreateCXXStmtWithTemporaries(FullStmt);
+  return MaybeCreateStmtWithCleanups(FullStmt);
 }

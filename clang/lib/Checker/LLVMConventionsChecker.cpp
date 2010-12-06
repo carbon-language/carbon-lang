@@ -153,7 +153,7 @@ void StringRefCheckerVisitor::VisitVarDecl(VarDecl *VD) {
   // llvm::StringRef x = call() (where call returns std::string)
   if (!IsLLVMStringRef(VD->getType()))
     return;
-  CXXExprWithTemporaries *Ex1 = dyn_cast<CXXExprWithTemporaries>(Init);
+  ExprWithCleanups *Ex1 = dyn_cast<ExprWithCleanups>(Init);
   if (!Ex1)
     return;
   CXXConstructExpr *Ex2 = dyn_cast<CXXConstructExpr>(Ex1->getSubExpr());

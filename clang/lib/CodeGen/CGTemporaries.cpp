@@ -76,14 +76,13 @@ void CodeGenFunction::EmitCXXTemporary(const CXXTemporary *Temporary,
 }
 
 RValue
-CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
-                                            AggValueSlot Slot) {
+CodeGenFunction::EmitExprWithCleanups(const ExprWithCleanups *E,
+                                      AggValueSlot Slot) {
   RunCleanupsScope Scope(*this);
   return EmitAnyExpr(E->getSubExpr(), Slot);
 }
 
-LValue CodeGenFunction::EmitCXXExprWithTemporariesLValue(
-                                              const CXXExprWithTemporaries *E) {
+LValue CodeGenFunction::EmitExprWithCleanupsLValue(const ExprWithCleanups *E) {
   RunCleanupsScope Scope(*this);
   return EmitLValue(E->getSubExpr());
 }

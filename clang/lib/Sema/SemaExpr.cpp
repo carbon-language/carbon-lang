@@ -2272,7 +2272,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
                                                          SourceLocation(),
                                                          Owned(E));
             if (!Res.isInvalid()) {
-              Res = MaybeCreateCXXExprWithTemporaries(Res.get());
+              Res = MaybeCreateExprWithCleanups(Res.get());
               Expr *Init = Res.takeAs<Expr>();
               BDRE->setCopyConstructorExpr(Init);
             }

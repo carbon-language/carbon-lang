@@ -5780,15 +5780,14 @@ TreeTransform<Derived>::TransformCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   return getDerived().TransformExpr(E->getSubExpr());
 }
 
-/// \brief Transform a C++ expression that contains temporaries that should
-/// be destroyed after the expression is evaluated.
+/// \brief Transform a C++ expression that contains cleanups that should
+/// be run after the expression is evaluated.
 ///
-/// Since CXXExprWithTemporaries nodes are implicitly generated, we
+/// Since ExprWithCleanups nodes are implicitly generated, we
 /// just transform the subexpression and return that.
 template<typename Derived>
 ExprResult
-TreeTransform<Derived>::TransformCXXExprWithTemporaries(
-                                                    CXXExprWithTemporaries *E) {
+TreeTransform<Derived>::TransformExprWithCleanups(ExprWithCleanups *E) {
   return getDerived().TransformExpr(E->getSubExpr());
 }
 

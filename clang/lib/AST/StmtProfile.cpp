@@ -790,11 +790,8 @@ StmtProfiler::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *S) {
     VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
 }
 
-void StmtProfiler::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *S) {
+void StmtProfiler::VisitExprWithCleanups(ExprWithCleanups *S) {
   VisitExpr(S);
-  for (unsigned I = 0, N = S->getNumTemporaries(); I != N; ++I)
-    VisitDecl(
-      const_cast<CXXDestructorDecl *>(S->getTemporary(I)->getDestructor()));
 }
 
 void

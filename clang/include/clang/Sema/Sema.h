@@ -2359,12 +2359,12 @@ public:
                                        UnqualifiedId &SecondTypeName,
                                        bool HasTrailingLParen);
 
-  /// MaybeCreateCXXExprWithTemporaries - If the list of temporaries is
-  /// non-empty, will create a new CXXExprWithTemporaries expression.
-  /// Otherwise, just returs the passed in expression.
-  Expr *MaybeCreateCXXExprWithTemporaries(Expr *SubExpr);
-  Stmt *MaybeCreateCXXStmtWithTemporaries(Stmt *SubStmt);
-  ExprResult MaybeCreateCXXExprWithTemporaries(ExprResult SubExpr);
+  /// MaybeCreateExprWithCleanups - If the current full-expression
+  /// requires any cleanups, surround it with a ExprWithCleanups node.
+  /// Otherwise, just returns the passed-in expression.
+  Expr *MaybeCreateExprWithCleanups(Expr *SubExpr);
+  Stmt *MaybeCreateStmtWithCleanups(Stmt *SubStmt);
+  ExprResult MaybeCreateExprWithCleanups(ExprResult SubExpr);
   FullExpr CreateFullExpr(Expr *SubExpr);
 
   ExprResult ActOnFinishFullExpr(Expr *Expr);

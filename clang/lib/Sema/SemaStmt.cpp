@@ -89,7 +89,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   // we might want to make a more specific diagnostic.  Check for one of these
   // cases now.
   unsigned DiagID = diag::warn_unused_expr;
-  if (const CXXExprWithTemporaries *Temps = dyn_cast<CXXExprWithTemporaries>(E))
+  if (const ExprWithCleanups *Temps = dyn_cast<ExprWithCleanups>(E))
     E = Temps->getSubExpr();
 
   E = E->IgnoreParenImpCasts();
@@ -455,7 +455,7 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   
   if (!CondVar) {
     CheckImplicitConversions(Cond, SwitchLoc);
-    CondResult = MaybeCreateCXXExprWithTemporaries(Cond);
+    CondResult = MaybeCreateExprWithCleanups(Cond);
     if (CondResult.isInvalid())
       return StmtError();
     Cond = CondResult.take();
@@ -899,7 +899,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
     return StmtError();
 
   CheckImplicitConversions(Cond, DoLoc);
-  ExprResult CondResult = MaybeCreateCXXExprWithTemporaries(Cond);
+  ExprResult CondResult = MaybeCreateExprWithCleanups(Cond);
   if (CondResult.isInvalid())
     return StmtError();
   Cond = CondResult.take();
@@ -958,7 +958,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 /// full-expression.
 StmtResult Sema::ActOnForEachLValueExpr(Expr *E) {
   CheckImplicitConversions(E);
-  ExprResult Result = MaybeCreateCXXExprWithTemporaries(E);
+  ExprResult Result = MaybeCreateExprWithCleanups(E);
   if (Result.isInvalid()) return StmtError();
   return Owned(static_cast<Stmt*>(Result.get()));
 }
@@ -1195,7 +1195,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       
       if (RetValExp) {
         CheckImplicitConversions(RetValExp, ReturnLoc);
-        RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
+        RetValExp = MaybeCreateExprWithCleanups(RetValExp);
       }
 
       RetValExp = Res.takeAs<Expr>();
@@ -1254,7 +1254,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       }
 
       CheckImplicitConversions(RetValExp, ReturnLoc);
-      RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
+      RetValExp = MaybeCreateExprWithCleanups(RetValExp);
     }
     
     Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, 0);
@@ -1298,7 +1298,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     
     if (RetValExp) {
       CheckImplicitConversions(RetValExp, ReturnLoc);
-      RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp);
+      RetValExp = MaybeCreateExprWithCleanups(RetValExp);
     }
     Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, NRVOCandidate);
   }

@@ -137,7 +137,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, Expr *Arg,
   Arg = Result.takeAs<Expr>();
 
   CheckImplicitConversions(Arg, EqualLoc);
-  Arg = MaybeCreateCXXExprWithTemporaries(Arg);
+  Arg = MaybeCreateExprWithCleanups(Arg);
 
   // Okay: add the default argument to the parameter
   Param->setDefaultArg(Arg);
@@ -311,7 +311,7 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
     } else if (OldParam->hasDefaultArg()) {
       // Merge the old default argument into the new parameter.
       // It's important to use getInit() here;  getDefaultArg()
-      // strips off any top-level CXXExprWithTemporaries.
+      // strips off any top-level ExprWithCleanups.
       NewParam->setHasInheritedDefaultArg();
       if (OldParam->hasUninstantiatedDefaultArg())
         NewParam->setUninstantiatedDefaultArg(
@@ -1332,7 +1332,7 @@ Sema::BuildMemberInitializer(T *Member, Expr **Args,
   // C++0x [class.base.init]p7:
   //   The initialization of each base and member constitutes a 
   //   full-expression.
-  MemberInit = MaybeCreateCXXExprWithTemporaries(MemberInit.get());
+  MemberInit = MaybeCreateExprWithCleanups(MemberInit.get());
   if (MemberInit.isInvalid())
     return true;
   
@@ -1461,7 +1461,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   // C++0x [class.base.init]p7:
   //   The initialization of each base and member constitutes a 
   //   full-expression.
-  BaseInit = MaybeCreateCXXExprWithTemporaries(BaseInit.get());
+  BaseInit = MaybeCreateExprWithCleanups(BaseInit.get());
   if (BaseInit.isInvalid())
     return true;
 
@@ -1557,7 +1557,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
   if (BaseInit.isInvalid())
     return true;
       
-  BaseInit = SemaRef.MaybeCreateCXXExprWithTemporaries(BaseInit.get());
+  BaseInit = SemaRef.MaybeCreateExprWithCleanups(BaseInit.get());
   if (BaseInit.isInvalid())
     return true;
         
@@ -1671,7 +1671,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     ExprResult MemberInit
       = InitSeq.Perform(SemaRef, Entities.back(), InitKind, 
                         MultiExprArg(&CopyCtorArgE, 1));
-    MemberInit = SemaRef.MaybeCreateCXXExprWithTemporaries(MemberInit.get());
+    MemberInit = SemaRef.MaybeCreateExprWithCleanups(MemberInit.get());
     if (MemberInit.isInvalid())
       return true;
 
@@ -1699,7 +1699,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     if (MemberInit.isInvalid())
       return true;
 
-    MemberInit = SemaRef.MaybeCreateCXXExprWithTemporaries(MemberInit.get());
+    MemberInit = SemaRef.MaybeCreateExprWithCleanups(MemberInit.get());
     if (MemberInit.isInvalid())
       return true;
     
@@ -5414,7 +5414,7 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
   Expr *Temp = TempResult.takeAs<Expr>();
   CheckImplicitConversions(Temp, VD->getLocation());
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
-  Temp = MaybeCreateCXXExprWithTemporaries(Temp);
+  Temp = MaybeCreateExprWithCleanups(Temp);
   VD->setInit(Temp);
 
   return false;
@@ -5549,7 +5549,7 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
 
   CheckImplicitConversions(Result.get(), LParenLoc);
   
-  Result = MaybeCreateCXXExprWithTemporaries(Result.get());
+  Result = MaybeCreateExprWithCleanups(Result.get());
   VDecl->setInit(Result.takeAs<Expr>());
   VDecl->setCXXDirectInitializer(true);
 
@@ -7039,7 +7039,7 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
       InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);
       ExprResult MemberInit = 
         InitSeq.Perform(*this, InitEntity, InitKind, MultiExprArg());
-      MemberInit = MaybeCreateCXXExprWithTemporaries(MemberInit.get());
+      MemberInit = MaybeCreateExprWithCleanups(MemberInit.get());
       // Note, MemberInit could actually come back empty if no initialization 
       // is required (e.g., because it would call a trivial default constructor)
       if (!MemberInit.get() || MemberInit.isInvalid())

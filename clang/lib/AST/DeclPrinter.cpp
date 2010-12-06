@@ -449,8 +449,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
             // Nothing to print
           } else {
             Expr *Init = BMInitializer->getInit();
-            if (CXXExprWithTemporaries *Tmp
-                  = dyn_cast<CXXExprWithTemporaries>(Init))
+            if (ExprWithCleanups *Tmp = dyn_cast<ExprWithCleanups>(Init))
               Init = Tmp->getSubExpr();
             
             Init = Init->IgnoreParens();

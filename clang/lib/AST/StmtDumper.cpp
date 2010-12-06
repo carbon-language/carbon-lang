@@ -161,7 +161,7 @@ namespace  {
     void VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node);
     void VisitCXXConstructExpr(CXXConstructExpr *Node);
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node);
-    void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *Node);
+    void VisitExprWithCleanups(ExprWithCleanups *Node);
     void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *Node);
     void DumpCXXTemporary(CXXTemporary *Temporary);
 
@@ -534,7 +534,7 @@ void StmtDumper::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node) {
   DumpCXXTemporary(Node->getTemporary());
 }
 
-void StmtDumper::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *Node) {
+void StmtDumper::VisitExprWithCleanups(ExprWithCleanups *Node) {
   DumpExpr(Node);
   ++IndentLevel;
   for (unsigned i = 0, e = Node->getNumTemporaries(); i != e; ++i) {

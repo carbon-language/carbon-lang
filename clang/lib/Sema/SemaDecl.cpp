@@ -3037,7 +3037,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                                       SourceLocation(),
                                                       Owned(E));
       if (!Res.isInvalid()) {
-        Res = MaybeCreateCXXExprWithTemporaries(Res.get());
+        Res = MaybeCreateExprWithCleanups(Res.get());
         Expr *Init = Res.takeAs<Expr>();
         Context.setBlockVarCopyInits(NewVD, Init);
       }
@@ -4589,7 +4589,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
   // Check any implicit conversions within the expression.
   CheckImplicitConversions(Init, VDecl->getLocation());
 
-  Init = MaybeCreateCXXExprWithTemporaries(Init);
+  Init = MaybeCreateExprWithCleanups(Init);
   // Attach the initializer to the decl.
   VDecl->setInit(Init);
 
@@ -4805,7 +4805,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       if (Init.isInvalid())
         Var->setInvalidDecl();
       else if (Init.get()) {
-        Var->setInit(MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
+        Var->setInit(MaybeCreateExprWithCleanups(Init.takeAs<Expr>()));
 
         if (getLangOptions().CPlusPlus && !Var->isInvalidDecl() && 
             Var->hasGlobalStorage() && !Var->isStaticLocal() &&

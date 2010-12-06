@@ -164,7 +164,7 @@ namespace clang {
     void VisitCXXDeleteExpr(CXXDeleteExpr *E);
     void VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
     
-    void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
+    void VisitExprWithCleanups(ExprWithCleanups *E);
     
     void VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
     void VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
@@ -1164,7 +1164,7 @@ void ASTStmtReader::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
     E->setDestroyedType(GetTypeSourceInfo(Record, Idx));
 }
 
-void ASTStmtReader::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
+void ASTStmtReader::VisitExprWithCleanups(ExprWithCleanups *E) {
   VisitExpr(E);
   unsigned NumTemps = Record[Idx++];
   if (NumTemps) {
@@ -1767,8 +1767,8 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       S = new (Context) CXXPseudoDestructorExpr(Empty);
       break;
         
-    case EXPR_CXX_EXPR_WITH_TEMPORARIES:
-      S = new (Context) CXXExprWithTemporaries(Empty);
+    case EXPR_EXPR_WITH_CLEANUPS:
+      S = new (Context) ExprWithCleanups(Empty);
       break;
       
     case EXPR_CXX_DEPENDENT_SCOPE_MEMBER:

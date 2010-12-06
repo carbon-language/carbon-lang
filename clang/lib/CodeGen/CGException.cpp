@@ -547,7 +547,7 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *E,
   // Technically, the exception object is like a temporary; it has to
   // be cleaned up when its full-expression is complete.
   // Unfortunately, the AST represents full-expressions by creating a
-  // CXXExprWithTemporaries, which it only does when there are actually
+  // ExprWithCleanups, which it only does when there are actually
   // temporaries.
   //
   // If any cleanups have been added since we pushed ours, they must

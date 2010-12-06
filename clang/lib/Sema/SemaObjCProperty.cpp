@@ -500,7 +500,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       if (!Res.isInvalid()) {
         Expr *ResExpr = Res.takeAs<Expr>();
         if (ResExpr)
-          ResExpr = MaybeCreateCXXExprWithTemporaries(ResExpr);
+          ResExpr = MaybeCreateExprWithCleanups(ResExpr);
         PIDecl->setGetterCXXConstructor(ResExpr);
       }
     }
