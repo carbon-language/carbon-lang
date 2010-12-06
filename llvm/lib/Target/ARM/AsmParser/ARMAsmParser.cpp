@@ -263,8 +263,8 @@ public:
   void addCondCodeOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
-    // FIXME: What belongs here?
-    Inst.addOperand(MCOperand::CreateReg(0));
+    unsigned RegNum = getCondCode() == ARMCC::AL ? 0: ARM::CPSR;
+    Inst.addOperand(MCOperand::CreateReg(RegNum));
   }
 
   void addCCOutOperands(MCInst &Inst, unsigned N) const {
