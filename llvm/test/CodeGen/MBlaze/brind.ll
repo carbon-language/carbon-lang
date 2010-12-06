@@ -28,7 +28,7 @@ loop:
                              label %L3,
                              label %L4,
                              label %L5 ]
-    ; CHECK:        brd {{r[0-9]*}}
+    ; CHECK:        brad {{r[0-9]*}}
 
 L1:
     %tmp.1 = add i32 %a, %b
@@ -68,5 +68,5 @@ finish:
     %tmp.8 = urem i32 %tmp.7, 5
 
     br label %loop
-    ; CHECK:        brd
+    ; CHECK:        brad {{r[0-9]*}}
 }

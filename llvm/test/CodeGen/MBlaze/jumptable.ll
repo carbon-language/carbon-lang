@@ -18,8 +18,8 @@ define i32 @jmptable(i32 %arg)
                                       i32 8, label %L8
                                       i32 9, label %L9 ]
 
-    ; CHECK:        lw  [[REG:r[0-9]*]]
-    ; CHECK:        brd [[REG]]
+    ; CHECK:        lw   [[REG:r[0-9]*]]
+    ; CHECK:        brad [[REG]]
 L0:
     %var0 = add i32 %arg, 0
     br label %DONE

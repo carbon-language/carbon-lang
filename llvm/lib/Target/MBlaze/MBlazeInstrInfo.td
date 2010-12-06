@@ -372,8 +372,8 @@ let Predicates=[HasBarrel] in {
 }
 
 let Predicates=[HasDiv] in {
-  def IDIV   :  Arith<0x12, 0x000, "idiv   ", sdiv, IIAlu>;
-  def IDIVU  :  Arith<0x12, 0x002, "idivu  ", udiv, IIAlu>;
+  def IDIV   :  ArithR<0x12, 0x000, "idiv   ", sdiv, IIAlu>;
+  def IDIVU  :  ArithR<0x12, 0x002, "idivu  ", udiv, IIAlu>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -554,7 +554,7 @@ let neverHasSideEffects = 1 in {
 
 let usesCustomInserter = 1 in {
   def Select_CC : MBlazePseudo<(outs GPR:$dst),
-    (ins GPR:$T, GPR:$F, GPR:$CMP, i32imm:$CC),
+    (ins GPR:$T, GPR:$F, GPR:$CMP, i32imm:$CC), // F T reversed
     "; SELECT_CC PSEUDO!",
     []>;
 
@@ -660,34 +660,34 @@ def : Pat<(srl GPR:$L, GPR:$R), (ShiftRL GPR:$L, GPR:$R)>;
 // SET_CC operations
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETEQ),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMP GPR:$L, GPR:$R), 1)>;
+                     (CMP GPR:$R, GPR:$L), 1)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETNE),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMP GPR:$L, GPR:$R), 2)>;
+                     (CMP GPR:$R, GPR:$L), 2)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETGT),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMP GPR:$L, GPR:$R), 3)>;
+                     (CMP GPR:$R, GPR:$L), 3)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETLT),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMP GPR:$L, GPR:$R), 4)>;
+                     (CMP GPR:$R, GPR:$L), 4)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETGE),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMP GPR:$L, GPR:$R), 5)>;
+                     (CMP GPR:$R, GPR:$L), 5)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETLE),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMP GPR:$L, GPR:$R), 6)>;
+                     (CMP GPR:$R, GPR:$L), 6)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETUGT),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMPU GPR:$L, GPR:$R), 3)>;
+                     (CMPU GPR:$R, GPR:$L), 3)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETULT),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMPU GPR:$L, GPR:$R), 4)>;
+                     (CMPU GPR:$R, GPR:$L), 4)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETUGE),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMPU GPR:$L, GPR:$R), 5)>;
+                     (CMPU GPR:$R, GPR:$L), 5)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETULE),
           (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
-                     (CMPU GPR:$L, GPR:$R), 6)>;
+                     (CMPU GPR:$R, GPR:$L), 6)>;
 
 // SELECT operations
 def : Pat<(select (i32 GPR:$C), (i32 GPR:$T), (i32 GPR:$F)),
@@ -696,41 +696,41 @@ def : Pat<(select (i32 GPR:$C), (i32 GPR:$T), (i32 GPR:$F)),
 // SELECT_CC
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETEQ),
-          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 1)>;
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$R, GPR:$L), 1)>;
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETNE),
-          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 2)>;
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$R, GPR:$L), 2)>;
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETGT),
-          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 3)>;
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$R, GPR:$L), 3)>;
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETLT),
-          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 4)>;
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$R, GPR:$L), 4)>;
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETGE),
-          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 5)>;
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$R, GPR:$L), 5)>;
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETLE),
-          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$L, GPR:$R), 6)>;
+          (Select_CC GPR:$T, GPR:$F, (CMP GPR:$R, GPR:$L), 6)>;
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETUGT),
-          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$L, GPR:$R), 3)>;
+          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$R, GPR:$L), 3)>;
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETULT),
-          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$L, GPR:$R), 4)>;
+          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$R, GPR:$L), 4)>;
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETUGE),
-          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$L, GPR:$R), 5)>;
+          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$R, GPR:$L), 5)>;
 def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
                     (i32 GPR:$T), (i32 GPR:$F), SETULE),
-          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$L, GPR:$R), 6)>;
+          (Select_CC GPR:$T, GPR:$F, (CMPU GPR:$R, GPR:$L), 6)>;
 
 // Ret instructions
 def : Pat<(MBlazeRet GPR:$target), (RTSD GPR:$target, 0x8)>;
 
 // BR instructions
 def : Pat<(br bb:$T), (BRID bb:$T)>;
-def : Pat<(brind GPR:$T), (BRD GPR:$T)>;
+def : Pat<(brind GPR:$T), (BRAD GPR:$T)>;
 
 // BRCOND instructions
 def : Pat<(brcond (setcc (i32 GPR:$L), (i32 GPR:$R), SETEQ), bb:$T),
