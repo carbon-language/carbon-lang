@@ -9,6 +9,7 @@
 
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/PathV2.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include "gtest/gtest.h"
 
@@ -168,6 +169,18 @@ TEST(Support, Path) {
   // Make sure Temp1 doesn't exist.
   ASSERT_FALSE(fs::exists(Twine(TempPath), TempFileExists));
   EXPECT_FALSE(TempFileExists);
+
+  // I've yet to do directory iteration on Unix.
+#ifdef LLVM_ON_WIN32
+  error_code ec;
+  for (fs::directory_iterator i(".", ec), e; i != e; i.increment(ec)) {
+    if (ec) {
+      errs() << ec.message() << '\n';
+      errs().flush();
+      report_fatal_error("Directory iteration failed!");
+    }
+  }
+#endif
 }
 
 } // anonymous namespace

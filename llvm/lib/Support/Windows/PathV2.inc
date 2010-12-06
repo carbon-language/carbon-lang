@@ -121,6 +121,15 @@ namespace {
   typedef ScopedHandle<HCRYPTPROV, HCRYPTPROV(INVALID_HANDLE_VALUE),
                        BOOL (WINAPI*)(HCRYPTPROV), CryptReleaseContext>
     ScopedCryptContext;
+  bool is_separator(const wchar_t value) {
+    switch (value) {
+    case L'\\':
+    case L'/':
+      return true;
+    default:
+      return false;
+    }
+  }
 }
 
 namespace llvm {
@@ -598,6 +607,74 @@ retry_create_file:
   result_fd = fd;
   return success;
 }
+
+error_code directory_iterator_construct(directory_iterator& it,
+                                        const StringRef &path) {
+  SmallVector<wchar_t, 128> path_utf16;
+
+  if (error_code ec = UTF8ToUTF16(path,
+                                  path_utf16))
+    return ec;
+
+  // Convert path to the format that Windows is happy with.
+  if (path_utf16.size() > 0 &&
+      !is_separator(path_utf16[path.size() - 1]) &&
+      path_utf16[path.size() - 1] != L':') {
+    path_utf16.push_back(L'\\');
+    path_utf16.push_back(L'*');
+  } else {
+    path_utf16.push_back(L'*');
+  }
+
+  //  Get the first directory entry.
+  WIN32_FIND_DATAW FirstFind;
+  ScopedFindHandle FindHandle(::FindFirstFileW(path_utf16.c_str(), &FirstFind));
+  if (!FindHandle)
+    return windows_error(::GetLastError());
+
+  // Construct the current directory entry.
+  SmallString<128> directory_entry_path_utf8;
+  if (error_code ec = UTF16ToUTF8(FirstFind.cFileName,
+                                  ::wcslen(FirstFind.cFileName),
+                                  directory_entry_path_utf8))
+    return ec;
+
+  it.IterationHandle = intptr_t(FindHandle.take());
+  it.CurrentEntry = directory_entry(path);
+  it.CurrentEntry.replace_filename(Twine(directory_entry_path_utf8));
+
+  return success;
+}
+
+error_code directory_iterator_destruct(directory_iterator& it) {
+  if (it.IterationHandle != 0)
+    // Closes the handle if it's valid.
+    ScopedFindHandle close(HANDLE(it.IterationHandle));
+  it.IterationHandle = 0;
+  it.CurrentEntry = directory_entry();
+  return success;
+}
+
+error_code directory_iterator_increment(directory_iterator& it) {
+  WIN32_FIND_DATAW FindData;
+  if (!::FindNextFileW(HANDLE(it.IterationHandle), &FindData)) {
+    error_code ec = windows_error(::GetLastError());
+    // Check for end.
+    if (ec == windows_error::no_more_files)
+      return directory_iterator_destruct(it);
+    return ec;
+  }
+
+  SmallString<128> directory_entry_path_utf8;
+  if (error_code ec = UTF16ToUTF8(FindData.cFileName,
+                                  ::wcslen(FindData.cFileName),
+                                  directory_entry_path_utf8))
+    return ec;
+
+  it.CurrentEntry.replace_filename(Twine(directory_entry_path_utf8));
+  return success;
+}
+
 } // end namespace fs
 } // end namespace sys
 } // end namespace llvm

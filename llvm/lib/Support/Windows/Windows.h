@@ -94,7 +94,11 @@ public:
     return Handle == InvalidHandle ? 0 : unspecified_bool_true;
   }
 
-  typedef ScopedHandle<HANDLE, INVALID_HANDLE_VALUE,
-                       BOOL (WINAPI*)(HANDLE), ::FindClose>
-    ScopedFindHandle;
+  bool operator!() const {
+    return Handle == InvalidHandle;
+  }
 };
+
+typedef ScopedHandle<HANDLE, INVALID_HANDLE_VALUE,
+                      BOOL (WINAPI*)(HANDLE), ::FindClose>
+  ScopedFindHandle;

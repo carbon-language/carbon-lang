@@ -688,6 +688,16 @@ error_code create_directories(const Twine &path, bool &existed) {
   return create_directory(p, existed);
 }
 
+void directory_entry::replace_filename(const Twine &filename, file_status st,
+                                       file_status symlink_st) {
+  SmallString<128> path(Path.begin(), Path.end());
+  path::remove_filename(path);
+  path::append(path, filename);
+  Path = path.str();
+  Status = st;
+  SymlinkStatus = symlink_st;
+}
+
 } // end namespace fs
 } // end namespace sys
 } // end namespace llvm

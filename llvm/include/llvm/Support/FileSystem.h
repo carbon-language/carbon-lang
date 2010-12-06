@@ -544,19 +544,29 @@ class directory_entry {
 
 public:
   explicit directory_entry(const Twine &path, file_status st = file_status(),
-                                       file_status symlink_st = file_status());
+                                       file_status symlink_st = file_status())
+    : Path(path.str())
+    , Status(st)
+    , SymlinkStatus(symlink_st) {}
+
+  directory_entry() {}
 
   void assign(const Twine &path, file_status st = file_status(),
-                          file_status symlink_st = file_status());
+                          file_status symlink_st = file_status()) {
+    Path = path.str();
+    Status = st;
+    SymlinkStatus = symlink_st;
+  }
+
   void replace_filename(const Twine &filename, file_status st = file_status(),
                               file_status symlink_st = file_status());
 
-  const SmallVectorImpl<char> &path() const;
+  StringRef path() const { return Path; }
   error_code status(file_status &result) const;
   error_code symlink_status(file_status &result) const;
 
-  bool operator==(const directory_entry& rhs) const;
-  bool operator!=(const directory_entry& rhs) const;
+  bool operator==(const directory_entry& rhs) const { return Path == rhs.Path; }
+  bool operator!=(const directory_entry& rhs) const { return !(*this == rhs); }
   bool operator< (const directory_entry& rhs) const;
   bool operator<=(const directory_entry& rhs) const;
   bool operator> (const directory_entry& rhs) const;
@@ -567,16 +577,41 @@ public:
 /// operator++ because we need an error_code. If it's really needed we can make
 /// it call report_fatal_error on error.
 class directory_iterator {
-  // implementation directory iterator status
+  intptr_t IterationHandle;
+  directory_entry CurrentEntry;
+
+  // Platform implementations implement these functions to handle iteration.
+  friend error_code directory_iterator_construct(directory_iterator& it,
+                                                 const StringRef &path);
+  friend error_code directory_iterator_increment(directory_iterator& it);
+  friend error_code directory_iterator_destruct(directory_iterator& it);
 
 public:
-  explicit directory_iterator(const Twine &path, error_code &ec);
+  explicit directory_iterator(const Twine &path, error_code &ec)
+  : IterationHandle(0) {
+    SmallString<128> path_storage;
+    ec = directory_iterator_construct(*this, path.toStringRef(path_storage));
+  }
+
+  /// Construct end iterator.
+  directory_iterator() : IterationHandle(0) {}
+
+  ~directory_iterator() {
+    directory_iterator_destruct(*this);
+  }
+
   // No operator++ because we need error_code.
-  directory_iterator &increment(error_code &ec);
+  directory_iterator &increment(error_code &ec) {
+    ec = directory_iterator_increment(*this);
+    return *this;
+  }
 
-  const directory_entry &operator*() const;
-  const directory_entry *operator->() const;
+  const directory_entry &operator*() const { return CurrentEntry; }
+  const directory_entry *operator->() const { return &CurrentEntry; };
 
+  bool operator!=(const directory_iterator &RHS) const {
+    return CurrentEntry != RHS.CurrentEntry;
+  }
   // Other members as required by
   // C++ Std, 24.1.1 Input iterators [input.iterators]
 };
