@@ -1417,24 +1417,26 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // FIXME: The lookup source location should be in the attribute, not the
   // start of the attribute.
   NamedDecl *CleanupDecl
-    = S.LookupSingleName(S.TUScope, Attr.getParameterName(), Attr.getLoc(),
-                         Sema::LookupOrdinaryName);
+    = S.LookupSingleName(S.TUScope, Attr.getParameterName(),
+                         Attr.getParameterLoc(), Sema::LookupOrdinaryName);
   if (!CleanupDecl) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_found) <<
+    S.Diag(Attr.getParameterLoc(), diag::err_attribute_cleanup_arg_not_found) <<
       Attr.getParameterName();
     return;
   }
 
   FunctionDecl *FD = dyn_cast<FunctionDecl>(CleanupDecl);
   if (!FD) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_function) <<
-      Attr.getParameterName();
+    S.Diag(Attr.getParameterLoc(),
+           diag::err_attribute_cleanup_arg_not_function)
+      << Attr.getParameterName();
     return;
   }
 
   if (FD->getNumParams() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_func_must_take_one_arg) <<
-      Attr.getParameterName();
+    S.Diag(Attr.getParameterLoc(),
+           diag::err_attribute_cleanup_func_must_take_one_arg)
+      << Attr.getParameterName();
     return;
   }
 
@@ -1443,7 +1445,7 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   QualType Ty = S.Context.getPointerType(VD->getType());
   QualType ParamTy = FD->getParamDecl(0)->getType();
   if (S.CheckAssignmentConstraints(ParamTy, Ty) != Sema::Compatible) {
-    S.Diag(Attr.getLoc(),
+    S.Diag(Attr.getParameterLoc(),
            diag::err_attribute_cleanup_func_arg_incompatible_type) <<
       Attr.getParameterName() << ParamTy << Ty;
     return;

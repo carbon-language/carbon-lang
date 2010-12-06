@@ -168,6 +168,7 @@ public:
   SourceLocation getScopeLoc() const { return ScopeLoc; }
   
   IdentifierInfo *getParameterName() const { return ParmName; }
+  SourceLocation getParameterLoc() const { return ParmLoc; }
 
   bool isDeclspecAttribute() const { return DeclspecAttribute; }
   bool isCXX0XAttribute() const { return CXX0XAttribute; }
