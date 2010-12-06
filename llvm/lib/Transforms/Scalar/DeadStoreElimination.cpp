@@ -23,8 +23,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -32,6 +30,9 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumFastStores, "Number of stores deleted");
@@ -441,6 +442,9 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       if (LoadInst *DepLoad = dyn_cast<LoadInst>(InstDep.getInst())) {
         if (SI->getPointerOperand() == DepLoad->getPointerOperand() &&
             SI->getOperand(0) == DepLoad && !SI->isVolatile()) {
+          DEBUG(dbgs() << "DSE: Remove Store Of Load from same pointer:\n  "
+                       << "LOAD: " << *DepLoad << "\n  STORE: " << *SI << '\n');
+          
           // DeleteDeadInstruction can delete the current instruction.  Save BBI
           // in case we need it.
           WeakVH NextInst(BBI);
@@ -484,6 +488,9 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // 'Inst' doesn't load from, then we can remove it.
       if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, *AA) &&
           !isPossibleSelfRead(Inst, Loc, DepWrite, *AA)) {
+        DEBUG(dbgs() << "DSE: Remove Dead Store:\n  DEAD: "
+              << *DepWrite << "\n  KILLER: " << *Inst << '\n');
+        
         // Delete the store and now-dead instructions that feed it.
         DeleteDeadInstruction(DepWrite, *MD);
         ++NumFastStores;
@@ -593,8 +600,12 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
       // Stores to stack values are valid candidates for removal.
       if (DeadStackObjects.count(Pointer)) {
-        // DCE instructions only used to calculate that store.
         Instruction *Dead = BBI++;
+        
+        DEBUG(dbgs() << "DSE: Dead Store at End of Block:\n  DEAD: "
+                     << *Dead << "\n  Object: " << *Pointer << '\n');
+        
+        // DCE instructions only used to calculate that store.
         DeleteDeadInstruction(Dead, *MD, &DeadStackObjects);
         ++NumFastStores;
         MadeChange = true;
