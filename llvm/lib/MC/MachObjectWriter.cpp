@@ -536,10 +536,14 @@ public:
       if (A_Base == B_Base && A_Base)
         report_fatal_error("unsupported relocation with identical base");
 
-      Value += Layout.getSymbolAddress(&A_SD) -
-               (A_Base == NULL ? 0 : Layout.getSymbolAddress(A_Base));
-      Value -= Layout.getSymbolAddress(&B_SD) -
-               (B_Base == NULL ? 0 : Layout.getSymbolAddress(B_Base));
+      assert((A_Base == NULL) == (B_Base == NULL));
+      assert(A_SD.getFragment()->getParent() ==
+             B_SD.getFragment()->getParent());
+
+      Value += Layout.getSymbolOffset(&A_SD) -
+               (A_Base == NULL ? 0 : Layout.getSymbolOffset(A_Base));
+      Value -= Layout.getSymbolOffset(&B_SD) -
+               (B_Base == NULL ? 0 : Layout.getSymbolOffset(B_Base));
 
       if (A_Base) {
         Index = A_Base->getIndex();
