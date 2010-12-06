@@ -400,8 +400,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
       if (!isa<Constant>(AI->getArraySize()))
         continue;
       
-      // Keep track of the static allocas that we inline into the caller if the
-      // StaticAllocas pointer is non-null.
+      // Keep track of the static allocas that we inline into the caller.
       IFI.StaticAllocas.push_back(AI);
       
       // Scan for the block of allocas that we can move over, and move them
