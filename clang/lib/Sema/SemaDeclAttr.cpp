@@ -1414,8 +1414,6 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   // Look up the function
   // FIXME: Lookup probably isn't looking in the right place
-  // FIXME: The lookup source location should be in the attribute, not the
-  // start of the attribute.
   NamedDecl *CleanupDecl
     = S.LookupSingleName(S.TUScope, Attr.getParameterName(),
                          Attr.getParameterLoc(), Sema::LookupOrdinaryName);
