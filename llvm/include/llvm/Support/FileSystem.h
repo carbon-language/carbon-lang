@@ -607,7 +607,7 @@ public:
   }
 
   const directory_entry &operator*() const { return CurrentEntry; }
-  const directory_entry *operator->() const { return &CurrentEntry; };
+  const directory_entry *operator->() const { return &CurrentEntry; }
 
   bool operator!=(const directory_iterator &RHS) const {
     return CurrentEntry != RHS.CurrentEntry;
