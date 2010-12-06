@@ -264,13 +264,17 @@ public:
   };
 
   /// \brief Determine what kind of linkage this entity has.
-  Linkage getLinkage() const { return getLinkageAndVisibility().linkage(); }
+  Linkage getLinkage() const;
 
   /// \brief Determines the visibility of this entity.
   Visibility getVisibility() const { return getLinkageAndVisibility().visibility(); }
 
   /// \brief Determines the linkage and visibility of this entity.
   LinkageInfo getLinkageAndVisibility() const;
+
+  /// \brief Clear the linkage cache in response to a change
+  /// to the declaration. 
+  void ClearLinkageCache() { HasCachedLinkage = 0; }
 
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
@@ -625,6 +629,8 @@ private:
   bool NRVOVariable : 1;
   
   friend class StmtIteratorBase;
+  friend class ASTDeclReader;
+  
 protected:
   VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
           QualType T, TypeSourceInfo *TInfo, StorageClass SC,
@@ -660,10 +666,7 @@ public:
   StorageClass getStorageClassAsWritten() const {
     return (StorageClass) SClassAsWritten;
   }
-  void setStorageClass(StorageClass SC) {
-    assert(isLegalForVariable(SC));
-    SClass = SC;
-  }
+  void setStorageClass(StorageClass SC);
   void setStorageClassAsWritten(StorageClass SC) {
     assert(isLegalForVariable(SC));
     SClassAsWritten = SC;
@@ -1478,10 +1481,7 @@ public:
   }
                        
   StorageClass getStorageClass() const { return StorageClass(SClass); }
-  void setStorageClass(StorageClass SC) {
-    assert(isLegalForFunction(SC));
-    SClass = SC;
-  }
+  void setStorageClass(StorageClass SC);
 
   StorageClass getStorageClassAsWritten() const {
     return StorageClass(SClassAsWritten);
@@ -2556,6 +2556,32 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            NamedDecl* ND) {
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(ND), Diagnostic::ak_nameddecl);
   return DB;
+}
+
+template<typename decl_type>
+void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
+  // Note: This routine is implemented here because we need both NamedDecl
+  // and Redeclarable to be defined.
+
+  decl_type *First;
+  
+  if (PrevDecl) {
+    // Point to previous. Make sure that this is actually the most recent
+    // redeclaration, or we can build invalid chains. If the most recent
+    // redeclaration is invalid, it won't be PrevDecl, but we want it anyway.
+    RedeclLink = PreviousDeclLink(llvm::cast<decl_type>(
+                                                        PrevDecl->getMostRecentDeclaration()));
+    First = PrevDecl->getFirstDeclaration();
+    assert(First->RedeclLink.NextIsLatest() && "Expected first");
+  } else {
+    // Make this first.
+    First = static_cast<decl_type*>(this);
+  }
+  
+  // First one will point to this one as latest.
+  First->RedeclLink = LatestDeclLink(static_cast<decl_type*>(this));
+  if (NamedDecl *ND = dyn_cast<NamedDecl>(static_cast<decl_type*>(this)))
+    ND->ClearLinkageCache();
 }
 
 }  // end namespace clang
