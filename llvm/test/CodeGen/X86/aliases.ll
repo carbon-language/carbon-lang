@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=i686-pc-linux-gnu -asm-verbose=false -o %t
-; RUN: grep { = } %t   | count 16
+; RUN: grep { = } %t   | count 17
 ; RUN: grep set %t   | count 18
 ; RUN: grep globl %t | count 6
 ; RUN: grep weak %t  | count 1
