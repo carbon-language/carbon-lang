@@ -88,6 +88,7 @@ Test_MyString (const char *program)
     NSString *str = [NSString stringWithFormat:@"Hello from '%s'", program];
     MyString *my = [[MyString alloc] initWithNSString:str];
     NSLog(@"MyString instance: %@", [my description]);
+    // Set break point at this line.  Test 'expression -o -- my'.
     my.descriptionPauses = YES;
     NSLog(@"MyString instance: %@", [my description]);
 }

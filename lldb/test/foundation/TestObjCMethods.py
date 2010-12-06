@@ -68,6 +68,12 @@ class FoundationTestCase(TestBase):
 
         self.runCmd("process continue")
 
+        # Second stop is still +[NSString stringWithFormat:].
+        self.expect("thread backtrace", "Stop at +[NSString stringWithFormat:]",
+            substrs = ["Foundation`+[NSString stringWithFormat:]"])
+
+        self.runCmd("process continue")
+
         # Followed by a.out`-[MyString initWithNSString:].
         self.expect("thread backtrace", "Stop at a.out`-[MyString initWithNSString:]",
             substrs = ["a.out`-[MyString initWithNSString:]"])
@@ -75,6 +81,12 @@ class FoundationTestCase(TestBase):
         self.runCmd("process continue")
 
         # Followed by -[MyString description].
+        self.expect("thread backtrace", "Stop at -[MyString description]",
+            substrs = ["a.out`-[MyString description]"])
+
+        self.runCmd("process continue")
+
+        # Followed by the same -[MyString description].
         self.expect("thread backtrace", "Stop at -[MyString description]",
             substrs = ["a.out`-[MyString description]"])
 
