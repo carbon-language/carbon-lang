@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
@@ -70,6 +71,17 @@ void MCStreamer::EmitSLEB128IntValue(int64_t Value, unsigned AddrSpace) {
   raw_svector_ostream OSE(Tmp);
   MCObjectWriter::EncodeSLEB128(Value, OSE);
   EmitBytes(OSE.str(), AddrSpace);
+}
+
+void MCStreamer::EmitAbsValue(const MCExpr *Value, unsigned Size,
+                              unsigned AddrSpace) {
+  if (!getContext().getAsmInfo().needsSetToChangeDiffSize()) {
+    EmitValue(Value, Size, AddrSpace);
+    return;
+  }
+  MCSymbol *ABS = getContext().CreateTempSymbol();
+  EmitAssignment(ABS, Value);
+  EmitSymbolValue(ABS, Size, AddrSpace);
 }
 
 void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,

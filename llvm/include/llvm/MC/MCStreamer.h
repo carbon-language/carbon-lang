@@ -249,6 +249,12 @@ namespace llvm {
     virtual void EmitIntValue(uint64_t Value, unsigned Size,
                               unsigned AddrSpace = 0);
 
+    /// EmitAbsValue - Emit the Value, but try to avoid relocations. On MachO
+    /// this is done by producing
+    /// foo = value
+    /// .long foo
+    void EmitAbsValue(const MCExpr *Value, unsigned Size,
+                      unsigned AddrSpace = 0);
 
     virtual void EmitULEB128Value(const MCExpr *Value,
                                   unsigned AddrSpace = 0) = 0;
