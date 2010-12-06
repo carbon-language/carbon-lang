@@ -62,7 +62,7 @@ L_.str2:
 // CHECK:       SectionData              =
 // CHECK:         83 EC 04 C7 04 24 00 00 - 00 00 E8 00 00 00 00 C7 |.....$..........|
 // CHECK:         04 24 07 00 00 00 E8 00 - 00 00 00 C7 04 24 10 00 |.$...........$..|
-// CHECK:         00 00 E8 00 00 00 00 31 - C0 83 C4 04 C3 00 00 00 |.......1........|
+// CHECK:         00 00 E8 00 00 00 00 31 - C0 83 C4 04 C3 |.......1.....|
 // CHECK:       Relocations              = [
 // CHECK:         0 = {
 // CHECK:           VirtualAddress           = 0x6
@@ -134,7 +134,7 @@ L_.str2:
 // CHECK:       StorageClass             = IMAGE_SYM_CLASS_STATIC (3)
 // CHECK:       NumberOfAuxSymbols       = 1
 // CHECK:       AuxillaryData            =
-// CHECK:         30 00 00 00 06 00 00 00 - 00 00 00 00 01 00 00 00 |0...............|
+// CHECK:         2D 00 00 00 06 00 00 00 - 00 00 00 00 01 00 00 00 |-...............|
 // CHECK:         00 00                                             |..|
 
 // CHECK:     }

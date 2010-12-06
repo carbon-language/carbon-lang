@@ -94,7 +94,7 @@ L_.str:                                 # @.str
 // CHECK:       StorageClass             = IMAGE_SYM_CLASS_STATIC (3)
 // CHECK:       NumberOfAuxSymbols       = 1
 // CHECK:       AuxillaryData            =
-// CHECK:         18 00 00 00 02 00 00 00 - 00 00 00 00 01 00 00 00 |................|
+// CHECK:         15 00 00 00 02 00 00 00 - 00 00 00 00 01 00 00 00 |................|
 // CHECK:         00 00                                             |..|
 // CHECK:     }
 // CHECK:     2 = {
