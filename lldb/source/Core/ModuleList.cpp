@@ -97,6 +97,20 @@ ModuleList::Remove (ModuleSP &module_sp)
     return false;
 }
 
+size_t
+ModuleList::Remove (ModuleList &module_list)
+{
+    Mutex::Locker locker(m_modules_mutex);
+    size_t num_removed = 0;
+    collection::iterator pos, end = module_list.m_modules.end();
+    for (pos = module_list.m_modules.begin(); pos != end; ++pos)
+    {
+        if (Remove (*pos))
+            ++num_removed;
+    }
+    return num_removed;
+}
+
 
 
 void

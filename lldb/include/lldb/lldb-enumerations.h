@@ -56,7 +56,8 @@ typedef enum LaunchFlags
 {
     eLaunchFlagNone         = 0u,
     eLaunchFlagDisableASLR  = (1u << 0),  ///< Disable Address Space Layout Randomization
-    eLaunchFlagDisableSTDIO = (1u << 1)   /// Disable stdio for inferior process (e.g. for a GUI app)
+    eLaunchFlagDisableSTDIO = (1u << 1),  ///< Disable stdio for inferior process (e.g. for a GUI app)
+    eLaunchFlagLaunchInTTY  = (1u << 2)   ///< Launch the process in a new TTY if supported by the host 
 } LaunchFlags;
     
 //----------------------------------------------------------------------

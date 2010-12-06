@@ -291,9 +291,9 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
             if (!m_filter_sp->ModulePasses (module_sp))
                 continue;
 
-            for (size_t j = 0; j < m_locations.GetSize(); j++)
+            for (size_t loc_idx = 0; loc_idx < m_locations.GetSize(); loc_idx++)
             {
-                BreakpointLocationSP break_loc = m_locations.GetByIndex(j);
+                BreakpointLocationSP break_loc = m_locations.GetByIndex(loc_idx);
                 if (!break_loc->IsEnabled())
                     continue;
                 const Section *section = break_loc->GetAddress().GetSection();
@@ -333,24 +333,22 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
         for (size_t i = 0; i < module_list.GetSize(); i++)
         {
             ModuleSP module_sp (module_list.GetModuleAtIndex (i));
-            if (!m_filter_sp->ModulePasses (module_sp))
-                continue;
-
-            for (size_t j = 0; j < m_locations.GetSize(); j++)
+            if (m_filter_sp->ModulePasses (module_sp))
             {
-                BreakpointLocationSP break_loc = m_locations.GetByIndex(j);
-                const Section *section = break_loc->GetAddress().GetSection();
-                if (section)
+                const size_t num_locs = m_locations.GetSize();
+                for (size_t loc_idx = 0; loc_idx < num_locs; ++loc_idx)
                 {
-                    if (section->GetModule() == module_sp.get())
+                    BreakpointLocationSP break_loc = m_locations.GetByIndex(loc_idx);
+                    const Section *section = break_loc->GetAddress().GetSection();
+                    if (section && section->GetModule() == module_sp.get())
+                    {
+                        // Remove this breakpoint since the shared library is 
+                        // unloaded, but keep the breakpoint location around
+                        // so we always get complete hit count and breakpoint
+                        // lifetime info
                         break_loc->ClearBreakpointSite();
+                    }
                 }
-//                else
-//                {
-//                    Address temp_addr;
-//                    if (module->ResolveLoadAddress(break_loc->GetLoadAddress(), m_target->GetProcess(), temp_addr))
-//                        break_loc->ClearBreakpointSite();
-//                }
             }
         }
     }

@@ -576,6 +576,10 @@ void
 Target::ModulesDidUnload (ModuleList &module_list)
 {
     m_breakpoint_list.UpdateBreakpoints (module_list, false);
+
+    // Remove the images from the target image list
+    m_images.Remove(module_list);
+
     // TODO: make event data that packages up the module_list
     BroadcastEvent (eBroadcastBitModulesUnloaded, NULL);
 }

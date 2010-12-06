@@ -313,6 +313,9 @@ public:
     bool
     Remove (lldb::ModuleSP &module_sp);
 
+    size_t
+    Remove (ModuleList &module_list);
+    
     bool
     ResolveFileAddress (lldb::addr_t vm_addr,
                         Address& so_addr);
