@@ -153,19 +153,21 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
       
       // Otherwise, we *can* reuse it, RAUW AI into AvailableAlloca and declare
       // success!
-      DEBUG(dbgs() << "    ***MERGED ALLOCA: " << *AI);
+      DEBUG(dbgs() << "    ***MERGED ALLOCA: " << *AI << "\n\t\tINTO: "
+                   << *AvailableAlloca << '\n');
       
       AI->replaceAllUsesWith(AvailableAlloca);
       AI->eraseFromParent();
       MergedAwayAlloca = true;
       ++NumMergedAllocas;
+      IFI.StaticAllocas[AllocaNo] = 0;
       break;
     }
 
     // If we already nuked the alloca, we're done with it.
     if (MergedAwayAlloca)
       continue;
-
+    
     // If we were unable to merge away the alloca either because there are no
     // allocas of the right type available or because we reused them all
     // already, remember that this alloca came from an inlined function and mark
@@ -402,7 +404,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
       
         // If this call site was obtained by inlining another function, verify
         // that the include path for the function did not include the callee
-        // itself.  If so, we'd be recursively inlinling the same function,
+        // itself.  If so, we'd be recursively inlining the same function,
         // which would provide the same callsites, which would cause us to
         // infinitely inline.
         int InlineHistoryID = CallSites[CSi].second;
