@@ -2530,8 +2530,7 @@ public:
                                     Expr **Args, unsigned NumArgs,
                                     SourceLocation RParenLoc);
 
-  template<typename T>
-  MemInitResult BuildMemberInitializer(T *Member, Expr **Args,
+  MemInitResult BuildMemberInitializer(ValueDecl *Member, Expr **Args,
                                        unsigned NumArgs, SourceLocation IdLoc,
                                        SourceLocation LParenLoc,
                                        SourceLocation RParenLoc);

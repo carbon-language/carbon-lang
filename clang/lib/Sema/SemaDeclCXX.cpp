@@ -1259,18 +1259,19 @@ static bool InitExprContainsUninitializedFields(const Stmt *S,
   return false;
 }
 
-template <typename T>
 MemInitResult
-Sema::BuildMemberInitializer(T *Member, Expr **Args,
+Sema::BuildMemberInitializer(ValueDecl *Member, Expr **Args,
                              unsigned NumArgs, SourceLocation IdLoc,
                              SourceLocation LParenLoc,
                              SourceLocation RParenLoc) {
-  assert((isa<FieldDecl>(Member) || isa<IndirectFieldDecl>(Member)) ||
+  FieldDecl *DirectMember = dyn_cast<FieldDecl>(Member);
+  IndirectFieldDecl *IndirectMember = dyn_cast<IndirectFieldDecl>(Member);
+  assert((DirectMember || IndirectMember) &&
          "Member must be a FieldDecl or IndirectFieldDecl");
 
   if (Member->isInvalidDecl())
     return true;
-  
+
   // Diagnose value-uses of fields to initialize themselves, e.g.
   //   foo(foo)
   // where foo is not also a parameter to the constructor.
@@ -1292,12 +1293,12 @@ Sema::BuildMemberInitializer(T *Member, Expr **Args,
   for (unsigned i = 0; i < NumArgs; i++)
     HasDependentArg |= Args[i]->isTypeDependent();
 
+  Expr *Init;
   if (Member->getType()->isDependentType() || HasDependentArg) {
     // Can't check initialization for a member of dependent type or when
     // any of the arguments are type-dependent expressions.
-    Expr *Init
-      = new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
-                                    RParenLoc);
+    Init = new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
+                                       RParenLoc);
 
     // Erase any temporaries within this evaluation context; we're not
     // going to track them in the AST, since we'll be rebuilding the
@@ -1305,57 +1306,54 @@ Sema::BuildMemberInitializer(T *Member, Expr **Args,
     ExprTemporaries.erase(
               ExprTemporaries.begin() + ExprEvalContexts.back().NumTemporaries,
                           ExprTemporaries.end());
-    
-    return new (Context) CXXBaseOrMemberInitializer(Context, Member, IdLoc,
-                                                    LParenLoc, 
-                                                    Init,
-                                                    RParenLoc);
-    
-  }
-  
-  // Initialize the member.
-  InitializedEntity MemberEntity =
-    InitializedEntity::InitializeMember(Member, 0);
-  InitializationKind Kind = 
-    InitializationKind::CreateDirect(IdLoc, LParenLoc, RParenLoc);
-  
-  InitializationSequence InitSeq(*this, MemberEntity, Kind, Args, NumArgs);
-  
-  ExprResult MemberInit =
-    InitSeq.Perform(*this, MemberEntity, Kind, 
-                    MultiExprArg(*this, Args, NumArgs), 0);
-  if (MemberInit.isInvalid())
-    return true;
+  } else {
+    // Initialize the member.
+    InitializedEntity MemberEntity =
+      DirectMember ? InitializedEntity::InitializeMember(DirectMember, 0)
+                   : InitializedEntity::InitializeMember(IndirectMember, 0);
+    InitializationKind Kind =
+      InitializationKind::CreateDirect(IdLoc, LParenLoc, RParenLoc);
 
-  CheckImplicitConversions(MemberInit.get(), LParenLoc);
-  
-  // C++0x [class.base.init]p7:
-  //   The initialization of each base and member constitutes a 
-  //   full-expression.
-  MemberInit = MaybeCreateExprWithCleanups(MemberInit.get());
-  if (MemberInit.isInvalid())
-    return true;
-  
-  // If we are in a dependent context, template instantiation will
-  // perform this type-checking again. Just save the arguments that we
-  // received in a ParenListExpr.
-  // FIXME: This isn't quite ideal, since our ASTs don't capture all
-  // of the information that we have about the member
-  // initializer. However, deconstructing the ASTs is a dicey process,
-  // and this approach is far more likely to get the corner cases right.
-  if (CurContext->isDependentContext()) {
-    Expr *Init = new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
-                                             RParenLoc);
-    return new (Context) CXXBaseOrMemberInitializer(Context, Member, IdLoc,
-                                                    LParenLoc, 
-                                                    Init,
-                                                    RParenLoc);
+    InitializationSequence InitSeq(*this, MemberEntity, Kind, Args, NumArgs);
+
+    ExprResult MemberInit =
+      InitSeq.Perform(*this, MemberEntity, Kind,
+                      MultiExprArg(*this, Args, NumArgs), 0);
+    if (MemberInit.isInvalid())
+      return true;
+
+    CheckImplicitConversions(MemberInit.get(), LParenLoc);
+
+    // C++0x [class.base.init]p7:
+    //   The initialization of each base and member constitutes a
+    //   full-expression.
+    MemberInit = MaybeCreateExprWithCleanups(MemberInit.get());
+    if (MemberInit.isInvalid())
+      return true;
+
+    // If we are in a dependent context, template instantiation will
+    // perform this type-checking again. Just save the arguments that we
+    // received in a ParenListExpr.
+    // FIXME: This isn't quite ideal, since our ASTs don't capture all
+    // of the information that we have about the member
+    // initializer. However, deconstructing the ASTs is a dicey process,
+    // and this approach is far more likely to get the corner cases right.
+    if (CurContext->isDependentContext())
+      Init = new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
+                                               RParenLoc);
+    else
+      Init = MemberInit.get();
   }
 
-  return new (Context) CXXBaseOrMemberInitializer(Context, Member, IdLoc,
-                                                  LParenLoc, 
-                                                  MemberInit.get(),
-                                                  RParenLoc);
+  if (DirectMember) {
+    return new (Context) CXXBaseOrMemberInitializer(Context, DirectMember,
+                                                    IdLoc, LParenLoc, Init,
+                                                    RParenLoc);
+  } else {
+    return new (Context) CXXBaseOrMemberInitializer(Context, IndirectMember,
+                                                    IdLoc, LParenLoc, Init,
+                                                    RParenLoc);
+  }
 }
 
 MemInitResult
