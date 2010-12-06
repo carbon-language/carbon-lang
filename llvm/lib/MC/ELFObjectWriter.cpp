@@ -557,9 +557,8 @@ static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout) {
   if (!Symbol.isInSection())
     return 0;
 
-  if (MCFragment *FF = Data.getFragment())
-    return Layout.getSymbolAddress(&Data) -
-      Layout.getSectionAddress(FF->getParent());
+  if (Data.getFragment())
+    return Layout.getSymbolOffset(&Data);
 
   return 0;
 }
@@ -1523,10 +1522,9 @@ void ARMELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       const MCSymbol &SymbolB = RefB->getSymbol();
       MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
       IsPCRel = true;
-      MCSectionData *Sec = Fragment->getParent();
 
       // Offset of the symbol in the section
-      int64_t a = Layout.getSymbolAddress(&SDB) - Layout.getSectionAddress(Sec);
+      int64_t a = Layout.getSymbolOffset(&SDB);
 
       // Ofeset of the relocation in the section
       int64_t b = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
@@ -1539,9 +1537,8 @@ void ARMELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
       Index = F->getParent()->getOrdinal() + 1;
 
-      MCSectionData *FSD = F->getParent();
       // Offset of the symbol in the section
-      Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
+      Value += Layout.getSymbolOffset(&SD);
     } else {
       if (Asm.getSymbolData(Symbol).getFlags() & ELF_Other_Weakref)
         WeakrefUsedInReloc.insert(RelocSymbol);
@@ -1601,10 +1598,9 @@ void MBlazeELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       const MCSymbol &SymbolB = RefB->getSymbol();
       MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
       IsPCRel = true;
-      MCSectionData *Sec = Fragment->getParent();
 
       // Offset of the symbol in the section
-      int64_t a = Layout.getSymbolAddress(&SDB) - Layout.getSectionAddress(Sec);
+      int64_t a = Layout.getSymbolOffset(&SDB);
 
       // Ofeset of the relocation in the section
       int64_t b = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
@@ -1617,9 +1613,8 @@ void MBlazeELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
       Index = F->getParent()->getOrdinal();
 
-      MCSectionData *FSD = F->getParent();
       // Offset of the symbol in the section
-      Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
+      Value += Layout.getSymbolOffset(&SD);
     } else {
       if (Asm.getSymbolData(Symbol).getFlags() & ELF_Other_Weakref)
         WeakrefUsedInReloc.insert(RelocSymbol);
@@ -1705,10 +1700,9 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
       const MCSymbol &SymbolB = RefB->getSymbol();
       MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
       IsPCRel = true;
-      MCSectionData *Sec = Fragment->getParent();
 
       // Offset of the symbol in the section
-      int64_t a = Layout.getSymbolAddress(&SDB) - Layout.getSectionAddress(Sec);
+      int64_t a = Layout.getSymbolOffset(&SDB);
 
       // Ofeset of the relocation in the section
       int64_t b = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
@@ -1721,9 +1715,8 @@ void X86ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
       Index = F->getParent()->getOrdinal() + 1;
 
-      MCSectionData *FSD = F->getParent();
       // Offset of the symbol in the section
-      Value += Layout.getSymbolAddress(&SD) - Layout.getSectionAddress(FSD);
+      Value += Layout.getSymbolOffset(&SD);
     } else {
       if (Asm.getSymbolData(Symbol).getFlags() & ELF_Other_Weakref)
         WeakrefUsedInReloc.insert(RelocSymbol);

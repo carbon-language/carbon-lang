@@ -133,6 +133,10 @@ public:
   /// layout.
   uint64_t getSymbolAddress(const MCSymbolData *SD) const;
 
+  /// \brief Get the offset of the given symbol, as computed in the current
+  /// layout.
+  uint64_t getSymbolOffset(const MCSymbolData *SD) const;
+
   /// @}
 };
 

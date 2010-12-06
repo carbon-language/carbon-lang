@@ -154,6 +154,11 @@ uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
   return F->Offset;
 }
 
+uint64_t MCAsmLayout::getSymbolOffset(const MCSymbolData *SD) const {
+  assert(SD->getFragment() && "Invalid getOffset() on undefined symbol!");
+  return getFragmentOffset(SD->getFragment()) + SD->getOffset();
+}
+
 uint64_t MCAsmLayout::getSymbolAddress(const MCSymbolData *SD) const {
   assert(SD->getFragment() && "Invalid getAddress() on undefined symbol!");
   return getFragmentAddress(SD->getFragment()) + SD->getOffset();
