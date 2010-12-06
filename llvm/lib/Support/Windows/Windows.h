@@ -59,7 +59,7 @@ public:
   }
 };
 
-template <class HandleType, HandleType InvalidHandle,
+template <class HandleType, uintptr_t InvalidHandle,
           class DeleterType, DeleterType D>
 class ScopedHandle {
   HandleType Handle;
@@ -69,13 +69,13 @@ public:
   ScopedHandle(HandleType handle) : Handle(handle) {}
 
   ~ScopedHandle() {
-    if (Handle != InvalidHandle)
+    if (Handle != HandleType(InvalidHandle))
       D(Handle);
   }
 
   HandleType take() {
     HandleType temp = Handle;
-    Handle = InvalidHandle;
+    Handle = HandleType(InvalidHandle);
     return temp;
   }
 
@@ -91,14 +91,14 @@ public:
 
   // True if Handle is valid.
   operator unspecified_bool_type() const {
-    return Handle == InvalidHandle ? 0 : unspecified_bool_true;
+    return Handle == HandleType(InvalidHandle) ? 0 : unspecified_bool_true;
   }
 
   bool operator!() const {
-    return Handle == InvalidHandle;
+    return Handle == HandleType(InvalidHandle);
   }
 };
 
-typedef ScopedHandle<HANDLE, INVALID_HANDLE_VALUE,
+typedef ScopedHandle<HANDLE, uintptr_t(-1),
                       BOOL (WINAPI*)(HANDLE), ::FindClose>
   ScopedFindHandle;

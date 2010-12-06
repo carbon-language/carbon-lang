@@ -118,7 +118,7 @@ namespace {
     return ::CryptReleaseContext(Provider, 0);
   }
 
-  typedef ScopedHandle<HCRYPTPROV, HCRYPTPROV(INVALID_HANDLE_VALUE),
+  typedef ScopedHandle<HCRYPTPROV, uintptr_t(-1),
                        BOOL (WINAPI*)(HCRYPTPROV), CryptReleaseContext>
     ScopedCryptContext;
   bool is_separator(const wchar_t value) {
