@@ -7684,24 +7684,34 @@ ExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
 ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
                             BinaryOperatorKind Opc,
                             Expr *lhs, Expr *rhs) {
-  if (getLangOptions().CPlusPlus &&
-      (!isa<ObjCPropertyRefExpr>(lhs)
-       || rhs->isTypeDependent() || Opc != BO_Assign) &&
-      (lhs->getType()->isOverloadableType() ||
-       rhs->getType()->isOverloadableType())) {
-    // Find all of the overloaded operators visible from this
-    // point. We perform both an operator-name lookup from the local
-    // scope and an argument-dependent lookup based on the types of
-    // the arguments.
-    UnresolvedSet<16> Functions;
-    OverloadedOperatorKind OverOp = BinaryOperator::getOverloadedOperator(Opc);
-    if (S && OverOp != OO_None)
-      LookupOverloadedOperatorName(OverOp, S, lhs->getType(), rhs->getType(),
-                                   Functions);
+  if (getLangOptions().CPlusPlus) {
+    bool UseBuiltinOperator;
 
-    // Build the (potentially-overloaded, potentially-dependent)
-    // binary operation.
-    return CreateOverloadedBinOp(OpLoc, Opc, Functions, lhs, rhs);
+    if (lhs->isTypeDependent() || rhs->isTypeDependent()) {
+      UseBuiltinOperator = false;
+    } else if (Opc == BO_Assign && lhs->getObjectKind() == OK_ObjCProperty) {
+      UseBuiltinOperator = true;
+    } else {
+      UseBuiltinOperator = !lhs->getType()->isOverloadableType() &&
+                           !rhs->getType()->isOverloadableType();
+    }
+
+    if (!UseBuiltinOperator) {
+      // Find all of the overloaded operators visible from this
+      // point. We perform both an operator-name lookup from the local
+      // scope and an argument-dependent lookup based on the types of
+      // the arguments.
+      UnresolvedSet<16> Functions;
+      OverloadedOperatorKind OverOp
+        = BinaryOperator::getOverloadedOperator(Opc);
+      if (S && OverOp != OO_None)
+        LookupOverloadedOperatorName(OverOp, S, lhs->getType(), rhs->getType(),
+                                     Functions);
+
+      // Build the (potentially-overloaded, potentially-dependent)
+      // binary operation.
+      return CreateOverloadedBinOp(OpLoc, Opc, Functions, lhs, rhs);
+    }
   }
 
   // Build a built-in binary operation.

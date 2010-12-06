@@ -132,3 +132,18 @@ namespace test5 {
     }
   };
 }
+
+// PR8739
+namespace test6 {
+  struct A {};
+  struct B {};
+  template <class T> class Base;
+  template <class T> class Derived : public Base<T> {
+    A *field;
+    void get(B **ptr) {
+      // It's okay if at some point we figure out how to diagnose this
+      // at instantiation time.
+      *ptr = field;
+    }
+  };
+}
