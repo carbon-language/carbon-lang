@@ -138,7 +138,7 @@ public:
     return Format;
   }
 
-  void ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
+  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
@@ -150,8 +150,8 @@ public:
 };
 
 // Fixme: Raise this to share code between Darwin and ELF.
-void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
-                                  uint64_t Value) const {
+void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
+                                  unsigned DataSize, uint64_t Value) const {
   // Fixme: 2 for Thumb
   unsigned NumBytes = 4;
   Value = adjustFixupValue(Fixup.getKind(), Value);
@@ -162,7 +162,7 @@ void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
   // bits from the fixup value.
   // The Value has been "split up" into the appropriate bitfields above.
   for (unsigned i = 0; i != NumBytes; ++i) {
-    DF.getContents()[Fixup.getOffset() + i] |= uint8_t(Value >> (i * 8));
+    Data[Fixup.getOffset() + i] |= uint8_t(Value >> (i * 8));
   }
 }
 
@@ -179,7 +179,7 @@ public:
     return Format;
   }
 
-  void ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
+  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
@@ -207,17 +207,17 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   }
 }
 
-void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
-                                     uint64_t Value) const {
+void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
+                                     unsigned DataSize, uint64_t Value) const {
   unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());
   Value = adjustFixupValue(Fixup.getKind(), Value);
 
-  assert(Fixup.getOffset() + NumBytes <= DF.getContents().size() &&
+  assert(Fixup.getOffset() + NumBytes <= DataSize &&
          "Invalid fixup offset!");
   // For each byte of the fragment that the fixup touches, mask in the
   // bits from the fixup value.
   for (unsigned i = 0; i != NumBytes; ++i)
-    DF.getContents()[Fixup.getOffset() + i] |= uint8_t(Value >> (i * 8));
+    Data[Fixup.getOffset() + i] |= uint8_t(Value >> (i * 8));
 }
 } // end anonymous namespace
 

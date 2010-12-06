@@ -735,6 +735,9 @@ private:
   /// FinishLayout - Finalize a layout, including fragment lowering.
   void FinishLayout(MCAsmLayout &Layout);
 
+  uint64_t HandleFixup(MCObjectWriter &Writer, const MCAsmLayout &Layout,
+                       MCFragment &F, const MCFixup &Fixup);
+
 public:
   /// Find the symbol which defines the atom containing the given symbol, or
   /// null if there is no such symbol.

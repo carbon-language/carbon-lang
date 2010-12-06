@@ -113,30 +113,6 @@ void MCAsmLayout::EnsureValid(const MCFragment *F) const {
   }
 }
 
-void MCAsmLayout::ReplaceFragment(MCFragment *Src, MCFragment *Dst) {
-  MCSectionData *SD = Src->getParent();
-
-  // Insert Dst immediately before Src
-  SD->getFragmentList().insert(Src, Dst);
-
-  // Set the data fragment's layout data.
-  Dst->setParent(Src->getParent());
-  Dst->setAtom(Src->getAtom());
-
-  Dst->Offset = Src->Offset;
-  Dst->EffectiveSize = Src->EffectiveSize;
-
-  // Remove Src, but don't delete it yet.
-  SD->getFragmentList().remove(Src);
-}
-
-void MCAsmLayout::CoalesceFragments(MCFragment *Src, MCFragment *Dst) {
-  assert(Src->getPrevNode() == Dst);
-  Dst->EffectiveSize += Src->EffectiveSize;
-  // Remove Src, but don't delete it yet.
-  Src->getParent()->getFragmentList().remove(Src);
-}
-
 uint64_t MCAsmLayout::getFragmentAddress(const MCFragment *F) const {
   assert(F->getParent() && "Missing section()!");
   return getSectionAddress(F->getParent()) + getFragmentOffset(F);
@@ -510,9 +486,11 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
     break;
   }
 
-  case MCFragment::FT_Inst:
-    llvm_unreachable("unexpected inst fragment after lowering");
+  case MCFragment::FT_Inst: {
+    MCInstFragment &IF = cast<MCInstFragment>(F);
+    OW->WriteBytes(StringRef(IF.getCode().begin(), IF.getCode().size()));
     break;
+  }
 
   case MCFragment::FT_LEB: {
     MCLEBFragment &LF = cast<MCLEBFragment>(F);
@@ -590,6 +568,23 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
 
   assert(OW->getStream().tell() - Start == Layout.getSectionFileSize(SD));
 }
+
+
+uint64_t MCAssembler::HandleFixup(MCObjectWriter &Writer,
+                              const MCAsmLayout &Layout,
+                              MCFragment &F,
+                              const MCFixup &Fixup) {
+   // Evaluate the fixup.
+   MCValue Target;
+   uint64_t FixedValue;
+   if (!EvaluateFixup(Writer, Layout, Fixup, &F, Target, FixedValue)) {
+     // The fixup was unresolved, we need a relocation. Inform the object
+     // writer of the relocation, and give it an opportunity to adjust the
+     // fixup value if need be.
+     Writer.RecordRelocation(*this, Layout, &F, Fixup, Target, FixedValue);
+   }
+   return FixedValue;
+ }
 
 void MCAssembler::Finish(MCObjectWriter *Writer) {
   DEBUG_WITH_TYPE("mc-dump", {
@@ -680,24 +675,24 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
     for (MCSectionData::iterator it2 = it->begin(),
            ie2 = it->end(); it2 != ie2; ++it2) {
       MCDataFragment *DF = dyn_cast<MCDataFragment>(it2);
-      if (!DF)
-        continue;
-
-      for (MCDataFragment::fixup_iterator it3 = DF->fixup_begin(),
-             ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
-        MCFixup &Fixup = *it3;
-
-        // Evaluate the fixup.
-        MCValue Target;
-        uint64_t FixedValue;
-        if (!EvaluateFixup(*Writer, Layout, Fixup, DF, Target, FixedValue)) {
-          // The fixup was unresolved, we need a relocation. Inform the object
-          // writer of the relocation, and give it an opportunity to adjust the
-          // fixup value if need be.
-          Writer->RecordRelocation(*this, Layout, DF, Fixup, Target,FixedValue);
+      if (DF) {
+        for (MCDataFragment::fixup_iterator it3 = DF->fixup_begin(),
+               ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
+          MCFixup &Fixup = *it3;
+          uint64_t FixedValue = HandleFixup(*Writer, Layout, *DF, Fixup);
+          getBackend().ApplyFixup(Fixup, DF->getContents().data(),
+                                  DF->getContents().size(), FixedValue);
         }
-
-        getBackend().ApplyFixup(Fixup, *DF, FixedValue);
+      }
+      MCInstFragment *IF = dyn_cast<MCInstFragment>(it2);
+      if (IF) {
+        for (MCInstFragment::fixup_iterator it3 = IF->fixup_begin(),
+               ie3 = IF->fixup_end(); it3 != ie3; ++it3) {
+          MCFixup &Fixup = *it3;
+          uint64_t FixedValue = HandleFixup(*Writer, Layout, *IF, Fixup);
+          getBackend().ApplyFixup(Fixup, IF->getCode().data(),
+                                  IF->getCode().size(), FixedValue);
+        }
       }
     }
   }
@@ -877,22 +872,6 @@ bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
   return WasRelaxed;
 }
 
-static void LowerInstFragment(MCInstFragment *IF,
-                              MCDataFragment *DF) {
-
-  uint64_t DataOffset = DF->getContents().size();
-
-  // Copy in the data
-  DF->getContents().append(IF->getCode().begin(), IF->getCode().end());
-
-  // Adjust the fixup offsets and add them to the data fragment.
-  for (unsigned i = 0, e = IF->getFixups().size(); i != e; ++i) {
-    MCFixup &F = IF->getFixups()[i];
-    F.setOffset(DataOffset + F.getOffset());
-    DF->getFixups().push_back(F);
-  }
-}
-
 void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
   // Lower out any instruction fragments, to simplify the fixup application and
   // output.
@@ -904,45 +883,6 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
 
   // The layout is done. Mark every fragment as valid.
   Layout.getFragmentOffset(&*Layout.getSectionOrder().back()->rbegin());
-
-  unsigned FragmentIndex = 0;
-  for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i) {
-    MCSectionData &SD = *Layout.getSectionOrder()[i];
-    MCDataFragment *CurDF = NULL;
-
-    for (MCSectionData::iterator it2 = SD.begin(),
-           ie2 = SD.end(); it2 != ie2; ++it2) {
-      switch (it2->getKind()) {
-      default:
-        CurDF = NULL;
-        break;
-      case MCFragment::FT_Data:
-        CurDF = cast<MCDataFragment>(it2);
-        break;
-      case MCFragment::FT_Inst: {
-        MCInstFragment *IF = cast<MCInstFragment>(it2);
-        // Use the existing data fragment if possible.
-        if (CurDF && CurDF->getAtom() == IF->getAtom()) {
-          Layout.CoalesceFragments(IF, CurDF);
-        } else {
-          // Otherwise, create a new data fragment.
-          CurDF = new MCDataFragment();
-          Layout.ReplaceFragment(IF, CurDF);
-        }
-
-        // Lower the Instruction Fragment
-        LowerInstFragment(IF, CurDF);
-
-        // Delete the instruction fragment and update the iterator.
-        delete IF;
-        it2 = CurDF;
-        break;
-      }
-      }
-      // Since we may have merged fragments, fix the layout order.
-      it2->setLayoutOrder(FragmentIndex++);
-    }
-  }
 }
 
 // Debugging methods

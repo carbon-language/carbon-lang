@@ -64,7 +64,7 @@ namespace {
       return Format;
     }
     
-    void ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
+    void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                     uint64_t Value) const {
       assert(0 && "UNIMP");
     }

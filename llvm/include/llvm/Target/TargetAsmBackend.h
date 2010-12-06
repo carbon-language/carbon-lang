@@ -13,7 +13,6 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
-class MCDataFragment;
 class MCFixup;
 class MCInst;
 class MCObjectFormat;
@@ -87,7 +86,7 @@ public:
   /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
   /// data fragment, at the offset specified by the fixup and following the
   /// fixup kind as appropriate.
-  virtual void ApplyFixup(const MCFixup &Fixup, MCDataFragment &Fragment,
+  virtual void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                           uint64_t Value) const = 0;
 
   /// MayNeedRelaxation - Check whether the given instruction may need

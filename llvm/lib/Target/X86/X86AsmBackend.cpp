@@ -49,14 +49,14 @@ public:
   X86AsmBackend(const Target &T)
     : TargetAsmBackend() {}
 
-  void ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
+  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const {
     unsigned Size = 1 << getFixupKindLog2Size(Fixup.getKind());
 
-    assert(Fixup.getOffset() + Size <= DF.getContents().size() &&
+    assert(Fixup.getOffset() + Size <= DataSize &&
            "Invalid fixup offset!");
     for (unsigned i = 0; i != Size; ++i)
-      DF.getContents()[Fixup.getOffset() + i] = uint8_t(Value >> (i * 8));
+      Data[Fixup.getOffset() + i] = uint8_t(Value >> (i * 8));
   }
 
   bool MayNeedRelaxation(const MCInst &Inst) const;

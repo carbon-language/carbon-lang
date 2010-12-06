@@ -110,7 +110,7 @@ public:
   }
 
 
-  void ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
+  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
@@ -121,14 +121,14 @@ public:
   }
 };
 
-void ELFMBlazeAsmBackend::ApplyFixup(const MCFixup &Fixup, MCDataFragment &DF,
-                                     uint64_t Value) const {
+void ELFMBlazeAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
+                                     unsigned DataSize, uint64_t Value) const {
   unsigned Size = getFixupKindSize(Fixup.getKind());
 
-  assert(Fixup.getOffset() + Size <= DF.getContents().size() &&
+  assert(Fixup.getOffset() + Size <= DataSize &&
          "Invalid fixup offset!");
 
-  char *data = DF.getContents().data() + Fixup.getOffset();
+  char *data = Data + Fixup.getOffset();
   switch (Size) {
   default: llvm_unreachable("Cannot fixup unknown value.");
   case 1:  llvm_unreachable("Cannot fixup 1 byte value.");
