@@ -413,7 +413,7 @@ error_code append(SmallVectorImpl<char> &path, const Twine &a,
       continue;
     }
 
-    if (!component_has_sep && !(path.empty() && is_root_name)) {
+    if (!component_has_sep && !(path.empty() || is_root_name)) {
       // Add a separator.
       path.push_back(prefered_separator);
     }
