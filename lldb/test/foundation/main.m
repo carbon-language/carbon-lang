@@ -35,7 +35,7 @@
 
 - (NSString *)description
 {
-    // Set a breakpoint on this function for '-[MyString description]' and test expressions:
+    // Set a breakpoint on '-[MyString description]' and test expressions:
     // expression (char *)sel_getName(_cmd)
     if (self.descriptionPauses)
     {
