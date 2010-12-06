@@ -16,14 +16,14 @@
 // (and hopefully tells someone about it).
 //
 // This also provides another really hacky method to prevent assert dialog boxes
-// from poping up. When --no-user32 is passed, if any process loads user32.dll,
+// from popping up. When --no-user32 is passed, if any process loads user32.dll,
 // we assume it is trying to call MessageBoxEx and terminate it. The proper way
 // to do this would be to actually set a break point, but there's quite a bit
 // of code involved to get the address of MessageBoxEx in the remote process's
 // address space due to Address space layout randomization (ASLR). This can be
 // added if it's ever actually needed.
 //
-// If the subprocess exits for any reason other than sucessful termination, -1
+// If the subprocess exits for any reason other than successful termination, -1
 // is returned. If the process exits normally the value it returned is returned.
 //
 // I hate Windows.
@@ -387,7 +387,7 @@ int main(int argc, char **argv) {
   StartupInfo.cb = sizeof(StartupInfo);
   std::memset(&ProcessInfo, 0, sizeof(ProcessInfo));
 
-  // Set error mode to not display any message boxes. The child process inherets
+  // Set error mode to not display any message boxes. The child process inherits
   // this.
   ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
   ::_set_error_mode(_OUT_TO_STDERR);
@@ -442,7 +442,7 @@ int main(int argc, char **argv) {
       a.HighPart = KernelTime.dwHighDateTime;
       b.LowPart = UserTime.dwLowDateTime;
       b.HighPart = UserTime.dwHighDateTime;
-      // Convert 100-nanosecond units to miliseconds.
+      // Convert 100-nanosecond units to milliseconds.
       uint64_t TotalTimeMiliseconds = (a.QuadPart + b.QuadPart) / 10000;
       // Handle the case where the process has been running for more than 49
       // days.
@@ -494,7 +494,7 @@ int main(int argc, char **argv) {
         if (TraceExecution)
           errs() << ToolName << ": Debug Event: EXIT_PROCESS_DEBUG_EVENT\n";
 
-        // If this is the process we origionally created, exit with its exit
+        // If this is the process we originally created, exit with its exit
         // code.
         if (DebugEvent.dwProcessId == ProcessInfo.dwProcessId)
           return DebugEvent.u.ExitProcess.dwExitCode;
@@ -534,7 +534,7 @@ int main(int argc, char **argv) {
           errs() << ToolName << ": user32.dll loaded!\n";
           errs().indent(ToolName.size())
                  << ": This probably means that assert was called. Closing "
-                    "program to prevent message box from poping up.\n";
+                    "program to prevent message box from popping up.\n";
           dwContinueStatus = DBG_CONTINUE;
           ::TerminateProcess(ProcessIDToHandle[DebugEvent.dwProcessId], -1);
           return -1;
