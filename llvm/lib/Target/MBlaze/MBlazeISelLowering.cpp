@@ -333,12 +333,12 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     unsigned Opc;
     switch (MI->getOperand(4).getImm()) {
     default: llvm_unreachable("Unknown branch condition");
-    case MBlazeCC::EQ: Opc = MBlaze::BNEID; break;
-    case MBlazeCC::NE: Opc = MBlaze::BEQID; break;
-    case MBlazeCC::GT: Opc = MBlaze::BLEID; break;
-    case MBlazeCC::LT: Opc = MBlaze::BGEID; break;
-    case MBlazeCC::GE: Opc = MBlaze::BLTID; break;
-    case MBlazeCC::LE: Opc = MBlaze::BGTID; break;
+    case MBlazeCC::EQ: Opc = MBlaze::BEQID; break;
+    case MBlazeCC::NE: Opc = MBlaze::BNEID; break;
+    case MBlazeCC::GT: Opc = MBlaze::BGTID; break;
+    case MBlazeCC::LT: Opc = MBlaze::BLTID; break;
+    case MBlazeCC::GE: Opc = MBlaze::BGEID; break;
+    case MBlazeCC::LE: Opc = MBlaze::BLEID; break;
     }
 
     F->insert(It, flsBB);
