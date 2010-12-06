@@ -41,12 +41,6 @@ public:
   // Implicit conversion to StringRef.
   operator StringRef() const { return str(); }
 
-  const char *c_str() {
-    this->push_back(0);
-    this->pop_back();
-    return this->data();
-  }
-
   // Extra operators.
   const SmallString &operator=(StringRef RHS) {
     this->clear();

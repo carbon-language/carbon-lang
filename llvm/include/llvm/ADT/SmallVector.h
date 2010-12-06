@@ -340,6 +340,12 @@ public:
     return Result;
   }
 
+  // TODO: Make this const, if it's safe...
+  typename SuperClass::const_pointer c_str() {
+    push_back(0);
+    pop_back();
+    return this->data();
+  }
 
   void swap(SmallVectorImpl &RHS);
 
