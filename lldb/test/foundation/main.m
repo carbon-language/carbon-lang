@@ -52,7 +52,7 @@ Test_Selector ()
 {
     SEL sel = @selector(length);
     printf("sel = %p\n", sel);
-    // Expressions to test here: 
+    // Expressions to test here for selector: 
     // expression (char *)sel_getName(sel)
     //      The expression above should return "sel" as it should be just
     //      a uniqued C string pointer. We were seeing the result pointer being
