@@ -213,7 +213,7 @@ def line_number(filename, string_to_match):
             if line.find(string_to_match) != -1:
                 # Found our match.
                 return i+1
-    return -1        
+    raise Exception("Unable to find %s within file %s" % (string_to_match, filename))
 
 def pointer_size():
     """Return the pointer size of the host system."""
