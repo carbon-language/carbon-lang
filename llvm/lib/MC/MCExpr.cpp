@@ -242,15 +242,12 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res) const {
 }
 
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res,
-                                const MCAsmLayout *Layout) const {
-  if (Layout)
-    return EvaluateAsAbsolute(Res, &Layout->getAssembler(), Layout);
-  else
-    return EvaluateAsAbsolute(Res, 0, 0);
+                                const MCAsmLayout &Layout) const {
+  return EvaluateAsAbsolute(Res, &Layout.getAssembler(), &Layout);
 }
 
-bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm) const {
-  return EvaluateAsAbsolute(Res, Asm, 0);
+bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const {
+  return EvaluateAsAbsolute(Res, &Asm, 0);
 }
 
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,

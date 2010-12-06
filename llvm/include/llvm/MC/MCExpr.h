@@ -41,6 +41,8 @@ private:
   MCExpr(const MCExpr&); // DO NOT IMPLEMENT
   void operator=(const MCExpr&); // DO NOT IMPLEMENT
 
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
+                          const MCAsmLayout *Layout) const;
 protected:
   explicit MCExpr(ExprKind _Kind) : Kind(_Kind) {}
 
@@ -72,10 +74,8 @@ public:
   /// evaluated.
   /// @result - True on success.
   bool EvaluateAsAbsolute(int64_t &Res) const;
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm) const;
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout) const;
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
-                          const MCAsmLayout *Layout) const;
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const;
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout) const;
 
   /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
   /// value, i.e. an expression of the fixed form (a - b + constant).

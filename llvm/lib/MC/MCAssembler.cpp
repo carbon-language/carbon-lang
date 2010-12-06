@@ -780,7 +780,7 @@ bool MCAssembler::RelaxOrg(const MCObjectWriter &Writer,
                            MCAsmLayout &Layout,
                            MCOrgFragment &OF) {
   int64_t TargetLocation;
-  if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, &Layout))
+  if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, Layout))
     report_fatal_error("expected assembly-time absolute expression");
 
   // FIXME: We need a way to communicate this error.
@@ -800,7 +800,7 @@ bool MCAssembler::RelaxLEB(const MCObjectWriter &Writer,
                            MCLEBFragment &LF) {
   int64_t Value = 0;
   uint64_t OldSize = LF.getContents().size();
-  LF.getValue().EvaluateAsAbsolute(Value, &Layout);
+  LF.getValue().EvaluateAsAbsolute(Value, Layout);
   SmallString<8> &Data = LF.getContents();
   Data.clear();
   raw_svector_ostream OSE(Data);
@@ -817,7 +817,7 @@ bool MCAssembler::RelaxDwarfLineAddr(const MCObjectWriter &Writer,
 				     MCDwarfLineAddrFragment &DF) {
   int64_t AddrDelta = 0;
   uint64_t OldSize = DF.getContents().size();
-  DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, &Layout);
+  DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, Layout);
   int64_t LineDelta;
   LineDelta = DF.getLineDelta();
   SmallString<8> &Data = DF.getContents();
