@@ -46,6 +46,11 @@ def MEMii : Operand<i32> {
 // PTX Specific Node Definitions
 //===----------------------------------------------------------------------===//
 
+// PTX allow generic 3-reg shifts like shl r0, r1, r2
+def PTXshl : SDNode<"ISD::SHL", SDTIntBinOp>;
+def PTXsrl : SDNode<"ISD::SRL", SDTIntBinOp>;
+def PTXsra : SDNode<"ISD::SRA", SDTIntBinOp>;
+
 def PTXexit
   : SDNode<"PTXISD::EXIT", SDTNone, [SDNPHasChain]>;
 def PTXret
@@ -64,6 +69,22 @@ multiclass INT3<string opcstr, SDNode opnode> {
                    (ins RRegs32:$a, i32imm:$b),
                    !strconcat(opcstr, ".%type\t$d, $a, $b"),
                    [(set RRegs32:$d, (opnode RRegs32:$a, imm:$b))]>;
+}
+
+// no %type directive, non-communtable
+multiclass INT3ntnc<string opcstr, SDNode opnode> {
+  def rr : InstPTX<(outs RRegs32:$d),
+                   (ins RRegs32:$a, RRegs32:$b),
+                   !strconcat(opcstr, "\t$d, $a, $b"),
+                   [(set RRegs32:$d, (opnode RRegs32:$a, RRegs32:$b))]>;
+  def ri : InstPTX<(outs RRegs32:$d),
+                   (ins RRegs32:$a, i32imm:$b),
+                   !strconcat(opcstr, "\t$d, $a, $b"),
+                   [(set RRegs32:$d, (opnode RRegs32:$a, imm:$b))]>;
+  def ir : InstPTX<(outs RRegs32:$d),
+                   (ins i32imm:$a, RRegs32:$b),
+                   !strconcat(opcstr, "\t$d, $a, $b"),
+                   [(set RRegs32:$d, (opnode imm:$a, RRegs32:$b))]>;
 }
 
 multiclass PTX_LD<string opstr, RegisterClass RC, PatFrag pat_load> {
@@ -85,6 +106,12 @@ multiclass PTX_LD<string opstr, RegisterClass RC, PatFrag pat_load> {
 
 defm ADD : INT3<"add", add>;
 defm SUB : INT3<"sub", sub>;
+
+///===- Logic and Shift Instructions --------------------------------------===//
+
+defm SHL : INT3ntnc<"shl.b32", PTXshl>;
+defm SRL : INT3ntnc<"shr.u32", PTXsrl>;
+defm SRA : INT3ntnc<"shr.s32", PTXsra>;
 
 ///===- Data Movement and Conversion Instructions -------------------------===//
 
