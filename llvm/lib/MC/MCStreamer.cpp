@@ -72,12 +72,6 @@ void MCStreamer::EmitSLEB128IntValue(int64_t Value, unsigned AddrSpace) {
   EmitBytes(OSE.str(), AddrSpace);
 }
 
-void MCStreamer::EmitAbsValue(const MCExpr *Value, unsigned Size) {
-  MCSymbol *ABS = getContext().CreateTempSymbol();
-  EmitAssignment(ABS, Value);
-  EmitSymbolValue(ABS, Size, 0);
-}
-
 void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
                                  unsigned AddrSpace) {
   EmitValue(MCSymbolRefExpr::Create(Sym, getContext()), Size, AddrSpace);

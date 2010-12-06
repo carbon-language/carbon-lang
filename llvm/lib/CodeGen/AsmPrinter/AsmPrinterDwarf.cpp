@@ -156,7 +156,7 @@ void AsmPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
   
   const MCExpr *Exp =
     TLOF.getExprForDwarfReference(Sym, Mang, MMI, Encoding, OutStreamer);
-  OutStreamer.EmitAbsValue(Exp, GetSizeOfEncodedValue(Encoding));
+  OutStreamer.EmitValue(Exp, GetSizeOfEncodedValue(Encoding), /*addrspace*/0);
 }
 
 void AsmPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const{
