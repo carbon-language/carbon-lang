@@ -6,28 +6,28 @@ int main (int argc, char const *argv[])
     puts ("hello");
     // Please test many expressions while stopped at this line:
 #if 0
-    expr 'a'        // make sure character constant makes it down (this is broken by the command line parser code right now)
-    expr 2          // Test int
-    expr 2ull       // Test unsigned long long
-    expr 2.234f     // Test float constants
-    expr 2.234      // Test double constants
-    expr 2+3
-    expr argc
-    expr argc + 22
-    expr argv
-    expr argv[0]
-    expr argv[1]
-    expr argv[-1]
-    expr puts("bonjour")                        // Test constant strings...
-    expr printf("\t\x68\n")       // Test constant strings that contain the \xXX (TAB, 'h', '\n' should be printed)
-    expr printf("\"\n")       // Test constant strings that contains an escaped double quote char
-    expr printf("\'\n")       // Test constant strings that contains an escaped single quote char
-    expr printf ("one: %i\n", 1)
-    expr printf ("1.234 as float: %f\n", 1.234f)
-    expr printf ("1.234 as double: %g\n", 1.234)
-    expr printf ("one: %i, two: %llu\n", 1, 2ull)
-    expr printf ("two: %llu, one: %i\n", 2ull, 1)
-    expr random() % 255l
+    expression 'a'        // make sure character constant makes it down (this is broken: <rdar://problem/8686536>)
+    expression 2          // Test int
+    expression 2ull       // Test unsigned long long
+    expression 2.234f     // Test float constants
+    expression 2.234      // Test double constants
+    expression 2+3
+    expression argc
+    expression argc + 22
+    expression argv
+    expression argv[0]
+    expression argv[1]
+    expression argv[-1]
+    expression puts("bonjour")                        // Test constant strings...
+    expression printf("\t\x68\n")       // Test constant strings that contain the \xXX (TAB, 'h', '\n' should be printed) (this is broken: <rdar://problem/8686536>)
+    expression printf("\"\n")       // Test constant strings that contains an escaped double quote char (this is broken: <rdar://problem/8686536>)
+    expression printf("\'\n")       // Test constant strings that contains an escaped single quote char (this is broken: <rdar://problem/8686536>)
+    expression printf ("one: %i\n", 1)
+    expression printf ("1.234 as float: %f\n", 1.234f)
+    expression printf ("1.234 as double: %g\n", 1.234)
+    expression printf ("one: %i, two: %llu\n", 1, 2ull)
+    expression printf ("two: %llu, one: %i\n", 2ull, 1)
+    expression random() % 255l
 #endif
     return 0;
 }
