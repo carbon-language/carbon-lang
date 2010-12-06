@@ -598,7 +598,7 @@ public:
 
         // Add the local offset, if needed.
         if (Base != &SD)
-          Value += Layout.getSymbolAddress(&SD) - Layout.getSymbolAddress(Base);
+          Value += Layout.getSymbolOffset(&SD) - Layout.getSymbolOffset(Base);
       } else if (Symbol->isInSection()) {
         // The index is the section ordinal (1-based).
         Index = SD.getFragment()->getParent()->getOrdinal() + 1;
