@@ -103,7 +103,18 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case ARM::fixup_arm_branch:
     // These values don't encode the low two bits since they're always zero.
     // Offset by 8 just as above.
-    return 0xFFFFFF & ((Value - 8) >> 2);
+    return 0xffffff & ((Value - 8) >> 2);
+  case ARM::fixup_arm_thumb_bl: {
+    // The value doesn't encode the low bit (always zero) and is offset by
+    // four. The value is encoded into disjoint bit positions in the destination
+    // opcode. x = unchanged, I = immediate value bit, S = sign extension bit
+    // xxxxxSIIIIIIIIII xxxxxIIIIIIIIIII
+    // Note that the halfwords are stored high first, low second; so we need
+    // to transpose the fixup value here to map properly.
+    uint32_t Binary = 0x3fffff & ((Value - 4) >> 1);
+    Binary = ((Binary & 0x7ff) << 16) | (Binary >> 11);
+    return Binary;
+  }
   case ARM::fixup_arm_pcrel_10: {
     // Offset by 8 just as above.
     Value = Value - 8;
@@ -198,12 +209,17 @@ public:
 
 static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
-  default: llvm_unreachable("Unknown fixup kind!");
-  case FK_Data_4: return 4;
-  case ARM::fixup_arm_ldst_pcrel_12: return 3;
-  case ARM::fixup_arm_pcrel_10: return 3;
-  case ARM::fixup_arm_adr_pcrel_12: return 3;
-  case ARM::fixup_arm_branch: return 3;
+  default:
+    llvm_unreachable("Unknown fixup kind!");
+  case FK_Data_4:
+    return 4;
+  case ARM::fixup_arm_ldst_pcrel_12:
+  case ARM::fixup_arm_pcrel_10:
+  case ARM::fixup_arm_adr_pcrel_12:
+  case ARM::fixup_arm_branch:
+    return 3;
+  case ARM::fixup_arm_thumb_bl:
+    return 4;
   }
 }
 

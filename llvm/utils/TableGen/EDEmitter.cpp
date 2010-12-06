@@ -587,6 +587,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("neon_vcvt_imm32");
 
   MISC("brtarget", "kOperandTypeARMBranchTarget");                // ?
+  MISC("t_bltarget", "kOperandTypeARMBranchTarget");              // ?
   MISC("bltarget", "kOperandTypeARMBranchTarget");                // ?
   MISC("so_reg", "kOperandTypeARMSoReg");                         // R, R, I
   MISC("shift_so_reg", "kOperandTypeARMSoReg");                   // R, R, I

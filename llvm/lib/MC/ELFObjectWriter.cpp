@@ -1546,6 +1546,7 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
     case ARM::fixup_arm_ldst_pcrel_12:
     case ARM::fixup_arm_pcrel_10:
     case ARM::fixup_arm_adr_pcrel_12:
+    case ARM::fixup_arm_thumb_bl:
       assert(0 && "Unimplemented"); break;
     case ARM::fixup_arm_branch:
       return ELF::R_ARM_CALL; break;

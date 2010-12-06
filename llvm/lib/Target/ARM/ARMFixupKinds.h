@@ -25,9 +25,11 @@ enum Fixups {
   // fixup_arm_adr_pcrel_12 - 12-bit PC relative relocation for the ADR
   // instruction.
   fixup_arm_adr_pcrel_12,
-  // fixup_arm_brnach - 24-bit PC relative relocation for direct branch
+  // fixup_arm_branch - 24-bit PC relative relocation for direct branch
   // instructions.
   fixup_arm_branch,
+  // fixup_arm_thumb_bl - Fixup for Thumb BL/BLX instructions.
+  fixup_arm_thumb_bl,
 
   // The next two are for the movt/movw pair
   // the 16bit imm field are split into imm{15-12} and imm{11-0}

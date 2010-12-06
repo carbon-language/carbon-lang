@@ -74,6 +74,10 @@ def t_imm_s4 : Operand<i32> {
 
 // Define Thumb specific addressing modes.
 
+def t_bltarget : Operand<i32> {
+  let EncoderMethod = "getThumbBLTargetOpValue";
+}
+
 def MemModeThumbAsmOperand : AsmOperandClass {
   let Name = "MemModeThumb";
   let SuperClasses = [];
@@ -366,22 +370,29 @@ let isCall = 1,
   Uses = [SP] in {
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
-                  (outs), (ins i32imm:$func, variable_ops), IIC_Br,
+                  (outs), (ins t_bltarget:$func, variable_ops), IIC_Br,
                   "bl\t$func",
                   [(ARMtcall tglobaladdr:$func)]>,
              Requires<[IsThumb, IsNotDarwin]> {
+    bits<21> func;
+    let Inst{25-16} = func{20-11};
     let Inst{13} = 1;
     let Inst{11} = 1;
+    let Inst{10-0} = func{10-0};
   }
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi : TIx2<0b11110, 0b11, 0,
-                   (outs), (ins i32imm:$func, variable_ops), IIC_Br,
+                   (outs), (ins t_bltarget:$func, variable_ops), IIC_Br,
                    "blx\t$func",
                    [(ARMcall tglobaladdr:$func)]>,
               Requires<[IsThumb, HasV5T, IsNotDarwin]> {
+    bits<21> func;
+    let Inst{25-16} = func{20-11};
     let Inst{13} = 1;
     let Inst{11} = 1;
+    let Inst{10-1} = func{10-1};
+    let Inst{0} = 0; // func{0} is assumed zero
   }
 
   // Also used for Thumb2
@@ -412,23 +423,29 @@ let isCall = 1,
   Uses = [R7, SP] in {
   // Also used for Thumb2
   def tBLr9 : TIx2<0b11110, 0b11, 1,
-                   (outs), (ins pred:$p, i32imm:$func, variable_ops), IIC_Br,
-                   "bl${p}\t$func",
+                   (outs), (ins pred:$p, t_bltarget:$func, variable_ops),
+                   IIC_Br, "bl${p}\t$func",
                    [(ARMtcall tglobaladdr:$func)]>,
               Requires<[IsThumb, IsDarwin]> {
-    let Inst{13}    = 1;
-    let Inst{11}    = 1;
+    bits<21> func;
+    let Inst{25-16} = func{20-11};
+    let Inst{13} = 1;
+    let Inst{11} = 1;
+    let Inst{10-0} = func{10-0};
   }
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi_r9 : TIx2<0b11110, 0b11, 0,
-                      (outs), (ins pred:$p, i32imm:$func, variable_ops),
-                      IIC_Br,
-                      "blx${p}\t$func",
+                      (outs), (ins pred:$p, t_bltarget:$func, variable_ops),
+                      IIC_Br, "blx${p}\t$func",
                       [(ARMcall tglobaladdr:$func)]>,
                  Requires<[IsThumb, HasV5T, IsDarwin]> {
+    bits<21> func;
+    let Inst{25-16} = func{20-11};
     let Inst{13} = 1;
     let Inst{11} = 1;
+    let Inst{10-1} = func{10-1};
+    let Inst{0} = 0; // func{0} is assumed zero
   }
 
   // Also used for Thumb2
