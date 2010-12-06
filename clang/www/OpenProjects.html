@@ -21,11 +21,6 @@ intended to be comprehensive.  Please ask on cfe-dev for more specifics or to
 verify that one of these isn't already completed. :)</p>
 
 <ul>
-<li><b>Compile your favorite C/ObjC project with Clang</b>:
-Clang's type-checking and code generation is very close to complete (but not bug free!) for C and Objective-C. We appreciate all reports of code that is
-rejected or miscompiled by the front-end. If you notice invalid code that is not rejected, or poor diagnostics when code is rejected, that is also very important to us.  For make-based projects,
-the <a href="get_started.html#driver"><code>clang</code></a> driver works as a drop-in replacement for GCC.</li>
-
 <li><b>Undefined behavior checking</b>: CodeGen could
 insert runtime checks for all sorts of different undefined behaviors, from 
 reading uninitialized variables, buffer overflows, and many other things.  This
@@ -50,11 +45,17 @@ rich understanding of the code.</li>
 <li><b>Use clang libraries to implement better versions of existing tools</b>:
 Clang is built as a set of libraries, which means that it is possible to
 implement capabilities similar to other source language tools, improving them
-in various ways.  Two examples are <a href="http://distcc.samba.org/">distcc</a>
-and the <a href="http://delta.tigris.org/">delta testcase reduction tool</a>.
-The former can be improved to scale better and be more efficient.  The latter
-could also be faster and more efficient at reducing C-family programs if built
-on the clang preprocessor.</li>
+in various ways.  Three examples are <a
+href="http://distcc.samba.org/">distcc</a>, the <a
+href="http://delta.tigris.org/">delta testcase reduction tool</a>, and the
+"indent" source reformatting tool.
+distcc can be improved to scale better and be more efficient.  Delta could be
+faster and more efficient at reducing C-family programs if built on the clang
+preprocessor, indent could do proper formatting for complex C++ features, and it
+would be straight-forward to extend a clang-based implementation to handle
+simple structural rules like those in <a
+href="http://llvm.org/docs/CodingStandards.html#hl_earlyexit">the LLVM coding
+standards</a>.</li>
 
 <li><b>Use clang libraries to extend Ragel with a JIT</b>: <a 
 href="http://research.cs.queensu.ca/~thurston/ragel/">Ragel</a> is a state
@@ -77,16 +78,10 @@ improve the quality of clang by self-testing. Some examples:
 </ul>
 </li>
 
-<li><b>Continue work on C++ support</b>: Implementing all of C++ was a very big job, but there are still lots of
-       little pieces that can be improved. Here are some small- to mid-sized C++ implementation projects:
-<ul>
-  <li>Fix bugs: there are a number of XFAIL'd test cases in Clang's repository (particularly in the CXX subdirectory). Pick a test case and fix Clang to make it work!</li>
-  <li>Write tests: the CXX test subdirectory in Clang's repository has placeholders for tests of every paragraph in the C++ standard. Pick a paragraph, write a few tests, and see if they work! Even if they don't we'd still like the new tests (with XFAIL'd) so that we know what to fix.</li>
-</ul>
-  
-Also, see the <a href="cxx_status.html">C++ status report page</a> to
-find out what is missing and what is already at least partially
-supported.</li>
+<li><b>Continue work on C++'0x support</b>:
+  C++'98 is feature complete, but there is still a lot of C++'0x featuers to
+  implement.  Please see the <a href="cxx_status.html">C++ status report
+  page</a> to find out what is missing.</li>
 </ul>
 
 <p>If you hit a bug with clang, it is very useful for us if you reduce the code
