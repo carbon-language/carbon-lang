@@ -55,6 +55,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Debug.h"
 using namespace llvm;
 
 /// startNewBlock - Set the current block to which generated machine
@@ -517,10 +518,7 @@ bool FastISel::SelectCall(const User *I) {
     } else {
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.
-      // Insert an undef so we can see what we dropped.
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
-        .addReg(0U).addImm(DI->getOffset())
-        .addMetadata(DI->getVariable());
+      DEBUG(dbgs() << "Dropping debug info for " << DI);
     }
     return true;
   }
