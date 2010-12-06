@@ -213,15 +213,8 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
 
   // The first 4 bytes is the total length of the information for this
   // compilation unit (not including these 4 bytes for the length).
-  // FIXME: We create the dummy TotalLength variable because LineEndSym points
-  // to the end of the section and the darwin assembler doesn't consider that
-  // difference an assembly time constant. It might be better for this to be
-  // proected by a flag.
-  MCSymbol *TotalLength = MCOS->getContext().CreateTempSymbol();
-  MCOS->EmitAssignment(TotalLength,
-		       MakeStartMinusEndExpr(MCOS, LineStartSym, LineEndSym,
-					     4));
-  MCOS->EmitSymbolValue(TotalLength, 4, 0);
+  MCOS->EmitAbsValue(MakeStartMinusEndExpr(MCOS, LineStartSym, LineEndSym,4),
+                     4);
 
   // Next 2 bytes is the Version, which is Dwarf 2.
   MCOS->EmitIntValue(2, 2);
