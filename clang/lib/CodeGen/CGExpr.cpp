@@ -1951,10 +1951,10 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   assert(E->getOpcode() == BO_Assign && "unexpected binary l-value");
   
   if (!hasAggregateLLVMType(E->getType())) {
-    // Emit the LHS as an l-value.
+    // __block variables need the RHS evaluated first.
+    RValue RV = EmitAnyExpr(E->getRHS());
     LValue LV = EmitLValue(E->getLHS());
-    // Store the value through the l-value.
-    EmitStoreThroughLValue(EmitAnyExpr(E->getRHS()), LV, E->getType());
+    EmitStoreThroughLValue(RV, LV, E->getType());
     return LV;
   }
 

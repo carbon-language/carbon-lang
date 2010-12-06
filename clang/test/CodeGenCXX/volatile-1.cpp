@@ -346,9 +346,9 @@ void test() {
   // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @j
 
   (j=k,i)=i;
+  // CHECK-NEXT: volatile load [[INT]]* @i
   // CHECK-NEXT: volatile load [[INT]]* @k
   // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @j
-  // CHECK-NEXT: volatile load [[INT]]* @i
   // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @i
 
   // CHECK-NEXT: ret void

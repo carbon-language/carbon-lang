@@ -602,7 +602,7 @@ LValue ComplexExprEmitter::EmitBinAssignLValue(const BinaryOperator *E,
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
 
-  // Emit the RHS.
+  // Emit the RHS.  __block variables need the RHS evaluated first.
   Val = Visit(E->getRHS());
 
   // Compute the address to store into.

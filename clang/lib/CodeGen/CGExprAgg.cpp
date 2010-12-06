@@ -389,6 +389,8 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   assert(CGF.getContext().hasSameUnqualifiedType(E->getLHS()->getType(),
                                                  E->getRHS()->getType())
          && "Invalid assignment");
+
+  // FIXME:  __block variables need the RHS evaluated first!
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
   // We have to special case property setters, otherwise we must have
