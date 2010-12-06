@@ -184,7 +184,7 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
 {
     // make unique temp .s file to put generated assembly code
     sys::Path uniqueAsmPath("lto-llvm.s");
-    if ( uniqueAsmPath.createTemporaryFileOnDisk(true, &errMsg) )
+    if ( uniqueAsmPath.createTemporaryFileOnDisk(false, &errMsg) )
         return NULL;
     sys::RemoveFileOnSignal(uniqueAsmPath);
        
