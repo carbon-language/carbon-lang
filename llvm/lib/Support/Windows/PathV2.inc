@@ -113,15 +113,14 @@ namespace {
     return success;
   }
 
-  struct AutoCryptoProvider {
-    HCRYPTPROV CryptoProvider;
+  // Forwarder for ScopedHandle.
+  BOOL WINAPI CryptReleaseContext(HCRYPTPROV Provider) {
+    return ::CryptReleaseContext(Provider, 0);
+  }
 
-    ~AutoCryptoProvider() {
-      ::CryptReleaseContext(CryptoProvider, 0);
-    }
-
-    operator HCRYPTPROV() const {return CryptoProvider;}
-  };
+  typedef ScopedHandle<HCRYPTPROV, HCRYPTPROV(INVALID_HANDLE_VALUE),
+                       BOOL (WINAPI*)(HCRYPTPROV), CryptReleaseContext>
+    ScopedCryptContext;
 }
 
 namespace llvm {
@@ -503,13 +502,14 @@ error_code unique_file(const Twine &model, int &result_fd,
   SmallVector<wchar_t, 128> random_path_utf16;
 
   // Get a Crypto Provider for CryptGenRandom.
-  AutoCryptoProvider CryptoProvider;
-  if (!::CryptAcquireContextW(&CryptoProvider.CryptoProvider,
+  HCRYPTPROV HCPC;
+  if (!::CryptAcquireContextW(&HCPC,
                               NULL,
                               NULL,
                               PROV_RSA_FULL,
                               0))
     return windows_error(::GetLastError());
+  ScopedCryptContext CryptoProvider(HCPC);
 
 retry_random_path:
   random_path_utf16.set_size(0);

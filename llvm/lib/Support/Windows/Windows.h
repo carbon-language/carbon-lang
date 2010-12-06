@@ -58,3 +58,43 @@ public:
     return *this;
   }
 };
+
+template <class HandleType, HandleType InvalidHandle,
+          class DeleterType, DeleterType D>
+class ScopedHandle {
+  HandleType Handle;
+
+public:
+  ScopedHandle() : Handle(InvalidHandle) {}
+  ScopedHandle(HandleType handle) : Handle(handle) {}
+
+  ~ScopedHandle() {
+    if (Handle != InvalidHandle)
+      D(Handle);
+  }
+
+  HandleType take() {
+    HandleType temp = Handle;
+    Handle = InvalidHandle;
+    return temp;
+  }
+
+  operator HandleType() const { return Handle; }
+
+  ScopedHandle &operator=(HandleType handle) {
+    Handle = handle;
+    return *this;
+  }
+
+  typedef void (*unspecified_bool_type)();
+  static void unspecified_bool_true() {}
+
+  // True if Handle is valid.
+  operator unspecified_bool_type() const {
+    return Handle == InvalidHandle ? 0 : unspecified_bool_true;
+  }
+
+  typedef ScopedHandle<HANDLE, INVALID_HANDLE_VALUE,
+                       BOOL (WINAPI*)(HANDLE), ::FindClose>
+    ScopedFindHandle;
+};
