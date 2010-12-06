@@ -188,6 +188,11 @@ public:
     return alias(LocA, LocB) == MustAlias;
   }
 
+  /// isMustAlias - A convenience wrapper.
+  bool isMustAlias(const Value *V1, const Value *V2) {
+    return alias(V1, 1, V2, 1) == MustAlias;
+  }
+  
   /// pointsToConstantMemory - If the specified memory location is
   /// known to be constant, return true. If OrLocal is true and the
   /// specified memory location is known to be "local" (derived from

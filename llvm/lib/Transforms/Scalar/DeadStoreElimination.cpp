@@ -198,6 +198,20 @@ getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
   }
 }
 
+/// getLocForRead - Return the location read by the specified "hasMemoryWrite"
+/// instruction if any.
+static AliasAnalysis::Location 
+getLocForRead(Instruction *Inst, AliasAnalysis &AA) {
+  assert(hasMemoryWrite(Inst) && "Unknown instruction case");
+  
+  // The only instructions that both read and write are the mem transfer
+  // instructions (memcpy/memmove).
+  if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(Inst))
+    return AA.getLocationForSource(MTI);
+  return AliasAnalysis::Location();
+}
+
+
 /// isRemovable - If the value of this instruction and the memory it writes to
 /// is unused, may we delete this instruction?
 static bool isRemovable(Instruction *I) {
@@ -347,6 +361,48 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
   return true;
 }
 
+/// isPossibleSelfRead - If 'Inst' might be a self read (i.e. a noop copy of a
+/// memory region into an identical pointer) then it doesn't actually make its
+/// input dead in the traditional sense.  Consider this case: 
+///
+///   memcpy(A <- B)
+///   memcpy(A <- A)
+///
+/// In this case, the second store to A does not make the first store to A dead.
+/// The usual situation isn't an explicit A<-A store like this (which can be
+/// trivially removed) but a case where two pointers may alias.
+///
+/// This function detects when it is unsafe to remove a dependent instruction
+/// because the DSE inducing instruction may be a self-read.
+static bool isPossibleSelfRead(Instruction *Inst,
+                               const AliasAnalysis::Location &InstStoreLoc,
+                               Instruction *DepWrite, AliasAnalysis &AA) {
+  // Self reads can only happen for instructions that read memory.  Get the
+  // location read.
+  AliasAnalysis::Location InstReadLoc = getLocForRead(Inst, AA);
+  if (InstReadLoc.Ptr == 0) return false;  // Not a reading instruction.
+  
+  // If the read and written loc obviously don't alias, it isn't a read.
+  if (AA.isNoAlias(InstReadLoc, InstStoreLoc)) return false;
+  
+  // Okay, 'Inst' may copy over itself.  However, we can still remove a the
+  // DepWrite instruction if we can prove that it reads from the same location
+  // as Inst.  This handles useful cases like:
+  //   memcpy(A <- B)
+  //   memcpy(A <- B)
+  // Here we don't know if A/B may alias, but we do know that B/B are must
+  // aliases, so removing the first memcpy is safe (assuming it writes <= #
+  // bytes as the second one.
+  AliasAnalysis::Location DepReadLoc = getLocForRead(DepWrite, AA);
+  
+  if (DepReadLoc.Ptr && AA.isMustAlias(InstReadLoc.Ptr, DepReadLoc.Ptr))
+    return false;
+  
+  // If DepWrite doesn't read memory or if we can't prove it is a must alias,
+  // then it can't be considered dead.
+  return true;
+}
+
 
 //===----------------------------------------------------------------------===//
 // DSE Pass
@@ -423,9 +479,11 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       if (DepLoc.Ptr == 0)
         break;
 
-      // If we find a removable write that is completely obliterated by the
-      // store to 'Loc' then we can remove it.
-      if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, *AA)) {
+      // If we find a write that is a) removable (i.e., non-volatile), b) is
+      // completely obliterated by the store to 'Loc', and c) which we know that
+      // 'Inst' doesn't load from, then we can remove it.
+      if (isRemovable(DepWrite) && isCompleteOverwrite(Loc, DepLoc, *AA) &&
+          !isPossibleSelfRead(Inst, Loc, DepWrite, *AA)) {
         // Delete the store and now-dead instructions that feed it.
         DeleteDeadInstruction(DepWrite, *MD);
         ++NumFastStores;
@@ -480,8 +538,7 @@ bool DSE::HandleFree(CallInst *F) {
       getStoredPointerOperand(Dependency)->getUnderlyingObject();
 
     // Check for aliasing.
-    if (AA->alias(F->getArgOperand(0), 1, DepPointer, 1) !=
-          AliasAnalysis::MustAlias)
+    if (!AA->isMustAlias(F->getArgOperand(0), DepPointer))
       return false;
   
     // DCE instructions only used to calculate that store

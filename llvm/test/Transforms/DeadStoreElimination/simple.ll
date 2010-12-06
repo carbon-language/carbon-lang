@@ -203,7 +203,7 @@ define void @test16(i8* %P, i8* %Q) nounwind ssp {
 }
 
 ;; Overwrite of memset by memcpy.
-define void @test17(i8* %P, i8* %Q) nounwind ssp {
+define void @test17(i8* %P, i8* noalias %Q) nounwind ssp {
   tail call void @llvm.memset.i64(i8* %P, i8 42, i64 8, i32 1)
   tail call void @llvm.memcpy.i64(i8* %P, i8* %Q, i64 12, i32 1)
   ret void
@@ -219,6 +219,20 @@ define void @test17v(i8* %P, i8* %Q) nounwind ssp {
   ret void
 ; CHECK: @test17v
 ; CHECK-NEXT: call void @llvm.memset
+; CHECK-NEXT: call void @llvm.memcpy
+; CHECK-NEXT: ret
+}
+
+; PR8728
+; Do not delete instruction where possible situation is:
+; A = B
+; A = A
+define void @test18(i8* %P, i8* %Q, i8* %R) nounwind ssp {
+  tail call void @llvm.memcpy.i64(i8* %P, i8* %Q, i64 12, i32 1)
+  tail call void @llvm.memcpy.i64(i8* %P, i8* %R, i64 12, i32 1)
+  ret void
+; CHECK: @test18
+; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: ret
 }
