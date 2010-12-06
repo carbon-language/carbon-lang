@@ -313,7 +313,7 @@ static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout,
 
   assert(!(Layout && !Asm));
 
-  if ((Layout || Asm) && A && B) {
+  if (Asm && A && B) {
     const MCSymbol &SA = A->getSymbol();
     const MCSymbol &SB = B->getSymbol();
     const MCObjectFormat &F = Asm->getBackend().getObjectFormat();
