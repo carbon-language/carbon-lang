@@ -345,12 +345,11 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
   QualType Ty = Expr->getType();
   assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
 
+  UsualUnaryConversions(Expr);
+
   // If this is a 'float' (CVR qualified or typedef) promote to double.
   if (Ty->isSpecificBuiltinType(BuiltinType::Float))
-    return ImpCastExprToType(Expr, Context.DoubleTy,
-                             CK_FloatingCast);
-
-  UsualUnaryConversions(Expr);
+    return ImpCastExprToType(Expr, Context.DoubleTy, CK_FloatingCast);
 }
 
 /// DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but

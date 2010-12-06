@@ -89,3 +89,17 @@ void test3(test3_object *p) {
   struct test3_struct array[1] = { p.s };
   struct test3_nested agg = { p.s };
 }
+
+// PR8742
+@interface Test4  {}
+@property float f;
+@end
+// CHECK: define void @test4
+void test4(Test4 *t) {
+  extern int test4_printf(const char *, ...);
+  // CHECK: [[TMP:%.*]] = call float {{.*}} @objc_msgSend
+  // CHECK-NEXT: [[EXT:%.*]] = fpext float [[TMP]] to double
+  // CHECK-NEXT: call i32 (i8*, ...)* @test4_printf(i8* {{.*}}, double [[EXT]])
+  // CHECK-NEXT: ret void
+  test4_printf("%.2f", t.f);
+}
