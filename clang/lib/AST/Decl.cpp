@@ -102,7 +102,7 @@ struct LVFlags {
     F.ConsiderVisibilityAttributes = false;
     return F;
   }
-};
+}; 
 } // end anonymous namespace
 
 /// \brief Get the most restrictive linkage for the types in the given
@@ -153,18 +153,14 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
       // The decl can validly be null as the representation of nullptr
       // arguments, valid only in C++0x.
       if (Decl *D = Args[I].getAsDecl()) {
-        if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-          LinkageInfo LI = getLVForDecl(ND, F);
-          LV = merge(LV, LVPair(LI.linkage(), LI.visibility()));
-        }
+        if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
+          LV = merge(LV, getLVForDecl(ND, F));
       }
       break;
 
     case TemplateArgument::Template:
-      if (TemplateDecl *Template = Args[I].getAsTemplate().getAsTemplateDecl()){
-        LinkageInfo LI = getLVForDecl(Template, F);
-        LV = merge(LV, LVPair(LI.linkage(), LI.visibility()));
-      }
+      if (TemplateDecl *Template = Args[I].getAsTemplate().getAsTemplateDecl())
+        LV = merge(LV, getLVForDecl(Template, F));
       break;
 
     case TemplateArgument::Pack:
