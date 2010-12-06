@@ -244,53 +244,57 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   }
 }
 
-void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
-  DefaultFunctionArrayConversion(E);
-  
+void Sema::DefaultLvalueConversion(Expr *&E) {
   // C++ [conv.lval]p1:
   //   A glvalue of a non-function, non-array type T can be
   //   converted to a prvalue.
-  if (E->isGLValue()) {
-    QualType T = E->getType();
-    assert(!T.isNull() && "r-value conversion on typeless expression?");
+  if (!E->isGLValue()) return;
 
-    // Create a load out of an ObjCProperty l-value, if necessary.
-    if (E->getObjectKind() == OK_ObjCProperty) {
-      ConvertPropertyForRValue(E);
-      if (!E->isGLValue())
-        return;
-    }
+  QualType T = E->getType();
+  assert(!T.isNull() && "r-value conversion on typeless expression?");
 
-    // We don't want to throw lvalue-to-rvalue casts on top of
-    // expressions of certain types in C++.
-    if (getLangOptions().CPlusPlus &&
-        (E->getType() == Context.OverloadTy ||
-         T->isDependentType() ||
-         T->isRecordType()))
+  // Create a load out of an ObjCProperty l-value, if necessary.
+  if (E->getObjectKind() == OK_ObjCProperty) {
+    ConvertPropertyForRValue(E);
+    if (!E->isGLValue())
       return;
-
-    // The C standard is actually really unclear on this point, and
-    // DR106 tells us what the result should be but not why.  It's
-    // generally best to say that void just doesn't undergo
-    // lvalue-to-rvalue at all.
-    if (T->isVoidType())
-      return;
-
-    // C++ [conv.lval]p1:
-    //   [...] If T is a non-class type, the type of the prvalue is the
-    //   cv-unqualified version of T. Otherwise, the type of the
-    //   rvalue is T.
-    //
-    // C99 6.3.2.1p2:
-    //   If the lvalue has qualified type, the value has the unqualified
-    //   version of the type of the lvalue; otherwise, the value has the
-    //   type of the lvalue.    
-    if (T.hasQualifiers())
-      T = T.getUnqualifiedType();
-
-    E = ImplicitCastExpr::Create(Context, T, CK_LValueToRValue,
-                                 E, 0, VK_RValue);
   }
+
+  // We don't want to throw lvalue-to-rvalue casts on top of
+  // expressions of certain types in C++.
+  if (getLangOptions().CPlusPlus &&
+      (E->getType() == Context.OverloadTy ||
+       T->isDependentType() ||
+       T->isRecordType()))
+    return;
+
+  // The C standard is actually really unclear on this point, and
+  // DR106 tells us what the result should be but not why.  It's
+  // generally best to say that void types just doesn't undergo
+  // lvalue-to-rvalue at all.  Note that expressions of unqualified
+  // 'void' type are never l-values, but qualified void can be.
+  if (T->isVoidType())
+    return;
+
+  // C++ [conv.lval]p1:
+  //   [...] If T is a non-class type, the type of the prvalue is the
+  //   cv-unqualified version of T. Otherwise, the type of the
+  //   rvalue is T.
+  //
+  // C99 6.3.2.1p2:
+  //   If the lvalue has qualified type, the value has the unqualified
+  //   version of the type of the lvalue; otherwise, the value has the
+  //   type of the lvalue.    
+  if (T.hasQualifiers())
+    T = T.getUnqualifiedType();
+
+  E = ImplicitCastExpr::Create(Context, T, CK_LValueToRValue,
+                               E, 0, VK_RValue);
+}
+
+void Sema::DefaultFunctionArrayLvalueConversion(Expr *&E) {
+  DefaultFunctionArrayConversion(E);
+  DefaultLvalueConversion(E);
 }
 
 
@@ -1722,10 +1726,13 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       if (SelfExpr.isInvalid())
         return ExprError();
 
+      Expr *SelfE = SelfExpr.take();
+      DefaultLvalueConversion(SelfE);
+
       MarkDeclarationReferenced(Loc, IV);
       return Owned(new (Context)
                    ObjCIvarRefExpr(IV, IV->getType(), Loc,
-                                   SelfExpr.takeAs<Expr>(), true, true));
+                                   SelfE, true, true));
     }
   } else if (CurMethod->isInstanceMethod()) {
     // We should warn if a local variable hides an ivar.
@@ -2672,7 +2679,7 @@ static QualType CheckRealImagOperand(Sema &S, Expr *&V, SourceLocation Loc,
 
   // _Real and _Imag are only l-values for normal l-values.
   if (V->getObjectKind() != OK_Ordinary)
-    S.DefaultFunctionArrayLvalueConversion(V);
+    S.DefaultLvalueConversion(V);
 
   // These operators return the element type of a complex type.
   if (const ComplexType *CT = V->getType()->getAs<ComplexType>())
@@ -3712,6 +3719,8 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
               << IV->getDeclName();
         }
 
+        if (IsArrow) DefaultLvalueConversion(BaseExpr);
+
         return Owned(new (Context) ObjCIvarRefExpr(IV, IV->getType(),
                                                    MemberLoc, BaseExpr,
                                                    IsArrow));
@@ -3725,7 +3734,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   if (!IsArrow && (BaseType->isObjCIdType() ||
                    BaseType->isObjCQualifiedIdType())) {
     // This actually uses the base as an r-value.
-    DefaultFunctionArrayLvalueConversion(BaseExpr);
+    DefaultLvalueConversion(BaseExpr);
     assert(Context.hasSameUnqualifiedType(BaseType, BaseExpr->getType()));
 
     const ObjCObjectPointerType *QIdTy = BaseType->getAs<ObjCObjectPointerType>();
@@ -3779,7 +3788,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     if (const ObjCObjectPointerType *OPT =
           BaseType->getAsObjCInterfacePointerType()) {
       // This actually uses the base as an r-value.
-      DefaultFunctionArrayLvalueConversion(BaseExpr);      
+      DefaultLvalueConversion(BaseExpr);      
       return HandleExprPropertyRefExpr(OPT, BaseExpr, MemberName, MemberLoc,
                                        SourceLocation(), QualType(), false);
     }

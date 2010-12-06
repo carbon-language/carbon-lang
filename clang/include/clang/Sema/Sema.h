@@ -4003,6 +4003,12 @@ public:
   // lvalue-to-rvalue conversion.
   void DefaultFunctionArrayLvalueConversion(Expr *&expr);
 
+  // DefaultLvalueConversion - performs lvalue-to-rvalue conversion on
+  // the operand.  This is DefaultFunctionArrayLvalueConversion,
+  // except that it assumes the operand isn't of function or array
+  // type.
+  void DefaultLvalueConversion(Expr *&expr);
+
   // DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
   // do not have a prototype. Integer promotions are performed on each
   // argument, and arguments that have type float are promoted to double.
