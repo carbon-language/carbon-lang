@@ -143,6 +143,11 @@ def CondCodeOperand : AsmOperandClass {
   let SuperClasses = [];
 }
 
+def CCOutOperand : AsmOperandClass {
+  let Name = "CCOut";
+  let SuperClasses = [];
+}
+
 // ARM Predicate operand. Default to 14 = always (AL). Second part is CC
 // register whose default is 0 (no register).
 def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
@@ -155,12 +160,14 @@ def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
 def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
   let EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
+  let ParserMatchClass = CCOutOperand;
 }
 
 // Same as cc_out except it defaults to setting CPSR.
 def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
   let EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
+  let ParserMatchClass = CCOutOperand;
 }
 
 // ARM special operands for disassembly only.

@@ -103,6 +103,7 @@ namespace {
 class ARMOperand : public MCParsedAsmOperand {
   enum KindTy {
     CondCode,
+    CCOut,
     Immediate,
     Memory,
     Register,
@@ -162,6 +163,7 @@ public:
     case Token:
       Tok = o.Tok;
       break;
+    case CCOut:
     case Register:
       Reg = o.Reg;
       break;
@@ -195,7 +197,7 @@ public:
   }
 
   unsigned getReg() const {
-    assert(Kind == Register && "Invalid access!");
+    assert(Kind == Register || Kind == CCOut && "Invalid access!");
     return Reg.RegNum;
   }
 
@@ -211,6 +213,7 @@ public:
   }
 
   bool isCondCode() const { return Kind == CondCode; }
+  bool isCCOut() const { return Kind == CCOut; }
   bool isImm() const { return Kind == Immediate; }
   bool isReg() const { return Kind == Register; }
   bool isRegList() const { return Kind == RegisterList; }
@@ -262,6 +265,11 @@ public:
     Inst.addOperand(MCOperand::CreateImm(unsigned(getCondCode())));
     // FIXME: What belongs here?
     Inst.addOperand(MCOperand::CreateReg(0));
+  }
+
+  void addCCOutOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(getReg()));
   }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
@@ -336,6 +344,14 @@ public:
   static ARMOperand *CreateCondCode(ARMCC::CondCodes CC, SMLoc S) {
     ARMOperand *Op = new ARMOperand(CondCode);
     Op->CC.Val = CC;
+    Op->StartLoc = S;
+    Op->EndLoc = S;
+    return Op;
+  }
+
+  static ARMOperand *CreateCCOut(unsigned RegNum, SMLoc S) {
+    ARMOperand *Op = new ARMOperand(CCOut);
+    Op->Reg.RegNum = RegNum;
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
@@ -417,6 +433,9 @@ void ARMOperand::dump(raw_ostream &OS) const {
   switch (Kind) {
   case CondCode:
     OS << ARMCondCodeToString(getCondCode());
+    break;
+  case CCOut:
+    OS << "<ccout " << getReg() << ">";
     break;
   case Immediate:
     getImm()->print(OS);
