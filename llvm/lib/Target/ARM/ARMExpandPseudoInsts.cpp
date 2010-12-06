@@ -717,7 +717,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         NewLdOpc = ARM::t2LDRSBi12;
       else
         llvm_unreachable("Not a known opcode?");
-            
+
       unsigned DstReg = MI.getOperand(0).getReg();
       bool DstIsDead = MI.getOperand(0).isDead();
       MachineInstrBuilder MIB =
