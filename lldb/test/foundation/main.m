@@ -35,6 +35,8 @@
 
 - (NSString *)description
 {
+    // Set a breakpoint on this function and test expressions:
+    // expression (char *)sel_getName(_cmd)
     if (self.descriptionPauses)
     {
         printf ("\nAbout to sleep.\n");
@@ -45,25 +47,86 @@
 }
 @end
 
+int
+Test_Selector ()
+{
+    SEL sel = @selector(length);
+    printf("sel = %p\n", sel);
+    // Expressions to test here: 
+    // expression (char *)sel_getName(sel)
+    //      The expression above should return "sel" as it should be just
+    //      a uniqued C string pointer. We were seeing the result pointer being
+    //      truncated with recent LLDBs.
+    return 0;
+}
+
+int
+Test_NSString (const char *program)
+{
+    NSString *str = [NSString stringWithFormat:@"Hello from '%s'", program];
+    NSLog(@"NSString instance: %@", str);
+    printf("str = '%s'\n", [str cStringUsingEncoding: [NSString defaultCStringEncoding]]);
+    printf("[str length] = %zu\n", (size_t)[str length]);
+    printf("[str description] = %s\n", [[str description] UTF8String]);
+    id str_id = str;
+    // Expressions to test here:
+    // expression (char *)sel_getName(sel)
+    // expression [str length]
+    // expression [id length]
+    // expression [str description]
+    // expression [id description]
+    // expression str.length
+    // expression str.description
+    // expression str = @"new"
+    // expression str = [NSString stringWithFormat: @"%cew", 'N']
+    return 0;
+}
+
+void
+Test_MyString (const char *program)
+{
+    NSString *str = [NSString stringWithFormat:@"Hello from '%s'", program];
+    MyString *my = [[MyString alloc] initWithNSString:str];
+    NSLog(@"MyString instance: %@", [my description]);
+    my.descriptionPauses = YES;
+    NSLog(@"MyString instance: %@", [my description]);
+}
+
+int
+Test_NSArray ()
+{
+    NSArray *array1 = [NSArray arrayWithObjects: @"array1 object1", @"array1 object2", @"array1 object3", nil];
+    NSArray *array2 = [NSArray arrayWithObjects: array1, @"array2 object2", @"array2 object3", nil];
+    // Expressions to test here:
+    // expression [array1 count]
+    // expression array1.count
+    // expression [array2 count]
+    // expression array2.count
+    id obj;
+    // After each object at index call, use expression and validate object
+    obj = [array1 objectAtIndex: 0];
+    obj = [array1 objectAtIndex: 1];
+    obj = [array1 objectAtIndex: 2];
+
+    obj = [array2 objectAtIndex: 0];
+    obj = [array2 objectAtIndex: 1];
+    obj = [array2 objectAtIndex: 2];
+
+    return 0;
+}
+
+
 int main (int argc, char const *argv[])
 {
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-    NSString *str = [NSString stringWithFormat:@"Hello from '%s'", argv[0]];
-    NSLog(@"NSString instance: %@", str);
+    Test_Selector();
+    Test_NSArray ();
+    Test_NSString (argv[0]);
+    Test_MyString (argv[0]);
 
-    MyString *my = [[MyString alloc] initWithNSString:str];
-    NSLog(@"MyString instance: %@", [my description]);
-
-    my.descriptionPauses = YES;
-
-    id str_id = str; // Set break point at this line.
-    SEL sel = @selector(length);
-    BOOL responds = [str respondsToSelector:sel];
     printf("sizeof(id) = %zu\n", sizeof(id));
     printf("sizeof(Class) = %zu\n", sizeof(Class));
     printf("sizeof(SEL) = %zu\n", sizeof(SEL));
-    printf("[str length] = %zu\n", (size_t)[str length]);
-    printf("str = '%s'\n", [str cStringUsingEncoding: [NSString defaultCStringEncoding]]);
 
     [pool release];
     return 0;
