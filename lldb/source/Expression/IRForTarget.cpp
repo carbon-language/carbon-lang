@@ -964,6 +964,10 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
             if (!fun)
                 return false;
         }
+        else if (const_expr && const_expr->getOpcode() == Instruction::IntToPtr)
+        {
+            return true; // already resolved
+        }
         else
         {
             return false;

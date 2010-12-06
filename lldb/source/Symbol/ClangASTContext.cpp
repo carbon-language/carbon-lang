@@ -677,7 +677,7 @@ ClangASTContext::GetBuiltInType_bool()
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_id()
 {
-    return getASTContext()->ObjCBuiltinIdTy.getAsOpaquePtr();
+    return getASTContext()->getPointerType(getASTContext()->ObjCBuiltinIdTy).getAsOpaquePtr();
 }
 
 clang_type_t
@@ -689,7 +689,7 @@ ClangASTContext::GetBuiltInType_objc_Class()
 clang_type_t
 ClangASTContext::GetBuiltInType_objc_selector()
 {
-    return getASTContext()->ObjCBuiltinSelTy.getAsOpaquePtr();
+    return getASTContext()->getPointerType(getASTContext()->ObjCBuiltinSelTy).getAsOpaquePtr();
 }
 
 clang_type_t
