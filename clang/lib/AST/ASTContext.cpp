@@ -1011,14 +1011,19 @@ void ASTContext::setObjCImplementation(ObjCCategoryDecl *CatD,
 /// \brief Get the copy initialization expression of VarDecl,or NULL if 
 /// none exists.
 Expr *ASTContext::getBlockVarCopyInits(const VarDecl*VD) {
+  assert(VD && "Passed null params");
+  assert(VD->hasAttr<BlocksAttr>() && 
+         "getBlockVarCopyInits - not __block var");
   llvm::DenseMap<const VarDecl*, Expr*>::iterator
-  I = BlockVarCopyInits.find(VD);
+    I = BlockVarCopyInits.find(VD);
   return (I != BlockVarCopyInits.end()) ? cast<Expr>(I->second) : 0;
 }
 
 /// \brief Set the copy inialization expression of a block var decl.
 void ASTContext::setBlockVarCopyInits(VarDecl*VD, Expr* Init) {
   assert(VD && Init && "Passed null params");
+  assert(VD->hasAttr<BlocksAttr>() && 
+         "setBlockVarCopyInits - not __block var");
   BlockVarCopyInits[VD] = Init;
 }
 
