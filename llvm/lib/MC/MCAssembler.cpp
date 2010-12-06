@@ -218,6 +218,7 @@ MCSectionData::MCSectionData() : Section(0) {}
 
 MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
   : Section(&_Section),
+    Ordinal(~UINT32_C(0)),
     Alignment(1),
     Address(~UINT64_C(0)),
     HasInstructions(false)

@@ -1285,7 +1285,7 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
 }
 
 static bool IsELFMetaDataSection(const MCSectionData &SD) {
-  return SD.getAddress() == ~UINT64_C(0) &&
+  return SD.getOrdinal() == ~UINT32_C(0) &&
     !SD.getSection().isVirtualSection();
 }
 

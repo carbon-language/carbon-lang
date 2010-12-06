@@ -476,8 +476,6 @@ public:
   unsigned getLayoutOrder() const { return LayoutOrder; }
   void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
-  uint64_t getAddress() const { return Address; }
-
   /// @name Fragment Access
   /// @{
 
