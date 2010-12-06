@@ -870,6 +870,9 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
             if (IsObjCSelectorRef(llvm_value_ptr))
                 return true;
             
+            if (!global_variable->hasExternalLinkage())
+                return true;
+            
             if (log)
                 log->Printf("Found global variable \"%s\" without metadata", global_variable->getName().str().c_str());
             return false;
