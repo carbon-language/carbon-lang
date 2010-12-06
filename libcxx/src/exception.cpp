@@ -38,7 +38,7 @@ std::get_unexpected() throw()
 void
 std::unexpected()
 {
-    (*get_unexpected())();
+    (*std::get_unexpected())();
     // unexpected handler should not return
     std::terminate();
 }
@@ -62,7 +62,7 @@ std::terminate()
     try
     {
 #endif  // _LIBCPP_NO_EXCEPTIONS
-        (*get_terminate())();
+        (*std::get_terminate())();
         // handler should not return
         ::abort ();
 #ifndef _LIBCPP_NO_EXCEPTIONS
