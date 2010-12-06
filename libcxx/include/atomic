@@ -41,2077 +41,80 @@ template <class T> T kill_dependency(T y);
 #define ATOMIC_INT_LOCK_FREE unspecified
 #define ATOMIC_LONG_LOCK_FREE unspecified
 #define ATOMIC_LLONG_LOCK_FREE unspecified
-#define ATOMIC_ADDRESS_LOCK_FREE unspecified
 
 // flag type and operations
 
 typedef struct atomic_flag
 {
-    bool test_and_set(memory_order = memory_order_seq_cst) volatile;
-    bool test_and_set(memory_order = memory_order_seq_cst);
-    void clear(memory_order = memory_order_seq_cst) volatile;
-    void clear(memory_order = memory_order_seq_cst);
+    bool test_and_set(memory_order m = memory_order_seq_cst) volatile;
+    bool test_and_set(memory_order m = memory_order_seq_cst);
+    void clear(memory_order m = memory_order_seq_cst) volatile;
+    void clear(memory_order m = memory_order_seq_cst);
     atomic_flag() = default;
     atomic_flag(const atomic_flag&) = delete;
     atomic_flag& operator=(const atomic_flag&) = delete;
     atomic_flag& operator=(const atomic_flag&) volatile = delete;
 } atomic_flag;
 
-bool atomic_flag_test_and_set(volatile atomic_flag*);
-bool atomic_flag_test_and_set(atomic_flag*);
-bool atomic_flag_test_and_set_explicit(volatile atomic_flag*, memory_order);
-bool atomic_flag_test_and_set_explicit(atomic_flag*, memory_order);
-void atomic_flag_clear(volatile atomic_flag*);
-void atomic_flag_clear(atomic_flag*);
-void atomic_flag_clear_explicit(volatile atomic_flag*, memory_order);
-void atomic_flag_clear_explicit(atomic_flag*, memory_order);
+bool
+    atomic_flag_test_and_set(volatile atomic_flag* obj);
+
+bool
+    atomic_flag_test_and_set(atomic_flag* obj);
+
+bool
+    atomic_flag_test_and_set_explicit(volatile atomic_flag* obj,
+                                      memory_order m);
+
+bool
+    atomic_flag_test_and_set_explicit(atomic_flag* obj, memory_order m);
+
+void
+    atomic_flag_clear(volatile atomic_flag* obj);
+
+void
+    atomic_flag_clear(atomic_flag* obj);
+
+void
+    atomic_flag_clear_explicit(volatile atomic_flag* obj, memory_order m);
+
+void
+    atomic_flag_clear_explicit(atomic_flag* obj, memory_order m);
 
 #define ATOMIC_FLAG_INIT see below
 #define ATOMIC_VAR_INIT(value) see below
-
-// atomic_bool
-
-typedef struct atomic_bool
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(bool, memory_order = memory_order_seq_cst) volatile;
-    void store(bool, memory_order = memory_order_seq_cst);
-    bool load(memory_order = memory_order_seq_cst) const volatile;
-    bool load(memory_order = memory_order_seq_cst) const;
-    operator bool() const volatile;
-    operator bool() const;
-    bool exchange(bool, memory_order = memory_order_seq_cst) volatile;
-    bool exchange(bool, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(bool&, bool, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(bool&, bool, memory_order, memory_order);
-    bool compare_exchange_strong(bool&, bool, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(bool&, bool, memory_order, memory_order);
-    bool compare_exchange_weak(bool&, bool,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(bool&, bool,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(bool&, bool,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(bool&, bool,
-                                 memory_order = memory_order_seq_cst);
-    atomic_bool() = default;
-    constexpr atomic_bool(bool);
-    atomic_bool(const atomic_bool&) = delete;
-    atomic_bool& operator=(const atomic_bool&) = delete;
-    atomic_bool& operator=(const atomic_bool&) volatile = delete;
-    bool operator=(bool) volatile;
-    bool operator=(bool);
-} atomic_bool;
-
-bool atomic_is_lock_free(const volatile atomic_bool*);
-bool atomic_is_lock_free(const atomic_bool*);
-void atomic_init(volatile atomic_bool*, bool);
-void atomic_init(atomic_bool*, bool);
-void atomic_store(volatile atomic_bool*, bool);
-void atomic_store(atomic_bool*, bool);
-void atomic_store_explicit(volatile atomic_bool*, bool, memory_order);
-void atomic_store_explicit(atomic_bool*, bool, memory_order);
-bool atomic_load(const volatile atomic_bool*);
-bool atomic_load(const atomic_bool*);
-bool atomic_load_explicit(const volatile atomic_bool*, memory_order);
-bool atomic_load_explicit(const atomic_bool*, memory_order);
-bool atomic_exchange(volatile atomic_bool*, bool);
-bool atomic_exchange(atomic_bool*, bool);
-bool atomic_exchange_explicit(volatile atomic_bool*, bool, memory_order);
-bool atomic_exchange_explicit(atomic_bool*, bool, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_bool*, bool*, bool);
-bool atomic_compare_exchange_weak(atomic_bool*, bool*, bool);
-bool atomic_compare_exchange_strong(volatile atomic_bool*, bool*, bool);
-bool atomic_compare_exchange_strong(atomic_bool*, bool*, bool);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_bool*, bool*, bool,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_bool*, bool*, bool,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_bool*, bool*, bool,
-                                             memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_bool*, bool*, bool,
-                                             memory_order, memory_order);
-
-// atomic_char
-
-typedef struct atomic_char
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(char, memory_order = memory_order_seq_cst) volatile;
-    void store(char, memory_order = memory_order_seq_cst);
-    char load(memory_order = memory_order_seq_cst) const volatile;
-    char load(memory_order = memory_order_seq_cst) const;
-    operator char() const volatile;
-    operator char() const;
-    char exchange(char, memory_order = memory_order_seq_cst) volatile;
-    char exchange(char, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(char&, char, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(char&, char, memory_order, memory_order);
-    bool compare_exchange_strong(char&, char, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(char&, char, memory_order, memory_order);
-    bool compare_exchange_weak(char&, char,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(char&, char,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(char&, char,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(char&, char,
-                                 memory_order = memory_order_seq_cst);
-    char fetch_add(char, memory_order = memory_order_seq_cst) volatile;
-    char fetch_add(char, memory_order = memory_order_seq_cst);
-    char fetch_sub(char, memory_order = memory_order_seq_cst) volatile;
-    char fetch_sub(char, memory_order = memory_order_seq_cst);
-    char fetch_and(char, memory_order = memory_order_seq_cst) volatile;
-    char fetch_and(char, memory_order = memory_order_seq_cst);
-    char fetch_or(char, memory_order = memory_order_seq_cst) volatile;
-    char fetch_or(char, memory_order = memory_order_seq_cst);
-    char fetch_xor(char, memory_order = memory_order_seq_cst) volatile;
-    char fetch_xor(char, memory_order = memory_order_seq_cst);
-    atomic_char() = default;
-    constexpr atomic_char(char);
-    atomic_char(const atomic_char&) = delete;
-    atomic_char& operator=(const atomic_char&) = delete;
-    atomic_char& operator=(const atomic_char&) volatile = delete;
-    char operator=(char) volatile;
-    char operator=(char);
-    char operator++(int) volatile;
-    char operator++(int);
-    char operator--(int) volatile;
-    char operator--(int);
-    char operator++() volatile;
-    char operator++();
-    char operator--() volatile;
-    char operator--();
-    char operator+=(char) volatile;
-    char operator+=(char);
-    char operator-=(char) volatile;
-    char operator-=(char);
-    char operator&=(char) volatile;
-    char operator&=(char);
-    char operator|=(char) volatile;
-    char operator|=(char);
-    char operator^=(char) volatile;
-    char operator^=(char);
-} atomic_char;
-
-bool atomic_is_lock_free(const volatile atomic_char*);
-bool atomic_is_lock_free(const atomic_char*);
-void atomic_init(volatile atomic_char*, char);
-void atomic_init(atomic_char*, char);
-void atomic_store(volatile atomic_char*, char);
-void atomic_store(atomic_char*, char);
-void atomic_store_explicit(volatile atomic_char*, char, memory_order);
-void atomic_store_explicit(atomic_char*, char, memory_order);
-char atomic_load(const volatile atomic_char*);
-char atomic_load(const atomic_char*);
-char atomic_load_explicit(const volatile atomic_char*, memory_order);
-char atomic_load_explicit(const atomic_char*, memory_order);
-char atomic_exchange(volatile atomic_char*, char);
-char atomic_exchange(atomic_char*, char);
-char atomic_exchange_explicit(volatile atomic_char*, char, memory_order);
-char atomic_exchange_explicit(atomic_char*, char, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_char*, char*, char);
-bool atomic_compare_exchange_weak(atomic_char*, char*, char);
-bool atomic_compare_exchange_strong(volatile atomic_char*, char*, char);
-bool atomic_compare_exchange_strong(atomic_char*, char*, char);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_char*, char*, char,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_char*, char*, char,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_char*, char*, char,
-                                             memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_char*, char*, char,
-                                             memory_order, memory_order);
-char atomic_fetch_add(volatile atomic_char*, char);
-char atomic_fetch_add(atomic_char*, char);
-char atomic_fetch_add_explicit(volatile atomic_char*, char, memory_order);
-char atomic_fetch_add_explicit(atomic_char*, char, memory_order);
-char atomic_fetch_sub(volatile atomic_char*, char);
-char atomic_fetch_sub(atomic_char*, char);
-char atomic_fetch_sub_explicit(volatile atomic_char*, char, memory_order);
-char atomic_fetch_sub_explicit(atomic_char*, char, memory_order);
-char atomic_fetch_and(volatile atomic_char*, char);
-char atomic_fetch_and(atomic_char*, char);
-char atomic_fetch_and_explicit(volatile atomic_char*, char, memory_order);
-char atomic_fetch_and_explicit(atomic_char*, char, memory_order);
-char atomic_fetch_or(volatile atomic_char*, char);
-char atomic_fetch_or(atomic_char*, char);
-char atomic_fetch_or_explicit(volatile atomic_char*, char, memory_order);
-char atomic_fetch_or_explicit(atomic_char*, char, memory_order);
-char atomic_fetch_xor(volatile atomic_char*, char);
-char atomic_fetch_xor(atomic_char*, char);
-char atomic_fetch_xor_explicit(volatile atomic_char*, char, memory_order);
-char atomic_fetch_xor_explicit(atomic_char*, char, memory_order);
-
-// atomic_schar
-
-typedef struct atomic_schar
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(signed char, memory_order = memory_order_seq_cst) volatile;
-    void store(signed char, memory_order = memory_order_seq_cst);
-    signed char load(memory_order = memory_order_seq_cst) const volatile;
-    signed char load(memory_order = memory_order_seq_cst) const;
-    operator signed char() const volatile;
-    operator signed char() const;
-    signed char exchange(signed char,
-                         memory_order = memory_order_seq_cst) volatile;
-    signed char exchange(signed char, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(signed char&, signed char, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(signed char&, signed char, memory_order,
-                               memory_order);
-    bool compare_exchange_strong(signed char&, signed char, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(signed char&, signed char, memory_order,
-                                 memory_order);
-    bool compare_exchange_weak(signed char&, signed char,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(signed char&, signed char,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(signed char&, signed char,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(signed char&, signed char,
-                                 memory_order = memory_order_seq_cst);
-    signed char fetch_add(signed char,
-                          memory_order = memory_order_seq_cst) volatile;
-    signed char fetch_add(signed char, memory_order = memory_order_seq_cst);
-    signed char fetch_sub(signed char,
-                          memory_order = memory_order_seq_cst) volatile;
-    signed char fetch_sub(signed char, memory_order = memory_order_seq_cst);
-    signed char fetch_and(signed char,
-                          memory_order = memory_order_seq_cst) volatile;
-    signed char fetch_and(signed char, memory_order = memory_order_seq_cst);
-    signed char fetch_or(signed char,
-                         memory_order = memory_order_seq_cst) volatile;
-    signed char fetch_or(signed char, memory_order = memory_order_seq_cst);
-    signed char fetch_xor(signed char,
-                          memory_order = memory_order_seq_cst) volatile;
-    signed char fetch_xor(signed char, memory_order = memory_order_seq_cst);
-    atomic_schar() = default;
-    constexpr atomic_schar(signed char);
-    atomic_schar(const atomic_schar&) = delete;
-    atomic_schar& operator=(const atomic_schar&) = delete;
-    atomic_schar& operator=(const atomic_schar&) volatile = delete;
-    signed char operator=(signed char) volatile;
-    signed char operator=(signed char);
-    signed char operator++(int) volatile;
-    signed char operator++(int);
-    signed char operator--(int) volatile;
-    signed char operator--(int);
-    signed char operator++() volatile;
-    signed char operator++();
-    signed char operator--() volatile;
-    signed char operator--();
-    signed char operator+=(signed char) volatile;
-    signed char operator+=(signed char);
-    signed char operator-=(signed char) volatile;
-    signed char operator-=(signed char);
-    signed char operator&=(signed char) volatile;
-    signed char operator&=(signed char);
-    signed char operator|=(signed char) volatile;
-    signed char operator|=(signed char);
-    signed char operator^=(signed char) volatile;
-    signed char operator^=(signed char);
-} atomic_schar;
-
-bool atomic_is_lock_free(const volatile atomic_schar*);
-bool atomic_is_lock_free(const atomic_schar*);
-void atomic_init(volatile atomic_schar*, signed char);
-void atomic_init(atomic_schar*, signed char);
-void atomic_store(volatile atomic_schar*, signed char);
-void atomic_store(atomic_schar*, signed char);
-void atomic_store_explicit(volatile atomic_schar*, signed char, memory_order);
-void atomic_store_explicit(atomic_schar*, signed char, memory_order);
-signed char atomic_load(const volatile atomic_schar*);
-signed char atomic_load(const atomic_schar*);
-signed char atomic_load_explicit(const volatile atomic_schar*, memory_order);
-signed char atomic_load_explicit(const atomic_schar*, memory_order);
-signed char atomic_exchange(volatile atomic_schar*, signed char);
-signed char atomic_exchange(atomic_schar*, signed char);
-signed char atomic_exchange_explicit(volatile atomic_schar*, signed char,
-                                     memory_order);
-signed char atomic_exchange_explicit(atomic_schar*, signed char, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_schar*, signed char*,
-                                  signed char);
-bool atomic_compare_exchange_weak(atomic_schar*, signed char*, signed char);
-bool atomic_compare_exchange_strong(volatile atomic_schar*, signed char*,
-                                    signed char);
-bool atomic_compare_exchange_strong(atomic_schar*, signed char*, signed char);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_schar*, signed char*,
-                                           signed char, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_schar*, signed char*,
-                                           signed char, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_schar*,
-                                             signed char*, signed char,
-                                             memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_schar*, signed char*,
-                                             signed char, memory_order, memory_order);
-signed char atomic_fetch_add(volatile atomic_schar*, signed char);
-signed char atomic_fetch_add(atomic_schar*, signed char);
-signed char atomic_fetch_add_explicit(volatile atomic_schar*, signed char,
-                                      memory_order);
-signed char atomic_fetch_add_explicit(atomic_schar*, signed char, memory_order);
-signed char atomic_fetch_sub(volatile atomic_schar*, signed char);
-signed char atomic_fetch_sub(atomic_schar*, signed char);
-signed char atomic_fetch_sub_explicit(volatile atomic_schar*, signed char,
-                                      memory_order);
-signed char atomic_fetch_sub_explicit(atomic_schar*, signed char, memory_order);
-signed char atomic_fetch_and(volatile atomic_schar*, signed char);
-signed char atomic_fetch_and(atomic_schar*, signed char);
-signed char atomic_fetch_and_explicit(volatile atomic_schar*, signed char,
-                                      memory_order);
-signed char atomic_fetch_and_explicit(atomic_schar*, signed char, memory_order);
-signed char atomic_fetch_or(volatile atomic_schar*, signed char);
-signed char atomic_fetch_or(atomic_schar*, signed char);
-signed char atomic_fetch_or_explicit(volatile atomic_schar*, signed char,
-                                     memory_order);
-signed char atomic_fetch_or_explicit(atomic_schar*, signed char, memory_order);
-signed char atomic_fetch_xor(volatile atomic_schar*, signed char);
-signed char atomic_fetch_xor(atomic_schar*, signed char);
-signed char atomic_fetch_xor_explicit(volatile atomic_schar*, signed char,
-                                      memory_order);
-signed char atomic_fetch_xor_explicit(atomic_schar*, signed char, memory_order);
-
-// atomic_uchar
-
-typedef struct atomic_uchar
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(unsigned char, memory_order = memory_order_seq_cst) volatile;
-    void store(unsigned char, memory_order = memory_order_seq_cst);
-    unsigned char load(memory_order = memory_order_seq_cst) const volatile;
-    unsigned char load(memory_order = memory_order_seq_cst) const;
-    operator unsigned char() const volatile;
-    operator unsigned char() const;
-    unsigned char exchange(unsigned char,
-                           memory_order = memory_order_seq_cst) volatile;
-    unsigned char exchange(unsigned char, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(unsigned char&, unsigned char, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(unsigned char&, unsigned char, memory_order,
-                               memory_order);
-    bool compare_exchange_strong(unsigned char&, unsigned char, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(unsigned char&, unsigned char, memory_order,
-                                 memory_order);
-    bool compare_exchange_weak(unsigned char&, unsigned char,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(unsigned char&, unsigned char,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(unsigned char&, unsigned char,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(unsigned char&, unsigned char,
-                                 memory_order = memory_order_seq_cst);
-    unsigned char fetch_add(unsigned char,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned char fetch_add(unsigned char, memory_order = memory_order_seq_cst);
-    unsigned char fetch_sub(unsigned char,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned char fetch_sub(unsigned char, memory_order = memory_order_seq_cst);
-    unsigned char fetch_and(unsigned char,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned char fetch_and(unsigned char, memory_order = memory_order_seq_cst);
-    unsigned char fetch_or(unsigned char,
-                           memory_order = memory_order_seq_cst) volatile;
-    unsigned char fetch_or(unsigned char, memory_order = memory_order_seq_cst);
-    unsigned char fetch_xor(unsigned char,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned char fetch_xor(unsigned char, memory_order = memory_order_seq_cst);
-    atomic_uchar() = default;
-    constexpr atomic_uchar(unsigned char);
-    atomic_uchar(const atomic_uchar&) = delete;
-    atomic_uchar& operator=(const atomic_uchar&) = delete;
-    atomic_uchar& operator=(const atomic_uchar&) volatile = delete;
-    unsigned char operator=(unsigned char) volatile;
-    unsigned char operator=(unsigned char);
-    unsigned char operator++(int) volatile;
-    unsigned char operator++(int);
-    unsigned char operator--(int) volatile;
-    unsigned char operator--(int);
-    unsigned char operator++() volatile;
-    unsigned char operator++();
-    unsigned char operator--() volatile;
-    unsigned char operator--();
-    unsigned char operator+=(unsigned char) volatile;
-    unsigned char operator+=(unsigned char);
-    unsigned char operator-=(unsigned char) volatile;
-    unsigned char operator-=(unsigned char);
-    unsigned char operator&=(unsigned char) volatile;
-    unsigned char operator&=(unsigned char);
-    unsigned char operator|=(unsigned char) volatile;
-    unsigned char operator|=(unsigned char);
-    unsigned char operator^=(unsigned char) volatile;
-    unsigned char operator^=(unsigned char);
-} atomic_uchar;
-
-bool atomic_is_lock_free(const volatile atomic_uchar*);
-bool atomic_is_lock_free(const atomic_uchar*);
-void atomic_init(volatile atomic_uchar*, unsigned char);
-void atomic_init(atomic_uchar*, unsigned char);
-void atomic_store(volatile atomic_uchar*, unsigned char);
-void atomic_store(atomic_uchar*, unsigned char);
-void atomic_store_explicit(volatile atomic_uchar*, unsigned char, memory_order);
-void atomic_store_explicit(atomic_uchar*, unsigned char, memory_order);
-unsigned char atomic_load(const volatile atomic_uchar*);
-unsigned char atomic_load(const atomic_uchar*);
-unsigned char atomic_load_explicit(const volatile atomic_uchar*, memory_order);
-unsigned char atomic_load_explicit(const atomic_uchar*, memory_order);
-unsigned char atomic_exchange(volatile atomic_uchar*, unsigned char);
-unsigned char atomic_exchange(atomic_uchar*, unsigned char);
-unsigned char atomic_exchange_explicit(volatile atomic_uchar*, unsigned char,
-                                       memory_order);
-unsigned char atomic_exchange_explicit(atomic_uchar*, unsigned char,
-                                       memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_uchar*, unsigned char*,
-                                  unsigned char);
-bool atomic_compare_exchange_weak(atomic_uchar*, unsigned char*, unsigned char);
-bool atomic_compare_exchange_strong(volatile atomic_uchar*, unsigned char*,
-                                    unsigned char);
-bool atomic_compare_exchange_strong(atomic_uchar*, unsigned char*,
-                                    unsigned char);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_uchar*,
-                                           unsigned char*, unsigned char,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_uchar*, unsigned char*,
-                                           unsigned char, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_uchar*,
-                                             unsigned char*, unsigned char,
-                                             memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_uchar*, unsigned char*,
-                                             unsigned char, memory_order,
-                                             memory_order);
-unsigned char atomic_fetch_add(volatile atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_add(atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_add_explicit(volatile atomic_uchar*, unsigned char,
-                                        memory_order);
-unsigned char atomic_fetch_add_explicit(atomic_uchar*, unsigned char,
-                                        memory_order);
-unsigned char atomic_fetch_sub(volatile atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_sub(atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_sub_explicit(volatile atomic_uchar*, unsigned char,
-                                        memory_order);
-unsigned char atomic_fetch_sub_explicit(atomic_uchar*, unsigned char,
-                                        memory_order);
-unsigned char atomic_fetch_and(volatile atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_and(atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_and_explicit(volatile atomic_uchar*, unsigned char,
-                                        memory_order);
-unsigned char atomic_fetch_and_explicit(atomic_uchar*, unsigned char,
-                                        memory_order);
-unsigned char atomic_fetch_or(volatile atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_or(atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_or_explicit(volatile atomic_uchar*, unsigned char,
-                                       memory_order);
-unsigned char atomic_fetch_or_explicit(atomic_uchar*, unsigned char,
-                                       memory_order);
-unsigned char atomic_fetch_xor(volatile atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_xor(atomic_uchar*, unsigned char);
-unsigned char atomic_fetch_xor_explicit(volatile atomic_uchar*, unsigned char,
-                                        memory_order);
-unsigned char atomic_fetch_xor_explicit(atomic_uchar*, unsigned char,
-                                        memory_order);
-
-// atomic_short
-
-typedef struct atomic_short
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(short, memory_order = memory_order_seq_cst) volatile;
-    void store(short, memory_order = memory_order_seq_cst);
-    short load(memory_order = memory_order_seq_cst) const volatile;
-    short load(memory_order = memory_order_seq_cst) const;
-    operator short() const volatile;
-    operator short() const;
-    short exchange(short, memory_order = memory_order_seq_cst) volatile;
-    short exchange(short, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(short&, short, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(short&, short, memory_order, memory_order);
-    bool compare_exchange_strong(short&, short, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(short&, short, memory_order, memory_order);
-    bool compare_exchange_weak(short&, short,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(short&, short,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(short&, short,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(short&, short,
-                                 memory_order = memory_order_seq_cst);
-    short fetch_add(short, memory_order = memory_order_seq_cst) volatile;
-    short fetch_add(short, memory_order = memory_order_seq_cst);
-    short fetch_sub(short, memory_order = memory_order_seq_cst) volatile;
-    short fetch_sub(short, memory_order = memory_order_seq_cst);
-    short fetch_and(short, memory_order = memory_order_seq_cst) volatile;
-    short fetch_and(short, memory_order = memory_order_seq_cst);
-    short fetch_or(short, memory_order = memory_order_seq_cst) volatile;
-    short fetch_or(short, memory_order = memory_order_seq_cst);
-    short fetch_xor(short, memory_order = memory_order_seq_cst) volatile;
-    short fetch_xor(short, memory_order = memory_order_seq_cst);
-    atomic_short() = default;
-    constexpr atomic_short(short);
-    atomic_short(const atomic_short&) = delete;
-    atomic_short& operator=(const atomic_short&) = delete;
-    atomic_short& operator=(const atomic_short&) volatile = delete;
-    short operator=(short) volatile;
-    short operator=(short);
-    short operator++(int) volatile;
-    short operator++(int);
-    short operator--(int) volatile;
-    short operator--(int);
-    short operator++() volatile;
-    short operator++();
-    short operator--() volatile;
-    short operator--();
-    short operator+=(short) volatile;
-    short operator+=(short);
-    short operator-=(short) volatile;
-    short operator-=(short);
-    short operator&=(short) volatile;
-    short operator&=(short);
-    short operator|=(short) volatile;
-    short operator|=(short);
-    short operator^=(short) volatile;
-    short operator^=(short);
-} atomic_short;
-
-bool atomic_is_lock_free(const volatile atomic_short*);
-bool atomic_is_lock_free(const atomic_short*);
-void atomic_init(volatile atomic_short*, short);
-void atomic_init(atomic_short*, short);
-void atomic_store(volatile atomic_short*, short);
-void atomic_store(atomic_short*, short);
-void atomic_store_explicit(volatile atomic_short*, short, memory_order);
-void atomic_store_explicit(atomic_short*, short, memory_order);
-short atomic_load(const volatile atomic_short*);
-short atomic_load(const atomic_short*);
-short atomic_load_explicit(const volatile atomic_short*, memory_order);
-short atomic_load_explicit(const atomic_short*, memory_order);
-short atomic_exchange(volatile atomic_short*, short);
-short atomic_exchange(atomic_short*, short);
-short atomic_exchange_explicit(volatile atomic_short*, short, memory_order);
-short atomic_exchange_explicit(atomic_short*, short, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_short*, short*, short);
-bool atomic_compare_exchange_weak(atomic_short*, short*, short);
-bool atomic_compare_exchange_strong(volatile atomic_short*, short*, short);
-bool atomic_compare_exchange_strong(atomic_short*, short*, short);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_short*, short*,
-                                           short, memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_short*, short*, short,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_short*, short*,
-                                             short, memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_short*, short*, short,
-                                             memory_order, memory_order);
-short atomic_fetch_add(volatile atomic_short*, short);
-short atomic_fetch_add(atomic_short*, short);
-short atomic_fetch_add_explicit(volatile atomic_short*, short, memory_order);
-short atomic_fetch_add_explicit(atomic_short*, short, memory_order);
-short atomic_fetch_sub(volatile atomic_short*, short);
-short atomic_fetch_sub(atomic_short*, short);
-short atomic_fetch_sub_explicit(volatile atomic_short*, short, memory_order);
-short atomic_fetch_sub_explicit(atomic_short*, short, memory_order);
-short atomic_fetch_and(volatile atomic_short*, short);
-short atomic_fetch_and(atomic_short*, short);
-short atomic_fetch_and_explicit(volatile atomic_short*, short, memory_order);
-short atomic_fetch_and_explicit(atomic_short*, short, memory_order);
-short atomic_fetch_or(volatile atomic_short*, short);
-short atomic_fetch_or(atomic_short*, short);
-short atomic_fetch_or_explicit(volatile atomic_short*, short, memory_order);
-short atomic_fetch_or_explicit(atomic_short*, short, memory_order);
-short atomic_fetch_xor(volatile atomic_short*, short);
-short atomic_fetch_xor(atomic_short*, short);
-short atomic_fetch_xor_explicit(volatile atomic_short*, short, memory_order);
-short atomic_fetch_xor_explicit(atomic_short*, short, memory_order);
-
-// atomic_ushort
-
-typedef struct atomic_ushort
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(unsigned short, memory_order = memory_order_seq_cst) volatile;
-    void store(unsigned short, memory_order = memory_order_seq_cst);
-    unsigned short load(memory_order = memory_order_seq_cst) const volatile;
-    unsigned short load(memory_order = memory_order_seq_cst) const;
-    operator unsigned short() const volatile;
-    operator unsigned short() const;
-    unsigned short exchange(unsigned short,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned short exchange(unsigned short,
-                            memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(unsigned short&, unsigned short, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(unsigned short&, unsigned short, memory_order,
-                               memory_order);
-    bool compare_exchange_strong(unsigned short&, unsigned short, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(unsigned short&, unsigned short, memory_order,
-                                 memory_order);
-    bool compare_exchange_weak(unsigned short&, unsigned short,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(unsigned short&, unsigned short,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(unsigned short&, unsigned short,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(unsigned short&, unsigned short,
-                                 memory_order = memory_order_seq_cst);
-    unsigned short fetch_add(unsigned short,
-                             memory_order = memory_order_seq_cst) volatile;
-    unsigned short fetch_add(unsigned short,
-                             memory_order = memory_order_seq_cst);
-    unsigned short fetch_sub(unsigned short,
-                             memory_order = memory_order_seq_cst) volatile;
-    unsigned short fetch_sub(unsigned short,
-                             memory_order = memory_order_seq_cst);
-    unsigned short fetch_and(unsigned short,
-                             memory_order = memory_order_seq_cst) volatile;
-    unsigned short fetch_and(unsigned short,
-                             memory_order = memory_order_seq_cst);
-    unsigned short fetch_or(unsigned short,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned short fetch_or(unsigned short,
-                            memory_order = memory_order_seq_cst);
-    unsigned short fetch_xor(unsigned short,
-                             memory_order = memory_order_seq_cst) volatile;
-    unsigned short fetch_xor(unsigned short,
-                             memory_order = memory_order_seq_cst);
-    atomic_ushort() = default;
-    constexpr atomic_ushort(unsigned short);
-    atomic_ushort(const atomic_ushort&) = delete;
-    atomic_ushort& operator=(const atomic_ushort&) = delete;
-    atomic_ushort& operator=(const atomic_ushort&) volatile = delete;
-    unsigned short operator=(unsigned short) volatile;
-    unsigned short operator=(unsigned short);
-    unsigned short operator++(int) volatile;
-    unsigned short operator++(int);
-    unsigned short operator--(int) volatile;
-    unsigned short operator--(int);
-    unsigned short operator++() volatile;
-    unsigned short operator++();
-    unsigned short operator--() volatile;
-    unsigned short operator--();
-    unsigned short operator+=(unsigned short) volatile;
-    unsigned short operator+=(unsigned short);
-    unsigned short operator-=(unsigned short) volatile;
-    unsigned short operator-=(unsigned short);
-    unsigned short operator&=(unsigned short) volatile;
-    unsigned short operator&=(unsigned short);
-    unsigned short operator|=(unsigned short) volatile;
-    unsigned short operator|=(unsigned short);
-    unsigned short operator^=(unsigned short) volatile;
-    unsigned short operator^=(unsigned short);
-} atomic_ushort;
-
-bool atomic_is_lock_free(const volatile atomic_ushort*);
-bool atomic_is_lock_free(const atomic_ushort*);
-void atomic_init(volatile atomic_ushort*, unsigned short);
-void atomic_init(atomic_ushort*, unsigned short);
-void atomic_store(volatile atomic_ushort*, unsigned short);
-void atomic_store(atomic_ushort*, unsigned short);
-void atomic_store_explicit(volatile atomic_ushort*, unsigned short,
-                           memory_order);
-void atomic_store_explicit(atomic_ushort*, unsigned short, memory_order);
-unsigned short atomic_load(const volatile atomic_ushort*);
-unsigned short atomic_load(const atomic_ushort*);
-unsigned short atomic_load_explicit(const volatile atomic_ushort*,
-                                    memory_order);
-unsigned short atomic_load_explicit(const atomic_ushort*, memory_order);
-unsigned short atomic_exchange(volatile atomic_ushort*, unsigned short);
-unsigned short atomic_exchange(atomic_ushort*, unsigned short);
-unsigned short atomic_exchange_explicit(volatile atomic_ushort*, unsigned short,
-                                        memory_order);
-unsigned short atomic_exchange_explicit(atomic_ushort*, unsigned short,
-                                        memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_ushort*, unsigned short*,
-                                  unsigned short);
-bool atomic_compare_exchange_weak(atomic_ushort*, unsigned short*,
-                                  unsigned short);
-bool atomic_compare_exchange_strong(volatile atomic_ushort*, unsigned short*,
-                                    unsigned short);
-bool atomic_compare_exchange_strong(atomic_ushort*, unsigned short*,
-                                    unsigned short);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_ushort*,
-                                           unsigned short*, unsigned short,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_ushort*, unsigned short*,
-                                           unsigned short, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_ushort*,
-                                             unsigned short*, unsigned short,
-                                             memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_ushort*, unsigned short*,
-                                             unsigned short, memory_order,
-                                             memory_order);
-unsigned short atomic_fetch_add(volatile atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_add(atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_add_explicit(volatile atomic_ushort*,
-                                         unsigned short, memory_order);
-unsigned short atomic_fetch_add_explicit(atomic_ushort*, unsigned short,
-                                         memory_order);
-unsigned short atomic_fetch_sub(volatile atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_sub(atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_sub_explicit(volatile atomic_ushort*,
-                                         unsigned short, memory_order);
-unsigned short atomic_fetch_sub_explicit(atomic_ushort*, unsigned short,
-                                         memory_order);
-unsigned short atomic_fetch_and(volatile atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_and(atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_and_explicit(volatile atomic_ushort*,
-                                         unsigned short, memory_order);
-unsigned short atomic_fetch_and_explicit(atomic_ushort*, unsigned short,
-                                         memory_order);
-unsigned short atomic_fetch_or(volatile atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_or(atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_or_explicit(volatile atomic_ushort*, unsigned short,
-                                        memory_order);
-unsigned short atomic_fetch_or_explicit(atomic_ushort*, unsigned short,
-                                        memory_order);
-unsigned short atomic_fetch_xor(volatile atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_xor(atomic_ushort*, unsigned short);
-unsigned short atomic_fetch_xor_explicit(volatile atomic_ushort*,
-                                         unsigned short, memory_order);
-unsigned short atomic_fetch_xor_explicit(atomic_ushort*, unsigned short,
-                                         memory_order);
-
-// atomic_int
-
-typedef struct atomic_int
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(int, memory_order = memory_order_seq_cst) volatile;
-    void store(int, memory_order = memory_order_seq_cst);
-    int load(memory_order = memory_order_seq_cst) const volatile;
-    int load(memory_order = memory_order_seq_cst) const;
-    operator int() const volatile;
-    operator int() const;
-    int exchange(int, memory_order = memory_order_seq_cst) volatile;
-    int exchange(int, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(int&, int, memory_order, memory_order) volatile;
-    bool compare_exchange_weak(int&, int, memory_order, memory_order);
-    bool compare_exchange_strong(int&, int, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(int&, int, memory_order, memory_order);
-    bool compare_exchange_weak(int&, int,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(int&, int, memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(int&, int,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(int&, int,
-                                 memory_order = memory_order_seq_cst);
-    int fetch_add(int, memory_order = memory_order_seq_cst) volatile;
-    int fetch_add(int, memory_order = memory_order_seq_cst);
-    int fetch_sub(int, memory_order = memory_order_seq_cst) volatile;
-    int fetch_sub(int, memory_order = memory_order_seq_cst);
-    int fetch_and(int, memory_order = memory_order_seq_cst) volatile;
-    int fetch_and(int, memory_order = memory_order_seq_cst);
-    int fetch_or(int, memory_order = memory_order_seq_cst) volatile;
-    int fetch_or(int, memory_order = memory_order_seq_cst);
-    int fetch_xor(int, memory_order = memory_order_seq_cst) volatile;
-    int fetch_xor(int, memory_order = memory_order_seq_cst);
-    atomic_int() = default;
-    constexpr atomic_int(int);
-    atomic_int(const atomic_int&) = delete;
-    atomic_int& operator=(const atomic_int&) = delete;
-    atomic_int& operator=(const atomic_int&) volatile = delete;
-    int operator=(int) volatile;
-    int operator=(int);
-    int operator++(int) volatile;
-    int operator++(int);
-    int operator--(int) volatile;
-    int operator--(int);
-    int operator++() volatile;
-    int operator++();
-    int operator--() volatile;
-    int operator--();
-    int operator+=(int) volatile;
-    int operator+=(int);
-    int operator-=(int) volatile;
-    int operator-=(int);
-    int operator&=(int) volatile;
-    int operator&=(int);
-    int operator|=(int) volatile;
-    int operator|=(int);
-    int operator^=(int) volatile;
-    int operator^=(int);
-} atomic_int;
-
-bool atomic_is_lock_free(const volatile atomic_int*);
-bool atomic_is_lock_free(const atomic_int*);
-void atomic_init(volatile atomic_int*, int);
-void atomic_init(atomic_int*, int);
-void atomic_store(volatile atomic_int*, int);
-void atomic_store(atomic_int*, int);
-void atomic_store_explicit(volatile atomic_int*, int, memory_order);
-void atomic_store_explicit(atomic_int*, int, memory_order);
-int atomic_load(const volatile atomic_int*);
-int atomic_load(const atomic_int*);
-int atomic_load_explicit(const volatile atomic_int*, memory_order);
-int atomic_load_explicit(const atomic_int*, memory_order);
-int atomic_exchange(volatile atomic_int*, int);
-int atomic_exchange(atomic_int*, int);
-int atomic_exchange_explicit(volatile atomic_int*, int, memory_order);
-int atomic_exchange_explicit(atomic_int*, int, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_int*, int*, int);
-bool atomic_compare_exchange_weak(atomic_int*, int*, int);
-bool atomic_compare_exchange_strong(volatile atomic_int*, int*, int);
-bool atomic_compare_exchange_strong(atomic_int*, int*, int);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_int*, int*, int,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_int*, int*, int, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_int*, int*, int,
-                                             memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_int*, int*, int,
-                                             memory_order, memory_order);
-int atomic_fetch_add(volatile atomic_int*, int);
-int atomic_fetch_add(atomic_int*, int);
-int atomic_fetch_add_explicit(volatile atomic_int*, int, memory_order);
-int atomic_fetch_add_explicit(atomic_int*, int, memory_order);
-int atomic_fetch_sub(volatile atomic_int*, int);
-int atomic_fetch_sub(atomic_int*, int);
-int atomic_fetch_sub_explicit(volatile atomic_int*, int, memory_order);
-int atomic_fetch_sub_explicit(atomic_int*, int, memory_order);
-int atomic_fetch_and(volatile atomic_int*, int);
-int atomic_fetch_and(atomic_int*, int);
-int atomic_fetch_and_explicit(volatile atomic_int*, int, memory_order);
-int atomic_fetch_and_explicit(atomic_int*, int, memory_order);
-int atomic_fetch_or(volatile atomic_int*, int);
-int atomic_fetch_or(atomic_int*, int);
-int atomic_fetch_or_explicit(volatile atomic_int*, int, memory_order);
-int atomic_fetch_or_explicit(atomic_int*, int, memory_order);
-int atomic_fetch_xor(volatile atomic_int*, int);
-int atomic_fetch_xor(atomic_int*, int);
-int atomic_fetch_xor_explicit(volatile atomic_int*, int, memory_order);
-int atomic_fetch_xor_explicit(atomic_int*, int, memory_order);
-
-// atomic_uint
-
-typedef struct atomic_uint
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(unsigned int, memory_order = memory_order_seq_cst) volatile;
-    void store(unsigned int, memory_order = memory_order_seq_cst);
-    unsigned int load(memory_order = memory_order_seq_cst) const volatile;
-    unsigned int load(memory_order = memory_order_seq_cst) const;
-    operator unsigned int() const volatile;
-    operator unsigned int() const;
-    unsigned int exchange(unsigned int,
-                          memory_order = memory_order_seq_cst) volatile;
-    unsigned int exchange(unsigned int, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(unsigned int&, unsigned int, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(unsigned int&, unsigned int, memory_order,
-                               memory_order);
-    bool compare_exchange_strong(unsigned int&, unsigned int, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(unsigned int&, unsigned int, memory_order,
-                                 memory_order);
-    bool compare_exchange_weak(unsigned int&, unsigned int,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(unsigned int&, unsigned int,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(unsigned int&, unsigned int,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(unsigned int&, unsigned int,
-                                 memory_order = memory_order_seq_cst);
-    unsigned int fetch_add(unsigned int,
-                           memory_order = memory_order_seq_cst) volatile;
-    unsigned int fetch_add(unsigned int, memory_order = memory_order_seq_cst);
-    unsigned int fetch_sub(unsigned int,
-                           memory_order = memory_order_seq_cst) volatile;
-    unsigned int fetch_sub(unsigned int, memory_order = memory_order_seq_cst);
-    unsigned int fetch_and(unsigned int,
-                           memory_order = memory_order_seq_cst) volatile;
-    unsigned int fetch_and(unsigned int, memory_order = memory_order_seq_cst);
-    unsigned int fetch_or(unsigned int,
-                          memory_order = memory_order_seq_cst) volatile;
-    unsigned int fetch_or(unsigned int, memory_order = memory_order_seq_cst);
-    unsigned int fetch_xor(unsigned int,
-                           memory_order = memory_order_seq_cst) volatile;
-    unsigned int fetch_xor(unsigned int, memory_order = memory_order_seq_cst);
-    atomic_uint() = default;
-    constexpr atomic_uint(unsigned int);
-    atomic_uint(const atomic_uint&) = delete;
-    atomic_uint& operator=(const atomic_uint&) = delete;
-    atomic_uint& operator=(const atomic_uint&) volatile = delete;
-    unsigned int operator=(unsigned int) volatile;
-    unsigned int operator=(unsigned int);
-    unsigned int operator++(int) volatile;
-    unsigned int operator++(int);
-    unsigned int operator--(int) volatile;
-    unsigned int operator--(int);
-    unsigned int operator++() volatile;
-    unsigned int operator++();
-    unsigned int operator--() volatile;
-    unsigned int operator--();
-    unsigned int operator+=(unsigned int) volatile;
-    unsigned int operator+=(unsigned int);
-    unsigned int operator-=(unsigned int) volatile;
-    unsigned int operator-=(unsigned int);
-    unsigned int operator&=(unsigned int) volatile;
-    unsigned int operator&=(unsigned int);
-    unsigned int operator|=(unsigned int) volatile;
-    unsigned int operator|=(unsigned int);
-    unsigned int operator^=(unsigned int) volatile;
-    unsigned int operator^=(unsigned int);
-} atomic_uint;
-
-bool atomic_is_lock_free(const volatile atomic_uint*);
-bool atomic_is_lock_free(const atomic_uint*);
-void atomic_init(volatile atomic_uint*, unsigned int);
-void atomic_init(atomic_uint*, unsigned int);
-void atomic_store(volatile atomic_uint*, unsigned int);
-void atomic_store(atomic_uint*, unsigned int);
-void atomic_store_explicit(volatile atomic_uint*, unsigned int, memory_order);
-void atomic_store_explicit(atomic_uint*, unsigned int, memory_order);
-unsigned int atomic_load(const volatile atomic_uint*);
-unsigned int atomic_load(const atomic_uint*);
-unsigned int atomic_load_explicit(const volatile atomic_uint*, memory_order);
-unsigned int atomic_load_explicit(const atomic_uint*, memory_order);
-unsigned int atomic_exchange(volatile atomic_uint*, unsigned int);
-unsigned int atomic_exchange(atomic_uint*, unsigned int);
-unsigned int atomic_exchange_explicit(volatile atomic_uint*, unsigned int,
-                                      memory_order);
-unsigned int atomic_exchange_explicit(atomic_uint*, unsigned int, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_uint*, unsigned int*,
-                                  unsigned int);
-bool atomic_compare_exchange_weak(atomic_uint*, unsigned int*, unsigned int);
-bool atomic_compare_exchange_strong(volatile atomic_uint*, unsigned int*,
-                                    unsigned int);
-bool atomic_compare_exchange_strong(atomic_uint*, unsigned int*, unsigned int);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_uint*, unsigned int*,
-                                           unsigned int, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_uint*, unsigned int*,
-                                           unsigned int, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_uint*,
-                                             unsigned int*, unsigned int,
-                                             memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_uint*, unsigned int*,
-                                             unsigned int, memory_order, 
-                                             memory_order);
-unsigned int atomic_fetch_add(volatile atomic_uint*, unsigned int);
-unsigned int atomic_fetch_add(atomic_uint*, unsigned int);
-unsigned int atomic_fetch_add_explicit(volatile atomic_uint*, unsigned int,
-                                       memory_order);
-unsigned int atomic_fetch_add_explicit(atomic_uint*, unsigned int,
-                                       memory_order);
-unsigned int atomic_fetch_sub(volatile atomic_uint*, unsigned int);
-unsigned int atomic_fetch_sub(atomic_uint*, unsigned int);
-unsigned int atomic_fetch_sub_explicit(volatile atomic_uint*, unsigned int,
-                                       memory_order);
-unsigned int atomic_fetch_sub_explicit(atomic_uint*, unsigned int,
-                                       memory_order);
-unsigned int atomic_fetch_and(volatile atomic_uint*, unsigned int);
-unsigned int atomic_fetch_and(atomic_uint*, unsigned int);
-unsigned int atomic_fetch_and_explicit(volatile atomic_uint*, unsigned int,
-                                       memory_order);
-unsigned int atomic_fetch_and_explicit(atomic_uint*, unsigned int,
-                                       memory_order);
-unsigned int atomic_fetch_or(volatile atomic_uint*, unsigned int);
-unsigned int atomic_fetch_or(atomic_uint*, unsigned int);
-unsigned int atomic_fetch_or_explicit(volatile atomic_uint*, unsigned int,
-                                      memory_order);
-unsigned int atomic_fetch_or_explicit(atomic_uint*, unsigned int, memory_order);
-unsigned int atomic_fetch_xor(volatile atomic_uint*, unsigned int);
-unsigned int atomic_fetch_xor(atomic_uint*, unsigned int);
-unsigned int atomic_fetch_xor_explicit(volatile atomic_uint*, unsigned int,
-                                       memory_order);
-unsigned int atomic_fetch_xor_explicit(atomic_uint*, unsigned int,
-                                       memory_order);
-
-// atomic_long
-
-typedef struct atomic_long
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(long, memory_order = memory_order_seq_cst) volatile;
-    void store(long, memory_order = memory_order_seq_cst);
-    long load(memory_order = memory_order_seq_cst) const volatile;
-    long load(memory_order = memory_order_seq_cst) const;
-    operator long() const volatile;
-    operator long() const;
-    long exchange(long, memory_order = memory_order_seq_cst) volatile;
-    long exchange(long, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(long&, long, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(long&, long, memory_order, memory_order);
-    bool compare_exchange_strong(long&, long, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(long&, long, memory_order, memory_order);
-    bool compare_exchange_weak(long&, long,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(long&, long,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(long&, long,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(long&, long,
-                                 memory_order = memory_order_seq_cst);
-    long fetch_add(long, memory_order = memory_order_seq_cst) volatile;
-    long fetch_add(long, memory_order = memory_order_seq_cst);
-    long fetch_sub(long, memory_order = memory_order_seq_cst) volatile;
-    long fetch_sub(long, memory_order = memory_order_seq_cst);
-    long fetch_and(long, memory_order = memory_order_seq_cst) volatile;
-    long fetch_and(long, memory_order = memory_order_seq_cst);
-    long fetch_or(long, memory_order = memory_order_seq_cst) volatile;
-    long fetch_or(long, memory_order = memory_order_seq_cst);
-    long fetch_xor(long, memory_order = memory_order_seq_cst) volatile;
-    long fetch_xor(long, memory_order = memory_order_seq_cst);
-    atomic_long() = default;
-    constexpr atomic_long(long);
-    atomic_long(const atomic_long&) = delete;
-    atomic_long& operator=(const atomic_long&) = delete;
-    atomic_long& operator=(const atomic_long&) volatile = delete;
-    long operator=(long) volatile;
-    long operator=(long);
-    long operator++(int) volatile;
-    long operator++(int);
-    long operator--(int) volatile;
-    long operator--(int);
-    long operator++() volatile;
-    long operator++();
-    long operator--() volatile;
-    long operator--();
-    long operator+=(long) volatile;
-    long operator+=(long);
-    long operator-=(long) volatile;
-    long operator-=(long);
-    long operator&=(long) volatile;
-    long operator&=(long);
-    long operator|=(long) volatile;
-    long operator|=(long);
-    long operator^=(long) volatile;
-    long operator^=(long);
-} atomic_long;
-
-bool atomic_is_lock_free(const volatile atomic_long*);
-bool atomic_is_lock_free(const atomic_long*);
-void atomic_init(volatile atomic_long*, long);
-void atomic_init(atomic_long*, long);
-void atomic_store(volatile atomic_long*, long);
-void atomic_store(atomic_long*, long);
-void atomic_store_explicit(volatile atomic_long*, long, memory_order);
-void atomic_store_explicit(atomic_long*, long, memory_order);
-long atomic_load(const volatile atomic_long*);
-long atomic_load(const atomic_long*);
-long atomic_load_explicit(const volatile atomic_long*, memory_order);
-long atomic_load_explicit(const atomic_long*, memory_order);
-long atomic_exchange(volatile atomic_long*, long);
-long atomic_exchange(atomic_long*, long);
-long atomic_exchange_explicit(volatile atomic_long*, long, memory_order);
-long atomic_exchange_explicit(atomic_long*, long, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_long*, long*, long);
-bool atomic_compare_exchange_weak(atomic_long*, long*, long);
-bool atomic_compare_exchange_strong(volatile atomic_long*, long*, long);
-bool atomic_compare_exchange_strong(atomic_long*, long*, long);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_long*, long*, long,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_long*, long*, long,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_long*, long*, long,
-                                             memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_long*, long*, long,
-                                             memory_order, memory_order);
-long atomic_fetch_add(volatile atomic_long*, long);
-long atomic_fetch_add(atomic_long*, long);
-long atomic_fetch_add_explicit(volatile atomic_long*, long, memory_order);
-long atomic_fetch_add_explicit(atomic_long*, long, memory_order);
-long atomic_fetch_sub(volatile atomic_long*, long);
-long atomic_fetch_sub(atomic_long*, long);
-long atomic_fetch_sub_explicit(volatile atomic_long*, long, memory_order);
-long atomic_fetch_sub_explicit(atomic_long*, long, memory_order);
-long atomic_fetch_and(volatile atomic_long*, long);
-long atomic_fetch_and(atomic_long*, long);
-long atomic_fetch_and_explicit(volatile atomic_long*, long, memory_order);
-long atomic_fetch_and_explicit(atomic_long*, long, memory_order);
-long atomic_fetch_or(volatile atomic_long*, long);
-long atomic_fetch_or(atomic_long*, long);
-long atomic_fetch_or_explicit(volatile atomic_long*, long, memory_order);
-long atomic_fetch_or_explicit(atomic_long*, long, memory_order);
-long atomic_fetch_xor(volatile atomic_long*, long);
-long atomic_fetch_xor(atomic_long*, long);
-long atomic_fetch_xor_explicit(volatile atomic_long*, long, memory_order);
-long atomic_fetch_xor_explicit(atomic_long*, long, memory_order);
-
-// atomic_ulong
-
-typedef struct atomic_ulong
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(unsigned long, memory_order = memory_order_seq_cst) volatile;
-    void store(unsigned long, memory_order = memory_order_seq_cst);
-    unsigned long load(memory_order = memory_order_seq_cst) const volatile;
-    unsigned long load(memory_order = memory_order_seq_cst) const;
-    operator unsigned long() const volatile;
-    operator unsigned long() const;
-    unsigned long exchange(unsigned long,
-                           memory_order = memory_order_seq_cst) volatile;
-    unsigned long exchange(unsigned long, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(unsigned long&, unsigned long, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(unsigned long&, unsigned long, memory_order,
-                               memory_order);
-    bool compare_exchange_strong(unsigned long&, unsigned long, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(unsigned long&, unsigned long, memory_order,
-                                 memory_order);
-    bool compare_exchange_weak(unsigned long&, unsigned long,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(unsigned long&, unsigned long,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(unsigned long&, unsigned long,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(unsigned long&, unsigned long,
-                                 memory_order = memory_order_seq_cst);
-    unsigned long fetch_add(unsigned long,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned long fetch_add(unsigned long, memory_order = memory_order_seq_cst);
-    unsigned long fetch_sub(unsigned long,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned long fetch_sub(unsigned long, memory_order = memory_order_seq_cst);
-    unsigned long fetch_and(unsigned long,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned long fetch_and(unsigned long, memory_order = memory_order_seq_cst);
-    unsigned long fetch_or(unsigned long,
-                           memory_order = memory_order_seq_cst) volatile;
-    unsigned long fetch_or(unsigned long, memory_order = memory_order_seq_cst);
-    unsigned long fetch_xor(unsigned long,
-                            memory_order = memory_order_seq_cst) volatile;
-    unsigned long fetch_xor(unsigned long, memory_order = memory_order_seq_cst);
-    atomic_ulong() = default;
-    constexpr atomic_ulong(unsigned long);
-    atomic_ulong(const atomic_ulong&) = delete;
-    atomic_ulong& operator=(const atomic_ulong&) = delete;
-    atomic_ulong& operator=(const atomic_ulong&) volatile = delete;
-    unsigned long operator=(unsigned long) volatile;
-    unsigned long operator=(unsigned long);
-    unsigned long operator++(int) volatile;
-    unsigned long operator++(int);
-    unsigned long operator--(int) volatile;
-    unsigned long operator--(int);
-    unsigned long operator++() volatile;
-    unsigned long operator++();
-    unsigned long operator--() volatile;
-    unsigned long operator--();
-    unsigned long operator+=(unsigned long) volatile;
-    unsigned long operator+=(unsigned long);
-    unsigned long operator-=(unsigned long) volatile;
-    unsigned long operator-=(unsigned long);
-    unsigned long operator&=(unsigned long) volatile;
-    unsigned long operator&=(unsigned long);
-    unsigned long operator|=(unsigned long) volatile;
-    unsigned long operator|=(unsigned long);
-    unsigned long operator^=(unsigned long) volatile;
-    unsigned long operator^=(unsigned long);
-} atomic_ulong;
-
-bool atomic_is_lock_free(const volatile atomic_ulong*);
-bool atomic_is_lock_free(const atomic_ulong*);
-void atomic_init(volatile atomic_ulong*, unsigned long);
-void atomic_init(atomic_ulong*, unsigned long);
-void atomic_store(volatile atomic_ulong*, unsigned long);
-void atomic_store(atomic_ulong*, unsigned long);
-void atomic_store_explicit(volatile atomic_ulong*, unsigned long, memory_order);
-void atomic_store_explicit(atomic_ulong*, unsigned long, memory_order);
-unsigned long atomic_load(const volatile atomic_ulong*);
-unsigned long atomic_load(const atomic_ulong*);
-unsigned long atomic_load_explicit(const volatile atomic_ulong*, memory_order);
-unsigned long atomic_load_explicit(const atomic_ulong*, memory_order);
-unsigned long atomic_exchange(volatile atomic_ulong*, unsigned long);
-unsigned long atomic_exchange(atomic_ulong*, unsigned long);
-unsigned long atomic_exchange_explicit(volatile atomic_ulong*, unsigned long,
-                                       memory_order);
-unsigned long atomic_exchange_explicit(atomic_ulong*, unsigned long,
-                                       memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_ulong*, unsigned long*,
-                                  unsigned long);
-bool atomic_compare_exchange_weak(atomic_ulong*, unsigned long*, unsigned long);
-bool atomic_compare_exchange_strong(volatile atomic_ulong*, unsigned long*,
-                                    unsigned long);
-bool atomic_compare_exchange_strong(atomic_ulong*, unsigned long*,
-                                    unsigned long);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_ulong*,
-                                           unsigned long*, unsigned long,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_ulong*, unsigned long*,
-                                           unsigned long, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_ulong*,
-                                             unsigned long*, unsigned long,
-                                             memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_ulong*, unsigned long*,
-                                             unsigned long, memory_order,
-                                             memory_order);
-unsigned long atomic_fetch_add(volatile atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_add(atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_add_explicit(volatile atomic_ulong*, unsigned long,
-                                        memory_order);
-unsigned long atomic_fetch_add_explicit(atomic_ulong*, unsigned long,
-                                        memory_order);
-unsigned long atomic_fetch_sub(volatile atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_sub(atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_sub_explicit(volatile atomic_ulong*, unsigned long,
-                                        memory_order);
-unsigned long atomic_fetch_sub_explicit(atomic_ulong*, unsigned long,
-                                        memory_order);
-unsigned long atomic_fetch_and(volatile atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_and(atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_and_explicit(volatile atomic_ulong*, unsigned long,
-                                        memory_order);
-unsigned long atomic_fetch_and_explicit(atomic_ulong*, unsigned long,
-                                        memory_order);
-unsigned long atomic_fetch_or(volatile atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_or(atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_or_explicit(volatile atomic_ulong*, unsigned long,
-                                       memory_order);
-unsigned long atomic_fetch_or_explicit(atomic_ulong*, unsigned long,
-                                       memory_order);
-unsigned long atomic_fetch_xor(volatile atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_xor(atomic_ulong*, unsigned long);
-unsigned long atomic_fetch_xor_explicit(volatile atomic_ulong*, unsigned long,
-                                        memory_order);
-unsigned long atomic_fetch_xor_explicit(atomic_ulong*, unsigned long,
-                                        memory_order);
-
-// atomic_llong
-
-typedef struct atomic_llong
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(long long, memory_order = memory_order_seq_cst) volatile;
-    void store(long long, memory_order = memory_order_seq_cst);
-    long long load(memory_order = memory_order_seq_cst) const volatile;
-    long long load(memory_order = memory_order_seq_cst) const;
-    operator long long() const volatile;
-    operator long long() const;
-    long long exchange(long long, memory_order = memory_order_seq_cst) volatile;
-    long long exchange(long long, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(long long&, long long, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(long long&, long long, memory_order,
-                               memory_order);
-    bool compare_exchange_strong(long long&, long long, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(long long&, long long, memory_order,
-                                 memory_order);
-    bool compare_exchange_weak(long long&, long long,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(long long&, long long,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(long long&, long long,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(long long&, long long,
-                                 memory_order = memory_order_seq_cst);
-    long long fetch_add(long long,
-                        memory_order = memory_order_seq_cst) volatile;
-    long long fetch_add(long long, memory_order = memory_order_seq_cst);
-    long long fetch_sub(long long,
-                        memory_order = memory_order_seq_cst) volatile;
-    long long fetch_sub(long long, memory_order = memory_order_seq_cst);
-    long long fetch_and(long long,
-                        memory_order = memory_order_seq_cst) volatile;
-    long long fetch_and(long long, memory_order = memory_order_seq_cst);
-    long long fetch_or(long long, memory_order = memory_order_seq_cst) volatile;
-    long long fetch_or(long long, memory_order = memory_order_seq_cst);
-    long long fetch_xor(long long,
-                        memory_order = memory_order_seq_cst) volatile;
-    long long fetch_xor(long long, memory_order = memory_order_seq_cst);
-    atomic_llong() = default;
-    constexpr atomic_llong(long long);
-    atomic_llong(const atomic_llong&) = delete;
-    atomic_llong& operator=(const atomic_llong&) = delete;
-    atomic_llong& operator=(const atomic_llong&) volatile = delete;
-    long long operator=(long long) volatile;
-    long long operator=(long long);
-    long long operator++(int) volatile;
-    long long operator++(int);
-    long long operator--(int) volatile;
-    long long operator--(int);
-    long long operator++() volatile;
-    long long operator++();
-    long long operator--() volatile;
-    long long operator--();
-    long long operator+=(long long) volatile;
-    long long operator+=(long long);
-    long long operator-=(long long) volatile;
-    long long operator-=(long long);
-    long long operator&=(long long) volatile;
-    long long operator&=(long long);
-    long long operator|=(long long) volatile;
-    long long operator|=(long long);
-    long long operator^=(long long) volatile;
-    long long operator^=(long long);
-} atomic_llong;
-
-bool atomic_is_lock_free(const volatile atomic_llong*);
-bool atomic_is_lock_free(const atomic_llong*);
-void atomic_init(volatile atomic_llong*, long long);
-void atomic_init(atomic_llong*, long long);
-void atomic_store(volatile atomic_llong*, long long);
-void atomic_store(atomic_llong*, long long);
-void atomic_store_explicit(volatile atomic_llong*, long long, memory_order);
-void atomic_store_explicit(atomic_llong*, long long, memory_order);
-long long atomic_load(const volatile atomic_llong*);
-long long atomic_load(const atomic_llong*);
-long long atomic_load_explicit(const volatile atomic_llong*, memory_order);
-long long atomic_load_explicit(const atomic_llong*, memory_order);
-long long atomic_exchange(volatile atomic_llong*, long long);
-long long atomic_exchange(atomic_llong*, long long);
-long long atomic_exchange_explicit(volatile atomic_llong*, long long,
-                                   memory_order);
-long long atomic_exchange_explicit(atomic_llong*, long long, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_llong*, long long*,
-                                  long long);
-bool atomic_compare_exchange_weak(atomic_llong*, long long*, long long);
-bool atomic_compare_exchange_strong(volatile atomic_llong*, long long*,
-                                    long long);
-bool atomic_compare_exchange_strong(atomic_llong*, long long*, long long);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_llong*, long long*,
-                                           long long, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_llong*, long long*, long long,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_llong*, long long*,
-                                             long long, memory_order,
-                                             memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_llong*, long long*,
-                                             long long, memory_order,
-                                             memory_order);
-long long atomic_fetch_add(volatile atomic_llong*, long long);
-long long atomic_fetch_add(atomic_llong*, long long);
-long long atomic_fetch_add_explicit(volatile atomic_llong*, long long,
-                                    memory_order);
-long long atomic_fetch_add_explicit(atomic_llong*, long long, memory_order);
-long long atomic_fetch_sub(volatile atomic_llong*, long long);
-long long atomic_fetch_sub(atomic_llong*, long long);
-long long atomic_fetch_sub_explicit(volatile atomic_llong*, long long,
-                                    memory_order);
-long long atomic_fetch_sub_explicit(atomic_llong*, long long, memory_order);
-long long atomic_fetch_and(volatile atomic_llong*, long long);
-long long atomic_fetch_and(atomic_llong*, long long);
-long long atomic_fetch_and_explicit(volatile atomic_llong*, long long,
-                                    memory_order);
-long long atomic_fetch_and_explicit(atomic_llong*, long long, memory_order);
-long long atomic_fetch_or(volatile atomic_llong*, long long);
-long long atomic_fetch_or(atomic_llong*, long long);
-long long atomic_fetch_or_explicit(volatile atomic_llong*, long long,
-                                   memory_order);
-long long atomic_fetch_or_explicit(atomic_llong*, long long, memory_order);
-long long atomic_fetch_xor(volatile atomic_llong*, long long);
-long long atomic_fetch_xor(atomic_llong*, long long);
-long long atomic_fetch_xor_explicit(volatile atomic_llong*, long long,
-                                    memory_order);
-long long atomic_fetch_xor_explicit(atomic_llong*, long long, memory_order);
-
-// atomic_ullong
-
-typedef struct atomic_ullong
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(unsigned long long,
-               memory_order = memory_order_seq_cst) volatile;
-    void store(unsigned long long, memory_order = memory_order_seq_cst);
-    unsigned long long load(memory_order = memory_order_seq_cst) const volatile;
-    unsigned long long load(memory_order = memory_order_seq_cst) const;
-    operator unsigned long long() const volatile;
-    operator unsigned long long() const;
-    unsigned long long exchange(unsigned long long,
-                                memory_order = memory_order_seq_cst) volatile;
-    unsigned long long exchange(unsigned long long,
-                                memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(unsigned long long&, unsigned long long,
-                               memory_order, memory_order) volatile;
-    bool compare_exchange_weak(unsigned long long&, unsigned long long,
-                               memory_order, memory_order);
-    bool compare_exchange_strong(unsigned long long&, unsigned long long,
-                                 memory_order, memory_order) volatile;
-    bool compare_exchange_strong(unsigned long long&, unsigned long long,
-                                 memory_order, memory_order);
-    bool compare_exchange_weak(unsigned long long&, unsigned long long,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(unsigned long long&, unsigned long long,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(unsigned long long&, unsigned long long,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(unsigned long long&, unsigned long long,
-                                 memory_order = memory_order_seq_cst);
-    unsigned long long fetch_add(unsigned long long,
-                                 memory_order = memory_order_seq_cst) volatile;
-    unsigned long long fetch_add(unsigned long long,
-                                 memory_order = memory_order_seq_cst);
-    unsigned long long fetch_sub(unsigned long long,
-                                 memory_order = memory_order_seq_cst) volatile;
-    unsigned long long fetch_sub(unsigned long long,
-                                 memory_order = memory_order_seq_cst);
-    unsigned long long fetch_and(unsigned long long,
-                                 memory_order = memory_order_seq_cst) volatile;
-    unsigned long long fetch_and(unsigned long long,
-                                 memory_order = memory_order_seq_cst);
-    unsigned long long fetch_or(unsigned long long,
-                                memory_order = memory_order_seq_cst) volatile;
-    unsigned long long fetch_or(unsigned long long,
-                                memory_order = memory_order_seq_cst);
-    unsigned long long fetch_xor(unsigned long long,
-                                 memory_order = memory_order_seq_cst) volatile;
-    unsigned long long fetch_xor(unsigned long long,
-                                 memory_order = memory_order_seq_cst);
-    atomic_ullong() = default;
-    constexpr atomic_ullong(unsigned long long);
-    atomic_ullong(const atomic_ullong&) = delete;
-    atomic_ullong& operator=(const atomic_ullong&) = delete;
-    atomic_ullong& operator=(const atomic_ullong&) volatile = delete;
-    unsigned long long operator=(unsigned long long) volatile;
-    unsigned long long operator=(unsigned long long);
-    unsigned long long operator++(int) volatile;
-    unsigned long long operator++(int);
-    unsigned long long operator--(int) volatile;
-    unsigned long long operator--(int);
-    unsigned long long operator++() volatile;
-    unsigned long long operator++();
-    unsigned long long operator--() volatile;
-    unsigned long long operator--();
-    unsigned long long operator+=(unsigned long long) volatile;
-    unsigned long long operator+=(unsigned long long);
-    unsigned long long operator-=(unsigned long long) volatile;
-    unsigned long long operator-=(unsigned long long);
-    unsigned long long operator&=(unsigned long long) volatile;
-    unsigned long long operator&=(unsigned long long);
-    unsigned long long operator|=(unsigned long long) volatile;
-    unsigned long long operator|=(unsigned long long);
-    unsigned long long operator^=(unsigned long long) volatile;
-    unsigned long long operator^=(unsigned long long);
-} atomic_ullong;
-
-bool atomic_is_lock_free(const volatile atomic_ullong*);
-bool atomic_is_lock_free(const atomic_ullong*);
-void atomic_init(volatile atomic_ullong*, unsigned long long);
-void atomic_init(atomic_ullong*, unsigned long long);
-void atomic_store(volatile atomic_ullong*, unsigned long long);
-void atomic_store(atomic_ullong*, unsigned long long);
-void atomic_store_explicit(volatile atomic_ullong*, unsigned long long,
-                           memory_order);
-void atomic_store_explicit(atomic_ullong*, unsigned long long, memory_order);
-unsigned long long atomic_load(const volatile atomic_ullong*);
-unsigned long long atomic_load(const atomic_ullong*);
-unsigned long long atomic_load_explicit(const volatile atomic_ullong*,
-                                        memory_order);
-unsigned long long atomic_load_explicit(const atomic_ullong*, memory_order);
-unsigned long long atomic_exchange(volatile atomic_ullong*, unsigned long long);
-unsigned long long atomic_exchange(atomic_ullong*, unsigned long long);
-unsigned long long atomic_exchange_explicit(volatile atomic_ullong*,
-                                            unsigned long long, memory_order);
-unsigned long long atomic_exchange_explicit(atomic_ullong*, unsigned long long,
-                                            memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_ullong*, unsigned long long*,
-                                  unsigned long long);
-bool atomic_compare_exchange_weak(atomic_ullong*, unsigned long long*,
-                                  unsigned long long);
-bool atomic_compare_exchange_strong(volatile atomic_ullong*,
-                                    unsigned long long*, unsigned long long);
-bool atomic_compare_exchange_strong(atomic_ullong*, unsigned long long*,
-                                    unsigned long long);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_ullong*,
-                                           unsigned long long*,
-                                           unsigned long long, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_ullong*, unsigned long long*,
-                                           unsigned long long, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_ullong*,
-                                             unsigned long long*,
-                                             unsigned long long, memory_order,
-                                             memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_ullong*,
-                                             unsigned long long*,
-                                             unsigned long long, memory_order,
-                                             memory_order);
-unsigned long long atomic_fetch_add(volatile atomic_ullong*,
-                                    unsigned long long);
-unsigned long long atomic_fetch_add(atomic_ullong*, unsigned long long);
-unsigned long long atomic_fetch_add_explicit(volatile atomic_ullong*,
-                                             unsigned long long, memory_order);
-unsigned long long atomic_fetch_add_explicit(atomic_ullong*, unsigned long long,
-                                             memory_order);
-unsigned long long atomic_fetch_sub(volatile atomic_ullong*,
-                                    unsigned long long);
-unsigned long long atomic_fetch_sub(atomic_ullong*, unsigned long long);
-unsigned long long atomic_fetch_sub_explicit(volatile atomic_ullong*,
-                                             unsigned long long, memory_order);
-unsigned long long atomic_fetch_sub_explicit(atomic_ullong*, unsigned long long,
-                                             memory_order);
-unsigned long long atomic_fetch_and(volatile atomic_ullong*,
-                                    unsigned long long);
-unsigned long long atomic_fetch_and(atomic_ullong*, unsigned long long);
-unsigned long long atomic_fetch_and_explicit(volatile atomic_ullong*,
-                                             unsigned long long, memory_order);
-unsigned long long atomic_fetch_and_explicit(atomic_ullong*, unsigned long long,
-                                             memory_order);
-unsigned long long atomic_fetch_or(volatile atomic_ullong*, unsigned long long);
-unsigned long long atomic_fetch_or(atomic_ullong*, unsigned long long);
-unsigned long long atomic_fetch_or_explicit(volatile atomic_ullong*,
-                                            unsigned long long, memory_order);
-unsigned long long atomic_fetch_or_explicit(atomic_ullong*, unsigned long long,
-                                            memory_order);
-unsigned long long atomic_fetch_xor(volatile atomic_ullong*,
-                                    unsigned long long);
-unsigned long long atomic_fetch_xor(atomic_ullong*, unsigned long long);
-unsigned long long atomic_fetch_xor_explicit(volatile atomic_ullong*,
-                                             unsigned long long, memory_order);
-unsigned long long atomic_fetch_xor_explicit(atomic_ullong*, unsigned long long,
-                                             memory_order);
-
-// atomic_char16_t
-
-typedef struct atomic_char16_t
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(char16_t, memory_order = memory_order_seq_cst) volatile;
-    void store(char16_t, memory_order = memory_order_seq_cst);
-    char16_t load(memory_order = memory_order_seq_cst) const volatile;
-    char16_t load(memory_order = memory_order_seq_cst) const;
-    operator char16_t() const volatile;
-    operator char16_t() const;
-    char16_t exchange(char16_t, memory_order = memory_order_seq_cst) volatile;
-    char16_t exchange(char16_t, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(char16_t&, char16_t, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(char16_t&, char16_t, memory_order, memory_order);
-    bool compare_exchange_strong(char16_t&, char16_t, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(char16_t&, char16_t,
-                                 memory_order, memory_order);
-    bool compare_exchange_weak(char16_t&, char16_t,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(char16_t&, char16_t,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(char16_t&, char16_t,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(char16_t&, char16_t,
-                                 memory_order = memory_order_seq_cst);
-    char16_t fetch_add(char16_t, memory_order = memory_order_seq_cst) volatile;
-    char16_t fetch_add(char16_t, memory_order = memory_order_seq_cst);
-    char16_t fetch_sub(char16_t, memory_order = memory_order_seq_cst) volatile;
-    char16_t fetch_sub(char16_t, memory_order = memory_order_seq_cst);
-    char16_t fetch_and(char16_t, memory_order = memory_order_seq_cst) volatile;
-    char16_t fetch_and(char16_t, memory_order = memory_order_seq_cst);
-    char16_t fetch_or(char16_t, memory_order = memory_order_seq_cst) volatile;
-    char16_t fetch_or(char16_t, memory_order = memory_order_seq_cst);
-    char16_t fetch_xor(char16_t, memory_order = memory_order_seq_cst) volatile;
-    char16_t fetch_xor(char16_t, memory_order = memory_order_seq_cst);
-    atomic_char16_t() = default;
-    constexpr atomic_char16_t(char16_t);
-    atomic_char16_t(const atomic_char16_t&) = delete;
-    atomic_char16_t& operator=(const atomic_char16_t&) = delete;
-    atomic_char16_t& operator=(const atomic_char16_t&) volatile = delete;
-    char16_t operator=(char16_t) volatile;
-    char16_t operator=(char16_t);
-    char16_t operator++(int) volatile;
-    char16_t operator++(int);
-    char16_t operator--(int) volatile;
-    char16_t operator--(int);
-    char16_t operator++() volatile;
-    char16_t operator++();
-    char16_t operator--() volatile;
-    char16_t operator--();
-    char16_t operator+=(char16_t) volatile;
-    char16_t operator+=(char16_t);
-    char16_t operator-=(char16_t) volatile;
-    char16_t operator-=(char16_t);
-    char16_t operator&=(char16_t) volatile;
-    char16_t operator&=(char16_t);
-    char16_t operator|=(char16_t) volatile;
-    char16_t operator|=(char16_t);
-    char16_t operator^=(char16_t) volatile;
-    char16_t operator^=(char16_t);
-} atomic_char16_t;
-
-bool atomic_is_lock_free(const volatile atomic_char16_t*);
-bool atomic_is_lock_free(const atomic_char16_t*);
-void atomic_init(volatile atomic_char16_t*, char16_t);
-void atomic_init(atomic_char16_t*, char16_t);
-void atomic_store(volatile atomic_char16_t*, char16_t);
-void atomic_store(atomic_char16_t*, char16_t);
-void atomic_store_explicit(volatile atomic_char16_t*, char16_t, memory_order);
-void atomic_store_explicit(atomic_char16_t*, char16_t, memory_order);
-char16_t atomic_load(const volatile atomic_char16_t*);
-char16_t atomic_load(const atomic_char16_t*);
-char16_t atomic_load_explicit(const volatile atomic_char16_t*, memory_order);
-char16_t atomic_load_explicit(const atomic_char16_t*, memory_order);
-char16_t atomic_exchange(volatile atomic_char16_t*, char16_t);
-char16_t atomic_exchange(atomic_char16_t*, char16_t);
-char16_t atomic_exchange_explicit(volatile atomic_char16_t*, char16_t,
-                                  memory_order);
-char16_t atomic_exchange_explicit(atomic_char16_t*, char16_t, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_char16_t*, char16_t*,
-                                  char16_t);
-bool atomic_compare_exchange_weak(atomic_char16_t*, char16_t*, char16_t);
-bool atomic_compare_exchange_strong(volatile atomic_char16_t*, char16_t*,
-                                    char16_t);
-bool atomic_compare_exchange_strong(atomic_char16_t*, char16_t*, char16_t);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_char16_t*, char16_t*,
-                                           char16_t, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_char16_t*, char16_t*,
-                                           char16_t, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_char16_t*,
-                                             char16_t*, char16_t, memory_order,
-                                             memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_char16_t*, char16_t*,
-                                             char16_t, memory_order,
-                                             memory_order);
-char16_t atomic_fetch_add(volatile atomic_char16_t*, char16_t);
-char16_t atomic_fetch_add(atomic_char16_t*, char16_t);
-char16_t atomic_fetch_add_explicit(volatile atomic_char16_t*, char16_t,
-                                   memory_order);
-char16_t atomic_fetch_add_explicit(atomic_char16_t*, char16_t, memory_order);
-char16_t atomic_fetch_sub(volatile atomic_char16_t*, char16_t);
-char16_t atomic_fetch_sub(atomic_char16_t*, char16_t);
-char16_t atomic_fetch_sub_explicit(volatile atomic_char16_t*, char16_t,
-                                   memory_order);
-char16_t atomic_fetch_sub_explicit(atomic_char16_t*, char16_t, memory_order);
-char16_t atomic_fetch_and(volatile atomic_char16_t*, char16_t);
-char16_t atomic_fetch_and(atomic_char16_t*, char16_t);
-char16_t atomic_fetch_and_explicit(volatile atomic_char16_t*, char16_t,
-                                   memory_order);
-char16_t atomic_fetch_and_explicit(atomic_char16_t*, char16_t, memory_order);
-char16_t atomic_fetch_or(volatile atomic_char16_t*, char16_t);
-char16_t atomic_fetch_or(atomic_char16_t*, char16_t);
-char16_t atomic_fetch_or_explicit(volatile atomic_char16_t*, char16_t,
-                                  memory_order);
-char16_t atomic_fetch_or_explicit(atomic_char16_t*, char16_t, memory_order);
-char16_t atomic_fetch_xor(volatile atomic_char16_t*, char16_t);
-char16_t atomic_fetch_xor(atomic_char16_t*, char16_t);
-char16_t atomic_fetch_xor_explicit(volatile atomic_char16_t*, char16_t,
-                                   memory_order);
-char16_t atomic_fetch_xor_explicit(atomic_char16_t*, char16_t, memory_order);
-
-// atomic_char32_t
-
-typedef struct atomic_char32_t
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(char32_t, memory_order = memory_order_seq_cst) volatile;
-    void store(char32_t, memory_order = memory_order_seq_cst);
-    char32_t load(memory_order = memory_order_seq_cst) const volatile;
-    char32_t load(memory_order = memory_order_seq_cst) const;
-    operator char32_t() const volatile;
-    operator char32_t() const;
-    char32_t exchange(char32_t, memory_order = memory_order_seq_cst) volatile;
-    char32_t exchange(char32_t, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(char32_t&, char32_t, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(char32_t&, char32_t, memory_order, memory_order);
-    bool compare_exchange_strong(char32_t&, char32_t, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(char32_t&, char32_t,
-                                 memory_order, memory_order);
-    bool compare_exchange_weak(char32_t&, char32_t,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(char32_t&, char32_t,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(char32_t&, char32_t,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(char32_t&, char32_t,
-                                 memory_order = memory_order_seq_cst);
-    char32_t fetch_add(char32_t, memory_order = memory_order_seq_cst) volatile;
-    char32_t fetch_add(char32_t, memory_order = memory_order_seq_cst);
-    char32_t fetch_sub(char32_t, memory_order = memory_order_seq_cst) volatile;
-    char32_t fetch_sub(char32_t, memory_order = memory_order_seq_cst);
-    char32_t fetch_and(char32_t, memory_order = memory_order_seq_cst) volatile;
-    char32_t fetch_and(char32_t, memory_order = memory_order_seq_cst);
-    char32_t fetch_or(char32_t, memory_order = memory_order_seq_cst) volatile;
-    char32_t fetch_or(char32_t, memory_order = memory_order_seq_cst);
-    char32_t fetch_xor(char32_t, memory_order = memory_order_seq_cst) volatile;
-    char32_t fetch_xor(char32_t, memory_order = memory_order_seq_cst);
-    atomic_char32_t() = default;
-    constexpr atomic_char32_t(char32_t);
-    atomic_char32_t(const atomic_char32_t&) = delete;
-    atomic_char32_t& operator=(const atomic_char32_t&) = delete;
-    atomic_char32_t& operator=(const atomic_char32_t&) volatile = delete;
-    char32_t operator=(char32_t) volatile;
-    char32_t operator=(char32_t);
-    char32_t operator++(int) volatile;
-    char32_t operator++(int);
-    char32_t operator--(int) volatile;
-    char32_t operator--(int);
-    char32_t operator++() volatile;
-    char32_t operator++();
-    char32_t operator--() volatile;
-    char32_t operator--();
-    char32_t operator+=(char32_t) volatile;
-    char32_t operator+=(char32_t);
-    char32_t operator-=(char32_t) volatile;
-    char32_t operator-=(char32_t);
-    char32_t operator&=(char32_t) volatile;
-    char32_t operator&=(char32_t);
-    char32_t operator|=(char32_t) volatile;
-    char32_t operator|=(char32_t);
-    char32_t operator^=(char32_t) volatile;
-    char32_t operator^=(char32_t);
-} atomic_char32_t;
-
-bool atomic_is_lock_free(const volatile atomic_char32_t*);
-bool atomic_is_lock_free(const atomic_char32_t*);
-void atomic_init(volatile atomic_char32_t*, char32_t);
-void atomic_init(atomic_char32_t*, char32_t);
-void atomic_store(volatile atomic_char32_t*, char32_t);
-void atomic_store(atomic_char32_t*, char32_t);
-void atomic_store_explicit(volatile atomic_char32_t*, char32_t, memory_order);
-void atomic_store_explicit(atomic_char32_t*, char32_t, memory_order);
-char32_t atomic_load(const volatile atomic_char32_t*);
-char32_t atomic_load(const atomic_char32_t*);
-char32_t atomic_load_explicit(const volatile atomic_char32_t*, memory_order);
-char32_t atomic_load_explicit(const atomic_char32_t*, memory_order);
-char32_t atomic_exchange(volatile atomic_char32_t*, char32_t);
-char32_t atomic_exchange(atomic_char32_t*, char32_t);
-char32_t atomic_exchange_explicit(volatile atomic_char32_t*, char32_t,
-                                  memory_order);
-char32_t atomic_exchange_explicit(atomic_char32_t*, char32_t, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_char32_t*, char32_t*,
-                                  char32_t);
-bool atomic_compare_exchange_weak(atomic_char32_t*, char32_t*, char32_t);
-bool atomic_compare_exchange_strong(volatile atomic_char32_t*, char32_t*,
-                                    char32_t);
-bool atomic_compare_exchange_strong(atomic_char32_t*, char32_t*, char32_t);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_char32_t*, char32_t*,
-                                           char32_t, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_char32_t*, char32_t*,
-                                           char32_t, memory_order,
-                                           memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_char32_t*,
-                                             char32_t*, char32_t, memory_order,
-                                             memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_char32_t*, char32_t*,
-                                             char32_t, memory_order,
-                                             memory_order);
-char32_t atomic_fetch_add(volatile atomic_char32_t*, char32_t);
-char32_t atomic_fetch_add(atomic_char32_t*, char32_t);
-char32_t atomic_fetch_add_explicit(volatile atomic_char32_t*, char32_t,
-                                   memory_order);
-char32_t atomic_fetch_add_explicit(atomic_char32_t*, char32_t, memory_order);
-char32_t atomic_fetch_sub(volatile atomic_char32_t*, char32_t);
-char32_t atomic_fetch_sub(atomic_char32_t*, char32_t);
-char32_t atomic_fetch_sub_explicit(volatile atomic_char32_t*, char32_t,
-                                   memory_order);
-char32_t atomic_fetch_sub_explicit(atomic_char32_t*, char32_t, memory_order);
-char32_t atomic_fetch_and(volatile atomic_char32_t*, char32_t);
-char32_t atomic_fetch_and(atomic_char32_t*, char32_t);
-char32_t atomic_fetch_and_explicit(volatile atomic_char32_t*, char32_t,
-                                   memory_order);
-char32_t atomic_fetch_and_explicit(atomic_char32_t*, char32_t, memory_order);
-char32_t atomic_fetch_or(volatile atomic_char32_t*, char32_t);
-char32_t atomic_fetch_or(atomic_char32_t*, char32_t);
-char32_t atomic_fetch_or_explicit(volatile atomic_char32_t*, char32_t,
-                                  memory_order);
-char32_t atomic_fetch_or_explicit(atomic_char32_t*, char32_t, memory_order);
-char32_t atomic_fetch_xor(volatile atomic_char32_t*, char32_t);
-char32_t atomic_fetch_xor(atomic_char32_t*, char32_t);
-char32_t atomic_fetch_xor_explicit(volatile atomic_char32_t*, char32_t,
-                                   memory_order);
-char32_t atomic_fetch_xor_explicit(atomic_char32_t*, char32_t, memory_order);
-
-// atomic_wchar_t
-
-typedef struct atomic_wchar_t
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(wchar_t, memory_order = memory_order_seq_cst) volatile;
-    void store(wchar_t, memory_order = memory_order_seq_cst);
-    wchar_t load(memory_order = memory_order_seq_cst) const volatile;
-    wchar_t load(memory_order = memory_order_seq_cst) const;
-    operator wchar_t() const volatile;
-    operator wchar_t() const;
-    wchar_t exchange(wchar_t, memory_order = memory_order_seq_cst) volatile;
-    wchar_t exchange(wchar_t, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(wchar_t&, wchar_t, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(wchar_t&, wchar_t, memory_order, memory_order);
-    bool compare_exchange_strong(wchar_t&, wchar_t, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(wchar_t&, wchar_t, memory_order, memory_order);
-    bool compare_exchange_weak(wchar_t&, wchar_t,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(wchar_t&, wchar_t,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(wchar_t&, wchar_t,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(wchar_t&, wchar_t,
-                                 memory_order = memory_order_seq_cst);
-    wchar_t fetch_add(wchar_t, memory_order = memory_order_seq_cst) volatile;
-    wchar_t fetch_add(wchar_t, memory_order = memory_order_seq_cst);
-    wchar_t fetch_sub(wchar_t, memory_order = memory_order_seq_cst) volatile;
-    wchar_t fetch_sub(wchar_t, memory_order = memory_order_seq_cst);
-    wchar_t fetch_and(wchar_t, memory_order = memory_order_seq_cst) volatile;
-    wchar_t fetch_and(wchar_t, memory_order = memory_order_seq_cst);
-    wchar_t fetch_or(wchar_t, memory_order = memory_order_seq_cst) volatile;
-    wchar_t fetch_or(wchar_t, memory_order = memory_order_seq_cst);
-    wchar_t fetch_xor(wchar_t, memory_order = memory_order_seq_cst) volatile;
-    wchar_t fetch_xor(wchar_t, memory_order = memory_order_seq_cst);
-    atomic_wchar_t() = default;
-    constexpr atomic_wchar_t(wchar_t);
-    atomic_wchar_t(const atomic_wchar_t&) = delete;
-    atomic_wchar_t& operator=(const atomic_wchar_t&) = delete;
-    atomic_wchar_t& operator=(const atomic_wchar_t&) volatile = delete;
-    wchar_t operator=(wchar_t) volatile;
-    wchar_t operator=(wchar_t);
-    wchar_t operator++(int) volatile;
-    wchar_t operator++(int);
-    wchar_t operator--(int) volatile;
-    wchar_t operator--(int);
-    wchar_t operator++() volatile;
-    wchar_t operator++();
-    wchar_t operator--() volatile;
-    wchar_t operator--();
-    wchar_t operator+=(wchar_t) volatile;
-    wchar_t operator+=(wchar_t);
-    wchar_t operator-=(wchar_t) volatile;
-    wchar_t operator-=(wchar_t);
-    wchar_t operator&=(wchar_t) volatile;
-    wchar_t operator&=(wchar_t);
-    wchar_t operator|=(wchar_t) volatile;
-    wchar_t operator|=(wchar_t);
-    wchar_t operator^=(wchar_t) volatile;
-    wchar_t operator^=(wchar_t);
-} atomic_wchar_t;
-
-bool atomic_is_lock_free(const volatile atomic_wchar_t*);
-bool atomic_is_lock_free(const atomic_wchar_t*);
-void atomic_init(volatile atomic_wchar_t*, wchar_t);
-void atomic_init(atomic_wchar_t*, wchar_t);
-void atomic_store(volatile atomic_wchar_t*, wchar_t);
-void atomic_store(atomic_wchar_t*, wchar_t);
-void atomic_store_explicit(volatile atomic_wchar_t*, wchar_t, memory_order);
-void atomic_store_explicit(atomic_wchar_t*, wchar_t, memory_order);
-wchar_t atomic_load(const volatile atomic_wchar_t*);
-wchar_t atomic_load(const atomic_wchar_t*);
-wchar_t atomic_load_explicit(const volatile atomic_wchar_t*, memory_order);
-wchar_t atomic_load_explicit(const atomic_wchar_t*, memory_order);
-wchar_t atomic_exchange(volatile atomic_wchar_t*, wchar_t);
-wchar_t atomic_exchange(atomic_wchar_t*, wchar_t);
-wchar_t atomic_exchange_explicit(volatile atomic_wchar_t*,
-                                 wchar_t, memory_order);
-wchar_t atomic_exchange_explicit(atomic_wchar_t*, wchar_t, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_wchar_t*, wchar_t*, wchar_t);
-bool atomic_compare_exchange_weak(atomic_wchar_t*, wchar_t*, wchar_t);
-bool atomic_compare_exchange_strong(volatile atomic_wchar_t*, wchar_t*,
-                                    wchar_t);
-bool atomic_compare_exchange_strong(atomic_wchar_t*, wchar_t*, wchar_t);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_wchar_t*, wchar_t*,
-                                           wchar_t, memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_wchar_t*, wchar_t*, wchar_t,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_wchar_t*, wchar_t*,
-                                             wchar_t, memory_order,
-                                             memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_wchar_t*, wchar_t*, wchar_t,
-                                             memory_order, memory_order);
-wchar_t atomic_fetch_add(volatile atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_add(atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_add_explicit(volatile atomic_wchar_t*, wchar_t,
-                                  memory_order);
-wchar_t atomic_fetch_add_explicit(atomic_wchar_t*, wchar_t, memory_order);
-wchar_t atomic_fetch_sub(volatile atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_sub(atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_sub_explicit(volatile atomic_wchar_t*, wchar_t,
-                                  memory_order);
-wchar_t atomic_fetch_sub_explicit(atomic_wchar_t*, wchar_t, memory_order);
-wchar_t atomic_fetch_and(volatile atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_and(atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_and_explicit(volatile atomic_wchar_t*, wchar_t,
-                                  memory_order);
-wchar_t atomic_fetch_and_explicit(atomic_wchar_t*, wchar_t, memory_order);
-wchar_t atomic_fetch_or(volatile atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_or(atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_or_explicit(volatile atomic_wchar_t*, wchar_t,
-                                 memory_order);
-wchar_t atomic_fetch_or_explicit(atomic_wchar_t*, wchar_t, memory_order);
-wchar_t atomic_fetch_xor(volatile atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_xor(atomic_wchar_t*, wchar_t);
-wchar_t atomic_fetch_xor_explicit(volatile atomic_wchar_t*, wchar_t,
-                                  memory_order);
-wchar_t atomic_fetch_xor_explicit(atomic_wchar_t*, wchar_t, memory_order);
-
-// Atomics for standard typedef types
-
-typedef atomic_schar  atomic_int_least8_t;
-typedef atomic_uchar  atomic_uint_least8_t;
-typedef atomic_short  atomic_int_least16_t;
-typedef atomic_ushort atomic_uint_least16_t;
-typedef atomic_int    atomic_int_least32_t;
-typedef atomic_uint   atomic_uint_least32_t;
-typedef atomic_llong  atomic_int_least64_t;
-typedef atomic_ullong atomic_uint_least64_t;
-
-typedef atomic_schar  atomic_int_fast8_t;
-typedef atomic_uchar  atomic_uint_fast8_t;
-typedef atomic_short  atomic_int_fast16_t;
-typedef atomic_ushort atomic_uint_fast16_t;
-typedef atomic_int    atomic_int_fast32_t;
-typedef atomic_uint   atomic_uint_fast32_t;
-typedef atomic_llong  atomic_int_fast64_t;
-typedef atomic_ullong atomic_uint_fast64_t;
-
-typedef atomic_long   atomic_intptr_t;
-typedef atomic_ulong  atomic_uintptr_t;
-typedef atomic_ulong  atomic_size_t;
-typedef atomic_long   atomic_ptrdiff_t;
-typedef atomic_llong  atomic_intmax_t;
-typedef atomic_ullong atomic_uintmax_t;
-
-// address types
-
-typedef struct atomic_address
-{
-    bool is_lock_free() const volatile;
-    bool is_lock_free() const;
-    void store(void*, memory_order = memory_order_seq_cst) volatile;
-    void store(void*, memory_order = memory_order_seq_cst);
-    void* load(memory_order = memory_order_seq_cst) const volatile;
-    void* load(memory_order = memory_order_seq_cst) const;
-    operator void*() const volatile;
-    operator void*() const;
-    void* exchange(void*, memory_order = memory_order_seq_cst) volatile;
-    void* exchange(void*, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(void*&, void*, memory_order,
-                               memory_order) volatile;
-    bool compare_exchange_weak(void*&, void*, memory_order, memory_order);
-    bool compare_exchange_strong(void*&, void*, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(void*&, void*, memory_order, memory_order);
-    bool compare_exchange_weak(void*&, void*,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(void*&, void*,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(void*&, void*,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(void*&, void*,
-                                 memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(const void*&, const void*,
-                               memory_order, memory_order) volatile;
-    bool compare_exchange_weak(const void*&, const void*, memory_order,
-                               memory_order);
-    bool compare_exchange_strong(const void*&, const void*, memory_order,
-                                 memory_order) volatile;
-    bool compare_exchange_strong(const void*&, const void*, memory_order,
-                                 memory_order);
-    bool compare_exchange_weak(const void*&, const void*,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(const void*&, const void*,
-                               memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(const void*&, const void*,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(const void*&, const void*,
-                                 memory_order = memory_order_seq_cst);
-    void* fetch_add(ptrdiff_t, memory_order = memory_order_seq_cst) volatile;
-    void* fetch_add(ptrdiff_t, memory_order = memory_order_seq_cst);
-    void* fetch_sub(ptrdiff_t, memory_order = memory_order_seq_cst) volatile;
-    void* fetch_sub(ptrdiff_t, memory_order = memory_order_seq_cst);
-    atomic_address() = default;
-    constexpr atomic_address(void*);
-    atomic_address(const atomic_address&) = delete;
-    atomic_address& operator=(const atomic_address&) = delete;
-    atomic_address& operator=(const atomic_address&) volatile = delete;
-    void* operator=(const void*) volatile;
-    void* operator=(const void*);
-    void* operator+=(ptrdiff_t) volatile;
-    void* operator+=(ptrdiff_t);
-    void* operator-=(ptrdiff_t) volatile;
-    void* operator-=(ptrdiff_t);
-} atomic_address;
-
-bool atomic_is_lock_free(const volatile atomic_address*);
-bool atomic_is_lock_free(const atomic_address*);
-void atomic_init(volatile atomic_address*, void*);
-void atomic_init(atomic_address*, void*);
-void atomic_store(volatile atomic_address*, void*);
-void atomic_store(atomic_address*, void*);
-void atomic_store_explicit(volatile atomic_address*, void*, memory_order);
-void atomic_store_explicit(atomic_address*, void*, memory_order);
-void* atomic_load(const volatile atomic_address*);
-void* atomic_load(const atomic_address*);
-void* atomic_load_explicit(const volatile atomic_address*, memory_order);
-void* atomic_load_explicit(const atomic_address*, memory_order);
-void* atomic_exchange(volatile atomic_address*, void*);
-void* atomic_exchange(atomic_address*, void*);
-void* atomic_exchange_explicit(volatile atomic_address*, void*, memory_order);
-void* atomic_exchange_explicit(atomic_address*, void*, memory_order);
-bool atomic_compare_exchange_weak(volatile atomic_address*, void**, void*);
-bool atomic_compare_exchange_weak(atomic_address*, void**, void*);
-bool atomic_compare_exchange_strong(volatile atomic_address*, void**, void*);
-bool atomic_compare_exchange_strong(atomic_address*, void**, void*);
-bool atomic_compare_exchange_weak_explicit(volatile atomic_address*, void**,
-                                           void*, memory_order, memory_order);
-bool atomic_compare_exchange_weak_explicit(atomic_address*, void**, void*,
-                                           memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(volatile atomic_address*, void**,
-                                             void*, memory_order, memory_order);
-bool atomic_compare_exchange_strong_explicit(atomic_address*, void**, void*,
-                                             memory_order, memory_order);
-void* atomic_fetch_add(volatile atomic_address*, ptrdiff_t);
-void* atomic_fetch_add(atomic_address*, ptrdiff_t);
-void* atomic_fetch_add_explicit(volatile atomic_address*, ptrdiff_t,
-                                memory_order);
-void* atomic_fetch_add_explicit(atomic_address*, ptrdiff_t, memory_order);
-void* atomic_fetch_sub(volatile atomic_address*, ptrdiff_t);
-void* atomic_fetch_sub(atomic_address*, ptrdiff_t);
-void* atomic_fetch_sub_explicit(volatile atomic_address*, ptrdiff_t,
-                                memory_order);
-void* atomic_fetch_sub_explicit(atomic_address*, ptrdiff_t, memory_order);
-
-// generic types
 
 template <class T>
 struct atomic
 {
     bool is_lock_free() const volatile;
     bool is_lock_free() const;
-    void store(T, memory_order = memory_order_seq_cst) volatile;
-    void store(T, memory_order = memory_order_seq_cst);
-    T load(memory_order = memory_order_seq_cst) const volatile;
-    T load(memory_order = memory_order_seq_cst) const;
+    void store(T desr, memory_order m = memory_order_seq_cst) volatile;
+    void store(T desr, memory_order m = memory_order_seq_cst);
+    T load(memory_order m = memory_order_seq_cst) const volatile;
+    T load(memory_order m = memory_order_seq_cst) const;
     operator T() const volatile;
     operator T() const;
-    T exchange(T, memory_order = memory_order_seq_cst) volatile;
-    T exchange(T, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(T&, T, memory_order, memory_order) volatile;
-    bool compare_exchange_weak(T&, T, memory_order, memory_order);
-    bool compare_exchange_strong(T&, T, memory_order, memory_order) volatile;
-    bool compare_exchange_strong(T&, T, memory_order, memory_order);
-    bool compare_exchange_weak(T&, T,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(T&, T, memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(T&, T,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(T&, T, memory_order = memory_order_seq_cst);
+    T exchange(T desr, memory_order m = memory_order_seq_cst) volatile;
+    T exchange(T desr, memory_order m = memory_order_seq_cst);
+    bool compare_exchange_weak(T& expc, T desr,
+                               memory_order s, memory_order f) volatile;
+    bool compare_exchange_weak(T& expc, T desr, memory_order s, memory_order f);
+    bool compare_exchange_strong(T& expc, T desr,
+                                 memory_order s, memory_order f) volatile;
+    bool compare_exchange_strong(T& expc, T desr,
+                                 memory_order s, memory_order f);
+    bool compare_exchange_weak(T& expc, T desr,
+                               memory_order m = memory_order_seq_cst) volatile;
+    bool compare_exchange_weak(T& expc, T desr,
+                               memory_order m = memory_order_seq_cst);
+    bool compare_exchange_strong(T& expc, T desr,
+                                memory_order m = memory_order_seq_cst) volatile;
+    bool compare_exchange_strong(T& expc, T desr,
+                                 memory_order m = memory_order_seq_cst);
 
     atomic() = default;
-    constexpr atomic(T);
+    constexpr atomic(T desr);
     atomic(const atomic&) = delete;
     atomic& operator=(const atomic&) = delete;
     atomic& operator=(const atomic&) volatile = delete;
@@ -2120,261 +123,120 @@ struct atomic
 };
 
 template <>
-struct atomic<bool>
-    : public atomic_bool
+struct atomic<integral>
 {
-    atomic() = default;
-    constexpr atomic(bool);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    bool operator=(bool) volatile;
-    bool operator=(bool);
-    operator bool() const volatile;
-    operator bool() const;
-};
+    bool is_lock_free() const volatile;
+    bool is_lock_free() const;
+    void store(integral desr, memory_order m = memory_order_seq_cst) volatile;
+    void store(integral desr, memory_order m = memory_order_seq_cst);
+    integral load(memory_order m = memory_order_seq_cst) const volatile;
+    integral load(memory_order m = memory_order_seq_cst) const;
+    operator integral() const volatile;
+    operator integral() const;
+    integral exchange(integral desr,
+                      memory_order m = memory_order_seq_cst) volatile;
+    integral exchange(integral desr, memory_order m = memory_order_seq_cst);
+    bool compare_exchange_weak(integral& expc, integral desr,
+                               memory_order s, memory_order f) volatile;
+    bool compare_exchange_weak(integral& expc, integral desr,
+                               memory_order s, memory_order f);
+    bool compare_exchange_strong(integral& expc, integral desr,
+                                 memory_order s, memory_order f) volatile;
+    bool compare_exchange_strong(integral& expc, integral desr,
+                                 memory_order s, memory_order f);
+    bool compare_exchange_weak(integral& expc, integral desr,
+                               memory_order m = memory_order_seq_cst) volatile;
+    bool compare_exchange_weak(integral& expc, integral desr,
+                               memory_order m = memory_order_seq_cst);
+    bool compare_exchange_strong(integral& expc, integral desr,
+                                memory_order m = memory_order_seq_cst) volatile;
+    bool compare_exchange_strong(integral& expc, integral desr,
+                                 memory_order m = memory_order_seq_cst);
 
-template <>
-struct atomic<char>
-    : public atomic_char
-{
-    atomic() = default;
-    constexpr atomic(char);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    char operator=(char) volatile;
-    char operator=(char);
-    operator char() const volatile;
-    operator char() const;
-};
+    integral
+        fetch_add(integral op, memory_order m = memory_order_seq_cst) volatile;
+    integral fetch_add(integral op, memory_order m = memory_order_seq_cst);
+    integral
+        fetch_sub(integral op, memory_order m = memory_order_seq_cst) volatile;
+    integral fetch_sub(integral op, memory_order m = memory_order_seq_cst);
+    integral
+        fetch_and(integral op, memory_order m = memory_order_seq_cst) volatile;
+    integral fetch_and(integral op, memory_order m = memory_order_seq_cst);
+    integral
+        fetch_or(integral op, memory_order m = memory_order_seq_cst) volatile;
+    integral fetch_or(integral op, memory_order m = memory_order_seq_cst);
+    integral
+        fetch_xor(integral op, memory_order m = memory_order_seq_cst) volatile;
+    integral fetch_xor(integral op, memory_order m = memory_order_seq_cst);
 
-template <>
-struct atomic<signed char>
-    : public atomic_schar
-{
     atomic() = default;
-    constexpr atomic(signed char);
+    constexpr atomic(integral desr);
     atomic(const atomic&) = delete;
     atomic& operator=(const atomic&) = delete;
     atomic& operator=(const atomic&) volatile = delete;
-    signed char operator=(signed char) volatile;
-    signed char operator=(signed char);
-    operator signed char() const volatile;
-    operator signed char() const;
-};
+    integral operator=(integral desr) volatile;
+    integral operator=(integral desr);
 
-template <>
-struct atomic<unsigned char>
-    : public atomic_uchar
-{
-    atomic() = default;
-    constexpr atomic(unsigned char);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    unsigned char operator=(unsigned char) volatile;
-    unsigned char operator=(unsigned char);
-    operator unsigned char() const volatile;
-    operator unsigned char() const;
-};
-
-template <>
-struct atomic<short>
-    : public atomic_short
-{
-    atomic() = default;
-    constexpr atomic(short);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    short operator=(short) volatile;
-    short operator=(short);
-    operator short() const volatile;
-    operator short() const;
-};
-
-template <>
-struct atomic<unsigned short>
-    : public atomic_ushort
-{
-    atomic() = default;
-    constexpr atomic(unsigned short);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    unsigned short operator=(unsigned short) volatile;
-    unsigned short operator=(unsigned short);
-    operator unsigned short() const volatile;
-    operator unsigned short() const;
-};
-
-template <>
-struct atomic<int>
-    : public atomic_int
-{
-    atomic() = default;
-    constexpr atomic(int);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    int operator=(int) volatile;
-    int operator=(int);
-    operator int() const volatile;
-    operator int() const;
-};
-
-template <>
-struct atomic<unsigned int>
-    : public atomic_uint
-{
-    atomic() = default;
-    constexpr atomic(unsigned int);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    unsigned int operator=(unsigned int) volatile;
-    unsigned int operator=(unsigned int);
-    operator unsigned int() const volatile;
-    operator unsigned int() const;
-};
-
-template <>
-struct atomic<long>
-    : public atomic_long
-{
-    atomic() = default;
-    constexpr atomic(long);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    long operator=(long) volatile;
-    long operator=(long);
-    operator long() const volatile;
-    operator long() const;
-};
-
-template <>
-struct atomic<unsigned long>
-    : public atomic_ulong
-{
-    atomic() = default;
-    constexpr atomic(unsigned long);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    unsigned long operator=(unsigned long) volatile;
-    unsigned long operator=(unsigned long);
-    operator unsigned long() const volatile;
-    operator unsigned long() const;
-};
-
-template <>
-struct atomic<long long>
-    : public atomic_llong
-{
-    atomic() = default;
-    constexpr atomic(long long);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    long long operator=(long long) volatile;
-    long long operator=(long long);
-    operator long long() const volatile;
-    operator long long() const;
-};
-
-template <>
-struct atomic<unsigned long long>
-    : public atomic_ullong
-{
-    atomic() = default;
-    constexpr atomic(unsigned long long);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    unsigned long long operator=(unsigned long long) volatile;
-    unsigned long long operator=(unsigned long long);
-    operator unsigned long long() const volatile;
-    operator unsigned long long() const;
-};
-
-template <>
-struct atomic<char16_t>
-    : public atomic_char16_t
-{
-    atomic() = default;
-    constexpr atomic(char16_t);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    char16_t operator=(char16_t) volatile;
-    char16_t operator=(char16_t);
-    operator char16_t() const volatile;
-    operator char16_t() const;
-};
-
-template <>
-struct atomic<char32_t>
-    : public atomic_char32_t
-{
-    atomic() = default;
-    constexpr atomic(char32_t);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    char32_t operator=(char32_t) volatile;
-    char32_t operator=(char32_t);
-    operator char32_t() const volatile;
-    operator char32_t() const;
-};
-
-template <>
-struct atomic<wchar_t>
-    : public atomic_wchar_t
-{
-    atomic() = default;
-    constexpr atomic(wchar_t);
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    wchar_t operator=(wchar_t) volatile;
-    wchar_t operator=(wchar_t);
-    operator wchar_t() const volatile;
-    operator wchar_t() const;
+    integral operator++(int) volatile;
+    integral operator++(int);
+    integral operator--(int) volatile;
+    integral operator--(int);
+    integral operator++() volatile;
+    integral operator++();
+    integral operator--() volatile;
+    integral operator--();
+    integral operator+=(integral op) volatile;
+    integral operator+=(integral op);
+    integral operator-=(integral op) volatile;
+    integral operator-=(integral op);
+    integral operator&=(integral op) volatile;
+    integral operator&=(integral op);
+    integral operator|=(integral op) volatile;
+    integral operator|=(integral op);
+    integral operatorˆ=(integral op) volatile;
+    integral operatorˆ=(integral op);
 };
 
 template <class T>
 struct atomic<T*>
-    : public atomic_address
 {
-    void store(T*, memory_order = memory_order_seq_cst) volatile;
-    void store(T*, memory_order = memory_order_seq_cst);
-    T* load(memory_order = memory_order_seq_cst) const volatile;
-    T* load(memory_order = memory_order_seq_cst) const;
+    bool is_lock_free() const volatile;
+    bool is_lock_free() const;
+    void store(T* desr, memory_order m = memory_order_seq_cst) volatile;
+    void store(T* desr, memory_order m = memory_order_seq_cst);
+    T* load(memory_order m = memory_order_seq_cst) const volatile;
+    T* load(memory_order m = memory_order_seq_cst) const;
     operator T*() const volatile;
     operator T*() const;
-    T* exchange(T*, memory_order = memory_order_seq_cst) volatile;
-    T* exchange(T*, memory_order = memory_order_seq_cst);
-    bool compare_exchange_weak(T*&, T*, memory_order, memory_order) volatile;
-    bool compare_exchange_weak(T*&, T*, memory_order, memory_order);
-    bool compare_exchange_strong(T*&, T*, memory_order, memory_order) volatile;
-    bool compare_exchange_strong(T*&, T*, memory_order, memory_order);
-    bool compare_exchange_weak(T*&, T*,
-                               memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_weak(T*&, T*, memory_order = memory_order_seq_cst);
-    bool compare_exchange_strong(T*&, T*,
-                                 memory_order = memory_order_seq_cst) volatile;
-    bool compare_exchange_strong(T*&, T*, memory_order = memory_order_seq_cst);
-    T* fetch_add(ptrdiff_t, memory_order = memory_order_seq_cst) volatile;
-    T* fetch_add(ptrdiff_t, memory_order = memory_order_seq_cst);
-    T* fetch_sub(ptrdiff_t, memory_order = memory_order_seq_cst) volatile;
-    T* fetch_sub(ptrdiff_t, memory_order = memory_order_seq_cst);
+    T* exchange(T* desr, memory_order m = memory_order_seq_cst) volatile;
+    T* exchange(T* desr, memory_order m = memory_order_seq_cst);
+    bool compare_exchange_weak(T*& expc, T* desr,
+                               memory_order s, memory_order f) volatile;
+    bool compare_exchange_weak(T*& expc, T* desr,
+                               memory_order s, memory_order f);
+    bool compare_exchange_strong(T*& expc, T* desr,
+                                 memory_order s, memory_order f) volatile;
+    bool compare_exchange_strong(T*& expc, T* desr,
+                                 memory_order s, memory_order f);
+    bool compare_exchange_weak(T*& expc, T* desr,
+                               memory_order m = memory_order_seq_cst) volatile;
+    bool compare_exchange_weak(T*& expc, T* desr,
+                               memory_order m = memory_order_seq_cst);
+    bool compare_exchange_strong(T*& expc, T* desr,
+                                memory_order m = memory_order_seq_cst) volatile;
+    bool compare_exchange_strong(T*& expc, T* desr,
+                                 memory_order m = memory_order_seq_cst);
+    T* fetch_add(ptrdiff_t op, memory_order m = memory_order_seq_cst) volatile;
+    T* fetch_add(ptrdiff_t op, memory_order m = memory_order_seq_cst);
+    T* fetch_sub(ptrdiff_t op, memory_order m = memory_order_seq_cst) volatile;
+    T* fetch_sub(ptrdiff_t op, memory_order m = memory_order_seq_cst);
+
     atomic() = default;
-    constexpr atomic(T*);
+    constexpr atomic(T* desr);
     atomic(const atomic&) = delete;
     atomic& operator=(const atomic&) = delete;
     atomic& operator=(const atomic&) volatile = delete;
+
     T* operator=(T*) volatile;
     T* operator=(T*);
     T* operator++(int) volatile;
@@ -2385,24 +247,352 @@ struct atomic<T*>
     T* operator++();
     T* operator--() volatile;
     T* operator--();
-    T* operator+=(ptrdiff_t) volatile;
-    T* operator+=(ptrdiff_t);
-    T* operator-=(ptrdiff_t) volatile;
-    T* operator-=(ptrdiff_t);
+    T* operator+=(ptrdiff_t op) volatile;
+    T* operator+=(ptrdiff_t op);
+    T* operator-=(ptrdiff_t op) volatile;
+    T* operator-=(ptrdiff_t op);
 };
+
+
+template <class T>
+    bool
+    atomic_is_lock_free(const volatile atomic<T>* obj);
+
+template <class T>
+    bool
+    atomic_is_lock_free(const atomic<T>* obj);
+
+template <class T>
+    void
+    atomic_init(volatile atomic<T>* obj, T desr);
+
+template <class T>
+    void
+    atomic_init(atomic<T>* obj, T desr);
+
+template <class T>
+    void
+    atomic_store(volatile atomic<T>* obj, T desr);
+
+template <class T>
+    void
+    atomic_store(atomic<T>* obj, T desr);
+
+template <class T>
+    void
+    atomic_store_explicit(volatile atomic<T>* obj, T desr, memory_order m);
+
+template <class T>
+    void
+    atomic_store_explicit(atomic<T>* obj, T desr, memory_order m);
+
+template <class T>
+    T
+    atomic_load(const volatile atomic<T>* obj);
+
+template <class T>
+    T
+    atomic_load(const atomic<T>* obj);
+
+template <class T>
+    T
+    atomic_load_explicit(const volatile atomic<T>* obj, memory_order m);
+
+template <class T>
+    T
+    atomic_load_explicit(const atomic<T>* obj, memory_order m);
+
+template <class T>
+    T
+    atomic_exchange(volatile atomic<T>* obj, T desr);
+
+template <class T>
+    T
+    atomic_exchange(atomic<T>* obj, T desr);
+
+template <class T>
+    T
+    atomic_exchange_explicit(volatile atomic<T>* obj, T desr, memory_order m);
+
+template <class T>
+    T
+    atomic_exchange_explicit(atomic<T>* obj, T desr, memory_order m);
+
+template <class T>
+    bool
+    atomic_compare_exchange_weak(volatile atomic<T>* obj, T* expc, T desr);
+
+template <class T>
+    bool
+    atomic_compare_exchange_weak(atomic<T>* obj, T* expc, T desr);
+
+template <class T>
+    bool
+    atomic_compare_exchange_strong(volatile atomic<T>* obj, T* expc, T desr);
+
+template <class T>
+    bool
+    atomic_compare_exchange_strong(atomic<T>* obj, T* expc, T desr);
+
+template <class T>
+    bool
+    atomic_compare_exchange_weak_explicit(volatile atomic<T>* obj, T* expc,
+                                          T desr,
+                                          memory_order s, memory_order f);
+
+template <class T>
+    bool
+    atomic_compare_exchange_weak_explicit(atomic<T>* obj, T* expc, T desr,
+                                          memory_order s, memory_order f);
+
+template <class T>
+    bool
+    atomic_compare_exchange_strong_explicit(volatile atomic<T>* obj,
+                                            T* expc, T desr,
+                                            memory_order s, memory_order f);
+
+template <class T>
+    bool
+    atomic_compare_exchange_strong_explicit(atomic<T>* obj, T* expc,
+                                            T desr,
+                                            memory_order s, memory_order f);
+
+template <class Integral>
+    Integral
+    atomic_fetch_add(volatile atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_add(atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_add_explicit(volatile atomic<Integral>* obj, Integral op,
+                              memory_order m);
+template <class Integral>
+    Integral
+    atomic_fetch_add_explicit(atomic<Integral>* obj, Integral op,
+                              memory_order m);
+template <class Integral>
+    Integral
+    atomic_fetch_sub(volatile atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_sub(atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_sub_explicit(volatile atomic<Integral>* obj, Integral op,
+                              memory_order m);
+template <class Integral>
+    Integral
+    atomic_fetch_sub_explicit(atomic<Integral>* obj, Integral op,
+                              memory_order m);
+template <class Integral>
+    Integral
+    atomic_fetch_and(volatile atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_and(atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_and_explicit(volatile atomic<Integral>* obj, Integral op,
+                              memory_order m);
+template <class Integral>
+    Integral
+    atomic_fetch_and_explicit(atomic<Integral>* obj, Integral op,
+                              memory_order m);
+template <class Integral>
+    Integral
+    atomic_fetch_or(volatile atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_or(atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_or_explicit(volatile atomic<Integral>* obj, Integral op,
+                             memory_order m);
+template <class Integral>
+    Integral
+    atomic_fetch_or_explicit(atomic<Integral>* obj, Integral op,
+                             memory_order m);
+template <class Integral>
+    Integral
+    atomic_fetch_xor(volatile atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_xor(atomic<Integral>* obj, Integral op);
+
+template <class Integral>
+    Integral
+    atomic_fetch_xor_explicit(volatile atomic<Integral>* obj, Integral op,
+                              memory_order m);
+template <class Integral>
+    Integral
+    atomic_fetch_xor_explicit(atomic<Integral>* obj, Integral op,
+                              memory_order m);
+
+template <class T>
+    T*
+    atomic_fetch_add(volatile atomic<T*>* obj, ptrdiff_t op);
+
+template <class T>
+    T*
+    atomic_fetch_add(atomic<T*>* obj, ptrdiff_t op);
+
+template <class T>
+    T*
+    atomic_fetch_add_explicit(volatile atomic<T*>* obj, ptrdiff_t op,
+                              memory_order m);
+template <class T>
+    T*
+    atomic_fetch_add_explicit(atomic<T*>* obj, ptrdiff_t op, memory_order m);
+
+template <class T>
+    T*
+    atomic_fetch_sub(volatile atomic<T*>* obj, ptrdiff_t op);
+
+template <class T>
+    T*
+    atomic_fetch_sub(atomic<T*>* obj, ptrdiff_t op);
+
+template <class T>
+    T*
+    atomic_fetch_sub_explicit(volatile atomic<T*>* obj, ptrdiff_t op,
+                              memory_order m);
+template <class T>
+    T*
+    atomic_fetch_sub_explicit(atomic<T*>* obj, ptrdiff_t op, memory_order m);
+
+// Atomics for standard typedef types
+
+typedef atomic<char>               atomic_char;
+typedef atomic<signed char>        atomic_schar;
+typedef atomic<unsigned char>      atomic_uchar;
+typedef atomic<short>              atomic_short;
+typedef atomic<unsigned short>     atomic_ushort;
+typedef atomic<int>                atomic_int;
+typedef atomic<unsigned int>       atomic_uint;
+typedef atomic<long>               atomic_long;
+typedef atomic<unsigned long>      atomic_ulong;
+typedef atomic<long long>          atomic_llong;
+typedef atomic<unsigned long long> atomic_ullong;
+typedef atomic<char16_t>           atomic_char16_t;
+typedef atomic<char32_t>           atomic_char32_t;
+typedef atomic<wchar_t>            atomic_wchar_t;
+
+typedef atomic<int_least8_t>   atomic_int_least8_t;
+typedef atomic<uint_least8_t>  atomic_uint_least8_t;
+typedef atomic<int_least16_t>  atomic_int_least16_t;
+typedef atomic<uint_least16_t> atomic_uint_least16_t;
+typedef atomic<int_least32_t>  atomic_int_least32_t;
+typedef atomic<uint_least32_t> atomic_uint_least32_t;
+typedef atomic<int_least64_t>  atomic_int_least64_t;
+typedef atomic<uint_least64_t> atomic_uint_least64_t;
+
+typedef atomic<int_fast8_t>   atomic_int_fast8_t;
+typedef atomic<uint_fast8_t>  atomic_uint_fast8_t;
+typedef atomic<int_fast16_t>  atomic_int_fast16_t;
+typedef atomic<uint_fast16_t> atomic_uint_fast16_t;
+typedef atomic<int_fast32_t>  atomic_int_fast32_t;
+typedef atomic<uint_fast32_t> atomic_uint_fast32_t;
+typedef atomic<int_fast64_t>  atomic_int_fast64_t;
+typedef atomic<uint_fast64_t> atomic_uint_fast64_t;
+
+typedef atomic<intptr_t>  atomic_intptr_t;
+typedef atomic<uintptr_t> atomic_uintptr_t;
+typedef atomic<size_t>    atomic_size_t;
+typedef atomic<ptrdiff_t> atomic_ptrdiff_t;
+typedef atomic<intmax_t>  atomic_intmax_t;
+typedef atomic<uintmax_t> atomic_uintmax_t;
 
 // fences
 
-void atomic_thread_fence(memory_order);
-void atomic_signal_fence(memory_order);
+void atomic_thread_fence(memory_order m);
+void atomic_signal_fence(memory_order m);
 
 }  // std
 
 */
 
 #include <__config>
+#include <cstddef>
+#include <cstdint>
+#include <type_traits>
 
 #pragma GCC system_header
+
+//// Begin Temporary Intrinsics ////
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__atomic_is_lock_free(_Tp)
+{
+    return false;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+__atomic_load(const volatile _Tp* __t, int)
+{
+    return *__t;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+__atomic_store(volatile _Tp* __t, _Tp __d, int)
+{
+    *__t = __d;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+__atomic_exchange(volatile _Tp* __t, _Tp __d, int)
+{
+    _Tp __tmp = *__t;
+    *__t = __d;
+    return __tmp;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__atomic_compare_exchange_strong(volatile _Tp* __o, _Tp* __e, _Tp __d, int, int)
+{
+    if (const_cast<_Tp&>(*__o) == *__e)
+    {
+        *__o = __d;
+        return true;
+    }
+    *__e = __d;
+    return false;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+__atomic_compare_exchange_weak(volatile _Tp* __o, _Tp* __e, _Tp __d, int, int)
+{
+    if (const_cast<_Tp&>(*__o) == *__e)
+    {
+        *__o = __d;
+        return true;
+    }
+    *__e = __d;
+    return false;
+}
+
+//// End Temporary Intrinsics ////
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -2420,6 +610,290 @@ kill_dependency(_Tp __y)
     return __y;
 }
 
+template <class T> struct atomic;
+
+// atomic_is_lock_free
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_is_lock_free(const volatile atomic<_Tp>*)
+{
+    return __atomic_is_lock_free(_Tp());
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_is_lock_free(const atomic<_Tp>*)
+{
+    return __atomic_is_lock_free(_Tp());
+}
+
+// atomic_init
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_init(volatile atomic<_Tp>* __o, _Tp __d)
+{
+    __o->__a_ = __d;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_init(atomic<_Tp>* __o, _Tp __d)
+{
+    __o->__a_ = __d;
+}
+
+// atomic_store
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store(volatile atomic<_Tp>* __o, _Tp __d)
+{
+    __atomic_store(&__o->__a_, __d, memory_order_seq_cst);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store(atomic<_Tp>* __o, _Tp __d)
+{
+    __atomic_store(&__o->__a_, __d, memory_order_seq_cst);
+}
+
+// atomic_store_explicit
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store_explicit(volatile atomic<_Tp>* __o, _Tp __d, memory_order __m)
+{
+    __atomic_store(&__o->__a_, __d, __m);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_store_explicit(atomic<_Tp>* __o, _Tp __d, memory_order __m)
+{
+    __atomic_store(&__o->__a_, __d, __m);
+}
+
+// atomic_load
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+atomic_load(const volatile atomic<_Tp>* __o)
+{
+    return __atomic_load(&__o->__a_, memory_order_seq_cst);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+atomic_load(const atomic<_Tp>* __o)
+{
+    return __atomic_load(&__o->__a_, memory_order_seq_cst);
+}
+
+// atomic_load_explicit
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+atomic_load_explicit(const volatile atomic<_Tp>* __o, memory_order __m)
+{
+    return __atomic_load(&__o->__a_, __m);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+atomic_load_explicit(const atomic<_Tp>* __o, memory_order __m)
+{
+    return __atomic_load(&__o->__a_, __m);
+}
+
+// atomic_exchange
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+atomic_exchange(volatile atomic<_Tp>* __o, _Tp __d)
+{
+    return __atomic_exchange(&__o->__a_, __d, memory_order_seq_cst);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+atomic_exchange(atomic<_Tp>* __o, _Tp __d)
+{
+    return __atomic_exchange(&__o->__a_, __d, memory_order_seq_cst);
+}
+
+// atomic_exchange_explicit
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+atomic_exchange_explicit(volatile atomic<_Tp>* __o, _Tp __d, memory_order __m)
+{
+    return __atomic_exchange(&__o->__a_, __d, __m);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+_Tp
+atomic_exchange_explicit(atomic<_Tp>* __o, _Tp __d, memory_order __m)
+{
+    return __atomic_exchange(&__o->__a_, __d, __m);
+}
+
+// atomic_compare_exchange_weak
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak(volatile atomic<_Tp>* __o, _Tp* __e, _Tp __d)
+{
+    return __atomic_compare_exchange_weak(&__o->__a_, __e, __d,
+                                          memory_order_seq_cst,
+                                          memory_order_seq_cst);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak(atomic<_Tp>* __o, _Tp* __e, _Tp __d)
+{
+    return __atomic_compare_exchange_weak(&__o->__a_, __e, __d,
+                                          memory_order_seq_cst,
+                                          memory_order_seq_cst);
+}
+
+// atomic_compare_exchange_strong
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong(volatile atomic<_Tp>* __o, _Tp* __e, _Tp __d)
+{
+    return __atomic_compare_exchange_strong(&__o->__a_, __e, __d,
+                                            memory_order_seq_cst,
+                                            memory_order_seq_cst);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong(atomic<_Tp>* __o, _Tp* __e, _Tp __d)
+{
+    return __atomic_compare_exchange_strong(&__o->__a_, __e, __d,
+                                            memory_order_seq_cst,
+                                            memory_order_seq_cst);
+}
+
+// atomic_compare_exchange_weak_explicit
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak_explicit(volatile atomic<_Tp>* __o, _Tp* __e,
+                                      _Tp __d,
+                                      memory_order __s, memory_order __f)
+{
+    return __atomic_compare_exchange_weak(&__o->__a_, __e, __d, __s, __f);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_weak_explicit(atomic<_Tp>* __o, _Tp* __e, _Tp __d,
+                                      memory_order __s, memory_order __f)
+{
+    return __atomic_compare_exchange_weak(&__o->__a_, __e, __d, __s, __f);
+}
+
+// atomic_compare_exchange_strong_explicit
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong_explicit(volatile atomic<_Tp>* __o,
+                                        _Tp* __e, _Tp __d,
+                                        memory_order __s, memory_order __f)
+{
+    return __atomic_compare_exchange_strong(&__o->__a_, __e, __d, __s, __f);
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_compare_exchange_strong_explicit(atomic<_Tp>* __o, _Tp* __e,
+                                        _Tp __d,
+                                        memory_order __s, memory_order __f)
+{
+    return __atomic_compare_exchange_strong(&__o->__a_, __e, __d, __s, __f);
+}
+
+
+// atomic<T>
+
+template <class _Tp>
+struct atomic
+{
+    _Tp __a_;
+
+    bool is_lock_free() const volatile;
+    bool is_lock_free() const;
+    void store(_Tp __d, memory_order __m = memory_order_seq_cst) volatile;
+    void store(_Tp __d, memory_order __m = memory_order_seq_cst);
+    _LIBCPP_INLINE_VISIBILITY
+    _Tp load(memory_order __m = memory_order_seq_cst) const volatile
+        {return atomic_load_explicit(this, __m);}
+    _LIBCPP_INLINE_VISIBILITY
+    _Tp load(memory_order __m = memory_order_seq_cst) const
+        {return atomic_load_explicit(this, __m);}
+    _LIBCPP_INLINE_VISIBILITY
+    operator _Tp() const volatile {return load();}
+    _LIBCPP_INLINE_VISIBILITY
+    operator _Tp() const          {return load();}
+    _Tp exchange(_Tp __d, memory_order __m = memory_order_seq_cst) volatile;
+    _Tp exchange(_Tp __d, memory_order __m = memory_order_seq_cst);
+    bool compare_exchange_weak(_Tp& __e, _Tp __d,
+                               memory_order __s, memory_order __f) volatile;
+    bool compare_exchange_weak(_Tp& __e, _Tp __d,
+                               memory_order __s, memory_order __f);
+    bool compare_exchange_strong(_Tp& __e, _Tp __d,
+                                 memory_order __s, memory_order __f) volatile;
+    bool compare_exchange_strong(_Tp& __e, _Tp __d,
+                                 memory_order __s, memory_order __f);
+    bool compare_exchange_weak(_Tp& __e, _Tp __d,
+                              memory_order __m = memory_order_seq_cst) volatile;
+    bool compare_exchange_weak(_Tp& __e, _Tp __d,
+                               memory_order __m = memory_order_seq_cst);
+    bool compare_exchange_strong(_Tp& __e, _Tp __d,
+                              memory_order __m = memory_order_seq_cst) volatile;
+    bool compare_exchange_strong(_Tp& __e, _Tp __d,
+                                 memory_order __m = memory_order_seq_cst);
+
+    atomic() {} // = default;
+    constexpr atomic(_Tp __d);
+    atomic(const atomic&) = delete;
+    atomic& operator=(const atomic&) = delete;
+    atomic& operator=(const atomic&) volatile = delete;
+    _Tp operator=(_Tp) volatile;
+    _Tp operator=(_Tp);
+};
+
+/*
 // flag type and operations
 
 typedef bool __atomic_flag__;
@@ -2664,7 +1138,7 @@ typedef struct atomic_bool
     atomic_bool() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_bool(bool __v)
+    constexpr atomic_bool(bool __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_bool(const atomic_bool&) = delete;
@@ -3018,7 +1492,7 @@ typedef struct atomic_char
     atomic_char() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_char(char __v)
+    constexpr atomic_char(char __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_char(const atomic_char&) = delete;
@@ -3624,7 +2098,7 @@ typedef struct atomic_schar
     atomic_schar() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_schar(signed char __v)
+    constexpr atomic_schar(signed char __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_schar(const atomic_schar&) = delete;
@@ -4244,7 +2718,7 @@ typedef struct atomic_uchar
     atomic_uchar() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_uchar(unsigned char __v)
+    constexpr atomic_uchar(unsigned char __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_uchar(const atomic_uchar&) = delete;
@@ -4837,7 +3311,7 @@ typedef struct atomic_short
     atomic_short() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_short(short __v)
+    constexpr atomic_short(short __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_short(const atomic_short&) = delete;
@@ -5453,7 +3927,7 @@ typedef struct atomic_ushort
     atomic_ushort() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_ushort(unsigned short __v)
+    constexpr atomic_ushort(unsigned short __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_ushort(const atomic_ushort&) = delete;
@@ -6047,7 +4521,7 @@ typedef struct atomic_int
     atomic_int() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_int(int __v)
+    constexpr atomic_int(int __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_int(const atomic_int&) = delete;
@@ -6660,7 +5134,7 @@ typedef struct atomic_uint
     atomic_uint() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_uint(unsigned int __v)
+    constexpr atomic_uint(unsigned int __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_uint(const atomic_uint&) = delete;
@@ -7253,7 +5727,7 @@ typedef struct atomic_long
     atomic_long() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_long(long __v)
+    constexpr atomic_long(long __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_long(const atomic_long&) = delete;
@@ -7866,7 +6340,7 @@ typedef struct atomic_ulong
     atomic_ulong() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_ulong(unsigned long __v)
+    constexpr atomic_ulong(unsigned long __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_ulong(const atomic_ulong&) = delete;
@@ -8491,7 +6965,7 @@ typedef struct atomic_llong
     atomic_llong() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_llong(long long __v)
+    constexpr atomic_llong(long long __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_llong(const atomic_llong&) = delete;
@@ -9126,7 +7600,7 @@ typedef struct atomic_ullong
     atomic_ullong() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_ullong(unsigned long long __v)
+    constexpr atomic_ullong(unsigned long long __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_ullong(const atomic_ullong&) = delete;
@@ -9742,7 +8216,7 @@ typedef struct atomic_char16_t
     atomic_char16_t() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_char16_t(char16_t __v)
+    constexpr atomic_char16_t(char16_t __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_char16_t(const atomic_char16_t&) = delete;
@@ -10348,7 +8822,7 @@ typedef struct atomic_char32_t
     atomic_char32_t() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_char32_t(char32_t __v)
+    constexpr atomic_char32_t(char32_t __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_char32_t(const atomic_char32_t&) = delete;
@@ -10956,7 +9430,7 @@ typedef struct atomic_wchar_t
     atomic_wchar_t() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_wchar_t(wchar_t __v)
+    constexpr atomic_wchar_t(wchar_t __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_wchar_t(const atomic_wchar_t&) = delete;
@@ -11562,7 +10036,7 @@ typedef struct atomic_address
     atomic_address() {}
 #endif
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ atomic_address(void* __v)
+    constexpr atomic_address(void* __v)
         : __v_(__v) {}
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_address(const atomic_address&) = delete;
@@ -11849,7 +10323,7 @@ atomic_fetch_sub_explicit(atomic_address* __obj, ptrdiff_t __v,
     return atomic_fetch_sub_explicit(const_cast<volatile atomic_address*>(__obj),
                                                                       __v, __o);
 }
-
+*/
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_ATOMIC
