@@ -142,3 +142,12 @@ namespace rdar8714395 {
 
   
 }
+
+namespace rdar8734046 {
+  void f1(id);
+  void f2(id<P0>);
+  void g(const A *a) {
+    f1(a);
+    f2(a);
+  }
+}
