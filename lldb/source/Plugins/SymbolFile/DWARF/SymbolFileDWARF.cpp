@@ -2933,7 +2933,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         }
                         else if (type_name_const_str == g_objc_type_name_selector)
                         {
-                            clang_type = ast.GetBuiltInType_objc_selector();
+                            clang_type = ast.CreatePointerType(ast.GetBuiltInType_objc_selector());
                             resolve_state = Type::eResolveStateFull;
                         }
                     }

@@ -846,7 +846,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
-        log->Printf("MaybeHandleVariable (%s)\n", PrintValue(llvm_value_ptr).c_str());
+        log->Printf("MaybeHandleVariable (%s)", PrintValue(llvm_value_ptr).c_str());
 
     if (ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(llvm_value_ptr))
     {

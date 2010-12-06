@@ -160,6 +160,9 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
         case clang::BuiltinType::Float:
         case clang::BuiltinType::Double:
         case clang::BuiltinType::LongDouble:    return lldb::eEncodingIEEE754;
+        
+        case clang::BuiltinType::ObjCId:
+        case clang::BuiltinType::ObjCSel:       return lldb::eEncodingUint;
 
         case clang::BuiltinType::NullPtr:       return lldb::eEncodingUint;
         }
