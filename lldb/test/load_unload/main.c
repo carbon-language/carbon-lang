@@ -23,7 +23,7 @@ main (int argc, char const *argv[])
     void *c_dylib_handle = NULL;
     int (*a_function) (void);
 
-    a_dylib_handle = dlopen (a_name, RTLD_NOW);
+    a_dylib_handle = dlopen (a_name, RTLD_NOW); // Set break point at this line for test_lldb_process_load_and_unload_commands().
     if (a_dylib_handle == NULL)
     {
         fprintf (stderr, "%s\n", dlerror());
