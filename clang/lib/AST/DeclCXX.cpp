@@ -792,8 +792,6 @@ CXXRecordDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
   }
   
   if (MemberSpecializationInfo *MSInfo = getMemberSpecializationInfo()) {
-    if (MSInfo->getTemplateSpecializationKind() != TSK)
-      ClearLinkageAndVisibilityCache();
     MSInfo->setTemplateSpecializationKind(TSK);
     return;
   }

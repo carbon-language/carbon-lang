@@ -526,57 +526,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
 }
 
 LinkageInfo NamedDecl::getLinkageAndVisibility() const {
-  // If we have already cached linkage and visibility, just return the
-  // cached information.
-  if (HasLinkageAndVisibilityCached) {
-#ifndef NDEBUG
-    LinkageInfo LI = getLVForDecl(this, LVFlags());
-    assert(LI.visibility() == Visibility(CachedVisibility));
-    assert(LI.visibilityExplicit() == CachedVisibilityIsExplicit);
-    assert(LI.linkage() == Linkage(CachedLinkage));
-#endif
-    return LinkageInfo(Linkage(CachedLinkage), Visibility(CachedVisibility),
-                       CachedVisibilityIsExplicit);
-  }
-  
-  LinkageInfo LI = getLVForDecl(this, LVFlags());
-  HasLinkageAndVisibilityCached = 1;
-  CachedVisibility = LI.visibility();
-  CachedVisibilityIsExplicit = LI.visibilityExplicit();
-  CachedLinkage = LI.linkage();
-  return LI;
-}
-
-void NamedDecl::ClearLinkageAndVisibilityCache() {
-  HasLinkageAndVisibilityCached = 0;
-  
-  if (VarDecl *VD = dyn_cast<VarDecl>(this)) {
-    for (VarDecl::redecl_iterator R = VD->redecls_begin(),
-                               REnd = VD->redecls_end();
-         R != REnd; ++R)
-      R->HasLinkageAndVisibilityCached = 0;
-    
-    return;
-  }
-  
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(this)) {
-    for (FunctionDecl::redecl_iterator R = FD->redecls_begin(),
-                                    REnd = FD->redecls_end();
-         R != REnd; ++R)
-      R->HasLinkageAndVisibilityCached = 0;
-    
-    return;
-  }
-  
-  // Changing the linkage or visibility of a C++ class affect the linkage and
-  // visibility of all of its members. Clear their caches, too.
-  if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(this)) {
-    for (DeclContext::decl_iterator D = RD->decls_begin(),
-                                 DEnd = RD->decls_end();
-         D != DEnd; ++D)
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        ND->ClearLinkageAndVisibilityCache();
-  }
+  return getLVForDecl(this, LVFlags());
 }
 
 static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
@@ -928,14 +878,6 @@ VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
   return new (C) VarDecl(Var, DC, L, Id, T, TInfo, S, SCAsWritten);
 }
 
-void VarDecl::setStorageClass(StorageClass SC) {
-  assert(isLegalForVariable(SC));
-  if (getStorageClass() != SC)
-    ClearLinkageAndVisibilityCache();
-  
-  SClass = SC;
-}
-
 SourceLocation VarDecl::getInnerLocStart() const {
   SourceLocation Start = getTypeSpecStartLoc();
   if (Start.isInvalid())
@@ -1154,7 +1096,6 @@ void VarDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK,
       PointOfInstantiation.isValid() &&
       MSI->getPointOfInstantiation().isInvalid())
     MSI->setPointOfInstantiation(PointOfInstantiation);
-  ClearLinkageAndVisibilityCache();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1254,10 +1195,8 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
 
 void FunctionDecl::setBody(Stmt *B) {
   Body = B;
-  if (B) {
+  if (B)
     EndRangeLoc = B->getLocEnd();
-    ClearLinkageAndVisibilityCache();
-  }
 }
 
 void FunctionDecl::setPure(bool P) {
@@ -1336,14 +1275,6 @@ const FunctionDecl *FunctionDecl::getCanonicalDecl() const {
 
 FunctionDecl *FunctionDecl::getCanonicalDecl() {
   return getFirstDeclaration();
-}
-
-void FunctionDecl::setStorageClass(StorageClass SC) {
-  assert(isLegalForFunction(SC));
-  if (getStorageClass() != SC)
-    ClearLinkageAndVisibilityCache();
-  
-  SClass = SC;
 }
 
 /// \brief Returns a value indicating whether this function
@@ -1778,7 +1709,6 @@ FunctionDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK,
       MSInfo->setPointOfInstantiation(PointOfInstantiation);
   } else
     assert(false && "Function cannot have a template specialization kind");
-  ClearLinkageAndVisibilityCache();
 }
 
 SourceLocation FunctionDecl::getPointOfInstantiation() const {
@@ -1857,7 +1787,6 @@ void TagDecl::setTypedefForAnonDecl(TypedefDecl *TDD) {
   TypedefDeclOrQualifier = TDD; 
   if (TypeForDecl)
     TypeForDecl->ClearLinkageCache();
-  ClearLinkageAndVisibilityCache();
 }
 
 void TagDecl::startDefinition() {

@@ -198,7 +198,7 @@ private:
     return DeclCtx.get<DeclContext*>();
   }
 
-  /// Loc - The location of this decl.
+  /// Loc - The location that this decl.
   SourceLocation Loc;
 
   /// DeclKind - This indicates which class this is.
@@ -316,7 +316,12 @@ public:
   void swapAttrs(Decl *D);
   void dropAttrs();
 
-  void addAttr(Attr *A);
+  void addAttr(Attr *A) {
+    if (hasAttrs())
+      getAttrs().push_back(A);
+    else
+      setAttrs(AttrVec(1, A));
+  }
 
   typedef AttrVec::const_iterator attr_iterator;
 
