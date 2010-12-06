@@ -277,7 +277,7 @@ static bool isObjectPointerWithTrustworthySize(const Value *V) {
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(V))
     return !AI->isArrayAllocation();
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-    return !GV->isWeakForLinker();
+    return !GV->mayBeOverridden();
   if (const Argument *A = dyn_cast<Argument>(V))
     return A->hasByValAttr();
   return false;
