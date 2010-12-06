@@ -661,7 +661,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     const MCSymbol *B = &Target.getSymB()->getSymbol();
     MCSymbolData &B_SD = Asm.getSymbolData(*B);
 
-    FixedValue = Layout.getSymbolAddress(&A_SD) - Layout.getSymbolAddress(&B_SD);
+    FixedValue = Layout.getSymbolOffset(&A_SD) - Layout.getSymbolOffset(&B_SD);
 
     // In the case where we have SymbA and SymB, we just need to store the delta
     // between the two symbols.  Update FixedValue to account for the delta, and
