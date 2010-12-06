@@ -29,6 +29,14 @@ using namespace llvm;
 
 STATISTIC(FilledSlots, "Number of delay slots filled");
 
+namespace llvm {
+cl::opt<bool> DisableDelaySlotFiller(
+  "disable-mblaze-delay-filler",
+  cl::init(false),
+  cl::desc("Disable the MBlaze delay slot filter."),
+  cl::Hidden);
+}
+
 namespace {
   struct Filler : public MachineFunctionPass {
 
@@ -61,15 +69,22 @@ static bool hasImmInstruction(MachineBasicBlock::iterator &candidate) {
     // 16-bits requires an implicit IMM instruction.
     unsigned numOper = candidate->getNumOperands();
     for (unsigned op = 0; op < numOper; ++op) {
-        if (candidate->getOperand(op).isImm() &&
-            (candidate->getOperand(op).getImm() & 0xFFFFFFFFFFFF0000LL) != 0)
-            return true;
+        MachineOperand &mop = candidate->getOperand(op);
+
+        // The operand requires more than 16-bits to represent.
+        if (mop.isImm() && (mop.getImm() < -0x8000 || mop.getImm() > 0x7fff))
+          return true;
+
+        // We must assume that unknown immediate values require more than
+        // 16-bits to represent.
+        if (mop.isGlobal() || mop.isSymbol())
+          return true;
 
         // FIXME: we could probably check to see if the FP value happens
         //        to not need an IMM instruction. For now we just always
-        //        assume that FP values always do.
-        if (candidate->getOperand(op).isFPImm())
-            return true;
+        //        assume that FP values do.
+        if (mop.isFPImm())
+          return true;
     }
 
     return false;
@@ -77,48 +92,67 @@ static bool hasImmInstruction(MachineBasicBlock::iterator &candidate) {
 
 static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
                            MachineBasicBlock::iterator &slot) {
-    // Loop over all of the operands in the branch instruction
-    // and make sure that none of them are defined by the
-    // candidate instruction.
-    unsigned numOper = slot->getNumOperands();
-    for (unsigned op = 0; op < numOper; ++op) {
-        if (!slot->getOperand(op).isReg() ||
-            !slot->getOperand(op).isUse() ||
-            slot->getOperand(op).isImplicit())
-            continue;
+  // Hazard check
+  MachineBasicBlock::iterator a = candidate;
+  MachineBasicBlock::iterator b = slot;
+  TargetInstrDesc desc = candidate->getDesc();
 
-        unsigned cnumOper = candidate->getNumOperands();
-        for (unsigned cop = 0; cop < cnumOper; ++cop) {
-            if (candidate->getOperand(cop).isReg() &&
-                candidate->getOperand(cop).isDef() &&
-                candidate->getOperand(cop).getReg() ==
-                slot->getOperand(op).getReg())
-                return true;
-        }
+  // MBB layout:-
+  //    candidate := a0 = operation(a1, a2)
+  //    ...middle bit...
+  //    slot := b0 = operation(b1, b2)
+
+  // Possible hazards:-/
+  // 1. a1 or a2 was written during the middle bit
+  // 2. a0 was read or written during the middle bit
+  // 3. a0 is one or more of {b0, b1, b2}
+  // 4. b0 is one or more of {a1, a2}
+  // 5. a accesses memory, and the middle bit
+  //    contains a store operation.
+  bool a_is_memory = desc.mayLoad() || desc.mayStore();
+
+  // Check hazards type 1, 2 and 5 by scanning the middle bit
+  MachineBasicBlock::iterator m = a;
+  for (++m; m != b; ++m) {
+    for (unsigned aop = 0, aend = a->getNumOperands(); aop<aend; ++aop) {
+      bool aop_is_reg = a->getOperand(aop).isReg();
+      if (!aop_is_reg) continue;
+
+      bool aop_is_def = a->getOperand(aop).isDef();
+      unsigned aop_reg = a->getOperand(aop).getReg();
+
+      for (unsigned mop = 0, mend = m->getNumOperands(); mop<mend; ++mop) {
+        bool mop_is_reg = m->getOperand(mop).isReg();
+        if (!mop_is_reg) continue;
+
+        bool mop_is_def = m->getOperand(mop).isDef();
+        unsigned mop_reg = m->getOperand(mop).getReg();
+
+        if (aop_is_def && (mop_reg == aop_reg))
+            return true; // Hazard type 2, because aop = a0
+        else if (mop_is_def && (mop_reg == aop_reg))
+            return true; // Hazard type 1, because aop in {a1, a2}
+      }
     }
 
-    // There are no hazards between the two instructions
-    return false;
-}
+    // Check hazard type 5
+    if (a_is_memory && m->getDesc().mayStore())
+      return true;
+  }
 
-static bool usedBeforeDelaySlot(MachineBasicBlock::iterator &candidate,
-                                MachineBasicBlock::iterator &slot) {
-  MachineBasicBlock::iterator I = candidate;
-  for (++I; I != slot; ++I) {
-        unsigned numOper = I->getNumOperands();
-        for (unsigned op = 0; op < numOper; ++op) {
-            if (I->getOperand(op).isReg() &&
-                I->getOperand(op).isUse()) {
-                unsigned reg = I->getOperand(op).getReg();
-                unsigned cops = candidate->getNumOperands();
-                for (unsigned cop = 0; cop < cops; ++cop) {
-                    if (candidate->getOperand(cop).isReg() &&
-                        candidate->getOperand(cop).isDef() &&
-                        candidate->getOperand(cop).getReg() == reg)
-                        return true;
-                }
-            }
+  // Check hazard type 3 & 4
+  for (unsigned aop = 0, aend = a->getNumOperands(); aop<aend; ++aop) {
+    if (a->getOperand(aop).isReg()) {
+      unsigned aop_reg = a->getOperand(aop).getReg();
+
+      for (unsigned bop = 0, bend = b->getNumOperands(); bop<bend; ++bop) {
+        if (b->getOperand(bop).isReg() && (!b->getOperand(bop).isImplicit())) {
+          unsigned bop_reg = b->getOperand(bop).getReg();
+          if (aop_reg == bop_reg)
+            return true;
         }
+      }
+    }
   }
 
   return false;
@@ -142,11 +176,12 @@ findDelayInstr(MachineBasicBlock &MBB,MachineBasicBlock::iterator slot) {
 
     --I;
     TargetInstrDesc desc = I->getDesc();
-    if (desc.hasDelaySlot() || desc.isBranch() || isDelayFiller(MBB,I))
+    if (desc.hasDelaySlot() || desc.isBranch() || isDelayFiller(MBB,I) ||
+        desc.isCall() || desc.isReturn() || desc.isBarrier() ||
+        desc.hasUnmodeledSideEffects())
       break;
 
-    if (desc.mayLoad() || desc.mayStore() || hasImmInstruction(I) ||
-        delayHasHazard(I,slot) || usedBeforeDelaySlot(I,slot))
+    if (hasImmInstruction(I) || delayHasHazard(I,slot))
       continue;
 
     return I;
@@ -162,8 +197,11 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I)
     if (I->getDesc().hasDelaySlot()) {
-      MachineBasicBlock::iterator D = findDelayInstr(MBB,I);
+      MachineBasicBlock::iterator D = MBB.end();
       MachineBasicBlock::iterator J = I;
+
+      if (!DisableDelaySlotFiller)
+        D = findDelayInstr(MBB,I);
 
       ++FilledSlots;
       Changed = true;

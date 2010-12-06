@@ -22,7 +22,7 @@ define i16 @retimm_i16() {
     ; FPU:          retimm_i16:
     ; FPU:          rtsd
     ; FPU-NEXT:     add
-    ret i16 38212
+    ret i16 31212
 }
 
 define i32 @retimm_i32() {
