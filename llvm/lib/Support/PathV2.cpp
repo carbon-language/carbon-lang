@@ -518,7 +518,7 @@ error_code replace_extension(SmallVectorImpl<char> &path,
 
 error_code native(const Twine &path, SmallVectorImpl<char> &result) {
   // Clear result.
-  result.set_size(0);
+  result.clear();
 #ifdef LLVM_ON_WIN32
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);

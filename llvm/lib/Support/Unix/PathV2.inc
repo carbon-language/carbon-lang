@@ -65,7 +65,7 @@ namespace {
 #endif
     (dir = "/tmp");
 
-    result.set_size(0);
+    result.clear();
     StringRef d(dir);
     result.append(d.begin(), d.end());
     return success;
@@ -400,7 +400,7 @@ rety_open_create:
     return error_code(errno, system_category());
   }
 
-  result_path.set_size(0);
+  result_path.clear();
   StringRef d(real_path_buff);
   result_path.append(d.begin(), d.end());
 
