@@ -406,7 +406,8 @@ CommandInterpreter::GetAliasHelp (const char *alias_name, const char *command_na
         {
             OptionArgPair cur_option = (*options)[i];
             std::string opt = cur_option.first;
-            std::string value = cur_option.second;
+            OptionArgValue value_pair = cur_option.second;
+            std::string value = value_pair.second;
             if (opt.compare("<argument>") == 0)
             {
                 help_string.Printf (" %s", value.c_str());
@@ -502,6 +503,7 @@ CommandInterpreter::HandleCommand
     ExecutionContext *override_context
 )
 {
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_COMMANDS));
     // FIXME: there should probably be a mutex to make sure only one thread can
     // run the interpreter at a time.
 
@@ -542,10 +544,16 @@ CommandInterpreter::HandleCommand
         add_to_history = false;
     }
 
+    if (log)
+        log->Printf ("CommandInterpreter::HandleCommand, command_line = '%s'", command_line);
+
     Args command_args(command_line);
 
     if (command_args.GetArgumentCount() > 0)
     {
+        std::string raw_command_string (command_line);  // For commands that take raw input but may be aliased or
+                                                        // have command options.
+                                                        
         const char *command_cstr = command_args.GetArgumentAtIndex(0);
         if (command_cstr)
         {
@@ -556,20 +564,54 @@ CommandInterpreter::HandleCommand
                 
             if (command_obj != NULL)
             {
+                // Strip command name from the raw_command_string.
+                if (raw_command_string.find (command_cstr) == 0)
+                {
+                    // The command name is at the front of the string (where it should be) so strip it off.
+                    raw_command_string = raw_command_string.substr (strlen (command_cstr));
+                }
+                
+            
                 std::string aliased_cmd_str;
                 if (command_obj->IsAlias())
                 {
-                    BuildAliasCommandArgs (command_obj, command_cstr, command_args, result);
+                    if (log)
+                        log->Printf ("Command '%s' is an alias. Building alias command args.", command_cstr);
+                    BuildAliasCommandArgs (command_obj, command_cstr, command_args, raw_command_string, result);
                     if (!result.Succeeded())
+                    {
+                        if (log)
+                            log->Printf ("Building alias command args failed.");
                         return false;
+                    }
                     else
                     {
                         // We need to transfer the newly constructed args back into the command_line, in case
                         // this happens to be an alias for a command that takes raw input.
                         if (command_args.GetCommandString (aliased_cmd_str))
                         {
+                            if (log)
+                                log->Printf ("Result string from BuildAliasCommandArgs is '%s'", aliased_cmd_str.c_str());
+                            if (command_obj->WantsRawCommandString())
+                            {
+                                if (log)
+                                {
+                                    log->Printf ("This command takes raw input.");
+                                }
+                                aliased_cmd_str.append (" ");
+                                aliased_cmd_str.append (raw_command_string);
+                            }
+                            else
+                            {
+                                if (log)
+                                    log->Printf ("This command does NOT take raw input.");
+                            }
                             command_line = aliased_cmd_str.c_str();
                             command_cstr = command_args.GetArgumentAtIndex (0);
+                            if (log)
+                            {
+                                log->Printf ("Final command line, after resolving aliases is '%s'", command_line);
+                            }
                         }
                     }
                 }
@@ -594,6 +636,9 @@ CommandInterpreter::HandleCommand
                         stripped_command += strlen(command_cstr);
                         while (isspace(*stripped_command))
                             ++stripped_command;
+                        if (log)
+                            log->Printf ("Input string being passed to ExecuteRawCommandString for '%s' command is '%s'", 
+                                         command_obj->GetCommandName(), stripped_command);
                         command_obj->ExecuteRawCommandString (stripped_command, result);
                     }
                 }
@@ -601,6 +646,14 @@ CommandInterpreter::HandleCommand
                 {
                     // Remove the command from the args.
                     command_args.Shift();
+                    if (log)
+                    {
+                        size_t count = command_args.GetArgumentCount();
+                        log->Printf ("ExecuteWithOptions for '%s' command is being called with %d args:", 
+                                      command_obj->GetCommandName(), count);
+                        for (size_t k = 0; k < count; ++k)
+                            log->Printf ("    arg[%d]='%s'", k, command_args.GetArgumentAtIndex (k));
+                    }
                     command_obj->ExecuteWithOptions (command_args, result);
                 }
             }
@@ -983,20 +1036,35 @@ void
 CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
                                            const char *alias_name,
                                            Args &cmd_args,
+                                           std::string &raw_input_string,
                                            CommandReturnObject &result)
 {
     OptionArgVectorSP option_arg_vector_sp = GetAliasOptions (alias_name);
+    
+    bool wants_raw_input = alias_cmd_obj->WantsRawCommandString();
 
+    // Make sure that the alias name is the 0th element in cmd_args
+    std::string alias_name_str = alias_name;
+    if (alias_name_str.compare (cmd_args.GetArgumentAtIndex(0)) != 0)
+        cmd_args.Unshift (alias_name);
+    
+    Args new_args (alias_cmd_obj->GetCommandName());
+    if (new_args.GetArgumentCount() == 2)
+        new_args.Shift();
+    
     if (option_arg_vector_sp.get())
     {
-        // Make sure that the alias name is the 0th element in cmd_args
-        std::string alias_name_str = alias_name;
-        if (alias_name_str.compare (cmd_args.GetArgumentAtIndex(0)) != 0)
-            cmd_args.Unshift (alias_name);
-
-        Args new_args (alias_cmd_obj->GetCommandName());
-        if (new_args.GetArgumentCount() == 2)
-            new_args.Shift();
+        if (wants_raw_input)
+        {
+            // We have a command that both has command options and takes raw input.  Make *sure* it has a
+            // " -- " in the right place in the raw_input_string.
+            size_t pos = raw_input_string.find(" -- ");
+            if (pos == std::string::npos)
+            {
+                // None found; assume it goes at the beginning of the raw input string
+                raw_input_string.insert (0, " -- ");
+            }
+        }
 
         OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
         int old_size = cmd_args.GetArgumentCount();
@@ -1007,19 +1075,36 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
         for (int i = 0; i < option_arg_vector->size(); ++i)
         {
             OptionArgPair option_pair = (*option_arg_vector)[i];
+            OptionArgValue value_pair = option_pair.second;
+            int value_type = value_pair.first;
             std::string option = option_pair.first;
-            std::string value = option_pair.second;
+            std::string value = value_pair.second;
             if (option.compare ("<argument>") == 0)
-                new_args.AppendArgument (value.c_str());
+            {
+                if (!wants_raw_input
+                    || (value.compare("--") != 0)) // Since we inserted this above, make sure we don't insert it twice
+                    new_args.AppendArgument (value.c_str());
+            }
             else
             {
-                new_args.AppendArgument (option.c_str());
+                if (value_type != optional_argument)
+                    new_args.AppendArgument (option.c_str());
                 if (value.compare ("<no-argument>") != 0)
                 {
                     int index = GetOptionArgumentPosition (value.c_str());
                     if (index == 0)
+                    {
                         // value was NOT a positional argument; must be a real value
-                        new_args.AppendArgument (value.c_str());
+                        if (value_type != optional_argument)
+                            new_args.AppendArgument (value.c_str());
+                        else
+                        {
+                            char buffer[255];
+                            ::snprintf (buffer, sizeof (buffer), "%s%s", option.c_str(), value.c_str());
+                            new_args.AppendArgument (buffer);
+                        }
+
+                    }
                     else if (index >= cmd_args.GetArgumentCount())
                     {
                         result.AppendErrorWithFormat
@@ -1030,7 +1115,22 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
                     }
                     else
                     {
-                        new_args.AppendArgument (cmd_args.GetArgumentAtIndex (index));
+                        // Find and remove cmd_args.GetArgumentAtIndex(i) from raw_input_string
+                        size_t strpos = raw_input_string.find (cmd_args.GetArgumentAtIndex (index));
+                        if (strpos != std::string::npos)
+                        {
+                            raw_input_string = raw_input_string.erase (strpos, strlen (cmd_args.GetArgumentAtIndex (index)));
+                        }
+
+                        if (value_type != optional_argument)
+                            new_args.AppendArgument (cmd_args.GetArgumentAtIndex (index));
+                        else
+                        {
+                            char buffer[255];
+                            ::snprintf (buffer, sizeof(buffer), "%s%s", option.c_str(), 
+                                        cmd_args.GetArgumentAtIndex (index));
+                            new_args.AppendArgument (buffer);
+                        }
                         used[index] = true;
                     }
                 }
@@ -1039,7 +1139,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
 
         for (int j = 0; j < cmd_args.GetArgumentCount(); ++j)
         {
-            if (!used[j])
+            if (!used[j] && !wants_raw_input)
                 new_args.AppendArgument (cmd_args.GetArgumentAtIndex (j));
         }
 
@@ -1049,7 +1149,14 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
     else
     {
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        // This alias was not created with any options; nothing further needs to be done.
+        // This alias was not created with any options; nothing further needs to be done, unless it is a command that
+        // wants raw input, in which case we need to clear the rest of the data from cmd_args, since its in the raw
+        // input string.
+        if (wants_raw_input)
+        {
+            cmd_args.Clear();
+            cmd_args.SetArguments (new_args.GetArgumentCount(), (const char **) new_args.GetArgumentVector());
+        }
         return;
     }
 

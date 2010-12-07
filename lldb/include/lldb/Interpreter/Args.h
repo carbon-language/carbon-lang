@@ -27,7 +27,8 @@
 
 namespace lldb_private {
 
-typedef std::pair<std::string, std::string> OptionArgPair;
+typedef std::pair<int, std::string> OptionArgValue;
+typedef std::pair<std::string, OptionArgValue> OptionArgPair;
 typedef std::vector<OptionArgPair> OptionArgVector;
 typedef lldb::SharedPtr<OptionArgVector>::Type OptionArgVectorSP;
 
@@ -301,6 +302,12 @@ public:
     //------------------------------------------------------------------
     Error
     ParseOptions (Options &options);
+    
+    size_t
+    FindArgumentIndexForOption (struct option *long_options, int long_options_index);
+    
+    bool
+    IsPositionalArgument (const char *arg);
 
     // The following works almost identically to ParseOptions, except that no option is required to have arguments,
     // and it builds up the option_arg_vector as it parses the options.

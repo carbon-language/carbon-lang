@@ -801,6 +801,51 @@ Args::LongestCommonPrefix (std::string &common_prefix)
     }
 }
 
+size_t
+Args::FindArgumentIndexForOption (struct option *long_options, int long_options_index)
+{
+    char short_buffer[3];
+    char long_buffer[255];
+    ::snprintf (short_buffer, sizeof (short_buffer), "-%c", (char) long_options[long_options_index].val);
+    ::snprintf (long_buffer, sizeof (long_buffer),  "--%s", long_options[long_options_index].name);
+    size_t end = GetArgumentCount ();
+    size_t idx = 0;
+    while (idx < end)
+    {   
+        if ((::strncmp (GetArgumentAtIndex (idx), short_buffer, strlen (short_buffer)) == 0)
+            || (::strncmp (GetArgumentAtIndex (idx), long_buffer, strlen (long_buffer)) == 0))
+            {
+                return idx;
+            }
+        ++idx;
+    }
+
+    return end;
+}
+
+bool
+Args::IsPositionalArgument (const char *arg)
+{
+    if (arg == NULL)
+        return false;
+        
+    bool is_positional = true;
+    char *cptr = (char *) arg;
+    
+    if (cptr[0] == '%')
+    {
+        ++cptr;
+        while (isdigit (cptr[0]))
+            ++cptr;
+        if (cptr[0] != '\0')
+            is_positional = false;
+    }
+    else
+        is_positional = false;
+
+    return is_positional;
+}
+
 void
 Args::ParseAliasOptions (Options &options,
                          CommandReturnObject &result,
@@ -889,14 +934,16 @@ Args::ParseAliasOptions (Options &options,
             switch (long_options[long_options_index].has_arg)
             {
             case no_argument:
-                option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()), "<no-argument>"));
+                option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()), 
+                                                             OptionArgValue (no_argument, "<no-argument>")));
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 break;
             case required_argument:
                 if (optarg != NULL)
                 {
                     option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()),
-                                                                 std::string (optarg)));
+                                                                 OptionArgValue (required_argument, 
+                                                                                 std::string (optarg))));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
@@ -910,13 +957,14 @@ Args::ParseAliasOptions (Options &options,
                 if (optarg != NULL)
                 {
                     option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()),
-                                                                 std::string (optarg)));
+                                                                 OptionArgValue (optional_argument, 
+                                                                                 std::string (optarg))));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else
                 {
                     option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()),
-                                                                 "<no-argument>"));
+                                                                 OptionArgValue (optional_argument, "<no-argument>")));
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 break;
@@ -938,24 +986,16 @@ Args::ParseAliasOptions (Options &options,
         {
             // Find option in the argument list; also see if it was supposed to take an argument and if one was
             // supplied.  Remove option (and argument, if given) from the argument list.
-            StreamString short_opt_str;
-            StreamString long_opt_str;
-            short_opt_str.Printf ("-%c", (char) long_options[long_options_index].val);
-            long_opt_str.Printf ("-%s", long_options[long_options_index].name);
-            bool found = false;
-            size_t end = GetArgumentCount();
-            for (size_t i = 0; i < end && !found; ++i)
-                if ((strcmp (GetArgumentAtIndex (i), short_opt_str.GetData()) == 0)
-                    || (strcmp (GetArgumentAtIndex (i), long_opt_str.GetData()) == 0))
-                {
-                    found = true;
-                    ReplaceArgumentAtIndex (i, "");
-                    if ((long_options[long_options_index].has_arg != no_argument)
-                        && (optarg != NULL)
-                        && (i+1 < end)
-                        && (strcmp (optarg, GetArgumentAtIndex(i+1)) == 0))
-                        ReplaceArgumentAtIndex (i+1, "");
-                }
+            size_t idx = FindArgumentIndexForOption (long_options, long_options_index);
+            if (idx < GetArgumentCount())
+            {
+                ReplaceArgumentAtIndex (idx, "");
+                if ((long_options[long_options_index].has_arg != no_argument)
+                    && (optarg != NULL)
+                    && (idx+1 < GetArgumentCount())
+                    && (strcmp (optarg, GetArgumentAtIndex(idx+1)) == 0))
+                    ReplaceArgumentAtIndex (idx+1, "");
+            }
         }
 
         if (!result.Succeeded())

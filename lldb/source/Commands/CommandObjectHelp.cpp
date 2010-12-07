@@ -146,6 +146,10 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                         && (strlen (long_help) > 0))
                         output_strm.Printf ("\n%s", long_help);
                     // Mark this help command with a success status.
+                    if (sub_cmd_obj->WantsRawCommandString())
+                    {
+                        m_interpreter.OutputFormattedHelpText (output_strm, "", "", "\nIMPORTANT NOTE:  Because this command takes 'raw' input, if you use any command options you must use ' -- ' between the end of the command options and the beginning of the raw input.", 1);
+                    }
                     result.SetStatus (eReturnStatusSuccessFinishNoResult);
                 }
                 else if (sub_cmd_obj->IsMultiwordObject())

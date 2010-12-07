@@ -193,8 +193,8 @@ public:
     HasAliasOptions ();
 
     void
-    BuildAliasCommandArgs (CommandObject *alias_cmd_obj, const char *alias_name, Args &cmd_args,
-                           CommandReturnObject &result);
+    BuildAliasCommandArgs (CommandObject *alias_cmd_obj, const char *alias_name, Args &cmd_args, 
+                           std::string &raw_input_string, CommandReturnObject &result);
 
     int
     GetOptionArgumentPosition (const char *in_string);
