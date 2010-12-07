@@ -1119,7 +1119,7 @@ public:
   friend class iterator;
 
   const_iterator begin() const {
-    iterator I(*this);
+    const_iterator I(*this);
     I.goToBegin();
     return I;
   }
@@ -1131,7 +1131,7 @@ public:
   }
 
   const_iterator end() const {
-    iterator I(*this);
+    const_iterator I(*this);
     I.goToEnd();
     return I;
   }
@@ -1145,7 +1145,7 @@ public:
   /// find - Return an iterator pointing to the first interval ending at or
   /// after x, or end().
   const_iterator find(KeyT x) const {
-    iterator I(*this);
+    const_iterator I(*this);
     I.find(x);
     return I;
   }
@@ -1347,7 +1347,8 @@ protected:
   // The path may be partially filled, but never between iterator calls.
   IntervalMapImpl::Path path;
 
-  explicit const_iterator(IntervalMap &map) : map(&map) {}
+  explicit const_iterator(const IntervalMap &map) :
+    map(const_cast<IntervalMap*>(&map)) {}
 
   bool branched() const {
     assert(map && "Invalid iterator");
