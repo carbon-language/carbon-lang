@@ -272,7 +272,7 @@ Section::Dump (Stream *s, Target *target) const
             addr = m_linked_section->GetFileAddress() + m_linked_offset;
         }
 
-        int indent = (sizeof(void*) + 1 + sizeof(user_id_t) + 1) * 2 + 3 + s->GetIndentLevel();
+        int indent = 26 + s->GetIndentLevel();
         s->Printf("%*.*s", indent, indent, "");
         VMRange linked_range(addr, addr + m_byte_size);
         linked_range.Dump (s, 0);
@@ -289,9 +289,7 @@ Section::Dump (Stream *s, Target *target) const
 void
 Section::DumpName (Stream *s) const
 {
-    if (m_linked_section)
-        return m_linked_section->DumpName(s);
-    else if (m_parent == NULL)
+    if (m_parent == NULL)
     {
         // The top most section prints the module basename
         const char *module_basename = m_module->GetFileSpec().GetFilename().AsCString();
