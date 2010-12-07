@@ -103,8 +103,10 @@ getNonexecutableStackSection(MCContext &Ctx) const {
 }
 
 X86MCAsmInfoCOFF::X86MCAsmInfoCOFF(const Triple &Triple) {
-  if (Triple.getArch() == Triple::x86_64)
+  if (Triple.getArch() == Triple::x86_64) {
     GlobalPrefix = "";
+    PrivateGlobalPrefix = ".L";
+  }
 
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
