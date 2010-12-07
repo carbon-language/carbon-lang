@@ -508,11 +508,7 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
-  MachineInstrBuilder MIB = BuildMI(MF, DL, TII.get(Opc));
-  MIB.addReg(ARM::SP, getDefRegState(true));
-  MIB.addReg(ARM::SP);
-  AddDefaultPred(MIB);
-  bool NumRegs = false;
+  SmallVector<std::pair<unsigned,bool>, 4> Regs;
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
     if (!(Func)(Reg, STI.isTargetDarwin())) continue;
@@ -530,15 +526,16 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
     if (isKill)
       MBB.addLiveIn(Reg);
 
-    NumRegs = true;
-    MIB.addReg(Reg, getKillRegState(isKill));
+    Regs.push_back(std::make_pair(Reg, isKill));
   }
 
   // It's illegal to emit push instruction without operands.
-  if (NumRegs)
-    MBB.insert(MI, &*MIB);
-  else
-    MF.DeleteMachineInstr(MIB);
+  if (!Regs.empty()) {
+    MachineInstrBuilder MIB = AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc),
+                                                     ARM::SP).addReg(ARM::SP));
+    for (unsigned i = 0, e = Regs.size(); i < e; ++i)
+      MIB.addReg(Regs[i].first, getKillRegState(Regs[i].second));
+  }
 }
 
 bool ARMFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
