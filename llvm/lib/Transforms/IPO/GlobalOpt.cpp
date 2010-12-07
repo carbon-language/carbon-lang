@@ -2046,13 +2046,81 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
 }
 
 
-static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues,
-                        Value *V) {
+static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues, Value *V) {
   if (Constant *CV = dyn_cast<Constant>(V)) return CV;
   Constant *R = ComputedValues[V];
   assert(R && "Reference to an uncomputed value!");
   return R;
 }
+
+static inline bool 
+isSimpleEnoughValueToCommit(Constant *C,
+                            SmallPtrSet<Constant*, 8> &SimpleConstants);
+
+
+/// isSimpleEnoughValueToCommit - Return true if the specified constant can be
+/// handled by the code generator.  We don't want to generate something like:
+///   void *X = &X/42;
+/// because the code generator doesn't have a relocation that can handle that.
+///
+/// This function should be called if C was not found (but just got inserted)
+/// in SimpleConstants to avoid having to rescan the same constants all the
+/// time.
+static bool isSimpleEnoughValueToCommitHelper(Constant *C,
+                                   SmallPtrSet<Constant*, 8> &SimpleConstants) {
+  // Simple integer, undef, constant aggregate zero, global addresses, etc are
+  // all supported.
+  if (C->getNumOperands() == 0 || isa<BlockAddress>(C) ||
+      isa<GlobalValue>(C))
+    return true;
+  
+  // Aggregate values are safe if all their elements are.
+  if (isa<ConstantArray>(C) || isa<ConstantStruct>(C) ||
+      isa<ConstantVector>(C)) {
+    for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
+      Constant *Op = cast<Constant>(C->getOperand(i));
+      if (!isSimpleEnoughValueToCommit(Op, SimpleConstants))
+        return false;
+    }
+    return true;
+  }
+  
+  // We don't know exactly what relocations are allowed in constant expressions,
+  // so we allow &global+constantoffset, which is safe and uniformly supported
+  // across targets.
+  ConstantExpr *CE = cast<ConstantExpr>(C);
+  switch (CE->getOpcode()) {
+  case Instruction::BitCast:
+  case Instruction::IntToPtr:
+  case Instruction::PtrToInt:
+    // These casts are always fine if the casted value is.
+    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants);
+      
+  // GEP is fine if it is simple + constant offset.
+  case Instruction::GetElementPtr:
+    for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+      if (!isa<ConstantInt>(CE->getOperand(i)))
+        return false;
+    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants);
+      
+  case Instruction::Add:
+    // We allow simple+cst.
+    if (!isa<ConstantInt>(CE->getOperand(1)))
+      return false;
+    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants);
+  }
+  return false;
+}
+
+static inline bool 
+isSimpleEnoughValueToCommit(Constant *C,
+                            SmallPtrSet<Constant*, 8> &SimpleConstants) {
+  // If we already checked this constant, we win.
+  if (!SimpleConstants.insert(C)) return true;
+  // Check the constant.
+  return isSimpleEnoughValueToCommitHelper(C, SimpleConstants);
+}
+
 
 /// isSimpleEnoughPointerToCommit - Return true if this constant is simple
 /// enough for us to understand.  In particular, if it is a cast of something,
@@ -2219,7 +2287,9 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
                              const SmallVectorImpl<Constant*> &ActualArgs,
                              std::vector<Function*> &CallStack,
                              DenseMap<Constant*, Constant*> &MutatedMemory,
-                             std::vector<GlobalVariable*> &AllocaTmps) {
+                             std::vector<GlobalVariable*> &AllocaTmps,
+                             SmallPtrSet<Constant*, 8> &SimpleConstants,
+                             const TargetData *TD) {
   // Check to see if this function is already executing (recursion).  If so,
   // bail out.  TODO: we might want to accept limited recursion.
   if (std::find(CallStack.begin(), CallStack.end(), F) != CallStack.end())
@@ -2254,7 +2324,13 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       if (!isSimpleEnoughPointerToCommit(Ptr))
         // If this is too complex for us to commit, reject it.
         return false;
+      
       Constant *Val = getVal(Values, SI->getOperand(0));
+
+      // If this might be too difficult for the backend to handle (e.g. the addr
+      // of one global variable divided by another) then we can't commit it.
+      if (!isSimpleEnoughValueToCommit(Val, SimpleConstants))
+        return false;
       MutatedMemory[Ptr] = Val;
     } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CurInst)) {
       InstResult = ConstantExpr::get(BO->getOpcode(),
@@ -2331,7 +2407,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         Constant *RetVal;
         // Execute the call, if successful, use the return value.
         if (!EvaluateFunction(Callee, RetVal, Formals, CallStack,
-                              MutatedMemory, AllocaTmps))
+                              MutatedMemory, AllocaTmps, SimpleConstants, TD))
           return false;
         InstResult = RetVal;
       }
@@ -2391,8 +2467,12 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       return false;
     }
 
-    if (!CurInst->use_empty())
+    if (!CurInst->use_empty()) {
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(InstResult))
+        InstResult = ConstantFoldConstantExpression(CE, TD);
+      
       Values[CurInst] = InstResult;
+    }
 
     // Advance program counter.
     ++CurInst;
@@ -2401,7 +2481,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
 /// EvaluateStaticConstructor - Evaluate static constructors in the function, if
 /// we can.  Return true if we can, false otherwise.
-static bool EvaluateStaticConstructor(Function *F) {
+static bool EvaluateStaticConstructor(Function *F, const TargetData *TD) {
   /// MutatedMemory - For each store we execute, we update this map.  Loads
   /// check this to get the most up-to-date value.  If evaluation is successful,
   /// this state is committed to the process.
@@ -2417,11 +2497,17 @@ static bool EvaluateStaticConstructor(Function *F) {
   /// unbounded.
   std::vector<Function*> CallStack;
 
+  /// SimpleConstants - These are constants we have checked and know to be
+  /// simple enough to live in a static initializer of a global.
+  SmallPtrSet<Constant*, 8> SimpleConstants;
+  
   // Call the function.
   Constant *RetValDummy;
   bool EvalSuccess = EvaluateFunction(F, RetValDummy,
                                       SmallVector<Constant*, 0>(), CallStack,
-                                      MutatedMemory, AllocaTmps);
+                                      MutatedMemory, AllocaTmps,
+                                      SimpleConstants, TD);
+  
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
     DEBUG(dbgs() << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
@@ -2458,6 +2544,7 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   bool MadeChange = false;
   if (Ctors.empty()) return false;
 
+  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
   // Loop over global ctors, optimizing them when we can.
   for (unsigned i = 0; i != Ctors.size(); ++i) {
     Function *F = Ctors[i];
@@ -2475,7 +2562,7 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
     if (F->empty()) continue;
 
     // If we can evaluate the ctor at compile time, do.
-    if (EvaluateStaticConstructor(F)) {
+    if (EvaluateStaticConstructor(F, TD)) {
       Ctors.erase(Ctors.begin()+i);
       MadeChange = true;
       --i;
