@@ -597,6 +597,12 @@ def : Pat<(select (setne CPURegs:$lhs, CPURegs:$rhs), CPURegs:$T, CPURegs:$F),
 def : Pat<(select CPURegs:$cond, CPURegs:$T, CPURegs:$F),
           (MOVN CPURegs:$F, CPURegs:$T, CPURegs:$cond)>;
 
+// select patterns with got access
+def : Pat<(select (setne CPURegs:$lhs, CPURegs:$rhs),
+                  (i32 tglobaladdr:$T), CPURegs:$F),
+          (MOVN CPURegs:$F, (ADDiu GP, tglobaladdr:$T),
+                (XOR CPURegs:$lhs, CPURegs:$rhs))>;
+
 // setcc patterns
 def : Pat<(seteq CPURegs:$lhs, CPURegs:$rhs),
           (SLTu (XOR CPURegs:$lhs, CPURegs:$rhs), 1)>;
