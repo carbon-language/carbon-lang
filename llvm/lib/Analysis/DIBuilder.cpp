@@ -28,7 +28,7 @@ static Constant *GetTagConstant(LLVMContext &VMContext, unsigned Tag) {
   return ConstantInt::get(Type::getInt32Ty(VMContext), Tag | LLVMDebugVersion);
 }
 DIBuilder::DIBuilder(Module &m)
-  : M(m), VMContext(M.getContext()), TheCU(0) {}
+  : M(m), VMContext(M.getContext()), TheCU(0), DeclareFn(0), ValueFn(0) {}
 
 /// CreateCompileUnit - A CompileUnit provides an anchor for all debugging
 /// information generated during this instance of compilation.
@@ -214,17 +214,17 @@ DIType DIBuilder::CreateInheritance(DIType Ty, DIType BaseTy,
 }
 
 /// CreateMemberType - Create debugging information entry for a member.
-DIType DIBuilder::CreateMemberType(DIDescriptor Context, StringRef Name, 
-                                   DIFile F, unsigned LineNumber, 
+DIType DIBuilder::CreateMemberType(StringRef Name, 
+                                   DIFile File, unsigned LineNumber, 
                                    uint64_t SizeInBits, uint64_t AlignInBits,
                                    uint64_t OffsetInBits, unsigned Flags, 
                                    DIType Ty) {
   // TAG_member is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
-    Context,
+    File, // Or TheCU ? Ty ?
     MDString::get(VMContext, Name),
-    F,
+    File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
@@ -234,6 +234,30 @@ DIType DIBuilder::CreateMemberType(DIDescriptor Context, StringRef Name,
   };
   return DIType(MDNode::get(VMContext, &Elts[0], array_lengthof(Elts)));
 }
+
+/// CreateStructType - Create debugging information entry for a struct.
+DIType DIBuilder::CreateStructType(DIDescriptor Context, StringRef Name, DIFile F,
+                                   unsigned LineNumber, uint64_t SizeInBits,
+                                   uint64_t AlignInBits, unsigned Flags,
+                                   DIArray Elements, unsigned RunTimeLang) {
+ // TAG_structure_type is encoded in DICompositeType format.
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_structure_type),
+    Context,
+    MDString::get(VMContext, Name),
+    F,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
+    ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
+    ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Elements,
+    ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeLang),
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+  };
+  return DIType(MDNode::get(VMContext, &Elts[0], array_lengthof(Elts)));
+}
+
 
 /// CreateArtificialType - Create a new DIType with "artificial" flag set.
 DIType DIBuilder::CreateArtificialType(DIType Ty) {
@@ -258,3 +282,183 @@ DIType DIBuilder::CreateArtificialType(DIType Ty) {
 
   return DIType(MDNode::get(VMContext, Elts.data(), Elts.size()));
 }
+
+/// CreateTemporaryType - Create a temporary forward-declared type.
+DIType DIBuilder::CreateTemporaryType() {
+  // Give the temporary MDNode a tag. It doesn't matter what tag we
+  // use here as long as DIType accepts it.
+  Value *Elts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
+  MDNode *Node = MDNode::getTemporary(VMContext, Elts, array_lengthof(Elts));
+  return DIType(Node);
+}
+
+/// CreateTemporaryType - Create a temporary forward-declared type.
+DIType DIBuilder::CreateTemporaryType(DIFile F) {
+  // Give the temporary MDNode a tag. It doesn't matter what tag we
+  // use here as long as DIType accepts it.
+  Value *Elts[] = {
+    GetTagConstant(VMContext, DW_TAG_base_type),
+    F.getCompileUnit(),
+    NULL,
+    F
+  };
+  MDNode *Node = MDNode::getTemporary(VMContext, Elts, array_lengthof(Elts));
+  return DIType(Node);
+}
+
+/// GetOrCreateArray - Get a DIArray, create one if required.
+DIArray DIBuilder::GetOrCreateArray(Value *const *Elements, unsigned NumElements) {
+  if (NumElements == 0) {
+    Value *Null = llvm::Constant::getNullValue(Type::getInt32Ty(VMContext));
+    return DIArray(MDNode::get(VMContext, &Null, 1));
+  }
+  return DIArray(MDNode::get(VMContext, Elements, NumElements));
+}
+
+/// CreateGlobalVariable - Create a new descriptor for the specified global.
+DIGlobalVariable DIBuilder::
+CreateGlobalVariable(StringRef Name, 
+                     StringRef LinkageName, DIFile F, unsigned LineNumber, 
+                     DIType Ty, bool isLocalToUnit, llvm::Value *Val) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_variable),
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    TheCU,
+    MDString::get(VMContext, Name),
+    MDString::get(VMContext, Name),
+    MDString::get(VMContext, LinkageName),
+    F,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
+    Ty,
+    ConstantInt::get(Type::getInt32Ty(VMContext), isLocalToUnit),
+    ConstantInt::get(Type::getInt32Ty(VMContext), 1), /* isDefinition*/
+    Val
+  };
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], array_lengthof(Elts));
+  // Create a named metadata so that we do not lose this mdnode.
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.gv");
+  NMD->addOperand(Node);
+  return DIGlobalVariable(Node);
+}
+
+/// CreateStaticVariable - Create a new descriptor for the specified static
+/// variable.
+DIGlobalVariable DIBuilder::
+CreateStaticVariable(DIDescriptor Context, StringRef Name, 
+                     StringRef LinkageName, DIFile F, unsigned LineNumber, 
+                     DIType Ty, bool isLocalToUnit, llvm::Value *Val) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_variable),
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Context,
+    MDString::get(VMContext, Name),
+    MDString::get(VMContext, Name),
+    MDString::get(VMContext, LinkageName),
+    F,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
+    Ty,
+    ConstantInt::get(Type::getInt32Ty(VMContext), isLocalToUnit),
+    ConstantInt::get(Type::getInt32Ty(VMContext), 1), /* isDefinition*/
+    Val
+  };
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], array_lengthof(Elts));
+  // Create a named metadata so that we do not lose this mdnode.
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.gv");
+  NMD->addOperand(Node);
+  return DIGlobalVariable(Node);
+}
+
+/// CreateComplexVariable - Create a new descriptor for the specified variable
+/// which has a complex address expression for its address.
+DIVariable DIBuilder::CreateComplexVariable(unsigned Tag, DIDescriptor Scope,
+                                            StringRef Name, DIFile F,
+                                            unsigned LineNo,
+                                            DIType Ty, Value *const *Addr,
+                                            unsigned NumAddr) {
+  SmallVector<Value *, 15> Elts;
+  Elts.push_back(GetTagConstant(VMContext, Tag));
+  Elts.push_back(Scope);
+  Elts.push_back(MDString::get(VMContext, Name));
+  Elts.push_back(F);
+  Elts.push_back(ConstantInt::get(Type::getInt32Ty(VMContext), LineNo));
+  Elts.push_back(Ty);
+  Elts.append(Addr, Addr+NumAddr);
+
+  return DIVariable(MDNode::get(VMContext, Elts.data(), Elts.size()));
+}
+
+
+/// CreateNameSpace - This creates new descriptor for a namespace
+/// with the specified parent scope.
+DINameSpace DIBuilder::CreateNameSpace(DIDescriptor Scope, StringRef Name,
+                                       DIFile File, unsigned LineNo) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_namespace),
+    Scope,
+    MDString::get(VMContext, Name),
+    File,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo)
+  };
+  return DINameSpace(MDNode::get(VMContext, &Elts[0], array_lengthof(Elts)));
+}
+
+/// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
+Instruction *DIBuilder::InsertDeclare(Value *Storage, DIVariable VarInfo,
+                                      Instruction *InsertBefore) {
+  assert(Storage && "no storage passed to dbg.declare");
+  assert(VarInfo.Verify() && "empty DIVariable passed to dbg.declare");
+  if (!DeclareFn)
+    DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
+
+  Value *Args[] = { MDNode::get(Storage->getContext(), &Storage, 1), VarInfo };
+  return CallInst::Create(DeclareFn, Args, Args+2, "", InsertBefore);
+}
+
+/// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
+Instruction *DIBuilder::InsertDeclare(Value *Storage, DIVariable VarInfo,
+                                      BasicBlock *InsertAtEnd) {
+  assert(Storage && "no storage passed to dbg.declare");
+  assert(VarInfo.Verify() && "invalid DIVariable passed to dbg.declare");
+  if (!DeclareFn)
+    DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
+
+  Value *Args[] = { MDNode::get(Storage->getContext(), &Storage, 1), VarInfo };
+
+  // If this block already has a terminator then insert this intrinsic
+  // before the terminator.
+  if (TerminatorInst *T = InsertAtEnd->getTerminator())
+    return CallInst::Create(DeclareFn, Args, Args+2, "", T);
+  else
+    return CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);
+}
+
+/// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
+Instruction *DIBuilder::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
+                                                DIVariable VarInfo,
+                                                Instruction *InsertBefore) {
+  assert(V && "no value passed to dbg.value");
+  assert(VarInfo.Verify() && "invalid DIVariable passed to dbg.value");
+  if (!ValueFn)
+    ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
+
+  Value *Args[] = { MDNode::get(V->getContext(), &V, 1),
+                    ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
+                    VarInfo };
+  return CallInst::Create(ValueFn, Args, Args+3, "", InsertBefore);
+}
+
+/// InsertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
+Instruction *DIBuilder::InsertDbgValueIntrinsic(Value *V, uint64_t Offset,
+                                                DIVariable VarInfo,
+                                                BasicBlock *InsertAtEnd) {
+  assert(V && "no value passed to dbg.value");
+  assert(VarInfo.Verify() && "invalid DIVariable passed to dbg.value");
+  if (!ValueFn)
+    ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
+
+  Value *Args[] = { MDNode::get(V->getContext(), &V, 1),
+                    ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
+                    VarInfo };
+  return CallInst::Create(ValueFn, Args, Args+3, "", InsertAtEnd);
+}
+

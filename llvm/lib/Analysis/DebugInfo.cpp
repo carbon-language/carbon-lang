@@ -308,7 +308,8 @@ bool DIType::Verify() const {
   unsigned Tag = getTag();
   if (!isBasicType() && Tag != dwarf::DW_TAG_const_type &&
       Tag != dwarf::DW_TAG_volatile_type && Tag != dwarf::DW_TAG_pointer_type &&
-      Tag != dwarf::DW_TAG_restrict_type && getFilename().empty())
+      Tag != dwarf::DW_TAG_reference_type && Tag != dwarf::DW_TAG_restrict_type 
+      && getFilename().empty())
     return false;
   return true;
 }
@@ -960,7 +961,6 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
   return DICompositeType(Node);
 }
 
-
 /// CreateTemporaryType - Create a temporary forward-declared type.
 DIType DIFactory::CreateTemporaryType() {
   // Give the temporary MDNode a tag. It doesn't matter what tag we
@@ -972,6 +972,19 @@ DIType DIFactory::CreateTemporaryType() {
   return DIType(Node);
 }
 
+/// CreateTemporaryType - Create a temporary forward-declared type.
+DIType DIFactory::CreateTemporaryType(DIFile F) {
+  // Give the temporary MDNode a tag. It doesn't matter what tag we
+  // use here as long as DIType accepts it.
+  Value *Elts[] = {
+    GetTagConstant(DW_TAG_base_type),
+    F.getCompileUnit(),
+    NULL,
+    F
+  };
+  MDNode *Node = MDNode::getTemporary(VMContext, Elts, array_lengthof(Elts));
+  return DIType(Node);
+}
 
 /// CreateCompositeType - Create a composite type like array, struct, etc.
 DICompositeType DIFactory::CreateCompositeTypeEx(unsigned Tag,

@@ -715,6 +715,7 @@ namespace llvm {
 
     /// CreateTemporaryType - Create a temporary forward-declared type.
     DIType CreateTemporaryType();
+    DIType CreateTemporaryType(DIFile F);
 
     /// CreateArtificialType - Create a new DIType with "artificial" flag set.
     DIType CreateArtificialType(DIType Ty);
