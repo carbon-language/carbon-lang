@@ -45,19 +45,14 @@ ValueObjectChild::ValueObjectChild
     m_bitfield_bit_offset (bitfield_bit_offset),
     m_is_base_class (is_base_class)
 {
+    assert (bitfield_bit_size   < (sizeof(m_bitfield_bit_size  ) * CHAR_BIT));
+    assert (bitfield_bit_offset < (sizeof(m_bitfield_bit_offset) * CHAR_BIT));
     assert(byte_size != 0 && "TEMPORARY DEBUGGING ASSERT");
-    
     m_name = name;
 }
 
 ValueObjectChild::~ValueObjectChild()
 {
-}
-
-void *
-ValueObjectChild::GetClangType()
-{
-    return m_clang_type;
 }
 
 lldb::ValueType
@@ -70,36 +65,6 @@ uint32_t
 ValueObjectChild::CalculateNumChildren()
 {
     return ClangASTContext::GetNumChildren (m_clang_type, true);
-}
-
-clang::ASTContext *
-ValueObjectChild::GetClangAST ()
-{
-    return m_clang_ast;
-}
-
-size_t
-ValueObjectChild::GetByteSize()
-{
-    return m_byte_size;
-}
-
-off_t
-ValueObjectChild::GetByteOffset()
-{
-    return m_byte_offset;
-}
-
-uint32_t
-ValueObjectChild::GetBitfieldBitSize()
-{
-    return m_bitfield_bit_size;
-}
-
-uint32_t
-ValueObjectChild::GetBitfieldBitOffset()
-{
-    return m_bitfield_bit_offset;
 }
 
 ConstString

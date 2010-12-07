@@ -38,22 +38,40 @@ public:
     virtual ~ValueObjectChild();
 
     virtual size_t
-    GetByteSize();
+    GetByteSize()
+    {
+        return m_byte_size;
+    }
 
     virtual off_t
-    GetByteOffset();
+    GetByteOffset()
+    {
+        return m_byte_offset;
+    }
 
     virtual uint32_t
-    GetBitfieldBitSize();
+    GetBitfieldBitSize()
+    {
+        return m_bitfield_bit_size;
+    }
 
     virtual uint32_t
-    GetBitfieldBitOffset();
+    GetBitfieldBitOffset()
+    {
+        return m_bitfield_bit_offset;
+    }
 
     virtual clang::ASTContext *
-    GetClangAST ();
+    GetClangAST ()
+    {
+        return m_clang_ast;
+    }
 
     virtual void *
-    GetClangType ();
+    GetClangType ()
+    {
+        return m_clang_type;
+    }
 
     virtual lldb::ValueType
     GetValueType() const;
@@ -82,12 +100,10 @@ protected:
     ConstString m_type_name;
     uint32_t m_byte_size;
     int32_t m_byte_offset;
-    uint32_t m_bitfield_bit_size;
-    uint32_t m_bitfield_bit_offset;
+    uint8_t m_bitfield_bit_size;
+    uint8_t m_bitfield_bit_offset;
     bool m_is_base_class;
 
-    uint32_t
-    GetByteOffset() const;
 //
 //  void
 //  ReadValueFromMemory (ValueObject* parent, lldb::addr_t address);
