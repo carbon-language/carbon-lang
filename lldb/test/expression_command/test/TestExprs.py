@@ -91,33 +91,33 @@ class BasicExprCommandsTestCase(TestBase):
             substrs = ['(char) $',
                        "'a'"])
 
-        # runCmd: expression printf ("\n\n\tHello there!\\n")
+        # runCmd: expression printf ("\n\n\tHello there!\n")
         # output: (unsigned long) $1 = 16
-        self.expect('expression printf ("\\n\\n\\tHello there!\\n")',
+        self.expect(r'''expression printf ("\n\n\tHello there!\n")''',
             substrs = ['(unsigned long) $',
                        '16'])
 
         # runCmd: expression printf("\t\x68\n")
         # output: (unsigned long) $2 = 3
-        self.expect('expression printf("\\t\\x68\\n")',
+        self.expect(r'''expression printf("\t\x68\n")''',
             substrs = ['(unsigned long) $',
                        '3'])
 
         # runCmd: expression printf("\"\n")
         # output: (unsigned long) $3 = 2
-        self.expect('expression printf("\\"\\n")',
+        self.expect(r'''expression printf("\"\n")''',
             substrs = ['(unsigned long) $',
                        '2'])
 
         # runCmd: expression printf("'\n")
         # output: (unsigned long) $4 = 2
-        self.expect('expression printf("\'\\n")',
+        self.expect(r'''expression printf("'\n")''',
             substrs = ['(unsigned long) $',
                        '2'])
 
-        # runCmd: command alias print_hi expression printf ("\n\tHi!")
+        # runCmd: command alias print_hi expression printf ("\n\tHi!\n")
         # output: 
-        self.runCmd('command alias print_hi expression printf ("\\n\\tHi!")')
+        self.runCmd(r'''command alias print_hi expression printf ("\n\tHi!\n")''')
         # This fails currently.
         self.runCmd('print_hi')
 
