@@ -22,6 +22,10 @@ if (NOT LLVM_ENABLE_THREADS)
   add_definitions(-DGTEST_HAS_PTHREAD=0)
 endif()
 
+if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
+  add_definitions("-Wno-variadic-macros")
+endif()
+
 set(LLVM_LINK_COMPONENTS
   jit
   interpreter
