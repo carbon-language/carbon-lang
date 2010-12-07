@@ -1143,12 +1143,12 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     }
     if (mask)
       OS << "case ARM::BI__builtin_neon_"
-      << MangleName(name, TypeVec[si], ClassB)
-      << ": mask = " << "0x" << utohexstr(mask) << "; break;\n";
+         << MangleName(name, TypeVec[si], ClassB)
+         << ": mask = " << "0x" << utohexstr(mask) << "; break;\n";
     if (qmask)
       OS << "case ARM::BI__builtin_neon_"
-      << MangleName(name, TypeVec[qi], ClassB)
-      << ": mask = " << "0x" << utohexstr(qmask) << "; break;\n";
+         << MangleName(name, TypeVec[qi], ClassB)
+         << ": mask = " << "0x" << utohexstr(qmask) << "; break;\n";
   }
   OS << "#endif\n\n";
 
@@ -1226,7 +1226,7 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
           case 'i': ie = ii + 1; break;
         }
       }
-      OS << "case ARM::BI__builtin_neon_"  << MangleName(name, TypeVec[ti], ck)
+      OS << "case ARM::BI__builtin_neon_" << MangleName(name, TypeVec[ti], ck)
          << ": i = " << immidx << "; " << rangestr << "; break;\n";
     }
   }
