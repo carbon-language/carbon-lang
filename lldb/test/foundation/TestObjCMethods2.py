@@ -105,10 +105,14 @@ class FoundationTestCase2(TestBase):
 
         # Test_NSArray:
         self.runCmd("thread backtrace")
-        self.expect("expression [array1 count]")
-        self.expect("expression array1.count")
-        self.expect("expression [array2 count]")
-        self.expect("expression array2.count")
+        self.expect("expression (int)[array1 count]",
+            patterns = ["\(int\) \$.* = 3"])
+        self.expect("expression (int)[array2 count]",
+            patterns = ["\(int\) \$.* = 3"])
+        self.expect("expression (int)array1.count",
+            patterns = ["\(int\) \$.* = 3"])
+        self.expect("expression (int)array2.count",
+            patterns = ["\(int\) \$.* = 3"])
         self.runCmd("process continue")
 
     @unittest2.expectedFailure
@@ -127,8 +131,10 @@ class FoundationTestCase2(TestBase):
 
         # Test_NSString:
         self.runCmd("thread backtrace")
-        self.expect("expression [str length]")
-        self.expect("expression [id length]")
+        self.expect("expression (int)[str length]",
+            patterns = ["\(int\) \$.* ="])
+        self.expect("expression (int)[id length]",
+            patterns = ["\(int\) \$.* ="])
         self.expect("expression [str description]")
         self.expect("expression [id description]")
         self.expect("expression str.description")
