@@ -897,6 +897,55 @@ static std::string GenBuiltinDef(const std::string &name,
   return s;
 }
 
+static std::string GenIntrinsic(const std::string &name,
+                                const std::string &proto,
+                                StringRef outTypeStr, StringRef inTypeStr,
+                                OpKind kind, ClassKind classKind) {
+  assert(!proto.empty() && "");
+  bool define = proto.find('i') != std::string::npos;
+  std::string s;
+
+  // static always inline + return type
+  if (define)
+    s += "#define ";
+  else
+    s += "__ai " + TypeString(proto[0], outTypeStr) + " ";
+
+  // Function name with type suffix
+  std::string mangledName = MangleName(name, outTypeStr, ClassS);
+  if (outTypeStr != inTypeStr) {
+    // If the input type is different (e.g., for vreinterpret), append a suffix
+    // for the input type.  String off a "Q" (quad) prefix so that MangleName
+    // does not insert another "q" in the name.
+    unsigned typeStrOff = (inTypeStr[0] == 'Q' ? 1 : 0);
+    StringRef inTypeNoQuad = inTypeStr.substr(typeStrOff);
+    mangledName = MangleName(mangledName, inTypeNoQuad, ClassS);
+  }
+  s += mangledName;
+
+  // Function arguments
+  s += GenArgs(proto, inTypeStr);
+
+  // Definition.
+  if (define) {
+    s += " __extension__ ({ \\\n  ";
+    s += GenMacroLocals(proto, inTypeStr);
+  } else {
+    s += " { \\\n  ";
+  }
+
+  if (kind != OpNone)
+    s += GenOpString(kind, proto, outTypeStr);
+  else
+    s += GenBuiltin(name, proto, outTypeStr, classKind);
+  if (define)
+    s += " })";
+  else
+    s += " }";
+  s += "\n";
+  return s;
+}
+
 /// run - Read the records in arm_neon.td and output arm_neon.h.  arm_neon.h
 /// is comprised of type definitions and function declarations.
 void NeonEmitter::run(raw_ostream &OS) {
@@ -975,50 +1024,32 @@ void NeonEmitter::run(raw_ostream &OS) {
     SmallVector<StringRef, 16> TypeVec;
     ParseTypes(R, Types, TypeVec);
 
-    OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
+    OpKind kind = OpMap[R->getValueAsDef("Operand")->getName()];
 
-    bool define = Proto.find('i') != std::string::npos;
+    ClassKind classKind = ClassNone;
+    if (R->getSuperClasses().size() >= 2)
+      classKind = ClassMap[R->getSuperClasses()[1]];
+    if (classKind == ClassNone && kind == OpNone)
+      throw TGError(R->getLoc(), "Builtin has no class kind");
 
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
-      assert(!Proto.empty() && "");
-
-      // static always inline + return type
-      if (define)
-        OS << "#define";
-      else
-        OS << "__ai " << TypeString(Proto[0], TypeVec[ti]);
-
-      // Function name with type suffix
-      OS << " " << MangleName(name, TypeVec[ti], ClassS);
-
-      // Function arguments
-      OS << GenArgs(Proto, TypeVec[ti]);
-
-      // Definition.
-      if (define) {
-        OS << " __extension__ ({ \\\n  ";
-        OS << GenMacroLocals(Proto, TypeVec[ti]);
+      if (kind == OpReinterpret) {
+        bool outQuad = false;
+        bool dummy = false;
+        (void)ClassifyType(TypeVec[ti], outQuad, dummy, dummy);
+        for (unsigned srcti = 0, srcte = TypeVec.size();
+             srcti != srcte; ++srcti) {
+          bool inQuad = false;
+          (void)ClassifyType(TypeVec[srcti], inQuad, dummy, dummy);
+          if (srcti == ti || inQuad != outQuad)
+            continue;
+          OS << GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[srcti],
+                             OpCast, ClassS);
+        }
       } else {
-        OS << " { \\\n  ";
+        OS << GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[ti],
+                           kind, classKind);
       }
-
-      if (k != OpNone) {
-        OS << GenOpString(k, Proto, TypeVec[ti]);
-      } else {
-        if (R->getSuperClasses().size() < 2)
-          throw TGError(R->getLoc(), "Builtin has no class kind");
-
-        ClassKind ck = ClassMap[R->getSuperClasses()[1]];
-
-        if (ck == ClassNone)
-          throw TGError(R->getLoc(), "Builtin has no class kind");
-        OS << GenBuiltin(name, Proto, TypeVec[ti], ck);
-      }
-      if (define)
-        OS << " })";
-      else
-        OS << " }";
-      OS << "\n";
     }
     OS << "\n";
   }
