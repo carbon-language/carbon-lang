@@ -234,7 +234,7 @@ Section::Dump (Stream *s, Target *target) const
         s->Printf("%39s", "");
     else
     {
-        if (target)
+        if (target && m_linked_section == NULL)
             addr = GetLoadBaseAddress (target);
 
         if (addr == LLDB_INVALID_ADDRESS)
@@ -257,7 +257,7 @@ Section::Dump (Stream *s, Target *target) const
     if (m_linked_section)
     {
         addr = LLDB_INVALID_ADDRESS;
-
+        resolved = true;
         if (target)
         {
             addr = m_linked_section->GetLoadBaseAddress(target);
@@ -668,6 +668,7 @@ SectionList::ContainsSection(user_id_t sect_id) const
 void
 SectionList::Dump (Stream *s, Target *target, bool show_header) const
 {
+    bool target_has_loaded_sections = target && !target->GetSectionLoadList().IsEmpty();
     if (show_header && !m_sections.empty())
     {
 //        s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
@@ -676,7 +677,7 @@ SectionList::Dump (Stream *s, Target *target, bool show_header) const
 //        s->IndentMore();
 //        s->Printf("%*s", 2*(sizeof(void *) + 2), "");
         s->Indent();
-        s->Printf("SectID     Type           %s Address                             File Off.  File Size  Flags      Section Name\n", (target && target->GetSectionLoadList().IsEmpty() == false) ? "Load" : "File");
+        s->Printf("SectID     Type           %s Address                             File Off.  File Size  Flags      Section Name\n", target_has_loaded_sections ? "Load" : "File");
 //        s->Printf("%*s", 2*(sizeof(void *) + 2), "");
         s->Indent();
         s->PutCString("---------- -------------- ---------------------------------------  ---------- ---------- ---------- ----------------------------\n");
@@ -687,7 +688,7 @@ SectionList::Dump (Stream *s, Target *target, bool show_header) const
     const_iterator end = m_sections.end();
     for (sect_iter = m_sections.begin(); sect_iter != end; ++sect_iter)
     {
-        (*sect_iter)->Dump(s, target);
+        (*sect_iter)->Dump(s, target_has_loaded_sections ? target : NULL);
     }
 
     if (show_header && !m_sections.empty())
