@@ -62,7 +62,7 @@ public:
     size_t
     GetNumSymbols ();
     
-    SBSymbol
+    lldb::SBSymbol
     GetSymbolAtIndex (size_t idx);
 
 private:
