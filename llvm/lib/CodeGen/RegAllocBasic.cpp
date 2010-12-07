@@ -443,15 +443,8 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
 
     if (!spillInterferences(VirtReg, *PhysRegI, SplitVRegs)) continue;
 
-    unsigned InterferingReg = checkPhysRegInterference(VirtReg, *PhysRegI);
-    if (InterferingReg != 0) {
-      const LiveSegment &seg =
-        *Queries[InterferingReg].firstInterference().liveUnionPos();
-
-      dbgs() << "spilling cannot free " << TRI->getName(*PhysRegI) <<
-        " for " << VirtReg.reg << " with interference " << *seg.VirtReg << "\n";
-      llvm_unreachable("Interference after spill.");
-    }
+    assert(checkPhysRegInterference(VirtReg, *PhysRegI) == 0 &&
+           "Interference after spill.");
     // Tell the caller to allocate to this newly freed physical register.
     return *PhysRegI;
   }
