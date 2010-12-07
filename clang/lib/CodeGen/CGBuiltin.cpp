@@ -1066,10 +1066,8 @@ const llvm::VectorType *GetNeonType(LLVMContext &C, unsigned type, bool q) {
   return 0;
 }
 
-Value *CodeGenFunction::EmitNeonSplat(Value *V, Constant *C, bool widen) {
+Value *CodeGenFunction::EmitNeonSplat(Value *V, Constant *C) {
   unsigned nElts = cast<llvm::VectorType>(V->getType())->getNumElements();
-  if (widen)
-    nElts <<= 1;
   SmallVector<Constant*, 16> Indices(nElts, C);
   Value* SV = llvm::ConstantVector::get(Indices.begin(), Indices.size());
   return Builder.CreateShuffleVector(V, V, SV, "lane");
@@ -1314,12 +1312,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(Int, Tys, 2);
     return EmitNeonCall(F, Ops, "vcvt_n");
   }
-  case ARM::BI__builtin_neon_vdup_lane_v: 
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    return EmitNeonSplat(Ops[0], cast<Constant>(Ops[1]));
-  case ARM::BI__builtin_neon_vdupq_lane_v:
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    return EmitNeonSplat(Ops[0], cast<Constant>(Ops[1]), true);
   case ARM::BI__builtin_neon_vext_v:
   case ARM::BI__builtin_neon_vextq_v: {
     ConstantInt *C = dyn_cast<ConstantInt>(Ops[2]);

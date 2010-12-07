@@ -46,6 +46,7 @@ def OP_HI    : Op;
 def OP_LO    : Op;
 def OP_CONC  : Op;
 def OP_DUP   : Op;
+def OP_DUP_LN: Op;
 def OP_SEL   : Op;
 def OP_REV64 : Op;
 def OP_REV32 : Op;
@@ -264,8 +265,8 @@ def VDUP_N : Inst<"vdup_n", "ds",
                   "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl", OP_DUP>;
 def VMOV_N : Inst<"vmov_n", "ds",
                   "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl", OP_DUP>;
-def VDUP_LANE : WInst<"vdup_lane", "dgi",
-                      "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl">;
+def VDUP_LANE : Inst<"vdup_lane", "dgi",
+                     "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl",OP_DUP_LN>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.20 Combining vectors
