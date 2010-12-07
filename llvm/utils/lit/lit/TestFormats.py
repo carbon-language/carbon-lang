@@ -59,8 +59,9 @@ class GoogleTest(object):
         source_path = testSuite.getSourcePath(path_in_suite)
         for filename in os.listdir(source_path):
             # Check for the one subdirectory (build directory) tests will be in.
-            if not os.path.normcase(filename) in self.test_sub_dir:
-                continue
+            if not '.' in self.test_sub_dir:
+                if not os.path.normcase(filename) in self.test_sub_dir:
+                    continue
 
             filepath = os.path.join(source_path, filename)
             if not os.path.isdir(filepath):
