@@ -133,6 +133,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
 }
 
 namespace {
+
 // FIXME: This should be in a separate file.
 // ELF is an ELF of course...
 class ELFARMAsmBackend : public ARMAsmBackend {
@@ -160,24 +161,24 @@ public:
   }
 };
 
-// Fixme: Raise this to share code between Darwin and ELF.
+// FIXME: Raise this to share code between Darwin and ELF.
 void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
                                   unsigned DataSize, uint64_t Value) const {
-  // Fixme: 2 for Thumb
-  unsigned NumBytes = 4;
-  Value = adjustFixupValue(Fixup.getKind(), Value);
+  unsigned NumBytes = 4;        // FIXME: 2 for Thumb
 
-  assert((Fixup.getOffset() % NumBytes == 0)
-         && "Offset mod NumBytes is nonzero!");
-  // For each byte of the fragment that the fixup touches, mask in the
-  // bits from the fixup value.
-  // The Value has been "split up" into the appropriate bitfields above.
-  for (unsigned i = 0; i != NumBytes; ++i) {
-    Data[Fixup.getOffset() + i] |= uint8_t(Value >> (i * 8));
-  }
+  Value = adjustFixupValue(Fixup.getKind(), Value);
+  if (!Value) return;           // No need to encode nothing.
+
+  unsigned Offset = Fixup.getOffset();
+  assert(Offset % NumBytes == 0 && "Offset mod NumBytes is nonzero!");
+
+  // For each byte of the fragment that the fixup touches, mask in the bits from
+  // the fixup value. The Value has been "split up" into the appropriate
+  // bitfields above.
+  for (unsigned i = 0; i != NumBytes; ++i)
+    Data[Offset + i] |= uint8_t((Value >> (i * 8)) & 0xff);
 }
 
-namespace {
 // FIXME: This should be in a separate file.
 class DarwinARMAsmBackend : public ARMAsmBackend {
   MCMachOObjectFormat Format;
@@ -205,7 +206,6 @@ public:
     return false;
   }
 };
-} // end anonymous namespace
 
 static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
@@ -235,6 +235,7 @@ void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
   for (unsigned i = 0; i != NumBytes; ++i)
     Data[Fixup.getOffset() + i] |= uint8_t(Value >> (i * 8));
 }
+
 } // end anonymous namespace
 
 TargetAsmBackend *llvm::createARMAsmBackend(const Target &T,
