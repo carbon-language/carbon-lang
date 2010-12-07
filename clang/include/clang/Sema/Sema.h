@@ -78,7 +78,6 @@ namespace clang {
   class ExternalSemaSource;
   class FormatAttr;
   class FriendDecl;
-  class FullExpr;
   class FunctionDecl;
   class FunctionProtoType;
   class FunctionTemplateDecl;
@@ -1556,7 +1555,7 @@ public:
 
   private:
     // FIXME: No need to make the entire Sema class a friend when it's just
-    // Sema::FullExpr that needs access to the constructor below.
+    // Sema::MakeFullExpr that needs access to the constructor below.
     friend class Sema;
 
     explicit FullExprArg(Expr *expr) : E(expr) {}
@@ -1595,17 +1594,17 @@ public:
                             SourceLocation ColonLoc, Stmt *SubStmt,
                             bool HasUnusedAttr);
   StmtResult ActOnIfStmt(SourceLocation IfLoc,
-                                 FullExprArg CondVal, Decl *CondVar,
-                                 Stmt *ThenVal,
-                                 SourceLocation ElseLoc, Stmt *ElseVal);
+                         FullExprArg CondVal, Decl *CondVar,
+                         Stmt *ThenVal,
+                         SourceLocation ElseLoc, Stmt *ElseVal);
   StmtResult ActOnStartOfSwitchStmt(SourceLocation SwitchLoc,
                                             Expr *Cond,
                                             Decl *CondVar);
   StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
                                            Stmt *Switch, Stmt *Body);
   StmtResult ActOnWhileStmt(SourceLocation WhileLoc,
-                                    FullExprArg Cond,
-                                    Decl *CondVar, Stmt *Body);
+                            FullExprArg Cond,
+                            Decl *CondVar, Stmt *Body);
   StmtResult ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
                                  SourceLocation WhileLoc,
                                  SourceLocation CondLParen, Expr *Cond,
@@ -2379,7 +2378,6 @@ public:
   Expr *MaybeCreateExprWithCleanups(Expr *SubExpr);
   Stmt *MaybeCreateStmtWithCleanups(Stmt *SubStmt);
   ExprResult MaybeCreateExprWithCleanups(ExprResult SubExpr);
-  FullExpr CreateFullExpr(Expr *SubExpr);
 
   ExprResult ActOnFinishFullExpr(Expr *Expr);
   StmtResult ActOnFinishFullStmt(Stmt *Stmt);

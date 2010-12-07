@@ -3176,22 +3176,6 @@ Sema::MaybeCreateExprWithCleanups(ExprResult SubExpr) {
   return Owned(MaybeCreateExprWithCleanups(SubExpr.take()));
 }
 
-FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
-  unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
-  assert(ExprTemporaries.size() >= FirstTemporary);
-  
-  unsigned NumTemporaries = ExprTemporaries.size() - FirstTemporary;
-  CXXTemporary **Temporaries = 
-    NumTemporaries == 0 ? 0 : &ExprTemporaries[FirstTemporary];
-  
-  FullExpr E = FullExpr::Create(Context, SubExpr, Temporaries, NumTemporaries);
-
-  ExprTemporaries.erase(ExprTemporaries.begin() + FirstTemporary,
-                        ExprTemporaries.end());
-
-  return E;
-}
-
 Stmt *Sema::MaybeCreateStmtWithCleanups(Stmt *SubStmt) {
   assert(SubStmt && "sub statement can't be null!");
 

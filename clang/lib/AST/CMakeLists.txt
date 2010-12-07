@@ -24,7 +24,6 @@ add_clang_library(clangAST
   ExprClassification.cpp
   ExprConstant.cpp
   ExprCXX.cpp
-  FullExpr.cpp
   InheritViz.cpp
   ItaniumCXXABI.cpp
   MicrosoftCXXABI.cpp
