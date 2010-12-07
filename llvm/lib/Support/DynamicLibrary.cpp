@@ -61,17 +61,12 @@ using namespace llvm::sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
-static SmartMutex<true>* HandlesMutex;
 static std::vector<void *> *OpenedHandles = 0;
 
-static bool InitializeMutex() {
-  HandlesMutex = new SmartMutex<true>;
-  return HandlesMutex != 0;
-}
 
-static bool EnsureMutexInitialized() {
-  static bool result = InitializeMutex();
-  return result;
+static SmartMutex<true>& getMutex() {
+  static SmartMutex<true> HandlesMutex;
+  return HandlesMutex;
 }
 
 
@@ -88,8 +83,7 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
   if (Filename == NULL)
     H = RTLD_DEFAULT;
 #endif
-  EnsureMutexInitialized();
-  SmartScopedLock<true> Lock(*HandlesMutex);
+  SmartScopedLock<true> Lock(getMutex());
   if (OpenedHandles == 0)
     OpenedHandles = new std::vector<void *>();
   OpenedHandles->push_back(H);
@@ -124,8 +118,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
 
 #if HAVE_DLFCN_H
   // Now search the libraries.
-  EnsureMutexInitialized();
-  SmartScopedLock<true> Lock(*HandlesMutex);
+  SmartScopedLock<true> Lock(getMutex());
   if (OpenedHandles) {
     for (std::vector<void *>::iterator I = OpenedHandles->begin(),
          E = OpenedHandles->end(); I != E; ++I) {
