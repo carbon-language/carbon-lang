@@ -1477,46 +1477,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vminq_v:
     Int = usgn ? Intrinsic::arm_neon_vminu : Intrinsic::arm_neon_vmins;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmin");
-  case ARM::BI__builtin_neon_vmlal_lane_v: {
-    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
-    Ops[2] = Builder.CreateBitCast(Ops[2], DTy);
-    Ops[2] = EmitNeonSplat(Ops[2], cast<Constant>(Ops[3]));
-  }
-  case ARM::BI__builtin_neon_vmlal_v: {
-    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
-    Ops[2] = Builder.CreateBitCast(Ops[2], DTy);
-    if (usgn) {
-      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
-      Ops[2] = Builder.CreateZExt(Ops[2], Ty);
-    } else {
-      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
-      Ops[2] = Builder.CreateSExt(Ops[2], Ty);
-    }
-    Ops[1] = Builder.CreateMul(Ops[1], Ops[2]);
-    return Builder.CreateAdd(Ops[0], Ops[1], "vmlal");
-  }
-  case ARM::BI__builtin_neon_vmlsl_lane_v: {
-    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
-    Ops[2] = Builder.CreateBitCast(Ops[2], DTy);
-    Ops[2] = EmitNeonSplat(Ops[2], cast<Constant>(Ops[3]));
-  }
-  case ARM::BI__builtin_neon_vmlsl_v: {
-    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
-    Ops[2] = Builder.CreateBitCast(Ops[2], DTy);
-    if (usgn) {
-      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
-      Ops[2] = Builder.CreateZExt(Ops[2], Ty);
-    } else {
-      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
-      Ops[2] = Builder.CreateSExt(Ops[2], Ty);
-    }
-    Ops[1] = Builder.CreateMul(Ops[1], Ops[2]);
-    return Builder.CreateSub(Ops[0], Ops[1], "vmlsl");
-  }
   case ARM::BI__builtin_neon_vmovl_v: {
     const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
     Ops[0] = Builder.CreateBitCast(Ops[0], DTy);
