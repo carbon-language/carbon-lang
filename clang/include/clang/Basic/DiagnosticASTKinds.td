@@ -56,6 +56,8 @@ def note_odr_number_of_bases : Note<
   "class has %0 base %plural{1:class|:classes}0">;
 def note_odr_enumerator : Note<"enumerator %0 with value %1 here">;
 def note_odr_missing_enumerator : Note<"no corresponding enumerator here">;
+
+// Importing Objective-C ASTs
 def err_odr_ivar_type_inconsistent : Error<
   "instance variable %0 declared with incompatible types in different "
   "translation units (%1 vs. %2)">;
@@ -80,6 +82,18 @@ def note_odr_objc_method_here : Note<
 def err_odr_objc_property_type_inconsistent : Error<
   "property %0 declared with incompatible types in different "
   "translation units (%1 vs. %2)">;
+def err_odr_objc_property_impl_kind_inconsistent : Error<
+  "property %0 is implemented with %select{@synthesize|@dynamic}1 in one "
+  "translation but %select{@dynamic|@synthesize}1 in another translation unit">;
+def note_odr_objc_property_impl_kind : Note<
+  "property %0 is implemented with %select{@synthesize|@dynamic}1 here">;
+def err_odr_objc_synthesize_ivar_inconsistent : Error<
+  "property %0 is synthesized to different ivars in different translation "
+  "units (%1 vs. %2)">;
+def note_odr_objc_synthesize_ivar_here : Note<
+  "property is synthesized to ivar %0 here">;
+
+// Importing C++ ASTs
 def err_odr_different_num_template_parameters : Error<
   "template parameter lists have a different number of parameters (%0 vs %1)">;
 def note_odr_template_parameter_list : Note<

@@ -118,6 +118,7 @@ namespace {
     Decl *VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
     Decl *VisitObjCImplementationDecl(ObjCImplementationDecl *D);
     Decl *VisitObjCPropertyDecl(ObjCPropertyDecl *D);
+    Decl *VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
     Decl *VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
     Decl *VisitObjCClassDecl(ObjCClassDecl *D);
     Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
@@ -3193,6 +3194,87 @@ Decl *ASTNodeImporter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   ToProperty->setPropertyIvarDecl(
        cast_or_null<ObjCIvarDecl>(Importer.Import(D->getPropertyIvarDecl())));
   return ToProperty;
+}
+
+Decl *ASTNodeImporter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
+  ObjCPropertyDecl *Property = cast_or_null<ObjCPropertyDecl>(
+                                        Importer.Import(D->getPropertyDecl()));
+  if (!Property)
+    return 0;
+
+  DeclContext *DC = Importer.ImportContext(D->getDeclContext());
+  if (!DC)
+    return 0;
+  
+  // Import the lexical declaration context.
+  DeclContext *LexicalDC = DC;
+  if (D->getDeclContext() != D->getLexicalDeclContext()) {
+    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
+    if (!LexicalDC)
+      return 0;
+  }
+
+  ObjCImplDecl *InImpl = dyn_cast<ObjCImplDecl>(LexicalDC);
+  if (!InImpl)
+    return 0;
+
+  // Import the ivar (for an @synthesize).
+  ObjCIvarDecl *Ivar = 0;
+  if (D->getPropertyIvarDecl()) {
+    Ivar = cast_or_null<ObjCIvarDecl>(
+                                    Importer.Import(D->getPropertyIvarDecl()));
+    if (!Ivar)
+      return 0;
+  }
+
+  ObjCPropertyImplDecl *ToImpl
+    = InImpl->FindPropertyImplDecl(Property->getIdentifier());
+  if (!ToImpl) {    
+    ToImpl = ObjCPropertyImplDecl::Create(Importer.getToContext(), DC,
+                                          Importer.Import(D->getLocStart()),
+                                          Importer.Import(D->getLocation()),
+                                          Property,
+                                          D->getPropertyImplementation(),
+                                          Ivar, 
+                                  Importer.Import(D->getPropertyIvarDeclLoc()));
+    ToImpl->setLexicalDeclContext(LexicalDC);
+    Importer.Imported(D, ToImpl);
+    LexicalDC->addDecl(ToImpl);
+  } else {
+    // Check that we have the same kind of property implementation (@synthesize
+    // vs. @dynamic).
+    if (D->getPropertyImplementation() != ToImpl->getPropertyImplementation()) {
+      Importer.ToDiag(ToImpl->getLocation(), 
+                      diag::err_odr_objc_property_impl_kind_inconsistent)
+        << Property->getDeclName() 
+        << (ToImpl->getPropertyImplementation() 
+                                              == ObjCPropertyImplDecl::Dynamic);
+      Importer.FromDiag(D->getLocation(),
+                        diag::note_odr_objc_property_impl_kind)
+        << D->getPropertyDecl()->getDeclName()
+        << (D->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic);
+      return 0;
+    }
+    
+    // For @synthesize, check that we have the same 
+    if (D->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize &&
+        Ivar != ToImpl->getPropertyIvarDecl()) {
+      Importer.ToDiag(ToImpl->getPropertyIvarDeclLoc(), 
+                      diag::err_odr_objc_synthesize_ivar_inconsistent)
+        << Property->getDeclName()
+        << ToImpl->getPropertyIvarDecl()->getDeclName()
+        << Ivar->getDeclName();
+      Importer.FromDiag(D->getPropertyIvarDeclLoc(), 
+                        diag::note_odr_objc_synthesize_ivar_here)
+        << D->getPropertyIvarDecl()->getDeclName();
+      return 0;
+    }
+    
+    // Merge the existing implementation with the new implementation.
+    Importer.Imported(D, ToImpl);
+  }
+  
+  return ToImpl;
 }
 
 Decl *
