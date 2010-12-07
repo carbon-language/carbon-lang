@@ -601,6 +601,11 @@ static std::string GenOpString(OpKind op, const std::string &proto,
       Extend(proto, typestr,
              Duplicate(nElts << (int)quad, typestr, "__b")) + ";";
     break;
+  case OpMullLane:
+    s += Extend(proto, typestr, "__a") + " * " +
+      Extend(proto, typestr,
+             SplatLane(nElts, "__b", "__c")) + ";";
+    break;
   case OpMull:
     s += Extend(proto, typestr, "__a") + " * " +
       Extend(proto, typestr, "__b") + ";";
