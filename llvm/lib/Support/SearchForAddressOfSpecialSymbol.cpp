@@ -44,8 +44,13 @@ static void *DoSearch(const char* symbolName) {
     EXPLICIT_SYMBOL(__umoddi3);
 
     // __eprintf is sometimes used for assert() handling on x86.
+    //
+    // FIXME: Currently disabled when using Clang, as we don't always have our
+    // runtime support libraries available.
+#ifndef __clang__
 #ifdef __i386__
     EXPLICIT_SYMBOL(__eprintf);
+#endif
 #endif
   }
 #endif
