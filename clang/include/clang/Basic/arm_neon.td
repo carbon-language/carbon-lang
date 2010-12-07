@@ -47,6 +47,7 @@ def OP_SEL   : Op;
 def OP_REV64 : Op;
 def OP_REV32 : Op;
 def OP_REV16 : Op;
+def OP_REINT : Op;
 
 class Inst <string n, string p, string t, Op o> {
   string Name = n;
@@ -365,3 +366,7 @@ def VUZP : WInst<"vuzp", "2dd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.31 Vector reinterpret cast operations
+def VREINTERPRET
+  : Inst<"vreinterpret", "dd",
+         "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs", OP_REINT>;
+
