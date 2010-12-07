@@ -893,7 +893,7 @@ public:
         // compensate for the addend of the symbol address, if it was
         // undefined. This occurs with weak definitions, for example.
         if (!SD->Symbol->isUndefined())
-          FixedValue -= getSymbolAddress(SD, Layout);
+          FixedValue -= Layout.getSymbolOffset(SD);
       } else {
         // The index is the section ordinal (1-based).
         Index = SD->getFragment()->getParent()->getOrdinal() + 1;
