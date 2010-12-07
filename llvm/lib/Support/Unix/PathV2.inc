@@ -30,6 +30,11 @@
 using namespace llvm;
 
 namespace {
+  /// This class automatically closes the given file descriptor when it goes out
+  /// of scope. You can take back explicit ownership of the file descriptor by
+  /// calling take(). The destructor does not verify that close was successful.
+  /// Therefore, never allow this class to call close on a file descriptor that
+  /// has been read from or written to.
   struct AutoFD {
     int FileDescriptor;
 

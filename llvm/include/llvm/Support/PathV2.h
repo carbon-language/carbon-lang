@@ -123,17 +123,18 @@ inline reverse_iterator rend(const StringRef &path) {
 /// empty \a path will result in the current directory.
 ///
 /// /absolute/path   => /absolute/path
-/// relative/../path => <current-directory>/path
+/// relative/../path => <current-directory>/relative/../path
 ///
 /// @param path A path that is modified to be an absolute path.
 /// @returns errc::success if \a path has been made absolute, otherwise a
 ///          platform specific error_code.
 error_code make_absolute(SmallVectorImpl<char> &path);
 
-/// @brief Remove the last component from \a path if it exists.
+/// @brief Remove the last component from \a path unless it is the root dir.
 ///
 /// directory/filename.cpp => directory/
 /// directory/             => directory
+/// /                      => /
 ///
 /// @param path A path that is modified to not have a file component.
 /// @returns errc::success if \a path's file name has been removed (or there was
@@ -144,7 +145,7 @@ error_code remove_filename(SmallVectorImpl<char> &path);
 ///
 /// ./filename.cpp => ./filename.extension
 /// ./filename     => ./filename.extension
-/// ./             => ? TODO: decide what semantics this has.
+/// ./             => ./.extension
 ///
 /// @param path A path that has its extension replaced with \a extension.
 /// @param extension The extension to be added. It may be empty. It may also
