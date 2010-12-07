@@ -407,7 +407,7 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
     unsigned SizeWidth = NEC.getBitWidth();
 
     // Determine if there is an overflow here by doing an extended multiply.
-    NEC.zext(SizeWidth*2);
+    NEC = NEC.zext(SizeWidth*2);
     llvm::APInt SC(SizeWidth*2, TypeSize.getQuantity());
     SC *= NEC;
 
@@ -416,8 +416,7 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
       // overflow's already happened because SizeWithoutCookie isn't
       // used if the allocator returns null or throws, as it should
       // always do on an overflow.
-      llvm::APInt SWC = SC;
-      SWC.trunc(SizeWidth);
+      llvm::APInt SWC = SC.trunc(SizeWidth);
       SizeWithoutCookie = llvm::ConstantInt::get(SizeTy, SWC);
 
       // Add the cookie size.
@@ -425,7 +424,7 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
     }
     
     if (SC.countLeadingZeros() >= SizeWidth) {
-      SC.trunc(SizeWidth);
+      SC = SC.trunc(SizeWidth);
       Size = llvm::ConstantInt::get(SizeTy, SC);
     } else {
       // On overflow, produce a -1 so operator new throws.

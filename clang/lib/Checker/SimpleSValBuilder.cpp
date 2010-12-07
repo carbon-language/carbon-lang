@@ -97,7 +97,7 @@ SVal SimpleSValBuilder::evalCastNL(NonLoc val, QualType castTy) {
 
   llvm::APSInt i = cast<nonloc::ConcreteInt>(val).getValue();
   i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::IsLocType(castTy));
-  i.extOrTrunc(Context.getTypeSize(castTy));
+  i = i.extOrTrunc(Context.getTypeSize(castTy));
 
   if (isLocType)
     return makeIntLocVal(i);
@@ -129,7 +129,7 @@ SVal SimpleSValBuilder::evalCastL(Loc val, QualType castTy) {
 
     llvm::APSInt i = cast<loc::ConcreteInt>(val).getValue();
     i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::IsLocType(castTy));
-    i.extOrTrunc(BitWidth);
+    i = i.extOrTrunc(BitWidth);
     return makeIntVal(i);
   }
 
@@ -306,7 +306,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const GRState *state,
           // Transform the integer into a location and compare.
           llvm::APSInt i = cast<nonloc::ConcreteInt>(rhs).getValue();
           i.setIsUnsigned(true);
-          i.extOrTrunc(Context.getTypeSize(Context.VoidPtrTy));
+          i = i.extOrTrunc(Context.getTypeSize(Context.VoidPtrTy));
           return evalBinOpLL(state, op, lhsL, makeLoc(i), resultTy);
         }
         default:
@@ -837,7 +837,7 @@ SVal SimpleSValBuilder::evalBinOpLN(const GRState *state,
 
       // Convert the bitwidth of rightI.  This should deal with overflow
       // since we are dealing with concrete values.
-      rightI.extOrTrunc(leftI.getBitWidth());
+      rightI = rightI.extOrTrunc(leftI.getBitWidth());
 
       // Offset the increment by the pointer size.
       llvm::APSInt Multiplicand(rightI.getBitWidth(), /* isUnsigned */ true);

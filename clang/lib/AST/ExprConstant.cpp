@@ -220,7 +220,7 @@ static APSInt HandleIntToIntCast(QualType DestType, QualType SrcType,
   APSInt Result = Value;
   // Figure out if this is a truncate, extend or noop cast.
   // If the input is signed, do a sign extend, noop, or truncate.
-  Result.extOrTrunc(DestWidth);
+  Result = Result.extOrTrunc(DestWidth);
   Result.setIsUnsigned(DestType->isUnsignedIntegerType());
   return Result;
 }
@@ -587,7 +587,7 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
       break;
 
     if (Value.isInt()) {
-      Value.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
+      Value.getInt() = Value.getInt().extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
       Result.Base = 0;
       Result.Offset = CharUnits::fromQuantity(Value.getInt().getZExtValue());
       return true;
@@ -731,8 +731,7 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
   llvm::SmallVector<APValue, 4> Elts;
   for (unsigned i = 0; i != NElts; ++i) {
-    APSInt Tmp = Init;
-    Tmp.extOrTrunc(EltWidth);
+    APSInt Tmp = Init.extOrTrunc(EltWidth);
 
     if (EltTy->isIntegerType())
       Elts.push_back(APValue(Tmp));

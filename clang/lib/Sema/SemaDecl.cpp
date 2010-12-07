@@ -7355,7 +7355,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
           // There is no integral type larger enough to represent this 
           // value. Complain, then allow the value to wrap around.
           EnumVal = LastEnumConst->getInitVal();
-          EnumVal.zext(EnumVal.getBitWidth() * 2);
+          EnumVal = EnumVal.zext(EnumVal.getBitWidth() * 2);
           ++EnumVal;
           if (Enum->isFixed())
             // When the underlying type is fixed, this is ill-formed.
@@ -7374,7 +7374,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
         // value, then increment.
         EnumVal = LastEnumConst->getInitVal();
         EnumVal.setIsSigned(EltTy->isSignedIntegerType());
-        EnumVal.zextOrTrunc(Context.getIntWidth(EltTy));
+        EnumVal = EnumVal.zextOrTrunc(Context.getIntWidth(EltTy));
         ++EnumVal;        
         
         // If we're not in C++, diagnose the overflow of enumerator values,
@@ -7396,7 +7396,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
   if (!EltTy->isDependentType()) {
     // Make the enumerator value match the signedness and size of the 
     // enumerator's type.
-    EnumVal.zextOrTrunc(Context.getIntWidth(EltTy));
+    EnumVal = EnumVal.zextOrTrunc(Context.getIntWidth(EltTy));
     EnumVal.setIsSigned(EltTy->isSignedIntegerType());
   }
   
@@ -7659,7 +7659,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     }
 
     // Adjust the APSInt value.
-    InitVal.extOrTrunc(NewWidth);
+    InitVal = InitVal.extOrTrunc(NewWidth);
     InitVal.setIsSigned(NewSign);
     ECD->setInitVal(InitVal);
 

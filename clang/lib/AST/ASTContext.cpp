@@ -1422,7 +1422,8 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   // Convert the array size into a canonical width matching the pointer size for
   // the target.
   llvm::APInt ArySize(ArySizeIn);
-  ArySize.zextOrTrunc(Target.getPointerWidth(EltTy.getAddressSpace()));
+  ArySize =
+    ArySize.zextOrTrunc(Target.getPointerWidth(EltTy.getAddressSpace()));
 
   llvm::FoldingSetNodeID ID;
   ConstantArrayType::Profile(ID, EltTy, ArySize, ASM, EltTypeQuals);

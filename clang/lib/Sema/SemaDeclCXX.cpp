@@ -4628,8 +4628,8 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   Stmt *InitStmt = new (S.Context) DeclStmt(DeclGroupRef(IterationVar),Loc,Loc);
   
   // Create the comparison against the array bound.
-  llvm::APInt Upper = ArrayTy->getSize();
-  Upper.zextOrTrunc(S.Context.getTypeSize(SizeType));
+  llvm::APInt Upper
+    = ArrayTy->getSize().zextOrTrunc(S.Context.getTypeSize(SizeType));
   Expr *Comparison
     = new (S.Context) BinaryOperator(IterationVarRef,
                      IntegerLiteral::Create(S.Context, Upper, SizeType, Loc),
@@ -5021,8 +5021,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
               = Context.getAsConstantArrayType(FieldType);
            Array; 
            Array = Context.getAsConstantArrayType(Array->getElementType())) {
-        llvm::APInt ArraySize = Array->getSize();
-        ArraySize.zextOrTrunc(Size.getBitWidth());
+        llvm::APInt ArraySize
+          = Array->getSize().zextOrTrunc(Size.getBitWidth());
         Size *= ArraySize;
       }
           

@@ -3120,7 +3120,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       // based on the template parameter's type.
       unsigned AllowedBits = Context.getTypeSize(IntegerType);
       if (Value.getBitWidth() != AllowedBits)
-        Value.extOrTrunc(AllowedBits);
+        Value = Value.extOrTrunc(AllowedBits);
       Value.setIsSigned(IntegerType->isSignedIntegerType());
 
       // Complain if an unsigned parameter received a negative value.

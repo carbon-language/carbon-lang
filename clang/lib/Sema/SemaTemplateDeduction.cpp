@@ -57,9 +57,9 @@ using namespace clang;
 /// necessary to compare their values regardless of underlying type.
 static bool hasSameExtendedValue(llvm::APSInt X, llvm::APSInt Y) {
   if (Y.getBitWidth() > X.getBitWidth())
-    X.extend(Y.getBitWidth());
+    X = X.extend(Y.getBitWidth());
   else if (Y.getBitWidth() < X.getBitWidth())
-    Y.extend(X.getBitWidth());
+    Y = Y.extend(X.getBitWidth());
 
   // If there is a signedness mismatch, correct it.
   if (X.isSigned() != Y.isSigned()) {

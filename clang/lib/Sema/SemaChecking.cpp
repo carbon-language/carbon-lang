@@ -2243,7 +2243,7 @@ IntRange GetValueRange(ASTContext &C, llvm::APSInt &value, unsigned MaxWidth) {
     return IntRange(value.getMinSignedBits(), false);
 
   if (value.getBitWidth() > MaxWidth)
-    value.trunc(MaxWidth);
+    value = value.trunc(MaxWidth);
 
   // isNonNegative() just checks the sign bit without considering
   // signedness.
@@ -2656,16 +2656,15 @@ bool AnalyzeBitFieldAssignment(Sema &S, FieldDecl *Bitfield, Expr *Init,
   if (OriginalWidth <= FieldWidth)
     return false;
 
-  llvm::APSInt TruncatedValue = Value;
-  TruncatedValue.trunc(FieldWidth);
+  llvm::APSInt TruncatedValue = Value.trunc(FieldWidth);
 
   // It's fairly common to write values into signed bitfields
   // that, if sign-extended, would end up becoming a different
   // value.  We don't want to warn about that.
   if (Value.isSigned() && Value.isNegative())
-    TruncatedValue.sext(OriginalWidth);
+    TruncatedValue = TruncatedValue.sext(OriginalWidth);
   else
-    TruncatedValue.zext(OriginalWidth);
+    TruncatedValue = TruncatedValue.zext(OriginalWidth);
 
   if (Value == TruncatedValue)
     return false;
@@ -2712,7 +2711,7 @@ std::string PrettyPrintInRange(const llvm::APSInt &Value, IntRange Range) {
 
   llvm::APSInt ValueInRange = Value;
   ValueInRange.setIsSigned(!Range.NonNegative);
-  ValueInRange.trunc(Range.Width);
+  ValueInRange = ValueInRange.trunc(Range.Width);
   return ValueInRange.toString(10);
 }
 

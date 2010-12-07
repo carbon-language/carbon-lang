@@ -972,7 +972,7 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
   if (const ConstantArrayType *CAT =
         SemaRef.Context.getAsConstantArrayType(DeclType)) {
     maxElements = CAT->getSize();
-    elementIndex.extOrTrunc(maxElements.getBitWidth());
+    elementIndex = elementIndex.extOrTrunc(maxElements.getBitWidth());
     elementIndex.setIsUnsigned(maxElements.isUnsigned());
     maxElementsKnown = true;
   }
@@ -999,9 +999,9 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
       }
 
       if (elementIndex.getBitWidth() > maxElements.getBitWidth())
-        maxElements.extend(elementIndex.getBitWidth());
+        maxElements = maxElements.extend(elementIndex.getBitWidth());
       else if (elementIndex.getBitWidth() < maxElements.getBitWidth())
-        elementIndex.extend(maxElements.getBitWidth());
+        elementIndex = elementIndex.extend(maxElements.getBitWidth());
       elementIndex.setIsUnsigned(maxElements.isUnsigned());
 
       // If the array is of incomplete type, keep track of the number of
@@ -1641,9 +1641,11 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
 
   if (isa<ConstantArrayType>(AT)) {
     llvm::APSInt MaxElements(cast<ConstantArrayType>(AT)->getSize(), false);
-    DesignatedStartIndex.extOrTrunc(MaxElements.getBitWidth());
+    DesignatedStartIndex
+      = DesignatedStartIndex.extOrTrunc(MaxElements.getBitWidth());
     DesignatedStartIndex.setIsUnsigned(MaxElements.isUnsigned());
-    DesignatedEndIndex.extOrTrunc(MaxElements.getBitWidth());
+    DesignatedEndIndex
+      = DesignatedEndIndex.extOrTrunc(MaxElements.getBitWidth());
     DesignatedEndIndex.setIsUnsigned(MaxElements.isUnsigned());
     if (DesignatedEndIndex >= MaxElements) {
       SemaRef.Diag(IndexExpr->getSourceRange().getBegin(),
@@ -1656,10 +1658,12 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
   } else {
     // Make sure the bit-widths and signedness match.
     if (DesignatedStartIndex.getBitWidth() > DesignatedEndIndex.getBitWidth())
-      DesignatedEndIndex.extend(DesignatedStartIndex.getBitWidth());
+      DesignatedEndIndex
+        = DesignatedEndIndex.extend(DesignatedStartIndex.getBitWidth());
     else if (DesignatedStartIndex.getBitWidth() <
              DesignatedEndIndex.getBitWidth())
-      DesignatedStartIndex.extend(DesignatedEndIndex.getBitWidth());
+      DesignatedStartIndex
+        = DesignatedStartIndex.extend(DesignatedEndIndex.getBitWidth());
     DesignatedStartIndex.setIsUnsigned(true);
     DesignatedEndIndex.setIsUnsigned(true);
   }
@@ -1911,9 +1915,9 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
         if (StartDependent || EndDependent) {
           // Nothing to compute.
         } else if (StartValue.getBitWidth() > EndValue.getBitWidth())
-          EndValue.extend(StartValue.getBitWidth());
+          EndValue = EndValue.extend(StartValue.getBitWidth());
         else if (StartValue.getBitWidth() < EndValue.getBitWidth())
-          StartValue.extend(EndValue.getBitWidth());
+          StartValue = StartValue.extend(EndValue.getBitWidth());
 
         if (!StartDependent && !EndDependent && EndValue < StartValue) {
           Diag(D.getEllipsisLoc(), diag::err_array_designator_empty_range)

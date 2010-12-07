@@ -2508,7 +2508,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       }
 
       if (ResultVal.getBitWidth() != Width)
-        ResultVal.trunc(Width);
+        ResultVal = ResultVal.trunc(Width);
     }
     Res = IntegerLiteral::Create(Context, ResultVal, Ty, Tok.getLocation());
   }

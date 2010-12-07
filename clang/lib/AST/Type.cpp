@@ -41,7 +41,8 @@ unsigned ConstantArrayType::getNumAddressingBits(ASTContext &Context,
                                                const llvm::APInt &NumElements) {
   llvm::APSInt SizeExtended(NumElements, true);
   unsigned SizeTypeBits = Context.getTypeSize(Context.getSizeType());
-  SizeExtended.extend(std::max(SizeTypeBits, SizeExtended.getBitWidth()) * 2);
+  SizeExtended = SizeExtended.extend(std::max(SizeTypeBits,
+                                              SizeExtended.getBitWidth()) * 2);
 
   uint64_t ElementSize
     = Context.getTypeSizeInChars(ElementType).getQuantity();

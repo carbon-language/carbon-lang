@@ -212,9 +212,9 @@ static bool IsSameValue(const llvm::APInt &I1, const llvm::APInt &I2) {
     return I1 == I2;
   
   if (I1.getBitWidth() > I2.getBitWidth())
-    return I1 == llvm::APInt(I2).zext(I1.getBitWidth());
+    return I1 == I2.zext(I1.getBitWidth());
   
-  return llvm::APInt(I1).zext(I2.getBitWidth()) == I2;
+  return I1.zext(I2.getBitWidth()) == I2;
 }
 
 /// \brief Determine if two APSInts have the same value, zero- or sign-extending
@@ -225,9 +225,9 @@ static bool IsSameValue(const llvm::APSInt &I1, const llvm::APSInt &I2) {
   
   // Check for a bit-width mismatch.
   if (I1.getBitWidth() > I2.getBitWidth())
-    return IsSameValue(I1, llvm::APSInt(I2).extend(I1.getBitWidth()));
+    return IsSameValue(I1, I2.extend(I1.getBitWidth()));
   else if (I2.getBitWidth() > I1.getBitWidth())
-    return IsSameValue(llvm::APSInt(I1).extend(I2.getBitWidth()), I2);
+    return IsSameValue(I1.extend(I2.getBitWidth()), I2);
   
   // We have a signedness mismatch. Turn the signed value into an unsigned 
   // value.

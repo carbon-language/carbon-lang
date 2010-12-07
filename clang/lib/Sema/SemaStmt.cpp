@@ -330,7 +330,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
   // Perform a conversion to the promoted condition type if needed.
   if (NewWidth > Val.getBitWidth()) {
     // If this is an extension, just do it.
-    Val.extend(NewWidth);
+    Val = Val.extend(NewWidth);
     Val.setIsSigned(NewSign);
 
     // If the input was signed and negative and the output is
@@ -340,16 +340,16 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
   } else if (NewWidth < Val.getBitWidth()) {
     // If this is a truncation, check for overflow.
     llvm::APSInt ConvVal(Val);
-    ConvVal.trunc(NewWidth);
+    ConvVal = ConvVal.trunc(NewWidth);
     ConvVal.setIsSigned(NewSign);
-    ConvVal.extend(Val.getBitWidth());
+    ConvVal = ConvVal.extend(Val.getBitWidth());
     ConvVal.setIsSigned(Val.isSigned());
     if (ConvVal != Val)
       Diag(Loc, DiagID) << Val.toString(10) << ConvVal.toString(10);
 
     // Regardless of whether a diagnostic was emitted, really do the
     // truncation.
-    Val.trunc(NewWidth);
+    Val = Val.trunc(NewWidth);
     Val.setIsSigned(NewSign);
   } else if (NewSign != Val.isSigned()) {
     // Convert the sign to match the sign of the condition.  This can cause
@@ -470,9 +470,9 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
 
 static void AdjustAPSInt(llvm::APSInt &Val, unsigned BitWidth, bool IsSigned) {
   if (Val.getBitWidth() < BitWidth)
-    Val.extend(BitWidth);
+    Val = Val.extend(BitWidth);
   else if (Val.getBitWidth() > BitWidth)
-    Val.trunc(BitWidth);
+    Val = Val.trunc(BitWidth);
   Val.setIsSigned(IsSigned);
 }
 

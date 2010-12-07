@@ -265,11 +265,11 @@ const GRState *SimpleConstraintManager::assumeSymRel(const GRState *state,
 
   // Convert the adjustment.
   Adjustment.setIsUnsigned(isSymUnsigned);
-  Adjustment.extOrTrunc(bitwidth);
+  Adjustment = Adjustment.extOrTrunc(bitwidth);
 
   // Convert the right-hand side integer.
   llvm::APSInt ConvertedInt(Int, isSymUnsigned);
-  ConvertedInt.extOrTrunc(bitwidth);
+  ConvertedInt = ConvertedInt.extOrTrunc(bitwidth);
 
   switch (op) {
   default:

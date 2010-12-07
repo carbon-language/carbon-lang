@@ -142,11 +142,11 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
   // constants are cast to bool, and because clang is not enforcing bitfield
   // width limits.
   if (FieldSize > FieldValue.getBitWidth())
-    FieldValue.zext(FieldSize);
+    FieldValue = FieldValue.zext(FieldSize);
 
   // Truncate the size of FieldValue to the bit field size.
   if (FieldSize < FieldValue.getBitWidth())
-    FieldValue.trunc(FieldSize);
+    FieldValue = FieldValue.trunc(FieldSize);
 
   if (FieldOffset < NextFieldOffsetInBytes * 8) {
     // Either part of the field or the entire field can go into the previous
@@ -166,20 +166,20 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
 
       if (CGM.getTargetData().isBigEndian()) {
         Tmp = Tmp.lshr(NewFieldWidth);
-        Tmp.trunc(BitsInPreviousByte);
+        Tmp = Tmp.trunc(BitsInPreviousByte);
 
         // We want the remaining high bits.
-        FieldValue.trunc(NewFieldWidth);
+        FieldValue = FieldValue.trunc(NewFieldWidth);
       } else {
-        Tmp.trunc(BitsInPreviousByte);
+        Tmp = Tmp.trunc(BitsInPreviousByte);
 
         // We want the remaining low bits.
         FieldValue = FieldValue.lshr(BitsInPreviousByte);
-        FieldValue.trunc(NewFieldWidth);
+        FieldValue = FieldValue.trunc(NewFieldWidth);
       }
     }
 
-    Tmp.zext(8);
+    Tmp = Tmp.zext(8);
     if (CGM.getTargetData().isBigEndian()) {
       if (FitsCompletelyInPreviousByte)
         Tmp = Tmp.shl(BitsInPreviousByte - FieldValue.getBitWidth());
@@ -231,13 +231,10 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
 
     if (CGM.getTargetData().isBigEndian()) {
       // We want the high bits.
-      Tmp = FieldValue;
-      Tmp = Tmp.lshr(Tmp.getBitWidth() - 8);
-      Tmp.trunc(8);
+      Tmp = FieldValue.lshr(Tmp.getBitWidth() - 8).trunc(8);
     } else {
       // We want the low bits.
-      Tmp = FieldValue;
-      Tmp.trunc(8);
+      Tmp = FieldValue.trunc(8);
 
       FieldValue = FieldValue.lshr(8);
     }
@@ -245,7 +242,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
     Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp));
     NextFieldOffsetInBytes++;
 
-    FieldValue.trunc(FieldValue.getBitWidth() - 8);
+    FieldValue = FieldValue.trunc(FieldValue.getBitWidth() - 8);
   }
 
   assert(FieldValue.getBitWidth() > 0 &&
@@ -257,10 +254,9 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
     if (CGM.getTargetData().isBigEndian()) {
       unsigned BitWidth = FieldValue.getBitWidth();
 
-      FieldValue.zext(8);
-      FieldValue = FieldValue << (8 - BitWidth);
+      FieldValue = FieldValue.zext(8) << (8 - BitWidth);
     } else
-      FieldValue.zext(8);
+      FieldValue = FieldValue.zext(8);
   }
 
   // Append the last element.
