@@ -149,6 +149,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::CXXPseudoDestructorExprClass:
   case Stmt::UnresolvedLookupExprClass:   
   case Stmt::UnaryTypeTraitExprClass:     
+  case Stmt::BinaryTypeTraitExprClass:     
   case Stmt::DependentScopeDeclRefExprClass:  
   case Stmt::CXXBindTemporaryExprClass:   
   case Stmt::ExprWithCleanupsClass: 

@@ -987,6 +987,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___has_virtual_destructor:
     return ParseUnaryTypeTrait();
 
+  case tok::kw___is_base_of:
+    return ParseBinaryTypeTrait();
+
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();
     return ParseObjCAtExpression(AtLoc);

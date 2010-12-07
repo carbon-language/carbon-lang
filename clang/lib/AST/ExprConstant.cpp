@@ -964,6 +964,10 @@ public:
     return Success(E->getValue(), E);
   }
 
+  bool VisitBinaryTypeTraitExpr(const BinaryTypeTraitExpr *E) {
+    return Success(E->getValue(), E);
+  }
+
   bool VisitChooseExpr(const ChooseExpr *E) {
     return Visit(E->getChosenSubExpr(Info.Ctx));
   }
@@ -2526,6 +2530,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXScalarValueInitExprClass:
   case Expr::TypesCompatibleExprClass:
   case Expr::UnaryTypeTraitExprClass:
+  case Expr::BinaryTypeTraitExprClass:
   case Expr::CXXNoexceptExprClass:
     return NoDiag();
   case Expr::CallExprClass:

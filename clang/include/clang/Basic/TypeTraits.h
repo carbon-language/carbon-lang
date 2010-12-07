@@ -36,6 +36,10 @@ namespace clang {
     UTT_IsLiteral
   };
 
+  /// BinaryTypeTrait - Names for the binary type traits.
+  enum BinaryTypeTrait {
+    BTT_IsBaseOf,
+  };
 }
 
 #endif

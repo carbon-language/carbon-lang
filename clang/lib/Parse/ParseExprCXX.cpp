@@ -1800,7 +1800,6 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
 
 static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
-  default: assert(false && "Not a known unary type trait.");
   case tok::kw___has_nothrow_assign:      return UTT_HasNothrowAssign;
   case tok::kw___has_nothrow_copy:        return UTT_HasNothrowCopy;
   case tok::kw___has_nothrow_constructor: return UTT_HasNothrowConstructor;
@@ -1818,6 +1817,14 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___is_union:                return UTT_IsUnion;
   case tok::kw___is_literal:              return UTT_IsLiteral;
   }
+  llvm_unreachable("Not a known unary type trait");
+}
+
+static BinaryTypeTrait BinaryTypeTraitFromTokKind(tok::TokenKind kind) {
+  switch(kind) {
+  case tok::kw___is_base_of:      return BTT_IsBaseOf;
+  }
+  llvm_unreachable("Not a known binary type trait");
 }
 
 /// ParseUnaryTypeTrait - Parse the built-in unary type-trait
@@ -1846,6 +1853,43 @@ ExprResult Parser::ParseUnaryTypeTrait() {
     return ExprError();
 
   return Actions.ActOnUnaryTypeTrait(UTT, Loc, Ty.get(), RParen);
+}
+
+/// ParseBinaryTypeTrait - Parse the built-in binary type-trait
+/// pseudo-functions that allow implementation of the TR1/C++0x type traits
+/// templates.
+///
+///       primary-expression:
+/// [GNU]             binary-type-trait '(' type-id ',' type-id ')'
+///
+ExprResult Parser::ParseBinaryTypeTrait() {
+  BinaryTypeTrait BTT = BinaryTypeTraitFromTokKind(Tok.getKind());
+  SourceLocation Loc = ConsumeToken();
+
+  SourceLocation LParen = Tok.getLocation();
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen))
+    return ExprError();
+
+  TypeResult LhsTy = ParseTypeName();
+  if (LhsTy.isInvalid()) {
+    SkipUntil(tok::r_paren);
+    return ExprError();
+  }
+
+  if (ExpectAndConsume(tok::comma, diag::err_expected_comma)) {
+    SkipUntil(tok::r_paren);
+    return ExprError();
+  }
+
+  TypeResult RhsTy = ParseTypeName();
+  if (RhsTy.isInvalid()) {
+    SkipUntil(tok::r_paren);
+    return ExprError();
+  }
+
+  SourceLocation RParen = MatchRHSPunctuation(tok::r_paren, LParen);
+
+  return Actions.ActOnBinaryTypeTrait(BTT, Loc, LhsTy.get(), RhsTy.get(), RParen);
 }
 
 /// ParseCXXAmbiguousParenExpression - We have parsed the left paren of a

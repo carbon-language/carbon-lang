@@ -1608,6 +1608,7 @@ public:
   void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   void VisitWhileStmt(WhileStmt *W);
   void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
+  void VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E);
   void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U);
   void VisitVAArgExpr(VAArgExpr *E);
 
@@ -1890,6 +1891,12 @@ void EnqueueVisitor::VisitWhileStmt(WhileStmt *W) {
 void EnqueueVisitor::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   AddTypeLoc(E->getQueriedTypeSourceInfo());
 }
+
+void EnqueueVisitor::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
+  AddTypeLoc(E->getLhsTypeSourceInfo());
+  AddTypeLoc(E->getRhsTypeSourceInfo());
+}
+
 void EnqueueVisitor::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U) {
   VisitOverloadExpr(U);
   if (!U->isImplicitAccess())

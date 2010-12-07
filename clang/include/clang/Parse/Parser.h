@@ -1636,6 +1636,7 @@ private:
   //===--------------------------------------------------------------------===//
   // GNU G++: Type Traits [Type-Traits.html in the GCC manual]
   ExprResult ParseUnaryTypeTrait();
+  ExprResult ParseBinaryTypeTrait();
 
   //===--------------------------------------------------------------------===//
   // Preprocessor code-completion pass-through

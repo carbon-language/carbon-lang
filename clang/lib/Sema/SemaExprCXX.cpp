@@ -2342,6 +2342,77 @@ ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait UTT,
                                                 RParen, Context.BoolTy));
 }
 
+ExprResult Sema::ActOnBinaryTypeTrait(BinaryTypeTrait BTT,
+                                      SourceLocation KWLoc,
+                                      ParsedType LhsTy,
+                                      ParsedType RhsTy,
+                                      SourceLocation RParen) {
+  TypeSourceInfo *LhsTSInfo;
+  QualType LhsT = GetTypeFromParser(LhsTy, &LhsTSInfo);
+  if (!LhsTSInfo)
+    LhsTSInfo = Context.getTrivialTypeSourceInfo(LhsT);
+
+  TypeSourceInfo *RhsTSInfo;
+  QualType RhsT = GetTypeFromParser(RhsTy, &RhsTSInfo);
+  if (!RhsTSInfo)
+    RhsTSInfo = Context.getTrivialTypeSourceInfo(RhsT);
+
+  return BuildBinaryTypeTrait(BTT, KWLoc, LhsTSInfo, RhsTSInfo, RParen);
+}
+
+static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
+                                    QualType LhsT, QualType RhsT,
+                                    SourceLocation KeyLoc) {
+  assert((!LhsT->isDependentType() || RhsT->isDependentType()) &&
+         "Cannot evaluate traits for dependent types.");
+
+  switch(BTT) {
+  case BTT_IsBaseOf:
+    // C++0x [meta.rel]p2
+    // Base is a base class of Derived  without regard to cv-qualifiers or
+    // Base and Derived are not unions and name the same class type without
+    // regard to cv-qualifiers.
+    if (Self.IsDerivedFrom(RhsT, LhsT) || 
+        (!LhsT->isUnionType() &&  !RhsT->isUnionType()
+         && LhsT->getAsCXXRecordDecl() == RhsT->getAsCXXRecordDecl()))
+      return true;
+
+    return false;
+  }
+  llvm_unreachable("Unknown type trait or not implemented");
+}
+
+ExprResult Sema::BuildBinaryTypeTrait(BinaryTypeTrait BTT,
+                                      SourceLocation KWLoc,
+                                      TypeSourceInfo *LhsTSInfo,
+                                      TypeSourceInfo *RhsTSInfo,
+                                      SourceLocation RParen) {
+  QualType LhsT = LhsTSInfo->getType();
+  QualType RhsT = RhsTSInfo->getType();
+  
+  if (BTT == BTT_IsBaseOf) {
+    // C++0x [meta.rel]p2
+    // If Base and Derived are class types and are different types
+    // (ignoring possible cv-qualifiers) then Derived shall be a complete
+    // type. []
+    CXXRecordDecl *LhsDecl = LhsT->getAsCXXRecordDecl();
+    CXXRecordDecl *RhsDecl = RhsT->getAsCXXRecordDecl();
+    if (!LhsT->isDependentType() && !RhsT->isDependentType() &&
+        LhsDecl && RhsDecl && LhsT != RhsT &&
+        RequireCompleteType(KWLoc, RhsT,
+                            diag::err_incomplete_type_used_in_type_trait_expr))
+      return ExprError();
+  }
+
+  bool Value = false;
+  if (!LhsT->isDependentType() && !RhsT->isDependentType())
+    Value = EvaluateBinaryTypeTrait(*this, BTT, LhsT, RhsT, KWLoc);
+
+  return Owned(new (Context) BinaryTypeTraitExpr(KWLoc, BTT, LhsTSInfo,
+                                                 RhsTSInfo, Value, RParen,
+                                                 Context.BoolTy));
+}
+
 QualType Sema::CheckPointerToMemberOperands(Expr *&lex, Expr *&rex,
                                             ExprValueKind &VK,
                                             SourceLocation Loc,

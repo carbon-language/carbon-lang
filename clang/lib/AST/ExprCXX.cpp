@@ -304,6 +304,14 @@ Stmt::child_iterator UnaryTypeTraitExpr::child_end() {
   return child_iterator();
 }
 
+//BinaryTypeTraitExpr
+Stmt::child_iterator BinaryTypeTraitExpr::child_begin() {
+  return child_iterator();
+}
+Stmt::child_iterator BinaryTypeTraitExpr::child_end() {
+  return child_iterator();
+}
+
 // DependentScopeDeclRefExpr
 DependentScopeDeclRefExpr *
 DependentScopeDeclRefExpr::Create(ASTContext &C,

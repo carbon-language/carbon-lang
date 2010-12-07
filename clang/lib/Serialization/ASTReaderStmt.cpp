@@ -175,6 +175,7 @@ namespace clang {
     void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
 
     void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
+    void VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E);
     void VisitCXXNoexceptExpr(CXXNoexceptExpr *E);
 
     void VisitOpaqueValueExpr(OpaqueValueExpr *E);
@@ -1275,6 +1276,17 @@ void ASTStmtReader::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   E->QueriedType = GetTypeSourceInfo(Record, Idx);
 }
 
+void ASTStmtReader::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
+  VisitExpr(E);
+  E->BTT = (BinaryTypeTrait)Record[Idx++];
+  E->Value = (bool)Record[Idx++];
+  SourceRange Range = ReadSourceRange(Record, Idx);
+  E->Loc = Range.getBegin();
+  E->RParen = Range.getEnd();
+  E->LhsType = GetTypeSourceInfo(Record, Idx);
+  E->RhsType = GetTypeSourceInfo(Record, Idx);
+}
+
 void ASTStmtReader::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
   VisitExpr(E);
   E->Value = (bool)Record[Idx++];
@@ -1798,6 +1810,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       
     case EXPR_CXX_UNARY_TYPE_TRAIT:
       S = new (Context) UnaryTypeTraitExpr(Empty);
+      break;
+
+    case EXPR_CXX_BINARY_TYPE_TRAIT:
+      S = new (Context) BinaryTypeTraitExpr(Empty);
       break;
 
     case EXPR_CXX_NOEXCEPT:

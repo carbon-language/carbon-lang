@@ -446,3 +446,54 @@ void has_virtual_destructor() {
   int t22[F(__has_virtual_destructor(void))];
   int t23[F(__has_virtual_destructor(cvoid))];
 }
+
+
+class Base {};
+class Derived : Base {};
+class Derived2a : Derived {};
+class Derived2b : Derived {};
+class Derived3 : virtual Derived2a, virtual Derived2b {};
+template<typename T> struct BaseA { T a;  };
+template<typename T> struct DerivedB : BaseA<T> { };
+template<typename T> struct CrazyDerived : T { };
+
+
+class class_forward; // expected-note {{forward declaration of 'class_forward'}}
+
+template <typename Base, typename Derived>
+void isBaseOfT() {
+  int t[T(__is_base_of(Base, Derived))];
+};
+template <typename Base, typename Derived>
+void isBaseOfF() {
+  int t[F(__is_base_of(Base, Derived))];
+};
+
+
+void is_base_of() {
+  int t01[T(__is_base_of(Base, Derived))];
+  int t02[T(__is_base_of(const Base, Derived))];
+  int t03[F(__is_base_of(Derived, Base))];
+  int t04[F(__is_base_of(Derived, int))];
+  int t05[T(__is_base_of(Base, Base))];
+  int t06[T(__is_base_of(Base, Derived3))];
+  int t07[T(__is_base_of(Derived, Derived3))];
+  int t08[T(__is_base_of(Derived2b, Derived3))];
+  int t09[T(__is_base_of(Derived2a, Derived3))];
+  int t10[T(__is_base_of(BaseA<int>, DerivedB<int>))];
+  int t11[F(__is_base_of(DerivedB<int>, BaseA<int>))];
+  int t12[T(__is_base_of(Base, CrazyDerived<Base>))];
+  int t13[F(__is_base_of(Union, Union))];
+  int t14[T(__is_base_of(Empty, Empty))];
+  int t15[T(__is_base_of(class_forward, class_forward))];
+  int t16[F(__is_base_of(Empty, class_forward))]; // expected-error {{incomplete type 'class_forward' used in type trait expression}}   
+
+  isBaseOfT<Base, Derived>();
+  isBaseOfF<Derived, Base>();
+
+  isBaseOfT<Base, CrazyDerived<Base> >();
+  isBaseOfF<CrazyDerived<Base>, Base>();
+
+  isBaseOfT<BaseA<int>, DerivedB<int> >();
+  isBaseOfF<DerivedB<int>, BaseA<int> >();
+}

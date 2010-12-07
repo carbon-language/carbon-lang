@@ -780,6 +780,13 @@ void StmtProfiler::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *S) {
   VisitType(S->getQueriedType());
 }
 
+void StmtProfiler::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *S) {
+  VisitExpr(S);
+  ID.AddInteger(S->getTrait());
+  VisitType(S->getLhsType());
+  VisitType(S->getRhsType());
+}
+
 void
 StmtProfiler::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *S) {
   VisitExpr(S);

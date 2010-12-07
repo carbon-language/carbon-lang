@@ -1735,6 +1735,11 @@ DEF_TRAVERSE_STMT(UnaryTypeTraitExpr, {
     TRY_TO(TraverseTypeLoc(S->getQueriedTypeSourceInfo()->getTypeLoc()));
   })
 
+DEF_TRAVERSE_STMT(BinaryTypeTraitExpr, {
+    TRY_TO(TraverseTypeLoc(S->getLhsTypeSourceInfo()->getTypeLoc()));
+    TRY_TO(TraverseTypeLoc(S->getRhsTypeSourceInfo()->getTypeLoc()));
+  })
+
 DEF_TRAVERSE_STMT(VAArgExpr, {
     // The child-iterator will pick up the expression argument.
     TRY_TO(TraverseTypeLoc(S->getWrittenTypeInfo()->getTypeLoc()));

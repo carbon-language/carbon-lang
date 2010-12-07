@@ -809,6 +809,7 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::CXXScalarValueInitExprClass:
     case Stmt::DependentScopeDeclRefExprClass:
     case Stmt::UnaryTypeTraitExprClass:
+    case Stmt::BinaryTypeTraitExprClass:
     case Stmt::UnresolvedLookupExprClass:
     case Stmt::UnresolvedMemberExprClass:
     case Stmt::CXXNoexceptExprClass:

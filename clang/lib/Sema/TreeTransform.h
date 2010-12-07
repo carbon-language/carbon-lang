@@ -1657,6 +1657,18 @@ public:
     return getSema().BuildUnaryTypeTrait(Trait, StartLoc, T, RParenLoc);
   }
 
+  /// \brief Build a new binary type trait expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildBinaryTypeTrait(BinaryTypeTrait Trait,
+                                    SourceLocation StartLoc,
+                                    TypeSourceInfo *LhsT,
+                                    TypeSourceInfo *RhsT,
+                                    SourceLocation RParenLoc) {
+    return getSema().BuildBinaryTypeTrait(Trait, StartLoc, LhsT, RhsT, RParenLoc);
+  }
+
   /// \brief Build a new (previously unresolved) declaration reference
   /// expression.
   ///
@@ -5662,6 +5674,27 @@ TreeTransform<Derived>::TransformUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   return getDerived().RebuildUnaryTypeTrait(E->getTrait(),
                                             E->getLocStart(),
                                             T,
+                                            E->getLocEnd());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
+  TypeSourceInfo *LhsT = getDerived().TransformType(E->getLhsTypeSourceInfo());
+  if (!LhsT)
+    return ExprError();
+
+  TypeSourceInfo *RhsT = getDerived().TransformType(E->getRhsTypeSourceInfo());
+  if (!RhsT)
+    return ExprError();
+
+  if (!getDerived().AlwaysRebuild() &&
+      LhsT == E->getLhsTypeSourceInfo() && RhsT == E->getRhsTypeSourceInfo())
+    return SemaRef.Owned(E);
+
+  return getDerived().RebuildBinaryTypeTrait(E->getTrait(),
+                                            E->getLocStart(),
+                                            LhsT, RhsT,
                                             E->getLocEnd());
 }
 

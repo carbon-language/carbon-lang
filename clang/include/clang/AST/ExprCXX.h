@@ -1452,6 +1452,72 @@ public:
   friend class ASTStmtReader;
 };
 
+/// BinaryTypeTraitExpr - A GCC or MS binary type trait, as used in the
+/// implementation of TR1/C++0x type trait templates.
+/// Example:
+/// __is_base_of(Base, Derived) == true
+class BinaryTypeTraitExpr : public Expr {
+  /// BTT - The trait. A BinaryTypeTrait enum in MSVC compat unsigned.
+  unsigned BTT : 8;
+
+  /// The value of the type trait. Unspecified if dependent.
+  bool Value : 1;
+
+  /// Loc - The location of the type trait keyword.
+  SourceLocation Loc;
+
+  /// RParen - The location of the closing paren.
+  SourceLocation RParen;
+
+  /// The lhs type being queried.
+  TypeSourceInfo *LhsType;
+
+  /// The rhs type being queried.
+  TypeSourceInfo *RhsType;
+
+public:
+  BinaryTypeTraitExpr(SourceLocation loc, BinaryTypeTrait btt, 
+                     TypeSourceInfo *lhsType, TypeSourceInfo *rhsType, 
+                     bool value, SourceLocation rparen, QualType ty)
+    : Expr(BinaryTypeTraitExprClass, ty, VK_RValue, OK_Ordinary, false, 
+           lhsType->getType()->isDependentType() ||
+           rhsType->getType()->isDependentType()),
+      BTT(btt), Value(value), Loc(loc), RParen(rparen),
+      LhsType(lhsType), RhsType(rhsType) { }
+
+
+  explicit BinaryTypeTraitExpr(EmptyShell Empty)
+    : Expr(BinaryTypeTraitExprClass, Empty), BTT(0), Value(false),
+      LhsType() { }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(Loc, RParen);
+  }
+
+  BinaryTypeTrait getTrait() const {
+    return static_cast<BinaryTypeTrait>(BTT);
+  }
+
+  QualType getLhsType() const { return LhsType->getType(); }
+  QualType getRhsType() const { return RhsType->getType(); }
+
+  TypeSourceInfo *getLhsTypeSourceInfo() const { return LhsType; }
+  TypeSourceInfo *getRhsTypeSourceInfo() const { return RhsType; }
+  
+  bool getValue() const { assert(!isTypeDependent()); return Value; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == BinaryTypeTraitExprClass;
+  }
+  static bool classof(const BinaryTypeTraitExpr *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
+  friend class ASTStmtReader;
+};
+
 /// \brief A reference to an overloaded function set, either an
 /// \t UnresolvedLookupExpr or an \t UnresolvedMemberExpr.
 class OverloadExpr : public Expr {

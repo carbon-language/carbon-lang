@@ -353,6 +353,10 @@ public:
     return llvm::ConstantInt::get(Builder.getInt1Ty(), E->getValue());
   }
 
+  Value *VisitBinaryTypeTraitExpr(const BinaryTypeTraitExpr *E) {
+    return llvm::ConstantInt::get(Builder.getInt1Ty(), E->getValue());
+  }
+
   Value *VisitCXXPseudoDestructorExpr(const CXXPseudoDestructorExpr *E) {
     // C++ [expr.pseudo]p1:
     //   The result shall only be used as the operand for the function call
