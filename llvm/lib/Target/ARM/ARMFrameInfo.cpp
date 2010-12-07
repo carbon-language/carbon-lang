@@ -529,7 +529,6 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
     Regs.push_back(std::make_pair(Reg, isKill));
   }
 
-  // It's illegal to emit push instruction without operands.
   if (!Regs.empty()) {
     MachineInstrBuilder MIB = AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc),
                                                      ARM::SP).addReg(ARM::SP));
@@ -568,31 +567,30 @@ void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   DebugLoc DL = MI->getDebugLoc();
 
-  MachineInstrBuilder MIB = BuildMI(MF, DL, TII.get(Opc));
-  MIB.addReg(ARM::SP, getDefRegState(true));
-  MIB.addReg(ARM::SP);
-  AddDefaultPred(MIB);
-  bool NumRegs = false;
+  bool DeleteRet = false;
+  SmallVector<unsigned, 4> Regs;
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
     if (!(Func)(Reg, STI.isTargetDarwin())) continue;
 
     if (Reg == ARM::LR && !isVarArg) {
       Reg = ARM::PC;
-      unsigned Opc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
-      (*MIB).setDesc(TII.get(Opc));
-      MI = MBB.erase(MI);
+      Opc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
+      // Fold the return instruction into the LDM.
+      DeleteRet = true;
     }
 
-    MIB.addReg(Reg, RegState::Define);
-    NumRegs = true;
+    Regs.push_back(Reg);
   }
 
-  // It's illegal to emit pop instruction without operands.
-  if (NumRegs)
-    MBB.insert(MI, &*MIB);
-  else
-    MF.DeleteMachineInstr(MIB);
+  if (!Regs.empty()) {
+    MachineInstrBuilder MIB = AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc),
+                                                     ARM::SP).addReg(ARM::SP));
+    for (unsigned i = 0, e = Regs.size(); i < e; ++i)
+      MIB.addReg(Regs[i], getDefRegState(true));
+    if (DeleteRet)
+      MI->eraseFromParent();
+  }
 }
 
 bool ARMFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
