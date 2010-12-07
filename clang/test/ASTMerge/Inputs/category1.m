@@ -23,3 +23,12 @@
 @interface I2 ()
 - (int)method3;
 @end
+
+// Category with implementation
+@interface I2 (Cat3)
+@end
+
+// Category with implementation
+@interface I2 (Cat4)
+@end
+

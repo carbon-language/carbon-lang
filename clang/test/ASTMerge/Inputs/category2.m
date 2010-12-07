@@ -25,3 +25,11 @@ typedef int Int;
 @interface I2 ()
 - (float)method3;
 @end
+
+// Category with implementation
+@interface I2 (Cat3)
+@end
+
+// Category with implementation
+@interface I2 (Cat5)
+@end

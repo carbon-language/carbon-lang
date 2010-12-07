@@ -115,6 +115,7 @@ namespace {
     Decl *VisitObjCCategoryDecl(ObjCCategoryDecl *D);
     Decl *VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
+    Decl *VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
     Decl *VisitObjCImplementationDecl(ObjCImplementationDecl *D);
     Decl *VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     Decl *VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
@@ -3022,6 +3023,41 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   }
   
   return ToIface;
+}
+
+Decl *ASTNodeImporter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
+  ObjCCategoryDecl *Category = cast_or_null<ObjCCategoryDecl>(
+                                        Importer.Import(D->getCategoryDecl()));
+  if (!Category)
+    return 0;
+  
+  ObjCCategoryImplDecl *ToImpl = Category->getImplementation();
+  if (!ToImpl) {
+    DeclContext *DC = Importer.ImportContext(D->getDeclContext());
+    if (!DC)
+      return 0;
+    
+    ToImpl = ObjCCategoryImplDecl::Create(Importer.getToContext(), DC,
+                                          Importer.Import(D->getLocation()),
+                                          Importer.Import(D->getIdentifier()),
+                                          Category->getClassInterface());
+    
+    DeclContext *LexicalDC = DC;
+    if (D->getDeclContext() != D->getLexicalDeclContext()) {
+      LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
+      if (!LexicalDC)
+        return 0;
+      
+      ToImpl->setLexicalDeclContext(LexicalDC);
+    }
+    
+    LexicalDC->addDecl(ToImpl);
+    Category->setImplementation(ToImpl);
+  }
+  
+  Importer.Imported(D, ToImpl);
+  ImportDeclContext(ToImpl);
+  return ToImpl;
 }
 
 Decl *ASTNodeImporter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
