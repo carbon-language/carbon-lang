@@ -35,6 +35,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Support/Atomic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
@@ -85,7 +86,7 @@ const unsigned DefaultPreambleRebuildInterval = 5;
 /// \brief Tracks the number of ASTUnit objects that are currently active.
 ///
 /// Used for debugging purposes only.
-static unsigned ActiveASTUnitObjects;
+static llvm::sys::cas_flag ActiveASTUnitObjects;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
   : CaptureDiagnostics(false), MainFileIsAST(_MainFileIsAST), 
@@ -98,7 +99,7 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     CacheCodeCompletionCoolDown(0),
     UnsafeToFree(false) { 
   if (getenv("LIBCLANG_OBJTRACKING")) {
-    ++ActiveASTUnitObjects;
+    llvm::sys::AtomicIncrement(&ActiveASTUnitObjects);
     fprintf(stderr, "+++ %d translation units\n", ActiveASTUnitObjects);
   }    
 }
@@ -129,7 +130,7 @@ ASTUnit::~ASTUnit() {
   ClearCachedCompletionResults();  
   
   if (getenv("LIBCLANG_OBJTRACKING")) {
-    --ActiveASTUnitObjects;
+    llvm::sys::AtomicDecrement(&ActiveASTUnitObjects);
     fprintf(stderr, "--- %d translation units\n", ActiveASTUnitObjects);
   }    
 }
