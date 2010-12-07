@@ -508,6 +508,15 @@ static std::string GenMacroLocals(const std::string &proto, StringRef typestr) {
   return s;
 }
 
+// Use the vmovl builtin to sign-extend or zero-extend a vector.
+static std::string Extend(const std::string &proto, StringRef typestr,
+                          const std::string &a) {
+  std::string s;
+  s = MangleName("vmovl", typestr, ClassS);
+  s += "(" + a + ")";
+  return s;
+}
+
 static std::string Duplicate(unsigned nElts, StringRef typestr,
                              const std::string &a) {
   std::string s;
@@ -586,6 +595,15 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   case OpMul:
     s += "__a * __b;";
+    break;
+  case OpMullN:
+    s += Extend(proto, typestr, "__a") + " * " +
+      Extend(proto, typestr,
+             Duplicate(nElts << (int)quad, typestr, "__b")) + ";";
+    break;
+  case OpMull:
+    s += Extend(proto, typestr, "__a") + " * " +
+      Extend(proto, typestr, "__b") + ";";
     break;
   case OpMlaN:
     s += "__a + (__b * " + Duplicate(nElts, typestr, "__c") + ");";
