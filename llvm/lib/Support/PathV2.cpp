@@ -491,56 +491,56 @@ const StringRef extension(const StringRef &path) {
       return StringRef(fname.begin() + pos, fname.size() - pos);
 }
 
-const bool has_root_name(const Twine &path) {
+bool has_root_name(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
   return !root_name(p).empty();
 }
 
-const bool has_root_directory(const Twine &path) {
+bool has_root_directory(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
   return !root_directory(p).empty();
 }
 
-const bool has_root_path(const Twine &path) {
+bool has_root_path(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
   return !root_path(p).empty();
 }
 
-const bool has_filename(const Twine &path) {
+bool has_filename(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
   return !filename(p).empty();
 }
 
-const bool has_parent_path(const Twine &path) {
+bool has_parent_path(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
   return !parent_path(p).empty();
 }
 
-const bool has_stem(const Twine &path) {
+bool has_stem(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
   return !stem(p).empty();
 }
 
-const bool has_extension(const Twine &path) {
+bool has_extension(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
   return !extension(p).empty();
 }
 
-const bool is_absolute(const Twine &path) {
+bool is_absolute(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
@@ -554,7 +554,7 @@ const bool is_absolute(const Twine &path) {
   return rootDir && rootName;
 }
 
-const bool is_relative(const Twine &path) {
+bool is_relative(const Twine &path) {
   return !is_absolute(path);
 }
 

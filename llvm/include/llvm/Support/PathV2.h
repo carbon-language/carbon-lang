@@ -264,7 +264,7 @@ const StringRef extension(const StringRef &path);
 ///
 /// @param path Input path.
 /// @result True if the path has a root name, false otherwise.
-const bool has_root_name(const Twine &path);
+bool has_root_name(const Twine &path);
 
 /// @brief Has root directory?
 ///
@@ -272,7 +272,7 @@ const bool has_root_name(const Twine &path);
 ///
 /// @param path Input path.
 /// @result True if the path has a root directory, false otherwise.
-const bool has_root_directory(const Twine &path);
+bool has_root_directory(const Twine &path);
 
 /// @brief Has root path?
 ///
@@ -280,7 +280,7 @@ const bool has_root_directory(const Twine &path);
 ///
 /// @param path Input path.
 /// @result True if the path has a root path, false otherwise.
-const bool has_root_path(const Twine &path);
+bool has_root_path(const Twine &path);
 
 /// @brief Has relative path?
 ///
@@ -288,7 +288,7 @@ const bool has_root_path(const Twine &path);
 ///
 /// @param path Input path.
 /// @result True if the path has a relative path, false otherwise.
-const bool has_relative_path(const Twine &path);
+bool has_relative_path(const Twine &path);
 
 /// @brief Has parent path?
 ///
@@ -296,7 +296,7 @@ const bool has_relative_path(const Twine &path);
 ///
 /// @param path Input path.
 /// @result True if the path has a parent path, false otherwise.
-const bool has_parent_path(const Twine &path);
+bool has_parent_path(const Twine &path);
 
 /// @brief Has filename?
 ///
@@ -304,7 +304,7 @@ const bool has_parent_path(const Twine &path);
 ///
 /// @param path Input path.
 /// @result True if the path has a filename, false otherwise.
-const bool has_filename(const Twine &path);
+bool has_filename(const Twine &path);
 
 /// @brief Has stem?
 ///
@@ -312,7 +312,7 @@ const bool has_filename(const Twine &path);
 ///
 /// @param path Input path.
 /// @result True if the path has a stem, false otherwise.
-const bool has_stem(const Twine &path);
+bool has_stem(const Twine &path);
 
 /// @brief Has extension?
 ///
@@ -320,19 +320,19 @@ const bool has_stem(const Twine &path);
 ///
 /// @param path Input path.
 /// @result True if the path has a extension, false otherwise.
-const bool has_extension(const Twine &path);
+bool has_extension(const Twine &path);
 
 /// @brief Is path absolute?
 ///
 /// @param path Input path.
 /// @result True if the path is absolute, false if it is not.
-const bool is_absolute(const Twine &path);
+bool is_absolute(const Twine &path);
 
 /// @brief Is path relative?
 ///
 /// @param path Input path.
 /// @result True if the path is relative, false if it is not.
-const bool is_relative(const Twine &path);
+bool is_relative(const Twine &path);
 
 } // end namespace path
 } // end namespace sys
