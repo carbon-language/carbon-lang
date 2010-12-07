@@ -898,9 +898,9 @@ public:
         // The index is the section ordinal (1-based).
         Index = SD->getFragment()->getParent()->getOrdinal() + 1;
         FixedValue += getSectionAddress(SD->getFragment()->getParent());
-        if (IsPCRel)
-          FixedValue -= getSectionAddress(Fragment->getParent());
       }
+      if (IsPCRel)
+        FixedValue -= getSectionAddress(Fragment->getParent());
 
       Type = macho::RIT_Vanilla;
     }
