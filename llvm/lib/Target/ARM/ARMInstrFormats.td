@@ -961,6 +961,9 @@ class Thumb2sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                InstrItinClass itin,
                string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
+  bits<1> s; // condition-code set flag ('1' if the insn should set the flags)
+  let Inst{20} = s;
+
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p, cc_out:$s));
   let AsmString = !strconcat(opc, "${s}${p}", asm);

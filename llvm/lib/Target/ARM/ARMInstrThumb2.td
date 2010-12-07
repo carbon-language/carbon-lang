@@ -225,7 +225,7 @@ class T2OneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
 
 class T2sOneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
-  : T2I<oops, iops, itin, opc, asm, pattern> {
+  : T2sI<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   bits<12> ShiftedRm;
 
@@ -414,7 +414,6 @@ multiclass T2I_un_irs<bits<4> opcod, string opc,
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
      let Inst{19-16} = 0b1111; // Rn
      let Inst{15} = 0;
    }
@@ -425,7 +424,6 @@ multiclass T2I_un_irs<bits<4> opcod, string opc,
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
      let Inst{19-16} = 0b1111; // Rn
      let Inst{14-12} = 0b000; // imm3
      let Inst{7-6} = 0b00; // imm2
@@ -438,7 +436,6 @@ multiclass T2I_un_irs<bits<4> opcod, string opc,
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
      let Inst{19-16} = 0b1111; // Rn
    }
 }
@@ -457,7 +454,6 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc,
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
      let Inst{15} = 0;
    }
    // register
@@ -468,7 +464,6 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc,
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
      let Inst{14-12} = 0b000; // imm3
      let Inst{7-6} = 0b00; // imm2
      let Inst{5-4} = 0b00; // type
@@ -481,7 +476,6 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc,
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
    }
 }
 
@@ -504,7 +498,6 @@ multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
      let Inst{15} = 0;
    }
    // register
@@ -515,7 +508,6 @@ multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
      let Inst{14-12} = 0b000; // imm3
      let Inst{7-6} = 0b00; // imm2
      let Inst{5-4} = 0b00; // type
@@ -528,7 +520,6 @@ multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = ?; // The S bit.
    }
 }
 
@@ -592,7 +583,6 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
      let Inst{25} = 0;
      let Inst{24} = 1;
      let Inst{23-21} = op23_21;
-     let Inst{20} = 0; // The S bit.
      let Inst{15} = 0;
    }
    }
@@ -617,7 +607,6 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
      let Inst{26-25} = 0b01;
      let Inst{24} = 1;
      let Inst{23-21} = op23_21;
-     let Inst{20} = 0; // The S bit.
      let Inst{14-12} = 0b000; // imm3
      let Inst{7-6} = 0b00; // imm2
      let Inst{5-4} = 0b00; // type
@@ -631,7 +620,6 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
      let Inst{26-25} = 0b01;
      let Inst{24} = 1;
      let Inst{23-21} = op23_21;
-     let Inst{20} = 0; // The S bit.
    }
 }
 
@@ -649,7 +637,6 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
-     let Inst{20} = 0; // The S bit.
      let Inst{15} = 0;
    }
    // register
@@ -661,7 +648,6 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = 0; // The S bit.
      let Inst{14-12} = 0b000; // imm3
      let Inst{7-6} = 0b00; // imm2
      let Inst{5-4} = 0b00; // type
@@ -675,7 +661,6 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
-     let Inst{20} = 0; // The S bit.
    }
 }
 
@@ -1146,7 +1131,6 @@ def t2ADDrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_imm:$imm),
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b1000;
-  let Inst{20} = ?; // The S bit.
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
@@ -1167,7 +1151,6 @@ def t2ADDrSPs   : T2sTwoRegShiftedReg<
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b1000;
-  let Inst{20} = ?; // The S bit.
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
@@ -1178,7 +1161,6 @@ def t2SUBrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_imm:$imm),
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b1101;
-  let Inst{20} = ?; // The S bit.
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
@@ -1199,7 +1181,6 @@ def t2SUBrSPs   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_reg:$imm),
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b1101;
-  let Inst{20} = ?; // The S bit.
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
@@ -1654,7 +1635,6 @@ def t2MOVr : T2sTwoReg<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
-  let Inst{20} = ?; // The S bit.
   let Inst{19-16} = 0b1111; // Rn
   let Inst{14-12} = 0b000;
   let Inst{7-4} = 0b0000;
@@ -1669,7 +1649,6 @@ def t2MOVi : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), IIC_iMOVi,
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b0010;
-  let Inst{20} = ?; // The S bit.
   let Inst{19-16} = 0b1111; // Rn
   let Inst{15} = 0;
 }
@@ -2027,7 +2006,6 @@ def t2RRX : T2sTwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iMOVsi,
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b0010;
-  let Inst{20} = ?; // The S bit.
   let Inst{19-16} = 0b1111; // Rn
   let Inst{14-12} = 0b000;
   let Inst{7-4} = 0b0011;
