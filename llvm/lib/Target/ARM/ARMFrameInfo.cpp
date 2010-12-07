@@ -500,7 +500,7 @@ int ARMFrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
 void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI,
-                                unsigned Opc,
+                                unsigned Opc, bool NoGap,
                                 bool(*Func)(unsigned, bool)) const {
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
@@ -509,31 +509,90 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
   SmallVector<std::pair<unsigned,bool>, 4> Regs;
-  for (unsigned i = CSI.size(); i != 0; --i) {
-    unsigned Reg = CSI[i-1].getReg();
-    if (!(Func)(Reg, STI.isTargetDarwin())) continue;
+  unsigned i = CSI.size();
+  while (i != 0) {
+    unsigned LastReg = 0;
+    for (; i != 0; --i) {
+      unsigned Reg = CSI[i-1].getReg();
+      if (!(Func)(Reg, STI.isTargetDarwin())) continue;
 
-    // Add the callee-saved register as live-in unless it's LR and
-    // @llvm.returnaddress is called. If LR is returned for @llvm.returnaddress
-    // then it's already added to the function and entry block live-in sets.
-    bool isKill = true;
-    if (Reg == ARM::LR) {
-      if (MF.getFrameInfo()->isReturnAddressTaken() &&
-          MF.getRegInfo().isLiveIn(Reg))
-        isKill = false;
+      // Add the callee-saved register as live-in unless it's LR and
+      // @llvm.returnaddress is called. If LR is returned for @llvm.returnaddress
+      // then it's already added to the function and entry block live-in sets.
+      bool isKill = true;
+      if (Reg == ARM::LR) {
+        if (MF.getFrameInfo()->isReturnAddressTaken() &&
+            MF.getRegInfo().isLiveIn(Reg))
+          isKill = false;
+      }
+
+      if (isKill)
+        MBB.addLiveIn(Reg);
+
+      if (NoGap && LastReg) {
+        if (LastReg != Reg-1)
+          break;
+      }
+      LastReg = Reg;
+      Regs.push_back(std::make_pair(Reg, isKill));
     }
 
-    if (isKill)
-      MBB.addLiveIn(Reg);
-
-    Regs.push_back(std::make_pair(Reg, isKill));
+    if (!Regs.empty()) {
+      MachineInstrBuilder MIB =
+        AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc),ARM::SP)
+                       .addReg(ARM::SP));
+      for (unsigned i = 0, e = Regs.size(); i < e; ++i)
+        MIB.addReg(Regs[i].first, getKillRegState(Regs[i].second));
+      Regs.clear();
+    }
   }
+}
 
-  if (!Regs.empty()) {
-    MachineInstrBuilder MIB = AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc),
-                                                     ARM::SP).addReg(ARM::SP));
-    for (unsigned i = 0, e = Regs.size(); i < e; ++i)
-      MIB.addReg(Regs[i].first, getKillRegState(Regs[i].second));
+void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator MI,
+                               const std::vector<CalleeSavedInfo> &CSI,
+                               unsigned Opc, bool isVarArg, bool NoGap,
+                               bool(*Func)(unsigned, bool)) const {
+  MachineFunction &MF = *MBB.getParent();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  DebugLoc DL = MI->getDebugLoc();
+
+  SmallVector<unsigned, 4> Regs;
+  unsigned i = CSI.size();
+  while (i != 0) {
+    unsigned LastReg = 0;
+    bool DeleteRet = false;
+    for (; i != 0; --i) {
+      unsigned Reg = CSI[i-1].getReg();
+      if (!(Func)(Reg, STI.isTargetDarwin())) continue;
+
+      if (Reg == ARM::LR && !isVarArg) {
+        Reg = ARM::PC;
+        Opc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
+        // Fold the return instruction into the LDM.
+        DeleteRet = true;
+      }
+
+      if (NoGap && LastReg) {
+        if (LastReg != Reg-1)
+          break;
+      }
+      LastReg = Reg;
+      Regs.push_back(Reg);
+    }
+
+    if (!Regs.empty()) {
+      MachineInstrBuilder MIB =
+        AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc), ARM::SP)
+                       .addReg(ARM::SP));
+      for (unsigned i = 0, e = Regs.size(); i < e; ++i)
+        MIB.addReg(Regs[i], getDefRegState(true));
+      if (DeleteRet)
+        MI->eraseFromParent();
+      MI = MIB;
+      Regs.clear();
+    }
   }
 }
 
@@ -550,47 +609,11 @@ bool ARMFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   unsigned PushOpc = AFI->isThumbFunction() ? ARM::t2STMDB_UPD : ARM::STMDB_UPD;
   unsigned FltOpc = ARM::VSTMDDB_UPD;
-  emitPushInst(MBB, MI, CSI, PushOpc, &isARMArea1Register);
-  emitPushInst(MBB, MI, CSI, PushOpc, &isARMArea2Register);
-  emitPushInst(MBB, MI, CSI, FltOpc, &isARMArea3Register);
+  emitPushInst(MBB, MI, CSI, PushOpc, false, &isARMArea1Register);
+  emitPushInst(MBB, MI, CSI, PushOpc, false, &isARMArea2Register);
+  emitPushInst(MBB, MI, CSI, FltOpc,  true,  &isARMArea3Register);
 
   return true;
-}
-
-void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
-                               MachineBasicBlock::iterator MI,
-                               const std::vector<CalleeSavedInfo> &CSI,
-                               unsigned Opc, bool isVarArg,
-                               bool(*Func)(unsigned, bool)) const {
-  MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  DebugLoc DL = MI->getDebugLoc();
-
-  bool DeleteRet = false;
-  SmallVector<unsigned, 4> Regs;
-  for (unsigned i = CSI.size(); i != 0; --i) {
-    unsigned Reg = CSI[i-1].getReg();
-    if (!(Func)(Reg, STI.isTargetDarwin())) continue;
-
-    if (Reg == ARM::LR && !isVarArg) {
-      Reg = ARM::PC;
-      Opc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
-      // Fold the return instruction into the LDM.
-      DeleteRet = true;
-    }
-
-    Regs.push_back(Reg);
-  }
-
-  if (!Regs.empty()) {
-    MachineInstrBuilder MIB = AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc),
-                                                     ARM::SP).addReg(ARM::SP));
-    for (unsigned i = 0, e = Regs.size(); i < e; ++i)
-      MIB.addReg(Regs[i], getDefRegState(true));
-    if (DeleteRet)
-      MI->eraseFromParent();
-  }
 }
 
 bool ARMFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
@@ -607,9 +630,9 @@ bool ARMFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   unsigned PopOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_UPD : ARM::LDMIA_UPD;
   unsigned FltOpc = ARM::VLDMDIA_UPD;
-  emitPopInst(MBB, MI, CSI, FltOpc, isVarArg, &isARMArea3Register);
-  emitPopInst(MBB, MI, CSI, PopOpc, isVarArg, &isARMArea2Register);
-  emitPopInst(MBB, MI, CSI, PopOpc, isVarArg, &isARMArea1Register);
+  emitPopInst(MBB, MI, CSI, FltOpc, isVarArg, true,  &isARMArea3Register);
+  emitPopInst(MBB, MI, CSI, PopOpc, isVarArg, false, &isARMArea2Register);
+  emitPopInst(MBB, MI, CSI, PopOpc, isVarArg, false, &isARMArea1Register);
 
   return true;
 }
