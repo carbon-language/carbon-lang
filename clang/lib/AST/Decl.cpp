@@ -535,10 +535,8 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
 
 Linkage NamedDecl::getLinkage() const {
   if (HasCachedLinkage) {
-#ifndef NDEBUG
-    assert(CachedLinkage == getLVForDecl(this, 
-                                  LVFlags::CreateOnlyDeclLinkage()).linkage());
-#endif
+    assert(Linkage(CachedLinkage) ==
+             getLVForDecl(this, LVFlags::CreateOnlyDeclLinkage()).linkage());
     return Linkage(CachedLinkage);
   }
 
@@ -550,7 +548,7 @@ Linkage NamedDecl::getLinkage() const {
 
 LinkageInfo NamedDecl::getLinkageAndVisibility() const {
   LinkageInfo LI = getLVForDecl(this, LVFlags());
-  assert(!HasCachedLinkage || (CachedLinkage == LI.linkage()));
+  assert(!HasCachedLinkage || Linkage(CachedLinkage) == LI.linkage());
   HasCachedLinkage = 1;
   CachedLinkage = LI.linkage();
   return LI;
