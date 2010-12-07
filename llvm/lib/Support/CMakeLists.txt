@@ -54,7 +54,6 @@ add_llvm_library(LLVMSupport
   regstrlcpy.c
 
 # System
-  Alarm.cpp
   Atomic.cpp
   Disassembler.cpp
   DynamicLibrary.cpp
@@ -75,7 +74,6 @@ add_llvm_library(LLVMSupport
   Threading.cpp
   TimeValue.cpp
   Valgrind.cpp
-  Unix/Alarm.inc
   Unix/Host.inc
   Unix/Memory.inc
   Unix/Mutex.inc
@@ -88,7 +86,6 @@ add_llvm_library(LLVMSupport
   Unix/system_error.inc
   Unix/ThreadLocal.inc
   Unix/TimeValue.inc
-  Windows/Alarm.inc
   Windows/DynamicLibrary.inc
   Windows/Host.inc
   Windows/Memory.inc
