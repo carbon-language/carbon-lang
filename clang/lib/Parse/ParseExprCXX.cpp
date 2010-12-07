@@ -1800,6 +1800,7 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
 
 static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
+  default: llvm_unreachable("Not a known unary type trait");
   case tok::kw___has_nothrow_assign:      return UTT_HasNothrowAssign;
   case tok::kw___has_nothrow_copy:        return UTT_HasNothrowCopy;
   case tok::kw___has_nothrow_constructor: return UTT_HasNothrowConstructor;
@@ -1817,14 +1818,13 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___is_union:                return UTT_IsUnion;
   case tok::kw___is_literal:              return UTT_IsLiteral;
   }
-  llvm_unreachable("Not a known unary type trait");
 }
 
 static BinaryTypeTrait BinaryTypeTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
+  default: llvm_unreachable("Not a known binary type trait");
   case tok::kw___is_base_of:      return BTT_IsBaseOf;
   }
-  llvm_unreachable("Not a known binary type trait");
 }
 
 /// ParseUnaryTypeTrait - Parse the built-in unary type-trait

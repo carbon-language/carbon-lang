@@ -1206,6 +1206,7 @@ void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
 
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   switch (UTT) {
+  default: llvm_unreachable("Unknown unary type trait");
   case UTT_HasNothrowAssign:      return "__has_nothrow_assign";
   case UTT_HasNothrowCopy:        return "__has_nothrow_copy";
   case UTT_HasNothrowConstructor: return "__has_nothrow_constructor";
@@ -1222,15 +1223,14 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   case UTT_IsPolymorphic:         return "__is_polymorphic";
   case UTT_IsUnion:               return "__is_union";
   }
-  llvm_unreachable("Unknown unary type trait");
   return "";
 }
 
 static const char *getTypeTraitName(BinaryTypeTrait BTT) {
   switch (BTT) {
+  default: llvm_unreachable("Unknown binary type trait");
   case BTT_IsBaseOf:      return "__is_base_of";
   }
-  llvm_unreachable("Unknown binary type trait");
   return "";
 }
 
