@@ -95,6 +95,8 @@ class FoundationDisassembleTestCase(TestBase):
         self.runCmd("disassemble -f")
 
         self.runCmd("process continue")
+        # Skip another breakpoint for +[NSString stringWithFormat:].
+        self.runCmd("process continue")
 
         # Followed by a.out`-[MyString initWithNSString:].
         self.expect("thread backtrace", "Stop at a.out`-[MyString initWithNSString:]",
@@ -112,6 +114,8 @@ class FoundationDisassembleTestCase(TestBase):
         # Do the disassemble for the currently stopped function.
         self.runCmd("disassemble -f")
 
+        self.runCmd("process continue")
+        # Skip another breakpoint for -[MyString description].
         self.runCmd("process continue")
 
         # Followed by -[NSAutoreleasePool release].
