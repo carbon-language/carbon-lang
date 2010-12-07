@@ -49,7 +49,7 @@ struct AlignOf {
 
 };
 
-/// alignOf - A templated function that returns the mininum alignment of
+/// alignOf - A templated function that returns the minimum alignment of
 ///  of a type.  This provides no extra functionality beyond the AlignOf
 ///  class besides some cosmetic cleanliness.  Example usage:
 ///  alignOf<int>() returns the alignment of an int.
