@@ -85,10 +85,31 @@ class BasicExprCommandsTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
+        # runCmd: expression 'a'
+        # output: (char) $0 = 'a'
         self.runCmd("expression 'a'")
-        self.runCmd('expression printf("\t\x68\n")')
-        self.runCmd('expression printf("\"\n")')
-        self.runCmd('expression printf("\'\n")')
+
+        # runCmd: expression printf ("\n\n\tHello there!")
+        # output: (unsigned long) $1 = 15
+        self.runCmd('expression printf ("\\n\\n\\tHello there!")')
+
+        # runCmd: expression printf("\t\x68\n")
+        # output: (unsigned long) $2 = 3
+        self.runCmd('expression printf("\\t\\x68\\n")')
+
+        # runCmd: expression printf("\"\n")
+        # output: (unsigned long) $3 = 2
+        self.runCmd('expression printf("\\"\\n")')
+
+        # runCmd: expression printf("'\n")
+        # output: (unsigned long) $4 = 2
+        self.runCmd('expression printf("\'\\n")')
+
+        # runCmd: command alias print_hi expression printf ("\n\tHi!")
+        # output: 
+        self.runCmd('command alias print_hi expression printf ("\\n\\tHi!")')
+        # This fails currently.
+        self.runCmd('print_hi')
 
 
 if __name__ == '__main__':
