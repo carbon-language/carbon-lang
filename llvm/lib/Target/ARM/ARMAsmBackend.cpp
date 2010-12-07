@@ -165,9 +165,8 @@ public:
 void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
                                   unsigned DataSize, uint64_t Value) const {
   unsigned NumBytes = 4;        // FIXME: 2 for Thumb
-
   Value = adjustFixupValue(Fixup.getKind(), Value);
-  if (!Value) return;           // No need to encode nothing.
+  if (!Value) return;           // Doesn't change encoding.
 
   unsigned Offset = Fixup.getOffset();
   assert(Offset % NumBytes == 0 && "Offset mod NumBytes is nonzero!");
@@ -207,6 +206,7 @@ public:
   }
 };
 
+/// getFixupKindNumBytes - The number of bytes the fixup may change.
 static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
   default:
@@ -227,13 +227,15 @@ void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
                                      unsigned DataSize, uint64_t Value) const {
   unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());
   Value = adjustFixupValue(Fixup.getKind(), Value);
+  if (!Value) return;           // Doesn't change encoding.
 
-  assert(Fixup.getOffset() + NumBytes <= DataSize &&
-         "Invalid fixup offset!");
+  unsigned Offset = Fixup.getOffset();
+  assert(Offset + NumBytes <= DataSize && "Invalid fixup offset!");
+
   // For each byte of the fragment that the fixup touches, mask in the
   // bits from the fixup value.
   for (unsigned i = 0; i != NumBytes; ++i)
-    Data[Fixup.getOffset() + i] |= uint8_t(Value >> (i * 8));
+    Data[Offset + i] |= uint8_t((Value >> (i * 8)) & 0xff);
 }
 
 } // end anonymous namespace
