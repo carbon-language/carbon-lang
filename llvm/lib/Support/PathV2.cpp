@@ -437,7 +437,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
 
   // All of the following conditions will need the current directory.
   SmallString<128> current_dir;
-  if (error_code ec = current_path(current_dir)) return ec;
+  if (error_code ec = fs::current_path(current_dir)) return ec;
 
   // Relative path. Prepend the current directory.
   if (!rootName && !rootDirectory) {

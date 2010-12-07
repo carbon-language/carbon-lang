@@ -134,7 +134,7 @@ namespace {
 
 namespace llvm {
 namespace sys  {
-namespace path {
+namespace fs {
 
 error_code current_path(SmallVectorImpl<char> &result) {
   SmallVector<wchar_t, 128> cur_path;
@@ -179,10 +179,6 @@ retry_cur_dir:
 
   return success;
 }
-
-} // end namespace path
-
-namespace fs {
 
 error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
   // Get arguments.

@@ -148,6 +148,13 @@ error_code create_hard_link(const Twine &to, const Twine &from);
 ///          otherwise a platform specific error_code.
 error_code create_symlink(const Twine &to, const Twine &from);
 
+/// @brief Get the current path.
+///
+/// @param result Holds the current path on return.
+/// @results errc::success if the current path has been stored in result,
+///          otherwise a platform specific error_code.
+error_code current_path(SmallVectorImpl<char> &result);
+
 /// @brief Remove path. Equivalent to POSIX remove().
 ///
 /// @param path Input path.

@@ -69,23 +69,25 @@ namespace {
 
 namespace llvm {
 namespace sys  {
-namespace path {
+namespace fs {
 
 error_code current_path(SmallVectorImpl<char> &result) {
-  long size = ::pathconf(".", _PC_PATH_MAX);
-  result.reserve(size + 1);
-  result.set_size(size + 1);
+  result.reserve(MAXPATHLEN);
 
-  if (::getcwd(result.data(), result.size()) == 0)
-    return error_code(errno, system_category());
+  while (true) {
+    if (::getcwd(result.data(), result.capacity()) == 0) {
+      // See if there was a real error.
+      if (errno != errc::not_enough_memory)
+        return error_code(errno, system_category());
+      // Otherwise there just wasn't enough space.
+      result.reserve(result.capacity() * 2);
+    } else
+      break;
+  }
 
   result.set_size(strlen(result.data()));
   return success;
 }
-
-} // end namespace path
-
-namespace fs{
 
 error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
  // Get arguments.
