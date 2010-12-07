@@ -1567,9 +1567,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
       return false;
     if (thumbInstruction(Form))
       return false;
-    if (Name.find("CMPz") != std::string::npos /* ||
-        Name.find("CMNz") != std::string::npos */)
-      return false;
 
     // Tail calls are other patterns that generate existing instructions.
     if (Name == "TCRETURNdi" || Name == "TCRETURNdiND" ||
@@ -1713,7 +1710,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     // Resolve conflicts:
     //
     //   tBfar conflicts with tBLr9
-    //   tCMNz conflicts with tCMN (with assembly format strings being equal)
     //   tPOP_RET/t2LDMIA_RET conflict with tPOP/t2LDM (ditto)
     //   tMOVCCi conflicts with tMOVi8
     //   tMOVCCr conflicts with tMOVgpr2gpr
@@ -1723,10 +1719,7 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     //   t2LEApcrelJT conflicts with t2LEApcrel
     //   t2MOVCCi16 conflicts with tMOVi16
     if (Name == "tBfar" ||
-        /* Name == "tCMNz" || */ Name == "tCMPzi8" || Name == "tCMPzr" ||
-        Name == "tCMPzhir" || /* Name == "t2CMNzrr" || Name == "t2CMNzrs" ||
-        Name == "t2CMNzri" || */ Name == "t2CMPzrr" || Name == "t2CMPzrs" ||
-        Name == "t2CMPzri" || Name == "tPOP_RET" || Name == "t2LDMIA_RET" ||
+        Name == "tPOP_RET" || Name == "t2LDMIA_RET" ||
         Name == "tMOVCCi" || Name == "tMOVCCr" ||
         Name == "tSpill" || Name == "tLDRcp" || Name == "tRestore" ||
         Name == "t2LEApcrelJT" || Name == "t2MOVCCi16")
