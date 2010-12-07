@@ -680,6 +680,9 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpDup:
     s += Duplicate(nElts, typestr, "__a") + ";";
     break;
+  case OpDupLane:
+    s += SplatLane(nElts, "__a", "__b") + ";";
+    break;
   case OpSelect:
     // ((0 & 1) | (~0 & 2))
     s += "(" + ts + ")";

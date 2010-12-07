@@ -52,6 +52,7 @@ enum OpKind {
   OpCast,
   OpConcat,
   OpDup,
+  OpDupLane,
   OpHi,
   OpLo,
   OpSelect,
@@ -110,6 +111,7 @@ namespace llvm {
       OpMap["OP_HI"]    = OpHi;
       OpMap["OP_LO"]    = OpLo;
       OpMap["OP_DUP"]   = OpDup;
+      OpMap["OP_DUP_LN"] = OpDupLane;
       OpMap["OP_SEL"]   = OpSelect;
       OpMap["OP_REV16"] = OpRev16;
       OpMap["OP_REV32"] = OpRev32;
