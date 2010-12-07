@@ -78,7 +78,7 @@ class SetValuesTestCase(TestBase):
             startstr = "(char) i = 'a'")
 
         # Now set variable 'i' and check that it is correctly displayed.
-        self.runCmd("expression i = 'b'") # Escape the single quotes.
+        self.runCmd("expression i = 'b'")
         self.expect("frame variable -t", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(char) i = 'b'")
 
