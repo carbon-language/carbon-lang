@@ -39,13 +39,12 @@ private:
   /// The last fragment which was layed out, or 0 if nothing has been layed
   /// out. Fragments are always layed out in order, so all fragments with a
   /// lower ordinal will be up to date.
-  mutable MCFragment *LastValidFragment;
+  mutable DenseMap<const MCSectionData*, MCFragment *> LastValidFragment;
 
   /// \brief Make sure that the layout for the given fragment is valid, lazily
   /// computing it if necessary.
   void EnsureValid(const MCFragment *F) const;
 
-  bool isSectionUpToDate(const MCSectionData *SD) const;
   bool isFragmentUpToDate(const MCFragment *F) const;
 
 public:
@@ -57,9 +56,6 @@ public:
   /// \brief Invalidate all following fragments because a fragment has been resized. The
   /// fragments size should have already been updated.
   void Invalidate(MCFragment *F);
-
-  /// \brief Perform a full layout.
-  void LayoutFile();
 
   /// \brief Perform layout for a single fragment, assuming that the previous
   /// fragment has already been layed out correctly, and the parent section has

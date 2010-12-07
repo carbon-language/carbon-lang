@@ -78,8 +78,7 @@ private:
   /// initialized.
   uint64_t EffectiveSize;
 
-  /// LayoutOrder - The global layout order of this fragment. This is the index
-  /// across all fragments in the file, not just within the section.
+  /// LayoutOrder - The layout order of this fragment.
   unsigned LayoutOrder;
 
   /// @}

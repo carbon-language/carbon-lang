@@ -49,7 +49,7 @@ STATISTIC(RelaxedInstructions, "Number of relaxed instructions");
 /* *** */
 
 MCAsmLayout::MCAsmLayout(MCAssembler &Asm)
-  : Assembler(Asm), LastValidFragment(0)
+  : Assembler(Asm), LastValidFragment()
  {
   // Compute the section layout order. Virtual sections must go last.
   for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
@@ -60,21 +60,13 @@ MCAsmLayout::MCAsmLayout(MCAssembler &Asm)
       SectionOrder.push_back(&*it);
 }
 
-bool MCAsmLayout::isSectionUpToDate(const MCSectionData *SD) const {
-  // The first section is always up-to-date.
-  unsigned Index = SD->getLayoutOrder();
-  if (!Index)
-    return true;
-
-  // Otherwise, sections are always implicitly computed when the preceeding
-  // fragment is layed out.
-  const MCSectionData *Prev = getSectionOrder()[Index - 1];
-  return isFragmentUpToDate(&(Prev->getFragmentList().back()));
-}
-
 bool MCAsmLayout::isFragmentUpToDate(const MCFragment *F) const {
-  return (LastValidFragment &&
-          F->getLayoutOrder() <= LastValidFragment->getLayoutOrder());
+  const MCSectionData &SD = *F->getParent();
+  const MCFragment *LastValid = LastValidFragment.lookup(&SD);
+  if (!LastValid)
+    return false;
+  assert(LastValid->getParent() == F->getParent());
+  return F->getLayoutOrder() <= LastValid->getLayoutOrder();
 }
 
 void MCAsmLayout::Invalidate(MCFragment *F) {
@@ -84,31 +76,23 @@ void MCAsmLayout::Invalidate(MCFragment *F) {
 
   // Otherwise, reset the last valid fragment to the predecessor of the
   // invalidated fragment.
-  LastValidFragment = F->getPrevNode();
-  if (!LastValidFragment) {
-    unsigned Index = F->getParent()->getLayoutOrder();
-    if (Index != 0) {
-      MCSectionData *Prev = getSectionOrder()[Index - 1];
-      LastValidFragment = &(Prev->getFragmentList().back());
-    }
-  }
+  const MCSectionData &SD = *F->getParent();
+  LastValidFragment[&SD] = F->getPrevNode();
 }
 
 void MCAsmLayout::EnsureValid(const MCFragment *F) const {
+  MCSectionData &SD = *F->getParent();
+
+  MCFragment *Cur = LastValidFragment[&SD];
+  if (!Cur)
+    Cur = &*SD.begin();
+  else
+    Cur = Cur->getNextNode();
+
   // Advance the layout position until the fragment is up-to-date.
   while (!isFragmentUpToDate(F)) {
-    // Advance to the next fragment.
-    MCFragment *Cur = LastValidFragment;
-    if (Cur)
-      Cur = Cur->getNextNode();
-    if (!Cur) {
-      unsigned NextIndex = 0;
-      if (LastValidFragment)
-        NextIndex = LastValidFragment->getParent()->getLayoutOrder() + 1;
-      Cur = SectionOrder[NextIndex]->begin();
-    }
-
     const_cast<MCAsmLayout*>(this)->LayoutFragment(Cur);
+    Cur = Cur->getNextNode();
   }
 }
 
@@ -311,21 +295,11 @@ uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F,
   return 0;
 }
 
-void MCAsmLayout::LayoutFile() {
-  // Initialize the first section and set the valid fragment layout point. All
-  // actual layout computations are done lazily.
-  LastValidFragment = 0;
-}
-
 void MCAsmLayout::LayoutFragment(MCFragment *F) {
   MCFragment *Prev = F->getPrevNode();
 
   // We should never try to recompute something which is up-to-date.
   assert(!isFragmentUpToDate(F) && "Attempt to recompute up-to-date fragment!");
-  // We should never try to compute the fragment layout if the section isn't
-  // up-to-date.
-  assert(isSectionUpToDate(F->getParent()) &&
-         "Attempt to compute fragment before it's section!");
   // We should never try to compute the fragment layout if it's predecessor
   // isn't up-to-date.
   assert((!Prev || isFragmentUpToDate(Prev)) &&
@@ -340,7 +314,7 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
 
   F->Offset = Offset;
   F->EffectiveSize = getAssembler().ComputeFragmentSize(*F, F->Offset);
-  LastValidFragment = F;
+  LastValidFragment[F->getParent()] = F;
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
@@ -541,11 +515,11 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
   }
 
   // Assign layout order indices to sections and fragments.
-  unsigned FragmentIndex = 0;
   for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i) {
     MCSectionData *SD = Layout.getSectionOrder()[i];
     SD->setLayoutOrder(i);
 
+    unsigned FragmentIndex = 0;
     for (MCSectionData::iterator it2 = SD->begin(),
            ie2 = SD->end(); it2 != ie2; ++it2)
       it2->setLayoutOrder(FragmentIndex++);
@@ -743,9 +717,6 @@ bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
                              MCAsmLayout &Layout) {
   ++stats::RelaxationSteps;
 
-  // Layout the sections in order.
-  Layout.LayoutFile();
-
   // Scan for fragments that need relaxation.
   bool WasRelaxed = false;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
@@ -784,16 +755,10 @@ bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
 }
 
 void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
-  // Lower out any instruction fragments, to simplify the fixup application and
-  // output.
-  //
-  // FIXME-PERF: We don't have to do this, but the assumption is that it is
-  // cheap (we will mostly end up eliminating fragments and appending on to data
-  // fragments), so the extra complexity downstream isn't worth it. Evaluate
-  // this assumption.
-
   // The layout is done. Mark every fragment as valid.
-  Layout.getFragmentOffset(&*Layout.getSectionOrder().back()->rbegin());
+  for (unsigned int i = 0, n = Layout.getSectionOrder().size(); i != n; ++i) {
+    Layout.getFragmentOffset(&*Layout.getSectionOrder()[i]->rbegin());
+  }
 }
 
 // Debugging methods
