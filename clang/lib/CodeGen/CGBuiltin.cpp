@@ -1541,27 +1541,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     assert(poly && "vmul builtin only supported for polynomial types");
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmulp, &Ty, 1),
                         Ops, "vmul");
-  case ARM::BI__builtin_neon_vmull_lane_v: {
-    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
-    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
-    Ops[1] = EmitNeonSplat(Ops[1], cast<Constant>(Ops[2]));
-  }
-  case ARM::BI__builtin_neon_vmull_v: {
-    if (poly)
-      return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmullp, &Ty, 1),
-                          Ops, "vmull");
-    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
-    Ops[0] = Builder.CreateBitCast(Ops[0], DTy);
-    Ops[1] = Builder.CreateBitCast(Ops[1], DTy);
-    if (usgn) {
-      Ops[0] = Builder.CreateZExt(Ops[0], Ty);
-      Ops[1] = Builder.CreateZExt(Ops[1], Ty);
-    } else {
-      Ops[0] = Builder.CreateSExt(Ops[0], Ty);
-      Ops[1] = Builder.CreateSExt(Ops[1], Ty);
-    }
-    return Builder.CreateMul(Ops[0], Ops[1], "vmull");
-  }
+  case ARM::BI__builtin_neon_vmull_v:
+    assert(poly && "vmull builtin only supported for polynomial types");
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmullp, &Ty, 1),
+                        Ops, "vmull");
   case ARM::BI__builtin_neon_vpadal_v:
   case ARM::BI__builtin_neon_vpadalq_v:
     Int = usgn ? Intrinsic::arm_neon_vpadalu : Intrinsic::arm_neon_vpadals;
