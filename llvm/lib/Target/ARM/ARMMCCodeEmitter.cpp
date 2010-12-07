@@ -156,6 +156,11 @@ public:
   uint32_t getAddrMode3OpValue(const MCInst &MI, unsigned OpIdx,
                                SmallVectorImpl<MCFixup> &Fixups) const;
 
+  /// getAddrModeThumbSPOpValue - Return encoding info for 'reg +/- imm12'
+  /// operand.
+  uint32_t getAddrModeThumbSPOpValue(const MCInst &MI, unsigned OpIdx,
+                                     SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getAddrModeS4OpValue - Return encoding for t_addrmode_s4 operands.
   uint32_t getAddrModeS4OpValue(const MCInst &MI, unsigned OpIdx,
                                 SmallVectorImpl<MCFixup> &Fixups) const;
@@ -654,6 +659,20 @@ getAddrMode3OpValue(const MCInst &MI, unsigned OpIdx,
   if (!isImm)
     Imm8 = getARMRegisterNumbering(MO1.getReg());
   return (Rn << 9) | Imm8 | (isAdd << 8) | (isImm << 13);
+}
+
+/// getAddrModeThumbSPOpValue- Encode the t_addrmode_sp operands.
+uint32_t ARMMCCodeEmitter::
+getAddrModeThumbSPOpValue(const MCInst &MI, unsigned OpIdx,
+                          SmallVectorImpl<MCFixup> &Fixups) const {
+  // [SP, #imm]
+  //   {7-0} = imm8
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
+  assert (MO.getReg() == ARM::SP && "Unexpected base register!");
+  // The immediate is already shifted for the implicit zeroes, so no change
+  // here.
+  return MO1.getImm() & 0xff;
 }
 
 /// getAddrModeSOpValue - Encode the t_addrmode_s# operands.

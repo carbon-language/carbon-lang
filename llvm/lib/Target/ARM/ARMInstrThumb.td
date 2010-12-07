@@ -128,6 +128,7 @@ def t_addrmode_s1 : Operand<i32>,
 //
 def t_addrmode_sp : Operand<i32>,
                     ComplexPattern<i32, 2, "SelectThumbAddrModeSP", []> {
+  let EncoderMethod = "getAddrModeThumbSPOpValue";
   let PrintMethod = "printThumbAddrModeSPOperand";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
   let ParserMatchClass = MemModeThumbAsmOperand;
@@ -600,14 +601,20 @@ def tLDRSH :                    // A8.6.84
                  [(set tGPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
 
 let canFoldAsLoad = 1 in
-def tLDRspi : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
-                  "ldr", "\t$dst, $addr",
-                  [(set tGPR:$dst, (load t_addrmode_sp:$addr))]>,
-              T1LdStSP<{1,?,?}>;
+def tLDRspi : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
+                  "ldr", "\t$Rt, $addr",
+                  [(set tGPR:$Rt, (load t_addrmode_sp:$addr))]>,
+              T1LdStSP<{1,?,?}> {
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{10-8} = Rt;
+  let Inst{7-0} = addr;
+}
 
 // Special instruction for restore. It cannot clobber condition register
 // when it's expanded by eliminateCallFramePseudoInstr().
 let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1 in
+// FIXME: Pseudo for tLDRspi
 def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
                     "ldr", "\t$dst, $addr", []>,
                T1LdStSP<{1,?,?}>;
@@ -668,14 +675,20 @@ def tSTRHi :                    // A8.6.205
                     "strh", "\t$Rt, $addr",
                     []>;
 
-def tSTRspi : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
-                   "str", "\t$src, $addr",
-                   [(store tGPR:$src, t_addrmode_sp:$addr)]>,
-              T1LdStSP<{0,?,?}>;
+def tSTRspi : T1pIs<(outs), (ins tGPR:$Rt, t_addrmode_sp:$addr), IIC_iStore_i,
+                   "str", "\t$Rt, $addr",
+                   [(store tGPR:$Rt, t_addrmode_sp:$addr)]>,
+              T1LdStSP<{0,?,?}> {
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{10-8} = Rt;
+  let Inst{7-0} = addr;
+}
 
 let mayStore = 1, neverHasSideEffects = 1 in
 // Special instruction for spill. It cannot clobber condition register when it's
 // expanded by eliminateCallFramePseudoInstr().
+// FIXME: Pseudo for tSTRspi
 def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
                   "str", "\t$src, $addr", []>,
              T1LdStSP<{0,?,?}>;

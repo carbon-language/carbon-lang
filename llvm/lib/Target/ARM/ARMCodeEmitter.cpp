@@ -247,6 +247,8 @@ namespace {
       const { return 0;}
     uint32_t getAddrMode3OpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
+    uint32_t getAddrModeThumbSPOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
     uint32_t getAddrModeS4OpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     uint32_t getAddrModeS2OpValue(const MachineInstr &MI, unsigned Op)
