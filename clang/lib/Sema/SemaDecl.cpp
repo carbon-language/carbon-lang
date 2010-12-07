@@ -3037,7 +3037,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                                       SourceLocation(),
                                                       Owned(E));
       if (!Res.isInvalid()) {
-        Res = MaybeCreateExprWithCleanups(Res.get());
+        Res = MaybeCreateExprWithCleanups(Res);
         Expr *Init = Res.takeAs<Expr>();
         Context.setBlockVarCopyInits(NewVD, Init);
       }
@@ -4805,7 +4805,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       if (Init.isInvalid())
         Var->setInvalidDecl();
       else if (Init.get()) {
-        Var->setInit(MaybeCreateExprWithCleanups(Init.takeAs<Expr>()));
+        Var->setInit(MaybeCreateExprWithCleanups(Init.get()));
 
         if (getLangOptions().CPlusPlus && !Var->isInvalidDecl() && 
             Var->hasGlobalStorage() && !Var->isStaticLocal() &&

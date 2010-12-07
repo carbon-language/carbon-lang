@@ -1327,7 +1327,7 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr **Args,
     // C++0x [class.base.init]p7:
     //   The initialization of each base and member constitutes a
     //   full-expression.
-    MemberInit = MaybeCreateExprWithCleanups(MemberInit.get());
+    MemberInit = MaybeCreateExprWithCleanups(MemberInit);
     if (MemberInit.isInvalid())
       return true;
 
@@ -1459,7 +1459,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   // C++0x [class.base.init]p7:
   //   The initialization of each base and member constitutes a 
   //   full-expression.
-  BaseInit = MaybeCreateExprWithCleanups(BaseInit.get());
+  BaseInit = MaybeCreateExprWithCleanups(BaseInit);
   if (BaseInit.isInvalid())
     return true;
 
@@ -1552,10 +1552,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     assert(false && "Unhandled initializer kind!");
   }
 
-  if (BaseInit.isInvalid())
-    return true;
-      
-  BaseInit = SemaRef.MaybeCreateExprWithCleanups(BaseInit.get());
+  BaseInit = SemaRef.MaybeCreateExprWithCleanups(BaseInit);
   if (BaseInit.isInvalid())
     return true;
         
@@ -1669,7 +1666,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     ExprResult MemberInit
       = InitSeq.Perform(SemaRef, Entities.back(), InitKind, 
                         MultiExprArg(&CopyCtorArgE, 1));
-    MemberInit = SemaRef.MaybeCreateExprWithCleanups(MemberInit.get());
+    MemberInit = SemaRef.MaybeCreateExprWithCleanups(MemberInit);
     if (MemberInit.isInvalid())
       return true;
 
@@ -1694,10 +1691,8 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     InitializationSequence InitSeq(SemaRef, InitEntity, InitKind, 0, 0);
     ExprResult MemberInit = 
       InitSeq.Perform(SemaRef, InitEntity, InitKind, MultiExprArg());
-    if (MemberInit.isInvalid())
-      return true;
 
-    MemberInit = SemaRef.MaybeCreateExprWithCleanups(MemberInit.get());
+    MemberInit = SemaRef.MaybeCreateExprWithCleanups(MemberInit);
     if (MemberInit.isInvalid())
       return true;
     
@@ -5547,7 +5542,7 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
 
   CheckImplicitConversions(Result.get(), LParenLoc);
   
-  Result = MaybeCreateExprWithCleanups(Result.get());
+  Result = MaybeCreateExprWithCleanups(Result);
   VDecl->setInit(Result.takeAs<Expr>());
   VDecl->setCXXDirectInitializer(true);
 
@@ -7037,7 +7032,7 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
       InitializationSequence InitSeq(*this, InitEntity, InitKind, 0, 0);
       ExprResult MemberInit = 
         InitSeq.Perform(*this, InitEntity, InitKind, MultiExprArg());
-      MemberInit = MaybeCreateExprWithCleanups(MemberInit.get());
+      MemberInit = MaybeCreateExprWithCleanups(MemberInit);
       // Note, MemberInit could actually come back empty if no initialization 
       // is required (e.g., because it would call a trivial default constructor)
       if (!MemberInit.get() || MemberInit.isInvalid())
