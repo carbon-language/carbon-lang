@@ -675,6 +675,11 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
+  if (S.Context.Target.getTriple().getOS() == llvm::Triple::Darwin) {
+    S.Diag(Attr.getLoc(), diag::err_alias_not_supported_on_darwin);
+    return;
+  }
+
   // FIXME: check if target symbol exists in current file
 
   d->addAttr(::new (S.Context) AliasAttr(Attr.getLoc(), S.Context,

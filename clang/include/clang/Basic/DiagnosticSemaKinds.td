@@ -1001,6 +1001,8 @@ def err_attribute_weakref_not_global_context : Error<
   "weakref declaration of '%0' must be in a global context">;
 def err_attribute_weakref_without_alias : Error<
   "weakref declaration of '%0' must also have an alias attribute">;
+def err_alias_not_supported_on_darwin : Error <
+  "only weak aliases are supported on darwin">;
 def warn_attribute_wrong_decl_type : Warning<
   "%0 attribute only applies to %select{function|union|"
   "variable and function|function or method|parameter|"

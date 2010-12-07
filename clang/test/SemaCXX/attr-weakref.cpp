@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -fsyntax-only -verify %s
 
 // GCC will accept anything as the argument of weakref. Should we
 // check for an existing decl?
