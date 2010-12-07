@@ -104,7 +104,7 @@ TEST(Support, Path) {
 
     SmallString<16> temp_store;
     temp_store = *i;
-    ASSERT_FALSE(path::make_absolute(temp_store));
+    ASSERT_FALSE(fs::make_absolute(temp_store));
     temp_store = *i;
     ASSERT_FALSE(path::remove_filename(temp_store));
 

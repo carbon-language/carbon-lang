@@ -424,61 +424,6 @@ error_code append(SmallVectorImpl<char> &path, const Twine &a,
   return success;
 }
 
-error_code make_absolute(SmallVectorImpl<char> &path) {
-  StringRef p(path.data(), path.size());
-
-  bool rootName = false, rootDirectory = false;
-  if (error_code ec = has_root_name(p, rootName)) return ec;
-  if (error_code ec = has_root_directory(p, rootDirectory)) return ec;
-
-  // Already absolute.
-  if (rootName && rootDirectory)
-    return success;
-
-  // All of the following conditions will need the current directory.
-  SmallString<128> current_dir;
-  if (error_code ec = fs::current_path(current_dir)) return ec;
-
-  // Relative path. Prepend the current directory.
-  if (!rootName && !rootDirectory) {
-    // Append path to the current directory.
-    if (error_code ec = append(current_dir, p)) return ec;
-    // Set path to the result.
-    path.swap(current_dir);
-    return success;
-  }
-
-  if (!rootName && rootDirectory) {
-    StringRef cdrn;
-    if (error_code ec = root_name(current_dir, cdrn)) return ec;
-    SmallString<128> curDirRootName(cdrn.begin(), cdrn.end());
-    if (error_code ec = append(curDirRootName, p)) return ec;
-    // Set path to the result.
-    path.swap(curDirRootName);
-    return success;
-  }
-
-  if (rootName && !rootDirectory) {
-    StringRef pRootName;
-    StringRef bRootDirectory;
-    StringRef bRelativePath;
-    StringRef pRelativePath;
-    if (error_code ec = root_name(p, pRootName)) return ec;
-    if (error_code ec = root_directory(current_dir, bRootDirectory)) return ec;
-    if (error_code ec = relative_path(current_dir, bRelativePath)) return ec;
-    if (error_code ec = relative_path(p, pRelativePath)) return ec;
-
-    SmallString<128> res;
-    if (error_code ec = append(res, pRootName, bRootDirectory,
-                                    bRelativePath, pRelativePath)) return ec;
-    path.swap(res);
-    return success;
-  }
-
-  llvm_unreachable("All rootName and rootDirectory combinations should have "
-                   "occurred above!");
-}
-
 error_code parent_path(const StringRef &path, StringRef &result) {
   size_t end_pos = parent_path_end(path);
   if (end_pos == StringRef::npos)
@@ -672,6 +617,63 @@ error_code is_relative(const Twine &path, bool &result) {
 } // end namespace path
 
 namespace fs {
+
+error_code make_absolute(SmallVectorImpl<char> &path) {
+  StringRef p(path.data(), path.size());
+
+  bool rootName = false, rootDirectory = false;
+  if (error_code ec = path::has_root_name(p, rootName)) return ec;
+  if (error_code ec = path::has_root_directory(p, rootDirectory)) return ec;
+
+  // Already absolute.
+  if (rootName && rootDirectory)
+    return success;
+
+  // All of the following conditions will need the current directory.
+  SmallString<128> current_dir;
+  if (error_code ec = current_path(current_dir)) return ec;
+
+  // Relative path. Prepend the current directory.
+  if (!rootName && !rootDirectory) {
+    // Append path to the current directory.
+    if (error_code ec = path::append(current_dir, p)) return ec;
+    // Set path to the result.
+    path.swap(current_dir);
+    return success;
+  }
+
+  if (!rootName && rootDirectory) {
+    StringRef cdrn;
+    if (error_code ec = path::root_name(current_dir, cdrn)) return ec;
+    SmallString<128> curDirRootName(cdrn.begin(), cdrn.end());
+    if (error_code ec = path::append(curDirRootName, p)) return ec;
+    // Set path to the result.
+    path.swap(curDirRootName);
+    return success;
+  }
+
+  if (rootName && !rootDirectory) {
+    StringRef pRootName;
+    StringRef bRootDirectory;
+    StringRef bRelativePath;
+    StringRef pRelativePath;
+    if (error_code ec = path::root_name(p, pRootName)) return ec;
+    if (error_code ec = path::root_directory(current_dir, bRootDirectory))
+      return ec;
+    if (error_code ec = path::relative_path(current_dir, bRelativePath))
+      return ec;
+    if (error_code ec = path::relative_path(p, pRelativePath)) return ec;
+
+    SmallString<128> res;
+    if (error_code ec = path::append(res, pRootName, bRootDirectory,
+                                     bRelativePath, pRelativePath)) return ec;
+    path.swap(res);
+    return success;
+  }
+
+  llvm_unreachable("All rootName and rootDirectory combinations should have "
+                   "occurred above!");
+}
 
 error_code create_directories(const Twine &path, bool &existed) {
   SmallString<128> path_storage;
