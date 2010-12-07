@@ -31,7 +31,7 @@ namespace {
 
 #ifdef LLVM_ON_WIN32
   const StringRef separators = "\\/";
-  const char       prefered_separator = '\\';
+  const char      prefered_separator = '\\';
 #else
   const StringRef separators = "/";
   const char      prefered_separator = '/';
@@ -50,16 +50,19 @@ namespace {
     if (path.empty())
       return path;
 
+#ifdef LLVM_ON_WIN32
     // C:
     if (path.size() >= 2 && std::isalpha(path[0]) && path[1] == ':')
       return StringRef(path.begin(), 2);
+#endif
 
     // //net
     if ((path.size() > 2) &&
-        (path.startswith("\\\\") || path.startswith("//")) &&
-        (path[2] != '\\' && path[2] != '/')) {
+        is_separator(path[0]) &&
+        path[0] == path[1] &&
+        !is_separator(path[2])) {
       // Find the next directory separator.
-      size_t end = path.find_first_of("\\/", 2);
+      size_t end = path.find_first_of(separators, 2);
       if (end == StringRef::npos)
         return path;
       else
@@ -67,7 +70,7 @@ namespace {
     }
 
     // {/,\}
-    if (path[0] == '\\' || path[0] == '/')
+    if (is_separator(path[0]))
       return StringRef(path.begin(), 1);
 
     if (path.startswith(".."))
@@ -77,7 +80,7 @@ namespace {
       return StringRef(path.begin(), 1);
 
     // * {file,directory}name
-    size_t end = path.find_first_of("\\/", 2);
+    size_t end = path.find_first_of(separators, 2);
     if (end == StringRef::npos)
       return path;
     else
@@ -89,7 +92,7 @@ namespace {
   size_t filename_pos(const StringRef &str) {
     if (str.size() == 2 &&
         is_separator(str[0]) &&
-        is_separator(str[1]))
+        str[0] == str[1])
       return 0;
 
     if (str.size() > 0 && is_separator(str[str.size() - 1]))
