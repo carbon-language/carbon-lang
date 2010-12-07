@@ -157,7 +157,7 @@ error_code create_directory(const Twine &path, bool &existed) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
-  if (::mkdir(p.begin(), 0700) == -1) {
+  if (::mkdir(p.begin(), S_IRWXU | S_IRWXG) == -1) {
     if (errno != errc::file_exists)
       return error_code(errno, system_category());
     existed = true;
