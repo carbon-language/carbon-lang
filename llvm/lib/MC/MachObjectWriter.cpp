@@ -884,6 +884,17 @@ public:
       // FIXME: Currently, these are never generated (see code below). I cannot
       // find a case where they are actually emitted.
       Type = macho::RIT_Vanilla;
+    } else if (SD->getSymbol().isVariable()) {
+      const MCExpr *Value = SD->getSymbol().getVariableValue();
+      int64_t Res;
+      bool isAbs = Value->EvaluateAsAbsolute(Res, Layout, SectionAddress);
+      if (isAbs) {
+        FixedValue = Res;
+        return;
+      } else {
+        report_fatal_error("unsupported relocation of variable '" +
+                           SD->getSymbol().getName() + "'");
+      }
     } else {
       // Check whether we need an external or internal relocation.
       if (doesSymbolRequireExternRelocation(SD)) {
