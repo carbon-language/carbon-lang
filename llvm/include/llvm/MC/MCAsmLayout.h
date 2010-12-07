@@ -66,11 +66,6 @@ public:
   /// been initialized.
   void LayoutFragment(MCFragment *Fragment);
 
-  /// \brief Performs initial layout for a single section, assuming that the
-  /// previous section (including its fragments) has already been layed out
-  /// correctly.
-  void LayoutSection(MCSectionData *SD);
-
   /// @name Section Access (in layout order)
   /// @{
 
@@ -93,19 +88,8 @@ public:
   uint64_t getFragmentOffset(const MCFragment *F) const;
 
   /// @}
-  /// @name Section Layout Data
-  /// @{
-
-  /// \brief Get the computed address of the given section.
-  uint64_t getSectionAddress(const MCSectionData *SD) const;
-
-  /// @}
   /// @name Utility Functions
   /// @{
-
-  /// \brief Get the address of the given fragment, as computed in the current
-  /// layout.
-  uint64_t getFragmentAddress(const MCFragment *F) const;
 
   /// \brief Get the address space size of the given section, as it effects
   /// layout. This may differ from the size reported by \see getSectionSize() by
@@ -115,13 +99,6 @@ public:
   /// \brief Get the data size of the given section, as emitted to the object
   /// file. This may include additional padding, or be 0 for virtual sections.
   uint64_t getSectionFileSize(const MCSectionData *SD) const;
-
-  /// \brief Get the logical data size of the given section.
-  uint64_t getSectionSize(const MCSectionData *SD) const;
-
-  /// \brief Get the address of the given symbol, as computed in the current
-  /// layout.
-  uint64_t getSymbolAddress(const MCSymbolData *SD) const;
 
   /// \brief Get the offset of the given symbol, as computed in the current
   /// layout.

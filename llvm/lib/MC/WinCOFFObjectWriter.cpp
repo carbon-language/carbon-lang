@@ -170,7 +170,7 @@ public:
 
   // MCObjectWriter interface implementation.
 
-  void ExecutePostLayoutBinding(MCAssembler &Asm);
+  void ExecutePostLayoutBinding(MCAssembler &Asm, const MCAsmLayout &Layout);
 
   void RecordRelocation(const MCAssembler &Asm,
                         const MCAsmLayout &Layout,
@@ -616,7 +616,8 @@ void WinCOFFObjectWriter::WriteRelocation(const COFF::relocation &R) {
 ////////////////////////////////////////////////////////////////////////////////
 // MCObjectWriter interface implementations
 
-void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm) {
+void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
+                                                   const MCAsmLayout &Layout) {
   // "Define" each section & symbol. This creates section & symbol
   // entries in the staging area.
 
@@ -753,7 +754,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
   for (sections::iterator i = Sections.begin(),
                           e = Sections.end(); i != e; i++) {
-    if (Layout.getSectionSize((*i)->MCData) > 0) {
+    if (Layout.getSectionAddressSize((*i)->MCData) > 0) {
       MakeSectionReal(**i, ++Header.NumberOfSections);
     } else {
       (*i)->Number = -1;

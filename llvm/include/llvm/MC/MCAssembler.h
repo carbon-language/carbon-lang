@@ -236,19 +236,12 @@ class MCAlignFragment : public MCFragment {
   /// target dependent.
   bool EmitNops : 1;
 
-  /// OnlyAlignAddress - Flag to indicate that this align is only used to adjust
-  /// the address space size of a section and that it should not be included as
-  /// part of the section size. This flag can only be used on the last fragment
-  /// in a section.
-  bool OnlyAlignAddress : 1;
-
 public:
   MCAlignFragment(unsigned _Alignment, int64_t _Value, unsigned _ValueSize,
                   unsigned _MaxBytesToEmit, MCSectionData *SD = 0)
     : MCFragment(FT_Align, SD), Alignment(_Alignment),
       Value(_Value),ValueSize(_ValueSize),
-      MaxBytesToEmit(_MaxBytesToEmit), EmitNops(false),
-      OnlyAlignAddress(false) {}
+      MaxBytesToEmit(_MaxBytesToEmit), EmitNops(false) {}
 
   /// @name Accessors
   /// @{
@@ -263,9 +256,6 @@ public:
 
   bool hasEmitNops() const { return EmitNops; }
   void setEmitNops(bool Value) { EmitNops = Value; }
-
-  bool hasOnlyAlignAddress() const { return OnlyAlignAddress; }
-  void setOnlyAlignAddress(bool Value) { OnlyAlignAddress = Value; }
 
   /// @}
 
@@ -446,10 +436,6 @@ private:
   /// @{
   //
   // FIXME: This could all be kept private to the assembler implementation.
-
-  /// Address - The computed address of this section. This is ~0 until
-  /// initialized.
-  uint64_t Address;
 
   /// HasInstructions - Whether this section has had instructions emitted into
   /// it.
@@ -679,7 +665,6 @@ private:
 
   unsigned RelaxAll : 1;
   unsigned SubsectionsViaSymbols : 1;
-  unsigned PadSectionToAlignment : 1;
 
 private:
   /// Evaluate a fixup to a relocatable expression and the value which should be
@@ -713,7 +698,6 @@ private:
   /// Compute the effective fragment size assuming it is layed out at the given
   /// \arg SectionAddress and \arg FragmentOffset.
   uint64_t ComputeFragmentSize(const MCFragment &F,
-                               uint64_t SectionAddress,
                                uint64_t FragmentOffset) const;
 
   /// LayoutOnce - Perform one layout iteration and return true if any offsets
@@ -765,8 +749,7 @@ public:
   // option is to make this abstract, and have targets provide concrete
   // implementations as we do with AsmParser.
   MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
-              MCCodeEmitter &_Emitter, bool _PadSectionToAlignment,
-              raw_ostream &OS);
+              MCCodeEmitter &_Emitter, raw_ostream &OS);
   ~MCAssembler();
 
   MCContext &getContext() const { return Context; }

@@ -325,7 +325,8 @@ namespace {
     virtual void CreateGroupSections(MCAssembler &Asm, MCAsmLayout &Layout,
                              GroupMapTy &GroupMap, RevGroupMapTy &RevGroupMap);
 
-    virtual void ExecutePostLayoutBinding(MCAssembler &Asm);
+    virtual void ExecutePostLayoutBinding(MCAssembler &Asm,
+                                          const MCAsmLayout &Layout);
 
     virtual void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
                           uint64_t Address, uint64_t Offset,
@@ -557,7 +558,8 @@ static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout) {
   return 0;
 }
 
-void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm) {
+void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
+                                               const MCAsmLayout &Layout) {
   // The presence of symbol versions causes undefined symbols and
   // versions declared with @@@ to be renamed.
 
@@ -1365,11 +1367,11 @@ static uint64_t GetSectionFileSize(const MCAsmLayout &Layout,
   return Layout.getSectionFileSize(&SD);
 }
 
-static uint64_t GetSectionSize(const MCAsmLayout &Layout,
-                                   const MCSectionData &SD) {
+static uint64_t GetSectionAddressSize(const MCAsmLayout &Layout,
+                                      const MCSectionData &SD) {
   if (IsELFMetaDataSection(SD))
     return DataSectionSize(SD);
-  return Layout.getSectionSize(&SD);
+  return Layout.getSectionAddressSize(&SD);
 }
 
 static void WriteDataSectionData(ELFObjectWriter *W, const MCSectionData &SD) {
@@ -1479,7 +1481,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     else
       GroupSymbolIndex = getSymbolIndexInSymbolTable(Asm, GroupMap[&Section]);
 
-    uint64_t Size = GetSectionSize(Layout, SD);
+    uint64_t Size = GetSectionAddressSize(Layout, SD);
 
     WriteSection(Asm, SectionIndexMap, GroupSymbolIndex,
                  SectionOffsetMap[&Section], Size,

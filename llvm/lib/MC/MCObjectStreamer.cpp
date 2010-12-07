@@ -19,11 +19,9 @@
 using namespace llvm;
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
-                                   raw_ostream &_OS, MCCodeEmitter *_Emitter,
-                                   bool _PadSectionToAlignment)
+                                   raw_ostream &_OS, MCCodeEmitter *_Emitter)
   : MCStreamer(Context), Assembler(new MCAssembler(Context, TAB,
                                                    *_Emitter,
-                                                   _PadSectionToAlignment,
                                                    _OS)),
     CurSectionData(0)
 {

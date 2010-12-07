@@ -197,6 +197,34 @@ class MachObjectWriter : public MCObjectWriter {
 
   /// @}
 
+  SectionAddrMap SectionAddress;
+  uint64_t getSectionAddress(const MCSectionData* SD) const {
+    return SectionAddress.lookup(SD);
+  }
+  uint64_t getSymbolAddress(const MCSymbolData* SD,
+                            const MCAsmLayout &Layout) const {
+    return getSectionAddress(SD->getFragment()->getParent()) +
+      Layout.getSymbolOffset(SD);
+  }
+  uint64_t getFragmentAddress(const MCFragment *Fragment,
+                            const MCAsmLayout &Layout) const {
+    return getSectionAddress(Fragment->getParent()) +
+      Layout.getFragmentOffset(Fragment);
+  }
+
+  uint64_t getPaddingSize(const MCSectionData *SD,
+                          const MCAsmLayout &Layout) const {
+    uint64_t EndAddr = getSectionAddress(SD) + Layout.getSectionAddressSize(SD);
+    unsigned Next = SD->getLayoutOrder() + 1;
+    if (Next >= Layout.getSectionOrder().size())
+      return 0;
+
+    const MCSectionData &NextSD = *Layout.getSectionOrder()[Next];
+    if (NextSD.getSection().isVirtualSection())
+      return 0;
+    return OffsetToAlignment(EndAddr, NextSD.getAlignment());
+  }
+
   unsigned Is64Bit : 1;
 
   uint32_t CPUType;
@@ -283,7 +311,7 @@ public:
   void WriteSection(const MCAssembler &Asm, const MCAsmLayout &Layout,
                     const MCSectionData &SD, uint64_t FileOffset,
                     uint64_t RelocationsStart, unsigned NumRelocations) {
-    uint64_t SectionSize = Layout.getSectionSize(&SD);
+    uint64_t SectionSize = Layout.getSectionAddressSize(&SD);
 
     // The offset is unused for virtual sections.
     if (SD.getSection().isVirtualSection()) {
@@ -301,10 +329,10 @@ public:
     WriteBytes(Section.getSectionName(), 16);
     WriteBytes(Section.getSegmentName(), 16);
     if (Is64Bit) {
-      Write64(Layout.getSectionAddress(&SD)); // address
+      Write64(getSectionAddress(&SD)); // address
       Write64(SectionSize); // size
     } else {
-      Write32(Layout.getSectionAddress(&SD)); // address
+      Write32(getSectionAddress(&SD)); // address
       Write32(SectionSize); // size
     }
     Write32(FileOffset);
@@ -413,7 +441,7 @@ public:
       if (Symbol.isAbsolute()) {
         Address = cast<MCConstantExpr>(Symbol.getVariableValue())->getValue();
       } else {
-        Address = Layout.getSymbolAddress(&Data);
+        Address = getSymbolAddress(&Data, Layout);
       }
     } else if (Data.isCommon()) {
       // Common symbols are encoded with the size in the address
@@ -473,7 +501,7 @@ public:
     uint32_t FixupOffset =
       Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
     uint32_t FixupAddress =
-      Layout.getFragmentAddress(Fragment) + Fixup.getOffset();
+      getFragmentAddress(Fragment, Layout) + Fixup.getOffset();
     int64_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
@@ -603,10 +631,21 @@ public:
         // The index is the section ordinal (1-based).
         Index = SD.getFragment()->getParent()->getOrdinal() + 1;
         IsExtern = 0;
-        Value += Layout.getSymbolAddress(&SD);
+        Value += getSymbolAddress(&SD, Layout);
 
         if (IsPCRel)
           Value -= FixupAddress + (1 << Log2Size);
+      } else if (Symbol->isVariable()) {
+        const MCExpr *Value = Symbol->getVariableValue();
+        int64_t Res;
+        bool isAbs = Value->EvaluateAsAbsolute(Res, Layout, SectionAddress);
+        if (isAbs) {
+          FixedValue = Res;
+          return;
+        } else {
+          report_fatal_error("unsupported relocation of variable '" +
+                             Symbol->getName() + "'");
+        }
       } else {
         report_fatal_error("unsupported relocation of undefined symbol '" +
                            Symbol->getName() + "'");
@@ -708,7 +747,9 @@ public:
       report_fatal_error("symbol '" + A->getName() +
                         "' can not be undefined in a subtraction expression");
 
-    uint32_t Value = Layout.getSymbolAddress(A_SD);
+    uint32_t Value = getSymbolAddress(A_SD, Layout);
+    uint64_t SecAddr = getSectionAddress(A_SD->getFragment()->getParent());
+    FixedValue += SecAddr;
     uint32_t Value2 = 0;
 
     if (const MCSymbolRefExpr *B = Target.getSymB()) {
@@ -725,7 +766,8 @@ public:
       // for pedantic compatibility with 'as'.
       Type = A_SD->isExternal() ? macho::RIT_Difference :
         macho::RIT_LocalDifference;
-      Value2 = Layout.getSymbolAddress(B_SD);
+      Value2 = getSymbolAddress(B_SD, Layout);
+      FixedValue -= getSectionAddress(B_SD->getFragment()->getParent());
     }
 
     // Relocations are written out in reverse order, so the PAIR comes first.
@@ -774,10 +816,10 @@ public:
     if (Target.getSymB()) {
       // If this is a subtraction then we're pcrel.
       uint32_t FixupAddress =
-      Layout.getFragmentAddress(Fragment) + Fixup.getOffset();
+        getFragmentAddress(Fragment, Layout) + Fixup.getOffset();
       MCSymbolData *SD_B = &Asm.getSymbolData(Target.getSymB()->getSymbol());
       IsPCRel = 1;
-      FixedValue = (FixupAddress - Layout.getSymbolAddress(SD_B) +
+      FixedValue = (FixupAddress - getSymbolAddress(SD_B, Layout) +
                     Target.getConstant());
       FixedValue += 1ULL << Log2Size;
     } else {
@@ -855,10 +897,13 @@ public:
         // compensate for the addend of the symbol address, if it was
         // undefined. This occurs with weak definitions, for example.
         if (!SD->Symbol->isUndefined())
-          FixedValue -= Layout.getSymbolAddress(SD);
+          FixedValue -= getSymbolAddress(SD, Layout);
       } else {
         // The index is the section ordinal (1-based).
         Index = SD->getFragment()->getParent()->getOrdinal() + 1;
+        FixedValue += getSectionAddress(SD->getFragment()->getParent());
+        if (IsPCRel)
+          FixedValue -= getSectionAddress(Fragment->getParent());
       }
 
       Type = macho::RIT_Vanilla;
@@ -1039,7 +1084,25 @@ public:
       StringTable += '\x00';
   }
 
-  void ExecutePostLayoutBinding(MCAssembler &Asm) {
+  void computeSectionAddresses(const MCAssembler &Asm,
+                               const MCAsmLayout &Layout) {
+    uint64_t StartAddress = 0;
+    const SmallVectorImpl<MCSectionData*> &Order = Layout.getSectionOrder();
+    for (int i = 0, n = Order.size(); i != n ; ++i) {
+      const MCSectionData *SD = Order[i];
+      StartAddress = RoundUpToAlignment(StartAddress, SD->getAlignment());
+      SectionAddress[SD] = StartAddress;
+      StartAddress += Layout.getSectionAddressSize(SD);
+      // Explicitly pad the section to match the alignment requirements of the
+      // following one. This is for 'gas' compatibility, it shouldn't
+      /// strictly be necessary.
+      StartAddress += getPaddingSize(SD, Layout);
+    }
+  }
+
+  void ExecutePostLayoutBinding(MCAssembler &Asm, const MCAsmLayout &Layout) {
+    computeSectionAddresses(Asm, Layout);
+
     // Create symbol data for any indirect symbols.
     BindIndirectSymbols(Asm);
 
@@ -1113,9 +1176,10 @@ public:
     for (MCAssembler::const_iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it) {
       const MCSectionData &SD = *it;
-      uint64_t Address = Layout.getSectionAddress(&SD);
-      uint64_t Size = Layout.getSectionSize(&SD);
+      uint64_t Address = getSectionAddress(&SD);
+      uint64_t Size = Layout.getSectionAddressSize(&SD);
       uint64_t FileSize = Layout.getSectionFileSize(&SD);
+      FileSize += getPaddingSize(&SD, Layout);
 
       VMSize = std::max(VMSize, Address + Size);
 
@@ -1144,7 +1208,7 @@ public:
            ie = Asm.end(); it != ie; ++it) {
       std::vector<macho::RelocationEntry> &Relocs = Relocations[it];
       unsigned NumRelocs = Relocs.size();
-      uint64_t SectionStart = SectionDataStart + Layout.getSectionAddress(it);
+      uint64_t SectionStart = SectionDataStart + getSectionAddress(it);
       WriteSection(Asm, Layout, *it, SectionStart, RelocTableEnd, NumRelocs);
       RelocTableEnd += NumRelocs * macho::RelocationInfoSize;
     }
@@ -1185,8 +1249,13 @@ public:
 
     // Write the actual section data.
     for (MCAssembler::const_iterator it = Asm.begin(),
-           ie = Asm.end(); it != ie; ++it)
+           ie = Asm.end(); it != ie; ++it) {
       Asm.WriteSectionData(it, Layout, this);
+
+      uint64_t Pad = getPaddingSize(it, Layout);
+      for (unsigned int i = 0; i < Pad; ++i)
+        Write8(0);
+    }
 
     // Write the extra padding.
     WriteZeros(SectionDataPadding);

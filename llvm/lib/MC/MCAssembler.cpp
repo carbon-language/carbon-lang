@@ -38,7 +38,6 @@ STATISTIC(FragmentLayouts, "Number of fragment layouts");
 STATISTIC(ObjectBytes, "Number of emitted object file bytes");
 STATISTIC(RelaxationSteps, "Number of assembler layout and relaxation steps");
 STATISTIC(RelaxedInstructions, "Number of relaxed instructions");
-STATISTIC(SectionLayouts, "Number of section layouts");
 }
 }
 
@@ -113,11 +112,6 @@ void MCAsmLayout::EnsureValid(const MCFragment *F) const {
   }
 }
 
-uint64_t MCAsmLayout::getFragmentAddress(const MCFragment *F) const {
-  assert(F->getParent() && "Missing section()!");
-  return getSectionAddress(F->getParent()) + getFragmentOffset(F);
-}
-
 uint64_t MCAsmLayout::getFragmentEffectiveSize(const MCFragment *F) const {
   EnsureValid(F);
   assert(F->EffectiveSize != ~UINT64_C(0) && "Address not set!");
@@ -135,17 +129,6 @@ uint64_t MCAsmLayout::getSymbolOffset(const MCSymbolData *SD) const {
   return getFragmentOffset(SD->getFragment()) + SD->getOffset();
 }
 
-uint64_t MCAsmLayout::getSymbolAddress(const MCSymbolData *SD) const {
-  assert(SD->getFragment() && "Invalid getAddress() on undefined symbol!");
-  return getFragmentAddress(SD->getFragment()) + SD->getOffset();
-}
-
-uint64_t MCAsmLayout::getSectionAddress(const MCSectionData *SD) const {
-  EnsureValid(SD->begin());
-  assert(SD->Address != ~UINT64_C(0) && "Address not set!");
-  return SD->Address;
-}
-
 uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
   // The size is the last fragment's end offset.
   const MCFragment &F = SD->getFragmentList().back();
@@ -159,17 +142,6 @@ uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
 
   // Otherwise, the file size is the same as the address space size.
   return getSectionAddressSize(SD);
-}
-
-uint64_t MCAsmLayout::getSectionSize(const MCSectionData *SD) const {
-  // The logical size is the address space size minus any tail padding.
-  uint64_t Size = getSectionAddressSize(SD);
-  const MCAlignFragment *AF =
-    dyn_cast<MCAlignFragment>(&(SD->getFragmentList().back()));
-  if (AF && AF->hasOnlyAlignAddress())
-    Size -= getFragmentEffectiveSize(AF);
-
-  return Size;
 }
 
 /* *** */
@@ -196,7 +168,6 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
   : Section(&_Section),
     Ordinal(~UINT32_C(0)),
     Alignment(1),
-    Address(~UINT64_C(0)),
     HasInstructions(false)
 {
   if (A)
@@ -221,11 +192,9 @@ MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
 /* *** */
 
 MCAssembler::MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
-                         MCCodeEmitter &_Emitter, bool _PadSectionToAlignment,
-                         raw_ostream &_OS)
+                         MCCodeEmitter &_Emitter, raw_ostream &_OS)
   : Context(_Context), Backend(_Backend), Emitter(_Emitter),
-    OS(_OS), RelaxAll(false), SubsectionsViaSymbols(false),
-    PadSectionToAlignment(_PadSectionToAlignment)
+    OS(_OS), RelaxAll(false), SubsectionsViaSymbols(false)
 {
 }
 
@@ -285,14 +254,14 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
     const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
     if (Sym.isDefined())
-      Value += Layout.getSymbolAddress(&getSymbolData(Sym));
+      Value += Layout.getSymbolOffset(&getSymbolData(Sym));
     else
       IsResolved = false;
   }
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
     const MCSymbol &Sym = B->getSymbol().AliasedSymbol();
     if (Sym.isDefined())
-      Value -= Layout.getSymbolAddress(&getSymbolData(Sym));
+      Value -= Layout.getSymbolOffset(&getSymbolData(Sym));
     else
       IsResolved = false;
   }
@@ -301,13 +270,12 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
     IsResolved = Writer.IsFixupFullyResolved(*this, Target, IsPCRel, DF);
 
   if (IsPCRel)
-    Value -= Layout.getFragmentAddress(DF) + Fixup.getOffset();
+    Value -= Layout.getFragmentOffset(DF) + Fixup.getOffset();
 
   return IsResolved;
 }
 
 uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F,
-                                          uint64_t SectionAddress,
                                           uint64_t FragmentOffset) const {
   switch (F.getKind()) {
   case MCFragment::FT_Data:
@@ -323,11 +291,7 @@ uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F,
   case MCFragment::FT_Align: {
     const MCAlignFragment &AF = cast<MCAlignFragment>(F);
 
-    assert((!AF.hasOnlyAlignAddress() || !AF.getNextNode()) &&
-           "Invalid OnlyAlignAddress bit, not the last fragment!");
-
-    uint64_t Size = OffsetToAlignment(SectionAddress + FragmentOffset,
-                                      AF.getAlignment());
+    uint64_t Size = OffsetToAlignment(FragmentOffset, AF.getAlignment());
 
     // Honor MaxBytesToEmit.
     if (Size > AF.getMaxBytesToEmit())
@@ -351,8 +315,6 @@ void MCAsmLayout::LayoutFile() {
   // Initialize the first section and set the valid fragment layout point. All
   // actual layout computations are done lazily.
   LastValidFragment = 0;
-  if (!getSectionOrder().empty())
-    getSectionOrder().front()->Address = 0;
 }
 
 void MCAsmLayout::LayoutFragment(MCFragment *F) {
@@ -371,43 +333,14 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
 
   ++stats::FragmentLayouts;
 
-  // Compute the fragment start address.
-  uint64_t StartAddress = F->getParent()->Address;
-  uint64_t Address = StartAddress;
-  if (Prev)
-    Address += Prev->Offset + Prev->EffectiveSize;
-
   // Compute fragment offset and size.
-  F->Offset = Address - StartAddress;
-  F->EffectiveSize = getAssembler().ComputeFragmentSize(*F, StartAddress,
-                                                        F->Offset);
+  uint64_t Offset = 0;
+  if (Prev)
+    Offset += Prev->Offset + Prev->EffectiveSize;
+
+  F->Offset = Offset;
+  F->EffectiveSize = getAssembler().ComputeFragmentSize(*F, F->Offset);
   LastValidFragment = F;
-
-  // If this is the last fragment in a section, update the next section address.
-  if (!F->getNextNode()) {
-    unsigned NextIndex = F->getParent()->getLayoutOrder() + 1;
-    if (NextIndex != getSectionOrder().size())
-      LayoutSection(getSectionOrder()[NextIndex]);
-  }
-}
-
-void MCAsmLayout::LayoutSection(MCSectionData *SD) {
-  unsigned SectionOrderIndex = SD->getLayoutOrder();
-
-  ++stats::SectionLayouts;
-
-  // Compute the section start address.
-  uint64_t StartAddress = 0;
-  if (SectionOrderIndex) {
-    MCSectionData *Prev = getSectionOrder()[SectionOrderIndex - 1];
-    StartAddress = getSectionAddress(Prev) + getSectionAddressSize(Prev);
-  }
-
-  // Honor the section alignment requirements.
-  StartAddress = RoundUpToAlignment(StartAddress, SD->getAlignment());
-
-  // Set the section address.
-  SD->Address = StartAddress;
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
@@ -566,7 +499,7 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
          ie = SD->end(); it != ie; ++it)
     WriteFragmentData(*this, Layout, *it, OW);
 
-  assert(OW->getStream().tell() - Start == Layout.getSectionFileSize(SD));
+  assert(OW->getStream().tell() - Start == Layout.getSectionAddressSize(SD));
 }
 
 
@@ -594,29 +527,7 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
   // Create the layout object.
   MCAsmLayout Layout(*this);
 
-  // Insert additional align fragments for concrete sections to explicitly pad
-  // the previous section to match their alignment requirements. This is for
-  // 'gas' compatibility, it shouldn't strictly be necessary.
-  if (PadSectionToAlignment) {
-    for (unsigned i = 1, e = Layout.getSectionOrder().size(); i < e; ++i) {
-      MCSectionData *SD = Layout.getSectionOrder()[i];
 
-      // Ignore sections without alignment requirements.
-      unsigned Align = SD->getAlignment();
-      if (Align <= 1)
-        continue;
-
-      // Ignore virtual sections, they don't cause file size modifications.
-      if (SD->getSection().isVirtualSection())
-        continue;
-
-      // Otherwise, create a new align fragment at the end of the previous
-      // section.
-      MCAlignFragment *AF = new MCAlignFragment(Align, 0, 1, Align,
-                                                Layout.getSectionOrder()[i - 1]);
-      AF->setOnlyAlignAddress(true);
-    }
-  }
 
   // Create dummy fragments and assign section ordinals.
   unsigned SectionIndex = 0;
@@ -668,7 +579,7 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
 
   // Allow the object writer a chance to perform post-layout binding (for
   // example, to set the index fields in the symbol data).
-  Writer->ExecutePostLayoutBinding(*this);
+  Writer->ExecutePostLayoutBinding(*this, Layout);
 
   // Evaluate and apply the fixups, generating relocation entries as necessary.
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
@@ -920,8 +831,6 @@ void MCFragment::dump() {
     const MCAlignFragment *AF = cast<MCAlignFragment>(this);
     if (AF->hasEmitNops())
       OS << " (emit nops)";
-    if (AF->hasOnlyAlignAddress())
-      OS << " (only align section)";
     OS << "\n       ";
     OS << " Alignment:" << AF->getAlignment()
        << " Value:" << AF->getValue() << " ValueSize:" << AF->getValueSize()
@@ -991,8 +900,7 @@ void MCSectionData::dump() {
   raw_ostream &OS = llvm::errs();
 
   OS << "<MCSectionData";
-  OS << " Alignment:" << getAlignment() << " Address:" << Address
-     << " Fragments:[\n      ";
+  OS << " Alignment:" << getAlignment() << " Fragments:[\n      ";
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     if (it != begin()) OS << ",\n      ";
     it->dump();
