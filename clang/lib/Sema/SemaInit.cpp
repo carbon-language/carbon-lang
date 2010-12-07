@@ -3100,6 +3100,10 @@ InitializationSequence::InitializationSequence(Sema &S,
     return;
   }
 
+  for (unsigned I = 0; I != NumArgs; ++I)
+    if (Args[I]->getObjectKind() == OK_ObjCProperty)
+      S.ConvertPropertyForRValue(Args[I]);
+
   QualType SourceType;
   Expr *Initializer = 0;
   if (NumArgs == 1) {
@@ -3214,7 +3218,7 @@ InitializationSequence::InitializationSequence(Sema &S,
                               /*AllowExplicitConversions*/ false,
                               /*InOverloadResolution*/ false))
   {
-    if (Initializer->getType() == Context.OverloadTy )
+    if (Initializer->getType() == Context.OverloadTy)
       SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
     else
       SetFailed(InitializationSequence::FK_ConversionFailed);

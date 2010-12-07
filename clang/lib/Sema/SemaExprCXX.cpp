@@ -1850,7 +1850,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // Should this get its own ICK?
     if (From->getObjectKind() == OK_ObjCProperty) {
       ConvertPropertyForRValue(From);
-      if (!From->isRValue()) break;
+      if (!From->isGLValue()) break;
     }
 
     FromType = FromType.getUnqualifiedType();
