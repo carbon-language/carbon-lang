@@ -315,12 +315,14 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
         
         if (log)
         {
-            log->Printf("Function address  : 0x%llx", (uint64_t)m_jit_addr);
+            log->Printf("-- Materializing for execution --");
+            
+            log->Printf("  Function address  : 0x%llx", (uint64_t)m_jit_addr);
             
             if (m_needs_object_ptr)
-                log->Printf("Object pointer    : 0x%llx", (uint64_t)object_ptr);
+                log->Printf("  Object pointer    : 0x%llx", (uint64_t)object_ptr);
             
-            log->Printf("Structure address : 0x%llx", (uint64_t)struct_address);
+            log->Printf("  Structure address : 0x%llx", (uint64_t)struct_address);
                     
             StreamString args;
             
@@ -330,11 +332,11 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             {
                 if (!m_expr_decl_map->DumpMaterializedStruct(exe_ctx, args, dump_error))
                 {
-                    log->Printf("Couldn't extract variable values : %s", dump_error.AsCString("unknown error"));
+                    log->Printf("  Couldn't extract variable values : %s", dump_error.AsCString("unknown error"));
                 }
                 else
                 {
-                    log->Printf("Structure contents:\n%s", args.GetData());
+                    log->Printf("  Structure contents:\n%s", args.GetData());
                 }
             }
         }
@@ -371,6 +373,26 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
 {
     Error expr_error;
     
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+    {
+        log->Printf("-- Dematerializing after execution --");
+    
+        StreamString args;
+        
+        Error dump_error;
+        
+        if (!m_expr_decl_map->DumpMaterializedStruct(exe_ctx, args, dump_error))
+        {
+            log->Printf("  Couldn't extract variable values : %s", dump_error.AsCString("unknown error"));
+        }
+        else
+        {
+            log->Printf("  Structure contents:\n%s", args.GetData());
+        }
+    }
+        
     if (!m_expr_decl_map->Dematerialize(exe_ctx, result, expr_error))
     {
         error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
@@ -386,6 +408,8 @@ ClangUserExpression::Execute (Stream &error_stream,
                               ClangUserExpression::ClangUserExpressionSP &shared_ptr_to_me,
                               ClangExpressionVariable *&result)
 {
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
     if (m_dwarf_opcodes.get())
     {
         // TODO execute the JITted opcodes
@@ -416,9 +440,16 @@ ClangUserExpression::Execute (Stream &error_stream,
         call_plan_sp->SetPrivate(true);
     
         uint32_t single_thread_timeout_usec = 10000000;
+        
+        if (log)
+            log->Printf("-- Execution of expression begins --");
+        
         Process::ExecutionResults execution_result = 
            exe_ctx.process->RunThreadPlan (exe_ctx, call_plan_sp, stop_others, try_all_threads, discard_on_error,
                                            single_thread_timeout_usec, error_stream);
+        
+        if (log)
+            log->Printf("-- Execution of expression completed --");
 
         if (execution_result == Process::eExecutionInterrupted)
         {

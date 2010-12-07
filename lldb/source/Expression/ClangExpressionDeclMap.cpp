@@ -507,6 +507,12 @@ ClangExpressionDeclMap::DumpMaterializedStruct
         return false;
     }
     
+    if (!m_material_vars->m_materialized_location)
+    {
+        err.SetErrorString("No materialized location");
+        return false;
+    }
+    
     lldb::DataBufferSP data(new DataBufferHeap(m_struct_vars->m_struct_size, 0));    
     
     Error error;
