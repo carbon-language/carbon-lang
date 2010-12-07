@@ -15,5 +15,8 @@
 // CHECK: interface1.m:46:1: note: class method 'bar:' also declared here
 // CHECK: interface2.m:57:20: error: instance method 'bar:' has a parameter with a different types in different translation units ('double' vs. 'float')
 // CHECK: interface1.m:58:19: note: declared here with type 'float'
-// CHECK: 6 errors generated
+// CHECK: interface1.m:100:1: error: class 'I15' has incompatible superclasses
+// CHECK: interface1.m:100:1: note: inherits from superclass 'I12' here
+// CHECK: interface2.m:99:1: note: inherits from superclass 'I11' here
+// CHECK: 8 errors generated
 

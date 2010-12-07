@@ -78,3 +78,23 @@
 @protocol P5
 - (double)honk:(int)a;
 @end
+
+// Interface with implementation
+@interface I13
+@end
+
+@implementation I13
+@end
+
+@interface I13b
+@end
+
+@implementation I13b
+@end
+
+// Implementation by itself
+@implementation I14 : I12
+@end
+
+@implementation I15 : I11
+@end

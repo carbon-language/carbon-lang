@@ -115,6 +115,7 @@ namespace {
     Decl *VisitObjCCategoryDecl(ObjCCategoryDecl *D);
     Decl *VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
+    Decl *VisitObjCImplementationDecl(ObjCImplementationDecl *D);
     Decl *VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     Decl *VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
     Decl *VisitObjCClassDecl(ObjCClassDecl *D);
@@ -3012,8 +3013,8 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   
   // If we have an @implementation, import it as well.
   if (D->getImplementation()) {
-    ObjCImplementationDecl *Impl
-      = cast<ObjCImplementationDecl>(Importer.Import(D->getImplementation()));
+    ObjCImplementationDecl *Impl = cast_or_null<ObjCImplementationDecl>(
+                                       Importer.Import(D->getImplementation()));
     if (!Impl)
       return 0;
     
@@ -3021,6 +3022,79 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   }
   
   return ToIface;
+}
+
+Decl *ASTNodeImporter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
+  // Find the corresponding interface.
+  ObjCInterfaceDecl *Iface = cast_or_null<ObjCInterfaceDecl>(
+                                       Importer.Import(D->getClassInterface()));
+  if (!Iface)
+    return 0;
+
+  // Import the superclass, if any.
+  ObjCInterfaceDecl *Super = 0;
+  if (D->getSuperClass()) {
+    Super = cast_or_null<ObjCInterfaceDecl>(
+                                          Importer.Import(D->getSuperClass()));
+    if (!Super)
+      return 0;
+  }
+
+  ObjCImplementationDecl *Impl = Iface->getImplementation();
+  if (!Impl) {
+    // We haven't imported an implementation yet. Create a new @implementation
+    // now.
+    Impl = ObjCImplementationDecl::Create(Importer.getToContext(),
+                                  Importer.ImportContext(D->getDeclContext()),
+                                          Importer.Import(D->getLocation()),
+                                          Iface, Super);
+    
+    if (D->getDeclContext() != D->getLexicalDeclContext()) {
+      DeclContext *LexicalDC
+        = Importer.ImportContext(D->getLexicalDeclContext());
+      if (!LexicalDC)
+        return 0;
+      Impl->setLexicalDeclContext(LexicalDC);
+    }
+    
+    // Associate the implementation with the class it implements.
+    Iface->setImplementation(Impl);
+    Importer.Imported(D, Iface->getImplementation());
+  } else {
+    Importer.Imported(D, Iface->getImplementation());
+
+    // Verify that the existing @implementation has the same superclass.
+    if ((Super && !Impl->getSuperClass()) ||
+        (!Super && Impl->getSuperClass()) ||
+        (Super && Impl->getSuperClass() && 
+         Super->getCanonicalDecl() != Impl->getSuperClass())) {
+        Importer.ToDiag(Impl->getLocation(), 
+                        diag::err_odr_objc_superclass_inconsistent)
+          << Iface->getDeclName();
+        // FIXME: It would be nice to have the location of the superclass
+        // below.
+        if (Impl->getSuperClass())
+          Importer.ToDiag(Impl->getLocation(), 
+                          diag::note_odr_objc_superclass)
+          << Impl->getSuperClass()->getDeclName();
+        else
+          Importer.ToDiag(Impl->getLocation(), 
+                          diag::note_odr_objc_missing_superclass);
+        if (D->getSuperClass())
+          Importer.FromDiag(D->getLocation(), 
+                            diag::note_odr_objc_superclass)
+          << D->getSuperClass()->getDeclName();
+        else
+          Importer.FromDiag(D->getLocation(), 
+                            diag::note_odr_objc_missing_superclass);
+      return 0;
+    }
+  }
+    
+  // Import all of the members of this @implementation.
+  ImportDeclContext(D);
+
+  return Impl;
 }
 
 Decl *ASTNodeImporter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
