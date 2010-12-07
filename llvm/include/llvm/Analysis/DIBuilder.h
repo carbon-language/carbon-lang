@@ -188,6 +188,25 @@ namespace llvm {
                          DIType Ty, bool isLocalToUnit, llvm::Value *Val);
 
 
+    /// CreateLocalVariable - Create a new descriptor for the specified 
+    /// local variable.
+    /// @param Tag         Dwarf TAG. Usually DW_TAG_auto_variable or
+    ///                    DW_TAG_arg_variable.
+    /// @param Scope       Variable scope.
+    /// @param Name        Variable name.
+    /// @param File        File where this variable is defined.
+    /// @param LineNo      Line number.
+    /// @param Ty          Variable Type
+    /// @param AlwaysPreserve Boolean. Set to true if debug info for this
+    ///                       variable should be preserved in optimized build.
+    /// @param Flags          Flags, e.g. artificial variable.
+    DIVariable CreateLocalVariable(unsigned Tag, DIDescriptor Scope,
+                                   StringRef Name,
+                                   DIFile File, unsigned LineNo,
+                                   DIType Ty, bool AlwaysPreserve = false,
+                                   unsigned Flags = 0);
+
+
     /// CreateComplexVariable - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.
     /// @param Tag         Dwarf TAG. Usually DW_TAG_auto_variable or

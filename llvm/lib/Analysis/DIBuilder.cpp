@@ -27,6 +27,7 @@ static Constant *GetTagConstant(LLVMContext &VMContext, unsigned Tag) {
          "Tag too large for debug encoding!");
   return ConstantInt::get(Type::getInt32Ty(VMContext), Tag | LLVMDebugVersion);
 }
+
 DIBuilder::DIBuilder(Module &m)
   : M(m), VMContext(M.getContext()), TheCU(0), DeclareFn(0), ValueFn(0) {}
 
@@ -366,6 +367,38 @@ CreateStaticVariable(DIDescriptor Context, StringRef Name,
   NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.gv");
   NMD->addOperand(Node);
   return DIGlobalVariable(Node);
+}
+
+/// CreateVariable - Create a new descriptor for the specified variable.
+DIVariable DIBuilder::CreateLocalVariable(unsigned Tag, DIDescriptor Scope,
+                                          StringRef Name, DIFile File,
+                                          unsigned LineNo, DIType Ty, 
+                                          bool AlwaysPreserve, unsigned Flags) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, Tag),
+    Scope,
+    MDString::get(VMContext, Name),
+    File,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
+    Ty,
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags)
+  };
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], array_lengthof(Elts));
+  if (AlwaysPreserve) {
+    // The optimizer may remove local variable. If there is an interest
+    // to preserve variable info in such situation then stash it in a
+    // named mdnode.
+    DISubprogram Fn(getDISubprogram(Scope));
+    StringRef FName = "fn";
+    if (Fn.getFunction())
+      FName = Fn.getFunction()->getName();
+    char One = '\1';
+    if (FName.startswith(StringRef(&One, 1)))
+      FName = FName.substr(1);
+    NamedMDNode *FnLocals = getOrInsertFnSpecificMDNode(M, FName);
+    FnLocals->addOperand(Node);
+  }
+  return DIVariable(Node);
 }
 
 /// CreateComplexVariable - Create a new descriptor for the specified variable
