@@ -315,7 +315,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
         
         if (log)
         {
-            log->Printf("-- Materializing for execution --");
+            log->Printf("-- [ClangUserExpression::PrepareToExecuteJITExpression] Materializing for execution --");
             
             log->Printf("  Function address  : 0x%llx", (uint64_t)m_jit_addr);
             
@@ -377,7 +377,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
     
     if (log)
     {
-        log->Printf("-- Dematerializing after execution --");
+        log->Printf("-- [ClangUserExpression::FinalizeJITExecution] Dematerializing after execution --");
     
         StreamString args;
         
@@ -442,14 +442,14 @@ ClangUserExpression::Execute (Stream &error_stream,
         uint32_t single_thread_timeout_usec = 10000000;
         
         if (log)
-            log->Printf("-- Execution of expression begins --");
+            log->Printf("-- [ClangUserExpression::Execute] Execution of expression begins --");
         
         Process::ExecutionResults execution_result = 
            exe_ctx.process->RunThreadPlan (exe_ctx, call_plan_sp, stop_others, try_all_threads, discard_on_error,
                                            single_thread_timeout_usec, error_stream);
         
         if (log)
-            log->Printf("-- Execution of expression completed --");
+            log->Printf("-- [ClangUserExpression::Execute] Execution of expression completed --");
 
         if (execution_result == Process::eExecutionInterrupted)
         {
@@ -494,6 +494,8 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp)
 {
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
     Error error;
     Process::ExecutionResults execution_results = Process::eExecutionSetupError;
     
@@ -507,6 +509,9 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     
     if (!exe_ctx.process->GetDynamicCheckers())
     {
+        if (log)
+            log->Printf("== [ClangUserExpression::Evaluate] Installing dynamic checkers ==");
+        
         DynamicCheckerFunctions *dynamic_checkers = new DynamicCheckerFunctions();
         
         StreamString install_errors;
@@ -523,11 +528,17 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
         }
             
         exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
+        
+        if (log)
+            log->Printf("== [ClangUserExpression::Evaluate] Finished installing dynamic checkers ==");
     }
     
     ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix));
 
     StreamString error_stream;
+    
+    if (log)
+        log->Printf("== [ClangUserExpression::Evaluate] Parsing expression %s ==", expr_cstr);
     
     if (!user_expression_sp->Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL)))
     {
@@ -541,6 +552,9 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
         ClangExpressionVariable *expr_result = NULL;
 
         error_stream.GetString().clear();
+        
+        if (log)
+            log->Printf("== [ClangUserExpression::Evaluate] Executing expression ==");
 
         execution_results = user_expression_sp->Execute (error_stream, 
                                                          exe_ctx, 
@@ -549,6 +563,9 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                                          expr_result);
         if (execution_results != Process::eExecutionCompleted)
         {
+            if (log)
+                log->Printf("== [ClangUserExpression::Evaluate] Execution completed abnormally ==");
+            
             if (error_stream.GetString().empty())
                 error.SetErrorString ("expression failed to execute, unknown error");
             else
@@ -564,9 +581,15 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
             if (expr_result)
             {
                 result_valobj_sp = expr_result->GetExpressionResult (&exe_ctx);
+                
+                if (log)
+                    log->Printf("== [ClangUserExpression::Evaluate] Execution completed normally with result %s ==", result_valobj_sp->GetValueAsCString(exe_ctx.GetBestExecutionContextScope()));
             }
             else
             {
+                if (log)
+                    log->Printf("== [ClangUserExpression::Evaluate] Execution completed normally with no result ==");
+                
                 error.SetErrorString ("Expression did not return a result");
             }
         }

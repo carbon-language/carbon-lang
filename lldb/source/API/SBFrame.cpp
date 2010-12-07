@@ -561,6 +561,8 @@ lldb::SBValue
 SBFrame::EvaluateExpression (const char *expr)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    LogSP expr_log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     lldb::SBValue expr_result;
     if (log)
@@ -579,6 +581,9 @@ SBFrame::EvaluateExpression (const char *expr)
         
         ClangUserExpression::Evaluate (exe_ctx, discard_on_error, expr, prefix, *expr_result);
     }
+    
+    if (expr_log)
+        expr_log->Printf("** [SBFrame::EvaluateExpression] Expression result is %s, summary %s **", expr_result.GetValue(*this), expr_result.GetSummary(*this));
     
     if (log)
         log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p)", m_opaque_sp.get(), expr, expr_result.get());
