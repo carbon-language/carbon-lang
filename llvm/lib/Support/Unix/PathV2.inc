@@ -395,9 +395,10 @@ rety_open_create:
    // Make the path absolute.
   char real_path_buff[PATH_MAX + 1];
   if (realpath(RandomPath.c_str(), real_path_buff) == NULL) {
+    int error = errno;
     ::close(RandomFD);
     ::unlink(RandomPath.c_str());
-    return error_code(errno, system_category());
+    return error_code(error, system_category());
   }
 
   result_path.clear();
