@@ -197,7 +197,7 @@ public:
   }
 
   unsigned getReg() const {
-    assert(Kind == Register || Kind == CCOut && "Invalid access!");
+    assert((Kind == Register || Kind == CCOut) && "Invalid access!");
     return Reg.RegNum;
   }
 
