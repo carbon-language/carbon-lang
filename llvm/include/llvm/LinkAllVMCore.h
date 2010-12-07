@@ -22,7 +22,6 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Support/Alarm.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/Mutex.h"
