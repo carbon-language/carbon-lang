@@ -926,8 +926,9 @@ def tCMPzi8 : T1pI<(outs), (ins tGPR:$Rn, i32imm:$imm8), IIC_iCMPi,
               T1General<{1,0,1,?,?}> {
   // A8.6.35
   bits<3> Rn;
+  bits<8> imm8;
   let Inst{10-8} = Rn;
-  let Inst{7-0}  = 0x00;
+  let Inst{7-0}  = imm8;
 }
 
 // CMP register
