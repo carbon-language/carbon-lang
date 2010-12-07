@@ -603,8 +603,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   case OpMullLane:
     s += Extend(proto, typestr, "__a") + " * " +
-      Extend(proto, typestr,
-             SplatLane(nElts, "__b", "__c")) + ";";
+      Extend(proto, typestr, SplatLane(nElts, "__b", "__c")) + ";";
     break;
   case OpMull:
     s += Extend(proto, typestr, "__a") + " * " +
@@ -619,6 +618,18 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpMla:
     s += "__a + (__b * __c);";
     break;
+  case OpMlalN:
+    s += "__a + (" + Extend(proto, typestr, "__b") + " * " +
+      Extend(proto, typestr, Duplicate(nElts, typestr, "__c")) + ");";
+    break;
+  case OpMlalLane:
+    s += "__a + (" + Extend(proto, typestr, "__b") + " * " +
+      Extend(proto, typestr, SplatLane(nElts, "__c", "__d")) + ");";
+    break;
+  case OpMlal:
+    s += "__a + (" + Extend(proto, typestr, "__b") + " * " +
+      Extend(proto, typestr, "__c") + ");";
+    break;
   case OpMlsN:
     s += "__a - (__b * " + Duplicate(nElts, typestr, "__c") + ");";
     break;
@@ -627,6 +638,18 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     break;
   case OpMls:
     s += "__a - (__b * __c);";
+    break;
+  case OpMlslN:
+    s += "__a - (" + Extend(proto, typestr, "__b") + " * " +
+      Extend(proto, typestr, Duplicate(nElts, typestr, "__c")) + ");";
+    break;
+  case OpMlslLane:
+    s += "__a - (" + Extend(proto, typestr, "__b") + " * " +
+      Extend(proto, typestr, SplatLane(nElts, "__c", "__d")) + ");";
+    break;
+  case OpMlsl:
+    s += "__a - (" + Extend(proto, typestr, "__b") + " * " +
+      Extend(proto, typestr, "__c") + ");";
     break;
   case OpEq:
     s += "(" + ts + ")(__a == __b);";

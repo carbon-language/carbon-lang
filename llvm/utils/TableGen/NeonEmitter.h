@@ -28,15 +28,21 @@ enum OpKind {
   OpMul,
   OpMull,
   OpMla,
+  OpMlal,
   OpMls,
+  OpMlsl,
   OpMulN,
   OpMullN,
   OpMlaN,
   OpMlsN,
+  OpMlalN,
+  OpMlslN,
   OpMulLane,
   OpMullLane,
   OpMlaLane,
   OpMlsLane,
+  OpMlalLane,
+  OpMlslLane,
   OpEq,
   OpGe,
   OpLe,
@@ -85,15 +91,21 @@ namespace llvm {
       OpMap["OP_MUL"]   = OpMul;
       OpMap["OP_MULL"]  = OpMull;
       OpMap["OP_MLA"]   = OpMla;
+      OpMap["OP_MLAL"]  = OpMlal;
       OpMap["OP_MLS"]   = OpMls;
+      OpMap["OP_MLSL"]  = OpMlsl;
       OpMap["OP_MUL_N"] = OpMulN;
       OpMap["OP_MULL_N"]= OpMullN;
       OpMap["OP_MLA_N"] = OpMlaN;
       OpMap["OP_MLS_N"] = OpMlsN;
+      OpMap["OP_MLAL_N"] = OpMlalN;
+      OpMap["OP_MLSL_N"] = OpMlslN;
       OpMap["OP_MUL_LN"]= OpMulLane;
       OpMap["OP_MULL_LN"] = OpMullLane;
       OpMap["OP_MLA_LN"]= OpMlaLane;
       OpMap["OP_MLS_LN"]= OpMlsLane;
+      OpMap["OP_MLAL_LN"] = OpMlalLane;
+      OpMap["OP_MLSL_LN"] = OpMlslLane;
       OpMap["OP_EQ"]    = OpEq;
       OpMap["OP_GE"]    = OpGe;
       OpMap["OP_LE"]    = OpLe;
