@@ -667,9 +667,9 @@ getAddrModeThumbSPOpValue(const MCInst &MI, unsigned OpIdx,
                           SmallVectorImpl<MCFixup> &Fixups) const {
   // [SP, #imm]
   //   {7-0} = imm8
-  const MCOperand &MO = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
-  assert (MO.getReg() == ARM::SP && "Unexpected base register!");
+  assert (MI.getOperand(OpIdx).getReg() == ARM::SP &&
+          "Unexpected base register!");
   // The immediate is already shifted for the implicit zeroes, so no change
   // here.
   return MO1.getImm() & 0xff;
