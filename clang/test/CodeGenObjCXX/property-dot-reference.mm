@@ -57,3 +57,6 @@ void test2() {
 // CHECK: call double bitcast
 // CHECK: call i32 bitcast
 // CHECK: call double bitcast
+
+// PR8751
+int test3(Test2 *obj) { return obj.myProperty; }
