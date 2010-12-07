@@ -749,7 +749,7 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
         // stores.  If the target supports neither 32- nor 64-bits, this
         // xform is certainly not worth it.
         const APInt &IntVal =CFP->getValueAPF().bitcastToAPInt();
-        SDValue Lo = DAG.getConstant(APInt(IntVal).trunc(32), MVT::i32);
+        SDValue Lo = DAG.getConstant(IntVal.trunc(32), MVT::i32);
         SDValue Hi = DAG.getConstant(IntVal.lshr(32).trunc(32), MVT::i32);
         if (TLI.isBigEndian()) std::swap(Lo, Hi);
 

@@ -442,9 +442,7 @@ ConstantRange ConstantRange::zeroExtend(uint32_t DstTySize) const {
     // Change into [0, 1 << src bit width)
     return ConstantRange(APInt(DstTySize,0), APInt(DstTySize,1).shl(SrcTySize));
 
-  APInt L = Lower; L.zext(DstTySize);
-  APInt U = Upper; U.zext(DstTySize);
-  return ConstantRange(L, U);
+  return ConstantRange(Lower.zext(DstTySize), Upper.zext(DstTySize));
 }
 
 /// signExtend - Return a new range in the specified integer type, which must
@@ -461,9 +459,7 @@ ConstantRange ConstantRange::signExtend(uint32_t DstTySize) const {
                          APInt::getLowBitsSet(DstTySize, SrcTySize-1) + 1);
   }
 
-  APInt L = Lower; L.sext(DstTySize);
-  APInt U = Upper; U.sext(DstTySize);
-  return ConstantRange(L, U);
+  return ConstantRange(Lower.sext(DstTySize), Upper.sext(DstTySize));
 }
 
 /// truncate - Return a new range in the specified integer type, which must be
@@ -477,9 +473,7 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
   if (isFullSet() || getSetSize().ugt(Size))
     return ConstantRange(DstTySize, /*isFullSet=*/true);
 
-  APInt L = Lower; L.trunc(DstTySize);
-  APInt U = Upper; U.trunc(DstTySize);
-  return ConstantRange(L, U);
+  return ConstantRange(Lower.trunc(DstTySize), Upper.trunc(DstTySize));
 }
 
 /// zextOrTrunc - make this range have the bit width given by \p DstTySize. The

@@ -342,9 +342,7 @@ public:
 
     if (isSingleWord())
       return isUIntN(N, VAL);
-    APInt Tmp(N, getNumWords(), pVal);
-    Tmp.zext(getBitWidth());
-    return Tmp == (*this);
+    return APInt(N, getNumWords(), pVal).zext(getBitWidth()) == (*this);
   }
 
   /// @brief Check if this APInt has an N-bits signed integer value.
@@ -1013,30 +1011,30 @@ public:
   /// Truncate the APInt to a specified width. It is an error to specify a width
   /// that is greater than or equal to the current width.
   /// @brief Truncate to new width.
-  APInt &trunc(unsigned width);
+  APInt trunc(unsigned width) const;
 
   /// This operation sign extends the APInt to a new width. If the high order
   /// bit is set, the fill on the left will be done with 1 bits, otherwise zero.
   /// It is an error to specify a width that is less than or equal to the
   /// current width.
   /// @brief Sign extend to a new width.
-  APInt &sext(unsigned width);
+  APInt sext(unsigned width) const;
 
   /// This operation zero extends the APInt to a new width. The high order bits
   /// are filled with 0 bits.  It is an error to specify a width that is less
   /// than or equal to the current width.
   /// @brief Zero extend to a new width.
-  APInt &zext(unsigned width);
+  APInt zext(unsigned width) const;
 
   /// Make this APInt have the bit width given by \p width. The value is sign
   /// extended, truncated, or left alone to make it that width.
   /// @brief Sign extend or truncate to width
-  APInt &sextOrTrunc(unsigned width);
+  APInt sextOrTrunc(unsigned width) const;
 
   /// Make this APInt have the bit width given by \p width. The value is zero
   /// extended, truncated, or left alone to make it that width.
   /// @brief Zero extend or truncate to width
-  APInt &zextOrTrunc(unsigned width);
+  APInt zextOrTrunc(unsigned width) const;
 
   /// @}
   /// @name Bit Manipulation Operators

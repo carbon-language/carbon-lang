@@ -255,14 +255,13 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     else
       SrcBitWidth = SrcTy->getScalarSizeInBits();
     
-    APInt MaskIn(Mask);
-    MaskIn.zextOrTrunc(SrcBitWidth);
-    KnownZero.zextOrTrunc(SrcBitWidth);
-    KnownOne.zextOrTrunc(SrcBitWidth);
+    APInt MaskIn = Mask.zextOrTrunc(SrcBitWidth);
+    KnownZero = KnownZero.zextOrTrunc(SrcBitWidth);
+    KnownOne = KnownOne.zextOrTrunc(SrcBitWidth);
     ComputeMaskedBits(I->getOperand(0), MaskIn, KnownZero, KnownOne, TD,
                       Depth+1);
-    KnownZero.zextOrTrunc(BitWidth);
-    KnownOne.zextOrTrunc(BitWidth);
+    KnownZero = KnownZero.zextOrTrunc(BitWidth);
+    KnownOne = KnownOne.zextOrTrunc(BitWidth);
     // Any top bits are known to be zero.
     if (BitWidth > SrcBitWidth)
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth);
@@ -284,15 +283,14 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     // Compute the bits in the result that are not present in the input.
     unsigned SrcBitWidth = I->getOperand(0)->getType()->getScalarSizeInBits();
       
-    APInt MaskIn(Mask); 
-    MaskIn.trunc(SrcBitWidth);
-    KnownZero.trunc(SrcBitWidth);
-    KnownOne.trunc(SrcBitWidth);
+    APInt MaskIn = Mask.trunc(SrcBitWidth);
+    KnownZero = KnownZero.trunc(SrcBitWidth);
+    KnownOne = KnownOne.trunc(SrcBitWidth);
     ComputeMaskedBits(I->getOperand(0), MaskIn, KnownZero, KnownOne, TD,
                       Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-    KnownZero.zext(BitWidth);
-    KnownOne.zext(BitWidth);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
 
     // If the sign bit of the input is known set or clear, then we know the
     // top bits of the result.

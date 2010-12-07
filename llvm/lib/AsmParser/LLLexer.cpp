@@ -682,7 +682,7 @@ lltok::Kind LLLexer::LexIdentifier() {
     APInt Tmp(bits, StringRef(TokStart+3, len), 16);
     uint32_t activeBits = Tmp.getActiveBits();
     if (activeBits > 0 && activeBits < bits)
-      Tmp.trunc(activeBits);
+      Tmp = Tmp.trunc(activeBits);
     APSIntVal = APSInt(Tmp, TokStart[0] == 'u');
     return lltok::APSInt;
   }
@@ -809,12 +809,12 @@ lltok::Kind LLLexer::LexDigitOrNegative() {
     if (TokStart[0] == '-') {
       uint32_t minBits = Tmp.getMinSignedBits();
       if (minBits > 0 && minBits < numBits)
-        Tmp.trunc(minBits);
+        Tmp = Tmp.trunc(minBits);
       APSIntVal = APSInt(Tmp, false);
     } else {
       uint32_t activeBits = Tmp.getActiveBits();
       if (activeBits > 0 && activeBits < numBits)
-        Tmp.trunc(activeBits);
+        Tmp = Tmp.trunc(activeBits);
       APSIntVal = APSInt(Tmp, true);
     }
     return lltok::APSInt;

@@ -29,11 +29,11 @@ static bool MultiplyOverflows(ConstantInt *C1, ConstantInt *C2, bool sign) {
   uint32_t W = C1->getBitWidth();
   APInt LHSExt = C1->getValue(), RHSExt = C2->getValue();
   if (sign) {
-    LHSExt.sext(W * 2);
-    RHSExt.sext(W * 2);
+    LHSExt = LHSExt.sext(W * 2);
+    RHSExt = RHSExt.sext(W * 2);
   } else {
-    LHSExt.zext(W * 2);
-    RHSExt.zext(W * 2);
+    LHSExt = LHSExt.zext(W * 2);
+    RHSExt = RHSExt.zext(W * 2);
   }
   
   APInt MulExt = LHSExt * RHSExt;

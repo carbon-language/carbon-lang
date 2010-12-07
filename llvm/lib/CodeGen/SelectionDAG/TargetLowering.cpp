@@ -1520,8 +1520,8 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     if ((NewBits & NewMask) == 0)
       return TLO.CombineTo(Op, Op.getOperand(0));
 
-    APInt InSignBit = APInt::getSignBit(EVT.getScalarType().getSizeInBits());
-    InSignBit.zext(BitWidth);
+    APInt InSignBit =
+      APInt::getSignBit(EVT.getScalarType().getSizeInBits()).zext(BitWidth);
     APInt InputDemandedBits =
       APInt::getLowBitsSet(BitWidth,
                            EVT.getScalarType().getSizeInBits()) &
@@ -1556,8 +1556,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   case ISD::ZERO_EXTEND: {
     unsigned OperandBitWidth =
       Op.getOperand(0).getValueType().getScalarType().getSizeInBits();
-    APInt InMask = NewMask;
-    InMask.trunc(OperandBitWidth);
+    APInt InMask = NewMask.trunc(OperandBitWidth);
 
     // If none of the top bits are demanded, convert this into an any_extend.
     APInt NewBits =
@@ -1571,8 +1570,8 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
                              KnownZero, KnownOne, TLO, Depth+1))
       return true;
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
-    KnownZero.zext(BitWidth);
-    KnownOne.zext(BitWidth);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
     KnownZero |= NewBits;
     break;
   }
@@ -1593,13 +1592,13 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // bit is demanded.
     APInt InDemandedBits = InMask & NewMask;
     InDemandedBits |= InSignBit;
-    InDemandedBits.trunc(InBits);
+    InDemandedBits = InDemandedBits.trunc(InBits);
 
     if (SimplifyDemandedBits(Op.getOperand(0), InDemandedBits, KnownZero,
                              KnownOne, TLO, Depth+1))
       return true;
-    KnownZero.zext(BitWidth);
-    KnownOne.zext(BitWidth);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
 
     // If the sign bit is known zero, convert this to a zero extend.
     if (KnownZero.intersects(InSignBit))
@@ -1620,14 +1619,13 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   case ISD::ANY_EXTEND: {
     unsigned OperandBitWidth =
       Op.getOperand(0).getValueType().getScalarType().getSizeInBits();
-    APInt InMask = NewMask;
-    InMask.trunc(OperandBitWidth);
+    APInt InMask = NewMask.trunc(OperandBitWidth);
     if (SimplifyDemandedBits(Op.getOperand(0), InMask,
                              KnownZero, KnownOne, TLO, Depth+1))
       return true;
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
-    KnownZero.zext(BitWidth);
-    KnownOne.zext(BitWidth);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
     break;
   }
   case ISD::TRUNCATE: {
@@ -1635,13 +1633,12 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // zero/one bits live out.
     unsigned OperandBitWidth =
       Op.getOperand(0).getValueType().getScalarType().getSizeInBits();
-    APInt TruncMask = NewMask;
-    TruncMask.zext(OperandBitWidth);
+    APInt TruncMask = NewMask.zext(OperandBitWidth);
     if (SimplifyDemandedBits(Op.getOperand(0), TruncMask,
                              KnownZero, KnownOne, TLO, Depth+1))
       return true;
-    KnownZero.trunc(BitWidth);
-    KnownOne.trunc(BitWidth);
+    KnownZero = KnownZero.trunc(BitWidth);
+    KnownOne = KnownOne.trunc(BitWidth);
 
     // If the input is only used by this truncate, see if we can shrink it based
     // on the known demanded bits.
@@ -1662,8 +1659,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
           break;
         APInt HighBits = APInt::getHighBitsSet(OperandBitWidth,
                                                OperandBitWidth - BitWidth);
-        HighBits = HighBits.lshr(ShAmt->getZExtValue());
-        HighBits.trunc(BitWidth);
+        HighBits = HighBits.lshr(ShAmt->getZExtValue()).trunc(BitWidth);
 
         if (ShAmt->getZExtValue() < BitWidth && !(HighBits & NewMask)) {
           // None of the shifted in bits are needed.  Add a truncate of the
@@ -1969,7 +1965,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
             (isOperationLegal(ISD::SETCC, newVT) &&
               getCondCodeAction(Cond, newVT)==Legal))
           return DAG.getSetCC(dl, VT, N0.getOperand(0),
-                              DAG.getConstant(APInt(C1).trunc(InSize), newVT),
+                              DAG.getConstant(C1.trunc(InSize), newVT),
                               Cond);
         break;
       }

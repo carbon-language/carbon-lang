@@ -206,14 +206,14 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
     Value *CastOp = cast<CastInst>(V)->getOperand(0);
     unsigned OldWidth = Scale.getBitWidth();
     unsigned SmallWidth = CastOp->getType()->getPrimitiveSizeInBits();
-    Scale.trunc(SmallWidth);
-    Offset.trunc(SmallWidth);
+    Scale = Scale.trunc(SmallWidth);
+    Offset = Offset.trunc(SmallWidth);
     Extension = isa<SExtInst>(V) ? EK_SignExt : EK_ZeroExt;
 
     Value *Result = GetLinearExpression(CastOp, Scale, Offset, Extension,
                                         TD, Depth+1);
-    Scale.zext(OldWidth);
-    Offset.zext(OldWidth);
+    Scale = Scale.zext(OldWidth);
+    Offset = Offset.zext(OldWidth);
     
     return Result;
   }

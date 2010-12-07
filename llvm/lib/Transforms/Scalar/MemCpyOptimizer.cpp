@@ -63,8 +63,8 @@ static Value *isBytewiseValue(Value *V) {
       while (Val.getBitWidth() != 8) {
         unsigned NextWidth = Val.getBitWidth()/2;
         Val2  = Val.lshr(NextWidth);
-        Val2.trunc(Val.getBitWidth()/2);
-        Val.trunc(Val.getBitWidth()/2);
+        Val2 = Val2.trunc(Val.getBitWidth()/2);
+        Val = Val.trunc(Val.getBitWidth()/2);
 
         // If the top/bottom halves aren't the same, reject it.
         if (Val != Val2)

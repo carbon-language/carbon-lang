@@ -610,10 +610,8 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
   APInt BasePtr(BitWidth, 0);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
     if (CE->getOpcode() == Instruction::IntToPtr)
-      if (ConstantInt *Base = dyn_cast<ConstantInt>(CE->getOperand(0))) {
-        BasePtr = Base->getValue();
-        BasePtr.zextOrTrunc(BitWidth);
-      }
+      if (ConstantInt *Base = dyn_cast<ConstantInt>(CE->getOperand(0)))
+        BasePtr = Base->getValue().zextOrTrunc(BitWidth);
   if (Ptr->isNullValue() || BasePtr != 0) {
     Constant *C = ConstantInt::get(Ptr->getContext(), Offset+BasePtr);
     return ConstantExpr::getIntToPtr(C, ResultTy);

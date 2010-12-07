@@ -202,7 +202,7 @@ static Constant *ExtractConstantBytes(Constant *C, unsigned ByteStart,
     APInt V = CI->getValue();
     if (ByteStart)
       V = V.lshr(ByteStart*8);
-    V.trunc(ByteSize*8);
+    V = V.trunc(ByteSize*8);
     return ConstantInt::get(CI->getContext(), V);
   }
   
@@ -647,25 +647,22 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
   case Instruction::ZExt:
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
-      APInt Result(CI->getValue());
-      Result.zext(BitWidth);
-      return ConstantInt::get(V->getContext(), Result);
+      return ConstantInt::get(V->getContext(),
+                              CI->getValue().zext(BitWidth));
     }
     return 0;
   case Instruction::SExt:
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
-      APInt Result(CI->getValue());
-      Result.sext(BitWidth);
-      return ConstantInt::get(V->getContext(), Result);
+      return ConstantInt::get(V->getContext(),
+                              CI->getValue().sext(BitWidth));
     }
     return 0;
   case Instruction::Trunc: {
     uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      APInt Result(CI->getValue());
-      Result.trunc(DestBitWidth);
-      return ConstantInt::get(V->getContext(), Result);
+      return ConstantInt::get(V->getContext(),
+                              CI->getValue().trunc(DestBitWidth));
     }
     
     // The input must be a constantexpr.  See if we can simplify this based on

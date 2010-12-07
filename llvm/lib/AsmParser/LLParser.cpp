@@ -2575,7 +2575,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
   case ValID::t_APSInt:
     if (!Ty->isIntegerTy())
       return Error(ID.Loc, "integer constant must have integer type");
-    ID.APSIntVal.extOrTrunc(Ty->getPrimitiveSizeInBits());
+    ID.APSIntVal = ID.APSIntVal.extOrTrunc(Ty->getPrimitiveSizeInBits());
     V = ConstantInt::get(Context, ID.APSIntVal);
     return false;
   case ValID::t_APFloat:

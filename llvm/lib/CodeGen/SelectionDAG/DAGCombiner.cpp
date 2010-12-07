@@ -2133,7 +2133,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::ANY_EXTEND) {
     SDValue N0Op0 = N0.getOperand(0);
     APInt Mask = ~N1C->getAPIntValue();
-    Mask.trunc(N0Op0.getValueSizeInBits());
+    Mask = Mask.trunc(N0Op0.getValueSizeInBits());
     if (DAG.MaskedValueIsZero(N0Op0, Mask)) {
       SDValue Zext = DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(),
                                  N0.getValueType(), N0Op0);
@@ -2866,7 +2866,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       EVT TruncVT = N1.getValueType();
       SDValue N100 = N1.getOperand(0).getOperand(0);
       APInt TruncC = N101C->getAPIntValue();
-      TruncC.trunc(TruncVT.getSizeInBits());
+      TruncC = TruncC.trunc(TruncVT.getSizeInBits());
       return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0,
                          DAG.getNode(ISD::AND, N->getDebugLoc(), TruncVT,
                                      DAG.getNode(ISD::TRUNCATE,
@@ -3022,7 +3022,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
       EVT TruncVT = N1.getValueType();
       SDValue N100 = N1.getOperand(0).getOperand(0);
       APInt TruncC = N101C->getAPIntValue();
-      TruncC.trunc(TruncVT.getScalarType().getSizeInBits());
+      TruncC = TruncC.trunc(TruncVT.getScalarType().getSizeInBits());
       return DAG.getNode(ISD::SRA, N->getDebugLoc(), VT, N0,
                          DAG.getNode(ISD::AND, N->getDebugLoc(),
                                      TruncVT,
@@ -3163,7 +3163,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
       EVT TruncVT = N1.getValueType();
       SDValue N100 = N1.getOperand(0).getOperand(0);
       APInt TruncC = N101C->getAPIntValue();
-      TruncC.trunc(TruncVT.getSizeInBits());
+      TruncC = TruncC.trunc(TruncVT.getSizeInBits());
       return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0,
                          DAG.getNode(ISD::AND, N->getDebugLoc(),
                                      TruncVT,
@@ -3706,7 +3706,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       X = DAG.getNode(ISD::TRUNCATE, X.getDebugLoc(), VT, X);
     }
     APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
-    Mask.zext(VT.getSizeInBits());
+    Mask = Mask.zext(VT.getSizeInBits());
     return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
                        X, DAG.getConstant(Mask, VT));
   }
@@ -3907,7 +3907,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
       X = DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, X);
     }
     APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
-    Mask.zext(VT.getSizeInBits());
+    Mask = Mask.zext(VT.getSizeInBits());
     return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
                        X, DAG.getConstant(Mask, VT));
   }
@@ -4614,7 +4614,7 @@ ConstantFoldBITCASTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
         if (Op.getOpcode() == ISD::UNDEF) continue;
         EltIsUndef = false;
 
-        NewBits |= APInt(cast<ConstantSDNode>(Op)->getAPIntValue()).
+        NewBits |= cast<ConstantSDNode>(Op)->getAPIntValue().
                    zextOrTrunc(SrcBitSize).zext(DstBitSize);
       }
 
@@ -4644,13 +4644,13 @@ ConstantFoldBITCASTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
       continue;
     }
 
-    APInt OpVal = APInt(cast<ConstantSDNode>(BV->getOperand(i))->
-                        getAPIntValue()).zextOrTrunc(SrcBitSize);
+    APInt OpVal = cast<ConstantSDNode>(BV->getOperand(i))->
+                  getAPIntValue().zextOrTrunc(SrcBitSize);
 
     for (unsigned j = 0; j != NumOutputsPerInput; ++j) {
-      APInt ThisVal = APInt(OpVal).trunc(DstBitSize);
+      APInt ThisVal = OpVal.trunc(DstBitSize);
       Ops.push_back(DAG.getConstant(ThisVal, DstEltVT));
-      if (isS2V && i == 0 && j == 0 && APInt(ThisVal).zext(SrcBitSize) == OpVal)
+      if (isS2V && i == 0 && j == 0 && ThisVal.zext(SrcBitSize) == OpVal)
         // Simply turn this into a SCALAR_TO_VECTOR of the new type.
         return DAG.getNode(ISD::SCALAR_TO_VECTOR, BV->getDebugLoc(), VT,
                            Ops[0]);

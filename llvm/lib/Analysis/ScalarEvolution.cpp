@@ -3367,8 +3367,8 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
               // If C is a single bit, it may be in the sign-bit position
               // before the zero-extend. In this case, represent the xor
               // using an add, which is equivalent, and re-apply the zext.
-              APInt Trunc = APInt(CI->getValue()).trunc(Z0TySize);
-              if (APInt(Trunc).zext(getTypeSizeInBits(UTy)) == CI->getValue() &&
+              APInt Trunc = CI->getValue().trunc(Z0TySize);
+              if (Trunc.zext(getTypeSizeInBits(UTy)) == CI->getValue() &&
                   Trunc.isSignBit())
                 return getZeroExtendExpr(getAddExpr(Z0, getConstant(Trunc)),
                                          UTy);

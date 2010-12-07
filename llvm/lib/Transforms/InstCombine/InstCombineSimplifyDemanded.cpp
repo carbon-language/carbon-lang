@@ -34,7 +34,7 @@ static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
   if (!OpC) return false;
 
   // If there are no bits set that aren't demanded, nothing to do.
-  Demanded.zextOrTrunc(OpC->getValue().getBitWidth());
+  Demanded = Demanded.zextOrTrunc(OpC->getValue().getBitWidth());
   if ((~Demanded & OpC->getValue()) == 0)
     return false;
 
@@ -388,15 +388,15 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     break;
   case Instruction::Trunc: {
     unsigned truncBf = I->getOperand(0)->getType()->getScalarSizeInBits();
-    DemandedMask.zext(truncBf);
-    KnownZero.zext(truncBf);
-    KnownOne.zext(truncBf);
+    DemandedMask = DemandedMask.zext(truncBf);
+    KnownZero = KnownZero.zext(truncBf);
+    KnownOne = KnownOne.zext(truncBf);
     if (SimplifyDemandedBits(I->getOperandUse(0), DemandedMask, 
                              KnownZero, KnownOne, Depth+1))
       return I;
-    DemandedMask.trunc(BitWidth);
-    KnownZero.trunc(BitWidth);
-    KnownOne.trunc(BitWidth);
+    DemandedMask = DemandedMask.trunc(BitWidth);
+    KnownZero = KnownZero.trunc(BitWidth);
+    KnownOne = KnownOne.trunc(BitWidth);
     assert(!(KnownZero & KnownOne) && "Bits known to be one AND zero?"); 
     break;
   }
@@ -426,15 +426,15 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     // Compute the bits in the result that are not present in the input.
     unsigned SrcBitWidth =I->getOperand(0)->getType()->getScalarSizeInBits();
     
-    DemandedMask.trunc(SrcBitWidth);
-    KnownZero.trunc(SrcBitWidth);
-    KnownOne.trunc(SrcBitWidth);
+    DemandedMask = DemandedMask.trunc(SrcBitWidth);
+    KnownZero = KnownZero.trunc(SrcBitWidth);
+    KnownOne = KnownOne.trunc(SrcBitWidth);
     if (SimplifyDemandedBits(I->getOperandUse(0), DemandedMask,
                              KnownZero, KnownOne, Depth+1))
       return I;
-    DemandedMask.zext(BitWidth);
-    KnownZero.zext(BitWidth);
-    KnownOne.zext(BitWidth);
+    DemandedMask = DemandedMask.zext(BitWidth);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
     assert(!(KnownZero & KnownOne) && "Bits known to be one AND zero?"); 
     // The top bits are known to be zero.
     KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - SrcBitWidth);
@@ -453,15 +453,15 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     if ((NewBits & DemandedMask) != 0)
       InputDemandedBits.setBit(SrcBitWidth-1);
       
-    InputDemandedBits.trunc(SrcBitWidth);
-    KnownZero.trunc(SrcBitWidth);
-    KnownOne.trunc(SrcBitWidth);
+    InputDemandedBits = InputDemandedBits.trunc(SrcBitWidth);
+    KnownZero = KnownZero.trunc(SrcBitWidth);
+    KnownOne = KnownOne.trunc(SrcBitWidth);
     if (SimplifyDemandedBits(I->getOperandUse(0), InputDemandedBits,
                              KnownZero, KnownOne, Depth+1))
       return I;
-    InputDemandedBits.zext(BitWidth);
-    KnownZero.zext(BitWidth);
-    KnownOne.zext(BitWidth);
+    InputDemandedBits = InputDemandedBits.zext(BitWidth);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
     assert(!(KnownZero & KnownOne) && "Bits known to be one AND zero?"); 
       
     // If the sign bit of the input is known set or clear, then we know the

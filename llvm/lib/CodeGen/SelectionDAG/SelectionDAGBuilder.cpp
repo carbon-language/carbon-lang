@@ -1866,9 +1866,8 @@ static inline bool areJTsAllowed(const TargetLowering &TLI) {
 }
 
 static APInt ComputeRange(const APInt &First, const APInt &Last) {
-  APInt LastExt(Last), FirstExt(First);
   uint32_t BitWidth = std::max(Last.getBitWidth(), First.getBitWidth()) + 1;
-  LastExt.sext(BitWidth); FirstExt.sext(BitWidth);
+  APInt LastExt = Last.sext(BitWidth), FirstExt = First.sext(BitWidth);
   return (LastExt - FirstExt + 1ULL);
 }
 

@@ -68,20 +68,22 @@ public:
   }
   using APInt::toString;
 
-  APSInt& extend(uint32_t width) {
-    if (IsUnsigned)
-      zext(width);
-    else
-      sext(width);
-    return *this;
+  APSInt trunc(uint32_t width) const {
+    return APSInt(APInt::trunc(width), IsUnsigned);
   }
 
-  APSInt& extOrTrunc(uint32_t width) {
+  APSInt extend(uint32_t width) const {
+    if (IsUnsigned)
+      return APSInt(zext(width), IsUnsigned);
+    else
+      return APSInt(sext(width), IsUnsigned);
+  }
+
+  APSInt extOrTrunc(uint32_t width) const {
       if (IsUnsigned)
-        zextOrTrunc(width);
+        return APSInt(zextOrTrunc(width), IsUnsigned);
       else
-        sextOrTrunc(width);
-      return *this;
+        return APSInt(sextOrTrunc(width), IsUnsigned);
   }
 
   const APSInt &operator%=(const APSInt &RHS) {

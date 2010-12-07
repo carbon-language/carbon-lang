@@ -4006,7 +4006,7 @@ static SDValue SkipExtension(SDNode *N, SelectionDAG &DAG) {
   for (unsigned i = 0; i != NumElts; ++i) {
     ConstantSDNode *C = cast<ConstantSDNode>(N->getOperand(i));
     const APInt &CInt = C->getAPIntValue();
-    Ops.push_back(DAG.getConstant(APInt(CInt).trunc(EltSize), TruncVT));
+    Ops.push_back(DAG.getConstant(CInt.trunc(EltSize), TruncVT));
   }
   return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
                      MVT::getVectorVT(TruncVT, NumElts), Ops.data(), NumElts);

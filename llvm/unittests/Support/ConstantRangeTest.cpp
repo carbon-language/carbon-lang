@@ -171,8 +171,8 @@ TEST_F(ConstantRangeTest, Trunc) {
   ConstantRange TWrap = Wrap.truncate(10);
   EXPECT_TRUE(TFull.isFullSet());
   EXPECT_TRUE(TEmpty.isEmptySet());
-  EXPECT_EQ(TOne, ConstantRange(APInt(One.getLower()).trunc(10),
-                                APInt(One.getUpper()).trunc(10)));
+  EXPECT_EQ(TOne, ConstantRange(One.getLower().trunc(10),
+                                One.getUpper().trunc(10)));
   EXPECT_TRUE(TSome.isFullSet());
 }
 
@@ -184,10 +184,10 @@ TEST_F(ConstantRangeTest, ZExt) {
   ConstantRange ZWrap = Wrap.zeroExtend(20);
   EXPECT_EQ(ZFull, ConstantRange(APInt(20, 0), APInt(20, 0x10000)));
   EXPECT_TRUE(ZEmpty.isEmptySet());
-  EXPECT_EQ(ZOne, ConstantRange(APInt(One.getLower()).zext(20),
-                                APInt(One.getUpper()).zext(20)));
-  EXPECT_EQ(ZSome, ConstantRange(APInt(Some.getLower()).zext(20),
-                                 APInt(Some.getUpper()).zext(20)));
+  EXPECT_EQ(ZOne, ConstantRange(One.getLower().zext(20),
+                                One.getUpper().zext(20)));
+  EXPECT_EQ(ZSome, ConstantRange(Some.getLower().zext(20),
+                                 Some.getUpper().zext(20)));
   EXPECT_EQ(ZWrap, ConstantRange(APInt(20, 0), APInt(20, 0x10000)));
 }
 
@@ -200,10 +200,10 @@ TEST_F(ConstantRangeTest, SExt) {
   EXPECT_EQ(SFull, ConstantRange(APInt(20, (uint64_t)INT16_MIN, true),
                                  APInt(20, INT16_MAX + 1, true)));
   EXPECT_TRUE(SEmpty.isEmptySet());
-  EXPECT_EQ(SOne, ConstantRange(APInt(One.getLower()).sext(20),
-                                APInt(One.getUpper()).sext(20)));
-  EXPECT_EQ(SSome, ConstantRange(APInt(Some.getLower()).sext(20),
-                                 APInt(Some.getUpper()).sext(20)));
+  EXPECT_EQ(SOne, ConstantRange(One.getLower().sext(20),
+                                One.getUpper().sext(20)));
+  EXPECT_EQ(SSome, ConstantRange(Some.getLower().sext(20),
+                                 Some.getUpper().sext(20)));
   EXPECT_EQ(SWrap, ConstantRange(APInt(20, (uint64_t)INT16_MIN, true),
                                  APInt(20, INT16_MAX + 1, true)));
 

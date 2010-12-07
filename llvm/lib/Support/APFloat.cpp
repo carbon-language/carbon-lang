@@ -3310,7 +3310,7 @@ namespace {
     // Truncate the significand down to its active bit count, but
     // don't try to drop below 32.
     unsigned newPrecision = std::max(32U, significand.getActiveBits());
-    significand.trunc(newPrecision);
+    significand = significand.trunc(newPrecision);
   }
 
 
@@ -3415,7 +3415,7 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
     // Nothing to do.
   } else if (exp > 0) {
     // Just shift left.
-    significand.zext(semantics->precision + exp);
+    significand = significand.zext(semantics->precision + exp);
     significand <<= exp;
     exp = 0;
   } else { /* exp < 0 */
@@ -3434,7 +3434,7 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
 
     // Multiply significand by 5^e.
     //   N * 5^0101 == N * 5^(1*1) * 5^(0*2) * 5^(1*4) * 5^(0*8)
-    significand.zext(precision);
+    significand = significand.zext(precision);
     APInt five_to_the_i(precision, 5);
     while (true) {
       if (texp & 1) significand *= five_to_the_i;

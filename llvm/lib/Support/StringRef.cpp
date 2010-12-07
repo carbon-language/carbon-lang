@@ -371,7 +371,7 @@ bool StringRef::getAsInteger(unsigned Radix, APInt &Result) const {
   if (BitWidth < Result.getBitWidth())
     BitWidth = Result.getBitWidth(); // don't shrink the result
   else
-    Result.zext(BitWidth);
+    Result = Result.zext(BitWidth);
 
   APInt RadixAP, CharAP; // unused unless !IsPowerOf2Radix
   if (!IsPowerOf2Radix) {

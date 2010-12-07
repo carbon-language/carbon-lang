@@ -939,8 +939,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       // If all the high bits are known, we can do this xform.
       if ((KnownZero|KnownOne).countLeadingOnes() >= SrcBits-DstBits) {
         // Pull in the high bits from known-ones set.
-        APInt NewRHS(RHS->getValue());
-        NewRHS.zext(SrcBits);
+        APInt NewRHS = RHS->getValue().zext(SrcBits);
         NewRHS |= KnownOne;
         return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
                             ConstantInt::get(ICI.getContext(), NewRHS));
@@ -1022,10 +1021,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
              (AndCST->getValue().isNonNegative() && RHSV.isNonNegative()))) {
           uint32_t BitWidth = 
             cast<IntegerType>(Cast->getOperand(0)->getType())->getBitWidth();
-          APInt NewCST = AndCST->getValue();
-          NewCST.zext(BitWidth);
-          APInt NewCI = RHSV;
-          NewCI.zext(BitWidth);
+          APInt NewCST = AndCST->getValue().zext(BitWidth);
+          APInt NewCI = RHSV.zext(BitWidth);
           Value *NewAnd = 
             Builder->CreateAnd(Cast->getOperand(0),
                            ConstantInt::get(ICI.getContext(), NewCST),

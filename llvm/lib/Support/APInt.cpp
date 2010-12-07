@@ -995,96 +995,90 @@ double APInt::roundToDouble(bool isSigned) const {
 }
 
 // Truncate to new width.
-APInt &APInt::trunc(unsigned width) {
+APInt APInt::trunc(unsigned width) const {
   assert(width < BitWidth && "Invalid APInt Truncate request");
   assert(width && "Can't truncate to 0 bits");
-  unsigned wordsBefore = getNumWords();
-  BitWidth = width;
-  unsigned wordsAfter = getNumWords();
-  if (wordsBefore != wordsAfter) {
-    if (wordsAfter == 1) {
-      uint64_t *tmp = pVal;
-      VAL = pVal[0];
-      delete [] tmp;
-    } else {
-      uint64_t *newVal = getClearedMemory(wordsAfter);
-      for (unsigned i = 0; i < wordsAfter; ++i)
-        newVal[i] = pVal[i];
-      delete [] pVal;
-      pVal = newVal;
-    }
-  }
-  return clearUnusedBits();
+
+  if (width <= APINT_BITS_PER_WORD)
+    return APInt(width, getRawData()[0]);
+
+  APInt Result(getMemory(getNumWords(width)), width);
+
+  // Copy full words.
+  unsigned i;
+  for (i = 0; i != width / APINT_BITS_PER_WORD; i++)
+    Result.pVal[i] = pVal[i];
+
+  // Truncate and copy any partial word.
+  unsigned bits = (0 - width) % APINT_BITS_PER_WORD;
+  if (bits != 0)
+    Result.pVal[i] = pVal[i] << bits >> bits;
+
+  return Result;
 }
 
 // Sign extend to a new width.
-APInt &APInt::sext(unsigned width) {
+APInt APInt::sext(unsigned width) const {
   assert(width > BitWidth && "Invalid APInt SignExtend request");
-  // If the sign bit isn't set, this is the same as zext.
-  if (!isNegative()) {
-    zext(width);
-    return *this;
+
+  if (width <= APINT_BITS_PER_WORD) {
+    uint64_t val = VAL << (APINT_BITS_PER_WORD - BitWidth);
+    val = (int64_t)val >> (width - BitWidth);
+    return APInt(width, val >> (APINT_BITS_PER_WORD - width));
   }
 
-  // The sign bit is set. First, get some facts
-  unsigned wordsBefore = getNumWords();
-  unsigned wordBits = BitWidth % APINT_BITS_PER_WORD;
-  BitWidth = width;
-  unsigned wordsAfter = getNumWords();
+  APInt Result(getMemory(getNumWords(width)), width);
 
-  // Mask the high order word appropriately
-  if (wordsBefore == wordsAfter) {
-    unsigned newWordBits = width % APINT_BITS_PER_WORD;
-    // The extension is contained to the wordsBefore-1th word.
-    uint64_t mask = ~0ULL;
-    if (newWordBits)
-      mask >>= APINT_BITS_PER_WORD - newWordBits;
-    mask <<= wordBits;
-    if (wordsBefore == 1)
-      VAL |= mask;
-    else
-      pVal[wordsBefore-1] |= mask;
-    return clearUnusedBits();
+  // Copy full words.
+  unsigned i;
+  uint64_t word = 0;
+  for (i = 0; i != BitWidth / APINT_BITS_PER_WORD; i++) {
+    word = getRawData()[i];
+    Result.pVal[i] = word;
   }
 
-  uint64_t mask = wordBits == 0 ? 0 : ~0ULL << wordBits;
-  uint64_t *newVal = getMemory(wordsAfter);
-  if (wordsBefore == 1)
-    newVal[0] = VAL | mask;
-  else {
-    for (unsigned i = 0; i < wordsBefore; ++i)
-      newVal[i] = pVal[i];
-    newVal[wordsBefore-1] |= mask;
+  // Read and sign-extend any partial word.
+  unsigned bits = (0 - BitWidth) % APINT_BITS_PER_WORD;
+  if (bits != 0)
+    word = (int64_t)getRawData()[i] << bits >> bits;
+  else
+    word = (int64_t)word >> (APINT_BITS_PER_WORD - 1);
+
+  // Write remaining full words.
+  for (; i != width / APINT_BITS_PER_WORD; i++) {
+    Result.pVal[i] = word;
+    word = (int64_t)word >> (APINT_BITS_PER_WORD - 1);
   }
-  for (unsigned i = wordsBefore; i < wordsAfter; i++)
-    newVal[i] = -1ULL;
-  if (wordsBefore != 1)
-    delete [] pVal;
-  pVal = newVal;
-  return clearUnusedBits();
+
+  // Write any partial word.
+  bits = (0 - width) % APINT_BITS_PER_WORD;
+  if (bits != 0)
+    Result.pVal[i] = word << bits >> bits;
+
+  return Result;
 }
 
 //  Zero extend to a new width.
-APInt &APInt::zext(unsigned width) {
+APInt APInt::zext(unsigned width) const {
   assert(width > BitWidth && "Invalid APInt ZeroExtend request");
-  unsigned wordsBefore = getNumWords();
-  BitWidth = width;
-  unsigned wordsAfter = getNumWords();
-  if (wordsBefore != wordsAfter) {
-    uint64_t *newVal = getClearedMemory(wordsAfter);
-    if (wordsBefore == 1)
-      newVal[0] = VAL;
-    else
-      for (unsigned i = 0; i < wordsBefore; ++i)
-        newVal[i] = pVal[i];
-    if (wordsBefore != 1)
-      delete [] pVal;
-    pVal = newVal;
-  }
-  return *this;
+
+  if (width <= APINT_BITS_PER_WORD)
+    return APInt(width, VAL);
+
+  APInt Result(getMemory(getNumWords(width)), width);
+
+  // Copy words.
+  unsigned i;
+  for (i = 0; i != getNumWords(); i++)
+    Result.pVal[i] = getRawData()[i];
+
+  // Zero remaining words.
+  memset(&Result.pVal[i], 0, (Result.getNumWords() - i) * APINT_WORD_SIZE);
+
+  return Result;
 }
 
-APInt &APInt::zextOrTrunc(unsigned width) {
+APInt APInt::zextOrTrunc(unsigned width) const {
   if (BitWidth < width)
     return zext(width);
   if (BitWidth > width)
@@ -1092,7 +1086,7 @@ APInt &APInt::zextOrTrunc(unsigned width) {
   return *this;
 }
 
-APInt &APInt::sextOrTrunc(unsigned width) {
+APInt APInt::sextOrTrunc(unsigned width) const {
   if (BitWidth < width)
     return sext(width);
   if (BitWidth > width)

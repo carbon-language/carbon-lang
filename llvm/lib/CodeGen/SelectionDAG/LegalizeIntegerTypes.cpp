@@ -1435,7 +1435,7 @@ void DAGTypeLegalizer::ExpandIntRes_Constant(SDNode *N,
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   unsigned NBitWidth = NVT.getSizeInBits();
   const APInt &Cst = cast<ConstantSDNode>(N)->getAPIntValue();
-  Lo = DAG.getConstant(APInt(Cst).trunc(NBitWidth), NVT);
+  Lo = DAG.getConstant(Cst.trunc(NBitWidth), NVT);
   Hi = DAG.getConstant(Cst.lshr(NBitWidth).trunc(NBitWidth), NVT);
 }
 

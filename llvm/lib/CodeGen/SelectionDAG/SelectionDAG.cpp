@@ -1806,7 +1806,7 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
 
     // If the sign extended bits are demanded, we know that the sign
     // bit is demanded.
-    InSignBit.zext(BitWidth);
+    InSignBit = InSignBit.zext(BitWidth);
     if (NewBits.getBoolValue())
       InputDemandedBits |= InSignBit;
 
@@ -1849,13 +1849,12 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     EVT InVT = Op.getOperand(0).getValueType();
     unsigned InBits = InVT.getScalarType().getSizeInBits();
     APInt NewBits   = APInt::getHighBitsSet(BitWidth, BitWidth - InBits) & Mask;
-    APInt InMask    = Mask;
-    InMask.trunc(InBits);
-    KnownZero.trunc(InBits);
-    KnownOne.trunc(InBits);
+    APInt InMask    = Mask.trunc(InBits);
+    KnownZero = KnownZero.trunc(InBits);
+    KnownOne = KnownOne.trunc(InBits);
     ComputeMaskedBits(Op.getOperand(0), InMask, KnownZero, KnownOne, Depth+1);
-    KnownZero.zext(BitWidth);
-    KnownOne.zext(BitWidth);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
     KnownZero |= NewBits;
     return;
   }
@@ -1864,16 +1863,15 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     unsigned InBits = InVT.getScalarType().getSizeInBits();
     APInt InSignBit = APInt::getSignBit(InBits);
     APInt NewBits   = APInt::getHighBitsSet(BitWidth, BitWidth - InBits) & Mask;
-    APInt InMask = Mask;
-    InMask.trunc(InBits);
+    APInt InMask = Mask.trunc(InBits);
 
     // If any of the sign extended bits are demanded, we know that the sign
     // bit is demanded. Temporarily set this bit in the mask for our callee.
     if (NewBits.getBoolValue())
       InMask |= InSignBit;
 
-    KnownZero.trunc(InBits);
-    KnownOne.trunc(InBits);
+    KnownZero = KnownZero.trunc(InBits);
+    KnownOne = KnownOne.trunc(InBits);
     ComputeMaskedBits(Op.getOperand(0), InMask, KnownZero, KnownOne, Depth+1);
 
     // Note if the sign bit is known to be zero or one.
@@ -1885,13 +1883,12 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     // If the sign bit wasn't actually demanded by our caller, we don't
     // want it set in the KnownZero and KnownOne result values. Reset the
     // mask and reapply it to the result values.
-    InMask = Mask;
-    InMask.trunc(InBits);
+    InMask = Mask.trunc(InBits);
     KnownZero &= InMask;
     KnownOne  &= InMask;
 
-    KnownZero.zext(BitWidth);
-    KnownOne.zext(BitWidth);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
 
     // If the sign bit is known zero or one, the top bits match.
     if (SignBitKnownZero)
@@ -1903,26 +1900,24 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
   case ISD::ANY_EXTEND: {
     EVT InVT = Op.getOperand(0).getValueType();
     unsigned InBits = InVT.getScalarType().getSizeInBits();
-    APInt InMask = Mask;
-    InMask.trunc(InBits);
-    KnownZero.trunc(InBits);
-    KnownOne.trunc(InBits);
+    APInt InMask = Mask.trunc(InBits);
+    KnownZero = KnownZero.trunc(InBits);
+    KnownOne = KnownOne.trunc(InBits);
     ComputeMaskedBits(Op.getOperand(0), InMask, KnownZero, KnownOne, Depth+1);
-    KnownZero.zext(BitWidth);
-    KnownOne.zext(BitWidth);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
     return;
   }
   case ISD::TRUNCATE: {
     EVT InVT = Op.getOperand(0).getValueType();
     unsigned InBits = InVT.getScalarType().getSizeInBits();
-    APInt InMask = Mask;
-    InMask.zext(InBits);
-    KnownZero.zext(InBits);
-    KnownOne.zext(InBits);
+    APInt InMask = Mask.zext(InBits);
+    KnownZero = KnownZero.zext(InBits);
+    KnownOne = KnownOne.zext(InBits);
     ComputeMaskedBits(Op.getOperand(0), InMask, KnownZero, KnownOne, Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
-    KnownZero.trunc(BitWidth);
-    KnownOne.trunc(BitWidth);
+    KnownZero = KnownZero.trunc(BitWidth);
+    KnownOne = KnownOne.trunc(BitWidth);
     break;
   }
   case ISD::AssertZext: {
@@ -2349,11 +2344,11 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     switch (Opcode) {
     default: break;
     case ISD::SIGN_EXTEND:
-      return getConstant(APInt(Val).sextOrTrunc(VT.getSizeInBits()), VT);
+      return getConstant(Val.sextOrTrunc(VT.getSizeInBits()), VT);
     case ISD::ANY_EXTEND:
     case ISD::ZERO_EXTEND:
     case ISD::TRUNCATE:
-      return getConstant(APInt(Val).zextOrTrunc(VT.getSizeInBits()), VT);
+      return getConstant(Val.zextOrTrunc(VT.getSizeInBits()), VT);
     case ISD::UINT_TO_FP:
     case ISD::SINT_TO_FP: {
       // No compile time operations on ppcf128.
@@ -6418,7 +6413,7 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
     if (OpVal.getOpcode() == ISD::UNDEF)
       SplatUndef |= APInt::getBitsSet(sz, BitPos, BitPos + EltBitSize);
     else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(OpVal))
-      SplatValue |= APInt(CN->getAPIntValue()).zextOrTrunc(EltBitSize).
+      SplatValue |= CN->getAPIntValue().zextOrTrunc(EltBitSize).
                     zextOrTrunc(sz) << BitPos;
     else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal))
       SplatValue |= CN->getValueAPF().bitcastToAPInt().zextOrTrunc(sz) <<BitPos;
@@ -6433,10 +6428,10 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
   while (sz > 8) {
 
     unsigned HalfSize = sz / 2;
-    APInt HighValue = APInt(SplatValue).lshr(HalfSize).trunc(HalfSize);
-    APInt LowValue = APInt(SplatValue).trunc(HalfSize);
-    APInt HighUndef = APInt(SplatUndef).lshr(HalfSize).trunc(HalfSize);
-    APInt LowUndef = APInt(SplatUndef).trunc(HalfSize);
+    APInt HighValue = SplatValue.lshr(HalfSize).trunc(HalfSize);
+    APInt LowValue = SplatValue.trunc(HalfSize);
+    APInt HighUndef = SplatUndef.lshr(HalfSize).trunc(HalfSize);
+    APInt LowUndef = SplatUndef.trunc(HalfSize);
 
     // If the two halves do not match (ignoring undef bits), stop here.
     if ((HighValue & ~LowUndef) != (LowValue & ~HighUndef) ||
