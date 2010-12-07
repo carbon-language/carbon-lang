@@ -85,37 +85,37 @@ TEST(Support, Path) {
 
     bool      bres;
     StringRef sfres;
-    ASSERT_FALSE(path::has_root_path(*i, bres));
-    ASSERT_FALSE(path::root_path(*i, sfres));
-    ASSERT_FALSE(path::has_root_name(*i, bres));
-    ASSERT_FALSE(path::root_name(*i, sfres));
-    ASSERT_FALSE(path::has_root_directory(*i, bres));
-    ASSERT_FALSE(path::root_directory(*i, sfres));
-    ASSERT_FALSE(path::has_parent_path(*i, bres));
-    ASSERT_FALSE(path::parent_path(*i, sfres));
-    ASSERT_FALSE(path::has_filename(*i, bres));
-    ASSERT_FALSE(path::filename(*i, sfres));
-    ASSERT_FALSE(path::has_stem(*i, bres));
-    ASSERT_FALSE(path::stem(*i, sfres));
-    ASSERT_FALSE(path::has_extension(*i, bres));
-    ASSERT_FALSE(path::extension(*i, sfres));
-    ASSERT_FALSE(path::is_absolute(*i, bres));
-    ASSERT_FALSE(path::is_relative(*i, bres));
+    path::has_root_path(*i, bres);
+    path::root_path(*i, sfres);
+    path::has_root_name(*i, bres);
+    path::root_name(*i, sfres);
+    path::has_root_directory(*i, bres);
+    path::root_directory(*i, sfres);
+    path::has_parent_path(*i, bres);
+    path::parent_path(*i, sfres);
+    path::has_filename(*i, bres);
+    path::filename(*i, sfres);
+    path::has_stem(*i, bres);
+    path::stem(*i, sfres);
+    path::has_extension(*i, bres);
+    path::extension(*i, sfres);
+    path::is_absolute(*i, bres);
+    path::is_relative(*i, bres);
 
     SmallString<16> temp_store;
     temp_store = *i;
     ASSERT_FALSE(fs::make_absolute(temp_store));
     temp_store = *i;
-    ASSERT_FALSE(path::remove_filename(temp_store));
+    path::remove_filename(temp_store);
 
     temp_store = *i;
-    ASSERT_FALSE(path::replace_extension(temp_store, "ext"));
+    path::replace_extension(temp_store, "ext");
     StringRef filename(temp_store.begin(), temp_store.size()), stem, ext;
-    ASSERT_FALSE(path::stem(filename, stem));
-    ASSERT_FALSE(path::extension(filename, ext));
+    path::stem(filename, stem);
+    path::extension(filename, ext);
     EXPECT_EQ(*(--sys::path::end(filename)), (stem + ext).str());
 
-    ASSERT_FALSE(path::native(*i, temp_store));
+    path::native(*i, temp_store);
 
     outs().flush();
   }

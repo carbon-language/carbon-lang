@@ -490,7 +490,7 @@ error_code unique_file(const Twine &model, int &result_fd,
 
   // Make model absolute by prepending a temp directory if it's not already.
   bool absolute;
-  if (error_code ec = path::is_absolute(m, absolute)) return ec;
+  path::is_absolute(m, absolute);
 
   if (!absolute) {
     SmallVector<wchar_t, 64> temp_dir;
@@ -560,7 +560,7 @@ retry_create_file:
       SmallString<64> dir_to_create;
       for (path::const_iterator i = path::begin(p),
                                 e = --path::end(p); i != e; ++i) {
-        if (error_code ec = path::append(dir_to_create, *i)) return ec;
+        path::append(dir_to_create, *i);
         bool Exists;
         if (error_code ec = exists(Twine(dir_to_create), Exists)) return ec;
         if (!Exists) {

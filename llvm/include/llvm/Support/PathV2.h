@@ -11,16 +11,7 @@
 // TR2/boost filesystem (v3), but modified to remove exception handling and the
 // path class.
 //
-// All functions return an error_code and their actual work via the last out
-// argument. The out argument is defined if and only if errc::success is
-// returned. A function may return any error code in the generic or system
-// category. However, they shall be equivalent to any error conditions listed
-// in each functions respective documentation if the condition applies. [ note:
-// this does not guarantee that error_code will be in the set of explicitly
-// listed codes, but it does guarantee that if any of the explicitly listed
-// errors occur, the correct error_code will be used ]. All functions may
-// return errc::not_enough_memory if there is not enough memory to complete the
-// operation.
+// All functions return void and their actual work via the last out argument.
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +21,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/system_error.h"
 #include <iterator>
 
 namespace llvm {
@@ -124,9 +114,7 @@ inline reverse_iterator rend(const StringRef &path) {
 /// /                      => /
 ///
 /// @param path A path that is modified to not have a file component.
-/// @returns errc::success if \a path's file name has been removed (or there was
-///          not one to begin with), otherwise a platform specific error_code.
-error_code remove_filename(SmallVectorImpl<char> &path);
+void remove_filename(SmallVectorImpl<char> &path);
 
 /// @brief Replace the file extension of \a path with \a extension.
 ///
@@ -138,9 +126,7 @@ error_code remove_filename(SmallVectorImpl<char> &path);
 /// @param extension The extension to be added. It may be empty. It may also
 ///                  optionally start with a '.', if it does not, one will be
 ///                  prepended.
-/// @returns errc::success if \a path's extension has been replaced, otherwise a
-///          platform specific error_code.
-error_code replace_extension(SmallVectorImpl<char> &path,
+void replace_extension(SmallVectorImpl<char> &path,
                              const Twine &extension);
 
 /// @brief Append to path.
@@ -151,9 +137,7 @@ error_code replace_extension(SmallVectorImpl<char> &path,
 ///
 /// @param path Set to \a path + \a component.
 /// @param component The component to be appended to \a path.
-/// @returns errc::success if \a component has been appended to \a path,
-///          otherwise a platform specific error_code.
-error_code append(SmallVectorImpl<char> &path, const Twine &a,
+void append(SmallVectorImpl<char> &path, const Twine &a,
                                                const Twine &b = "",
                                                const Twine &c = "",
                                                const Twine &d = "");
@@ -167,9 +151,7 @@ error_code append(SmallVectorImpl<char> &path, const Twine &a,
 /// @param path Set to \a path + [\a begin, \a end).
 /// @param begin Start of components to append.
 /// @param end One past the end of components to append.
-/// @returns errc::success if [\a begin, \a end) has been appended to \a path,
-///          otherwise a platform specific error_code.
-error_code append(SmallVectorImpl<char> &path,
+void append(SmallVectorImpl<char> &path,
                   const_iterator begin, const_iterator end);
 
 /// @}
@@ -182,9 +164,7 @@ error_code append(SmallVectorImpl<char> &path,
 ///
 /// @param path A path that is transformed to native format.
 /// @param result Holds the result of the transformation.
-/// @returns errc::success if \a path has been transformed and stored in result,
-///          otherwise a platform specific error_code.
-error_code native(const Twine &path, SmallVectorImpl<char> &result);
+void native(const Twine &path, SmallVectorImpl<char> &result);
 
 /// @}
 /// @name Lexical Observers
@@ -198,9 +178,7 @@ error_code native(const Twine &path, SmallVectorImpl<char> &result);
 ///
 /// @param path Input path.
 /// @param result Set to the root name of \a path if it has one, otherwise "".
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code root_name(const StringRef &path, StringRef &result);
+void root_name(const StringRef &path, StringRef &result);
 
 /// @brief Get root directory.
 ///
@@ -211,9 +189,7 @@ error_code root_name(const StringRef &path, StringRef &result);
 /// @param path Input path.
 /// @param result Set to the root directory of \a path if it has one, otherwise
 ///               "".
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code root_directory(const StringRef &path, StringRef &result);
+void root_directory(const StringRef &path, StringRef &result);
 
 /// @brief Get root path.
 ///
@@ -221,9 +197,7 @@ error_code root_directory(const StringRef &path, StringRef &result);
 ///
 /// @param path Input path.
 /// @param result Set to the root path of \a path if it has one, otherwise "".
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code root_path(const StringRef &path, StringRef &result);
+void root_path(const StringRef &path, StringRef &result);
 
 /// @brief Get relative path.
 ///
@@ -234,9 +208,7 @@ error_code root_path(const StringRef &path, StringRef &result);
 /// @param path Input path.
 /// @param result Set to the path starting after root_path if one exists,
 ///               otherwise "".
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code relative_path(const StringRef &path, StringRef &result);
+void relative_path(const StringRef &path, StringRef &result);
 
 /// @brief Get parent path.
 ///
@@ -246,9 +218,7 @@ error_code relative_path(const StringRef &path, StringRef &result);
 ///
 /// @param path Input path.
 /// @param result Set to the parent path of \a path if one exists, otherwise "".
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code parent_path(const StringRef &path, StringRef &result);
+void parent_path(const StringRef &path, StringRef &result);
 
 /// @brief Get filename.
 ///
@@ -260,9 +230,7 @@ error_code parent_path(const StringRef &path, StringRef &result);
 /// @param path Input path.
 /// @param result Set to the filename part of \a path. This is defined as the
 ///               last component of \a path.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code filename(const StringRef &path, StringRef &result);
+void filename(const StringRef &path, StringRef &result);
 
 /// @brief Get stem.
 ///
@@ -278,9 +246,7 @@ error_code filename(const StringRef &path, StringRef &result);
 ///
 /// @param path Input path.
 /// @param result Set to the stem of \a path.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code stem(const StringRef &path, StringRef &result);
+void stem(const StringRef &path, StringRef &result);
 
 /// @brief Get extension.
 ///
@@ -294,9 +260,7 @@ error_code stem(const StringRef &path, StringRef &result);
 ///
 /// @param path Input path.
 /// @param result Set to the extension of \a path.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code extension(const StringRef &path, StringRef &result);
+void extension(const StringRef &path, StringRef &result);
 
 /// @brief Has root name?
 ///
@@ -304,9 +268,7 @@ error_code extension(const StringRef &path, StringRef &result);
 ///
 /// @param path Input path.
 /// @param result Set to true if the path has a root name, false otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code has_root_name(const Twine &path, bool &result);
+void has_root_name(const Twine &path, bool &result);
 
 /// @brief Has root directory?
 ///
@@ -314,9 +276,7 @@ error_code has_root_name(const Twine &path, bool &result);
 ///
 /// @param path Input path.
 /// @param result Set to true if the path has a root directory, false otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code has_root_directory(const Twine &path, bool &result);
+void has_root_directory(const Twine &path, bool &result);
 
 /// @brief Has root path?
 ///
@@ -324,9 +284,7 @@ error_code has_root_directory(const Twine &path, bool &result);
 ///
 /// @param path Input path.
 /// @param result Set to true if the path has a root path, false otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code has_root_path(const Twine &path, bool &result);
+void has_root_path(const Twine &path, bool &result);
 
 /// @brief Has relative path?
 ///
@@ -334,9 +292,7 @@ error_code has_root_path(const Twine &path, bool &result);
 ///
 /// @param path Input path.
 /// @param result Set to true if the path has a relative path, false otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code has_relative_path(const Twine &path, bool &result);
+void has_relative_path(const Twine &path, bool &result);
 
 /// @brief Has parent path?
 ///
@@ -344,9 +300,7 @@ error_code has_relative_path(const Twine &path, bool &result);
 ///
 /// @param path Input path.
 /// @param result Set to true if the path has a parent path, false otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code has_parent_path(const Twine &path, bool &result);
+void has_parent_path(const Twine &path, bool &result);
 
 /// @brief Has filename?
 ///
@@ -354,9 +308,7 @@ error_code has_parent_path(const Twine &path, bool &result);
 ///
 /// @param path Input path.
 /// @param result Set to true if the path has a filename, false otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code has_filename(const Twine &path, bool &result);
+void has_filename(const Twine &path, bool &result);
 
 /// @brief Has stem?
 ///
@@ -364,9 +316,7 @@ error_code has_filename(const Twine &path, bool &result);
 ///
 /// @param path Input path.
 /// @param result Set to true if the path has a stem, false otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code has_stem(const Twine &path, bool &result);
+void has_stem(const Twine &path, bool &result);
 
 /// @brief Has extension?
 ///
@@ -374,26 +324,19 @@ error_code has_stem(const Twine &path, bool &result);
 ///
 /// @param path Input path.
 /// @param result Set to true if the path has a extension, false otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code has_extension(const Twine &path, bool &result);
+void has_extension(const Twine &path, bool &result);
 
 /// @brief Is path absolute?
 ///
 /// @param path Input path.
 /// @param result Set to true if the path is absolute, false if it is not.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_absolute(const Twine &path, bool &result);
+void is_absolute(const Twine &path, bool &result);
 
 /// @brief Is path relative?
 ///
 /// @param path Input path.
 /// @param result Set to true if the path is relative, false if it is not.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_relative(const Twine &path, bool &result);
-// end purely lexical.
+void is_relative(const Twine &path, bool &result);
 
 } // end namespace path
 } // end namespace sys
