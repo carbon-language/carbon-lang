@@ -18,7 +18,6 @@
 #define LLVM_CODEGEN_LIVEINTERVALUNION
 
 #include "llvm/CodeGen/LiveInterval.h"
-#include <vector>
 #include <set>
 
 namespace llvm {
@@ -99,13 +98,6 @@ class LiveIntervalUnion {
   // FIXME: std::set is a placeholder until we decide how to
   // efficiently represent it. Probably need to roll our own B-tree.
   typedef std::set<LiveSegment> LiveSegments;
-
-  // A set of live virtual registers. Elements have type LiveInterval, where
-  // each element represents the liveness of a single live virtual register.
-  // This is traditionally known as a live range, but we refer is as a live
-  // virtual register to avoid confusing it with the misnamed LiveRange
-  // class.
-  typedef std::vector<LiveInterval*> LiveVRegs;
 
 public:
   // SegmentIter can advance to the next segment ordered by starting position
