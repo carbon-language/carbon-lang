@@ -39,7 +39,7 @@ class SendSignalTestCase(TestBase):
                         self.line)
 
         self.runCmd("run", RUN_SUCCEEDED)
-        self.runCmd("thread backtrac")
+        self.runCmd("thread backtrace")
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
