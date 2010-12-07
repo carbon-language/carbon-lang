@@ -83,24 +83,22 @@ TEST(Support, Path) {
     outs() << "]\n";
 #endif
 
-    bool      bres;
-    StringRef sfres;
-    path::has_root_path(*i, bres);
-    path::root_path(*i, sfres);
-    path::has_root_name(*i, bres);
-    path::root_name(*i, sfres);
-    path::has_root_directory(*i, bres);
-    path::root_directory(*i, sfres);
-    path::has_parent_path(*i, bres);
-    path::parent_path(*i, sfres);
-    path::has_filename(*i, bres);
-    path::filename(*i, sfres);
-    path::has_stem(*i, bres);
-    path::stem(*i, sfres);
-    path::has_extension(*i, bres);
-    path::extension(*i, sfres);
-    path::is_absolute(*i, bres);
-    path::is_relative(*i, bres);
+    path::has_root_path(*i);
+    path::root_path(*i);
+    path::has_root_name(*i);
+    path::root_name(*i);
+    path::has_root_directory(*i);
+    path::root_directory(*i);
+    path::has_parent_path(*i);
+    path::parent_path(*i);
+    path::has_filename(*i);
+    path::filename(*i);
+    path::has_stem(*i);
+    path::stem(*i);
+    path::has_extension(*i);
+    path::extension(*i);
+    path::is_absolute(*i);
+    path::is_relative(*i);
 
     SmallString<16> temp_store;
     temp_store = *i;
@@ -111,8 +109,8 @@ TEST(Support, Path) {
     temp_store = *i;
     path::replace_extension(temp_store, "ext");
     StringRef filename(temp_store.begin(), temp_store.size()), stem, ext;
-    path::stem(filename, stem);
-    path::extension(filename, ext);
+    stem = path::stem(filename);
+    ext  = path::extension(filename);
     EXPECT_EQ(*(--sys::path::end(filename)), (stem + ext).str());
 
     path::native(*i, temp_store);

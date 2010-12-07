@@ -489,8 +489,7 @@ error_code unique_file(const Twine &model, int &result_fd,
   if (error_code ec = UTF8ToUTF16(m, model_utf16)) return ec;
 
   // Make model absolute by prepending a temp directory if it's not already.
-  bool absolute;
-  path::is_absolute(m, absolute);
+  bool absolute = path::is_absolute(m);
 
   if (!absolute) {
     SmallVector<wchar_t, 64> temp_dir;

@@ -11,8 +11,6 @@
 // TR2/boost filesystem (v3), but modified to remove exception handling and the
 // path class.
 //
-// All functions return void and their actual work via the last out argument.
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_PATHV2_H
@@ -126,8 +124,7 @@ void remove_filename(SmallVectorImpl<char> &path);
 /// @param extension The extension to be added. It may be empty. It may also
 ///                  optionally start with a '.', if it does not, one will be
 ///                  prepended.
-void replace_extension(SmallVectorImpl<char> &path,
-                             const Twine &extension);
+void replace_extension(SmallVectorImpl<char> &path, const Twine &extension);
 
 /// @brief Append to path.
 ///
@@ -138,9 +135,9 @@ void replace_extension(SmallVectorImpl<char> &path,
 /// @param path Set to \a path + \a component.
 /// @param component The component to be appended to \a path.
 void append(SmallVectorImpl<char> &path, const Twine &a,
-                                               const Twine &b = "",
-                                               const Twine &c = "",
-                                               const Twine &d = "");
+                                         const Twine &b = "",
+                                         const Twine &c = "",
+                                         const Twine &d = "");
 
 /// @brief Append to path.
 ///
@@ -152,7 +149,7 @@ void append(SmallVectorImpl<char> &path, const Twine &a,
 /// @param begin Start of components to append.
 /// @param end One past the end of components to append.
 void append(SmallVectorImpl<char> &path,
-                  const_iterator begin, const_iterator end);
+            const_iterator begin, const_iterator end);
 
 /// @}
 /// @name Transforms (or some other better name)
@@ -177,8 +174,8 @@ void native(const Twine &path, SmallVectorImpl<char> &result);
 /// /hello      => <empty>
 ///
 /// @param path Input path.
-/// @param result Set to the root name of \a path if it has one, otherwise "".
-void root_name(const StringRef &path, StringRef &result);
+/// @result The root name of \a path if it has one, otherwise "".
+const StringRef root_name(const StringRef &path);
 
 /// @brief Get root directory.
 ///
@@ -187,17 +184,17 @@ void root_name(const StringRef &path, StringRef &result);
 /// d/file.txt => <empty>
 ///
 /// @param path Input path.
-/// @param result Set to the root directory of \a path if it has one, otherwise
+/// @result The root directory of \a path if it has one, otherwise
 ///               "".
-void root_directory(const StringRef &path, StringRef &result);
+const StringRef root_directory(const StringRef &path);
 
 /// @brief Get root path.
 ///
 /// Equivalent to root_name + root_directory.
 ///
 /// @param path Input path.
-/// @param result Set to the root path of \a path if it has one, otherwise "".
-void root_path(const StringRef &path, StringRef &result);
+/// @result The root path of \a path if it has one, otherwise "".
+const StringRef root_path(const StringRef &path);
 
 /// @brief Get relative path.
 ///
@@ -206,9 +203,8 @@ void root_path(const StringRef &path, StringRef &result);
 /// /foo/bar       => foo/bar
 ///
 /// @param path Input path.
-/// @param result Set to the path starting after root_path if one exists,
-///               otherwise "".
-void relative_path(const StringRef &path, StringRef &result);
+/// @result The path starting after root_path if one exists, otherwise "".
+const StringRef relative_path(const StringRef &path);
 
 /// @brief Get parent path.
 ///
@@ -217,8 +213,8 @@ void relative_path(const StringRef &path, StringRef &result);
 /// foo/../bar => foo/..
 ///
 /// @param path Input path.
-/// @param result Set to the parent path of \a path if one exists, otherwise "".
-void parent_path(const StringRef &path, StringRef &result);
+/// @result The parent path of \a path if one exists, otherwise "".
+const StringRef parent_path(const StringRef &path);
 
 /// @brief Get filename.
 ///
@@ -228,9 +224,9 @@ void parent_path(const StringRef &path, StringRef &result);
 /// /          => /
 ///
 /// @param path Input path.
-/// @param result Set to the filename part of \a path. This is defined as the
-///               last component of \a path.
-void filename(const StringRef &path, StringRef &result);
+/// @result The filename part of \a path. This is defined as the last component
+///         of \a path.
+const StringRef filename(const StringRef &path);
 
 /// @brief Get stem.
 ///
@@ -245,8 +241,8 @@ void filename(const StringRef &path, StringRef &result);
 /// /foo/..      => ..
 ///
 /// @param path Input path.
-/// @param result Set to the stem of \a path.
-void stem(const StringRef &path, StringRef &result);
+/// @result The stem of \a path.
+const StringRef stem(const StringRef &path);
 
 /// @brief Get extension.
 ///
@@ -259,84 +255,84 @@ void stem(const StringRef &path, StringRef &result);
 /// /foo/.txt    => .txt
 ///
 /// @param path Input path.
-/// @param result Set to the extension of \a path.
-void extension(const StringRef &path, StringRef &result);
+/// @result The extension of \a path.
+const StringRef extension(const StringRef &path);
 
 /// @brief Has root name?
 ///
 /// root_name != ""
 ///
 /// @param path Input path.
-/// @param result Set to true if the path has a root name, false otherwise.
-void has_root_name(const Twine &path, bool &result);
+/// @result True if the path has a root name, false otherwise.
+const bool has_root_name(const Twine &path);
 
 /// @brief Has root directory?
 ///
 /// root_directory != ""
 ///
 /// @param path Input path.
-/// @param result Set to true if the path has a root directory, false otherwise.
-void has_root_directory(const Twine &path, bool &result);
+/// @result True if the path has a root directory, false otherwise.
+const bool has_root_directory(const Twine &path);
 
 /// @brief Has root path?
 ///
 /// root_path != ""
 ///
 /// @param path Input path.
-/// @param result Set to true if the path has a root path, false otherwise.
-void has_root_path(const Twine &path, bool &result);
+/// @result True if the path has a root path, false otherwise.
+const bool has_root_path(const Twine &path);
 
 /// @brief Has relative path?
 ///
 /// relative_path != ""
 ///
 /// @param path Input path.
-/// @param result Set to true if the path has a relative path, false otherwise.
-void has_relative_path(const Twine &path, bool &result);
+/// @result True if the path has a relative path, false otherwise.
+const bool has_relative_path(const Twine &path);
 
 /// @brief Has parent path?
 ///
 /// parent_path != ""
 ///
 /// @param path Input path.
-/// @param result Set to true if the path has a parent path, false otherwise.
-void has_parent_path(const Twine &path, bool &result);
+/// @result True if the path has a parent path, false otherwise.
+const bool has_parent_path(const Twine &path);
 
 /// @brief Has filename?
 ///
 /// filename != ""
 ///
 /// @param path Input path.
-/// @param result Set to true if the path has a filename, false otherwise.
-void has_filename(const Twine &path, bool &result);
+/// @result True if the path has a filename, false otherwise.
+const bool has_filename(const Twine &path);
 
 /// @brief Has stem?
 ///
 /// stem != ""
 ///
 /// @param path Input path.
-/// @param result Set to true if the path has a stem, false otherwise.
-void has_stem(const Twine &path, bool &result);
+/// @result True if the path has a stem, false otherwise.
+const bool has_stem(const Twine &path);
 
 /// @brief Has extension?
 ///
 /// extension != ""
 ///
 /// @param path Input path.
-/// @param result Set to true if the path has a extension, false otherwise.
-void has_extension(const Twine &path, bool &result);
+/// @result True if the path has a extension, false otherwise.
+const bool has_extension(const Twine &path);
 
 /// @brief Is path absolute?
 ///
 /// @param path Input path.
-/// @param result Set to true if the path is absolute, false if it is not.
-void is_absolute(const Twine &path, bool &result);
+/// @result True if the path is absolute, false if it is not.
+const bool is_absolute(const Twine &path);
 
 /// @brief Is path relative?
 ///
 /// @param path Input path.
-/// @param result Set to true if the path is relative, false if it is not.
-void is_relative(const Twine &path, bool &result);
+/// @result True if the path is relative, false if it is not.
+const bool is_relative(const Twine &path);
 
 } // end namespace path
 } // end namespace sys

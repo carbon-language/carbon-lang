@@ -279,7 +279,7 @@ ptrdiff_t const_iterator::operator-(const const_iterator &RHS) const {
   return Position - RHS.Position;
 }
 
-void root_path(const StringRef &path, StringRef &result) {
+const StringRef root_path(const StringRef &path) {
   const_iterator b = begin(path),
                  pos = b,
                  e = end(path);
@@ -295,26 +295,23 @@ void root_path(const StringRef &path, StringRef &result) {
     if (has_net || has_drive) {
       if ((++pos != e) && is_separator((*pos)[0])) {
         // {C:/,//net/}, so get the first two components.
-        result = StringRef(path.begin(), b->size() + pos->size());
-        return;
+        return StringRef(path.begin(), b->size() + pos->size());
       } else {
         // just {C:,//net}, return the first component.
-        result = *b;
-        return;
+        return *b;
       }
     }
 
     // POSIX style root directory.
     if (is_separator((*b)[0])) {
-      result = *b;
-      return;
+      return *b;
     }
   }
 
-  result = StringRef();
+  return StringRef();
 }
 
-void root_name(const StringRef &path, StringRef &result) {
+const StringRef root_name(const StringRef &path) {
   const_iterator b = begin(path),
                  e = end(path);
   if (b != e) {
@@ -328,17 +325,15 @@ void root_name(const StringRef &path, StringRef &result) {
 
     if (has_net || has_drive) {
       // just {C:,//net}, return the first component.
-      result = *b;
-      return;
+      return *b;
     }
   }
 
   // No path or no name.
-  result = StringRef();
-  return;
+  return StringRef();
 }
 
-void root_directory(const StringRef &path, StringRef &result) {
+const StringRef root_directory(const StringRef &path) {
   const_iterator b = begin(path),
                  pos = b,
                  e = end(path);
@@ -354,27 +349,22 @@ void root_directory(const StringRef &path, StringRef &result) {
     if ((has_net || has_drive) &&
         // {C:,//net}, skip to the next component.
         (++pos != e) && is_separator((*pos)[0])) {
-      result = *pos;
-      return;
+      return *pos;
     }
 
     // POSIX style root directory.
     if (!has_net && is_separator((*b)[0])) {
-      result = *b;
-      return;
+      return *b;
     }
   }
 
   // No path or no root.
-  result = StringRef();
-  return;
+  return StringRef();
 }
 
-void relative_path(const StringRef &path, StringRef &result) {
-  StringRef root;
-  root_path(path, root);
-  result = StringRef(path.begin() + root.size(), path.size() - root.size());
-  return;
+const StringRef relative_path(const StringRef &path) {
+  StringRef root = root_path(path);
+  return StringRef(path.begin() + root.size(), path.size() - root.size());
 }
 
 void append(SmallVectorImpl<char> &path, const Twine &a,
@@ -397,8 +387,7 @@ void append(SmallVectorImpl<char> &path, const Twine &a,
                                                   i != e; ++i) {
     bool path_has_sep = !path.empty() && is_separator(path[path.size() - 1]);
     bool component_has_sep = !i->empty() && is_separator((*i)[0]);
-    bool is_root_name = false;
-    has_root_name(*i, is_root_name);
+    bool is_root_name = has_root_name(*i);
 
     if (path_has_sep) {
       // Strip separators from beginning of component.
@@ -419,12 +408,12 @@ void append(SmallVectorImpl<char> &path, const Twine &a,
   }
 }
 
-void parent_path(const StringRef &path, StringRef &result) {
+const StringRef parent_path(const StringRef &path) {
   size_t end_pos = parent_path_end(path);
   if (end_pos == StringRef::npos)
-    result = StringRef();
+    return StringRef();
   else
-    result = StringRef(path.data(), end_pos);
+    return StringRef(path.data(), end_pos);
 }
 
 void remove_filename(SmallVectorImpl<char> &path) {
@@ -433,8 +422,7 @@ void remove_filename(SmallVectorImpl<char> &path) {
     path.set_size(end_pos);
 }
 
-void replace_extension(SmallVectorImpl<char> &path,
-                             const Twine &extension) {
+void replace_extension(SmallVectorImpl<char> &path, const Twine &extension) {
   StringRef p(path.begin(), path.size());
   SmallString<32> ext_storage;
   StringRef ext = extension.toStringRef(ext_storage);
@@ -473,121 +461,101 @@ void native(const Twine &path, SmallVectorImpl<char> &result) {
 #endif
 }
 
-void filename(const StringRef &path, StringRef &result) {
-  result = *(--end(path));
+const StringRef filename(const StringRef &path) {
+  return *(--end(path));
 }
 
-void stem(const StringRef &path, StringRef &result) {
-  StringRef fname;
-  filename(path, fname);
+const StringRef stem(const StringRef &path) {
+  StringRef fname = filename(path);
   size_t pos = fname.find_last_of('.');
   if (pos == StringRef::npos)
-    result = fname;
+    return fname;
   else
     if ((fname.size() == 1 && fname == ".") ||
         (fname.size() == 2 && fname == ".."))
-      result = fname;
+      return fname;
     else
-      result = StringRef(fname.begin(), pos);
+      return StringRef(fname.begin(), pos);
 }
 
-void extension(const StringRef &path, StringRef &result) {
-  StringRef fname;
-  filename(path, fname);
+const StringRef extension(const StringRef &path) {
+  StringRef fname = filename(path);
   size_t pos = fname.find_last_of('.');
   if (pos == StringRef::npos)
-    result = StringRef();
+    return StringRef();
   else
     if ((fname.size() == 1 && fname == ".") ||
         (fname.size() == 2 && fname == ".."))
-      result = StringRef();
+      return StringRef();
     else
-      result = StringRef(fname.begin() + pos, fname.size() - pos);
+      return StringRef(fname.begin() + pos, fname.size() - pos);
 }
 
-void has_root_name(const Twine &path, bool &result) {
+const bool has_root_name(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
-  root_name(p, p);
-
-  result = !p.empty();
+  return !root_name(p).empty();
 }
 
-void has_root_directory(const Twine &path, bool &result) {
+const bool has_root_directory(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
-  root_directory(p, p);
-
-  result = !p.empty();
+  return !root_directory(p).empty();
 }
 
-void has_root_path(const Twine &path, bool &result) {
+const bool has_root_path(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
-  root_path(p, p);
-
-  result = !p.empty();
+  return !root_path(p).empty();
 }
 
-void has_filename(const Twine &path, bool &result) {
+const bool has_filename(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
-  filename(p, p);
-
-  result = !p.empty();
+  return !filename(p).empty();
 }
 
-void has_parent_path(const Twine &path, bool &result) {
+const bool has_parent_path(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
-  parent_path(p, p);
-
-  result = !p.empty();
+  return !parent_path(p).empty();
 }
 
-void has_stem(const Twine &path, bool &result) {
+const bool has_stem(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
-  stem(p, p);
-
-  result = !p.empty();
+  return !stem(p).empty();
 }
 
-void has_extension(const Twine &path, bool &result) {
+const bool has_extension(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
-  extension(p, p);
-
-  result = !p.empty();
+  return !extension(p).empty();
 }
 
-void is_absolute(const Twine &path, bool &result) {
+const bool is_absolute(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
-  bool rootDir = false,
-       rootName = false;
-  has_root_directory(p, rootDir);
+  bool rootDir = has_root_directory(p),
 #ifdef LLVM_ON_WIN32
-  has_root_name(p, rootName);
+       rootName = has_root_name(p);
 #else
-  rootName = true;
+       rootName = true;
 #endif
 
-  result = rootDir && rootName;
+  return rootDir && rootName;
 }
 
-void is_relative(const Twine &path, bool &result) {
-  bool res;
-  is_absolute(path, res);
-  result = !res;
+const bool is_relative(const Twine &path) {
+  return !is_absolute(path);
 }
 
 } // end namespace path
@@ -597,9 +565,8 @@ namespace fs {
 error_code make_absolute(SmallVectorImpl<char> &path) {
   StringRef p(path.data(), path.size());
 
-  bool rootName = false, rootDirectory = false;
-  path::has_root_name(p, rootName);
-  path::has_root_directory(p, rootDirectory);
+  bool rootName      = path::has_root_name(p),
+       rootDirectory = path::has_root_directory(p);
 
   // Already absolute.
   if (rootName && rootDirectory)
@@ -619,8 +586,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
   }
 
   if (!rootName && rootDirectory) {
-    StringRef cdrn;
-    path::root_name(current_dir, cdrn);
+    StringRef cdrn = path::root_name(current_dir);
     SmallString<128> curDirRootName(cdrn.begin(), cdrn.end());
     path::append(curDirRootName, p);
     // Set path to the result.
@@ -629,14 +595,10 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
   }
 
   if (rootName && !rootDirectory) {
-    StringRef pRootName;
-    StringRef bRootDirectory;
-    StringRef bRelativePath;
-    StringRef pRelativePath;
-    path::root_name(p, pRootName);
-    path::root_directory(current_dir, bRootDirectory);
-    path::relative_path(current_dir, bRelativePath);
-    path::relative_path(p, pRelativePath);
+    StringRef pRootName      = path::root_name(p);
+    StringRef bRootDirectory = path::root_directory(current_dir);
+    StringRef bRelativePath  = path::relative_path(current_dir);
+    StringRef pRelativePath  = path::relative_path(p);
 
     SmallString<128> res;
     path::append(res, pRootName, bRootDirectory, bRelativePath, pRelativePath);
@@ -652,9 +614,9 @@ error_code create_directories(const Twine &path, bool &existed) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
 
-  StringRef parent;
+  StringRef parent = path::parent_path(p);
   bool parent_exists;
-  path::parent_path(p, parent);
+
   if (error_code ec = fs::exists(parent, parent_exists)) return ec;
 
   if (!parent_exists)

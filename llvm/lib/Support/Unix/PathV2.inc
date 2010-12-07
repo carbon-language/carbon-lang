@@ -324,8 +324,7 @@ error_code unique_file(const Twine &model, int &result_fd,
   Model.c_str();
 
   // Make model absolute by prepending a temp directory if it's not already.
-  bool absolute;
-  path::is_absolute(Twine(Model), absolute);
+  bool absolute = path::is_absolute(Twine(Model));
   if (!absolute) {
     SmallString<128> TDir;
     if (error_code ec = TempDir(TDir)) return ec;
