@@ -2644,9 +2644,13 @@ def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000),
 defm t2CMP  : T2I_cmp_irs<0b1101, "cmp",
                           IIC_iCMPi, IIC_iCMPr, IIC_iCMPsi,
                           BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
-defm t2CMPz : T2I_cmp_irs<0b1101, "cmp",
-                          IIC_iCMPi, IIC_iCMPr, IIC_iCMPsi,
-                          BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
+
+def : T2Pat<(ARMcmpZ  GPR:$lhs, t2_so_imm:$imm),
+            (t2CMPri  GPR:$lhs, t2_so_imm:$imm)>;
+def : T2Pat<(ARMcmpZ  GPR:$lhs, rGPR:$rhs),
+            (t2CMPrr  GPR:$lhs, rGPR:$rhs)>;
+def : T2Pat<(ARMcmpZ  GPR:$lhs, t2_so_reg:$rhs),
+            (t2CMPrs  GPR:$lhs, t2_so_reg:$rhs)>;
 
 //FIXME: Disable CMN, as CCodes are backwards from compare expectations
 //       Compare-to-zero still works out, just not the relationals

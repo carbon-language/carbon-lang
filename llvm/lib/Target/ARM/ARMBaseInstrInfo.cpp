@@ -1439,9 +1439,7 @@ AnalyzeCompare(const MachineInstr *MI, unsigned &SrcReg, int &CmpMask,
   switch (MI->getOpcode()) {
   default: break;
   case ARM::CMPri:
-  case ARM::CMPzri:
   case ARM::t2CMPri:
-  case ARM::t2CMPzri:
     SrcReg = MI->getOperand(0).getReg();
     CmpMask = ~0;
     CmpValue = MI->getOperand(1).getImm();

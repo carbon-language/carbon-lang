@@ -1648,7 +1648,7 @@ bool ARMConstantIslands::OptimizeThumb2Branches(MachineFunction &MF) {
     unsigned DestOffset = BBOffsets[DestBB->getNumber()];
     if (BrOffset < DestOffset && (DestOffset - BrOffset) <= 126) {
       MachineBasicBlock::iterator CmpMI = Br.MI; --CmpMI;
-      if (CmpMI->getOpcode() == ARM::tCMPzi8) {
+      if (CmpMI->getOpcode() == ARM::tCMPi8) {
         unsigned Reg = CmpMI->getOperand(0).getReg();
         Pred = llvm::getInstrPredicate(CmpMI, PredReg);
         if (Pred == ARMCC::AL &&

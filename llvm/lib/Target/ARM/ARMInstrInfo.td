@@ -2901,6 +2901,14 @@ defm CMP  : AI1_cmp_irs<0b1010, "cmp",
                         IIC_iCMPi, IIC_iCMPr, IIC_iCMPsr,
                         BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
 
+// ARMcmpZ can re-use the above instruction definitions.
+def : ARMPat<(ARMcmpZ GPR:$src, so_imm:$imm),
+             (CMPri   GPR:$src, so_imm:$imm)>;
+def : ARMPat<(ARMcmpZ GPR:$src, GPR:$rhs),
+             (CMPrr   GPR:$src, GPR:$rhs)>;
+def : ARMPat<(ARMcmpZ GPR:$src, so_reg:$rhs),
+             (CMPrs   GPR:$src, so_reg:$rhs)>;
+
 // FIXME: We have to be careful when using the CMN instruction and comparison
 // with 0. One would expect these two pieces of code should give identical
 // results:
@@ -2953,9 +2961,6 @@ defm TEQ  : AI1_cmp_irs<0b1001, "teq",
                         IIC_iTSTi, IIC_iTSTr, IIC_iTSTsr,
                       BinOpFrag<(ARMcmpZ (xor_su node:$LHS, node:$RHS), 0)>, 1>;
 
-defm CMPz  : AI1_cmp_irs<0b1010, "cmp",
-                         IIC_iCMPi, IIC_iCMPr, IIC_iCMPsr,
-                         BinOpFrag<(ARMcmpZ node:$LHS, node:$RHS)>>;
 defm CMNz  : AI1_cmp_irs<0b1011, "cmn",
                          IIC_iCMPi, IIC_iCMPr, IIC_iCMPsr,
                          BinOpFrag<(ARMcmpZ node:$LHS,(ineg node:$RHS))>>;

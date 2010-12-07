@@ -920,28 +920,12 @@ def tCMPi8 : T1pI<(outs), (ins tGPR:$Rn, i32imm:$imm8), IIC_iCMPi,
   let Inst{7-0}  = imm8;
 }
 
-def tCMPzi8 : T1pI<(outs), (ins tGPR:$Rn, i32imm:$imm8), IIC_iCMPi,
-                  "cmp", "\t$Rn, $imm8",
-                  [(ARMcmpZ tGPR:$Rn, imm0_255:$imm8)]>,
-              T1General<{1,0,1,?,?}> {
-  // A8.6.35
-  bits<3> Rn;
-  bits<8> imm8;
-  let Inst{10-8} = Rn;
-  let Inst{7-0}  = imm8;
-}
-
 // CMP register
 def tCMPr :                     // A8.6.36 T1
   T1pIDPEncode<0b1010, (outs), (ins tGPR:$Rn, tGPR:$Rm),
                IIC_iCMPr,
                "cmp", "\t$Rn, $Rm",
                [(ARMcmp tGPR:$Rn, tGPR:$Rm)]>;
-
-def tCMPzr :                    // A8.6.36 T1
-  T1pIDPEncode<0b1010, (outs), (ins tGPR:$Rn, tGPR:$Rm), IIC_iCMPr,
-               "cmp", "\t$Rn, $Rm",
-               [(ARMcmpZ tGPR:$Rn, tGPR:$Rm)]>;
 
 def tCMPhir : T1pI<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_iCMPr,
                    "cmp", "\t$Rn, $Rm", []>,
@@ -953,17 +937,6 @@ def tCMPhir : T1pI<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_iCMPr,
   let Inst{6-3} = Rm;
   let Inst{2-0} = Rn{2-0};
 }
-def tCMPzhir : T1pI<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_iCMPr,
-                    "cmp", "\t$Rn, $Rm", []>,
-               T1Special<{0,1,?,?}> {
-  // A8.6.36 T2
-  bits<4> Rm;
-  bits<4> Rn;
-  let Inst{7}   = Rn{3};
-  let Inst{6-3} = Rm;
-  let Inst{2-0} = Rn{2-0};
-}
-
 } // isCompare = 1, Defs = [CPSR]
 
 
@@ -1318,6 +1291,12 @@ def tInt_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
+
+// Comparisons
+def : T1Pat<(ARMcmpZ tGPR:$Rn, imm0_255:$imm8),
+            (tCMPi8  tGPR:$Rn, imm0_255:$imm8)>;
+def : T1Pat<(ARMcmpZ tGPR:$Rn, tGPR:$Rm),
+            (tCMPr   tGPR:$Rn, tGPR:$Rm)>;
 
 // Add with carry
 def : T1Pat<(addc   tGPR:$lhs, imm0_7:$rhs),
