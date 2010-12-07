@@ -5,6 +5,7 @@
 ; CHECK: {{^1$}}
 ; CHECK: {{^0$}}
 ; XFAIL: vg_leak
+; REQUIRES: shell
 
 ; Test that the error handling when writing to stderr fails exits the
 ; program cleanly rather than aborting.
