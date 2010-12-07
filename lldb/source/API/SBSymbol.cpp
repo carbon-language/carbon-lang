@@ -41,10 +41,15 @@ SBSymbol::operator = (const SBSymbol &rhs)
     return *this;
 }
 
-
 SBSymbol::~SBSymbol ()
 {
     m_opaque_ptr = NULL;
+}
+
+void
+SBSymbol::SetSymbol (lldb_private::Symbol *lldb_object_ptr)
+{
+    m_opaque_ptr = lldb_object_ptr;
 }
 
 bool

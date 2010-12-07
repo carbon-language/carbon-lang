@@ -59,6 +59,12 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+    size_t
+    GetNumSymbols ();
+    
+    SBSymbol
+    GetSymbolAtIndex (size_t idx);
+
 private:
     friend class SBSymbolContext;
     friend class SBTarget;

@@ -181,3 +181,36 @@ SBModule::GetDescription (SBStream &description)
 
     return true;
 }
+
+size_t
+SBModule::GetNumSymbols ()
+{
+    if (m_opaque_sp)
+    {
+        ObjectFile *obj_file = m_opaque_sp->GetObjectFile();
+        if (obj_file)
+        {
+            Symtab *symtab = obj_file->GetSymtab();
+            if (symtab)
+                return symtab->GetNumSymbols();
+        }
+    }
+    return 0;
+}
+
+SBSymbol
+SBModule::GetSymbolAtIndex (size_t idx)
+{
+    SBSymbol sb_symbol;
+    if (m_opaque_sp)
+    {
+        ObjectFile *obj_file = m_opaque_sp->GetObjectFile();
+        if (obj_file)
+        {
+            Symtab *symtab = obj_file->GetSymtab();
+            if (symtab)
+                sb_symbol.SetSymbol(symtab->SymbolAtIndex (idx));
+        }
+    }
+    return sb_symbol;
+}

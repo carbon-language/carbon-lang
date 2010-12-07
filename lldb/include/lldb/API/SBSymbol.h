@@ -62,9 +62,13 @@ protected:
     
 private:
     friend class SBFrame;
+    friend class SBModule;
     friend class SBSymbolContext;
 
     SBSymbol (lldb_private::Symbol *lldb_object_ptr);
+    
+    void
+    SetSymbol (lldb_private::Symbol *lldb_object_ptr);
 
     lldb_private::Symbol *m_opaque_ptr;
 };
