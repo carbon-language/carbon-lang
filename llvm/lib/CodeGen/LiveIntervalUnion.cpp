@@ -21,96 +21,48 @@
 #include <algorithm>
 using namespace llvm;
 
-// Find the first segment in the range [SegBegin,Segments.end()) that
-// intersects with LS. If no intersection is found, return the first SI
-// such that SI.start >= LS.End.
-//
-// This logic is tied to the underlying LiveSegments data structure. For now, we
-// use set::upper_bound to find the nearest starting position,
-// then reverse iterate to find the first overlap.
-//
-// Upon entry we have SegBegin.Start < LS.End
-// SegBegin   |--...
-//             \   .
-//       LS ...-|
-//
-// After set::upper_bound, we have SI.start >= LS.start:
-// SI   |--...
-//     /
-// LS |--...
-//
-// Assuming intervals are disjoint, if an intersection exists, it must be the
-// segment found or the one immediately preceeding it. We continue reverse
-// iterating to return the first overlapping segment.
-LiveIntervalUnion::SegmentIter
-LiveIntervalUnion::upperBound(SegmentIter SegBegin,
-                              const LiveSegment &LS) {
-  assert(LS.End > SegBegin->Start && "segment iterator precondition");
-
-  // Get the next LIU segment such that segI->Start is not less than seg.Start
-  //
-  // FIXME: Once we have a B+tree, we can make good use of SegBegin as a hint to
-  // upper_bound. For now, we're forced to search again from the root each time.
-  SegmentIter SI = Segments.upper_bound(LS);
-  while (SI != SegBegin) {
-    --SI;
-    if (LS.Start >= SI->End)
-      return ++SI;
-  }
-  return SI;
-}
 
 // Merge a LiveInterval's segments. Guarantee no overlaps.
-//
-// After implementing B+tree, segments will be coalesced.
 void LiveIntervalUnion::unify(LiveInterval &VirtReg) {
+  if (VirtReg.empty())
+    return;
 
   // Insert each of the virtual register's live segments into the map.
-  SegmentIter SegPos = Segments.begin();
-  for (LiveInterval::iterator VirtRegI = VirtReg.begin(),
-         VirtRegEnd = VirtReg.end();
-       VirtRegI != VirtRegEnd; ++VirtRegI ) {
+  LiveInterval::iterator RegPos = VirtReg.begin();
+  LiveInterval::iterator RegEnd = VirtReg.end();
+  SegmentIter SegPos = Segments.find(RegPos->start);
 
-    LiveSegment Seg(*VirtRegI, &VirtReg);
-    SegPos = Segments.insert(SegPos, Seg);
-
-    assert(*SegPos == Seg && "need equal val for equal key");
-#ifndef NDEBUG
-    // Check for overlap (inductively).
-    if (SegPos != Segments.begin()) {
-      assert(llvm::prior(SegPos)->End <= Seg.Start && "overlapping segments" );
-    }
-    SegmentIter NextPos = llvm::next(SegPos);
-    if (NextPos != Segments.end())
-      assert(Seg.End <= NextPos->Start && "overlapping segments" );
-#endif // NDEBUG
+  for (;;) {
+    SegPos.insert(RegPos->start, RegPos->end, &VirtReg);
+    if (++RegPos == RegEnd)
+      return;
+    SegPos.advanceTo(RegPos->start);
   }
 }
 
 // Remove a live virtual register's segments from this union.
-void LiveIntervalUnion::extract(const LiveInterval &VirtReg) {
+void LiveIntervalUnion::extract(LiveInterval &VirtReg) {
+  if (VirtReg.empty())
+    return;
 
   // Remove each of the virtual register's live segments from the map.
-  SegmentIter SegPos = Segments.begin();
-  for (LiveInterval::const_iterator VirtRegI = VirtReg.begin(),
-         VirtRegEnd = VirtReg.end();
-       VirtRegI != VirtRegEnd; ++VirtRegI) {
+  LiveInterval::iterator RegPos = VirtReg.begin();
+  LiveInterval::iterator RegEnd = VirtReg.end();
+  SegmentIter SegPos = Segments.find(RegPos->start);
 
-    LiveSegment Seg(*VirtRegI, const_cast<LiveInterval*>(&VirtReg));
-    SegPos = upperBound(SegPos, Seg);
-    assert(SegPos != Segments.end() && "missing VirtReg segment");
+  for (;;) {
+    assert(SegPos.value() == &VirtReg && "Inconsistent LiveInterval");
+    SegPos.erase();
+    if (!SegPos.valid())
+      return;
 
-    Segments.erase(SegPos++);
+    // Skip all segments that may have been coalesced.
+    RegPos = VirtReg.advanceTo(RegPos, SegPos.start());
+    if (RegPos == RegEnd)
+      return;
+
+    SegPos.advanceTo(RegPos->start);
   }
-}
-
-raw_ostream& llvm::operator<<(raw_ostream& OS, const LiveSegment &LS) {
-  return OS << '[' << LS.Start << ',' << LS.End << ':' <<
-    LS.VirtReg->reg << ")";
-}
-
-void LiveSegment::dump() const {
-  dbgs() << *this << "\n";
 }
 
 void
@@ -122,10 +74,9 @@ LiveIntervalUnion::print(raw_ostream &OS,
   else {
     OS << RepReg;
   }
-  for (LiveSegments::const_iterator SI = Segments.begin(),
-         SegEnd = Segments.end(); SI != SegEnd; ++SI) {
-    dbgs() << " " << *SI;
-  }
+  for (LiveSegments::const_iterator SI = Segments.begin(); SI.valid(); ++SI)
+    dbgs() << " [" << SI.start() << ' ' << SI.stop() << "):%reg"
+           << SI.value()->reg;
   OS << "\n";
 }
 
@@ -136,14 +87,8 @@ void LiveIntervalUnion::dump(const AbstractRegisterDescription *RegDesc) const {
 #ifndef NDEBUG
 // Verify the live intervals in this union and add them to the visited set.
 void LiveIntervalUnion::verify(LiveVirtRegBitSet& VisitedVRegs) {
-  SegmentIter SI = Segments.begin();
-  SegmentIter SegEnd = Segments.end();
-  if (SI == SegEnd) return;
-  VisitedVRegs.set(SI->VirtReg->reg);
-  for (++SI; SI != SegEnd; ++SI) {
-    VisitedVRegs.set(SI->VirtReg->reg);
-    assert(llvm::prior(SI)->End <= SI->Start && "overlapping segments" );
-  }
+  for (SegmentIter SI = Segments.begin(); SI.valid(); ++SI)
+    VisitedVRegs.set(SI.value()->reg);
 }
 #endif //!NDEBUG
 
@@ -169,36 +114,30 @@ void LiveIntervalUnion::Query::findIntersection(InterferenceResult &IR) const {
 
   // Search until reaching the end of the LiveUnion segments.
   LiveInterval::iterator VirtRegEnd = VirtReg->end();
-  SegmentIter LiveUnionEnd = LiveUnion->end();
-  while (IR.LiveUnionI != LiveUnionEnd) {
-
+  while (IR.LiveUnionI.valid()) {
     // Slowly advance the live virtual reg iterator until we surpass the next
     // segment in LiveUnion.
     //
     // Note: If this is ever used for coalescing of fixed registers and we have
     // a live vreg with thousands of segments, then change this code to use
     // upperBound instead.
-    while (IR.VirtRegI != VirtRegEnd &&
-           IR.VirtRegI->end <= IR.LiveUnionI->Start)
-      ++IR.VirtRegI;
+    IR.VirtRegI = VirtReg->advanceTo(IR.VirtRegI, IR.LiveUnionI.start());
     if (IR.VirtRegI == VirtRegEnd)
       break; // Retain current (nonoverlapping) LiveUnionI
 
-    // VirtRegI may have advanced far beyond LiveUnionI,
-    // do a fast intersection test to "catch up"
-    LiveSegment Seg(*IR.VirtRegI, VirtReg);
-    IR.LiveUnionI = LiveUnion->upperBound(IR.LiveUnionI, Seg);
+    // VirtRegI may have advanced far beyond LiveUnionI, catch up.
+    IR.LiveUnionI.advanceTo(IR.VirtRegI->start);
 
     // Check if no LiveUnionI exists with VirtRegI->Start < LiveUnionI.end
-    if (IR.LiveUnionI == LiveUnionEnd)
+    if (!IR.LiveUnionI.valid())
       break;
-    if (IR.LiveUnionI->Start < IR.VirtRegI->end) {
-      assert(overlap(*IR.VirtRegI, *IR.LiveUnionI) &&
+    if (IR.LiveUnionI.start() < IR.VirtRegI->end) {
+      assert(overlap(*IR.VirtRegI, IR.LiveUnionI) &&
              "upperBound postcondition");
       break;
     }
   }
-  if (IR.LiveUnionI == LiveUnionEnd)
+  if (!IR.LiveUnionI.valid())
     IR.VirtRegI = VirtRegEnd;
 }
 
@@ -221,18 +160,18 @@ bool LiveIntervalUnion::Query::nextInterference(InterferenceResult &IR) const {
 
   // Advance either the VirtReg or LiveUnion segment to ensure that we visit all
   // unique overlapping pairs.
-  if (IR.VirtRegI->end < IR.LiveUnionI->End) {
+  if (IR.VirtRegI->end < IR.LiveUnionI.stop()) {
     if (++IR.VirtRegI == VirtReg->end())
       return false;
   }
   else {
-    if (++IR.LiveUnionI == LiveUnion->end()) {
+    if (!(++IR.LiveUnionI).valid()) {
       IR.VirtRegI = VirtReg->end();
       return false;
     }
   }
   // Short-circuit findIntersection() if possible.
-  if (overlap(*IR.VirtRegI, *IR.LiveUnionI))
+  if (overlap(*IR.VirtRegI, IR.LiveUnionI))
     return true;
 
   // Find the next intersection.
@@ -261,55 +200,47 @@ unsigned LiveIntervalUnion::Query::
 collectInterferingVRegs(unsigned MaxInterferingRegs) {
   InterferenceResult IR = firstInterference();
   LiveInterval::iterator VirtRegEnd = VirtReg->end();
-  SegmentIter LiveUnionEnd = LiveUnion->end();
   LiveInterval *RecentInterferingVReg = NULL;
-  while (IR.LiveUnionI != LiveUnionEnd) {
+  while (IR.LiveUnionI.valid()) {
     // Advance the union's iterator to reach an unseen interfering vreg.
     do {
-      if (IR.LiveUnionI->VirtReg == RecentInterferingVReg)
+      if (IR.LiveUnionI.value() == RecentInterferingVReg)
         continue;
 
-      if (!isSeenInterference(IR.LiveUnionI->VirtReg))
+      if (!isSeenInterference(IR.LiveUnionI.value()))
         break;
 
       // Cache the most recent interfering vreg to bypass isSeenInterference.
-      RecentInterferingVReg = IR.LiveUnionI->VirtReg;
+      RecentInterferingVReg = IR.LiveUnionI.value();
 
-    } while( ++IR.LiveUnionI != LiveUnionEnd);
-    if (IR.LiveUnionI == LiveUnionEnd)
+    } while ((++IR.LiveUnionI).valid());
+    if (!IR.LiveUnionI.valid())
       break;
 
     // Advance the VirtReg iterator until surpassing the next segment in
     // LiveUnion.
-    //
-    // Note: If this is ever used for coalescing of fixed registers and we have
-    // a live virtual register with thousands of segments, then use upperBound
-    // instead.
-    while (IR.VirtRegI != VirtRegEnd &&
-           IR.VirtRegI->end <= IR.LiveUnionI->Start)
-      ++IR.VirtRegI;
+    IR.VirtRegI = VirtReg->advanceTo(IR.VirtRegI, IR.LiveUnionI.start());
     if (IR.VirtRegI == VirtRegEnd)
       break;
 
     // Check for intersection with the union's segment.
-    if (overlap(*IR.VirtRegI, *IR.LiveUnionI)) {
+    if (overlap(*IR.VirtRegI, IR.LiveUnionI)) {
 
-      if (!IR.LiveUnionI->VirtReg->isSpillable())
+      if (!IR.LiveUnionI.value()->isSpillable())
         SeenUnspillableVReg = true;
 
-      InterferingVRegs.push_back(IR.LiveUnionI->VirtReg);
+      InterferingVRegs.push_back(IR.LiveUnionI.value());
       if (InterferingVRegs.size() == MaxInterferingRegs)
         return MaxInterferingRegs;
 
       // Cache the most recent interfering vreg to bypass isSeenInterference.
-      RecentInterferingVReg = IR.LiveUnionI->VirtReg;
+      RecentInterferingVReg = IR.LiveUnionI.value();
       ++IR.LiveUnionI;
       continue;
     }
     // VirtRegI may have advanced far beyond LiveUnionI,
     // do a fast intersection test to "catch up"
-    LiveSegment Seg(*IR.VirtRegI, VirtReg);
-    IR.LiveUnionI = LiveUnion->upperBound(IR.LiveUnionI, Seg);
+    IR.LiveUnionI.advanceTo(IR.VirtRegI->start);
   }
   SeenAllInterferences = true;
   return InterferingVRegs.size();

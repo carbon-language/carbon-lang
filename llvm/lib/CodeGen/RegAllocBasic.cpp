@@ -19,6 +19,7 @@
 #include "Spiller.h"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Function.h"
 #include "llvm/PassAnalysisSupport.h"
@@ -44,6 +45,7 @@
 
 #include <vector>
 #include <queue>
+#include <cstdlib>
 
 using namespace llvm;
 
@@ -198,12 +200,13 @@ void RegAllocBase::verify() {
 //===----------------------------------------------------------------------===//
 
 // Instantiate a LiveIntervalUnion for each physical register.
-void RegAllocBase::LiveUnionArray::init(unsigned NRegs) {
-  Array.reset(new LiveIntervalUnion[NRegs]);
+void RegAllocBase::LiveUnionArray::init(LiveIntervalUnion::Allocator &allocator,
+                                        unsigned NRegs) {
   NumRegs = NRegs;
-  for (unsigned RegNum = 0; RegNum < NRegs; ++RegNum) {
-    Array[RegNum].init(RegNum);
-  }
+  Array =
+    static_cast<LiveIntervalUnion*>(malloc(sizeof(LiveIntervalUnion)*NRegs));
+  for (unsigned r = 0; r != NRegs; ++r)
+    new(Array + r) LiveIntervalUnion(r, allocator);
 }
 
 void RegAllocBase::init(const TargetRegisterInfo &tri, VirtRegMap &vrm,
@@ -211,14 +214,19 @@ void RegAllocBase::init(const TargetRegisterInfo &tri, VirtRegMap &vrm,
   TRI = &tri;
   VRM = &vrm;
   LIS = &lis;
-  PhysReg2LiveUnion.init(TRI->getNumRegs());
+  PhysReg2LiveUnion.init(UnionAllocator, TRI->getNumRegs());
   // Cache an interferece query for each physical reg
   Queries.reset(new LiveIntervalUnion::Query[PhysReg2LiveUnion.numRegs()]);
 }
 
 void RegAllocBase::LiveUnionArray::clear() {
+  if (!Array)
+    return;
+  for (unsigned r = 0; r != NumRegs; ++r)
+    Array[r].~LiveIntervalUnion();
+  free(Array);
   NumRegs =  0;
-  Array.reset(0);
+  Array = 0;
 }
 
 void RegAllocBase::releaseMemory() {
@@ -427,7 +435,7 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
       return PhysReg;
     }
     LiveInterval *interferingVirtReg =
-      Queries[interfReg].firstInterference().liveUnionPos()->VirtReg;
+      Queries[interfReg].firstInterference().liveUnionPos().value();
 
     // The current VirtReg must either spillable, or one of its interferences
     // must have less spill weight.
@@ -474,7 +482,7 @@ void RABasic::addMBBLiveIns() {
 
       // Find the set of basic blocks which this range is live into...
       liveInMBBs.clear();
-      if (!LIS->findLiveInMBBs(SI->Start, SI->End, liveInMBBs)) continue;
+      if (!LIS->findLiveInMBBs(SI.start(), SI.stop(), liveInMBBs)) continue;
 
       // And add the physreg for this interval to their live-in sets.
       for (MBBVec::iterator I = liveInMBBs.begin(), E = liveInMBBs.end();

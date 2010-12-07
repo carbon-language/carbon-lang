@@ -38,6 +38,7 @@
 #define LLVM_CODEGEN_REGALLOCBASE
 
 #include "llvm/ADT/OwningPtr.h"
+#include "LiveIntervalUnion.h"
 
 namespace llvm {
 
@@ -69,17 +70,19 @@ class LiveVirtRegQueue;
 /// live range splitting. LessSpillWeightPriority is provided as a standard
 /// comparator, but we may add an interface to override it if necessary.
 class RegAllocBase {
+  LiveIntervalUnion::Allocator UnionAllocator;
 protected:
   // Array of LiveIntervalUnions indexed by physical register.
   class LiveUnionArray {
     unsigned NumRegs;
-    OwningArrayPtr<LiveIntervalUnion> Array;
+    LiveIntervalUnion *Array;
   public:
-    LiveUnionArray(): NumRegs(0) {}
+    LiveUnionArray(): NumRegs(0), Array(0) {}
+    ~LiveUnionArray() { clear(); }
 
     unsigned numRegs() const { return NumRegs; }
 
-    void init(unsigned NRegs);
+    void init(LiveIntervalUnion::Allocator &, unsigned NRegs);
 
     void clear();
 

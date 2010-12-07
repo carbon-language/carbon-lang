@@ -17,8 +17,8 @@
 #ifndef LLVM_CODEGEN_LIVEINTERVALUNION
 #define LLVM_CODEGEN_LIVEINTERVALUNION
 
+#include "llvm/ADT/IntervalMap.h"
 #include "llvm/CodeGen/LiveInterval.h"
-#include <set>
 
 namespace llvm {
 
@@ -28,64 +28,19 @@ template <unsigned Element> class SparseBitVector;
 typedef SparseBitVector<128> LiveVirtRegBitSet;
 #endif
 
-/// A LiveSegment is a copy of a LiveRange object used within
-/// LiveIntervalUnion. LiveSegment additionally contains a pointer to its
-/// original live virtual register (LiveInterval). This allows quick lookup of
-/// the live virtual register as we iterate over live segments in a union. Note
-/// that LiveRange is misnamed and actually represents only a single contiguous
-/// interval within a virtual register's liveness. To limit confusion, in this
-/// file we refer it as a live segment.
-///
-/// Note: This currently represents a half-open interval [Start,End).
-/// If LiveRange is modified to represent a closed interval, so should this.
-struct LiveSegment {
-  SlotIndex Start;
-  SlotIndex End;
-  LiveInterval *VirtReg;
-
-  LiveSegment(const LiveRange& LR, LiveInterval *VReg)
-    : Start(LR.start), End(LR.end), VirtReg(VReg) {}
-
-  bool operator==(const LiveSegment &LS) const {
-    return Start == LS.Start && End == LS.End && VirtReg == LS.VirtReg;
-  }
-
-  bool operator!=(const LiveSegment &LS) const {
-    return !operator==(LS);
-  }
-
-  // Order segments by starting point only--we expect them to be disjoint.
-  bool operator<(const LiveSegment &LS) const { return Start < LS.Start; }
-
-  void dump() const;
-  void print(raw_ostream &OS) const;
-};
-
-inline bool operator<(SlotIndex Idx, const LiveSegment &LS) {
-  return Idx < LS.Start;
-}
-
-inline bool operator<(const LiveSegment &LS, SlotIndex Idx) {
-  return LS.Start < Idx;
-}
-
-/// Compare a live virtual register segment to a LiveIntervalUnion segment.
-inline bool overlap(const LiveRange &VirtRegSegment,
-                    const LiveSegment &LiveUnionSegment) {
-  return VirtRegSegment.start < LiveUnionSegment.End &&
-    LiveUnionSegment.Start < VirtRegSegment.end;
-}
-
-template <> struct isPodLike<LiveSegment> { static const bool value = true; };
-
-raw_ostream& operator<<(raw_ostream& OS, const LiveSegment &LS);
-
 /// Abstraction to provide info for the representative register.
 class AbstractRegisterDescription {
 public:
   virtual const char *getName(unsigned Reg) const = 0;
   virtual ~AbstractRegisterDescription() {}
 };
+
+/// Compare a live virtual register segment to a LiveIntervalUnion segment.
+inline bool
+overlap(const LiveRange &VRSeg,
+        const IntervalMap<SlotIndex, LiveInterval*>::const_iterator &LUSeg) {
+  return VRSeg.start < LUSeg.stop() && LUSeg.start() < VRSeg.end;
+}
 
 /// Union of live intervals that are strong candidates for coalescing into a
 /// single register (either physical or virtual depending on the context).  We
@@ -94,10 +49,8 @@ public:
 class LiveIntervalUnion {
   // A set of live virtual register segments that supports fast insertion,
   // intersection, and removal.
-  //
-  // FIXME: std::set is a placeholder until we decide how to
-  // efficiently represent it. Probably need to roll our own B-tree.
-  typedef std::set<LiveSegment> LiveSegments;
+  // Mapping SlotIndex intervals to virtual register numbers.
+  typedef IntervalMap<SlotIndex, LiveInterval*> LiveSegments;
 
 public:
   // SegmentIter can advance to the next segment ordered by starting position
@@ -105,36 +58,29 @@ public:
   // to reach the current segment's containing virtual register.
   typedef LiveSegments::iterator SegmentIter;
 
+  // LiveIntervalUnions share an external allocator.
+  typedef LiveSegments::Allocator Allocator;
+
   class InterferenceResult;
   class Query;
 
 private:
-  unsigned RepReg;        // representative register number
-  LiveSegments Segments;  // union of virtual reg segements
+  const unsigned RepReg;  // representative register number
+  LiveSegments Segments;  // union of virtual reg segments
 
 public:
-  // default ctor avoids placement new
-  LiveIntervalUnion() : RepReg(0) {}
-
-  // Initialize the union by associating it with a representative register
-  // number.
-  void init(unsigned Reg) { RepReg = Reg; }
+  LiveIntervalUnion(unsigned r, Allocator &a) : RepReg(r), Segments(a) {}
 
   // Iterate over all segments in the union of live virtual registers ordered
   // by their starting position.
   SegmentIter begin() { return Segments.begin(); }
   SegmentIter end() { return Segments.end(); }
 
-  // Return an iterator to the first segment after or including begin that
-  // intersects with LS.
-  SegmentIter upperBound(SegmentIter SegBegin, const LiveSegment &LS);
-
   // Add a live virtual register to this union and merge its segments.
-  // Holds a nonconst reference to the VirtReg for later maniplution.
   void unify(LiveInterval &VirtReg);
 
   // Remove a live virtual register's segments from this union.
-  void extract(const LiveInterval &VirtReg);
+  void extract(LiveInterval &VirtReg);
 
   void dump(const AbstractRegisterDescription *RegDesc) const;
 
@@ -171,7 +117,7 @@ public:
     LiveInterval::iterator virtRegPos() const { return VirtRegI; }
 
     // Access the LiveUnion segment.
-    SegmentIter liveUnionPos() const { return LiveUnionI; }
+    const SegmentIter &liveUnionPos() const { return LiveUnionI; }
 
     bool operator==(const InterferenceResult &IR) const {
       return VirtRegI == IR.VirtRegI && LiveUnionI == IR.LiveUnionI;
@@ -228,7 +174,7 @@ public:
 
     bool isInterference(const InterferenceResult &IR) const {
       if (IR.VirtRegI != VirtReg->end()) {
-        assert(overlap(*IR.VirtRegI, *IR.LiveUnionI) &&
+        assert(overlap(*IR.VirtRegI, IR.LiveUnionI) &&
                "invalid segment iterators");
         return true;
       }
