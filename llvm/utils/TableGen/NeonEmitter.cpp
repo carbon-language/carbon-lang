@@ -1040,47 +1040,58 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
 
+  // Emit vmovl intrinsics first so they can be used by other intrinsics.
+  emitIntrinsic(OS, Records.getDef("VMOVL"));
+
   // Unique the return+pattern types, and assign them.
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
-    std::string name = R->getValueAsString("Name");
-    std::string Proto = R->getValueAsString("Prototype");
-    std::string Types = R->getValueAsString("Types");
-
-    SmallVector<StringRef, 16> TypeVec;
-    ParseTypes(R, Types, TypeVec);
-
-    OpKind kind = OpMap[R->getValueAsDef("Operand")->getName()];
-
-    ClassKind classKind = ClassNone;
-    if (R->getSuperClasses().size() >= 2)
-      classKind = ClassMap[R->getSuperClasses()[1]];
-    if (classKind == ClassNone && kind == OpNone)
-      throw TGError(R->getLoc(), "Builtin has no class kind");
-
-    for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
-      if (kind == OpReinterpret) {
-        bool outQuad = false;
-        bool dummy = false;
-        (void)ClassifyType(TypeVec[ti], outQuad, dummy, dummy);
-        for (unsigned srcti = 0, srcte = TypeVec.size();
-             srcti != srcte; ++srcti) {
-          bool inQuad = false;
-          (void)ClassifyType(TypeVec[srcti], inQuad, dummy, dummy);
-          if (srcti == ti || inQuad != outQuad)
-            continue;
-          OS << GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[srcti],
-                             OpCast, ClassS);
-        }
-      } else {
-        OS << GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[ti],
-                           kind, classKind);
-      }
-    }
-    OS << "\n";
+    if (R->getName() != "VMOVL")
+      emitIntrinsic(OS, R);
   }
+
   OS << "#undef __ai\n\n";
   OS << "#endif /* __ARM_NEON_H */\n";
+}
+
+/// emitIntrinsic - Write out the arm_neon.h header file definitions for the
+/// intrinsics specified by record R.
+void NeonEmitter::emitIntrinsic(raw_ostream &OS, Record *R) {
+  std::string name = R->getValueAsString("Name");
+  std::string Proto = R->getValueAsString("Prototype");
+  std::string Types = R->getValueAsString("Types");
+
+  SmallVector<StringRef, 16> TypeVec;
+  ParseTypes(R, Types, TypeVec);
+
+  OpKind kind = OpMap[R->getValueAsDef("Operand")->getName()];
+
+  ClassKind classKind = ClassNone;
+  if (R->getSuperClasses().size() >= 2)
+    classKind = ClassMap[R->getSuperClasses()[1]];
+  if (classKind == ClassNone && kind == OpNone)
+    throw TGError(R->getLoc(), "Builtin has no class kind");
+
+  for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
+    if (kind == OpReinterpret) {
+      bool outQuad = false;
+      bool dummy = false;
+      (void)ClassifyType(TypeVec[ti], outQuad, dummy, dummy);
+      for (unsigned srcti = 0, srcte = TypeVec.size();
+           srcti != srcte; ++srcti) {
+        bool inQuad = false;
+        (void)ClassifyType(TypeVec[srcti], inQuad, dummy, dummy);
+        if (srcti == ti || inQuad != outQuad)
+          continue;
+        OS << GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[srcti],
+                           OpCast, ClassS);
+      }
+    } else {
+      OS << GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[ti],
+                         kind, classKind);
+    }
+  }
+  OS << "\n";
 }
 
 static unsigned RangeFromType(StringRef typestr) {

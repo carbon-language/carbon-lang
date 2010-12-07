@@ -131,6 +131,9 @@ namespace llvm {
 
     // runHeader - Emit all the __builtin prototypes used in arm_neon.h
     void runHeader(raw_ostream &o);
+
+  private:
+    void emitIntrinsic(raw_ostream &OS, Record *R);
   };
 
 } // End llvm namespace
