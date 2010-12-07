@@ -20,6 +20,7 @@
 #include "FastISelEmitter.h"
 #include "Record.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
@@ -380,9 +381,14 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
       SubRegNo,
       PhysRegInputs
     };
-    assert(!SimplePatterns[Operands][OpcodeName][VT][RetVT]
-            .count(PredicateCheck) &&
-           "Duplicate pattern!");
+    // FIXME: Source location information for the diagnostic.
+    if (SimplePatterns[Operands][OpcodeName][VT][RetVT]
+            .count(PredicateCheck)) {
+      SmallString<128> PatText;
+      raw_svector_ostream OS(PatText);
+      Pattern.SrcPattern->print(OS);
+      throw "Duplicate record: " + OS.str().str();
+    }
     SimplePatterns[Operands][OpcodeName][VT][RetVT][PredicateCheck] = Memo;
   }
 }
