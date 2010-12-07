@@ -381,14 +381,10 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
       SubRegNo,
       PhysRegInputs
     };
-    // FIXME: Source location information for the diagnostic.
     if (SimplePatterns[Operands][OpcodeName][VT][RetVT]
-            .count(PredicateCheck)) {
-      SmallString<128> PatText;
-      raw_svector_ostream OS(PatText);
-      Pattern.SrcPattern->print(OS);
-      throw "Duplicate record: " + OS.str().str();
-    }
+            .count(PredicateCheck))
+      throw TGError(Pattern.getSrcRecord()->getLoc(), "Duplicate record!");
+
     SimplePatterns[Operands][OpcodeName][VT][RetVT][PredicateCheck] = Memo;
   }
 }

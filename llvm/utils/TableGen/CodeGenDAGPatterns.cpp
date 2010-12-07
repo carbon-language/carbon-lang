@@ -2482,7 +2482,8 @@ void CodeGenDAGPatterns::ParseInstructions() {
     
     Record *Instr = II->first;
     AddPatternToMatch(I,
-                      PatternToMatch(Instr->getValueAsListInit("Predicates"),
+                      PatternToMatch(Instr,
+                                     Instr->getValueAsListInit("Predicates"),
                                      SrcPattern,
                                      TheInst.getResultPattern(),
                                      TheInst.getImpResults(),
@@ -2714,7 +2715,8 @@ void CodeGenDAGPatterns::ParsePatterns() {
 
     
     AddPatternToMatch(Pattern,
-                    PatternToMatch(CurPattern->getValueAsListInit("Predicates"),
+                    PatternToMatch(CurPattern,
+                                   CurPattern->getValueAsListInit("Predicates"),
                                    Pattern->getTree(0),
                                    Temp.getOnlyTree(), InstImpResults,
                                    CurPattern->getValueAsInt("AddedComplexity"),
@@ -3013,7 +3015,8 @@ void CodeGenDAGPatterns::GenerateVariants() {
 
       // Otherwise, add it to the list of patterns we have.
       PatternsToMatch.
-        push_back(PatternToMatch(PatternsToMatch[i].getPredicates(),
+        push_back(PatternToMatch(PatternsToMatch[i].getSrcRecord(),
+                                 PatternsToMatch[i].getPredicates(),
                                  Variant, PatternsToMatch[i].getDstPattern(),
                                  PatternsToMatch[i].getDstRegs(),
                                  PatternsToMatch[i].getAddedComplexity(),
