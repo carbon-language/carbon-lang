@@ -605,7 +605,11 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
 
           case ARM::LDRi12:
           case ARM::LDRcp:
-          case ARM::t2LDRpci:
+          case ARM::t2LDRi12:
+          case ARM::t2LDRHi12:
+          case ARM::t2LDRBi12:
+          case ARM::t2LDRSHi12:
+          case ARM::t2LDRSBi12:
             Bits = 12;  // +-offset_12
             NegOk = true;
             break;

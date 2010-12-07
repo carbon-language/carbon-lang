@@ -1777,37 +1777,6 @@ static bool DisassembleThumb2PreLoad(MCInst &MI, unsigned Opcode, uint32_t insn,
   return true;
 }
 
-// A8.6.63 LDRB (literal)
-// A8.6.79 LDRSB (literal)
-// A8.6.75 LDRH (literal)
-// A8.6.83 LDRSH (literal)
-// A8.6.59 LDR (literal)
-//
-// These instrs calculate an address from the PC value and an immediate offset.
-// Rd Rn=PC (+/-)imm12 (+ if Inst{23} == 0b1)
-static bool DisassembleThumb2Ldpci(MCInst &MI, unsigned Opcode,
-    uint32_t insn, unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
-
-  const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
-  if (!OpInfo) return false;
-
-  assert(NumOps >= 2 &&
-         OpInfo[0].RegClass == ARM::GPRRegClassID &&
-         OpInfo[1].RegClass < 0 &&
-         "Expect >= 2 operands, first as reg, and second as imm operand");
-
-  // Build the register operand, followed by the (+/-)imm12 immediate.
-
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
-                                                     decodeRd(insn))));
-
-  MI.addOperand(MCOperand::CreateImm(decodeImm12(insn)));
-
-  NumOpsAdded = 2;
-
-  return true;
-}
-
 // A6.3.10 Store single data item
 // A6.3.9 Load byte, memory hints
 // A6.3.8 Load halfword, memory hints
@@ -1842,10 +1811,6 @@ static bool DisassembleThumb2LdSt(bool Load, MCInst &MI, unsigned Opcode,
 
   if (Thumb2PreloadOpcode(Opcode))
     return DisassembleThumb2PreLoad(MI, Opcode, insn, NumOps, NumOpsAdded, B);
-
-  // See, for example, A6.3.7 Load word: Table A6-18 Load word.
-  if (Load && Rn == 15)
-    return DisassembleThumb2Ldpci(MI, Opcode, insn, NumOps, NumOpsAdded, B);
 
   const TargetInstrDesc &TID = ARMInsts[Opcode];
   const TargetOperandInfo *OpInfo = TID.OpInfo;

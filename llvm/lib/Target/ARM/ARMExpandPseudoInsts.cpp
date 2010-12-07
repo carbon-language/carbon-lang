@@ -699,16 +699,48 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       MI.eraseFromParent();
       break;
     }
+    case ARM::t2LDRHpci:
+    case ARM::t2LDRBpci:
+    case ARM::t2LDRSHpci:
+    case ARM::t2LDRSBpci:
+    case ARM::t2LDRpci: {
+      unsigned NewLdOpc;
+      if (Opcode == ARM::t2LDRpci)
+        NewLdOpc = ARM::t2LDRi12;
+      else if (Opcode == ARM::t2LDRHpci)
+        NewLdOpc = ARM::t2LDRHi12;
+      else if (Opcode == ARM::t2LDRBpci)
+        NewLdOpc = ARM::t2LDRBi12;
+      else if (Opcode == ARM::t2LDRSHpci)
+        NewLdOpc = ARM::t2LDRSHi12;
+      else if (Opcode == ARM::t2LDRSBpci)
+        NewLdOpc = ARM::t2LDRSBi12;
+      else
+        llvm_unreachable("Not a known opcode?");
+
+      unsigned DstReg = MI.getOperand(0).getReg();
+      MachineInstrBuilder MIB =
+        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                               TII->get(NewLdOpc), DstReg)
+                .addReg(ARM::PC)
+                .addOperand(MI.getOperand(1)));
+      (*MIB).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+      TransferImpOps(MI, MIB, MIB);
+      MI.eraseFromParent();
+      break;
+    }
     case ARM::tLDRpci_pic:
     case ARM::t2LDRpci_pic: {
       unsigned NewLdOpc = (Opcode == ARM::tLDRpci_pic)
-        ? ARM::tLDRpci : ARM::t2LDRpci;
+        ? ARM::tLDRpci : ARM::t2LDRi12;
       unsigned DstReg = MI.getOperand(0).getReg();
       bool DstIsDead = MI.getOperand(0).isDead();
       MachineInstrBuilder MIB1 =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(NewLdOpc), DstReg)
-                       .addOperand(MI.getOperand(1)));
+        BuildMI(MBB, MBBI, MI.getDebugLoc(),
+        TII->get(NewLdOpc), DstReg);
+      if (Opcode == ARM::t2LDRpci_pic) MIB1.addReg(ARM::PC);
+      MIB1.addOperand(MI.getOperand(1));
+      AddDefaultPred(MIB1);
       (*MIB1).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       MachineInstrBuilder MIB2 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                          TII->get(ARM::tPICADD))

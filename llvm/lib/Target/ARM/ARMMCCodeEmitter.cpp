@@ -462,13 +462,18 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
   bool isAdd = true;
   // If The first operand isn't a register, we have a label reference.
   const MCOperand &MO = MI.getOperand(OpIdx);
-  if (!MO.isReg()) {
+  const MCOperand &MO2 = MI.getOperand(OpIdx+1);
+  if (!MO.isReg() || (MO.getReg() == ARM::PC && MO2.isExpr())) {
     Reg = getARMRegisterNumbering(ARM::PC);   // Rn is PC.
     Imm12 = 0;
     isAdd = false ; // 'U' bit is set as part of the fixup.
 
-    assert(MO.isExpr() && "Unexpected machine operand type!");
-    const MCExpr *Expr = MO.getExpr();
+    const MCExpr *Expr = 0;
+    if (!MO.isReg())
+      Expr = MO.getExpr();
+    else
+      Expr = MO2.getExpr();
+    
     MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_ldst_pcrel_12);
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 

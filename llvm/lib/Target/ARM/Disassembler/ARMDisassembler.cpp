@@ -256,27 +256,27 @@ static unsigned T2Morph2LoadLiteral(unsigned Opcode) {
   case ARM::t2LDR_POST:   case ARM::t2LDR_PRE:
   case ARM::t2LDRi12:     case ARM::t2LDRi8:
   case ARM::t2LDRs:       case ARM::t2LDRT:
-    return ARM::t2LDRpci;
+    return ARM::t2LDRi12;
 
   case ARM::t2LDRB_POST:  case ARM::t2LDRB_PRE:
   case ARM::t2LDRBi12:    case ARM::t2LDRBi8:
   case ARM::t2LDRBs:      case ARM::t2LDRBT:
-    return ARM::t2LDRBpci;
+    return ARM::t2LDRBi12;
 
   case ARM::t2LDRH_POST:  case ARM::t2LDRH_PRE:
   case ARM::t2LDRHi12:    case ARM::t2LDRHi8:
   case ARM::t2LDRHs:      case ARM::t2LDRHT:
-    return ARM::t2LDRHpci;
+    return ARM::t2LDRHi12;
 
   case ARM::t2LDRSB_POST:  case ARM::t2LDRSB_PRE:
   case ARM::t2LDRSBi12:    case ARM::t2LDRSBi8:
   case ARM::t2LDRSBs:      case ARM::t2LDRSBT:
-    return ARM::t2LDRSBpci;
+    return ARM::t2LDRSBi12;
 
   case ARM::t2LDRSH_POST:  case ARM::t2LDRSH_PRE:
   case ARM::t2LDRSHi12:    case ARM::t2LDRSHi8:
   case ARM::t2LDRSHs:      case ARM::t2LDRSHT:
-    return ARM::t2LDRSHpci;
+    return ARM::t2LDRSHi12;
   }
 }
 

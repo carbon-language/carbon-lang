@@ -560,6 +560,9 @@ void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
   if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, OpNum, O);
     return;
+  } else if (MO1.getReg() == ARM::PC && MO2.isExpr()) {
+    printOperand(MI, OpNum+1, O);
+    return;
   }
 
   O << "[" << getRegisterName(MO1.getReg());
