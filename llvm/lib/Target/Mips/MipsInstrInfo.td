@@ -52,9 +52,6 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
 // Select Condition Code
 def MipsSelectCC  : SDNode<"MipsISD::SelectCC", SDT_MipsSelectCC>;
 
-// Conditional Move
-def MipsCMov      : SDNode<"MipsISD::CMov", SDT_MipsCMov>;
-
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
@@ -306,8 +303,7 @@ class ByteSwap<bits<6> func, string instr_asm>:
 class CondMov<bits<6> func, string instr_asm, PatLeaf MovCode>:
   FR<0x00, func, (outs CPURegs:$dst), (ins CPURegs:$F, CPURegs:$T,
      CPURegs:$cond), !strconcat(instr_asm, "\t$dst, $T, $cond"),
-     [(set CPURegs:$dst, (MipsCMov CPURegs:$F, CPURegs:$T,
-                          CPURegs:$cond, MovCode))], NoItinerary>;
+     [], NoItinerary>;
 
 //===----------------------------------------------------------------------===//
 // Pseudo instructions

@@ -40,9 +40,6 @@ namespace llvm {
       // Handle gp_rel (small data/bss sections) relocation.
       GPRel,
 
-      // Conditional Move
-      CMov,
-
       // Select CC Pseudo Instruction
       SelectCC,
 

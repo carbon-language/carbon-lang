@@ -41,7 +41,6 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
     case MipsISD::Lo         : return "MipsISD::Lo";
     case MipsISD::GPRel      : return "MipsISD::GPRel";
     case MipsISD::Ret        : return "MipsISD::Ret";
-    case MipsISD::CMov       : return "MipsISD::CMov";
     case MipsISD::SelectCC   : return "MipsISD::SelectCC";
     case MipsISD::FPSelectCC : return "MipsISD::FPSelectCC";
     case MipsISD::FPBrcond   : return "MipsISD::FPBrcond";
