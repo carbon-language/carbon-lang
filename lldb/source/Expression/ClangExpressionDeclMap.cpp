@@ -37,6 +37,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace lldb;
@@ -65,7 +66,9 @@ void ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx)
     
     if (exe_ctx.frame)
         m_parser_vars->m_sym_ctx = exe_ctx.frame->GetSymbolContext(lldb::eSymbolContextEverything);
-    
+    else if (exe_ctx.thread)
+        m_parser_vars->m_sym_ctx = exe_ctx.thread->GetStackFrameAtIndex(0)->GetSymbolContext(lldb::eSymbolContextEverything);
+            
     if (exe_ctx.process)
         m_parser_vars->m_persistent_vars = &exe_ctx.process->GetPersistentVariables();
 }
@@ -313,7 +316,9 @@ ClangExpressionDeclMap::GetFunctionAddress
     assert (m_parser_vars.get());
     
     // Back out in all cases where we're not fully initialized
-    if (m_parser_vars->m_exe_ctx->frame == NULL)
+    if (m_parser_vars->m_exe_ctx->target == NULL)
+        return false;
+    if (!m_parser_vars->m_sym_ctx.target_sp)
         return false;
 
     SymbolContextList sc_list;
