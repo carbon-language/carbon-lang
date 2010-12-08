@@ -208,6 +208,8 @@ public:
 
     bool matched;
 
+    constexpr sub_match();
+
     difference_type length() const;
     operator string_type() const;
     string_type str() const;
@@ -451,6 +453,8 @@ public:
     match_results& operator=(const match_results& m);
     match_results& operator=(match_results&& m);
     ~match_results();
+
+    bool ready() const;
 
     // size:
     size_type size() const;
@@ -4684,6 +4688,9 @@ public:
     bool matched;
 
     _LIBCPP_INLINE_VISIBILITY
+    /*constexpr*/ sub_match() : matched() {}
+
+    _LIBCPP_INLINE_VISIBILITY
     difference_type length() const
         {return matched ? _STD::distance(this->first, this->second) : 0;}
     _LIBCPP_INLINE_VISIBILITY
@@ -5104,6 +5111,7 @@ private:
     value_type __unmatched_;
     value_type __prefix_;
     value_type __suffix_;
+    bool       __ready_;
 public:
     _BidirectionalIterator __position_start_;
     typedef const value_type&                                 const_reference;
@@ -5122,6 +5130,9 @@ public:
 //    match_results(match_results&& __m) = default;
 //    match_results& operator=(match_results&& __m) = default;
 //    ~match_results() = default;
+
+    _LIBCPP_INLINE_VISIBILITY
+    bool ready() const {return __ready_;}
 
     // size:
     _LIBCPP_INLINE_VISIBILITY
@@ -5224,6 +5235,7 @@ public:
         __suffix_.matched = __m.suffix().matched;
         if (!__no_update_pos)
             __position_start_ = __prefix_.first;
+        __ready_ = __m.ready();
     }
 
 private:
@@ -5254,7 +5266,8 @@ match_results<_BidirectionalIterator, _Allocator>::match_results(
       __unmatched_(),
       __prefix_(),
       __suffix_(),
-      __position_start_()
+      __position_start_(),
+      __ready_(false)
 {
 }
 
@@ -5274,6 +5287,7 @@ match_results<_BidirectionalIterator, _Allocator>::__init(unsigned __s,
     __suffix_ = __unmatched_;
     if (!__no_update_pos)
         __position_start_ = __prefix_.first;
+    __ready_ = true;
 }
 
 template <class _BidirectionalIterator, class _Allocator>
@@ -5379,6 +5393,7 @@ match_results<_BidirectionalIterator, _Allocator>::swap(match_results& __m)
     swap(__prefix_, __m.__prefix_);
     swap(__suffix_, __m.__suffix_);
     swap(__position_start_, __m.__position_start_);
+    swap(__ready_, __m.__ready_);
 }
 
 typedef match_results<const char*>             cmatch;
@@ -5391,10 +5406,13 @@ bool
 operator==(const match_results<_BidirectionalIterator, _Allocator>& __x,
            const match_results<_BidirectionalIterator, _Allocator>& __y)
 {
+    if (__x.__ready_ != __y.__ready_)
+        return false;
+    if (!__x.__ready_)
+        return true;
     return __x.__matches_ == __y.__matches_ &&
            __x.__prefix_ == __y.__prefix_ &&
-           __x.__suffix_ == __y.__suffix_ &&
-           __x.__position_start_ == __y.__position_start_;
+           __x.__suffix_ == __y.__suffix_;
 }
 
 template <class _BidirectionalIterator, class _Allocator>
