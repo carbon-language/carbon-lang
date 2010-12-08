@@ -866,7 +866,6 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::ParenListExprClass:
     case Stmt::PredefinedExprClass:
     case Stmt::ShuffleVectorExprClass:
-    case Stmt::TypesCompatibleExprClass:
     case Stmt::VAArgExprClass:
         // Fall through.
 

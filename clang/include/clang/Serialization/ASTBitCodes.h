@@ -826,8 +826,6 @@ namespace clang {
       EXPR_ADDR_LABEL,
       /// \brief A StmtExpr record.
       EXPR_STMT,
-      /// \brief A TypesCompatibleExpr record.
-      EXPR_TYPES_COMPATIBLE,
       /// \brief A ChooseExpr record.
       EXPR_CHOOSE,
       /// \brief A GNUNullExpr record.
@@ -927,7 +925,7 @@ namespace clang {
       EXPR_CXX_NOEXCEPT,          // CXXNoexceptExpr
 
       EXPR_OPAQUE_VALUE,          // OpaqueValueExpr
-      EXPR_CXX_BINARY_TYPE_TRAIT  // BinaryTypeTraitExpr
+      EXPR_BINARY_TYPE_TRAIT      // BinaryTypeTraitExpr
     };
 
     /// \brief The kinds of designators that can occur in a

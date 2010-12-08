@@ -115,7 +115,6 @@ namespace clang {
     void VisitVAArgExpr(VAArgExpr *E);
     void VisitAddrLabelExpr(AddrLabelExpr *E);
     void VisitStmtExpr(StmtExpr *E);
-    void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     void VisitChooseExpr(ChooseExpr *E);
     void VisitGNUNullExpr(GNUNullExpr *E);
     void VisitShuffleVectorExpr(ShuffleVectorExpr *E);
@@ -757,14 +756,6 @@ void ASTStmtReader::VisitStmtExpr(StmtExpr *E) {
   E->setLParenLoc(ReadSourceLocation(Record, Idx));
   E->setRParenLoc(ReadSourceLocation(Record, Idx));
   E->setSubStmt(cast_or_null<CompoundStmt>(Reader.ReadSubStmt()));
-}
-
-void ASTStmtReader::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
-  VisitExpr(E);
-  E->setArgTInfo1(GetTypeSourceInfo(Record, Idx));
-  E->setArgTInfo2(GetTypeSourceInfo(Record, Idx));
-  E->setBuiltinLoc(ReadSourceLocation(Record, Idx));
-  E->setRParenLoc(ReadSourceLocation(Record, Idx));
 }
 
 void ASTStmtReader::VisitChooseExpr(ChooseExpr *E) {
@@ -1606,10 +1597,6 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       S = new (Context) StmtExpr(Empty);
       break;
 
-    case EXPR_TYPES_COMPATIBLE:
-      S = new (Context) TypesCompatibleExpr(Empty);
-      break;
-
     case EXPR_CHOOSE:
       S = new (Context) ChooseExpr(Empty);
       break;
@@ -1812,7 +1799,7 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       S = new (Context) UnaryTypeTraitExpr(Empty);
       break;
 
-    case EXPR_CXX_BINARY_TYPE_TRAIT:
+    case EXPR_BINARY_TYPE_TRAIT:
       S = new (Context) BinaryTypeTraitExpr(Empty);
       break;
 

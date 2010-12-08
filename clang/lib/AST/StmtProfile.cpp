@@ -359,12 +359,6 @@ void StmtProfiler::VisitStmtExpr(StmtExpr *S) {
   VisitExpr(S);
 }
 
-void StmtProfiler::VisitTypesCompatibleExpr(TypesCompatibleExpr *S) {
-  VisitExpr(S);
-  VisitType(S->getArgType1());
-  VisitType(S->getArgType2());
-}
-
 void StmtProfiler::VisitShuffleVectorExpr(ShuffleVectorExpr *S) {
   VisitExpr(S);
 }

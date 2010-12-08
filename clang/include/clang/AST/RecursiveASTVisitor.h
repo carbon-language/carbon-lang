@@ -1726,11 +1726,6 @@ DEF_TRAVERSE_STMT(CXXUuidofExpr, {
       TRY_TO(TraverseTypeLoc(S->getTypeOperandSourceInfo()->getTypeLoc()));
   })
 
-DEF_TRAVERSE_STMT(TypesCompatibleExpr, {
-    TRY_TO(TraverseTypeLoc(S->getArgTInfo1()->getTypeLoc()));
-    TRY_TO(TraverseTypeLoc(S->getArgTInfo2()->getTypeLoc()));
-  })
-
 DEF_TRAVERSE_STMT(UnaryTypeTraitExpr, {
     TRY_TO(TraverseTypeLoc(S->getQueriedTypeSourceInfo()->getTypeLoc()));
   })

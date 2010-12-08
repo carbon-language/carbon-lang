@@ -8126,35 +8126,6 @@ ExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
 }
 
 
-ExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                          ParsedType arg1, ParsedType arg2,
-                                          SourceLocation RPLoc) {
-  TypeSourceInfo *argTInfo1;
-  QualType argT1 = GetTypeFromParser(arg1, &argTInfo1);
-  TypeSourceInfo *argTInfo2;
-  QualType argT2 = GetTypeFromParser(arg2, &argTInfo2);
-
-  assert((!argT1.isNull() && !argT2.isNull()) && "Missing type argument(s)");
-
-  return BuildTypesCompatibleExpr(BuiltinLoc, argTInfo1, argTInfo2, RPLoc);
-}
-
-ExprResult
-Sema::BuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                               TypeSourceInfo *argTInfo1,
-                               TypeSourceInfo *argTInfo2,
-                               SourceLocation RPLoc) {
-  if (getLangOptions().CPlusPlus) {
-    Diag(BuiltinLoc, diag::err_types_compatible_p_in_cplusplus)
-      << SourceRange(BuiltinLoc, RPLoc);
-    return ExprError();
-  }
-
-  return Owned(new (Context) TypesCompatibleExpr(Context.IntTy, BuiltinLoc,
-                                                 argTInfo1, argTInfo2, RPLoc));
-}
-
-
 ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
                                  Expr *CondExpr,
                                  Expr *LHSExpr, Expr *RHSExpr,

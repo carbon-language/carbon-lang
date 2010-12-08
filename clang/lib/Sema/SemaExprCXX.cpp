@@ -2378,6 +2378,9 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
       return true;
 
     return false;
+  case BTT_TypeCompatible:
+    return Self.Context.typesAreCompatible(LhsT.getUnqualifiedType(),
+                                           RhsT.getUnqualifiedType());
   }
   llvm_unreachable("Unknown type trait or not implemented");
 }
@@ -2402,15 +2405,29 @@ ExprResult Sema::BuildBinaryTypeTrait(BinaryTypeTrait BTT,
         RequireCompleteType(KWLoc, RhsT,
                             diag::err_incomplete_type_used_in_type_trait_expr))
       return ExprError();
+  } else if (BTT == BTT_TypeCompatible) {
+    if (getLangOptions().CPlusPlus) {
+      Diag(KWLoc, diag::err_types_compatible_p_in_cplusplus)
+        << SourceRange(KWLoc, RParen);
+      return ExprError();
+    }
   }
 
   bool Value = false;
   if (!LhsT->isDependentType() && !RhsT->isDependentType())
     Value = EvaluateBinaryTypeTrait(*this, BTT, LhsT, RhsT, KWLoc);
 
+  // Select trait result type.
+  QualType ResultType;
+  switch (BTT) {
+  default: llvm_unreachable("Unknown type trait or not implemented");
+  case BTT_IsBaseOf:       ResultType = Context.BoolTy; break;
+  case BTT_TypeCompatible: ResultType = Context.IntTy; break;
+  }
+
   return Owned(new (Context) BinaryTypeTraitExpr(KWLoc, BTT, LhsTSInfo,
                                                  RhsTSInfo, Value, RParen,
-                                                 Context.BoolTy));
+                                                 ResultType));
 }
 
 QualType Sema::CheckPointerToMemberOperands(Expr *&lex, Expr *&rex,

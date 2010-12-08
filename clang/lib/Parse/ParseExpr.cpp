@@ -728,7 +728,6 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___builtin_va_arg:
   case tok::kw___builtin_offsetof:
   case tok::kw___builtin_choose_expr:
-  case tok::kw___builtin_types_compatible_p:
     return ParseBuiltinPrimaryExpression();
   case tok::kw___null:
     return Actions.ActOnGNUNullExpr(ConsumeToken());
@@ -987,6 +986,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___has_virtual_destructor:
     return ParseUnaryTypeTrait();
 
+  case tok::kw___builtin_types_compatible_p:
   case tok::kw___is_base_of:
     return ParseBinaryTypeTrait();
 
@@ -1477,25 +1477,6 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
                                   Expr2.take(), ConsumeParen());
     break;
   }
-  case tok::kw___builtin_types_compatible_p:
-    TypeResult Ty1 = ParseTypeName();
-
-    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
-      return ExprError();
-
-    TypeResult Ty2 = ParseTypeName();
-
-    if (Tok.isNot(tok::r_paren)) {
-      Diag(Tok, diag::err_expected_rparen);
-      return ExprError();
-    }
-
-    if (Ty1.isInvalid() || Ty2.isInvalid())
-      Res = ExprError();
-    else
-      Res = Actions.ActOnTypesCompatibleExpr(StartLoc, Ty1.get(), Ty2.get(),
-                                             ConsumeParen());
-    break;
   }
 
   if (Res.isInvalid())

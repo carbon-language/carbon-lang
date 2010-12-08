@@ -86,7 +86,6 @@ namespace clang {
     void VisitVAArgExpr(VAArgExpr *E);
     void VisitAddrLabelExpr(AddrLabelExpr *E);
     void VisitStmtExpr(StmtExpr *E);
-    void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
     void VisitChooseExpr(ChooseExpr *E);
     void VisitGNUNullExpr(GNUNullExpr *E);
     void VisitShuffleVectorExpr(ShuffleVectorExpr *E);
@@ -728,15 +727,6 @@ void ASTStmtWriter::VisitStmtExpr(StmtExpr *E) {
   Code = serialization::EXPR_STMT;
 }
 
-void ASTStmtWriter::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
-  VisitExpr(E);
-  Writer.AddTypeSourceInfo(E->getArgTInfo1(), Record);
-  Writer.AddTypeSourceInfo(E->getArgTInfo2(), Record);
-  Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
-  Writer.AddSourceLocation(E->getRParenLoc(), Record);
-  Code = serialization::EXPR_TYPES_COMPATIBLE;
-}
-
 void ASTStmtWriter::VisitChooseExpr(ChooseExpr *E) {
   VisitExpr(E);
   Writer.AddStmt(E->getCond());
@@ -1293,7 +1283,7 @@ void ASTStmtWriter::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
   Writer.AddSourceRange(E->getSourceRange(), Record);
   Writer.AddTypeSourceInfo(E->getLhsTypeSourceInfo(), Record);
   Writer.AddTypeSourceInfo(E->getRhsTypeSourceInfo(), Record);
-  Code = serialization::EXPR_CXX_BINARY_TYPE_TRAIT;
+  Code = serialization::EXPR_BINARY_TYPE_TRAIT;
 }
 
 void ASTStmtWriter::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {

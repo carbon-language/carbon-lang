@@ -152,7 +152,6 @@ namespace  {
     void VisitBinaryOperator(BinaryOperator *Node);
     void VisitCompoundAssignOperator(CompoundAssignOperator *Node);
     void VisitAddrLabelExpr(AddrLabelExpr *Node);
-    void VisitTypesCompatibleExpr(TypesCompatibleExpr *Node);
 
     // C++
     void VisitCXXNamedCastExpr(CXXNamedCastExpr *Node);
@@ -480,14 +479,6 @@ void StmtDumper::VisitAddrLabelExpr(AddrLabelExpr *Node) {
   DumpExpr(Node);
   OS << " " << Node->getLabel()->getName()
      << " " << (void*)Node->getLabel();
-}
-
-void StmtDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
-  DumpExpr(Node);
-  OS << " ";
-  DumpType(Node->getArgType1());
-  OS << " ";
-  DumpType(Node->getArgType2());
 }
 
 //===----------------------------------------------------------------------===//

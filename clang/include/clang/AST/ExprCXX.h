@@ -1488,7 +1488,7 @@ public:
 
   explicit BinaryTypeTraitExpr(EmptyShell Empty)
     : Expr(BinaryTypeTraitExprClass, Empty), BTT(0), Value(false),
-      LhsType() { }
+      LhsType(), RhsType() { }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(Loc, RParen);

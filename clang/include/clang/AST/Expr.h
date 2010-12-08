@@ -2641,52 +2641,6 @@ public:
   virtual child_iterator child_end();
 };
 
-/// TypesCompatibleExpr - GNU builtin-in function __builtin_types_compatible_p.
-/// This AST node represents a function that returns 1 if two *types* (not
-/// expressions) are compatible. The result of this built-in function can be
-/// used in integer constant expressions.
-class TypesCompatibleExpr : public Expr {
-  TypeSourceInfo *TInfo1;
-  TypeSourceInfo *TInfo2;
-  SourceLocation BuiltinLoc, RParenLoc;
-public:
-  TypesCompatibleExpr(QualType ReturnType, SourceLocation BLoc,
-                      TypeSourceInfo *tinfo1, TypeSourceInfo *tinfo2,
-                      SourceLocation RP) :
-    Expr(TypesCompatibleExprClass, ReturnType, VK_RValue, OK_Ordinary,
-         false, false),
-    TInfo1(tinfo1), TInfo2(tinfo2), BuiltinLoc(BLoc), RParenLoc(RP) {}
-
-  /// \brief Build an empty __builtin_type_compatible_p expression.
-  explicit TypesCompatibleExpr(EmptyShell Empty)
-    : Expr(TypesCompatibleExprClass, Empty) { }
-
-  TypeSourceInfo *getArgTInfo1() const { return TInfo1; }
-  void setArgTInfo1(TypeSourceInfo *TInfo) { TInfo1 = TInfo; }
-  TypeSourceInfo *getArgTInfo2() const { return TInfo2; }
-  void setArgTInfo2(TypeSourceInfo *TInfo) { TInfo2 = TInfo; }
-
-  QualType getArgType1() const { return TInfo1->getType(); }
-  QualType getArgType2() const { return TInfo2->getType(); }
-
-  SourceLocation getBuiltinLoc() const { return BuiltinLoc; }
-  void setBuiltinLoc(SourceLocation L) { BuiltinLoc = L; }
-
-  SourceLocation getRParenLoc() const { return RParenLoc; }
-  void setRParenLoc(SourceLocation L) { RParenLoc = L; }
-
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(BuiltinLoc, RParenLoc);
-  }
-  static bool classof(const Stmt *T) {
-    return T->getStmtClass() == TypesCompatibleExprClass;
-  }
-  static bool classof(const TypesCompatibleExpr *) { return true; }
-
-  // Iterators
-  virtual child_iterator child_begin();
-  virtual child_iterator child_end();
-};
 
 /// ShuffleVectorExpr - clang-specific builtin-in function
 /// __builtin_shufflevector.

@@ -1953,16 +1953,6 @@ public:
                                   unsigned NumComponents,
                                   SourceLocation RParenLoc);
 
-  // __builtin_types_compatible_p(type1, type2)
-  ExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                      ParsedType arg1,
-                                      ParsedType arg2,
-                                      SourceLocation RPLoc);
-  ExprResult BuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                      TypeSourceInfo *argTInfo1,
-                                      TypeSourceInfo *argTInfo2,
-                                      SourceLocation RPLoc);
-
   // __builtin_choose_expr(constExpr, expr1, expr2)
   ExprResult ActOnChooseExpr(SourceLocation BuiltinLoc,
                              Expr *cond, Expr *expr1,

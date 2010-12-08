@@ -133,7 +133,6 @@ namespace  {
     void VisitBinaryOperator(BinaryOperator *Node);
     void VisitCompoundAssignOperator(CompoundAssignOperator *Node);
     void VisitAddrLabelExpr(AddrLabelExpr *Node);
-    void VisitTypesCompatibleExpr(TypesCompatibleExpr *Node);
 
     // C++
     void VisitCXXNamedCastExpr(CXXNamedCastExpr *Node);
@@ -354,12 +353,6 @@ void StmtXML::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
 void StmtXML::VisitAddrLabelExpr(AddrLabelExpr *Node) {
   DumpExpr(Node);
   Doc.addAttribute("name", Node->getLabel()->getName());
-}
-
-void StmtXML::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
-  DumpExpr(Node);
-  DumpTypeExpr(Node->getArgType1());
-  DumpTypeExpr(Node->getArgType2());
 }
 
 //===----------------------------------------------------------------------===//

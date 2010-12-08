@@ -1348,19 +1348,6 @@ public:
     return getSema().ActOnStmtExpr(LParenLoc, SubStmt, RParenLoc);
   }
 
-  /// \brief Build a new __builtin_types_compatible_p expression.
-  ///
-  /// By default, performs semantic analysis to build the new expression.
-  /// Subclasses may override this routine to provide different behavior.
-  ExprResult RebuildTypesCompatibleExpr(SourceLocation BuiltinLoc,
-                                              TypeSourceInfo *TInfo1,
-                                              TypeSourceInfo *TInfo2,
-                                              SourceLocation RParenLoc) {
-    return getSema().BuildTypesCompatibleExpr(BuiltinLoc,
-                                              TInfo1, TInfo2,
-                                              RParenLoc);
-  }
-
   /// \brief Build a new __builtin_choose_expr expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -4932,30 +4919,6 @@ TreeTransform<Derived>::TransformStmtExpr(StmtExpr *E) {
   return getDerived().RebuildStmtExpr(E->getLParenLoc(),
                                       SubStmt.get(),
                                       E->getRParenLoc());
-}
-
-template<typename Derived>
-ExprResult
-TreeTransform<Derived>::TransformTypesCompatibleExpr(TypesCompatibleExpr *E) {
-  TypeSourceInfo *TInfo1;
-  TypeSourceInfo *TInfo2;
-  
-  TInfo1 = getDerived().TransformType(E->getArgTInfo1());
-  if (!TInfo1)
-    return ExprError();
-
-  TInfo2 = getDerived().TransformType(E->getArgTInfo2());
-  if (!TInfo2)
-    return ExprError();
-
-  if (!getDerived().AlwaysRebuild() &&
-      TInfo1 == E->getArgTInfo1() &&
-      TInfo2 == E->getArgTInfo2())
-    return SemaRef.Owned(E);
-
-  return getDerived().RebuildTypesCompatibleExpr(E->getBuiltinLoc(),
-                                                 TInfo1, TInfo2,
-                                                 E->getRParenLoc());
 }
 
 template<typename Derived>

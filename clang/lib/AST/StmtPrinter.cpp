@@ -814,12 +814,6 @@ void StmtPrinter::VisitStmtExpr(StmtExpr *E) {
   OS << ")";
 }
 
-void StmtPrinter::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
-  OS << "__builtin_types_compatible_p(";
-  OS << Node->getArgType1().getAsString(Policy) << ",";
-  OS << Node->getArgType2().getAsString(Policy) << ")";
-}
-
 void StmtPrinter::VisitChooseExpr(ChooseExpr *Node) {
   OS << "__builtin_choose_expr(";
   PrintExpr(Node->getCond());
@@ -1229,7 +1223,8 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
 static const char *getTypeTraitName(BinaryTypeTrait BTT) {
   switch (BTT) {
   default: llvm_unreachable("Unknown binary type trait");
-  case BTT_IsBaseOf:      return "__is_base_of";
+  case BTT_IsBaseOf:         return "__is_base_of";
+  case BTT_TypeCompatible:   return "__builtin_types_compatible_p";
   }
   return "";
 }

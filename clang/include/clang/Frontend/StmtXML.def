@@ -415,13 +415,6 @@ NODE_XML(StmtExpr, "StmtExpr")                          // StmtExpr contains a s
   SUB_NODE_XML(CompoundStmt)
 END_NODE_XML
 
-NODE_XML(TypesCompatibleExpr, "TypesCompatibleExpr")    // GNU builtin-in function __builtin_types_compatible_p
-  ATTRIBUTE_FILE_LOCATION_XML
-  TYPE_ATTRIBUTE_XML(getType())
-  ATTRIBUTE_XML(getArgType1(), "type1_ref")             // id of type1
-  ATTRIBUTE_XML(getArgType2(), "type2_ref")             // id of type2
-END_NODE_XML
-
 NODE_XML(ChooseExpr, "ChooseExpr")                      // GNU builtin-in function __builtin_choose_expr(expr1, expr2, expr3)
   ATTRIBUTE_FILE_LOCATION_XML
   TYPE_ATTRIBUTE_XML(getType())

@@ -76,7 +76,6 @@ def VAArgExpr : DStmt<Expr>;
 // GNU Extensions.
 def AddrLabelExpr : DStmt<Expr>;
 def StmtExpr : DStmt<Expr>;
-def TypesCompatibleExpr : DStmt<Expr>;
 def ChooseExpr : DStmt<Expr>;
 def GNUNullExpr : DStmt<Expr>;
 

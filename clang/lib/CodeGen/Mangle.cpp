@@ -1662,7 +1662,6 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   case Expr::PredefinedExprClass:
   case Expr::ShuffleVectorExprClass:
   case Expr::StmtExprClass:
-  case Expr::TypesCompatibleExprClass:
   case Expr::UnaryTypeTraitExprClass:
   case Expr::BinaryTypeTraitExprClass:
   case Expr::VAArgExprClass:

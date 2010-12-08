@@ -2708,14 +2708,6 @@ Stmt::child_iterator AddrLabelExpr::child_end() { return child_iterator(); }
 Stmt::child_iterator StmtExpr::child_begin() { return &SubStmt; }
 Stmt::child_iterator StmtExpr::child_end() { return &SubStmt+1; }
 
-// TypesCompatibleExpr
-Stmt::child_iterator TypesCompatibleExpr::child_begin() {
-  return child_iterator();
-}
-
-Stmt::child_iterator TypesCompatibleExpr::child_end() {
-  return child_iterator();
-}
 
 // ChooseExpr
 Stmt::child_iterator ChooseExpr::child_begin() { return &SubExprs[0]; }

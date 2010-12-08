@@ -1605,7 +1605,6 @@ public:
   void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
   void VisitStmt(Stmt *S);
   void VisitSwitchStmt(SwitchStmt *S);
-  void VisitTypesCompatibleExpr(TypesCompatibleExpr *E);
   void VisitWhileStmt(WhileStmt *W);
   void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
   void VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E);
@@ -1877,10 +1876,6 @@ void EnqueueVisitor::VisitSwitchStmt(SwitchStmt *S) {
   AddStmt(S->getBody());
   AddStmt(S->getCond());
   AddDecl(S->getConditionVariable());
-}
-void EnqueueVisitor::VisitTypesCompatibleExpr(TypesCompatibleExpr *E) {
-  AddTypeLoc(E->getArgTInfo2());
-  AddTypeLoc(E->getArgTInfo1());
 }
 
 void EnqueueVisitor::VisitWhileStmt(WhileStmt *W) {

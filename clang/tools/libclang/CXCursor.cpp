@@ -128,7 +128,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::VAArgExprClass:             
   case Stmt::AddrLabelExprClass:        
   case Stmt::StmtExprClass:             
-  case Stmt::TypesCompatibleExprClass:  
   case Stmt::ChooseExprClass:           
   case Stmt::GNUNullExprClass:          
   case Stmt::CXXStaticCastExprClass:      

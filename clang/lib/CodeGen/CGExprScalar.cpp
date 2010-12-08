@@ -188,11 +188,6 @@ public:
   Value *VisitGNUNullExpr(const GNUNullExpr *E) {
     return EmitNullValue(E->getType());
   }
-  Value *VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
-    return llvm::ConstantInt::get(ConvertType(E->getType()),
-                                  CGF.getContext().typesAreCompatible(
-                                    E->getArgType1(), E->getArgType2()));
-  }
   Value *VisitOffsetOfExpr(OffsetOfExpr *E);
   Value *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
   Value *VisitAddrLabelExpr(const AddrLabelExpr *E) {
@@ -354,7 +349,7 @@ public:
   }
 
   Value *VisitBinaryTypeTraitExpr(const BinaryTypeTraitExpr *E) {
-    return llvm::ConstantInt::get(Builder.getInt1Ty(), E->getValue());
+    return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
 
   Value *VisitCXXPseudoDestructorExpr(const CXXPseudoDestructorExpr *E) {

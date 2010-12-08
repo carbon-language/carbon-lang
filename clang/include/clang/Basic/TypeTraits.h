@@ -38,7 +38,8 @@ namespace clang {
 
   /// BinaryTypeTrait - Names for the binary type traits.
   enum BinaryTypeTrait {
-    BTT_IsBaseOf
+    BTT_IsBaseOf,
+    BTT_TypeCompatible
   };
 }
 
