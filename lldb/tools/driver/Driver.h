@@ -96,7 +96,7 @@ public:
 
         //static lldb::OptionDefinition m_cmd_option_table[];
 
-        std::string m_filename;
+        std::vector<std::string> m_args;
         lldb::ScriptLanguage m_script_lang;
         std::string m_crash_log;
         std::vector<std::string> m_source_command_files;

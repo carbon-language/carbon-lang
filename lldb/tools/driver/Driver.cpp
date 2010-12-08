@@ -371,7 +371,7 @@ BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, std::vector<str
 }
 
 Driver::OptionData::OptionData () :
-    m_filename(),
+    m_args(),
     m_script_lang (lldb::eScriptLanguageDefault),
     m_crash_log (),
     m_source_command_files (),
@@ -390,7 +390,7 @@ Driver::OptionData::~OptionData ()
 void
 Driver::OptionData::Clear ()
 {
-    m_filename.clear ();
+    m_args.clear ();
     m_script_lang = lldb::eScriptLanguageDefault;
     m_source_command_files.clear ();
     m_debug_mode = false;
@@ -408,9 +408,9 @@ Driver::ResetOptionValues ()
 const char *
 Driver::GetFilename() const
 {
-    if (m_option_data.m_filename.empty())
+    if (m_option_data.m_args.empty())
         return NULL;
-    return m_option_data.m_filename.c_str();
+    return m_option_data.m_args.front().c_str();
 }
 
 const char *
@@ -581,13 +581,15 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                         {
                             SBFileSpec file(optarg);
                             if (file.Exists())
-                                m_option_data.m_filename = optarg;
+                            {
+                                m_option_data.m_args.push_back (optarg);
+                            }
                             else if (file.ResolveExecutableLocation())
                             {
                                 char path[PATH_MAX];
                                 int path_len;
                                 file.GetPath (path, path_len);
-                                m_option_data.m_filename = path;
+                                m_option_data.m_args.push_back (path);
                             }
                             else
                                 error.SetErrorStringWithFormat("file specified in --file (-f) option doesn't exist: '%s'", optarg);
@@ -642,25 +644,6 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
         }
     }
     
-    // If there is a trailing argument, it is the filename.
-    if (optind == argc - 1)
-    {
-        if (m_option_data.m_filename.empty())
-        {
-            m_option_data.m_filename = argv[optind];
-        }
-        else
-        {
-            error.SetErrorStringWithFormat ("error: don't provide a file both on in the -f option and as an argument.");
-        }
-
-    }
-    else if (optind < argc - 1)
-    {
-        // Trailing extra arguments...
-        error.SetErrorStringWithFormat ("error: trailing extra arguments - only one the filename is allowed.");
-    }
-    
     if (error.Fail() || m_option_data.m_print_help)
     {
         ShowUsage (out_fh, g_options, m_option_data);
@@ -677,7 +660,26 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     }
     else
     {
-        // All other combinations are valid; do nothing more here.
+        // Any arguments that are left over after option parsing are for
+        // the program. If a file was specified with -f then the filename
+        // is already in the m_option_data.m_args array, and any remaining args
+        // are arguments for the inferior program. If no file was specified with
+        // -f, then what is left is the program name followed by any arguments.
+
+        // Skip any options we consumed with getopt_long
+        argc -= optind;
+        argv += optind;
+
+        if (argc > 0)
+        {
+            for (int arg_idx=0; arg_idx<argc; ++arg_idx)
+            {
+                const char *arg = argv[arg_idx];
+                if (arg)
+                    m_option_data.m_args.push_back (arg);
+            }
+        }
+        
     }
 
     return error;
@@ -1273,16 +1275,34 @@ Driver::MainLoop ()
                 }
             }
 
-            if (!m_option_data.m_filename.empty())
+            const size_t num_args = m_option_data.m_args.size();
+            if (num_args > 0)
             {
                 char arch_name[64];
                 if (m_debugger.GetDefaultArchitecture (arch_name, sizeof (arch_name)))
-                    ::snprintf (command_string, sizeof (command_string), "file --arch=%s '%s'", arch_name,
-                                m_option_data.m_filename.c_str());
+                    ::snprintf (command_string, 
+                                sizeof (command_string), 
+                                "file --arch=%s '%s'", 
+                                arch_name,
+                                m_option_data.m_args[0].c_str());
                 else
-                    ::snprintf (command_string, sizeof(command_string), "file '%s'", m_option_data.m_filename.c_str());
+                    ::snprintf (command_string, 
+                                sizeof(command_string), 
+                                "file '%s'", 
+                                m_option_data.m_args[0].c_str());
 
                 m_debugger.HandleCommand (command_string);
+                
+                if (num_args > 1)
+                {
+                    m_debugger.HandleCommand ("settings clear target.process.run-args");
+                    char arg_cstr[1024];
+                    for (size_t arg_idx = 1; arg_idx < num_args; ++arg_idx)
+                    {
+                        ::snprintf (arg_cstr, sizeof(arg_cstr), "settings append target.process.run-args \"%s\"", m_option_data.m_args[arg_idx].c_str());
+                        m_debugger.HandleCommand (arg_cstr);
+                    }
+                }
             }
 
             // Now that all option parsing is done, we try and parse the .lldbinit
