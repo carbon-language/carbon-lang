@@ -334,7 +334,7 @@ void RAFast::usePhysReg(MachineOperand &MO) {
     MO.setIsKill();
     return;
   default:
-    // The physreg was allocated to a virtual register. That means to value we
+    // The physreg was allocated to a virtual register. That means the value we
     // wanted has been clobbered.
     llvm_unreachable("Instruction uses an allocated register");
   }
