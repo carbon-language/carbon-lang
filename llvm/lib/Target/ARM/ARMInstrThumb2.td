@@ -284,10 +284,10 @@ class T2TwoRegImm<dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
-  bits<4> Rm;
+  bits<4> Rn;
 
   let Inst{11-8}  = Rd;
-  let Inst{3-0}   = Rm;
+  let Inst{3-0}   = Rn;
 }
 
 class T2sTwoRegImm<dag oops, dag iops, InstrItinClass itin,
@@ -605,16 +605,23 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
    }
    }
    // 12-bit imm
-   def ri12 : T2TwoRegImm<
+   def ri12 : T2I<
                   (outs rGPR:$Rd), (ins GPR:$Rn, imm0_4095:$imm), IIC_iALUi,
                   !strconcat(opc, "w"), "\t$Rd, $Rn, $imm",
                   [(set rGPR:$Rd, (opnode GPR:$Rn, imm0_4095:$imm))]> {
+     bits<4> Rd;
+     bits<4> Rn;
+     bits<12> imm;
      let Inst{31-27} = 0b11110;
-     let Inst{25} = 1;
-     let Inst{24} = 0;
+     let Inst{26} = imm{11};
+     let Inst{25-24} = 0b10;
      let Inst{23-21} = op23_21;
      let Inst{20} = 0; // The S bit.
+     let Inst{19-16} = Rn;
      let Inst{15} = 0;
+     let Inst{14-12} = imm{10-8};
+     let Inst{11-8} = Rd;
+     let Inst{7-0} = imm{7-0};
    }
    // register
    def rr : T2sThreeReg<(outs rGPR:$Rd), (ins GPR:$Rn, rGPR:$Rm), IIC_iALUr,
