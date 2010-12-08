@@ -90,6 +90,7 @@ class FoundationTestCase2(TestBase):
         self.runCmd("process continue")
 
     @unittest2.expectedFailure
+    # <rdar://problem/8741897> Expressions should support properties
     def NSArray_expr(self):
         """Test expression commands for NSArray."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -116,6 +117,7 @@ class FoundationTestCase2(TestBase):
         self.runCmd("process continue")
 
     @unittest2.expectedFailure
+    # <rdar://problem/8741897> Expressions should support properties
     def NSString_expr(self):
         """Test expression commands for NSString."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -133,12 +135,14 @@ class FoundationTestCase2(TestBase):
         self.runCmd("thread backtrace")
         self.expect("expression (int)[str length]",
             patterns = ["\(int\) \$.* ="])
-        self.expect("expression (int)[id length]",
+        self.expect("expression (int)[str_id length]",
             patterns = ["\(int\) \$.* ="])
-        self.expect("expression [str description]")
-        self.expect("expression [id description]")
+        self.expect("expression [str description]",
+            patterns = ["\(id\) \$.* = 0x"])
+        self.expect("expression [str_id description]",
+            patterns = ["\(id\) \$.* = 0x"])
         self.expect("expression str.description")
-        self.expect("expression id.description")
+        self.expect("expression str_id.description")
         self.expect('expression str = @"new"')
         self.expect('expression str = [NSString stringWithFormat: @"%cew", \'N\']')
         self.runCmd("process continue")

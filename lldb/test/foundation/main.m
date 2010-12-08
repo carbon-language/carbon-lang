@@ -72,9 +72,9 @@ Test_NSString (const char *program)
     // Expressions to test here for NSString:
     // expression (char *)sel_getName(sel)
     // expression [str length]
-    // expression [id length]
+    // expression [str_id length]
     // expression [str description]
-    // expression [id description]
+    // expression [str_id description]
     // expression str.length
     // expression str.description
     // expression str = @"new"
