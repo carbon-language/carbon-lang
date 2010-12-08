@@ -721,7 +721,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   // hook knows where in the block to insert the replacement code.
   MBB->insert(InsertPos, MI);
 
-  // Additional results must be an physical register def.
+  // Additional results must be physical register defs.
   if (HasPhysRegOuts) {
     for (unsigned i = II.getNumDefs(); i < NumResults; ++i) {
       unsigned Reg = II.getImplicitDefs()[i - II.getNumDefs()];
