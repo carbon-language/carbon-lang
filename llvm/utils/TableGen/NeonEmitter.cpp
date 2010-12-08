@@ -509,8 +509,7 @@ static std::string GenMacroLocals(const std::string &proto, StringRef typestr) {
 }
 
 // Use the vmovl builtin to sign-extend or zero-extend a vector.
-static std::string Extend(const std::string &proto, StringRef typestr,
-                          const std::string &a) {
+static std::string Extend(StringRef typestr, const std::string &a) {
   std::string s;
   s = MangleName("vmovl", typestr, ClassS);
   s += "(" + a + ")";
@@ -585,21 +584,19 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "__a + __b;";
     break;
   case OpAddl:
-    s += Extend(proto, typestr, "__a") + " + "
-      + Extend(proto, typestr, "__b") + ";";
+    s += Extend(typestr, "__a") + " + " + Extend(typestr, "__b") + ";";
     break;
   case OpAddw:
-    s += "__a + " + Extend(proto, typestr, "__b") + ";";
+    s += "__a + " + Extend(typestr, "__b") + ";";
     break;
   case OpSub:
     s += "__a - __b;";
     break;
   case OpSubl:
-    s += Extend(proto, typestr, "__a") + " - "
-      + Extend(proto, typestr, "__b") + ";";
+    s += Extend(typestr, "__a") + " - " + Extend(typestr, "__b") + ";";
     break;
   case OpSubw:
-    s += "__a - " + Extend(proto, typestr, "__b") + ";";
+    s += "__a - " + Extend(typestr, "__b") + ";";
     break;
   case OpMulN:
     s += "__a * " + Duplicate(nElts, typestr, "__b") + ";";
@@ -611,17 +608,15 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "__a * __b;";
     break;
   case OpMullN:
-    s += Extend(proto, typestr, "__a") + " * " +
-      Extend(proto, typestr,
-             Duplicate(nElts << (int)quad, typestr, "__b")) + ";";
+    s += Extend(typestr, "__a") + " * " +
+      Extend(typestr, Duplicate(nElts << (int)quad, typestr, "__b")) + ";";
     break;
   case OpMullLane:
-    s += Extend(proto, typestr, "__a") + " * " +
-      Extend(proto, typestr, SplatLane(nElts, "__b", "__c")) + ";";
+    s += Extend(typestr, "__a") + " * " +
+      Extend(typestr, SplatLane(nElts, "__b", "__c")) + ";";
     break;
   case OpMull:
-    s += Extend(proto, typestr, "__a") + " * " +
-      Extend(proto, typestr, "__b") + ";";
+    s += Extend(typestr, "__a") + " * " + Extend(typestr, "__b") + ";";
     break;
   case OpMlaN:
     s += "__a + (__b * " + Duplicate(nElts, typestr, "__c") + ");";
@@ -633,16 +628,16 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "__a + (__b * __c);";
     break;
   case OpMlalN:
-    s += "__a + (" + Extend(proto, typestr, "__b") + " * " +
-      Extend(proto, typestr, Duplicate(nElts, typestr, "__c")) + ");";
+    s += "__a + (" + Extend(typestr, "__b") + " * " +
+      Extend(typestr, Duplicate(nElts, typestr, "__c")) + ");";
     break;
   case OpMlalLane:
-    s += "__a + (" + Extend(proto, typestr, "__b") + " * " +
-      Extend(proto, typestr, SplatLane(nElts, "__c", "__d")) + ");";
+    s += "__a + (" + Extend(typestr, "__b") + " * " +
+      Extend(typestr, SplatLane(nElts, "__c", "__d")) + ");";
     break;
   case OpMlal:
-    s += "__a + (" + Extend(proto, typestr, "__b") + " * " +
-      Extend(proto, typestr, "__c") + ");";
+    s += "__a + (" + Extend(typestr, "__b") + " * " +
+      Extend(typestr, "__c") + ");";
     break;
   case OpMlsN:
     s += "__a - (__b * " + Duplicate(nElts, typestr, "__c") + ");";
@@ -654,16 +649,16 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "__a - (__b * __c);";
     break;
   case OpMlslN:
-    s += "__a - (" + Extend(proto, typestr, "__b") + " * " +
-      Extend(proto, typestr, Duplicate(nElts, typestr, "__c")) + ");";
+    s += "__a - (" + Extend(typestr, "__b") + " * " +
+      Extend(typestr, Duplicate(nElts, typestr, "__c")) + ");";
     break;
   case OpMlslLane:
-    s += "__a - (" + Extend(proto, typestr, "__b") + " * " +
-      Extend(proto, typestr, SplatLane(nElts, "__c", "__d")) + ");";
+    s += "__a - (" + Extend(typestr, "__b") + " * " +
+      Extend(typestr, SplatLane(nElts, "__c", "__d")) + ");";
     break;
   case OpMlsl:
-    s += "__a - (" + Extend(proto, typestr, "__b") + " * " +
-      Extend(proto, typestr, "__c") + ");";
+    s += "__a - (" + Extend(typestr, "__b") + " * " +
+      Extend(typestr, "__c") + ");";
     break;
   case OpEq:
     s += "(" + ts + ")(__a == __b);";
