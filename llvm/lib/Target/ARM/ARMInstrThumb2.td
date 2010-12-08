@@ -1154,27 +1154,30 @@ def t2LEApcrelJT : T2PCOneRegImm<(outs rGPR:$Rd),
   let Inst{15} = 0;
 }
 
+
+// FIXME: None of these add/sub SP special instructions should be necessary
+// at all for thumb2 since they use the same encodings as the generic
+// add/sub instructions. In thumb1 we need them since they have dedicated
+// encodings. At the least, they should be pseudo instructions.
 // ADD r, sp, {so_imm|i12}
-def t2ADDrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_imm:$imm),
-                        IIC_iALUi, "add", ".w\t$Rd, $sp, $imm", []> {
+def t2ADDrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, t2_so_imm:$imm),
+                        IIC_iALUi, "add", ".w\t$Rd, $Rn, $imm", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b1000;
-  let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
 def t2ADDrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, imm0_4095:$imm),
                        IIC_iALUi, "addw", "\t$Rd, $Rn, $imm", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-20} = 0b100000;
-  let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
 
 // ADD r, sp, so_reg
 def t2ADDrSPs   : T2sTwoRegShiftedReg<
-                        (outs GPR:$Rd), (ins GPR:$sp, t2_so_reg:$ShiftedRm),
-                        IIC_iALUsi, "add", ".w\t$Rd, $sp, $ShiftedRm", []> {
+                        (outs GPR:$Rd), (ins GPR:$Rn, t2_so_reg:$ShiftedRm),
+                        IIC_iALUsi, "add", ".w\t$Rd, $Rn, $ShiftedRm", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b1000;
@@ -1182,12 +1185,11 @@ def t2ADDrSPs   : T2sTwoRegShiftedReg<
 }
 
 // SUB r, sp, {so_imm|i12}
-def t2SUBrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_imm:$imm),
-                        IIC_iALUi, "sub", ".w\t$Rd, $sp, $imm", []> {
+def t2SUBrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, t2_so_imm:$imm),
+                        IIC_iALUi, "sub", ".w\t$Rd, $Rn, $imm", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 0;
   let Inst{24-21} = 0b1101;
-  let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
 def t2SUBrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, imm0_4095:$imm),
@@ -1198,9 +1200,9 @@ def t2SUBrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, imm0_4095:$imm),
 }
 
 // SUB r, sp, so_reg
-def t2SUBrSPs   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_reg:$imm),
+def t2SUBrSPs   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, t2_so_reg:$imm),
                        IIC_iALUsi,
-                       "sub", "\t$Rd, $sp, $imm", []> {
+                       "sub", "\t$Rd, $Rn, $imm", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b01;
   let Inst{24-21} = 0b1101;
