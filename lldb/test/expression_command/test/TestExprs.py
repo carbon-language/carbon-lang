@@ -1,10 +1,11 @@
 """
-Test many basic expression commands.
+Test many basic expression commands and SBFrame.EvaluateExpression() API.
 """
 
 import os, time
 import unittest2
 import lldb
+import lldbutil
 from lldbtest import *
 
 class BasicExprCommandsTestCase(TestBase):
@@ -67,6 +68,89 @@ class BasicExprCommandsTestCase(TestBase):
             substrs = ["(const char *)",
                        os.path.join(self.mydir, "a.out")])
         # (const char *) $8 = 0x... "/Volumes/data/lldb/svn/trunk/test/expression_command/test/a.out"
+
+
+    def test_evaluate_expression_python(self):
+        """These SBFrame.EvaluateExpression() API."""
+        self.buildDefault()
+
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        # Create the breakpoint.
+        filespec = lldb.SBFileSpec("main.cpp", False)
+        breakpoint = target.BreakpointCreateByLocation(filespec, self.line)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+
+        # Verify the breakpoint just created.
+        self.expect(repr(breakpoint), BREAKPOINT_CREATED, exe=False,
+            substrs = ['main.cpp',
+                       str(self.line)])
+
+        # Launch the process, and do not stop at the entry point.
+        # Pass 'X Y Z' as the args, which makes argc == 4.
+        rc = lldb.SBError()
+        self.process = target.Launch(['X', 'Y', 'Z'], [], os.ctermid(), 0, False, rc)
+
+        if not rc.Success() or not self.process.IsValid():
+            self.fail("SBTarget.LaunchProcess() failed")
+
+        if self.process.GetState() != lldb.eStateStopped:
+            self.fail("Process should be in the 'stopped' state, "
+                      "instead the actual state is: '%s'" %
+                      lldbutil.StateTypeString(self.process.GetState()))
+
+        # The stop reason of the thread should be breakpoint.
+        thread = self.process.GetThreadAtIndex(0)
+        if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
+            from lldbutil import StopReasonString
+            self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
+                      StopReasonString(thread.GetStopReason()))
+
+        # The filename of frame #0 should be 'main.cpp' and function is main.
+        self.expect(lldbutil.GetFilenames(thread)[0],
+                    "Break correctly at main.cpp", exe=False,
+            startstr = "main.cpp")
+        self.expect(lldbutil.GetFunctionNames(thread)[0],
+                    "Break correctly at main()", exe=False,
+            startstr = "main")
+
+        # We should be stopped on the breakpoint with a hit count of 1.
+        self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
+
+        #
+        # Use Python API to evaluate expressions while stopped in a stack frame.
+        #
+        frame = thread.GetFrameAtIndex(0)
+
+        val = frame.EvaluateExpression("2.234")
+        self.expect(val.GetValue(frame), "2.345 evaluated correctly", exe=False,
+            startstr = "2.234")
+        self.expect(val.GetTypeName(), "2.345 evaluated correctly", exe=False,
+            startstr = "double")
+        self.DebugSBValue(frame, val)
+
+        val = frame.EvaluateExpression("argc")
+        self.expect(val.GetValue(frame), "Argc evaluated correctly", exe=False,
+            startstr = "4")
+        self.DebugSBValue(frame, val)
+
+        val = frame.EvaluateExpression("*argv[1]")
+        self.expect(val.GetValue(frame), "Argv[1] evaluated correctly", exe=False,
+            startstr = "'X'")
+        self.DebugSBValue(frame, val)
+
+        val = frame.EvaluateExpression("*argv[2]")
+        self.expect(val.GetValue(frame), "Argv[2] evaluated correctly", exe=False,
+            startstr = "'Y'")
+        self.DebugSBValue(frame, val)
+
+        val = frame.EvaluateExpression("*argv[3]")
+        self.expect(val.GetValue(frame), "Argv[3] evaluated correctly", exe=False,
+            startstr = "'Z'")
+        self.DebugSBValue(frame, val)
 
 
     @unittest2.expectedFailure
