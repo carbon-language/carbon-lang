@@ -173,6 +173,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
       // Found an available register.
       return PhysReg;
     }
+    assert(!VirtReg.empty() && "Empty VirtReg has interference");
     LiveInterval *interferingVirtReg =
       Queries[interfReg].firstInterference().liveUnionPos().value();
 

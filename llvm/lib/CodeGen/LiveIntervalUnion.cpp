@@ -111,9 +111,10 @@ void LiveIntervalUnion::verify(LiveVirtRegBitSet& VisitedVRegs) {
 // Assumes that segments are sorted by start position in both
 // LiveInterval and LiveSegments.
 void LiveIntervalUnion::Query::findIntersection(InterferenceResult &IR) const {
-
   // Search until reaching the end of the LiveUnion segments.
   LiveInterval::iterator VirtRegEnd = VirtReg->end();
+  if (IR.VirtRegI == VirtRegEnd)
+    return;
   while (IR.LiveUnionI.valid()) {
     // Slowly advance the live virtual reg iterator until we surpass the next
     // segment in LiveUnion.
