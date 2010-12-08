@@ -149,6 +149,9 @@ protected:
   bool spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
                           SmallVectorImpl<LiveInterval*> &SplitVRegs);
 
+  /// addMBBLiveIns - Add physreg liveins to basic blocks.
+  void addMBBLiveIns(MachineFunction *);
+
 #ifndef NDEBUG
   // Verify each LiveIntervalUnion.
   void verify();

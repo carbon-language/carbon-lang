@@ -110,9 +110,6 @@ public:
   virtual bool runOnMachineFunction(MachineFunction &mf);
 
   static char ID;
-
-private:
-  void addMBBLiveIns();
 };
 
 char RABasic::ID = 0;
@@ -395,6 +392,36 @@ RegAllocBase::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
   return true;
 }
 
+// Add newly allocated physical registers to the MBB live in sets.
+void RegAllocBase::addMBBLiveIns(MachineFunction *MF) {
+  typedef SmallVector<MachineBasicBlock*, 8> MBBVec;
+  MBBVec liveInMBBs;
+  MachineBasicBlock &entryMBB = *MF->begin();
+
+  for (unsigned PhysReg = 0; PhysReg < PhysReg2LiveUnion.numRegs(); ++PhysReg) {
+    LiveIntervalUnion &LiveUnion = PhysReg2LiveUnion[PhysReg];
+    if (LiveUnion.empty())
+      continue;
+    for (LiveIntervalUnion::SegmentIter SI = LiveUnion.begin(); SI.valid();
+         ++SI) {
+
+      // Find the set of basic blocks which this range is live into...
+      liveInMBBs.clear();
+      if (!LIS->findLiveInMBBs(SI.start(), SI.stop(), liveInMBBs)) continue;
+
+      // And add the physreg for this interval to their live-in sets.
+      for (MBBVec::iterator I = liveInMBBs.begin(), E = liveInMBBs.end();
+           I != E; ++I) {
+        MachineBasicBlock *MBB = *I;
+        if (MBB == &entryMBB) continue;
+        if (MBB->isLiveIn(PhysReg)) continue;
+        MBB->addLiveIn(PhysReg);
+      }
+    }
+  }
+}
+
+
 //===----------------------------------------------------------------------===//
 //                         RABasic Implementation
 //===----------------------------------------------------------------------===//
@@ -467,35 +494,6 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
   return 0;
 }
 
-// Add newly allocated physical registers to the MBB live in sets.
-void RABasic::addMBBLiveIns() {
-  typedef SmallVector<MachineBasicBlock*, 8> MBBVec;
-  MBBVec liveInMBBs;
-  MachineBasicBlock &entryMBB = *MF->begin();
-
-  for (unsigned PhysReg = 0; PhysReg < PhysReg2LiveUnion.numRegs(); ++PhysReg) {
-    LiveIntervalUnion &LiveUnion = PhysReg2LiveUnion[PhysReg];
-
-    for (LiveIntervalUnion::SegmentIter SI = LiveUnion.begin(),
-           SegEnd = LiveUnion.end();
-         SI != SegEnd; ++SI) {
-
-      // Find the set of basic blocks which this range is live into...
-      liveInMBBs.clear();
-      if (!LIS->findLiveInMBBs(SI.start(), SI.stop(), liveInMBBs)) continue;
-
-      // And add the physreg for this interval to their live-in sets.
-      for (MBBVec::iterator I = liveInMBBs.begin(), E = liveInMBBs.end();
-           I != E; ++I) {
-        MachineBasicBlock *MBB = *I;
-        if (MBB == &entryMBB) continue;
-        if (MBB->isLiveIn(PhysReg)) continue;
-        MBB->addLiveIn(PhysReg);
-      }
-    }
-  }
-}
-
 bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   DEBUG(dbgs() << "********** BASIC REGISTER ALLOCATION **********\n"
                << "********** Function: "
@@ -517,7 +515,7 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
 
   allocatePhysRegs();
 
-  addMBBLiveIns();
+  addMBBLiveIns(MF);
 
   // Diagnostic output before rewriting
   DEBUG(dbgs() << "Post alloc VirtRegMap:\n" << *VRM << "\n");

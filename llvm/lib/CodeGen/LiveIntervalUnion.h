@@ -75,6 +75,7 @@ public:
   // by their starting position.
   SegmentIter begin() { return Segments.begin(); }
   SegmentIter end() { return Segments.end(); }
+  bool empty() { return Segments.empty(); }
 
   // Add a live virtual register to this union and merge its segments.
   void unify(LiveInterval &VirtReg);
