@@ -412,29 +412,43 @@ tgtok::TokKind TGLexer::LexBracket() {
 /// LexExclaim - Lex '!' and '![a-zA-Z]+'.
 tgtok::TokKind TGLexer::LexExclaim() {
   if (!isalpha(*CurPtr))
-    return ReturnError(CurPtr-1, "Invalid \"!operator\"");
+    return ReturnError(CurPtr - 1, "Invalid \"!operator\"");
   
   const char *Start = CurPtr++;
   while (isalpha(*CurPtr))
     ++CurPtr;
   
   // Check to see which operator this is.
-  unsigned Len = CurPtr-Start;
-  
-  if (Len == 3  && !memcmp(Start, "con", 3)) return tgtok::XConcat;
-  if (Len == 3  && !memcmp(Start, "sra", 3)) return tgtok::XSRA;
-  if (Len == 3  && !memcmp(Start, "srl", 3)) return tgtok::XSRL;
-  if (Len == 3  && !memcmp(Start, "shl", 3)) return tgtok::XSHL;
-  if (Len == 2  && !memcmp(Start, "eq", 2)) return tgtok::XEq;
-  if (Len == 9  && !memcmp(Start, "strconcat", 9))   return tgtok::XStrConcat;
-  if (Len == 5 && !memcmp(Start, "subst", 5)) return tgtok::XSubst;
-  if (Len == 7 && !memcmp(Start, "foreach", 7)) return tgtok::XForEach;
-  if (Len == 4 && !memcmp(Start, "cast", 4)) return tgtok::XCast;
-  if (Len == 3 && !memcmp(Start, "car", 3)) return tgtok::XCar;
-  if (Len == 3 && !memcmp(Start, "cdr", 3)) return tgtok::XCdr;
-  if (Len == 4 && !memcmp(Start, "null", 4)) return tgtok::XNull;
-  if (Len == 2 && !memcmp(Start, "if", 2)) return tgtok::XIf;
+  switch (CurPtr - Start) {
+  default:
+    break;
+  case 2:
+    if (!memcmp(Start, "eq", 2)) return tgtok::XEq;
+    if (!memcmp(Start, "if", 2)) return tgtok::XIf;
+    break;
+  case 3:
+    if (!memcmp(Start, "car", 3)) return tgtok::XCar;
+    if (!memcmp(Start, "cdr", 3)) return tgtok::XCdr;
+    if (!memcmp(Start, "con", 3)) return tgtok::XConcat;
+    if (!memcmp(Start, "shl", 3)) return tgtok::XSHL;
+    if (!memcmp(Start, "sra", 3)) return tgtok::XSRA;
+    if (!memcmp(Start, "srl", 3)) return tgtok::XSRL;
+    break;
+  case 4:
+    if (!memcmp(Start, "cast", 4)) return tgtok::XCast;
+    if (!memcmp(Start, "null", 4)) return tgtok::XNull;
+    break;
+  case 5:
+    if (!memcmp(Start, "subst", 5)) return tgtok::XSubst;
+    break;
+  case 7:
+    if (!memcmp(Start, "foreach", 7)) return tgtok::XForEach;
+    break;
+  case 9:
+    if (!memcmp(Start, "strconcat", 9)) return tgtok::XStrConcat;
+    break;
+  }
 
-  return ReturnError(Start-1, "Unknown operator");
+  return ReturnError(Start - 1, "Unknown operator");
 }
 
