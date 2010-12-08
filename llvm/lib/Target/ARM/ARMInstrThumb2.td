@@ -1193,7 +1193,7 @@ def t2SUBrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_imm:$imm),
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
-def t2SUBrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, imm0_4095:$imm),
+def t2SUBrSPi12 : T2I<(outs GPR:$Rd), (ins GPR:$sp, imm0_4095:$imm),
                        IIC_iALUi, "subw", "\t$Rd, $sp, $imm", []> {
   bits<4> Rd;
   bits<12> imm;
