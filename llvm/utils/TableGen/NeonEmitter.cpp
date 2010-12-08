@@ -660,6 +660,26 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "__a - (" + Extend(typestr, "__b") + " * " +
       Extend(typestr, "__c") + ");";
     break;
+  case OpQDMullLane:
+    s += MangleName("vqdmull", typestr, ClassS) + "(__a, " +
+      SplatLane(nElts, "__b", "__c") + ");";
+    break;
+  case OpQDMlalLane:
+    s += MangleName("vqdmlal", typestr, ClassS) + "(__a, " +
+      SplatLane(nElts, "__b", "__c") + ");";
+    break;
+  case OpQDMlslLane:
+    s += MangleName("vqdmlsl", typestr, ClassS) + "(__a, " +
+      SplatLane(nElts, "__b", "__c") + ");";
+    break;
+  case OpQDMulhLane:
+    s += MangleName("vqdmulh", typestr, ClassS) + "(__a, " +
+      SplatLane(nElts, "__b", "__c") + ");";
+    break;
+  case OpQRDMulhLane:
+    s += MangleName("vqrdmulh", typestr, ClassS) + "(__a, " +
+      SplatLane(nElts, "__b", "__c") + ");";
+    break;
   case OpEq:
     s += "(" + ts + ")(__a == __b);";
     break;
@@ -1103,11 +1123,13 @@ void NeonEmitter::run(raw_ostream &OS) {
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
 
   // Emit vmovl and vabd intrinsics first so they can be used by other
-  // intrinsics.
+  // intrinsics.  (Some of the saturating multiply instructions are also
+  // used to implement the corresponding "_lane" variants, but tablegen
+  // sorts the records into alphabetical order so that the "_lane" variants
+  // come after the intrinsics they use.)
   emitIntrinsic(OS, Records.getDef("VMOVL"));
   emitIntrinsic(OS, Records.getDef("VABD"));
 
-  // Unique the return+pattern types, and assign them.
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
     if (R->getName() != "VMOVL" && R->getName() != "VABD")

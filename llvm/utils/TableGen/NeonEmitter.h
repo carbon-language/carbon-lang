@@ -47,6 +47,11 @@ enum OpKind {
   OpMlsLane,
   OpMlalLane,
   OpMlslLane,
+  OpQDMullLane,
+  OpQDMlalLane,
+  OpQDMlslLane,
+  OpQDMulhLane,
+  OpQRDMulhLane,
   OpEq,
   OpGe,
   OpLe,
@@ -117,6 +122,11 @@ namespace llvm {
       OpMap["OP_MLS_LN"]= OpMlsLane;
       OpMap["OP_MLAL_LN"] = OpMlalLane;
       OpMap["OP_MLSL_LN"] = OpMlslLane;
+      OpMap["OP_QDMULL_LN"] = OpQDMullLane;
+      OpMap["OP_QDMLAL_LN"] = OpQDMlalLane;
+      OpMap["OP_QDMLSL_LN"] = OpQDMlslLane;
+      OpMap["OP_QDMULH_LN"] = OpQDMulhLane;
+      OpMap["OP_QRDMULH_LN"] = OpQRDMulhLane;
       OpMap["OP_EQ"]    = OpEq;
       OpMap["OP_GE"]    = OpGe;
       OpMap["OP_LE"]    = OpLe;
