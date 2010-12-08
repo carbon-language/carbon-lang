@@ -70,6 +70,8 @@ public:
 
   virtual Spiller &spiller() { return *SpillerInstance; }
 
+  virtual float getPriority(LiveInterval *LI) { return LI->weight; }
+
   virtual unsigned selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &SplitVRegs);
 

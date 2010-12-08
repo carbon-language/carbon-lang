@@ -39,6 +39,7 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "LiveIntervalUnion.h"
+#include <queue>
 
 namespace llvm {
 
@@ -47,16 +48,6 @@ class TargetRegisterInfo;
 class VirtRegMap;
 class LiveIntervals;
 class Spiller;
-
-// Heuristic that determines the priority of assigning virtual to physical
-// registers. The main impact of the heuristic is expected to be compile time.
-// The default is to simply compare spill weights.
-struct LessSpillWeightPriority
-  : public std::binary_function<LiveInterval,LiveInterval, bool> {
-  bool operator()(const LiveInterval *Left, const LiveInterval *Right) const {
-    return Left->weight < Right->weight;
-  }
-};
 
 // Forward declare a priority queue of live virtual registers. If an
 // implementation needs to prioritize by anything other than spill weight, then
@@ -128,6 +119,10 @@ protected:
   // Get a temporary reference to a Spiller instance.
   virtual Spiller &spiller() = 0;
 
+  // getPriority - Calculate the allocation priority for VirtReg.
+  // Virtual registers with higher priorities are allocated first.
+  virtual float getPriority(LiveInterval *LI) = 0;
+
   // A RegAlloc pass should override this to provide the allocation heuristics.
   // Each call must guarantee forward progess by returning an available PhysReg
   // or new set of split live virtual registers. It is up to the splitter to
@@ -158,7 +153,7 @@ protected:
 #endif
 
 private:
-  void seedLiveVirtRegs(LiveVirtRegQueue &VirtRegQ);
+  void seedLiveVirtRegs(std::priority_queue<std::pair<float, unsigned> >&);
 
   void spillReg(LiveInterval &VirtReg, unsigned PhysReg,
                 SmallVectorImpl<LiveInterval*> &SplitVRegs);

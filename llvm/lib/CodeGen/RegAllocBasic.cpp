@@ -43,8 +43,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include <vector>
-#include <queue>
 #include <cstdlib>
 
 using namespace llvm;
@@ -102,6 +100,8 @@ public:
   virtual void releaseMemory();
 
   virtual Spiller &spiller() { return *SpillerInstance; }
+
+  virtual float getPriority(LiveInterval *LI) { return LI->weight; }
 
   virtual unsigned selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &SplitVRegs);
@@ -230,49 +230,18 @@ void RegAllocBase::releaseMemory() {
   PhysReg2LiveUnion.clear();
 }
 
-namespace llvm {
-/// This class defines a queue of live virtual registers prioritized by spill
-/// weight. The heaviest vreg is popped first.
-///
-/// Currently, this is trivial wrapper that gives us an opaque type in the
-/// header, but we may later give it a virtual interface for register allocators
-/// to override the priority queue comparator.
-class LiveVirtRegQueue {
-  typedef std::priority_queue
-    <LiveInterval*, std::vector<LiveInterval*>, LessSpillWeightPriority>
-    PriorityQ;
-  PriorityQ PQ;
-
-public:
-  // Is the queue empty?
-  bool empty() { return PQ.empty(); }
-
-  // Get the highest priority lvr (top + pop)
-  LiveInterval *get() {
-    LiveInterval *VirtReg = PQ.top();
-    PQ.pop();
-    return VirtReg;
-  }
-  // Add this lvr to the queue
-  void push(LiveInterval *VirtReg) {
-    PQ.push(VirtReg);
-  }
-};
-} // end namespace llvm
-
 // Visit all the live virtual registers. If they are already assigned to a
 // physical register, unify them with the corresponding LiveIntervalUnion,
 // otherwise push them on the priority queue for later assignment.
-void RegAllocBase::seedLiveVirtRegs(LiveVirtRegQueue &VirtRegQ) {
+void RegAllocBase::
+seedLiveVirtRegs(std::priority_queue<std::pair<float, unsigned> > &VirtRegQ) {
   for (LiveIntervals::iterator I = LIS->begin(), E = LIS->end(); I != E; ++I) {
     unsigned RegNum = I->first;
     LiveInterval &VirtReg = *I->second;
-    if (TargetRegisterInfo::isPhysicalRegister(RegNum)) {
+    if (TargetRegisterInfo::isPhysicalRegister(RegNum))
       PhysReg2LiveUnion[RegNum].unify(VirtReg);
-    }
-    else {
-      VirtRegQ.push(&VirtReg);
-    }
+    else
+      VirtRegQ.push(std::make_pair(getPriority(&VirtReg), RegNum));
   }
 }
 
@@ -281,27 +250,28 @@ void RegAllocBase::seedLiveVirtRegs(LiveVirtRegQueue &VirtRegQ) {
 void RegAllocBase::allocatePhysRegs() {
 
   // Push each vreg onto a queue or "precolor" by adding it to a physreg union.
-  LiveVirtRegQueue VirtRegQ;
+  std::priority_queue<std::pair<float, unsigned> > VirtRegQ;
   seedLiveVirtRegs(VirtRegQ);
 
   // Continue assigning vregs one at a time to available physical registers.
   while (!VirtRegQ.empty()) {
     // Pop the highest priority vreg.
-    LiveInterval *VirtReg = VirtRegQ.get();
+    LiveInterval &VirtReg = LIS->getInterval(VirtRegQ.top().second);
+    VirtRegQ.pop();
 
     // selectOrSplit requests the allocator to return an available physical
     // register if possible and populate a list of new live intervals that
     // result from splitting.
     typedef SmallVector<LiveInterval*, 4> VirtRegVec;
     VirtRegVec SplitVRegs;
-    unsigned AvailablePhysReg = selectOrSplit(*VirtReg, SplitVRegs);
+    unsigned AvailablePhysReg = selectOrSplit(VirtReg, SplitVRegs);
 
     if (AvailablePhysReg) {
       DEBUG(dbgs() << "allocating: " << TRI->getName(AvailablePhysReg) <<
-            " " << *VirtReg << '\n');
-      assert(!VRM->hasPhys(VirtReg->reg) && "duplicate vreg in union");
-      VRM->assignVirt2Phys(VirtReg->reg, AvailablePhysReg);
-      PhysReg2LiveUnion[AvailablePhysReg].unify(*VirtReg);
+            " " << VirtReg << '\n');
+      assert(!VRM->hasPhys(VirtReg.reg) && "duplicate vreg in union");
+      VRM->assignVirt2Phys(VirtReg.reg, AvailablePhysReg);
+      PhysReg2LiveUnion[AvailablePhysReg].unify(VirtReg);
     }
     for (VirtRegVec::iterator I = SplitVRegs.begin(), E = SplitVRegs.end();
          I != E; ++I) {
@@ -310,7 +280,8 @@ void RegAllocBase::allocatePhysRegs() {
       DEBUG(dbgs() << "queuing new interval: " << *SplitVirtReg << "\n");
       assert(TargetRegisterInfo::isVirtualRegister(SplitVirtReg->reg) &&
              "expect split value in virtual register");
-      VirtRegQ.push(SplitVirtReg);
+      VirtRegQ.push(std::make_pair(getPriority(SplitVirtReg),
+                                   SplitVirtReg->reg));
     }
   }
 }
