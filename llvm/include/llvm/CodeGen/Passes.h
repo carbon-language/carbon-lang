@@ -103,6 +103,11 @@ namespace llvm {
   ///
   FunctionPass *createBasicRegisterAllocator();
 
+  /// Greedy register allocation pass - This pass implements a global register
+  /// allocator for optimized builds.
+  ///
+  FunctionPass *createGreedyRegisterAllocator();
+
   /// LinearScanRegisterAllocation Pass - This pass implements the linear scan
   /// register allocation algorithm, a global register allocator.
   ///

@@ -61,6 +61,7 @@ add_llvm_library(LLVMCodeGen
   PseudoSourceValue.cpp
   RegAllocBasic.cpp
   RegAllocFast.cpp
+  RegAllocGreedy.cpp
   RegAllocLinearScan.cpp
   RegAllocPBQP.cpp
   RegisterCoalescer.cpp
