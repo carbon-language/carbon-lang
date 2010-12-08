@@ -529,10 +529,11 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
       if (isKill)
         MBB.addLiveIn(Reg);
 
-      if (NoGap && LastReg) {
-        if (LastReg != Reg-1)
-          break;
-      }
+      // If NoGap is true, pop consecutive registers and then leave the rest
+      // for other instructions. e.g.
+      // vpush {d8, d10, d11} -> vpush {d8}, vpop {d10, d11}
+      if (NoGap && LastReg && LastReg != Reg-1)
+        break;
       LastReg = Reg;
       Regs.push_back(std::make_pair(Reg, isKill));
     }
@@ -574,10 +575,12 @@ void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
         DeleteRet = true;
       }
 
-      if (NoGap && LastReg) {
-        if (LastReg != Reg-1)
-          break;
-      }
+      // If NoGap is true, pop consecutive registers and then leave the rest
+      // for other instructions. e.g.
+      // vpop {d8, d10, d11} -> vpop {d8}, vpop {d10, d11}
+      if (NoGap && LastReg && LastReg != Reg-1)
+        break;
+
       LastReg = Reg;
       Regs.push_back(Reg);
     }
