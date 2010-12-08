@@ -16,7 +16,11 @@ class Op;
 
 def OP_NONE  : Op;
 def OP_ADD   : Op;
+def OP_ADDL  : Op;
+def OP_ADDW  : Op;
 def OP_SUB   : Op;
+def OP_SUBL  : Op;
+def OP_SUBW  : Op;
 def OP_MUL   : Op;
 def OP_MULL  : Op;
 def OP_MLA   : Op;
@@ -112,8 +116,8 @@ class WInst<string n, string p, string t> : Inst<n, p, t, OP_NONE> {}
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.1 Addition
 def VADD : Inst<"vadd", "ddd", "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUl", OP_ADD>;
-def VADDL   : SInst<"vaddl", "wdd", "csiUcUsUi">;
-def VADDW   : SInst<"vaddw", "wwd", "csiUcUsUi">;
+def VADDL   : Inst<"vaddl", "wdd", "csiUcUsUi", OP_ADDL>;
+def VADDW   : Inst<"vaddw", "wwd", "csiUcUsUi", OP_ADDW>;
 def VHADD   : SInst<"vhadd", "ddd", "csiUcUsUiQcQsQiQUcQUsQUi">;
 def VRHADD  : SInst<"vrhadd", "ddd", "csiUcUsUiQcQsQiQUcQUsQUi">;
 def VQADD   : SInst<"vqadd", "ddd", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
@@ -139,8 +143,8 @@ def VQDMULL  : SInst<"vqdmull", "wdd", "si">;
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.3 Subtraction
 def VSUB : Inst<"vsub", "ddd", "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUl", OP_SUB>;
-def VSUBL   : SInst<"vsubl", "wdd", "csiUcUsUi">;
-def VSUBW   : SInst<"vsubw", "wwd", "csiUcUsUi">;
+def VSUBL   : Inst<"vsubl", "wdd", "csiUcUsUi", OP_SUBL>;
+def VSUBW   : Inst<"vsubw", "wwd", "csiUcUsUi", OP_SUBW>;
 def VQSUB   : SInst<"vqsub", "ddd", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VHSUB   : SInst<"vhsub", "ddd", "csiUcUsUiQcQsQiQUcQUsQUi">;
 def VSUBHN  : IInst<"vsubhn", "dww", "csiUcUsUi">;
