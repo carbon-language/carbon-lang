@@ -177,7 +177,7 @@ class T2OneRegImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<12> imm;
 
-  let Inst{11-8}  = Rd{3-0};
+  let Inst{11-8}  = Rd;
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
@@ -191,7 +191,7 @@ class T2sOneRegImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rn;
   bits<12> imm;
 
-  let Inst{11-8}  = Rd{3-0};
+  let Inst{11-8}  = Rd;
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
@@ -203,7 +203,7 @@ class T2OneRegCmpImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rn;
   bits<12> imm;
 
-  let Inst{19-16}  = Rn{3-0};
+  let Inst{19-16}  = Rn;
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
@@ -216,7 +216,7 @@ class T2OneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<12> ShiftedRm;
 
-  let Inst{11-8}  = Rd{3-0};
+  let Inst{11-8}  = Rd;
   let Inst{3-0}   = ShiftedRm{3-0};
   let Inst{5-4}   = ShiftedRm{6-5};
   let Inst{14-12} = ShiftedRm{11-9};
@@ -229,7 +229,7 @@ class T2sOneRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<12> ShiftedRm;
 
-  let Inst{11-8}  = Rd{3-0};
+  let Inst{11-8}  = Rd;
   let Inst{3-0}   = ShiftedRm{3-0};
   let Inst{5-4}   = ShiftedRm{6-5};
   let Inst{14-12} = ShiftedRm{11-9};
@@ -242,7 +242,7 @@ class T2OneRegCmpShiftedReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rn;
   bits<12> ShiftedRm;
 
-  let Inst{19-16} = Rn{3-0};
+  let Inst{19-16} = Rn;
   let Inst{3-0}   = ShiftedRm{3-0};
   let Inst{5-4}   = ShiftedRm{6-5};
   let Inst{14-12} = ShiftedRm{11-9};
@@ -255,8 +255,8 @@ class T2TwoReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{3-0}   = Rm{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{3-0}   = Rm;
 }
 
 class T2sTwoReg<dag oops, dag iops, InstrItinClass itin,
@@ -265,8 +265,8 @@ class T2sTwoReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{3-0}   = Rm{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{3-0}   = Rm;
 }
 
 class T2TwoRegCmp<dag oops, dag iops, InstrItinClass itin,
@@ -275,8 +275,8 @@ class T2TwoRegCmp<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rn;
   bits<4> Rm;
 
-  let Inst{19-16} = Rn{3-0};
-  let Inst{3-0}   = Rm{3-0};
+  let Inst{19-16} = Rn;
+  let Inst{3-0}   = Rm;
 }
 
 
@@ -286,8 +286,8 @@ class T2TwoRegImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{3-0}   = Rm{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{3-0}   = Rm;
 }
 
 class T2sTwoRegImm<dag oops, dag iops, InstrItinClass itin,
@@ -297,8 +297,8 @@ class T2sTwoRegImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rn;
   bits<12> imm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
@@ -311,8 +311,8 @@ class T2TwoRegShiftImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rm;
   bits<5> imm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{3-0}   = Rm{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{3-0}   = Rm;
   let Inst{14-12} = imm{4-2};
   let Inst{7-6}   = imm{1-0};
 }
@@ -324,8 +324,8 @@ class T2sTwoRegShiftImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rm;
   bits<5> imm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{3-0}   = Rm{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{3-0}   = Rm;
   let Inst{14-12} = imm{4-2};
   let Inst{7-6}   = imm{1-0};
 }
@@ -337,9 +337,9 @@ class T2ThreeReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rn;
   bits<4> Rm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
-  let Inst{3-0}   = Rm{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{3-0}   = Rm;
 }
 
 class T2sThreeReg<dag oops, dag iops, InstrItinClass itin,
@@ -349,9 +349,9 @@ class T2sThreeReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rn;
   bits<4> Rm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
-  let Inst{3-0}   = Rm{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{3-0}   = Rm;
 }
 
 class T2TwoRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
@@ -361,8 +361,8 @@ class T2TwoRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rn;
   bits<12> ShiftedRm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
   let Inst{3-0}   = ShiftedRm{3-0};
   let Inst{5-4}   = ShiftedRm{6-5};
   let Inst{14-12} = ShiftedRm{11-9};
@@ -376,8 +376,8 @@ class T2sTwoRegShiftedReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rn;
   bits<12> ShiftedRm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
   let Inst{3-0}   = ShiftedRm{3-0};
   let Inst{5-4}   = ShiftedRm{6-5};
   let Inst{14-12} = ShiftedRm{11-9};
@@ -392,10 +392,10 @@ class T2FourReg<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rm;
   bits<4> Ra;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
-  let Inst{3-0}   = Rm{3-0};
-  let Inst{15-12} = Ra{3-0};
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Ra;
+  let Inst{11-8}  = Rd;
+  let Inst{3-0}   = Rm;
 }
 
 
@@ -824,7 +824,7 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{20} = 1; // load
 
     bits<4> Rt;
-    let Inst{15-12} = Rt{3-0};
+    let Inst{15-12} = Rt;
 
     bits<17> addr;
     let Inst{19-16} = addr{16-13}; // Rn
@@ -846,7 +846,7 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{8} = 0; // The W bit.
 
     bits<4> Rt;
-    let Inst{15-12} = Rt{3-0};
+    let Inst{15-12} = Rt;
 
     bits<13> addr;
     let Inst{19-16} = addr{12-9}; // Rn
@@ -865,7 +865,7 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{11-6} = 0b000000;
 
     bits<4> Rt;
-    let Inst{15-12} = Rt{3-0};
+    let Inst{15-12} = Rt;
 
     bits<10> addr;
     let Inst{19-16} = addr{9-6}; // Rn
@@ -889,7 +889,7 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{20} = 0; // !load
 
     bits<4> Rt;
-    let Inst{15-12} = Rt{3-0};
+    let Inst{15-12} = Rt;
 
     bits<17> addr;
     let Inst{19-16} = addr{16-13}; // Rn
@@ -909,7 +909,7 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{8} = 0; // The W bit.
 
     bits<4> Rt;
-    let Inst{15-12} = Rt{3-0};
+    let Inst{15-12} = Rt;
 
     bits<13> addr;
     let Inst{19-16} = addr{12-9}; // Rn
@@ -926,7 +926,7 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{11-6} = 0b000000;
 
     bits<4> Rt;
-    let Inst{15-12} = Rt{3-0};
+    let Inst{15-12} = Rt;
 
     bits<10> addr;
     let Inst{19-16}   = addr{9-6}; // Rn
@@ -1090,7 +1090,7 @@ class T2PCOneRegImm<dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<12> label;
 
-  let Inst{11-8}  = Rd{3-0};
+  let Inst{11-8}  = Rd;
   let Inst{26}    = label{11};
   let Inst{14-12} = label{10-8};
   let Inst{7-0}   = label{7-0};
@@ -1371,7 +1371,7 @@ class T2IldT<bit signed, bits<2> type, string opc, InstrItinClass ii>
 
   bits<4> Rt;
   bits<13> addr;
-  let Inst{15-12} = Rt{3-0};
+  let Inst{15-12} = Rt;
   let Inst{19-16} = addr{12-9};
   let Inst{7-0}   = addr{7-0};
 }
@@ -1456,7 +1456,7 @@ class T2IstT<bits<2> type, string opc, InstrItinClass ii>
 
   bits<4> Rt;
   bits<13> addr;
-  let Inst{15-12} = Rt{3-0};
+  let Inst{15-12} = Rt;
   let Inst{19-16} = addr{12-9};
   let Inst{7-0}   = addr{7-0};
 }
@@ -1666,7 +1666,7 @@ def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm:$imm), IIC_iMOVi,
   bits<4> Rd;
   bits<16> imm;
 
-  let Inst{11-8}  = Rd{3-0};
+  let Inst{11-8}  = Rd;
   let Inst{19-16} = imm{15-12};
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
@@ -1687,7 +1687,7 @@ def t2MOVTi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$src, i32imm:$imm), IIC_iMOVi,
   bits<4> Rd;
   bits<16> imm;
 
-  let Inst{11-8}  = Rd{3-0};
+  let Inst{11-8}  = Rd;
   let Inst{19-16} = imm{15-12};
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
@@ -1833,9 +1833,9 @@ class T2I_pam<bits<3> op22_20, bits<4> op7_4, string opc,
   bits<4> Rn;
   bits<4> Rm;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
-  let Inst{3-0}   = Rm{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{3-0}   = Rm;
 }
 
 // Saturating add/subtract -- for disassembly only
@@ -1933,8 +1933,8 @@ class T2SatI<dag oops, dag iops, InstrItinClass itin,
   bits<5> sat_imm;
   bits<7> sh;
 
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
   let Inst{4-0}   = sat_imm{4-0};
   let Inst{21}    = sh{6};
   let Inst{14-12} = sh{4-2};
@@ -2068,7 +2068,7 @@ class T2BitFI<dag oops, dag iops, InstrItinClass itin,
   bits<5> msb;
   bits<5> lsb;
 
-  let Inst{11-8}  = Rd{3-0};
+  let Inst{11-8}  = Rd;
   let Inst{4-0}   = msb{4-0};
   let Inst{14-12} = lsb{4-2};
   let Inst{7-6}   = lsb{1-0};
@@ -2079,7 +2079,7 @@ class T2TwoRegBitFI<dag oops, dag iops, InstrItinClass itin,
     : T2BitFI<oops, iops, itin, opc, asm, pattern> {
   bits<4> Rn;
 
-  let Inst{19-16} = Rn{3-0};
+  let Inst{19-16} = Rn;
 }
 
 let Constraints = "$src = $Rd" in
@@ -2532,7 +2532,7 @@ class T2I_misc<bits<2> op1, bits<2> op2, dag oops, dag iops,
   let Inst{15-12} = 0b1111;
   let Inst{7-6} = 0b10;
   let Inst{5-4} = op2;
-  let Rn{3-0} = Rm{3-0};
+  let Rn{3-0} = Rm;
 }
 
 def t2CLZ : T2I_misc<0b11, 0b00, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
@@ -2696,7 +2696,7 @@ def t2MOVCCi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$false, i32imm:$imm),
   bits<4> Rd;
   bits<16> imm;
 
-  let Inst{11-8}  = Rd{3-0};
+  let Inst{11-8}  = Rd;
   let Inst{19-16} = imm{15-12};
   let Inst{26}    = imm{11};
   let Inst{14-12} = imm{10-8};
@@ -2795,8 +2795,8 @@ class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
 
   bits<4> Rn;
   bits<4> Rt;
-  let Inst{19-16} = Rn{3-0};
-  let Inst{15-12} = Rt{3-0};
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rt;
 }
 class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                 InstrItinClass itin, string opc, string asm, string cstr,
@@ -2811,9 +2811,9 @@ class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rt;
-  let Inst{11-8}  = Rd{3-0};
-  let Inst{19-16} = Rn{3-0};
-  let Inst{15-12} = Rt{3-0};
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rt;
 }
 
 let mayLoad = 1 in {
@@ -2837,7 +2837,7 @@ def t2LDREXD : T2I_ldrex<0b11, (outs rGPR:$Rt, rGPR:$Rt2), (ins rGPR:$Rn),
                          "ldrexd", "\t$Rt, $Rt2, [$Rn]", "",
                          [], {?, ?, ?, ?}> {
   bits<4> Rt2;
-  let Inst{11-8} = Rt2{3-0};
+  let Inst{11-8} = Rt2;
 }
 }
 
@@ -2862,7 +2862,7 @@ def t2STREXD : T2I_strex<0b11, (outs rGPR:$Rd),
                          "strexd", "\t$Rd, $Rt, $Rt2, [$Rn]", "", [],
                          {?, ?, ?, ?}> {
   bits<4> Rt2;
-  let Inst{11-8} = Rt2{3-0};
+  let Inst{11-8} = Rt2;
 }
 }
 
@@ -3041,8 +3041,8 @@ def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
 
   bits<4> cc;
   bits<4> mask;
-  let Inst{7-4} = cc{3-0};
-  let Inst{3-0} = mask{3-0};
+  let Inst{7-4} = cc;
+  let Inst{3-0} = mask;
 }
 
 // Branch and Exchange Jazelle -- for disassembly only
@@ -3056,7 +3056,7 @@ def t2BXJ : T2I<(outs), (ins rGPR:$func), NoItinerary, "bxj", "\t$func",
   let Inst{12} = 0;
 
   bits<4> func;
-  let Inst{19-16} = func{3-0};
+  let Inst{19-16} = func;
 }
 
 // Change Processor State is a system instruction -- for disassembly only.
@@ -3122,7 +3122,7 @@ def t2DBG : T2I<(outs),(ins i32imm:$opt), NoItinerary, "dbg", "\t$opt",
   let Inst{7-4} = 0b1111;
 
   bits<4> opt;
-  let Inst{3-0} = opt{3-0};
+  let Inst{3-0} = opt;
 }
 
 // Secure Monitor Call is a system instruction -- for disassembly only
@@ -3134,7 +3134,7 @@ def t2SMC : T2I<(outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
   let Inst{15-12} = 0b1000;
 
   bits<4> opt;
-  let Inst{19-16} = opt{3-0};
+  let Inst{19-16} = opt;
 }
 
 class T2SRS<bits<12> op31_20,
@@ -3169,7 +3169,7 @@ class T2RFE<bits<12> op31_20, dag oops, dag iops, InstrItinClass itin,
   let Inst{31-20} = op31_20{11-0};
 
   bits<4> Rn;
-  let Inst{19-16} = Rn{3-0};
+  let Inst{19-16} = Rn;
 }
 
 def t2RFEDBW : T2RFE<0b111010000011,
@@ -3235,7 +3235,7 @@ class T2MRS<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
           string opc, string asm, list<dag> pattern>
   : T2SpecialReg<op31_20, op15_14, op12, oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
-  let Inst{11-8} = Rd{3-0};
+  let Inst{11-8} = Rd;
 }
 
 def t2MRS : T2MRS<0b111100111110, 0b10, 0,
@@ -3251,8 +3251,8 @@ class T2MSR<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
   : T2SpecialReg<op31_20, op15_14, op12, oops, iops, itin, opc, asm, pattern> {
   bits<4> Rn;
   bits<4> mask;
-  let Inst{19-16} = Rn{3-0};
-  let Inst{11-8} = mask{3-0};
+  let Inst{19-16} = Rn;
+  let Inst{11-8} = mask;
 }
 
 def t2MSR : T2MSR<0b111100111000, 0b10, 0,
