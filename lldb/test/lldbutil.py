@@ -11,19 +11,29 @@ import StringIO
 # ===========================================
 
 def lldb_iter(obj, getsize, getelem):
-    """
-    A generator adaptor for lldb aggregate data structures.
+    """A generator adaptor for lldb aggregate data structures.
 
-    API clients pass in the aggregate object, the name of the method to get the
-    size of the object, and the name of the method to get the element given an
-    index.
+    API clients pass in an aggregate object or a container of it, the name of
+    the method to get the size of the aggregate, and the name of the method to
+    get the element by index.
 
-    Example usage:
+    Example usages:
+
+    1. Pass an aggregate as the first argument:
 
     def disassemble_instructions (insts):
         from lldbutil import lldb_iter
         for i in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
             print i
+
+    2. Pass a container of aggregate which provides APIs to get to the size and
+       the element of the aggregate:
+
+    # Module is a container of symbol table 
+    module = target.FindModule(filespec)
+    for symbol in lldb_iter(module, 'GetNumSymbols', 'GetSymbolAtIndex'):
+        name = symbol.GetName()
+        ...
     """
     size = getattr(obj, getsize)
     elem = getattr(obj, getelem)
