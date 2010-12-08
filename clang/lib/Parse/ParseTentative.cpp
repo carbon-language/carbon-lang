@@ -1119,10 +1119,11 @@ bool Parser::isCXXFunctionDeclarator(bool warnIfAmbiguous) {
 ///   parameter-declaration-list ',' parameter-declaration
 ///
 /// parameter-declaration:
-///   decl-specifier-seq declarator
-///   decl-specifier-seq declarator '=' assignment-expression
-///   decl-specifier-seq abstract-declarator[opt]
-///   decl-specifier-seq abstract-declarator[opt] '=' assignment-expression
+///   decl-specifier-seq declarator attributes[opt]
+///   decl-specifier-seq declarator attributes[opt] '=' assignment-expression
+///   decl-specifier-seq abstract-declarator[opt] attributes[opt]
+///   decl-specifier-seq abstract-declarator[opt] attributes[opt]
+///     '=' assignment-expression
 ///
 Parser::TPResult Parser::TryParseParameterDeclarationClause() {
 
@@ -1156,6 +1157,10 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
     TPR = TryParseDeclarator(true/*mayBeAbstract*/);
     if (TPR != TPResult::Ambiguous())
       return TPR;
+
+    // [GNU] attributes[opt]
+    if (Tok.is(tok::kw___attribute))
+      return TPResult::True();
 
     if (Tok.is(tok::equal)) {
       // '=' assignment-expression

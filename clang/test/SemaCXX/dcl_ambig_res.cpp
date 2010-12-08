@@ -71,3 +71,6 @@ struct S5 {
 int foo8() {
   int v(int(S5::value)); // expected-warning{{disambiguated}} expected-error{{parameter declarator cannot be qualified}}
 }
+
+template<typename T>
+void rdar8739801( void (T::*)( void ) __attribute__((unused)) );
