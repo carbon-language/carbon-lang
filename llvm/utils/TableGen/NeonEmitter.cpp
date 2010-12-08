@@ -747,9 +747,36 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += ");";
     break;
   }
+  case OpAbdl: {
+    std::string abd = MangleName("vabd", typestr, ClassS) + "(__a, __b)";
+    if (typestr[0] != 'U') {
+      // vabd results are always unsigned and must be zero-extended.
+      std::string utype = "U" + typestr.str();
+      s += "(" + TypeString(proto[0], typestr) + ")";
+      abd = "(" + TypeString('d', utype) + ")" + abd;
+      s += Extend(utype, abd) + ";";
+    } else {
+      s += Extend(typestr, abd) + ";";
+    }
+    break;
+  }
   case OpAba:
     s += "__a + " + MangleName("vabd", typestr, ClassS) + "(__b, __c);";
     break;
+  case OpAbal: {
+    s += "__a + ";
+    std::string abd = MangleName("vabd", typestr, ClassS) + "(__b, __c)";
+    if (typestr[0] != 'U') {
+      // vabd results are always unsigned and must be zero-extended.
+      std::string utype = "U" + typestr.str();
+      s += "(" + TypeString(proto[0], typestr) + ")";
+      abd = "(" + TypeString('d', utype) + ")" + abd;
+      s += Extend(utype, abd) + ";";
+    } else {
+      s += Extend(typestr, abd) + ";";
+    }
+    break;
+  }
   default:
     throw "unknown OpKind!";
     break;

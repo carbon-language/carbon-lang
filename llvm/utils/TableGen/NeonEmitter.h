@@ -70,7 +70,9 @@ enum OpKind {
   OpRev32,
   OpRev64,
   OpReinterpret,
-  OpAba
+  OpAbdl,
+  OpAba,
+  OpAbal
 };
 
 enum ClassKind {
@@ -138,7 +140,9 @@ namespace llvm {
       OpMap["OP_REV32"] = OpRev32;
       OpMap["OP_REV64"] = OpRev64;
       OpMap["OP_REINT"] = OpReinterpret;
+      OpMap["OP_ABDL"]  = OpAbdl;
       OpMap["OP_ABA"]   = OpAba;
+      OpMap["OP_ABAL"]  = OpAbal;
 
       Record *SI = R.getClass("SInst");
       Record *II = R.getClass("IInst");
