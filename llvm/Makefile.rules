@@ -526,10 +526,6 @@ ifdef SHARED_LIBRARY
 ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
 ifneq ($(HOST_OS),Darwin)
   LD.Flags += $(RPATH) -Wl,'$$ORIGIN'
-else
-ifneq ($(DARWIN_MAJVERS),4)
-  LD.Flags += $(RPATH) -Wl,$(SharedLibDir)
-endif
 endif
 endif
 endif
