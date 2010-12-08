@@ -203,7 +203,7 @@ DIType DIBuilder::CreateInheritance(DIType Ty, DIType BaseTy,
     GetTagConstant(VMContext, dwarf::DW_TAG_inheritance),
     Ty,
     NULL, // Name
-    NULL, // File
+    Ty.getFile(),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Align
