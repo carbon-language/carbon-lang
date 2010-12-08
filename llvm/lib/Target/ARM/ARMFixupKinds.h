@@ -31,8 +31,12 @@ enum Fixups {
   // fixup_arm_branch - 24-bit PC relative relocation for direct branch
   // instructions.
   fixup_arm_branch,
+
   // fixup_arm_thumb_bl - Fixup for Thumb BL/BLX instructions.
   fixup_arm_thumb_bl,
+
+  // fixup_arm_thumb_br - Fixup for Thumb branch instructions.
+  fixup_arm_thumb_br,
 
   // fixup_arm_thumb_cp - Fixup for Thumb load/store from constant pool instrs.
   fixup_arm_thumb_cp,

@@ -74,6 +74,10 @@ def t_imm_s4 : Operand<i32> {
 
 // Define Thumb specific addressing modes.
 
+def t_brtarget : Operand<i32> {
+  let EncoderMethod = "getThumbBRTargetOpValue";
+}
+
 def t_bltarget : Operand<i32> {
   let EncoderMethod = "getThumbBLTargetOpValue";
 }
@@ -510,7 +514,7 @@ let isBranch = 1, isTerminator = 1 in
 
 // Compare and branch on zero / non-zero
 let isBranch = 1, isTerminator = 1 in {
-  def tCBZ  : T1I<(outs), (ins tGPR:$Rn, brtarget:$target), IIC_Br,
+  def tCBZ  : T1I<(outs), (ins tGPR:$Rn, t_brtarget:$target), IIC_Br,
                   "cbz\t$Rn, $target", []>,
               T1Misc<{0,0,?,1,?,?,?}> {
     // A8.6.27
@@ -521,7 +525,7 @@ let isBranch = 1, isTerminator = 1 in {
     let Inst{2-0} = Rn;
   }
 
-  def tCBNZ : T1I<(outs), (ins tGPR:$cmp, brtarget:$target), IIC_Br,
+  def tCBNZ : T1I<(outs), (ins tGPR:$cmp, t_brtarget:$target), IIC_Br,
                   "cbnz\t$cmp, $target", []>,
               T1Misc<{1,0,?,1,?,?,?}> {
     // A8.6.27
@@ -563,7 +567,7 @@ def tLDR :                      // A8.6.60
                  "ldr", "\t$Rt, $addr",
                  [(set tGPR:$Rt, (load t_addrmode_s4:$addr))]>;
 
-def tLDRi:                      // A8.6.57
+def tLDRi :                     // A8.6.57
   T1pILdStEncodeImm<0b0110, 1, (outs tGPR:$Rt), (ins t_addrmode_s4:$addr),
                     AddrModeT1_4, IIC_iLoad_r,
                     "ldr", "\t$Rt, $addr",
@@ -587,7 +591,7 @@ def tLDRH :                     // A8.6.76
                  "ldrh", "\t$dst, $addr",
                  [(set tGPR:$dst, (zextloadi16 t_addrmode_s2:$addr))]>;
 
-def tLDRHi:                     // A8.6.73
+def tLDRHi :                    // A8.6.73
   T1pILdStEncodeImm<0b1000, 1, (outs tGPR:$Rt), (ins t_addrmode_s2:$addr),
                     AddrModeT1_2, IIC_iLoad_bh_r,
                     "ldrh", "\t$Rt, $addr",
