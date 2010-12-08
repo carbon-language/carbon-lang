@@ -758,6 +758,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
 
   if (getLexer().is(AsmToken::EndOfStatement))
     Parser.Lex(); // Consume the EndOfStatement
+  else if (isPrefix && getLexer().is(AsmToken::Slash))
+    Parser.Lex(); // Consume the prefix separator Slash
 
   // This is a terrible hack to handle "out[bwl]? %al, (%dx)" ->
   // "outb %al, %dx".  Out doesn't take a memory form, but this is a widely

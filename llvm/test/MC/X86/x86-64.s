@@ -738,6 +738,11 @@ lock  incl 1(%rsp)
 // CHECK: lock
 // CHECK: incl 1(%rsp)
 
+// rdar://8741045
+lock/incl 1(%rsp)
+// CHECK: lock
+// CHECK: incl 1(%rsp)
+
 // rdar://8033482
 rep movsl
 // CHECK: rep
