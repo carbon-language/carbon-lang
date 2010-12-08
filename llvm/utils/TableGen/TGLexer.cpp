@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "TGLexer.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Config/config.h"
+#include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Twine.h"
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
@@ -419,36 +420,23 @@ tgtok::TokKind TGLexer::LexExclaim() {
     ++CurPtr;
   
   // Check to see which operator this is.
-  switch (CurPtr - Start) {
-  default:
-    break;
-  case 2:
-    if (!memcmp(Start, "eq", 2)) return tgtok::XEq;
-    if (!memcmp(Start, "if", 2)) return tgtok::XIf;
-    break;
-  case 3:
-    if (!memcmp(Start, "car", 3)) return tgtok::XCar;
-    if (!memcmp(Start, "cdr", 3)) return tgtok::XCdr;
-    if (!memcmp(Start, "con", 3)) return tgtok::XConcat;
-    if (!memcmp(Start, "shl", 3)) return tgtok::XSHL;
-    if (!memcmp(Start, "sra", 3)) return tgtok::XSRA;
-    if (!memcmp(Start, "srl", 3)) return tgtok::XSRL;
-    break;
-  case 4:
-    if (!memcmp(Start, "cast", 4)) return tgtok::XCast;
-    if (!memcmp(Start, "null", 4)) return tgtok::XNull;
-    break;
-  case 5:
-    if (!memcmp(Start, "subst", 5)) return tgtok::XSubst;
-    break;
-  case 7:
-    if (!memcmp(Start, "foreach", 7)) return tgtok::XForEach;
-    break;
-  case 9:
-    if (!memcmp(Start, "strconcat", 9)) return tgtok::XStrConcat;
-    break;
-  }
+  tgtok::TokKind Kind =
+    StringSwitch<tgtok::TokKind>(StringRef(Start, CurPtr - Start))
+    .Case("eq", tgtok::XEq)
+    .Case("if", tgtok::XIf)
+    .Case("car", tgtok::XCar)
+    .Case("cdr", tgtok::XCdr)
+    .Case("con", tgtok::XConcat)
+    .Case("shl", tgtok::XSHL)
+    .Case("sra", tgtok::XSRA)
+    .Case("srl", tgtok::XSRL)
+    .Case("cast", tgtok::XCast)
+    .Case("null", tgtok::XNull)
+    .Case("subst", tgtok::XSubst)
+    .Case("foreach", tgtok::XForEach)
+    .Case("strconcat", tgtok::XStrConcat)
+    .Default(tgtok::Error);
 
-  return ReturnError(Start - 1, "Unknown operator");
+  return Kind != tgtok::Error ? Kind : ReturnError(Start-1, "Unknown operator");
 }
 
