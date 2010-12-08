@@ -1181,27 +1181,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   unsigned Int;
   switch (BuiltinID) {
   default: return 0;
-  case ARM::BI__builtin_neon_vabal_v: {
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    SmallVector<Value*, 2> Args;
-    Args.push_back(Ops[1]);
-    Args.push_back(Ops[2]);
-    Int = usgn ? Intrinsic::arm_neon_vabdu : Intrinsic::arm_neon_vabds;
-    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
-    Ops[1] = EmitNeonCall(CGM.getIntrinsic(Int, &DTy, 1), Args, "vabal");
-    Ops[1] = Builder.CreateZExt(Ops[1], Ty);
-    return Builder.CreateAdd(Ops[0], Ops[1], "vabal");
-  }
   case ARM::BI__builtin_neon_vabd_v:
   case ARM::BI__builtin_neon_vabdq_v:
     Int = usgn ? Intrinsic::arm_neon_vabdu : Intrinsic::arm_neon_vabds;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vabd");
-  case ARM::BI__builtin_neon_vabdl_v: {
-    Int = usgn ? Intrinsic::arm_neon_vabdu : Intrinsic::arm_neon_vabds;
-    const llvm::Type *DTy =llvm::VectorType::getTruncatedElementVectorType(VTy);
-    Ops[0] = EmitNeonCall(CGM.getIntrinsic(Int, &DTy, 1), Ops, "vabdl");
-    return Builder.CreateZExt(Ops[0], Ty, "vabdl");
-  }
   case ARM::BI__builtin_neon_vabs_v:
   case ARM::BI__builtin_neon_vabsq_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vabs, &Ty, 1),
