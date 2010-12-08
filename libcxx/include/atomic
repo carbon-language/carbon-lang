@@ -528,142 +528,6 @@ void atomic_signal_fence(memory_order m);
 
 #pragma GCC system_header
 
-//// Begin Temporary Intrinsics ////
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__atomic_is_lock_free(_Tp)
-{
-    return false;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp
-__atomic_load(const volatile _Tp* __t, int)
-{
-    return *__t;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-void
-__atomic_store(volatile _Tp* __t, _Tp __d, int)
-{
-    *__t = __d;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp
-__atomic_exchange(volatile _Tp* __t, _Tp __d, int)
-{
-    _Tp __tmp = *__t;
-    *__t = __d;
-    return __tmp;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__atomic_compare_exchange_strong(volatile _Tp* __o, _Tp* __e, _Tp __d, int, int)
-{
-    if (const_cast<_Tp&>(*__o) == *__e)
-    {
-        *__o = __d;
-        return true;
-    }
-    *__e = __d;
-    return false;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-__atomic_compare_exchange_weak(volatile _Tp* __o, _Tp* __e, _Tp __d, int, int)
-{
-    if (const_cast<_Tp&>(*__o) == *__e)
-    {
-        *__o = __d;
-        return true;
-    }
-    *__e = __d;
-    return false;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp
-__atomic_fetch_add(volatile _Tp* __o, _Tp __op, int)
-{
-    _Tp __tmp = *__o;
-    *__o += __op;
-    return __tmp;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp*
-__atomic_fetch_add(_Tp* volatile* __o, ptrdiff_t __op, int)
-{
-    _Tp* __tmp = *__o;
-    *__o += __op;
-    return __tmp;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp
-__atomic_fetch_sub(volatile _Tp* __o, _Tp __op, int)
-{
-    _Tp __tmp = *__o;
-    *__o -= __op;
-    return __tmp;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp*
-__atomic_fetch_sub(_Tp* volatile* __o, ptrdiff_t __op, int)
-{
-    _Tp* __tmp = *__o;
-    *__o -= __op;
-    return __tmp;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp
-__atomic_fetch_and(volatile _Tp* __o, _Tp __op, int)
-{
-    _Tp __tmp = *__o;
-    *__o &= __op;
-    return __tmp;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp
-__atomic_fetch_or(volatile _Tp* __o, _Tp __op, int)
-{
-    _Tp __tmp = *__o;
-    *__o |= __op;
-    return __tmp;
-}
-
-template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
-_Tp
-__atomic_fetch_xor(volatile _Tp* __o, _Tp __op, int)
-{
-    _Tp __tmp = *__o;
-    *__o ^= __op;
-    return __tmp;
-}
-
-//// End Temporary Intrinsics ////
-
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 typedef enum memory_order
@@ -752,9 +616,16 @@ struct __atomic_base  // false
     __atomic_base() {} // = default;
     _LIBCPP_INLINE_VISIBILITY
     /*constexpr*/ __atomic_base(_Tp __d) : __a_(__d) {}
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     __atomic_base(const __atomic_base&) = delete;
     __atomic_base& operator=(const __atomic_base&) = delete;
     __atomic_base& operator=(const __atomic_base&) volatile = delete;
+#else  // _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+private:
+    __atomic_base(const __atomic_base&);
+    __atomic_base& operator=(const __atomic_base&);
+    __atomic_base& operator=(const __atomic_base&) volatile;
+#endif  // _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 };
 
 // atomic<Integral>
@@ -1467,6 +1338,114 @@ atomic_fetch_xor_explicit(atomic<_Tp>* __o, _Tp __op, memory_order __m)
     return __o->fetch_xor(__op, __m);
 }
 
+// flag type and operations
+
+typedef struct atomic_flag
+{
+    bool __a_;
+
+    _LIBCPP_INLINE_VISIBILITY
+    bool test_and_set(memory_order __m = memory_order_seq_cst) volatile
+        {return __atomic_exchange(&__a_, true, __m);}
+    _LIBCPP_INLINE_VISIBILITY
+    bool test_and_set(memory_order __m = memory_order_seq_cst)
+        {return __atomic_exchange(&__a_, true, __m);}
+    _LIBCPP_INLINE_VISIBILITY
+    void clear(memory_order __m = memory_order_seq_cst) volatile
+        {__atomic_store(&__a_, false, __m);}
+    _LIBCPP_INLINE_VISIBILITY
+    void clear(memory_order __m = memory_order_seq_cst)
+        {__atomic_store(&__a_, false, __m);}
+
+    _LIBCPP_INLINE_VISIBILITY
+    atomic_flag() {} // = default;
+    _LIBCPP_INLINE_VISIBILITY
+    atomic_flag(bool __b) : __a_(__b) {}
+
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+    atomic_flag(const atomic_flag&) = delete;
+    atomic_flag& operator=(const atomic_flag&) = delete;
+    atomic_flag& operator=(const atomic_flag&) volatile = delete;
+#else  // _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+private:
+    atomic_flag(const atomic_flag&);
+    atomic_flag& operator=(const atomic_flag&);
+    atomic_flag& operator=(const atomic_flag&) volatile;
+#endif  // _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+} atomic_flag;
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_flag_test_and_set(volatile atomic_flag* __o)
+{
+    return __o->test_and_set();
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_flag_test_and_set(atomic_flag* __o)
+{
+    return __o->test_and_set();
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_flag_test_and_set_explicit(volatile atomic_flag* __o, memory_order __m)
+{
+    return __o->test_and_set(__m);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+bool
+atomic_flag_test_and_set_explicit(atomic_flag* __o, memory_order __m)
+{
+    return __o->test_and_set(__m);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_flag_clear(volatile atomic_flag* __o)
+{
+    __o->clear();
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_flag_clear(atomic_flag* __o)
+{
+    __o->clear();
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_flag_clear_explicit(volatile atomic_flag* __o, memory_order __m)
+{
+    __o->clear(__m);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_flag_clear_explicit(atomic_flag* __o, memory_order __m)
+{
+    __o->clear(__m);
+}
+
+// fences
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_thread_fence(memory_order __m)
+{
+    __atomic_thread_fence(__m);
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+void
+atomic_signal_fence(memory_order __m)
+{
+    __atomic_signal_fence(__m);
+}
+
 // Atomics for standard typedef types
 
 typedef atomic<char>               atomic_char;
@@ -1509,138 +1488,20 @@ typedef atomic<ptrdiff_t> atomic_ptrdiff_t;
 typedef atomic<intmax_t>  atomic_intmax_t;
 typedef atomic<uintmax_t> atomic_uintmax_t;
 
-/*
-// flag type and operations
-
-typedef bool __atomic_flag__;
-
-struct atomic_flag;
-
-bool atomic_flag_test_and_set(volatile atomic_flag*);
-bool atomic_flag_test_and_set(atomic_flag*);
-bool atomic_flag_test_and_set_explicit(volatile atomic_flag*, memory_order);
-bool atomic_flag_test_and_set_explicit(atomic_flag*, memory_order);
-void atomic_flag_clear(volatile atomic_flag*);
-void atomic_flag_clear(atomic_flag*);
-void atomic_flag_clear_explicit(volatile atomic_flag*, memory_order);
-void atomic_flag_clear_explicit(atomic_flag*, memory_order);
-
-typedef struct _LIBCPP_VISIBLE atomic_flag
-{
-    __atomic_flag__ __flg_;
-
-    _LIBCPP_INLINE_VISIBILITY
-    bool test_and_set(memory_order __o = memory_order_seq_cst) volatile
-        {return atomic_flag_test_and_set_explicit(this, __o);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool test_and_set(memory_order __o = memory_order_seq_cst)
-        {return atomic_flag_test_and_set_explicit(this, __o);}
-
-    _LIBCPP_INLINE_VISIBILITY
-    void clear(memory_order __o = memory_order_seq_cst) volatile
-        {atomic_flag_clear_explicit(this, __o);}
-    _LIBCPP_INLINE_VISIBILITY
-    void clear(memory_order __o = memory_order_seq_cst)
-        {atomic_flag_clear_explicit(this, __o);}
-
-#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
-    atomic_flag() = default;
-#else
-    _LIBCPP_INLINE_VISIBILITY
-    atomic_flag() {};
-#endif
-
-#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
-    atomic_flag(const atomic_flag&) = delete;
-    atomic_flag& operator=(const atomic_flag&) = delete;
-    atomic_flag& operator=(const atomic_flag&) volatile = delete;
-#else
-private:
-    atomic_flag(const atomic_flag&);
-    atomic_flag& operator=(const atomic_flag&);
-    atomic_flag& operator=(const atomic_flag&) volatile;
-public:
-#endif
-} atomic_flag;
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-atomic_flag_test_and_set(volatile atomic_flag* __f)
-{
-    return __atomic_exchange(&__f->__flg_, __atomic_flag__(true),
-                             memory_order_seq_cst)
-            == __atomic_flag__(true);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-atomic_flag_test_and_set(atomic_flag* __f)
-{
-    return atomic_flag_test_and_set(const_cast<volatile atomic_flag*>(__f));
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-atomic_flag_test_and_set_explicit(volatile atomic_flag* __f, memory_order __o)
-{
-    return __atomic_exchange(&__f->__flg_, __atomic_flag__(true), __o)
-            == __atomic_flag__(true);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-bool
-atomic_flag_test_and_set_explicit(atomic_flag* __f, memory_order __o)
-{
-    return atomic_flag_test_and_set_explicit(const_cast<volatile atomic_flag*>
-                                                                    (__f), __o);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-void
-atomic_flag_clear(volatile atomic_flag* __f)
-{
-    __atomic_store(&__f->__flg_, __atomic_flag__(false), memory_order_seq_cst);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-void
-atomic_flag_clear(atomic_flag* __f)
-{
-    atomic_flag_clear(const_cast<volatile atomic_flag*>(__f));
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-void
-atomic_flag_clear_explicit(volatile atomic_flag* __f, memory_order __o)
-{
-    __atomic_store(&__f->__flg_, __atomic_flag__(false), __o);
-}
-
-inline _LIBCPP_INLINE_VISIBILITY
-void
-atomic_flag_clear_explicit(atomic_flag* __f, memory_order __o)
-{
-    atomic_flag_clear_explicit(const_cast<volatile atomic_flag*>(__f), __o);
-}
-
 #define ATOMIC_FLAG_INIT {false}
 #define ATOMIC_VAR_INIT(__v) {__v}
 
-inline _LIBCPP_INLINE_VISIBILITY
-memory_order
-__translate_memory_order(memory_order __o)
-{
-    switch (__o)
-    {
-    case memory_order_acq_rel:
-        return memory_order_acquire;
-    case memory_order_release:
-        return memory_order_relaxed;
-    }
-    return __o;
-}
+// lock-free property
 
-*/
+#define ATOMIC_CHAR_LOCK_FREE 0
+#define ATOMIC_CHAR16_T_LOCK_FREE 0
+#define ATOMIC_CHAR32_T_LOCK_FREE 0
+#define ATOMIC_WCHAR_T_LOCK_FREE 0
+#define ATOMIC_SHORT_LOCK_FREE 0
+#define ATOMIC_INT_LOCK_FREE 0
+#define ATOMIC_LONG_LOCK_FREE 0
+#define ATOMIC_LLONG_LOCK_FREE 0
+
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_ATOMIC
