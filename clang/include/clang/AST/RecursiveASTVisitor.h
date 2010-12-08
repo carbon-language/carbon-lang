@@ -393,7 +393,7 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
     switch (BinOp->getOpcode()) {
 #define OPERATOR(NAME) \
-    case BO_##NAME: DISPATCH(Bin##PtrMemD, BinaryOperator, S);
+    case BO_##NAME: DISPATCH(Bin##NAME, BinaryOperator, S);
 
     BINOP_LIST()
 #undef OPERATOR
