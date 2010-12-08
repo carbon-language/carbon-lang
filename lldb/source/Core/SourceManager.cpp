@@ -171,6 +171,7 @@ SourceManager::DisplayMoreWithLineNumbers (Stream *s)
 
 SourceManager::File::File(const FileSpec &file_spec) :
     m_file_spec(file_spec),
+    m_mod_time (m_file_spec.GetModificationTime()),
     m_data_sp(file_spec.ReadFileContents ()),
     m_offsets()
 {
@@ -211,6 +212,17 @@ SourceManager::File::LineIsValid (uint32_t line)
 size_t
 SourceManager::File::DisplaySourceLines (uint32_t line, uint32_t context_before, uint32_t context_after, Stream *s)
 {
+    // TODO: use host API to sign up for file modifications to anything in our
+    // source cache and only update when we determine a file has been updated.
+    // For now we check each time we want to display info for the file.
+    TimeValue curr_mod_time (m_file_spec.GetModificationTime());
+    if (m_mod_time != curr_mod_time)
+    {
+        m_mod_time = curr_mod_time;
+        m_data_sp = m_file_spec.ReadFileContents ();
+        m_offsets.clear();
+    }
+
     const uint32_t start_line = line <= context_before ? 1 : line - context_before;
     const uint32_t start_line_offset = GetLineOffset (start_line);
     if (start_line_offset != UINT32_MAX)

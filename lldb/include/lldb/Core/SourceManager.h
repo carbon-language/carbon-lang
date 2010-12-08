@@ -53,6 +53,7 @@ public:
         CalculateLineOffsets (uint32_t line = UINT32_MAX);
 
         FileSpec m_file_spec;
+        TimeValue m_mod_time;   // Keep the modification time that this file data is valid for
         lldb::DataBufferSP m_data_sp;
         typedef std::vector<uint32_t> LineOffsets;
         LineOffsets m_offsets;
