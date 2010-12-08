@@ -1152,14 +1152,18 @@ def t2ADDrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, t2_so_imm:$imm),
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
-def t2ADDrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$sp, imm0_4095:$imm),
+def t2ADDrSPi12 : T2I<(outs GPR:$Rd), (ins GPR:$sp, imm0_4095:$imm),
                        IIC_iALUi, "addw", "\t$Rd, $sp, $imm", []> {
+  bits<4> Rd;
+  bits<12> imm;
   let Inst{31-27} = 0b11110;
-  let Inst{25} = 1;
-  let Inst{24-21} = 0b0000;
-  let Inst{20} = 0; // The S bit.
+  let Inst{26} = imm{11};
+  let Inst{25-20} = 0b100000;
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
+  let Inst{14-12} = imm{10-8};
+  let Inst{11-8} = Rd;
+  let Inst{7-0} = imm{7-0};
 }
 
 // ADD r, sp, so_reg
