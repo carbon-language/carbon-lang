@@ -134,17 +134,24 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // xxxxxSIIIIIIIIII xxxxxIIIIIIIIIII
     // Note that the halfwords are stored high first, low second; so we need
     // to transpose the fixup value here to map properly.
+    // FIXME: Something isn't quite right with this. Some, but not all, BLX
+    // instructions are getting the encoded value off by one.
     uint32_t Binary = 0x3fffff & ((Value - 4) >> 1);
     Binary = ((Binary & 0x7ff) << 16) | (Binary >> 11);
     return Binary;
   }
   case ARM::fixup_arm_thumb_cp:
-    // Offset by 4, and don't encode the low two bits.
-    return ((Value - 4) >> 2) & 0xff;
-  case ARM::fixup_t2_pcrel_10:
-  case ARM::fixup_arm_pcrel_10: {
-    // Offset by 8 just as above.
-    Value = Value - 8;
+    // Offset by 4, and don't encode the low two bits. Two bytes of that
+    // 'off by 4' is implicitly handled by the half-word ordering of the
+    // Thumb encoding, so we only need to adjust by 2 here.
+    return ((Value - 2) >> 2) & 0xff;
+  case ARM::fixup_arm_pcrel_10:
+    Value = Value - 6; // ARM fixups offset by an additional word and don't
+                       // need to adjust for the half-word ordering.
+    // Fall through.
+  case ARM::fixup_t2_pcrel_10: {
+    // Offset by 4, adjusted by two due to the half-word ordering of thumb.
+    Value = Value - 2;
     bool isAdd = true;
     if ((int64_t)Value < 0) {
       Value = -Value;
@@ -154,7 +161,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     Value >>= 2;
     assert ((Value < 256) && "Out of range pc-relative fixup value!");
     Value |= isAdd << 23;
-    
+
     // Same addressing mode as fixup_arm_pcrel_10,
     // but with 16-bit halfwords swapped.
     if (Kind == ARM::fixup_t2_pcrel_10) {
@@ -162,7 +169,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
       swapped |= (Value & 0x0000FFFF) << 16;
       return swapped;
     }
-    
+
     return Value;
   }
   }
