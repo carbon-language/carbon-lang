@@ -7,14 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <functional>
-
-#include <functional>
-
-#ifndef _LIBCPP_VERSION
-#error _LIBCPP_VERSION not defined
-#endif
-
 int main()
 {
 }
