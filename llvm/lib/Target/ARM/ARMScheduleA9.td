@@ -1396,11 +1396,11 @@ def CortexA9Itineraries : ProcessorItineraries<
                               [4, 2, 2]>,
   //
   // Double-register Absolute Difference and Accumulate
-  InstrItinData<IIC_VABAD,    [InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
-                               InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+  InstrItinData<IIC_VABAD,    [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_DRegsN],   0, Required>,
                                // Extra latency cycles since wbck is 6 cycles
+                               InstrStage<7, [A9_DRegsVFP], 0, Reserved>,
                                InstrStage<1, [A9_NPipe]>],
                               [6, 3, 2, 1]>,
   //
