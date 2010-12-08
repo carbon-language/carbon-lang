@@ -1169,6 +1169,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   bool usgn = type & 0x08;
   bool quad = type & 0x10;
   bool poly = (type & 0x7) == 5 || (type & 0x7) == 6;
+  (void)poly;  // Only used in assert()s.
   bool splat = false;
   bool rightShift = false;
 
