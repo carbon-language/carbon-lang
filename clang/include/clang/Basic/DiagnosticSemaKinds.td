@@ -1781,7 +1781,7 @@ def note_typename_refers_here : Note<
 def err_typename_missing : Error<
   "missing 'typename' prior to dependent type name '%0%1'">;
 def ext_typename_outside_of_template : ExtWarn<
-  "'typename' occurs outside of a template">;
+  "'typename' occurs outside of a template">, InGroup<CXX0x>;
 
 def err_template_kw_refers_to_non_template : Error<
     "%0 following the 'template' keyword does not refer to a template">;
@@ -1794,7 +1794,7 @@ def note_referenced_class_template : Error<
 def err_template_kw_missing : Error<
   "missing 'template' keyword prior to dependent template name '%0%1'">;
 def ext_template_outside_of_template : ExtWarn<
-  "'template' keyword outside of a template">;
+  "'template' keyword outside of a template">, InGroup<CXX0x>;
 
 // C++0x Variadic Templates
 def err_variadic_templates_unsupported : Error<
