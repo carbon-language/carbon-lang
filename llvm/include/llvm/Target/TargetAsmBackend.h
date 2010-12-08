@@ -10,6 +10,7 @@
 #ifndef LLVM_TARGET_TARGETASMBACKEND_H
 #define LLVM_TARGET_TARGETASMBACKEND_H
 
+#include "llvm/MC/MCDirectives.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -109,6 +110,10 @@ public:
   ///
   /// \return - True on success.
   virtual bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const = 0;
+
+  /// HandleAssemblerFlag - Handle any target-specific assembler flags.
+  /// By default, do nothing.
+  virtual void HandleAssemblerFlag(MCAssemblerFlag Flag) {}
 };
 
 } // End llvm namespace

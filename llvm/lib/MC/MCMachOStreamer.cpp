@@ -124,6 +124,9 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
 }
 
 void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
+  // Let the target do whatever target specific stuff it needs to do.
+  getAssembler().getBackend().HandleAssemblerFlag(Flag);
+  // Do any generic stuff we need to do.
   switch (Flag) {
   case MCAF_SyntaxUnified: return; // no-op here.
   case MCAF_Code16: return; // no-op here.

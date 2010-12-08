@@ -12,6 +12,7 @@
 #include "ARMFixupKinds.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectFormat.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -27,6 +28,7 @@ using namespace llvm;
 
 namespace {
 class ARMAsmBackend : public TargetAsmBackend {
+  bool isThumbMode;  // Currently emitting Thumb code.
 public:
   ARMAsmBackend(const Target &T) : TargetAsmBackend() {}
 
@@ -36,9 +38,21 @@ public:
 
   bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
 
-  unsigned getPointerSize() const {
-    return 4;
+  void HandleAssemblerFlag(MCAssemblerFlag Flag) {
+    switch (Flag) {
+    default: break;
+    case MCAF_Code16:
+      setIsThumb(true);
+      break;
+    case MCAF_Code32:
+      setIsThumb(false);
+      break;
+    }
   }
+
+  unsigned getPointerSize() const { return 4; }
+  bool isThumb() const { return isThumbMode; }
+  void setIsThumb(bool it) { isThumbMode = it; }
 };
 } // end anonymous namespace
 
@@ -53,10 +67,19 @@ void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
 }
 
 bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
-  // FIXME: Zero fill for now. That's not right, but at least will get the
-  // section size right.
+  if (isThumb()) {
+    assert (((Count & 1) == 0) && "Unaligned Nop data fragment!");
+    // FIXME: 0xbf00 is the ARMv7 value. For v6 and before, we'll need to
+    // use 0x46c0 (which is a 'mov r8, r8' insn).
+    Count /= 2;
+    for (uint64_t i = 0; i != Count; ++i)
+      OW->Write16(0xbf00);
+    return true;
+  }
+  // ARM mode
+  Count /= 4;
   for (uint64_t i = 0; i != Count; ++i)
-    OW->Write8(0);
+    OW->Write32(0xe1a00000);
   return true;
 }
 
