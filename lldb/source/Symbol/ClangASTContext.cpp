@@ -747,7 +747,25 @@ ClangASTContext::CopyType (ASTContext *dst_ast,
                            ASTContext *src_ast,
                            clang_type_t clang_type)
 {
-    // null_client's ownership is transferred to diagnostics
+    // we temporarily install diagnostic clients as needed to ensure that
+    // errors are properly handled
+    
+    std::auto_ptr<NullDiagnosticClient> diag_client;
+    
+    bool dst_needs_diag = !dst_ast->getDiagnostics().getClient();
+    bool src_needs_diag = !src_ast->getDiagnostics().getClient();
+    
+    if (dst_needs_diag || src_needs_diag)
+    {
+        diag_client.reset(new NullDiagnosticClient);
+    
+        if (dst_needs_diag)
+            dst_ast->getDiagnostics().setClient(diag_client.get(), false);
+        
+        if (src_needs_diag)
+            src_ast->getDiagnostics().setClient(diag_client.get(), false);
+    }
+        
     FileSystemOptions file_system_options;
     FileManager file_manager (file_system_options);
     ASTImporter importer(*dst_ast, file_manager,
@@ -755,6 +773,12 @@ ClangASTContext::CopyType (ASTContext *dst_ast,
     
     QualType src (QualType::getFromOpaquePtr(clang_type));
     QualType dst (importer.Import(src));
+    
+    if (dst_needs_diag)
+        dst_ast->getDiagnostics().setClient(NULL, false);
+    
+    if (src_needs_diag)
+        src_ast->getDiagnostics().setClient(NULL, false);
     
     return dst.getAsOpaquePtr();
 }
@@ -765,11 +789,35 @@ ClangASTContext::CopyDecl (ASTContext *dst_ast,
                            ASTContext *src_ast,
                            clang::Decl *source_decl)
 {
-    // null_client's ownership is transferred to diagnostics
+    // we temporarily install diagnostic clients as needed to ensure that
+    // errors are properly handled
+    
+    std::auto_ptr<NullDiagnosticClient> diag_client;
+    
+    bool dst_needs_diag = !dst_ast->getDiagnostics().getClient();
+    bool src_needs_diag = !src_ast->getDiagnostics().getClient();
+    
+    if (dst_needs_diag || src_needs_diag)
+    {
+        diag_client.reset(new NullDiagnosticClient);
+        
+        if (dst_needs_diag)
+            dst_ast->getDiagnostics().setClient(diag_client.get(), false);
+        
+        if (src_needs_diag)
+            src_ast->getDiagnostics().setClient(diag_client.get(), false);
+    }
+    
     FileSystemOptions file_system_options;
     FileManager file_manager (file_system_options);
     ASTImporter importer(*dst_ast, file_manager,
                          *src_ast, file_manager);
+    
+    if (dst_needs_diag)
+        dst_ast->getDiagnostics().setClient(NULL, false);
+    
+    if (src_needs_diag)
+        src_ast->getDiagnostics().setClient(NULL, false);
     
     return importer.Import(source_decl);
 }
