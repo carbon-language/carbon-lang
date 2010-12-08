@@ -236,6 +236,32 @@ DIType DIBuilder::CreateMemberType(StringRef Name,
   return DIType(MDNode::get(VMContext, &Elts[0], array_lengthof(Elts)));
 }
 
+/// CreateClassType - Create debugging information entry for a class.
+DIType DIBuilder::CreateClassType(DIDescriptor Context, StringRef Name, 
+                                  DIFile File, unsigned LineNumber, 
+                                  uint64_t SizeInBits, uint64_t AlignInBits,
+                                  uint64_t OffsetInBits, unsigned Flags,
+                                  DIType DerivedFrom, DIArray Elements,
+                                  MDNode *VTableHoder) {
+ // TAG_class_type is encoded in DICompositeType format.
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_class_type),
+    Context,
+    MDString::get(VMContext, Name),
+    File,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
+    ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
+    ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
+    ConstantInt::get(Type::getInt32Ty(VMContext), OffsetInBits),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
+    DerivedFrom,
+    Elements,
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    VTableHoder
+  };
+  return DIType(MDNode::get(VMContext, &Elts[0], array_lengthof(Elts)));
+}
+
 /// CreateStructType - Create debugging information entry for a struct.
 DIType DIBuilder::CreateStructType(DIDescriptor Context, StringRef Name, 
                                    DIFile File, unsigned LineNumber, 

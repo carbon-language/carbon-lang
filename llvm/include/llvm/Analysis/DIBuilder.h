@@ -142,6 +142,26 @@ namespace llvm {
                             uint64_t AlignInBits, uint64_t OffsetInBits, 
                             unsigned Flags, DIType Ty);
 
+    /// CreateClassType - Create debugging information entry for a class.
+    /// @param Scope        Scope in which this class is defined.
+    /// @param Name         class name.
+    /// @param File         File where this member is defined.
+    /// @param LineNo       Line number.
+    /// @param SizeInBits   Member size.
+    /// @param AlignInBits  Member alignment.
+    /// @param OffsetInBits Member offset.
+    /// @param Flags        Flags to encode member attribute, e.g. private
+    /// @param Elements     class members.
+    /// @param VTableHolder Debug info of the base class that contains vtable
+    ///                     for this type. This is used in 
+    ///                     DW_AT_containing_type. See DWARF documentation
+    ///                     for more info.
+    DIType CreateClassType(DIDescriptor Scope, StringRef Name, DIFile File,
+                           unsigned LineNumber, uint64_t SizeInBits,
+                           uint64_t AlignInBits, uint64_t OffsetInBits,
+                           unsigned Flags, DIType DerivedFrom, 
+                           DIArray Elements, MDNode *VTableHolder = 0);
+
     /// CreateStructType - Create debugging information entry for a struct.
     /// @param Scope        Scope in which this struct is defined.
     /// @param Name         Struct name.
@@ -149,7 +169,6 @@ namespace llvm {
     /// @param LineNo       Line number.
     /// @param SizeInBits   Member size.
     /// @param AlignInBits  Member alignment.
-    /// @param OffsetInBits Member offset.
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Elements     Struct elements.
     /// @param RunTimeLang  Optional parameter, Objective-C runtime version.
@@ -165,7 +184,6 @@ namespace llvm {
     /// @param LineNo       Line number.
     /// @param SizeInBits   Member size.
     /// @param AlignInBits  Member alignment.
-    /// @param OffsetInBits Member offset.
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Elements     Union elements.
     /// @param RunTimeLang  Optional parameter, Objective-C runtime version.

@@ -288,6 +288,26 @@ void DIType::replaceAllUsesWith(DIDescriptor &D) {
   }
 }
 
+/// replaceAllUsesWith - Replace all uses of debug info referenced by
+/// this descriptor.
+void DIType::replaceAllUsesWith(MDNode *D) {
+  if (!DbgNode)
+    return;
+
+  // Since we use a TrackingVH for the node, its easy for clients to manufacture
+  // legitimate situations where they want to replaceAllUsesWith() on something
+  // which, due to uniquing, has merged with the source. We shield clients from
+  // this detail by allowing a value to be replaced with replaceAllUsesWith()
+  // itself.
+  if (DbgNode != D) {
+    MDNode *Node = const_cast<MDNode*>(DbgNode);
+    const MDNode *DN = D;
+    const Value *V = cast_or_null<Value>(DN);
+    Node->replaceAllUsesWith(const_cast<Value*>(V));
+    MDNode::deleteTemporary(Node);
+  }
+}
+
 /// Verify - Verify that a compile unit is well formed.
 bool DICompileUnit::Verify() const {
   if (!DbgNode)
