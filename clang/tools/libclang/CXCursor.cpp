@@ -493,3 +493,68 @@ bool cxcursor::isFirstInDeclGroup(CXCursor C) {
   return ((uintptr_t) (C.data[1])) != 0;
 }
 
+//===----------------------------------------------------------------------===//
+// CXCursorSet.
+//===----------------------------------------------------------------------===//
+
+typedef llvm::DenseMap<CXCursor, unsigned> CXCursorSet_Impl;
+
+static inline CXCursorSet packCXCursorSet(CXCursorSet_Impl *setImpl) {
+  return (CXCursorSet) setImpl;
+}
+static inline CXCursorSet_Impl *unpackCXCursorSet(CXCursorSet set) {
+  return (CXCursorSet_Impl*) set;
+}
+namespace llvm {
+template<> class llvm::DenseMapInfo<CXCursor> {
+public:
+  static inline CXCursor getEmptyKey() {
+    return MakeCXCursorInvalid(CXCursor_InvalidFile);
+  }
+  static inline CXCursor getTombstoneKey() {
+    return MakeCXCursorInvalid(CXCursor_NoDeclFound);
+  }
+  static inline unsigned getHashValue(const CXCursor &cursor) {
+    return llvm::DenseMapInfo<std::pair<void*,void*> >
+      ::getHashValue(std::make_pair(cursor.data[0], cursor.data[1]));
+  }
+  static inline bool isEqual(const CXCursor &x, const CXCursor &y) {
+    return x.kind == y.kind &&
+           x.data[0] == y.data[0] &&
+           x.data[1] == y.data[1];
+  }
+};
+}
+
+extern "C" {
+CXCursorSet clang_createCXCursorSet() {
+  return packCXCursorSet(new CXCursorSet_Impl());
+}
+
+void clang_disposeCXCursorSet(CXCursorSet set) {
+  delete unpackCXCursorSet(set);
+}
+
+unsigned clang_CXCursorSet_contains(CXCursorSet set, CXCursor cursor) {
+  CXCursorSet_Impl *setImpl = unpackCXCursorSet(set);
+  if (!setImpl)
+    return 0;
+  return setImpl->find(cursor) == setImpl->end();
+}
+
+unsigned clang_CXCurorSet_insert(CXCursorSet set, CXCursor cursor) {
+  // Do not insert invalid cursors into the set.
+  if (cursor.kind >= CXCursor_FirstInvalid &&
+      cursor.kind <= CXCursor_LastInvalid)
+    return 1;
+
+  CXCursorSet_Impl *setImpl = unpackCXCursorSet(set);
+  if (!setImpl)
+    return 1;
+  unsigned &entry = (*setImpl)[cursor];
+  unsigned flag = entry == 0 ? 1 : 0;
+  entry = 1;
+  return flag;
+}
+} // end: extern "C"
+

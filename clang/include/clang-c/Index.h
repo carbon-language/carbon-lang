@@ -1460,7 +1460,38 @@ CINDEX_LINKAGE enum CXLanguageKind {
  */
 CINDEX_LINKAGE enum CXLanguageKind clang_getCursorLanguage(CXCursor cursor);
 
-  
+
+/**
+ * \brief A fast container representing a set of CXCursors.
+ */
+typedef struct CXCursorSetImpl *CXCursorSet;
+
+/**
+ * \brief Creates an empty CXCursorSet.
+ */
+CINDEX_LINKAGE CXCursorSet clang_createCXCursorSet();
+
+/**
+ * \brief Disposes a CXCursorSet and releases its associated memory.
+ */
+CINDEX_LINKAGE void clang_disposeCXCursorSet(CXCursorSet cset);
+
+/**
+ * \brief Queries a CXCursorSet to see if it contains a specific CXCursor.
+ *
+ * \returns non-zero if the set contains the specified cursor.
+*/
+CINDEX_LINKAGE unsigned clang_CXCursorSet_contains(CXCursorSet cset,
+                                                   CXCursor cursor);
+
+/**
+ * \brief Inserts a CXCursor into a CXCursorSet.
+ *
+ * \returns zero if the CXCursor was already in the set, and non-zero otherwise.
+*/
+CINDEX_LINKAGE unsigned clang_CXCursorSet_insert(CXCursorSet cset,
+                                                 CXCursor cursor);
+
 /**
  * \brief Determine the semantic parent of the given cursor.
  *

@@ -1,3 +1,5 @@
+_clang_CXCursorSet_contains
+_clang_CXCursorSet_insert
 _clang_CXXMethod_isStatic
 _clang_annotateTokens
 _clang_codeCompleteAt
@@ -9,6 +11,7 @@ _clang_constructUSR_ObjCIvar
 _clang_constructUSR_ObjCMethod
 _clang_constructUSR_ObjCProperty
 _clang_constructUSR_ObjCProtocol
+_clang_createCXCursorSet
 _clang_createIndex
 _clang_createTranslationUnit
 _clang_createTranslationUnitFromSourceFile
@@ -17,6 +20,7 @@ _clang_defaultDiagnosticDisplayOptions
 _clang_defaultEditingTranslationUnitOptions
 _clang_defaultReparseOptions
 _clang_defaultSaveOptions
+_clang_disposeCXCursorSet
 _clang_disposeCodeCompleteResults
 _clang_disposeDiagnostic
 _clang_disposeIndex
@@ -25,10 +29,10 @@ _clang_disposeString
 _clang_disposeTokens
 _clang_disposeTranslationUnit
 _clang_enableStackTraces
-_clang_executeOnThread
 _clang_equalCursors
 _clang_equalLocations
 _clang_equalTypes
+_clang_executeOnThread
 _clang_formatDiagnostic
 _clang_getCString
 _clang_getCXXAccessSpecifier
@@ -120,3 +124,4 @@ _clang_saveTranslationUnit
 _clang_sortCodeCompletionResults
 _clang_tokenize
 _clang_visitChildren
+_clang_visitChildrenWithBlock
