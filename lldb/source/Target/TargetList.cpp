@@ -78,23 +78,33 @@ TargetList::CreateTarget
         if (!Host::ResolveExecutableInBundle (resolved_file))
             resolved_file = file;
 
-        error = ModuleList::GetSharedModule(resolved_file, 
-                                                  arch, 
-                                                  uuid_ptr, 
-                                                  NULL, 
-                                                  0, 
-                                                  exe_module_sp, 
-                                                  NULL, 
-                                                  NULL);
+        error = ModuleList::GetSharedModule (resolved_file, 
+                                             arch, 
+                                             uuid_ptr, 
+                                             NULL, 
+                                             0, 
+                                             exe_module_sp, 
+                                             NULL, 
+                                             NULL);
         if (exe_module_sp)
         {
             if (exe_module_sp->GetObjectFile() == NULL)
             {
-                error.SetErrorStringWithFormat("%s%s%s: doesn't contain architecture %s",
-                                               file.GetDirectory().AsCString(),
-                                               file.GetDirectory() ? "/" : "",
-                                               file.GetFilename().AsCString(),
-                                               arch.AsCString());
+                if (arch.IsValid())
+                {
+                    error.SetErrorStringWithFormat("\"%s%s%s\" doesn't contain architecture %s",
+                                                   file.GetDirectory().AsCString(),
+                                                   file.GetDirectory() ? "/" : "",
+                                                   file.GetFilename().AsCString(),
+                                                   arch.AsCString());
+                }
+                else
+                {
+                    error.SetErrorStringWithFormat("unsupported file type \"%s%s%s\"",
+                                                   file.GetDirectory().AsCString(),
+                                                   file.GetDirectory() ? "/" : "",
+                                                   file.GetFilename().AsCString());
+                }
                 return error;
             }
             target_sp.reset(new Target(debugger));
