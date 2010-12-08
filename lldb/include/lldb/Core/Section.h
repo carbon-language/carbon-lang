@@ -46,7 +46,7 @@ public:
     ContainsSection(lldb::user_id_t sect_id) const;
 
     void
-    Dump (Stream *s, Target *target, bool show_header) const;
+    Dump (Stream *s, Target *target, bool show_header, uint32_t depth) const;
 
     lldb::SectionSP
     FindSectionByName (const ConstString &section_dstr) const;
@@ -137,7 +137,7 @@ public:
     }
 
     void
-    Dump (Stream *s, Target *target) const;
+    Dump (Stream *s, Target *target, uint32_t depth) const;
 
     void
     DumpName (Stream *s) const;

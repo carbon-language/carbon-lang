@@ -12,10 +12,12 @@
 
 // C Includes
 // C++ Includes
+#include <map>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-include.h"
-#include "lldb/Core/ThreadSafeSTLMap.h"
+#include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
 
@@ -26,7 +28,9 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     SectionLoadList () :
-        m_section_load_info ()
+        m_collection (),
+        m_mutex (Mutex::eMutexTypeRecursive)
+
     {
     }
 
@@ -61,10 +65,13 @@ public:
     size_t
     SetSectionUnloaded (const Section *section);
 
+    void
+    Dump (Stream &s, Target *target);
 
 protected:
-    typedef ThreadSafeSTLMap<lldb::addr_t, const Section *> collection;
-    collection m_section_load_info;    ///< A mapping of all currently loaded sections.
+    typedef std::map<lldb::addr_t, const Section *> collection;
+    collection m_collection;
+    mutable Mutex m_mutex;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (SectionLoadList);

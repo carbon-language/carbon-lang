@@ -1346,7 +1346,7 @@ ObjectFileMachO::Dump (Stream *s)
     *s << ", file = '" << m_file << "', arch = " << header_arch.AsCString() << "\n";
 
     if (m_sections_ap.get())
-        m_sections_ap->Dump(s, NULL, true);
+        m_sections_ap->Dump(s, NULL, true, UINT32_MAX);
 
     if (m_symtab_ap.get())
         m_symtab_ap->Dump(s, NULL, eSortOrderNone);

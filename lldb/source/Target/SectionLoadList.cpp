@@ -28,13 +28,15 @@ using namespace lldb_private;
 bool
 SectionLoadList::IsEmpty() const
 {
-    return m_section_load_info.IsEmpty();
+    Mutex::Locker locker(m_mutex);
+    return m_collection.empty();
 }
 
 void
 SectionLoadList::Clear ()
 {
-    m_section_load_info.Clear();
+    Mutex::Locker locker(m_mutex);
+    return m_collection.clear();
 }
 
 addr_t
@@ -42,9 +44,22 @@ SectionLoadList::GetSectionLoadAddress (const Section *section) const
 {
     // TODO: add support for the same section having multiple load addresses
     addr_t section_load_addr = LLDB_INVALID_ADDRESS;
-    if (m_section_load_info.GetFirstKeyForValue (section, section_load_addr))
-        return section_load_addr;
-    return LLDB_INVALID_ADDRESS;
+    if (section)
+    {
+        Mutex::Locker locker(m_mutex);
+        collection::const_iterator pos, end = m_collection.end();
+        for (pos = m_collection.begin(); pos != end; ++pos)
+        {
+            const addr_t pos_load_addr = pos->first;
+            const Section *pos_section = pos->second;
+            if (pos_section == section)
+            {
+                section_load_addr = pos_load_addr;
+                break;
+            }
+        }
+    }
+    return section_load_addr;
 }
 
 bool
@@ -60,16 +75,19 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
                      section->GetName().AsCString(),
                      load_addr);
 
-
-    const Section *existing_section = NULL;
-    Mutex::Locker locker(m_section_load_info.GetMutex());
-
-    if (m_section_load_info.GetValueForKeyNoLock (load_addr, existing_section))
+    Mutex::Locker locker(m_mutex);
+    collection::iterator pos = m_collection.find(load_addr);
+    if (pos != m_collection.end())
     {
-        if (existing_section == section)
-            return false;   // No change
+        if (section == pos->second)
+            return false; // No change...
+        else
+            pos->second = section;
     }
-    m_section_load_info.SetValueForKeyNoLock (load_addr, section);
+    else
+    {
+        m_collection[load_addr] = section;
+    }
     return true;    // Changed
 }
 
@@ -85,14 +103,22 @@ SectionLoadList::SetSectionUnloaded (const Section *section)
                      section->GetModule()->GetFileSpec().GetFilename().AsCString(),
                      section->GetName().AsCString());
 
-    Mutex::Locker locker(m_section_load_info.GetMutex());
-
     size_t unload_count = 0;
-    addr_t section_load_addr;
-    while (m_section_load_info.GetFirstKeyForValueNoLock (section, section_load_addr))
+    Mutex::Locker locker(m_mutex);
+    bool erased = false;
+    do 
     {
-        unload_count += m_section_load_info.EraseNoLock (section_load_addr);
-    }
+        erased = false;
+        for (collection::iterator pos = m_collection.begin(); pos != m_collection.end(); ++pos)
+        {
+            if (pos->second == section)
+            {
+                m_collection.erase(pos);
+                erased = true;
+            }
+        }
+    } while (erased);
+    
     return unload_count;
 }
 
@@ -108,28 +134,44 @@ SectionLoadList::SetSectionUnloaded (const Section *section, addr_t load_addr)
                      section->GetModule()->GetFileSpec().GetFilename().AsCString(),
                      section->GetName().AsCString(),
                      load_addr);
-
-    return m_section_load_info.Erase (load_addr) == 1;
+    Mutex::Locker locker(m_mutex);
+    return m_collection.erase (load_addr) != 0;
 }
 
 
 bool
 SectionLoadList::ResolveLoadAddress (addr_t load_addr, Address &so_addr) const
 {
-    addr_t section_load_addr = LLDB_INVALID_ADDRESS;
-    const Section *section = NULL;
-
-    // First find the top level section that this load address exists in
-    if (m_section_load_info.LowerBound (load_addr, section_load_addr, section, true))
+    // First find the top level section that this load address exists in    
+    Mutex::Locker locker(m_mutex);
+    collection::const_iterator pos = m_collection.lower_bound (load_addr);
+    if (pos != m_collection.end())
     {
-        addr_t offset = load_addr - section_load_addr;
-        if (offset < section->GetByteSize())
+        if (load_addr != pos->first && pos != m_collection.begin())
+            --pos;
+        assert (load_addr >= pos->first);
+        addr_t offset = load_addr - pos->first;
+        if (offset < pos->second->GetByteSize())
         {
             // We have found the top level section, now we need to find the
             // deepest child section.
-            return section->ResolveContainedAddress (offset, so_addr);
+            return pos->second->ResolveContainedAddress (offset, so_addr);
         }
     }
     so_addr.Clear();
     return false;
 }
+
+void
+SectionLoadList::Dump (Stream &s, Target *target)
+{
+    Mutex::Locker locker(m_mutex);
+    collection::const_iterator pos, end;
+    for (pos = m_collection.begin(), end = m_collection.end(); pos != end; ++pos)
+    {
+        s.Printf("addr = 0x%16.16llx, section = %p: ", pos->first, pos->second);
+        pos->second->Dump (&s, target, 0);
+    }
+}
+
+

@@ -684,7 +684,7 @@ ObjectFileELF::Dump(Stream *s)
     s->EOL();
     SectionList *section_list = GetSectionList();
     if (section_list)
-        section_list->Dump(s, NULL, true);
+        section_list->Dump(s, NULL, true, UINT32_MAX);
     Symtab *symtab = GetSymtab();
     if (symtab)
         symtab->Dump(s, NULL, lldb::eSortOrderNone);

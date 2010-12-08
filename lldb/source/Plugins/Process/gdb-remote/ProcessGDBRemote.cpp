@@ -1242,7 +1242,7 @@ ProcessGDBRemote::DoDestroy ()
 bool
 ProcessGDBRemote::IsAlive ()
 {
-    return m_gdb_comm.IsConnected();
+    return m_gdb_comm.IsConnected() && m_private_state.GetValue() != eStateExited;
 }
 
 addr_t

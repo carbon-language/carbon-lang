@@ -222,7 +222,7 @@ Section::Compare (const Section& a, const Section& b)
 
 
 void
-Section::Dump (Stream *s, Target *target) const
+Section::Dump (Stream *s, Target *target, uint32_t depth) const
 {
 //    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
@@ -283,7 +283,8 @@ Section::Dump (Stream *s, Target *target) const
         s->Printf(" + 0x%llx\n", m_linked_offset);
     }
 
-    m_children.Dump(s, target, false);
+    if (depth > 0)
+        m_children.Dump(s, target, false, depth - 1);
 }
 
 void
@@ -666,7 +667,7 @@ SectionList::ContainsSection(user_id_t sect_id) const
 }
 
 void
-SectionList::Dump (Stream *s, Target *target, bool show_header) const
+SectionList::Dump (Stream *s, Target *target, bool show_header, uint32_t depth) const
 {
     bool target_has_loaded_sections = target && !target->GetSectionLoadList().IsEmpty();
     if (show_header && !m_sections.empty())
@@ -688,7 +689,7 @@ SectionList::Dump (Stream *s, Target *target, bool show_header) const
     const_iterator end = m_sections.end();
     for (sect_iter = m_sections.begin(); sect_iter != end; ++sect_iter)
     {
-        (*sect_iter)->Dump(s, target_has_loaded_sections ? target : NULL);
+        (*sect_iter)->Dump(s, target_has_loaded_sections ? target : NULL, depth);
     }
 
     if (show_header && !m_sections.empty())

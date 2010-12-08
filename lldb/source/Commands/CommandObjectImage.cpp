@@ -185,7 +185,7 @@ DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *modul
                 strm << module->GetFileSpec();
                 strm.Printf ("' (%s):\n", module->GetArchitecture().AsCString());
                 strm.IndentMore();
-                section_list->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target, true);
+                section_list->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target, true, UINT32_MAX);
                 strm.IndentLess();
             }
         }

@@ -62,18 +62,6 @@ public:
     virtual void
     DidLaunch ();
 
-    //------------------------------------------------------------------
-    // Process::Notifications callback functions
-    //------------------------------------------------------------------
-    static void
-    Initialize (void *baton,
-                lldb_private::Process *process);
-
-    static void
-    ProcessStateChanged (void *baton,
-                         lldb_private::Process *process,
-                         lldb::StateType state);
-
     virtual lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan (lldb_private::Thread &thread,
                                   bool stop_others);

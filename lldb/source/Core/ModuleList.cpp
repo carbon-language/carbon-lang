@@ -223,13 +223,13 @@ public:
                 return false;
         }
 
-        if (m_arch_ptr)
+        if (m_arch_ptr && m_arch_ptr->IsValid())
         {
             if (module_sp->GetArchitecture() != *m_arch_ptr)
                 return false;
         }
 
-        if (m_uuid_ptr)
+        if (m_uuid_ptr && m_uuid_ptr->IsValid())
         {
             if (module_sp->GetUUID() != *m_uuid_ptr)
                 return false;

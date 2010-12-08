@@ -1019,33 +1019,13 @@ DynamicLoaderMacOSXDYLD::PutToLog(Log *log) const
     }
 }
 
-//----------------------------------------------------------------------
-// Static callback function that gets called when the process state
-// changes.
-//----------------------------------------------------------------------
-void
-DynamicLoaderMacOSXDYLD::Initialize(void *baton, Process *process)
-{
-    ((DynamicLoaderMacOSXDYLD*)baton)->PrivateInitialize(process);
-}
-
 void
 DynamicLoaderMacOSXDYLD::PrivateInitialize(Process *process)
 {
     DEBUG_PRINTF("DynamicLoaderMacOSXDYLD::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
     Clear(true);
     m_process = process;
-}
-
-
-//----------------------------------------------------------------------
-// Static callback function that gets called when the process state
-// changes.
-//----------------------------------------------------------------------
-void
-DynamicLoaderMacOSXDYLD::ProcessStateChanged(void *baton, Process *process, StateType state)
-{
-    ((DynamicLoaderMacOSXDYLD*)baton)->PrivateProcessStateChanged(process, state);
+    m_process->GetTarget().GetSectionLoadList().Clear();
 }
 
 bool

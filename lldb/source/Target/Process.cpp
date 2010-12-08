@@ -414,13 +414,18 @@ Process::GetExitDescription ()
 void
 Process::SetExitStatus (int status, const char *cstr)
 {
-    m_exit_status = status;
-    if (cstr)
-        m_exit_string = cstr;
-    else
-        m_exit_string.clear();
+    if (m_private_state.GetValue() != eStateExited)
+    {
+        m_exit_status = status;
+        if (cstr)
+            m_exit_string = cstr;
+        else
+            m_exit_string.clear();
 
-    SetPrivateState (eStateExited);
+        DidExit ();
+
+        SetPrivateState (eStateExited);
+    }
 }
 
 // This static callback can be used to watch for local child processes on
