@@ -136,8 +136,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   Args.AddLastArg(CmdArgs, options::OPT_CC);
 
   // Handle dependency file generation.
-  if ((A = Args.getLastArg(options::OPT_M)) ||
-      (A = Args.getLastArg(options::OPT_MM)) ||
+  if ((A = Args.getLastArg(options::OPT_M, options::OPT_MM)) ||
       (A = Args.getLastArg(options::OPT_MD)) ||
       (A = Args.getLastArg(options::OPT_MMD))) {
     // Determine the output location.
