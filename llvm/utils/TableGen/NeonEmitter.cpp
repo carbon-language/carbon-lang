@@ -752,6 +752,9 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += ");";
     break;
   }
+  case OpAba:
+    s += "__a + " + MangleName("vabd", typestr, ClassS) + "(__b, __c);";
+    break;
   default:
     throw "unknown OpKind!";
     break;
@@ -1077,13 +1080,15 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
 
-  // Emit vmovl intrinsics first so they can be used by other intrinsics.
+  // Emit vmovl and vabd intrinsics first so they can be used by other
+  // intrinsics.
   emitIntrinsic(OS, Records.getDef("VMOVL"));
+  emitIntrinsic(OS, Records.getDef("VABD"));
 
   // Unique the return+pattern types, and assign them.
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
-    if (R->getName() != "VMOVL")
+    if (R->getName() != "VMOVL" && R->getName() != "VABD")
       emitIntrinsic(OS, R);
   }
 
