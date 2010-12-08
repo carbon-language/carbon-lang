@@ -507,8 +507,8 @@ ifeq ($(HOST_OS),Darwin)
   # Get "4" out of 10.4 for later pieces in the makefile.
   DARWIN_MAJVERS := $(shell echo $(DARWIN_VERSION)| sed -E 's/10.([0-9]).*/\1/')
 
-  SharedLinkOptions=-Wl,-flat_namespace -Wl,-undefined,suppress \
-                    -dynamiclib
+  LoadableModuleOptions := -Wl,-flat_namespace -Wl,-undefined,suppress
+  SharedLinkOptions := -dynamiclib
   ifneq ($(ARCH),ARM)
     SharedLinkOptions += -mmacosx-version-min=$(DARWIN_VERSION)
   endif
@@ -1113,6 +1113,7 @@ endif
 ifdef LINK_LIBS_IN_SHARED
 ifdef LOADABLE_MODULE
 SharedLibKindMessage := "Loadable Module"
+SharedLinkOptions := $(LoadableModuleOptions) $(SharedLinkOptions)
 else
 SharedLibKindMessage := "Shared Library"
 endif
