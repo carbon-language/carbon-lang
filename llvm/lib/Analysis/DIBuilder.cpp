@@ -318,8 +318,7 @@ DIArray DIBuilder::GetOrCreateArray(Value *const *Elements, unsigned NumElements
 
 /// CreateGlobalVariable - Create a new descriptor for the specified global.
 DIGlobalVariable DIBuilder::
-CreateGlobalVariable(StringRef Name, 
-                     StringRef LinkageName, DIFile F, unsigned LineNumber, 
+CreateGlobalVariable(StringRef Name, DIFile F, unsigned LineNumber, 
                      DIType Ty, bool isLocalToUnit, llvm::Value *Val) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_variable),
@@ -327,7 +326,7 @@ CreateGlobalVariable(StringRef Name,
     TheCU,
     MDString::get(VMContext, Name),
     MDString::get(VMContext, Name),
-    MDString::get(VMContext, LinkageName),
+    MDString::get(VMContext, Name),
     F,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
     Ty,
