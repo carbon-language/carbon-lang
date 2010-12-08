@@ -118,7 +118,7 @@ class ClassTypesTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         rc = lldb.SBError()
-        self.process = target.Launch([''], [''], os.ctermid(), 0, False, rc)
+        self.process = target.Launch([], [], os.ctermid(), 0, False, rc)
         #self.breakAfterLaunch(self.process, "C::C(int, int, int)")
 
         if not rc.Success() or not self.process.IsValid():

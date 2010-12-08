@@ -43,7 +43,7 @@ class FoundationSymtabTestCase(TestBase):
         self.assertTrue(target.IsValid(), VALID_TARGET)
 
         # Launch the process, and do not stop at the entry point.
-        process = target.LaunchProcess([''], [''], os.ctermid(), 0, False)
+        process = target.LaunchProcess([], [], os.ctermid(), 0, False)
 
         #
         # Exercise Python APIs to access the symbol table entries.

@@ -51,7 +51,7 @@ class HelloWorldTestCase(TestBase):
         # SBTarget.LaunchProcess() issue (or is there some race condition)?
 
         if useLaunchAPI:
-            process = target.LaunchProcess([''], [''], os.ctermid(), 0, False)
+            process = target.LaunchProcess([], [], os.ctermid(), 0, False)
             # The following isn't needed anymore, rdar://8364687 is fixed.
             #
             # Apply some dances after LaunchProcess() in order to break at "main".

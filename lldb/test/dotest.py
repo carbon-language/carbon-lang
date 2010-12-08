@@ -557,7 +557,7 @@ def lldbLoggings():
         if ("LLDB_LOG_OPTION" in os.environ):
             lldb_log_option = os.environ["LLDB_LOG_OPTION"]
         else:
-            lldb_log_option = "event process expr state"
+            lldb_log_option = "event process expr state api"
         ci.HandleCommand(
             "log enable -T -n -f " + os.environ["LLDB_LOG"] + " lldb " + lldb_log_option,
             res)

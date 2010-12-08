@@ -51,7 +51,7 @@ class ConditionalBreakTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         rc = lldb.SBError()
-        self.process = target.Launch([''], [''], os.ctermid(), 0, False, rc)
+        self.process = target.Launch([], [], os.ctermid(), 0, False, rc)
 
         self.assertTrue(rc.Success() and self.process.IsValid(), PROCESS_IS_VALID)
 

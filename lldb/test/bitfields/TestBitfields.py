@@ -94,7 +94,7 @@ class BitfieldsTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED, setCookie=False)
         # This does not work, and results in the process stopped at dyld_start?
-        #process = target.LaunchProcess([''], [''], os.ctermid(), False)
+        #process = target.LaunchProcess([], [], os.ctermid(), False)
 
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)

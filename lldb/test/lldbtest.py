@@ -174,7 +174,11 @@ VALID_BREAKPOINT_LOCATION = "Got a valid breakpoint location"
 
 VALID_FILESPEC = "Got a valid filespec"
 
+VALID_MODULE = "Got a valid module"
+
 VALID_PROCESS = "Got a valid process"
+
+VALID_SYMBOL = "Got a valid symbol"
 
 VALID_TARGET = "Got a valid target"
 
