@@ -592,6 +592,83 @@ DIVariable DIBuilder::CreateComplexVariable(unsigned Tag, DIDescriptor Scope,
   return DIVariable(MDNode::get(VMContext, Elts.data(), Elts.size()));
 }
 
+/// CreateFunction - Create a new descriptor for the specified function.
+DISubprogram DIBuilder::CreateFunction(DIDescriptor Context,
+                                       StringRef Name,
+                                       StringRef LinkageName,
+                                       DIFile File, unsigned LineNo,
+                                       DIType Ty,
+                                       bool isLocalToUnit, bool isDefinition,
+                                       unsigned Flags, bool isOptimized,
+                                       Function *Fn) {
+
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Context,
+    MDString::get(VMContext, Name),
+    MDString::get(VMContext, Name),
+    MDString::get(VMContext, LinkageName),
+    File,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
+    Ty,
+    ConstantInt::get(Type::getInt1Ty(VMContext), isLocalToUnit),
+    ConstantInt::get(Type::getInt1Ty(VMContext), isDefinition),
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
+    ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
+    Fn
+  };
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], array_lengthof(Elts));
+
+  // Create a named metadata so that we do not lose this mdnode.
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.sp");
+  NMD->addOperand(Node);
+  return DISubprogram(Node);
+}
+
+/// CreateMethod - Create a new descriptor for the specified C++ method.
+DISubprogram DIBuilder::CreateMethod(DIDescriptor Context,
+                                     StringRef Name,
+                                     StringRef LinkageName,
+                                     DIFile F,
+                                     unsigned LineNo, DIType Ty,
+                                     bool isLocalToUnit,
+                                     bool isDefinition,
+                                     unsigned VK, unsigned VIndex,
+                                     MDNode *VTableHolder,
+                                     unsigned Flags,
+                                     bool isOptimized,
+                                     Function *Fn) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
+    llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
+    Context,
+    MDString::get(VMContext, Name),
+    MDString::get(VMContext, Name),
+    MDString::get(VMContext, LinkageName),
+    F,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
+    Ty,
+    ConstantInt::get(Type::getInt1Ty(VMContext), isLocalToUnit),
+    ConstantInt::get(Type::getInt1Ty(VMContext), isDefinition),
+    ConstantInt::get(Type::getInt32Ty(VMContext), (unsigned)VK),
+    ConstantInt::get(Type::getInt32Ty(VMContext), VIndex),
+    VTableHolder,
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
+    ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
+    Fn
+  };
+  MDNode *Node = MDNode::get(VMContext, &Elts[0], array_lengthof(Elts));
+
+  // Create a named metadata so that we do not lose this mdnode.
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.sp");
+  NMD->addOperand(Node);
+  return DISubprogram(Node);
+}
+
 /// CreateNameSpace - This creates new descriptor for a namespace
 /// with the specified parent scope.
 DINameSpace DIBuilder::CreateNameSpace(DIDescriptor Scope, StringRef Name,

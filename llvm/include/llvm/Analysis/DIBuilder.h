@@ -37,6 +37,7 @@ namespace llvm {
   class DIVariable;
   class DISubrange;
   class DILexicalBlock;
+  class DISubprogram;
 
   class DIBuilder {
     private:
@@ -315,6 +316,57 @@ namespace llvm {
                                      DIType Ty, Value *const *Addr,
                                      unsigned NumAddr);
 
+    /// CreateFunction - Create a new descriptor for the specified subprogram.
+    /// See comments in DISubprogram for descriptions of these fields.
+    /// @param Scope         Function scope.
+    /// @param Name          Function name.
+    /// @param LinkageName   Mangled function name.
+    /// @param File          File where this variable is defined.
+    /// @param LineNo        Line number.
+    /// @param Ty            Function type.
+    /// @param isLocalToUnit True if this function is not externally visible..
+    /// @param isDefinition  True if this is a function definition.
+    /// @param Flags         e.g. is this function prototyped or not.
+    ///                      This flags are used to emit dwarf attributes.
+    /// @param isOptimized   True if optimization is ON.
+    /// @param Fn            llvm::Function pointer.
+    DISubprogram CreateFunction(DIDescriptor Scope, StringRef Name,
+                                StringRef LinkageName,
+                                DIFile File, unsigned LineNo,
+                                DIType Ty, bool isLocalToUnit,
+                                bool isDefinition,
+                                unsigned Flags = 0,
+                                bool isOptimized = false,
+                                Function *Fn = 0);
+
+    /// CreateMethod - Create a new descriptor for the specified C++ method.
+    /// See comments in DISubprogram for descriptions of these fields.
+    /// @param Scope         Function scope.
+    /// @param Name          Function name.
+    /// @param LinkageName   Mangled function name.
+    /// @param File          File where this variable is defined.
+    /// @param LineNo        Line number.
+    /// @param Ty            Function type.
+    /// @param isLocalToUnit True if this function is not externally visible..
+    /// @param isDefinition  True if this is a function definition.
+    /// @param Virtuality    Attributes describing virutallness. e.g. pure 
+    ///                      virtual function.
+    /// @param VTableIndex   Index no of this method in virtual table.
+    /// @param VTableHolder  Type that holds vtable.
+    /// @param Flags         e.g. is this function prototyped or not.
+    ///                      This flags are used to emit dwarf attributes.
+    /// @param isOptimized   True if optimization is ON.
+    /// @param Fn            llvm::Function pointer.
+    DISubprogram CreateMethod(DIDescriptor Scope, StringRef Name,
+                              StringRef LinkageName,
+                              DIFile File, unsigned LineNo,
+                              DIType Ty, bool isLocalToUnit,
+                              bool isDefinition,
+                              unsigned Virtuality = 0, unsigned VTableIndex = 0,
+                              MDNode *VTableHolder = 0,
+                              unsigned Flags = 0,
+                              bool isOptimized = false,
+                              Function *Fn = 0);
 
     /// CreateNameSpace - This creates new descriptor for a namespace
     /// with the specified parent scope.
