@@ -131,10 +131,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     
     // Same addressing mode as fixup_arm_pcrel_10, but with the bytes reordered.
     if (Kind == ARM::fixup_t2_pcrel_10) {
-      uint64_t swapped = (Value & 0x00FF0000) >> 16;
-      swapped |= (Value & 0xFF000000) >> 16;
-      swapped |= (Value & 0x000000FF) << 16;
-      swapped |= (Value & 0x0000FF00) << 16;
+      uint64_t swapped = (Value & 0xFFFF0000) >> 16;
+      swapped |= (Value & 0x0000FFFF) << 16;
       return swapped;
     }
     
