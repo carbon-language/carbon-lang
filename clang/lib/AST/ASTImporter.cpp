@@ -2834,7 +2834,8 @@ Decl *ASTNodeImporter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
   // If we have an implementation, import it as well.
   if (D->getImplementation()) {
     ObjCCategoryImplDecl *Impl
-      = cast<ObjCCategoryImplDecl>(Importer.Import(D->getImplementation()));
+      = cast_or_null<ObjCCategoryImplDecl>(
+                                       Importer.Import(D->getImplementation()));
     if (!Impl)
       return 0;
     
@@ -3057,7 +3058,7 @@ Decl *ASTNodeImporter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
   }
   
   Importer.Imported(D, ToImpl);
-  ImportDeclContext(ToImpl);
+  ImportDeclContext(D);
   return ToImpl;
 }
 
