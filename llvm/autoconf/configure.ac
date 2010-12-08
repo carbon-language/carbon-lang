@@ -1156,10 +1156,10 @@ then
   AC_MSG_ERROR([gcc|icc required but not found])
 fi
 
-dnl Ensure that compilation tools are GCC; we use GCC specific extensions
+dnl Ensure that compilation tools are compatible with GCC extensions
 if test "$GXX" != "yes" && test "$IXX" != "yes"
 then
-  AC_MSG_ERROR([g++|icc required but not found])
+  AC_MSG_ERROR([g++|clang++|icc required but not found])
 fi
 
 dnl Verify that GCC is version 3.0 or higher
