@@ -1893,8 +1893,8 @@ void EnqueueVisitor::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
 }
 
 void EnqueueVisitor::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
-  AddTypeLoc(E->getLhsTypeSourceInfo());
   AddTypeLoc(E->getRhsTypeSourceInfo());
+  AddTypeLoc(E->getLhsTypeSourceInfo());
 }
 
 void EnqueueVisitor::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U) {
