@@ -1533,6 +1533,7 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
   MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
     MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
 
+  unsigned Type = 0;
   if (IsPCRel) {
     switch (Modifier) {
     default: assert(0 && "Unimplemented Modifier");
@@ -1540,11 +1541,17 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
     }
     switch ((unsigned)Fixup.getKind()) {
     default: assert(0 && "Unimplemented");
-    case ARM::fixup_arm_branch: return ELF::R_ARM_CALL; break;
+    case ARM::fixup_arm_branch: Type = ELF::R_ARM_CALL; break;
     }
   } else {
     switch ((unsigned)Fixup.getKind()) {
     default: llvm_unreachable("invalid fixup kind!");
+    case FK_Data_4:
+      switch (Modifier) {
+      default: llvm_unreachable("Unsupported Modifier");
+      case MCSymbolRefExpr::VK_ARM_GOTTPOFF:
+        Type = ELF::R_ARM_TLS_IE32;
+      } break;
     case ARM::fixup_arm_ldst_pcrel_12:
     case ARM::fixup_arm_pcrel_10:
     case ARM::fixup_arm_adr_pcrel_12:
@@ -1553,17 +1560,18 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
     case ARM::fixup_arm_thumb_cp:
       assert(0 && "Unimplemented"); break;
     case ARM::fixup_arm_branch:
-      return ELF::R_ARM_CALL; break;
+      Type = ELF::R_ARM_CALL; break;
     case ARM::fixup_arm_movt_hi16: 
-      return ELF::R_ARM_MOVT_ABS; break;
+      Type = ELF::R_ARM_MOVT_ABS; break;
     case ARM::fixup_arm_movw_lo16:
-      return ELF::R_ARM_MOVW_ABS_NC; break;
+      Type = ELF::R_ARM_MOVW_ABS_NC; break;
     }
   }
 
   if (RelocNeedsGOT(Modifier))
     NeedsGOT = true;
-  return -1;
+  
+  return Type;
 }
 
 //===- MBlazeELFObjectWriter -------------------------------------------===//

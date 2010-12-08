@@ -699,6 +699,21 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       MI.eraseFromParent();
       break;
     }
+    case ARM::TPsoft: {
+      unsigned PredReg = 0;
+      ARMCC::CondCodes Pred = llvm::getInstrPredicate(&MI, PredReg);
+      MachineInstrBuilder MIB = 
+        BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                TII->get(ARM::BL))
+        .addExternalSymbol("__aeabi_read_tp", 0);
+
+      (*MIB).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+      TransferImpOps(MI, MIB, MIB);
+      MI.eraseFromParent();
+       
+      //assert(0 && "HELP!");
+    }; break;
+
     case ARM::t2LDRHpci:
     case ARM::t2LDRBpci:
     case ARM::t2LDRSHpci:

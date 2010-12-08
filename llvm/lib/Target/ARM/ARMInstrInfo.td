@@ -3249,12 +3249,11 @@ def SWPB : AIswp<1, (outs GPR:$Rt), (ins GPR:$Rt2, GPR:$Rn), "swpb",
 //
 
 // __aeabi_read_tp preserves the registers r1-r3.
-// FIXME: This needs to be a pseudo of some sort so that we can get the
-// encoding right, complete with fixup for the aeabi_read_tp function.
+// This is a pseudo inst so that we can get the encoding right, 
+// complete with fixup for the aeabi_read_tp function.
 let isCall = 1,
   Defs = [R0, R12, LR, CPSR], Uses = [SP] in {
-  def TPsoft : ABXI<0b1011, (outs), (ins), IIC_Br,
-               "bl\t__aeabi_read_tp",
+  def TPsoft : PseudoInst<(outs), (ins), IIC_Br,
                [(set R0, ARMthread_pointer)]>;
 }
 
