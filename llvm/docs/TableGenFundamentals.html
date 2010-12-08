@@ -813,7 +813,8 @@ end-user to factor out commonality from the records.</p>
 apply, and one or more records to bind the values in.  Here are some
 examples:</p>
 
-<pre class="doc_code">
+<div class="doc_code">
+<pre>
 <b>let</b> isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 <b>in</b>
   <b>def</b> RET : I&lt;0xC3, RawFrm, (outs), (ins), "ret", [(X86retflag 0)]&gt;;
 
@@ -830,6 +831,7 @@ examples:</p>
                         "call\t{*}$dst", []&gt;;
   }
 </pre>
+</div>
 
 <p>File-scope "let" expressions are often useful when a couple of definitions
 need to be added to several records, and the records do not otherwise need to be
