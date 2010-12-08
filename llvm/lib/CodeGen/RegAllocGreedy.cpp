@@ -70,7 +70,7 @@ public:
 
   virtual Spiller &spiller() { return *SpillerInstance; }
 
-  virtual float getPriority(LiveInterval *LI) { return LI->weight; }
+  virtual float getPriority(LiveInterval *LI);
 
   virtual unsigned selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &SplitVRegs);
@@ -126,6 +126,22 @@ void RAGreedy::releaseMemory() {
   RegAllocBase::releaseMemory();
 }
 
+float RAGreedy::getPriority(LiveInterval *LI) {
+  float Priority = LI->weight;
+
+  // Prioritize hinted registers so they are allocated first.
+  std::pair<unsigned, unsigned> Hint;
+  if (Hint.first || Hint.second) {
+    // The hint can be target specific, a virtual register, or a physreg.
+    Priority *= 2;
+
+    // Prefer physreg hints above anything else.
+    if (Hint.first == 0 && TargetRegisterInfo::isPhysicalRegister(Hint.second))
+      Priority *= 2;
+  }
+  return Priority;
+}
+
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                 SmallVectorImpl<LiveInterval*> &SplitVRegs) {
   // Populate a list of physical register spill candidates.
@@ -134,6 +150,14 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   // Check for an available register in this class.
   const TargetRegisterClass *TRC = MRI->getRegClass(VirtReg.reg);
   DEBUG(dbgs() << "RegClass: " << TRC->getName() << ' ');
+
+  // Preferred physical register computed from hints.
+  unsigned Hint = VRM->getRegAllocPref(VirtReg.reg);
+
+  // Try a hinted allocation.
+  if (Hint && !ReservedRegs.test(Hint) && TRC->contains(Hint) &&
+      checkPhysRegInterference(VirtReg, Hint) == 0)
+    return Hint;
 
   for (TargetRegisterClass::iterator I = TRC->allocation_order_begin(*MF),
          E = TRC->allocation_order_end(*MF);
