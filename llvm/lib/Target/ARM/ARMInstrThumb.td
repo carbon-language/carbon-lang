@@ -134,6 +134,13 @@ def t_addrmode_sp : Operand<i32>,
   let ParserMatchClass = MemModeThumbAsmOperand;
 }
 
+// t_addrmode_pc := <label> => pc + imm8 * 4
+//
+def t_addrmode_pc : Operand<i32> {
+  let EncoderMethod = "getAddrModePCOpValue";
+  let ParserMatchClass = MemModeThumbAsmOperand;
+}
+
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions.
 //
@@ -622,22 +629,29 @@ def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
 // Load tconstpool
 // FIXME: Use ldr.n to work around a Darwin assembler bug.
 let canFoldAsLoad = 1, isReMaterializable = 1 in
-def tLDRpci : T1pIs<(outs tGPR:$Rt), (ins i32imm:$addr), IIC_iLoad_i,
+def tLDRpci : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_pc:$addr), IIC_iLoad_i,
                   "ldr", ".n\t$Rt, $addr",
                   [(set tGPR:$Rt, (load (ARMWrapper tconstpool:$addr)))]>,
               T1Encoding<{0,1,0,0,1,?}> {
   // A6.2 & A8.6.59
   bits<3> Rt;
+  bits<8> addr;
   let Inst{10-8} = Rt;
-  // FIXME: Finish for the addr.
+  let Inst{7-0}  = addr;
 }
 
 // Special LDR for loads from non-pc-relative constpools.
 let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1,
     isReMaterializable = 1 in
-def tLDRcp  : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoad_i,
-                  "ldr", "\t$dst, $addr", []>,
-              T1LdStSP<{1,?,?}>;
+def tLDRcp  : T1pIs<(outs tGPR:$Rt), (ins i32imm:$addr), IIC_iLoad_i,
+                  "ldr", "\t$Rt, $addr", []>,
+              T1LdStSP<{1,?,?}> {
+  // A6.2 & A8.6.57 T2
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{10-8} = Rt;
+  let Inst{7-0}  = addr;
+}
 
 def tSTR :                      // A8.6.194
   T1pILdStEncode<0b000, (outs), (ins tGPR:$src, t_addrmode_s4:$addr),

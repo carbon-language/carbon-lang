@@ -138,6 +138,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     Binary = ((Binary & 0x7ff) << 16) | (Binary >> 11);
     return Binary;
   }
+  case ARM::fixup_arm_thumb_cp:
+    // Offset by 4, and don't encode the low two bits.
+    return ((Value - 4) >> 2) & 0xff;
   case ARM::fixup_t2_pcrel_10:
   case ARM::fixup_arm_pcrel_10: {
     // Offset by 8 just as above.
@@ -243,13 +246,17 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
   default:
     llvm_unreachable("Unknown fixup kind!");
-  case FK_Data_4:
-    return 4;
+
+  case ARM::fixup_arm_thumb_cp:
+    return 1;
+
   case ARM::fixup_arm_ldst_pcrel_12:
   case ARM::fixup_arm_pcrel_10:
   case ARM::fixup_arm_adr_pcrel_12:
   case ARM::fixup_arm_branch:
     return 3;
+
+  case FK_Data_4:
   case ARM::fixup_t2_pcrel_10:
   case ARM::fixup_arm_thumb_bl:
     return 4;
