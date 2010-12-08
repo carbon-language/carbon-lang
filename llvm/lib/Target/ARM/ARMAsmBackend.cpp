@@ -30,7 +30,7 @@ namespace {
 class ARMAsmBackend : public TargetAsmBackend {
   bool isThumbMode;  // Currently emitting Thumb code.
 public:
-  ARMAsmBackend(const Target &T) : TargetAsmBackend() {}
+  ARMAsmBackend(const Target &T) : TargetAsmBackend(), isThumbMode(false) {}
 
   bool MayNeedRelaxation(const MCInst &Inst) const;
 
