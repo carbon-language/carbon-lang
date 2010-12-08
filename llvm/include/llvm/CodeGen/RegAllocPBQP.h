@@ -22,10 +22,11 @@
 #include "llvm/CodeGen/PBQP/Solution.h"
 
 #include <map>
+#include <set>
 
 namespace llvm {
 
-  class LiveInterval;
+  class LiveIntervals;
   class MachineFunction;
   class MachineLoopInfo;
 
