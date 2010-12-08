@@ -710,8 +710,8 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       (*MIB).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       TransferImpOps(MI, MIB, MIB);
       MI.eraseFromParent();
-    }; break;
-
+      break;
+    };
     case ARM::t2LDRHpci:
     case ARM::t2LDRBpci:
     case ARM::t2LDRSHpci:
