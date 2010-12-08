@@ -199,8 +199,6 @@ MachThread::IsUserReady()
     switch (m_basicInfo.run_state)
     {
     default: 
-        assert (!"Invalid run_state encountered");
-
     case TH_STATE_UNINTERRUPTIBLE:  
         break;
 
