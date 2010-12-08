@@ -155,7 +155,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     assert ((Value < 256) && "Out of range pc-relative fixup value!");
     Value |= isAdd << 23;
     
-    // Same addressing mode as fixup_arm_pcrel_10, but with the bytes reordered.
+    // Same addressing mode as fixup_arm_pcrel_10,
+    // but with 16-bit halfwords swapped.
     if (Kind == ARM::fixup_t2_pcrel_10) {
       uint64_t swapped = (Value & 0xFFFF0000) >> 16;
       swapped |= (Value & 0x0000FFFF) << 16;
