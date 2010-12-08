@@ -19,9 +19,12 @@ enum Fixups {
   // addresses
   fixup_arm_ldst_pcrel_12 = FirstTargetFixupKind,
   // fixup_arm_pcrel_10 - 10-bit PC relative relocation for symbol addresses
-  // used in VFP and Thumb2 instructions where the lower 2 bits are not encoded
+  // used in VFP instructions where the lower 2 bits are not encoded
   // (so it's encoded as an 8-bit immediate).
   fixup_arm_pcrel_10,
+  // fixup_t2_pcrel_10 - Equivalent to fixup_arm_pcrel_10, accounting for
+  // the byteswapped encoding of Thumb2 instructions.
+  fixup_t2_pcrel_10,
   // fixup_arm_adr_pcrel_12 - 12-bit PC relative relocation for the ADR
   // instruction.
   fixup_arm_adr_pcrel_12,

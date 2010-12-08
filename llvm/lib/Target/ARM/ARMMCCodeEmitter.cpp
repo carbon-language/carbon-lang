@@ -48,6 +48,7 @@ public:
       // name                       off   bits  flags
       { "fixup_arm_ldst_pcrel_12",  1,    24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_pcrel_10",       1,    24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_t2_pcrel_10",        0,    32,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_adr_pcrel_12",   1,    24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_branch",         1,    24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_bl",       0,    32,   MCFixupKindInfo::FKF_IsPCRel },
@@ -737,7 +738,12 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
 
     assert(MO.isExpr() && "Unexpected machine operand type!");
     const MCExpr *Expr = MO.getExpr();
-    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_pcrel_10);
+    MCFixupKind Kind;
+    const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+    if (Subtarget.isThumb2())
+      Kind = MCFixupKind(ARM::fixup_t2_pcrel_10);
+    else
+      Kind = MCFixupKind(ARM::fixup_arm_pcrel_10);
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 
     ++MCNumCPRelocations;

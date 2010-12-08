@@ -115,6 +115,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     Binary = ((Binary & 0x7ff) << 16) | (Binary >> 11);
     return Binary;
   }
+  case ARM::fixup_t2_pcrel_10:
   case ARM::fixup_arm_pcrel_10: {
     // Offset by 8 just as above.
     Value = Value - 8;
@@ -127,6 +128,16 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     Value >>= 2;
     assert ((Value < 256) && "Out of range pc-relative fixup value!");
     Value |= isAdd << 23;
+    
+    // Same addressing mode as fixup_arm_pcrel_10, but with the bytes reordered.
+    if (Kind == ARM::fixup_t2_pcrel_10) {
+      uint64_t swapped = (Value & 0x00FF0000) >> 16;
+      swapped |= (Value & 0xFF000000) >> 16;
+      swapped |= (Value & 0x000000FF) << 16;
+      swapped |= (Value & 0x0000FF00) << 16;
+      return swapped;
+    }
+    
     return Value;
   }
   }
@@ -218,6 +229,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_arm_adr_pcrel_12:
   case ARM::fixup_arm_branch:
     return 3;
+  case ARM::fixup_t2_pcrel_10:
   case ARM::fixup_arm_thumb_bl:
     return 4;
   }
