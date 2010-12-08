@@ -584,8 +584,22 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpAdd:
     s += "__a + __b;";
     break;
+  case OpAddl:
+    s += Extend(proto, typestr, "__a") + " + "
+      + Extend(proto, typestr, "__b") + ";";
+    break;
+  case OpAddw:
+    s += "__a + " + Extend(proto, typestr, "__b") + ";";
+    break;
   case OpSub:
     s += "__a - __b;";
+    break;
+  case OpSubl:
+    s += Extend(proto, typestr, "__a") + " - "
+      + Extend(proto, typestr, "__b") + ";";
+    break;
+  case OpSubw:
+    s += "__a - " + Extend(proto, typestr, "__b") + ";";
     break;
   case OpMulN:
     s += "__a * " + Duplicate(nElts, typestr, "__b") + ";";

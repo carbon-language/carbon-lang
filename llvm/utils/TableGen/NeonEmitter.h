@@ -24,7 +24,11 @@
 enum OpKind {
   OpNone,
   OpAdd,
+  OpAddl,
+  OpAddw,
   OpSub,
+  OpSubl,
+  OpSubw,
   OpMul,
   OpMull,
   OpMla,
@@ -87,7 +91,11 @@ namespace llvm {
     NeonEmitter(RecordKeeper &R) : Records(R) {
       OpMap["OP_NONE"]  = OpNone;
       OpMap["OP_ADD"]   = OpAdd;
+      OpMap["OP_ADDL"]  = OpAddl;
+      OpMap["OP_ADDW"]  = OpAddw;
       OpMap["OP_SUB"]   = OpSub;
+      OpMap["OP_SUBL"]  = OpSubl;
+      OpMap["OP_SUBW"]  = OpSubw;
       OpMap["OP_MUL"]   = OpMul;
       OpMap["OP_MULL"]  = OpMull;
       OpMap["OP_MLA"]   = OpMla;
