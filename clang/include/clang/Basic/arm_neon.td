@@ -62,6 +62,7 @@ def OP_REV64 : Op;
 def OP_REV32 : Op;
 def OP_REV16 : Op;
 def OP_REINT : Op;
+def OP_ABA   : Op;
 
 class Inst <string n, string p, string t, Op o> {
   string Name = n;
@@ -167,7 +168,7 @@ def VTST  : WInst<"vtst", "udd", "csiUcUsUiPcQcQsQiQUcQUsQUiQPc">;
 // E.3.5 Absolute Difference
 def VABD  : SInst<"vabd", "ddd",  "csiUcUsUifQcQsQiQUcQUsQUiQf">;
 def VABDL : SInst<"vabdl", "wdd",  "csiUcUsUi">;
-def VABA  : SInst<"vaba", "dddd", "csiUcUsUiQcQsQiQUcQUsQUi">;
+def VABA  : Inst<"vaba", "dddd", "csiUcUsUiQcQsQiQUcQUsQUi", OP_ABA>;
 def VABAL : SInst<"vabal", "wwdd", "csiUcUsUi">;
 
 ////////////////////////////////////////////////////////////////////////////////

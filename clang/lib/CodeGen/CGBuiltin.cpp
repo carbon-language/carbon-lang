@@ -1181,16 +1181,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   unsigned Int;
   switch (BuiltinID) {
   default: return 0;
-  case ARM::BI__builtin_neon_vaba_v:
-  case ARM::BI__builtin_neon_vabaq_v: {
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    SmallVector<Value*, 2> Args;
-    Args.push_back(Ops[1]);
-    Args.push_back(Ops[2]);
-    Int = usgn ? Intrinsic::arm_neon_vabdu : Intrinsic::arm_neon_vabds;
-    Ops[1] = EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Args, "vaba");
-    return Builder.CreateAdd(Ops[0], Ops[1], "vaba");
-  }
   case ARM::BI__builtin_neon_vabal_v: {
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     SmallVector<Value*, 2> Args;
