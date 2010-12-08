@@ -35,6 +35,8 @@ namespace llvm {
   class DIGlobalVariable;
   class DINameSpace;
   class DIVariable;
+  class DISubrange;
+  class DILexicalBlock;
 
   class DIBuilder {
     private:
@@ -141,10 +143,72 @@ namespace llvm {
                             unsigned Flags, DIType Ty);
 
     /// CreateStructType - Create debugging information entry for a struct.
-    DIType CreateStructType(DIDescriptor Context, StringRef Name, DIFile F,
+    /// @param Scope        Scope in which this struct is defined.
+    /// @param Name         Struct name.
+    /// @param File         File where this member is defined.
+    /// @param LineNo       Line number.
+    /// @param SizeInBits   Member size.
+    /// @param AlignInBits  Member alignment.
+    /// @param OffsetInBits Member offset.
+    /// @param Flags        Flags to encode member attribute, e.g. private
+    /// @param Elements     Struct elements.
+    /// @param RunTimeLang  Optional parameter, Objective-C runtime version.
+    DIType CreateStructType(DIDescriptor Scope, StringRef Name, DIFile File,
                             unsigned LineNumber, uint64_t SizeInBits,
                             uint64_t AlignInBits, unsigned Flags,
                             DIArray Elements, unsigned RunTimeLang = 0);
+
+    /// CreateUnionType - Create debugging information entry for an union.
+    /// @param Scope        Scope in which this union is defined.
+    /// @param Name         Union name.
+    /// @param File         File where this member is defined.
+    /// @param LineNo       Line number.
+    /// @param SizeInBits   Member size.
+    /// @param AlignInBits  Member alignment.
+    /// @param OffsetInBits Member offset.
+    /// @param Flags        Flags to encode member attribute, e.g. private
+    /// @param Elements     Union elements.
+    /// @param RunTimeLang  Optional parameter, Objective-C runtime version.
+    DIType CreateUnionType(DIDescriptor Scope, StringRef Name, DIFile File,
+                           unsigned LineNumber, uint64_t SizeInBits,
+                           uint64_t AlignInBits, unsigned Flags,
+                           DIArray Elements, unsigned RunTimeLang = 0);
+
+    /// CreateArrayType - Create debugging information entry for an array.
+    /// @param Size         Array size.
+    /// @param AlignInBits  Alignment.
+    /// @param Ty           Element type.
+    /// @param Subscripts   Subscripts.
+    DIType CreateArrayType(uint64_t Size, uint64_t AlignInBits, 
+                           DIType Ty, DIArray Subscripts);
+
+    /// CreateVectorType - Create debugging information entry for a vector type.
+    /// @param Size         Array size.
+    /// @param AlignInBits  Alignment.
+    /// @param Ty           Element type.
+    /// @param Subscripts   Subscripts.
+    DIType CreateVectorType(uint64_t Size, uint64_t AlignInBits, 
+                            DIType Ty, DIArray Subscripts);
+
+    /// CreateEnumerationType - Create debugging information entry for an 
+    /// enumeration.
+    /// @param Scope        Scope in which this enumeration is defined.
+    /// @param Name         Union name.
+    /// @param File         File where this member is defined.
+    /// @param LineNo       Line number.
+    /// @param SizeInBits   Member size.
+    /// @param AlignInBits  Member alignment.
+    /// @param Elements     Enumeration elements.
+    DIType CreateEnumerationType(DIDescriptor Scope, StringRef Name, 
+                                 DIFile File, unsigned LineNumber, 
+                                 uint64_t SizeInBits, 
+                                 uint64_t AlignInBits, DIArray Elements);
+
+    /// CreateSubroutineType - Create subroutine type.
+    /// @param File          File in which this subroutine is defined.
+    /// @param ParamterTypes An array of subroutine parameter types. This
+    ///                      includes return type at 0th index.
+    DIType CreateSubroutineType(DIFile File, DIArray ParameterTypes);
 
     /// CreateArtificialType - Create a new DIType with "artificial" flag set.
     DIType CreateArtificialType(DIType Ty);
@@ -153,8 +217,20 @@ namespace llvm {
     DIType CreateTemporaryType();
     DIType CreateTemporaryType(DIFile F);
 
+    /// RetainType - Retain DIType in a module even if it is not referenced 
+    /// through debug info anchors.
+    void RetainType(DIType T);
+
+    /// CreateUnspecifiedParameter - Create unspeicified type descriptor
+    /// for a subroutine type.
+    DIDescriptor CreateUnspecifiedParameter();
+
     /// GetOrCreateArray - Get a DIArray, create one if required.
     DIArray GetOrCreateArray(Value *const *Elements, unsigned NumElements);
+
+    /// GetOrCreateSubrange - Create a descriptor for a value range.  This
+    /// implicitly uniques the values returned.
+    DISubrange GetOrCreateSubrange(int64_t Lo, int64_t Hi);
 
     /// CreateGlobalVariable - Create a new descriptor for the specified global.
     /// @param Name        Name of the variable.
@@ -231,6 +307,15 @@ namespace llvm {
     DINameSpace CreateNameSpace(DIDescriptor Scope, StringRef Name,
                                 DIFile File, unsigned LineNo);
 
+
+    /// CreateLexicalBlock - This creates a descriptor for a lexical block
+    /// with the specified parent context.
+    /// @param Scope       Parent lexical scope.
+    /// @param File        Source file
+    /// @param Line        Line number
+    /// @param Col         Column number
+    DILexicalBlock CreateLexicalBlock(DIDescriptor Scope, DIFile File,
+                                      unsigned Line, unsigned Col);
 
     /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
     /// @param Storage     llvm::Value of the variable
