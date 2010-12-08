@@ -19,6 +19,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Analysis/DIBuilder.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Allocator.h"
 
@@ -42,7 +43,7 @@ namespace CodeGen {
 /// the backend.
 class CGDebugInfo {
   CodeGenModule &CGM;
-  llvm::DIFactory DebugFactory;
+  llvm::DIBuilder DBuilder;
   llvm::DICompileUnit TheCU;
   SourceLocation CurLoc, PrevLoc;
   llvm::DIType VTablePtrType;
@@ -109,26 +110,26 @@ class CGDebugInfo {
   
   void CollectCXXMemberFunctions(const CXXRecordDecl *Decl,
                                  llvm::DIFile F,
-                                 llvm::SmallVectorImpl<llvm::DIDescriptor> &E,
+                                 llvm::SmallVectorImpl<llvm::Value *> &E,
                                  llvm::DIType T);
 
   void CollectCXXFriends(const CXXRecordDecl *Decl,
                        llvm::DIFile F,
-                       llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
+                       llvm::SmallVectorImpl<llvm::Value *> &EltTys,
                        llvm::DIType RecordTy);
 
   void CollectCXXBases(const CXXRecordDecl *Decl,
                        llvm::DIFile F,
-                       llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys,
+                       llvm::SmallVectorImpl<llvm::Value *> &EltTys,
                        llvm::DIType RecordTy);
 
 
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
-                           llvm::SmallVectorImpl<llvm::DIDescriptor> &E);
+                           llvm::SmallVectorImpl<llvm::Value *> &E);
 
   void CollectVTableInfo(const CXXRecordDecl *Decl,
                          llvm::DIFile F,
-                         llvm::SmallVectorImpl<llvm::DIDescriptor> &EltTys);
+                         llvm::SmallVectorImpl<llvm::Value *> &EltTys);
 
 public:
   CGDebugInfo(CodeGenModule &CGM);
