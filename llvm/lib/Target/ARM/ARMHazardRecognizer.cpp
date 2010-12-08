@@ -68,14 +68,14 @@ ARMHazardRecognizer::getHazardType(SUnit *SU) {
     }
   }
 
-  return PostRAHazardRecognizer::getHazardType(SU);
+  return ScoreboardHazardRecognizer::getHazardType(SU);
 }
 
 void ARMHazardRecognizer::Reset() {
   LastMI = 0;
   Stalls = 0;
   ITBlockSize = 0;
-  PostRAHazardRecognizer::Reset();
+  ScoreboardHazardRecognizer::Reset();
 }
 
 void ARMHazardRecognizer::EmitInstruction(SUnit *SU) {
@@ -103,12 +103,16 @@ void ARMHazardRecognizer::EmitInstruction(SUnit *SU) {
     Stalls = 0;
   }
 
-  PostRAHazardRecognizer::EmitInstruction(SU);
+  ScoreboardHazardRecognizer::EmitInstruction(SU);
 }
 
 void ARMHazardRecognizer::AdvanceCycle() {
   if (Stalls && --Stalls == 0)
     // Stalled for 4 cycles but still can't schedule any other instructions.
     LastMI = 0;
-  PostRAHazardRecognizer::AdvanceCycle();
+  ScoreboardHazardRecognizer::AdvanceCycle();
+}
+
+void ARMHazardRecognizer::RecedeCycle() {
+  llvm_unreachable("reverse ARM hazard checking unsupported");
 }

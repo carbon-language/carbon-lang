@@ -1,4 +1,4 @@
-//===----- PostRAHazardRecognizer.cpp - hazard recognizer -------- ---------===//
+//===----- ScoreboardHazardRecognizer.cpp - Scheduler Support -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This implements a hazard recognizer using the instructions itineraries
-// defined for the current target.
+// This file implements the ScoreboardHazardRecognizer class, which
+// encapsultes hazard-avoidance heuristics for scheduling, based on the
+// scheduling itineraries specified for the target.
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "post-RA-sched"
-#include "llvm/CodeGen/PostRAHazardRecognizer.h"
+#define DEBUG_TYPE "sched-hazard"
+#include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -22,8 +23,8 @@
 
 using namespace llvm;
 
-PostRAHazardRecognizer::
-PostRAHazardRecognizer(const InstrItineraryData *LItinData) :
+ScoreboardHazardRecognizer::
+ScoreboardHazardRecognizer(const InstrItineraryData *LItinData) :
   ScheduleHazardRecognizer(), ItinData(LItinData) {
   // Determine the maximum depth of any itinerary. This determines the
   // depth of the scoreboard. We always make the scoreboard at least 1
@@ -40,23 +41,26 @@ PostRAHazardRecognizer(const InstrItineraryData *LItinData) :
       for (; IS != E; ++IS)
         ItinDepth += IS->getCycles();
 
-      ScoreboardDepth = std::max(ScoreboardDepth, ItinDepth);
+      // Find the next power-of-2 >= ItinDepth
+      while (ItinDepth > ScoreboardDepth) {
+        ScoreboardDepth *= 2;
+      }
     }
   }
 
   ReservedScoreboard.reset(ScoreboardDepth);
   RequiredScoreboard.reset(ScoreboardDepth);
 
-  DEBUG(dbgs() << "Using post-ra hazard recognizer: ScoreboardDepth = " 
+  DEBUG(dbgs() << "Using scoreboard hazard recognizer: Depth = "
                << ScoreboardDepth << '\n');
 }
 
-void PostRAHazardRecognizer::Reset() {
+void ScoreboardHazardRecognizer::Reset() {
   RequiredScoreboard.reset();
   ReservedScoreboard.reset();
 }
 
-void PostRAHazardRecognizer::ScoreBoard::dump() const {
+void ScoreboardHazardRecognizer::Scoreboard::dump() const {
   dbgs() << "Scoreboard:\n";
 
   unsigned last = Depth - 1;
@@ -73,7 +77,7 @@ void PostRAHazardRecognizer::ScoreBoard::dump() const {
 }
 
 ScheduleHazardRecognizer::HazardType
-PostRAHazardRecognizer::getHazardType(SUnit *SU) {
+ScoreboardHazardRecognizer::getHazardType(SUnit *SU) {
   if (!ItinData || ItinData->isEmpty())
     return NoHazard;
 
@@ -120,7 +124,7 @@ PostRAHazardRecognizer::getHazardType(SUnit *SU) {
   return NoHazard;
 }
 
-void PostRAHazardRecognizer::EmitInstruction(SUnit *SU) {
+void ScoreboardHazardRecognizer::EmitInstruction(SUnit *SU) {
   if (!ItinData || ItinData->isEmpty())
     return;
 
@@ -174,7 +178,14 @@ void PostRAHazardRecognizer::EmitInstruction(SUnit *SU) {
   DEBUG(RequiredScoreboard.dump());
 }
 
-void PostRAHazardRecognizer::AdvanceCycle() {
+void ScoreboardHazardRecognizer::AdvanceCycle() {
   ReservedScoreboard[0] = 0; ReservedScoreboard.advance();
   RequiredScoreboard[0] = 0; RequiredScoreboard.advance();
+}
+
+void ScoreboardHazardRecognizer::RecedeCycle() {
+  ReservedScoreboard[ReservedScoreboard.getDepth()-1] = 0;
+  ReservedScoreboard.recede();
+  RequiredScoreboard[RequiredScoreboard.getDepth()-1] = 0;
+  RequiredScoreboard.recede();
 }

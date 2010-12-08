@@ -53,7 +53,7 @@ add_llvm_library(LLVMCodeGen
   PHIEliminationUtils.cpp
   Passes.cpp
   PeepholeOptimizer.cpp
-  PostRAHazardRecognizer.cpp
+  ScoreboardHazardRecognizer.cpp
   PostRASchedulerList.cpp
   PreAllocSplitting.cpp
   ProcessImplicitDefs.cpp

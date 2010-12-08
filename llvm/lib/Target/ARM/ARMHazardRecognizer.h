@@ -14,7 +14,7 @@
 #ifndef ARMHAZARDRECOGNIZER_H
 #define ARMHAZARDRECOGNIZER_H
 
-#include "llvm/CodeGen/PostRAHazardRecognizer.h"
+#include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 
 namespace llvm {
 
@@ -23,7 +23,7 @@ class ARMBaseRegisterInfo;
 class ARMSubtarget;
 class MachineInstr;
 
-class ARMHazardRecognizer : public PostRAHazardRecognizer {
+class ARMHazardRecognizer : public ScoreboardHazardRecognizer {
   const ARMBaseInstrInfo &TII;
   const ARMBaseRegisterInfo &TRI;
   const ARMSubtarget &STI;
@@ -38,15 +38,15 @@ public:
                       const ARMBaseInstrInfo &tii,
                       const ARMBaseRegisterInfo &tri,
                       const ARMSubtarget &sti) :
-    PostRAHazardRecognizer(ItinData), TII(tii), TRI(tri), STI(sti),
+    ScoreboardHazardRecognizer(ItinData), TII(tii), TRI(tri), STI(sti),
     LastMI(0), ITBlockSize(0) {}
 
   virtual HazardType getHazardType(SUnit *SU);
   virtual void Reset();
   virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();
+  virtual void RecedeCycle();
 };
-
 
 } // end namespace llvm
 

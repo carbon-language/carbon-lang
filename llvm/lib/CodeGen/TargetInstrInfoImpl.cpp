@@ -22,7 +22,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/PostRAHazardRecognizer.h"
+#include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -135,7 +135,7 @@ bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
   const TargetInstrDesc &TID = MI->getDesc();
   if (!TID.isPredicable())
     return false;
-  
+
   for (unsigned j = 0, i = 0, e = MI->getNumOperands(); i != e; ++i) {
     if (TID.OpInfo[i].isPredicate()) {
       MachineOperand &MO = MI->getOperand(i);
@@ -417,5 +417,5 @@ bool TargetInstrInfoImpl::isSchedulingBoundary(const MachineInstr *MI,
 // Default implementation of CreateTargetPostRAHazardRecognizer.
 ScheduleHazardRecognizer *TargetInstrInfoImpl::
 CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II) const {
-  return (ScheduleHazardRecognizer *)new PostRAHazardRecognizer(II);
+  return (ScheduleHazardRecognizer *)new ScoreboardHazardRecognizer(II);
 }
