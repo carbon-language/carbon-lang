@@ -1092,7 +1092,14 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
     return CharUnits::Zero();
   }
 
-  unsigned BaseAlign = Layout.getNonVirtualAlign();
+  unsigned UnpackedBaseAlign = Layout.getNonVirtualAlign();
+  unsigned BaseAlign = (Packed) ? 8 : UnpackedBaseAlign;
+
+  // The maximum field alignment overrides base align.
+  if (MaxFieldAlignment) {
+    BaseAlign = std::min(BaseAlign, MaxFieldAlignment);
+    UnpackedBaseAlign = std::min(UnpackedBaseAlign, MaxFieldAlignment);
+  }
 
   // Round up the current record size to the base's alignment boundary.
   uint64_t Offset = llvm::RoundUpToAlignment(DataSize, BaseAlign);
@@ -1110,7 +1117,7 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
     Size = std::max(Size, Offset + Layout.getSize());
 
   // Remember max struct/class alignment.
-  UpdateAlignment(BaseAlign);
+  UpdateAlignment(BaseAlign, UnpackedBaseAlign);
 
   return toCharUnits(Offset);
 }
