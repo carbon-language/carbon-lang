@@ -82,6 +82,10 @@ def t_bltarget : Operand<i32> {
   let EncoderMethod = "getThumbBLTargetOpValue";
 }
 
+def t_blxtarget : Operand<i32> {
+  let EncoderMethod = "getThumbBLXTargetOpValue";
+}
+
 def MemModeThumbAsmOperand : AsmOperandClass {
   let Name = "MemModeThumb";
   let SuperClasses = [];
@@ -395,7 +399,7 @@ let isCall = 1,
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi : TIx2<0b11110, 0b11, 0,
-                   (outs), (ins t_bltarget:$func, variable_ops), IIC_Br,
+                   (outs), (ins t_blxtarget:$func, variable_ops), IIC_Br,
                    "blx\t$func",
                    [(ARMcall tglobaladdr:$func)]>,
               Requires<[IsThumb, HasV5T, IsNotDarwin]> {
@@ -448,7 +452,7 @@ let isCall = 1,
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi_r9 : TIx2<0b11110, 0b11, 0,
-                      (outs), (ins pred:$p, t_bltarget:$func, variable_ops),
+                      (outs), (ins pred:$p, t_blxtarget:$func, variable_ops),
                       IIC_Br, "blx${p}\t$func",
                       [(ARMcall tglobaladdr:$func)]>,
                  Requires<[IsThumb, HasV5T, IsDarwin]> {

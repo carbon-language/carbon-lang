@@ -35,8 +35,11 @@ enum Fixups {
   // instructions.
   fixup_t2_branch,
 
-  // fixup_arm_thumb_bl - Fixup for Thumb BL/BLX instructions.
+  // fixup_arm_thumb_blx - Fixup for Thumb BL instructions.
   fixup_arm_thumb_bl,
+
+  // fixup_arm_thumb_blx - Fixup for Thumb BLX instructions.
+  fixup_arm_thumb_blx,
 
   // fixup_arm_thumb_br - Fixup for Thumb branch instructions.
   fixup_arm_thumb_br,

@@ -53,6 +53,7 @@ public:
       { "fixup_arm_branch",         1,    24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_t2_branch",          0,    32,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_bl",       0,    32,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_thumb_blx",      0,    32,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_br",       0,    16,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_cp",       1,    8,    MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_movt_hi16",      0,    16,   0 },
@@ -87,9 +88,14 @@ public:
                               SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getThumbBLTargetOpValue - Return encoding info for Thumb immediate
-  /// branch target.
+  /// BL branch target.
   uint32_t getThumbBLTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                    SmallVectorImpl<MCFixup> &Fixups) const;
+
+  /// getThumbBLXTargetOpValue - Return encoding info for Thumb immediate
+  /// BLX branch target.
+  uint32_t getThumbBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                                    SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getThumbBRTargetOpValue - Return encoding info for Thumb branch target.
   uint32_t getThumbBRTargetOpValue(const MCInst &MI, unsigned OpIdx,
@@ -443,6 +449,14 @@ getThumbBLTargetOpValue(const MCInst &MI, unsigned OpIdx,
   return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_bl, Fixups);
 }
 
+/// getThumbBLXTargetOpValue - Return encoding info for Thumb immediate
+/// BLX branch target.
+uint32_t ARMMCCodeEmitter::
+getThumbBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                         SmallVectorImpl<MCFixup> &Fixups) const {
+  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_blx, Fixups);
+}
+
 /// getThumbBRTargetOpValue - Return encoding info for Thumb branch target.
 uint32_t ARMMCCodeEmitter::
 getThumbBRTargetOpValue(const MCInst &MI, unsigned OpIdx,
@@ -740,17 +754,7 @@ getAddrModeS1OpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getAddrModePCOpValue(const MCInst &MI, unsigned OpIdx,
                      SmallVectorImpl<MCFixup> &Fixups) const {
-  const MCOperand &MO = MI.getOperand(OpIdx);
-
-  // If the destination is an immediate, we have nothing to do.
-  if (MO.isImm()) return MO.getImm();
-  assert (MO.isExpr() && "Unexpected branch target type!");
-  const MCExpr *Expr = MO.getExpr();
-  MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_thumb_cp);
-  Fixups.push_back(MCFixup::Create(0, Expr, Kind));
-
-  // All of the information is in the fixup.
-  return 0;
+  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_cp, Fixups);
 }
 
 /// getAddrMode5OpValue - Return encoding info for 'reg +/- imm10' operand.

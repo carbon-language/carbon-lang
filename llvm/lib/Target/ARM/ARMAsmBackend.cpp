@@ -146,13 +146,33 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // The value doesn't encode the low bit (always zero) and is offset by
     // four. The value is encoded into disjoint bit positions in the destination
     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit
-    // xxxxxSIIIIIIIIII xxxxxIIIIIIIIIII
+    // 
+    //   BL:  xxxxxSIIIIIIIIII xxxxxIIIIIIIIIII
+    // 
     // Note that the halfwords are stored high first, low second; so we need
     // to transpose the fixup value here to map properly.
-    // FIXME: Something isn't quite right with this. Some, but not all, BLX
-    // instructions are getting the encoded value off by one.
+    unsigned isNeg = (int64_t(Value) < 0) ? 1 : 0;
     uint32_t Binary = 0x3fffff & ((Value - 4) >> 1);
-    Binary = ((Binary & 0x7ff) << 16) | (Binary >> 11);
+    Binary  = (Binary & 0x7ff) << 16;    // Low imm11 value.
+    Binary |= (Binary & 0x1ffc00) >> 11; // High imm10 value.
+    Binary |= isNeg << 10;               // Sign bit.
+    return Binary;
+  }
+  case ARM::fixup_arm_thumb_blx: {
+    // The value doesn't encode the low two bits (always zero) and is offset by
+    // four (see fixup_arm_thumb_cp). The value is encoded into disjoint bit
+    // positions in the destination opcode. x = unchanged, I = immediate value
+    // bit, S = sign extension bit, 0 = zero.
+    // 
+    //   BLX: xxxxxSIIIIIIIIII xxxxxIIIIIIIIII0
+    // 
+    // Note that the halfwords are stored high first, low second; so we need
+    // to transpose the fixup value here to map properly.
+    unsigned isNeg = (int64_t(Value) < 0) ? 1 : 0;
+    uint32_t Binary = 0xfffff & ((Value - 2) >> 2);
+    Binary  = (Binary & 0x3ff) << 17;    // Low imm10L value.
+    Binary |= (Binary & 0xffc00) >> 10;  // High imm10H value.
+    Binary |= isNeg << 10;               // Sign bit.
     return Binary;
   }
   case ARM::fixup_arm_thumb_cp:
@@ -291,6 +311,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_t2_branch:
   case ARM::fixup_t2_pcrel_10:
   case ARM::fixup_arm_thumb_bl:
+  case ARM::fixup_arm_thumb_blx:
     return 4;
   }
 }
