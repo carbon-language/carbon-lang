@@ -24,6 +24,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/system_error.h"
 #include "llvm/Config/config.h"
 #include <map>
 #include <set>
@@ -400,13 +401,16 @@ void FileManager::FixupRelativePath(llvm::sys::Path &path,
 
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
+  llvm::error_code ec;
   if (FileSystemOpts.WorkingDir.empty()) {
     const char *Filename = Entry->getName();
     // If the file is already open, use the open file descriptor.
     if (Entry->FD != -1) {
       llvm::MemoryBuffer *Buf =
-        llvm::MemoryBuffer::getOpenFile(Entry->FD, Filename, ErrorStr,
+        llvm::MemoryBuffer::getOpenFile(Entry->FD, Filename, ec,
                                         Entry->getSize());
+      if (Buf == 0 && ErrorStr)
+        *ErrorStr = ec.message();
       // getOpenFile will have closed the file descriptor, don't reuse or
       // reclose it.
       Entry->FD = -1;
@@ -414,23 +418,38 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr) {
     }
 
     // Otherwise, open the file.
-    return llvm::MemoryBuffer::getFile(Filename, ErrorStr, Entry->getSize());
+    llvm::MemoryBuffer *res =
+      llvm::MemoryBuffer::getFile(Filename, ec, Entry->getSize());
+    if (res == 0 && ErrorStr)
+      *ErrorStr = ec.message();
+    return res;
   }
   
   llvm::sys::Path FilePath(Entry->getName());
   FixupRelativePath(FilePath, FileSystemOpts);
-  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr,
-                                     Entry->getSize());
+  llvm::MemoryBuffer *res =
+    llvm::MemoryBuffer::getFile(FilePath.c_str(), ec, Entry->getSize());
+  if (res == 0 && ErrorStr)
+    *ErrorStr = ec.message();
+  return res;
 }
 
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(llvm::StringRef Filename, std::string *ErrorStr) {
-  if (FileSystemOpts.WorkingDir.empty())
-    return llvm::MemoryBuffer::getFile(Filename, ErrorStr);
-  
+  llvm::error_code ec;
+  if (FileSystemOpts.WorkingDir.empty()) {
+    llvm::MemoryBuffer *res = llvm::MemoryBuffer::getFile(Filename, ec);
+    if (res == 0 && ErrorStr)
+      *ErrorStr = ec.message();
+    return res;
+  }
+
   llvm::sys::Path FilePath(Filename);
   FixupRelativePath(FilePath, FileSystemOpts);
-  return llvm::MemoryBuffer::getFile(FilePath.c_str(), ErrorStr);
+  llvm::MemoryBuffer *res = llvm::MemoryBuffer::getFile(FilePath.c_str(), ec);
+  if (res == 0 && ErrorStr)
+    *ErrorStr = ec.message();
+  return res;
 }
 
 /// getStatValue - Get the 'stat' information for the specified path, using the

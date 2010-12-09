@@ -26,6 +26,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/system_error.h"
 
 #include <cstdlib> // ::getenv
 
@@ -1243,8 +1244,9 @@ static bool HasMultilib(llvm::Triple::ArchType Arch, enum LinuxDistro Distro) {
 }
 
 static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
+  llvm::error_code ec;
   llvm::OwningPtr<const llvm::MemoryBuffer>
-    LsbRelease(llvm::MemoryBuffer::getFile("/etc/lsb-release"));
+    LsbRelease(llvm::MemoryBuffer::getFile("/etc/lsb-release", ec));
   if (LsbRelease) {
     llvm::StringRef Data = LsbRelease.get()->getBuffer();
     llvm::SmallVector<llvm::StringRef, 8> Lines;
@@ -1263,7 +1265,7 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   }
 
   llvm::OwningPtr<const llvm::MemoryBuffer>
-    RHRelease(llvm::MemoryBuffer::getFile("/etc/redhat-release"));
+    RHRelease(llvm::MemoryBuffer::getFile("/etc/redhat-release", ec));
   if (RHRelease) {
     llvm::StringRef Data = RHRelease.get()->getBuffer();
     if (Data.startswith("Fedora release 14 (Laughlin)"))
@@ -1274,7 +1276,7 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   }
 
   llvm::OwningPtr<const llvm::MemoryBuffer>
-    DebianVersion(llvm::MemoryBuffer::getFile("/etc/debian_version"));
+    DebianVersion(llvm::MemoryBuffer::getFile("/etc/debian_version", ec));
   if (DebianVersion) {
     llvm::StringRef Data = DebianVersion.get()->getBuffer();
     if (Data[0] == '5')
@@ -1285,7 +1287,7 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   }
 
   llvm::OwningPtr<const llvm::MemoryBuffer>
-    SuseRelease(llvm::MemoryBuffer::getFile("/etc/SuSE-release"));
+    SuseRelease(llvm::MemoryBuffer::getFile("/etc/SuSE-release", ec));
   if (SuseRelease) {
     llvm::StringRef Data = SuseRelease.get()->getBuffer();
     if (Data.startswith("openSUSE 11.3"))

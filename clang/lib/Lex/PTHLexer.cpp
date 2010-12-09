@@ -26,6 +26,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/system_error.h"
 using namespace clang;
 using namespace clang::io;
 
@@ -436,9 +437,12 @@ static void InvalidPTH(Diagnostic &Diags, const char *Msg) {
 
 PTHManager *PTHManager::Create(const std::string &file, Diagnostic &Diags) {
   // Memory map the PTH file.
-  llvm::OwningPtr<llvm::MemoryBuffer> File(llvm::MemoryBuffer::getFile(file));
+  llvm::error_code ec;
+  llvm::OwningPtr<llvm::MemoryBuffer> File(
+    llvm::MemoryBuffer::getFile(file, ec));
 
   if (!File) {
+    // FIXME: Add ec.message() to this diag.
     Diags.Report(diag::err_invalid_pth_file) << file;
     return 0;
   }

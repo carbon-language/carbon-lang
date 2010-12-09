@@ -42,6 +42,7 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetData.h"
@@ -224,8 +225,10 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     return false;
   }
 
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(Opts.InputFile, &Error);
+  error_code ec;
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(Opts.InputFile, ec);
   if (Buffer == 0) {
+    Error = ec.message();
     Diags.Report(diag::err_fe_error_reading) << Opts.InputFile;
     return false;
   }

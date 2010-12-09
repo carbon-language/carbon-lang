@@ -41,6 +41,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <iterator>
 #include <cstdio>
@@ -2275,9 +2276,12 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
   //
   // FIXME: This shouldn't be here, we should just take a raw_ostream.
   std::string ErrStr;
-  if (FileName == "-")
-    F.Buffer.reset(llvm::MemoryBuffer::getSTDIN(&ErrStr));
-  else
+  llvm::error_code ec;
+  if (FileName == "-") {
+    F.Buffer.reset(llvm::MemoryBuffer::getSTDIN(ec));
+    if (ec)
+      ErrStr = ec.message();
+  } else
     F.Buffer.reset(FileMgr.getBufferForFile(FileName, &ErrStr));
   if (!F.Buffer) {
     Error(ErrStr.c_str());

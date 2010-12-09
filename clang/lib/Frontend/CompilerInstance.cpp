@@ -36,6 +36,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 using namespace clang;
 
 CompilerInstance::CompilerInstance()
@@ -486,8 +487,10 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
     }
     SourceMgr.createMainFileID(File);
   } else {
-    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
+    llvm::error_code ec;
+    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN(ec);
     if (!SB) {
+      // FIXME: Give ec.message() in this diag.
       Diags.Report(diag::err_fe_error_reading_stdin);
       return false;
     }

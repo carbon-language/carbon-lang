@@ -33,6 +33,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 using namespace clang;
 using namespace clang::driver;
 
@@ -181,7 +182,8 @@ static void ExpandArgsFromBuf(const char *Arg,
                               llvm::SmallVectorImpl<const char*> &ArgVector,
                               std::set<std::string> &SavedStrings) {
   const char *FName = Arg + 1;
-  llvm::MemoryBuffer *MemBuf = llvm::MemoryBuffer::getFile(FName);
+  llvm::error_code ec;
+  llvm::MemoryBuffer *MemBuf = llvm::MemoryBuffer::getFile(FName, ec);
   if (!MemBuf) {
     ArgVector.push_back(SaveStringInSet(SavedStrings, Arg));
     return;
