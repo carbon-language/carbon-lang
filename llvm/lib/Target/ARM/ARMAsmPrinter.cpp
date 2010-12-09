@@ -720,7 +720,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::t2ADDrSPi12:
   case ARM::t2SUBrSPi:
   case ARM::t2SUBrSPi12:
-    assert (MI->getOperand(1).getReg() == ARM::SP);
+    assert ((MI->getOperand(1).getReg() == ARM::SP) &&
+            "Unexpected source register!");
     break;
 
   case ARM::t2MOVi32imm: assert(0 && "Should be lowered by thumb2it pass");
