@@ -42,6 +42,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cstdio>
 using namespace llvm;
@@ -188,11 +189,11 @@ void llvm::PrintError(SMLoc ErrorLoc, const Twine &Msg) {
 static bool ParseFile(const std::string &Filename,
                       const std::vector<std::string> &IncludeDirs,
                       SourceMgr &SrcMgr) {
-  std::string ErrorStr;
-  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrorStr);
+  error_code ec;
+  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), ec);
   if (F == 0) {
     errs() << "Could not open input file '" << Filename << "': "
-           << ErrorStr <<"\n";
+           << ec.message() <<"\n";
     return true;
   }
 

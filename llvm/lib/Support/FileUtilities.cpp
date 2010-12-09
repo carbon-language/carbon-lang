@@ -16,6 +16,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/system_error.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include <cstdlib>
@@ -199,11 +200,20 @@ int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
 
   // Now its safe to mmap the files into memory becasue both files
   // have a non-zero size.
-  OwningPtr<MemoryBuffer> F1(MemoryBuffer::getFile(FileA.c_str(), Error));
-  OwningPtr<MemoryBuffer> F2(MemoryBuffer::getFile(FileB.c_str(), Error));
-  if (F1 == 0 || F2 == 0)
+  error_code ec;
+  OwningPtr<MemoryBuffer> F1(MemoryBuffer::getFile(FileA.c_str(), ec));
+  if (F1 == 0) {
+    if (Error)
+      *Error = ec.message();
     return 2;
-  
+  }
+  OwningPtr<MemoryBuffer> F2(MemoryBuffer::getFile(FileB.c_str(), ec));
+  if (F2 == 0) {
+    if (Error)
+      *Error = ec.message();
+    return 2;
+  }
+
   // Okay, now that we opened the files, scan them for the first difference.
   const char *File1Start = F1->getBufferStart();
   const char *File2Start = F2->getBufferStart();

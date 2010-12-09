@@ -37,6 +37,7 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include "Disassembler.h"
 using namespace llvm;
 
@@ -164,15 +165,10 @@ static tool_output_file *GetOutputStream() {
 }
 
 static int AsLexInput(const char *ProgName) {
-  std::string ErrorMessage;
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename,
-                                                      &ErrorMessage);
+  error_code ec;
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename, ec);
   if (Buffer == 0) {
-    errs() << ProgName << ": ";
-    if (ErrorMessage.size())
-      errs() << ErrorMessage << "\n";
-    else
-      errs() << "input file didn't read correctly.\n";
+    errs() << ProgName << ": " << ec.message() << '\n';
     return 1;
   }
 
@@ -282,14 +278,10 @@ static int AssembleInput(const char *ProgName) {
   if (!TheTarget)
     return 1;
 
-  std::string Error;
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename, &Error);
+  error_code ec;
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename, ec);
   if (Buffer == 0) {
-    errs() << ProgName << ": ";
-    if (Error.size())
-      errs() << Error << "\n";
-    else
-      errs() << "input file didn't read correctly.\n";
+    errs() << ProgName << ": " << ec.message() << '\n';
     return 1;
   }
   
@@ -383,18 +375,11 @@ static int DisassembleInput(const char *ProgName, bool Enhanced) {
   const Target *TheTarget = GetTarget(ProgName);
   if (!TheTarget)
     return 0;
-  
-  std::string ErrorMessage;
-  
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename,
-                                                      &ErrorMessage);
 
+  error_code ec;
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename, ec);
   if (Buffer == 0) {
-    errs() << ProgName << ": ";
-    if (ErrorMessage.size())
-      errs() << ErrorMessage << "\n";
-    else
-      errs() << "input file didn't read correctly.\n";
+    errs() << ProgName << ": " << ec.message() << '\n';
     return 1;
   }
   

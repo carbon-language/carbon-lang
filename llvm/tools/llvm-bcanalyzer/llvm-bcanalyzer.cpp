@@ -38,6 +38,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include <cstdio>
 #include <map>
 #include <algorithm>
@@ -473,10 +474,12 @@ static void PrintSize(uint64_t Bits) {
 /// AnalyzeBitcode - Analyze the bitcode file specified by InputFilename.
 static int AnalyzeBitcode() {
   // Read the input file.
-  MemoryBuffer *MemBuf = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str());
+  error_code ec;
+  MemoryBuffer *MemBuf =
+    MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), ec);
 
   if (MemBuf == 0)
-    return Error("Error reading '" + InputFilename + "'.");
+    return Error("Error reading '" + InputFilename + "': " + ec.message());
 
   if (MemBuf->getBufferSize() & 3)
     return Error("Bitcode stream should be a multiple of 4 bytes in length");

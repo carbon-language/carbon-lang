@@ -19,6 +19,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/system_error.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -143,19 +144,19 @@ MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size, StringRef BufferName) {
 /// in *ErrStr with a reason.  If stdin is empty, this API (unlike getSTDIN)
 /// returns an empty buffer.
 MemoryBuffer *MemoryBuffer::getFileOrSTDIN(StringRef Filename,
-                                           std::string *ErrStr,
+                                           error_code &ec,
                                            int64_t FileSize) {
   if (Filename == "-")
-    return getSTDIN(ErrStr);
-  return getFile(Filename, ErrStr, FileSize);
+    return getSTDIN(ec);
+  return getFile(Filename, ec, FileSize);
 }
 
 MemoryBuffer *MemoryBuffer::getFileOrSTDIN(const char *Filename,
-                                           std::string *ErrStr,
+                                           error_code &ec,
                                            int64_t FileSize) {
   if (strcmp(Filename, "-") == 0)
-    return getSTDIN(ErrStr);
-  return getFile(Filename, ErrStr, FileSize);
+    return getSTDIN(ec);
+  return getFile(Filename, ec, FileSize);
 }
 
 //===----------------------------------------------------------------------===//
@@ -185,14 +186,14 @@ public:
 };
 }
 
-MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
+MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, error_code &ec,
                                     int64_t FileSize) {
   // Ensure the path is null terminated.
   SmallString<256> PathBuf(Filename.begin(), Filename.end());
-  return MemoryBuffer::getFile(PathBuf.c_str(), ErrStr, FileSize);
+  return MemoryBuffer::getFile(PathBuf.c_str(), ec, FileSize);
 }
 
-MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
+MemoryBuffer *MemoryBuffer::getFile(const char *Filename, error_code &ec,
                                     int64_t FileSize) {
   int OpenFlags = O_RDONLY;
 #ifdef O_BINARY
@@ -200,15 +201,15 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
 #endif
   int FD = ::open(Filename, OpenFlags);
   if (FD == -1) {
-    if (ErrStr) *ErrStr = sys::StrError();
+    ec = error_code(errno, posix_category());
     return 0;
   }
 
-  return getOpenFile(FD, Filename, ErrStr, FileSize);
+  return getOpenFile(FD, Filename, ec, FileSize);
 }
 
 MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
-                                        std::string *ErrStr, int64_t FileSize) {
+                                        error_code &ec, int64_t FileSize) {
   FileCloser FC(FD); // Close FD on return.
 
   // If we don't know the file size, use fstat to find out.  fstat on an open
@@ -217,7 +218,7 @@ MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
     struct stat FileInfo;
     // TODO: This should use fstat64 when available.
     if (fstat(FD, &FileInfo) == -1) {
-      if (ErrStr) *ErrStr = sys::StrError();
+      ec = error_code(errno, posix_category());
       return 0;
     }
     FileSize = FileInfo.st_size;
@@ -240,8 +241,9 @@ MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
 
   MemoryBuffer *Buf = MemoryBuffer::getNewUninitMemBuffer(FileSize, Filename);
   if (!Buf) {
-    // Failed to create a buffer.
-    if (ErrStr) *ErrStr = "could not allocate buffer";
+    // Failed to create a buffer. The only way it can fail is if
+    // new(std::nothrow) returns 0.
+    ec = make_error_code(errc::not_enough_memory);
     return 0;
   }
 
@@ -255,7 +257,7 @@ MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
       if (errno == EINTR)
         continue;
       // Error while reading.
-      if (ErrStr) *ErrStr = sys::StrError();
+      ec = error_code(errno, posix_category());
       return 0;
     } else if (NumRead == 0) {
       // We hit EOF early, truncate and terminate buffer.
@@ -274,7 +276,7 @@ MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
 // MemoryBuffer::getSTDIN implementation.
 //===----------------------------------------------------------------------===//
 
-MemoryBuffer *MemoryBuffer::getSTDIN(std::string *ErrStr) {
+MemoryBuffer *MemoryBuffer::getSTDIN(error_code &ec) {
   // Read in all of the data from stdin, we cannot mmap stdin.
   //
   // FIXME: That isn't necessarily true, we should try to mmap stdin and
@@ -290,7 +292,7 @@ MemoryBuffer *MemoryBuffer::getSTDIN(std::string *ErrStr) {
     ReadBytes = read(0, Buffer.end(), ChunkSize);
     if (ReadBytes == -1) {
       if (errno == EINTR) continue;
-      if (ErrStr) *ErrStr = sys::StrError();
+      ec = error_code(errno, posix_category());
       return 0;
     }
     Buffer.set_size(Buffer.size() + ReadBytes);

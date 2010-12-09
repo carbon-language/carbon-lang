@@ -18,6 +18,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include <fstream>
 #include <ostream>
 #include <iomanip>
@@ -212,9 +213,13 @@ Archive::writeMember(
   const char *data = (const char*)member.getData();
   MemoryBuffer *mFile = 0;
   if (!data) {
-    mFile = MemoryBuffer::getFile(member.getPath().c_str(), ErrMsg);
-    if (mFile == 0)
+    error_code ec;
+    mFile = MemoryBuffer::getFile(member.getPath().c_str(), ec);
+    if (mFile == 0) {
+      if (ErrMsg)
+        *ErrMsg = ec.message();
       return true;
+    }
     data = mFile->getBufferStart();
     fSize = mFile->getBufferSize();
   }
@@ -406,8 +411,13 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 
     // Map in the archive we just wrote.
     {
-    OwningPtr<MemoryBuffer> arch(MemoryBuffer::getFile(TmpArchive.c_str()));
-    if (arch == 0) return true;
+    error_code ec;
+    OwningPtr<MemoryBuffer> arch(MemoryBuffer::getFile(TmpArchive.c_str(), ec));
+    if (arch == 0) {
+      if (ErrMsg)
+        *ErrMsg = ec.message();
+      return true;
+    }
     const char* base = arch->getBufferStart();
 
     // Open another temporary file in order to avoid invalidating the 

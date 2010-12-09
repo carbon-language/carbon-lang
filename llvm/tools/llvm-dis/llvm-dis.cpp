@@ -28,6 +28,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -78,13 +79,14 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");
 
   std::string ErrorMessage;
+  error_code ec;
   std::auto_ptr<Module> M;
- 
-  if (MemoryBuffer *Buffer
-         = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
+
+  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename, ec)) {
     M.reset(ParseBitcodeFile(Buffer, Context, &ErrorMessage));
     delete Buffer;
-  }
+  } else
+    ErrorMessage = ec.message();
 
   if (M.get() == 0) {
     errs() << argv[0] << ": ";

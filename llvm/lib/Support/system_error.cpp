@@ -96,6 +96,15 @@ system_category() {
   return s;
 }
 
+const error_category&
+posix_category() {
+#ifdef LLVM_ON_WIN32
+  return generic_category();
+#else
+  return system_category();
+#endif
+}
+
 // error_condition
 
 std::string

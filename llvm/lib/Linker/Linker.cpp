@@ -18,6 +18,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/system_error.h"
 using namespace llvm;
 
 Linker::Linker(StringRef progname, StringRef modname,
@@ -98,11 +99,14 @@ Linker::LoadObject(const sys::Path &FN) {
   std::string ParseErrorMessage;
   Module *Result = 0;
 
-  std::auto_ptr<MemoryBuffer> Buffer(MemoryBuffer::getFileOrSTDIN(FN.c_str()));
+  error_code ec;
+  std::auto_ptr<MemoryBuffer> Buffer(
+    MemoryBuffer::getFileOrSTDIN(FN.c_str(), ec));
   if (Buffer.get())
     Result = ParseBitcodeFile(Buffer.get(), Context, &ParseErrorMessage);
   else
-    ParseErrorMessage = "Error reading file '" + FN.str() + "'";
+    ParseErrorMessage = "Error reading file '" + FN.str() + "'" + ": "
+                      + ec.message();
 
   if (Result)
     return std::auto_ptr<Module>(Result);

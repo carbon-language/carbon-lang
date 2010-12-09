@@ -23,6 +23,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include <algorithm>
@@ -488,12 +489,11 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
 static bool ReadCheckFile(SourceMgr &SM,
                           std::vector<CheckString> &CheckStrings) {
   // Open the check file, and tell SourceMgr about it.
-  std::string ErrorStr;
-  MemoryBuffer *F =
-    MemoryBuffer::getFileOrSTDIN(CheckFilename.c_str(), &ErrorStr);
+  error_code ec;
+  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(CheckFilename.c_str(), ec);
   if (F == 0) {
     errs() << "Could not open check file '" << CheckFilename << "': "
-           << ErrorStr << '\n';
+           << ec.message() << '\n';
     return true;
   }
 
@@ -648,12 +648,11 @@ int main(int argc, char **argv) {
     return 2;
 
   // Open the file to check and add it to SourceMgr.
-  std::string ErrorStr;
-  MemoryBuffer *F =
-    MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), &ErrorStr);
+  error_code ec;
+  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), ec);
   if (F == 0) {
     errs() << "Could not open input file '" << InputFilename << "': "
-           << ErrorStr << '\n';
+           << ec.message() << '\n';
     return true;
   }
 

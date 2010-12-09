@@ -19,6 +19,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 using namespace llvm;
 using namespace llvm::object;
 
@@ -365,10 +366,11 @@ int main(int argc, char **argv) {
 
   // Load the input file.
   std::string ErrorStr;
+  error_code ec;
   OwningPtr<MemoryBuffer> InputBuffer(
-    MemoryBuffer::getFileOrSTDIN(InputFile, &ErrorStr));
+    MemoryBuffer::getFileOrSTDIN(InputFile, ec));
   if (!InputBuffer)
-    return Error("unable to read input: '" + ErrorStr + "'");
+    return Error("unable to read input: '" + ec.message() + "'");
 
   // Construct the Mach-O wrapper object.
   OwningPtr<MachOObject> InputObject(

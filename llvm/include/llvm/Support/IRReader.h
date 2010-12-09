@@ -23,6 +23,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/system_error.h"
 
 namespace llvm {
 
@@ -56,11 +57,11 @@ namespace llvm {
   inline Module *getLazyIRFileModule(const std::string &Filename,
                                      SMDiagnostic &Err,
                                      LLVMContext &Context) {
-    std::string ErrMsg;
-    MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrMsg);
+    error_code ec;
+    MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), ec);
     if (F == 0) {
-      Err = SMDiagnostic(Filename, 
-                         "Could not open input file: " + ErrMsg);
+      Err = SMDiagnostic(Filename,
+                         "Could not open input file: " + ec.message());
       return 0;
     }
 
@@ -94,11 +95,11 @@ namespace llvm {
   inline Module *ParseIRFile(const std::string &Filename,
                              SMDiagnostic &Err,
                              LLVMContext &Context) {
-    std::string ErrMsg;
-    MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrMsg);
+    error_code ec;
+    MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), ec);
     if (F == 0) {
-      Err = SMDiagnostic(Filename, 
-                         "Could not open input file: " + ErrMsg);
+      Err = SMDiagnostic(Filename,
+                         "Could not open input file: " + ec.message());
       return 0;
     }
 

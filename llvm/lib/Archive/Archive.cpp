@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/system_error.h"
 #include <memory>
 #include <cstring>
 using namespace llvm;
@@ -147,9 +148,13 @@ Archive::Archive(const sys::Path& filename, LLVMContext& C)
 
 bool
 Archive::mapToMemory(std::string* ErrMsg) {
-  mapfile = MemoryBuffer::getFile(archPath.c_str(), ErrMsg);
-  if (mapfile == 0)
+  error_code ec;
+  mapfile = MemoryBuffer::getFile(archPath.c_str(), ec);
+  if (mapfile == 0) {
+    if (ErrMsg)
+      *ErrMsg = ec.message();
     return true;
+  }
   base = mapfile->getBufferStart();
   return false;
 }
@@ -213,10 +218,12 @@ bool llvm::GetBitcodeSymbols(const sys::Path& fName,
                              LLVMContext& Context,
                              std::vector<std::string>& symbols,
                              std::string* ErrMsg) {
+  error_code ec;
   std::auto_ptr<MemoryBuffer> Buffer(
-                       MemoryBuffer::getFileOrSTDIN(fName.c_str()));
+                       MemoryBuffer::getFileOrSTDIN(fName.c_str(), ec));
   if (!Buffer.get()) {
-    if (ErrMsg) *ErrMsg = "Could not open file '" + fName.str() + "'";
+    if (ErrMsg) *ErrMsg = "Could not open file '" + fName.str() + "'" + ": "
+                        + ec.message();
     return true;
   }
   

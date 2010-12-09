@@ -28,6 +28,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -2220,25 +2221,25 @@ LLVMBool LLVMCreateMemoryBufferWithContentsOfFile(
     LLVMMemoryBufferRef *OutMemBuf,
     char **OutMessage) {
 
-  std::string Error;
-  if (MemoryBuffer *MB = MemoryBuffer::getFile(Path, &Error)) {
+  error_code ec;
+  if (MemoryBuffer *MB = MemoryBuffer::getFile(Path, ec)) {
     *OutMemBuf = wrap(MB);
     return 0;
   }
-  
-  *OutMessage = strdup(Error.c_str());
+
+  *OutMessage = strdup(ec.message().c_str());
   return 1;
 }
 
 LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
                                          char **OutMessage) {
-  std::string Error;
-  if (MemoryBuffer *MB = MemoryBuffer::getSTDIN(&Error)) {
+  error_code ec;
+  if (MemoryBuffer *MB = MemoryBuffer::getSTDIN(ec)) {
     *OutMemBuf = wrap(MB);
     return 0;
   }
 
-  *OutMessage = strdup(Error.c_str());
+  *OutMessage = strdup(ec.message().c_str());
   return 1;
 }
 

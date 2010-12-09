@@ -22,6 +22,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
@@ -464,8 +465,9 @@ static void ExpandResponseFiles(unsigned argc, char** argv,
       if (FileStat && FileStat->getSize() != 0) {
 
         // Mmap the response file into memory.
+        error_code ec;
         OwningPtr<MemoryBuffer>
-          respFilePtr(MemoryBuffer::getFile(respFile.c_str()));
+          respFilePtr(MemoryBuffer::getFile(respFile.c_str(), ec));
 
         // If we could open the file, parse its contents, otherwise
         // pass the @file option verbatim.

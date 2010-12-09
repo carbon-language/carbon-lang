@@ -30,6 +30,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <iomanip>
 #include <map>
@@ -263,12 +264,13 @@ int main(int argc, char **argv) {
 
   // Read in the bitcode file...
   std::string ErrorMessage;
+  error_code ec;
   Module *M = 0;
-  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BitcodeFile,
-                                                          &ErrorMessage)) {
+  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BitcodeFile, ec)) {
     M = ParseBitcodeFile(Buffer, Context, &ErrorMessage);
     delete Buffer;
-  }
+  } else
+    ErrorMessage = ec.message();
   if (M == 0) {
     errs() << argv[0] << ": " << BitcodeFile << ": "
       << ErrorMessage << "\n";
