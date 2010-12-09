@@ -1,6 +1,6 @@
-// RUN: %clang -S -fverbpse-asm -g %s -o -  | FileCheck %s
+// RUN: %clang -c -g %s -o /dev/null
 // Radar 8730409
-// CHECK-NOT:.byte	256
+
 class foo {
 public:
 #define x(a) virtual void v ## a (void)
