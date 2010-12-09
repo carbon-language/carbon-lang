@@ -2420,9 +2420,11 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       Alignment = 16;
       break;
     case X86::FsFLD0SD:
+    case X86::VFsFLD0SD:
       Alignment = 8;
       break;
     case X86::FsFLD0SS:
+    case X86::VFsFLD0SS:
       Alignment = 4;
       break;
     default:
@@ -2486,9 +2488,9 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     MachineConstantPool &MCP = *MF.getConstantPool();
     const Type *Ty;
     unsigned Opc = LoadMI->getOpcode();
-    if (Opc == X86::FsFLD0SS)
+    if (Opc == X86::FsFLD0SS || Opc == X86::VFsFLD0SS)
       Ty = Type::getFloatTy(MF.getFunction()->getContext());
-    else if (Opc == X86::FsFLD0SD)
+    else if (Opc == X86::FsFLD0SD || Opc == X86::VFsFLD0SD)
       Ty = Type::getDoubleTy(MF.getFunction()->getContext());
     else if (Opc == X86::AVX_SET0PSY || Opc == X86::AVX_SET0PDY)
       Ty = VectorType::get(Type::getFloatTy(MF.getFunction()->getContext()), 8);

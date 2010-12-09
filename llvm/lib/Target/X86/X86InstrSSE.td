@@ -1440,6 +1440,12 @@ def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
 def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
                  [(set FR64:$dst, fpimm0)]>,
                Requires<[HasSSE2]>, TB, OpSize;
+def VFsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
+                  [(set FR32:$dst, fp32imm0)]>,
+                  Requires<[HasAVX]>, TB, OpSize, VEX_4V;
+def VFsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
+                  [(set FR64:$dst, fpimm0)]>,
+                  Requires<[HasAVX]>, TB, OpSize, VEX_4V;
 }
 
 // Alias instruction to do FR32 or FR64 reg-to-reg copy using movaps. Upper
