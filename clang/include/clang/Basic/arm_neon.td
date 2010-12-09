@@ -384,7 +384,7 @@ def VBSL : Inst<"vbsl", "dudd",
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.30 Transposition operations
 def VTRN : WInst<"vtrn", "2dd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
-def VZIP : WInst<"vzip", "2dd", "csUcUsfPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
+def VZIP : WInst<"vzip", "2dd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
 def VUZP : WInst<"vuzp", "2dd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
 
 ////////////////////////////////////////////////////////////////////////////////
