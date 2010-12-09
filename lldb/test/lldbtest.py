@@ -151,6 +151,8 @@ BREAKPOINT_HIT_TWICE = "Breakpoint resolved with hit cout = 2"
 
 BREAKPOINT_HIT_THRICE = "Breakpoint resolved with hit cout = 3"
 
+SOURCE_DISPLAYED_CORRECTLY = "Source code displayed correctly"
+
 STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
 
 PROCESS_STOPPED = "Process status should be stopped"
