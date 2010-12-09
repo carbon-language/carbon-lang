@@ -2463,12 +2463,24 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     for (DeclContext::decl_iterator D = CurCtx->decls_begin(), 
                                  DEnd = CurCtx->decls_end();
          D != DEnd; ++D) {
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D)) {
         if (Result.isAcceptableDecl(ND)) {
           Consumer.FoundDecl(ND, Visited.checkHidden(ND), InBaseClass);
           Visited.add(ND);
         }
-
+      } else if (ObjCForwardProtocolDecl *ForwardProto
+                                      = dyn_cast<ObjCForwardProtocolDecl>(*D)) {
+        for (ObjCForwardProtocolDecl::protocol_iterator
+                  P = ForwardProto->protocol_begin(),
+               PEnd = ForwardProto->protocol_end();
+             P != PEnd;
+             ++P) {
+          if (Result.isAcceptableDecl(*P)) {
+            Consumer.FoundDecl(*P, Visited.checkHidden(*P), InBaseClass);
+            Visited.add(*P);
+          }
+        }
+      }
       // Visit transparent contexts and inline namespaces inside this context.
       if (DeclContext *InnerCtx = dyn_cast<DeclContext>(*D)) {
         if (InnerCtx->isTransparentContext() || InnerCtx->isInlineNamespace())

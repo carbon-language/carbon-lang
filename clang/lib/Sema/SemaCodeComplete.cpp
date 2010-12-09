@@ -4950,20 +4950,25 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
 void Sema::CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
                                               unsigned NumProtocols) {
   ResultBuilder Results(*this, CodeCompletionContext::CCC_ObjCProtocolName);
-  Results.EnterNewScope();
   
-  // Tell the result set to ignore all of the protocols we have
-  // already seen.
-  for (unsigned I = 0; I != NumProtocols; ++I)
-    if (ObjCProtocolDecl *Protocol = LookupProtocol(Protocols[I].first,
-                                                    Protocols[I].second))
-      Results.Ignore(Protocol);
+  if (CodeCompleter && CodeCompleter->includeGlobals()) {
+    Results.EnterNewScope();
+    
+    // Tell the result set to ignore all of the protocols we have
+    // already seen.
+    // FIXME: This doesn't work when caching code-completion results.
+    for (unsigned I = 0; I != NumProtocols; ++I)
+      if (ObjCProtocolDecl *Protocol = LookupProtocol(Protocols[I].first,
+                                                      Protocols[I].second))
+        Results.Ignore(Protocol);
 
-  // Add all protocols.
-  AddProtocolResults(Context.getTranslationUnitDecl(), CurContext, false,
-                     Results);
+    // Add all protocols.
+    AddProtocolResults(Context.getTranslationUnitDecl(), CurContext, false,
+                       Results);
 
-  Results.ExitScope();
+    Results.ExitScope();
+  }
+  
   HandleCodeCompleteResults(this, CodeCompleter, 
                             CodeCompletionContext::CCC_ObjCProtocolName,
                             Results.data(),Results.size());
@@ -4971,13 +4976,17 @@ void Sema::CodeCompleteObjCProtocolReferences(IdentifierLocPair *Protocols,
 
 void Sema::CodeCompleteObjCProtocolDecl(Scope *) {
   ResultBuilder Results(*this, CodeCompletionContext::CCC_ObjCProtocolName);
-  Results.EnterNewScope();
   
-  // Add all protocols.
-  AddProtocolResults(Context.getTranslationUnitDecl(), CurContext, true,
-                     Results);
+  if (CodeCompleter && CodeCompleter->includeGlobals()) {
+    Results.EnterNewScope();
+    
+    // Add all protocols.
+    AddProtocolResults(Context.getTranslationUnitDecl(), CurContext, true,
+                       Results);
 
-  Results.ExitScope();
+    Results.ExitScope();
+  }
+  
   HandleCodeCompleteResults(this, CodeCompleter, 
                             CodeCompletionContext::CCC_ObjCProtocolName,
                             Results.data(),Results.size());
