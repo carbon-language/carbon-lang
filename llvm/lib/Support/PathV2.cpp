@@ -625,6 +625,33 @@ error_code create_directories(const Twine &path, bool &existed) {
   return create_directory(p, existed);
 }
 
+bool exists(file_status status) {
+  return status_known(status) && status.type() != file_type::file_not_found;
+}
+
+bool status_known(file_status s) {
+  return s.type() != file_type::status_error;
+}
+
+bool is_directory(file_status status) {
+  return status.type() == file_type::directory_file;
+}
+
+bool is_regular_file(file_status status) {
+  return status.type() == file_type::regular_file;
+}
+
+bool is_symlink(file_status status) {
+  return status.type() == file_type::symlink_file;
+}
+
+bool is_other(file_status status) {
+  return exists(status) &&
+         !is_regular_file(status) &&
+         !is_directory(status) &&
+         !is_symlink(status);
+}
+
 void directory_entry::replace_filename(const Twine &filename, file_status st,
                                        file_status symlink_st) {
   SmallString<128> path(Path.begin(), Path.end());

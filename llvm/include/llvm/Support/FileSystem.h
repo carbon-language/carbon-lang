@@ -231,11 +231,9 @@ error_code set_execute(const Twine &path, bool value);
 /// @brief Does file exist?
 ///
 /// @param status A file_status previously returned from stat.
-/// @param result Set to true if the file represented by status exists, false if
-///               it does not. Undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code exists(file_status status, bool &result);
+/// @results True if the file represented by status exists, false if it does
+///          not.
+bool exists(file_status status);
 
 /// @brief Does file exist?
 ///
@@ -245,6 +243,17 @@ error_code exists(file_status status, bool &result);
 /// @results errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 error_code exists(const Twine &path, bool &result);
+
+/// @brief Do file_status's represent the same thing?
+///
+/// @param A Input file_status.
+/// @param B Input file_status.
+///
+/// assert(status_known(A) || status_known(B));
+///
+/// @results True if A and B both represent the same file system entity, false
+///          otherwise.
+bool equivalent(file_status A, file_status B);
 
 /// @brief Do paths represent the same thing?
 ///
@@ -266,12 +275,9 @@ error_code file_size(const Twine &path, uint64_t &result);
 
 /// @brief Does status represent a directory?
 ///
-/// @param status A file_status previously returned from stat.
-/// @param result Set to true if the file represented by status is a directory,
-///               false if it is not. Undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_directory(file_status status, bool &result);
+/// @param status A file_status previously returned from status.
+/// @results status.type() == file_type::directory_file.
+bool is_directory(file_status status);
 
 /// @brief Is path a directory?
 ///
@@ -293,12 +299,9 @@ error_code is_empty(const Twine &path, bool &result);
 
 /// @brief Does status represent a regular file?
 ///
-/// @param status A file_status previously returned from stat.
-/// @param result Set to true if the file represented by status is a regular
-///               file, false if it is not. Undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_regular_file(file_status status, bool &result);
+/// @param status A file_status previously returned from status.
+/// @results status_known(status) && status.type() == file_type::regular_file.
+bool is_regular_file(file_status status);
 
 /// @brief Is path a regular file?
 ///
@@ -309,16 +312,13 @@ error_code is_regular_file(file_status status, bool &result);
 ///          platform specific error_code.
 error_code is_regular_file(const Twine &path, bool &result);
 
-/// @brief Does status represent something that exists but is not a directory,
-///        regular file, or symlink?
+/// @brief Does this status represent something that exists but is not a
+///        directory, regular file, or symlink?
 ///
-/// @param status A file_status previously returned from stat.
-/// @param result Set to true if the file represented by status exists, but is
-///               not a directory, regular file, or a symlink, false if it does
-///               not. Undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_other(file_status status, bool &result);
+/// @param status A file_status previously returned from status.
+/// @results exists(s) && !is_regular_file(s) && !is_directory(s) &&
+///          !is_symlink(s)
+bool is_other(file_status status);
 
 /// @brief Is path something that exists but is not a directory,
 ///        regular file, or symlink?
@@ -333,11 +333,8 @@ error_code is_other(const Twine &path, bool &result);
 /// @brief Does status represent a symlink?
 ///
 /// @param status A file_status previously returned from stat.
-/// @param result Set to true if the file represented by status is a symlink,
-///               false if it is not. Undefined otherwise.
-/// @results errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_symlink(file_status status, bool &result);
+/// @param result status.type() == symlink_file.
+bool is_symlink(file_status status);
 
 /// @brief Is path a symlink?
 ///
@@ -389,6 +386,12 @@ error_code disk_space(const Twine &path, space_info &result);
 /// @results errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 error_code status(const Twine &path, file_status &result);
+
+/// @brief Is status available?
+///
+/// @param path Input path.
+/// @results True if status() != status_error.
+bool status_known(file_status s);
 
 /// @brief Is status available?
 ///
