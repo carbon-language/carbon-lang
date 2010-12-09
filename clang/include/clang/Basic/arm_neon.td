@@ -129,8 +129,8 @@ def VADDW   : Inst<"vaddw", "wwd", "csiUcUsUi", OP_ADDW>;
 def VHADD   : SInst<"vhadd", "ddd", "csiUcUsUiQcQsQiQUcQUsQUi">;
 def VRHADD  : SInst<"vrhadd", "ddd", "csiUcUsUiQcQsQiQUcQUsQUi">;
 def VQADD   : SInst<"vqadd", "ddd", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
-def VADDHN  : IInst<"vaddhn", "dww", "csiUcUsUi">;
-def VRADDHN : IInst<"vraddhn", "dww", "csiUcUsUi">;
+def VADDHN  : IInst<"vaddhn", "hkk", "silUsUiUl">;
+def VRADDHN : IInst<"vraddhn", "hkk", "silUsUiUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.2 Multiplication
@@ -155,8 +155,8 @@ def VSUBL   : Inst<"vsubl", "wdd", "csiUcUsUi", OP_SUBL>;
 def VSUBW   : Inst<"vsubw", "wwd", "csiUcUsUi", OP_SUBW>;
 def VQSUB   : SInst<"vqsub", "ddd", "csilUcUsUiUlQcQsQiQlQUcQUsQUiQUl">;
 def VHSUB   : SInst<"vhsub", "ddd", "csiUcUsUiQcQsQiQUcQUsQUi">;
-def VSUBHN  : IInst<"vsubhn", "dww", "csiUcUsUi">;
-def VRSUBHN : IInst<"vrsubhn", "dww", "csiUcUsUi">;
+def VSUBHN  : IInst<"vsubhn", "hkk", "silUsUiUl">;
+def VRSUBHN : IInst<"vrsubhn", "hkk", "silUsUiUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.4 Comparison
