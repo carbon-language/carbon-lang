@@ -542,7 +542,7 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
 
     if (!Regs.empty()) {
       MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc),ARM::SP)
+        AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc), ARM::SP)
                        .addReg(ARM::SP));
       for (unsigned i = 0, e = Regs.size(); i < e; ++i)
         MIB.addReg(Regs[i].first, getKillRegState(Regs[i].second));
