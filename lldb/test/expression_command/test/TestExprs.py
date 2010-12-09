@@ -1,5 +1,14 @@
 """
 Test many basic expression commands and SBFrame.EvaluateExpression() API.
+
+Test cases:
+
+o test_many_expr_commands:
+  Test many basic expression commands.
+o test_evaluate_expression_python:
+  Use Python APIs (SBFrame.EvaluateExpression()) to evaluate expressions.
+o test_expr_commands_can_handle_quotes:
+  Throw some expression commands with quotes at lldb.
 """
 
 import os, time
