@@ -1183,6 +1183,7 @@ private:
   unsigned SClass : 2;
   unsigned SClassAsWritten : 2;
   bool IsInline : 1;
+  bool IsInlineSpecified : 1;
   bool IsVirtualAsWritten : 1;
   bool IsPure : 1;
   bool HasInheritedPrototype : 1;
@@ -1261,11 +1262,12 @@ private:
 protected:
   FunctionDecl(Kind DK, DeclContext *DC, const DeclarationNameInfo &NameInfo,
                QualType T, TypeSourceInfo *TInfo,
-               StorageClass S, StorageClass SCAsWritten, bool isInline)
+               StorageClass S, StorageClass SCAsWritten, bool isInlineSpecified)
     : DeclaratorDecl(DK, DC, NameInfo.getLoc(), NameInfo.getName(), T, TInfo),
       DeclContext(DK),
       ParamInfo(0), Body(),
-      SClass(S), SClassAsWritten(SCAsWritten), IsInline(isInline),
+      SClass(S), SClassAsWritten(SCAsWritten), 
+      IsInline(isInlineSpecified), IsInlineSpecified(isInlineSpecified),
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false),
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
       HasImplicitReturnZero(false),
@@ -1290,11 +1292,11 @@ public:
                               TypeSourceInfo *TInfo,
                               StorageClass S = SC_None,
                               StorageClass SCAsWritten = SC_None,
-                              bool isInline = false,
+                              bool isInlineSpecified = false,
                               bool hasWrittenPrototype = true) {
     DeclarationNameInfo NameInfo(N, L);
     return FunctionDecl::Create(C, DC, NameInfo, T, TInfo, S, SCAsWritten,
-                                isInline, hasWrittenPrototype);
+                                isInlineSpecified, hasWrittenPrototype);
   }
 
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC,
@@ -1302,7 +1304,7 @@ public:
                               QualType T, TypeSourceInfo *TInfo,
                               StorageClass S = SC_None,
                               StorageClass SCAsWritten = SC_None,
-                              bool isInline = false,
+                              bool isInlineSpecified = false,
                               bool hasWrittenPrototype = true);
 
   DeclarationNameInfo getNameInfo() const {
@@ -1493,10 +1495,13 @@ public:
 
   /// \brief Determine whether the "inline" keyword was specified for this
   /// function.
-  bool isInlineSpecified() const { return IsInline; }
+  bool isInlineSpecified() const { return IsInlineSpecified; }
                        
   /// Set whether the "inline" keyword was specified for this function.
-  void setInlineSpecified(bool I) { IsInline = I; }
+  void setInlineSpecified(bool I) { 
+    IsInlineSpecified = I; 
+    IsInline = I;
+  }
 
   /// \brief Determine whether this function should be inlined, because it is
   /// either marked "inline" or is a member function of a C++ class that

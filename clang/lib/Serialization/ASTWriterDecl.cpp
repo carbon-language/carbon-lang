@@ -303,6 +303,7 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
 
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->getStorageClassAsWritten());
+  Record.push_back(D->IsInline);
   Record.push_back(D->isInlineSpecified());
   Record.push_back(D->isVirtualAsWritten());
   Record.push_back(D->isPure());

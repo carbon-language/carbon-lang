@@ -386,7 +386,8 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
 
   FD->SClass = (StorageClass)Record[Idx++];
   FD->setStorageClassAsWritten((StorageClass)Record[Idx++]);
-  FD->setInlineSpecified(Record[Idx++]);
+  FD->IsInline = Record[Idx++];
+  FD->IsInlineSpecified = Record[Idx++];
   FD->setVirtualAsWritten(Record[Idx++]);
   FD->setPure(Record[Idx++]);
   FD->setHasInheritedPrototype(Record[Idx++]);

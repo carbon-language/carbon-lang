@@ -1304,6 +1304,9 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
     assert((!PrevDecl || PrevFunTmpl) && "Function/function template mismatch");
     FunTmpl->setPreviousDeclaration(PrevFunTmpl);
   }
+  
+  if (PrevDecl->IsInline)
+    IsInline = true;
 }
 
 const FunctionDecl *FunctionDecl::getCanonicalDecl() const {
@@ -1410,14 +1413,7 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
 }
 
 bool FunctionDecl::isInlined() const {
-  // FIXME: This is not enough. Consider:
-  //
-  // inline void f();
-  // void f() { }
-  //
-  // f is inlined, but does not have inline specified.
-  // To fix this we should add an 'inline' flag to FunctionDecl.
-  if (isInlineSpecified())
+  if (IsInline)
     return true;
   
   if (isa<CXXMethodDecl>(this)) {
@@ -1471,20 +1467,22 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
   ASTContext &Context = getASTContext();
   
   if (!Context.getLangOptions().C99 || hasAttr<GNUInlineAttr>()) {
-    // GNU inline semantics. Based on a number of examples, we came up with the
-    // following heuristic: if the "inline" keyword is present on a
-    // declaration of the function but "extern" is not present on that
-    // declaration, then the symbol is externally visible. Otherwise, the GNU
-    // "extern inline" semantics applies and the symbol is not externally
-    // visible.
+    // If it's not the case that both 'inline' and 'extern' are
+    // specified on the definition, then this inline definition is
+    // externally visible.
+    if (!(isInlineSpecified() && getStorageClassAsWritten() == SC_Extern))
+      return true;
+    
+    // If any declaration is 'inline' but not 'extern', then this definition
+    // is externally visible.
     for (redecl_iterator Redecl = redecls_begin(), RedeclEnd = redecls_end();
          Redecl != RedeclEnd;
          ++Redecl) {
-      if (Redecl->isInlineSpecified() && Redecl->getStorageClass() != SC_Extern)
+      if (Redecl->isInlineSpecified() && 
+          Redecl->getStorageClassAsWritten() != SC_Extern)
         return true;
-    }
+    }    
     
-    // GNU "extern inline" semantics; no externally visible symbol.
     return false;
   }
   
@@ -2058,9 +2056,10 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    const DeclarationNameInfo &NameInfo,
                                    QualType T, TypeSourceInfo *TInfo,
                                    StorageClass S, StorageClass SCAsWritten,
-                                   bool isInline, bool hasWrittenPrototype) {
+                                   bool isInlineSpecified, 
+                                   bool hasWrittenPrototype) {
   FunctionDecl *New = new (C) FunctionDecl(Function, DC, NameInfo, T, TInfo,
-                                           S, SCAsWritten, isInline);
+                                           S, SCAsWritten, isInlineSpecified);
   New->HasWrittenPrototype = hasWrittenPrototype;
   return New;
 }

@@ -21,3 +21,11 @@ void B<char>::f() { }
 
 // CHECK: define void @_Z1fv
 void f() { }
+
+// <rdar://problem/8740363>
+inline void f1(int);
+
+// CHECK: define linkonce_odr void @_Z2f1i
+void f1(int) { }
+
+void test_f1() { f1(17); }
