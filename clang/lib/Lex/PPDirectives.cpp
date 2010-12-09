@@ -1046,6 +1046,12 @@ bool Preprocessor::ConcatenateIncludeName(
   while (CurTok.isNot(tok::eom)) {
     End = CurTok.getLocation();
     
+    // FIXME: Provide code completion for #includes.
+    if (CurTok.is(tok::code_completion)) {
+      Lex(CurTok);
+      continue;
+    }
+
     // Append the spelling of this token to the buffer. If there was a space
     // before it, add it now.
     if (CurTok.hasLeadingSpace())

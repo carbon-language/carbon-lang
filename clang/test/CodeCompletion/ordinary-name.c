@@ -12,3 +12,6 @@ void foo() {
   // CHECK-CC1: foo
   // CHECK-CC1: TYPEDEF
   // CHECK-CC1: y
+
+  // PR8744
+  // RUN: %clang_cc1 -isystem %S/Inputs -fsyntax-only -code-completion-at=%s:1:11 %s
