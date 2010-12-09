@@ -159,10 +159,7 @@ public:
     }
 
     void init(LiveInterval *VReg, LiveIntervalUnion *LIU) {
-      if (VirtReg == VReg) {
-        // We currently allow query objects to be reused acrossed live virtual
-        // registers, but always for the same live interval union.
-        assert(LiveUnion == LIU && "inconsistent initialization");
+      if (VirtReg == VReg && LiveUnion == LIU) {
         // Retain cached results, e.g. firstInterference.
         return;
       }

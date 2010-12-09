@@ -58,8 +58,8 @@ class LiveVirtRegQueue;
 /// be extended to add interesting heuristics.
 ///
 /// Register allocators must override the selectOrSplit() method to implement
-/// live range splitting. LessSpillWeightPriority is provided as a standard
-/// comparator, but we may add an interface to override it if necessary.
+/// live range splitting. They may also override getPriority() which otherwise
+/// defaults to the spill weight computed by CalculateSpillWeights.
 class RegAllocBase {
   LiveIntervalUnion::Allocator UnionAllocator;
 protected:

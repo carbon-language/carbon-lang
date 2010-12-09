@@ -79,6 +79,10 @@ public:
   virtual bool runOnMachineFunction(MachineFunction &mf);
 
   static char ID;
+
+private:
+  bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
+  bool reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg);
 };
 } // end anonymous namespace
 
@@ -142,10 +146,84 @@ float RAGreedy::getPriority(LiveInterval *LI) {
   return Priority;
 }
 
+// Attempt to reassign this virtual register to a different physical register.
+//
+// FIXME: we are not yet caching these "second-level" interferences discovered
+// in the sub-queries. These interferences can change with each call to
+// selectOrSplit. However, we could implement a "may-interfere" cache that
+// could be conservatively dirtied when we reassign or split.
+//
+// FIXME: This may result in a lot of alias queries. We could summarize alias
+// live intervals in their parent register's live union, but it's messy.
+bool RAGreedy::reassignVReg(LiveInterval &InterferingVReg,
+                            unsigned OldPhysReg) {
+  assert(OldPhysReg == VRM->getPhys(InterferingVReg.reg) &&
+         "inconsistent phys reg assigment");
+
+  const TargetRegisterClass *TRC = MRI->getRegClass(InterferingVReg.reg);
+  for (TargetRegisterClass::iterator I = TRC->allocation_order_begin(*MF),
+         E = TRC->allocation_order_end(*MF);
+       I != E; ++I) {
+    unsigned PhysReg = *I;
+    if (PhysReg == OldPhysReg)
+      continue;
+
+    // Instantiate a "subquery", not to be confused with the Queries array.
+    LiveIntervalUnion::Query subQ(&InterferingVReg,
+                                  &PhysReg2LiveUnion[PhysReg]);
+    if (subQ.checkInterference())
+      continue;
+
+    for (const unsigned *AliasI = TRI->getAliasSet(PhysReg);
+         *AliasI; ++AliasI) {
+      subQ.init(&InterferingVReg, &PhysReg2LiveUnion[*AliasI]);
+      if (subQ.checkInterference())
+        continue;
+    }
+    DEBUG(dbgs() << "reassigning: " << InterferingVReg << " from " <<
+          TRI->getName(OldPhysReg) << " to " << TRI->getName(PhysReg) << '\n');
+
+    // Reassign the interfering virtual reg to this physical reg.
+    PhysReg2LiveUnion[OldPhysReg].extract(InterferingVReg);
+    VRM->clearVirt(InterferingVReg.reg);
+    VRM->assignVirt2Phys(InterferingVReg.reg, PhysReg);
+    PhysReg2LiveUnion[PhysReg].unify(InterferingVReg);
+
+    return true;
+  }
+  return false;
+}
+
+// Collect all virtual regs currently assigned to PhysReg that interfere with
+// VirtReg.
+//
+// Currently, for simplicity, we only attempt to reassign a single interference
+// within the same register class.
+bool RAGreedy::reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg) {
+  LiveIntervalUnion::Query &Q = query(VirtReg, PhysReg);
+
+  // Limit the interference search to one interference.
+  Q.collectInterferingVRegs(1);
+  assert(Q.interferingVRegs().size() == 1 &&
+         "expected at least one interference");
+
+  // Do not attempt reassignment unless we find only a single interference.
+  if (!Q.seenAllInterferences())
+    return false;
+
+  // Don't allow any interferences on aliases.
+  for (const unsigned *AliasI = TRI->getAliasSet(PhysReg); *AliasI; ++AliasI) {
+    if (query(VirtReg, *AliasI).checkInterference())
+      return false;
+  }
+
+  return reassignVReg(*Q.interferingVRegs()[0], PhysReg);
+}
+
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                 SmallVectorImpl<LiveInterval*> &SplitVRegs) {
   // Populate a list of physical register spill candidates.
-  SmallVector<unsigned, 8> PhysRegSpillCands;
+  SmallVector<unsigned, 8> PhysRegSpillCands, ReassignCands;
 
   // Check for an available register in this class.
   const TargetRegisterClass *TRC = MRI->getRegClass(VirtReg.reg);
@@ -168,24 +246,44 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
 
     // Check interference and as a side effect, intialize queries for this
     // VirtReg and its aliases.
-    unsigned interfReg = checkPhysRegInterference(VirtReg, PhysReg);
-    if (interfReg == 0) {
+    unsigned InterfReg = checkPhysRegInterference(VirtReg, PhysReg);
+    if (InterfReg == 0) {
       // Found an available register.
       return PhysReg;
     }
     assert(!VirtReg.empty() && "Empty VirtReg has interference");
-    LiveInterval *interferingVirtReg =
-      Queries[interfReg].firstInterference().liveUnionPos().value();
+    LiveInterval *InterferingVirtReg =
+      Queries[InterfReg].firstInterference().liveUnionPos().value();
 
-    // The current VirtReg must either spillable, or one of its interferences
+    // The current VirtReg must either be spillable, or one of its interferences
     // must have less spill weight.
-    if (interferingVirtReg->weight < VirtReg.weight ) {
-      PhysRegSpillCands.push_back(PhysReg);
+    if (InterferingVirtReg->weight < VirtReg.weight ) {
+      // For simplicity, only consider reassigning registers in the same class.
+      if (InterfReg == PhysReg)
+        ReassignCands.push_back(PhysReg);
+      else
+        PhysRegSpillCands.push_back(PhysReg);
     }
   }
+
+  // Try to reassign interfering physical register. Priority among
+  // PhysRegSpillCands does not matter yet, because the reassigned virtual
+  // registers will still be assigned to physical registers.
+  for (SmallVectorImpl<unsigned>::iterator PhysRegI = ReassignCands.begin(),
+         PhysRegE = ReassignCands.end(); PhysRegI != PhysRegE; ++PhysRegI) {
+    if (reassignInterferences(VirtReg, *PhysRegI))
+      // Reassignment successfull. The caller may allocate now to this PhysReg.
+      return *PhysRegI;
+  }
+
+  PhysRegSpillCands.insert(PhysRegSpillCands.end(), ReassignCands.begin(),
+                           ReassignCands.end());
+
   // Try to spill another interfering reg with less spill weight.
   //
-  // FIXME: RAGreedy will sort this list by spill weight.
+  // FIXME: do this in two steps: (1) check for unspillable interferences while
+  // accumulating spill weight; (2) spill the interferences with lowest
+  // aggregate spill weight.
   for (SmallVectorImpl<unsigned>::iterator PhysRegI = PhysRegSpillCands.begin(),
          PhysRegE = PhysRegSpillCands.end(); PhysRegI != PhysRegE; ++PhysRegI) {
 
@@ -196,6 +294,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
     // Tell the caller to allocate to this newly freed physical register.
     return *PhysRegI;
   }
+
   // No other spill candidates were found, so spill the current VirtReg.
   DEBUG(dbgs() << "spilling: " << VirtReg << '\n');
   SmallVector<LiveInterval*, 1> pendingSpills;

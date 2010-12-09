@@ -435,15 +435,13 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
     LiveInterval *interferingVirtReg =
       Queries[interfReg].firstInterference().liveUnionPos().value();
 
-    // The current VirtReg must either spillable, or one of its interferences
+    // The current VirtReg must either be spillable, or one of its interferences
     // must have less spill weight.
     if (interferingVirtReg->weight < VirtReg.weight ) {
       PhysRegSpillCands.push_back(PhysReg);
     }
   }
   // Try to spill another interfering reg with less spill weight.
-  //
-  // FIXME: RAGreedy will sort this list by spill weight.
   for (SmallVectorImpl<unsigned>::iterator PhysRegI = PhysRegSpillCands.begin(),
          PhysRegE = PhysRegSpillCands.end(); PhysRegI != PhysRegE; ++PhysRegI) {
 

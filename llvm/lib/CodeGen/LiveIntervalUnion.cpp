@@ -247,9 +247,12 @@ collectInterferingVRegs(unsigned MaxInterferingRegs) {
       if (!IR.LiveUnionI.value()->isSpillable())
         SeenUnspillableVReg = true;
 
-      InterferingVRegs.push_back(IR.LiveUnionI.value());
       if (InterferingVRegs.size() == MaxInterferingRegs)
+        // Leave SeenAllInterferences set to false to indicate that at least one
+        // interference exists beyond those we collected.
         return MaxInterferingRegs;
+
+      InterferingVRegs.push_back(IR.LiveUnionI.value());
 
       // Cache the most recent interfering vreg to bypass isSeenInterference.
       RecentInterferingVReg = IR.LiveUnionI.value();
