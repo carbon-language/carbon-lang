@@ -165,7 +165,7 @@ bool RAGreedy::reassignVReg(LiveInterval &InterferingVReg,
          E = TRC->allocation_order_end(*MF);
        I != E; ++I) {
     unsigned PhysReg = *I;
-    if (PhysReg == OldPhysReg)
+    if (PhysReg == OldPhysReg || ReservedRegs.test(PhysReg))
       continue;
 
     // Instantiate a "subquery", not to be confused with the Queries array.
