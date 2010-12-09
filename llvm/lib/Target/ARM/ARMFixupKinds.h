@@ -23,7 +23,7 @@ enum Fixups {
   // (so it's encoded as an 8-bit immediate).
   fixup_arm_pcrel_10,
   // fixup_t2_pcrel_10 - Equivalent to fixup_arm_pcrel_10, accounting for
-  // the byteswapped encoding of Thumb2 instructions.
+  // the short-swapped encoding of Thumb2 instructions.
   fixup_t2_pcrel_10,
   // fixup_arm_adr_pcrel_12 - 12-bit PC relative relocation for the ADR
   // instruction.
@@ -31,6 +31,9 @@ enum Fixups {
   // fixup_arm_branch - 24-bit PC relative relocation for direct branch
   // instructions.
   fixup_arm_branch,
+  // fixup_t2_branch - 20-bit PC relative relocation for Thumb2 direct branch
+  // instructions.
+  fixup_t2_branch,
 
   // fixup_arm_thumb_bl - Fixup for Thumb BL/BLX instructions.
   fixup_arm_thumb_bl,

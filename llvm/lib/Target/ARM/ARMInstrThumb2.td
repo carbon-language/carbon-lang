@@ -3023,13 +3023,16 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{31-27} = 0b11110;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
+  
+  bits<4> p;
+  let Inst{25-22} = p;
 
-  bits<20> target;
-  let Inst{26} = target{19};
-  let Inst{11} = target{18};
-  let Inst{13} = target{17};
-  let Inst{21-16} = target{16-11};
-  let Inst{10-0} = target{10-0};
+  bits<21> target;
+  let Inst{26} = target{20};
+  let Inst{11} = target{19};
+  let Inst{13} = target{18};
+  let Inst{21-16} = target{17-12};
+  let Inst{10-0} = target{11-1};
 }
 
 
