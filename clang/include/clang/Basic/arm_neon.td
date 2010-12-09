@@ -391,5 +391,5 @@ def VUZP : WInst<"vuzp", "2dd", "csiUcUsUifPcPsQcQsQiQUcQUsQUiQfQPcQPs">;
 // E.3.31 Vector reinterpret cast operations
 def VREINTERPRET
   : Inst<"vreinterpret", "dd",
-         "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPs", OP_REINT>;
+         "csilUcUsUiUlhfPcPsQcQsQiQlQUcQUsQUiQUlQhQfQPcQPs", OP_REINT>;
 
