@@ -39,7 +39,7 @@ entry:
 ; CHECK: ittt eq
 ; CHECK: moveq r0
 ; CHECK-NOT: LBB0_
-; CHECK: popeq
+; CHECK: ldreq
 ; CHECK: popeq
   switch i32 undef, label %bb7 [
     i32 37, label %bb43

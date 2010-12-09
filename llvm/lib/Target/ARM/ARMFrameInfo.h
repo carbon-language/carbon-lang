@@ -59,11 +59,12 @@ public:
 
  private:
   void emitPushInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                    const std::vector<CalleeSavedInfo> &CSI, unsigned Opc,
-                    bool NoGap, bool(*Func)(unsigned, bool)) const;
+                    const std::vector<CalleeSavedInfo> &CSI, unsigned StmOpc,
+                    unsigned StrOpc, bool NoGap,
+                    bool(*Func)(unsigned, bool)) const;
   void emitPopInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                   const std::vector<CalleeSavedInfo> &CSI, unsigned Opc,
-                   bool isVarArg, bool NoGap,
+                   const std::vector<CalleeSavedInfo> &CSI, unsigned LdmOpc,
+                   unsigned LdrOpc, bool isVarArg, bool NoGap,
                    bool(*Func)(unsigned, bool)) const;
 };
 

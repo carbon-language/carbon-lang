@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMFrameInfo.h"
+#include "ARMAddressingModes.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -501,7 +502,7 @@ int ARMFrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
 void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI,
-                                unsigned Opc, bool NoGap,
+                                unsigned StmOpc, unsigned StrOpc, bool NoGap,
                                 bool(*Func)(unsigned, bool)) const {
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
@@ -540,21 +541,37 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
       Regs.push_back(std::make_pair(Reg, isKill));
     }
 
-    if (!Regs.empty()) {
+    if (Regs.empty())
+      continue;
+    if (Regs.size() > 1 || StrOpc== 0) {
       MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc), ARM::SP)
+        AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(StmOpc), ARM::SP)
                        .addReg(ARM::SP));
       for (unsigned i = 0, e = Regs.size(); i < e; ++i)
         MIB.addReg(Regs[i].first, getKillRegState(Regs[i].second));
-      Regs.clear();
+    } else if (Regs.size() == 1) {
+      MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, TII.get(StrOpc),
+                                        ARM::SP)
+        .addReg(Regs[0].first, getKillRegState(Regs[0].second))
+        .addReg(ARM::SP);
+      // ARM mode needs an extra reg0 here due to addrmode2. Will go away once
+      // that refactoring is complete (eventually).
+      if (StrOpc == ARM::STR_PRE) {
+        MIB.addReg(0);
+        MIB.addImm(ARM_AM::getAM2Opc(ARM_AM::sub, 4, ARM_AM::no_shift));
+      } else
+        MIB.addImm(-4);
+      AddDefaultPred(MIB);
     }
+    Regs.clear();
   }
 }
 
 void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator MI,
                                const std::vector<CalleeSavedInfo> &CSI,
-                               unsigned Opc, bool isVarArg, bool NoGap,
+                               unsigned LdmOpc, unsigned LdrOpc,
+                               bool isVarArg, bool NoGap,
                                bool(*Func)(unsigned, bool)) const {
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
@@ -572,7 +589,7 @@ void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
 
       if (Reg == ARM::LR && !isVarArg) {
         Reg = ARM::PC;
-        Opc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
+        LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
         // Fold the return instruction into the LDM.
         DeleteRet = true;
       }
@@ -587,17 +604,36 @@ void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
       Regs.push_back(Reg);
     }
 
-    if (!Regs.empty()) {
+    if (Regs.empty())
+      continue;
+    if (Regs.size() > 1 || LdrOpc == 0) {
       MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc), ARM::SP)
+        AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(LdmOpc), ARM::SP)
                        .addReg(ARM::SP));
       for (unsigned i = 0, e = Regs.size(); i < e; ++i)
         MIB.addReg(Regs[i], getDefRegState(true));
       if (DeleteRet)
         MI->eraseFromParent();
       MI = MIB;
-      Regs.clear();
+    } else if (Regs.size() == 1) {
+      // If we adjusted the reg to PC from LR above, switch it back here. We
+      // only do that for LDM.
+      if (Regs[0] == ARM::PC)
+        Regs[0] = ARM::LR;
+      MachineInstrBuilder MIB =
+        BuildMI(MBB, MI, DL, TII.get(LdrOpc), Regs[0])
+          .addReg(ARM::SP, RegState::Define)
+          .addReg(ARM::SP);
+      // ARM mode needs an extra reg0 here due to addrmode2. Will go away once
+      // that refactoring is complete (eventually).
+      if (LdrOpc == ARM::LDR_POST) {
+        MIB.addReg(0);
+        MIB.addImm(ARM_AM::getAM2Opc(ARM_AM::add, 4, ARM_AM::no_shift));
+      } else
+        MIB.addImm(4);
+      AddDefaultPred(MIB);
     }
+    Regs.clear();
   }
 }
 
@@ -613,10 +649,11 @@ bool ARMFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   DebugLoc DL = MI->getDebugLoc();
 
   unsigned PushOpc = AFI->isThumbFunction() ? ARM::t2STMDB_UPD : ARM::STMDB_UPD;
+  unsigned PushOneOpc = AFI->isThumbFunction() ? ARM::t2STR_PRE : ARM::STR_PRE;
   unsigned FltOpc = ARM::VSTMDDB_UPD;
-  emitPushInst(MBB, MI, CSI, PushOpc, false, &isARMArea1Register);
-  emitPushInst(MBB, MI, CSI, PushOpc, false, &isARMArea2Register);
-  emitPushInst(MBB, MI, CSI, FltOpc,  true,  &isARMArea3Register);
+  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea1Register);
+  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea2Register);
+  emitPushInst(MBB, MI, CSI, FltOpc,  0, true,  &isARMArea3Register);
 
   return true;
 }
@@ -634,10 +671,13 @@ bool ARMFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   DebugLoc DL = MI->getDebugLoc();
 
   unsigned PopOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_UPD : ARM::LDMIA_UPD;
+  unsigned LdrOpc = AFI->isThumbFunction() ? ARM::t2LDR_POST : ARM::LDR_POST;
   unsigned FltOpc = ARM::VLDMDIA_UPD;
-  emitPopInst(MBB, MI, CSI, FltOpc, isVarArg, true,  &isARMArea3Register);
-  emitPopInst(MBB, MI, CSI, PopOpc, isVarArg, false, &isARMArea2Register);
-  emitPopInst(MBB, MI, CSI, PopOpc, isVarArg, false, &isARMArea1Register);
+  emitPopInst(MBB, MI, CSI, FltOpc, 0, isVarArg, true,  &isARMArea3Register);
+  emitPopInst(MBB, MI, CSI, PopOpc, LdrOpc, isVarArg, false,
+              &isARMArea2Register);
+  emitPopInst(MBB, MI, CSI, PopOpc, LdrOpc, isVarArg, false,
+              &isARMArea1Register);
 
   return true;
 }
