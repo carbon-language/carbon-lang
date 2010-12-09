@@ -1,4 +1,4 @@
-//===- llvm/Support/Win32/PathV2.cpp - Windows Path Impl --------*- C++ -*-===//
+//===- llvm/Support/Windows/PathV2.inc - Windows Path Impl ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
