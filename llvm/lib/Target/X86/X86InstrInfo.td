@@ -84,7 +84,7 @@ def SDTX86Wrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
 def SDT_X86TLSADDR : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
-def SDT_X86TLSCALL : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
+def SDT_X86TLSCALL : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
 def SDT_X86EHRET : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
@@ -212,7 +212,7 @@ def X86WinAlloca : SDNode<"X86ISD::WIN_ALLOCA", SDTX86Void,
                           [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 
 def X86TLSCall : SDNode<"X86ISD::TLSCALL", SDT_X86TLSCALL,
-                        []>;
+                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.

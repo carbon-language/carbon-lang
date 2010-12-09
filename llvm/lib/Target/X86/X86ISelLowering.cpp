@@ -6181,7 +6181,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
       OpFlag = X86II::MO_TLVP;
     DebugLoc DL = Op.getDebugLoc();
     SDValue Result = DAG.getTargetGlobalAddress(GA->getGlobal(), DL,
-                                                getPointerTy(),
+                                                GA->getValueType(0),
                                                 GA->getOffset(), OpFlag);
     SDValue Offset = DAG.getNode(WrapperKind, DL, getPointerTy(), Result);
 
@@ -6194,8 +6194,10 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
     // Lowering the machine isd will make sure everything is in the right
     // location.
-    SDValue Args[] = { Offset };
-    SDValue RetVal = DAG.getNode(X86ISD::TLSCALL, DL, MVT::Other, Args, 1);
+    SDValue Chain = DAG.getEntryNode();
+    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+    SDValue Args[] = { Chain, Offset };
+    Chain = DAG.getNode(X86ISD::TLSCALL, DL, NodeTys, Args, 2);
 
     // TLSCALL will be codegen'ed as call. Inform MFI that function has calls.
     MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
@@ -6203,7 +6205,8 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     
     // And our return value (tls address) is in the standard call return value
     // location.
-    return RetVal;
+    unsigned Reg = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
+    return DAG.getCopyFromReg(Chain, DL, Reg, getPointerTy());
   }
 
   assert(false &&
