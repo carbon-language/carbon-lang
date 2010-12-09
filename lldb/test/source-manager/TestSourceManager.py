@@ -6,10 +6,8 @@ Test cases:
    Test the caching mechanism of the source manager.
 """
 
-import os, time
-import re
 import unittest2
-import lldb, lldbutil
+import lldb
 from lldbtest import *
 
 class SourceManagerTestCase(TestBase):
