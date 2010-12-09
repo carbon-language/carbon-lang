@@ -178,17 +178,9 @@ public:
   uint32_t getAddrModeThumbSPOpValue(const MCInst &MI, unsigned OpIdx,
                                      SmallVectorImpl<MCFixup> &Fixups) const;
 
-  /// getAddrModeS4OpValue - Return encoding for t_addrmode_s4 operands.
-  uint32_t getAddrModeS4OpValue(const MCInst &MI, unsigned OpIdx,
-                                SmallVectorImpl<MCFixup> &Fixups) const;
-
-  /// getAddrModeS2OpValue - Return encoding for t_addrmode_s2 operands.
-  uint32_t getAddrModeS2OpValue(const MCInst &MI, unsigned OpIdx,
-                                SmallVectorImpl<MCFixup> &Fixups) const;
-
-  /// getAddrModeS1OpValue - Return encoding for t_addrmode_s1 operands.
-  uint32_t getAddrModeS1OpValue(const MCInst &MI, unsigned OpIdx,
-                                SmallVectorImpl<MCFixup> &Fixups) const;
+  /// getAddrModeSOpValue - Encode the t_addrmode_s# operands.
+  uint32_t getAddrModeSOpValue(const MCInst &MI, unsigned OpIdx,
+                               SmallVectorImpl<MCFixup> &) const;
 
   /// getAddrModePCOpValue - Return encoding for t_addrmode_pc operands.
   uint32_t getAddrModePCOpValue(const MCInst &MI, unsigned OpIdx,
@@ -715,8 +707,9 @@ getAddrModeThumbSPOpValue(const MCInst &MI, unsigned OpIdx,
 }
 
 /// getAddrModeSOpValue - Encode the t_addrmode_s# operands.
-static unsigned getAddrModeSOpValue(const MCInst &MI, unsigned OpIdx,
-                                    unsigned Scale) {
+uint32_t ARMMCCodeEmitter::
+getAddrModeSOpValue(const MCInst &MI, unsigned OpIdx,
+                    SmallVectorImpl<MCFixup> &) const {
   // [Rn, Rm]
   //   {5-3} = Rm
   //   {2-0} = Rn
@@ -728,34 +721,13 @@ static unsigned getAddrModeSOpValue(const MCInst &MI, unsigned OpIdx,
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
   const MCOperand &MO2 = MI.getOperand(OpIdx + 2);
   unsigned Rn = getARMRegisterNumbering(MO.getReg());
-  unsigned Imm5 = (MO1.getImm() / Scale) & 0x1f;
+  unsigned Imm5 = MO1.getImm();
 
   if (MO2.getReg() != 0)
     // Is an immediate.
     Imm5 = getARMRegisterNumbering(MO2.getReg());
 
-  return (Imm5 << 3) | Rn;
-}
-
-/// getAddrModeS4OpValue - Return encoding for t_addrmode_s4 operands.
-uint32_t ARMMCCodeEmitter::
-getAddrModeS4OpValue(const MCInst &MI, unsigned OpIdx,
-                     SmallVectorImpl<MCFixup> &) const {
-  return getAddrModeSOpValue(MI, OpIdx, 4);
-}
-
-/// getAddrModeS2OpValue - Return encoding for t_addrmode_s2 operands.
-uint32_t ARMMCCodeEmitter::
-getAddrModeS2OpValue(const MCInst &MI, unsigned OpIdx,
-                     SmallVectorImpl<MCFixup> &) const {
-  return getAddrModeSOpValue(MI, OpIdx, 2);
-}
-
-/// getAddrModeS1OpValue - Return encoding for t_addrmode_s1 operands.
-uint32_t ARMMCCodeEmitter::
-getAddrModeS1OpValue(const MCInst &MI, unsigned OpIdx,
-                     SmallVectorImpl<MCFixup> &) const {
-  return getAddrModeSOpValue(MI, OpIdx, 1);
+  return ((Imm5 & 0x1f) << 3) | Rn;
 }
 
 /// getAddrModePCOpValue - Return encoding for t_addrmode_pc operands.

@@ -104,7 +104,7 @@ def t_addrmode_rr : Operand<i32>,
 //
 def t_addrmode_s4 : Operand<i32>,
                     ComplexPattern<i32, 3, "SelectThumbAddrModeS4", []> {
-  let EncoderMethod = "getAddrModeS4OpValue";
+  let EncoderMethod = "getAddrModeSOpValue";
   let PrintMethod = "printThumbAddrModeS4Operand";
   let MIOperandInfo = (ops tGPR:$base, i32imm:$offsimm, tGPR:$offsreg);
   let ParserMatchClass = MemModeThumbAsmOperand;
@@ -115,7 +115,7 @@ def t_addrmode_s4 : Operand<i32>,
 //
 def t_addrmode_s2 : Operand<i32>,
                     ComplexPattern<i32, 3, "SelectThumbAddrModeS2", []> {
-  let EncoderMethod = "getAddrModeS2OpValue";
+  let EncoderMethod = "getAddrModeSOpValue";
   let PrintMethod = "printThumbAddrModeS2Operand";
   let MIOperandInfo = (ops tGPR:$base, i32imm:$offsimm, tGPR:$offsreg);
   let ParserMatchClass = MemModeThumbAsmOperand;
@@ -126,7 +126,7 @@ def t_addrmode_s2 : Operand<i32>,
 //
 def t_addrmode_s1 : Operand<i32>,
                     ComplexPattern<i32, 3, "SelectThumbAddrModeS1", []> {
-  let EncoderMethod = "getAddrModeS1OpValue";
+  let EncoderMethod = "getAddrModeSOpValue";
   let PrintMethod = "printThumbAddrModeS1Operand";
   let MIOperandInfo = (ops tGPR:$base, i32imm:$offsimm, tGPR:$offsreg);
   let ParserMatchClass = MemModeThumbAsmOperand;
