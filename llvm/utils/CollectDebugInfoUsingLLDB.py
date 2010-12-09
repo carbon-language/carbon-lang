@@ -66,7 +66,7 @@ def print_var_value (v, file, frame):
                 file.write(v.GetValue(frame))
 
 # print_vars - Print variable values in output file.
-def print_vars (vars, fname, line, file, frame, target, thread):
+def print_vars (tag, vars, fname, line, file, frame, target, thread):
     # disable this thread.
     count = thread.GetStopReasonDataCount()
     bid = 0
@@ -87,7 +87,7 @@ def print_vars (vars, fname, line, file, frame, target, thread):
                 bp_loc.SetEnabled(False);
 
     for i in range(vars.GetSize()):
-        file.write("#Argument ")
+        file.write(tag)
         file.write(fname)
         file.write(':')
         file.write(str(line))
@@ -163,10 +163,12 @@ if target.IsValid():
                 if fname is None:
                     fname = function.GetName()
                 #print "function : ",fname
-                vars = frame.GetVariables(1,0,0,0)
                 line = frame.GetLineEntry().GetLine()
-                print_vars (vars, fname, line, file, frame, target, thread)
-                #print vars
+                vars = frame.GetVariables(1,0,0,0)
+                print_vars ("#Argument ", vars, fname, line, file, frame, target, thread)
+                vars = frame.GetVariables(0,1,0,0)
+                print_vars ("#Variables ", vars, fname, line, file, frame, target, thread)
+
         process.Continue()
     file.close()
 

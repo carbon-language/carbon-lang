@@ -7,9 +7,13 @@ class BreakPoint:
     def __init__(self, bp_name):
         self.name = bp_name
         self.values = {}
+        self.var_values = {}
 
     def recordArgument(self, arg_name, value):
         self.values[arg_name] = value
+        
+    def recordVariable(self, var_name, var_value):
+        self.var_values[var_name] = var_value
         
     def __repr__(self):
         print self.name
@@ -18,8 +22,14 @@ class BreakPoint:
             print items[i][0]," = ",items[i][1]
         return ''
 
-    def __cmp__(self, other):
+    def compare_args(self, other):
         return cmp(self.values, other.values)
+
+    def compare_vars(self, other):
+        return cmp(self.var_values, other.var_values)
+
+    def __cmp__(self, other):
+        return cmp(self.values, other.values) 
 
 def read_input(filename, dict):
     f = open(filename, "r")
@@ -33,6 +43,13 @@ def read_input(filename, dict):
             dict[c[2]] = bp
             bp.recordArgument(c[3], c[4])
 
+        if c[0] == "#Variables":
+            bp = dict.get(c[2])
+            if bp is None:
+                bp = BreakPoint(c[1])
+            dict[c[2]] = bp
+            bp.recordVariable(c[3], c[4])
+
     f.close()
     return
 
@@ -44,7 +61,8 @@ f2_breakpoints = {}
 read_input(sys.argv[2], f2_breakpoints)
 f2_items = f2_breakpoints.items()
     
-mismatch = 0
+arg_mismatch = 0
+var_mismatch = 0
 for f2bp in range(len(f2_items)):
     id = f2_items[f2bp][0]
     bp = f2_items[f2bp][1]
@@ -52,13 +70,16 @@ for f2bp in range(len(f2_items)):
     if bp1 is None:
         print "bp is missing"
     else:
-        if bp1 != bp:
-            mismatch = mismatch + 1
+        if bp1.compare_args(bp):
+            arg_mismatch = arg_mismatch + 1
+        if bp1.compare_vars(bp):
+            var_mismatch = var_mismatch + 1
 
 l2 = len(f2_items)
 print "=========="
 if l2 != 0:
-    print sys.argv[3]," success rate is", (l2-mismatch)*100/l2,"%"
+    print sys.argv[3]," Argument success rate is", (l2-arg_mismatch)*100/l2,"%"
+    print sys.argv[3]," Variable success rate is", (l2-var_mismatch)*100/l2,"%"
 else:
     print sys.argv[3]," success rate is 100%"
 print "=========="
