@@ -642,7 +642,7 @@ SPUDAGToDAGISel::Select(SDNode *N) {
       NewOpc = SPU::Ar32;
       Ops[0] = CurDAG->getRegister(SPU::R1, N->getValueType(0));
       Ops[1] = SDValue(CurDAG->getMachineNode(SPU::ILAr32, dl,
-                                              N->getValueType(0), TFI, Imm0),
+                                              N->getValueType(0), TFI),
                        0);
       n_ops = 2;
     }
