@@ -2,8 +2,9 @@
 Test lldb core component: SourceManager.
 
 Test cases:
-1. test_modify_source_file_while_debugging:
-   Test the caching mechanism of the source manager.
+
+o test_modify_source_file_while_debugging:
+  Test the caching mechanism of the source manager.
 """
 
 import unittest2
