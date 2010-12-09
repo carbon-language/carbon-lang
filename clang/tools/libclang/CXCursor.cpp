@@ -506,7 +506,7 @@ static inline CXCursorSet_Impl *unpackCXCursorSet(CXCursorSet set) {
   return (CXCursorSet_Impl*) set;
 }
 namespace llvm {
-template<> class llvm::DenseMapInfo<CXCursor> {
+template<> struct llvm::DenseMapInfo<CXCursor> {
 public:
   static inline CXCursor getEmptyKey() {
     return MakeCXCursorInvalid(CXCursor_InvalidFile);
