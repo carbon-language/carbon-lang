@@ -1209,7 +1209,12 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       emitT2RegPlusImmediate(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg,
                              Offset, Pred, PredReg, TII);
     }
+    // Update the original instruction to use the scratch register.
     MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
+    if (MI.getOpcode() == ARM::t2ADDrSPi)
+      MI.setDesc(TII.get(ARM::t2ADDri));
+    else if (MI.getOpcode() == ARM::t2SUBrSPi)
+      MI.setDesc(TII.get(ARM::t2SUBri));
   }
 }
 
