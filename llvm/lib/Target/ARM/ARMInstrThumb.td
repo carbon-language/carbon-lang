@@ -74,7 +74,7 @@ def t_imm_s4 : Operand<i32> {
 
 // Define Thumb specific addressing modes.
 
-def t_brtarget : Operand<i32> {
+def t_cbtarget : Operand<i32> {
   let EncoderMethod = "getThumbBRTargetOpValue";
 }
 
@@ -518,7 +518,7 @@ let isBranch = 1, isTerminator = 1 in
 
 // Compare and branch on zero / non-zero
 let isBranch = 1, isTerminator = 1 in {
-  def tCBZ  : T1I<(outs), (ins tGPR:$Rn, t_brtarget:$target), IIC_Br,
+  def tCBZ  : T1I<(outs), (ins tGPR:$Rn, t_cbtarget:$target), IIC_Br,
                   "cbz\t$Rn, $target", []>,
               T1Misc<{0,0,?,1,?,?,?}> {
     // A8.6.27
@@ -529,7 +529,7 @@ let isBranch = 1, isTerminator = 1 in {
     let Inst{2-0} = Rn;
   }
 
-  def tCBNZ : T1I<(outs), (ins tGPR:$cmp, t_brtarget:$target), IIC_Br,
+  def tCBNZ : T1I<(outs), (ins tGPR:$cmp, t_cbtarget:$target), IIC_Br,
                   "cbnz\t$cmp, $target", []>,
               T1Misc<{1,0,?,1,?,?,?}> {
     // A8.6.27
