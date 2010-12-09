@@ -101,20 +101,21 @@ void MCLineEntry::Make(MCStreamer *MCOS, const MCSection *Section) {
 //
 // This helper routine returns an expression of End - Start + IntVal .
 // 
-static inline const MCExpr *MakeStartMinusEndExpr(MCStreamer *MCOS,
-                                                  MCSymbol *Start,
-                                                  MCSymbol *End, int IntVal) {
+static inline const MCExpr *MakeStartMinusEndExpr(const MCStreamer &MCOS,
+                                                  const MCSymbol &Start,
+                                                  const MCSymbol &End,
+                                                  int IntVal) {
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
   const MCExpr *Res =
-    MCSymbolRefExpr::Create(End, Variant, MCOS->getContext());
+    MCSymbolRefExpr::Create(&End, Variant, MCOS.getContext());
   const MCExpr *RHS =
-    MCSymbolRefExpr::Create(Start, Variant, MCOS->getContext());
+    MCSymbolRefExpr::Create(&Start, Variant, MCOS.getContext());
   const MCExpr *Res1 =
-    MCBinaryExpr::Create(MCBinaryExpr::Sub, Res, RHS, MCOS->getContext());
+    MCBinaryExpr::Create(MCBinaryExpr::Sub, Res, RHS, MCOS.getContext());
   const MCExpr *Res2 =
-    MCConstantExpr::Create(IntVal, MCOS->getContext());
+    MCConstantExpr::Create(IntVal, MCOS.getContext());
   const MCExpr *Res3 =
-    MCBinaryExpr::Create(MCBinaryExpr::Sub, Res1, Res2, MCOS->getContext());
+    MCBinaryExpr::Create(MCBinaryExpr::Sub, Res1, Res2, MCOS.getContext());
   return Res3;
 }
 
@@ -213,7 +214,7 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
 
   // The first 4 bytes is the total length of the information for this
   // compilation unit (not including these 4 bytes for the length).
-  MCOS->EmitAbsValue(MakeStartMinusEndExpr(MCOS, LineStartSym, LineEndSym,4),
+  MCOS->EmitAbsValue(MakeStartMinusEndExpr(*MCOS, *LineStartSym, *LineEndSym,4),
                      4);
 
   // Next 2 bytes is the Version, which is Dwarf 2.
@@ -226,7 +227,7 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS,
   // section to the end of the prologue.  Not including the 4 bytes for the
   // total length, the 2 bytes for the version, and these 4 bytes for the
   // length of the prologue.
-  MCOS->EmitAbsValue(MakeStartMinusEndExpr(MCOS, LineStartSym, ProEndSym,
+  MCOS->EmitAbsValue(MakeStartMinusEndExpr(*MCOS, *LineStartSym, *ProEndSym,
                                         (4 + 2 + 4)),
                   4, 0);
 
