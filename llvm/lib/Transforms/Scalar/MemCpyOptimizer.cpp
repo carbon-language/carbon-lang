@@ -675,6 +675,14 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   if (M->getSource() != MDep->getDest() || MDep->isVolatile())
     return false;
   
+  // If dep instruction is reading from our current input, then it is a noop
+  // transfer and substituting the input won't change this instruction.  Just
+  // ignore the input and let someone else zap MDep.  This handles cases like:
+  //    memcpy(a <- a)
+  //    memcpy(b <- a)
+  if (M->getSource() == MDep->getSource())
+    return false;
+  
   // Second, the length of the memcpy's must be the same, or the preceeding one
   // must be larger than the following one.
   ConstantInt *C1 = dyn_cast<ConstantInt>(MDep->getLength());

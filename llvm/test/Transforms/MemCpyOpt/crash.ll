@@ -1,5 +1,4 @@
-; RUN: opt < %s -memcpyopt -disable-output
-; PR4882
+; RUN: opt < %s -basicaa -memcpyopt -disable-output
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
 target triple = "armv7-eabi"
@@ -7,7 +6,8 @@ target triple = "armv7-eabi"
 %struct.qw = type { [4 x float] }
 %struct.bar = type { %struct.qw, %struct.qw, %struct.qw, %struct.qw, %struct.qw, float, float}
 
-define arm_aapcs_vfpcc void @test1(%struct.bar* %this) {
+; PR4882
+define void @test1(%struct.bar* %this) {
 entry:
   %0 = getelementptr inbounds %struct.bar* %this, i32 0, i32 0, i32 0, i32 0
   store float 0.000000e+00, float* %0, align 4
@@ -42,4 +42,17 @@ entry:
   %15 = getelementptr inbounds %struct.bar* %this, i32 0, i32 5
   store float 0.000000e+00, float* %15, align 4
   unreachable
+}
+
+; PR8753
+
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32,
+i1) nounwind
+
+define void @test2(i32 %cmd) nounwind {
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* undef, i8* undef, i64 20, i32 1, i1
+false) nounwind
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* null, i8* undef, i64 20, i32 1, i1
+false) nounwind
+  ret void
 }
