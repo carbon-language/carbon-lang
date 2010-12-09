@@ -542,7 +542,7 @@ unsigned clang_CXCursorSet_contains(CXCursorSet set, CXCursor cursor) {
   return setImpl->find(cursor) == setImpl->end();
 }
 
-unsigned clang_CXCurorSet_insert(CXCursorSet set, CXCursor cursor) {
+unsigned clang_CXCursorSet_insert(CXCursorSet set, CXCursor cursor) {
   // Do not insert invalid cursors into the set.
   if (cursor.kind >= CXCursor_FirstInvalid &&
       cursor.kind <= CXCursor_LastInvalid)
