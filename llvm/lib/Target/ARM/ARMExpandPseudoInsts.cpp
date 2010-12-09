@@ -700,8 +700,6 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       break;
     }
     case ARM::TPsoft: {
-      unsigned PredReg = 0;
-      ARMCC::CondCodes Pred = llvm::getInstrPredicate(&MI, PredReg);
       MachineInstrBuilder MIB = 
         BuildMI(MBB, MBBI, MI.getDebugLoc(),
                 TII->get(ARM::BL))
