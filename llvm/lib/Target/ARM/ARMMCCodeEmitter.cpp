@@ -47,7 +47,8 @@ public:
     const static MCFixupKindInfo Infos[] = {
       // name                       off   bits  flags
       { "fixup_arm_ldst_pcrel_12",  1,    24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_t2_ldst_pcrel_12",   0,    32,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_t2_ldst_pcrel_12",   0,    32,   MCFixupKindInfo::FKF_IsPCRel |
+                                                MCFixupKindInfo::FKF_IsAligned},
       { "fixup_arm_pcrel_10",       1,    24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_t2_pcrel_10",        0,    32,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_adr_pcrel_12",   1,    24,   MCFixupKindInfo::FKF_IsPCRel },

@@ -100,10 +100,10 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   }
   case ARM::fixup_arm_ldst_pcrel_12:
     // ARM PC-relative values are offset by 8.
-    Value -= 6;
+    Value -= 4;
   case ARM::fixup_t2_ldst_pcrel_12: {
     // Offset by 4, adjusted by two due to the half-word ordering of thumb.
-    Value -= 2;
+    Value -= 4;
     bool isAdd = true;
     if ((int64_t)Value < 0) {
       Value = -Value;

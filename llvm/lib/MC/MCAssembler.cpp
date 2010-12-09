@@ -253,8 +253,15 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
   if (IsResolved)
     IsResolved = Writer.IsFixupFullyResolved(*this, Target, IsPCRel, DF);
 
-  if (IsPCRel)
-    Value -= Layout.getFragmentOffset(DF) + Fixup.getOffset();
+  if (IsPCRel) {
+    bool ShouldAlignPC = Emitter.getFixupKindInfo(
+                        Fixup.getKind()).Flags & MCFixupKindInfo::FKF_IsAligned;
+    // PC should be aligned to a 4-byte value.
+    if (ShouldAlignPC)
+      Value -= Layout.getFragmentOffset(DF) + (Fixup.getOffset() & ~0x3);
+    else
+      Value -= Layout.getFragmentOffset(DF) + Fixup.getOffset();
+  }
 
   return IsResolved;
 }
