@@ -347,8 +347,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   return DbgTy;
 }
 
-llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty,
-                                     llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty) {
   // Bit size, align and offset of the type.
   unsigned Encoding = llvm::dwarf::DW_ATE_complex_float;
   if (Ty->isComplexIntegerType())
@@ -1400,7 +1399,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::ObjCInterface:
     return CreateType(cast<ObjCInterfaceType>(Ty), Unit);
   case Type::Builtin: return CreateType(cast<BuiltinType>(Ty));
-  case Type::Complex: return CreateType(cast<ComplexType>(Ty), Unit);
+  case Type::Complex: return CreateType(cast<ComplexType>(Ty));
   case Type::Pointer: return CreateType(cast<PointerType>(Ty), Unit);
   case Type::BlockPointer:
     return CreateType(cast<BlockPointerType>(Ty), Unit);
