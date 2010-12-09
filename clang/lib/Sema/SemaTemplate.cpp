@@ -5699,6 +5699,23 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
   case LookupResult::NotFound:
     DiagID = diag::err_typename_nested_not_found;
     break;
+
+  case LookupResult::FoundUnresolvedValue: {
+    // We found a using declaration that is a value. Most likely, the using
+    // declaration itself is meant to have the 'typename' keyword.
+    SourceRange FullRange(KeywordLoc.isValid() ? KeywordLoc : NNSRange.getBegin(),
+                          IILoc);
+    Diag(IILoc, diag::err_typename_refers_to_using_value_decl)
+      << Name << Ctx << FullRange;
+    if (UnresolvedUsingValueDecl *Using
+          = dyn_cast<UnresolvedUsingValueDecl>(Result.getRepresentativeDecl())){
+      SourceLocation Loc = Using->getTargetNestedNameRange().getBegin();
+      Diag(Loc, diag::note_using_value_decl_missing_typename)
+        << FixItHint::CreateInsertion(Loc, "typename ");
+    }
+  }
+  // Fall through to create a dependent typename type, from which we can recover
+  // better.
       
   case LookupResult::NotFoundInCurrentInstantiation:
     // Okay, it's a member of an unknown instantiation.
@@ -5716,7 +5733,7 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
     Referenced = Result.getFoundDecl();
     break;
 
-  case LookupResult::FoundUnresolvedValue:
+    
     llvm_unreachable("unresolved using decl in non-dependent context");
     return QualType();
 
