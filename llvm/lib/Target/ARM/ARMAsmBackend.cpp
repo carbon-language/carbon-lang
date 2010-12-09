@@ -98,16 +98,28 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     Value = (Hi4 << 16) | (Lo12);
     return Value;
   }
-  case ARM::fixup_arm_ldst_pcrel_12: {
-    bool isAdd = true;
+  case ARM::fixup_arm_ldst_pcrel_12:
     // ARM PC-relative values are offset by 8.
-    Value -= 8;
+    Value -= 6;
+  case ARM::fixup_t2_ldst_pcrel_12: {
+    // Offset by 4, adjusted by two due to the half-word ordering of thumb.
+    Value -= 2;
+    bool isAdd = true;
     if ((int64_t)Value < 0) {
       Value = -Value;
       isAdd = false;
     }
     assert ((Value < 4096) && "Out of range pc-relative fixup value!");
     Value |= isAdd << 23;
+    
+    // Same addressing mode as fixup_arm_pcrel_10,
+    // but with 16-bit halfwords swapped.
+    if (Kind == ARM::fixup_t2_ldst_pcrel_12) {
+      uint64_t swapped = (Value & 0xFFFF0000) >> 16;
+      swapped |= (Value & 0x0000FFFF) << 16;
+      return swapped;
+    }
+    
     return Value;
   }
   case ARM::fixup_arm_adr_pcrel_12: {
@@ -128,7 +140,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // Offset by 8 just as above.
     return 0xffffff & ((Value - 8) >> 2);
   case ARM::fixup_t2_branch: {
-    Value = Value - 6;
+    Value = Value - 8;
     Value >>= 1; // Low bit is not encoded.
     
     uint64_t out = 0;
@@ -310,6 +322,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
     return 3;
 
   case FK_Data_4:
+  case ARM::fixup_t2_ldst_pcrel_12:
   case ARM::fixup_t2_branch:
   case ARM::fixup_t2_pcrel_10:
   case ARM::fixup_arm_thumb_bl:

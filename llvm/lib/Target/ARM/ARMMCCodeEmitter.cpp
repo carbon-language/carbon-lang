@@ -47,6 +47,7 @@ public:
     const static MCFixupKindInfo Infos[] = {
       // name                       off   bits  flags
       { "fixup_arm_ldst_pcrel_12",  1,    24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_t2_ldst_pcrel_12",   0,    32,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_pcrel_10",       1,    24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_t2_pcrel_10",        0,    32,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_adr_pcrel_12",   1,    24,   MCFixupKindInfo::FKF_IsPCRel },
@@ -508,7 +509,12 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
     else
       Expr = MO2.getExpr();
     
-    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_ldst_pcrel_12);
+    const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+    MCFixupKind Kind;
+    if (Subtarget.isThumb2())
+      Kind = MCFixupKind(ARM::fixup_t2_ldst_pcrel_12);
+    else
+      Kind = MCFixupKind(ARM::fixup_arm_ldst_pcrel_12);
     Fixups.push_back(MCFixup::Create(0, Expr, Kind));
 
     ++MCNumCPRelocations;
