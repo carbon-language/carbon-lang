@@ -115,7 +115,10 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::CTPOP,             MVT::i32,   Expand);
   setOperationAction(ISD::CTTZ,              MVT::i32,   Expand);
   setOperationAction(ISD::ROTL,              MVT::i32,   Expand);
-  setOperationAction(ISD::ROTR,              MVT::i32,   Expand);
+
+  if (!Subtarget->isMips32r2())
+    setOperationAction(ISD::ROTR, MVT::i32,   Expand);
+
   setOperationAction(ISD::SHL_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRA_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRL_PARTS,         MVT::i32,   Expand);
