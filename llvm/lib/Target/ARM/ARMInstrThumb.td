@@ -75,7 +75,7 @@ def t_imm_s4 : Operand<i32> {
 // Define Thumb specific addressing modes.
 
 def t_cbtarget : Operand<i32> {
-  let EncoderMethod = "getThumbBRTargetOpValue";
+  let EncoderMethod = "getThumbCBTargetOpValue";
 }
 
 def t_bltarget : Operand<i32> {

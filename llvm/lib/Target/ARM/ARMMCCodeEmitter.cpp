@@ -98,8 +98,8 @@ public:
   uint32_t getThumbBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                     SmallVectorImpl<MCFixup> &Fixups) const;
 
-  /// getThumbBRTargetOpValue - Return encoding info for Thumb branch target.
-  uint32_t getThumbBRTargetOpValue(const MCInst &MI, unsigned OpIdx,
+  /// getThumbCBTargetOpValue - Return encoding info for Thumb branch target.
+  uint32_t getThumbCBTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                    SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getBranchTargetOpValue - Return encoding info for 24-bit immediate
@@ -458,9 +458,9 @@ getThumbBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
   return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_blx, Fixups);
 }
 
-/// getThumbBRTargetOpValue - Return encoding info for Thumb branch target.
+/// getThumbCBTargetOpValue - Return encoding info for Thumb branch target.
 uint32_t ARMMCCodeEmitter::
-getThumbBRTargetOpValue(const MCInst &MI, unsigned OpIdx,
+getThumbCBTargetOpValue(const MCInst &MI, unsigned OpIdx,
                         SmallVectorImpl<MCFixup> &Fixups) const {
   return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_br, Fixups);
 }
