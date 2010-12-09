@@ -494,30 +494,184 @@ CommandInterpreter::GetHelp (CommandReturnObject &result)
     result.AppendMessage("For more information on any particular command, try 'help <command-name>'.");
 }
 
-bool
-CommandInterpreter::HandleCommand 
-(
-    const char *command_line, 
-    bool add_to_history,
-    CommandReturnObject &result,
-    ExecutionContext *override_context
-)
+CommandObject *
+CommandInterpreter::GetCommandObjectForCommand (std::string &command_string)
 {
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_COMMANDS));
-    // FIXME: there should probably be a mutex to make sure only one thread can
-    // run the interpreter at a time.
+    // This function finds the final, lowest-level, alias-resolved command object whose 'Execute' function will
+    // eventually be invoked by the given command line.
+    
+    CommandObject *cmd_obj = NULL;
+    std::string white_space (" \t\v");
+    size_t start = command_string.find_first_not_of (white_space);
+    size_t end = 0;
+    bool done = false;
+    while (!done)
+    {
+        if (start != std::string::npos)
+        {
+            // Get the next word from command_string.
+            end = command_string.find_first_of (white_space, start);
+            if (end == std::string::npos)
+                end = command_string.size();
+            std::string cmd_word = command_string.substr (start, end - start);
+            
+            if (cmd_obj == NULL)
+                // Since cmd_obj is NULL we are on our first time through this loop. Check to see if cmd_word is a valid 
+                // command or alias.
+                cmd_obj = GetCommandObject (cmd_word.c_str());
+            else if (cmd_obj->IsMultiwordObject ())
+            {
+                // Our current object is a multi-word object; see if the cmd_word is a valid sub-command for our object.
+                CommandObject *sub_cmd_obj = 
+                                         ((CommandObjectMultiword *) cmd_obj)->GetSubcommandObject (cmd_word.c_str());
+                if (sub_cmd_obj)
+                    cmd_obj = sub_cmd_obj;
+                else // cmd_word was not a valid sub-command word, so we are donee
+                    done = true;
+            }
+            else  
+                // We have a cmd_obj and it is not a multi-word object, so we are done.
+                done = true;
 
+            // If we didn't find a valid command object, or our command object is not a multi-word object, or
+            // we are at the end of the command_string, then we are done.  Otherwise, find the start of the
+            // next word.
+            
+            if (!cmd_obj || !cmd_obj->IsMultiwordObject() || end >= command_string.size())
+                done = true;
+            else
+                start = command_string.find_first_not_of (white_space, end);
+        }
+        else
+            // Unable to find any more words.
+            done = true;
+    }
+    
+    if (end == command_string.size())
+        command_string.clear();
+    else
+        command_string = command_string.substr(end);
+    
+    return cmd_obj;
+}
+
+bool
+CommandInterpreter::StripFirstWord (std::string &command_string, std::string &word)
+{
+    std::string white_space (" \t\v");
+    size_t start;
+    size_t end;
+    
+    start = command_string.find_first_not_of (white_space);
+    if (start != std::string::npos)
+    {
+        end = command_string.find_first_of (white_space, start);
+        if (end != std::string::npos)
+        {
+            word = command_string.substr (start, end - start);
+            command_string = command_string.substr (end);
+            size_t pos = command_string.find_first_not_of (white_space);
+            if ((pos != 0) && (pos != std::string::npos))
+                command_string = command_string.substr (pos);
+        }
+        else
+        {
+            word = command_string.substr (start);
+            command_string.erase();
+        }
+
+    }
+    return true;
+}
+
+void
+CommandInterpreter::BuildAliasResult (const char *alias_name, std::string &raw_input_string, std::string &alias_result,
+                                      CommandObject *&alias_cmd_obj, CommandReturnObject &result)
+{
+    Args cmd_args (raw_input_string.c_str());
+    alias_cmd_obj = GetCommandObject (alias_name);
+    StreamString result_str;
+    
+    if (alias_cmd_obj)
+    {
+        std::string alias_name_str = alias_name;
+        if ((cmd_args.GetArgumentCount() == 0)
+            || (alias_name_str.compare (cmd_args.GetArgumentAtIndex(0)) != 0))
+            cmd_args.Unshift (alias_name);
+            
+        result_str.Printf ("%s", alias_cmd_obj->GetCommandName ());
+        OptionArgVectorSP option_arg_vector_sp = GetAliasOptions (alias_name);
+
+        if (option_arg_vector_sp.get())
+        {
+            OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
+
+            for (int i = 0; i < option_arg_vector->size(); ++i)
+            {
+                OptionArgPair option_pair = (*option_arg_vector)[i];
+                OptionArgValue value_pair = option_pair.second;
+                int value_type = value_pair.first;
+                std::string option = option_pair.first;
+                std::string value = value_pair.second;
+                if (option.compare ("<argument>") == 0)
+                    result_str.Printf (" %s", value.c_str());
+                else
+                {
+                    result_str.Printf (" %s", option.c_str());
+                    if (value_type != optional_argument)
+                        result_str.Printf (" ");
+                    if (value.compare ("<no_argument>") != 0)
+                    {
+                        int index = GetOptionArgumentPosition (value.c_str());
+                        if (index == 0)
+                            result_str.Printf ("%s", value.c_str());
+                        else if (index >= cmd_args.GetArgumentCount())
+                        {
+                            
+                            result.AppendErrorWithFormat
+                            ("Not enough arguments provided; you need at least %d arguments to use this alias.\n",
+                             index);
+                            result.SetStatus (eReturnStatusFailed);
+                            return;
+                        }
+                        else
+                        {
+                            size_t strpos = raw_input_string.find (cmd_args.GetArgumentAtIndex (index));
+                            if (strpos != std::string::npos)
+                                raw_input_string = raw_input_string.erase (strpos, 
+                                                                          strlen (cmd_args.GetArgumentAtIndex (index)));
+                            result_str.Printf ("%s", cmd_args.GetArgumentAtIndex (index));
+                        }
+                    }
+                }
+            }
+        }
+        
+        alias_result = result_str.GetData();
+    }
+}
+
+bool
+CommandInterpreter::HandleCommand (const char *command_line, 
+                                   bool add_to_history,
+                                   CommandReturnObject &result,
+                                   ExecutionContext *override_context)
+{
+    bool done = false;
+    CommandObject *cmd_obj = NULL;
+    std::string next_word;
+    bool wants_raw_input = false;
+    std::string command_string (command_line);
+    
+    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_COMMANDS));
     Host::SetCrashDescriptionWithFormat ("HandleCommand(command = \"%s\")", command_line);
     
     // Make a scoped cleanup object that will clear the crash description string 
     // on exit of this function.
     lldb_utility::CleanUp <const char *, void> crash_description_cleanup(NULL, Host::SetCrashDescription);
 
-    // TODO: this should be a logging channel in lldb.
-//    if (DebugSelf())
-//    {
-//        result.AppendMessageWithFormat ("Processing command: %s\n", command_line);
-//    }
+    if (log)
+        log->Printf ("Processing command: %s", command_line);
 
     Timer scoped_timer (__PRETTY_FUNCTION__, "Handling command: %s.", command_line);
     
@@ -534,6 +688,7 @@ CommandInterpreter::HandleCommand
         else
         {
             command_line = m_repeat_command.c_str();
+            command_string = command_line;
             if (m_repeat_command.empty())
             {
                 result.AppendErrorWithFormat("No auto repeat.\n");
@@ -544,158 +699,171 @@ CommandInterpreter::HandleCommand
         add_to_history = false;
     }
 
-    if (log)
-        log->Printf ("CommandInterpreter::HandleCommand, command_line = '%s'", command_line);
+    // Phase 1.
+    
+    // Before we do ANY kind of argument processing, etc. we need to figure out what the real/final command object
+    // is for the specified command, and whether or not it wants raw input.  This gets complicated by the fact that
+    // the user could have specified an alias, and in translating the alias there may also be command options and/or
+    // even data (including raw text strings) that need to be found and inserted into the command line as part of
+    // the translation.  So this first step is plain look-up & replacement, resulting in three things:  1). the command
+    // object whose Execute method will actually be called; 2). a revised command string, with all substituitions &
+    // replacements taken care of; 3). whether or not the Execute function wants raw input or not.
 
-    Args command_args(command_line);
-
-    if (command_args.GetArgumentCount() > 0)
+    StreamString revised_command_line;
+    while (!done)
     {
-        std::string raw_command_string (command_line);  // For commands that take raw input but may be aliased or
-                                                        // have command options.
-                                                        
-        const char *command_cstr = command_args.GetArgumentAtIndex(0);
-        if (command_cstr)
+        StripFirstWord (command_string, next_word);
+        if (!cmd_obj && AliasExists (next_word.c_str())) 
         {
-
-            // We're looking up the command object here.  So first find an exact match to the
-            // command in the commands.
-            CommandObject *command_obj = GetCommandObject(command_cstr);
-                
-            if (command_obj != NULL)
+            std::string alias_result;
+            BuildAliasResult (next_word.c_str(), command_string, alias_result, cmd_obj, result);
+            revised_command_line.Printf ("%s", alias_result.c_str());
+            if (cmd_obj)
+                wants_raw_input = cmd_obj->WantsRawCommandString ();
+        }
+        else if (!cmd_obj)
+        {
+            cmd_obj = GetCommandObject (next_word.c_str());
+            if (cmd_obj)
             {
-                // Strip command name from the raw_command_string.
-                if (raw_command_string.find (command_cstr) == 0)
-                {
-                    // The command name is at the front of the string (where it should be) so strip it off.
-                    raw_command_string = raw_command_string.substr (strlen (command_cstr));
-                }
-                
-            
-                std::string aliased_cmd_str;
-                if (command_obj->IsAlias())
-                {
-                    if (log)
-                        log->Printf ("Command '%s' is an alias. Building alias command args.", command_cstr);
-                    BuildAliasCommandArgs (command_obj, command_cstr, command_args, raw_command_string, result);
-                    if (!result.Succeeded())
-                    {
-                        if (log)
-                            log->Printf ("Building alias command args failed.");
-                        return false;
-                    }
-                    else
-                    {
-                        // We need to transfer the newly constructed args back into the command_line, in case
-                        // this happens to be an alias for a command that takes raw input.
-                        if (command_args.GetCommandString (aliased_cmd_str))
-                        {
-                            if (log)
-                                log->Printf ("Result string from BuildAliasCommandArgs is '%s'", aliased_cmd_str.c_str());
-                            if (command_obj->WantsRawCommandString())
-                            {
-                                if (log)
-                                {
-                                    log->Printf ("This command takes raw input.");
-                                }
-                                aliased_cmd_str.append (" ");
-                                aliased_cmd_str.append (raw_command_string);
-                            }
-                            else
-                            {
-                                if (log)
-                                    log->Printf ("This command does NOT take raw input.");
-                            }
-                            command_line = aliased_cmd_str.c_str();
-                            command_cstr = command_args.GetArgumentAtIndex (0);
-                            if (log)
-                            {
-                                log->Printf ("Final command line, after resolving aliases is '%s'", command_line);
-                            }
-                        }
-                    }
-                }
-
-                if (add_to_history)
-                {
-                    const char *repeat_command = command_obj->GetRepeatCommand(command_args, 0);
-                    if (repeat_command != NULL)
-                        m_repeat_command.assign(repeat_command);
-                    else
-                        m_repeat_command.assign(command_line);
-                        
-                    m_command_history.push_back (command_line);
-                }
-
-
-                if (command_obj->WantsRawCommandString())
-                {
-                    const char *stripped_command = ::strstr (command_line, command_cstr);
-                    if (stripped_command)
-                    {
-                        stripped_command += strlen(command_cstr);
-                        while (isspace(*stripped_command))
-                            ++stripped_command;
-                        if (log)
-                            log->Printf ("Input string being passed to ExecuteRawCommandString for '%s' command is '%s'", 
-                                         command_obj->GetCommandName(), stripped_command);
-                        command_obj->ExecuteRawCommandString (stripped_command, result);
-                    }
-                }
-                else
-                {
-                    // Remove the command from the args.
-                    command_args.Shift();
-                    if (log)
-                    {
-                        size_t count = command_args.GetArgumentCount();
-                        log->Printf ("ExecuteWithOptions for '%s' command is being called with %d args:", 
-                                      command_obj->GetCommandName(), count);
-                        for (size_t k = 0; k < count; ++k)
-                            log->Printf ("    arg[%d]='%s'", k, command_args.GetArgumentAtIndex (k));
-                    }
-                    command_obj->ExecuteWithOptions (command_args, result);
-                }
+                revised_command_line.Printf ("%s", next_word.c_str());
+                wants_raw_input = cmd_obj->WantsRawCommandString ();
             }
             else
             {
-                // We didn't find the first command object, so complete the first argument.
-                StringList matches;
-                int num_matches;
-                int cursor_index = 0;
-                int cursor_char_position = strlen (command_args.GetArgumentAtIndex(0));
-                bool word_complete;
-                num_matches = HandleCompletionMatches (command_args, 
-                                                       cursor_index,
-                                                       cursor_char_position,
-                                                       0, 
-                                                       -1, 
-                                                       word_complete,
-                                                       matches);
-
-                if (num_matches > 0)
-                {
-                    std::string error_msg;
-                    error_msg.assign ("ambiguous command '");
-                    error_msg.append(command_cstr);
-                    error_msg.append ("'.");
-
-                    error_msg.append (" Possible completions:");
-                    for (int i = 0; i < num_matches; i++)
-                    {
-                        error_msg.append ("\n\t");
-                        error_msg.append (matches.GetStringAtIndex (i));
-                    }
-                    error_msg.append ("\n");
-                    result.AppendRawError (error_msg.c_str(), error_msg.size());
-                }
-                else
-                    result.AppendErrorWithFormat ("Unrecognized command '%s'.\n", command_cstr);
-
-                result.SetStatus (eReturnStatusFailed);
+                revised_command_line.Printf ("%s", next_word.c_str());
             }
         }
+        else if (cmd_obj->IsMultiwordObject ())
+        {
+            CommandObject *sub_cmd_obj = ((CommandObjectMultiword *) cmd_obj)->GetSubcommandObject (next_word.c_str());
+            if (sub_cmd_obj)
+            {
+                revised_command_line.Printf (" %s", next_word.c_str());
+                cmd_obj = sub_cmd_obj;
+                wants_raw_input = cmd_obj->WantsRawCommandString ();
+            }
+            else
+            {
+                revised_command_line.Printf (" %s", next_word.c_str());
+                done = true;
+            }
+        }
+        else
+        {
+            revised_command_line.Printf (" %s", next_word.c_str());
+            done = true;
+        }
+
+        if (cmd_obj == NULL)
+        {
+            result.AppendErrorWithFormat ("'%s' is not a valid command.\n", next_word.c_str());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        next_word.erase ();
+        if (command_string.length() == 0)
+            done = true;
+            
     }
+
+    if (command_string.size() > 0)
+        revised_command_line.Printf (" %s", command_string.c_str());
+
+    // End of Phase 1.
+    // At this point cmd_obj should contain the CommandObject whose Execute method will be called, if the command
+    // specified was valid; revised_command_line contains the complete command line (including command name(s)),
+    // fully translated with all substitutions & translations taken care of (still in raw text format); and
+    // wants_raw_input specifies whether the Execute method expects raw input or not.
+
+ 
+    if (log)
+    {
+        log->Printf ("HandleCommand, cmd_obj : '%s'", cmd_obj ? cmd_obj->GetCommandName() : "<not found>");
+        log->Printf ("HandleCommand, revised_command_line: '%s'", revised_command_line.GetData());
+        log->Printf ("HandleCommand, wants_raw_input:'%s'", wants_raw_input ? "True" : "False");
+    }
+
+    // Phase 2.
+    // Take care of things like setting up the history command & calling the appropriate Execute method on the
+    // CommandObject, with the appropriate arguments.
+    
+    if (cmd_obj != NULL)
+    {
+        if (add_to_history)
+        {
+            Args command_args (revised_command_line.GetData());
+            const char *repeat_command = cmd_obj->GetRepeatCommand(command_args, 0);
+            if (repeat_command != NULL)
+                m_repeat_command.assign(repeat_command);
+            else
+                m_repeat_command.assign(command_line);
+            
+            m_command_history.push_back (command_line);
+        }
+        
+        command_string = revised_command_line.GetData();
+        std::string command_name (cmd_obj->GetCommandName());
+        std::string remainder (command_string.substr (command_name.size()));
+        
+        // Remove any initial spaces
+        std::string white_space (" \t\v");
+        size_t pos = remainder.find_first_not_of (white_space);
+        if (pos != 0 && pos != std::string::npos)
+            remainder = remainder.substr (pos);
+
+        if (log)
+            log->Printf ("HandleCommand, command line after removing command name(s): '%s'\n", remainder.c_str());
+    
+
+        if (wants_raw_input)
+            cmd_obj->ExecuteRawCommandString (remainder.c_str(), result);
+        else
+        {
+            Args cmd_args (remainder.c_str());
+            cmd_obj->ExecuteWithOptions (cmd_args, result);
+        }
+    }
+    else
+    {
+        // We didn't find the first command object, so complete the first argument.
+        Args command_args (revised_command_line.GetData());
+        StringList matches;
+        int num_matches;
+        int cursor_index = 0;
+        int cursor_char_position = strlen (command_args.GetArgumentAtIndex(0));
+        bool word_complete;
+        num_matches = HandleCompletionMatches (command_args, 
+                                               cursor_index,
+                                               cursor_char_position,
+                                               0, 
+                                               -1, 
+                                               word_complete,
+                                               matches);
+        
+        if (num_matches > 0)
+        {
+            std::string error_msg;
+            error_msg.assign ("ambiguous command '");
+            error_msg.append(command_args.GetArgumentAtIndex(0));
+            error_msg.append ("'.");
+            
+            error_msg.append (" Possible completions:");
+            for (int i = 0; i < num_matches; i++)
+            {
+                error_msg.append ("\n\t");
+                error_msg.append (matches.GetStringAtIndex (i));
+            }
+            error_msg.append ("\n");
+            result.AppendRawError (error_msg.c_str(), error_msg.size());
+        }
+        else
+            result.AppendErrorWithFormat ("Unrecognized command '%s'.\n", command_args.GetArgumentAtIndex (0));
+        
+        result.SetStatus (eReturnStatusFailed);
+    }
+    
     return result.Succeeded();
 }
 

@@ -849,7 +849,8 @@ Args::IsPositionalArgument (const char *arg)
 void
 Args::ParseAliasOptions (Options &options,
                          CommandReturnObject &result,
-                         OptionArgVector *option_arg_vector)
+                         OptionArgVector *option_arg_vector,
+                         std::string &raw_input_string)
 {
     StreamString sstr;
     int i;
@@ -985,16 +986,33 @@ Args::ParseAliasOptions (Options &options,
         if (long_options_index >= 0)
         {
             // Find option in the argument list; also see if it was supposed to take an argument and if one was
-            // supplied.  Remove option (and argument, if given) from the argument list.
+            // supplied.  Remove option (and argument, if given) from the argument list.  Also remove them from
+            // the raw_input_string, if one was passed in.
             size_t idx = FindArgumentIndexForOption (long_options, long_options_index);
             if (idx < GetArgumentCount())
             {
+                if (raw_input_string.size() > 0)
+                {
+                    const char *tmp_arg = GetArgumentAtIndex (idx);
+                    size_t pos = raw_input_string.find (tmp_arg);
+                    if (pos != std::string::npos)
+                        raw_input_string.erase (pos, strlen (tmp_arg));
+                }
                 ReplaceArgumentAtIndex (idx, "");
                 if ((long_options[long_options_index].has_arg != no_argument)
                     && (optarg != NULL)
                     && (idx+1 < GetArgumentCount())
                     && (strcmp (optarg, GetArgumentAtIndex(idx+1)) == 0))
+                {
+                    if (raw_input_string.size() > 0)
+                    {
+                        const char *tmp_arg = GetArgumentAtIndex (idx+1);
+                        size_t pos = raw_input_string.find (tmp_arg);
+                        if (pos != std::string::npos)
+                            raw_input_string.erase (pos, strlen (tmp_arg));
+                    }
                     ReplaceArgumentAtIndex (idx+1, "");
+                }
             }
         }
 

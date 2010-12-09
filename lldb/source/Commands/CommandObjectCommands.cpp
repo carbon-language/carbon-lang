@@ -239,6 +239,133 @@ public:
     {
     }
 
+    bool
+    WantsRawCommandString ()
+    {
+        return true;
+    }
+    
+    bool
+    ExecuteRawCommandString (const char *raw_command_line, CommandReturnObject &result)
+    {
+        Args args (raw_command_line);
+        std::string raw_command_string (raw_command_line);
+        
+        size_t argc = args.GetArgumentCount();
+        
+        if (argc < 2)
+        {
+            result.AppendError ("'alias' requires at least two arguments");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        // Get the alias command.
+        
+        const std::string alias_command = args.GetArgumentAtIndex (0);
+
+        // Strip the new alias name off 'raw_command_string'  (leave it on args, which gets passed to 'Execute', which
+        // does the stripping itself.
+        size_t pos = raw_command_string.find (alias_command);
+        if (pos == 0)
+        {
+            raw_command_string = raw_command_string.substr (alias_command.size());
+            pos = raw_command_string.find_first_not_of (' ');
+            if ((pos != std::string::npos) && (pos > 0))
+                raw_command_string = raw_command_string.substr (pos);
+        }
+        else
+        {
+            result.AppendError ("Error parsing command string.  No alias created.");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        
+        // Verify that the command is alias-able.
+        if (m_interpreter.CommandExists (alias_command.c_str()))
+        {
+            result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be redefined.\n",
+                                          alias_command.c_str());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        // Get CommandObject that is being aliased. The command name is read from the front of raw_command_string.
+        // raw_command_string is returned with the name of the command object stripped off the front.
+        CommandObject *cmd_obj = m_interpreter.GetCommandObjectForCommand (raw_command_string);
+        
+        if (!cmd_obj)
+        {
+            result.AppendErrorWithFormat ("Invalid command given to 'alias'. '%s' does not begin with a valid command."
+                                          "  No alias created.", raw_command_string.c_str());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        else if (!cmd_obj->WantsRawCommandString ())
+        {
+            // Note that args was initialized with the original command, and has not been updated to this point.
+            // Therefore can we pass it to the version of Execute that does not need/expect raw input in the alias.
+            return Execute (args, result);
+        }
+        else
+        {
+            // Verify & handle any options/arguments passed to the alias command
+            
+            OptionArgVectorSP option_arg_vector_sp = OptionArgVectorSP (new OptionArgVector);
+            OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
+            
+            // Check to see if there's anything left in the input command string.
+            if (raw_command_string.size() > 0)
+            {
+            
+                // Check to see if the command being aliased can take any command options.
+                Options *options = cmd_obj->GetOptions();
+                if (options)
+                {
+                    // See if any options were specified as part of the alias; if so, handle them appropriately
+                    options->ResetOptionValues ();
+                    Args tmp_args (raw_command_string.c_str());
+                    args.Unshift ("dummy_arg");
+                    args.ParseAliasOptions (*options, result, option_arg_vector, raw_command_string);
+                    args.Shift ();
+                    if (result.Succeeded())
+                        options->VerifyPartialOptions (result);
+                    if (!result.Succeeded() && result.GetStatus() != lldb::eReturnStatusStarted)
+                    {
+                        result.AppendError ("Unable to create requested alias.\n");
+                        return false;
+                    }
+                }
+                // Anything remaining must be plain raw input.  Push it in as a single raw input argument.
+                if (raw_command_string.size() > 0)
+                    option_arg_vector->push_back (OptionArgPair ("<argument>",
+                                                                 OptionArgValue (-1,
+                                                                                  raw_command_string)));
+            }
+            
+            // Create the alias
+            if (m_interpreter.AliasExists (alias_command.c_str())
+                || m_interpreter.UserCommandExists (alias_command.c_str()))
+            {
+                OptionArgVectorSP temp_option_arg_sp (m_interpreter.GetAliasOptions (alias_command.c_str()));
+                if (temp_option_arg_sp.get())
+                {
+                    if (option_arg_vector->size() == 0)
+                        m_interpreter.RemoveAliasOptions (alias_command.c_str());
+                }
+                result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n",
+                                                alias_command.c_str());
+            }
+            
+            CommandObjectSP cmd_obj_sp = m_interpreter.GetCommandSPExact (cmd_obj->GetCommandName(), false);
+            m_interpreter.AddAlias (alias_command.c_str(), cmd_obj_sp);
+            if (option_arg_vector->size() > 0)
+                m_interpreter.AddOrReplaceAliasOptions (alias_command.c_str(), option_arg_vector_sp);
+            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+        }
+        return result.Succeeded();
+    }
 
     bool
     Execute
@@ -282,7 +409,7 @@ public:
                  OptionArgVectorSP option_arg_vector_sp = OptionArgVectorSP (new OptionArgVector);
                  OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
 
-                 if (cmd_obj->IsMultiwordObject())
+                 while (cmd_obj->IsMultiwordObject() && args.GetArgumentCount() > 0)
                  {
                      if (argc >= 3)
                      {
@@ -295,6 +422,7 @@ public:
                              sub_cmd_obj = subcommand_obj_sp.get();
                              use_subcommand = true;
                              args.Shift();  // Shift the sub_command word off the argument vector.
+                             cmd_obj = sub_cmd_obj;
                          }
                          else
                          {
@@ -320,8 +448,9 @@ public:
                          else
                              options = cmd_obj->GetOptions();
                          options->ResetOptionValues ();
+                         std::string empty_string;
                          args.Unshift ("dummy_arg");
-                         args.ParseAliasOptions (*options, result, option_arg_vector);
+                         args.ParseAliasOptions (*options, result, option_arg_vector, empty_string);
                          args.Shift ();
                          if (result.Succeeded())
                              options->VerifyPartialOptions (result);

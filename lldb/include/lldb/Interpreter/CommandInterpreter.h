@@ -85,10 +85,20 @@ public:
     AddOrReplaceAliasOptions (const char *alias_name, OptionArgVectorSP &option_arg_vector_sp);
 
     bool
+    StripFirstWord (std::string &command_string, std::string &next_word);
+
+    void
+    BuildAliasResult (const char *alias_name, std::string &raw_input_string, std::string &alias_result, 
+                      CommandObject *&alias_cmd_obj, CommandReturnObject &result);
+
+    bool
     HandleCommand (const char *command_line, 
                    bool add_to_history, 
                    CommandReturnObject &result, 
                    ExecutionContext *override_context = NULL);
+
+    CommandObject *
+    GetCommandObjectForCommand (std::string &command_line);
 
     // This handles command line completion.  You are given a pointer to the command string buffer, to the current cursor,
     // and to the end of the string (in case it is not NULL terminated).

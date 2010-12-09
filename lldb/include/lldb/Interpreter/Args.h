@@ -313,7 +313,8 @@ public:
     // and it builds up the option_arg_vector as it parses the options.
 
     void
-    ParseAliasOptions (Options &options, CommandReturnObject &result, OptionArgVector *option_arg_vector);
+    ParseAliasOptions (Options &options, CommandReturnObject &result, OptionArgVector *option_arg_vector, 
+                       std::string &raw_input_line);
 
     void
     ParseArgsForCompletion (Options &options, OptionElementVector &option_element_vector, uint32_t cursor_index);
