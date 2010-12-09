@@ -101,6 +101,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case ARM::fixup_arm_ldst_pcrel_12:
     // ARM PC-relative values are offset by 8.
     Value -= 4;
+    // FALLTHROUGH
   case ARM::fixup_t2_ldst_pcrel_12: {
     // Offset by 4, adjusted by two due to the half-word ordering of thumb.
     Value -= 4;
@@ -140,7 +141,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // Offset by 8 just as above.
     return 0xffffff & ((Value - 8) >> 2);
   case ARM::fixup_t2_branch: {
-    Value = Value - 8;
+    Value = Value - 6;
     Value >>= 1; // Low bit is not encoded.
     
     uint64_t out = 0;
