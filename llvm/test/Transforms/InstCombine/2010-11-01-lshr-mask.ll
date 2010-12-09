@@ -1,6 +1,7 @@
 ; RUN: opt -instcombine -S < %s | FileCheck %s
-; <rdar://problem/8606771>
 
+; <rdar://problem/8606771>
+; CHECK: @main
 define i32 @main(i32 %argc) nounwind ssp {
 entry:
   %tmp3151 = trunc i32 %argc to i8
@@ -17,4 +18,27 @@ entry:
   %tmp4086 = zext i8 %tmp4127 to i32
 ; CHECK: ret i32
   ret i32 %tmp4086
+}
+
+; rdar://8739316
+; CHECK: @foo
+define i8 @foo(i8 %arg, i8 %arg1) nounwind {
+bb:
+  %tmp = shl i8 %arg, 7
+  %tmp2 = and i8 %arg1, 84
+  %tmp3 = and i8 %arg1, -118
+  %tmp4 = and i8 %arg1, 33
+  %tmp5 = sub i8 -88, %tmp2
+  %tmp6 = and i8 %tmp5, 84
+  %tmp7 = or i8 %tmp4, %tmp6
+  %tmp8 = xor i8 %tmp, %tmp3
+  %tmp9 = or i8 %tmp7, %tmp8
+  %tmp10 = lshr i8 %tmp8, 7
+  %tmp11 = shl i8 %tmp10, 5
+
+; CHECK: %0 = lshr i8 %tmp8, 2
+; CHECK: %tmp11 = and i8 %0, 32
+
+  %tmp12 = xor i8 %tmp11, %tmp9
+  ret i8 %tmp12
 }
