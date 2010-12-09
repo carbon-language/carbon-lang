@@ -29,7 +29,7 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 // CommandObjectProcessLaunch
 //-------------------------------------------------------------------------
-
+#pragma mark CommandObjectProjectLaunch
 class CommandObjectProcessLaunch : public CommandObject
 {
 public:
@@ -163,13 +163,29 @@ public:
 
         Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
         if (process && process->IsAlive())
-        {
-            result.AppendErrorWithFormat ("Process %u is currently being debugged, kill the process before running again.\n",
-                                          process->GetID());
-            result.SetStatus (eReturnStatusFailed);
-            return false;
+        {        
+            if (!m_interpreter.Confirm ("There is a running process, kill it and restart?", true))
+            {
+                result.AppendErrorWithFormat ("Process %u is currently being debugged, restart cancelled.\n",
+                                              process->GetID());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            else
+            {
+                Error error (process->Destroy());
+                if (error.Success())
+                {
+                    result.SetStatus (eReturnStatusSuccessFinishResult);
+                }
+                else
+                {
+                    result.AppendErrorWithFormat ("Failed to kill process: %s\n", error.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
         }
-
+        
         const char *plugin_name;
         if (!m_options.plugin_name.empty())
             plugin_name = m_options.plugin_name.c_str();
@@ -357,7 +373,7 @@ CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
 //-------------------------------------------------------------------------
 // CommandObjectProcessAttach
 //-------------------------------------------------------------------------
-
+#pragma mark CommandObjectProcessAttach
 class CommandObjectProcessAttach : public CommandObject
 {
 public:
@@ -737,6 +753,7 @@ CommandObjectProcessAttach::CommandOptions::g_option_table[] =
 //-------------------------------------------------------------------------
 // CommandObjectProcessContinue
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessContinue
 
 class CommandObjectProcessContinue : public CommandObject
 {
@@ -824,6 +841,7 @@ public:
 //-------------------------------------------------------------------------
 // CommandObjectProcessDetach
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessDetach
 
 class CommandObjectProcessDetach : public CommandObject
 {
@@ -873,6 +891,7 @@ public:
 //-------------------------------------------------------------------------
 // CommandObjectProcessLoad
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessLoad
 
 class CommandObjectProcessLoad : public CommandObject
 {
@@ -930,6 +949,7 @@ public:
 //-------------------------------------------------------------------------
 // CommandObjectProcessUnload
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessUnload
 
 class CommandObjectProcessUnload : public CommandObject
 {
@@ -995,6 +1015,7 @@ public:
 //-------------------------------------------------------------------------
 // CommandObjectProcessSignal
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessSignal
 
 class CommandObjectProcessSignal : public CommandObject
 {
@@ -1079,6 +1100,7 @@ public:
 //-------------------------------------------------------------------------
 // CommandObjectProcessInterrupt
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessInterrupt
 
 class CommandObjectProcessInterrupt : public CommandObject
 {
@@ -1141,6 +1163,7 @@ public:
 //-------------------------------------------------------------------------
 // CommandObjectProcessKill
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessKill
 
 class CommandObjectProcessKill : public CommandObject
 {
@@ -1198,6 +1221,8 @@ public:
 //-------------------------------------------------------------------------
 // CommandObjectProcessStatus
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessStatus
+
 class CommandObjectProcessStatus : public CommandObject
 {
 public:
@@ -1274,6 +1299,7 @@ public:
 //-------------------------------------------------------------------------
 // CommandObjectProcessHandle
 //-------------------------------------------------------------------------
+#pragma mark CommandObjectProcessHandle
 
 class CommandObjectProcessHandle : public CommandObject
 {
