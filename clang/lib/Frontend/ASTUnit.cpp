@@ -848,6 +848,14 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   }
 
   Invocation.reset(Clang.takeInvocation());
+
+  if (ShouldCacheCodeCompletionResults) {
+    if (CacheCodeCompletionCoolDown > 0)
+      --CacheCodeCompletionCoolDown;
+    else if (top_level_size() != NumTopLevelDeclsAtLastCompletionCache)
+      CacheCodeCompletionResults();
+  }
+
   return false;
   
 error:
@@ -1586,14 +1594,6 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
   
   // Parse the sources
   bool Result = Parse(OverrideMainBuffer);  
-  
-  if (ShouldCacheCodeCompletionResults) {
-    if (CacheCodeCompletionCoolDown > 0)
-      --CacheCodeCompletionCoolDown;
-    else if (top_level_size() != NumTopLevelDeclsAtLastCompletionCache)
-      CacheCodeCompletionResults();
-  }
-  
   return Result;
 }
 
