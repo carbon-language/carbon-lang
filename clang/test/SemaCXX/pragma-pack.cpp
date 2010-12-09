@@ -6,11 +6,29 @@ struct Base {
   int i;
 };
 
-#pragma pack(1)
+#pragma pack(push, 1)
 struct Sub : public Base {
   char c;
 };
+#pragma pack(pop)
 
 int check[sizeof(Sub) == 5 ? 1 : -1];
+
+}
+
+namespace check2 {
+
+struct Base {
+  virtual ~Base();
+  int x;
+};
+
+#pragma pack(push, 1)
+struct Sub : virtual Base {
+  char c;
+};
+#pragma pack(pop)
+
+int check[sizeof(Sub) == 13 ? 1 : -1];
 
 }

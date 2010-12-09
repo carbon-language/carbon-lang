@@ -807,8 +807,17 @@ void RecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   Size += GetVirtualPointersSize(RD);
   DataSize = Size;
 
+  unsigned UnpackedBaseAlign = Context.Target.getPointerAlign(0);
+  unsigned BaseAlign = (Packed) ? 8 : UnpackedBaseAlign;
+
+  // The maximum field alignment overrides base align.
+  if (MaxFieldAlignment) {
+    BaseAlign = std::min(BaseAlign, MaxFieldAlignment);
+    UnpackedBaseAlign = std::min(UnpackedBaseAlign, MaxFieldAlignment);
+  }
+
   // Update the alignment.
-  UpdateAlignment(Context.Target.getPointerAlign(0));
+  UpdateAlignment(BaseAlign, UnpackedBaseAlign);
 }
 
 BaseSubobjectInfo *
