@@ -355,7 +355,7 @@ def VEXT : WInst<"vext", "dddi",
 // E.3.27 Reverse vector elements (sdap endianness)
 def VREV64 : Inst<"vrev64", "dd", "csiUcUsUiPcPsfQcQsQiQUcQUsQUiQPcQPsQf",
                   OP_REV64>;
-def VREV32 : Inst<"vrev32", "dd", "csUcUsPcQcQsQUcQUsQPc", OP_REV32>;
+def VREV32 : Inst<"vrev32", "dd", "csUcUsPcPsQcQsQUcQUsQPcQPs", OP_REV32>;
 def VREV16 : Inst<"vrev16", "dd", "cUcPcQcQUcQPc", OP_REV16>;
 
 ////////////////////////////////////////////////////////////////////////////////
