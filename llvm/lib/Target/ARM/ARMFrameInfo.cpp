@@ -458,7 +458,8 @@ ARMFrameInfo::ResolveFrameIndexReference(const MachineFunction &MF,
   if (hasFP(MF) && AFI->hasStackFrame()) {
     // Use frame pointer to reference fixed objects. Use it for locals if
     // there are VLAs (and thus the SP isn't reliable as a base).
-    if (isFixed || (MFI->hasVarSizedObjects() && !RegInfo->hasBasePointer(MF))) {
+    if (isFixed || (MFI->hasVarSizedObjects() &&
+                    !RegInfo->hasBasePointer(MF))) {
       FrameReg = RegInfo->getFrameRegister(MF);
       return FPOffset;
     } else if (MFI->hasVarSizedObjects()) {
@@ -517,8 +518,9 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
       if (!(Func)(Reg, STI.isTargetDarwin())) continue;
 
       // Add the callee-saved register as live-in unless it's LR and
-      // @llvm.returnaddress is called. If LR is returned for @llvm.returnaddress
-      // then it's already added to the function and entry block live-in sets.
+      // @llvm.returnaddress is called. If LR is returned for
+      // @llvm.returnaddress then it's already added to the function and
+      // entry block live-in sets.
       bool isKill = true;
       if (Reg == ARM::LR) {
         if (MF.getFrameInfo()->isReturnAddressTaken() &&
