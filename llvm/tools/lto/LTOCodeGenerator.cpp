@@ -43,6 +43,7 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include "llvm/Config/config.h"
 #include <cstdlib>
 #include <unistd.h>
@@ -221,9 +222,12 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     if ( !asmResult ) {
         // remove old buffer if compile() called twice
         delete _nativeObjectFile;
-        
+
         // read .o file into memory buffer
-        _nativeObjectFile = MemoryBuffer::getFile(uniqueObjStr.c_str(),&errMsg);
+        error_code ec;
+        _nativeObjectFile = MemoryBuffer::getFile(uniqueObjStr.c_str(), ec);
+        if (ec)
+          errMsg = ec.message();
     }
 
     // remove temp files

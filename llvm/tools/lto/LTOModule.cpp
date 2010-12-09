@@ -26,6 +26,7 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/system_error.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -56,7 +57,8 @@ bool LTOModule::isBitcodeFileForTarget(const void *mem, size_t length,
 
 bool LTOModule::isBitcodeFileForTarget(const char *path,
                                        const char *triplePrefix) {
-  MemoryBuffer *buffer = MemoryBuffer::getFile(path);
+  error_code ec;
+  MemoryBuffer *buffer = MemoryBuffer::getFile(path, ec);
   if (buffer == NULL)
     return false;
   return isTargetMatch(buffer, triplePrefix);
@@ -78,9 +80,12 @@ LTOModule::LTOModule(Module *m, TargetMachine *t)
 
 LTOModule *LTOModule::makeLTOModule(const char *path,
                                     std::string &errMsg) {
-  OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getFile(path, &errMsg));
-  if (!buffer)
+  error_code ec;
+  OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getFile(path, ec));
+  if (!buffer) {
+    errMsg = ec.message();
     return NULL;
+  }
   return makeLTOModule(buffer.get(), errMsg);
 }
 
