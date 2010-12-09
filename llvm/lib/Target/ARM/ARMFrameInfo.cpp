@@ -529,9 +529,9 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
       if (isKill)
         MBB.addLiveIn(Reg);
 
-      // If NoGap is true, pop consecutive registers and then leave the rest
+      // If NoGap is true, push consecutive registers and then leave the rest
       // for other instructions. e.g.
-      // vpush {d8, d10, d11} -> vpush {d8}, vpop {d10, d11}
+      // vpush {d8, d10, d11} -> vpush {d8}, vpush {d10, d11}
       if (NoGap && LastReg && LastReg != Reg-1)
         break;
       LastReg = Reg;
