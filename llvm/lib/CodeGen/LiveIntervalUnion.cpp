@@ -168,6 +168,8 @@ LiveIntervalUnion::Query::firstInterference() {
       IR.VirtRegI = VirtReg->end();
   }
   findIntersection(FirstInterference);
+  assert((IR.VirtRegI == VirtReg->end() || IR.LiveUnionI.valid())
+         && "Uninitialized iterator");
   return FirstInterference;
 }
 

@@ -145,8 +145,8 @@ public:
     Query(): LiveUnion(), VirtReg() {}
 
     Query(LiveInterval *VReg, LiveIntervalUnion *LIU):
-      LiveUnion(LIU), VirtReg(VReg), SeenAllInterferences(false),
-      SeenUnspillableVReg(false)
+      LiveUnion(LIU), VirtReg(VReg), CheckedFirstInterference(false),
+      SeenAllInterferences(false), SeenUnspillableVReg(false)
     {}
 
     void clear() {
@@ -159,6 +159,7 @@ public:
     }
 
     void init(LiveInterval *VReg, LiveIntervalUnion *LIU) {
+      assert(VReg && LIU && "Invalid arguments");
       if (VirtReg == VReg && LiveUnion == LIU) {
         // Retain cached results, e.g. firstInterference.
         return;
