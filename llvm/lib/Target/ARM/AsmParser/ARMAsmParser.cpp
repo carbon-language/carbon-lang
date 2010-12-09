@@ -874,11 +874,6 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   // FIXME: We need a way to check whether a prefix supports predication,
   // otherwise we will end up with an ambiguity for instructions that happen to
   // end with a predicate name.
-  // FIXME: Likewise, some arithmetic instructions have an 's' prefix which
-  // indicates to update the condition codes. Those instructions have an
-  // additional immediate operand which encodes the prefix as reg0 or CPSR.
-  // Just checking for a suffix of 's' definitely creates ambiguities; e.g,
-  // the SMMLS instruction.
   unsigned CC = StringSwitch<unsigned>(Head.substr(Head.size()-2))
     .Case("eq", ARMCC::EQ)
     .Case("ne", ARMCC::NE)
@@ -954,7 +949,51 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         MCStreamer &Out) {
   MCInst Inst;
   unsigned ErrorInfo;
-  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo)) {
+  MatchResultTy MatchResult, MatchResult2;
+  MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo);
+  if (MatchResult != Match_Success) {
+    // If we get a Match_InvalidOperand it might be some arithmetic instruction
+    // that does not update the condition codes.  So try adding a CCOut operand
+    // with a value of reg0.
+    if (MatchResult == Match_InvalidOperand) {
+      Operands.insert(Operands.begin() + 1,
+                      ARMOperand::CreateCCOut(0,
+                                  ((ARMOperand*)Operands[0])->getStartLoc()));
+      MatchResult2 = MatchInstructionImpl(Operands, Inst, ErrorInfo);
+      if (MatchResult2 == Match_Success)
+        MatchResult = Match_Success;
+      else
+        Operands.erase(Operands.begin() + 1);
+    }
+    // If we get a Match_MnemonicFail it might be some arithmetic instruction
+    // that updates the condition codes if it ends in 's'.  So see if the
+    // mnemonic ends in 's' and if so try removing the 's' and adding a CCOut
+    // operand with a value of CPSR.
+    else if(MatchResult == Match_MnemonicFail) {
+      // Get the instruction mnemonic, which is the first token.
+      StringRef Mnemonic = ((ARMOperand*)Operands[0])->getToken();
+      if (Mnemonic.substr(Mnemonic.size()-1) == "s") {
+        // removed the 's' from the mnemonic for matching.
+        StringRef MnemonicNoS = Mnemonic.slice(0, Mnemonic.size() - 1);
+        SMLoc NameLoc = ((ARMOperand*)Operands[0])->getStartLoc();
+	Operands.erase(Operands.begin());
+	Operands.insert(Operands.begin(),
+                        ARMOperand::CreateToken(MnemonicNoS, NameLoc));
+        Operands.insert(Operands.begin() + 1,
+                        ARMOperand::CreateCCOut(ARM::CPSR, NameLoc));
+        MatchResult2 = MatchInstructionImpl(Operands, Inst, ErrorInfo);
+        if (MatchResult2 == Match_Success)
+          MatchResult = Match_Success;
+        else {
+	  Operands.erase(Operands.begin());
+	  Operands.insert(Operands.begin(),
+                          ARMOperand::CreateToken(Mnemonic, NameLoc));
+	  Operands.erase(Operands.begin() + 1);
+        }
+      }
+    }
+  }
+  switch (MatchResult) {
   case Match_Success:
     Out.EmitInstruction(Inst);
     return false;
