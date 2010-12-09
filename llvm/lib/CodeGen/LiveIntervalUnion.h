@@ -75,7 +75,9 @@ public:
   // by their starting position.
   SegmentIter begin() { return Segments.begin(); }
   SegmentIter end() { return Segments.end(); }
+  SegmentIter find(SlotIndex x) { return Segments.find(x); }
   bool empty() { return Segments.empty(); }
+  SlotIndex startIndex() { return Segments.start(); }
 
   // Add a live virtual register to this union and merge its segments.
   void unify(LiveInterval &VirtReg);
@@ -135,6 +137,7 @@ public:
     LiveInterval *VirtReg;
     InterferenceResult FirstInterference;
     SmallVector<LiveInterval*,4> InterferingVRegs;
+    bool CheckedFirstInterference;
     bool SeenAllInterferences;
     bool SeenUnspillableVReg;
 
@@ -149,8 +152,8 @@ public:
     void clear() {
       LiveUnion = NULL;
       VirtReg = NULL;
-      FirstInterference = InterferenceResult();
       InterferingVRegs.clear();
+      CheckedFirstInterference = false;
       SeenAllInterferences = false;
       SeenUnspillableVReg = false;
     }
@@ -187,7 +190,7 @@ public:
 
     // Get the first pair of interfering segments, or a noninterfering result.
     // This initializes the firstInterference_ cache.
-    InterferenceResult firstInterference();
+    const InterferenceResult &firstInterference();
 
     // Treat the result as an iterator and advance to the next interfering pair
     // of segments. Visiting each unique interfering pairs means that the same

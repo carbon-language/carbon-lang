@@ -144,12 +144,29 @@ void LiveIntervalUnion::Query::findIntersection(InterferenceResult &IR) const {
 
 // Find the first intersection, and cache interference info
 // (retain segment iterators into both VirtReg and LiveUnion).
-LiveIntervalUnion::InterferenceResult
+const LiveIntervalUnion::InterferenceResult &
 LiveIntervalUnion::Query::firstInterference() {
-  if (FirstInterference != LiveIntervalUnion::InterferenceResult()) {
+  if (CheckedFirstInterference)
     return FirstInterference;
+  CheckedFirstInterference = true;
+  InterferenceResult &IR = FirstInterference;
+
+  // Quickly skip interference check for empty sets.
+  if (VirtReg->empty() || LiveUnion->empty()) {
+    IR.VirtRegI = VirtReg->end();
+  } else if (VirtReg->beginIndex() < LiveUnion->startIndex()) {
+    // VirtReg starts first, perform double binary search.
+    IR.VirtRegI = VirtReg->find(LiveUnion->startIndex());
+    if (IR.VirtRegI != VirtReg->end())
+      IR.LiveUnionI = LiveUnion->find(IR.VirtRegI->start);
+  } else {
+    // LiveUnion starts first, perform double binary search.
+    IR.LiveUnionI = LiveUnion->find(VirtReg->beginIndex());
+    if (IR.LiveUnionI.valid())
+      IR.VirtRegI = VirtReg->find(IR.LiveUnionI.start());
+    else
+      IR.VirtRegI = VirtReg->end();
   }
-  FirstInterference = InterferenceResult(VirtReg->begin(), LiveUnion->begin());
   findIntersection(FirstInterference);
   return FirstInterference;
 }
