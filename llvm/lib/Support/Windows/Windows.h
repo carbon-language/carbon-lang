@@ -102,3 +102,16 @@ public:
 typedef ScopedHandle<HANDLE, uintptr_t(-1),
                       BOOL (WINAPI*)(HANDLE), ::FindClose>
   ScopedFindHandle;
+
+namespace llvm {
+template <class T>
+class SmallVectorImpl;
+
+template <class T>
+typename SmallVectorImpl<T>::const_pointer
+c_str(SmallVectorImpl<T> &str) {
+  str.push_back(0);
+  str.pop_back();
+  return str.data();
+}
+} // end namespace llvm.

@@ -38,6 +38,13 @@ public:
   // Extra methods.
   StringRef str() const { return StringRef(this->begin(), this->size()); }
 
+  // TODO: Make this const, if it's safe...
+  const char* c_str() {
+    this->push_back(0);
+    this->pop_back();
+    return this->data();
+  }
+
   // Implicit conversion to StringRef.
   operator StringRef() const { return str(); }
 

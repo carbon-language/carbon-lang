@@ -623,7 +623,7 @@ error_code directory_iterator_construct(directory_iterator& it,
 
   //  Get the first directory entry.
   WIN32_FIND_DATAW FirstFind;
-  ScopedFindHandle FindHandle(::FindFirstFileW(path_utf16.c_str(), &FirstFind));
+  ScopedFindHandle FindHandle(::FindFirstFileW(c_str(path_utf16), &FirstFind));
   if (!FindHandle)
     return windows_error(::GetLastError());
 
