@@ -46,8 +46,8 @@ enum Fixups {
   // fixup_arm_thumb_blx - Fixup for Thumb BLX instructions.
   fixup_arm_thumb_blx,
 
-  // fixup_arm_thumb_br - Fixup for Thumb branch instructions.
-  fixup_arm_thumb_br,
+  // fixup_arm_thumb_cb - Fixup for Thumb branch instructions.
+  fixup_arm_thumb_cb,
 
   // fixup_arm_thumb_cp - Fixup for Thumb load/store from constant pool instrs.
   fixup_arm_thumb_cp,

@@ -55,7 +55,7 @@ public:
       { "fixup_t2_branch",          0,    32,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_bl",       0,    32,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_blx",      0,    32,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_thumb_br",       0,    16,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_thumb_cb",       0,    16,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_cp",       1,    8,    MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_movt_hi16",      0,    16,   0 },
       { "fixup_arm_movw_lo16",      0,    16,   0 },
@@ -462,7 +462,7 @@ getThumbBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getThumbCBTargetOpValue(const MCInst &MI, unsigned OpIdx,
                         SmallVectorImpl<MCFixup> &Fixups) const {
-  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_br, Fixups);
+  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_cb, Fixups);
 }
 
 /// getBranchTargetOpValue - Return encoding info for 24-bit immediate branch
