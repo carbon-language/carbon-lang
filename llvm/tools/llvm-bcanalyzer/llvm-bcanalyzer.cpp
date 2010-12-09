@@ -61,12 +61,19 @@ NonSymbolic("non-symbolic",
             cl::desc("Emit numberic info in dump even if"
                      " symbolic info is available"));
 
-/// CurStreamType - If we can sniff the flavor of this stream, we can produce
-/// better dump info.
-static enum {
+namespace {
+
+/// CurStreamTypeType - A type for CurStreamType
+enum CurStreamTypeType {
   UnknownBitstream,
   LLVMIRBitstream
-} CurStreamType;
+};
+
+}
+
+/// CurStreamType - If we can sniff the flavor of this stream, we can produce
+/// better dump info.
+static CurStreamTypeType CurStreamType;
 
 
 /// GetBlockName - Return a symbolic block name if known, otherwise return
