@@ -2953,9 +2953,14 @@ void Sema::CodeCompletePostfixExpression(Scope *S, ExprResult E) {
     CodeCompleteObjCInstanceMessage(S, E.take(), 0, 0, false);
 }
 
+/// \brief The set of properties that have already been added, referenced by
+/// property name.
+typedef llvm::SmallPtrSet<IdentifierInfo*, 16> AddedPropertiesSet;
+
 static void AddObjCProperties(ObjCContainerDecl *Container, 
                               bool AllowCategories,
                               DeclContext *CurContext,
+                              AddedPropertiesSet &AddedProperties,
                               ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
 
@@ -2963,40 +2968,46 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   for (ObjCContainerDecl::prop_iterator P = Container->prop_begin(),
                                      PEnd = Container->prop_end();
        P != PEnd;
-       ++P)
-    Results.MaybeAddResult(Result(*P, 0), CurContext);
+       ++P) {
+    if (AddedProperties.insert(P->getIdentifier()))
+      Results.MaybeAddResult(Result(*P, 0), CurContext);
+  }
   
   // Add properties in referenced protocols.
   if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
     for (ObjCProtocolDecl::protocol_iterator P = Protocol->protocol_begin(),
                                           PEnd = Protocol->protocol_end();
          P != PEnd; ++P)
-      AddObjCProperties(*P, AllowCategories, CurContext, Results);
+      AddObjCProperties(*P, AllowCategories, CurContext, AddedProperties, 
+                        Results);
   } else if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)){
     if (AllowCategories) {
       // Look through categories.
       for (ObjCCategoryDecl *Category = IFace->getCategoryList();
            Category; Category = Category->getNextClassCategory())
-        AddObjCProperties(Category, AllowCategories, CurContext, Results);
+        AddObjCProperties(Category, AllowCategories, CurContext, 
+                          AddedProperties, Results);
     }
     
     // Look through protocols.
     for (ObjCInterfaceDecl::all_protocol_iterator
          I = IFace->all_referenced_protocol_begin(),
          E = IFace->all_referenced_protocol_end(); I != E; ++I)
-      AddObjCProperties(*I, AllowCategories, CurContext, Results);
+      AddObjCProperties(*I, AllowCategories, CurContext, AddedProperties,
+                        Results);
     
     // Look in the superclass.
     if (IFace->getSuperClass())
       AddObjCProperties(IFace->getSuperClass(), AllowCategories, CurContext, 
-                        Results);
+                        AddedProperties, Results);
   } else if (const ObjCCategoryDecl *Category
                                     = dyn_cast<ObjCCategoryDecl>(Container)) {
     // Look through protocols.
     for (ObjCCategoryDecl::protocol_iterator P = Category->protocol_begin(),
                                           PEnd = Category->protocol_end(); 
          P != PEnd; ++P)
-      AddObjCProperties(*P, AllowCategories, CurContext, Results);
+      AddObjCProperties(*P, AllowCategories, CurContext, AddedProperties,
+                        Results);
   }
 }
 
@@ -3056,18 +3067,20 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
     }
   } else if (!IsArrow && BaseType->getAsObjCInterfacePointerType()) {
     // Objective-C property reference.
+    AddedPropertiesSet AddedProperties;
     
     // Add property results based on our interface.
     const ObjCObjectPointerType *ObjCPtr
       = BaseType->getAsObjCInterfacePointerType();
     assert(ObjCPtr && "Non-NULL pointer guaranteed above!");
-    AddObjCProperties(ObjCPtr->getInterfaceDecl(), true, CurContext, Results);
+    AddObjCProperties(ObjCPtr->getInterfaceDecl(), true, CurContext, 
+                      AddedProperties, Results);
     
     // Add properties from the protocols in a qualified interface.
     for (ObjCObjectPointerType::qual_iterator I = ObjCPtr->qual_begin(),
                                               E = ObjCPtr->qual_end();
          I != E; ++I)
-      AddObjCProperties(*I, true, CurContext, Results);
+      AddObjCProperties(*I, true, CurContext, AddedProperties, Results);
   } else if ((IsArrow && BaseType->isObjCObjectPointerType()) ||
              (!IsArrow && BaseType->isObjCObjectType())) {
     // Objective-C instance variable access.
@@ -5168,14 +5181,15 @@ void Sema::CodeCompleteObjCPropertyDefinition(Scope *S, Decl *ObjCImpDecl) {
       Results.Ignore(PropertyImpl->getPropertyDecl());
   
   // Add any properties that we find.
+  AddedPropertiesSet AddedProperties;
   Results.EnterNewScope();
   if (ObjCImplementationDecl *ClassImpl
         = dyn_cast<ObjCImplementationDecl>(Container))
     AddObjCProperties(ClassImpl->getClassInterface(), false, CurContext, 
-                      Results);
+                      AddedProperties, Results);
   else
     AddObjCProperties(cast<ObjCCategoryImplDecl>(Container)->getCategoryDecl(),
-                      false, CurContext, Results);
+                      false, CurContext, AddedProperties, Results);
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, 
