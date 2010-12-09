@@ -31,7 +31,7 @@ namespace {
     const TargetInstrInfo *TII;
 
     static char ID;
-    Filler(TargetMachine &tm) 
+    Filler(TargetMachine &tm)
       : MachineFunctionPass(ID), TM(tm), TII(tm.getInstrInfo()) { }
 
     virtual const char *getPassName() const {
@@ -55,18 +55,22 @@ namespace {
 /// Currently, we fill delay slots with NOPs. We assume there is only one
 /// delay slot per delayed instruction.
 bool Filler::
-runOnMachineBasicBlock(MachineBasicBlock &MBB) 
+runOnMachineBasicBlock(MachineBasicBlock &MBB)
 {
   bool Changed = false;
-  for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I)
-    if (TM.getSubtarget<MipsSubtarget>().isMips1() &&
-	I->getDesc().hasDelaySlot()) {
+  for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
+    const TargetInstrDesc& Tid = I->getDesc();
+    if (Tid.hasDelaySlot() &&
+        (TM.getSubtarget<MipsSubtarget>().isMips1() ||
+         Tid.isCall() || Tid.isBranch() || Tid.isReturn())) {
       MachineBasicBlock::iterator J = I;
       ++J;
       BuildMI(MBB, J, I->getDebugLoc(), TII->get(Mips::NOP));
       ++FilledSlots;
       Changed = true;
     }
+  }
+
   return Changed;
 }
 
