@@ -90,3 +90,16 @@ struct S {
     };
   };
 } s;
+
+
+ //PR8760 
+ template <typename T>
+  struct Foo {
+    Foo() : ptr(__nullptr) {}
+    union {
+      T *ptr;
+   };
+  };
+  Foo<int> f;
+  
+  

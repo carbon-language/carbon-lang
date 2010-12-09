@@ -467,9 +467,10 @@ Decl *TemplateDeclInstantiator::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
     NamedChain[i++] = (SemaRef.FindInstantiatedDecl(D->getLocation(),
                                             *PI, TemplateArgs));
 
+  QualType T = cast<FieldDecl>(NamedChain[i-1])->getType();
   IndirectFieldDecl* IndirectField
     = IndirectFieldDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                D->getIdentifier(), D->getType(),
+                                D->getIdentifier(), T,
                                 NamedChain, D->getChainingSize());
 
 
