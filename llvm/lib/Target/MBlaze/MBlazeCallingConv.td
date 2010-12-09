@@ -19,8 +19,10 @@ class CCIfSubtarget<string F, CCAction A>:
 
 def RetCC_MBlaze : CallingConv<[
   // i32 are returned in registers R3, R4
-  CCIfType<[i32], CCAssignToReg<[R3, R4]>>,
+  CCIfType<[i32,f32], CCAssignToReg<[R3, R4]>>
+]>;
 
-  // f32 are returned in registers R3, R4
-  CCIfType<[f32], CCAssignToReg<[R3, R4]>>
+def CC_MBlaze : CallingConv<[
+  CCIfType<[i32,f32], CCCustom<"CC_MBlaze_AssignReg">>,
+  CCIfType<[i32,f32], CCAssignToStack<4, 4>>
 ]>;

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ALPHA_FRAMEINFO_H
-#define ALPHA_FRAMEINFO_H
+#ifndef MBLAZE_FRAMEINFO_H
+#define MBLAZE_FRAMEINFO_H
 
 #include "MBlaze.h"
 #include "MBlazeSubtarget.h"
@@ -27,10 +27,8 @@ protected:
 
 public:
   explicit MBlazeFrameInfo(const MBlazeSubtarget &sti)
-    : TargetFrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0), STI(sti) {
+    : TargetFrameInfo(TargetFrameInfo::StackGrowsUp, 4, 0), STI(sti) {
   }
-
-  void adjustMBlazeStackFrame(MachineFunction &MF) const;
 
   /// targetHandlesStackFrameRounding - Returns true if the target is
   /// responsible for rounding up the stack frame (probably at emitPrologue
@@ -43,6 +41,9 @@ public:
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   bool hasFP(const MachineFunction &MF) const;
+
+  virtual void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                    RegScavenger *RS) const;
 };
 
 } // End llvm namespace

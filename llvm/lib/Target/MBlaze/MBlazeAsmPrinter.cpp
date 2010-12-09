@@ -163,7 +163,6 @@ void MBlazeAsmPrinter::emitFrameDirective() {
   unsigned stkReg = RI.getFrameRegister(*MF);
   unsigned retReg = RI.getRARegister();
   unsigned stkSze = MF->getFrameInfo()->getStackSize();
-  if (stkSze < 28 && MF->getFrameInfo()->adjustsStack()) stkSze = 28;
 
   OutStreamer.EmitRawText("\t.frame\t" +
                           Twine(MBlazeInstPrinter::getRegisterName(stkReg)) +
@@ -183,11 +182,6 @@ void MBlazeAsmPrinter::EmitFunctionBodyStart() {
 
   emitFrameDirective();
   printSavedRegsBitmask();
-
-  // SmallString<128> Str;
-  // raw_svector_ostream OS(Str);
-  // printSavedRegsBitmask(OS);
-  // OutStreamer.EmitRawText(OS.str());
 }
 
 void MBlazeAsmPrinter::EmitFunctionBodyEnd() {

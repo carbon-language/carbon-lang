@@ -48,9 +48,6 @@ struct MBlazeRegisterInfo : public MBlazeGenRegisterInfo {
   /// Get PIC indirect call register
   static unsigned getPICCallReg();
 
-  /// Adjust the MBlaze stack frame.
-  void adjustMBlazeStackFrame(MachineFunction &MF) const;
-
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
 

@@ -1,30 +1,14 @@
 * Writing out ELF files is close to working but the following needs to
   be examined more closely:
-    - ELF relocation records are incorrect because the function
-      ELFObjectWriter::RecordRelocation is hard coded for X86/X86-64.
     - Relocations use 2-byte / 4-byte to terminology in reference to
       the size of the immediate value being changed. The Xilinx
       terminology seems to be (???) 4-byte / 8-byte in reference
       to the number of bytes of instructions that are being changed.
-    - BRLID and like instructions are always assumed to use a 4-byte
-      immediate value for the relocation and BEQID and like instructions
-      are always assumed to use a 2-byte immediate value for the relocation.
-      I think this means that conditional branches like BEQID can only
-      branch += 32768 bytes (~8192 instructions). We should allow conditional
-      branches to use 4-byte relocations but I'm not sure how to do that
-      right now.
-    - Relocation records for indirect calls are not being generated
-      correctly. These should emit and IMM 0 directly before the ORI
-      instruction that loads the register (just like when a BRLID
-      instruction is used instead of an ORI).
 
 * Code generation seems to work relatively well now but the following
   needs to be examined more closely:
     - The stack layout needs to be examined to make sure it meets
       the standard, especially in regards to var arg functions.
-    - The delay slot filler is ad hoc but seems to work. Load and
-      store instructions were prevented from being moved to delay
-      slots but I'm not sure that is necessary.
     - The processor itineraries are copied from a different backend
       and need to be updated to model the MicroBlaze correctly.
     - Look at the MBlazeGenFastISel.inc stuff and make use of it

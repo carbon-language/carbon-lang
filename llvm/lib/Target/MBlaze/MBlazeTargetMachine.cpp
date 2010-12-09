@@ -97,8 +97,8 @@ MBlazeTargetMachine(const Target &T, const std::string &TT,
 
 // Install an instruction selector pass using
 // the ISelDag to gen MBlaze code.
-bool MBlazeTargetMachine::
-addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
+bool MBlazeTargetMachine::addInstSelector(PassManagerBase &PM,
+                                          CodeGenOpt::Level OptLevel) {
   PM.add(createMBlazeISelDag(*this));
   return false;
 }
@@ -106,8 +106,8 @@ addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
 // Implemented by targets that want to run passes immediately before
 // machine code is emitted. return true if -print-machineinstrs should
 // print out the code after the passes.
-bool MBlazeTargetMachine::
-addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
+bool MBlazeTargetMachine::addPreEmitPass(PassManagerBase &PM,
+                                         CodeGenOpt::Level OptLevel) {
   PM.add(createMBlazeDelaySlotFillerPass(*this));
   return true;
 }

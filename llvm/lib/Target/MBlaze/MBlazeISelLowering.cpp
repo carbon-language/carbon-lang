@@ -35,6 +35,11 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+static bool CC_MBlaze_AssignReg(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
+                                CCValAssign::LocInfo &LocInfo,
+                                ISD::ArgFlagsTy &ArgFlags,
+                                CCState &State);
+
 const char *MBlazeTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
     case MBlazeISD::JmpLink    : return "MBlazeISD::JmpLink";
@@ -468,47 +473,24 @@ SDValue MBlazeTargetLowering::LowerVASTART(SDValue Op,
 
 #include "MBlazeGenCallingConv.inc"
 
-static bool CC_MBlaze2(unsigned ValNo, MVT ValVT,
-                       MVT LocVT, CCValAssign::LocInfo LocInfo,
-                       ISD::ArgFlagsTy ArgFlags, CCState &State) {
-  static const unsigned RegsSize=6;
-  static const unsigned IntRegs[] = {
+static bool CC_MBlaze_AssignReg(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
+                                CCValAssign::LocInfo &LocInfo,
+                                ISD::ArgFlagsTy &ArgFlags,
+                                CCState &State) {
+  static const unsigned ArgRegs[] = {
     MBlaze::R5, MBlaze::R6, MBlaze::R7,
     MBlaze::R8, MBlaze::R9, MBlaze::R10
   };
 
-  unsigned Reg=0;
+  const unsigned NumArgRegs = array_lengthof(ArgRegs);
+  unsigned Reg = State.AllocateReg(ArgRegs, NumArgRegs);
+  if (!Reg) return false;
 
-  // Promote i8 and i16
-  if (LocVT == MVT::i8 || LocVT == MVT::i16) {
-    LocVT = MVT::i32;
-    if (ArgFlags.isSExt())
-      LocInfo = CCValAssign::SExt;
-    else if (ArgFlags.isZExt())
-      LocInfo = CCValAssign::ZExt;
-    else
-      LocInfo = CCValAssign::AExt;
-  }
+  unsigned SizeInBytes = ValVT.getSizeInBits() >> 3;
+  State.AllocateStack(SizeInBytes, SizeInBytes);
+  State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
 
-  if (ValVT == MVT::i32) {
-    Reg = State.AllocateReg(IntRegs, RegsSize);
-    LocVT = MVT::i32;
-  } else if (ValVT == MVT::f32) {
-    Reg = State.AllocateReg(IntRegs, RegsSize);
-    LocVT = MVT::f32;
-  }
-
-  if (!Reg) {
-    unsigned SizeInBytes = ValVT.getSizeInBits() >> 3;
-    unsigned Offset = State.AllocateStack(SizeInBytes, SizeInBytes);
-    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
-  } else {
-    unsigned SizeInBytes = ValVT.getSizeInBits() >> 3;
-    State.AllocateStack(SizeInBytes, SizeInBytes);
-    State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
-  }
-
-  return false; // CC must always match
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -529,26 +511,30 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
   // MBlaze does not yet support tail call optimization
   isTailCall = false;
 
+  // The MBlaze requires stack slots for arguments passed to var arg
+  // functions even if they are passed in registers.
+  bool needsRegArgSlots = isVarArg;
+
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
                  *DAG.getContext());
-  CCInfo.AnalyzeCallOperands(Outs, CC_MBlaze2);
+  CCInfo.AnalyzeCallOperands(Outs, CC_MBlaze);
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
+
+  // Variable argument function calls require a minimum of 24-bytes of stack
+  if (isVarArg && NumBytes < 24) NumBytes = 24;
+
   Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
 
   SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
-
-  // First/LastArgStackLoc contains the first/last
-  // "at stack" argument location.
-  int LastArgStackLoc = 0;
-  unsigned FirstStackArgLoc = 0;
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -579,10 +565,15 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
       // Register can't get to this point...
       assert(VA.isMemLoc());
 
+      // Since we are alread passing values on the stack we don't
+      // need to worry about creating additional slots for the
+      // values passed via registers.
+      needsRegArgSlots = false;
+
       // Create the frame index object for this incoming parameter
-      LastArgStackLoc = (FirstStackArgLoc + VA.getLocMemOffset());
-      int FI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
-                                      LastArgStackLoc, true);
+      unsigned ArgSize = VA.getValVT().getSizeInBits()/8;
+      unsigned StackLoc = VA.getLocMemOffset() + 4;
+      int FI = MFI->CreateFixedObject(ArgSize, StackLoc, true);
 
       SDValue PtrOff = DAG.getFrameIndex(FI,getPointerTy());
 
@@ -593,6 +584,11 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
                                          false, false, 0));
     }
   }
+
+  // If we need to reserve stack space for the arguments passed via registers
+  // then create a fixed stack object at the beginning of the stack.
+  if (needsRegArgSlots && TFI.hasReservedCallFrame(MF))
+    MFI->CreateFixedObject(28,0,true);
 
   // Transform all store nodes into one single node because all store
   // nodes are independent of each other.
@@ -710,10 +706,8 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
                  ArgLocs, *DAG.getContext());
 
-  CCInfo.AnalyzeFormalArguments(Ins, CC_MBlaze2);
+  CCInfo.AnalyzeFormalArguments(Ins, CC_MBlaze);
   SDValue StackPtr;
-
-  unsigned FirstStackArgLoc = 0;
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
@@ -753,9 +747,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       }
 
       InVals.push_back(ArgValue);
-
     } else { // VA.isRegLoc()
-
       // sanity check
       assert(VA.isMemLoc());
 
@@ -771,9 +763,9 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       // offset on PEI::calculateFrameObjectOffsets.
       // Arguments are always 32-bit.
       unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
+      unsigned StackLoc = VA.getLocMemOffset() + 4;
       int FI = MFI->CreateFixedObject(ArgSize, 0, true);
-      MBlazeFI->recordLoadArgsFI(FI, -(ArgSize+
-        (FirstStackArgLoc + VA.getLocMemOffset())));
+      MBlazeFI->recordLoadArgsFI(FI, -StackLoc);
 
       // Create load nodes to retrieve arguments from the stack
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
@@ -796,7 +788,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     unsigned Begin = MBlazeRegisterInfo::getRegisterNumbering(MBlaze::R5);
     unsigned Start = MBlazeRegisterInfo::getRegisterNumbering(ArgRegEnd+1);
     unsigned End   = MBlazeRegisterInfo::getRegisterNumbering(MBlaze::R10);
-    unsigned StackLoc = ArgLocs.size()-1 + (Start - Begin);
+    unsigned StackLoc = Start - Begin + 1;
 
     for (; Start <= End; ++Start, ++StackLoc) {
       unsigned Reg = MBlazeRegisterInfo::getRegisterFromNumbering(Start);
@@ -804,7 +796,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, LiveReg, MVT::i32);
 
       int FI = MFI->CreateFixedObject(4, 0, true);
-      MBlazeFI->recordStoreVarArgsFI(FI, -(4+(StackLoc*4)));
+      MBlazeFI->recordStoreVarArgsFI(FI, -(StackLoc*4));
       SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
       OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff,
                                        MachinePointerInfo(),

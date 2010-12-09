@@ -71,11 +71,8 @@ namespace llvm {
     }
 
     // Pass Pipeline Configuration
-    virtual bool addInstSelector(PassManagerBase &PM,
-                                 CodeGenOpt::Level OptLevel);
-
-    virtual bool addPreEmitPass(PassManagerBase &PM,
-                                CodeGenOpt::Level OptLevel);
+    virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level Opt);
+    virtual bool addPreEmitPass(PassManagerBase &PM,CodeGenOpt::Level Opt);
   };
 } // End llvm namespace
 

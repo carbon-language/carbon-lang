@@ -34,12 +34,6 @@ private:
   /// saved. This is used on Prologue and Epilogue to emit RA save/restore
   int RAStackOffset;
 
-  /// At each function entry a special bitmask directive must be emitted
-  /// to help in debugging CPU callee saved registers. It needs a negative
-  /// offset from the final stack size and its higher register location on
-  /// the stack.
-  int CPUTopSavedRegOff;
-
   /// MBlazeFIHolder - Holds a FrameIndex and it's Stack Pointer Offset
   struct MBlazeFIHolder {
 
@@ -84,9 +78,9 @@ private:
 
 public:
   MBlazeFunctionInfo(MachineFunction& MF)
-  : FPStackOffset(0), RAStackOffset(0), CPUTopSavedRegOff(0),
-    GPHolder(-1,-1), HasLoadArgs(false), HasStoreVarArgs(false),
-    SRetReturnReg(0), GlobalBaseReg(0), VarArgsFrameIndex(0)
+  : FPStackOffset(0), RAStackOffset(0), GPHolder(-1,-1),
+    HasLoadArgs(false), HasStoreVarArgs(false), SRetReturnReg(0),
+    GlobalBaseReg(0), VarArgsFrameIndex(0)
   {}
 
   int getFPStackOffset() const { return FPStackOffset; }
@@ -94,9 +88,6 @@ public:
 
   int getRAStackOffset() const { return RAStackOffset; }
   void setRAStackOffset(int Off) { RAStackOffset = Off; }
-
-  int getCPUTopSavedRegOff() const { return CPUTopSavedRegOff; }
-  void setCPUTopSavedRegOff(int Off) { CPUTopSavedRegOff = Off; }
 
   int getGPStackOffset() const { return GPHolder.SPOffset; }
   int getGPFI() const { return GPHolder.FI; }
