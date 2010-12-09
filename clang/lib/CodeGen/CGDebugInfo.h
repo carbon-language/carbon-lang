@@ -97,8 +97,7 @@ class CGDebugInfo {
   llvm::DIType getOrCreateMethodType(const CXXMethodDecl *Method,
                                      llvm::DIFile F);
   llvm::DIType getOrCreateVTablePtrType(llvm::DIFile F);
-  llvm::DINameSpace getOrCreateNameSpace(const NamespaceDecl *N, 
-                                         llvm::DIDescriptor Unit);
+  llvm::DINameSpace getOrCreateNameSpace(const NamespaceDecl *N);
   llvm::DIType CreatePointeeType(QualType PointeeTy, llvm::DIFile F);
   llvm::DIType CreatePointerLikeType(unsigned Tag,
                                      const Type *Ty, QualType PointeeTy,
@@ -206,8 +205,7 @@ private:
                                             uint64_t *OffSet);
 
   /// getContextDescriptor - Get context info for the decl.
-  llvm::DIDescriptor getContextDescriptor(const Decl *Decl,
-                                          llvm::DIDescriptor &CU);
+  llvm::DIDescriptor getContextDescriptor(const Decl *Decl);
 
   /// getCurrentDirname - Return current directory name.
   llvm::StringRef getCurrentDirname();

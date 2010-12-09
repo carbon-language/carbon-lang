@@ -53,10 +53,9 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
 }
 
 /// getContextDescriptor - Get context info for the decl.
-llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *Context,
-                                              llvm::DIDescriptor &CompileUnit) {
+llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *Context) {
   if (!Context)
-    return CompileUnit;
+    return TheCU;
 
   llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
     I = RegionMap.find(Context);
@@ -65,16 +64,16 @@ llvm::DIDescriptor CGDebugInfo::getContextDescriptor(const Decl *Context,
 
   // Check namespace.
   if (const NamespaceDecl *NSDecl = dyn_cast<NamespaceDecl>(Context))
-    return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl, CompileUnit));
+    return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl));
 
   if (const RecordDecl *RDecl = dyn_cast<RecordDecl>(Context)) {
     if (!RDecl->isDependentType()) {
       llvm::DIType Ty = getOrCreateType(CGM.getContext().getTypeDeclType(RDecl),
-                                        llvm::DIFile(CompileUnit));
+                                        getOrCreateMainFile());
       return llvm::DIDescriptor(Ty);
     }
   }
-  return CompileUnit;
+  return TheCU;
 }
 
 /// getFunctionName - Get function name for the given FunctionDecl. If the
@@ -423,7 +422,7 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
     llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
     unsigned Line = getLineNumber(RD->getLocation());
     llvm::DIDescriptor FDContext =
-      getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
+      getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()));
 
     if (RD->isStruct())
       return DBuilder.CreateStructType(FDContext, RD->getName(), DefUnit,
@@ -895,7 +894,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
   llvm::DIDescriptor FDContext =
-    getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
+    getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()));
 
   // If this is just a forward declaration, construct an appropriately
   // marked node and just return it.
@@ -966,7 +965,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     RegionMap.erase(RI);
 
   llvm::DIDescriptor RDContext =  
-    getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
+    getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()));
   llvm::StringRef RDName = RD->getName();
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
@@ -1298,7 +1297,7 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED, llvm::DIFile Unit){
     Align = CGM.getContext().getTypeAlign(ED->getTypeForDecl());
   }
   llvm::DIDescriptor EnumContext = 
-    getContextDescriptor(dyn_cast<Decl>(ED->getDeclContext()), Unit);
+    getContextDescriptor(dyn_cast<Decl>(ED->getDeclContext()));
   llvm::DIType DbgTy = 
     DBuilder.CreateEnumerationType(EnumContext, ED->getName(), DefUnit, Line,
                                    Size, Align, EltArray);
@@ -1495,7 +1494,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       Flags |= llvm::DIDescriptor::FlagPrototyped;
     if (const NamespaceDecl *NSDecl =
         dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
-      FDContext = getOrCreateNameSpace(NSDecl, Unit);
+      FDContext = getOrCreateNameSpace(NSDecl);
   } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {
     Name = getObjCMethodName(OMD);
     Flags |= llvm::DIDescriptor::FlagPrototyped;
@@ -1881,7 +1880,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   if (LinkageName == DeclName)
     LinkageName = llvm::StringRef();
   llvm::DIDescriptor DContext = 
-    getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()), Unit);
+    getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()));
   DBuilder.CreateStaticVariable(DContext, DeclName, LinkageName,
                                 Unit, LineNo, getOrCreateType(T, Unit),
                                 Var->hasInternalLinkage(), Var);
@@ -1936,8 +1935,7 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
 /// getOrCreateNamesSpace - Return namespace descriptor for the given
 /// namespace decl.
 llvm::DINameSpace 
-CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl, 
-                                  llvm::DIDescriptor Unit) {
+CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl) {
   llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH>::iterator I = 
     NameSpaceCache.find(NSDecl);
   if (I != NameSpaceCache.end())
@@ -1946,7 +1944,7 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl,
   unsigned LineNo = getLineNumber(NSDecl->getLocation());
   llvm::DIFile FileD = getOrCreateFile(NSDecl->getLocation());
   llvm::DIDescriptor Context = 
-    getContextDescriptor(dyn_cast<Decl>(NSDecl->getDeclContext()), Unit);
+    getContextDescriptor(dyn_cast<Decl>(NSDecl->getDeclContext()));
   llvm::DINameSpace NS =
     DBuilder.CreateNameSpace(Context, NSDecl->getName(), FileD, LineNo);
   NameSpaceCache[NSDecl] = llvm::WeakVH(NS);
