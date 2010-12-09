@@ -182,7 +182,7 @@ void SourceMgr::PrintMessage(SMLoc Loc, const Twine &Msg,
     DiagHandler(GetMessage(Loc, Msg, Type, ShowLine), DiagContext);
     return;
   }
-  
+
   raw_ostream &OS = errs();
 
   int CurBuf = FindBufferContainingLoc(Loc);

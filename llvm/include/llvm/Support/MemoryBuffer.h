@@ -72,7 +72,7 @@ public:
   static MemoryBuffer *getOpenFile(int FD, const char *Filename,
                                    error_code &ec,
                                    int64_t FileSize = -1);
-  
+
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
   /// that InputData must be null terminated.
   static MemoryBuffer *getMemBuffer(StringRef InputData,
