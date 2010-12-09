@@ -669,7 +669,8 @@ SDValue DAGCombiner::PromoteOperand(SDValue Op, EVT PVT, bool &Replace) {
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(Op)) {
     EVT MemVT = LD->getMemoryVT();
     ISD::LoadExtType ExtType = ISD::isNON_EXTLoad(LD)
-      ? (TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT) ? ISD::ZEXTLOAD : ISD::EXTLOAD)
+      ? (TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT) ? ISD::ZEXTLOAD 
+                                                  : ISD::EXTLOAD)
       : LD->getExtensionType();
     Replace = true;
     return DAG.getExtLoad(ExtType, PVT, dl,
@@ -892,7 +893,8 @@ bool DAGCombiner::PromoteLoad(SDValue Op) {
     LoadSDNode *LD = cast<LoadSDNode>(N);
     EVT MemVT = LD->getMemoryVT();
     ISD::LoadExtType ExtType = ISD::isNON_EXTLoad(LD)
-      ? (TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT) ? ISD::ZEXTLOAD : ISD::EXTLOAD)
+      ? (TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT) ? ISD::ZEXTLOAD 
+                                                  : ISD::EXTLOAD)
       : LD->getExtensionType();
     SDValue NewLD = DAG.getExtLoad(ExtType, PVT, dl,
                                    LD->getChain(), LD->getBasePtr(),
@@ -2826,7 +2828,8 @@ SDValue DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
                                LHS->getOperand(1), N->getOperand(1));
 
   // Create the new shift.
-  SDValue NewShift = DAG.getNode(N->getOpcode(), LHS->getOperand(0).getDebugLoc(),
+  SDValue NewShift = DAG.getNode(N->getOpcode(),
+                                 LHS->getOperand(0).getDebugLoc(),
                                  VT, LHS->getOperand(0), N->getOperand(1));
 
   // Create the new binop.
@@ -2989,7 +2992,8 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
     if (N01C && N1C) {
       // Determine what the truncate's result bitsize and type would be.
       EVT TruncVT =
-        EVT::getIntegerVT(*DAG.getContext(), OpSizeInBits - N1C->getZExtValue());
+        EVT::getIntegerVT(*DAG.getContext(),
+                          OpSizeInBits - N1C->getZExtValue());
       // Determine the residual right-shift amount.
       signed ShiftAmt = N1C->getZExtValue() - N01C->getZExtValue();
 
@@ -6092,9 +6096,9 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     // Otherwise, see if we can simplify the operation with
     // SimplifyDemandedBits, which only works if the value has a single use.
     if (SimplifyDemandedBits(Value,
-                             APInt::getLowBitsSet(
-                               Value.getValueType().getScalarType().getSizeInBits(),
-                               ST->getMemoryVT().getScalarType().getSizeInBits())))
+                        APInt::getLowBitsSet(
+                          Value.getValueType().getScalarType().getSizeInBits(),
+                          ST->getMemoryVT().getScalarType().getSizeInBits())))
       return SDValue(N, 0);
   }
 
@@ -6252,7 +6256,8 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       // Check the resultant load doesn't need a higher alignment than the
       // original load.
       unsigned NewAlign =
-        TLI.getTargetData()->getABITypeAlignment(LVT.getTypeForEVT(*DAG.getContext()));
+        TLI.getTargetData()
+            ->getABITypeAlignment(LVT.getTypeForEVT(*DAG.getContext()));
 
       if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, LVT))
         return SDValue();
@@ -7053,7 +7058,8 @@ SDValue DAGCombiner::BuildUDIV(SDNode *N) {
 }
 
 /// FindBaseOffset - Return true if base is a frame index, which is known not
-// to alias with anything but itself.  Provides base object and offset as results.
+// to alias with anything but itself.  Provides base object and offset as
+// results.
 static bool FindBaseOffset(SDValue Ptr, SDValue &Base, int64_t &Offset,
                            const GlobalValue *&GV, void *&CV) {
   // Assume it is a primitive operation.
