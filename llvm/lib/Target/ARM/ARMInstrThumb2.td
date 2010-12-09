@@ -1160,6 +1160,7 @@ def t2LEApcrelJT : T2PCOneRegImm<(outs rGPR:$Rd),
 // add/sub instructions. In thumb1 we need them since they have dedicated
 // encodings. At the least, they should be pseudo instructions.
 // ADD r, sp, {so_imm|i12}
+let isCodeGenOnly = 1 in {
 def t2ADDrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, t2_so_imm:$imm),
                         IIC_iALUi, "add", ".w\t$Rd, $Rn, $imm", []> {
   let Inst{31-27} = 0b11110;
@@ -1209,6 +1210,7 @@ def t2SUBrSPs   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, t2_so_reg:$imm),
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
+} // end isCodeGenOnly = 1
 
 // Signed and unsigned division on v7-M
 def t2SDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi,
