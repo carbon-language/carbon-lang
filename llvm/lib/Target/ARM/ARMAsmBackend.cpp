@@ -132,11 +132,11 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     Value >>= 1; // Low bit is not encoded.
     
     uint64_t out = 0;
-    Value |= (Value & 0x80000) << 7; // S bit
-    Value |= (Value & 0x40000) >> 7; // J2 bit
-    Value |= (Value & 0x20000) >> 4; // J1 bit
-    Value |= (Value & 0x1F800) << 5; // imm6 field
-    Value |= (Value & 0x007FF);      // imm11 field
+    out |= (Value & 0x80000) << 7; // S bit
+    out |= (Value & 0x40000) >> 7; // J2 bit
+    out |= (Value & 0x20000) >> 4; // J1 bit
+    out |= (Value & 0x1F800) << 5; // imm6 field
+    out |= (Value & 0x007FF);      // imm11 field
     
     uint64_t swapped = (out & 0xFFFF0000) >> 16;
     swapped |= (out & 0x0000FFFF) << 16;
