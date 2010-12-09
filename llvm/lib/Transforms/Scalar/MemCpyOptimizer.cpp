@@ -762,6 +762,14 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   ConstantInt *CopySize = dyn_cast<ConstantInt>(M->getLength());
   if (CopySize == 0 || M->isVolatile()) return false;
 
+  // If the source and destination of the memcpy are the same, then zap it.
+  if (M->getSource() == M->getDest()) {
+    MD->removeInstruction(M);
+    M->eraseFromParent();
+    return false;
+  }
+  
+  
   // The are two possible optimizations we can do for memcpy:
   //   a) memcpy-memcpy xform which exposes redundance for DSE.
   //   b) call-memcpy xform for return slot optimization.
@@ -773,10 +781,11 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
     return processMemCpyMemCpyDependence(M, MDep, CopySize->getZExtValue());
     
   if (CallInst *C = dyn_cast<CallInst>(DepInfo.getInst())) {
-    bool changed = performCallSlotOptzn(M, M->getDest(), M->getSource(),
-                                        CopySize->getZExtValue(), C);
-    if (changed) M->eraseFromParent();
-    return changed;
+    if (performCallSlotOptzn(M, M->getDest(), M->getSource(),
+                             CopySize->getZExtValue(), C)) {
+      M->eraseFromParent();
+      return true;
+    }
   }
   return false;
 }

@@ -100,3 +100,12 @@ entry:
   ; CHECK: store i8 4
   ; CHECK: call void @test5a(%struct.S* byval align 16 %y)
 }
+
+;; Noop memcpy should be zapped.
+define void @test6(i8 *%P) {
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %P, i64 8, i32 4, i1 false)
+  ret void
+; CHECK: @test6
+; CHECK-NEXT: ret void
+}
+
