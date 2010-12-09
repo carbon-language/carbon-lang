@@ -23,6 +23,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetAsmInfo.h"
 
 using namespace llvm;
 
@@ -36,29 +37,25 @@ class PTXMCAsmStreamer : public MCStreamer {
   SmallString<128> CommentToEmit;
   raw_svector_ostream CommentStream;
 
-  unsigned IsLittleEndian : 1;
   unsigned IsVerboseAsm : 1;
   unsigned ShowInst : 1;
 
 public:
   PTXMCAsmStreamer(MCContext &Context,
                    formatted_raw_ostream &os,
-                   bool isLittleEndian,
-                   bool isVerboseAsm,
+                   bool isVerboseAsm, bool useLoc,
                    MCInstPrinter *printer,
                    MCCodeEmitter *emitter,
                    bool showInst)
     : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
       InstPrinter(printer), Emitter(emitter), CommentStream(CommentToEmit),
-      IsLittleEndian(isLittleEndian), IsVerboseAsm(isVerboseAsm),
+      IsVerboseAsm(isVerboseAsm),
       ShowInst(showInst) {
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
   }
 
   ~PTXMCAsmStreamer() {}
-
-  bool isLittleEndian() const { return IsLittleEndian; }
 
   inline void EmitEOL() {
     // If we don't have any comments, just emit a \n.
@@ -147,7 +144,8 @@ public:
 
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
-  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace);
+  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
+                             bool isPCRel, unsigned AddrSpace);
   virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
   virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
   virtual void EmitGPRel32Value(const MCExpr *Value);
@@ -359,9 +357,10 @@ void PTXMCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
   EmitEOL();
 }
 
-void PTXMCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
-                                 unsigned AddrSpace) {
+void PTXMCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
+                                     bool isPCRel, unsigned AddrSpace) {
   assert(CurSection && "Cannot emit contents before setting section!");
+  assert(!isPCRel && "Cannot emit pc relative relocations!");
   const char *Directive = 0;
   switch (Size) {
   default: break;
@@ -375,7 +374,7 @@ void PTXMCAsmStreamer::EmitValue(const MCExpr *Value, unsigned Size,
     int64_t IntValue;
     if (!Value->EvaluateAsAbsolute(IntValue))
       report_fatal_error("Don't know how to emit this value.");
-    if (isLittleEndian()) {
+    if (getContext().getTargetAsmInfo().isLittleEndian()) {
       EmitIntValue((uint32_t)(IntValue >> 0 ), 4, AddrSpace);
       EmitIntValue((uint32_t)(IntValue >> 32), 4, AddrSpace);
     } else {
@@ -539,10 +538,10 @@ void PTXMCAsmStreamer::Finish() {}
 namespace llvm {
   MCStreamer *createPTXAsmStreamer(MCContext &Context,
                                    formatted_raw_ostream &OS,
-                                   bool isLittleEndian,
-                                   bool isVerboseAsm, MCInstPrinter *IP,
+                                   bool isVerboseAsm, bool useLoc,
+                                   MCInstPrinter *IP,
                                    MCCodeEmitter *CE, bool ShowInst) {
-    return new PTXMCAsmStreamer(Context, OS, isLittleEndian, isVerboseAsm,
+    return new PTXMCAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                                 IP, CE, ShowInst);
   }
 }

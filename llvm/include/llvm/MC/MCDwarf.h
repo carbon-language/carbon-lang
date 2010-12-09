@@ -22,6 +22,7 @@
 #include <vector>
 
 namespace llvm {
+  class MachineMove;
   class MCContext;
   class MCSection;
   class MCSectionData;
@@ -208,7 +209,7 @@ namespace llvm {
     //
     // This emits the Dwarf file and the line tables.
     //
-    static void Emit(MCStreamer *MCOS, const MCSection *DwarfLineSection);
+    static void Emit(MCStreamer *MCOS);
   };
 
   class MCDwarfLineAddr {
@@ -223,6 +224,21 @@ namespace llvm {
     /// Utility function to write the encoding to an object writer.
     static void Write(MCObjectWriter *OW,
                       int64_t LineDelta, uint64_t AddrDelta);
+  };
+
+  struct MCDwarfFrameInfo {
+    MCSymbol *Begin;
+    MCSymbol *End;
+    const MCSymbol *Personality;
+    const MCSymbol *Lsda;
+  };
+
+  class MCDwarfFrameEmitter {
+  public:
+    //
+    // This emits the frame info section.
+    //
+    static void Emit(MCStreamer &streamer);
   };
 } // end namespace llvm
 

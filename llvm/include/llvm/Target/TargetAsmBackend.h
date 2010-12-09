@@ -21,7 +21,6 @@ class MCObjectWriter;
 class MCSection;
 template<typename T>
 class SmallVectorImpl;
-class Target;
 class raw_ostream;
 
 /// TargetAsmBackend - Generic interface to target specific assembler backends.
@@ -80,9 +79,6 @@ public:
   virtual bool isSectionAtomizable(const MCSection &Section) const {
     return true;
   }
-
-  /// getPointerSize - Get the pointer size in bytes.
-  virtual unsigned getPointerSize() const = 0;
 
   /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
   /// data fragment, at the offset specified by the fixup and following the
