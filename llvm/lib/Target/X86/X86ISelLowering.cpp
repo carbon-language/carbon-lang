@@ -6195,7 +6195,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     // Lowering the machine isd will make sure everything is in the right
     // location.
     SDValue Args[] = { Offset };
-    SDValue Chain = DAG.getNode(X86ISD::TLSCALL, DL, MVT::Other, Args, 1);
+    SDValue RetVal = DAG.getNode(X86ISD::TLSCALL, DL, MVT::Other, Args, 1);
 
     // TLSCALL will be codegen'ed as call. Inform MFI that function has calls.
     MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
@@ -6203,7 +6203,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     
     // And our return value (tls address) is in the standard call return value
     // location.
-    return Chain;
+    return RetVal;
   }
 
   assert(false &&
