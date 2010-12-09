@@ -252,8 +252,10 @@ void SelectionDAGLegalize::LegalizeDAG() {
 
 /// FindCallEndFromCallStart - Given a chained node that is part of a call
 /// sequence, find the CALLSEQ_END node that terminates the call sequence.
-static SDNode *FindCallEndFromCallStart(SDNode *Node) {
-  if (Node->getOpcode() == ISD::CALLSEQ_END)
+static SDNode *FindCallEndFromCallStart(SDNode *Node, int depth = 0) {
+  if (Node->getOpcode() == ISD::CALLSEQ_START)
+    depth++;
+  if ((Node->getOpcode() == ISD::CALLSEQ_END) && (depth == 1))
     return Node;
   if (Node->use_empty())
     return 0;   // No CallSeqEnd
@@ -284,7 +286,7 @@ static SDNode *FindCallEndFromCallStart(SDNode *Node) {
     SDNode *User = *UI;
     for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
       if (User->getOperand(i) == TheChain)
-        if (SDNode *Result = FindCallEndFromCallStart(User))
+        if (SDNode *Result = FindCallEndFromCallStart(User, depth))
           return Result;
   }
   return 0;
@@ -293,12 +295,26 @@ static SDNode *FindCallEndFromCallStart(SDNode *Node) {
 /// FindCallStartFromCallEnd - Given a chained node that is part of a call
 /// sequence, find the CALLSEQ_START node that initiates the call sequence.
 static SDNode *FindCallStartFromCallEnd(SDNode *Node) {
+  int nested = 0;
   assert(Node && "Didn't find callseq_start for a call??");
-  if (Node->getOpcode() == ISD::CALLSEQ_START) return Node;
-
-  assert(Node->getOperand(0).getValueType() == MVT::Other &&
-         "Node doesn't have a token chain argument!");
-  return FindCallStartFromCallEnd(Node->getOperand(0).getNode());
+  while (Node->getOpcode() != ISD::CALLSEQ_START || nested) {
+    Node = Node->getOperand(0).getNode();
+    assert(Node->getOperand(0).getValueType() == MVT::Other &&
+           "Node doesn't have a token chain argument!");
+    switch (Node->getOpcode()) {
+    default:
+      break;
+    case ISD::CALLSEQ_START:
+      if (!nested)
+        return Node;
+      nested--;
+      break;
+    case ISD::CALLSEQ_END:
+      nested++;
+      break;
+    }
+  }
+  return 0;
 }
 
 /// LegalizeAllNodesNotLeadingTo - Recursively walk the uses of N, looking to
