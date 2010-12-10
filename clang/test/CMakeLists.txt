@@ -66,7 +66,6 @@ if(PYTHONINTERP_FOUND)
                 --param build_config=${CMAKE_CFG_INTDIR}
                 ${LIT_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
-                DEPENDS clang c-index-test FileCheck not count
                 COMMENT "Running Clang regression tests")
 
   add_custom_target(clang-c++tests
@@ -88,4 +87,15 @@ if(PYTHONINTERP_FOUND)
                 ${LLVM_BINARY_DIR}/test
                 ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Running Clang and LLVM regression tests")
+
+  add_custom_target(clang-test.deps)
+
+  add_dependencies(clang-test clang-test.deps)
+  add_dependencies(clang-test.deps
+                 clang clang-headers c-index-test
+                 llvm-dis opt
+                 FileCheck count not)
+
+  add_dependencies(check-all check.deps clang-test.deps)
+
 endif()
