@@ -495,6 +495,8 @@ getThumbCBTargetOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                        SmallVectorImpl<MCFixup> &Fixups) const {
+  // FIXME: This really, really shouldn't use TargetMachine. We don't want
+  // coupling between MC and TM anywhere we can help it.
   const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
   if (Subtarget.isThumb2())
     return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_branch, Fixups);
