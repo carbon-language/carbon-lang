@@ -1457,6 +1457,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateTrunc(Ops[0], Ty, "vmovn");
   }
   case ARM::BI__builtin_neon_vmul_v:
+  case ARM::BI__builtin_neon_vmulq_v:
     assert(poly && "vmul builtin only supported for polynomial types");
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmulp, &Ty, 1),
                         Ops, "vmul");
