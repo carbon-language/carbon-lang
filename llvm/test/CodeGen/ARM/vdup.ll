@@ -162,24 +162,6 @@ define <4 x float> @v_shuffledupQfloat(float %A) nounwind {
 	ret <4 x float> %tmp2
 }
 
-define <2 x float> @v_shuffledupfloat2(float* %A) nounwind {
-;CHECK: v_shuffledupfloat2:
-;CHECK: vdup.32
-	%tmp0 = load float* %A
-        %tmp1 = insertelement <2 x float> undef, float %tmp0, i32 0
-        %tmp2 = shufflevector <2 x float> %tmp1, <2 x float> undef, <2 x i32> zeroinitializer
-        ret <2 x float> %tmp2
-}
-
-define <4 x float> @v_shuffledupQfloat2(float* %A) nounwind {
-;CHECK: v_shuffledupQfloat2:
-;CHECK: vdup.32
-        %tmp0 = load float* %A
-        %tmp1 = insertelement <4 x float> undef, float %tmp0, i32 0
-        %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> zeroinitializer
-        ret <4 x float> %tmp2
-}
-
 define <8 x i8> @vduplane8(<8 x i8>* %A) nounwind {
 ;CHECK: vduplane8:
 ;CHECK: vdup.8

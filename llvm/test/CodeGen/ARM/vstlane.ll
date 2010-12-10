@@ -30,6 +30,15 @@ define void @vst1lanei32(i32* %A, <2 x i32>* %B) nounwind {
 	ret void
 }
 
+define void @vst1lanef(float* %A, <2 x float>* %B) nounwind {
+;CHECK: vst1lanef:
+;CHECK: vst1.32 {d16[1]}, [r0]
+	%tmp1 = load <2 x float>* %B
+        %tmp2 = extractelement <2 x float> %tmp1, i32 1
+        store float %tmp2, float* %A
+	ret void
+}
+
 define void @vst1laneQi8(i8* %A, <16 x i8>* %B) nounwind {
 ;CHECK: vst1laneQi8:
 ;CHECK: vst1.8 {d17[1]}, [r0]
@@ -54,6 +63,15 @@ define void @vst1laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 	%tmp1 = load <4 x i32>* %B
         %tmp2 = extractelement <4 x i32> %tmp1, i32 3
         store i32 %tmp2, i32* %A, align 8
+	ret void
+}
+
+define void @vst1laneQf(float* %A, <4 x float>* %B) nounwind {
+;CHECK: vst1laneQf:
+;CHECK: vst1.32 {d17[1]}, [r0]
+	%tmp1 = load <4 x float>* %B
+        %tmp2 = extractelement <4 x float> %tmp1, i32 3
+        store float %tmp2, float* %A
 	ret void
 }
 

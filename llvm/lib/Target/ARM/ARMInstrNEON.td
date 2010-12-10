@@ -546,6 +546,13 @@ def VLD1LNq8Pseudo  : VLD1QLNPseudo<v16i8, extloadi8>;
 def VLD1LNq16Pseudo : VLD1QLNPseudo<v8i16, extloadi16>;
 def VLD1LNq32Pseudo : VLD1QLNPseudo<v4i32, load>;
 
+def : Pat<(vector_insert (v2f32 DPR:$src),
+                         (f32 (load addrmode6:$addr)), imm:$lane),
+          (VLD1LNd32 addrmode6:$addr, DPR:$src, imm:$lane)>;
+def : Pat<(vector_insert (v4f32 QPR:$src),
+                         (f32 (load addrmode6:$addr)), imm:$lane),
+          (VLD1LNq32Pseudo addrmode6:$addr, QPR:$src, imm:$lane)>;
+
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 
 // ...with address register writeback:
@@ -812,6 +819,11 @@ def VLD1DUPd32 : VLD1DUP<{1,0,0,?}, "32", v2i32, load>;
 def VLD1DUPq8Pseudo  : VLD1QDUPPseudo<v16i8, extloadi8>;
 def VLD1DUPq16Pseudo : VLD1QDUPPseudo<v8i16, extloadi16>;
 def VLD1DUPq32Pseudo : VLD1QDUPPseudo<v4i32, load>;
+
+def : Pat<(v2f32 (NEONvdup (f32 (load addrmode6dup:$addr)))),
+          (VLD1DUPd32 addrmode6:$addr)>;
+def : Pat<(v4f32 (NEONvdup (f32 (load addrmode6dup:$addr)))),
+          (VLD1DUPq32Pseudo addrmode6:$addr)>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 
@@ -1364,6 +1376,11 @@ def VST1LNd32 : VST1LN<0b1000, {?,0,?,?}, "32", v2i32, store, extractelt> {
 def VST1LNq8Pseudo  : VST1QLNPseudo<v16i8, truncstorei8, NEONvgetlaneu>;
 def VST1LNq16Pseudo : VST1QLNPseudo<v8i16, truncstorei16, NEONvgetlaneu>;
 def VST1LNq32Pseudo : VST1QLNPseudo<v4i32, store, extractelt>;
+
+def : Pat<(store (extractelt (v2f32 DPR:$src), imm:$lane), addrmode6:$addr),
+          (VST1LNd32 addrmode6:$addr, DPR:$src, imm:$lane)>;
+def : Pat<(store (extractelt (v4f32 QPR:$src), imm:$lane), addrmode6:$addr),
+          (VST1LNq32Pseudo addrmode6:$addr, QPR:$src, imm:$lane)>;
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 

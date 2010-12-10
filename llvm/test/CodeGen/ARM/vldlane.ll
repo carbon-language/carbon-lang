@@ -30,6 +30,15 @@ define <2 x i32> @vld1lanei32(i32* %A, <2 x i32>* %B) nounwind {
         ret <2 x i32> %tmp3
 }
 
+define <2 x float> @vld1lanef(float* %A, <2 x float>* %B) nounwind {
+;CHECK: vld1lanef:
+;CHECK: vld1.32 {d16[1]}, [r0]
+	%tmp1 = load <2 x float>* %B
+	%tmp2 = load float* %A, align 4
+	%tmp3 = insertelement <2 x float> %tmp1, float %tmp2, i32 1
+	ret <2 x float> %tmp3
+}
+
 define <16 x i8> @vld1laneQi8(i8* %A, <16 x i8>* %B) nounwind {
 ;CHECK: vld1laneQi8:
 ;CHECK: vld1.8 {d17[1]}, [r0]
@@ -55,6 +64,15 @@ define <4 x i32> @vld1laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 	%tmp2 = load i32* %A, align 8
 	%tmp3 = insertelement <4 x i32> %tmp1, i32 %tmp2, i32 3
 	ret <4 x i32> %tmp3
+}
+
+define <4 x float> @vld1laneQf(float* %A, <4 x float>* %B) nounwind {
+;CHECK: vld1laneQf:
+;CHECK: vld1.32 {d16[0]}, [r0]
+	%tmp1 = load <4 x float>* %B
+	%tmp2 = load float* %A
+	%tmp3 = insertelement <4 x float> %tmp1, float %tmp2, i32 0
+	ret <4 x float> %tmp3
 }
 
 %struct.__neon_int8x8x2_t = type { <8 x i8>,  <8 x i8> }

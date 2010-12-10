@@ -30,6 +30,15 @@ define <2 x i32> @vld1dupi32(i32* %A) nounwind {
         ret <2 x i32> %tmp3
 }
 
+define <2 x float> @vld1dupf(float* %A) nounwind {
+;CHECK: vld1dupf:
+;CHECK: vld1.32 {d16[]}, [r0]
+	%tmp0 = load float* %A
+        %tmp1 = insertelement <2 x float> undef, float %tmp0, i32 0
+        %tmp2 = shufflevector <2 x float> %tmp1, <2 x float> undef, <2 x i32> zeroinitializer
+        ret <2 x float> %tmp2
+}
+
 define <16 x i8> @vld1dupQi8(i8* %A) nounwind {
 ;CHECK: vld1dupQi8:
 ;Check the (default) alignment value.
@@ -38,6 +47,15 @@ define <16 x i8> @vld1dupQi8(i8* %A) nounwind {
 	%tmp2 = insertelement <16 x i8> undef, i8 %tmp1, i32 0
 	%tmp3 = shufflevector <16 x i8> %tmp2, <16 x i8> undef, <16 x i32> zeroinitializer
         ret <16 x i8> %tmp3
+}
+
+define <4 x float> @vld1dupQf(float* %A) nounwind {
+;CHECK: vld1dupQf:
+;CHECK: vld1.32 {d16[], d17[]}, [r0]
+        %tmp0 = load float* %A
+        %tmp1 = insertelement <4 x float> undef, float %tmp0, i32 0
+        %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> zeroinitializer
+        ret <4 x float> %tmp2
 }
 
 %struct.__neon_int8x8x2_t = type { <8 x i8>, <8 x i8> }
