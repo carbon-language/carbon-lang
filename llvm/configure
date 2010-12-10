@@ -742,7 +742,7 @@ BZIP2
 CAT
 DOXYGEN
 GROFF
-GZIP
+GZIPBIN
 POD2HTML
 POD2MAN
 PDFROFF
@@ -8275,12 +8275,12 @@ fi
 set dummy gzip; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_GZIP+set}" = set; then
+if test "${ac_cv_path_GZIPBIN+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  case $GZIP in
+  case $GZIPBIN in
   [\\/]* | ?:[\\/]*)
-  ac_cv_path_GZIP="$GZIP" # Let the user override the test with a path.
+  ac_cv_path_GZIPBIN="$GZIPBIN" # Let the user override the test with a path.
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -8290,7 +8290,7 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_GZIP="$as_dir/$ac_word$ac_exec_ext"
+    ac_cv_path_GZIPBIN="$as_dir/$ac_word$ac_exec_ext"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -8301,10 +8301,10 @@ IFS=$as_save_IFS
   ;;
 esac
 fi
-GZIP=$ac_cv_path_GZIP
-if test -n "$GZIP"; then
-  { echo "$as_me:$LINENO: result: $GZIP" >&5
-echo "${ECHO_T}$GZIP" >&6; }
+GZIPBIN=$ac_cv_path_GZIPBIN
+if test -n "$GZIPBIN"; then
+  { echo "$as_me:$LINENO: result: $GZIPBIN" >&5
+echo "${ECHO_T}$GZIPBIN" >&6; }
 else
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
@@ -21880,7 +21880,7 @@ BZIP2!$BZIP2$ac_delim
 CAT!$CAT$ac_delim
 DOXYGEN!$DOXYGEN$ac_delim
 GROFF!$GROFF$ac_delim
-GZIP!$GZIP$ac_delim
+GZIPBIN!$GZIPBIN$ac_delim
 POD2HTML!$POD2HTML$ac_delim
 POD2MAN!$POD2MAN$ac_delim
 PDFROFF!$PDFROFF$ac_delim
