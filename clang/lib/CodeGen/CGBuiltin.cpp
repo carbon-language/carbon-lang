@@ -1190,25 +1190,25 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vcale_v:
     std::swap(Ops[0], Ops[1]);
   case ARM::BI__builtin_neon_vcage_v: {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vacged, &Ty, 1);
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vacged);
     return EmitNeonCall(F, Ops, "vcage");
   }
   case ARM::BI__builtin_neon_vcaleq_v:
     std::swap(Ops[0], Ops[1]);
   case ARM::BI__builtin_neon_vcageq_v: {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vacgeq, &Ty, 1);
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vacgeq);
     return EmitNeonCall(F, Ops, "vcage");
   }
   case ARM::BI__builtin_neon_vcalt_v:
     std::swap(Ops[0], Ops[1]);
   case ARM::BI__builtin_neon_vcagt_v: {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vacgtd, &Ty, 1);
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vacgtd);
     return EmitNeonCall(F, Ops, "vcagt");
   }
   case ARM::BI__builtin_neon_vcaltq_v:
     std::swap(Ops[0], Ops[1]);
   case ARM::BI__builtin_neon_vcagtq_v: {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vacgtq, &Ty, 1);
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vacgtq);
     return EmitNeonCall(F, Ops, "vcagt");
   }
   case ARM::BI__builtin_neon_vcls_v:
