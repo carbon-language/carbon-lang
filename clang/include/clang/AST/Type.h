@@ -2168,10 +2168,10 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
   unsigned NumExceptions : 10;
 
   /// HasExceptionSpec - Whether this function has an exception spec at all.
-  bool HasExceptionSpec : 1;
+  unsigned HasExceptionSpec : 1;
 
   /// AnyExceptionSpec - Whether this function has a throw(...) spec.
-  bool AnyExceptionSpec : 1;
+  unsigned AnyExceptionSpec : 1;
 
   /// ArgInfo - There is an variable size array after the class in memory that
   /// holds the argument types.
