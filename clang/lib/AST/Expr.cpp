@@ -2330,7 +2330,23 @@ ObjCMessageExpr *ObjCMessageExpr::CreateEmpty(ASTContext &Context,
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
   return new (Mem) ObjCMessageExpr(EmptyShell(), NumArgs);
 }
-         
+
+SourceRange ObjCMessageExpr::getReceiverRange() const {
+  switch (getReceiverKind()) {
+  case Instance:
+    return getInstanceReceiver()->getSourceRange();
+
+  case Class:
+    return getClassReceiverTypeInfo()->getTypeLoc().getSourceRange();
+
+  case SuperInstance:
+  case SuperClass:
+    return getSuperLoc();
+  }
+
+  return SourceLocation();
+}
+
 Selector ObjCMessageExpr::getSelector() const {
   if (HasMethod)
     return reinterpret_cast<const ObjCMethodDecl *>(SelectorOrMethod)

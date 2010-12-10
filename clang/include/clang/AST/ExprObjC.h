@@ -610,6 +610,9 @@ public:
   /// sent to.
   ReceiverKind getReceiverKind() const { return (ReceiverKind)Kind; }
 
+  /// \brief Source range of the receiver.
+  SourceRange getReceiverRange() const;
+
   /// \brief Determine whether this is an instance message to either a
   /// computed object or to super.
   bool isInstanceMessage() const {
