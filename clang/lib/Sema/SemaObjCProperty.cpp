@@ -111,6 +111,7 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
   
   // Create a new ObjCPropertyDecl with the DeclContext being
   // the class extension.
+  // FIXME. We should really be using CreatePropertyDecl for this.
   ObjCPropertyDecl *PDecl =
     ObjCPropertyDecl::Create(Context, DC, FD.D.getIdentifierLoc(),
                              PropertyId, AtLoc, T);
@@ -118,7 +119,9 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
   if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
-
+  // Set setter/getter selector name. Needed later.
+  PDecl->setGetterName(GetterSel);
+  PDecl->setSetterName(SetterSel);
   DC->addDecl(PDecl);
 
   // We need to look in the @interface to see if the @property was

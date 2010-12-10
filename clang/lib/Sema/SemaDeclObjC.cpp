@@ -1522,8 +1522,29 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
 
     // Compare protocol properties with those in category
     CompareProperties(C, C);
-    if (C->IsClassExtension())
-      DiagnoseClassExtensionDupMethods(C, C->getClassInterface());
+    if (C->IsClassExtension()) {
+      ObjCInterfaceDecl *CCPrimary = C->getClassInterface();
+      DiagnoseClassExtensionDupMethods(C, CCPrimary);
+      for (ObjCContainerDecl::prop_iterator I = C->prop_begin(),
+           E = C->prop_end(); I != E; ++I) {
+        // Any property declared in a class extension might have user
+        // declared setter or getter in current class extension or one
+        // of the other class extensions. Mark them as synthesized as
+        // property will be synthesized when property with same name is
+        // seen in the @implementation.
+        for (const ObjCCategoryDecl *ClsExtDecl =
+             CCPrimary->getFirstClassExtension();
+             ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
+          if (ObjCMethodDecl *GetterMethod =
+              ClsExtDecl->getInstanceMethod((*I)->getGetterName()))
+            GetterMethod->setSynthesized(true);
+          if (!(*I)->isReadOnly())
+            if (ObjCMethodDecl *SetterMethod =
+                ClsExtDecl->getInstanceMethod((*I)->getSetterName()))
+              SetterMethod->setSynthesized(true);
+        }        
+      }
+    }
   }
   if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(ClassDecl)) {
     if (CDecl->getIdentifier())
