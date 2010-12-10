@@ -492,7 +492,7 @@ def ldst_so_reg : Operand<i32>,
 //
 def addrmode2 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode2", []> {
-  string EncoderMethod = "getAddrMode2OpValue";
+  let EncoderMethod = "getAddrMode2OpValue";
   let PrintMethod = "printAddrMode2Operand";
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
@@ -500,7 +500,7 @@ def addrmode2 : Operand<i32>,
 def am2offset : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode2Offset",
                 [], [SDNPWantRoot]> {
-  string EncoderMethod = "getAddrMode2OffsetOpValue";
+  let EncoderMethod = "getAddrMode2OffsetOpValue";
   let PrintMethod = "printAddrMode2OffsetOperand";
   let MIOperandInfo = (ops GPR, i32imm);
 }

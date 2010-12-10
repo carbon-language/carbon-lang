@@ -127,7 +127,7 @@ def imm0_255_not : PatLeaf<(i32 imm), [{
 def t2addrmode_imm12 : Operand<i32>,
                        ComplexPattern<i32, 2, "SelectT2AddrModeImm12", []> {
   let PrintMethod = "printAddrModeImm12Operand";
-  string EncoderMethod = "getAddrModeImm12OpValue";
+  let EncoderMethod = "getAddrModeImm12OpValue";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -135,7 +135,7 @@ def t2addrmode_imm12 : Operand<i32>,
 def t2addrmode_imm8 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
   let PrintMethod = "printT2AddrModeImm8Operand";
-  string EncoderMethod = "getT2AddrModeImm8OpValue";
+  let EncoderMethod = "getT2AddrModeImm8OpValue";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -143,13 +143,13 @@ def t2am_imm8_offset : Operand<i32>,
                        ComplexPattern<i32, 1, "SelectT2AddrModeImm8Offset",
                                       [], [SDNPWantRoot]> {
   let PrintMethod = "printT2AddrModeImm8OffsetOperand";
-  string EncoderMethod = "getT2AddrModeImm8OffsetOpValue";
+  let EncoderMethod = "getT2AddrModeImm8OffsetOpValue";
 }
 
 // t2addrmode_imm8s4  := reg +/- (imm8 << 2)
 def t2addrmode_imm8s4 : Operand<i32> {
   let PrintMethod = "printT2AddrModeImm8s4Operand";
-  string EncoderMethod = "getT2AddrModeImm8s4OpValue";
+  let EncoderMethod = "getT2AddrModeImm8s4OpValue";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -161,7 +161,7 @@ def t2am_imm8s4_offset : Operand<i32> {
 def t2addrmode_so_reg : Operand<i32>,
                         ComplexPattern<i32, 3, "SelectT2AddrModeSoReg", []> {
   let PrintMethod = "printT2AddrModeSoRegOperand";
-  string EncoderMethod = "getT2AddrModeSORegOpValue";
+  let EncoderMethod = "getT2AddrModeSORegOpValue";
   let MIOperandInfo = (ops GPR:$base, rGPR:$offsreg, i32imm:$offsimm);
 }
 
