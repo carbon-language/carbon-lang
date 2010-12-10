@@ -1502,6 +1502,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqmovnsu, &Ty, 1),
                         Ops, "vqdmull");
   case ARM::BI__builtin_neon_vqneg_v:
+  case ARM::BI__builtin_neon_vqnegq_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vqneg, &Ty, 1),
                         Ops, "vqneg");
   case ARM::BI__builtin_neon_vqrdmulh_v:
