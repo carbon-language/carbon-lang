@@ -29,12 +29,12 @@ public:
 	// Constructors and Destructors
 	//------------------------------------------------------------------
 	AppleThreadPlanStepThroughObjCTrampoline(Thread &thread, 
-                                        AppleObjCTrampolineHandler *trampoline_handler, 
-                                        lldb::addr_t args_addr, 
-                                        lldb::addr_t object_ptr, 
-                                        lldb::addr_t class_ptr, 
-                                        lldb::addr_t sel_ptr, 
-                                        bool stop_others);
+                                             AppleObjCTrampolineHandler *trampoline_handler, 
+                                             lldb::addr_t args_addr, 
+                                             lldb::addr_t object_addr,
+                                             lldb::addr_t isa_addr,
+                                             lldb::addr_t sel_addr,
+                                             bool stop_others);
     
 	virtual ~AppleThreadPlanStepThroughObjCTrampoline();
 
@@ -77,18 +77,17 @@ private:
 	//------------------------------------------------------------------
 	// For AppleThreadPlanStepThroughObjCTrampoline only
 	//------------------------------------------------------------------
-    bool m_stop_others;
-    lldb::addr_t m_object_ptr;
-    lldb::addr_t m_class_ptr;
-    lldb::addr_t m_sel_ptr;
-
+    AppleObjCTrampolineHandler *m_trampoline_handler; // FIXME - ensure this doesn't go away on us?  SP maybe?
+    lldb::addr_t m_args_addr;     // Stores the address for our step through function result structure.
+    lldb::addr_t m_object_addr;  // This is only for Description.
+    lldb::addr_t m_isa_addr;     // isa_addr and sel_addr are the keys we will use to cache the implementation.
+    lldb::addr_t m_sel_addr;
     ThreadPlanSP m_func_sp;       // This is the function call plan.  We fill it at start, then set it
                                   // to NULL when this plan is done.  That way we know to go to:
-    lldb::addr_t m_args_addr;     // Stores the address for our step through function result structure.
     ThreadPlanSP m_run_to_sp;     // The plan that runs to the target.
-    AppleObjCTrampolineHandler *m_objc_trampoline_handler;
     ClangFunction *m_impl_function;  // This is a pointer to a impl function that 
                                      // is owned by the client that pushes this plan.
+    bool m_stop_others;
 };
 
 } // namespace lldb_private

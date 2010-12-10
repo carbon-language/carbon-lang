@@ -20,6 +20,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
+#include "lldb/Target/ThreadPlanStepOut.h"
 #include "lldb/Core/Log.h"
 
 using namespace lldb_private;
@@ -31,19 +32,19 @@ AppleThreadPlanStepThroughObjCTrampoline::AppleThreadPlanStepThroughObjCTrampoli
         Thread &thread, 
         AppleObjCTrampolineHandler *trampoline_handler, 
         lldb::addr_t args_addr, 
-        lldb::addr_t object_ptr, 
-        lldb::addr_t class_ptr, 
-        lldb::addr_t sel_ptr, 
+        lldb::addr_t object_addr,
+        lldb::addr_t isa_addr,
+        lldb::addr_t sel_addr,
         bool stop_others) :
     ThreadPlan (ThreadPlan::eKindGeneric, "MacOSX Step through ObjC Trampoline", thread, 
         lldb::eVoteNoOpinion, lldb::eVoteNoOpinion),
-    m_stop_others (stop_others),
-    m_object_ptr (object_ptr),
-    m_class_ptr (class_ptr),
-    m_sel_ptr (sel_ptr),
+    m_trampoline_handler (trampoline_handler),
     m_args_addr (args_addr),
-    m_objc_trampoline_handler (trampoline_handler),
-    m_impl_function (trampoline_handler->GetLookupImplementationWrapperFunction())
+    m_object_addr (object_addr),
+    m_isa_addr(isa_addr),
+    m_sel_addr(sel_addr),
+    m_impl_function (trampoline_handler->GetLookupImplementationWrapperFunction()),
+    m_stop_others (stop_others)
 {
     
 }
@@ -74,8 +75,8 @@ AppleThreadPlanStepThroughObjCTrampoline::GetDescription (Stream *s,
         s->Printf("Step through ObjC trampoline");
     else
     {
-        s->Printf ("Stepping to implementation of ObjC method - obj: 0x%llx class: 0x%llx selector: 0x%llx",
-        m_object_ptr, m_class_ptr, m_sel_ptr);
+        s->Printf ("Stepping to implementation of ObjC method - obj: 0x%llx, isa: 0x%llx, sel: 0x%llx",
+        m_object_addr, m_isa_addr, m_sel_addr);
     }
 }
                 
@@ -122,12 +123,26 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
                 SetPlanComplete();
                 return true;
             }
+            if (m_trampoline_handler->AddrIsMsgForward(target_addr))
+            {
+                if (log)
+                    log->Printf ("Implementation lookup returned msgForward function: 0x%llx, stopping.", target_addr);
+
+                SymbolContext sc = m_thread.GetStackFrameAtIndex(0)->GetSymbolContext(eSymbolContextEverything);
+                m_run_to_sp.reset(new ThreadPlanStepOut(m_thread, &sc, true, m_stop_others, eVoteNoOpinion, eVoteNoOpinion));
+                m_thread.QueueThreadPlan(m_run_to_sp, false);
+                m_run_to_sp->SetPrivate(true);
+                return false;
+            }
+            
             if (log)
                 log->Printf("Running to ObjC method implementation: 0x%llx", target_addr);
             
             ObjCLanguageRuntime *objc_runtime = GetThread().GetProcess().GetObjCLanguageRuntime();
             assert (objc_runtime != NULL);
-            objc_runtime->AddToMethodCache (m_class_ptr, m_sel_ptr, target_addr);
+            objc_runtime->AddToMethodCache (m_isa_addr, m_sel_addr, target_addr);
+            if (log)
+                log->Printf("Adding {0x%llx, 0x%llx} = 0x%llx to cache.", m_isa_addr, m_sel_addr, target_addr);
 
             // Extract the target address from the value:
             

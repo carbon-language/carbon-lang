@@ -22,7 +22,6 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Value.h"
-#include "lldb/Expression/ClangFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -35,7 +34,117 @@
 using namespace lldb;
 using namespace lldb_private;
 
-        
+const char *AppleObjCTrampolineHandler::g_lookup_implementation_function_name = "__lldb_objc_find_implementation_for_selector";
+const char *AppleObjCTrampolineHandler::g_lookup_implementation_function_code = "                               \n\
+extern \"C\"                                                                                                    \n\
+{                                                                                                               \n\
+    extern void *class_getMethodImplementation(void *objc_class, void *sel);                                    \n\
+    extern void *class_getMethodImplementation_stret(void *objc_class, void *sel);                              \n\
+    extern void * sel_getUid(char *name);                                                                       \n\
+    extern int printf(const char *format, ...);                                                                 \n\
+}                                                                                                               \n\
+extern \"C\" void * __lldb_objc_find_implementation_for_selector (void *object,                                 \n\
+                                                    void *sel,                                                  \n\
+                                                    int is_stret,                                               \n\
+                                                    int is_super,                                               \n\
+                                                    int is_super2,                                              \n\
+                                                    int is_fixup,                                               \n\
+                                                    int is_fixed,                                               \n\
+                                                    int debug)                                                  \n\
+{                                                                                                               \n\
+    struct __lldb_imp_return_struct                                                                             \n\
+    {                                                                                                           \n\
+        void *class_addr;                                                                                       \n\
+        void *sel_addr;                                                                                         \n\
+        void *impl_addr;                                                                                        \n\
+    };                                                                                                          \n\
+                                                                                                                \n\
+    struct __lldb_objc_class {                                                                                  \n\
+        void *isa;                                                                                              \n\
+        void *super_ptr;                                                                                        \n\
+    };                                                                                                          \n\
+    struct __lldb_objc_super {                                                                                  \n\
+        void *reciever;                                                                                         \n\
+        struct __lldb_objc_class *class_ptr;                                                                    \n\
+    };                                                                                                          \n\
+    struct __lldb_msg_ref {                                                                                     \n\
+        void *dont_know;                                                                                        \n\
+        void *sel;                                                                                              \n\
+    };                                                                                                          \n\
+                                                                                                                \n\
+    struct __lldb_imp_return_struct return_struct;                                                              \n\
+                                                                                                                \n\
+    if (debug)                                                                                                  \n\
+        printf (\"\\n*** Called with obj: 0x%p sel: 0x%p is_stret: %d is_super: %d, \"                          \n\
+                \"is_super2: %d, is_fixup: %d, is_fixed: %d\\n\",                                               \n\
+                 object, sel, is_stret, is_super, is_super2, is_fixup, is_fixed);                               \n\
+    if (is_super)                                                                                               \n\
+    {                                                                                                           \n\
+        if (is_super2)                                                                                          \n\
+        {                                                                                                       \n\
+            return_struct.class_addr = ((__lldb_objc_super *) object)->class_ptr->super_ptr;                    \n\
+        }                                                                                                       \n\
+        else                                                                                                    \n\
+        {                                                                                                       \n\
+            return_struct.class_addr = ((__lldb_objc_super *) object)->class_ptr;                               \n\
+        }                                                                                                       \n\
+    }                                                                                                           \n\
+    else                                                                                                        \n\
+    {                                                                                                           \n\
+        void *class_ptr = (void *) [(id) object class];                                                         \n\
+        if (class_ptr == object)                                                                                \n\
+        {                                                                                                       \n\
+            struct __lldb_objc_class *class_as_class_struct = (struct __lldb_objc_class *) class_ptr;           \n\
+            if (debug)                                                                                          \n\
+                printf (\"Found a class object, need to return the meta class 0x%p -> 0x%p\\n\",                \n\
+                        class_ptr, class_as_class_struct->isa);                                                 \n\
+            return_struct.class_addr = class_as_class_struct->isa;                                              \n\
+        }                                                                                                       \n\
+        else                                                                                                    \n\
+        {                                                                                                       \n\
+            if (debug)                                                                                          \n\
+                printf (\"[object class] returned: 0x%p.\\n\", class_ptr);                                      \n\
+            return_struct.class_addr = class_ptr;                                                               \n\
+        }                                                                                                       \n\
+    }                                                                                                           \n\
+                                                                                                                \n\
+    if (is_fixup)                                                                                               \n\
+    {                                                                                                           \n\
+        if (is_fixed)                                                                                           \n\
+        {                                                                                                       \n\
+            return_struct.sel_addr = ((__lldb_msg_ref *) sel)->sel;                                             \n\
+        }                                                                                                       \n\
+        else                                                                                                    \n\
+        {                                                                                                       \n\
+            char *sel_name = (char *) ((__lldb_msg_ref *) sel)->sel;                                            \n\
+            return_struct.sel_addr = sel_getUid (sel_name);                                                     \n\
+            if (debug)                                                                                          \n\
+                printf (\"\\n*** Got fixed up selector: 0x%p for name %s.\\n\",                                 \n\
+                        return_struct.sel_addr, sel_name);                                                      \n\
+        }                                                                                                       \n\
+    }                                                                                                           \n\
+    else                                                                                                        \n\
+    {                                                                                                           \n\
+        return_struct.sel_addr = sel;                                                                           \n\
+    }                                                                                                           \n\
+                                                                                                                \n\
+    if (is_stret)                                                                                               \n\
+    {                                                                                                           \n\
+        return_struct.impl_addr = class_getMethodImplementation_stret (return_struct.class_addr,                \n\
+                                                                       return_struct.sel_addr);                 \n\
+    }                                                                                                           \n\
+    else                                                                                                        \n\
+    {                                                                                                           \n\
+        return_struct.impl_addr = class_getMethodImplementation (return_struct.class_addr,                      \n\
+                                                                       return_struct.sel_addr);                 \n\
+    }                                                                                                           \n\
+    if (debug)                                                                                                  \n\
+        printf (\"\\n*** Returning implementation: 0x%p.\\n\", return_struct.impl_addr);                        \n\
+                                                                                                                \n\
+    return return_struct.impl_addr;                                                                             \n\
+}                                                                                                               \n\
+";
+
 AppleObjCTrampolineHandler::AppleObjCVTables::VTableRegion::VTableRegion(AppleObjCVTables *owner, lldb::addr_t header_addr) :
     m_valid (true),
     m_owner(owner),
@@ -383,27 +492,27 @@ AppleObjCTrampolineHandler::AppleObjCVTables::IsAddressInVTables (lldb::addr_t a
 const AppleObjCTrampolineHandler::DispatchFunction
 AppleObjCTrampolineHandler::g_dispatch_functions[] =
 {
-    // NAME                              STRET  SUPER  FIXUP TYPE
-    {"objc_msgSend",                     false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSend_fixup",               false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSend_fixedup",             false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSend_stret",               true,  false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSend_stret_fixup",         true,  false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSend_stret_fixedup",       true,  false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSend_fpret",               false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSend_fpret_fixup",         false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSend_fpret_fixedup",       false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSend_fp2ret",              false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSend_fp2ret_fixup",        false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSend_fp2ret_fixedup",      false, false, AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSendSuper",                false, true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSendSuper_stret",          true,  true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSendSuper2",               false, true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSendSuper2_fixup",         false, true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSendSuper2_fixedup",       false, true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
-    {"objc_msgSendSuper2_stret",         true,  true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpNone    },
-    {"objc_msgSendSuper2_stret_fixup",   true,  true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpToFix   },
-    {"objc_msgSendSuper2_stret_fixedup", true,  true,  AppleObjCTrampolineHandler::DispatchFunction::eFixUpFixed   },
+    // NAME                              STRET  SUPER  SUPER2  FIXUP TYPE
+    {"objc_msgSend",                     false, false, false, DispatchFunction::eFixUpNone    },
+    {"objc_msgSend_fixup",               false, false, false, DispatchFunction::eFixUpToFix   },
+    {"objc_msgSend_fixedup",             false, false, false, DispatchFunction::eFixUpFixed   },
+    {"objc_msgSend_stret",               true,  false, false, DispatchFunction::eFixUpNone    },
+    {"objc_msgSend_stret_fixup",         true,  false, false, DispatchFunction::eFixUpToFix   },
+    {"objc_msgSend_stret_fixedup",       true,  false, false, DispatchFunction::eFixUpFixed   },
+    {"objc_msgSend_fpret",               false, false, false, DispatchFunction::eFixUpNone    },
+    {"objc_msgSend_fpret_fixup",         false, false, false, DispatchFunction::eFixUpToFix   },
+    {"objc_msgSend_fpret_fixedup",       false, false, false, DispatchFunction::eFixUpFixed   },
+    {"objc_msgSend_fp2ret",              false, false,  true, DispatchFunction::eFixUpNone    },
+    {"objc_msgSend_fp2ret_fixup",        false, false,  true, DispatchFunction::eFixUpToFix   },
+    {"objc_msgSend_fp2ret_fixedup",      false, false,  true, DispatchFunction::eFixUpFixed   },
+    {"objc_msgSendSuper",                false, true,  false, DispatchFunction::eFixUpNone    },
+    {"objc_msgSendSuper_stret",          true,  true,  false, DispatchFunction::eFixUpNone    },
+    {"objc_msgSendSuper2",               false, true,   true, DispatchFunction::eFixUpNone    },
+    {"objc_msgSendSuper2_fixup",         false, true,   true, DispatchFunction::eFixUpToFix   },
+    {"objc_msgSendSuper2_fixedup",       false, true,   true, DispatchFunction::eFixUpFixed   },
+    {"objc_msgSendSuper2_stret",         true,  true,   true, DispatchFunction::eFixUpNone    },
+    {"objc_msgSendSuper2_stret_fixup",   true,  true,   true, DispatchFunction::eFixUpToFix   },
+    {"objc_msgSendSuper2_stret_fixedup", true,  true,   true, DispatchFunction::eFixUpFixed   },
     {NULL}
 };
 
@@ -411,21 +520,30 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (ProcessSP process_sp, Mo
     m_process_sp (process_sp),
     m_objc_module_sp (objc_module_sp),
     m_impl_fn_addr (LLDB_INVALID_ADDRESS),
-    m_impl_stret_fn_addr (LLDB_INVALID_ADDRESS)
+    m_impl_stret_fn_addr (LLDB_INVALID_ADDRESS),
+    m_msg_forward_addr (LLDB_INVALID_ADDRESS)
 {
     // Look up the known resolution functions:
     
     ConstString get_impl_name("class_getMethodImplementation");
     ConstString get_impl_stret_name("class_getMethodImplementation_stret");
+    ConstString msg_forward_name("_objc_msgForward");
+    ConstString msg_forward_stret_name("_objc_msgForward_stret");
     
     Target *target = m_process_sp ? &m_process_sp->GetTarget() : NULL;
     const Symbol *class_getMethodImplementation = m_objc_module_sp->FindFirstSymbolWithNameAndType (get_impl_name, eSymbolTypeCode);
     const Symbol *class_getMethodImplementation_stret = m_objc_module_sp->FindFirstSymbolWithNameAndType (get_impl_stret_name, eSymbolTypeCode);
+    const Symbol *msg_forward = m_objc_module_sp->FindFirstSymbolWithNameAndType (msg_forward_name, eSymbolTypeCode);
+    const Symbol *msg_forward_stret = m_objc_module_sp->FindFirstSymbolWithNameAndType (msg_forward_stret_name, eSymbolTypeCode);
     
     if (class_getMethodImplementation)
         m_impl_fn_addr = class_getMethodImplementation->GetValue().GetLoadAddress(target);
     if  (class_getMethodImplementation_stret)
         m_impl_stret_fn_addr = class_getMethodImplementation_stret->GetValue().GetLoadAddress(target);
+    if (msg_forward)
+        m_msg_forward_addr = msg_forward->GetValue().GetLoadAddress(target);
+    if  (msg_forward_stret)
+        m_msg_forward_stret_addr = msg_forward_stret->GetValue().GetLoadAddress(target);
     
     // FIXME: Do some kind of logging here.
     if (m_impl_fn_addr == LLDB_INVALID_ADDRESS || m_impl_stret_fn_addr == LLDB_INVALID_ADDRESS)
@@ -467,6 +585,9 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
     DispatchFunction this_dispatch;
     bool found_it = false;
     
+    // First step is to look and see if we are in one of the known ObjC dispatch functions.  We've already compiled
+    // a table of same, so consult it.
+    
     MsgsendMap::iterator pos;
     pos = m_msgSend_map.find (curr_pc);
     if (pos != m_msgSend_map.end())
@@ -474,6 +595,8 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         this_dispatch = g_dispatch_functions[(*pos).second];
         found_it = true;
     }
+    
+    // Next check to see if we are in a vtable region:
     
     if (!found_it)
     {
@@ -496,6 +619,8 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
     {
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
+        // We are decoding a method dispatch.  
+        // First job is to pull the arguments out:
         
         lldb::StackFrameSP thread_cur_frame = thread.GetStackFrameAtIndex(0);
         
@@ -506,16 +631,12 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
             
         Target *target = thread.CalculateTarget();
         
-        // FIXME: Since neither the value nor the Clang QualType know their ASTContext, 
-        // we have to make sure the type we put in our value list comes from the same ASTContext
-        // the ABI will use to get the argument values.  THis is the bottom-most frame's module.
-
         ClangASTContext *clang_ast_context = target->GetScratchClangASTContext();
         ValueList argument_values;
-        Value input_value;
-        void *clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
-        input_value.SetValueType (Value::eValueTypeScalar);
-        input_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
+        Value void_ptr_value;
+        lldb::clang_type_t clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
+        void_ptr_value.SetValueType (Value::eValueTypeScalar);
+        void_ptr_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
         
         int obj_index;
         int sel_index;
@@ -527,99 +648,185 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         {
             obj_index = 1;
             sel_index = 2;
-            argument_values.PushValue(input_value);
-            argument_values.PushValue(input_value);
-            argument_values.PushValue(input_value);
+            argument_values.PushValue(void_ptr_value);
+            argument_values.PushValue(void_ptr_value);
+            argument_values.PushValue(void_ptr_value);
         }
         else
         {
             obj_index = 0;
             sel_index = 1;
-            argument_values.PushValue(input_value);
-            argument_values.PushValue(input_value);
+            argument_values.PushValue(void_ptr_value);
+            argument_values.PushValue(void_ptr_value);
         }
 
         
         bool success = abi->GetArgumentValues (thread, argument_values);
         if (!success)
             return ret_plan_sp;
-        
-        // Okay, the first value here is the object, we actually want the class of that object.
-        // For now we're just going with the ISA.  
-        // FIXME: This should really be the return value of [object class] to properly handle KVO interposition.
-        
+            
+        // Pull the class out of the Object and see if we've already cached this method call,
+        // If so we can push a run-to-address plan directly.  Otherwise we have to figure out where
+        // the implementation lives.
+
         Value isa_value(*(argument_values.GetValueAtIndex(obj_index)));
-        
-        // This is a little cheesy, but since object->isa is the first field, 
+
+        // This is a little cheesy, but since object->isa is the first field,
         // making the object value a load address value and resolving it will get
         // the pointer sized data pointed to by that value...
-        ExecutionContext exec_ctx;
-        thread.CalculateExecutionContext (exec_ctx);
+        ExecutionContext exe_ctx;
+        thread.CalculateExecutionContext (exe_ctx);
 
         isa_value.SetValueType(Value::eValueTypeLoadAddress);
-        isa_value.ResolveValue(&exec_ctx, clang_ast_context->getASTContext());
-        
-        if (this_dispatch.fixedup == DispatchFunction::eFixUpFixed)
-        {
-            // For the FixedUp method the Selector is actually a pointer to a 
-            // structure, the second field of which is the selector number.
-            Value *sel_value = argument_values.GetValueAtIndex(sel_index);
-            sel_value->GetScalar() += process->GetAddressByteSize();
-            sel_value->SetValueType(Value::eValueTypeLoadAddress);
-            sel_value->ResolveValue(&exec_ctx, clang_ast_context->getASTContext());            
-        }
-        else if (this_dispatch.fixedup == DispatchFunction::eFixUpToFix)
-        {   
-            // FIXME: If the method dispatch is not "fixed up" then the selector is actually a
-            // pointer to the string name of the selector.  We need to look that up...
-            // For now I'm going to punt on that and just return no plan.
-            if (log)
-                log->Printf ("Punting on stepping into un-fixed-up method dispatch.");
-            return ret_plan_sp;
-        }
-        
-        // FIXME: If this is a dispatch to the super-class, we need to get the super-class from
-        // the class, and disaptch to that instead.
-        // But for now I just punt and return no plan.
-        if (this_dispatch.is_super)
-        {   
-            if (log)
-                log->Printf ("Punting on stepping into super method dispatch.");
-            return ret_plan_sp;
-        }
-        
-        ValueList dispatch_values;
-        dispatch_values.PushValue (isa_value);
-        dispatch_values.PushValue(*(argument_values.GetValueAtIndex(sel_index)));
-        
+        isa_value.ResolveValue(&exe_ctx, clang_ast_context->getASTContext());
+        lldb::addr_t isa_addr = isa_value.GetScalar().ULongLong();
+        lldb::addr_t sel_addr = argument_values.GetValueAtIndex(sel_index)->GetScalar().ULongLong();
+
         if (log)
         {
             log->Printf("Resolving method call for class - 0x%llx and selector - 0x%llx",
-                        dispatch_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
-                        dispatch_values.GetValueAtIndex(1)->GetScalar().ULongLong());
+                        isa_addr, sel_addr);
         }
         ObjCLanguageRuntime *objc_runtime = m_process_sp->GetObjCLanguageRuntime ();
         assert(objc_runtime != NULL);
-        lldb::addr_t impl_addr = objc_runtime->LookupInMethodCache (dispatch_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
-                                                dispatch_values.GetValueAtIndex(1)->GetScalar().ULongLong());
+        
+        lldb::addr_t impl_addr = objc_runtime->LookupInMethodCache (isa_addr, sel_addr);
                                                 
         if (impl_addr == LLDB_INVALID_ADDRESS)
-        {
-
-            Address resolve_address(NULL, this_dispatch.stret_return ? m_impl_stret_fn_addr : m_impl_fn_addr);
-            
+        {            
+            // We haven't seen this class/selector pair yet.  Look it up.
             StreamString errors;
+            Address impl_code_address;
+            
+            ValueList dispatch_values;
+            
+            // We've will inject a little function in the target that takes the object, selector and some flags,
+            // and figures out the implementation.  Looks like:
+            //      void *__lldb_objc_find_implementation_for_selector (void *object, 
+            //                                                          void *sel, 
+            //                                                          int is_stret, 
+            //                                                          int is_super, 
+            //                                                          int is_super2, 
+            //                                                          int is_fixup, 
+            //                                                          int is_fixed,
+            //                                                          int debug)
+            // So set up the arguments for that call.
+            
+            dispatch_values.PushValue (*(argument_values.GetValueAtIndex(obj_index)));
+            dispatch_values.PushValue (*(argument_values.GetValueAtIndex(sel_index)));
+            
+            Value flag_value;
+            lldb::clang_type_t clang_int_type = clang_ast_context->GetBuiltinTypeForEncodingAndBitSize(lldb::eEncodingSint, 32);
+            flag_value.SetValueType (Value::eValueTypeScalar);
+            flag_value.SetContext (Value::eContextTypeClangType, clang_int_type);
+            
+            if (this_dispatch.stret_return)
+                flag_value.GetScalar() = 1;
+            else
+                flag_value.GetScalar() = 0;
+            dispatch_values.PushValue (flag_value);
+                    
+            if (this_dispatch.is_super)
+                flag_value.GetScalar() = 1;
+            else
+                flag_value.GetScalar() = 0;
+            dispatch_values.PushValue (flag_value);
+                    
+            if (this_dispatch.is_super2)
+                flag_value.GetScalar() = 1;
+            else
+                flag_value.GetScalar() = 0;
+            dispatch_values.PushValue (flag_value);
+                    
+            switch (this_dispatch.fixedup)
+            {
+              case DispatchFunction::eFixUpNone:
+                 flag_value.GetScalar() = 0;
+                 dispatch_values.PushValue (flag_value);
+                 dispatch_values.PushValue (flag_value);
+                 break;
+              case DispatchFunction::eFixUpFixed:
+                 flag_value.GetScalar() = 1;
+                 dispatch_values.PushValue (flag_value);
+                 flag_value.GetScalar() = 1;
+                 dispatch_values.PushValue (flag_value);
+                 break;
+              case DispatchFunction::eFixUpToFix:
+                 flag_value.GetScalar() = 1;
+                 dispatch_values.PushValue (flag_value);
+                 flag_value.GetScalar() = 0;
+                 dispatch_values.PushValue (flag_value);
+                 break;
+            }
+            if (log) 
+                flag_value.GetScalar() = 1;
+            else
+                flag_value.GetScalar() = 0;  // FIXME - Set to 0 when debugging is done.
+                 dispatch_values.PushValue (flag_value);
+
+            // Now, if we haven't already, make and insert the function as a ClangUtilityFunction, and make and insert 
+            // it's runner ClangFunction.
             { 
                 // Scope for mutex locker:
                 Mutex::Locker locker(m_impl_function_mutex);
+                
+                // First stage is to make the ClangUtility to hold our injected function:
+
+#define USE_BUILTIN_FUNCTION 0  // Define this to 1 and we will use the get_implementation function found in the target.
+                                // This is useful for debugging additions to the get_impl function 'cause you don't have
+                                // to bother with string-ifying the code into g_lookup_implementation_function_code.
+                
+                if (USE_BUILTIN_FUNCTION)
+                {
+                    ConstString our_utility_function_name("__lldb_objc_find_implementation_for_selector");
+                    SymbolContextList sc_list;
+                    exe_ctx.target->GetImages().FindSymbolsWithNameAndType (our_utility_function_name, eSymbolTypeCode, sc_list);
+                    if (sc_list.GetSize() == 1)
+                    {
+                        SymbolContext sc;
+                        sc_list.GetContextAtIndex(0, sc);
+                        if (sc.symbol != NULL)
+                            impl_code_address = sc.symbol->GetValue();
+                            
+                        lldb::addr_t addr = impl_code_address.GetLoadAddress (exe_ctx.target);
+                        printf ("Getting address for our_utility_function: 0x%llx.\n", addr);
+                    }
+                    else
+                    {
+                        printf ("Could not find implementation function address.\n");
+                        return ret_plan_sp;
+                    }
+                }
+                else if (!m_impl_code.get())
+                {
+                    m_impl_code.reset (new ClangUtilityFunction (g_lookup_implementation_function_code,
+                                                                 g_lookup_implementation_function_name));
+                    if (!m_impl_code->Install(errors, exe_ctx))
+                    {
+                        if (log)
+                            log->Printf ("Failed to install implementation lookup: %s.", errors.GetData());
+                        m_impl_code.reset();
+                        return ret_plan_sp;
+                    }
+                    impl_code_address.Clear();
+                    impl_code_address.SetOffset(m_impl_code->StartAddress());
+                }
+                else
+                {
+                    impl_code_address.Clear();
+                    impl_code_address.SetOffset(m_impl_code->StartAddress());
+                }
+
+                // Next make the runner function for our implementation utility function.
                 if (!m_impl_function.get())
                 {
                      m_impl_function.reset(new ClangFunction(process->GetTargetTriple().GetCString(), 
                                                              clang_ast_context, 
                                                              clang_void_ptr_type, 
-                                                             resolve_address, 
+                                                             impl_code_address, 
                                                              dispatch_values));
-                            
+                    
+                    errors.Clear();        
                     unsigned num_errors = m_impl_function->CompileFunction(errors);
                     if (num_errors)
                     {
@@ -629,7 +836,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                     }
                     
                     errors.Clear();
-                    if (!m_impl_function->WriteFunctionWrapper(exec_ctx, errors))
+                    if (!m_impl_function->WriteFunctionWrapper(exe_ctx, errors))
                     {
                         if (log)
                             log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
@@ -637,19 +844,21 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                     }
                 }
                 
-            }
+            } 
             
             errors.Clear();
             
-            // Now write down the argument values for this call.
+            // Now write down the argument values for this particular call.  This looks like it might be a race condition
+            // if other threads were calling into here, but actually it isn't because we allocate a new args structure for
+            // this call by passing args_addr = LLDB_INVALID_ADDRESS...
+
             lldb::addr_t args_addr = LLDB_INVALID_ADDRESS;
-            if (!m_impl_function->WriteFunctionArguments (exec_ctx, args_addr, resolve_address, dispatch_values, errors))
+            if (!m_impl_function->WriteFunctionArguments (exe_ctx, args_addr, impl_code_address, dispatch_values, errors))
                 return ret_plan_sp;
         
-            ret_plan_sp.reset (new AppleThreadPlanStepThroughObjCTrampoline (thread, this, args_addr, 
-                                                                        argument_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
+            ret_plan_sp.reset (new AppleThreadPlanStepThroughObjCTrampoline (thread, this, args_addr,
                                                                         dispatch_values.GetValueAtIndex(0)->GetScalar().ULongLong(),
-                                                                        dispatch_values.GetValueAtIndex(1)->GetScalar().ULongLong(),
+                                                                        isa_addr, sel_addr,
                                                                         stop_others));
             if (log)
             {

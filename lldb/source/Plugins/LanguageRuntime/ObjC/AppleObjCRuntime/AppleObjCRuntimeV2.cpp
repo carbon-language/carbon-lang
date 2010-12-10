@@ -136,7 +136,7 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
     if (m_has_object_getClass)
     {
         assert(snprintf(&buf->contents[0], sizeof(buf->contents),
-                        "extern \"C\" int gdb_object_getClass(void *);      \n"
+                        "extern \"C\" void *gdb_object_getClass(void *);      \n"
                         "extern \"C\" void                                  \n"
                         "%s(void *$__lldb_arg_obj)                          \n"
                         "{                                                  \n"
@@ -148,7 +148,7 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
     else
     {
         assert(snprintf(&buf->contents[0], sizeof(buf->contents), 
-                        "extern \"C\" int gdb_class_getClass(void *);         \n"
+                        "extern \"C\" void *gdb_class_getClass(void *);         \n"
                         "extern \"C\" void                                    \n"
                         "%s(void *$__lldb_arg_obj)                            \n"
                         "{                                                    \n"

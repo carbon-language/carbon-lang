@@ -35,13 +35,13 @@ public:
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
 
-protected:
     ThreadPlanStepOut (Thread &thread,
                        SymbolContext *addr_context,
                        bool first_insn,
                        bool stop_others,
                        lldb::Vote stop_vote,
                        lldb::Vote run_vote);
+protected:
 
 private:
     SymbolContext *m_step_from_context;

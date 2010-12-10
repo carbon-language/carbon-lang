@@ -18,6 +18,7 @@
 // Project includes
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangFunction.h"
+#include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Host/Mutex.h"
 
 
@@ -38,6 +39,12 @@ public:
     ClangFunction *
     GetLookupImplementationWrapperFunction ();
     
+    bool 
+    AddrIsMsgForward (lldb::addr_t addr) const
+    {
+        return (addr == m_msg_forward_addr || addr == m_msg_forward_stret_addr);
+    }
+
     
     struct DispatchFunction {
     public:
@@ -51,10 +58,13 @@ public:
         const char *name;
         bool stret_return;
         bool is_super;
+        bool is_super2;
         FixUpState fixedup;
     };
     
 private:
+    static const char *g_lookup_implementation_function_name;
+    static const char *g_lookup_implementation_function_code;
 
     class AppleObjCVTables
     {
@@ -165,7 +175,7 @@ private:
         {   
             return m_process_sp.get();
         }
-
+        
     private:
         ProcessSP m_process_sp;
         typedef std::vector<VTableRegion> region_collection;
@@ -182,11 +192,13 @@ private:
     MsgsendMap m_msgSend_map;
     ProcessSP m_process_sp;
     ModuleSP m_objc_module_sp;
-    lldb::addr_t get_impl_addr;
     std::auto_ptr<ClangFunction> m_impl_function;
+    std::auto_ptr<ClangUtilityFunction> m_impl_code;
     Mutex m_impl_function_mutex;
     lldb::addr_t m_impl_fn_addr;
     lldb::addr_t m_impl_stret_fn_addr;
+    lldb::addr_t m_msg_forward_addr;
+    lldb::addr_t m_msg_forward_stret_addr;
     std::auto_ptr<AppleObjCVTables> m_vtables_ap;
     
      
