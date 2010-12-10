@@ -3464,7 +3464,7 @@ inline void QualType::removeLocalVolatile() {
 
 inline void QualType::removeLocalCVRQualifiers(unsigned Mask) {
   assert(!(Mask & ~Qualifiers::CVRMask) && "mask has non-CVR bits");
-  assert(Qualifiers::CVRMask == Qualifiers::FastMask);
+  assert((int)Qualifiers::CVRMask == (int)Qualifiers::FastMask);
 
   // Fast path: we don't need to touch the slow qualifiers.
   removeLocalFastQualifiers(Mask);
