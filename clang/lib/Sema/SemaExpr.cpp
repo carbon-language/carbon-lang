@@ -7035,6 +7035,10 @@ void Sema::ConvertPropertyForRValue(Expr *&E) {
 
   E = ImplicitCastExpr::Create(Context, E->getType(), CK_GetObjCProperty,
                                E, 0, VK);
+  
+  ExprResult Result = MaybeBindToTemporary(E);
+  if (!Result.isInvalid())
+    E = Result.take();
 }
 
 void Sema::ConvertPropertyForLValue(Expr *&LHS, Expr *&RHS, QualType &LHSTy) {
