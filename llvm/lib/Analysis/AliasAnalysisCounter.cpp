@@ -29,14 +29,14 @@ PrintAllFailures("count-aa-print-all-failed-queries", cl::ReallyHidden);
 
 namespace {
   class AliasAnalysisCounter : public ModulePass, public AliasAnalysis {
-    unsigned No, May, Must;
+    unsigned No, May, Partial, Must;
     unsigned NoMR, JustRef, JustMod, MR;
     Module *M;
   public:
     static char ID; // Class identification, replacement for typeinfo
     AliasAnalysisCounter() : ModulePass(ID) {
       initializeAliasAnalysisCounterPass(*PassRegistry::getPassRegistry());
-      No = May = Must = 0;
+      No = May = Partial = Must = 0;
       NoMR = JustRef = JustMod = MR = 0;
     }
 
@@ -45,7 +45,7 @@ namespace {
              << Val*100/Sum << "%)\n";
     }
     ~AliasAnalysisCounter() {
-      unsigned AASum = No+May+Must;
+      unsigned AASum = No+May+Partial+Must;
       unsigned MRSum = NoMR+JustRef+JustMod+MR;
       if (AASum + MRSum) { // Print a report if any counted queries occurred...
         errs() << "\n===== Alias Analysis Counter Report =====\n"
@@ -54,9 +54,12 @@ namespace {
         if (AASum) {
           printLine("no alias",     No, AASum);
           printLine("may alias",   May, AASum);
+          printLine("partial alias", Partial, AASum);
           printLine("must alias", Must, AASum);
           errs() << "  Alias Analysis Counter Summary: " << No*100/AASum << "%/"
-                 << May*100/AASum << "%/" << Must*100/AASum<<"%\n\n";
+                 << May*100/AASum << "%/"
+                 << Partial*100/AASum << "%/"
+                 << Must*100/AASum<<"%\n\n";
         }
 
         errs() << "  " << MRSum    << " Total Mod/Ref Queries Performed\n";
@@ -129,6 +132,7 @@ AliasAnalysisCounter::alias(const Location &LocA, const Location &LocB) {
   default: llvm_unreachable("Unknown alias type!");
   case NoAlias:   No++;   AliasString = "No alias"; break;
   case MayAlias:  May++;  AliasString = "May alias"; break;
+  case PartialAlias: Partial++; AliasString = "Partial alias"; break;
   case MustAlias: Must++; AliasString = "Must alias"; break;
   }
 
