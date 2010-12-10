@@ -327,20 +327,16 @@ private:
 };
 
 
-/// ExtQuals - We can encode up to three bits in the low bits of a
+/// ExtQuals - We can encode up to four bits in the low bits of a
 /// type pointer, but there are many more type qualifiers that we want
 /// to be able to apply to an arbitrary type.  Therefore we have this
 /// struct, intended to be heap-allocated and used by QualType to
 /// store qualifiers.
 ///
-/// The current design tags the 'const' and 'restrict' qualifiers in
-/// two low bits on the QualType pointer; a third bit records whether
-/// the pointer is an ExtQuals node.  'const' was chosen because it is
-/// orders of magnitude more common than the other two qualifiers, in
-/// both library and user code.  It's relatively rare to see
-/// 'restrict' in user code, but many standard C headers are saturated
-/// with 'restrict' declarations, so that representing them efficiently
-/// is a critical goal of this representation.
+/// The current design tags the 'const', 'restrict', and 'volatile' qualifiers 
+/// in three low bits on the QualType pointer; a fourth bit records whether
+/// the pointer is an ExtQuals node. The extended qualifiers (address spaces,
+/// Objective-C GC attributes) are much more rare.
 class ExtQuals : public llvm::FoldingSetNode {
   // NOTE: changing the fast qualifiers should be straightforward as
   // long as you don't make 'const' non-fast.
