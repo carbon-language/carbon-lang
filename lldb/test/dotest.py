@@ -124,6 +124,7 @@ where options:
 -a   : don't do lldb Python API tests
        use @python_api_test to decorate a test case as lldb Python API test
 +a   : just do lldb Python API tests
+       do not specify both '-a' and '+a' at the same time
 -b   : read a blacklist file specified after this option
 -c   : read a config file specified after this option
        (see also lldb-trunk/example/test/usage-config)
@@ -369,6 +370,10 @@ def parseOptionsAndInitTestdirs():
         else:
             print "Unknown option: ", sys.argv[index]
             usage()
+
+    # Do not specify both '-a' and '+a' at the same time.
+    if dont_do_python_api_test and just_do_python_api_test:
+        usage()
 
     # Gather all the dirs passed on the command line.
     if len(sys.argv) > index:
