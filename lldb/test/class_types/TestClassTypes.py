@@ -17,6 +17,7 @@ class ClassTypesTestCase(TestBase):
         self.class_types()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_with_dsym_and_python_api(self):
         """Use Python APIs to create a breakpoint by (filespec, line)."""
         self.buildDsym()
@@ -30,6 +31,7 @@ class ClassTypesTestCase(TestBase):
         self.buildDwarf()
         self.class_types()
 
+    @python_api_test
     def test_with_dwarf_and_python_api(self):
         """Use Python APIs to create a breakpoint by (filespec, line)."""
         self.buildDwarf()

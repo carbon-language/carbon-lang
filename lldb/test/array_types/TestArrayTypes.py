@@ -16,6 +16,7 @@ class ArrayTypesTestCase(TestBase):
         self.array_types()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test    
     def test_with_dsym_and_python_api(self):
         """Use Python APIs to inspect variables with array types."""
         self.buildDsym()
@@ -26,6 +27,7 @@ class ArrayTypesTestCase(TestBase):
         self.buildDwarf()
         self.array_types()
 
+    @python_api_test
     def test_with_dwarf_and_python_api(self):
         """Use Python APIs to inspect variables with array types."""
         self.buildDwarf()

@@ -16,6 +16,7 @@ class BitfieldsTestCase(TestBase):
         self.bitfields_variable()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_with_dsym_and_python_api(self):
         """Use Python APIs to inspect a bitfields variable."""
         self.buildDsym()
@@ -26,6 +27,7 @@ class BitfieldsTestCase(TestBase):
         self.buildDwarf()
         self.bitfields_variable()
 
+    @python_api_test
     def test_with_dwarf_and_python_api(self):
         """Use Python APIs to inspect a bitfields variable."""
         self.buildDwarf()
@@ -92,11 +94,7 @@ class BitfieldsTestCase(TestBase):
         breakpoint = target.BreakpointCreateByLocation("main.c", self.line)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
-        self.runCmd("run", RUN_SUCCEEDED, setCookie=False)
-        # This does not work, and results in the process stopped at dyld_start?
-        #process = target.LaunchProcess([], [], os.ctermid(), False)
-
-        self.process = target.GetProcess()
+        self.process = target.LaunchProcess([], [], os.ctermid(), False, 0)
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.

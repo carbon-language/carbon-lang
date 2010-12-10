@@ -23,15 +23,17 @@ class IterateFrameAndDisassembleTestCase(TestBase):
         self.disassemble_call_stack()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_with_dsym_and_python_api(self):
         """Disassemble each call frame when stopped on C's constructor."""
         self.buildDsym()
-        self.disassemble_call_stack_api()
+        self.disassemble_call_stack_python()
 
+    @python_api_test
     def test_with_dwarf_and_python_api(self):
         """Disassemble each call frame when stopped on C's constructor."""
         self.buildDwarf()
-        self.disassemble_call_stack_api()
+        self.disassemble_call_stack_python()
 
     def setUp(self):
         # Call super's setUp().
@@ -81,7 +83,7 @@ class IterateFrameAndDisassembleTestCase(TestBase):
                 #print "function:", function
                 self.runCmd("disassemble -n '%s'" % function)
 
-    def disassemble_call_stack_api(self):
+    def disassemble_call_stack_python(self):
         """Disassemble each call frame when stopped on C's constructor."""
         self.breakOnCtor()
 

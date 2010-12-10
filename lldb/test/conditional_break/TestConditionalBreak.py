@@ -18,11 +18,13 @@ class ConditionalBreakTestCase(TestBase):
     mydir = "conditional_break"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_with_dsym_python(self):
         """Exercise some thread and frame APIs to break if c() is called by a()."""
         self.buildDsym()
         self.do_conditional_break()
 
+    @python_api_test
     def test_with_dwarf_python(self):
         """Exercise some thread and frame APIs to break if c() is called by a()."""
         self.buildDwarf()

@@ -19,6 +19,7 @@ class BreakpointConditionsTestCase(TestBase):
         self.breakpoint_conditions()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_with_dsym_and_python_api(self):
         """Use Python APIs to set breakpoint conditions."""
         self.buildDsym()
@@ -29,6 +30,7 @@ class BreakpointConditionsTestCase(TestBase):
         self.buildDwarf()
         self.breakpoint_conditions()
 
+    @python_api_test
     def test_with_dwarf_and_python_api(self):
         """Use Python APIs to set breakpoint conditions."""
         self.buildDwarf()
