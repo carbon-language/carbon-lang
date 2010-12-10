@@ -3130,6 +3130,24 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     clang_disposeString(ResultFileName);
     clang_disposeString(KindSpelling);
     clang_disposeString(USR);
+    
+    CXCursor Definition = clang_getCursorDefinition(Result);
+    if (!clang_equalCursors(Definition, clang_getNullCursor())) {
+      CXSourceLocation DefinitionLoc = clang_getCursorLocation(Definition);
+      CXString DefinitionKindSpelling
+                                = clang_getCursorKindSpelling(Definition.kind);
+      CXFile DefinitionFile;
+      unsigned DefinitionLine, DefinitionColumn;
+      clang_getInstantiationLocation(DefinitionLoc, &DefinitionFile, 
+                                     &DefinitionLine, &DefinitionColumn, 0);
+      CXString DefinitionFileName = clang_getFileName(DefinitionFile);
+      fprintf(stderr, "  -> %s(%s:%d:%d)\n",
+              clang_getCString(DefinitionKindSpelling),
+              clang_getCString(DefinitionFileName),
+              DefinitionLine, DefinitionColumn);
+      clang_disposeString(DefinitionFileName);
+      clang_disposeString(DefinitionKindSpelling);
+    }
   }
 
   return Result;
