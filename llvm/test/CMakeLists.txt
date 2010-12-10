@@ -89,7 +89,7 @@ if(PYTHONINTERP_FOUND)
                 UnitTests
                 BugpointPasses LLVMHello
                 llc lli llvm-ar llvm-as llvm-dis llvm-extract
-                llvm-ld llvm-link llvm-mc llvm-nm opt
+                llvm-ld llvm-link llvm-mc llvm-nm macho-dump opt
                 FileCheck count not)
 
 endif()
