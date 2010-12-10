@@ -175,6 +175,8 @@ namespace {
       const { return 0; }
     unsigned getThumbBLXTargetOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
+    unsigned getThumbBCCTargetOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
     unsigned getThumbCBTargetOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getBranchTargetOpValue(const MachineInstr &MI, unsigned Op)

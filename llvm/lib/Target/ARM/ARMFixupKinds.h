@@ -52,6 +52,9 @@ enum Fixups {
   // fixup_arm_thumb_cp - Fixup for Thumb load/store from constant pool instrs.
   fixup_arm_thumb_cp,
 
+  // fixup_arm_thumb_bcc - Fixup for Thumb load/store from constant pool instrs.
+  fixup_arm_thumb_bcc,
+
   // The next two are for the movt/movw pair
   // the 16bit imm field are split into imm{15-12} and imm{11-0}
   // Fixme: We need new ones for Thumb.
