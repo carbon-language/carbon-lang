@@ -2110,9 +2110,12 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
   // Check non-type template parameters.
   if (NonTypeTemplateParmDecl *NTTP =dyn_cast<NonTypeTemplateParmDecl>(Param)) {    
     // Do substitution on the type of the non-type template parameter
-    // with the template arguments we've seen thus far.
+    // with the template arguments we've seen thus far.  But if the
+    // template has a dependent context then we cannot substitute yet.
     QualType NTTPType = NTTP->getType();
-    if (NTTPType->isDependentType()) {
+    if (NTTPType->isDependentType() &&
+        !isa<TemplateTemplateParmDecl>(Template) &&
+        !Template->getDeclContext()->isDependentContext()) {
       // Do substitution on the type of the non-type template parameter.
       InstantiatingTemplate Inst(*this, TemplateLoc, Template,
                                  NTTP, Converted.data(), Converted.size(),

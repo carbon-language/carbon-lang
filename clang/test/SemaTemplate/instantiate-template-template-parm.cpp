@@ -44,3 +44,18 @@ template<long V> struct X3l { }; // expected-note{{different type 'long'}}
 
 X2<int, X3i> x2okay;
 X2<long, X3l> x2bad; // expected-note{{instantiation}}
+
+template <typename T, template <T, T> class TT, class R = TT<1, 2> >
+struct Comp {
+  typedef R r1;
+  template <T x, T y> struct gt {
+    static const bool result = x > y;
+  };
+  typedef gt<2, 1> r2;
+};
+
+template <int x, int y> struct lt {
+  static const bool result = x < y;
+};
+
+Comp<int, lt> c0;
