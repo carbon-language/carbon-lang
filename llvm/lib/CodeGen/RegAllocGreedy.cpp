@@ -230,8 +230,10 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   SmallVector<unsigned, 8> PhysRegSpillCands, ReassignCands;
 
   // Check for an available register in this class.
-  const TargetRegisterClass *TRC = MRI->getRegClass(VirtReg.reg);
-  DEBUG(dbgs() << "RegClass: " << TRC->getName() << ' ');
+  DEBUG({
+      const TargetRegisterClass *TRC = MRI->getRegClass(VirtReg.reg);
+      dbgs() << "RegClass: " << TRC->getName() << ' ');
+    });
 
   AllocationOrder Order(VirtReg.reg, *VRM, ReservedRegs);
   while (unsigned PhysReg = Order.next()) {
@@ -324,4 +326,3 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
 
   return true;
 }
-
