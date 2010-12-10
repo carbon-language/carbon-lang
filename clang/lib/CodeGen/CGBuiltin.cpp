@@ -1379,6 +1379,27 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vld2_dup_v:
   case ARM::BI__builtin_neon_vld3_dup_v:
   case ARM::BI__builtin_neon_vld4_dup_v: {
+    // Handle 64-bit elements as a special-case.  There is no "dup" needed.
+    if (VTy->getElementType()->getPrimitiveSizeInBits() == 64) {
+      switch (BuiltinID) {
+      case ARM::BI__builtin_neon_vld2_dup_v: 
+        Int = Intrinsic::arm_neon_vld2; 
+        break;
+      case ARM::BI__builtin_neon_vld3_dup_v:
+        Int = Intrinsic::arm_neon_vld2; 
+        break;
+      case ARM::BI__builtin_neon_vld4_dup_v:
+        Int = Intrinsic::arm_neon_vld2; 
+        break;
+      default: assert(0 && "unknown vld_dup intrinsic?");
+      }
+      Function *F = CGM.getIntrinsic(Int, &Ty, 1);
+      Value *Align = GetPointeeAlignment(*this, E->getArg(1));
+      Ops[1] = Builder.CreateCall2(F, Ops[1], Align, "vld_dup");
+      Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
+      Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
+      return Builder.CreateStore(Ops[1], Ops[0]);
+    }
     switch (BuiltinID) {
     case ARM::BI__builtin_neon_vld2_dup_v: 
       Int = Intrinsic::arm_neon_vld2lane; 
