@@ -80,7 +80,7 @@ class BasicExprCommandsTestCase(TestBase):
 
     @python_api_test
     def test_evaluate_expression_python(self):
-        """These SBFrame.EvaluateExpression() API."""
+        """Test SBFrame.EvaluateExpression() API for evaluating an expression."""
         self.buildDefault()
 
         exe = os.path.join(os.getcwd(), "a.out")
