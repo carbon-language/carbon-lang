@@ -81,7 +81,15 @@ if(PYTHONINTERP_FOUND)
                 --param build_mode=${RUNTIME_BUILD_MODE}
                 ${LIT_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
-                DEPENDS
                 COMMENT "Running LLVM regression tests")
+
+  add_custom_target(check.deps)
+  add_dependencies(check check.deps)
+  add_dependencies(check.deps
+                UnitTests
+                BugpointPasses LLVMHello
+                llc lli llvm-ar llvm-as llvm-dis llvm-extract
+                llvm-ld llvm-link llvm-mc llvm-nm opt
+                FileCheck count not)
 
 endif()
