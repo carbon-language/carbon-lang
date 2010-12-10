@@ -908,28 +908,24 @@ IsOperator (const char *name, OverloadedOperatorKind &op_kind)
     if (name == NULL || name[0] == '\0')
         return false;
     
-#define OPERATOR_SPACE_PREFIX "operator "
-#define OPERATOR_NOSPACE_PREFIX "operator"
+#define OPERATOR_PREFIX "operator"
     
     const char *post_op_name = NULL;
 
-    bool no_space = false;
+    bool no_space = true;
     
-    if (!::strncmp(name, OPERATOR_SPACE_PREFIX, sizeof(OPERATOR_SPACE_PREFIX) - 1))
-    {
-        post_op_name = name + sizeof(OPERATOR_SPACE_PREFIX) - 1;
-    }
-    else if (!::strncmp(name, OPERATOR_NOSPACE_PREFIX, sizeof(OPERATOR_NOSPACE_PREFIX) - 1))
-    {
-        post_op_name = name + sizeof(OPERATOR_NOSPACE_PREFIX) - 1;
-        no_space = true;
-    }
-    
-#undef OPERATOR_SPACE_PREFIX
-#undef OPERATOR_NOSPACE_PREFIX
-    
-    if (!post_op_name)
+    if (!::strncmp(name, OPERATOR_PREFIX, sizeof(OPERATOR_PREFIX) - 1))
+        post_op_name = name + sizeof(OPERATOR_PREFIX) - 1;
+    else
         return false;
+    
+    if (post_op_name[0] == ' ')
+    {
+        post_op_name++;
+        no_space = false;
+    }
+    
+#undef OPERATOR_PREFIX
     
     // This is an operator, set the overloaded operator kind to invalid
     // in case this is a conversion operator...
