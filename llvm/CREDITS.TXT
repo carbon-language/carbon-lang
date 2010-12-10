@@ -329,6 +329,7 @@ D: The `paths' pass
 N: Michael J. Spencer
 E: bigcheesegs@gmail.com
 D: Shepherding Windows COFF support into MC.
+D: Lots of Windows stuff.
 
 N: Reid Spencer
 E: rspencer@reidspencer.com
