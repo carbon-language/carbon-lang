@@ -1622,6 +1622,8 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
     unsigned NumBytes = NumVecs * VT.getVectorElementType().getSizeInBits()/8;
     if (Alignment > NumBytes)
       Alignment = NumBytes;
+    if (Alignment < 8 && Alignment < NumBytes)
+      Alignment = 0;
     // Alignment must be a power of two; make sure of that.
     Alignment = (Alignment & -Alignment);
     if (Alignment == 1)
@@ -1720,6 +1722,8 @@ SDNode *ARMDAGToDAGISel::SelectVLDDup(SDNode *N, unsigned NumVecs,
     unsigned NumBytes = NumVecs * VT.getVectorElementType().getSizeInBits()/8;
     if (Alignment > NumBytes)
       Alignment = NumBytes;
+    if (Alignment < 8 && Alignment < NumBytes)
+      Alignment = 0;
     // Alignment must be a power of two; make sure of that.
     Alignment = (Alignment & -Alignment);
     if (Alignment == 1)
