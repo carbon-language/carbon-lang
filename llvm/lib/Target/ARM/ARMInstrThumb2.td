@@ -2824,6 +2824,11 @@ def t2LDREX  : Thumb2I<(outs rGPR:$Rt), (ins rGPR:$Rn), AddrModeNone,
   let Inst{26-20} = 0b0000101;
   let Inst{11-8} = 0b1111;
   let Inst{7-0} = 0b00000000; // imm8 = 0
+  
+  bits<4> Rn;
+  bits<4> Rt;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rt;
 }
 def t2LDREXD : T2I_ldrex<0b11, (outs rGPR:$Rt, rGPR:$Rt2), (ins rGPR:$Rn),
                          AddrModeNone, Size4Bytes, NoItinerary,
@@ -2848,6 +2853,13 @@ def t2STREX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt, rGPR:$Rn),
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000100;
   let Inst{7-0} = 0b00000000; // imm8 = 0
+  
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<4> Rt;
+  let Inst{11-8}  = Rd;
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = Rt;
 }
 def t2STREXD : T2I_strex<0b11, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, rGPR:$Rt2, rGPR:$Rn),
