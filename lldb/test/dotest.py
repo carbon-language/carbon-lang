@@ -45,6 +45,14 @@ class _WritelnDecorator(object):
 # The test suite.
 suite = unittest2.TestSuite()
 
+# By default, both command line and Python API tests are performed.
+# See @python_api_test decorator in lldbtest.py.
+dont_do_python_api_test = False
+
+# By default, both command line and Python API tests are performed.
+# This does not work yet as the @lldb_command_test decorator is needed.
+just_do_python_api_test = False
+
 # The blacklist is optional (-b blacklistFile) and allows a central place to skip
 # testclass's and/or testclass.testmethod's.
 blacklist = None
@@ -113,6 +121,8 @@ def usage():
 Usage: dotest.py [option] [args]
 where options:
 -h   : print this help message and exit (also --help)
+-a   : don't do lldb Python API tests
+       use @python_api_test to decorate a test case as lldb Python API test
 -b   : read a blacklist file specified after this option
 -c   : read a config file specified after this option
        (see also lldb-trunk/example/test/usage-config)
@@ -231,6 +241,8 @@ def parseOptionsAndInitTestdirs():
     '-h/--help as the first option prints out usage info and exit the program.
     """
 
+    global dont_do_python_api_test
+    global just_do_python_api_test
     global blacklist
     global blacklistConfig
     global configFile
@@ -253,12 +265,21 @@ def parseOptionsAndInitTestdirs():
     # Process possible trace and/or verbose flag, among other things.
     index = 1
     while index < len(sys.argv):
-        if not sys.argv[index].startswith('-'):
+        if sys.argv[index].startswith('-') or sys.argv[index].startswith('+'):
+            # We should continue processing...
+            pass
+        else:
             # End of option processing.
             break
 
         if sys.argv[index].find('-h') != -1:
             usage()
+        elif sys.argv[index].startswith('-a'):
+            dont_do_python_api_test = True
+            index += 1
+        elif sys.argv[index].startswith('+a'):
+            just_do_python_api_test = True
+            index += 1
         elif sys.argv[index].startswith('-b'):
             # Increment by 1 to fetch the blacklist file name option argument.
             index += 1
@@ -624,8 +645,12 @@ atexit.register(lambda: lldb.SBDebugger.Terminate())
 # Create a singleton SBDebugger in the lldb namespace.
 lldb.DBG = lldb.SBDebugger.Create()
 
-# And put the blacklist in the lldb namespace, to be used by lldb.TestBase.
+# Put the blacklist in the lldb namespace, to be used by lldb.TestBase.
 lldb.blacklist = blacklist
+
+# Put dont/just_do_python_api_test in the lldb namespace, too.
+lldb.dont_do_python_api_test = dont_do_python_api_test
+lldb.just_do_python_api_test = just_do_python_api_test
 
 # Turn on lldb loggings if necessary.
 lldbLoggings()

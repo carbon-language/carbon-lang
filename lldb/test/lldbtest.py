@@ -227,6 +227,16 @@ def pointer_size():
     a_pointer = ctypes.c_void_p(0xffff)
     return 8 * ctypes.sizeof(a_pointer)
 
+from functools import wraps
+def python_api_test(func):
+    """Decorate the item as a Python API only test."""
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if lldb.dont_do_python_api_test:
+            self.skipTest("Skip Python API tests")
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 class recording(StringIO.StringIO):
     """

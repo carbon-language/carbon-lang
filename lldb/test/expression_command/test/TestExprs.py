@@ -78,7 +78,7 @@ class BasicExprCommandsTestCase(TestBase):
                        os.path.join(self.mydir, "a.out")])
         # (const char *) $8 = 0x... "/Volumes/data/lldb/svn/trunk/test/expression_command/test/a.out"
 
-
+    @python_api_test
     def test_evaluate_expression_python(self):
         """These SBFrame.EvaluateExpression() API."""
         self.buildDefault()
@@ -161,8 +161,6 @@ class BasicExprCommandsTestCase(TestBase):
             startstr = "'Z'")
         self.DebugSBValue(frame, val)
 
-
-    @unittest2.expectedFailure
     # rdar://problem/8686536
     # CommandInterpreter::HandleCommand is stripping \'s from input for WantsRawCommand commands
     def test_expr_commands_can_handle_quotes(self):
@@ -212,7 +210,9 @@ class BasicExprCommandsTestCase(TestBase):
         # output: 
         self.runCmd(r'''command alias print_hi expression printf ("\n\tHi!\n")''')
         # This fails currently.
-        self.runCmd('print_hi')
+        self.expect('print_hi',
+            substrs = ['(unsigned long) $',
+                       '6'])
 
 
 if __name__ == '__main__':
