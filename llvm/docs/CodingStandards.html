@@ -60,7 +60,7 @@
               loop</a></li>
           <li><a href="#ll_iostream"><tt>#include &lt;iostream&gt;</tt> is
               <em>forbidden</em></a></li>
-          <li><a href="#ll_raw_ostream">Use <tt>raw_ostream</tt></a</li>
+          <li><a href="#ll_raw_ostream">Use <tt>raw_ostream</tt></a></li>
           <li><a href="#ll_avoidendl">Avoid <tt>std::endl</tt></a></li>
         </ol></li>
         
@@ -828,24 +828,25 @@ and <tt>isLValue()</tt>).  Different kinds of declarations have different rules:
 </p>
 
 <ul>
-<li><b>Type names</b> (including classes, structs, enums, typedefs, etc) should
-    be nouns and start with an upper-case letter (e.g. <tt>TextFileReader</tt>).
+<li><p><b>Type names</b> (including classes, structs, enums, typedefs, etc)
+  should be nouns and start with an upper-case letter (e.g.
+  <tt>TextFileReader</tt>).</p>
 </li>
   
-<li><b>Function names</b> should be verb phrases (as they represent
+<li><p><b>Function names</b> should be verb phrases (as they represent
     actions), and command-like function should be imperative.  The name should
     be camel case, and start with a lower case letter (e.g. <tt>openFile()</tt>
-    or <tt>isFoo()</tt>).
+    or <tt>isFoo()</tt>).</p>
 </li>
 
-<li><b>Enum declarations</b> (e.g. "enum Foo {...}") are types, so they should
-  follow the naming conventions for types.  A common use for enums is as a
+<li><p><b>Enum declarations</b> (e.g. "enum Foo {...}") are types, so they
+should follow the naming conventions for types.  A common use for enums is as a
   discriminator for a union, or an indicator of a subclass.  When an enum is
   used for something like this, it should have a "Kind" suffix (e.g.
-  "ValueKind").
+  "ValueKind").</p>
 </li>
   
-<li><b>Enumerators</b> (e.g. enum { Foo, Bar }) and 
+<li><p><b>Enumerators</b> (e.g. enum { Foo, Bar }) and 
 <b>public member variables</b> should start with an upper-case letter, just
 like types.   Unless the enumerators are defined in their own small
 namespace or inside a class, enumerators should have a prefix corresponding
