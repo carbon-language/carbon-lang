@@ -908,18 +908,42 @@ IsOperator (const char *name, OverloadedOperatorKind &op_kind)
     if (name == NULL || name[0] == '\0')
         return false;
     
-    if (::strstr(name, "operator ") != name)
+#define OPERATOR_SPACE_PREFIX "operator "
+#define OPERATOR_NOSPACE_PREFIX "operator"
+    
+    const char *post_op_name = NULL;
+
+    bool no_space = false;
+    
+    if (!::strncmp(name, OPERATOR_SPACE_PREFIX, sizeof(OPERATOR_SPACE_PREFIX) - 1))
+    {
+        post_op_name = name + sizeof(OPERATOR_SPACE_PREFIX) - 1;
+    }
+    else if (!::strncmp(name, OPERATOR_NOSPACE_PREFIX, sizeof(OPERATOR_NOSPACE_PREFIX) - 1))
+    {
+        post_op_name = name + sizeof(OPERATOR_NOSPACE_PREFIX) - 1;
+        no_space = true;
+    }
+    
+#undef OPERATOR_SPACE_PREFIX
+#undef OPERATOR_NOSPACE_PREFIX
+    
+    if (!post_op_name)
         return false;
     
-    const char *post_op_name = name + 9;
-        
     // This is an operator, set the overloaded operator kind to invalid
     // in case this is a conversion operator...
     op_kind = NUM_OVERLOADED_OPERATORS;
 
     switch (post_op_name[0])
     {
+    default:
+        if (no_space)
+            return false;
+        break;
     case 'n':
+        if (no_space)
+            return false;
         if  (strcmp (post_op_name, "new") == 0)  
             op_kind = OO_New;
         else if (strcmp (post_op_name, "new[]") == 0)  
@@ -927,6 +951,8 @@ IsOperator (const char *name, OverloadedOperatorKind &op_kind)
         break;
 
     case 'd':
+        if (no_space)
+            return false;
         if (strcmp (post_op_name, "delete") == 0)
             op_kind = OO_Delete;
         else if (strcmp (post_op_name, "delete[]") == 0)  
