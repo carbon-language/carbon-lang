@@ -962,8 +962,11 @@ MatchAndEmitInstruction(SMLoc IDLoc,
       MatchResult2 = MatchInstructionImpl(Operands, Inst, ErrorInfo);
       if (MatchResult2 == Match_Success)
         MatchResult = Match_Success;
-      else
+      else {
+        ARMOperand *CCOut = ((ARMOperand*)Operands[1]);
         Operands.erase(Operands.begin() + 1);
+        delete CCOut;
+      }
     }
     // If we get a Match_MnemonicFail it might be some arithmetic instruction
     // that updates the condition codes if it ends in 's'.  So see if the
@@ -976,8 +979,10 @@ MatchAndEmitInstruction(SMLoc IDLoc,
         // removed the 's' from the mnemonic for matching.
         StringRef MnemonicNoS = Mnemonic.slice(0, Mnemonic.size() - 1);
         SMLoc NameLoc = ((ARMOperand*)Operands[0])->getStartLoc();
-	Operands.erase(Operands.begin());
-	Operands.insert(Operands.begin(),
+        ARMOperand *OldMnemonic = ((ARMOperand*)Operands[0]);
+        Operands.erase(Operands.begin());
+        delete OldMnemonic;
+        Operands.insert(Operands.begin(),
                         ARMOperand::CreateToken(MnemonicNoS, NameLoc));
         Operands.insert(Operands.begin() + 1,
                         ARMOperand::CreateCCOut(ARM::CPSR, NameLoc));
@@ -985,10 +990,14 @@ MatchAndEmitInstruction(SMLoc IDLoc,
         if (MatchResult2 == Match_Success)
           MatchResult = Match_Success;
         else {
-	  Operands.erase(Operands.begin());
-	  Operands.insert(Operands.begin(),
+          ARMOperand *OldMnemonic = ((ARMOperand*)Operands[0]);
+          Operands.erase(Operands.begin());
+          delete OldMnemonic;
+          Operands.insert(Operands.begin(),
                           ARMOperand::CreateToken(Mnemonic, NameLoc));
-	  Operands.erase(Operands.begin() + 1);
+          ARMOperand *CCOut = ((ARMOperand*)Operands[1]);
+          Operands.erase(Operands.begin() + 1);
+          delete CCOut;
         }
       }
     }
