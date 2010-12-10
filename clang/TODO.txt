@@ -2,7 +2,6 @@
 // Minor random things that can be improved
 //===---------------------------------------------------------------------===//
    
-
 Warn about "X && 0x1000" saying that the user may mean "X & 0x1000".
 We should do this for any immediate except zero, so long as it doesn't come 
 from a macro expansion.  Likewise for ||.
