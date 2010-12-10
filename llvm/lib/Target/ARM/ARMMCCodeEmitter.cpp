@@ -223,7 +223,7 @@ public:
     Binary |= ARM_AM::getSOImmValImm((unsigned)SoImmVal);
     return Binary;
   }
-  
+
   /// getT2SOImmOpValue - Return an encoded 12-bit shifted-immediate value.
   unsigned getT2SOImmOpValue(const MCInst &MI, unsigned Op,
                            SmallVectorImpl<MCFixup> &Fixups) const {
@@ -314,14 +314,14 @@ MCCodeEmitter *llvm::createARMMCCodeEmitter(const Target &, TargetMachine &TM,
   return new ARMMCCodeEmitter(TM, Ctx);
 }
 
-/// NEONThumb2DataIPostEncoder - Post-process encoded NEON data-processing 
-/// instructions, and rewrite them to their Thumb2 form if we are currently in 
+/// NEONThumb2DataIPostEncoder - Post-process encoded NEON data-processing
+/// instructions, and rewrite them to their Thumb2 form if we are currently in
 /// Thumb2 mode.
 unsigned ARMMCCodeEmitter::NEONThumb2DataIPostEncoder(const MCInst &MI,
                                                  unsigned EncodedValue) const {
   const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
   if (Subtarget.isThumb2()) {
-    // NEON Thumb2 data-processsing encodings are very simple: bit 24 is moved 
+    // NEON Thumb2 data-processsing encodings are very simple: bit 24 is moved
     // to bit 12 of the high half-word (i.e. bit 28), and bits 27-24 are
     // set to 1111.
     unsigned Bit24 = EncodedValue & 0x01000000;
@@ -330,12 +330,12 @@ unsigned ARMMCCodeEmitter::NEONThumb2DataIPostEncoder(const MCInst &MI,
     EncodedValue |= Bit28;
     EncodedValue |= 0x0F000000;
   }
-  
+
   return EncodedValue;
 }
 
 /// NEONThumb2LoadStorePostEncoder - Post-process encoded NEON load/store
-/// instructions, and rewrite them to their Thumb2 form if we are currently in 
+/// instructions, and rewrite them to their Thumb2 form if we are currently in
 /// Thumb2 mode.
 unsigned ARMMCCodeEmitter::NEONThumb2LoadStorePostEncoder(const MCInst &MI,
                                                  unsigned EncodedValue) const {
@@ -344,12 +344,12 @@ unsigned ARMMCCodeEmitter::NEONThumb2LoadStorePostEncoder(const MCInst &MI,
     EncodedValue &= 0xF0FFFFFF;
     EncodedValue |= 0x09000000;
   }
-  
+
   return EncodedValue;
 }
 
 /// NEONThumb2DupPostEncoder - Post-process encoded NEON vdup
-/// instructions, and rewrite them to their Thumb2 form if we are currently in 
+/// instructions, and rewrite them to their Thumb2 form if we are currently in
 /// Thumb2 mode.
 unsigned ARMMCCodeEmitter::NEONThumb2DupPostEncoder(const MCInst &MI,
                                                  unsigned EncodedValue) const {
@@ -358,7 +358,7 @@ unsigned ARMMCCodeEmitter::NEONThumb2DupPostEncoder(const MCInst &MI,
     EncodedValue &= 0x00FFFFFF;
     EncodedValue |= 0xEE000000;
   }
-  
+
   return EncodedValue;
 }
 
@@ -526,7 +526,7 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
       Expr = MO.getExpr();
     else
       Expr = MO2.getExpr();
-    
+
     const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
     MCFixupKind Kind;
     if (Subtarget.isThumb2())
@@ -586,10 +586,10 @@ getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   // {20-16} = imm{15-12}
   // {11-0}  = imm{11-0}
-  const MCOperand &MO = MI.getOperand(OpIdx); 
+  const MCOperand &MO = MI.getOperand(OpIdx);
   if (MO.isImm()) {
     return static_cast<unsigned>(MO.getImm());
-  } else if (const MCSymbolRefExpr *Expr = 
+  } else if (const MCSymbolRefExpr *Expr =
              dyn_cast<MCSymbolRefExpr>(MO.getExpr())) {
     MCFixupKind Kind;
     switch (Expr->getKind()) {
@@ -878,8 +878,8 @@ getT2AddrModeSORegOpValue(const MCInst &MI, unsigned OpNum,
                 SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand &MO1 = MI.getOperand(OpNum);
   const MCOperand &MO2 = MI.getOperand(OpNum+1);
-  const MCOperand &MO3 = MI.getOperand(OpNum+2);                 
-  
+  const MCOperand &MO3 = MI.getOperand(OpNum+2);
+
   // Encoded as [Rn, Rm, imm].
   // FIXME: Needs fixup support.
   unsigned Value = getARMRegisterNumbering(MO1.getReg());
@@ -887,7 +887,7 @@ getT2AddrModeSORegOpValue(const MCInst &MI, unsigned OpNum,
   Value |= getARMRegisterNumbering(MO2.getReg());
   Value <<= 2;
   Value |= MO3.getImm();
-  
+
   return Value;
 }
 
@@ -899,7 +899,7 @@ getT2AddrModeImm8OpValue(const MCInst &MI, unsigned OpNum,
 
   // FIXME: Needs fixup support.
   unsigned Value = getARMRegisterNumbering(MO1.getReg());
-  
+
   // Even though the immediate is 8 bits long, we need 9 bits in order
   // to represent the (inverse of the) sign bit.
   Value <<= 9;
