@@ -81,6 +81,7 @@ public:
   static char ID;
 
 private:
+  bool checkUncachedInterference(LiveInterval &, unsigned);
   bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
   bool reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg);
 };
@@ -146,6 +147,20 @@ float RAGreedy::getPriority(LiveInterval *LI) {
   return Priority;
 }
 
+// Check interference without using the cache.
+bool RAGreedy::checkUncachedInterference(LiveInterval &VirtReg,
+                                         unsigned PhysReg) {
+  LiveIntervalUnion::Query subQ(&VirtReg, &PhysReg2LiveUnion[PhysReg]);
+  if (subQ.checkInterference())
+      return true;
+  for (const unsigned *AliasI = TRI->getAliasSet(PhysReg); *AliasI; ++AliasI) {
+    subQ.init(&VirtReg, &PhysReg2LiveUnion[*AliasI]);
+    if (subQ.checkInterference())
+      return true;
+  }
+  return false;
+}
+
 // Attempt to reassign this virtual register to a different physical register.
 //
 // FIXME: we are not yet caching these "second-level" interferences discovered
@@ -168,18 +183,9 @@ bool RAGreedy::reassignVReg(LiveInterval &InterferingVReg,
     if (PhysReg == OldPhysReg || ReservedRegs.test(PhysReg))
       continue;
 
-    // Instantiate a "subquery", not to be confused with the Queries array.
-    LiveIntervalUnion::Query subQ(&InterferingVReg,
-                                  &PhysReg2LiveUnion[PhysReg]);
-    if (subQ.checkInterference())
+    if (checkUncachedInterference(InterferingVReg, PhysReg))
       continue;
 
-    for (const unsigned *AliasI = TRI->getAliasSet(PhysReg);
-         *AliasI; ++AliasI) {
-      subQ.init(&InterferingVReg, &PhysReg2LiveUnion[*AliasI]);
-      if (subQ.checkInterference())
-        continue;
-    }
     DEBUG(dbgs() << "reassigning: " << InterferingVReg << " from " <<
           TRI->getName(OldPhysReg) << " to " << TRI->getName(PhysReg) << '\n');
 
