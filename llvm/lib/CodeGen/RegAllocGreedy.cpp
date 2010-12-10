@@ -232,7 +232,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   // Check for an available register in this class.
   DEBUG({
       const TargetRegisterClass *TRC = MRI->getRegClass(VirtReg.reg);
-      dbgs() << "RegClass: " << TRC->getName() << ' ');
+      dbgs() << "RegClass: " << TRC->getName() << ' ';
     });
 
   AllocationOrder Order(VirtReg.reg, *VRM, ReservedRegs);
