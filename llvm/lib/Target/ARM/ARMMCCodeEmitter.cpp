@@ -552,9 +552,9 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
                         SmallVectorImpl<MCFixup> &Fixups) const {
-  // {17-13} = reg
-  // {12}    = (U)nsigned (add == '1', sub == '0')
-  // {11-0}  = imm8
+  // {12-9} = reg
+  // {8}    = (U)nsigned (add == '1', sub == '0')
+  // {7-0}  = imm8
   unsigned Reg, Imm8;
   bool isAdd = true;
   // If The first operand isn't a register, we have a label reference.
@@ -576,7 +576,7 @@ getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
   uint32_t Binary = (Imm8 >> 2) & 0xff;
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
   if (isAdd)
-    Binary |= (1 << 9);
+    Binary |= (1 << 8);
   Binary |= (Reg << 9);
   return Binary;
 }
