@@ -156,9 +156,12 @@ namespace llvm {
     }
 
     MachineFunction &getMachineFunction() const {
-      assert(MF && "getMachineFunction called before runOnMAchineFunction");
+      assert(MF && "getMachineFunction called before runOnMachineFunction");
       return *MF;
     }
+
+    MachineRegisterInfo &getRegInfo() const { return *MRI; }
+    const TargetRegisterInfo &getTargetRegInfo() const { return *TRI; }
 
     void grow();
 
