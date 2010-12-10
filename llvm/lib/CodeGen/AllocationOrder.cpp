@@ -36,6 +36,10 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
   if (Hint && TargetRegisterInfo::isVirtualRegister(Hint))
     Hint = VRM.getPhys(Hint);
 
+  // The remaining allocation order may depend on the hint.
+  tie(Begin, End) = VRM.getTargetRegInfo()
+        .getAllocationOrder(RC, HintPair.first, Hint, VRM.getMachineFunction());
+
   // Target-dependent hints require resolution.
   if (HintPair.first)
     Hint = VRM.getTargetRegInfo().ResolveRegAllocHint(HintPair.first, Hint,
@@ -45,10 +49,6 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
   if (Hint && (!TargetRegisterInfo::isPhysicalRegister(Hint) ||
                !RC->contains(Hint) || ReservedRegs.test(Hint)))
     Hint = 0;
-
-  // The remaining allocation order may also depend on the hint.
-  tie(Begin, End) = VRM.getTargetRegInfo()
-        .getAllocationOrder(RC, HintPair.first, Hint, VRM.getMachineFunction());
 }
 
 unsigned AllocationOrder::next() {

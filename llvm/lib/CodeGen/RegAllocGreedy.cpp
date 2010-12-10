@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
+#include "AllocationOrder.h"
 #include "LiveIntervalUnion.h"
 #include "RegAllocBase.h"
 #include "Spiller.h"
@@ -175,12 +176,9 @@ bool RAGreedy::reassignVReg(LiveInterval &InterferingVReg,
   assert(OldPhysReg == VRM->getPhys(InterferingVReg.reg) &&
          "inconsistent phys reg assigment");
 
-  const TargetRegisterClass *TRC = MRI->getRegClass(InterferingVReg.reg);
-  for (TargetRegisterClass::iterator I = TRC->allocation_order_begin(*MF),
-         E = TRC->allocation_order_end(*MF);
-       I != E; ++I) {
-    unsigned PhysReg = *I;
-    if (PhysReg == OldPhysReg || ReservedRegs.test(PhysReg))
+  AllocationOrder Order(InterferingVReg.reg, *VRM, ReservedRegs);
+  while (unsigned PhysReg = Order.next()) {
+    if (PhysReg == OldPhysReg)
       continue;
 
     if (checkUncachedInterference(InterferingVReg, PhysReg))
@@ -235,21 +233,8 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   const TargetRegisterClass *TRC = MRI->getRegClass(VirtReg.reg);
   DEBUG(dbgs() << "RegClass: " << TRC->getName() << ' ');
 
-  // Preferred physical register computed from hints.
-  unsigned Hint = VRM->getRegAllocPref(VirtReg.reg);
-
-  // Try a hinted allocation.
-  if (Hint && !ReservedRegs.test(Hint) && TRC->contains(Hint) &&
-      checkPhysRegInterference(VirtReg, Hint) == 0)
-    return Hint;
-
-  for (TargetRegisterClass::iterator I = TRC->allocation_order_begin(*MF),
-         E = TRC->allocation_order_end(*MF);
-       I != E; ++I) {
-
-    unsigned PhysReg = *I;
-    if (ReservedRegs.test(PhysReg)) continue;
-
+  AllocationOrder Order(VirtReg.reg, *VRM, ReservedRegs);
+  while (unsigned PhysReg = Order.next()) {
     // Check interference and as a side effect, intialize queries for this
     // VirtReg and its aliases.
     unsigned InterfReg = checkPhysRegInterference(VirtReg, PhysReg);
