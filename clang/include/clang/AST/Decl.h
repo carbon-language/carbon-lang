@@ -2259,7 +2259,7 @@ public:
   }
 
   /// \brief Set the underlying integer type.
-  void setIntegerType(QualType T) { IntegerType = T.getTypePtr(); }
+  void setIntegerType(QualType T) { IntegerType = T.getTypePtrOrNull(); }
 
   /// \brief Set the underlying integer type source info.
   void setIntegerTypeSourceInfo(TypeSourceInfo* TInfo) { IntegerType = TInfo; }

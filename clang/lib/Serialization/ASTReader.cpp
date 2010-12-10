@@ -2772,6 +2772,9 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     }
     QualType PointeeType = GetType(Record[0]);
     QualType ClassType = GetType(Record[1]);
+    if (PointeeType.isNull() || ClassType.isNull())
+      return QualType();
+    
     return Context->getMemberPointerType(PointeeType, ClassType.getTypePtr());
   }
 
@@ -4368,7 +4371,10 @@ ASTReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
 
     case NestedNameSpecifier::TypeSpec:
     case NestedNameSpecifier::TypeSpecWithTemplate: {
-      Type *T = GetType(Record[Idx++]).getTypePtr();
+      Type *T = GetType(Record[Idx++]).getTypePtrOrNull();
+      if (!T)
+        return 0;
+      
       bool Template = Record[Idx++];
       NNS = NestedNameSpecifier::Create(*Context, Prev, Template, T);
       break;

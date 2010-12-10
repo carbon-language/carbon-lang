@@ -326,7 +326,24 @@ private:
   static const uint32_t AddressSpaceShift = 5;
 };
 
-
+/// \brief Base class that is common to both the \c ExtQuals and \c Type 
+/// classes, which allows \c QualType to access the common fields between the
+/// two.
+///
+class ExtQualsTypeCommonBase {
+protected:
+  ExtQualsTypeCommonBase(const Type *BaseType) : BaseType(BaseType) { }
+  
+  /// \brief The "base" type of an extended qualifiers type (\c ExtQuals) or
+  /// a self-referential pointer (for \c Type).
+  ///
+  /// This pointer allows an efficient mapping from a QualType to its 
+  /// underlying type pointer.
+  const Type *BaseType;
+  
+  friend class QualType;
+};
+  
 /// ExtQuals - We can encode up to four bits in the low bits of a
 /// type pointer, but there are many more type qualifiers that we want
 /// to be able to apply to an arbitrary type.  Therefore we have this
@@ -337,7 +354,7 @@ private:
 /// in three low bits on the QualType pointer; a fourth bit records whether
 /// the pointer is an ExtQuals node. The extended qualifiers (address spaces,
 /// Objective-C GC attributes) are much more rare.
-class ExtQuals : public llvm::FoldingSetNode {
+class ExtQuals : public ExtQualsTypeCommonBase, public llvm::FoldingSetNode {
   // NOTE: changing the fast qualifiers should be straightforward as
   // long as you don't make 'const' non-fast.
   // 1. Qualifiers:
@@ -351,15 +368,13 @@ class ExtQuals : public llvm::FoldingSetNode {
   // 3. ASTContext:
   //    a) Update get{Volatile,Restrict}Type.
 
-  /// BaseType - the underlying type that this qualifies
-  const Type *BaseType;
-
   /// Quals - the immutable set of qualifiers applied by this
   /// node;  always contains extended qualifiers.
   Qualifiers Quals;
 
 public:
-  ExtQuals(const Type *Base, Qualifiers Quals) : BaseType(Base), Quals(Quals)
+  ExtQuals(const Type *Base, Qualifiers Quals) 
+    : ExtQualsTypeCommonBase(Base), Quals(Quals)
   {
     assert(Quals.hasNonFastQualifiers()
            && "ExtQuals created with no fast qualifiers");
@@ -444,10 +459,25 @@ public:
   /// Retrieves a pointer to the underlying (unqualified) type.
   /// This should really return a const Type, but it's not worth
   /// changing all the users right now.
+  ///
+  /// This function requires that the type not be NULL. If the type might be
+  /// NULL, use the (slightly less efficient) \c getTypePtrOrNull().
   Type *getTypePtr() const {
-    if (hasLocalNonFastQualifiers())
-      return const_cast<Type*>(getExtQualsUnsafe()->getBaseType());
-    return const_cast<Type*>(getTypePtrUnsafe());
+    assert(!isNull() && "Cannot retrieve a NULL type pointer");
+    uintptr_t CommonPtrVal
+      = reinterpret_cast<uintptr_t>(Value.getOpaqueValue());
+    CommonPtrVal &= ~(uintptr_t)((1 << TypeAlignmentInBits) - 1);
+    ExtQualsTypeCommonBase *CommonPtr
+      = reinterpret_cast<ExtQualsTypeCommonBase*>(CommonPtrVal);
+    return const_cast<Type *>(CommonPtr->BaseType);
+  }
+  
+  Type *getTypePtrOrNull() const {
+    uintptr_t TypePtrPtrVal
+      = reinterpret_cast<uintptr_t>(Value.getOpaqueValue());
+    TypePtrPtrVal &= ~(uintptr_t)((1 << TypeAlignmentInBits) - 1);
+    Type **TypePtrPtr = reinterpret_cast<Type**>(TypePtrPtrVal);
+    return TypePtrPtr? *TypePtrPtr : 0;
   }
 
   /// Divides a QualType into its unqualified type and a set of local
@@ -741,7 +771,7 @@ namespace llvm {
 template<> struct simplify_type<const ::clang::QualType> {
   typedef ::clang::Type* SimpleType;
   static SimpleType getSimplifiedValue(const ::clang::QualType &Val) {
-    return Val.getTypePtr();
+    return Val.getTypePtrOrNull();
   }
 };
 template<> struct simplify_type< ::clang::QualType>
@@ -790,7 +820,7 @@ namespace clang {
 ///
 /// Types, once created, are immutable.
 ///
-class Type {
+class Type : public ExtQualsTypeCommonBase {
 public:
   enum TypeClass {
 #define TYPE(Class, Base) Class,
@@ -981,7 +1011,8 @@ protected:
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
   Type(TypeClass tc, QualType Canonical, bool Dependent, bool VariablyModified)
-    : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical) {
+    : ExtQualsTypeCommonBase(this), 
+      CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical) {
     TypeBits.TC = tc;
     TypeBits.Dependent = Dependent;
     TypeBits.VariablyModified = VariablyModified;

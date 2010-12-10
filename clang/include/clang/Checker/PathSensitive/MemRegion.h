@@ -359,7 +359,7 @@ public:
 
   QualType getDesugaredValueType(ASTContext &Context) const {
     QualType T = getValueType();
-    return T.getTypePtr() ? T.getDesugaredType(Context) : T;
+    return T.getTypePtrOrNull() ? T.getDesugaredType(Context) : T;
   }
 
   QualType getDesugaredLocationType(ASTContext &Context) const {

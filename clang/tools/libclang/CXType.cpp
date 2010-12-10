@@ -63,7 +63,7 @@ static CXTypeKind GetBuiltinTypeKind(const BuiltinType *BT) {
 }
 
 static CXTypeKind GetTypeKind(QualType T) {
-  Type *TP = T.getTypePtr();
+  Type *TP = T.getTypePtrOrNull();
   if (!TP)
     return CXType_Invalid;
 
@@ -186,7 +186,7 @@ CXType clang_getCanonicalType(CXType CT) {
 
 CXType clang_getPointeeType(CXType CT) {
   QualType T = GetQualType(CT);
-  Type *TP = T.getTypePtr();
+  Type *TP = T.getTypePtrOrNull();
   
   if (!TP)
     return MakeCXType(QualType(), GetTU(CT));
@@ -217,7 +217,7 @@ CXCursor clang_getTypeDeclaration(CXType CT) {
     return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);
 
   QualType T = GetQualType(CT);
-  Type *TP = T.getTypePtr();
+  Type *TP = T.getTypePtrOrNull();
 
   if (!TP)
     return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);
@@ -254,7 +254,7 @@ try_again:
   // FIXME: Template type parameters!      
 
   case Type::Elaborated:
-    TP = cast<ElaboratedType>(TP)->getNamedType().getTypePtr();
+    TP = cast<ElaboratedType>(TP)->getNamedType().getTypePtrOrNull();
     goto try_again;
     
   default:
@@ -324,7 +324,7 @@ unsigned clang_equalTypes(CXType A, CXType B) {
 
 CXType clang_getResultType(CXType X) {
   QualType T = GetQualType(X);
-  if (!T.getTypePtr())
+  if (!T.getTypePtrOrNull())
     return MakeCXType(QualType(), GetTU(X));
   
   if (const FunctionType *FD = T->getAs<FunctionType>())
@@ -347,7 +347,7 @@ CXType clang_getCursorResultType(CXCursor C) {
 
 unsigned clang_isPODType(CXType X) {
   QualType T = GetQualType(X);
-  if (!T.getTypePtr())
+  if (!T.getTypePtrOrNull())
     return 0;
   return T->isPODType() ? 1 : 0;
 }

@@ -167,7 +167,7 @@ void ASTDeclReader::Visit(Decl *D) {
 
   if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
     // if we have a fully initialized TypeDecl, we can safely read its type now.
-    TD->setTypeForDecl(Reader.GetType(TypeIDForTypeDecl).getTypePtr());
+    TD->setTypeForDecl(Reader.GetType(TypeIDForTypeDecl).getTypePtrOrNull());
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // FunctionDecl's body was written last after all other Stmts/Exprs.
     if (Record[Idx++])
@@ -443,7 +443,7 @@ void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 
 void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   VisitObjCContainerDecl(ID);
-  ID->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtr());
+  ID->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtrOrNull());
   ID->setSuperClass(cast_or_null<ObjCInterfaceDecl>
                        (Reader.GetDecl(Record[Idx++])));
   
