@@ -3820,7 +3820,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   bool OverloadableAttrRequired=false; // FIXME: HACK!
   if (!getLangOptions().CPlusPlus) {
     // Perform semantic checking on the function declaration.
-    CheckFunctionDeclaration(S, NewFD, Previous, isExplicitSpecialization,
+    bool isExplctSpecialization=false;
+    CheckFunctionDeclaration(S, NewFD, Previous, isExplctSpecialization,
                              Redeclaration, 
                              /*FIXME:*/OverloadableAttrRequired);
     assert((NewFD->isInvalidDecl() || !Redeclaration ||
