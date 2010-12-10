@@ -105,7 +105,7 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
         AA.alias(AliasAnalysis::Location(P->getValue(), P->getSize(),
                                          P->getTBAAInfo()),
                  AliasAnalysis::Location(Entry.getValue(), Size, TBAAInfo));
-      if (Result == AliasAnalysis::MayAlias)
+      if (Result != AliasAnalysis::MustAlias)
         AliasTy = MayAlias;
       else                  // First entry of must alias must have maximum size!
         P->updateSizeAndTBAAInfo(Size, TBAAInfo);
