@@ -1376,7 +1376,7 @@ public:
   /// (looking through parentheses).
   DeclaratorChunk::FunctionTypeInfo &getFunctionTypeInfo() {
     assert(isFunctionDeclarator() && "Not a function declarator!");
-    unsigned index;
+    unsigned index = 0;
     isFunctionDeclarator(index);
     return DeclTypeInfo[index].Fun;
   }
