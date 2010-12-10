@@ -150,8 +150,9 @@ public:
   ///
   enum AliasResult {
     NoAlias = 0,        ///< No dependencies.
-    MayAlias = 1,       ///< Anything goes.
-    MustAlias = 2       ///< Pointers are equal.
+    MayAlias,           ///< Anything goes.
+    PartialAlias,       ///< Pointers differ, but pointees overlap.
+    MustAlias           ///< Pointers are equal.
   };
 
   /// alias - The main low level interface to the alias analysis implementation.

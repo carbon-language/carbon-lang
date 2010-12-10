@@ -188,7 +188,8 @@ that the accesses alias.</p>
 <div class="doc_text">
 <p>The <tt>alias</tt> method is the primary interface used to determine whether
 or not two memory objects alias each other.  It takes two memory objects as
-input and returns MustAlias, MayAlias, or NoAlias as appropriate.</p>
+input and returns MustAlias, PartialAlias, MayAlias, or NoAlias as
+appropriate.</p>
 
 <p>Like all <tt>AliasAnalysis</tt> interfaces, the <tt>alias</tt> method requires
 that either the two pointer values be defined within the same function, or at
@@ -215,8 +216,10 @@ and reallocation.</p>
 dependencies are ignored.</p>
 
 <p>The MayAlias response is used whenever the two pointers might refer to the
-same object.  If the two memory objects overlap, but do not start at the same
-location, return MayAlias.</p>
+same object.</p>
+
+<p>The PartialAlias response is used when the two memory objects are known
+to be overlapping in some way, but do not start at the same address.</p>
 
 <p>The MustAlias response may only be returned if the two memory objects are
 guaranteed to always start at exactly the same location. A MustAlias response
