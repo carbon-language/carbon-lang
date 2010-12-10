@@ -1815,6 +1815,7 @@ public:
   /// \brief Build a new Objective-C class message.
   ExprResult RebuildObjCMessageExpr(TypeSourceInfo *ReceiverTypeInfo,
                                           Selector Sel,
+                                          SourceLocation SelectorLoc,
                                           ObjCMethodDecl *Method,
                                           SourceLocation LBracLoc, 
                                           MultiExprArg Args,
@@ -1822,13 +1823,14 @@ public:
     return SemaRef.BuildClassMessage(ReceiverTypeInfo,
                                      ReceiverTypeInfo->getType(),
                                      /*SuperLoc=*/SourceLocation(),
-                                     Sel, Method, LBracLoc, RBracLoc,
-                                     move(Args));
+                                     Sel, Method, LBracLoc, SelectorLoc,
+                                     RBracLoc, move(Args));
   }
 
   /// \brief Build a new Objective-C instance message.
   ExprResult RebuildObjCMessageExpr(Expr *Receiver,
                                           Selector Sel,
+                                          SourceLocation SelectorLoc,
                                           ObjCMethodDecl *Method,
                                           SourceLocation LBracLoc, 
                                           MultiExprArg Args,
@@ -1836,8 +1838,8 @@ public:
     return SemaRef.BuildInstanceMessage(Receiver,
                                         Receiver->getType(),
                                         /*SuperLoc=*/SourceLocation(),
-                                        Sel, Method, LBracLoc, RBracLoc,
-                                        move(Args));
+                                        Sel, Method, LBracLoc, SelectorLoc,
+                                        RBracLoc, move(Args));
   }
 
   /// \brief Build a new Objective-C ivar reference expression.
@@ -6165,6 +6167,7 @@ TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
     // Build a new class message send.
     return getDerived().RebuildObjCMessageExpr(ReceiverTypeInfo,
                                                E->getSelector(),
+                                               E->getSelectorLoc(),
                                                E->getMethodDecl(),
                                                E->getLeftLoc(),
                                                move_arg(Args),
@@ -6187,6 +6190,7 @@ TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
   // Build a new instance message send.
   return getDerived().RebuildObjCMessageExpr(Receiver.get(),
                                              E->getSelector(),
+                                             E->getSelectorLoc(),
                                              E->getMethodDecl(),
                                              E->getLeftLoc(),
                                              move_arg(Args),

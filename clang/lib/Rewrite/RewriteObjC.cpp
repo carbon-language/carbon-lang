@@ -1228,10 +1228,12 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
   bool Super = false;
   QualType SuperTy;
   SourceLocation SuperLocation;
+  SourceLocation SelectorLoc;
   // Synthesize a ObjCMessageExpr from a ObjCPropertyRefExpr or ObjCImplicitSetterGetterRefExpr.
   // This allows us to reuse all the fun and games in SynthMessageExpr().
   if (ObjCPropertyRefExpr *PropRefExpr =
         dyn_cast<ObjCPropertyRefExpr>(BinOp->getLHS())) {
+    SelectorLoc = PropRefExpr->getLocation();
     if (PropRefExpr->isExplicitProperty()) {
       ObjCPropertyDecl *PDecl = PropRefExpr->getExplicitProperty();
       OMD = PDecl->getSetterMethodDecl();
@@ -1264,7 +1266,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
                                       SuperLocation,
                                       /*IsInstanceSuper=*/true,
                                       SuperTy,
-                                      Sel, OMD,
+                                      Sel, SelectorLoc, OMD,
                                       &ExprVec[0], 1,
                                       /*FIXME:*/SourceLocation());
   else {
@@ -1281,7 +1283,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(BinaryOperator *BinOp, Expr *
                                       Expr::getValueKindForType(Ty),
                                       /*FIXME: */SourceLocation(),
                                       cast<Expr>(Receiver),
-                                      Sel, OMD,
+                                      Sel, SelectorLoc, OMD,
                                       &ExprVec[0], 1,
                                       /*FIXME:*/SourceLocation());
   }
@@ -1306,8 +1308,10 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
   bool Super = false;
   QualType SuperTy;
   SourceLocation SuperLocation;
+  SourceLocation SelectorLoc;
   if (ObjCPropertyRefExpr *PropRefExpr = 
         dyn_cast<ObjCPropertyRefExpr>(PropOrGetterRefExpr)) {
+    SelectorLoc = PropRefExpr->getLocation();
     if (PropRefExpr->isExplicitProperty()) {
       ObjCPropertyDecl *PDecl = PropRefExpr->getExplicitProperty();
       OMD = PDecl->getGetterMethodDecl();
@@ -1338,7 +1342,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
                                       SuperLocation,
                                       /*IsInstanceSuper=*/true,
                                       SuperTy,
-                                      Sel, OMD,
+                                      Sel, SelectorLoc, OMD,
                                       0, 0, 
                                       /*FIXME:*/SourceLocation());
   else {
@@ -1352,7 +1356,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(Expr *PropOrGetterRefExpr) {
                                       Expr::getValueKindForType(Ty),
                                       /*FIXME:*/SourceLocation(),
                                       cast<Expr>(Receiver),
-                                      Sel, OMD,
+                                      Sel, SelectorLoc, OMD,
                                       0, 0, 
                                       /*FIXME:*/SourceLocation());
   }

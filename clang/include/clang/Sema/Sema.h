@@ -3868,6 +3868,7 @@ public:
                                Selector Sel,
                                ObjCMethodDecl *Method,
                                SourceLocation LBracLoc,
+                               SourceLocation SelectorLoc,
                                SourceLocation RBracLoc,
                                MultiExprArg Args);
 
@@ -3885,6 +3886,7 @@ public:
                                   Selector Sel,
                                   ObjCMethodDecl *Method,
                                   SourceLocation LBracLoc,
+                                  SourceLocation SelectorLoc,
                                   SourceLocation RBracLoc,
                                   MultiExprArg Args);
 

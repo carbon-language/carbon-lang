@@ -2211,6 +2211,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  bool IsInstanceSuper,
                                  QualType SuperType,
                                  Selector Sel, 
+                                 SourceLocation SelLoc,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
@@ -2220,7 +2221,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
     HasMethod(Method != 0), SuperLoc(SuperLoc),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
-    LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
+    SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   setReceiverPointer(SuperType.getAsOpaquePtr());
   if (NumArgs)
@@ -2231,7 +2232,8 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  ExprValueKind VK,
                                  SourceLocation LBracLoc,
                                  TypeSourceInfo *Receiver,
-                                 Selector Sel, 
+                                 Selector Sel,
+                                 SourceLocation SelLoc,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
@@ -2241,7 +2243,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
     NumArgs(NumArgs), Kind(Class), HasMethod(Method != 0),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
-    LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
+    SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   setReceiverPointer(Receiver);
   if (NumArgs)
@@ -2253,6 +2255,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  SourceLocation LBracLoc,
                                  Expr *Receiver,
                                  Selector Sel, 
+                                 SourceLocation SelLoc,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
@@ -2262,7 +2265,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
     NumArgs(NumArgs), Kind(Instance), HasMethod(Method != 0),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
-    LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
+    SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   setReceiverPointer(Receiver);
   if (NumArgs)
@@ -2276,6 +2279,7 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
                                          bool IsInstanceSuper,
                                          QualType SuperType,
                                          Selector Sel, 
+                                         SourceLocation SelLoc,
                                          ObjCMethodDecl *Method,
                                          Expr **Args, unsigned NumArgs,
                                          SourceLocation RBracLoc) {
@@ -2283,7 +2287,7 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
     NumArgs * sizeof(Expr *);
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
   return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, SuperLoc, IsInstanceSuper,
-                                   SuperType, Sel, Method, Args, NumArgs, 
+                                   SuperType, Sel, SelLoc, Method, Args,NumArgs, 
                                    RBracLoc);
 }
 
@@ -2292,29 +2296,31 @@ ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
                                          SourceLocation LBracLoc,
                                          TypeSourceInfo *Receiver,
                                          Selector Sel, 
+                                         SourceLocation SelLoc,
                                          ObjCMethodDecl *Method,
                                          Expr **Args, unsigned NumArgs,
                                          SourceLocation RBracLoc) {
   unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
     NumArgs * sizeof(Expr *);
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
-  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel, Method, Args,
-                                   NumArgs, RBracLoc);
+  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel, SelLoc,
+                                   Method, Args, NumArgs, RBracLoc);
 }
 
 ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
                                          ExprValueKind VK,
                                          SourceLocation LBracLoc,
                                          Expr *Receiver,
-                                         Selector Sel, 
+                                         Selector Sel,
+                                         SourceLocation SelLoc,
                                          ObjCMethodDecl *Method,
                                          Expr **Args, unsigned NumArgs,
                                          SourceLocation RBracLoc) {
   unsigned Size = sizeof(ObjCMessageExpr) + sizeof(void *) + 
     NumArgs * sizeof(Expr *);
   void *Mem = Context.Allocate(Size, llvm::AlignOf<ObjCMessageExpr>::Alignment);
-  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel, Method, Args, 
-                                   NumArgs, RBracLoc);
+  return new (Mem) ObjCMessageExpr(T, VK, LBracLoc, Receiver, Sel, SelLoc,
+                                   Method, Args, NumArgs, RBracLoc);
 }
 
 ObjCMessageExpr *ObjCMessageExpr::CreateEmpty(ASTContext &Context, 

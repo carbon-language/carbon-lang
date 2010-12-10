@@ -426,6 +426,9 @@ class ObjCMessageExpr : public Expr {
   /// referring to the method that we type-checked against.
   uintptr_t SelectorOrMethod;
 
+  /// \brief Location of the selector.
+  SourceLocation SelectorLoc;
+
   /// \brief The source locations of the open and close square
   /// brackets ('[' and ']', respectively).
   SourceLocation LBracLoc, RBracLoc;
@@ -440,6 +443,7 @@ class ObjCMessageExpr : public Expr {
                   bool IsInstanceSuper,
                   QualType SuperType,
                   Selector Sel, 
+                  SourceLocation SelLoc,
                   ObjCMethodDecl *Method,
                   Expr **Args, unsigned NumArgs,
                   SourceLocation RBracLoc);
@@ -447,6 +451,7 @@ class ObjCMessageExpr : public Expr {
                   SourceLocation LBracLoc,
                   TypeSourceInfo *Receiver,
                   Selector Sel, 
+                  SourceLocation SelLoc,
                   ObjCMethodDecl *Method,
                   Expr **Args, unsigned NumArgs,
                   SourceLocation RBracLoc);
@@ -454,6 +459,7 @@ class ObjCMessageExpr : public Expr {
                   SourceLocation LBracLoc,
                   Expr *Receiver,
                   Selector Sel, 
+                  SourceLocation SelLoc,
                   ObjCMethodDecl *Method,
                   Expr **Args, unsigned NumArgs,
                   SourceLocation RBracLoc);
@@ -516,6 +522,7 @@ public:
                                  bool IsInstanceSuper,
                                  QualType SuperType,
                                  Selector Sel, 
+                                 SourceLocation SelLoc,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc);
@@ -550,6 +557,7 @@ public:
                                  SourceLocation LBracLoc,
                                  TypeSourceInfo *Receiver,
                                  Selector Sel, 
+                                 SourceLocation SelLoc,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc);
@@ -584,6 +592,7 @@ public:
                                  SourceLocation LBracLoc,
                                  Expr *Receiver,
                                  Selector Sel, 
+                                 SourceLocation SelLoc,
                                  ObjCMethodDecl *Method,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc);
@@ -751,9 +760,7 @@ public:
 
   SourceLocation getLeftLoc() const { return LBracLoc; }
   SourceLocation getRightLoc() const { return RBracLoc; }
-
-  void setLeftLoc(SourceLocation L) { LBracLoc = L; }
-  void setRightLoc(SourceLocation L) { RBracLoc = L; }
+  SourceLocation getSelectorLoc() const { return SelectorLoc; }
 
   void setSourceRange(SourceRange R) {
     LBracLoc = R.getBegin();
@@ -779,6 +786,9 @@ public:
   arg_iterator arg_end()   { return getArgs() + NumArgs; }
   const_arg_iterator arg_begin() const { return getArgs(); }
   const_arg_iterator arg_end() const { return getArgs() + NumArgs; }
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 /// ObjCIsaExpr - Represent X->isa and X.isa when X is an ObjC 'id' type.

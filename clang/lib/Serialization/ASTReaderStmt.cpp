@@ -897,8 +897,9 @@ void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   else
     E->setSelector(Reader.GetSelector(Record, Idx));
 
-  E->setLeftLoc(ReadSourceLocation(Record, Idx));
-  E->setRightLoc(ReadSourceLocation(Record, Idx));
+  E->LBracLoc = ReadSourceLocation(Record, Idx);
+  E->RBracLoc = ReadSourceLocation(Record, Idx);
+  E->SelectorLoc = ReadSourceLocation(Record, Idx);
 
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, Reader.ReadSubExpr());
