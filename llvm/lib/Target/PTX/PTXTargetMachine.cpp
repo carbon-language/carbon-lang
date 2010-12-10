@@ -21,7 +21,7 @@ using namespace llvm;
 
 namespace llvm {
   MCStreamer *createPTXAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                                   bool isLittleEndian, bool isVerboseAsm,
+                                   bool isVerboseAsm, bool useLoc,
                                    MCInstPrinter *InstPrint,
                                    MCCodeEmitter *CE,
                                    bool ShowInst);

@@ -24,6 +24,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmBackend.h"
+#include "llvm/Target/TargetAsmInfo.h"
 
 using namespace llvm;
 
@@ -354,15 +355,6 @@ void MCMachOStreamer::EmitInstToData(const MCInst &Inst) {
 }
 
 void MCMachOStreamer::Finish() {
-  // Dump out the dwarf file & directory tables and line tables.
-  if (getContext().hasDwarfFiles()) {
-    const MCSection *DwarfLineSection = getContext().getMachOSection("__DWARF",
-                                         "__debug_line",
-                                         MCSectionMachO::S_ATTR_DEBUG,
-                                         0, SectionKind::getDataRelLocal());
-    MCDwarfFileTable::Emit(this, DwarfLineSection);
-  }
-
   // We have to set the fragment atom associations so we can relax properly for
   // Mach-O.
 
