@@ -231,12 +231,6 @@ public:
 
 } // end anonymous namespace
 
-namespace llvm {
-Spiller *createInlineSpiller(MachineFunctionPass &pass,
-                             MachineFunction &mf,
-                             VirtRegMap &vrm);
-}
-
 llvm::Spiller* llvm::createSpiller(MachineFunctionPass &pass,
                                    MachineFunction &mf,
                                    VirtRegMap &vrm) {

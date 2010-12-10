@@ -311,7 +311,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
                      getAnalysis<LiveIntervals>());
 
   ReservedRegs = TRI->getReservedRegs(*MF);
-  SpillerInstance.reset(createSpiller(*this, *MF, *VRM));
+  SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
   allocatePhysRegs();
   addMBBLiveIns(MF);
 
