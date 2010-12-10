@@ -45,9 +45,6 @@ namespace {
 class RAGreedy : public MachineFunctionPass, public RegAllocBase {
   // context
   MachineFunction *MF;
-  const TargetMachine *TM;
-  MachineRegisterInfo *MRI;
-
   BitVector ReservedRegs;
 
   // analyses
@@ -230,11 +227,6 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   SmallVector<unsigned, 8> PhysRegSpillCands, ReassignCands;
 
   // Check for an available register in this class.
-  DEBUG({
-      const TargetRegisterClass *TRC = MRI->getRegClass(VirtReg.reg);
-      dbgs() << "RegClass: " << TRC->getName() << ' ';
-    });
-
   AllocationOrder Order(VirtReg.reg, *VRM, ReservedRegs);
   while (unsigned PhysReg = Order.next()) {
     // Check interference and as a side effect, intialize queries for this
@@ -305,12 +297,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
                << ((Value*)mf.getFunction())->getName() << '\n');
 
   MF = &mf;
-  TM = &mf.getTarget();
-  MRI = &mf.getRegInfo();
-
-  const TargetRegisterInfo *TRI = TM->getRegisterInfo();
-  RegAllocBase::init(*TRI, getAnalysis<VirtRegMap>(),
-                     getAnalysis<LiveIntervals>());
+  RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
 
   ReservedRegs = TRI->getReservedRegs(*MF);
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));

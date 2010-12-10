@@ -74,9 +74,6 @@ class RABasic : public MachineFunctionPass, public RegAllocBase
 {
   // context
   MachineFunction *MF;
-  const TargetMachine *TM;
-  MachineRegisterInfo *MRI;
-
   BitVector ReservedRegs;
 
   // analyses
@@ -206,9 +203,9 @@ void RegAllocBase::LiveUnionArray::init(LiveIntervalUnion::Allocator &allocator,
     new(Array + r) LiveIntervalUnion(r, allocator);
 }
 
-void RegAllocBase::init(const TargetRegisterInfo &tri, VirtRegMap &vrm,
-                        LiveIntervals &lis) {
-  TRI = &tri;
+void RegAllocBase::init(VirtRegMap &vrm, LiveIntervals &lis) {
+  TRI = &vrm.getTargetRegInfo();
+  MRI = &vrm.getRegInfo();
   VRM = &vrm;
   LIS = &lis;
   PhysReg2LiveUnion.init(UnionAllocator, TRI->getNumRegs());
@@ -262,13 +259,15 @@ void RegAllocBase::allocatePhysRegs() {
     // selectOrSplit requests the allocator to return an available physical
     // register if possible and populate a list of new live intervals that
     // result from splitting.
+    DEBUG(dbgs() << "\nselectOrSplit " << MRI->getRegClass(VirtReg.reg)->getName()
+                 << ':' << VirtReg << '\n');
     typedef SmallVector<LiveInterval*, 4> VirtRegVec;
     VirtRegVec SplitVRegs;
     unsigned AvailablePhysReg = selectOrSplit(VirtReg, SplitVRegs);
 
     if (AvailablePhysReg) {
-      DEBUG(dbgs() << "allocating: " << TRI->getName(AvailablePhysReg) <<
-            " " << VirtReg << '\n');
+      DEBUG(dbgs() << "allocating: " << TRI->getName(AvailablePhysReg)
+                   << " for " << VirtReg << '\n');
       assert(!VRM->hasPhys(VirtReg.reg) && "duplicate vreg in union");
       VRM->assignVirt2Phys(VirtReg.reg, AvailablePhysReg);
       PhysReg2LiveUnion[AvailablePhysReg].unify(VirtReg);
@@ -416,7 +415,6 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
 
   // Check for an available register in this class.
   const TargetRegisterClass *TRC = MRI->getRegClass(VirtReg.reg);
-  DEBUG(dbgs() << "RegClass: " << TRC->getName() << ' ');
 
   for (TargetRegisterClass::iterator I = TRC->allocation_order_begin(*MF),
          E = TRC->allocation_order_end(*MF);
@@ -469,14 +467,9 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
                << ((Value*)mf.getFunction())->getName() << '\n');
 
   MF = &mf;
-  TM = &mf.getTarget();
-  MRI = &mf.getRegInfo();
-
   DEBUG(RMF = &getAnalysis<RenderMachineFunction>());
 
-  const TargetRegisterInfo *TRI = TM->getRegisterInfo();
-  RegAllocBase::init(*TRI, getAnalysis<VirtRegMap>(),
-                     getAnalysis<LiveIntervals>());
+  RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
 
   ReservedRegs = TRI->getReservedRegs(*MF);
 
