@@ -1444,16 +1444,30 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmullp, &Ty, 1),
                         Ops, "vmull");
   case ARM::BI__builtin_neon_vpadal_v:
-  case ARM::BI__builtin_neon_vpadalq_v:
+  case ARM::BI__builtin_neon_vpadalq_v: {
     Int = usgn ? Intrinsic::arm_neon_vpadalu : Intrinsic::arm_neon_vpadals;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vpadal");
+    // The source operand type has twice as many elements of half the size.
+    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    const llvm::Type *EltTy = llvm::IntegerType::get(VMContext, EltBits / 2);
+    const llvm::Type *NarrowTy =
+      llvm::VectorType::get(EltTy, VTy->getNumElements() * 2);
+    const llvm::Type *Tys[2] = { Ty, NarrowTy };
+    return EmitNeonCall(CGM.getIntrinsic(Int, Tys, 2), Ops, "vpadal");
+  }
   case ARM::BI__builtin_neon_vpadd_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vpadd, &Ty, 1),
                         Ops, "vpadd");
   case ARM::BI__builtin_neon_vpaddl_v:
-  case ARM::BI__builtin_neon_vpaddlq_v:
+  case ARM::BI__builtin_neon_vpaddlq_v: {
     Int = usgn ? Intrinsic::arm_neon_vpaddlu : Intrinsic::arm_neon_vpaddls;
-    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vpaddl");
+    // The source operand type has twice as many elements of half the size.
+    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    const llvm::Type *EltTy = llvm::IntegerType::get(VMContext, EltBits / 2);
+    const llvm::Type *NarrowTy =
+      llvm::VectorType::get(EltTy, VTy->getNumElements() * 2);
+    const llvm::Type *Tys[2] = { Ty, NarrowTy };
+    return EmitNeonCall(CGM.getIntrinsic(Int, Tys, 2), Ops, "vpaddl");
+  }
   case ARM::BI__builtin_neon_vpmax_v:
     Int = usgn ? Intrinsic::arm_neon_vpmaxu : Intrinsic::arm_neon_vpmaxs;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vpmax");
