@@ -815,7 +815,7 @@ def VLD1DUPq32Pseudo : VLD1QDUPPseudo<v4i32, load>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 
-class VLD1QDUP<bits<4> op7_4, string Dt, ValueType Ty, PatFrag LoadOp>
+class VLD1QDUP<bits<4> op7_4, string Dt>
   : NLdSt<1, 0b10, 0b1100, op7_4, (outs DPR:$Vd, DPR:$dst2),
           (ins addrmode6dup:$Rn), IIC_VLD1dup,
           "vld1", Dt, "\\{$Vd[], $dst2[]\\}, $Rn", "", []> {
@@ -823,9 +823,9 @@ class VLD1QDUP<bits<4> op7_4, string Dt, ValueType Ty, PatFrag LoadOp>
   let Inst{4} = Rn{4};
 }
 
-def VLD1DUPq8  : VLD1QDUP<{0,0,1,0}, "8", v16i8, extloadi8>;
-def VLD1DUPq16 : VLD1QDUP<{0,1,1,?}, "16", v8i16, extloadi16>;
-def VLD1DUPq32 : VLD1QDUP<{1,0,1,?}, "32", v4i32, load>;
+def VLD1DUPq8  : VLD1QDUP<{0,0,1,0}, "8">;
+def VLD1DUPq16 : VLD1QDUP<{0,1,1,?}, "16">;
+def VLD1DUPq32 : VLD1QDUP<{1,0,1,?}, "32">;
 
 // ...with address register writeback:
 class VLD1DUPWB<bits<4> op7_4, string Dt>
