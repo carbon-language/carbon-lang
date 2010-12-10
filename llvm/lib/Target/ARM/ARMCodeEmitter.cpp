@@ -191,6 +191,8 @@ namespace {
       const { return 0; }
     unsigned getSORegOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
+    unsigned getTAddrModeRegRegOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
     unsigned getT2AddrModeImm12OpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getT2AddrModeImm8OpValue(const MachineInstr &MI, unsigned Op)

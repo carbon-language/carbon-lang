@@ -103,6 +103,7 @@ def MemModeThumbAsmOperand : AsmOperandClass {
 //
 def t_addrmode_rr : Operand<i32>,
                     ComplexPattern<i32, 2, "SelectThumbAddrModeRR", []> {
+  let EncoderMethod = "getTAddrModeRegRegOpValue";
   let PrintMethod = "printThumbAddrModeRROperand";
   let MIOperandInfo = (ops tGPR:$base, tGPR:$offsreg);
 }

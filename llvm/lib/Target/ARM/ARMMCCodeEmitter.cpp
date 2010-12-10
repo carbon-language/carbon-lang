@@ -129,6 +129,10 @@ public:
   uint32_t getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
                                    SmallVectorImpl<MCFixup> &Fixups) const;
 
+  /// getTAddrModeRegRegOpValue - Return encoding for 'reg + reg' operand.
+  uint32_t getTAddrModeRegRegOpValue(const MCInst &MI, unsigned OpIdx,
+                                     SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getT2AddrModeImm8s4OpValue - Return encoding info for 'reg +/- imm8<<2'
   /// operand.
   uint32_t getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
@@ -502,6 +506,17 @@ getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
   assert(MI.getOperand(OpIdx).isExpr() && "Unexpected adr target type!");
   return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_adr_pcrel_12,
                                   Fixups);
+}
+
+/// getTAddrModeRegRegOpValue - Return encoding info for 'reg + reg' operand.
+uint32_t ARMMCCodeEmitter::
+getTAddrModeRegRegOpValue(const MCInst &MI, unsigned OpIdx,
+                        SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO1 = MI.getOperand(OpIdx);
+  const MCOperand &MO2 = MI.getOperand(OpIdx+1);
+  unsigned Rn = getARMRegisterNumbering(MO1.getReg());
+  unsigned Rm = getARMRegisterNumbering(MO2.getReg());
+  return (Rm << 3) | Rn;
 }
 
 /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12' operand.
