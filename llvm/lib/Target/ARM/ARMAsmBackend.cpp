@@ -141,7 +141,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // Offset by 8 just as above.
     return 0xffffff & ((Value - 8) >> 2);
   case ARM::fixup_t2_branch: {
-    Value = Value - 6;
+    Value = Value - 4;
     Value >>= 1; // Low bit is not encoded.
     
     uint64_t out = 0;

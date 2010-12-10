@@ -57,8 +57,7 @@ public:
                                                 MCFixupKindInfo::FKF_IsAligned},
 { "fixup_arm_adr_pcrel_12",  1,            24,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_branch",        1,            24,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_t2_branch",         0,            32,  MCFixupKindInfo::FKF_IsPCRel |
-                                                MCFixupKindInfo::FKF_IsAligned},
+{ "fixup_t2_branch",         0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_br",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_bl",      0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_blx",     7,            21,  MCFixupKindInfo::FKF_IsPCRel },
