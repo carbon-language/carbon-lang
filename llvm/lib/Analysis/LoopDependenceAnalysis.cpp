@@ -221,6 +221,7 @@ LoopDependenceAnalysis::analysePair(DependencePair *P) const {
 
   switch (UnderlyingObjectsAlias(AA, aPtr, bPtr)) {
   case AliasAnalysis::MayAlias:
+  case AliasAnalysis::PartialAlias:
     // We can not analyse objects if we do not know about their aliasing.
     DEBUG(dbgs() << "---> [?] may alias\n");
     return Unknown;
