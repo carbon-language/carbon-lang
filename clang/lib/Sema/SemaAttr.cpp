@@ -296,8 +296,8 @@ void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
   }
 }
 
-typedef std::vector<std::pair<VisibilityAttr::VisibilityType,
-                              SourceLocation> > VisStack;
+typedef std::vector<std::pair<unsigned, SourceLocation> > VisStack;
+enum { NoVisibility = (unsigned) -1 };
 
 void Sema::AddPushedVisibilityAttribute(Decl *D) {
   if (!VisContext)
@@ -307,7 +307,11 @@ void Sema::AddPushedVisibilityAttribute(Decl *D) {
     return;
 
   VisStack *Stack = static_cast<VisStack*>(VisContext);
-  VisibilityAttr::VisibilityType type = Stack->back().first;
+  unsigned rawType = Stack->back().first;
+  if (rawType == NoVisibility) return;
+
+  VisibilityAttr::VisibilityType type
+    = (VisibilityAttr::VisibilityType) rawType;
   SourceLocation loc = Stack->back().second;
 
   D->addAttr(::new (Context) VisibilityAttr(loc, Context, type));
@@ -319,8 +323,7 @@ void Sema::FreeVisContext() {
   VisContext = 0;
 }
 
-static void PushPragmaVisibility(Sema &S, VisibilityAttr::VisibilityType type,
-                                 SourceLocation loc) {
+static void PushPragmaVisibility(Sema &S, unsigned type, SourceLocation loc) {
   // Put visibility on stack.
   if (!S.VisContext)
     S.VisContext = new VisStack;
@@ -353,8 +356,12 @@ void Sema::ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
   }
 }
 
-void Sema::PushVisibilityAttr(const VisibilityAttr *Attr) {
-  PushPragmaVisibility(*this, Attr->getVisibility(), Attr->getLocation());
+void Sema::PushNamespaceVisibilityAttr(const VisibilityAttr *Attr) {
+  // Visibility calculations will consider the namespace's visibility.
+  // Here we just want to note that we're in a visibility context
+  // which overrides any enclosing #pragma context, but doesn't itself
+  // contribute visibility.
+  PushPragmaVisibility(*this, NoVisibility, SourceLocation());
 }
 
 void Sema::PopPragmaVisibility() {

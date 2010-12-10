@@ -3194,8 +3194,8 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
   ProcessDeclAttributeList(DeclRegionScope, Namespc, AttrList);
 
-  if (const VisibilityAttr *attr = Namespc->getAttr<VisibilityAttr>())
-    PushVisibilityAttr(attr);
+  if (const VisibilityAttr *Attr = Namespc->getAttr<VisibilityAttr>())
+    PushNamespaceVisibilityAttr(Attr);
 
   if (II) {
     // C++ [namespace.def]p2:

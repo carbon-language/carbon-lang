@@ -3957,9 +3957,9 @@ public:
   /// FreePackedContext - Deallocate and null out PackContext.
   void FreePackedContext();
 
-  /// PushVisibilityAttr - Note that we've entered a context with a
-  /// visibility attribute.
-  void PushVisibilityAttr(const VisibilityAttr *Attr);
+  /// PushNamespaceVisibilityAttr - Note that we've entered a
+  /// namespace with a visibility attribute.
+  void PushNamespaceVisibilityAttr(const VisibilityAttr *Attr);
 
   /// AddPushedVisibilityAttribute - If '#pragma GCC visibility' was used,
   /// add an appropriate visibility attribute.

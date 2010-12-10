@@ -79,3 +79,21 @@ namespace test1 {
 // CHECK: declare void @_ZN5test11A3fooEv
 // CHECK: declare void @_ZN5test11AD1Ev
 }
+
+// PR8713
+namespace test2 {
+  struct A {};
+  template <class T> class B {};
+  typedef B<A> arg;
+
+  namespace ns __attribute__((visibility("default"))) {
+    template <class T> inline void foo() {}
+    extern template void foo<arg>();
+  }
+
+  void test() {
+    ns::foo<arg>();
+  }
+
+  // CHECK: define available_externally void @_ZN5test22ns3fooINS_1BINS_1AEEEEEvv()
+}

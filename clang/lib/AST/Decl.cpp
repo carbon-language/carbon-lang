@@ -249,6 +249,20 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
     if (const VisibilityAttr *VA = GetExplicitVisibility(D)) {
       LV.setVisibility(GetVisibilityFromAttr(VA), true);
       F.ConsiderGlobalVisibility = false;
+    } else {
+      // If we're declared in a namespace with a visibility attribute,
+      // use that namespace's visibility, but don't call it explicit.
+      for (const DeclContext *DC = D->getDeclContext();
+           !isa<TranslationUnitDecl>(DC);
+           DC = DC->getParent()) {
+        if (!isa<NamespaceDecl>(DC)) continue;
+        if (const VisibilityAttr *VA =
+              cast<NamespaceDecl>(DC)->getAttr<VisibilityAttr>()) {
+          LV.setVisibility(GetVisibilityFromAttr(VA), false);
+          F.ConsiderGlobalVisibility = false;
+          break;
+        }
+      }
     }
   }
 
