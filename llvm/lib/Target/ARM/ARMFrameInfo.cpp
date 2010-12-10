@@ -92,6 +92,11 @@ static bool isCSRestore(MachineInstr *MI,
         return false;
     return true;
   }
+  if ((MI->getOpcode() == ARM::LDR_POST ||
+       MI->getOpcode() == ARM::t2LDR_POST) &&
+      isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs) &&
+      MI->getOperand(1).getReg() == ARM::SP)
+    return true;
 
   return false;
 }
