@@ -178,7 +178,7 @@ const StackFrameContext *VarRegion::getStackFrame() const {
 
 DefinedOrUnknownSVal DeclRegion::getExtent(SValBuilder &svalBuilder) const {
   ASTContext& Ctx = svalBuilder.getContext();
-  QualType T = getDesugaredValueType();
+  QualType T = getDesugaredValueType(Ctx);
 
   if (isa<VariableArrayType>(T))
     return nonloc::SymbolVal(svalBuilder.getSymbolManager().getExtentSymbol(this));
@@ -196,7 +196,7 @@ DefinedOrUnknownSVal FieldRegion::getExtent(SValBuilder &svalBuilder) const {
   // A zero-length array at the end of a struct often stands for dynamically-
   // allocated extra memory.
   if (Extent.isZeroConstant()) {
-    QualType T = getDesugaredValueType();
+    QualType T = getDesugaredValueType(svalBuilder.getContext());
 
     if (isa<ConstantArrayType>(T))
       return UnknownVal();

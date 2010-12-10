@@ -1144,7 +1144,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         // part of the implementation spec. and not the actual qualifier for
         // the variable.
         if (CDRE->isConstQualAdded())
-           CurBlock->ReturnType.removeConst();
+          CurBlock->ReturnType.removeLocalConst(); // FIXME: local???
       }
     } else
       CurBlock->ReturnType = Context.VoidTy;

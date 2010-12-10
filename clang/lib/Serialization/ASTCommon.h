@@ -34,7 +34,7 @@ TypeID MakeTypeID(QualType T, IdxForTypeTy IdxForType) {
     return PREDEF_TYPE_NULL_ID;
 
   unsigned FastQuals = T.getLocalFastQualifiers();
-  T.removeFastQualifiers();
+  T.removeLocalFastQualifiers();
 
   if (T.hasLocalNonFastQualifiers())
     return IdxForType(T).asTypeID(FastQuals);

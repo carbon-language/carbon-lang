@@ -464,7 +464,9 @@ DeduceTemplateArguments(Sema &S,
     assert(TemplateTypeParm->getDepth() == 0 && "Can't deduce with depth > 0");
     assert(Arg != S.Context.OverloadTy && "Unresolved overloaded function");
     QualType DeducedType = Arg;
-    DeducedType.removeCVRQualifiers(Param.getCVRQualifiers());
+
+    // local manipulation is okay because it's canonical
+    DeducedType.removeLocalCVRQualifiers(Param.getCVRQualifiers());
     if (RecanonicalizeArg)
       DeducedType = S.Context.getCanonicalType(DeducedType);
 

@@ -5503,7 +5503,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
           if (!VisibleTypeConversionsQuals.hasRestrict() && 
               T.isRestrictQualified())
             continue;
-          T = Q1.apply(T);
+          T = Q1.apply(Context, T);
           QualType ResultTy = Context.getLValueReferenceType(T);
           AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
         }
@@ -6075,9 +6075,9 @@ void DiagnoseBadDeduction(Sema &S, OverloadCandidate *Cand,
 
     // Param will have been canonicalized, but it should just be a
     // qualified version of ParamD, so move the qualifiers to that.
-    QualifierCollector Qs(S.Context);
+    QualifierCollector Qs;
     Qs.strip(Param);
-    QualType NonCanonParam = Qs.apply(TParam->getTypeForDecl());
+    QualType NonCanonParam = Qs.apply(S.Context, TParam->getTypeForDecl());
     assert(S.Context.hasSameType(Param, NonCanonParam));
 
     // Arg has also been canonicalized, but there's nothing we can do

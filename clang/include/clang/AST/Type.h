@@ -351,12 +351,6 @@ class ExtQuals : public llvm::FoldingSetNode {
   // 3. ASTContext:
   //    a) Update get{Volatile,Restrict}Type.
 
-  /// Context - the context to which this set belongs.  We save this
-  /// here so that QualifierCollector can use it to reapply extended
-  /// qualifiers to an arbitrary type without requiring a context to
-  /// be pushed through every single API dealing with qualifiers.
-  ASTContext& Context;
-
   /// BaseType - the underlying type that this qualifies
   const Type *BaseType;
 
@@ -365,8 +359,7 @@ class ExtQuals : public llvm::FoldingSetNode {
   Qualifiers Quals;
 
 public:
-  ExtQuals(ASTContext& Context, const Type *Base, Qualifiers Quals)
-    : Context(Context), BaseType(Base), Quals(Quals)
+  ExtQuals(const Type *Base, Qualifiers Quals) : BaseType(Base), Quals(Quals)
   {
     assert(Quals.hasNonFastQualifiers()
            && "ExtQuals created with no fast qualifiers");
@@ -383,8 +376,6 @@ public:
   unsigned getAddressSpace() const { return Quals.getAddressSpace(); }
 
   const Type *getBaseType() const { return BaseType; }
-
-  ASTContext &getContext() const { return Context; }
 
 public:
   void Profile(llvm::FoldingSetNodeID &ID) const {
@@ -409,6 +400,7 @@ enum CallingConv {
   CC_X86Pascal    // __attribute__((pascal))
 };
 
+typedef std::pair<const Type*, Qualifiers> SplitQualType;
 
 /// QualType - For efficiency, we don't store CV-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -456,6 +448,19 @@ public:
     if (hasLocalNonFastQualifiers())
       return const_cast<Type*>(getExtQualsUnsafe()->getBaseType());
     return const_cast<Type*>(getTypePtrUnsafe());
+  }
+
+  /// Divides a QualType into its unqualified type and a set of local
+  /// qualifiers.
+  SplitQualType split() const {
+    if (!hasLocalNonFastQualifiers())
+      return SplitQualType(getTypePtrUnsafe(),
+                           Qualifiers::fromFastMask(getLocalFastQualifiers()));
+
+    const ExtQuals *eq = getExtQualsUnsafe();
+    Qualifiers qs = eq->getQualifiers();
+    qs.addFastQualifiers(getLocalFastQualifiers());
+    return SplitQualType(eq->getBaseType(), qs);
   }
 
   void *getAsOpaquePtr() const { return Value.getOpaqueValue(); }
@@ -579,16 +584,13 @@ public:
     Value.setInt(Value.getInt() | TQs);
   }
 
-  // FIXME: The remove* functions are semantically broken, because they might
-  // not remove a qualifier stored on a typedef. Most of the with* functions
-  // have the same problem.
-  void removeConst();
-  void removeVolatile();
-  void removeRestrict();
-  void removeCVRQualifiers(unsigned Mask);
+  void removeLocalConst();
+  void removeLocalVolatile();
+  void removeLocalRestrict();
+  void removeLocalCVRQualifiers(unsigned Mask);
 
-  void removeFastQualifiers() { Value.setInt(0); }
-  void removeFastQualifiers(unsigned Mask) {
+  void removeLocalFastQualifiers() { Value.setInt(0); }
+  void removeLocalFastQualifiers(unsigned Mask) {
     assert(!(Mask & ~Qualifiers::FastMask) && "mask has non-fast qualifiers");
     Value.setInt(Value.getInt() & ~Mask);
   }
@@ -603,14 +605,14 @@ public:
 
   // Creates a type with exactly the given fast qualifiers, removing
   // any existing fast qualifiers.
-  QualType withExactFastQualifiers(unsigned TQs) const {
-    return withoutFastQualifiers().withFastQualifiers(TQs);
+  QualType withExactLocalFastQualifiers(unsigned TQs) const {
+    return withoutLocalFastQualifiers().withFastQualifiers(TQs);
   }
 
   // Removes fast qualifiers, but leaves any extended qualifiers in place.
-  QualType withoutFastQualifiers() const {
+  QualType withoutLocalFastQualifiers() const {
     QualType T = *this;
-    T.removeFastQualifiers();
+    T.removeLocalFastQualifiers();
     return T;
   }
 
@@ -651,8 +653,12 @@ public:
   /// concrete.
   ///
   /// Qualifiers are left in place.
-  QualType getDesugaredType() const {
-    return QualType::getDesugaredType(*this);
+  QualType getDesugaredType(ASTContext &Context) const {
+    return getDesugaredType(*this, Context);
+  }
+
+  SplitQualType getSplitDesugaredType() const {
+    return getSplitDesugaredType(*this);
   }
 
   /// operator==/!= - Indicate whether the specified types and qualifiers are
@@ -663,7 +669,13 @@ public:
   friend bool operator!=(const QualType &LHS, const QualType &RHS) {
     return LHS.Value != RHS.Value;
   }
-  std::string getAsString() const;
+  std::string getAsString() const {
+    return getAsString(split());
+  }
+  static std::string getAsString(SplitQualType split) {
+    return getAsString(split.first, split.second);
+  }
+  static std::string getAsString(const Type *ty, Qualifiers qs);
 
   std::string getAsString(const PrintingPolicy &Policy) const {
     std::string S;
@@ -671,7 +683,16 @@ public:
     return S;
   }
   void getAsStringInternal(std::string &Str,
-                           const PrintingPolicy &Policy) const;
+                           const PrintingPolicy &Policy) const {
+    return getAsStringInternal(split(), Str, Policy);
+  }
+  static void getAsStringInternal(SplitQualType split, std::string &out,
+                                  const PrintingPolicy &policy) {
+    return getAsStringInternal(split.first, split.second, out, policy);
+  }
+  static void getAsStringInternal(const Type *ty, Qualifiers qs,
+                                  std::string &out,
+                                  const PrintingPolicy &policy);
 
   void dump(const char *s) const;
   void dump() const;
@@ -701,7 +722,8 @@ private:
   // "static"-ize them to avoid creating temporary QualTypes in the
   // caller.
   static bool isConstant(QualType T, ASTContext& Ctx);
-  static QualType getDesugaredType(QualType T);
+  static QualType getDesugaredType(QualType T, ASTContext &Context);
+  static SplitQualType getSplitDesugaredType(QualType T);
 };
 
 } // end clang.
@@ -2278,14 +2300,6 @@ public:
 
   TypedefDecl *getDecl() const { return Decl; }
 
-  /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
-  /// potentially looking through *all* consecutive typedefs.  This returns the
-  /// sum of the type qualifiers, so if you have:
-  ///   typedef const int A;
-  ///   typedef volatile A B;
-  /// looking through the typedefs for B will give you "const volatile A".
-  QualType LookThroughTypedefs() const;
-
   bool isSugared() const { return true; }
   QualType desugar() const;
 
@@ -3341,15 +3355,8 @@ public:
 
 /// A qualifier set is used to build a set of qualifiers.
 class QualifierCollector : public Qualifiers {
-  ASTContext *Context;
-
 public:
-  QualifierCollector(Qualifiers Qs = Qualifiers())
-    : Qualifiers(Qs), Context(0) {}
-  QualifierCollector(ASTContext &Context, Qualifiers Qs = Qualifiers())
-    : Qualifiers(Qs), Context(&Context) {}
-
-  void setContext(ASTContext &C) { Context = &C; }
+  QualifierCollector(Qualifiers Qs = Qualifiers()) : Qualifiers(Qs) {}
 
   /// Collect any qualifiers on the given type and return an
   /// unqualified type.
@@ -3357,7 +3364,6 @@ public:
     addFastQualifiers(QT.getLocalFastQualifiers());
     if (QT.hasLocalNonFastQualifiers()) {
       const ExtQuals *EQ = QT.getExtQualsUnsafe();
-      Context = &EQ->getContext();
       addQualifiers(EQ->getQualifiers());
       return EQ->getBaseType();
     }
@@ -3365,11 +3371,10 @@ public:
   }
 
   /// Apply the collected qualifiers to the given type.
-  QualType apply(QualType QT) const;
+  QualType apply(ASTContext &Context, QualType QT) const;
 
   /// Apply the collected qualifiers to the given type.
-  QualType apply(const Type* T) const;
-
+  QualType apply(ASTContext &Context, const Type* T) const;
 };
 
 
@@ -3445,36 +3450,24 @@ inline unsigned QualType::getCVRQualifiersThroughArrayTypes() const {
   return 0;
 }
 
-inline void QualType::removeConst() {
-  removeFastQualifiers(Qualifiers::Const);
+inline void QualType::removeLocalConst() {
+  removeLocalFastQualifiers(Qualifiers::Const);
 }
 
-inline void QualType::removeRestrict() {
-  removeFastQualifiers(Qualifiers::Restrict);
+inline void QualType::removeLocalRestrict() {
+  removeLocalFastQualifiers(Qualifiers::Restrict);
 }
 
-inline void QualType::removeVolatile() {
-  QualifierCollector Qc;
-  const Type *Ty = Qc.strip(*this);
-  if (Qc.hasVolatile()) {
-    Qc.removeVolatile();
-    *this = Qc.apply(Ty);
-  }
+inline void QualType::removeLocalVolatile() {
+  removeLocalFastQualifiers(Qualifiers::Volatile);
 }
 
-inline void QualType::removeCVRQualifiers(unsigned Mask) {
+inline void QualType::removeLocalCVRQualifiers(unsigned Mask) {
   assert(!(Mask & ~Qualifiers::CVRMask) && "mask has non-CVR bits");
+  assert(Qualifiers::CVRMask == Qualifiers::FastMask);
 
   // Fast path: we don't need to touch the slow qualifiers.
-  if (!(Mask & ~Qualifiers::FastMask)) {
-    removeFastQualifiers(Mask);
-    return;
-  }
-
-  QualifierCollector Qc;
-  const Type *Ty = Qc.strip(*this);
-  Qc.removeCVRQualifiers(Mask);
-  *this = Qc.apply(Ty);
+  removeLocalFastQualifiers(Mask);
 }
 
 /// getAddressSpace - Return the address space of this type.

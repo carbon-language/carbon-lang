@@ -2569,7 +2569,7 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
                                             Oversized);
     if (FixedType.isNull()) return FixedType;
     FixedType = Context.getPointerType(FixedType);
-    return Qs.apply(FixedType);
+    return Qs.apply(Context, FixedType);
   }
 
   const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T);

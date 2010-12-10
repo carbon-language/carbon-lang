@@ -799,7 +799,7 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
     return UnknownVal();
 
   // Strip off typedefs from the ArrayRegion's ValueType.
-  QualType T = ArrayR->getValueType().getDesugaredType();
+  QualType T = ArrayR->getValueType().getDesugaredType(Ctx);
   ArrayType *AT = cast<ArrayType>(T);
   T = AT->getElementType();
 

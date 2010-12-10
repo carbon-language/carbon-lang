@@ -1084,7 +1084,7 @@ QualType ASTContext::getExtQualType(const Type *TypeNode, Qualifiers Quals) {
     return T;
   }
 
-  ExtQuals *New = new (*this, TypeAlignment) ExtQuals(*this, TypeNode, Quals);
+  ExtQuals *New = new (*this, TypeAlignment) ExtQuals(TypeNode, Quals);
   ExtQualNodes.InsertNode(New, InsertPos);
   QualType T = QualType(New, Fast);
   return T;
@@ -2791,7 +2791,7 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
   // we must propagate them down into the element type.
 
   QualifierCollector Qs;
-  const Type *Ty = Qs.strip(T.getDesugaredType());
+  const Type *Ty = Qs.strip(T.getDesugaredType(*this));
 
   // If we have a simple case, just return now.
   const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
@@ -2854,7 +2854,7 @@ QualType ASTContext::getBaseElementType(QualType QT) {
   QualifierCollector Qs;
   while (const ArrayType *AT = getAsArrayType(QualType(Qs.strip(QT), 0)))
     QT = AT->getElementType();
-  return Qs.apply(QT);
+  return Qs.apply(*this, QT);
 }
 
 QualType ASTContext::getBaseElementType(const ArrayType *AT) {

@@ -145,7 +145,12 @@ QualType QualType::getUnqualifiedTypeSlow() const {
 /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
 /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
 /// concrete.
-QualType QualType::getDesugaredType(QualType T) {
+QualType QualType::getDesugaredType(QualType T, ASTContext &Context) {
+  SplitQualType split = getSplitDesugaredType(T);
+  return Context.getQualifiedType(split.first, split.second);
+}
+
+SplitQualType QualType::getSplitDesugaredType(QualType T) {
   QualifierCollector Qs;
 
   QualType Cur = T;
@@ -157,7 +162,7 @@ QualType QualType::getDesugaredType(QualType T) {
     case Type::Class: { \
       const Class##Type *Ty = cast<Class##Type>(CurTy); \
       if (!Ty->isSugared()) \
-        return Qs.apply(Cur); \
+        return SplitQualType(Ty, Qs); \
       Cur = Ty->desugar(); \
       break; \
     }
@@ -1089,32 +1094,6 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
           getExtInfo());
 }
 
-/// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
-/// potentially looking through *all* consequtive typedefs.  This returns the
-/// sum of the type qualifiers, so if you have:
-///   typedef const int A;
-///   typedef volatile A B;
-/// looking through the typedefs for B will give you "const volatile A".
-///
-QualType TypedefType::LookThroughTypedefs() const {
-  // Usually, there is only a single level of typedefs, be fast in that case.
-  QualType FirstType = getDecl()->getUnderlyingType();
-  if (!isa<TypedefType>(FirstType))
-    return FirstType;
-
-  // Otherwise, do the fully general loop.
-  QualifierCollector Qs;
-
-  QualType CurType;
-  const TypedefType *TDT = this;
-  do {
-    CurType = TDT->getDecl()->getUnderlyingType();
-    TDT = dyn_cast<TypedefType>(Qs.strip(CurType));
-  } while (TDT);
-
-  return Qs.apply(CurType);
-}
-
 QualType TypedefType::desugar() const {
   return getDecl()->getUnderlyingType();
 }
@@ -1280,20 +1259,18 @@ TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
     Args[Idx].Profile(ID, Context);
 }
 
-QualType QualifierCollector::apply(QualType QT) const {
+QualType QualifierCollector::apply(ASTContext &Context, QualType QT) const {
   if (!hasNonFastQualifiers())
     return QT.withFastQualifiers(getFastQualifiers());
 
-  assert(Context && "extended qualifiers but no context!");
-  return Context->getQualifiedType(QT, *this);
+  return Context.getQualifiedType(QT, *this);
 }
 
-QualType QualifierCollector::apply(const Type *T) const {
+QualType QualifierCollector::apply(ASTContext &Context, const Type *T) const {
   if (!hasNonFastQualifiers())
     return QualType(T, getFastQualifiers());
 
-  assert(Context && "extended qualifiers but no context!");
-  return Context->getQualifiedType(T, *this);
+  return Context.getQualifiedType(T, *this);
 }
 
 void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID,

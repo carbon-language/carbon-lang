@@ -357,13 +357,13 @@ public:
     return getContext().getPointerType(getValueType());
   }
 
-  QualType getDesugaredValueType() const {
+  QualType getDesugaredValueType(ASTContext &Context) const {
     QualType T = getValueType();
-    return T.getTypePtr() ? T.getDesugaredType() : T;
+    return T.getTypePtr() ? T.getDesugaredType(Context) : T;
   }
 
-  QualType getDesugaredLocationType() const {
-    return getLocationType().getDesugaredType();
+  QualType getDesugaredLocationType(ASTContext &Context) const {
+    return getLocationType().getDesugaredType(Context);
   }
 
   bool isBoundable() const { return true; }

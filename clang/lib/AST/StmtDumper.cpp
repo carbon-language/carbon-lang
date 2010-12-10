@@ -90,13 +90,14 @@ namespace  {
     }
 
     void DumpType(QualType T) {
-      OS << "'" << T.getAsString() << "'";
+      SplitQualType T_split = T.split();
+      OS << "'" << QualType::getAsString(T_split) << "'";
 
       if (!T.isNull()) {
         // If the type is sugared, also dump a (shallow) desugared type.
-        QualType Simplified = T.getDesugaredType();
-        if (Simplified != T)
-          OS << ":'" << Simplified.getAsString() << "'";
+        SplitQualType D_split = T.getSplitDesugaredType();
+        if (T_split != D_split)
+          OS << ":'" << QualType::getAsString(D_split) << "'";
       }
     }
     void DumpStmt(const Stmt *Node) {

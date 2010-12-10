@@ -1354,8 +1354,8 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
     //
     // Following the existing practice of GNU and EDG, we allow a typedef of a
     // template specialization type.
-    if (const TypedefType *TT = dyn_cast<TypedefType>(T))
-      T = TT->LookThroughTypedefs().getTypePtr();
+    while (const TypedefType *TT = dyn_cast<TypedefType>(T))
+      T = TT->getDecl()->getUnderlyingType().getTypePtr();
 
     if (const TemplateSpecializationType *SpecType
                                   = dyn_cast<TemplateSpecializationType>(T)) {

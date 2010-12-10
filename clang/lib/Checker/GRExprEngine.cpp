@@ -1263,8 +1263,8 @@ void GRExprEngine::VisitLValue(const Expr* Ex, ExplodedNode* Pred,
 
       // NOTE: Do not use 'isAggregateType()' here as CXXRecordDecls that
       //  are non-pod are not aggregates.
-      assert ((isa<RecordType>(Ex->getType().getDesugaredType()) ||
-               isa<ArrayType>(Ex->getType().getDesugaredType())) &&
+      assert ((Ex->getType()->isRecordType() ||
+               Ex->getType()->isArrayType()) &&
               "Other kinds of expressions with non-aggregate/union/class types"
               " do not have lvalues.");
 
