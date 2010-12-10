@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-TOOLNAME = macho-dumpx
+TOOLNAME = macho-dump
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
