@@ -43,7 +43,7 @@ int main()
 
     static_assert((std::is_same<
         std::scoped_allocator_adaptor<A1<int>>::size_type,
-        std::size_t>::value), "");
+        std::make_unsigned<std::ptrdiff_t>::type>::value), "");
 
     static_assert((std::is_same<
         std::scoped_allocator_adaptor<A1<int>>::difference_type,
