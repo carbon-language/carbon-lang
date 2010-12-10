@@ -3069,6 +3069,12 @@ enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
       cursor.kind == CXCursor_TypeRef)
     return CXChildVisit_Recurse;
   
+  // Don't override a preprocessing cursor with another preprocessing
+  // cursor; we want the outermost preprocessing cursor.
+  if (clang_isPreprocessing(cursor.kind) &&
+      clang_isPreprocessing(BestCursor->kind))
+    return CXChildVisit_Recurse;
+  
   *BestCursor = cursor;
   return CXChildVisit_Recurse;
 }

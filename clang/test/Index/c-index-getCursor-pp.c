@@ -8,6 +8,11 @@ void OBSCURE(func)(int x) {
 
 #include "a.h"
 
+#define A(X) X
+#define B(X) A(X)
+
+B(int x);
+
 // RUN: c-index-test -cursor-at=%s:1:11 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-1 %s
 // CHECK-1: macro definition=OBSCURE
 // RUN: c-index-test -cursor-at=%s:2:14 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-2 %s
@@ -20,6 +25,8 @@ void OBSCURE(func)(int x) {
 // CHECK-5: macro instantiation=DECORATION:2:9
 // RUN: c-index-test -cursor-at=%s:9:10 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-6 %s
 // CHECK-6: inclusion directive=a.h
+// RUN: c-index-test -cursor-at=%s:14:1 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-7 %s
+// CHECK-7: macro instantiation=B:12:9
 
 // Same tests, but with "editing" optimizations
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -cursor-at=%s:1:11 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-1 %s
