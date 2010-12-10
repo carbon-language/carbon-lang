@@ -10,11 +10,13 @@ class TestObjCStepping(TestBase):
     mydir = "objc-stepping"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_with_dsym_and_python_api(self):
         """Test stepping through ObjC method dispatch in various forms."""
         self.buildDsym()
         self.objc_stepping()
 
+    @python_api_test
     def test_with_dward_and_python_api(self):
         """Test stepping through ObjC method dispatch in various forms."""
         self.buildDwarf()
