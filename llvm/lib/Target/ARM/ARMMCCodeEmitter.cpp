@@ -45,24 +45,27 @@ public:
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
-      // name                       off   bits  flags
-      { "fixup_arm_ldst_pcrel_12",  1,    24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_t2_ldst_pcrel_12",   0,    32,   MCFixupKindInfo::FKF_IsPCRel |
+// This table *must* be in the order that the fixup_* kinds are defined in
+// ARMFixupKinds.h.
+//
+// Name                      Offset (bits) Size (bits)     Flags
+{ "fixup_arm_ldst_pcrel_12", 1,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_ldst_pcrel_12",  0,            32,  MCFixupKindInfo::FKF_IsPCRel |
                                                 MCFixupKindInfo::FKF_IsAligned},
-      { "fixup_arm_pcrel_10",       1,    24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_t2_pcrel_10",        0,    32,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_adr_pcrel_12",   1,    24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_branch",         1,    24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_t2_branch",          0,    32,   MCFixupKindInfo::FKF_IsPCRel |
+{ "fixup_arm_pcrel_10",      1,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_pcrel_10",       0,            32,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_adr_pcrel_12",  1,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_branch",        1,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_branch",         0,            32,  MCFixupKindInfo::FKF_IsPCRel |
                                                 MCFixupKindInfo::FKF_IsAligned},
-      { "fixup_arm_thumb_bl",       0,    32,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_thumb_blx",      0,    32,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_thumb_cb",       0,    16,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_thumb_cp",       1,    8,    MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_thumb_br",       0,    16,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_thumb_bcc",      1,    8,    MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_arm_movt_hi16",      0,    16,   0 },
-      { "fixup_arm_movw_lo16",      0,    16,   0 },
+{ "fixup_arm_thumb_br",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_bl",      0,            32,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_blx",     7,            21,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_cb",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_cp",      1,             8,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_bcc",     1,             8,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_movt_hi16",     0,            16,  0 },
+{ "fixup_arm_movw_lo16",     0,            16,  0 },
     };
 
     if (Kind < FirstTargetFixupKind)
