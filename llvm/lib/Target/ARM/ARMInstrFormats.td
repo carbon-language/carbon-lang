@@ -1517,6 +1517,7 @@ class NDataXI<dag oops, dag iops, Format f, InstrItinClass itin,
   : NeonXI<oops, iops, AddrModeNone, IndexModeNone, f, itin, opc, asm,
            cstr, pattern> {
   let Inst{31-25} = 0b1111001;
+  let PostEncoderMethod = "NEONThumb2DataIPostEncoder";
 }
 
 // NEON "one register and a modified immediate" format.
