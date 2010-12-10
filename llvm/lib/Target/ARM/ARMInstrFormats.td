@@ -906,7 +906,7 @@ class T1LdStSP<bits<3> opB>   : T1LoadStore<0b1001, opB>; // SP relative
 
 // Helper classes to encode Thumb1 loads and stores. For immediates, the
 // following bits are used for "opA" (see A6.2.4):
-// 
+//
 //   0b0110 => Immediate, 4 bytes
 //   0b1000 => Immediate, 2 bytes
 //   0b0111 => Immediate, 1 byte
@@ -1020,7 +1020,7 @@ class T2Ii8s4<bit P, bit W, bit load, dag oops, dag iops, InstrItinClass itin,
   let Inst{22}    = 1;
   let Inst{21}    = W;
   let Inst{20}    = load;
-  
+
   bits<4> Rt;
   bits<4> Rt2;
   bits<13> addr;
@@ -1068,11 +1068,11 @@ class T2Iidxldst<bit signed, bits<2> opcod, bit load, bit pre,
   // (P, W) = (1, 1) Pre-indexed or (0, 1) Post-indexed
   let Inst{10}    = pre; // The P bit.
   let Inst{8}     = 1; // The W bit.
-  
+
   bits<9> addr;
   let Inst{7-0} = addr{7-0};
-  let Inst{9}   = addr{8}; // Sign bit 
-  
+  let Inst{9}   = addr{8}; // Sign bit
+
   bits<4> Rt;
   bits<4> Rn;
   let Inst{15-12} = Rt{3-0};
