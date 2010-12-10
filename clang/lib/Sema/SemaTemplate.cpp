@@ -4336,9 +4336,7 @@ Decl *Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
                                MultiTemplateParamsArg TemplateParameterLists,
                                             Declarator &D) {
   assert(getCurFunctionDecl() == 0 && "Function parsing confused");
-  assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
-         "Not a function declarator!");
-  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
 
   if (FTI.hasPrototype) {
     // FIXME: Diagnose arguments without names in C.

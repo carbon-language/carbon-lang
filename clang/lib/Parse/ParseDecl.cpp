@@ -3037,10 +3037,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 
     ParseDeclaratorInternal(D, &Parser::ParseDirectDeclarator);
     // Match the ')'.
-    SourceLocation Loc = MatchRHSPunctuation(tok::r_paren, StartLoc);
+    SourceLocation EndLoc = MatchRHSPunctuation(tok::r_paren, StartLoc);
+    D.AddTypeInfo(DeclaratorChunk::getParen(StartLoc, EndLoc), EndLoc);
 
     D.setGroupingParens(hadGroupingParens);
-    D.SetRangeEnd(Loc);
     return;
   }
 

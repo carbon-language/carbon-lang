@@ -326,6 +326,7 @@ public:
   bool VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL);
   bool VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL);
   bool VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL);
+  bool VisitParenTypeLoc(ParenTypeLoc TL);
   bool VisitPointerTypeLoc(PointerTypeLoc TL);
   bool VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL);
   bool VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL);
@@ -1359,6 +1360,10 @@ bool CursorVisitor::VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
 
 bool CursorVisitor::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
   return Visit(TL.getPointeeLoc());
+}
+
+bool CursorVisitor::VisitParenTypeLoc(ParenTypeLoc TL) {
+  return Visit(TL.getInnerLoc());
 }
 
 bool CursorVisitor::VisitPointerTypeLoc(PointerTypeLoc TL) {

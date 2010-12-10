@@ -101,6 +101,7 @@ class ASTContext {
   llvm::FoldingSet<SubstTemplateTypeParmType> SubstTemplateTypeParmTypes;
   llvm::ContextualFoldingSet<TemplateSpecializationType, ASTContext&>
     TemplateSpecializationTypes;
+  llvm::FoldingSet<ParenType> ParenTypes;
   llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
   llvm::FoldingSet<DependentNameType> DependentNameTypes;
   llvm::ContextualFoldingSet<DependentTemplateSpecializationType, ASTContext&>
@@ -684,6 +685,8 @@ public:
   getTemplateSpecializationTypeInfo(TemplateName T, SourceLocation TLoc,
                                     const TemplateArgumentListInfo &Args,
                                     QualType Canon = QualType());
+
+  QualType getParenType(QualType NamedType);
 
   QualType getElaboratedType(ElaboratedTypeKeyword Keyword,
                              NestedNameSpecifier *NNS,

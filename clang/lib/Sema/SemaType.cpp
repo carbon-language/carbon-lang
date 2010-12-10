@@ -521,6 +521,11 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
   return Context.getQualifiedType(T, Qs);
 }
 
+/// \brief Build a paren type including \p T.
+QualType Sema::BuildParenType(QualType T) {
+  return Context.getParenType(T);
+}
+
 /// \brief Build a pointer type.
 ///
 /// \param T The type to which we'll be building a pointer.
@@ -1002,7 +1007,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // Check for auto functions and trailing return type and adjust the
   // return type accordingly.
   if (getLangOptions().CPlusPlus0x && D.isFunctionDeclarator()) {
-    const DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+    const DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
     if (T == Context.UndeducedAutoTy) {
       if (FTI.TrailingReturnType) {
           T = GetTypeFromParser(ParsedType::getFromOpaquePtr(FTI.TrailingReturnType),
@@ -1082,6 +1087,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     DeclaratorChunk &DeclType = D.getTypeObject(e-i-1);
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
+    case DeclaratorChunk::Paren:
+      T = BuildParenType(T);
+      break;
     case DeclaratorChunk::BlockPointer:
       // If blocks are disabled, emit an error.
       if (!LangOpts.Blocks)
@@ -1677,6 +1685,11 @@ namespace {
         TL.setArg(tpi++, Param);
       }
       // FIXME: exception specs
+    }
+    void VisitParenTypeLoc(ParenTypeLoc TL) {
+      assert(Chunk.Kind == DeclaratorChunk::Paren);
+      TL.setLParenLoc(Chunk.Loc);
+      TL.setRParenLoc(Chunk.EndLoc);
     }
 
     void VisitTypeLoc(TypeLoc TL) {

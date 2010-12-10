@@ -171,6 +171,12 @@ SplitQualType QualType::getSplitDesugaredType(QualType T) {
   }
 }
 
+QualType QualType::IgnoreParens(QualType T) {
+  while (const ParenType *PT = T->getAs<ParenType>())
+    T = PT->getInnerType();
+  return T;
+}
+
 /// getUnqualifiedDesugaredType - Pull any qualifiers and syntactic
 /// sugar off the given type.  This should produce an object of the
 /// same dynamic type as the canonical type.

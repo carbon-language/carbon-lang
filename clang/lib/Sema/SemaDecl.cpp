@@ -2571,6 +2571,15 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
     FixedType = Context.getPointerType(FixedType);
     return Qs.apply(Context, FixedType);
   }
+  if (const ParenType* PTy = dyn_cast<ParenType>(Ty)) {
+    QualType Inner = PTy->getInnerType();
+    QualType FixedType =
+        TryToFixInvalidVariablyModifiedType(Inner, Context, SizeIsNegative,
+                                            Oversized);
+    if (FixedType.isNull()) return FixedType;
+    FixedType = Context.getParenType(FixedType);
+    return Qs.apply(Context, FixedType);
+  }
 
   const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T);
   if (!VLATy)
@@ -3456,7 +3465,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     //   - the type R of the function is some kind of typedef or other reference
     //     to a type name (which eventually refers to a function type).
     bool HasPrototype =
-    (D.getNumTypeObjects() && D.getTypeObject(0).Fun.hasPrototype) ||
+    (D.isFunctionDeclarator() && D.getFunctionTypeInfo().hasPrototype) ||
     (!isa<FunctionType>(R.getTypePtr()) && R->isFunctionProtoType());
   
     NewFD = FunctionDecl::Create(Context, DC,
@@ -3754,7 +3763,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // declaration NewFD, if they are available.  First scavenge them into Params.
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   if (D.getNumTypeObjects() > 0) {
-    DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+    DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
 
     // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs
     // function that takes no arguments, not a function that takes a
@@ -5088,9 +5097,7 @@ ParmVarDecl *Sema::CheckParameter(DeclContext *DC,
 
 void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
                                            SourceLocation LocAfterDecls) {
-  assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
-         "Not a function declarator!");
-  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
 
   // Verify 6.9.1p6: 'every identifier in the identifier list shall be declared'
   // for a K&R function.
@@ -5124,8 +5131,7 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
 Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
                                          Declarator &D) {
   assert(getCurFunctionDecl() == 0 && "Function parsing confused");
-  assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
-         "Not a function declarator!");
+  assert(D.isFunctionDeclarator() && "Not a function declarator!");
   Scope *ParentScope = FnBodyScope->getParent();
 
   Decl *DP = HandleDeclarator(ParentScope, D,

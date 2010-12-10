@@ -619,6 +619,8 @@ public:
                                   DeclarationName Entity);
   QualType BuildBlockPointerType(QualType T,
                                  SourceLocation Loc, DeclarationName Entity);
+  QualType BuildParenType(QualType T);
+
   TypeSourceInfo *GetTypeForDeclarator(Declarator &D, Scope *S,
                                        TagDecl **OwnedDecl = 0);
   TypeSourceInfo *GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,

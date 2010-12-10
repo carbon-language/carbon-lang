@@ -519,6 +519,14 @@ public:
                                              SourceLocation TemplateLoc,
                                        const TemplateArgumentListInfo &Args);
 
+  /// \brief Build a new parenthesized type.
+  ///
+  /// By default, builds a new ParenType type from the inner type.
+  /// Subclasses may override this routine to provide different behavior.
+  QualType RebuildParenType(QualType InnerType) {
+    return SemaRef.Context.getParenType(InnerType);
+  }
+
   /// \brief Build a new qualified name type.
   ///
   /// By default, builds a new ElaboratedType type from the keyword,
@@ -3368,6 +3376,28 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
   NewTL.setKeywordLoc(TL.getKeywordLoc());
   NewTL.setQualifierRange(TL.getQualifierRange());
 
+  return Result;
+}
+
+template<typename Derived>
+QualType
+TreeTransform<Derived>::TransformParenType(TypeLocBuilder &TLB,
+                                           ParenTypeLoc TL) {
+  QualType Inner = getDerived().TransformType(TLB, TL.getInnerLoc());
+  if (Inner.isNull())
+    return QualType();
+
+  QualType Result = TL.getType();
+  if (getDerived().AlwaysRebuild() ||
+      Inner != TL.getInnerLoc().getType()) {
+    Result = getDerived().RebuildParenType(Inner);
+    if (Result.isNull())
+      return QualType();
+  }
+
+  ParenTypeLoc NewTL = TLB.push<ParenTypeLoc>(Result);
+  NewTL.setLParenLoc(TL.getLParenLoc());
+  NewTL.setRParenLoc(TL.getRParenLoc());
   return Result;
 }
 

@@ -2835,7 +2835,7 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
     SC = SC_None;
   }
 
-  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
   if (FTI.TypeQuals != 0) {
     if (FTI.TypeQuals & Qualifiers::Const)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
@@ -2984,7 +2984,7 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
       << SourceRange(D.getIdentifierLoc());
   }
 
-  DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
+  DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
   if (FTI.TypeQuals != 0 && !D.isInvalidType()) {
     if (FTI.TypeQuals & Qualifiers::Const)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
@@ -3074,7 +3074,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
     Diag(D.getIdentifierLoc(), diag::err_conv_function_with_params);
 
     // Delete the parameters.
-    D.getTypeObject(0).Fun.freeArgs();
+    D.getFunctionTypeInfo().freeArgs();
     D.setInvalidType();
   } else if (Proto->isVariadic()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_variadic);

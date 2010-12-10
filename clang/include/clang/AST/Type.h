@@ -661,6 +661,12 @@ public:
     return getSplitDesugaredType(*this);
   }
 
+  /// IgnoreParens - Returns the specified type after dropping any
+  /// outer-level parentheses.
+  QualType IgnoreParens() const {
+    return QualType::IgnoreParens(*this);
+  }
+
   /// operator==/!= - Indicate whether the specified types and qualifiers are
   /// identical.
   friend bool operator==(const QualType &LHS, const QualType &RHS) {
@@ -724,6 +730,7 @@ private:
   static bool isConstant(QualType T, ASTContext& Ctx);
   static QualType getDesugaredType(QualType T, ASTContext &Context);
   static SplitQualType getSplitDesugaredType(QualType T);
+  static QualType IgnoreParens(QualType T);
 };
 
 } // end clang.
@@ -1392,6 +1399,36 @@ public:
   static bool classof(const ComplexType *) { return true; }
 };
 
+/// ParenType - Sugar for parentheses used when specifying types.
+///
+class ParenType : public Type, public llvm::FoldingSetNode {
+  QualType Inner;
+
+  ParenType(QualType InnerType, QualType CanonType) :
+    Type(Paren, CanonType, InnerType->isDependentType(),
+         InnerType->isVariablyModifiedType()),
+    Inner(InnerType) {
+  }
+  friend class ASTContext;  // ASTContext creates these.
+
+public:
+
+  QualType getInnerType() const { return Inner; }
+
+  bool isSugared() const { return true; }
+  QualType desugar() const { return getInnerType(); }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getInnerType());
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Inner) {
+    Inner.Profile(ID);
+  }
+
+  static bool classof(const Type *T) { return T->getTypeClass() == Paren; }
+  static bool classof(const ParenType *) { return true; }
+};
+
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
 ///
 class PointerType : public Type, public llvm::FoldingSetNode {
@@ -2026,12 +2063,12 @@ class FunctionType : public Type {
   QualType ResultType;
 
  public:
-  // This class is used for passing arround the information needed to
+  // This class is used for passing around the information needed to
   // construct a call. It is not actually used for storage, just for
   // factoring together common arguments.
-  // If you add a field (say Foo), other than the obvious places (both, constructors,
-  // compile failures), what you need to update is
-  // * Operetor==
+  // If you add a field (say Foo), other than the obvious places (both,
+  // constructors, compile failures), what you need to update is
+  // * Operator==
   // * getFoo
   // * withFoo
   // * functionType. Add Foo, getFoo.

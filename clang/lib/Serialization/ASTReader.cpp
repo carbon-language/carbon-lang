@@ -2916,6 +2916,15 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return T;
   }
 
+  case TYPE_PAREN: {
+    if (Record.size() != 1) {
+      Error("incorrect encoding of paren type");
+      return QualType();
+    }
+    QualType InnerType = GetType(Record[0]);
+    return Context->getParenType(InnerType);
+  }
+
   case TYPE_ELABORATED: {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
@@ -3185,6 +3194,10 @@ void TypeLocReader::VisitTemplateSpecializationTypeLoc(
         Reader.GetTemplateArgumentLocInfo(F,
                                           TL.getTypePtr()->getArg(i).getKind(),
                                           Record, Idx));
+}
+void TypeLocReader::VisitParenTypeLoc(ParenTypeLoc TL) {
+  TL.setLParenLoc(ReadSourceLocation(Record, Idx));
+  TL.setRParenLoc(ReadSourceLocation(Record, Idx));
 }
 void TypeLocReader::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   TL.setKeywordLoc(ReadSourceLocation(Record, Idx));

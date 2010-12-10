@@ -22,8 +22,7 @@ using namespace clang;
 /// and store its tokens for parsing after the C++ class is complete.
 Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
                                 const ParsedTemplateInfo &TemplateInfo) {
-  assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
-         "This isn't a function declarator!");
+  assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) &&
          "Current token not a '{', ':' or 'try'!");
 

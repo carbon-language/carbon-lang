@@ -553,6 +553,13 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       
     break;
       
+  case Type::Paren:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<ParenType>(T1)->getInnerType(),
+                                  cast<ParenType>(T2)->getInnerType()))
+      return false;
+    break;
+
   case Type::Typedef:
     if (!IsStructurallyEquivalent(Context,
                                   cast<TypedefType>(T1)->getDecl(),

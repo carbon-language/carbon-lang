@@ -618,6 +618,12 @@ void TypePrinter::printElaborated(const ElaboratedType *T, std::string &S) {
     S = MyString + ' ' + S;  
 }
 
+void TypePrinter::printParen(const ParenType *T, std::string &S) {
+  if (!S.empty() && !isa<FunctionType>(T->getInnerType()))
+    S = '(' + S + ')';
+  print(T->getInnerType(), S);
+}
+
 void TypePrinter::printDependentName(const DependentNameType *T, std::string &S) { 
   std::string MyString;
   

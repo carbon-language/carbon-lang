@@ -694,6 +694,46 @@ public:
   }
 };
 
+struct ParenLocInfo {
+  SourceLocation LParenLoc;
+  SourceLocation RParenLoc;
+};
+
+class ParenTypeLoc
+  : public ConcreteTypeLoc<UnqualTypeLoc, ParenTypeLoc, ParenType,
+                           ParenLocInfo> {
+public:
+  SourceLocation getLParenLoc() const {
+    return this->getLocalData()->LParenLoc;
+  }
+  SourceLocation getRParenLoc() const {
+    return this->getLocalData()->RParenLoc;
+  }
+  void setLParenLoc(SourceLocation Loc) {
+    this->getLocalData()->LParenLoc = Loc;
+  }
+  void setRParenLoc(SourceLocation Loc) {
+    this->getLocalData()->RParenLoc = Loc;
+  }
+
+  SourceRange getLocalSourceRange() const {
+    return SourceRange(getLParenLoc(), getRParenLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setLParenLoc(Loc);
+    setRParenLoc(Loc);
+  }
+
+  TypeLoc getInnerLoc() const {
+    return getInnerTypeLoc();
+  }
+
+  QualType getInnerType() const {
+    return this->getTypePtr()->getInnerType();
+  }
+};
+
 
 struct PointerLikeLocInfo {
   SourceLocation StarLoc;

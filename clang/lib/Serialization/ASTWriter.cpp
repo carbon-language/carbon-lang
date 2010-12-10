@@ -298,6 +298,11 @@ ASTTypeWriter::VisitDependentTemplateSpecializationType(
   Code = TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION;
 }
 
+void ASTTypeWriter::VisitParenType(const ParenType *T) {
+  Writer.AddTypeRef(T->getInnerType(), Record);
+  Code = TYPE_PAREN;
+}
+
 void ASTTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
   Record.push_back(T->getKeyword());
   Writer.AddNestedNameSpecifier(T->getQualifier(), Record);
@@ -466,6 +471,10 @@ void TypeLocWriter::VisitTemplateSpecializationTypeLoc(
   for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
     Writer.AddTemplateArgumentLocInfo(TL.getArgLoc(i).getArgument().getKind(),
                                       TL.getArgLoc(i).getLocInfo(), Record);
+}
+void TypeLocWriter::VisitParenTypeLoc(ParenTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getLParenLoc(), Record);
+  Writer.AddSourceLocation(TL.getRParenLoc(), Record);
 }
 void TypeLocWriter::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   Writer.AddSourceLocation(TL.getKeywordLoc(), Record);

@@ -26,6 +26,7 @@
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace clang {
   class LangOptions;
@@ -799,7 +800,7 @@ typedef llvm::SmallVector<Token, 4> CachedTokens;
 /// This is intended to be a small value object.
 struct DeclaratorChunk {
   enum {
-    Pointer, Reference, Array, Function, BlockPointer, MemberPointer
+    Pointer, Reference, Array, Function, BlockPointer, MemberPointer, Paren
   } Kind;
 
   /// Loc - The place where this type was defined.
@@ -1006,6 +1007,7 @@ struct DeclaratorChunk {
     case DeclaratorChunk::Reference:     return Ref.destroy();
     case DeclaratorChunk::Array:         return Arr.destroy();
     case DeclaratorChunk::MemberPointer: return Mem.destroy();
+    case DeclaratorChunk::Paren:         return;
     }
   }
 
@@ -1013,14 +1015,16 @@ struct DeclaratorChunk {
   /// them.
   const AttributeList *getAttrs() const {
     switch (Kind) {
-    default: assert(0 && "Unknown declarator kind!");
     case Pointer:       return Ptr.AttrList;
     case Reference:     return Ref.AttrList;
     case MemberPointer: return Mem.AttrList;
     case Array:         return 0;
     case Function:      return 0;
     case BlockPointer:  return Cls.AttrList;
+    case Paren:         return 0;
     }
+    llvm_unreachable("Unknown declarator kind!");
+    return 0;
   }
 
 
@@ -1104,6 +1108,18 @@ struct DeclaratorChunk {
     new (I.Mem.ScopeMem.Mem) CXXScopeSpec(SS);
     return I;
   }
+
+  /// getParen - Return a DeclaratorChunk for a paren.
+  ///
+  static DeclaratorChunk getParen(SourceLocation LParenLoc,
+                                  SourceLocation RParenLoc) {
+    DeclaratorChunk I;
+    I.Kind          = Paren;
+    I.Loc           = LParenLoc;
+    I.EndLoc        = RParenLoc;
+    return I;
+  }
+
 };
 
 /// Declarator - Information about one declarator, including the parsed type
@@ -1323,11 +1339,52 @@ public:
     DeclTypeInfo.erase(DeclTypeInfo.begin());
   }
 
+  /// isFunctionDeclarator - This method returns true if the declarator
+  /// is a function declarator (looking through parentheses).
+  /// If true is returned, then the reference type parameter idx is
+  /// assigned with the index of the declaration chunk.
+  bool isFunctionDeclarator(unsigned& idx) const {
+    for (unsigned i = 0, i_end = DeclTypeInfo.size(); i < i_end; ++i) {
+      switch (DeclTypeInfo[i].Kind) {
+      case DeclaratorChunk::Function:
+        idx = i;
+        return true;
+      case DeclaratorChunk::Paren:
+        continue;
+      case DeclaratorChunk::Pointer:
+      case DeclaratorChunk::Reference:
+      case DeclaratorChunk::Array:
+      case DeclaratorChunk::BlockPointer:
+      case DeclaratorChunk::MemberPointer:
+        return false;
+      }
+      llvm_unreachable("Invalid type chunk");
+      return false;
+    }
+    return false;
+  }
+
   /// isFunctionDeclarator - Once this declarator is fully parsed and formed,
-  /// this method returns true if the identifier is a function declarator.
+  /// this method returns true if the identifier is a function declarator
+  /// (looking through parentheses).
   bool isFunctionDeclarator() const {
-    return !DeclTypeInfo.empty() &&
-           DeclTypeInfo[0].Kind == DeclaratorChunk::Function;
+    unsigned index;
+    return isFunctionDeclarator(index);
+  }
+
+  /// getFunctionTypeInfo - Retrieves the function type info object
+  /// (looking through parentheses).
+  DeclaratorChunk::FunctionTypeInfo &getFunctionTypeInfo() {
+    assert(isFunctionDeclarator() && "Not a function declarator!");
+    unsigned index;
+    isFunctionDeclarator(index);
+    return DeclTypeInfo[index].Fun;
+  }
+
+  /// getFunctionTypeInfo - Retrieves the function type info object
+  /// (looking through parentheses).
+  const DeclaratorChunk::FunctionTypeInfo &getFunctionTypeInfo() const {
+    return const_cast<Declarator*>(this)->getFunctionTypeInfo();
   }
 
   /// AddAttributes - simply adds the attribute list to the Declarator.

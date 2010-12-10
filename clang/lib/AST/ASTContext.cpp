@@ -811,6 +811,9 @@ ASTContext::getTypeInfo(const Type *T) {
     return getTypeInfo(cast<SubstTemplateTypeParmType>(T)->
                        getReplacementType().getTypePtr());
 
+  case Type::Paren:
+    return getTypeInfo(cast<ParenType>(T)->getInnerType().getTypePtr());
+
   case Type::Typedef: {
     const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
     std::pair<uint64_t, unsigned> Info
@@ -1147,6 +1150,13 @@ static QualType getExtFunctionType(ASTContext& Context, QualType T,
       return T;
 
     ResultType = Context.getPointerType(ResultType);
+  } else if (const ParenType *Paren = T->getAs<ParenType>()) {
+    QualType Inner = Paren->getInnerType();
+    ResultType = getExtFunctionType(Context, Inner, Info);
+    if (ResultType == Inner)
+      return T;
+
+    ResultType = Context.getParenType(ResultType);
   } else if (const BlockPointerType *BlockPointer
                                               = T->getAs<BlockPointerType>()) {
     QualType Pointee = BlockPointer->getPointeeType();
@@ -2092,6 +2102,30 @@ ASTContext::getElaboratedType(ElaboratedTypeKeyword Keyword,
   T = new (*this) ElaboratedType(Keyword, NNS, NamedType, Canon);
   Types.push_back(T);
   ElaboratedTypes.InsertNode(T, InsertPos);
+  return QualType(T, 0);
+}
+
+QualType
+ASTContext::getParenType(QualType InnerType) {
+  llvm::FoldingSetNodeID ID;
+  ParenType::Profile(ID, InnerType);
+
+  void *InsertPos = 0;
+  ParenType *T = ParenTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (T)
+    return QualType(T, 0);
+
+  QualType Canon = InnerType;
+  if (!Canon.isCanonical()) {
+    Canon = getCanonicalType(InnerType);
+    ParenType *CheckT = ParenTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(!CheckT && "Paren canonical type broken");
+    (void)CheckT;
+  }
+
+  T = new (*this) ParenType(InnerType, Canon);
+  Types.push_back(T);
+  ParenTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);
 }
 

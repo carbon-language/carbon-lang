@@ -32,7 +32,11 @@ static QualType Desugar(ASTContext &Context, QualType QT, bool &ShouldAKA) {
       QT = cast<ElaboratedType>(Ty)->desugar();
       continue;
     }
-
+    // ... or a paren type ...
+    if (isa<ParenType>(Ty)) {
+      QT = cast<ParenType>(Ty)->desugar();
+      continue;
+    }
     // ...or a substituted template type parameter.
     if (isa<SubstTemplateTypeParmType>(Ty)) {
       QT = cast<SubstTemplateTypeParmType>(Ty)->desugar();
