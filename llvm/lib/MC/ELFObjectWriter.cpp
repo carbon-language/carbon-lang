@@ -1558,6 +1558,7 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
     case ARM::fixup_arm_thumb_bl:
     case ARM::fixup_arm_thumb_cb:
     case ARM::fixup_arm_thumb_cp:
+    case ARM::fixup_arm_thumb_br:
       assert(0 && "Unimplemented"); break;
     case ARM::fixup_arm_branch:
       Type = ELF::R_ARM_CALL; break;

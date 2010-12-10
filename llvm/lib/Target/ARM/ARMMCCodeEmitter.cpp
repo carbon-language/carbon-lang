@@ -59,6 +59,7 @@ public:
       { "fixup_arm_thumb_blx",      0,    32,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_cb",       0,    16,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_cp",       1,    8,    MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_arm_thumb_br",       0,    16,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_thumb_bcc",      1,    8,    MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_arm_movt_hi16",      0,    16,   0 },
       { "fixup_arm_movw_lo16",      0,    16,   0 },
@@ -100,6 +101,10 @@ public:
   /// BLX branch target.
   uint32_t getThumbBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                     SmallVectorImpl<MCFixup> &Fixups) const;
+
+  /// getThumbBRTargetOpValue - Return encoding info for Thumb branch target.
+  uint32_t getThumbBRTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                                   SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getThumbBCCTargetOpValue - Return encoding info for Thumb branch target.
   uint32_t getThumbBCCTargetOpValue(const MCInst &MI, unsigned OpIdx,
@@ -457,10 +462,17 @@ getThumbBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
   return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_blx, Fixups);
 }
 
+/// getThumbBRTargetOpValue - Return encoding info for Thumb branch target.
+uint32_t ARMMCCodeEmitter::
+getThumbBRTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                        SmallVectorImpl<MCFixup> &Fixups) const {
+  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_br, Fixups);
+}
+
 /// getThumbBCCTargetOpValue - Return encoding info for Thumb branch target.
 uint32_t ARMMCCodeEmitter::
 getThumbBCCTargetOpValue(const MCInst &MI, unsigned OpIdx,
-                        SmallVectorImpl<MCFixup> &Fixups) const {
+                         SmallVectorImpl<MCFixup> &Fixups) const {
   return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_thumb_bcc, Fixups);
 }
 

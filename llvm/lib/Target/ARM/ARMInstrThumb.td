@@ -74,6 +74,10 @@ def t_imm_s4 : Operand<i32> {
 
 // Define Thumb specific addressing modes.
 
+def t_brtarget : Operand<OtherVT> {
+  let EncoderMethod = "getThumbBRTargetOpValue";
+}
+
 def t_bcctarget : Operand<i32> {
   let EncoderMethod = "getThumbBCCTargetOpValue";
 }
@@ -492,11 +496,15 @@ let isCall = 1,
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   let isPredicable = 1 in
-  def tB   : T1I<(outs), (ins brtarget:$target), IIC_Br,
+  def tB   : T1I<(outs), (ins t_brtarget:$target), IIC_Br,
                  "b\t$target", [(br bb:$target)]>,
-             T1Encoding<{1,1,1,0,0,?}>;
+             T1Encoding<{1,1,1,0,0,?}> {
+    bits<11> target;
+    let Inst{10-0} = target;
+  }
 
   // Far jump
+  // FIXME: Encoding. This should probably be a pseudo for tBL
   let Defs = [LR] in
   def tBfar : TIx2<0b11110, 0b11, 1, (outs), (ins brtarget:$target), IIC_Br,
                     "bl\t$target",[]>;
