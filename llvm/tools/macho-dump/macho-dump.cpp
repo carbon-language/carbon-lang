@@ -288,7 +288,7 @@ static int DumpDysymtabCommand(MachOObject &Obj,
   if (!DLC)
     return Error("unable to read segment load command");
 
-  outs() << "  ('ilocalsym', " << DLC->LocalSymbolIndex << ")\n";
+  outs() << "  ('ilocalsym', " << DLC->LocalSymbolsIndex << ")\n";
   outs() << "  ('nlocalsym', " << DLC->NumLocalSymbols << ")\n";
   outs() << "  ('iextdefsym', " << DLC->ExternalSymbolsIndex << ")\n";
   outs() << "  ('nextdefsym', " << DLC->NumExternalSymbols << ")\n";

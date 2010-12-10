@@ -190,7 +190,7 @@ namespace macho {
     uint32_t Type;
     uint32_t Size;
 
-    uint32_t LocalSymbolIndex;
+    uint32_t LocalSymbolsIndex;
     uint32_t NumLocalSymbols;
 
     uint32_t ExternalSymbolsIndex;

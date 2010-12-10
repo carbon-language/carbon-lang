@@ -217,7 +217,7 @@ template<>
 void SwapStruct(macho::DysymtabLoadCommand &Value) {
   SwapValue(Value.Type);
   SwapValue(Value.Size);
-  SwapValue(Value.LocalSymbolIndex);
+  SwapValue(Value.LocalSymbolsIndex);
   SwapValue(Value.NumLocalSymbols);
   SwapValue(Value.ExternalSymbolsIndex);
   SwapValue(Value.NumExternalSymbols);
