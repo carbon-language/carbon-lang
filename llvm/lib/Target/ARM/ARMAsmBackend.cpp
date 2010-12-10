@@ -207,12 +207,12 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // Offset by 4 and don't encode the lower bit, which is always 0.
     return ((Value - 4) >> 1) & 0xff;
   case ARM::fixup_arm_pcrel_10:
-    Value = Value - 6; // ARM fixups offset by an additional word and don't
+    Value = Value - 4; // ARM fixups offset by an additional word and don't
                        // need to adjust for the half-word ordering.
     // Fall through.
   case ARM::fixup_t2_pcrel_10: {
     // Offset by 4, adjusted by two due to the half-word ordering of thumb.
-    Value = Value - 2;
+    Value = Value - 4;
     bool isAdd = true;
     if ((int64_t)Value < 0) {
       Value = -Value;
