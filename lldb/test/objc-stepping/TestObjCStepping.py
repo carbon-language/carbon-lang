@@ -10,15 +10,14 @@ class TestObjCStepping(TestBase):
     mydir = "objc-stepping"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_with_dsym_and_run_command(self):
-        """Test 'frame variable var_name' on some variables with array types."""
+    def test_with_dsym_and_python_api(self):
+        """Test stepping through ObjC method dispatch in various forms."""
         self.buildDsym()
         self.objc_stepping()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_with_dsym_and_python_api(self):
-        """Use Python APIs to inspect variables with array types."""
-        self.buildDsym()
+    def test_with_dward_and_python_api(self):
+        """Test stepping through ObjC method dispatch in various forms."""
+        self.buildDwarf()
         self.objc_stepping()
 
     def setUp(self):
