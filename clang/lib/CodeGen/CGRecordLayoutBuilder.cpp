@@ -125,7 +125,7 @@ private:
                              const ASTRecordLayout &Layout);
 
   /// ComputeNonVirtualBaseType - Compute the non-virtual base field types.
-  void ComputeNonVirtualBaseType(const CXXRecordDecl *RD);
+  bool ComputeNonVirtualBaseType(const CXXRecordDecl *RD);
   
   /// LayoutField - layout a single field. Returns false if the operation failed
   /// because the current struct is not packed.
@@ -612,7 +612,7 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
   }
 }
 
-void 
+bool
 CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(RD);
 
@@ -624,26 +624,27 @@ CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   // First check if we can use the same fields as for the complete class.
   if (AlignedNonVirtualTypeSize == Layout.getSize() / 8) {
     NonVirtualBaseTypeIsSameAsCompleteType = true;
-    return;
+    return true;
   }
-
-  NonVirtualBaseFieldTypes = FieldTypes;
 
   // Check if we need padding.
   uint64_t AlignedNextFieldOffset =
     llvm::RoundUpToAlignment(NextFieldOffsetInBytes, 
                              getAlignmentAsLLVMStruct());
 
-  assert(AlignedNextFieldOffset <= AlignedNonVirtualTypeSize && 
-         "Size mismatch!");
+  if (AlignedNextFieldOffset > AlignedNonVirtualTypeSize)
+    return false; // Needs packing.
+
+  NonVirtualBaseFieldTypes = FieldTypes;
 
   if (AlignedNonVirtualTypeSize == AlignedNextFieldOffset) {
     // We don't need any padding.
-    return;
+    return true;
   }
 
   uint64_t NumBytes = AlignedNonVirtualTypeSize - AlignedNextFieldOffset;
   NonVirtualBaseFieldTypes.push_back(getByteArrayType(NumBytes));
+  return true;
 }
 
 bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
@@ -670,7 +671,10 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   if (RD) {
     // We've laid out the non-virtual bases and the fields, now compute the
     // non-virtual base field types.
-    ComputeNonVirtualBaseType(RD);
+    if (!ComputeNonVirtualBaseType(RD)) {
+      assert(!Packed && "Could not layout even with a packed LLVM struct!");
+      return false;
+    }
 
     // And lay out the virtual bases.
     RD->getIndirectPrimaryBases(IndirectPrimaryBases);
