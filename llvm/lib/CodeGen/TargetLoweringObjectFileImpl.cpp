@@ -135,7 +135,7 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                SectionKind::getReadOnly());
   EHFrameSection =
     getContext().getELFSection(".eh_frame", MCSectionELF::SHT_PROGBITS,
-                               MCSectionELF::SHF_ALLOC,
+                               MCSectionELF::SHF_ALLOC |MCSectionELF::SHF_WRITE,
                                SectionKind::getDataRel());
 
   // Debug Info Sections.

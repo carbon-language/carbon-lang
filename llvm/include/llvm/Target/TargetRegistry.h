@@ -42,8 +42,7 @@ namespace llvm {
   class formatted_raw_ostream;
 
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                                bool isVerboseAsm,
-                                bool useLoc,
+                                bool isLittleEndian, bool isVerboseAsm,
                                 MCInstPrinter *InstPrint,
                                 MCCodeEmitter *CE,
                                 bool ShowInst);
@@ -91,8 +90,8 @@ namespace llvm {
                                                 bool RelaxAll);
     typedef MCStreamer *(*AsmStreamerCtorTy)(MCContext &Ctx,
                                              formatted_raw_ostream &OS,
+                                             bool isLittleEndian,
                                              bool isVerboseAsm,
-                                             bool useLoc,
                                              MCInstPrinter *InstPrint,
                                              MCCodeEmitter *CE,
                                              bool ShowInst);
@@ -319,13 +318,13 @@ namespace llvm {
     /// createAsmStreamer - Create a target specific MCStreamer.
     MCStreamer *createAsmStreamer(MCContext &Ctx,
                                   formatted_raw_ostream &OS,
+                                  bool isLittleEndian,
                                   bool isVerboseAsm,
-                                  bool useLoc,
                                   MCInstPrinter *InstPrint,
                                   MCCodeEmitter *CE,
                                   bool ShowInst) const {
       // AsmStreamerCtorFn is default to llvm::createAsmStreamer
-      return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useLoc,
+      return AsmStreamerCtorFn(Ctx, OS, isLittleEndian, isVerboseAsm,
                                InstPrint, CE, ShowInst);
     }
 

@@ -12,12 +12,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetAsmBackend.h"
-#include "llvm/Target/TargetAsmInfo.h"
 using namespace llvm;
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
@@ -76,8 +74,8 @@ const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
   return Value;
 }
 
-void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
-                                     bool isPCRel, unsigned AddrSpace) {
+void MCObjectStreamer::EmitValue(const MCExpr *Value, unsigned Size,
+                                 unsigned AddrSpace) {
   assert(AddrSpace == 0 && "Address space must be 0!");
   MCDataFragment *DF = getOrCreateDataFragment();
 
@@ -89,7 +87,7 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
   }
   DF->addFixup(MCFixup::Create(DF->getContents().size(),
                                AddValueSymbols(Value),
-                               MCFixup::getKindForSize(Size, isPCRel)));
+                               MCFixup::getKindForSize(Size, false)));
   DF->getContents().resize(DF->getContents().size() + Size, 0);
 }
 
@@ -191,7 +189,7 @@ void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                                 const MCSymbol *LastLabel,
                                                 const MCSymbol *Label) {
   if (!LastLabel) {
-    int PointerSize = getContext().getTargetAsmInfo().getPointerSize();
+    int PointerSize = getAssembler().getBackend().getPointerSize();
     EmitDwarfSetLineAddr(LineDelta, Label, PointerSize);
     return;
   }
@@ -217,9 +215,5 @@ void MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
 }
 
 void MCObjectStreamer::Finish() {
-  // Dump out the dwarf file & directory tables and line tables.
-  if (getContext().hasDwarfFiles())
-    MCDwarfFileTable::Emit(this);
-
   getAssembler().Finish();
 }

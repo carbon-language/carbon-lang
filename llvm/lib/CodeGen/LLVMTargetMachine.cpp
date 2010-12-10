@@ -24,7 +24,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
@@ -146,12 +145,27 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     if (ShowMCEncoding)
       MCE = getTarget().createCodeEmitter(*this, *Context);
 
-    MCStreamer *S = getTarget().createAsmStreamer(*Context, Out,
-                                                  getVerboseAsm(),
-                                                  hasMCUseLoc(),
-                                                  InstPrinter,
-                                                  MCE,
-                                                  ShowMCInst);
+    const TargetLoweringObjectFile &TLOF =
+      getTargetLowering()->getObjFileLowering();
+    int PointerSize = getTargetData()->getPointerSize();
+
+    MCStreamer *S;
+    if (hasMCUseLoc())
+      S = getTarget().createAsmStreamer(*Context, Out,
+                                        getTargetData()->isLittleEndian(),
+                                        getVerboseAsm(),
+                                        InstPrinter,
+                                        MCE,
+                                        ShowMCInst);
+    else
+      S = createAsmStreamerNoLoc(*Context, Out,
+                                 getTargetData()->isLittleEndian(),
+                                 getVerboseAsm(),
+                                 &TLOF,
+                                 PointerSize,
+                                 InstPrinter,
+                                 MCE,
+                                 ShowMCInst);
     AsmStreamer.reset(S);
     break;
   }
@@ -330,8 +344,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Install a MachineModuleInfo class, which is an immutable pass that holds
   // all the per-module stuff we're generating, including MCContext.
-  TargetAsmInfo *TAI = new TargetAsmInfo(*this);
-  MachineModuleInfo *MMI = new MachineModuleInfo(*getMCAsmInfo(), TAI);
+  MachineModuleInfo *MMI = new MachineModuleInfo(*getMCAsmInfo());
   PM.add(MMI);
   OutContext = &MMI->getContext(); // Return the MCContext specifically by-ref.
 

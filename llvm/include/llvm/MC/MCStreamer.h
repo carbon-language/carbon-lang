@@ -16,7 +16,6 @@
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/MC/MCDirectives.h"
-#include "llvm/MC/MCDwarf.h"
 
 namespace llvm {
   class MCAsmInfo;
@@ -49,9 +48,6 @@ namespace llvm {
     MCStreamer(const MCStreamer&); // DO NOT IMPLEMENT
     MCStreamer &operator=(const MCStreamer&); // DO NOT IMPLEMENT
 
-    void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
-                         bool isPCRel, unsigned AddrSpace);
-
   protected:
     MCStreamer(MCContext &Ctx);
 
@@ -63,22 +59,10 @@ namespace llvm {
     /// is kept up to date by SwitchSection.
     const MCSection *PrevSection;
 
-    std::vector<MCDwarfFrameInfo> FrameInfos;
-    MCDwarfFrameInfo *getCurrentFrameInfo();
-    void EnsureValidFrame();
-
   public:
     virtual ~MCStreamer();
 
     MCContext &getContext() const { return Context; }
-
-    unsigned getNumFrameInfos() {
-      return FrameInfos.size();
-    }
-
-    const MCDwarfFrameInfo &getFrameInfo(unsigned i) {
-      return FrameInfos[i];
-    }
 
     /// @name Assembly File Formatting.
     /// @{
@@ -257,13 +241,8 @@ namespace llvm {
     /// @param Value - The value to emit.
     /// @param Size - The size of the integer (in bytes) to emit. This must
     /// match a native machine width.
-    virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                               bool isPCRel, unsigned AddrSpace) = 0;
-
-    void EmitValue(const MCExpr *Value, unsigned Size, unsigned AddrSpace = 0);
-
-    void EmitPCRelValue(const MCExpr *Value, unsigned Size,
-                        unsigned AddrSpace = 0);
+    virtual void EmitValue(const MCExpr *Value, unsigned Size,
+                           unsigned AddrSpace = 0) = 0;
 
     /// EmitIntValue - Special case of EmitValue that avoids the client having
     /// to pass in a MCExpr for constant integers.
@@ -295,9 +274,6 @@ namespace llvm {
     /// having to pass in a MCExpr for MCSymbols.
     void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
                          unsigned AddrSpace = 0);
-
-    void EmitPCRelSymbolValue(const MCSymbol *Sym, unsigned Size,
-                              unsigned AddrSpace = 0);
 
     /// EmitGPRel32Value - Emit the expression @p Value into the output as a
     /// gprel32 (32-bit GP relative) value.
@@ -429,11 +405,18 @@ namespace llvm {
   /// \param ShowInst - Whether to show the MCInst representation inline with
   /// the assembly.
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                                bool isVerboseAsm,
-                                bool useLoc,
+                                bool isLittleEndian, bool isVerboseAsm,
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0,
                                 bool ShowInst = false);
+
+  MCStreamer *createAsmStreamerNoLoc(MCContext &Ctx, formatted_raw_ostream &OS,
+                                     bool isLittleEndian, bool isVerboseAsm,
+                                     const TargetLoweringObjectFile *TLOF,
+                                     int PointerSize,
+                                     MCInstPrinter *InstPrint = 0,
+                                     MCCodeEmitter *CE = 0,
+                                     bool ShowInst = false);
 
   /// createMachOStreamer - Create a machine code streamer which will generate
   /// Mach-O format object files.

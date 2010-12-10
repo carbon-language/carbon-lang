@@ -170,8 +170,7 @@ public:
   VariableDbgInfoMapTy VariableDbgInfo;
 
   MachineModuleInfo();  // DUMMY CONSTRUCTOR, DO NOT CALL.
-  // Real constructor.
-  MachineModuleInfo(const MCAsmInfo &MAI, const TargetAsmInfo *TAI);
+  MachineModuleInfo(const MCAsmInfo &MAI);  // Real constructor.
   ~MachineModuleInfo();
 
   bool doInitialization();

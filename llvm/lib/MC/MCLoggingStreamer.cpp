@@ -154,10 +154,9 @@ public:
     return Child->EmitBytes(Data, AddrSpace);
   }
 
-  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             bool isPCRel, unsigned AddrSpace){
+  virtual void EmitValue(const MCExpr *Value, unsigned Size,unsigned AddrSpace){
     LogCall("EmitValue");
-    return Child->EmitValueImpl(Value, Size, isPCRel, AddrSpace);
+    return Child->EmitValue(Value, Size, AddrSpace);
   }
 
   virtual void EmitULEB128Value(const MCExpr *Value,

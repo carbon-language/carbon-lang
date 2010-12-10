@@ -1755,7 +1755,7 @@ bool CWriter::doInitialization(Module &M) {
     TAsm = Match->createAsmInfo(Triple);
 #endif
   TAsm = new CBEMCAsmInfo();
-  TCtx = new MCContext(*TAsm, NULL);
+  TCtx = new MCContext(*TAsm);
   Mang = new Mangler(*TCtx, *TD);
 
   // Keep track of which functions are static ctors/dtors so they can have
