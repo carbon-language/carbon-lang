@@ -198,11 +198,9 @@ static unsigned RFT(unsigned t, bool shift = false) {
       assert(!shift && "cannot shift float types!");
       return (2 << (int)quad) - 1;
     case 5: // poly8
-      assert(!shift && "cannot shift polynomial types!");
-      return (8 << (int)quad) - 1;
+      return shift ? 7 : (8 << (int)quad) - 1;
     case 6: // poly16
-      assert(!shift && "cannot shift polynomial types!");
-      return (4 << (int)quad) - 1;
+      return shift ? 15 : (4 << (int)quad) - 1;
     case 7: // float16
       assert(!shift && "cannot shift float types!");
       return (4 << (int)quad) - 1;
