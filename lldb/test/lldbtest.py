@@ -230,6 +230,8 @@ def pointer_size():
 from functools import wraps
 def python_api_test(func):
     """Decorate the item as a Python API only test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@python_api_test can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         if lldb.dont_do_python_api_test:
