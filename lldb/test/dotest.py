@@ -46,11 +46,11 @@ class _WritelnDecorator(object):
 suite = unittest2.TestSuite()
 
 # By default, both command line and Python API tests are performed.
-# See @python_api_test decorator in lldbtest.py.
+# Use @python_api_test decorator, defined in lldbtest.py, to mark a test as
+# a Python API test.
 dont_do_python_api_test = False
 
 # By default, both command line and Python API tests are performed.
-# This does not work yet as the @lldb_command_test decorator is needed.
 just_do_python_api_test = False
 
 # The blacklist is optional (-b blacklistFile) and allows a central place to skip
@@ -123,6 +123,7 @@ where options:
 -h   : print this help message and exit (also --help)
 -a   : don't do lldb Python API tests
        use @python_api_test to decorate a test case as lldb Python API test
++a   : just do lldb Python API tests
 -b   : read a blacklist file specified after this option
 -c   : read a config file specified after this option
        (see also lldb-trunk/example/test/usage-config)

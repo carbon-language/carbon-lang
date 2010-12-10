@@ -236,6 +236,8 @@ def python_api_test(func):
             self.skipTest("Skip Python API tests")
         return func(self, *args, **kwargs)
 
+    # Mark this function as such to separate them from lldb command line tests.
+    wrapper.__python_api_test__ = True
     return wrapper
 
 class recording(StringIO.StringIO):
@@ -476,6 +478,16 @@ class TestBase(unittest2.TestCase):
                 self.skipTest(lldb.blacklist.get(className))
             elif classAndMethodName in lldb.blacklist:
                 self.skipTest(lldb.blacklist.get(classAndMethodName))
+
+        # Python API only test is decorated with @python_api_test,
+        # which also sets the "__python_api_test__" attribute of the
+        # function object to True.
+        if lldb.just_do_python_api_test:
+            testMethod = getattr(self, self._testMethodName)
+            if getattr(testMethod, "__python_api_test__", False):
+                pass
+            else:
+                self.skipTest("Skip lldb command line test")
 
         if ("LLDB_WAIT_BETWEEN_TEST_CASES" in os.environ and
             os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] == 'YES'):
