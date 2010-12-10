@@ -466,7 +466,9 @@ public:
   /// getVolatileType - Returns the uniqued reference to the type for a
   /// 'volatile' qualified type.  The resulting type has a union of the
   /// qualifiers from T and 'volatile'.
-  QualType getVolatileType(QualType T);
+  QualType getVolatileType(QualType T) {
+    return T.withFastQualifiers(Qualifiers::Volatile);
+  }
 
   /// getConstType - Returns the uniqued reference to the type for a
   /// 'const' qualified type.  The resulting type has a union of the

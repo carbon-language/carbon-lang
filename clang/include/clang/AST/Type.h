@@ -35,7 +35,7 @@ using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 namespace clang {
   enum {
-    TypeAlignmentInBits = 3,
+    TypeAlignmentInBits = 4,
     TypeAlignment = 1 << TypeAlignmentInBits
   };
   class Type;
@@ -129,7 +129,7 @@ public:
     MaxAddressSpace = 0xffffffu,
 
     /// The width of the "fast" qualifier mask.
-    FastWidth = 2,
+    FastWidth = 3,
 
     /// The fast qualifier mask.
     FastMask = (1 << FastWidth) - 1
@@ -380,8 +380,6 @@ public:
 
   Qualifiers getQualifiers() const { return Quals; }
 
-  bool hasVolatile() const { return Quals.hasVolatile(); }
-
   bool hasObjCGCAttr() const { return Quals.hasObjCGCAttr(); }
   Qualifiers::GC getObjCGCAttr() const { return Quals.getObjCGCAttr(); }
 
@@ -511,7 +509,7 @@ public:
   /// "volatile" qualifier set, without looking through typedefs that may have
   /// added "volatile" at a different level.
   bool isLocalVolatileQualified() const {
-    return (hasLocalNonFastQualifiers() && getExtQualsUnsafe()->hasVolatile());
+    return (getLocalFastQualifiers() & Qualifiers::Volatile);
   }
 
   /// \brief Determine whether this type is volatile-qualified.
@@ -552,10 +550,7 @@ public:
   /// local to this particular QualType instance, not including any qualifiers
   /// acquired through typedefs or other sugar.
   unsigned getLocalCVRQualifiers() const {
-    unsigned CVR = getLocalFastQualifiers();
-    if (isLocalVolatileQualified())
-      CVR |= Qualifiers::Volatile;
-    return CVR;
+    return getLocalFastQualifiers();
   }
 
   /// \brief Retrieve the set of CVR (const-volatile-restrict) qualifiers 

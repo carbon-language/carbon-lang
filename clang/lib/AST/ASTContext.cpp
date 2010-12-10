@@ -1090,17 +1090,6 @@ QualType ASTContext::getExtQualType(const Type *TypeNode, Qualifiers Quals) {
   return T;
 }
 
-QualType ASTContext::getVolatileType(QualType T) {
-  QualType CanT = getCanonicalType(T);
-  if (CanT.isVolatileQualified()) return T;
-
-  QualifierCollector Quals;
-  const Type *TypeNode = Quals.strip(T);
-  Quals.addVolatile();
-
-  return getExtQualType(TypeNode, Quals);
-}
-
 QualType ASTContext::getAddrSpaceQualType(QualType T, unsigned AddressSpace) {
   QualType CanT = getCanonicalType(T);
   if (CanT.getAddressSpace() == AddressSpace)
