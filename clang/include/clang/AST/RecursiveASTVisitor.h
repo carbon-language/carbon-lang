@@ -1091,7 +1091,9 @@ DEF_TRAVERSE_DECL(ObjCProtocolDecl, {
   })
 
 DEF_TRAVERSE_DECL(ObjCMethodDecl, {
-    // FIXME: implement
+    // We don't traverse nodes in param_begin()/param_end(), as they
+    // appear in decls_begin()/decls_end() and thus are handled.
+    TRY_TO(TraverseStmt(D->getBody()));
   })
 
 DEF_TRAVERSE_DECL(ObjCPropertyDecl, {
