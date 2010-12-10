@@ -1487,7 +1487,7 @@ struct _LIBCPP_VISIBLE uses_allocator
 {
 };
 
-#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 
 // uses-allocator construction
 
@@ -1505,7 +1505,7 @@ struct __uses_alloc_ctor
     : integral_constant<int, __uses_alloc_ctor_imp<_Tp, _Alloc, _Args...>::value>
     {};
 
-#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 
 // allocator
 
@@ -1546,6 +1546,7 @@ public:
         {
             ::new((void*)__p) _Tp();
         }
+# if defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
     template <class _A0>
         _LIBCPP_INLINE_VISIBILITY
         typename enable_if
@@ -1579,6 +1580,7 @@ public:
         {
             ::new((void*)__p) _Tp(_STD::move(__a0));
         }
+# endif  // defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
     template <class _A0, class _A1>
         _LIBCPP_INLINE_VISIBILITY
         void

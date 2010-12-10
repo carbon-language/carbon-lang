@@ -21,8 +21,6 @@
 #include <langinfo.h>
 #include <stdlib.h>
 
-// FIXME: Locales are hard.
-#if __APPLE__
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 namespace {
@@ -676,61 +674,93 @@ ctype<wchar_t>::~ctype()
 bool
 ctype<wchar_t>::do_is(mask m, char_type c) const
 {
+#ifdef __APPLE__
     return isascii(c) ? _DefaultRuneLocale.__runetype[c] & m : false;
+#else
+    return false;
+#endif
 }
 
 const wchar_t*
 ctype<wchar_t>::do_is(const char_type* low, const char_type* high, mask* vec) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low, ++vec)
         *vec = static_cast<mask>(isascii(*low) ? _DefaultRuneLocale.__runetype[*low] : 0);
     return low;
+#else
+    return NULL;
+#endif
 }
 
 const wchar_t*
 ctype<wchar_t>::do_scan_is(mask m, const char_type* low, const char_type* high) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low)
         if (isascii(*low) && (_DefaultRuneLocale.__runetype[*low] & m))
             break;
     return low;
+#else
+    return NULL;
+#endif
 }
 
 const wchar_t*
 ctype<wchar_t>::do_scan_not(mask m, const char_type* low, const char_type* high) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low)
         if (!(isascii(*low) && (_DefaultRuneLocale.__runetype[*low] & m)))
             break;
     return low;
+#else
+    return NULL;
+#endif
 }
 
 wchar_t
 ctype<wchar_t>::do_toupper(char_type c) const
 {
+#ifdef __APPLE__
     return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
+#else
+    return 0;
+#endif
 }
 
 const wchar_t*
 ctype<wchar_t>::do_toupper(char_type* low, const char_type* high) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low)
         *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
     return low;
+#else
+    return NULL;
+#endif
 }
 
 wchar_t
 ctype<wchar_t>::do_tolower(char_type c) const
 {
+#ifdef __APPLE__
     return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
+#else
+    return 0;
+#endif
 }
 
 const wchar_t*
 ctype<wchar_t>::do_tolower(char_type* low, const char_type* high) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low)
         *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
     return low;
+#else
+    return NULL;
+#endif
 }
 
 wchar_t
@@ -775,8 +805,10 @@ ctype<char>::ctype(const mask* tab, bool del, size_t refs)
       __tab_(tab),
       __del_(del)
 {
+#ifdef __APPLE__
     if (__tab_ == 0)
         __tab_ = _DefaultRuneLocale.__runetype;
+#endif
 }
 
 ctype<char>::~ctype()
@@ -788,29 +820,45 @@ ctype<char>::~ctype()
 char
 ctype<char>::do_toupper(char_type c) const
 {
+#ifdef __APPLE__
     return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
+#else
+    return 0;
+#endif
 }
 
 const char*
 ctype<char>::do_toupper(char_type* low, const char_type* high) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low)
         *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
     return low;
+#else
+    return NULL;
+#endif
 }
 
 char
 ctype<char>::do_tolower(char_type c) const
 {
+#ifdef __APPLE__
     return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
+#else
+    return 0;
+#endif
 }
 
 const char*
 ctype<char>::do_tolower(char_type* low, const char_type* high) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low)
         *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
     return low;
+#else
+    return NULL;
+#endif
 }
 
 char
@@ -849,7 +897,11 @@ ctype<char>::do_narrow(const char_type* low, const char_type* high, char dfault,
 const ctype<char>::mask*
 ctype<char>::classic_table() throw()
 {
+#ifdef __APPLE__
     return _DefaultRuneLocale.__runetype;
+#else
+    return NULL;
+#endif
 }
 
 // template <> class ctype_byname<char>
@@ -947,6 +999,7 @@ ctype_byname<wchar_t>::do_is(mask m, char_type c) const
 const wchar_t*
 ctype_byname<wchar_t>::do_is(const char_type* low, const char_type* high, mask* vec) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low, ++vec)
     {
         if (isascii(*low))
@@ -975,6 +1028,9 @@ ctype_byname<wchar_t>::do_is(const char_type* low, const char_type* high, mask* 
         }
     }
     return low;
+#else
+    return NULL;
+#endif
 }
 
 const wchar_t*
@@ -1026,33 +1082,49 @@ ctype_byname<wchar_t>::do_tolower(char_type* low, const char_type* high) const
 wchar_t
 ctype_byname<wchar_t>::do_widen(char c) const
 {
+#ifdef __APPLE__
     return btowc_l(c, __l);
+#else
+    return 0;
+#endif
 }
 
 const char*
 ctype_byname<wchar_t>::do_widen(const char* low, const char* high, char_type* dest) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low, ++dest)
         *dest = btowc_l(*low, __l);
     return low;
+#else
+    return NULL;
+#endif
 }
 
 char
 ctype_byname<wchar_t>::do_narrow(char_type c, char dfault) const
 {
+#ifdef __APPLE__
     int r = wctob_l(c, __l);
     return r != WEOF ? static_cast<char>(r) : dfault;
+#else
+    return 0;
+#endif
 }
 
 const wchar_t*
 ctype_byname<wchar_t>::do_narrow(const char_type* low, const char_type* high, char dfault, char* dest) const
 {
+#ifdef __APPLE__
     for (; low != high; ++low, ++dest)
     {
         int r = wctob_l(*low, __l);
         *dest = r != WEOF ? static_cast<char>(r) : dfault;
     }
     return low;
+#else
+    return NULL;
+#endif
 }
 
 // template <> class codecvt<char, char, mbstate_t>
@@ -1148,6 +1220,7 @@ codecvt<wchar_t, char, mbstate_t>::do_out(state_type& st,
     const intern_type* frm, const intern_type* frm_end, const intern_type*& frm_nxt,
     extern_type* to, extern_type* to_end, extern_type*& to_nxt) const
 {
+#ifdef __APPLE__
     // look for first internal null in frm
     const intern_type* fend = frm;
     for (; fend != frm_end; ++fend)
@@ -1197,6 +1270,9 @@ codecvt<wchar_t, char, mbstate_t>::do_out(state_type& st,
         }
     }
     return frm_nxt == frm_end ? ok : partial;
+#else
+    return error;
+#endif
 }
 
 codecvt<wchar_t, char, mbstate_t>::result
@@ -1204,6 +1280,7 @@ codecvt<wchar_t, char, mbstate_t>::do_in(state_type& st,
     const extern_type* frm, const extern_type* frm_end, const extern_type*& frm_nxt,
     intern_type* to, intern_type* to_end, intern_type*& to_nxt) const
 {
+#ifdef __APPLE__
     // look for first internal null in frm
     const extern_type* fend = frm;
     for (; fend != frm_end; ++fend)
@@ -1261,12 +1338,16 @@ codecvt<wchar_t, char, mbstate_t>::do_in(state_type& st,
         }
     }
     return frm_nxt == frm_end ? ok : partial;
+#else
+    return error;
+#endif
 }
 
 codecvt<wchar_t, char, mbstate_t>::result
 codecvt<wchar_t, char, mbstate_t>::do_unshift(state_type& st,
     extern_type* to, extern_type* to_end, extern_type*& to_nxt) const
 {
+#ifdef __APPLE__
     to_nxt = to;
     extern_type tmp[MB_LEN_MAX];
     size_t n = wcrtomb_l(tmp, intern_type(), &st, __l);
@@ -1278,11 +1359,15 @@ codecvt<wchar_t, char, mbstate_t>::do_unshift(state_type& st,
     for (extern_type* p = tmp; n; --n)  // write it
         *to_nxt++ = *p++;
     return ok;
+#else
+    return error;
+#endif
 }
 
 int
 codecvt<wchar_t, char, mbstate_t>::do_encoding() const throw()
 {
+#ifdef __APPLE__
     if (mbtowc_l(0, 0, MB_LEN_MAX, __l) == 0)
     {
         // stateless encoding
@@ -1291,6 +1376,9 @@ codecvt<wchar_t, char, mbstate_t>::do_encoding() const throw()
          return 0;
     }
     return -1;
+#else
+    return 0;
+#endif
 }
 
 bool
@@ -1303,6 +1391,7 @@ int
 codecvt<wchar_t, char, mbstate_t>::do_length(state_type& st,
     const extern_type* frm, const extern_type* frm_end, size_t mx) const
 {
+#ifdef __APPLE__
     int nbytes = 0;
     for (size_t nwchar_t = 0; nwchar_t < mx && frm != frm_end; ++nwchar_t)
     {
@@ -1323,12 +1412,19 @@ codecvt<wchar_t, char, mbstate_t>::do_length(state_type& st,
         }
     }
     return nbytes;
+#else
+    return 0;
+#endif
 }
 
 int
 codecvt<wchar_t, char, mbstate_t>::do_max_length() const throw()
 {
+#ifdef __APPLE__
     return __l == 0 ? 1 : MB_CUR_MAX_L(__l);
+#else
+    return 0;
+#endif
 }
 
 //                                     Valid UTF ranges
@@ -3869,6 +3965,7 @@ numpunct_byname<char>::~numpunct_byname()
 void
 numpunct_byname<char>::__init(const char* nm)
 {
+#ifdef __APPLE__
     if (strcmp(nm, "C") != 0)
     {
         unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
@@ -3885,6 +3982,7 @@ numpunct_byname<char>::__init(const char* nm)
         __grouping_ = lc->grouping;
         // locallization for truename and falsename is not available
     }
+#endif
 }
 
 // numpunct_byname<wchar_t>
@@ -3908,6 +4006,7 @@ numpunct_byname<wchar_t>::~numpunct_byname()
 void
 numpunct_byname<wchar_t>::__init(const char* nm)
 {
+#ifdef __APPLE__
     if (strcmp(nm, "C") != 0)
     {
         unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
@@ -3924,6 +4023,7 @@ numpunct_byname<wchar_t>::__init(const char* nm)
         __grouping_ = lc->grouping;
         // locallization for truename and falsename is not available
     }
+#endif
 }
 
 // num_get helpers
@@ -4488,6 +4588,7 @@ template <>
 wstring
 __time_get_storage<wchar_t>::__analyze(char fmt, const ctype<wchar_t>& ct)
 {
+#ifdef __APPLE__
     tm t;
     t.tm_sec = 59;
     t.tm_min = 55;
@@ -4632,6 +4733,9 @@ __time_get_storage<wchar_t>::__analyze(char fmt, const ctype<wchar_t>& ct)
         ++wbb;
     }
     return result;
+#else
+    return wstring();
+#endif
 }
 
 template <>
@@ -4675,6 +4779,7 @@ template <>
 void
 __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
 {
+#ifdef __APPLE__
     tm t = {0};
     char buf[100];
     size_t be;
@@ -4746,6 +4851,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
     __r_ = __analyze('r', ct);
     __x_ = __analyze('x', ct);
     __X_ = __analyze('X', ct);
+#endif
 }
 
 template <class CharT>
@@ -5007,6 +5113,7 @@ void
 __time_put::__do_put(wchar_t* __wb, wchar_t*& __we, const tm* __tm,
                      char __fmt, char __mod) const
 {
+#ifdef __APPLE__
     char __nar[100];
     char* __ne = __nar + 100;
     __do_put(__nar, __ne, __tm, __fmt, __mod);
@@ -5016,6 +5123,7 @@ __time_put::__do_put(wchar_t* __wb, wchar_t*& __we, const tm* __tm,
     if (j == -1)
         __throw_runtime_error("locale not supported");
     __we = __wb + j;
+#endif
 }
 
 // moneypunct_byname
@@ -5260,6 +5368,7 @@ template<>
 void
 moneypunct_byname<char, false>::init(const char* nm)
 {
+#ifdef __APPLE__
     typedef moneypunct<char, false> base;
     unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -5292,12 +5401,14 @@ moneypunct_byname<char, false>::init(const char* nm)
         __negative_sign_ = lc->negative_sign;
     __init_pat(__pos_format_, lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn);
     __init_pat(__neg_format_, lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn);
+#endif
 }
 
 template<>
 void
 moneypunct_byname<char, true>::init(const char* nm)
 {
+#ifdef __APPLE__
     typedef moneypunct<char, true> base;
     unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -5330,12 +5441,14 @@ moneypunct_byname<char, true>::init(const char* nm)
         __negative_sign_ = lc->negative_sign;
     __init_pat(__pos_format_, lc->int_p_cs_precedes, lc->int_p_sep_by_space, lc->int_p_sign_posn);
     __init_pat(__neg_format_, lc->int_n_cs_precedes, lc->int_n_sep_by_space, lc->int_n_sign_posn);
+#endif
 }
 
 template<>
 void
 moneypunct_byname<wchar_t, false>::init(const char* nm)
 {
+#ifdef __APPLE__
     typedef moneypunct<wchar_t, false> base;
     unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -5391,12 +5504,14 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
     }
     __init_pat(__pos_format_, lc->p_cs_precedes, lc->p_sep_by_space, lc->p_sign_posn);
     __init_pat(__neg_format_, lc->n_cs_precedes, lc->n_sep_by_space, lc->n_sign_posn);
+#endif
 }
 
 template<>
 void
 moneypunct_byname<wchar_t, true>::init(const char* nm)
 {
+#ifdef __APPLE__
     typedef moneypunct<wchar_t, true> base;
     unique_ptr<_xlocale, int(*)(locale_t)>  loc(newlocale(LC_ALL_MASK, nm, 0), freelocale);
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -5452,6 +5567,7 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
     }
     __init_pat(__pos_format_, lc->int_p_cs_precedes, lc->int_p_sep_by_space, lc->int_p_sign_posn);
     __init_pat(__neg_format_, lc->int_n_cs_precedes, lc->int_n_sep_by_space, lc->int_n_sign_posn);
+#endif
 }
 
 void __do_nothing(void*) {}
@@ -5526,4 +5642,3 @@ template class codecvt_byname<char32_t, char, mbstate_t>;
 template class __vector_base_common<true>;
 
 _LIBCPP_END_NAMESPACE_STD
-#endif  // __APPLE__

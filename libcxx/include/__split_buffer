@@ -85,12 +85,14 @@ public:
     void shrink_to_fit();
     void push_front(const_reference __x);
     void push_back(const_reference __x);
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
     void push_front(value_type&& __x);
     void push_back(value_type&& __x);
+#if !defined(_LIBCPP_HAS_NO_VARIADICS)
     template <class... _Args>
         void emplace_back(_Args&&... __args);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // !defined(_LIBCPP_HAS_NO_VARIADICS)
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
 
     _LIBCPP_INLINE_VISIBILITY void pop_front() {__destruct_at_begin(__begin_+1);}
     _LIBCPP_INLINE_VISIBILITY void pop_back() {__destruct_at_end(__end_-1);}

@@ -214,6 +214,7 @@ using namespace _LIBCPP_NAMESPACE;
 #endif  // !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 4)
 
 #if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 6)
+#define _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
 #define _LIBCPP_HAS_NO_NULLPTR
 #endif
 

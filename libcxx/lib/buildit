@@ -2,7 +2,7 @@
 #
 # Set the $TRIPLE environment variable to your system's triple before
 # running this script.  If you set $CXX, that will be used to compile
-# the library.  Otherwise we'll use g++.
+# the library.  Otherwise we'll use clang++.
 
 set -e
 
@@ -74,7 +74,7 @@ for FILE in ../src/*.cpp; do
 done
 
 
-cc *.o $RC_CFLAGS $LDSHARED_FLAGS 
+cc *.o $RC_CFLAGS $LDSHARED_FLAGS
 
 #libtool -static -o libc++.a *.o
 

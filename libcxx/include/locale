@@ -265,7 +265,10 @@ __nolocale_isdigit(int __c)
 }
 
 #else  // __APPLE__
-inline _LIBCPP_INLINE_VISIBILITY
+inline
+#ifndef _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
+_LIBCPP_INLINE_VISIBILITY
+#endif
 int
 __nolocale_sprintf(char* __restrict __str,
                    const char* __restrict __format, ...)
@@ -276,7 +279,10 @@ __nolocale_sprintf(char* __restrict __str,
     va_end(__ap);
     return __result;
 }
-inline _LIBCPP_INLINE_VISIBILITY
+inline
+#ifndef _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
+_LIBCPP_INLINE_VISIBILITY
+#endif
 int
 __nolocale_snprintf(char* __restrict __str, size_t __size,
                     const char* __restrict __format, ...)
@@ -287,7 +293,10 @@ __nolocale_snprintf(char* __restrict __str, size_t __size,
     va_end(__ap);
     return __result;
 }
-inline _LIBCPP_INLINE_VISIBILITY
+inline
+#ifndef _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
+_LIBCPP_INLINE_VISIBILITY
+#endif
 int
 __nolocale_asprintf(char** __ret,
                     const char* __restrict __format, ...)
@@ -298,7 +307,10 @@ __nolocale_asprintf(char** __ret,
     va_end(__ap);
     return __result;
 }
-inline _LIBCPP_INLINE_VISIBILITY
+inline
+#ifndef _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
+_LIBCPP_INLINE_VISIBILITY
+#endif
 int
 __nolocale_sscanf(const char* __restrict __str,
                   const char* __restrict __format, ...)
