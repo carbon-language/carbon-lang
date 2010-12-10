@@ -3449,14 +3449,15 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
   
   FunctionDecl *NewFD;
-  bool isFriend, isVirtual, isExplicit, isVirtualOkay;
   bool isInline = D.getDeclSpec().isInlineSpecified();
+  bool isFriend = false;
   DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpecAsWritten();
   FunctionDecl::StorageClass SCAsWritten
     = StorageClassSpecToFunctionDeclStorageClass(SCSpec);
-  FunctionTemplateDecl *FunctionTemplate;
-  bool isExplicitSpecialization, isFunctionTemplateSpecialization;
-  unsigned NumMatchedTemplateParamLists;
+  FunctionTemplateDecl *FunctionTemplate = 0;
+  bool isExplicitSpecialization = false;
+  bool isFunctionTemplateSpecialization = false;
+  unsigned NumMatchedTemplateParamLists = 0;
   
   if (!getLangOptions().CPlusPlus) {
     // Determine whether the function was written with a
@@ -3480,9 +3481,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     FilterLookupForScope(*this, Previous, DC, S, NewFD->hasLinkage());
   } else {
     isFriend = D.getDeclSpec().isFriendSpecified();
-    isVirtual = D.getDeclSpec().isVirtualSpecified();
-    isExplicit = D.getDeclSpec().isExplicitSpecified();
-    isVirtualOkay = false;
+    bool isVirtual = D.getDeclSpec().isVirtualSpecified();
+    bool isExplicit = D.getDeclSpec().isExplicitSpecified();
+    bool isVirtualOkay = false;
 
     // Check that the return type is not an abstract class type.
     // For record types, this is done by the AbstractClassUsageDiagnoser once
@@ -3593,7 +3594,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                    true/*HasPrototype*/);
     }
     SetNestedNameSpecifier(NewFD, D);
-    FunctionTemplate = 0;
     isExplicitSpecialization = false;
     isFunctionTemplateSpecialization = false;
     NumMatchedTemplateParamLists = TemplateParamLists.size();
