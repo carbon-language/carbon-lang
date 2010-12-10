@@ -81,8 +81,8 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
 X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   : TargetLowering(TM, createTLOF(TM)) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
-  X86ScalarSSEf64 = Subtarget->hasSSE2();
-  X86ScalarSSEf32 = Subtarget->hasSSE1();
+  X86ScalarSSEf64 = Subtarget->hasXMMInt();
+  X86ScalarSSEf32 = Subtarget->hasXMM();
   X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
 
   RegInfo = TM.getRegisterInfo();
@@ -356,7 +356,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SRL_PARTS     , MVT::i64  , Custom);
   }
 
-  if (Subtarget->hasSSE1())
+  if (Subtarget->hasXMM())
     setOperationAction(ISD::PREFETCH      , MVT::Other, Legal);
 
   // We may not have a libcall for MEMBARRIER so we should lower this.
@@ -664,7 +664,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::BITCAST,            MVT::v2i32, Expand);
   setOperationAction(ISD::BITCAST,            MVT::v1i64, Expand);
 
-  if (!UseSoftFloat && Subtarget->hasSSE1()) {
+  if (!UseSoftFloat && Subtarget->hasXMM()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
     setOperationAction(ISD::FADD,               MVT::v4f32, Legal);
@@ -681,7 +681,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSETCC,             MVT::v4f32, Custom);
   }
 
-  if (!UseSoftFloat && Subtarget->hasSSE2()) {
+  if (!UseSoftFloat && Subtarget->hasXMMInt()) {
     addRegisterClass(MVT::v2f64, X86::VR128RegisterClass);
 
     // FIXME: Unfortunately -soft-float and -no-implicit-float means XMM
@@ -1043,7 +1043,7 @@ unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
   }
 
   unsigned Align = 4;
-  if (Subtarget->hasSSE1())
+  if (Subtarget->hasXMM())
     getMaxByValAlign(Ty, Align);
   return Align;
 }
@@ -1084,7 +1084,7 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
     } else if (!MemcpyStrSrc && Size >= 8 &&
                !Subtarget->is64Bit() &&
                Subtarget->getStackAlignment() >= 8 &&
-               Subtarget->hasSSE2()) {
+               Subtarget->hasXMMInt()) {
       // Do not use f64 to lower memcpy if source is string constant. It's
       // better to use i32 to avoid the loads.
       return MVT::f64;
@@ -1272,14 +1272,14 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     // or SSE or MMX vectors.
     if ((ValVT == MVT::f32 || ValVT == MVT::f64 ||
          VA.getLocReg() == X86::XMM0 || VA.getLocReg() == X86::XMM1) &&
-          (Subtarget->is64Bit() && !Subtarget->hasSSE1())) {
+          (Subtarget->is64Bit() && !Subtarget->hasXMM())) {
       report_fatal_error("SSE register return with SSE disabled");
     }
     // Likewise we can't return F64 values with SSE1 only.  gcc does so, but
     // llvm-gcc has never done it right and no one has noticed, so this
     // should be OK for now.
     if (ValVT == MVT::f64 &&
-        (Subtarget->is64Bit() && !Subtarget->hasSSE2()))
+        (Subtarget->is64Bit() && !Subtarget->hasXMMInt()))
       report_fatal_error("SSE2 register return with SSE2 disabled");
 
     // Returns in ST0/ST1 are handled specially: these are pushed as operands to
@@ -1391,7 +1391,7 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
     // If this is x86-64, and we disabled SSE, we can't return FP values
     if ((CopyVT == MVT::f32 || CopyVT == MVT::f64) &&
-        ((Is64Bit || Ins[i].Flags.isInReg()) && !Subtarget->hasSSE1())) {
+        ((Is64Bit || Ins[i].Flags.isInReg()) && !Subtarget->hasXMM())) {
       report_fatal_error("SSE register return with SSE disabled");
     }
 
@@ -1700,11 +1700,11 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
                                                        TotalNumIntRegs);
 
       bool NoImplicitFloatOps = Fn->hasFnAttr(Attribute::NoImplicitFloat);
-      assert(!(NumXMMRegs && !Subtarget->hasSSE1()) &&
+      assert(!(NumXMMRegs && !Subtarget->hasXMM()) &&
              "SSE register cannot be used when SSE is disabled!");
       assert(!(NumXMMRegs && UseSoftFloat && NoImplicitFloatOps) &&
              "SSE register cannot be used when SSE is disabled!");
-      if (UseSoftFloat || NoImplicitFloatOps || !Subtarget->hasSSE1())
+      if (UseSoftFloat || NoImplicitFloatOps || !Subtarget->hasXMM())
         // Kernel mode asks for SSE to be disabled, so don't push them
         // on the stack.
         TotalNumXMMRegs = 0;
@@ -2055,7 +2055,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };
     unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
-    assert((Subtarget->hasSSE1() || !NumXMMRegs)
+    assert((Subtarget->hasXMM() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
 
     Chain = DAG.getCopyToReg(Chain, dl, X86::AL,
@@ -7635,7 +7635,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
     assert(!UseSoftFloat &&
            !(DAG.getMachineFunction()
                 .getFunction()->hasFnAttr(Attribute::NoImplicitFloat)) &&
-           Subtarget->hasSSE1());
+           Subtarget->hasXMM());
   }
 
   // Insert VAARG_64 node into the DAG
@@ -11689,7 +11689,7 @@ TargetLowering::ConstraintWeight
       break;
   case 'x':
   case 'Y':
-    if ((type->getPrimitiveSizeInBits() == 128) && Subtarget->hasSSE1())
+    if ((type->getPrimitiveSizeInBits() == 128) && Subtarget->hasXMM())
       weight = CW_Register;
     break;
   case 'I':
@@ -11759,9 +11759,9 @@ LowerXConstraint(EVT ConstraintVT) const {
   // FP X constraints get lowered to SSE1/2 registers if available, otherwise
   // 'f' like normal targets.
   if (ConstraintVT.isFloatingPoint()) {
-    if (Subtarget->hasSSE2())
+    if (Subtarget->hasXMMInt())
       return "Y";
-    if (Subtarget->hasSSE1())
+    if (Subtarget->hasXMM())
       return "x";
   }
 
@@ -11991,10 +11991,10 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       if (!Subtarget->hasMMX()) break;
       return std::make_pair(0U, X86::VR64RegisterClass);
     case 'Y':   // SSE_REGS if SSE2 allowed
-      if (!Subtarget->hasSSE2()) break;
+      if (!Subtarget->hasXMMInt()) break;
       // FALL THROUGH.
     case 'x':   // SSE_REGS if SSE1 allowed
-      if (!Subtarget->hasSSE1()) break;
+      if (!Subtarget->hasXMM()) break;
 
       switch (VT.getSimpleVT().SimpleTy) {
       default: break;

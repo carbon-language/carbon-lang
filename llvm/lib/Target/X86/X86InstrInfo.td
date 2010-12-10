@@ -400,26 +400,26 @@ def tls64addr : ComplexPattern<i64, 5, "SelectTLSADDRAddr",
 def HasCMov      : Predicate<"Subtarget->hasCMov()">;
 def NoCMov       : Predicate<"!Subtarget->hasCMov()">;
 
-// FIXME: temporary hack to let codegen assert or generate poor code in case
-// no AVX version of the desired intructions is present, this is better for
-// incremental dev (without fallbacks it's easier to spot what's missing)
-def HasMMX       : Predicate<"Subtarget->hasMMX() && !Subtarget->hasAVX()">;
+def HasMMX       : Predicate<"Subtarget->hasMMX()">;
 def Has3DNow     : Predicate<"Subtarget->has3DNow()">;
 def Has3DNowA    : Predicate<"Subtarget->has3DNowA()">;
-def HasSSE1      : Predicate<"Subtarget->hasSSE1() && !Subtarget->hasAVX()">;
-def HasSSE2      : Predicate<"Subtarget->hasSSE2() && !Subtarget->hasAVX()">;
-def HasSSE3      : Predicate<"Subtarget->hasSSE3() && !Subtarget->hasAVX()">;
-def HasSSSE3     : Predicate<"Subtarget->hasSSSE3() && !Subtarget->hasAVX()">;
-def HasSSE41     : Predicate<"Subtarget->hasSSE41() && !Subtarget->hasAVX()">;
-def HasSSE42     : Predicate<"Subtarget->hasSSE42() && !Subtarget->hasAVX()">;
-def HasSSE4A     : Predicate<"Subtarget->hasSSE4A() && !Subtarget->hasAVX()">;
+def HasSSE1      : Predicate<"Subtarget->hasSSE1()">;
+def HasSSE2      : Predicate<"Subtarget->hasSSE2()">;
+def HasSSE3      : Predicate<"Subtarget->hasSSE3()">;
+def HasSSSE3     : Predicate<"Subtarget->hasSSSE3()">;
+def HasSSE41     : Predicate<"Subtarget->hasSSE41()">;
+def HasSSE42     : Predicate<"Subtarget->hasSSE42()">;
+def HasSSE4A     : Predicate<"Subtarget->hasSSE4A()">;
 
 def HasAVX       : Predicate<"Subtarget->hasAVX()">;
+def HasXMMInt    : Predicate<"Subtarget->hasXMMInt()">;
+
+def HasAES       : Predicate<"Subtarget->hasAES()">;
 def HasCLMUL     : Predicate<"Subtarget->hasCLMUL()">;
 def HasFMA3      : Predicate<"Subtarget->hasFMA3()">;
 def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
-def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;
-def FPStackf64   : Predicate<"!Subtarget->hasSSE2()">;
+def FPStackf32   : Predicate<"!Subtarget->hasXMM()">;
+def FPStackf64   : Predicate<"!Subtarget->hasXMMInt()">;
 def In32BitMode  : Predicate<"!Subtarget->is64Bit()">, AssemblerPredicate;
 def In64BitMode  : Predicate<"Subtarget->is64Bit()">, AssemblerPredicate;
 def IsWin64      : Predicate<"Subtarget->isTargetWin64()">;
@@ -436,7 +436,6 @@ def OptForSize   : Predicate<"OptForSize">;
 def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
 def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
-def HasAES       : Predicate<"Subtarget->hasAES()">;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.

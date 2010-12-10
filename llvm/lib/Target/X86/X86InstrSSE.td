@@ -712,6 +712,8 @@ def VCVTSD2SSrm  : I<0x5A, MRMSrcMem, (outs FR32:$dst),
                       "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                       []>, XD, Requires<[HasAVX, OptForSize]>, VEX_4V;
 }
+def : Pat<(f32 (fround FR64:$src)), (VCVTSD2SSrr FR64:$src, FR64:$src)>;
+
 def CVTSD2SSrr  : SDI<0x5A, MRMSrcReg, (outs FR32:$dst), (ins FR64:$src),
                       "cvtsd2ss\t{$src, $dst|$dst, $src}",
                       [(set FR32:$dst, (fround FR64:$src))]>;
@@ -739,6 +741,8 @@ def VCVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     []>, XS, VEX_4V, Requires<[HasAVX, OptForSize]>;
 }
+def : Pat<(f64 (fextend FR32:$src)), (VCVTSS2SDrr FR32:$src, FR32:$src)>;
+
 def CVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst), (ins FR32:$src),
                    "cvtss2sd\t{$src, $dst|$dst, $src}",
                    [(set FR64:$dst, (fextend FR32:$src))]>, XS,
@@ -3680,7 +3684,7 @@ let Predicates = [HasSSE2] in
            (CVTSS2SDrm addr:$src)>;
 
 // bit_convert
-let Predicates = [HasSSE2] in {
+let Predicates = [HasXMMInt] in {
   def : Pat<(v2i64 (bitconvert (v4i32 VR128:$src))), (v2i64 VR128:$src)>;
   def : Pat<(v2i64 (bitconvert (v8i16 VR128:$src))), (v2i64 VR128:$src)>;
   def : Pat<(v2i64 (bitconvert (v16i8 VR128:$src))), (v2i64 VR128:$src)>;
@@ -3711,6 +3715,10 @@ let Predicates = [HasSSE2] in {
   def : Pat<(v2f64 (bitconvert (v8i16 VR128:$src))), (v2f64 VR128:$src)>;
   def : Pat<(v2f64 (bitconvert (v16i8 VR128:$src))), (v2f64 VR128:$src)>;
   def : Pat<(v2f64 (bitconvert (v4f32 VR128:$src))), (v2f64 VR128:$src)>;
+}
+
+let Predicates = [HasAVX] in {
+  def : Pat<(v4f64 (bitconvert (v8f32 VR256:$src))), (v4f64 VR256:$src)>;
 }
 
 // Move scalar to XMM zero-extended

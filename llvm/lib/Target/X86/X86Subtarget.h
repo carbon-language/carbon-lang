@@ -155,6 +155,8 @@ public:
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasPOPCNT() const { return HasPOPCNT; }
   bool hasAVX() const { return HasAVX; }
+  bool hasXMM() const { return hasSSE1() || hasAVX(); }
+  bool hasXMMInt() const { return hasSSE2() || hasAVX(); }
   bool hasAES() const { return HasAES; }
   bool hasCLMUL() const { return HasCLMUL; }
   bool hasFMA3() const { return HasFMA3; }
