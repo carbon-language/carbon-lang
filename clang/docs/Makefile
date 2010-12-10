@@ -59,7 +59,7 @@ $(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
 	$(Verb) $(RM) -rf $@ $(PROJ_OBJ_DIR)/html.tar
 	$(Verb) cd $(PROJ_SRC_DIR) && \
 	  $(TAR) cf $(PROJ_OBJ_DIR)/html.tar *.html
-	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/html.tar
+	$(Verb) $(GZIPBIN) $(PROJ_OBJ_DIR)/html.tar
 
 install-doxygen: doxygen
 	$(Echo) Installing doxygen documentation
@@ -82,7 +82,7 @@ $(PROJ_OBJ_DIR)/doxygen.tar.gz: $(DOXYFILES) $(PROJ_OBJ_DIR)/doxygen.cfg
 	$(Echo) Packaging doxygen documentation
 	$(Verb) $(RM) -rf $@ $(PROJ_OBJ_DIR)/doxygen.tar
 	$(Verb) $(TAR) cf $(PROJ_OBJ_DIR)/doxygen.tar doxygen
-	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/doxygen.tar
+	$(Verb) $(GZIPBIN) $(PROJ_OBJ_DIR)/doxygen.tar
 	$(Verb) $(CP) $(PROJ_OBJ_DIR)/doxygen.tar.gz $(PROJ_OBJ_DIR)/doxygen/html/
 
 userloc: $(LLVM_SRC_ROOT)/docs/userloc.html
