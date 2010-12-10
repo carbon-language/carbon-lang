@@ -59,18 +59,18 @@ Init *BitsRecTy::convertValue(UnsetInit *UI) {
 }
 
 Init *BitsRecTy::convertValue(BitInit *UI) {
-  if (Size != 1) return 0;  // Can only convert single bit...
+  if (Size != 1) return 0;  // Can only convert single bit.
   BitsInit *Ret = new BitsInit(1);
   Ret->setBit(0, UI);
   return Ret;
 }
 
 // convertValue from Int initializer to bits type: Split the integer up into the
-// appropriate bits...
+// appropriate bits.
 //
 Init *BitsRecTy::convertValue(IntInit *II) {
   int64_t Value = II->getValue();
-  // Make sure this bitfield is large enough to hold the integer value...
+  // Make sure this bitfield is large enough to hold the integer value.
   if (Value >= 0) {
     if (Value & ~((1LL << Size)-1))
       return 0;
@@ -88,7 +88,7 @@ Init *BitsRecTy::convertValue(IntInit *II) {
 
 Init *BitsRecTy::convertValue(BitsInit *BI) {
   // If the number of bits is right, return it.  Otherwise we need to expand or
-  // truncate...
+  // truncate.
   if (BI->getNumBits() == Size) return BI;
   return 0;
 }
@@ -966,7 +966,7 @@ RecTy *TypedInit::getFieldType(const std::string &FieldName) const {
 
 Init *TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   BitsRecTy *T = dynamic_cast<BitsRecTy*>(getType());
-  if (T == 0) return 0;  // Cannot subscript a non-bits variable...
+  if (T == 0) return 0;  // Cannot subscript a non-bits variable.
   unsigned NumBits = T->getNumBits();
 
   BitsInit *BI = new BitsInit(Bits.size());
@@ -982,7 +982,7 @@ Init *TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
 
 Init *TypedInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
   ListRecTy *T = dynamic_cast<ListRecTy*>(getType());
-  if (T == 0) return 0;  // Cannot subscript a non-list variable...
+  if (T == 0) return 0;  // Cannot subscript a non-list variable.
 
   if (Elements.size() == 1)
     return new VarListElementInit(this, Elements[0]);
@@ -1135,7 +1135,7 @@ Init *FieldInit::resolveBitReference(Record &R, const RecordVal *RV,
       assert(Bit < BI->getNumBits() && "Bit reference out of range!");
       Init *B = BI->getBit(Bit);
 
-      if (dynamic_cast<BitInit*>(B))  // If the bit is set...
+      if (dynamic_cast<BitInit*>(B))  // If the bit is set.
         return B;                     // Replace the VarBitInit with it.
     }
   return 0;
