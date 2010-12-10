@@ -857,6 +857,17 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   if (GEP1BaseOffset == 0 && GEP1VariableIndices.empty())
     return MustAlias;
 
+  // If there is a difference betwen the pointers, but the difference is
+  // less than the size of the associated memory object, then we know
+  // that the objects are partially overlapping.
+  if (GEP1BaseOffset != 0 && GEP1VariableIndices.empty()) {
+    if (GEP1BaseOffset >= 0 ?
+        (V2Size != UnknownSize && (uint64_t)GEP1BaseOffset < V2Size) :
+        (V1Size != UnknownSize && -(uint64_t)GEP1BaseOffset < V1Size &&
+         GEP1BaseOffset != INT64_MIN))
+      return PartialAlias;
+  }
+
   // If we have a known constant offset, see if this offset is larger than the
   // access size being queried.  If so, and if no variable indices can remove
   // pieces of this constant, then we know we have a no-alias.  For example,
