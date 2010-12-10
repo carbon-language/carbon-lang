@@ -771,7 +771,7 @@ namespace llvm {
 template<> struct simplify_type<const ::clang::QualType> {
   typedef ::clang::Type* SimpleType;
   static SimpleType getSimplifiedValue(const ::clang::QualType &Val) {
-    return Val.getTypePtrOrNull();
+    return Val.getTypePtr();
   }
 };
 template<> struct simplify_type< ::clang::QualType>

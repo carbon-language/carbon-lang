@@ -347,7 +347,7 @@ template<typename T>
 struct simplify_type<const ::clang::CanQual<T> > {
   typedef T* SimpleType;
   static SimpleType getSimplifiedValue(const ::clang::CanQual<T> &Val) {
-    return Val.getTypePtrOrNull();
+    return Val.getTypePtr();
   }
 };
 template<typename T>
