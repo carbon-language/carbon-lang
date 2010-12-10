@@ -665,12 +665,12 @@ static std::string GenOpString(OpKind op, const std::string &proto,
       SplatLane(nElts, "__b", "__c") + ");";
     break;
   case OpQDMlalLane:
-    s += MangleName("vqdmlal", typestr, ClassS) + "(__a, " +
-      SplatLane(nElts, "__b", "__c") + ");";
+    s += MangleName("vqdmlal", typestr, ClassS) + "(__a, __b, " +
+      SplatLane(nElts, "__c", "__d") + ");";
     break;
   case OpQDMlslLane:
-    s += MangleName("vqdmlsl", typestr, ClassS) + "(__a, " +
-      SplatLane(nElts, "__b", "__c") + ");";
+    s += MangleName("vqdmlsl", typestr, ClassS) + "(__a, __b, " +
+      SplatLane(nElts, "__c", "__d") + ");";
     break;
   case OpQDMulhLane:
     s += MangleName("vqdmulh", typestr, ClassS) + "(__a, " +
