@@ -93,6 +93,28 @@ Args::GetCommandString (std::string &command)
     return argc > 0;
 }
 
+bool
+Args::GetQuotedCommandString (std::string &command)
+{
+    command.clear ();
+    int argc = GetArgumentCount ();
+    for (int i = 0; i < argc; ++i)
+    {
+        if (i > 0)
+            command += ' ';
+        char quote_char = m_args_quote_char[i];
+        if (quote_char != '\0')
+        {
+            command += quote_char;
+            command += m_argv[i];
+            command += quote_char;
+        }
+        else
+            command += m_argv[i];
+    }
+    return argc > 0;
+}
+
 void
 Args::SetCommandString (const char *command, size_t len)
 {

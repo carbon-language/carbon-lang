@@ -122,6 +122,9 @@ public:
     bool
     GetCommandString (std::string &command);
 
+    bool
+    GetQuotedCommandString (std::string &command);
+
     //------------------------------------------------------------------
     /// Gets the number of arguments left in this command object.
     ///

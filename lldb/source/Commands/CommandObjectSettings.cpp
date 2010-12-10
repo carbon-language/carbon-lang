@@ -90,6 +90,29 @@ CommandObjectSettingsSet::CommandObjectSettingsSet (CommandInterpreter &interpre
     // Push the data for the first argument into the m_arguments vector.
     m_arguments.push_back (arg1);
     m_arguments.push_back (arg2);
+    
+    SetHelpLong (
+"When setting a dictionary or array variable, you can set multiple entries \n\
+at once by giving the values to the set command.  For example: \n\
+\n\
+(lldb) settings set target.process.run-args value1  value2 value3 \n\
+(lldb) settings set target.process.env-vars [\"MYPATH\"]=~/.:/usr/bin  [\"SOME_ENV_VAR\"]=12345 \n\
+\n\
+(lldb) settings show target.process.run-args \n\
+  [0]: 'value1' \n\
+  [1]: 'value2' \n\
+  [3]: 'value3' \n\
+(lldb) settings show target.process.env-vars \n\
+  'MYPATH=~/.:/usr/bin'\n\
+  'SOME_ENV_VAR=12345' \n\
+\n\
+Note the special syntax for setting a dictionary element: [\"<key>\"]=<value> \n\
+\n\
+Warning:  The 'set' command re-sets the entire array or dictionary.  If you \n\
+just want to add, remove or update individual values (or add something to \n\
+the end), use one of the other settings sub-commands: append, replace, \n\
+insert-before or insert-after.\n");
+
 }
 
 CommandObjectSettingsSet::~CommandObjectSettingsSet()
@@ -126,7 +149,7 @@ CommandObjectSettingsSet::Execute (Args& command, CommandReturnObject &result)
     const char *var_value;
     std::string value_string;
 
-    command.GetCommandString (value_string);
+    command.GetQuotedCommandString (value_string);
     var_value = value_string.c_str();
 
     if (!m_options.m_reset
@@ -342,14 +365,17 @@ CommandObjectSettingsShow::Execute (Args& command,
 
             if (value.GetSize() == 0)
                 result.AppendMessageWithFormat ("%s%s = ''\n", variable_name, type_name);
-            else if (value.GetSize() == 1)
+            else if ((var_type != lldb::eSetVarTypeArray) && (var_type != lldb::eSetVarTypeDictionary))
                 result.AppendMessageWithFormat ("%s%s = '%s'\n", variable_name, type_name, value.GetStringAtIndex (0));
             else
             {
                 result.AppendMessageWithFormat ("%s%s:\n", variable_name, type_name);
                 for (unsigned i = 0, e = value.GetSize(); i != e; ++i)
                 {
-                    result.AppendMessageWithFormat ("  [%d]: '%s'\n", i, value.GetStringAtIndex (i));
+                    if (var_type == lldb::eSetVarTypeArray)
+                        result.AppendMessageWithFormat ("  [%d]: '%s'\n", i, value.GetStringAtIndex (i));
+                    else if (var_type == lldb::eSetVarTypeDictionary)
+                        result.AppendMessageWithFormat ("  '%s'\n", value.GetStringAtIndex (i));
                 }
             }
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
@@ -727,7 +753,7 @@ CommandObjectSettingsReplace::Execute (                         Args& command,
     const char *var_value;
     std::string value_string;
 
-    command.GetCommandString (value_string);
+    command.GetQuotedCommandString (value_string);
     var_value = value_string.c_str();
 
     if ((var_value == NULL) || (var_value[0] == '\0'))
@@ -872,7 +898,7 @@ CommandObjectSettingsInsertBefore::Execute (                              Args& 
     const char *var_value;
     std::string value_string;
 
-    command.GetCommandString (value_string);
+    command.GetQuotedCommandString (value_string);
     var_value = value_string.c_str();
 
     if ((var_value == NULL) || (var_value[0] == '\0'))
@@ -1019,7 +1045,7 @@ CommandObjectSettingsInsertAfter::Execute (                             Args& co
     const char *var_value;
     std::string value_string;
 
-    command.GetCommandString (value_string);
+    command.GetQuotedCommandString (value_string);
     var_value = value_string.c_str();
 
     if ((var_value == NULL) || (var_value[0] == '\0'))
@@ -1144,7 +1170,7 @@ CommandObjectSettingsAppend::Execute (Args& command,
     const char *var_value;
     std::string value_string;
 
-    command.GetCommandString (value_string);
+    command.GetQuotedCommandString (value_string);
     var_value = value_string.c_str();
 
     if ((var_value == NULL) || (var_value[0] == '\0'))

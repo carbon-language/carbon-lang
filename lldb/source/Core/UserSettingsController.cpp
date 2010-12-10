@@ -780,18 +780,31 @@ UserSettingsController::GetAllDefaultSettingValues (StreamString &result_stream)
         m_default_settings->GetInstanceSettingsValue (entry, var_name, tmp_value, NULL);
 
         StreamString value_string;
+        bool multi_value = false;
 
         if (tmp_value.GetSize() == 1)
             value_string.Printf ("%s", tmp_value.GetStringAtIndex (0));
         else
         {
             for (int j = 0; j < tmp_value.GetSize(); ++j)
-                value_string.Printf ("%s ", tmp_value.GetStringAtIndex (j));
+            {
+                if (entry.var_type == lldb::eSetVarTypeArray)
+                    value_string.Printf ("\n  [%d]: '%s'", j, tmp_value.GetStringAtIndex (j));
+                else if (entry.var_type == lldb::eSetVarTypeDictionary)
+                    value_string.Printf ("\n  '%s'", tmp_value.GetStringAtIndex (j));
+            }
+            multi_value = true;
         }
 
         if (! parent_prefix.empty())
-            result_stream.Printf ("%s.%s (%s) = '%s'\n", prefix, var_name.AsCString(),
-                                  UserSettingsController::GetTypeString (entry.var_type), value_string.GetData());
+        {
+            if (multi_value)
+                result_stream.Printf ("%s.%s (%s):%s\n", prefix, var_name.AsCString(),
+                                      UserSettingsController::GetTypeString (entry.var_type), value_string.GetData());
+            else
+                result_stream.Printf ("%s.%s (%s) = '%s'\n", prefix, var_name.AsCString(),
+                                      UserSettingsController::GetTypeString (entry.var_type), value_string.GetData());
+        }
     }
 }
 
@@ -1366,10 +1379,12 @@ UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
                                 value.GetStringAtIndex (0));
         else
         {
-            description.Printf ("%s (%s) = '", full_var_name.GetData(), GetTypeString (entry.var_type));
+            description.Printf ("%s (%s):\n", full_var_name.GetData(), GetTypeString (entry.var_type));
             for (int j = 0; j < value.GetSize(); ++j)
-                description.Printf ("%s ", value.GetStringAtIndex (j));
-            description.Printf ("'");
+                if (entry.var_type == lldb::eSetVarTypeArray)
+                    description.Printf ("  [%d]: '%s'\n", j, value.GetStringAtIndex (j));
+                else if (entry.var_type == lldb::eSetVarTypeDictionary)
+                    description.Printf ("  '%s'\n", value.GetStringAtIndex (j));
         }
 
         result_stream.Printf ("%s\n", description.GetData());
