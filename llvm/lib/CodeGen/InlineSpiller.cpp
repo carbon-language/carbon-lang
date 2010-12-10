@@ -15,15 +15,12 @@
 #define DEBUG_TYPE "regalloc"
 #include "Spiller.h"
 #include "LiveRangeEdit.h"
-#include "SplitKit.h"
 #include "VirtRegMap.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
-#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -36,18 +33,12 @@ using namespace llvm;
 static cl::opt<bool>
 VerifySpills("verify-spills", cl::desc("Verify after each spill/split"));
 
-static cl::opt<bool>
-ExtraSpillerSplits("extra-spiller-splits",
-                   cl::desc("Enable additional splitting during splitting"));
-
 namespace {
 class InlineSpiller : public Spiller {
   MachineFunctionPass &pass_;
   MachineFunction &mf_;
   LiveIntervals &lis_;
   LiveStacks &lss_;
-  MachineDominatorTree &mdt_;
-  MachineLoopInfo &loops_;
   AliasAnalysis *aa_;
   VirtRegMap &vrm_;
   MachineFrameInfo &mfi_;
@@ -55,8 +46,6 @@ class InlineSpiller : public Spiller {
   const TargetInstrInfo &tii_;
   const TargetRegisterInfo &tri_;
   const BitVector reserved_;
-
-  SplitAnalysis splitAnalysis_;
 
   // Variables that are valid during spill(), but used by multiple methods.
   LiveRangeEdit *edit_;
@@ -76,16 +65,13 @@ public:
       mf_(mf),
       lis_(pass.getAnalysis<LiveIntervals>()),
       lss_(pass.getAnalysis<LiveStacks>()),
-      mdt_(pass.getAnalysis<MachineDominatorTree>()),
-      loops_(pass.getAnalysis<MachineLoopInfo>()),
       aa_(&pass.getAnalysis<AliasAnalysis>()),
       vrm_(vrm),
       mfi_(*mf.getFrameInfo()),
       mri_(mf.getRegInfo()),
       tii_(*mf.getTarget().getInstrInfo()),
       tri_(*mf.getTarget().getRegisterInfo()),
-      reserved_(tri_.getReservedRegs(mf_)),
-      splitAnalysis_(mf, lis_, loops_) {}
+      reserved_(tri_.getReservedRegs(mf_)) {}
 
   void spill(LiveInterval *li,
              SmallVectorImpl<LiveInterval*> &newIntervals,
@@ -94,8 +80,6 @@ public:
   void spill(LiveRangeEdit &);
 
 private:
-  bool split();
-
   bool reMaterializeFor(MachineBasicBlock::iterator MI);
   void reMaterializeAll();
 
@@ -115,42 +99,6 @@ Spiller *createInlineSpiller(MachineFunctionPass &pass,
     mf.verify(&pass);
   return new InlineSpiller(pass, mf, vrm);
 }
-}
-
-/// split - try splitting the current interval into pieces that may allocate
-/// separately. Return true if successful.
-bool InlineSpiller::split() {
-  splitAnalysis_.analyze(&edit_->getParent());
-
-  // Try splitting around loops.
-  if (ExtraSpillerSplits) {
-    const MachineLoop *loop = splitAnalysis_.getBestSplitLoop();
-    if (loop) {
-      SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
-        .splitAroundLoop(loop);
-      return true;
-    }
-  }
-
-  // Try splitting into single block intervals.
-  SplitAnalysis::BlockPtrSet blocks;
-  if (splitAnalysis_.getMultiUseBlocks(blocks)) {
-    SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
-      .splitSingleBlocks(blocks);
-    return true;
-  }
-
-  // Try splitting inside a basic block.
-  if (ExtraSpillerSplits) {
-    const MachineBasicBlock *MBB = splitAnalysis_.getBlockForInsideSplit();
-    if (MBB){
-      SplitEditor(splitAnalysis_, lis_, vrm_, mdt_, *edit_)
-        .splitInsideBlock(MBB);
-      return true;
-    }
-  }
-
-  return false;
 }
 
 /// reMaterializeFor - Attempt to rematerialize edit_->getReg() before MI instead of
@@ -376,9 +324,6 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
                << ':' << edit.getParent() << "\n");
   assert(edit.getParent().isSpillable() &&
          "Attempting to spill already spilled value.");
-
-  if (split())
-    return;
 
   reMaterializeAll();
 
