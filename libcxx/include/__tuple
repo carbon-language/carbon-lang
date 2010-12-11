@@ -68,12 +68,13 @@ template <class _Tp, size_t _Size> struct _LIBCPP_VISIBLE array;
 
 template <class _Tp> struct __tuple_like : false_type {};
 
+template <class _Tp> struct __tuple_like<const _Tp> : public __tuple_like<_Tp> {};
+template <class _Tp> struct __tuple_like<volatile _Tp> : public __tuple_like<_Tp> {};
+template <class _Tp> struct __tuple_like<const volatile _Tp> : public __tuple_like<_Tp> {};
+
 template <class... _Tp> struct __tuple_like<tuple<_Tp...>> : true_type {};
-template <class... _Tp> struct __tuple_like<const tuple<_Tp...>> : true_type {};
 template <class _T1, class _T2> struct __tuple_like<pair<_T1, _T2> > : true_type {};
-template <class _T1, class _T2> struct __tuple_like<const pair<_T1, _T2> > : true_type {};
 template <class _Tp, size_t _Size> struct __tuple_like<array<_Tp, _Size> > : true_type {};
-template <class _Tp, size_t _Size> struct __tuple_like<const array<_Tp, _Size> > : true_type {};
 
 template <size_t _Ip, class ..._Tp>
 typename tuple_element<_Ip, tuple<_Tp...>>::type&
