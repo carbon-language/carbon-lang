@@ -51,6 +51,7 @@ namespace clang
     class DeclStmt;
     class DependencyOutputOptions;
     class Diagnostic;
+    class DiagnosticClient;
     class DiagnosticOptions;
     class EnumDecl;
     class Expr;
