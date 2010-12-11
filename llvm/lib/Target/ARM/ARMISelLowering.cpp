@@ -4727,16 +4727,37 @@ static SDValue PerformORCombine(SDNode *N,
   // Case (1): or (and A, mask), val => ARMbfi A, val, mask
   if ((C = dyn_cast<ConstantSDNode>(N1))) {
     unsigned Val = C->getZExtValue();
-    if (!ARM::isBitFieldInvertedMask(Mask) || (Val & ~Mask) != Val)
+    if ((Val & ~Mask) != Val)
       return SDValue();
-    Val >>= CountTrailingZeros_32(~Mask);
 
-    Res = DAG.getNode(ARMISD::BFI, DL, VT, N0.getOperand(0),
-                      DAG.getConstant(Val, MVT::i32),
-                      DAG.getConstant(Mask, MVT::i32));
+    if (ARM::isBitFieldInvertedMask(Mask)) {
+      Val >>= CountTrailingZeros_32(~Mask);
 
-    // Do not add new nodes to DAG combiner worklist.
-    DCI.CombineTo(N, Res, false);
+      Res = DAG.getNode(ARMISD::BFI, DL, VT, N0.getOperand(0),
+                        DAG.getConstant(Val, MVT::i32),
+                        DAG.getConstant(Mask, MVT::i32));
+
+      // Do not add new nodes to DAG combiner worklist.
+      DCI.CombineTo(N, Res, false);
+    } else if (N0.getOperand(0).getOpcode() == ISD::SHL &&
+               isa<ConstantSDNode>(N0.getOperand(0).getOperand(1)) &&
+               ARM::isBitFieldInvertedMask(~Mask)) {
+      // Case (3): or (and (shl A, #shamt), mask), B => ARMbfi B, A, ~mask
+      // where lsb(mask) == #shamt
+      SDValue ShAmt = N0.getOperand(0).getOperand(1);
+      unsigned ShAmtC = cast<ConstantSDNode>(ShAmt)->getZExtValue();
+      unsigned LSB = CountTrailingZeros_32(Mask);
+      if (ShAmtC != LSB)
+        return SDValue();
+      //unsigned Width = (32 - CountLeadingZeros_32(Mask)) - LSB;
+
+      Res = DAG.getNode(ARMISD::BFI, DL, VT, N1,
+                        N0.getOperand(0).getOperand(0),
+                        DAG.getConstant(~Mask, MVT::i32));
+
+      // Do not add new nodes to DAG combiner worklist.
+      DCI.CombineTo(N, Res, false);
+    }
   } else if (N1.getOpcode() == ISD::AND) {
     // case (2) or (and A, mask), (and B, mask2) => ARMbfi A, (lsr B, amt), mask
     C = dyn_cast<ConstantSDNode>(N1.getOperand(1));

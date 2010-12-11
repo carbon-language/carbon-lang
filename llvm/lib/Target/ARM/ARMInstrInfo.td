@@ -225,16 +225,6 @@ def sext_16_node : PatLeaf<(i32 GPR:$a), [{
   return CurDAG->ComputeNumSignBits(SDValue(N,0)) >= 17;
 }]>;
 
-/// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
-/// e.g., 0xf000ffff
-def bf_inv_mask_imm : Operand<i32>,
-                      PatLeaf<(imm), [{
-  return ARM::isBitFieldInvertedMask(N->getZExtValue());
-}] > {
-  let EncoderMethod = "getBitfieldInvertedMaskOpValue";
-  let PrintMethod = "printBitfieldInvMaskImmOperand";
-}
-
 /// Split a 32-bit immediate into two 16 bit parts.
 def hi16 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() >> 16, MVT::i32);
@@ -460,6 +450,16 @@ def imm0_31_m1 : Operand<i32>, PatLeaf<(imm), [{
 //
 def movt_imm : Operand<i32> {
   let EncoderMethod = "getMovtImmOpValue";
+}
+
+/// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
+/// e.g., 0xf000ffff
+def bf_inv_mask_imm : Operand<i32>,
+                      PatLeaf<(imm), [{
+  return ARM::isBitFieldInvertedMask(N->getZExtValue());
+}] > {
+  let EncoderMethod = "getBitfieldInvertedMaskOpValue";
+  let PrintMethod = "printBitfieldInvMaskImmOperand";
 }
 
 // Define ARM specific addressing modes.

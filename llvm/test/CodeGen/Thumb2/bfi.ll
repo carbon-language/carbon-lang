@@ -38,3 +38,14 @@ entry:
   %or = or i32 %and2, %and                        ; <i32> [#uses=1]
   ret i32 %or
 }
+
+; rdar://8752056
+define i32 @f4(i32 %a) nounwind {
+; CHECK: f4
+; CHECK: movw r1, #3137
+; CHECK: bfi r1, r0, #15, #5
+  %1 = shl i32 %a, 15
+  %ins7 = and i32 %1, 1015808
+  %ins12 = or i32 %ins7, 3137
+  ret i32 %ins12
+}
