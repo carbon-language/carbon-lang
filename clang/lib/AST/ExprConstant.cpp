@@ -2091,12 +2091,13 @@ public:
   bool VisitCastExpr(CastExpr *E);
 
   bool VisitBinaryOperator(const BinaryOperator *E);
+  bool VisitUnaryOperator(const UnaryOperator *E);
+  bool VisitConditionalOperator(const ConditionalOperator *E);
   bool VisitChooseExpr(const ChooseExpr *E)
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
   bool VisitUnaryExtension(const UnaryOperator *E)
     { return Visit(E->getSubExpr()); }
-  // FIXME Missing: unary +/-/~, binary div, ImplicitValueInitExpr,
-  //                conditional ?:, comma
+  // FIXME Missing: ImplicitValueInitExpr
 };
 } // end anonymous namespace
 
@@ -2227,6 +2228,17 @@ bool ComplexExprEvaluator::VisitCastExpr(CastExpr *E) {
 }
 
 bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
+  if (E->getOpcode() == BO_Comma) {
+    if (!Visit(E->getRHS()))
+      return false;
+
+    // If we can't evaluate the LHS, it might have side effects;
+    // conservatively mark it.
+    if (!E->getLHS()->isEvaluatable(Info.Ctx))
+      Info.EvalResult.HasSideEffects = true;
+
+    return true;
+  }
   if (!Visit(E->getLHS()))
     return false;
 
@@ -2291,9 +2303,95 @@ bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
          LHS.getComplexIntImag() * RHS.getComplexIntReal());
     }
     break;
+  case BO_Div:
+    if (Result.isComplexFloat()) {
+      ComplexValue LHS = Result;
+      APFloat &LHS_r = LHS.getComplexFloatReal();
+      APFloat &LHS_i = LHS.getComplexFloatImag();
+      APFloat &RHS_r = RHS.getComplexFloatReal();
+      APFloat &RHS_i = RHS.getComplexFloatImag();
+      APFloat &Res_r = Result.getComplexFloatReal();
+      APFloat &Res_i = Result.getComplexFloatImag();
+
+      APFloat Den = RHS_r;
+      Den.multiply(RHS_r, APFloat::rmNearestTiesToEven);
+      APFloat Tmp = RHS_i;
+      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
+      Den.add(Tmp, APFloat::rmNearestTiesToEven);
+
+      Res_r = LHS_r;
+      Res_r.multiply(RHS_r, APFloat::rmNearestTiesToEven);
+      Tmp = LHS_i;
+      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
+      Res_r.add(Tmp, APFloat::rmNearestTiesToEven);
+      Res_r.divide(Den, APFloat::rmNearestTiesToEven);
+
+      Res_i = LHS_i;
+      Res_i.multiply(RHS_r, APFloat::rmNearestTiesToEven);
+      Tmp = LHS_r;
+      Tmp.multiply(RHS_i, APFloat::rmNearestTiesToEven);
+      Res_i.subtract(Tmp, APFloat::rmNearestTiesToEven);
+      Res_i.divide(Den, APFloat::rmNearestTiesToEven);
+    } else {
+      if (RHS.getComplexIntReal() == 0 && RHS.getComplexIntImag() == 0) {
+        // FIXME: what about diagnostics?
+        return false;
+      }
+      ComplexValue LHS = Result;
+      APSInt Den = RHS.getComplexIntReal() * RHS.getComplexIntReal() +
+        RHS.getComplexIntImag() * RHS.getComplexIntImag();
+      Result.getComplexIntReal() =
+        (LHS.getComplexIntReal() * RHS.getComplexIntReal() +
+         LHS.getComplexIntImag() * RHS.getComplexIntImag()) / Den;
+      Result.getComplexIntImag() =
+        (LHS.getComplexIntImag() * RHS.getComplexIntReal() -
+         LHS.getComplexIntReal() * RHS.getComplexIntImag()) / Den;
+    }
+    break;
   }
 
   return true;
+}
+
+bool ComplexExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
+  // Get the operand value into 'Result'.
+  if (!Visit(E->getSubExpr()))
+    return false;
+
+  switch (E->getOpcode()) {
+  default:
+    // FIXME: what about diagnostics?
+    return false;
+  case UO_Extension:
+    return true;
+  case UO_Plus:
+    // The result is always just the subexpr.
+    return true;
+  case UO_Minus:
+    if (Result.isComplexFloat()) {
+      Result.getComplexFloatReal().changeSign();
+      Result.getComplexFloatImag().changeSign();
+    }
+    else {
+      Result.getComplexIntReal() = -Result.getComplexIntReal();
+      Result.getComplexIntImag() = -Result.getComplexIntImag();
+    }
+    return true;
+  case UO_Not:
+    if (Result.isComplexFloat())
+      Result.getComplexFloatImag().changeSign();
+    else
+      Result.getComplexIntImag() = -Result.getComplexIntImag();
+    return true;
+  }
+}
+
+bool ComplexExprEvaluator::VisitConditionalOperator(const ConditionalOperator *E) {
+  bool Cond;
+  if (!HandleConversionToBool(E->getCond(), Cond, Info))
+    return false;
+
+  return Visit(Cond ? E->getTrueExpr() : E->getFalseExpr());
 }
 
 //===----------------------------------------------------------------------===//
