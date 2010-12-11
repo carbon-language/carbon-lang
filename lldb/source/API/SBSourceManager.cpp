@@ -9,6 +9,7 @@
 
 
 #include "lldb/API/SBSourceManager.h"
+#include "lldb/API/SBStream.h"
 
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/Core/Stream.h"
@@ -49,26 +50,23 @@ SBSourceManager::DisplaySourceLinesWithLineNumbers
     uint32_t context_before,
     uint32_t context_after,
     const char* current_line_cstr,
-    FILE *f
+    SBStream &s
 )
 {
     if (m_opaque_ptr == NULL)
         return 0;
 
-    if (f == NULL)
+    if (s.m_opaque_ap.get() == NULL)
         return 0;
 
     if (file.IsValid())
     {
-        StreamFile str (f);
-
-
         return m_opaque_ptr->DisplaySourceLinesWithLineNumbers (*file,
                                                                 line,
                                                                 context_before,
                                                                 context_after,
                                                                 current_line_cstr,
-                                                                &str);
+                                                                s.m_opaque_ap.get());
     }
     return 0;
 }

@@ -3,6 +3,8 @@ Test lldb core component: SourceManager.
 
 Test cases:
 
+o test_display_source_python:
+  Test display of source using the SBSourceManager API.
 o test_modify_source_file_while_debugging:
   Test the caching mechanism of the source manager.
 """
@@ -21,10 +23,52 @@ class SourceManagerTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
 
+    @python_api_test
+    def test_display_source_python(self):
+        """Test display of source using the SBSourceManager API."""
+        self.buildDefault()
+        self.display_source_python()
+
     def test_modify_source_file_while_debugging(self):
         """Modify a source file while debugging the executable."""
         self.buildDefault()
         self.modify_source_file_while_debugging()
+
+    def display_source_python(self):
+        """Display source using the SBSourceManager API."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        # Launch the process, and do not stop at the entry point.
+        process = target.LaunchProcess([], [], os.ctermid(), 0, False)
+
+        #
+        # Exercise Python APIs to display source lines.
+        #
+
+        # Create the filespec for 'main.c'.
+        filespec = lldb.SBFileSpec('main.c', False)
+        source_mgr = self.dbg.GetSourceManager()
+        # Use a string stream as the destination.
+        stream = lldb.SBStream()
+        source_mgr.DisplaySourceLinesWithLineNumbers(filespec,
+                                                     self.line,
+                                                     2, # context before
+                                                     2, # context after
+                                                     "=>", # prefix for current line
+                                                     stream)
+
+        # 2   	
+        # 3   	int main(int argc, char const *argv[]) {
+        # 4 =>	    printf("Hello world.\n"); // Set break point at this line.
+        # 5   	    return 0;
+        # 6   	}
+        self.expect(stream.GetData(), "Source code displayed correctly",
+                    exe=False,
+            patterns = ['=>.*Hello world'])        
 
     def modify_source_file_while_debugging(self):
         """Modify a source file while debugging the executable."""

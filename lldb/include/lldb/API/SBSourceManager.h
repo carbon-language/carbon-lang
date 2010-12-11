@@ -34,7 +34,7 @@ public:
                                        uint32_t context_before,
                                        uint32_t context_after,
                                        const char* current_line_cstr,
-                                       FILE *f);
+                                       lldb::SBStream &s);
 
 
 protected:

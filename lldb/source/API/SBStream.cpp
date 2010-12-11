@@ -17,7 +17,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 SBStream::SBStream () :
-    m_opaque_ap (),
+    m_opaque_ap (new StreamString()),
     m_is_file (false)
 {
 }
