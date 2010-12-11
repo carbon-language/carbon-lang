@@ -710,6 +710,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
     // replacements taken care of; 3). whether or not the Execute function wants raw input or not.
 
     StreamString revised_command_line;
+    size_t actual_cmd_name_len = 0;
     while (!done)
     {
         StripFirstWord (command_string, next_word);
@@ -720,12 +721,14 @@ CommandInterpreter::HandleCommand (const char *command_line,
             revised_command_line.Printf ("%s", alias_result.c_str());
             if (cmd_obj)
                 wants_raw_input = cmd_obj->WantsRawCommandString ();
+            actual_cmd_name_len = strlen (cmd_obj->GetCommandName());
         }
         else if (!cmd_obj)
         {
             cmd_obj = GetCommandObject (next_word.c_str());
             if (cmd_obj)
             {
+                actual_cmd_name_len += next_word.length();
                 revised_command_line.Printf ("%s", next_word.c_str());
                 wants_raw_input = cmd_obj->WantsRawCommandString ();
             }
@@ -739,6 +742,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
             CommandObject *sub_cmd_obj = ((CommandObjectMultiword *) cmd_obj)->GetSubcommandObject (next_word.c_str());
             if (sub_cmd_obj)
             {
+                actual_cmd_name_len += next_word.length() + 1;
                 revised_command_line.Printf (" %s", next_word.c_str());
                 cmd_obj = sub_cmd_obj;
                 wants_raw_input = cmd_obj->WantsRawCommandString ();
@@ -805,7 +809,12 @@ CommandInterpreter::HandleCommand (const char *command_line,
         
         command_string = revised_command_line.GetData();
         std::string command_name (cmd_obj->GetCommandName());
-        std::string remainder (command_string.substr (command_name.size()));
+        std::string remainder;
+        if (actual_cmd_name_len < command_string.length()) 
+            remainder = command_string.substr (actual_cmd_name_len);  // Note: 'actual_cmd_name_len' may be considerably shorter
+                                                           // than cmd_obj->GetCommandName(), because name completion
+                                                           // allows users to enter short versions of the names,
+                                                           // e.g. 'br s' for 'breakpoint set'.
         
         // Remove any initial spaces
         std::string white_space (" \t\v");
