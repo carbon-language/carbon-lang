@@ -153,6 +153,9 @@ protected:
   void verify();
 #endif
 
+  // Use this group name for NamedRegionTimer.
+  static const char *TimerGroupName;
+
 private:
   void seedLiveVirtRegs(std::priority_queue<std::pair<float, unsigned> >&);
 

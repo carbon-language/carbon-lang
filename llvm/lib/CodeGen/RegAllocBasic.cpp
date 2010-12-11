@@ -42,6 +42,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Timer.h"
 
 #include <cstdlib>
 
@@ -55,6 +56,8 @@ static RegisterRegAlloc basicRegAlloc("basic", "basic register allocator",
 static cl::opt<bool>
 VerifyRegAlloc("verify-regalloc",
                cl::desc("Verify live intervals before renaming"));
+
+const char *RegAllocBase::TimerGroupName = "Register Allocation";
 
 namespace {
 
@@ -204,6 +207,7 @@ void RegAllocBase::LiveUnionArray::init(LiveIntervalUnion::Allocator &allocator,
 }
 
 void RegAllocBase::init(VirtRegMap &vrm, LiveIntervals &lis) {
+  NamedRegionTimer T("Initialize", TimerGroupName, TimePassesIsEnabled);
   TRI = &vrm.getTargetRegInfo();
   MRI = &vrm.getRegInfo();
   VRM = &vrm;
@@ -364,6 +368,7 @@ RegAllocBase::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
 
 // Add newly allocated physical registers to the MBB live in sets.
 void RegAllocBase::addMBBLiveIns(MachineFunction *MF) {
+  NamedRegionTimer T("MBB Live Ins", TimerGroupName, TimePassesIsEnabled);
   typedef SmallVector<MachineBasicBlock*, 8> MBBVec;
   MBBVec liveInMBBs;
   MachineBasicBlock &entryMBB = *MF->begin();

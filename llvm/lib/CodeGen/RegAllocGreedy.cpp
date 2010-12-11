@@ -35,6 +35,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Timer.h"
 
 using namespace llvm;
 
@@ -58,7 +59,7 @@ public:
 
   /// Return the pass name.
   virtual const char* getPassName() const {
-    return "Basic Register Allocator";
+    return "Greedy Register Allocator";
   }
 
   /// RAGreedy analysis usage.
@@ -254,17 +255,19 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   // Try to reassign interfering physical register. Priority among
   // PhysRegSpillCands does not matter yet, because the reassigned virtual
   // registers will still be assigned to physical registers.
-  for (SmallVectorImpl<unsigned>::iterator PhysRegI = ReassignCands.begin(),
-         PhysRegE = ReassignCands.end(); PhysRegI != PhysRegE; ++PhysRegI) {
-    if (reassignInterferences(VirtReg, *PhysRegI))
-      // Reassignment successfull. The caller may allocate now to this PhysReg.
-      return *PhysRegI;
+  {
+    NamedRegionTimer T("Reassign", TimerGroupName, TimePassesIsEnabled);
+    for (SmallVectorImpl<unsigned>::iterator PhysRegI = ReassignCands.begin(),
+          PhysRegE = ReassignCands.end(); PhysRegI != PhysRegE; ++PhysRegI)
+      if (reassignInterferences(VirtReg, *PhysRegI))
+        // Reassignment successfull. Allocate now to this PhysReg.
+        return *PhysRegI;
   }
-
   PhysRegSpillCands.insert(PhysRegSpillCands.end(), ReassignCands.begin(),
                            ReassignCands.end());
 
   // Try to spill another interfering reg with less spill weight.
+  NamedRegionTimer T("Spiller", TimerGroupName, TimePassesIsEnabled);
   //
   // FIXME: do this in two steps: (1) check for unspillable interferences while
   // accumulating spill weight; (2) spill the interferences with lowest
@@ -305,8 +308,11 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   addMBBLiveIns(MF);
 
   // Run rewriter
-  std::auto_ptr<VirtRegRewriter> rewriter(createVirtRegRewriter());
-  rewriter->runOnMachineFunction(*MF, *VRM, LIS);
+  {
+    NamedRegionTimer T("Rewriter", TimerGroupName, TimePassesIsEnabled);
+    std::auto_ptr<VirtRegRewriter> rewriter(createVirtRegRewriter());
+    rewriter->runOnMachineFunction(*MF, *VRM, LIS);
+  }
 
   // The pass output is in VirtRegMap. Release all the transient data.
   releaseMemory();
