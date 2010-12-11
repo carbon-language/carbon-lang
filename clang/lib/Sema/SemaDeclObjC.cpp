@@ -1525,25 +1525,6 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
     if (C->IsClassExtension()) {
       ObjCInterfaceDecl *CCPrimary = C->getClassInterface();
       DiagnoseClassExtensionDupMethods(C, CCPrimary);
-      for (ObjCContainerDecl::prop_iterator I = C->prop_begin(),
-           E = C->prop_end(); I != E; ++I) {
-        // Any property declared in a class extension might have user
-        // declared setter or getter in current class extension or one
-        // of the other class extensions. Mark them as synthesized as
-        // property will be synthesized when property with same name is
-        // seen in the @implementation.
-        for (const ObjCCategoryDecl *ClsExtDecl =
-             CCPrimary->getFirstClassExtension();
-             ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
-          if (ObjCMethodDecl *GetterMethod =
-              ClsExtDecl->getInstanceMethod((*I)->getGetterName()))
-            GetterMethod->setSynthesized(true);
-          if (!(*I)->isReadOnly())
-            if (ObjCMethodDecl *SetterMethod =
-                ClsExtDecl->getInstanceMethod((*I)->getSetterName()))
-              SetterMethod->setSynthesized(true);
-        }        
-      }
     }
   }
   if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(ClassDecl)) {
@@ -1560,6 +1541,38 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
     IC->setAtEndRange(AtEnd);
     if (ObjCInterfaceDecl* IDecl = IC->getClassInterface()) {
+      // Any property declared in a class extension might have user
+      // declared setter or getter in current class extension or one
+      // of the other class extensions. Mark them as synthesized as
+      // property will be synthesized when property with same name is
+      // seen in the @implementation.
+      for (const ObjCCategoryDecl *ClsExtDecl =
+           IDecl->getFirstClassExtension();
+           ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
+        for (ObjCContainerDecl::prop_iterator I = ClsExtDecl->prop_begin(),
+             E = ClsExtDecl->prop_end(); I != E; ++I) {
+          ObjCPropertyDecl *Property = (*I);
+          // Skip over properties declared @dynamic
+          if (const ObjCPropertyImplDecl *PIDecl
+              = IC->FindPropertyImplDecl(Property->getIdentifier()))
+            if (PIDecl->getPropertyImplementation() 
+                  == ObjCPropertyImplDecl::Dynamic)
+              continue;
+          
+          for (const ObjCCategoryDecl *CExtDecl =
+               IDecl->getFirstClassExtension();
+               CExtDecl; CExtDecl = CExtDecl->getNextClassExtension()) {
+            if (ObjCMethodDecl *GetterMethod =
+                CExtDecl->getInstanceMethod(Property->getGetterName()))
+              GetterMethod->setSynthesized(true);
+            if (!Property->isReadOnly())
+              if (ObjCMethodDecl *SetterMethod =
+                  CExtDecl->getInstanceMethod(Property->getSetterName()))
+                SetterMethod->setSynthesized(true);
+          }        
+        }
+      }
+      
       if (LangOpts.ObjCNonFragileABI2)
         DefaultSynthesizeProperties(S, IC, IDecl);
       ImplMethodsVsClassMethods(S, IC, IDecl);

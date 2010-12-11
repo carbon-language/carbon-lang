@@ -19,6 +19,7 @@ void FUNC () {
 @private
     NSObject *_bar;
     NSObject *_baz;
+    NSObject *_bam;
 }
 - (NSObject *)baz;
 @end
@@ -30,10 +31,20 @@ void FUNC () {
 @interface rdar8747333 ()
 @property (readwrite, assign) NSObject *bar;
 @property (readwrite, assign) NSObject *baz;
+@property (readwrite, assign) NSObject *bam;
+@property (readwrite, assign) NSObject *warn;
 @end
 
-@implementation rdar8747333
+@interface rdar8747333 ()
+- (NSObject *)bam;
+- (NSObject *)warn;	// expected-note {{method definition for 'warn' not found}}
+- (void)setWarn : (NSObject *)val; // expected-note {{method definition for 'setWarn:' not found}}
+@end
+
+@implementation rdar8747333 // expected-warning {{incomplete implementation}}
 @synthesize bar = _bar;
 @synthesize baz = _baz;
+@synthesize bam = _bam;
+@dynamic warn;
 @end
 
