@@ -1736,46 +1736,6 @@ Ideal output:
 
 //===---------------------------------------------------------------------===//
 
-Testcase:
-int x(int a) { return (a & 0x80) ? 0x100 : 0; }
-int y(int a) { return (a & 0x80) *2; }
-
-Current:
-	testl	$128, 4(%esp)
-	setne	%al
-	movzbl	%al, %eax
-	shll	$8, %eax
-	ret
-
-Better:
-	movl	4(%esp), %eax
-	addl	%eax, %eax
-	andl	$256, %eax
-	ret
-
-This is another general instcombine transformation that is profitable on all
-targets.  In LLVM IR, these functions look like this:
-
-define i32 @x(i32 %a) nounwind readnone {
-entry:
-	%0 = and i32 %a, 128
-	%1 = icmp eq i32 %0, 0
-	%iftmp.0.0 = select i1 %1, i32 0, i32 256
-	ret i32 %iftmp.0.0
-}
-
-define i32 @y(i32 %a) nounwind readnone {
-entry:
-	%0 = shl i32 %a, 1
-	%1 = and i32 %0, 256
-	ret i32 %1
-}
-
-Replacing an icmp+select with a shift should always be considered profitable in
-instcombine.
-
-//===---------------------------------------------------------------------===//
-
 Re-implement atomic builtins __sync_add_and_fetch() and __sync_sub_and_fetch
 properly.
 

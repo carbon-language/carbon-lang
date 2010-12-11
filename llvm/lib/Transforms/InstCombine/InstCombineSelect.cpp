@@ -446,7 +446,58 @@ Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
 }
 
 
+/// foldSelectICmpAnd - If one of the constants is zero (we know they can't
+/// both be) and we have an icmp instruction with zero, and we have an 'and'
+/// with the non-constant value and a power of two we can turn the select
+/// into a shift on the result of the 'and'.
+static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
+                                ConstantInt *FalseVal,
+                                InstCombiner::BuilderTy *Builder) {
+  const ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition());
+  if (!IC || !IC->isEquality())
+    return 0;
 
+  // One of the select arms must be zero.
+  if (!TrueVal->isZero() && !FalseVal->isZero())
+    return 0;
+
+  if (ConstantInt *C = dyn_cast<ConstantInt>(IC->getOperand(1)))
+    if (!C->isZero())
+      return 0;
+
+  ConstantInt *AndRHS;
+  Value *LHS = IC->getOperand(0);
+  if (LHS->getType() != SI.getType() ||
+      !match(LHS, m_And(m_Value(), m_ConstantInt(AndRHS))))
+    return 0;
+
+
+  // Make sure the mask in the 'and' and one of the select arms is a power of 2.
+  if (!AndRHS->getValue().isPowerOf2() ||
+      (!TrueVal->getValue().isPowerOf2() &&
+       !FalseVal->getValue().isPowerOf2()))
+    return 0;
+
+  // Determine which shift is needed to transform result of the 'and' into the
+  // desired result.
+  ConstantInt *ValC = !TrueVal->isZero() ? TrueVal : FalseVal;
+  unsigned ValZeros = ValC->getValue().logBase2();
+  unsigned AndZeros = AndRHS->getValue().logBase2();
+
+  Value *V = LHS;
+  if (ValZeros > AndZeros)
+    V = Builder->CreateShl(V, ValZeros - AndZeros);
+  else if (ValZeros < AndZeros)
+    V = Builder->CreateLShr(V, AndZeros - ValZeros);
+
+  // Okay, now we know that everything is set up, we just don't know whether we
+  // have a icmp_ne or icmp_eq and whether the true or false val is the zero.
+  bool ShouldNotVal = !TrueVal->isZero();
+  ShouldNotVal ^= IC->getPredicate() == ICmpInst::ICMP_NE;
+  if (ShouldNotVal)
+    V = Builder->CreateXor(V, ValC);
+  return V;
+}
 
 Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   Value *CondVal = SI.getCondition();
@@ -509,32 +560,9 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         Value *NotCond = Builder->CreateNot(CondVal, "not."+CondVal->getName());
         return new SExtInst(NotCond, SI.getType());
       }
-      
-      if (ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition())) {
-        // If one of the constants is zero (we know they can't both be) and we
-        // have an icmp instruction with zero, and we have an 'and' with the
-        // non-constant value, eliminate this whole mess.  This corresponds to
-        // cases like this: ((X & 27) ? 27 : 0)
-        if (TrueValC->isZero() || FalseValC->isZero())
-          if (IC->isEquality() && isa<ConstantInt>(IC->getOperand(1)) &&
-              cast<Constant>(IC->getOperand(1))->isNullValue())
-            if (Instruction *ICA = dyn_cast<Instruction>(IC->getOperand(0)))
-              if (ICA->getOpcode() == Instruction::And &&
-                  isa<ConstantInt>(ICA->getOperand(1)) &&
-                  (ICA->getOperand(1) == TrueValC ||
-                   ICA->getOperand(1) == FalseValC) &&
-               cast<ConstantInt>(ICA->getOperand(1))->getValue().isPowerOf2()) {
-                // Okay, now we know that everything is set up, we just don't
-                // know whether we have a icmp_ne or icmp_eq and whether the 
-                // true or false val is the zero.
-                bool ShouldNotVal = !TrueValC->isZero();
-                ShouldNotVal ^= IC->getPredicate() == ICmpInst::ICMP_NE;
-                Value *V = ICA;
-                if (ShouldNotVal)
-                  V = Builder->CreateXor(V, ICA->getOperand(1));
-                return ReplaceInstUsesWith(SI, V);
-              }
-      }
+
+      if (Value *V = foldSelectICmpAnd(SI, TrueValC, FalseValC, Builder))
+        return ReplaceInstUsesWith(SI, V);
     }
 
   // See if we are selecting two values based on a comparison of the two values.

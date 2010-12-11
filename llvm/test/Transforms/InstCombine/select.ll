@@ -223,6 +223,31 @@ define i32 @test15d(i32 %X) {
 ; CHECK: ret i32 %t1
 }
 
+;; (a & 128) ? 256 : 0
+define i32 @test15e(i32 %X) {
+        %t1 = and i32 %X, 128
+        %t2 = icmp ne i32 %t1, 0
+        %t3 = select i1 %t2, i32 256, i32 0
+        ret i32 %t3
+; CHECK: @test15e
+; CHECK: %t1 = shl i32 %X, 1
+; CHECK: and i32 %t1, 256
+; CHECK: ret i32
+}
+
+;; (a & 128) ? 0 : 256
+define i32 @test15f(i32 %X) {
+        %t1 = and i32 %X, 128
+        %t2 = icmp ne i32 %t1, 0
+        %t3 = select i1 %t2, i32 0, i32 256
+        ret i32 %t3
+; CHECK: @test15f
+; CHECK: %t1 = shl i32 %X, 1
+; CHECK: and i32 %t1, 256
+; CHECK: xor i32 %{{.*}}, 256
+; CHECK: ret i32
+}
+
 define i32 @test16(i1 %C, i32* %P) {
         %P2 = select i1 %C, i32* %P, i32* null          
         %V = load i32* %P2              
