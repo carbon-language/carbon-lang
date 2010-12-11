@@ -248,6 +248,56 @@ define i32 @test15f(i32 %X) {
 ; CHECK: ret i32
 }
 
+;; (a & 8) ? -1 : -9
+define i32 @test15g(i32 %X) {
+        %t1 = and i32 %X, 8
+        %t2 = icmp ne i32 %t1, 0
+        %t3 = select i1 %t2, i32 -1, i32 -9
+        ret i32 %t3
+; CHECK: @test15g
+; CHECK-NEXT: %1 = or i32 %X, -9
+; CHECK-NEXT: ret i32 %1
+}
+
+;; (a & 8) ? -9 : -1
+define i32 @test15h(i32 %X) {
+        %t1 = and i32 %X, 8
+        %t2 = icmp ne i32 %t1, 0
+        %t3 = select i1 %t2, i32 -9, i32 -1
+        ret i32 %t3
+; CHECK: @test15h
+; CHECK-NEXT: %1 = or i32 %X, -9
+; CHECK-NEXT: %2 = xor i32 %1, 8
+; CHECK-NEXT: ret i32 %2
+}
+
+;; (a & 2) ? 577 : 1089
+define i32 @test15i(i32 %X) {
+        %t1 = and i32 %X, 2
+        %t2 = icmp ne i32 %t1, 0
+        %t3 = select i1 %t2, i32 577, i32 1089
+        ret i32 %t3
+; CHECK: @test15i
+; CHECK-NEXT: %t1 = shl i32 %X, 8
+; CHECK-NEXT: %1 = and i32 %t1, 512
+; CHECK-NEXT: %2 = xor i32 %1, 512
+; CHECK-NEXT: %3 = add i32 %2, 577
+; CHECK-NEXT: ret i32 %3
+}
+
+;; (a & 2) ? 1089 : 577
+define i32 @test15j(i32 %X) {
+        %t1 = and i32 %X, 2
+        %t2 = icmp ne i32 %t1, 0
+        %t3 = select i1 %t2, i32 1089, i32 577
+        ret i32 %t3
+; CHECK: @test15j
+; CHECK-NEXT: %t1 = shl i32 %X, 8
+; CHECK-NEXT: %1 = and i32 %t1, 512
+; CHECK-NEXT: %2 = add i32 %1, 577
+; CHECK-NEXT: ret i32 %2
+}
+
 define i32 @test16(i1 %C, i32* %P) {
         %P2 = select i1 %C, i32* %P, i32* null          
         %V = load i32* %P2              

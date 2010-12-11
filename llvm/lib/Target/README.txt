@@ -1055,18 +1055,6 @@ Should also combine to x | 8.  Currently not optimized with "clang
 
 //===---------------------------------------------------------------------===//
 
-int a(int x) {return (x & 8) == 0 ? -1 : -9;}
-Should combine to (x | -9) ^ 8.  Currently not optimized with "clang
--emit-llvm-bc | opt -std-compile-opts".
-
-//===---------------------------------------------------------------------===//
-
-int a(int x) {return (x & 8) == 0 ? -9 : -1;}
-Should combine to x | -9.  Currently not optimized with "clang
--emit-llvm-bc | opt -std-compile-opts".
-
-//===---------------------------------------------------------------------===//
-
 int a(int x) {return ((x | -9) ^ 8) & x;}
 Should combine to x & -9.  Currently not optimized with "clang
 -emit-llvm-bc | opt -std-compile-opts".

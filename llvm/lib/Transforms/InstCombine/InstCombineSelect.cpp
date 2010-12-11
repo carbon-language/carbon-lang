@@ -457,10 +457,6 @@ static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
   if (!IC || !IC->isEquality())
     return 0;
 
-  // One of the select arms must be zero.
-  if (!TrueVal->isZero() && !FalseVal->isZero())
-    return 0;
-
   if (ConstantInt *C = dyn_cast<ConstantInt>(IC->getOperand(1)))
     if (!C->isZero())
       return 0;
@@ -471,6 +467,24 @@ static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
       !match(LHS, m_And(m_Value(), m_ConstantInt(AndRHS))))
     return 0;
 
+  // If both select arms are non-zero see if we have a select of the form
+  // 'x ? 2^n + C : C'. Then we can offset both arms by C, use the logic
+  // for 'x ? 2^n : 0' and fix the thing up at the end.
+  ConstantInt *Offset = 0;
+  if (!TrueVal->isZero() && !FalseVal->isZero()) {
+    if ((TrueVal->getValue() - FalseVal->getValue()).isPowerOf2())
+      Offset = FalseVal;
+    else if ((FalseVal->getValue() - TrueVal->getValue()).isPowerOf2())
+      Offset = TrueVal;
+    else
+      return 0;
+
+    // Adjust TrueVal and FalseVal to the offset.
+    TrueVal = ConstantInt::get(Builder->getContext(),
+                               TrueVal->getValue() - Offset->getValue());
+    FalseVal = ConstantInt::get(Builder->getContext(),
+                                FalseVal->getValue() - Offset->getValue());
+  }
 
   // Make sure the mask in the 'and' and one of the select arms is a power of 2.
   if (!AndRHS->getValue().isPowerOf2() ||
@@ -496,6 +510,10 @@ static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
   ShouldNotVal ^= IC->getPredicate() == ICmpInst::ICMP_NE;
   if (ShouldNotVal)
     V = Builder->CreateXor(V, ValC);
+
+  // Apply an offset if needed.
+  if (Offset)
+    V = Builder->CreateAdd(V, Offset);
   return V;
 }
 
