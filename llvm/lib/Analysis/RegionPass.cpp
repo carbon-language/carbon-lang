@@ -259,8 +259,7 @@ void RegionPass::assignPassManager(PMStack &PMS,
 
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
-    Pass *P = dynamic_cast<Pass *>(RGPM);
-    TPM->schedulePass(P);
+    TPM->schedulePass(RGPM);
 
     // [4] Push new manager into PMS
     PMS.push(RGPM);
