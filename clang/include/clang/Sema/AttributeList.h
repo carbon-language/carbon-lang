@@ -109,6 +109,7 @@ public:
     AT_gnu_inline,
     AT_hiding,
     AT_host,
+    AT_launch_bounds,
     AT_malloc,
     AT_may_alias,
     AT_mode,

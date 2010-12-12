@@ -2316,6 +2316,51 @@ static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
                                            NumParams.getZExtValue()));
 }
 
+static void HandleLaunchBoundsAttr(Decl *d, const AttributeList &Attr, Sema &S){
+  if (S.LangOpts.CUDA) {
+    // check the attribute arguments.
+    if (Attr.getNumArgs() != 1 && Attr.getNumArgs() != 2) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+        << "1 or 2";
+      return;
+    }
+
+    if (!isFunctionOrMethod(d)) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 0 /*function*/;
+      return;
+    }
+
+    Expr *MaxThreadsExpr = Attr.getArg(0);
+    llvm::APSInt MaxThreads(32);
+    if (MaxThreadsExpr->isTypeDependent() ||
+        MaxThreadsExpr->isValueDependent() ||
+        !MaxThreadsExpr->isIntegerConstantExpr(MaxThreads, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
+        << "launch_bounds" << 1 << MaxThreadsExpr->getSourceRange();
+      return;
+    }
+
+    llvm::APSInt MinBlocks(32);
+    if (Attr.getNumArgs() > 1) {
+      Expr *MinBlocksExpr = Attr.getArg(1);
+      if (MinBlocksExpr->isTypeDependent() ||
+          MinBlocksExpr->isValueDependent() ||
+          !MinBlocksExpr->isIntegerConstantExpr(MinBlocks, S.Context)) {
+        S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int)
+          << "launch_bounds" << 2 << MinBlocksExpr->getSourceRange();
+        return;
+      }
+    }
+
+    d->addAttr(::new (S.Context) CUDALaunchBoundsAttr(Attr.getLoc(), S.Context,
+                                                      MaxThreads.getZExtValue(),
+                                                     MinBlocks.getZExtValue()));
+  } else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "launch_bounds";
+  }
+}
+
 static void HandleFinalAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
@@ -2529,6 +2574,9 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_gnu_inline:  HandleGNUInlineAttr   (D, Attr, S); break;
   case AttributeList::AT_hiding:      HandleHidingAttr      (D, Attr, S); break;
   case AttributeList::AT_host:        HandleHostAttr        (D, Attr, S); break;
+  case AttributeList::AT_launch_bounds:
+    HandleLaunchBoundsAttr(D, Attr, S);
+    break;
   case AttributeList::AT_mode:        HandleModeAttr        (D, Attr, S); break;
   case AttributeList::AT_malloc:      HandleMallocAttr      (D, Attr, S); break;
   case AttributeList::AT_may_alias:   HandleMayAliasAttr    (D, Attr, S); break;

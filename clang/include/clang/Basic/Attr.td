@@ -190,6 +190,11 @@ def CUDAHost : Attr {
   let Spellings = ["host"];
 }
 
+def CUDALaunchBounds : Attr {
+  let Spellings = ["launch_bounds"];
+  let Args = [IntArgument<"MaxThreads">, DefaultIntArgument<"MinBlocks", 0>];
+}
+
 def CUDAShared : Attr {
   let Spellings = ["shared"];
 }
