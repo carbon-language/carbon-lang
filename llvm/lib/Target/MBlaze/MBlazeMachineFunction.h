@@ -34,6 +34,9 @@ private:
   /// saved. This is used on Prologue and Epilogue to emit RA save/restore
   int RAStackOffset;
 
+  /// Holds the stack adjustment necessary for each function.
+  int StackAdjust;
+
   /// MBlazeFIHolder - Holds a FrameIndex and it's Stack Pointer Offset
   struct MBlazeFIHolder {
 
@@ -76,11 +79,15 @@ private:
   // VarArgsFrameIndex - FrameIndex for start of varargs area.
   int VarArgsFrameIndex;
 
+  /// LiveInFI - keeps track of the frame indexes in a callers stack
+  /// frame that are live into a function.
+  SmallVector<int, 16> LiveInFI;
+
 public:
   MBlazeFunctionInfo(MachineFunction& MF)
-  : FPStackOffset(0), RAStackOffset(0), GPHolder(-1,-1),
+  : FPStackOffset(0), RAStackOffset(0), StackAdjust(0), GPHolder(-1,-1),
     HasLoadArgs(false), HasStoreVarArgs(false), SRetReturnReg(0),
-    GlobalBaseReg(0), VarArgsFrameIndex(0)
+    GlobalBaseReg(0), VarArgsFrameIndex(0), LiveInFI()
   {}
 
   int getFPStackOffset() const { return FPStackOffset; }
@@ -88,6 +95,9 @@ public:
 
   int getRAStackOffset() const { return RAStackOffset; }
   void setRAStackOffset(int Off) { RAStackOffset = Off; }
+
+  int getStackAdjust() const { return StackAdjust; }
+  void setStackAdjust(int Adj) { StackAdjust = Adj; }
 
   int getGPStackOffset() const { return GPHolder.SPOffset; }
   int getGPFI() const { return GPHolder.FI; }
@@ -97,6 +107,19 @@ public:
 
   bool hasLoadArgs() const { return HasLoadArgs; }
   bool hasStoreVarArgs() const { return HasStoreVarArgs; }
+
+  void recordLiveIn(int FI) {
+    LiveInFI.push_back(FI);
+  }
+
+  bool isLiveIn(int FI) {
+    for (unsigned i = 0, e = LiveInFI.size(); i < e; ++i)
+      if (FI == LiveInFI[i]) return true;
+
+    return false;
+  }
+
+  const SmallVector<int, 16>& getLiveIn() const { return LiveInFI; }
 
   void recordLoadArgsFI(int FI, int SPOffset) {
     if (!HasLoadArgs) HasLoadArgs=true;

@@ -650,7 +650,7 @@ def : Pat<(MBlazeJmpLink (i32 texternalsym:$dst)),
           (BRLID (i32 R15), texternalsym:$dst)>;
 
 def : Pat<(MBlazeJmpLink GPR:$dst),
-          (BRLD (i32 R15), GPR:$dst)>;
+          (BRALD (i32 R15), GPR:$dst)>;
 
 // Shift Instructions
 def : Pat<(shl GPR:$L, GPR:$R), (ShiftL GPR:$L, GPR:$R)>;

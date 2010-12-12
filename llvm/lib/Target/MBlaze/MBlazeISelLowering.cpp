@@ -766,6 +766,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       unsigned StackLoc = VA.getLocMemOffset() + 4;
       int FI = MFI->CreateFixedObject(ArgSize, 0, true);
       MBlazeFI->recordLoadArgsFI(FI, -StackLoc);
+      MBlazeFI->recordLiveIn(FI);
 
       // Create load nodes to retrieve arguments from the stack
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());

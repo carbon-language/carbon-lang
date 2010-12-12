@@ -210,6 +210,8 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                     RegScavenger *RS) const {
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
 
   unsigned i = 0;
   while (!MI.getOperand(i).isFI()) {
@@ -233,11 +235,14 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
   // as explained on LowerFormalArguments, detect negative offsets
   // and adjust SPOffsets considering the final stack size.
-  spOffset = (spOffset < 0) ? (stackSize - spOffset) : spOffset;
-  spOffset += MI.getOperand(oi).getImm();
-  DEBUG(errs() << "Offset     : " << spOffset << "\n" << "<--------->\n");
+  int Offset = (spOffset < 0) ? (stackSize - spOffset) : spOffset;
+  Offset += MI.getOperand(oi).getImm();
+  if (!MFI->isFixedObjectIndex(FrameIndex) && !MBlazeFI->isLiveIn(FrameIndex) && spOffset >= 0)
+    Offset -= MBlazeFI->getStackAdjust();
 
-  MI.getOperand(oi).ChangeToImmediate(spOffset);
+  DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
+
+  MI.getOperand(oi).ChangeToImmediate(Offset);
   MI.getOperand(i).ChangeToRegister(getFrameRegister(MF), false);
 }
 
