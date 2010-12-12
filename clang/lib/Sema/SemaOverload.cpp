@@ -4618,6 +4618,8 @@ class BuiltinOperatorOverloadBuilder {
   llvm::SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes;
   OverloadCandidateSet &CandidateSet;
 
+  /// \brief Helper method to factor out the common pattern of adding overloads
+  /// for '++' and '--' builtin operators.
   void addPlusPlusMinusMinusStyleOverloads(QualType CandidateTy,
                                            bool HasVolatile) {
     QualType ParamTypes[2] = {
