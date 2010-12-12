@@ -4,12 +4,16 @@ dnl **************************************************************************
 AC_INIT([[[SAMPLE]]],[[[x.xx]]],[bugs@yourdomain])
 
 dnl Identify where LLVM source tree is
-LLVM_SRC_ROOT="../../"
-LLVM_OBJ_ROOT="../../"
+LLVM_SRC_ROOT="../.."
+LLVM_OBJ_ROOT="../.."
+
+dnl Find absolute paths to LLVM source and object trees
+LLVM_ABS_SRC_ROOT="`cd $srcdir ; cd $LLVM_SRC_ROOT ; pwd`"
+LLVM_ABS_OBJ_ROOT="`cd $LLVM_OBJ_ROOT ; pwd`"
 
 dnl Tell autoconf that this is an LLVM project being configured
 dnl This provides the --with-llvmsrc and --with-llvmobj options
-LLVM_CONFIG_PROJECT($LLVM_SRC_ROOT,$LLVM_OBJ_ROOT)
+LLVM_CONFIG_PROJECT($LLVM_ABS_SRC_ROOT,$LLVM_ABS_OBJ_ROOT)
 
 dnl Tell autoconf that the auxilliary files are actually located in
 dnl the LLVM autoconf directory, not here.
