@@ -611,9 +611,6 @@ void SelectionDAG::DeallocateNode(SDNode *N) {
 bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   bool Erased = false;
   switch (N->getOpcode()) {
-  case ISD::EntryToken:
-    llvm_unreachable("EntryToken should not be in CSEMaps!");
-    return false;
   case ISD::HANDLENODE: return false;  // noop.
   case ISD::CONDCODE:
     assert(CondCodeNodes[cast<CondCodeSDNode>(N)->get()] &&
@@ -643,6 +640,8 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   }
   default:
     // Remove it from the CSE Map.
+    assert(N->getOpcode() != ISD::DELETED_NODE && "DELETED_NODE in CSEMap!");
+    assert(N->getOpcode() != ISD::EntryToken && "EntryToken in CSEMap!");
     Erased = CSEMap.RemoveNode(N);
     break;
   }
