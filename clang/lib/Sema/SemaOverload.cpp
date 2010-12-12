@@ -5533,7 +5533,6 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                                            CandidateTypes, CandidateSet);
 
   // Dispatch over the operation to add in only those overloads which apply.
-  bool isComparison = false;
   switch (Op) {
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
@@ -5600,31 +5599,26 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_EqualEqual:
   case OO_ExclaimEqual:
     OpBuilder.addEqualEqualOrNotEqualMemberPointerOverloads();
-
-    // Fall through
-
+    // Fall through.
   case OO_Less:
   case OO_Greater:
   case OO_LessEqual:
   case OO_GreaterEqual:
     OpBuilder.addRelationalPointerOrEnumeralOverloads(
       UserDefinedBinaryOperators);
-
-    // Fall through.
-    isComparison = true;
+    OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/true);
+    break;
 
   BinaryPlus:
   BinaryMinus:
-    if (!isComparison) {
-      // We didn't fall through, so we must have OO_Plus or OO_Minus.
-      OpBuilder.addBinaryPlusOrMinusPointerOverloads(Op);
-    }
-    // Fall through
+    OpBuilder.addBinaryPlusOrMinusPointerOverloads(Op);
+    OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);;
+    break;
 
   case OO_Slash:
   BinaryStar:
   Conditional:
-    OpBuilder.addGenericBinaryArithmeticOverloads(isComparison);
+    OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
     break;
 
   case OO_Percent:
