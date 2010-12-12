@@ -185,11 +185,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New;
       if (Old->getOpcode() == MBlaze::ADJCALLSTACKDOWN) {
-        New = BuildMI(MF, Old->getDebugLoc(), TII.get(MBlaze::ADDI), MBlaze::R1)
+        New = BuildMI(MF,Old->getDebugLoc(),TII.get(MBlaze::ADDIK),MBlaze::R1)
                 .addReg(MBlaze::R1).addImm(-Amount);
       } else {
         assert(Old->getOpcode() == MBlaze::ADJCALLSTACKUP);
-        New = BuildMI(MF, Old->getDebugLoc(), TII.get(MBlaze::ADDI), MBlaze::R1)
+        New = BuildMI(MF,Old->getDebugLoc(),TII.get(MBlaze::ADDIK),MBlaze::R1)
                 .addReg(MBlaze::R1).addImm(Amount);
       }
 

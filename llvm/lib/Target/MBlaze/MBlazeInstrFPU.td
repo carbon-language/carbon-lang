@@ -143,74 +143,74 @@ let Predicates=[HasFPU] in {
 // SET_CC operations
 let Predicates=[HasFPU] in {
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETEQ),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_EQ GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETNE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_EQ GPR:$L, GPR:$R), 1)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETOEQ),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_EQ GPR:$L, GPR:$R), 2)>;
  def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETONE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (XOR (FCMP_UN GPR:$L, GPR:$R),
                             (FCMP_EQ GPR:$L, GPR:$R)), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETONE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (OR (FCMP_UN GPR:$L, GPR:$R),
                            (FCMP_EQ GPR:$L, GPR:$R)), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETGT),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_GT GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETLT),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_LT GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETGE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_GE GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETLE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_LE GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETOGT),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_GT GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETOLT),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_LT GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETOGE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_GE GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETOLE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_LE GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETUEQ),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (OR (FCMP_UN GPR:$L, GPR:$R),
                            (FCMP_EQ GPR:$L, GPR:$R)), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETUNE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_NE GPR:$L, GPR:$R), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETUGT),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (OR (FCMP_UN GPR:$L, GPR:$R),
                            (FCMP_GT GPR:$L, GPR:$R)), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETULT),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (OR (FCMP_UN GPR:$L, GPR:$R),
                            (FCMP_LT GPR:$L, GPR:$R)), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETUGE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (OR (FCMP_UN GPR:$L, GPR:$R),
                            (FCMP_GE GPR:$L, GPR:$R)), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETULE),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (OR (FCMP_UN GPR:$L, GPR:$R),
                            (FCMP_LE GPR:$L, GPR:$R)), 2)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETO),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_UN GPR:$L, GPR:$R), 1)>;
   def : Pat<(setcc (f32 GPR:$L), (f32 GPR:$R), SETUO),
-            (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+            (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                        (FCMP_UN GPR:$L, GPR:$R), 2)>;
 }
 

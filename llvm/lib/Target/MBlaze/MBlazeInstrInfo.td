@@ -327,9 +327,9 @@ class BranchCI<bits<6> op, bits<5> br, string instr_asm> :
 //===----------------------------------------------------------------------===//
 
 let isCommutable = 1, isAsCheapAsAMove = 1 in {
-  def ADD    :  Arith<0x00, 0x000, "add    ", add,  IIAlu>;
+  def ADD    :  Arith<0x00, 0x000, "add    ", addc, IIAlu>;
   def ADDC   :  Arith<0x02, 0x000, "addc   ", adde, IIAlu>;
-  def ADDK   :  Arith<0x04, 0x000, "addk   ", addc, IIAlu>;
+  def ADDK   :  Arith<0x04, 0x000, "addk   ", add,  IIAlu>;
   def ADDKC  : ArithN<0x06, 0x000, "addkc  ", IIAlu>;
   def AND    :  Logic<0x21, 0x000, "and    ", and>;
   def OR     :  Logic<0x20, 0x000, "or     ", or>;
@@ -343,9 +343,9 @@ let isAsCheapAsAMove = 1 in {
   def ANDN   :  ArithN<0x23, 0x000, "andn   ", IIAlu>;
   def CMP    :  ArithN<0x05, 0x001, "cmp    ", IIAlu>;
   def CMPU   :  ArithN<0x05, 0x003, "cmpu   ", IIAlu>;
-  def RSUB   :  ArithR<0x01, 0x000, "rsub   ", sub,  IIAlu>;
+  def RSUB   :  ArithR<0x01, 0x000, "rsub   ", subc, IIAlu>;
   def RSUBC  :  ArithR<0x03, 0x000, "rsubc  ", sube, IIAlu>;
-  def RSUBK  :  ArithR<0x05, 0x000, "rsubk  ", subc, IIAlu>;
+  def RSUBK  :  ArithR<0x05, 0x000, "rsubk  ", sub,  IIAlu>;
   def RSUBKC : ArithRN<0x07, 0x000, "rsubkc ", IIAlu>;
 }
 
@@ -589,7 +589,7 @@ let rb = 0 in {
 }
 
 let isCodeGenOnly=1 in {
-  def ADDI32  : ArithI32<0x08, "addi   ", simm16, immSExt16>;
+  def ADDIK32 : ArithI32<0x08, "addik  ", simm16, immSExt16>;
   def ORI32   : LogicI32<0x28, "ori    ">;
   def BRLID32 : BranchLI<0x2E, 0x14, "brlid  ">;
 }
@@ -632,11 +632,11 @@ def IMM : MBlazeInst<0x2C, FCCI, (outs), (ins simm16:$imm),
 
 // Small immediates
 def : Pat<(i32 0), (ADD (i32 R0), (i32 R0))>;
-def : Pat<(i32 immSExt16:$imm), (ADDI (i32 R0), imm:$imm)>;
+def : Pat<(i32 immSExt16:$imm), (ADDIK (i32 R0), imm:$imm)>;
 def : Pat<(i32 immZExt16:$imm), (ORI (i32 R0), imm:$imm)>;
 
 // Arbitrary immediates
-def : Pat<(i32 imm:$imm), (ADDI (i32 R0), imm:$imm)>;
+def : Pat<(i32 imm:$imm), (ADDIK (i32 R0), imm:$imm)>;
 
 // In register sign extension
 def : Pat<(sext_inreg GPR:$src, i16), (SEXT16 GPR:$src)>;
@@ -659,34 +659,34 @@ def : Pat<(srl GPR:$L, GPR:$R), (ShiftRL GPR:$L, GPR:$R)>;
 
 // SET_CC operations
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETEQ),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMP GPR:$R, GPR:$L), 1)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETNE),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMP GPR:$R, GPR:$L), 2)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETGT),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMP GPR:$R, GPR:$L), 3)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETLT),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMP GPR:$R, GPR:$L), 4)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETGE),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMP GPR:$R, GPR:$L), 5)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETLE),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMP GPR:$R, GPR:$L), 6)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETUGT),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMPU GPR:$R, GPR:$L), 3)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETULT),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMPU GPR:$R, GPR:$L), 4)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETUGE),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMPU GPR:$R, GPR:$L), 5)>;
 def : Pat<(setcc (i32 GPR:$L), (i32 GPR:$R), SETULE),
-          (Select_CC (ADDI (i32 R0), 1), (ADDI (i32 R0), 0),
+          (Select_CC (ADDIK (i32 R0), 1), (ADDIK (i32 R0), 0),
                      (CMPU GPR:$R, GPR:$L), 6)>;
 
 // SELECT operations
@@ -765,7 +765,7 @@ def : Pat<(MBWrapper tconstpool:$in),  (ORI (i32 R0), tconstpool:$in)>;
 def : Pat<(and (i32 GPR:$lh), (not (i32 GPR:$rh))),(ANDN GPR:$lh, GPR:$rh)>;
 
 // Arithmetic with immediates
-def : Pat<(add (i32 GPR:$in), imm:$imm),(ADDI GPR:$in, imm:$imm)>;
+def : Pat<(add (i32 GPR:$in), imm:$imm),(ADDIK GPR:$in, imm:$imm)>;
 def : Pat<(or (i32 GPR:$in), imm:$imm),(ORI GPR:$in, imm:$imm)>;
 def : Pat<(xor (i32 GPR:$in), imm:$imm),(XORI GPR:$in, imm:$imm)>;
 

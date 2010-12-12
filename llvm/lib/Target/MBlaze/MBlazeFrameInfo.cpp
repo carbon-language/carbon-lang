@@ -187,7 +187,7 @@ void MBlazeFrameInfo::emitPrologue(MachineFunction &MF) const {
   int RAOffset = MBlazeFI->getRAStackOffset();
 
   // Adjust stack : addi R1, R1, -imm
-  BuildMI(MBB, MBBI, DL, TII.get(MBlaze::ADDI), MBlaze::R1)
+  BuildMI(MBB, MBBI, DL, TII.get(MBlaze::ADDIK), MBlaze::R1)
       .addReg(MBlaze::R1).addImm(-StackSize);
 
   // swi  R15, R1, stack_loc
@@ -242,7 +242,7 @@ void MBlazeFrameInfo::emitEpilogue(MachineFunction &MF,
 
   // addi R1, R1, imm
   if (StackSize) {
-    BuildMI(MBB, MBBI, dl, TII.get(MBlaze::ADDI), MBlaze::R1)
+    BuildMI(MBB, MBBI, dl, TII.get(MBlaze::ADDIK), MBlaze::R1)
       .addReg(MBlaze::R1).addImm(StackSize);
   }
 }

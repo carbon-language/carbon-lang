@@ -61,7 +61,7 @@ public:
 static unsigned getRelaxedOpcode(unsigned Op) {
     switch (Op) {
     default:            return Op;
-    case MBlaze::ADDI:  return MBlaze::ADDI32;
+    case MBlaze::ADDIK: return MBlaze::ADDIK32;
     case MBlaze::ORI:   return MBlaze::ORI32;
     case MBlaze::BRLID: return MBlaze::BRLID32;
     }

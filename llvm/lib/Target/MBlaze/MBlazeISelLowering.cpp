@@ -268,7 +268,7 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addImm(31);
 
     unsigned IVAL = R.createVirtualRegister(MBlaze::GPRRegisterClass);
-    BuildMI(BB, dl, TII->get(MBlaze::ADDI), IVAL)
+    BuildMI(BB, dl, TII->get(MBlaze::ADDIK), IVAL)
       .addReg(MI->getOperand(1).getReg())
       .addImm(0);
 
@@ -297,7 +297,7 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     else
         llvm_unreachable("Cannot lower unknown shift instruction");
 
-    BuildMI(loop, dl, TII->get(MBlaze::ADDI), NAMT)
+    BuildMI(loop, dl, TII->get(MBlaze::ADDIK), NAMT)
       .addReg(SAMT)
       .addImm(-1);
 

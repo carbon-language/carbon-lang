@@ -210,7 +210,7 @@ SDNode* MBlazeDAGToDAGISel::Select(SDNode *Node) {
         int FI = dyn_cast<FrameIndexSDNode>(Node)->getIndex();
         EVT VT = Node->getValueType(0);
         SDValue TFI = CurDAG->getTargetFrameIndex(FI, VT);
-        unsigned Opc = MBlaze::ADDI;
+        unsigned Opc = MBlaze::ADDIK;
         if (Node->hasOneUse())
           return CurDAG->SelectNodeTo(Node, Opc, VT, TFI, imm);
         return CurDAG->getMachineNode(Opc, dl, VT, TFI, imm);

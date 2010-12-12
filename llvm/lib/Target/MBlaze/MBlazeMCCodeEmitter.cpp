@@ -141,7 +141,7 @@ EmitIMM(const MCInst &MI, unsigned &CurByte,raw_ostream &OS) const {
   switch (MI.getOpcode()) {
   default: break;
 
-  case MBlaze::ADDI32:
+  case MBlaze::ADDIK32:
   case MBlaze::ORI32:
   case MBlaze::BRLID32:
     EmitByte(0x0D, CurByte, OS);
@@ -168,7 +168,7 @@ EmitImmediate(const MCInst &MI, unsigned opNo, bool pcrel, unsigned &CurByte,
       Fixups.push_back(MCFixup::Create(0,oper.getExpr(),FixupKind));
       break;
     case MBlaze::ORI32:
-    case MBlaze::ADDI32:
+    case MBlaze::ADDIK32:
     case MBlaze::BRLID32:
       FixupKind = pcrel ? FK_PCRel_4 : FK_Data_4;
       Fixups.push_back(MCFixup::Create(0,oper.getExpr(),FixupKind));
