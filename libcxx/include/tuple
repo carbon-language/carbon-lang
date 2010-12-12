@@ -804,47 +804,84 @@ tuple_cat()
     return tuple<>();
 }
 
-template <class _Tuple>
-inline _LIBCPP_INLINE_VISIBILITY
-typename __tuple_cat_return<_Tuple>::type
-tuple_cat(_Tuple&& __tpl)
-{
-    typedef typename __tuple_cat_return<_Tuple>::type _R;
-    return _R(_STD::forward<_Tuple>(__tpl));
-}
+template <class _R, class _Indices, class _Tuple0, class ..._Tuples>
+struct __tuple_cat_return_ref_imp;
 
-template <class _Tuple0, size_t ..._I0, class _Tuple1, size_t ..._I1>
-inline _LIBCPP_INLINE_VISIBILITY
-typename __tuple_cat_return<_Tuple0, _Tuple1>::type
-__tuple_cat(_Tuple0&& __t0, __tuple_indices<_I0...>,
-            _Tuple1&& __t1, __tuple_indices<_I1...>)
-{
-    typedef typename __tuple_cat_return<_Tuple0, _Tuple1>::type _R;
-    return _R(get<_I0>(_STD::forward<_Tuple0>(__t0))...,
-              get<_I1>(_STD::forward<_Tuple1>(__t1))...);
-}
-
-template <class _Tuple0, class _Tuple1>
-inline _LIBCPP_INLINE_VISIBILITY
-typename __tuple_cat_return<_Tuple0, _Tuple1>::type
-tuple_cat(_Tuple0&& __t0, _Tuple1&& __t1)
+template <class ..._Types, size_t ..._I0, class _Tuple0>
+struct __tuple_cat_return_ref_imp<tuple<_Types...>, __tuple_indices<_I0...>, _Tuple0>
 {
     typedef typename remove_reference<_Tuple0>::type _T0;
-    typedef typename remove_reference<_Tuple1>::type _T1;
-    return __tuple_cat(_STD::forward<_Tuple0>(__t0),
-                       typename __make_tuple_indices<tuple_size<_T0>::value>::type(),
-                       _STD::forward<_Tuple1>(__t1),
-                       typename __make_tuple_indices<tuple_size<_T1>::value>::type());
-}
+    typedef tuple<_Types..., typename __apply_cv<_Tuple0,
+                          typename tuple_element<_I0, _T0>::type>::type&&...> type;
+};
 
-template <class _Tuple0, class _Tuple1, class... _Tuples>
-inline _LIBCPP_INLINE_VISIBILITY
-typename __tuple_cat_return<_Tuple0, _Tuple1, _Tuples...>::type
-tuple_cat(_Tuple0&& __t0, _Tuple1&& __t1, _Tuples&&... __tpls)
+template <class ..._Types, size_t ..._I0, class _Tuple0, class _Tuple1, class ..._Tuples>
+struct __tuple_cat_return_ref_imp<tuple<_Types...>, __tuple_indices<_I0...>,
+                                  _Tuple0, _Tuple1, _Tuples...>
+    : public __tuple_cat_return_ref_imp<
+         tuple<_Types..., typename __apply_cv<_Tuple0,
+               typename tuple_element<_I0,
+                  typename remove_reference<_Tuple0>::type>::type>::type&&...>,
+         typename __make_tuple_indices<tuple_size<typename
+                                 remove_reference<_Tuple1>::type>::value>::type,
+         _Tuple1, _Tuples...>
 {
-    return tuple_cat(tuple_cat(_STD::forward<_Tuple0>(__t0),
-                               _STD::forward<_Tuple1>(__t1)),
-                               _STD::forward<_Tuples>(__tpls)...);
+};
+
+template <class _Tuple0, class ..._Tuples>
+struct __tuple_cat_return_ref
+    : public __tuple_cat_return_ref_imp<tuple<>,
+               typename __make_tuple_indices<
+                        tuple_size<typename remove_reference<_Tuple0>::type>::value
+               >::type, _Tuple0, _Tuples...>
+{
+};
+
+template <class _Types, class _I0, class _J0>
+struct __tuple_cat;
+
+template <class ..._Types, size_t ..._I0, size_t ..._J0>
+struct __tuple_cat<tuple<_Types...>, __tuple_indices<_I0...>, __tuple_indices<_J0...>>
+{
+    template <class _Tuple0>
+    _LIBCPP_INLINE_VISIBILITY
+    typename __tuple_cat_return_ref<tuple<_Types...>&&, _Tuple0&&>::type
+    operator()(tuple<_Types...> __t, _Tuple0&& __t0)
+    {
+        return _STD::forward_as_tuple(_STD::forward<_Types>(get<_I0>(__t))...,
+                                      get<_J0>(_STD::forward<_Tuple0>(__t0))...);
+    }
+
+    template <class _Tuple0, class _Tuple1, class ..._Tuples>
+    _LIBCPP_INLINE_VISIBILITY
+    typename __tuple_cat_return_ref<tuple<_Types...>&&, _Tuple0&&, _Tuple1&&, _Tuples&&...>::type
+    operator()(tuple<_Types...> __t, _Tuple0&& __t0, _Tuple1&& __t1, _Tuples&& ...__tpls)
+    {
+        typedef typename remove_reference<_Tuple0>::type _T0;
+        typedef typename remove_reference<_Tuple1>::type _T1;
+        return __tuple_cat<
+           tuple<_Types..., typename __apply_cv<_Tuple0, typename tuple_element<_J0, _T0>::type>::type&&...>,
+           typename __make_tuple_indices<sizeof ...(_Types) + tuple_size<_T0>::value>::type,
+           typename __make_tuple_indices<tuple_size<_T1>::value>::type>()
+                           (_STD::forward_as_tuple(
+                              _STD::forward<_Types>(get<_I0>(__t))...,
+                              get<_J0>(_STD::forward<_Tuple0>(__t0))...
+                            ),
+                            _STD::forward<_Tuple1>(__t1),
+                            _STD::forward<_Tuples>(__tpls)...);
+    }
+};
+
+template <class _Tuple0, class... _Tuples>
+inline _LIBCPP_INLINE_VISIBILITY
+typename __tuple_cat_return<_Tuple0, _Tuples...>::type
+tuple_cat(_Tuple0&& __t0, _Tuples&&... __tpls)
+{
+    typedef typename remove_reference<_Tuple0>::type _T0;
+    return __tuple_cat<tuple<>, __tuple_indices<>,
+                  typename __make_tuple_indices<tuple_size<_T0>::value>::type>()
+                  (tuple<>(), _STD::forward<_Tuple0>(__t0),
+                                            _STD::forward<_Tuples>(__tpls)...);
 }
 
 template <class ..._Tp, class _Alloc>
