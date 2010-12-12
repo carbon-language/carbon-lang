@@ -285,6 +285,18 @@ void Sema::ActOnEndOfTranslationUnit() {
   // At PCH writing, implicit instantiations and VTable handling info are
   // stored and performed when the PCH is included.
   if (CompleteTranslationUnit) {
+    // If any dynamic classes have their key function defined within
+    // this translation unit, then those vtables are considered "used" and must
+    // be emitted.
+    for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I) {
+      if (const CXXMethodDecl *KeyFunction
+          = Context.getKeyFunction(DynamicClasses[I])) {
+        const FunctionDecl *Definition = 0;
+        if (KeyFunction->hasBody(Definition))
+          MarkVTableUsed(Definition->getLocation(), DynamicClasses[I], true);
+      }
+    }
+
     // If DefinedUsedVTables ends up marking any virtual member functions it
     // might lead to more pending template instantiations, which we then need
     // to instantiate.

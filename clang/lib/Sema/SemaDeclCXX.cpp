@@ -6895,21 +6895,9 @@ void Sema::MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,
 }
 
 bool Sema::DefineUsedVTables() {
-  // If any dynamic classes have their key function defined within
-  // this translation unit, then those vtables are considered "used" and must
-  // be emitted.
-  for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I) {
-    if (const CXXMethodDecl *KeyFunction
-                             = Context.getKeyFunction(DynamicClasses[I])) {
-      const FunctionDecl *Definition = 0;
-      if (KeyFunction->hasBody(Definition))
-        MarkVTableUsed(Definition->getLocation(), DynamicClasses[I], true);
-    }
-  }
-
   if (VTableUses.empty())
     return false;
-  
+
   // Note: The VTableUses vector could grow as a result of marking
   // the members of a class as "used", so we check the size each
   // time through the loop and prefer indices (with are stable) to
