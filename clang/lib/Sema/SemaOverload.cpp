@@ -5567,7 +5567,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       //      operator '->', the built-in candidates set is empty.
       break;
 
-    goto BinaryAmp;
+    OpBuilder.addBinaryBitwiseArithmeticOverloads(Op);
+    break;
 
   case OO_PlusPlus:
   case OO_MinusMinus:
@@ -5598,6 +5599,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_ExclaimEqual:
     OpBuilder.addEqualEqualOrNotEqualMemberPointerOverloads();
     // Fall through.
+
   case OO_Less:
   case OO_Greater:
   case OO_LessEqual:
@@ -5612,7 +5614,6 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     break;
 
   case OO_Percent:
-  BinaryAmp:
   case OO_Caret:
   case OO_Pipe:
   case OO_LessLess:
