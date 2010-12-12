@@ -27,11 +27,10 @@ loop_inner:
 
 loop_inner_finish:
     %inner.5 = add i32 %inner.2, 1
-    ; CHECK:        addi {{.*, 1}}
-
     call i32 (i8*,...)* @printf( i8* getelementptr([19 x i8]* @MSG,i32 0,i32 0),
                                  i32 %inner.0, i32 %inner.1, i32 %inner.2 )
     ; CHECK:        brlid
+    ; CHECK:        addik {{.*, 1}}
 
     %inner.6 = icmp eq i32 %inner.5, 100
     ; CHECK:        cmp

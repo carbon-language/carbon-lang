@@ -381,14 +381,14 @@ let Predicates=[HasDiv] in {
 //===----------------------------------------------------------------------===//
 
 let isAsCheapAsAMove = 1 in {
-  def ADDI    :   ArithI<0x08, "addi   ", add,  simm16, immSExt16>;
-  def ADDIC   :  ArithNI<0x0A, "addic  ", simm16, immSExt16>;
-  def ADDIK   :  ArithNI<0x0C, "addik  ", simm16, immSExt16>;
-  def ADDIKC  :   ArithI<0x0E, "addikc ", addc, simm16, immSExt16>;
-  def RSUBI   :  ArithRI<0x09, "rsubi  ", sub,  simm16, immSExt16>;
-  def RSUBIC  : ArithRNI<0x0B, "rsubic ", simm16, immSExt16>;
-  def RSUBIK  : ArithRNI<0x0D, "rsubik ", simm16, immSExt16>;
-  def RSUBIKC :  ArithRI<0x0F, "rsubikc", subc, simm16, immSExt16>;
+  def ADDI    :   ArithI<0x08, "addi   ", addc, simm16, immSExt16>;
+  def ADDIC   :   ArithI<0x0A, "addic  ", adde, simm16, immSExt16>;
+  def ADDIK   :   ArithI<0x0C, "addik  ", add,  simm16, immSExt16>;
+  def ADDIKC  :  ArithNI<0x0E, "addikc ", simm16, immSExt16>;
+  def RSUBI   :  ArithRI<0x09, "rsubi  ", subc,  simm16, immSExt16>;
+  def RSUBIC  :  ArithRI<0x0B, "rsubic ", sube, simm16, immSExt16>;
+  def RSUBIK  :  ArithRI<0x0D, "rsubik ", sub, simm16, immSExt16>;
+  def RSUBIKC : ArithRNI<0x0F, "rsubikc", simm16, immSExt16>;
   def ANDNI   :  ArithNI<0x2B, "andni  ", uimm16, immZExt16>;
   def ANDI    :   LogicI<0x29, "andi   ", and>;
   def ORI     :   LogicI<0x28, "ori    ", or>;
