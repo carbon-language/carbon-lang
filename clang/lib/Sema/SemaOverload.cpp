@@ -5543,7 +5543,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     if (NumArgs == 1)
       OpBuilder.addUnaryStarPointerOverloads();
     else
-      goto BinaryStar;
+      OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
     break;
 
   case OO_Plus: // '+' is either unary or binary
@@ -5551,15 +5551,18 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       OpBuilder.addUnaryPlusPointerOverloads();
       OpBuilder.addUnaryPlusOrMinusArithmeticOverloads();
     } else {
-      goto BinaryPlus;
+      OpBuilder.addBinaryPlusOrMinusPointerOverloads(Op);
+      OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
     }
     break;
 
   case OO_Minus: // '-' is either unary or binary
-    if (NumArgs == 1)
+    if (NumArgs == 1) {
       OpBuilder.addUnaryPlusOrMinusArithmeticOverloads();
-    else
-      goto BinaryMinus;
+    } else {
+      OpBuilder.addBinaryPlusOrMinusPointerOverloads(Op);
+      OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
+    }
     break;
 
   case OO_Amp: // '&' is either unary or binary
@@ -5609,15 +5612,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/true);
     break;
 
-  BinaryPlus:
-  BinaryMinus:
-    OpBuilder.addBinaryPlusOrMinusPointerOverloads(Op);
-    OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);;
-    break;
-
   case OO_Slash:
-  BinaryStar:
-  Conditional:
     OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
     break;
 
@@ -5672,7 +5667,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
   case OO_Conditional:
     OpBuilder.addConditionalOperatorOverloads();
-    goto Conditional;
+    OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
+    break;
   }
 }
 
