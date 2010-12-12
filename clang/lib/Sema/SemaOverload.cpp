@@ -4544,23 +4544,17 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     return VRQuals;
 }
 
-  
-/// AddBuiltinOperatorCandidates - Add the appropriate built-in
-/// operator overloads to the candidate set (C++ [over.built]), based
-/// on the operator @p Op and the arguments given. For example, if the
-/// operator is a binary '+', this routine might add "int
-/// operator+(int, int)" to cover integer addition.
-void
-Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
-                                   SourceLocation OpLoc,
-                                   Expr **Args, unsigned NumArgs,
-                                   OverloadCandidateSet& CandidateSet) {
-  // Information about arithmetic types useful to builtin-type
-  // calculations.
+namespace {
 
+/// \brief Helper class to manage the addition of builtin operator overload
+/// candidates. It provides shared state and utility methods used throughout
+/// the process, as well as a helper method to add each group of builtin
+/// operator overloads from the standard to a candidate set.
+class BuiltinOperatorOverloadBuilder {
+
+  // FIXME: Clean up and document the static helpers for arithmetic types here.
   // The "promoted arithmetic types" are the arithmetic
   // types are that preserved by promotion (C++ [over.built]p2).
-
   static const unsigned FirstIntegralType = 3;
   static const unsigned LastIntegralType = 18;
   static const unsigned FirstPromotedIntegralType = 3,
@@ -4569,43 +4563,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                         LastPromotedArithmeticType = 9;
   static const unsigned NumArithmeticTypes = 18;
 
-  static CanQualType ASTContext::* const ArithmeticTypes[NumArithmeticTypes] = {
-    // Start of promoted types.
-    &ASTContext::FloatTy,
-    &ASTContext::DoubleTy,
-    &ASTContext::LongDoubleTy,
-
-    // Start of integral types.
-    &ASTContext::IntTy,
-    &ASTContext::LongTy,
-    &ASTContext::LongLongTy,
-    &ASTContext::UnsignedIntTy,
-    &ASTContext::UnsignedLongTy,
-    &ASTContext::UnsignedLongLongTy,
-    // End of promoted types.
-
-    &ASTContext::BoolTy,
-    &ASTContext::CharTy,
-    &ASTContext::WCharTy,
-    &ASTContext::Char16Ty,
-    &ASTContext::Char32Ty,
-    &ASTContext::SignedCharTy,
-    &ASTContext::ShortTy,
-    &ASTContext::UnsignedCharTy,
-    &ASTContext::UnsignedShortTy
-    // End of integral types.
-  };
-  // FIXME: What about complex?
-  assert(ArithmeticTypes[FirstPromotedIntegralType] == &ASTContext::IntTy &&
-         "Invalid first promoted integral type");
-  assert(ArithmeticTypes[LastPromotedIntegralType - 1] 
-           == &ASTContext::UnsignedLongLongTy &&
-         "Invalid last promoted integral type");
-  assert(ArithmeticTypes[FirstPromotedArithmeticType] == &ASTContext::FloatTy &&
-         "Invalid first promoted arithmetic type");
-  assert(ArithmeticTypes[LastPromotedArithmeticType - 1] 
-           == &ASTContext::UnsignedLongLongTy &&
-         "Invalid last promoted arithmetic type");
+  static CanQualType ASTContext::* const ArithmeticTypes[NumArithmeticTypes];
 
   // Accelerator table for performing the usual arithmetic conversions.
   // The rules are basically:
@@ -4620,17 +4578,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   // better not to make any assumptions).
   enum PromT {  Flt,  Dbl, LDbl,   SI,   SL,  SLL,   UI,   UL,  ULL, Dep=-1 };
   static PromT UsualArithmeticConversionsTypes
-    [LastPromotedArithmeticType][LastPromotedArithmeticType] = {
-    /* Flt*/ {  Flt,  Dbl, LDbl,  Flt,  Flt,  Flt,  Flt,  Flt,  Flt },
-    /* Dbl*/ {  Dbl,  Dbl, LDbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl },
-    /*LDbl*/ { LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl },
-    /*  SI*/ {  Flt,  Dbl, LDbl,   SI,   SL,  SLL,   UI,   UL,  ULL },
-    /*  SL*/ {  Flt,  Dbl, LDbl,   SL,   SL,  SLL,  Dep,   UL,  ULL },
-    /* SLL*/ {  Flt,  Dbl, LDbl,  SLL,  SLL,  SLL,  Dep,  Dep,  ULL },
-    /*  UI*/ {  Flt,  Dbl, LDbl,   UI,  Dep,  Dep,   UI,   UL,  ULL },
-    /*  UL*/ {  Flt,  Dbl, LDbl,   UL,   UL,  Dep,   UL,   UL,  ULL },
-    /* ULL*/ {  Flt,  Dbl, LDbl,  ULL,  ULL,  ULL,  ULL,  ULL,  ULL }
-  };
+    [LastPromotedArithmeticType][LastPromotedArithmeticType];
   struct UsualArithmeticConversionsType {
     static CanQualType find(ASTContext &C, unsigned L, unsigned R) {
       assert(L < LastPromotedArithmeticType);
@@ -4655,7 +4603,858 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       return C.UnsignedLongLongTy;
     }
   };
-         
+
+  // Common instance state available to all overload candidate addition methods.
+  Sema &S;
+  Expr **Args;
+  unsigned NumArgs;
+  Qualifiers VisibleTypeConversionsQuals;
+  llvm::SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes;
+  OverloadCandidateSet &CandidateSet;
+
+  void addPlusPlusMinusMinusStyleOverloads(QualType CandidateTy,
+                                           bool HasVolatile) {
+    QualType ParamTypes[2] = {
+      S.Context.getLValueReferenceType(CandidateTy),
+      S.Context.IntTy
+    };
+
+    // Non-volatile version.
+    if (NumArgs == 1)
+      S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
+    else
+      S.AddBuiltinCandidate(CandidateTy, ParamTypes, Args, 2, CandidateSet);
+
+    // Use a heuristic to reduce number of builtin candidates in the set:
+    // add volatile version only if there are conversions to a volatile type.
+    if (HasVolatile) {
+      ParamTypes[0] =
+        S.Context.getLValueReferenceType(
+          S.Context.getVolatileType(CandidateTy));
+      if (NumArgs == 1)
+        S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
+      else
+        S.AddBuiltinCandidate(CandidateTy, ParamTypes, Args, 2, CandidateSet);
+    }
+  }
+
+public:
+  BuiltinOperatorOverloadBuilder(
+    Sema &S, Expr **Args, unsigned NumArgs,
+    Qualifiers VisibleTypeConversionsQuals,
+    llvm::SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes,
+    OverloadCandidateSet &CandidateSet)
+    : S(S), Args(Args), NumArgs(NumArgs),
+      VisibleTypeConversionsQuals(VisibleTypeConversionsQuals),
+      CandidateTypes(CandidateTypes),
+      CandidateSet(CandidateSet) {
+    // Validate some of our static helper constants in debug builds.
+    assert(ArithmeticTypes[FirstPromotedIntegralType] == &ASTContext::IntTy &&
+           "Invalid first promoted integral type");
+    assert(ArithmeticTypes[LastPromotedIntegralType - 1]
+             == &ASTContext::UnsignedLongLongTy &&
+           "Invalid last promoted integral type");
+    assert(ArithmeticTypes[FirstPromotedArithmeticType]
+             == &ASTContext::FloatTy &&
+           "Invalid first promoted arithmetic type");
+    assert(ArithmeticTypes[LastPromotedArithmeticType - 1]
+             == &ASTContext::UnsignedLongLongTy &&
+           "Invalid last promoted arithmetic type");
+  }
+
+  // C++ [over.built]p3:
+  //
+  //   For every pair (T, VQ), where T is an arithmetic type, and VQ
+  //   is either volatile or empty, there exist candidate operator
+  //   functions of the form
+  //
+  //       VQ T&      operator++(VQ T&);
+  //       T          operator++(VQ T&, int);
+  //
+  // C++ [over.built]p4:
+  //
+  //   For every pair (T, VQ), where T is an arithmetic type other
+  //   than bool, and VQ is either volatile or empty, there exist
+  //   candidate operator functions of the form
+  //
+  //       VQ T&      operator--(VQ T&);
+  //       T          operator--(VQ T&, int);
+  void addPlusPlusMinusMinusArithmeticOverloads(OverloadedOperatorKind Op) {
+    for (unsigned Arith = (Op == OO_PlusPlus? 0 : 1);
+         Arith < NumArithmeticTypes; ++Arith) {
+      addPlusPlusMinusMinusStyleOverloads(
+        S.Context.*ArithmeticTypes[Arith],
+        VisibleTypeConversionsQuals.hasVolatile());
+    }
+  }
+
+  // C++ [over.built]p5:
+  //
+  //   For every pair (T, VQ), where T is a cv-qualified or
+  //   cv-unqualified object type, and VQ is either volatile or
+  //   empty, there exist candidate operator functions of the form
+  //
+  //       T*VQ&      operator++(T*VQ&);
+  //       T*VQ&      operator--(T*VQ&);
+  //       T*         operator++(T*VQ&, int);
+  //       T*         operator--(T*VQ&, int);
+  void addPlusPlusMinusMinusPointerOverloads() {
+    for (BuiltinCandidateTypeSet::iterator
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
+      // Skip pointer types that aren't pointers to object types.
+      if (!(*Ptr)->getPointeeType()->isIncompleteOrObjectType())
+        continue;
+
+      addPlusPlusMinusMinusStyleOverloads(*Ptr,
+        (!S.Context.getCanonicalType(*Ptr).isVolatileQualified() &&
+         VisibleTypeConversionsQuals.hasVolatile()));
+    }
+  }
+
+  // C++ [over.built]p6:
+  //   For every cv-qualified or cv-unqualified object type T, there
+  //   exist candidate operator functions of the form
+  //
+  //       T&         operator*(T*);
+  //
+  // C++ [over.built]p7:
+  //   For every function type T, there exist candidate operator
+  //   functions of the form
+  //       T&         operator*(T*);
+  void addUnaryStarPointerOverloads() {
+    for (BuiltinCandidateTypeSet::iterator
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
+      QualType ParamTy = *Ptr;
+      QualType PointeeTy = ParamTy->getPointeeType();
+      S.AddBuiltinCandidate(S.Context.getLValueReferenceType(PointeeTy),
+                            &ParamTy, Args, 1, CandidateSet);
+    }
+  }
+
+  // C++ [over.built]p9:
+  //  For every promoted arithmetic type T, there exist candidate
+  //  operator functions of the form
+  //
+  //       T         operator+(T);
+  //       T         operator-(T);
+  void addUnaryPlusOrMinusArithmeticOverloads() {
+    for (unsigned Arith = FirstPromotedArithmeticType;
+         Arith < LastPromotedArithmeticType; ++Arith) {
+      QualType ArithTy = S.Context.*ArithmeticTypes[Arith];
+      S.AddBuiltinCandidate(ArithTy, &ArithTy, Args, 1, CandidateSet);
+    }
+
+    // Extension: We also add these operators for vector types.
+    for (BuiltinCandidateTypeSet::iterator
+              Vec = CandidateTypes[0].vector_begin(),
+           VecEnd = CandidateTypes[0].vector_end();
+         Vec != VecEnd; ++Vec) {
+      QualType VecTy = *Vec;
+      S.AddBuiltinCandidate(VecTy, &VecTy, Args, 1, CandidateSet);
+    }
+  }
+
+  // C++ [over.built]p8:
+  //   For every type T, there exist candidate operator functions of
+  //   the form
+  //
+  //       T*         operator+(T*);
+  void addUnaryPlusPointerOverloads() {
+    for (BuiltinCandidateTypeSet::iterator
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
+      QualType ParamTy = *Ptr;
+      S.AddBuiltinCandidate(ParamTy, &ParamTy, Args, 1, CandidateSet);
+    }
+  }
+
+  // C++ [over.built]p10:
+  //   For every promoted integral type T, there exist candidate
+  //   operator functions of the form
+  //
+  //        T         operator~(T);
+  void addUnaryTildePromotedIntegralOverloads() {
+    for (unsigned Int = FirstPromotedIntegralType;
+         Int < LastPromotedIntegralType; ++Int) {
+      QualType IntTy = S.Context.*ArithmeticTypes[Int];
+      S.AddBuiltinCandidate(IntTy, &IntTy, Args, 1, CandidateSet);
+    }
+
+    // Extension: We also add this operator for vector types.
+    for (BuiltinCandidateTypeSet::iterator
+              Vec = CandidateTypes[0].vector_begin(),
+           VecEnd = CandidateTypes[0].vector_end();
+         Vec != VecEnd; ++Vec) {
+      QualType VecTy = *Vec;
+      S.AddBuiltinCandidate(VecTy, &VecTy, Args, 1, CandidateSet);
+    }
+  }
+
+  // C++ [over.match.oper]p16:
+  //   For every pointer to member type T, there exist candidate operator
+  //   functions of the form
+  //
+  //        bool operator==(T,T);
+  //        bool operator!=(T,T);
+  void addEqualEqualOrNotEqualMemberPointerOverloads() {
+    /// Set of (canonical) types that we've already handled.
+    llvm::SmallPtrSet<QualType, 8> AddedTypes;
+
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+      for (BuiltinCandidateTypeSet::iterator
+                MemPtr = CandidateTypes[ArgIdx].member_pointer_begin(),
+             MemPtrEnd = CandidateTypes[ArgIdx].member_pointer_end();
+           MemPtr != MemPtrEnd;
+           ++MemPtr) {
+        // Don't add the same builtin candidate twice.
+        if (!AddedTypes.insert(S.Context.getCanonicalType(*MemPtr)))
+          continue;
+
+        QualType ParamTypes[2] = { *MemPtr, *MemPtr };
+        S.AddBuiltinCandidate(S.Context.BoolTy, ParamTypes, Args, 2,
+                              CandidateSet);
+      }
+    }
+  }
+
+  // C++ [over.built]p15:
+  //
+  //   For every pointer or enumeration type T, there exist
+  //   candidate operator functions of the form
+  //
+  //        bool       operator<(T, T);
+  //        bool       operator>(T, T);
+  //        bool       operator<=(T, T);
+  //        bool       operator>=(T, T);
+  //        bool       operator==(T, T);
+  //        bool       operator!=(T, T);
+  void addRelationalPointerOrEnumeralOverloads(
+    const llvm::DenseSet<std::pair<CanQualType, CanQualType> >
+      &UserDefinedBinaryOperators) {
+    /// Set of (canonical) types that we've already handled.
+    llvm::SmallPtrSet<QualType, 8> AddedTypes;
+
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+      for (BuiltinCandidateTypeSet::iterator
+                Ptr = CandidateTypes[ArgIdx].pointer_begin(),
+             PtrEnd = CandidateTypes[ArgIdx].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
+        // Don't add the same builtin candidate twice.
+        if (!AddedTypes.insert(S.Context.getCanonicalType(*Ptr)))
+          continue;
+
+        QualType ParamTypes[2] = { *Ptr, *Ptr };
+        S.AddBuiltinCandidate(S.Context.BoolTy, ParamTypes, Args, 2,
+                              CandidateSet);
+      }
+      for (BuiltinCandidateTypeSet::iterator
+                Enum = CandidateTypes[ArgIdx].enumeration_begin(),
+             EnumEnd = CandidateTypes[ArgIdx].enumeration_end();
+           Enum != EnumEnd; ++Enum) {
+        CanQualType CanonType = S.Context.getCanonicalType(*Enum);
+
+        // Don't add the same builtin candidate twice.
+        if (!AddedTypes.insert(CanonType))
+          continue;
+
+        QualType ParamTypes[2] = { *Enum, *Enum };
+        if (!UserDefinedBinaryOperators.count(
+              std::make_pair(CanonType, CanonType)))
+          S.AddBuiltinCandidate(S.Context.BoolTy, ParamTypes, Args, 2,
+                                CandidateSet);
+      }
+    }
+  }
+
+  // C++ [over.built]p13:
+  //
+  //   For every cv-qualified or cv-unqualified object type T
+  //   there exist candidate operator functions of the form
+  //
+  //      T*         operator+(T*, ptrdiff_t);
+  //      T&         operator[](T*, ptrdiff_t);    [BELOW]
+  //      T*         operator-(T*, ptrdiff_t);
+  //      T*         operator+(ptrdiff_t, T*);
+  //      T&         operator[](ptrdiff_t, T*);    [BELOW]
+  //
+  // C++ [over.built]p14:
+  //
+  //   For every T, where T is a pointer to object type, there
+  //   exist candidate operator functions of the form
+  //
+  //      ptrdiff_t  operator-(T, T);
+  void addBinaryPlusOrMinusPointerOverloads(OverloadedOperatorKind Op) {
+    /// Set of (canonical) types that we've already handled.
+    llvm::SmallPtrSet<QualType, 8> AddedTypes;
+
+    for (int Arg = 0; Arg < 2; ++Arg) {
+      QualType AsymetricParamTypes[2] = {
+        S.Context.getPointerDiffType(),
+        S.Context.getPointerDiffType(),
+      };
+      for (BuiltinCandidateTypeSet::iterator
+                Ptr = CandidateTypes[Arg].pointer_begin(),
+             PtrEnd = CandidateTypes[Arg].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
+        AsymetricParamTypes[Arg] = *Ptr;
+        if (Arg == 0 || Op == OO_Plus) {
+          // operator+(T*, ptrdiff_t) or operator-(T*, ptrdiff_t)
+          // T* operator+(ptrdiff_t, T*);
+          S.AddBuiltinCandidate(*Ptr, AsymetricParamTypes, Args, 2,
+                                CandidateSet);
+        }
+        if (Op == OO_Minus) {
+          // ptrdiff_t operator-(T, T);
+          if (!AddedTypes.insert(S.Context.getCanonicalType(*Ptr)))
+            continue;
+
+          QualType ParamTypes[2] = { *Ptr, *Ptr };
+          S.AddBuiltinCandidate(S.Context.getPointerDiffType(), ParamTypes,
+                                Args, 2, CandidateSet);
+        }
+      }
+    }
+  }
+
+  // C++ [over.built]p12:
+  //
+  //   For every pair of promoted arithmetic types L and R, there
+  //   exist candidate operator functions of the form
+  //
+  //        LR         operator*(L, R);
+  //        LR         operator/(L, R);
+  //        LR         operator+(L, R);
+  //        LR         operator-(L, R);
+  //        bool       operator<(L, R);
+  //        bool       operator>(L, R);
+  //        bool       operator<=(L, R);
+  //        bool       operator>=(L, R);
+  //        bool       operator==(L, R);
+  //        bool       operator!=(L, R);
+  //
+  //   where LR is the result of the usual arithmetic conversions
+  //   between types L and R.
+  //
+  // C++ [over.built]p24:
+  //
+  //   For every pair of promoted arithmetic types L and R, there exist
+  //   candidate operator functions of the form
+  //
+  //        LR       operator?(bool, L, R);
+  //
+  //   where LR is the result of the usual arithmetic conversions
+  //   between types L and R.
+  // Our candidates ignore the first parameter.
+  void addGenericBinaryArithmeticOverloads(bool isComparison) {
+    for (unsigned Left = FirstPromotedArithmeticType;
+         Left < LastPromotedArithmeticType; ++Left) {
+      for (unsigned Right = FirstPromotedArithmeticType;
+           Right < LastPromotedArithmeticType; ++Right) {
+        QualType LandR[2] = { S.Context.*ArithmeticTypes[Left],
+                              S.Context.*ArithmeticTypes[Right] };
+        QualType Result =
+          isComparison ? S.Context.BoolTy
+                       : UsualArithmeticConversionsType::find(S.Context, Left,
+                                                              Right);
+        S.AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
+      }
+    }
+
+    // Extension: Add the binary operators ==, !=, <, <=, >=, >, *, /, and the
+    // conditional operator for vector types.
+    for (BuiltinCandidateTypeSet::iterator
+              Vec1 = CandidateTypes[0].vector_begin(),
+           Vec1End = CandidateTypes[0].vector_end();
+         Vec1 != Vec1End; ++Vec1) {
+      for (BuiltinCandidateTypeSet::iterator
+                Vec2 = CandidateTypes[1].vector_begin(),
+             Vec2End = CandidateTypes[1].vector_end();
+           Vec2 != Vec2End; ++Vec2) {
+        QualType LandR[2] = { *Vec1, *Vec2 };
+        QualType Result = S.Context.BoolTy;
+        if (!isComparison) {
+          if ((*Vec1)->isExtVectorType() || !(*Vec2)->isExtVectorType())
+            Result = *Vec1;
+          else
+            Result = *Vec2;
+        }
+
+        S.AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
+      }
+    }
+  }
+
+  // C++ [over.built]p17:
+  //
+  //   For every pair of promoted integral types L and R, there
+  //   exist candidate operator functions of the form
+  //
+  //      LR         operator%(L, R);
+  //      LR         operator&(L, R);
+  //      LR         operator^(L, R);
+  //      LR         operator|(L, R);
+  //      L          operator<<(L, R);
+  //      L          operator>>(L, R);
+  //
+  //   where LR is the result of the usual arithmetic conversions
+  //   between types L and R.
+  void addBinaryBitwiseArithmeticOverloads(OverloadedOperatorKind Op) {
+    for (unsigned Left = FirstPromotedIntegralType;
+         Left < LastPromotedIntegralType; ++Left) {
+      for (unsigned Right = FirstPromotedIntegralType;
+           Right < LastPromotedIntegralType; ++Right) {
+        QualType LandR[2] = { S.Context.*ArithmeticTypes[Left],
+                              S.Context.*ArithmeticTypes[Right] };
+        QualType Result = (Op == OO_LessLess || Op == OO_GreaterGreater)
+            ? LandR[0]
+            : UsualArithmeticConversionsType::find(S.Context, Left, Right);
+        S.AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
+      }
+    }
+  }
+
+  // C++ [over.built]p20:
+  //
+  //   For every pair (T, VQ), where T is an enumeration or
+  //   pointer to member type and VQ is either volatile or
+  //   empty, there exist candidate operator functions of the form
+  //
+  //        VQ T&      operator=(VQ T&, T);
+  void addAssignmentMemberPointerOrEnumeralOverloads() {
+    /// Set of (canonical) types that we've already handled.
+    llvm::SmallPtrSet<QualType, 8> AddedTypes;
+
+    for (unsigned ArgIdx = 0; ArgIdx < 2; ++ArgIdx) {
+      for (BuiltinCandidateTypeSet::iterator
+                Enum = CandidateTypes[ArgIdx].enumeration_begin(),
+             EnumEnd = CandidateTypes[ArgIdx].enumeration_end();
+           Enum != EnumEnd; ++Enum) {
+        if (!AddedTypes.insert(S.Context.getCanonicalType(*Enum)))
+          continue;
+
+        AddBuiltinAssignmentOperatorCandidates(S, *Enum, Args, 2,
+                                               CandidateSet);
+      }
+
+      for (BuiltinCandidateTypeSet::iterator
+                MemPtr = CandidateTypes[ArgIdx].member_pointer_begin(),
+             MemPtrEnd = CandidateTypes[ArgIdx].member_pointer_end();
+           MemPtr != MemPtrEnd; ++MemPtr) {
+        if (!AddedTypes.insert(S.Context.getCanonicalType(*MemPtr)))
+          continue;
+
+        AddBuiltinAssignmentOperatorCandidates(S, *MemPtr, Args, 2,
+                                               CandidateSet);
+      }
+    }
+  }
+
+  // C++ [over.built]p19:
+  //
+  //   For every pair (T, VQ), where T is any type and VQ is either
+  //   volatile or empty, there exist candidate operator functions
+  //   of the form
+  //
+  //        T*VQ&      operator=(T*VQ&, T*);
+  //
+  // C++ [over.built]p21:
+  //
+  //   For every pair (T, VQ), where T is a cv-qualified or
+  //   cv-unqualified object type and VQ is either volatile or
+  //   empty, there exist candidate operator functions of the form
+  //
+  //        T*VQ&      operator+=(T*VQ&, ptrdiff_t);
+  //        T*VQ&      operator-=(T*VQ&, ptrdiff_t);
+  void addAssignmentPointerOverloads(bool isEqualOp) {
+    /// Set of (canonical) types that we've already handled.
+    llvm::SmallPtrSet<QualType, 8> AddedTypes;
+
+    for (BuiltinCandidateTypeSet::iterator
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
+      // If this is operator=, keep track of the builtin candidates we added.
+      if (isEqualOp)
+        AddedTypes.insert(S.Context.getCanonicalType(*Ptr));
+
+      // non-volatile version
+      QualType ParamTypes[2] = {
+        S.Context.getLValueReferenceType(*Ptr),
+        isEqualOp ? *Ptr : S.Context.getPointerDiffType(),
+      };
+      S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                            /*IsAssigmentOperator=*/ isEqualOp);
+
+      if (!S.Context.getCanonicalType(*Ptr).isVolatileQualified() &&
+          VisibleTypeConversionsQuals.hasVolatile()) {
+        // volatile version
+        ParamTypes[0] =
+          S.Context.getLValueReferenceType(S.Context.getVolatileType(*Ptr));
+        S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                              /*IsAssigmentOperator=*/isEqualOp);
+      }
+    }
+
+    if (isEqualOp) {
+      for (BuiltinCandidateTypeSet::iterator
+                Ptr = CandidateTypes[1].pointer_begin(),
+             PtrEnd = CandidateTypes[1].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
+        // Make sure we don't add the same candidate twice.
+        if (!AddedTypes.insert(S.Context.getCanonicalType(*Ptr)))
+          continue;
+
+        QualType ParamTypes[2] = { S.Context.getLValueReferenceType(*Ptr), *Ptr };
+
+        // non-volatile version
+        S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                              /*IsAssigmentOperator=*/true);
+
+        if (!S.Context.getCanonicalType(*Ptr).isVolatileQualified() &&
+            VisibleTypeConversionsQuals.hasVolatile()) {
+          // volatile version
+          ParamTypes[0] =
+            S.Context.getLValueReferenceType(S.Context.getVolatileType(*Ptr));
+          S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                                /*IsAssigmentOperator=*/true);
+        }
+      }
+    }
+  }
+
+  // C++ [over.built]p18:
+  //
+  //   For every triple (L, VQ, R), where L is an arithmetic type,
+  //   VQ is either volatile or empty, and R is a promoted
+  //   arithmetic type, there exist candidate operator functions of
+  //   the form
+  //
+  //        VQ L&      operator=(VQ L&, R);
+  //        VQ L&      operator*=(VQ L&, R);
+  //        VQ L&      operator/=(VQ L&, R);
+  //        VQ L&      operator+=(VQ L&, R);
+  //        VQ L&      operator-=(VQ L&, R);
+  void addAssignmentArithmeticOverloads(bool isEqualOp) {
+    for (unsigned Left = 0; Left < NumArithmeticTypes; ++Left) {
+      for (unsigned Right = FirstPromotedArithmeticType;
+           Right < LastPromotedArithmeticType; ++Right) {
+        QualType ParamTypes[2];
+        ParamTypes[1] = S.Context.*ArithmeticTypes[Right];
+
+        // Add this built-in operator as a candidate (VQ is empty).
+        ParamTypes[0] =
+          S.Context.getLValueReferenceType(S.Context.*ArithmeticTypes[Left]);
+        S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                              /*IsAssigmentOperator=*/isEqualOp);
+
+        // Add this built-in operator as a candidate (VQ is 'volatile').
+        if (VisibleTypeConversionsQuals.hasVolatile()) {
+          ParamTypes[0] =
+            S.Context.getVolatileType(S.Context.*ArithmeticTypes[Left]);
+          ParamTypes[0] = S.Context.getLValueReferenceType(ParamTypes[0]);
+          S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                                /*IsAssigmentOperator=*/isEqualOp);
+        }
+      }
+    }
+
+    // Extension: Add the binary operators =, +=, -=, *=, /= for vector types.
+    for (BuiltinCandidateTypeSet::iterator
+              Vec1 = CandidateTypes[0].vector_begin(),
+           Vec1End = CandidateTypes[0].vector_end();
+         Vec1 != Vec1End; ++Vec1) {
+      for (BuiltinCandidateTypeSet::iterator
+                Vec2 = CandidateTypes[1].vector_begin(),
+             Vec2End = CandidateTypes[1].vector_end();
+           Vec2 != Vec2End; ++Vec2) {
+        QualType ParamTypes[2];
+        ParamTypes[1] = *Vec2;
+        // Add this built-in operator as a candidate (VQ is empty).
+        ParamTypes[0] = S.Context.getLValueReferenceType(*Vec1);
+        S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                              /*IsAssigmentOperator=*/isEqualOp);
+
+        // Add this built-in operator as a candidate (VQ is 'volatile').
+        if (VisibleTypeConversionsQuals.hasVolatile()) {
+          ParamTypes[0] = S.Context.getVolatileType(*Vec1);
+          ParamTypes[0] = S.Context.getLValueReferenceType(ParamTypes[0]);
+          S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                                /*IsAssigmentOperator=*/isEqualOp);
+        }
+      }
+    }
+  }
+
+  // C++ [over.built]p22:
+  //
+  //   For every triple (L, VQ, R), where L is an integral type, VQ
+  //   is either volatile or empty, and R is a promoted integral
+  //   type, there exist candidate operator functions of the form
+  //
+  //        VQ L&       operator%=(VQ L&, R);
+  //        VQ L&       operator<<=(VQ L&, R);
+  //        VQ L&       operator>>=(VQ L&, R);
+  //        VQ L&       operator&=(VQ L&, R);
+  //        VQ L&       operator^=(VQ L&, R);
+  //        VQ L&       operator|=(VQ L&, R);
+  void addAssignmentIntegralOverloads() {
+    for (unsigned Left = FirstIntegralType; Left < LastIntegralType; ++Left) {
+      for (unsigned Right = FirstPromotedIntegralType;
+           Right < LastPromotedIntegralType; ++Right) {
+        QualType ParamTypes[2];
+        ParamTypes[1] = S.Context.*ArithmeticTypes[Right];
+
+        // Add this built-in operator as a candidate (VQ is empty).
+        ParamTypes[0] =
+          S.Context.getLValueReferenceType(S.Context.*ArithmeticTypes[Left]);
+        S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+        if (VisibleTypeConversionsQuals.hasVolatile()) {
+          // Add this built-in operator as a candidate (VQ is 'volatile').
+          ParamTypes[0] = S.Context.*ArithmeticTypes[Left];
+          ParamTypes[0] = S.Context.getVolatileType(ParamTypes[0]);
+          ParamTypes[0] = S.Context.getLValueReferenceType(ParamTypes[0]);
+          S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2,
+                                CandidateSet);
+        }
+      }
+    }
+  }
+
+  // C++ [over.operator]p23:
+  //
+  //   There also exist candidate operator functions of the form
+  //
+  //        bool        operator!(bool);
+  //        bool        operator&&(bool, bool);
+  //        bool        operator||(bool, bool);
+  void addExclaimOverload() {
+    QualType ParamTy = S.Context.BoolTy;
+    S.AddBuiltinCandidate(ParamTy, &ParamTy, Args, 1, CandidateSet,
+                          /*IsAssignmentOperator=*/false,
+                          /*NumContextualBoolArguments=*/1);
+  }
+  void addAmpAmpOrPipePipeOverload() {
+    QualType ParamTypes[2] = { S.Context.BoolTy, S.Context.BoolTy };
+    S.AddBuiltinCandidate(S.Context.BoolTy, ParamTypes, Args, 2, CandidateSet,
+                          /*IsAssignmentOperator=*/false,
+                          /*NumContextualBoolArguments=*/2);
+  }
+
+  // C++ [over.built]p13:
+  //
+  //   For every cv-qualified or cv-unqualified object type T there
+  //   exist candidate operator functions of the form
+  //
+  //        T*         operator+(T*, ptrdiff_t);     [ABOVE]
+  //        T&         operator[](T*, ptrdiff_t);
+  //        T*         operator-(T*, ptrdiff_t);     [ABOVE]
+  //        T*         operator+(ptrdiff_t, T*);     [ABOVE]
+  //        T&         operator[](ptrdiff_t, T*);
+  void addSubscriptOverloads() {
+    for (BuiltinCandidateTypeSet::iterator
+              Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
+      QualType ParamTypes[2] = { *Ptr, S.Context.getPointerDiffType() };
+      QualType PointeeType = (*Ptr)->getPointeeType();
+      QualType ResultTy = S.Context.getLValueReferenceType(PointeeType);
+
+      // T& operator[](T*, ptrdiff_t)
+      S.AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
+    }
+
+    for (BuiltinCandidateTypeSet::iterator
+              Ptr = CandidateTypes[1].pointer_begin(),
+           PtrEnd = CandidateTypes[1].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
+      QualType ParamTypes[2] = { S.Context.getPointerDiffType(), *Ptr };
+      QualType PointeeType = (*Ptr)->getPointeeType();
+      QualType ResultTy = S.Context.getLValueReferenceType(PointeeType);
+
+      // T& operator[](ptrdiff_t, T*)
+      S.AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
+    }
+  }
+
+  // C++ [over.built]p11:
+  //    For every quintuple (C1, C2, T, CV1, CV2), where C2 is a class type,
+  //    C1 is the same type as C2 or is a derived class of C2, T is an object
+  //    type or a function type, and CV1 and CV2 are cv-qualifier-seqs,
+  //    there exist candidate operator functions of the form
+  //
+  //      CV12 T& operator->*(CV1 C1*, CV2 T C2::*);
+  //
+  //    where CV12 is the union of CV1 and CV2.
+  void addArrowStarOverloads() {
+    for (BuiltinCandidateTypeSet::iterator
+             Ptr = CandidateTypes[0].pointer_begin(),
+           PtrEnd = CandidateTypes[0].pointer_end();
+         Ptr != PtrEnd; ++Ptr) {
+      QualType C1Ty = (*Ptr);
+      QualType C1;
+      QualifierCollector Q1;
+      C1 = QualType(Q1.strip(C1Ty->getPointeeType()), 0);
+      if (!isa<RecordType>(C1))
+        continue;
+      // heuristic to reduce number of builtin candidates in the set.
+      // Add volatile/restrict version only if there are conversions to a
+      // volatile/restrict type.
+      if (!VisibleTypeConversionsQuals.hasVolatile() && Q1.hasVolatile())
+        continue;
+      if (!VisibleTypeConversionsQuals.hasRestrict() && Q1.hasRestrict())
+        continue;
+      for (BuiltinCandidateTypeSet::iterator
+                MemPtr = CandidateTypes[1].member_pointer_begin(),
+             MemPtrEnd = CandidateTypes[1].member_pointer_end();
+           MemPtr != MemPtrEnd; ++MemPtr) {
+        const MemberPointerType *mptr = cast<MemberPointerType>(*MemPtr);
+        QualType C2 = QualType(mptr->getClass(), 0);
+        C2 = C2.getUnqualifiedType();
+        if (C1 != C2 && !S.IsDerivedFrom(C1, C2))
+          break;
+        QualType ParamTypes[2] = { *Ptr, *MemPtr };
+        // build CV12 T&
+        QualType T = mptr->getPointeeType();
+        if (!VisibleTypeConversionsQuals.hasVolatile() &&
+            T.isVolatileQualified())
+          continue;
+        if (!VisibleTypeConversionsQuals.hasRestrict() &&
+            T.isRestrictQualified())
+          continue;
+        T = Q1.apply(S.Context, T);
+        QualType ResultTy = S.Context.getLValueReferenceType(T);
+        S.AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
+      }
+    }
+  }
+
+  // Note that we don't consider the first argument, since it has been
+  // contextually converted to bool long ago. The candidates below are
+  // therefore added as binary.
+  //
+  // C++ [over.built]p25:
+  //   For every type T, where T is a pointer, pointer-to-member, or scoped
+  //   enumeration type, there exist candidate operator functions of the form
+  //
+  //        T        operator?(bool, T, T);
+  //
+  void addConditionalOperatorOverloads() {
+    /// Set of (canonical) types that we've already handled.
+    llvm::SmallPtrSet<QualType, 8> AddedTypes;
+
+    for (unsigned ArgIdx = 0; ArgIdx < 2; ++ArgIdx) {
+      for (BuiltinCandidateTypeSet::iterator
+                Ptr = CandidateTypes[ArgIdx].pointer_begin(),
+             PtrEnd = CandidateTypes[ArgIdx].pointer_end();
+           Ptr != PtrEnd; ++Ptr) {
+        if (!AddedTypes.insert(S.Context.getCanonicalType(*Ptr)))
+          continue;
+
+        QualType ParamTypes[2] = { *Ptr, *Ptr };
+        S.AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
+      }
+
+      for (BuiltinCandidateTypeSet::iterator
+                MemPtr = CandidateTypes[ArgIdx].member_pointer_begin(),
+             MemPtrEnd = CandidateTypes[ArgIdx].member_pointer_end();
+           MemPtr != MemPtrEnd; ++MemPtr) {
+        if (!AddedTypes.insert(S.Context.getCanonicalType(*MemPtr)))
+          continue;
+
+        QualType ParamTypes[2] = { *MemPtr, *MemPtr };
+        S.AddBuiltinCandidate(*MemPtr, ParamTypes, Args, 2, CandidateSet);
+      }
+
+      if (S.getLangOptions().CPlusPlus0x) {
+        for (BuiltinCandidateTypeSet::iterator
+                  Enum = CandidateTypes[ArgIdx].enumeration_begin(),
+               EnumEnd = CandidateTypes[ArgIdx].enumeration_end();
+             Enum != EnumEnd; ++Enum) {
+          if (!(*Enum)->getAs<EnumType>()->getDecl()->isScoped())
+            continue;
+
+          if (!AddedTypes.insert(S.Context.getCanonicalType(*Enum)))
+            continue;
+
+          QualType ParamTypes[2] = { *Enum, *Enum };
+          S.AddBuiltinCandidate(*Enum, ParamTypes, Args, 2, CandidateSet);
+        }
+      }
+    }
+  }
+};
+
+CanQualType ASTContext::* const
+BuiltinOperatorOverloadBuilder::ArithmeticTypes[NumArithmeticTypes] = {
+  // Start of promoted types.
+  &ASTContext::FloatTy,
+  &ASTContext::DoubleTy,
+  &ASTContext::LongDoubleTy,
+
+  // Start of integral types.
+  &ASTContext::IntTy,
+  &ASTContext::LongTy,
+  &ASTContext::LongLongTy,
+  &ASTContext::UnsignedIntTy,
+  &ASTContext::UnsignedLongTy,
+  &ASTContext::UnsignedLongLongTy,
+  // End of promoted types.
+
+  &ASTContext::BoolTy,
+  &ASTContext::CharTy,
+  &ASTContext::WCharTy,
+  &ASTContext::Char16Ty,
+  &ASTContext::Char32Ty,
+  &ASTContext::SignedCharTy,
+  &ASTContext::ShortTy,
+  &ASTContext::UnsignedCharTy,
+  &ASTContext::UnsignedShortTy
+  // End of integral types.
+  // FIXME: What about complex?
+};
+
+// Accelerator table for performing the usual arithmetic conversions.
+// The rules are basically:
+//   - if either is floating-point, use the wider floating-point
+//   - if same signedness, use the higher rank
+//   - if same size, use unsigned of the higher rank
+//   - use the larger type
+// These rules, together with the axiom that higher ranks are
+// never smaller, are sufficient to precompute all of these results
+// *except* when dealing with signed types of higher rank.
+// (we could precompute SLL x UI for all known platforms, but it's
+// better not to make any assumptions).
+BuiltinOperatorOverloadBuilder::PromT
+BuiltinOperatorOverloadBuilder::UsualArithmeticConversionsTypes
+[LastPromotedArithmeticType][LastPromotedArithmeticType] = {
+  /* Flt*/ {  Flt,  Dbl, LDbl,  Flt,  Flt,  Flt,  Flt,  Flt,  Flt },
+  /* Dbl*/ {  Dbl,  Dbl, LDbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl },
+  /*LDbl*/ { LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl },
+  /*  SI*/ {  Flt,  Dbl, LDbl,   SI,   SL,  SLL,   UI,   UL,  ULL },
+  /*  SL*/ {  Flt,  Dbl, LDbl,   SL,   SL,  SLL,  Dep,   UL,  ULL },
+  /* SLL*/ {  Flt,  Dbl, LDbl,  SLL,  SLL,  SLL,  Dep,  Dep,  ULL },
+  /*  UI*/ {  Flt,  Dbl, LDbl,   UI,  Dep,  Dep,   UI,   UL,  ULL },
+  /*  UL*/ {  Flt,  Dbl, LDbl,   UL,   UL,  Dep,   UL,   UL,  ULL },
+  /* ULL*/ {  Flt,  Dbl, LDbl,  ULL,  ULL,  ULL,  ULL,  ULL,  ULL }
+};
+
+} // end anonymous namespace
+
+/// AddBuiltinOperatorCandidates - Add the appropriate built-in
+/// operator overloads to the candidate set (C++ [over.built]), based
+/// on the operator @p Op and the arguments given. For example, if the
+/// operator is a binary '+', this routine might add "int
+/// operator+(int, int)" to cover integer addition.
+void
+Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
+                                   SourceLocation OpLoc,
+                                   Expr **Args, unsigned NumArgs,
+                                   OverloadCandidateSet& CandidateSet) {
   // Find all of the types that the arguments can convert to, but only
   // if the operator we're looking at has built-in operator candidates
   // that make use of these types.
@@ -4687,10 +5486,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   // so we track which enumeration types we've seen operators for.
   llvm::DenseSet<std::pair<CanQualType, CanQualType> > 
     UserDefinedBinaryOperators;
-  
-  /// Set of (canonical) types that we've already handled.
-  llvm::SmallPtrSet<QualType, 8> AddedTypes;
-  
+
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
     if (CandidateTypes[ArgIdx].enumeration_begin() 
                                 != CandidateTypes[ArgIdx].enumeration_end()) {
@@ -4719,7 +5515,13 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       }
     }
   }
-  
+
+  // Setup an object to manage the common state for building overloads.
+  BuiltinOperatorOverloadBuilder OpBuilder(*this, Args, NumArgs,
+                                           VisibleTypeConversionsQuals,
+                                           CandidateTypes, CandidateSet);
+
+  // Dispatch over the operation to add in only those overloads which apply.
   bool isComparison = false;
   switch (Op) {
   case OO_None:
@@ -4729,196 +5531,44 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
   case OO_Star: // '*' is either unary or binary
     if (NumArgs == 1)
-      goto UnaryStar;
+      OpBuilder.addUnaryStarPointerOverloads();
     else
       goto BinaryStar;
     break;
 
   case OO_Plus: // '+' is either unary or binary
-    if (NumArgs == 1)
-      goto UnaryPlus;
-    else
+    if (NumArgs == 1) {
+      OpBuilder.addUnaryPlusPointerOverloads();
+      OpBuilder.addUnaryPlusOrMinusArithmeticOverloads();
+    } else {
       goto BinaryPlus;
+    }
     break;
 
   case OO_Minus: // '-' is either unary or binary
     if (NumArgs == 1)
-      goto UnaryMinus;
+      OpBuilder.addUnaryPlusOrMinusArithmeticOverloads();
     else
       goto BinaryMinus;
     break;
 
   case OO_Amp: // '&' is either unary or binary
     if (NumArgs == 1)
-      goto UnaryAmp;
-    else
-      goto BinaryAmp;
+      // C++ [over.match.oper]p3:
+      //   -- For the operator ',', the unary operator '&', or the
+      //      operator '->', the built-in candidates set is empty.
+      break;
+
+    goto BinaryAmp;
 
   case OO_PlusPlus:
   case OO_MinusMinus:
-    // C++ [over.built]p3:
-    //
-    //   For every pair (T, VQ), where T is an arithmetic type, and VQ
-    //   is either volatile or empty, there exist candidate operator
-    //   functions of the form
-    //
-    //       VQ T&      operator++(VQ T&);
-    //       T          operator++(VQ T&, int);
-    //
-    // C++ [over.built]p4:
-    //
-    //   For every pair (T, VQ), where T is an arithmetic type other
-    //   than bool, and VQ is either volatile or empty, there exist
-    //   candidate operator functions of the form
-    //
-    //       VQ T&      operator--(VQ T&);
-    //       T          operator--(VQ T&, int);
-    for (unsigned Arith = (Op == OO_PlusPlus? 0 : 1);
-         Arith < NumArithmeticTypes; ++Arith) {
-      QualType ArithTy = Context.*ArithmeticTypes[Arith];
-      QualType ParamTypes[2]
-        = { Context.getLValueReferenceType(ArithTy), Context.IntTy };
-
-      // Non-volatile version.
-      if (NumArgs == 1)
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
-      else
-        AddBuiltinCandidate(ArithTy, ParamTypes, Args, 2, CandidateSet);
-      // heuristic to reduce number of builtin candidates in the set.
-      // Add volatile version only if there are conversions to a volatile type.
-      if (VisibleTypeConversionsQuals.hasVolatile()) {
-        // Volatile version
-        ParamTypes[0]
-          = Context.getLValueReferenceType(Context.getVolatileType(ArithTy));
-        if (NumArgs == 1)
-          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
-        else
-          AddBuiltinCandidate(ArithTy, ParamTypes, Args, 2, CandidateSet);
-      }
-    }
-
-    // C++ [over.built]p5:
-    //
-    //   For every pair (T, VQ), where T is a cv-qualified or
-    //   cv-unqualified object type, and VQ is either volatile or
-    //   empty, there exist candidate operator functions of the form
-    //
-    //       T*VQ&      operator++(T*VQ&);
-    //       T*VQ&      operator--(T*VQ&);
-    //       T*         operator++(T*VQ&, int);
-    //       T*         operator--(T*VQ&, int);
-    for (BuiltinCandidateTypeSet::iterator 
-              Ptr = CandidateTypes[0].pointer_begin(),
-           PtrEnd = CandidateTypes[0].pointer_end();
-         Ptr != PtrEnd; ++Ptr) {
-      // Skip pointer types that aren't pointers to object types.
-      if (!(*Ptr)->getPointeeType()->isIncompleteOrObjectType())
-        continue;
-
-      QualType ParamTypes[2] = {
-        Context.getLValueReferenceType(*Ptr), Context.IntTy
-      };
-
-      // Without volatile
-      if (NumArgs == 1)
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
-      else
-        AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
-
-      if (!Context.getCanonicalType(*Ptr).isVolatileQualified() &&
-          VisibleTypeConversionsQuals.hasVolatile()) {
-        // With volatile
-        ParamTypes[0]
-          = Context.getLValueReferenceType(Context.getVolatileType(*Ptr));
-        if (NumArgs == 1)
-          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
-        else
-          AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
-      }
-    }
-    break;
-
-  UnaryStar:
-    // C++ [over.built]p6:
-    //   For every cv-qualified or cv-unqualified object type T, there
-    //   exist candidate operator functions of the form
-    //
-    //       T&         operator*(T*);
-    //
-    // C++ [over.built]p7:
-    //   For every function type T, there exist candidate operator
-    //   functions of the form
-    //       T&         operator*(T*);
-    for (BuiltinCandidateTypeSet::iterator 
-              Ptr = CandidateTypes[0].pointer_begin(),
-           PtrEnd = CandidateTypes[0].pointer_end();
-         Ptr != PtrEnd; ++Ptr) {
-      QualType ParamTy = *Ptr;
-      QualType PointeeTy = ParamTy->getPointeeType();
-      AddBuiltinCandidate(Context.getLValueReferenceType(PointeeTy),
-                          &ParamTy, Args, 1, CandidateSet);
-    }
-    break;
-
-  UnaryPlus:
-    // C++ [over.built]p8:
-    //   For every type T, there exist candidate operator functions of
-    //   the form
-    //
-    //       T*         operator+(T*);
-    for (BuiltinCandidateTypeSet::iterator 
-              Ptr = CandidateTypes[0].pointer_begin(),
-           PtrEnd = CandidateTypes[0].pointer_end();
-         Ptr != PtrEnd; ++Ptr) {
-      QualType ParamTy = *Ptr;
-      AddBuiltinCandidate(ParamTy, &ParamTy, Args, 1, CandidateSet);
-    }
-
-    // Fall through
-
-  UnaryMinus:
-    // C++ [over.built]p9:
-    //  For every promoted arithmetic type T, there exist candidate
-    //  operator functions of the form
-    //
-    //       T         operator+(T);
-    //       T         operator-(T);
-    for (unsigned Arith = FirstPromotedArithmeticType;
-         Arith < LastPromotedArithmeticType; ++Arith) {
-      QualType ArithTy = Context.*ArithmeticTypes[Arith];
-      AddBuiltinCandidate(ArithTy, &ArithTy, Args, 1, CandidateSet);
-    }
-      
-    // Extension: We also add these operators for vector types.
-    for (BuiltinCandidateTypeSet::iterator
-              Vec = CandidateTypes[0].vector_begin(),
-           VecEnd = CandidateTypes[0].vector_end(); 
-         Vec != VecEnd; ++Vec) {
-      QualType VecTy = *Vec;
-      AddBuiltinCandidate(VecTy, &VecTy, Args, 1, CandidateSet);
-    }
+    OpBuilder.addPlusPlusMinusMinusArithmeticOverloads(Op);
+    OpBuilder.addPlusPlusMinusMinusPointerOverloads();
     break;
 
   case OO_Tilde:
-    // C++ [over.built]p10:
-    //   For every promoted integral type T, there exist candidate
-    //   operator functions of the form
-    //
-    //        T         operator~(T);
-    for (unsigned Int = FirstPromotedIntegralType;
-         Int < LastPromotedIntegralType; ++Int) {
-      QualType IntTy = Context.*ArithmeticTypes[Int];
-      AddBuiltinCandidate(IntTy, &IntTy, Args, 1, CandidateSet);
-    }
-      
-    // Extension: We also add this operator for vector types.
-    for (BuiltinCandidateTypeSet::iterator
-              Vec = CandidateTypes[0].vector_begin(),
-           VecEnd = CandidateTypes[0].vector_end(); 
-         Vec != VecEnd; ++Vec) {
-      QualType VecTy = *Vec;
-      AddBuiltinCandidate(VecTy, &VecTy, Args, 1, CandidateSet);
-    }      
+    OpBuilder.addUnaryTildePromotedIntegralOverloads();
     break;
 
   case OO_New:
@@ -4930,7 +5580,6 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     break;
 
   case OO_Comma:
-  UnaryAmp:
   case OO_Arrow:
     // C++ [over.match.oper]p3:
     //   -- For the operator ',', the unary operator '&', or the
@@ -4939,74 +5588,17 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
   case OO_EqualEqual:
   case OO_ExclaimEqual:
-    // C++ [over.match.oper]p16:
-    //   For every pointer to member type T, there exist candidate operator
-    //   functions of the form
-    //
-    //        bool operator==(T,T);
-    //        bool operator!=(T,T);
-    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
-      for (BuiltinCandidateTypeSet::iterator
-                MemPtr = CandidateTypes[ArgIdx].member_pointer_begin(),
-             MemPtrEnd = CandidateTypes[ArgIdx].member_pointer_end();
-           MemPtr != MemPtrEnd;
-           ++MemPtr) {
-        // Don't add the same builtin candidate twice.
-        if (!AddedTypes.insert(Context.getCanonicalType(*MemPtr)))
-          continue;
-        
-        QualType ParamTypes[2] = { *MemPtr, *MemPtr };
-        AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
-      }
-    }
-    AddedTypes.clear();
-    
+    OpBuilder.addEqualEqualOrNotEqualMemberPointerOverloads();
+
     // Fall through
 
   case OO_Less:
   case OO_Greater:
   case OO_LessEqual:
   case OO_GreaterEqual:
-    // C++ [over.built]p15:
-    //
-    //   For every pointer or enumeration type T, there exist
-    //   candidate operator functions of the form
-    //
-    //        bool       operator<(T, T);
-    //        bool       operator>(T, T);
-    //        bool       operator<=(T, T);
-    //        bool       operator>=(T, T);
-    //        bool       operator==(T, T);
-    //        bool       operator!=(T, T);
-    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
-      for (BuiltinCandidateTypeSet::iterator 
-                Ptr = CandidateTypes[ArgIdx].pointer_begin(),
-             PtrEnd = CandidateTypes[ArgIdx].pointer_end();
-           Ptr != PtrEnd; ++Ptr) {
-        // Don't add the same builtin candidate twice.
-        if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
-          continue;
-        
-        QualType ParamTypes[2] = { *Ptr, *Ptr };
-        AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
-      }
-      for (BuiltinCandidateTypeSet::iterator 
-                Enum = CandidateTypes[ArgIdx].enumeration_begin(),
-             EnumEnd = CandidateTypes[ArgIdx].enumeration_end();
-           Enum != EnumEnd; ++Enum) {
-        // Don't add the same builtin candidate twice.
-        if (!AddedTypes.insert(Context.getCanonicalType(*Enum)))
-          continue;
-        
-        QualType ParamTypes[2] = { *Enum, *Enum };
-        CanQualType CanonType = Context.getCanonicalType(*Enum);
-        if (!UserDefinedBinaryOperators.count(
-                                            std::make_pair(CanonType, CanonType)))
-          AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet);
-      }
-    }
-    AddedTypes.clear();
-      
+    OpBuilder.addRelationalPointerOrEnumeralOverloads(
+      UserDefinedBinaryOperators);
+
     // Fall through.
     isComparison = true;
 
@@ -5014,137 +5606,14 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   BinaryMinus:
     if (!isComparison) {
       // We didn't fall through, so we must have OO_Plus or OO_Minus.
-
-      // C++ [over.built]p13:
-      //
-      //   For every cv-qualified or cv-unqualified object type T
-      //   there exist candidate operator functions of the form
-      //
-      //      T*         operator+(T*, ptrdiff_t);
-      //      T&         operator[](T*, ptrdiff_t);    [BELOW]
-      //      T*         operator-(T*, ptrdiff_t);
-      //      T*         operator+(ptrdiff_t, T*);
-      //      T&         operator[](ptrdiff_t, T*);    [BELOW]
-      //
-      // C++ [over.built]p14:
-      //
-      //   For every T, where T is a pointer to object type, there
-      //   exist candidate operator functions of the form
-      //
-      //      ptrdiff_t  operator-(T, T);
-      for (BuiltinCandidateTypeSet::iterator 
-                Ptr = CandidateTypes[0].pointer_begin(),
-             PtrEnd = CandidateTypes[0].pointer_end();
-           Ptr != PtrEnd; ++Ptr) {
-        QualType ParamTypes[2] = { *Ptr, Context.getPointerDiffType() };
-
-        // operator+(T*, ptrdiff_t) or operator-(T*, ptrdiff_t)
-        AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
-
-        if (Op == OO_Minus) {
-          // ptrdiff_t operator-(T, T);
-          if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
-            continue;
-          
-          ParamTypes[1] = *Ptr;
-          AddBuiltinCandidate(Context.getPointerDiffType(), ParamTypes,
-                              Args, 2, CandidateSet);
-        }
-      }
-      
-      for (BuiltinCandidateTypeSet::iterator 
-                Ptr = CandidateTypes[1].pointer_begin(),
-             PtrEnd = CandidateTypes[1].pointer_end();
-           Ptr != PtrEnd; ++Ptr) {
-        if (Op == OO_Plus) {
-          // T* operator+(ptrdiff_t, T*);
-          QualType ParamTypes[2] = { Context.getPointerDiffType(), *Ptr };
-          AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
-        } else {
-          // ptrdiff_t operator-(T, T);
-          if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
-            continue;
-          
-          QualType ParamTypes[2] = { *Ptr, *Ptr };
-          AddBuiltinCandidate(Context.getPointerDiffType(), ParamTypes,
-                              Args, 2, CandidateSet);
-        }
-      }   
-      
-      AddedTypes.clear();
+      OpBuilder.addBinaryPlusOrMinusPointerOverloads(Op);
     }
     // Fall through
 
   case OO_Slash:
   BinaryStar:
   Conditional:
-    // C++ [over.built]p12:
-    //
-    //   For every pair of promoted arithmetic types L and R, there
-    //   exist candidate operator functions of the form
-    //
-    //        LR         operator*(L, R);
-    //        LR         operator/(L, R);
-    //        LR         operator+(L, R);
-    //        LR         operator-(L, R);
-    //        bool       operator<(L, R);
-    //        bool       operator>(L, R);
-    //        bool       operator<=(L, R);
-    //        bool       operator>=(L, R);
-    //        bool       operator==(L, R);
-    //        bool       operator!=(L, R);
-    //
-    //   where LR is the result of the usual arithmetic conversions
-    //   between types L and R.
-    //
-    // C++ [over.built]p24:
-    //
-    //   For every pair of promoted arithmetic types L and R, there exist
-    //   candidate operator functions of the form
-    //
-    //        LR       operator?(bool, L, R);
-    //
-    //   where LR is the result of the usual arithmetic conversions
-    //   between types L and R.
-    // Our candidates ignore the first parameter.
-    for (unsigned Left = FirstPromotedArithmeticType;
-         Left < LastPromotedArithmeticType; ++Left) {
-      for (unsigned Right = FirstPromotedArithmeticType;
-           Right < LastPromotedArithmeticType; ++Right) {
-        QualType LandR[2] = { Context.*ArithmeticTypes[Left],
-                              Context.*ArithmeticTypes[Right] };
-        QualType Result
-          = isComparison
-          ? Context.BoolTy
-          : UsualArithmeticConversionsType::find(Context, Left, Right);
-        AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
-      }
-    }
-
-    // Extension: Add the binary operators ==, !=, <, <=, >=, >, *, /, and the
-    // conditional operator for vector types.
-    for (BuiltinCandidateTypeSet::iterator
-              Vec1 = CandidateTypes[0].vector_begin(),
-           Vec1End = CandidateTypes[0].vector_end(); 
-         Vec1 != Vec1End; ++Vec1)
-      for (BuiltinCandidateTypeSet::iterator 
-               Vec2 = CandidateTypes[1].vector_begin(),
-             Vec2End = CandidateTypes[1].vector_end(); 
-           Vec2 != Vec2End; ++Vec2) {
-        QualType LandR[2] = { *Vec1, *Vec2 };
-        QualType Result;
-        if (isComparison)
-          Result = Context.BoolTy;
-        else {
-          if ((*Vec1)->isExtVectorType() || !(*Vec2)->isExtVectorType())
-            Result = *Vec1;
-          else
-            Result = *Vec2;
-        }
-        
-        AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
-      }
-      
+    OpBuilder.addGenericBinaryArithmeticOverloads(isComparison);
     break;
 
   case OO_Percent:
@@ -5153,202 +5622,21 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_Pipe:
   case OO_LessLess:
   case OO_GreaterGreater:
-    // C++ [over.built]p17:
-    //
-    //   For every pair of promoted integral types L and R, there
-    //   exist candidate operator functions of the form
-    //
-    //      LR         operator%(L, R);
-    //      LR         operator&(L, R);
-    //      LR         operator^(L, R);
-    //      LR         operator|(L, R);
-    //      L          operator<<(L, R);
-    //      L          operator>>(L, R);
-    //
-    //   where LR is the result of the usual arithmetic conversions
-    //   between types L and R.
-    for (unsigned Left = FirstPromotedIntegralType;
-         Left < LastPromotedIntegralType; ++Left) {
-      for (unsigned Right = FirstPromotedIntegralType;
-           Right < LastPromotedIntegralType; ++Right) {
-        QualType LandR[2] = { Context.*ArithmeticTypes[Left],
-                              Context.*ArithmeticTypes[Right] };
-        QualType Result = (Op == OO_LessLess || Op == OO_GreaterGreater)
-            ? LandR[0]
-            : UsualArithmeticConversionsType::find(Context, Left, Right);
-        AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
-      }
-    }
+    OpBuilder.addBinaryBitwiseArithmeticOverloads(Op);
     break;
 
   case OO_Equal:
-    // C++ [over.built]p20:
-    //
-    //   For every pair (T, VQ), where T is an enumeration or
-    //   pointer to member type and VQ is either volatile or
-    //   empty, there exist candidate operator functions of the form
-    //
-    //        VQ T&      operator=(VQ T&, T);
-    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
-      for (BuiltinCandidateTypeSet::iterator
-                Enum = CandidateTypes[ArgIdx].enumeration_begin(),
-             EnumEnd = CandidateTypes[ArgIdx].enumeration_end();
-           Enum != EnumEnd; ++Enum) {
-        if (!AddedTypes.insert(Context.getCanonicalType(*Enum)))
-          continue;
-        
-        AddBuiltinAssignmentOperatorCandidates(*this, *Enum, Args, 2,
-                                               CandidateSet);
-      }
-      
-      for (BuiltinCandidateTypeSet::iterator
-                MemPtr = CandidateTypes[ArgIdx].member_pointer_begin(),
-             MemPtrEnd = CandidateTypes[ArgIdx].member_pointer_end();
-           MemPtr != MemPtrEnd; ++MemPtr) {
-        if (!AddedTypes.insert(Context.getCanonicalType(*MemPtr)))
-          continue;
-        
-        AddBuiltinAssignmentOperatorCandidates(*this, *MemPtr, Args, 2,
-                                               CandidateSet);
-      }
-    }
-    AddedTypes.clear();
-      
+    OpBuilder.addAssignmentMemberPointerOrEnumeralOverloads();
     // Fall through.
 
   case OO_PlusEqual:
   case OO_MinusEqual:
-    // C++ [over.built]p19:
-    //
-    //   For every pair (T, VQ), where T is any type and VQ is either
-    //   volatile or empty, there exist candidate operator functions
-    //   of the form
-    //
-    //        T*VQ&      operator=(T*VQ&, T*);
-    //
-    // C++ [over.built]p21:
-    //
-    //   For every pair (T, VQ), where T is a cv-qualified or
-    //   cv-unqualified object type and VQ is either volatile or
-    //   empty, there exist candidate operator functions of the form
-    //
-    //        T*VQ&      operator+=(T*VQ&, ptrdiff_t);
-    //        T*VQ&      operator-=(T*VQ&, ptrdiff_t);
-    for (BuiltinCandidateTypeSet::iterator 
-              Ptr = CandidateTypes[0].pointer_begin(),
-           PtrEnd = CandidateTypes[0].pointer_end();
-         Ptr != PtrEnd; ++Ptr) {
-      QualType ParamTypes[2];
-      ParamTypes[1] = (Op == OO_Equal)? *Ptr : Context.getPointerDiffType();
-
-      // If this is operator=, keep track of the builtin candidates we added.
-      if (Op == OO_Equal)
-        AddedTypes.insert(Context.getCanonicalType(*Ptr));
-      
-      // non-volatile version
-      ParamTypes[0] = Context.getLValueReferenceType(*Ptr);
-      AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                          /*IsAssigmentOperator=*/Op == OO_Equal);
-
-      if (!Context.getCanonicalType(*Ptr).isVolatileQualified() &&
-          VisibleTypeConversionsQuals.hasVolatile()) {
-        // volatile version
-        ParamTypes[0]
-          = Context.getLValueReferenceType(Context.getVolatileType(*Ptr));
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                            /*IsAssigmentOperator=*/Op == OO_Equal);
-      }
-    }
-      
-    if (Op == OO_Equal) {
-      for (BuiltinCandidateTypeSet::iterator 
-                Ptr = CandidateTypes[1].pointer_begin(),
-             PtrEnd = CandidateTypes[1].pointer_end();
-           Ptr != PtrEnd; ++Ptr) {
-        // Make sure we don't add the same candidate twice.
-        if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
-          continue;
-        
-        QualType ParamTypes[2] = { Context.getLValueReferenceType(*Ptr), *Ptr };
-        
-        // non-volatile version
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                            /*IsAssigmentOperator=*/true);
-        
-        if (!Context.getCanonicalType(*Ptr).isVolatileQualified() &&
-            VisibleTypeConversionsQuals.hasVolatile()) {
-          // volatile version
-          ParamTypes[0]
-            = Context.getLValueReferenceType(Context.getVolatileType(*Ptr));
-          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                              /*IsAssigmentOperator=*/true);
-        }
-      }
-      AddedTypes.clear();
-    }
+    OpBuilder.addAssignmentPointerOverloads(Op == OO_Equal);
     // Fall through.
 
   case OO_StarEqual:
   case OO_SlashEqual:
-    // C++ [over.built]p18:
-    //
-    //   For every triple (L, VQ, R), where L is an arithmetic type,
-    //   VQ is either volatile or empty, and R is a promoted
-    //   arithmetic type, there exist candidate operator functions of
-    //   the form
-    //
-    //        VQ L&      operator=(VQ L&, R);
-    //        VQ L&      operator*=(VQ L&, R);
-    //        VQ L&      operator/=(VQ L&, R);
-    //        VQ L&      operator+=(VQ L&, R);
-    //        VQ L&      operator-=(VQ L&, R);
-    for (unsigned Left = 0; Left < NumArithmeticTypes; ++Left) {
-      for (unsigned Right = FirstPromotedArithmeticType;
-           Right < LastPromotedArithmeticType; ++Right) {
-        QualType ParamTypes[2];
-        ParamTypes[1] = Context.*ArithmeticTypes[Right];
-
-        // Add this built-in operator as a candidate (VQ is empty).
-        ParamTypes[0] =
-          Context.getLValueReferenceType(Context.*ArithmeticTypes[Left]);
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                            /*IsAssigmentOperator=*/Op == OO_Equal);
-
-        // Add this built-in operator as a candidate (VQ is 'volatile').
-        if (VisibleTypeConversionsQuals.hasVolatile()) {
-          ParamTypes[0] =
-            Context.getVolatileType(Context.*ArithmeticTypes[Left]);
-          ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
-          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                              /*IsAssigmentOperator=*/Op == OO_Equal);
-        }
-      }
-    }
-      
-    // Extension: Add the binary operators =, +=, -=, *=, /= for vector types.
-    for (BuiltinCandidateTypeSet::iterator
-              Vec1 = CandidateTypes[0].vector_begin(),
-           Vec1End = CandidateTypes[0].vector_end(); 
-         Vec1 != Vec1End; ++Vec1)
-      for (BuiltinCandidateTypeSet::iterator 
-                Vec2 = CandidateTypes[1].vector_begin(),
-             Vec2End = CandidateTypes[1].vector_end(); 
-           Vec2 != Vec2End; ++Vec2) {
-        QualType ParamTypes[2];
-        ParamTypes[1] = *Vec2;
-        // Add this built-in operator as a candidate (VQ is empty).
-        ParamTypes[0] = Context.getLValueReferenceType(*Vec1);
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                            /*IsAssigmentOperator=*/Op == OO_Equal);
-        
-        // Add this built-in operator as a candidate (VQ is 'volatile').
-        if (VisibleTypeConversionsQuals.hasVolatile()) {
-          ParamTypes[0] = Context.getVolatileType(*Vec1);
-          ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
-          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                              /*IsAssigmentOperator=*/Op == OO_Equal);
-        }
-      }
+    OpBuilder.addAssignmentArithmeticOverloads(Op == OO_Equal);
     break;
 
   case OO_PercentEqual:
@@ -5357,210 +5645,28 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_AmpEqual:
   case OO_CaretEqual:
   case OO_PipeEqual:
-    // C++ [over.built]p22:
-    //
-    //   For every triple (L, VQ, R), where L is an integral type, VQ
-    //   is either volatile or empty, and R is a promoted integral
-    //   type, there exist candidate operator functions of the form
-    //
-    //        VQ L&       operator%=(VQ L&, R);
-    //        VQ L&       operator<<=(VQ L&, R);
-    //        VQ L&       operator>>=(VQ L&, R);
-    //        VQ L&       operator&=(VQ L&, R);
-    //        VQ L&       operator^=(VQ L&, R);
-    //        VQ L&       operator|=(VQ L&, R);
-    for (unsigned Left = FirstIntegralType; Left < LastIntegralType; ++Left) {
-      for (unsigned Right = FirstPromotedIntegralType;
-           Right < LastPromotedIntegralType; ++Right) {
-        QualType ParamTypes[2];
-        ParamTypes[1] = Context.*ArithmeticTypes[Right];
-
-        // Add this built-in operator as a candidate (VQ is empty).
-        ParamTypes[0] =
-          Context.getLValueReferenceType(Context.*ArithmeticTypes[Left]);
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
-        if (VisibleTypeConversionsQuals.hasVolatile()) {
-          // Add this built-in operator as a candidate (VQ is 'volatile').
-          ParamTypes[0] = Context.*ArithmeticTypes[Left];
-          ParamTypes[0] = Context.getVolatileType(ParamTypes[0]);
-          ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
-          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
-        }
-      }
-    }
+    OpBuilder.addAssignmentIntegralOverloads();
     break;
 
-  case OO_Exclaim: {
-    // C++ [over.operator]p23:
-    //
-    //   There also exist candidate operator functions of the form
-    //
-    //        bool        operator!(bool);
-    //        bool        operator&&(bool, bool);     [BELOW]
-    //        bool        operator||(bool, bool);     [BELOW]
-    QualType ParamTy = Context.BoolTy;
-    AddBuiltinCandidate(ParamTy, &ParamTy, Args, 1, CandidateSet,
-                        /*IsAssignmentOperator=*/false,
-                        /*NumContextualBoolArguments=*/1);
+  case OO_Exclaim:
+    OpBuilder.addExclaimOverload();
     break;
-  }
 
   case OO_AmpAmp:
-  case OO_PipePipe: {
-    // C++ [over.operator]p23:
-    //
-    //   There also exist candidate operator functions of the form
-    //
-    //        bool        operator!(bool);            [ABOVE]
-    //        bool        operator&&(bool, bool);
-    //        bool        operator||(bool, bool);
-    QualType ParamTypes[2] = { Context.BoolTy, Context.BoolTy };
-    AddBuiltinCandidate(Context.BoolTy, ParamTypes, Args, 2, CandidateSet,
-                        /*IsAssignmentOperator=*/false,
-                        /*NumContextualBoolArguments=*/2);
+  case OO_PipePipe:
+    OpBuilder.addAmpAmpOrPipePipeOverload();
     break;
-  }
 
   case OO_Subscript:
-    // C++ [over.built]p13:
-    //
-    //   For every cv-qualified or cv-unqualified object type T there
-    //   exist candidate operator functions of the form
-    //
-    //        T*         operator+(T*, ptrdiff_t);     [ABOVE]
-    //        T&         operator[](T*, ptrdiff_t);
-    //        T*         operator-(T*, ptrdiff_t);     [ABOVE]
-    //        T*         operator+(ptrdiff_t, T*);     [ABOVE]
-    //        T&         operator[](ptrdiff_t, T*);
-    for (BuiltinCandidateTypeSet::iterator 
-              Ptr = CandidateTypes[0].pointer_begin(),
-           PtrEnd = CandidateTypes[0].pointer_end();
-         Ptr != PtrEnd; ++Ptr) {
-      QualType ParamTypes[2] = { *Ptr, Context.getPointerDiffType() };
-      QualType PointeeType = (*Ptr)->getPointeeType();
-      QualType ResultTy = Context.getLValueReferenceType(PointeeType);
-
-      // T& operator[](T*, ptrdiff_t)
-      AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
-    }
-      
-    for (BuiltinCandidateTypeSet::iterator 
-              Ptr = CandidateTypes[1].pointer_begin(),
-           PtrEnd = CandidateTypes[1].pointer_end();
-         Ptr != PtrEnd; ++Ptr) {
-      QualType ParamTypes[2] = { Context.getPointerDiffType(), *Ptr };
-      QualType PointeeType = (*Ptr)->getPointeeType();
-      QualType ResultTy = Context.getLValueReferenceType(PointeeType);
-      
-      // T& operator[](ptrdiff_t, T*)
-      AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
-    }
+    OpBuilder.addSubscriptOverloads();
     break;
 
   case OO_ArrowStar:
-    // C++ [over.built]p11:
-    //    For every quintuple (C1, C2, T, CV1, CV2), where C2 is a class type, 
-    //    C1 is the same type as C2 or is a derived class of C2, T is an object 
-    //    type or a function type, and CV1 and CV2 are cv-qualifier-seqs, 
-    //    there exist candidate operator functions of the form 
-    //
-    //      CV12 T& operator->*(CV1 C1*, CV2 T C2::*); 
-    //
-    //    where CV12 is the union of CV1 and CV2.
-    {
-      for (BuiltinCandidateTypeSet::iterator 
-               Ptr = CandidateTypes[0].pointer_begin(),
-             PtrEnd = CandidateTypes[0].pointer_end();
-           Ptr != PtrEnd; ++Ptr) {
-        QualType C1Ty = (*Ptr);
-        QualType C1;
-        QualifierCollector Q1;
-        C1 = QualType(Q1.strip(C1Ty->getPointeeType()), 0);
-        if (!isa<RecordType>(C1))
-          continue;
-        // heuristic to reduce number of builtin candidates in the set.
-        // Add volatile/restrict version only if there are conversions to a
-        // volatile/restrict type.
-        if (!VisibleTypeConversionsQuals.hasVolatile() && Q1.hasVolatile())
-          continue;
-        if (!VisibleTypeConversionsQuals.hasRestrict() && Q1.hasRestrict())
-          continue;
-        for (BuiltinCandidateTypeSet::iterator
-                  MemPtr = CandidateTypes[1].member_pointer_begin(),
-               MemPtrEnd = CandidateTypes[1].member_pointer_end();
-             MemPtr != MemPtrEnd; ++MemPtr) {
-          const MemberPointerType *mptr = cast<MemberPointerType>(*MemPtr);
-          QualType C2 = QualType(mptr->getClass(), 0);
-          C2 = C2.getUnqualifiedType();
-          if (C1 != C2 && !IsDerivedFrom(C1, C2))
-            break;
-          QualType ParamTypes[2] = { *Ptr, *MemPtr };
-          // build CV12 T&
-          QualType T = mptr->getPointeeType();
-          if (!VisibleTypeConversionsQuals.hasVolatile() && 
-              T.isVolatileQualified())
-            continue;
-          if (!VisibleTypeConversionsQuals.hasRestrict() && 
-              T.isRestrictQualified())
-            continue;
-          T = Q1.apply(Context, T);
-          QualType ResultTy = Context.getLValueReferenceType(T);
-          AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
-        }
-      }
-    }
+    OpBuilder.addArrowStarOverloads();
     break;
 
   case OO_Conditional:
-    // Note that we don't consider the first argument, since it has been
-    // contextually converted to bool long ago. The candidates below are
-    // therefore added as binary.
-    //
-    // C++ [over.built]p25:
-    //   For every type T, where T is a pointer, pointer-to-member, or scoped
-    //   enumeration type, there exist candidate operator functions of the form
-    //
-    //        T        operator?(bool, T, T);
-    //
-    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
-      for (BuiltinCandidateTypeSet::iterator
-                Ptr = CandidateTypes[ArgIdx].pointer_begin(),
-             PtrEnd = CandidateTypes[ArgIdx].pointer_end();
-           Ptr != PtrEnd; ++Ptr) {
-        if (!AddedTypes.insert(Context.getCanonicalType(*Ptr)))
-          continue;
-        
-        QualType ParamTypes[2] = { *Ptr, *Ptr };
-        AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
-      }
-      
-      for (BuiltinCandidateTypeSet::iterator 
-                MemPtr = CandidateTypes[ArgIdx].member_pointer_begin(),
-             MemPtrEnd = CandidateTypes[ArgIdx].member_pointer_end(); 
-           MemPtr != MemPtrEnd; ++MemPtr) {
-        if (!AddedTypes.insert(Context.getCanonicalType(*MemPtr)))
-          continue;
-        
-        QualType ParamTypes[2] = { *MemPtr, *MemPtr };
-        AddBuiltinCandidate(*MemPtr, ParamTypes, Args, 2, CandidateSet);
-      }
-      
-      if (getLangOptions().CPlusPlus0x) {
-        for (BuiltinCandidateTypeSet::iterator 
-                  Enum = CandidateTypes[ArgIdx].enumeration_begin(),
-               EnumEnd = CandidateTypes[ArgIdx].enumeration_end(); 
-             Enum != EnumEnd; ++Enum) {
-          if (!(*Enum)->getAs<EnumType>()->getDecl()->isScoped())
-            continue;
-          
-          if (!AddedTypes.insert(Context.getCanonicalType(*Enum)))
-            continue;
-
-          QualType ParamTypes[2] = { *Enum, *Enum };
-          AddBuiltinCandidate(*Enum, ParamTypes, Args, 2, CandidateSet);
-        }
-      }
-    }
+    OpBuilder.addConditionalOperatorOverloads();
     goto Conditional;
   }
 }
