@@ -383,6 +383,17 @@ SBTarget::reset (const lldb::TargetSP& target_sp)
     m_opaque_sp = target_sp;
 }
 
+bool
+SBTarget::ResolveLoadAddress (lldb::addr_t vm_addr, 
+                              lldb::SBAddress& addr)
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetSectionLoadList().ResolveLoadAddress (vm_addr, *addr);
+
+    addr->Clear();
+    return false;    
+}
+
 SBBreakpoint
 SBTarget::BreakpointCreateByLocation (const char *file, uint32_t line)
 {

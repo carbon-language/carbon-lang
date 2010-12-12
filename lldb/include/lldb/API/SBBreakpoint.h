@@ -33,6 +33,12 @@ public:
 #ifndef SWIG
     const lldb::SBBreakpoint &
     operator = (const lldb::SBBreakpoint& rhs);
+    
+    // Tests to see if the opaque breakpoint object in this object matches the
+    // opaque breakpoint object in "rhs".
+    bool
+    operator == (const lldb::SBBreakpoint& rhs);
+
 #endif
 
     break_id_t

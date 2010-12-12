@@ -54,6 +54,7 @@ protected:
     friend class SBInstruction;
     friend class SBModule;
     friend class SBSymbolContext;
+    friend class SBTarget;
     friend class SBThread;
 
 #ifndef SWIG

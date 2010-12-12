@@ -103,6 +103,10 @@ public:
 
     bool
     DeleteTargetFromList (lldb_private::TargetList *list);
+    
+    bool
+    ResolveLoadAddress (lldb::addr_t vm_addr, 
+                        lldb::SBAddress& addr);
 
     lldb::SBBreakpoint
     BreakpointCreateByLocation (const char *file, uint32_t line);
