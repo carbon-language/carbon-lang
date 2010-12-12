@@ -313,7 +313,7 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
             }
 
             if (!seen)
-                new_modules.AppendInNeeded (module_sp);
+                new_modules.AppendIfNeeded (module_sp);
 
         }
         if (new_modules.GetSize() > 0)

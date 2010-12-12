@@ -202,13 +202,13 @@ protected:
 
     struct DYLDImageInfo
     {
-        lldb::addr_t address;           // Address of mach header for this dylib
-        lldb::addr_t slide;             // The amount to slide all segments by if there is a global slide.
-        lldb::addr_t mod_date;          // Modification date for this dylib
-        lldb_private::FileSpec file_spec;       // Resolved path for this dylib
-        lldb_private::UUID uuid;                // UUID for this dylib if it has one, else all zeros
-        llvm::MachO::mach_header header;      // The mach header for this image
-        std::vector<Segment> segments;  // All segment vmaddr and vmsize pairs for this executable (from memory of inferior)
+        lldb::addr_t address;               // Address of mach header for this dylib
+        lldb::addr_t slide;                 // The amount to slide all segments by if there is a global slide.
+        lldb::addr_t mod_date;              // Modification date for this dylib
+        lldb_private::FileSpec file_spec;   // Resolved path for this dylib
+        lldb_private::UUID uuid;            // UUID for this dylib if it has one, else all zeros
+        llvm::MachO::mach_header header;    // The mach header for this image
+        std::vector<Segment> segments;      // All segment vmaddr and vmsize pairs for this executable (from memory of inferior)
 
         DYLDImageInfo() :
             address(LLDB_INVALID_ADDRESS),
@@ -358,6 +358,10 @@ protected:
     bool
     UnloadImageLoadAddress (lldb_private::Module *module,
                             struct DYLDImageInfo& info);
+
+    DYLDImageInfo *
+    GetImageInfo (const lldb_private::FileSpec &file_spec, 
+                  const lldb_private::UUID &uuid);
 
     bool
     NeedToLocateDYLD () const;

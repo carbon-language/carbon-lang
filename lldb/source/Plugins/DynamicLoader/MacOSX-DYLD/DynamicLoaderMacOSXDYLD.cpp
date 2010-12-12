@@ -40,6 +40,23 @@ using namespace llvm::MachO;
 /// I am putting it here so I can invoke it in the Trampoline code here, but
 /// it should be moved to the ObjC Runtime support when it is set up.
 
+
+DynamicLoaderMacOSXDYLD::DYLDImageInfo *
+DynamicLoaderMacOSXDYLD::GetImageInfo (const FileSpec &file_spec, const UUID &uuid)
+{
+    DYLDImageInfo::collection::iterator pos, end = m_dyld_image_infos.end();
+    for (pos = m_dyld_image_infos.begin(); pos != end; ++pos)
+    {
+        if (pos->uuid == uuid && pos->file_spec == file_spec)
+            return &(*pos);
+    }
+    
+    if (m_dyld.uuid == uuid && m_dyld.file_spec == file_spec)
+        return &m_dyld;
+
+    return NULL;
+}
+
 //----------------------------------------------------------------------
 // Create an instance of this class. This function is filled into
 // the plugin info class that gets handed out by the plugin factory and
@@ -226,7 +243,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
             // it again (since Target::SetExecutableModule() will clear the
             // images). So append the dyld module back to the list if it is
             /// unique!
-            if (m_process->GetTarget().GetImages().AppendInNeeded (dyld_module_sp))
+            if (m_process->GetTarget().GetImages().AppendIfNeeded (dyld_module_sp))
                 UpdateImageLoadAddress(dyld_module_sp.get(), m_dyld);
 
             return true;
@@ -589,36 +606,57 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 
         // If our new list is smaller than our old list, we have unloaded
         // some shared libraries
-        if (m_dyld_image_infos.size() < old_dyld_all_image_infos.size())
+        if (m_dyld_image_infos.size() != old_dyld_all_image_infos.size())
         {
             ModuleList unloaded_module_list;
-            uint32_t old_idx;
-            for (idx = 0; idx < old_dyld_all_image_infos.size(); ++idx)
+            if (old_dyld_all_image_infos.size() == 0)
             {
-                for (old_idx = idx; old_idx < old_dyld_all_image_infos.size(); ++old_idx)
+                // This is the first time we are loading shared libraries,
+                // we need to make sure to trim anything that isn't in the
+                // m_dyld_image_infos out of the target module list since
+                // we might have shared libraries that got loaded from
+                // elsewhere due to DYLD_FRAMEWORK_PATH, or DYLD_LIBRARY_PATH
+                // environment variables...
+                ModuleList& images = m_process->GetTarget().GetImages();
+                const size_t num_images = images.GetSize();
+                for (idx = 0; idx < num_images; ++idx)
                 {
-                    if (m_dyld_image_infos[idx].file_spec == old_dyld_all_image_infos[old_idx].file_spec)
-                    {
-                        old_dyld_all_image_infos[old_idx].address = LLDB_INVALID_ADDRESS;
-                        break;
-                    }
+                    ModuleSP module_sp (images.GetModuleAtIndex (idx));
+                    
+                    if (GetImageInfo (module_sp->GetFileSpec(), module_sp->GetUUID()) == NULL)
+                        unloaded_module_list.AppendIfNeeded (module_sp);
                 }
             }
-
-            if (log)
-                log->PutCString("Unloaded:");
-
-            for (old_idx = 0; old_idx < old_dyld_all_image_infos.size(); ++old_idx)
+            else
             {
-                if (old_dyld_all_image_infos[old_idx].address != LLDB_INVALID_ADDRESS)
+                uint32_t old_idx;
+                for (idx = 0; idx < old_dyld_all_image_infos.size(); ++idx)
                 {
-                    if (log)
-                        old_dyld_all_image_infos[old_idx].PutToLog (log.get());
-                    ModuleSP unload_image_module_sp(m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (old_dyld_all_image_infos[old_idx].file_spec));
-                    if (unload_image_module_sp.get())
+                    for (old_idx = idx; old_idx < old_dyld_all_image_infos.size(); ++old_idx)
                     {
-                        if (UnloadImageLoadAddress (unload_image_module_sp.get(), old_dyld_all_image_infos[old_idx]))
-                            unloaded_module_list.AppendInNeeded (unload_image_module_sp);
+                        if (m_dyld_image_infos[idx].file_spec == old_dyld_all_image_infos[old_idx].file_spec)
+                        {
+                            old_dyld_all_image_infos[old_idx].address = LLDB_INVALID_ADDRESS;
+                            break;
+                        }
+                    }
+                }
+
+                if (log)
+                    log->PutCString("Unloaded:");
+
+                for (old_idx = 0; old_idx < old_dyld_all_image_infos.size(); ++old_idx)
+                {
+                    if (old_dyld_all_image_infos[old_idx].address != LLDB_INVALID_ADDRESS)
+                    {
+                        if (log)
+                            old_dyld_all_image_infos[old_idx].PutToLog (log.get());
+                        ModuleSP unload_image_module_sp(m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (old_dyld_all_image_infos[old_idx].file_spec));
+                        if (unload_image_module_sp.get())
+                        {
+                            if (UnloadImageLoadAddress (unload_image_module_sp.get(), old_dyld_all_image_infos[old_idx]))
+                                unloaded_module_list.AppendIfNeeded (unload_image_module_sp);
+                        }
                     }
                 }
             }
@@ -690,7 +728,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                 // shared libraries each time.
                 if (UpdateImageLoadAddress (image_module_sp.get(), m_dyld_image_infos[idx]))
                 {
-                    loaded_module_list.AppendInNeeded (image_module_sp);
+                    loaded_module_list.AppendIfNeeded (image_module_sp);
                 }
             }
         }

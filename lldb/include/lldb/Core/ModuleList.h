@@ -76,7 +76,7 @@ public:
     Append (lldb::ModuleSP &module_sp);
 
     bool
-    AppendInNeeded (lldb::ModuleSP &module_sp);
+    AppendIfNeeded (lldb::ModuleSP &module_sp);
 
     //------------------------------------------------------------------
     /// Clear the object's state.

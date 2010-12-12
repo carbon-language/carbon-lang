@@ -67,7 +67,7 @@ ModuleList::Append (ModuleSP &module_sp)
 }
 
 bool
-ModuleList::AppendInNeeded (ModuleSP &module_sp)
+ModuleList::AppendIfNeeded (ModuleSP &module_sp)
 {
     Mutex::Locker locker(m_modules_mutex);
     collection::iterator pos, end = m_modules.end();
