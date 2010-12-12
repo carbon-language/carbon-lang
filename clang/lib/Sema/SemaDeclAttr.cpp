@@ -2168,6 +2168,21 @@ static void HandleGlobalAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       return;
     }
 
+    FunctionDecl *FD = cast<FunctionDecl>(d);
+    if (!FD->getResultType()->isVoidType()) {
+      TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc();
+      if (FunctionTypeLoc* FTL = dyn_cast<FunctionTypeLoc>(&TL)) {
+        S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
+          << FD->getType()
+          << FixItHint::CreateReplacement(FTL->getResultLoc().getSourceRange(),
+                                          "void");
+      } else {
+        S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
+          << FD->getType();
+      }
+      return;
+    }
+
     d->addAttr(::new (S.Context) CUDAGlobalAttr(Attr.getLoc(), S.Context));
   } else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "global";

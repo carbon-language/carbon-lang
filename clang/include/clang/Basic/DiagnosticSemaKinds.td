@@ -2859,8 +2859,11 @@ def err_atomic_builtin_pointer_size : Error<
   "first argument to atomic builtin must be a pointer to 1,2,4,8 or 16 byte "
   "type (%0 invalid)">;
 
-  
 def err_deleted_function_use : Error<"attempt to use a deleted function">;
+
+def err_kern_type_not_void_return : Error<
+  "kernel function type %0 must have void return type">;
+
 
 def err_cannot_pass_objc_interface_to_vararg : Error<
   "cannot pass object with interface type %0 by-value through variadic "
