@@ -4839,9 +4839,50 @@ public:
   //        bool       operator>=(T, T);
   //        bool       operator==(T, T);
   //        bool       operator!=(T, T);
-  void addRelationalPointerOrEnumeralOverloads(
-    const llvm::DenseSet<std::pair<CanQualType, CanQualType> >
-      &UserDefinedBinaryOperators) {
+  void addRelationalPointerOrEnumeralOverloads() {
+    // C++ [over.built]p1:
+    //   If there is a user-written candidate with the same name and parameter
+    //   types as a built-in candidate operator function, the built-in operator
+    //   function is hidden and is not included in the set of candidate
+    //   functions.
+    //
+    // The text is actually in a note, but if we don't implement it then we end
+    // up with ambiguities when the user provides an overloaded operator for
+    // an enumeration type. Note that only enumeration types have this problem,
+    // so we track which enumeration types we've seen operators for. Also, the
+    // only other overloaded operator with enumeration argumenst, operator=,
+    // cannot be overloaded for enumeration types, so this is the only place
+    // where we must suppress candidates like this.
+    llvm::DenseSet<std::pair<CanQualType, CanQualType> >
+      UserDefinedBinaryOperators;
+
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
+      if (CandidateTypes[ArgIdx].enumeration_begin() !=
+          CandidateTypes[ArgIdx].enumeration_end()) {
+        for (OverloadCandidateSet::iterator C = CandidateSet.begin(),
+                                         CEnd = CandidateSet.end();
+             C != CEnd; ++C) {
+          if (!C->Viable || !C->Function || C->Function->getNumParams() != 2)
+            continue;
+
+          QualType FirstParamType =
+            C->Function->getParamDecl(0)->getType().getUnqualifiedType();
+          QualType SecondParamType =
+            C->Function->getParamDecl(1)->getType().getUnqualifiedType();
+
+          // Skip if either parameter isn't of enumeral type.
+          if (!FirstParamType->isEnumeralType() ||
+              !SecondParamType->isEnumeralType())
+            continue;
+
+          // Add this operator to the set of known user-defined operators.
+          UserDefinedBinaryOperators.insert(
+            std::make_pair(S.Context.getCanonicalType(FirstParamType),
+                           S.Context.getCanonicalType(SecondParamType)));
+        }
+      }
+    }
+
     /// Set of (canonical) types that we've already handled.
     llvm::SmallPtrSet<QualType, 8> AddedTypes;
 
@@ -4864,15 +4905,16 @@ public:
            Enum != EnumEnd; ++Enum) {
         CanQualType CanonType = S.Context.getCanonicalType(*Enum);
 
-        // Don't add the same builtin candidate twice.
-        if (!AddedTypes.insert(CanonType))
+        // Don't add the same builtin candidate twice, or if a user defined
+        // candidate exists.
+        if (!AddedTypes.insert(CanonType) ||
+            UserDefinedBinaryOperators.count(std::make_pair(CanonType,
+                                                            CanonType)))
           continue;
 
         QualType ParamTypes[2] = { *Enum, *Enum };
-        if (!UserDefinedBinaryOperators.count(
-              std::make_pair(CanonType, CanonType)))
-          S.AddBuiltinCandidate(S.Context.BoolTy, ParamTypes, Args, 2,
-                                CandidateSet);
+        S.AddBuiltinCandidate(S.Context.BoolTy, ParamTypes, Args, 2,
+                              CandidateSet);
       }
     }
   }
@@ -5486,47 +5528,6 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                                                  VisibleTypeConversionsQuals);
   }
 
-  // C++ [over.built]p1:
-  //   If there is a user-written candidate with the same name and parameter
-  //   types as a built-in candidate operator function, the built-in operator 
-  //   function is hidden and is not included in the set of candidate functions.
-  //
-  // The text is actually in a note, but if we don't implement it then we end
-  // up with ambiguities when the user provides an overloaded operator for
-  // an enumeration type. Note that only enumeration types have this problem,
-  // so we track which enumeration types we've seen operators for.
-  llvm::DenseSet<std::pair<CanQualType, CanQualType> > 
-    UserDefinedBinaryOperators;
-
-  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
-    if (CandidateTypes[ArgIdx].enumeration_begin() 
-                                != CandidateTypes[ArgIdx].enumeration_end()) {
-      for (OverloadCandidateSet::iterator C = CandidateSet.begin(),
-                                       CEnd = CandidateSet.end();
-           C != CEnd; ++C) {
-        if (!C->Viable || !C->Function || C->Function->getNumParams() != 2)
-          continue;
-        
-        // Check if the first parameter is of enumeration type.
-        QualType FirstParamType
-          = C->Function->getParamDecl(0)->getType().getUnqualifiedType();
-        if (!FirstParamType->isEnumeralType())
-          continue;
-        
-        // Check if the second parameter is of enumeration type.
-        QualType SecondParamType
-          = C->Function->getParamDecl(1)->getType().getUnqualifiedType();
-        if (!SecondParamType->isEnumeralType())
-          continue;
-
-        // Add this operator to the set of known user-defined operators.
-        UserDefinedBinaryOperators.insert(
-                    std::make_pair(Context.getCanonicalType(FirstParamType),
-                                   Context.getCanonicalType(SecondParamType)));
-      }
-    }
-  }
-
   // Setup an object to manage the common state for building overloads.
   BuiltinOperatorOverloadBuilder OpBuilder(*this, Args, NumArgs,
                                            VisibleTypeConversionsQuals,
@@ -5594,8 +5595,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   case OO_Greater:
   case OO_LessEqual:
   case OO_GreaterEqual:
-    OpBuilder.addRelationalPointerOrEnumeralOverloads(
-      UserDefinedBinaryOperators);
+    OpBuilder.addRelationalPointerOrEnumeralOverloads();
     OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/true);
     break;
 
