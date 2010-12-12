@@ -5547,14 +5547,9 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     break;
 
   case OO_Plus: // '+' is either unary or binary
-    if (NumArgs == 1) {
+    if (NumArgs == 1)
       OpBuilder.addUnaryPlusPointerOverloads();
-      OpBuilder.addUnaryPlusOrMinusArithmeticOverloads();
-    } else {
-      OpBuilder.addBinaryPlusOrMinusPointerOverloads(Op);
-      OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
-    }
-    break;
+    // Fall through.
 
   case OO_Minus: // '-' is either unary or binary
     if (NumArgs == 1) {
