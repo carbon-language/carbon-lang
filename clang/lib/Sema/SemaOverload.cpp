@@ -5539,11 +5539,19 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     assert(false && "Expected an overloaded operator");
     break;
 
-  case OO_Star: // '*' is either unary or binary
-    if (NumArgs == 1)
-      OpBuilder.addUnaryStarPointerOverloads();
-    else
-      OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
+  case OO_New:
+  case OO_Delete:
+  case OO_Array_New:
+  case OO_Array_Delete:
+  case OO_Call:
+    assert(false && "Special operators don't use AddBuiltinOperatorCandidates");
+    break;
+
+  case OO_Comma:
+  case OO_Arrow:
+    // C++ [over.match.oper]p3:
+    //   -- For the operator ',', the unary operator '&', or the
+    //      operator '->', the built-in candidates set is empty.
     break;
 
   case OO_Plus: // '+' is either unary or binary
@@ -5560,39 +5568,21 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     }
     break;
 
-  case OO_Amp: // '&' is either unary or binary
+  case OO_Star: // '*' is either unary or binary
     if (NumArgs == 1)
-      // C++ [over.match.oper]p3:
-      //   -- For the operator ',', the unary operator '&', or the
-      //      operator '->', the built-in candidates set is empty.
-      break;
+      OpBuilder.addUnaryStarPointerOverloads();
+    else
+      OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
+    break;
 
-    OpBuilder.addBinaryBitwiseArithmeticOverloads(Op);
+  case OO_Slash:
+    OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
     break;
 
   case OO_PlusPlus:
   case OO_MinusMinus:
     OpBuilder.addPlusPlusMinusMinusArithmeticOverloads(Op);
     OpBuilder.addPlusPlusMinusMinusPointerOverloads();
-    break;
-
-  case OO_Tilde:
-    OpBuilder.addUnaryTildePromotedIntegralOverloads();
-    break;
-
-  case OO_New:
-  case OO_Delete:
-  case OO_Array_New:
-  case OO_Array_Delete:
-  case OO_Call:
-    assert(false && "Special operators don't use AddBuiltinOperatorCandidates");
-    break;
-
-  case OO_Comma:
-  case OO_Arrow:
-    // C++ [over.match.oper]p3:
-    //   -- For the operator ',', the unary operator '&', or the
-    //      operator '->', the built-in candidates set is empty.
     break;
 
   case OO_EqualEqual:
@@ -5609,16 +5599,26 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/true);
     break;
 
-  case OO_Slash:
-    OpBuilder.addGenericBinaryArithmeticOverloads(/*isComparison=*/false);
-    break;
-
   case OO_Percent:
   case OO_Caret:
   case OO_Pipe:
   case OO_LessLess:
   case OO_GreaterGreater:
     OpBuilder.addBinaryBitwiseArithmeticOverloads(Op);
+    break;
+
+  case OO_Amp: // '&' is either unary or binary
+    if (NumArgs == 1)
+      // C++ [over.match.oper]p3:
+      //   -- For the operator ',', the unary operator '&', or the
+      //      operator '->', the built-in candidates set is empty.
+      break;
+
+    OpBuilder.addBinaryBitwiseArithmeticOverloads(Op);
+    break;
+
+  case OO_Tilde:
+    OpBuilder.addUnaryTildePromotedIntegralOverloads();
     break;
 
   case OO_Equal:
