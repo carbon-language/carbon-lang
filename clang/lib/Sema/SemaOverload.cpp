@@ -4571,45 +4571,6 @@ class BuiltinOperatorOverloadBuilder {
 
   static CanQualType ASTContext::* const ArithmeticTypes[NumArithmeticTypes];
 
-  // Accelerator table for performing the usual arithmetic conversions.
-  // The rules are basically:
-  //   - if either is floating-point, use the wider floating-point
-  //   - if same signedness, use the higher rank
-  //   - if same size, use unsigned of the higher rank
-  //   - use the larger type
-  // These rules, together with the axiom that higher ranks are
-  // never smaller, are sufficient to precompute all of these results
-  // *except* when dealing with signed types of higher rank.
-  // (we could precompute SLL x UI for all known platforms, but it's
-  // better not to make any assumptions).
-  enum PromT {  Flt,  Dbl, LDbl,   SI,   SL,  SLL,   UI,   UL,  ULL, Dep=-1 };
-  static PromT UsualArithmeticConversionsTypes
-    [LastPromotedArithmeticType][LastPromotedArithmeticType];
-  struct UsualArithmeticConversionsType {
-    static CanQualType find(ASTContext &C, unsigned L, unsigned R) {
-      assert(L < LastPromotedArithmeticType);
-      assert(R < LastPromotedArithmeticType);
-      signed char Idx = UsualArithmeticConversionsTypes[L][R];
-
-      // Fast path: the table gives us a concrete answer.
-      if (Idx != Dep) return C.*ArithmeticTypes[Idx];
-
-      // Slow path: we need to compare widths.
-      // An invariant is that the signed type has higher rank.
-      CanQualType LT = C.*ArithmeticTypes[L], RT = C.*ArithmeticTypes[R];
-      unsigned LW = C.getIntWidth(LT), RW = C.getIntWidth(RT);
-
-      // If they're different widths, use the signed type.
-      if (LW > RW) return LT;
-      else if (LW > RW) return RT;
-
-      // Otherwise, use the unsigned type of the signed type's rank.
-      if (L == SL || R == SL) return C.UnsignedLongTy;
-      assert(L == SLL || R == SLL);
-      return C.UnsignedLongLongTy;
-    }
-  };
-
   // Common instance state available to all overload candidate addition methods.
   Sema &S;
   Expr **Args;
@@ -4617,6 +4578,60 @@ class BuiltinOperatorOverloadBuilder {
   Qualifiers VisibleTypeConversionsQuals;
   llvm::SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes;
   OverloadCandidateSet &CandidateSet;
+
+  /// \brief Gets the canonical type resulting from the usual arithemetic
+  /// converions for the given arithmetic types.
+  CanQualType getUsualArithmeticConversions(unsigned L, unsigned R) {
+    // Accelerator table for performing the usual arithmetic conversions.
+    // The rules are basically:
+    //   - if either is floating-point, use the wider floating-point
+    //   - if same signedness, use the higher rank
+    //   - if same size, use unsigned of the higher rank
+    //   - use the larger type
+    // These rules, together with the axiom that higher ranks are
+    // never smaller, are sufficient to precompute all of these results
+    // *except* when dealing with signed types of higher rank.
+    // (we could precompute SLL x UI for all known platforms, but it's
+    // better not to make any assumptions).
+    enum PromotedType {
+                  Flt,  Dbl, LDbl,   SI,   SL,  SLL,   UI,   UL,  ULL, Dep=-1
+    };
+    static PromotedType ConversionsTable[LastPromotedArithmeticType]
+                                        [LastPromotedArithmeticType] = {
+      /* Flt*/ {  Flt,  Dbl, LDbl,  Flt,  Flt,  Flt,  Flt,  Flt,  Flt },
+      /* Dbl*/ {  Dbl,  Dbl, LDbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl },
+      /*LDbl*/ { LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl },
+      /*  SI*/ {  Flt,  Dbl, LDbl,   SI,   SL,  SLL,   UI,   UL,  ULL },
+      /*  SL*/ {  Flt,  Dbl, LDbl,   SL,   SL,  SLL,  Dep,   UL,  ULL },
+      /* SLL*/ {  Flt,  Dbl, LDbl,  SLL,  SLL,  SLL,  Dep,  Dep,  ULL },
+      /*  UI*/ {  Flt,  Dbl, LDbl,   UI,  Dep,  Dep,   UI,   UL,  ULL },
+      /*  UL*/ {  Flt,  Dbl, LDbl,   UL,   UL,  Dep,   UL,   UL,  ULL },
+      /* ULL*/ {  Flt,  Dbl, LDbl,  ULL,  ULL,  ULL,  ULL,  ULL,  ULL },
+    };
+
+    assert(L < LastPromotedArithmeticType);
+    assert(R < LastPromotedArithmeticType);
+    int Idx = ConversionsTable[L][R];
+
+    // Fast path: the table gives us a concrete answer.
+    if (Idx != Dep) return S.Context.*ArithmeticTypes[Idx];
+
+    // Slow path: we need to compare widths.
+    // An invariant is that the signed type has higher rank.
+    CanQualType LT = S.Context.*ArithmeticTypes[L],
+                RT = S.Context.*ArithmeticTypes[R];
+    unsigned LW = S.Context.getIntWidth(LT),
+             RW = S.Context.getIntWidth(RT);
+
+    // If they're different widths, use the signed type.
+    if (LW > RW) return LT;
+    else if (LW < RW) return RT;
+
+    // Otherwise, use the unsigned type of the signed type's rank.
+    if (L == SL || R == SL) return S.Context.UnsignedLongTy;
+    assert(L == SLL || R == SLL);
+    return S.Context.UnsignedLongLongTy;
+  }
 
   /// \brief Helper method to factor out the common pattern of adding overloads
   /// for '++' and '--' builtin operators.
@@ -5009,8 +5024,7 @@ public:
                               S.Context.*ArithmeticTypes[Right] };
         QualType Result =
           isComparison ? S.Context.BoolTy
-                       : UsualArithmeticConversionsType::find(S.Context, Left,
-                                                              Right);
+                       : getUsualArithmeticConversions(Left, Right);
         S.AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
       }
     }
@@ -5062,7 +5076,7 @@ public:
                               S.Context.*ArithmeticTypes[Right] };
         QualType Result = (Op == OO_LessLess || Op == OO_GreaterGreater)
             ? LandR[0]
-            : UsualArithmeticConversionsType::find(S.Context, Left, Right);
+            : getUsualArithmeticConversions(Left, Right);
         S.AddBuiltinCandidate(Result, LandR, Args, 2, CandidateSet);
       }
     }
@@ -5471,31 +5485,6 @@ BuiltinOperatorOverloadBuilder::ArithmeticTypes[NumArithmeticTypes] = {
   &ASTContext::UnsignedShortTy
   // End of integral types.
   // FIXME: What about complex?
-};
-
-// Accelerator table for performing the usual arithmetic conversions.
-// The rules are basically:
-//   - if either is floating-point, use the wider floating-point
-//   - if same signedness, use the higher rank
-//   - if same size, use unsigned of the higher rank
-//   - use the larger type
-// These rules, together with the axiom that higher ranks are
-// never smaller, are sufficient to precompute all of these results
-// *except* when dealing with signed types of higher rank.
-// (we could precompute SLL x UI for all known platforms, but it's
-// better not to make any assumptions).
-BuiltinOperatorOverloadBuilder::PromT
-BuiltinOperatorOverloadBuilder::UsualArithmeticConversionsTypes
-[LastPromotedArithmeticType][LastPromotedArithmeticType] = {
-  /* Flt*/ {  Flt,  Dbl, LDbl,  Flt,  Flt,  Flt,  Flt,  Flt,  Flt },
-  /* Dbl*/ {  Dbl,  Dbl, LDbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl,  Dbl },
-  /*LDbl*/ { LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl, LDbl },
-  /*  SI*/ {  Flt,  Dbl, LDbl,   SI,   SL,  SLL,   UI,   UL,  ULL },
-  /*  SL*/ {  Flt,  Dbl, LDbl,   SL,   SL,  SLL,  Dep,   UL,  ULL },
-  /* SLL*/ {  Flt,  Dbl, LDbl,  SLL,  SLL,  SLL,  Dep,  Dep,  ULL },
-  /*  UI*/ {  Flt,  Dbl, LDbl,   UI,  Dep,  Dep,   UI,   UL,  ULL },
-  /*  UL*/ {  Flt,  Dbl, LDbl,   UL,   UL,  Dep,   UL,   UL,  ULL },
-  /* ULL*/ {  Flt,  Dbl, LDbl,  ULL,  ULL,  ULL,  ULL,  ULL,  ULL }
 };
 
 } // end anonymous namespace
