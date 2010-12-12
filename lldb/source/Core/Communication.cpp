@@ -94,7 +94,16 @@ Communication::Disconnect (Error *error_ptr)
     if (m_connection_ap.get())
     {
         ConnectionStatus status = m_connection_ap->Disconnect (error_ptr);
-        m_connection_ap.reset();
+        // We currently don't protect m_connection_ap with any mutex for 
+        // multi-threaded environments. So lets not nuke our connection class 
+        // without putting some multi-threaded protections in. We also probably
+        // don't want to pay for the overhead it might cause if every time we
+        // access the connection we have to take a lock.
+        //
+        // This auto_ptr will cleanup after itself when this object goes away,
+        // so there is no need to currently have it destroy itself immediately
+        // upon disconnnect.
+        //m_connection_ap.reset();
         return status;
     }
     return eConnectionStatusNoConnection;
@@ -347,6 +356,7 @@ Communication::ReadThread (void *p)
     // Let clients know that this thread is exiting
     comm->BroadcastEvent (eBroadcastBitReadThreadDidExit);
     comm->m_read_thread = LLDB_INVALID_HOST_THREAD;
+    comm->Disconnect();
     return NULL;
 }
 
