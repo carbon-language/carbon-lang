@@ -1515,7 +1515,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       AddPredecessorToBlock(FalseDest, PredBlock, BB);
       PBI->setSuccessor(1, FalseDest);
     }
-    return SimplifyCFG(BB) | true;
+    return SimplifyCFG(PBI->getParent()) | true;
   }
   return false;
 }
@@ -1905,25 +1905,17 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   
   BasicBlock *BB = BI->getParent();
   
-  DEBUG(dbgs() << "CONVERTING 'icmp' CHAIN with " << Values.size()
-               << " cases into SWITCH.  BB is:\n" << *BB);
-  
   // If there are any extra values that couldn't be folded into the switch
   // then we evaluate them with an explicit branch first.  Split the block
   // right before the condbr to handle it.
   if (ExtraCase) {
-    DEBUG(dbgs() << "  ** 'icmp' chain unhandled condition: " << *ExtraCase
-                 << '\n');
+    return false;
     
     BasicBlock *NewBB = BB->splitBasicBlock(BI, "switch.early.test");
     // Remove the uncond branch added to the old block.
     TerminatorInst *OldTI = BB->getTerminator();
     
-    if (TrueWhenEqual)
-      BranchInst::Create(EdgeBB, NewBB, ExtraCase, OldTI);
-    else
-      BranchInst::Create(NewBB, EdgeBB, ExtraCase, OldTI);
-      
+    BranchInst::Create(EdgeBB, NewBB, ExtraCase, OldTI);
     OldTI->eraseFromParent();
     
     // If there are PHI nodes in EdgeBB, then we need to add a new entry to them
@@ -1963,7 +1955,6 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   
   // Erase the old branch instruction.
   EraseTerminatorInstAndDCECond(BI);
-  
   return true;
 }
 
@@ -2367,7 +2358,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI) {
   // branches to us and one of our successors, fold the setcc into the
   // predecessor and use logical operations to pick the right destination.
   if (FoldBranchToCommonDest(BI))
-    return true;
+    return SimplifyCFG(BB) | true;
   
   // Scan predecessor blocks for conditional branches.
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
@@ -2419,7 +2410,8 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     if (BI->isUnconditional()) {
       if (SimplifyUncondBranch(BI)) return true;
     } else {
-      if (SimplifyCondBranch(BI)) return true;
+      if (SimplifyCondBranch(BI))
+        return true;
     }
   } else if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
     if (SimplifyReturn(RI)) return true;

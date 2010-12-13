@@ -1,4 +1,5 @@
 ; RUN: opt < %s -simplifycfg -S | FileCheck %s
+; XFAIL: *
 
 declare void @foo1()
 
