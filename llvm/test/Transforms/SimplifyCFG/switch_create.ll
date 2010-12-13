@@ -290,5 +290,44 @@ F:
 ; CHECK:  ]
 }
 
+; PR8780
+define i32 @test11(i32 %bar) nounwind {
+entry:
+  %cmp = icmp eq i32 %bar, 4
+  %cmp2 = icmp eq i32 %bar, 35
+  %or.cond = or i1 %cmp, %cmp2
+  %cmp5 = icmp eq i32 %bar, 53
+  %or.cond1 = or i1 %or.cond, %cmp5
+  %cmp8 = icmp eq i32 %bar, 24
+  %or.cond2 = or i1 %or.cond1, %cmp8
+  %cmp11 = icmp eq i32 %bar, 23
+  %or.cond3 = or i1 %or.cond2, %cmp11
+  %cmp14 = icmp eq i32 %bar, 55
+  %or.cond4 = or i1 %or.cond3, %cmp14
+  %cmp17 = icmp eq i32 %bar, 12
+  %or.cond5 = or i1 %or.cond4, %cmp17
+  %cmp20 = icmp eq i32 %bar, 35
+  %or.cond6 = or i1 %or.cond5, %cmp20
+  br i1 %or.cond6, label %if.then, label %if.end
 
+if.then:                                          ; preds = %entry
+  br label %return
 
+if.end:                                           ; preds = %entry
+  br label %return
+
+return:                                           ; preds = %if.end, %if.then
+  %retval.0 = phi i32 [ 1, %if.then ], [ 0, %if.end ]
+  ret i32 %retval.0
+
+; CHECK: @test11
+; CHECK: switch i32 %bar, label %if.end [
+; CHECK:   i32 55, label %return
+; CHECK:   i32 53, label %return
+; CHECK:   i32 35, label %return
+; CHECK:   i32 24, label %return
+; CHECK:   i32 23, label %return
+; CHECK:   i32 12, label %return
+; CHECK:   i32 4, label %return
+; CHECK: ]
+}
