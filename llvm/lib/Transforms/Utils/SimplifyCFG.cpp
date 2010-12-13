@@ -1357,7 +1357,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   // must be at the front of the block.
   BasicBlock::iterator FrontIt = BB->front();
   // Ignore dbg intrinsics.
-  while(isa<DbgInfoIntrinsic>(FrontIt))
+  while (isa<DbgInfoIntrinsic>(FrontIt))
     ++FrontIt;
     
   // Allow a single instruction to be hoisted in addition to the compare
@@ -1441,7 +1441,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
         UsedValues.erase(Pair.first);
         if (UsedValues.empty()) break;
         
-        if (Instruction* I = dyn_cast<Instruction>(Pair.first)) {
+        if (Instruction *I = dyn_cast<Instruction>(Pair.first)) {
           for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
                OI != OE; ++OI)
             Worklist.push_back(std::make_pair(OI->get(), Pair.second+1));
@@ -1469,9 +1469,16 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     
     // If we need to invert the condition in the pred block to match, do so now.
     if (InvertPredCond) {
-      Value *NewCond =
-        BinaryOperator::CreateNot(PBI->getCondition(),
+      Value *NewCond = PBI->getCondition();
+      
+      if (NewCond->hasOneUse() && isa<CmpInst>(NewCond)) {
+        CmpInst *CI = cast<CmpInst>(NewCond);
+        CI->setPredicate(CI->getInversePredicate());
+      } else {
+        NewCond = BinaryOperator::CreateNot(NewCond,
                                   PBI->getCondition()->getName()+".not", PBI);
+      }
+      
       PBI->setCondition(NewCond);
       BasicBlock *OldTrue = PBI->getSuccessor(0);
       BasicBlock *OldFalse = PBI->getSuccessor(1);
@@ -1507,7 +1514,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       AddPredecessorToBlock(FalseDest, PredBlock, BB);
       PBI->setSuccessor(1, FalseDest);
     }
-    return true;
+    return SimplifyCFG(PBI->getParent()) | true;
   }
   return false;
 }

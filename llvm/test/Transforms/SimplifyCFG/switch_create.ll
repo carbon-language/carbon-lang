@@ -203,5 +203,70 @@ if.end:                                           ; preds = %entry
 ; CHECK:     i8 97, label %if.then
 ; CHECK:   ]
 ; CHECK:   %A = phi i32 [ 0, %entry ], [ 42, %switch.early.test ], [ 42, %N ], [ 42, %switch.early.test ]
-
 }
+
+define i32 @test9(i8 zeroext %c) nounwind ssp noredzone {
+entry:
+  %cmp = icmp ult i8 %c, 33
+  br i1 %cmp, label %lor.end, label %lor.lhs.false
+
+lor.lhs.false:                                    ; preds = %entry
+  %cmp4 = icmp eq i8 %c, 46
+  br i1 %cmp4, label %lor.end, label %lor.lhs.false6
+
+lor.lhs.false6:                                   ; preds = %lor.lhs.false
+  %cmp9 = icmp eq i8 %c, 44
+  br i1 %cmp9, label %lor.end, label %lor.lhs.false11
+
+lor.lhs.false11:                                  ; preds = %lor.lhs.false6
+  %cmp14 = icmp eq i8 %c, 58
+  br i1 %cmp14, label %lor.end, label %lor.lhs.false16
+
+lor.lhs.false16:                                  ; preds = %lor.lhs.false11
+  %cmp19 = icmp eq i8 %c, 59
+  br i1 %cmp19, label %lor.end, label %lor.lhs.false21
+
+lor.lhs.false21:                                  ; preds = %lor.lhs.false16
+  %cmp24 = icmp eq i8 %c, 60
+  br i1 %cmp24, label %lor.end, label %lor.lhs.false26
+
+lor.lhs.false26:                                  ; preds = %lor.lhs.false21
+  %cmp29 = icmp eq i8 %c, 62
+  br i1 %cmp29, label %lor.end, label %lor.lhs.false31
+
+lor.lhs.false31:                                  ; preds = %lor.lhs.false26
+  %cmp34 = icmp eq i8 %c, 34
+  br i1 %cmp34, label %lor.end, label %lor.lhs.false36
+
+lor.lhs.false36:                                  ; preds = %lor.lhs.false31
+  %cmp39 = icmp eq i8 %c, 92
+  br i1 %cmp39, label %lor.end, label %lor.rhs
+
+lor.rhs:                                          ; preds = %lor.lhs.false36
+  %cmp43 = icmp eq i8 %c, 39
+  br label %lor.end
+
+lor.end:                                          ; preds = %lor.rhs, %lor.lhs.false36, %lor.lhs.false31, %lor.lhs.false26, %lor.lhs.false21, %lor.lhs.false16, %lor.lhs.false11, %lor.lhs.false6, %lor.lhs.false, %entry
+  %0 = phi i1 [ true, %lor.lhs.false36 ], [ true, %lor.lhs.false31 ], [ true, %lor.lhs.false26 ], [ true, %lor.lhs.false21 ], [ true, %lor.lhs.false16 ], [ true, %lor.lhs.false11 ], [ true, %lor.lhs.false6 ], [ true, %lor.lhs.false ], [ true, %entry ], [ %cmp43, %lor.rhs ]
+  %conv46 = zext i1 %0 to i32
+  ret i32 %conv46
+  
+; CHECK: @test9
+; CHECK:   %cmp = icmp ult i8 %c, 33
+; CHECK:   br i1 %cmp, label %lor.end, label %switch.early.test
+
+; CHECK: switch.early.test:
+; CHECK:   switch i8 %c, label %lor.rhs [
+; CHECK:     i8 46, label %lor.end
+; CHECK:     i8 44, label %lor.end
+; CHECK:     i8 58, label %lor.end
+; CHECK:     i8 59, label %lor.end
+; CHECK:     i8 60, label %lor.end
+; CHECK:     i8 62, label %lor.end
+; CHECK:     i8 34, label %lor.end
+; CHECK:     i8 92, label %lor.end
+; CHECK:     i8 39, label %lor.end
+; CHECK:   ]
+}
+
+
