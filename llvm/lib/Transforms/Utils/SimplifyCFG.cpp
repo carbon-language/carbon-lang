@@ -1770,6 +1770,91 @@ static bool SimplifyIndirectBrOnSelect(IndirectBrInst *IBI, SelectInst *SI) {
   return true;
 }
 
+/// TryToSimplifyUncondBranchWithICmpInIt - This is called when we find an icmp
+/// instruction (a seteq/setne with a constant) as the only instruction in a
+/// block that ends with an uncond branch.  We are looking for a very specific
+/// pattern that occurs when "A == 1 || A == 2 || A == 3" gets simplified.  In
+/// this case, we merge the first two "or's of icmp" into a switch, but then the
+/// default value goes to an uncond block with a seteq in it, we get something
+/// like:
+///
+///   switch i8 %A, label %DEFAULT [ i8 1, label %end    i8 2, label %end ]
+/// DEFAULT:
+///   %tmp = icmp eq i8 %A, 92
+///   br label %end
+/// end:
+///   ... = phi i1 [ true, %entry ], [ %tmp, %DEFAULT ], [ true, %entry ]
+/// 
+/// We prefer to split the edge to 'end' so that there is a true/false entry to
+/// the PHI, merging the third icmp into the switch.
+static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI) {
+  BasicBlock *BB = ICI->getParent();
+  // If the block has any PHIs in it or the icmp has multiple uses, it is too
+  // complex.
+  if (isa<PHINode>(BB->begin()) || !ICI->hasOneUse()) return false;
+
+  Value *V = ICI->getOperand(0);
+  ConstantInt *Cst = cast<ConstantInt>(ICI->getOperand(1));
+  
+  // The pattern we're looking for is where our only predecessor is a switch on
+  // 'V' and this block is the default case for the switch.  In this case we can
+  // fold the compared value into the switch to simplify things.
+  BasicBlock *Pred = BB->getSinglePredecessor();
+  if (Pred == 0 || !isa<SwitchInst>(Pred->getTerminator())) return false;
+  
+  SwitchInst *SI = cast<SwitchInst>(Pred->getTerminator());
+  if (SI->getCondition() != V)
+    return false;
+  
+  // If BB is reachable on a non-default case, then we simply know the value of
+  // V in this block.  Substitute it and constant fold the icmp instruction
+  // away.
+  if (SI->getDefaultDest() != BB) {
+    ConstantInt *VVal = SI->findCaseDest(BB);
+    assert(VVal && "Should have a unique destination value");
+    ICI->setOperand(0, VVal);
+    
+    if (Constant *C = ConstantFoldInstruction(ICI)) {
+      ICI->replaceAllUsesWith(C);
+      ICI->eraseFromParent();
+    }
+    // BB is now empty, so it is likely to simplify away.
+    return SimplifyCFG(BB) | true;
+  }
+  
+  // The use of the icmp has to be in the 'end' block, by the only PHI node in
+  // the block.
+  BasicBlock *SuccBlock = BB->getTerminator()->getSuccessor(0);
+  PHINode *PHIUse = dyn_cast<PHINode>(ICI->use_back());
+  if (PHIUse == 0 || PHIUse != &SuccBlock->front() ||
+      isa<PHINode>(++BasicBlock::iterator(PHIUse)))
+    return false;
+
+  // If the icmp is a SETEQ, then the default dest gets false, the new edge gets
+  // true in the PHI.
+  Constant *DefaultCst = ConstantInt::getTrue(BB->getContext());
+  Constant *NewCst     = ConstantInt::getFalse(BB->getContext());
+
+  if (ICI->getPredicate() == ICmpInst::ICMP_EQ)
+    std::swap(DefaultCst, NewCst);
+
+  // Replace ICI (which is used by the PHI for the default value) with true or
+  // false depending on if it is EQ or NE.
+  ICI->replaceAllUsesWith(DefaultCst);
+  ICI->eraseFromParent();
+
+  // Okay, the switch goes to this block on a default value.  Add an edge from
+  // the switch to the merge point on the compared value.
+  BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), "switch.edge",
+                                         BB->getParent(), BB);
+  SI->addCase(Cst, NewBB);
+  
+  // NewBB branches to the phi block, add the uncond branch and the phi entry.
+  BranchInst::Create(SuccBlock, NewBB);
+  PHIUse->addIncoming(NewCst, NewBB);
+  return true;
+}
+
 bool SimplifyCFGOpt::run(BasicBlock *BB) {
   bool Changed = false;
   Function *Fn = BB->getParent();
@@ -1926,10 +2011,21 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
   } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     if (BI->isUnconditional()) {
       // If the Terminator is the only non-phi instruction, simplify the block.
-      Instruction *I = BB->getFirstNonPHIOrDbg();
+      BasicBlock::iterator I = BB->getFirstNonPHIOrDbg();
       if (I->isTerminator() && BB != &Fn->getEntryBlock() &&
           TryToSimplifyUncondBranchFromEmptyBlock(BB))
         return true;
+      
+      // If the only instruction in the block is a seteq/setne comparison
+      // against a constant, try to simplify the block.
+      if (ICmpInst *ICI = dyn_cast<ICmpInst>(I))
+        if (ICI->isEquality() && isa<ConstantInt>(ICI->getOperand(1))) {
+          for (++I; isa<DbgInfoIntrinsic>(I); ++I)
+            ;
+          if (I->isTerminator() &&
+              TryToSimplifyUncondBranchWithICmpInIt(ICI))
+            return true;
+        }
       
     } else {  // Conditional branch
       if (isValueEqualityComparison(BI)) {
