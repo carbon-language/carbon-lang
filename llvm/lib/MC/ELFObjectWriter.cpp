@@ -1535,22 +1535,40 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
 
   unsigned Type = 0;
   if (IsPCRel) {
-    switch (Modifier) {
-    default: assert(0 && "Unimplemented Modifier");
-    case MCSymbolRefExpr::VK_None: break;
-    }
     switch ((unsigned)Fixup.getKind()) {
     default: assert(0 && "Unimplemented");
-    case ARM::fixup_arm_branch: Type = ELF::R_ARM_CALL; break;
+    case FK_Data_4:
+      switch (Modifier) {
+      default: llvm_unreachable("Unsupported Modifier");
+      case MCSymbolRefExpr::VK_None:
+        Type = ELF::R_ARM_BASE_PREL; break;
+      case MCSymbolRefExpr::VK_ARM_TLSGD:
+        assert(0 && "unimplemented"); break;
+      case MCSymbolRefExpr::VK_ARM_GOTTPOFF:
+        Type = ELF::R_ARM_TLS_IE32;
+      } break;
+    case ARM::fixup_arm_branch:
+      switch (Modifier) {
+      case MCSymbolRefExpr::VK_ARM_PLT:
+        Type = ELF::R_ARM_PLT32; break;
+      default:
+        Type = ELF::R_ARM_CALL; break;
+      } break;
     }
   } else {
     switch ((unsigned)Fixup.getKind()) {
     default: llvm_unreachable("invalid fixup kind!");
     case FK_Data_4:
       switch (Modifier) {
-      default: llvm_unreachable("Unsupported Modifier");
+      default: llvm_unreachable("Unsupported Modifier"); break;
+      case MCSymbolRefExpr::VK_ARM_GOT:
+        Type = ELF::R_ARM_GOT_BREL; break;
+      case MCSymbolRefExpr::VK_ARM_TLSGD:
+        Type = ELF::R_ARM_TLS_GD32; break;
       case MCSymbolRefExpr::VK_ARM_GOTTPOFF:
-        Type = ELF::R_ARM_TLS_IE32;
+        Type = ELF::R_ARM_TLS_IE32; break;
+      case MCSymbolRefExpr::VK_ARM_GOTOFF:
+        Type = ELF::R_ARM_GOTOFF32; break;
       } break;
     case ARM::fixup_arm_ldst_pcrel_12:
     case ARM::fixup_arm_pcrel_10:
