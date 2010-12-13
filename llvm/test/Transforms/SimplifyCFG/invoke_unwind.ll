@@ -9,10 +9,9 @@ define i32 @test1() {
 ; CHECK-NEXT: call void @bar()
 ; CHECK-NEXT: ret i32 0
         invoke void @bar( )
-                        to label %Ok unwind label %Rethrow
-Ok:             ; preds = %0
+                        to label %1 unwind label %Rethrow
         ret i32 0
-Rethrow:                ; preds = %0
+Rethrow:
         unwind
 }
 
