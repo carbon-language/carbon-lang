@@ -226,10 +226,9 @@ void Lint::visitCallSite(CallSite CS) {
                 "Undefined behavior: Call argument type mismatches "
                 "callee parameter type", &I);
 
-        // Check that noalias arguments don't alias other arguments. The
-        // AliasAnalysis API isn't expressive enough for what we really want
-        // to do. Known partial overlap is not distinguished from the case
-        // where nothing is known.
+        // Check that noalias arguments don't alias other arguments. This is
+        // not fully precise because we don't know the sizes of the dereferenced
+        // memory regions.
         if (Formal->hasNoAliasAttr() && Actual->getType()->isPointerTy())
           for (CallSite::arg_iterator BI = CS.arg_begin(); BI != AE; ++BI)
             if (AI != BI && (*BI)->getType()->isPointerTy()) {
