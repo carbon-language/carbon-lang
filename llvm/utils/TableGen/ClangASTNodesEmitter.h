@@ -57,7 +57,7 @@ class ClangASTNodesEmitter : public TableGenBackend {
 public:
   explicit ClangASTNodesEmitter(RecordKeeper &R, const std::string &N,
                                 const std::string &S)
-    : Records(R), Root(N, SMLoc()), BaseSuffix(S)
+    : Records(R), Root(N, SMLoc(), R), BaseSuffix(S)
     {}
 
   // run - Output the .inc file contents

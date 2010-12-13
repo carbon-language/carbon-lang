@@ -94,7 +94,7 @@ using namespace llvm::X86Disassembler;
 ///   instruction.
 
 void DisassemblerEmitter::run(raw_ostream &OS) {
-  CodeGenTarget Target;
+  CodeGenTarget Target(Records);
 
   OS << "/*===- TableGen'erated file "
      << "---------------------------------------*- C -*-===*\n"

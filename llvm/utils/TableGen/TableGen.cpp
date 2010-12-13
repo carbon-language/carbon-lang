@@ -173,9 +173,6 @@ namespace {
 }
 
 
-// FIXME: Eliminate globals from tblgen.
-RecordKeeper llvm::Records;
-
 static SourceMgr SrcMgr;
 
 void llvm::PrintError(SMLoc ErrorLoc, const Twine &Msg) {
@@ -188,7 +185,8 @@ void llvm::PrintError(SMLoc ErrorLoc, const Twine &Msg) {
 /// file.
 static bool ParseFile(const std::string &Filename,
                       const std::vector<std::string> &IncludeDirs,
-                      SourceMgr &SrcMgr) {
+                      SourceMgr &SrcMgr,
+                      RecordKeeper& Records) {
   error_code ec;
   MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), ec);
   if (F == 0) {
@@ -204,19 +202,21 @@ static bool ParseFile(const std::string &Filename,
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
 
-  TGParser Parser(SrcMgr);
+  TGParser Parser(SrcMgr, Records);
 
   return Parser.ParseFile();
 }
 
 int main(int argc, char **argv) {
+  RecordKeeper Records;
+
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
 
 
   // Parse the input file.
-  if (ParseFile(InputFilename, IncludeDirs, SrcMgr))
+  if (ParseFile(InputFilename, IncludeDirs, SrcMgr, Records))
     return 1;
 
   std::string Error;

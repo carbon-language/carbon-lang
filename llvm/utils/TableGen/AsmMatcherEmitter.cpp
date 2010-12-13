@@ -492,6 +492,9 @@ struct SubtargetFeatureInfo {
 
 class AsmMatcherInfo {
 public:
+  /// Tracked Records
+  RecordKeeper& Records;
+
   /// The tablegen AsmParser record.
   Record *AsmParser;
 
@@ -546,7 +549,9 @@ private:
                                   MatchableInfo::AsmOperand &Op);
                                   
 public:
-  AsmMatcherInfo(Record *AsmParser, CodeGenTarget &Target);
+  AsmMatcherInfo(Record *AsmParser, 
+                 CodeGenTarget &Target, 
+                 RecordKeeper& Records);
 
   /// BuildInfo - Construct the various tables used during matching.
   void BuildInfo();
@@ -558,6 +563,14 @@ public:
     std::map<Record*, SubtargetFeatureInfo*>::const_iterator I =
       SubtargetFeatures.find(Def);
     return I == SubtargetFeatures.end() ? 0 : I->second;
+  }
+
+  RecordKeeper& getRecords() {
+    return(Records);
+  }
+
+  RecordKeeper& getRecords() const {
+    return(Records);
   }
 };
 
@@ -989,8 +1002,10 @@ void AsmMatcherInfo::BuildOperandClasses() {
   }
 }
 
-AsmMatcherInfo::AsmMatcherInfo(Record *asmParser, CodeGenTarget &target)
-  : AsmParser(asmParser), Target(target),
+AsmMatcherInfo::AsmMatcherInfo(Record *asmParser, 
+                               CodeGenTarget &target, 
+                               RecordKeeper& records)
+  : Records(records), AsmParser(asmParser), Target(target),
     RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix")) {
 }
 
@@ -1659,7 +1674,7 @@ static std::string GetAliasRequiredFeatures(Record *R,
 /// emit a function for them and return true, otherwise return false.
 static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
   std::vector<Record*> Aliases =
-    Records.getAllDerivedDefinitions("MnemonicAlias");
+    Info.getRecords().getAllDerivedDefinitions("MnemonicAlias");
   if (Aliases.empty()) return false;
 
   OS << "static void ApplyMnemonicAliases(StringRef &Mnemonic, "
@@ -1732,12 +1747,12 @@ static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
 }
 
 void AsmMatcherEmitter::run(raw_ostream &OS) {
-  CodeGenTarget Target;
+  CodeGenTarget Target(Records);
   Record *AsmParser = Target.getAsmParser();
   std::string ClassName = AsmParser->getValueAsString("AsmParserClassName");
 
   // Compute the information on the instructions to match.
-  AsmMatcherInfo Info(AsmParser, Target);
+  AsmMatcherInfo Info(AsmParser, Target, Records);
   Info.BuildInfo();
 
   // Sort the instruction table using the partial order on classes. We use

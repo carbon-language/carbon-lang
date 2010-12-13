@@ -880,7 +880,7 @@ void EDEmitter::run(raw_ostream &o) {
   unsigned int i = 0;
 
   CompoundConstantEmitter infoArray;
-  CodeGenTarget target;
+  CodeGenTarget target(Records);
 
   populateInstInfo(infoArray, target);
 

@@ -638,7 +638,7 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS) {
 // SubtargetEmitter::run - Main subtarget enumeration emitter.
 //
 void SubtargetEmitter::run(raw_ostream &OS) {
-  Target = CodeGenTarget().getName();
+  Target = CodeGenTarget(Records).getName();
 
   EmitSourceFileHeader("Subtarget Enumeration Source Fragment", OS);
 

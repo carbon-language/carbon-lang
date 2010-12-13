@@ -528,7 +528,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
           }
         }
 
-        if (Record *D = Records.getDef(Name))
+        if (Record *D = (CurRec->getRecords()).getDef(Name))
           return new DefInit(D);
 
         errs() << "Variable not defined: '" + Name + "'\n";
@@ -1227,14 +1227,14 @@ void RecordVal::print(raw_ostream &OS, bool PrintSem) const {
 unsigned Record::LastID = 0;
 
 void Record::setName(const std::string &Name) {
-  if (Records.getDef(getName()) == this) {
-    Records.removeDef(getName());
+  if (TrackedRecords.getDef(getName()) == this) {
+    TrackedRecords.removeDef(getName());
     this->Name = Name;
-    Records.addDef(this);
+    TrackedRecords.addDef(this);
   } else {
-    Records.removeClass(getName());
+    TrackedRecords.removeClass(getName());
     this->Name = Name;
-    Records.addClass(this);
+    TrackedRecords.addClass(this);
   }
 }
 

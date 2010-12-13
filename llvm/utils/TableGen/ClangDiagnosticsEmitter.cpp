@@ -29,9 +29,10 @@ using namespace llvm;
 
 namespace {
 class DiagGroupParentMap {
+  RecordKeeper &Records;
   std::map<const Record*, std::vector<Record*> > Mapping;
 public:
-  DiagGroupParentMap() {
+  DiagGroupParentMap(RecordKeeper &records) : Records(records) {
     std::vector<Record*> DiagGroups
       = Records.getAllDerivedDefinitions("DiagGroup");
     for (unsigned i = 0, e = DiagGroups.size(); i != e; ++i) {
@@ -84,11 +85,12 @@ static std::string getDiagnosticCategory(const Record *R,
 
 namespace {
   class DiagCategoryIDMap {
+    RecordKeeper &Records;
     StringMap<unsigned> CategoryIDs;
     std::vector<std::string> CategoryStrings;
   public:
-    DiagCategoryIDMap() {
-      DiagGroupParentMap ParentInfo;
+    DiagCategoryIDMap(RecordKeeper &records) : Records(records) {
+      DiagGroupParentMap ParentInfo(Records);
       
       // The zero'th category is "".
       CategoryStrings.push_back("");
@@ -138,8 +140,8 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
   const std::vector<Record*> &Diags =
     Records.getAllDerivedDefinitions("Diagnostic");
   
-  DiagCategoryIDMap CategoryIDs;
-  DiagGroupParentMap DGParentMap;
+  DiagCategoryIDMap CategoryIDs(Records);
+  DiagGroupParentMap DGParentMap(Records);
 
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
     const Record &R = *Diags[i];
@@ -187,7 +189,7 @@ struct GroupInfo {
 
 void ClangDiagGroupsEmitter::run(raw_ostream &OS) {
   // Compute a mapping from a DiagGroup to all of its parents.
-  DiagGroupParentMap DGParentMap;
+  DiagGroupParentMap DGParentMap(Records);
   
   // Invert the 1-[0/1] mapping of diags to group into a one to many mapping of
   // groups to diags in the group.
@@ -277,7 +279,7 @@ void ClangDiagGroupsEmitter::run(raw_ostream &OS) {
   OS << "#endif // GET_DIAG_TABLE\n\n";
   
   // Emit the category table next.
-  DiagCategoryIDMap CategoriesByID;
+  DiagCategoryIDMap CategoriesByID(Records);
   OS << "\n#ifdef GET_CATEGORY_TABLE\n";
   for (DiagCategoryIDMap::iterator I = CategoriesByID.begin(),
        E = CategoriesByID.end(); I != E; ++I)

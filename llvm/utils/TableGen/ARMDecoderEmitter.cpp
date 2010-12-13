@@ -1488,11 +1488,11 @@ bool FilterChooser::emit(raw_ostream &o, unsigned &Indentation) {
 
 class ARMDecoderEmitter::ARMDEBackend {
 public:
-  ARMDEBackend(ARMDecoderEmitter &frontend) :
+  ARMDEBackend(ARMDecoderEmitter &frontend, RecordKeeper &Records) :
     NumberedInstructions(),
     Opcodes(),
     Frontend(frontend),
-    Target(),
+    Target(Records),
     FC(NULL)
   {
     if (Target.getName() == "ARM")
@@ -1843,7 +1843,7 @@ void ARMDecoderEmitter::ARMDEBackend::emit(raw_ostream &o) {
 
 void ARMDecoderEmitter::initBackend()
 {
-    Backend = new ARMDEBackend(*this);
+  Backend = new ARMDEBackend(*this, Records);
 }
 
 void ARMDecoderEmitter::run(raw_ostream &o)

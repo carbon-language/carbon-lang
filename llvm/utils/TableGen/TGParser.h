@@ -22,6 +22,7 @@
 namespace llvm {
   class Record;
   class RecordVal;
+  class RecordKeeper;
   struct RecTy;
   struct Init;
   struct MultiClass;
@@ -47,8 +48,12 @@ class TGParser {
   /// CurMultiClass - If we are parsing a 'multiclass' definition, this is the 
   /// current value.
   MultiClass *CurMultiClass;
+
+  // Record tracker
+  RecordKeeper& Records;
 public:
-  TGParser(SourceMgr &SrcMgr) : Lex(SrcMgr), CurMultiClass(0) {}
+  TGParser(SourceMgr &SrcMgr, RecordKeeper& records) : 
+    Lex(SrcMgr), CurMultiClass(0), Records(records) {}
   
   /// ParseFile - Main entrypoint for parsing a tblgen file.  These parser
   /// routines return true on error, or false on success.

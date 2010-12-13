@@ -1785,7 +1785,9 @@ void TreePattern::dump() const { print(errs()); }
 // CodeGenDAGPatterns implementation
 //
 
-CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) : Records(R) {
+CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) : 
+  Records(R), Target(R) {
+
   Intrinsics = LoadIntrinsics(Records, false);
   TgtIntrinsics = LoadIntrinsics(Records, true);
   ParseNodeInfo();

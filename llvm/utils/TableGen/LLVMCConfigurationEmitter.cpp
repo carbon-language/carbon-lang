@@ -3028,7 +3028,8 @@ void CheckDriverData(DriverData& Data) {
   CheckForSuperfluousOptions(Data.Edges, Data.ToolDescs, Data.OptDescs);
 }
 
-void EmitDriverCode(const DriverData& Data, raw_ostream& O) {
+void EmitDriverCode(const DriverData& Data, 
+                    raw_ostream& O, RecordKeeper &Records) {
   // Emit file header.
   EmitIncludes(O);
 
@@ -3089,7 +3090,7 @@ void LLVMCConfigurationEmitter::run (raw_ostream &O) {
     CheckDriverData(Data);
 
     this->EmitSourceFileHeader("llvmc-based driver: auto-generated code", O);
-    EmitDriverCode(Data, O);
+    EmitDriverCode(Data, O, Records);
 
   } catch (std::exception& Error) {
     throw Error.what() + std::string(" - usually this means a syntax error.");

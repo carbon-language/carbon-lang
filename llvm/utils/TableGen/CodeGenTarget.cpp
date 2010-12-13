@@ -108,7 +108,7 @@ std::string llvm::getQualifiedName(const Record *R) {
 
 /// getTarget - Return the current instance of the Target class.
 ///
-CodeGenTarget::CodeGenTarget() {
+CodeGenTarget::CodeGenTarget(RecordKeeper& records) : Records(records) {
   std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
   if (Targets.size() == 0)
     throw std::string("ERROR: No 'Target' subclasses defined!");
@@ -314,7 +314,8 @@ void CodeGenTarget::ReadInstructions() const {
 
 static const CodeGenInstruction *
 GetInstByName(const char *Name,
-              const DenseMap<const Record*, CodeGenInstruction*> &Insts) {
+              const DenseMap<const Record*, CodeGenInstruction*> &Insts, 
+              RecordKeeper &Records) {
   const Record *Rec = Records.getDef(Name);
   
   DenseMap<const Record*, CodeGenInstruction*>::const_iterator
@@ -358,7 +359,7 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
   };
   const DenseMap<const Record*, CodeGenInstruction*> &Insts = getInstructions();
   for (const char *const *p = FixedInstrs; *p; ++p) {
-    const CodeGenInstruction *Instr = GetInstByName(*p, Insts);
+    const CodeGenInstruction *Instr = GetInstByName(*p, Insts, Records);
     assert(Instr && "Missing target independent instruction");
     assert(Instr->Namespace == "TargetOpcode" && "Bad namespace");
     InstrsByEnum.push_back(Instr);

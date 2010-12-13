@@ -61,6 +61,7 @@ std::string getQualifiedName(const Record *R);
 /// CodeGenTarget - This class corresponds to the Target class in the .td files.
 ///
 class CodeGenTarget {
+  RecordKeeper &Records;
   Record *TargetRec;
 
   mutable DenseMap<const Record*, CodeGenInstruction*> Instructions;
@@ -76,7 +77,7 @@ class CodeGenTarget {
   
   mutable std::vector<const CodeGenInstruction*> InstrsByEnum;
 public:
-  CodeGenTarget();
+  CodeGenTarget(RecordKeeper &Records);
 
   Record *getTargetRecord() const { return TargetRec; }
   const std::string &getName() const;

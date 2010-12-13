@@ -25,7 +25,7 @@ using namespace llvm;
 
 // runEnums - Print out enum values for all of the registers.
 void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
-  CodeGenTarget Target;
+  CodeGenTarget Target(Records);
   const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
 
   std::string Namespace = Registers[0].TheDef->getValueAsString("Namespace");
@@ -63,7 +63,7 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
 
 void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
   EmitSourceFileHeader("Register Information Header Fragment", OS);
-  CodeGenTarget Target;
+  CodeGenTarget Target(Records);
   const std::string &TargetName = Target.getName();
   std::string ClassName = TargetName + "GenRegisterInfo";
 
@@ -333,7 +333,7 @@ public:
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
 void RegisterInfoEmitter::run(raw_ostream &OS) {
-  CodeGenTarget Target;
+  CodeGenTarget Target(Records);
   EmitSourceFileHeader("Register Information Source Fragment", OS);
 
   OS << "namespace llvm {\n\n";

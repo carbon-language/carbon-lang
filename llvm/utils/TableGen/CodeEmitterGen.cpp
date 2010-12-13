@@ -198,7 +198,7 @@ std::string CodeEmitterGen::getInstructionCase(Record *R,
 }
 
 void CodeEmitterGen::run(raw_ostream &o) {
-  CodeGenTarget Target;
+  CodeGenTarget Target(Records);
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
 
   // For little-endian instruction bit encodings, reverse the bit order

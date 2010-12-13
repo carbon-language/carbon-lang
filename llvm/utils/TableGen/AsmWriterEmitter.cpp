@@ -240,7 +240,7 @@ static void UnescapeString(std::string &Str) {
 /// EmitPrintInstruction - Generate the code for the "printInstruction" method
 /// implementation.
 void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
-  CodeGenTarget Target;
+  CodeGenTarget Target(Records);
   Record *AsmWriter = Target.getAsmWriter();
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
   bool isMC = AsmWriter->getValueAsBit("isMCAsmWriter");
@@ -459,7 +459,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
 
 
 void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
-  CodeGenTarget Target;
+  CodeGenTarget Target(Records);
   Record *AsmWriter = Target.getAsmWriter();
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
   const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
@@ -501,7 +501,7 @@ void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
 }
 
 void AsmWriterEmitter::EmitGetInstructionName(raw_ostream &O) {
-  CodeGenTarget Target;
+  CodeGenTarget Target(Records);
   Record *AsmWriter = Target.getAsmWriter();
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
 

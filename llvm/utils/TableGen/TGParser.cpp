@@ -1068,7 +1068,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
 
     // Create the new record, set it as CurRec temporarily.
     static unsigned AnonCounter = 0;
-    Record *NewRec = new Record("anonymous.val."+utostr(AnonCounter++),NameLoc);
+    Record *NewRec = Records.createRecord(
+                        "anonymous.val."+utostr(AnonCounter++),NameLoc);
     SubClassReference SCRef;
     SCRef.RefLoc = NameLoc;
     SCRef.Rec = Class;
@@ -1632,7 +1633,7 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
   Lex.Lex();  // Eat the 'def' token.
 
   // Parse ObjectName and make a record for it.
-  Record *CurRec = new Record(ParseObjectName(), DefLoc);
+  Record *CurRec = Records.createRecord(ParseObjectName(), DefLoc);
 
   if (!CurMultiClass) {
     // Top-level def definition.
@@ -1699,7 +1700,7 @@ bool TGParser::ParseClass() {
       return TokError("Class '" + CurRec->getName() + "' already defined");
   } else {
     // If this is the first reference to this class, create and add it.
-    CurRec = new Record(Lex.getCurStrVal(), Lex.getLoc());
+    CurRec = Records.createRecord(Lex.getCurStrVal(), Lex.getLoc());
     Records.addClass(CurRec);
   }
   Lex.Lex(); // eat the name.
@@ -1816,7 +1817,8 @@ bool TGParser::ParseMultiClass() {
   if (MultiClasses.count(Name))
     return TokError("multiclass '" + Name + "' already defined");
 
-  CurMultiClass = MultiClasses[Name] = new MultiClass(Name, Lex.getLoc());
+  CurMultiClass = MultiClasses[Name] = new MultiClass(Name, 
+                                                      Lex.getLoc(), Records);
   Lex.Lex();  // Eat the identifier.
 
   // If there are template args, parse them.
@@ -1945,7 +1947,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
         }
       }
 
-      Record *CurRec = new Record(DefName, DefmPrefixLoc);
+      Record *CurRec = Records.createRecord(DefName, DefmPrefixLoc);
 
       SubClassReference Ref;
       Ref.RefLoc = DefmPrefixLoc;
