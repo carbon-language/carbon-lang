@@ -1847,6 +1847,93 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI) {
   return true;
 }
 
+/// SimplifyBranchOnICmpChain - The specified branch is a conditional branch.
+/// Check to see if it is branching on an or/and chain of icmp instructions, and
+/// fold it into a switch instruction if so.
+static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
+  Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
+  if (Cond == 0) return false;
+  
+  
+  // Change br (X == 0 | X == 1), T, F into a switch instruction.
+  // If this is a bunch of seteq's or'd together, or if it's a bunch of
+  // 'setne's and'ed together, collect them.
+  Value *CompVal = 0;
+  std::vector<ConstantInt*> Values;
+  bool TrueWhenEqual = true;
+  Value *ExtraCase = 0;
+  
+  if (Cond->getOpcode() == Instruction::Or) {
+    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, true);
+  } else if (Cond->getOpcode() == Instruction::And) {
+    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, false);
+    TrueWhenEqual = false;
+  }
+  
+  // If we didn't have a multiply compared value, fail.
+  if (CompVal == 0) return false;
+
+  // There might be duplicate constants in the list, which the switch
+  // instruction can't handle, remove them now.
+  array_pod_sort(Values.begin(), Values.end(), ConstantIntSortPredicate);
+  Values.erase(std::unique(Values.begin(), Values.end()), Values.end());
+  
+  // If Extra was used, we require at least two switch values to do the
+  // transformation.  A switch with one value is just an cond branch.
+  if (ExtraCase && Values.size() < 2) return false;
+  
+  // Figure out which block is which destination.
+  BasicBlock *DefaultBB = BI->getSuccessor(1);
+  BasicBlock *EdgeBB    = BI->getSuccessor(0);
+  if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
+  
+  BasicBlock *BB = BI->getParent();
+  
+  // If there are any extra values that couldn't be folded into the switch
+  // then we evaluate them with an explicit branch first.  Split the block
+  // right before the condbr to handle it.
+  if (ExtraCase) {
+    BasicBlock *NewBB = BB->splitBasicBlock(BI, "switch.early.test");
+    // Remove the uncond branch added to the old block.
+    TerminatorInst *OldTI = BB->getTerminator();
+    
+    BranchInst::Create(EdgeBB, NewBB, ExtraCase, OldTI);
+    OldTI->eraseFromParent();
+    BB = NewBB;
+  }
+  
+  // Convert pointer to int before we switch.
+  if (CompVal->getType()->isPointerTy()) {
+    assert(TD && "Cannot switch on pointer without TargetData");
+    CompVal = new PtrToIntInst(CompVal,
+                               TD->getIntPtrType(CompVal->getContext()),
+                               "magicptr", BI);
+  }
+  
+  // Create the new switch instruction now.
+  SwitchInst *New =
+  SwitchInst::Create(CompVal, DefaultBB, Values.size(), BI);
+  
+  // Add all of the 'cases' to the switch instruction.
+  for (unsigned i = 0, e = Values.size(); i != e; ++i)
+    New->addCase(Values[i], EdgeBB);
+  
+  // We added edges from PI to the EdgeBB.  As such, if there were any
+  // PHI nodes in EdgeBB, they need entries to be added corresponding to
+  // the number of edges added.
+  for (BasicBlock::iterator BBI = EdgeBB->begin();
+       isa<PHINode>(BBI); ++BBI) {
+    PHINode *PN = cast<PHINode>(BBI);
+    Value *InVal = PN->getIncomingValueForBlock(BB);
+    for (unsigned i = 0, e = Values.size()-1; i != e; ++i)
+      PN->addIncoming(InVal, BB);
+  }
+  
+  // Erase the old branch instruction.
+  EraseTerminatorInstAndDCECond(BI);
+  return true;
+}
+
 bool SimplifyCFGOpt::run(BasicBlock *BB) {
   bool Changed = false;
   Function *Fn = BB->getParent();
@@ -2047,6 +2134,10 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
         }
       }
 
+      // Try to turn "br (X == 0 | X == 1), T, F" into a switch instruction.
+      if (SimplifyBranchOnICmpChain(BI, TD))
+        return true;
+      
       // If this is a branch on a phi node in the current block, thread control
       // through this block if any PHI node entries are constants.
       if (PHINode *PN = dyn_cast<PHINode>(BI->getCondition()))
@@ -2060,89 +2151,12 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       if (FoldBranchToCommonDest(BI))
         return SimplifyCFG(BB) | true;
 
-
       // Scan predecessor blocks for conditional branches.
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
         if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
           if (PBI != BI && PBI->isConditional())
             if (SimplifyCondBranchToCondBranch(PBI, BI))
               return SimplifyCFG(BB) | true;
-      
-    
-      // Change br (X == 0 | X == 1), T, F into a switch instruction.
-      // If this is a bunch of seteq's or'd together, or if it's a bunch of
-      // 'setne's and'ed together, collect them.
-      Value *CompVal = 0;
-      std::vector<ConstantInt*> Values;
-      bool TrueWhenEqual = true;
-      Value *ExtraCase = 0;
-      
-      if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition())) {
-        if (Cond->getOpcode() == Instruction::Or) {
-          CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, true);
-        } else if (Cond->getOpcode() == Instruction::And) {
-          CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, false);
-          TrueWhenEqual = false;
-        }
-      }
-
-      // We do this transformation if we'll end up creating a switch with at
-      // least two values if Extra is used.
-      if (CompVal && (!ExtraCase || Values.size() > 1)) {
-        // There might be duplicate constants in the list, which the switch
-        // instruction can't handle, remove them now.
-        array_pod_sort(Values.begin(), Values.end(), ConstantIntSortPredicate);
-        Values.erase(std::unique(Values.begin(), Values.end()), Values.end());
-        
-        // Figure out which block is which destination.
-        BasicBlock *DefaultBB = BI->getSuccessor(1);
-        BasicBlock *EdgeBB    = BI->getSuccessor(0);
-        if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
-        
-        // If there are any extra values that couldn't be folded into the switch
-        // then we evaluate them with an explicit branch first.  Split the block
-        // right before the condbr to handle it.
-        if (ExtraCase) {
-          BasicBlock *NewBB = BB->splitBasicBlock(BI, "switch.early.test");
-          // Remove the uncond branch added to the old block.
-          TerminatorInst *OldTI = BB->getTerminator();
-          
-          BranchInst::Create(EdgeBB, NewBB, ExtraCase, OldTI);
-          OldTI->eraseFromParent();
-          BB = NewBB;
-        }
-         
-        // Convert pointer to int before we switch.
-        if (CompVal->getType()->isPointerTy()) {
-          assert(TD && "Cannot switch on pointer without TargetData");
-          CompVal = new PtrToIntInst(CompVal,
-                                     TD->getIntPtrType(CompVal->getContext()),
-                                     "magicptr", BI);
-        }
-        
-        // Create the new switch instruction now.
-        SwitchInst *New =
-          SwitchInst::Create(CompVal, DefaultBB, Values.size(), BI);
-        
-        // Add all of the 'cases' to the switch instruction.
-        for (unsigned i = 0, e = Values.size(); i != e; ++i)
-          New->addCase(Values[i], EdgeBB);
-        
-        // We added edges from PI to the EdgeBB.  As such, if there were any
-        // PHI nodes in EdgeBB, they need entries to be added corresponding to
-        // the number of edges added.
-        for (BasicBlock::iterator BBI = EdgeBB->begin();
-             isa<PHINode>(BBI); ++BBI) {
-          PHINode *PN = cast<PHINode>(BBI);
-          Value *InVal = PN->getIncomingValueForBlock(BB);
-          for (unsigned i = 0, e = Values.size()-1; i != e; ++i)
-            PN->addIncoming(InVal, BB);
-        }
-        
-        // Erase the old branch instruction.
-        EraseTerminatorInstAndDCECond(BI);
-        return true;
-      }
     }
   } else if (isa<UnreachableInst>(BB->getTerminator())) {
     // If there are any instructions immediately before the unreachable that can
