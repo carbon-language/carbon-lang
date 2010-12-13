@@ -347,31 +347,6 @@ GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values,
   return 0;
 }
 
-/// GatherValueComparisons - If the specified Cond is an 'and' or 'or' of a
-/// bunch of comparisons of one value against constants, return the value and
-/// the constants being compared.
-static bool GatherValueComparisons(Value *CondV, Value *&CompVal,
-                                   std::vector<ConstantInt*> &Values,
-                                   const TargetData *TD) {
-  Instruction *Cond = dyn_cast<Instruction>(CondV);
-  if (Cond == 0) return false;
-  
-  if (Cond->getOpcode() == Instruction::Or) {
-    CompVal = GatherConstantSetEQs(Cond, Values, TD);
-
-    // Return true to indicate that the condition is true if the CompVal is
-    // equal to one of the constants.
-    return true;
-  }
-  if (Cond->getOpcode() == Instruction::And) {
-    CompVal = GatherConstantSetNEs(Cond, Values, TD);
-
-    // Return false to indicate that the condition is false if the CompVal is
-    // equal to one of the constants.
-    return false;
-  }
-  return false;
-}
 
 static void EraseTerminatorInstAndDCECond(TerminatorInst *TI) {
   Instruction* Cond = 0;
@@ -2096,8 +2071,17 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       // 'setne's and'ed together, collect them.
       Value *CompVal = 0;
       std::vector<ConstantInt*> Values;
-      bool TrueWhenEqual = GatherValueComparisons(BI->getCondition(), CompVal,
-                                                  Values, TD);
+      bool TrueWhenEqual = true;
+      
+      if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition())) {
+        if (Cond->getOpcode() == Instruction::Or) {
+          CompVal = GatherConstantSetEQs(Cond, Values, TD);
+        } else if (Cond->getOpcode() == Instruction::And) {
+          CompVal = GatherConstantSetNEs(Cond, Values, TD);
+          TrueWhenEqual = false;
+        }
+      }
+
       if (CompVal) {
         // There might be duplicate constants in the list, which the switch
         // instruction can't handle, remove them now.
