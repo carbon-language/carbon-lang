@@ -637,48 +637,51 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
       }
 
       Chain = P.getValue(1);
+      Parts[i] = P;
 
       // If the source register was virtual and if we know something about it,
       // add an assert node.
-      if (TargetRegisterInfo::isVirtualRegister(Regs[Part+i]) &&
-          RegisterVT.isInteger() && !RegisterVT.isVector()) {
-        unsigned SlotNo = Regs[Part+i]-TargetRegisterInfo::FirstVirtualRegister;
-        if (FuncInfo.LiveOutRegInfo.size() > SlotNo) {
-          const FunctionLoweringInfo::LiveOutInfo &LOI =
-            FuncInfo.LiveOutRegInfo[SlotNo];
+      if (!TargetRegisterInfo::isVirtualRegister(Regs[Part+i]) ||
+          !RegisterVT.isInteger() || RegisterVT.isVector())
+        continue;
+      
+      unsigned SlotNo = Regs[Part+i]-TargetRegisterInfo::FirstVirtualRegister;
+      if (SlotNo >= FuncInfo.LiveOutRegInfo.size()) continue;
+      
+      const FunctionLoweringInfo::LiveOutInfo &LOI =
+        FuncInfo.LiveOutRegInfo[SlotNo];
 
-          unsigned RegSize = RegisterVT.getSizeInBits();
-          unsigned NumSignBits = LOI.NumSignBits;
-          unsigned NumZeroBits = LOI.KnownZero.countLeadingOnes();
+      unsigned RegSize = RegisterVT.getSizeInBits();
+      unsigned NumSignBits = LOI.NumSignBits;
+      unsigned NumZeroBits = LOI.KnownZero.countLeadingOnes();
 
-          // FIXME: We capture more information than the dag can represent.  For
-          // now, just use the tightest assertzext/assertsext possible.
-          bool isSExt = true;
-          EVT FromVT(MVT::Other);
-          if (NumSignBits == RegSize)
-            isSExt = true, FromVT = MVT::i1;   // ASSERT SEXT 1
-          else if (NumZeroBits >= RegSize-1)
-            isSExt = false, FromVT = MVT::i1;  // ASSERT ZEXT 1
-          else if (NumSignBits > RegSize-8)
-            isSExt = true, FromVT = MVT::i8;   // ASSERT SEXT 8
-          else if (NumZeroBits >= RegSize-8)
-            isSExt = false, FromVT = MVT::i8;  // ASSERT ZEXT 8
-          else if (NumSignBits > RegSize-16)
-            isSExt = true, FromVT = MVT::i16;  // ASSERT SEXT 16
-          else if (NumZeroBits >= RegSize-16)
-            isSExt = false, FromVT = MVT::i16; // ASSERT ZEXT 16
-          else if (NumSignBits > RegSize-32)
-            isSExt = true, FromVT = MVT::i32;  // ASSERT SEXT 32
-          else if (NumZeroBits >= RegSize-32)
-            isSExt = false, FromVT = MVT::i32; // ASSERT ZEXT 32
+      // FIXME: We capture more information than the dag can represent.  For
+      // now, just use the tightest assertzext/assertsext possible.
+      bool isSExt = true;
+      EVT FromVT(MVT::Other);
+      if (NumSignBits == RegSize)
+        isSExt = true, FromVT = MVT::i1;   // ASSERT SEXT 1
+      else if (NumZeroBits >= RegSize-1)
+        isSExt = false, FromVT = MVT::i1;  // ASSERT ZEXT 1
+      else if (NumSignBits > RegSize-8)
+        isSExt = true, FromVT = MVT::i8;   // ASSERT SEXT 8
+      else if (NumZeroBits >= RegSize-8)
+        isSExt = false, FromVT = MVT::i8;  // ASSERT ZEXT 8
+      else if (NumSignBits > RegSize-16)
+        isSExt = true, FromVT = MVT::i16;  // ASSERT SEXT 16
+      else if (NumZeroBits >= RegSize-16)
+        isSExt = false, FromVT = MVT::i16; // ASSERT ZEXT 16
+      else if (NumSignBits > RegSize-32)
+        isSExt = true, FromVT = MVT::i32;  // ASSERT SEXT 32
+      else if (NumZeroBits >= RegSize-32)
+        isSExt = false, FromVT = MVT::i32; // ASSERT ZEXT 32
+      else
+        continue;
 
-          if (FromVT != MVT::Other)
-            P = DAG.getNode(isSExt ? ISD::AssertSext : ISD::AssertZext, dl,
-                            RegisterVT, P, DAG.getValueType(FromVT));
-        }
-      }
-
-      Parts[i] = P;
+      // Add an assertion node.
+      assert(FromVT != MVT::Other);
+      Parts[i] = DAG.getNode(isSExt ? ISD::AssertSext : ISD::AssertZext, dl,
+                             RegisterVT, P, DAG.getValueType(FromVT));
     }
 
     Values[Value] = getCopyFromParts(DAG, dl, Parts.begin(),
