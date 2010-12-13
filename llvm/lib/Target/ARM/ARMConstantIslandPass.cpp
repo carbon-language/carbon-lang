@@ -594,7 +594,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
             NegOk = true;
             IsSoImm = true;
             break;
-          case ARM::t2ADR:
+          case ARM::t2LEApcrel:
             Bits = 12;
             NegOk = true;
             break;
@@ -1555,7 +1555,7 @@ bool ARMConstantIslands::OptimizeThumb2Instructions(MachineFunction &MF) {
     unsigned Bits = 0;
     switch (Opcode) {
     default: break;
-    case ARM::t2ADR:
+    case ARM::t2LEApcrel:
       if (isARMLowRegister(U.MI->getOperand(0).getReg())) {
         NewOpc = ARM::tLEApcrel;
         Bits = 8;
@@ -1754,16 +1754,16 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
       if (!OptOk)
         continue;
 
-      // Now scan back again to find the tLEApcrel or t2ADR instruction
+      // Now scan back again to find the tLEApcrel or t2LEApcrelJT instruction
       // that gave us the initial base register definition.
       for (--PrevI; PrevI != B && !PrevI->definesRegister(BaseReg); --PrevI)
         ;
 
-      // The instruction should be a tLEApcrel or t2ADR; we want
+      // The instruction should be a tLEApcrel or t2LEApcrelJT; we want
       // to delete it as well.
       MachineInstr *LeaMI = PrevI;
       if ((LeaMI->getOpcode() != ARM::tLEApcrelJT &&
-           LeaMI->getOpcode() != ARM::t2ADR) ||
+           LeaMI->getOpcode() != ARM::t2LEApcrelJT) ||
           LeaMI->getOperand(0).getReg() != BaseReg)
         OptOk = false;
 

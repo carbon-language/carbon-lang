@@ -584,7 +584,6 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("t_imm_s4");
   IMM("pclabel");
   IMM("adrlabel");
-  IMM("t2adrlabel");
   IMM("shift_imm");
   IMM("neon_vcvt_imm32");
 

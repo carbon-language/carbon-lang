@@ -33,9 +33,6 @@ enum Fixups {
   // fixup_arm_adr_pcrel_12 - 12-bit PC relative relocation for the ADR
   // instruction.
   fixup_arm_adr_pcrel_12,
-  // fixup_t2_adr_pcrel_12 - 12-bit PC relative relocation for the ADR
-  // instruction.
-  fixup_t2_adr_pcrel_12,
   // fixup_arm_branch - 24-bit PC relative relocation for direct branch
   // instructions.
   fixup_arm_branch,
