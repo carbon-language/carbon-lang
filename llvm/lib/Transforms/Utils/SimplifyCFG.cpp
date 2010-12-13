@@ -2145,6 +2145,16 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       if (SimplifyBranchOnICmpChain(BI, TD))
         return true;
       
+      
+      // We have a conditional branch to two blocks that are only reachable
+      // from BI.  We know that the condbr dominates the two blocks, so see if
+      // there is any identical code in the "then" and "else" blocks.  If so, we
+      // can hoist it up to the branching block.
+      if (BI->getSuccessor(0)->getSinglePredecessor() != 0 &&
+          BI->getSuccessor(1)->getSinglePredecessor() != 0)
+        if (HoistThenElseCodeToIf(BI))
+          return SimplifyCFG(BB) | true;
+      
       // If this is a branch on a phi node in the current block, thread control
       // through this block if any PHI node entries are constants.
       if (PHINode *PN = dyn_cast<PHINode>(BI->getCondition()))
@@ -2327,13 +2337,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       pred_iterator PI = pred_begin(OtherBB);
       ++PI;
       
-      if (PI == pred_end(OtherBB)) {
-        // We have a conditional branch to two blocks that are only reachable
-        // from the condbr.  We know that the condbr dominates the two blocks,
-        // so see if there is any identical code in the "then" and "else"
-        // blocks.  If so, we can hoist it up to the branching block.
-        Changed |= HoistThenElseCodeToIf(BI);
-      } else {
+      if (PI != pred_end(OtherBB)) {
         BasicBlock* OnlySucc = NULL;
         for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
              SI != SE; ++SI) {
