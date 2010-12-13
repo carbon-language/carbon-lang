@@ -1940,15 +1940,11 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     }
   } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     if (BI->isUnconditional()) {
-      BasicBlock::iterator BBI = BB->getFirstNonPHI();
-
-      // Ignore dbg intrinsics.
-      while (isa<DbgInfoIntrinsic>(BBI))
-        ++BBI;
-      if (BBI->isTerminator()) // Terminator is the only non-phi instruction!
-        if (BB != &Fn->getEntryBlock())
-          if (TryToSimplifyUncondBranchFromEmptyBlock(BB))
-            return true;
+      // If the Terminator is the only non-phi instruction, simplify the block.
+      Instruction *I = BB->getFirstNonPHIOrDbg();
+      if (I->isTerminator() && BB != &Fn->getEntryBlock() &&
+          TryToSimplifyUncondBranchFromEmptyBlock(BB))
+        return true;
       
     } else {  // Conditional branch
       if (isValueEqualityComparison(BI)) {
