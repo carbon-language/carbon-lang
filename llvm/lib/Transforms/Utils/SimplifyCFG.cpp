@@ -291,61 +291,39 @@ static ConstantInt *GetConstantInt(Value *V, const TargetData *TD) {
   return 0;
 }
 
-/// GatherConstantSetEQs - Given a potentially 'or'd together collection of
-/// icmp_eq instructions that compare a value against a constant, return the
-/// value being compared, and stick the constant into the Values vector.
+/// GatherConstantCompares - Given a potentially 'or'd or 'and'd together
+/// collection of icmp eq/ne instructions that compare a value against a
+/// constant, return the value being compared, and stick the constant into the
+/// Values vector.
 static Value *
-GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values,
-                     const TargetData *TD) {
-  Instruction *Inst = dyn_cast<Instruction>(V);
-  if (Inst == 0) return 0;
+GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
+                       const TargetData *TD, bool isEQ) {
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0) return 0;
   
-  if (Inst->getOpcode() == Instruction::ICmp &&
-      cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_EQ) {
-    if (ConstantInt *C = GetConstantInt(Inst->getOperand(1), TD)) {
-      Values.push_back(C);
-      return Inst->getOperand(0);
-    }
+  if (ICmpInst *ICI = dyn_cast<ICmpInst>(I)) {
+    if (ICI->getPredicate() == (isEQ ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE))
+      if (ConstantInt *C = GetConstantInt(I->getOperand(1), TD)) {
+        Vals.push_back(C);
+        return I->getOperand(0);
+      }
     return 0;
   }
   
-  if (Inst->getOpcode() == Instruction::Or) {
-    if (Value *LHS = GatherConstantSetEQs(Inst->getOperand(0), Values, TD))
-      if (Value *RHS = GatherConstantSetEQs(Inst->getOperand(1), Values, TD))
-        if (LHS == RHS)
-          return LHS;
-  }
-  return 0;
-}
-
-/// GatherConstantSetNEs - Given a potentially 'and'd together collection of
-/// setne instructions that compare a value against a constant, return the value
-/// being compared, and stick the constant into the Values vector.
-static Value *
-GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values,
-                     const TargetData *TD) {
-  Instruction *Inst = dyn_cast<Instruction>(V);
-  if (Inst == 0) return 0;
-
-  if (Inst->getOpcode() == Instruction::ICmp &&
-      cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_NE) {
-    if (ConstantInt *C = GetConstantInt(Inst->getOperand(1), TD)) {
-      Values.push_back(C);
-      return Inst->getOperand(0);
-    }
+  if (I->getOpcode() != (isEQ ? Instruction::Or : Instruction::And))
     return 0;
-  }
   
-  if (Inst->getOpcode() == Instruction::And) {
-    if (Value *LHS = GatherConstantSetNEs(Inst->getOperand(0), Values, TD))
-      if (Value *RHS = GatherConstantSetNEs(Inst->getOperand(1), Values, TD))
-        if (LHS == RHS)
-          return LHS;
+  if (Value *LHS = GatherConstantCompares(I->getOperand(0), Vals, Extra, TD,
+                                          isEQ)) {
+    if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, TD,
+                                            isEQ)) {
+      if (LHS == RHS)
+        return LHS;
+    }
   }
   return 0;
 }
-
-
+      
 static void EraseTerminatorInstAndDCECond(TerminatorInst *TI) {
   Instruction* Cond = 0;
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
@@ -2070,12 +2048,13 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       Value *CompVal = 0;
       std::vector<ConstantInt*> Values;
       bool TrueWhenEqual = true;
+      Value *ExtraCase = 0;
       
       if (Instruction *Cond = dyn_cast<Instruction>(BI->getCondition())) {
         if (Cond->getOpcode() == Instruction::Or) {
-          CompVal = GatherConstantSetEQs(Cond, Values, TD);
+          CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, true);
         } else if (Cond->getOpcode() == Instruction::And) {
-          CompVal = GatherConstantSetNEs(Cond, Values, TD);
+          CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, false);
           TrueWhenEqual = false;
         }
       }
