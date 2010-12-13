@@ -1908,10 +1908,10 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
 
   if (NewTInfo != OldTInfo) {
     // Get parameters from the new type info.
-    TypeLoc OldTL = OldTInfo->getTypeLoc();
+    TypeLoc OldTL = OldTInfo->getTypeLoc().IgnoreParens();
     if (FunctionProtoTypeLoc *OldProtoLoc
                                   = dyn_cast<FunctionProtoTypeLoc>(&OldTL)) {
-      TypeLoc NewTL = NewTInfo->getTypeLoc();
+      TypeLoc NewTL = NewTInfo->getTypeLoc().IgnoreParens();
       FunctionProtoTypeLoc *NewProtoLoc = cast<FunctionProtoTypeLoc>(&NewTL);
       assert(NewProtoLoc && "Missing prototype?");
       for (unsigned i = 0, i_end = NewProtoLoc->getNumArgs(); i != i_end; ++i) {
@@ -1926,7 +1926,7 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
     // The function type itself was not dependent and therefore no
     // substitution occurred. However, we still need to instantiate
     // the function parameters themselves.
-    TypeLoc OldTL = OldTInfo->getTypeLoc();
+    TypeLoc OldTL = OldTInfo->getTypeLoc().IgnoreParens();
     if (FunctionProtoTypeLoc *OldProtoLoc
                                     = dyn_cast<FunctionProtoTypeLoc>(&OldTL)) {
       for (unsigned i = 0, i_end = OldProtoLoc->getNumArgs(); i != i_end; ++i) {

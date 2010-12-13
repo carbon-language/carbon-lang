@@ -115,6 +115,8 @@ public:
   /// \brief Skips past any qualifiers, if this is qualified.
   UnqualTypeLoc getUnqualifiedLoc() const; // implemented in this header
 
+  TypeLoc IgnoreParens() const;
+
   /// \brief Initializes this to state that every location in this
   /// type is the given location.
   ///
