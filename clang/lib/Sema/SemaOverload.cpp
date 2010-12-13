@@ -4245,7 +4245,14 @@ class BuiltinCandidateTypeSet  {
   /// \brief The set of vector types that will be used in the built-in 
   /// candidates.
   TypeSet VectorTypes;
-  
+
+  /// \brief A flag indicating non-record types are viable candidates
+  bool HasNonRecordTypes;
+
+  /// \brief A flag indicating whether either arithmetic or enumeration types
+  /// were present in the candidate set.
+  bool HasArithmeticOrEnumeralTypes;
+
   /// Sema - The semantic analysis instance where we are building the
   /// candidate type set.
   Sema &SemaRef;
@@ -4262,7 +4269,10 @@ public:
   typedef TypeSet::iterator iterator;
 
   BuiltinCandidateTypeSet(Sema &SemaRef)
-    : SemaRef(SemaRef), Context(SemaRef.Context) { }
+    : HasNonRecordTypes(false),
+      HasArithmeticOrEnumeralTypes(false),
+      SemaRef(SemaRef),
+      Context(SemaRef.Context) { }
 
   void AddTypesConvertedFrom(QualType Ty, 
                              SourceLocation Loc,
@@ -4290,6 +4300,9 @@ public:
   
   iterator vector_begin() { return VectorTypes.begin(); }
   iterator vector_end() { return VectorTypes.end(); }
+
+  bool hasNonRecordTypes() { return HasNonRecordTypes; }
+  bool hasArithmeticOrEnumeralTypes() { return HasArithmeticOrEnumeralTypes; }
 };
 
 /// AddPointerWithMoreQualifiedTypeVariants - Add the pointer type @p Ty to
@@ -4419,9 +4432,18 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
   // We don't care about qualifiers on the type.
   Ty = Ty.getLocalUnqualifiedType();
 
+  // Flag if we ever add a non-record type.
+  const RecordType *TyRec = Ty->getAs<RecordType>();
+  HasNonRecordTypes = HasNonRecordTypes || !TyRec;
+
   // If we're dealing with an array type, decay to the pointer.
   if (Ty->isArrayType())
     Ty = SemaRef.Context.getArrayDecayedType(Ty);
+
+  // Flag if we encounter an arithmetic type.
+  HasArithmeticOrEnumeralTypes =
+    HasArithmeticOrEnumeralTypes || Ty->isArithmeticType();
+
   if (Ty->isObjCIdType() || Ty->isObjCClassType())
     PointerTypes.insert(Ty);
   else if (Ty->getAs<PointerType>() || Ty->getAs<ObjCObjectPointerType>()) {
@@ -4434,35 +4456,36 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
     if (!AddMemberPointerWithMoreQualifiedTypeVariants(Ty))
       return;
   } else if (Ty->isEnumeralType()) {
+    HasArithmeticOrEnumeralTypes = true;
     EnumerationTypes.insert(Ty);
   } else if (Ty->isVectorType()) {
+    // We treat vector types as arithmetic types in many contexts as an
+    // extension.
+    HasArithmeticOrEnumeralTypes = true;
     VectorTypes.insert(Ty);
-  } else if (AllowUserConversions) {
-    if (const RecordType *TyRec = Ty->getAs<RecordType>()) {
-      if (SemaRef.RequireCompleteType(Loc, Ty, 0)) {
-        // No conversion functions in incomplete types.
-        return;
-      }
+  } else if (AllowUserConversions && TyRec) {
+    // No conversion functions in incomplete types.
+    if (SemaRef.RequireCompleteType(Loc, Ty, 0))
+      return;
 
-      CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
-      const UnresolvedSetImpl *Conversions
-        = ClassDecl->getVisibleConversionFunctions();
-      for (UnresolvedSetImpl::iterator I = Conversions->begin(),
-             E = Conversions->end(); I != E; ++I) {
-        NamedDecl *D = I.getDecl();
-        if (isa<UsingShadowDecl>(D))
-          D = cast<UsingShadowDecl>(D)->getTargetDecl();
+    CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
+    const UnresolvedSetImpl *Conversions
+      = ClassDecl->getVisibleConversionFunctions();
+    for (UnresolvedSetImpl::iterator I = Conversions->begin(),
+           E = Conversions->end(); I != E; ++I) {
+      NamedDecl *D = I.getDecl();
+      if (isa<UsingShadowDecl>(D))
+        D = cast<UsingShadowDecl>(D)->getTargetDecl();
 
-        // Skip conversion function templates; they don't tell us anything
-        // about which builtin types we can convert to.
-        if (isa<FunctionTemplateDecl>(D))
-          continue;
+      // Skip conversion function templates; they don't tell us anything
+      // about which builtin types we can convert to.
+      if (isa<FunctionTemplateDecl>(D))
+        continue;
 
-        CXXConversionDecl *Conv = cast<CXXConversionDecl>(D);
-        if (AllowExplicitConversions || !Conv->isExplicit()) {
-          AddTypesConvertedFrom(Conv->getConversionType(), Loc, false, false, 
-                                VisibleQuals);
-        }
+      CXXConversionDecl *Conv = cast<CXXConversionDecl>(D);
+      if (AllowExplicitConversions || !Conv->isExplicit()) {
+        AddTypesConvertedFrom(Conv->getConversionType(), Loc, false, false,
+                              VisibleQuals);
       }
     }
   }
@@ -4562,6 +4585,7 @@ class BuiltinOperatorOverloadBuilder {
   Expr **Args;
   unsigned NumArgs;
   Qualifiers VisibleTypeConversionsQuals;
+  bool HasArithmeticOrEnumeralCandidateType;
   llvm::SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes;
   OverloadCandidateSet &CandidateSet;
 
@@ -4697,10 +4721,13 @@ public:
   BuiltinOperatorOverloadBuilder(
     Sema &S, Expr **Args, unsigned NumArgs,
     Qualifiers VisibleTypeConversionsQuals,
+    bool HasArithmeticOrEnumeralCandidateType,
     llvm::SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes,
     OverloadCandidateSet &CandidateSet)
     : S(S), Args(Args), NumArgs(NumArgs),
       VisibleTypeConversionsQuals(VisibleTypeConversionsQuals),
+      HasArithmeticOrEnumeralCandidateType(
+        HasArithmeticOrEnumeralCandidateType),
       CandidateTypes(CandidateTypes),
       CandidateSet(CandidateSet) {
     // Validate some of our static helper constants in debug builds.
@@ -4735,6 +4762,9 @@ public:
   //       VQ T&      operator--(VQ T&);
   //       T          operator--(VQ T&, int);
   void addPlusPlusMinusMinusArithmeticOverloads(OverloadedOperatorKind Op) {
+    if (!HasArithmeticOrEnumeralCandidateType)
+      return;
+
     for (unsigned Arith = (Op == OO_PlusPlus? 0 : 1);
          Arith < NumArithmeticTypes; ++Arith) {
       addPlusPlusMinusMinusStyleOverloads(
@@ -4797,6 +4827,9 @@ public:
   //       T         operator+(T);
   //       T         operator-(T);
   void addUnaryPlusOrMinusArithmeticOverloads() {
+    if (!HasArithmeticOrEnumeralCandidateType)
+      return;
+
     for (unsigned Arith = FirstPromotedArithmeticType;
          Arith < LastPromotedArithmeticType; ++Arith) {
       QualType ArithTy = getArithmeticType(Arith);
@@ -4834,6 +4867,9 @@ public:
   //
   //        T         operator~(T);
   void addUnaryTildePromotedIntegralOverloads() {
+    if (!HasArithmeticOrEnumeralCandidateType)
+      return;
+
     for (unsigned Int = FirstPromotedIntegralType;
          Int < LastPromotedIntegralType; ++Int) {
       QualType IntTy = getArithmeticType(Int);
@@ -5048,6 +5084,9 @@ public:
   //   between types L and R.
   // Our candidates ignore the first parameter.
   void addGenericBinaryArithmeticOverloads(bool isComparison) {
+    if (!HasArithmeticOrEnumeralCandidateType)
+      return;
+
     for (unsigned Left = FirstPromotedArithmeticType;
          Left < LastPromotedArithmeticType; ++Left) {
       for (unsigned Right = FirstPromotedArithmeticType;
@@ -5100,6 +5139,9 @@ public:
   //   where LR is the result of the usual arithmetic conversions
   //   between types L and R.
   void addBinaryBitwiseArithmeticOverloads(OverloadedOperatorKind Op) {
+    if (!HasArithmeticOrEnumeralCandidateType)
+      return;
+
     for (unsigned Left = FirstPromotedIntegralType;
          Left < LastPromotedIntegralType; ++Left) {
       for (unsigned Right = FirstPromotedIntegralType;
@@ -5239,6 +5281,9 @@ public:
   //        VQ L&      operator+=(VQ L&, R);
   //        VQ L&      operator-=(VQ L&, R);
   void addAssignmentArithmeticOverloads(bool isEqualOp) {
+    if (!HasArithmeticOrEnumeralCandidateType)
+      return;
+
     for (unsigned Left = 0; Left < NumArithmeticTypes; ++Left) {
       for (unsigned Right = FirstPromotedArithmeticType;
            Right < LastPromotedArithmeticType; ++Right) {
@@ -5304,6 +5349,9 @@ public:
   //        VQ L&       operator^=(VQ L&, R);
   //        VQ L&       operator|=(VQ L&, R);
   void addAssignmentIntegralOverloads() {
+    if (!HasArithmeticOrEnumeralCandidateType)
+      return;
+
     for (unsigned Left = FirstIntegralType; Left < LastIntegralType; ++Left) {
       for (unsigned Right = FirstPromotedIntegralType;
            Right < LastPromotedIntegralType; ++Right) {
@@ -5504,12 +5552,15 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                                    OverloadCandidateSet& CandidateSet) {
   // Find all of the types that the arguments can convert to, but only
   // if the operator we're looking at has built-in operator candidates
-  // that make use of these types.
+  // that make use of these types. Also record whether we encounter non-record
+  // candidate types or either arithmetic or enumeral candidate types.
   Qualifiers VisibleTypeConversionsQuals;
   VisibleTypeConversionsQuals.addConst();
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
     VisibleTypeConversionsQuals += CollectVRQualifiers(Context, Args[ArgIdx]);
-  
+
+  bool HasNonRecordCandidateType = false;
+  bool HasArithmeticOrEnumeralCandidateType = false;
   llvm::SmallVector<BuiltinCandidateTypeSet, 2> CandidateTypes;
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
     CandidateTypes.push_back(BuiltinCandidateTypeSet(*this));
@@ -5520,11 +5571,22 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                                                   Op == OO_AmpAmp ||
                                                   Op == OO_PipePipe),
                                                  VisibleTypeConversionsQuals);
+    HasNonRecordCandidateType = HasNonRecordCandidateType ||
+        CandidateTypes[ArgIdx].hasNonRecordTypes();
+    HasArithmeticOrEnumeralCandidateType =
+        HasArithmeticOrEnumeralCandidateType ||
+        CandidateTypes[ArgIdx].hasArithmeticOrEnumeralTypes();
   }
+
+  // Exit early when no non-record types have been added to the candidate set
+  // for any of the arguments to the operator.
+  if (!HasNonRecordCandidateType)
+    return;
 
   // Setup an object to manage the common state for building overloads.
   BuiltinOperatorOverloadBuilder OpBuilder(*this, Args, NumArgs,
                                            VisibleTypeConversionsQuals,
+                                           HasArithmeticOrEnumeralCandidateType,
                                            CandidateTypes, CandidateSet);
 
   // Dispatch over the operation to add in only those overloads which apply.
