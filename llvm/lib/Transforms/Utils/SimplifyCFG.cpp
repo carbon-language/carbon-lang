@@ -306,11 +306,10 @@ GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values,
       Values.push_back(C);
       return Inst->getOperand(0);
     }
-    if (ConstantInt *C = GetConstantInt(Inst->getOperand(0), TD)) {
-      Values.push_back(C);
-      return Inst->getOperand(1);
-    }
-  } else if (Inst->getOpcode() == Instruction::Or) {
+    return 0;
+  }
+  
+  if (Inst->getOpcode() == Instruction::Or) {
     if (Value *LHS = GatherConstantSetEQs(Inst->getOperand(0), Values, TD))
       if (Value *RHS = GatherConstantSetEQs(Inst->getOperand(1), Values, TD))
         if (LHS == RHS)
@@ -329,16 +328,15 @@ GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values,
   if (Inst == 0) return 0;
 
   if (Inst->getOpcode() == Instruction::ICmp &&
-             cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_NE) {
+      cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_NE) {
     if (ConstantInt *C = GetConstantInt(Inst->getOperand(1), TD)) {
       Values.push_back(C);
       return Inst->getOperand(0);
     }
-    if (ConstantInt *C = GetConstantInt(Inst->getOperand(0), TD)) {
-      Values.push_back(C);
-      return Inst->getOperand(1);
-    }
-  } else if (Inst->getOpcode() == Instruction::And) {
+    return 0;
+  }
+  
+  if (Inst->getOpcode() == Instruction::And) {
     if (Value *LHS = GatherConstantSetNEs(Inst->getOperand(0), Values, TD))
       if (Value *RHS = GatherConstantSetNEs(Inst->getOperand(1), Values, TD))
         if (LHS == RHS)
