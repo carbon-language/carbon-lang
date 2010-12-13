@@ -112,7 +112,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     }
     assert ((Value < 4096) && "Out of range pc-relative fixup value!");
     Value |= isAdd << 23;
-    
+
     // Same addressing mode as fixup_arm_pcrel_10,
     // but with 16-bit halfwords swapped.
     if (Kind == ARM::fixup_t2_ldst_pcrel_12) {
@@ -120,7 +120,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
       swapped |= (Value & 0x0000FFFF) << 16;
       return swapped;
     }
-    
+
     return Value;
   }
   case ARM::fixup_arm_adr_pcrel_12: {
@@ -143,14 +143,14 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case ARM::fixup_t2_branch: {
     Value = Value - 4;
     Value >>= 1; // Low bit is not encoded.
-    
+
     uint64_t out = 0;
     out |= (Value & 0x80000) << 7; // S bit
     out |= (Value & 0x40000) >> 7; // J2 bit
     out |= (Value & 0x20000) >> 4; // J1 bit
     out |= (Value & 0x1F800) << 5; // imm6 field
     out |= (Value & 0x007FF);      // imm11 field
-    
+
     uint64_t swapped = (out & 0xFFFF0000) >> 16;
     swapped |= (out & 0x0000FFFF) << 16;
     return swapped;
@@ -159,9 +159,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // The value doesn't encode the low bit (always zero) and is offset by
     // four. The value is encoded into disjoint bit positions in the destination
     // opcode. x = unchanged, I = immediate value bit, S = sign extension bit
-    // 
+    //
     //   BL:  xxxxxSIIIIIIIIII xxxxxIIIIIIIIIII
-    // 
+    //
     // Note that the halfwords are stored high first, low second; so we need
     // to transpose the fixup value here to map properly.
     unsigned isNeg = (int64_t(Value) < 0) ? 1 : 0;
@@ -177,9 +177,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // four (see fixup_arm_thumb_cp). The value is encoded into disjoint bit
     // positions in the destination opcode. x = unchanged, I = immediate value
     // bit, S = sign extension bit, 0 = zero.
-    // 
+    //
     //   BLX: xxxxxSIIIIIIIIII xxxxxIIIIIIIIII0
-    // 
+    //
     // Note that the halfwords are stored high first, low second; so we need
     // to transpose the fixup value here to map properly.
     unsigned isNeg = (int64_t(Value) < 0) ? 1 : 0;
