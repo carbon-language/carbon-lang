@@ -1668,7 +1668,6 @@ def SubReg_i32_lane : SDNodeXForm<imm, [{
 //===----------------------------------------------------------------------===//
 
 // Basic 2-register operations: single-, double- and quad-register.
-let neverHasSideEffects = 1 in
 class N2VD<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
            bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
            string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
