@@ -88,3 +88,26 @@ lor.end:                                          ; preds = %lor.rhs, %lor.lhs.f
 ; CHECK:  ]
 }
 
+define i32 @test5(i8 zeroext %c) nounwind ssp noredzone {
+entry:
+  switch i8 %c, label %lor.rhs [
+    i8 62, label %lor.end
+    i8 34, label %lor.end
+    i8 92, label %lor.end
+  ]
+
+lor.rhs:                                          ; preds = %entry
+  %V = icmp eq i8 %c, 92
+  br label %lor.end
+
+lor.end:                                          ; preds = %entry, %entry, %entry, %lor.rhs
+  %0 = phi i1 [ true, %entry ], [ %V, %lor.rhs ], [ true, %entry ], [ true, %entry ]
+  %lor.ext = zext i1 %0 to i32
+  ret i32 %lor.ext
+; CHECK: @test5
+; CHECK:  switch i8 %c, label %lor.rhs [
+; CHECK:    i8 62, label %lor.end
+; CHECK:    i8 34, label %lor.end
+; CHECK:    i8 92, label %lor.end
+; CHECK:  ]
+}

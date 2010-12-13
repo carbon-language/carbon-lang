@@ -1820,6 +1820,22 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI) {
     return SimplifyCFG(BB) | true;
   }
   
+  // Ok, the block is reachable from the default dest.  If the constant we're
+  // comparing exists in one of the other edges, then we can constant fold ICI
+  // and zap it.
+  if (SI->findCaseValue(Cst) != 0) {
+    Value *V;
+    if (ICI->getPredicate() == ICmpInst::ICMP_EQ)
+      V = ConstantInt::getFalse(BB->getContext());
+    else
+      V = ConstantInt::getTrue(BB->getContext());
+    
+    ICI->replaceAllUsesWith(V);
+    ICI->eraseFromParent();
+    // BB is now empty, so it is likely to simplify away.
+    return SimplifyCFG(BB) | true;
+  }
+  
   // The use of the icmp has to be in the 'end' block, by the only PHI node in
   // the block.
   BasicBlock *SuccBlock = BB->getTerminator()->getSuccessor(0);
