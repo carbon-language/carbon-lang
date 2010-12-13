@@ -48,6 +48,14 @@ class SimplifyCFGOpt {
                                                      BasicBlock *Pred);
   bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI);
 
+  bool SimplifyReturn(ReturnInst *RI);
+  bool SimplifyUnwind(UnwindInst *UI);
+  bool SimplifyUnreachable(UnreachableInst *UI);
+  bool SimplifySwitch(SwitchInst *SI);
+  bool SimplifyIndirectBr(IndirectBrInst *IBI);
+  bool SimplifyUncondBranch(BranchInst *BI);
+  bool SimplifyCondBranch(BranchInst *BI);
+
 public:
   explicit SimplifyCFGOpt(const TargetData *td) : TD(td) {}
   bool run(BasicBlock *BB);
@@ -1918,8 +1926,7 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   }
   
   // Create the new switch instruction now.
-  SwitchInst *New =
-  SwitchInst::Create(CompVal, DefaultBB, Values.size(), BI);
+  SwitchInst *New = SwitchInst::Create(CompVal, DefaultBB, Values.size(), BI);
   
   // Add all of the 'cases' to the switch instruction.
   for (unsigned i = 0, e = Values.size(); i != e; ++i)
@@ -1939,6 +1946,418 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   // Erase the old branch instruction.
   EraseTerminatorInstAndDCECond(BI);
   return true;
+}
+
+bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI) {
+  BasicBlock *BB = RI->getParent();
+  if (!BB->getFirstNonPHIOrDbg()->isTerminator()) return false;
+  
+  // Find predecessors that end with branches.
+  SmallVector<BasicBlock*, 8> UncondBranchPreds;
+  SmallVector<BranchInst*, 8> CondBranchPreds;
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+    BasicBlock *P = *PI;
+    TerminatorInst *PTI = P->getTerminator();
+    if (BranchInst *BI = dyn_cast<BranchInst>(PTI)) {
+      if (BI->isUnconditional())
+        UncondBranchPreds.push_back(P);
+      else
+        CondBranchPreds.push_back(BI);
+    }
+  }
+  
+  // If we found some, do the transformation!
+  if (!UncondBranchPreds.empty()) {
+    while (!UncondBranchPreds.empty()) {
+      BasicBlock *Pred = UncondBranchPreds.pop_back_val();
+      DEBUG(dbgs() << "FOLDING: " << *BB
+            << "INTO UNCOND BRANCH PRED: " << *Pred);
+      Instruction *UncondBranch = Pred->getTerminator();
+      // Clone the return and add it to the end of the predecessor.
+      Instruction *NewRet = RI->clone();
+      Pred->getInstList().push_back(NewRet);
+      
+      // If the return instruction returns a value, and if the value was a
+      // PHI node in "BB", propagate the right value into the return.
+      for (User::op_iterator i = NewRet->op_begin(), e = NewRet->op_end();
+           i != e; ++i)
+        if (PHINode *PN = dyn_cast<PHINode>(*i))
+          if (PN->getParent() == BB)
+            *i = PN->getIncomingValueForBlock(Pred);
+      
+      // Update any PHI nodes in the returning block to realize that we no
+      // longer branch to them.
+      BB->removePredecessor(Pred);
+      Pred->getInstList().erase(UncondBranch);
+    }
+    
+    // If we eliminated all predecessors of the block, delete the block now.
+    if (pred_begin(BB) == pred_end(BB))
+      // We know there are no successors, so just nuke the block.
+      BB->eraseFromParent();
+    
+    return true;
+  }
+  
+  // Check out all of the conditional branches going to this return
+  // instruction.  If any of them just select between returns, change the
+  // branch itself into a select/return pair.
+  while (!CondBranchPreds.empty()) {
+    BranchInst *BI = CondBranchPreds.pop_back_val();
+    
+    // Check to see if the non-BB successor is also a return block.
+    if (isa<ReturnInst>(BI->getSuccessor(0)->getTerminator()) &&
+        isa<ReturnInst>(BI->getSuccessor(1)->getTerminator()) &&
+        SimplifyCondBranchToTwoReturns(BI))
+      return true;
+  }
+  return false;
+}
+
+bool SimplifyCFGOpt::SimplifyUnwind(UnwindInst *UI) {
+  // Check to see if the first instruction in this block is just an unwind.
+  // If so, replace any invoke instructions which use this as an exception
+  // destination with call instructions.
+  BasicBlock *BB = UI->getParent();
+  if (!BB->getFirstNonPHIOrDbg()->isTerminator()) return false;
+
+  bool Changed = false;
+  SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
+  while (!Preds.empty()) {
+    BasicBlock *Pred = Preds.back();
+    InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator());
+    if (II && II->getUnwindDest() == BB) {
+      // Insert a new branch instruction before the invoke, because this
+      // is now a fall through.
+      BranchInst *BI = BranchInst::Create(II->getNormalDest(), II);
+      Pred->getInstList().remove(II);   // Take out of symbol table
+      
+      // Insert the call now.
+      SmallVector<Value*,8> Args(II->op_begin(), II->op_end()-3);
+      CallInst *CI = CallInst::Create(II->getCalledValue(),
+                                      Args.begin(), Args.end(),
+                                      II->getName(), BI);
+      CI->setCallingConv(II->getCallingConv());
+      CI->setAttributes(II->getAttributes());
+      // If the invoke produced a value, the Call now does instead.
+      II->replaceAllUsesWith(CI);
+      delete II;
+      Changed = true;
+    }
+    
+    Preds.pop_back();
+  }
+  
+  // If this block is now dead (and isn't the entry block), remove it.
+  if (pred_begin(BB) == pred_end(BB) &&
+      BB != &BB->getParent()->getEntryBlock()) {
+    // We know there are no successors, so just nuke the block.
+    BB->eraseFromParent();
+    return true;
+  }
+  
+  return Changed;  
+}
+
+bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
+  BasicBlock *BB = UI->getParent();
+  
+  bool Changed = false;
+  
+  // If there are any instructions immediately before the unreachable that can
+  // be removed, do so.
+  while (UI != BB->begin()) {
+    BasicBlock::iterator BBI = UI;
+    --BBI;
+    // Do not delete instructions that can have side effects, like calls
+    // (which may never return) and volatile loads and stores.
+    if (isa<CallInst>(BBI) && !isa<DbgInfoIntrinsic>(BBI)) break;
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+      if (SI->isVolatile())
+        break;
+    
+    if (LoadInst *LI = dyn_cast<LoadInst>(BBI))
+      if (LI->isVolatile())
+        break;
+    
+    // Delete this instruction
+    BB->getInstList().erase(BBI);
+    Changed = true;
+  }
+  
+  // If the unreachable instruction is the first in the block, take a gander
+  // at all of the predecessors of this instruction, and simplify them.
+  if (&BB->front() != UI) return Changed;
+  
+  SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
+  for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
+    TerminatorInst *TI = Preds[i]->getTerminator();
+    
+    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+      if (BI->isUnconditional()) {
+        if (BI->getSuccessor(0) == BB) {
+          new UnreachableInst(TI->getContext(), TI);
+          TI->eraseFromParent();
+          Changed = true;
+        }
+      } else {
+        if (BI->getSuccessor(0) == BB) {
+          BranchInst::Create(BI->getSuccessor(1), BI);
+          EraseTerminatorInstAndDCECond(BI);
+        } else if (BI->getSuccessor(1) == BB) {
+          BranchInst::Create(BI->getSuccessor(0), BI);
+          EraseTerminatorInstAndDCECond(BI);
+          Changed = true;
+        }
+      }
+    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+      for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
+        if (SI->getSuccessor(i) == BB) {
+          BB->removePredecessor(SI->getParent());
+          SI->removeCase(i);
+          --i; --e;
+          Changed = true;
+        }
+      // If the default value is unreachable, figure out the most popular
+      // destination and make it the default.
+      if (SI->getSuccessor(0) == BB) {
+        std::map<BasicBlock*, unsigned> Popularity;
+        for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
+          Popularity[SI->getSuccessor(i)]++;
+        
+        // Find the most popular block.
+        unsigned MaxPop = 0;
+        BasicBlock *MaxBlock = 0;
+        for (std::map<BasicBlock*, unsigned>::iterator
+             I = Popularity.begin(), E = Popularity.end(); I != E; ++I) {
+          if (I->second > MaxPop) {
+            MaxPop = I->second;
+            MaxBlock = I->first;
+          }
+        }
+        if (MaxBlock) {
+          // Make this the new default, allowing us to delete any explicit
+          // edges to it.
+          SI->setSuccessor(0, MaxBlock);
+          Changed = true;
+          
+          // If MaxBlock has phinodes in it, remove MaxPop-1 entries from
+          // it.
+          if (isa<PHINode>(MaxBlock->begin()))
+            for (unsigned i = 0; i != MaxPop-1; ++i)
+              MaxBlock->removePredecessor(SI->getParent());
+          
+          for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
+            if (SI->getSuccessor(i) == MaxBlock) {
+              SI->removeCase(i);
+              --i; --e;
+            }
+        }
+      }
+    } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
+      if (II->getUnwindDest() == BB) {
+        // Convert the invoke to a call instruction.  This would be a good
+        // place to note that the call does not throw though.
+        BranchInst *BI = BranchInst::Create(II->getNormalDest(), II);
+        II->removeFromParent();   // Take out of symbol table
+        
+        // Insert the call now...
+        SmallVector<Value*, 8> Args(II->op_begin(), II->op_end()-3);
+        CallInst *CI = CallInst::Create(II->getCalledValue(),
+                                        Args.begin(), Args.end(),
+                                        II->getName(), BI);
+        CI->setCallingConv(II->getCallingConv());
+        CI->setAttributes(II->getAttributes());
+        // If the invoke produced a value, the call does now instead.
+        II->replaceAllUsesWith(CI);
+        delete II;
+        Changed = true;
+      }
+    }
+  }
+  
+  // If this block is now dead, remove it.
+  if (pred_begin(BB) == pred_end(BB) &&
+      BB != &BB->getParent()->getEntryBlock()) {
+    // We know there are no successors, so just nuke the block.
+    BB->eraseFromParent();
+    return true;
+  }
+
+  return Changed;
+}
+
+
+bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
+  // If this switch is too complex to want to look at, ignore it.
+  if (!isValueEqualityComparison(SI))
+    return false;
+
+  BasicBlock *BB = SI->getParent();
+
+  // If we only have one predecessor, and if it is a branch on this value,
+  // see if that predecessor totally determines the outcome of this switch.
+  if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
+    if (SimplifyEqualityComparisonWithOnlyPredecessor(SI, OnlyPred))
+      return SimplifyCFG(BB) || 1;
+  
+  // If the block only contains the switch, see if we can fold the block
+  // away into any preds.
+  BasicBlock::iterator BBI = BB->begin();
+  // Ignore dbg intrinsics.
+  while (isa<DbgInfoIntrinsic>(BBI))
+    ++BBI;
+  if (SI == &*BBI)
+    if (FoldValueComparisonIntoPredecessors(SI))
+      return SimplifyCFG(BB) || 1;
+  
+  return false;
+}
+
+bool SimplifyCFGOpt::SimplifyIndirectBr(IndirectBrInst *IBI) {
+  BasicBlock *BB = IBI->getParent();
+  bool Changed = false;
+  
+  // Eliminate redundant destinations.
+  SmallPtrSet<Value *, 8> Succs;
+  for (unsigned i = 0, e = IBI->getNumDestinations(); i != e; ++i) {
+    BasicBlock *Dest = IBI->getDestination(i);
+    if (!Dest->hasAddressTaken() || !Succs.insert(Dest)) {
+      Dest->removePredecessor(BB);
+      IBI->removeDestination(i);
+      --i; --e;
+      Changed = true;
+    }
+  } 
+
+  if (IBI->getNumDestinations() == 0) {
+    // If the indirectbr has no successors, change it to unreachable.
+    new UnreachableInst(IBI->getContext(), IBI);
+    EraseTerminatorInstAndDCECond(IBI);
+    return true;
+  }
+  
+  if (IBI->getNumDestinations() == 1) {
+    // If the indirectbr has one successor, change it to a direct branch.
+    BranchInst::Create(IBI->getDestination(0), IBI);
+    EraseTerminatorInstAndDCECond(IBI);
+    return true;
+  }
+  
+  if (SelectInst *SI = dyn_cast<SelectInst>(IBI->getAddress())) {
+    if (SimplifyIndirectBrOnSelect(IBI, SI))
+      return SimplifyCFG(BB) | true;
+  }
+  return Changed;
+}
+
+bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI) {
+  BasicBlock *BB = BI->getParent();
+  
+  // If the Terminator is the only non-phi instruction, simplify the block.
+  BasicBlock::iterator I = BB->getFirstNonPHIOrDbg();
+  if (I->isTerminator() && BB != &BB->getParent()->getEntryBlock() &&
+      TryToSimplifyUncondBranchFromEmptyBlock(BB))
+    return true;
+  
+  // If the only instruction in the block is a seteq/setne comparison
+  // against a constant, try to simplify the block.
+  if (ICmpInst *ICI = dyn_cast<ICmpInst>(I))
+    if (ICI->isEquality() && isa<ConstantInt>(ICI->getOperand(1))) {
+      for (++I; isa<DbgInfoIntrinsic>(I); ++I)
+        ;
+      if (I->isTerminator() && TryToSimplifyUncondBranchWithICmpInIt(ICI))
+        return true;
+    }
+  
+  return false;
+}
+
+
+bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI) {
+  BasicBlock *BB = BI->getParent();
+  
+  // Conditional branch
+  if (isValueEqualityComparison(BI)) {
+    // If we only have one predecessor, and if it is a branch on this value,
+    // see if that predecessor totally determines the outcome of this
+    // switch.
+    if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
+      if (SimplifyEqualityComparisonWithOnlyPredecessor(BI, OnlyPred))
+        return SimplifyCFG(BB) | true;
+    
+    // This block must be empty, except for the setcond inst, if it exists.
+    // Ignore dbg intrinsics.
+    BasicBlock::iterator I = BB->begin();
+    // Ignore dbg intrinsics.
+    while (isa<DbgInfoIntrinsic>(I))
+      ++I;
+    if (&*I == BI) {
+      if (FoldValueComparisonIntoPredecessors(BI))
+        return SimplifyCFG(BB) | true;
+    } else if (&*I == cast<Instruction>(BI->getCondition())){
+      ++I;
+      // Ignore dbg intrinsics.
+      while (isa<DbgInfoIntrinsic>(I))
+        ++I;
+      if (&*I == BI && FoldValueComparisonIntoPredecessors(BI))
+        return SimplifyCFG(BB) | true;
+    }
+  }
+  
+  // Try to turn "br (X == 0 | X == 1), T, F" into a switch instruction.
+  if (SimplifyBranchOnICmpChain(BI, TD))
+    return true;
+  
+  // We have a conditional branch to two blocks that are only reachable
+  // from BI.  We know that the condbr dominates the two blocks, so see if
+  // there is any identical code in the "then" and "else" blocks.  If so, we
+  // can hoist it up to the branching block.
+  if (BI->getSuccessor(0)->getSinglePredecessor() != 0) {
+    if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
+      if (HoistThenElseCodeToIf(BI))
+        return SimplifyCFG(BB) | true;
+    } else {
+      // If Successor #1 has multiple preds, we may be able to conditionally
+      // execute Successor #0 if it branches to successor #1.
+      TerminatorInst *Succ0TI = BI->getSuccessor(0)->getTerminator();
+      if (Succ0TI->getNumSuccessors() == 1 &&
+          Succ0TI->getSuccessor(0) == BI->getSuccessor(1))
+        if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0)))
+          return SimplifyCFG(BB) | true;
+    }
+  } else if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
+    // If Successor #0 has multiple preds, we may be able to conditionally
+    // execute Successor #1 if it branches to successor #0.
+    TerminatorInst *Succ1TI = BI->getSuccessor(1)->getTerminator();
+    if (Succ1TI->getNumSuccessors() == 1 &&
+        Succ1TI->getSuccessor(0) == BI->getSuccessor(0))
+      if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1)))
+        return SimplifyCFG(BB) | true;
+  }
+  
+  // If this is a branch on a phi node in the current block, thread control
+  // through this block if any PHI node entries are constants.
+  if (PHINode *PN = dyn_cast<PHINode>(BI->getCondition()))
+    if (PN->getParent() == BI->getParent())
+      if (FoldCondBranchOnPHI(BI))
+        return SimplifyCFG(BB) | true;
+  
+  // If this basic block is ONLY a setcc and a branch, and if a predecessor
+  // branches to us and one of our successors, fold the setcc into the
+  // predecessor and use logical operations to pick the right destination.
+  if (FoldBranchToCommonDest(BI))
+    return SimplifyCFG(BB) | true;
+  
+  // Scan predecessor blocks for conditional branches.
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+    if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
+      if (PBI != BI && PBI->isConditional())
+        if (SimplifyCondBranchToCondBranch(PBI, BI))
+          return SimplifyCFG(BB) | true;
+
+  return false;
 }
 
 bool SimplifyCFGOpt::run(BasicBlock *BB) {
@@ -1977,379 +2396,27 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     if (PN->getNumIncomingValues() == 2)
       Changed |= FoldTwoEntryPHINode(PN); 
 
-  // If this is a returning block with only PHI nodes in it, fold the return
-  // instruction into any unconditional branch predecessors.
-  //
-  // If any predecessor is a conditional branch that just selects among
-  // different return values, fold the replace the branch/return with a select
-  // and return.
-  if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-    if (BB->getFirstNonPHIOrDbg()->isTerminator()) {
-      // Find predecessors that end with branches.
-      SmallVector<BasicBlock*, 8> UncondBranchPreds;
-      SmallVector<BranchInst*, 8> CondBranchPreds;
-      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-        BasicBlock *P = *PI;
-        TerminatorInst *PTI = P->getTerminator();
-        if (BranchInst *BI = dyn_cast<BranchInst>(PTI)) {
-          if (BI->isUnconditional())
-            UncondBranchPreds.push_back(P);
-          else
-            CondBranchPreds.push_back(BI);
-        }
-      }
-
-      // If we found some, do the transformation!
-      if (!UncondBranchPreds.empty()) {
-        while (!UncondBranchPreds.empty()) {
-          BasicBlock *Pred = UncondBranchPreds.pop_back_val();
-          DEBUG(dbgs() << "FOLDING: " << *BB
-                       << "INTO UNCOND BRANCH PRED: " << *Pred);
-          Instruction *UncondBranch = Pred->getTerminator();
-          // Clone the return and add it to the end of the predecessor.
-          Instruction *NewRet = RI->clone();
-          Pred->getInstList().push_back(NewRet);
-
-          // If the return instruction returns a value, and if the value was a
-          // PHI node in "BB", propagate the right value into the return.
-          for (User::op_iterator i = NewRet->op_begin(), e = NewRet->op_end();
-               i != e; ++i)
-            if (PHINode *PN = dyn_cast<PHINode>(*i))
-              if (PN->getParent() == BB)
-                *i = PN->getIncomingValueForBlock(Pred);
-          
-          // Update any PHI nodes in the returning block to realize that we no
-          // longer branch to them.
-          BB->removePredecessor(Pred);
-          Pred->getInstList().erase(UncondBranch);
-        }
-
-        // If we eliminated all predecessors of the block, delete the block now.
-        if (pred_begin(BB) == pred_end(BB))
-          // We know there are no successors, so just nuke the block.
-          Fn->getBasicBlockList().erase(BB);
-
-        return true;
-      }
-
-      // Check out all of the conditional branches going to this return
-      // instruction.  If any of them just select between returns, change the
-      // branch itself into a select/return pair.
-      while (!CondBranchPreds.empty()) {
-        BranchInst *BI = CondBranchPreds.pop_back_val();
-
-        // Check to see if the non-BB successor is also a return block.
-        if (isa<ReturnInst>(BI->getSuccessor(0)->getTerminator()) &&
-            isa<ReturnInst>(BI->getSuccessor(1)->getTerminator()) &&
-            SimplifyCondBranchToTwoReturns(BI))
-          return true;
-      }
-    }
-  } else if (isa<UnwindInst>(BB->begin())) {
-    // Check to see if the first instruction in this block is just an unwind.
-    // If so, replace any invoke instructions which use this as an exception
-    // destination with call instructions.
-    //
-    SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
-    while (!Preds.empty()) {
-      BasicBlock *Pred = Preds.back();
-      InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator());
-      if (II && II->getUnwindDest() == BB) {
-        // Insert a new branch instruction before the invoke, because this
-        // is now a fall through.
-        BranchInst *BI = BranchInst::Create(II->getNormalDest(), II);
-        Pred->getInstList().remove(II);   // Take out of symbol table
-
-        // Insert the call now.
-        SmallVector<Value*,8> Args(II->op_begin(), II->op_end()-3);
-        CallInst *CI = CallInst::Create(II->getCalledValue(),
-                                        Args.begin(), Args.end(),
-                                        II->getName(), BI);
-        CI->setCallingConv(II->getCallingConv());
-        CI->setAttributes(II->getAttributes());
-        // If the invoke produced a value, the Call now does instead.
-        II->replaceAllUsesWith(CI);
-        delete II;
-        Changed = true;
-      }
-
-      Preds.pop_back();
-    }
-
-    // If this block is now dead (and isn't the entry block), remove it.
-    if (pred_begin(BB) == pred_end(BB) && BB != &Fn->getEntryBlock()) {
-      // We know there are no successors, so just nuke the block.
-      Fn->getBasicBlockList().erase(BB);
-      return true;
-    }
-
-  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
-    if (isValueEqualityComparison(SI)) {
-      // If we only have one predecessor, and if it is a branch on this value,
-      // see if that predecessor totally determines the outcome of this switch.
-      if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
-        if (SimplifyEqualityComparisonWithOnlyPredecessor(SI, OnlyPred))
-          return SimplifyCFG(BB) || 1;
-
-      // If the block only contains the switch, see if we can fold the block
-      // away into any preds.
-      BasicBlock::iterator BBI = BB->begin();
-      // Ignore dbg intrinsics.
-      while (isa<DbgInfoIntrinsic>(BBI))
-        ++BBI;
-      if (SI == &*BBI)
-        if (FoldValueComparisonIntoPredecessors(SI))
-          return SimplifyCFG(BB) || 1;
-    }
-  } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
-    if (BI->isUnconditional()) {
-      // If the Terminator is the only non-phi instruction, simplify the block.
-      BasicBlock::iterator I = BB->getFirstNonPHIOrDbg();
-      if (I->isTerminator() && BB != &Fn->getEntryBlock() &&
-          TryToSimplifyUncondBranchFromEmptyBlock(BB))
-        return true;
-      
-      // If the only instruction in the block is a seteq/setne comparison
-      // against a constant, try to simplify the block.
-      if (ICmpInst *ICI = dyn_cast<ICmpInst>(I))
-        if (ICI->isEquality() && isa<ConstantInt>(ICI->getOperand(1))) {
-          for (++I; isa<DbgInfoIntrinsic>(I); ++I)
-            ;
-          if (I->isTerminator() &&
-              TryToSimplifyUncondBranchWithICmpInIt(ICI))
-            return true;
-        }
-      
-    } else {  // Conditional branch
-      if (isValueEqualityComparison(BI)) {
-        // If we only have one predecessor, and if it is a branch on this value,
-        // see if that predecessor totally determines the outcome of this
-        // switch.
-        if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
-          if (SimplifyEqualityComparisonWithOnlyPredecessor(BI, OnlyPred))
-            return SimplifyCFG(BB) | true;
-
-        // This block must be empty, except for the setcond inst, if it exists.
-        // Ignore dbg intrinsics.
-        BasicBlock::iterator I = BB->begin();
-        // Ignore dbg intrinsics.
-        while (isa<DbgInfoIntrinsic>(I))
-          ++I;
-        if (&*I == BI) {
-          if (FoldValueComparisonIntoPredecessors(BI))
-            return SimplifyCFG(BB) | true;
-        } else if (&*I == cast<Instruction>(BI->getCondition())){
-          ++I;
-          // Ignore dbg intrinsics.
-          while (isa<DbgInfoIntrinsic>(I))
-            ++I;
-          if (&*I == BI && FoldValueComparisonIntoPredecessors(BI))
-            return SimplifyCFG(BB) | true;
-        }
-      }
-
-      // Try to turn "br (X == 0 | X == 1), T, F" into a switch instruction.
-      if (SimplifyBranchOnICmpChain(BI, TD))
-        return true;
-      
-      
-      // We have a conditional branch to two blocks that are only reachable
-      // from BI.  We know that the condbr dominates the two blocks, so see if
-      // there is any identical code in the "then" and "else" blocks.  If so, we
-      // can hoist it up to the branching block.
-      if (BI->getSuccessor(0)->getSinglePredecessor() != 0) {
-        if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
-          if (HoistThenElseCodeToIf(BI))
-            return SimplifyCFG(BB) | true;
-        } else {
-          // If Successor #1 has multiple preds, we may be able to conditionally
-          // execute Successor #0 if it branches to successor #1.
-          TerminatorInst *Succ0TI = BI->getSuccessor(0)->getTerminator();
-          if (Succ0TI->getNumSuccessors() == 1 &&
-              Succ0TI->getSuccessor(0) == BI->getSuccessor(1))
-            if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0)))
-              return SimplifyCFG(BB) | true;
-        }
-      } else if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
-        // If Successor #0 has multiple preds, we may be able to conditionally
-        // execute Successor #1 if it branches to successor #0.
-        TerminatorInst *Succ1TI = BI->getSuccessor(1)->getTerminator();
-        if (Succ1TI->getNumSuccessors() == 1 &&
-            Succ1TI->getSuccessor(0) == BI->getSuccessor(0))
-          if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1)))
-            return SimplifyCFG(BB) | true;
-      }
-      
-      // If this is a branch on a phi node in the current block, thread control
-      // through this block if any PHI node entries are constants.
-      if (PHINode *PN = dyn_cast<PHINode>(BI->getCondition()))
-        if (PN->getParent() == BI->getParent())
-          if (FoldCondBranchOnPHI(BI))
-            return SimplifyCFG(BB) | true;
-
-      // If this basic block is ONLY a setcc and a branch, and if a predecessor
-      // branches to us and one of our successors, fold the setcc into the
-      // predecessor and use logical operations to pick the right destination.
-      if (FoldBranchToCommonDest(BI))
-        return SimplifyCFG(BB) | true;
-
-      // Scan predecessor blocks for conditional branches.
-      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-        if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
-          if (PBI != BI && PBI->isConditional())
-            if (SimplifyCondBranchToCondBranch(PBI, BI))
-              return SimplifyCFG(BB) | true;
-    }
-  } else if (isa<UnreachableInst>(BB->getTerminator())) {
-    // If there are any instructions immediately before the unreachable that can
-    // be removed, do so.
-    Instruction *Unreachable = BB->getTerminator();
-    while (Unreachable != BB->begin()) {
-      BasicBlock::iterator BBI = Unreachable;
-      --BBI;
-      // Do not delete instructions that can have side effects, like calls
-      // (which may never return) and volatile loads and stores.
-      if (isa<CallInst>(BBI) && !isa<DbgInfoIntrinsic>(BBI)) break;
-
-      if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
-        if (SI->isVolatile())
-          break;
-
-      if (LoadInst *LI = dyn_cast<LoadInst>(BBI))
-        if (LI->isVolatile())
-          break;
-
-      // Delete this instruction
-      BB->getInstList().erase(BBI);
-      Changed = true;
-    }
-
-    // If the unreachable instruction is the first in the block, take a gander
-    // at all of the predecessors of this instruction, and simplify them.
-    if (&BB->front() == Unreachable) {
-      SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
-      for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-        TerminatorInst *TI = Preds[i]->getTerminator();
-
-        if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-          if (BI->isUnconditional()) {
-            if (BI->getSuccessor(0) == BB) {
-              new UnreachableInst(TI->getContext(), TI);
-              TI->eraseFromParent();
-              Changed = true;
-            }
-          } else {
-            if (BI->getSuccessor(0) == BB) {
-              BranchInst::Create(BI->getSuccessor(1), BI);
-              EraseTerminatorInstAndDCECond(BI);
-            } else if (BI->getSuccessor(1) == BB) {
-              BranchInst::Create(BI->getSuccessor(0), BI);
-              EraseTerminatorInstAndDCECond(BI);
-              Changed = true;
-            }
-          }
-        } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-          for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
-            if (SI->getSuccessor(i) == BB) {
-              BB->removePredecessor(SI->getParent());
-              SI->removeCase(i);
-              --i; --e;
-              Changed = true;
-            }
-          // If the default value is unreachable, figure out the most popular
-          // destination and make it the default.
-          if (SI->getSuccessor(0) == BB) {
-            std::map<BasicBlock*, unsigned> Popularity;
-            for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
-              Popularity[SI->getSuccessor(i)]++;
-
-            // Find the most popular block.
-            unsigned MaxPop = 0;
-            BasicBlock *MaxBlock = 0;
-            for (std::map<BasicBlock*, unsigned>::iterator
-                   I = Popularity.begin(), E = Popularity.end(); I != E; ++I) {
-              if (I->second > MaxPop) {
-                MaxPop = I->second;
-                MaxBlock = I->first;
-              }
-            }
-            if (MaxBlock) {
-              // Make this the new default, allowing us to delete any explicit
-              // edges to it.
-              SI->setSuccessor(0, MaxBlock);
-              Changed = true;
-
-              // If MaxBlock has phinodes in it, remove MaxPop-1 entries from
-              // it.
-              if (isa<PHINode>(MaxBlock->begin()))
-                for (unsigned i = 0; i != MaxPop-1; ++i)
-                  MaxBlock->removePredecessor(SI->getParent());
-
-              for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
-                if (SI->getSuccessor(i) == MaxBlock) {
-                  SI->removeCase(i);
-                  --i; --e;
-                }
-            }
-          }
-        } else if (InvokeInst *II = dyn_cast<InvokeInst>(TI)) {
-          if (II->getUnwindDest() == BB) {
-            // Convert the invoke to a call instruction.  This would be a good
-            // place to note that the call does not throw though.
-            BranchInst *BI = BranchInst::Create(II->getNormalDest(), II);
-            II->removeFromParent();   // Take out of symbol table
-
-            // Insert the call now...
-            SmallVector<Value*, 8> Args(II->op_begin(), II->op_end()-3);
-            CallInst *CI = CallInst::Create(II->getCalledValue(),
-                                            Args.begin(), Args.end(),
-                                            II->getName(), BI);
-            CI->setCallingConv(II->getCallingConv());
-            CI->setAttributes(II->getAttributes());
-            // If the invoke produced a value, the call does now instead.
-            II->replaceAllUsesWith(CI);
-            delete II;
-            Changed = true;
-          }
-        }
-      }
-
-      // If this block is now dead, remove it.
-      if (pred_begin(BB) == pred_end(BB) && BB != &Fn->getEntryBlock()) {
-        // We know there are no successors, so just nuke the block.
-        Fn->getBasicBlockList().erase(BB);
-        return true;
-      }
-    }
-  } else if (IndirectBrInst *IBI =
-               dyn_cast<IndirectBrInst>(BB->getTerminator())) {
-    // Eliminate redundant destinations.
-    SmallPtrSet<Value *, 8> Succs;
-    for (unsigned i = 0, e = IBI->getNumDestinations(); i != e; ++i) {
-      BasicBlock *Dest = IBI->getDestination(i);
-      if (!Dest->hasAddressTaken() || !Succs.insert(Dest)) {
-        Dest->removePredecessor(BB);
-        IBI->removeDestination(i);
-        --i; --e;
-        Changed = true;
-      }
-    } 
-
-    if (IBI->getNumDestinations() == 0) {
-      // If the indirectbr has no successors, change it to unreachable.
-      new UnreachableInst(IBI->getContext(), IBI);
-      EraseTerminatorInstAndDCECond(IBI);
-      Changed = true;
-    } else if (IBI->getNumDestinations() == 1) {
-      // If the indirectbr has one successor, change it to a direct branch.
-      BranchInst::Create(IBI->getDestination(0), IBI);
-      EraseTerminatorInstAndDCECond(IBI);
-      Changed = true;
-    } else if (SelectInst *SI = dyn_cast<SelectInst>(IBI->getAddress())) {
-      if (SimplifyIndirectBrOnSelect(IBI, SI))
-        return SimplifyCFG(BB) | true;
-    }
+  if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
+    if (BI->isUnconditional())
+      return SimplifyUncondBranch(BI) | Changed;
+    
+    return SimplifyCondBranch(BI) | Changed;
   }
+
+  if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
+    return SimplifyReturn(RI) | Changed;
+  
+  if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator()))
+    return SimplifySwitch(SI) | Changed;
+  
+  if (UnreachableInst *UI = dyn_cast<UnreachableInst>(BB->getTerminator()))
+    return SimplifyUnreachable(UI) | Changed;
+  
+  if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator()))
+    return SimplifyUnwind(UI) | Changed;
+  
+  if (IndirectBrInst *IBI = dyn_cast<IndirectBrInst>(BB->getTerminator()))
+    return SimplifyIndirectBr(IBI) | Changed;
 
   return Changed;
 }
