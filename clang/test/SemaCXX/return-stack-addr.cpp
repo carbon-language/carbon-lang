@@ -123,7 +123,6 @@ void test_PR7999(PR7999_X& x) { (void)PR7999_f(x); } // no-warning
 // variables with an initializer, especially in templates where the default
 // argument may not be an expression (yet).
 namespace PR8774 {
-  template <typename T> class A { };
   template <typename U> struct B { };
   template <typename V> V f(typename B<V>::type const &v = B<V>::value()) {
     return v;
