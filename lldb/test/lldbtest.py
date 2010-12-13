@@ -164,6 +164,8 @@ STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS = "%s, %s" % (
 
 STOPPED_DUE_TO_BREAKPOINT_CONDITION = "Stopped due to breakpoint condition"
 
+STOPPED_DUE_TO_BREAKPOINT_IGNORE_COUNT = "Stopped due to breakpoint and ignore count"
+
 STOPPED_DUE_TO_SIGNAL = "Process state is stopped due to signal"
 
 STOPPED_DUE_TO_STEP_IN = "Process state is stopped due to step in"
