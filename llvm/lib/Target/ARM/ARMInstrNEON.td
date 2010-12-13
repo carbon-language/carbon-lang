@@ -1669,8 +1669,6 @@ def SubReg_i32_lane : SDNodeXForm<imm, [{
 
 // Basic 2-register operations: single-, double- and quad-register.
 let neverHasSideEffects = 1 in
-class N2VS
-  : PseudoNeonI<(outs DPR_VFP2:$Vd), (ins DPR_VFP2:$Vm), IIC_VUNAD, "", []>;
 class N2VD<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
            bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
            string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
@@ -4678,11 +4676,14 @@ def  VTBX4Pseudo
 // NEON instructions for single-precision FP math
 //===----------------------------------------------------------------------===//
 
-class N2VSPat<SDNode OpNode, ValueType ResTy, ValueType OpTy, PseudoNeonI Inst>
+class N2VSPat<SDNode OpNode, ValueType ResTy, ValueType OpTy, NeonI Inst>
   : NEONFPPat<(ResTy (OpNode SPR:$a)),
-              (EXTRACT_SUBREG (OpTy (Inst (INSERT_SUBREG (OpTy (IMPLICIT_DEF)),
-                                                       SPR:$a, ssub_0))),
-                              ssub_0)>;
+              (EXTRACT_SUBREG
+               (OpTy (COPY_TO_REGCLASS
+                (OpTy (Inst (INSERT_SUBREG
+                 (OpTy (COPY_TO_REGCLASS (OpTy (IMPLICIT_DEF)), DPR_VFP2)),
+                                           SPR:$a, ssub_0))),
+                                       DPR_VFP2)), ssub_0)>;
 
 class N3VSPat<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a, SPR:$b)),
@@ -4736,12 +4737,10 @@ def : N3VSMulOpPat<fmul, fsub, VMLSfd_sfp>,
       Requires<[HasNEON, UseNEONForFP, UseFPVMLx]>;
 
 // Vector Absolute used for single-precision FP
-def  VABSfd_sfp : N2VS;
-def : N2VSPat<fabs, f32, v2f32, VABSfd_sfp>;
+def : N2VSPat<fabs, f32, v2f32, VABSfd>;
 
 // Vector Negate used for single-precision FP
-def  VNEGfd_sfp : N2VS;
-def : N2VSPat<fneg, f32, v2f32, VNEGfd_sfp>;
+def : N2VSPat<fneg, f32, v2f32, VNEGfd>;
 
 // Vector Maximum used for single-precision FP
 let neverHasSideEffects = 1 in
@@ -4758,17 +4757,10 @@ def VMINfd_sfp : N3V<0, 0, 0b10, 0b1111, 0, 0, (outs DPR_VFP2:$Vd),
 def : N3VSPat<NEONfmin, VMINfd_sfp>;
 
 // Vector Convert between single-precision FP and integer
-def  VCVTf2sd_sfp : N2VS;
-def : N2VSPat<arm_ftosi, f32, v2f32, VCVTf2sd_sfp>;
-
-def  VCVTf2ud_sfp : N2VS;
-def : N2VSPat<arm_ftoui, f32, v2f32, VCVTf2ud_sfp>;
-
-def  VCVTs2fd_sfp : N2VS;
-def : N2VSPat<arm_sitof, f32, v2i32, VCVTs2fd_sfp>;
-
-def  VCVTu2fd_sfp : N2VS;
-def : N2VSPat<arm_uitof, f32, v2i32, VCVTu2fd_sfp>;
+def : N2VSPat<arm_ftosi, f32, v2f32, VCVTf2sd>;
+def : N2VSPat<arm_ftoui, f32, v2f32, VCVTf2ud>;
+def : N2VSPat<arm_sitof, f32, v2i32, VCVTs2fd>;
+def : N2VSPat<arm_uitof, f32, v2i32, VCVTu2fd>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
