@@ -1821,6 +1821,10 @@ def note_template_parameter_pack_here : Note<
   "previous template %select{type|non-type|template}0 "
   "parameter%select{| pack}1 declared here">;
   
+def err_unexpanded_parameter_pack : Error<
+  "%select{expression|base type|declaration type|template argument}0 contains "
+  "unexpanded parameter pack">;
+
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;
 def err_unexpected_namespace : Error<

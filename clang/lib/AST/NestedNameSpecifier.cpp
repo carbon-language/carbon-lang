@@ -113,6 +113,24 @@ bool NestedNameSpecifier::isDependent() const {
   return false;
 }
 
+bool NestedNameSpecifier::containsUnexpandedParameterPack() const {
+  switch (getKind()) {
+  case Identifier:
+    return getPrefix() && getPrefix()->containsUnexpandedParameterPack();
+
+  case Namespace:
+  case Global:
+    return false;
+
+  case TypeSpec:
+  case TypeSpecWithTemplate:
+    return getAsType()->containsUnexpandedParameterPack();
+  }
+
+  // Necessary to suppress a GCC warning.
+  return false;  
+}
+
 /// \brief Print this nested name specifier to the given output
 /// stream.
 void

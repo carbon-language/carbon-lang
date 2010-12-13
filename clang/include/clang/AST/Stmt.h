@@ -143,14 +143,16 @@ protected:
     friend class DeclRefExpr; // computeDependence
     friend class InitListExpr; // ctor
     friend class DesignatedInitExpr; // ctor
+    friend class ASTStmtReader;
     unsigned : NumStmtBits;
 
     unsigned ValueKind : 2;
     unsigned ObjectKind : 2;
     unsigned TypeDependent : 1;
     unsigned ValueDependent : 1;
+    unsigned ContainsUnexpandedParameterPack : 1;
   };
-  enum { NumExprBits = 14 };
+  enum { NumExprBits = 15 };
 
   class CastExprBitfields {
     friend class CastExpr;
@@ -167,6 +169,8 @@ protected:
     ExprBitfields ExprBits;
     CastExprBitfields CastExprBits;
   };
+
+  friend class ASTStmtReader;
 
 public:
   // Only allow allocation of Stmts using the allocator in ASTContext

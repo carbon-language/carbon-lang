@@ -543,6 +543,11 @@ Sema::ActOnBaseSpecifier(Decl *classdecl, SourceRange SpecifierRange,
 
   TypeSourceInfo *TInfo = 0;
   GetTypeFromParser(basetype, &TInfo);
+
+  if (DiagnoseUnexpandedParameterPack(SpecifierRange.getBegin(), TInfo, 
+                                      UPPC_BaseType))
+    return true;
+
   if (CXXBaseSpecifier *BaseSpec = CheckBaseSpecifier(Class, SpecifierRange,
                                                       Virtual, Access, TInfo))
     return BaseSpec;

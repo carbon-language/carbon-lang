@@ -1080,6 +1080,14 @@ public:
   using TemplateParmPosition::getPosition;
   using TemplateParmPosition::getIndex;
 
+  /// \brief Whether this template template parameter is a template
+  /// parameter pack.
+  ///
+  /// \code
+  /// template<template <class T> ...MetaFunctions> struct Apply;
+  /// \endcode
+  bool isParameterPack() const { return /*FIXME: variadic templates*/false; }
+
   /// \brief Determine whether this template parameter has a default
   /// argument.
   bool hasDefaultArgument() const {

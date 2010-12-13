@@ -182,6 +182,10 @@ public:
   /// \brief Determine whether this template argument has no value.
   bool isNull() const { return Kind == Null; }
 
+  /// \brief Whether this template argument contains an unexpanded
+  /// parameter pack.
+  bool containsUnexpandedParameterPack() const;
+
   /// \brief Retrieve the template argument as a type.
   QualType getAsType() const {
     if (Kind != Type)

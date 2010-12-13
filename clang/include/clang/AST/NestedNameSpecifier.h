@@ -172,6 +172,10 @@ public:
   /// type or not.
   bool isDependent() const;
 
+  /// \brief Whether this nested-name-specifier contains an unexpanded
+  /// parameter pack (for C++0x variadic templates).
+  bool containsUnexpandedParameterPack() const;
+
   /// \brief Print this nested name specifier to the given output
   /// stream.
   void print(llvm::raw_ostream &OS, const PrintingPolicy &Policy) const;

@@ -63,6 +63,18 @@ unsigned ConstantArrayType::getMaxSizeBits(ASTContext &Context) {
   return Bits;
 }
 
+DependentSizedArrayType::DependentSizedArrayType(ASTContext &Context, 
+                                                 QualType et, QualType can,
+                                                 Expr *e, ArraySizeModifier sm,
+                                                 unsigned tq,
+                                                 SourceRange brackets)
+    : ArrayType(DependentSizedArray, et, can, sm, tq, 
+                (et->containsUnexpandedParameterPack() ||
+                 (e && e->containsUnexpandedParameterPack()))),
+      Context(Context), SizeExpr((Stmt*) e), Brackets(brackets) 
+{
+}
+
 void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID,
                                       ASTContext &Context,
                                       QualType ET,
@@ -75,12 +87,48 @@ void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID,
   E->Profile(ID, Context, true);
 }
 
+DependentSizedExtVectorType::DependentSizedExtVectorType(ASTContext &Context, 
+                                                         QualType ElementType,
+                                                         QualType can, 
+                                                         Expr *SizeExpr, 
+                                                         SourceLocation loc)
+    : Type(DependentSizedExtVector, can, /*Dependent=*/true,
+           ElementType->isVariablyModifiedType(), 
+           (ElementType->containsUnexpandedParameterPack() ||
+            (SizeExpr && SizeExpr->containsUnexpandedParameterPack()))),
+      Context(Context), SizeExpr(SizeExpr), ElementType(ElementType),
+      loc(loc) 
+{
+}
+
 void
 DependentSizedExtVectorType::Profile(llvm::FoldingSetNodeID &ID,
                                      ASTContext &Context,
                                      QualType ElementType, Expr *SizeExpr) {
   ID.AddPointer(ElementType.getAsOpaquePtr());
   SizeExpr->Profile(ID, Context, true);
+}
+
+VectorType::VectorType(QualType vecType, unsigned nElements, QualType canonType,
+                       VectorKind vecKind)
+  : Type(Vector, canonType, vecType->isDependentType(),
+         vecType->isVariablyModifiedType(),
+         vecType->containsUnexpandedParameterPack()),
+    ElementType(vecType) 
+{
+  VectorTypeBits.VecKind = vecKind;
+  VectorTypeBits.NumElements = nElements;
+}
+
+VectorType::VectorType(TypeClass tc, QualType vecType, unsigned nElements,
+                       QualType canonType, VectorKind vecKind)
+  : Type(tc, canonType, vecType->isDependentType(),
+         vecType->isVariablyModifiedType(),
+         vecType->containsUnexpandedParameterPack()), 
+    ElementType(vecType) 
+{
+  VectorTypeBits.VecKind = vecKind;
+  VectorTypeBits.NumElements = nElements;
 }
 
 /// getArrayElementTypeNoTypeQual - If this is an array type, return the
@@ -321,8 +369,9 @@ const RecordType *Type::getAsUnionType() const {
 ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
                                ObjCProtocolDecl * const *Protocols,
                                unsigned NumProtocols)
-  : Type(ObjCObject, Canonical, false, false),
-    BaseType(Base) {
+  : Type(ObjCObject, Canonical, false, false, false),
+    BaseType(Base) 
+{
   ObjCObjectTypeBits.NumProtocols = NumProtocols;
   assert(getNumProtocols() == NumProtocols &&
          "bitfield overflow in protocol count");
@@ -924,12 +973,17 @@ DependentTemplateSpecializationType::DependentTemplateSpecializationType(
                          unsigned NumArgs, const TemplateArgument *Args,
                          QualType Canon)
   : TypeWithKeyword(Keyword, DependentTemplateSpecialization, Canon, true,
-                    false),
+                    /*VariablyModified=*/false,
+                    NNS->containsUnexpandedParameterPack()),
     NNS(NNS), Name(Name), NumArgs(NumArgs) {
   assert(NNS && NNS->isDependent() &&
          "DependentTemplateSpecializatonType requires dependent qualifier");
-  for (unsigned I = 0; I != NumArgs; ++I)
+  for (unsigned I = 0; I != NumArgs; ++I) {
+    if (Args[I].containsUnexpandedParameterPack())
+      setContainsUnexpandedParameterPack();
+
     new (&getArgBuffer()[I]) TemplateArgument(Args[I]);
+  }
 }
 
 void
@@ -1052,6 +1106,7 @@ FunctionProtoType::FunctionProtoType(QualType Result, const QualType *ArgArray,
   : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
                  Result->isDependentType(),
                  Result->isVariablyModifiedType(),
+                 Result->containsUnexpandedParameterPack(),
                  Info),
     NumArgs(numArgs), NumExceptions(numExs), HasExceptionSpec(hasExs),
     AnyExceptionSpec(hasAnyExs) 
@@ -1061,7 +1116,10 @@ FunctionProtoType::FunctionProtoType(QualType Result, const QualType *ArgArray,
   for (unsigned i = 0; i != numArgs; ++i) {
     if (ArgArray[i]->isDependentType())
       setDependent();
-    
+
+    if (ArgArray[i]->containsUnexpandedParameterPack())
+      setContainsUnexpandedParameterPack();
+
     ArgInfo[i] = ArgArray[i];
   }
   
@@ -1106,7 +1164,9 @@ QualType TypedefType::desugar() const {
 
 TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
   : Type(TypeOfExpr, can, E->isTypeDependent(), 
-         E->getType()->isVariablyModifiedType()), TOExpr(E) {
+         E->getType()->isVariablyModifiedType(),
+         E->containsUnexpandedParameterPack()), 
+    TOExpr(E) {
 }
 
 QualType TypeOfExprType::desugar() const {
@@ -1120,7 +1180,9 @@ void DependentTypeOfExprType::Profile(llvm::FoldingSetNodeID &ID,
 
 DecltypeType::DecltypeType(Expr *E, QualType underlyingType, QualType can)
   : Type(Decltype, can, E->isTypeDependent(), 
-         E->getType()->isVariablyModifiedType()), E(E),
+         E->getType()->isVariablyModifiedType(), 
+         E->containsUnexpandedParameterPack()), 
+    E(E),
   UnderlyingType(underlyingType) {
 }
 
@@ -1133,7 +1195,8 @@ void DependentDecltypeType::Profile(llvm::FoldingSetNodeID &ID,
 }
 
 TagType::TagType(TypeClass TC, const TagDecl *D, QualType can)
-  : Type(TC, can, D->isDependentType(), /*VariablyModified=*/false),
+  : Type(TC, can, D->isDependentType(), /*VariablyModified=*/false, 
+         /*ContainsUnexpandedParameterPack=*/false),
     decl(const_cast<TagDecl*>(D)) {}
 
 static TagDecl *getInterestingTagDecl(TagDecl *decl) {
@@ -1233,7 +1296,8 @@ TemplateSpecializationType(TemplateName T,
                            unsigned NumArgs, QualType Canon)
   : Type(TemplateSpecialization,
          Canon.isNull()? QualType(this, 0) : Canon,
-         T.isDependent(), false),
+         T.isDependent(), false,
+         T.containsUnexpandedParameterPack()),
     Template(T), NumArgs(NumArgs) 
 {
   assert((!Canon.isNull() ||
@@ -1249,7 +1313,9 @@ TemplateSpecializationType(TemplateName T,
     if (Args[Arg].getKind() == TemplateArgument::Type &&
         Args[Arg].getAsType()->isVariablyModifiedType())
       setVariablyModified();
-    
+    if (Args[Arg].containsUnexpandedParameterPack())
+      setContainsUnexpandedParameterPack();
+
     new (&TemplateArgs[Arg]) TemplateArgument(Args[Arg]);
   }
 }

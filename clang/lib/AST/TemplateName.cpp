@@ -60,6 +60,22 @@ bool TemplateName::isDependent() const {
   return true;
 }
 
+bool TemplateName::containsUnexpandedParameterPack() const {
+  if (TemplateDecl *Template = getAsTemplateDecl()) {
+    if (TemplateTemplateParmDecl *TTP 
+                                  = dyn_cast<TemplateTemplateParmDecl>(Template))
+      return TTP->isParameterPack();
+
+    return false;
+  }
+
+  if (DependentTemplateName *DTN = getAsDependentTemplateName())
+    return DTN->getQualifier() && 
+      DTN->getQualifier()->containsUnexpandedParameterPack();
+
+  return false;
+}
+
 void
 TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
                     bool SuppressNNS) const {

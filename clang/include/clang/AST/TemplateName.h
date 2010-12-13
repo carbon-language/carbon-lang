@@ -157,6 +157,10 @@ public:
   /// \brief Determines whether this is a dependent template name.
   bool isDependent() const;
 
+  /// \brief Determines whether this template name contains an
+  /// unexpanded parameter pack (for C++0x variadic templates).
+  bool containsUnexpandedParameterPack() const;
+
   /// \brief Print the template name.
   ///
   /// \param OS the output stream to which the template name will be

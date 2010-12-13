@@ -26,6 +26,39 @@ using namespace clang;
 // TemplateArgument Implementation
 //===----------------------------------------------------------------------===//
 
+bool TemplateArgument::containsUnexpandedParameterPack() const {
+  switch (getKind()) {
+  case Null:
+  case Declaration:
+  case Integral:
+    break;
+
+  case Type:
+    if (getAsType()->containsUnexpandedParameterPack())
+      return true;
+    break;
+
+  case Template:
+    if (getAsTemplate().containsUnexpandedParameterPack())
+      return true;
+    break;
+        
+  case Expression:
+    if (getAsExpr()->containsUnexpandedParameterPack())
+      return true;
+    break;
+
+  case Pack:
+    for (pack_iterator P = pack_begin(), PEnd = pack_end(); P != PEnd; ++P)
+      if (P->containsUnexpandedParameterPack())
+        return true;
+
+    break;
+  }
+
+  return false;
+}
+
 void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
                                ASTContext &Context) const {
   ID.AddInteger(Kind);

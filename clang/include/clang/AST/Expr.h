@@ -62,6 +62,8 @@ protected:
     ExprBits.ValueDependent = VD;
     ExprBits.ValueKind = VK;
     ExprBits.ObjectKind = OK;
+    // FIXME: Variadic templates.
+    ExprBits.ContainsUnexpandedParameterPack = false;
     setType(T);
   }
 
@@ -111,6 +113,24 @@ public:
 
   /// \brief Set whether this expression is type-dependent or not.
   void setTypeDependent(bool TD) { ExprBits.TypeDependent = TD; }
+
+  /// \brief Whether this expression contains an unexpanded parameter
+  /// pack (for C++0x variadic templates).
+  ///
+  /// Given the following function template:
+  ///
+  /// \code
+  /// template<typename F, typename ...Types>
+  /// void forward(const F &f, Types &&...args) {
+  ///   f(static_cast<Types&&>(args)...);
+  /// }
+  /// \endcode
+  ///
+  /// The expressions \c args and \c static_cast<Types&&>(args) both
+  /// contain parameter packs.
+  bool containsUnexpandedParameterPack() const { 
+    return ExprBits.ContainsUnexpandedParameterPack; 
+  }
 
   /// SourceLocation tokens are not useful in isolation - they are low level
   /// value objects created/interpreted by SourceManager. We assume AST

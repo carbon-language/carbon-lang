@@ -165,7 +165,9 @@ class LocInfoType : public Type {
 
   LocInfoType(QualType ty, TypeSourceInfo *TInfo)
     : Type((TypeClass)LocInfo, ty, ty->isDependentType(), 
-           ty->isVariablyModifiedType()), DeclInfo(TInfo) {
+           ty->isVariablyModifiedType(),
+           ty->containsUnexpandedParameterPack()), 
+      DeclInfo(TInfo) {
     assert(getTypeClass() == (TypeClass)LocInfo && "LocInfo didn't fit in TC?");
   }
   friend class Sema;
@@ -3126,6 +3128,40 @@ public:
   getTemplateArgumentBindingsText(const TemplateParameterList *Params,
                                   const TemplateArgument *Args,
                                   unsigned NumArgs);
+
+  /// \brief The context in which an unexpanded parameter pack is
+  /// being diagnosed.
+  ///
+  /// Note that the values of this enumeration line up with the first
+  /// argument to the \c err_unexpanded_parameter_pack diagnostic.
+  enum UnexpandedParameterPackContext {
+    UPPC_Expression = 0,
+    UPPC_BaseType,
+    UPPC_DeclarationType,
+    UPPC_TemplateArgument
+  };
+
+  /// \brief If the given type contains an unexpanded parameter pack,
+  /// diagnose the error.
+  ///
+  /// \param Loc The source location where a diagnostc should be emitted.
+  ///
+  /// \param T The type that is being checked for unexpanded parameter
+  /// packs.
+  ///
+  /// \returns true if an error ocurred, false otherwise.
+  bool DiagnoseUnexpandedParameterPack(SourceLocation Loc, TypeSourceInfo *T,
+                                       UnexpandedParameterPackContext UPPC);
+
+  /// \brief If the given expression contains an unexpanded parameter
+  /// pack, diagnose the error.
+  ///
+  /// \param E The expression that is being checked for unexpanded
+  /// parameter packs.
+  ///
+  /// \returns true if an error ocurred, false otherwise.
+  bool DiagnoseUnexpandedParameterPack(Expr *E,
+                       UnexpandedParameterPackContext UPPC = UPPC_Expression);
 
   /// \brief Describes the result of template argument deduction.
   ///
