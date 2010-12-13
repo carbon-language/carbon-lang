@@ -54,6 +54,7 @@ namespace {
     void ExpandLaneOp(MachineBasicBlock::iterator &MBBI);
     void ExpandVTBL(MachineBasicBlock::iterator &MBBI,
                     unsigned Opc, bool IsExt, unsigned NumRegs);
+    void ExpandNeonSFP2(MachineBasicBlock::iterator &MBBI, unsigned Opc);
   };
   char ARMExpandPseudo::ID = 0;
 }
@@ -612,6 +613,21 @@ void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
   MI.eraseFromParent();
 }
 
+/// ExpandNeonSFP2 - Translate a 2-register Neon pseudo instruction used for
+/// scalar floating-point to a real instruction.
+void ARMExpandPseudo::ExpandNeonSFP2(MachineBasicBlock::iterator &MBBI,
+                                     unsigned Opc) {
+  MachineInstr &MI = *MBBI;
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineInstrBuilder MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc));
+  MIB.addOperand(MI.getOperand(0)) // destination register
+    .addOperand(MI.getOperand(1))  // source register
+    .addOperand(MI.getOperand(2))  // predicate
+    .addOperand(MI.getOperand(3)); // predicate register
+  TransferImpOps(MI, MIB, MIB);
+  MI.eraseFromParent();
+}
+
 bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
   bool Modified = false;
 
@@ -1145,18 +1161,19 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       ExpandLaneOp(MBBI);
       break;
 
-    case ARM::VTBL2Pseudo:
-      ExpandVTBL(MBBI, ARM::VTBL2, false, 2); break;
-    case ARM::VTBL3Pseudo:
-      ExpandVTBL(MBBI, ARM::VTBL3, false, 3); break;
-    case ARM::VTBL4Pseudo:
-      ExpandVTBL(MBBI, ARM::VTBL4, false, 4); break;
-    case ARM::VTBX2Pseudo:
-      ExpandVTBL(MBBI, ARM::VTBX2, true, 2); break;
-    case ARM::VTBX3Pseudo:
-      ExpandVTBL(MBBI, ARM::VTBX3, true, 3); break;
-    case ARM::VTBX4Pseudo:
-      ExpandVTBL(MBBI, ARM::VTBX4, true, 4); break;
+    case ARM::VTBL2Pseudo: ExpandVTBL(MBBI, ARM::VTBL2, false, 2); break;
+    case ARM::VTBL3Pseudo: ExpandVTBL(MBBI, ARM::VTBL3, false, 3); break;
+    case ARM::VTBL4Pseudo: ExpandVTBL(MBBI, ARM::VTBL4, false, 4); break;
+    case ARM::VTBX2Pseudo: ExpandVTBL(MBBI, ARM::VTBX2, true, 2); break;
+    case ARM::VTBX3Pseudo: ExpandVTBL(MBBI, ARM::VTBX3, true, 3); break;
+    case ARM::VTBX4Pseudo: ExpandVTBL(MBBI, ARM::VTBX4, true, 4); break;
+
+    case ARM::VABSfd_sfp:   ExpandNeonSFP2(MBBI, ARM::VABSfd); break;
+    case ARM::VNEGfd_sfp:   ExpandNeonSFP2(MBBI, ARM::VNEGfd); break;
+    case ARM::VCVTf2sd_sfp: ExpandNeonSFP2(MBBI, ARM::VCVTf2sd); break;
+    case ARM::VCVTf2ud_sfp: ExpandNeonSFP2(MBBI, ARM::VCVTf2ud); break;
+    case ARM::VCVTs2fd_sfp: ExpandNeonSFP2(MBBI, ARM::VCVTs2fd); break;
+    case ARM::VCVTu2fd_sfp: ExpandNeonSFP2(MBBI, ARM::VCVTu2fd); break;
     }
 
     if (ModifiedOp)
