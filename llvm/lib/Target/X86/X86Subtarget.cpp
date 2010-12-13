@@ -256,7 +256,8 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   if ((ECX >> 9)  & 1) X86SSELevel = SSSE3;
   if ((ECX >> 19) & 1) X86SSELevel = SSE41;
   if ((ECX >> 20) & 1) X86SSELevel = SSE42;
-  if ((ECX >> 28) & 1) { HasAVX = true; X86SSELevel = NoMMXSSE; }
+  // FIXME: AVX codegen support is not ready.
+  //if ((ECX >> 28) & 1) { HasAVX = true; X86SSELevel = NoMMXSSE; }
 
   bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
   bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;

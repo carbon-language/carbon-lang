@@ -120,7 +120,9 @@ def : Proc<"westmere",        [FeatureSSE42,  Feature64Bit, FeatureSlowBTMem,
                                FeatureFastUAMem, FeatureAES, FeatureCLMUL]>;
 // SSE is not listed here since llvm treats AVX as a reimplementation of SSE,
 // rather than a superset.
-def : Proc<"sandybridge",     [FeatureAVX, FeatureAES, FeatureCLMUL, Feature64Bit]>;
+// FIXME: Disabling AVX for now since it's not ready.
+def : Proc<"sandybridge",     [FeatureSSE42, Feature64Bit,
+                               FeatureAES, FeatureCLMUL]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [FeatureMMX,    Feature3DNow]>;
