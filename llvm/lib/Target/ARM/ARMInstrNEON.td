@@ -4675,14 +4675,13 @@ def  VTBX4Pseudo
 // NEON instructions for single-precision FP math
 //===----------------------------------------------------------------------===//
 
-class N2VSPat<SDNode OpNode, ValueType ResTy, ValueType OpTy, NeonI Inst>
-  : NEONFPPat<(ResTy (OpNode SPR:$a)),
+class N2VSPat<SDNode OpNode, NeonI Inst>
+  : NEONFPPat<(f32 (OpNode SPR:$a)),
               (EXTRACT_SUBREG
-               (OpTy (COPY_TO_REGCLASS
-                (OpTy (Inst (INSERT_SUBREG
-                 (OpTy (COPY_TO_REGCLASS (OpTy (IMPLICIT_DEF)), DPR_VFP2)),
-                                           SPR:$a, ssub_0))),
-                                       DPR_VFP2)), ssub_0)>;
+               (v2f32 (COPY_TO_REGCLASS
+                (Inst (INSERT_SUBREG
+                 (v2f32 (COPY_TO_REGCLASS (v2f32 (IMPLICIT_DEF)), DPR_VFP2)),
+                 SPR:$a, ssub_0)), DPR_VFP2)), ssub_0)>;
 
 class N3VSPat<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a, SPR:$b)),
@@ -4736,10 +4735,10 @@ def : N3VSMulOpPat<fmul, fsub, VMLSfd_sfp>,
       Requires<[HasNEON, UseNEONForFP, UseFPVMLx]>;
 
 // Vector Absolute used for single-precision FP
-def : N2VSPat<fabs, f32, v2f32, VABSfd>;
+def : N2VSPat<fabs, VABSfd>;
 
 // Vector Negate used for single-precision FP
-def : N2VSPat<fneg, f32, v2f32, VNEGfd>;
+def : N2VSPat<fneg, VNEGfd>;
 
 // Vector Maximum used for single-precision FP
 let neverHasSideEffects = 1 in
@@ -4756,10 +4755,10 @@ def VMINfd_sfp : N3V<0, 0, 0b10, 0b1111, 0, 0, (outs DPR_VFP2:$Vd),
 def : N3VSPat<NEONfmin, VMINfd_sfp>;
 
 // Vector Convert between single-precision FP and integer
-def : N2VSPat<arm_ftosi, f32, v2f32, VCVTf2sd>;
-def : N2VSPat<arm_ftoui, f32, v2f32, VCVTf2ud>;
-def : N2VSPat<arm_sitof, f32, v2i32, VCVTs2fd>;
-def : N2VSPat<arm_uitof, f32, v2i32, VCVTu2fd>;
+def : N2VSPat<arm_ftosi, VCVTf2sd>;
+def : N2VSPat<arm_ftoui, VCVTf2ud>;
+def : N2VSPat<arm_sitof, VCVTs2fd>;
+def : N2VSPat<arm_uitof, VCVTu2fd>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
