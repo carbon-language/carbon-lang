@@ -920,14 +920,6 @@ void AsmPrinter::EmitConstantPool() {
 
       const Type *Ty = CPE.getType();
       Offset = NewOffset + TM.getTargetData()->getTypeAllocSize(Ty);
-
-      // Emit the label with a comment on it.
-      if (isVerbose()) {
-        OutStreamer.GetCommentOS() << "constant pool ";
-        WriteTypeSymbolic(OutStreamer.GetCommentOS(), CPE.getType(),
-                          MF->getFunction()->getParent());
-        OutStreamer.GetCommentOS() << '\n';
-      }
       OutStreamer.EmitLabel(GetCPISymbol(CPI));
 
       if (CPE.isMachineConstantPoolEntry())
