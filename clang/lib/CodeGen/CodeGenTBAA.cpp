@@ -77,8 +77,29 @@ llvm::MDNode *CodeGenTBAA::getTBAAInfoForNamedType(llvm::StringRef NameStr,
   return llvm::MDNode::get(VMContext, Ops, llvm::array_lengthof(Ops) - !Flags);
 }
 
+static bool TypeHasMayAlias(QualType QTy) {
+  // Tagged types have declarations, and therefore may have attributes.
+  if (const TagType *TTy = dyn_cast<TagType>(QTy))
+    return TTy->getDecl()->hasAttr<MayAliasAttr>();
+
+  // Typedef types have declarations, and therefore may have attributes.
+  if (const TypedefType *TTy = dyn_cast<TypedefType>(QTy)) {
+    if (TTy->getDecl()->hasAttr<MayAliasAttr>())
+      return true;
+    // Also, their underlying types may have relevant attributes.
+    return TypeHasMayAlias(TTy->desugar());
+  }
+
+  return false;
+}
+
 llvm::MDNode *
 CodeGenTBAA::getTBAAInfo(QualType QTy) {
+  // If the type has the may_alias attribute (even on a typedef), it is
+  // effectively in the general char alias class.
+  if (TypeHasMayAlias(QTy))
+    return getChar();
+
   Type *Ty = Context.getCanonicalType(QTy).getTypePtr();
 
   if (llvm::MDNode *N = MetadataCache[Ty])
