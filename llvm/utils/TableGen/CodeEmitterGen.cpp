@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include <map>
 using namespace llvm;
 
 // FIXME: Somewhat hackish to use a command line option for this. There should

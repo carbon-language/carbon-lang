@@ -15,7 +15,6 @@
 #define CODEMITTERGEN_H
 
 #include "TableGenBackend.h"
-#include <map>
 #include <vector>
 #include <string>
 
