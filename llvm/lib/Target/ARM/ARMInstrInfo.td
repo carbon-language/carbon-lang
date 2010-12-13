@@ -293,6 +293,10 @@ def brtarget : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
 }
 
+def uncondbrtarget : Operand<OtherVT> {
+  let EncoderMethod = "getUnconditionalBranchTargetOpValue";
+}
+
 // Call target.
 def bltarget : Operand<i32> {
   // Encoded the same as branch targets.

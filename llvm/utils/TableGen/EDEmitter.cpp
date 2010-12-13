@@ -322,6 +322,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   PCR("offset32");
   PCR("offset64");
   PCR("brtarget");
+  PCR("uncondbrtarget");
   PCR("bltarget");
 
   return 1;
@@ -587,6 +588,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("neon_vcvt_imm32");
 
   MISC("brtarget", "kOperandTypeARMBranchTarget");                // ?
+  MISC("uncondbrtarget", "kOperandTypeARMBranchTarget");           // ?
   MISC("t_brtarget", "kOperandTypeARMBranchTarget");              // ?
   MISC("t_bcctarget", "kOperandTypeARMBranchTarget");             // ?
   MISC("t_cbtarget", "kOperandTypeARMBranchTarget");              // ?

@@ -57,7 +57,8 @@ public:
                                                 MCFixupKindInfo::FKF_IsAligned},
 { "fixup_arm_adr_pcrel_12",  1,            24,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_branch",        1,            24,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_t2_branch",         0,            32,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_condbranch",     0,            32,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_uncondbranch",   0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_br",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_bl",      0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_blx",     7,            21,  MCFixupKindInfo::FKF_IsPCRel },
@@ -121,6 +122,12 @@ public:
   /// branch target.
   uint32_t getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                                   SmallVectorImpl<MCFixup> &Fixups) const;
+
+  /// getUnconditionalBranchTargetOpValue - Return encoding info for 24-bit
+  /// immediate Thumb2 direct branch target.
+  uint32_t getUnconditionalBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                                  SmallVectorImpl<MCFixup> &Fixups) const;
+  
 
   /// getAdrLabelOpValue - Return encoding info for 12-bit immediate
   /// ADR label target.
@@ -499,8 +506,32 @@ getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
   // coupling between MC and TM anywhere we can help it.
   const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
   if (Subtarget.isThumb2())
-    return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_branch, Fixups);
+    return
+      ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_condbranch, Fixups);
   return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_branch, Fixups);
+}
+
+/// getUnconditionalBranchTargetOpValue - Return encoding info for 24-bit
+/// immediate branch target.
+uint32_t ARMMCCodeEmitter::
+getUnconditionalBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
+                       SmallVectorImpl<MCFixup> &Fixups) const {
+  unsigned Val =
+    ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_uncondbranch, Fixups);
+  bool I  = (Val & 0x800000);
+  bool J1 = (Val & 0x400000);
+  bool J2 = (Val & 0x200000);
+  if (I ^ J1)
+    Val &= ~0x400000;
+  else
+    Val |= 0x400000;
+    
+  if (I ^ J2)
+    Val &= ~0x200000;
+  else
+    Val |= 0x200000;
+  
+  return Val;
 }
 
 /// getAdrLabelOpValue - Return encoding info for 12-bit immediate ADR label

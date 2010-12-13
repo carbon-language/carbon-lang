@@ -2961,7 +2961,7 @@ def t2LDMIA_RET: T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 let isPredicable = 1 in
-def t2B   : T2XI<(outs), (ins brtarget:$target), IIC_Br,
+def t2B   : T2XI<(outs), (ins uncondbrtarget:$target), IIC_Br,
                  "b.w\t$target",
                  [(br bb:$target)]> {
   let Inst{31-27} = 0b11110;

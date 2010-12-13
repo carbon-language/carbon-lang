@@ -140,11 +140,32 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // These values don't encode the low two bits since they're always zero.
     // Offset by 8 just as above.
     return 0xffffff & ((Value - 8) >> 2);
-  case ARM::fixup_t2_branch: {
+  case ARM::fixup_t2_uncondbranch: {
     Value = Value - 4;
     Value >>= 1; // Low bit is not encoded.
 
     uint32_t out = 0;
+    bool I =  Value & 0x800000;
+    bool J1 = Value & 0x400000;
+    bool J2 = Value & 0x200000;
+    J1 ^= I;
+    J2 ^= I;
+    
+    out |= I  << 26; // S bit
+    out |= !J1 << 13; // J1 bit
+    out |= !J2 << 11; // J2 bit
+    out |= (Value & 0x1FF800)  << 5; // imm6 field
+    out |= (Value & 0x0007FF);        // imm11 field
+    
+    uint64_t swapped = (out & 0xFFFF0000) >> 16;
+    swapped |= (out & 0x0000FFFF) << 16;
+    return swapped;
+  }
+  case ARM::fixup_t2_condbranch: {
+    Value = Value - 4;
+    Value >>= 1; // Low bit is not encoded.
+    
+    uint64_t out = 0;
     out |= (Value & 0x80000) << 7; // S bit
     out |= (Value & 0x40000) >> 7; // J2 bit
     out |= (Value & 0x20000) >> 4; // J1 bit
@@ -332,7 +353,8 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
 
   case FK_Data_4:
   case ARM::fixup_t2_ldst_pcrel_12:
-  case ARM::fixup_t2_branch:
+  case ARM::fixup_t2_condbranch:
+  case ARM::fixup_t2_uncondbranch:
   case ARM::fixup_t2_pcrel_10:
   case ARM::fixup_arm_thumb_bl:
   case ARM::fixup_arm_thumb_blx:
