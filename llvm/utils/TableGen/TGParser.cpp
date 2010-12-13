@@ -868,7 +868,6 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     TernOpInit::TernaryOp Code;
     RecTy *Type = 0;
 
-
     tgtok::TokKind LexCode = Lex.getCode();
     Lex.Lex();  // eat the operation
     switch (LexCode) {
@@ -919,16 +918,45 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     switch (LexCode) {
     default: assert(0 && "Unhandled code!");
     case tgtok::XIf: {
-      TypedInit *MHSt = dynamic_cast<TypedInit *>(MHS);
-      TypedInit *RHSt = dynamic_cast<TypedInit *>(RHS);
-      if (MHSt == 0 || RHSt == 0) {
+      // FIXME: The `!if' operator doesn't handle non-TypedInit well at
+      // all. This can be made much more robust.
+      TypedInit *MHSt = dynamic_cast<TypedInit*>(MHS);
+      TypedInit *RHSt = dynamic_cast<TypedInit*>(RHS);
+
+      RecTy *MHSTy = 0;
+      RecTy *RHSTy = 0;
+
+      if (MHSt == 0 && RHSt == 0) {
+        BitsInit *MHSbits = dynamic_cast<BitsInit*>(MHS);
+        BitsInit *RHSbits = dynamic_cast<BitsInit*>(RHS);
+
+        if (MHSbits && RHSbits &&
+            MHSbits->getNumBits() == RHSbits->getNumBits()) {
+          Type = new BitRecTy();
+          break;
+        } else {
+          BitInit *MHSbit = dynamic_cast<BitInit*>(MHS);
+          BitInit *RHSbit = dynamic_cast<BitInit*>(RHS);
+
+          if (MHSbit && RHSbit) {
+            Type = new BitRecTy();
+            break;
+          }
+        }
+      } else if (MHSt != 0 && RHSt != 0) {
+        MHSTy = MHSt->getType();
+        RHSTy = RHSt->getType();
+      }
+
+      if (!MHSTy || !RHSTy) {
         TokError("could not get type for !if");
         return 0;
       }
-      if (MHSt->getType()->typeIsConvertibleTo(RHSt->getType())) {
-        Type = RHSt->getType();
-      } else if (RHSt->getType()->typeIsConvertibleTo(MHSt->getType())) {
-        Type = MHSt->getType();
+
+      if (MHSTy->typeIsConvertibleTo(RHSTy)) {
+        Type = RHSTy;
+      } else if (RHSTy->typeIsConvertibleTo(MHSTy)) {
+        Type = MHSTy;
       } else {
         TokError("inconsistent types for !if");
         return 0;

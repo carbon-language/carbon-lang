@@ -65,19 +65,27 @@ Init *BitsRecTy::convertValue(BitInit *UI) {
   return Ret;
 }
 
-// convertValue from Int initializer to bits type: Split the integer up into the
-// appropriate bits.
-//
+/// canFitInBitfield - Return true if the number of bits is large enough to hold
+/// the integer value.
+static bool canFitInBitfield(int64_t Value, unsigned NumBits) {
+  if (Value >= 0) {
+    if (Value & ~((1LL << NumBits) - 1))
+      return false;
+  } else if ((Value >> NumBits) != -1 || (Value & (1LL << (NumBits-1))) == 0) {
+    return false;
+  }
+
+  return true;
+}
+
+/// convertValue from Int initializer to bits type: Split the integer up into the
+/// appropriate bits.
+///
 Init *BitsRecTy::convertValue(IntInit *II) {
   int64_t Value = II->getValue();
   // Make sure this bitfield is large enough to hold the integer value.
-  if (Value >= 0) {
-    if (Value & ~((1LL << Size)-1))
-      return 0;
-  } else {
-    if ((Value >> Size) != -1 || ((Value & (1LL << (Size-1))) == 0))
-      return 0;
-  }
+  if (!canFitInBitfield(Value, Size))
+    return 0;
 
   BitsInit *Ret = new BitsInit(Size);
   for (unsigned i = 0; i != Size; ++i)
@@ -101,10 +109,54 @@ Init *BitsRecTy::convertValue(TypedInit *VI) {
         Ret->setBit(i, new VarBitInit(VI, i));
       return Ret;
     }
+
   if (Size == 1 && dynamic_cast<BitRecTy*>(VI->getType())) {
     BitsInit *Ret = new BitsInit(1);
     Ret->setBit(0, VI);
     return Ret;
+  }
+
+  if (TernOpInit *Tern = dynamic_cast<TernOpInit*>(VI)) {
+    if (Tern->getOpcode() == TernOpInit::IF) {
+      Init *LHS = Tern->getLHS();
+      Init *MHS = Tern->getMHS();
+      Init *RHS = Tern->getRHS();
+
+      IntInit *MHSi = dynamic_cast<IntInit*>(MHS);
+      IntInit *RHSi = dynamic_cast<IntInit*>(RHS);
+
+      if (MHSi && RHSi) {
+        int64_t MHSVal = MHSi->getValue();
+        int64_t RHSVal = RHSi->getValue();
+
+        if (canFitInBitfield(MHSVal, Size) && canFitInBitfield(RHSVal, Size)) {
+          BitsInit *Ret = new BitsInit(Size);
+
+          for (unsigned i = 0; i != Size; ++i)
+            Ret->setBit(i, new TernOpInit(TernOpInit::IF, LHS,
+                                          new IntInit((MHSVal & (1LL << i)) ? 1 : 0),
+                                          new IntInit((RHSVal & (1LL << i)) ? 1 : 0),
+                                          VI->getType()));
+
+          return Ret;
+        }
+      } else {
+        BitsInit *MHSbs = dynamic_cast<BitsInit*>(MHS);
+        BitsInit *RHSbs = dynamic_cast<BitsInit*>(RHS);
+
+        if (MHSbs && RHSbs) {
+          BitsInit *Ret = new BitsInit(Size);
+
+          for (unsigned i = 0; i != Size; ++i)
+            Ret->setBit(i, new TernOpInit(TernOpInit::IF, LHS,
+                                          MHSbs->getBit(i),
+                                          RHSbs->getBit(i),
+                                          VI->getType()));
+
+          return Ret;
+        }
+      }
+    }
   }
 
   return 0;
