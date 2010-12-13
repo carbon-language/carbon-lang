@@ -469,8 +469,8 @@ ValuesOverlap(std::vector<std::pair<ConstantInt*, BasicBlock*> > &C1,
   }
 
   // Otherwise, just sort both lists and compare element by element.
-  std::sort(V1->begin(), V1->end());
-  std::sort(V2->begin(), V2->end());
+  array_pod_sort(V1->begin(), V1->end());
+  array_pod_sort(V2->begin(), V2->end());
   unsigned i1 = 0, i2 = 0, e1 = V1->size(), e2 = V2->size();
   while (i1 != e1 && i2 != e2) {
     if ((*V1)[i1].first == (*V2)[i2].first)
