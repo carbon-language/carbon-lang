@@ -29,8 +29,8 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <functional>
 #include <set>
 #include <map>
 using namespace llvm;
@@ -608,6 +608,12 @@ namespace {
       return LHS->getValue().ult(RHS->getValue());
     }
   };
+}
+
+static int ConstantIntSortPredicate(const void *P1, const void *P2) {
+  const ConstantInt *LHS = *(const ConstantInt**)P1;
+  const ConstantInt *RHS = *(const ConstantInt**)P2;
+  return LHS->getValue().ult(RHS->getValue());
 }
 
 /// FoldValueComparisonIntoPredecessors - The specified terminator is a value
@@ -1985,7 +1991,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       if (CompVal) {
         // There might be duplicate constants in the list, which the switch
         // instruction can't handle, remove them now.
-        std::sort(Values.begin(), Values.end(), ConstantIntOrdering());
+        array_pod_sort(Values.begin(), Values.end(), ConstantIntSortPredicate);
         Values.erase(std::unique(Values.begin(), Values.end()), Values.end());
         
         // Figure out which block is which destination.
