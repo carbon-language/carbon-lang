@@ -1899,6 +1899,13 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
     
     BranchInst::Create(EdgeBB, NewBB, ExtraCase, OldTI);
     OldTI->eraseFromParent();
+    
+    // If there are PHI nodes in EdgeBB, then we need to add a new entry to them
+    // for the edge we just added.
+    for (BasicBlock::iterator I = EdgeBB->begin(); isa<PHINode>(I); ++I) {
+      PHINode *PN = cast<PHINode>(I);
+      PN->addIncoming(PN->getIncomingValueForBlock(NewBB), BB);
+    }    
     BB = NewBB;
   }
   

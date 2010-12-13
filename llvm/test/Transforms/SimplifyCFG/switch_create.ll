@@ -176,3 +176,32 @@ if.end:                                           ; preds = %entry
 ; CHECK:     i8 97, label %if.then
 ; CHECK:   ]
 }
+
+define i32 @test8(i8 zeroext %c, i32 %x, i1 %C) nounwind ssp noredzone {
+entry:
+  br i1 %C, label %N, label %if.then
+N:
+  %cmp = icmp ult i32 %x, 32
+  %cmp4 = icmp eq i8 %c, 97
+  %or.cond = or i1 %cmp, %cmp4
+  %cmp9 = icmp eq i8 %c, 99
+  %or.cond11 = or i1 %or.cond, %cmp9
+  br i1 %or.cond11, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  %A = phi i32 [0, %entry], [42, %N]
+  tail call void @foo1() nounwind noredzone
+  ret i32 %A
+
+if.end:                                           ; preds = %entry
+  ret i32 0
+  
+; CHECK: @test8
+; CHECK: switch.early.test:
+; CHECK:   switch i8 %c, label %if.end [
+; CHECK:     i8 99, label %if.then
+; CHECK:     i8 97, label %if.then
+; CHECK:   ]
+; CHECK:   %A = phi i32 [ 0, %entry ], [ 42, %switch.early.test ], [ 42, %N ], [ 42, %switch.early.test ]
+
+}
