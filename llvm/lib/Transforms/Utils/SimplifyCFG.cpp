@@ -2334,22 +2334,11 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     if (BI && BI->isConditional()) {
       // Get the other block.
       BasicBlock *OtherBB = BI->getSuccessor(BI->getSuccessor(0) == BB);
-      pred_iterator PI = pred_begin(OtherBB);
-      ++PI;
-      
-      if (PI != pred_end(OtherBB)) {
-        BasicBlock* OnlySucc = NULL;
-        for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
-             SI != SE; ++SI) {
-          if (!OnlySucc)
-            OnlySucc = *SI;
-          else if (*SI != OnlySucc) {
-            OnlySucc = 0;     // There are multiple distinct successors!
-            break;
-          }
-        }
 
-        if (OnlySucc == OtherBB) {
+      if (OtherBB->getSinglePredecessor() == 0) {
+        TerminatorInst *BBTerm = BB->getTerminator();
+        if (BBTerm->getNumSuccessors() == 1 &&
+            BBTerm->getSuccessor(0) == OtherBB) {
           // If BB's only successor is the other successor of the predecessor,
           // i.e. a triangle, see if we can hoist any code from this block up
           // to the "if" block.
