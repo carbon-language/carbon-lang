@@ -1957,6 +1957,13 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
   // Check for and eliminate duplicate PHI nodes in this block.
   Changed |= EliminateDuplicatePHINodes(BB);
 
+  // Merge basic blocks into their predecessor if there is only one distinct
+  // pred, and if there is only one distinct successor of the predecessor, and
+  // if there are no PHI nodes.
+  //
+  if (MergeBlockIntoPredecessor(BB))
+    return true;
+  
   // If there is a trivial two-entry PHI node in this basic block, and we can
   // eliminate it, do so now.
   if (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
@@ -2309,33 +2316,15 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     }
   }
 
-  // Merge basic blocks into their predecessor if there is only one distinct
-  // pred, and if there is only one distinct successor of the predecessor, and
-  // if there are no PHI nodes.
-  //
-  if (MergeBlockIntoPredecessor(BB))
-    return true;
-
   // Otherwise, if this block only has a single predecessor, and if that block
   // is a conditional branch, see if we can hoist any code from this block up
   // into our predecessor.
-  pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
-  BasicBlock *OnlyPred = 0;
-  for (; PI != PE; ++PI) { // Search all predecessors, see if they are all same
-    if (!OnlyPred)
-      OnlyPred = *PI;
-    else if (*PI != OnlyPred) {
-      OnlyPred = 0;       // There are multiple different predecessors...
-      break;
-    }
-  }
-  
-  if (OnlyPred) {
+  if (BasicBlock *OnlyPred = BB->getSinglePredecessor()) {
     BranchInst *BI = dyn_cast<BranchInst>(OnlyPred->getTerminator());
     if (BI && BI->isConditional()) {
       // Get the other block.
       BasicBlock *OtherBB = BI->getSuccessor(BI->getSuccessor(0) == BB);
-      PI = pred_begin(OtherBB);
+      pred_iterator PI = pred_begin(OtherBB);
       ++PI;
       
       if (PI == pred_end(OtherBB)) {
