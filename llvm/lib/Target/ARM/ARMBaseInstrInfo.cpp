@@ -58,8 +58,6 @@ static const ARM_MLxEntry ARM_MLxTable[] = {
   { ARM::VMLSS,       ARM::VMULS,       ARM::VSUBS,      false,  false },
   { ARM::VMLAD,       ARM::VMULD,       ARM::VADDD,      false,  false },
   { ARM::VMLSD,       ARM::VMULD,       ARM::VSUBD,      false,  false },
-  { ARM::VMLAfd_sfp,  ARM::VMULfd_sfp,  ARM::VADDfd_sfp, false,  false },
-  { ARM::VMLSfd_sfp,  ARM::VMULfd_sfp,  ARM::VSUBfd_sfp, false,  false },
   { ARM::VNMLAS,      ARM::VNMULS,      ARM::VSUBS,      true,   false },
   { ARM::VNMLSS,      ARM::VMULS,       ARM::VSUBS,      true,   false },
   { ARM::VNMLAD,      ARM::VNMULD,      ARM::VSUBD,      true,   false },

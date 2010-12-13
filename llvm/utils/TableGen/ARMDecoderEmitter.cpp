@@ -1613,11 +1613,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
         Name == "VNEGScc")
       return false;
 
-    // Ignore the *_sfp instructions when decoding.  They are used by the
-    // compiler to implement scalar floating point operations using vector
-    // operations in order to work around some performance issues.
-    if (Name.find("_sfp") != std::string::npos) return false;
-
     // LDMIA_RET is a special case of LDM (Load Multiple) where the registers
     // loaded include the PC, causing a branch to a loaded address.  Ignore
     // the LDMIA_RET instruction when decoding.

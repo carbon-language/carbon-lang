@@ -1667,7 +1667,7 @@ def SubReg_i32_lane : SDNodeXForm<imm, [{
 // Instruction Classes
 //===----------------------------------------------------------------------===//
 
-// Basic 2-register operations: single-, double- and quad-register.
+// Basic 2-register operations: double- and quad-register.
 class N2VD<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
            bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
            string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
@@ -1736,13 +1736,7 @@ class N2VQShuffle<bits<2> op19_18, bits<5> op11_7,
         (ins QPR:$src1, QPR:$src2), itin, OpcodeStr, Dt, "$Vd, $Vm",
         "$src1 = $Vd, $src2 = $Vm", []>;
 
-// Basic 3-register operations: single-, double- and quad-register.
-class N3VS<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
-           string OpcodeStr, string Dt>
-  : N3V<op24, op23, op21_20, op11_8, 0, op4,
-        (outs DPR_VFP2:$Vd), (ins DPR_VFP2:$Vn, DPR_VFP2:$Vm), N3RegFrm,
-        IIC_VBIND, OpcodeStr, Dt, "$Vd, $Vn, $Vm", "", []>;
-
+// Basic 3-register operations: double- and quad-register.
 class N3VD<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            InstrItinClass itin, string OpcodeStr, string Dt,
            ValueType ResTy, ValueType OpTy, SDNode OpNode, bit Commutable>
@@ -1912,13 +1906,7 @@ class N3VQIntSh<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
   let isCommutable = 0;
 }
 
-// Multiply-Add/Sub operations: single-, double- and quad-register.
-class N3VSMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
-                InstrItinClass itin, string OpcodeStr, string Dt>
-  : N3V<op24, op23, op21_20, op11_8, 0, op4, (outs DPR_VFP2:$Vd),
-        (ins DPR_VFP2:$src1, DPR_VFP2:$Vn, DPR_VFP2:$Vm), N3RegFrm, itin,
-        OpcodeStr, Dt, "$Vd, $Vn, $Vm", "$src1 = $Vd", []>;
-
+// Multiply-Add/Sub operations: double- and quad-register.
 class N3VDMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
                 InstrItinClass itin, string OpcodeStr, string Dt,
                 ValueType Ty, SDPatternOperator MulOp, SDPatternOperator OpNode>
@@ -4678,83 +4666,47 @@ def  VTBX4Pseudo
 class N2VSPat<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a)),
               (EXTRACT_SUBREG
-               (v2f32 (COPY_TO_REGCLASS
-                (Inst (INSERT_SUBREG
+               (v2f32 (COPY_TO_REGCLASS (Inst
+                (INSERT_SUBREG
                  (v2f32 (COPY_TO_REGCLASS (v2f32 (IMPLICIT_DEF)), DPR_VFP2)),
                  SPR:$a, ssub_0)), DPR_VFP2)), ssub_0)>;
 
 class N3VSPat<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a, SPR:$b)),
-              (EXTRACT_SUBREG (v2f32
-                                 (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                      SPR:$a, ssub_0),
-                                       (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                      SPR:$b, ssub_0))),
-                              ssub_0)>;
+              (EXTRACT_SUBREG
+               (v2f32 (COPY_TO_REGCLASS (Inst
+                (INSERT_SUBREG
+                 (v2f32 (COPY_TO_REGCLASS (v2f32 (IMPLICIT_DEF)), DPR_VFP2)),
+                 SPR:$a, ssub_0),
+                (INSERT_SUBREG
+                 (v2f32 (COPY_TO_REGCLASS (v2f32 (IMPLICIT_DEF)), DPR_VFP2)),
+                 SPR:$b, ssub_0)), DPR_VFP2)), ssub_0)>;
 
 class N3VSMulOpPat<SDNode MulNode, SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$acc, (f32 (MulNode SPR:$a, SPR:$b)))),
-              (EXTRACT_SUBREG (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$acc, ssub_0),
-                                    (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$a, ssub_0),
-                                    (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$b, ssub_0)),
-                              ssub_0)>;
+              (EXTRACT_SUBREG
+               (v2f32 (COPY_TO_REGCLASS (Inst
+                (INSERT_SUBREG
+                 (v2f32 (COPY_TO_REGCLASS (v2f32 (IMPLICIT_DEF)), DPR_VFP2)),
+                 SPR:$acc, ssub_0),
+                (INSERT_SUBREG
+                 (v2f32 (COPY_TO_REGCLASS (v2f32 (IMPLICIT_DEF)), DPR_VFP2)),
+                 SPR:$a, ssub_0),
+                (INSERT_SUBREG
+                 (v2f32 (COPY_TO_REGCLASS (v2f32 (IMPLICIT_DEF)), DPR_VFP2)),
+                 SPR:$b, ssub_0)), DPR_VFP2)), ssub_0)>;
 
-// These need separate instructions because they must use DPR_VFP2 register
-// class which have SPR sub-registers.
-
-// Vector Add Operations used for single-precision FP
-let neverHasSideEffects = 1 in
-def VADDfd_sfp : N3VS<0,0,0b00,0b1101,0, "vadd", "f32">;
-def : N3VSPat<fadd, VADDfd_sfp>;
-
-// Vector Sub Operations used for single-precision FP
-let neverHasSideEffects = 1 in
-def VSUBfd_sfp : N3VS<0,0,0b10,0b1101,0, "vsub", "f32">;
-def : N3VSPat<fsub, VSUBfd_sfp>;
-
-// Vector Multiply Operations used for single-precision FP
-let neverHasSideEffects = 1 in
-def VMULfd_sfp : N3VS<1,0,0b00,0b1101,1, "vmul", "f32">;
-def : N3VSPat<fmul, VMULfd_sfp>;
-
-// Vector Multiply-Accumulate/Subtract used for single-precision FP
-// vml[as].f32 can cause 4-8 cycle stalls in following ASIMD instructions, so
-// we want to avoid them for now. e.g., alternating vmla/vadd instructions.
-
-let neverHasSideEffects = 1 in
-def VMLAfd_sfp : N3VSMulOp<0,0,0b00,0b1101,1, IIC_VMACD, "vmla", "f32">;
-def : N3VSMulOpPat<fmul, fadd, VMLAfd_sfp>,
+def : N3VSPat<fadd, VADDfd>;
+def : N3VSPat<fsub, VSUBfd>;
+def : N3VSPat<fmul, VMULfd>;
+def : N3VSMulOpPat<fmul, fadd, VMLAfd>,
       Requires<[HasNEON, UseNEONForFP, UseFPVMLx]>;
-
-let neverHasSideEffects = 1 in
-def VMLSfd_sfp : N3VSMulOp<0,0,0b10,0b1101,1, IIC_VMACD, "vmls", "f32">;
-def : N3VSMulOpPat<fmul, fsub, VMLSfd_sfp>,
+def : N3VSMulOpPat<fmul, fsub, VMLSfd>,
       Requires<[HasNEON, UseNEONForFP, UseFPVMLx]>;
-
-// Vector Absolute used for single-precision FP
 def : N2VSPat<fabs, VABSfd>;
-
-// Vector Negate used for single-precision FP
 def : N2VSPat<fneg, VNEGfd>;
-
-// Vector Maximum used for single-precision FP
-let neverHasSideEffects = 1 in
-def VMAXfd_sfp : N3V<0, 0, 0b00, 0b1111, 0, 0, (outs DPR_VFP2:$Vd),
-                     (ins DPR_VFP2:$Vn, DPR_VFP2:$Vm), N3RegFrm, IIC_VBIND,
-                     "vmax", "f32", "$Vd, $Vn, $Vm", "", []>;
-def : N3VSPat<NEONfmax, VMAXfd_sfp>;
-
-// Vector Minimum used for single-precision FP
-let neverHasSideEffects = 1 in
-def VMINfd_sfp : N3V<0, 0, 0b10, 0b1111, 0, 0, (outs DPR_VFP2:$Vd),
-                     (ins DPR_VFP2:$Vn, DPR_VFP2:$Vm), N3RegFrm, IIC_VBIND,
-                     "vmin", "f32", "$Vd, $Vn, $Vm", "", []>;
-def : N3VSPat<NEONfmin, VMINfd_sfp>;
-
-// Vector Convert between single-precision FP and integer
+def : N3VSPat<NEONfmax, VMAXfd>;
+def : N3VSPat<NEONfmin, VMINfd>;
 def : N2VSPat<arm_ftosi, VCVTf2sd>;
 def : N2VSPat<arm_ftoui, VCVTf2ud>;
 def : N2VSPat<arm_sitof, VCVTs2fd>;
