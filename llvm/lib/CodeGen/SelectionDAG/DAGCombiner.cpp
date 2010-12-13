@@ -1916,6 +1916,7 @@ SDValue DAGCombiner::visitMULHS(SDNode *N) {
   SDValue N1 = N->getOperand(1);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   EVT VT = N->getValueType(0);
+  DebugLoc DL = N->getDebugLoc();
 
   // fold (mulhs x, 0) -> 0
   if (N1C && N1C->isNullValue())
@@ -1929,6 +1930,22 @@ SDValue DAGCombiner::visitMULHS(SDNode *N) {
   if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(0, VT);
 
+  // If the type twice as wide is legal, transform the mulhs to a wider multiply
+  // plus a shift.
+  if (VT.isSimple() && !VT.isVector()) {
+    MVT Simple = VT.getSimpleVT();
+    unsigned SimpleSize = Simple.getSizeInBits();
+    EVT NewVT = EVT::getIntegerVT(*DAG.getContext(), SimpleSize*2);
+    if (TLI.isOperationLegal(ISD::MUL, NewVT)) {
+      N0 = DAG.getNode(ISD::SIGN_EXTEND, DL, NewVT, N0);
+      N1 = DAG.getNode(ISD::SIGN_EXTEND, DL, NewVT, N1);
+      N1 = DAG.getNode(ISD::MUL, DL, NewVT, N0, N1);
+      N1 = DAG.getNode(ISD::SRA, DL, NewVT, N1,
+                       DAG.getConstant(SimpleSize, getShiftAmountTy()));
+      return DAG.getNode(ISD::TRUNCATE, DL, VT, N1);
+    }
+  }
+  
   return SDValue();
 }
 
@@ -1937,6 +1954,7 @@ SDValue DAGCombiner::visitMULHU(SDNode *N) {
   SDValue N1 = N->getOperand(1);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   EVT VT = N->getValueType(0);
+  DebugLoc DL = N->getDebugLoc();
 
   // fold (mulhu x, 0) -> 0
   if (N1C && N1C->isNullValue())
@@ -1948,6 +1966,22 @@ SDValue DAGCombiner::visitMULHU(SDNode *N) {
   if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(0, VT);
 
+  // If the type twice as wide is legal, transform the mulhu to a wider multiply
+  // plus a shift.
+  if (VT.isSimple() && !VT.isVector()) {
+    MVT Simple = VT.getSimpleVT();
+    unsigned SimpleSize = Simple.getSizeInBits();
+    EVT NewVT = EVT::getIntegerVT(*DAG.getContext(), SimpleSize*2);
+    if (TLI.isOperationLegal(ISD::MUL, NewVT)) {
+      N0 = DAG.getNode(ISD::ZERO_EXTEND, DL, NewVT, N0);
+      N1 = DAG.getNode(ISD::ZERO_EXTEND, DL, NewVT, N1);
+      N1 = DAG.getNode(ISD::MUL, DL, NewVT, N0, N1);
+      N1 = DAG.getNode(ISD::SRL, DL, NewVT, N1,
+                       DAG.getConstant(SimpleSize, getShiftAmountTy()));
+      return DAG.getNode(ISD::TRUNCATE, DL, VT, N1);
+    }
+  }
+  
   return SDValue();
 }
 
@@ -2011,6 +2045,7 @@ SDValue DAGCombiner::visitSMUL_LOHI(SDNode *N) {
   SDValue Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHS);
   if (Res.getNode()) return Res;
 
+  // TODO: Transform smul_lohi to mul if the wider mul is legal!
   return SDValue();
 }
 
@@ -2018,6 +2053,7 @@ SDValue DAGCombiner::visitUMUL_LOHI(SDNode *N) {
   SDValue Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHU);
   if (Res.getNode()) return Res;
 
+  // TODO: Transform umul_lohi to mul if the wider mul is legal!
   return SDValue();
 }
 
