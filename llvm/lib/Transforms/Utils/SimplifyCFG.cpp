@@ -41,11 +41,6 @@ namespace {
 class SimplifyCFGOpt {
   const TargetData *const TD;
 
-  ConstantInt *GetConstantInt(Value *V);
-  Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values);
-  Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values);
-  bool GatherValueComparisons(Value *Cond, Value *&CompVal,
-                              std::vector<ConstantInt*> &Values);
   Value *isValueEqualityComparison(TerminatorInst *TI);
   BasicBlock *GetValueEqualityComparisonCases(TerminatorInst *TI,
     std::vector<std::pair<ConstantInt*, BasicBlock*> > &Cases);
@@ -268,7 +263,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
 
 /// GetConstantInt - Extract ConstantInt from value, looking through IntToPtr
 /// and PointerNullValue. Return NULL if value is not a constant int.
-ConstantInt *SimplifyCFGOpt::GetConstantInt(Value *V) {
+static ConstantInt *GetConstantInt(Value *V, const TargetData *TD) {
   // Normal constant int.
   ConstantInt *CI = dyn_cast<ConstantInt>(V);
   if (CI || !TD || !isa<Constant>(V) || !V->getType()->isPointerTy())
@@ -299,24 +294,25 @@ ConstantInt *SimplifyCFGOpt::GetConstantInt(Value *V) {
 /// GatherConstantSetEQs - Given a potentially 'or'd together collection of
 /// icmp_eq instructions that compare a value against a constant, return the
 /// value being compared, and stick the constant into the Values vector.
-Value *SimplifyCFGOpt::
-GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values) {
+static Value *
+GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values,
+                     const TargetData *TD) {
   Instruction *Inst = dyn_cast<Instruction>(V);
   if (Inst == 0) return 0;
   
   if (Inst->getOpcode() == Instruction::ICmp &&
       cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_EQ) {
-    if (ConstantInt *C = GetConstantInt(Inst->getOperand(1))) {
+    if (ConstantInt *C = GetConstantInt(Inst->getOperand(1), TD)) {
       Values.push_back(C);
       return Inst->getOperand(0);
     }
-    if (ConstantInt *C = GetConstantInt(Inst->getOperand(0))) {
+    if (ConstantInt *C = GetConstantInt(Inst->getOperand(0), TD)) {
       Values.push_back(C);
       return Inst->getOperand(1);
     }
   } else if (Inst->getOpcode() == Instruction::Or) {
-    if (Value *LHS = GatherConstantSetEQs(Inst->getOperand(0), Values))
-      if (Value *RHS = GatherConstantSetEQs(Inst->getOperand(1), Values))
+    if (Value *LHS = GatherConstantSetEQs(Inst->getOperand(0), Values, TD))
+      if (Value *RHS = GatherConstantSetEQs(Inst->getOperand(1), Values, TD))
         if (LHS == RHS)
           return LHS;
   }
@@ -326,24 +322,25 @@ GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values) {
 /// GatherConstantSetNEs - Given a potentially 'and'd together collection of
 /// setne instructions that compare a value against a constant, return the value
 /// being compared, and stick the constant into the Values vector.
-Value *SimplifyCFGOpt::
-GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values) {
+static Value *
+GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values,
+                     const TargetData *TD) {
   Instruction *Inst = dyn_cast<Instruction>(V);
   if (Inst == 0) return 0;
 
   if (Inst->getOpcode() == Instruction::ICmp &&
              cast<ICmpInst>(Inst)->getPredicate() == ICmpInst::ICMP_NE) {
-    if (ConstantInt *C = GetConstantInt(Inst->getOperand(1))) {
+    if (ConstantInt *C = GetConstantInt(Inst->getOperand(1), TD)) {
       Values.push_back(C);
       return Inst->getOperand(0);
     }
-    if (ConstantInt *C = GetConstantInt(Inst->getOperand(0))) {
+    if (ConstantInt *C = GetConstantInt(Inst->getOperand(0), TD)) {
       Values.push_back(C);
       return Inst->getOperand(1);
     }
   } else if (Inst->getOpcode() == Instruction::And) {
-    if (Value *LHS = GatherConstantSetNEs(Inst->getOperand(0), Values))
-      if (Value *RHS = GatherConstantSetNEs(Inst->getOperand(1), Values))
+    if (Value *LHS = GatherConstantSetNEs(Inst->getOperand(0), Values, TD))
+      if (Value *RHS = GatherConstantSetNEs(Inst->getOperand(1), Values, TD))
         if (LHS == RHS)
           return LHS;
   }
@@ -353,20 +350,21 @@ GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values) {
 /// GatherValueComparisons - If the specified Cond is an 'and' or 'or' of a
 /// bunch of comparisons of one value against constants, return the value and
 /// the constants being compared.
-bool SimplifyCFGOpt::GatherValueComparisons(Value *CondV, Value *&CompVal,
-                                            std::vector<ConstantInt*> &Values) {
+static bool GatherValueComparisons(Value *CondV, Value *&CompVal,
+                                   std::vector<ConstantInt*> &Values,
+                                   const TargetData *TD) {
   Instruction *Cond = dyn_cast<Instruction>(CondV);
   if (Cond == 0) return false;
   
   if (Cond->getOpcode() == Instruction::Or) {
-    CompVal = GatherConstantSetEQs(Cond, Values);
+    CompVal = GatherConstantSetEQs(Cond, Values, TD);
 
     // Return true to indicate that the condition is true if the CompVal is
     // equal to one of the constants.
     return true;
   }
   if (Cond->getOpcode() == Instruction::And) {
-    CompVal = GatherConstantSetNEs(Cond, Values);
+    CompVal = GatherConstantSetNEs(Cond, Values, TD);
 
     // Return false to indicate that the condition is false if the CompVal is
     // equal to one of the constants.
@@ -405,7 +403,7 @@ Value *SimplifyCFGOpt::isValueEqualityComparison(TerminatorInst *TI) {
       if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition()))
         if ((ICI->getPredicate() == ICmpInst::ICMP_EQ ||
              ICI->getPredicate() == ICmpInst::ICMP_NE) &&
-            GetConstantInt(ICI->getOperand(1)))
+            GetConstantInt(ICI->getOperand(1), TD))
           CV = ICI->getOperand(0);
 
   // Unwrap any lossless ptrtoint cast.
@@ -430,7 +428,7 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
 
   BranchInst *BI = cast<BranchInst>(TI);
   ICmpInst *ICI = cast<ICmpInst>(BI->getCondition());
-  Cases.push_back(std::make_pair(GetConstantInt(ICI->getOperand(1)),
+  Cases.push_back(std::make_pair(GetConstantInt(ICI->getOperand(1), TD),
                                  BI->getSuccessor(ICI->getPredicate() ==
                                                   ICmpInst::ICMP_NE)));
   return BI->getSuccessor(ICI->getPredicate() == ICmpInst::ICMP_EQ);
@@ -2083,7 +2081,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       Value *CompVal = 0;
       std::vector<ConstantInt*> Values;
       bool TrueWhenEqual = GatherValueComparisons(BI->getCondition(), CompVal,
-                                                  Values);
+                                                  Values, TD);
       if (CompVal) {
         // There might be duplicate constants in the list, which the switch
         // instruction can't handle, remove them now.
