@@ -168,40 +168,38 @@ bool JumpThreading::runOnFunction(Function &F) {
         LVI->eraseBlock(BB);
         DeleteDeadBlock(BB);
         Changed = true;
-      } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
-        // Can't thread an unconditional jump, but if the block is "almost
-        // empty", we can replace uses of it with uses of the successor and make
-        // this dead.
-        if (BI->isUnconditional() &&
-            BB != &BB->getParent()->getEntryBlock()) {
-          BasicBlock::iterator BBI = BB->getFirstNonPHI();
-          // Ignore dbg intrinsics.
-          while (isa<DbgInfoIntrinsic>(BBI))
-            ++BBI;
+        continue;
+      }
+      
+      BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator());
+      
+      // Can't thread an unconditional jump, but if the block is "almost
+      // empty", we can replace uses of it with uses of the successor and make
+      // this dead.
+      if (BI && BI->isUnconditional() &&
+          BB != &BB->getParent()->getEntryBlock() &&
           // If the terminator is the only non-phi instruction, try to nuke it.
-          if (BBI->isTerminator()) {
-            // Since TryToSimplifyUncondBranchFromEmptyBlock may delete the
-            // block, we have to make sure it isn't in the LoopHeaders set.  We
-            // reinsert afterward if needed.
-            bool ErasedFromLoopHeaders = LoopHeaders.erase(BB);
-            BasicBlock *Succ = BI->getSuccessor(0);
+          BB->getFirstNonPHIOrDbg()->isTerminator()) {
+        // Since TryToSimplifyUncondBranchFromEmptyBlock may delete the
+        // block, we have to make sure it isn't in the LoopHeaders set.  We
+        // reinsert afterward if needed.
+        bool ErasedFromLoopHeaders = LoopHeaders.erase(BB);
+        BasicBlock *Succ = BI->getSuccessor(0);
 
-            // FIXME: It is always conservatively correct to drop the info
-            // for a block even if it doesn't get erased.  This isn't totally
-            // awesome, but it allows us to use AssertingVH to prevent nasty
-            // dangling pointer issues within LazyValueInfo.
-            LVI->eraseBlock(BB);
-            if (TryToSimplifyUncondBranchFromEmptyBlock(BB)) {
-              Changed = true;
-              // If we deleted BB and BB was the header of a loop, then the
-              // successor is now the header of the loop.
-              BB = Succ;
-            }
-
-            if (ErasedFromLoopHeaders)
-              LoopHeaders.insert(BB);
-          }
+        // FIXME: It is always conservatively correct to drop the info
+        // for a block even if it doesn't get erased.  This isn't totally
+        // awesome, but it allows us to use AssertingVH to prevent nasty
+        // dangling pointer issues within LazyValueInfo.
+        LVI->eraseBlock(BB);
+        if (TryToSimplifyUncondBranchFromEmptyBlock(BB)) {
+          Changed = true;
+          // If we deleted BB and BB was the header of a loop, then the
+          // successor is now the header of the loop.
+          BB = Succ;
         }
+
+        if (ErasedFromLoopHeaders)
+          LoopHeaders.insert(BB);
       }
     }
     EverChanged |= Changed;
