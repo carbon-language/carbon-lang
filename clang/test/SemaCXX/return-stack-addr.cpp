@@ -119,5 +119,24 @@ struct PR7999_X {};
 PR7999_X& PR7999_f(PR7999<PR7999_X> s) { return s.value; } // no-warning
 void test_PR7999(PR7999_X& x) { (void)PR7999_f(x); } // no-warning
 
+// PR 8774: Don't try to evaluate parameters with default arguments like
+// variables with an initializer, especially in templates where the default
+// argument may not be an expression (yet).
+namespace PR8774 {
+  template <typename T> class A { };
+  template <typename U> struct B { };
+  template <typename V> V f(typename B<V>::type const &v = B<V>::value()) {
+    return v;
+  }
+  template <> struct B<const char *> {
+    typedef const char *type;
+    static const char *value();
+  };
+  void g() {
+    const char *t;
+    f<const char*>(t);
+  }
+}
+
 // TODO: test case for dynamic_cast.  clang does not yet have
 // support for C++ classes to write such a test case.

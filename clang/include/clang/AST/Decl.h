@@ -818,7 +818,7 @@ public:
   const Expr *getAnyInitializer(const VarDecl *&D) const;
 
   bool hasInit() const {
-    return !Init.isNull();
+    return !Init.isNull() && (Init.is<Stmt *>() || Init.is<EvaluatedStmt *>());
   }
   const Expr *getInit() const {
     if (Init.isNull())
