@@ -331,8 +331,8 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
                                             isEQ)) {
       if (LHS == RHS)
         return LHS;
+      Vals.resize(NumVals);
     }
-    Vals.resize(NumVals);
 
     // The RHS of the or/and can't be folded in and we haven't used "Extra" yet,
     // set it and return success.
@@ -348,12 +348,13 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
   // If the LHS can't be folded in, but Extra is available and RHS can, try to
   // use LHS as Extra.
   if (Extra == 0 || Extra == I->getOperand(0)) {
+    Value *OldExtra = Extra;
     Extra = I->getOperand(0);
     if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, TD,
                                             isEQ))
       return RHS;
-    Vals.resize(NumValsBeforeLHS);
-    Extra = 0;
+    assert(Vals.size() == NumValsBeforeLHS);
+    Extra = OldExtra;
   }
   
   return 0;
@@ -1908,6 +1909,8 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   // then we evaluate them with an explicit branch first.  Split the block
   // right before the condbr to handle it.
   if (ExtraCase) {
+    return false;
+    
     BasicBlock *NewBB = BB->splitBasicBlock(BI, "switch.early.test");
     // Remove the uncond branch added to the old block.
     TerminatorInst *OldTI = BB->getTerminator();
