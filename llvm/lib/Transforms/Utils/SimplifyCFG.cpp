@@ -44,7 +44,7 @@ class SimplifyCFGOpt {
   ConstantInt *GetConstantInt(Value *V);
   Value *GatherConstantSetEQs(Value *V, std::vector<ConstantInt*> &Values);
   Value *GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values);
-  bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
+  bool GatherValueComparisons(Value *Cond, Value *&CompVal,
                               std::vector<ConstantInt*> &Values);
   Value *isValueEqualityComparison(TerminatorInst *TI);
   BasicBlock *GetValueEqualityComparisonCases(TerminatorInst *TI,
@@ -353,8 +353,11 @@ GatherConstantSetNEs(Value *V, std::vector<ConstantInt*> &Values) {
 /// GatherValueComparisons - If the specified Cond is an 'and' or 'or' of a
 /// bunch of comparisons of one value against constants, return the value and
 /// the constants being compared.
-bool SimplifyCFGOpt::GatherValueComparisons(Instruction *Cond, Value *&CompVal,
+bool SimplifyCFGOpt::GatherValueComparisons(Value *CondV, Value *&CompVal,
                                             std::vector<ConstantInt*> &Values) {
+  Instruction *Cond = dyn_cast<Instruction>(CondV);
+  if (Cond == 0) return false;
+  
   if (Cond->getOpcode() == Instruction::Or) {
     CompVal = GatherConstantSetEQs(Cond, Values);
 
@@ -1970,6 +1973,57 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
           if (PBI != BI && PBI->isConditional())
             if (SimplifyCondBranchToCondBranch(PBI, BI))
               return SimplifyCFG(BB) | true;
+      
+    
+      // Change br (X == 0 | X == 1), T, F into a switch instruction.
+      // If this is a bunch of seteq's or'd together, or if it's a bunch of
+      // 'setne's and'ed together, collect them.
+      Value *CompVal = 0;
+      std::vector<ConstantInt*> Values;
+      bool TrueWhenEqual = GatherValueComparisons(BI->getCondition(), CompVal,
+                                                  Values);
+      if (CompVal) {
+        // There might be duplicate constants in the list, which the switch
+        // instruction can't handle, remove them now.
+        std::sort(Values.begin(), Values.end(), ConstantIntOrdering());
+        Values.erase(std::unique(Values.begin(), Values.end()), Values.end());
+        
+        // Figure out which block is which destination.
+        BasicBlock *DefaultBB = BI->getSuccessor(1);
+        BasicBlock *EdgeBB    = BI->getSuccessor(0);
+        if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
+        
+        // Convert pointer to int before we switch.
+        if (CompVal->getType()->isPointerTy()) {
+          assert(TD && "Cannot switch on pointer without TargetData");
+          CompVal = new PtrToIntInst(CompVal,
+                                     TD->getIntPtrType(CompVal->getContext()),
+                                     "magicptr", BI);
+        }
+        
+        // Create the new switch instruction now.
+        SwitchInst *New = SwitchInst::Create(CompVal, DefaultBB,
+                                             Values.size(), BI);
+        
+        // Add all of the 'cases' to the switch instruction.
+        for (unsigned i = 0, e = Values.size(); i != e; ++i)
+          New->addCase(Values[i], EdgeBB);
+        
+        // We added edges from PI to the EdgeBB.  As such, if there were any
+        // PHI nodes in EdgeBB, they need entries to be added corresponding to
+        // the number of edges added.
+        for (BasicBlock::iterator BBI = EdgeBB->begin();
+             isa<PHINode>(BBI); ++BBI) {
+          PHINode *PN = cast<PHINode>(BBI);
+          Value *InVal = PN->getIncomingValueForBlock(BB);
+          for (unsigned i = 0, e = Values.size()-1; i != e; ++i)
+            PN->addIncoming(InVal, BB);
+        }
+        
+        // Erase the old branch instruction.
+        EraseTerminatorInstAndDCECond(BI);
+        return true;
+      }
     }
   } else if (isa<UnreachableInst>(BB->getTerminator())) {
     // If there are any instructions immediately before the unreachable that can
@@ -2175,61 +2229,6 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
           // to the "if" block.
           Changed |= SpeculativelyExecuteBB(BI, BB);
         }
-      }
-    }
-  }
-  
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-    BranchInst *BI = dyn_cast<BranchInst>((*PI)->getTerminator());
-    // Change br (X == 0 | X == 1), T, F into a switch instruction.
-    if (BI && BI->isConditional() && isa<Instruction>(BI->getCondition())) {
-      Instruction *Cond = cast<Instruction>(BI->getCondition());
-      // If this is a bunch of seteq's or'd together, or if it's a bunch of
-      // 'setne's and'ed together, collect them.
-      Value *CompVal = 0;
-      std::vector<ConstantInt*> Values;
-      bool TrueWhenEqual = GatherValueComparisons(Cond, CompVal, Values);
-      if (CompVal) {
-        // There might be duplicate constants in the list, which the switch
-        // instruction can't handle, remove them now.
-        std::sort(Values.begin(), Values.end(), ConstantIntOrdering());
-        Values.erase(std::unique(Values.begin(), Values.end()), Values.end());
-
-        // Figure out which block is which destination.
-        BasicBlock *DefaultBB = BI->getSuccessor(1);
-        BasicBlock *EdgeBB    = BI->getSuccessor(0);
-        if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
-
-        // Convert pointer to int before we switch.
-        if (CompVal->getType()->isPointerTy()) {
-          assert(TD && "Cannot switch on pointer without TargetData");
-          CompVal = new PtrToIntInst(CompVal,
-                                     TD->getIntPtrType(CompVal->getContext()),
-                                     "magicptr", BI);
-        }
-
-        // Create the new switch instruction now.
-        SwitchInst *New = SwitchInst::Create(CompVal, DefaultBB,
-                                             Values.size(), BI);
-
-        // Add all of the 'cases' to the switch instruction.
-        for (unsigned i = 0, e = Values.size(); i != e; ++i)
-          New->addCase(Values[i], EdgeBB);
-
-        // We added edges from PI to the EdgeBB.  As such, if there were any
-        // PHI nodes in EdgeBB, they need entries to be added corresponding to
-        // the number of edges added.
-        for (BasicBlock::iterator BBI = EdgeBB->begin();
-             isa<PHINode>(BBI); ++BBI) {
-          PHINode *PN = cast<PHINode>(BBI);
-          Value *InVal = PN->getIncomingValueForBlock(*PI);
-          for (unsigned i = 0, e = Values.size()-1; i != e; ++i)
-            PN->addIncoming(InVal, *PI);
-        }
-
-        // Erase the old branch instruction.
-        EraseTerminatorInstAndDCECond(BI);
-        return true;
       }
     }
   }
