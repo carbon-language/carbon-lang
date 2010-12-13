@@ -1973,3 +1973,39 @@ _foo:                                   ## @foo
 
 //===---------------------------------------------------------------------===//
 
+This code (from GCC PR28685):
+
+int test(int a, int b) {
+  int lt = a < b;
+  int eq = a == b;
+  if (lt)
+    return 1;
+  return eq;
+}
+
+Is compiled to:
+
+define i32 @test(i32 %a, i32 %b) nounwind readnone ssp {
+entry:
+  %cmp = icmp slt i32 %a, %b
+  br i1 %cmp, label %return, label %if.end
+
+if.end:                                           ; preds = %entry
+  %cmp5 = icmp eq i32 %a, %b
+  %conv6 = zext i1 %cmp5 to i32
+  ret i32 %conv6
+
+return:                                           ; preds = %entry
+  ret i32 1
+}
+
+it could be:
+
+define i32 @test__(i32 %a, i32 %b) nounwind readnone ssp {
+entry:
+  %0 = icmp sle i32 %a, %b
+  %retval = zext i1 %0 to i32
+  ret i32 %retval
+}
+
+//===---------------------------------------------------------------------===//
