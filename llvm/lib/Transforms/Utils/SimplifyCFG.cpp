@@ -2200,7 +2200,7 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
   // see if that predecessor totally determines the outcome of this switch.
   if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
     if (SimplifyEqualityComparisonWithOnlyPredecessor(SI, OnlyPred))
-      return SimplifyCFG(BB) || 1;
+      return SimplifyCFG(BB) | true;
   
   // If the block only contains the switch, see if we can fold the block
   // away into any preds.
@@ -2210,7 +2210,7 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
     ++BBI;
   if (SI == &*BBI)
     if (FoldValueComparisonIntoPredecessors(SI))
-      return SimplifyCFG(BB) || 1;
+      return SimplifyCFG(BB) | true;
   
   return false;
 }
@@ -2397,26 +2397,25 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       Changed |= FoldTwoEntryPHINode(PN); 
 
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
-    if (BI->isUnconditional())
-      return SimplifyUncondBranch(BI) | Changed;
-    
-    return SimplifyCondBranch(BI) | Changed;
+    if (BI->isUnconditional()) {
+      if (SimplifyUncondBranch(BI)) return true;
+    } else {
+      if (SimplifyCondBranch(BI))
+        return true;
+    }
+  } else if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
+    if (SimplifyReturn(RI)) return true;
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
+    if (SimplifySwitch(SI)) return true;
+  } else if (UnreachableInst *UI =
+               dyn_cast<UnreachableInst>(BB->getTerminator())) {
+    if (SimplifyUnreachable(UI)) return true;
+  } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
+    if (SimplifyUnwind(UI)) return true;
+  } else if (IndirectBrInst *IBI =
+               dyn_cast<IndirectBrInst>(BB->getTerminator())) {
+    if (SimplifyIndirectBr(IBI)) return true;
   }
-
-  if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
-    return SimplifyReturn(RI) | Changed;
-  
-  if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator()))
-    return SimplifySwitch(SI) | Changed;
-  
-  if (UnreachableInst *UI = dyn_cast<UnreachableInst>(BB->getTerminator()))
-    return SimplifyUnreachable(UI) | Changed;
-  
-  if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator()))
-    return SimplifyUnwind(UI) | Changed;
-  
-  if (IndirectBrInst *IBI = dyn_cast<IndirectBrInst>(BB->getTerminator()))
-    return SimplifyIndirectBr(IBI) | Changed;
 
   return Changed;
 }
