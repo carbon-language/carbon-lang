@@ -1670,7 +1670,7 @@ def SubReg_i32_lane : SDNodeXForm<imm, [{
 // Basic 2-register operations: single-, double- and quad-register.
 class N2VS<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
            bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
-           string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
+           string Dt>
   : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, 0, op4,
         (outs DPR_VFP2:$Vd), (ins DPR_VFP2:$Vm),
         IIC_VUNAD, OpcodeStr, Dt, "$Vd, $Vm", "", []>;
@@ -1744,13 +1744,10 @@ class N2VQShuffle<bits<2> op19_18, bits<5> op11_7,
 
 // Basic 3-register operations: single-, double- and quad-register.
 class N3VS<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
-           string OpcodeStr, string Dt, ValueType ResTy, ValueType OpTy,
-           SDNode OpNode, bit Commutable>
+           string OpcodeStr, string Dt>
   : N3V<op24, op23, op21_20, op11_8, 0, op4,
         (outs DPR_VFP2:$Vd), (ins DPR_VFP2:$Vn, DPR_VFP2:$Vm), N3RegFrm,
-        IIC_VBIND, OpcodeStr, Dt, "$Vd, $Vn, $Vm", "", []> {
-  let isCommutable = Commutable;
-}
+        IIC_VBIND, OpcodeStr, Dt, "$Vd, $Vn, $Vm", "", []>;
 
 class N3VD<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
            InstrItinClass itin, string OpcodeStr, string Dt,
@@ -1923,10 +1920,8 @@ class N3VQIntSh<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
 
 // Multiply-Add/Sub operations: single-, double- and quad-register.
 class N3VSMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
-                InstrItinClass itin, string OpcodeStr, string Dt,
-                ValueType Ty, SDPatternOperator MulOp, SDNode OpNode>
-  : N3V<op24, op23, op21_20, op11_8, 0, op4,
-        (outs DPR_VFP2:$Vd),
+                InstrItinClass itin, string OpcodeStr, string Dt>
+  : N3V<op24, op23, op21_20, op11_8, 0, op4, (outs DPR_VFP2:$Vd),
         (ins DPR_VFP2:$src1, DPR_VFP2:$Vn, DPR_VFP2:$Vm), N3RegFrm, itin,
         OpcodeStr, Dt, "$Vd, $Vn, $Vm", "$src1 = $Vd", []>;
 
@@ -4716,17 +4711,17 @@ class N3VSMulOpPat<SDNode MulNode, SDNode OpNode, NeonI Inst>
 
 // Vector Add Operations used for single-precision FP
 let neverHasSideEffects = 1 in
-def VADDfd_sfp : N3VS<0,0,0b00,0b1101,0, "vadd", "f32", v2f32, v2f32, fadd, 1>;
+def VADDfd_sfp : N3VS<0,0,0b00,0b1101,0, "vadd", "f32">;
 def : N3VSPat<fadd, VADDfd_sfp>;
 
 // Vector Sub Operations used for single-precision FP
 let neverHasSideEffects = 1 in
-def VSUBfd_sfp : N3VS<0,0,0b10,0b1101,0, "vsub", "f32", v2f32, v2f32, fsub, 0>;
+def VSUBfd_sfp : N3VS<0,0,0b10,0b1101,0, "vsub", "f32">;
 def : N3VSPat<fsub, VSUBfd_sfp>;
 
 // Vector Multiply Operations used for single-precision FP
 let neverHasSideEffects = 1 in
-def VMULfd_sfp : N3VS<1,0,0b00,0b1101,1, "vmul", "f32", v2f32, v2f32, fmul, 1>;
+def VMULfd_sfp : N3VS<1,0,0b00,0b1101,1, "vmul", "f32">;
 def : N3VSPat<fmul, VMULfd_sfp>;
 
 // Vector Multiply-Accumulate/Subtract used for single-precision FP
@@ -4734,14 +4729,12 @@ def : N3VSPat<fmul, VMULfd_sfp>;
 // we want to avoid them for now. e.g., alternating vmla/vadd instructions.
 
 let neverHasSideEffects = 1 in
-def VMLAfd_sfp : N3VSMulOp<0,0,0b00,0b1101,1, IIC_VMACD, "vmla", "f32",
-                           v2f32, fmul_su, fadd>;
+def VMLAfd_sfp : N3VSMulOp<0,0,0b00,0b1101,1, IIC_VMACD, "vmla", "f32">;
 def : N3VSMulOpPat<fmul, fadd, VMLAfd_sfp>,
       Requires<[HasNEON, UseNEONForFP, UseFPVMLx]>;
 
 let neverHasSideEffects = 1 in
-def VMLSfd_sfp : N3VSMulOp<0,0,0b10,0b1101,1, IIC_VMACD, "vmls", "f32",
-                           v2f32, fmul_su, fsub>;
+def VMLSfd_sfp : N3VSMulOp<0,0,0b10,0b1101,1, IIC_VMACD, "vmls", "f32">;
 def : N3VSMulOpPat<fmul, fsub, VMLSfd_sfp>,
       Requires<[HasNEON, UseNEONForFP, UseFPVMLx]>;
 
@@ -4775,23 +4768,19 @@ def : N3VSPat<NEONfmin, VMINfd_sfp>;
 
 // Vector Convert between single-precision FP and integer
 let neverHasSideEffects = 1 in
-def  VCVTf2sd_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01110, 0, "vcvt", "s32.f32",
-                         v2i32, v2f32, fp_to_sint>;
+def  VCVTf2sd_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01110, 0, "vcvt", "s32.f32">;
 def : N2VSPat<arm_ftosi, f32, v2f32, VCVTf2sd_sfp>;
 
 let neverHasSideEffects = 1 in
-def  VCVTf2ud_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01111, 0, "vcvt", "u32.f32",
-                         v2i32, v2f32, fp_to_uint>;
+def  VCVTf2ud_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01111, 0, "vcvt", "u32.f32">;
 def : N2VSPat<arm_ftoui, f32, v2f32, VCVTf2ud_sfp>;
 
 let neverHasSideEffects = 1 in
-def  VCVTs2fd_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt", "f32.s32",
-                         v2f32, v2i32, sint_to_fp>;
+def  VCVTs2fd_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt", "f32.s32">;
 def : N2VSPat<arm_sitof, f32, v2i32, VCVTs2fd_sfp>;
 
 let neverHasSideEffects = 1 in
-def  VCVTu2fd_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt", "f32.u32",
-                         v2f32, v2i32, uint_to_fp>;
+def  VCVTu2fd_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt", "f32.u32">;
 def : N2VSPat<arm_uitof, f32, v2i32, VCVTu2fd_sfp>;
 
 //===----------------------------------------------------------------------===//
