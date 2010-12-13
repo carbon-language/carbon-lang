@@ -34,6 +34,7 @@ namespace clang
     class CodeGenOptions;
     class CodeGenerator;
     class CompilerInstance;
+    class CompoundStmt;
     class CXXBaseSpecifier;
     class CXXBoolLiteralExpr;
     class CXXFunctionalCastExpr;

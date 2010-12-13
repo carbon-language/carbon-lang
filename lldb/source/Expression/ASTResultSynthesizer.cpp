@@ -12,6 +12,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Parse/Parser.h"
@@ -54,9 +55,23 @@ ASTResultSynthesizer::Initialize(ASTContext &Context)
 void
 ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
 {
-    LinkageSpecDecl *linkage_spec_decl = dyn_cast<LinkageSpecDecl>(D);
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    if (NamedDecl *named_decl = dyn_cast<NamedDecl>(D))
+    {
+        if (log)
+        {
+            if (named_decl->getIdentifier())
+                log->Printf("TransformTopLevelDecl(%s)", named_decl->getIdentifier()->getNameStart());
+            else if (ObjCMethodDecl *method_decl = dyn_cast<ObjCMethodDecl>(D))
+                log->Printf("TransformTopLevelDecl(%s)", method_decl->getSelector().getAsString().c_str());
+            else
+                log->Printf("TransformTopLevelDecl(<complex>)");
+        }
+
+    }
     
-    if (linkage_spec_decl)
+    if (LinkageSpecDecl *linkage_spec_decl = dyn_cast<LinkageSpecDecl>(D))
     {
         RecordDecl::decl_iterator decl_iterator;
         
@@ -67,14 +82,21 @@ ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
             TransformTopLevelDecl(*decl_iterator);
         }
     }
-    
-    FunctionDecl *function_decl = dyn_cast<FunctionDecl>(D);
-    
-    if (m_ast_context &&
-        function_decl &&
-        !function_decl->getNameInfo().getAsString().compare("$__lldb_expr"))
+    else if (ObjCMethodDecl *method_decl = dyn_cast<ObjCMethodDecl>(D))
     {
-        SynthesizeResult(function_decl);
+        if (m_ast_context &&
+            !method_decl->getSelector().getAsString().compare("$__lldb_expr:"))
+        {
+            SynthesizeObjCMethodResult(method_decl);
+        }
+    }
+    else if (FunctionDecl *function_decl = dyn_cast<FunctionDecl>(D))
+    {
+        if (m_ast_context &&
+            !function_decl->getNameInfo().getAsString().compare("$__lldb_expr"))
+        {
+            SynthesizeFunctionResult(function_decl);
+        }
     }
 }
 
@@ -97,15 +119,15 @@ ASTResultSynthesizer::HandleTopLevelDecl(DeclGroupRef D)
 }
 
 bool 
-ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
+ASTResultSynthesizer::SynthesizeFunctionResult (FunctionDecl *FunDecl)
 {
-    ASTContext &Ctx(*m_ast_context);
-    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
+    ASTContext &Ctx(*m_ast_context);
+
     if (!m_sema)
         return false;
-
+    
     FunctionDecl *function_decl = FunDecl;
     
     if (!function_decl)
@@ -125,6 +147,80 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
     
     Stmt *function_body = function_decl->getBody();
     CompoundStmt *compound_stmt = dyn_cast<CompoundStmt>(function_body);
+    
+    bool ret = SynthesizeBodyResult (compound_stmt,
+                                     function_decl);
+    
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream os(s);
+        
+        function_decl->print(os);
+        
+        os.flush();
+        
+        log->Printf("Transformed function AST:\n%s", s.c_str());
+    }
+    
+    return ret;
+}
+
+bool
+ASTResultSynthesizer::SynthesizeObjCMethodResult (ObjCMethodDecl *MethodDecl)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    ASTContext &Ctx(*m_ast_context);
+    
+    if (!m_sema)
+        return false;
+        
+    if (!MethodDecl)
+        return false;
+    
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream os(s);
+        
+        Ctx.getTranslationUnitDecl()->print(os);
+        
+        os.flush();
+        
+        log->Printf("AST context before transforming:\n%s", s.c_str());
+    }
+    
+    Stmt *method_body = MethodDecl->getBody();
+    CompoundStmt *compound_stmt = dyn_cast<CompoundStmt>(method_body);
+    
+    bool ret = SynthesizeBodyResult (compound_stmt,
+                                     MethodDecl);
+    
+    if (log)
+    {
+        std::string s;
+        raw_string_ostream os(s);
+        
+        MethodDecl->print(os);
+        
+        os.flush();
+        
+        log->Printf("Transformed function AST:\n%s", s.c_str());
+    }
+    
+    return ret;
+}
+
+bool 
+ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body, 
+                                            DeclContext *DC)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    ASTContext &Ctx(*m_ast_context);
+    
+    CompoundStmt *compound_stmt = dyn_cast<CompoundStmt>(Body);
     
     if (!compound_stmt)
         return false;
@@ -169,7 +265,7 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
     IdentifierInfo &result_id = Ctx.Idents.get("$__lldb_expr_result");
         
     clang::VarDecl *result_decl = VarDecl::Create(Ctx, 
-                                                  function_decl, 
+                                                  DC, 
                                                   SourceLocation(), 
                                                   &result_id, 
                                                   expr_qual_type, 
@@ -180,7 +276,7 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
     if (!result_decl)
         return false;
     
-    function_decl->addDecl(result_decl);
+    DC->addDecl(result_decl);
     
     ///////////////////////////////
     // call AddInitializerToDecl
@@ -210,18 +306,6 @@ ASTResultSynthesizer::SynthesizeResult (FunctionDecl *FunDecl)
     
     *last_stmt_ptr = reinterpret_cast<Stmt*>(result_initialization_stmt_result.take());
 
-    if (log)
-    {
-        std::string s;
-        raw_string_ostream os(s);
-        
-        function_decl->print(os);
-        
-        os.flush();
-        
-        log->Printf("Transformed function AST:\n%s", s.c_str());
-    }
-    
     return true;
 }
 

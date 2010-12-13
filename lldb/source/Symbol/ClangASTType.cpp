@@ -928,6 +928,20 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
     }
 }
 
+void
+ClangASTType::DumpTypeCode (Stream *s)
+{
+    DumpTypeCode(m_type, s);
+}
+
+void
+ClangASTType::DumpTypeCode (void *type, 
+                            Stream *s)
+{
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(type));
+    s->PutCString(qual_type.getAsString().c_str());
+}
+
 bool
 ClangASTType::GetValueAsScalar
 (

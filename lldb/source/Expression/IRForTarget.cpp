@@ -899,7 +899,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
                 
         size_t value_size = (ast_context->getTypeSize(qual_type) + 7) / 8;
         off_t value_alignment = (ast_context->getTypeAlign(qual_type) + 7) / 8;
-                
+        
         if (log)
             log->Printf("Type of \"%s\" is [clang \"%s\", lldb \"%s\"] [size %d, align %d]", 
                         name.c_str(), 
@@ -907,7 +907,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
                         PrintType(value_type).c_str(), 
                         value_size, 
                         value_alignment);
-
+        
         
         if (named_decl && !m_decl_map->AddValueToStruct(named_decl,
                                                         lldb_private::ConstString (name.c_str()),
@@ -1353,6 +1353,23 @@ IRForTarget::ReplaceVariables (Module &llvm_module, Function &llvm_function)
         
         argument = iter;
     }
+    else if (argument->getName().equals("self"))
+    {
+        ++iter;
+        
+        if (iter == llvm_function.getArgumentList().end())
+            return false;
+        
+        if (!iter->getName().equals("_cmd"))
+            return false;
+        
+        ++iter;
+        
+        if (iter == llvm_function.getArgumentList().end())
+            return false;
+        
+        argument = iter;
+    }
     
     if (!argument->getName().equals("$__lldb_arg"))
         return false;
@@ -1430,7 +1447,11 @@ IRForTarget::runOnModule (Module &llvm_module)
     //
     
     if (!CreateResultVariable(llvm_module, *function))
+    {
+        if (log)
+            log->Printf("CreateResultVariable() failed");
         return false;
+    }
     
     ///////////////////////////////////////////////////////////////////////////////
     // Fix all Objective-C constant strings to use NSStringWithCString:encoding:
@@ -1449,7 +1470,11 @@ IRForTarget::runOnModule (Module &llvm_module)
     }
     
     if (!RewriteObjCConstStrings(llvm_module, *function))
+    {
+        if (log)
+            log->Printf("RewriteObjCConstStrings() failed");
         return false;
+    }
     
     if (log)
     {
@@ -1472,16 +1497,32 @@ IRForTarget::runOnModule (Module &llvm_module)
          ++bbi)
     {
         if (!RemoveGuards(llvm_module, *bbi))
+        {
+            if (log)
+                log->Printf("RemoveGuards() failed");
             return false;
+        }
         
         if (!RewritePersistentAllocs(llvm_module, *bbi))
+        {
+            if (log)
+                log->Printf("RewritePersistentAllocs() failed");
             return false;
+        }
         
         if (!RewriteObjCSelectors(llvm_module, *bbi))
+        {
+            if (log)
+                log->Printf("RewriteObjCSelectors() failed");
             return false;
+        }
 
         if (!ResolveCalls(llvm_module, *bbi))
+        {
+            if (log)
+                log->Printf("ResolveCalls() failed");
             return false;
+        }
     }
     
     ///////////////////////////////
@@ -1489,10 +1530,18 @@ IRForTarget::runOnModule (Module &llvm_module)
     //
     
     if (!ResolveExternals(llvm_module, *function))
+    {
+        if (log)
+            log->Printf("ResolveExternals() failed");
         return false;
+    }
     
     if (!ReplaceVariables(llvm_module, *function))
+    {
+        if (log)
+            log->Printf("ReplaceVariables() failed");
         return false;
+    }
     
     if (log)
     {

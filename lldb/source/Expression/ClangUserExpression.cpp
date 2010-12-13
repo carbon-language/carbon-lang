@@ -174,6 +174,27 @@ ClangUserExpression::Parse (Stream &error_stream,
         
         m_needs_object_ptr = true;
     }
+    else if(m_objectivec)
+    {
+        const char *function_name = FunctionName();
+        
+        m_transformed_stream.Printf("%s                                                     \n"
+                                    "@interface $__lldb_objc_class ($__lldb_category)       \n"
+                                    "-(void)%s:(void *)$__lldb_arg;                         \n"
+                                    "@end                                                   \n"
+                                    "@implementation $__lldb_objc_class ($__lldb_category)  \n"
+                                    "-(void)%s:(void *)$__lldb_arg                          \n"
+                                    "{                                                      \n"
+                                    "    %s;                                                \n"
+                                    "}                                                      \n"
+                                    "@end                                                   \n",
+                                    m_expr_prefix.c_str(),
+                                    function_name,
+                                    function_name,
+                                    m_expr_text.c_str());
+        
+        m_needs_object_ptr = true;
+    }
     else
     {
         m_transformed_stream.Printf("%s                             \n"
@@ -297,14 +318,31 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
 
     if (m_jit_addr != LLDB_INVALID_ADDRESS)
     {
-        
         Error materialize_error;
         
-        
-        if (m_needs_object_ptr && !(m_expr_decl_map->GetObjectPointer(object_ptr, exe_ctx, materialize_error)))
+        if (m_needs_object_ptr)
         {
-            error_stream.Printf("Couldn't get required object pointer: %s\n", materialize_error.AsCString());
-            return false;
+            ConstString object_name;
+            
+            if (m_cplusplus)
+            {
+                object_name.SetCString("this");
+            }
+            else if (m_objectivec)
+            {
+                object_name.SetCString("self");
+            }
+            else
+            {
+                error_stream.Printf("Need object pointer but don't know the language\n");
+                return false;
+            }
+            
+            if (!(m_expr_decl_map->GetObjectPointer(object_ptr, object_name, exe_ctx, materialize_error)))
+            {
+                error_stream.Printf("Couldn't get required object pointer: %s\n", materialize_error.AsCString());
+                return false;
+            }
         }
                 
         if (!m_expr_decl_map->Materialize(exe_ctx, struct_address, materialize_error))
@@ -351,19 +389,22 @@ ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
     lldb::addr_t struct_address;
             
     lldb::addr_t object_ptr = NULL;
+    lldb::addr_t cmd_ptr = NULL;
     
     PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr);
     
     // FIXME: This should really return a ThreadPlanCallUserExpression, in order to make sure that we don't release the
     // ClangUserExpression resources before the thread plan finishes execution in the target.  But because we are 
-    // forcing unwind_on_error to be true here, in practical terms that can't happen.  
+    // forcing unwind_on_error to be true here, in practical terms that can't happen.
+    
     return ClangFunction::GetThreadPlanToCallFunction (exe_ctx, 
                                                        m_jit_addr, 
                                                        struct_address, 
                                                        error_stream,
                                                        true,
                                                        true, 
-                                                       (m_needs_object_ptr ? &object_ptr : NULL));
+                                                       (m_needs_object_ptr ? &object_ptr : NULL),
+                                                       (m_needs_object_ptr && m_objectivec) ? &cmd_ptr : NULL);
 }
 
 bool
@@ -423,17 +464,24 @@ ClangUserExpression::Execute (Stream &error_stream,
         lldb::addr_t struct_address;
                 
         lldb::addr_t object_ptr = NULL;
+        lldb::addr_t cmd_ptr = NULL;
         
-        PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr);
+        if (!PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr))
+            return Process::eExecutionSetupError;
         
         const bool stop_others = true;
         const bool try_all_threads = true;
         
         Address wrapper_address (NULL, m_jit_addr);
-        lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (*(exe_ctx.thread), wrapper_address, struct_address, 
-                                                                               stop_others, discard_on_error, 
-                                                                               (m_needs_object_ptr ? &object_ptr : NULL),
-                                                                               shared_ptr_to_me));
+        lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (*(exe_ctx.thread), 
+                                                                          wrapper_address, 
+                                                                          struct_address, 
+                                                                          stop_others, 
+                                                                          discard_on_error, 
+                                                                          (m_needs_object_ptr ? &object_ptr : NULL),
+                                                                          ((m_needs_object_ptr && m_objectivec) ? &cmd_ptr : NULL),
+                                                                          shared_ptr_to_me));
+        
         if (call_plan_sp == NULL || !call_plan_sp->ValidatePlan (NULL))
             return Process::eExecutionSetupError;
     

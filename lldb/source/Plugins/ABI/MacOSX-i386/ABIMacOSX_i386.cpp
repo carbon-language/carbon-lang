@@ -58,7 +58,8 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
                                     lldb::addr_t functionAddress, 
                                     lldb::addr_t returnAddress, 
                                     lldb::addr_t arg,
-                                    lldb::addr_t *this_arg) const
+                                    lldb::addr_t *this_arg,
+                                    lldb::addr_t *cmd_arg) const
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext();
     if (!reg_ctx)
@@ -73,7 +74,9 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
     
     // Make room for the argument(s) on the stack
     
-    if (this_arg)
+    if (this_arg && cmd_arg)
+        sp -= 12;
+    else if (this_arg)
         sp -= 8;
     else
         sp -= 4;
@@ -86,6 +89,19 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
     
     Error error;
     
+    if (this_arg && cmd_arg)
+    {
+        uint32_t cmd_argU32 = *cmd_arg & 0xffffffffull;
+        uint32_t this_argU32 = *this_arg & 0xffffffffull;
+        uint32_t argU32 = arg & 0xffffffffull;
+        
+        if (thread.GetProcess().WriteMemory(sp, &this_argU32, sizeof(this_argU32), error) != sizeof(this_argU32))
+            return false;
+        if (thread.GetProcess().WriteMemory(sp, &cmd_argU32, sizeof(cmd_argU32), error) != sizeof(cmd_argU32))
+            return false;
+        if (thread.GetProcess().WriteMemory(sp + 4, &argU32, sizeof(argU32), error) != sizeof(argU32))
+            return false;
+    }
     if (this_arg)
     {
         uint32_t this_argU32 = *this_arg & 0xffffffffull;

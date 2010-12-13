@@ -40,7 +40,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 lldb::addr_t arg,
                                                 bool stop_other_threads,
                                                 bool discard_on_error,
-                                                lldb::addr_t *this_arg) :
+                                                lldb::addr_t *this_arg,
+                                                lldb::addr_t *cmd_arg) :
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_valid (false),
     m_stop_other_threads (stop_other_threads),
@@ -86,7 +87,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                  FunctionLoadAddr, 
                                  StartLoadAddr, 
                                  m_arg_addr,
-                                 this_arg))
+                                 this_arg,
+                                 cmd_arg))
         return;
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));

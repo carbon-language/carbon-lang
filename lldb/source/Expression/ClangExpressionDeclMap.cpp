@@ -371,6 +371,7 @@ bool
 ClangExpressionDeclMap::GetObjectPointer
 (
     lldb::addr_t &object_ptr,
+    ConstString &object_name,
     ExecutionContext &exe_ctx,
     Error &err
 )
@@ -389,12 +390,11 @@ ClangExpressionDeclMap::GetObjectPointer
         return false;
     }
     
-    static ConstString g_this_const_str ("this");
-    Variable *object_ptr_var = FindVariableInScope (*exe_ctx.frame, g_this_const_str, &m_struct_vars->m_object_pointer_type);
+    Variable *object_ptr_var = FindVariableInScope (*exe_ctx.frame, object_name, &m_struct_vars->m_object_pointer_type);
     
     if (!object_ptr_var)
     {
-        err.SetErrorString("Couldn't find 'this' with appropriate type in scope");
+        err.SetErrorStringWithFormat("Couldn't find '%s' with appropriate type in scope", object_name.GetCString());
         return false;
     }
     
@@ -404,7 +404,7 @@ ClangExpressionDeclMap::GetObjectPointer
     
     if (!location_value.get())
     {
-        err.SetErrorString("Couldn't get the location for 'this'");
+        err.SetErrorStringWithFormat("Couldn't get the location for '%s'", object_name.GetCString());
         return false;
     }
     
@@ -417,7 +417,7 @@ ClangExpressionDeclMap::GetObjectPointer
         if (ClangASTType::GetClangTypeBitWidth(m_struct_vars->m_object_pointer_type.GetASTContext(), 
                                                m_struct_vars->m_object_pointer_type.GetOpaqueQualType()) != address_byte_size * 8)
         {
-            err.SetErrorStringWithFormat("'this' is not of an expected pointer size");
+            err.SetErrorStringWithFormat("'%s' is not of an expected pointer size", object_name.GetCString());
             return false;
         }
         
@@ -427,7 +427,7 @@ ClangExpressionDeclMap::GetObjectPointer
         
         if (exe_ctx.process->ReadMemory (value_addr, data.GetBytes(), address_byte_size, read_error) != address_byte_size)
         {
-            err.SetErrorStringWithFormat("Coldn't read 'this' from the target: %s", read_error.AsCString());
+            err.SetErrorStringWithFormat("Coldn't read '%s' from the target: %s", object_name.GetCString(), read_error.AsCString());
             return false;
         }
         
@@ -441,7 +441,7 @@ ClangExpressionDeclMap::GetObjectPointer
     }
     else
     {
-        err.SetErrorString("'this' is not in memory; LLDB must be extended to handle registers");
+        err.SetErrorStringWithFormat("'%s' is not in memory; LLDB must be extended to handle registers", object_name.GetCString());
         return false;
     }
 }
@@ -1250,7 +1250,62 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             TypeFromUser class_user_type(pointer_target_type,
                                          this_type->GetClangAST());
 
+            if (log)
+            {
+                StreamString type_stream;
+                class_user_type.DumpTypeCode(&type_stream);
+                type_stream.Flush();
+                log->Printf("Adding type for $__lldb_class: %s", type_stream.GetString().c_str());
+            }
+            
             AddOneType(context, class_user_type, true);
+            
+            return;
+        }
+        
+        static ConstString g_lldb_objc_class_name ("$__lldb_objc_class");
+        if (name == g_lldb_objc_class_name)
+        {
+            // Clang is looking for the type of "*self"
+            
+            VariableList *vars = m_parser_vars->m_exe_ctx->frame->GetVariableList(false);
+
+            if (!vars)
+                return;
+        
+            lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
+        
+            if (!self_var)
+                return;
+        
+            Type *self_type = self_var->GetType();
+            
+            if (!self_type)
+                return;
+        
+            TypeFromUser self_user_type(self_type->GetClangType(),
+                                        self_type->GetClangAST());
+            
+            m_struct_vars->m_object_pointer_type = self_user_type;
+
+            void *pointer_target_type;
+        
+            if (!ClangASTContext::IsPointerType(self_user_type.GetOpaqueQualType(),
+                                                &pointer_target_type))
+                return;
+        
+            TypeFromUser class_user_type(pointer_target_type,
+                                         self_type->GetClangAST());
+            
+            if (log)
+            {
+                StreamString type_stream;
+                class_user_type.DumpTypeCode(&type_stream);
+                type_stream.Flush();
+                log->Printf("Adding type for $__lldb_objc_class: %s", type_stream.GetString().c_str());
+            }
+            
+            AddOneType(context, class_user_type, false);
             
             return;
         }

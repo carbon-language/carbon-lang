@@ -28,7 +28,8 @@ public:
                             lldb::addr_t arg,
                             bool stop_other_threads,
                             bool discard_on_error = true,
-                            lldb::addr_t *this_arg = 0);
+                            lldb::addr_t *this_arg = 0,
+                            lldb::addr_t *cmd_arg = 0);
     
     virtual
     ~ThreadPlanCallFunction ();

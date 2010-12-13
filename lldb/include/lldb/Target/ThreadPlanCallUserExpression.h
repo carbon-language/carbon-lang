@@ -31,6 +31,7 @@ public:
                             bool stop_other_threads,
                             bool discard_on_error,
                             lldb::addr_t *this_arg,
+                            lldb::addr_t *cmd_arg,
                             ClangUserExpression::ClangUserExpressionSP &user_expression_sp);
     
     virtual

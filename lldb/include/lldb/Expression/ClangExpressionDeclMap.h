@@ -291,6 +291,10 @@ public:
     /// @param[out] object_ptr
     ///     The this pointer.
     ///
+    /// @param[in] object_name
+    ///     The name of the object pointer -- "this," "self," or similar
+    ///     depending on language
+    ///
     /// @param[in] exe_ctx
     ///     The execution context at which to dump the struct.
     ///
@@ -302,6 +306,7 @@ public:
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     bool GetObjectPointer(lldb::addr_t &object_ptr,
+                          ConstString &object_name,
                           ExecutionContext &exe_ctx,
                           Error &error);
     

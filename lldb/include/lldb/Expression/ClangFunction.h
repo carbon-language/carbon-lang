@@ -423,8 +423,13 @@ public:
     ///     True if the thread plan may simply be discarded if an error occurs.
     ///
     /// @param[in] this_arg
-    ///     If non-NULL, the function is invoked like a C++ method, with the
-    ///     value pointed to by the pointer as its 'this' argument.
+    ///     If non-NULL (and cmd_arg is NULL), the function is invoked like a C++ 
+    ///     method, with the value pointed to by the pointer as its 'this' 
+    ///     argument.
+    ///
+    /// @param[in] cmd_arg
+    ///     If non-NULL, the function is invoked like an Objective-C method, with
+    ///     this_arg in the 'self' slot and cmd_arg in the '_cmd' slot
     ///
     /// @return
     ///     A ThreadPlan for executing the function.
@@ -436,7 +441,8 @@ public:
                                  Stream &errors, 
                                  bool stop_others, 
                                  bool discard_on_error,
-                                 lldb::addr_t *this_arg = 0);
+                                 lldb::addr_t *this_arg = 0,
+                                 lldb::addr_t *cmd_arg = 0);
     
     //------------------------------------------------------------------
     /// Get a thread plan to run the function this ClangFunction was created with.

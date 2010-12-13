@@ -372,7 +372,8 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
                                             Stream &errors, 
                                             bool stop_others, 
                                             bool discard_on_error, 
-                                            lldb::addr_t *this_arg)
+                                            lldb::addr_t *this_arg,
+                                            lldb::addr_t *cmd_arg)
 {
     // FIXME: Use the errors Stream for better error reporting.
 
@@ -388,11 +389,12 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
 
     Address wrapper_address (NULL, func_addr);
     ThreadPlan *new_plan = new ThreadPlanCallFunction (*exe_ctx.thread, 
-                                          wrapper_address,
-                                          args_addr,
-                                          stop_others, 
-                                          discard_on_error,
-                                          this_arg);
+                                                       wrapper_address,
+                                                       args_addr,
+                                                       stop_others, 
+                                                       discard_on_error,
+                                                       this_arg,
+                                                       cmd_arg);
     return new_plan;
 }
 

@@ -123,12 +123,31 @@ private:
     void TransformTopLevelDecl(clang::Decl *D);
     
     //----------------------------------------------------------------------
+    /// Process an Objective-C method and produce the result variable and
+    /// initialization
+    ///
+    /// @param[in] MethodDecl
+    ///     The method to process.
+    //----------------------------------------------------------------------
+    bool SynthesizeObjCMethodResult(clang::ObjCMethodDecl *MethodDecl);
+    
+    //----------------------------------------------------------------------
     /// Process a function and produce the result variable and initialization
     ///
     /// @param[in] FunDecl
     ///     The function to process.
     //----------------------------------------------------------------------
-    bool SynthesizeResult(clang::FunctionDecl *FunDecl);
+    bool SynthesizeFunctionResult(clang::FunctionDecl *FunDecl);
+    
+    //----------------------------------------------------------------------
+    /// Process a functionbody and produce the result variable and 
+    /// initialization
+    ///
+    /// @param[in] Body
+    ///     The body of the function.
+    //----------------------------------------------------------------------
+    bool SynthesizeBodyResult(clang::CompoundStmt *Body,
+                              clang::DeclContext *DC);
     
     clang::ASTContext *m_ast_context;           ///< The AST context to use for identifiers and types.
     clang::ASTConsumer *m_passthrough;          ///< The ASTConsumer down the chain, for passthrough.  NULL if it's a SemaConsumer.

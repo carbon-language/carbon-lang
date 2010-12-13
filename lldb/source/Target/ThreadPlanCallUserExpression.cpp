@@ -42,8 +42,9 @@ ThreadPlanCallUserExpression::ThreadPlanCallUserExpression (Thread &thread,
                                                 bool stop_other_threads,
                                                 bool discard_on_error,
                                                 lldb::addr_t *this_arg,
+                                                lldb::addr_t *cmd_arg,
                                                 ClangUserExpression::ClangUserExpressionSP &user_expression_sp) :
-    ThreadPlanCallFunction (thread, function, arg, stop_other_threads, discard_on_error, this_arg),
+    ThreadPlanCallFunction (thread, function, arg, stop_other_threads, discard_on_error, this_arg, cmd_arg),
     m_user_expression_sp (user_expression_sp)
 {
 }

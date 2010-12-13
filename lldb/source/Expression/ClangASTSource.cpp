@@ -227,6 +227,14 @@ clang::NamedDecl *NameSearchContext::AddTypeDecl(void *type)
         
         return tag_decl;
     }
+    else if (ObjCObjectType *objc_object_type = dyn_cast<clang::ObjCObjectType>(qual_type))
+    {
+        ObjCInterfaceDecl *interface_decl = objc_object_type->getInterface();
+        
+        m_decls.push_back((NamedDecl*)interface_decl);
+        
+        return (NamedDecl*)interface_decl;
+    }
     else
     {
         return NULL;

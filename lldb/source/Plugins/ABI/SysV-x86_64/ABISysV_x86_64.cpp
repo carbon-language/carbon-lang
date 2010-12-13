@@ -59,18 +59,22 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                                     lldb::addr_t functionAddress, 
                                     lldb::addr_t returnAddress, 
                                     lldb::addr_t arg,
-                                    lldb::addr_t *this_arg) const
+                                    lldb::addr_t *this_arg,
+                                    lldb::addr_t *cmd_arg) const
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
-        log->Printf("ABISysV_x86_64::PrepareTrivialCall\n(\n  thread = %p\n  sp = 0x%llx\n  functionAddress = 0x%llx\n  returnAddress = 0x%llx\n  arg = 0x%llx\n  this_arg = %p(0x%llx)\n)",
+        log->Printf("ABISysV_x86_64::PrepareTrivialCall\n(\n  thread = %p\n  sp = 0x%llx\n  functionAddress = 0x%llx\n  returnAddress = 0x%llx\n  arg = 0x%llx\n  this_arg = %p(0x%llx)\n  cmd_arg = %p(0x%llx)\n)",
                     (void*)&thread,
                     (uint64_t)sp,
                     (uint64_t)functionAddress,
                     (uint64_t)returnAddress,
                     (void*)arg,
-                    this_arg ? (uint64_t)*this_arg : (uint64_t)0);
+                    this_arg,
+                    this_arg ? (uint64_t)*this_arg : (uint64_t)0,
+                    cmd_arg,
+                    cmd_arg ? (uint64_t)*cmd_arg : (uint64_t)0);
     
     RegisterContext *reg_ctx = thread.GetRegisterContext();
     if (!reg_ctx)
@@ -88,6 +92,31 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
 
     // The argument is in %rdi, and not on the stack.
     
+    if (cmd_arg)
+    {
+        if (log)
+            log->PutCString("The trivial call has a self and a _cmd pointer");
+        
+        uint32_t rsiID = reg_ctx->GetRegisterInfoByName("rsi", 0)->kinds[eRegisterKindLLDB];
+        uint32_t rdxID = reg_ctx->GetRegisterInfoByName("rdx", 0)->kinds[eRegisterKindLLDB];
+        
+        if (log)
+            log->Printf("About to write 'self' (0x%llx) into RDI", (uint64_t)*this_arg);
+        
+        if (!reg_ctx->WriteRegisterFromUnsigned(rdiID, *this_arg))
+            return false;
+        
+        if (log)
+            log->Printf("About to write '_cmd' (0x%llx) into RSI", (uint64_t)*cmd_arg);
+        
+        if (!reg_ctx->WriteRegisterFromUnsigned(rsiID, *this_arg))
+            return false;
+        
+        if (log)
+            log->Printf("About to write the argument (0x%llx) into RDX", (uint64_t)arg);
+        
+        if (!reg_ctx->WriteRegisterFromUnsigned(rdxID, arg))
+            return false;    }
     if (this_arg)
     {
         if (log)
