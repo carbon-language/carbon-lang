@@ -149,7 +149,30 @@ UnifiedReturnBlock:             ; preds = %shortcirc_done.4, %shortcirc_next.4
 ; CHECK:       i32 18, label %UnifiedReturnBlock
 ; CHECK:       i32 19, label %switch.edge
 ; CHECK:     ]
-
 }
 
+define void @test7(i8 zeroext %c, i32 %x) nounwind ssp noredzone {
+entry:
+  %cmp = icmp ult i32 %x, 32
+  %cmp4 = icmp eq i8 %c, 97
+  %or.cond = or i1 %cmp, %cmp4
+  %cmp9 = icmp eq i8 %c, 99
+  %or.cond11 = or i1 %or.cond, %cmp9
+  br i1 %or.cond11, label %if.then, label %if.end
 
+if.then:                                          ; preds = %entry
+  tail call void @foo1() nounwind noredzone
+  ret void
+
+if.end:                                           ; preds = %entry
+  ret void
+  
+; CHECK: @test7
+; CHECK:   %cmp = icmp ult i32 %x, 32
+; CHECK:   br i1 %cmp, label %if.then, label %switch.early.test
+; CHECK: switch.early.test:
+; CHECK:   switch i8 %c, label %if.end [
+; CHECK:     i8 99, label %if.then
+; CHECK:     i8 97, label %if.then
+; CHECK:   ]
+}

@@ -301,6 +301,7 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) return 0;
   
+  // If this is an icmp against a constant, handle this as one of the cases.
   if (ICmpInst *ICI = dyn_cast<ICmpInst>(I)) {
     if (ICI->getPredicate() == (isEQ ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE))
       if (ConstantInt *C = GetConstantInt(I->getOperand(1), TD)) {
@@ -310,17 +311,43 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
     return 0;
   }
   
+  // Otherwise, we can only handle an | or &, depending on isEQ.
   if (I->getOpcode() != (isEQ ? Instruction::Or : Instruction::And))
     return 0;
   
+  unsigned NumValsBeforeLHS = Vals.size();
   if (Value *LHS = GatherConstantCompares(I->getOperand(0), Vals, Extra, TD,
                                           isEQ)) {
+    unsigned NumVals = Vals.size();
     if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, TD,
                                             isEQ)) {
       if (LHS == RHS)
         return LHS;
     }
+    Vals.resize(NumVals);
+
+    // The RHS of the or/and can't be folded in and we haven't used "Extra" yet,
+    // set it and return success.
+    if (Extra == 0 || Extra == I->getOperand(1)) {
+      Extra = I->getOperand(1);
+      return LHS;
+    }
+    
+    Vals.resize(NumValsBeforeLHS);
+    return 0;
   }
+  
+  // If the LHS can't be folded in, but Extra is available and RHS can, try to
+  // use LHS as Extra.
+  if (Extra == 0 || Extra == I->getOperand(0)) {
+    Extra = I->getOperand(0);
+    if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, TD,
+                                            isEQ))
+      return RHS;
+    Vals.resize(NumValsBeforeLHS);
+    Extra = 0;
+  }
+  
   return 0;
 }
       
@@ -2059,7 +2086,9 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
         }
       }
 
-      if (CompVal) {
+      // We do this transformation if we'll end up creating a switch with at
+      // least two values if Extra is used.
+      if (CompVal && (!ExtraCase || Values.size() > 1)) {
         // There might be duplicate constants in the list, which the switch
         // instruction can't handle, remove them now.
         array_pod_sort(Values.begin(), Values.end(), ConstantIntSortPredicate);
@@ -2070,6 +2099,19 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
         BasicBlock *EdgeBB    = BI->getSuccessor(0);
         if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
         
+        // If there are any extra values that couldn't be folded into the switch
+        // then we evaluate them with an explicit branch first.  Split the block
+        // right before the condbr to handle it.
+        if (ExtraCase) {
+          BasicBlock *NewBB = BB->splitBasicBlock(BI, "switch.early.test");
+          // Remove the uncond branch added to the old block.
+          TerminatorInst *OldTI = BB->getTerminator();
+          
+          BranchInst::Create(EdgeBB, NewBB, ExtraCase, OldTI);
+          OldTI->eraseFromParent();
+          BB = NewBB;
+        }
+         
         // Convert pointer to int before we switch.
         if (CompVal->getType()->isPointerTy()) {
           assert(TD && "Cannot switch on pointer without TargetData");
@@ -2079,8 +2121,8 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
         }
         
         // Create the new switch instruction now.
-        SwitchInst *New = SwitchInst::Create(CompVal, DefaultBB,
-                                             Values.size(), BI);
+        SwitchInst *New =
+          SwitchInst::Create(CompVal, DefaultBB, Values.size(), BI);
         
         // Add all of the 'cases' to the switch instruction.
         for (unsigned i = 0, e = Values.size(); i != e; ++i)
