@@ -1515,7 +1515,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       AddPredecessorToBlock(FalseDest, PredBlock, BB);
       PBI->setSuccessor(1, FalseDest);
     }
-    return SimplifyCFG(PBI->getParent()) | true;
+    return SimplifyCFG(BB) | true;
   }
   return false;
 }
