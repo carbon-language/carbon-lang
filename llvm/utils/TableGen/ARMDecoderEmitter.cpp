@@ -1726,15 +1726,15 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
       return false;
   }
 
-  // Dumps the instruction encoding format.
-  switch (TargetName) {
-  case TARGET_ARM:
-  case TARGET_THUMB:
-    DEBUG(errs() << Name << " " << stringForARMFormat((ARMFormat)Form));
-    break;
-  }
-
   DEBUG({
+      // Dumps the instruction encoding format.
+      switch (TargetName) {
+      case TARGET_ARM:
+      case TARGET_THUMB:
+        errs() << Name << " " << stringForARMFormat((ARMFormat)Form);
+        break;
+      }
+
       errs() << " ";
 
       // Dumps the instruction encoding bits.
