@@ -56,6 +56,8 @@ public:
 { "fixup_t2_pcrel_10",       0,            32,  MCFixupKindInfo::FKF_IsPCRel |
                                                 MCFixupKindInfo::FKF_IsAligned},
 { "fixup_arm_adr_pcrel_12",  1,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_adr_pcrel_12",   0,            32,  MCFixupKindInfo::FKF_IsPCRel |
+                                                MCFixupKindInfo::FKF_IsAligned},
 { "fixup_arm_branch",        1,            24,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_t2_condbranch",     0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_t2_uncondbranch",   0,            32,  MCFixupKindInfo::FKF_IsPCRel },
@@ -133,6 +135,9 @@ public:
   /// ADR label target.
   uint32_t getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
                               SmallVectorImpl<MCFixup> &Fixups) const;
+  uint32_t getT2AdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
+  
 
   /// getAddrModeImm12OpValue - Return encoding info for 'reg +/- imm12'
   /// operand.
@@ -541,6 +546,16 @@ getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
                    SmallVectorImpl<MCFixup> &Fixups) const {
   assert(MI.getOperand(OpIdx).isExpr() && "Unexpected adr target type!");
   return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_arm_adr_pcrel_12,
+                                  Fixups);
+}
+
+/// getAdrLabelOpValue - Return encoding info for 12-bit immediate ADR label
+/// target.
+uint32_t ARMMCCodeEmitter::
+getT2AdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
+                   SmallVectorImpl<MCFixup> &Fixups) const {
+  assert(MI.getOperand(OpIdx).isExpr() && "Unexpected adr target type!");
+  return ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_adr_pcrel_12,
                                   Fixups);
 }
 

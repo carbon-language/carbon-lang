@@ -763,6 +763,21 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
       break;
     }
 
+    case ARM::t2LEApcrel:
+    case ARM::t2LEApcrelJT: {
+      bool DstIsDead = MI.getOperand(0).isDead();
+      MachineInstrBuilder MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                                TII->get(ARM::t2ADR))
+        .addReg(MI.getOperand(0).getReg(),
+                RegState::Define | getDeadRegState(DstIsDead)) // Dst reg
+        .addOperand(MI.getOperand(1))      // Label
+        .addOperand(MI.getOperand(2))      // Pred
+        .addOperand(MI.getOperand(3));
+      TransferImpOps(MI, MIB, MIB);
+      MI.eraseFromParent();
+      return MIB;
+    }
+
     case ARM::MOVi32imm:
     case ARM::MOVCCi32imm:
     case ARM::t2MOVi32imm:
