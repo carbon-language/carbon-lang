@@ -144,14 +144,14 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     Value = Value - 4;
     Value >>= 1; // Low bit is not encoded.
 
-    uint64_t out = 0;
+    uint32_t out = 0;
     out |= (Value & 0x80000) << 7; // S bit
     out |= (Value & 0x40000) >> 7; // J2 bit
     out |= (Value & 0x20000) >> 4; // J1 bit
     out |= (Value & 0x1F800) << 5; // imm6 field
     out |= (Value & 0x007FF);      // imm11 field
 
-    uint64_t swapped = (out & 0xFFFF0000) >> 16;
+    uint32_t swapped = (out & 0xFFFF0000) >> 16;
     swapped |= (out & 0x0000FFFF) << 16;
     return swapped;
   }
@@ -226,7 +226,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // Same addressing mode as fixup_arm_pcrel_10,
     // but with 16-bit halfwords swapped.
     if (Kind == ARM::fixup_t2_pcrel_10) {
-      uint64_t swapped = (Value & 0xFFFF0000) >> 16;
+      uint32_t swapped = (Value & 0xFFFF0000) >> 16;
       swapped |= (Value & 0x0000FFFF) << 16;
       return swapped;
     }
