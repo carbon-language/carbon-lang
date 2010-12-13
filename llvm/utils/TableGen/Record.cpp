@@ -1497,7 +1497,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const RecordKeeper &RK) {
 /// name does not exist, an error is printed and true is returned.
 std::vector<Record*>
 RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
-  Record *Class = Records.getClass(ClassName);
+  Record *Class = getClass(ClassName);
   if (!Class)
     throw "ERROR: Couldn't find the `" + ClassName + "' class!\n";
 
