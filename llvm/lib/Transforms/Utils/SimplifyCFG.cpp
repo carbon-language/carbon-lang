@@ -1909,13 +1909,15 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   // then we evaluate them with an explicit branch first.  Split the block
   // right before the condbr to handle it.
   if (ExtraCase) {
-    return false;
-    
     BasicBlock *NewBB = BB->splitBasicBlock(BI, "switch.early.test");
     // Remove the uncond branch added to the old block.
     TerminatorInst *OldTI = BB->getTerminator();
     
-    BranchInst::Create(EdgeBB, NewBB, ExtraCase, OldTI);
+    if (TrueWhenEqual)
+      BranchInst::Create(EdgeBB, NewBB, ExtraCase, OldTI);
+    else
+      BranchInst::Create(NewBB, EdgeBB, ExtraCase, OldTI);
+      
     OldTI->eraseFromParent();
     
     // If there are PHI nodes in EdgeBB, then we need to add a new entry to them
@@ -1955,6 +1957,7 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   
   // Erase the old branch instruction.
   EraseTerminatorInstAndDCECond(BI);
+  
   return true;
 }
 

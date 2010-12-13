@@ -168,13 +168,13 @@ if.end:                                           ; preds = %entry
   ret void
   
 ; CHECK: @test7
-; HECK:   %cmp = icmp ult i32 %x, 32
-; HECK:   br i1 %cmp, label %if.then, label %switch.early.test
-; HECK: switch.early.test:
-; HECK:   switch i8 %c, label %if.end [
-; HECK:     i8 99, label %if.then
-; HECK:     i8 97, label %if.then
-; HECK:   ]
+; CHECK:   %cmp = icmp ult i32 %x, 32
+; CHECK:   br i1 %cmp, label %if.then, label %switch.early.test
+; CHECK: switch.early.test:
+; CHECK:   switch i8 %c, label %if.end [
+; CHECK:     i8 99, label %if.then
+; CHECK:     i8 97, label %if.then
+; CHECK:   ]
 }
 
 define i32 @test8(i8 zeroext %c, i32 %x, i1 %C) nounwind ssp noredzone {
@@ -197,12 +197,12 @@ if.end:                                           ; preds = %entry
   ret i32 0
   
 ; CHECK: @test8
-; HECK: switch.early.test:
-; HECK:   switch i8 %c, label %if.end [
-; HECK:     i8 99, label %if.then
-; HECK:     i8 97, label %if.then
-; HECK:   ]
-; HECK:   %A = phi i32 [ 0, %entry ], [ 42, %switch.early.test ], [ 42, %N ], [ 42, %switch.early.test ]
+; CHECK: switch.early.test:
+; CHECK:   switch i8 %c, label %if.end [
+; CHECK:     i8 99, label %if.then
+; CHECK:     i8 97, label %if.then
+; CHECK:   ]
+; CHECK:   %A = phi i32 [ 0, %entry ], [ 42, %switch.early.test ], [ 42, %N ], [ 42, %switch.early.test ]
 }
 
 ;; This is "Example 7" from http://blog.regehr.org/archives/320
@@ -254,20 +254,41 @@ lor.end:                                          ; preds = %lor.rhs, %lor.lhs.f
   
 ; CHECK: @test9
 ; CHECK:   %cmp = icmp ult i8 %c, 33
-; HECK:   br i1 %cmp, label %lor.end, label %switch.early.test
+; CHECK:   br i1 %cmp, label %lor.end, label %switch.early.test
 
-; HECK: switch.early.test:
-; HECK:   switch i8 %c, label %lor.rhs [
-; HECK:     i8 46, label %lor.end
-; HECK:     i8 44, label %lor.end
-; HECK:     i8 58, label %lor.end
-; HECK:     i8 59, label %lor.end
-; HECK:     i8 60, label %lor.end
-; HECK:     i8 62, label %lor.end
-; HECK:     i8 34, label %lor.end
-; HECK:     i8 92, label %lor.end
-; HECK:     i8 39, label %lor.end
-; HECK:   ]
+; CHECK: switch.early.test:
+; CHECK:   switch i8 %c, label %lor.rhs [
+; CHECK:     i8 46, label %lor.end
+; CHECK:     i8 44, label %lor.end
+; CHECK:     i8 58, label %lor.end
+; CHECK:     i8 59, label %lor.end
+; CHECK:     i8 60, label %lor.end
+; CHECK:     i8 62, label %lor.end
+; CHECK:     i8 34, label %lor.end
+; CHECK:     i8 92, label %lor.end
+; CHECK:     i8 39, label %lor.end
+; CHECK:   ]
 }
+
+define i32 @test10(i32 %mode, i1 %Cond) {
+  %A = icmp ne i32 %mode, 0
+  %B = icmp ne i32 %mode, 51
+  %C = and i1 %A, %B
+  %D = and i1 %C, %Cond
+  br i1 %D, label %T, label %F
+T:
+  ret i32 123
+F:
+  ret i32 324
+
+; CHECK: @test10
+; CHECK:  br i1 %Cond, label %switch.early.test, label %F
+; CHECK:switch.early.test:
+; CHECK:  switch i32 %mode, label %T [
+; CHECK:    i32 51, label %F
+; CHECK:    i32 0, label %F
+; CHECK:  ]
+}
+
 
 
