@@ -131,6 +131,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
 //----------------------------------------------------------------------
 ProcessGDBRemote::~ProcessGDBRemote()
 {
+    m_dynamic_loader_ap.reset();
+
     if (m_debugserver_thread != LLDB_INVALID_HOST_THREAD)
     {
         Host::ThreadCancel (m_debugserver_thread, NULL);
