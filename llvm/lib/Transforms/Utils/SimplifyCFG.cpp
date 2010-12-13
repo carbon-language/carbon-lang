@@ -2150,10 +2150,28 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       // from BI.  We know that the condbr dominates the two blocks, so see if
       // there is any identical code in the "then" and "else" blocks.  If so, we
       // can hoist it up to the branching block.
-      if (BI->getSuccessor(0)->getSinglePredecessor() != 0 &&
-          BI->getSuccessor(1)->getSinglePredecessor() != 0)
-        if (HoistThenElseCodeToIf(BI))
-          return SimplifyCFG(BB) | true;
+      if (BI->getSuccessor(0)->getSinglePredecessor() != 0) {
+        if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
+          if (HoistThenElseCodeToIf(BI))
+            return SimplifyCFG(BB) | true;
+        } else {
+          // If Successor #1 has multiple preds, we may be able to conditionally
+          // execute Successor #0 if it branches to successor #1.
+          TerminatorInst *Succ0TI = BI->getSuccessor(0)->getTerminator();
+          if (Succ0TI->getNumSuccessors() == 1 &&
+              Succ0TI->getSuccessor(0) == BI->getSuccessor(1))
+            if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0)))
+              return SimplifyCFG(BB) | true;
+        }
+      } else if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
+        // If Successor #0 has multiple preds, we may be able to conditionally
+        // execute Successor #1 if it branches to successor #0.
+        TerminatorInst *Succ1TI = BI->getSuccessor(1)->getTerminator();
+        if (Succ1TI->getNumSuccessors() == 1 &&
+            Succ1TI->getSuccessor(0) == BI->getSuccessor(0))
+          if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1)))
+            return SimplifyCFG(BB) | true;
+      }
       
       // If this is a branch on a phi node in the current block, thread control
       // through this block if any PHI node entries are constants.
@@ -2326,28 +2344,6 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     }
   }
 
-  // Otherwise, if this block only has a single predecessor, and if that block
-  // is a conditional branch, see if we can hoist any code from this block up
-  // into our predecessor.
-  if (BasicBlock *OnlyPred = BB->getSinglePredecessor()) {
-    BranchInst *BI = dyn_cast<BranchInst>(OnlyPred->getTerminator());
-    if (BI && BI->isConditional()) {
-      // Get the other block.
-      BasicBlock *OtherBB = BI->getSuccessor(BI->getSuccessor(0) == BB);
-
-      if (OtherBB->getSinglePredecessor() == 0) {
-        TerminatorInst *BBTerm = BB->getTerminator();
-        if (BBTerm->getNumSuccessors() == 1 &&
-            BBTerm->getSuccessor(0) == OtherBB) {
-          // If BB's only successor is the other successor of the predecessor,
-          // i.e. a triangle, see if we can hoist any code from this block up
-          // to the "if" block.
-          Changed |= SpeculativelyExecuteBB(BI, BB);
-        }
-      }
-    }
-  }
-  
   return Changed;
 }
 
