@@ -68,7 +68,7 @@ class SourceManagerTestCase(TestBase):
         # 6   	}
         self.expect(stream.GetData(), "Source code displayed correctly",
                     exe=False,
-            patterns = ['=>.*Hello world'])        
+            patterns = ['%d =>.*Hello world' % self.line])        
 
     def modify_source_file_while_debugging(self):
         """Modify a source file while debugging the executable."""
