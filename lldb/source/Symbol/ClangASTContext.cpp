@@ -1829,7 +1829,7 @@ ClangASTContext::GetTypeInfo
     case clang::Type::TemplateSpecialization:           return eTypeIsTemplate;
 
     case clang::Type::Typedef:                         
-        return eTypeIsTypedef | ClangASTContext::GetTypeInfo (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(),
+        return eTypeIsTypedef | ClangASTContext::GetTypeInfo (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                                                   ast_context, 
                                                                   pointee_or_element_clang_type);
 
@@ -1867,7 +1867,7 @@ ClangASTContext::IsAggregateType (clang_type_t clang_type)
         return true;
 
     case clang::Type::Typedef:
-        return ClangASTContext::IsAggregateType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
+        return ClangASTContext::IsAggregateType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
 
     default:
         break;
@@ -2021,7 +2021,7 @@ ClangASTContext::GetNumChildren (clang_type_t clang_qual_type, bool omit_empty_b
 
 
     case clang::Type::Typedef:
-        num_children = ClangASTContext::GetNumChildren (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(), omit_empty_base_classes);
+        num_children = ClangASTContext::GetNumChildren (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), omit_empty_base_classes);
         break;
 
     default:
@@ -2423,7 +2423,7 @@ ClangASTContext::GetChildClangTypeAtIndex
         case clang::Type::Typedef:
             return GetChildClangTypeAtIndex (ast_context,
                                              parent_name,
-                                             cast<TypedefType>(parent_qual_type)->LookThroughTypedefs().getAsOpaquePtr(),
+                                             cast<TypedefType>(parent_qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                              idx,
                                              transparent_pointers,
                                              omit_empty_base_classes,
@@ -2877,7 +2877,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
 
         case clang::Type::Typedef:
             return GetIndexOfChildMemberWithName (ast_context,
-                                                  cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(),
+                                                  cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                                   name,
                                                   omit_empty_base_classes,
                                                   child_indexes);
@@ -3088,7 +3088,7 @@ ClangASTContext::GetIndexOfChildWithName
 
         case clang::Type::Typedef:
             return GetIndexOfChildWithName (ast_context,
-                                            cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(),
+                                            cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                             name,
                                             omit_empty_base_classes);
 
@@ -3157,7 +3157,7 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
     case clang::Type::ObjCObjectPointer:        return ClangASTContext::GetDeclContextForType (cast<ObjCObjectPointerType>(qual_type.getTypePtr())->getPointeeType().getAsOpaquePtr());
     case clang::Type::Record:                   return cast<RecordType>(qual_type)->getDecl();
     case clang::Type::Enum:                     return cast<EnumType>(qual_type)->getDecl();
-    case clang::Type::Typedef:                  return ClangASTContext::GetDeclContextForType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
+    case clang::Type::Typedef:                  return ClangASTContext::GetDeclContextForType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
 
     case clang::Type::TypeOfExpr:               break;
     case clang::Type::TypeOf:                   break;
@@ -3401,7 +3401,10 @@ ClangASTContext::CreateEnumerationType (const Declaration &decl, const char *nam
                                             SourceLocation(),
                                             name && name[0] ? &ast_context->Idents.get(name) : NULL,
                                             SourceLocation(),
-                                            NULL, false, false); //IsScoped, IsFixed);
+                                            NULL, 
+                                            false,  // IsScoped
+                                            false,  // IsScopedUsingClassTag
+                                            false); // IsFixed
     if (enum_decl)
     {
         // TODO: check if we should be setting the promotion type too?
@@ -3580,7 +3583,7 @@ ClangASTContext::IsPointerOrReferenceType (clang_type_t clang_type, clang_type_t
             *target_type = cast<LValueReferenceType>(qual_type)->desugar().getAsOpaquePtr();
         return true;
     case clang::Type::Typedef:
-        return ClangASTContext::IsPointerOrReferenceType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
+        return ClangASTContext::IsPointerOrReferenceType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
     default:
         break;
     }
@@ -3643,7 +3646,7 @@ ClangASTContext::IsPointerType (clang_type_t clang_type, clang_type_t*target_typ
                 *target_type = cast<MemberPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
             return true;
         case clang::Type::Typedef:
-            return ClangASTContext::IsPointerOrReferenceType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(), target_type);
+            return ClangASTContext::IsPointerOrReferenceType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), target_type);
         default:
             break;
         }
@@ -3791,7 +3794,7 @@ ClangASTContext::IsFunctionPointerType (clang_type_t clang_type)
         switch (type_class)
         {
         case clang::Type::Typedef:
-            return ClangASTContext::IsFunctionPointerType (cast<TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
+            return ClangASTContext::IsFunctionPointerType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
 
         case clang::Type::LValueReference:
         case clang::Type::RValueReference:

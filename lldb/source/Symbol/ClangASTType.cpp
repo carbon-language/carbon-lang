@@ -185,7 +185,7 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
     case clang::Type::Record:                   break;
     case clang::Type::Enum:                     return lldb::eEncodingSint;
     case clang::Type::Typedef:
-        return GetEncoding(cast<clang::TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr(), count);
+            return GetEncoding(cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), count);
         break;
 
     case clang::Type::TypeOfExpr:
@@ -274,7 +274,7 @@ ClangASTType::GetFormat (clang_type_t clang_type)
     case clang::Type::Record:                   break;
     case clang::Type::Enum:                     return lldb::eFormatEnum;
     case clang::Type::Typedef:
-        return ClangASTType::GetFormat(cast<clang::TypedefType>(qual_type)->LookThroughTypedefs().getAsOpaquePtr());
+            return ClangASTType::GetFormat(cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
 
     case clang::Type::TypeOfExpr:
     case clang::Type::TypeOf:
@@ -565,7 +565,7 @@ ClangASTType::DumpValue
 
     case clang::Type::Typedef:
         {
-            clang::QualType typedef_qual_type = cast<clang::TypedefType>(qual_type)->LookThroughTypedefs();
+            clang::QualType typedef_qual_type = cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType();
             lldb::Format typedef_format = ClangASTType::GetFormat(typedef_qual_type.getAsOpaquePtr());
             std::pair<uint64_t, unsigned> typedef_type_info = ast_context->getTypeInfo(typedef_qual_type);
             uint64_t typedef_byte_size = typedef_type_info.first / 8;
@@ -673,7 +673,7 @@ ClangASTType::DumpTypeValue
 
         case clang::Type::Typedef:
             {
-                clang::QualType typedef_qual_type = cast<clang::TypedefType>(qual_type)->LookThroughTypedefs();
+                clang::QualType typedef_qual_type = cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType();
                 lldb::Format typedef_format = ClangASTType::GetFormat(typedef_qual_type.getAsOpaquePtr());
                 std::pair<uint64_t, unsigned> typedef_type_info = ast_context->getTypeInfo(typedef_qual_type);
                 uint64_t typedef_byte_size = typedef_type_info.first / 8;
@@ -1295,6 +1295,6 @@ lldb::clang_type_t
 ClangASTType::RemoveFastQualifiers (lldb::clang_type_t clang_type)
 {
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
-    qual_type.removeFastQualifiers();
+    qual_type.getQualifiers().removeFastQualifiers();
     return qual_type.getAsOpaquePtr();
 }
