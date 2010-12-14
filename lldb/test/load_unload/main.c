@@ -68,5 +68,8 @@ main (int argc, char const *argv[])
     printf ("Second time around, got: %d\n", a_function ());
     dlclose (a_dylib_handle);
 
+    int d_function(void);
+    printf ("d_function returns: %d\n", d_function());
+
     return 0;
 }

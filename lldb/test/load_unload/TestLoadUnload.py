@@ -1,5 +1,5 @@
 """
-Test that breakpoint by symbol name works correctly dlopen'ing a dynamic lib.
+Test that breakpoint by symbol name works correctly with dynamic libs.
 """
 
 import os, time
@@ -18,6 +18,62 @@ class LoadUnloadTestCase(TestBase):
         # Find the line number to break for main.cpp.
         self.line = line_number('main.c',
                                 '// Set break point at this line for test_lldb_process_load_and_unload_commands().')
+        self.line_d_function = line_number('d.c',
+                                           '// Find this line number within d_dunction().')
+
+    def test_dyld_library_path(self):
+        """Test DYLD_LIBRARY_PATH after moving libd.dylib, which defines d_function, somewhere else."""
+
+        # Invoke the default build rule.
+        self.buildDefault()
+
+        if sys.platform.startswith("darwin"):
+            dylibName = 'libd.dylib'
+            dsymName = 'libd.dylib.dSYM'
+            dylibPath = 'DYLD_LIBRARY_PATH'
+
+        # Now let's move the dynamic library to a different directory than $CWD.
+
+        # The directory to relocate the dynamic library and its debugging info.
+        new_dir = os.path.join(os.getcwd(), "dyld_path")
+
+        # This is the function to remove the dyld_path directory after the test.
+        def remove_dyld_path():
+            import shutil
+            shutil.rmtree(new_dir)
+
+        old_dylib = os.path.join(os.getcwd(), dylibName)
+        new_dylib = os.path.join(new_dir, dylibName)
+        old_dSYM = os.path.join(os.getcwd(), dsymName)
+        new_dSYM = os.path.join(new_dir, dsymName)
+        #system(["ls", "-lR", "."])
+        os.mkdir(new_dir)
+        os.rename(old_dylib, new_dylib)
+        if dsymName:
+            os.rename(old_dSYM, new_dSYM)
+        self.addTearDownHook(remove_dyld_path)
+        #system(["ls", "-lR", "."])
+
+        # With libd.dylib moved, a.out run should fail.
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        # Set breakpoint by function name d_function.
+        self.expect("breakpoint set -n d_function", BREAKPOINT_CREATED,
+            substrs = ["Breakpoint created",
+                       "name = 'd_function'",
+                       "locations = 0 (pending)"])
+        self.runCmd("run")
+        self.expect("process status", "Not expected to hit the d_function breakpoint",
+                    matching=False,
+            substrs = ["stop reason = breakpoint"])
+        # Kill the inferior process.
+        self.runCmd("process kill")
+
+        # Try again with the DYLD_LIBRARY_PATH environment variable properly set.
+        os.environ[dylibPath] = new_dir
+        self.runCmd("run")
+        self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
+            patterns = ["frame #0.*d_function.*at d.c:%d" % self.line_d_function])
 
     def test_lldb_process_load_and_unload_commands(self):
         """Test that lldb process load/unload command work correctly."""
@@ -67,7 +123,6 @@ class LoadUnloadTestCase(TestBase):
             patterns = ["Unloading .* with index %s.*ok" % index])
 
         self.runCmd("process continue")
-
 
     def test_load_unload(self):
         """Test breakpoint by name works correctly with dlopen'ing."""

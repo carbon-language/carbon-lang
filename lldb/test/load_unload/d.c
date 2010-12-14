@@ -9,5 +9,5 @@
 int
 d_function ()
 {
-    return 700;
+    return 700; // Find this line number within d_dunction().
 }
