@@ -105,20 +105,21 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
 }
 
 
-/// GetIfCondition - Given a basic block (BB) with two predecessors (and
-/// presumably PHI nodes in it), check to see if the merge at this block is due
+/// GetIfCondition - Given a basic block (BB) with two predecessors (and at
+/// least one PHI node in it), check to see if the merge at this block is due
 /// to an "if condition".  If so, return the boolean condition that determines
 /// which entry into BB will be taken.  Also, return by references the block
 /// that will be entered from if the condition is true, and the block that will
 /// be entered if the condition is false.
 ///
 ///
-static Value *GetIfCondition(BasicBlock *BB,
-                             BasicBlock *&IfTrue, BasicBlock *&IfFalse) {
-  assert(std::distance(pred_begin(BB), pred_end(BB)) == 2 &&
+static Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
+                             BasicBlock *&IfFalse) {
+  PHINode *SomePHI = cast<PHINode>(BB->begin());
+  assert(SomePHI->getNumIncomingValues() == 2 &&
          "Function can only handle blocks with 2 predecessors!");
-  BasicBlock *Pred1 = *pred_begin(BB);
-  BasicBlock *Pred2 = *++pred_begin(BB);
+  BasicBlock *Pred1 = SomePHI->getIncomingBlock(0);
+  BasicBlock *Pred2 = SomePHI->getIncomingBlock(1);
 
   // We can only handle branches.  Other control flow will be lowered to
   // branches if possible anyway.
@@ -1147,14 +1148,13 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const TargetData *TD) {
 
 /// FoldTwoEntryPHINode - Given a BB that starts with the specified two-entry
 /// PHI node, see if we can eliminate it.
-static bool FoldTwoEntryPHINode(PHINode *PN) {
+static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   // Ok, this is a two entry PHI node.  Check to see if this is a simple "if
   // statement", which has a very simple dominance structure.  Basically, we
   // are trying to find the condition that is being branched on, which
   // subsequently causes this merge to happen.  We really want control
   // dependence information for this check, but simplifycfg can't keep it up
   // to date, and this catches most of the cases we care about anyway.
-  //
   BasicBlock *BB = PN->getParent();
   BasicBlock *IfTrue, *IfFalse;
   Value *IfCond = GetIfCondition(BB, IfTrue, IfFalse);
@@ -1247,10 +1247,19 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
     Value *TrueVal  = PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
     Value *FalseVal = PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
     
-    Value *NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", AfterPHIIt);
+    Value *NV;
+    if (Value *V = SimplifySelectInst(IfCond, TrueVal, FalseVal, TD))
+      NV = V;
+    else if (TrueVal->getType()->isIntegerTy(1) && isa<ConstantInt>(TrueVal) &&
+             cast<ConstantInt>(TrueVal)->isOne()) {
+      if (Value *V = SimplifyOrInst(IfCond, FalseVal, TD))
+        NV = V;
+      else
+        NV = BinaryOperator::CreateOr(IfCond, FalseVal, "", AfterPHIIt);
+    } else
+      NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", AfterPHIIt);
     PN->replaceAllUsesWith(NV);
     NV->takeName(PN);
-    
     PN->eraseFromParent();
   }
   return true;
@@ -2415,7 +2424,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
   // eliminate it, do so now.
   if (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
     if (PN->getNumIncomingValues() == 2)
-      Changed |= FoldTwoEntryPHINode(PN); 
+      Changed |= FoldTwoEntryPHINode(PN, TD);
 
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     if (BI->isUnconditional()) {
