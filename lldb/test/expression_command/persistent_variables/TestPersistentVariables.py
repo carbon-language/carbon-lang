@@ -34,8 +34,12 @@ class PersistentVariablesTestCase(TestBase):
         # (int) $2 = 14
 
         self.expect("expression $2",
-            startstr = "(int) $3 = 14")
-        # (int) $3 =  14
+            startstr = "(int) $2 = 14")
+        # (int) $2 =  14
+
+        self.expect("expression $1",
+            startstr = "(int) $1 = 8")
+        # (int) $1 = 8
 
 
 if __name__ == '__main__':
