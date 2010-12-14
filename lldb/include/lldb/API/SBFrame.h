@@ -120,10 +120,12 @@ public:
     GetRegisters ();
 
     lldb::SBValue
-    LookupVar (const char *var_name);
+    FindVariable (const char *var_name);
 
+    // Find variables, register sets, registers, or persistent variables using
+    // the frame as the scope
     lldb::SBValue
-    LookupVarInScope (const char *var_name, const char *scope);
+    FindValue (const char *name, ValueType value_type);
 
     bool
     GetDescription (lldb::SBStream &description);

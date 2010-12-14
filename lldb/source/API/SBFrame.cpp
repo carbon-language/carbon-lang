@@ -48,10 +48,10 @@ SBFrame::SBFrame () :
 {
 }
 
-SBFrame::SBFrame (const lldb::StackFrameSP &lldb_object_sp) :
+SBFrame::SBFrame (const StackFrameSP &lldb_object_sp) :
     m_opaque_sp (lldb_object_sp)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
     {
@@ -82,11 +82,11 @@ SBFrame::~SBFrame()
 
 
 void
-SBFrame::SetFrame (const lldb::StackFrameSP &lldb_object_sp)
+SBFrame::SetFrame (const StackFrameSP &lldb_object_sp)
 {
     void *old_ptr = m_opaque_sp.get();
     m_opaque_sp = lldb_object_sp;
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
     {
@@ -111,7 +111,7 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
     if (m_opaque_sp)
         sb_sym_ctx.SetSymbolContext(&m_opaque_sp->GetSymbolContext (resolve_scope));
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSymbolContext (resolve_scope=0x%8.8x) => SBSymbolContext(%p)", 
                      m_opaque_sp.get(), resolve_scope, sb_sym_ctx.get());
@@ -126,7 +126,7 @@ SBFrame::GetModule () const
     if (m_opaque_sp)
         *sb_module = m_opaque_sp->GetSymbolContext (eSymbolContextModule).module_sp;
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetModule () => SBModule(%p)", 
                      m_opaque_sp.get(), sb_module.get());
@@ -140,7 +140,7 @@ SBFrame::GetCompileUnit () const
     SBCompileUnit sb_comp_unit;
     if (m_opaque_sp)
         sb_comp_unit.reset (m_opaque_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetModule () => SBCompileUnit(%p)", 
                      m_opaque_sp.get(), sb_comp_unit.get());
@@ -154,7 +154,7 @@ SBFrame::GetFunction () const
     SBFunction sb_function;
     if (m_opaque_sp)
         sb_function.reset(m_opaque_sp->GetSymbolContext (eSymbolContextFunction).function);
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFunction () => SBFunction(%p)", 
                      m_opaque_sp.get(), sb_function.get());
@@ -168,7 +168,7 @@ SBFrame::GetSymbol () const
     SBSymbol sb_symbol;
     if (m_opaque_sp)
         sb_symbol.reset(m_opaque_sp->GetSymbolContext (eSymbolContextSymbol).symbol);
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSymbol () => SBSymbol(%p)", 
                      m_opaque_sp.get(), sb_symbol.get());
@@ -181,7 +181,7 @@ SBFrame::GetBlock () const
     SBBlock sb_block;
     if (m_opaque_sp)
         sb_block.reset (m_opaque_sp->GetSymbolContext (eSymbolContextBlock).block);
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetBlock () => SBBlock(%p)", 
                      m_opaque_sp.get(), sb_block.get());
@@ -194,7 +194,7 @@ SBFrame::GetFrameBlock () const
     SBBlock sb_block;
     if (m_opaque_sp)
         sb_block.reset(m_opaque_sp->GetFrameBlock ());
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFrameBlock () => SBBlock(%p)", 
                      m_opaque_sp.get(), sb_block.get());
@@ -207,7 +207,7 @@ SBFrame::GetLineEntry () const
     SBLineEntry sb_line_entry;
     if (m_opaque_sp)
         sb_line_entry.SetLineEntry (m_opaque_sp->GetSymbolContext (eSymbolContextLineEntry).line_entry);
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetLineEntry () => SBLineEntry(%p)", 
                      m_opaque_sp.get(), sb_line_entry.get());
@@ -219,21 +219,21 @@ SBFrame::GetFrameID () const
 {
     uint32_t frame_idx = m_opaque_sp ? m_opaque_sp->GetFrameIndex () : UINT32_MAX;
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFrameID () => %u", 
                      m_opaque_sp.get(), frame_idx);
     return frame_idx;
 }
 
-lldb::addr_t
+addr_t
 SBFrame::GetPC () const
 {
-    lldb::addr_t addr = LLDB_INVALID_ADDRESS;
+    addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
         addr = m_opaque_sp->GetFrameCodeAddress().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess().GetTarget());
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetPC () => 0x%llx", m_opaque_sp.get(), addr);
 
@@ -241,13 +241,13 @@ SBFrame::GetPC () const
 }
 
 bool
-SBFrame::SetPC (lldb::addr_t new_pc)
+SBFrame::SetPC (addr_t new_pc)
 {
     bool ret_val = false;
     if (m_opaque_sp)
         ret_val = m_opaque_sp->GetRegisterContext()->SetPC (new_pc);
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::SetPC (new_pc=0x%llx) => %i", 
                      m_opaque_sp.get(), new_pc, ret_val);
@@ -255,13 +255,13 @@ SBFrame::SetPC (lldb::addr_t new_pc)
     return ret_val;
 }
 
-lldb::addr_t
+addr_t
 SBFrame::GetSP () const
 {
     addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
         addr = m_opaque_sp->GetRegisterContext()->GetSP();
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSP () => 0x%llx", m_opaque_sp.get(), addr);
 
@@ -269,14 +269,14 @@ SBFrame::GetSP () const
 }
 
 
-lldb::addr_t
+addr_t
 SBFrame::GetFP () const
 {
-    lldb::addr_t addr = LLDB_INVALID_ADDRESS;
+    addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
         addr = m_opaque_sp->GetRegisterContext()->GetFP();
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFP () => 0x%llx", m_opaque_sp.get(), addr);
     return addr;
@@ -289,7 +289,7 @@ SBFrame::GetPCAddress () const
     SBAddress sb_addr;
     if (m_opaque_sp)
         sb_addr.SetAddress (&m_opaque_sp->GetFrameCodeAddress());
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetPCAddress () => SBAddress(%p)", m_opaque_sp.get(), sb_addr.get());
     return sb_addr;
@@ -302,12 +302,12 @@ SBFrame::Clear()
 }
 
 SBValue
-SBFrame::LookupVar (const char *var_name)
+SBFrame::FindVariable (const char *name)
 {
-    lldb::VariableSP var_sp;
-    if (m_opaque_sp && var_name && var_name[0])
+    VariableSP var_sp;
+    if (m_opaque_sp && name && name[0])
     {
-        lldb_private::VariableList variable_list;
+        VariableList variable_list;
 
         SymbolContext sc (m_opaque_sp->GetSymbolContext (eSymbolContextBlock));
 
@@ -322,7 +322,7 @@ SBFrame::LookupVar (const char *var_name)
                                            stop_if_block_is_inlined_function,
                                            &variable_list))
             {
-                var_sp = variable_list.FindVariable (lldb_private::ConstString(var_name));
+                var_sp = variable_list.FindVariable (ConstString(name));
             }
         }
     }
@@ -332,71 +332,116 @@ SBFrame::LookupVar (const char *var_name)
     if (var_sp)
         *sb_value = ValueObjectSP (new ValueObjectVariable (var_sp));
 
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBFrame(%p)::LookupVar (name=\"%s\") => SBValue(%p)", 
-                     m_opaque_sp.get(), var_name, sb_value.get());
+        log->Printf ("SBFrame(%p)::FindVariable (name=\"%s\") => SBValue(%p)", 
+                     m_opaque_sp.get(), name, sb_value.get());
 
     return sb_value;
 }
 
 SBValue
-SBFrame::LookupVarInScope (const char *var_name, const char *scope)
+SBFrame::FindValue (const char *name, ValueType value_type)
 {
-    lldb::VariableSP var_sp;
-    if (m_opaque_sp && var_name && var_name[0] && scope && scope[0])
+    SBValue sb_value;
+    if (m_opaque_sp && name && name[0])
     {
-        std::string scope_str = scope;
-        lldb::ValueType var_scope = eValueTypeInvalid;
-        // Convert scope_str to be all lowercase;
-        std::transform (scope_str.begin(), scope_str.end(), scope_str.begin(), ::tolower);
-
-        if (scope_str.compare ("global") == 0)
-            var_scope = eValueTypeVariableGlobal;
-        else if (scope_str.compare ("local") == 0)
-            var_scope = eValueTypeVariableLocal;
-        else if (scope_str.compare ("parameter") == 0)
-           var_scope = eValueTypeVariableArgument;
-
-        if (var_scope != eValueTypeInvalid)
+    
+        switch (value_type)
         {
-            lldb_private::VariableList *variable_list = m_opaque_sp->GetVariableList(true);
-
-            SymbolContext sc (m_opaque_sp->GetSymbolContext (eSymbolContextBlock));
-
-            const bool can_create = true;
-            const bool get_parent_variables = true;
-            const bool stop_if_block_is_inlined_function = true;
-
-            if (sc.block && sc.block->AppendVariables (can_create, 
-                                                       get_parent_variables,
-                                                       stop_if_block_is_inlined_function,
-                                                       variable_list))
+        case eValueTypeVariableGlobal:      // global variable
+        case eValueTypeVariableStatic:      // static variable
+        case eValueTypeVariableArgument:    // function argument variables
+        case eValueTypeVariableLocal:       // function local variables
             {
-                lldb_private::ConstString const_var_name(var_name);
-                const uint32_t num_variables = variable_list->GetSize();
-                for (uint32_t i = 0; i < num_variables; ++i)
+                VariableList *variable_list = m_opaque_sp->GetVariableList(true);
+
+                SymbolContext sc (m_opaque_sp->GetSymbolContext (eSymbolContextBlock));
+
+                const bool can_create = true;
+                const bool get_parent_variables = true;
+                const bool stop_if_block_is_inlined_function = true;
+
+                if (sc.block && sc.block->AppendVariables (can_create, 
+                                                           get_parent_variables,
+                                                           stop_if_block_is_inlined_function,
+                                                           variable_list))
                 {
-                    lldb::VariableSP curr_var_sp (variable_list->GetVariableAtIndex(i));
-                    if (curr_var_sp && curr_var_sp->GetScope() == var_scope &&
-                        curr_var_sp->GetName() == const_var_name)
+                    ConstString const_name(name);
+                    const uint32_t num_variables = variable_list->GetSize();
+                    for (uint32_t i = 0; i < num_variables; ++i)
                     {
-                        var_sp = curr_var_sp;
-                        break;
+                        VariableSP variable_sp (variable_list->GetVariableAtIndex(i));
+                        if (variable_sp && 
+                            variable_sp->GetScope() == value_type &&
+                            variable_sp->GetName() == const_name)
+                        {
+                            *sb_value = ValueObjectSP (new ValueObjectVariable (variable_sp));
+                            break;
+                        }
                     }
                 }
             }
+            break;
+
+        case eValueTypeRegister:            // stack frame register value
+            {
+                RegisterContext *reg_ctx = m_opaque_sp->GetRegisterContext();
+                if (reg_ctx)
+                {
+                    const uint32_t num_regs = reg_ctx->GetRegisterCount();
+                    for (uint32_t reg_idx = 0; reg_idx < num_regs; ++reg_idx)
+                    {
+                        const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex (reg_idx);
+                        if (reg_info && 
+                            ((reg_info->name && strcasecmp (reg_info->name, name) == 0) ||
+                             (reg_info->alt_name && strcasecmp (reg_info->alt_name, name) == 0)))
+                        {
+                            *sb_value = ValueObjectSP (new ValueObjectRegister (NULL, reg_ctx, reg_idx));
+                        }
+                    }
+                }
+            }
+            break;
+
+        case eValueTypeRegisterSet:         // A collection of stack frame register values
+            {
+                RegisterContext *reg_ctx = m_opaque_sp->GetRegisterContext();
+                if (reg_ctx)
+                {
+                    const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
+                    for (uint32_t set_idx = 0; set_idx < num_sets; ++set_idx)
+                    {
+                        const RegisterSet *reg_set = reg_ctx->GetRegisterSet (set_idx);
+                        if (reg_set && 
+                            ((reg_set->name && strcasecmp (reg_set->name, name) == 0) ||
+                             (reg_set->short_name && strcasecmp (reg_set->short_name, name) == 0)))
+                        {
+                            *sb_value = ValueObjectSP (new ValueObjectRegisterSet (NULL, reg_ctx, set_idx));
+                        }
+                    }
+                }
+            }
+            break;
+
+        case eValueTypeConstResult:         // constant result variables
+            {
+                ConstString const_name(name);
+                ClangExpressionVariableSP expr_var_sp (m_opaque_sp->GetThread().GetProcess().GetTarget().GetPersistentVariables().GetVariable (const_name));
+                if (expr_var_sp)
+                    *sb_value = expr_var_sp->GetValueObject();
+            }
+            break;
+
+        default:
+            break;
         }
     }
     
-    SBValue sb_value;
-    if (var_sp)
-        *sb_value = ValueObjectSP (new ValueObjectVariable (var_sp));
-
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBFrame(%p)::LookupVarInScope (name=\"%s\", scope=%s) => SBValue(%p)", 
-                     m_opaque_sp.get(), var_name, scope, sb_value.get());
+        log->Printf ("SBFrame(%p)::FindVariableInScope (name=\"%s\", value_type=%i) => SBValue(%p)", 
+                     m_opaque_sp.get(), name, value_type, sb_value.get());
 
     
     return sb_value;
@@ -430,7 +475,7 @@ SBFrame::get() const
 SBThread
 SBFrame::GetThread () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBThread sb_thread;
     if (m_opaque_sp)
@@ -453,7 +498,7 @@ SBFrame::Disassemble () const
     const char *disassembly = NULL;
     if (m_opaque_sp)
         disassembly = m_opaque_sp->Disassemble();
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBFrame(%p)::Disassemble () => %s", m_opaque_sp.get(), disassembly);
@@ -468,7 +513,7 @@ SBFrame::GetVariables (bool arguments,
                        bool statics,
                        bool in_scope_only)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBFrame(%p)::GetVariables (arguments=%i, locals=%i, statics=%i, in_scope_only=%i)", 
@@ -534,10 +579,10 @@ SBFrame::GetVariables (bool arguments,
     return value_list;
 }
 
-lldb::SBValueList
+SBValueList
 SBFrame::GetRegisters ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBValueList value_list;
     if (m_opaque_sp)
@@ -573,20 +618,20 @@ SBFrame::GetDescription (SBStream &description)
     return true;
 }
 
-lldb::SBValue
+SBValue
 SBFrame::EvaluateExpression (const char *expr)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
-    LogSP expr_log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    LogSP expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    lldb::SBValue expr_result;
+    SBValue expr_result;
     if (log)
         log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\")...", m_opaque_sp.get(), expr);
 
     if (m_opaque_sp)
     {
-        lldb::ExecutionResults exe_results;
+        ExecutionResults exe_results;
         const bool unwind_on_error = true;
 
         exe_results = m_opaque_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, m_opaque_sp.get(), unwind_on_error, *expr_result);
