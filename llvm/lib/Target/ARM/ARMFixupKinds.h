@@ -61,7 +61,7 @@ enum Fixups {
   // fixup_arm_thumb_cp - Fixup for Thumb load/store from constant pool instrs.
   fixup_arm_thumb_cp,
 
-  // fixup_arm_thumb_bcc - Fixup for Thumb load/store from constant pool instrs.
+  // fixup_arm_thumb_bcc - Fixup for Thumb conditional branching instructions.
   fixup_arm_thumb_bcc,
 
   // The next two are for the movt/movw pair
