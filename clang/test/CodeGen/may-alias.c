@@ -12,8 +12,8 @@ void test0(aliasing_int *ai, int *i)
   *i = 1;
 }
 
-// CHECK: store i32 0, i32* %tmp, !tbaa !1
-// CHECK: store i32 1, i32* %tmp1, !tbaa !3
+// CHECK: store i32 0, i32* %{{.*}}, !tbaa !1
+// CHECK: store i32 1, i32* %{{.*}}, !tbaa !3
 
 // CHECK: !0 = metadata !{metadata !"any pointer", metadata !1}
 // CHECK: !1 = metadata !{metadata !"omnipotent char", metadata !2}
