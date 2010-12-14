@@ -1168,11 +1168,11 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   // that need to be moved to the dominating block.
   SmallPtrSet<Instruction*, 4> AggressiveInsts;
   
-  BasicBlock::iterator AfterPHIIt = BB->begin();
-  while (isa<PHINode>(AfterPHIIt)) {
-    PHINode *PN = cast<PHINode>(AfterPHIIt++);
+  for (BasicBlock::iterator II = BB->begin(); isa<PHINode>(II);) {
+    PHINode *PN = cast<PHINode>(II++);
     if (Value *V = SimplifyInstruction(PN, TD)) {
       PN->replaceAllUsesWith(V);
+      PN->eraseFromParent();
       continue;
     }
     
@@ -1185,6 +1185,14 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   // we ran out of PHIs then we simplified them all.
   PN = dyn_cast<PHINode>(BB->begin());
   if (PN == 0) return true;
+  
+  // Don't fold i1 branches on PHIs which contain binary operators.  These can
+  // often be turned into switches and other things.
+  if (PN->getType()->isIntegerTy(1) &&
+      (isa<BinaryOperator>(PN->getIncomingValue(0)) ||
+       isa<BinaryOperator>(PN->getIncomingValue(1)) ||
+       isa<BinaryOperator>(IfCond)))
+    return false;
   
   // If we all PHI nodes are promotable, check to make sure that all
   // instructions in the predecessor blocks can be promoted as well.  If
@@ -1224,15 +1232,16 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
       
   // If we can still promote the PHI nodes after this gauntlet of tests,
   // do all of the PHI's now.
-
+  Instruction *InsertPt = DomBlock->getTerminator();
+  
   // Move all 'aggressive' instructions, which are defined in the
   // conditional parts of the if's up to the dominating block.
   if (IfBlock1)
-    DomBlock->getInstList().splice(DomBlock->getTerminator(),
+    DomBlock->getInstList().splice(InsertPt,
                                    IfBlock1->getInstList(), IfBlock1->begin(),
                                    IfBlock1->getTerminator());
   if (IfBlock2)
-    DomBlock->getInstList().splice(DomBlock->getTerminator(),
+    DomBlock->getInstList().splice(InsertPt,
                                    IfBlock2->getInstList(), IfBlock2->begin(),
                                    IfBlock2->getTerminator());
   
@@ -1241,7 +1250,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
     Value *TrueVal  = PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
     Value *FalseVal = PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
     
-    Value *NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", AfterPHIIt);
+    Value *NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", InsertPt);
     PN->replaceAllUsesWith(NV);
     NV->takeName(PN);
     PN->eraseFromParent();

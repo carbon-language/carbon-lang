@@ -253,21 +253,21 @@ lor.end:                                          ; preds = %lor.rhs, %lor.lhs.f
   ret i32 %conv46
   
 ; CHECK: @test9
-; HECK:   %cmp = icmp ult i8 %c, 33
-; HECK:   br i1 %cmp, label %lor.end, label %switch.early.test
+; CHECK:   %cmp = icmp ult i8 %c, 33
+; CHECK:   br i1 %cmp, label %lor.end, label %switch.early.test
 
-; HECK: switch.early.test:
-; HECK:   switch i8 %c, label %lor.rhs [
-; HECK:     i8 46, label %lor.end
-; HECK:     i8 44, label %lor.end
-; HECK:     i8 58, label %lor.end
-; HECK:     i8 59, label %lor.end
-; HECK:     i8 60, label %lor.end
-; HECK:     i8 62, label %lor.end
-; HECK:     i8 34, label %lor.end
-; HECK:     i8 92, label %lor.end
-; HECK:     i8 39, label %lor.end
-; HECK:   ]
+; CHECK: switch.early.test:
+; CHECK:   switch i8 %c, label %lor.rhs [
+; CHECK:     i8 92, label %lor.end
+; CHECK:     i8 62, label %lor.end
+; CHECK:     i8 60, label %lor.end
+; CHECK:     i8 59, label %lor.end
+; CHECK:     i8 58, label %lor.end
+; CHECK:     i8 46, label %lor.end
+; CHECK:     i8 44, label %lor.end
+; CHECK:     i8 34, label %lor.end
+; CHECK:     i8 39, label %lor.end
+; CHECK:   ]
 }
 
 define i32 @test10(i32 %mode, i1 %Cond) {

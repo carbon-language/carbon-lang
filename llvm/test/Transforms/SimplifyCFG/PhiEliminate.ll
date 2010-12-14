@@ -11,20 +11,6 @@ declare void @use(i1)
 
 declare void @use.upgrd.1(i32)
 
-define void @test2(i1 %c, i1 %d, i32 %V, i32 %V2) {
-; <label>:0
-        br i1 %d, label %X, label %F
-X:              ; preds = %0
-        br i1 %c, label %T, label %F
-T:              ; preds = %X
-        br label %F
-F:              ; preds = %T, %X, %0
-        %B1 = phi i1 [ true, %0 ], [ false, %T ], [ false, %X ]         ; <i1> [#uses=1]
-        %I7 = phi i32 [ %V, %0 ], [ %V2, %T ], [ %V2, %X ]              ; <i32> [#uses=1]
-        call void @use( i1 %B1 )
-        call void @use.upgrd.1( i32 %I7 )
-        ret void
-}
 
 define void @test(i1 %c, i32 %V, i32 %V2) {
 ; <label>:0
