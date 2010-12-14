@@ -20,8 +20,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
-#include <algorithm>
-
 using namespace llvm;
 
 
@@ -72,11 +70,34 @@ void
 LiveIntervalUnion::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
   OS << "LIU ";
   TRI->printReg(RepReg, OS);
+  if (empty()) {
+    OS << " empty\n";
+    return;
+  }
   for (LiveSegments::const_iterator SI = Segments.begin(); SI.valid(); ++SI) {
     OS << " [" << SI.start() << ' ' << SI.stop() << "):";
     TRI->printReg(SI.value()->reg, OS);
   }
-  OS << "\n";
+  OS << '\n';
+}
+
+void LiveIntervalUnion::InterferenceResult::print(raw_ostream &OS,
+                                          const TargetRegisterInfo *TRI) const {
+  OS << '[' << start() << ';' << stop() << ")\t";
+  interference()->print(OS, TRI);
+}
+
+void LiveIntervalUnion::Query::print(raw_ostream &OS,
+                                     const TargetRegisterInfo *TRI) {
+  OS << "Interferences with ";
+  LiveUnion->print(OS, TRI);
+  InterferenceResult IR = firstInterference();
+  while (isInterference(IR)) {
+    OS << "  ";
+    IR.print(OS, TRI);
+    OS << '\n';
+    nextInterference(IR);
+  }
 }
 
 #ifndef NDEBUG
