@@ -56,8 +56,15 @@ public:
 
 protected:
 
+#ifndef SWIG
+
     lldb_private::Function *
     get ();
+
+    void
+    reset (lldb_private::Function *lldb_object_ptr);
+
+#endif
 
 private:
     friend class SBFrame;

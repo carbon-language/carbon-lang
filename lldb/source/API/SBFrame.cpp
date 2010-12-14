@@ -122,7 +122,10 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 SBModule
 SBFrame::GetModule () const
 {
-    SBModule sb_module (m_opaque_sp->GetSymbolContext (eSymbolContextModule).module_sp);
+    SBModule sb_module;
+    if (m_opaque_sp)
+        *sb_module = m_opaque_sp->GetSymbolContext (eSymbolContextModule).module_sp;
+
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetModule () => SBModule(%p)", 
@@ -134,8 +137,9 @@ SBFrame::GetModule () const
 SBCompileUnit
 SBFrame::GetCompileUnit () const
 {
-    SBCompileUnit sb_comp_unit(m_opaque_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
-
+    SBCompileUnit sb_comp_unit;
+    if (m_opaque_sp)
+        sb_comp_unit.reset (m_opaque_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetModule () => SBCompileUnit(%p)", 
@@ -147,8 +151,9 @@ SBFrame::GetCompileUnit () const
 SBFunction
 SBFrame::GetFunction () const
 {
-    SBFunction sb_function(m_opaque_sp->GetSymbolContext (eSymbolContextFunction).function);
-
+    SBFunction sb_function;
+    if (m_opaque_sp)
+        sb_function.reset(m_opaque_sp->GetSymbolContext (eSymbolContextFunction).function);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFunction () => SBFunction(%p)", 
@@ -160,7 +165,9 @@ SBFrame::GetFunction () const
 SBSymbol
 SBFrame::GetSymbol () const
 {
-    SBSymbol sb_symbol(m_opaque_sp->GetSymbolContext (eSymbolContextSymbol).symbol);
+    SBSymbol sb_symbol;
+    if (m_opaque_sp)
+        sb_symbol.reset(m_opaque_sp->GetSymbolContext (eSymbolContextSymbol).symbol);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSymbol () => SBSymbol(%p)", 
@@ -171,7 +178,9 @@ SBFrame::GetSymbol () const
 SBBlock
 SBFrame::GetBlock () const
 {
-    SBBlock sb_block(m_opaque_sp->GetSymbolContext (eSymbolContextBlock).block);
+    SBBlock sb_block;
+    if (m_opaque_sp)
+        sb_block.reset (m_opaque_sp->GetSymbolContext (eSymbolContextBlock).block);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetBlock () => SBBlock(%p)", 
@@ -182,7 +191,9 @@ SBFrame::GetBlock () const
 SBBlock
 SBFrame::GetFrameBlock () const
 {
-    SBBlock sb_block(m_opaque_sp->GetFrameBlock ());
+    SBBlock sb_block;
+    if (m_opaque_sp)
+        sb_block.reset(m_opaque_sp->GetFrameBlock ());
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFrameBlock () => SBBlock(%p)", 
@@ -193,7 +204,9 @@ SBFrame::GetFrameBlock () const
 SBLineEntry
 SBFrame::GetLineEntry () const
 {
-    SBLineEntry sb_line_entry(&m_opaque_sp->GetSymbolContext (eSymbolContextLineEntry).line_entry);
+    SBLineEntry sb_line_entry;
+    if (m_opaque_sp)
+        sb_line_entry.SetLineEntry (m_opaque_sp->GetSymbolContext (eSymbolContextLineEntry).line_entry);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetLineEntry () => SBLineEntry(%p)", 
@@ -216,7 +229,6 @@ SBFrame::GetFrameID () const
 lldb::addr_t
 SBFrame::GetPC () const
 {
-
     lldb::addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
         addr = m_opaque_sp->GetFrameCodeAddress().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess().GetTarget());
@@ -231,7 +243,6 @@ SBFrame::GetPC () const
 bool
 SBFrame::SetPC (lldb::addr_t new_pc)
 {
-
     bool ret_val = false;
     if (m_opaque_sp)
         ret_val = m_opaque_sp->GetRegisterContext()->SetPC (new_pc);
@@ -294,27 +305,26 @@ SBValue
 SBFrame::LookupVar (const char *var_name)
 {
     lldb::VariableSP var_sp;
-    if (IsValid ())
+    if (m_opaque_sp && var_name && var_name[0])
     {
         lldb_private::VariableList variable_list;
-        SBSymbolContext sc = GetSymbolContext (eSymbolContextEverything);
 
-        SBBlock block = sc.GetBlock();
-        if (block.IsValid())
-            block.AppendVariables (true, true, &variable_list);
+        SymbolContext sc (m_opaque_sp->GetSymbolContext (eSymbolContextBlock));
 
-        const uint32_t num_variables = variable_list.GetSize();
-
-        bool found = false;
-        for (uint32_t i = 0; i < num_variables && !found; ++i)
+        if (sc.block)
         {
-            var_sp = variable_list.GetVariableAtIndex(i);
-            if (var_sp
-                && (var_sp.get()->GetName() == lldb_private::ConstString(var_name)))
-                found = true;
+            const bool can_create = true;
+            const bool get_parent_variables = true;
+            const bool stop_if_block_is_inlined_function = true;
+            
+            if (sc.block->AppendVariables (can_create, 
+                                           get_parent_variables,
+                                           stop_if_block_is_inlined_function,
+                                           &variable_list))
+            {
+                var_sp = variable_list.FindVariable (lldb_private::ConstString(var_name));
+            }
         }
-        if (!found)
-            var_sp.reset();
     }
     
     SBValue sb_value;
@@ -334,7 +344,7 @@ SBValue
 SBFrame::LookupVarInScope (const char *var_name, const char *scope)
 {
     lldb::VariableSP var_sp;
-    if (IsValid())
+    if (m_opaque_sp && var_name && var_name[0] && scope && scope[0])
     {
         std::string scope_str = scope;
         lldb::ValueType var_scope = eValueTypeInvalid;
@@ -350,24 +360,31 @@ SBFrame::LookupVarInScope (const char *var_name, const char *scope)
 
         if (var_scope != eValueTypeInvalid)
         {
-            lldb_private::VariableList *variable_list = m_opaque_sp->GetVariableList(true);
-            if (variable_list)
+            lldb_private::VariableList variable_list;
+
+            SymbolContext sc (m_opaque_sp->GetSymbolContext (eSymbolContextBlock));
+
+            const bool can_create = true;
+            const bool get_parent_variables = true;
+            const bool stop_if_block_is_inlined_function = true;
+
+            if (sc.block && sc.block->AppendVariables (can_create, 
+                                                       get_parent_variables,
+                                                       stop_if_block_is_inlined_function,
+                                                       &variable_list))
             {
-                const uint32_t num_variables = variable_list->GetSize();
-                bool found = false;
-                for (uint32_t i = 0; i < num_variables && !found; ++i)
+                lldb_private::ConstString const_var_name(var_name);
+                const uint32_t num_variables = variable_list.GetSize();
+                for (uint32_t i = 0; i < num_variables; ++i)
                 {
-                    var_sp = variable_list->GetVariableAtIndex(i);
-                    if (var_sp
-                        && (var_sp.get()->GetName() == lldb_private::ConstString(var_name))
-                        && var_sp.get()->GetScope() == var_scope)
+                    lldb::VariableSP curr_var_sp (variable_list.GetVariableAtIndex(i));
+                    if (curr_var_sp && curr_var_sp->GetScope() == var_scope &&
+                        curr_var_sp->GetName() == const_var_name)
                     {
-                        found = true;
+                        var_sp = curr_var_sp;
                         break;
                     }
                 }
-                if (!found)
-                    var_sp.reset();
             }
         }
     }
@@ -415,10 +432,9 @@ SBFrame::GetThread () const
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    //if (log)
-    //    log->Printf ("SBFrame::GetThread ()");
-
-    SBThread sb_thread (m_opaque_sp->GetThread().GetSP());
+    SBThread sb_thread;
+    if (m_opaque_sp)
+        sb_thread.SetThread (m_opaque_sp->GetThread().GetSP());
 
     if (log)
     {

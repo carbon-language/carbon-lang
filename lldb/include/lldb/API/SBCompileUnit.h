@@ -77,6 +77,9 @@ private:
     const lldb_private::CompileUnit *
     get () const;
 
+    void
+    reset (lldb_private::CompileUnit *lldb_object_ptr);
+
 #endif
 
     lldb_private::CompileUnit *m_opaque_ptr;

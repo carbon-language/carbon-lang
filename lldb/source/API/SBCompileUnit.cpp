@@ -170,6 +170,13 @@ SBCompileUnit::get () const
 {
     return m_opaque_ptr;
 }
+
+void
+SBCompileUnit::reset (lldb_private::CompileUnit *lldb_object_ptr)
+{
+    m_opaque_ptr = lldb_object_ptr;
+}
+
     
 bool
 SBCompileUnit::GetDescription (SBStream &description)

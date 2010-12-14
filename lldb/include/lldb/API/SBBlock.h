@@ -68,6 +68,9 @@ private:
     const lldb_private::Block *
     get () const;
 
+    void
+    reset (lldb_private::Block *lldb_object_ptr);
+
     SBBlock (lldb_private::Block *lldb_object_ptr);
 
     void

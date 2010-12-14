@@ -148,3 +148,9 @@ SBFunction::get ()
     return m_opaque_ptr;
 }
 
+void
+SBFunction::reset (lldb_private::Function *lldb_object_ptr)
+{
+    m_opaque_ptr = lldb_object_ptr;
+}
+

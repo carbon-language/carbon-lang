@@ -143,3 +143,9 @@ SBSymbol::get ()
 {
     return m_opaque_ptr;
 }
+
+void
+SBSymbol::reset (lldb_private::Symbol *symbol)
+{
+    m_opaque_ptr = symbol;
+}

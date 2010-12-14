@@ -57,8 +57,13 @@ public:
 
 protected:
 
+#ifndef SWIG
     lldb_private::Symbol *
     get ();
+
+    void
+    reset (lldb_private::Symbol *);
+#endif
     
 private:
     friend class SBFrame;

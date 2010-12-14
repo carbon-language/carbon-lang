@@ -151,6 +151,11 @@ SBBlock::get () const
     return m_opaque_ptr;
 }
 
+void
+SBBlock::reset (lldb_private::Block *block)
+{
+    m_opaque_ptr = block;
+}
 
 bool
 SBBlock::GetDescription (SBStream &description)
