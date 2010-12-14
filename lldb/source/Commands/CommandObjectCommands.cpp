@@ -359,10 +359,18 @@ public:
             }
             
             CommandObjectSP cmd_obj_sp = m_interpreter.GetCommandSPExact (cmd_obj->GetCommandName(), false);
-            m_interpreter.AddAlias (alias_command.c_str(), cmd_obj_sp);
-            if (option_arg_vector->size() > 0)
-                m_interpreter.AddOrReplaceAliasOptions (alias_command.c_str(), option_arg_vector_sp);
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            if (cmd_obj_sp)
+            {
+                m_interpreter.AddAlias (alias_command.c_str(), cmd_obj_sp);
+                if (option_arg_vector->size() > 0)
+                    m_interpreter.AddOrReplaceAliasOptions (alias_command.c_str(), option_arg_vector_sp);
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            }
+            else
+            {
+                result.AppendError ("Unable to create requested alias.\n");
+                result.SetStatus (eReturnStatusFailed);
+            }
         }
         return result.Succeeded();
     }

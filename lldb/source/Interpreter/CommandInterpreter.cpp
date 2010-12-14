@@ -314,7 +314,45 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
 CommandObjectSP
 CommandInterpreter::GetCommandSPExact (const char *cmd_cstr, bool include_aliases)
 {
-    return GetCommandSP(cmd_cstr, include_aliases, true, NULL);
+    Args cmd_words (cmd_cstr); // Break up the command string into words, in case it's a multi-word command.
+    CommandObjectSP ret_val;   // Possibly empty return value.
+    
+    if (cmd_cstr == NULL)
+        return ret_val;
+    
+    if (cmd_words.GetArgumentCount() == 1)
+        return GetCommandSP(cmd_cstr, include_aliases, true, NULL);
+    else
+    {
+        // We have a multi-word command (seemingly), so we need to do more work.
+        // First, get the cmd_obj_sp for the first word in the command.
+        CommandObjectSP cmd_obj_sp = GetCommandSP (cmd_words.GetArgumentAtIndex (0), include_aliases, true, NULL);
+        if (cmd_obj_sp.get() != NULL)
+        {
+            // Loop through the rest of the words in the command (everything passed in was supposed to be part of a 
+            // command name), and find the appropriate sub-command SP for each command word....
+            size_t end = cmd_words.GetArgumentCount();
+            for (size_t j= 1; j < end; ++j)
+            {
+                if (cmd_obj_sp->IsMultiwordObject())
+                {
+                    cmd_obj_sp = ((CommandObjectMultiword *) cmd_obj_sp.get())->GetSubcommandSP 
+                    (cmd_words.GetArgumentAtIndex (j));
+                    if (cmd_obj_sp.get() == NULL)
+                        // The sub-command name was invalid.  Fail and return the empty 'ret_val'.
+                        return ret_val;
+                }
+                else
+                    // We have more words in the command name, but we don't have a multiword object. Fail and return 
+                    // empty 'ret_val'.
+                    return ret_val;
+            }
+            // We successfully looped through all the command words and got valid command objects for them.  Assign the 
+            // last object retrieved to 'ret_val'.
+            ret_val = cmd_obj_sp;
+        }
+    }
+    return ret_val;
 }
 
 CommandObject *
@@ -720,8 +758,10 @@ CommandInterpreter::HandleCommand (const char *command_line,
             BuildAliasResult (next_word.c_str(), command_string, alias_result, cmd_obj, result);
             revised_command_line.Printf ("%s", alias_result.c_str());
             if (cmd_obj)
+            {
                 wants_raw_input = cmd_obj->WantsRawCommandString ();
-            actual_cmd_name_len = strlen (cmd_obj->GetCommandName());
+                actual_cmd_name_len = strlen (cmd_obj->GetCommandName());
+            }
         }
         else if (!cmd_obj)
         {
