@@ -89,11 +89,11 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Set the run-args and the env-vars.
-        self.runCmd('settings set target.process.run-args A B C')
-        self.runCmd('settings set target.process.env-vars ["MY_ENV_VAR"]=YES')
         # And add hooks to restore the settings during tearDown().
+        self.runCmd('settings set target.process.run-args A B C')
         self.addTearDownHook(
             lambda: self.runCmd("settings set -r target.process.run-args"))
+        self.runCmd('settings set target.process.env-vars ["MY_ENV_VAR"]=YES')
         self.addTearDownHook(
             lambda: self.runCmd("settings set -r target.process.env-vars"))
 
