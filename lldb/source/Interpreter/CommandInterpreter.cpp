@@ -1007,6 +1007,23 @@ CommandInterpreter::HandleCompletion (const char *current_line,
         cursor_char_position = 0;
     else
         cursor_char_position = strlen (partial_parsed_line.GetArgumentAtIndex(cursor_index));
+        
+    if (cursor > current_line && cursor[-1] == ' ')
+    {
+        // We are just after a space.  If we are in an argument, then we will continue
+        // parsing, but if we are between arguments, then we have to complete whatever the next
+        // element would be.
+        // We can distinguish the two cases because if we are in an argument (e.g. because the space is
+        // protected by a quote) then the space will also be in the parsed argument...
+        
+        const char *current_elem = partial_parsed_line.GetArgumentAtIndex(cursor_index);
+        if (cursor_char_position == 0 || current_elem[cursor_char_position - 1] != ' ')
+        {
+            parsed_line.InsertArgumentAtIndex(cursor_index + 1, "", '"');
+            cursor_index++;
+            cursor_char_position = 0;
+        }
+    }
 
     int num_command_matches;
 
