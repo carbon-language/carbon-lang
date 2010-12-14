@@ -450,6 +450,15 @@ namespace {
           To += From[i];
       }
     }
+
+    QualType getSimpleFunctionType(QualType result,
+                                   const QualType *args,
+                                   unsigned numArgs,
+                                   bool variadic = false) {
+      FunctionProtoType::ExtProtoInfo fpi;
+      fpi.Variadic = variadic;
+      return Context->getFunctionType(result, args, numArgs, fpi);
+    }
   };
 
   // Helper function: create a CStyleCastExpr with trivial type source info.
@@ -2352,11 +2361,8 @@ void RewriteObjC::SynthSelGetUidFunctionDecl() {
   IdentifierInfo *SelGetUidIdent = &Context->Idents.get("sel_registerName");
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
-  QualType getFuncType = Context->getFunctionType(Context->getObjCSelType(),
-                                                  &ArgTys[0], ArgTys.size(),
-                                                  false /*isVariadic*/, 0,
-                                                  false, false, 0, 0,
-                                                  FunctionType::ExtInfo());
+  QualType getFuncType =
+    getSimpleFunctionType(Context->getObjCSelType(), &ArgTys[0], ArgTys.size());
   SelGetUidFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                            SourceLocation(),
                                            SelGetUidIdent, getFuncType, 0,
@@ -2451,11 +2457,8 @@ void RewriteObjC::SynthSuperContructorFunctionDecl() {
   assert(!argT.isNull() && "Can't find 'id' type");
   ArgTys.push_back(argT);
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
-                                                  &ArgTys[0], ArgTys.size(),
-                                                  false, 0,
-                                                  false, false, 0, 0,
-                                                  FunctionType::ExtInfo());
+  QualType msgSendType = getSimpleFunctionType(Context->getObjCIdType(),
+                                               &ArgTys[0], ArgTys.size());
   SuperContructorFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                          SourceLocation(),
                                          msgSendIdent, msgSendType, 0,
@@ -2473,11 +2476,9 @@ void RewriteObjC::SynthMsgSendFunctionDecl() {
   argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
-                                                  &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0,
-                                                  false, false, 0, 0,
-                                                  FunctionType::ExtInfo());
+  QualType msgSendType = getSimpleFunctionType(Context->getObjCIdType(),
+                                               &ArgTys[0], ArgTys.size(),
+                                               true /*isVariadic*/);
   MsgSendFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                          SourceLocation(),
                                          msgSendIdent, msgSendType, 0,
@@ -2498,11 +2499,9 @@ void RewriteObjC::SynthMsgSendSuperFunctionDecl() {
   argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
-                                                  &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0,
-                                                  false, false, 0, 0,
-                                                  FunctionType::ExtInfo());
+  QualType msgSendType = getSimpleFunctionType(Context->getObjCIdType(),
+                                               &ArgTys[0], ArgTys.size(),
+                                               true /*isVariadic*/);
   MsgSendSuperFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                               SourceLocation(),
                                               msgSendIdent, msgSendType, 0,
@@ -2520,11 +2519,9 @@ void RewriteObjC::SynthMsgSendStretFunctionDecl() {
   argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
-                                                  &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0,
-                                                  false, false, 0, 0,
-                                                  FunctionType::ExtInfo());
+  QualType msgSendType = getSimpleFunctionType(Context->getObjCIdType(),
+                                               &ArgTys[0], ArgTys.size(),
+                                               true /*isVariadic*/);
   MsgSendStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                          SourceLocation(),
                                          msgSendIdent, msgSendType, 0,
@@ -2547,11 +2544,9 @@ void RewriteObjC::SynthMsgSendSuperStretFunctionDecl() {
   argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
-                                                  &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0,
-                                                  false, false, 0, 0,
-                                                  FunctionType::ExtInfo());
+  QualType msgSendType = getSimpleFunctionType(Context->getObjCIdType(),
+                                               &ArgTys[0], ArgTys.size(),
+                                               true /*isVariadic*/);
   MsgSendSuperStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                                        SourceLocation(),
                                               msgSendIdent, msgSendType, 0,
@@ -2569,11 +2564,9 @@ void RewriteObjC::SynthMsgSendFpretFunctionDecl() {
   argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->DoubleTy,
-                                                  &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0,
-                                                  false, false, 0, 0,
-                                                  FunctionType::ExtInfo());
+  QualType msgSendType = getSimpleFunctionType(Context->DoubleTy,
+                                               &ArgTys[0], ArgTys.size(),
+                                               true /*isVariadic*/);
   MsgSendFpretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                               SourceLocation(),
                                               msgSendIdent, msgSendType, 0,
@@ -2586,11 +2579,8 @@ void RewriteObjC::SynthGetClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getClass");
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
-  QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
-                                                   &ArgTys[0], ArgTys.size(),
-                                                   false /*isVariadic*/, 0,
-                                                  false, false, 0, 0,
-                                                   FunctionType::ExtInfo());
+  QualType getClassType = getSimpleFunctionType(Context->getObjCIdType(),
+                                                &ArgTys[0], ArgTys.size());
   GetClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                           SourceLocation(),
                                           getClassIdent, getClassType, 0,
@@ -2604,11 +2594,8 @@ void RewriteObjC::SynthGetSuperClassFunctionDecl() {
     &Context->Idents.get("class_getSuperclass");
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getObjCClassType());
-  QualType getClassType = Context->getFunctionType(Context->getObjCClassType(),
-                                                   &ArgTys[0], ArgTys.size(),
-                                                   false /*isVariadic*/, 0,
-                                                   false, false, 0, 0,
-                                                   FunctionType::ExtInfo());
+  QualType getClassType = getSimpleFunctionType(Context->getObjCClassType(),
+                                                &ArgTys[0], ArgTys.size());
   GetSuperClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                                    SourceLocation(),
                                                    getSuperClassIdent,
@@ -2623,11 +2610,8 @@ void RewriteObjC::SynthGetMetaClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getMetaClass");
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
-  QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
-                                                   &ArgTys[0], ArgTys.size(),
-                                                   false /*isVariadic*/, 0,
-                                                   false, false, 0, 0,
-                                                   FunctionType::ExtInfo());
+  QualType getClassType = getSimpleFunctionType(Context->getObjCIdType(),
+                                                &ArgTys[0], ArgTys.size());
   GetMetaClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                               SourceLocation(),
                                               getClassIdent, getClassType, 0,
@@ -3075,12 +3059,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                   CK_BitCast, DRE);
 
   // Now do the "normal" pointer to function cast.
-  QualType castType = Context->getFunctionType(returnType,
-    &ArgTypes[0], ArgTypes.size(),
-    // If we don't have a method decl, force a variadic cast.
-    Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : true, 0,
-                                               false, false, 0, 0,
-                                               FunctionType::ExtInfo());
+  QualType castType =
+    getSimpleFunctionType(returnType, &ArgTypes[0], ArgTypes.size(),
+      // If we don't have a method decl, force a variadic cast.
+      Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : true);
   castType = Context->getPointerType(castType);
   cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_BitCast,
                                   cast);
@@ -3108,11 +3090,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
                                     Context->getPointerType(Context->VoidTy),
                                     CK_BitCast, STDRE);
     // Now do the "normal" pointer to function cast.
-    castType = Context->getFunctionType(returnType,
-      &ArgTypes[0], ArgTypes.size(),
-      Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false, 0,
-                                        false, false, 0, 0,
-                                        FunctionType::ExtInfo());
+    castType = getSimpleFunctionType(returnType, &ArgTypes[0], ArgTypes.size(),
+      Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false);
     castType = Context->getPointerType(castType);
     cast = NoTypeInfoCStyleCastExpr(Context, castType, CK_BitCast,
                                     cast);
@@ -4649,9 +4628,7 @@ QualType RewriteObjC::convertFunctionTypeOfBlocks(const FunctionType *FT) {
   // FIXME. Does this work if block takes no argument but has a return type
   // which is of block type?
   if (HasBlockType)
-    FuncType = Context->getFunctionType(Res,
-                        &ArgTypes[0], ArgTypes.size(), false/*no variadic*/, 0,
-                        false, false, 0, 0, FunctionType::ExtInfo());
+    FuncType = getSimpleFunctionType(Res, &ArgTypes[0], ArgTypes.size());
   else FuncType = QualType(FT, 0);
   return FuncType;
 }
@@ -4719,10 +4696,8 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
     }
   }
   // Now do the pointer to function cast.
-  QualType PtrToFuncCastType = Context->getFunctionType(Exp->getType(),
-    &ArgTypes[0], ArgTypes.size(), false/*no variadic*/, 0,
-                                                        false, false, 0, 0, 
-                                                       FunctionType::ExtInfo());
+  QualType PtrToFuncCastType
+    = getSimpleFunctionType(Exp->getType(), &ArgTypes[0], ArgTypes.size());
 
   PtrToFuncCastType = Context->getPointerType(PtrToFuncCastType);
 

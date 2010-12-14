@@ -1473,16 +1473,12 @@ QualType ASTNodeImporter::VisitFunctionProtoType(FunctionProtoType *T) {
       return QualType();
     ExceptionTypes.push_back(ExceptionType);
   }
+
+  FunctionProtoType::ExtProtoInfo EPI = T->getExtProtoInfo();
+  EPI.Exceptions = ExceptionTypes.data();
        
   return Importer.getToContext().getFunctionType(ToResultType, ArgTypes.data(),
-                                                 ArgTypes.size(),
-                                                 T->isVariadic(),
-                                                 T->getTypeQuals(),
-                                                 T->hasExceptionSpec(), 
-                                                 T->hasAnyExceptionSpec(),
-                                                 ExceptionTypes.size(),
-                                                 ExceptionTypes.data(),
-                                                 T->getExtInfo());
+                                                 ArgTypes.size(), EPI);
 }
 
 QualType ASTNodeImporter::VisitTypedefType(TypedefType *T) {

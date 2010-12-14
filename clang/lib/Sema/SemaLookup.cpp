@@ -671,13 +671,14 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
     // Compute the type of the function that we would expect the conversion
     // function to have, if it were to match the name given.
     // FIXME: Calling convention!
-    FunctionType::ExtInfo ConvProtoInfo = ConvProto->getExtInfo();
+    FunctionProtoType::ExtProtoInfo EPI = ConvProto->getExtProtoInfo();
+    EPI.ExtInfo = EPI.ExtInfo.withCallingConv(CC_Default);
+    EPI.HasExceptionSpec = false;
+    EPI.HasAnyExceptionSpec = false;
+    EPI.NumExceptions = 0;
     QualType ExpectedType
       = R.getSema().Context.getFunctionType(R.getLookupName().getCXXNameType(),
-                                            0, 0, ConvProto->isVariadic(),
-                                            ConvProto->getTypeQuals(),
-                                            false, false, 0, 0,
-                                    ConvProtoInfo.withCallingConv(CC_Default));
+                                            0, 0, EPI);
  
     // Perform template argument deduction against the type that we would
     // expect the function to have.

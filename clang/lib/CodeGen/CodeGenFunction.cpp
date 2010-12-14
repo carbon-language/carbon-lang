@@ -250,13 +250,14 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
 
   Builder.SetInsertPoint(EntryBB);
 
-  QualType FnType = getContext().getFunctionType(RetTy, 0, 0, false, 0,
-                                                 false, false, 0, 0,
-                                                 /*FIXME?*/
-                                                 FunctionType::ExtInfo());
-
   // Emit subprogram debug descriptor.
   if (CGDebugInfo *DI = getDebugInfo()) {
+    // FIXME: what is going on here and why does it ignore all these
+    // interesting type properties?
+    QualType FnType =
+      getContext().getFunctionType(RetTy, 0, 0,
+                                   FunctionProtoType::ExtProtoInfo());
+
     DI->setLocation(StartLoc);
     DI->EmitFunctionStart(GD, FnType, CurFn, Builder);
   }

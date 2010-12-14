@@ -626,14 +626,11 @@ public:
     return getFunctionNoProtoType(ResultTy, FunctionType::ExtInfo());
   }
 
-  /// getFunctionType - Return a normal function type with a typed argument
-  /// list.  isVariadic indicates whether the argument list includes '...'.
-  QualType getFunctionType(QualType ResultTy, const QualType *ArgArray,
-                           unsigned NumArgs, bool isVariadic,
-                           unsigned TypeQuals, bool hasExceptionSpec,
-                           bool hasAnyExceptionSpec,
-                           unsigned NumExs, const QualType *ExArray,
-                           const FunctionType::ExtInfo &Info);
+  /// getFunctionType - Return a normal function type with a typed
+  /// argument list.
+  QualType getFunctionType(QualType ResultTy,
+                           const QualType *Args, unsigned NumArgs,
+                           const FunctionProtoType::ExtProtoInfo &EPI);
 
   /// getTypeDeclType - Return the unique reference to the type for
   /// the specified type declaration.
