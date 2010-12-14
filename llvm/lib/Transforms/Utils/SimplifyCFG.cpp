@@ -94,8 +94,6 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
 /// ExistPred, an existing predecessor of Succ.
 static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
                                   BasicBlock *ExistPred) {
-  assert(std::find(succ_begin(ExistPred), succ_end(ExistPred), Succ) !=
-         succ_end(ExistPred) && "ExistPred is not a predecessor of Succ!");
   if (!isa<PHINode>(Succ->begin())) return; // Quick exit if nothing to do
   
   PHINode *PN;
@@ -1089,12 +1087,9 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const TargetData *TD) {
                                             RealDest->getName()+".critedge",
                                             RealDest->getParent(), RealDest);
     BranchInst::Create(RealDest, EdgeBB);
-    PHINode *PN;
-    for (BasicBlock::iterator BBI = RealDest->begin();
-         (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
-      Value *V = PN->getIncomingValueForBlock(BB);
-      PN->addIncoming(V, EdgeBB);
-    }
+    
+    // Update PHI nodes.
+    AddPredecessorToBlock(RealDest, EdgeBB, BB);
 
     // BB may have instructions that are being threaded over.  Clone these
     // instructions into EdgeBB.  We know that there will be no uses of the
@@ -1674,17 +1669,13 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   
   // OtherDest may have phi nodes.  If so, add an entry from PBI's
   // block that are identical to the entries for BI's block.
-  PHINode *PN;
-  for (BasicBlock::iterator II = OtherDest->begin();
-       (PN = dyn_cast<PHINode>(II)); ++II) {
-    Value *V = PN->getIncomingValueForBlock(BB);
-    PN->addIncoming(V, PBI->getParent());
-  }
+  AddPredecessorToBlock(OtherDest, PBI->getParent(), BB);
   
   // We know that the CommonDest already had an edge from PBI to
   // it.  If it has PHIs though, the PHIs may have different
   // entries for BB and PBI's BB.  If so, insert a select to make
   // them agree.
+  PHINode *PN;
   for (BasicBlock::iterator II = CommonDest->begin();
        (PN = dyn_cast<PHINode>(II)); ++II) {
     Value *BIV = PN->getIncomingValueForBlock(BB);
@@ -1935,10 +1926,7 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
     
     // If there are PHI nodes in EdgeBB, then we need to add a new entry to them
     // for the edge we just added.
-    for (BasicBlock::iterator I = EdgeBB->begin(); isa<PHINode>(I); ++I) {
-      PHINode *PN = cast<PHINode>(I);
-      PN->addIncoming(PN->getIncomingValueForBlock(NewBB), BB);
-    }
+    AddPredecessorToBlock(EdgeBB, BB, NewBB);
     
     DEBUG(dbgs() << "  ** 'icmp' chain unhandled condition: " << *ExtraCase
           << "\nEXTRABB = " << *BB);
