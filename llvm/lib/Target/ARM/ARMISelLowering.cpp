@@ -4809,6 +4809,25 @@ static SDValue PerformORCombine(SDNode *N,
   return SDValue();
 }
 
+/// PerformBFICombine - (bfi A, (and B, C1), C2) -> (bfi A, B, C2) iff
+/// C1 & C2 == C1.
+static SDValue PerformBFICombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  SDValue N1 = N->getOperand(1);
+  if (N1.getOpcode() == ISD::AND) {
+    ConstantSDNode *N11C = dyn_cast<ConstantSDNode>(N1.getOperand(1));
+    if (!N11C)
+      return SDValue();
+    unsigned Mask = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
+    unsigned Mask2 = N11C->getZExtValue();
+    if ((Mask & Mask2) == Mask2)
+      return DCI.DAG.getNode(ARMISD::BFI, N->getDebugLoc(), N->getValueType(0),
+                             N->getOperand(0), N1.getOperand(0),
+                             N->getOperand(2));
+  }
+  return SDValue();
+}
+
 /// PerformVMOVRRDCombine - Target-specific dag combine xforms for
 /// ARMISD::VMOVRRD.
 static SDValue PerformVMOVRRDCombine(SDNode *N,
@@ -5398,6 +5417,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::MUL:        return PerformMULCombine(N, DCI, Subtarget);
   case ISD::OR:         return PerformORCombine(N, DCI, Subtarget);
   case ISD::AND:        return PerformANDCombine(N, DCI);
+  case ARMISD::BFI:     return PerformBFICombine(N, DCI);
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ARMISD::VMOVDRR: return PerformVMOVDRRCombine(N, DCI.DAG);
   case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DCI.DAG);

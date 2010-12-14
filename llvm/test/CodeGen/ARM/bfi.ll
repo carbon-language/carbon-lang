@@ -49,3 +49,16 @@ define i32 @f4(i32 %a) nounwind {
   %ins12 = or i32 %ins7, 3137
   ret i32 %ins12
 }
+
+; rdar://8458663
+define i32 @f5(i32 %a, i32 %b) nounwind {
+entry:
+; CHECK: f5:
+; CHECK-NOT: bfc
+; CHECK: bfi r0, r1, #20, #4
+  %0 = and i32 %a, -15728641
+  %1 = shl i32 %b, 20
+  %2 = and i32 %1, 15728640
+  %3 = or i32 %2, %0
+  ret i32 %3
+}
