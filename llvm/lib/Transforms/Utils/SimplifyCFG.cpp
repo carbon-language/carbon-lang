@@ -1148,7 +1148,10 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   BasicBlock *BB = PN->getParent();
   BasicBlock *IfTrue, *IfFalse;
   Value *IfCond = GetIfCondition(BB, IfTrue, IfFalse);
-  if (!IfCond) return false;
+  if (!IfCond ||
+      // Don't bother if the branch will be constant folded trivially.
+      isa<ConstantInt>(IfCond))
+    return false;
   
   // Okay, we found that we can merge this two-entry phi node into a select.
   // Doing so would require us to fold *all* two entry phi nodes in this block.
@@ -1243,6 +1246,13 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
     NV->takeName(PN);
     PN->eraseFromParent();
   }
+  
+  // At this point, IfBlock1 and IfBlock2 are both empty, so our if statement
+  // has been flattened.  Change DomBlock to jump directly to our new block to
+  // avoid other simplifycfg's kicking in on the diamond.
+  TerminatorInst *OldTI = DomBlock->getTerminator();
+  BranchInst::Create(BB, OldTI);
+  OldTI->eraseFromParent();
   return true;
 }
 
