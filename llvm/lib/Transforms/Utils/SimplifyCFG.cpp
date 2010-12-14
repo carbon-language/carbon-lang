@@ -1238,17 +1238,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
     Value *TrueVal  = PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
     Value *FalseVal = PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
     
-    Value *NV;
-    if (Value *V = SimplifySelectInst(IfCond, TrueVal, FalseVal, TD))
-      NV = V;
-    else if (TrueVal->getType()->isIntegerTy(1) && isa<ConstantInt>(TrueVal) &&
-             cast<ConstantInt>(TrueVal)->isOne()) {
-      if (Value *V = SimplifyOrInst(IfCond, FalseVal, TD))
-        NV = V;
-      else
-        NV = BinaryOperator::CreateOr(IfCond, FalseVal, "", AfterPHIIt);
-    } else
-      NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", AfterPHIIt);
+    Value *NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", AfterPHIIt);
     PN->replaceAllUsesWith(NV);
     NV->takeName(PN);
     PN->eraseFromParent();
