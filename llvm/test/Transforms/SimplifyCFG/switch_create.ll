@@ -1,5 +1,4 @@
 ; RUN: opt < %s -simplifycfg -S | FileCheck %s
-; XFAIL: *
 
 declare void @foo1()
 
@@ -257,7 +256,7 @@ lor.end:                                          ; preds = %lor.rhs, %lor.lhs.f
 ; HECK:   %cmp = icmp ult i8 %c, 33
 ; HECK:   br i1 %cmp, label %lor.end, label %switch.early.test
 
-; HECK: switch.early.test:
+; CHECK: switch.early.test:
 ; HECK:   switch i8 %c, label %lor.rhs [
 ; HECK:     i8 46, label %lor.end
 ; HECK:     i8 44, label %lor.end
