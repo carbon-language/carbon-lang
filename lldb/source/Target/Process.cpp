@@ -88,7 +88,6 @@ Process::Process(Target &target, Listener &listener) :
     m_image_tokens (),
     m_listener (listener),
     m_breakpoint_site_list (),
-    m_persistent_vars (),
     m_dynamic_checkers_ap (),
     m_unix_signals (),
     m_target_triple (),
@@ -2157,12 +2156,6 @@ Process::GetSP ()
     return GetTarget().GetProcessSP();
 }
 
-ClangPersistentVariables &
-Process::GetPersistentVariables()
-{
-    return m_persistent_vars;
-}
-
 uint32_t
 Process::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
 {
@@ -2334,7 +2327,7 @@ Process::UpdateInstanceName ()
     }
 }
 
-Process::ExecutionResults
+ExecutionResults
 Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         lldb::ThreadPlanSP &thread_plan_sp,        
                         bool stop_others,
@@ -2375,7 +2368,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     {
         errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
         exe_ctx.process->RestoreProcessEvents();
-        return Process::eExecutionSetupError;
+        return lldb::eExecutionSetupError;
     }
     
     // We need to call the function synchronously, so spin waiting for it to return.
@@ -2440,7 +2433,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     {
                         if (log)
                             log->Printf ("Even though we timed out, the call plan was done.  Exiting wait loop.");
-                        return_value = Process::eExecutionCompleted;
+                        return_value = lldb::eExecutionCompleted;
                         break;
                     }
 
@@ -2458,7 +2451,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     else
                     {
                         exe_ctx.process->RestoreProcessEvents ();
-                        return Process::eExecutionInterrupted;
+                        return lldb::eExecutionInterrupted;
                     }
                 }
             }
@@ -2473,12 +2466,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         
         if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
         {
-            return_value = Process::eExecutionCompleted;
+            return_value = lldb::eExecutionCompleted;
             break;
         }
         else if (exe_ctx.thread->WasThreadPlanDiscarded (thread_plan_sp.get()))
         {
-            return_value = Process::eExecutionDiscarded;
+            return_value = lldb::eExecutionDiscarded;
             break;
         }
         else
@@ -2557,7 +2550,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 exe_ctx.thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
             }
-            return_value = Process::eExecutionInterrupted;
+            return_value = lldb::eExecutionInterrupted;
             break;
         }
     }
@@ -2593,19 +2586,19 @@ Process::ExecutionResultAsCString (ExecutionResults result)
     
     switch (result)
     {
-        case Process::eExecutionCompleted:
+        case lldb::eExecutionCompleted:
             result_name = "eExecutionCompleted";
             break;
-        case Process::eExecutionDiscarded:
+        case lldb::eExecutionDiscarded:
             result_name = "eExecutionDiscarded";
             break;
-        case Process::eExecutionInterrupted:
+        case lldb::eExecutionInterrupted:
             result_name = "eExecutionInterrupted";
             break;
-        case Process::eExecutionSetupError:
+        case lldb::eExecutionSetupError:
             result_name = "eExecutionSetupError";
             break;
-        case Process::eExecutionTimedOut:
+        case lldb::eExecutionTimedOut:
             result_name = "eExecutionTimedOut";
             break;
     }

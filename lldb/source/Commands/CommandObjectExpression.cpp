@@ -232,55 +232,55 @@ CommandObjectExpression::EvaluateExpression
     CommandReturnObject *result
 )
 {
-    if (!m_exe_ctx.process)
-    {
-        error_stream.Printf ("Execution context doesn't contain a process\n");
-        return false;
-    }
-    
-    const char *prefix = NULL;
-    
     if (m_exe_ctx.target)
-        prefix = m_exe_ctx.target->GetExpressionPrefixContentsAsCString();
-    
-    lldb::ValueObjectSP result_valobj_sp;
-    Process::ExecutionResults execution_results = ClangUserExpression::Evaluate (m_exe_ctx, m_options.unwind_on_error, expr, prefix, result_valobj_sp);
-    assert (result_valobj_sp.get());
-    if (result_valobj_sp->GetError().Success())
     {
-        if (m_options.format != eFormatDefault)
-            result_valobj_sp->SetFormat (m_options.format);
+        lldb::ValueObjectSP result_valobj_sp;
 
-        ValueObject::DumpValueObject (output_stream,
-                                      m_exe_ctx.GetBestExecutionContextScope(),
-                                      result_valobj_sp.get(),   // Variable object to dump
-                                      result_valobj_sp->GetName().AsCString(),// Root object name
-                                      0,                        // Pointer depth to traverse (zero means stop at pointers)
-                                      0,                        // Current depth, this is the top most, so zero...
-                                      UINT32_MAX,               // Max depth to go when dumping concrete types, dump everything...
-                                      m_options.show_types,     // Show types when dumping?
-                                      false,                    // Show locations of variables, no since this is a host address which we don't care to see
-                                      m_options.print_object,   // Print the objective C object?
-                                      true,                     // Scope is already checked. Const results are always in scope.
-                                      false);                   // Don't flatten output
-        if (result)
-            result->SetStatus (eReturnStatusSuccessFinishResult);
-    }
-    else
-    {
-        error_stream.PutCString(result_valobj_sp->GetError().AsCString());
-        // If we've been interrupted, display state information.
-        if (execution_results == Process::eExecutionInterrupted && !m_options.unwind_on_error)
+        lldb::ExecutionResults exe_results;
+        exe_results = m_exe_ctx.target->EvaluateExpression(expr, m_exe_ctx.frame, m_options.unwind_on_error, result_valobj_sp);
+        
+        if (exe_results == eExecutionInterrupted && !m_options.unwind_on_error)
         {
             if (m_exe_ctx.thread)
                 lldb_private::DisplayThreadInfo (m_interpreter, result->GetOutputStream(), m_exe_ctx.thread, false, true);
             else
-            {
                 lldb_private::DisplayThreadsInfo (m_interpreter, &m_exe_ctx, *result, true, true); 
+        }
+
+        if (result_valobj_sp)
+        {
+            if (result_valobj_sp->GetError().Success())
+            {
+                if (m_options.format != eFormatDefault)
+                    result_valobj_sp->SetFormat (m_options.format);
+
+                ValueObject::DumpValueObject (output_stream,
+                                              m_exe_ctx.GetBestExecutionContextScope(),
+                                              result_valobj_sp.get(),   // Variable object to dump
+                                              result_valobj_sp->GetName().GetCString(),// Root object name
+                                              0,                        // Pointer depth to traverse (zero means stop at pointers)
+                                              0,                        // Current depth, this is the top most, so zero...
+                                              UINT32_MAX,               // Max depth to go when dumping concrete types, dump everything...
+                                              m_options.show_types,     // Show types when dumping?
+                                              false,                    // Show locations of variables, no since this is a host address which we don't care to see
+                                              m_options.print_object,   // Print the objective C object?
+                                              true,                     // Scope is already checked. Const results are always in scope.
+                                              false);                   // Don't flatten output
+                if (result)
+                    result->SetStatus (eReturnStatusSuccessFinishResult);
+            }
+            else
+            {
+                error_stream.PutCString(result_valobj_sp->GetError().AsCString());
+                if (result)
+                    result->SetStatus (eReturnStatusFailed);
             }
         }
-        if (result)
-            result->SetStatus (eReturnStatusFailed);
+    }
+    else
+    {
+        error_stream.Printf ("error: invalid execution context for expression\n");
+        return false;
     }
         
     return true;

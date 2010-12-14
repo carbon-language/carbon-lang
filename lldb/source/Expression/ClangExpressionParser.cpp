@@ -367,7 +367,7 @@ ClangExpressionParser::MakeDWARF ()
         return err;
     }
     
-    ClangExpressionVariableStore *local_variables = m_expr.LocalVariables();
+    ClangExpressionVariableList *local_variables = m_expr.LocalVariables();
     ClangExpressionDeclMap *decl_map = m_expr.DeclMap();
     
     if (!local_variables)

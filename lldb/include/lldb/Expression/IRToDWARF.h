@@ -13,19 +13,9 @@
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 
-namespace llvm {
-    class BasicBlock;
-    class Module;
-}
-
-namespace lldb_private {
-    class ClangExpressionVariableStore;
-    class ClangExpressionDeclMap;
-    class StreamString;
-}
+#include "lldb/lldb-include.h"
 
 class Relocator;
-
 //----------------------------------------------------------------------
 /// @class IRToDWARF IRToDWARF.h "lldb/Expression/IRToDWARF.h"
 /// @brief Transforms the IR for a function into a DWARF location expression
@@ -64,7 +54,7 @@ public:
     /// @param[in] func_name
     ///     The name of the function to translate to DWARF.
     //------------------------------------------------------------------
-    IRToDWARF(lldb_private::ClangExpressionVariableStore &local_vars, 
+    IRToDWARF(lldb_private::ClangExpressionVariableList &local_vars, 
               lldb_private::ClangExpressionDeclMap *decl_map,
               lldb_private::StreamString &strm,
               const char* func_name = "$__lldb_expr");
@@ -113,7 +103,7 @@ private:
     bool runOnBasicBlock(llvm::BasicBlock &BB, Relocator &Relocator);
     
     std::string m_func_name;                                    ///< The name of the function to translate
-    lldb_private::ClangExpressionVariableStore &m_local_vars;   ///< The list of local variables to populate while transforming
+    lldb_private::ClangExpressionVariableList &m_local_vars;   ///< The list of local variables to populate while transforming
     lldb_private::ClangExpressionDeclMap *m_decl_map;           ///< The list of external variables
     lldb_private::StreamString &m_strm;                         ///< The stream to write bytecode to
 };

@@ -68,12 +68,17 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
 
     if (log)
-        log->Printf ("SectionLoadList::%s (section = %p (%s.%s), load_addr = 0x%16.16llx)",
+    {
+        const FileSpec &module_file_spec (section->GetModule()->GetFileSpec());
+        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16llx)",
                      __FUNCTION__,
                      section,
-                     section->GetModule()->GetFileSpec().GetFilename().AsCString(),
+                     module_file_spec.GetDirectory().AsCString(),
+                     module_file_spec.GetDirectory() ? "/" : "",
+                     module_file_spec.GetFilename().AsCString(),
                      section->GetName().AsCString(),
                      load_addr);
+    }
 
     Mutex::Locker locker(m_mutex);
     collection::iterator pos = m_collection.find(load_addr);
@@ -97,11 +102,16 @@ SectionLoadList::SetSectionUnloaded (const Section *section)
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
 
     if (log)
-        log->Printf ("SectionLoadList::%s (section = %p (%s.%s))",
+    {
+        const FileSpec &module_file_spec (section->GetModule()->GetFileSpec());
+        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s))",
                      __FUNCTION__,
                      section,
-                     section->GetModule()->GetFileSpec().GetFilename().AsCString(),
+                     module_file_spec.GetDirectory().AsCString(),
+                     module_file_spec.GetDirectory() ? "/" : "",
+                     module_file_spec.GetFilename().AsCString(),
                      section->GetName().AsCString());
+    }
 
     size_t unload_count = 0;
     Mutex::Locker locker(m_mutex);
@@ -128,12 +138,17 @@ SectionLoadList::SetSectionUnloaded (const Section *section, addr_t load_addr)
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER | LIBLLDB_LOG_VERBOSE));
 
     if (log)
-        log->Printf ("SectionLoadList::%s (section = %p (%s.%s), load_addr = 0x%16.16llx)",
+    {
+        const FileSpec &module_file_spec (section->GetModule()->GetFileSpec());
+        log->Printf ("SectionLoadList::%s (section = %p (%s%s%s.%s), load_addr = 0x%16.16llx)",
                      __FUNCTION__,
                      section,
-                     section->GetModule()->GetFileSpec().GetFilename().AsCString(),
+                     module_file_spec.GetDirectory().AsCString(),
+                     module_file_spec.GetDirectory() ? "/" : "",
+                     module_file_spec.GetFilename().AsCString(),
                      section->GetName().AsCString(),
                      load_addr);
+    }
     Mutex::Locker locker(m_mutex);
     return m_collection.erase (load_addr) != 0;
 }

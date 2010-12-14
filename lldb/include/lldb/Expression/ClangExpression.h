@@ -74,7 +74,7 @@ public:
     /// Return the object that the parser should use when registering
     /// local variables.  May be NULL if the Expression doesn't care.
     //------------------------------------------------------------------
-    virtual ClangExpressionVariableStore *
+    virtual ClangExpressionVariableList *
     LocalVariables () = 0;
     
     //------------------------------------------------------------------

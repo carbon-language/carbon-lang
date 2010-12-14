@@ -522,6 +522,10 @@ public:
     lldb::clang_type_t
     CreatePointerType (lldb::clang_type_t clang_type);
 
+    static lldb::clang_type_t
+    CreatePointerType (clang::ASTContext *ast, 
+                       lldb::clang_type_t clang_type);
+
     lldb::clang_type_t
     CreateLValueReferenceType (lldb::clang_type_t clang_type);
 

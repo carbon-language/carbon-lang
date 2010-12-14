@@ -72,12 +72,12 @@ public:
     ///
     /// Initializes class variabes.
     //------------------------------------------------------------------
-    ClangExpressionDeclMap();
+    ClangExpressionDeclMap ();
     
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    ~ClangExpressionDeclMap();
+    ~ClangExpressionDeclMap ();
     
     //------------------------------------------------------------------
     /// Enable the state needed for parsing and IR transformation.
@@ -86,12 +86,14 @@ public:
     ///     The execution context to use when finding types for variables.
     ///     Also used to find a "scratch" AST context to store result types.
     //------------------------------------------------------------------
-    void WillParse(ExecutionContext &exe_ctx);
+    void
+    WillParse (ExecutionContext &exe_ctx);
     
     //------------------------------------------------------------------
     /// Disable the state needed for parsing and IR transformation.
     //------------------------------------------------------------------
-    void DidParse();
+    void 
+    DidParse ();
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Get a new result variable name of the form
@@ -124,9 +126,10 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool AddPersistentVariable (const clang::NamedDecl *decl,
-                                const ConstString &name, 
-                                TypeFromParser type);
+    bool 
+    AddPersistentVariable (const clang::NamedDecl *decl,
+                           const ConstString &name, 
+                           TypeFromParser type);
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Add a variable to the struct that needs to
@@ -150,11 +153,12 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool AddValueToStruct (const clang::NamedDecl *decl,
-                           const ConstString &name,
-                           llvm::Value *value,
-                           size_t size,
-                           off_t alignment);
+    bool 
+    AddValueToStruct (const clang::NamedDecl *decl,
+                      const ConstString &name,
+                      llvm::Value *value,
+                      size_t size,
+                      off_t alignment);
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Finalize the struct, laying out the position 
@@ -163,7 +167,8 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool DoStructLayout ();
+    bool 
+    DoStructLayout ();
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Get general information about the laid-out
@@ -181,9 +186,10 @@ public:
     /// @return
     ///     True if the information could be retrieved; false otherwise.
     //------------------------------------------------------------------
-    bool GetStructInfo (uint32_t &num_elements,
-                        size_t &size,
-                        off_t &alignment);
+    bool 
+    GetStructInfo (uint32_t &num_elements,
+                   size_t &size,
+                   off_t &alignment);
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Get specific information about one field
@@ -216,11 +222,12 @@ public:
     /// @return
     ///     True if the information could be retrieved; false otherwise.
     //------------------------------------------------------------------
-    bool GetStructElement (const clang::NamedDecl *&decl,
-                           llvm::Value *&value,
-                           off_t &offset,
-                           ConstString &name,
-                           uint32_t index);
+    bool 
+    GetStructElement (const clang::NamedDecl *&decl,
+                      llvm::Value *&value,
+                      off_t &offset,
+                      ConstString &name,
+                      uint32_t index);
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Get information about a function given its
@@ -240,9 +247,10 @@ public:
     /// @return
     ///     True if the information could be retrieved; false otherwise.
     //------------------------------------------------------------------
-    bool GetFunctionInfo (const clang::NamedDecl *decl, 
-                          llvm::Value**& value, 
-                          uint64_t &ptr);
+    bool 
+    GetFunctionInfo (const clang::NamedDecl *decl, 
+                     llvm::Value**& value, 
+                     uint64_t &ptr);
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Get the address of a function given nothing
@@ -259,8 +267,9 @@ public:
     /// @return
     ///     True if the address could be retrieved; false otherwise.
     //------------------------------------------------------------------
-    bool GetFunctionAddress (const ConstString &name,
-                             uint64_t &ptr);
+    bool 
+    GetFunctionAddress (const ConstString &name,
+                        uint64_t &ptr);
     
     //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Materialize the entire struct
@@ -280,9 +289,10 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool Materialize(ExecutionContext &exe_ctx,
-                     lldb::addr_t &struct_address,
-                     Error &error);
+    bool 
+    Materialize (ExecutionContext &exe_ctx,
+                 lldb::addr_t &struct_address,
+                 Error &error);
     
     //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Get the "this" pointer
@@ -308,11 +318,12 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool GetObjectPointer(lldb::addr_t &object_ptr,
-                          ConstString &object_name,
-                          ExecutionContext &exe_ctx,
-                          Error &error,
-                          bool suppress_type_check = false);
+    bool
+    GetObjectPointer (lldb::addr_t &object_ptr,
+                      ConstString &object_name,
+                      ExecutionContext &exe_ctx,
+                      Error &error,
+                      bool suppress_type_check = false);
     
     //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Pretty-print a materialized
@@ -332,9 +343,10 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool DumpMaterializedStruct(ExecutionContext &exe_ctx,
-                                Stream &s,
-                                Error &error);
+    bool 
+    DumpMaterializedStruct (ExecutionContext &exe_ctx,
+                            Stream &s,
+                            Error &error);
     
     //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Deaterialize the entire struct.
@@ -353,9 +365,10 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool Dematerialize(ExecutionContext &exe_ctx,
-                       ClangExpressionVariable *&result,
-                       Error &error);
+    bool 
+    Dematerialize (ExecutionContext &exe_ctx,
+                   lldb::ClangExpressionVariableSP &result_sp,
+                   Error &error);
     
     //------------------------------------------------------------------
     /// [Used by ClangASTSource] Find all entities matching a given name,
@@ -373,8 +386,9 @@ public:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    void GetDecls (NameSearchContext &context,
-                   const ConstString &name);
+    void 
+    GetDecls (NameSearchContext &context,
+              const ConstString &name);
     
     //------------------------------------------------------------------
     /// [Used by ClangASTSource] Report whether a $__lldb variable has
@@ -405,8 +419,8 @@ public:
     }
 
 private:
-    ClangExpressionVariableStore    m_found_entities;           ///< All entities that were looked up for the parser.
-    ClangExpressionVariableList     m_struct_members;           ///< All entities that need to be placed in the struct.
+    ClangExpressionVariableList    m_found_entities;           ///< All entities that were looked up for the parser.
+    ClangExpressionVariableList    m_struct_members;           ///< All entities that need to be placed in the struct.
     
     //----------------------------------------------------------------------
     /// The following values should not live beyond parsing
@@ -421,6 +435,15 @@ private:
         {
         }
         
+        Target *
+        GetTarget()
+        {
+            if (m_exe_ctx && m_exe_ctx->target)
+                return m_exe_ctx->target;
+            else if (m_sym_ctx.target_sp)
+                m_sym_ctx.target_sp.get();
+            return NULL;
+        }
         ExecutionContext           *m_exe_ctx;          ///< The execution context to use when parsing.
         SymbolContext               m_sym_ctx;          ///< The symbol context to use in finding variables and types.
         ClangPersistentVariables   *m_persistent_vars;  ///< The persistent variables for the process.
@@ -433,7 +456,8 @@ private:
     //----------------------------------------------------------------------
     /// Activate parser-specific variables
     //----------------------------------------------------------------------
-    void EnableParserVars()
+    void 
+    EnableParserVars()
     {
         if (!m_parser_vars.get())
             m_parser_vars.reset(new struct ParserVars);
@@ -442,7 +466,8 @@ private:
     //----------------------------------------------------------------------
     /// Deallocate parser-specific variables
     //----------------------------------------------------------------------
-    void DisableParserVars()
+    void 
+    DisableParserVars()
     {
         m_parser_vars.reset();
     }
@@ -473,7 +498,8 @@ private:
     //----------------------------------------------------------------------
     /// Activate struct variables
     //----------------------------------------------------------------------
-    void EnableStructVars()
+    void 
+    EnableStructVars()
     {
         if (!m_struct_vars.get())
             m_struct_vars.reset(new struct StructVars);
@@ -482,7 +508,8 @@ private:
     //----------------------------------------------------------------------
     /// Deallocate struct variables
     //----------------------------------------------------------------------
-    void DisableStructVars()
+    void
+    DisableStructVars()
     {
         m_struct_vars.reset();
     }
@@ -508,7 +535,8 @@ private:
     //----------------------------------------------------------------------
     /// Activate materialization-specific variables
     //----------------------------------------------------------------------
-    void EnableMaterialVars()
+    void 
+    EnableMaterialVars()
     {
         if (!m_material_vars.get())
             m_material_vars.reset(new struct MaterialVars);
@@ -517,7 +545,8 @@ private:
     //----------------------------------------------------------------------
     /// Deallocate materialization-specific variables
     //----------------------------------------------------------------------
-    void DisableMaterialVars()
+    void 
+    DisableMaterialVars()
     {
         m_material_vars.reset();
     }
@@ -542,9 +571,10 @@ private:
     /// @return
     ///     The LLDB Variable found, or NULL if none was found.
     //------------------------------------------------------------------
-    Variable *FindVariableInScope(StackFrame &frame,
-                                  const ConstString &name,
-                                  TypeFromUser *type = NULL);
+    Variable *
+    FindVariableInScope (StackFrame &frame,
+                         const ConstString &name,
+                         TypeFromUser *type = NULL);
     
     //------------------------------------------------------------------
     /// Get the value of a variable in a given execution context and return
@@ -575,11 +605,12 @@ private:
     /// @return
     ///     The LLDB Value for the variable.
     //------------------------------------------------------------------
-    Value *GetVariableValue(ExecutionContext &exe_ctx,
-                            Variable *var,
-                            clang::ASTContext *parser_ast_context,
-                            TypeFromUser *found_type = NULL,
-                            TypeFromParser *parser_type = NULL);
+    Value *
+    GetVariableValue (ExecutionContext &exe_ctx,
+                      Variable *var,
+                      clang::ASTContext *parser_ast_context,
+                      TypeFromUser *found_type = NULL,
+                      TypeFromParser *parser_type = NULL);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given LLDB
@@ -591,8 +622,9 @@ private:
     /// @param[in] var
     ///     The LLDB Variable that needs a Decl.
     //------------------------------------------------------------------
-    void AddOneVariable(NameSearchContext &context, 
-                        Variable *var);
+    void 
+    AddOneVariable (NameSearchContext &context, 
+                    Variable *var);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -604,7 +636,9 @@ private:
     /// @param[in] pvar
     ///     The persistent variable that needs a Decl.
     //------------------------------------------------------------------
-    void AddOneVariable(NameSearchContext &context, ClangExpressionVariable *pvar);
+    void 
+    AddOneVariable (NameSearchContext &context, 
+                    lldb::ClangExpressionVariableSP &pvar_sp);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -622,7 +656,10 @@ private:
     ///     The Symbol that corresponds to a function that needs to be 
     ///     created with generic type (unitptr_t foo(...)).
     //------------------------------------------------------------------
-    void AddOneFunction(NameSearchContext &context, Function *fun, Symbol *sym);
+    void
+    AddOneFunction (NameSearchContext &context, 
+                    Function *fun, 
+                    Symbol *sym);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -634,7 +671,9 @@ private:
     /// @param[in] reg_info
     ///     The information corresponding to that register.
     //------------------------------------------------------------------
-    void AddOneRegister(NameSearchContext &context, const lldb::RegisterInfo *reg_info);
+    void 
+    AddOneRegister (NameSearchContext &context, 
+                    const lldb::RegisterInfo *reg_info);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -650,9 +689,10 @@ private:
     ///     True if a method with signature void $__lldb_expr(void*)
     ///     should be added to the C++ class type passed in
     //------------------------------------------------------------------
-    void AddOneType(NameSearchContext &context, 
-                    TypeFromUser &type, 
-                    bool add_method = false);
+    void 
+    AddOneType (NameSearchContext &context, 
+                TypeFromUser &type, 
+                bool add_method = false);
     
     //------------------------------------------------------------------
     /// Actually do the task of materializing or dematerializing the struct.
@@ -678,15 +718,17 @@ private:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool DoMaterialize (bool dematerialize,
-                        ExecutionContext &exe_ctx,
-                        ClangExpressionVariable **result,
-                        Error &err);
+    bool 
+    DoMaterialize (bool dematerialize,
+                   ExecutionContext &exe_ctx,
+                   lldb::ClangExpressionVariableSP *result_sp_ptr,
+                   Error &err);
     
     //------------------------------------------------------------------
     /// Clean up the state required to dematerialize the variable.
     //------------------------------------------------------------------
-    void DidDematerialize ();
+    void 
+    DidDematerialize ();
 
     //------------------------------------------------------------------
     /// Actually do the task of materializing or dematerializing a persistent
@@ -699,8 +741,8 @@ private:
     /// @param[in] exe_ctx
     ///     The execution context to use.
     ///
-    /// @param[in] name
-    ///     The name of the persistent variable.
+    /// @param[in] var_sp
+    ///     The persistent variable to materialize
     ///
     /// @param[in] addr
     ///     The address at which to materialize the variable.
@@ -712,11 +754,12 @@ private:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool DoMaterializeOnePersistentVariable(bool dematerialize,
-                                            ExecutionContext &exe_ctx,
-                                            const ConstString &name,
-                                            lldb::addr_t addr,
-                                            Error &err);
+    bool 
+    DoMaterializeOnePersistentVariable (bool dematerialize,
+                                        ExecutionContext &exe_ctx,
+                                        lldb::ClangExpressionVariableSP &var_sp,
+                                        lldb::addr_t addr,
+                                        Error &err);
     
     //------------------------------------------------------------------
     /// Actually do the task of materializing or dematerializing a 
@@ -748,13 +791,14 @@ private:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool DoMaterializeOneVariable(bool dematerialize,
-                                  ExecutionContext &exe_ctx,
-                                  const SymbolContext &sym_ctx,
-                                  const ConstString &name,
-                                  TypeFromUser type,
-                                  lldb::addr_t addr, 
-                                  Error &err);
+    bool 
+    DoMaterializeOneVariable (bool dematerialize,
+                              ExecutionContext &exe_ctx,
+                              const SymbolContext &sym_ctx,
+                              const ConstString &name,
+                              TypeFromUser type,
+                              lldb::addr_t addr, 
+                              Error &err);
     
     //------------------------------------------------------------------
     /// Actually do the task of materializing or dematerializing a 
@@ -783,12 +827,13 @@ private:
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
-    bool DoMaterializeOneRegister(bool dematerialize,
-                                  ExecutionContext &exe_ctx,
-                                  RegisterContext &reg_ctx,
-                                  const lldb::RegisterInfo &reg_info,
-                                  lldb::addr_t addr, 
-                                  Error &err);
+    bool 
+    DoMaterializeOneRegister (bool dematerialize,
+                              ExecutionContext &exe_ctx,
+                              RegisterContext &reg_ctx,
+                              const lldb::RegisterInfo &reg_info,
+                              lldb::addr_t addr, 
+                              Error &err);
     
     //------------------------------------------------------------------
     /// A wrapper for ClangASTContext::CopyType that sets a flag that
@@ -807,9 +852,10 @@ private:
     /// @return
     ///     The imported type.
     //------------------------------------------------------------------
-    void *GuardedCopyType (clang::ASTContext *dest_context, 
-                           clang::ASTContext *source_context,
-                           void *clang_type);
+    void *
+    GuardedCopyType (clang::ASTContext *dest_context, 
+                     clang::ASTContext *source_context,
+                     void *clang_type);
 };
     
 } // namespace lldb_private

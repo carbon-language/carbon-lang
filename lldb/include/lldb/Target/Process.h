@@ -266,17 +266,6 @@ public:
         eBroadcastInternalStateControlPause = (1<<1),
         eBroadcastInternalStateControlResume = (1<<2)
     };
-
-    // We can execute Thread Plans on one thread with various fall-back modes (try other threads after timeout, etc.)
-    // This enum gives the result of thread plan executions.
-    typedef enum ExecutionResults
-    {
-        eExecutionSetupError,
-        eExecutionCompleted,
-        eExecutionDiscarded,
-        eExecutionInterrupted,
-        eExecutionTimedOut
-    } ExecutionResults;
         
     //------------------------------------------------------------------
     /// A notification structure that can be used by clients to listen
@@ -1195,7 +1184,7 @@ public:
     lldb::StateType
     GetState ();
     
-    ExecutionResults
+    lldb::ExecutionResults
     RunThreadPlan (ExecutionContext &exe_ctx,    
                     lldb::ThreadPlanSP &thread_plan_sp,
                     bool stop_others,
@@ -1205,7 +1194,7 @@ public:
                     Stream &errors);
 
     static const char *
-    ExecutionResultAsCString (ExecutionResults result);
+    ExecutionResultAsCString (lldb::ExecutionResults result);
 
 protected:
     friend class CommandObjectProcessLaunch;
@@ -1751,9 +1740,6 @@ public:
     lldb::ProcessSP
     GetSP ();
     
-    ClangPersistentVariables &
-    GetPersistentVariables();
-    
 protected:
     //------------------------------------------------------------------
     // Member variables
@@ -1776,7 +1762,6 @@ protected:
     Listener                    &m_listener;
     BreakpointSiteList          m_breakpoint_site_list; ///< This is the list of breakpoint locations we intend
                                                         ///< to insert in the target.
-    ClangPersistentVariables    m_persistent_vars;      ///< These are the persistent variables associated with this process for the expression parser.
     std::auto_ptr<DynamicCheckerFunctions>  m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
     UnixSignals                 m_unix_signals;         /// This is the current signal set for this process.
     ConstString                 m_target_triple;

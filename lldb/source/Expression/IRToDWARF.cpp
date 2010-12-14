@@ -26,7 +26,7 @@ using namespace llvm;
 
 static char ID;
 
-IRToDWARF::IRToDWARF(lldb_private::ClangExpressionVariableStore &local_vars, 
+IRToDWARF::IRToDWARF(lldb_private::ClangExpressionVariableList &local_vars, 
                      lldb_private::ClangExpressionDeclMap *decl_map,
                      lldb_private::StreamString &strm,
                      const char *func_name) :

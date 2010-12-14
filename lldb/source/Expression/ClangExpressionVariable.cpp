@@ -25,116 +25,109 @@
 using namespace lldb_private;
 using namespace clang;
 
-ClangExpressionVariable::ClangExpressionVariable() :
-    m_name(),
-    m_user_type (TypeFromUser(NULL, NULL)),
-    m_store (NULL),
-    m_register_info (NULL),
-    m_index (0),
+ClangExpressionVariable::ClangExpressionVariable(lldb::ByteOrder byte_order, uint32_t addr_byte_size) :
     m_parser_vars(),
     m_jit_vars (),
-    m_data_sp ()
+    m_valojb_sp (new ValueObjectConstResult(byte_order, addr_byte_size))
 {
 }
 
-void 
-ClangExpressionVariable::DisableDataVars()
+ClangExpressionVariable::ClangExpressionVariable (const lldb::ValueObjectSP &valobj_sp) :
+    m_parser_vars(),
+    m_jit_vars (),
+    m_valojb_sp (valobj_sp)
 {
-    m_data_sp.reset();
 }
 
-
-ClangExpressionVariable::ClangExpressionVariable(const ClangExpressionVariable &rhs) :
-    m_name(rhs.m_name),
-    m_user_type(rhs.m_user_type),
-    m_store(rhs.m_store),  
-    m_register_info(rhs.m_register_info),
-    m_index(rhs.m_index)
+//----------------------------------------------------------------------
+/// Return the variable's size in bytes
+//----------------------------------------------------------------------
+size_t 
+ClangExpressionVariable::GetByteSize ()
 {
-    if (rhs.m_parser_vars.get())
-    {
-        // TODO: Sean, can m_parser_vars be a shared pointer??? We are copy
-        // constructing it here. That is ok if we need to, but do we really
-        // need to?
-        m_parser_vars.reset(new struct ParserVars);
-        *m_parser_vars.get() = *rhs.m_parser_vars.get();
-    }
-    
-    if (rhs.m_jit_vars.get())
-    {
-        // TODO: Sean, can m_jit_vars be a shared pointer??? We are copy
-        // constructing it here. That is ok if we need to, but do we really
-        // need to?
-        m_jit_vars.reset(new struct JITVars);
-        *m_jit_vars.get() = *rhs.m_jit_vars.get();
-    }
-    
-    if (rhs.m_data_sp)
-    {
-        // TODO: Sean, does m_data_sp need to be copy constructed? Or can it
-        // shared the data?
-        
-        m_data_sp.reset(new DataBufferHeap (rhs.m_data_sp->GetBytes(),
-                                            rhs.m_data_sp->GetByteSize()));
-    }
-}
+    return m_valojb_sp->GetByteSize();
+}    
 
-bool
-ClangExpressionVariable::PointValueAtData(Value &value, ExecutionContext *exe_ctx)
+const ConstString &
+ClangExpressionVariable::GetName ()
 {
-    if (m_data_sp.get() == NULL)
-        return false;
-    
-    value.SetContext(Value::eContextTypeClangType, m_user_type.GetOpaqueQualType());
-    value.SetValueType(Value::eValueTypeHostAddress);
-    value.GetScalar() = (uintptr_t)m_data_sp->GetBytes();
-    clang::ASTContext *ast_context = m_user_type.GetASTContext();
-
-    if (exe_ctx)
-        value.ResolveValue (exe_ctx, ast_context);
-    
-    return true;
-}
-
-void 
-ClangExpressionVariable::EnableDataVars()
-{
-    if (!m_data_sp.get())
-        m_data_sp.reset(new DataBufferHeap);
-}
+    return m_valojb_sp->GetName();
+}    
 
 lldb::ValueObjectSP
-ClangExpressionVariable::GetExpressionResult (ExecutionContext *exe_ctx)
+ClangExpressionVariable::GetValueObject()
 {
-    lldb::ValueObjectSP result_sp;
-    if (m_data_sp)
+    return m_valojb_sp;
+}
+
+lldb::RegisterInfo *
+ClangExpressionVariable::GetRegisterInfo()
+{
+    return m_valojb_sp->GetValue().GetRegisterInfo();
+}
+
+void
+ClangExpressionVariable::SetRegisterInfo (const lldb::RegisterInfo *reg_info)
+{
+    return m_valojb_sp->GetValue().SetContext (Value::eContextTypeRegisterInfo, const_cast<lldb::RegisterInfo *>(reg_info));
+}
+
+lldb::clang_type_t
+ClangExpressionVariable::GetClangType()
+{
+    return m_valojb_sp->GetClangType();
+}    
+
+void
+ClangExpressionVariable::SetClangType(lldb::clang_type_t clang_type)
+{
+    m_valojb_sp->GetValue().SetContext(Value::eContextTypeClangType, clang_type);
+}    
+
+clang::ASTContext *
+ClangExpressionVariable::GetClangAST()
+{
+    return m_valojb_sp->GetClangAST();
+}    
+
+void
+ClangExpressionVariable::SetClangAST (clang::ASTContext *ast)
+{
+    m_valojb_sp->SetClangAST (ast);
+}
+
+TypeFromUser
+ClangExpressionVariable::GetTypeFromUser()
+{
+    TypeFromUser tfu (m_valojb_sp->GetClangType(), m_valojb_sp->GetClangAST());
+    return tfu;
+}    
+
+uint8_t *
+ClangExpressionVariable::GetValueBytes()
+{
+    const size_t byte_size = m_valojb_sp->GetByteSize();
+    if (byte_size > 0)
     {
-        Target * target = NULL;
-        Process *process = NULL;
-        if (exe_ctx)
+        if (m_valojb_sp->GetDataExtractor().GetByteSize() < byte_size)
         {
-            target = exe_ctx->target;
-            process = exe_ctx->process;
+            m_valojb_sp->GetValue().ResizeData(byte_size);
+            m_valojb_sp->GetValue().GetData (m_valojb_sp->GetDataExtractor());
         }
-        
-        Value value;
-        if (PointValueAtData(value, exe_ctx))
-        {
-            lldb::ByteOrder byte_order = lldb::eByteOrderHost;
-            uint32_t addr_byte_size = 4;
-            if (process)
-            {
-                byte_order = process->GetByteOrder();
-                addr_byte_size = process->GetAddressByteSize();
-            }
-            result_sp.reset (new ValueObjectConstResult (m_user_type.GetASTContext(),
-                                                         m_user_type.GetOpaqueQualType(),
-                                                         m_name,
-                                                         m_data_sp,// TODO: sean can you get this to be valid?
-                                                         byte_order,
-                                                         addr_byte_size));
-        }
+        return const_cast<uint8_t *>(m_valojb_sp->GetDataExtractor().GetDataStart());
     }
-    return result_sp;
+    return NULL;
+}
+
+void
+ClangExpressionVariable::SetName (const ConstString &name)
+{
+    m_valojb_sp->SetName (name);
+}
+
+void
+ClangExpressionVariable::ValueUpdated ()
+{
+    m_valojb_sp->ValueUpdated ();
 }
 

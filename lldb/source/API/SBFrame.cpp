@@ -570,16 +570,10 @@ SBFrame::EvaluateExpression (const char *expr)
 
     if (m_opaque_sp)
     {
-        ExecutionContext exe_ctx;
-        m_opaque_sp->CalculateExecutionContext (exe_ctx);
-        
-        const char *prefix = NULL;
-        const bool discard_on_error = true;
-        
-        if (exe_ctx.target)
-            prefix = exe_ctx.target->GetExpressionPrefixContentsAsCString();
-        
-        ClangUserExpression::Evaluate (exe_ctx, discard_on_error, expr, prefix, *expr_result);
+        lldb::ExecutionResults exe_results;
+        const bool unwind_on_error = true;
+
+        exe_results = m_opaque_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, m_opaque_sp.get(), unwind_on_error, *expr_result);
     }
     
     if (expr_log)

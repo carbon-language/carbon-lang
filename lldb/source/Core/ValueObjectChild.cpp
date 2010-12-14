@@ -125,7 +125,8 @@ ValueObjectChild::UpdateValue (ExecutionContextScope *exe_scope)
                 else
                 {
                     m_value.GetScalar() += m_byte_offset;
-                    if (value_type == Value::eValueTypeScalar ||
+                    if (m_pointers_point_to_load_addrs ||
+                        value_type == Value::eValueTypeScalar ||
                         value_type == Value::eValueTypeFileAddress)
                         m_value.SetValueType (Value::eValueTypeLoadAddress);
                 }

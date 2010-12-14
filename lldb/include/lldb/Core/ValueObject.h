@@ -113,6 +113,12 @@ public:
     {
         return 0;
     }
+    
+    virtual bool
+    SetClangAST (clang::ASTContext *ast)
+    {
+        return false;
+    }
 
     virtual const char *
     GetValueAsCString (ExecutionContextScope *exe_scope);
@@ -197,6 +203,25 @@ public:
         return m_dynamic_value_sp;
     }
     
+    virtual lldb::ValueObjectSP
+    CreateConstantValue (ExecutionContextScope *exe_scope, const ConstString &name);
+
+    virtual lldb::ValueObjectSP
+    Dereference (ExecutionContextScope *exe_scope, Error *error_ptr);
+    
+    virtual lldb::ValueObjectSP
+    AddressOf ();
+
+    // The backing bits of this value object were updated, clear any value
+    // values, summaries or descriptions so we refetch them.
+    virtual void
+    ValueUpdated ()
+    {
+        m_value_str.clear();
+        m_summary_str.clear();
+        m_object_desc_str.clear();
+    }
+
     bool
     SetDynamicValue ();
 
@@ -249,6 +274,13 @@ public:
     {
         return m_parent;
     }
+    
+    void
+    SetPointersPointToLoadAddrs (bool b)
+    {
+        m_pointers_point_to_load_addrs = b;
+    }
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these
@@ -277,8 +309,12 @@ protected:
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
                         m_children_count_valid:1,
-                        m_old_value_valid:1;
-                        
+                        m_old_value_valid:1,
+                        m_pointers_point_to_load_addrs:1;
+    
+    friend class CommandObjectExpression;
+    friend class ClangExpressionVariable;
+    friend class Target;
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------

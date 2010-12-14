@@ -21,6 +21,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectChild.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectList.h"
 
 #include "lldb/Symbol/ClangASTType.h"
@@ -62,7 +63,8 @@ ValueObject::ValueObject (ValueObject *parent) :
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
-    m_old_value_valid (false)
+    m_old_value_valid (false),
+    m_pointers_point_to_load_addrs (false)
 {
 }
 
@@ -281,7 +283,7 @@ ValueObject::GetIndexOfChildWithName (const ConstString &name)
     bool omit_empty_base_classes = true;
     return ClangASTContext::GetIndexOfChildWithName (GetClangAST(),
                                                      GetClangType(),
-                                                     name.AsCString(),
+                                                     name.GetCString(),
                                                      omit_empty_base_classes);
 }
 
@@ -297,7 +299,7 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
     bool omit_empty_base_classes = true;
     const size_t num_child_indexes =  ClangASTContext::GetIndexOfChildMemberWithName (clang_ast,
                                                                                       clang_type,
-                                                                                      name.AsCString(),
+                                                                                      name.GetCString(),
                                                                                       omit_empty_base_classes,
                                                                                       child_indexes);
     ValueObjectSP child_sp;
@@ -370,7 +372,7 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
     clang_type_t clang_type = GetClangType();
     clang_type_t child_clang_type;
     child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (clang_ast,
-                                                                  GetName().AsCString(),
+                                                                  GetName().GetCString(),
                                                                   clang_type,
                                                                   idx,
                                                                   transparent_pointers,
@@ -399,6 +401,8 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
                                                child_bitfield_bit_size,
                                                child_bitfield_bit_offset,
                                                child_is_base_class));
+        if (m_pointers_point_to_load_addrs)
+            valobj_sp->SetPointersPointToLoadAddrs (m_pointers_point_to_load_addrs);
     }
     return valobj_sp;
 }
@@ -418,8 +422,8 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                 StreamString sstr;
                 clang_type_t elem_or_pointee_clang_type;
                 const Flags type_flags (ClangASTContext::GetTypeInfo (clang_type, 
-                                                                          GetClangAST(), 
-                                                                          &elem_or_pointee_clang_type));
+                                                                      GetClangAST(), 
+                                                                      &elem_or_pointee_clang_type));
 
                 if (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
                     ClangASTContext::IsCharType (elem_or_pointee_clang_type))
@@ -721,6 +725,10 @@ ValueObject::GetPointerValue (lldb::AddressType &address_type, bool scalar_is_lo
         }
         break;
     }
+
+    if (m_pointers_point_to_load_addrs)
+        address_type = eAddressTypeLoad;
+
     return address;
 }
 
@@ -956,7 +964,7 @@ ValueObject::GetExpressionPath (Stream &s)
     }
     else
     {
-        const char *name = GetName().AsCString();
+        const char *name = GetName().GetCString();
         if (name)
             s.PutCString(name);    
     }
@@ -1001,7 +1009,7 @@ ValueObject::DumpValueObject
 
             // Always show the type for the top level items.
             if (show_types || curr_depth == 0)
-                s.Printf("(%s) ", valobj->GetTypeName().AsCString());
+                s.Printf("(%s) ", valobj->GetTypeName().AsCString("<invalid type>"));
 
 
             if (flat_output)
@@ -1161,5 +1169,199 @@ ValueObject::DumpValueObject
             }
         }
     }
+}
+
+
+ValueObjectSP
+ValueObject::CreateConstantValue (ExecutionContextScope *exe_scope, const ConstString &name)
+{
+    ValueObjectSP valobj_sp;
+    
+    if (UpdateValueIfNeeded(exe_scope) && m_error.Success())
+    {
+        ExecutionContext exe_ctx;
+        exe_scope->CalculateExecutionContext(exe_ctx);
+
+        clang::ASTContext *ast = GetClangAST ();
+
+        DataExtractor data;
+        data.SetByteOrder (m_data.GetByteOrder());
+        data.SetAddressByteSize(m_data.GetAddressByteSize());
+
+        m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0);
+
+        valobj_sp.reset (new ValueObjectConstResult (ast,
+                                                     GetClangType(),
+                                                     name,
+                                                     data));
+    }
+    else
+    {
+        valobj_sp.reset (new ValueObjectConstResult (m_error));
+    }
+    return valobj_sp;
+}
+
+lldb::ValueObjectSP
+ValueObject::Dereference (ExecutionContextScope *exe_scope, Error *error_ptr)
+{
+    lldb::ValueObjectSP valobj_sp;
+    if (IsPointerType())
+    {
+        bool omit_empty_base_classes = true;
+
+        std::string child_name_str;
+        uint32_t child_byte_size = 0;
+        int32_t child_byte_offset = 0;
+        uint32_t child_bitfield_bit_size = 0;
+        uint32_t child_bitfield_bit_offset = 0;
+        bool child_is_base_class = false;
+        const bool transparent_pointers = false;
+        clang::ASTContext *clang_ast = GetClangAST();
+        clang_type_t clang_type = GetClangType();
+        clang_type_t child_clang_type;
+        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (clang_ast,
+                                                                      GetName().GetCString(),
+                                                                      clang_type,
+                                                                      0,
+                                                                      transparent_pointers,
+                                                                      omit_empty_base_classes,
+                                                                      child_name_str,
+                                                                      child_byte_size,
+                                                                      child_byte_offset,
+                                                                      child_bitfield_bit_size,
+                                                                      child_bitfield_bit_offset,
+                                                                      child_is_base_class);
+        if (child_clang_type)
+        {
+            ConstString child_name;
+            if (!child_name_str.empty())
+                child_name.SetCString (child_name_str.c_str());
+
+            valobj_sp.reset (new ValueObjectChild (this,
+                                                   clang_ast,
+                                                   child_clang_type,
+                                                   child_name,
+                                                   child_byte_size,
+                                                   child_byte_offset,
+                                                   child_bitfield_bit_size,
+                                                   child_bitfield_bit_offset,
+                                                   child_is_base_class));
+        }
+    }
+    else
+    {
+        if (error_ptr)
+            error_ptr->SetErrorString("can't dereference a non-pointer value");
+    }
+
+    return valobj_sp;
+}
+
+    
+
+//lldb::ValueObjectSP
+//ValueObject::Dereference (ExecutionContextScope *exe_scope, Error *error_ptr)
+//{
+//    lldb::ValueObjectSP valobj_sp;
+//    if (IsPointerType())
+//    {
+//        UpdateValueIfNeeded(exe_scope);
+//        if (m_error.Success())
+//        {
+//            lldb::AddressType address_type = eAddressTypeInvalid;
+//            const bool scalar_is_load_address = true;
+//            lldb::addr_t addr = GetPointerValue (address_type, scalar_is_load_address);
+//            if (addr != LLDB_INVALID_ADDRESS)
+//            {
+//                switch (address_type)
+//                {
+//                    case eAddressTypeInvalid:
+//                        if (error_ptr)
+//                            error_ptr->SetErrorString("value is not in memory");
+//                        break;
+//                    case eAddressTypeFile:
+//                    case eAddressTypeLoad:
+//                    case eAddressTypeHost:
+//                    {
+//                        clang::ASTContext *ast = GetClangAST();
+//                        clang_type_t clang_type = ClangASTType::GetPointeeType (GetClangType());
+//                        if (ast && clang_type)
+//                        {
+//                            std::string name (1, '*');
+//                            name.append (m_name.AsCString(""));
+//                            valobj_sp.reset (new ValueObjectConstResult (ast, 
+//                                                                         ClangASTContext::CreatePointerType (ast, clang_type),
+//                                                                         ConstString (name.c_str()),
+//                                                                         addr, 
+//                                                                         address_type,
+//                                                                         m_data.GetAddressByteSize()));
+//                        }
+//                        else
+//                        {
+//                            if (error_ptr)
+//                                error_ptr->SetErrorString("invalid clang type info");
+//                        }
+//                    }
+//                    break;
+//                }
+//            }
+//            else
+//            {
+//                if (error_ptr)
+//                    error_ptr->SetErrorString("failed to extract pointer value");
+//            }
+//        }
+//        else
+//        {
+//            if (error_ptr)
+//                *error_ptr = m_error;
+//        }
+//    }
+//    else
+//    {
+//        if (error_ptr)
+//            error_ptr->SetErrorString("can't dereference a non-pointer value");
+//    }
+//
+//    return valobj_sp;
+//}
+    
+lldb::ValueObjectSP
+ValueObject::AddressOf ()
+{
+    lldb::ValueObjectSP valobj_sp;
+
+    lldb::AddressType address_type = eAddressTypeInvalid;
+    const bool scalar_is_load_address = false;
+    lldb::addr_t addr = GetAddressOf (address_type, scalar_is_load_address);
+    if (addr != LLDB_INVALID_ADDRESS)
+    {
+        switch (address_type)
+        {
+        case eAddressTypeInvalid:
+            break;
+        case eAddressTypeFile:
+        case eAddressTypeLoad:
+        case eAddressTypeHost:
+            {
+                clang::ASTContext *ast = GetClangAST();
+                clang_type_t clang_type = GetClangType();
+                if (ast && clang_type)
+                {
+                    std::string name (1, '&');
+                    name.append (m_name.AsCString(""));
+                    valobj_sp.reset (new ValueObjectConstResult (ast, 
+                                                                 ClangASTContext::CreatePointerType (ast, clang_type),
+                                                                 ConstString (name.c_str()),
+                                                                 addr, 
+                                                                 address_type,
+                                                                 m_data.GetAddressByteSize()));
+                }
+            }
+            break;
+        }
+    }
+    return valobj_sp;
 }
 

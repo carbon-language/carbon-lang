@@ -27,7 +27,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 Communication::Communication(const char *name) :
     Broadcaster (name),
-    m_connection_ap (),
+    m_connection_sp (),
     m_read_thread (LLDB_INVALID_HOST_THREAD),
     m_read_thread_enabled (false),
     m_bytes(),
@@ -65,8 +65,9 @@ Communication::BytesAvailable (uint32_t timeout_usec, Error *error_ptr)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION, "%p Communication::BytesAvailable (timeout_usec = %u)", this, timeout_usec);
 
-    if (m_connection_ap.get())
-        return m_connection_ap->BytesAvailable (timeout_usec, error_ptr);
+    lldb::ConnectionSP connection_sp (m_connection_sp);
+    if (connection_sp.get())
+        return connection_sp->BytesAvailable (timeout_usec, error_ptr);
     if (error_ptr)
         error_ptr->SetErrorString("Invalid connection.");
     return eConnectionStatusNoConnection;
@@ -79,8 +80,9 @@ Communication::Connect (const char *url, Error *error_ptr)
 
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION, "%p Communication::Connect (url = %s)", this, url);
 
-    if (m_connection_ap.get())
-        return m_connection_ap->Connect (url, error_ptr);
+    lldb::ConnectionSP connection_sp (m_connection_sp);
+    if (connection_sp.get())
+        return connection_sp->Connect (url, error_ptr);
     if (error_ptr)
         error_ptr->SetErrorString("Invalid connection.");
     return eConnectionStatusNoConnection;
@@ -91,10 +93,11 @@ Communication::Disconnect (Error *error_ptr)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION, "%p Communication::Disconnect ()", this);
 
-    if (m_connection_ap.get())
+    lldb::ConnectionSP connection_sp (m_connection_sp);
+    if (connection_sp.get())
     {
-        ConnectionStatus status = m_connection_ap->Disconnect (error_ptr);
-        // We currently don't protect m_connection_ap with any mutex for 
+        ConnectionStatus status = connection_sp->Disconnect (error_ptr);
+        // We currently don't protect connection_sp with any mutex for 
         // multi-threaded environments. So lets not nuke our connection class 
         // without putting some multi-threaded protections in. We also probably
         // don't want to pay for the overhead it might cause if every time we
@@ -103,7 +106,7 @@ Communication::Disconnect (Error *error_ptr)
         // This auto_ptr will cleanup after itself when this object goes away,
         // so there is no need to currently have it destroy itself immediately
         // upon disconnnect.
-        //m_connection_ap.reset();
+        //connection_sp.reset();
         return status;
     }
     return eConnectionStatusNoConnection;
@@ -112,23 +115,28 @@ Communication::Disconnect (Error *error_ptr)
 bool
 Communication::IsConnected () const
 {
-    if (m_connection_ap.get())
-        return m_connection_ap->IsConnected ();
+    lldb::ConnectionSP connection_sp (m_connection_sp);
+    if (connection_sp.get())
+        return connection_sp->IsConnected ();
     return false;
 }
 
 bool
 Communication::HasConnection () const
 {
-    return m_connection_ap.get() != NULL;
+    return m_connection_sp.get() != NULL;
 }
 
 size_t
 Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, ConnectionStatus &status, Error *error_ptr)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
-                                 "%p Communication::Write (dst = %p, dst_len = %zu, timeout_usec = %u) connection = %p",
-                                 this, dst, dst_len, timeout_usec, m_connection_ap.get());
+                                         "%p Communication::Read (dst = %p, dst_len = %zu, timeout_usec = %u) connection = %p",
+                                         this, 
+                                         dst, 
+                                         dst_len, 
+                                         timeout_usec, 
+                                         m_connection_sp.get());
 
     if (m_read_thread != LLDB_INVALID_HOST_THREAD)
     {
@@ -140,7 +148,7 @@ Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connectio
             return cached_bytes;
         }
 
-        if (m_connection_ap.get() == NULL)
+        if (m_connection_sp.get() == NULL)
         {
             if (error_ptr)
                 error_ptr->SetErrorString("Invalid connection.");
@@ -177,11 +185,12 @@ Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connectio
 
     // We aren't using a read thread, just read the data synchronously in this
     // thread.
-    if (m_connection_ap.get())
+    lldb::ConnectionSP connection_sp (m_connection_sp);
+    if (connection_sp.get())
     {
-        status = m_connection_ap->BytesAvailable (timeout_usec, error_ptr);
+        status = connection_sp->BytesAvailable (timeout_usec, error_ptr);
         if (status == eConnectionStatusSuccess)
-            return m_connection_ap->Read (dst, dst_len, status, error_ptr);
+            return connection_sp->Read (dst, dst_len, status, error_ptr);
     }
 
     if (error_ptr)
@@ -194,12 +203,17 @@ Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connectio
 size_t
 Communication::Write (const void *src, size_t src_len, ConnectionStatus &status, Error *error_ptr)
 {
-    lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
-                                 "%p Communication::Write (src = %p, src_len = %zu) connection = %p",
-                                 this, src, src_len, m_connection_ap.get());
+    lldb::ConnectionSP connection_sp (m_connection_sp);
 
-    if (m_connection_ap.get())
-        return m_connection_ap->Write (src, src_len, status, error_ptr);
+    lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
+                                         "%p Communication::Write (src = %p, src_len = %zu) connection = %p",
+                                         this, 
+                                         src, 
+                                         src_len, 
+                                         connection_sp.get());
+
+    if (connection_sp.get())
+        return connection_sp->Write (src, src_len, status, error_ptr);
 
     if (error_ptr)
         error_ptr->SetErrorString("Invalid connection.");
@@ -294,8 +308,9 @@ Communication::AppendBytesToCache (const uint8_t * bytes, size_t len, bool broad
 size_t
 Communication::ReadFromConnection (void *dst, size_t dst_len, ConnectionStatus &status, Error *error_ptr)
 {
-    if (m_connection_ap.get())
-        return m_connection_ap->Read (dst, dst_len, status, error_ptr);
+    lldb::ConnectionSP connection_sp (m_connection_sp);
+    if (connection_sp.get())
+        return connection_sp->Read (dst, dst_len, status, error_ptr);
     return 0;
 }
 
@@ -376,7 +391,7 @@ Communication::SetConnection (Connection *connection)
 {
     StopReadThread(NULL);
     Disconnect (NULL);
-    m_connection_ap.reset(connection);
+    m_connection_sp.reset(connection);
 }
 
 const char *

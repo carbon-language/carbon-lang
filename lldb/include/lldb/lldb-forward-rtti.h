@@ -29,8 +29,10 @@ namespace lldb {
     typedef SharedPtr<lldb_private::BreakpointLocation>::Type BreakpointLocationSP;
     typedef SharedPtr<lldb_private::BreakpointResolver>::Type BreakpointResolverSP;
     typedef SharedPtr<lldb_private::Broadcaster>::Type BroadcasterSP;
+    typedef SharedPtr<lldb_private::ClangExpressionVariable>::Type ClangExpressionVariableSP;
     typedef SharedPtr<lldb_private::CommandObject>::Type CommandObjectSP;
     typedef SharedPtr<lldb_private::Communication>::Type CommunicationSP;
+    typedef SharedPtr<lldb_private::Connection>::Type ConnectionSP;
     typedef SharedPtr<lldb_private::CompileUnit>::Type CompUnitSP;
     typedef SharedPtr<lldb_private::DataBuffer>::Type DataBufferSP;
     typedef SharedPtr<lldb_private::Debugger>::Type DebuggerSP;

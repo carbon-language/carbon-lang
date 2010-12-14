@@ -76,11 +76,11 @@ ThreadPlanTestCondition::ShouldStop (Event *event_ptr)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (m_thread.IsThreadPlanDone(m_expression_plan_sp.get()))
     {
-        ClangExpressionVariable *expr_result = NULL;
+        lldb::ClangExpressionVariableSP expr_result;
         StreamString error_stream;
         m_expression->FinalizeJITExecution(error_stream, m_exe_ctx, expr_result);
         
-        ValueObjectSP result_sp (expr_result->GetExpressionResult(&m_exe_ctx));
+        ValueObjectSP result_sp (expr_result->GetValueObject());
         if (result_sp)
         {
             // FIXME: This is not the right answer, we should have a "GetValueAsBoolean..."

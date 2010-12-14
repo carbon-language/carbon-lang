@@ -96,6 +96,9 @@ public:
     VariableList *
     GetVariableList (bool get_file_globals);
 
+    lldb::ValueObjectSP
+    GetValueForVariableExpressionPath (const char *var_expr);
+
     bool
     HasDebugInformation ();
 

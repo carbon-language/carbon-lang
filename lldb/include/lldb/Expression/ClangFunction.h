@@ -264,7 +264,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
 	//------------------------------------------------------------------
-    static Process::ExecutionResults 
+    static lldb::ExecutionResults 
     ExecuteFunction (ExecutionContext &exe_ctx, 
                      lldb::addr_t function_address, 
                      lldb::addr_t &void_arg, 
@@ -294,7 +294,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    Process::ExecutionResults 
+    lldb::ExecutionResults 
     ExecuteFunction(ExecutionContext &exe_ctx, 
                      Stream &errors, 
                      Value &results);
@@ -320,7 +320,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    Process::ExecutionResults 
+    lldb::ExecutionResults 
     ExecuteFunction(ExecutionContext &exe_ctx, 
                      Stream &errors, bool stop_others, 
                      Value &results);
@@ -350,7 +350,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    Process::ExecutionResults 
+    lldb::ExecutionResults 
     ExecuteFunction(ExecutionContext &exe_ctx, 
                     Stream &errors, 
                     uint32_t single_thread_timeout_usec, 
@@ -390,7 +390,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    Process::ExecutionResults 
+    lldb::ExecutionResults 
     ExecuteFunction(ExecutionContext &exe_ctx, 
                     lldb::addr_t *args_addr_ptr, 
                     Stream &errors, 
@@ -555,7 +555,7 @@ public:
     /// Return the object that the parser should use when registering
     /// local variables.  May be NULL if the Expression doesn't care.
     //------------------------------------------------------------------
-    ClangExpressionVariableStore *
+    ClangExpressionVariableList *
     LocalVariables ()
     {
         return NULL;

@@ -131,6 +131,9 @@ public:
     static const char *
     GetContextTypeAsCString (ContextType context_type);
 
+    bool
+    GetData (DataExtractor &data);
+
 protected:
     Scalar          m_value;
     ValueType       m_value_type;

@@ -18,15 +18,17 @@
 #include "lldb/Breakpoint/BreakpointResolverFileLine.h"
 #include "lldb/Breakpoint/BreakpointResolverName.h"
 #include "lldb/Core/DataBufferMemoryMap.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Core/Timer.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/Timer.h"
+#include "lldb/Core/ValueObject.h"
 #include "lldb/Host/Host.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Core/Debugger.h"
+#include "lldb/Target/StackFrame.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -46,7 +48,8 @@ Target::Target(Debugger &debugger) :
     m_triple(),
     m_search_filter_sp(),
     m_image_search_paths (ImageSearchPathsChanged, this),
-    m_scratch_ast_context_ap(NULL)
+    m_scratch_ast_context_ap (NULL),
+    m_persistent_variables ()
 {
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
@@ -864,6 +867,81 @@ const char *
 Target::GetExpressionPrefixContentsAsCString ()
 {
     return m_expr_prefix_contents.c_str();
+}
+
+ExecutionResults
+Target::EvaluateExpression
+(
+    const char *expr_cstr,
+    StackFrame *frame,
+    bool unwind_on_error,
+    lldb::ValueObjectSP &result_valobj_sp
+)
+{
+    ExecutionResults execution_results = eExecutionSetupError;
+
+    result_valobj_sp.reset();
+
+    ExecutionContext exe_ctx;
+    if (frame)
+    {
+        frame->CalculateExecutionContext(exe_ctx);
+        result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr);
+    }
+    else if (m_process_sp)
+    {
+        m_process_sp->CalculateExecutionContext(exe_ctx);
+    }
+    else
+    {
+        CalculateExecutionContext(exe_ctx);
+    }
+    
+    if (result_valobj_sp)
+    {
+        execution_results = eExecutionCompleted;
+        // We got a result from the frame variable expression path above...
+        ConstString persistent_variable_name (m_persistent_variables.GetNextPersistentVariableName());
+
+        lldb::ValueObjectSP const_valobj_sp;
+        
+        // Check in case our value is already a constant value
+        if (result_valobj_sp->GetIsConstant())
+        {
+            const_valobj_sp = result_valobj_sp;
+            const_valobj_sp->SetName (persistent_variable_name);
+        }
+        else
+            const_valobj_sp = result_valobj_sp->CreateConstantValue (exe_ctx.GetBestExecutionContextScope(), 
+                                                                     persistent_variable_name);
+
+        result_valobj_sp = const_valobj_sp;
+
+        ClangExpressionVariableSP clang_expr_variable_sp(m_persistent_variables.CreatePersistentVariable(result_valobj_sp));
+        assert (clang_expr_variable_sp.get());        
+    }
+    else
+    {
+        // Make sure we aren't just trying to see the value of a persistent 
+        // variable (something like "$0")
+        lldb::ClangExpressionVariableSP persistent_var_sp (m_persistent_variables.GetVariable (expr_cstr));
+        if (persistent_var_sp)
+        {
+            result_valobj_sp = persistent_var_sp->GetValueObject ();
+            execution_results = eExecutionCompleted;
+        }
+        else
+        {
+            const char *prefix = GetExpressionPrefixContentsAsCString();
+        
+            execution_results = ClangUserExpression::Evaluate (exe_ctx, 
+                                                               unwind_on_error, 
+                                                               expr_cstr, 
+                                                               prefix, 
+                                                               result_valobj_sp);
+        }
+    }
+    return execution_results;
 }
 
 //--------------------------------------------------------------

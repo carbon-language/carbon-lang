@@ -47,7 +47,7 @@ class   ClangExpression;
 class   ClangExpressionDeclMap;
 class   ClangExpressionVariable;
 class   ClangExpressionVariableList;
-class   ClangExpressionVariableStore;
+class   ClangExpressionVariableList;
 class   CommandInterpreter;
 class   CommandObject;
 class   CommandReturnObject;

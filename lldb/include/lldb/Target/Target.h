@@ -446,6 +446,25 @@ public:
     const char *
     GetExpressionPrefixContentsAsCString ();
     
+    // Since expressions results can persist beyond the lifetime of a process,
+    // and the const expression results are available after a process is gone,
+    // we provide a way for expressions to be evaluated from the Target itself.
+    // If an expression is going to be run, then it should have a frame filled
+    // in in th execution context. 
+    lldb::ExecutionResults
+    EvaluateExpression (const char *expression,
+                        StackFrame *frame,
+                        bool unwind_on_error,
+                        lldb::ValueObjectSP &result_valobj_sp);
+
+    ClangPersistentVariables &
+    GetPersistentVariables()
+    {
+        return m_persistent_variables;
+    }
+
+
+
 protected:
     friend class lldb::SBTarget;
 
@@ -467,6 +486,8 @@ protected:
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
     std::auto_ptr<ClangASTContext> m_scratch_ast_context_ap;
+    ClangPersistentVariables m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
+
     //------------------------------------------------------------------
     // Methods.
     //------------------------------------------------------------------

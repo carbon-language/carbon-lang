@@ -162,34 +162,6 @@ Value::GetProxyTarget()
         return NULL;
 }
 
-//#include "clang/Lex/LiteralSupport.h"
-//#include "clang/AST/ASTContext.h"
-//#include "clang/Frontend/CompilerInstance.h"
-//
-//Value::Value (const char *data, llvm::CompilerInstance *compiler)
-//{
-//    clang::NumericLiteralParser parser(data, data + strlen(data), clang::SourceLocation(),
-//                                compiler->getPreprocessor());
-//    if (parser.had_error)
-//    {
-//    }
-//    else if (parser.isBool)
-//    {
-//        APInt value;
-//        parser.GetIntegerValue(value);
-//    }
-//    else if (parser.isLong)
-//    {
-//    }
-//    else if (parser.isLongLong)
-//    {
-//    }
-//    else if (parser.isFloat)
-//    {
-//    }
-//
-//}
-//
 void
 Value::Dump (Stream* strm)
 {
@@ -482,6 +454,34 @@ Value::GetValueDefaultFormat ()
 
     // Return a good default in case we can't figure anything out
     return eFormatHex;
+}
+
+bool
+Value::GetData (DataExtractor &data)
+{
+    switch (m_value_type)
+    {
+    default:
+        break;
+
+    case eValueTypeScalar:
+        if (m_value.GetData (data))
+            return true;
+        break;
+
+    case eValueTypeLoadAddress:
+    case eValueTypeFileAddress:
+    case eValueTypeHostAddress:
+        if (m_data_buffer.GetByteSize())
+        {
+            data.SetData(m_data_buffer.GetBytes(), m_data_buffer.GetByteSize(), data.GetByteOrder());
+            return true;
+        }
+        break;
+    }
+
+    return false;
+
 }
 
 Error

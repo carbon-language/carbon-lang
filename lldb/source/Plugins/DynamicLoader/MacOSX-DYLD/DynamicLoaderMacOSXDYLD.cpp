@@ -642,9 +642,6 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                     }
                 }
 
-                if (log)
-                    log->PutCString("Unloaded:");
-
                 for (old_idx = 0; old_idx < old_dyld_all_image_infos.size(); ++old_idx)
                 {
                     if (old_dyld_all_image_infos[old_idx].address != LLDB_INVALID_ADDRESS)
@@ -662,7 +659,14 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
             }
 
             if (unloaded_module_list.GetSize() > 0)
+            {
+                if (log)
+                {
+                    log->PutCString("Unloaded:");
+                    unloaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXDYLD::ModulesDidUnload");
+                }
                 m_process->GetTarget().ModulesDidUnload (unloaded_module_list);
+            }
         }
         else
         {
@@ -752,6 +756,8 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                     }
                 }
             }
+            if (log)
+                loaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXDYLD::ModulesDidLoad");
             m_process->GetTarget().ModulesDidLoad (loaded_module_list);
         }
     }

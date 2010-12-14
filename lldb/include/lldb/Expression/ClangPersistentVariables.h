@@ -23,29 +23,36 @@ namespace lldb_private
 /// ClangPersistentVariable for more discussion.  Also provides an increasing,
 /// 0-based counter for naming result variables.
 //----------------------------------------------------------------------
-class ClangPersistentVariables : public ClangExpressionVariableStore
+class ClangPersistentVariables : public ClangExpressionVariableList
 {
 public:
-    //----------------------------------------------------------------------
-    /// Return the next entry in the sequence of strings "$0", "$1", ... for use
-    /// naming result variables.
-    ///
-    /// @param[in] name
-    ///     A string to place the variable name in.
-    //----------------------------------------------------------------------
-    void
-    GetNextResultName (ConstString &name);
     
     //----------------------------------------------------------------------
     /// Constructor
     //----------------------------------------------------------------------
     ClangPersistentVariables ();
 
-    bool 
-    CreatePersistentVariable (const ConstString &name,
-                              TypeFromUser user_type);
+    lldb::ClangExpressionVariableSP
+    CreatePersistentVariable (const lldb::ValueObjectSP &valobj_sp);
+
+    lldb::ClangExpressionVariableSP
+    CreatePersistentVariable (const ConstString &name, 
+                              const TypeFromUser& user_type, 
+                              lldb::ByteOrder byte_order, 
+                              uint32_t addr_byte_size);
+
+    //----------------------------------------------------------------------
+    /// Return the next entry in the sequence of strings "$0", "$1", ... for
+    /// use naming persistent expression convenience variables.
+    ///
+    /// @return
+    ///     A string that contains the next persistent variable name.
+    //----------------------------------------------------------------------
+    ConstString
+    GetNextPersistentVariableName ();
+
 private:
-    uint64_t m_result_counter;   ///< The counter used by GetNextResultName().
+    uint32_t m_next_persistent_variable_id;   ///< The counter used by GetNextResultName().
 };
 
 }

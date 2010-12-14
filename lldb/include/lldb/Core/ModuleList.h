@@ -102,6 +102,10 @@ public:
     void
     Dump (Stream *s) const;
 
+    void
+    LogUUIDAndPaths (lldb::LogSP &log_sp, 
+                     const char *prefix_cstr);
+
     uint32_t
     GetIndexForModule (const Module *module) const;
 

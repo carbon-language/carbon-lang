@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_ValueObjectChild_h_
-#define liblldb_ValueObjectChild_h_
+#ifndef liblldb_ValueObjectConstResult_h_
+#define liblldb_ValueObjectConstResult_h_
 
 // C Includes
 // C++ Includes
@@ -24,6 +24,14 @@ namespace lldb_private {
 class ValueObjectConstResult : public ValueObject
 {
 public:
+    ValueObjectConstResult (lldb::ByteOrder byte_order, 
+                            uint32_t addr_byte_size);
+
+    ValueObjectConstResult (clang::ASTContext *clang_ast,
+                            void *clang_type,
+                            const ConstString &name,
+                            const DataExtractor &data);
+
     ValueObjectConstResult (clang::ASTContext *clang_ast,
                             void *clang_type,
                             const ConstString &name,
@@ -31,6 +39,12 @@ public:
                             lldb::ByteOrder byte_order, 
                             uint8_t addr_size);
 
+    ValueObjectConstResult (clang::ASTContext *clang_ast,
+                            void *clang_type,
+                            const ConstString &name,
+                            lldb::addr_t address,
+                            lldb::AddressType address_type,
+                            uint8_t addr_byte_size);
 
     // When an expression fails to evaluate, we return an error
     ValueObjectConstResult (const Error& error);
@@ -61,9 +75,20 @@ public:
     virtual bool
     IsInScope (StackFrame *frame);
 
+    virtual bool
+    SetClangAST (clang::ASTContext *ast)
+    {
+        m_clang_ast = ast;
+        return true;
+    }
+
+    void
+    SetByteSize (size_t size);
+
 protected:
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     ConstString m_type_name;
+    uint32_t m_byte_size;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (ValueObjectConstResult);
@@ -71,4 +96,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ValueObjectChild_h_
+#endif  // liblldb_ValueObjectConstResult_h_

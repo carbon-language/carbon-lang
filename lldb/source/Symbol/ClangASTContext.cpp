@@ -870,15 +870,16 @@ IsOperator (const char *name, OverloadedOperatorKind &op_kind)
         return false;
     
 #define OPERATOR_PREFIX "operator"
+#define OPERATOR_PREFIX_LENGTH (sizeof (OPERATOR_PREFIX) - 1)
     
     const char *post_op_name = NULL;
 
     bool no_space = true;
     
-    if (!::strncmp(name, OPERATOR_PREFIX, sizeof(OPERATOR_PREFIX) - 1))
-        post_op_name = name + sizeof(OPERATOR_PREFIX) - 1;
-    else
+    if (::strncmp(name, OPERATOR_PREFIX, OPERATOR_PREFIX_LENGTH))
         return false;
+    
+    post_op_name = name + OPERATOR_PREFIX_LENGTH;
     
     if (post_op_name[0] == ' ')
     {
@@ -887,6 +888,7 @@ IsOperator (const char *name, OverloadedOperatorKind &op_kind)
     }
     
 #undef OPERATOR_PREFIX
+#undef OPERATOR_PREFIX_LENGTH
     
     // This is an operator, set the overloaded operator kind to invalid
     // in case this is a conversion operator...
@@ -3488,7 +3490,13 @@ ClangASTContext::AddEnumerationValueToEnumerationType
 clang_type_t
 ClangASTContext::CreatePointerType (clang_type_t clang_type)
 {
-    if (clang_type)
+    return CreatePointerType (getASTContext(), clang_type);
+}
+
+clang_type_t
+ClangASTContext::CreatePointerType (clang::ASTContext *ast, clang_type_t clang_type)
+{
+    if (ast && clang_type)
     {
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
 
@@ -3497,10 +3505,10 @@ ClangASTContext::CreatePointerType (clang_type_t clang_type)
         {
         case clang::Type::ObjCObject:
         case clang::Type::ObjCInterface:
-            return getASTContext()->getObjCObjectPointerType(qual_type).getAsOpaquePtr();
+            return ast->getObjCObjectPointerType(qual_type).getAsOpaquePtr();
 
         default:
-            return getASTContext()->getPointerType(qual_type).getAsOpaquePtr();
+            return ast->getPointerType(qual_type).getAsOpaquePtr();
         }
     }
     return NULL;

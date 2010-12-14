@@ -13,38 +13,39 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Value.h"
 
+using namespace lldb;
 using namespace lldb_private;
 
 ClangPersistentVariables::ClangPersistentVariables () :
-    ClangExpressionVariableStore()
+    ClangExpressionVariableList(),
+    m_next_persistent_variable_id (0)
 {
-    m_result_counter = 0;
 }
 
-void
-ClangPersistentVariables::GetNextResultName (ConstString &name)
+ClangExpressionVariableSP
+ClangPersistentVariables::CreatePersistentVariable (const lldb::ValueObjectSP &valobj_sp)
 {
-    char result_name[256];
-    ::snprintf (result_name, sizeof(result_name), "$%llu", m_result_counter++);
-    name.SetCString(result_name);
+    ClangExpressionVariableSP var_sp (CreateVariable(valobj_sp));
+    return var_sp;
 }
 
-bool
-ClangPersistentVariables::CreatePersistentVariable (const ConstString &name,
-                                                    TypeFromUser user_type)
+ClangExpressionVariableSP
+ClangPersistentVariables::CreatePersistentVariable (const ConstString &name, const TypeFromUser& user_type, lldb::ByteOrder byte_order, uint32_t addr_byte_size)
 {
-    if (GetVariable(name))
-            return false;
-
-    ClangExpressionVariable &pvar (VariableAtIndex(CreateVariable()));
-
-    pvar.m_name = name;
-    pvar.m_user_type = user_type;
-    // TODO: Sean, why do we need to call this?, we can just make it below
-    // and we aren't checking the result or anything... Is this cruft left
-    // over from an old code re-org?
-    //pvar.EnableDataVars();
-    pvar.m_data_sp.reset(new DataBufferHeap(pvar.Size(), 0));
+    ClangExpressionVariableSP var_sp (GetVariable(name));
     
-    return true;
+    if (!var_sp)
+        var_sp = CreateVariable(name, user_type, byte_order, addr_byte_size);
+
+    return var_sp;
+}
+
+
+ConstString
+ClangPersistentVariables::GetNextPersistentVariableName ()
+{
+    char name_cstr[256];
+    ::snprintf (name_cstr, sizeof(name_cstr), "$%u", m_next_persistent_variable_id++);
+    ConstString name(name_cstr);
+    return name;
 }

@@ -122,9 +122,15 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
     bool try_all_threads = true;
     bool stop_others = true;
     
-    Process::ExecutionResults results 
-        = func.ExecuteFunction(exe_ctx, &wrapper_struct_addr, error_stream, stop_others, 1000000, try_all_threads, unwind_on_error, ret);
-    if (results != Process::eExecutionCompleted)
+    ExecutionResults results = func.ExecuteFunction (exe_ctx, 
+                                                     &wrapper_struct_addr, 
+                                                     error_stream, 
+                                                     stop_others, 
+                                                     1000000, 
+                                                     try_all_threads, 
+                                                     unwind_on_error, 
+                                                     ret);
+    if (results != lldb::eExecutionCompleted)
     {
         str.Printf("Error evaluating Print Object function: %d.\n", results);
         return false;

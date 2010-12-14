@@ -117,12 +117,12 @@ public:
     /// @return
     ///     A Process::Execution results value.
     //------------------------------------------------------------------
-    Process::ExecutionResults
+    lldb::ExecutionResults
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
              bool discard_on_error,
              ClangUserExpressionSP &shared_ptr_to_me,
-             ClangExpressionVariable *&result);
+             lldb::ClangExpressionVariableSP &result);
              
     ThreadPlan *
     GetThreadPlanToExecuteJITExpression (Stream &error_stream,
@@ -130,7 +130,7 @@ public:
     bool
     FinalizeJITExecution (Stream &error_stream,
                           ExecutionContext &exe_ctx,
-                          ClangExpressionVariable *&result);
+                          lldb::ClangExpressionVariableSP &result);
     
     //------------------------------------------------------------------
     /// Return the string that the parser should parse.  Must be a full
@@ -176,7 +176,7 @@ public:
     /// Return the object that the parser should use when registering
     /// local variables.  May be NULL if the Expression doesn't care.
     //------------------------------------------------------------------
-    ClangExpressionVariableStore *
+    ClangExpressionVariableList *
     LocalVariables ()
     {
         return m_local_variables.get();
@@ -239,7 +239,7 @@ public:
     /// @result
     ///      A Process::ExecutionResults value.  eExecutionCompleted for success.
     //------------------------------------------------------------------
-    static Process::ExecutionResults
+    static lldb::ExecutionResults
     Evaluate (ExecutionContext &exe_ctx, 
               bool discard_on_error,
               const char *expr_cstr,
@@ -266,7 +266,7 @@ private:
     TypeFromUser                                m_desired_type;         ///< The type to coerce the expression's result to.  If NULL, inferred from the expression.
     
     std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
-    std::auto_ptr<ClangExpressionVariableStore> m_local_variables;      ///< The local expression variables, if the expression is DWARF.
+    std::auto_ptr<ClangExpressionVariableList> m_local_variables;      ///< The local expression variables, if the expression is DWARF.
     std::auto_ptr<StreamString>                 m_dwarf_opcodes;        ///< The DWARF opcodes for the expression.  May be NULL.
     lldb::addr_t                                m_jit_addr;             ///< The address of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
     

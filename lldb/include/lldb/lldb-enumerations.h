@@ -615,6 +615,21 @@ typedef enum PathType
     ePathTypePythonDir              // Find Python modules (PYTHONPATH) directory
 } PathType;
 
+
+//----------------------------------------------------------------------
+// We can execute ThreadPlans on one thread with various fall-back modes 
+// (try other threads after timeout, etc.) This enum gives the result of 
+// thread plan executions.
+//----------------------------------------------------------------------
+typedef enum ExecutionResults
+{
+    eExecutionSetupError,
+    eExecutionCompleted,
+    eExecutionDiscarded,
+    eExecutionInterrupted,
+    eExecutionTimedOut
+} ExecutionResults;
+
 } // namespace lldb
 
 

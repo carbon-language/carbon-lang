@@ -20,7 +20,7 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-types.h"
+#include "lldb/lldb-include.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Symbol/TaggedASTType.h"
@@ -31,11 +31,8 @@ namespace llvm {
 
 namespace lldb_private {
 
-class ClangExpressionVariableStore;
-class DataBufferHeap;
-class ExecutionContext;
-class Stream;
-class Value;
+class ClangExpressionVariableList;
+class ValueObjectConstResult;
 
 //----------------------------------------------------------------------
 /// @class ClangExpressionVariable ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
@@ -60,12 +57,13 @@ class Value;
 /// polymorphism, and provides necessary support methods.  Its interface
 /// is RTTI-neutral.
 //----------------------------------------------------------------------
-struct ClangExpressionVariable
+class ClangExpressionVariable
 {
-    ClangExpressionVariable();
-    
-    ClangExpressionVariable(const ClangExpressionVariable &cev);
-    
+public:
+    ClangExpressionVariable(lldb::ByteOrder byte_order, uint32_t addr_byte_size);
+
+    ClangExpressionVariable(const lldb::ValueObjectSP &valobj_sp);
+
     //----------------------------------------------------------------------
     /// If the variable contains its own data, make a Value point at it.
     /// If \a exe_ctx in not NULL, the value will be resolved in with
@@ -85,23 +83,8 @@ struct ClangExpressionVariable
     PointValueAtData(Value &value, ExecutionContext *exe_ctx);
     
     lldb::ValueObjectSP
-    GetExpressionResult (ExecutionContext *exe_ctx);
+    GetValueObject();
 
-    //----------------------------------------------------------------------
-    /// The following values should stay valid for the life of the variable
-    //----------------------------------------------------------------------
-    ConstString                 m_name;             ///< The name of the variable
-    TypeFromUser                m_user_type;        ///< The type of the variable according to some LLDB context; 
-                                                    ///< NULL if the type hasn't yet been migrated to one
-    
-    const lldb::RegisterInfo   *m_register_info;    ///< if non-NULL, LLDB's information for the register this value is stored in.  Only used for register values
-    
-    //----------------------------------------------------------------------
-    /// The following values indicate where the variable originally came from
-    //----------------------------------------------------------------------
-    ClangExpressionVariableStore   *m_store;    ///< The store containing the variable
-    uint64_t                        m_index;    ///< The index of the variable in the store
-    
     //----------------------------------------------------------------------
     /// The following values should not live beyond parsing
     //----------------------------------------------------------------------
@@ -120,13 +103,12 @@ struct ClangExpressionVariable
         llvm::Value            *m_llvm_value;   ///< The IR value corresponding to this variable; usually a GlobalValue
         lldb_private::Value    *m_lldb_value;   ///< The value found in LLDB for this variable
     };
-    std::auto_ptr<ParserVars> m_parser_vars;
-    
     //----------------------------------------------------------------------
     /// Make this variable usable by the parser by allocating space for
     /// parser-specific variables
     //----------------------------------------------------------------------
-    void EnableParserVars()
+    void 
+    EnableParserVars()
     {
         if (!m_parser_vars.get())
             m_parser_vars.reset(new struct ParserVars);
@@ -135,7 +117,8 @@ struct ClangExpressionVariable
     //----------------------------------------------------------------------
     /// Deallocate parser-specific variables
     //----------------------------------------------------------------------
-    void DisableParserVars()
+    void
+    DisableParserVars()
     {
         m_parser_vars.reset();
     }
@@ -155,13 +138,13 @@ struct ClangExpressionVariable
         size_t  m_size;         ///< The space required for the variable, in bytes
         off_t   m_offset;       ///< The offset of the variable in the struct, in bytes
     };
-    std::auto_ptr<JITVars> m_jit_vars;
-    
+
     //----------------------------------------------------------------------
     /// Make this variable usable for materializing for the JIT by allocating 
     /// space for JIT-specific variables
     //----------------------------------------------------------------------
-    void EnableJITVars()
+    void 
+    EnableJITVars()
     {
         if (!m_jit_vars.get())
             m_jit_vars.reset(new struct JITVars);
@@ -170,62 +153,100 @@ struct ClangExpressionVariable
     //----------------------------------------------------------------------
     /// Deallocate JIT-specific variables
     //----------------------------------------------------------------------
-    void DisableJITVars()
+    void 
+    DisableJITVars()
     {
         m_jit_vars.reset();
     }
-    
-    lldb::DataBufferSP m_data_sp;
-    
-    //----------------------------------------------------------------------
-    /// Make this variable usable for storing its data internally by
-    /// allocating data-specific variables
-    //----------------------------------------------------------------------
-    void 
-    EnableDataVars();
-
-    //----------------------------------------------------------------------
-    /// Deallocate data-specific variables
-    //----------------------------------------------------------------------
-    void DisableDataVars();
-    
+        
     //----------------------------------------------------------------------
     /// Return the variable's size in bytes
     //----------------------------------------------------------------------
-    size_t Size ()
-    {
-        return (m_user_type.GetClangTypeBitWidth () + 7) / 8;
-    }    
+    size_t 
+    GetByteSize ();
+
+    const ConstString &
+    GetName();
+
+    lldb::RegisterInfo *
+    GetRegisterInfo();
+    
+    void
+    SetRegisterInfo (const lldb::RegisterInfo *reg_info);
+
+    lldb::clang_type_t
+    GetClangType ();
+    
+    void
+    SetClangType (lldb::clang_type_t);
+
+    clang::ASTContext *
+    GetClangAST ();
+    
+    void
+    SetClangAST (clang::ASTContext *ast);
+
+    TypeFromUser
+    GetTypeFromUser ();
+
+    uint8_t *
+    GetValueBytes ();
+    
+    void
+    SetName (const ConstString &name);
+
+    void
+    ValueUpdated ();
+
+
+    typedef lldb::SharedPtr<ValueObjectConstResult>::Type ValueObjectConstResultSP;
+
+    //----------------------------------------------------------------------
+    /// Members
+    //----------------------------------------------------------------------
+    std::auto_ptr<ParserVars> m_parser_vars;
+    std::auto_ptr<JITVars> m_jit_vars;
+    //ValueObjectConstResultSP m_valojb_sp;
+    lldb::ValueObjectSP m_valojb_sp;
+
+private:
+    DISALLOW_COPY_AND_ASSIGN (ClangExpressionVariable);
 };
 
 //----------------------------------------------------------------------
 /// @class ClangExpressionVariableListBase ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
-/// @brief Manages variables that the expression parser uses.
+/// @brief A list of variable references.
 ///
-/// The expression parser uses variable lists in various contexts, as
-/// discuessed at ClangExpressionVariable.  This abstract class contains
-/// the basic functions for managing a list of variables.  Its subclasses
-/// store pointers to variables or variables, depending on whether they
-/// are backing stores or merely transient repositories.
+/// This class stores variables internally, acting as the permanent store.
 //----------------------------------------------------------------------
-class ClangExpressionVariableListBase
+class ClangExpressionVariableList
 {
 public:
     //----------------------------------------------------------------------
-    /// Return the number of variables in the list
+    /// Implementation of methods in ClangExpressionVariableListBase
     //----------------------------------------------------------------------
-    virtual uint64_t Size() = 0;
+    virtual size_t 
+    GetSize()
+    {
+        return m_variables.size();
+    }
     
-    //----------------------------------------------------------------------
-    /// Return the variable at the given index in the list
-    //----------------------------------------------------------------------
-    virtual ClangExpressionVariable &VariableAtIndex(uint64_t index) = 0;
+    virtual lldb::ClangExpressionVariableSP
+    GetVariableAtIndex(size_t index)
+    {
+        lldb::ClangExpressionVariableSP var_sp;
+        if (index < m_variables.size())
+            var_sp = m_variables[index];
+        return var_sp;
+    }
     
-    //----------------------------------------------------------------------
-    /// Add a new variable and return its index
-    //----------------------------------------------------------------------
-    virtual uint64_t AddVariable(ClangExpressionVariable& var) = 0;
-    
+    virtual size_t
+    AddVariable (const lldb::ClangExpressionVariableSP &var_sp)
+    {
+        m_variables.push_back(var_sp);
+        return m_variables.size() - 1;
+    }
+
     //----------------------------------------------------------------------
     /// Finds a variable by name in the list.
     ///
@@ -235,15 +256,36 @@ public:
     /// @return
     ///     The variable requested, or NULL if that variable is not in the list.
     //----------------------------------------------------------------------
-    ClangExpressionVariable *GetVariable (const ConstString &name)
+    lldb::ClangExpressionVariableSP
+    GetVariable (const ConstString &name)
     {
-        for (uint64_t index = 0, size = Size(); index < size; ++index)
+        lldb::ClangExpressionVariableSP var_sp;
+        for (size_t index = 0, size = GetSize(); index < size; ++index)
         {
-            ClangExpressionVariable &candidate (VariableAtIndex(index));
-            if (candidate.m_name == name)
-                return &candidate;
+            var_sp = GetVariableAtIndex(index);
+            if (var_sp->GetName() == name)
+                return var_sp;
         }
-        return NULL;
+        var_sp.reset();
+        return var_sp;
+    }
+
+    lldb::ClangExpressionVariableSP
+    GetVariable (const char *name)
+    {
+        lldb::ClangExpressionVariableSP var_sp;
+        if (name && name[0])
+        {
+            for (size_t index = 0, size = GetSize(); index < size; ++index)
+            {
+                var_sp = GetVariableAtIndex(index);
+                const char *var_name_cstr = var_sp->GetName().GetCString();
+                if (::strcmp (var_name_cstr, name) == 0)
+                    return var_sp;
+            }
+            var_sp.reset();
+        }
+        return var_sp;
     }
     
     //----------------------------------------------------------------------
@@ -255,97 +297,59 @@ public:
     /// @return
     ///     The variable requested, or NULL if that variable is not in the list.
     //----------------------------------------------------------------------
-    ClangExpressionVariable *GetVariable (const clang::NamedDecl *decl)
+    lldb::ClangExpressionVariableSP
+    GetVariable (const clang::NamedDecl *decl)
     {
-        for (uint64_t index = 0, size = Size(); index < size; ++index)
+        lldb::ClangExpressionVariableSP var_sp;
+        for (size_t index = 0, size = GetSize(); index < size; ++index)
         {
-            ClangExpressionVariable &candidate (VariableAtIndex(index));
-            if (candidate.m_parser_vars.get() && 
-                candidate.m_parser_vars->m_named_decl == decl)
-                return &candidate;
+            var_sp = GetVariableAtIndex(index);
+            if (var_sp->m_parser_vars.get() && var_sp->m_parser_vars->m_named_decl == decl)
+                return var_sp;
         }
-        return NULL;
+        var_sp.reset();
+        return var_sp;
     }
-};
-    
-//----------------------------------------------------------------------
-/// @class ClangExpressionVariableListBase ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
-/// @brief A list of variable references.
-///
-/// This class stores variables internally, acting as the permanent store.
-//----------------------------------------------------------------------
-class ClangExpressionVariableStore : public ClangExpressionVariableListBase
-{
-public:
-    //----------------------------------------------------------------------
-    /// Implementation of methods in ClangExpressionVariableListBase
-    //----------------------------------------------------------------------
-    uint64_t Size()
-    {
-        return m_variables.size();
-    }
-    
-    ClangExpressionVariable &VariableAtIndex(uint64_t index)
-    {
-        return m_variables[index];
-    }
-    
-    uint64_t AddVariable(ClangExpressionVariable &var)
-    {
-        m_variables.push_back(var);
-        return m_variables.size() - 1;
-    }
-    
+
     //----------------------------------------------------------------------
     /// Create a new variable in the list and return its index
     //----------------------------------------------------------------------
-    uint64_t CreateVariable()
+    lldb::ClangExpressionVariableSP
+    CreateVariable (lldb::ByteOrder byte_order, uint32_t addr_byte_size)
     {
-        uint64_t index = m_variables.size();
-        
-        m_variables.push_back(ClangExpressionVariable());
-        m_variables[index].m_store = this;
-        m_variables[index].m_index = index;
-        
-        return index;
+        lldb::ClangExpressionVariableSP var_sp(new ClangExpressionVariable(byte_order, addr_byte_size));
+        m_variables.push_back(var_sp);
+        return var_sp;
     }
+
+    lldb::ClangExpressionVariableSP
+    CreateVariable(const lldb::ValueObjectSP &valobj_sp)
+    {
+        lldb::ClangExpressionVariableSP var_sp(new ClangExpressionVariable(valobj_sp));
+        m_variables.push_back(var_sp);
+        return var_sp;
+    }
+    
+    
+
+    lldb::ClangExpressionVariableSP
+    CreateVariable (const ConstString &name, 
+                    const TypeFromUser& user_type,
+                    lldb::ByteOrder byte_order, 
+                    uint32_t addr_byte_size)
+    {
+        lldb::ClangExpressionVariableSP var_sp(new ClangExpressionVariable(byte_order, addr_byte_size));
+        var_sp->SetName (name);
+        var_sp->SetClangType (user_type.GetOpaqueQualType());
+        var_sp->SetClangAST (user_type.GetASTContext());
+        m_variables.push_back(var_sp);
+        return var_sp;
+    }
+    
 private:
-    std::vector <ClangExpressionVariable> m_variables;
+    std::vector <lldb::ClangExpressionVariableSP> m_variables;
 };
-    
-//----------------------------------------------------------------------
-/// @class ClangExpressionVariableListBase ClangExpressionVariable.h "lldb/Expression/ClangExpressionVariable.h"
-/// @brief A list of variable references.
-///
-/// This class stores references to variables stored elsewhere.
-//----------------------------------------------------------------------
-class ClangExpressionVariableList : public ClangExpressionVariableListBase
-{
-public:
-    //----------------------------------------------------------------------
-    /// Implementation of methods in ClangExpressionVariableListBase
-    //----------------------------------------------------------------------
-    uint64_t Size()
-    {
-        return m_references.size();
-    }
-    
-    ClangExpressionVariable &VariableAtIndex(uint64_t index)
-    {
-        return m_references[index].first->VariableAtIndex(m_references[index].second);
-    }
-    
-    uint64_t AddVariable(ClangExpressionVariable &var)
-    {
-        m_references.push_back(ClangExpressionVariableRef(var.m_store, var.m_index));
-        return m_references.size() - 1;
-    }
-private:
-    typedef std::pair <ClangExpressionVariableStore *, uint64_t>
-    ClangExpressionVariableRef;
-    
-    std::vector <ClangExpressionVariableRef> m_references;
-};
+
 
 } // namespace lldb_private
 
