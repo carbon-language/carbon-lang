@@ -26,7 +26,6 @@ def imm_comp_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), MVT::i32);
 }]>;
 
-
 /// imm0_7 predicate - True if the 32-bit immediate is in the range [0,7].
 def imm0_7 : PatLeaf<(i32 imm), [{
   return (uint32_t)N->getZExtValue() < 8;
@@ -127,7 +126,6 @@ def t_addrmode_rrs1 : Operand<i32>,
   let MIOperandInfo = (ops tGPR:$base, tGPR:$offsreg);
   let ParserMatchClass = MemModeRegThumbAsmOperand;
 }
-
 def t_addrmode_rrs2 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectThumbAddrModeRI5S2", []> {
   let EncoderMethod = "getThumbAddrModeRegRegOpValue";
@@ -618,12 +616,12 @@ multiclass thumb_ld_rr_ri_enc<bits<3> reg_opc, bits<4> imm_opc,
                               AddrMode am, InstrItinClass itin_r,
                               InstrItinClass itin_i, string asm,
                               PatFrag opnode> {
-  def r :
+  def r : // reg/reg
     T1pILdStEncode<reg_opc,
                    (outs tGPR:$Rt), (ins AddrMode_r:$addr),
                    am, itin_r, asm, "\t$Rt, $addr",
                    [(set tGPR:$Rt, (opnode AddrMode_r:$addr))]>;
-  def i :
+  def i : // reg/imm5
     T1pILdStEncodeImm<imm_opc, 1 /* Load */,
                       (outs tGPR:$Rt), (ins AddrMode_i:$addr),
                       am, itin_i, asm, "\t$Rt, $addr",
@@ -635,12 +633,12 @@ multiclass thumb_st_rr_ri_enc<bits<3> reg_opc, bits<4> imm_opc,
                               AddrMode am, InstrItinClass itin_r,
                               InstrItinClass itin_i, string asm,
                               PatFrag opnode> {
-  def r :
+  def r : // reg/reg
     T1pILdStEncode<reg_opc,
                    (outs), (ins tGPR:$Rt, AddrMode_r:$addr),
                    am, itin_r, asm, "\t$Rt, $addr",
                    [(opnode tGPR:$Rt, AddrMode_r:$addr)]>;
-  def i :
+  def i : // reg/imm5
     T1pILdStEncodeImm<imm_opc, 0 /* Store */,
                       (outs), (ins tGPR:$Rt, AddrMode_i:$addr),
                       am, itin_i, asm, "\t$Rt, $addr",
