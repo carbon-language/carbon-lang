@@ -1161,9 +1161,6 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
     if (NumPhis > 2)
       return false;
   
-  DEBUG(dbgs() << "FOUND IF CONDITION!  " << *IfCond << "  T: "
-        << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
-  
   // Loop over the PHI's seeing if we can promote them all to select
   // instructions.  While we are at it, keep track of the instructions
   // that need to be moved to the dominating block.
@@ -1192,8 +1189,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   if (cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
     IfBlock1 = Pred;
     DomBlock = *pred_begin(Pred);
-    for (BasicBlock::iterator I = Pred->begin();
-         !isa<TerminatorInst>(I); ++I)
+    for (BasicBlock::iterator I = Pred->begin(); !isa<TerminatorInst>(I); ++I)
       if (!AggressiveInsts.count(I) && !isa<DbgInfoIntrinsic>(I)) {
         // This is not an aggressive instruction that we can promote.
         // Because of this, we won't be able to get rid of the control
@@ -1206,8 +1202,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   if (cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
     IfBlock2 = Pred;
     DomBlock = *pred_begin(Pred);
-    for (BasicBlock::iterator I = Pred->begin();
-         !isa<TerminatorInst>(I); ++I)
+    for (BasicBlock::iterator I = Pred->begin(); !isa<TerminatorInst>(I); ++I)
       if (!AggressiveInsts.count(I) && !isa<DbgInfoIntrinsic>(I)) {
         // This is not an aggressive instruction that we can promote.
         // Because of this, we won't be able to get rid of the control
@@ -1215,6 +1210,9 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
         return false;
       }
   }
+  
+  DEBUG(dbgs() << "FOUND IF CONDITION!  " << *IfCond << "  T: "
+        << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
       
   // If we can still promote the PHI nodes after this gauntlet of tests,
   // do all of the PHI's now.
