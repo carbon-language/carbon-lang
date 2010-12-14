@@ -80,10 +80,12 @@ public:
   static char ID;
 
 private:
-  bool checkUncachedInterference(LiveInterval &, unsigned);
+  bool checkUncachedInterference(LiveInterval&, unsigned);
+  LiveInterval *getSingleInterference(LiveInterval&, unsigned);
   bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
   bool reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg);
 
+  unsigned tryReassign(LiveInterval&, AllocationOrder&);
   unsigned trySplit(LiveInterval&, AllocationOrder&,
                     SmallVectorImpl<LiveInterval*>&);
 };
@@ -163,6 +165,35 @@ bool RAGreedy::checkUncachedInterference(LiveInterval &VirtReg,
   return false;
 }
 
+/// getSingleInterference - Return the single interfering virtual register
+/// assigned to PhysReg. Return 0 if more than one virtual register is
+/// interfering.
+LiveInterval *RAGreedy::getSingleInterference(LiveInterval &VirtReg,
+                                              unsigned PhysReg) {
+  LiveInterval *Interference = 0;
+
+  // Check direct interferences.
+  LiveIntervalUnion::Query &Q = query(VirtReg, PhysReg);
+  if (Q.checkInterference()) {
+    if (!Q.seenAllInterferences())
+      return 0;
+    Q.collectInterferingVRegs(1);
+    Interference = Q.interferingVRegs().front();
+  }
+
+  // Check aliases.
+  for (const unsigned *AliasI = TRI->getAliasSet(PhysReg); *AliasI; ++AliasI) {
+    LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
+    if (Q.checkInterference()) {
+      if (Interference || !Q.seenAllInterferences())
+        return 0;
+      Q.collectInterferingVRegs(1);
+      Interference = Q.interferingVRegs().front();
+    }
+  }
+  return Interference;
+}
+
 // Attempt to reassign this virtual register to a different physical register.
 //
 // FIXME: we are not yet caching these "second-level" interferences discovered
@@ -173,23 +204,26 @@ bool RAGreedy::checkUncachedInterference(LiveInterval &VirtReg,
 // FIXME: This may result in a lot of alias queries. We could summarize alias
 // live intervals in their parent register's live union, but it's messy.
 bool RAGreedy::reassignVReg(LiveInterval &InterferingVReg,
-                            unsigned OldPhysReg) {
-  assert(OldPhysReg == VRM->getPhys(InterferingVReg.reg) &&
+                            unsigned WantedPhysReg) {
+  assert(TargetRegisterInfo::isVirtualRegister(InterferingVReg.reg) &&
+         "Can only reassign virtual registers");
+  assert(TRI->regsOverlap(WantedPhysReg, VRM->getPhys(InterferingVReg.reg)) &&
          "inconsistent phys reg assigment");
 
   AllocationOrder Order(InterferingVReg.reg, *VRM, ReservedRegs);
   while (unsigned PhysReg = Order.next()) {
-    if (PhysReg == OldPhysReg)
+    // Don't reassign to a WantedPhysReg alias.
+    if (TRI->regsOverlap(PhysReg, WantedPhysReg))
       continue;
 
     if (checkUncachedInterference(InterferingVReg, PhysReg))
       continue;
 
-    DEBUG(dbgs() << "reassigning: " << InterferingVReg << " from " <<
-          TRI->getName(OldPhysReg) << " to " << TRI->getName(PhysReg) << '\n');
-
     // Reassign the interfering virtual reg to this physical reg.
-    PhysReg2LiveUnion[OldPhysReg].extract(InterferingVReg);
+    unsigned OldAssign = VRM->getPhys(InterferingVReg.reg);
+    DEBUG(dbgs() << "reassigning: " << InterferingVReg << " from " <<
+          TRI->getName(OldAssign) << " to " << TRI->getName(PhysReg) << '\n');
+    PhysReg2LiveUnion[OldAssign].extract(InterferingVReg);
     VRM->clearVirt(InterferingVReg.reg);
     VRM->assignVirt2Phys(InterferingVReg.reg, PhysReg);
     PhysReg2LiveUnion[PhysReg].unify(InterferingVReg);
@@ -199,30 +233,32 @@ bool RAGreedy::reassignVReg(LiveInterval &InterferingVReg,
   return false;
 }
 
-// Collect all virtual regs currently assigned to PhysReg that interfere with
-// VirtReg.
-//
-// Currently, for simplicity, we only attempt to reassign a single interference
-// within the same register class.
+/// reassignInterferences - Reassign all interferences to different physical
+/// registers such that Virtreg can be assigned to PhysReg.
+/// Currently this only works with a single interference.
+/// @param  VirtReg Currently unassigned virtual register.
+/// @param  PhysReg Physical register to be cleared.
+/// @return True on success, false if nothing was changed.
 bool RAGreedy::reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg) {
-  LiveIntervalUnion::Query &Q = query(VirtReg, PhysReg);
-
-  // Limit the interference search to one interference.
-  Q.collectInterferingVRegs(1);
-  assert(Q.interferingVRegs().size() == 1 &&
-         "expected at least one interference");
-
-  // Do not attempt reassignment unless we find only a single interference.
-  if (!Q.seenAllInterferences())
+  LiveInterval *InterferingVReg = getSingleInterference(VirtReg, PhysReg);
+  if (!InterferingVReg)
     return false;
+  if (TargetRegisterInfo::isPhysicalRegister(InterferingVReg->reg))
+    return false;
+  return reassignVReg(*InterferingVReg, PhysReg);
+}
 
-  // Don't allow any interferences on aliases.
-  for (const unsigned *AliasI = TRI->getAliasSet(PhysReg); *AliasI; ++AliasI) {
-    if (query(VirtReg, *AliasI).checkInterference())
-      return false;
-  }
-
-  return reassignVReg(*Q.interferingVRegs()[0], PhysReg);
+/// tryReassign - Try to reassign interferences to different physregs.
+/// @param  VirtReg Currently unassigned virtual register.
+/// @param  Order   Physregs to try.
+/// @return         Physreg to assign VirtReg, or 0.
+unsigned RAGreedy::tryReassign(LiveInterval &VirtReg, AllocationOrder &Order) {
+  NamedRegionTimer T("Reassign", TimerGroupName, TimePassesIsEnabled);
+  Order.rewind();
+  while (unsigned PhysReg = Order.next())
+    if (reassignInterferences(VirtReg, PhysReg))
+      return PhysReg;
+  return 0;
 }
 
 /// trySplit - Try to split VirtReg or one of its interferences, making it
@@ -255,29 +291,15 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
 
     // The current VirtReg must either be spillable, or one of its interferences
     // must have less spill weight.
-    if (InterferingVirtReg->weight < VirtReg.weight ) {
-      // For simplicity, only consider reassigning registers in the same class.
-      if (InterfReg == PhysReg)
-        ReassignCands.push_back(PhysReg);
-      else
-        PhysRegSpillCands.push_back(PhysReg);
-    }
+    if (InterferingVirtReg->weight < VirtReg.weight )
+      PhysRegSpillCands.push_back(PhysReg);
   }
 
-  // Try to reassign interfering physical register. Priority among
-  // PhysRegSpillCands does not matter yet, because the reassigned virtual
-  // registers will still be assigned to physical registers.
-  {
-    NamedRegionTimer T("Reassign", TimerGroupName, TimePassesIsEnabled);
-    for (SmallVectorImpl<unsigned>::iterator PhysRegI = ReassignCands.begin(),
-          PhysRegE = ReassignCands.end(); PhysRegI != PhysRegE; ++PhysRegI)
-      if (reassignInterferences(VirtReg, *PhysRegI))
-        // Reassignment successfull. Allocate now to this PhysReg.
-        return *PhysRegI;
-  }
-  PhysRegSpillCands.insert(PhysRegSpillCands.end(), ReassignCands.begin(),
-                           ReassignCands.end());
+  // Try to reassign interferences.
+  if (unsigned PhysReg = tryReassign(VirtReg, Order))
+    return PhysReg;
 
+  // Try splitting VirtReg or interferences.
   unsigned PhysReg = trySplit(VirtReg, Order, SplitVRegs);
   if (PhysReg || !SplitVRegs.empty())
     return PhysReg;
