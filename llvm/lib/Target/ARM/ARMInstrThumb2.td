@@ -131,6 +131,12 @@ def t2addrmode_imm12 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
+// ADR instruction labels.
+def t2adrlabel : Operand<i32> {
+  let EncoderMethod = "getT2AdrLabelOpValue";
+}
+
+
 // t2addrmode_imm8  := reg +/- imm8
 def t2addrmode_imm8 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
@@ -1128,10 +1134,9 @@ class T2PCOneRegImm<dag oops, dag iops, InstrItinClass itin,
 
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
-let neverHasSideEffects = 1 in {
-let isReMaterializable = 1 in
-def t2LEApcrel : T2PCOneRegImm<(outs rGPR:$Rd), (ins i32imm:$label, pred:$p), IIC_iALUi,
-                      "adr${p}.w\t$Rd, #$label", []> {
+def t2ADR : T2PCOneRegImm<(outs rGPR:$Rd),
+              (ins t2adrlabel:$addr, pred:$p),
+              IIC_iALUi, "adr{$p}.w\t$Rd, #$addr", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25-24} = 0b10;
   // Inst{23:21} = '11' (add = FALSE) or '00' (add = TRUE)
@@ -1139,21 +1144,23 @@ def t2LEApcrel : T2PCOneRegImm<(outs rGPR:$Rd), (ins i32imm:$label, pred:$p), II
   let Inst{20} = 0;
   let Inst{19-16} = 0b1111; // Rn
   let Inst{15} = 0;
-
-
+  
+  bits<4> Rd;
+  bits<13> addr;
+  let Inst{11-8} = Rd;
+  let Inst{23}    = addr{12};
+  let Inst{21}    = addr{12};
+  let Inst{26}    = addr{11};
+  let Inst{14-12} = addr{10-8};
+  let Inst{7-0}   = addr{7-0};
 }
-} // neverHasSideEffects
-def t2LEApcrelJT : T2PCOneRegImm<(outs rGPR:$Rd),
+
+let neverHasSideEffects = 1, isReMaterializable = 1 in
+def t2LEApcrel : PseudoInst<(outs rGPR:$Rd), (ins i32imm:$label, pred:$p),
+                            IIC_iALUi, []>;
+def t2LEApcrelJT : PseudoInst<(outs rGPR:$Rd),
                         (ins i32imm:$label, nohash_imm:$id, pred:$p), IIC_iALUi,
-                        "adr${p}.w\t$Rd, #${label}_${id}", []> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25-24} = 0b10;
-  // Inst{23:21} = '11' (add = FALSE) or '00' (add = TRUE)
-  let Inst{22} = 0;
-  let Inst{20} = 0;
-  let Inst{19-16} = 0b1111; // Rn
-  let Inst{15} = 0;
-}
+                        []>;
 
 
 // FIXME: None of these add/sub SP special instructions should be necessary

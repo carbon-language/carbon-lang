@@ -136,6 +136,25 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // Encode the immediate and shift the opcode into place.
     return ARM_AM::getSOImmVal(Value) | (opc << 21);
   }
+  
+  case ARM::fixup_t2_adr_pcrel_12: {
+    Value -= 4;
+    unsigned opc = 0;
+    if ((int64_t)Value < 0) {
+      Value = -Value;
+      opc = 5;
+    }
+
+    uint32_t out = (opc << 21);
+    out |= (Value & 0x800) << 14;
+    out |= (Value & 0x700) << 4;
+    out |= (Value & 0x0FF);
+    
+    uint64_t swapped = (out & 0xFFFF0000) >> 16;
+    swapped |= (out & 0x0000FFFF) << 16;
+    return swapped;
+  }
+  
   case ARM::fixup_arm_branch:
     // These values don't encode the low two bits since they're always zero.
     // Offset by 8 just as above.
@@ -356,6 +375,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_t2_condbranch:
   case ARM::fixup_t2_uncondbranch:
   case ARM::fixup_t2_pcrel_10:
+  case ARM::fixup_t2_adr_pcrel_12:
   case ARM::fixup_arm_thumb_bl:
   case ARM::fixup_arm_thumb_blx:
     return 4;
