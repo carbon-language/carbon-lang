@@ -648,7 +648,7 @@ class TestBase(unittest2.TestCase):
         #traceback.print_stack()
 
         # Check and run any hook functions.
-        for hook in self.hooks:
+        for hook in reversed(self.hooks):
             with recording(self, traceAlways) as sbuf:
                 print >> sbuf, "Executing tearDown hook:", getsource_if_available(hook)
             hook()

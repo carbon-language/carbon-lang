@@ -38,7 +38,7 @@ class LoadUnloadTestCase(TestBase):
         new_dir = os.path.join(os.getcwd(), "dyld_path")
 
         # This is the function to remove the dyld_path directory after the test.
-        def remove_dyld_path():
+        def remove_dyld_dir():
             import shutil
             shutil.rmtree(new_dir)
 
@@ -51,7 +51,7 @@ class LoadUnloadTestCase(TestBase):
         os.rename(old_dylib, new_dylib)
         if dsymName:
             os.rename(old_dSYM, new_dSYM)
-        self.addTearDownHook(remove_dyld_path)
+        self.addTearDownHook(remove_dyld_dir)
         #system(["ls", "-lR", "."])
 
         # With libd.dylib moved, a.out run should fail.
@@ -71,6 +71,7 @@ class LoadUnloadTestCase(TestBase):
 
         # Try again with the DYLD_LIBRARY_PATH environment variable properly set.
         os.environ[dylibPath] = new_dir
+        self.addTearDownHook(lambda: os.environ.pop(dylibPath))
         self.runCmd("run")
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
             patterns = ["frame #0.*d_function.*at d.c:%d" % self.line_d_function])
