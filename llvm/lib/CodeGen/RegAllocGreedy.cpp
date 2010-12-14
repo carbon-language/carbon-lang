@@ -269,14 +269,14 @@ unsigned RAGreedy::tryReassign(LiveInterval &VirtReg, AllocationOrder &Order) {
 unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
                             SmallVectorImpl<LiveInterval*>&SplitVRegs) {
   NamedRegionTimer T("Splitter", TimerGroupName, TimePassesIsEnabled);
-  Order.rewind();
-  while (unsigned PhysReg = Order.next()) {
-    DEBUG({
-      query(VirtReg, PhysReg).print(dbgs(), TRI);
-      for (const unsigned *AI = TRI->getAliasSet(PhysReg); *AI; ++AI)
-        query(VirtReg, *AI).print(dbgs(), TRI);
-    });
-  }
+  DEBUG({
+    Order.rewind();
+    while (unsigned PhysReg = Order.next()) {
+        query(VirtReg, PhysReg).print(dbgs(), TRI);
+        for (const unsigned *AI = TRI->getAliasSet(PhysReg); *AI; ++AI)
+          query(VirtReg, *AI).print(dbgs(), TRI);
+    }
+  });
   return 0;
 }
 
