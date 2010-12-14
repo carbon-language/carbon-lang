@@ -43,4 +43,10 @@ how Keychain Access makes certificates.
 
 sudo security add-trust -d -r trustRoot -p basic -p codeSign -k /Library/Keychains/System.keychain ~/Desktop/lldb_codesign.cer
 
+- Right click on the "lldb_codesign" certificate in the "System" keychain (NOT
+  "login", but the one in "System"), and select "Delete" to delete it from
+  the "System" keychain.
+- Reboot
+- Clean and rebuild lldb and you should be able to debug.
+
 That should do it.
