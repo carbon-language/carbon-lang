@@ -1144,7 +1144,7 @@ def t2ADR : T2PCOneRegImm<(outs rGPR:$Rd),
   let Inst{20} = 0;
   let Inst{19-16} = 0b1111; // Rn
   let Inst{15} = 0;
-  
+
   bits<4> Rd;
   bits<13> addr;
   let Inst{11-8} = Rd;
@@ -2831,7 +2831,7 @@ def t2LDREX  : Thumb2I<(outs rGPR:$Rt), (ins rGPR:$Rn), AddrModeNone,
   let Inst{26-20} = 0b0000101;
   let Inst{11-8} = 0b1111;
   let Inst{7-0} = 0b00000000; // imm8 = 0
-  
+
   bits<4> Rn;
   bits<4> Rt;
   let Inst{19-16} = Rn;
@@ -2860,7 +2860,7 @@ def t2STREX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt, rGPR:$Rn),
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000100;
   let Inst{7-0} = 0b00000000; // imm8 = 0
-  
+
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rt;
@@ -3032,7 +3032,7 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{31-27} = 0b11110;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
-  
+
   bits<4> p;
   let Inst{25-22} = p;
 
