@@ -29,6 +29,7 @@ class MachineFunction;
 class MachineMove;
 class RegScavenger;
 template<class T> class SmallVectorImpl;
+class raw_ostream;
 
 /// TargetRegisterDesc - This record contains all of the information known about
 /// a particular register.  The AliasSet field (if not null) contains a pointer
@@ -320,6 +321,9 @@ public:
     assert(Reg && "this is not a register!");
     return Reg >= FirstVirtualRegister;
   }
+
+  /// printReg - Print a virtual or physical register on OS.
+  void printReg(unsigned Reg, raw_ostream &OS) const;
 
   /// getMinimalPhysRegClass - Returns the Register Class of a physical
   /// register of the given type, picking the most sub register class of

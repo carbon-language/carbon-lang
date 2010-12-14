@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -38,6 +39,13 @@ TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
 }
 
 TargetRegisterInfo::~TargetRegisterInfo() {}
+
+void TargetRegisterInfo::printReg(unsigned Reg, raw_ostream &OS) const {
+  if (Reg && isVirtualRegister(Reg))
+    OS << "%reg" << Reg;
+  else
+    OS << '%' << getName(Reg);
+}
 
 /// getMinimalPhysRegClass - Returns the Register Class of a physical
 /// register of the given type, picking the most sub register class of
