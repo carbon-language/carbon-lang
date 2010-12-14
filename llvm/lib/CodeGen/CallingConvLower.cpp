@@ -51,11 +51,9 @@ void CCState::HandleByVal(unsigned ValNo, MVT ValVT,
 
 /// MarkAllocated - Mark a register and all of its aliases as allocated.
 void CCState::MarkAllocated(unsigned Reg) {
-  UsedRegs[Reg/32] |= 1 << (Reg&31);
-  
-  if (const unsigned *RegAliases = TRI.getAliasSet(Reg))
-    for (; (Reg = *RegAliases); ++RegAliases)
-      UsedRegs[Reg/32] |= 1 << (Reg&31);
+  for (const unsigned *Alias = TRI.getOverlaps(Reg);
+       unsigned Reg = *Alias; ++Alias)
+    UsedRegs[Reg/32] |= 1 << (Reg&31);
 }
 
 /// AnalyzeFormalArguments - Analyze an array of argument values,
