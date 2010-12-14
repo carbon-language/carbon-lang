@@ -238,7 +238,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case ARM::fixup_arm_thumb_cb: {
     // Offset by 4 and don't encode the lower bit, which is always 0.
     uint32_t Binary = (Value - 4) >> 1;
-    return ((Binary & 0x20) << 9) | ((Binary & 0x1f) << 3);
+    return ((Binary & 0x20) << 4) | ((Binary & 0x1f) << 3);
   }
   case ARM::fixup_arm_thumb_br:
     // Offset by 4 and don't encode the lower bit, which is always 0.
