@@ -154,11 +154,8 @@ float RAGreedy::getPriority(LiveInterval *LI) {
 // Check interference without using the cache.
 bool RAGreedy::checkUncachedInterference(LiveInterval &VirtReg,
                                          unsigned PhysReg) {
-  LiveIntervalUnion::Query subQ(&VirtReg, &PhysReg2LiveUnion[PhysReg]);
-  if (subQ.checkInterference())
-      return true;
-  for (const unsigned *AliasI = TRI->getAliasSet(PhysReg); *AliasI; ++AliasI) {
-    subQ.init(&VirtReg, &PhysReg2LiveUnion[*AliasI]);
+  for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
+    LiveIntervalUnion::Query subQ(&VirtReg, &PhysReg2LiveUnion[*AliasI]);
     if (subQ.checkInterference())
       return true;
   }
@@ -170,19 +167,9 @@ bool RAGreedy::checkUncachedInterference(LiveInterval &VirtReg,
 /// interfering.
 LiveInterval *RAGreedy::getSingleInterference(LiveInterval &VirtReg,
                                               unsigned PhysReg) {
+  // Check physreg and aliases.
   LiveInterval *Interference = 0;
-
-  // Check direct interferences.
-  LiveIntervalUnion::Query &Q = query(VirtReg, PhysReg);
-  if (Q.checkInterference()) {
-    Q.collectInterferingVRegs(1);
-    if (!Q.seenAllInterferences())
-      return 0;
-    Interference = Q.interferingVRegs().front();
-  }
-
-  // Check aliases.
-  for (const unsigned *AliasI = TRI->getAliasSet(PhysReg); *AliasI; ++AliasI) {
+  for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
     if (Q.checkInterference()) {
       if (Interference)
