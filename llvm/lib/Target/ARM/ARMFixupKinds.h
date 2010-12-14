@@ -18,11 +18,11 @@ enum Fixups {
   // fixup_arm_ldst_pcrel_12 - 12-bit PC relative relocation for symbol
   // addresses
   fixup_arm_ldst_pcrel_12 = FirstTargetFixupKind,
-  
+
   // fixup_t2_ldst_pcrel_12 - Equivalent to fixup_arm_ldst_pcrel_12, with
   // the 16-bit halfwords reordered.
   fixup_t2_ldst_pcrel_12,
-  
+
   // fixup_arm_pcrel_10 - 10-bit PC relative relocation for symbol addresses
   // used in VFP instructions where the lower 2 bits are not encoded
   // (so it's encoded as an 8-bit immediate).
@@ -39,10 +39,10 @@ enum Fixups {
   // fixup_arm_branch - 24-bit PC relative relocation for direct branch
   // instructions.
   fixup_arm_branch,
-  // fixup_t2_condbranch - 20-bit PC relative relocation for Thumb2 direct 
+  // fixup_t2_condbranch - 20-bit PC relative relocation for Thumb2 direct
   // uconditional branch instructions.
   fixup_t2_condbranch,
-  // fixup_t2_uncondbranch - 20-bit PC relative relocation for Thumb2 direct 
+  // fixup_t2_uncondbranch - 20-bit PC relative relocation for Thumb2 direct
   // branch unconditional branch instructions.
   fixup_t2_uncondbranch,
 
