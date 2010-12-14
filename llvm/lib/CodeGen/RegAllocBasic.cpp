@@ -60,14 +60,6 @@ VerifyRegAlloc("verify-regalloc",
 const char *RegAllocBase::TimerGroupName = "Register Allocation";
 
 namespace {
-
-class PhysicalRegisterDescription : public AbstractRegisterDescription {
-  const TargetRegisterInfo *TRI;
-public:
-  PhysicalRegisterDescription(const TargetRegisterInfo *T): TRI(T) {}
-  virtual const char *getName(unsigned Reg) const { return TRI->getName(Reg); }
-};
-
 /// RABasic provides a minimal implementation of the basic register allocation
 /// algorithm. It prioritizes live virtual registers by spill weight and spills
 /// whenever a register is unavailable. This is not practical in production but
@@ -165,8 +157,7 @@ void RegAllocBase::verify() {
 
   // Verify disjoint unions.
   for (unsigned PhysReg = 0; PhysReg < PhysReg2LiveUnion.numRegs(); ++PhysReg) {
-    DEBUG(PhysicalRegisterDescription PRD(TRI);
-          PhysReg2LiveUnion[PhysReg].dump(&PRD));
+    DEBUG(PhysReg2LiveUnion[PhysReg].print(dbgs(), TRI));
     LiveVirtRegBitSet &VRegs = unionVRegs[PhysReg];
     PhysReg2LiveUnion[PhysReg].verify(VRegs);
     // Union + intersection test could be done efficiently in one pass, but

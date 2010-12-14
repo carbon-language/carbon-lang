@@ -22,18 +22,13 @@
 
 namespace llvm {
 
+class TargetRegisterInfo;
+
 #ifndef NDEBUG
 // forward declaration
 template <unsigned Element> class SparseBitVector;
 typedef SparseBitVector<128> LiveVirtRegBitSet;
 #endif
-
-/// Abstraction to provide info for the representative register.
-class AbstractRegisterDescription {
-public:
-  virtual const char *getName(unsigned Reg) const = 0;
-  virtual ~AbstractRegisterDescription() {}
-};
 
 /// Compare a live virtual register segment to a LiveIntervalUnion segment.
 inline bool
@@ -85,10 +80,8 @@ public:
   // Remove a live virtual register's segments from this union.
   void extract(LiveInterval &VirtReg);
 
-  void dump(const AbstractRegisterDescription *RegDesc) const;
-
-  // If tri != NULL, use it to decode RepReg
-  void print(raw_ostream &OS, const AbstractRegisterDescription *RegDesc) const;
+  // Print union, using TRI to translate register names
+  void print(raw_ostream &OS, const TargetRegisterInfo *TRI) const;
 
 #ifndef NDEBUG
   // Verify the live intervals in this union and add them to the visited set.

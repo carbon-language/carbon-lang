@@ -18,7 +18,10 @@
 #include "llvm/ADT/SparseBitVector.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetRegisterInfo.h"
+
 #include <algorithm>
+
 using namespace llvm;
 
 
@@ -66,22 +69,14 @@ void LiveIntervalUnion::extract(LiveInterval &VirtReg) {
 }
 
 void
-LiveIntervalUnion::print(raw_ostream &OS,
-                         const AbstractRegisterDescription *RegDesc) const {
+LiveIntervalUnion::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
   OS << "LIU ";
-  if (RegDesc != NULL)
-    OS << RegDesc->getName(RepReg);
-  else {
-    OS << RepReg;
+  TRI->printReg(RepReg, OS);
+  for (LiveSegments::const_iterator SI = Segments.begin(); SI.valid(); ++SI) {
+    OS << " [" << SI.start() << ' ' << SI.stop() << "):";
+    TRI->printReg(SI.value()->reg, OS);
   }
-  for (LiveSegments::const_iterator SI = Segments.begin(); SI.valid(); ++SI)
-    dbgs() << " [" << SI.start() << ' ' << SI.stop() << "):%reg"
-           << SI.value()->reg;
   OS << "\n";
-}
-
-void LiveIntervalUnion::dump(const AbstractRegisterDescription *RegDesc) const {
-  print(dbgs(), RegDesc);
 }
 
 #ifndef NDEBUG
