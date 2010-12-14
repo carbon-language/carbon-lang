@@ -199,7 +199,7 @@ static Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
 /// non-trapping.  If both are true, the instruction is inserted into the set
 /// and true is returned.
 static bool DominatesMergePoint(Value *V, BasicBlock *BB,
-                                std::set<Instruction*> *AggressiveInsts) {
+                                SmallPtrSet<Instruction*, 4> *AggressiveInsts) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) {
     // Non-instructions all dominate instructions, but not all constantexprs
@@ -217,50 +217,49 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
 
   // If this instruction is defined in a block that contains an unconditional
   // branch to BB, then it must be in the 'conditional' part of the "if
-  // statement".
-  if (BranchInst *BI = dyn_cast<BranchInst>(PBB->getTerminator()))
-    if (BI->isUnconditional() && BI->getSuccessor(0) == BB) {
-      if (!AggressiveInsts) return false;
-      // Okay, it looks like the instruction IS in the "condition".  Check to
-      // see if it's a cheap instruction to unconditionally compute, and if it
-      // only uses stuff defined outside of the condition.  If so, hoist it out.
-      if (!I->isSafeToSpeculativelyExecute())
-        return false;
+  // statement".  If not, it definitely dominates the region.
+  BranchInst *BI = dyn_cast<BranchInst>(PBB->getTerminator());
+  if (BI == 0 || BI->isConditional() || BI->getSuccessor(0) != BB)
+    return true;
 
-      switch (I->getOpcode()) {
-      default: return false;  // Cannot hoist this out safely.
-      case Instruction::Load: {
-        // We have to check to make sure there are no instructions before the
-        // load in its basic block, as we are going to hoist the loop out to
-        // its predecessor.
-        BasicBlock::iterator IP = PBB->begin();
-        while (isa<DbgInfoIntrinsic>(IP))
-          IP++;
-        if (IP != BasicBlock::iterator(I))
-          return false;
-        break;
-      }
-      case Instruction::Add:
-      case Instruction::Sub:
-      case Instruction::And:
-      case Instruction::Or:
-      case Instruction::Xor:
-      case Instruction::Shl:
-      case Instruction::LShr:
-      case Instruction::AShr:
-      case Instruction::ICmp:
-        break;   // These are all cheap and non-trapping instructions.
-      }
+  // If we aren't allowing aggressive promotion anymore, then don't consider
+  // instructions in the 'if region'.
+  if (AggressiveInsts == 0) return false;
+  
+  // Okay, it looks like the instruction IS in the "condition".  Check to
+  // see if it's a cheap instruction to unconditionally compute, and if it
+  // only uses stuff defined outside of the condition.  If so, hoist it out.
+  if (!I->isSafeToSpeculativelyExecute())
+    return false;
 
-      // Okay, we can only really hoist these out if their operands are not
-      // defined in the conditional region.
-      for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
-        if (!DominatesMergePoint(*i, BB, 0))
-          return false;
-      // Okay, it's safe to do this!  Remember this instruction.
-      AggressiveInsts->insert(I);
-    }
+  switch (I->getOpcode()) {
+  default: return false;  // Cannot hoist this out safely.
+  case Instruction::Load:
+    // We have to check to make sure there are no instructions before the
+    // load in its basic block, as we are going to hoist the load out to its
+    // predecessor.
+    if (PBB->getFirstNonPHIOrDbg() != I)
+      return false;
+    break;
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+  case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::AShr:
+  case Instruction::ICmp:
+    break;   // These are all cheap and non-trapping instructions.
+  }
 
+  // Okay, we can only really hoist these out if their operands are not
+  // defined in the conditional region.
+  for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
+    if (!DominatesMergePoint(*i, BB, 0))
+      return false;
+  // Okay, it's safe to do this!  Remember this instruction.
+  AggressiveInsts->insert(I);
   return true;
 }
 
@@ -1164,7 +1163,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   // Loop over the PHI's seeing if we can promote them all to select
   // instructions.  While we are at it, keep track of the instructions
   // that need to be moved to the dominating block.
-  std::set<Instruction*> AggressiveInsts;
+  SmallPtrSet<Instruction*, 4> AggressiveInsts;
   
   BasicBlock::iterator AfterPHIIt = BB->begin();
   while (isa<PHINode>(AfterPHIIt)) {
@@ -1179,17 +1178,23 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
       return false;
   }
   
+  // If we folded the the first phi, PN dangles at this point.  Refresh it.  If
+  // we ran out of PHIs then we simplified them all.
+  PN = dyn_cast<PHINode>(BB->begin());
+  if (PN == 0) return true;
+  
   // If we all PHI nodes are promotable, check to make sure that all
   // instructions in the predecessor blocks can be promoted as well.  If
   // not, we won't be able to get rid of the control flow, so it's not
   // worth promoting to select instructions.
-  BasicBlock *DomBlock = 0, *IfBlock1 = 0, *IfBlock2 = 0;
-  PN = cast<PHINode>(BB->begin());
-  BasicBlock *Pred = PN->getIncomingBlock(0);
-  if (cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
-    IfBlock1 = Pred;
-    DomBlock = *pred_begin(Pred);
-    for (BasicBlock::iterator I = Pred->begin(); !isa<TerminatorInst>(I); ++I)
+  BasicBlock *DomBlock = 0;
+  BasicBlock *IfBlock1 = PN->getIncomingBlock(0);
+  BasicBlock *IfBlock2 = PN->getIncomingBlock(1);
+  if (cast<BranchInst>(IfBlock1->getTerminator())->isConditional()) {
+    IfBlock1 = 0;
+  } else {
+    DomBlock = *pred_begin(IfBlock1);
+    for (BasicBlock::iterator I = IfBlock1->begin();!isa<TerminatorInst>(I);++I)
       if (!AggressiveInsts.count(I) && !isa<DbgInfoIntrinsic>(I)) {
         // This is not an aggressive instruction that we can promote.
         // Because of this, we won't be able to get rid of the control
@@ -1198,11 +1203,11 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
       }
   }
     
-  Pred = PN->getIncomingBlock(1);
-  if (cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
-    IfBlock2 = Pred;
-    DomBlock = *pred_begin(Pred);
-    for (BasicBlock::iterator I = Pred->begin(); !isa<TerminatorInst>(I); ++I)
+  if (cast<BranchInst>(IfBlock2->getTerminator())->isConditional()) {
+    IfBlock2 = 0;
+  } else {
+    DomBlock = *pred_begin(IfBlock2);
+    for (BasicBlock::iterator I = IfBlock2->begin();!isa<TerminatorInst>(I);++I)
       if (!AggressiveInsts.count(I) && !isa<DbgInfoIntrinsic>(I)) {
         // This is not an aggressive instruction that we can promote.
         // Because of this, we won't be able to get rid of the control
@@ -1212,7 +1217,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   }
   
   DEBUG(dbgs() << "FOUND IF CONDITION!  " << *IfCond << "  T: "
-        << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
+               << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
       
   // If we can still promote the PHI nodes after this gauntlet of tests,
   // do all of the PHI's now.
