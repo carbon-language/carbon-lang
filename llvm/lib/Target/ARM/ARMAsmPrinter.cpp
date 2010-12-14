@@ -1129,13 +1129,12 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     {
       MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tSTR);
+      TmpInst.setOpcode(ARM::tSTRi);
       TmpInst.addOperand(MCOperand::CreateReg(ValReg));
       TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
       // The offset immediate is #4. The operand value is scaled by 4 for the
       // tSTR instruction.
       TmpInst.addOperand(MCOperand::CreateImm(1));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
       TmpInst.addOperand(MCOperand::CreateReg(0));
@@ -1312,13 +1311,12 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     unsigned ScratchReg = MI->getOperand(1).getReg();
     {
       MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tLDR);
+      TmpInst.setOpcode(ARM::tLDRi);
       TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
       TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
       // The offset immediate is #8. The operand value is scaled by 4 for the
-      // tSTR instruction.
+      // tLDR instruction.
       TmpInst.addOperand(MCOperand::CreateImm(2));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
       TmpInst.addOperand(MCOperand::CreateReg(0));
@@ -1336,11 +1334,10 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     {
       MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tLDR);
+      TmpInst.setOpcode(ARM::tLDRi);
       TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
       TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
       TmpInst.addOperand(MCOperand::CreateImm(1));
-      TmpInst.addOperand(MCOperand::CreateReg(0));
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
       TmpInst.addOperand(MCOperand::CreateReg(0));
@@ -1348,10 +1345,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     {
       MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tLDR);
+      TmpInst.setOpcode(ARM::tLDRr);
       TmpInst.addOperand(MCOperand::CreateReg(ARM::R7));
       TmpInst.addOperand(MCOperand::CreateReg(SrcReg));
-      TmpInst.addOperand(MCOperand::CreateImm(0));
       TmpInst.addOperand(MCOperand::CreateReg(0));
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));

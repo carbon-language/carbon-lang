@@ -644,13 +644,11 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                 *this, dl);
     }
 
-    MI.setDesc(TII.get(ARM::tLDR));
+    MI.setDesc(TII.get(ARM::tLDRr));
     MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
     if (UseRR)
       // Use [reg, reg] addrmode.
       MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
-    else  // tLDR has an extra register operand.
-      MI.addOperand(MachineOperand::CreateReg(0, false));
   } else if (Desc.mayStore()) {
       VReg = MF.getRegInfo().createVirtualRegister(ARM::tGPRRegisterClass);
       bool UseRR = false;
@@ -666,14 +664,13 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       } else
         emitThumbRegPlusImmediate(MBB, II, VReg, FrameReg, Offset, TII,
                                   *this, dl);
-      MI.setDesc(TII.get(ARM::tSTR));
+      MI.setDesc(TII.get(ARM::tSTRr));
       MI.getOperand(i).ChangeToRegister(VReg, false, false, true);
       if (UseRR)  // Use [reg, reg] addrmode.
         MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
-      else // tSTR has an extra register operand.
-        MI.addOperand(MachineOperand::CreateReg(0, false));
-  } else
+  } else {
     assert(false && "Unexpected opcode!");
+  }
 
   // Add predicate back if it's needed.
   if (MI.getDesc().isPredicable()) {

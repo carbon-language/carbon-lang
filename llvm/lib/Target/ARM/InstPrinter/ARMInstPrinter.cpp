@@ -482,17 +482,7 @@ void ARMInstPrinter::printThumbITMask(const MCInst *MI, unsigned OpNum,
 void ARMInstPrinter::printThumbAddrModeRROperand(const MCInst *MI, unsigned Op,
                                                  raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
-  const MCOperand &MO2 = MI->getOperand(Op+1);
-  O << "[" << getRegisterName(MO1.getReg());
-  O << ", " << getRegisterName(MO2.getReg()) << "]";
-}
-
-void ARMInstPrinter::printThumbAddrModeRI5Operand(const MCInst *MI, unsigned Op,
-                                                  raw_ostream &O,
-                                                  unsigned Scale) {
-  const MCOperand &MO1 = MI->getOperand(Op);
-  const MCOperand &MO2 = MI->getOperand(Op+1);
-  const MCOperand &MO3 = MI->getOperand(Op+2);
+  const MCOperand &MO2 = MI->getOperand(Op + 1);
 
   if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, Op, O);
@@ -500,36 +490,50 @@ void ARMInstPrinter::printThumbAddrModeRI5Operand(const MCInst *MI, unsigned Op,
   }
 
   O << "[" << getRegisterName(MO1.getReg());
-  if (MO3.getReg())
-    O << ", " << getRegisterName(MO3.getReg());
-  else if (unsigned ImmOffs = MO2.getImm())
+  if (unsigned RegNum = MO2.getReg())
+    O << ", " << getRegisterName(RegNum);
+  O << "]";
+}
+
+void ARMInstPrinter::printThumbAddrModeImm5SOperand(const MCInst *MI,
+                                                    unsigned Op,
+                                                    raw_ostream &O,
+                                                    unsigned Scale) {
+  const MCOperand &MO1 = MI->getOperand(Op);
+  const MCOperand &MO2 = MI->getOperand(Op + 1);
+
+  if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
+    printOperand(MI, Op, O);
+    return;
+  }
+
+  O << "[" << getRegisterName(MO1.getReg());
+  if (unsigned ImmOffs = MO2.getImm())
     O << ", #" << ImmOffs * Scale;
   O << "]";
 }
 
-void ARMInstPrinter::printThumbAddrModeS1Operand(const MCInst *MI, unsigned Op,
-                                                 raw_ostream &O) {
-  printThumbAddrModeRI5Operand(MI, Op, O, 1);
+void ARMInstPrinter::printThumbAddrModeImm5S1Operand(const MCInst *MI,
+                                                     unsigned Op,
+                                                     raw_ostream &O) {
+  printThumbAddrModeImm5SOperand(MI, Op, O, 1);
 }
 
-void ARMInstPrinter::printThumbAddrModeS2Operand(const MCInst *MI, unsigned Op,
-                                                 raw_ostream &O) {
-  printThumbAddrModeRI5Operand(MI, Op, O, 2);
+void ARMInstPrinter::printThumbAddrModeImm5S2Operand(const MCInst *MI,
+                                                     unsigned Op,
+                                                     raw_ostream &O) {
+  printThumbAddrModeImm5SOperand(MI, Op, O, 2);
 }
 
-void ARMInstPrinter::printThumbAddrModeS4Operand(const MCInst *MI, unsigned Op,
-                                                 raw_ostream &O) {
-  printThumbAddrModeRI5Operand(MI, Op, O, 4);
+void ARMInstPrinter::printThumbAddrModeImm5S4Operand(const MCInst *MI,
+                                                     unsigned Op,
+                                                     raw_ostream &O) {
+  printThumbAddrModeImm5SOperand(MI, Op, O, 4);
 }
 
 void ARMInstPrinter::printThumbAddrModeSPOperand(const MCInst *MI, unsigned Op,
                                                  raw_ostream &O) {
-  const MCOperand &MO1 = MI->getOperand(Op);
-  const MCOperand &MO2 = MI->getOperand(Op+1);
-  O << "[" << getRegisterName(MO1.getReg());
-  if (unsigned ImmOffs = MO2.getImm())
-    O << ", #" << ImmOffs*4;
-  O << "]";
+  printThumbAddrModeImm5SOperand(MI, Op, O, 4);
 }
 
 // Constant shifts t2_so_reg is a 2-operand unit corresponding to the Thumb2

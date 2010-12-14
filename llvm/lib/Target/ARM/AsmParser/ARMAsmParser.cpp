@@ -236,11 +236,16 @@ public:
     int64_t Value = CE->getValue();
     return ((Value & 0x3) == 0 && Value <= 1020 && Value >= -1020);
   }
-  bool isMemModeThumb() const {
+  bool isMemModeRegThumb() const {
+    if (!isMemory() || (!Mem.OffsetIsReg && !Mem.Offset) || Mem.Writeback)
+      return false;
+    return !Mem.Offset || !isa<MCConstantExpr>(Mem.Offset);
+  }
+  bool isMemModeImmThumb() const {
     if (!isMemory() || (!Mem.OffsetIsReg && !Mem.Offset) || Mem.Writeback)
       return false;
 
-    if (!Mem.Offset) return true;
+    if (!Mem.Offset) return false;
 
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
     if (!CE) return false;
@@ -324,19 +329,18 @@ public:
     }
   }
 
-  void addMemModeThumbOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 3 && isMemModeThumb() && "Invalid number of operands!");
+  void addMemModeRegThumbOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && isMemModeRegThumb() && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+  }
 
-    if (Mem.Offset) {
-      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
-      assert(CE && "Non-constant mode offset operand!");
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
-      Inst.addOperand(MCOperand::CreateReg(0));
-    } else {
-      Inst.addOperand(MCOperand::CreateImm(0));
-      Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
-    }
+  void addMemModeImmThumbOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && isMemModeImmThumb() && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+    assert(CE && "Non-constant mode offset operand!");
+    Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
   }
 
   virtual void dump(raw_ostream &OS) const;

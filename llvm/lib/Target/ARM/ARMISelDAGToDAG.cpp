@@ -130,18 +130,24 @@ public:
   bool SelectAddrModePC(SDValue N, SDValue &Offset,
                         SDValue &Label);
 
+  // Thumb Addressing Modes:
   bool SelectThumbAddrModeRR(SDValue N, SDValue &Base, SDValue &Offset);
-  bool SelectThumbAddrModeRI5(SDValue N, unsigned Scale,
-                              SDValue &Base, SDValue &OffImm,
-                              SDValue &Offset);
-  bool SelectThumbAddrModeS1(SDValue N, SDValue &Base,
-                             SDValue &OffImm, SDValue &Offset);
-  bool SelectThumbAddrModeS2(SDValue N, SDValue &Base,
-                             SDValue &OffImm, SDValue &Offset);
-  bool SelectThumbAddrModeS4(SDValue N, SDValue &Base,
-                             SDValue &OffImm, SDValue &Offset);
+  bool SelectThumbAddrModeRI(SDValue N, SDValue &Base, SDValue &Offset,
+                             unsigned Scale);
+  bool SelectThumbAddrModeRI5S1(SDValue N, SDValue &Base, SDValue &Offset);
+  bool SelectThumbAddrModeRI5S2(SDValue N, SDValue &Base, SDValue &Offset);
+  bool SelectThumbAddrModeRI5S4(SDValue N, SDValue &Base, SDValue &Offset);
+  bool SelectThumbAddrModeImm5S(SDValue N, unsigned Scale, SDValue &Base,
+                                SDValue &OffImm);
+  bool SelectThumbAddrModeImm5S1(SDValue N, SDValue &Base,
+                                 SDValue &OffImm);
+  bool SelectThumbAddrModeImm5S2(SDValue N, SDValue &Base,
+                                 SDValue &OffImm);
+  bool SelectThumbAddrModeImm5S4(SDValue N, SDValue &Base,
+                                 SDValue &OffImm);
   bool SelectThumbAddrModeSP(SDValue N, SDValue &Base, SDValue &OffImm);
 
+  // Thumb 2 Addressing Modes:
   bool SelectT2ShifterOperandReg(SDValue N,
                                  SDValue &BaseReg, SDValue &Opc);
   bool SelectT2AddrModeImm12(SDValue N, SDValue &Base, SDValue &OffImm);
@@ -872,8 +878,15 @@ bool ARMDAGToDAGISel::SelectAddrModePC(SDValue N,
                                        MVT::i32);
     return true;
   }
+
   return false;
 }
+
+
+//===----------------------------------------------------------------------===//
+//                         Thumb Addressing Modes
+//===----------------------------------------------------------------------===//
+
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDValue N,
                                             SDValue &Base, SDValue &Offset){
@@ -893,13 +906,13 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDValue N,
 }
 
 bool
-ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDValue N,
-                                        unsigned Scale, SDValue &Base,
-                                        SDValue &OffImm, SDValue &Offset) {
+ARMDAGToDAGISel::SelectThumbAddrModeRI(SDValue N, SDValue &Base,
+                                       SDValue &Offset, unsigned Scale) {
   if (Scale == 4) {
     SDValue TmpBase, TmpOffImm;
     if (SelectThumbAddrModeSP(N, TmpBase, TmpOffImm))
       return false;  // We want to select tLDRspi / tSTRspi instead.
+
     if (N.getOpcode() == ARMISD::Wrapper &&
         N.getOperand(0).getOpcode() == ISD::TargetConstantPool)
       return false;  // We want to select tLDRpci instead.
@@ -907,14 +920,13 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDValue N,
 
   if (N.getOpcode() != ISD::ADD) {
     if (N.getOpcode() == ARMISD::Wrapper &&
-        !(Subtarget->useMovt() &&
-          N.getOperand(0).getOpcode() == ISD::TargetGlobalAddress)) {
+        (!Subtarget->useMovt() ||
+         N.getOperand(0).getOpcode() != ISD::TargetGlobalAddress))
       Base = N.getOperand(0);
-    } else
+    else
       Base = N;
 
     Offset = CurDAG->getRegister(0, MVT::i32);
-    OffImm = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
 
@@ -925,6 +937,68 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDValue N,
       (RHSR && RHSR->getReg() == ARM::SP)) {
     Base = N;
     Offset = CurDAG->getRegister(0, MVT::i32);
+    return true;
+  }
+
+  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+    int RHSC = (int)RHS->getZExtValue();
+
+    if ((RHSC & (Scale - 1)) == 0) { // The constant is implicitly multiplied.
+      RHSC /= Scale;
+
+      if (RHSC >= 0 && RHSC < 32)
+        return false;
+    }
+  }
+
+  Base = N.getOperand(0);
+  Offset = N.getOperand(1);
+  return true;
+}
+
+bool
+ARMDAGToDAGISel::SelectThumbAddrModeRI5S1(SDValue N,
+                                          SDValue &Base,
+                                          SDValue &Offset) {
+  return SelectThumbAddrModeRI(N, Base, Offset, 1);
+}
+
+bool
+ARMDAGToDAGISel::SelectThumbAddrModeRI5S2(SDValue N,
+                                          SDValue &Base,
+                                          SDValue &Offset) {
+  return SelectThumbAddrModeRI(N, Base, Offset, 2);
+}
+
+bool
+ARMDAGToDAGISel::SelectThumbAddrModeRI5S4(SDValue N,
+                                          SDValue &Base,
+                                          SDValue &Offset) {
+  return SelectThumbAddrModeRI(N, Base, Offset, 4);
+}
+
+bool
+ARMDAGToDAGISel::SelectThumbAddrModeImm5S(SDValue N, unsigned Scale,
+                                          SDValue &Base, SDValue &OffImm) {
+  if (Scale == 4) {
+    SDValue TmpBase, TmpOffImm;
+    if (SelectThumbAddrModeSP(N, TmpBase, TmpOffImm))
+      return false;  // We want to select tLDRspi / tSTRspi instead.
+
+    if (N.getOpcode() == ARMISD::Wrapper &&
+        N.getOperand(0).getOpcode() == ISD::TargetConstantPool)
+      return false;  // We want to select tLDRpci instead.
+  }
+
+  if (N.getOpcode() != ISD::ADD) {
+    if (N.getOpcode() == ARMISD::Wrapper &&
+        !(Subtarget->useMovt() &&
+          N.getOperand(0).getOpcode() == ISD::TargetGlobalAddress)) {
+      Base = N.getOperand(0);
+    } else {
+      Base = N;
+    }
+
     OffImm = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
@@ -932,11 +1006,12 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDValue N,
   // If the RHS is + imm5 * scale, fold into addr mode.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     int RHSC = (int)RHS->getZExtValue();
-    if ((RHSC & (Scale-1)) == 0) {  // The constant is implicitly multiplied.
+
+    if ((RHSC & (Scale - 1)) == 0) { // The constant is implicitly multiplied.
       RHSC /= Scale;
+
       if (RHSC >= 0 && RHSC < 32) {
         Base = N.getOperand(0);
-        Offset = CurDAG->getRegister(0, MVT::i32);
         OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
         return true;
       }
@@ -944,27 +1019,26 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI5(SDValue N,
   }
 
   Base = N.getOperand(0);
-  Offset = N.getOperand(1);
   OffImm = CurDAG->getTargetConstant(0, MVT::i32);
   return true;
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeS1(SDValue N,
-                                            SDValue &Base, SDValue &OffImm,
-                                            SDValue &Offset) {
-  return SelectThumbAddrModeRI5(N, 1, Base, OffImm, Offset);
+bool
+ARMDAGToDAGISel::SelectThumbAddrModeImm5S4(SDValue N, SDValue &Base,
+                                           SDValue &OffImm) {
+  return SelectThumbAddrModeImm5S(N, 4, Base, OffImm);
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeS2(SDValue N,
-                                            SDValue &Base, SDValue &OffImm,
-                                            SDValue &Offset) {
-  return SelectThumbAddrModeRI5(N, 2, Base, OffImm, Offset);
+bool
+ARMDAGToDAGISel::SelectThumbAddrModeImm5S2(SDValue N, SDValue &Base,
+                                           SDValue &OffImm) {
+  return SelectThumbAddrModeImm5S(N, 2, Base, OffImm);
 }
 
-bool ARMDAGToDAGISel::SelectThumbAddrModeS4(SDValue N,
-                                            SDValue &Base, SDValue &OffImm,
-                                            SDValue &Offset) {
-  return SelectThumbAddrModeRI5(N, 4, Base, OffImm, Offset);
+bool
+ARMDAGToDAGISel::SelectThumbAddrModeImm5S1(SDValue N, SDValue &Base,
+                                           SDValue &OffImm) {
+  return SelectThumbAddrModeImm5S(N, 1, Base, OffImm);
 }
 
 bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue N,
@@ -1002,6 +1076,12 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue N,
 
   return false;
 }
+
+
+//===----------------------------------------------------------------------===//
+//                        Thumb 2 Addressing Modes
+//===----------------------------------------------------------------------===//
+
 
 bool ARMDAGToDAGISel::SelectT2ShifterOperandReg(SDValue N, SDValue &BaseReg,
                                                 SDValue &Opc) {

@@ -105,19 +105,19 @@ namespace {
     // FIXME: Clean this up after splitting each Thumb load / store opcode
     // into multiple ones.
     { ARM::t2LDRi12,ARM::tLDRi,   ARM::tLDRspi,  5,   8,    1,   0,  0,0, 1 },
-    { ARM::t2LDRs,  ARM::tLDR,    0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRs,  ARM::tLDRr,   0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRBi12,ARM::tLDRBi, 0,             5,   0,    1,   0,  0,0, 1 },
-    { ARM::t2LDRBs, ARM::tLDRB,   0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRBs, ARM::tLDRBr,  0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRHi12,ARM::tLDRHi, 0,             5,   0,    1,   0,  0,0, 1 },
-    { ARM::t2LDRHs, ARM::tLDRH,   0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2LDRHs, ARM::tLDRHr,  0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRSBs,ARM::tLDRSB,  0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2LDRSHs,ARM::tLDRSH,  0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRi12,ARM::tSTRi,   ARM::tSTRspi,  5,   8,    1,   0,  0,0, 1 },
-    { ARM::t2STRs,  ARM::tSTR,    0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRs,  ARM::tSTRr,   0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRBi12,ARM::tSTRBi, 0,             5,   0,    1,   0,  0,0, 1 },
-    { ARM::t2STRBs, ARM::tSTRB,   0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRBs, ARM::tSTRBr,  0,             0,   0,    1,   0,  0,0, 1 },
     { ARM::t2STRHi12,ARM::tSTRHi, 0,             5,   0,    1,   0,  0,0, 1 },
-    { ARM::t2STRHs, ARM::tSTRH,   0,             0,   0,    1,   0,  0,0, 1 },
+    { ARM::t2STRHs, ARM::tSTRHr,  0,             0,   0,    1,   0,  0,0, 1 },
 
     { ARM::t2LDMIA, ARM::tLDMIA,  0,             0,   0,    1,   1,  1,1, 1 },
     { ARM::t2LDMIA_RET,0,         ARM::tPOP_RET, 0,   0,    1,   1,  1,1, 1 },
@@ -273,7 +273,6 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   bool HasShift = false;
   bool HasOffReg = true;
   bool isLdStMul = false;
-  bool InsertImmOffset = true;
   unsigned Opc = Entry.NarrowOpc1;
   unsigned OpNum = 3; // First 'rest' of operands.
   uint8_t  ImmLimit = Entry.Imm1Limit;
@@ -282,39 +281,41 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   default:
     llvm_unreachable("Unexpected Thumb2 load / store opcode!");
   case ARM::t2LDRi12:
-  case ARM::t2STRi12: {
-    unsigned BaseReg = MI->getOperand(1).getReg();
-    if (BaseReg == ARM::SP) {
+  case ARM::t2STRi12:
+    if (MI->getOperand(1).getReg() == ARM::SP) {
       Opc = Entry.NarrowOpc2;
       ImmLimit = Entry.Imm2Limit;
       HasOffReg = false;
     }
+
     Scale = 4;
-    if (MI->getOperand(2).isImm())
+
+    if (MI->getOperand(2).isImm()) {
       HasImmOffset = true;
-    else {
+      HasOffReg = false;
+    } else {
       if (Entry.WideOpc == ARM::t2LDRi12) {
         Opc = ARM::tLDRpci;
         OpNum = 2;
       }
+
       HasImmOffset = false;
-      InsertImmOffset = false;
       HasBaseReg = false;
       HasOffReg = false;
     }
     break;
-  }
   case ARM::t2LDRBi12:
   case ARM::t2STRBi12:
-    if (MI->getOperand(2).isImm())
+    if (MI->getOperand(2).isImm()) {
       HasImmOffset = true;
-    else {
+      HasOffReg = false;
+    } else {
       if (Entry.WideOpc == ARM::t2LDRBi12) {
         Opc = ARM::tLDRpci;
         OpNum = 2;
       }
+
       HasImmOffset = false;
-      InsertImmOffset = false;
       HasBaseReg = false;
       HasOffReg = false;
     }
@@ -322,15 +323,16 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   case ARM::t2LDRHi12:
   case ARM::t2STRHi12:
     Scale = 2;
-    if (MI->getOperand(2).isImm())
+    if (MI->getOperand(2).isImm()) {
       HasImmOffset = true;
-    else {
+      HasOffReg = false;
+    } else {
       if (Entry.WideOpc == ARM::t2LDRHi12) {
         Opc = ARM::tLDRpci;
         OpNum = 2;
       }
+
       HasImmOffset = false;
-      InsertImmOffset = false;
       HasBaseReg = false;
       HasOffReg = false;
     }
@@ -351,6 +353,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     unsigned BaseReg = MI->getOperand(0).getReg();
     if (!isARMLowRegister(BaseReg) || Entry.WideOpc != ARM::t2LDMIA)
       return false;
+
     // For the non-writeback version (this one), the base register must be
     // one of the registers being loaded.
     bool isOK = false;
@@ -360,6 +363,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
         break;
       }
     }
+
     if (!isOK)
       return false;
 
@@ -381,6 +385,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   case ARM::t2STMIA_UPD:
   case ARM::t2STMDB_UPD: {
     OpNum = 0;
+
     unsigned BaseReg = MI->getOperand(1).getReg();
     if (BaseReg == ARM::SP &&
         (Entry.WideOpc == ARM::t2LDMIA_UPD ||
@@ -392,6 +397,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
                 Entry.WideOpc != ARM::t2STMIA_UPD)) {
       return false;
     }
+
     isLdStMul = true;
     break;
   }
@@ -402,6 +408,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   if (HasShift) {
     OffsetReg  = MI->getOperand(2).getReg();
     OffsetKill = MI->getOperand(2).isKill();
+
     if (MI->getOperand(3).getImm())
       // Thumb1 addressing mode doesn't support shift.
       return false;
@@ -411,24 +418,24 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
   if (HasImmOffset) {
     OffsetImm = MI->getOperand(2).getImm();
     unsigned MaxOffset = ((1 << ImmLimit) - 1) * Scale;
-    if ((OffsetImm & (Scale-1)) || OffsetImm > MaxOffset)
+
+    if ((OffsetImm & (Scale - 1)) || OffsetImm > MaxOffset)
       // Make sure the immediate field fits.
       return false;
   }
 
   // Add the 16-bit load / store instruction.
-  // FIXME: Thumb1 addressing mode encode both immediate and register offset.
   DebugLoc dl = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MBB, *MI, dl, TII->get(Opc));
   if (!isLdStMul) {
     MIB.addOperand(MI->getOperand(0));
-    if (HasBaseReg) MIB.addOperand(MI->getOperand(1));
-    if (InsertImmOffset && Opc != ARM::tLDRSB && Opc != ARM::tLDRSH) {
-      // tLDRSB and tLDRSH do not have an immediate offset field. On the other
-      // hand, it must have an offset register.
-      // FIXME: Remove this special case.
-      MIB.addImm(OffsetImm/Scale);
-    }
+
+    if (HasBaseReg)
+      MIB.addOperand(MI->getOperand(1));
+
+    if (HasImmOffset)
+      MIB.addImm(OffsetImm / Scale);
+
     assert((!HasShift || OffsetReg) && "Invalid so_reg load / store address!");
 
     if (HasOffReg)

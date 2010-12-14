@@ -629,9 +629,12 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   MISC("t2am_imm8s4_offset", "kOperandTypeThumb2AddrModeImm8s4Offset");
                                                                   // R, I
   MISC("tb_addrmode", "kOperandTypeARMTBAddrMode");               // I
-  MISC("t_addrmode_s1", "kOperandTypeThumbAddrModeS1");           // R, I, R
-  MISC("t_addrmode_s2", "kOperandTypeThumbAddrModeS2");           // R, I, R
-  MISC("t_addrmode_s4", "kOperandTypeThumbAddrModeS4");           // R, I, R
+  MISC("t_addrmode_rrs1", "kOperandTypeThumbAddrModeRegS");       // R, R
+  MISC("t_addrmode_rrs2", "kOperandTypeThumbAddrModeRegS");       // R, R
+  MISC("t_addrmode_rrs4", "kOperandTypeThumbAddrModeRegS");       // R, R
+  MISC("t_addrmode_is1", "kOperandTypeThumbAddrModeImmS");        // R, I
+  MISC("t_addrmode_is2", "kOperandTypeThumbAddrModeImmS");        // R, I
+  MISC("t_addrmode_is4", "kOperandTypeThumbAddrModeImmS");        // R, I
   MISC("t_addrmode_rr", "kOperandTypeThumbAddrModeRR");           // R, R
   MISC("t_addrmode_sp", "kOperandTypeThumbAddrModeSP");           // R, I
   MISC("t_addrmode_pc", "kOperandTypeThumbAddrModePC");           // R, I
@@ -841,9 +844,8 @@ static void emitCommonEnums(raw_ostream &o, unsigned int &i) {
   operandTypes.addEntry("kOperandTypeARMSPRRegisterList");
   operandTypes.addEntry("kOperandTypeARMTBAddrMode");
   operandTypes.addEntry("kOperandTypeThumbITMask");
-  operandTypes.addEntry("kOperandTypeThumbAddrModeS1");
-  operandTypes.addEntry("kOperandTypeThumbAddrModeS2");
-  operandTypes.addEntry("kOperandTypeThumbAddrModeS4");
+  operandTypes.addEntry("kOperandTypeThumbAddrModeRegS");
+  operandTypes.addEntry("kOperandTypeThumbAddrModeImmS");
   operandTypes.addEntry("kOperandTypeThumbAddrModeRR");
   operandTypes.addEntry("kOperandTypeThumbAddrModeSP");
   operandTypes.addEntry("kOperandTypeThumbAddrModePC");

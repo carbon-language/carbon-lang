@@ -193,7 +193,7 @@ namespace {
       const { return 0; }
     unsigned getSORegOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
-    unsigned getTAddrModeRegRegOpValue(const MachineInstr &MI, unsigned Op)
+    unsigned getThumbAddrModeRegRegOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getT2AddrModeImm12OpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
@@ -264,6 +264,8 @@ namespace {
     uint32_t getAddrModeThumbSPOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     uint32_t getAddrModeSOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
+    uint32_t getAddrModeISOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     uint32_t getAddrModePCOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }

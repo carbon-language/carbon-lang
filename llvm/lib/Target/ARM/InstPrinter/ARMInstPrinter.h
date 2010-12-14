@@ -59,14 +59,14 @@ public:
   void printThumbITMask(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printThumbAddrModeRROperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
-  void printThumbAddrModeRI5Operand(const MCInst *MI, unsigned OpNum,
-                                    raw_ostream &O, unsigned Scale);
-  void printThumbAddrModeS1Operand(const MCInst *MI, unsigned OpNum,
-                                   raw_ostream &O);
-  void printThumbAddrModeS2Operand(const MCInst *MI, unsigned OpNum,
-                                   raw_ostream &O);
-  void printThumbAddrModeS4Operand(const MCInst *MI, unsigned OpNum,
-                                   raw_ostream &O);
+  void printThumbAddrModeImm5SOperand(const MCInst *MI, unsigned OpNum,
+                                      raw_ostream &O, unsigned Scale);
+  void printThumbAddrModeImm5S1Operand(const MCInst *MI, unsigned OpNum,
+                                       raw_ostream &O);
+  void printThumbAddrModeImm5S2Operand(const MCInst *MI, unsigned OpNum,
+                                       raw_ostream &O);
+  void printThumbAddrModeImm5S4Operand(const MCInst *MI, unsigned OpNum,
+                                       raw_ostream &O);
   void printThumbAddrModeSPOperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
 
