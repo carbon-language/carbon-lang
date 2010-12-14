@@ -123,6 +123,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
 
     return Value;
   }
+  case ARM::fixup_thumb_adr_pcrel_10:
+    return ((Value - 4) >> 2) & 0xff;
   case ARM::fixup_arm_adr_pcrel_12: {
     // ARM PC-relative values are offset by 8.
     Value -= 8;
@@ -358,6 +360,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
 
   case ARM::fixup_arm_thumb_bcc:
   case ARM::fixup_arm_thumb_cp:
+  case ARM::fixup_thumb_adr_pcrel_10:
     return 1;
 
   case ARM::fixup_arm_thumb_br:

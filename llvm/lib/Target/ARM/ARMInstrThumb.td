@@ -67,6 +67,11 @@ def thumb_immshifted_shamt : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
+// ADR instruction labels.
+def t_adrlabel : Operand<i32> {
+  let EncoderMethod = "getThumbAdrLabelOpValue";
+}
+
 // Scaled 4 immediate.
 def t_imm_s4 : Operand<i32> {
   let PrintMethod = "printThumbS4ImmOperand";
@@ -1303,25 +1308,23 @@ def tMOVCCi : T1pIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, i32imm:$Rm), IIC_iCMOVi,
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
-let neverHasSideEffects = 1, isReMaterializable = 1 in
-def tLEApcrel : T1I<(outs tGPR:$Rd), (ins i32imm:$label, pred:$p), IIC_iALUi,
-                    "adr${p}\t$Rd, #$label", []>,
-                T1Encoding<{1,0,1,0,0,?}> {
-  // A6.2 & A8.6.10
+
+def tADR : T1I<(outs tGPR:$Rd), (ins t_adrlabel:$addr, pred:$p),
+               IIC_iALUi, "adr{$p}\t$Rd, #$addr", []>,
+               T1Encoding<{1,0,1,0,0,?}> {
   bits<3> Rd;
+  bits<8> addr;
   let Inst{10-8} = Rd;
-  // FIXME: Add label encoding/fixup
+  let Inst{7-0} = addr;
 }
 
-def tLEApcrelJT : T1I<(outs tGPR:$Rd),
-                      (ins i32imm:$label, nohash_imm:$id, pred:$p),
-                      IIC_iALUi, "adr${p}\t$Rd, #${label}_${id}", []>,
-                  T1Encoding<{1,0,1,0,0,?}> {
-  // A6.2 & A8.6.10
-  bits<3> Rd;
-  let Inst{10-8} = Rd;
-  // FIXME: Add label encoding/fixup
-}
+let neverHasSideEffects = 1, isReMaterializable = 1 in
+def tLEApcrel   : tPseudoInst<(outs tGPR:$Rd), (ins i32imm:$label, pred:$p),
+                              Size2Bytes, IIC_iALUi, []>;
+
+def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
+                              (ins i32imm:$label, nohash_imm:$id, pred:$p),
+                              Size2Bytes, IIC_iALUi, []>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions

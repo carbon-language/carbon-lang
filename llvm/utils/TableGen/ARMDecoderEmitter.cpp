@@ -1679,12 +1679,8 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     if (Name == "tTPsoft" || Name == "t2TPsoft")
       return false;
 
-    // Ignore tLEApcrel and tLEApcrelJT, prefer tADDrPCi.
-    if (Name == "tLEApcrel" || Name == "tLEApcrelJT")
-      return false;
-
-    // Ignore t2LEApcrel, prefer the generic t2ADD* for disassembly printing.
-    if (Name == "t2LEApcrel")
+    // Ignore tADR, prefer tADDrPCi.
+    if (Name == "tADR")
       return false;
 
     // Ignore tADDrSP, tADDspr, and tPICADD, prefer the generic tADDhirr.
@@ -1711,13 +1707,12 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     //   tSpill conflicts with tSTRspi
     //   tLDRcp conflicts with tLDRspi
     //   tRestore conflicts with tLDRspi
-    //   t2LEApcrelJT conflicts with t2LEApcrel
     //   t2MOVCCi16 conflicts with tMOVi16
     if (Name == "tBfar" ||
         Name == "tPOP_RET" || Name == "t2LDMIA_RET" ||
         Name == "tMOVCCi" || Name == "tMOVCCr" ||
         Name == "tSpill" || Name == "tLDRcp" || Name == "tRestore" ||
-        Name == "t2LEApcrelJT" || Name == "t2MOVCCi16")
+        Name == "t2MOVCCi16")
       return false;
   }
 

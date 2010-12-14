@@ -747,11 +747,13 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
   case ARM::LEApcrel:
+  case ARM::tLEApcrel:
   case ARM::t2LEApcrel: {
     // FIXME: Need to also handle globals and externals
     MCInst TmpInst;
-    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrel
-                      ? ARM::t2ADR : ARM::ADR);
+    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrel ? ARM::t2ADR
+                      : (MI->getOpcode() == ARM::tLEApcrel ? ARM::tADR
+                         : ARM::ADR));
     populateADROperands(TmpInst, MI->getOperand(0).getReg(),
                         GetCPISymbol(MI->getOperand(1).getIndex()),
                         MI->getOperand(2).getImm(), MI->getOperand(3).getReg(),
@@ -759,11 +761,13 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
-  case ARM::t2LEApcrelJT:
-  case ARM::LEApcrelJT: {
+  case ARM::LEApcrelJT:
+  case ARM::tLEApcrelJT:
+  case ARM::t2LEApcrelJT: {
     MCInst TmpInst;
-    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrelJT
-                      ? ARM::t2ADR : ARM::ADR);
+    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrelJT ? ARM::t2ADR
+                      : (MI->getOpcode() == ARM::tLEApcrelJT ? ARM::tADR
+                         : ARM::ADR));
     populateADROperands(TmpInst, MI->getOperand(0).getReg(),
                       GetARMJTIPICJumpTableLabel2(MI->getOperand(1).getIndex(),
                                                   MI->getOperand(2).getImm()),
