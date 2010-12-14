@@ -606,42 +606,59 @@ def tTRAP : TI<(outs), (ins), IIC_Br,
 //  Load Store Instructions.
 //
 
+// Loads: reg/reg and reg/imm5
 let canFoldAsLoad = 1, isReMaterializable = 1 in
-def tLDRr :                      // A8.6.60
-  T1pILdStEncode<0b100, (outs tGPR:$Rt), (ins t_addrmode_rrs4:$addr),
-                 AddrModeT1_4, IIC_iLoad_r,
-                 "ldr", "\t$Rt, $addr",
-                 [(set tGPR:$Rt, (load t_addrmode_rrs4:$addr))]>;
+multiclass thumb_ld_rr_ri_enc<bits<3> reg_opc, bits<4> imm_opc,
+                              Operand AddrMode_r, Operand AddrMode_i,
+                              AddrMode am, InstrItinClass itin_r,
+                              InstrItinClass itin_i, string asm,
+                              PatFrag opnode> {
+  def r :
+    T1pILdStEncode<reg_opc,
+                   (outs tGPR:$Rt), (ins AddrMode_r:$addr),
+                   am, itin_r, asm, "\t$Rt, $addr",
+                   [(set tGPR:$Rt, (opnode AddrMode_r:$addr))]>;
+  def i :
+    T1pILdStEncodeImm<imm_opc, 1 /* Load */,
+                      (outs tGPR:$Rt), (ins AddrMode_i:$addr),
+                      am, itin_i, asm, "\t$Rt, $addr",
+                      [(set tGPR:$Rt, (opnode AddrMode_i:$addr))]>;
+}
+// Stores: reg/reg and reg/imm5
+multiclass thumb_st_rr_ri_enc<bits<3> reg_opc, bits<4> imm_opc,
+                              Operand AddrMode_r, Operand AddrMode_i,
+                              AddrMode am, InstrItinClass itin_r,
+                              InstrItinClass itin_i, string asm,
+                              PatFrag opnode> {
+  def r :
+    T1pILdStEncode<reg_opc,
+                   (outs), (ins tGPR:$Rt, AddrMode_r:$addr),
+                   am, itin_r, asm, "\t$Rt, $addr",
+                   [(opnode tGPR:$Rt, AddrMode_r:$addr)]>;
+  def i :
+    T1pILdStEncodeImm<imm_opc, 0 /* Store */,
+                      (outs), (ins tGPR:$Rt, AddrMode_i:$addr),
+                      am, itin_i, asm, "\t$Rt, $addr",
+                      [(opnode tGPR:$Rt, AddrMode_i:$addr)]>;
+}
 
-def tLDRi :                     // A8.6.57
-  T1pILdStEncodeImm<0b0110, 1, (outs tGPR:$Rt), (ins t_addrmode_is4:$addr),
-                    AddrModeT1_4, IIC_iLoad_i,
-                    "ldr", "\t$Rt, $addr",
-                    [(set tGPR:$Rt, (load t_addrmode_is4:$addr))]>;
+// A8.6.57 & A8.6.60
+defm tLDR  : thumb_ld_rr_ri_enc<0b100, 0b0110, t_addrmode_rrs4,
+                                t_addrmode_is4, AddrModeT1_4,
+                                IIC_iLoad_r, IIC_iLoad_i, "ldr",
+                                UnOpFrag<(load node:$Src)>>;
 
-def tLDRBr :                    // A8.6.64
-  T1pILdStEncode<0b110, (outs tGPR:$Rt), (ins t_addrmode_rrs1:$addr),
-                 AddrModeT1_1, IIC_iLoad_bh_r,
-                 "ldrb", "\t$Rt, $addr",
-                 [(set tGPR:$Rt, (zextloadi8 t_addrmode_rrs1:$addr))]>;
+// A8.6.64 & A8.6.61
+defm tLDRB : thumb_ld_rr_ri_enc<0b110, 0b0111, t_addrmode_rrs1,
+                                t_addrmode_is1, AddrModeT1_1,
+                                IIC_iLoad_bh_r, IIC_iLoad_bh_i, "ldrb",
+                                UnOpFrag<(zextloadi8 node:$Src)>>;
 
-def tLDRBi :                    // A8.6.61
-  T1pILdStEncodeImm<0b0111, 1, (outs tGPR:$Rt), (ins t_addrmode_is1:$addr),
-                    AddrModeT1_1, IIC_iLoad_bh_i,
-                    "ldrb", "\t$Rt, $addr",
-                    [(set tGPR:$Rt, (zextloadi8 t_addrmode_is1:$addr))]>;
-
-def tLDRHr :                    // A8.6.76
-  T1pILdStEncode<0b101, (outs tGPR:$Rt), (ins t_addrmode_rrs2:$addr),
-                 AddrModeT1_2, IIC_iLoad_bh_r,
-                 "ldrh", "\t$Rt, $addr",
-                 [(set tGPR:$Rt, (zextloadi16 t_addrmode_rrs2:$addr))]>;
-
-def tLDRHi :                    // A8.6.73
-  T1pILdStEncodeImm<0b1000, 1, (outs tGPR:$Rt), (ins t_addrmode_is2:$addr),
-                    AddrModeT1_2, IIC_iLoad_bh_i,
-                    "ldrh", "\t$Rt, $addr",
-                    [(set tGPR:$Rt, (zextloadi16 t_addrmode_is2:$addr))]>;
+// A8.6.76 & A8.6.73
+defm tLDRH : thumb_ld_rr_ri_enc<0b101, 0b1000, t_addrmode_rrs2,
+                                t_addrmode_is2, AddrModeT1_2,
+                                IIC_iLoad_bh_r, IIC_iLoad_bh_i, "ldrh",
+                                UnOpFrag<(zextloadi16 node:$Src)>>;
 
 let AddedComplexity = 10 in
 def tLDRSB :                    // A8.6.80
@@ -703,41 +720,24 @@ def tLDRcp  : T1pIs<(outs tGPR:$Rt), (ins i32imm:$addr), IIC_iLoad_i,
   let Inst{7-0}  = addr;
 }
 
-def tSTRr :                     // A8.6.194
-  T1pILdStEncode<0b000, (outs), (ins tGPR:$Rt, t_addrmode_rrs4:$addr),
-                 AddrModeT1_4, IIC_iStore_r,
-                 "str", "\t$Rt, $addr",
-                 [(store tGPR:$Rt, t_addrmode_rrs4:$addr)]>;
+// A8.6.194 & A8.6.192
+defm tSTR  : thumb_st_rr_ri_enc<0b000, 0b0110, t_addrmode_rrs4,
+                                t_addrmode_is4, AddrModeT1_4,
+                                IIC_iStore_r, IIC_iStore_i, "str",
+                                BinOpFrag<(store node:$LHS, node:$RHS)>>;
 
-def tSTRi :                     // A8.6.192
-  T1pILdStEncodeImm<0b0110, 0, (outs), (ins tGPR:$Rt, t_addrmode_is4:$addr),
-                    AddrModeT1_4, IIC_iStore_i,
-                    "str", "\t$Rt, $addr",
-                    [(store tGPR:$Rt, t_addrmode_is4:$addr)]>;
+// A8.6.197 & A8.6.195
+defm tSTRB : thumb_st_rr_ri_enc<0b010, 0b0111, t_addrmode_rrs1,
+                                t_addrmode_is1, AddrModeT1_1,
+                                IIC_iStore_bh_r, IIC_iStore_bh_i, "strb",
+                                BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
 
-def tSTRBr :                    // A8.6.197
-  T1pILdStEncode<0b010, (outs), (ins tGPR:$Rt, t_addrmode_rrs1:$addr),
-                 AddrModeT1_1, IIC_iStore_bh_r,
-                 "strb", "\t$Rt, $addr",
-                 [(truncstorei8 tGPR:$Rt, t_addrmode_rrs1:$addr)]>;
+// A8.6.207 & A8.6.205
+defm tSTRH : thumb_st_rr_ri_enc<0b001, 0b1000, t_addrmode_rrs2,
+                                t_addrmode_is2, AddrModeT1_2,
+                                IIC_iStore_bh_r, IIC_iStore_bh_i, "strh",
+                                BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
-def tSTRBi :                    // A8.6.195
-  T1pILdStEncodeImm<0b0111, 0, (outs), (ins tGPR:$Rt, t_addrmode_is1:$addr),
-                    AddrModeT1_1, IIC_iStore_bh_i,
-                    "strb", "\t$Rt, $addr",
-                    [(truncstorei8 tGPR:$Rt, t_addrmode_is1:$addr)]>;
-
-def tSTRHr :                    // A8.6.207
-  T1pILdStEncode<0b001, (outs), (ins tGPR:$Rt, t_addrmode_rrs2:$addr),
-                 AddrModeT1_2, IIC_iStore_bh_r,
-                 "strh", "\t$Rt, $addr",
-                 [(truncstorei16 tGPR:$Rt, t_addrmode_rrs2:$addr)]>;
-
-def tSTRHi :                    // A8.6.205
-  T1pILdStEncodeImm<0b1000, 0, (outs), (ins tGPR:$Rt, t_addrmode_is2:$addr),
-                    AddrModeT1_2, IIC_iStore_bh_i,
-                    "strh", "\t$Rt, $addr",
-                    [(truncstorei16 tGPR:$Rt, t_addrmode_is2:$addr)]>;
 
 def tSTRspi : T1pIs<(outs), (ins tGPR:$Rt, t_addrmode_sp:$addr), IIC_iStore_i,
                     "str", "\t$Rt, $addr",
