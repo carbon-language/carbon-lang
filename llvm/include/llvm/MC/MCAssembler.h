@@ -11,6 +11,7 @@
 #define LLVM_MC_MCASSEMBLER_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
@@ -662,6 +663,15 @@ private:
 
   std::vector<IndirectSymbolData> IndirectSymbols;
 
+  /// The set of function symbols for which a .thumb_func directive has
+  /// been seen.
+  //
+  // FIXME: We really would like this in target specific code rather than
+  // here. Maybe when the relocation stuff moves to target specific,
+  // this can go with it? The streamer would need some target specific
+  // refactoring too.
+  SmallPtrSet<const MCSymbol*, 64> ThumbFuncs;
+
   unsigned RelaxAll : 1;
   unsigned SubsectionsViaSymbols : 1;
 
@@ -737,6 +747,14 @@ public:
   // FIXME: Should MCAssembler always have a reference to the object writer?
   void WriteSectionData(const MCSectionData *Section, const MCAsmLayout &Layout,
                         MCObjectWriter *OW) const;
+
+  /// Check whether a given symbol has been flagged with .thumb_func.
+  bool isThumbFunc(const MCSymbol *Func) const {
+    return ThumbFuncs.count(Func);
+  }
+
+  /// Flag a function symbol as the target of a .thumb_func directive.
+  void setIsThumbFunc(const MCSymbol *Func) { ThumbFuncs.insert(Func); }
 
 public:
   /// Construct a new assembler instance.
