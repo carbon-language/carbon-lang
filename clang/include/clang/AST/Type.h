@@ -2125,9 +2125,13 @@ class FunctionType : public Type {
   QualType ResultType;
 
  public:
-  // This class is used for passing around the information needed to
-  // construct a call. It is not actually used for storage, just for
-  // factoring together common arguments.
+  /// ExtInfo - A class which abstracts out some details necessary for
+  /// making a call.
+  ///
+  /// It is not actually used directly for storing this information in
+  /// a FunctionType, although FunctionType does currently use the
+  /// same bit-pattern.
+  ///
   // If you add a field (say Foo), other than the obvious places (both,
   // constructors, compile failures), what you need to update is
   // * Operator==
@@ -2141,16 +2145,21 @@ class FunctionType : public Type {
   // * TypePrinter::PrintFunctionProto
   // * AST read and write
   // * Codegen
-
   class ExtInfo {
+    // Feel free to rearrange or add bits, but if you go over 8,
+    // you'll need to adjust both the Bits field below and
+    // Type::FunctionTypeBitfields.
+
+    //   |  CC  |noreturn|regparm
+    //   |0 .. 2|   3    |4 ..  6
     enum { CallConvMask = 0x7 };
     enum { NoReturnMask = 0x8 };
     enum { RegParmMask = ~(CallConvMask | NoReturnMask),
            RegParmOffset = 4 };
 
-    unsigned Bits;
+    unsigned char Bits;
 
-    ExtInfo(unsigned Bits) : Bits(Bits) {}
+    ExtInfo(unsigned Bits) : Bits(static_cast<unsigned char>(Bits)) {}
 
     friend class FunctionType;
 

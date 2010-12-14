@@ -1327,7 +1327,6 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         if (FTI.hasExceptionSpec) {
           EPI.HasExceptionSpec = FTI.hasExceptionSpec;
           EPI.HasAnyExceptionSpec = FTI.hasAnyExceptionSpec;
-          EPI.NumExceptions = FTI.NumExceptions;
           Exceptions.reserve(FTI.NumExceptions);
           for (unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei) {
             // FIXME: Preserve type source info.
@@ -1337,6 +1336,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
             if (!CheckSpecifiedExceptionType(ET, FTI.Exceptions[ei].Range))
               Exceptions.push_back(ET);
           }
+          EPI.NumExceptions = Exceptions.size();
           EPI.Exceptions = Exceptions.data();
         }
 
