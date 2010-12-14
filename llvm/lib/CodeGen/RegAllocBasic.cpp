@@ -285,12 +285,9 @@ void RegAllocBase::allocatePhysRegs() {
 // physical register. Return the interfering register.
 unsigned RegAllocBase::checkPhysRegInterference(LiveInterval &VirtReg,
                                                 unsigned PhysReg) {
-  if (query(VirtReg, PhysReg).checkInterference())
-    return PhysReg;
-  for (const unsigned *AliasI = TRI->getAliasSet(PhysReg); *AliasI; ++AliasI) {
+  for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI)
     if (query(VirtReg, *AliasI).checkInterference())
       return *AliasI;
-  }
   return 0;
 }
 
@@ -331,15 +328,9 @@ RegAllocBase::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
                                  SmallVectorImpl<LiveInterval*> &SplitVRegs) {
   // Record each interference and determine if all are spillable before mutating
   // either the union or live intervals.
-
-  // Collect interferences assigned to the requested physical register.
-  LiveIntervalUnion::Query &QPreg = query(VirtReg, PhysReg);
-  unsigned NumInterferences = QPreg.collectInterferingVRegs();
-  if (QPreg.seenUnspillableVReg()) {
-    return false;
-  }
+  unsigned NumInterferences = 0;
   // Collect interferences assigned to any alias of the physical register.
-  for (const unsigned *asI = TRI->getAliasSet(PhysReg); *asI; ++asI) {
+  for (const unsigned *asI = TRI->getOverlaps(PhysReg); *asI; ++asI) {
     LiveIntervalUnion::Query &QAlias = query(VirtReg, *asI);
     NumInterferences += QAlias.collectInterferingVRegs();
     if (QAlias.seenUnspillableVReg()) {
@@ -351,8 +342,7 @@ RegAllocBase::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
   assert(NumInterferences > 0 && "expect interference");
 
   // Spill each interfering vreg allocated to PhysReg or an alias.
-  spillReg(VirtReg, PhysReg, SplitVRegs);
-  for (const unsigned *AliasI = TRI->getAliasSet(PhysReg); *AliasI; ++AliasI)
+  for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI)
     spillReg(VirtReg, *AliasI, SplitVRegs);
   return true;
 }
