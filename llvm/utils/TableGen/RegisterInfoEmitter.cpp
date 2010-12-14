@@ -777,17 +777,13 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   delete [] AliasesHashTable;
 
   if (!RegisterAliases.empty())
-    OS << "\n\n  // Register Alias Sets...\n";
+    OS << "\n\n  // Register Overlap Lists...\n";
 
-  // Emit the empty alias list
-  OS << "  const unsigned Empty_AliasSet[] = { 0 };\n";
-  // Loop over all of the registers which have aliases, emitting the alias list
-  // to memory.
+  // Emit an overlap list for all registers.
   for (std::map<Record*, std::set<Record*>, LessRecord >::iterator
          I = RegisterAliases.begin(), E = RegisterAliases.end(); I != E; ++I) {
-    if (I->second.empty())
-      continue;
-    OS << "  const unsigned " << I->first->getName() << "_AliasSet[] = { ";
+    OS << "  const unsigned " << I->first->getName() << "_Overlaps[] = { "
+       << getQualifiedName(I->first) << ", ";
     for (std::set<Record*>::iterator ASI = I->second.begin(),
            E = I->second.end(); ASI != E; ++ASI)
       OS << getQualifiedName(*ASI) << ", ";
@@ -849,11 +845,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     const CodeGenRegister &Reg = Regs[i];
     OS << "    { \"";
-    OS << Reg.getName() << "\",\t";
-    if (!RegisterAliases[Reg.TheDef].empty())
-      OS << Reg.getName() << "_AliasSet,\t";
-    else
-      OS << "Empty_AliasSet,\t";
+    OS << Reg.getName() << "\",\t" << Reg.getName() << "_Overlaps,\t";
     if (!RegisterSubRegs[Reg.TheDef].empty())
       OS << Reg.getName() << "_SubRegsSet,\t";
     else
