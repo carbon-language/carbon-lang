@@ -360,7 +360,7 @@ SBFrame::LookupVarInScope (const char *var_name, const char *scope)
 
         if (var_scope != eValueTypeInvalid)
         {
-            lldb_private::VariableList variable_list;
+            lldb_private::VariableList *variable_list = m_opaque_sp->GetVariableList(true);
 
             SymbolContext sc (m_opaque_sp->GetSymbolContext (eSymbolContextBlock));
 
@@ -371,13 +371,13 @@ SBFrame::LookupVarInScope (const char *var_name, const char *scope)
             if (sc.block && sc.block->AppendVariables (can_create, 
                                                        get_parent_variables,
                                                        stop_if_block_is_inlined_function,
-                                                       &variable_list))
+                                                       variable_list))
             {
                 lldb_private::ConstString const_var_name(var_name);
-                const uint32_t num_variables = variable_list.GetSize();
+                const uint32_t num_variables = variable_list->GetSize();
                 for (uint32_t i = 0; i < num_variables; ++i)
                 {
-                    lldb::VariableSP curr_var_sp (variable_list.GetVariableAtIndex(i));
+                    lldb::VariableSP curr_var_sp (variable_list->GetVariableAtIndex(i));
                     if (curr_var_sp && curr_var_sp->GetScope() == var_scope &&
                         curr_var_sp->GetName() == const_var_name)
                     {
