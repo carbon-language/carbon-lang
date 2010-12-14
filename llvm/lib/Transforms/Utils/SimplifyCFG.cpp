@@ -1172,17 +1172,14 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   BasicBlock::iterator AfterPHIIt = BB->begin();
   while (isa<PHINode>(AfterPHIIt)) {
     PHINode *PN = cast<PHINode>(AfterPHIIt++);
-    if (PN->getIncomingValue(0) == PN->getIncomingValue(1)) {
-      if (PN->getIncomingValue(0) != PN)
-        PN->replaceAllUsesWith(PN->getIncomingValue(0));
-      else
-        PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-    } else if (!DominatesMergePoint(PN->getIncomingValue(0), BB,
-                                    &AggressiveInsts) ||
-               !DominatesMergePoint(PN->getIncomingValue(1), BB,
-                                    &AggressiveInsts)) {
-      return false;
+    if (Value *V = SimplifyInstruction(PN, TD)) {
+      PN->replaceAllUsesWith(V);
+      continue;
     }
+    
+    if (!DominatesMergePoint(PN->getIncomingValue(0), BB, &AggressiveInsts) ||
+        !DominatesMergePoint(PN->getIncomingValue(1), BB, &AggressiveInsts))
+      return false;
   }
   
   // If we all PHI nodes are promotable, check to make sure that all
