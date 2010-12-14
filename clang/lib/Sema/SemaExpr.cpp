@@ -4487,6 +4487,8 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
     case Type::STK_Floating:
       return CK_IntegralToFloating;
     case Type::STK_IntegralComplex:
+      S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
+                          CK_IntegralCast);
       return CK_IntegralRealToComplex;
     case Type::STK_FloatingComplex:
       S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
@@ -4506,6 +4508,8 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
     case Type::STK_Integral:
       return CK_FloatingToIntegral;
     case Type::STK_FloatingComplex:
+      S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
+                          CK_FloatingCast);
       return CK_FloatingRealToComplex;
     case Type::STK_IntegralComplex:
       S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
@@ -4524,8 +4528,13 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
       return CK_FloatingComplexCast;
     case Type::STK_IntegralComplex:
       return CK_FloatingComplexToIntegralComplex;
-    case Type::STK_Floating:
-      return CK_FloatingComplexToReal;
+    case Type::STK_Floating: {
+      QualType ET = cast<ComplexType>(SrcTy)->getElementType();
+      if (S.Context.hasSameType(ET, DestTy))
+        return CK_FloatingComplexToReal;
+      S.ImpCastExprToType(Src, ET, CK_FloatingComplexToReal);
+      return CK_FloatingCast;
+    }
     case Type::STK_Bool:
       return CK_FloatingComplexToBoolean;
     case Type::STK_Integral:
@@ -4545,8 +4554,13 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
       return CK_IntegralComplexToFloatingComplex;
     case Type::STK_IntegralComplex:
       return CK_IntegralComplexCast;
-    case Type::STK_Integral:
-      return CK_IntegralComplexToReal;
+    case Type::STK_Integral: {
+      QualType ET = cast<ComplexType>(SrcTy)->getElementType();
+      if (S.Context.hasSameType(ET, DestTy))
+        return CK_IntegralComplexToReal;
+      S.ImpCastExprToType(Src, ET, CK_IntegralComplexToReal);
+      return CK_IntegralCast;
+    }
     case Type::STK_Bool:
       return CK_IntegralComplexToBoolean;
     case Type::STK_Floating:
