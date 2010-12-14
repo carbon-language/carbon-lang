@@ -75,15 +75,6 @@ void FindFunctionBackedges(const Function &F,
       SmallVectorImpl<std::pair<const BasicBlock*,const BasicBlock*> > &Result);
   
 
-// RemoveSuccessor - Change the specified terminator instruction such that its
-// successor #SuccNum no longer exists.  Because this reduces the outgoing
-// degree of the current basic block, the actual terminator instruction itself
-// may have to be changed.  In the case where the last successor of the block is
-// deleted, a return instruction is inserted in its place which can cause a
-// suprising change in program behavior if it is not expected.
-//
-void RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum);
-
 /// GetSuccessorNumber - Search for the specified successor of basic block BB
 /// and return its position in the terminator instruction's list of
 /// successors.  It is an error to call this with a block that is not a

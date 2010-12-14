@@ -218,52 +218,6 @@ void llvm::ReplaceInstWithInst(Instruction *From, Instruction *To) {
   ReplaceInstWithInst(From->getParent()->getInstList(), BI, To);
 }
 
-/// RemoveSuccessor - Change the specified terminator instruction such that its
-/// successor SuccNum no longer exists.  Because this reduces the outgoing
-/// degree of the current basic block, the actual terminator instruction itself
-/// may have to be changed.  In the case where the last successor of the block 
-/// is deleted, a return instruction is inserted in its place which can cause a
-/// surprising change in program behavior if it is not expected.
-///
-void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
-  assert(SuccNum < TI->getNumSuccessors() &&
-         "Trying to remove a nonexistant successor!");
-
-  // If our old successor block contains any PHI nodes, remove the entry in the
-  // PHI nodes that comes from this branch...
-  //
-  BasicBlock *BB = TI->getParent();
-  TI->getSuccessor(SuccNum)->removePredecessor(BB);
-
-  TerminatorInst *NewTI = 0;
-  switch (TI->getOpcode()) {
-  case Instruction::Br:
-    // If this is a conditional branch... convert to unconditional branch.
-    if (TI->getNumSuccessors() == 2) {
-      cast<BranchInst>(TI)->setUnconditionalDest(TI->getSuccessor(1-SuccNum));
-    } else {                    // Otherwise convert to a return instruction...
-      Value *RetVal = 0;
-
-      // Create a value to return... if the function doesn't return null...
-      if (!BB->getParent()->getReturnType()->isVoidTy())
-        RetVal = Constant::getNullValue(BB->getParent()->getReturnType());
-
-      // Create the return...
-      NewTI = ReturnInst::Create(TI->getContext(), RetVal);
-    }
-    break;
-
-  case Instruction::Invoke:    // Should convert to call
-  case Instruction::Switch:    // Should remove entry
-  default:
-  case Instruction::Ret:       // Cannot happen, has no successors!
-    llvm_unreachable("Unhandled terminator inst type in RemoveSuccessor!");
-  }
-
-  if (NewTI)   // If it's a different instruction, replace.
-    ReplaceInstWithInst(TI, NewTI);
-}
-
 /// GetSuccessorNumber - Search for the specified successor of basic block BB
 /// and return its position in the terminator instruction's list of
 /// successors.  It is an error to call this with a block that is not a
