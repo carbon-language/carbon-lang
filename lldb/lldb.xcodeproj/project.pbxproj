@@ -989,8 +989,6 @@
 		4C98D3DB118FB96F00E575D0 /* RecordingMemoryManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RecordingMemoryManager.cpp; path = source/Expression/RecordingMemoryManager.cpp; sourceTree = "<group>"; };
 		4C98D3E0118FB98F00E575D0 /* ClangFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangFunction.h; path = include/lldb/Expression/ClangFunction.h; sourceTree = "<group>"; };
 		4C98D3E1118FB98F00E575D0 /* RecordingMemoryManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RecordingMemoryManager.h; path = include/lldb/Expression/RecordingMemoryManager.h; sourceTree = "<group>"; };
-		4C98D3E4118FB9B100E575D0 /* CommandObjectCall.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectCall.cpp; path = source/Commands/CommandObjectCall.cpp; sourceTree = "<group>"; };
-		4C98D3E5118FB9B100E575D0 /* CommandObjectCall.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectCall.h; path = source/Commands/CommandObjectCall.h; sourceTree = "<group>"; };
 		4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectApropos.cpp; path = source/Commands/CommandObjectApropos.cpp; sourceTree = "<group>"; };
 		4CA9637A11B6E99A00780E28 /* CommandObjectApropos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectApropos.h; path = source/Commands/CommandObjectApropos.h; sourceTree = "<group>"; };
 		4CAFCE001101216B00CA63DB /* ThreadPlanRunToAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanRunToAddress.h; path = include/lldb/Target/ThreadPlanRunToAddress.h; sourceTree = "<group>"; };
@@ -1892,8 +1890,6 @@
 				26BC7E2D10F1B84700F91463 /* CommandObjectBreakpoint.cpp */,
 				9A42976111861A9F00FE05CD /* CommandObjectBreakpointCommand.h */,
 				9A42976211861AA600FE05CD /* CommandObjectBreakpointCommand.cpp */,
-				4C98D3E5118FB9B100E575D0 /* CommandObjectCall.h */,
-				4C98D3E4118FB9B100E575D0 /* CommandObjectCall.cpp */,
 				4C5DBBC711E3FEC60035160F /* CommandObjectCommands.h */,
 				4C5DBBC611E3FEC60035160F /* CommandObjectCommands.cpp */,
 				26BC7D1710F1B76300F91463 /* CommandObjectDisassemble.h */,
@@ -2459,7 +2455,6 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.1";
-			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
