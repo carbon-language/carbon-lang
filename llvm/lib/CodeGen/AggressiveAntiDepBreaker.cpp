@@ -155,16 +155,11 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
     // In a return block, examine the function live-out regs.
     for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
          E = MRI.liveout_end(); I != E; ++I) {
-      unsigned Reg = *I;
-      State->UnionGroups(Reg, 0);
-      KillIndices[Reg] = BB->size();
-      DefIndices[Reg] = ~0u;
-      // Repeat, for all aliases.
-      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-        unsigned AliasReg = *Alias;
-        State->UnionGroups(AliasReg, 0);
-        KillIndices[AliasReg] = BB->size();
-        DefIndices[AliasReg] = ~0u;
+      for (const unsigned *Alias = TRI->getOverlaps(*I);
+           unsigned Reg = *Alias; ++Alias) {
+        State->UnionGroups(Reg, 0);
+        KillIndices[Reg] = BB->size();
+        DefIndices[Reg] = ~0u;
       }
     }
   }
@@ -176,16 +171,11 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
          SE = BB->succ_end(); SI != SE; ++SI)
     for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
            E = (*SI)->livein_end(); I != E; ++I) {
-      unsigned Reg = *I;
-      State->UnionGroups(Reg, 0);
-      KillIndices[Reg] = BB->size();
-      DefIndices[Reg] = ~0u;
-      // Repeat, for all aliases.
-      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-        unsigned AliasReg = *Alias;
-        State->UnionGroups(AliasReg, 0);
-        KillIndices[AliasReg] = BB->size();
-        DefIndices[AliasReg] = ~0u;
+      for (const unsigned *Alias = TRI->getOverlaps(*I);
+           unsigned Reg = *Alias; ++Alias) {
+        State->UnionGroups(Reg, 0);
+        KillIndices[Reg] = BB->size();
+        DefIndices[Reg] = ~0u;
       }
     }
 
@@ -197,12 +187,8 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
     unsigned Reg = *I;
     if (!IsReturnBlock && !Pristine.test(Reg)) continue;
-    State->UnionGroups(Reg, 0);
-    KillIndices[Reg] = BB->size();
-    DefIndices[Reg] = ~0u;
-    // Repeat, for all aliases.
-    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-      unsigned AliasReg = *Alias;
+    for (const unsigned *Alias = TRI->getOverlaps(Reg);
+         unsigned AliasReg = *Alias; ++Alias) {
       State->UnionGroups(AliasReg, 0);
       KillIndices[AliasReg] = BB->size();
       DefIndices[AliasReg] = ~0u;
@@ -435,12 +421,9 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
       continue;
 
     // Update def for Reg and aliases.
-    DefIndices[Reg] = Count;
-    for (const unsigned *Alias = TRI->getAliasSet(Reg);
-         *Alias; ++Alias) {
-      unsigned AliasReg = *Alias;
+    for (const unsigned *Alias = TRI->getOverlaps(Reg);
+         unsigned AliasReg = *Alias; ++Alias)
       DefIndices[AliasReg] = Count;
-    }
   }
 }
 
