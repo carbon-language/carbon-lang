@@ -1,7 +1,7 @@
 ; RUN: llc  %s -mtriple=armv7-linux-gnueabi -arm-use-movt -relocation-model=pic -filetype=obj -o - | \
 ; RUN:    elf-dump --dump-section-data | FileCheck  -check-prefix=PIC01 %s
 
-;; Fixme: Reduce this test further, or even better, 
+;; FIXME: Reduce this test further, or even better,
 ;; redo as .s -> .o test once ARM AsmParser is working better
 
 ; ModuleID = 'large2.pnacl.bc'
