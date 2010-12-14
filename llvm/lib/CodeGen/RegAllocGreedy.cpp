@@ -273,7 +273,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                 SmallVectorImpl<LiveInterval*> &SplitVRegs) {
   // Populate a list of physical register spill candidates.
-  SmallVector<unsigned, 8> PhysRegSpillCands, ReassignCands;
+  SmallVector<unsigned, 8> PhysRegSpillCands;
 
   // Check for an available register in this class.
   AllocationOrder Order(VirtReg.reg, *VRM, ReservedRegs);
