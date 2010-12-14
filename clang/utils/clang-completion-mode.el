@@ -53,10 +53,10 @@
   :group 'clang-completion-mode)
 
 ;;; Extra compilation flags to pass to clang.
-(defcustom clang-flags ""
+(defcustom clang-flags nil
   "Extra flags to pass to the Clang executable.
 This variable will typically contain include paths, e.g., -I~/MyProject."
-  :type 'string
+  :type '(repeat (string :tag "Argument" ""))
   :group 'clang-completion-mode)
 
 ;;; The prefix header to use with Clang code completion. 
