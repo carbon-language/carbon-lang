@@ -713,6 +713,18 @@ void ARMAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   printOperand(MI, NOps-2, OS);
 }
 
+static void populateADROperands(MCInst &Inst, unsigned Dest,
+                                const MCSymbol *Label,
+                                unsigned pred, unsigned ccreg,
+                                MCContext &Ctx) {
+  const MCExpr *SymbolExpr = MCSymbolRefExpr::Create(Label, Ctx);
+  Inst.addOperand(MCOperand::CreateReg(Dest));
+  Inst.addOperand(MCOperand::CreateExpr(SymbolExpr));
+  // Add predicate operands.
+  Inst.addOperand(MCOperand::CreateImm(pred));
+  Inst.addOperand(MCOperand::CreateReg(ccreg));
+}
+
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   switch (MI->getOpcode()) {
   default: break;
@@ -734,42 +746,29 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  case ARM::t2LEApcrel:
-  case ARM::LEApcrel: {
+  case ARM::LEApcrel:
+  case ARM::t2LEApcrel: {
     // FIXME: Need to also handle globals and externals
-    assert (MI->getOperand(1).isCPI());
-    unsigned LabelId = MI->getOperand(1).getIndex();
-    MCSymbol *Sym = GetCPISymbol(LabelId);
-    const MCExpr *SymbolExpr = MCSymbolRefExpr::Create(Sym, OutContext);
     MCInst TmpInst;
-    if (MI->getOpcode() == ARM::LEApcrel)
-      TmpInst.setOpcode(ARM::ADR);
-    else
-      TmpInst.setOpcode(ARM::t2ADR);
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    TmpInst.addOperand(MCOperand::CreateExpr(SymbolExpr));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
+    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrel
+                      ? ARM::t2ADR : ARM::ADR);
+    populateADROperands(TmpInst, MI->getOperand(0).getReg(),
+                        GetCPISymbol(MI->getOperand(1).getIndex()),
+                        MI->getOperand(2).getImm(), MI->getOperand(3).getReg(),
+                        OutContext);
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
   case ARM::t2LEApcrelJT:
   case ARM::LEApcrelJT: {
-    unsigned JTI = MI->getOperand(1).getIndex();
-    unsigned Id = MI->getOperand(2).getImm();
-    MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, Id);
-    const MCExpr *SymbolExpr = MCSymbolRefExpr::Create(JTISymbol, OutContext);
     MCInst TmpInst;
-    if (MI->getOpcode() == ARM::LEApcrelJT)
-      TmpInst.setOpcode(ARM::ADR);
-    else
-      TmpInst.setOpcode(ARM::t2ADR);
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    TmpInst.addOperand(MCOperand::CreateExpr(SymbolExpr));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(4).getReg()));
+    TmpInst.setOpcode(MI->getOpcode() == ARM::t2LEApcrelJT
+                      ? ARM::t2ADR : ARM::ADR);
+    populateADROperands(TmpInst, MI->getOperand(0).getReg(),
+                      GetARMJTIPICJumpTableLabel2(MI->getOperand(1).getIndex(),
+                                                  MI->getOperand(2).getImm()),
+                      MI->getOperand(3).getImm(), MI->getOperand(4).getReg(),
+                      OutContext);
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
