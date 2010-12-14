@@ -19,10 +19,7 @@
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/DenseMap.h"
@@ -30,6 +27,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/CFG.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <set>
 #include <map>
@@ -796,7 +796,7 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
     if (!I2->use_empty())
       I2->replaceAllUsesWith(I1);
     I1->intersectOptionalDataWith(I2);
-    BB2->getInstList().erase(I2);
+    I2->eraseFromParent();
 
     I1 = BB1_Itr++;
     while (isa<DbgInfoIntrinsic>(I1))
@@ -1050,7 +1050,7 @@ static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
 /// that is defined in the same block as the branch and if any PHI entries are
 /// constants, thread edges corresponding to that entry to be branches to their
 /// ultimate destination.
-static bool FoldCondBranchOnPHI(BranchInst *BI) {
+static bool FoldCondBranchOnPHI(BranchInst *BI, const TargetData *TD) {
   BasicBlock *BB = BI->getParent();
   PHINode *PN = dyn_cast<PHINode>(BI->getCondition());
   // NOTE: we currently cannot transform this case if the PHI node is used
@@ -1118,9 +1118,9 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
       }
       
       // Check for trivial simplification.
-      if (Constant *C = ConstantFoldInstruction(N)) {
-        TranslateMap[BBI] = C;
-        delete N;   // Constant folded away, don't need actual inst
+      if (Value *V = SimplifyInstruction(N, TD)) {
+        TranslateMap[BBI] = V;
+        delete N;   // Instruction folded away, don't need actual inst
       } else {
         // Insert the new instruction into its new home.
         EdgeBB->getInstList().insert(InsertPt, N);
@@ -1139,7 +1139,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
       }
     
     // Recurse, simplifying any other constants.
-    return FoldCondBranchOnPHI(BI) | true;
+    return FoldCondBranchOnPHI(BI, TD) | true;
   }
 
   return false;
@@ -1251,7 +1251,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
     PN->replaceAllUsesWith(NV);
     NV->takeName(PN);
     
-    BB->getInstList().erase(PN);
+    PN->eraseFromParent();
   }
   return true;
 }
@@ -1779,7 +1779,8 @@ static bool SimplifyIndirectBrOnSelect(IndirectBrInst *IBI, SelectInst *SI) {
 /// 
 /// We prefer to split the edge to 'end' so that there is a true/false entry to
 /// the PHI, merging the third icmp into the switch.
-static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI) {
+static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI,
+                                                  const TargetData *TD) {
   BasicBlock *BB = ICI->getParent();
   // If the block has any PHIs in it or the icmp has multiple uses, it is too
   // complex.
@@ -1806,8 +1807,8 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI) {
     assert(VVal && "Should have a unique destination value");
     ICI->setOperand(0, VVal);
     
-    if (Constant *C = ConstantFoldInstruction(ICI)) {
-      ICI->replaceAllUsesWith(C);
+    if (Value *V = SimplifyInstruction(ICI, TD)) {
+      ICI->replaceAllUsesWith(V);
       ICI->eraseFromParent();
     }
     // BB is now empty, so it is likely to simplify away.
@@ -1905,16 +1906,13 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   
   BasicBlock *BB = BI->getParent();
   
-  DEBUG(dbgs() << "CONVERTING 'icmp' CHAIN with " << Values.size()
+  DEBUG(dbgs() << "Converting 'icmp' chain with " << Values.size()
                << " cases into SWITCH.  BB is:\n" << *BB);
   
   // If there are any extra values that couldn't be folded into the switch
   // then we evaluate them with an explicit branch first.  Split the block
   // right before the condbr to handle it.
   if (ExtraCase) {
-    DEBUG(dbgs() << "  ** 'icmp' chain unhandled condition: " << *ExtraCase
-                 << '\n');
-    
     BasicBlock *NewBB = BB->splitBasicBlock(BI, "switch.early.test");
     // Remove the uncond branch added to the old block.
     TerminatorInst *OldTI = BB->getTerminator();
@@ -1931,7 +1929,10 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
     for (BasicBlock::iterator I = EdgeBB->begin(); isa<PHINode>(I); ++I) {
       PHINode *PN = cast<PHINode>(I);
       PN->addIncoming(PN->getIncomingValueForBlock(NewBB), BB);
-    }    
+    }
+    
+    DEBUG(dbgs() << "  ** 'icmp' chain unhandled condition: " << *ExtraCase
+          << "\nEXTRABB = " << *BB);
     BB = NewBB;
   }
   
@@ -1964,6 +1965,7 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   // Erase the old branch instruction.
   EraseTerminatorInstAndDCECond(BI);
   
+  DEBUG(dbgs() << "  ** 'icmp' chain result is:\n" << *BB << '\n');
   return true;
 }
 
@@ -2007,7 +2009,7 @@ bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI) {
       // Update any PHI nodes in the returning block to realize that we no
       // longer branch to them.
       BB->removePredecessor(Pred);
-      Pred->getInstList().erase(UncondBranch);
+      UncondBranch->eraseFromParent();
     }
     
     // If we eliminated all predecessors of the block, delete the block now.
@@ -2101,7 +2103,7 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
         break;
     
     // Delete this instruction
-    BB->getInstList().erase(BBI);
+    BBI->eraseFromParent();
     Changed = true;
   }
   
@@ -2286,7 +2288,7 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI) {
     if (ICI->isEquality() && isa<ConstantInt>(ICI->getOperand(1))) {
       for (++I; isa<DbgInfoIntrinsic>(I); ++I)
         ;
-      if (I->isTerminator() && TryToSimplifyUncondBranchWithICmpInIt(ICI))
+      if (I->isTerminator() && TryToSimplifyUncondBranchWithICmpInIt(ICI, TD))
         return true;
     }
   
@@ -2360,7 +2362,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI) {
   // through this block if any PHI node entries are constants.
   if (PHINode *PN = dyn_cast<PHINode>(BI->getCondition()))
     if (PN->getParent() == BI->getParent())
-      if (FoldCondBranchOnPHI(BI))
+      if (FoldCondBranchOnPHI(BI, TD))
         return SimplifyCFG(BB) | true;
   
   // If this basic block is ONLY a setcc and a branch, and if a predecessor
@@ -2381,14 +2383,14 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI) {
 
 bool SimplifyCFGOpt::run(BasicBlock *BB) {
   bool Changed = false;
-  Function *Fn = BB->getParent();
 
-  assert(BB && Fn && "Block not embedded in function!");
+  assert(BB && BB->getParent() && "Block not embedded in function!");
   assert(BB->getTerminator() && "Degenerate basic block encountered!");
 
   // Remove basic blocks that have no predecessors (except the entry block)...
   // or that just have themself as a predecessor.  These are unreachable.
-  if ((pred_begin(BB) == pred_end(BB) && BB != &Fn->getEntryBlock()) ||
+  if ((pred_begin(BB) == pred_end(BB) &&
+       BB != &BB->getParent()->getEntryBlock()) ||
       BB->getSinglePredecessor() == BB) {
     DEBUG(dbgs() << "Removing BB: \n" << *BB);
     DeleteDeadBlock(BB);
