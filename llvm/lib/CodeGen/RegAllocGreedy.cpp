@@ -83,6 +83,9 @@ private:
   bool checkUncachedInterference(LiveInterval &, unsigned);
   bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
   bool reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg);
+
+  unsigned trySplit(LiveInterval&, AllocationOrder&,
+                    SmallVectorImpl<LiveInterval*>&);
 };
 } // end anonymous namespace
 
@@ -222,6 +225,15 @@ bool RAGreedy::reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg) {
   return reassignVReg(*Q.interferingVRegs()[0], PhysReg);
 }
 
+/// trySplit - Try to split VirtReg or one of its interferences, making it
+/// assignable.
+/// @return Physreg when VirtReg may be assigned and/or new SplitVRegs.
+unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
+                            SmallVectorImpl<LiveInterval*>&SplitVRegs) {
+  NamedRegionTimer T("Splitter", TimerGroupName, TimePassesIsEnabled);
+  return 0;
+}
+
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                 SmallVectorImpl<LiveInterval*> &SplitVRegs) {
   // Populate a list of physical register spill candidates.
@@ -265,6 +277,10 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   }
   PhysRegSpillCands.insert(PhysRegSpillCands.end(), ReassignCands.begin(),
                            ReassignCands.end());
+
+  unsigned PhysReg = trySplit(VirtReg, Order, SplitVRegs);
+  if (PhysReg || !SplitVRegs.empty())
+    return PhysReg;
 
   // Try to spill another interfering reg with less spill weight.
   NamedRegionTimer T("Spiller", TimerGroupName, TimePassesIsEnabled);
