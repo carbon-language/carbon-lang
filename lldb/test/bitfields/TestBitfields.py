@@ -109,7 +109,7 @@ class BitfieldsTestCase(TestBase):
 
         # Lookup the "bits" variable which contains 8 bitfields.
         frame = thread.GetFrameAtIndex(0)
-        bits = frame.LookupVar("bits")
+        bits = frame.FindVariable("bits")
         self.DebugSBValue(frame, bits)
         self.assertTrue(bits.GetTypeName() == "Bits" and
                         bits.GetNumChildren() == 8 and

@@ -133,7 +133,7 @@ class BreakpointConditionsTestCase(TestBase):
 
         # Frame #0 should be on self.line1 and the break condition should hold.
         frame0 = self.process.GetThreadAtIndex(0).GetFrameAtIndex(0)
-        var = frame0.LookupVarInScope('val', 'parameter')
+        var = frame0.FindValue('val', lldb.eValueTypeVariableArgument)
         self.assertTrue(frame0.GetLineEntry().GetLine() == self.line1 and
                         var.GetValue(frame0) == '3')
 

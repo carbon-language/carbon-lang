@@ -89,7 +89,7 @@ class ConditionalBreakTestCase(TestBase):
                                     "Immediate caller a() at main.c:%d" % line)
 
                     # And the local variable 'val' should have a value of (int) 3.
-                    val = frame1.LookupVar("val")
+                    val = frame1.FindVariable("val")
                     self.assertTrue(val.GetTypeName() == "int", "'val' has int type")
                     self.assertTrue(val.GetValue(frame1) == "3", "'val' has a value of 3")
                     break

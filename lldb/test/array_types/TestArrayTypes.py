@@ -153,7 +153,7 @@ class ArrayTypesTestCase(TestBase):
 
         # Lookup the "strings" string array variable and sanity check its print
         # representation.
-        variable = frame.LookupVar("strings")
+        variable = frame.FindVariable("strings")
         var = repr(variable)
         self.expect(var, "Variable for 'strings' looks good with correct name", exe=False,
             substrs = ["name: '%s'" % variable.GetName()])
@@ -167,7 +167,7 @@ class ArrayTypesTestCase(TestBase):
                         'strings[3] == "Guten Tag"')
 
         # Lookup the "char_16" char array variable.
-        variable = frame.LookupVar("char_16")
+        variable = frame.FindVariable("char_16")
         self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 16,
                         "Variable 'char_16' should have 16 children")
@@ -176,7 +176,7 @@ class ArrayTypesTestCase(TestBase):
         # Notice the pattern of int(child0_2.GetValue(frame), 0).  We pass a
         # base of 0 so that the proper radix is determined based on the contents
         # of the string.  Same applies to long().
-        variable = frame.LookupVar("ushort_matrix")
+        variable = frame.FindVariable("ushort_matrix")
         self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 2,
                         "Variable 'ushort_matrix' should have 2 children")
@@ -190,7 +190,7 @@ class ArrayTypesTestCase(TestBase):
                         "ushort_matrix[0][2] == 3")
 
         # Lookup the "long_6" char array variable.
-        variable = frame.LookupVar("long_6")
+        variable = frame.FindVariable("long_6")
         self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 6,
                         "Variable 'long_6' should have 6 children")
@@ -205,7 +205,7 @@ class ArrayTypesTestCase(TestBase):
         self.assertTrue(variable.GetValueType() == lldb.eValueTypeVariableLocal,
                         "Variable 'long_6' should have '%s' value type." %
                         ValueTypeString(lldb.eValueTypeVariableLocal))
-        argc = frame.LookupVar("argc")
+        argc = frame.FindVariable("argc")
         self.DebugSBValue(frame, argc)
         self.assertTrue(argc.GetValueType() == lldb.eValueTypeVariableArgument,
                         "Variable 'argc' should have '%s' value type." %

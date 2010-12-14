@@ -80,7 +80,7 @@ class TestObjCStepping(TestBase):
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.line1, "Hit the first breakpoint.")
 
-        mySource = thread.GetFrameAtIndex(0).LookupVar("mySource")
+        mySource = thread.GetFrameAtIndex(0).FindVariable("mySource")
         self.assertTrue(mySource.IsValid(), "Found mySource local variable.")
         mySource_isa = mySource.GetChildMemberWithName ("isa")
         self.assertTrue(mySource_isa.IsValid(), "Found mySource->isa local variable.")
