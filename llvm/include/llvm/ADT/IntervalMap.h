@@ -105,9 +105,6 @@
 #include "llvm/Support/RecyclingAllocator.h"
 #include <iterator>
 
-// FIXME: Remove debugging code.
-#include "llvm/Support/raw_ostream.h"
-
 namespace llvm {
 
 
@@ -590,16 +587,6 @@ public:
   }
 
   unsigned insertFrom(unsigned &Pos, unsigned Size, KeyT a, KeyT b, ValT y);
-
-#ifndef NDEBUG
-  void dump(raw_ostream &OS, unsigned Size) {
-    OS << "  N" << this << " [shape=record label=\"{ " << Size << '/' << N;
-    for (unsigned i = 0; i != Size; ++i)
-      OS << " | {" << start(i) << '-' << stop(i) << "|" << value(i) << '}';
-    OS << "}\"];\n";
-  }
-#endif
-
 };
 
 /// insertFrom - Add mapping of [a;b] to y if possible, coalescing as much as
@@ -743,19 +730,6 @@ public:
     subtree(i) = Node;
     stop(i) = Stop;
   }
-
-#ifndef NDEBUG
-  void dump(raw_ostream &OS, unsigned Size) {
-    OS << "  N" << this << " [shape=record label=\"" << Size << '/' << N;
-    for (unsigned i = 0; i != Size; ++i)
-      OS << " | <s" << i << "> " << stop(i);
-    OS << "\"];\n";
-    for (unsigned i = 0; i != Size; ++i)
-      OS << "  N" << this << ":s" << i << " -> N"
-         << &subtree(i).template get<BranchNode>() << ";\n";
-  }
-#endif
-
 };
 
 //===----------------------------------------------------------------------===//
@@ -922,14 +896,6 @@ public:
     moveLeft(Level);
     ++path[Level].offset;
   }
-
-#ifndef NDEBUG
-  void dump() const {
-    for (unsigned l = 0, e = path.size(); l != e; ++l)
-      errs() << l << ": " << path[l].node << ' ' << path[l].size << ' '
-             << path[l].offset << '\n';
-  }
-#endif
 };
 
 } // namespace IntervalMapImpl
@@ -1155,12 +1121,6 @@ public:
     I.find(x);
     return I;
   }
-
-#ifndef NDEBUG
-  raw_ostream *OS;
-  void dump();
-  void dumpNode(IntervalMapImpl::NodeRef Node, unsigned Height);
-#endif
 };
 
 /// treeSafeLookup - Return the mapped value at x or NotFound, assuming a
@@ -1303,32 +1263,6 @@ clear() {
   }
   rootSize = 0;
 }
-
-#ifndef NDEBUG
-template <typename KeyT, typename ValT, unsigned N, typename Traits>
-void IntervalMap<KeyT, ValT, N, Traits>::
-dumpNode(IntervalMapImpl::NodeRef Node, unsigned Height) {
-  if (Height)
-    Node.get<Branch>().dump(*OS, Node.size());
-  else
-    Node.get<Leaf>().dump(*OS, Node.size());
-}
-
-template <typename KeyT, typename ValT, unsigned N, typename Traits>
-void IntervalMap<KeyT, ValT, N, Traits>::
-dump() {
-  std::string errors;
-  raw_fd_ostream ofs("tree.dot", errors);
-  OS = &ofs;
-  ofs << "digraph {\n";
-  if (branched())
-    rootBranch().dump(ofs, rootSize);
-  else
-    rootLeaf().dump(ofs, rootSize);
-  visitNodes(&IntervalMap::dumpNode);
-  ofs << "}\n";
-}
-#endif
 
 //===----------------------------------------------------------------------===//
 //---                   IntervalMap::const_iterator                       ----//
