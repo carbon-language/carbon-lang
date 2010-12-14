@@ -615,7 +615,7 @@ def tLDRr :                      // A8.6.60
 
 def tLDRi :                     // A8.6.57
   T1pILdStEncodeImm<0b0110, 1, (outs tGPR:$Rt), (ins t_addrmode_is4:$addr),
-                    AddrModeT1_4, IIC_iLoad_r,
+                    AddrModeT1_4, IIC_iLoad_i,
                     "ldr", "\t$Rt, $addr",
                     [(set tGPR:$Rt, (load t_addrmode_is4:$addr))]>;
 
@@ -627,7 +627,7 @@ def tLDRBr :                    // A8.6.64
 
 def tLDRBi :                    // A8.6.61
   T1pILdStEncodeImm<0b0111, 1, (outs tGPR:$Rt), (ins t_addrmode_is1:$addr),
-                    AddrModeT1_1, IIC_iLoad_bh_r,
+                    AddrModeT1_1, IIC_iLoad_bh_i,
                     "ldrb", "\t$Rt, $addr",
                     [(set tGPR:$Rt, (zextloadi8 t_addrmode_is1:$addr))]>;
 
@@ -639,7 +639,7 @@ def tLDRHr :                    // A8.6.76
 
 def tLDRHi :                    // A8.6.73
   T1pILdStEncodeImm<0b1000, 1, (outs tGPR:$Rt), (ins t_addrmode_is2:$addr),
-                    AddrModeT1_2, IIC_iLoad_bh_r,
+                    AddrModeT1_2, IIC_iLoad_bh_i,
                     "ldrh", "\t$Rt, $addr",
                     [(set tGPR:$Rt, (zextloadi16 t_addrmode_is2:$addr))]>;
 
@@ -711,7 +711,7 @@ def tSTRr :                     // A8.6.194
 
 def tSTRi :                     // A8.6.192
   T1pILdStEncodeImm<0b0110, 0, (outs), (ins tGPR:$Rt, t_addrmode_is4:$addr),
-                    AddrModeT1_4, IIC_iStore_r,
+                    AddrModeT1_4, IIC_iStore_i,
                     "str", "\t$Rt, $addr",
                     [(store tGPR:$Rt, t_addrmode_is4:$addr)]>;
 
@@ -723,7 +723,7 @@ def tSTRBr :                    // A8.6.197
 
 def tSTRBi :                    // A8.6.195
   T1pILdStEncodeImm<0b0111, 0, (outs), (ins tGPR:$Rt, t_addrmode_is1:$addr),
-                    AddrModeT1_1, IIC_iStore_bh_r,
+                    AddrModeT1_1, IIC_iStore_bh_i,
                     "strb", "\t$Rt, $addr",
                     [(truncstorei8 tGPR:$Rt, t_addrmode_is1:$addr)]>;
 
@@ -735,7 +735,7 @@ def tSTRHr :                    // A8.6.207
 
 def tSTRHi :                    // A8.6.205
   T1pILdStEncodeImm<0b1000, 0, (outs), (ins tGPR:$Rt, t_addrmode_is2:$addr),
-                    AddrModeT1_2, IIC_iStore_bh_r,
+                    AddrModeT1_2, IIC_iStore_bh_i,
                     "strh", "\t$Rt, $addr",
                     [(truncstorei16 tGPR:$Rt, t_addrmode_is2:$addr)]>;
 
