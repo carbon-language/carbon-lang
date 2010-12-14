@@ -366,9 +366,15 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
   PrintingPolicy SubPolicy(Policy);
   SubPolicy.SuppressSpecifiers = false;
   std::string Proto = D->getNameInfo().getAsString();
-  if (isa<FunctionType>(D->getType().getTypePtr())) {
-    const FunctionType *AFT = D->getType()->getAs<FunctionType>();
 
+  QualType Ty = D->getType();
+  while (ParenType* PT = dyn_cast<ParenType>(Ty)) {
+    Proto = '(' + Proto + ')';
+    Ty = PT->getInnerType();
+  }
+
+  if (isa<FunctionType>(Ty)) {
+    const FunctionType *AFT = Ty->getAs<FunctionType>();
     const FunctionProtoType *FT = 0;
     if (D->hasWrittenPrototype())
       FT = dyn_cast<FunctionProtoType>(AFT);
@@ -487,7 +493,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     else
       AFT->getResultType().getAsStringInternal(Proto, Policy);
   } else {
-    D->getType().getAsStringInternal(Proto, Policy);
+    Ty.getAsStringInternal(Proto, Policy);
   }
 
   Out << Proto;

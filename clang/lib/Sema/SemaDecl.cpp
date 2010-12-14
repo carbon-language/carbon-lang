@@ -3761,7 +3761,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Copy the parameter declarations from the declarator D to the function
   // declaration NewFD, if they are available.  First scavenge them into Params.
   llvm::SmallVector<ParmVarDecl*, 16> Params;
-  if (D.getNumTypeObjects() > 0) {
+  if (D.isFunctionDeclarator()) {
     DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
 
     // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs
@@ -4283,7 +4283,7 @@ void Sema::CheckMain(FunctionDecl* FD) {
 
   if (!Context.hasSameUnqualifiedType(FT->getResultType(), Context.IntTy)) {
     TypeSourceInfo *TSI = FD->getTypeSourceInfo();
-    TypeLoc TL = TSI->getTypeLoc();
+    TypeLoc TL = TSI->getTypeLoc().IgnoreParens();
     const SemaDiagnosticBuilder& D = Diag(FD->getTypeSpecStartLoc(),
                                           diag::err_main_returns_nonint);
     if (FunctionTypeLoc* PTL = dyn_cast<FunctionTypeLoc>(&TL)) {

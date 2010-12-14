@@ -8240,8 +8240,9 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
   // Push block parameters from the declarator if we had them.
   llvm::SmallVector<ParmVarDecl*, 8> Params;
-  if (isa<FunctionProtoType>(T)) {
-    FunctionProtoTypeLoc TL = cast<FunctionProtoTypeLoc>(Sig->getTypeLoc());
+  if (isa<FunctionProtoType>(T.IgnoreParens())) {
+    FunctionProtoTypeLoc TL
+      = cast<FunctionProtoTypeLoc>(Sig->getTypeLoc().IgnoreParens());
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
       ParmVarDecl *Param = TL.getArg(I);
       if (Param->getIdentifier() == 0 &&

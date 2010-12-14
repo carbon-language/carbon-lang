@@ -990,7 +990,7 @@ static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
   if (T->getType()->isDependentType() || T->getType()->isVariablyModifiedType())
     return true;
 
-  TypeLoc TL = T->getTypeLoc();
+  TypeLoc TL = T->getTypeLoc().IgnoreParens();
   if (!isa<FunctionProtoTypeLoc>(TL))
     return false;
 

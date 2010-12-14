@@ -115,7 +115,11 @@ public:
   /// \brief Skips past any qualifiers, if this is qualified.
   UnqualTypeLoc getUnqualifiedLoc() const; // implemented in this header
 
-  TypeLoc IgnoreParens() const;
+  TypeLoc IgnoreParens() const {
+    if (isa<ParenTypeLoc>(this))
+      return IgnoreParensImpl(*this);
+    return *this;
+  }
 
   /// \brief Initializes this to state that every location in this
   /// type is the given location.
@@ -146,6 +150,7 @@ private:
   static void initializeImpl(TypeLoc TL, SourceLocation Loc);
   static void initializeFullCopyImpl(TypeLoc TL, TypeLoc Other);
   static TypeLoc getNextTypeLocImpl(TypeLoc TL);
+  static TypeLoc IgnoreParensImpl(TypeLoc TL);
   static SourceRange getLocalSourceRangeImpl(TypeLoc TL);
 };
 

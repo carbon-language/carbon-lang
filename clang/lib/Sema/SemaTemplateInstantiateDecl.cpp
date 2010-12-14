@@ -1264,16 +1264,16 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     return 0;
   QualType T = TInfo->getType();
 
-  // \brief If the type of this function is not *directly* a function
-  // type, then we're instantiating the a function that was declared
-  // via a typedef, e.g.,
+  // \brief If the type of this function, after ignoring parentheses,
+  // is not *directly* a function type, then we're instantiating a function
+  // that was declared via a typedef, e.g.,
   //
   //   typedef int functype(int, int);
   //   functype func;
   //
   // In this case, we'll just go instantiate the ParmVarDecls that we
   // synthesized in the method declaration.
-  if (!isa<FunctionProtoType>(T)) {
+  if (!isa<FunctionProtoType>(T.IgnoreParens())) {
     assert(!Params.size() && "Instantiating type could not yield parameters");
     for (unsigned I = 0, N = D->getNumParams(); I != N; ++I) {
       ParmVarDecl *P = SemaRef.SubstParmVarDecl(D->getParamDecl(I), 

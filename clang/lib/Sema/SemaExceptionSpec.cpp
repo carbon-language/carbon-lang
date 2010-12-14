@@ -81,7 +81,6 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
 /// to member to a function with an exception specification. This means that
 /// it is invalid to add another level of indirection.
 bool Sema::CheckDistantExceptionSpec(QualType T) {
-  T = T.IgnoreParens();
   if (const PointerType *PT = T->getAs<PointerType>())
     T = PT->getPointeeType();
   else if (const MemberPointerType *PT = T->getAs<MemberPointerType>())
@@ -89,7 +88,6 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
   else
     return false;
 
-  T = T.IgnoreParens();
   const FunctionProtoType *FnT = T->getAs<FunctionProtoType>();
   if (!FnT)
     return false;
@@ -198,7 +196,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 
     SourceLocation AfterParenLoc;
     if (TypeSourceInfo *TSInfo = New->getTypeSourceInfo()) {
-      TypeLoc TL = TSInfo->getTypeLoc();
+      TypeLoc TL = TSInfo->getTypeLoc().IgnoreParens();
       if (const FunctionTypeLoc *FTLoc = dyn_cast<FunctionTypeLoc>(&TL))
         AfterParenLoc = PP.getLocForEndOfToken(FTLoc->getRParenLoc());
     }

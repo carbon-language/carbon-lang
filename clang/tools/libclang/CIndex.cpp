@@ -693,7 +693,7 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
   if (TypeSourceInfo *TSInfo = ND->getTypeSourceInfo()) {
     // Visit the function declaration's syntactic components in the order
     // written. This requires a bit of work.
-    TypeLoc TL = TSInfo->getTypeLoc();
+    TypeLoc TL = TSInfo->getTypeLoc().IgnoreParens();
     FunctionTypeLoc *FTL = dyn_cast<FunctionTypeLoc>(&TL);
     
     // If we have a function declared directly (without the use of a typedef),

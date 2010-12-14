@@ -2170,7 +2170,7 @@ static void HandleGlobalAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
     FunctionDecl *FD = cast<FunctionDecl>(d);
     if (!FD->getResultType()->isVoidType()) {
-      TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc();
+      TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc().IgnoreParens();
       if (FunctionTypeLoc* FTL = dyn_cast<FunctionTypeLoc>(&TL)) {
         S.Diag(FD->getTypeSpecStartLoc(), diag::err_kern_type_not_void_return)
           << FD->getType()

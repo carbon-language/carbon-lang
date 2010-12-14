@@ -1918,10 +1918,7 @@ static std::string FormatFunctionParameter(ASTContext &Context,
       // then we're done.
       if (BlockPointerTypeLoc *BlockPtr
           = dyn_cast<BlockPointerTypeLoc>(&TL)) {
-        TL = BlockPtr->getPointeeLoc();
-        // Skip any paren typeloc.
-        while (ParenTypeLoc *ParenPtr = dyn_cast<ParenTypeLoc>(&TL))
-          TL = ParenPtr->getInnerLoc();
+        TL = BlockPtr->getPointeeLoc().IgnoreParens();
         Block = dyn_cast<FunctionProtoTypeLoc>(&TL);
       }
       break;

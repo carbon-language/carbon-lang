@@ -694,7 +694,9 @@ public:
   /// IgnoreParens - Returns the specified type after dropping any
   /// outer-level parentheses.
   QualType IgnoreParens() const {
-    return QualType::IgnoreParens(*this);
+    if (isa<ParenType>(*this))
+      return QualType::IgnoreParens(*this);
+    return *this;
   }
 
   /// operator==/!= - Indicate whether the specified types and qualifiers are
