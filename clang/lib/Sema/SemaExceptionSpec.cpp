@@ -115,9 +115,6 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   if (!MissingExceptionSpecification && !MissingEmptyExceptionSpecification)
     return true;
 
-  const FunctionProtoType *NewProto 
-    = New->getType()->getAs<FunctionProtoType>();
-
   // The new function declaration is only missing an empty exception
   // specification "throw()". If the throw() specification came from a
   // function in a system header that has C linkage, just add an empty
@@ -126,38 +123,42 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   // to many libc functions as an optimization. Unfortunately, that
   // optimization isn't permitted by the C++ standard, so we're forced
   // to work around it here.
-  if (MissingEmptyExceptionSpecification && NewProto &&
+  if (MissingEmptyExceptionSpecification &&
+      isa<FunctionProtoType>(New->getType()) &&
       (Old->getLocation().isInvalid() ||
        Context.getSourceManager().isInSystemHeader(Old->getLocation())) &&
       Old->isExternC()) {
-    FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
-    EPI.HasExceptionSpec = true;
-    EPI.HasAnyExceptionSpec = false;
-    EPI.NumExceptions = 0;
+    const FunctionProtoType *NewProto 
+      = cast<FunctionProtoType>(New->getType());
     QualType NewType = Context.getFunctionType(NewProto->getResultType(),
                                                NewProto->arg_type_begin(),
                                                NewProto->getNumArgs(),
-                                               EPI);
+                                               NewProto->isVariadic(),
+                                               NewProto->getTypeQuals(),
+                                               true, false, 0, 0,
+                                               NewProto->getExtInfo());
     New->setType(NewType);
     return false;
   }
 
-  if (MissingExceptionSpecification && NewProto) {
+  if (MissingExceptionSpecification && isa<FunctionProtoType>(New->getType())) {
+    const FunctionProtoType *NewProto 
+      = cast<FunctionProtoType>(New->getType());
     const FunctionProtoType *OldProto
       = Old->getType()->getAs<FunctionProtoType>();
-
-    FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
-    EPI.HasExceptionSpec = OldProto->hasExceptionSpec();
-    EPI.HasAnyExceptionSpec = OldProto->hasAnyExceptionSpec();
-    EPI.NumExceptions = OldProto->getNumExceptions();
-    EPI.Exceptions = OldProto->exception_begin();
 
     // Update the type of the function with the appropriate exception
     // specification.
     QualType NewType = Context.getFunctionType(NewProto->getResultType(),
                                                NewProto->arg_type_begin(),
                                                NewProto->getNumArgs(),
-                                               EPI);
+                                               NewProto->isVariadic(),
+                                               NewProto->getTypeQuals(),
+                                               OldProto->hasExceptionSpec(),
+                                               OldProto->hasAnyExceptionSpec(),
+                                               OldProto->getNumExceptions(),
+                                               OldProto->exception_begin(),
+                                               NewProto->getExtInfo());
     New->setType(NewType);
 
     // If exceptions are disabled, suppress the warning about missing

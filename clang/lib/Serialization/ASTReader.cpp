@@ -2842,29 +2842,28 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
   case TYPE_FUNCTION_PROTO: {
     QualType ResultType = GetType(Record[0]);
-
-    FunctionProtoType::ExtProtoInfo EPI;
-    EPI.ExtInfo = FunctionType::ExtInfo(/*noreturn*/ Record[1],
-                                        /*regparm*/ Record[2],
-                                        static_cast<CallingConv>(Record[3]));
-
+    bool NoReturn = Record[1];
+    unsigned RegParm = Record[2];
+    CallingConv CallConv = (CallingConv)Record[3];
     unsigned Idx = 4;
     unsigned NumParams = Record[Idx++];
     llvm::SmallVector<QualType, 16> ParamTypes;
     for (unsigned I = 0; I != NumParams; ++I)
       ParamTypes.push_back(GetType(Record[Idx++]));
-
-    EPI.Variadic = Record[Idx++];
-    EPI.TypeQuals = Record[Idx++];
-    EPI.HasExceptionSpec = Record[Idx++];
-    EPI.HasAnyExceptionSpec = Record[Idx++];
-    EPI.NumExceptions = Record[Idx++];
+    bool isVariadic = Record[Idx++];
+    unsigned Quals = Record[Idx++];
+    bool hasExceptionSpec = Record[Idx++];
+    bool hasAnyExceptionSpec = Record[Idx++];
+    unsigned NumExceptions = Record[Idx++];
     llvm::SmallVector<QualType, 2> Exceptions;
-    for (unsigned I = 0; I != EPI.NumExceptions; ++I)
+    for (unsigned I = 0; I != NumExceptions; ++I)
       Exceptions.push_back(GetType(Record[Idx++]));
-    EPI.Exceptions = Exceptions.data();
     return Context->getFunctionType(ResultType, ParamTypes.data(), NumParams,
-                                    EPI);
+                                    isVariadic, Quals, hasExceptionSpec,
+                                    hasAnyExceptionSpec, NumExceptions,
+                                    Exceptions.data(),
+                                    FunctionType::ExtInfo(NoReturn, RegParm,
+                                                          CallConv));
   }
 
   case TYPE_UNRESOLVED_USING:

@@ -2851,21 +2851,20 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
     if (FTI.TypeQuals & Qualifiers::Restrict)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
         << "restrict" << SourceRange(D.getIdentifierLoc());
-    D.setInvalidType();
   }
 
   // Rebuild the function type "R" without any type qualifiers (in
   // case any of the errors above fired) and with "void" as the
   // return type, since constructors don't have return types.
   const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
-  if (Proto->getResultType() == Context.VoidTy && !D.isInvalidType())
-    return R;
-
-  FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
-  EPI.TypeQuals = 0;
-
   return Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
-                                 Proto->getNumArgs(), EPI);
+                                 Proto->getNumArgs(),
+                                 Proto->isVariadic(), 0,
+                                 Proto->hasExceptionSpec(),
+                                 Proto->hasAnyExceptionSpec(),
+                                 Proto->getNumExceptions(),
+                                 Proto->exception_begin(),
+                                 Proto->getExtInfo());
 }
 
 /// CheckConstructor - Checks a fully-formed constructor for
@@ -3023,14 +3022,16 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
   // parameters (in case any of the errors above fired) and with
   // "void" as the return type, since destructors don't have return
   // types. 
-  if (!D.isInvalidType())
-    return R;
-
   const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
-  FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
-  EPI.Variadic = false;
-  EPI.TypeQuals = 0;
-  return Context.getFunctionType(Context.VoidTy, 0, 0, EPI);
+  if (!Proto)
+    return QualType();
+  
+  return Context.getFunctionType(Context.VoidTy, 0, 0, false, 0,
+                                 Proto->hasExceptionSpec(),
+                                 Proto->hasAnyExceptionSpec(),
+                                 Proto->getNumExceptions(),
+                                 Proto->exception_begin(),
+                                 Proto->getExtInfo());
 }
 
 /// CheckConversionDeclarator - Called by ActOnDeclarator to check the
@@ -3110,8 +3111,15 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   // Rebuild the function type "R" without any parameters (in case any
   // of the errors above fired) and with the conversion type as the
   // return type.
-  if (D.isInvalidType())
-    R = Context.getFunctionType(ConvType, 0, 0, Proto->getExtProtoInfo());
+  if (D.isInvalidType()) {
+    R = Context.getFunctionType(ConvType, 0, 0, false,
+                                Proto->getTypeQuals(),
+                                Proto->hasExceptionSpec(),
+                                Proto->hasAnyExceptionSpec(),
+                                Proto->getNumExceptions(),
+                                Proto->exception_begin(),
+                                Proto->getExtInfo());
+  }
 
   // C++0x explicit conversion operators.
   if (D.getDeclSpec().isExplicitSpecified() && !getLangOptions().CPlusPlus0x)
@@ -4302,12 +4310,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
         ExceptSpec.CalledDecl(Constructor);
     }
   }
-
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.HasExceptionSpec = ExceptSpec.hasExceptionSpecification();
-  EPI.HasAnyExceptionSpec = ExceptSpec.hasAnyExceptionSpecification();
-  EPI.NumExceptions = ExceptSpec.size();
-  EPI.Exceptions = ExceptSpec.data();
+  
   
   // Create the actual constructor declaration.
   CanQualType ClassType
@@ -4318,7 +4321,12 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   CXXConstructorDecl *DefaultCon
     = CXXConstructorDecl::Create(Context, ClassDecl, NameInfo,
                                  Context.getFunctionType(Context.VoidTy,
-                                                         0, 0, EPI),
+                                                         0, 0, false, 0,
+                                       ExceptSpec.hasExceptionSpecification(),
+                                     ExceptSpec.hasAnyExceptionSpecification(),
+                                                         ExceptSpec.size(),
+                                                         ExceptSpec.data(),
+                                                       FunctionType::ExtInfo()),
                                  /*TInfo=*/0,
                                  /*isExplicit=*/false,
                                  /*isInline=*/true,
@@ -4406,12 +4414,13 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   }
   
   // Create the actual destructor declaration.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.HasExceptionSpec = ExceptSpec.hasExceptionSpecification();
-  EPI.HasAnyExceptionSpec = ExceptSpec.hasAnyExceptionSpecification();
-  EPI.NumExceptions = ExceptSpec.size();
-  EPI.Exceptions = ExceptSpec.data();
-  QualType Ty = Context.getFunctionType(Context.VoidTy, 0, 0, EPI);
+  QualType Ty = Context.getFunctionType(Context.VoidTy,
+                                        0, 0, false, 0,
+                                        ExceptSpec.hasExceptionSpecification(),
+                                    ExceptSpec.hasAnyExceptionSpecification(),
+                                        ExceptSpec.size(),
+                                        ExceptSpec.data(),
+                                        FunctionType::ExtInfo());
   
   CanQualType ClassType
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
@@ -4803,16 +4812,17 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   
   //   An implicitly-declared copy assignment operator is an inline public
   //   member of its class.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.HasExceptionSpec = ExceptSpec.hasExceptionSpecification();
-  EPI.HasAnyExceptionSpec = ExceptSpec.hasAnyExceptionSpecification();
-  EPI.NumExceptions = ExceptSpec.size();
-  EPI.Exceptions = ExceptSpec.data();
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
   DeclarationNameInfo NameInfo(Name, ClassDecl->getLocation());
   CXXMethodDecl *CopyAssignment
     = CXXMethodDecl::Create(Context, ClassDecl, NameInfo,
-                            Context.getFunctionType(RetType, &ArgType, 1, EPI),
+                            Context.getFunctionType(RetType, &ArgType, 1,
+                                                    false, 0,
+                                         ExceptSpec.hasExceptionSpecification(),
+                                      ExceptSpec.hasAnyExceptionSpecification(),
+                                                    ExceptSpec.size(),
+                                                    ExceptSpec.data(),
+                                                    FunctionType::ExtInfo()),
                             /*TInfo=*/0, /*isStatic=*/false,
                             /*StorageClassAsWritten=*/SC_None,
                             /*isInline=*/true);
@@ -5268,11 +5278,6 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   
   //   An implicitly-declared copy constructor is an inline public
   //   member of its class.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.HasExceptionSpec = ExceptSpec.hasExceptionSpecification();
-  EPI.HasAnyExceptionSpec = ExceptSpec.hasAnyExceptionSpecification();
-  EPI.NumExceptions = ExceptSpec.size();
-  EPI.Exceptions = ExceptSpec.data();
   DeclarationName Name
     = Context.DeclarationNames.getCXXConstructorName(
                                            Context.getCanonicalType(ClassType));
@@ -5280,7 +5285,13 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   CXXConstructorDecl *CopyConstructor
     = CXXConstructorDecl::Create(Context, ClassDecl, NameInfo,
                                  Context.getFunctionType(Context.VoidTy,
-                                                         &ArgType, 1, EPI),
+                                                         &ArgType, 1,
+                                                         false, 0,
+                                         ExceptSpec.hasExceptionSpecification(),
+                                      ExceptSpec.hasAnyExceptionSpecification(),
+                                                         ExceptSpec.size(),
+                                                         ExceptSpec.data(),
+                                                       FunctionType::ExtInfo()),
                                  /*TInfo=*/0,
                                  /*isExplicit=*/false,
                                  /*isInline=*/true,

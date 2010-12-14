@@ -1278,7 +1278,22 @@ public:
                           TypeSourceInfo *ScopeType,
                           SourceLocation ColonColonLoc,
                           SourceLocation TildeLoc,
-                          PseudoDestructorTypeStorage DestroyedType);
+                          PseudoDestructorTypeStorage DestroyedType)
+    : Expr(CXXPseudoDestructorExprClass,
+           Context.getPointerType(Context.getFunctionType(Context.VoidTy, 0, 0,
+                                                          false, 0, false, 
+                                                          false, 0, 0,
+                                                      FunctionType::ExtInfo())),
+           VK_RValue, OK_Ordinary,
+           /*isTypeDependent=*/(Base->isTypeDependent() ||
+            (DestroyedType.getTypeSourceInfo() &&
+              DestroyedType.getTypeSourceInfo()->getType()->isDependentType())),
+           /*isValueDependent=*/Base->isValueDependent()),
+      Base(static_cast<Stmt *>(Base)), IsArrow(isArrow),
+      OperatorLoc(OperatorLoc), Qualifier(Qualifier),
+      QualifierRange(QualifierRange), 
+      ScopeType(ScopeType), ColonColonLoc(ColonColonLoc), TildeLoc(TildeLoc),
+      DestroyedType(DestroyedType) { }
 
   explicit CXXPseudoDestructorExpr(EmptyShell Shell)
     : Expr(CXXPseudoDestructorExprClass, Shell),

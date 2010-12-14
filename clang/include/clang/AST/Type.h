@@ -925,8 +925,8 @@ protected:
     /// regparm and the calling convention.
     unsigned ExtInfo : 8;
 
-    /// Whether the function is variadic.  Only used by FunctionProtoType.
-    unsigned Variadic : 1;
+    /// A bit to be used by the subclass.
+    unsigned SubclassInfo : 1;
 
     /// TypeQuals - Used only by FunctionProtoType, put here to pack with the
     /// other bitfields.
@@ -2196,13 +2196,13 @@ class FunctionType : public Type {
       return ExtInfo((Bits & ~CallConvMask) | (unsigned) cc);
     }
 
-    void Profile(llvm::FoldingSetNodeID &ID) const {
+    void Profile(llvm::FoldingSetNodeID &ID) {
       ID.AddInteger(Bits);
     }
   };
 
 protected:
-  FunctionType(TypeClass tc, QualType res, bool variadic,
+  FunctionType(TypeClass tc, QualType res, bool SubclassInfo,
                unsigned typeQuals, QualType Canonical, bool Dependent,
                bool VariablyModified, bool ContainsUnexpandedParameterPack, 
                ExtInfo Info)
@@ -2210,10 +2210,10 @@ protected:
            ContainsUnexpandedParameterPack), 
       ResultType(res) {
     FunctionTypeBits.ExtInfo = Info.Bits;
-    FunctionTypeBits.Variadic = variadic;
+    FunctionTypeBits.SubclassInfo = SubclassInfo;
     FunctionTypeBits.TypeQuals = typeQuals;
   }
-  bool isVariadic() const { return FunctionTypeBits.Variadic; }
+  bool getSubClassData() const { return FunctionTypeBits.SubclassInfo; }
   unsigned getTypeQuals() const { return FunctionTypeBits.TypeQuals; }
 public:
 
@@ -2276,23 +2276,6 @@ public:
 /// exception specification, but this specification is not part of the canonical
 /// type.
 class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
-public:
-  /// ExtProtoInfo - Extra information about a function prototype.
-  struct ExtProtoInfo {
-    ExtProtoInfo() :
-      Variadic(false), HasExceptionSpec(false), HasAnyExceptionSpec(false),
-      TypeQuals(0), NumExceptions(0), Exceptions(0) {}
-
-    FunctionType::ExtInfo ExtInfo;
-    bool Variadic;
-    bool HasExceptionSpec;
-    bool HasAnyExceptionSpec;
-    unsigned char TypeQuals;
-    unsigned NumExceptions;
-    const QualType *Exceptions;
-  };
-
-private:
   /// \brief Determine whether there are any argument types that
   /// contain an unexpanded parameter pack.
   static bool containsAnyUnexpandedParameterPack(const QualType *ArgArray, 
@@ -2304,8 +2287,11 @@ private:
     return false;
   }
 
-  FunctionProtoType(QualType result, const QualType *args, unsigned numArgs,
-                    QualType canonical, const ExtProtoInfo &epi);
+  FunctionProtoType(QualType Result, const QualType *ArgArray, unsigned numArgs,
+                    bool isVariadic, unsigned typeQuals, bool hasExs,
+                    bool hasAnyExs, const QualType *ExArray,
+                    unsigned numExs, QualType Canonical,
+                    const ExtInfo &Info);
 
   /// NumArgs - The number of arguments this function has, not counting '...'.
   unsigned NumArgs : 20;
@@ -2316,8 +2302,8 @@ private:
   /// HasExceptionSpec - Whether this function has an exception spec at all.
   unsigned HasExceptionSpec : 1;
 
-  /// HasAnyExceptionSpec - Whether this function has a throw(...) spec.
-  unsigned HasAnyExceptionSpec : 1;
+  /// AnyExceptionSpec - Whether this function has a throw(...) spec.
+  unsigned AnyExceptionSpec : 1;
 
   /// ArgInfo - There is an variable size array after the class in memory that
   /// holds the argument types.
@@ -2334,20 +2320,8 @@ public:
     return arg_type_begin()[i];
   }
 
-  ExtProtoInfo getExtProtoInfo() const {
-    ExtProtoInfo EPI;
-    EPI.ExtInfo = getExtInfo();
-    EPI.Variadic = isVariadic();
-    EPI.HasExceptionSpec = hasExceptionSpec();
-    EPI.HasAnyExceptionSpec = hasAnyExceptionSpec();
-    EPI.TypeQuals = static_cast<unsigned char>(getTypeQuals());
-    EPI.NumExceptions = NumExceptions;
-    EPI.Exceptions = exception_begin();
-    return EPI;
-  }
-
   bool hasExceptionSpec() const { return HasExceptionSpec; }
-  bool hasAnyExceptionSpec() const { return HasAnyExceptionSpec; }
+  bool hasAnyExceptionSpec() const { return AnyExceptionSpec; }
   unsigned getNumExceptions() const { return NumExceptions; }
   QualType getExceptionType(unsigned i) const {
     assert(i < NumExceptions && "Invalid exception number!");
@@ -2358,7 +2332,7 @@ public:
       getNumExceptions() == 0;
   }
 
-  using FunctionType::isVariadic;
+  bool isVariadic() const { return getSubClassData(); }
   unsigned getTypeQuals() const { return FunctionType::getTypeQuals(); }
 
   typedef const QualType *arg_type_iterator;
@@ -2387,7 +2361,10 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                       arg_type_iterator ArgTys, unsigned NumArgs,
-                      const ExtProtoInfo &EPI);
+                      bool isVariadic, unsigned TypeQuals,
+                      bool hasExceptionSpec, bool anyExceptionSpec,
+                      unsigned NumExceptions, exception_iterator Exs,
+                      ExtInfo ExtInfo);
 };
 
 

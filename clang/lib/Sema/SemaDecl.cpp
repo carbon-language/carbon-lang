@@ -1285,7 +1285,10 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
                                                  OldProto->arg_type_end());
       NewQType = Context.getFunctionType(NewFuncType->getResultType(),
                                          ParamTypes.data(), ParamTypes.size(),
-                                         OldProto->getExtProtoInfo());
+                                         OldProto->isVariadic(),
+                                         OldProto->getTypeQuals(),
+                                         false, false, 0, 0,
+                                         OldProto->getExtInfo());
       New->setType(NewQType);
       New->setHasInheritedPrototype();
 
@@ -1367,7 +1370,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 
       New->setType(Context.getFunctionType(MergedReturn, &ArgTypes[0],
                                            ArgTypes.size(),
-                                           OldProto->getExtProtoInfo()));
+                                           OldProto->isVariadic(), 0,
+                                           false, false, 0, 0,
+                                           OldProto->getExtInfo()));
       return MergeCompatibleFunctionDecls(New, Old);
     }
 
@@ -4041,11 +4046,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     // Turn this into a variadic function with no parameters.
     const FunctionType *FT = NewFD->getType()->getAs<FunctionType>();
-    FunctionProtoType::ExtProtoInfo EPI;
-    EPI.Variadic = true;
-    EPI.ExtInfo = FT->getExtInfo();
-
-    QualType R = Context.getFunctionType(FT->getResultType(), 0, 0, EPI);
+    QualType R = Context.getFunctionType(FT->getResultType(),
+                                         0, 0, true, 0, false, false, 0, 0,
+                                         FT->getExtInfo());
     NewFD->setType(R);
   }
 

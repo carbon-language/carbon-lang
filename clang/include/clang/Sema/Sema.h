@@ -615,7 +615,7 @@ public:
                              QualType *ParamTypes, unsigned NumParamTypes,
                              bool Variadic, unsigned Quals,
                              SourceLocation Loc, DeclarationName Entity,
-                             FunctionType::ExtInfo Info);
+                             const FunctionType::ExtInfo &Info);
   QualType BuildMemberPointerType(QualType T, QualType Class,
                                   SourceLocation Loc,
                                   DeclarationName Entity);

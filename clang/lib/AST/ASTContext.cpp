@@ -1141,7 +1141,7 @@ QualType ASTContext::getObjCGCQualType(QualType T,
 }
 
 static QualType getExtFunctionType(ASTContext& Context, QualType T,
-                                   const FunctionType::ExtInfo &Info) {
+                                        const FunctionType::ExtInfo &Info) {
   QualType ResultType;
   if (const PointerType *Pointer = T->getAs<PointerType>()) {
     QualType Pointee = Pointer->getPointeeType();
@@ -1183,11 +1183,15 @@ static QualType getExtFunctionType(ASTContext& Context, QualType T,
                                                   Info);
     } else {
       const FunctionProtoType *FPT = cast<FunctionProtoType>(F);
-      FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-      EPI.ExtInfo = Info;
-      ResultType = Context.getFunctionType(FPT->getResultType(),
-                                           FPT->arg_type_begin(),
-                                           FPT->getNumArgs(), EPI);
+      ResultType
+        = Context.getFunctionType(FPT->getResultType(), FPT->arg_type_begin(),
+                                  FPT->getNumArgs(), FPT->isVariadic(),
+                                  FPT->getTypeQuals(),
+                                  FPT->hasExceptionSpec(),
+                                  FPT->hasAnyExceptionSpec(),
+                                  FPT->getNumExceptions(),
+                                  FPT->exception_begin(),
+                                  Info);
     }
   } else
     return T;
@@ -1197,17 +1201,20 @@ static QualType getExtFunctionType(ASTContext& Context, QualType T,
 
 QualType ASTContext::getNoReturnType(QualType T, bool AddNoReturn) {
   FunctionType::ExtInfo Info = getFunctionExtInfo(T);
-  return getExtFunctionType(*this, T, Info.withNoReturn(AddNoReturn));
+  return getExtFunctionType(*this, T,
+                                 Info.withNoReturn(AddNoReturn));
 }
 
 QualType ASTContext::getCallConvType(QualType T, CallingConv CallConv) {
   FunctionType::ExtInfo Info = getFunctionExtInfo(T);
-  return getExtFunctionType(*this, T, Info.withCallingConv(CallConv));
+  return getExtFunctionType(*this, T,
+                            Info.withCallingConv(CallConv));
 }
 
 QualType ASTContext::getRegParmType(QualType T, unsigned RegParm) {
   FunctionType::ExtInfo Info = getFunctionExtInfo(T);
-  return getExtFunctionType(*this, T, Info.withRegParm(RegParm));
+  return getExtFunctionType(*this, T,
+                                 Info.withRegParm(RegParm));
 }
 
 /// getComplexType - Return the uniqued reference to the type for a complex
@@ -1756,13 +1763,20 @@ QualType ASTContext::getFunctionNoProtoType(QualType ResultTy,
 
 /// getFunctionType - Return a normal function type with a typed argument
 /// list.  isVariadic indicates whether the argument list includes '...'.
-QualType ASTContext::getFunctionType(QualType ResultTy,
-                                     const QualType *ArgArray, unsigned NumArgs,
-                                   const FunctionProtoType::ExtProtoInfo &EPI) {
+QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
+                                     unsigned NumArgs, bool isVariadic,
+                                     unsigned TypeQuals, bool hasExceptionSpec,
+                                     bool hasAnyExceptionSpec, unsigned NumExs,
+                                     const QualType *ExArray,
+                                     const FunctionType::ExtInfo &Info) {
+
+  const CallingConv CallConv= Info.getCC();
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, EPI);
+  FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic,
+                             TypeQuals, hasExceptionSpec, hasAnyExceptionSpec,
+                             NumExs, ExArray, Info);
 
   void *InsertPos = 0;
   if (FunctionProtoType *FTP =
@@ -1770,12 +1784,10 @@ QualType ASTContext::getFunctionType(QualType ResultTy,
     return QualType(FTP, 0);
 
   // Determine whether the type being created is already canonical or not.
-  bool isCanonical = !EPI.HasExceptionSpec && ResultTy.isCanonical();
+  bool isCanonical = !hasExceptionSpec && ResultTy.isCanonical();
   for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
     if (!ArgArray[i].isCanonicalAsParam())
       isCanonical = false;
-
-  const CallingConv CallConv = EPI.ExtInfo.getCC();
 
   // If this type isn't canonical, get the canonical version of it.
   // The exception spec is not part of the canonical type.
@@ -1786,18 +1798,11 @@ QualType ASTContext::getFunctionType(QualType ResultTy,
     for (unsigned i = 0; i != NumArgs; ++i)
       CanonicalArgs.push_back(getCanonicalParamType(ArgArray[i]));
 
-    FunctionProtoType::ExtProtoInfo CanonicalEPI = EPI;
-    if (CanonicalEPI.HasExceptionSpec) {
-      CanonicalEPI.HasExceptionSpec = false;
-      CanonicalEPI.HasAnyExceptionSpec = false;
-      CanonicalEPI.NumExceptions = 0;
-    }
-    CanonicalEPI.ExtInfo
-      = CanonicalEPI.ExtInfo.withCallingConv(getCanonicalCallConv(CallConv));
-
     Canonical = getFunctionType(getCanonicalType(ResultTy),
                                 CanonicalArgs.data(), NumArgs,
-                                CanonicalEPI);
+                                isVariadic, TypeQuals, false,
+                                false, 0, 0,
+                     Info.withCallingConv(getCanonicalCallConv(CallConv)));
 
     // Get the new insert position for the node we care about.
     FunctionProtoType *NewIP =
@@ -1808,11 +1813,13 @@ QualType ASTContext::getFunctionType(QualType ResultTy,
   // FunctionProtoType objects are allocated with extra bytes after them
   // for two variable size arrays (for parameter and exception types) at the
   // end of them.
-  size_t Size = sizeof(FunctionProtoType) +
-                NumArgs * sizeof(QualType) +
-                EPI.NumExceptions * sizeof(QualType);
-  FunctionProtoType *FTP = (FunctionProtoType*) Allocate(Size, TypeAlignment);
-  new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, Canonical, EPI);
+  FunctionProtoType *FTP =
+    (FunctionProtoType*)Allocate(sizeof(FunctionProtoType) +
+                                 NumArgs*sizeof(QualType) +
+                                 NumExs*sizeof(QualType), TypeAlignment);
+  new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, isVariadic,
+                              TypeQuals, hasExceptionSpec, hasAnyExceptionSpec,
+                              ExArray, NumExs, Canonical, Info);
   Types.push_back(FTP);
   FunctionProtoTypes.InsertNode(FTP, InsertPos);
   return QualType(FTP, 0);
@@ -4845,8 +4852,6 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   if (!isSameCallConv(lcc, rcc))
     return QualType();
 
-  FunctionType::ExtInfo einfo = FunctionType::ExtInfo(NoReturn, RegParm, lcc);
-
   if (lproto && rproto) { // two C99 style function prototypes
     assert(!lproto->hasExceptionSpec() && !rproto->hasExceptionSpec() &&
            "C++ shouldn't be here");
@@ -4890,10 +4895,10 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     }
     if (allLTypes) return lhs;
     if (allRTypes) return rhs;
-
-    FunctionProtoType::ExtProtoInfo EPI = lproto->getExtProtoInfo();
-    EPI.ExtInfo = einfo;
-    return getFunctionType(retType, types.begin(), types.size(), EPI);
+    return getFunctionType(retType, types.begin(), types.size(),
+                           lproto->isVariadic(), lproto->getTypeQuals(),
+                           false, false, 0, 0,
+                           FunctionType::ExtInfo(NoReturn, RegParm, lcc));
   }
 
   if (lproto) allRTypes = false;
@@ -4924,11 +4929,11 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
 
     if (allLTypes) return lhs;
     if (allRTypes) return rhs;
-
-    FunctionProtoType::ExtProtoInfo EPI = proto->getExtProtoInfo();
-    EPI.ExtInfo = einfo;
     return getFunctionType(retType, proto->arg_type_begin(),
-                           proto->getNumArgs(), EPI);
+                           proto->getNumArgs(), proto->isVariadic(),
+                           proto->getTypeQuals(),
+                           false, false, 0, 0,
+                           FunctionType::ExtInfo(NoReturn, RegParm, lcc));
   }
 
   if (allLTypes) return lhs;
@@ -5213,11 +5218,16 @@ QualType ASTContext::mergeObjCGCQualifiers(QualType LHS, QualType RHS) {
       // In either case, use OldReturnType to build the new function type.
       const FunctionType *F = LHS->getAs<FunctionType>();
       if (const FunctionProtoType *FPT = cast<FunctionProtoType>(F)) {
-        FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-        EPI.ExtInfo = getFunctionExtInfo(LHS);
+        FunctionType::ExtInfo Info = getFunctionExtInfo(LHS);
         QualType ResultType
           = getFunctionType(OldReturnType, FPT->arg_type_begin(),
-                            FPT->getNumArgs(), EPI);
+                                  FPT->getNumArgs(), FPT->isVariadic(),
+                                  FPT->getTypeQuals(),
+                                  FPT->hasExceptionSpec(),
+                                  FPT->hasAnyExceptionSpec(),
+                                  FPT->getNumExceptions(),
+                                  FPT->exception_begin(),
+                                  Info);
         return ResultType;
       }
     }
@@ -5570,11 +5580,10 @@ QualType ASTContext::GetBuiltinType(unsigned Id,
   if (ArgTypes.size() == 0 && TypeStr[0] == '.')
     return getFunctionNoProtoType(ResType);
 
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.Variadic = (TypeStr[0] == '.');
   // FIXME: Should we create noreturn types?
-
-  return getFunctionType(ResType, ArgTypes.data(), ArgTypes.size(), EPI);
+  return getFunctionType(ResType, ArgTypes.data(), ArgTypes.size(),
+                         TypeStr[0] == '.', 0, false, false, 0, 0,
+                         FunctionType::ExtInfo());
 }
 
 GVALinkage ASTContext::GetGVALinkageForFunction(const FunctionDecl *FD) {

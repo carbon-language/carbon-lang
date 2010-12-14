@@ -8326,9 +8326,8 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     
     // Turn protoless block types into nullary block types.
     if (isa<FunctionNoProtoType>(FTy)) {
-      FunctionProtoType::ExtProtoInfo EPI;
-      EPI.ExtInfo = Ext;
-      BlockTy = Context.getFunctionType(RetTy, 0, 0, EPI);
+      BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0,
+                                        false, false, 0, 0, Ext);
 
     // Otherwise, if we don't need to change anything about the function type,
     // preserve its sugar structure.
@@ -8339,20 +8338,23 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     // Otherwise, make the minimal modifications to the function type.
     } else {
       const FunctionProtoType *FPT = cast<FunctionProtoType>(FTy);
-      FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-      EPI.TypeQuals = 0; // FIXME: silently?
-      EPI.ExtInfo = Ext;
       BlockTy = Context.getFunctionType(RetTy,
                                         FPT->arg_type_begin(),
                                         FPT->getNumArgs(),
-                                        EPI);
+                                        FPT->isVariadic(),
+                                        /*quals*/ 0,
+                                        FPT->hasExceptionSpec(),
+                                        FPT->hasAnyExceptionSpec(),
+                                        FPT->getNumExceptions(),
+                                        FPT->exception_begin(),
+                                        Ext);
     }
 
   // If we don't have a function type, just build one from nothing.
   } else {
-    FunctionProtoType::ExtProtoInfo EPI;
-    EPI.ExtInfo = FunctionType::ExtInfo(NoReturn, 0, CC_Default);
-    BlockTy = Context.getFunctionType(RetTy, 0, 0, EPI);
+    BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0,
+                                      false, false, 0, 0,
+                             FunctionType::ExtInfo(NoReturn, 0, CC_Default));
   }
 
   DiagnoseUnusedParameters(BSI->TheDecl->param_begin(),

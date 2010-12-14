@@ -829,7 +829,7 @@ QualType Sema::BuildFunctionType(QualType T,
                                  unsigned NumParamTypes,
                                  bool Variadic, unsigned Quals,
                                  SourceLocation Loc, DeclarationName Entity,
-                                 FunctionType::ExtInfo Info) {
+                                 const FunctionType::ExtInfo &Info) {
   if (T->isArrayType() || T->isFunctionType()) {
     Diag(Loc, diag::err_func_returning_array_function) 
       << T->isFunctionType() << T;
@@ -850,12 +850,8 @@ QualType Sema::BuildFunctionType(QualType T,
   if (Invalid)
     return QualType();
 
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.Variadic = Variadic;
-  EPI.TypeQuals = Quals;
-  EPI.ExtInfo = Info;
-
-  return Context.getFunctionType(T, ParamTypes, NumParamTypes, EPI);
+  return Context.getFunctionType(T, ParamTypes, NumParamTypes, Variadic,
+                                 Quals, false, false, 0, 0, Info);
 }
 
 /// \brief Build a member pointer type \c T Class::*.
@@ -1269,10 +1265,6 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           break;
         }
 
-        FunctionProtoType::ExtProtoInfo EPI;
-        EPI.Variadic = FTI.isVariadic;
-        EPI.TypeQuals = FTI.TypeQuals;
-
         // Otherwise, we have a function with an argument list that is
         // potentially variadic.
         llvm::SmallVector<QualType, 16> ArgTys;
@@ -1324,23 +1316,22 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         }
 
         llvm::SmallVector<QualType, 4> Exceptions;
-        if (FTI.hasExceptionSpec) {
-          EPI.HasExceptionSpec = FTI.hasExceptionSpec;
-          EPI.HasAnyExceptionSpec = FTI.hasAnyExceptionSpec;
-          EPI.NumExceptions = FTI.NumExceptions;
-          Exceptions.reserve(FTI.NumExceptions);
-          for (unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei) {
-            // FIXME: Preserve type source info.
-            QualType ET = GetTypeFromParser(FTI.Exceptions[ei].Ty);
-            // Check that the type is valid for an exception spec, and
-            // drop it if not.
-            if (!CheckSpecifiedExceptionType(ET, FTI.Exceptions[ei].Range))
-              Exceptions.push_back(ET);
-          }
-          EPI.Exceptions = Exceptions.data();
+        Exceptions.reserve(FTI.NumExceptions);
+        for (unsigned ei = 0, ee = FTI.NumExceptions; ei != ee; ++ei) {
+          // FIXME: Preserve type source info.
+          QualType ET = GetTypeFromParser(FTI.Exceptions[ei].Ty);
+          // Check that the type is valid for an exception spec, and drop it if
+          // not.
+          if (!CheckSpecifiedExceptionType(ET, FTI.Exceptions[ei].Range))
+            Exceptions.push_back(ET);
         }
 
-        T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(), EPI);
+        T = Context.getFunctionType(T, ArgTys.data(), ArgTys.size(),
+                                    FTI.isVariadic, FTI.TypeQuals,
+                                    FTI.hasExceptionSpec,
+                                    FTI.hasAnyExceptionSpec,
+                                    Exceptions.size(), Exceptions.data(),
+                                    FunctionType::ExtInfo());
       }
 
       // For GCC compatibility, we allow attributes that apply only to
@@ -1446,11 +1437,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           << FreeFunction;
 
       // Strip the cv-quals from the type.
-      FunctionProtoType::ExtProtoInfo EPI = FnTy->getExtProtoInfo();
-      EPI.TypeQuals = 0;
-
       T = Context.getFunctionType(FnTy->getResultType(), FnTy->arg_type_begin(),
-                                  FnTy->getNumArgs(), EPI);
+                                  FnTy->getNumArgs(), FnTy->isVariadic(), 0, 
+                                  false, false, 0, 0, FunctionType::ExtInfo());
     }
   }
 
