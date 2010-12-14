@@ -15,8 +15,16 @@
 int
 main(int argc, char const *argv[])
 {
-    // The program writes its output to the "output.txt" file.
-    std::ofstream outfile("output.txt");
+    // The program writes its output to the following file:
+    //
+    //     o "output1.txt" for test_pass_host_env_vars() test case
+    //     o "output2.txt" for test_run_args_and_env_vars_with_dsym() test case
+    //     o "output2.txt" for test_run_args_and_env_vars_with_dwarf() test case
+    std::ofstream outfile;
+    if (argc == 1)
+        outfile.open("output1.txt");
+    else
+        outfile.open("output2.txt");
 
     for (unsigned i = 0; i < argc; ++i) {
         std::string theArg(argv[i]);
@@ -56,5 +64,6 @@ main(int argc, char const *argv[])
 
     std::cout << "This message should go to standard out.\n";
 
+    outfile.close();
     return 0;
 }

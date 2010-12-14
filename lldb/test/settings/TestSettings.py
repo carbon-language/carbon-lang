@@ -14,7 +14,8 @@ class SettingsCommandTestCase(TestBase):
     @classmethod
     def classCleanup(cls):
         """Cleanup the test byproducts."""
-        system(["/bin/sh", "-c", "rm -f output.txt"])
+        system(["/bin/sh", "-c", "rm -f output1.txt"])
+        system(["/bin/sh", "-c", "rm -f output2.txt"])
         system(["/bin/sh", "-c", "rm -f stdout.txt"])
 
     def test_set_prompt(self):
@@ -72,12 +73,12 @@ class SettingsCommandTestCase(TestBase):
             startstr = "auto-confirm (boolean) = 'false'")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_with_dsym(self):
+    def test_run_args_and_env_vars_with_dsym(self):
         """Test that run-args and env-vars are passed to the launched process."""
         self.buildDsym()
         self.pass_run_args_and_env_vars()
 
-    def test_with_dwarf(self):
+    def test_run_args_and_env_vars_with_dwarf(self):
         """Test that run-args and env-vars are passed to the launched process."""
         self.buildDwarf()
         self.pass_run_args_and_env_vars()
@@ -99,7 +100,7 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Read the output file produced by running the program.
-        with open('output.txt', 'r') as f:
+        with open('output2.txt', 'r') as f:
             output = f.read()
 
         self.expect(output, exe=False,
@@ -123,10 +124,16 @@ class SettingsCommandTestCase(TestBase):
         os.environ["MY_HOST_ENV_VAR1"] = "VAR1"
         os.environ["MY_HOST_ENV_VAR2"] = "VAR2"
 
+        # This is the function to unset the two env variables set above.
+        def unset_env_variables():
+            os.environ.pop("MY_HOST_ENV_VAR1")
+            os.environ.pop("MY_HOST_ENV_VAR2")
+
+        self.addTearDownHook(unset_env_variables)
         self.runCmd("run", RUN_SUCCEEDED)
 
         # Read the output file produced by running the program.
-        with open('output.txt', 'r') as f:
+        with open('output1.txt', 'r') as f:
             output = f.read()
 
         self.expect(output, exe=False,
