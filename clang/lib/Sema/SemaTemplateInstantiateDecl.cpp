@@ -1995,19 +1995,20 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
 
     // Rebuild the function type 
 
+    FunctionProtoType::ExtProtoInfo EPI = Proto->getExtProtoInfo();
+    EPI.HasExceptionSpec = Proto->hasExceptionSpec();
+    EPI.HasAnyExceptionSpec = Proto->hasAnyExceptionSpec();
+    EPI.NumExceptions = Exceptions.size();
+    EPI.Exceptions = Exceptions.data();
+    EPI.ExtInfo = Proto->getExtInfo();
+
     const FunctionProtoType *NewProto
       = New->getType()->getAs<FunctionProtoType>();
     assert(NewProto && "Template instantiation without function prototype?");
     New->setType(SemaRef.Context.getFunctionType(NewProto->getResultType(),
                                                  NewProto->arg_type_begin(),
                                                  NewProto->getNumArgs(),
-                                                 NewProto->isVariadic(),
-                                                 NewProto->getTypeQuals(),
-                                                 Proto->hasExceptionSpec(),
-                                                 Proto->hasAnyExceptionSpec(),
-                                                 Exceptions.size(),
-                                                 Exceptions.data(),
-                                                 Proto->getExtInfo()));
+                                                 EPI));
   }
 
   SemaRef.InstantiateAttrs(TemplateArgs, Tmpl, New);

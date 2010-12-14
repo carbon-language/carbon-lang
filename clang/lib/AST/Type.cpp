@@ -1097,65 +1097,55 @@ llvm::StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   return "";
 }
 
-FunctionProtoType::FunctionProtoType(QualType Result, const QualType *ArgArray,
-                                     unsigned numArgs, bool isVariadic, 
-                                     unsigned typeQuals, bool hasExs,
-                                     bool hasAnyExs, const QualType *ExArray,
-                                     unsigned numExs, QualType Canonical,
-                                     const ExtInfo &Info)
-  : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
-                 Result->isDependentType(),
-                 Result->isVariablyModifiedType(),
-                 Result->containsUnexpandedParameterPack(),
-                 Info),
-    NumArgs(numArgs), NumExceptions(numExs), HasExceptionSpec(hasExs),
-    AnyExceptionSpec(hasAnyExs) 
+FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
+                                     unsigned numArgs, QualType canonical,
+                                     const ExtProtoInfo &epi)
+  : FunctionType(FunctionProto, result, epi.Variadic, epi.TypeQuals, canonical,
+                 result->isDependentType(),
+                 result->isVariablyModifiedType(),
+                 result->containsUnexpandedParameterPack(),
+                 epi.ExtInfo),
+    NumArgs(numArgs), NumExceptions(epi.NumExceptions),
+    HasExceptionSpec(epi.HasExceptionSpec),
+    HasAnyExceptionSpec(epi.HasAnyExceptionSpec)
 {
   // Fill in the trailing argument array.
-  QualType *ArgInfo = reinterpret_cast<QualType*>(this+1);
+  QualType *argSlot = reinterpret_cast<QualType*>(this+1);
   for (unsigned i = 0; i != numArgs; ++i) {
-    if (ArgArray[i]->isDependentType())
+    if (args[i]->isDependentType())
       setDependent();
 
-    if (ArgArray[i]->containsUnexpandedParameterPack())
+    if (args[i]->containsUnexpandedParameterPack())
       setContainsUnexpandedParameterPack();
 
-    ArgInfo[i] = ArgArray[i];
+    argSlot[i] = args[i];
   }
   
   // Fill in the exception array.
-  QualType *Ex = ArgInfo + numArgs;
-  for (unsigned i = 0; i != numExs; ++i)
-    Ex[i] = ExArray[i];
+  QualType *exnSlot = argSlot + numArgs;
+  for (unsigned i = 0, e = epi.NumExceptions; i != e; ++i)
+    exnSlot[i] = epi.Exceptions[i];
 }
 
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
-                                arg_type_iterator ArgTys,
-                                unsigned NumArgs, bool isVariadic,
-                                unsigned TypeQuals, bool hasExceptionSpec,
-                                bool anyExceptionSpec, unsigned NumExceptions,
-                                exception_iterator Exs,
-                                FunctionType::ExtInfo Info) {
+                                const QualType *ArgTys, unsigned NumArgs,
+                                const ExtProtoInfo &epi) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
-  ID.AddInteger(isVariadic);
-  ID.AddInteger(TypeQuals);
-  ID.AddInteger(hasExceptionSpec);
-  if (hasExceptionSpec) {
-    ID.AddInteger(anyExceptionSpec);
-    for (unsigned i = 0; i != NumExceptions; ++i)
-      ID.AddPointer(Exs[i].getAsOpaquePtr());
+  ID.AddBoolean(epi.Variadic);
+  ID.AddInteger(epi.TypeQuals);
+  if (epi.HasExceptionSpec) {
+    ID.AddBoolean(epi.HasAnyExceptionSpec);
+    for (unsigned i = 0; i != epi.NumExceptions; ++i)
+      ID.AddPointer(epi.Exceptions[i].getAsOpaquePtr());
   }
-  Info.Profile(ID);
+  epi.ExtInfo.Profile(ID);
 }
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic(),
-          getTypeQuals(), hasExceptionSpec(), hasAnyExceptionSpec(),
-          getNumExceptions(), exception_begin(),
-          getExtInfo());
+  Profile(ID, getResultType(), arg_type_begin(), NumArgs, getExtProtoInfo());
 }
 
 QualType TypedefType::desugar() const {

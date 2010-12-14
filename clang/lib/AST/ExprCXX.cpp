@@ -185,6 +185,25 @@ PseudoDestructorTypeStorage::PseudoDestructorTypeStorage(TypeSourceInfo *Info)
   Location = Info->getTypeLoc().getLocalSourceRange().getBegin();
 }
 
+CXXPseudoDestructorExpr::CXXPseudoDestructorExpr(ASTContext &Context,
+    Expr *Base, bool isArrow, SourceLocation OperatorLoc,
+    NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
+    TypeSourceInfo *ScopeType, SourceLocation ColonColonLoc,
+    SourceLocation TildeLoc, PseudoDestructorTypeStorage DestroyedType)
+  : Expr(CXXPseudoDestructorExprClass,
+         Context.getPointerType(Context.getFunctionType(Context.VoidTy, 0, 0,
+                                         FunctionProtoType::ExtProtoInfo())),
+         VK_RValue, OK_Ordinary,
+         /*isTypeDependent=*/(Base->isTypeDependent() ||
+           (DestroyedType.getTypeSourceInfo() &&
+            DestroyedType.getTypeSourceInfo()->getType()->isDependentType())),
+         /*isValueDependent=*/Base->isValueDependent()),
+    Base(static_cast<Stmt *>(Base)), IsArrow(isArrow),
+    OperatorLoc(OperatorLoc), Qualifier(Qualifier),
+    QualifierRange(QualifierRange), 
+    ScopeType(ScopeType), ColonColonLoc(ColonColonLoc), TildeLoc(TildeLoc),
+    DestroyedType(DestroyedType) { }
+
 QualType CXXPseudoDestructorExpr::getDestroyedType() const {
   if (TypeSourceInfo *TInfo = DestroyedType.getTypeSourceInfo())
     return TInfo->getType();
