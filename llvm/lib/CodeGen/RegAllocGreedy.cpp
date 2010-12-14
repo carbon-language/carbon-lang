@@ -175,9 +175,9 @@ LiveInterval *RAGreedy::getSingleInterference(LiveInterval &VirtReg,
   // Check direct interferences.
   LiveIntervalUnion::Query &Q = query(VirtReg, PhysReg);
   if (Q.checkInterference()) {
+    Q.collectInterferingVRegs(1);
     if (!Q.seenAllInterferences())
       return 0;
-    Q.collectInterferingVRegs(1);
     Interference = Q.interferingVRegs().front();
   }
 
@@ -185,9 +185,11 @@ LiveInterval *RAGreedy::getSingleInterference(LiveInterval &VirtReg,
   for (const unsigned *AliasI = TRI->getAliasSet(PhysReg); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
     if (Q.checkInterference()) {
-      if (Interference || !Q.seenAllInterferences())
+      if (Interference)
         return 0;
       Q.collectInterferingVRegs(1);
+      if (!Q.seenAllInterferences())
+        return 0;
       Interference = Q.interferingVRegs().front();
     }
   }
