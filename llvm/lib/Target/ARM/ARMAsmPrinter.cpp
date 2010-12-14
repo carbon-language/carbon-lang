@@ -749,8 +749,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     TmpInst.addOperand(MCOperand::CreateExpr(SymbolExpr));
     // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
+    TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
@@ -768,8 +768,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     TmpInst.addOperand(MCOperand::CreateExpr(SymbolExpr));
     // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
+    TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(3).getImm()));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(4).getReg()));
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
