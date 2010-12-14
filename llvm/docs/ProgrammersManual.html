@@ -84,6 +84,7 @@ option</a></li>
       <li><a href="#dss_indexedmap">"llvm/ADT/IndexedMap.h"</a></li>
       <li><a href="#dss_densemap">"llvm/ADT/DenseMap.h"</a></li>
       <li><a href="#dss_valuemap">"llvm/ADT/ValueMap.h"</a></li>
+      <li><a href="#dss_intervalmap">"llvm/ADT/IntervalMap.h"</a></li>
       <li><a href="#dss_map">&lt;map&gt;</a></li>
       <li><a href="#dss_othermap">Other Map-Like Container Options</a></li>
     </ul></li>
@@ -1504,6 +1505,23 @@ ValueMap will update itself so the new version of the key is mapped to the same
 value, just as if the key were a WeakVH.  You can configure exactly how this
 happens, and what else happens on these two events, by passing
 a <code>Config</code> parameter to the ValueMap template.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_intervalmap">"llvm/ADT/IntervalMap.h"</a>
+</div>
+
+<div class="doc_text">
+
+<p> IntervalMap is a compact map for small keys and values. It maps key
+intervals instead of single keys, and it will automatically coalesce adjacent
+intervals. When then map only contains a few intervals, they are stored in the
+map object itself to avoid allocations.</p>
+
+<p> The IntervalMap iterators are quite big, so they should not be passed around
+as STL iterators. The heavyweight iterators allow a smaller data structure.</p>
 
 </div>
 
