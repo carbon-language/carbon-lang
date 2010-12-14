@@ -102,7 +102,7 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
         if (thread.GetProcess().WriteMemory(sp + 4, &argU32, sizeof(argU32), error) != sizeof(argU32))
             return false;
     }
-    if (this_arg)
+    else if (this_arg)
     {
         uint32_t this_argU32 = *this_arg & 0xffffffffull;
         uint32_t argU32 = arg & 0xffffffffull;

@@ -109,15 +109,16 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
         if (log)
             log->Printf("About to write '_cmd' (0x%llx) into RSI", (uint64_t)*cmd_arg);
         
-        if (!reg_ctx->WriteRegisterFromUnsigned(rsiID, *this_arg))
+        if (!reg_ctx->WriteRegisterFromUnsigned(rsiID, *cmd_arg))
             return false;
         
         if (log)
             log->Printf("About to write the argument (0x%llx) into RDX", (uint64_t)arg);
         
         if (!reg_ctx->WriteRegisterFromUnsigned(rdxID, arg))
-            return false;    }
-    if (this_arg)
+            return false;    
+    }
+    else if (this_arg)
     {
         if (log)
             log->PutCString("The trivial call has a this pointer");

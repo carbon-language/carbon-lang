@@ -302,13 +302,17 @@ public:
     ///     An Error to populate with any messages related to
     ///     finding the "this" pointer.
     ///
+    /// @param[in] suppress_type_check
+    ///     True if the type is not needed.
+    ///
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     bool GetObjectPointer(lldb::addr_t &object_ptr,
                           ConstString &object_name,
                           ExecutionContext &exe_ctx,
-                          Error &error);
+                          Error &error,
+                          bool suppress_type_check = false);
     
     //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Pretty-print a materialized

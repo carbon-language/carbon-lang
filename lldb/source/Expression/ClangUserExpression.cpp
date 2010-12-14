@@ -312,7 +312,8 @@ bool
 ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
                                                     ExecutionContext &exe_ctx,
                                                     lldb::addr_t &struct_address,
-                                                    lldb::addr_t &object_ptr)
+                                                    lldb::addr_t &object_ptr,
+                                                    lldb::addr_t &cmd_ptr)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -342,6 +343,17 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             {
                 error_stream.Printf("Couldn't get required object pointer: %s\n", materialize_error.AsCString());
                 return false;
+            }
+            
+            if (m_objectivec)
+            {
+                ConstString cmd_name("_cmd");
+                
+                if (!(m_expr_decl_map->GetObjectPointer(cmd_ptr, cmd_name, exe_ctx, materialize_error, true)))
+                {
+                    error_stream.Printf("Couldn't get required object pointer: %s\n", materialize_error.AsCString());
+                    return false;
+                }
             }
         }
                 
@@ -391,7 +403,7 @@ ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
     lldb::addr_t object_ptr = NULL;
     lldb::addr_t cmd_ptr = NULL;
     
-    PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr);
+    PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr, cmd_ptr);
     
     // FIXME: This should really return a ThreadPlanCallUserExpression, in order to make sure that we don't release the
     // ClangUserExpression resources before the thread plan finishes execution in the target.  But because we are 
@@ -466,7 +478,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         lldb::addr_t object_ptr = NULL;
         lldb::addr_t cmd_ptr = NULL;
         
-        if (!PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr))
+        if (!PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr, cmd_ptr))
             return Process::eExecutionSetupError;
         
         const bool stop_others = true;

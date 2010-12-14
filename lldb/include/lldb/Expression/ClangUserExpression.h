@@ -257,7 +257,8 @@ private:
     PrepareToExecuteJITExpression (Stream &error_stream,
                                    ExecutionContext &exe_ctx,
                                    lldb::addr_t &struct_address,
-                                   lldb::addr_t &object_ptr);
+                                   lldb::addr_t &object_ptr,
+                                   lldb::addr_t &cmd_ptr);
     
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user

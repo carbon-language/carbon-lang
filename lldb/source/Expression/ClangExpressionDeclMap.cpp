@@ -373,7 +373,8 @@ ClangExpressionDeclMap::GetObjectPointer
     lldb::addr_t &object_ptr,
     ConstString &object_name,
     ExecutionContext &exe_ctx,
-    Error &err
+    Error &err,
+    bool suppress_type_check
 )
 {
     assert (m_struct_vars.get());
@@ -390,7 +391,9 @@ ClangExpressionDeclMap::GetObjectPointer
         return false;
     }
     
-    Variable *object_ptr_var = FindVariableInScope (*exe_ctx.frame, object_name, &m_struct_vars->m_object_pointer_type);
+    Variable *object_ptr_var = FindVariableInScope (*exe_ctx.frame,
+                                                    object_name, 
+                                                    (suppress_type_check ? NULL : &m_struct_vars->m_object_pointer_type));
     
     if (!object_ptr_var)
     {
