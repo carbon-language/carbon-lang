@@ -554,7 +554,8 @@ TwoAddressInstructionPass::isProfitableToCommute(unsigned regB, unsigned regC,
   unsigned ToRegB = getMappedReg(regB, DstRegMap);
   unsigned ToRegC = getMappedReg(regC, DstRegMap);
   if (!regsAreCompatible(FromRegB, ToRegB, TRI) &&
-      (regsAreCompatible(FromRegB, ToRegC, TRI) ||
+      ((!FromRegC && !ToRegC) ||
+       regsAreCompatible(FromRegB, ToRegC, TRI) ||
        regsAreCompatible(FromRegC, ToRegB, TRI)))
     return true;
 
