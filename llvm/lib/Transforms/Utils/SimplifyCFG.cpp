@@ -110,7 +110,8 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
 /// that will be entered from if the condition is true, and the block that will
 /// be entered if the condition is false.
 ///
-///
+/// This does no checking to see if the true/false blocks have large or unsavory
+/// instructions in them.
 static Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
                              BasicBlock *&IfFalse) {
   PHINode *SomePHI = cast<PHINode>(BB->begin());
@@ -121,11 +122,10 @@ static Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
 
   // We can only handle branches.  Other control flow will be lowered to
   // branches if possible anyway.
-  if (!isa<BranchInst>(Pred1->getTerminator()) ||
-      !isa<BranchInst>(Pred2->getTerminator()))
+  BranchInst *Pred1Br = dyn_cast<BranchInst>(Pred1->getTerminator());
+  BranchInst *Pred2Br = dyn_cast<BranchInst>(Pred2->getTerminator());
+  if (Pred1Br == 0 || Pred2Br == 0)
     return 0;
-  BranchInst *Pred1Br = cast<BranchInst>(Pred1->getTerminator());
-  BranchInst *Pred2Br = cast<BranchInst>(Pred2->getTerminator());
 
   // Eliminate code duplication by ensuring that Pred1Br is conditional if
   // either are.
@@ -142,6 +142,12 @@ static Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
   }
 
   if (Pred1Br->isConditional()) {
+    // The only thing we have to watch out for here is to make sure that Pred2
+    // doesn't have incoming edges from other blocks.  If it does, the condition
+    // doesn't dominate BB.
+    if (Pred2->getSinglePredecessor() == 0)
+      return 0;
+    
     // If we found a conditional branch predecessor, make sure that it branches
     // to BB and Pred2Br.  If it doesn't, this isn't an "if statement".
     if (Pred1Br->getSuccessor(0) == BB &&
@@ -158,39 +164,29 @@ static Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
       return 0;
     }
 
-    // The only thing we have to watch out for here is to make sure that Pred2
-    // doesn't have incoming edges from other blocks.  If it does, the condition
-    // doesn't dominate BB.
-    if (++pred_begin(Pred2) != pred_end(Pred2))
-      return 0;
-
     return Pred1Br->getCondition();
   }
 
   // Ok, if we got here, both predecessors end with an unconditional branch to
   // BB.  Don't panic!  If both blocks only have a single (identical)
   // predecessor, and THAT is a conditional branch, then we're all ok!
-  if (pred_begin(Pred1) == pred_end(Pred1) ||
-      ++pred_begin(Pred1) != pred_end(Pred1) ||
-      pred_begin(Pred2) == pred_end(Pred2) ||
-      ++pred_begin(Pred2) != pred_end(Pred2) ||
-      *pred_begin(Pred1) != *pred_begin(Pred2))
+  BasicBlock *CommonPred = Pred1->getSinglePredecessor();
+  if (CommonPred == 0 || CommonPred != Pred2->getSinglePredecessor())
     return 0;
 
   // Otherwise, if this is a conditional branch, then we can use it!
-  BasicBlock *CommonPred = *pred_begin(Pred1);
-  if (BranchInst *BI = dyn_cast<BranchInst>(CommonPred->getTerminator())) {
-    assert(BI->isConditional() && "Two successors but not conditional?");
-    if (BI->getSuccessor(0) == Pred1) {
-      IfTrue = Pred1;
-      IfFalse = Pred2;
-    } else {
-      IfTrue = Pred2;
-      IfFalse = Pred1;
-    }
-    return BI->getCondition();
+  BranchInst *BI = dyn_cast<BranchInst>(CommonPred->getTerminator());
+  if (BI == 0) return 0;
+  
+  assert(BI->isConditional() && "Two successors but not conditional?");
+  if (BI->getSuccessor(0) == Pred1) {
+    IfTrue = Pred1;
+    IfFalse = Pred2;
+  } else {
+    IfTrue = Pred2;
+    IfFalse = Pred1;
   }
-  return 0;
+  return BI->getCondition();
 }
 
 /// DominatesMergePoint - If we have a merge point of an "if condition" as
