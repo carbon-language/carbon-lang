@@ -1940,7 +1940,7 @@ SDValue DAGCombiner::visitMULHS(SDNode *N) {
       N0 = DAG.getNode(ISD::SIGN_EXTEND, DL, NewVT, N0);
       N1 = DAG.getNode(ISD::SIGN_EXTEND, DL, NewVT, N1);
       N1 = DAG.getNode(ISD::MUL, DL, NewVT, N0, N1);
-      N1 = DAG.getNode(ISD::SRA, DL, NewVT, N1,
+      N1 = DAG.getNode(ISD::SRL, DL, NewVT, N1,
                        DAG.getConstant(SimpleSize, getShiftAmountTy()));
       return DAG.getNode(ISD::TRUNCATE, DL, VT, N1);
     }
