@@ -4,6 +4,21 @@
 #include <vector>
 
 namespace hooks {
+
+/// NUM_KEYS - Calculate the size of a const char* array.
+#define NUM_KEYS(Keys) sizeof(Keys) / sizeof(const char*)
+
+// See http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+inline unsigned NextHighestPowerOf2 (unsigned i) {
+  i |= i >> 1;
+  i |= i >> 2;
+  i |= i >> 4;
+  i |= i >> 8;
+  i |= i >> 16;
+  i++;
+  return i;
+}
+
 typedef std::vector<std::string> StrVec;
 typedef llvm::StringMap<const char*> ArgMap;
 
@@ -49,33 +64,88 @@ std::string ConvertToMAttrImpl(const StrVec& Opts, const ArgMap* Args = 0) {
   return out;
 }
 
-// Values needed to be special-cased by ConvertMArchToMAttr.
-const char* MArchMapKeys[] = { "armv4t", "armv5t", "armv5te", "armv6",
+// -march values that need to be special-cased.
+const char* MArchKeysARM[] = { "armv4t", "armv5t", "armv5te", "armv6",
                                "armv6-m", "armv6t2", "armv7-a", "armv7-m" };
-const char* MArchMapValues[] = { "v4t", "v5t", "v5te", "v6", "v6m", "v6t2",
+const char* MArchValuesARM[] = { "v4t", "v5t", "v5te", "v6", "v6m", "v6t2",
                                  "v7a", "v7m" };
-const unsigned NumMArchMapKeys = sizeof(MArchMapKeys) / sizeof(const char*);
+const unsigned MArchNumKeysARM = NUM_KEYS(MArchKeysARM);
+const unsigned MArchMapSize = NextHighestPowerOf2(MArchNumKeysARM);
 
-void InitializeMArchMap(ArgMap& Args) {
-  for (unsigned i = 0; i < NumMArchMapKeys; ++i) {
+void FillInArgMap(ArgMap& Args, const char* Keys[],
+                  const char* Values[], unsigned NumKeys)
+{
+  for (unsigned i = 0; i < NumKeys; ++i) {
     // Explicit cast to StringRef here is necessary to pick up the right
     // overload.
-    Args.GetOrCreateValue(llvm::StringRef(MArchMapKeys[i]), MArchMapValues[i]);
+    Args.GetOrCreateValue(llvm::StringRef(Keys[i]), Values[i]);
   }
 }
 
-/// ConvertMArchToMAttr - Try to convert -march from the gcc dialect to
+/// ConvertMArchToMAttr - Convert -march from the gcc dialect to
 /// something llc can understand.
 std::string ConvertMArchToMAttr(const StrVec& Opts) {
-  static ArgMap MArchMap(NumMArchMapKeys);
-  static bool MArchMapInitialized = false;
+  static ArgMap MArchMap(MArchMapSize);
+  static bool StaticDataInitialized = false;
 
-  if (!MArchMapInitialized) {
-    InitializeMArchMap(MArchMap);
-    MArchMapInitialized = true;
+  if (!StaticDataInitialized) {
+    FillInArgMap(MArchMap, MArchKeysARM, MArchValuesARM, MArchNumKeysARM);
+    StaticDataInitialized = true;
   }
 
   return ConvertToMAttrImpl(Opts, &MArchMap);
+}
+
+// -mcpu values that need to be special-cased.
+const char* MCpuKeysPPC[] = { "G3", "G4", "G5", "powerpc", "powerpc64"};
+const char* MCpuValuesPPC[] = { "g3", "g4", "g5", "ppc", "ppc64"};
+const unsigned MCpuNumKeysPPC = NUM_KEYS(MCpuKeysPPC);
+const unsigned MCpuMapSize = NextHighestPowerOf2(MCpuNumKeysPPC);
+
+/// ConvertMCpu - Convert -mcpu value from the gcc to the llc dialect.
+std::string ConvertMCpu(const char* Val) {
+  static ArgMap MCpuMap(MCpuMapSize);
+  static bool StaticDataInitialized = false;
+
+  if (!StaticDataInitialized) {
+    FillInArgMap(MCpuMap, MCpuKeysPPC, MCpuValuesPPC, MCpuNumKeysPPC);
+    StaticDataInitialized = true;
+  }
+
+  std::string ret = "-mcpu=";
+  ArgMap::const_iterator I = MCpuMap.find(Val);
+  if (I != MCpuMap.end()) {
+    return ret + I->getValue();
+  }
+  return ret + Val;
+}
+
+// -mfpu values that need to be special-cased.
+const char* MFpuKeysARM[] = { "vfp", "vfpv3",
+                              "vfpv3-fp16", "vfpv3-d16", "vfpv3-d16-fp16",
+                              "neon", "neon-fp16" };
+const char* MFpuValuesARM[] = { "vfp2", "vfp3",
+                                "+vfp3,+fp16", "+vfp3,+d16", "+vfp3,+d16,+fp16",
+                                "+neon", "+neon,+neonfp" };
+const unsigned MFpuNumKeysARM = NUM_KEYS(MFpuKeysARM);
+const unsigned MFpuMapSize = NextHighestPowerOf2(MFpuNumKeysARM);
+
+/// ConvertMFpu - Convert -mfpu value from the gcc to the llc dialect.
+std::string ConvertMFpu(const char* Val) {
+  static ArgMap MFpuMap(MFpuMapSize);
+  static bool StaticDataInitialized = false;
+
+  if (!StaticDataInitialized) {
+    FillInArgMap(MFpuMap, MFpuKeysARM, MFpuValuesARM, MFpuNumKeysARM);
+    StaticDataInitialized = true;
+  }
+
+  std::string ret = "-mattr=";
+  ArgMap::const_iterator I = MFpuMap.find(Val);
+  if (I != MFpuMap.end()) {
+    return ret + I->getValue();
+  }
+  return ret + '+' + Val;
 }
 
 /// ConvertToMAttr - Convert '-mfoo' and '-mno-bar' to '-mattr=+foo,-bar'.
