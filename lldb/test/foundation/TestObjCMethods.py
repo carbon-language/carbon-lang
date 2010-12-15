@@ -39,6 +39,16 @@ class FoundationTestCase(TestBase):
         self.buildDwarf()
         self.data_type_and_expr_objc()
 
+    @python_api_test
+    def test_print_ivars_correctly_with_dsym (self):
+        self.buildDsym()
+        self.print_ivars_correctly()
+
+    @python_api_test
+    def test_print_ivars_correctly_with_dwarf (self):
+        self.buildDwarf()
+        self.print_ivars_correctly()
+
     def break_on_objc_methods(self):
         """Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -100,7 +110,8 @@ class FoundationTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
-        self.line = line_number('main.m', '// Set break point at this line.')
+        self.main_source = "main.m"
+        self.line = line_number(self.main_source, '// Set break point at this line.')
 
     def data_type_and_expr_objc(self):
         """Lookup objective-c data types and evaluate expressions."""
@@ -151,7 +162,7 @@ class FoundationTestCase(TestBase):
 
         # This should display the str and date member fields as well.
         self.expect("frame variable -t *self", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["(MyString) *self",
+            substrs = ["(MyString *) self",
                        "(NSString *) str",
                        "(NSDate *) date"])
 
@@ -189,7 +200,54 @@ class FoundationTestCase(TestBase):
         self.expect("expression -o -- my", "Object description displayed correctly",
             patterns = ["Hello from.*a.out.*with timestamp: "])
 
+    @unittest2.expectedFailure
+    # See: <rdar://problem/8717050> lldb needs to use the ObjC runtime symbols for ivar offsets
+    # Only fails for the ObjC 2.0 runtime.
+    def print_ivars_correctly(self) :
+        exe = os.path.join(os.getcwd(), "a.out")
 
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        break1 = target.BreakpointCreateByLocation(self.main_source, self.line)
+        self.assertTrue(break1.IsValid(), VALID_BREAKPOINT)
+
+        # Now launch the process, and do not stop at entry point.
+        self.process = target.LaunchProcess([], [], os.ctermid(), 0, False)
+
+        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+
+        # The stop reason of the thread should be breakpoint.
+        thread = self.process.GetThreadAtIndex(0)
+        if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
+            from lldbutil import StopReasonString
+            self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
+                      StopReasonString(thread.GetStopReason()))
+
+        # Make sure we stopped at the first breakpoint.
+
+        cur_frame = thread.GetFrameAtIndex(0)
+
+        line_number = cur_frame.GetLineEntry().GetLine()
+        self.assertTrue (line_number == self.line, "Hit the first breakpoint.")
+
+        my_var = cur_frame.FindVariable("my")
+        self.assertTrue(my_var.IsValid(), "Made a variable object for my")
+
+        str_var = cur_frame.FindVariable("str")
+        self.assertTrue(str_var.IsValid(), "Made a variable object for str")
+
+        # Now make sure that the my->str == str:
+
+        my_str_var = my_var.GetChildMemberWithName("str")
+        self.assertTrue(my_str_var.IsValid(), "Found a str ivar in my")
+
+        str_value = int(str_var.GetValue(cur_frame), 0)
+
+        my_str_value = int(my_str_var.GetValue(cur_frame), 0)
+
+        self.assertTrue(str_value == my_str_value, "Got the correct value for my->str")
+        
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

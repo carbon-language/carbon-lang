@@ -1,12 +1,14 @@
 #import <Foundation/Foundation.h>
 #include <unistd.h>
+#import "my-base.h"
 
-@interface MyString : NSObject {
+@interface MyString : MyBase {
     NSString *str;
     NSDate *date;
     BOOL _desc_pauses;
 }
 
+@property(retain) NSString * str_property;
 @property BOOL descriptionPauses;
 
 - (id)initWithNSString:(NSString *)string;
@@ -14,6 +16,7 @@
 
 @implementation MyString
 @synthesize descriptionPauses = _desc_pauses;
+@synthesize str_property = str;
 
 - (id)initWithNSString:(NSString *)string
 {
@@ -88,8 +91,7 @@ Test_MyString (const char *program)
     NSString *str = [NSString stringWithFormat:@"Hello from '%s'", program];
     MyString *my = [[MyString alloc] initWithNSString:str];
     NSLog(@"MyString instance: %@", [my description]);
-    // Set break point at this line.  Test 'expression -o -- my'.
-    my.descriptionPauses = YES;
+    my.descriptionPauses = YES;     // Set break point at this line.  Test 'expression -o -- my'.
     NSLog(@"MyString instance: %@", [my description]);
 }
 
