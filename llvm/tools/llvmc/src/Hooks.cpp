@@ -50,8 +50,10 @@ std::string ConvertToMAttrImpl(const StrVec& Opts, const ArgMap* Args = 0) {
 }
 
 // Values needed to be special-cased by ConvertMArchToMAttr.
-const char* MArchMapKeys[] = { "armv6" };
-const char* MArchMapValues[] = { "v6" };
+const char* MArchMapKeys[] = { "armv4t", "armv5t", "armv5te", "armv6",
+                               "armv6-m", "armv6t2", "armv7-a", "armv7-m" };
+const char* MArchMapValues[] = { "v4t", "v5t", "v5te", "v6", "v6m", "v6t2",
+                                 "v7a", "v7m" };
 const unsigned NumMArchMapKeys = sizeof(MArchMapKeys) / sizeof(const char*);
 
 void InitializeMArchMap(ArgMap& Args) {
