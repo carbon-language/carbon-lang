@@ -3463,7 +3463,16 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
                                             T,
                                             Loc));
 
-  return Owned(IntegerLiteral::Create(Context, *Arg.getAsIntegral(), T, Loc));
+  QualType BT;
+  if (const EnumType *ET = T->getAs<EnumType>())
+    BT = ET->getDecl()->getPromotionType();
+  else
+    BT = T;
+
+  Expr *E = IntegerLiteral::Create(Context, *Arg.getAsIntegral(), BT, Loc);
+  ImpCastExprToType(E, T, CK_IntegralCast);
+
+  return Owned(E);
 }
 
 
