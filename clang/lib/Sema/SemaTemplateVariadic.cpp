@@ -103,9 +103,14 @@ namespace {
       return true;
     }
 
-    /// \brief Suppress traversal of declarations, since they cannot
-    /// contain unexpanded parameter packs.
-    bool TraverseDecl(Decl *D) { return true; }
+    /// \brief Suppress traversal of non-parameter declarations, since
+    /// they cannot contain unexpanded parameter packs.
+    bool TraverseDecl(Decl *D) { 
+      if (D && isa<ParmVarDecl>(D))
+        return inherited::TraverseDecl(D);
+
+      return true; 
+    }
   };
 }
 
