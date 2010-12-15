@@ -806,10 +806,9 @@ getAddrModeThumbSPOpValue(const MCInst &MI, unsigned OpIdx,
   // [SP, #imm]
   //   {7-0} = imm8
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
-#if 0  // FIXME: This crashes2003-05-14-initialize-string.c
   assert(MI.getOperand(OpIdx).getReg() == ARM::SP &&
          "Unexpected base register!");
-#endif
+
   // The immediate is already shifted for the implicit zeroes, so no change
   // here.
   return MO1.getImm() & 0xff;
