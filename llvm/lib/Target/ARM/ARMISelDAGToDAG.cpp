@@ -918,15 +918,27 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI(SDValue N, SDValue &Base,
       return false;  // We want to select tLDRpci instead.
   }
 
-  if (N.getOpcode() != ISD::ADD)
-    return false;
+  if (N.getOpcode() != ISD::ADD) {
+    if (N.getOpcode() == ARMISD::Wrapper &&
+        (!Subtarget->useMovt() ||
+         N.getOperand(0).getOpcode() != ISD::TargetGlobalAddress))
+      Base = N.getOperand(0);
+    else
+      Base = N;
+
+    Offset = CurDAG->getRegister(0, MVT::i32);
+    return true;
+  }
 
   // Thumb does not have [sp, r] address mode.
   RegisterSDNode *LHSR = dyn_cast<RegisterSDNode>(N.getOperand(0));
   RegisterSDNode *RHSR = dyn_cast<RegisterSDNode>(N.getOperand(1));
   if ((LHSR && LHSR->getReg() == ARM::SP) ||
-      (RHSR && RHSR->getReg() == ARM::SP))
-    return false;
+      (RHSR && RHSR->getReg() == ARM::SP)) {
+    Base = N;
+    Offset = CurDAG->getRegister(0, MVT::i32);
+    return true;
+  }
 
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     int RHSC = (int)RHS->getZExtValue();
@@ -987,23 +999,6 @@ ARMDAGToDAGISel::SelectThumbAddrModeImm5S(SDValue N, unsigned Scale,
       Base = N;
     }
 
-    OffImm = CurDAG->getTargetConstant(0, MVT::i32);
-    return true;
-  }
-
-  RegisterSDNode *LHSR = dyn_cast<RegisterSDNode>(N.getOperand(0));
-  RegisterSDNode *RHSR = dyn_cast<RegisterSDNode>(N.getOperand(1));
-  if ((LHSR && LHSR->getReg() == ARM::SP) ||
-      (RHSR && RHSR->getReg() == ARM::SP)) {
-    ConstantSDNode *LHS = dyn_cast<ConstantSDNode>(N.getOperand(0));
-    ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1));
-    unsigned LHSC = LHS ? LHS->getZExtValue() : 0;
-    unsigned RHSC = RHS ? RHS->getZExtValue() : 0;
-
-    // Thumb does not have [sp, #imm5] address mode for non-zero imm5.
-    if (LHSC != 0 || RHSC != 0) return false;
-
-    Base = N;
     OffImm = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
