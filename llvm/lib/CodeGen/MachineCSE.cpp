@@ -24,7 +24,6 @@
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -33,6 +32,7 @@ STATISTIC(NumCoalesces, "Number of copies coalesced");
 STATISTIC(NumCSEs,      "Number of common subexpression eliminated");
 STATISTIC(NumPhysCSEs,
           "Number of physreg referencing common subexpr eliminated");
+STATISTIC(NumCommutes,  "Number of copies coalesced after commuting");
 
 namespace {
   class MachineCSE : public MachineFunctionPass {
@@ -368,7 +368,22 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
         FoundCSE = VNT.count(MI);
       }
     }
-    // FIXME: commute commutable instructions?
+
+    // Commute commutable instructions.
+    bool Commuted = false;
+    if (!FoundCSE && MI->getDesc().isCommutable()) {
+      MachineInstr *NewMI = TII->commuteInstruction(MI);
+      if (NewMI) {
+        Commuted = true;
+        FoundCSE = VNT.count(NewMI);
+        if (NewMI != MI)
+          // New instruction. It doesn't need to be kept.
+          NewMI->eraseFromParent();
+        else if (!FoundCSE)
+          // MI was changed but it didn't help, commute it back!
+          (void)TII->commuteInstruction(MI);
+      }
+    }
 
     // If the instruction defines physical registers and the values *may* be
     // used, then it's not safe to replace it with a common subexpression.
@@ -430,6 +445,8 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
       ++NumCSEs;
       if (!PhysRefs.empty())
         ++NumPhysCSEs;
+      if (Commuted)
+        ++NumCommutes;
     } else {
       DEBUG(dbgs() << "*** Not profitable, avoid CSE!\n");
       VNT.insert(MI, CurrVN++);

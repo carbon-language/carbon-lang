@@ -37,3 +37,43 @@ bb3:
 declare void @bar(i32*)
 
 declare fastcc i8* @foo(%struct.s2*) nounwind
+
+; rdar://8773371
+
+declare void @printf(...) nounwind
+
+define void @commute(i32 %test_case, i32 %scale) nounwind ssp {
+; CHECK: commute:
+entry:
+  switch i32 %test_case, label %sw.bb307 [
+    i32 1, label %sw.bb
+    i32 2, label %sw.bb
+    i32 3, label %sw.bb
+  ]
+
+sw.bb:                                            ; preds = %entry, %entry, %entry
+  %mul = mul nsw i32 %test_case, 3
+  %mul20 = mul nsw i32 %mul, %scale
+  br i1 undef, label %if.end34, label %sw.bb307
+
+if.end34:                                         ; preds = %sw.bb
+; CHECK: %if.end34
+; CHECK: imull
+; CHECK: leal
+; CHECK-NOT: imull
+  tail call void (...)* @printf(i32 %test_case, i32 %mul20) nounwind
+  %tmp = mul i32 %scale, %test_case
+  %tmp752 = mul i32 %tmp, 3
+  %tmp753 = zext i32 %tmp752 to i64
+  br label %bb.nph743.us
+
+for.body53.us:                                    ; preds = %bb.nph743.us, %for.body53.us
+  %exitcond = icmp eq i64 undef, %tmp753
+  br i1 %exitcond, label %bb.nph743.us, label %for.body53.us
+
+bb.nph743.us:                                     ; preds = %for.body53.us, %if.end34
+  br label %for.body53.us
+
+sw.bb307:                                         ; preds = %sw.bb, %entry
+  ret void
+}
