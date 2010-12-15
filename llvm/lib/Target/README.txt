@@ -93,6 +93,14 @@ when it would be better to generate:
 	addq	%rdi, %rbx
 	jno	LBB0_2
 
+Apparently some version of GCC knows this.  Here is a multiply idiom:
+
+unsigned int mul(unsigned int a,unsigned int b) {
+ if ((unsigned long long)a*b>0xffffffff)
+   exit(0);
+  return a*b;
+}
+
 //===---------------------------------------------------------------------===//
 
 Get the C front-end to expand hypot(x,y) -> llvm.sqrt(x*x+y*y) when errno and
