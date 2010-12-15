@@ -615,7 +615,6 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
             break;
 
           case ARM::tLDRpci:
-          case ARM::tLDRcp:
             Bits = 8;
             Scale = 4;  // +(offset_8*4)
             break;

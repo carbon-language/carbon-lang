@@ -63,7 +63,7 @@ void Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
           Type::getInt32Ty(MBB.getParent()->getFunction()->getContext()), Val);
   unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
 
-  BuildMI(MBB, MBBI, dl, TII.get(ARM::tLDRcp))
+  BuildMI(MBB, MBBI, dl, TII.get(ARM::tLDRpci))
           .addReg(DestReg, getDefRegState(true), SubIdx)
           .addConstantPoolIndex(Idx).addImm(Pred).addReg(PredReg);
 }

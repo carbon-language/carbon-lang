@@ -710,19 +710,6 @@ def tLDRpci : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_pc:$addr), IIC_iLoad_i,
   let Inst{7-0}  = addr;
 }
 
-// Special LDR for loads from non-pc-relative constpools.
-let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1,
-    isReMaterializable = 1 in
-def tLDRcp  : T1pIs<(outs tGPR:$Rt), (ins i32imm:$addr), IIC_iLoad_i,
-                  "ldr", "\t$Rt, $addr", []>,
-              T1LdStSP<{1,?,?}> {
-  // A6.2 & A8.6.57 T2
-  bits<3> Rt;
-  bits<8> addr;
-  let Inst{10-8} = Rt;
-  let Inst{7-0}  = addr;
-}
-
 // A8.6.194 & A8.6.192
 defm tSTR  : thumb_st_rr_ri_enc<0b000, 0b0110, t_addrmode_rrs4,
                                 t_addrmode_is4, AddrModeT1_4,
