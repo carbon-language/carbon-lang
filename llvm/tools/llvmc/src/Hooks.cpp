@@ -10,18 +10,18 @@ namespace hooks {
 
 // See http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 inline unsigned NextHighestPowerOf2 (unsigned i) {
+  --i;
   i |= i >> 1;
   i |= i >> 2;
   i |= i >> 4;
   i |= i >> 8;
   i |= i >> 16;
-  i++;
+  ++i;
   return i;
 }
 
 typedef std::vector<std::string> StrVec;
 typedef llvm::StringMap<const char*> ArgMap;
-
 
 /// AddPlusOrMinus - Convert 'no-foo' to '-foo' and 'foo' to '+foo'.
 void AddPlusOrMinus (const std::string& Arg, std::string& out) {
@@ -78,26 +78,9 @@ std::string ConvertMArchToMAttr(const StrVec& Opts) {
   std::string mcpu("-mcpu=");
   bool mattrTouched = false;
   bool mcpuTouched = false;
-  bool firstIter = true;
 
   for (StrVec::const_iterator B = Opts.begin(), E = Opts.end(); B!=E; ++B) {
     const std::string& Arg = *B;
-
-    if (firstIter)
-      firstIter = false;
-    else
-      mattr += ",";
-
-    // Check if the argument is a special case.
-    {
-      ArgMap::const_iterator I = MArchMap.find(Arg);
-
-      if (I != MArchMap.end()) {
-        mattr += '+';
-        mattr += I->getValue();
-        continue;
-      }
-    }
 
     // Check if the argument should be forwarded to -mcpu instead of -mattr.
     {
@@ -106,6 +89,21 @@ std::string ConvertMArchToMAttr(const StrVec& Opts) {
       if (I != MArchMCpuMap.end()) {
         mcpuTouched = true;
         mcpu += I->getValue();
+        continue;
+      }
+    }
+
+    if (mattrTouched)
+      mattr += ",";
+
+    // Check if the argument is a special case.
+    {
+      ArgMap::const_iterator I = MArchMap.find(Arg);
+
+      if (I != MArchMap.end()) {
+        mattrTouched = true;
+        mattr += '+';
+        mattr += I->getValue();
         continue;
       }
     }
