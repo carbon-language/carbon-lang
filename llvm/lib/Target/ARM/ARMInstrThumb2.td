@@ -1156,11 +1156,12 @@ def t2ADR : T2PCOneRegImm<(outs rGPR:$Rd),
 }
 
 let neverHasSideEffects = 1, isReMaterializable = 1 in
-def t2LEApcrel : PseudoInst<(outs rGPR:$Rd), (ins i32imm:$label, pred:$p),
-                            IIC_iALUi, []>;
-def t2LEApcrelJT : PseudoInst<(outs rGPR:$Rd),
-                        (ins i32imm:$label, nohash_imm:$id, pred:$p), IIC_iALUi,
-                        []>;
+def t2LEApcrel   : t2PseudoInst<(outs rGPR:$Rd), (ins i32imm:$label, pred:$p),
+                                Size4Bytes, IIC_iALUi, []>;
+def t2LEApcrelJT : t2PseudoInst<(outs rGPR:$Rd),
+                                (ins i32imm:$label, nohash_imm:$id, pred:$p),
+                                Size4Bytes, IIC_iALUi,
+                                []>;
 
 
 // FIXME: None of these add/sub SP special instructions should be necessary

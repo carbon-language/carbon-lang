@@ -266,6 +266,13 @@ class tPseudoInst<dag oops, dag iops, SizeFlagVal sz, InstrItinClass itin,
   list<Predicate> Predicates = [IsThumb];
 }
 
+// PseudoInst that's Thumb2-mode only.
+class t2PseudoInst<dag oops, dag iops, SizeFlagVal sz, InstrItinClass itin,
+                    list<dag> pattern>
+  : PseudoInst<oops, iops, itin, pattern> {
+  let SZ = sz;
+  list<Predicate> Predicates = [IsThumb2];
+}
 // Almost all ARM instructions are predicable.
 class I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
         IndexMode im, Format f, InstrItinClass itin,
