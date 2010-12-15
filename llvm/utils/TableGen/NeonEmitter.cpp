@@ -73,6 +73,8 @@ static char Widen(const char t) {
       return 'i';
     case 'i':
       return 'l';
+    case 'h':
+      return 'f';
     default: throw "unhandled type in widen!";
   }
   return '\0';
