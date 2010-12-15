@@ -78,8 +78,11 @@ namespace llvm {
       // Integer Compare
       ICmp,
 
-      // Return
-      Ret
+      // Return from subroutine
+      Ret,
+
+      // Return from interrupt
+      IRet
     };
   }
 

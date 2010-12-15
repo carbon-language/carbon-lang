@@ -864,13 +864,18 @@ LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     Flag = Chain.getValue(1);
   }
 
-  // Return on MBlaze is always a "rtsd R15, 8"
+  // If this function is using the interrupt_handler calling convention
+  // then use "rtid r14, 0" otherwise use "rtsd r15, 8"
+  unsigned Ret = (CallConv == llvm::CallingConv::MBLAZE_INTR) ? MBlazeISD::IRet 
+                                                              : MBlazeISD::Ret;
+  unsigned Reg = (CallConv == llvm::CallingConv::MBLAZE_INTR) ? MBlaze::R14 
+                                                              : MBlaze::R15;
+  SDValue DReg = DAG.getRegister(Reg, MVT::i32);
+
   if (Flag.getNode())
-    return DAG.getNode(MBlazeISD::Ret, dl, MVT::Other,
-                       Chain, DAG.getRegister(MBlaze::R15, MVT::i32), Flag);
-  else // Return Void
-    return DAG.getNode(MBlazeISD::Ret, dl, MVT::Other,
-                       Chain, DAG.getRegister(MBlaze::R15, MVT::i32));
+    return DAG.getNode(Ret, dl, MVT::Other, Chain, DReg, Flag);
+
+  return DAG.getNode(Ret, dl, MVT::Other, Chain, DReg);
 }
 
 //===----------------------------------------------------------------------===//

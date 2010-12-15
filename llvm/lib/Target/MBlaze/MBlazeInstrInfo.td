@@ -18,6 +18,7 @@ include "MBlazeInstrFormats.td"
 
 // def SDTMBlazeSelectCC : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>]>;
 def SDT_MBlazeRet     : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
+def SDT_MBlazeIRet    : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_MBlazeJmpLink : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 def SDT_MBCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_MBCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
@@ -27,6 +28,8 @@ def SDT_MBCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 //===----------------------------------------------------------------------===//
 
 def MBlazeRet     : SDNode<"MBlazeISD::Ret", SDT_MBlazeRet,
+                           [SDNPHasChain, SDNPOptInFlag]>;
+def MBlazeIRet    : SDNode<"MBlazeISD::IRet", SDT_MBlazeIRet,
                            [SDNPHasChain, SDNPOptInFlag]>;
 
 def MBlazeJmpLink : SDNode<"MBlazeISD::JmpLink",SDT_MBlazeJmpLink,
@@ -727,6 +730,7 @@ def : Pat<(selectcc (i32 GPR:$L), (i32 GPR:$R),
 
 // Ret instructions
 def : Pat<(MBlazeRet GPR:$target), (RTSD GPR:$target, 0x8)>;
+def : Pat<(MBlazeIRet GPR:$target), (RTID GPR:$target, 0x0)>;
 
 // BR instructions
 def : Pat<(br bb:$T), (BRID bb:$T)>;

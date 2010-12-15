@@ -132,6 +132,92 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
   MBlazeFI->setStackAdjust(StackAdjust);
 }
 
+static void interruptFrameLayout(MachineFunction &MF) {
+  const Function *F = MF.getFunction();
+  llvm::CallingConv::ID CallConv = F->getCallingConv();
+
+  // If this function is not using either the interrupt_handler
+  // calling convention or the save_volatiles calling convention
+  // then we don't need to do any additional frame layout.
+  if (CallConv != llvm::CallingConv::MBLAZE_INTR &&
+      CallConv != llvm::CallingConv::MBLAZE_SVOL)
+      return;
+
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  const MBlazeInstrInfo &TII =
+    *static_cast<const MBlazeInstrInfo*>(MF.getTarget().getInstrInfo());
+
+  // Determine if the calling convention is the interrupt_handler
+  // calling convention. Some pieces of the prologue and epilogue
+  // only need to be emitted if we are lowering and interrupt handler.
+  bool isIntr = CallConv == llvm::CallingConv::MBLAZE_INTR;
+
+  // Determine where to put prologue and epilogue additions
+  MachineBasicBlock &MENT   = MF.front();
+  MachineBasicBlock &MEXT   = MF.back();
+
+  MachineBasicBlock::iterator MENTI = MENT.begin();
+  MachineBasicBlock::iterator MEXTI = prior(MEXT.end());
+
+  DebugLoc ENTDL = MENTI != MENT.end() ? MENTI->getDebugLoc() : DebugLoc();
+  DebugLoc EXTDL = MEXTI != MEXT.end() ? MEXTI->getDebugLoc() : DebugLoc();
+
+  // Store the frame indexes generated during prologue additions for use
+  // when we are generating the epilogue additions.
+  SmallVector<int, 10> VFI;
+
+  // Build the prologue SWI for R3 - R12 if needed. Note that R11 must
+  // always have a SWI because it is used when processing RMSR.
+  for (unsigned r = MBlaze::R3; r <= MBlaze::R12; ++r) {
+    if (!MRI.isPhysRegUsed(r) && !(isIntr && r == MBlaze::R11)) continue;
+    
+    int FI = MFI->CreateStackObject(4,4,false,false);
+    VFI.push_back(FI);
+
+    BuildMI(MENT, MENTI, ENTDL, TII.get(MBlaze::SWI), r)
+      .addFrameIndex(FI).addImm(0);
+  }
+    
+  // Build the prologue SWI for R17, R18
+  int R17FI = MFI->CreateStackObject(4,4,false,false);
+  int R18FI = MFI->CreateStackObject(4,4,false,false);
+
+  BuildMI(MENT, MENTI, ENTDL, TII.get(MBlaze::SWI), MBlaze::R17)
+    .addFrameIndex(R17FI).addImm(0);
+    
+  BuildMI(MENT, MENTI, ENTDL, TII.get(MBlaze::SWI), MBlaze::R18)
+    .addFrameIndex(R18FI).addImm(0);
+
+  // Buid the prologue SWI and the epilogue LWI for RMSR if needed
+  if (isIntr) {
+    int MSRFI = MFI->CreateStackObject(4,4,false,false);
+    BuildMI(MENT, MENTI, ENTDL, TII.get(MBlaze::MFS), MBlaze::R11)
+      .addReg(MBlaze::RMSR);
+    BuildMI(MENT, MENTI, ENTDL, TII.get(MBlaze::SWI), MBlaze::R11)
+      .addFrameIndex(MSRFI).addImm(0);
+
+    BuildMI(MEXT, MEXTI, EXTDL, TII.get(MBlaze::LWI), MBlaze::R11)
+      .addFrameIndex(MSRFI).addImm(0);
+    BuildMI(MEXT, MEXTI, EXTDL, TII.get(MBlaze::MTS), MBlaze::RMSR)
+      .addReg(MBlaze::R11);
+  }
+
+  // Build the epilogue LWI for R17, R18
+  BuildMI(MEXT, MEXTI, EXTDL, TII.get(MBlaze::LWI), MBlaze::R18)
+    .addFrameIndex(R18FI).addImm(0);
+
+  BuildMI(MEXT, MEXTI, EXTDL, TII.get(MBlaze::LWI), MBlaze::R17)
+    .addFrameIndex(R17FI).addImm(0);
+
+  // Build the epilogue LWI for R3 - R12 if needed
+  for (unsigned r = MBlaze::R12, i = VFI.size(); r >= MBlaze::R3; --r) {
+    if (!MRI.isPhysRegUsed(r)) continue;
+    BuildMI(MEXT, MEXTI, EXTDL, TII.get(MBlaze::LWI), r)
+      .addFrameIndex(VFI[--i]).addImm(0);
+  }
+}
+
 static void determineFrameLayout(MachineFunction &MF) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
@@ -174,6 +260,9 @@ void MBlazeFrameInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
+  llvm::CallingConv::ID CallConv = MF.getFunction()->getCallingConv();
+  bool requiresRA = CallConv == llvm::CallingConv::MBLAZE_INTR;
+
   // Determine the correct frame layout
   determineFrameLayout(MF);
 
@@ -181,7 +270,7 @@ void MBlazeFrameInfo::emitPrologue(MachineFunction &MF) const {
   unsigned StackSize = MFI->getStackSize();
 
   // No need to allocate space on the stack.
-  if (StackSize == 0 && !MFI->adjustsStack()) return;
+  if (StackSize == 0 && !MFI->adjustsStack() && !requiresRA) return;
 
   int FPOffset = MBlazeFI->getFPStackOffset();
   int RAOffset = MBlazeFI->getRAStackOffset();
@@ -191,7 +280,7 @@ void MBlazeFrameInfo::emitPrologue(MachineFunction &MF) const {
       .addReg(MBlaze::R1).addImm(-StackSize);
 
   // swi  R15, R1, stack_loc
-  if (MFI->adjustsStack()) {
+  if (MFI->adjustsStack() || requiresRA) {
     BuildMI(MBB, MBBI, DL, TII.get(MBlaze::SWI))
         .addReg(MBlaze::R15).addReg(MBlaze::R1).addImm(RAOffset);
   }
@@ -217,6 +306,9 @@ void MBlazeFrameInfo::emitEpilogue(MachineFunction &MF,
 
   DebugLoc dl = MBBI->getDebugLoc();
 
+  llvm::CallingConv::ID CallConv = MF.getFunction()->getCallingConv();
+  bool requiresRA = CallConv == llvm::CallingConv::MBLAZE_INTR;
+
   // Get the FI's where RA and FP are saved.
   int FPOffset = MBlazeFI->getFPStackOffset();
   int RAOffset = MBlazeFI->getRAStackOffset();
@@ -232,7 +324,7 @@ void MBlazeFrameInfo::emitEpilogue(MachineFunction &MF,
   }
 
   // lwi R15, R1, stack_loc
-  if (MFI->adjustsStack()) {
+  if (MFI->adjustsStack() || requiresRA) {
     BuildMI(MBB, MBBI, dl, TII.get(MBlaze::LWI), MBlaze::R15)
       .addReg(MBlaze::R1).addImm(RAOffset);
   }
@@ -251,8 +343,10 @@ void MBlazeFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF, 
                                                            const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
+  llvm::CallingConv::ID CallConv = MF.getFunction()->getCallingConv();
+  bool requiresRA = CallConv == llvm::CallingConv::MBLAZE_INTR;
 
-  if (MFI->adjustsStack()) {
+  if (MFI->adjustsStack() || requiresRA) {
     MBlazeFI->setRAStackOffset(0);
     MFI->CreateFixedObject(4,0,true);
   }
@@ -262,5 +356,6 @@ void MBlazeFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF, 
     MFI->CreateFixedObject(4,4,true);
   }
 
+  interruptFrameLayout(MF);
   analyzeFrameIndexes(MF);
 }
