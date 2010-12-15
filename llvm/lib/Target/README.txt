@@ -1226,6 +1226,29 @@ loadpre14.c loadpre15.c
 
 actually a conditional increment: loadpre18.c loadpre19.c
 
+//===---------------------------------------------------------------------===//
+
+[LOAD PRE / STORE SINKING / SPEC HACK]
+
+This is a chunk of code from 456.hmmer:
+
+int f(int M, int *mc, int *mpp, int *tpmm, int *ip, int *tpim, int *dpp,
+     int *tpdm, int xmb, int *bp, int *ms) {
+ int k, sc;
+ for (k = 1; k <= M; k++) {
+     mc[k] = mpp[k-1]   + tpmm[k-1];
+     if ((sc = ip[k-1]  + tpim[k-1]) > mc[k])  mc[k] = sc;
+     if ((sc = dpp[k-1] + tpdm[k-1]) > mc[k])  mc[k] = sc;
+     if ((sc = xmb  + bp[k])         > mc[k])  mc[k] = sc;
+     mc[k] += ms[k];
+   }
+}
+
+It is very profitable for this benchmark to turn the conditional stores to mc[k]
+into a conditional move (select instr in IR) and allow the final store to do the
+store.  See GCC PR27313 for more details.  Note that this is valid to xform even
+with the new C++ memory model, since mc[k] is previously loaded and later
+stored.
 
 //===---------------------------------------------------------------------===//
 
