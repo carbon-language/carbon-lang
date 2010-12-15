@@ -113,6 +113,19 @@ class BreakpointConditionsTestCase(TestBase):
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
+        # We didn't associate a thread index with the breakpoint, so it should be invalid.
+        self.assertTrue(breakpoint.GetThreadIndex() == lldb.UINT32_MAX,
+                        "The thread index should be invalid")
+        # The thread name should be invalid, too.
+        self.assertTrue(breakpoint.GetThreadName() is None,
+                        "The thread name should be invalid")
+
+        # Let's set the thread index for this breakpoint and verify that it is,
+        # indeed, being set correctly.
+        breakpoint.SetThreadIndex(1) # There's only one thread for the process.
+        self.assertTrue(breakpoint.GetThreadIndex() == 1,
+                        "The thread index has been set correctly")
+
         # Get the breakpoint location from breakpoint after we verified that,
         # indeed, it has one location.
         location = breakpoint.GetLocationAtIndex(0)

@@ -314,14 +314,14 @@ SBBreakpoint::GetThreadIndex() const
     if (m_opaque_sp)
     {
         const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
-        if (thread_spec == NULL)
+        if (thread_spec != NULL)
             thread_idx = thread_spec->GetIndex();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBBreakpoint(%p)::GetThreadIndex () => %u", m_opaque_sp.get(), thread_idx);
 
-    return UINT32_MAX;
+    return thread_idx;
 }
     
 
@@ -343,7 +343,7 @@ SBBreakpoint::GetThreadName () const
     if (m_opaque_sp)
     {
         const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
-        if (thread_spec == NULL)
+        if (thread_spec != NULL)
             name = thread_spec->GetName();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
