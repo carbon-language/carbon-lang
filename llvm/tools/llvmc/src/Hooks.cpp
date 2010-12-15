@@ -26,8 +26,13 @@ typedef llvm::StringMap<const char*> ArgMap;
 /// ConvertToMAttr. The optional Args parameter contains information about how
 /// to transform special-cased values (for example, '-march=armv6' must be
 /// forwarded as '-mattr=+v6').
-std::string ConvertToMAttrImpl(const StrVec& Opts, const ArgMap* Args = 0) {
-  std::string out("-mattr=");
+std::string ConvertToMAttrImpl(const StrVec& Opts,
+                               const ArgMap* Args = 0,
+                               const ArgMap* MCpuArgs = 0) {
+  std::string mattr("-mattr=");
+  std::string mcpu("-mcpu=");
+  bool mattrTouched = false;
+  bool mcpuTouched = false;
   bool firstIter = true;
 
   for (StrVec::const_iterator B = Opts.begin(), E = Opts.end(); B!=E; ++B) {
@@ -36,30 +41,47 @@ std::string ConvertToMAttrImpl(const StrVec& Opts, const ArgMap* Args = 0) {
     if (firstIter)
       firstIter = false;
     else
-      out += ",";
+      mattr += ",";
 
     // Check if the argument is a special case.
     if (Args != 0) {
       ArgMap::const_iterator I = Args->find(Arg);
 
       if (I != Args->end()) {
-        out += '+';
-        out += I->getValue();
+        mattr += '+';
+        mattr += I->getValue();
+        continue;
+      }
+    }
+
+    // Check if the argument should be forwarded to -mcpu instead of -mattr.
+    if (MCpuArgs != 0 && !mcpuTouched) {
+      ArgMap::const_iterator I = MCpuArgs->find(Arg);
+
+      if (I != MCpuArgs->end()) {
+        mcpuTouched = true;
+        mcpu += I->getValue();
         continue;
       }
     }
 
     // Convert 'no-foo' to '-foo'.
     if (Arg.find("no-") == 0 && Arg[3] != 0) {
-      out += '-';
-      out += Arg.c_str() + 3;
+      mattr += '-';
+      mattr += Arg.c_str() + 3;
     }
     // Convert 'foo' to '+foo'.
     else {
-      out += '+';
-      out += Arg;
+      mattr += '+';
+      mattr += Arg;
     }
   }
+
+  std::string out;
+  if (mattrTouched)
+    out += mattr;
+  if (mcpuTouched)
+    out += (mattrTouched ? " " : "") + mcpu;
 
   return out;
 }
@@ -71,6 +93,13 @@ const char* MArchValuesARM[] = { "v4t", "v5t", "v5te", "v6", "v6m", "v6t2",
                                  "v7a", "v7m" };
 const unsigned MArchNumKeysARM = NUM_KEYS(MArchKeysARM);
 const unsigned MArchMapSize = NextHighestPowerOf2(MArchNumKeysARM);
+
+// -march values that should be forwarded as -mcpu
+const char* MArchMCpuKeysARM[] = { "iwmmxt", "ep9312" };
+const char* MArchMCpuValuesARM[] = { "iwmmxt", "ep9312"};
+const unsigned MArchMCpuNumKeysARM = NUM_KEYS(MArchMCpuKeysARM);
+const unsigned MArchMCpuMapSize = NextHighestPowerOf2(MArchMCpuNumKeysARM);
+
 
 void FillInArgMap(ArgMap& Args, const char* Keys[],
                   const char* Values[], unsigned NumKeys)
@@ -86,14 +115,17 @@ void FillInArgMap(ArgMap& Args, const char* Keys[],
 /// something llc can understand.
 std::string ConvertMArchToMAttr(const StrVec& Opts) {
   static ArgMap MArchMap(MArchMapSize);
+  static ArgMap MArchMCpuMap(MArchMapSize);
   static bool StaticDataInitialized = false;
 
   if (!StaticDataInitialized) {
     FillInArgMap(MArchMap, MArchKeysARM, MArchValuesARM, MArchNumKeysARM);
+    FillInArgMap(MArchMCpuMap, MArchMCpuKeysARM,
+                 MArchMCpuValuesARM, MArchMCpuNumKeysARM);
     StaticDataInitialized = true;
   }
 
-  return ConvertToMAttrImpl(Opts, &MArchMap);
+  return ConvertToMAttrImpl(Opts, &MArchMap, &MArchMCpuMap);
 }
 
 // -mcpu values that need to be special-cased.
