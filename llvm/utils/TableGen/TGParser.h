@@ -50,9 +50,9 @@ class TGParser {
   MultiClass *CurMultiClass;
 
   // Record tracker
-  RecordKeeper& Records;
+  RecordKeeper &Records;
 public:
-  TGParser(SourceMgr &SrcMgr, RecordKeeper& records) : 
+  TGParser(SourceMgr &SrcMgr, RecordKeeper &records) : 
     Lex(SrcMgr), CurMultiClass(0), Records(records) {}
   
   /// ParseFile - Main entrypoint for parsing a tblgen file.  These parser

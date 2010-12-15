@@ -23,7 +23,7 @@ namespace llvm {
   class LLVMCConfigurationEmitter : public TableGenBackend {
     RecordKeeper &Records;
   public:
-    explicit LLVMCConfigurationEmitter(RecordKeeper& records) : 
+    explicit LLVMCConfigurationEmitter(RecordKeeper &records) : 
       Records(records) {}
 
     // run - Output the asmwriter, returning true on failure.

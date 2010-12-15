@@ -1236,8 +1236,8 @@ class Record {
 
 public:
 
-  // Constructs a record. See also RecordKeeper::createRecord.
-  explicit Record(const std::string &N, SMLoc loc, RecordKeeper& records) :
+  // Constructs a record.
+  explicit Record(const std::string &N, SMLoc loc, RecordKeeper &records) :
     ID(LastID++), Name(N), Loc(loc), TrackedRecords(records) {}
   ~Record() {}
 
@@ -1324,7 +1324,7 @@ public:
   void resolveReferencesTo(const RecordVal *RV);
 
   RecordKeeper &getRecords() const {
-    return(TrackedRecords);
+    return TrackedRecords;
   }
 
   void dump() const;
@@ -1465,12 +1465,6 @@ public:
   /// name does not exist, an exception is thrown.
   std::vector<Record*>
   getAllDerivedDefinitions(const std::string &ClassName) const;
-
-  // allocates and returns a record. 
-  Record *createRecord(const std::string &N, SMLoc loc) {
-    return(new Record(N, loc, *this));
-  }
-
 
   void dump() const;
 };

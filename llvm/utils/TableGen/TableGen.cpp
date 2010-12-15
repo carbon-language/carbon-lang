@@ -186,7 +186,7 @@ void llvm::PrintError(SMLoc ErrorLoc, const Twine &Msg) {
 static bool ParseFile(const std::string &Filename,
                       const std::vector<std::string> &IncludeDirs,
                       SourceMgr &SrcMgr,
-                      RecordKeeper& Records) {
+                      RecordKeeper &Records) {
   error_code ec;
   MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), ec);
   if (F == 0) {

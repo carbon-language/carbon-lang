@@ -493,7 +493,7 @@ struct SubtargetFeatureInfo {
 class AsmMatcherInfo {
 public:
   /// Tracked Records
-  RecordKeeper& Records;
+  RecordKeeper &Records;
 
   /// The tablegen AsmParser record.
   Record *AsmParser;
@@ -551,7 +551,7 @@ private:
 public:
   AsmMatcherInfo(Record *AsmParser, 
                  CodeGenTarget &Target, 
-                 RecordKeeper& Records);
+                 RecordKeeper &Records);
 
   /// BuildInfo - Construct the various tables used during matching.
   void BuildInfo();
@@ -565,12 +565,8 @@ public:
     return I == SubtargetFeatures.end() ? 0 : I->second;
   }
 
-  RecordKeeper& getRecords() {
-    return(Records);
-  }
-
-  RecordKeeper& getRecords() const {
-    return(Records);
+  RecordKeeper &getRecords() const {
+    return Records;
   }
 };
 
@@ -1004,7 +1000,7 @@ void AsmMatcherInfo::BuildOperandClasses() {
 
 AsmMatcherInfo::AsmMatcherInfo(Record *asmParser, 
                                CodeGenTarget &target, 
-                               RecordKeeper& records)
+                               RecordKeeper &records)
   : Records(records), AsmParser(asmParser), Target(target),
     RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix")) {
 }

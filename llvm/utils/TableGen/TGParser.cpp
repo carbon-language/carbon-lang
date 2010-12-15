@@ -1096,8 +1096,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
 
     // Create the new record, set it as CurRec temporarily.
     static unsigned AnonCounter = 0;
-    Record *NewRec = Records.createRecord(
-                        "anonymous.val."+utostr(AnonCounter++),NameLoc);
+    Record *NewRec = new Record("anonymous.val."+utostr(AnonCounter++),
+                                NameLoc,
+                                Records);
     SubClassReference SCRef;
     SCRef.RefLoc = NameLoc;
     SCRef.Rec = Class;
@@ -1661,7 +1662,7 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
   Lex.Lex();  // Eat the 'def' token.
 
   // Parse ObjectName and make a record for it.
-  Record *CurRec = Records.createRecord(ParseObjectName(), DefLoc);
+  Record *CurRec = new Record(ParseObjectName(), DefLoc, Records);
 
   if (!CurMultiClass) {
     // Top-level def definition.
@@ -1728,7 +1729,7 @@ bool TGParser::ParseClass() {
       return TokError("Class '" + CurRec->getName() + "' already defined");
   } else {
     // If this is the first reference to this class, create and add it.
-    CurRec = Records.createRecord(Lex.getCurStrVal(), Lex.getLoc());
+    CurRec = new Record(Lex.getCurStrVal(), Lex.getLoc(), Records);
     Records.addClass(CurRec);
   }
   Lex.Lex(); // eat the name.
@@ -1975,7 +1976,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
         }
       }
 
-      Record *CurRec = Records.createRecord(DefName, DefmPrefixLoc);
+      Record *CurRec = new Record(DefName, DefmPrefixLoc, Records);
 
       SubClassReference Ref;
       Ref.RefLoc = DefmPrefixLoc;
