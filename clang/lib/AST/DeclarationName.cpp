@@ -20,6 +20,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
@@ -531,6 +532,7 @@ bool DeclarationNameInfo::containsUnexpandedParameterPack() const {
 
     return Name.getCXXNameType()->containsUnexpandedParameterPack();
   }
+  llvm_unreachable("All name kinds handled.");
 }
 
 std::string DeclarationNameInfo::getAsString() const {
