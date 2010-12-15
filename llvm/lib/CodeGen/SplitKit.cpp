@@ -339,7 +339,7 @@ bool SplitAnalysis::isBypassLoop(const MachineLoop *Loop) {
 /// loops whose parent is not a bypass loop.
 void SplitAnalysis::getBypassLoops(LoopPtrSet &BypassLoops) {
   SmallVector<MachineLoop*, 8> Todo(loops_.begin(), loops_.end());
-  while (!Todo.empty) {
+  while (!Todo.empty()) {
     MachineLoop *Loop = Todo.pop_back_val();
     if (!usingLoops_.count(Loop)) {
       // This is either a bypass loop or completely irrelevant.
