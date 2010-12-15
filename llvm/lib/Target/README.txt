@@ -73,7 +73,25 @@ This has a number of uses:
 
 //===---------------------------------------------------------------------===//
 
-Make the PPC branch selector target independant
+We should recognized various "overflow detection" idioms and translate them into
+llvm.uadd.with.overflow and similar intrinsics.  For example, we compile this:
+
+size_t add(size_t a,size_t b) {
+ if (a+b<a)
+   exit(0);
+ return a+b;
+}
+
+into:
+
+	addq	%rdi, %rbx
+	cmpq	%rdi, %rbx
+	jae	LBB0_2
+
+when it would be better to generate:
+
+	addq	%rdi, %rbx
+	jno	LBB0_2
 
 //===---------------------------------------------------------------------===//
 
