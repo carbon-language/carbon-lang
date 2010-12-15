@@ -27,6 +27,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -262,6 +263,14 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       V = Op->getOperand(0);
       continue;
     }
+
+    if (const Instruction *I = dyn_cast<Instruction>(V))
+      // TODO: Get a DominatorTree and use it here.
+      if (const Value *Simplified =
+            SimplifyInstruction(const_cast<Instruction *>(I), TD)) {
+        V = Simplified;
+        continue;
+      }
     
     const GEPOperator *GEPOp = dyn_cast<GEPOperator>(Op);
     if (GEPOp == 0)

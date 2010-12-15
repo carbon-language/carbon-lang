@@ -1441,6 +1441,14 @@ Value *llvm::GetUnderlyingObject(Value *V, unsigned MaxLookup) {
         return V;
       V = GA->getAliasee();
     } else {
+      // See if InstructionSimplify knows any relevant tricks.
+      if (Instruction *I = dyn_cast<Instruction>(V))
+        // TODO: Aquire TargetData and DominatorTree and use them.
+        if (Value *Simplified = SimplifyInstruction(I, 0, 0)) {
+          V = Simplified;
+          continue;
+        }
+
       return V;
     }
     assert(V->getType()->isPointerTy() && "Unexpected operand type!");
