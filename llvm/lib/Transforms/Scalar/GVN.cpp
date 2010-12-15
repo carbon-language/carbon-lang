@@ -22,6 +22,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Operator.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -1659,9 +1660,13 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     BasicBlock *UnavailablePred = I->first;
     Value *LoadPtr = I->second;
 
-    Value *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
-                                  LI->getAlignment(),
-                                  UnavailablePred->getTerminator());
+    Instruction *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
+                                        LI->getAlignment(),
+                                        UnavailablePred->getTerminator());
+
+    // Transfer the old load's TBAA tag to the new load.
+    if (MDNode *Tag = LI->getMetadata(LLVMContext::MD_tbaa))
+      NewLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
 
     // Add the newly created load.
     ValuesPerBlock.push_back(AvailableValueInBlock::get(UnavailablePred,
