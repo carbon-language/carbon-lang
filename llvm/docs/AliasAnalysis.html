@@ -31,7 +31,7 @@
     <li><a href="#chaining"><tt>AliasAnalysis</tt> chaining behavior</a></li>
     <li><a href="#updating">Updating analysis results for transformations</a></li>
     <li><a href="#implefficiency">Efficiency Issues</a></li>
-    <li><a href="#passmanager">Pass Manager Issues</a></li>
+    <li><a href="#limitations">Limtations</a></li>
     </ul>
   </li>
 
@@ -523,13 +523,13 @@ method as possible (within reason).</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="passmanager">Pass Manager Issues</a>
+  <a name="limitations">Limitations</a>
 </div>
 
 <div class="doc_text">
 
-<p>PassManager support for alternative AliasAnalysis implementation
-has some issues.</p>
+<p>The AliasAnalysis infrastructure has several limitations which make
+writing a new <tt>AliasAnalysis</tt> implementation difficult.</p>
 
 <p>There is no way to override the default alias analysis. It would
 be very useful to be able to do something like "opt -my-aa -O2" and
@@ -557,6 +557,40 @@ silently route alias analysis queries directly to
 <p>Similarly, the <tt>opt -p</tt> option introduces <tt>ModulePass</tt>
 passes between each pass, which prevents the use of <tt>FunctionPass</tt>
 alias analysis passes.</p>
+
+<p>The <tt>AliasAnalysis</tt> API does have functions for notifying
+implementations when values are deleted or copied, however these
+aren't sufficient. There are many other ways that LLVM IR can be
+modified which could be relevant to <tt>AliasAnalysis</tt>
+implementations which can not be expressed.</p>
+
+<p>The <tt>AliasAnalysisDebugger</tt> utility seems to suggest that
+<tt>AliasAnalysis</tt> implementations can expect that they will be
+informed of any relevant <tt>Value</tt> before it appears in an
+alias query. However, popular clients such as <tt>GVN</tt> don't
+support this, and are known to trigger errors when run with the
+<tt>AliasAnalysisDebugger</tt>.</p>
+
+<p>Due to several of the above limitations, the most obvious use for
+the <tt>AliasAnalysisCounter</tt> utility, collecting stats on all
+alias queries in a compilation, doesn't work, even if the
+<tt>AliasAnalysis</tt> implementations don't use <tt>FunctionPass</tt>.
+There's no way to set a default, much less a default sequence,
+and there's no way to preserve it.</p>
+
+<p>The <tt>AliasSetTracker</tt> class (which is used by <tt>LICM</tt>
+makes a non-deterministic number of alias queries. This can cause stats
+collected by <tt>AliasAnalysisCounter</tt> to have fluctuations among
+identical runs, for example. Another consequence is that debugging
+techniques involving pausing execution after a predetermined number
+of queries can be unreliable.</p>
+
+<p>Many alias queries can be reformulated in terms of other alias
+queries. When multiple <tt>AliasAnalysis</tt> queries are chained together,
+it would make sense to start those queries from the beginning of the chain,
+with care taken to avoid infinite looping, however currently an
+implementation which wants to do this can only start such queries
+from itself.</p>
 
 </div>
 
