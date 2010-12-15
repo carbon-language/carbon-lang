@@ -48,9 +48,8 @@ void MCStreamer::EmitDwarfSetLineAddr(int64_t LineDelta,
 void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
                               unsigned AddrSpace) {
   assert(Size <= 8 && "Invalid size");
-  unsigned Bits = 8 * Size;
-  (void)Bits;
-  assert((isUIntN(Bits, Value) || isIntN(Bits, Value)) && "Invalid size");
+  assert((isUIntN(8 * Size, Value) || isIntN(8 * Size, Value)) &&
+         "Invalid size");
   char buf[8];
   // FIXME: Endianness assumption.
   for (unsigned i = 0; i != Size; ++i)
