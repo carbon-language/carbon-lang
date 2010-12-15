@@ -768,12 +768,19 @@ public:
 
     CheckNumberOfArguments(d, 2);
 
+    // Alias option store the aliased option name in the 'Help' field and do not
+    // have any properties.
     if (OD.isAlias()) {
-      // Aliases store the aliased option name in the 'Help' field.
       OD.Help = InitPtrToString(d.getArg(1));
     }
     else {
       processOptionProperties(d, OD);
+    }
+
+    // Switch options are ZeroOrMore by default.
+    if (OD.isSwitch()) {
+      if (!(OD.isOptional() || OD.isOneOrMore() || OD.isRequired()))
+        OD.setZeroOrMore();
     }
 
     OptDescs_.InsertDescription(OD);
