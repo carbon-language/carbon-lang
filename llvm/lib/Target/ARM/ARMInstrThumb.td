@@ -679,8 +679,8 @@ def tLDRSH :                    // A8.6.84
 
 let canFoldAsLoad = 1 in
 def tLDRspi : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
-                  "ldr", "\t$Rt, $addr",
-                  [(set tGPR:$Rt, (load t_addrmode_sp:$addr))]>,
+                    "ldr", "\t$Rt, $addr",
+                    [(set tGPR:$Rt, (load t_addrmode_sp:$addr))]>,
               T1LdStSP<{1,?,?}> {
   bits<3> Rt;
   bits<8> addr;
@@ -693,7 +693,7 @@ def tLDRspi : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
 let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1 in
 // FIXME: Pseudo for tLDRspi
 def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
-                    "ldr", "\t$dst, $addr", []>,
+                     "ldr", "\t$dst, $addr", []>,
                T1LdStSP<{1,?,?}>;
 
 // Load tconstpool
