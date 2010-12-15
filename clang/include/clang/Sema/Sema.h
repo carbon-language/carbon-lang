@@ -3148,7 +3148,10 @@ public:
     UPPC_DataMemberType,
 
     /// \brief The size of a bit-field.
-    UPPC_BitFieldWidth
+    UPPC_BitFieldWidth,
+
+    /// \brief The expression in a static assertion.
+    UPPC_StaticAssertExpression
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,

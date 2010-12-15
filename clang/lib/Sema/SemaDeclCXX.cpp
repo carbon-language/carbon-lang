@@ -6175,6 +6175,9 @@ Decl *Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
     }
   }
 
+  if (DiagnoseUnexpandedParameterPack(AssertExpr, UPPC_StaticAssertExpression))
+    return 0;
+
   Decl *Decl = StaticAssertDecl::Create(Context, CurContext, AssertLoc,
                                         AssertExpr, AssertMessage);
 
