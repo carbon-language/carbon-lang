@@ -17,25 +17,27 @@ class MBlazeReg<string n> : Register<n> {
   let Namespace = "MBlaze";
 }
 
-// MBlaze CPU Registers
+// Special purpose registers have 15-bit values
+class MBlazeSReg<string n> : Register<n> {
+  field bits<15> Num;
+  let Namespace = "MBlaze";
+}
+
+// MBlaze general purpose registers
 class MBlazeGPRReg<bits<5> num, string n> : MBlazeReg<n> {
   let Num = num;
 }
 
-// MBlaze 32-bit (aliased) FPU Registers
-/*
-class FPR<bits<5> num, string n, list<Register> aliases> : MBlazeReg<n> {
+// MBlaze special purpose registers
+class MBlazeSPRReg<bits<15> num, string n> : MBlazeSReg<n> {
   let Num = num;
-  let Aliases = aliases;
 }
-*/
 
 //===----------------------------------------------------------------------===//
 //  Registers
 //===----------------------------------------------------------------------===//
 
 let Namespace = "MBlaze" in {
-
   // General Purpose Registers
   def R0  : MBlazeGPRReg< 0,  "r0">,   DwarfRegNum<[0]>;
   def R1  : MBlazeGPRReg< 1,  "r1">,   DwarfRegNum<[1]>;
@@ -70,41 +72,31 @@ let Namespace = "MBlaze" in {
   def R30 : MBlazeGPRReg< 30, "r30">,  DwarfRegNum<[30]>;
   def R31 : MBlazeGPRReg< 31, "r31">,  DwarfRegNum<[31]>;
 
-  /// MBlaze Single point precision FPU Registers
-  /*
-  def F0  : FPR< 0,  "f0", [R0]>,  DwarfRegNum<[32]>;
-  def F1  : FPR< 1,  "f1", [R1]>,  DwarfRegNum<[33]>;
-  def F2  : FPR< 2,  "f2", [R2]>,  DwarfRegNum<[34]>;
-  def F3  : FPR< 3,  "f3", [R3]>,  DwarfRegNum<[35]>;
-  def F4  : FPR< 4,  "f4", [R4]>,  DwarfRegNum<[36]>;
-  def F5  : FPR< 5,  "f5", [R5]>,  DwarfRegNum<[37]>;
-  def F6  : FPR< 6,  "f6", [R6]>,  DwarfRegNum<[38]>;
-  def F7  : FPR< 7,  "f7", [R7]>,  DwarfRegNum<[39]>;
-  def F8  : FPR< 8,  "f8", [R8]>,  DwarfRegNum<[40]>;
-  def F9  : FPR< 9,  "f9", [R9]>,  DwarfRegNum<[41]>;
-  def F10 : FPR<10, "f10", [R10]>, DwarfRegNum<[42]>;
-  def F11 : FPR<11, "f11", [R11]>, DwarfRegNum<[43]>;
-  def F12 : FPR<12, "f12", [R12]>, DwarfRegNum<[44]>;
-  def F13 : FPR<13, "f13", [R13]>, DwarfRegNum<[45]>;
-  def F14 : FPR<14, "f14", [R14]>, DwarfRegNum<[46]>;
-  def F15 : FPR<15, "f15", [R15]>, DwarfRegNum<[47]>;
-  def F16 : FPR<16, "f16", [R16]>, DwarfRegNum<[48]>;
-  def F17 : FPR<17, "f17", [R17]>, DwarfRegNum<[49]>;
-  def F18 : FPR<18, "f18", [R18]>, DwarfRegNum<[50]>;
-  def F19 : FPR<19, "f19", [R19]>, DwarfRegNum<[51]>;
-  def F20 : FPR<20, "f20", [R20]>, DwarfRegNum<[52]>;
-  def F21 : FPR<21, "f21", [R21]>, DwarfRegNum<[53]>;
-  def F22 : FPR<22, "f22", [R22]>, DwarfRegNum<[54]>;
-  def F23 : FPR<23, "f23", [R23]>, DwarfRegNum<[55]>;
-  def F24 : FPR<24, "f24", [R24]>, DwarfRegNum<[56]>;
-  def F25 : FPR<25, "f25", [R25]>, DwarfRegNum<[57]>;
-  def F26 : FPR<26, "f26", [R26]>, DwarfRegNum<[58]>;
-  def F27 : FPR<27, "f27", [R27]>, DwarfRegNum<[59]>;
-  def F28 : FPR<28, "f28", [R28]>, DwarfRegNum<[60]>;
-  def F29 : FPR<29, "f29", [R29]>, DwarfRegNum<[61]>;
-  def F30 : FPR<30, "f30", [R30]>, DwarfRegNum<[62]>;
-  def F31 : FPR<31, "f31", [R31]>, DwarfRegNum<[63]>;
-  */
+  // Special Purpose Registers
+  def RPC    : MBlazeSPRReg<0x0000, "rpc">,    DwarfRegNum<[32]>;
+  def RMSR   : MBlazeSPRReg<0x0001, "rmsr">,   DwarfRegNum<[33]>;
+  def REAR   : MBlazeSPRReg<0x0003, "rear">,   DwarfRegNum<[34]>;
+  def RESR   : MBlazeSPRReg<0x0005, "resr">,   DwarfRegNum<[35]>;
+  def RFSR   : MBlazeSPRReg<0x0007, "rfsr">,   DwarfRegNum<[36]>;
+  def RBTR   : MBlazeSPRReg<0x000B, "rbtr">,   DwarfRegNum<[37]>;
+  def REDR   : MBlazeSPRReg<0x000D, "redr">,   DwarfRegNum<[38]>;
+  def RPID   : MBlazeSPRReg<0x1000, "rpid">,   DwarfRegNum<[39]>;
+  def RZPR   : MBlazeSPRReg<0x1001, "rzpr">,   DwarfRegNum<[40]>;
+  def RTLBX  : MBlazeSPRReg<0x0002, "rtlbx">,  DwarfRegNum<[41]>;
+  def RTLBLO : MBlazeSPRReg<0x1003, "rtlblo">, DwarfRegNum<[42]>;
+  def RTLBHI : MBlazeSPRReg<0x1004, "rtlbhi">, DwarfRegNum<[43]>;
+  def RPVR0  : MBlazeSPRReg<0x2000, "rpvr0">,  DwarfRegNum<[44]>;
+  def RPVR1  : MBlazeSPRReg<0x2001, "rpvr1">,  DwarfRegNum<[45]>;
+  def RPVR2  : MBlazeSPRReg<0x2002, "rpvr2">,  DwarfRegNum<[46]>;
+  def RPVR3  : MBlazeSPRReg<0x2003, "rpvr3">,  DwarfRegNum<[47]>;
+  def RPVR4  : MBlazeSPRReg<0x2004, "rpvr4">,  DwarfRegNum<[48]>;
+  def RPVR5  : MBlazeSPRReg<0x2005, "rpvr5">,  DwarfRegNum<[49]>;
+  def RPVR6  : MBlazeSPRReg<0x2006, "rpvr6">,  DwarfRegNum<[50]>;
+  def RPVR7  : MBlazeSPRReg<0x2007, "rpvr7">,  DwarfRegNum<[51]>;
+  def RPVR8  : MBlazeSPRReg<0x2008, "rpvr8">,  DwarfRegNum<[52]>;
+  def RPVR9  : MBlazeSPRReg<0x2009, "rpvr9">,  DwarfRegNum<[53]>;
+  def RPVR10 : MBlazeSPRReg<0x200A, "rpvr10">, DwarfRegNum<[54]>;
+  def RPVR11 : MBlazeSPRReg<0x200B, "rpvr11">, DwarfRegNum<[55]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -146,41 +138,3 @@ def GPR : RegisterClass<"MBlaze", [i32,f32], 32,
     }
   }];
 }
-
-/*
-def FGR32 : RegisterClass<"MBlaze", [f32], 32,
-  [
-  // Return Values and Arguments
-  F3, F4, F5, F6, F7, F8, F9, F10,
-
-  // Not preserved across procedure calls
-  F11, F12,
-
-  // Callee save
-  F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31,
-
-  // Reserved
-  F0,  // Always zero
-  F1,  // The stack pointer
-  F2,  // Read-only small data area anchor
-  F13, // Read-write small data area anchor
-  F14, // Return address for interrupts
-  F15, // Return address for sub-routines
-  F16, // Return address for trap
-  F17, // Return address for exceptions
-  F18, // Reserved for assembler
-  F19  // The frame pointer
-  ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    FGR32Class::iterator
-    FGR32Class::allocation_order_end(const MachineFunction &MF) const {
-      // The last 10 registers on the list above are reserved
-      return end()-10;
-    }
-  }];
-}
-*/
