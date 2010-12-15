@@ -25,6 +25,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
@@ -195,6 +196,16 @@ class Preprocessor {
   /// Macros - For each IdentifierInfo with 'HasMacro' set, we keep a mapping
   /// to the actual definition of the macro.
   llvm::DenseMap<IdentifierInfo*, MacroInfo*> Macros;
+
+  /// \brief Macros that we want to warn because they are not used at the end
+  /// of the translation unit; we store just their SourceLocations instead
+  /// something like MacroInfo*. The benefit of this is that when we are
+  /// deserializing from PCH, we don't need to deserialize identifier & macros
+  /// just so that we can report that they are unused, we just warn using
+  /// the SourceLocations of this set (that will be filled by the ASTReader).
+  /// We are using SmallPtrSet instead of a vector for faster removal.
+  typedef llvm::SmallPtrSet<SourceLocation, 32> WarnUnusedMacroLocsTy;
+  WarnUnusedMacroLocsTy WarnUnusedMacroLocs;
 
   /// MacroArgCache - This is a "freelist" of MacroArg objects that can be
   /// reused for quick allocation.
@@ -1013,6 +1024,10 @@ public:
   // Return true and store the first token only if any CommentHandler
   // has inserted some tokens and getCommentRetentionState() is false.
   bool HandleComment(Token &Token, SourceRange Comment);
+
+  /// \brief A macro is used, update information about macros that need unused
+  /// warnings.
+  void markMacroAsUsed(MacroInfo *MI);
 };
 
 /// \brief Abstract base class that describes a handler that will receive

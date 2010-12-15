@@ -22,8 +22,9 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
   IsBuiltinMacro = false;
   IsFromAST = false;
   IsDisabled = false;
-  IsUsed = true;
+  IsUsed = false;
   IsAllowRedefinitionsWithoutWarning = false;
+  IsWarnIfUnused = false;
 
   ArgumentList = 0;
   NumArguments = 0;

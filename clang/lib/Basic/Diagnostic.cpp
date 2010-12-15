@@ -49,9 +49,10 @@ Diagnostic::Diagnostic(const llvm::IntrusiveRefCntPtr<DiagnosticIDs> &diags,
   ErrorLimit = 0;
   TemplateBacktraceLimit = 0;
 
-  // Set all mappings to 'unset'.
-  DiagMappingsStack.clear();
-  DiagMappingsStack.push_back(DiagMappings());
+  // Create a DiagState and DiagStatePoint representing diagnostic changes
+  // through command-line.
+  DiagStates.push_back(DiagState());
+  PushDiagStatePoint(&DiagStates.back(), SourceLocation());
 
   Reset();
 }
@@ -62,17 +63,19 @@ Diagnostic::~Diagnostic() {
 }
 
 
-void Diagnostic::pushMappings() {
-  // Avoids undefined behavior when the stack has to resize.
-  DiagMappingsStack.reserve(DiagMappingsStack.size() + 1);
-  DiagMappingsStack.push_back(DiagMappingsStack.back());
+void Diagnostic::pushMappings(SourceLocation Loc) {
+  DiagStateOnPushStack.push_back(GetCurDiagState());
 }
 
-bool Diagnostic::popMappings() {
-  if (DiagMappingsStack.size() == 1)
+bool Diagnostic::popMappings(SourceLocation Loc) {
+  if (DiagStateOnPushStack.empty())
     return false;
 
-  DiagMappingsStack.pop_back();
+  if (DiagStateOnPushStack.back() != GetCurDiagState()) {
+    // State changed at some point between push/pop.
+    PushDiagStatePoint(DiagStateOnPushStack.back(), Loc);
+  }
+  DiagStateOnPushStack.pop_back();
   return true;
 }
 
@@ -107,6 +110,91 @@ void Diagnostic::ReportDelayed() {
   DelayedDiagID = 0;
   DelayedDiagArg1.clear();
   DelayedDiagArg2.clear();
+}
+
+Diagnostic::DiagStatePointsTy::iterator
+Diagnostic::GetDiagStatePointForLoc(SourceLocation L) const {
+  assert(!DiagStatePoints.empty());
+  assert(DiagStatePoints.front().Loc.isInvalid() &&
+         "Should have created a DiagStatePoint for command-line");
+
+  FullSourceLoc Loc(L, *SourceMgr);
+  if (Loc.isInvalid())
+    return DiagStatePoints.end() - 1;
+
+  DiagStatePointsTy::iterator Pos = DiagStatePoints.end();
+  FullSourceLoc LastStateChangePos = DiagStatePoints.back().Loc;
+  if (LastStateChangePos.isValid() &&
+      Loc.isBeforeInTranslationUnitThan(LastStateChangePos))
+    Pos = std::upper_bound(DiagStatePoints.begin(), DiagStatePoints.end(),
+                           DiagStatePoint(0, Loc));
+  --Pos;
+  return Pos;
+}
+
+/// \brief This allows the client to specify that certain
+/// warnings are ignored.  Notes can never be mapped, errors can only be
+/// mapped to fatal, and WARNINGs and EXTENSIONs can be mapped arbitrarily.
+///
+/// \param The source location that this change of diagnostic state should
+/// take affect. It can be null if we are setting the latest state.
+void Diagnostic::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
+                                      SourceLocation L) {
+  assert(Diag < diag::DIAG_UPPER_LIMIT &&
+         "Can only map builtin diagnostics");
+  assert((Diags->isBuiltinWarningOrExtension(Diag) ||
+          (Map == diag::MAP_FATAL || Map == diag::MAP_ERROR)) &&
+         "Cannot map errors into warnings!");
+  assert(!DiagStatePoints.empty());
+
+  FullSourceLoc Loc(L, *SourceMgr);
+  FullSourceLoc LastStateChangePos = DiagStatePoints.back().Loc;
+
+  // Common case; setting all the diagnostics of a group in one place.
+  if (Loc.isInvalid() || Loc == LastStateChangePos) {
+    setDiagnosticMappingInternal(Diag, Map, GetCurDiagState(), true);
+    return;
+  }
+
+  // Another common case; modifying diagnostic state in a source location
+  // after the previous one.
+  if ((Loc.isValid() && LastStateChangePos.isInvalid()) ||
+      LastStateChangePos.isBeforeInTranslationUnitThan(Loc)) {
+    // A diagnostic pragma occured, create a new DiagState initialized with
+    // the current one and a new DiagStatePoint to record at which location
+    // the new state became active.
+    DiagStates.push_back(*GetCurDiagState());
+    PushDiagStatePoint(&DiagStates.back(), Loc);
+    setDiagnosticMappingInternal(Diag, Map, GetCurDiagState(), true);
+    return;
+  }
+
+  // We allow setting the diagnostic state in random source order for
+  // completeness but it should not be actually happening in normal practice.
+
+  DiagStatePointsTy::iterator Pos = GetDiagStatePointForLoc(Loc);
+  assert(Pos != DiagStatePoints.end());
+
+  // Update all diagnostic states that are active after the given location.
+  for (DiagStatePointsTy::iterator
+         I = Pos+1, E = DiagStatePoints.end(); I != E; ++I) {
+    setDiagnosticMappingInternal(Diag, Map, I->State, true);
+  }
+
+  // If the location corresponds to an existing point, just update its state.
+  if (Pos->Loc == Loc) {
+    setDiagnosticMappingInternal(Diag, Map, Pos->State, true);
+    return;
+  }
+
+  // Create a new state/point and fit it into the vector of DiagStatePoints
+  // so that the vector is always ordered according to location.
+  Pos->Loc.isBeforeInTranslationUnitThan(Loc);
+  DiagStates.push_back(*Pos->State);
+  DiagState *NewState = &DiagStates.back();
+  setDiagnosticMappingInternal(Diag, Map, NewState, true);
+  DiagStatePoints.insert(Pos+1, DiagStatePoint(NewState,
+                                               FullSourceLoc(Loc, *SourceMgr)));
 }
 
 void DiagnosticBuilder::FlushCounts() {

@@ -646,7 +646,11 @@ void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
   if (iter != PragmaPushMacroInfo.end()) {
     // Release the MacroInfo currently associated with IdentInfo.
     MacroInfo *CurrentMI = getMacroInfo(IdentInfo);
-    if (CurrentMI) ReleaseMacroInfo(CurrentMI);
+    if (CurrentMI) {
+      if (CurrentMI->isWarnIfUnused())
+        WarnUnusedMacroLocs.erase(CurrentMI->getDefinitionLoc());
+      ReleaseMacroInfo(CurrentMI);
+    }
 
     // Get the MacroInfo we want to reinstall.
     MacroInfo *MacroToReInstall = iter->second.back();
@@ -810,6 +814,7 @@ public:
   explicit PragmaDiagnosticHandler() : PragmaHandler("diagnostic") {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                             Token &DiagToken) {
+    SourceLocation DiagLoc = DiagToken.getLocation();
     Token Tok;
     PP.LexUnexpandedToken(Tok);
     if (Tok.isNot(tok::identifier)) {
@@ -828,12 +833,12 @@ public:
     else if (II->isStr("fatal"))
       Map = diag::MAP_FATAL;
     else if (II->isStr("pop")) {
-      if (!PP.getDiagnostics().popMappings())
+      if (!PP.getDiagnostics().popMappings(DiagLoc))
         PP.Diag(Tok, diag::warn_pragma_diagnostic_cannot_pop);
 
       return;
     } else if (II->isStr("push")) {
-      PP.getDiagnostics().pushMappings();
+      PP.getDiagnostics().pushMappings(DiagLoc);
       return;
     } else {
       PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
@@ -883,7 +888,7 @@ public:
     }
 
     if (PP.getDiagnostics().setDiagnosticGroupMapping(WarningName.c_str()+2,
-                                                      Map))
+                                                      Map, DiagLoc))
       PP.Diag(StrToks[0].getLocation(),
               diag::warn_pragma_diagnostic_unknown_warning) << WarningName;
   }

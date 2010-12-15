@@ -16,11 +16,13 @@
 
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/type_traits.h"
 
 #include <vector>
+#include <list>
 
 namespace clang {
   class DiagnosticClient;
@@ -158,30 +160,82 @@ private:
   DiagnosticClient *Client;
   bool OwnsDiagClient;
   SourceManager *SourceMgr;
-  
-  /// DiagMappings - Mapping information for diagnostics.  Mapping info is
+
+  /// \brief Mapping information for diagnostics.  Mapping info is
   /// packed into four bits per diagnostic.  The low three bits are the mapping
   /// (an instance of diag::Mapping), or zero if unset.  The high bit is set
   /// when the mapping was established as a user mapping.  If the high bit is
   /// clear, then the low bits are set to the default value, and should be
   /// mapped with -pedantic, -Werror, etc.
-  class DiagMappings {
-    unsigned char Values[diag::DIAG_UPPER_LIMIT/2];
+  ///
+  /// Contrary to DiagMappings, a new DiagState is created and kept around when
+  /// diagnostic pragmas modify the state so that we know what is the diagnostic
+  /// state at any given source location.
+  class DiagState {
+    mutable llvm::DenseMap<unsigned, unsigned> DiagMap;
 
   public:
-    DiagMappings() : Values() /*zero-initialization of array*/ { }
-
-    void setMapping(diag::kind Diag, unsigned Map) {
-      size_t Shift = (Diag & 1)*4;
-      Values[Diag/2] = (Values[Diag/2] & ~(15 << Shift)) | (Map << Shift);
-    }
+    void setMapping(diag::kind Diag, unsigned Map) { DiagMap[Diag] = Map; }
 
     diag::Mapping getMapping(diag::kind Diag) const {
-      return (diag::Mapping)((Values[Diag/2] >> (Diag & 1)*4) & 15);
+      return (diag::Mapping)DiagMap[Diag];
     }
   };
 
-  mutable std::vector<DiagMappings> DiagMappingsStack;
+  /// \brief Keeps and automatically disposes all DiagStates that we create.
+  std::list<DiagState> DiagStates;
+
+  /// \brief Represents a point in source where the diagnostic state was
+  /// modified because of a pragma. 'Loc' can be null if the point represents
+  /// the diagnostic state modifications done through the command-line.
+  struct DiagStatePoint {
+    DiagState *State;
+    FullSourceLoc Loc;
+    DiagStatePoint(DiagState *State, FullSourceLoc Loc)
+      : State(State), Loc(Loc) { } 
+    
+    bool operator<(const DiagStatePoint &RHS) const {
+      // If Loc is invalid it means it came from <command-line>, in which case
+      // we regard it as coming before any valid source location.
+      if (RHS.Loc.isInvalid())
+        return false;
+      if (Loc.isInvalid())
+        return true;
+      return Loc.isBeforeInTranslationUnitThan(RHS.Loc);
+    }
+  };
+
+  /// \brief A vector of all DiagStatePoints representing changes in diagnostic
+  /// state due to diagnostic pragmas. The vector is always sorted according to
+  /// the SourceLocation of the DiagStatePoint.
+  typedef std::vector<DiagStatePoint> DiagStatePointsTy;
+  mutable DiagStatePointsTy DiagStatePoints;
+
+  /// \brief Keeps the DiagState that was active during each diagnostic 'push'
+  /// so we can get back at it when we 'pop'.
+  std::vector<DiagState *> DiagStateOnPushStack;
+
+  DiagState *GetCurDiagState() const {
+    assert(!DiagStatePoints.empty());
+    return DiagStatePoints.back().State;
+  }
+
+  void PushDiagStatePoint(DiagState *State, SourceLocation L) {
+    FullSourceLoc Loc(L, *SourceMgr);
+    // Make sure that DiagStatePoints is always sorted according to Loc.
+    assert((Loc.isValid() || DiagStatePoints.empty()) &&
+           "Adding invalid loc point after another point");
+    assert((Loc.isInvalid() || DiagStatePoints.empty() ||
+            DiagStatePoints.back().Loc.isInvalid() ||
+            DiagStatePoints.back().Loc.isBeforeInTranslationUnitThan(Loc)) &&
+           "Previous point loc comes after or is the same as new one");
+    DiagStatePoints.push_back(DiagStatePoint(State,
+                                             FullSourceLoc(Loc, *SourceMgr)));
+  }
+
+  /// \brief Finds the DiagStatePoint that contains the diagnostic state of
+  /// the given source location.
+  DiagStatePointsTy::iterator GetDiagStatePointForLoc(SourceLocation Loc) const;
 
   /// ErrorOccurred / FatalErrorOccurred - This is set to true when an error or
   /// fatal error is emitted, and is sticky.
@@ -261,13 +315,13 @@ public:
 
   /// pushMappings - Copies the current DiagMappings and pushes the new copy
   /// onto the top of the stack.
-  void pushMappings();
+  void pushMappings(SourceLocation Loc);
 
   /// popMappings - Pops the current DiagMappings off the top of the stack
   /// causing the new top of the stack to be the active mappings. Returns
   /// true if the pop happens, false if there is only one DiagMapping on the
   /// stack.
-  bool popMappings();
+  bool popMappings(SourceLocation Loc);
 
   /// \brief Set the diagnostic client associated with this diagnostic object.
   ///
@@ -349,23 +403,24 @@ public:
   void DecrementAllExtensionsSilenced() { --AllExtensionsSilenced; }
   bool hasAllExtensionsSilenced() { return AllExtensionsSilenced != 0; }
 
-  /// setDiagnosticMapping - This allows the client to specify that certain
+  /// \brief This allows the client to specify that certain
   /// warnings are ignored.  Notes can never be mapped, errors can only be
   /// mapped to fatal, and WARNINGs and EXTENSIONs can be mapped arbitrarily.
-  void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
-    assert(Diag < diag::DIAG_UPPER_LIMIT &&
-           "Can only map builtin diagnostics");
-    assert((Diags->isBuiltinWarningOrExtension(Diag) ||
-            (Map == diag::MAP_FATAL || Map == diag::MAP_ERROR)) &&
-           "Cannot map errors into warnings!");
-    setDiagnosticMappingInternal(Diag, Map, true);
-  }
+  ///
+  /// \param Loc The source location that this change of diagnostic state should
+  /// take affect. It can be null if we are setting the latest state.
+  void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
+                            SourceLocation Loc);
 
   /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
   /// "unknown-pragmas" to have the specified mapping.  This returns true and
   /// ignores the request if "Group" was unknown, false otherwise.
-  bool setDiagnosticGroupMapping(const char *Group, diag::Mapping Map) {
-    return Diags->setDiagnosticGroupMapping(Group, Map, *this);
+  ///
+  /// 'Loc' is the source location that this change of diagnostic state should
+  /// take affect. It can be null if we are setting the state from command-line.
+  bool setDiagnosticGroupMapping(const char *Group, diag::Mapping Map,
+                                 SourceLocation Loc = SourceLocation()) {
+    return Diags->setDiagnosticGroupMapping(Group, Map, Loc, *this);
   }
 
   bool hasErrorOccurred() const { return ErrorOccurred; }
@@ -408,11 +463,14 @@ public:
   // Diagnostic classification and reporting interfaces.
   //
 
-  /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
+  /// \brief Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
-  Level getDiagnosticLevel(unsigned DiagID) const {
-    return (Level)Diags->getDiagnosticLevel(DiagID, *this);
+  ///
+  /// \param Loc The source location we are interested in finding out the
+  /// diagnostic state. Can be null in order to query the latest state.
+  Level getDiagnosticLevel(unsigned DiagID, SourceLocation Loc) const {
+    return (Level)Diags->getDiagnosticLevel(DiagID, Loc, *this);
   }
 
   /// Report - Issue the message to the client.  @c DiagID is a member of the
@@ -461,14 +519,15 @@ private:
   /// getDiagnosticMappingInfo - Return the mapping info currently set for the
   /// specified builtin diagnostic.  This returns the high bit encoding, or zero
   /// if the field is completely uninitialized.
-  diag::Mapping getDiagnosticMappingInfo(diag::kind Diag) const {
-    return DiagMappingsStack.back().getMapping(Diag);
+  diag::Mapping getDiagnosticMappingInfo(diag::kind Diag,
+                                         DiagState *State) const {
+    return State->getMapping(Diag);
   }
 
   void setDiagnosticMappingInternal(unsigned DiagId, unsigned Map,
-                                    bool isUser) const {
+                                    DiagState *State, bool isUser) const {
     if (isUser) Map |= 8;  // Set the high bit for user mappings.
-    DiagMappingsStack.back().setMapping((diag::kind)DiagId, Map);
+    State->setMapping((diag::kind)DiagId, Map);
   }
 
   // This is private state used by DiagnosticBuilder.  We put it here instead of

@@ -282,32 +282,42 @@ const char *DiagnosticIDs::getDescription(unsigned DiagID) const {
 /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
 /// object, classify the specified diagnostic ID into a Level, consumable by
 /// the DiagnosticClient.
-DiagnosticIDs::Level DiagnosticIDs::getDiagnosticLevel(unsigned DiagID,
-                                        const Diagnostic &Diag) const {
+DiagnosticIDs::Level
+DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
+                                  const Diagnostic &Diag) const {
   // Handle custom diagnostics, which cannot be mapped.
   if (DiagID >= diag::DIAG_UPPER_LIMIT)
     return CustomDiagInfo->getLevel(DiagID);
 
   unsigned DiagClass = getBuiltinDiagClass(DiagID);
   assert(DiagClass != CLASS_NOTE && "Cannot get diagnostic level of a note!");
-  return getDiagnosticLevel(DiagID, DiagClass, Diag);
+  return getDiagnosticLevel(DiagID, DiagClass, Loc, Diag);
 }
 
-/// getDiagnosticLevel - Based on the way the client configured the Diagnostic
+/// \brief Based on the way the client configured the Diagnostic
 /// object, classify the specified diagnostic ID into a Level, consumable by
 /// the DiagnosticClient.
+///
+/// \param Loc The source location we are interested in finding out the
+/// diagnostic state. Can be null in order to query the latest state.
 DiagnosticIDs::Level
 DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
-                               const Diagnostic &Diag) const {
+                                  SourceLocation Loc,
+                                  const Diagnostic &Diag) const {
   // Specific non-error diagnostics may be mapped to various levels from ignored
   // to error.  Errors can only be mapped to fatal.
   DiagnosticIDs::Level Result = DiagnosticIDs::Fatal;
 
+  Diagnostic::DiagStatePointsTy::iterator
+    Pos = Diag.GetDiagStatePointForLoc(Loc);
+  Diagnostic::DiagState *State = Pos->State;
+
   // Get the mapping information, if unset, compute it lazily.
-  unsigned MappingInfo = Diag.getDiagnosticMappingInfo((diag::kind)DiagID);
+  unsigned MappingInfo = Diag.getDiagnosticMappingInfo((diag::kind)DiagID,
+                                                       State);
   if (MappingInfo == 0) {
     MappingInfo = GetDefaultDiagMapping(DiagID);
-    Diag.setDiagnosticMappingInternal(DiagID, MappingInfo, false);
+    Diag.setDiagnosticMappingInternal(DiagID, MappingInfo, State, false);
   }
 
   switch (MappingInfo & 7) {
@@ -404,17 +414,17 @@ static bool WarningOptionCompare(const WarningOption &LHS,
 }
 
 static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
-                            Diagnostic &Diag) {
+                            SourceLocation Loc, Diagnostic &Diag) {
   // Option exists, poke all the members of its diagnostic set.
   if (const short *Member = Group->Members) {
     for (; *Member != -1; ++Member)
-      Diag.setDiagnosticMapping(*Member, Mapping);
+      Diag.setDiagnosticMapping(*Member, Mapping, Loc);
   }
 
   // Enable/disable all subgroups along with this one.
   if (const short *SubGroups = Group->SubGroups) {
     for (; *SubGroups != (short)-1; ++SubGroups)
-      MapGroupMembers(&OptionTable[(short)*SubGroups], Mapping, Diag);
+      MapGroupMembers(&OptionTable[(short)*SubGroups], Mapping, Loc, Diag);
   }
 }
 
@@ -423,7 +433,18 @@ static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
 /// ignores the request if "Group" was unknown, false otherwise.
 bool DiagnosticIDs::setDiagnosticGroupMapping(const char *Group,
                                            diag::Mapping Map,
+                                           SourceLocation Loc,
                                            Diagnostic &Diag) const {
+  assert((Loc.isValid() ||
+          Diag.DiagStatePoints.empty() ||
+          Diag.DiagStatePoints.back().Loc.isInvalid()) &&
+         "Loc should be invalid only when the mapping comes from command-line");
+  assert((Loc.isInvalid() || Diag.DiagStatePoints.empty() ||
+          Diag.DiagStatePoints.back().Loc.isInvalid() ||
+          !Diag.SourceMgr->isBeforeInTranslationUnit(Loc,
+                                            Diag.DiagStatePoints.back().Loc)) &&
+         "Source location of new mapping is before the previous one!");
+
   WarningOption Key = { Group, 0, 0 };
   const WarningOption *Found =
   std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
@@ -432,7 +453,7 @@ bool DiagnosticIDs::setDiagnosticGroupMapping(const char *Group,
       strcmp(Found->Name, Group) != 0)
     return true;  // Option not found.
 
-  MapGroupMembers(Found, Map, Diag);
+  MapGroupMembers(Found, Map, Loc, Diag);
   return false;
 }
 
@@ -475,7 +496,8 @@ bool DiagnosticIDs::ProcessDiag(Diagnostic &Diag) const {
       // *map* warnings/extensions to errors.
       ShouldEmitInSystemHeader = DiagClass == CLASS_ERROR;
 
-      DiagLevel = getDiagnosticLevel(DiagID, DiagClass, Diag);
+      DiagLevel = getDiagnosticLevel(DiagID, DiagClass, Info.getLocation(),
+                                     Diag);
     }
   }
 

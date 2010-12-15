@@ -809,7 +809,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
       << Context.BuiltinInfo.GetName(BID)
       << R;
     if (Context.BuiltinInfo.getHeaderName(BID) &&
-        Diags.getDiagnosticLevel(diag::ext_implicit_lib_function_decl)
+        Diags.getDiagnosticLevel(diag::ext_implicit_lib_function_decl, Loc)
           != Diagnostic::Ignored)
       Diag(Loc, diag::note_please_include_header)
         << Context.BuiltinInfo.getHeaderName(BID)
@@ -3081,7 +3081,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 ///
 void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
   // Return if warning is ignored.
-  if (Diags.getDiagnosticLevel(diag::warn_decl_shadow) == Diagnostic::Ignored)
+  if (Diags.getDiagnosticLevel(diag::warn_decl_shadow, R.getNameLoc()) ==
+        Diagnostic::Ignored)
     return;
 
   // Don't diagnose declarations at file scope.  The scope might not
@@ -3135,6 +3136,10 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
 
 /// \brief Check -Wshadow without the advantage of a previous lookup.
 void Sema::CheckShadow(Scope *S, VarDecl *D) {
+  if (Diags.getDiagnosticLevel(diag::warn_decl_shadow, D->getLocation()) ==
+        Diagnostic::Ignored)
+    return;
+
   LookupResult R(*this, D->getDeclName(), D->getLocation(),
                  Sema::LookupOrdinaryName, Sema::ForRedeclaration);
   LookupName(R, S);
@@ -5014,10 +5019,6 @@ ParmVarDecl *Sema::BuildParmVarDeclForTypedef(DeclContext *DC,
 
 void Sema::DiagnoseUnusedParameters(ParmVarDecl * const *Param,
                                     ParmVarDecl * const *ParamEnd) {
-  if (Diags.getDiagnosticLevel(diag::warn_unused_parameter) ==
-        Diagnostic::Ignored)
-    return;
-
   // Don't diagnose unused-parameter errors in template instantiations; we
   // will already have done so in the template itself.
   if (!ActiveTemplateInstantiations.empty())
@@ -5047,9 +5048,6 @@ void Sema::DiagnoseSizeOfParametersAndReturnValue(ParmVarDecl * const *Param,
       Diag(D->getLocation(), diag::warn_return_value_size)
           << D->getDeclName() << Size;
   }
-
-  if (Diags.getDiagnosticLevel(diag::warn_parameter_size)==Diagnostic::Ignored)
-    return;
 
   // Warn if any parameter is pass-by-value and larger than the specified
   // threshold.
@@ -5255,9 +5253,6 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   CheckParmsForFunctionDef(FD->param_begin(), FD->param_end(),
                            /*CheckParameterNames=*/true);
 
-  bool ShouldCheckShadow =
-    Diags.getDiagnosticLevel(diag::warn_decl_shadow) != Diagnostic::Ignored;
-
   // Introduce our parameters into the function scope
   for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
@@ -5265,8 +5260,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
 
     // If this has an identifier, add it to the scope stack.
     if (Param->getIdentifier() && FnBodyScope) {
-      if (ShouldCheckShadow)
-        CheckShadow(FnBodyScope, Param);
+      CheckShadow(FnBodyScope, Param);
 
       PushOnScopeChains(Param, FnBodyScope);
     }

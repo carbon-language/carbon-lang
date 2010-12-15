@@ -1504,11 +1504,6 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     }
   }
 
-  // If this is the primary source file, remember that this macro hasn't been
-  // used yet.
-  if (isInPrimaryFile())
-    MI->setIsUsed(false);
-
   MI->setDefinitionEndLoc(LastTok.getLocation());
 
   // Finally, if this identifier already had a macro defined for it, verify that
@@ -1535,6 +1530,16 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   }
 
   setMacroInfo(MacroNameTok.getIdentifierInfo(), MI);
+
+  assert(!MI->isUsed());
+  // If we need warning for not using the macro, add its location in the
+  // warn-because-unused-macro set. If it gets used it will be removed from set.
+  if (isInPrimaryFile() && // don't warn for include'd macros.
+      Diags->getDiagnosticLevel(diag::pp_macro_not_used,
+                               MI->getDefinitionLoc()) != Diagnostic::Ignored) {
+    MI->setIsWarnIfUnused(true);
+    WarnUnusedMacroLocs.insert(MI->getDefinitionLoc());
+  }
 
   // If the callbacks want to know, tell them about the macro definition.
   if (Callbacks)
@@ -1568,6 +1573,9 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   // If the callbacks want to know, tell them about the macro #undef.
   if (Callbacks)
     Callbacks->MacroUndefined(MacroNameTok, MI);
+
+  if (MI->isWarnIfUnused())
+    WarnUnusedMacroLocs.erase(MI->getDefinitionLoc());
 
   // Free macro definition.
   ReleaseMacroInfo(MI);
@@ -1621,7 +1629,7 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
 
   // If there is a macro, process it.
   if (MI)  // Mark it used.
-    MI->setIsUsed(true);
+    markMacroAsUsed(MI);
 
   // Should we include the stuff contained by this directive?
   if (!MI == isIfndef) {

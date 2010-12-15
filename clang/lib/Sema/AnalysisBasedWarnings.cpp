@@ -216,9 +216,11 @@ struct CheckFallThroughDiagnostics {
   unsigned diag_AlwaysFallThrough_ReturnsNonVoid;
   unsigned diag_NeverFallThroughOrReturn;
   bool funMode;
+  SourceLocation FuncLoc;
 
   static CheckFallThroughDiagnostics MakeForFunction(const Decl *Func) {
     CheckFallThroughDiagnostics D;
+    D.FuncLoc = Func->getLocation();
     D.diag_MaybeFallThrough_HasNoReturn =
       diag::warn_falloff_noreturn_function;
     D.diag_MaybeFallThrough_ReturnsNonVoid =
@@ -263,18 +265,22 @@ struct CheckFallThroughDiagnostics {
   bool checkDiagnostics(Diagnostic &D, bool ReturnsVoid,
                         bool HasNoReturn) const {
     if (funMode) {
-      return (D.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function)
-              == Diagnostic::Ignored || ReturnsVoid)
-        && (D.getDiagnosticLevel(diag::warn_noreturn_function_has_return_expr)
-              == Diagnostic::Ignored || !HasNoReturn)
-        && (D.getDiagnosticLevel(diag::warn_suggest_noreturn_block)
-              == Diagnostic::Ignored || !ReturnsVoid);
+      return (ReturnsVoid ||
+              D.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function,
+                                   FuncLoc) == Diagnostic::Ignored)
+        && (!HasNoReturn ||
+            D.getDiagnosticLevel(diag::warn_noreturn_function_has_return_expr,
+                                 FuncLoc) == Diagnostic::Ignored)
+        && (!ReturnsVoid ||
+            D.getDiagnosticLevel(diag::warn_suggest_noreturn_block, FuncLoc)
+              == Diagnostic::Ignored);
     }
 
     // For blocks.
     return  ReturnsVoid && !HasNoReturn
-            && (D.getDiagnosticLevel(diag::warn_suggest_noreturn_block)
-                == Diagnostic::Ignored || !ReturnsVoid);
+            && (!ReturnsVoid ||
+                D.getDiagnosticLevel(diag::warn_suggest_noreturn_block, FuncLoc)
+                  == Diagnostic::Ignored);
   }
 };
 
@@ -363,7 +369,8 @@ clang::sema::AnalysisBasedWarnings::Policy::Policy() {
 clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s) : S(s) {
   Diagnostic &D = S.getDiagnostics();
   DefaultPolicy.enableCheckUnreachable = (unsigned)
-    (D.getDiagnosticLevel(diag::warn_unreachable) != Diagnostic::Ignored);
+    (D.getDiagnosticLevel(diag::warn_unreachable, SourceLocation()) !=
+        Diagnostic::Ignored);
 }
 
 void clang::sema::

@@ -969,7 +969,8 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
             IDecl->lookupInstanceMethod(method->getSelector());
             if (!MethodInClass || !MethodInClass->isSynthesized()) {
               unsigned DIAG = diag::warn_unimplemented_protocol_method;
-              if (Diags.getDiagnosticLevel(DIAG) != Diagnostic::Ignored) {
+              if (Diags.getDiagnosticLevel(DIAG, ImpLoc)
+                      != Diagnostic::Ignored) {
                 WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
                 Diag(method->getLocation(), diag::note_method_declared_at);
                 Diag(CDecl->getLocation(), diag::note_required_for_protocol_at)
@@ -987,7 +988,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
         !ClsMap.count(method->getSelector()) &&
         (!Super || !Super->lookupClassMethod(method->getSelector()))) {
       unsigned DIAG = diag::warn_unimplemented_protocol_method;
-      if (Diags.getDiagnosticLevel(DIAG) != Diagnostic::Ignored) {
+      if (Diags.getDiagnosticLevel(DIAG, ImpLoc) != Diagnostic::Ignored) {
         WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
         Diag(method->getLocation(), diag::note_method_declared_at);
         Diag(IDecl->getLocation(), diag::note_required_for_protocol_at) <<
@@ -1325,7 +1326,8 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
   ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
 
   bool strictSelectorMatch = receiverIdOrClass && warn &&
-    (Diags.getDiagnosticLevel(diag::warn_strict_multiple_method_decl) != 
+    (Diags.getDiagnosticLevel(diag::warn_strict_multiple_method_decl,
+                              R.getBegin()) != 
       Diagnostic::Ignored);
   if (warn && MethList.Method && MethList.Next) {
     bool issueWarning = false;

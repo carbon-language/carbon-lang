@@ -110,6 +110,11 @@ bool FullSourceLoc::isInSystemHeader() const {
   return SrcMgr->isInSystemHeader(*this);
 }
 
+bool FullSourceLoc::isBeforeInTranslationUnitThan(SourceLocation Loc) const {
+  assert(isValid());
+  return SrcMgr->isBeforeInTranslationUnit(*this, Loc);
+}
+
 const char *FullSourceLoc::getCharacterData(bool *Invalid) const {
   assert(isValid());
   return SrcMgr->getCharacterData(*this, Invalid);

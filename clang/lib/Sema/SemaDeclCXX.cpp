@@ -1991,8 +1991,19 @@ DiagnoseBaseOrMemInitializerOrder(Sema &SemaRef,
   if (Constructor->getDeclContext()->isDependentContext())
     return;
 
-  if (SemaRef.Diags.getDiagnosticLevel(diag::warn_initializer_out_of_order)
-        == Diagnostic::Ignored)
+  // Don't check initializers order unless the warning is enabled at the
+  // location of at least one initializer. 
+  bool ShouldCheckOrder = false;
+  for (unsigned InitIndex = 0; InitIndex != NumInits; ++InitIndex) {
+    CXXBaseOrMemberInitializer *Init = Inits[InitIndex];
+    if (SemaRef.Diags.getDiagnosticLevel(diag::warn_initializer_out_of_order,
+                                         Init->getSourceLocation())
+          != Diagnostic::Ignored) {
+      ShouldCheckOrder = true;
+      break;
+    }
+  }
+  if (!ShouldCheckOrder)
     return;
   
   // Build the list of bases and members in the order that they'll

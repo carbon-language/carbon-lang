@@ -2863,11 +2863,12 @@ void CheckConditionalOperator(Sema &S, ConditionalOperator *E, QualType T) {
   if (!Suspicious) return;
 
   // ...but it's currently ignored...
-  if (S.Diags.getDiagnosticLevel(diag::warn_impcast_integer_sign_conditional))
+  if (S.Diags.getDiagnosticLevel(diag::warn_impcast_integer_sign_conditional,
+                                 CC))
     return;
 
   // ...and -Wsign-compare isn't...
-  if (!S.Diags.getDiagnosticLevel(diag::warn_mixed_sign_conditional))
+  if (!S.Diags.getDiagnosticLevel(diag::warn_mixed_sign_conditional, CC))
     return;
 
   // ...then check whether it would have warned about either of the
@@ -3028,7 +3029,8 @@ bool Sema::CheckParmsForFunctionDef(ParmVarDecl **P, ParmVarDecl **PEnd,
 void Sema::CheckCastAlign(Expr *Op, QualType T, SourceRange TRange) {
   // This is actually a lot of work to potentially be doing on every
   // cast; don't do it if we're ignoring -Wcast_align (as is the default).
-  if (getDiagnostics().getDiagnosticLevel(diag::warn_cast_align)
+  if (getDiagnostics().getDiagnosticLevel(diag::warn_cast_align,
+                                          TRange.getBegin())
         == Diagnostic::Ignored)
     return;
 

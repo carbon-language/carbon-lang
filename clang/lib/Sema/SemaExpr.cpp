@@ -8336,17 +8336,13 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   if (Params.empty())
     return;
 
-  bool ShouldCheckShadow =
-    Diags.getDiagnosticLevel(diag::warn_decl_shadow) != Diagnostic::Ignored;
-
   for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
          E = CurBlock->TheDecl->param_end(); AI != E; ++AI) {
     (*AI)->setOwningFunction(CurBlock->TheDecl);
 
     // If this has an identifier, add it to the scope stack.
     if ((*AI)->getIdentifier()) {
-      if (ShouldCheckShadow)
-        CheckShadow(CurBlock->TheScope, *AI);
+      CheckShadow(CurBlock->TheScope, *AI);
 
       PushOnScopeChains(*AI, CurBlock->TheScope);
     }
@@ -8670,7 +8666,8 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
     E->getSourceRange();
 
   if (EvalResult.Diag &&
-      Diags.getDiagnosticLevel(diag::ext_expr_not_ice) != Diagnostic::Ignored)
+      Diags.getDiagnosticLevel(diag::ext_expr_not_ice, EvalResult.DiagLoc)
+          != Diagnostic::Ignored)
     Diag(EvalResult.DiagLoc, EvalResult.Diag);
 
   if (Result)

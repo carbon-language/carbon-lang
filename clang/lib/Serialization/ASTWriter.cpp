@@ -1460,7 +1460,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
 void ASTWriter::WriteUserDiagnosticMappings(const Diagnostic &Diag) {
   RecordData Record;
   for (unsigned i = 0; i != diag::DIAG_UPPER_LIMIT; ++i) {
-    diag::Mapping Map = Diag.getDiagnosticMappingInfo(i);
+    diag::Mapping Map = Diag.getDiagnosticMappingInfo(i,Diag.GetCurDiagState());
     if (Map & 0x8) { // user mapping.
       Record.push_back(i);
       Record.push_back(Map & 0x7);

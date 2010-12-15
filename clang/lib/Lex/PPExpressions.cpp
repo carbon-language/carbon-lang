@@ -112,7 +112,7 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   // If there is a macro, mark it used.
   if (Result.Val != 0 && ValueLive) {
     MacroInfo *Macro = PP.getMacroInfo(II);
-    Macro->setIsUsed(true);
+    PP.markMacroAsUsed(Macro);
   }
 
   // Consume identifier.

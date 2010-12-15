@@ -82,6 +82,9 @@ private:
   /// AllowRedefinitionsWithoutWarning - True if this macro can be redefined
   /// without emitting a warning.
   bool IsAllowRedefinitionsWithoutWarning : 1;
+
+  /// \brief Must warn if the macro is unused at the end of translation unit.
+  bool IsWarnIfUnused : 1;
    
    ~MacroInfo() {
     assert(ArgumentList == 0 && "Didn't call destroy before dtor!");
@@ -136,6 +139,11 @@ public:
   /// IsAllowRedefinitionsWithoutWarning flag.
   void setIsAllowRedefinitionsWithoutWarning(bool Val) {
     IsAllowRedefinitionsWithoutWarning = Val;
+  }
+
+  /// \brief Set the value of the IsWarnIfUnused flag.
+  void setIsWarnIfUnused(bool val) {
+    IsWarnIfUnused = val;
   }
 
   /// setArgumentList - Set the specified list of identifiers as the argument
@@ -199,6 +207,11 @@ public:
   /// redefined without warning.
   bool isAllowRedefinitionsWithoutWarning() const {
     return IsAllowRedefinitionsWithoutWarning;
+  }
+
+  /// \brief Return true if we should emit a warning if the macro is unused.
+  bool isWarnIfUnused() const {
+    return IsWarnIfUnused;
   }
 
   /// getNumTokens - Return the number of tokens that this macro expands to.

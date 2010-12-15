@@ -19,6 +19,7 @@
 
 namespace clang {
   class Diagnostic;
+  class SourceLocation;
 
   // Import the diagnostic enums themselves.
   namespace diag {
@@ -174,18 +175,22 @@ private:
   /// "unknown-pragmas" to have the specified mapping.  This returns true and
   /// ignores the request if "Group" was unknown, false otherwise.
   bool setDiagnosticGroupMapping(const char *Group, diag::Mapping Map,
-                                 Diagnostic &Diag) const;
+                                 SourceLocation Loc, Diagnostic &Diag) const;
 
-  /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
+  /// \brief Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
-  DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID,
+  ///
+  /// \param Loc The source location we are interested in finding out the
+  /// diagnostic state. Can be null in order to query the latest state.
+  DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
                                           const Diagnostic &Diag) const;
 
   /// getDiagnosticLevel - This is an internal implementation helper used when
   /// DiagClass is already known.
   DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID,
                                           unsigned DiagClass,
+                                          SourceLocation Loc,
                                           const Diagnostic &Diag) const;
 
   /// ProcessDiag - This is the method used to report a diagnostic that is

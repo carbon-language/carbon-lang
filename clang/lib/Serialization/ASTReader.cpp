@@ -2670,7 +2670,8 @@ void ASTReader::ReadUserDiagnosticMappings(Diagnostic &Diag) {
   while (Idx < UserDiagMappings.size()) {
     unsigned DiagID = UserDiagMappings[Idx++];
     unsigned Map = UserDiagMappings[Idx++];
-    Diag.setDiagnosticMappingInternal(DiagID, Map, /*isUser=*/true);
+    Diag.setDiagnosticMappingInternal(DiagID, Map, Diag.GetCurDiagState(),
+                                      /*isUser=*/true);
   }
 }
 

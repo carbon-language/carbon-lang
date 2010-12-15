@@ -250,15 +250,11 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
 
   CurPPLexer = 0;
 
-  // This is the end of the top-level file.  If the diag::pp_macro_not_used
-  // diagnostic is enabled, look for macros that have not been used.
-  if (getDiagnostics().getDiagnosticLevel(diag::pp_macro_not_used) !=
-        Diagnostic::Ignored) {
-    for (macro_iterator I = macro_begin(false), E = macro_end(false); 
-         I != E; ++I)
-      if (!I->second->isUsed())
-        Diag(I->second->getDefinitionLoc(), diag::pp_macro_not_used);
-  }
+  // This is the end of the top-level file. 'WarnUnusedMacroLocs' has collected
+  // all macro locations that we need to warn because they are not used.
+  for (WarnUnusedMacroLocsTy::iterator
+         I=WarnUnusedMacroLocs.begin(), E=WarnUnusedMacroLocs.end(); I!=E; ++I)
+    Diag(*I, diag::pp_macro_not_used);
 
   return true;
 }

@@ -223,7 +223,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   }
 
   // Notice that this macro has been used.
-  MI->setIsUsed(true);
+  markMacroAsUsed(MI);
 
   // If we started lexing a macro, enter the macro expansion body.
 
@@ -868,4 +868,12 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     assert(0 && "Unknown identifier!");
   }
   CreateString(OS.str().data(), OS.str().size(), Tok, Tok.getLocation());
+}
+
+void Preprocessor::markMacroAsUsed(MacroInfo *MI) {
+  // If the 'used' status changed, and the macro requires 'unused' warning,
+  // remove its SourceLocation from the warn-for-unused-macro locations.
+  if (MI->isWarnIfUnused() && !MI->isUsed())
+    WarnUnusedMacroLocs.erase(MI->getDefinitionLoc());
+  MI->setIsUsed(true);
 }
