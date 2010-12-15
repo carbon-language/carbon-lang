@@ -829,30 +829,31 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
     // list, and remove it from DeferredDecls (since we don't need it anymore).
     DeferredDeclsToEmit.push_back(DDI->second);
     DeferredDecls.erase(DDI);
-  } else if (const FunctionDecl *FD = cast_or_null<FunctionDecl>(D.getDecl())) {
-    // If this the first reference to a C++ inline function in a class, queue up
-    // the deferred function body for emission.  These are not seen as
-    // top-level declarations.
-    if (FD->isThisDeclarationADefinition() && MayDeferGeneration(FD)) {
-      DeferredDeclsToEmit.push_back(D);
-    // A called constructor which has no definition or declaration need be
-    // synthesized.
-    } else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-      if (CD->isImplicit()) {
-        assert(CD->isUsed() && "Sema doesn't consider constructor as used.");
-        DeferredDeclsToEmit.push_back(D);
+
+  // Otherwise, there are cases we have to worry about where we're
+  // using a declaration for which we must emit a definition but where
+  // we might not find a top-level definition:
+  //   - member functions defined inline in their classes
+  //   - friend functions defined inline in some class
+  //   - special member functions with implicit definitions
+  // If we ever change our AST traversal to walk into class methods,
+  // this will be unnecessary.
+  } else if (getLangOptions().CPlusPlus && D.getDecl()) {
+    // Look for a declaration that's lexically in a record.
+    const FunctionDecl *FD = cast<FunctionDecl>(D.getDecl());
+    do {
+      if (isa<CXXRecordDecl>(FD->getLexicalDeclContext())) {
+        if (FD->isImplicit()) {
+          assert(FD->isUsed() && "Sema didn't mark implicit function as used!");
+          DeferredDeclsToEmit.push_back(D);
+          break;
+        } else if (FD->isThisDeclarationADefinition()) {
+          DeferredDeclsToEmit.push_back(D);
+          break;
+        }
       }
-    } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
-      if (DD->isImplicit()) {
-        assert(DD->isUsed() && "Sema doesn't consider destructor as used.");
-        DeferredDeclsToEmit.push_back(D);
-      }
-    } else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      if (MD->isImplicit() && MD->isCopyAssignmentOperator()) {
-        assert(MD->isUsed() && "Sema doesn't consider CopyAssignment as used.");
-        DeferredDeclsToEmit.push_back(D);
-      }
-    }
+      FD = FD->getPreviousDeclaration();
+    } while (FD);
   }
 
   // Make sure the result is of the requested type.

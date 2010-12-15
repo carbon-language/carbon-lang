@@ -3735,6 +3735,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       NewFD->setAccess(AS_public);
     }
 
+    if (isa<CXXMethodDecl>(NewFD) && DC == CurContext && IsFunctionDefinition) {
+      // A method is implicitly inline if it's defined in its class
+      // definition.
+      NewFD->setImplicitlyInline();
+    }
+
     if (SC == SC_Static && isa<CXXMethodDecl>(NewFD) &&
         !CurContext->isRecord()) {
       // C++ [class.static]p1:
