@@ -441,7 +441,7 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
 
   // A ^ undef -> undef
   if (isa<UndefValue>(Op1))
-    return UndefValue::get(Op0->getType());
+    return Op1;
 
   // A ^ 0 = A
   if (match(Op1, m_Zero()))
@@ -868,8 +868,8 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
 
   /// If called on unreachable code, the above logic may report that the
   /// instruction simplified to itself.  Make life easier for users by
-  /// detecting that case here, returning null if it occurs.
-  return Result == I ? 0 : Result;
+  /// detecting that case here, returning a safe value instead.
+  return Result == I ? UndefValue::get(I->getType()) : Result;
 }
 
 /// ReplaceAndSimplifyAllUses - Perform From->replaceAllUsesWith(To) and then
