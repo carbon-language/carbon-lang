@@ -1655,27 +1655,27 @@ DEF_TRAVERSE_STMT(ImplicitCastExpr, {
   })
 
 DEF_TRAVERSE_STMT(CStyleCastExpr, {
-    TRY_TO(TraverseType(S->getTypeAsWritten()));
+    TRY_TO(TraverseTypeLoc(S->getTypeInfoAsWritten()->getTypeLoc()));
   })
 
 DEF_TRAVERSE_STMT(CXXFunctionalCastExpr, {
-    TRY_TO(TraverseType(S->getTypeAsWritten()));
+    TRY_TO(TraverseTypeLoc(S->getTypeInfoAsWritten()->getTypeLoc()));
   })
 
 DEF_TRAVERSE_STMT(CXXConstCastExpr, {
-    TRY_TO(TraverseType(S->getTypeAsWritten()));
+    TRY_TO(TraverseTypeLoc(S->getTypeInfoAsWritten()->getTypeLoc()));
   })
 
 DEF_TRAVERSE_STMT(CXXDynamicCastExpr, {
-    TRY_TO(TraverseType(S->getTypeAsWritten()));
+    TRY_TO(TraverseTypeLoc(S->getTypeInfoAsWritten()->getTypeLoc()));
   })
 
 DEF_TRAVERSE_STMT(CXXReinterpretCastExpr, {
-    TRY_TO(TraverseType(S->getTypeAsWritten()));
+    TRY_TO(TraverseTypeLoc(S->getTypeInfoAsWritten()->getTypeLoc()));
   })
 
 DEF_TRAVERSE_STMT(CXXStaticCastExpr, {
-    TRY_TO(TraverseType(S->getTypeAsWritten()));
+    TRY_TO(TraverseTypeLoc(S->getTypeInfoAsWritten()->getTypeLoc()));
   })
 
 // InitListExpr is a tricky one, because we want to do all our work on
