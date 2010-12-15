@@ -1213,10 +1213,11 @@ void NeonEmitter::emitIntrinsic(raw_ostream &OS, Record *R) {
   OS << "\n";
 }
 
-static unsigned RangeFromType(StringRef typestr) {
+static unsigned RangeFromType(const char mod, StringRef typestr) {
   // base type to get the type string for.
   bool quad = false, dummy = false;
   char type = ClassifyType(typestr, quad, dummy, dummy);
+  type = ModType(mod, type, quad, dummy, dummy, dummy, dummy, dummy);
 
   switch (type) {
     case 'c':
@@ -1359,7 +1360,8 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
 
     // Functions which do not have an immediate do not need to have range
     // checking code emitted.
-    if (Proto.find('i') == std::string::npos)
+    size_t immPos = Proto.find('i');
+    if (immPos == std::string::npos)
       continue;
 
     SmallVector<StringRef, 16> TypeVec;
@@ -1386,7 +1388,9 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
         }
         rangestr += "u = RFT(TV" + shiftstr + ")";
       } else {
-        rangestr = "u = " + utostr(RangeFromType(TypeVec[ti]));
+        // The immediate generally refers to a lane in the preceding argument.
+        assert(immPos > 0 && "unexpected immediate operand");
+        rangestr = "u = " + utostr(RangeFromType(Proto[immPos-1], TypeVec[ti]));
       }
       // Make sure cases appear only once by uniquing them in a string map.
       namestr = MangleName(name, TypeVec[ti], ck);
