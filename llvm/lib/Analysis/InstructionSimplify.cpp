@@ -242,17 +242,25 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     std::swap(Op0, Op1);
   }
 
-  if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
-    // X + undef -> undef
-    if (isa<UndefValue>(Op1C))
-      return Op1C;
+  // X + undef -> undef
+  if (isa<UndefValue>(Op1))
+    return Op1;
 
-    // X + 0 --> X
-    if (Op1C->isNullValue())
-      return Op0;
-  }
+  // X + 0 -> X
+  if (match(Op1, m_Zero()))
+    return Op0;
 
-  // FIXME: Could pull several more out of instcombine.
+  // X + (Y - X) -> Y
+  // (Y - X) + X -> Y
+  Value *Y = 0;
+  if (match(Op1, m_Sub(m_Value(Y), m_Specific(Op0))) ||
+      match(Op0, m_Sub(m_Value(Y), m_Specific(Op1))))
+    return Y;
+
+  // X + ~X -> -1   since   ~X = -X-1
+  if (match(Op0, m_Not(m_Specific(Op1))) ||
+      match(Op1, m_Not(m_Specific(Op0))))
+    return Constant::getAllOnesValue(Op0->getType());
 
   // Threading Add over selects and phi nodes is pointless, so don't bother.
   // Threading over the select in "A + select(cond, B, C)" means evaluating
@@ -261,6 +269,49 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   // that operands have already been simplified) "select(cond, B, C)" should
   // have been simplified to the common value of B and C already.  Analysing
   // "A+B" and "A+C" thus gains nothing, but costs compile time.  Similarly
+  // for threading over phi nodes.
+
+  return 0;
+}
+
+/// SimplifySubInst - Given operands for a Sub, see if we can
+/// fold the result.  If not, this returns null.
+Value *llvm::SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
+                             const TargetData *TD, const DominatorTree *) {
+  if (Constant *CLHS = dyn_cast<Constant>(Op0))
+    if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
+      Constant *Ops[] = { CLHS, CRHS };
+      return ConstantFoldInstOperands(Instruction::Sub, CLHS->getType(),
+                                      Ops, 2, TD);
+    }
+
+  // X - undef -> undef
+  // undef - X -> undef
+  if (isa<UndefValue>(Op0) || isa<UndefValue>(Op1))
+    return UndefValue::get(Op0->getType());
+
+  // X - 0 -> X
+  if (match(Op1, m_Zero()))
+    return Op0;
+
+  // X - X -> 0
+  if (Op0 == Op1)
+    return Constant::getNullValue(Op0->getType());
+
+  // (X + Y) - Y -> X
+  // (Y + X) - Y -> X
+  Value *X = 0;
+  if (match(Op0, m_Add(m_Value(X), m_Specific(Op1))) ||
+      match(Op0, m_Add(m_Specific(Op1), m_Value(X))))
+    return X;
+
+  // Threading Sub over selects and phi nodes is pointless, so don't bother.
+  // Threading over the select in "A - select(cond, B, C)" means evaluating
+  // "A-B" and "A-C" and seeing if they are equal; but they are equal if and
+  // only if B and C are equal.  If B and C are equal then (since we assume
+  // that operands have already been simplified) "select(cond, B, C)" should
+  // have been simplified to the common value of B and C already.  Analysing
+  // "A-B" and "A-C" thus gains nothing, but costs compile time.  Similarly
   // for threading over phi nodes.
 
   return 0;
@@ -831,6 +882,12 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
     break;
   case Instruction::Add:
     Result = SimplifyAddInst(I->getOperand(0), I->getOperand(1),
+                             cast<BinaryOperator>(I)->hasNoSignedWrap(),
+                             cast<BinaryOperator>(I)->hasNoUnsignedWrap(),
+                             TD, DT);
+    break;
+  case Instruction::Sub:
+    Result = SimplifySubInst(I->getOperand(0), I->getOperand(1),
                              cast<BinaryOperator>(I)->hasNoSignedWrap(),
                              cast<BinaryOperator>(I)->hasNoUnsignedWrap(),
                              TD, DT);

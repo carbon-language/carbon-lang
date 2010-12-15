@@ -29,6 +29,11 @@ namespace llvm {
   Value *SimplifyAddInst(Value *LHS, Value *RHS, bool isNSW, bool isNUW,
                          const TargetData *TD = 0, const DominatorTree *DT = 0);
 
+  /// SimplifySubInst - Given operands for a Sub, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifySubInst(Value *LHS, Value *RHS, bool isNSW, bool isNUW,
+                         const TargetData *TD = 0, const DominatorTree *DT = 0);
+
   /// SimplifyAndInst - Given operands for an And, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyAndInst(Value *LHS, Value *RHS, const TargetData *TD = 0,

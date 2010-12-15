@@ -105,7 +105,7 @@ define i32 @test4(i8* %P) {
 ; CHECK: load i32* @G
 ; CHECK: memset.p0i8.i32
 ; CHECK-NOT: load
-; CHECK: sub i32 %tmp, %tmp
+; CHECK: ret i32 0
 }
 
 ; Verify that basicaa is handling variable length memcpy, knowing it doesn't
@@ -120,7 +120,7 @@ define i32 @test5(i8* %P, i32 %Len) {
 ; CHECK: load i32* @G
 ; CHECK: memcpy.p0i8.p0i8.i32
 ; CHECK-NOT: load
-; CHECK: sub i32 %tmp, %tmp
+; CHECK: ret i32 0
 }
 
 define i8 @test6(i8* %p, i8* noalias %a) {

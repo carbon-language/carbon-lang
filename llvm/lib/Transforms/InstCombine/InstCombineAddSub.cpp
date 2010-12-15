@@ -154,17 +154,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     // X + X --> X << 1
     if (LHS == RHS)
       return BinaryOperator::CreateShl(LHS, ConstantInt::get(I.getType(), 1));
-
-    if (Instruction *RHSI = dyn_cast<Instruction>(RHS)) {
-      if (RHSI->getOpcode() == Instruction::Sub)
-        if (LHS == RHSI->getOperand(1))                   // A + (B - A) --> B
-          return ReplaceInstUsesWith(I, RHSI->getOperand(0));
-    }
-    if (Instruction *LHSI = dyn_cast<Instruction>(LHS)) {
-      if (LHSI->getOpcode() == Instruction::Sub)
-        if (RHS == LHSI->getOperand(1))                   // (B - A) + A --> B
-          return ReplaceInstUsesWith(I, LHSI->getOperand(0));
-    }
   }
 
   // -A + B  -->  B - A
@@ -200,11 +189,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   // X + X*C --> X * (C+1)
   if (dyn_castFoldableMul(RHS, C2) == LHS)
     return BinaryOperator::CreateMul(LHS, AddOne(C2));
-
-  // X + ~X --> -1   since   ~X = -X-1
-  if (match(LHS, m_Not(m_Specific(RHS))) ||
-      match(RHS, m_Not(m_Specific(LHS))))
-    return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
 
   // A+B --> A|B iff A and B have no bits set in common.
   if (const IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
@@ -547,8 +531,9 @@ Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Op0 == Op1)                        // sub X, X  -> 0
-    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+  if (Value *V = SimplifySubInst(Op0, Op1, I.hasNoSignedWrap(),
+                                 I.hasNoUnsignedWrap(), TD))
+    return ReplaceInstUsesWith(I, V);
 
   if (Instruction *NV = SimplifyByFactorizing(I)) // (A*B)-(A*C) -> A*(B-C)
     return NV;
@@ -561,10 +546,6 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     return Res;
   }
 
-  if (isa<UndefValue>(Op0))
-    return ReplaceInstUsesWith(I, Op0);    // undef - X -> undef
-  if (isa<UndefValue>(Op1))
-    return ReplaceInstUsesWith(I, Op1);    // X - undef -> undef
   if (I.getType()->isIntegerTy(1))
     return BinaryOperator::CreateXor(Op0, Op1);
   
@@ -693,12 +674,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   }
 
   if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
-    if (Op0I->getOpcode() == Instruction::Add) {
-      if (Op0I->getOperand(0) == Op1)             // (Y+X)-Y == X
-        return ReplaceInstUsesWith(I, Op0I->getOperand(1));
-      else if (Op0I->getOperand(1) == Op1)        // (X+Y)-Y == X
-        return ReplaceInstUsesWith(I, Op0I->getOperand(0));
-    } else if (Op0I->getOpcode() == Instruction::Sub) {
+    if (Op0I->getOpcode() == Instruction::Sub) {
       if (Op0I->getOperand(0) == Op1)             // (X-Y)-X == -Y
         return BinaryOperator::CreateNeg(Op0I->getOperand(1),
                                          I.getName());
