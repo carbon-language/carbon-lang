@@ -330,11 +330,20 @@ ScriptInterpreterPython::InputReaderCallback
     if (baton == NULL)
         return 0;
 
+    FILE *out_fh = reader.GetDebugger().GetOutputFileHandle ();
+    if (out_fh == NULL)
+        out_fh = stdout;
+
     ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;            
     switch (notification)
     {
     case eInputReaderActivate:
         {
+            if (out_fh)
+            {
+                ::fprintf (out_fh, "Python Interactive Interpreter. To exit Python, type 'quit()' or 'exit()'.\n");
+                ::fprintf (out_fh, "Do NOT use Ctrl-D (EOF) to exit, as that will cause the lldb debugger to hang.\n");
+            }
             // Save terminal settings if we can
             int input_fd;
             FILE *input_fh = reader.GetDebugger().GetInputFileHandle();
