@@ -371,7 +371,7 @@ Process::ProcessInstanceSettings::GetHostEnvironmentIfNeeded ()
             const char *env_entry = host_env.GetStringAtIndex (idx);
             if (env_entry)
             {
-                char *equal_pos = ::strchr(env_entry, '=');
+                const char *equal_pos = ::strchr(env_entry, '=');
                 if (equal_pos)
                 {
                     std::string key (env_entry, equal_pos - env_entry);
