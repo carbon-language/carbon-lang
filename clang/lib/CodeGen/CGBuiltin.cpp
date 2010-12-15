@@ -1226,7 +1226,16 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vcnt, &Ty, 1);
     return EmitNeonCall(F, Ops, "vcnt");
   }
-  // FIXME: intrinsics for f16<->f32 convert missing from ARM target.
+  case ARM::BI__builtin_neon_vcvt_f16_v: {
+    assert((type & 0x7) == 7 && !quad && "unexpected vcvt_f16_v builtin");
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vcvtfp2hf);
+    return EmitNeonCall(F, Ops, "vcvt");
+  }
+  case ARM::BI__builtin_neon_vcvt_f32_f16: {
+    assert((type & 0x7) == 7 && !quad && "unexpected vcvt_f32_f16 builtin");
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vcvthf2fp);
+    return EmitNeonCall(F, Ops, "vcvt");
+  }
   case ARM::BI__builtin_neon_vcvt_f32_v:
   case ARM::BI__builtin_neon_vcvtq_f32_v: {
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
