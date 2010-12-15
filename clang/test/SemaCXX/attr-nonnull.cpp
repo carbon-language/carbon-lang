@@ -16,3 +16,14 @@ void test(S s) {
   s.g("", 0, ""); // expected-warning{{null passed}}
   s.g(0, "", 0);
 }
+
+namespace rdar8769025 {
+  __attribute__((nonnull)) void f0(int *&p);
+  __attribute__((nonnull)) void f1(int * const &p);
+  __attribute__((nonnull(2))) void f2(int i, int * const &p);
+
+  void test_f1() {
+    f1(0); // expected-warning{{null passed to a callee which requires a non-null argument}}
+    f2(0, 0); // expected-warning{{null passed to a callee which requires a non-null argument}}
+  }
+}

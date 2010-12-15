@@ -371,7 +371,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     }
 
     // Is the function argument a pointer type?
-    QualType T = getFunctionOrMethodArgType(d, x);
+    QualType T = getFunctionOrMethodArgType(d, x).getNonReferenceType();
     if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
       // FIXME: Should also highlight argument in decl.
       S.Diag(Attr.getLoc(), diag::warn_nonnull_pointers_only)
@@ -386,7 +386,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // arguments have a nonnull attribute.
   if (NonNullArgs.empty()) {
     for (unsigned I = 0, E = getFunctionOrMethodNumArgs(d); I != E; ++I) {
-      QualType T = getFunctionOrMethodArgType(d, I);
+      QualType T = getFunctionOrMethodArgType(d, I).getNonReferenceType();
       if (T->isAnyPointerType() || T->isBlockPointerType())
         NonNullArgs.push_back(I);
       else if (const RecordType *UT = T->getAsUnionType()) {
