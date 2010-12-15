@@ -76,10 +76,6 @@ public:
   /// @name Fragment Layout Data
   /// @{
 
-  /// \brief Get the effective size of the given fragment, as computed in the
-  /// current layout.
-  uint64_t getFragmentEffectiveSize(const MCFragment *F) const;
-
   /// \brief Get the offset of the given fragment inside its containing section.
   uint64_t getFragmentOffset(const MCFragment *F) const;
 

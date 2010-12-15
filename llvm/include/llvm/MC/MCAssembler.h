@@ -75,10 +75,6 @@ private:
   /// initialized.
   uint64_t Offset;
 
-  /// EffectiveSize - The compute size of this section. This is ~0 until
-  /// initialized.
-  uint64_t EffectiveSize;
-
   /// LayoutOrder - The layout order of this fragment.
   unsigned LayoutOrder;
 
@@ -231,6 +227,9 @@ class MCAlignFragment : public MCFragment {
   /// cannot be satisfied in this width then this fragment is ignored.
   unsigned MaxBytesToEmit;
 
+  /// Size - The current estimate of the size.
+  unsigned Size;
+
   /// EmitNops - Flag to indicate that (optimal) NOPs should be emitted instead
   /// of using the provided value. The exact interpretation of this flag is
   /// target dependent.
@@ -241,7 +240,7 @@ public:
                   unsigned _MaxBytesToEmit, MCSectionData *SD = 0)
     : MCFragment(FT_Align, SD), Alignment(_Alignment),
       Value(_Value),ValueSize(_ValueSize),
-      MaxBytesToEmit(_MaxBytesToEmit), EmitNops(false) {}
+      MaxBytesToEmit(_MaxBytesToEmit), Size(0), EmitNops(false) {}
 
   /// @name Accessors
   /// @{
@@ -251,6 +250,10 @@ public:
   int64_t getValue() const { return Value; }
 
   unsigned getValueSize() const { return ValueSize; }
+
+  unsigned getSize() const { return Size; }
+
+  void setSize(unsigned Size_) { Size = Size_; }
 
   unsigned getMaxBytesToEmit() const { return MaxBytesToEmit; }
 
@@ -704,11 +707,6 @@ private:
                                const MCInstFragment *IF,
                                const MCAsmLayout &Layout) const;
 
-  /// Compute the effective fragment size assuming it is layed out at the given
-  /// \arg SectionAddress and \arg FragmentOffset.
-  uint64_t ComputeFragmentSize(const MCFragment &F,
-                               uint64_t FragmentOffset) const;
-
   /// LayoutOnce - Perform one layout iteration and return true if any offsets
   /// were adjusted.
   bool LayoutOnce(const MCObjectWriter &Writer, MCAsmLayout &Layout);
@@ -725,6 +723,9 @@ private:
   bool RelaxDwarfLineAddr(const MCObjectWriter &Writer, MCAsmLayout &Layout,
 			  MCDwarfLineAddrFragment &DF);
 
+  bool RelaxAlignment(const MCObjectWriter &Writer, MCAsmLayout &Layout,
+		      MCAlignFragment &DF);
+
   /// FinishLayout - Finalize a layout, including fragment lowering.
   void FinishLayout(MCAsmLayout &Layout);
 
@@ -732,6 +733,10 @@ private:
                        MCFragment &F, const MCFixup &Fixup);
 
 public:
+  /// Compute the effective fragment size assuming it is layed out at the given
+  /// \arg SectionAddress and \arg FragmentOffset.
+  uint64_t ComputeFragmentSize(const MCFragment &F) const;
+
   /// Find the symbol which defines the atom containing the given symbol, or
   /// null if there is no such symbol.
   const MCSymbolData *getAtom(const MCSymbolData *Symbol) const;

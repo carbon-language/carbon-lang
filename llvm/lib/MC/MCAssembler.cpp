@@ -74,10 +74,9 @@ void MCAsmLayout::Invalidate(MCFragment *F) {
   if (!isFragmentUpToDate(F))
     return;
 
-  // Otherwise, reset the last valid fragment to the predecessor of the
-  // invalidated fragment.
+  // Otherwise, reset the last valid fragment to this fragment.
   const MCSectionData &SD = *F->getParent();
-  LastValidFragment[&SD] = F->getPrevNode();
+  LastValidFragment[&SD] = F;
 }
 
 void MCAsmLayout::EnsureValid(const MCFragment *F) const {
@@ -96,12 +95,6 @@ void MCAsmLayout::EnsureValid(const MCFragment *F) const {
   }
 }
 
-uint64_t MCAsmLayout::getFragmentEffectiveSize(const MCFragment *F) const {
-  EnsureValid(F);
-  assert(F->EffectiveSize != ~UINT64_C(0) && "Address not set!");
-  return F->EffectiveSize;
-}
-
 uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
   EnsureValid(F);
   assert(F->Offset != ~UINT64_C(0) && "Address not set!");
@@ -116,7 +109,7 @@ uint64_t MCAsmLayout::getSymbolOffset(const MCSymbolData *SD) const {
 uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
   // The size is the last fragment's end offset.
   const MCFragment &F = SD->getFragmentList().back();
-  return getFragmentOffset(&F) + getFragmentEffectiveSize(&F);
+  return getFragmentOffset(&F) + getAssembler().ComputeFragmentSize(F);
 }
 
 uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
@@ -137,8 +130,7 @@ MCFragment::~MCFragment() {
 }
 
 MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
-  : Kind(_Kind), Parent(_Parent), Atom(0), Offset(~UINT64_C(0)),
-    EffectiveSize(~UINT64_C(0))
+  : Kind(_Kind), Parent(_Parent), Atom(0), Offset(~UINT64_C(0))
 {
   if (Parent)
     Parent->getFragmentList().push_back(this);
@@ -276,8 +268,7 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
   return IsResolved;
 }
 
-uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F,
-                                          uint64_t FragmentOffset) const {
+uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F) const {
   switch (F.getKind()) {
   case MCFragment::FT_Data:
     return cast<MCDataFragment>(F).getContents().size();
@@ -289,17 +280,8 @@ uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F,
   case MCFragment::FT_LEB:
     return cast<MCLEBFragment>(F).getContents().size();
 
-  case MCFragment::FT_Align: {
-    const MCAlignFragment &AF = cast<MCAlignFragment>(F);
-
-    uint64_t Size = OffsetToAlignment(FragmentOffset, AF.getAlignment());
-
-    // Honor MaxBytesToEmit.
-    if (Size > AF.getMaxBytesToEmit())
-      return 0;
-
-    return Size;
-  }
+  case MCFragment::FT_Align:
+    return cast<MCAlignFragment>(F).getSize();
 
   case MCFragment::FT_Org:
     return cast<MCOrgFragment>(F).getSize();
@@ -327,10 +309,9 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
   // Compute fragment offset and size.
   uint64_t Offset = 0;
   if (Prev)
-    Offset += Prev->Offset + Prev->EffectiveSize;
+    Offset += Prev->Offset + getAssembler().ComputeFragmentSize(*Prev);
 
   F->Offset = Offset;
-  F->EffectiveSize = getAssembler().ComputeFragmentSize(*F, F->Offset);
   LastValidFragment[F->getParent()] = F;
 }
 
@@ -343,7 +324,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
   ++stats::EmittedFragments;
 
   // FIXME: Embed in fragments instead?
-  uint64_t FragmentSize = Layout.getFragmentEffectiveSize(&F);
+  uint64_t FragmentSize = Asm.ComputeFragmentSize(F);
   switch (F.getKind()) {
   case MCFragment::FT_Align: {
     MCAlignFragment &AF = cast<MCAlignFragment>(F);
@@ -730,6 +711,18 @@ bool MCAssembler::RelaxDwarfLineAddr(const MCObjectWriter &Writer,
   return OldSize != Data.size();
 }
 
+bool MCAssembler::RelaxAlignment(const MCObjectWriter &Writer,
+				 MCAsmLayout &Layout,
+				 MCAlignFragment &AF) {
+  unsigned Offset = Layout.getFragmentOffset(&AF);
+  unsigned Size = OffsetToAlignment(Offset, AF.getAlignment());
+  if (Size > AF.getMaxBytesToEmit())
+    Size = 0;
+  unsigned OldSize = AF.getSize();
+  AF.setSize(Size);
+  return OldSize != Size;
+}
+
 bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
                              MCAsmLayout &Layout) {
   ++stats::RelaxationSteps;
@@ -747,6 +740,10 @@ bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
       switch(it2->getKind()) {
       default:
         break;
+      case MCFragment::FT_Align:
+	relaxedFrag = RelaxAlignment(Writer, Layout,
+				     *cast<MCAlignFragment>(it2));
+	break;
       case MCFragment::FT_Inst:
         relaxedFrag = RelaxInstruction(Writer, Layout,
                                        *cast<MCInstFragment>(it2));
@@ -809,7 +806,7 @@ void MCFragment::dump() {
   }
 
   OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
-     << " Offset:" << Offset << " EffectiveSize:" << EffectiveSize << ">";
+     << " Offset:" << Offset << ">";
 
   switch (getKind()) {
   case MCFragment::FT_Align: {
