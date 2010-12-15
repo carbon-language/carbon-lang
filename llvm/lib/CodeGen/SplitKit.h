@@ -133,6 +133,10 @@ public:
   /// these edges, but they do require special treatment.
   void getCriticalPreds(const LoopBlocks &Blocks, BlockPtrSet &CriticalPreds);
 
+  /// getSplitLoops - Get the set of loops that have curli uses and would be
+  /// profitable to split.
+  void getSplitLoops(LoopPtrSet&);
+
   /// getBestSplitLoop - Return the loop where curli may best be split to a
   /// separate register, or NULL.
   const MachineLoop *getBestSplitLoop();

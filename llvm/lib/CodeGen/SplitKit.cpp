@@ -257,12 +257,11 @@ void SplitAnalysis::analyze(const LiveInterval *li) {
   analyzeUses();
 }
 
-const MachineLoop *SplitAnalysis::getBestSplitLoop() {
-  assert(curli_ && "Call analyze() before getBestSplitLoop");
+void SplitAnalysis::getSplitLoops(LoopPtrSet &Loops) {
+  assert(curli_ && "Call analyze() before getSplitLoops");
   if (usingLoops_.empty())
-    return 0;
+    return;
 
-  LoopPtrSet Loops;
   LoopBlocks Blocks;
   BlockPtrSet CriticalExits;
 
@@ -280,11 +279,11 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
       // FIXME: We could split a live range with multiple uses in a peripheral
       // block and still make progress. However, it is possible that splitting
       // another live range will insert copies into a peripheral block, and
-      // there is a small chance we can enter an infinity loop, inserting copies
+      // there is a small chance we can enter an infinite loop, inserting copies
       // forever.
       // For safety, stick to splitting live ranges with uses outside the
       // periphery.
-      DEBUG(dbgs() << ": multiple peripheral uses\n");
+      DEBUG(dbgs() << ": multiple peripheral uses");
       break;
     case ContainedInLoop:
       DEBUG(dbgs() << ": fully contained\n");
@@ -302,9 +301,13 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
     Loops.insert(Loop);
   }
 
-  DEBUG(dbgs() << "  getBestSplitLoop found " << Loops.size()
+  DEBUG(dbgs() << "  getSplitLoops found " << Loops.size()
                << " candidate loops.\n");
+}
 
+const MachineLoop *SplitAnalysis::getBestSplitLoop() {
+  LoopPtrSet Loops;
+  getSplitLoops(Loops);
   if (Loops.empty())
     return 0;
 
