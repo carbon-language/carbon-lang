@@ -22,68 +22,17 @@ inline unsigned NextHighestPowerOf2 (unsigned i) {
 typedef std::vector<std::string> StrVec;
 typedef llvm::StringMap<const char*> ArgMap;
 
-/// ConvertToMAttrImpl - Common implementation of ConvertMArchToMAttr and
-/// ConvertToMAttr. The optional Args parameter contains information about how
-/// to transform special-cased values (for example, '-march=armv6' must be
-/// forwarded as '-mattr=+v6').
-std::string ConvertToMAttrImpl(const StrVec& Opts,
-                               const ArgMap* Args = 0,
-                               const ArgMap* MCpuArgs = 0) {
-  std::string mattr("-mattr=");
-  std::string mcpu("-mcpu=");
-  bool mattrTouched = false;
-  bool mcpuTouched = false;
-  bool firstIter = true;
 
-  for (StrVec::const_iterator B = Opts.begin(), E = Opts.end(); B!=E; ++B) {
-    const std::string& Arg = *B;
-
-    if (firstIter)
-      firstIter = false;
-    else
-      mattr += ",";
-
-    // Check if the argument is a special case.
-    if (Args != 0) {
-      ArgMap::const_iterator I = Args->find(Arg);
-
-      if (I != Args->end()) {
-        mattr += '+';
-        mattr += I->getValue();
-        continue;
-      }
-    }
-
-    // Check if the argument should be forwarded to -mcpu instead of -mattr.
-    if (MCpuArgs != 0 && !mcpuTouched) {
-      ArgMap::const_iterator I = MCpuArgs->find(Arg);
-
-      if (I != MCpuArgs->end()) {
-        mcpuTouched = true;
-        mcpu += I->getValue();
-        continue;
-      }
-    }
-
-    // Convert 'no-foo' to '-foo'.
-    if (Arg.find("no-") == 0 && Arg[3] != 0) {
-      mattr += '-';
-      mattr += Arg.c_str() + 3;
-    }
-    // Convert 'foo' to '+foo'.
-    else {
-      mattr += '+';
-      mattr += Arg;
-    }
+/// AddPlusOrMinus - Convert 'no-foo' to '-foo' and 'foo' to '+foo'.
+void AddPlusOrMinus (const std::string& Arg, std::string& out) {
+  if (Arg.find("no-") == 0 && Arg[3] != 0) {
+    out += '-';
+    out += Arg.c_str() + 3;
   }
-
-  std::string out;
-  if (mattrTouched)
-    out += mattr;
-  if (mcpuTouched)
-    out += (mattrTouched ? " " : "") + mcpu;
-
-  return out;
+  else {
+    out += '+';
+    out += Arg;
+  }
 }
 
 // -march values that need to be special-cased.
@@ -125,7 +74,52 @@ std::string ConvertMArchToMAttr(const StrVec& Opts) {
     StaticDataInitialized = true;
   }
 
-  return ConvertToMAttrImpl(Opts, &MArchMap, &MArchMCpuMap);
+  std::string mattr("-mattr=");
+  std::string mcpu("-mcpu=");
+  bool mattrTouched = false;
+  bool mcpuTouched = false;
+  bool firstIter = true;
+
+  for (StrVec::const_iterator B = Opts.begin(), E = Opts.end(); B!=E; ++B) {
+    const std::string& Arg = *B;
+
+    if (firstIter)
+      firstIter = false;
+    else
+      mattr += ",";
+
+    // Check if the argument is a special case.
+    {
+      ArgMap::const_iterator I = MArchMap.find(Arg);
+
+      if (I != MArchMap.end()) {
+        mattr += '+';
+        mattr += I->getValue();
+        continue;
+      }
+    }
+
+    // Check if the argument should be forwarded to -mcpu instead of -mattr.
+    {
+      ArgMap::const_iterator I = MArchMCpuMap.find(Arg);
+
+      if (I != MArchMCpuMap.end()) {
+        mcpuTouched = true;
+        mcpu += I->getValue();
+        continue;
+      }
+    }
+
+    AddPlusOrMinus(Arg, mattr);
+  }
+
+  std::string out;
+  if (mattrTouched)
+    out += mattr;
+  if (mcpuTouched)
+    out += (mattrTouched ? " " : "") + mcpu;
+
+  return out;
 }
 
 // -mcpu values that need to be special-cased.
@@ -182,7 +176,21 @@ std::string ConvertMFpu(const char* Val) {
 
 /// ConvertToMAttr - Convert '-mfoo' and '-mno-bar' to '-mattr=+foo,-bar'.
 std::string ConvertToMAttr(const StrVec& Opts) {
-  return ConvertToMAttrImpl(Opts);
+  std::string out("-mattr=");
+  bool firstIter = true;
+
+  for (StrVec::const_iterator B = Opts.begin(), E = Opts.end(); B!=E; ++B) {
+    const std::string& Arg = *B;
+
+    if (firstIter)
+      firstIter = false;
+    else
+      out += ",";
+
+    AddPlusOrMinus(Arg, out);
+  }
+
+  return out;
 }
 
 }
