@@ -348,6 +348,9 @@ public:
     GetNumChildren (lldb::clang_type_t clang_type,
                     bool omit_empty_base_classes);
 
+    static uint32_t
+    GetNumPointeeChildren (lldb::clang_type_t clang_type);
+
     lldb::clang_type_t
     GetChildClangTypeAtIndex (const char *parent_name,
                               lldb::clang_type_t  parent_clang_type,

@@ -207,10 +207,10 @@ public:
     CreateConstantValue (ExecutionContextScope *exe_scope, const ConstString &name);
 
     virtual lldb::ValueObjectSP
-    Dereference (ExecutionContextScope *exe_scope, Error *error_ptr);
+    Dereference (ExecutionContextScope *exe_scope, Error &error);
     
     virtual lldb::ValueObjectSP
-    AddressOf ();
+    AddressOf (Error &error);
 
     // The backing bits of this value object were updated, clear any value
     // values, summaries or descriptions so we refetch them.

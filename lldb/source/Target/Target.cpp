@@ -886,7 +886,9 @@ Target::EvaluateExpression
     if (frame)
     {
         frame->CalculateExecutionContext(exe_ctx);
-        result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr);
+        Error error;
+        const bool check_ptr_vs_member = true;
+        result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr, check_ptr_vs_member, error);
     }
     else if (m_process_sp)
     {

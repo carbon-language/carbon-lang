@@ -1901,7 +1901,10 @@ ClangASTContext::GetNumChildren (clang_type_t clang_qual_type, bool omit_empty_b
             break;
         }
         break;
-        
+
+    case clang::Type::Complex:
+        return 2;
+
     case clang::Type::Record:
         if (ClangASTType::IsDefined (clang_qual_type))
         {
@@ -1995,12 +1998,15 @@ ClangASTContext::GetNumChildren (clang_type_t clang_qual_type, bool omit_empty_b
     case clang::Type::Pointer:
         {
             PointerType *pointer_type = cast<PointerType>(qual_type.getTypePtr());
-            QualType pointee_type = pointer_type->getPointeeType();
+            QualType pointee_type (pointer_type->getPointeeType());
             uint32_t num_pointee_children = ClangASTContext::GetNumChildren (pointee_type.getAsOpaquePtr(), 
                                                                              omit_empty_base_classes);
-            // If this type points to a simple type, then it has 1 child
             if (num_pointee_children == 0)
-                num_children = 1;
+            {
+                // We have a pointer to a pointee type that claims it has no children.
+                // We will want to look at
+                num_children = ClangASTContext::GetNumPointeeChildren (pointee_type.getAsOpaquePtr());
+            }
             else
                 num_children = num_pointee_children;
         }
@@ -2032,6 +2038,60 @@ ClangASTContext::GetNumChildren (clang_type_t clang_qual_type, bool omit_empty_b
     return num_children;
 }
 
+// If a pointer to a pointee type (the clang_type arg) says that it has no 
+// children, then we either need to trust it, or override it and return a 
+// different result. For example, an "int *" has one child that is an integer, 
+// but a function pointer doesn't have any children. Likewise if a Record type
+// claims it has no children, then there really is nothing to show.
+uint32_t
+ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
+{
+    if (clang_type == NULL)
+        return 0;
+
+    QualType qual_type(QualType::getFromOpaquePtr(clang_type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
+    {
+    case clang::Type::Builtin:                  return 1;
+    case clang::Type::Complex:                  return 2;
+    case clang::Type::Pointer:                  return 1;
+    case clang::Type::BlockPointer:             return 0;   // If block pointers don't have debug info, then no children for them
+    case clang::Type::LValueReference:          return 1;
+    case clang::Type::RValueReference:          return 1;
+    case clang::Type::MemberPointer:            return 0;
+    case clang::Type::ConstantArray:            return 0;
+    case clang::Type::IncompleteArray:          return 0;
+    case clang::Type::VariableArray:            return 0;
+    case clang::Type::DependentSizedArray:      return 0;
+    case clang::Type::DependentSizedExtVector:  return 0;
+    case clang::Type::Vector:                   return 0;
+    case clang::Type::ExtVector:                return 0;
+    case clang::Type::FunctionProto:            return 0;   // When we function pointers, they have no children...
+    case clang::Type::FunctionNoProto:          return 0;   // When we function pointers, they have no children...
+    case clang::Type::UnresolvedUsing:          return 0;
+    case clang::Type::Paren:                    return 0;
+    case clang::Type::Typedef:                  return ClangASTContext::GetNumPointeeChildren (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+    case clang::Type::TypeOfExpr:               return 0;
+    case clang::Type::TypeOf:                   return 0;
+    case clang::Type::Decltype:                 return 0;
+    case clang::Type::Record:                   return 0;
+    case clang::Type::Enum:                     return 1;
+    case clang::Type::Elaborated:               return 1;
+    case clang::Type::TemplateTypeParm:         return 1;
+    case clang::Type::SubstTemplateTypeParm:    return 1;
+    case clang::Type::TemplateSpecialization:   return 1;
+    case clang::Type::InjectedClassName:        return 0;
+    case clang::Type::DependentName:            return 1;
+    case clang::Type::DependentTemplateSpecialization:  return 1;
+    case clang::Type::ObjCObject:               return 0;
+    case clang::Type::ObjCInterface:            return 0;
+    case clang::Type::ObjCObjectPointer:        return 1;
+    default: 
+        break;
+    }
+    return 0;
+}
 
 clang_type_t
 ClangASTContext::GetChildClangTypeAtIndex

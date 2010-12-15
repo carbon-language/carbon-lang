@@ -151,7 +151,7 @@ class FoundationTestCase(TestBase):
 
         # This should display the str and date member fields as well.
         self.expect("frame variable -t *self", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["(MyString *) self",
+            substrs = ["(MyString) *self",
                        "(NSString *) str",
                        "(NSDate *) date"])
 

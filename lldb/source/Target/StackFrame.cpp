@@ -18,6 +18,7 @@
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -479,155 +480,234 @@ StackFrame::GetVariableList (bool get_file_globals)
 }
 
 ValueObjectSP
-StackFrame::GetValueForVariableExpressionPath (const char *var_expr)
+StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool check_ptr_vs_member, Error &error)
 {
-    bool deref = false;
-    bool address_of = false;
-    ValueObjectSP valobj_sp;
-    const bool get_file_globals = true;
-    VariableList *variable_list = GetVariableList (get_file_globals);
-    
-    if (variable_list)
+
+    if (var_expr_cstr && var_expr_cstr[0])
     {
-        // If first character is a '*', then show pointer contents
-        if (var_expr[0] == '*')
+        error.Clear();
+        bool deref = false;
+        bool address_of = false;
+        ValueObjectSP valobj_sp;
+        const bool get_file_globals = true;
+        VariableList *variable_list = GetVariableList (get_file_globals);
+        
+        if (variable_list)
         {
-            deref = true;
-            var_expr++; // Skip the '*'
-        }
-        else if (var_expr[0] == '&')
-        {
-            address_of = true;
-            var_expr++; // Skip the '&'
-        }
-
-        std::string var_path (var_expr);
-        size_t separator_idx = var_path.find_first_of(".-[");
-
-        ConstString name_const_string;
-        if (separator_idx == std::string::npos)
-            name_const_string.SetCString (var_path.c_str());
-        else
-            name_const_string.SetCStringWithLength (var_path.c_str(), separator_idx);
-
-        VariableSP var_sp (variable_list->FindVariable(name_const_string));
-        if (var_sp)
-        {
-            valobj_sp = GetValueObjectForFrameVariable (var_sp);
-
-            var_path.erase (0, name_const_string.GetLength ());
-            // We are dumping at least one child
-            while (separator_idx != std::string::npos)
+            // If first character is a '*', then show pointer contents
+            const char *var_expr = var_expr_cstr;
+            if (var_expr[0] == '*')
             {
-                // Calculate the next separator index ahead of time
-                ValueObjectSP child_valobj_sp;
-                const char separator_type = var_path[0];
-                switch (separator_type)
+                deref = true;
+                var_expr++; // Skip the '*'
+            }
+            else if (var_expr[0] == '&')
+            {
+                address_of = true;
+                var_expr++; // Skip the '&'
+            }
+
+            std::string var_path (var_expr);
+            size_t separator_idx = var_path.find_first_of(".-[=+~|&^%#@!/?,<>{}");
+            StreamString var_expr_path_strm;
+
+            ConstString name_const_string;
+            if (separator_idx == std::string::npos)
+                name_const_string.SetCString (var_path.c_str());
+            else
+                name_const_string.SetCStringWithLength (var_path.c_str(), separator_idx);
+
+            VariableSP var_sp (variable_list->FindVariable(name_const_string));
+            if (var_sp)
+            {
+                valobj_sp = GetValueObjectForFrameVariable (var_sp);
+
+                var_path.erase (0, name_const_string.GetLength ());
+                // We are dumping at least one child
+                while (separator_idx != std::string::npos)
                 {
-
-                case '-':
-                    if (var_path.size() >= 2 && var_path[1] != '>')
-                        return ValueObjectSP();
-
-                    var_path.erase (0, 1); // Remove the '-'
-                    // Fall through
-                case '.':
+                    // Calculate the next separator index ahead of time
+                    ValueObjectSP child_valobj_sp;
+                    const char separator_type = var_path[0];
+                    switch (separator_type)
                     {
-                        // We either have a pointer type and need to verify 
-                        // valobj_sp is a pointer, or we have a member of a 
-                        // class/union/struct being accessed with the . syntax 
-                        // and need to verify we don't have a pointer.
-                        const bool is_ptr = var_path[0] == '>';
-                        
-                        if (valobj_sp->IsPointerType () != is_ptr)
-                        {
-                            // Incorrect use of "." with a pointer, or "->" with
-                            // a class/union/struct instance or reference.
+
+                    case '-':
+                        if (var_path.size() >= 2 && var_path[1] != '>')
                             return ValueObjectSP();
-                        }
 
-                        var_path.erase (0, 1); // Remove the '.' or '>'
-                        separator_idx = var_path.find_first_of(".-[");
-                        ConstString child_name;
-                        if (separator_idx == std::string::npos)
-                            child_name.SetCString (var_path.c_str());
-                        else
-                            child_name.SetCStringWithLength(var_path.c_str(), separator_idx);
-
-                        child_valobj_sp = valobj_sp->GetChildMemberWithName (child_name, true);
-                        if (!child_valobj_sp)
+                        var_path.erase (0, 1); // Remove the '-'
+                        // Fall through
+                    case '.':
                         {
-                            // No child member with name "child_name"
-                            return ValueObjectSP();
-                        }
-                        // Remove the child name from the path
-                        var_path.erase(0, child_name.GetLength());
-                    }
-                    break;
+                            const bool expr_is_ptr = var_path[0] == '>';
 
-                case '[':
-                    // Array member access, or treating pointer as an array
-                    if (var_path.size() > 2) // Need at least two brackets and a number
-                    {
-                        char *end = NULL;
-                        int32_t child_index = ::strtol (&var_path[1], &end, 0);
-                        if (end && *end == ']')
-                        {
-
-                            if (valobj_sp->IsPointerType ())
-                            {
-                                child_valobj_sp = valobj_sp->GetSyntheticArrayMemberFromPointer (child_index, true);
-                            }
+                            var_path.erase (0, 1); // Remove the '.' or '>'
+                            separator_idx = var_path.find_first_of(".-[");
+                            ConstString child_name;
+                            if (separator_idx == std::string::npos)
+                                child_name.SetCString (var_path.c_str());
                             else
+                                child_name.SetCStringWithLength(var_path.c_str(), separator_idx);
+
+                            if (check_ptr_vs_member)
                             {
-                                child_valobj_sp = valobj_sp->GetChildAtIndex (child_index, true);
+                                // We either have a pointer type and need to verify 
+                                // valobj_sp is a pointer, or we have a member of a 
+                                // class/union/struct being accessed with the . syntax 
+                                // and need to verify we don't have a pointer.
+                                const bool actual_is_ptr = valobj_sp->IsPointerType ();
+                                
+                                if (actual_is_ptr != expr_is_ptr)
+                                {
+                                    // Incorrect use of "." with a pointer, or "->" with
+                                    // a class/union/struct instance or reference.
+                                    valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                    if (actual_is_ptr)
+                                        error.SetErrorStringWithFormat ("\"%s\" is a pointer and . was used to attempt to access \"%s\". Did you mean \"%s->%s\"?", 
+                                                                        var_expr_path_strm.GetString().c_str(), 
+                                                                        child_name.GetCString(),
+                                                                        var_expr_path_strm.GetString().c_str(), 
+                                                                        var_path.c_str());
+                                    else
+                                        error.SetErrorStringWithFormat ("\"%s\" is not a pointer and -> was used to attempt to access \"%s\". Did you mean \"%s.%s\"?", 
+                                                                        var_expr_path_strm.GetString().c_str(), 
+                                                                        child_name.GetCString(),
+                                                                        var_expr_path_strm.GetString().c_str(), 
+                                                                        var_path.c_str());
+                                    return ValueObjectSP();
+                                }
                             }
 
+                            child_valobj_sp = valobj_sp->GetChildMemberWithName (child_name, true);
                             if (!child_valobj_sp)
                             {
-                                // Invalid array index...
+                                // No child member with name "child_name"
+                                valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                if (child_name)
+                                {
+                                    error.SetErrorStringWithFormat ("\"%s\" is not a member of \"(%s) %s\"", 
+                                                                    child_name.GetCString(), 
+                                                                    valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                    var_expr_path_strm.GetString().c_str());
+                                }
+                                else
+                                {
+                                    error.SetErrorStringWithFormat ("incomplete expression path after \"%s\" in \"%s\"",
+                                                                    var_expr_path_strm.GetString().c_str(),
+                                                                    var_expr_cstr);
+                                }
+
                                 return ValueObjectSP();
                             }
+                            // Remove the child name from the path
+                            var_path.erase(0, child_name.GetLength());
+                        }
+                        break;
 
-                            // Erase the array member specification '[%i]' where 
-                            // %i is the array index
-                            var_path.erase(0, (end - var_path.c_str()) + 1);
-                            separator_idx = var_path.find_first_of(".-[");
+                    case '[':
+                        // Array member access, or treating pointer as an array
+                        if (var_path.size() > 2) // Need at least two brackets and a number
+                        {
+                            char *end = NULL;
+                            int32_t child_index = ::strtol (&var_path[1], &end, 0);
+                            if (end && *end == ']')
+                            {
 
-                            // Break out early from the switch since we were 
-                            // able to find the child member
-                            break;
+                                if (valobj_sp->IsPointerType ())
+                                {
+                                    child_valobj_sp = valobj_sp->GetSyntheticArrayMemberFromPointer (child_index, true);
+                                    if (!child_valobj_sp)
+                                    {
+                                        valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                        error.SetErrorStringWithFormat ("failed to use pointer as array for index %i for \"(%s) %s\"", 
+                                                                        child_index, 
+                                                                        valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                        var_expr_path_strm.GetString().c_str());
+                                    }
+                                }
+                                else if (ClangASTContext::IsArrayType (valobj_sp->GetClangType(), NULL, NULL))
+                                {
+                                    child_valobj_sp = valobj_sp->GetChildAtIndex (child_index, true);
+                                    if (!child_valobj_sp)
+                                    {
+                                        valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                        error.SetErrorStringWithFormat ("array index %i is not valid for \"(%s) %s\"", 
+                                                                        child_index, 
+                                                                        valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                        var_expr_path_strm.GetString().c_str());
+                                    }
+                                }
+                                else
+                                {
+                                    valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                    error.SetErrorStringWithFormat ("\"(%s) %s\" is not an array type", 
+                                                                    valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                    var_expr_path_strm.GetString().c_str());
+                                }
+
+                                if (!child_valobj_sp)
+                                {
+                                    // Invalid array index...
+                                    return ValueObjectSP();
+                                }
+
+                                // Erase the array member specification '[%i]' where 
+                                // %i is the array index
+                                var_path.erase(0, (end - var_path.c_str()) + 1);
+                                separator_idx = var_path.find_first_of(".-[");
+
+                                // Break out early from the switch since we were 
+                                // able to find the child member
+                                break;
+                            }
+                        }
+                        return ValueObjectSP();
+
+                    default:
+                        // Failure...
+                        {
+                            valobj_sp->GetExpressionPath (var_expr_path_strm);
+                            error.SetErrorStringWithFormat ("unexpected char '%c' encountered after \"%s\" in \"%s\"", 
+                                                            separator_type,
+                                                            var_expr_path_strm.GetString().c_str(),
+                                                            var_path.c_str());
+
+                            return ValueObjectSP();
                         }
                     }
-                    return ValueObjectSP();
 
-                default:
-                    // Failure...
-                    return ValueObjectSP();
+                    if (child_valobj_sp)
+                        valobj_sp = child_valobj_sp;
+
+                    if (var_path.empty())
+                        break;
+
                 }
-
-                if (child_valobj_sp)
-                    valobj_sp = child_valobj_sp;
-
-                if (var_path.empty())
-                    break;
-
+                if (valobj_sp)
+                {
+                    if (deref)
+                    {
+                        ValueObjectSP deref_valobj_sp (valobj_sp->Dereference(this, error));
+                        valobj_sp = deref_valobj_sp;
+                    }
+                    else if (address_of)
+                    {
+                        ValueObjectSP address_of_valobj_sp (valobj_sp->AddressOf(error));
+                        valobj_sp = address_of_valobj_sp;
+                    }
+                }
+                return valobj_sp;
             }
-            if (valobj_sp)
+            else
             {
-                if (deref)
-                {
-                    ValueObjectSP deref_valobj_sp (valobj_sp->Dereference(this, NULL));
-                    valobj_sp = deref_valobj_sp;
-                }
-                else if (address_of)
-                {
-                    ValueObjectSP address_of_valobj_sp (valobj_sp->AddressOf());
-                    valobj_sp = address_of_valobj_sp;
-                }
+                error.SetErrorStringWithFormat("no variable named '%s' found in this frame", name_const_string.GetCString());
             }
-            return valobj_sp;
         }
+    }
+    else
+    {
+        error.SetErrorStringWithFormat("invalid variable path '%s'", var_expr_cstr);
     }
     return ValueObjectSP();
 }

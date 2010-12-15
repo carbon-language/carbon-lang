@@ -1203,10 +1203,11 @@ ValueObject::CreateConstantValue (ExecutionContextScope *exe_scope, const ConstS
 }
 
 lldb::ValueObjectSP
-ValueObject::Dereference (ExecutionContextScope *exe_scope, Error *error_ptr)
+ValueObject::Dereference (ExecutionContextScope *exe_scope, Error &error)
 {
     lldb::ValueObjectSP valobj_sp;
-    if (IsPointerType())
+    const bool is_pointer_type = IsPointerType();
+    if (is_pointer_type)
     {
         bool omit_empty_base_classes = true;
 
@@ -1249,98 +1250,46 @@ ValueObject::Dereference (ExecutionContextScope *exe_scope, Error *error_ptr)
                                                    child_is_base_class));
         }
     }
+
+    if (valobj_sp)
+    {
+        error.Clear();
+    }
     else
     {
-        if (error_ptr)
-            error_ptr->SetErrorString("can't dereference a non-pointer value");
+        StreamString strm;
+        GetExpressionPath(strm);
+
+        if (is_pointer_type)
+            error.SetErrorStringWithFormat("dereference failed: (%s) %s", GetTypeName().AsCString("<invalid type>"), strm.GetString().c_str());
+        else
+            error.SetErrorStringWithFormat("not a pointer type: (%s) %s", GetTypeName().AsCString("<invalid type>"), strm.GetString().c_str());
     }
 
     return valobj_sp;
 }
 
-    
-
-//lldb::ValueObjectSP
-//ValueObject::Dereference (ExecutionContextScope *exe_scope, Error *error_ptr)
-//{
-//    lldb::ValueObjectSP valobj_sp;
-//    if (IsPointerType())
-//    {
-//        UpdateValueIfNeeded(exe_scope);
-//        if (m_error.Success())
-//        {
-//            lldb::AddressType address_type = eAddressTypeInvalid;
-//            const bool scalar_is_load_address = true;
-//            lldb::addr_t addr = GetPointerValue (address_type, scalar_is_load_address);
-//            if (addr != LLDB_INVALID_ADDRESS)
-//            {
-//                switch (address_type)
-//                {
-//                    case eAddressTypeInvalid:
-//                        if (error_ptr)
-//                            error_ptr->SetErrorString("value is not in memory");
-//                        break;
-//                    case eAddressTypeFile:
-//                    case eAddressTypeLoad:
-//                    case eAddressTypeHost:
-//                    {
-//                        clang::ASTContext *ast = GetClangAST();
-//                        clang_type_t clang_type = ClangASTType::GetPointeeType (GetClangType());
-//                        if (ast && clang_type)
-//                        {
-//                            std::string name (1, '*');
-//                            name.append (m_name.AsCString(""));
-//                            valobj_sp.reset (new ValueObjectConstResult (ast, 
-//                                                                         ClangASTContext::CreatePointerType (ast, clang_type),
-//                                                                         ConstString (name.c_str()),
-//                                                                         addr, 
-//                                                                         address_type,
-//                                                                         m_data.GetAddressByteSize()));
-//                        }
-//                        else
-//                        {
-//                            if (error_ptr)
-//                                error_ptr->SetErrorString("invalid clang type info");
-//                        }
-//                    }
-//                    break;
-//                }
-//            }
-//            else
-//            {
-//                if (error_ptr)
-//                    error_ptr->SetErrorString("failed to extract pointer value");
-//            }
-//        }
-//        else
-//        {
-//            if (error_ptr)
-//                *error_ptr = m_error;
-//        }
-//    }
-//    else
-//    {
-//        if (error_ptr)
-//            error_ptr->SetErrorString("can't dereference a non-pointer value");
-//    }
-//
-//    return valobj_sp;
-//}
-    
-lldb::ValueObjectSP
-ValueObject::AddressOf ()
+    lldb::ValueObjectSP
+ValueObject::AddressOf (Error &error)
 {
     lldb::ValueObjectSP valobj_sp;
-
     lldb::AddressType address_type = eAddressTypeInvalid;
     const bool scalar_is_load_address = false;
     lldb::addr_t addr = GetAddressOf (address_type, scalar_is_load_address);
+    error.Clear();
     if (addr != LLDB_INVALID_ADDRESS)
     {
         switch (address_type)
         {
+        default:
         case eAddressTypeInvalid:
+            {
+                StreamString expr_path_strm;
+                GetExpressionPath(expr_path_strm);
+                error.SetErrorStringWithFormat("'%s' is not in memory", expr_path_strm.GetString().c_str());
+            }
             break;
+
         case eAddressTypeFile:
         case eAddressTypeLoad:
         case eAddressTypeHost:

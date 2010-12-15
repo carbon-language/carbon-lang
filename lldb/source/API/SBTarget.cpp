@@ -50,7 +50,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // SBTarget constructor
 //----------------------------------------------------------------------
-SBTarget::SBTarget ()
+SBTarget::SBTarget () :
+    m_opaque_sp ()
 {
 }
 
