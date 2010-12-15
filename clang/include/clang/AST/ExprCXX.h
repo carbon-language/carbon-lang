@@ -283,7 +283,8 @@ class CXXBoolLiteralExpr : public Expr {
   SourceLocation Loc;
 public:
   CXXBoolLiteralExpr(bool val, QualType Ty, SourceLocation l) :
-    Expr(CXXBoolLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false),
+    Expr(CXXBoolLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
+         false),
     Value(val), Loc(l) {}
 
   explicit CXXBoolLiteralExpr(EmptyShell Empty)
@@ -312,7 +313,8 @@ class CXXNullPtrLiteralExpr : public Expr {
   SourceLocation Loc;
 public:
   CXXNullPtrLiteralExpr(QualType Ty, SourceLocation l) :
-    Expr(CXXNullPtrLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false),
+    Expr(CXXNullPtrLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
+         false),
     Loc(l) {}
 
   explicit CXXNullPtrLiteralExpr(EmptyShell Empty)
@@ -348,15 +350,17 @@ public:
            // typeid is never type-dependent (C++ [temp.dep.expr]p4)
            false,
            // typeid is value-dependent if the type or expression are dependent
-           Operand->getType()->isDependentType()),
+           Operand->getType()->isDependentType(),
+           Operand->getType()->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
   
   CXXTypeidExpr(QualType Ty, Expr *Operand, SourceRange R)
     : Expr(CXXTypeidExprClass, Ty, VK_LValue, OK_Ordinary,
         // typeid is never type-dependent (C++ [temp.dep.expr]p4)
-        false,
+           false,
         // typeid is value-dependent if the type or expression are dependent
-        Operand->isTypeDependent() || Operand->isValueDependent()),
+           Operand->isTypeDependent() || Operand->isValueDependent(),
+           Operand->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
 
   CXXTypeidExpr(EmptyShell Empty, bool isExpr)
@@ -419,12 +423,14 @@ private:
 public:
   CXXUuidofExpr(QualType Ty, TypeSourceInfo *Operand, SourceRange R)
     : Expr(CXXUuidofExprClass, Ty, VK_RValue, OK_Ordinary,
-        false, Operand->getType()->isDependentType()),
+           false, Operand->getType()->isDependentType(),
+           Operand->getType()->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
   
   CXXUuidofExpr(QualType Ty, Expr *Operand, SourceRange R)
     : Expr(CXXUuidofExprClass, Ty, VK_RValue, OK_Ordinary,
-        false, Operand->isTypeDependent()),
+           false, Operand->isTypeDependent(),
+           Operand->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
 
   CXXUuidofExpr(EmptyShell Empty, bool isExpr)
@@ -495,7 +501,8 @@ public:
     : Expr(CXXThisExprClass, Type, VK_RValue, OK_Ordinary,
            // 'this' is type-dependent if the class type of the enclosing
            // member function is dependent (C++ [temp.dep.expr]p2)
-           Type->isDependentType(), Type->isDependentType()),
+           Type->isDependentType(), Type->isDependentType(),
+           /*ContainsUnexpandedParameterPack=*/false),
       Loc(L), Implicit(isImplicit) { }
 
   CXXThisExpr(EmptyShell Empty) : Expr(CXXThisExprClass, Empty) {}
@@ -530,7 +537,8 @@ public:
   // exepression.  The l is the location of the throw keyword.  expr
   // can by null, if the optional expression to throw isn't present.
   CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l) :
-    Expr(CXXThrowExprClass, Ty, VK_RValue, OK_Ordinary, false, false),
+    Expr(CXXThrowExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
+         expr && expr->containsUnexpandedParameterPack()),
     Op(expr), ThrowLoc(l) {}
   CXXThrowExpr(EmptyShell Empty) : Expr(CXXThrowExprClass, Empty) {}
 
@@ -578,14 +586,15 @@ class CXXDefaultArgExpr : public Expr {
              ? param->getType().getNonReferenceType()
              : param->getDefaultArg()->getType(),
            param->getDefaultArg()->getValueKind(),
-           param->getDefaultArg()->getObjectKind(), false, false),
+           param->getDefaultArg()->getObjectKind(), false, false, false),
       Param(param, false), Loc(Loc) { }
 
   CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param, 
                     Expr *SubExpr)
     : Expr(SC, SubExpr->getType(),
            SubExpr->getValueKind(), SubExpr->getObjectKind(),
-           false, false), Param(param, true), Loc(Loc) {
+           false, false, false), 
+      Param(param, true), Loc(Loc) {
     *reinterpret_cast<Expr **>(this + 1) = SubExpr;
   }
   
@@ -680,11 +689,12 @@ class CXXBindTemporaryExpr : public Expr {
 
   Stmt *SubExpr;
 
-  CXXBindTemporaryExpr(CXXTemporary *temp, Expr* subexpr, 
-                       bool TD=false, bool VD=false)
-   : Expr(CXXBindTemporaryExprClass, subexpr->getType(),
-          VK_RValue, OK_Ordinary, TD, VD),
-     Temp(temp), SubExpr(subexpr) { }
+  CXXBindTemporaryExpr(CXXTemporary *temp, Expr* SubExpr)
+   : Expr(CXXBindTemporaryExprClass, SubExpr->getType(),
+          VK_RValue, OK_Ordinary, SubExpr->isTypeDependent(), 
+          SubExpr->isValueDependent(),
+          SubExpr->containsUnexpandedParameterPack()),
+     Temp(temp), SubExpr(SubExpr) { }
 
 public:
   CXXBindTemporaryExpr(EmptyShell Empty)
@@ -935,7 +945,7 @@ public:
                          TypeSourceInfo *TypeInfo,
                          SourceLocation rParenLoc ) :
     Expr(CXXScalarValueInitExprClass, Type, VK_RValue, OK_Ordinary,
-         false, false),
+         false, false, false),
     RParenLoc(rParenLoc), TypeInfo(TypeInfo) {}
 
   explicit CXXScalarValueInitExpr(EmptyShell Shell)
@@ -1147,7 +1157,8 @@ public:
   CXXDeleteExpr(QualType ty, bool globalDelete, bool arrayForm,
                 bool arrayFormAsWritten, FunctionDecl *operatorDelete,
                 Expr *arg, SourceLocation loc)
-    : Expr(CXXDeleteExprClass, ty, VK_RValue, OK_Ordinary, false, false),
+    : Expr(CXXDeleteExprClass, ty, VK_RValue, OK_Ordinary, false, false,
+           arg->containsUnexpandedParameterPack()),
       GlobalDelete(globalDelete),
       ArrayForm(arrayForm), ArrayFormAsWritten(arrayFormAsWritten),
       OperatorDelete(operatorDelete), Argument(arg), Loc(loc) { }
@@ -1408,7 +1419,8 @@ public:
                      TypeSourceInfo *queried, bool value,
                      SourceLocation rparen, QualType ty)
     : Expr(UnaryTypeTraitExprClass, ty, VK_RValue, OK_Ordinary,
-           false,  queried->getType()->isDependentType()),
+           false,  queried->getType()->isDependentType(),
+           queried->getType()->containsUnexpandedParameterPack()),
       UTT(utt), Value(value), Loc(loc), RParen(rparen), QueriedType(queried) { }
 
   explicit UnaryTypeTraitExpr(EmptyShell Empty)
@@ -1466,7 +1478,9 @@ public:
                      bool value, SourceLocation rparen, QualType ty)
     : Expr(BinaryTypeTraitExprClass, ty, VK_RValue, OK_Ordinary, false, 
            lhsType->getType()->isDependentType() ||
-           rhsType->getType()->isDependentType()),
+           rhsType->getType()->isDependentType(),
+           (lhsType->getType()->containsUnexpandedParameterPack() ||
+            rhsType->getType()->containsUnexpandedParameterPack())),
       BTT(btt), Value(value), Loc(loc), RParen(rparen),
       LhsType(lhsType), RhsType(rhsType) { }
 
@@ -1522,27 +1536,29 @@ class OverloadExpr : public Expr {
   /// The source range of the scope specifier.
   SourceRange QualifierRange;
 
+  friend class ASTStmtReader;
+
 protected:
   /// True if the name was a template-id.
   bool HasExplicitTemplateArgs;
 
-  OverloadExpr(StmtClass K, ASTContext &C, QualType T, bool Dependent,
+  OverloadExpr(StmtClass K, ASTContext &C,
                NestedNameSpecifier *Qualifier, SourceRange QRange,
                const DeclarationNameInfo &NameInfo,
-               bool HasTemplateArgs,
-               UnresolvedSetIterator Begin, UnresolvedSetIterator End);
+               const TemplateArgumentListInfo *TemplateArgs,
+               UnresolvedSetIterator Begin, UnresolvedSetIterator End,
+               bool KnownDependent = false,
+               bool KnownContainsUnexpandedParameterPack = false);
 
   OverloadExpr(StmtClass K, EmptyShell Empty)
     : Expr(K, Empty), Results(0), NumResults(0),
       Qualifier(0), HasExplicitTemplateArgs(false) { }
 
-public:
-  /// Computes whether an unresolved lookup on the given declarations
-  /// and optional template arguments is type- and value-dependent.
-  static bool ComputeDependence(UnresolvedSetIterator Begin,
-                                UnresolvedSetIterator End,
-                                const TemplateArgumentListInfo *Args);
+  void initializeResults(ASTContext &C,
+                         UnresolvedSetIterator Begin,
+                         UnresolvedSetIterator End);
 
+public:
   struct FindResult {
     OverloadExpr *Expression;
     bool IsAddressOfOperand;
@@ -1586,9 +1602,6 @@ public:
     return UnresolvedSetIterator(Results + NumResults);
   }
   
-  void initializeResults(ASTContext &C,
-                         UnresolvedSetIterator Begin,UnresolvedSetIterator End);
-
   /// Gets the number of declarations in the unresolved set.
   unsigned getNumDecls() const { return NumResults; }
 
@@ -1667,15 +1680,15 @@ class UnresolvedLookupExpr : public OverloadExpr {
   /// against the qualified-lookup bits.
   CXXRecordDecl *NamingClass;
 
-  UnresolvedLookupExpr(ASTContext &C, QualType T, bool Dependent, 
+  UnresolvedLookupExpr(ASTContext &C, 
                        CXXRecordDecl *NamingClass,
                        NestedNameSpecifier *Qualifier, SourceRange QRange,
                        const DeclarationNameInfo &NameInfo,
-                       bool RequiresADL, bool Overloaded, bool HasTemplateArgs,
+                       bool RequiresADL, bool Overloaded, 
+                       const TemplateArgumentListInfo *TemplateArgs,
                        UnresolvedSetIterator Begin, UnresolvedSetIterator End)
-    : OverloadExpr(UnresolvedLookupExprClass, C, T,
-                   Dependent, Qualifier,  QRange, NameInfo, HasTemplateArgs,
-                   Begin, End),
+    : OverloadExpr(UnresolvedLookupExprClass, C, Qualifier,  QRange, NameInfo, 
+                   TemplateArgs, Begin, End),
       RequiresADL(RequiresADL), Overloaded(Overloaded), NamingClass(NamingClass)
   {}
 
@@ -1686,7 +1699,6 @@ class UnresolvedLookupExpr : public OverloadExpr {
 
 public:
   static UnresolvedLookupExpr *Create(ASTContext &C,
-                                      bool Dependent,
                                       CXXRecordDecl *NamingClass,
                                       NestedNameSpecifier *Qualifier,
                                       SourceRange QualifierRange,
@@ -1694,16 +1706,12 @@ public:
                                       bool ADL, bool Overloaded,
                                       UnresolvedSetIterator Begin, 
                                       UnresolvedSetIterator End) {
-    return new(C) UnresolvedLookupExpr(C,
-                                       Dependent ? C.DependentTy : C.OverloadTy,
-                                       Dependent, NamingClass,
-                                       Qualifier, QualifierRange, NameInfo,
-                                       ADL, Overloaded, false,
-                                       Begin, End);
+    return new(C) UnresolvedLookupExpr(C, NamingClass, Qualifier, 
+                                       QualifierRange, NameInfo, ADL, 
+                                       Overloaded, 0, Begin, End);
   }
 
   static UnresolvedLookupExpr *Create(ASTContext &C,
-                                      bool Dependent,
                                       CXXRecordDecl *NamingClass,
                                       NestedNameSpecifier *Qualifier,
                                       SourceRange QualifierRange,
@@ -1825,12 +1833,7 @@ class DependentScopeDeclRefExpr : public Expr {
                             NestedNameSpecifier *Qualifier,
                             SourceRange QualifierRange,
                             const DeclarationNameInfo &NameInfo,
-                            bool HasExplicitTemplateArgs)
-    : Expr(DependentScopeDeclRefExprClass, T, VK_LValue, OK_Ordinary,
-           true, true),
-      NameInfo(NameInfo), QualifierRange(QualifierRange), Qualifier(Qualifier),
-      HasExplicitTemplateArgs(HasExplicitTemplateArgs)
-  {}
+                            const TemplateArgumentListInfo *Args);
 
 public:
   static DependentScopeDeclRefExpr *Create(ASTContext &C,
@@ -2161,20 +2164,13 @@ class CXXDependentScopeMemberExpr : public Expr {
 
 public:
   CXXDependentScopeMemberExpr(ASTContext &C,
-                          Expr *Base, QualType BaseType,
-                          bool IsArrow,
-                          SourceLocation OperatorLoc,
-                          NestedNameSpecifier *Qualifier,
-                          SourceRange QualifierRange,
-                          NamedDecl *FirstQualifierFoundInScope,
-                          DeclarationNameInfo MemberNameInfo)
-  : Expr(CXXDependentScopeMemberExprClass, C.DependentTy,
-         VK_LValue, OK_Ordinary, true, true),
-    Base(Base), BaseType(BaseType), IsArrow(IsArrow),
-    HasExplicitTemplateArgs(false), OperatorLoc(OperatorLoc),
-    Qualifier(Qualifier), QualifierRange(QualifierRange),
-    FirstQualifierFoundInScope(FirstQualifierFoundInScope),
-    MemberNameInfo(MemberNameInfo) { }
+                              Expr *Base, QualType BaseType,
+                              bool IsArrow,
+                              SourceLocation OperatorLoc,
+                              NestedNameSpecifier *Qualifier,
+                              SourceRange QualifierRange,
+                              NamedDecl *FirstQualifierFoundInScope,
+                              DeclarationNameInfo MemberNameInfo);
 
   static CXXDependentScopeMemberExpr *
   Create(ASTContext &C,
@@ -2384,8 +2380,7 @@ class UnresolvedMemberExpr : public OverloadExpr {
   /// \brief The location of the '->' or '.' operator.
   SourceLocation OperatorLoc;
 
-  UnresolvedMemberExpr(ASTContext &C, QualType T, bool Dependent,
-                       bool HasUnresolvedUsing,
+  UnresolvedMemberExpr(ASTContext &C, bool HasUnresolvedUsing,
                        Expr *Base, QualType BaseType, bool IsArrow,
                        SourceLocation OperatorLoc,
                        NestedNameSpecifier *Qualifier,
@@ -2400,7 +2395,7 @@ class UnresolvedMemberExpr : public OverloadExpr {
 
 public:
   static UnresolvedMemberExpr *
-  Create(ASTContext &C, bool Dependent, bool HasUnresolvedUsing,
+  Create(ASTContext &C, bool HasUnresolvedUsing,
          Expr *Base, QualType BaseType, bool IsArrow,
          SourceLocation OperatorLoc,
          NestedNameSpecifier *Qualifier,
@@ -2553,7 +2548,8 @@ public:
                   SourceLocation Keyword, SourceLocation RParen)
     : Expr(CXXNoexceptExprClass, Ty, VK_RValue, OK_Ordinary,
            /*TypeDependent*/false,
-           /*ValueDependent*/Val == CT_Dependent),
+           /*ValueDependent*/Val == CT_Dependent,
+           Operand->containsUnexpandedParameterPack()),
       Value(Val == CT_Cannot), Operand(Operand), Range(Keyword, RParen)
   { }
 

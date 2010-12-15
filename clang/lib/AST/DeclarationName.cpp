@@ -512,6 +512,27 @@ DeclarationNameLoc::DeclarationNameLoc(DeclarationName Name) {
   }
 }
 
+bool DeclarationNameInfo::containsUnexpandedParameterPack() const {
+  switch (Name.getNameKind()) {
+  case DeclarationName::Identifier:
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+  case DeclarationName::CXXOperatorName:
+  case DeclarationName::CXXLiteralOperatorName:
+  case DeclarationName::CXXUsingDirective:
+    return false;
+
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+    if (TypeSourceInfo *TInfo = LocInfo.NamedType.TInfo)
+      return TInfo->getType()->containsUnexpandedParameterPack();
+
+    return Name.getCXXNameType()->containsUnexpandedParameterPack();
+  }
+}
+
 std::string DeclarationNameInfo::getAsString() const {
   std::string Result;
   llvm::raw_string_ostream OS(Result);

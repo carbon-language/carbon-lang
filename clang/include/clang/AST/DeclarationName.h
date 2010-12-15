@@ -492,6 +492,10 @@ public:
     LocInfo.CXXLiteralOperatorName.OpNameLoc = Loc.getRawEncoding();
   }
 
+  /// \brief Determine whether this name contains an unexpanded
+  /// parameter pack.
+  bool containsUnexpandedParameterPack() const;
+
   /// getAsString - Retrieve the human-readable string for this name.
   std::string getAsString() const;
 

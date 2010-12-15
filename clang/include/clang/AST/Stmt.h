@@ -143,7 +143,18 @@ protected:
     friend class DeclRefExpr; // computeDependence
     friend class InitListExpr; // ctor
     friend class DesignatedInitExpr; // ctor
-    friend class ASTStmtReader;
+    friend class ASTStmtReader; // deserialization
+    friend class CXXNewExpr; // ctor
+    friend class DependentScopeDeclRefExpr; // ctor
+    friend class CXXConstructExpr; // ctor
+    friend class CallExpr; // ctor
+    friend class OffsetOfExpr; // ctor
+    friend class ObjCMessageExpr; // ctor
+    friend class ShuffleVectorExpr; // ctor
+    friend class ParenListExpr; // ctor
+    friend class CXXUnresolvedConstructExpr; // ctor
+    friend class CXXDependentScopeMemberExpr; // ctor
+    friend class OverloadExpr; // ctor
     unsigned : NumStmtBits;
 
     unsigned ValueKind : 2;

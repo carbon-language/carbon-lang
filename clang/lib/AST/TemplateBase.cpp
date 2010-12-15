@@ -26,6 +26,42 @@ using namespace clang;
 // TemplateArgument Implementation
 //===----------------------------------------------------------------------===//
 
+bool TemplateArgument::isDependent() const {
+  switch (getKind()) {
+  case Null:
+    assert(false && "Should not have a NULL template argument");
+    return false;
+
+  case Type:
+    return getAsType()->isDependentType();
+
+  case Template:
+    return getAsTemplate().isDependent();
+      
+  case Declaration:
+    if (DeclContext *DC = dyn_cast<DeclContext>(getAsDecl()))
+      return DC->isDependentContext();
+    return getAsDecl()->getDeclContext()->isDependentContext();
+
+  case Integral:
+    // Never dependent
+    return false;
+
+  case Expression:
+    return (getAsExpr()->isTypeDependent() || getAsExpr()->isValueDependent());
+
+  case Pack:
+    for (pack_iterator P = pack_begin(), PEnd = pack_end(); P != PEnd; ++P) {
+      if (P->isDependent())
+        return true;
+    }
+
+    return false;
+  }
+
+  return false;
+}
+
 bool TemplateArgument::containsUnexpandedParameterPack() const {
   switch (getKind()) {
   case Null:

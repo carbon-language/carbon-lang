@@ -1709,11 +1709,8 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
   // We don't want lookup warnings at this point.
   R.suppressDiagnostics();
   
-  bool Dependent
-    = UnresolvedLookupExpr::ComputeDependence(R.begin(), R.end(),
-                                              &TemplateArgs);
   UnresolvedLookupExpr *ULE
-    = UnresolvedLookupExpr::Create(Context, Dependent, R.getNamingClass(),
+    = UnresolvedLookupExpr::Create(Context, R.getNamingClass(),
                                    Qualifier, QualifierRange,
                                    R.getLookupNameInfo(),
                                    RequiresADL, TemplateArgs, 

@@ -1220,45 +1220,6 @@ bool EnumType::classof(const TagType *TT) {
   return isa<EnumDecl>(TT->getDecl());
 }
 
-static bool isDependent(const TemplateArgument &Arg) {
-  switch (Arg.getKind()) {
-  case TemplateArgument::Null:
-    assert(false && "Should not have a NULL template argument");
-    return false;
-
-  case TemplateArgument::Type:
-    return Arg.getAsType()->isDependentType();
-
-  case TemplateArgument::Template:
-    return Arg.getAsTemplate().isDependent();
-      
-  case TemplateArgument::Declaration:
-    if (DeclContext *DC = dyn_cast<DeclContext>(Arg.getAsDecl()))
-      return DC->isDependentContext();
-    return Arg.getAsDecl()->getDeclContext()->isDependentContext();
-
-  case TemplateArgument::Integral:
-    // Never dependent
-    return false;
-
-  case TemplateArgument::Expression:
-    return (Arg.getAsExpr()->isTypeDependent() ||
-            Arg.getAsExpr()->isValueDependent());
-
-  case TemplateArgument::Pack:
-    for (TemplateArgument::pack_iterator P = Arg.pack_begin(), 
-                                      PEnd = Arg.pack_end();
-         P != PEnd; ++P) {
-      if (isDependent(*P))
-        return true;
-    }
-
-    return false;
-  }
-
-  return false;
-}
-
 bool TemplateSpecializationType::
 anyDependentTemplateArguments(const TemplateArgumentListInfo &Args) {
   return anyDependentTemplateArguments(Args.getArgumentArray(), Args.size());
@@ -1267,7 +1228,7 @@ anyDependentTemplateArguments(const TemplateArgumentListInfo &Args) {
 bool TemplateSpecializationType::
 anyDependentTemplateArguments(const TemplateArgumentLoc *Args, unsigned N) {
   for (unsigned i = 0; i != N; ++i)
-    if (isDependent(Args[i].getArgument()))
+    if (Args[i].getArgument().isDependent())
       return true;
   return false;
 }
@@ -1275,7 +1236,7 @@ anyDependentTemplateArguments(const TemplateArgumentLoc *Args, unsigned N) {
 bool TemplateSpecializationType::
 anyDependentTemplateArguments(const TemplateArgument *Args, unsigned N) {
   for (unsigned i = 0; i != N; ++i)
-    if (isDependent(Args[i]))
+    if (Args[i].isDependent())
       return true;
   return false;
 }
@@ -1298,7 +1259,7 @@ TemplateSpecializationType(TemplateName T,
     = reinterpret_cast<TemplateArgument *>(this + 1);
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
     // Update dependent and variably-modified bits.
-    if (isDependent(Args[Arg]))
+    if (Args[Arg].isDependent())
       setDependent();
     if (Args[Arg].getKind() == TemplateArgument::Type &&
         Args[Arg].getAsType()->isVariablyModifiedType())

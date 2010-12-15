@@ -7275,7 +7275,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
     
     CXXRecordDecl *NamingClass = 0; // because lookup ignores member operators
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
+      = UnresolvedLookupExpr::Create(Context, NamingClass,
                                      0, SourceRange(), OpNameInfo,
                                      /*ADL*/ true, IsOverloaded(Fns),
                                      Fns.begin(), Fns.end());
@@ -7452,9 +7452,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     // TODO: provide better source location info in DNLoc component.
     DeclarationNameInfo OpNameInfo(OpName, OpLoc);
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
-                                     0, SourceRange(), OpNameInfo,
-                                     /*ADL*/ true, IsOverloaded(Fns),
+      = UnresolvedLookupExpr::Create(Context, NamingClass, 0, SourceRange(), 
+                                     OpNameInfo, /*ADL*/ true, IsOverloaded(Fns),
                                      Fns.begin(), Fns.end());
     return Owned(new (Context) CXXOperatorCallExpr(Context, Op, Fn,
                                                    Args, 2,
@@ -7679,7 +7678,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     DeclarationNameInfo OpNameInfo(OpName, LLoc);
     OpNameInfo.setCXXOperatorNameRange(SourceRange(LLoc, RLoc));
     UnresolvedLookupExpr *Fn
-      = UnresolvedLookupExpr::Create(Context, /*Dependent*/ true, NamingClass,
+      = UnresolvedLookupExpr::Create(Context, NamingClass,
                                      0, SourceRange(), OpNameInfo,
                                      /*ADL*/ true, /*Overloaded*/ false,
                                      UnresolvedSetIterator(),

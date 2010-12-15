@@ -3633,7 +3633,8 @@ void Sema::IgnoredValueConversions(Expr *&E) {
 }
 
 ExprResult Sema::ActOnFinishFullExpr(Expr *FullExpr) {
-  if (!FullExpr) return ExprError();
+  if (!FullExpr) 
+    return ExprError();
 
   if (DiagnoseUnexpandedParameterPack(FullExpr))
     return ExprError();

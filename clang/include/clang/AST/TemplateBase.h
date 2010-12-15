@@ -182,6 +182,10 @@ public:
   /// \brief Determine whether this template argument has no value.
   bool isNull() const { return Kind == Null; }
 
+  /// \brief Whether this template argument is dependent on a template
+  /// parameter.
+  bool isDependent() const;
+
   /// \brief Whether this template argument contains an unexpanded
   /// parameter pack.
   bool containsUnexpandedParameterPack() const;

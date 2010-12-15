@@ -57,13 +57,12 @@ class Expr : public Stmt {
 
 protected:
   Expr(StmtClass SC, QualType T, ExprValueKind VK, ExprObjectKind OK,
-       bool TD, bool VD) : Stmt(SC) {
+       bool TD, bool VD, bool ContainsUnexpandedParameterPack) : Stmt(SC) {
     ExprBits.TypeDependent = TD;
     ExprBits.ValueDependent = VD;
     ExprBits.ValueKind = VK;
     ExprBits.ObjectKind = OK;
-    // FIXME: Variadic templates.
-    ExprBits.ContainsUnexpandedParameterPack = false;
+    ExprBits.ContainsUnexpandedParameterPack = ContainsUnexpandedParameterPack;
     setType(T);
   }
 
@@ -130,6 +129,12 @@ public:
   /// contain parameter packs.
   bool containsUnexpandedParameterPack() const { 
     return ExprBits.ContainsUnexpandedParameterPack; 
+  }
+
+  /// \brief Set the bit that describes whether this expression
+  /// contains an unexpanded parameter pack.
+  void setContainsUnexpandedParameterPack(bool PP = true) {
+    ExprBits.ContainsUnexpandedParameterPack = PP;
   }
 
   /// SourceLocation tokens are not useful in isolation - they are low level
@@ -568,6 +573,8 @@ struct ExplicitTemplateArgumentList {
   }
 
   void initializeFrom(const TemplateArgumentListInfo &List);
+  void initializeFrom(const TemplateArgumentListInfo &List,
+                      bool &Dependent, bool &ContainsUnexpandedParameterPack);
   void copyInto(TemplateArgumentListInfo &List) const;
   static std::size_t sizeFor(unsigned NumTemplateArgs);
   static std::size_t sizeFor(const TemplateArgumentListInfo &List);
@@ -631,7 +638,7 @@ class DeclRefExpr : public Expr {
 
 public:
   DeclRefExpr(ValueDecl *d, QualType t, ExprValueKind VK, SourceLocation l) :
-    Expr(DeclRefExprClass, t, VK, OK_Ordinary, false, false),
+    Expr(DeclRefExprClass, t, VK, OK_Ordinary, false, false, false),
     DecoratedD(d, 0), Loc(l) {
     computeDependence();
   }
@@ -795,7 +802,8 @@ private:
 public:
   PredefinedExpr(SourceLocation l, QualType type, IdentType IT)
     : Expr(PredefinedExprClass, type, VK_LValue, OK_Ordinary,
-           type->isDependentType(), type->isDependentType()),
+           type->isDependentType(), type->isDependentType(), 
+           /*ContainsUnexpandedParameterPack=*/false),
       Loc(l), Type(IT) {}
 
   /// \brief Construct an empty predefined expression.
@@ -882,7 +890,8 @@ public:
   // or UnsignedLongLongTy
   IntegerLiteral(ASTContext &C, const llvm::APInt &V,
                  QualType type, SourceLocation l)
-    : Expr(IntegerLiteralClass, type, VK_RValue, OK_Ordinary, false, false),
+    : Expr(IntegerLiteralClass, type, VK_RValue, OK_Ordinary, false, false,
+           false),
       Loc(l) {
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
     setValue(C, V);
@@ -920,7 +929,8 @@ class CharacterLiteral : public Expr {
 public:
   // type should be IntTy
   CharacterLiteral(unsigned value, bool iswide, QualType type, SourceLocation l)
-    : Expr(CharacterLiteralClass, type, VK_RValue, OK_Ordinary, false, false),
+    : Expr(CharacterLiteralClass, type, VK_RValue, OK_Ordinary, false, false,
+           false),
       Value(value), Loc(l), IsWide(iswide) {
   }
 
@@ -955,7 +965,8 @@ class FloatingLiteral : public Expr {
 
   FloatingLiteral(ASTContext &C, const llvm::APFloat &V, bool isexact,
                   QualType Type, SourceLocation L)
-    : Expr(FloatingLiteralClass, Type, VK_RValue, OK_Ordinary, false, false),
+    : Expr(FloatingLiteralClass, Type, VK_RValue, OK_Ordinary, false, false,
+           false),
       IsExact(isexact), Loc(L) {
     setValue(C, V);
   }
@@ -1006,7 +1017,8 @@ class ImaginaryLiteral : public Expr {
   Stmt *Val;
 public:
   ImaginaryLiteral(Expr *val, QualType Ty)
-    : Expr(ImaginaryLiteralClass, Ty, VK_RValue, OK_Ordinary, false, false),
+    : Expr(ImaginaryLiteralClass, Ty, VK_RValue, OK_Ordinary, false, false,
+           false),
       Val(val) {}
 
   /// \brief Build an empty imaginary literal.
@@ -1052,7 +1064,7 @@ class StringLiteral : public Expr {
   SourceLocation TokLocs[1];
 
   StringLiteral(QualType Ty) :
-    Expr(StringLiteralClass, Ty, VK_LValue, OK_Ordinary, false, false) {}
+    Expr(StringLiteralClass, Ty, VK_LValue, OK_Ordinary, false, false, false) {}
 
 public:
   /// This is the "fully general" constructor that allows representation of
@@ -1140,7 +1152,8 @@ public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
     : Expr(ParenExprClass, val->getType(),
            val->getValueKind(), val->getObjectKind(),
-           val->isTypeDependent(), val->isValueDependent()),
+           val->isTypeDependent(), val->isValueDependent(),
+           val->containsUnexpandedParameterPack()),
       L(l), R(r), Val(val) {}
 
   /// \brief Construct an empty parenthesized expression.
@@ -1196,7 +1209,8 @@ public:
                 ExprValueKind VK, ExprObjectKind OK, SourceLocation l)
     : Expr(UnaryOperatorClass, type, VK, OK,
            input->isTypeDependent() || type->isDependentType(),
-           input->isValueDependent()),
+           input->isValueDependent(),
+           input->containsUnexpandedParameterPack()),
       Opc(opc), Loc(l), Val(input) {}
 
   /// \brief Build an empty unary operator.
@@ -1483,7 +1497,8 @@ public:
       Expr(SizeOfAlignOfExprClass, resultType, VK_RValue, OK_Ordinary,
            false, // Never type-dependent (C++ [temp.dep.expr]p3).
            // Value-dependent if the argument is type-dependent.
-           TInfo->getType()->isDependentType()),
+           TInfo->getType()->isDependentType(),
+           TInfo->getType()->containsUnexpandedParameterPack()),
       isSizeof(issizeof), isType(true), OpLoc(op), RParenLoc(rp) {
     Argument.Ty = TInfo;
   }
@@ -1494,7 +1509,8 @@ public:
       Expr(SizeOfAlignOfExprClass, resultType, VK_RValue, OK_Ordinary,
            false, // Never type-dependent (C++ [temp.dep.expr]p3).
            // Value-dependent if the argument is type-dependent.
-           E->isTypeDependent()),
+           E->isTypeDependent(),
+           E->containsUnexpandedParameterPack()),
       isSizeof(issizeof), isType(false), OpLoc(op), RParenLoc(rp) {
     Argument.Ex = E;
   }
@@ -1569,7 +1585,9 @@ public:
                      SourceLocation rbracketloc)
   : Expr(ArraySubscriptExprClass, t, VK, OK,
          lhs->isTypeDependent() || rhs->isTypeDependent(),
-         lhs->isValueDependent() || rhs->isValueDependent()),
+         lhs->isValueDependent() || rhs->isValueDependent(),
+         (lhs->containsUnexpandedParameterPack() ||
+          rhs->containsUnexpandedParameterPack())),
     RBracketLoc(rbracketloc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
@@ -1790,7 +1808,8 @@ public:
              const DeclarationNameInfo &NameInfo, QualType ty,
              ExprValueKind VK, ExprObjectKind OK)
     : Expr(MemberExprClass, ty, VK, OK,
-           base->isTypeDependent(), base->isValueDependent()),
+           base->isTypeDependent(), base->isValueDependent(),
+           base->containsUnexpandedParameterPack()),
       Base(base), MemberDecl(memberdecl), MemberLoc(NameInfo.getLoc()),
       MemberDNLoc(NameInfo.getInfo()), IsArrow(isarrow),
       HasQualifierOrFoundDecl(false), HasExplicitTemplateArgumentList(false) {
@@ -1805,7 +1824,8 @@ public:
              SourceLocation l, QualType ty,
              ExprValueKind VK, ExprObjectKind OK)
     : Expr(MemberExprClass, ty, VK, OK,
-           base->isTypeDependent(), base->isValueDependent()),
+           base->isTypeDependent(), base->isValueDependent(),
+           base->containsUnexpandedParameterPack()),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), MemberDNLoc(),
       IsArrow(isarrow),
       HasQualifierOrFoundDecl(false), HasExplicitTemplateArgumentList(false) {}
@@ -1991,11 +2011,12 @@ class CompoundLiteralExpr : public Expr {
   Stmt *Init;
   bool FileScope;
 public:
-  // FIXME: Can compound literals be value-dependent?
   CompoundLiteralExpr(SourceLocation lparenloc, TypeSourceInfo *tinfo,
                       QualType T, ExprValueKind VK, Expr *init, bool fileScope)
     : Expr(CompoundLiteralExprClass, T, VK, OK_Ordinary,
-           tinfo->getType()->isDependentType(), false),
+           tinfo->getType()->isDependentType(), 
+           init->isValueDependent(),
+           init->containsUnexpandedParameterPack()),
       LParenLoc(lparenloc), TInfo(tinfo), Init(init), FileScope(fileScope) {}
 
   /// \brief Construct an empty compound literal.
@@ -2119,7 +2140,9 @@ protected:
          ty->isDependentType(),
          // Cast expressions are value-dependent if the type is
          // dependent or if the subexpression is value-dependent.
-         ty->isDependentType() || (op && op->isValueDependent())),
+         ty->isDependentType() || (op && op->isValueDependent()),
+         (ty->containsUnexpandedParameterPack() ||
+          op->containsUnexpandedParameterPack())),
     Op(op) {
     assert(kind != CK_Invalid && "creating cast with invalid cast kind");
     CastExprBits.Kind = kind;
@@ -2351,7 +2374,9 @@ public:
                  SourceLocation opLoc)
     : Expr(BinaryOperatorClass, ResTy, VK, OK,
            lhs->isTypeDependent() || rhs->isTypeDependent(),
-           lhs->isValueDependent() || rhs->isValueDependent()),
+           lhs->isValueDependent() || rhs->isValueDependent(),
+           (lhs->containsUnexpandedParameterPack() ||
+            rhs->containsUnexpandedParameterPack())),
       Opc(opc), OpLoc(opLoc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
@@ -2450,7 +2475,9 @@ protected:
                  SourceLocation opLoc, bool dead)
     : Expr(CompoundAssignOperatorClass, ResTy, VK, OK,
            lhs->isTypeDependent() || rhs->isTypeDependent(),
-           lhs->isValueDependent() || rhs->isValueDependent()),
+           lhs->isValueDependent() || rhs->isValueDependent(),
+           (lhs->containsUnexpandedParameterPack() ||
+            rhs->containsUnexpandedParameterPack())),
       Opc(opc), OpLoc(opLoc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
@@ -2519,7 +2546,10 @@ public:
            ((lhs && lhs->isTypeDependent()) || (rhs && rhs->isTypeDependent())),
            (cond->isValueDependent() ||
             (lhs && lhs->isValueDependent()) ||
-            (rhs && rhs->isValueDependent()))),
+            (rhs && rhs->isValueDependent())),
+           (cond->containsUnexpandedParameterPack() ||
+            (lhs && lhs->containsUnexpandedParameterPack()) ||
+            (rhs && rhs->containsUnexpandedParameterPack()))),
       QuestionLoc(QLoc),
       ColonLoc(CLoc) {
     SubExprs[COND] = cond;
@@ -2589,7 +2619,7 @@ class AddrLabelExpr : public Expr {
 public:
   AddrLabelExpr(SourceLocation AALoc, SourceLocation LLoc, LabelStmt *L,
                 QualType t)
-    : Expr(AddrLabelExprClass, t, VK_RValue, OK_Ordinary, false, false),
+    : Expr(AddrLabelExprClass, t, VK_RValue, OK_Ordinary, false, false, false),
       AmpAmpLoc(AALoc), LabelLoc(LLoc), Label(L) {}
 
   /// \brief Build an empty address of a label expression.
@@ -2632,7 +2662,7 @@ public:
   StmtExpr(CompoundStmt *substmt, QualType T,
            SourceLocation lp, SourceLocation rp) :
     Expr(StmtExprClass, T, VK_RValue, OK_Ordinary,
-         T->isDependentType(), false),
+         T->isDependentType(), false, false),
     SubStmt(substmt), LParenLoc(lp), RParenLoc(rp) { }
 
   /// \brief Build an empty statement expression.
@@ -2679,19 +2709,9 @@ class ShuffleVectorExpr : public Expr {
   unsigned NumExprs;
 
 public:
-  // FIXME: Can a shufflevector be value-dependent?  Does type-dependence need
-  // to be computed differently?
   ShuffleVectorExpr(ASTContext &C, Expr **args, unsigned nexpr,
                     QualType Type, SourceLocation BLoc,
-                    SourceLocation RP) :
-    Expr(ShuffleVectorExprClass, Type, VK_RValue, OK_Ordinary,
-         Type->isDependentType(), false),
-    BuiltinLoc(BLoc), RParenLoc(RP), NumExprs(nexpr) {
-
-    SubExprs = new (C) Stmt*[nexpr];
-    for (unsigned i = 0; i < nexpr; i++)
-      SubExprs[i] = args[i];
-  }
+                    SourceLocation RP);
 
   /// \brief Build an empty vector-shuffle expression.
   explicit ShuffleVectorExpr(EmptyShell Empty)
@@ -2755,7 +2775,10 @@ public:
   ChooseExpr(SourceLocation BLoc, Expr *cond, Expr *lhs, Expr *rhs,
              QualType t, ExprValueKind VK, ExprObjectKind OK,
              SourceLocation RP, bool TypeDependent, bool ValueDependent)
-    : Expr(ChooseExprClass, t, VK, OK, TypeDependent, ValueDependent),
+    : Expr(ChooseExprClass, t, VK, OK, TypeDependent, ValueDependent,
+           (cond->containsUnexpandedParameterPack() ||
+            lhs->containsUnexpandedParameterPack() ||
+            rhs->containsUnexpandedParameterPack())),
       BuiltinLoc(BLoc), RParenLoc(RP) {
       SubExprs[COND] = cond;
       SubExprs[LHS] = lhs;
@@ -2813,7 +2836,7 @@ class GNUNullExpr : public Expr {
 
 public:
   GNUNullExpr(QualType Ty, SourceLocation Loc)
-    : Expr(GNUNullExprClass, Ty, VK_RValue, OK_Ordinary, false, false),
+    : Expr(GNUNullExprClass, Ty, VK_RValue, OK_Ordinary, false, false, false),
       TokenLoc(Loc) { }
 
   /// \brief Build an empty GNU __null expression.
@@ -2845,7 +2868,9 @@ public:
   VAArgExpr(SourceLocation BLoc, Expr* e, TypeSourceInfo *TInfo,
             SourceLocation RPLoc, QualType t)
     : Expr(VAArgExprClass, t, VK_RValue, OK_Ordinary,
-           t->isDependentType(), false),
+           t->isDependentType(), false,
+           (TInfo->getType()->containsUnexpandedParameterPack() ||
+            e->containsUnexpandedParameterPack())),
       Val(e), TInfo(TInfo),
       BuiltinLoc(BLoc),
       RParenLoc(RPLoc) { }
@@ -3346,7 +3371,7 @@ class ImplicitValueInitExpr : public Expr {
 public:
   explicit ImplicitValueInitExpr(QualType ty)
     : Expr(ImplicitValueInitExprClass, ty, VK_RValue, OK_Ordinary,
-           false, false) { }
+           false, false, false) { }
 
   /// \brief Construct an empty implicit value initialization.
   explicit ImplicitValueInitExpr(EmptyShell Empty)
@@ -3434,7 +3459,8 @@ public:
                        IdentifierInfo &accessor, SourceLocation loc)
     : Expr(ExtVectorElementExprClass, ty, VK,
            (VK == VK_RValue ? OK_Ordinary : OK_VectorComponent),
-           base->isTypeDependent(), base->isValueDependent()),
+           base->isTypeDependent(), base->isValueDependent(),
+           base->containsUnexpandedParameterPack()),
       Base(base), Accessor(&accessor), AccessorLoc(loc) {}
 
   /// \brief Build an empty vector element expression.
@@ -3490,7 +3516,7 @@ protected:
 public:
   BlockExpr(BlockDecl *BD, QualType ty, bool hasBlockDeclRefExprs)
     : Expr(BlockExprClass, ty, VK_RValue, OK_Ordinary,
-           ty->isDependentType(), false),
+           ty->isDependentType(), false, false),
       TheBlock(BD), HasBlockDeclRefExprs(hasBlockDeclRefExprs) {}
 
   /// \brief Build an empty block expression.
@@ -3541,7 +3567,7 @@ public:
                    SourceLocation l, bool ByRef, bool constAdded = false,
                    Stmt *copyConstructorVal = 0)
     : Expr(BlockDeclRefExprClass, t, VK, OK_Ordinary,
-           (!t.isNull() && t->isDependentType()), false),
+           (!t.isNull() && t->isDependentType()), false, false),
     D(d), Loc(l), IsByRef(ByRef),
     ConstQualAdded(constAdded),  CopyConstructorVal(copyConstructorVal) {}
 
@@ -3591,7 +3617,7 @@ class OpaqueValueExpr : public Expr {
 public:
   OpaqueValueExpr(QualType T, ExprValueKind VK, ExprObjectKind OK = OK_Ordinary)
     : Expr(OpaqueValueExprClass, T, VK, OK,
-           T->isDependentType(), T->isDependentType()) {
+           T->isDependentType(), T->isDependentType(), false) {
   }
 
   explicit OpaqueValueExpr(EmptyShell Empty)

@@ -108,6 +108,25 @@ void ExplicitTemplateArgumentList::initializeFrom(
     new (&ArgBuffer[i]) TemplateArgumentLoc(Info[i]);
 }
 
+void ExplicitTemplateArgumentList::initializeFrom(
+                                   const TemplateArgumentListInfo &Info,
+                                   bool &Dependent, 
+                                   bool &ContainsUnexpandedParameterPack) {
+  LAngleLoc = Info.getLAngleLoc();
+  RAngleLoc = Info.getRAngleLoc();
+  NumTemplateArgs = Info.size();
+
+  TemplateArgumentLoc *ArgBuffer = getTemplateArgs();
+  for (unsigned i = 0; i != NumTemplateArgs; ++i) {
+    Dependent = Dependent || Info[i].getArgument().isDependent();
+    ContainsUnexpandedParameterPack 
+      = ContainsUnexpandedParameterPack || 
+        Info[i].getArgument().containsUnexpandedParameterPack();
+
+    new (&ArgBuffer[i]) TemplateArgumentLoc(Info[i]);
+  }
+}
+
 void ExplicitTemplateArgumentList::copyInto(
                                       TemplateArgumentListInfo &Info) const {
   Info.setLAngleLoc(LAngleLoc);
@@ -188,6 +207,9 @@ void DeclRefExpr::computeDependence() {
   //  (TD)  - a nested-name-specifier or a qualified-id that names a
   //          member of an unknown specialization.
   //        (handled by DependentScopeDeclRefExpr)
+
+  // FIXME: Variadic templates require that we compute whether this
+  // declaration reference contains an unexpanded parameter pack.
 }
 
 DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier, 
@@ -195,7 +217,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
                          ValueDecl *D, SourceLocation NameLoc,
                          const TemplateArgumentListInfo *TemplateArgs,
                          QualType T, ExprValueKind VK)
-  : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false),
+  : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
     DecoratedD(D,
                (Qualifier? HasQualifierFlag : 0) |
                (TemplateArgs ? HasExplicitTemplateArgumentListFlag : 0)),
@@ -217,7 +239,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier,
                          ValueDecl *D, const DeclarationNameInfo &NameInfo,
                          const TemplateArgumentListInfo *TemplateArgs,
                          QualType T, ExprValueKind VK)
-  : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false),
+  : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
     DecoratedD(D,
                (Qualifier? HasQualifierFlag : 0) |
                (TemplateArgs ? HasExplicitTemplateArgumentListFlag : 0)),
@@ -597,14 +619,23 @@ CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args,
                    unsigned numargs, QualType t, ExprValueKind VK,
                    SourceLocation rparenloc)
   : Expr(SC, t, VK, OK_Ordinary,
-         fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
-         fn->isValueDependent() || hasAnyValueDependentArguments(args,numargs)),
+         fn->isTypeDependent(),
+         fn->isValueDependent(),
+         fn->containsUnexpandedParameterPack()),
     NumArgs(numargs) {
 
   SubExprs = new (C) Stmt*[numargs+1];
   SubExprs[FN] = fn;
-  for (unsigned i = 0; i != numargs; ++i)
+  for (unsigned i = 0; i != numargs; ++i) {
+    if (args[i]->isTypeDependent())
+      ExprBits.TypeDependent = true;
+    if (args[i]->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (args[i]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
     SubExprs[i+ARGS_START] = args[i];
+  }
 
   RParenLoc = rparenloc;
 }
@@ -612,20 +643,30 @@ CallExpr::CallExpr(ASTContext& C, StmtClass SC, Expr *fn, Expr **args,
 CallExpr::CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
                    QualType t, ExprValueKind VK, SourceLocation rparenloc)
   : Expr(CallExprClass, t, VK, OK_Ordinary,
-         fn->isTypeDependent() || hasAnyTypeDependentArguments(args, numargs),
-         fn->isValueDependent() || hasAnyValueDependentArguments(args,numargs)),
+         fn->isTypeDependent(),
+         fn->isValueDependent(),
+         fn->containsUnexpandedParameterPack()),
     NumArgs(numargs) {
 
   SubExprs = new (C) Stmt*[numargs+1];
   SubExprs[FN] = fn;
-  for (unsigned i = 0; i != numargs; ++i)
+  for (unsigned i = 0; i != numargs; ++i) {
+    if (args[i]->isTypeDependent())
+      ExprBits.TypeDependent = true;
+    if (args[i]->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (args[i]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
     SubExprs[i+ARGS_START] = args[i];
+  }
 
   RParenLoc = rparenloc;
 }
 
 CallExpr::CallExpr(ASTContext &C, StmtClass SC, EmptyShell Empty)
   : Expr(SC, Empty), SubExprs(0), NumArgs(0) {
+  // FIXME: Why do we allocate this?
   SubExprs = new (C) Stmt*[1];
 }
 
@@ -745,9 +786,8 @@ OffsetOfExpr::OffsetOfExpr(ASTContext &C, QualType type,
                            SourceLocation RParenLoc)
   : Expr(OffsetOfExprClass, type, VK_RValue, OK_Ordinary,
          /*TypeDependent=*/false, 
-         /*ValueDependent=*/tsi->getType()->isDependentType() ||
-         hasAnyTypeDependentArguments(exprsPtr, numExprs) ||
-         hasAnyValueDependentArguments(exprsPtr, numExprs)),
+         /*ValueDependent=*/tsi->getType()->isDependentType(),
+         tsi->getType()->containsUnexpandedParameterPack()),
     OperatorLoc(OperatorLoc), RParenLoc(RParenLoc), TSInfo(tsi), 
     NumComps(numComps), NumExprs(numExprs) 
 {
@@ -756,6 +796,11 @@ OffsetOfExpr::OffsetOfExpr(ASTContext &C, QualType type,
   }
   
   for(unsigned i = 0; i < numExprs; ++i) {
+    if (exprsPtr[i]->isTypeDependent() || exprsPtr[i]->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (exprsPtr[i]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
     setIndexExpr(i, exprsPtr[i]);
   }
 }
@@ -1100,7 +1145,8 @@ OverloadedOperatorKind BinaryOperator::getOverloadedOperator(Opcode Opc) {
 InitListExpr::InitListExpr(ASTContext &C, SourceLocation lbraceloc,
                            Expr **initExprs, unsigned numInits,
                            SourceLocation rbraceloc)
-  : Expr(InitListExprClass, QualType(), VK_RValue, OK_Ordinary, false, false),
+  : Expr(InitListExprClass, QualType(), VK_RValue, OK_Ordinary, false, false,
+         false),
     InitExprs(C, numInits),
     LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), SyntacticForm(0),
     UnionFieldInit(0), HadArrayRangeDesignator(false) 
@@ -1110,6 +1156,8 @@ InitListExpr::InitListExpr(ASTContext &C, SourceLocation lbraceloc,
       ExprBits.TypeDependent = true;
     if (initExprs[I]->isValueDependent())
       ExprBits.ValueDependent = true;
+    if (initExprs[I]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
   }
       
   InitExprs.insert(C, InitExprs.end(), initExprs, initExprs+numInits);
@@ -2216,7 +2264,8 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
   : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary,
-         /*TypeDependent=*/false, /*ValueDependent=*/false),
+         /*TypeDependent=*/false, /*ValueDependent=*/false,
+         /*ContainsUnexpandedParameterPack=*/false),
     NumArgs(NumArgs), Kind(IsInstanceSuper? SuperInstance : SuperClass),
     HasMethod(Method != 0), SuperLoc(SuperLoc),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
@@ -2238,16 +2287,24 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
   : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary, T->isDependentType(),
-         (T->isDependentType() || 
-          hasAnyValueDependentArguments(Args, NumArgs))),
+         T->isDependentType(), T->containsUnexpandedParameterPack()),
     NumArgs(NumArgs), Kind(Class), HasMethod(Method != 0),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   setReceiverPointer(Receiver);
-  if (NumArgs)
-    memcpy(getArgs(), Args, NumArgs * sizeof(Expr *));
+  Stmt **MyArgs = getArgs();
+  for (unsigned I = 0; I != NumArgs; ++I) {
+    if (Args[I]->isTypeDependent())
+      ExprBits.TypeDependent = true;
+    if (Args[I]->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (Args[I]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+  
+    MyArgs[I] = Args[I];
+  }
 }
 
 ObjCMessageExpr::ObjCMessageExpr(QualType T,
@@ -2260,16 +2317,25 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  Expr **Args, unsigned NumArgs,
                                  SourceLocation RBracLoc)
   : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary, Receiver->isTypeDependent(),
-         (Receiver->isTypeDependent() || 
-          hasAnyValueDependentArguments(Args, NumArgs))),
+         Receiver->isTypeDependent(),
+         Receiver->containsUnexpandedParameterPack()),
     NumArgs(NumArgs), Kind(Instance), HasMethod(Method != 0),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   setReceiverPointer(Receiver);
-  if (NumArgs)
-    memcpy(getArgs(), Args, NumArgs * sizeof(Expr *));
+  Stmt **MyArgs = getArgs();
+  for (unsigned I = 0; I != NumArgs; ++I) {
+    if (Args[I]->isTypeDependent())
+      ExprBits.TypeDependent = true;
+    if (Args[I]->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (Args[I]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+  
+    MyArgs[I] = Args[I];
+  }
 }
 
 ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
@@ -2388,6 +2454,27 @@ bool ChooseExpr::isConditionTrue(ASTContext &C) const {
   return getCond()->EvaluateAsInt(C) != 0;
 }
 
+ShuffleVectorExpr::ShuffleVectorExpr(ASTContext &C, Expr **args, unsigned nexpr,
+                                     QualType Type, SourceLocation BLoc,
+                                     SourceLocation RP) 
+   : Expr(ShuffleVectorExprClass, Type, VK_RValue, OK_Ordinary,
+          Type->isDependentType(), Type->isDependentType(),
+          Type->containsUnexpandedParameterPack()),
+     BuiltinLoc(BLoc), RParenLoc(RP), NumExprs(nexpr) 
+{
+  SubExprs = new (C) Stmt*[nexpr];
+  for (unsigned i = 0; i < nexpr; i++) {
+    if (args[i]->isTypeDependent())
+      ExprBits.TypeDependent = true;
+    if (args[i]->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (args[i]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
+    SubExprs[i] = args[i];
+  }
+}
+
 void ShuffleVectorExpr::setExprs(ASTContext &C, Expr ** Exprs,
                                  unsigned NumExprs) {
   if (SubExprs) C.Deallocate(SubExprs);
@@ -2419,7 +2506,8 @@ DesignatedInitExpr::DesignatedInitExpr(ASTContext &C, QualType Ty,
                                        Expr *Init)
   : Expr(DesignatedInitExprClass, Ty,
          Init->getValueKind(), Init->getObjectKind(),
-         Init->isTypeDependent(), Init->isValueDependent()),
+         Init->isTypeDependent(), Init->isValueDependent(),
+         Init->containsUnexpandedParameterPack()),
     EqualOrColonLoc(EqualOrColonLoc), GNUSyntax(GNUSyntax),
     NumDesignators(NumDesignators), NumSubExprs(NumIndexExprs + 1) {
   this->Designators = new (C) Designator[NumDesignators];
@@ -2437,8 +2525,12 @@ DesignatedInitExpr::DesignatedInitExpr(ASTContext &C, QualType Ty,
     if (this->Designators[I].isArrayDesignator()) {
       // Compute type- and value-dependence.
       Expr *Index = IndexExprs[IndexIdx];
-      ExprBits.ValueDependent = ExprBits.ValueDependent ||
-        Index->isTypeDependent() || Index->isValueDependent();
+      if (Index->isTypeDependent() || Index->isValueDependent())
+        ExprBits.ValueDependent = true;
+
+      // Propagate unexpanded parameter packs.
+      if (Index->containsUnexpandedParameterPack())
+        ExprBits.ContainsUnexpandedParameterPack = true;
 
       // Copy the index expressions into permanent storage.
       *Child++ = IndexExprs[IndexIdx++];
@@ -2446,9 +2538,14 @@ DesignatedInitExpr::DesignatedInitExpr(ASTContext &C, QualType Ty,
       // Compute type- and value-dependence.
       Expr *Start = IndexExprs[IndexIdx];
       Expr *End = IndexExprs[IndexIdx + 1];
-      ExprBits.ValueDependent = ExprBits.ValueDependent ||
-        Start->isTypeDependent() || Start->isValueDependent() ||
-        End->isTypeDependent() || End->isValueDependent();
+      if (Start->isTypeDependent() || Start->isValueDependent() ||
+          End->isTypeDependent() || End->isValueDependent())
+        ExprBits.ValueDependent = true;
+
+      // Propagate unexpanded parameter packs.
+      if (Start->containsUnexpandedParameterPack() ||
+          End->containsUnexpandedParameterPack())
+        ExprBits.ContainsUnexpandedParameterPack = true;
 
       // Copy the start/end expressions into permanent storage.
       *Child++ = IndexExprs[IndexIdx++];
@@ -2559,14 +2656,21 @@ void DesignatedInitExpr::ExpandDesignator(ASTContext &C, unsigned Idx,
 ParenListExpr::ParenListExpr(ASTContext& C, SourceLocation lparenloc,
                              Expr **exprs, unsigned nexprs,
                              SourceLocation rparenloc)
-: Expr(ParenListExprClass, QualType(), VK_RValue, OK_Ordinary,
-       hasAnyTypeDependentArguments(exprs, nexprs),
-       hasAnyValueDependentArguments(exprs, nexprs)),
-  NumExprs(nexprs), LParenLoc(lparenloc), RParenLoc(rparenloc) {
+  : Expr(ParenListExprClass, QualType(), VK_RValue, OK_Ordinary,
+         false, false, false),
+    NumExprs(nexprs), LParenLoc(lparenloc), RParenLoc(rparenloc) {
 
   Exprs = new (C) Stmt*[nexprs];
-  for (unsigned i = 0; i != nexprs; ++i)
+  for (unsigned i = 0; i != nexprs; ++i) {
+    if (exprs[i]->isTypeDependent())
+      ExprBits.TypeDependent = true;
+    if (exprs[i]->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (exprs[i]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
     Exprs[i] = exprs[i];
+  }
 }
 
 //===----------------------------------------------------------------------===//

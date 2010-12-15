@@ -29,7 +29,8 @@ class ObjCStringLiteral : public Expr {
   SourceLocation AtLoc;
 public:
   ObjCStringLiteral(StringLiteral *SL, QualType T, SourceLocation L)
-    : Expr(ObjCStringLiteralClass, T, VK_RValue, OK_Ordinary, false, false),
+    : Expr(ObjCStringLiteralClass, T, VK_RValue, OK_Ordinary, false, false,
+           false),
       String(SL), AtLoc(L) {}
   explicit ObjCStringLiteral(EmptyShell Empty)
     : Expr(ObjCStringLiteralClass, Empty) {}
@@ -66,7 +67,8 @@ public:
                  SourceLocation at, SourceLocation rp)
     : Expr(ObjCEncodeExprClass, T, VK_LValue, OK_Ordinary,
            EncodedType->getType()->isDependentType(),
-           EncodedType->getType()->isDependentType()), 
+           EncodedType->getType()->isDependentType(),
+           EncodedType->getType()->containsUnexpandedParameterPack()), 
       EncodedType(EncodedType), AtLoc(at), RParenLoc(rp) {}
 
   explicit ObjCEncodeExpr(EmptyShell Empty) : Expr(ObjCEncodeExprClass, Empty){}
@@ -105,7 +107,8 @@ class ObjCSelectorExpr : public Expr {
 public:
   ObjCSelectorExpr(QualType T, Selector selInfo,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCSelectorExprClass, T, VK_RValue, OK_Ordinary, false, false),
+    : Expr(ObjCSelectorExprClass, T, VK_RValue, OK_Ordinary, false, false, 
+           false),
     SelName(selInfo), AtLoc(at), RParenLoc(rp){}
   explicit ObjCSelectorExpr(EmptyShell Empty)
    : Expr(ObjCSelectorExprClass, Empty) {}
@@ -145,8 +148,9 @@ class ObjCProtocolExpr : public Expr {
 public:
   ObjCProtocolExpr(QualType T, ObjCProtocolDecl *protocol,
                    SourceLocation at, SourceLocation rp)
-  : Expr(ObjCProtocolExprClass, T, VK_RValue, OK_Ordinary, false, false),
-    TheProtocol(protocol), AtLoc(at), RParenLoc(rp) {}
+    : Expr(ObjCProtocolExprClass, T, VK_RValue, OK_Ordinary, false, false,
+           false),
+      TheProtocol(protocol), AtLoc(at), RParenLoc(rp) {}
   explicit ObjCProtocolExpr(EmptyShell Empty)
     : Expr(ObjCProtocolExprClass, Empty) {}
 
@@ -185,9 +189,9 @@ public:
                   SourceLocation l, Expr *base,
                   bool arrow = false, bool freeIvar = false) :
     Expr(ObjCIvarRefExprClass, t, VK_LValue, OK_Ordinary,
-         /*TypeDependent=*/false, base->isValueDependent()), D(d),
-         Loc(l), Base(base), IsArrow(arrow),
-         IsFreeIvar(freeIvar) {}
+         /*TypeDependent=*/false, base->isValueDependent(), 
+         base->containsUnexpandedParameterPack()), 
+    D(d), Loc(l), Base(base), IsArrow(arrow), IsFreeIvar(freeIvar) {}
 
   explicit ObjCIvarRefExpr(EmptyShell Empty)
     : Expr(ObjCIvarRefExprClass, Empty) {}
@@ -248,7 +252,8 @@ public:
                       ExprValueKind VK, ExprObjectKind OK,
                       SourceLocation l, Expr *base)
     : Expr(ObjCPropertyRefExprClass, t, VK, OK,
-           /*TypeDependent=*/false, base->isValueDependent()),
+           /*TypeDependent=*/false, base->isValueDependent(),
+           base->containsUnexpandedParameterPack()),
       PropertyOrGetter(PD, false), Setter(0),
       IdLoc(l), ReceiverLoc(), Receiver(base) {
   }
@@ -257,7 +262,8 @@ public:
                       ExprValueKind VK, ExprObjectKind OK,
                       SourceLocation l, SourceLocation sl, QualType st)
     : Expr(ObjCPropertyRefExprClass, t, VK, OK,
-           /*TypeDependent=*/false, false),
+           /*TypeDependent=*/false, false, 
+           st->containsUnexpandedParameterPack()),
       PropertyOrGetter(PD, false), Setter(0),
       IdLoc(l), ReceiverLoc(sl), Receiver(st.getTypePtr()) {
   }
@@ -266,7 +272,8 @@ public:
                       QualType T, ExprValueKind VK, ExprObjectKind OK,
                       SourceLocation IdLoc, Expr *Base)
     : Expr(ObjCPropertyRefExprClass, T, VK, OK, false,
-           Base->isValueDependent()),
+           Base->isValueDependent(), 
+           Base->containsUnexpandedParameterPack()),
       PropertyOrGetter(Getter, true), Setter(Setter),
       IdLoc(IdLoc), ReceiverLoc(), Receiver(Base) {
   }
@@ -275,7 +282,7 @@ public:
                       QualType T, ExprValueKind VK, ExprObjectKind OK,
                       SourceLocation IdLoc,
                       SourceLocation SuperLoc, QualType SuperTy)
-    : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false),
+    : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false, false),
       PropertyOrGetter(Getter, true), Setter(Setter),
       IdLoc(IdLoc), ReceiverLoc(SuperLoc), Receiver(SuperTy.getTypePtr()) {
   }
@@ -284,7 +291,7 @@ public:
                       QualType T, ExprValueKind VK, ExprObjectKind OK,
                       SourceLocation IdLoc,
                       SourceLocation ReceiverLoc, ObjCInterfaceDecl *Receiver)
-    : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false),
+    : Expr(ObjCPropertyRefExprClass, T, VK, OK, false, false, false),
       PropertyOrGetter(Getter, true), Setter(Setter),
       IdLoc(IdLoc), ReceiverLoc(ReceiverLoc), Receiver(Receiver) {
   }
@@ -808,7 +815,8 @@ class ObjCIsaExpr : public Expr {
 public:
   ObjCIsaExpr(Expr *base, bool isarrow, SourceLocation l, QualType ty)
     : Expr(ObjCIsaExprClass, ty, VK_LValue, OK_Ordinary,
-           /*TypeDependent=*/false, base->isValueDependent()),
+           /*TypeDependent=*/false, base->isValueDependent(),
+           /*ContainsUnexpandedParameterPack=*/false),
       Base(base), IsaMemberLoc(l), IsArrow(isarrow) {}
 
   /// \brief Build an empty expression.

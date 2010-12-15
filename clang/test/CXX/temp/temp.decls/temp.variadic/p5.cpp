@@ -9,3 +9,8 @@ struct TestPPName
 {
   typedef Types *types_pointer; // expected-error{{declaration type contains unexpanded parameter pack}}
 };
+
+template<typename ... Types>
+void TestPPNameFunc(int i) {
+  f(static_cast<Types>(i)); // expected-error{{expression contains unexpanded parameter pack}}
+}

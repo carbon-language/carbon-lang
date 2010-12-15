@@ -117,7 +117,8 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
                        SourceLocation constructorLParen,
                        SourceLocation constructorRParen)
   : Expr(CXXNewExprClass, ty, VK_RValue, OK_Ordinary,
-         ty->isDependentType(), ty->isDependentType()),
+         ty->isDependentType(), ty->isDependentType(),
+         ty->containsUnexpandedParameterPack()),
     GlobalNew(globalNew),
     Initializer(initializer), SubExprs(0), OperatorNew(operatorNew),
     OperatorDelete(operatorDelete), Constructor(constructor),
@@ -126,12 +127,26 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
     ConstructorRParen(constructorRParen) {
   AllocateArgsArray(C, arraySize != 0, numPlaceArgs, numConsArgs);
   unsigned i = 0;
-  if (Array)
+  if (Array) {
+    if (arraySize->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
     SubExprs[i++] = arraySize;
-  for (unsigned j = 0; j < NumPlacementArgs; ++j)
+  }
+
+  for (unsigned j = 0; j < NumPlacementArgs; ++j) {
+    if (placementArgs[j]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
     SubExprs[i++] = placementArgs[j];
-  for (unsigned j = 0; j < NumConstructorArgs; ++j)
+  }
+
+  for (unsigned j = 0; j < NumConstructorArgs; ++j) {
+    if (constructorArgs[j]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
     SubExprs[i++] = constructorArgs[j];
+  }
 }
 
 void CXXNewExpr::AllocateArgsArray(ASTContext &C, bool isArray,
@@ -197,7 +212,15 @@ CXXPseudoDestructorExpr::CXXPseudoDestructorExpr(ASTContext &Context,
          /*isTypeDependent=*/(Base->isTypeDependent() ||
            (DestroyedType.getTypeSourceInfo() &&
             DestroyedType.getTypeSourceInfo()->getType()->isDependentType())),
-         /*isValueDependent=*/Base->isValueDependent()),
+         /*isValueDependent=*/Base->isValueDependent(),
+         // ContainsUnexpandedParameterPack
+         (Base->containsUnexpandedParameterPack() ||
+          (Qualifier && Qualifier->containsUnexpandedParameterPack()) ||
+          (ScopeType && 
+           ScopeType->getType()->containsUnexpandedParameterPack()) ||
+          (DestroyedType.getTypeSourceInfo() &&
+           DestroyedType.getTypeSourceInfo()->getType()
+                                   ->containsUnexpandedParameterPack()))),
     Base(static_cast<Stmt *>(Base)), IsArrow(isArrow),
     OperatorLoc(OperatorLoc), Qualifier(Qualifier),
     QualifierRange(QualifierRange), 
@@ -221,7 +244,7 @@ SourceRange CXXPseudoDestructorExpr::getSourceRange() const {
 
 // UnresolvedLookupExpr
 UnresolvedLookupExpr *
-UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
+UnresolvedLookupExpr::Create(ASTContext &C, 
                              CXXRecordDecl *NamingClass,
                              NestedNameSpecifier *Qualifier,
                              SourceRange QualifierRange,
@@ -233,19 +256,10 @@ UnresolvedLookupExpr::Create(ASTContext &C, bool Dependent,
 {
   void *Mem = C.Allocate(sizeof(UnresolvedLookupExpr) + 
                          ExplicitTemplateArgumentList::sizeFor(Args));
-  UnresolvedLookupExpr *ULE
-    = new (Mem) UnresolvedLookupExpr(C, 
-                                     Dependent ? C.DependentTy : C.OverloadTy,
-                                     Dependent, NamingClass,
-                                     Qualifier, QualifierRange, NameInfo,
-                                     ADL,
-                                     /*Overload*/ true,
-                                     /*ExplicitTemplateArgs*/ true,
-                                     Begin, End);
-
-  reinterpret_cast<ExplicitTemplateArgumentList*>(ULE+1)->initializeFrom(Args);
-
-  return ULE;
+  return new (Mem) UnresolvedLookupExpr(C, NamingClass,
+                                        Qualifier, QualifierRange, NameInfo,
+                                        ADL, /*Overload*/ true, &Args,
+                                        Begin, End);
 }
 
 UnresolvedLookupExpr *
@@ -260,18 +274,60 @@ UnresolvedLookupExpr::CreateEmpty(ASTContext &C, unsigned NumTemplateArgs) {
   return E;
 }
 
-OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C, QualType T, 
-                           bool Dependent, NestedNameSpecifier *Qualifier, 
-                           SourceRange QRange,
+OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C, 
+                           NestedNameSpecifier *Qualifier, SourceRange QRange,
                            const DeclarationNameInfo &NameInfo,
-                           bool HasTemplateArgs,
+                           const TemplateArgumentListInfo *TemplateArgs,
                            UnresolvedSetIterator Begin, 
-                           UnresolvedSetIterator End)
-  : Expr(K, T, VK_LValue, OK_Ordinary, Dependent, Dependent),
-  Results(0), NumResults(0), NameInfo(NameInfo), Qualifier(Qualifier), 
-  QualifierRange(QRange), HasExplicitTemplateArgs(HasTemplateArgs)
+                           UnresolvedSetIterator End,
+                           bool KnownDependent,
+                           bool KnownContainsUnexpandedParameterPack)
+  : Expr(K, C.OverloadTy, VK_LValue, OK_Ordinary, KnownDependent, 
+         KnownDependent,
+         (KnownContainsUnexpandedParameterPack ||
+          NameInfo.containsUnexpandedParameterPack() ||
+          (Qualifier && Qualifier->containsUnexpandedParameterPack()))),
+    Results(0), NumResults(End - Begin), NameInfo(NameInfo), 
+    Qualifier(Qualifier), QualifierRange(QRange), 
+    HasExplicitTemplateArgs(TemplateArgs != 0)
 {
-  initializeResults(C, Begin, End);
+  NumResults = End - Begin;
+  if (NumResults) {
+    // Determine whether this expression is type-dependent.
+    for (UnresolvedSetImpl::const_iterator I = Begin; I != End; ++I) {
+      if ((*I)->getDeclContext()->isDependentContext() ||
+          isa<UnresolvedUsingValueDecl>(*I)) {
+        ExprBits.TypeDependent = true;
+        ExprBits.ValueDependent = true;
+      }
+    }
+
+    Results = static_cast<DeclAccessPair *>(
+                                C.Allocate(sizeof(DeclAccessPair) * NumResults, 
+                                           llvm::alignOf<DeclAccessPair>()));
+    memcpy(Results, &*Begin.getIterator(), 
+           NumResults * sizeof(DeclAccessPair));
+  }
+
+  // If we have explicit template arguments, check for dependent
+  // template arguments and whether they contain any unexpanded pack
+  // expansions.
+  if (TemplateArgs) {
+    bool Dependent = false;
+    bool ContainsUnexpandedParameterPack = false;
+    getExplicitTemplateArgs().initializeFrom(*TemplateArgs, Dependent,
+                                             ContainsUnexpandedParameterPack);
+
+    if (Dependent) {
+        ExprBits.TypeDependent = true;
+        ExprBits.ValueDependent = true;
+    } 
+    if (ContainsUnexpandedParameterPack)
+      ExprBits.ContainsUnexpandedParameterPack = true;
+  }
+
+  if (isTypeDependent())
+    setType(C.DependentTy);
 }
 
 void OverloadExpr::initializeResults(ASTContext &C,
@@ -280,26 +336,13 @@ void OverloadExpr::initializeResults(ASTContext &C,
   assert(Results == 0 && "Results already initialized!");
   NumResults = End - Begin;
   if (NumResults) {
-    Results = static_cast<DeclAccessPair *>(
-                                C.Allocate(sizeof(DeclAccessPair) * NumResults, 
-                                           llvm::alignOf<DeclAccessPair>()));
-    memcpy(Results, &*Begin.getIterator(), 
-           NumResults * sizeof(DeclAccessPair));
+     Results = static_cast<DeclAccessPair *>(
+                               C.Allocate(sizeof(DeclAccessPair) * NumResults,
+ 
+                                          llvm::alignOf<DeclAccessPair>()));
+     memcpy(Results, &*Begin.getIterator(), 
+            NumResults * sizeof(DeclAccessPair));
   }
-}
-
-
-bool OverloadExpr::ComputeDependence(UnresolvedSetIterator Begin,
-                                     UnresolvedSetIterator End,
-                                     const TemplateArgumentListInfo *Args) {
-  for (UnresolvedSetImpl::const_iterator I = Begin; I != End; ++I)
-    if ((*I)->getDeclContext()->isDependentContext())
-      return true;
-
-  if (Args && TemplateSpecializationType::anyDependentTemplateArguments(*Args))
-    return true;
-
-  return false;
 }
 
 CXXRecordDecl *OverloadExpr::getNamingClass() const {
@@ -332,6 +375,29 @@ Stmt::child_iterator BinaryTypeTraitExpr::child_end() {
 }
 
 // DependentScopeDeclRefExpr
+DependentScopeDeclRefExpr::DependentScopeDeclRefExpr(QualType T,
+                            NestedNameSpecifier *Qualifier,
+                            SourceRange QualifierRange,
+                            const DeclarationNameInfo &NameInfo,
+                            const TemplateArgumentListInfo *Args)
+  : Expr(DependentScopeDeclRefExprClass, T, VK_LValue, OK_Ordinary,
+         true, true,
+         (NameInfo.containsUnexpandedParameterPack() ||
+          (Qualifier && Qualifier->containsUnexpandedParameterPack()))),
+    NameInfo(NameInfo), QualifierRange(QualifierRange), Qualifier(Qualifier),
+    HasExplicitTemplateArgs(Args != 0)
+{
+  if (Args) {
+    bool Dependent = true;
+    bool ContainsUnexpandedParameterPack
+      = ExprBits.ContainsUnexpandedParameterPack;
+
+    reinterpret_cast<ExplicitTemplateArgumentList*>(this+1)
+      ->initializeFrom(*Args, Dependent, ContainsUnexpandedParameterPack);
+    ExprBits.ContainsUnexpandedParameterPack = ContainsUnexpandedParameterPack;
+  }
+}
+
 DependentScopeDeclRefExpr *
 DependentScopeDeclRefExpr::Create(ASTContext &C,
                                   NestedNameSpecifier *Qualifier,
@@ -339,19 +405,12 @@ DependentScopeDeclRefExpr::Create(ASTContext &C,
                                   const DeclarationNameInfo &NameInfo,
                                   const TemplateArgumentListInfo *Args) {
   std::size_t size = sizeof(DependentScopeDeclRefExpr);
-  if (Args) size += ExplicitTemplateArgumentList::sizeFor(*Args);
-  void *Mem = C.Allocate(size);
-
-  DependentScopeDeclRefExpr *DRE
-    = new (Mem) DependentScopeDeclRefExpr(C.DependentTy,
-                                          Qualifier, QualifierRange,
-                                          NameInfo, Args != 0);
-
   if (Args)
-    reinterpret_cast<ExplicitTemplateArgumentList*>(DRE+1)
-      ->initializeFrom(*Args);
-
-  return DRE;
+    size += ExplicitTemplateArgumentList::sizeFor(*Args);
+  void *Mem = C.Allocate(size);
+  return new (Mem) DependentScopeDeclRefExpr(C.DependentTy,
+                                             Qualifier, QualifierRange,
+                                             NameInfo, Args);
 }
 
 DependentScopeDeclRefExpr *
@@ -361,10 +420,8 @@ DependentScopeDeclRefExpr::CreateEmpty(ASTContext &C,
   if (NumTemplateArgs)
     size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
   void *Mem = C.Allocate(size);
-
   return new (Mem) DependentScopeDeclRefExpr(QualType(), 0, SourceRange(),
-                                             DeclarationNameInfo(),
-                                             NumTemplateArgs != 0);
+                                             DeclarationNameInfo(), 0);
 }
 
 StmtIterator DependentScopeDeclRefExpr::child_begin() {
@@ -580,9 +637,7 @@ CXXBindTemporaryExpr *CXXBindTemporaryExpr::Create(ASTContext &C,
   assert(SubExpr->getType()->isRecordType() &&
          "Expression bound to a temporary must have record type!");
 
-  return new (C) CXXBindTemporaryExpr(Temp, SubExpr,
-                                      SubExpr->isTypeDependent(),
-                                      SubExpr->isValueDependent());
+  return new (C) CXXBindTemporaryExpr(Temp, SubExpr);
 }
 
 CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
@@ -624,19 +679,24 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
                                    bool ZeroInitialization, 
                                    ConstructionKind ConstructKind,
                                    SourceRange ParenRange)
-: Expr(SC, T, VK_RValue, OK_Ordinary,
-       T->isDependentType(),
-       (T->isDependentType() ||
-        CallExpr::hasAnyValueDependentArguments(args, numargs))),
-  Constructor(D), Loc(Loc), ParenRange(ParenRange), Elidable(elidable),
-  ZeroInitialization(ZeroInitialization), ConstructKind(ConstructKind),
-  Args(0), NumArgs(numargs) 
+  : Expr(SC, T, VK_RValue, OK_Ordinary,
+         T->isDependentType(), T->isDependentType(),
+         T->containsUnexpandedParameterPack()),
+    Constructor(D), Loc(Loc), ParenRange(ParenRange), Elidable(elidable),
+    ZeroInitialization(ZeroInitialization), ConstructKind(ConstructKind),
+    Args(0), NumArgs(numargs) 
 {
   if (NumArgs) {
     Args = new (C) Stmt*[NumArgs];
     
     for (unsigned i = 0; i != NumArgs; ++i) {
       assert(args[i] && "NULL argument in CXXConstructExpr");
+
+      if (args[i]->isValueDependent())
+        ExprBits.ValueDependent = true;
+      if (args[i]->containsUnexpandedParameterPack())
+        ExprBits.ContainsUnexpandedParameterPack = true;
+  
       Args[i] = args[i];
     }
   }
@@ -648,7 +708,8 @@ ExprWithCleanups::ExprWithCleanups(ASTContext &C,
                                    unsigned numtemps)
   : Expr(ExprWithCleanupsClass, subexpr->getType(),
          subexpr->getValueKind(), subexpr->getObjectKind(),
-         subexpr->isTypeDependent(), subexpr->isValueDependent()),
+         subexpr->isTypeDependent(), subexpr->isValueDependent(),
+         subexpr->containsUnexpandedParameterPack()),
     SubExpr(subexpr), Temps(0), NumTemps(0) {
   if (numtemps) {
     setNumTemporaries(C, numtemps);
@@ -705,13 +766,19 @@ CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
   : Expr(CXXUnresolvedConstructExprClass, 
          Type->getType().getNonReferenceType(),
          VK_LValue, OK_Ordinary,
-         Type->getType()->isDependentType(), true),
+         Type->getType()->isDependentType(), true,
+         Type->getType()->containsUnexpandedParameterPack()),
     Type(Type),
     LParenLoc(LParenLoc),
     RParenLoc(RParenLoc),
     NumArgs(NumArgs) {
   Stmt **StoredArgs = reinterpret_cast<Stmt **>(this + 1);
-  memcpy(StoredArgs, Args, sizeof(Expr *) * NumArgs);
+  for (unsigned I = 0; I != NumArgs; ++I) {
+    if (Args[I]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
+    StoredArgs[I] = Args[I];
+  }
 }
 
 CXXUnresolvedConstructExpr *
@@ -757,16 +824,44 @@ CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
                                           DeclarationNameInfo MemberNameInfo,
                                    const TemplateArgumentListInfo *TemplateArgs)
   : Expr(CXXDependentScopeMemberExprClass, C.DependentTy,
-         VK_LValue, OK_Ordinary, true, true),
+         VK_LValue, OK_Ordinary, true, true,
+         ((Base && Base->containsUnexpandedParameterPack()) ||
+          (Qualifier && Qualifier->containsUnexpandedParameterPack()) ||
+          MemberNameInfo.containsUnexpandedParameterPack())),
     Base(Base), BaseType(BaseType), IsArrow(IsArrow),
     HasExplicitTemplateArgs(TemplateArgs != 0),
     OperatorLoc(OperatorLoc),
     Qualifier(Qualifier), QualifierRange(QualifierRange),
     FirstQualifierFoundInScope(FirstQualifierFoundInScope),
     MemberNameInfo(MemberNameInfo) {
-  if (TemplateArgs)
-    getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
+  if (TemplateArgs) {
+    bool Dependent = true;
+    bool ContainsUnexpandedParameterPack = false;
+    getExplicitTemplateArgs().initializeFrom(*TemplateArgs, Dependent,
+                                             ContainsUnexpandedParameterPack);
+    if (ContainsUnexpandedParameterPack)
+      ExprBits.ContainsUnexpandedParameterPack = true;
+  }
 }
+
+CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,
+                          Expr *Base, QualType BaseType,
+                          bool IsArrow,
+                          SourceLocation OperatorLoc,
+                          NestedNameSpecifier *Qualifier,
+                          SourceRange QualifierRange,
+                          NamedDecl *FirstQualifierFoundInScope,
+                          DeclarationNameInfo MemberNameInfo)
+  : Expr(CXXDependentScopeMemberExprClass, C.DependentTy,
+         VK_LValue, OK_Ordinary, true, true,
+         ((Base && Base->containsUnexpandedParameterPack()) ||
+          (Qualifier && Qualifier->containsUnexpandedParameterPack()) ||
+          MemberNameInfo.containsUnexpandedParameterPack())),
+    Base(Base), BaseType(BaseType), IsArrow(IsArrow),
+    HasExplicitTemplateArgs(false), OperatorLoc(OperatorLoc),
+    Qualifier(Qualifier), QualifierRange(QualifierRange),
+    FirstQualifierFoundInScope(FirstQualifierFoundInScope),
+    MemberNameInfo(MemberNameInfo) { }
 
 CXXDependentScopeMemberExpr *
 CXXDependentScopeMemberExpr::Create(ASTContext &C,
@@ -827,8 +922,7 @@ Stmt::child_iterator CXXDependentScopeMemberExpr::child_end() {
   return child_iterator(&Base + 1);
 }
 
-UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C, QualType T, 
-                                           bool Dependent, 
+UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C, 
                                            bool HasUnresolvedUsing,
                                            Expr *Base, QualType BaseType,
                                            bool IsArrow,
@@ -839,17 +933,21 @@ UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C, QualType T,
                                    const TemplateArgumentListInfo *TemplateArgs,
                                            UnresolvedSetIterator Begin, 
                                            UnresolvedSetIterator End)
-  : OverloadExpr(UnresolvedMemberExprClass, C, T, Dependent,
+  : OverloadExpr(UnresolvedMemberExprClass, C, 
                  Qualifier, QualifierRange, MemberNameInfo,
-                 TemplateArgs != 0, Begin, End),
+                 TemplateArgs, Begin, End,
+                 // Dependent
+                 ((Base && Base->isTypeDependent()) ||
+                  BaseType->isDependentType()),
+                 // Contains unexpanded parameter pack
+                 ((Base && Base->containsUnexpandedParameterPack()) ||
+                  BaseType->containsUnexpandedParameterPack())),
     IsArrow(IsArrow), HasUnresolvedUsing(HasUnresolvedUsing),
     Base(Base), BaseType(BaseType), OperatorLoc(OperatorLoc) {
-  if (TemplateArgs)
-    getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
 }
 
 UnresolvedMemberExpr *
-UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
+UnresolvedMemberExpr::Create(ASTContext &C, 
                              bool HasUnresolvedUsing,
                              Expr *Base, QualType BaseType, bool IsArrow,
                              SourceLocation OperatorLoc,
@@ -865,8 +963,7 @@ UnresolvedMemberExpr::Create(ASTContext &C, bool Dependent,
 
   void *Mem = C.Allocate(size, llvm::alignOf<UnresolvedMemberExpr>());
   return new (Mem) UnresolvedMemberExpr(C, 
-                             Dependent ? C.DependentTy : C.OverloadTy,
-                             Dependent, HasUnresolvedUsing, Base, BaseType,
+                             HasUnresolvedUsing, Base, BaseType,
                              IsArrow, OperatorLoc, Qualifier, QualifierRange,
                              MemberNameInfo, TemplateArgs, Begin, End);
 }
