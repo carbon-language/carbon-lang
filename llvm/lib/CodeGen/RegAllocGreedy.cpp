@@ -17,6 +17,7 @@
 #include "LiveIntervalUnion.h"
 #include "RegAllocBase.h"
 #include "Spiller.h"
+#include "SplitKit.h"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -27,6 +28,7 @@
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineLoopRanges.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
@@ -50,9 +52,11 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
 
   // analyses
   LiveStacks *LS;
-
+  MachineLoopInfo *Loops;
+  MachineLoopRanges *LoopRanges;
   // state
   std::auto_ptr<Spiller> SpillerInstance;
+  std::auto_ptr<SplitAnalysis> SA;
 
 public:
   RAGreedy();
@@ -106,6 +110,7 @@ RAGreedy::RAGreedy(): MachineFunctionPass(ID) {
   initializeLiveStacksPass(*PassRegistry::getPassRegistry());
   initializeMachineDominatorTreePass(*PassRegistry::getPassRegistry());
   initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
+  initializeMachineLoopRangesPass(*PassRegistry::getPassRegistry());
   initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
 }
 
@@ -125,6 +130,8 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(MachineDominatorsID);
   AU.addRequired<MachineLoopInfo>();
   AU.addPreserved<MachineLoopInfo>();
+  AU.addRequired<MachineLoopRanges>();
+  AU.addPreserved<MachineLoopRanges>();
   AU.addRequired<VirtRegMap>();
   AU.addPreserved<VirtRegMap>();
   MachineFunctionPass::getAnalysisUsage(AU);
@@ -256,14 +263,32 @@ unsigned RAGreedy::tryReassign(LiveInterval &VirtReg, AllocationOrder &Order) {
 unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
                             SmallVectorImpl<LiveInterval*>&SplitVRegs) {
   NamedRegionTimer T("Splitter", TimerGroupName, TimePassesIsEnabled);
-  DEBUG({
-    Order.rewind();
-    while (unsigned PhysReg = Order.next()) {
-        query(VirtReg, PhysReg).print(dbgs(), TRI);
-        for (const unsigned *AI = TRI->getAliasSet(PhysReg); *AI; ++AI)
-          query(VirtReg, *AI).print(dbgs(), TRI);
+  SA->analyze(&VirtReg);
+
+  // Get the set of loops that have VirtReg uses and are splittable.
+  SplitAnalysis::LoopPtrSet SplitLoops;
+  SA->getSplitLoops(SplitLoops);
+
+  Order.rewind();
+  while (unsigned PhysReg = Order.next()) {
+    for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
+      LiveIntervalUnion::Query &Q = query(VirtReg, *AI);
+      if (!Q.checkInterference())
+        continue;
+      LiveIntervalUnion::InterferenceResult IR = Q.firstInterference();
+      do {
+        DEBUG({dbgs() << "  "; IR.print(dbgs(), TRI);});
+        for (SplitAnalysis::LoopPtrSet::iterator I = SplitLoops.begin(),
+               E = SplitLoops.end(); I != E; ++I) {
+          MachineLoopRange *Range = LoopRanges->getLoopRange(*I);
+          if (!Range->overlaps(IR.start(), IR.stop()))
+            continue;
+          DEBUG(dbgs() << ", overlaps " << *Range);
+        }
+        DEBUG(dbgs() << '\n');
+      } while (Q.nextInterference(IR));
     }
-  });
+  }
   return 0;
 }
 
@@ -336,9 +361,12 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
 
   MF = &mf;
   RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
-
   ReservedRegs = TRI->getReservedRegs(*MF);
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
+  Loops = &getAnalysis<MachineLoopInfo>();
+  LoopRanges = &getAnalysis<MachineLoopRanges>();
+  SA.reset(new SplitAnalysis(*MF, *LIS, *Loops));
+
   allocatePhysRegs();
   addMBBLiveIns(MF);
 

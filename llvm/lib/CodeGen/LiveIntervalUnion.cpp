@@ -83,8 +83,8 @@ LiveIntervalUnion::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
 
 void LiveIntervalUnion::InterferenceResult::print(raw_ostream &OS,
                                           const TargetRegisterInfo *TRI) const {
-  OS << '[' << start() << ';' << stop() << ")\t";
-  interference()->print(OS, TRI);
+  OS << '[' << start() << ';' << stop() << "):";
+  TRI->printReg(interference()->reg, OS);
 }
 
 void LiveIntervalUnion::Query::print(raw_ostream &OS,
