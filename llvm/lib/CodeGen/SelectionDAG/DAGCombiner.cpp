@@ -2045,7 +2045,29 @@ SDValue DAGCombiner::visitSMUL_LOHI(SDNode *N) {
   SDValue Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHS);
   if (Res.getNode()) return Res;
 
-  // TODO: Transform smul_lohi to mul if the wider mul is legal!
+  EVT VT = N->getValueType(0);
+  DebugLoc DL = N->getDebugLoc();
+
+  // If the type twice as wide is legal, transform the mulhu to a wider multiply
+  // plus a shift.
+  if (VT.isSimple() && !VT.isVector()) {
+    MVT Simple = VT.getSimpleVT();
+    unsigned SimpleSize = Simple.getSizeInBits();
+    EVT NewVT = EVT::getIntegerVT(*DAG.getContext(), SimpleSize*2);
+    if (TLI.isOperationLegal(ISD::MUL, NewVT)) {
+      SDValue Lo = DAG.getNode(ISD::SIGN_EXTEND, DL, NewVT, N->getOperand(0));
+      SDValue Hi = DAG.getNode(ISD::SIGN_EXTEND, DL, NewVT, N->getOperand(1));
+      Lo = DAG.getNode(ISD::MUL, DL, NewVT, Lo, Hi);
+      // Compute the high part as N1.
+      Hi = DAG.getNode(ISD::SRL, DL, NewVT, Lo,
+                       DAG.getConstant(SimpleSize, getShiftAmountTy()));
+      Hi = DAG.getNode(ISD::TRUNCATE, DL, VT, Hi);
+      // Compute the low part as N0.
+      Lo = DAG.getNode(ISD::TRUNCATE, DL, VT, Lo);
+      return CombineTo(N, Lo, Hi);
+    }
+  }
+  
   return SDValue();
 }
 
@@ -2053,7 +2075,29 @@ SDValue DAGCombiner::visitUMUL_LOHI(SDNode *N) {
   SDValue Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHU);
   if (Res.getNode()) return Res;
 
-  // TODO: Transform umul_lohi to mul if the wider mul is legal!
+  EVT VT = N->getValueType(0);
+  DebugLoc DL = N->getDebugLoc();
+  
+  // If the type twice as wide is legal, transform the mulhu to a wider multiply
+  // plus a shift.
+  if (VT.isSimple() && !VT.isVector()) {
+    MVT Simple = VT.getSimpleVT();
+    unsigned SimpleSize = Simple.getSizeInBits();
+    EVT NewVT = EVT::getIntegerVT(*DAG.getContext(), SimpleSize*2);
+    if (TLI.isOperationLegal(ISD::MUL, NewVT)) {
+      SDValue Lo = DAG.getNode(ISD::ZERO_EXTEND, DL, NewVT, N->getOperand(0));
+      SDValue Hi = DAG.getNode(ISD::ZERO_EXTEND, DL, NewVT, N->getOperand(1));
+      Lo = DAG.getNode(ISD::MUL, DL, NewVT, Lo, Hi);
+      // Compute the high part as N1.
+      Hi = DAG.getNode(ISD::SRL, DL, NewVT, Lo,
+                       DAG.getConstant(SimpleSize, getShiftAmountTy()));
+      Hi = DAG.getNode(ISD::TRUNCATE, DL, VT, Hi);
+      // Compute the low part as N0.
+      Lo = DAG.getNode(ISD::TRUNCATE, DL, VT, Lo);
+      return CombineTo(N, Lo, Hi);
+    }
+  }
+  
   return SDValue();
 }
 
