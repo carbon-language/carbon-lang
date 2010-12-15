@@ -40,6 +40,7 @@ add_llvm_library(LLVMCodeGen
   MachineInstr.cpp
   MachineLICM.cpp
   MachineLoopInfo.cpp
+  MachineLoopRanges.cpp
   MachineModuleInfo.cpp
   MachineModuleInfoImpls.cpp
   MachinePassRegistry.cpp
