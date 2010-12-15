@@ -3450,6 +3450,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
 
   // Perform default conversions.
   DefaultFunctionArrayConversion(BaseExpr);
+  if (IsArrow) DefaultLvalueConversion(BaseExpr);
 
   QualType BaseType = BaseExpr->getType();
   assert(!BaseType->isDependentType());
@@ -3795,8 +3796,9 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
 
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType()) {
+    // FIXME: this expr should store IsArrow.
     IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
-    ExprValueKind VK = BaseExpr->getValueKind();
+    ExprValueKind VK = (IsArrow ? VK_LValue : BaseExpr->getValueKind());
     QualType ret = CheckExtVectorComponent(*this, BaseType, VK, OpLoc,
                                            Member, MemberLoc);
     if (ret.isNull())
@@ -3826,12 +3828,12 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
 ///   this is an ugly hack around the fact that ObjC @implementations
 ///   aren't properly put in the context chain
 ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
-                                                   SourceLocation OpLoc,
-                                                   tok::TokenKind OpKind,
-                                                   CXXScopeSpec &SS,
-                                                   UnqualifiedId &Id,
-                                                   Decl *ObjCImpDecl,
-                                                   bool HasTrailingLParen) {
+                                       SourceLocation OpLoc,
+                                       tok::TokenKind OpKind,
+                                       CXXScopeSpec &SS,
+                                       UnqualifiedId &Id,
+                                       Decl *ObjCImpDecl,
+                                       bool HasTrailingLParen) {
   if (SS.isSet() && SS.isInvalid())
     return ExprError();
 

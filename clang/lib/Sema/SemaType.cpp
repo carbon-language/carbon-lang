@@ -680,7 +680,13 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     return QualType();
   }
 
+  // Do lvalue-to-rvalue conversions on the array size expression.
+  if (ArraySize && !ArraySize->isRValue())
+    DefaultLvalueConversion(ArraySize);
+
   // C99 6.7.5.2p1: The size expression shall have integer type.
+  // TODO: in theory, if we were insane, we could allow contextual
+  // conversions to integer type here.
   if (ArraySize && !ArraySize->isTypeDependent() &&
       !ArraySize->getType()->isIntegralOrUnscopedEnumerationType()) {
     Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)

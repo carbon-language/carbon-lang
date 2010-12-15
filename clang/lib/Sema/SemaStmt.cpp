@@ -1597,6 +1597,8 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try,
 StmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc,
                                                   Expr *Throw) {
   if (Throw) {
+    DefaultLvalueConversion(Throw);
+
     QualType ThrowType = Throw->getType();
     // Make sure the expression type is an ObjC pointer or "void *".
     if (!ThrowType->isDependentType() &&
@@ -1631,6 +1633,8 @@ StmtResult
 Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, Expr *SyncExpr,
                                   Stmt *SyncBody) {
   getCurFunction()->setHasBranchProtectedScope();
+
+  DefaultLvalueConversion(SyncExpr);
 
   // Make sure the expression type is an ObjC pointer or "void *".
   if (!SyncExpr->getType()->isDependentType() &&
