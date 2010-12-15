@@ -87,7 +87,14 @@ namespace CallingConv {
 
     /// PTX_Device - Call to a PTX device function.
     /// Passes all arguments in register or parameter space.
-    PTX_Device = 72
+    PTX_Device = 72,
+
+    /// MBLAZE_INTR - Calling convention used for MBlaze interrupt routines.
+    MBLAZE_INTR = 73,
+
+    /// MBLAZE_INTR - Calling convention used for MBlaze interrupt support
+    /// routines (i.e. GCC's save_volatiles attribute).
+    MBLAZE_SVOL = 74
   };
 } // End CallingConv namespace
 
