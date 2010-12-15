@@ -156,6 +156,7 @@ def NoVFP            : Predicate<"!Subtarget->hasVFP2()">;
 def HasVFP2          : Predicate<"Subtarget->hasVFP2()">, AssemblerPredicate;
 def HasVFP3          : Predicate<"Subtarget->hasVFP3()">, AssemblerPredicate;
 def HasNEON          : Predicate<"Subtarget->hasNEON()">, AssemblerPredicate;
+def HasFP16          : Predicate<"Subtarget->hasFP16()">, AssemblerPredicate;
 def HasDivide        : Predicate<"Subtarget->hasDivide()">, AssemblerPredicate;
 def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">,
                                  AssemblerPredicate;

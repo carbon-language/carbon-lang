@@ -103,7 +103,8 @@ def ProcA8      : SubtargetFeature<"a8", "ARMProcFamily", "CortexA8",
                                     FeatureHasSlowFPVMLx, FeatureT2XtPk]>;
 def ProcA9      : SubtargetFeature<"a9", "ARMProcFamily", "CortexA9",
                                    "Cortex-A9 ARM processors",
-                                   [FeatureHasSlowFPVMLx, FeatureT2XtPk]>;
+                                   [FeatureHasSlowFPVMLx, FeatureT2XtPk,
+                                    FeatureFP16]>;
 
 class ProcNoItin<string Name, list<SubtargetFeature> Features>
  : Processor<Name, GenericItineraries, Features>;

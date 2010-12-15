@@ -1724,6 +1724,15 @@ class N2VL<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         (ins DPR:$Vm), itin, OpcodeStr, Dt, "$Vd, $Vm", "",
         [(set QPR:$Vd, (TyQ (OpNode (TyD DPR:$Vm))))]>;
 
+// Long 2-register intrinsics.
+class N2VLInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
+              bits<2> op17_16, bits<5> op11_7, bit op6, bit op4,
+              InstrItinClass itin, string OpcodeStr, string Dt,
+              ValueType TyQ, ValueType TyD, Intrinsic IntOp>
+  : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, op6, op4, (outs QPR:$Vd),
+        (ins DPR:$Vm), itin, OpcodeStr, Dt, "$Vd, $Vm", "",
+        [(set QPR:$Vd, (TyQ (IntOp (TyD DPR:$Vm))))]>;
+
 // 2-register shuffles (VTRN/VZIP/VUZP), both double- and quad-register.
 class N2VDShuffle<bits<2> op19_18, bits<5> op11_7, string OpcodeStr, string Dt>
   : N2V<0b11, 0b11, op19_18, 0b10, op11_7, 0, 0, (outs DPR:$Vd, DPR:$Vm),
@@ -4446,6 +4455,16 @@ def VCVTxs2fq : N2VCvtQ<0, 1, 0b1110, 0, 1, "vcvt", "f32.s32",
                         v4f32, v4i32, int_arm_neon_vcvtfxs2fp>;
 def VCVTxu2fq : N2VCvtQ<1, 1, 0b1110, 0, 1, "vcvt", "f32.u32",
                         v4f32, v4i32, int_arm_neon_vcvtfxu2fp>;
+
+//   VCVT     : Vector Convert Between Half-Precision and Single-Precision.
+def  VCVTf2h  : N2VNInt<0b11, 0b11, 0b01, 0b10, 0b01100, 0, 0,
+                        IIC_VUNAQ, "vcvt", "f16.f32",
+                        v4i16, v4f32, int_arm_neon_vcvtfp2hf>,
+                Requires<[HasNEON, HasFP16]>;
+def  VCVTh2f  : N2VLInt<0b11, 0b11, 0b01, 0b10, 0b01110, 0, 0,
+                        IIC_VUNAQ, "vcvt", "f32.f16",
+                        v4f32, v4i16, int_arm_neon_vcvthf2fp>,
+                Requires<[HasNEON, HasFP16]>;
 
 // Vector Reverse.
 

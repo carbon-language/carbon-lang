@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon,+fp16 | FileCheck %s
 
 define <2 x i32> @vcvt_f32tos32(<2 x float>* %A) nounwind {
 ;CHECK: vcvt_f32tos32:
@@ -138,3 +138,21 @@ declare <4 x i32> @llvm.arm.neon.vcvtfp2fxu.v4i32.v4f32(<4 x float>, i32) nounwi
 declare <4 x float> @llvm.arm.neon.vcvtfxs2fp.v4f32.v4i32(<4 x i32>, i32) nounwind readnone
 declare <4 x float> @llvm.arm.neon.vcvtfxu2fp.v4f32.v4i32(<4 x i32>, i32) nounwind readnone
 
+define <4 x float> @vcvt_f16tof32(<4 x i16>* %A) nounwind {
+;CHECK: vcvt_f16tof32:
+;CHECK: vcvt.f32.f16
+	%tmp1 = load <4 x i16>* %A
+	%tmp2 = call <4 x float> @llvm.arm.neon.vcvthf2fp(<4 x i16> %tmp1)
+	ret <4 x float> %tmp2
+}
+
+define <4 x i16> @vcvt_f32tof16(<4 x float>* %A) nounwind {
+;CHECK: vcvt_f32tof16:
+;CHECK: vcvt.f16.f32
+	%tmp1 = load <4 x float>* %A
+	%tmp2 = call <4 x i16> @llvm.arm.neon.vcvtfp2hf(<4 x float> %tmp1)
+	ret <4 x i16> %tmp2
+}
+
+declare <4 x float> @llvm.arm.neon.vcvthf2fp(<4 x i16>) nounwind readnone
+declare <4 x i16> @llvm.arm.neon.vcvtfp2hf(<4 x float>) nounwind readnone
