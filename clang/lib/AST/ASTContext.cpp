@@ -4806,8 +4806,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     retType = mergeTypes(rbase->getResultType(), lbase->getResultType(), true,
                          Unqualified);
   else
-   retType = mergeTypes(lbase->getResultType(), rbase->getResultType(),
-                        false, Unqualified);
+    retType = mergeTypes(lbase->getResultType(), rbase->getResultType(), false,
+                         Unqualified);
   if (retType.isNull()) return QualType();
   
   if (Unqualified)
@@ -4824,28 +4824,33 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     allLTypes = false;
   if (getCanonicalType(retType) != RRetType)
     allRTypes = false;
+
   // FIXME: double check this
   // FIXME: should we error if lbase->getRegParmAttr() != 0 &&
   //                           rbase->getRegParmAttr() != 0 &&
   //                           lbase->getRegParmAttr() != rbase->getRegParmAttr()?
   FunctionType::ExtInfo lbaseInfo = lbase->getExtInfo();
   FunctionType::ExtInfo rbaseInfo = rbase->getExtInfo();
-  unsigned RegParm = lbaseInfo.getRegParm() == 0 ? rbaseInfo.getRegParm() :
-      lbaseInfo.getRegParm();
-  bool NoReturn = lbaseInfo.getNoReturn() || rbaseInfo.getNoReturn();
-  if (NoReturn != lbaseInfo.getNoReturn() ||
-      RegParm != lbaseInfo.getRegParm())
-    allLTypes = false;
-  if (NoReturn != rbaseInfo.getNoReturn() ||
-      RegParm != rbaseInfo.getRegParm())
-    allRTypes = false;
-  CallingConv lcc = lbaseInfo.getCC();
-  CallingConv rcc = rbaseInfo.getCC();
+
   // Compatible functions must have compatible calling conventions
-  if (!isSameCallConv(lcc, rcc))
+  if (!isSameCallConv(lbaseInfo.getCC(), rbaseInfo.getCC()))
     return QualType();
 
-  FunctionType::ExtInfo einfo = FunctionType::ExtInfo(NoReturn, RegParm, lcc);
+  // Regparm is part of the calling convention.
+  if (lbaseInfo.getRegParm() != rbaseInfo.getRegParm())
+    return QualType();
+
+  // It's noreturn if either type is.
+  // FIXME: some uses, e.g. conditional exprs, really want this to be 'both'.
+  bool NoReturn = lbaseInfo.getNoReturn() || rbaseInfo.getNoReturn();
+  if (NoReturn != lbaseInfo.getNoReturn())
+    allLTypes = false;
+  if (NoReturn != rbaseInfo.getNoReturn())
+    allRTypes = false;
+
+  FunctionType::ExtInfo einfo(NoReturn,
+                              lbaseInfo.getRegParm(),
+                              lbaseInfo.getCC());
 
   if (lproto && rproto) { // two C99 style function prototypes
     assert(!lproto->hasExceptionSpec() && !rproto->hasExceptionSpec() &&
@@ -4933,8 +4938,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
 
   if (allLTypes) return lhs;
   if (allRTypes) return rhs;
-  FunctionType::ExtInfo Info(NoReturn, RegParm, lcc);
-  return getFunctionNoProtoType(retType, Info);
+  return getFunctionNoProtoType(retType, einfo);
 }
 
 QualType ASTContext::mergeTypes(QualType LHS, QualType RHS, 
