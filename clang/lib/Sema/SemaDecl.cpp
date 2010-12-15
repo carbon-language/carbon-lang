@@ -6424,7 +6424,9 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
         << FieldName << FieldTy << BitWidth->getSourceRange();
     return Diag(FieldLoc, diag::err_not_integral_type_anon_bitfield)
       << FieldTy << BitWidth->getSourceRange();
-  }
+  } else if (DiagnoseUnexpandedParameterPack(const_cast<Expr *>(BitWidth),
+                                             UPPC_BitFieldWidth))
+    return true;
 
   // If the bit-width is type- or value-dependent, don't try to check
   // it now.
@@ -6499,8 +6501,16 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
   QualType T = TInfo->getType();
-  if (getLangOptions().CPlusPlus)
+  if (getLangOptions().CPlusPlus) {
     CheckExtraCXXDefaultArguments(D);
+
+    if (DiagnoseUnexpandedParameterPack(D.getIdentifierLoc(), TInfo,
+                                        UPPC_DataMemberType)) {
+      D.setInvalidType();
+      T = Context.IntTy;
+      TInfo = Context.getTrivialTypeSourceInfo(T, Loc);
+    }
+  }
 
   DiagnoseFunctionSpecifiers(D);
 

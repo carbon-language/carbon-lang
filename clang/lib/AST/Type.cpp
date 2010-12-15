@@ -1123,8 +1123,15 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
   
   // Fill in the exception array.
   QualType *exnSlot = argSlot + numArgs;
-  for (unsigned i = 0, e = epi.NumExceptions; i != e; ++i)
+  for (unsigned i = 0, e = epi.NumExceptions; i != e; ++i) {
+    if (epi.Exceptions[i]->isDependentType())
+      setDependent();
+
+    if (epi.Exceptions[i]->containsUnexpandedParameterPack())
+      setContainsUnexpandedParameterPack();
+
     exnSlot[i] = epi.Exceptions[i];
+  }
 }
 
 

@@ -3135,10 +3135,20 @@ public:
   /// Note that the values of this enumeration line up with the first
   /// argument to the \c err_unexpanded_parameter_pack diagnostic.
   enum UnexpandedParameterPackContext {
+    /// \brief An arbitrary expression.
     UPPC_Expression = 0,
+
+    /// \brief The base type of a class type.
     UPPC_BaseType,
+
+    /// \brief The type of an arbitrary declaration.
     UPPC_DeclarationType,
-    UPPC_TemplateArgument
+
+    /// \brief The type of a data member.
+    UPPC_DataMemberType,
+
+    /// \brief The size of a bit-field.
+    UPPC_BitFieldWidth
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,

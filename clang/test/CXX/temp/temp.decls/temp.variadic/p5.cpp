@@ -96,11 +96,25 @@ struct TestPPName
   // ObjCObjectPointerType is uninteresting
 };
 
+// FIXME: Test for unexpanded parameter packs in each of the expression nodes.
+
 template<typename ... Types>
 void TestPPNameFunc(int i) {
   f(static_cast<Types>(i)); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
 }
 
+// FIXME: Test for unexpanded parameter packs in declarations.
+template<typename... Types>
+struct TestUnexpandedDecls {
+  void member_function(Types);  // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+  void member_function () throw(Types); // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+  Types data_member;  // expected-error{{data member type contains unexpanded parameter pack 'Types'}}
+  static Types static_data_member; // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+  unsigned bit_field : static_cast<Types>(0);  // expected-error{{bit-field size contains unexpanded parameter pack 'Types'}}
+};
+
+// Test for diagnostics in the presence of multiple unexpanded
+// parameter packs.
 template<typename T, typename U> struct pair;
 
 template<typename ...OuterTypes>
@@ -115,3 +129,4 @@ struct MemberTemplatePPNames {
     };
   };
 };
+
