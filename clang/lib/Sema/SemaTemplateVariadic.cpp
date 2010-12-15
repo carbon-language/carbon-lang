@@ -12,9 +12,141 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeLoc.h"
 
 using namespace clang;
+
+//----------------------------------------------------------------------------
+// Visitor that collects unexpanded parameter packs
+//----------------------------------------------------------------------------
+
+// FIXME: No way to easily map from TemplateTypeParmTypes to
+// TemplateTypeParmDecls, so we have this horrible PointerUnion.
+typedef std::pair<llvm::PointerUnion<const TemplateTypeParmType*, NamedDecl*>,
+                  SourceLocation> UnexpandedParameterPack;
+
+namespace {
+  /// \brief A class that collects unexpanded parameter packs.
+  class CollectUnexpandedParameterPacksVisitor :
+    public RecursiveASTVisitor<CollectUnexpandedParameterPacksVisitor> 
+  {
+    typedef RecursiveASTVisitor<CollectUnexpandedParameterPacksVisitor>
+      inherited;
+
+    llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded;
+
+  public:
+    explicit CollectUnexpandedParameterPacksVisitor(
+                  llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded)
+      : Unexpanded(Unexpanded) { }
+
+    //------------------------------------------------------------------------
+    // Recording occurrences of (unexpanded) parameter packs.
+    //------------------------------------------------------------------------
+
+    /// \brief Record occurrences of template type parameter packs.
+    bool VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
+      if (TL.getTypePtr()->isParameterPack())
+        Unexpanded.push_back(std::make_pair(TL.getTypePtr(), TL.getNameLoc()));
+      return true;
+    }
+
+    /// \brief Record occurrences of template type parameter packs
+    /// when we don't have proper source-location information for
+    /// them.
+    ///
+    /// Ideally, this routine would never be used.
+    bool VisitTemplateTypeParmType(TemplateTypeParmType *T) {
+      if (T->isParameterPack())
+        Unexpanded.push_back(std::make_pair(T, SourceLocation()));
+
+      return true;
+    }
+
+    // FIXME: Record occurrences of non-type and template template
+    // parameter packs.
+
+    // FIXME: Once we have pack expansions in the AST, block their
+    // traversal.
+
+    //------------------------------------------------------------------------
+    // Pruning the search for unexpanded parameter packs.
+    //------------------------------------------------------------------------
+
+    /// \brief Suppress traversal into statements and expressions that
+    /// do not contain unexpanded parameter packs.
+    bool TraverseStmt(Stmt *S) { 
+      if (Expr *E = dyn_cast_or_null<Expr>(S))
+        if (E->containsUnexpandedParameterPack())
+          return inherited::TraverseStmt(E);
+
+      return true; 
+    }
+
+    /// \brief Suppress traversal into types that do not contain
+    /// unexpanded parameter packs.
+    bool TraverseType(QualType T) {
+      if (!T.isNull() && T->containsUnexpandedParameterPack())
+        return inherited::TraverseType(T);
+
+      return true;
+    }
+
+    /// \brief Suppress traversel into types with location information
+    /// that do not contain unexpanded parameter packs.
+    bool TraverseTypeLoc(TypeLoc TL) {
+      if (!TL.getType().isNull() && TL.
+          getType()->containsUnexpandedParameterPack())
+        return inherited::TraverseTypeLoc(TL);
+
+      return true;
+    }
+
+    /// \brief Suppress traversal of declarations, since they cannot
+    /// contain unexpanded parameter packs.
+    bool TraverseDecl(Decl *D) { return true; }
+  };
+}
+
+/// \brief Diagnose all of the unexpanded parameter packs in the given
+/// vector.
+static void 
+DiagnoseUnexpandedParameterPacks(Sema &S, SourceLocation Loc,
+                                 Sema::UnexpandedParameterPackContext UPPC,
+             const llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded) {
+  llvm::SmallVector<SourceLocation, 4> Locations;
+  llvm::SmallVector<IdentifierInfo *, 4> Names;
+  llvm::SmallPtrSet<IdentifierInfo *, 4> NamesKnown;
+
+  for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
+    IdentifierInfo *Name = 0;
+    if (const TemplateTypeParmType *TTP
+          = Unexpanded[I].first.dyn_cast<const TemplateTypeParmType *>())
+      Name = TTP->getName();
+    else
+      Name = Unexpanded[I].first.get<NamedDecl *>()->getIdentifier();
+
+    if (Name && NamesKnown.insert(Name))
+      Names.push_back(Name);
+
+    if (Unexpanded[I].second.isValid())
+      Locations.push_back(Unexpanded[I].second);
+  }
+
+  DiagnosticBuilder DB
+    = Names.size() == 0? S.Diag(Loc, diag::err_unexpanded_parameter_pack_0)
+                           << (int)UPPC
+    : Names.size() == 1? S.Diag(Loc, diag::err_unexpanded_parameter_pack_1)
+                           << (int)UPPC << Names[0]
+    : Names.size() == 2? S.Diag(Loc, diag::err_unexpanded_parameter_pack_2)
+                           << (int)UPPC << Names[0] << Names[1]
+    : S.Diag(Loc, diag::err_unexpanded_parameter_pack_3_or_more)
+        << (int)UPPC << Names[0] << Names[1];
+
+  for (unsigned I = 0, N = Locations.size(); I != N; ++I)
+    DB << SourceRange(Locations[I]);
+}
 
 bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc, 
                                            TypeSourceInfo *T,
@@ -25,9 +157,11 @@ bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
   if (!T->getType()->containsUnexpandedParameterPack())
     return false;
 
-  // FIXME: Provide the names and locations of the unexpanded parameter packs.
-  Diag(Loc, diag::err_unexpanded_parameter_pack)
-    << (int)UPPC << T->getTypeLoc().getSourceRange();
+  llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+  CollectUnexpandedParameterPacksVisitor(Unexpanded).TraverseTypeLoc(
+                                                              T->getTypeLoc());
+  assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
+  DiagnoseUnexpandedParameterPacks(*this, Loc, UPPC, Unexpanded);
   return true;
 }
 
@@ -39,8 +173,9 @@ bool Sema::DiagnoseUnexpandedParameterPack(Expr *E,
   if (!E->containsUnexpandedParameterPack())
     return false;
 
-  // FIXME: Provide the names and locations of the unexpanded parameter packs.
-  Diag(E->getSourceRange().getBegin(), diag::err_unexpanded_parameter_pack)
-    << (int)UPPC << E->getSourceRange();
+  llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+  CollectUnexpandedParameterPacksVisitor(Unexpanded).TraverseStmt(E);
+  assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
+  DiagnoseUnexpandedParameterPacks(*this, E->getLocStart(), UPPC, Unexpanded);
   return true;
 }
