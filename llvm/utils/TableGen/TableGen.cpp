@@ -75,6 +75,7 @@ enum ActionType {
   GenEDInfo,
   GenArmNeon,
   GenArmNeonSema,
+  GenArmNeonTest,
   PrintEnums
 };
 
@@ -147,6 +148,8 @@ namespace {
                                "Generate arm_neon.h for clang"),
                     clEnumValN(GenArmNeonSema, "gen-arm-neon-sema",
                                "Generate ARM NEON sema support for clang"),
+                    clEnumValN(GenArmNeonTest, "gen-arm-neon-test",
+                               "Generate ARM NEON tests for clang"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValEnd));
@@ -329,6 +332,9 @@ int main(int argc, char **argv) {
       break;
     case GenArmNeonSema:
       NeonEmitter(Records).runHeader(Out.os());
+      break;
+    case GenArmNeonTest:
+      NeonEmitter(Records).runTests(Out.os());
       break;
     case PrintEnums:
     {
