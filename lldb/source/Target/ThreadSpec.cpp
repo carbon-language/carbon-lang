@@ -14,7 +14,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 ThreadSpec::ThreadSpec() :
-    m_index (-1),
+    m_index (UINT32_MAX),
     m_tid (LLDB_INVALID_THREAD_ID),
     m_name(),
     m_queue_name ()
@@ -83,7 +83,7 @@ ThreadSpec::ThreadPassesBasicTests (Thread *thread) const
 bool
 ThreadSpec::HasSpecification() const
 {
-    return (m_index != -1 || m_tid != LLDB_INVALID_THREAD_ID || !m_name.empty() || !m_queue_name.empty());
+    return (m_index != UINT32_MAX || m_tid != LLDB_INVALID_THREAD_ID || !m_name.empty() || !m_queue_name.empty());
 }
 void
 ThreadSpec::GetDescription (Stream *s, lldb::DescriptionLevel level) const
@@ -106,7 +106,7 @@ ThreadSpec::GetDescription (Stream *s, lldb::DescriptionLevel level) const
             if (GetTID() != LLDB_INVALID_THREAD_ID)
                 s->Printf("tid: 0x%llx ", GetTID());
                 
-            if (GetIndex() != -1)
+            if (GetIndex() != UINT32_MAX)
                 s->Printf("index: %d ", GetIndex());
                 
             const char *name = GetName();
