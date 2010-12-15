@@ -143,7 +143,8 @@ Mangled::GetDemangledName () const
         // We already know mangled is valid from the above check,
         // lets just make sure it isn't empty...
         const char * mangled = m_mangled.AsCString();
-        if (mangled[0])
+        // Don't bother running anything that doesn't start with _Z through the demangler
+        if (mangled[0] != '\0' && mangled[0] == '_' && mangled[1] == 'Z')
         {
             // Since demangling can be a costly, and since all names that go 
             // into a ConstString (like our m_mangled and m_demangled members)
