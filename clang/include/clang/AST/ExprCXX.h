@@ -1536,8 +1536,6 @@ class OverloadExpr : public Expr {
   /// The source range of the scope specifier.
   SourceRange QualifierRange;
 
-  friend class ASTStmtReader;
-
 protected:
   /// True if the name was a template-id.
   bool HasExplicitTemplateArgs;
