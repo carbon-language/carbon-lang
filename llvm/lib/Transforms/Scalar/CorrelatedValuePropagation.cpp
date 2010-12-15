@@ -73,7 +73,12 @@ bool CorrelatedValuePropagation::processSelect(SelectInst *S) {
   ConstantInt *CI = dyn_cast<ConstantInt>(C);
   if (!CI) return false;
 
-  S->replaceAllUsesWith(S->getOperand(CI->isOne() ? 1 : 2));
+  Value *ReplaceWith = S->getOperand(1);
+  Value *Other = S->getOperand(2);
+  if (!CI->isOne()) std::swap(ReplaceWith, Other);
+  if (ReplaceWith == S) ReplaceWith = UndefValue::get(S->getType());
+
+  S->replaceAllUsesWith(ReplaceWith);
   S->eraseFromParent();
 
   ++NumSelects;

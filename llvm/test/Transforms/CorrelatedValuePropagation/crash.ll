@@ -18,3 +18,20 @@ for.cond.us.us:                                   ; preds = %for.cond.us.us
 for.end:                                          ; preds = %for.cond.us, %for.cond.us.us, %entry
   ret void
 }
+
+; PR 8790
+define void @test2() nounwind ssp {
+entry:
+  br label %func_29.exit
+
+sdf.exit.i:
+  %l_44.1.mux.i = select i1 %tobool5.not.i, i8 %l_44.1.mux.i, i8 1
+  br label %srf.exit.i
+
+srf.exit.i:
+  %tobool5.not.i = icmp ne i8 undef, 0
+  br i1 %tobool5.not.i, label %sdf.exit.i, label %func_29.exit
+
+func_29.exit:
+  ret void
+}
