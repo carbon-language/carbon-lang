@@ -258,7 +258,7 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
     
     // A number of ARM fixups in Thumb mode require that the effective PC
     // address be determined as the 32-bit aligned version of the actual offset.
-    if (ShouldAlignPC) Offset &= 0x3;
+    if (ShouldAlignPC) Offset &= ~0x3;
     Value -= Layout.getFragmentOffset(DF) + Offset;
   }
 
