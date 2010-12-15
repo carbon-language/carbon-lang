@@ -76,6 +76,12 @@ inline bool isUIntN(unsigned N, uint64_t x) {
   return x == (x & (~0ULL >> (64 - N)));
 }
 
+/// isIIntN - Checks if an signed integer fits into the given (dynamic)
+/// bit width.
+inline bool isIntN(unsigned N, int64_t x) {
+  return N >= 64 || (-(INT64_C(1)<<(N-1)) <= x && x < (INT64_C(1)<<(N-1)));
+}
+
 /// isMask_32 - This function returns true if the argument is a sequence of ones
 /// starting at the least significant bit with the remainder zero (32 bit
 /// version).   Ex. isMask_32(0x0000FFFFU) == true.
