@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
 @ XFAIL: *
 @ NOTE: This currently fails because the ASM parser doesn't parse vabal.
 

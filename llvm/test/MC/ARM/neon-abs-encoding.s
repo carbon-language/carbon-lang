@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
 
 @ CHECK: vabs.s8	d16, d16                @ encoding: [0x20,0x03,0xf1,0xf3]
 	vabs.s8	d16, d16

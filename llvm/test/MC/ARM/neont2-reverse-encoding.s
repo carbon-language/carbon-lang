@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -mcpu=cortex-a8 -triple thumb-unknown-unkown -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple thumb-unknown-unknown -show-encoding < %s | FileCheck %s
 
 @ CHECK: vrev64.8	d16, d16        @ encoding: [0xf0,0xff,0x20,0x00]
 	vrev64.8	d16, d16

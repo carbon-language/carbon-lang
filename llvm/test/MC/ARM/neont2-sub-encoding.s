@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -mcpu=cortex-a8 -triple thumb-unknown-unkown -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple thumb-unknown-unknown -show-encoding < %s | FileCheck %s
 
 @ CHECK: vext.8	d16, d17, d16, #3       @ encoding: [0xf1,0xef,0xa0,0x03]
 	vext.8	d16, d17, d16, #3

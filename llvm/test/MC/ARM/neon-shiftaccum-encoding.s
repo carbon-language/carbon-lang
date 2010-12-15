@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
 
 @ CHECK: vsra.s8	d17, d16, #8            @ encoding: [0x30,0x11,0xc8,0xf2]
 	vsra.s8	d17, d16, #8

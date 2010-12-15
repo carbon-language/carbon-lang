@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unkown -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
 @ XFAIL: *
 
 @ CHECK: vand	d16, d17, d16           @ encoding: [0xb0,0x01,0x41,0xf2]
