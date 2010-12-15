@@ -52,18 +52,18 @@ namespace llvm {
 namespace {
 class LVILatticeVal {
   enum LatticeValueTy {
-    /// undefined - This LLVM Value has no known value yet.
+    /// undefined - This Value has no known value yet.
     undefined,
     
-    /// constant - This LLVM Value has a specific constant value.
+    /// constant - This Value has a specific constant value.
     constant,
-    /// notconstant - This LLVM value is known to not have the specified value.
+    /// notconstant - This Value is known to not have the specified value.
     notconstant,
     
-    /// constantrange
+    /// constantrange - The Value falls within this range.
     constantrange,
     
-    /// overdefined - This instruction is not known to be constant, and we know
+    /// overdefined - This value is not known to be constant, and we know that
     /// it has a value.
     overdefined
   };
@@ -79,17 +79,13 @@ public:
 
   static LVILatticeVal get(Constant *C) {
     LVILatticeVal Res;
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
-      Res.markConstantRange(ConstantRange(CI->getValue(), CI->getValue()+1));
-    else if (!isa<UndefValue>(C))
+    if (!isa<UndefValue>(C))
       Res.markConstant(C);
     return Res;
   }
   static LVILatticeVal getNot(Constant *C) {
     LVILatticeVal Res;
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
-      Res.markConstantRange(ConstantRange(CI->getValue()+1, CI->getValue()));
-    else
+    if (!isa<UndefValue>(C))
       Res.markNotConstant(C);
     return Res;
   }
@@ -131,32 +127,34 @@ public:
 
   /// markConstant - Return true if this is a change in status.
   bool markConstant(Constant *V) {
-    if (isConstant()) {
-      assert(getConstant() == V && "Marking constant with different value");
+    assert(V && "Marking constant with NULL");
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
+      return markConstantRange(ConstantRange(CI->getValue()));
+    if (isa<UndefValue>(V))
       return false;
-    }
-    
+
+    assert((!isConstant() || getConstant() == V) &&
+           "Marking constant with different value");
     assert(isUndefined());
     Tag = constant;
-    assert(V && "Marking constant with NULL");
     Val = V;
     return true;
   }
   
   /// markNotConstant - Return true if this is a change in status.
   bool markNotConstant(Constant *V) {
-    if (isNotConstant()) {
-      assert(getNotConstant() == V && "Marking !constant with different value");
-      return false;
-    }
-    
-    if (isConstant())
-      assert(getConstant() != V && "Marking not constant with different value");
-    else
-      assert(isUndefined());
-
-    Tag = notconstant;
     assert(V && "Marking constant with NULL");
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
+      return markConstantRange(ConstantRange(CI->getValue()+1, CI->getValue()));
+    if (isa<UndefValue>(V))
+      return false;
+
+    assert((!isConstant() || getConstant() != V) &&
+           "Marking constant !constant with same value");
+    assert((!isNotConstant() || getNotConstant() == V) &&
+           "Marking !constant with different value");
+    assert(isUndefined() || isConstant());
+    Tag = notconstant;
     Val = V;
     return true;
   }
@@ -187,67 +185,81 @@ public:
     if (RHS.isUndefined() || isOverdefined()) return false;
     if (RHS.isOverdefined()) return markOverdefined();
 
-    if (RHS.isNotConstant()) {
-      if (isNotConstant()) {
-        if (getNotConstant() != RHS.getNotConstant() ||
-            isa<ConstantExpr>(getNotConstant()) ||
-            isa<ConstantExpr>(RHS.getNotConstant()))
-          return markOverdefined();
-        return false;
-      } else if (isConstant()) {
-        if (getConstant() == RHS.getNotConstant() ||
-            isa<ConstantExpr>(RHS.getNotConstant()) ||
-            isa<ConstantExpr>(getConstant()))
-          return markOverdefined();
-        return markNotConstant(RHS.getNotConstant());
-      } else if (isConstantRange()) {
-         // FIXME: This could be made more precise.
-        return markOverdefined();
-      }
-      
-      assert(isUndefined() && "Unexpected lattice");
-      return markNotConstant(RHS.getNotConstant());
-    }
-    
-    if (RHS.isConstantRange()) {
-      if (isConstantRange()) {
-        ConstantRange NewR = Range.unionWith(RHS.getConstantRange());
-        if (NewR.isFullSet())
-          return markOverdefined();
-        else
-          return markConstantRange(NewR);
-      } else if (!isUndefined()) {
-        return markOverdefined();
-      }
-      
-      assert(isUndefined() && "Unexpected lattice");
-      return markConstantRange(RHS.getConstantRange());
-    }
-    
-    // RHS must be a constant, we must be constantrange, 
-    // undef, constant, or notconstant.
-    if (isConstantRange()) {
-      // FIXME: This could be made more precise.
-      return markOverdefined();
-    }
-    
-    if (isUndefined())
-      return markConstant(RHS.getConstant());
-    
-    if (isConstant()) {
-      if (getConstant() != RHS.getConstant())
-        return markOverdefined();
-      return false;
+    if (isUndefined()) {
+      Tag = RHS.Tag;
+      Val = RHS.Val;
+      Range = RHS.Range;
+      return true;
     }
 
-    // If we are known "!=4" and RHS is "==5", stay at "!=4".
-    if (getNotConstant() == RHS.getConstant() ||
-        isa<ConstantExpr>(getNotConstant()) ||
-        isa<ConstantExpr>(RHS.getConstant()))
+    if (isConstant()) {
+      if (RHS.isConstant()) {
+        if (Val == RHS.Val)
+          return false;
+        return markOverdefined();
+      }
+
+      if (RHS.isNotConstant()) {
+        if (Val == RHS.Val)
+          return markOverdefined();
+
+        // Unless we can prove that the two Constants are different, we must
+        // move to overdefined.
+        // FIXME: use TargetData for smarter constant folding.
+        if (ConstantInt *Res = dyn_cast<ConstantInt>(
+                ConstantFoldCompareInstOperands(CmpInst::ICMP_NE,
+                                                getConstant(),
+                                                RHS.getNotConstant())))
+          if (Res->isOne())
+            return markNotConstant(RHS.getNotConstant());
+
+        return markOverdefined();
+      }
+
+      // RHS is a ConstantRange, LHS is a non-integer Constant.
+
+      // FIXME: consider the case where RHS is a range [1, 0) and LHS is
+      // a function. The correct result is to pick up RHS.
+
       return markOverdefined();
-    return false;
+    }
+
+    if (isNotConstant()) {
+      if (RHS.isConstant()) {
+        if (Val == RHS.Val)
+          return markOverdefined();
+
+        // Unless we can prove that the two Constants are different, we must
+        // move to overdefined.
+        // FIXME: use TargetData for smarter constant folding.
+        if (ConstantInt *Res = dyn_cast<ConstantInt>(
+                ConstantFoldCompareInstOperands(CmpInst::ICMP_NE,
+                                                getNotConstant(),
+                                                RHS.getConstant())))
+          if (Res->isOne())
+            return false;
+
+        return markOverdefined();
+      }
+
+      if (RHS.isNotConstant()) {
+        if (Val == RHS.Val)
+          return false;
+        return markOverdefined();
+      }
+
+      return markOverdefined();
+    }
+
+    assert(isConstantRange() && "New LVILattice type?");
+    if (!RHS.isConstantRange())
+      return markOverdefined();
+
+    ConstantRange NewR = Range.unionWith(RHS.getConstantRange());
+    if (NewR.isFullSet())
+      return markOverdefined();
+    return markConstantRange(NewR);
   }
-  
 };
   
 } // end anonymous namespace.
@@ -292,7 +304,7 @@ namespace {
         : CallbackVH(V), Parent(P) { }
       
       void deleted();
-      void allUsesReplacedWith(Value* V) {
+      void allUsesReplacedWith(Value *V) {
         deleted();
       }
     };
@@ -310,7 +322,7 @@ namespace {
     LVILatticeVal getBlockValue(Value *Val, BasicBlock *BB);
     LVILatticeVal getEdgeValue(Value *V, BasicBlock *F, BasicBlock *T);
     
-    ValueCacheEntryTy  &lookup(Value *V) {
+    ValueCacheEntryTy &lookup(Value *V) {
       return ValueCache[LVIValueHandle(V, this)];
     }
     
@@ -321,7 +333,6 @@ namespace {
     }
     
   public:
-    
     /// getValueInBlock - This is the query interface to determine the lattice
     /// value for the specified Value* at the end of the specified block.
     LVILatticeVal getValueInBlock(Value *V, BasicBlock *BB);
@@ -456,7 +467,7 @@ LVILatticeVal LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
     // Loop over all of our predecessors, merging what we know from them into
     // result.
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-      Value* PhiVal = PN->getIncomingValueForBlock(*PI);
+      Value *PhiVal = PN->getIncomingValueForBlock(*PI);
       Result.mergeIn(getValueOnEdge(PhiVal, *PI, BB));
       
       // If we hit overdefined, exit early.  The BlockVals entry is already set
@@ -574,8 +585,8 @@ LVILatticeVal LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
 
 /// getEdgeValue - This method attempts to infer more complex 
 LVILatticeVal LazyValueInfoCache::getEdgeValue(Value *Val,
-                                    BasicBlock *BBFrom,
-                                     BasicBlock *BBTo) {
+                                               BasicBlock *BBFrom,
+                                               BasicBlock *BBTo) {
   // TODO: Handle more complex conditionals.  If (v == 0 || v2 < 1) is false, we
   // know that v != 0.
   if (BranchInst *BI = dyn_cast<BranchInst>(BBFrom->getTerminator())) {
@@ -725,7 +736,7 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
     if (ToUpdate == NewSucc) continue;
     
     bool changed = false;
-    for (DenseSet<Value*>::iterator I = ClearSet.begin(),E = ClearSet.end();
+    for (DenseSet<Value*>::iterator I = ClearSet.begin(), E = ClearSet.end();
          I != E; ++I) {
       // If a value was marked overdefined in OldSucc, and is here too...
       std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator OI =
@@ -784,7 +795,7 @@ Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB) {
   
   if (Result.isConstant())
     return Result.getConstant();
-  else if (Result.isConstantRange()) {
+  if (Result.isConstantRange()) {
     ConstantRange CR = Result.getConstantRange();
     if (const APInt *SingleVal = CR.getSingleElement())
       return ConstantInt::get(V->getContext(), *SingleVal);
@@ -800,7 +811,7 @@ Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
   
   if (Result.isConstant())
     return Result.getConstant();
-  else if (Result.isConstantRange()) {
+  if (Result.isConstantRange()) {
     ConstantRange CR = Result.getConstantRange();
     if (const APInt *SingleVal = CR.getSingleElement())
       return ConstantInt::get(V->getContext(), *SingleVal);
@@ -820,7 +831,7 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
   Constant *Res = 0;
   if (Result.isConstant()) {
     Res = ConstantFoldCompareInstOperands(Pred, Result.getConstant(), C, TD);
-    if (ConstantInt *ResCI = dyn_cast_or_null<ConstantInt>(Res))
+    if (ConstantInt *ResCI = dyn_cast<ConstantInt>(Res))
       return ResCI->isZero() ? False : True;
     return Unknown;
   }
@@ -845,13 +856,12 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
     }
     
     // Handle more complex predicates.
-    ConstantRange RHS(CI->getValue(), CI->getValue()+1);
-    ConstantRange TrueValues = ConstantRange::makeICmpRegion(Pred, RHS);
-    if (CR.intersectWith(TrueValues).isEmptySet())
-      return False;
-    else if (TrueValues.contains(CR))
+    ConstantRange TrueValues =
+        ICmpInst::makeConstantRange((ICmpInst::Predicate)Pred, CI->getValue());
+    if (TrueValues.contains(CR))
       return True;
-    
+    if (TrueValues.inverse().contains(CR))
+      return False;
     return Unknown;
   }
   
@@ -878,7 +888,7 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
 }
 
 void LazyValueInfo::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
-                               BasicBlock* NewSucc) {
+                               BasicBlock *NewSucc) {
   if (PImpl) getCache(PImpl).threadEdge(PredBB, OldSucc, NewSucc);
 }
 
