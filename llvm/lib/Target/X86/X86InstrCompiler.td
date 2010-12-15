@@ -1038,8 +1038,9 @@ def or_is_add : PatFrag<(ops node:$lhs, node:$rhs), (or node:$lhs, node:$rhs),[{
 // (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
 let AddedComplexity = 5 in { // Try this before the selecting to OR
 
-let isCommutable = 1, isConvertibleToThreeAddress = 1,
+let isConvertibleToThreeAddress = 1,
     Constraints = "$src1 = $dst", Defs = [EFLAGS] in {
+let isCommutable = 1 in {
 def ADD16rr_DB  : I<0, Pseudo, (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                     "", // orw/addw REG, REG
                     [(set GR16:$dst, (or_is_add GR16:$src1, GR16:$src2))]>;
@@ -1049,6 +1050,7 @@ def ADD32rr_DB  : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
 def ADD64rr_DB  : I<0, Pseudo, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                     "", // orq/addq REG, REG
                     [(set GR64:$dst, (or_is_add GR64:$src1, GR64:$src2))]>;
+} // isCommutable
 
 // NOTE: These are order specific, we want the ri8 forms to be listed
 // first so that they are slightly preferred to the ri forms.
