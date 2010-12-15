@@ -810,6 +810,51 @@ badness.  PPC64 misses f, f5 and f6.  CellSPU aborts in isel.
 
 //===---------------------------------------------------------------------===//
 
+This (and similar related idioms):
+
+unsigned int foo(unsigned char i) {
+  return i | (i<<8) | (i<<16) | (i<<24);
+} 
+
+compiles into:
+
+define i32 @foo(i8 zeroext %i) nounwind readnone ssp noredzone {
+entry:
+  %conv = zext i8 %i to i32
+  %shl = shl i32 %conv, 8
+  %shl5 = shl i32 %conv, 16
+  %shl9 = shl i32 %conv, 24
+  %or = or i32 %shl9, %conv
+  %or6 = or i32 %or, %shl5
+  %or10 = or i32 %or6, %shl
+  ret i32 %or10
+}
+
+it would be better as:
+
+unsigned int bar(unsigned char i) {
+  unsigned int j=i | (i << 8); 
+  return j | (j<<16);
+}
+
+aka:
+
+define i32 @bar(i8 zeroext %i) nounwind readnone ssp noredzone {
+entry:
+  %conv = zext i8 %i to i32
+  %shl = shl i32 %conv, 8
+  %or = or i32 %shl, %conv
+  %shl5 = shl i32 %or, 16
+  %or6 = or i32 %shl5, %or
+  ret i32 %or6
+}
+
+or even i*0x01010101, depending on the speed of the multiplier.  The best way to
+handle this is to canonicalize it to a multiply in IR and have codegen handle
+lowering multiplies to shifts on cpus where shifts are faster.
+
+//===---------------------------------------------------------------------===//
+
 We do a number of simplifications in simplify libcalls to strength reduce
 standard library functions, but we don't currently merge them together.  For
 example, it is useful to merge memcpy(a,b,strlen(b)) -> strcpy.  This can only
