@@ -52,6 +52,8 @@ DisableARMFastISel("disable-arm-fast-isel",
                     cl::desc("Turn off experimental ARM fast-isel support"),
                     cl::init(false), cl::Hidden);
 
+extern cl::opt<bool> EnableARMLongCalls;
+
 namespace {
 
   // All possible address modes, plus some.
@@ -1656,6 +1658,9 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   // For now we're using BLX etc on the assumption that we have v5t ops.
   if (!Subtarget->hasV5TOps()) return false;
 
+  // TODO: For now if we have long calls specified we don't handle the call.
+  if (EnableARMLongCalls) return false;
+
   // Set up the argument vectors.
   SmallVector<Value*, 8> Args;
   SmallVector<unsigned, 8> ArgRegs;
@@ -1753,6 +1758,9 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   // TODO: Maybe?
   if (!Subtarget->hasV5TOps()) return false;
 
+  // TODO: For now if we have long calls specified we don't handle the call.
+  if (EnableARMLongCalls) return false;
+  
   // Set up the argument vectors.
   SmallVector<Value*, 8> Args;
   SmallVector<unsigned, 8> ArgRegs;
