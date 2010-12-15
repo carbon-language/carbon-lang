@@ -592,7 +592,11 @@ namespace {
 static int ConstantIntSortPredicate(const void *P1, const void *P2) {
   const ConstantInt *LHS = *(const ConstantInt**)P1;
   const ConstantInt *RHS = *(const ConstantInt**)P2;
-  return LHS->getValue().ult(RHS->getValue()) ? 1 : -1;
+  if (LHS->getValue().ult(RHS->getValue()))
+    return 1;
+  if (LHS->getValue() == RHS->getValue())
+    return 0;
+  return -1;
 }
 
 /// FoldValueComparisonIntoPredecessors - The specified terminator is a value
