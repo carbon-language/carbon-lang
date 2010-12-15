@@ -49,6 +49,7 @@ void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
                               unsigned AddrSpace) {
   assert(Size <= 8 && "Invalid size");
   unsigned Bits = 8 * Size;
+  (void)Bits;
   assert((isUIntN(Bits, Value) || isIntN(Bits, Value)) && "Invalid size");
   char buf[8];
   // FIXME: Endianness assumption.
