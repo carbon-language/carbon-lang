@@ -3431,6 +3431,38 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
   return ExprError();
 }
 
+/// Given that normal member access failed on the given expression,
+/// and given that the expression's type involves builtin-id or
+/// builtin-Class, decide whether substituting in the redefinition
+/// types would be profitable.  The redefinition type is whatever
+/// this translation unit tried to typedef to id/Class;  we store
+/// it to the side and then re-use it in places like this.
+static bool ShouldTryAgainWithRedefinitionType(Sema &S, Expr *&base) {
+  const ObjCObjectPointerType *opty
+    = base->getType()->getAs<ObjCObjectPointerType>();
+  if (!opty) return false;
+
+  const ObjCObjectType *ty = opty->getObjectType();
+
+  QualType redef;
+  if (ty->isObjCId()) {
+    redef = S.Context.ObjCIdRedefinitionType;
+  } else if (ty->isObjCClass()) {
+    redef = S.Context.ObjCClassRedefinitionType;
+  } else {
+    return false;
+  }
+
+  // Do the substitution as long as the redefinition type isn't just a
+  // possibly-qualified pointer to builtin-id or builtin-Class again.
+  opty = redef->getAs<ObjCObjectPointerType>();
+  if (opty && !opty->getObjectType()->getInterface() != 0)
+    return false;
+
+  S.ImpCastExprToType(base, redef, CK_BitCast);
+  return true;
+}
+
 /// Look up the given member of the given non-type-dependent
 /// expression.  This can return in one of two ways:
 ///  * If it returns a sentinel null-but-valid result, the caller will
@@ -3458,91 +3490,230 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   DeclarationName MemberName = R.getLookupName();
   SourceLocation MemberLoc = R.getNameLoc();
 
-  // If the user is trying to apply -> or . to a function pointer
-  // type, it's probably because they forgot parentheses to call that
-  // function. Suggest the addition of those parentheses, build the
-  // call, and continue on.
-  if (const PointerType *Ptr = BaseType->getAs<PointerType>()) {
-    if (const FunctionProtoType *Fun
-          = Ptr->getPointeeType()->getAs<FunctionProtoType>()) {
-      QualType ResultTy = Fun->getResultType();
-      if (Fun->getNumArgs() == 0 &&
-          ((!IsArrow && ResultTy->isRecordType()) ||
-           (IsArrow && ResultTy->isPointerType() &&
-            ResultTy->getAs<PointerType>()->getPointeeType()
-                                                          ->isRecordType()))) {
-        SourceLocation Loc = PP.getLocForEndOfToken(BaseExpr->getLocEnd());
-        Diag(BaseExpr->getExprLoc(), diag::err_member_reference_needs_call)
-          << QualType(Fun, 0)
-          << FixItHint::CreateInsertion(Loc, "()");
-
-        ExprResult NewBase
-          = ActOnCallExpr(0, BaseExpr, Loc, MultiExprArg(*this, 0, 0), Loc);
-        BaseExpr = 0;
-        if (NewBase.isInvalid())
-          return ExprError();
-
-        BaseExpr = NewBase.takeAs<Expr>();
-        DefaultFunctionArrayConversion(BaseExpr);
-        BaseType = BaseExpr->getType();
-      }
+  // For later type-checking purposes, turn arrow accesses into dot
+  // accesses.  The only access type we support that doesn't follow
+  // the C equivalence "a->b === (*a).b" is ObjC property accesses,
+  // and those never use arrows, so this is unaffected.
+  if (IsArrow) {
+    if (const PointerType *Ptr = BaseType->getAs<PointerType>())
+      BaseType = Ptr->getPointeeType();
+    else if (const ObjCObjectPointerType *Ptr
+               = BaseType->getAs<ObjCObjectPointerType>())
+      BaseType = Ptr->getPointeeType();
+    else if (BaseType->isRecordType()) {
+      // Recover from arrow accesses to records, e.g.:
+      //   struct MyRecord foo;
+      //   foo->bar
+      // This is actually well-formed in C++ if MyRecord has an
+      // overloaded operator->, but that should have been dealt with
+      // by now.
+      Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
+        << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
+        << FixItHint::CreateReplacement(OpLoc, ".");
+      IsArrow = false;
+    } else {
+      Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
+        << BaseType << BaseExpr->getSourceRange();
+      return ExprError();
     }
   }
 
-  // If this is an Objective-C pseudo-builtin and a definition is provided then
-  // use that.
-  if (BaseType->isObjCIdType()) {
-    if (IsArrow) {
-      // Handle the following exceptional case PObj->isa.
-      if (const ObjCObjectPointerType *OPT =
-          BaseType->getAs<ObjCObjectPointerType>()) {
-        if (OPT->getObjectType()->isObjCId() &&
-            MemberName.getAsIdentifierInfo()->isStr("isa"))
-          return Owned(new (Context) ObjCIsaExpr(BaseExpr, true, MemberLoc,
-                                                 Context.getObjCClassType()));
-      }
-    }
-    // We have an 'id' type. Rather than fall through, we check if this
-    // is a reference to 'isa'.
-    if (BaseType != Context.ObjCIdRedefinitionType) {
-      BaseType = Context.ObjCIdRedefinitionType;
-      ImpCastExprToType(BaseExpr, BaseType, CK_BitCast);
-    }
+  // Handle field access to simple records.
+  if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
+    if (LookupMemberExprInRecord(*this, R, BaseExpr->getSourceRange(),
+                                 RTy, OpLoc, SS, HasTemplateArgs))
+      return ExprError();
+
+    // Returning valid-but-null is how we indicate to the caller that
+    // the lookup result was filled in.
+    return Owned((Expr*) 0);
   }
 
-  // If this is an Objective-C pseudo-builtin and a definition is provided then
-  // use that.
-  if (Context.isObjCSelType(BaseType)) {
-    // We have an 'SEL' type. Rather than fall through, we check if this
-    // is a reference to 'sel_id'.
-    if (BaseType != Context.ObjCSelRedefinitionType) {
-      BaseType = Context.ObjCSelRedefinitionType;
-      ImpCastExprToType(BaseExpr, BaseType, CK_BitCast);
-    }
-  }
-
-  assert(!BaseType.isNull() && "no type for member expression");
-
-  // Handle properties on ObjC 'Class' types.
-  if (!IsArrow && BaseType->isObjCClassType()) {
-    // Also must look for a getter name which uses property syntax.
+  // Handle ivar access to Objective-C objects.
+  if (const ObjCObjectType *OTy = BaseType->getAs<ObjCObjectType>()) {
     IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
-    Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
-    if (ObjCMethodDecl *MD = getCurMethodDecl()) {
+
+    // There are three cases for the base type:
+    //   - builtin id (qualified or unqualified)
+    //   - builtin Class (qualified or unqualified)
+    //   - an interface
+    ObjCInterfaceDecl *IDecl = OTy->getInterface();
+    if (!IDecl) {
+      // There's an implicit 'isa' ivar on all objects.
+      // But we only actually find it this way on objects of type 'id',
+      // apparently.
+      if (OTy->isObjCId() && Member->isStr("isa"))
+        return Owned(new (Context) ObjCIsaExpr(BaseExpr, IsArrow, MemberLoc,
+                                               Context.getObjCClassType()));
+
+      if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
+        return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+                                ObjCImpDecl, HasTemplateArgs);
+      goto fail;
+    }
+
+    ObjCInterfaceDecl *ClassDeclared;
+    ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(Member, ClassDeclared);
+
+    if (!IV) {
+      // Attempt to correct for typos in ivar names.
+      LookupResult Res(*this, R.getLookupName(), R.getNameLoc(),
+                       LookupMemberName);
+      if (CorrectTypo(Res, 0, 0, IDecl, false, 
+                      IsArrow ? CTC_ObjCIvarLookup
+                              : CTC_ObjCPropertyLookup) &&
+          (IV = Res.getAsSingle<ObjCIvarDecl>())) {
+        Diag(R.getNameLoc(),
+             diag::err_typecheck_member_reference_ivar_suggest)
+          << IDecl->getDeclName() << MemberName << IV->getDeclName()
+          << FixItHint::CreateReplacement(R.getNameLoc(),
+                                          IV->getNameAsString());
+        Diag(IV->getLocation(), diag::note_previous_decl)
+          << IV->getDeclName();
+      } else {
+        Res.clear();
+        Res.setLookupName(Member);
+
+        Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
+          << IDecl->getDeclName() << MemberName
+          << BaseExpr->getSourceRange();
+        return ExprError();
+      }
+    }
+
+    // If the decl being referenced had an error, return an error for this
+    // sub-expr without emitting another error, in order to avoid cascading
+    // error cases.
+    if (IV->isInvalidDecl())
+      return ExprError();
+
+    // Check whether we can reference this field.
+    if (DiagnoseUseOfDecl(IV, MemberLoc))
+      return ExprError();
+    if (IV->getAccessControl() != ObjCIvarDecl::Public &&
+        IV->getAccessControl() != ObjCIvarDecl::Package) {
+      ObjCInterfaceDecl *ClassOfMethodDecl = 0;
+      if (ObjCMethodDecl *MD = getCurMethodDecl())
+        ClassOfMethodDecl =  MD->getClassInterface();
+      else if (ObjCImpDecl && getCurFunctionDecl()) {
+        // Case of a c-function declared inside an objc implementation.
+        // FIXME: For a c-style function nested inside an objc implementation
+        // class, there is no implementation context available, so we pass
+        // down the context as argument to this routine. Ideally, this context
+        // need be passed down in the AST node and somehow calculated from the
+        // AST for a function decl.
+        if (ObjCImplementationDecl *IMPD =
+              dyn_cast<ObjCImplementationDecl>(ObjCImpDecl))
+          ClassOfMethodDecl = IMPD->getClassInterface();
+        else if (ObjCCategoryImplDecl* CatImplClass =
+                   dyn_cast<ObjCCategoryImplDecl>(ObjCImpDecl))
+          ClassOfMethodDecl = CatImplClass->getClassInterface();
+      }
+
+      if (IV->getAccessControl() == ObjCIvarDecl::Private) {
+        if (ClassDeclared != IDecl ||
+            ClassOfMethodDecl != ClassDeclared)
+          Diag(MemberLoc, diag::error_private_ivar_access)
+            << IV->getDeclName();
+      } else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
+        // @protected
+        Diag(MemberLoc, diag::error_protected_ivar_access)
+          << IV->getDeclName();
+    }
+
+    return Owned(new (Context) ObjCIvarRefExpr(IV, IV->getType(),
+                                               MemberLoc, BaseExpr,
+                                               IsArrow));
+  }
+
+  // Objective-C property access.
+  const ObjCObjectPointerType *OPT;
+  if (!IsArrow && (OPT = BaseType->getAs<ObjCObjectPointerType>())) {
+    // This actually uses the base as an r-value.
+    DefaultLvalueConversion(BaseExpr);
+    assert(Context.hasSameUnqualifiedType(BaseType, BaseExpr->getType()));
+
+    IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
+
+    const ObjCObjectType *OT = OPT->getObjectType();
+
+    // id, with and without qualifiers.
+    if (OT->isObjCId()) {
+      // Check protocols on qualified interfaces.
+      Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
+      if (Decl *PMDecl = FindGetterSetterNameDecl(OPT, Member, Sel, Context)) {
+        if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(PMDecl)) {
+          // Check the use of this declaration
+          if (DiagnoseUseOfDecl(PD, MemberLoc))
+            return ExprError();
+
+          return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
+                                                         VK_LValue,
+                                                         OK_ObjCProperty,
+                                                         MemberLoc, 
+                                                         BaseExpr));
+        }
+
+        if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(PMDecl)) {
+          // Check the use of this method.
+          if (DiagnoseUseOfDecl(OMD, MemberLoc))
+            return ExprError();
+          Selector SetterSel =
+            SelectorTable::constructSetterName(PP.getIdentifierTable(),
+                                               PP.getSelectorTable(), Member);
+          ObjCMethodDecl *SMD = 0;
+          if (Decl *SDecl = FindGetterSetterNameDecl(OPT, /*Property id*/0, 
+                                                     SetterSel, Context))
+            SMD = dyn_cast<ObjCMethodDecl>(SDecl);
+          QualType PType = OMD->getSendResultType();
+          
+          ExprValueKind VK = VK_LValue;
+          if (!getLangOptions().CPlusPlus &&
+              IsCForbiddenLValueType(Context, PType))
+            VK = VK_RValue;
+          ExprObjectKind OK = (VK == VK_RValue ? OK_Ordinary : OK_ObjCProperty);
+
+          return Owned(new (Context) ObjCPropertyRefExpr(OMD, SMD, PType,
+                                                         VK, OK,
+                                                         MemberLoc, BaseExpr));
+        }
+      }
+
+      if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
+        return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+                                ObjCImpDecl, HasTemplateArgs);
+
+      return ExprError(Diag(MemberLoc, diag::err_property_not_found)
+                         << MemberName << BaseType);
+    }
+
+    // 'Class', unqualified only.
+    if (OT->isObjCClass()) {
+      // Only works in a method declaration (??!).
+      ObjCMethodDecl *MD = getCurMethodDecl();
+      if (!MD) {
+        if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
+          return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+                                  ObjCImpDecl, HasTemplateArgs);
+
+        goto fail;
+      }
+
+      // Also must look for a getter name which uses property syntax.
+      Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
       ObjCInterfaceDecl *IFace = MD->getClassInterface();
       ObjCMethodDecl *Getter;
       if ((Getter = IFace->lookupClassMethod(Sel))) {
         // Check the use of this method.
         if (DiagnoseUseOfDecl(Getter, MemberLoc))
           return ExprError();
-      }
-      else
+      } else
         Getter = IFace->lookupPrivateMethod(Sel, false);
       // If we found a getter then this may be a valid dot-reference, we
       // will look for the matching setter, in case it is needed.
       Selector SetterSel =
-      SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                         PP.getSelectorTable(), Member);
+        SelectorTable::constructSetterName(PP.getIdentifierTable(),
+                                           PP.getSelectorTable(), Member);
       ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
       if (!Setter) {
         // If this reference is in an @implementation, also check for 'private'
@@ -3576,223 +3747,19 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                                                        PType, VK, OK,
                                                        MemberLoc, BaseExpr));
       }
+
+      if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
+        return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+                                ObjCImpDecl, HasTemplateArgs);
+
       return ExprError(Diag(MemberLoc, diag::err_property_not_found)
-                       << MemberName << BaseType);
-    }
-  }
-
-  if (BaseType->isObjCClassType() &&
-      BaseType != Context.ObjCClassRedefinitionType) {
-    BaseType = Context.ObjCClassRedefinitionType;
-    ImpCastExprToType(BaseExpr, BaseType, CK_BitCast);
-  }
-
-  if (IsArrow) {
-    if (const PointerType *PT = BaseType->getAs<PointerType>())
-      BaseType = PT->getPointeeType();
-    else if (BaseType->isObjCObjectPointerType())
-      ;
-    else if (BaseType->isRecordType()) {
-      // Recover from arrow accesses to records, e.g.:
-      //   struct MyRecord foo;
-      //   foo->bar
-      // This is actually well-formed in C++ if MyRecord has an
-      // overloaded operator->, but that should have been dealt with
-      // by now.
-      Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
-        << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
-        << FixItHint::CreateReplacement(OpLoc, ".");
-      IsArrow = false;
-    } else {
-      Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
-        << BaseType << BaseExpr->getSourceRange();
-      return ExprError();
-    }
-  } else {
-    // Recover from dot accesses to pointers, e.g.:
-    //   type *foo;
-    //   foo.bar
-    // This is actually well-formed in two cases:
-    //   - 'type' is an Objective C type
-    //   - 'bar' is a pseudo-destructor name which happens to refer to
-    //     the appropriate pointer type
-    if (MemberName.getNameKind() != DeclarationName::CXXDestructorName) {
-      const PointerType *PT = BaseType->getAs<PointerType>();
-      if (PT && PT->getPointeeType()->isRecordType()) {
-        Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
-          << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
-          << FixItHint::CreateReplacement(OpLoc, "->");
-        BaseType = PT->getPointeeType();
-        IsArrow = true;
-      }
-    }
-  }
-
-  // Handle field access to simple records.
-  if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
-    if (LookupMemberExprInRecord(*this, R, BaseExpr->getSourceRange(),
-                                 RTy, OpLoc, SS, HasTemplateArgs))
-      return ExprError();
-    return Owned((Expr*) 0);
-  }
-
-  // Handle access to Objective-C instance variables, such as "Obj->ivar" and
-  // (*Obj).ivar.
-  if ((IsArrow && BaseType->isObjCObjectPointerType()) ||
-      (!IsArrow && BaseType->isObjCObjectType())) {
-    const ObjCObjectPointerType *OPT = BaseType->getAs<ObjCObjectPointerType>();
-    ObjCInterfaceDecl *IDecl =
-      OPT ? OPT->getInterfaceDecl()
-          : BaseType->getAs<ObjCObjectType>()->getInterface();
-    if (IDecl) {
-      IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
-
-      ObjCInterfaceDecl *ClassDeclared;
-      ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(Member, ClassDeclared);
-
-      if (!IV) {
-        // Attempt to correct for typos in ivar names.
-        LookupResult Res(*this, R.getLookupName(), R.getNameLoc(),
-                         LookupMemberName);
-        if (CorrectTypo(Res, 0, 0, IDecl, false, 
-                        IsArrow? CTC_ObjCIvarLookup
-                               : CTC_ObjCPropertyLookup) &&
-            (IV = Res.getAsSingle<ObjCIvarDecl>())) {
-          Diag(R.getNameLoc(),
-               diag::err_typecheck_member_reference_ivar_suggest)
-            << IDecl->getDeclName() << MemberName << IV->getDeclName()
-            << FixItHint::CreateReplacement(R.getNameLoc(),
-                                            IV->getNameAsString());
-          Diag(IV->getLocation(), diag::note_previous_decl)
-            << IV->getDeclName();
-        } else {
-          Res.clear();
-          Res.setLookupName(Member);
-        }
-      }
-
-      if (IV) {
-        // If the decl being referenced had an error, return an error for this
-        // sub-expr without emitting another error, in order to avoid cascading
-        // error cases.
-        if (IV->isInvalidDecl())
-          return ExprError();
-
-        // Check whether we can reference this field.
-        if (DiagnoseUseOfDecl(IV, MemberLoc))
-          return ExprError();
-        if (IV->getAccessControl() != ObjCIvarDecl::Public &&
-            IV->getAccessControl() != ObjCIvarDecl::Package) {
-          ObjCInterfaceDecl *ClassOfMethodDecl = 0;
-          if (ObjCMethodDecl *MD = getCurMethodDecl())
-            ClassOfMethodDecl =  MD->getClassInterface();
-          else if (ObjCImpDecl && getCurFunctionDecl()) {
-            // Case of a c-function declared inside an objc implementation.
-            // FIXME: For a c-style function nested inside an objc implementation
-            // class, there is no implementation context available, so we pass
-            // down the context as argument to this routine. Ideally, this context
-            // need be passed down in the AST node and somehow calculated from the
-            // AST for a function decl.
-            if (ObjCImplementationDecl *IMPD =
-                dyn_cast<ObjCImplementationDecl>(ObjCImpDecl))
-              ClassOfMethodDecl = IMPD->getClassInterface();
-            else if (ObjCCategoryImplDecl* CatImplClass =
-                        dyn_cast<ObjCCategoryImplDecl>(ObjCImpDecl))
-              ClassOfMethodDecl = CatImplClass->getClassInterface();
-          }
-
-          if (IV->getAccessControl() == ObjCIvarDecl::Private) {
-            if (ClassDeclared != IDecl ||
-                ClassOfMethodDecl != ClassDeclared)
-              Diag(MemberLoc, diag::error_private_ivar_access)
-                << IV->getDeclName();
-          } else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
-            // @protected
-            Diag(MemberLoc, diag::error_protected_ivar_access)
-              << IV->getDeclName();
-        }
-
-        if (IsArrow) DefaultLvalueConversion(BaseExpr);
-
-        return Owned(new (Context) ObjCIvarRefExpr(IV, IV->getType(),
-                                                   MemberLoc, BaseExpr,
-                                                   IsArrow));
-      }
-      return ExprError(Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
-                         << IDecl->getDeclName() << MemberName
-                         << BaseExpr->getSourceRange());
-    }
-  }
-  // Handle properties on 'id' and qualified "id".
-  if (!IsArrow && (BaseType->isObjCIdType() ||
-                   BaseType->isObjCQualifiedIdType())) {
-    // This actually uses the base as an r-value.
-    DefaultLvalueConversion(BaseExpr);
-    assert(Context.hasSameUnqualifiedType(BaseType, BaseExpr->getType()));
-
-    const ObjCObjectPointerType *QIdTy = BaseType->getAs<ObjCObjectPointerType>();
-    IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
-
-    // Check protocols on qualified interfaces.
-    Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
-    if (Decl *PMDecl = FindGetterSetterNameDecl(QIdTy, Member, Sel, 
-                                                Context)) {
-      if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(PMDecl)) {
-        // Check the use of this declaration
-        if (DiagnoseUseOfDecl(PD, MemberLoc))
-          return ExprError();
-
-        return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
-                                                       VK_LValue, OK_ObjCProperty,
-                                                       MemberLoc, 
-                                                       BaseExpr));
-      }
-      if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(PMDecl)) {
-        // Check the use of this method.
-        if (DiagnoseUseOfDecl(OMD, MemberLoc))
-          return ExprError();
-        Selector SetterSel =
-          SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                             PP.getSelectorTable(), Member);
-        ObjCMethodDecl *SMD = 0;
-        if (Decl *SDecl = FindGetterSetterNameDecl(QIdTy, /*Property id*/0, 
-                                                   SetterSel, Context))
-          SMD = dyn_cast<ObjCMethodDecl>(SDecl);
-        QualType PType = OMD->getSendResultType();
-
-        ExprValueKind VK = VK_LValue;
-        if (!getLangOptions().CPlusPlus &&
-            IsCForbiddenLValueType(Context, PType))
-          VK = VK_RValue;
-        ExprObjectKind OK = (VK == VK_RValue ? OK_Ordinary : OK_ObjCProperty);
-
-        return Owned(new (Context) ObjCPropertyRefExpr(OMD, SMD, PType, VK, OK,
-                                                       MemberLoc, BaseExpr));
-      }
+                         << MemberName << BaseType);
     }
 
-    return ExprError(Diag(MemberLoc, diag::err_property_not_found)
-                       << MemberName << BaseType);
+    // Normal property access.
+    return HandleExprPropertyRefExpr(OPT, BaseExpr, MemberName, MemberLoc,
+                                     SourceLocation(), QualType(), false);
   }
-
-  // Handle Objective-C property access, which is "Obj.property" where Obj is a
-  // pointer to a (potentially qualified) interface type.
-  if (!IsArrow)
-    if (const ObjCObjectPointerType *OPT =
-          BaseType->getAsObjCInterfacePointerType()) {
-      // This actually uses the base as an r-value.
-      DefaultLvalueConversion(BaseExpr);      
-      return HandleExprPropertyRefExpr(OPT, BaseExpr, MemberName, MemberLoc,
-                                       SourceLocation(), QualType(), false);
-    }
-
-  // Handle the following exceptional case (*Obj).isa.
-  if (!IsArrow &&
-      BaseType->isObjCObjectType() &&
-      BaseType->getAs<ObjCObjectType>()->isObjCId() &&
-      MemberName.getAsIdentifierInfo()->isStr("isa"))
-    return Owned(new (Context) ObjCIsaExpr(BaseExpr, false, MemberLoc,
-                                           Context.getObjCClassType()));
 
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType()) {
@@ -3806,6 +3773,93 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
 
     return Owned(new (Context) ExtVectorElementExpr(ret, VK, BaseExpr,
                                                     *Member, MemberLoc));
+  }
+
+  // Adjust builtin-sel to the appropriate redefinition type if that's
+  // not just a pointer to builtin-sel again.
+  if (IsArrow &&
+      BaseType->isSpecificBuiltinType(BuiltinType::ObjCSel) &&
+      !Context.ObjCSelRedefinitionType->isObjCSelType()) {
+    ImpCastExprToType(BaseExpr, Context.ObjCSelRedefinitionType, CK_BitCast);
+    return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+                            ObjCImpDecl, HasTemplateArgs);
+  }
+
+  // Failure cases.
+ fail:
+
+  // There's a possible road to recovery for function types.
+  const FunctionType *Fun = 0;
+
+  if (const PointerType *Ptr = BaseType->getAs<PointerType>()) {
+    if ((Fun = Ptr->getPointeeType()->getAs<FunctionType>())) {
+      // fall out, handled below.
+
+    // Recover from dot accesses to pointers, e.g.:
+    //   type *foo;
+    //   foo.bar
+    // This is actually well-formed in two cases:
+    //   - 'type' is an Objective C type
+    //   - 'bar' is a pseudo-destructor name which happens to refer to
+    //     the appropriate pointer type
+    } else if (Ptr->getPointeeType()->isRecordType() &&
+               MemberName.getNameKind() != DeclarationName::CXXDestructorName) {
+      Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
+        << BaseType << int(IsArrow) << BaseExpr->getSourceRange()
+        << FixItHint::CreateReplacement(OpLoc, "->");
+
+      // Recurse as an -> access.
+      IsArrow = true;
+      return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+                              ObjCImpDecl, HasTemplateArgs);
+    }
+  } else {
+    Fun = BaseType->getAs<FunctionType>();
+  }
+
+  // If the user is trying to apply -> or . to a function pointer
+  // type, it's probably because they forgot parentheses to call that
+  // function. Suggest the addition of those parentheses, build the
+  // call, and continue on.
+  if (Fun || BaseType == Context.OverloadTy) {
+    bool TryCall;
+    if (BaseType == Context.OverloadTy) {
+      TryCall = true;
+    } else {
+      if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Fun)) {
+        TryCall = (FPT->getNumArgs() == 0);
+      } else {
+        TryCall = true;
+      }
+
+      if (TryCall) {
+        QualType ResultTy = Fun->getResultType();
+        TryCall = (!IsArrow && ResultTy->isRecordType()) ||
+                  (IsArrow && ResultTy->isPointerType() &&
+                   ResultTy->getAs<PointerType>()->getPointeeType()->isRecordType());
+      }
+    }
+
+
+    if (TryCall) {
+      SourceLocation Loc = PP.getLocForEndOfToken(BaseExpr->getLocEnd());
+      Diag(BaseExpr->getExprLoc(), diag::err_member_reference_needs_call)
+        << QualType(Fun, 0)
+        << FixItHint::CreateInsertion(Loc, "()");
+
+      ExprResult NewBase
+        = ActOnCallExpr(0, BaseExpr, Loc, MultiExprArg(*this, 0, 0), Loc);
+      if (NewBase.isInvalid())
+        return ExprError();
+      BaseExpr = NewBase.takeAs<Expr>();
+
+
+      DefaultFunctionArrayConversion(BaseExpr);
+      BaseType = BaseExpr->getType();
+
+      return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
+                              ObjCImpDecl, HasTemplateArgs);
+    }
   }
 
   Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union)
