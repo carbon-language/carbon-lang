@@ -72,7 +72,7 @@ class AbbreviationsTestCase(TestBase):
     def running_abbreviations (self):
         exe = os.path.join (os.getcwd(), "a.out")
         self.expect("fil " + exe,
-                    patterns = [ "Current executable set to .*a.out.*(x86_64)" ])
+                    patterns = [ "Current executable set to .*a.out.*" ])
 
         self.expect("regex product",
                     substrs = [ "breakpoint set --name 'product'",
@@ -121,11 +121,11 @@ class AbbreviationsTestCase(TestBase):
 
         self.expect("d -f",
                     startstr = "a.out`sum(int, int):",
-                    substrs = [' pushq ',
-                               ' movq ',
+                    substrs = [' push',
+                               ' mov',
                                ' addl ',
-                               'leave',
-                               'ret'])
+                               'ret'],
+                    patterns = ['(leave|popq|popl)'])                               
 
         self.expect("i d l main.cpp",
                     patterns = ["Line table for .*main.cpp in `a.out"])
