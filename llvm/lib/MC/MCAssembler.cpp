@@ -248,14 +248,18 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
   if (IsResolved)
     IsResolved = Writer.IsFixupFullyResolved(*this, Target, IsPCRel, DF);
 
+  bool ShouldAlignPC = Emitter.getFixupKindInfo(Fixup.getKind()).Flags &
+                         MCFixupKindInfo::FKF_IsAlignedDownTo32Bits;
+  assert((ShouldAlignPC ? IsPCRel : true) &&
+    "FKF_IsAlignedDownTo32Bits is only allowed on PC-relative fixups!");
+
   if (IsPCRel) {
-    bool ShouldAlignPC = Emitter.getFixupKindInfo(
-                        Fixup.getKind()).Flags & MCFixupKindInfo::FKF_IsAligned;
-    // PC should be aligned to a 4-byte value.
-    if (ShouldAlignPC)
-      Value -= Layout.getFragmentOffset(DF) + (Fixup.getOffset() & ~0x3);
-    else
-      Value -= Layout.getFragmentOffset(DF) + Fixup.getOffset();
+    uint32_t Offset = Fixup.getOffset();
+    
+    // A number of ARM fixups in Thumb mode require that the effective PC
+    // address be determined as the 32-bit aligned version of the actual offset.
+    if (ShouldAlignPC) Offset &= 0x3;
+    Value -= Layout.getFragmentOffset(DF) + Offset;
   }
 
   // ARM fixups based from a thumb function address need to have the low
