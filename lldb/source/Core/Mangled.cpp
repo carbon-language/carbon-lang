@@ -181,13 +181,13 @@ Mangled::GetDemangledName () const
                     g_mangled_to_demangled.insert (std::make_pair (mangled, m_demangled.GetCString()));
                     free (demangled_name);
                 }
-                else
-                {
-                    // Set the demangled string to the empty string to indicate we
-                    // tried to parse it once and failed.
-                    m_demangled.SetCString("");
-                }
             }
+        }
+        if (!m_demangled)
+        {
+            // Set the demangled string to the empty string to indicate we
+            // tried to parse it once and failed.
+            m_demangled.SetCString("");
         }
     }
 
