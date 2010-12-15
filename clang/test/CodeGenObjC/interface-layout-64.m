@@ -5,8 +5,8 @@
 // RUN: grep '@"OBJC_IVAR_$_I3._iv3" = global i64 12, section "__DATA, __objc_const", align 8' %t
 // RUN: grep '@"OBJC_IVAR_$_I4._iv4" = global i64 13, section "__DATA, __objc_const", align 8' %t
 // RUN: grep '@"OBJC_IVAR_$_I5._iv5" = global i64 14, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I5._iv6_synth" = global i64 16, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I5._iv7_synth" = global i64 20, section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I5._iv6_synth" = hidden global i64 16, section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I5._iv7_synth" = hidden global i64 20, section "__DATA, __objc_const", align 8' %t
 // RUN: grep '@"OBJC_IVAR_$_I6.iv0" = global i64 0, section "__DATA, __objc_const", align 8' %t
 // RUN: grep '@"OBJC_IVAR_$_I8.b" = global i64 8, section "__DATA, __objc_const", align 8' %t
 // RUN: grep '@"OBJC_IVAR_$_I9.iv0" = global i64 0, section "__DATA, __objc_const", align 8' %t

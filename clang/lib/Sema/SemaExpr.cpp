@@ -1374,7 +1374,7 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
     ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(SemaRef.Context, ClassImpDecl, 
                                               NameLoc,
                                               II, PropType, /*Dinfo=*/0,
-                                              ObjCIvarDecl::Protected,
+                                              ObjCIvarDecl::Private,
                                               (Expr *)0, true);
     ClassImpDecl->addDecl(Ivar);
     IDecl->makeDeclVisibleInContext(Ivar, false);
