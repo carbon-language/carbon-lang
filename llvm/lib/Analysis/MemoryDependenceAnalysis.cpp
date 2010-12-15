@@ -25,6 +25,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/PHITransAddr.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/PredIteratorCache.h"
@@ -338,7 +339,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     // need to continue scanning until the malloc call.
     if (isa<AllocaInst>(Inst) ||
         (isa<CallInst>(Inst) && extractMallocCall(Inst))) {
-      const Value *AccessPtr = MemLoc.Ptr->getUnderlyingObject();
+      const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr);
       
       if (AccessPtr == Inst ||
           AA->alias(Inst, 1, AccessPtr, 1) == AliasAnalysis::MustAlias)

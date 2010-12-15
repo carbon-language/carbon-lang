@@ -16,6 +16,7 @@
 #include "ScheduleDAGInstrs.h"
 #include "llvm/Operator.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -78,12 +79,12 @@ static const Value *getUnderlyingObjectFromInt(const Value *V) {
   } while (1);
 }
 
-/// getUnderlyingObject - This is a wrapper around Value::getUnderlyingObject
+/// getUnderlyingObject - This is a wrapper around GetUnderlyingObject
 /// and adds support for basic ptrtoint+arithmetic+inttoptr sequences.
 static const Value *getUnderlyingObject(const Value *V) {
   // First just call Value::getUnderlyingObject to let it do what it does.
   do {
-    V = V->getUnderlyingObject();
+    V = GetUnderlyingObject(V);
     // If it found an inttoptr, use special code to continue climing.
     if (Operator::getOpcode(V) != Instruction::IntToPtr)
       break;

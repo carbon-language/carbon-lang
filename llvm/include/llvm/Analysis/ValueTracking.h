@@ -121,6 +121,18 @@ namespace llvm {
   /// GetStringLength - If we can compute the length of the string pointed to by
   /// the specified pointer, return 'len+1'.  If we can't, return 0.
   uint64_t GetStringLength(Value *V);
+
+  /// GetUnderlyingObject - This method strips off any GEP address adjustments
+  /// and pointer casts from the specified value, returning the original object
+  /// being addressed.  Note that the returned value has pointer type if the
+  /// specified value does.  If the MaxLookup value is non-zero, it limits the
+  /// number of instructions to be stripped off.
+  Value *GetUnderlyingObject(Value *V, unsigned MaxLookup = 6);
+  static inline const Value *
+  GetUnderlyingObject(const Value *V, unsigned MaxLookup = 6) {
+    return GetUnderlyingObject(const_cast<Value *>(V), MaxLookup);
+  }
+
 } // end namespace llvm
 
 #endif

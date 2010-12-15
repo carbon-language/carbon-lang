@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "lazy-value-info"
 #include "llvm/Analysis/LazyValueInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -414,8 +415,8 @@ LVILatticeVal LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
       for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();BI != BE;++BI){
         LoadInst *L = dyn_cast<LoadInst>(BI);
         if (L && L->getPointerAddressSpace() == 0 &&
-            L->getPointerOperand()->getUnderlyingObject() ==
-              Val->getUnderlyingObject()) {
+            GetUnderlyingObject(L->getPointerOperand()) ==
+              GetUnderlyingObject(Val)) {
           NotNull = true;
           break;
         }

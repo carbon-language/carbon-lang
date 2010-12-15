@@ -27,6 +27,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Instructions.h"
 #include "llvm/Operator.h"
 #include "llvm/Support/Allocator.h"
@@ -90,8 +91,8 @@ static Value *GetPointerOperand(Value *I) {
 static AliasAnalysis::AliasResult UnderlyingObjectsAlias(AliasAnalysis *AA,
                                                          const Value *A,
                                                          const Value *B) {
-  const Value *aObj = A->getUnderlyingObject();
-  const Value *bObj = B->getUnderlyingObject();
+  const Value *aObj = GetUnderlyingObject(A);
+  const Value *bObj = GetUnderlyingObject(B);
   return AA->alias(aObj, AA->getTypeStoreSize(aObj->getType()),
                    bObj, AA->getTypeStoreSize(bObj->getType()));
 }

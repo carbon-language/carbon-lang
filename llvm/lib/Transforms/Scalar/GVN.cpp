@@ -1076,7 +1076,7 @@ static int AnalyzeLoadFromClobberingMemInst(const Type *LoadTy, Value *LoadPtr,
   Constant *Src = dyn_cast<Constant>(MTI->getSource());
   if (Src == 0) return -1;
   
-  GlobalVariable *GV = dyn_cast<GlobalVariable>(Src->getUnderlyingObject());
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(GetUnderlyingObject(Src));
   if (GV == 0 || !GV->isConstant()) return -1;
   
   // See if the access is within the bounds of the transfer.

@@ -285,16 +285,6 @@ public:
     return const_cast<Value*>(this)->stripPointerCasts();
   }
 
-  /// getUnderlyingObject - This method strips off any GEP address adjustments
-  /// and pointer casts from the specified value, returning the original object
-  /// being addressed.  Note that the returned value has pointer type if the
-  /// specified value does.  If the MaxLookup value is non-zero, it limits the
-  /// number of instructions to be stripped off.
-  Value *getUnderlyingObject(unsigned MaxLookup = 6);
-  const Value *getUnderlyingObject(unsigned MaxLookup = 6) const {
-    return const_cast<Value*>(this)->getUnderlyingObject(MaxLookup);
-  }
-
   /// isDereferenceablePointer - Test if this value is always a pointer to
   /// allocated and suitably aligned memory for a simple load or store.
   bool isDereferenceablePointer() const;

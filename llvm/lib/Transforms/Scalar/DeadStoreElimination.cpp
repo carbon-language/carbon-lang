@@ -324,7 +324,7 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
   // other store to the same object.
   const TargetData &TD = *AA.getTargetData();
   
-  const Value *UO1 = P1->getUnderlyingObject(), *UO2 = P2->getUnderlyingObject();
+  const Value *UO1 = GetUnderlyingObject(P1), *UO2 = GetUnderlyingObject(P2);
   
   // If we can't resolve the same pointers to the same object, then we can't
   // analyze them at all.
@@ -542,7 +542,7 @@ bool DSE::HandleFree(CallInst *F) {
       return false;
   
     Value *DepPointer =
-      getStoredPointerOperand(Dependency)->getUnderlyingObject();
+      GetUnderlyingObject(getStoredPointerOperand(Dependency));
 
     // Check for aliasing.
     if (!AA->isMustAlias(F->getArgOperand(0), DepPointer))
@@ -596,7 +596,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     // If we find a store, check to see if it points into a dead stack value.
     if (hasMemoryWrite(BBI) && isRemovable(BBI)) {
       // See through pointer-to-pointer bitcasts
-      Value *Pointer = getStoredPointerOperand(BBI)->getUnderlyingObject();
+      Value *Pointer = GetUnderlyingObject(getStoredPointerOperand(BBI));
 
       // Stores to stack values are valid candidates for removal.
       if (DeadStackObjects.count(Pointer)) {
@@ -703,7 +703,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 /// because the location is being loaded.
 void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
                                 SmallPtrSet<Value*, 16> &DeadStackObjects) {
-  const Value *UnderlyingPointer = LoadedLoc.Ptr->getUnderlyingObject();
+  const Value *UnderlyingPointer = GetUnderlyingObject(LoadedLoc.Ptr);
 
   // A constant can't be in the dead pointer set.
   if (isa<Constant>(UnderlyingPointer))

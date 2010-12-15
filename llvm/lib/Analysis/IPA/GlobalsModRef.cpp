@@ -24,6 +24,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -324,7 +325,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
         continue;
 
       // Check the value being stored.
-      Value *Ptr = SI->getOperand(0)->getUnderlyingObject();
+      Value *Ptr = GetUnderlyingObject(SI->getOperand(0));
 
       if (isMalloc(Ptr)) {
         // Okay, easy case.
@@ -489,8 +490,8 @@ AliasAnalysis::AliasResult
 GlobalsModRef::alias(const Location &LocA,
                      const Location &LocB) {
   // Get the base object these pointers point to.
-  const Value *UV1 = LocA.Ptr->getUnderlyingObject();
-  const Value *UV2 = LocB.Ptr->getUnderlyingObject();
+  const Value *UV1 = GetUnderlyingObject(LocA.Ptr);
+  const Value *UV2 = GetUnderlyingObject(LocB.Ptr);
 
   // If either of the underlying values is a global, they may be non-addr-taken
   // globals, which we can answer queries about.
@@ -549,7 +550,7 @@ GlobalsModRef::getModRefInfo(ImmutableCallSite CS,
   // If we are asking for mod/ref info of a direct call with a pointer to a
   // global we are tracking, return information if we have it.
   if (const GlobalValue *GV =
-        dyn_cast<GlobalValue>(Loc.Ptr->getUnderlyingObject()))
+        dyn_cast<GlobalValue>(GetUnderlyingObject(Loc.Ptr)))
     if (GV->hasLocalLinkage())
       if (const Function *F = CS.getCalledFunction())
         if (NonAddressTakenGlobals.count(GV))
