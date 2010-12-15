@@ -908,7 +908,7 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{5-4}   = addr{1-0}; // imm
   }
 
-  def pci : tPseudoInst<(outs GPR:$Rt), (ins i32imm:$addr), Size4Bytes, iis,
+  def pci : t2PseudoInst<(outs GPR:$Rt), (ins i32imm:$addr), Size4Bytes, iis,
                       [(set GPR:$Rt, (opnode (ARMWrapper tconstpool:$addr)))]>;
 }
 
@@ -2985,17 +2985,17 @@ def t2B   : T2XI<(outs), (ins uncondbrtarget:$target), IIC_Br,
 }
 
 let isNotDuplicable = 1, isIndirectBranch = 1 in {
-def t2BR_JT : tPseudoInst<(outs),
+def t2BR_JT : t2PseudoInst<(outs),
           (ins GPR:$target, GPR:$index, i32imm:$jt, i32imm:$id),
            SizeSpecial, IIC_Br,
           [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt, imm:$id)]>;
 
 // FIXME: Add a non-pc based case that can be predicated.
-def t2TBB_JT : tPseudoInst<(outs),
+def t2TBB_JT : t2PseudoInst<(outs),
         (ins GPR:$index, i32imm:$jt, i32imm:$id),
          SizeSpecial, IIC_Br, []>;
 
-def t2TBH_JT : tPseudoInst<(outs),
+def t2TBH_JT : t2PseudoInst<(outs),
         (ins GPR:$index, i32imm:$jt, i32imm:$id),
          SizeSpecial, IIC_Br, []>;
 
