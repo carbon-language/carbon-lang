@@ -141,6 +141,15 @@ public:
   /// separate register, or NULL.
   const MachineLoop *getBestSplitLoop();
 
+  /// isBypassLoop - Return true if curli is live through Loop and has no uses
+  /// inside the loop. Bypass loops are candidates for splitting because it can
+  /// prevent interference inside the loop.
+  bool isBypassLoop(const MachineLoop *Loop);
+
+  /// getBypassLoops - Get all the maximal bypass loops. These are the bypass
+  /// loops whose parent is not a bypass loop.
+  void getBypassLoops(LoopPtrSet&);
+
   /// getMultiUseBlocks - Add basic blocks to Blocks that may benefit from
   /// having curli split to a new live interval. Return true if Blocks can be
   /// passed to SplitEditor::splitSingleBlocks.

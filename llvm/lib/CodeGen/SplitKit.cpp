@@ -325,6 +325,36 @@ const MachineLoop *SplitAnalysis::getBestSplitLoop() {
   return Best;
 }
 
+/// isBypassLoop - Return true if curli is live through Loop and has no uses
+/// inside the loop. Bypass loops are candidates for splitting because it can
+/// prevent interference inside the loop.
+bool SplitAnalysis::isBypassLoop(const MachineLoop *Loop) {
+  // If curli is live into the loop header and there are no uses in the loop, it
+  // must be live in the entire loop and live on at least one exiting edge.
+  return !usingLoops_.count(Loop) &&
+         lis_.isLiveInToMBB(*curli_, Loop->getHeader());
+}
+
+/// getBypassLoops - Get all the maximal bypass loops. These are the bypass
+/// loops whose parent is not a bypass loop.
+void SplitAnalysis::getBypassLoops(LoopPtrSet &BypassLoops) {
+  SmallVector<MachineLoop*, 8> Todo(loops_.begin(), loops_.end());
+  while (!Todo.empty) {
+    MachineLoop *Loop = Todo.pop_back_val();
+    if (!usingLoops_.count(Loop)) {
+      // This is either a bypass loop or completely irrelevant.
+      if (lis_.isLiveInToMBB(*curli_, Loop->getHeader()))
+        BypassLoops.insert(Loop);
+      // Either way, skip the child loops.
+      continue;
+    }
+
+    // The child loops may be bypass loops.
+    Todo.append(Loop->begin(), Loop->end());
+  }
+}
+
+
 //===----------------------------------------------------------------------===//
 //                               LiveIntervalMap
 //===----------------------------------------------------------------------===//
