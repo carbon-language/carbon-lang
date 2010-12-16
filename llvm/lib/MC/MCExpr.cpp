@@ -290,6 +290,20 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
   return true;
 }
 
+/// \brief Evaluate the result of an add between (conceptually) two MCValues.
+///
+/// This routine conceptually attempts to construct an MCValue:
+///   Result = (Result_A - Result_B + Result_Cst)
+/// from two MCValue's LHS and RHS where
+///   Result = LHS + RHS
+/// and
+///   Result = (LHS_A - LHS_B + LHS_Cst) + (RHS_A - RHS_B + RHS_Cst).
+///
+/// This routine attempts to aggresively fold the operands such that the result
+/// is representable in an MCValue, but may not always succeed.
+///
+/// \returns True on success, false if the result is not representable in an
+/// MCValue.
 static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
                                 const MCAsmLayout *Layout,
                                 const SectionAddrMap *Addrs,
