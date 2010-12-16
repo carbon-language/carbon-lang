@@ -1336,9 +1336,33 @@ public:
                 size_t size,
                 Error &error);
 
+    //------------------------------------------------------------------
+    /// Reads an unsigned integer of the specified byte size from 
+    /// process memory.
+    ///
+    /// @param[in] load_addr
+    ///     A load address of the integer to read.
+    ///
+    /// @param[in] byte_size
+    ///     The size in byte of the integer to read.
+    ///
+    /// @param[out] error
+    ///     An error that indicates the success or failure of this
+    ///     operation. If error indicates success (error.Success()), 
+    ///     then the value returned can be trusted, otherwise zero
+    ///     will be returned.
+    ///
+    /// @return
+    ///     The unsigned integer that was read from the process memory
+    ///     space. If the integer was smaller than a uint64_t, any
+    ///     unused upper bytes will be zero filled. If the process
+    ///     byte order differs from the host byte order, the integer
+    ///     value will be appropriately byte swapped into host byte
+    ///     order.
+    //------------------------------------------------------------------
     uint64_t
-    ReadUnsignedInteger (lldb::addr_t vm_addr, 
-                         size_t integer_byte_size,
+    ReadUnsignedInteger (lldb::addr_t load_addr, 
+                         size_t byte_size,
                          Error &error);
     //------------------------------------------------------------------
     /// Actually do the writing of memory to a process.
