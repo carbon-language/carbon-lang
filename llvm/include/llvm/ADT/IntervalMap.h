@@ -2036,11 +2036,11 @@ class IntervalMapOverlaps {
     for (;;) {
       // Make a.end > b.start.
       posA.advanceTo(posB.start());
-      if (!posA.valid() || !Traits::stopLess(posB.end(), posA.start()))
+      if (!posA.valid() || !Traits::stopLess(posB.stop(), posA.start()))
         return;
       // Make b.end > a.start.
       posB.advanceTo(posA.start());
-      if (!posB.valid() || !Traits::stopLess(posA.end(), posB.start()))
+      if (!posB.valid() || !Traits::stopLess(posA.stop(), posB.start()))
         return;
     }
   }
@@ -2068,11 +2068,11 @@ public:
   /// skipA - Move to the next overlap that doesn't involve a().
   void skipA() {
     ++posA;
-    if (!posA.valid() || !Traits::stopLess(posB.end(), posA.start()))
+    if (!posA.valid() || !Traits::stopLess(posB.stop(), posA.start()))
       return;
     // Second half-loop of advance().
     posB.advanceTo(posA.start());
-    if (!posB.valid() || !Traits::stopLess(posA.end(), posB.start()))
+    if (!posB.valid() || !Traits::stopLess(posA.stop(), posB.start()))
       return ;
     advance();
   }
@@ -2080,7 +2080,7 @@ public:
   /// skipB - Move to the next overlap that doesn't involve b().
   void skipB() {
     ++posB;
-    if (!posB.valid() || !Traits::stopLess(posA.end(), posB.start()))
+    if (!posB.valid() || !Traits::stopLess(posA.stop(), posB.start()))
         return;
     advance();
   }
@@ -2088,7 +2088,7 @@ public:
   /// Preincrement - Move to the next overlap.
   IntervalMapOverlaps &operator++() {
     // Bump the iterator that ends first. The other one may have more overlaps.
-    if (Traits::startLess(posB.end(), posA.end()))
+    if (Traits::startLess(posB.stop(), posA.stop()))
       skipB();
     else
       skipA();

@@ -550,4 +550,19 @@ TEST(IntervalMapTest, RandomCoalescing) {
 
 }
 
+TEST(IntervalMapOverlapsTest, EmptyMaps) {
+  typedef IntervalMapOverlaps<UUMap,UUMap> UUOverlaps;
+  UUMap::Allocator allocator;
+  UUMap mapA(allocator);
+  UUMap mapB(allocator);
+
+  // empty, empty.
+  EXPECT_FALSE(UUOverlaps(mapA, mapB).valid());
+
+  mapA.insert(1, 2, 3);
+  // full, empty
+  EXPECT_FALSE(UUOverlaps(mapA, mapB).valid());
+  // empty, full
+  EXPECT_FALSE(UUOverlaps(mapB, mapA).valid());
+}
 } // namespace
