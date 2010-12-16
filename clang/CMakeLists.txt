@@ -151,7 +151,7 @@ endif ()
 add_subdirectory(include)
 add_subdirectory(lib)
 add_subdirectory(tools)
+add_subdirectory(runtime)
 
 # TODO: docs.
 add_subdirectory(test)
-
