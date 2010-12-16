@@ -14,7 +14,7 @@ blacklist = {'IntegerTypesExprTestCase': 'This test class crashed',
 """
 
 blacklist = {'BasicExprCommandsTestCase.test_evaluate_expression_python': 'Crashed while running the entire test suite with CC=clang'
-             # To reproduce the crash: CC=clang ./dotest.py -v -w 2> ~/Developer/Log/lldbtest.log
+             # To reproduce the crash: CC=clang ./dotest.py -v -w -# 5 -f BasicExprCommandsTestCase.test_evaluate_expression_python
              # The clang version used is clang-126.
              # Two radars filed for the crashes: rdar://problem/8769826 and rdar://problem/8773329.
              # To skip this test case: CC=clang ./dotest.py -b blacklist.py -v -w 2> ~/Developer/Log/lldbtest.log
