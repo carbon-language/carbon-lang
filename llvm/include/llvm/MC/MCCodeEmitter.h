@@ -36,10 +36,6 @@ struct MCFixupKindInfo {
   const char *Name;
 
   /// The bit offset to write the relocation into.
-  //
-  // FIXME: These two fields are under-specified and not general enough, but it
-  // covers many things. It's enough to let the AsmStreamer pretty-print
-  // the encoding.
   unsigned TargetOffset;
 
   /// The number of bits written by this fixup. The bits are assumed to be
