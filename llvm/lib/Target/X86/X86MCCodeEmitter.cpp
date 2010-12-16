@@ -996,7 +996,10 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                     Fixups);
     } else {
       unsigned FixupKind;
-      if (MI.getOpcode() == X86::MOV64ri32 || MI.getOpcode() == X86::MOV64mi32)
+      // FIXME: Is there a better way to know that we need a signed relocation?
+      if (MI.getOpcode() == X86::MOV64ri32 ||
+          MI.getOpcode() == X86::MOV64mi32 ||
+          MI.getOpcode() == X86::PUSH64i32)
         FixupKind = X86::reloc_signed_4byte;
       else
         FixupKind = getImmFixupKind(TSFlags);
