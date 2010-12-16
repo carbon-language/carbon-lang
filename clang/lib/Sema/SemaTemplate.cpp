@@ -626,16 +626,10 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                            PrevDecl);
   }
 
-  if (DiagnoseUnexpandedParameterPack(D.getIdentifierLoc(), TInfo, 
-                                      UPPC_NonTypeTemplateParameterType)) {
+  T = CheckNonTypeTemplateParameterType(T, D.getIdentifierLoc());
+  if (T.isNull()) {
     T = Context.IntTy; // Recover with an 'int' type.
     Invalid = true;
-  } else {  
-    T = CheckNonTypeTemplateParameterType(T, D.getIdentifierLoc());
-    if (T.isNull()) {
-      T = Context.IntTy; // Recover with an 'int' type.
-      Invalid = true;
-    }
   }
   
   NonTypeTemplateParmDecl *Param
@@ -1049,6 +1043,30 @@ static bool DiagnoseDefaultTemplateArgument(Sema &S,
   return false;
 }
 
+/// \brief Check for unexpanded parameter packs within the template parameters
+/// of a template template parameter, recursively.
+bool DiagnoseUnexpandedParameterPacks(Sema &S, TemplateTemplateParmDecl *TTP){
+  TemplateParameterList *Params = TTP->getTemplateParameters();
+  for (unsigned I = 0, N = Params->size(); I != N; ++I) {
+    NamedDecl *P = Params->getParam(I);
+    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(P)) {
+      if (S.DiagnoseUnexpandedParameterPack(NTTP->getLocation(), 
+                                            NTTP->getTypeSourceInfo(),
+                                      Sema::UPPC_NonTypeTemplateParameterType))
+        return true;
+      
+      continue;
+    }
+    
+    if (TemplateTemplateParmDecl *InnerTTP 
+                                        = dyn_cast<TemplateTemplateParmDecl>(P))
+      if (DiagnoseUnexpandedParameterPacks(S, InnerTTP))
+        return true;
+  }
+    
+  return false;
+}
+
 /// \brief Checks the validity of a template parameter list, possibly
 /// considering the template parameter list from a previous
 /// declaration.
@@ -1153,6 +1171,14 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         MissingDefaultArg = true;
     } else if (NonTypeTemplateParmDecl *NewNonTypeParm
                = dyn_cast<NonTypeTemplateParmDecl>(*NewParam)) {
+      // Check for unexpanded parameter packs.
+      if (DiagnoseUnexpandedParameterPack(NewNonTypeParm->getLocation(),
+                                          NewNonTypeParm->getTypeSourceInfo(), 
+                                          UPPC_NonTypeTemplateParameterType)) {
+        Invalid = true;
+        continue;
+      }
+
       // Check the presence of a default argument here.
       if (NewNonTypeParm->hasDefaultArgument() && 
           DiagnoseDefaultTemplateArgument(*this, TPC, 
@@ -1191,6 +1217,13 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       // Check the presence of a default argument here.
       TemplateTemplateParmDecl *NewTemplateParm
         = cast<TemplateTemplateParmDecl>(*NewParam);
+      
+      // Check for unexpanded parameter packs, recursively.
+      if (DiagnoseUnexpandedParameterPacks(*this, NewTemplateParm)) {
+        Invalid = true;
+        continue;
+      }
+      
       if (NewTemplateParm->hasDefaultArgument() && 
           DiagnoseDefaultTemplateArgument(*this, TPC, 
                                           NewTemplateParm->getLocation(), 
