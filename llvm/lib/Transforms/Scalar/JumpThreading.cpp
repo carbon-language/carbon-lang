@@ -984,7 +984,7 @@ FindMostPopularDest(BasicBlock *BB,
     }
   }
 
-  // Okay, now we know the most popular destination.  If there is more than
+  // Okay, now we know the most popular destination.  If there is more than one
   // destination, we need to determine one.  This is arbitrary, but we need
   // to make a deterministic decision.  Pick the first one that appears in the
   // successor list.
@@ -1064,7 +1064,7 @@ bool JumpThreading::ProcessThreadableEdges(Value *Cond, BasicBlock *BB,
     }
 
     // If we have exactly one destination, remember it for efficiency below.
-    if (i == 0)
+    if (PredToDestList.empty())
       OnlyDest = DestBB;
     else if (OnlyDest != DestBB)
       OnlyDest = MultipleDestSentinel;
