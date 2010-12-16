@@ -10,6 +10,7 @@
 #include "llvm/Target/TargetAsmBackend.h"
 #include "PPC.h"
 #include "PPCFixupKinds.h"
+#include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCObjectFormat.h"
 #include "llvm/MC/MCObjectWriter.h"

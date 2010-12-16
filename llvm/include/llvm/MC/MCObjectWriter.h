@@ -179,9 +179,6 @@ public:
   static void EncodeULEB128(uint64_t Value, raw_ostream &OS);
 };
 
-MCObjectWriter *createMachObjectWriter(raw_ostream &OS, bool is64Bit,
-                                       uint32_t CPUType, uint32_t CPUSubtype,
-                                       bool IsLittleEndian);
 MCObjectWriter *createELFObjectWriter(raw_ostream &OS, bool is64Bit,
                                       Triple::OSType OSType, uint16_t EMachine,
                                       bool IsLittleEndian,
