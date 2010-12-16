@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-experimental-checks -verify %s
-// XFAIL: *
 
 // Trigger a warning if the analyzer reaches this point in the control flow.
 #define WARN ((void)*(char*)0)

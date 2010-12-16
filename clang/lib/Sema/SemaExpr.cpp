@@ -6246,15 +6246,15 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 
   // Shifts don't perform usual arithmetic conversions, they just do integer
   // promotions on each operand. C99 6.5.7p3
-  QualType LHSTy = Context.isPromotableBitField(lex);
-  if (LHSTy.isNull()) {
-    LHSTy = lex->getType();
-    if (LHSTy->isPromotableIntegerType())
-      LHSTy = Context.getPromotedIntegerType(LHSTy);
-  }
-  if (!isCompAssign)
-    ImpCastExprToType(lex, LHSTy, CK_IntegralCast);
 
+  // For the LHS, do usual unary conversions, but then reset them away
+  // if this is a compound assignment.
+  Expr *old_lex = lex;
+  UsualUnaryConversions(lex);
+  QualType LHSTy = lex->getType();
+  if (isCompAssign) lex = old_lex;
+
+  // The RHS is simpler.
   UsualUnaryConversions(rex);
 
   // Sanity-check shift operands
