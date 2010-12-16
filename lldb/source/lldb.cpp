@@ -14,6 +14,8 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
 
 #include "Plugins/Disassembler/llvm/DisassemblerLLVM.h"
 #include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
