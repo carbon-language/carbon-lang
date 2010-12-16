@@ -20,6 +20,10 @@ using namespace llvm;
 
 namespace {
 class PPCMachObjectWriter : public MCMachObjectTargetWriter {
+public:
+  PPCMachObjectWriter(bool Is64Bit, uint32_t CPUType,
+                      uint32_t CPUSubtype)
+    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
 };
 
 class PPCAsmBackend : public TargetAsmBackend {
@@ -95,12 +99,12 @@ namespace {
     
     MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
       bool is64 = getPointerSize() == 8;
-      return createMachObjectWriter(new PPCMachObjectWriter,
-                                    OS, /*Is64Bit=*/is64,
-                                    (is64 ? object::mach::CTM_PowerPC64 :
-                                     object::mach::CTM_PowerPC),
-                                    object::mach::CSPPC_ALL,
-                                    /*IsLittleEndian=*/false);
+      return createMachObjectWriter(new PPCMachObjectWriter(
+                                      /*Is64Bit=*/is64,
+                                      (is64 ? object::mach::CTM_PowerPC64 :
+                                       object::mach::CTM_PowerPC),
+                                      object::mach::CSPPC_ALL),
+                                    OS, /*IsLittleEndian=*/false);
     }
     
     virtual bool doesSectionRequireSymbols(const MCSection &Section) const {

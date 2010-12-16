@@ -29,6 +29,10 @@ using namespace llvm;
 
 namespace {
 class ARMMachObjectWriter : public MCMachObjectTargetWriter {
+public:
+  ARMMachObjectWriter(bool Is64Bit, uint32_t CPUType,
+                      uint32_t CPUSubtype)
+    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
 };
 
 class ARMAsmBackend : public TargetAsmBackend {
@@ -385,10 +389,11 @@ public:
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     // FIXME: Subtarget info should be derived. Force v7 for now.
-    return createMachObjectWriter(new ARMMachObjectWriter,
-                                  OS, /*Is64Bit=*/false,
-                                  object::mach::CTM_ARM,
-                                  object::mach::CSARM_V7,
+    return createMachObjectWriter(new ARMMachObjectWriter(
+                                    /*Is64Bit=*/false,
+                                    object::mach::CTM_ARM,
+                                    object::mach::CSARM_V7),
+                                  OS,
                                   /*IsLittleEndian=*/true);
   }
 

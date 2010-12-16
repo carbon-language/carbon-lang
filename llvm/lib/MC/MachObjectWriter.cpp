@@ -225,18 +225,18 @@ private:
     return OffsetToAlignment(EndAddr, NextSD.getAlignment());
   }
 
-  unsigned Is64Bit : 1;
-
-  uint32_t CPUType;
-  uint32_t CPUSubtype;
-
 public:
   MachObjectWriter(MCMachObjectTargetWriter *MOTW, raw_ostream &_OS,
-                   bool _Is64Bit, uint32_t _CPUType, uint32_t _CPUSubtype,
                    bool _IsLittleEndian)
-    : MCObjectWriter(_OS, _IsLittleEndian), TargetObjectWriter(MOTW),
-      Is64Bit(_Is64Bit), CPUType(_CPUType), CPUSubtype(_CPUSubtype) {
+    : MCObjectWriter(_OS, _IsLittleEndian), TargetObjectWriter(MOTW) {
   }
+
+  /// @name Target Writer Proxy Accessors
+  /// @{
+
+  bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
+
+  /// @}
 
   void WriteHeader(unsigned NumLoadCommands, unsigned LoadCommandsSize,
                    bool SubsectionsViaSymbols) {
@@ -251,19 +251,19 @@ public:
     uint64_t Start = OS.tell();
     (void) Start;
 
-    Write32(Is64Bit ? macho::HM_Object64 : macho::HM_Object32);
+    Write32(is64Bit() ? macho::HM_Object64 : macho::HM_Object32);
 
-    Write32(CPUType);
-    Write32(CPUSubtype);
+    Write32(TargetObjectWriter->getCPUType());
+    Write32(TargetObjectWriter->getCPUSubtype());
 
     Write32(macho::HFT_Object);
     Write32(NumLoadCommands);
     Write32(LoadCommandsSize);
     Write32(Flags);
-    if (Is64Bit)
+    if (is64Bit())
       Write32(0); // reserved
 
-    assert(OS.tell() - Start == Is64Bit ? 
+    assert(OS.tell() - Start == is64Bit() ? 
            macho::Header64Size : macho::Header32Size);
   }
 
@@ -281,15 +281,16 @@ public:
     uint64_t Start = OS.tell();
     (void) Start;
 
-    unsigned SegmentLoadCommandSize = Is64Bit ? macho::SegmentLoadCommand64Size:
+    unsigned SegmentLoadCommandSize =
+      is64Bit() ? macho::SegmentLoadCommand64Size:
       macho::SegmentLoadCommand32Size;
-    Write32(Is64Bit ? macho::LCT_Segment64 : macho::LCT_Segment);
+    Write32(is64Bit() ? macho::LCT_Segment64 : macho::LCT_Segment);
     Write32(SegmentLoadCommandSize +
-            NumSections * (Is64Bit ? macho::Section64Size :
+            NumSections * (is64Bit() ? macho::Section64Size :
                            macho::Section32Size));
 
     WriteBytes("", 16);
-    if (Is64Bit) {
+    if (is64Bit()) {
       Write64(0); // vmaddr
       Write64(VMSize); // vmsize
       Write64(SectionDataStartOffset); // file offset
@@ -328,7 +329,7 @@ public:
     const MCSectionMachO &Section = cast<MCSectionMachO>(SD.getSection());
     WriteBytes(Section.getSectionName(), 16);
     WriteBytes(Section.getSegmentName(), 16);
-    if (Is64Bit) {
+    if (is64Bit()) {
       Write64(getSectionAddress(&SD)); // address
       Write64(SectionSize); // size
     } else {
@@ -348,10 +349,10 @@ public:
     Write32(Flags);
     Write32(IndirectSymBase.lookup(&SD)); // reserved1
     Write32(Section.getStubSize()); // reserved2
-    if (Is64Bit)
+    if (is64Bit())
       Write32(0); // reserved3
 
-    assert(OS.tell() - Start == Is64Bit ? macho::Section64Size :
+    assert(OS.tell() - Start == is64Bit() ? macho::Section64Size :
            macho::Section32Size);
   }
 
@@ -469,7 +470,7 @@ public:
     // The Mach-O streamer uses the lowest 16-bits of the flags for the 'desc'
     // value.
     Write16(Flags);
-    if (Is64Bit)
+    if (is64Bit())
       Write64(Address);
     else
       Write32(Address);
@@ -798,7 +799,7 @@ public:
                             const MCFixup &Fixup, MCValue Target,
                             uint64_t &FixedValue) {
     assert(Target.getSymA()->getKind() == MCSymbolRefExpr::VK_TLVP &&
-           !Is64Bit &&
+           !is64Bit() &&
            "Should only be called with a 32-bit TLVP relocation!");
 
     unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
@@ -840,7 +841,7 @@ public:
   void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, uint64_t &FixedValue) {
-    if (Is64Bit) {
+    if (is64Bit()) {
       RecordX86_64Relocation(Asm, Layout, Fragment, Fixup, Target, FixedValue);
       return;
     }
@@ -1164,7 +1165,7 @@ public:
     // The section data starts after the header, the segment load command (and
     // section headers) and the symbol table.
     unsigned NumLoadCommands = 1;
-    uint64_t LoadCommandsSize = Is64Bit ?
+    uint64_t LoadCommandsSize = is64Bit() ?
       macho::SegmentLoadCommand64Size + NumSections * macho::Section64Size :
       macho::SegmentLoadCommand32Size + NumSections * macho::Section32Size;
 
@@ -1179,7 +1180,7 @@ public:
 
     // Compute the total size of the section data, as well as its file size and
     // vm size.
-    uint64_t SectionDataStart = (Is64Bit ? macho::Header64Size :
+    uint64_t SectionDataStart = (is64Bit() ? macho::Header64Size :
                                  macho::Header32Size) + LoadCommandsSize;
     uint64_t SectionDataSize = 0;
     uint64_t SectionDataFileSize = 0;
@@ -1247,7 +1248,7 @@ public:
 
       // The string table is written after symbol table.
       uint64_t StringTableOffset =
-        SymbolTableOffset + NumSymTabSymbols * (Is64Bit ? macho::Nlist64Size :
+        SymbolTableOffset + NumSymTabSymbols * (is64Bit() ? macho::Nlist64Size :
                                                 macho::Nlist32Size);
       WriteSymtabLoadCommand(SymbolTableOffset, NumSymTabSymbols,
                              StringTableOffset, StringTable.size());
@@ -1327,10 +1328,7 @@ public:
 }
 
 MCObjectWriter *llvm::createMachObjectWriter(MCMachObjectTargetWriter *MOTW,
-                                             raw_ostream &OS, bool is64Bit,
-                                             uint32_t CPUType,
-                                             uint32_t CPUSubtype,
+                                             raw_ostream &OS,
                                              bool IsLittleEndian) {
-  return new MachObjectWriter(MOTW, OS, is64Bit, CPUType, CPUSubtype,
-                              IsLittleEndian);
+  return new MachObjectWriter(MOTW, OS, IsLittleEndian);
 }
