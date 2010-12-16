@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-check-objc-mem -analyzer-check-idempotent-operations -verify %s
+// XFAIL: *
 
 // Basic tests
 

@@ -40,13 +40,6 @@ public:
       default:
         assert(false && "Unsupport statement.");
         return;
-
-      case Stmt::ImplicitCastExprClass:
-      case Stmt::CStyleCastExprClass:
-        static_cast<ImplClass*>(this)->PreVisitCastExpr(C,
-                                               static_cast<const CastExpr*>(S));
-        break;
-
       case Stmt::CompoundAssignOperatorClass:
         static_cast<ImplClass*>(this)->PreVisitBinaryOperator(C,
                                          static_cast<const BinaryOperator*>(S));

@@ -59,11 +59,7 @@ void GRExprEngine::evalArguments(ConstExprIterator AI, ConstExprIterator AE,
         : false;
     }
 
-    if (VisitAsLvalue)
-      VisitLValue(*Item.I, Item.N, Tmp);
-    else
-      Visit(*Item.I, Item.N, Tmp);
-
+    Visit(*Item.I, Item.N, Tmp);
     ++(Item.I);
     for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI != NE; ++NI)
       WorkList.push_back(CallExprWLItem(Item.I, *NI));
@@ -106,7 +102,7 @@ void GRExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
 void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, 
                                          const MemRegion *Dest,
                                          ExplodedNode *Pred,
-                                         ExplodedNodeSet &Dst, bool asLValue) {
+                                         ExplodedNodeSet &Dst) {
   if (!Dest)
     Dest = svalBuilder.getRegionManager().getCXXTempObjectRegion(E,
                                                     Pred->getLocationContext());
@@ -131,7 +127,8 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
   // The callee stack frame context used to create the 'this' parameter region.
   const StackFrameContext *SFC = AMgr.getStackFrame(CD, 
                                                     Pred->getLocationContext(),
-                        E, asLValue, Builder->getBlock(), Builder->getIndex());
+                                                    E, Builder->getBlock(),
+                                                    Builder->getIndex());
 
   const CXXThisRegion *ThisR =getCXXThisRegion(E->getConstructor()->getParent(),
                                                SFC);
@@ -159,7 +156,7 @@ void GRExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
   // Create the context for 'this' region.
   const StackFrameContext *SFC = AMgr.getStackFrame(DD,
                                                     Pred->getLocationContext(),
-                                                 S, false, Builder->getBlock(),
+                                                    S, Builder->getBlock(),
                                                     Builder->getIndex());
 
   const CXXThisRegion *ThisR = getCXXThisRegion(DD->getParent(), SFC);
@@ -193,10 +190,7 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
   Expr *ObjArgExpr = ME->getBase();
   for (ExplodedNodeSet::iterator I = argsEvaluated.begin(), 
                                  E = argsEvaluated.end(); I != E; ++I) {
-    if (ME->isArrow())
       Visit(ObjArgExpr, *I, AllargsEvaluated);
-    else
-      VisitLValue(ObjArgExpr, *I, AllargsEvaluated);
   }
 
   // Now evaluate the call itself.
@@ -211,7 +205,7 @@ void GRExprEngine::VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *C,
   const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(C->getCalleeDecl());
   if (!MD) {
     // If the operator doesn't represent a method call treat as regural call.
-    VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst, false);
+    VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
     return;
   }
 
@@ -245,7 +239,7 @@ void GRExprEngine::evalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
 
   const StackFrameContext *SFC = AMgr.getStackFrame(MD, 
                                                     Pred->getLocationContext(),
-                                                    MCE, false,
+                                                    MCE,
                                                     Builder->getBlock(), 
                                                     Builder->getIndex());
   const CXXThisRegion *ThisR = getCXXThisRegion(MD, SFC);

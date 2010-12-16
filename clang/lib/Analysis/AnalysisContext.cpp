@@ -152,8 +152,7 @@ void LocationContext::ProfileCommon(llvm::FoldingSetNodeID &ID,
 }
 
 void StackFrameContext::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getAnalysisContext(), getParent(), CallSite.getPointer(),
-          CallSite.getInt(), Block, Index);
+  Profile(ID, getAnalysisContext(), getParent(), CallSite, Block, Index);
 }
 
 void ScopeContext::Profile(llvm::FoldingSetNodeID &ID) {
@@ -189,15 +188,15 @@ LocationContextManager::getLocationContext(AnalysisContext *ctx,
 const StackFrameContext*
 LocationContextManager::getStackFrame(AnalysisContext *ctx,
                                       const LocationContext *parent,
-                                      const Stmt *s, bool asLValue,
+                                      const Stmt *s,
                                       const CFGBlock *blk, unsigned idx) {
   llvm::FoldingSetNodeID ID;
-  StackFrameContext::Profile(ID, ctx, parent, s, asLValue, blk, idx);
+  StackFrameContext::Profile(ID, ctx, parent, s, blk, idx);
   void *InsertPos;
   StackFrameContext *L =
    cast_or_null<StackFrameContext>(Contexts.FindNodeOrInsertPos(ID, InsertPos));
   if (!L) {
-    L = new StackFrameContext(ctx, parent, s, asLValue, blk, idx);
+    L = new StackFrameContext(ctx, parent, s, blk, idx);
     Contexts.InsertNode(L, InsertPos);
   }
   return L;

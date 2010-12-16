@@ -16,6 +16,7 @@
 #define LLVM_CLANG_ANALYSIS_ANALYSISCONTEXT_H
 
 #include "clang/AST/Decl.h"
+#include "clang/AST/Expr.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerUnion.h"
@@ -200,7 +201,7 @@ public:
 class StackFrameContext : public LocationContext {
   // The callsite where this stack frame is established. The int bit indicates
   // whether the call expr should return an l-value when it has reference type.
-  llvm::PointerIntPair<const Stmt *, 1> CallSite;
+  const Stmt *CallSite;
 
   // The parent block of the callsite.
   const CFGBlock *Block;
@@ -210,17 +211,21 @@ class StackFrameContext : public LocationContext {
 
   friend class LocationContextManager;
   StackFrameContext(AnalysisContext *ctx, const LocationContext *parent,
-                    const Stmt *s, bool asLValue, const CFGBlock *blk, 
+                    const Stmt *s, const CFGBlock *blk, 
                     unsigned idx)
-    : LocationContext(StackFrame, ctx, parent), CallSite(s, asLValue), 
+    : LocationContext(StackFrame, ctx, parent), CallSite(s),
       Block(blk), Index(idx) {}
 
 public:
   ~StackFrameContext() {}
 
-  const Stmt *getCallSite() const { return CallSite.getPointer(); }
+  const Stmt *getCallSite() const { return CallSite; }
 
-  bool evalAsLValue() const { return CallSite.getInt(); }
+  bool evalAsLValue() const {
+    if (const Expr *CE = dyn_cast<Expr>(CallSite))
+      return CE->isLValue();
+    return false;
+  }
 
   const CFGBlock *getCallSiteBlock() const { return Block; }
 
@@ -230,9 +235,8 @@ public:
 
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
                       const LocationContext *parent, const Stmt *s,
-                      bool asLValue, const CFGBlock *blk, unsigned idx) {
+                      const CFGBlock *blk, unsigned idx) {
     ProfileCommon(ID, StackFrame, ctx, parent, s);
-    ID.AddBoolean(asLValue);
     ID.AddPointer(blk);
     ID.AddInteger(idx);
   }
@@ -300,7 +304,7 @@ public:
 
   const StackFrameContext *getStackFrame(AnalysisContext *ctx,
                                          const LocationContext *parent,
-                                         const Stmt *s, bool asLValue,
+                                         const Stmt *s,
                                          const CFGBlock *blk, unsigned idx);
 
   const ScopeContext *getScope(AnalysisContext *ctx,

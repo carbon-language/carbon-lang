@@ -758,7 +758,7 @@ void GRCallEnterNodeBuilder::GenerateNode(const GRState *state) {
     const StackFrameContext *OldLocCtx = CalleeCtx;
     const StackFrameContext *NewLocCtx = AMgr.getStackFrame(NewAnaCtx, 
                                                OldLocCtx->getParent(),
-                                               OldLocCtx->getCallSite(), false,
+                                               OldLocCtx->getCallSite(),
                                                OldLocCtx->getCallSiteBlock(), 
                                                OldLocCtx->getIndex());
 

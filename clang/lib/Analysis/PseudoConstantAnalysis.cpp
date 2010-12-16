@@ -86,6 +86,9 @@ void PseudoConstantAnalysis::RunAnalysis() {
     const Stmt* Head = WorkList.front();
     WorkList.pop_front();
 
+    if (const Expr *Ex = dyn_cast<Expr>(Head))
+      Head = Ex->IgnoreParenCasts();
+
     switch (Head->getStmtClass()) {
     // Case 1: Assignment operators modifying VarDecls
     case Stmt::BinaryOperatorClass: {
@@ -225,8 +228,8 @@ void PseudoConstantAnalysis::RunAnalysis() {
       continue;
     }
 
-      default:
-        break;
+    default:
+      break;
     } // switch (head->getStmtClass())
 
     // Add all substatements to the worklist

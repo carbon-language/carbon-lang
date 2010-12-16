@@ -42,6 +42,9 @@ top:
   else
     return SourceLocation();
 
+  if (const Expr *Ex = dyn_cast<Expr>(S))
+    S = Ex->IgnoreParenImpCasts();
+
   switch (S->getStmtClass()) {
     case Expr::BinaryOperatorClass: {
       const BinaryOperator *BO = cast<BinaryOperator>(S);
@@ -101,9 +104,6 @@ top:
       R1 = CE->getSubExpr()->getSourceRange();
       return CE->getTypeBeginLoc();
     }
-    case Expr::ImplicitCastExprClass:
-      ++sn;
-      goto top;
     case Stmt::CXXTryStmtClass: {
       return cast<CXXTryStmt>(S)->getHandler(0)->getCatchLoc();
     }

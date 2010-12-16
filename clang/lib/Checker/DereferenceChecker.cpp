@@ -125,6 +125,11 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
 
       llvm::SmallString<100> buf;
       llvm::SmallVector<SourceRange, 2> Ranges;
+      
+      // Walk through lvalue casts to get the original expression
+      // that syntactically caused the load.
+      if (const Expr *expr = dyn_cast<Expr>(S))
+        S = expr->IgnoreParenLValueCasts();
 
       switch (S->getStmtClass()) {
         case Stmt::ArraySubscriptExprClass: {

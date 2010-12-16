@@ -318,13 +318,14 @@ void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
   GRStateManager &StateMgr = BRC.getStateManager();
   const GRState *state = N->getState();
 
+  // Walk through lvalue-to-rvalue conversions.  
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S)) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
       const VarRegion *R =
-      StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
+        StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
 
       // What did we load?
-      SVal V = state->getSVal(S);
+      SVal V = state->getSVal(loc::MemRegionVal(R));
 
       if (isa<loc::ConcreteInt>(V) || isa<nonloc::ConcreteInt>(V)
           || V.isUndef()) {

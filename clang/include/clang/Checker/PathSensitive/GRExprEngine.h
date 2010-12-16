@@ -297,14 +297,10 @@ public:
   ///  other functions that handle specific kinds of statements.
   void Visit(const Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst);
 
-  /// VisitLValue - evaluate the lvalue of the expression. For example, if Ex is
-  /// a DeclRefExpr, it evaluates to the MemRegionVal which represents its
-  /// storage location. Note that not all kinds of expressions has lvalue.
-  void VisitLValue(const Expr* Ex, ExplodedNode* Pred, ExplodedNodeSet& Dst);
-
   /// VisitArraySubscriptExpr - Transfer function for array accesses.
-  void VisitArraySubscriptExpr(const ArraySubscriptExpr* Ex, ExplodedNode* Pred,
-                               ExplodedNodeSet& Dst, bool asLValue);
+  void VisitLvalArraySubscriptExpr(const ArraySubscriptExpr* Ex,
+                                   ExplodedNode* Pred,
+                                   ExplodedNodeSet& Dst);
 
   /// VisitAsmStmt - Transfer function logic for inline asm.
   void VisitAsmStmt(const AsmStmt* A, ExplodedNode* Pred, ExplodedNodeSet& Dst);
@@ -325,35 +321,26 @@ public:
 
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(const BinaryOperator* B, ExplodedNode* Pred, 
-                           ExplodedNodeSet& Dst, bool asLValue);
+                           ExplodedNodeSet& Dst);
 
 
   /// VisitCall - Transfer function for function calls.
   void VisitCall(const CallExpr* CE, ExplodedNode* Pred,
                  CallExpr::const_arg_iterator AI, 
                  CallExpr::const_arg_iterator AE,
-                 ExplodedNodeSet& Dst, bool asLValue);
+                 ExplodedNodeSet& Dst);
 
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
   void VisitCast(const CastExpr *CastE, const Expr *Ex, ExplodedNode *Pred,
-                 ExplodedNodeSet &Dst, bool asLValue);
+                ExplodedNodeSet &Dst);
 
   /// VisitCompoundLiteralExpr - Transfer function logic for compound literals.
   void VisitCompoundLiteralExpr(const CompoundLiteralExpr* CL, 
-                                ExplodedNode* Pred, ExplodedNodeSet& Dst, 
-                                bool asLValue);
+                                ExplodedNode* Pred, ExplodedNodeSet& Dst);
 
-  /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
-  void VisitDeclRefExpr(const DeclRefExpr* DR, ExplodedNode* Pred,
-                        ExplodedNodeSet& Dst, bool asLValue);
-
-  /// VisitBlockDeclRefExpr - Transfer function logic for BlockDeclRefExprs.
-  void VisitBlockDeclRefExpr(const BlockDeclRefExpr* DR, ExplodedNode* Pred,
-                             ExplodedNodeSet& Dst, bool asLValue);
-  
+  /// Transfer function logic for DeclRefExprs and BlockDeclRefExprs.
   void VisitCommonDeclRefExpr(const Expr* DR, const NamedDecl *D,
-                              ExplodedNode* Pred, ExplodedNodeSet& Dst, 
-                              bool asLValue);  
+                              ExplodedNode* Pred, ExplodedNodeSet& Dst);
   
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
   void VisitDeclStmt(const DeclStmt* DS, ExplodedNode* Pred, 
@@ -377,15 +364,15 @@ public:
 
   /// VisitMemberExpr - Transfer function for member expressions.
   void VisitMemberExpr(const MemberExpr* M, ExplodedNode* Pred, 
-                       ExplodedNodeSet& Dst, bool asLValue);
+                           ExplodedNodeSet& Dst);
 
   /// Transfer function logic for ObjCAtSynchronizedStmts.
   void VisitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt *S,
                                    ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
-  /// VisitObjCIvarRefExpr - Transfer function logic for ObjCIvarRefExprs.
-  void VisitObjCIvarRefExpr(const ObjCIvarRefExpr* DR, ExplodedNode* Pred,
-                            ExplodedNodeSet& Dst, bool asLValue);
+  /// Transfer function logic for computing the lvalue of an Objective-C ivar.
+  void VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr* DR, ExplodedNode* Pred,
+                                ExplodedNodeSet& Dst);
 
   /// VisitObjCForCollectionStmt - Transfer function logic for
   ///  ObjCForCollectionStmt.
@@ -398,7 +385,7 @@ public:
 
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
   void VisitObjCMessageExpr(const ObjCMessageExpr* ME, ExplodedNode* Pred, 
-                            ExplodedNodeSet& Dst, bool asLValue);
+                            ExplodedNodeSet& Dst);
 
   /// VisitReturnStmt - Transfer function logic for return statements.
   void VisitReturnStmt(const ReturnStmt* R, ExplodedNode* Pred, 
@@ -414,20 +401,18 @@ public:
 
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(const UnaryOperator* B, ExplodedNode* Pred, 
-                          ExplodedNodeSet& Dst, bool asLValue);
+                          ExplodedNodeSet& Dst);
 
   void VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred, 
                         ExplodedNodeSet & Dst);
 
   void VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *expr,
-                                   ExplodedNode *Pred, ExplodedNodeSet &Dst, 
-                                   bool asLValue) {
-    VisitCXXConstructExpr(expr, 0, Pred, Dst, asLValue);
+                                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {
+    VisitCXXConstructExpr(expr, 0, Pred, Dst);
   }
 
   void VisitCXXConstructExpr(const CXXConstructExpr *E, const MemRegion *Dest,
-                             ExplodedNode *Pred, ExplodedNodeSet &Dst, 
-                             bool asLValue);
+                             ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   void VisitCXXDestructor(const CXXDestructorDecl *DD,
                           const MemRegion *Dest, const Stmt *S,
