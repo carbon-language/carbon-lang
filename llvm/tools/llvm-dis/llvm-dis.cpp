@@ -80,12 +80,14 @@ int main(int argc, char **argv) {
 
   std::string ErrorMessage;
   std::auto_ptr<Module> M;
-  OwningPtr<MemoryBuffer> BufferPtr;
 
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
-    ErrorMessage = ec.message();
-  else
-    M.reset(ParseBitcodeFile(BufferPtr.take(), Context, &ErrorMessage));
+  {
+    OwningPtr<MemoryBuffer> BufferPtr;
+    if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
+      ErrorMessage = ec.message();
+    else
+      M.reset(ParseBitcodeFile(BufferPtr.get(), Context, &ErrorMessage));
+  }
 
   if (M.get() == 0) {
     errs() << argv[0] << ": ";
