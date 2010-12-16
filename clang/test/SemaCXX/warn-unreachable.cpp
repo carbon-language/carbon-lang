@@ -39,8 +39,10 @@ void test2() {
 void test3() {
   halt()
     --;         // expected-warning {{will never be executed}}
-  halt()
-    ?           // expected-warning {{will never be executed}}
+  // FIXME: The unreachable part is just the '?', but really all of this
+  // code is unreachable and shouldn't be separately reported.
+  halt()        // expected-warning {{will never be executed}}
+    ? 
     dead() : dead();
   live(),
     float       // expected-warning {{will never be executed}}
