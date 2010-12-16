@@ -19,6 +19,9 @@
 using namespace llvm;
 
 namespace {
+class PPCMachObjectWriter : public MCMachObjectTargetWriter {
+};
+
 class PPCAsmBackend : public TargetAsmBackend {
 const Target &TheTarget;
 public:
@@ -92,7 +95,8 @@ namespace {
     
     MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
       bool is64 = getPointerSize() == 8;
-      return createMachObjectWriter(OS, /*Is64Bit=*/is64,
+      return createMachObjectWriter(new PPCMachObjectWriter,
+                                    OS, /*Is64Bit=*/is64,
                                     (is64 ? object::mach::CTM_PowerPC64 :
                                      object::mach::CTM_PowerPC),
                                     object::mach::CSPPC_ALL,

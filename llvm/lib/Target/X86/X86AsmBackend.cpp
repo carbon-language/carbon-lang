@@ -46,6 +46,9 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
 }
 
 namespace {
+class X86MachObjectWriter : public MCMachObjectTargetWriter {
+};
+
 class X86AsmBackend : public TargetAsmBackend {
 public:
   X86AsmBackend(const Target &T)
@@ -362,7 +365,8 @@ public:
     : DarwinX86AsmBackend(T) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createMachObjectWriter(OS, /*Is64Bit=*/false,
+    return createMachObjectWriter(new X86MachObjectWriter,
+                                  OS, /*Is64Bit=*/false,
                                   object::mach::CTM_i386,
                                   object::mach::CSX86_ALL,
                                   /*IsLittleEndian=*/true);
@@ -377,7 +381,8 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createMachObjectWriter(OS, /*Is64Bit=*/true,
+    return createMachObjectWriter(new X86MachObjectWriter,
+                                  OS, /*Is64Bit=*/true,
                                   object::mach::CTM_x86_64,
                                   object::mach::CSX86_ALL,
                                   /*IsLittleEndian=*/true);

@@ -16,6 +16,7 @@ add_llvm_library(LLVMMC
   MCDwarf.cpp
   MCLoggingStreamer.cpp
   MCMachOStreamer.cpp
+  MCMachObjectTargetWriter.cpp
   MCNullStreamer.cpp
   MCObjectStreamer.cpp
   MCObjectFormat.cpp

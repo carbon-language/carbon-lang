@@ -7,12 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCMachObjectWriter.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
@@ -162,17 +163,8 @@ class MachObjectWriter : public MCObjectWriter {
     }
   };
 
-  /// @name Utility Methods
-  /// @{
-
-  bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
-    const MCFixupKindInfo &FKI = Asm.getBackend().getFixupKindInfo(
-      (MCFixupKind) Kind);
-
-    return FKI.Flags & MCFixupKindInfo::FKF_IsPCRel;
-  }
-
-  /// @}
+  /// The target specific Mach-O writer instance.
+  llvm::OwningPtr<MCMachObjectTargetWriter> TargetObjectWriter;
 
   /// @name Relocation Data
   /// @{
@@ -189,6 +181,19 @@ class MachObjectWriter : public MCObjectWriter {
   std::vector<MachSymbolData> LocalSymbolData;
   std::vector<MachSymbolData> ExternalSymbolData;
   std::vector<MachSymbolData> UndefinedSymbolData;
+
+  /// @}
+
+private:
+  /// @name Utility Methods
+  /// @{
+
+  bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
+    const MCFixupKindInfo &FKI = Asm.getBackend().getFixupKindInfo(
+      (MCFixupKind) Kind);
+
+    return FKI.Flags & MCFixupKindInfo::FKF_IsPCRel;
+  }
 
   /// @}
 
@@ -226,10 +231,10 @@ class MachObjectWriter : public MCObjectWriter {
   uint32_t CPUSubtype;
 
 public:
-  MachObjectWriter(raw_ostream &_OS,
+  MachObjectWriter(MCMachObjectTargetWriter *MOTW, raw_ostream &_OS,
                    bool _Is64Bit, uint32_t _CPUType, uint32_t _CPUSubtype,
                    bool _IsLittleEndian)
-    : MCObjectWriter(_OS, _IsLittleEndian),
+    : MCObjectWriter(_OS, _IsLittleEndian), TargetObjectWriter(MOTW),
       Is64Bit(_Is64Bit), CPUType(_CPUType), CPUSubtype(_CPUSubtype) {
   }
 
@@ -1321,9 +1326,11 @@ public:
 
 }
 
-MCObjectWriter *llvm::createMachObjectWriter(raw_ostream &OS, bool is64Bit,
+MCObjectWriter *llvm::createMachObjectWriter(MCMachObjectTargetWriter *MOTW,
+                                             raw_ostream &OS, bool is64Bit,
                                              uint32_t CPUType,
                                              uint32_t CPUSubtype,
                                              bool IsLittleEndian) {
-  return new MachObjectWriter(OS, is64Bit, CPUType, CPUSubtype, IsLittleEndian);
+  return new MachObjectWriter(MOTW, OS, is64Bit, CPUType, CPUSubtype,
+                              IsLittleEndian);
 }

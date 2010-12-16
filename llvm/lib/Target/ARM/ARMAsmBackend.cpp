@@ -28,6 +28,9 @@
 using namespace llvm;
 
 namespace {
+class ARMMachObjectWriter : public MCMachObjectTargetWriter {
+};
+
 class ARMAsmBackend : public TargetAsmBackend {
   bool isThumbMode;  // Currently emitting Thumb code.
 public:
@@ -382,7 +385,8 @@ public:
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     // FIXME: Subtarget info should be derived. Force v7 for now.
-    return createMachObjectWriter(OS, /*Is64Bit=*/false,
+    return createMachObjectWriter(new ARMMachObjectWriter,
+                                  OS, /*Is64Bit=*/false,
                                   object::mach::CTM_ARM,
                                   object::mach::CSARM_V7,
                                   /*IsLittleEndian=*/true);
