@@ -1,3 +1,12 @@
 tools/clang
 
 *.pyc
+*~
+.gitignore
+.gitusers
+projects/test-suite
+projects/test-suite-externals
+projects/compiler-rt
+projects/libcxx
+cscope.files
+cscope.out
