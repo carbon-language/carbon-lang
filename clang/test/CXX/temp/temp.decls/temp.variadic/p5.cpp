@@ -103,7 +103,7 @@ void TestPPNameFunc(int i) {
   f(static_cast<Types>(i)); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
 }
 
-// FIXME: Test for unexpanded parameter packs in declarations.
+// Test for unexpanded parameter packs in declarations.
 // FIXME: Attributes?
 template<typename T, typename... Types>
 struct TestUnexpandedDecls : T{
@@ -144,7 +144,26 @@ struct TestUnexpandedDecls : T{
 
   template<Types value> // expected-error{{non-type template parameter type contains unexpanded parameter pack 'Types'}}
   struct non_type_template_param_type;
+
+  void decls_in_stmts() {
+    Types t; // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+    for (Types *t = 0; ; ) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+    for (; Types *t = 0; ) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+    switch(Types *t = 0) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+    while(Types *t = 0) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+    if (Types *t = 0) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+    try {
+    } catch (Types*) { // expected-error{{exception type contains unexpanded parameter pack 'Types'}}
+    }
+  }
 };
+
+// FIXME: Test for unexpanded parameter packs in each of the statements.
+
+// FIXME: Once we have template argument deduction, we can test
+// unexpanded parameter packs in partial specializations.
+// template<typename ...Types>
+// struct TestUnexpandedDecls<int, Types>;
 
 // Test for diagnostics in the presence of multiple unexpanded
 // parameter packs.

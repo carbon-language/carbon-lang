@@ -3175,7 +3175,10 @@ public:
     UPPC_DefaultArgument,
     
     /// \brief The type of a non-type template parameter.
-    UPPC_NonTypeTemplateParameterType
+    UPPC_NonTypeTemplateParameterType,
+
+    /// \brief The type of an exception.
+    UPPC_ExceptionType
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,

@@ -1825,25 +1825,25 @@ def err_unexpanded_parameter_pack_0 : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
   "using declaration|friend declaration|qualifier|initializer|default argument|"
-  "non-type template parameter type}0 "
+  "non-type template parameter type|exception type}0 "
   "contains an unexpanded parameter pack">;
 def err_unexpanded_parameter_pack_1 : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
   "using declaration|friend declaration|qualifier|initializer|default argument|"
-  "non-type template parameter type}0 "
+  "non-type template parameter type|exception type}0 "
   "contains unexpanded parameter pack %1">;
 def err_unexpanded_parameter_pack_2 : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
   "using declaration|friend declaration|qualifier|initializer|default argument|"
-  "non-type template parameter type}0 "
+  "non-type template parameter type|exception type}0 "
   "contains unexpanded parameter packs %1 and %2">;
 def err_unexpanded_parameter_pack_3_or_more : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
   "using declaration|friend declaration|qualifier|initializer|default argument|"
-  "non-type template parameter type}0 "
+  "non-type template parameter type|exception type}0 "
   "contains unexpanded parameter packs %1, %2, ...">;
 
 def err_unexpected_typedef : Error<

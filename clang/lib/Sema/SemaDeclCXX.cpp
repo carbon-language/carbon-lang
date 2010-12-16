@@ -6138,9 +6138,18 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
 /// handler.
 Decl *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
+  bool Invalid = D.isInvalidType();
+
+  // Check for unexpanded parameter packs.
+  if (TInfo && DiagnoseUnexpandedParameterPack(D.getIdentifierLoc(), TInfo,
+                                               UPPC_ExceptionType)) {
+    TInfo = Context.getTrivialTypeSourceInfo(Context.IntTy, 
+                                             D.getIdentifierLoc());
+    Invalid = true;
+  }
+
   QualType ExDeclType = TInfo->getType();
 
-  bool Invalid = D.isInvalidType();
   IdentifierInfo *II = D.getIdentifier();
   if (NamedDecl *PrevDecl = LookupSingleName(S, II, D.getIdentifierLoc(),
                                              LookupOrdinaryName,
