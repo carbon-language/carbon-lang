@@ -1565,8 +1565,12 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
         Type = ELF::R_ARM_GOT_BREL; break;
       case MCSymbolRefExpr::VK_ARM_TLSGD:
         Type = ELF::R_ARM_TLS_GD32; break;
+      case MCSymbolRefExpr::VK_ARM_TPOFF:
+        Type = ELF::R_ARM_TLS_LE32; break;
       case MCSymbolRefExpr::VK_ARM_GOTTPOFF:
         Type = ELF::R_ARM_TLS_IE32; break;
+      case MCSymbolRefExpr::VK_None:
+        Type = ELF::R_ARM_ABS32; break;
       case MCSymbolRefExpr::VK_ARM_GOTOFF:
         Type = ELF::R_ARM_GOTOFF32; break;
       } break;
@@ -1579,6 +1583,8 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
     case ARM::fixup_arm_thumb_br:
       assert(0 && "Unimplemented"); break;
     case ARM::fixup_arm_branch:
+      // FIXME: Differentiate between R_ARM_CALL and
+      // R_ARM_JUMP24 (latter used for conditional jumps)
       Type = ELF::R_ARM_CALL; break;
     case ARM::fixup_arm_movt_hi16: 
       Type = ELF::R_ARM_MOVT_ABS; break;
