@@ -3160,7 +3160,13 @@ public:
     UPPC_EnumeratorValue,
 
     /// \brief A using declaration.
-    UPPC_UsingDeclaration
+    UPPC_UsingDeclaration,
+
+    /// \brief A friend declaration.
+    UPPC_FriendDeclaration,
+
+    /// \brief A declaration qualifier.
+    UPPC_DeclarationQualifier
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,

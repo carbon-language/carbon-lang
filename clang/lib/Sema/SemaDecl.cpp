@@ -2332,6 +2332,10 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   if (D.getCXXScopeSpec().isInvalid())
     D.setInvalidType();
   else if (D.getCXXScopeSpec().isSet()) {
+    if (DiagnoseUnexpandedParameterPack(D.getCXXScopeSpec(), 
+                                        UPPC_DeclarationQualifier))
+      return 0;
+
     bool EnteringContext = !D.getDeclSpec().isFriendSpecified();
     DC = computeDeclContext(D.getCXXScopeSpec(), EnteringContext);
     if (!DC) {

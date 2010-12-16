@@ -121,6 +121,10 @@ struct TestUnexpandedDecls : T{
   using typename Types::type; // expected-error{{using declaration contains unexpanded parameter pack 'Types'}}
   using Types::value; // expected-error{{using declaration contains unexpanded parameter pack 'Types'}}
   using T::operator Types; // expected-error{{using declaration contains unexpanded parameter pack 'Types'}}
+
+  friend class Types::foo; // expected-error{{friend declaration contains unexpanded parameter pack 'Types'}}
+  friend void friend_func(Types); // expected-error{{friend declaration contains unexpanded parameter pack 'Types'}}
+  friend void Types::other_friend_func(int); // expected-error{{friend declaration contains unexpanded parameter pack 'Types'}}
 };
 
 // Test for diagnostics in the presence of multiple unexpanded

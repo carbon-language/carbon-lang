@@ -6383,6 +6383,9 @@ Decl *Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   if (TheDeclarator.isInvalidType())
     return 0;
 
+  if (DiagnoseUnexpandedParameterPack(Loc, TSI, UPPC_FriendDeclaration))
+    return 0;
+
   // This is definitely an error in C++98.  It's probably meant to
   // be forbidden in C++0x, too, but the specification is just
   // poorly written.
@@ -6481,6 +6484,12 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
   assert(Name);
+
+  // Check for unexpanded parameter packs.
+  if (DiagnoseUnexpandedParameterPack(Loc, TInfo, UPPC_FriendDeclaration) ||
+      DiagnoseUnexpandedParameterPack(NameInfo, UPPC_FriendDeclaration) ||
+      DiagnoseUnexpandedParameterPack(SS, UPPC_FriendDeclaration))
+    return 0;
 
   // The context we found the declaration in, or in which we should
   // create the declaration.
