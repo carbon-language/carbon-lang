@@ -487,9 +487,8 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
     }
     SourceMgr.createMainFileID(File);
   } else {
-    llvm::error_code ec;
-    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN(ec);
-    if (!SB) {
+    llvm::OwningPtr<llvm::MemoryBuffer> SB;
+    if (llvm::MemoryBuffer::getSTDIN(SB)) {
       // FIXME: Give ec.message() in this diag.
       Diags.Report(diag::err_fe_error_reading_stdin);
       return false;
@@ -497,7 +496,7 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
     const FileEntry *File = FileMgr.getVirtualFile(SB->getBufferIdentifier(),
                                                    SB->getBufferSize(), 0);
     SourceMgr.createMainFileID(File);
-    SourceMgr.overrideFileContents(File, SB);
+    SourceMgr.overrideFileContents(File, SB.take());
   }
 
   assert(!SourceMgr.getMainFileID().isInvalid() &&

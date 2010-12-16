@@ -437,11 +437,9 @@ static void InvalidPTH(Diagnostic &Diags, const char *Msg) {
 
 PTHManager *PTHManager::Create(const std::string &file, Diagnostic &Diags) {
   // Memory map the PTH file.
-  llvm::error_code ec;
-  llvm::OwningPtr<llvm::MemoryBuffer> File(
-    llvm::MemoryBuffer::getFile(file, ec));
+  llvm::OwningPtr<llvm::MemoryBuffer> File;
 
-  if (!File) {
+  if (llvm::MemoryBuffer::getFile(file, File)) {
     // FIXME: Add ec.message() to this diag.
     Diags.Report(diag::err_invalid_pth_file) << file;
     return 0;

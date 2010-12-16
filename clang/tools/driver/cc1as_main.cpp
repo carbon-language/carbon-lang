@@ -228,13 +228,13 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     return false;
   }
 
-  error_code ec;
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(Opts.InputFile, ec);
-  if (Buffer == 0) {
+  OwningPtr<MemoryBuffer> BufferPtr;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Opts.InputFile, BufferPtr)) {
     Error = ec.message();
     Diags.Report(diag::err_fe_error_reading) << Opts.InputFile;
     return false;
   }
+  MemoryBuffer *Buffer = BufferPtr.take();
 
   SourceMgr SrcMgr;
 

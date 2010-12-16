@@ -2278,7 +2278,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
   std::string ErrStr;
   llvm::error_code ec;
   if (FileName == "-") {
-    F.Buffer.reset(llvm::MemoryBuffer::getSTDIN(ec));
+    ec = llvm::MemoryBuffer::getSTDIN(F.Buffer);
     if (ec)
       ErrStr = ec.message();
   } else

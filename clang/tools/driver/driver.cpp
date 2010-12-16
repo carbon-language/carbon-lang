@@ -182,9 +182,8 @@ static void ExpandArgsFromBuf(const char *Arg,
                               llvm::SmallVectorImpl<const char*> &ArgVector,
                               std::set<std::string> &SavedStrings) {
   const char *FName = Arg + 1;
-  llvm::error_code ec;
-  llvm::MemoryBuffer *MemBuf = llvm::MemoryBuffer::getFile(FName, ec);
-  if (!MemBuf) {
+  llvm::OwningPtr<llvm::MemoryBuffer> MemBuf;
+  if (llvm::MemoryBuffer::getFile(FName, MemBuf)) {
     ArgVector.push_back(SaveStringInSet(SavedStrings, Arg));
     return;
   }
@@ -235,7 +234,6 @@ static void ExpandArgsFromBuf(const char *Arg,
     }
     CurArg.push_back(*P);
   }
-  delete MemBuf;
 }
 
 static void ExpandArgv(int argc, const char **argv,

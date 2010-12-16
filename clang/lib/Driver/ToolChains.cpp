@@ -1244,11 +1244,9 @@ static bool HasMultilib(llvm::Triple::ArchType Arch, enum LinuxDistro Distro) {
 }
 
 static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
-  llvm::error_code ec;
-  llvm::OwningPtr<const llvm::MemoryBuffer>
-    LsbRelease(llvm::MemoryBuffer::getFile("/etc/lsb-release", ec));
-  if (LsbRelease) {
-    llvm::StringRef Data = LsbRelease.get()->getBuffer();
+  llvm::OwningPtr<llvm::MemoryBuffer> File;
+  if (!llvm::MemoryBuffer::getFile("/etc/lsb-release", File)) {
+    llvm::StringRef Data = File.get()->getBuffer();
     llvm::SmallVector<llvm::StringRef, 8> Lines;
     Data.split(Lines, "\n");
     for (unsigned int i = 0, s = Lines.size(); i < s; ++ i) {
@@ -1257,17 +1255,15 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
       else if (Lines[i] == "DISTRIB_CODENAME=lucid")
         return UbuntuLucid;
       else if (Lines[i] == "DISTRIB_CODENAME=jaunty")
-	return UbuntuJaunty;
+        return UbuntuJaunty;
       else if (Lines[i] == "DISTRIB_CODENAME=karmic")
         return UbuntuKarmic;
     }
     return UnknownDistro;
   }
 
-  llvm::OwningPtr<const llvm::MemoryBuffer>
-    RHRelease(llvm::MemoryBuffer::getFile("/etc/redhat-release", ec));
-  if (RHRelease) {
-    llvm::StringRef Data = RHRelease.get()->getBuffer();
+  if (!llvm::MemoryBuffer::getFile("/etc/redhat-release", File)) {
+    llvm::StringRef Data = File.get()->getBuffer();
     if (Data.startswith("Fedora release 14 (Laughlin)"))
       return Fedora14;
     else if (Data.startswith("Fedora release 13 (Goddard)"))
@@ -1275,10 +1271,8 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  llvm::OwningPtr<const llvm::MemoryBuffer>
-    DebianVersion(llvm::MemoryBuffer::getFile("/etc/debian_version", ec));
-  if (DebianVersion) {
-    llvm::StringRef Data = DebianVersion.get()->getBuffer();
+  if (!llvm::MemoryBuffer::getFile("/etc/debian_version", File)) {
+    llvm::StringRef Data = File.get()->getBuffer();
     if (Data[0] == '5')
       return DebianLenny;
     else if (Data.startswith("squeeze/sid"))
@@ -1286,10 +1280,8 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  llvm::OwningPtr<const llvm::MemoryBuffer>
-    SuseRelease(llvm::MemoryBuffer::getFile("/etc/SuSE-release", ec));
-  if (SuseRelease) {
-    llvm::StringRef Data = SuseRelease.get()->getBuffer();
+  if (!llvm::MemoryBuffer::getFile("/etc/SuSE-release", File)) {
+    llvm::StringRef Data = File.get()->getBuffer();
     if (Data.startswith("openSUSE 11.3"))
       return OpenSuse11_3;
     return UnknownDistro;
