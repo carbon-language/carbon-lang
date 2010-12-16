@@ -19,56 +19,56 @@
 using namespace llvm;
 
 namespace {
-  class PPCAsmBackend : public TargetAsmBackend {
-  const Target &TheTarget;
-  public:
-    PPCAsmBackend(const Target &T) : TargetAsmBackend(), TheTarget(T) {}
-  
-    unsigned getNumFixupKinds() const { return PPC::NumTargetFixupKinds; }
+class PPCAsmBackend : public TargetAsmBackend {
+const Target &TheTarget;
+public:
+  PPCAsmBackend(const Target &T) : TargetAsmBackend(), TheTarget(T) {}
 
-    const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
-      const static MCFixupKindInfo Infos[PPC::NumTargetFixupKinds] = {
-        // name                    offset  bits  flags
-        { "fixup_ppc_br24",        6,      24,   MCFixupKindInfo::FKF_IsPCRel },
-        { "fixup_ppc_brcond14",    16,     14,   MCFixupKindInfo::FKF_IsPCRel },
-        { "fixup_ppc_lo16",        16,     16,   0 },
-        { "fixup_ppc_ha16",        16,     16,   0 },
-        { "fixup_ppc_lo14",        16,     14,   0 }
-      };
-    
-      if (Kind < FirstTargetFixupKind)
-        return TargetAsmBackend::getFixupKindInfo(Kind);
-    
-      assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
-             "Invalid kind!");
-      return Infos[Kind - FirstTargetFixupKind];
-    }
-    
-    bool MayNeedRelaxation(const MCInst &Inst) const {
-      // FIXME.
-      return false;
-    }
-    
-    void RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
-      // FIXME.
-      assert(0 && "RelaxInstruction() unimplemented");
-    }
-    
-    bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
-      // FIXME: Zero fill for now. That's not right, but at least will get the
-      // section size right.
-      for (uint64_t i = 0; i != Count; ++i)
-        OW->Write8(0);
-      return true;
-    }      
-    
-    unsigned getPointerSize() const {
-      StringRef Name = TheTarget.getName();
-      if (Name == "ppc64") return 8;
-      assert(Name == "ppc32" && "Unknown target name!");
-      return 4;
-    }
-  };
+  unsigned getNumFixupKinds() const { return PPC::NumTargetFixupKinds; }
+
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+    const static MCFixupKindInfo Infos[PPC::NumTargetFixupKinds] = {
+      // name                    offset  bits  flags
+      { "fixup_ppc_br24",        6,      24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ppc_brcond14",    16,     14,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ppc_lo16",        16,     16,   0 },
+      { "fixup_ppc_ha16",        16,     16,   0 },
+      { "fixup_ppc_lo14",        16,     14,   0 }
+    };
+  
+    if (Kind < FirstTargetFixupKind)
+      return TargetAsmBackend::getFixupKindInfo(Kind);
+  
+    assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
+           "Invalid kind!");
+    return Infos[Kind - FirstTargetFixupKind];
+  }
+  
+  bool MayNeedRelaxation(const MCInst &Inst) const {
+    // FIXME.
+    return false;
+  }
+  
+  void RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
+    // FIXME.
+    assert(0 && "RelaxInstruction() unimplemented");
+  }
+  
+  bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
+    // FIXME: Zero fill for now. That's not right, but at least will get the
+    // section size right.
+    for (uint64_t i = 0; i != Count; ++i)
+      OW->Write8(0);
+    return true;
+  }      
+  
+  unsigned getPointerSize() const {
+    StringRef Name = TheTarget.getName();
+    if (Name == "ppc64") return 8;
+    assert(Name == "ppc32" && "Unknown target name!");
+    return 4;
+  }
+};
 } // end anonymous namespace
 
 
