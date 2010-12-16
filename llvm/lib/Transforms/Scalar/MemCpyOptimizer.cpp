@@ -688,10 +688,6 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   ConstantInt *C1 = dyn_cast<ConstantInt>(MDep->getLength());
   if (!C1) return false;
   
-  uint64_t DepSize = C1->getValue().getZExtValue();
-  if (DepSize < MSize)
-    return false;
-  
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
   // Verify that the copied-from memory doesn't change in between the two
@@ -716,7 +712,8 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   // source and dest might overlap.  We still want to eliminate the intermediate
   // value, but we have to generate a memmove instead of memcpy.
   Intrinsic::ID ResultFn = Intrinsic::memcpy;
-  if (!AA.isNoAlias(M->getRawDest(), MSize, MDep->getRawSource(), DepSize))
+  if (AA.alias(AA.getLocationForDest(M), AA.getLocationForSource(MDep)) !=
+      AliasAnalysis::NoAlias)
     ResultFn = Intrinsic::memmove;
   
   // If all checks passed, then we can transform M.
@@ -795,14 +792,9 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
 bool MemCpyOpt::processMemMove(MemMoveInst *M) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
-  // If the memmove is a constant size, use it for the alias query, this allows
-  // us to optimize things like: memmove(P, P+64, 64);
-  uint64_t MemMoveSize = AliasAnalysis::UnknownSize;
-  if (ConstantInt *Len = dyn_cast<ConstantInt>(M->getLength()))
-    MemMoveSize = Len->getZExtValue();
-  
   // See if the pointers alias.
-  if (AA.alias(M->getRawDest(), MemMoveSize, M->getRawSource(), MemMoveSize) !=
+  if (AA.alias(AA.getLocationForDest(M),
+               AA.getLocationForSource(M)) !=
       AliasAnalysis::NoAlias)
     return false;
   

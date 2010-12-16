@@ -219,8 +219,11 @@ AliasAnalysis::getLocationForSource(const MemTransferInst *MTI) {
   if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
     Size = C->getValue().getZExtValue();
 
-  // FIXME: Can memcpy/memmove have TBAA tags?
-  return Location(MTI->getRawSource(), Size, 0);
+  // memcpy/memmove can have TBAA tags. For memcpy, they apply
+  // to both the source and the destination.
+  MDNode *TBAATag = MTI->getMetadata(LLVMContext::MD_tbaa);
+
+  return Location(MTI->getRawSource(), Size, TBAATag);
 }
 
 AliasAnalysis::Location 
@@ -228,9 +231,12 @@ AliasAnalysis::getLocationForDest(const MemIntrinsic *MTI) {
   uint64_t Size = UnknownSize;
   if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
     Size = C->getValue().getZExtValue();
+
+  // memcpy/memmove can have TBAA tags. For memcpy, they apply
+  // to both the source and the destination.
+  MDNode *TBAATag = MTI->getMetadata(LLVMContext::MD_tbaa);
   
-  // FIXME: Can memcpy/memmove have TBAA tags?
-  return Location(MTI->getRawDest(), Size, 0);
+  return Location(MTI->getRawDest(), Size, TBAATag);
 }
 
 
