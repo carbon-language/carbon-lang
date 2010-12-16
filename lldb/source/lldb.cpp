@@ -43,6 +43,7 @@
 #include "Plugins/Process/Linux/ProcessLinux.h"
 #endif
 
+using namespace lldb;
 using namespace lldb_private;
 
 
