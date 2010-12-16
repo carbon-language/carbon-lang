@@ -823,7 +823,7 @@ getAddrModeISOpValue(const MCInst &MI, unsigned OpIdx,
   const MCOperand &MO = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
   unsigned Rn = getARMRegisterNumbering(MO.getReg());
-  unsigned Imm5 = Imm5 = MO1.getImm();
+  unsigned Imm5 = MO1.getImm();
   return ((Imm5 & 0x1f) << 3) | Rn;
 }
 
