@@ -146,7 +146,8 @@ static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
       unsigned aop_reg = a->getOperand(aop).getReg();
 
       for (unsigned bop = 0, bend = b->getNumOperands(); bop<bend; ++bop) {
-        if (b->getOperand(bop).isReg() && (!b->getOperand(bop).isImplicit())) {
+        if (b->getOperand(bop).isReg() && !b->getOperand(bop).isImplicit() &&
+            !b->getOperand(bop).isKill()) {
           unsigned bop_reg = b->getOperand(bop).getReg();
           if (aop_reg == bop_reg)
             return true;

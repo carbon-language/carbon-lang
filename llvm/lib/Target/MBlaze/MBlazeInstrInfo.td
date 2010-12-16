@@ -19,7 +19,7 @@ include "MBlazeInstrFormats.td"
 // def SDTMBlazeSelectCC : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>]>;
 def SDT_MBlazeRet     : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_MBlazeIRet    : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
-def SDT_MBlazeJmpLink : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+def SDT_MBlazeJmpLink : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
 def SDT_MBCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_MBCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 
@@ -33,7 +33,8 @@ def MBlazeIRet    : SDNode<"MBlazeISD::IRet", SDT_MBlazeIRet,
                            [SDNPHasChain, SDNPOptInFlag]>;
 
 def MBlazeJmpLink : SDNode<"MBlazeISD::JmpLink",SDT_MBlazeJmpLink,
-                           [SDNPHasChain,SDNPOptInFlag,SDNPOutFlag]>;
+                           [SDNPHasChain,SDNPOptInFlag,SDNPOutFlag,
+                            SDNPVariadic]>;
 
 def MBWrapper   : SDNode<"MBlazeISD::Wrap", SDTIntUnaryOp>;
 
@@ -290,7 +291,7 @@ class BranchI<bits<6> op, bits<5> br, string instr_asm> :
 // Branch and Link Instructions
 //===----------------------------------------------------------------------===//
 class BranchL<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
-              TA<op, flags, (outs), (ins GPR:$link, GPR:$target),
+              TA<op, flags, (outs), (ins GPR:$link, GPR:$target, variable_ops),
                  !strconcat(instr_asm, "   $link, $target"),
                  [], IIBranch> {
   let ra = br;
@@ -298,7 +299,7 @@ class BranchL<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
 }
 
 class BranchLI<bits<6> op, bits<5> br, string instr_asm> :
-               TB<op, (outs), (ins GPR:$link, calltarget:$target),
+               TB<op, (outs), (ins GPR:$link, calltarget:$target, variable_ops),
                   !strconcat(instr_asm, "   $link, $target"),
                   [], IIBranch> {
   let ra = br;
@@ -500,17 +501,16 @@ let isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
   def BGED   :  BranchC<0x27, 0x15, 0x000, "bged   ">;
 }
 
-let isCall = 1, hasDelaySlot = 1, hasCtrlDep = 1, isBarrier = 1,
+let isCall =1, hasDelaySlot = 1,
     Defs = [R3,R4,R5,R6,R7,R8,R9,R10,R11,R12],
-    Uses = [R1,R5,R6,R7,R8,R9,R10] in {
+    Uses = [R1] in {
   def BRLID  : BranchLI<0x2E, 0x14, "brlid  ">;
   def BRALID : BranchLI<0x2E, 0x1C, "bralid ">;
 }
 
-let isCall = 1, hasDelaySlot = 1, hasCtrlDep = 1, isIndirectBranch = 1,
-    isBarrier = 1,
+let isCall = 1, hasDelaySlot = 1,
     Defs = [R3,R4,R5,R6,R7,R8,R9,R10,R11,R12],
-    Uses = [R1,R5,R6,R7,R8,R9,R10] in {
+    Uses = [R1] in {
   def BRLD   : BranchL<0x26, 0x14, 0x000, "brld   ">;
   def BRALD  : BranchL<0x26, 0x1C, 0x000, "brald  ">;
 }
