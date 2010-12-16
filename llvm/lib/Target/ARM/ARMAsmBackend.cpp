@@ -237,9 +237,6 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // 'off by 4' is implicitly handled by the half-word ordering of the
     // Thumb encoding, so we only need to adjust by 2 here.
     return ((Value - 2) >> 2) & 0xff;
-  case ARM::fixup_arm_thumb_ldst:
-    // Offset by 4.
-    return ((Value - 4) & 0x1f) << 6;
   case ARM::fixup_arm_thumb_cb: {
     // Offset by 4 and don't encode the lower bit, which is always 0.
     uint32_t Binary = (Value - 4) >> 1;
@@ -368,7 +365,6 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
 
   case ARM::fixup_arm_thumb_br:
   case ARM::fixup_arm_thumb_cb:
-  case ARM::fixup_arm_thumb_ldst:
     return 2;
 
   case ARM::fixup_arm_ldst_pcrel_12:

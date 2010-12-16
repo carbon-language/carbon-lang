@@ -68,7 +68,6 @@ public:
 { "fixup_arm_thumb_blx",     7,            21,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_cb",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_cp",      1,             8,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_arm_thumb_ldst",    1,             8,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_bcc",     1,             8,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_movt_hi16",     0,            16,  0 },
 { "fixup_arm_movw_lo16",     0,            16,  0 },
@@ -824,16 +823,7 @@ getAddrModeISOpValue(const MCInst &MI, unsigned OpIdx,
   const MCOperand &MO = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
   unsigned Rn = getARMRegisterNumbering(MO.getReg());
-  unsigned Imm5 = 0;
-
-  if (MO1.isExpr()) {
-    const MCExpr *Expr = MO.getExpr();
-    MCFixupKind Kind = MCFixupKind(ARM::fixup_arm_thumb_ldst);
-    Fixups.push_back(MCFixup::Create(0, Expr, Kind));
-  } else {
-    Imm5 = MO1.getImm();
-  }
-
+  unsigned Imm5 = Imm5 = MO1.getImm();
   return ((Imm5 & 0x1f) << 3) | Rn;
 }
 
