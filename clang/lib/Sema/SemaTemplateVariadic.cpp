@@ -221,7 +221,7 @@ bool Sema::DiagnoseUnexpandedParameterPack(const DeclarationNameInfo &NameInfo,
   case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
   case DeclarationName::CXXConversionFunctionName:
-    // FIXME: We shouldn't need this!
+    // FIXME: We shouldn't need this null check!
     if (TypeSourceInfo *TSInfo = NameInfo.getNamedTypeInfo())
       return DiagnoseUnexpandedParameterPack(NameInfo.getLoc(), TSInfo, UPPC);
 
