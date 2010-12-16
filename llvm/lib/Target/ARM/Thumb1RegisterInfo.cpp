@@ -356,9 +356,11 @@ static void removeOperands(MachineInstr &MI, unsigned i) {
 static unsigned convertToNonSPOpcode(unsigned Opcode) {
   switch (Opcode) {
   case ARM::tLDRspi:
+  case ARM::tRestore:           // FIXME: Should this opcode be here?
     return ARM::tLDRi;
 
   case ARM::tSTRspi:
+  case ARM::tSpill:             // FIXME: Should this opcode be here?
     return ARM::tSTRi;
   }
 
