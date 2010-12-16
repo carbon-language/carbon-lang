@@ -15,6 +15,7 @@
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Signals.h"
@@ -43,17 +44,16 @@ int main(int argc, char **argv) {
   }
 
   // Get the input data.
-  error_code ec;
-  MemoryBuffer *In =
-    MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), ec);
-  if (In == 0) {
+  OwningPtr<MemoryBuffer> In;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), In)) {
     errs() << argv[0] << ": error: Unable to get input '"
            << InputFilename << "': " << ec.message() << '\n';
     return 1;
   }
 
   // Get the output data.
-  MemoryBuffer *Out = MemoryBuffer::getFile(OutputFilename.c_str(), ec);
+  OwningPtr<MemoryBuffer> Out;
+  MemoryBuffer::getFile(OutputFilename.c_str(), Out);
 
   // If the output exists and the contents match, we are done.
   if (Out && In->getBufferSize() == Out->getBufferSize() &&
@@ -64,8 +64,6 @@ int main(int argc, char **argv) {
              << "', contents match input.\n";
     return 0;
   }
-
-  delete Out;
 
   // Otherwise, overwrite the output.
   if (!Quiet)

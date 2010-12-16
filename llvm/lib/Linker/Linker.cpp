@@ -99,14 +99,12 @@ Linker::LoadObject(const sys::Path &FN) {
   std::string ParseErrorMessage;
   Module *Result = 0;
 
-  error_code ec;
-  std::auto_ptr<MemoryBuffer> Buffer(
-    MemoryBuffer::getFileOrSTDIN(FN.c_str(), ec));
-  if (Buffer.get())
-    Result = ParseBitcodeFile(Buffer.get(), Context, &ParseErrorMessage);
-  else
+  OwningPtr<MemoryBuffer> Buffer;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(FN.c_str(), Buffer))
     ParseErrorMessage = "Error reading file '" + FN.str() + "'" + ": "
                       + ec.message();
+  else
+    Result = ParseBitcodeFile(Buffer.get(), Context, &ParseErrorMessage);
 
   if (Result)
     return std::auto_ptr<Module>(Result);

@@ -148,13 +148,13 @@ Archive::Archive(const sys::Path& filename, LLVMContext& C)
 
 bool
 Archive::mapToMemory(std::string* ErrMsg) {
-  error_code ec;
-  mapfile = MemoryBuffer::getFile(archPath.c_str(), ec);
-  if (mapfile == 0) {
+  OwningPtr<MemoryBuffer> File;
+  if (error_code ec = MemoryBuffer::getFile(archPath.c_str(), File)) {
     if (ErrMsg)
       *ErrMsg = ec.message();
     return true;
   }
+  mapfile = File.take();
   base = mapfile->getBufferStart();
   return false;
 }
@@ -218,10 +218,8 @@ bool llvm::GetBitcodeSymbols(const sys::Path& fName,
                              LLVMContext& Context,
                              std::vector<std::string>& symbols,
                              std::string* ErrMsg) {
-  error_code ec;
-  std::auto_ptr<MemoryBuffer> Buffer(
-                       MemoryBuffer::getFileOrSTDIN(fName.c_str(), ec));
-  if (!Buffer.get()) {
+  OwningPtr<MemoryBuffer> Buffer;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(fName.c_str(), Buffer)) {
     if (ErrMsg) *ErrMsg = "Could not open file '" + fName.str() + "'" + ": "
                         + ec.message();
     return true;
@@ -246,7 +244,7 @@ llvm::GetBitcodeSymbols(const char *BufPtr, unsigned Length,
                         std::vector<std::string>& symbols,
                         std::string* ErrMsg) {
   // Get the module.
-  std::auto_ptr<MemoryBuffer> Buffer(
+  OwningPtr<MemoryBuffer> Buffer(
     MemoryBuffer::getMemBufferCopy(StringRef(BufPtr, Length),ModuleID.c_str()));
   
   Module *M = ParseBitcodeFile(Buffer.get(), Context, ErrMsg);

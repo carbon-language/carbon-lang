@@ -35,6 +35,8 @@
 #include <fcntl.h>
 using namespace llvm;
 
+namespace { const llvm::error_code success; }
+
 //===----------------------------------------------------------------------===//
 // MemoryBuffer implementation itself.
 //===----------------------------------------------------------------------===//
@@ -143,20 +145,20 @@ MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size, StringRef BufferName) {
 /// if the Filename is "-".  If an error occurs, this returns null and fills
 /// in *ErrStr with a reason.  If stdin is empty, this API (unlike getSTDIN)
 /// returns an empty buffer.
-MemoryBuffer *MemoryBuffer::getFileOrSTDIN(StringRef Filename,
-                                           error_code &ec,
-                                           int64_t FileSize) {
+error_code MemoryBuffer::getFileOrSTDIN(StringRef Filename,
+                                        OwningPtr<MemoryBuffer> &result,
+                                        int64_t FileSize) {
   if (Filename == "-")
-    return getSTDIN(ec);
-  return getFile(Filename, ec, FileSize);
+    return getSTDIN(result);
+  return getFile(Filename, result, FileSize);
 }
 
-MemoryBuffer *MemoryBuffer::getFileOrSTDIN(const char *Filename,
-                                           error_code &ec,
-                                           int64_t FileSize) {
+error_code MemoryBuffer::getFileOrSTDIN(const char *Filename,
+                                        OwningPtr<MemoryBuffer> &result,
+                                        int64_t FileSize) {
   if (strcmp(Filename, "-") == 0)
-    return getSTDIN(ec);
-  return getFile(Filename, ec, FileSize);
+    return getSTDIN(result);
+  return getFile(Filename, result, FileSize);
 }
 
 //===----------------------------------------------------------------------===//
@@ -186,30 +188,32 @@ public:
 };
 }
 
-MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, error_code &ec,
-                                    int64_t FileSize) {
+error_code MemoryBuffer::getFile(StringRef Filename,
+                                 OwningPtr<MemoryBuffer> &result,
+                                 int64_t FileSize) {
   // Ensure the path is null terminated.
   SmallString<256> PathBuf(Filename.begin(), Filename.end());
-  return MemoryBuffer::getFile(PathBuf.c_str(), ec, FileSize);
+  return MemoryBuffer::getFile(PathBuf.c_str(), result, FileSize);
 }
 
-MemoryBuffer *MemoryBuffer::getFile(const char *Filename, error_code &ec,
-                                    int64_t FileSize) {
+error_code MemoryBuffer::getFile(const char *Filename,
+                                 OwningPtr<MemoryBuffer> &result,
+                                 int64_t FileSize) {
   int OpenFlags = O_RDONLY;
 #ifdef O_BINARY
   OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
 #endif
   int FD = ::open(Filename, OpenFlags);
   if (FD == -1) {
-    ec = error_code(errno, posix_category());
-    return 0;
+    return error_code(errno, posix_category());
   }
 
-  return getOpenFile(FD, Filename, ec, FileSize);
+  return getOpenFile(FD, Filename, result, FileSize);
 }
 
-MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
-                                        error_code &ec, int64_t FileSize) {
+error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
+                                     OwningPtr<MemoryBuffer> &result,
+                                     int64_t FileSize) {
   FileCloser FC(FD); // Close FD on return.
 
   // If we don't know the file size, use fstat to find out.  fstat on an open
@@ -218,8 +222,7 @@ MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
     struct stat FileInfo;
     // TODO: This should use fstat64 when available.
     if (fstat(FD, &FileInfo) == -1) {
-      ec = error_code(errno, posix_category());
-      return 0;
+      return error_code(errno, posix_category());
     }
     FileSize = FileInfo.st_size;
   }
@@ -234,8 +237,9 @@ MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
   if (FileSize >= 4096*4 &&
       (FileSize & (sys::Process::GetPageSize()-1)) != 0) {
     if (const char *Pages = sys::Path::MapInFilePages(FD, FileSize)) {
-      return GetNamedBuffer<MemoryBufferMMapFile>(StringRef(Pages, FileSize),
-                                                  Filename);
+      result.reset(GetNamedBuffer<MemoryBufferMMapFile>(
+        StringRef(Pages, FileSize), Filename));
+      return success;
     }
   }
 
@@ -243,8 +247,7 @@ MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
   if (!Buf) {
     // Failed to create a buffer. The only way it can fail is if
     // new(std::nothrow) returns 0.
-    ec = make_error_code(errc::not_enough_memory);
-    return 0;
+    return make_error_code(errc::not_enough_memory);
   }
 
   OwningPtr<MemoryBuffer> SB(Buf);
@@ -257,26 +260,27 @@ MemoryBuffer *MemoryBuffer::getOpenFile(int FD, const char *Filename,
       if (errno == EINTR)
         continue;
       // Error while reading.
-      ec = error_code(errno, posix_category());
-      return 0;
+      return error_code(errno, posix_category());
     } else if (NumRead == 0) {
       // We hit EOF early, truncate and terminate buffer.
       Buf->BufferEnd = BufPtr;
       *BufPtr = 0;
-      return SB.take();
+      result.swap(SB);
+      return success;
     }
     BytesLeft -= NumRead;
     BufPtr += NumRead;
   }
 
-  return SB.take();
+  result.swap(SB);
+  return success;
 }
 
 //===----------------------------------------------------------------------===//
 // MemoryBuffer::getSTDIN implementation.
 //===----------------------------------------------------------------------===//
 
-MemoryBuffer *MemoryBuffer::getSTDIN(error_code &ec) {
+error_code MemoryBuffer::getSTDIN(OwningPtr<MemoryBuffer> &result) {
   // Read in all of the data from stdin, we cannot mmap stdin.
   //
   // FIXME: That isn't necessarily true, we should try to mmap stdin and
@@ -292,11 +296,11 @@ MemoryBuffer *MemoryBuffer::getSTDIN(error_code &ec) {
     ReadBytes = read(0, Buffer.end(), ChunkSize);
     if (ReadBytes == -1) {
       if (errno == EINTR) continue;
-      ec = error_code(errno, posix_category());
-      return 0;
+      return error_code(errno, posix_category());
     }
     Buffer.set_size(Buffer.size() + ReadBytes);
   } while (ReadBytes != 0);
 
-  return getMemBufferCopy(Buffer, "<stdin>");
+  result.reset(getMemBufferCopy(Buffer, "<stdin>"));
+  return success;
 }

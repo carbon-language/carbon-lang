@@ -27,6 +27,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
@@ -58,7 +59,7 @@ static cl::opt<bool> NoHistogram("disable-histogram",
 
 static cl::opt<bool>
 NonSymbolic("non-symbolic",
-            cl::desc("Emit numberic info in dump even if"
+            cl::desc("Emit numeric info in dump even if"
                      " symbolic info is available"));
 
 namespace {
@@ -481,11 +482,10 @@ static void PrintSize(uint64_t Bits) {
 /// AnalyzeBitcode - Analyze the bitcode file specified by InputFilename.
 static int AnalyzeBitcode() {
   // Read the input file.
-  error_code ec;
-  MemoryBuffer *MemBuf =
-    MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), ec);
+  OwningPtr<MemoryBuffer> MemBuf;
 
-  if (MemBuf == 0)
+  if (error_code ec =
+        MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), MemBuf))
     return Error("Error reading '" + InputFilename + "': " + ec.message());
 
   if (MemBuf->getBufferSize() & 3)

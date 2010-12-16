@@ -213,13 +213,13 @@ Archive::writeMember(
   const char *data = (const char*)member.getData();
   MemoryBuffer *mFile = 0;
   if (!data) {
-    error_code ec;
-    mFile = MemoryBuffer::getFile(member.getPath().c_str(), ec);
-    if (mFile == 0) {
+    OwningPtr<MemoryBuffer> File;
+    if (error_code ec = MemoryBuffer::getFile(member.getPath().c_str(), File)) {
       if (ErrMsg)
         *ErrMsg = ec.message();
       return true;
     }
+    mFile = File.take();
     data = mFile->getBufferStart();
     fSize = mFile->getBufferSize();
   }
@@ -411,9 +411,8 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 
     // Map in the archive we just wrote.
     {
-    error_code ec;
-    OwningPtr<MemoryBuffer> arch(MemoryBuffer::getFile(TmpArchive.c_str(), ec));
-    if (arch == 0) {
+    OwningPtr<MemoryBuffer> arch;
+    if (error_code ec = MemoryBuffer::getFile(TmpArchive.c_str(), arch)) {
       if (ErrMsg)
         *ErrMsg = ec.message();
       return true;

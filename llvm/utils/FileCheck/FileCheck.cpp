@@ -16,6 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -489,13 +490,14 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
 static bool ReadCheckFile(SourceMgr &SM,
                           std::vector<CheckString> &CheckStrings) {
   // Open the check file, and tell SourceMgr about it.
-  error_code ec;
-  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(CheckFilename.c_str(), ec);
-  if (F == 0) {
+  OwningPtr<MemoryBuffer> File;
+  if (error_code ec =
+        MemoryBuffer::getFileOrSTDIN(CheckFilename.c_str(), File)) {
     errs() << "Could not open check file '" << CheckFilename << "': "
            << ec.message() << '\n';
     return true;
   }
+  MemoryBuffer *F = File.take();
 
   // If we want to canonicalize whitespace, strip excess whitespace from the
   // buffer containing the CHECK lines.
@@ -648,13 +650,14 @@ int main(int argc, char **argv) {
     return 2;
 
   // Open the file to check and add it to SourceMgr.
-  error_code ec;
-  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), ec);
-  if (F == 0) {
+  OwningPtr<MemoryBuffer> File;
+  if (error_code ec =
+        MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), File)) {
     errs() << "Could not open input file '" << InputFilename << "': "
            << ec.message() << '\n';
     return true;
   }
+  MemoryBuffer *F = File.take();
 
   // Remove duplicate spaces in the input file if requested.
   if (!NoCanonicalizeWhiteSpace)

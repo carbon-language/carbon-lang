@@ -20,6 +20,7 @@
 namespace llvm {
 
 class error_code;
+template<class T> class OwningPtr;
 
 /// MemoryBuffer - This interface provides simple read-only access to a block
 /// of memory, and provides simple methods for reading files and standard input
@@ -61,17 +62,18 @@ public:
   /// MemoryBuffer if successful, otherwise returning null.  If FileSize is
   /// specified, this means that the client knows that the file exists and that
   /// it has the specified size.
-  static MemoryBuffer *getFile(StringRef Filename, error_code &ec,
-                               int64_t FileSize = -1);
-  static MemoryBuffer *getFile(const char *Filename, error_code &ec,
-                               int64_t FileSize = -1);
+  static error_code getFile(StringRef Filename, OwningPtr<MemoryBuffer> &result,
+                            int64_t FileSize = -1);
+  static error_code getFile(const char *Filename,
+                            OwningPtr<MemoryBuffer> &result,
+                            int64_t FileSize = -1);
 
   /// getOpenFile - Given an already-open file descriptor, read the file and
   /// return a MemoryBuffer.  This takes ownership of the descriptor,
   /// immediately closing it after reading the file.
-  static MemoryBuffer *getOpenFile(int FD, const char *Filename,
-                                   error_code &ec,
-                                   int64_t FileSize = -1);
+  static error_code getOpenFile(int FD, const char *Filename,
+                                OwningPtr<MemoryBuffer> &result,
+                                int64_t FileSize = -1);
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
   /// that InputData must be null terminated.
@@ -99,18 +101,18 @@ public:
 
   /// getSTDIN - Read all of stdin into a file buffer, and return it.
   /// If an error occurs, this returns null and sets ec.
-  static MemoryBuffer *getSTDIN(error_code &ec);
+  static error_code getSTDIN(OwningPtr<MemoryBuffer> &result);
 
 
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
   /// if the Filename is "-".  If an error occurs, this returns null and sets
   /// ec.
-  static MemoryBuffer *getFileOrSTDIN(StringRef Filename,
-                                      error_code &ec,
-                                      int64_t FileSize = -1);
-  static MemoryBuffer *getFileOrSTDIN(const char *Filename,
-                                      error_code &ec,
-                                      int64_t FileSize = -1);
+  static error_code getFileOrSTDIN(StringRef Filename,
+                                   OwningPtr<MemoryBuffer> &result,
+                                   int64_t FileSize = -1);
+  static error_code getFileOrSTDIN(const char *Filename,
+                                   OwningPtr<MemoryBuffer> &result,
+                                   int64_t FileSize = -1);
 };
 
 } // end namespace llvm

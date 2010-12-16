@@ -19,6 +19,7 @@
 #ifndef LLVM_SUPPORT_IRREADER_H
 #define LLVM_SUPPORT_IRREADER_H
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -57,15 +58,14 @@ namespace llvm {
   inline Module *getLazyIRFileModule(const std::string &Filename,
                                      SMDiagnostic &Err,
                                      LLVMContext &Context) {
-    error_code ec;
-    MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), ec);
-    if (F == 0) {
+    OwningPtr<MemoryBuffer> File;
+    if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), File)) {
       Err = SMDiagnostic(Filename,
                          "Could not open input file: " + ec.message());
       return 0;
     }
 
-    return getLazyIRModule(F, Err, Context);
+    return getLazyIRModule(File.take(), Err, Context);
   }
 
   /// If the given MemoryBuffer holds a bitcode image, return a Module
@@ -95,15 +95,14 @@ namespace llvm {
   inline Module *ParseIRFile(const std::string &Filename,
                              SMDiagnostic &Err,
                              LLVMContext &Context) {
-    error_code ec;
-    MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), ec);
-    if (F == 0) {
+    OwningPtr<MemoryBuffer> File;
+    if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), File)) {
       Err = SMDiagnostic(Filename,
                          "Could not open input file: " + ec.message());
       return 0;
     }
 
-    return ParseIR(F, Err, Context);
+    return ParseIR(File.take(), Err, Context);
   }
 
 }

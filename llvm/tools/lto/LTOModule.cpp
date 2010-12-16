@@ -57,18 +57,17 @@ bool LTOModule::isBitcodeFileForTarget(const void *mem, size_t length,
 
 bool LTOModule::isBitcodeFileForTarget(const char *path,
                                        const char *triplePrefix) {
-  error_code ec;
-  MemoryBuffer *buffer = MemoryBuffer::getFile(path, ec);
-  if (buffer == NULL)
+  OwningPtr<MemoryBuffer> buffer;
+  if (MemoryBuffer::getFile(path, buffer))
     return false;
-  return isTargetMatch(buffer, triplePrefix);
+  return isTargetMatch(buffer.take(), triplePrefix);
 }
 
 // Takes ownership of buffer.
 bool LTOModule::isTargetMatch(MemoryBuffer *buffer, const char *triplePrefix) {
   std::string Triple = getBitcodeTargetTriple(buffer, getGlobalContext());
   delete buffer;
-  return (strncmp(Triple.c_str(), triplePrefix, 
+  return (strncmp(Triple.c_str(), triplePrefix,
  		  strlen(triplePrefix)) == 0);
 }
 
@@ -80,9 +79,8 @@ LTOModule::LTOModule(Module *m, TargetMachine *t)
 
 LTOModule *LTOModule::makeLTOModule(const char *path,
                                     std::string &errMsg) {
-  error_code ec;
-  OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getFile(path, ec));
-  if (!buffer) {
+  OwningPtr<MemoryBuffer> buffer;
+  if (error_code ec = MemoryBuffer::getFile(path, buffer)) {
     errMsg = ec.message();
     return NULL;
   }

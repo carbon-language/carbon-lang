@@ -144,10 +144,8 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
   sys::Path aPath(Filename);
   // Note: Currently we do not support reading an archive from stdin.
   if (Filename == "-" || aPath.isBitcodeFile()) {
-    error_code ec;
-    std::auto_ptr<MemoryBuffer> Buffer(
-                   MemoryBuffer::getFileOrSTDIN(Filename, ec));
-    if (Buffer.get() == 0)
+    OwningPtr<MemoryBuffer> Buffer;
+    if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buffer))
       ErrorMessage = ec.message();
     Module *Result = 0;
     if (Buffer.get())

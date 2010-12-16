@@ -366,10 +366,8 @@ int main(int argc, char **argv) {
 
   // Load the input file.
   std::string ErrorStr;
-  error_code ec;
-  OwningPtr<MemoryBuffer> InputBuffer(
-    MemoryBuffer::getFileOrSTDIN(InputFile, ec));
-  if (!InputBuffer)
+  OwningPtr<MemoryBuffer> InputBuffer;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFile, InputBuffer))
     return Error("unable to read input: '" + ec.message() + "'");
 
   // Construct the Mach-O wrapper object.

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
@@ -63,6 +64,8 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
 }
 
 ObjectFile *ObjectFile::createObjectFile(StringRef ObjectPath) {
-  error_code ec;
-  return createObjectFile(MemoryBuffer::getFile(ObjectPath, ec));
+  OwningPtr<MemoryBuffer> File;
+  if (error_code ec = MemoryBuffer::getFile(ObjectPath, File))
+    return NULL;
+  return createObjectFile(File.take());
 }

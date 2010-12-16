@@ -224,10 +224,10 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
         delete _nativeObjectFile;
 
         // read .o file into memory buffer
-        error_code ec;
-        _nativeObjectFile = MemoryBuffer::getFile(uniqueObjStr.c_str(), ec);
-        if (ec)
+        OwningPtr<MemoryBuffer> BuffPtr;
+        if (error_code ec = MemoryBuffer::getFile(uniqueObjStr.c_str(),BuffPtr))
           errMsg = ec.message();
+        _nativeObjectFile = BuffPtr.take();
     }
 
     // remove temp files

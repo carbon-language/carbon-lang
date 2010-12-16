@@ -37,6 +37,7 @@
 #include "ARMDecoderEmitter.h"
 #include "SubtargetEmitter.h"
 #include "TGParser.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -190,13 +191,13 @@ static bool ParseFile(const std::string &Filename,
                       const std::vector<std::string> &IncludeDirs,
                       SourceMgr &SrcMgr,
                       RecordKeeper &Records) {
-  error_code ec;
-  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), ec);
-  if (F == 0) {
+  OwningPtr<MemoryBuffer> File;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), File)) {
     errs() << "Could not open input file '" << Filename << "': "
            << ec.message() <<"\n";
     return true;
   }
+  MemoryBuffer *F = File.take();
 
   // Tell SrcMgr about this buffer, which is what TGParser will pick up.
   SrcMgr.AddNewSourceBuffer(F, SMLoc());
