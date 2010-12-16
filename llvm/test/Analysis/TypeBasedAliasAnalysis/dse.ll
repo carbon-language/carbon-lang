@@ -1,4 +1,4 @@
-; RUN: opt < %s -enable-tbaa -tbaa -basicaa -dse -S | FileCheck %s
+; RUN: opt < %s -tbaa -basicaa -dse -S | FileCheck %s
 
 ; DSE should make use of TBAA.
 

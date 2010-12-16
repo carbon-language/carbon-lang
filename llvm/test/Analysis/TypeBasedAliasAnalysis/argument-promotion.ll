@@ -1,4 +1,4 @@
-; RUN: opt < %s -enable-tbaa -tbaa -basicaa -argpromotion -mem2reg -S | not grep alloca
+; RUN: opt < %s -tbaa -basicaa -argpromotion -mem2reg -S | not grep alloca
 
 target datalayout = "E-p:64:64:64"
 

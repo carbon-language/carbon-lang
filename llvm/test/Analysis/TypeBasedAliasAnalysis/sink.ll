@@ -1,4 +1,4 @@
-; RUN: opt -tbaa -enable-tbaa -sink -S < %s | FileCheck %s
+; RUN: opt -tbaa -sink -S < %s | FileCheck %s
 
 ; CHECK: a:
 ; CHECK:   %f = load float* %p, !tbaa !2

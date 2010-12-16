@@ -1,4 +1,4 @@
-; RUN: opt < %s -enable-tbaa -tbaa -basicaa -gvn -S | FileCheck %s
+; RUN: opt < %s -tbaa -basicaa -gvn -S | FileCheck %s
 
 ; Test that basic alias queries work.
 

@@ -1,5 +1,5 @@
-; RUN: opt -enable-tbaa -basicaa -tbaa -gvn -instcombine -S < %s | FileCheck %s --check-prefix=TBAA
-; RUN: opt -enable-tbaa -tbaa -basicaa -gvn -instcombine -S < %s | FileCheck %s --check-prefix=BASICAA
+; RUN: opt -basicaa -tbaa -gvn -instcombine -S < %s | FileCheck %s --check-prefix=TBAA
+; RUN: opt -tbaa -basicaa -gvn -instcombine -S < %s | FileCheck %s --check-prefix=BASICAA
 
 ; According to the TBAA metadata the load and store don't alias. However,
 ; according to the actual code, they do. The order of the alias analysis
