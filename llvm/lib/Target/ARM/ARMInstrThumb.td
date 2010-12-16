@@ -694,7 +694,12 @@ let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1 in
 // FIXME: Pseudo for tLDRspi
 def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
                      "ldr", "\t$dst, $addr", []>,
-               T1LdStSP<{1,?,?}>;
+               T1LdStSP<{1,?,?}> {
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{10-8} = Rt;
+  let Inst{7-0} = addr;
+}
 
 // Load tconstpool
 // FIXME: Use ldr.n to work around a Darwin assembler bug.
@@ -745,7 +750,12 @@ let mayStore = 1, neverHasSideEffects = 1 in
 // FIXME: Pseudo for tSTRspi
 def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStore_i,
                   "str", "\t$src, $addr", []>,
-             T1LdStSP<{0,?,?}>;
+             T1LdStSP<{0,?,?}> {
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{10-8} = Rt;
+  let Inst{7-0} = addr;
+}
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
