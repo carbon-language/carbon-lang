@@ -3166,7 +3166,10 @@ public:
     UPPC_FriendDeclaration,
 
     /// \brief A declaration qualifier.
-    UPPC_DeclarationQualifier
+    UPPC_DeclarationQualifier,
+
+    /// \brief An initializer.
+    UPPC_Initializer
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,

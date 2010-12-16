@@ -5517,11 +5517,21 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
     return;
   } 
 
+  bool IsDependent = false;
+  for (unsigned I = 0, N = Exprs.size(); I != N; ++I) {
+    if (DiagnoseUnexpandedParameterPack(Exprs.get()[I], UPPC_Expression)) {
+      VDecl->setInvalidDecl();
+      return;
+    }
+
+    if (Exprs.get()[I]->isTypeDependent())
+      IsDependent = true;
+  }
+
   // If either the declaration has a dependent type or if any of the
   // expressions is type-dependent, we represent the initialization
   // via a ParenListExpr for later use during template instantiation.
-  if (VDecl->getType()->isDependentType() ||
-      Expr::hasAnyTypeDependentArguments((Expr **)Exprs.get(), Exprs.size())) {
+  if (VDecl->getType()->isDependentType() || IsDependent) {
     // Let clients know that initialization was done with a direct initializer.
     VDecl->setCXXDirectInitializer(true);
 

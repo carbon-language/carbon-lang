@@ -104,6 +104,7 @@ void TestPPNameFunc(int i) {
 }
 
 // FIXME: Test for unexpanded parameter packs in declarations.
+// FIXME: Attributes?
 template<typename T, typename... Types>
 struct TestUnexpandedDecls : T{
   void member_function(Types);  // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
@@ -125,6 +126,12 @@ struct TestUnexpandedDecls : T{
   friend class Types::foo; // expected-error{{friend declaration contains unexpanded parameter pack 'Types'}}
   friend void friend_func(Types); // expected-error{{friend declaration contains unexpanded parameter pack 'Types'}}
   friend void Types::other_friend_func(int); // expected-error{{friend declaration contains unexpanded parameter pack 'Types'}}
+
+  void test_initializers() {
+    T copy_init = static_cast<Types>(0); // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
+    T direct_init(0, static_cast<Types>(0)); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+    T list_init = { static_cast<Types>(0) }; // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
+  }
 };
 
 // Test for diagnostics in the presence of multiple unexpanded

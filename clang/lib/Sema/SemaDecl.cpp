@@ -4464,27 +4464,34 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
     return;
   }
   
-  // C++ [class.static.data]p4
-  //   If a static data member is of const integral or const
-  //   enumeration type, its declaration in the class definition can
-  //   specify a constant-initializer which shall be an integral
-  //   constant expression (5.19). In that case, the member can appear
-  //   in integral constant expressions. The member shall still be
-  //   defined in a namespace scope if it is used in the program and the
-  //   namespace scope definition shall not contain an initializer.
-  //
-  // We already performed a redefinition check above, but for static
-  // data members we also need to check whether there was an in-class
-  // declaration with an initializer.
   const VarDecl* PrevInit = 0;
-  if (VDecl->isStaticDataMember() && VDecl->getAnyInitializer(PrevInit)) {
-    Diag(VDecl->getLocation(), diag::err_redefinition) << VDecl->getDeclName();
-    Diag(PrevInit->getLocation(), diag::note_previous_definition);
-    return;
-  }  
+  if (getLangOptions().CPlusPlus) {
+    // C++ [class.static.data]p4
+    //   If a static data member is of const integral or const
+    //   enumeration type, its declaration in the class definition can
+    //   specify a constant-initializer which shall be an integral
+    //   constant expression (5.19). In that case, the member can appear
+    //   in integral constant expressions. The member shall still be
+    //   defined in a namespace scope if it is used in the program and the
+    //   namespace scope definition shall not contain an initializer.
+    //
+    // We already performed a redefinition check above, but for static
+    // data members we also need to check whether there was an in-class
+    // declaration with an initializer.
+    if (VDecl->isStaticDataMember() && VDecl->getAnyInitializer(PrevInit)) {
+      Diag(VDecl->getLocation(), diag::err_redefinition) << VDecl->getDeclName();
+      Diag(PrevInit->getLocation(), diag::note_previous_definition);
+      return;
+    }  
 
-  if (getLangOptions().CPlusPlus && VDecl->hasLocalStorage())
-    getCurFunction()->setHasBranchProtectedScope();
+    if (VDecl->hasLocalStorage())
+      getCurFunction()->setHasBranchProtectedScope();
+
+    if (DiagnoseUnexpandedParameterPack(Init, UPPC_Initializer)) {
+      VDecl->setInvalidDecl();
+      return;
+    }
+  }
 
   // Capture the variable that is being initialized and the style of
   // initialization.
