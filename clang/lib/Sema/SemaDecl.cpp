@@ -5771,6 +5771,11 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         // Recover by falling back to int.
         EnumUnderlying = Context.IntTy.getTypePtr();
       }
+
+      if (DiagnoseUnexpandedParameterPack(UnderlyingLoc, TI, 
+                                          UPPC_FixedUnderlyingType))
+        EnumUnderlying = Context.IntTy.getTypePtr();
+
     } else if (getLangOptions().Microsoft)
       // Microsoft enums are always of int type.
       EnumUnderlying = Context.IntTy.getTypePtr();
@@ -7319,6 +7324,10 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
   unsigned IntWidth = Context.Target.getIntWidth();
   llvm::APSInt EnumVal(IntWidth);
   QualType EltTy;
+
+  if (Val && DiagnoseUnexpandedParameterPack(Val, UPPC_EnumeratorValue))
+    Val = 0;
+
   if (Val) {
     if (Enum->isDependentType() || Val->isTypeDependent())
       EltTy = Context.DependentTy;

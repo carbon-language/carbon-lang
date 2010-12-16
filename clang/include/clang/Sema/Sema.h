@@ -3151,7 +3151,13 @@ public:
     UPPC_BitFieldWidth,
 
     /// \brief The expression in a static assertion.
-    UPPC_StaticAssertExpression
+    UPPC_StaticAssertExpression,
+
+    /// \brief The fixed underlying type of an enumeration.
+    UPPC_FixedUnderlyingType,
+
+    /// \brief The enumerator value.
+    UPPC_EnumeratorValue
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,

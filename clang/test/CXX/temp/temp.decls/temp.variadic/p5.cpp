@@ -112,6 +112,10 @@ struct TestUnexpandedDecls {
   static Types static_data_member; // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
   unsigned bit_field : static_cast<Types>(0);  // expected-error{{bit-field size contains unexpanded parameter pack 'Types'}}
   static_assert(static_cast<Types>(0), "Boom"); // expected-error{{static assertion contains unexpanded parameter pack 'Types'}}
+
+  enum E0 : Types {  // expected-error{{fixed underlying type contains unexpanded parameter pack 'Types'}}
+    EnumValue = static_cast<Types>(0) // expected-error{{enumerator value contains unexpanded parameter pack 'Types'}}
+  };
 };
 
 // Test for diagnostics in the presence of multiple unexpanded
