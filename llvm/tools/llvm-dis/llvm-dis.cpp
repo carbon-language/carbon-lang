@@ -83,11 +83,11 @@ int main(int argc, char **argv) {
   std::auto_ptr<Module> M;
   OwningPtr<MemoryBuffer> BufferPtr;
 
-  if (ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
+  if ((ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr)))
     ErrorMessage = ec.message();
   else
     M.reset(ParseBitcodeFile(BufferPtr.get(), Context, &ErrorMessage));
-  MemoryBuffer *Buffer = BufferPtr.take();
+  (void) BufferPtr.take();
 
   if (M.get() == 0) {
     errs() << argv[0] << ": ";
