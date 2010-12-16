@@ -11,6 +11,7 @@
 #define LLVM_MC_MCCODEEMITTER_H
 
 #include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 
 #include <cassert>
 
@@ -19,32 +20,6 @@ class MCExpr;
 class MCInst;
 class raw_ostream;
 template<typename T> class SmallVectorImpl;
-
-/// MCFixupKindInfo - Target independent information on a fixup kind.
-struct MCFixupKindInfo {
-  enum FixupKindFlags {
-    /// Is this fixup kind PCrelative? This is used by the assembler backend to
-    /// evaluate fixup values in a target independent manner when possible.
-    FKF_IsPCRel = (1 << 0),
-    
-    /// Should this fixup kind force a 4-byte aligned effective PC value?
-    FKF_IsAlignedDownTo32Bits = (1 << 1)
-  };
-
-  /// A target specific name for the fixup kind. The names will be unique for
-  /// distinct kinds on any given target.
-  const char *Name;
-
-  /// The bit offset to write the relocation into.
-  unsigned TargetOffset;
-
-  /// The number of bits written by this fixup. The bits are assumed to be
-  /// contiguous.
-  unsigned TargetSize;
-
-  /// Flags describing additional information on this fixup kind.
-  unsigned Flags;
-};
 
 /// MCCodeEmitter - Generic instruction encoding interface.
 class MCCodeEmitter {
