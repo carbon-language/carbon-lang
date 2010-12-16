@@ -22,7 +22,6 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectConstResult.h"
-#include "lldb/Expression/ASTSplitConsumer.h"
 #include "lldb/Expression/ASTResultSynthesizer.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionParser.h"
