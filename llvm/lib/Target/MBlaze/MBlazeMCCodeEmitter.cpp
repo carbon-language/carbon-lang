@@ -51,10 +51,6 @@ public:
     return getMachineOpValue(MI, MI.getOperand(OpIdx));
   }
 
-  unsigned getNumFixupKinds() const {
-    return 2;
-  }
-
   static unsigned GetMBlazeRegNum(const MCOperand &MO) {
     // FIXME: getMBlazeRegisterNumbering() is sufficient?
     assert(0 && "MBlazeMCCodeEmitter::GetMBlazeRegNum() not yet implemented.");

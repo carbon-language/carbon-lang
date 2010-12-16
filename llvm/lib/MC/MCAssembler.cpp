@@ -224,7 +224,7 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
 
   Value = Target.getConstant();
 
-  bool IsPCRel = Emitter.getFixupKindInfo(
+  bool IsPCRel = Backend.getFixupKindInfo(
     Fixup.getKind()).Flags & MCFixupKindInfo::FKF_IsPCRel;
   bool IsResolved = true;
   bool IsThumb = false;
@@ -248,7 +248,7 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
   if (IsResolved)
     IsResolved = Writer.IsFixupFullyResolved(*this, Target, IsPCRel, DF);
 
-  bool ShouldAlignPC = Emitter.getFixupKindInfo(Fixup.getKind()).Flags &
+  bool ShouldAlignPC = Backend.getFixupKindInfo(Fixup.getKind()).Flags &
                          MCFixupKindInfo::FKF_IsAlignedDownTo32Bits;
   assert((ShouldAlignPC ? IsPCRel : true) &&
     "FKF_IsAlignedDownTo32Bits is only allowed on PC-relative fixups!");

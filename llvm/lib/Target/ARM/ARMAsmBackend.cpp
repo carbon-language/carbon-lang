@@ -32,6 +32,46 @@ class ARMAsmBackend : public TargetAsmBackend {
 public:
   ARMAsmBackend(const Target &T) : TargetAsmBackend(), isThumbMode(false) {}
 
+  unsigned getNumFixupKinds() const { return ARM::NumTargetFixupKinds; }
+
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+    const static MCFixupKindInfo Infos[ARM::NumTargetFixupKinds] = {
+// This table *must* be in the order that the fixup_* kinds are defined in
+// ARMFixupKinds.h.
+//
+// Name                      Offset (bits) Size (bits)     Flags
+{ "fixup_arm_ldst_pcrel_12", 1,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_ldst_pcrel_12",  0,            32,  MCFixupKindInfo::FKF_IsPCRel |
+                                   MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+{ "fixup_arm_pcrel_10",      1,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_pcrel_10",       0,            32,  MCFixupKindInfo::FKF_IsPCRel |
+                                   MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+{ "fixup_thumb_adr_pcrel_10",0,            8,   MCFixupKindInfo::FKF_IsPCRel |
+                                   MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+{ "fixup_arm_adr_pcrel_12",  1,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_adr_pcrel_12",   0,            32,  MCFixupKindInfo::FKF_IsPCRel |
+                                   MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+{ "fixup_arm_branch",        0,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_condbranch",     0,            32,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_uncondbranch",   0,            32,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_br",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_bl",      0,            32,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_blx",     7,            21,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_cb",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_cp",      1,             8,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_bcc",     1,             8,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_movt_hi16",     0,            16,  0 },
+{ "fixup_arm_movw_lo16",     0,            16,  0 },
+    };
+
+    if (Kind < FirstTargetFixupKind)
+      return TargetAsmBackend::getFixupKindInfo(Kind);
+
+    assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
+           "Invalid kind!");
+    return Infos[Kind - FirstTargetFixupKind];
+  }
+
   bool MayNeedRelaxation(const MCInst &Inst) const;
 
   void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;

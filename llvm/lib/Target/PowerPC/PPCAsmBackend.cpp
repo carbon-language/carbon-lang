@@ -22,6 +22,26 @@ namespace {
   const Target &TheTarget;
   public:
     PPCAsmBackend(const Target &T) : TargetAsmBackend(), TheTarget(T) {}
+  
+    unsigned getNumFixupKinds() const { return PPC::NumTargetFixupKinds; }
+
+    const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+      const static MCFixupKindInfo Infos[PPC::NumTargetFixupKinds] = {
+        // name                    offset  bits  flags
+        { "fixup_ppc_br24",        6,      24,   MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_ppc_brcond14",    16,     14,   MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_ppc_lo16",        16,     16,   0 },
+        { "fixup_ppc_ha16",        16,     16,   0 },
+        { "fixup_ppc_lo14",        16,     14,   0 }
+      };
+    
+      if (Kind < FirstTargetFixupKind)
+        return TargetAsmBackend::getFixupKindInfo(Kind);
+    
+      assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
+             "Invalid kind!");
+      return Infos[Kind - FirstTargetFixupKind];
+    }
     
     bool MayNeedRelaxation(const MCInst &Inst) const {
       // FIXME.

@@ -47,6 +47,10 @@ public:
     : TargetAsmBackend() {
   }
 
+  unsigned getNumFixupKinds() const {
+    return 2;
+  }
+
   bool MayNeedRelaxation(const MCInst &Inst) const;
 
   void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;

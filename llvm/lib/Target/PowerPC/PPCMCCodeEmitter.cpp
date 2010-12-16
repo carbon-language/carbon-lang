@@ -37,26 +37,6 @@ public:
   }
   
   ~PPCMCCodeEmitter() {}
-  
-  unsigned getNumFixupKinds() const { return PPC::NumTargetFixupKinds; }
-  
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
-    const static MCFixupKindInfo Infos[] = {
-      // name                     offset  bits  flags
-      { "fixup_ppc_br24",         6,      24,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ppc_brcond14",     16,     14,   MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ppc_lo16",         16,     16,   0 },
-      { "fixup_ppc_ha16",         16,     16,   0 },
-      { "fixup_ppc_lo14",         16,     14,   0 }
-    };
-    
-    if (Kind < FirstTargetFixupKind)
-      return MCCodeEmitter::getFixupKindInfo(Kind);
-    
-    assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
-           "Invalid kind!");
-    return Infos[Kind - FirstTargetFixupKind];
-  }
 
   unsigned getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
                                SmallVectorImpl<MCFixup> &Fixups) const;

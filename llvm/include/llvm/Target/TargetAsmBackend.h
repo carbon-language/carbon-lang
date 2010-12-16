@@ -11,6 +11,8 @@
 #define LLVM_TARGET_TARGETASMBACKEND_H
 
 #include "llvm/MC/MCDirectives.h"
+#include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -80,11 +82,27 @@ public:
     return true;
   }
 
+  /// @name Target Fixup Interfaces
+  /// @{
+
+  /// getNumFixupKinds - Get the number of target specific fixup kinds.
+  virtual unsigned getNumFixupKinds() const = 0;
+
+  /// getFixupKindInfo - Get information on a fixup kind.
+  virtual const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const;
+
+  /// @}
+
   /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
   /// data fragment, at the offset specified by the fixup and following the
   /// fixup kind as appropriate.
   virtual void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                           uint64_t Value) const = 0;
+
+  /// @}
+
+  /// @name Target Relaxation Interfaces
+  /// @{
 
   /// MayNeedRelaxation - Check whether the given instruction may need
   /// relaxation.
@@ -99,6 +117,8 @@ public:
   /// output.
   /// \parm Res [output] - On return, the relaxed instruction.
   virtual void RelaxInstruction(const MCInst &Inst, MCInst &Res) const = 0;
+
+  /// @}
 
   /// WriteNopData - Write an (optimal) nop sequence of Count bytes to the given
   /// output. If the target cannot generate such a sequence, it should return an

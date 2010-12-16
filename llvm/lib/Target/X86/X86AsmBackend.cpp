@@ -13,6 +13,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectFormat.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionCOFF.h"
@@ -48,6 +49,26 @@ class X86AsmBackend : public TargetAsmBackend {
 public:
   X86AsmBackend(const Target &T)
     : TargetAsmBackend() {}
+
+  unsigned getNumFixupKinds() const {
+    return X86::NumTargetFixupKinds;
+  }
+
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+    const static MCFixupKindInfo Infos[X86::NumTargetFixupKinds] = {
+      { "reloc_riprel_4byte", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
+      { "reloc_riprel_4byte_movq_load", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel},
+      { "reloc_signed_4byte", 0, 4 * 8, 0},
+      { "reloc_global_offset_table", 0, 4 * 8, 0}
+    };
+
+    if (Kind < FirstTargetFixupKind)
+      return TargetAsmBackend::getFixupKindInfo(Kind);
+
+    assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
+           "Invalid kind!");
+    return Infos[Kind - FirstTargetFixupKind];
+  }
 
   void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const {

@@ -20,9 +20,12 @@ enum Fixups {
   reloc_signed_4byte,                        // 32-bit signed. Unlike FK_Data_4
                                              // this will be sign extended at
                                              // runtime.
-  reloc_global_offset_table                  // 32-bit, relative to the start
+  reloc_global_offset_table,                 // 32-bit, relative to the start
                                              // of the instruction. Used only
                                              // for _GLOBAL_OFFSET_TABLE_.
+  // Marker
+  LastTargetFixupKind,
+  NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind
 };
 }
 }

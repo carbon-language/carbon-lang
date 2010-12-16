@@ -11,7 +11,6 @@
 #define LLVM_MC_MCCODEEMITTER_H
 
 #include "llvm/MC/MCFixup.h"
-#include "llvm/MC/MCFixupKindInfo.h"
 
 #include <cassert>
 
@@ -31,17 +30,6 @@ protected: // Can only create subclasses.
 
 public:
   virtual ~MCCodeEmitter();
-
-  /// @name Target Independent Fixup Information
-  /// @{
-
-  /// getNumFixupKinds - Get the number of target specific fixup kinds.
-  virtual unsigned getNumFixupKinds() const = 0;
-
-  /// getFixupKindInfo - Get information on a fixup kind.
-  virtual const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const;
-
-  /// @}
 
   /// EncodeInstruction - Encode the given \arg Inst to bytes on the output
   /// stream \arg OS.
