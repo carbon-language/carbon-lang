@@ -141,6 +141,9 @@ struct TestUnexpandedDecls : T{
     struct default_template_args_2;
   template<template<typename> class = Types::template apply> // expected-error{{default argument contains unexpanded parameter pack 'Types'}}
     struct default_template_args_3;
+
+  template<Types value> // expected-error{{non-type template parameter type contains unexpanded parameter pack 'Types'}}
+  struct non_type_template_param_type;
 };
 
 // Test for diagnostics in the presence of multiple unexpanded

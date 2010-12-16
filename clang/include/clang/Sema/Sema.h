@@ -3172,7 +3172,10 @@ public:
     UPPC_Initializer,
     
     /// \brief A default argument.
-    UPPC_DefaultArgument
+    UPPC_DefaultArgument,
+    
+    /// \brief The type of a non-type template parameter.
+    UPPC_NonTypeTemplateParameterType
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,

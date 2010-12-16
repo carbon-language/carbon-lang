@@ -626,12 +626,18 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                                            PrevDecl);
   }
 
-  T = CheckNonTypeTemplateParameterType(T, D.getIdentifierLoc());
-  if (T.isNull()) {
+  if (DiagnoseUnexpandedParameterPack(D.getIdentifierLoc(), TInfo, 
+                                      UPPC_NonTypeTemplateParameterType)) {
     T = Context.IntTy; // Recover with an 'int' type.
     Invalid = true;
+  } else {  
+    T = CheckNonTypeTemplateParameterType(T, D.getIdentifierLoc());
+    if (T.isNull()) {
+      T = Context.IntTy; // Recover with an 'int' type.
+      Invalid = true;
+    }
   }
-
+  
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
                                       D.getIdentifierLoc(),
