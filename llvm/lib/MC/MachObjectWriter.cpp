@@ -50,24 +50,6 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
   }
 }
 
-static bool isFixupKindPCRel(unsigned Kind) {
-  switch (Kind) {
-  default:
-    return false;
-  case FK_PCRel_1:
-  case FK_PCRel_2:
-  case FK_PCRel_4:
-  case X86::reloc_riprel_4byte:
-  case X86::reloc_riprel_4byte_movq_load:
-    return true;
-  }
-}
-
-static bool isFixupKindRIPRel(unsigned Kind) {
-  return Kind == X86::reloc_riprel_4byte ||
-    Kind == X86::reloc_riprel_4byte_movq_load;
-}
-
 static bool doesSymbolRequireExternRelocation(MCSymbolData *SD) {
   // Undefined symbols are always extern.
   if (SD->Symbol->isUndefined())
@@ -178,6 +160,18 @@ class MachObjectWriter : public MCObjectWriter {
              RHS.SymbolData->getSymbol().getName();
     }
   };
+
+  /// @name Utility Methods
+  /// @{
+
+  bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
+    const MCFixupKindInfo &FKI = Asm.getBackend().getFixupKindInfo(
+      (MCFixupKind) Kind);
+
+    return FKI.Flags & MCFixupKindInfo::FKF_IsPCRel;
+  }
+
+  /// @}
 
   /// @name Relocation Data
   /// @{
@@ -489,11 +483,15 @@ public:
   //  - Input errors, where something cannot be correctly encoded. 'as' allows
   //    these through in many cases.
 
+  static bool isFixupKindRIPRel(unsigned Kind) {
+    return Kind == X86::reloc_riprel_4byte ||
+      Kind == X86::reloc_riprel_4byte_movq_load;
+  }
   void RecordX86_64Relocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                               const MCFragment *Fragment,
                               const MCFixup &Fixup, MCValue Target,
                               uint64_t &FixedValue) {
-    unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
+    unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
     unsigned IsRIPRel = isFixupKindRIPRel(Fixup.getKind());
     unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
 
@@ -731,7 +729,7 @@ public:
                                  const MCFixup &Fixup, MCValue Target,
                                  uint64_t &FixedValue) {
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
-    unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
+    unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
     unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
     unsigned Type = macho::RIT_Vanilla;
 
@@ -841,7 +839,7 @@ public:
       return;
     }
 
-    unsigned IsPCRel = isFixupKindPCRel(Fixup.getKind());
+    unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
     unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
 
     // If this is a 32-bit TLVP reloc it's handled a bit differently.
