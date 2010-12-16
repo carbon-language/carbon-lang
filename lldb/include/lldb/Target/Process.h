@@ -1336,6 +1336,10 @@ public:
                 size_t size,
                 Error &error);
 
+    uint64_t
+    ReadUnsignedInteger (lldb::addr_t vm_addr, 
+                         size_t integer_byte_size,
+                         Error &error);
     //------------------------------------------------------------------
     /// Actually do the writing of memory to a process.
     ///

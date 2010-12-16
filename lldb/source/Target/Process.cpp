@@ -1072,6 +1072,29 @@ Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
     return bytes_read;
 }
 
+uint64_t
+Process::ReadUnsignedInteger (lldb::addr_t vm_addr, size_t integer_byte_size, Error &error)
+{
+    if (integer_byte_size > sizeof(uint64_t))
+    {
+        error.SetErrorString ("unsupported integer size");
+    }
+    else
+    {
+        uint8_t tmp[sizeof(uint64_t)];
+        DataExtractor data (tmp, integer_byte_size, GetByteOrder(), GetAddressByteSize());
+        if (ReadMemory (vm_addr, tmp, integer_byte_size, error) == integer_byte_size)
+        {
+            uint32_t offset = 0;
+            return data.GetMaxU64 (&offset, integer_byte_size);
+        }
+    }
+    // Any plug-in that doesn't return success a memory read with the number
+    // of bytes that were requested should be setting the error
+    assert (error.Fail());
+    return 0;
+}
+
 size_t
 Process::WriteMemoryPrivate (addr_t addr, const void *buf, size_t size, Error &error)
 {
