@@ -79,15 +79,13 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");
 
   std::string ErrorMessage;
-  error_code ec;
   std::auto_ptr<Module> M;
   OwningPtr<MemoryBuffer> BufferPtr;
 
-  if ((ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr)))
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
     ErrorMessage = ec.message();
   else
-    M.reset(ParseBitcodeFile(BufferPtr.get(), Context, &ErrorMessage));
-  (void) BufferPtr.take();
+    M.reset(ParseBitcodeFile(BufferPtr.take(), Context, &ErrorMessage));
 
   if (M.get() == 0) {
     errs() << argv[0] << ": ";
