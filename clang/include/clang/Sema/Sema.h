@@ -3157,7 +3157,10 @@ public:
     UPPC_FixedUnderlyingType,
 
     /// \brief The enumerator value.
-    UPPC_EnumeratorValue
+    UPPC_EnumeratorValue,
+
+    /// \brief A using declaration.
+    UPPC_UsingDeclaration
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,
@@ -3181,6 +3184,26 @@ public:
   /// \returns true if an error ocurred, false otherwise.
   bool DiagnoseUnexpandedParameterPack(Expr *E,
                        UnexpandedParameterPackContext UPPC = UPPC_Expression);
+
+  /// \brief If the given nested-name-specifier contains an unexpanded
+  /// parameter pack, diagnose the error.
+  ///
+  /// \param SS The nested-name-specifier that is being checked for
+  /// unexpanded parameter packs.
+  ///
+  /// \returns true if an error ocurred, false otherwise.
+  bool DiagnoseUnexpandedParameterPack(const CXXScopeSpec &SS,
+                                       UnexpandedParameterPackContext UPPC);
+
+  /// \brief If the given name contains an unexpanded parameter pack,
+  /// diagnose the error.
+  ///
+  /// \param NameInfo The name (with source location information) that
+  /// is being checked for unexpanded parameter packs.
+  ///
+  /// \returns true if an error ocurred, false otherwise.
+  bool DiagnoseUnexpandedParameterPack(const DeclarationNameInfo &NameInfo,
+                                       UnexpandedParameterPackContext UPPC);
 
   /// \brief Describes the result of template argument deduction.
   ///

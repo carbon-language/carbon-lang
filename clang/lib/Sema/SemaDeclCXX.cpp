@@ -928,6 +928,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     }
     
     // FIXME: Check for template parameters!
+    // FIXME: Check that the name is an identifier!
     Member = HandleField(S, cast<CXXRecordDecl>(CurContext), Loc, D, BitWidth,
                          AS);
     assert(Member && "HandleField never returns null");
@@ -3546,6 +3547,10 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
     Diag(UsingLoc, diag::warn_access_decl_deprecated)
       << FixItHint::CreateInsertion(SS.getRange().getBegin(), "using ");
   }
+
+  if (DiagnoseUnexpandedParameterPack(SS, UPPC_UsingDeclaration) ||
+      DiagnoseUnexpandedParameterPack(TargetNameInfo, UPPC_UsingDeclaration))
+    return 0;
 
   NamedDecl *UD = BuildUsingDeclaration(S, AS, UsingLoc, SS,
                                         TargetNameInfo, AttrList,

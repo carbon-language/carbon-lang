@@ -104,10 +104,11 @@ void TestPPNameFunc(int i) {
 }
 
 // FIXME: Test for unexpanded parameter packs in declarations.
-template<typename... Types>
-struct TestUnexpandedDecls {
+template<typename T, typename... Types>
+struct TestUnexpandedDecls : T{
   void member_function(Types);  // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
   void member_function () throw(Types); // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+  operator Types() const; // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
   Types data_member;  // expected-error{{data member type contains unexpanded parameter pack 'Types'}}
   static Types static_data_member; // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
   unsigned bit_field : static_cast<Types>(0);  // expected-error{{bit-field size contains unexpanded parameter pack 'Types'}}
@@ -116,6 +117,10 @@ struct TestUnexpandedDecls {
   enum E0 : Types {  // expected-error{{fixed underlying type contains unexpanded parameter pack 'Types'}}
     EnumValue = static_cast<Types>(0) // expected-error{{enumerator value contains unexpanded parameter pack 'Types'}}
   };
+
+  using typename Types::type; // expected-error{{using declaration contains unexpanded parameter pack 'Types'}}
+  using Types::value; // expected-error{{using declaration contains unexpanded parameter pack 'Types'}}
+  using T::operator Types; // expected-error{{using declaration contains unexpanded parameter pack 'Types'}}
 };
 
 // Test for diagnostics in the presence of multiple unexpanded

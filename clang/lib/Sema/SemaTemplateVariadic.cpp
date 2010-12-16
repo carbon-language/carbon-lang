@@ -171,7 +171,7 @@ bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
 }
 
 bool Sema::DiagnoseUnexpandedParameterPack(Expr *E,
-                                           UnexpandedParameterPackContext UPPC) {
+                                        UnexpandedParameterPackContext UPPC) {
   // C++0x [temp.variadic]p5:
   //   An appearance of a name of a parameter pack that is not expanded is 
   //   ill-formed.
@@ -182,5 +182,55 @@ bool Sema::DiagnoseUnexpandedParameterPack(Expr *E,
   CollectUnexpandedParameterPacksVisitor(Unexpanded).TraverseStmt(E);
   assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
   DiagnoseUnexpandedParameterPacks(*this, E->getLocStart(), UPPC, Unexpanded);
+  return true;
+}
+
+bool Sema::DiagnoseUnexpandedParameterPack(const CXXScopeSpec &SS,
+                                        UnexpandedParameterPackContext UPPC) {
+  // C++0x [temp.variadic]p5:
+  //   An appearance of a name of a parameter pack that is not expanded is 
+  //   ill-formed.
+  if (!SS.getScopeRep() || 
+      !SS.getScopeRep()->containsUnexpandedParameterPack())
+    return false;
+
+  llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+  CollectUnexpandedParameterPacksVisitor(Unexpanded)
+    .TraverseNestedNameSpecifier(SS.getScopeRep());
+  assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
+  DiagnoseUnexpandedParameterPacks(*this, SS.getRange().getBegin(), 
+                                   UPPC, Unexpanded);
+  return true;
+}
+
+bool Sema::DiagnoseUnexpandedParameterPack(const DeclarationNameInfo &NameInfo,
+                                         UnexpandedParameterPackContext UPPC) {
+  // C++0x [temp.variadic]p5:
+  //   An appearance of a name of a parameter pack that is not expanded is 
+  //   ill-formed.
+  switch (NameInfo.getName().getNameKind()) {
+  case DeclarationName::Identifier:
+  case DeclarationName::ObjCZeroArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCMultiArgSelector:
+  case DeclarationName::CXXOperatorName:
+  case DeclarationName::CXXLiteralOperatorName:
+  case DeclarationName::CXXUsingDirective:
+    return false;
+
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXConversionFunctionName:
+    if (!NameInfo.getNamedTypeInfo()->getType()
+                                          ->containsUnexpandedParameterPack())
+      return false;
+    break;
+  }
+
+  llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+  CollectUnexpandedParameterPacksVisitor(Unexpanded)
+    .TraverseTypeLoc(NameInfo.getNamedTypeInfo()->getTypeLoc());
+  assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
+  DiagnoseUnexpandedParameterPacks(*this, NameInfo.getLoc(), UPPC, Unexpanded);
   return true;
 }

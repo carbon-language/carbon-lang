@@ -2319,7 +2319,8 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
            diag::err_declarator_need_ident)
         << D.getDeclSpec().getSourceRange() << D.getSourceRange();
     return 0;
-  }
+  } else if (DiagnoseUnexpandedParameterPack(NameInfo, UPPC_DeclarationType))
+    return 0;
 
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
   // we find one that is.
