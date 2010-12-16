@@ -101,6 +101,11 @@ public:
     /// @param[in] exe_ctx
     ///     The execution context to write the function into.
     ///
+    /// @param[out] const_result
+    ///     If non-NULL, the result of the expression is constant, and the
+    ///     expression has no side effects, this is set to the result of the 
+    ///     expression.  
+    ///
     /// @return
     ///     An error code indicating the success or failure of the operation.
     ///     Test with Success().
@@ -108,7 +113,8 @@ public:
     Error
     MakeJIT (lldb::addr_t &func_addr,
              lldb::addr_t &func_end,
-             ExecutionContext &exe_ctx);
+             ExecutionContext &exe_ctx,
+             lldb::ClangExpressionVariableSP *const_result = NULL);
     
     //------------------------------------------------------------------
     /// Disassemble the machine code for a JITted function from the target 
@@ -119,10 +125,6 @@ public:
     ///
     /// @param[in] exc_context
     ///     The execution context to get the machine code from.
-    ///
-    /// @param[in] func_name
-    ///     The name of the function to be disassembled.  By default, the
-    ///     function wrapped by ParseExpression().
     ///
     /// @return
     ///     The error generated.  If .Success() is true, disassembly succeeded.

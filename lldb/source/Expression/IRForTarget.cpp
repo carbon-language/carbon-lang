@@ -34,13 +34,16 @@ static char ID;
 
 IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
                           bool resolve_vars,
+                          lldb::ClangExpressionVariableSP *const_result,
                           const char *func_name) :
     ModulePass(ID),
     m_decl_map(decl_map),
     m_CFStringCreateWithBytes(NULL),
     m_sel_registerName(NULL),
     m_func_name(func_name),
-    m_resolve_vars(resolve_vars)
+    m_resolve_vars(resolve_vars),
+    m_const_result(const_result),
+    m_has_side_effects(NULL)
 {
 }
 
@@ -72,6 +75,64 @@ PrintType(const Type *type, bool truncate = false)
 
 IRForTarget::~IRForTarget()
 {
+}
+
+bool 
+IRForTarget::HasSideEffects (llvm::Module &llvm_module,
+                             llvm::Function &llvm_function)
+{
+    llvm::Function::iterator bbi;
+    BasicBlock::iterator ii;
+    
+    for (bbi = llvm_function.begin();
+         bbi != llvm_function.end();
+         ++bbi)
+    {
+        BasicBlock &basic_block = *bbi;
+        
+        for (ii = basic_block.begin();
+             ii != basic_block.end();
+             ++ii)
+        {      
+            switch (ii->getOpcode())
+            {
+            default:
+                return true;
+            case Instruction::Store:
+                {
+                    StoreInst *store_inst = dyn_cast<StoreInst>(ii);
+                    
+                    Value *store_ptr = store_inst->getPointerOperand();
+                    
+                    if (!isa <AllocaInst> (store_ptr))
+                        return true;
+                    else
+                        break;
+                }
+            case Instruction::Load:
+            case Instruction::Alloca:
+            case Instruction::GetElementPtr:
+            case Instruction::Ret:
+                break;
+            }
+        }
+    }
+    
+    return false;
+}
+
+void 
+IRForTarget::MaybeSetConstantResult (llvm::Constant *initializer,
+                                     const lldb_private::ConstString &name,
+                                     lldb_private::TypeFromParser type)
+{
+    if (!m_const_result)
+        return;
+    
+    if (llvm::ConstantInt *init_int = dyn_cast<llvm::ConstantInt>(initializer))
+    {
+        *m_const_result = m_decl_map->BuildIntegerVariable(name, type, init_int->getValue());
+    }
 }
 
 bool 
@@ -239,6 +300,16 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
         }
         
         Constant *initializer = result_global->getInitializer();
+        
+        // Here we write the initializer into a result variable assuming it
+        // can be computed statically.
+        
+        if (!m_has_side_effects)
+        {
+            MaybeSetConstantResult (initializer, 
+                                    new_result_name, 
+                                    result_decl_type);
+        }
                 
         StoreInst *synthesized_store = new StoreInst::StoreInst(initializer,
                                                                 new_result_global,
@@ -1442,6 +1513,8 @@ IRForTarget::runOnModule (Module &llvm_module)
         
     Function::iterator bbi;
     
+    m_has_side_effects = HasSideEffects(llvm_module, *function);
+    
     ////////////////////////////////////////////////////////////
     // Replace $__lldb_expr_result with a persistent variable
     //
@@ -1456,36 +1529,12 @@ IRForTarget::runOnModule (Module &llvm_module)
     ///////////////////////////////////////////////////////////////////////////////
     // Fix all Objective-C constant strings to use NSStringWithCString:encoding:
     //
-    
-    if (log)
-    {
-        std::string s;
-        raw_string_ostream oss(s);
         
-        llvm_module.print(oss, NULL);
-        
-        oss.flush();
-        
-        log->Printf("Module after creating the result variable: \n\"%s\"", s.c_str());
-    }
-    
     if (!RewriteObjCConstStrings(llvm_module, *function))
     {
         if (log)
             log->Printf("RewriteObjCConstStrings() failed");
         return false;
-    }
-    
-    if (log)
-    {
-        std::string s;
-        raw_string_ostream oss(s);
-        
-        llvm_module.print(oss, NULL);
-        
-        oss.flush();
-        
-        log->Printf("Module after rewriting Objective-C const strings: \n\"%s\"", s.c_str());
     }
     
     //////////////////////////////////

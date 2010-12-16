@@ -20,6 +20,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -119,6 +120,78 @@ ClangExpressionDeclMap::GetPersistentResultName ()
         m_struct_vars->m_result_name = target->GetPersistentVariables().GetNextPersistentVariableName();
     }
     return m_struct_vars->m_result_name;
+}
+
+lldb::ClangExpressionVariableSP
+ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
+                                              lldb_private::TypeFromParser type,
+                                              const llvm::APInt& value)
+{
+    assert (m_parser_vars.get());
+
+    
+    clang::ASTContext *context(m_parser_vars->m_exe_ctx->target->GetScratchClangASTContext()->getASTContext());
+    
+    TypeFromUser user_type(ClangASTContext::CopyType(context, 
+                                                     type.GetASTContext(),
+                                                     type.GetOpaqueQualType()),
+                           context);
+    
+    DataBufferHeap *heap_data_buf = new DataBufferHeap(ClangASTType::GetClangTypeBitWidth(user_type.GetASTContext(),
+                                                                                          user_type.GetOpaqueQualType()) / 8,
+                                                       '\0');
+    
+    DataBufferSP data_sp(heap_data_buf);
+    
+    uint64_t value64 = value.getLimitedValue();
+    
+    ByteOrder byte_order = m_parser_vars->m_exe_ctx->process->GetByteOrder();
+    
+    size_t num_val_bytes = sizeof(value64);
+    size_t num_data_bytes = heap_data_buf->GetByteSize();
+    
+    size_t num_bytes = num_val_bytes;
+    if (num_bytes > num_data_bytes)
+        num_bytes = num_data_bytes;
+    
+    uint8_t *data_bytes = heap_data_buf->GetBytes();
+    
+    for (off_t byte_idx = 0;
+         byte_idx < num_bytes;
+         ++byte_idx)
+    {
+        uint64_t shift = byte_idx * 8;
+        uint64_t mask = 0xffll << shift;
+        uint8_t cur_byte = (uint8_t)((value64 & mask) >> shift);
+        
+        switch (byte_order)
+        {
+        case eByteOrderBig:
+            //                    High         Low
+            // Original:         |AABBCCDDEEFFGGHH|
+            // Target:                   |EEFFGGHH|
+            
+            data_bytes[num_data_bytes - (1 + byte_idx)] = cur_byte;
+            break;
+        case eByteOrderLittle:
+            // Target:                   |HHGGFFEE|
+            data_bytes[byte_idx] = cur_byte;
+            break;
+        default:
+            return lldb::ClangExpressionVariableSP();    
+        }
+    }
+    
+    ValueObjectSP valobj_sp(new ValueObjectConstResult(user_type.GetASTContext(),
+                                                       user_type.GetOpaqueQualType(),
+                                                       name,
+                                                       data_sp,
+                                                       m_parser_vars->m_exe_ctx->process->GetByteOrder(), 
+                                                       m_parser_vars->m_exe_ctx->process->GetAddressByteSize()));
+    
+    ClangExpressionVariableSP var_sp(new ClangExpressionVariable(valobj_sp));
+    
+    return var_sp;
 }
 
 bool 

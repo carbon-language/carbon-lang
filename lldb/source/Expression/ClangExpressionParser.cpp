@@ -409,7 +409,8 @@ ClangExpressionParser::MakeDWARF ()
 Error
 ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr, 
                                 lldb::addr_t &func_end, 
-                                ExecutionContext &exe_ctx)
+                                ExecutionContext &exe_ctx,
+                                lldb::ClangExpressionVariableSP *const_result)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -446,6 +447,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
     {
         IRForTarget ir_for_target(decl_map, 
                                   m_expr.NeedsVariableResolution(),
+                                  const_result,
                                   function_name.c_str());
         
         if (!ir_for_target.runOnModule(*module))

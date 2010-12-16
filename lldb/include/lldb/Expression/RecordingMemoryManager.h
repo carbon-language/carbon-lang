@@ -54,7 +54,8 @@ class RecordingMemoryManager : public llvm::JITMemoryManager
 {
 friend Error ClangExpressionParser::MakeJIT (uint64_t &, 
                                              uint64_t&, 
-                                             ExecutionContext &);
+                                             ExecutionContext &,
+                                             lldb::ClangExpressionVariableSP *);
 
 public:
     //------------------------------------------------------------------

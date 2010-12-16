@@ -10,6 +10,9 @@
 #ifndef liblldb_IRForTarget_h_
 #define liblldb_IRForTarget_h_
 
+#include "lldb/lldb-include.h"
+#include "lldb/Core/ConstString.h"
+#include "lldb/Symbol/TaggedASTType.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
@@ -62,6 +65,7 @@ public:
     //------------------------------------------------------------------
     IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                 bool resolve_vars,
+                lldb::ClangExpressionVariableSP *const_result,
                 const char* func_name = "$__lldb_expr");
     
     //------------------------------------------------------------------
@@ -106,11 +110,55 @@ public:
 
 private:
     //------------------------------------------------------------------
+    /// A function-level pass to check whether the function has side
+    /// effects.
+    //------------------------------------------------------------------
+    
+    //------------------------------------------------------------------
+    /// The top-level pass implementation
+    ///
+    /// @param[in] llvm_module
+    ///     The module currently being processed.
+    ///
+    /// @param[in] llvm_function
+    ///     The function currently being processed.
+    ///
+    /// @return
+    ///     True if the function has side effects (or if this cannot
+    ///     be determined); false otherwise.
+    //------------------------------------------------------------------
+    bool 
+    HasSideEffects (llvm::Module &llvm_module,
+                    llvm::Function &llvm_function);
+    
+    //------------------------------------------------------------------
     /// A function-level pass to take the generated global value
     /// $__lldb_expr_result and make it into a persistent variable.
     /// Also see ASTResultSynthesizer.
     //------------------------------------------------------------------
-
+    
+    //------------------------------------------------------------------
+    /// Set the constant result variable m_const_result to the provided
+    /// constant, assuming it can be evaluated.  The result variable
+    /// will be reset to NULL later if the expression has side effects.
+    ///
+    /// @param[in] initializer
+    ///     The constant initializer for the variable.
+    ///
+    /// @param[in] name
+    ///     The name of the result variable.
+    ///
+    /// @param[in] type
+    ///     The Clang type of the result variable.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------    
+    void 
+    MaybeSetConstantResult (llvm::Constant *initializer,
+                            const lldb_private::ConstString &name,
+                            lldb_private::TypeFromParser type);
+    
     //------------------------------------------------------------------
     /// The top-level pass implementation
     ///
@@ -403,6 +451,9 @@ private:
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
+    lldb::ClangExpressionVariableSP        *m_const_result;             ///< If non-NULL, this value should be set to the return value of the expression if it is constant and the expression has no side effects
+    
+    bool                                    m_has_side_effects;         ///< True if the function's result cannot be simply determined statically
     
 private:
     //------------------------------------------------------------------

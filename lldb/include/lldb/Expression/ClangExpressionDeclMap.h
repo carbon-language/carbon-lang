@@ -110,6 +110,28 @@ public:
                   const ClangNamespaceDecl &namespace_decl);
 
     //------------------------------------------------------------------
+    /// [Used by IRForTarget] Get a constant variable given a name,
+    ///     a type, and an llvm::APInt.
+    ///
+    /// @param[in] name
+    ///     The name of the variable
+    ///
+    /// @param[in] type
+    ///     The type of the variable, which will be imported into the
+    ///     target's AST context
+    ///
+    /// @param[in] value
+    ///     The value of the variable
+    ///
+    /// @return
+    ///     The created variable
+    //------------------------------------------------------------------
+    lldb::ClangExpressionVariableSP
+    BuildIntegerVariable (const ConstString &name,
+                          lldb_private::TypeFromParser type,
+                          const llvm::APInt& value);
+    
+    //------------------------------------------------------------------
     /// [Used by IRForTarget] Add a variable to the list of persistent
     ///     variables for the process.
     ///

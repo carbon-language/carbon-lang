@@ -81,13 +81,19 @@ public:
     ///     The type that the expression should be coerced to.  If NULL,
     ///     inferred from the expression itself.
     ///
+    /// @param[out] const_result
+    ///     If this is non-NULL, the expression has no side effects, and 
+    ///     the expression returns a constant result, then that result 
+    ///     is put into this variable.
+    ///
     /// @return
     ///     True on success (no errors); false otherwise.
     //------------------------------------------------------------------
     bool
     Parse (Stream &error_stream, 
            ExecutionContext &exe_ctx,
-           TypeFromUser desired_type);
+           TypeFromUser desired_type,
+           lldb::ClangExpressionVariableSP *const_result = NULL);
     
     //------------------------------------------------------------------
     /// Execute the parsed expression

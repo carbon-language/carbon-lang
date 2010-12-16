@@ -22,10 +22,11 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Expression/ASTSplitConsumer.h"
+#include "lldb/Expression/ASTResultSynthesizer.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangFunction.h"
-#include "lldb/Expression/ASTResultSynthesizer.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/VariableList.h"
@@ -143,7 +144,8 @@ ApplyUnicharHack(std::string &expr)
 bool
 ClangUserExpression::Parse (Stream &error_stream, 
                             ExecutionContext &exe_ctx,
-                            TypeFromUser desired_type)
+                            TypeFromUser desired_type,
+                            lldb::ClangExpressionVariableSP *const_result)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -292,8 +294,8 @@ ClangUserExpression::Parse (Stream &error_stream,
     m_dwarf_opcodes.reset();
     
     lldb::addr_t jit_end;
-    
-    Error jit_error = parser.MakeJIT (m_jit_addr, jit_end, exe_ctx);
+        
+    Error jit_error = parser.MakeJIT (m_jit_addr, jit_end, exe_ctx, const_result);
     
     m_expr_decl_map->DidParse();
     
@@ -601,10 +603,12 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
 
     StreamString error_stream;
     
+    lldb::ClangExpressionVariableSP const_result;
+    
     if (log)
         log->Printf("== [ClangUserExpression::Evaluate] Parsing expression %s ==", expr_cstr);
     
-    if (!user_expression_sp->Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL)))
+    if (!user_expression_sp->Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL), &const_result))
     {
         if (error_stream.GetString().empty())
             error.SetErrorString ("expression failed to parse, unknown error");
@@ -615,41 +619,52 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     {
         lldb::ClangExpressionVariableSP expr_result;
 
-        error_stream.GetString().clear();
-        
-        if (log)
-            log->Printf("== [ClangUserExpression::Evaluate] Executing expression ==");
-
-        execution_results = user_expression_sp->Execute (error_stream, 
-                                                         exe_ctx, 
-                                                         discard_on_error, 
-                                                         user_expression_sp, 
-                                                         expr_result);
-        if (execution_results != lldb::eExecutionCompleted)
+        if (const_result.get())
         {
             if (log)
-                log->Printf("== [ClangUserExpression::Evaluate] Execution completed abnormally ==");
+                log->Printf("== [ClangUserExpression::Evaluate] Expression evaluated as a constant ==");
             
-            if (error_stream.GetString().empty())
-                error.SetErrorString ("expression failed to execute, unknown error");
-            else
-                error.SetErrorString (error_stream.GetString().c_str());
+            result_valobj_sp = const_result->GetValueObject();
         }
-        else 
-        {
-            if (expr_result)
+        else
+        {    
+            error_stream.GetString().clear();
+            
+            if (log)
+                log->Printf("== [ClangUserExpression::Evaluate] Executing expression ==");
+
+            execution_results = user_expression_sp->Execute (error_stream, 
+                                                             exe_ctx, 
+                                                             discard_on_error, 
+                                                             user_expression_sp, 
+                                                             expr_result);
+            
+            if (execution_results != lldb::eExecutionCompleted)
             {
-                result_valobj_sp = expr_result->GetValueObject();
-                
                 if (log)
-                    log->Printf("== [ClangUserExpression::Evaluate] Execution completed normally with result %s ==", result_valobj_sp->GetValueAsCString(exe_ctx.GetBestExecutionContextScope()));
+                    log->Printf("== [ClangUserExpression::Evaluate] Execution completed abnormally ==");
+                
+                if (error_stream.GetString().empty())
+                    error.SetErrorString ("expression failed to execute, unknown error");
+                else
+                    error.SetErrorString (error_stream.GetString().c_str());
             }
-            else
+            else 
             {
-                if (log)
-                    log->Printf("== [ClangUserExpression::Evaluate] Execution completed normally with no result ==");
-                
-                error.SetErrorString ("Expression did not return a result");
+                if (expr_result)
+                {
+                    result_valobj_sp = expr_result->GetValueObject();
+                    
+                    if (log)
+                        log->Printf("== [ClangUserExpression::Evaluate] Execution completed normally with result %s ==", result_valobj_sp->GetValueAsCString(exe_ctx.GetBestExecutionContextScope()));
+                }
+                else
+                {
+                    if (log)
+                        log->Printf("== [ClangUserExpression::Evaluate] Execution completed normally with no result ==");
+                    
+                    error.SetErrorString ("Expression did not return a result");
+                }
             }
         }
     }
