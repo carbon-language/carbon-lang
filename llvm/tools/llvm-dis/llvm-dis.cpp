@@ -49,7 +49,7 @@ ShowAnnotations("show-annotations",
                 cl::desc("Add informational comments to the .ll file"));
 
 namespace {
-  
+
 class CommentWriter : public AssemblyAnnotationWriter {
 public:
   void emitFunctionAnnot(const Function *F,
@@ -59,23 +59,23 @@ public:
   }
   void printInfoComment(const Value &V, formatted_raw_ostream &OS) {
     if (V.getType()->isVoidTy()) return;
-      
+
     OS.PadToColumn(50);
     OS << "; [#uses=" << V.getNumUses() << ']';  // Output # uses
   }
 };
-  
+
 } // end anon namespace
 
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
-  
+
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-  
-  
+
+
   cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");
 
   std::string ErrorMessage;
@@ -97,11 +97,11 @@ int main(int argc, char **argv) {
       errs() << "bitcode didn't read correctly.\n";
     return 1;
   }
-  
+
   // Just use stdout.  We won't actually print anything on it.
   if (DontPrint)
     OutputFilename = "-";
-  
+
   if (OutputFilename.empty()) { // Unspecified output, infer it.
     if (InputFilename == "-") {
       OutputFilename = "-";
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
   }
 
   std::string ErrorInfo;
-  OwningPtr<tool_output_file> 
+  OwningPtr<tool_output_file>
   Out(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
                            raw_fd_ostream::F_Binary));
   if (!ErrorInfo.empty()) {
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
   OwningPtr<AssemblyAnnotationWriter> Annotator;
   if (ShowAnnotations)
     Annotator.reset(new CommentWriter());
-  
+
   // All that llvm-dis does is write the assembly to a file.
   if (!DontPrint)
     M->print(Out->os(), Annotator.get());
