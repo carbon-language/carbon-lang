@@ -746,6 +746,14 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
+  case ARM::tBfar: {
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::tBL);
+    TmpInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::Create(
+          MI->getOperand(0).getMBB()->getSymbol(), OutContext)));
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
   case ARM::LEApcrel:
   case ARM::tLEApcrel:
   case ARM::t2LEApcrel: {

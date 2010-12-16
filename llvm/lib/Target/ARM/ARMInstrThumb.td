@@ -535,10 +535,11 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   }
 
   // Far jump
-  // FIXME: Encoding. This should probably be a pseudo for tBL
+  // Just a pseudo for a tBL instruction. Needed to let regalloc know about
+  // the clobber of LR.
   let Defs = [LR] in
-  def tBfar : TIx2<0b11110, 0b11, 1, (outs), (ins brtarget:$target), IIC_Br,
-                    "bl\t$target",[]>;
+  def tBfar : tPseudoInst<(outs), (ins t_bltarget:$target),
+                          Size4Bytes, IIC_Br, []>;
 
   def tBR_JTr : tPseudoInst<(outs),
                       (ins tGPR:$target, i32imm:$jt, i32imm:$id),
