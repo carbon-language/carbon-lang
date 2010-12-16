@@ -60,15 +60,16 @@ class SymbolContextAPITestCase(TestBase):
         context = frame0.GetSymbolContext(lldb.eSymbolContextEverything)
         self.assertTrue(context.IsValid())
 
+        # Get the description of this module.
         module = context.GetModule()
-        self.expect(repr(module), "The module should match", exe=False,
+        stream = lldb.SBStream()
+        module.GetDescription(stream)
+        self.expect(stream.GetData(), "The module should match", exe=False,
             substrs = [os.path.join(self.mydir, 'a.out')])
-        #print "module:", module
 
         compileUnit = context.GetCompileUnit()
         self.expect(repr(compileUnit), "The compile unit should match", exe=False,
             substrs = [os.path.join(self.mydir, 'main.c')])
-        #print "compile unit:", compileUnit
 
         function = context.GetFunction()
         self.assertTrue(function.IsValid())
