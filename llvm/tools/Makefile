@@ -34,6 +34,7 @@ include $(LEVEL)/Makefile.config
 
 # These libraries build as dynamic libraries (.dylib /.so), they can only be
 # built if ENABLE_PIC is set.
+ifndef ONLY_TOOLS
 ifeq ($(ENABLE_PIC),1)
   # gold only builds if binutils is around.  It requires "lto" to build before
   # it so it is added to DIRS.
@@ -56,6 +57,7 @@ endif
 
 ifdef LLVM_HAS_POLLY
   PARALLEL_DIRS += polly
+endif
 endif
 
 # On Win32, loadable modules can be built with ENABLE_SHARED.
