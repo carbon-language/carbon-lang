@@ -2416,6 +2416,10 @@ def err_ref_array_type : Error<
   "cannot refer to declaration with an array type inside block">;
 def err_property_not_found : Error<
   "property %0 not found on object of type %1">;
+def err_property_not_found_forward_class : Error<
+  "property %0 cannot be found in forward class object %1">;
+def note_forward_class : Note<
+  "forward class is declared here">;
 def err_duplicate_property : Error<
   "property has a previous declaration">;
 def ext_gnu_void_ptr : Extension<

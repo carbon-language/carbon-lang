@@ -353,6 +353,12 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   ObjCInterfaceDecl *IFace = IFaceT->getDecl();
   IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
 
+  if (IFace->isForwardDecl()) {
+    Diag(MemberLoc, diag::err_property_not_found_forward_class)
+         << MemberName << QualType(OPT, 0);
+    Diag(IFace->getLocation(), diag::note_forward_class);
+    return ExprError();
+  }
   // Search for a declared property first.
   if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(Member)) {
     // Check whether we can reference this property.
