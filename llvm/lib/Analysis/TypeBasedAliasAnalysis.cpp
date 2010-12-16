@@ -66,7 +66,9 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-// For testing purposes, enable TBAA only via a special option.
+// A handy option for disabling TBAA functionality. The same effect can also be
+// achieved by stripping the !tbaa tags from IR, but this option is sometimes
+// more convenient.
 static cl::opt<bool> EnableTBAA("enable-tbaa", cl::init(true));
 
 namespace {
