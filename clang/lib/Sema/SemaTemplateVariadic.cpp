@@ -221,15 +221,19 @@ bool Sema::DiagnoseUnexpandedParameterPack(const DeclarationNameInfo &NameInfo,
   case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
   case DeclarationName::CXXConversionFunctionName:
-    if (!NameInfo.getNamedTypeInfo()->getType()
-                                          ->containsUnexpandedParameterPack())
+    // FIXME: We shouldn't need this!
+    if (TypeSourceInfo *TSInfo = NameInfo.getNamedTypeInfo())
+      return DiagnoseUnexpandedParameterPack(NameInfo.getLoc(), TSInfo, UPPC);
+
+    if (!NameInfo.getName().getCXXNameType()->containsUnexpandedParameterPack())
       return false;
+
     break;
   }
 
   llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
   CollectUnexpandedParameterPacksVisitor(Unexpanded)
-    .TraverseTypeLoc(NameInfo.getNamedTypeInfo()->getTypeLoc());
+    .TraverseType(NameInfo.getName().getCXXNameType());
   assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
   DiagnoseUnexpandedParameterPacks(*this, NameInfo.getLoc(), UPPC, Unexpanded);
   return true;
