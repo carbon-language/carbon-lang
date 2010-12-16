@@ -2,7 +2,6 @@ tools/clang
 
 *.pyc
 *~
-.gitignore
 .gitusers
 projects/test-suite
 projects/test-suite-externals
