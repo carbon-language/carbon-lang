@@ -238,3 +238,19 @@ bool Sema::DiagnoseUnexpandedParameterPack(const DeclarationNameInfo &NameInfo,
   DiagnoseUnexpandedParameterPacks(*this, NameInfo.getLoc(), UPPC, Unexpanded);
   return true;
 }
+
+bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
+                                           TemplateName Template,
+                                       UnexpandedParameterPackContext UPPC) {
+  
+  if (Template.isNull() || !Template.containsUnexpandedParameterPack())
+    return false;
+
+  llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+  CollectUnexpandedParameterPacksVisitor(Unexpanded)
+    .TraverseTemplateName(Template);
+  assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
+  DiagnoseUnexpandedParameterPacks(*this, Loc, UPPC, Unexpanded);
+  return true;
+}
+

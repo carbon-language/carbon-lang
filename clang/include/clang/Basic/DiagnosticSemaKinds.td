@@ -1824,22 +1824,26 @@ def note_template_parameter_pack_here : Note<
 def err_unexpanded_parameter_pack_0 : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
-  "using declaration|friend declaration|qualifier|initializer}0 "
+  "using declaration|friend declaration|qualifier|initializer|default argument"
+  "}0 "
   "contains an unexpanded parameter pack">;
 def err_unexpanded_parameter_pack_1 : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
-  "using declaration|friend declaration|qualifier|initializer}0 "
+  "using declaration|friend declaration|qualifier|initializer|default argument"
+  "}0 "
   "contains unexpanded parameter pack %1">;
 def err_unexpanded_parameter_pack_2 : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
-  "using declaration|friend declaration|qualifier|initializer}0 "
+  "using declaration|friend declaration|qualifier|initializer|default argument"
+  "}0 "
   "contains unexpanded parameter packs %1 and %2">;
 def err_unexpanded_parameter_pack_3_or_more : Error<
   "%select{expression|base type|declaration type|data member type|bit-field "
   "size|static assertion|fixed underlying type|enumerator value|"
-  "using declaration|friend declaration|qualifier|initializer}0 "
+  "using declaration|friend declaration|qualifier|initializer|default argument"
+  "}0 "
   "contains unexpanded parameter packs %1, %2, ...">;
 
 def err_unexpected_typedef : Error<

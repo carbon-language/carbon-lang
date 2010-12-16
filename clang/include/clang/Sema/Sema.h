@@ -3169,7 +3169,10 @@ public:
     UPPC_DeclarationQualifier,
 
     /// \brief An initializer.
-    UPPC_Initializer
+    UPPC_Initializer,
+    
+    /// \brief A default argument.
+    UPPC_DefaultArgument
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,
@@ -3212,6 +3215,19 @@ public:
   ///
   /// \returns true if an error ocurred, false otherwise.
   bool DiagnoseUnexpandedParameterPack(const DeclarationNameInfo &NameInfo,
+                                       UnexpandedParameterPackContext UPPC);
+
+  /// \brief If the given template name contains an unexpanded parameter pack,
+  /// diagnose the error.
+  ///
+  /// \param Loc The location of the template name.
+  ///
+  /// \param Template The template name that is being checked for unexpanded 
+  /// parameter packs.
+  ///
+  /// \returns true if an error ocurred, false otherwise.
+  bool DiagnoseUnexpandedParameterPack(SourceLocation Loc,
+                                       TemplateName Template,
                                        UnexpandedParameterPackContext UPPC);
 
   /// \brief Describes the result of template argument deduction.

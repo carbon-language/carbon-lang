@@ -132,6 +132,15 @@ struct TestUnexpandedDecls : T{
     T direct_init(0, static_cast<Types>(0)); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
     T list_init = { static_cast<Types>(0) }; // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
   }
+
+  void default_function_args(T = static_cast<Types>(0)); // expected-error{{default argument contains unexpanded parameter pack 'Types'}}
+
+  template<typename = Types*> // expected-error{{default argument contains unexpanded parameter pack 'Types'}}
+    struct default_template_args_1; 
+  template<int = static_cast<Types>(0)> // expected-error{{default argument contains unexpanded parameter pack 'Types'}}
+    struct default_template_args_2;
+  template<template<typename> class = Types::template apply> // expected-error{{default argument contains unexpanded parameter pack 'Types'}}
+    struct default_template_args_3;
 };
 
 // Test for diagnostics in the presence of multiple unexpanded

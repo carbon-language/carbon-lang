@@ -536,6 +536,11 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
       Diag(EqualLoc, diag::err_template_param_pack_default_arg);
       return Param;
     }
+
+    // Check for unexpanded parameter packs.
+    if (DiagnoseUnexpandedParameterPack(Loc, DefaultTInfo, 
+                                        UPPC_DefaultArgument))
+      return Param;
     
     // Check the template argument itself.
     if (CheckTemplateArgument(Param, DefaultTInfo)) {
@@ -642,6 +647,10 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   
   // Check the well-formedness of the default template argument, if provided.
   if (Default) {  
+    // Check for unexpanded parameter packs.
+    if (DiagnoseUnexpandedParameterPack(Default, UPPC_DefaultArgument))
+      return Param;
+
     TemplateArgument Converted;
     if (CheckTemplateArgument(Param, Param->getType(), Default, Converted)) {
       Param->setInvalidDecl();
@@ -683,6 +692,12 @@ Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
     IdResolver.AddDecl(Param);
   }
 
+  if (Params->size() == 0) {
+    Diag(Param->getLocation(), diag::err_template_template_parm_no_parms)
+    << SourceRange(Params->getLAngleLoc(), Params->getRAngleLoc());
+    Param->setInvalidDecl();
+  }
+
   if (!Default.isInvalid()) {
     // Check only that we have a template template argument. We don't want to
     // try to check well-formedness now, because our template template parameter
@@ -699,14 +714,15 @@ Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
       return Param;
     }
     
+    // Check for unexpanded parameter packs.
+    if (DiagnoseUnexpandedParameterPack(DefaultArg.getLocation(), 
+                                        DefaultArg.getArgument().getAsTemplate(),
+                                        UPPC_DefaultArgument))
+      return Param;
+    
     Param->setDefaultArgument(DefaultArg, false);
   }
   
-  if (Params->size() == 0) {
-    Diag(Param->getLocation(), diag::err_template_template_parm_no_parms)
-      << SourceRange(Params->getLAngleLoc(), Params->getRAngleLoc());
-    Param->setInvalidDecl();
-  }
   return Param;
 }
 
