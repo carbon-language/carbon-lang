@@ -340,10 +340,14 @@ static int AssembleInput(const char *ProgName) {
     MCInstPrinter *IP =
       TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI);
     MCCodeEmitter *CE = 0;
-    if (ShowEncoding)
+    TargetAsmBackend *TAB = 0;
+    if (ShowEncoding) {
       CE = TheTarget->createCodeEmitter(*TM, Ctx);
+      TAB = TheTarget->createAsmBackend(TripleName);
+    }
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
-                                           /*useLoc*/ true, IP, CE, ShowInst));
+                                           /*useLoc*/ true, IP, CE, TAB,
+                                           ShowInst));
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));
   } else {

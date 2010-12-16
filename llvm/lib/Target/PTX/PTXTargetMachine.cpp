@@ -24,6 +24,7 @@ namespace llvm {
                                    bool isVerboseAsm, bool useLoc,
                                    MCInstPrinter *InstPrint,
                                    MCCodeEmitter *CE,
+                                   TargetAsmBackend *TAB,
                                    bool ShowInst);
 }
 

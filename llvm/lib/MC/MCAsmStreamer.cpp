@@ -23,8 +23,9 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 using namespace llvm;
 
 namespace {
@@ -34,6 +35,7 @@ class MCAsmStreamer : public MCStreamer {
   const MCAsmInfo &MAI;
   OwningPtr<MCInstPrinter> InstPrinter;
   OwningPtr<MCCodeEmitter> Emitter;
+  OwningPtr<TargetAsmBackend> AsmBackend;
 
   SmallString<128> CommentToEmit;
   raw_svector_ostream CommentStream;
@@ -48,10 +50,12 @@ public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
                 bool isVerboseAsm,
                 bool useLoc,
-                MCInstPrinter *printer, MCCodeEmitter *emitter, bool showInst)
+                MCInstPrinter *printer, MCCodeEmitter *emitter,
+                TargetAsmBackend *asmbackend,
+                bool showInst)
     : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
-      InstPrinter(printer), Emitter(emitter), CommentStream(CommentToEmit),
-      IsVerboseAsm(isVerboseAsm),
+      InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
+      CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
       ShowInst(showInst), UseLoc(useLoc) {
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
@@ -893,8 +897,8 @@ void MCAsmStreamer::Finish() {
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
                                     bool isVerboseAsm, bool useLoc,
-                                    MCInstPrinter *IP,
-                                    MCCodeEmitter *CE, bool ShowInst) {
+                                    MCInstPrinter *IP, MCCodeEmitter *CE,
+                                    TargetAsmBackend *TAB, bool ShowInst) {
   return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc,
-                           IP, CE, ShowInst);
+                           IP, CE, TAB, ShowInst);
 }

@@ -540,7 +540,8 @@ namespace llvm {
                                    formatted_raw_ostream &OS,
                                    bool isVerboseAsm, bool useLoc,
                                    MCInstPrinter *IP,
-                                   MCCodeEmitter *CE, bool ShowInst) {
+                                   MCCodeEmitter *CE, TargetAsmBackend *TAB,
+                                   bool ShowInst) {
     return new PTXMCAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                                 IP, CE, ShowInst);
   }

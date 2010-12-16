@@ -426,6 +426,10 @@ namespace llvm {
   /// \param CE - If given, a code emitter to use to show the instruction
   /// encoding inline with the assembly. This method takes ownership of \arg CE.
   ///
+  /// \param TAB - If given, a target asm backend to use to show the fixup
+  /// information in conjunction with encoding information. This method takes
+  /// ownership of \arg TAB.
+  ///
   /// \param ShowInst - Whether to show the MCInst representation inline with
   /// the assembly.
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
@@ -433,6 +437,7 @@ namespace llvm {
                                 bool useLoc,
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0,
+                                TargetAsmBackend *TAB = 0,
                                 bool ShowInst = false);
 
   /// createMachOStreamer - Create a machine code streamer which will generate

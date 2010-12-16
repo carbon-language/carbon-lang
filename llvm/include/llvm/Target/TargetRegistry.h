@@ -46,6 +46,7 @@ namespace llvm {
                                 bool useLoc,
                                 MCInstPrinter *InstPrint,
                                 MCCodeEmitter *CE,
+                                TargetAsmBackend *TAB,
                                 bool ShowInst);
 
   /// Target - Wrapper for Target specific information.
@@ -95,6 +96,7 @@ namespace llvm {
                                              bool useLoc,
                                              MCInstPrinter *InstPrint,
                                              MCCodeEmitter *CE,
+                                             TargetAsmBackend *TAB,
                                              bool ShowInst);
 
   private:
@@ -323,10 +325,11 @@ namespace llvm {
                                   bool useLoc,
                                   MCInstPrinter *InstPrint,
                                   MCCodeEmitter *CE,
+                                  TargetAsmBackend *TAB,
                                   bool ShowInst) const {
       // AsmStreamerCtorFn is default to llvm::createAsmStreamer
       return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useLoc,
-                               InstPrint, CE, ShowInst);
+                               InstPrint, CE, TAB, ShowInst);
     }
 
     /// @}
