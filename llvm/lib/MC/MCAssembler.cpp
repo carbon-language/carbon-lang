@@ -254,12 +254,12 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
     "FKF_IsAlignedDownTo32Bits is only allowed on PC-relative fixups!");
 
   if (IsPCRel) {
-    uint32_t Offset = Fixup.getOffset();
+    uint32_t Offset = Layout.getFragmentOffset(DF) + Fixup.getOffset();
     
     // A number of ARM fixups in Thumb mode require that the effective PC
     // address be determined as the 32-bit aligned version of the actual offset.
     if (ShouldAlignPC) Offset &= ~0x3;
-    Value -= Layout.getFragmentOffset(DF) + Offset;
+    Value -= Offset;
   }
 
   // ARM fixups based from a thumb function address need to have the low
