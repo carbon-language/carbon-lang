@@ -123,18 +123,26 @@ void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
 
 bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
   if (isThumb()) {
-    assert (((Count & 1) == 0) && "Unaligned Nop data fragment!");
     // FIXME: 0xbf00 is the ARMv7 value. For v6 and before, we'll need to
     // use 0x46c0 (which is a 'mov r8, r8' insn).
-    Count /= 2;
-    for (uint64_t i = 0; i != Count; ++i)
+    uint64_t NumNops = Count / 2;
+    for (uint64_t i = 0; i != NumNops; ++i)
       OW->Write16(0xbf00);
+    if (Count & 1)
+      OW->Write8(0);
     return true;
   }
   // ARM mode
-  Count /= 4;
-  for (uint64_t i = 0; i != Count; ++i)
+  uint64_t NumNops = Count / 4;
+  for (uint64_t i = 0; i != NumNops; ++i)
     OW->Write32(0xe1a00000);
+  switch (Count % 4) {
+  default: break; // No leftover bytes to write
+  case 1: OW->Write8(0); break;
+  case 2: OW->Write16(0); break;
+  case 3: OW->Write16(0); OW->Write8(0xa0); break;
+  }
+
   return true;
 }
 
