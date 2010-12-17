@@ -143,7 +143,7 @@ def immU16 : PatLeaf<(imm), [{
 def imm18  : PatLeaf<(imm), [{
   // imm18 predicate: True if the immediate fits into an 18-bit unsigned field.
   int Value = (int) N->getZExtValue();
-  return ((Value & ((1 << 19) - 1)) == Value);
+  return isUInt<18>(Value); 
 }]>;
 
 def lo16 : PatLeaf<(imm), [{
@@ -203,7 +203,7 @@ def FPimm_sext16 : SDNodeXForm<fpimm, [{
 
 def FPimm_u18 : SDNodeXForm<fpimm, [{
   float fval = N->getValueAPF().convertToFloat();
-  return getI32Imm(FloatToBits(fval) & ((1 << 19) - 1));
+  return getI32Imm(FloatToBits(fval) & ((1 << 18) - 1));
 }]>;
 
 def fpimmSExt16 : PatLeaf<(fpimm), [{
@@ -225,7 +225,7 @@ def hi16_f32 : PatLeaf<(fpimm), [{
 def fpimm18  : PatLeaf<(fpimm), [{
   if (N->getValueType(0) == MVT::f32) {
     uint32_t Value = FloatToBits(N->getValueAPF().convertToFloat());
-    return ((Value & ((1 << 19) - 1)) == Value);
+    return isUInt<18>(Value);
   }
 
   return false;

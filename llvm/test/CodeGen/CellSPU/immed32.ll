@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=cellspu > %t1.s
-; RUN: grep ilhu  %t1.s | count 8
-; RUN: grep iohl  %t1.s | count 6
+; RUN: grep ilhu  %t1.s | count 9
+; RUN: grep iohl  %t1.s | count 7
 ; RUN: grep -w il    %t1.s | count 3
 ; RUN: grep 16429 %t1.s | count 1
 ; RUN: grep 63572 %t1.s | count 1
@@ -12,6 +12,7 @@
 ; RUN: grep 49077 %t1.s | count 1
 ; RUN: grep  1267 %t1.s | count 2
 ; RUN: grep 16309 %t1.s | count 1
+; RUN: cat %t1.s | FileCheck %s
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"
 
@@ -29,6 +30,16 @@ define i32 @test_3() {
 
 define i32 @test_4() {
   ret i32 -512                  ;; IL via pattern
+}
+
+define i32 @test_5()
+{
+;CHECK: test_5:
+;CHECK-NOT: ila $3, 40000
+;CHECK: ilhu
+;CHECK: iohl
+;CHECK: bi $lr
+  ret i32 400000
 }
 
 ;; double             float       floatval
