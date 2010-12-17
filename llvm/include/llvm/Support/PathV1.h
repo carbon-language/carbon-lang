@@ -304,12 +304,16 @@ namespace sys {
       /// This function determines if the path name is absolute, as opposed to
       /// relative.
       /// @brief Determine if the path is absolute.
-      LLVM_ATTRIBUTE_DEPRECATED(bool isAbsolute() const, LLVMV_PATH_DEPRECATED_MSG);
+      LLVM_ATTRIBUTE_DEPRECATED(
+        bool isAbsolute() const,
+        LLVMV_PATH_DEPRECATED_MSG);
 
       /// This function determines if the path name is absolute, as opposed to
       /// relative.
       /// @brief Determine if the path is absolute.
-      LLVM_ATTRIBUTE_DEPRECATED(static bool isAbsolute(const char *NameStart, unsigned NameLen), LLVMV_PATH_DEPRECATED_MSG);
+      LLVM_ATTRIBUTE_DEPRECATED(
+        static bool isAbsolute(const char *NameStart, unsigned NameLen),
+        LLVMV_PATH_DEPRECATED_MSG);
 
       /// This function opens the file associated with the path name provided by
       /// the Path object and reads its magic number. If the magic number at the
