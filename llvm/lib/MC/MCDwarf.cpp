@@ -569,11 +569,9 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer) {
   return *sectionStart;
 }
 
-static void EmitFDE(MCStreamer &streamer,
-                    const MCSymbol &cieStart,
-                    const MCDwarfFrameInfo &frame) {
-  MCContext &context = streamer.getContext();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+static MCSymbol *EmitFDE(MCStreamer &streamer,
+                         const MCSymbol &cieStart,
+                         const MCDwarfFrameInfo &frame) {
   MCSymbol *fdeStart = streamer.getContext().CreateTempSymbol();
   MCSymbol *fdeEnd = streamer.getContext().CreateTempSymbol();
 
@@ -602,12 +600,22 @@ static void EmitFDE(MCStreamer &streamer,
   // Call Frame Instructions
 
   // Padding
-  streamer.EmitValueToAlignment(asmInfo.getPointerSize());
-  streamer.EmitLabel(fdeEnd);
+  streamer.EmitValueToAlignment(4);
+
+  return fdeEnd;
 }
 
 void MCDwarfFrameEmitter::Emit(MCStreamer &streamer) {
+  const MCContext &context = streamer.getContext();
+  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   const MCSymbol &cieStart = EmitCIE(streamer);
-  for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i)
-    EmitFDE(streamer, cieStart, streamer.getFrameInfo(i));
+  MCSymbol *fdeEnd = NULL;
+  for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
+    fdeEnd = EmitFDE(streamer, cieStart, streamer.getFrameInfo(i));
+    if (i != n - 1)
+      streamer.EmitLabel(fdeEnd);
+  }
+  streamer.EmitValueToAlignment(asmInfo.getPointerSize());
+  if (fdeEnd)
+    streamer.EmitLabel(fdeEnd);
 }
