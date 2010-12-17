@@ -422,13 +422,13 @@ private:
 
 public:
   CXXUuidofExpr(QualType Ty, TypeSourceInfo *Operand, SourceRange R)
-    : Expr(CXXUuidofExprClass, Ty, VK_RValue, OK_Ordinary,
+    : Expr(CXXUuidofExprClass, Ty, VK_LValue, OK_Ordinary,
            false, Operand->getType()->isDependentType(),
            Operand->getType()->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
   
   CXXUuidofExpr(QualType Ty, Expr *Operand, SourceRange R)
-    : Expr(CXXUuidofExprClass, Ty, VK_RValue, OK_Ordinary,
+    : Expr(CXXUuidofExprClass, Ty, VK_LValue, OK_Ordinary,
            false, Operand->isTypeDependent(),
            Operand->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
