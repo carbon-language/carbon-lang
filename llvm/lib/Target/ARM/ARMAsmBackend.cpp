@@ -37,6 +37,11 @@ public:
                                /*UseAggressiveSymbolFolding=*/true) {}
 };
 
+class ARMELFObjectWriter : public MCELFObjectTargetWriter {
+public:
+  ARMELFObjectWriter() : MCELFObjectTargetWriter() {}
+};
+
 class ARMAsmBackend : public TargetAsmBackend {
   bool isThumbMode;  // Currently emitting Thumb code.
 public:
@@ -348,7 +353,8 @@ public:
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(OS, /*Is64Bit=*/false,
+    return createELFObjectWriter(new ARMELFObjectWriter(), OS,
+                                 /*Is64Bit=*/false,
                                  OSType, ELF::EM_ARM,
                                  /*IsLittleEndian=*/true,
                                  /*HasRelocationAddend=*/false);

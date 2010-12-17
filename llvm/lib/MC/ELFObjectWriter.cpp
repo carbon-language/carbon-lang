@@ -1467,7 +1467,8 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   }
 }
 
-MCObjectWriter *llvm::createELFObjectWriter(raw_ostream &OS,
+MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                                            raw_ostream &OS,
                                             bool Is64Bit,
                                             Triple::OSType OSType,
                                             uint16_t EMachine,

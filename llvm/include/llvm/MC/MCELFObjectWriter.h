@@ -14,11 +14,21 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
+class MCELFObjectTargetWriter {
+protected:
+  MCELFObjectTargetWriter();
+
+public:
+  virtual ~MCELFObjectTargetWriter();
+};
+
 /// \brief Construct a new ELF writer instance.
 ///
+/// \param MOTW - The target specific ELF writer subclass.
 /// \param OS - The stream to write to.
 /// \returns The constructed object writer.
-MCObjectWriter *createELFObjectWriter(raw_ostream &OS, bool is64Bit,
+MCObjectWriter *createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                                      raw_ostream &OS, bool is64Bit,
                                       Triple::OSType OSType, uint16_t EMachine,
                                       bool IsLittleEndian,
                                       bool HasRelocationAddend);

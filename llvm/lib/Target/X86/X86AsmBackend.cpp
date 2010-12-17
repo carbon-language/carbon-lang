@@ -55,6 +55,11 @@ public:
                                /*UseAggressiveSymbolFolding=*/Is64Bit) {}
 };
 
+class X86ELFObjectWriter : public MCELFObjectTargetWriter {
+public:
+  X86ELFObjectWriter() : MCELFObjectTargetWriter() {}
+};
+
 class X86AsmBackend : public TargetAsmBackend {
 public:
   X86AsmBackend(const Target &T)
@@ -310,7 +315,8 @@ public:
     : ELFX86AsmBackend(T, OSType) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(OS, /*Is64Bit=*/false,
+    return createELFObjectWriter(new X86ELFObjectWriter(), OS,
+                                 /*Is64Bit=*/false,
                                  OSType, ELF::EM_386,
                                  /*IsLittleEndian=*/true,
                                  /*HasRelocationAddend=*/false);
@@ -323,7 +329,7 @@ public:
     : ELFX86AsmBackend(T, OSType) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(OS, /*Is64Bit=*/true,
+    return createELFObjectWriter(new X86ELFObjectWriter(), OS, /*Is64Bit=*/true,
                                  OSType, ELF::EM_X86_64,
                                  /*IsLittleEndian=*/true,
                                  /*HasRelocationAddend=*/true);

@@ -42,6 +42,11 @@ static unsigned getFixupKindSize(unsigned Kind) {
 
 
 namespace {
+class MBlazeELFObjectWriter : public MCELFObjectTargetWriter {
+public:
+  MBlazeELFObjectWriter() : MCELFObjectTargetWriter() {}
+};
+
 class MBlazeAsmBackend : public TargetAsmBackend {
 public:
   MBlazeAsmBackend(const Target &T)
@@ -117,7 +122,8 @@ public:
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(OS,/*Is64Bit=*/false,
+    return createELFObjectWriter(new MBlazeELFObjectWriter(),
+                                 OS,/*Is64Bit=*/false,
                                  OSType, ELF::EM_MBLAZE,
                                  /*IsLittleEndian=*/false,
                                  /*HasRelocationAddend=*/true);
