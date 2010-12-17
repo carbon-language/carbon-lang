@@ -79,7 +79,7 @@ private:
 
 public:
   /// \brief Construct an empty, invalid template argument.
-  TemplateArgument() : TypeOrValue(0), Kind(Null) { }
+  TemplateArgument() : Kind(Null), TypeOrValue(0) { }
 
   /// \brief Construct a template type argument.
   TemplateArgument(QualType T) : Kind(Type) {
