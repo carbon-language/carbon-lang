@@ -784,7 +784,7 @@ void Driver::BuildActions(const ToolChain &TC, const ArgList &Args,
 
       // Follow gcc behavior and treat as linker input for invalid -x
       // options. Its not clear why we shouldn't just revert to unknown; but
-      // this isn't very important, we might as well be bug comatible.
+      // this isn't very important, we might as well be bug compatible.
       if (!InputType) {
         Diag(clang::diag::err_drv_unknown_language) << A->getValue(Args);
         InputType = types::TY_Object;
