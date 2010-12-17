@@ -167,10 +167,11 @@ MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
 
 /* *** */
 
-MCAssembler::MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
-                         MCCodeEmitter &_Emitter, raw_ostream &_OS)
-  : Context(_Context), Backend(_Backend), Emitter(_Emitter),
-    OS(_OS), RelaxAll(false), SubsectionsViaSymbols(false)
+MCAssembler::MCAssembler(MCContext &Context_, TargetAsmBackend &Backend_,
+                         MCCodeEmitter &Emitter_, MCObjectWriter &Writer_,
+                         raw_ostream &OS_)
+  : Context(Context_), Backend(Backend_), Emitter(Emitter_), Writer(Writer_),
+    OS(OS_), RelaxAll(false), SubsectionsViaSymbols(false)
 {
 }
 
@@ -495,15 +496,13 @@ uint64_t MCAssembler::HandleFixup(MCObjectWriter &Writer,
    return FixedValue;
  }
 
-void MCAssembler::Finish(MCObjectWriter *Writer) {
+void MCAssembler::Finish() {
   DEBUG_WITH_TYPE("mc-dump", {
       llvm::errs() << "assembler backend - pre-layout\n--\n";
       dump(); });
 
   // Create the layout object.
   MCAsmLayout Layout(*this);
-
-
 
   // Create dummy fragments and assign section ordinals.
   unsigned SectionIndex = 0;
@@ -527,17 +526,8 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
       it2->setLayoutOrder(FragmentIndex++);
   }
 
-  llvm::OwningPtr<MCObjectWriter> OwnWriter(0);
-  if (Writer == 0) {
-    //no custom Writer_ : create the default one life-managed by OwningPtr
-    OwnWriter.reset(getBackend().createObjectWriter(OS));
-    Writer = OwnWriter.get();
-    if (!Writer)
-      report_fatal_error("unable to create object writer!");
-  }
-
   // Layout until everything fits.
-  while (LayoutOnce(*Writer, Layout))
+  while (LayoutOnce(Writer, Layout))
     continue;
 
   DEBUG_WITH_TYPE("mc-dump", {
@@ -555,7 +545,7 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
 
   // Allow the object writer a chance to perform post-layout binding (for
   // example, to set the index fields in the symbol data).
-  Writer->ExecutePostLayoutBinding(*this, Layout);
+  Writer.ExecutePostLayoutBinding(*this, Layout);
 
   // Evaluate and apply the fixups, generating relocation entries as necessary.
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
@@ -566,7 +556,7 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
         for (MCDataFragment::fixup_iterator it3 = DF->fixup_begin(),
                ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
           MCFixup &Fixup = *it3;
-          uint64_t FixedValue = HandleFixup(*Writer, Layout, *DF, Fixup);
+          uint64_t FixedValue = HandleFixup(Writer, Layout, *DF, Fixup);
           getBackend().ApplyFixup(Fixup, DF->getContents().data(),
                                   DF->getContents().size(), FixedValue);
         }
@@ -576,7 +566,7 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
         for (MCInstFragment::fixup_iterator it3 = IF->fixup_begin(),
                ie3 = IF->fixup_end(); it3 != ie3; ++it3) {
           MCFixup &Fixup = *it3;
-          uint64_t FixedValue = HandleFixup(*Writer, Layout, *IF, Fixup);
+          uint64_t FixedValue = HandleFixup(Writer, Layout, *IF, Fixup);
           getBackend().ApplyFixup(Fixup, IF->getCode().data(),
                                   IF->getCode().size(), FixedValue);
         }
@@ -585,7 +575,7 @@ void MCAssembler::Finish(MCObjectWriter *Writer) {
   }
 
   // Write the object file.
-  Writer->WriteObject(*this, Layout);
+  Writer.WriteObject(*this, Layout);
 
   stats::ObjectBytes += OS.tell() - StartOffset;
 }

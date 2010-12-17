@@ -21,10 +21,11 @@
 using namespace llvm;
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
-                                   raw_ostream &_OS, MCCodeEmitter *_Emitter)
-  : MCStreamer(Context), Assembler(new MCAssembler(Context, TAB,
-                                                   *_Emitter,
-                                                   _OS)),
+                                   raw_ostream &OS, MCCodeEmitter *Emitter_)
+  : MCStreamer(Context),
+    Assembler(new MCAssembler(Context, TAB,
+                              *Emitter_, *TAB.createObjectWriter(OS),
+                              OS)),
     CurSectionData(0)
 {
 }
@@ -32,6 +33,7 @@ MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
 MCObjectStreamer::~MCObjectStreamer() {
   delete &Assembler->getBackend();
   delete &Assembler->getEmitter();
+  delete &Assembler->getWriter();
   delete Assembler;
 }
 

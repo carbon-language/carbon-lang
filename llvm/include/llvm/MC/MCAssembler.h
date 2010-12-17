@@ -648,6 +648,8 @@ private:
 
   MCCodeEmitter &Emitter;
 
+  MCObjectWriter &Writer;
+
   raw_ostream &OS;
 
   iplist<MCSectionData> Sections;
@@ -770,8 +772,9 @@ public:
   // concrete and require clients to pass in a target like object. The other
   // option is to make this abstract, and have targets provide concrete
   // implementations as we do with AsmParser.
-  MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
-              MCCodeEmitter &_Emitter, raw_ostream &OS);
+  MCAssembler(MCContext &Context_, TargetAsmBackend &Backend_,
+              MCCodeEmitter &Emitter_, MCObjectWriter &Writer_,
+              raw_ostream &OS);
   ~MCAssembler();
 
   MCContext &getContext() const { return Context; }
@@ -780,10 +783,12 @@ public:
 
   MCCodeEmitter &getEmitter() const { return Emitter; }
 
+  MCObjectWriter &getWriter() const { return Writer; }
+
   /// Finish - Do final processing and write the object to the output stream.
   /// \arg Writer is used for custom object writer (as the MCJIT does),
   /// if not specified it is automatically created from backend.
-  void Finish(MCObjectWriter *Writer = 0);
+  void Finish();
 
   // FIXME: This does not belong here.
   bool getSubsectionsViaSymbols() const {
