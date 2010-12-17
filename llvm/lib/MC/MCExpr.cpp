@@ -311,13 +311,21 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
                                 const MCValue &LHS,const MCSymbolRefExpr *RHS_A,
                                 const MCSymbolRefExpr *RHS_B, int64_t RHS_Cst,
                                 MCValue &Res) {
-  // We can't add or subtract two symbols.
-  if ((LHS.getSymA() && RHS_A) ||
-      (LHS.getSymB() && RHS_B))
+  // FIXME: This routine (and other evaluation parts) are *incredibly* sloppy
+  // about dealing with modifiers. This will ultimately bite us, one day.
+  const MCSymbolRefExpr *LHS_A = LHS.getSymA();
+  const MCSymbolRefExpr *LHS_B = LHS.getSymB();
+  int64_t LHS_Cst = LHS.getConstant();
+
+  // Fold the result constant immediately.
+  int64_t Result_Cst = LHS_Cst + RHS_Cst;
+
+  // We can't represent the addition or subtraction of two symbols.
+  if ((LHS_A && RHS_A) || (LHS_B && RHS_B))
     return false;
 
-  const MCSymbolRefExpr *A = LHS.getSymA() ? LHS.getSymA() : RHS_A;
-  const MCSymbolRefExpr *B = LHS.getSymB() ? LHS.getSymB() : RHS_B;
+  const MCSymbolRefExpr *A = LHS_A ? LHS_A : RHS_A;
+  const MCSymbolRefExpr *B = LHS_B ? LHS_B : RHS_B;
   if (B) {
     // If we have a negated symbol, then we must have also have a non-negated
     // symbol in order to encode the expression. We can do this check later to
@@ -343,8 +351,7 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
       if (AD.getFragment() == BD.getFragment()) {
         Res = MCValue::get(+ AD.getOffset()
                            - BD.getOffset()
-                           + LHS.getConstant()
-                           + RHS_Cst);
+                           + Result_Cst);
         return true;
       }
 
@@ -353,8 +360,7 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
         const MCSectionData &SecB = *BD.getFragment()->getParent();
         int64_t Val = + Layout->getSymbolOffset(&AD)
                       - Layout->getSymbolOffset(&BD)
-                      + LHS.getConstant()
-                      + RHS_Cst;
+                      + Result_Cst;
         if (&SecA != &SecB) {
           if (!Addrs)
             return false;
@@ -367,7 +373,7 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
     }
   }
 
-  Res = MCValue::get(A, B, LHS.getConstant() + RHS_Cst);
+  Res = MCValue::get(A, B, Result_Cst);
   return true;
 }
 
