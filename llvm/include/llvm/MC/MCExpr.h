@@ -93,7 +93,10 @@ public:
   /// @param Res - The relocatable value, if evaluation succeeds.
   /// @param Layout - The assembler layout object to use for evaluating values.
   /// @result - True on success.
-  bool EvaluateAsRelocatable(MCValue &Res, const MCAsmLayout *Layout = 0) const;
+  bool EvaluateAsRelocatable(MCValue &Res,
+                             const MCAsmLayout *Layout = 0) const {
+    return EvaluateAsRelocatableImpl(Res, Layout, 0, false);
+  }
 
   /// @}
 

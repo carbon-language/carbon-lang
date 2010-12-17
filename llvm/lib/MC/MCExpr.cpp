@@ -355,14 +355,6 @@ static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout,
   return true;
 }
 
-bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
-                                   const MCAsmLayout *Layout) const {
-  if (Layout)
-    return EvaluateAsRelocatableImpl(Res, Layout, 0, false);
-  else
-    return EvaluateAsRelocatableImpl(Res, 0, 0, false);
-}
-
 bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
                                        const MCAsmLayout *Layout,
                                        const SectionAddrMap *Addrs,
