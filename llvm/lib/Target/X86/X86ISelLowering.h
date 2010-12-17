@@ -159,7 +159,13 @@ namespace llvm {
 
       /// PSHUFB - Shuffle 16 8-bit values within a vector.
       PSHUFB,
-
+      
+      /// PANDN - and with not'd value.
+      PANDN,
+      
+      /// PSIGNB/W/D - Copy integer sign.
+      PSIGNB, PSIGNW, PSIGND, 
+      
       /// FMAX, FMIN - Floating point max and min.
       ///
       FMAX, FMIN,

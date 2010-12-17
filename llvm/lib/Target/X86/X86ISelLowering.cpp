@@ -981,6 +981,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::SRA);
   setTargetDAGCombine(ISD::SRL);
   setTargetDAGCombine(ISD::OR);
+  setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ZERO_EXTEND);
   if (Subtarget->is64Bit())
@@ -8870,6 +8871,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PINSRB:             return "X86ISD::PINSRB";
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
   case X86ISD::PSHUFB:             return "X86ISD::PSHUFB";
+  case X86ISD::PANDN:              return "X86ISD::PANDN";
+  case X86ISD::PSIGNB:             return "X86ISD::PSIGNB";
+  case X86ISD::PSIGNW:             return "X86ISD::PSIGNW";
+  case X86ISD::PSIGND:             return "X86ISD::PSIGND";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
@@ -11053,6 +11058,36 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   return SDValue();
 }
 
+
+static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const X86Subtarget *Subtarget) {
+  if (DCI.isBeforeLegalizeOps())
+    return SDValue();
+  
+  // Want to form PANDN nodes, in the hopes of then easily combining them with
+  // OR and AND nodes to form PBLEND/PSIGN.
+  EVT VT = N->getValueType(0);
+  if (VT != MVT::v2i64)
+    return SDValue();
+  
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  DebugLoc DL = N->getDebugLoc();
+  
+  // Check LHS for vnot
+  if (N0.getOpcode() == ISD::XOR && 
+      ISD::isBuildVectorAllOnes(N0.getOperand(1).getNode()))
+    return DAG.getNode(X86ISD::PANDN, DL, VT, N0.getOperand(0), N1);
+
+  // Check RHS for vnot
+  if (N1.getOpcode() == ISD::XOR &&
+      ISD::isBuildVectorAllOnes(N1.getOperand(1).getNode()))
+    return DAG.getNode(X86ISD::PANDN, DL, VT, N1.getOperand(0), N0);
+  
+  return SDValue();
+}
+
 static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
                                 TargetLowering::DAGCombinerInfo &DCI,
                                 const X86Subtarget *Subtarget) {
@@ -11060,12 +11095,101 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   EVT VT = N->getValueType(0);
-  if (VT != MVT::i16 && VT != MVT::i32 && VT != MVT::i64)
+  if (VT != MVT::i16 && VT != MVT::i32 && VT != MVT::i64 && VT != MVT::v2i64)
     return SDValue();
 
-  // fold (or (x << c) | (y >> (64 - c))) ==> (shld64 x, y, c)
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
+  
+  // look for psign/blend
+  if (Subtarget->hasSSSE3()) {
+    if (VT == MVT::v2i64) {
+      // Canonicalize pandn to RHS
+      if (N0.getOpcode() == X86ISD::PANDN)
+        std::swap(N0, N1);
+      // or (and (m, x), (pandn m, y))
+      if (N0.getOpcode() == ISD::AND && N1.getOpcode() == X86ISD::PANDN) {
+        SDValue Mask = N1.getOperand(0);
+        SDValue X    = N1.getOperand(1);
+        SDValue Y;
+        if (N0.getOperand(0) == Mask)
+          Y = N0.getOperand(1);
+        if (N0.getOperand(1) == Mask)
+          Y = N0.getOperand(0);
+        
+        // Check to see if the mask appeared in both the AND and PANDN and
+        if (!Y.getNode())
+          return SDValue();
+        
+        // Validate that X, Y, and Mask are BIT_CONVERTS, and see through them.
+        if (Mask.getOpcode() != ISD::BITCAST ||
+            X.getOpcode() != ISD::BITCAST ||
+            Y.getOpcode() != ISD::BITCAST)
+          return SDValue();
+        
+        // Look through mask bitcast.
+        Mask = Mask.getOperand(0);
+        EVT MaskVT = Mask.getValueType();
+
+        // Validate that the Mask operand is a vector sra node.  The sra node
+        // will be an intrinsic.
+        if (Mask.getOpcode() != ISD::INTRINSIC_WO_CHAIN)
+          return SDValue();
+        
+        // FIXME: what to do for bytes, since there is a psignb/pblendvb, but
+        // there is no psrai.b
+        switch (cast<ConstantSDNode>(Mask.getOperand(0))->getZExtValue()) {
+        case Intrinsic::x86_sse2_psrai_w:
+        case Intrinsic::x86_sse2_psrai_d:
+          break;
+        default: return SDValue();
+        }
+        
+        // Check that the SRA is all signbits.
+        SDValue SraC = Mask.getOperand(2);
+        unsigned SraAmt  = cast<ConstantSDNode>(SraC)->getZExtValue();
+        unsigned EltBits = MaskVT.getVectorElementType().getSizeInBits();
+        if ((SraAmt + 1) != EltBits)
+          return SDValue();
+        
+        DebugLoc DL = N->getDebugLoc();
+
+        // Now we know we at least have a plendvb with the mask val.  See if
+        // we can form a psignb/w/d.
+        // psign = x.type == y.type == mask.type && y = sub(0, x);
+        X = X.getOperand(0);
+        Y = Y.getOperand(0);
+        if (Y.getOpcode() == ISD::SUB && Y.getOperand(1) == X &&
+            ISD::isBuildVectorAllZeros(Y.getOperand(0).getNode()) &&
+            X.getValueType() == MaskVT && X.getValueType() == Y.getValueType()){
+          unsigned Opc = 0;
+          switch (EltBits) {
+          case 8: Opc = X86ISD::PSIGNB; break;
+          case 16: Opc = X86ISD::PSIGNW; break;
+          case 32: Opc = X86ISD::PSIGND; break;
+          default: break;
+          }
+          if (Opc) {
+            SDValue Sign = DAG.getNode(Opc, DL, MaskVT, X, Mask.getOperand(1));
+            return DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, Sign);
+          }
+        }
+        // PBLENDVB only available on SSE 4.1
+        if (!Subtarget->hasSSE41())
+          return SDValue();
+        
+        unsigned IID = Intrinsic::x86_sse41_pblendvb;
+        X = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, X);
+        Y = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Y);
+        Mask = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Mask);
+        Mask = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, MVT::v16i8,
+                           DAG.getConstant(IID, MVT::i32), X, Y, Mask);
+        return DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, Mask);
+      }
+    }
+  }
+  
+  // fold (or (x << c) | (y >> (64 - c))) ==> (shld64 x, y, c)
   if (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SHL)
     std::swap(N0, N1);
   if (N0.getOpcode() != ISD::SHL || N1.getOpcode() != ISD::SRL)
@@ -11116,7 +11240,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
                          DAG.getNode(ISD::TRUNCATE, DL,
                                        MVT::i8, ShAmt0));
   }
-
+  
   return SDValue();
 }
 
@@ -11334,6 +11458,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:            return PerformShiftCombine(N, DAG, Subtarget);
+  case ISD::AND:            return PerformAndCombine(N, DAG, DCI, Subtarget);
   case ISD::OR:             return PerformOrCombine(N, DAG, DCI, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case X86ISD::FXOR:

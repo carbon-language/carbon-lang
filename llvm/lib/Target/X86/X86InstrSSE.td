@@ -1584,19 +1584,13 @@ defm XOR  : sse12_fp_packed_logical<0x57, "xor", xor>;
 let isCommutable = 0 in
   defm ANDN : sse12_fp_packed_logical<0x55, "andn", undef /* dummy */, 1, [
     // single r+r
-    [(set VR128:$dst, (v2i64 (and (xor VR128:$src1,
-                                       (bc_v2i64 (v4i32 immAllOnesV))),
-                                   VR128:$src2)))],
+    [(set VR128:$dst, (X86pandn VR128:$src1, VR128:$src2))],
     // double r+r
-    [(set VR128:$dst, (and (vnot (bc_v2i64 (v2f64 VR128:$src1))),
-                                 (bc_v2i64 (v2f64 VR128:$src2))))],
+    [],
     // single r+m
-    [(set VR128:$dst, (v2i64 (and (xor (bc_v2i64 (v4f32 VR128:$src1)),
-                                       (bc_v2i64 (v4i32 immAllOnesV))),
-                                  (memopv2i64 addr:$src2))))],
+    [(set VR128:$dst, (X86pandn VR128:$src1, (memopv2i64 addr:$src2)))],
     // double r+m
-    [(set VR128:$dst, (and (vnot (bc_v2i64 (v2f64 VR128:$src1))),
-                           (memopv2i64 addr:$src2)))]]>;
+    []]>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Arithmetic Instructions
@@ -2536,15 +2530,11 @@ let ExeDomain = SSEPackedInt in {
   }
   def PANDNrr : PDI<0xDF, MRMSrcReg,
                     (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                    "pandn\t{$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (v2i64 (and (vnot VR128:$src1),
-                                              VR128:$src2)))]>;
+                    "pandn\t{$src2, $dst|$dst, $src2}", []>;
 
   def PANDNrm : PDI<0xDF, MRMSrcMem,
                     (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                    "pandn\t{$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (v2i64 (and (vnot VR128:$src1),
-                                              (memopv2i64 addr:$src2))))]>;
+                    "pandn\t{$src2, $dst|$dst, $src2}", []>;
 }
 } // Constraints = "$src1 = $dst"
 
@@ -3608,6 +3598,13 @@ def : Pat<(X86pshufb VR128:$src, VR128:$mask),
 def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
           (PSHUFBrm128 VR128:$src, addr:$mask)>, Requires<[HasSSSE3]>;
 
+def : Pat<(X86psignb VR128:$src1, VR128:$src2),
+          (PSIGNBrr128 VR128:$src1, VR128:$src2)>, Requires<[HasSSSE3]>;
+def : Pat<(X86psignw VR128:$src1, VR128:$src2),
+          (PSIGNWrr128 VR128:$src1, VR128:$src2)>, Requires<[HasSSSE3]>;
+def : Pat<(X86psignd VR128:$src1, VR128:$src2),
+          (PSIGNDrr128 VR128:$src1, VR128:$src2)>, Requires<[HasSSSE3]>;
+
 //===---------------------------------------------------------------------===//
 // SSSE3 - Packed Align Instruction Patterns
 //===---------------------------------------------------------------------===//
@@ -3895,27 +3892,6 @@ def : Pat<(v4f32 (movlp:$src3 VR128:$src1, (v4f32 VR128:$src2))),
 // Set lowest element and zero upper elements.
 def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
-
-// Some special case pandn patterns.
-def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v4i32 immAllOnesV))),
-                  VR128:$src2)),
-          (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v8i16 immAllOnesV))),
-                  VR128:$src2)),
-          (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
-                  VR128:$src2)),
-          (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
-
-def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v4i32 immAllOnesV))),
-                  (memop addr:$src2))),
-          (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v8i16 immAllOnesV))),
-                  (memop addr:$src2))),
-          (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
-                  (memop addr:$src2))),
-          (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
 // vector -> vector casts
 def : Pat<(v4f32 (sint_to_fp (v4i32 VR128:$src))),
