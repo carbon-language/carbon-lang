@@ -1,11 +1,37 @@
-tools/clang
+#==============================================================================#
+# This file specifies intentionally untracked files that git should ignore.
+# See: http://www.kernel.org/pub/software/scm/git/docs/gitignore.html
+#
+# This file is intentionally different from the output of `git svn show-ignore`,
+# as most of those are useless.
+#==============================================================================#
 
-*.pyc
+#==============================================================================#
+# File extensions to be ignored anywhere in the tree.
+#==============================================================================#
+# Temp files created by most text editors.
 *~
+# Merge files created by git.
+*.orig
+# Byte compiled python modules.
+*.pyc
+
+#==============================================================================#
+# Explicit files to ignore (only matches one).
+#==============================================================================#
 .gitusers
-projects/test-suite
-projects/test-suite-externals
-projects/compiler-rt
-projects/libcxx
 cscope.files
 cscope.out
+autoconf/aclocal.m4
+autoconf/autom4te.cache
+
+#==============================================================================#
+# Directories to ignore (do not add trailing '/'s, they skip symlinks).
+#==============================================================================#
+# External projects that are tracked independently.
+projects/*
+!projects/sample
+!projects/CMakeLists.txt
+!projects/Makefile
+# Clang, which is tracked independently.
+tools/clang
