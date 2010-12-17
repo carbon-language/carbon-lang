@@ -57,12 +57,13 @@ MachineLoopRange *MachineLoopRanges::getLoopRange(const MachineLoop *Loop) {
 MachineLoopRange::MachineLoopRange(const MachineLoop *loop,
                                    MachineLoopRange::Allocator &alloc,
                                    SlotIndexes &Indexes)
-  : Loop(loop), Intervals(alloc) {
+  : Loop(loop), Intervals(alloc), Area(0) {
   // Compute loop coverage.
   for (MachineLoop::block_iterator I = Loop->block_begin(),
          E = Loop->block_end(); I != E; ++I) {
     const std::pair<SlotIndex, SlotIndex> &Range = Indexes.getMBBRange(*I);
     Intervals.insert(Range.first, Range.second, 1u);
+    Area += Range.first.distance(Range.second);
   }
 }
 
@@ -73,8 +74,38 @@ bool MachineLoopRange::overlaps(SlotIndex Start, SlotIndex Stop) {
   return I.valid() && Stop > I.start();
 }
 
+unsigned MachineLoopRange::getNumber() const {
+  return Loop->getHeader()->getNumber();
+}
+
+/// byNumber - Comparator for array_pod_sort that sorts a list of
+/// MachineLoopRange pointers by number.
+int MachineLoopRange::byNumber(const void *pa, const void *pb) {
+  const MachineLoopRange *a = *static_cast<MachineLoopRange *const *>(pa);
+  const MachineLoopRange *b = *static_cast<MachineLoopRange *const *>(pb);
+  unsigned na = a->getNumber();
+  unsigned nb = b->getNumber();
+  if (na < nb)
+    return -1;
+  if (na > nb)
+    return 1;
+  return 0;
+}
+
+/// byAreaDesc - Comparator for array_pod_sort that sorts a list of
+/// MachineLoopRange pointers by:
+/// 1. Descending area.
+/// 2. Ascending number.
+int MachineLoopRange::byAreaDesc(const void *pa, const void *pb) {
+  const MachineLoopRange *a = *static_cast<MachineLoopRange *const *>(pa);
+  const MachineLoopRange *b = *static_cast<MachineLoopRange *const *>(pb);
+  if (a->getArea() != b->getArea())
+    return a->getArea() > b->getArea() ? -1 : 1;
+  return byNumber(pa, pb);
+}
+
 void MachineLoopRange::print(raw_ostream &OS) const {
-  OS << "Loop#" << Loop->getHeader()->getNumber() << " =";
+  OS << "Loop#" << getNumber() << " =";
   for (Map::const_iterator I = Intervals.begin(); I.valid(); ++I)
     OS << " [" << I.start() << ';' << I.stop() << ')';
 }

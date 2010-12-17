@@ -42,6 +42,9 @@ private:
   /// Bit 0 = inside loop block.
   Map Intervals;
 
+  /// Loop area as measured by SlotIndex::distance.
+  unsigned Area;
+
   /// Create a MachineLoopRange, only accessible to MachineLoopRanges.
   MachineLoopRange(const MachineLoop*, Allocator&, SlotIndexes&);
 
@@ -50,11 +53,27 @@ public:
   /// inteructions.
   bool overlaps(SlotIndex Start, SlotIndex Stop);
 
+  /// getNumber - Return the loop number. This is the same as the number of the
+  /// header block.
+  unsigned getNumber() const;
+
+  /// getArea - Return the loop area. This number is approximately proportional
+  /// to the number of instructions in the loop.
+  unsigned getArea() const { return Area; }
+
   /// getMap - Allow public read-only access for IntervalMapOverlaps.
   const Map &getMap() { return Intervals; }
 
   /// print - Print loop ranges on OS.
   void print(raw_ostream&) const;
+
+  /// byNumber - Comparator for array_pod_sort that sorts a list of
+  /// MachineLoopRange pointers by number.
+  static int byNumber(const void*, const void*);
+
+  /// byAreaDesc - Comparator for array_pod_sort that sorts a list of
+  /// MachineLoopRange pointers by descending area, then by number.
+  static int byAreaDesc(const void*, const void*);
 };
 
 raw_ostream &operator<<(raw_ostream&, const MachineLoopRange&);
