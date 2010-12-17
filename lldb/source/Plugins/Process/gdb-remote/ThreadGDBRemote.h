@@ -14,7 +14,6 @@
 
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
-#include "libunwind/include/libunwind.h"
 
 class StringExtractor;
 class ProcessGDBRemote;

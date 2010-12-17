@@ -16,7 +16,6 @@
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/StackFrameList.h"
-#include "libunwind/include/libunwind.h"
 
 #define LLDB_THREAD_MAX_STOP_EXC_DATA 8
 

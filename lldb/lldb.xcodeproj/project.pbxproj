@@ -282,17 +282,11 @@
 		26D5B14B11B07550009A862E /* CommandObjectTarget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 269416AD119A024800FF2715 /* CommandObjectTarget.cpp */; };
 		26D5B14C11B07550009A862E /* PathMappingList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 495BBACB119A0DBE00418BEA /* PathMappingList.cpp */; };
 		26D5B14D11B07550009A862E /* StringExtractorGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2676A093119C93C8008A98EF /* StringExtractorGDBRemote.cpp */; };
-		26D5B14E11B07550009A862E /* MacOSXLibunwindCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9654F79C1197DA1300F72B43 /* MacOSXLibunwindCallbacks.cpp */; };
-		26D5B15011B07550009A862E /* Registers.s in Sources */ = {isa = PBXBuildFile; fileRef = 9654F7B51197DA3F00F72B43 /* Registers.s */; };
-		26D5B15111B07550009A862E /* unw_getcontext.s in Sources */ = {isa = PBXBuildFile; fileRef = 9654F7BA1197DA3F00F72B43 /* unw_getcontext.s */; };
-		26D5B15211B07550009A862E /* LibUnwindRegisterContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B4666F11A2091600CF6220 /* LibUnwindRegisterContext.cpp */; };
 		26D5B15311B07550009A862E /* ABIMacOSX_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 497650CE11A21BEE008DDB57 /* ABIMacOSX_i386.cpp */; };
 		26D5B15511B07550009A862E /* Baton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A0604811A5D03C00F75969 /* Baton.cpp */; };
 		26D5B15611B07550009A862E /* CommandObjectArgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */; };
-		26D5B15911B07550009A862E /* UnwindLibUnwind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E3EEBE11A98A1900FBADB6 /* UnwindLibUnwind.cpp */; };
 		26D5B15A11B07550009A862E /* UnwindMacOSXFrameBackchain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */; };
 		26D5B15B11B07550009A862E /* RegisterContextMacOSXFrameBackchain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */; };
-		26D5B18E11B07979009A862E /* libuwind.cxx in Sources */ = {isa = PBXBuildFile; fileRef = 9654F7B31197DA3F00F72B43 /* libuwind.cxx */; };
 		26DE1E6B11616C2E00A093E2 /* lldb-forward-rtti.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DE1E6911616C2E00A093E2 /* lldb-forward-rtti.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26DE1E6C11616C2E00A093E2 /* lldb-forward.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DE1E6A11616C2E00A093E2 /* lldb-forward.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26DE204111618AB900A093E2 /* SBSymbolContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DE204011618AB900A093E2 /* SBSymbolContext.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -599,8 +593,6 @@
 		26B167A41123BF5500DC7B4F /* ThreadSafeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeValue.h; path = include/lldb/Core/ThreadSafeValue.h; sourceTree = "<group>"; };
 		26B42B1E1187A92B0079C8C8 /* lldb-include.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-include.h"; path = "include/lldb/lldb-include.h"; sourceTree = "<group>"; };
 		26B42C4C1187ABA50079C8C8 /* LLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LLDB.h; path = include/lldb/API/LLDB.h; sourceTree = "<group>"; };
-		26B4666F11A2091600CF6220 /* LibUnwindRegisterContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibUnwindRegisterContext.cpp; path = Utility/LibUnwindRegisterContext.cpp; sourceTree = "<group>"; };
-		26B4667011A2091600CF6220 /* LibUnwindRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LibUnwindRegisterContext.h; path = Utility/LibUnwindRegisterContext.h; sourceTree = "<group>"; };
 		26B4E26E112F35F700AB3F64 /* TimeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimeValue.h; path = include/lldb/Host/TimeValue.h; sourceTree = "<group>"; };
 		26BC7C2510F1B3BC00F91463 /* lldb-defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-defines.h"; path = "include/lldb/lldb-defines.h"; sourceTree = "<group>"; };
 		26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-enumerations.h"; path = "include/lldb/lldb-enumerations.h"; sourceTree = "<group>"; };
@@ -899,8 +891,6 @@
 		26DFBC58113B48F300DD817F /* CommandObjectMultiword.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectMultiword.cpp; path = source/Commands/CommandObjectMultiword.cpp; sourceTree = "<group>"; };
 		26DFBC59113B48F300DD817F /* CommandObjectRegexCommand.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectRegexCommand.cpp; path = source/Interpreter/CommandObjectRegexCommand.cpp; sourceTree = "<group>"; };
 		26E3EEBD11A9870400FBADB6 /* Unwind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Unwind.h; path = include/lldb/Target/Unwind.h; sourceTree = "<group>"; };
-		26E3EEBE11A98A1900FBADB6 /* UnwindLibUnwind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindLibUnwind.cpp; path = Utility/UnwindLibUnwind.cpp; sourceTree = "<group>"; };
-		26E3EEBF11A98A1900FBADB6 /* UnwindLibUnwind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindLibUnwind.h; path = Utility/UnwindLibUnwind.h; sourceTree = "<group>"; };
 		26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindMacOSXFrameBackchain.cpp; path = Utility/UnwindMacOSXFrameBackchain.cpp; sourceTree = "<group>"; };
 		26E3EEE411A9901300FBADB6 /* UnwindMacOSXFrameBackchain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindMacOSXFrameBackchain.h; path = Utility/UnwindMacOSXFrameBackchain.h; sourceTree = "<group>"; };
 		26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextMacOSXFrameBackchain.cpp; path = Utility/RegisterContextMacOSXFrameBackchain.cpp; sourceTree = "<group>"; };
@@ -1024,31 +1014,6 @@
 		961FAC18123605A200F93A47 /* ArchDefaultUnwindPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArchDefaultUnwindPlan.cpp; path = source/Utility/ArchDefaultUnwindPlan.cpp; sourceTree = "<group>"; };
 		961FAC1C12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "ArchDefaultUnwindPlan-x86.cpp"; path = "Utility/ArchDefaultUnwindPlan-x86.cpp"; sourceTree = "<group>"; };
 		961FAC1D12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "ArchDefaultUnwindPlan-x86.h"; path = "Utility/ArchDefaultUnwindPlan-x86.h"; sourceTree = "<group>"; };
-		9654F79C1197DA1300F72B43 /* MacOSXLibunwindCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MacOSXLibunwindCallbacks.cpp; path = Utility/MacOSXLibunwindCallbacks.cpp; sourceTree = "<group>"; };
-		9654F79D1197DA1300F72B43 /* MacOSXLibunwindCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MacOSXLibunwindCallbacks.h; path = Utility/MacOSXLibunwindCallbacks.h; sourceTree = "<group>"; };
-		9654F7A11197DA3F00F72B43 /* libunwind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libunwind.h; sourceTree = "<group>"; };
-		9654F7A31197DA3F00F72B43 /* compact_unwind_encoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compact_unwind_encoding.h; sourceTree = "<group>"; };
-		9654F7A41197DA3F00F72B43 /* unwind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = unwind.h; sourceTree = "<group>"; };
-		9654F7A61197DA3F00F72B43 /* AddressSpace.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AddressSpace.hpp; sourceTree = "<group>"; };
-		9654F7A71197DA3F00F72B43 /* ArchDefaultUnwinder.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ArchDefaultUnwinder.hpp; sourceTree = "<group>"; };
-		9654F7A81197DA3F00F72B43 /* AssemblyInstructions.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AssemblyInstructions.hpp; sourceTree = "<group>"; };
-		9654F7A91197DA3F00F72B43 /* AssemblyParser.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AssemblyParser.hpp; sourceTree = "<group>"; };
-		9654F7AA1197DA3F00F72B43 /* CompactUnwinder.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CompactUnwinder.hpp; sourceTree = "<group>"; };
-		9654F7AB1197DA3F00F72B43 /* dwarf2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dwarf2.h; sourceTree = "<group>"; };
-		9654F7AC1197DA3F00F72B43 /* DwarfInstructions.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = DwarfInstructions.hpp; sourceTree = "<group>"; };
-		9654F7AD1197DA3F00F72B43 /* DwarfParser.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = DwarfParser.hpp; sourceTree = "<group>"; };
-		9654F7AE1197DA3F00F72B43 /* FileAbstraction.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = FileAbstraction.hpp; sourceTree = "<group>"; };
-		9654F7AF1197DA3F00F72B43 /* InternalMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InternalMacros.h; sourceTree = "<group>"; };
-		9654F7B21197DA3F00F72B43 /* libunwind_priv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libunwind_priv.h; sourceTree = "<group>"; };
-		9654F7B31197DA3F00F72B43 /* libuwind.cxx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = libuwind.cxx; sourceTree = "<group>"; };
-		9654F7B41197DA3F00F72B43 /* Registers.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Registers.hpp; sourceTree = "<group>"; };
-		9654F7B51197DA3F00F72B43 /* Registers.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = Registers.s; sourceTree = "<group>"; };
-		9654F7B61197DA3F00F72B43 /* RemoteDebuggerDummyUnwinder.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = RemoteDebuggerDummyUnwinder.hpp; sourceTree = "<group>"; };
-		9654F7B71197DA3F00F72B43 /* RemoteProcInfo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = RemoteProcInfo.hpp; sourceTree = "<group>"; };
-		9654F7B81197DA3F00F72B43 /* RemoteRegisterMap.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = RemoteRegisterMap.hpp; sourceTree = "<group>"; };
-		9654F7B91197DA3F00F72B43 /* RemoteUnwindProfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RemoteUnwindProfile.h; sourceTree = "<group>"; };
-		9654F7BA1197DA3F00F72B43 /* unw_getcontext.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = unw_getcontext.s; sourceTree = "<group>"; };
-		9654F7BD1197DA3F00F72B43 /* UnwindCursor.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = UnwindCursor.hpp; sourceTree = "<group>"; };
 		96A6D9C51249D96F00250B38 /* ArchVolatileRegs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArchVolatileRegs.cpp; path = source/Utility/ArchVolatileRegs.cpp; sourceTree = "<group>"; };
 		96A6D9C71249D98800250B38 /* ArchVolatileRegs-x86.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "ArchVolatileRegs-x86.cpp"; path = "Utility/ArchVolatileRegs-x86.cpp"; sourceTree = "<group>"; };
 		96A6D9C81249D98800250B38 /* ArchVolatileRegs-x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "ArchVolatileRegs-x86.h"; path = "Utility/ArchVolatileRegs-x86.h"; sourceTree = "<group>"; };
@@ -1639,17 +1604,10 @@
 				961FAC1D12360C7D00F93A47 /* ArchDefaultUnwindPlan-x86.h */,
 				961FABE81235F26800F93A47 /* UnwindAssemblyProfiler-x86.cpp */,
 				961FABE91235F26800F93A47 /* UnwindAssemblyProfiler-x86.h */,
-				9654F79F1197DA3F00F72B43 /* libunwind */,
-				26B4667011A2091600CF6220 /* LibUnwindRegisterContext.h */,
-				26B4666F11A2091600CF6220 /* LibUnwindRegisterContext.cpp */,
-				9654F79D1197DA1300F72B43 /* MacOSXLibunwindCallbacks.h */,
-				9654F79C1197DA1300F72B43 /* MacOSXLibunwindCallbacks.cpp */,
 				26E3EEF811A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.h */,
 				26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */,
 				2615DBC91208B5FC0021781D /* StopInfoMachException.h */,
 				2615DBC81208B5FC0021781D /* StopInfoMachException.cpp */,
-				26E3EEBF11A98A1900FBADB6 /* UnwindLibUnwind.h */,
-				26E3EEBE11A98A1900FBADB6 /* UnwindLibUnwind.cpp */,
 				26E3EEE411A9901300FBADB6 /* UnwindMacOSXFrameBackchain.h */,
 				26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */,
 			);
@@ -2274,61 +2232,6 @@
 			path = source/Host/common;
 			sourceTree = "<group>";
 		};
-		9654F79F1197DA3F00F72B43 /* libunwind */ = {
-			isa = PBXGroup;
-			children = (
-				9654F7A01197DA3F00F72B43 /* include */,
-				9654F7A51197DA3F00F72B43 /* src */,
-			);
-			name = libunwind;
-			path = Utility/libunwind;
-			sourceTree = "<group>";
-		};
-		9654F7A01197DA3F00F72B43 /* include */ = {
-			isa = PBXGroup;
-			children = (
-				9654F7A11197DA3F00F72B43 /* libunwind.h */,
-				9654F7A21197DA3F00F72B43 /* mach-o */,
-				9654F7A41197DA3F00F72B43 /* unwind.h */,
-			);
-			path = include;
-			sourceTree = "<group>";
-		};
-		9654F7A21197DA3F00F72B43 /* mach-o */ = {
-			isa = PBXGroup;
-			children = (
-				9654F7A31197DA3F00F72B43 /* compact_unwind_encoding.h */,
-			);
-			path = "mach-o";
-			sourceTree = "<group>";
-		};
-		9654F7A51197DA3F00F72B43 /* src */ = {
-			isa = PBXGroup;
-			children = (
-				9654F7A61197DA3F00F72B43 /* AddressSpace.hpp */,
-				9654F7A71197DA3F00F72B43 /* ArchDefaultUnwinder.hpp */,
-				9654F7A81197DA3F00F72B43 /* AssemblyInstructions.hpp */,
-				9654F7A91197DA3F00F72B43 /* AssemblyParser.hpp */,
-				9654F7AA1197DA3F00F72B43 /* CompactUnwinder.hpp */,
-				9654F7AB1197DA3F00F72B43 /* dwarf2.h */,
-				9654F7AC1197DA3F00F72B43 /* DwarfInstructions.hpp */,
-				9654F7AD1197DA3F00F72B43 /* DwarfParser.hpp */,
-				9654F7AE1197DA3F00F72B43 /* FileAbstraction.hpp */,
-				9654F7AF1197DA3F00F72B43 /* InternalMacros.h */,
-				9654F7B21197DA3F00F72B43 /* libunwind_priv.h */,
-				9654F7B31197DA3F00F72B43 /* libuwind.cxx */,
-				9654F7B41197DA3F00F72B43 /* Registers.hpp */,
-				9654F7B51197DA3F00F72B43 /* Registers.s */,
-				9654F7B61197DA3F00F72B43 /* RemoteDebuggerDummyUnwinder.hpp */,
-				9654F7B71197DA3F00F72B43 /* RemoteProcInfo.hpp */,
-				9654F7B81197DA3F00F72B43 /* RemoteRegisterMap.hpp */,
-				9654F7B91197DA3F00F72B43 /* RemoteUnwindProfile.h */,
-				9654F7BA1197DA3F00F72B43 /* unw_getcontext.s */,
-				9654F7BD1197DA3F00F72B43 /* UnwindCursor.hpp */,
-			);
-			path = src;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -2791,14 +2694,9 @@
 				26D5B14B11B07550009A862E /* CommandObjectTarget.cpp in Sources */,
 				26D5B14C11B07550009A862E /* PathMappingList.cpp in Sources */,
 				26D5B14D11B07550009A862E /* StringExtractorGDBRemote.cpp in Sources */,
-				26D5B14E11B07550009A862E /* MacOSXLibunwindCallbacks.cpp in Sources */,
-				26D5B15011B07550009A862E /* Registers.s in Sources */,
-				26D5B15111B07550009A862E /* unw_getcontext.s in Sources */,
-				26D5B15211B07550009A862E /* LibUnwindRegisterContext.cpp in Sources */,
 				26D5B15311B07550009A862E /* ABIMacOSX_i386.cpp in Sources */,
 				26D5B15511B07550009A862E /* Baton.cpp in Sources */,
 				26D5B15611B07550009A862E /* CommandObjectArgs.cpp in Sources */,
-				26D5B15911B07550009A862E /* UnwindLibUnwind.cpp in Sources */,
 				26D5B15A11B07550009A862E /* UnwindMacOSXFrameBackchain.cpp in Sources */,
 				26D5B15B11B07550009A862E /* RegisterContextMacOSXFrameBackchain.cpp in Sources */,
 				26680324116005D9008E1FE4 /* SBThread.cpp in Sources */,
@@ -2833,7 +2731,6 @@
 				9AC703AF117675410086C050 /* SBInstruction.cpp in Sources */,
 				9AC703B1117675490086C050 /* SBInstructionList.cpp in Sources */,
 				9AA69DB1118A024600D753A0 /* SBInputReader.cpp in Sources */,
-				26D5B18E11B07979009A862E /* libuwind.cxx in Sources */,
 				49F1A74611B3388F003ED505 /* ClangExpressionDeclMap.cpp in Sources */,
 				49D7072911B5AD11001AD875 /* ClangASTSource.cpp in Sources */,
 				4CA9637B11B6E99A00780E28 /* CommandObjectApropos.cpp in Sources */,

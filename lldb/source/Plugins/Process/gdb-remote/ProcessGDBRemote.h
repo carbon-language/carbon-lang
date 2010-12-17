@@ -29,7 +29,6 @@
 #include "GDBRemoteCommunication.h"
 #include "Utility/StringExtractor.h"
 #include "GDBRemoteRegisterContext.h"
-#include "libunwind/include/libunwind.h"
 
 class ThreadGDBRemote;
 
@@ -335,8 +334,6 @@ protected:
     lldb::addr_t m_dispatch_queue_offsets_addr;
     uint32_t m_packet_timeout;
     size_t m_max_memory_size;       // The maximum number of bytes to read/write when reading and writing memory
-    lldb_private::unw_targettype_t m_libunwind_target_type;
-    lldb_private::unw_addr_space_t m_libunwind_addr_space; // libunwind address space object for this process.
     bool m_waiting_for_attach;
     bool m_local_debugserver;  // Is the debugserver process we are talking to local or on another machine.
 
@@ -384,11 +381,6 @@ private:
     //------------------------------------------------------------------
     DISALLOW_COPY_AND_ASSIGN (ProcessGDBRemote);
 
-    lldb_private::unw_addr_space_t
-    GetLibUnwindAddressSpace ();
-
-    void 
-    DestoryLibUnwindAddressSpace ();
 };
 
 #endif  // liblldb_ProcessGDBRemote_h_

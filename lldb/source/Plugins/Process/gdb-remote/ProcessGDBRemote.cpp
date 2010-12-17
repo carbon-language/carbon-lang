@@ -45,7 +45,6 @@
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"
 #include "ThreadGDBRemote.h"
-#include "MacOSXLibunwindCallbacks.h"
 #include "StopInfoMachException.h"
 
 
@@ -119,8 +118,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
     m_packet_timeout (1),
     m_max_memory_size (512),
-    m_libunwind_target_type (UNW_TARGET_UNSPECIFIED),
-    m_libunwind_addr_space (NULL),
     m_waiting_for_attach (false),
     m_local_debugserver (true)
 {
@@ -1615,7 +1612,6 @@ ProcessGDBRemote::Clear()
         Mutex::Locker locker(m_stdio_mutex);
         m_stdout_data.clear();
     }
-    DestoryLibUnwindAddressSpace();
 }
 
 Error
@@ -2169,45 +2165,6 @@ ProcessGDBRemote::AsyncThread (void *arg)
     process->m_async_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;
 }
-
-lldb_private::unw_addr_space_t
-ProcessGDBRemote::GetLibUnwindAddressSpace ()
-{
-    unw_targettype_t target_type = UNW_TARGET_UNSPECIFIED;
-
-    ArchSpec::CPU arch_cpu = m_target.GetArchitecture().GetGenericCPUType();
-    if (arch_cpu == ArchSpec::eCPU_i386)
-        target_type = UNW_TARGET_I386;
-    else if (arch_cpu == ArchSpec::eCPU_x86_64)
-        target_type = UNW_TARGET_X86_64;
-
-    if (m_libunwind_addr_space)
-    {
-        if (m_libunwind_target_type != target_type)
-            DestoryLibUnwindAddressSpace();
-        else
-            return m_libunwind_addr_space;
-    }
-    unw_accessors_t callbacks = get_macosx_libunwind_callbacks ();
-    m_libunwind_addr_space = unw_create_addr_space (&callbacks, target_type);
-    if (m_libunwind_addr_space)
-        m_libunwind_target_type = target_type;
-    else
-        m_libunwind_target_type = UNW_TARGET_UNSPECIFIED;
-    return m_libunwind_addr_space;
-}
-
-void
-ProcessGDBRemote::DestoryLibUnwindAddressSpace ()
-{
-    if (m_libunwind_addr_space)
-    {
-        unw_destroy_addr_space (m_libunwind_addr_space);
-        m_libunwind_addr_space = NULL;
-    }
-    m_libunwind_target_type = UNW_TARGET_UNSPECIFIED;
-}
-
 
 const char *
 ProcessGDBRemote::GetDispatchQueueNameForThread

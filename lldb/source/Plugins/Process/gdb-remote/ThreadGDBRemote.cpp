@@ -20,11 +20,9 @@
 #include "lldb/Target/Unwind.h"
 #include "lldb/Breakpoint/WatchpointLocation.h"
 
-#include "LibUnwindRegisterContext.h"
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"
 #include "Utility/StringExtractorGDBRemote.h"
-#include "UnwindLibUnwind.h"
 #include "UnwindMacOSXFrameBackchain.h"
 #include "UnwindLLDB.h"
 

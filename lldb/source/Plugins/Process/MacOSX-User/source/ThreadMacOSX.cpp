@@ -23,8 +23,6 @@
 #include "lldb/Breakpoint/WatchpointLocation.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Target/Unwind.h"
-#include "LibUnwindRegisterContext.h"
-#include "UnwindLibUnwind.h"
 #include "UnwindMacOSXFrameBackchain.h"
 
 using namespace lldb;
