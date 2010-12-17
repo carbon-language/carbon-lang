@@ -418,11 +418,8 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
     return false;
   }
 
-  // This is a horrible hack. Some projects depend on gcc-like versions
-  // coming out of gcc -dumpversion to determine if the gcc compatible
-  // compiler has a correct version. Ideally we'd fix all of those projects.
   if (C.getArgs().hasArg(options::OPT_dumpversion)) {
-    llvm::outs() << GCC_COMPAT_VERSION_STRING "\n";
+    llvm::outs() << CLANG_VERSION_STRING "\n";
     return false;
   }
 
