@@ -550,7 +550,7 @@ TEST(IntervalMapTest, RandomCoalescing) {
 
 }
 
-TEST(IntervalMapOverlapsTest, EmptyMaps) {
+TEST(IntervalMapOverlapsTest, SmallMaps) {
   typedef IntervalMapOverlaps<UUMap,UUMap> UUOverlaps;
   UUMap::Allocator allocator;
   UUMap mapA(allocator);
@@ -560,9 +560,114 @@ TEST(IntervalMapOverlapsTest, EmptyMaps) {
   EXPECT_FALSE(UUOverlaps(mapA, mapB).valid());
 
   mapA.insert(1, 2, 3);
+
   // full, empty
   EXPECT_FALSE(UUOverlaps(mapA, mapB).valid());
   // empty, full
   EXPECT_FALSE(UUOverlaps(mapB, mapA).valid());
+
+  mapB.insert(3, 4, 5);
+
+  // full, full, non-overlapping
+  EXPECT_FALSE(UUOverlaps(mapA, mapB).valid());
+  EXPECT_FALSE(UUOverlaps(mapB, mapA).valid());
+
+  // Add an overlapping segment.
+  mapA.insert(4, 5, 6);
+
+  UUOverlaps AB(mapA, mapB);
+  ASSERT_TRUE(AB.valid());
+  EXPECT_EQ(4u, AB.a().start());
+  EXPECT_EQ(3u, AB.b().start());
+  ++AB;
+  EXPECT_FALSE(AB.valid());
+
+  UUOverlaps BA(mapB, mapA);
+  ASSERT_TRUE(BA.valid());
+  EXPECT_EQ(3u, BA.a().start());
+  EXPECT_EQ(4u, BA.b().start());
+  ++BA;
+  EXPECT_FALSE(BA.valid());
 }
+
+TEST(IntervalMapOverlapsTest, BigMaps) {
+  typedef IntervalMapOverlaps<UUMap,UUMap> UUOverlaps;
+  UUMap::Allocator allocator;
+  UUMap mapA(allocator);
+  UUMap mapB(allocator);
+
+  // [0;4] [10;14] [20;24] ...
+  for (unsigned n = 0; n != 100; ++n)
+    mapA.insert(10*n, 10*n+4, n);
+
+  // [5;6] [15;16] [25;26] ...
+  for (unsigned n = 10; n != 20; ++n)
+    mapB.insert(10*n+5, 10*n+6, n);
+
+  // [208;209] [218;219] ...
+  for (unsigned n = 20; n != 30; ++n)
+    mapB.insert(10*n+8, 10*n+9, n);
+
+  // insert some overlapping segments.
+  mapB.insert(400, 400, 400);
+  mapB.insert(401, 401, 401);
+  mapB.insert(402, 500, 402);
+  mapB.insert(600, 601, 402);
+
+  UUOverlaps AB(mapA, mapB);
+  ASSERT_TRUE(AB.valid());
+  EXPECT_EQ(400u, AB.a().start());
+  EXPECT_EQ(400u, AB.b().start());
+  ++AB;
+  ASSERT_TRUE(AB.valid());
+  EXPECT_EQ(400u, AB.a().start());
+  EXPECT_EQ(401u, AB.b().start());
+  ++AB;
+  ASSERT_TRUE(AB.valid());
+  EXPECT_EQ(400u, AB.a().start());
+  EXPECT_EQ(402u, AB.b().start());
+  ++AB;
+  ASSERT_TRUE(AB.valid());
+  EXPECT_EQ(410u, AB.a().start());
+  EXPECT_EQ(402u, AB.b().start());
+  ++AB;
+  ASSERT_TRUE(AB.valid());
+  EXPECT_EQ(420u, AB.a().start());
+  EXPECT_EQ(402u, AB.b().start());
+  AB.skipB();
+  ASSERT_TRUE(AB.valid());
+  EXPECT_EQ(600u, AB.a().start());
+  EXPECT_EQ(600u, AB.b().start());
+  ++AB;
+  EXPECT_FALSE(AB.valid());
+
+  // Check reversed maps.
+  UUOverlaps BA(mapB, mapA);
+  ASSERT_TRUE(BA.valid());
+  EXPECT_EQ(400u, BA.b().start());
+  EXPECT_EQ(400u, BA.a().start());
+  ++BA;
+  ASSERT_TRUE(BA.valid());
+  EXPECT_EQ(400u, BA.b().start());
+  EXPECT_EQ(401u, BA.a().start());
+  ++BA;
+  ASSERT_TRUE(BA.valid());
+  EXPECT_EQ(400u, BA.b().start());
+  EXPECT_EQ(402u, BA.a().start());
+  ++BA;
+  ASSERT_TRUE(BA.valid());
+  EXPECT_EQ(410u, BA.b().start());
+  EXPECT_EQ(402u, BA.a().start());
+  ++BA;
+  ASSERT_TRUE(BA.valid());
+  EXPECT_EQ(420u, BA.b().start());
+  EXPECT_EQ(402u, BA.a().start());
+  BA.skipA();
+  ASSERT_TRUE(BA.valid());
+  EXPECT_EQ(600u, BA.b().start());
+  EXPECT_EQ(600u, BA.a().start());
+  ++BA;
+  EXPECT_FALSE(BA.valid());
+}
+
 } // namespace
