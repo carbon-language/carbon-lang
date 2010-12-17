@@ -60,8 +60,8 @@ class GRExprEngine : public GRSubEngine {
   ///  variables and symbols (as determined by a liveness analysis).
   const GRState* CleanedState;
 
-  /// CurrentStmt - The current block-level statement.
-  const Stmt* CurrentStmt;
+  /// currentStmt - The current block-level statement.
+  const Stmt* currentStmt;
 
   // Obj-C Class Identifiers.
   IdentifierInfo* NSExceptionII;
