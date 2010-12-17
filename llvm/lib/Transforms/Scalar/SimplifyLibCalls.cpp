@@ -577,7 +577,8 @@ struct StrToOpt : public LibCallOptimization {
 
     Value *EndPtr = CI->getArgOperand(1);
     if (isa<ConstantPointerNull>(EndPtr)) {
-      CI->setOnlyReadsMemory();
+      // With a null EndPtr, this function won't capture the main argument.
+      // It would be readonly too, except that it still may write to errno.
       CI->addAttribute(1, Attribute::NoCapture);
     }
 
