@@ -324,7 +324,7 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
         Span = Span.inverse();
       
       // If there are a ton of values, we don't want to make a ginormous switch.
-      if (Span.getSetSize().getZExtValue() > 8 || Span.isEmptySet() ||
+      if (Span.getSetSize().ugt(8) || Span.isEmptySet() ||
           // We don't handle wrapped sets yet.
           Span.isWrappedSet())
         return 0;

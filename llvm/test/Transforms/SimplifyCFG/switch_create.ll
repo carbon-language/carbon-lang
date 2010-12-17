@@ -421,3 +421,23 @@ if.end:                                           ; preds = %if.then, %lor.lhs.f
 ; CHECK:   ]
 }
 
+; Don't crash on ginormous ranges.
+define void @test15(i128 %x) nounwind {
+  %cmp = icmp ugt i128 %x, 2
+  br i1 %cmp, label %if.end, label %lor.false
+
+lor.false:
+  %cmp2 = icmp ne i128 %x, 100000000000000000000
+  br i1 %cmp2, label %if.end, label %if.then
+
+if.then:
+  call void @foo1() noredzone
+  br label %if.end
+
+if.end:
+  ret void
+
+; CHECK: @test15
+; CHECK-NOT: switch
+; CHECK: ret void
+}
