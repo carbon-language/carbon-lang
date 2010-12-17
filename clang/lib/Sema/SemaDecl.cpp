@@ -7745,7 +7745,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     ECD->setInitVal(InitVal);
 
     // Adjust the Expr initializer and type.
-    if (ECD->getInitExpr() && NewTy != ECD->getInitExpr()->getType())
+    if (ECD->getInitExpr() &&
+	!Context.hasSameType(NewTy, ECD->getInitExpr()->getType()))
       ECD->setInitExpr(ImplicitCastExpr::Create(Context, NewTy,
                                                 CK_IntegralCast,
                                                 ECD->getInitExpr(),
