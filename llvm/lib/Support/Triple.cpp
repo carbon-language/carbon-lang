@@ -22,7 +22,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   switch (Kind) {
   case InvalidArch: return "<invalid>";
   case UnknownArch: return "unknown";
-    
+
   case alpha:   return "alpha";
   case arm:     return "arm";
   case bfin:    return "bfin";
@@ -225,7 +225,8 @@ const char *Triple::getArchNameForAssembler() {
     return "arm";
   if (Str == "armv4t" || Str == "thumbv4t")
     return "armv4t";
-  if (Str == "armv5" || Str == "armv5e" || Str == "thumbv5" || Str == "thumbv5e")
+  if (Str == "armv5" || Str == "armv5e" || Str == "thumbv5"
+      || Str == "thumbv5e")
     return "armv5";
   if (Str == "armv6" || Str == "thumbv6")
     return "armv6";
@@ -239,8 +240,8 @@ const char *Triple::getArchNameForAssembler() {
 //
 
 Triple::ArchType Triple::ParseArch(StringRef ArchName) {
-  if (ArchName.size() == 4 && ArchName[0] == 'i' && 
-      ArchName[2] == '8' && ArchName[3] == '6' && 
+  if (ArchName.size() == 4 && ArchName[0] == 'i' &&
+      ArchName[2] == '8' && ArchName[3] == '6' &&
       ArchName[1] - '3' < 6) // i[3-9]86
     return x86;
   else if (ArchName == "amd64" || ArchName == "x86_64")
@@ -512,17 +513,17 @@ StringRef Triple::getOSAndEnvironmentName() const {
 static unsigned EatNumber(StringRef &Str) {
   assert(!Str.empty() && Str[0] >= '0' && Str[0] <= '9' && "Not a number");
   unsigned Result = Str[0]-'0';
-  
+
   // Eat the digit.
   Str = Str.substr(1);
-  
+
   // Handle "darwin11".
   if (Result == 1 && !Str.empty() && Str[0] >= '0' && Str[0] <= '9') {
     Result = Result*10 + (Str[0] - '0');
     // Eat the digit.
     Str = Str.substr(1);
   }
-  
+
   return Result;
 }
 
@@ -535,10 +536,10 @@ void Triple::getDarwinNumber(unsigned &Maj, unsigned &Min,
   assert(getOS() == Darwin && "Not a darwin target triple!");
   StringRef OSName = getOSName();
   assert(OSName.startswith("darwin") && "Unknown darwin target triple!");
-  
+
   // Strip off "darwin".
   OSName = OSName.substr(6);
-  
+
   Maj = Min = Revision = 0;
 
   if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
@@ -547,27 +548,27 @@ void Triple::getDarwinNumber(unsigned &Maj, unsigned &Min,
   // The major version is the first digit.
   Maj = EatNumber(OSName);
   if (OSName.empty()) return;
-  
+
   // Handle minor version: 10.4.9 -> darwin8.9.
   if (OSName[0] != '.')
     return;
-  
+
   // Eat the '.'.
   OSName = OSName.substr(1);
 
   if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
     return;
-  
+
   Min = EatNumber(OSName);
   if (OSName.empty()) return;
 
   // Handle revision darwin8.9.1
   if (OSName[0] != '.')
     return;
-  
+
   // Eat the '.'.
   OSName = OSName.substr(1);
-  
+
   if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
     return;
 
