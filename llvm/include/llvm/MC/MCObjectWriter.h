@@ -190,10 +190,6 @@ public:
   static void EncodeULEB128(uint64_t Value, raw_ostream &OS);
 };
 
-MCObjectWriter *createELFObjectWriter(raw_ostream &OS, bool is64Bit,
-                                      Triple::OSType OSType, uint16_t EMachine,
-                                      bool IsLittleEndian,
-                                      bool HasRelocationAddend);
 MCObjectWriter *createWinCOFFObjectWriter(raw_ostream &OS, bool is64Bit);
 
 } // End llvm namespace
