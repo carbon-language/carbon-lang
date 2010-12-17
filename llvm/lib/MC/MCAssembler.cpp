@@ -210,8 +210,7 @@ const MCSymbolData *MCAssembler::getAtom(const MCSymbolData *SD) const {
   return SD->getFragment()->getAtom();
 }
 
-bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
-                                const MCAsmLayout &Layout,
+bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
                                 const MCFixup &Fixup, const MCFragment *DF,
                                 MCValue &Target, uint64_t &Value) const {
   ++stats::EvaluateFixup;
@@ -247,7 +246,7 @@ bool MCAssembler::EvaluateFixup(const MCObjectWriter &Writer,
   }
 
   if (IsResolved)
-    IsResolved = Writer.IsFixupFullyResolved(*this, Target, IsPCRel, DF);
+    IsResolved = getWriter().IsFixupFullyResolved(*this, Target, IsPCRel, DF);
 
   bool ShouldAlignPC = Backend.getFixupKindInfo(Fixup.getKind()).Flags &
                          MCFixupKindInfo::FKF_IsAlignedDownTo32Bits;
@@ -322,7 +321,8 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
 
 /// WriteFragmentData - Write the \arg F data to the output file.
 static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
-                              const MCFragment &F, MCObjectWriter *OW) {
+                              const MCFragment &F) {
+  MCObjectWriter *OW = &Asm.getWriter();
   uint64_t Start = OW->getStream().tell();
   (void) Start;
 
@@ -428,8 +428,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 }
 
 void MCAssembler::WriteSectionData(const MCSectionData *SD,
-                                   const MCAsmLayout &Layout,
-                                   MCObjectWriter *OW) const {
+                                   const MCAsmLayout &Layout) const {
   // Ignore virtual sections.
   if (SD->getSection().isVirtualSection()) {
     assert(Layout.getSectionFileSize(SD) == 0 && "Invalid size for section!");
@@ -469,29 +468,29 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
     return;
   }
 
-  uint64_t Start = OW->getStream().tell();
+  uint64_t Start = getWriter().getStream().tell();
   (void) Start;
 
   for (MCSectionData::const_iterator it = SD->begin(),
          ie = SD->end(); it != ie; ++it)
-    WriteFragmentData(*this, Layout, *it, OW);
+    WriteFragmentData(*this, Layout, *it);
 
-  assert(OW->getStream().tell() - Start == Layout.getSectionAddressSize(SD));
+  assert(getWriter().getStream().tell() - Start ==
+         Layout.getSectionAddressSize(SD));
 }
 
 
-uint64_t MCAssembler::HandleFixup(MCObjectWriter &Writer,
-                              const MCAsmLayout &Layout,
-                              MCFragment &F,
-                              const MCFixup &Fixup) {
+uint64_t MCAssembler::HandleFixup(const MCAsmLayout &Layout,
+                                  MCFragment &F,
+                                  const MCFixup &Fixup) {
    // Evaluate the fixup.
    MCValue Target;
    uint64_t FixedValue;
-   if (!EvaluateFixup(Writer, Layout, Fixup, &F, Target, FixedValue)) {
+   if (!EvaluateFixup(Layout, Fixup, &F, Target, FixedValue)) {
      // The fixup was unresolved, we need a relocation. Inform the object
      // writer of the relocation, and give it an opportunity to adjust the
      // fixup value if need be.
-     Writer.RecordRelocation(*this, Layout, &F, Fixup, Target, FixedValue);
+     getWriter().RecordRelocation(*this, Layout, &F, Fixup, Target, FixedValue);
    }
    return FixedValue;
  }
@@ -527,7 +526,7 @@ void MCAssembler::Finish() {
   }
 
   // Layout until everything fits.
-  while (LayoutOnce(Writer, Layout))
+  while (LayoutOnce(Layout))
     continue;
 
   DEBUG_WITH_TYPE("mc-dump", {
@@ -545,7 +544,7 @@ void MCAssembler::Finish() {
 
   // Allow the object writer a chance to perform post-layout binding (for
   // example, to set the index fields in the symbol data).
-  Writer.ExecutePostLayoutBinding(*this, Layout);
+  getWriter().ExecutePostLayoutBinding(*this, Layout);
 
   // Evaluate and apply the fixups, generating relocation entries as necessary.
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
@@ -556,7 +555,7 @@ void MCAssembler::Finish() {
         for (MCDataFragment::fixup_iterator it3 = DF->fixup_begin(),
                ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
           MCFixup &Fixup = *it3;
-          uint64_t FixedValue = HandleFixup(Writer, Layout, *DF, Fixup);
+          uint64_t FixedValue = HandleFixup(Layout, *DF, Fixup);
           getBackend().ApplyFixup(Fixup, DF->getContents().data(),
                                   DF->getContents().size(), FixedValue);
         }
@@ -566,7 +565,7 @@ void MCAssembler::Finish() {
         for (MCInstFragment::fixup_iterator it3 = IF->fixup_begin(),
                ie3 = IF->fixup_end(); it3 != ie3; ++it3) {
           MCFixup &Fixup = *it3;
-          uint64_t FixedValue = HandleFixup(Writer, Layout, *IF, Fixup);
+          uint64_t FixedValue = HandleFixup(Layout, *IF, Fixup);
           getBackend().ApplyFixup(Fixup, IF->getCode().data(),
                                   IF->getCode().size(), FixedValue);
         }
@@ -575,13 +574,12 @@ void MCAssembler::Finish() {
   }
 
   // Write the object file.
-  Writer.WriteObject(*this, Layout);
+  getWriter().WriteObject(*this, Layout);
 
   stats::ObjectBytes += OS.tell() - StartOffset;
 }
 
-bool MCAssembler::FixupNeedsRelaxation(const MCObjectWriter &Writer,
-                                       const MCFixup &Fixup,
+bool MCAssembler::FixupNeedsRelaxation(const MCFixup &Fixup,
                                        const MCFragment *DF,
                                        const MCAsmLayout &Layout) const {
   if (getRelaxAll())
@@ -590,7 +588,7 @@ bool MCAssembler::FixupNeedsRelaxation(const MCObjectWriter &Writer,
   // If we cannot resolve the fixup value, it requires relaxation.
   MCValue Target;
   uint64_t Value;
-  if (!EvaluateFixup(Writer, Layout, Fixup, DF, Target, Value))
+  if (!EvaluateFixup(Layout, Fixup, DF, Target, Value))
     return true;
 
   // Otherwise, relax if the value is too big for a (signed) i8.
@@ -599,8 +597,7 @@ bool MCAssembler::FixupNeedsRelaxation(const MCObjectWriter &Writer,
   return int64_t(Value) != int64_t(int8_t(Value));
 }
 
-bool MCAssembler::FragmentNeedsRelaxation(const MCObjectWriter &Writer,
-                                          const MCInstFragment *IF,
+bool MCAssembler::FragmentNeedsRelaxation(const MCInstFragment *IF,
                                           const MCAsmLayout &Layout) const {
   // If this inst doesn't ever need relaxation, ignore it. This occurs when we
   // are intentionally pushing out inst fragments, or because we relaxed a
@@ -610,16 +607,15 @@ bool MCAssembler::FragmentNeedsRelaxation(const MCObjectWriter &Writer,
 
   for (MCInstFragment::const_fixup_iterator it = IF->fixup_begin(),
          ie = IF->fixup_end(); it != ie; ++it)
-    if (FixupNeedsRelaxation(Writer, *it, IF, Layout))
+    if (FixupNeedsRelaxation(*it, IF, Layout))
       return true;
 
   return false;
 }
 
-bool MCAssembler::RelaxInstruction(const MCObjectWriter &Writer,
-                                   MCAsmLayout &Layout,
+bool MCAssembler::RelaxInstruction(MCAsmLayout &Layout,
                                    MCInstFragment &IF) {
-  if (!FragmentNeedsRelaxation(Writer, &IF, Layout))
+  if (!FragmentNeedsRelaxation(&IF, Layout))
     return false;
 
   ++stats::RelaxedInstructions;
@@ -653,9 +649,7 @@ bool MCAssembler::RelaxInstruction(const MCObjectWriter &Writer,
   return true;
 }
 
-bool MCAssembler::RelaxOrg(const MCObjectWriter &Writer,
-                           MCAsmLayout &Layout,
-                           MCOrgFragment &OF) {
+bool MCAssembler::RelaxOrg(MCAsmLayout &Layout, MCOrgFragment &OF) {
   int64_t TargetLocation;
   if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, Layout))
     report_fatal_error("expected assembly-time absolute expression");
@@ -672,9 +666,7 @@ bool MCAssembler::RelaxOrg(const MCObjectWriter &Writer,
   return OldSize != OF.getSize();
 }
 
-bool MCAssembler::RelaxLEB(const MCObjectWriter &Writer,
-                           MCAsmLayout &Layout,
-                           MCLEBFragment &LF) {
+bool MCAssembler::RelaxLEB(MCAsmLayout &Layout, MCLEBFragment &LF) {
   int64_t Value = 0;
   uint64_t OldSize = LF.getContents().size();
   LF.getValue().EvaluateAsAbsolute(Value, Layout);
@@ -689,8 +681,7 @@ bool MCAssembler::RelaxLEB(const MCObjectWriter &Writer,
   return OldSize != LF.getContents().size();
 }
 
-bool MCAssembler::RelaxDwarfLineAddr(const MCObjectWriter &Writer,
-				     MCAsmLayout &Layout,
+bool MCAssembler::RelaxDwarfLineAddr(MCAsmLayout &Layout,
 				     MCDwarfLineAddrFragment &DF) {
   int64_t AddrDelta = 0;
   uint64_t OldSize = DF.getContents().size();
@@ -705,8 +696,7 @@ bool MCAssembler::RelaxDwarfLineAddr(const MCObjectWriter &Writer,
   return OldSize != Data.size();
 }
 
-bool MCAssembler::RelaxAlignment(const MCObjectWriter &Writer,
-				 MCAsmLayout &Layout,
+bool MCAssembler::RelaxAlignment(MCAsmLayout &Layout,
 				 MCAlignFragment &AF) {
   unsigned Offset = Layout.getFragmentOffset(&AF);
   unsigned Size = OffsetToAlignment(Offset, AF.getAlignment());
@@ -717,8 +707,7 @@ bool MCAssembler::RelaxAlignment(const MCObjectWriter &Writer,
   return OldSize != Size;
 }
 
-bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
-                             MCAsmLayout &Layout) {
+bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
   ++stats::RelaxationSteps;
 
   // Scan for fragments that need relaxation.
@@ -735,22 +724,20 @@ bool MCAssembler::LayoutOnce(const MCObjectWriter &Writer,
       default:
         break;
       case MCFragment::FT_Align:
-	relaxedFrag = RelaxAlignment(Writer, Layout,
-				     *cast<MCAlignFragment>(it2));
+	relaxedFrag = RelaxAlignment(Layout, *cast<MCAlignFragment>(it2));
 	break;
       case MCFragment::FT_Inst:
-        relaxedFrag = RelaxInstruction(Writer, Layout,
-                                       *cast<MCInstFragment>(it2));
+        relaxedFrag = RelaxInstruction(Layout, *cast<MCInstFragment>(it2));
         break;
       case MCFragment::FT_Org:
-        relaxedFrag = RelaxOrg(Writer, Layout, *cast<MCOrgFragment>(it2));
+        relaxedFrag = RelaxOrg(Layout, *cast<MCOrgFragment>(it2));
         break;
       case MCFragment::FT_Dwarf:
-        relaxedFrag = RelaxDwarfLineAddr(Writer, Layout,
-					 *cast<MCDwarfLineAddrFragment>(it2));
+        relaxedFrag = RelaxDwarfLineAddr(Layout,
+                                         *cast<MCDwarfLineAddrFragment>(it2));
 	break;
       case MCFragment::FT_LEB:
-        relaxedFrag = RelaxLEB(Writer, Layout, *cast<MCLEBFragment>(it2));
+        relaxedFrag = RelaxLEB(Layout, *cast<MCLEBFragment>(it2));
         break;
       }
       // Update the layout, and remember that we relaxed.

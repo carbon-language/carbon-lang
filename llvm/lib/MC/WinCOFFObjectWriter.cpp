@@ -874,7 +874,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
         assert(OS.tell() == (*i)->Header.PointerToRawData &&
                "Section::PointerToRawData is insane!");
 
-        Asm.WriteSectionData(j, Layout, this);
+        Asm.WriteSectionData(j, Layout);
       }
 
       if ((*i)->Relocations.size() > 0) {

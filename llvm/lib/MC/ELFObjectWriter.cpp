@@ -1455,7 +1455,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     if (IsELFMetaDataSection(SD))
       WriteDataSectionData(this, SD);
     else
-      Asm.WriteSectionData(&SD, Layout, this);
+      Asm.WriteSectionData(&SD, Layout);
   }
 
   uint64_t Padding = OffsetToAlignment(FileOff, NaturalAlignment);

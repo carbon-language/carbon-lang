@@ -694,44 +694,37 @@ private:
   /// \return Whether the fixup value was fully resolved. This is true if the
   /// \arg Value result is fixed, otherwise the value may change due to
   /// relocation.
-  bool EvaluateFixup(const MCObjectWriter &Writer, const MCAsmLayout &Layout,
+  bool EvaluateFixup(const MCAsmLayout &Layout,
                      const MCFixup &Fixup, const MCFragment *DF,
                      MCValue &Target, uint64_t &Value) const;
 
   /// Check whether a fixup can be satisfied, or whether it needs to be relaxed
   /// (increased in size, in order to hold its value correctly).
-  bool FixupNeedsRelaxation(const MCObjectWriter &Writer,
-                            const MCFixup &Fixup, const MCFragment *DF,
+  bool FixupNeedsRelaxation(const MCFixup &Fixup, const MCFragment *DF,
                             const MCAsmLayout &Layout) const;
 
   /// Check whether the given fragment needs relaxation.
-  bool FragmentNeedsRelaxation(const MCObjectWriter &Writer,
-                               const MCInstFragment *IF,
+  bool FragmentNeedsRelaxation(const MCInstFragment *IF,
                                const MCAsmLayout &Layout) const;
 
   /// LayoutOnce - Perform one layout iteration and return true if any offsets
   /// were adjusted.
-  bool LayoutOnce(const MCObjectWriter &Writer, MCAsmLayout &Layout);
+  bool LayoutOnce(MCAsmLayout &Layout);
 
-  bool RelaxInstruction(const MCObjectWriter &Writer, MCAsmLayout &Layout,
-                        MCInstFragment &IF);
+  bool RelaxInstruction(MCAsmLayout &Layout, MCInstFragment &IF);
 
-  bool RelaxOrg(const MCObjectWriter &Writer, MCAsmLayout &Layout,
-                MCOrgFragment &OF);
+  bool RelaxOrg(MCAsmLayout &Layout, MCOrgFragment &OF);
 
-  bool RelaxLEB(const MCObjectWriter &Writer, MCAsmLayout &Layout,
-                MCLEBFragment &IF);
+  bool RelaxLEB(MCAsmLayout &Layout, MCLEBFragment &IF);
 
-  bool RelaxDwarfLineAddr(const MCObjectWriter &Writer, MCAsmLayout &Layout,
-			  MCDwarfLineAddrFragment &DF);
+  bool RelaxDwarfLineAddr(MCAsmLayout &Layout, MCDwarfLineAddrFragment &DF);
 
-  bool RelaxAlignment(const MCObjectWriter &Writer, MCAsmLayout &Layout,
-		      MCAlignFragment &DF);
+  bool RelaxAlignment(MCAsmLayout &Layout, MCAlignFragment &DF);
 
   /// FinishLayout - Finalize a layout, including fragment lowering.
   void FinishLayout(MCAsmLayout &Layout);
 
-  uint64_t HandleFixup(MCObjectWriter &Writer, const MCAsmLayout &Layout,
+  uint64_t HandleFixup(const MCAsmLayout &Layout,
                        MCFragment &F, const MCFixup &Fixup);
 
 public:
@@ -750,10 +743,8 @@ public:
   bool isSymbolLinkerVisible(const MCSymbol &SD) const;
 
   /// Emit the section contents using the given object writer.
-  //
-  // FIXME: Should MCAssembler always have a reference to the object writer?
-  void WriteSectionData(const MCSectionData *Section, const MCAsmLayout &Layout,
-                        MCObjectWriter *OW) const;
+  void WriteSectionData(const MCSectionData *Section,
+                        const MCAsmLayout &Layout) const;
 
   /// Check whether a given symbol has been flagged with .thumb_func.
   bool isThumbFunc(const MCSymbol *Func) const {
