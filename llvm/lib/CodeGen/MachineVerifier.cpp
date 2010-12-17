@@ -625,7 +625,12 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
             *OS << UseIdx << " is not live in " << LI << '\n';
           }
           // Verify isKill == LI.killedAt.
-          if (!MI->isRegTiedToDefOperand(MONum)) {
+          // Two-address instrs don't have kill flags on the tied operands, and
+          // we even allow
+          //   %r1 = add %r1, %r1
+          // without a kill flag on the untied operand.
+          // MI->findRegisterUseOperandIdx finds the first operand using reg.
+          if (!MI->isRegTiedToDefOperand(MI->findRegisterUseOperandIdx(Reg))) {
             // MI could kill register without a kill flag on MO.
             bool miKill = MI->killsRegister(Reg);
             bool liKill = LI.killedAt(UseIdx.getDefIndex());
