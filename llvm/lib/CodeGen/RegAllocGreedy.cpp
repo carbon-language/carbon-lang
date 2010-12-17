@@ -328,6 +328,9 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SplitEditor(*SA, *LIS, *VRM, *DomTree, LREdit)
     .splitAroundLoop(Loop->getLoop());
 
+  if (VerifyEnabled)
+    MF->verify(this);
+
   // We have new split regs, don't assign anything.
   return 0;
 }
@@ -400,6 +403,9 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
                << ((Value*)mf.getFunction())->getName() << '\n');
 
   MF = &mf;
+  if (VerifyEnabled)
+    MF->verify(this);
+
   RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
   DomTree = &getAnalysis<MachineDominatorTree>();
   ReservedRegs = TRI->getReservedRegs(*MF);

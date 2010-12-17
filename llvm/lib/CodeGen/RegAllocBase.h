@@ -156,6 +156,10 @@ protected:
   // Use this group name for NamedRegionTimer.
   static const char *TimerGroupName;
 
+public:
+  /// VerifyEnabled - True when -verify-regalloc is given.
+  static bool VerifyEnabled;
+
 private:
   void seedLiveVirtRegs(std::priority_queue<std::pair<float, unsigned> >&);
 

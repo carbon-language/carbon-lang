@@ -53,11 +53,12 @@ static RegisterRegAlloc basicRegAlloc("basic", "basic register allocator",
 
 // Temporary verification option until we can put verification inside
 // MachineVerifier.
-static cl::opt<bool>
-VerifyRegAlloc("verify-regalloc",
-               cl::desc("Verify live intervals before renaming"));
+static cl::opt<bool, true>
+VerifyRegAlloc("verify-regalloc", cl::location(RegAllocBase::VerifyEnabled),
+               cl::desc("Verify during register allocation"));
 
 const char *RegAllocBase::TimerGroupName = "Register Allocation";
+bool RegAllocBase::VerifyEnabled = false;
 
 namespace {
 /// RABasic provides a minimal implementation of the basic register allocation
@@ -475,7 +476,7 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   // make the rewriter a separate pass and override verifyAnalysis instead. When
   // that happens, verification naturally falls under VerifyMachineCode.
 #ifndef NDEBUG
-  if (VerifyRegAlloc) {
+  if (VerifyEnabled) {
     // Verify accuracy of LiveIntervals. The standard machine code verifier
     // ensures that each LiveIntervals covers all uses of the virtual reg.
 
