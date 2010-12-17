@@ -338,7 +338,8 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
   // Absolutize symbol differences between defined symbols when we have a
   // layout object and the target requests it.
 
-  assert(!(Layout && !Asm));
+  assert((!Layout || Asm) &&
+         "Must have an assembler object if layout is given!");
 
   if (Asm && A && B) {
     const MCSymbol &SA = A->getSymbol();
