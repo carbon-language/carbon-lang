@@ -87,6 +87,13 @@ static bool RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant) {
   }
 }
 
+static bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
+  const MCFixupKindInfo &FKI =
+    Asm.getBackend().getFixupKindInfo((MCFixupKind) Kind);
+
+  return FKI.Flags & MCFixupKindInfo::FKF_IsPCRel;
+}
+
 namespace {
   class ELFObjectWriter : public MCObjectWriter {
   protected:
@@ -361,8 +368,6 @@ namespace {
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend) = 0;
-
-    virtual bool isFixupKindPCRel(unsigned Kind) const = 0;
   };
 
   //===- X86ELFObjectWriter -------------------------------------------===//
@@ -378,19 +383,6 @@ namespace {
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend);
-
-    virtual bool isFixupKindPCRel(unsigned Kind) const {
-      switch (Kind) {
-      default:
-        return false;
-      case FK_PCRel_1:
-      case FK_PCRel_2:
-      case FK_PCRel_4:
-      case X86::reloc_riprel_4byte:
-      case X86::reloc_riprel_4byte_movq_load:
-        return true;
-      }
-    }
   };
 
 
@@ -407,19 +399,6 @@ namespace {
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend);
-    virtual bool isFixupKindPCRel(unsigned Kind) const {
-      switch (Kind) {
-      default:
-        return false;
-      case FK_PCRel_1:
-      case FK_PCRel_2:
-      case FK_PCRel_4:
-      case ARM::fixup_arm_ldst_pcrel_12:
-      case ARM::fixup_arm_pcrel_10:
-      case ARM::fixup_arm_branch:
-        return true;
-      }
-    }
   };
 
   //===- MBlazeELFObjectWriter -------------------------------------------===//
@@ -435,17 +414,6 @@ namespace {
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend);
-
-    virtual bool isFixupKindPCRel(unsigned Kind) const {
-      switch (Kind) {
-      default:
-        return false;
-      case FK_PCRel_1:
-      case FK_PCRel_2:
-      case FK_PCRel_4:
-        return true;
-      }
-    }
   };
 }
 
@@ -777,7 +745,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   int64_t Value = Target.getConstant();
   const MCSymbol *RelocSymbol = NULL;
 
-  bool IsPCRel = isFixupKindPCRel(Fixup.getKind());
+  bool IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
   if (!Target.isAbsolute()) {
     const MCSymbol &Symbol = Target.getSymA()->getSymbol();
     const MCSymbol &ASymbol = Symbol.AliasedSymbol();
