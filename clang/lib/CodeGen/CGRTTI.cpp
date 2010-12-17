@@ -535,7 +535,8 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   BuildVTablePointer(cast<Type>(Ty));
   
   // And the name.
-  Fields.push_back(BuildName(Ty, DecideHidden(Ty), Linkage));
+  bool Hidden = DecideHidden(Ty);
+  Fields.push_back(BuildName(Ty, Hidden, Linkage));
 
   switch (Ty->getTypeClass()) {
 #define TYPE(Class, Base)
@@ -636,8 +637,9 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   if (const RecordType *RT = dyn_cast<RecordType>(Ty))
     CGM.setTypeVisibility(GV, cast<CXXRecordDecl>(RT->getDecl()),
                           /*ForRTTI*/ true, /*ForDefinition*/ true);
-  else if (CGM.getCodeGenOpts().HiddenWeakVTables &&
-           Linkage == llvm::GlobalValue::WeakODRLinkage)
+  else if (Hidden || 
+           (CGM.getCodeGenOpts().HiddenWeakVTables &&
+            Linkage == llvm::GlobalValue::WeakODRLinkage))
     GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   
   return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
