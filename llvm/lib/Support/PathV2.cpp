@@ -89,7 +89,7 @@ namespace {
     return StringRef();
   }
 
-  size_t filename_pos(const StringRef &str) {
+  size_t filename_pos(StringRef str) {
     if (str.size() == 2 &&
         is_separator(str[0]) &&
         str[0] == str[1])
@@ -112,7 +112,7 @@ namespace {
     return pos + 1;
   }
 
-  size_t root_dir_start(const StringRef &str) {
+  size_t root_dir_start(StringRef str) {
     // case "c:/"
 #ifdef LLVM_ON_WIN32
     if (str.size() > 2 &&
@@ -142,7 +142,7 @@ namespace {
     return StringRef::npos;
   }
 
-  size_t parent_path_end(const StringRef &path) {
+  size_t parent_path_end(StringRef path) {
     size_t end_pos = filename_pos(path);
 
     bool filename_was_sep = path.size() > 0 && is_separator(path[end_pos]);
@@ -166,7 +166,7 @@ namespace llvm {
 namespace sys  {
 namespace path {
 
-const_iterator begin(const StringRef &path) {
+const_iterator begin(StringRef path) {
   const_iterator i;
   i.Path      = path;
   i.Component = find_first_component(path);
@@ -174,7 +174,7 @@ const_iterator begin(const StringRef &path) {
   return i;
 }
 
-const_iterator end(const StringRef &path) {
+const_iterator end(StringRef path) {
   const_iterator i;
   i.Path      = path;
   i.Position  = path.size();
@@ -279,7 +279,7 @@ ptrdiff_t const_iterator::operator-(const const_iterator &RHS) const {
   return Position - RHS.Position;
 }
 
-const StringRef root_path(const StringRef &path) {
+const StringRef root_path(StringRef path) {
   const_iterator b = begin(path),
                  pos = b,
                  e = end(path);
@@ -311,7 +311,7 @@ const StringRef root_path(const StringRef &path) {
   return StringRef();
 }
 
-const StringRef root_name(const StringRef &path) {
+const StringRef root_name(StringRef path) {
   const_iterator b = begin(path),
                  e = end(path);
   if (b != e) {
@@ -333,7 +333,7 @@ const StringRef root_name(const StringRef &path) {
   return StringRef();
 }
 
-const StringRef root_directory(const StringRef &path) {
+const StringRef root_directory(StringRef path) {
   const_iterator b = begin(path),
                  pos = b,
                  e = end(path);
@@ -362,7 +362,7 @@ const StringRef root_directory(const StringRef &path) {
   return StringRef();
 }
 
-const StringRef relative_path(const StringRef &path) {
+const StringRef relative_path(StringRef path) {
   StringRef root = root_path(path);
   return StringRef(path.begin() + root.size(), path.size() - root.size());
 }
@@ -408,7 +408,7 @@ void append(SmallVectorImpl<char> &path, const Twine &a,
   }
 }
 
-const StringRef parent_path(const StringRef &path) {
+const StringRef parent_path(StringRef path) {
   size_t end_pos = parent_path_end(path);
   if (end_pos == StringRef::npos)
     return StringRef();
@@ -461,11 +461,11 @@ void native(const Twine &path, SmallVectorImpl<char> &result) {
 #endif
 }
 
-const StringRef filename(const StringRef &path) {
+const StringRef filename(StringRef path) {
   return *(--end(path));
 }
 
-const StringRef stem(const StringRef &path) {
+const StringRef stem(StringRef path) {
   StringRef fname = filename(path);
   size_t pos = fname.find_last_of('.');
   if (pos == StringRef::npos)
@@ -478,7 +478,7 @@ const StringRef stem(const StringRef &path) {
       return StringRef(fname.begin(), pos);
 }
 
-const StringRef extension(const StringRef &path) {
+const StringRef extension(StringRef path) {
   StringRef fname = filename(path);
   size_t pos = fname.find_last_of('.');
   if (pos == StringRef::npos)

@@ -400,7 +400,7 @@ MBlazeOperand *MBlazeAsmParser::ParseRegister() {
   }
 }
 
-static unsigned MatchFslRegister(const StringRef &String) {
+static unsigned MatchFslRegister(StringRef String) {
   if (!String.startswith("rfsl"))
     return -1;
 

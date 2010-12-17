@@ -604,10 +604,10 @@ class directory_iterator {
   directory_entry CurrentEntry;
 
   // Platform implementations implement these functions to handle iteration.
-  friend error_code directory_iterator_construct(directory_iterator& it,
-                                                 const StringRef &path);
-  friend error_code directory_iterator_increment(directory_iterator& it);
-  friend error_code directory_iterator_destruct(directory_iterator& it);
+  friend error_code directory_iterator_construct(directory_iterator &it,
+                                                 StringRef path);
+  friend error_code directory_iterator_increment(directory_iterator &it);
+  friend error_code directory_iterator_destruct(directory_iterator &it);
 
 public:
   explicit directory_iterator(const Twine &path, error_code &ec)

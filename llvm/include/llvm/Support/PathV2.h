@@ -52,8 +52,8 @@ class const_iterator {
   size_t    Position;  //< The iterators current position within Path.
 
   // An end iterator has Position = Path.size() + 1.
-  friend const_iterator begin(const StringRef &path);
-  friend const_iterator end(const StringRef &path);
+  friend const_iterator begin(StringRef path);
+  friend const_iterator end(StringRef path);
 
 public:
   typedef const StringRef value_type;
@@ -80,24 +80,24 @@ typedef std::reverse_iterator<const_iterator> reverse_iterator;
 /// @brief Get begin iterator over \a path.
 /// @param path Input path.
 /// @returns Iterator initialized with the first component of \a path.
-const_iterator begin(const StringRef &path);
+const_iterator begin(StringRef path);
 
 /// @brief Get end iterator over \a path.
 /// @param path Input path.
 /// @returns Iterator initialized to the end of \a path.
-const_iterator end(const StringRef &path);
+const_iterator end(StringRef path);
 
 /// @brief Get reverse begin iterator over \a path.
 /// @param path Input path.
 /// @returns Iterator initialized with the first reverse component of \a path.
-inline reverse_iterator rbegin(const StringRef &path) {
+inline reverse_iterator rbegin(StringRef path) {
   return reverse_iterator(end(path));
 }
 
 /// @brief Get reverse end iterator over \a path.
 /// @param path Input path.
 /// @returns Iterator initialized to the reverse end of \a path.
-inline reverse_iterator rend(const StringRef &path) {
+inline reverse_iterator rend(StringRef path) {
   return reverse_iterator(begin(path));
 }
 
@@ -175,7 +175,7 @@ void native(const Twine &path, SmallVectorImpl<char> &result);
 ///
 /// @param path Input path.
 /// @result The root name of \a path if it has one, otherwise "".
-const StringRef root_name(const StringRef &path);
+const StringRef root_name(StringRef path);
 
 /// @brief Get root directory.
 ///
@@ -186,7 +186,7 @@ const StringRef root_name(const StringRef &path);
 /// @param path Input path.
 /// @result The root directory of \a path if it has one, otherwise
 ///               "".
-const StringRef root_directory(const StringRef &path);
+const StringRef root_directory(StringRef path);
 
 /// @brief Get root path.
 ///
@@ -194,7 +194,7 @@ const StringRef root_directory(const StringRef &path);
 ///
 /// @param path Input path.
 /// @result The root path of \a path if it has one, otherwise "".
-const StringRef root_path(const StringRef &path);
+const StringRef root_path(StringRef path);
 
 /// @brief Get relative path.
 ///
@@ -204,7 +204,7 @@ const StringRef root_path(const StringRef &path);
 ///
 /// @param path Input path.
 /// @result The path starting after root_path if one exists, otherwise "".
-const StringRef relative_path(const StringRef &path);
+const StringRef relative_path(StringRef path);
 
 /// @brief Get parent path.
 ///
@@ -214,7 +214,7 @@ const StringRef relative_path(const StringRef &path);
 ///
 /// @param path Input path.
 /// @result The parent path of \a path if one exists, otherwise "".
-const StringRef parent_path(const StringRef &path);
+const StringRef parent_path(StringRef path);
 
 /// @brief Get filename.
 ///
@@ -226,7 +226,7 @@ const StringRef parent_path(const StringRef &path);
 /// @param path Input path.
 /// @result The filename part of \a path. This is defined as the last component
 ///         of \a path.
-const StringRef filename(const StringRef &path);
+const StringRef filename(StringRef path);
 
 /// @brief Get stem.
 ///
@@ -242,7 +242,7 @@ const StringRef filename(const StringRef &path);
 ///
 /// @param path Input path.
 /// @result The stem of \a path.
-const StringRef stem(const StringRef &path);
+const StringRef stem(StringRef path);
 
 /// @brief Get extension.
 ///
@@ -256,7 +256,7 @@ const StringRef stem(const StringRef &path);
 ///
 /// @param path Input path.
 /// @result The extension of \a path.
-const StringRef extension(const StringRef &path);
+const StringRef extension(StringRef path);
 
 /// @brief Has root name?
 ///
