@@ -247,6 +247,12 @@ TEST(IntervalMapTest, RootMultiCoalescing) {
   EXPECT_EQ(140u, I.start());
   EXPECT_EQ(150u, I.stop());
 
+  I.advanceTo(200);
+  EXPECT_FALSE(I.valid());
+
+  I.advanceTo(300);
+  EXPECT_FALSE(I.valid());
+
   // Coalesce left with followers.
   // [100;110] [120;130] [140;150] [160;170]
   map.insert(111, 115, 1);
@@ -519,6 +525,14 @@ TEST(IntervalMapTest, Branched2) {
   ASSERT_TRUE(I.valid());
   EXPECT_EQ(2000u, I.start());
   EXPECT_EQ(2005u, I.stop());
+
+  // advanceTo beyond end()
+  I.advanceTo(20000);
+  EXPECT_FALSE(I.valid());
+
+  // end().advanceTo() is valid as long as x > map.stop()
+  I.advanceTo(30000);
+  EXPECT_FALSE(I.valid());
 
   // Test clear() on branched map.
   map.clear();

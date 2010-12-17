@@ -1411,6 +1411,8 @@ public:
   /// The search is started from the current position, and no earlier positions
   /// can be found. This is much faster than find() for small moves.
   void advanceTo(KeyT x) {
+    if (!valid())
+      return;
     if (branched())
       treeAdvanceTo(x);
     else
