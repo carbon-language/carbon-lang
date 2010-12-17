@@ -35,20 +35,8 @@ class TypeSourceInfo;
 /// \brief Represents a template argument within a class template
 /// specialization.
 class TemplateArgument {
-  union {
-    uintptr_t TypeOrValue;
-    struct {
-      char Value[sizeof(llvm::APSInt)];
-      void *Type;
-    } Integer;
-    struct {
-      TemplateArgument *Args;
-      unsigned NumArgs;
-    } Args;
-  };
-
 public:
-  /// \brief The type of template argument we're storing.
+  /// \brief The kind of template argument we're storing.
   enum ArgKind {
     /// \brief Represents an empty template argument, e.g., one that has not
     /// been deduced.
@@ -71,8 +59,25 @@ public:
     /// The template argument is actually a parameter pack. Arguments are stored
     /// in the Args struct.
     Pack
-  } Kind;
+  };
 
+private:
+  /// \brief The kind of template argument we're storing.
+  unsigned Kind;
+
+  union {
+    uintptr_t TypeOrValue;
+    struct {
+      char Value[sizeof(llvm::APSInt)];
+      void *Type;
+    } Integer;
+    struct {
+      TemplateArgument *Args;
+      unsigned NumArgs;
+    } Args;
+  };
+
+public:
   /// \brief Construct an empty, invalid template argument.
   TemplateArgument() : TypeOrValue(0), Kind(Null) { }
 
@@ -177,7 +182,7 @@ public:
   }
 
   /// \brief Return the kind of stored template argument.
-  ArgKind getKind() const { return Kind; }
+  ArgKind getKind() const { return (ArgKind)Kind; }
 
   /// \brief Determine whether this template argument has no value.
   bool isNull() const { return Kind == Null; }
