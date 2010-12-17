@@ -84,7 +84,7 @@ MachOObject::MachOObject(MemoryBuffer *Buffer_, bool IsLittleEndian_,
 }
 
 MachOObject::~MachOObject() {
-  delete LoadCommands;
+  delete [] LoadCommands;
 }
 
 MachOObject *MachOObject::LoadFromBuffer(MemoryBuffer *Buffer,
