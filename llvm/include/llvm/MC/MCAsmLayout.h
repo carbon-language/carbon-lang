@@ -53,8 +53,8 @@ public:
   /// Get the assembler object this is a layout for.
   MCAssembler &getAssembler() const { return Assembler; }
 
-  /// \brief Invalidate all following fragments because a fragment has been resized. The
-  /// fragments size should have already been updated.
+  /// \brief Invalidate all following fragments because a fragment has been
+  /// resized. The fragments size should have already been updated.
   void Invalidate(MCFragment *F);
 
   /// \brief Perform layout for a single fragment, assuming that the previous
