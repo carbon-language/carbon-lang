@@ -54,7 +54,7 @@ public:
   /// @brief Initialize a range of values explicitly. This will assert out if
   /// Lower==Upper and Lower != Min or Max value for its type. It will also
   /// assert out if the two APInt's are not the same bit width.
-  ConstantRange(const APInt& Lower, const APInt& Upper);
+  ConstantRange(const APInt &Lower, const APInt &Upper);
 
   /// makeICmpRegion - Produce the smallest range that contains all values that
   /// might satisfy the comparison specified by Pred when compared to any value

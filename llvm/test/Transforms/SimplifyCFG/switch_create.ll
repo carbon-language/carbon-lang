@@ -352,3 +352,72 @@ malformed:
 ; CHECK: @test12
 
 }
+
+; test13 - handle switch formation with ult.
+define void @test13(i32 %x) nounwind ssp noredzone {
+entry:
+  %cmp = icmp ult i32 %x, 2
+  br i1 %cmp, label %if.then, label %lor.lhs.false3
+
+lor.lhs.false3:                                   ; preds = %lor.lhs.false
+  %cmp5 = icmp eq i32 %x, 3
+  br i1 %cmp5, label %if.then, label %lor.lhs.false6
+
+lor.lhs.false6:                                   ; preds = %lor.lhs.false3
+  %cmp8 = icmp eq i32 %x, 4
+  br i1 %cmp8, label %if.then, label %lor.lhs.false9
+
+lor.lhs.false9:                                   ; preds = %lor.lhs.false6
+  %cmp11 = icmp eq i32 %x, 6
+  br i1 %cmp11, label %if.then, label %if.end
+
+if.then:                                          ; preds = %lor.lhs.false9, %lor.lhs.false6, %lor.lhs.false3, %lor.lhs.false, %entry
+  call void @foo1() noredzone
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %lor.lhs.false9
+  ret void
+; CHECK: @test13
+; CHECK:  switch i32 %x, label %if.end [
+; CHECK:     i32 6, label %if.then
+; CHECK:     i32 4, label %if.then
+; CHECK:     i32 3, label %if.then
+; CHECK:     i32 1, label %if.then
+; CHECK:     i32 0, label %if.then
+; CHECK:   ]
+}
+
+; test14 - handle switch formation with ult.
+define void @test14(i32 %x) nounwind ssp noredzone {
+entry:
+  %cmp = icmp ugt i32 %x, 2
+  br i1 %cmp, label %lor.lhs.false3, label %if.then
+
+lor.lhs.false3:                                   ; preds = %lor.lhs.false
+  %cmp5 = icmp ne i32 %x, 3
+  br i1 %cmp5, label %lor.lhs.false6, label %if.then
+
+lor.lhs.false6:                                   ; preds = %lor.lhs.false3
+  %cmp8 = icmp ne i32 %x, 4
+  br i1 %cmp8, label %lor.lhs.false9, label %if.then
+
+lor.lhs.false9:                                   ; preds = %lor.lhs.false6
+  %cmp11 = icmp ne i32 %x, 6
+  br i1 %cmp11, label %if.end, label %if.then
+
+if.then:                                          ; preds = %lor.lhs.false9, %lor.lhs.false6, %lor.lhs.false3, %lor.lhs.false, %entry
+  call void @foo1() noredzone
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %lor.lhs.false9
+  ret void
+; CHECK: @test14
+; CHECK:  switch i32 %x, label %if.end [
+; CHECK:     i32 6, label %if.then
+; CHECK:     i32 4, label %if.then
+; CHECK:     i32 3, label %if.then
+; CHECK:     i32 1, label %if.then
+; CHECK:     i32 0, label %if.then
+; CHECK:   ]
+}
+

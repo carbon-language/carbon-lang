@@ -28,6 +28,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -305,11 +306,33 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
   
   // If this is an icmp against a constant, handle this as one of the cases.
   if (ICmpInst *ICI = dyn_cast<ICmpInst>(I)) {
-    if (ICI->getPredicate() == (isEQ ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE))
-      if (ConstantInt *C = GetConstantInt(I->getOperand(1), TD)) {
+    if (ConstantInt *C = GetConstantInt(I->getOperand(1), TD)) {
+      if (ICI->getPredicate() == (isEQ ? ICmpInst::ICMP_EQ:ICmpInst::ICMP_NE)) {
         Vals.push_back(C);
         return I->getOperand(0);
       }
+      
+      // If we have "x ult 3" comparison, for example, then we can add 0,1,2 to
+      // the set.
+      ConstantRange Span =
+        ConstantRange::makeICmpRegion(ICI->getPredicate(),
+                                      ConstantRange(C->getValue()));
+      
+      // If this is an and/!= check then we want to optimize "x ugt 2" into
+      // x != 0 && x != 1.
+      if (!isEQ)
+        Span = Span.inverse();
+      
+      // If there are a ton of values, we don't want to make a ginormous switch.
+      if (Span.getSetSize().getZExtValue() > 8 || Span.isEmptySet() ||
+          // We don't handle wrapped sets yet.
+          Span.isWrappedSet())
+        return 0;
+      
+      for (APInt Tmp = Span.getLower(); Tmp != Span.getUpper(); ++Tmp)
+        Vals.push_back(ConstantInt::get(V->getContext(), Tmp));
+      return I->getOperand(0);
+    }
     return 0;
   }
   
