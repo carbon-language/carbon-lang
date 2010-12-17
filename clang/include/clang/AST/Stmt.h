@@ -868,7 +868,7 @@ public:
 /// DoStmt - This represents a 'do/while' stmt.
 ///
 class DoStmt : public Stmt {
-  enum { COND, BODY, END_EXPR };
+  enum { BODY, COND, END_EXPR };
   Stmt* SubExprs[END_EXPR];
   SourceLocation DoLoc;
   SourceLocation WhileLoc;

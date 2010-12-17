@@ -14,9 +14,14 @@ void g(int i, ...) {
   __builtin_va_list va;
   (void)__builtin_va_arg(va, Int);
   (void)__builtin_types_compatible_p(Int, Int);
+
+  struct X x = { 0, 0 };
+  do {
+    x.a++;
+  } while (x.a < 10);
 }
 
-// RUN: c-index-test -test-annotate-tokens=%s:4:1:17:1 %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:4:1:22:1 %s | FileCheck %s
 // CHECK: Identifier: "T" [4:3 - 4:4] TypeRef=T:1:13
 // CHECK: Punctuation: "*" [4:4 - 4:5] VarDecl=t_ptr:4:6 (Definition)
 // CHECK: Identifier: "t_ptr" [4:6 - 4:11] VarDecl=t_ptr:4:6 (Definition)
@@ -74,5 +79,21 @@ void g(int i, ...) {
 // CHECK: Identifier: "Int" [16:38 - 16:41] TypeRef=Int:12:13
 // CHECK: Punctuation: "," [16:41 - 16:42] UnexposedExpr=
 // CHECK: Identifier: "Int" [16:43 - 16:46] TypeRef=Int:12:13
+// CHECK: Keyword: "struct" [18:3 - 18:9] UnexposedStmt=
+// CHECK: Identifier: "X" [18:10 - 18:11] TypeRef=struct X:2:8
+// CHECK: Identifier: "x" [18:12 - 18:13] VarDecl=x:18:12 (Definition)
+// CHECK: Keyword: "do" [19:3 - 19:5] UnexposedStmt=
+// CHECK: Identifier: "x" [20:5 - 20:6] DeclRefExpr=x:18:12
+// CHECK: Punctuation: "." [20:6 - 20:7] MemberRefExpr=a:2:16
+// CHECK: Identifier: "a" [20:7 - 20:8] MemberRefExpr=a:2:16
+// CHECK: Punctuation: "++" [20:8 - 20:10] UnexposedExpr=
+// CHECK: Punctuation: ";" [20:10 - 20:11] UnexposedStmt=
+// CHECK: Punctuation: "}" [21:3 - 21:4] UnexposedStmt=
+// CHECK: Keyword: "while" [21:5 - 21:10] UnexposedStmt=
+// CHECK: Punctuation: "(" [21:11 - 21:12] UnexposedStmt=
+// CHECK: Identifier: "x" [21:12 - 21:13] DeclRefExpr=x:18:12
+// CHECK: Punctuation: "." [21:13 - 21:14] MemberRefExpr=a:2:16
+// CHECK: Identifier: "a" [21:14 - 21:15] MemberRefExpr=a:2:16
+
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:165:32 %s | FileCheck %s
 // RUN: c-index-test -test-annotate-tokens=%s:4:1:165:38 %s | FileCheck %s
