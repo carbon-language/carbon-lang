@@ -199,7 +199,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
 
   std::string DirName = "";
 
-  if (!llvm::sys::Path(Entry->getName()).isAbsolute()) {
+  if (llvm::sys::path::is_relative(Entry->getName())) {
     llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
     DirName = P.str() + "/";
   }

@@ -1703,7 +1703,7 @@ void ASTReader::MaybeAddSystemRootToFilename(std::string &Filename) {
   if (!RelocatablePCH)
     return;
 
-  if (Filename.empty() || llvm::sys::Path(Filename).isAbsolute())
+  if (Filename.empty() || llvm::sys::path::is_absolute(Filename))
     return;
 
   if (isysroot == 0) {

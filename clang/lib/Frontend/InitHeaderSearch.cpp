@@ -106,10 +106,10 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   // Compute the actual path, taking into consideration -isysroot.
   llvm::SmallString<256> MappedPathStorage;
   llvm::StringRef MappedPathStr = Path.toStringRef(MappedPathStorage);
-  llvm::sys::Path MappedPath(MappedPathStr);
 
   // Handle isysroot.
-  if (Group == System && !IgnoreSysRoot && MappedPath.isAbsolute() &&
+  if (Group == System && !IgnoreSysRoot &&
+      llvm::sys::path::is_absolute(MappedPathStr) &&
       IncludeSysroot != llvm::sys::Path::GetRootDirectory()) {
     MappedPathStorage.clear();
     MappedPathStr =

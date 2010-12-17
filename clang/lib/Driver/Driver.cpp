@@ -30,6 +30,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 
@@ -757,14 +758,15 @@ void Driver::BuildActions(const ToolChain &TC, const ArgList &Args,
 
       // Check that the file exists, if enabled.
       if (CheckInputsExist && memcmp(Value, "-", 2) != 0) {
-        llvm::sys::Path Path(Value);
+        llvm::SmallString<64> Path(Value);
         if (Arg *WorkDir = Args.getLastArg(options::OPT_working_directory))
-          if (!Path.isAbsolute()) {
+          if (llvm::sys::path::is_absolute(Path.str())) {
             Path = WorkDir->getValue(Args);
-            Path.appendComponent(Value);
+            llvm::sys::path::append(Path, Value);
           }
 
-        if (!Path.exists())
+        bool exists = false;
+        if (/*error_code ec =*/llvm::sys::fs::exists(Value, exists) || !exists)
           Diag(clang::diag::err_drv_no_such_file) << Path.str();
         else
           Inputs.push_back(std::make_pair(Ty, A));

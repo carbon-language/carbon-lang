@@ -392,10 +392,11 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
 
 void FileManager::FixupRelativePath(llvm::sys::Path &path,
                                     const FileSystemOptions &FSOpts) {
-  if (FSOpts.WorkingDir.empty() || path.isAbsolute()) return;
-  
-  llvm::sys::Path NewPath(FSOpts.WorkingDir);
-  NewPath.appendComponent(path.str());
+  if (FSOpts.WorkingDir.empty() || llvm::sys::path::is_absolute(path.str()))
+    return;
+
+  llvm::SmallString<128> NewPath(FSOpts.WorkingDir);
+  llvm::sys::path::append(NewPath, path.str());
   path = NewPath;
 }
 

@@ -475,8 +475,7 @@ void PTHWriter::GeneratePTH(const std::string &MainFile) {
     const FileEntry *FE = C.Entry;
 
     // FIXME: Handle files with non-absolute paths.
-    llvm::sys::Path P(FE->getName());
-    if (!P.isAbsolute())
+    if (llvm::sys::path::is_relative(FE->getName()))
       continue;
 
     const llvm::MemoryBuffer *B = C.getBuffer(PP.getDiagnostics(), SM);
@@ -525,7 +524,7 @@ public:
       PM.insert(PTHEntryKeyVariant(Path), PTHEntry());
     else if (S_ISDIR(StatBuf.st_mode)) {
       // Only cache directories with absolute paths.
-      if (!llvm::sys::Path(Path).isAbsolute())
+      if (llvm::sys::path::is_relative(Path))
         return Result;
 
       PM.insert(PTHEntryKeyVariant(&StatBuf, Path), PTHEntry());

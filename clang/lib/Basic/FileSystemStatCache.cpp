@@ -113,7 +113,7 @@ MemorizeStatCalls::getStat(const char *Path, struct stat &StatBuf,
     return Result;
   
   // Cache file 'stat' results and directories with absolutely paths.
-  if (!S_ISDIR(StatBuf.st_mode) || llvm::sys::Path(Path).isAbsolute())
+  if (!S_ISDIR(StatBuf.st_mode) || llvm::sys::path::is_absolute(Path))
     StatCalls[Path] = StatBuf;
   
   return Result;

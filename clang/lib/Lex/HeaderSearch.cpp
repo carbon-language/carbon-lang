@@ -211,7 +211,7 @@ const FileEntry *HeaderSearch::LookupFile(llvm::StringRef Filename,
                                           const DirectoryLookup *&CurDir,
                                           const FileEntry *CurFileEnt) {
   // If 'Filename' is absolute, check to see if it exists and no searching.
-  if (llvm::sys::Path::isAbsolute(Filename.begin(), Filename.size())) {
+  if (llvm::sys::path::is_absolute(Filename)) {
     CurDir = 0;
 
     // If this was an #include_next "/absolute/file", fail.
