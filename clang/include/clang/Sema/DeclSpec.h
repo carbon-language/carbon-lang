@@ -539,7 +539,8 @@ public:
     DQ_PR_retain = 0x10,
     DQ_PR_copy = 0x20,
     DQ_PR_nonatomic = 0x40,
-    DQ_PR_setter = 0x80
+    DQ_PR_setter = 0x80,
+    DQ_PR_atomic = 0x100
   };
 
 
@@ -573,7 +574,7 @@ private:
   ObjCDeclQualifier objcDeclQualifier : 6;
 
   // NOTE: VC++ treats enums as signed, avoid using ObjCPropertyAttributeKind
-  unsigned PropertyAttributes : 8;
+  unsigned PropertyAttributes : 9;
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
 };

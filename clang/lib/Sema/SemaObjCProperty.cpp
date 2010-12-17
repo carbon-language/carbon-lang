@@ -299,6 +299,8 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
 
   if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
+  else if (Attributes & ObjCDeclSpec::DQ_PR_atomic)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_atomic);
 
   PDecl->setPropertyAttributesAsWritten(PDecl->getPropertyAttributes());
   
@@ -349,6 +351,16 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       Diag(PropertyLoc, diag::error_bad_property_decl) << IDecl->getDeclName();
       return 0;
     }
+    unsigned PIkind = property->getPropertyAttributesAsWritten();
+    if ((PIkind & (ObjCPropertyDecl::OBJC_PR_atomic |
+                   ObjCPropertyDecl::OBJC_PR_nonatomic) ) == 0) {
+      if (AtLoc.isValid())
+        Diag(AtLoc, diag::warn_implicit_atomic_property);
+      else
+        Diag(IC->getLocation(), diag::warn_auto_implicit_atomic_property);
+      Diag(property->getLocation(), diag::note_property_declare);
+    }
+    
     if (const ObjCCategoryDecl *CD =
         dyn_cast<ObjCCategoryDecl>(property->getDeclContext())) {
       if (!CD->IsClassExtension()) {

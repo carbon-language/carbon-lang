@@ -1367,7 +1367,8 @@ public:
     OBJC_PR_retain    = 0x10,
     OBJC_PR_copy      = 0x20,
     OBJC_PR_nonatomic = 0x40,
-    OBJC_PR_setter    = 0x80
+    OBJC_PR_setter    = 0x80,
+    OBJC_PR_atomic    = 0x100
   };
 
   enum SetterKind { Assign, Retain, Copy };
@@ -1375,8 +1376,8 @@ public:
 private:
   SourceLocation AtLoc;   // location of @property
   TypeSourceInfo *DeclType;
-  unsigned PropertyAttributes : 8;
-  unsigned PropertyAttributesAsWritten : 8;
+  unsigned PropertyAttributes : 9;
+  unsigned PropertyAttributesAsWritten : 9;
   // @required/@optional
   unsigned PropertyImplementation : 2;
 
