@@ -1020,6 +1020,23 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   }
   }
   
+  // vector (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
+  if (const VectorType *VTy = dyn_cast<VectorType>(DestTy)) {
+  ICmpInst::Predicate Pred; Value *CmpLHS;
+  if (match(Src, m_ICmp(Pred, m_Value(CmpLHS), m_Zero()))) {
+    if (Pred == ICmpInst::ICMP_SLT && CmpLHS->getType() == DestTy) {
+      const Type *EltTy = VTy->getElementType();
+
+      // splat the shift constant to a cosntant vector
+      Constant *Sh = ConstantInt::get(EltTy, EltTy->getScalarSizeInBits()-1);
+      std::vector<Constant *> Elts(VTy->getNumElements(), Sh);
+      Constant *VSh = ConstantVector::get(Elts);
+      
+      Value *In = Builder->CreateAShr(CmpLHS, VSh, CmpLHS->getName()+".lobit");
+      return ReplaceInstUsesWith(CI, In);
+    }
+  }
+  }
   
   // If the input is a shl/ashr pair of a same constant, then this is a sign
   // extension from a smaller value.  If we could trust arbitrary bitwidth

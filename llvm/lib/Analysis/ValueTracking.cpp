@@ -678,6 +678,13 @@ unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
       Tmp += C->getZExtValue();
       if (Tmp > TyBits) Tmp = TyBits;
     }
+    // vector ashr X, <C, C, C, C>  -> adds C sign bits
+    if (ConstantVector *C = dyn_cast<ConstantVector>(U->getOperand(1))) {
+      if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(C->getSplatValue())) {
+        Tmp += CI->getZExtValue();
+        if (Tmp > TyBits) Tmp = TyBits;
+      }
+    }
     return Tmp;
   case Instruction::Shl:
     if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
