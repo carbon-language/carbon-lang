@@ -11,8 +11,7 @@
 using namespace llvm;
 
 TargetAsmBackend::TargetAsmBackend()
-  : HasReliableSymbolDifference(false),
-    HasScatteredSymbols(false)
+  : HasReliableSymbolDifference(false)
 {
 }
 

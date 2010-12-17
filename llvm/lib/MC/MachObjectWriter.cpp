@@ -1123,15 +1123,10 @@ public:
                        UndefinedSymbolData);
   }
 
-
   bool IsFixupFullyResolved(const MCAssembler &Asm,
                             const MCValue Target,
                             bool IsPCRel,
                             const MCFragment *DF) const {
-    // If we aren't using scattered symbols, the fixup is fully resolved.
-    if (!Asm.getBackend().hasScatteredSymbols())
-      return true;
-
     // Otherwise, determine whether this value is actually resolved; scattering
     // may cause atoms to move.
 

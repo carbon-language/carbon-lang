@@ -105,9 +105,7 @@ class ELFMBlazeAsmBackend : public MBlazeAsmBackend {
 public:
   Triple::OSType OSType;
   ELFMBlazeAsmBackend(const Target &T, Triple::OSType _OSType)
-    : MBlazeAsmBackend(T), OSType(_OSType) {
-    HasScatteredSymbols = true;
-  }
+    : MBlazeAsmBackend(T), OSType(_OSType) { }
 
   virtual const MCObjectFormat &getObjectFormat() const {
     return Format;

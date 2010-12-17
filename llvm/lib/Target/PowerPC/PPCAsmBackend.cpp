@@ -84,9 +84,7 @@ namespace {
   class DarwinPPCAsmBackend : public PPCAsmBackend {
     MCMachOObjectFormat Format;
   public:
-    DarwinPPCAsmBackend(const Target &T) : PPCAsmBackend(T) {
-      HasScatteredSymbols = true;
-    }
+    DarwinPPCAsmBackend(const Target &T) : PPCAsmBackend(T) { }
     
     virtual const MCObjectFormat &getObjectFormat() const {
       return Format;

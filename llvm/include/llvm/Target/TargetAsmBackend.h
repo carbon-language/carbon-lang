@@ -33,7 +33,6 @@ protected: // Can only create subclasses.
   TargetAsmBackend();
 
   unsigned HasReliableSymbolDifference : 1;
-  unsigned HasScatteredSymbols : 1;
 
 public:
   virtual ~TargetAsmBackend();
@@ -57,16 +56,6 @@ public:
   bool hasReliableSymbolDifference() const {
     return HasReliableSymbolDifference;
   }
-
-  /// hasScatteredSymbols - Check whether this target supports scattered
-  /// symbols. If so, the assembler should assume that atoms can be scattered by
-  /// the linker. In particular, this means that the offsets between symbols
-  /// which are in distinct atoms is not known at link time, and the assembler
-  /// must generate fixups and relocations appropriately.
-  ///
-  /// Note that the assembler currently does not reason about atoms, instead it
-  /// assumes all temporary symbols reside in the "current atom".
-  bool hasScatteredSymbols() const { return HasScatteredSymbols; }
 
   /// doesSectionRequireSymbols - Check whether the given section requires that
   /// all symbols (even temporaries) have symbol table entries.

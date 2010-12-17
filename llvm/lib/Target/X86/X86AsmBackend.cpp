@@ -289,7 +289,6 @@ public:
   Triple::OSType OSType;
   ELFX86AsmBackend(const Target &T, Triple::OSType _OSType)
     : X86AsmBackend(T), OSType(_OSType) {
-    HasScatteredSymbols = true;
     HasReliableSymbolDifference = true;
   }
 
@@ -337,7 +336,6 @@ public:
   WindowsX86AsmBackend(const Target &T, bool is64Bit)
     : X86AsmBackend(T)
     , Is64Bit(is64Bit) {
-    HasScatteredSymbols = true;
   }
 
   virtual const MCObjectFormat &getObjectFormat() const {
@@ -354,9 +352,7 @@ class DarwinX86AsmBackend : public X86AsmBackend {
 
 public:
   DarwinX86AsmBackend(const Target &T)
-    : X86AsmBackend(T) {
-    HasScatteredSymbols = true;
-  }
+    : X86AsmBackend(T) { }
 
   virtual const MCObjectFormat &getObjectFormat() const {
     return Format;

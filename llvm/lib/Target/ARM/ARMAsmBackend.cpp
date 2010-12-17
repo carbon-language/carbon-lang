@@ -336,9 +336,7 @@ class ELFARMAsmBackend : public ARMAsmBackend {
 public:
   Triple::OSType OSType;
   ELFARMAsmBackend(const Target &T, Triple::OSType _OSType)
-    : ARMAsmBackend(T), OSType(_OSType) {
-    HasScatteredSymbols = true;
-  }
+    : ARMAsmBackend(T), OSType(_OSType) { }
 
   virtual const MCObjectFormat &getObjectFormat() const {
     return Format;
@@ -376,9 +374,7 @@ void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
 class DarwinARMAsmBackend : public ARMAsmBackend {
   MCMachOObjectFormat Format;
 public:
-  DarwinARMAsmBackend(const Target &T) : ARMAsmBackend(T) {
-    HasScatteredSymbols = true;
-  }
+  DarwinARMAsmBackend(const Target &T) : ARMAsmBackend(T) { }
 
   virtual const MCObjectFormat &getObjectFormat() const {
     return Format;
