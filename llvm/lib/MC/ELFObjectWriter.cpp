@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -148,6 +149,9 @@ namespace {
       }
     };
 
+    /// The target specific ELF writer instance.
+    llvm::OwningPtr<MCELFObjectTargetWriter> TargetObjectWriter;
+
     SmallPtrSet<const MCSymbol *, 16> UsedInReloc;
     SmallPtrSet<const MCSymbol *, 16> WeakrefUsedInReloc;
     DenseMap<const MCSymbol *, const MCSymbol *> Renames;
@@ -194,10 +198,12 @@ namespace {
                                   const MCFragment &F) const;
 
   public:
-    ELFObjectWriter(raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
+    ELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                    raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
                     uint16_t _EMachine, bool _HasRelAddend,
                     Triple::OSType _OSType)
       : MCObjectWriter(_OS, IsLittleEndian),
+        TargetObjectWriter(MOTW),
         NeedsGOT(false), NeedsSymtabShndx(false),
         Is64Bit(_Is64Bit), HasRelocationAddend(_HasRelAddend),
         OSType(_OSType), EMachine(_EMachine) {
@@ -375,7 +381,8 @@ namespace {
 
   class X86ELFObjectWriter : public ELFObjectWriter {
   public:
-    X86ELFObjectWriter(raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
+    X86ELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                       raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
                        uint16_t _EMachine, bool _HasRelAddend,
                        Triple::OSType _OSType);
 
@@ -391,7 +398,8 @@ namespace {
 
   class ARMELFObjectWriter : public ELFObjectWriter {
   public:
-    ARMELFObjectWriter(raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
+    ARMELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                       raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
                        uint16_t _EMachine, bool _HasRelAddend,
                        Triple::OSType _OSType);
 
@@ -406,7 +414,8 @@ namespace {
 
   class MBlazeELFObjectWriter : public ELFObjectWriter {
   public:
-    MBlazeELFObjectWriter(raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
+    MBlazeELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                          raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
                           uint16_t _EMachine, bool _HasRelAddend,
                           Triple::OSType _OSType);
 
@@ -1477,13 +1486,14 @@ MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
   switch (EMachine) {
     case ELF::EM_386:
     case ELF::EM_X86_64:
-      return new X86ELFObjectWriter(OS, Is64Bit, IsLittleEndian, EMachine,
+      return new X86ELFObjectWriter(MOTW, OS, Is64Bit, IsLittleEndian, EMachine,
                                     HasRelocationAddend, OSType); break;
     case ELF::EM_ARM:
-      return new ARMELFObjectWriter(OS, Is64Bit, IsLittleEndian, EMachine,
+      return new ARMELFObjectWriter(MOTW, OS, Is64Bit, IsLittleEndian, EMachine,
                                     HasRelocationAddend, OSType); break;
     case ELF::EM_MBLAZE:
-      return new MBlazeELFObjectWriter(OS, Is64Bit, IsLittleEndian, EMachine,
+      return new MBlazeELFObjectWriter(MOTW, OS, Is64Bit, IsLittleEndian,
+                                       EMachine,
                                        HasRelocationAddend, OSType); break;
     default: llvm_unreachable("Unsupported architecture"); break;
   }
@@ -1493,11 +1503,12 @@ MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
 /// START OF SUBCLASSES for ELFObjectWriter
 //===- ARMELFObjectWriter -------------------------------------------===//
 
-ARMELFObjectWriter::ARMELFObjectWriter(raw_ostream &_OS, bool _Is64Bit,
+ARMELFObjectWriter::ARMELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                                       raw_ostream &_OS, bool _Is64Bit,
                                        bool _IsLittleEndian,
                                        uint16_t _EMachine, bool _HasRelocationAddend,
                                        Triple::OSType _OSType)
-  : ELFObjectWriter(_OS, _Is64Bit, _IsLittleEndian, _EMachine,
+  : ELFObjectWriter(MOTW, _OS, _Is64Bit, _IsLittleEndian, _EMachine,
                     _HasRelocationAddend, _OSType)
 {}
 
@@ -1580,12 +1591,13 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
 
 //===- MBlazeELFObjectWriter -------------------------------------------===//
 
-MBlazeELFObjectWriter::MBlazeELFObjectWriter(raw_ostream &_OS, bool _Is64Bit,
+MBlazeELFObjectWriter::MBlazeELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                                             raw_ostream &_OS, bool _Is64Bit,
                                              bool _IsLittleEndian,
                                              uint16_t _EMachine,
                                              bool _HasRelocationAddend,
                                              Triple::OSType _OSType)
-  : ELFObjectWriter(_OS, _Is64Bit, _IsLittleEndian, _EMachine,
+  : ELFObjectWriter(MOTW, _OS, _Is64Bit, _IsLittleEndian, _EMachine,
                     _HasRelocationAddend, _OSType) {
 }
 
@@ -1629,11 +1641,12 @@ unsigned MBlazeELFObjectWriter::GetRelocType(const MCValue &Target,
 //===- X86ELFObjectWriter -------------------------------------------===//
 
 
-X86ELFObjectWriter::X86ELFObjectWriter(raw_ostream &_OS, bool _Is64Bit,
+X86ELFObjectWriter::X86ELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                                       raw_ostream &_OS, bool _Is64Bit,
                                        bool _IsLittleEndian,
                                        uint16_t _EMachine, bool _HasRelocationAddend,
                                        Triple::OSType _OSType)
-  : ELFObjectWriter(_OS, _Is64Bit, _IsLittleEndian, _EMachine,
+  : ELFObjectWriter(MOTW, _OS, _Is64Bit, _IsLittleEndian, _EMachine,
                     _HasRelocationAddend, _OSType)
 {}
 
