@@ -32,7 +32,8 @@ class ARMMachObjectWriter : public MCMachObjectTargetWriter {
 public:
   ARMMachObjectWriter(bool Is64Bit, uint32_t CPUType,
                       uint32_t CPUSubtype)
-    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
+    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype,
+                               /*UseAggressiveSymbolFolding=*/true) {}
 };
 
 class ARMAsmBackend : public TargetAsmBackend {
