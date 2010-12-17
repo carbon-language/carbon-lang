@@ -1029,19 +1029,25 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   return true;
 }
 
-/// materializeFrameBaseRegister - Insert defining instruction(s) for
-/// BaseReg to be a pointer to FrameIdx before insertion point I.
+/// materializeFrameBaseRegister - Insert defining instruction(s) for BaseReg to
+/// be a pointer to FrameIdx at the beginning of the basic block.
 void ARMBaseRegisterInfo::
-materializeFrameBaseRegister(MachineBasicBlock::iterator I, unsigned BaseReg,
-                             int FrameIdx, int64_t Offset) const {
-  ARMFunctionInfo *AFI =
-    I->getParent()->getParent()->getInfo<ARMFunctionInfo>();
+materializeFrameBaseRegister(MachineBasicBlock *MBB,
+                             unsigned BaseReg, int FrameIdx,
+                             int64_t Offset) const {
+  ARMFunctionInfo *AFI = MBB->getParent()->getInfo<ARMFunctionInfo>();
   unsigned ADDriOpc = !AFI->isThumbFunction() ? ARM::ADDri :
     (AFI->isThumb1OnlyFunction() ? ARM::tADDrSPi : ARM::t2ADDri);
 
+  MachineBasicBlock::iterator Ins = MBB->begin();
+  DebugLoc DL;                  // Defaults to "unknown"
+  if (Ins != MBB->end())
+    DL = Ins->getDebugLoc();
+
   MachineInstrBuilder MIB =
-    BuildMI(*I->getParent(), I, I->getDebugLoc(), TII.get(ADDriOpc), BaseReg)
+    BuildMI(*MBB, Ins, DL, TII.get(ADDriOpc), BaseReg)
     .addFrameIndex(FrameIdx).addImm(Offset);
+
   if (!AFI->isThumb1OnlyFunction())
     AddDefaultCC(AddDefaultPred(MIB));
 }

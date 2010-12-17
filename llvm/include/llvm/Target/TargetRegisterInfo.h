@@ -644,7 +644,7 @@ public:
 
   /// materializeFrameBaseRegister - Insert defining instruction(s) for
   /// BaseReg to be a pointer to FrameIdx before insertion point I.
-  virtual void materializeFrameBaseRegister(MachineBasicBlock::iterator I,
+  virtual void materializeFrameBaseRegister(MachineBasicBlock *MBB,
                                             unsigned BaseReg, int FrameIdx,
                                             int64_t Offset) const {
     assert(0 && "materializeFrameBaseRegister does not exist on this target");
