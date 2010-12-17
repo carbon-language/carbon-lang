@@ -303,7 +303,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   }
       
   case Expr::CXXUuidofExprClass:
-    return Cl::CL_PRValue;
+    return Cl::CL_LValue;
   }
   
   llvm_unreachable("unhandled expression kind in classification");

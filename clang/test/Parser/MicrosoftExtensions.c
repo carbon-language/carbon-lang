@@ -77,6 +77,8 @@ void uuidof_test2()
    C c;
    // FIXME, this must not compile
   _uuidof(c);
+
+  &_uuidof(0);
 }
 
 /* Microsoft attribute tests */
