@@ -40,6 +40,10 @@
   CLANG_MAKE_VERSION_STRING(CLANG_VERSION_MAJOR,CLANG_VERSION_MINOR)
 #endif
 
+/// \brief A horrible hack to work around projects that depend upon gcc
+/// compatible compilers having versions that resemble gcc.
+#define GCC_COMPAT_VERSION_STRING CLANG_MAKE_VERSION_STRING(4,2)
+
 namespace clang {
   /// \brief Retrieves the repository path (e.g., Subversion path) that 
   /// identifies the particular Clang branch, tag, or trunk from which this
