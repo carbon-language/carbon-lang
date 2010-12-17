@@ -179,6 +179,14 @@ public:
                         MCValue Target,
                         uint64_t &FixedValue);
 
+  virtual bool
+  IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
+                                     const MCSymbolRefExpr *A,
+                                     const MCSymbolRefExpr *B) const {
+    // FIXME: Implement this!
+    return false;
+  }
+
   virtual bool IsFixupFullyResolved(const MCAssembler &Asm,
                                     const MCValue Target,
                                     bool IsPCRel,

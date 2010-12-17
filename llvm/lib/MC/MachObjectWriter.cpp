@@ -1123,6 +1123,12 @@ public:
                        UndefinedSymbolData);
   }
 
+  bool IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
+                                          const MCSymbolRefExpr *A,
+                                          const MCSymbolRefExpr *B) const {
+    return false;
+  }
+
   bool IsFixupFullyResolved(const MCAssembler &Asm,
                             const MCValue Target,
                             bool IsPCRel,

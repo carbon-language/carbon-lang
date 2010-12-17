@@ -20,6 +20,7 @@ class MCAsmLayout;
 class MCAssembler;
 class MCFixup;
 class MCFragment;
+class MCSymbolRefExpr;
 class MCValue;
 class raw_ostream;
 
@@ -76,6 +77,16 @@ public:
                                 const MCFragment *Fragment,
                                 const MCFixup &Fixup, MCValue Target,
                                 uint64_t &FixedValue) = 0;
+
+  /// \brief Check whether the difference (A - B) between two symbol
+  /// references is fully resolved.
+  ///
+  /// Clients are not required to answer precisely and may conservatively return
+  /// false, even when a difference is fully resolved.
+  virtual bool
+  IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
+                                     const MCSymbolRefExpr *A,
+                                     const MCSymbolRefExpr *B) const = 0;
 
   /// Check if a fixup is fully resolved.
   ///

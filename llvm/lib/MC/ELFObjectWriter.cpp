@@ -333,8 +333,17 @@ namespace {
                           uint64_t Size, uint32_t Link, uint32_t Info,
                           uint64_t Alignment, uint64_t EntrySize);
 
-    virtual void WriteRelocationsFragment(const MCAssembler &Asm, MCDataFragment *F,
-                                  const MCSectionData *SD);
+    virtual void WriteRelocationsFragment(const MCAssembler &Asm,
+                                          MCDataFragment *F,
+                                          const MCSectionData *SD);
+
+    virtual bool
+    IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
+                                       const MCSymbolRefExpr *A,
+                                       const MCSymbolRefExpr *B) const {
+      // FIXME: Implement this!
+      return false;
+    }
 
     virtual bool IsFixupFullyResolved(const MCAssembler &Asm,
                               const MCValue Target,
