@@ -41,8 +41,7 @@ namespace {
     ::GetProcAddress(::GetModuleHandleA("kernel32.dll"),
                      "CreateSymbolicLinkW"));
 
-  error_code UTF8ToUTF16(const StringRef &utf8,
-                               SmallVectorImpl<wchar_t> &utf16) {
+  error_code UTF8ToUTF16(StringRef utf8, SmallVectorImpl<wchar_t> &utf16) {
     int len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
                                     utf8.begin(), utf8.size(),
                                     utf16.begin(), 0);
@@ -603,8 +602,7 @@ retry_create_file:
   return success;
 }
 
-error_code directory_iterator_construct(directory_iterator& it,
-                                        const StringRef &path) {
+error_code directory_iterator_construct(directory_iterator &it, StringRef path){
   SmallVector<wchar_t, 128> path_utf16;
 
   if (error_code ec = UTF8ToUTF16(path,

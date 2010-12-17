@@ -39,7 +39,7 @@ namespace {
 
   const llvm::error_code success;
 
-  StringRef find_first_component(const StringRef  &path) {
+  StringRef find_first_component(StringRef path) {
     // Look for this first component in the following order.
     // * empty (in this case we return an empty string)
     // * either C: or {//,\\}net.
