@@ -606,6 +606,53 @@ SBThread::GetFrameAtIndex (uint32_t idx)
     return sb_frame;
 }
 
+lldb::SBFrame
+SBThread::GetSelectedFrame ()
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBFrame sb_frame;
+    if (m_opaque_sp)
+        sb_frame.SetFrame (m_opaque_sp->GetSelectedFrame ());
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_frame.GetDescription (sstr);
+        log->Printf ("SBThread(%p)::GetSelectedFrame () => SBFrame(%p): %s", 
+                     m_opaque_sp.get(), sb_frame.get(), sstr.GetData());
+    }
+
+    return sb_frame;
+}
+
+lldb::SBFrame
+SBThread::SetSelectedFrame (uint32_t idx)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBFrame sb_frame;
+    if (m_opaque_sp)
+    {
+        lldb::StackFrameSP frame_sp (m_opaque_sp->GetStackFrameAtIndex (idx));
+        if (frame_sp)
+        {
+            m_opaque_sp->SetSelectedFrame (frame_sp.get());
+            sb_frame.SetFrame (frame_sp);
+        }
+    }
+
+    if (log)
+    {
+        SBStream sstr;
+        sb_frame.GetDescription (sstr);
+        log->Printf ("SBThread(%p)::SetSelectedFrame (idx=%u) => SBFrame(%p): %s", 
+                     m_opaque_sp.get(), idx, sb_frame.get(), sstr.GetData());
+    }
+    return sb_frame;
+}
+
+
 bool
 SBThread::operator == (const SBThread &rhs) const
 {

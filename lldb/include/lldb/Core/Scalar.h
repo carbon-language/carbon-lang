@@ -57,6 +57,12 @@ public:
     size_t
     GetByteSize() const;
 
+    static size_t
+    GetMaxByteSize()
+    {
+        return std::max (sizeof(long double), sizeof (unsigned long long));
+    }
+
     bool
     GetData (DataExtractor &data, size_t limit_byte_size = UINT32_MAX) const;
 

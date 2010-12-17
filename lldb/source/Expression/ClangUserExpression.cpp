@@ -180,6 +180,7 @@ ClangUserExpression::Parse (Stream &error_stream,
         const char *function_name = FunctionName();
         
         m_transformed_stream.Printf("%s                                                     \n"
+                                    "typedef unsigned short unichar;                        \n"
                                     "@interface $__lldb_objc_class ($__lldb_category)       \n"
                                     "-(void)%s:(void *)$__lldb_arg;                         \n"
                                     "@end                                                   \n"
