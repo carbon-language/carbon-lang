@@ -3003,7 +3003,7 @@ def t2TBB : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
                     "tbb", "\t[$Rn, $Rm]", []> {
   bits<4> Rn;
   bits<4> Rm;
-  let Inst{27-20} = 0b10001101;
+  let Inst{31-20} = 0b111010001101;
   let Inst{19-16} = Rn;
   let Inst{15-5} = 0b11110000000;
   let Inst{4} = 0; // B form
@@ -3014,7 +3014,7 @@ def t2TBH : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
                    "tbh", "\t[$Rn, $Rm, lsl #1]", []> {
   bits<4> Rn;
   bits<4> Rm;
-  let Inst{27-20} = 0b10001101;
+  let Inst{31-20} = 0b111010001101;
   let Inst{19-16} = Rn;
   let Inst{15-5} = 0b11110000000;
   let Inst{4} = 1; // H form
