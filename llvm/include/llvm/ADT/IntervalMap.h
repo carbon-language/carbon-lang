@@ -2040,6 +2040,21 @@ class IntervalMapOverlaps {
   void advance() {
     if (!valid())
       return;
+
+    if (Traits::stopLess(posA.stop(), posB.start())) {
+      // A ends before B begins. Catch up.
+      posA.advanceTo(posB.start());
+      if (!posA.valid() || !Traits::stopLess(posB.stop(), posA.start()))
+        return;
+    } else if (Traits::stopLess(posB.stop(), posA.start())) {
+      // B ends before A begins. Catch up.
+      posB.advanceTo(posA.start());
+      if (!posB.valid() || !Traits::stopLess(posA.stop(), posB.start()))
+        return;
+    } else
+      // Already overlapping.
+      return;
+
     for (;;) {
       // Make a.end > b.start.
       posA.advanceTo(posB.start());
@@ -2076,7 +2091,7 @@ public:
     return Traits::startLess(ak, bk) ? bk : ak;
   }
 
-  /// stop - End of the overlaping interval.
+  /// stop - End of the overlapping interval.
   KeyType stop() const {
     KeyType ak = a().stop();
     KeyType bk = b().stop();
@@ -2086,20 +2101,12 @@ public:
   /// skipA - Move to the next overlap that doesn't involve a().
   void skipA() {
     ++posA;
-    if (!posA.valid() || !Traits::stopLess(posB.stop(), posA.start()))
-      return;
-    // Second half-loop of advance().
-    posB.advanceTo(posA.start());
-    if (!posB.valid() || !Traits::stopLess(posA.stop(), posB.start()))
-      return;
     advance();
   }
 
   /// skipB - Move to the next overlap that doesn't involve b().
   void skipB() {
     ++posB;
-    if (!posB.valid() || !Traits::stopLess(posA.stop(), posB.start()))
-      return;
     advance();
   }
 
@@ -2116,8 +2123,13 @@ public:
   /// advanceTo - Move to the first overlapping interval with
   /// stopLess(x, stop()).
   void advanceTo(KeyType x) {
-    posA.advanceTo(x);
-    posB.advanceTo(x);
+    if (!valid())
+      return;
+    // Make sure advanceTo sees monotonic keys.
+    if (Traits::stopLess(posA.stop(), x))
+      posA.advanceTo(x);
+    if (Traits::stopLess(posB.stop(), x))
+      posB.advanceTo(x);
     advance();
   }
 };

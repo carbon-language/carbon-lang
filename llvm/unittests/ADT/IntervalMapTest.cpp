@@ -659,6 +659,19 @@ TEST(IntervalMapOverlapsTest, BigMaps) {
   ++AB;
   EXPECT_FALSE(AB.valid());
 
+  // Test advanceTo.
+  UUOverlaps AB2(mapA, mapB);
+  AB2.advanceTo(410);
+  ASSERT_TRUE(AB2.valid());
+  EXPECT_EQ(410u, AB2.a().start());
+  EXPECT_EQ(402u, AB2.b().start());
+
+  // It is valid to advanceTo with any monotonic sequence.
+  AB2.advanceTo(411);
+  ASSERT_TRUE(AB2.valid());
+  EXPECT_EQ(410u, AB2.a().start());
+  EXPECT_EQ(402u, AB2.b().start());
+
   // Check reversed maps.
   UUOverlaps BA(mapB, mapA);
   ASSERT_TRUE(BA.valid());
@@ -686,6 +699,18 @@ TEST(IntervalMapOverlapsTest, BigMaps) {
   EXPECT_EQ(600u, BA.a().start());
   ++BA;
   EXPECT_FALSE(BA.valid());
+
+  // Test advanceTo.
+  UUOverlaps BA2(mapB, mapA);
+  BA2.advanceTo(410);
+  ASSERT_TRUE(BA2.valid());
+  EXPECT_EQ(410u, BA2.b().start());
+  EXPECT_EQ(402u, BA2.a().start());
+
+  BA2.advanceTo(411);
+  ASSERT_TRUE(BA2.valid());
+  EXPECT_EQ(410u, BA2.b().start());
+  EXPECT_EQ(402u, BA2.a().start());
 }
 
 } // namespace
