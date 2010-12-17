@@ -267,7 +267,8 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
     return true;
   }
 
-  if (!EvaluateAsRelocatableImpl(Value, Asm, Layout, Addrs, Addrs) ||
+  // FIXME: This use of Addrs is wrong, right?
+  if (!EvaluateAsRelocatableImpl(Value, Layout, Addrs, /*InSet=*/Addrs) ||
       !Value.isAbsolute()) {
     // EvaluateAsAbsolute is defined to return the "current value" of
     // the expression if we are given a Layout object, even in cases
@@ -377,14 +378,12 @@ static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout,
 bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
                                    const MCAsmLayout *Layout) const {
   if (Layout)
-    return EvaluateAsRelocatableImpl(Res, &Layout->getAssembler(), Layout,
-                                     0, false);
+    return EvaluateAsRelocatableImpl(Res, Layout, 0, false);
   else
-    return EvaluateAsRelocatableImpl(Res, 0, 0, 0, false);
+    return EvaluateAsRelocatableImpl(Res, 0, 0, false);
 }
 
 bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
-                                       const MCAssembler *Asm,
                                        const MCAsmLayout *Layout,
                                        const SectionAddrMap *Addrs,
                                        bool InSet) const {
@@ -404,10 +403,8 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
 
     // Evaluate recursively if this is a variable.
     if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None) {
-      bool Ret = Sym.getVariableValue()->EvaluateAsRelocatableImpl(Res, Asm,
-                                                                   Layout,
-                                                                   Addrs,
-                                                                   true);
+      bool Ret = Sym.getVariableValue()->EvaluateAsRelocatableImpl(Res, Layout,
+                                                                   Addrs, true);
       // If we failed to simplify this to a constant, let the target
       // handle it.
       if (Ret && !Res.getSymA() && !Res.getSymB())
@@ -422,7 +419,7 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     const MCUnaryExpr *AUE = cast<MCUnaryExpr>(this);
     MCValue Value;
 
-    if (!AUE->getSubExpr()->EvaluateAsRelocatableImpl(Value, Asm, Layout,
+    if (!AUE->getSubExpr()->EvaluateAsRelocatableImpl(Value, Layout,
                                                       Addrs, InSet))
       return false;
 
@@ -456,9 +453,9 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     const MCBinaryExpr *ABE = cast<MCBinaryExpr>(this);
     MCValue LHSValue, RHSValue;
 
-    if (!ABE->getLHS()->EvaluateAsRelocatableImpl(LHSValue, Asm, Layout,
+    if (!ABE->getLHS()->EvaluateAsRelocatableImpl(LHSValue, Layout,
                                                   Addrs, InSet) ||
-        !ABE->getRHS()->EvaluateAsRelocatableImpl(RHSValue, Asm, Layout,
+        !ABE->getRHS()->EvaluateAsRelocatableImpl(RHSValue, Layout,
                                                   Addrs, InSet))
       return false;
 

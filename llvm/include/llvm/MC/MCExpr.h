@@ -50,8 +50,7 @@ private:
 protected:
   explicit MCExpr(ExprKind _Kind) : Kind(_Kind) {}
 
-  bool EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
-                                 const MCAsmLayout *Layout,
+  bool EvaluateAsRelocatableImpl(MCValue &Res, const MCAsmLayout *Layout,
                                  const SectionAddrMap *Addrs,
                                  bool InSet) const;
 public:
