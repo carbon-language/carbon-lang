@@ -1421,12 +1421,6 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   assert(ScratchArgs.isEmpty());
   RetainSummary* Summ = getPersistentSummary(ObjCAllocRetE);
 
-  // Create the summaries for "alloc", "new", and "allocWithZone:" for
-  // NSObject and its derivatives.
-  addNSObjectClsMethSummary(GetNullarySelector("alloc", Ctx), Summ);
-  addNSObjectClsMethSummary(GetNullarySelector("new", Ctx), Summ);
-  addNSObjectClsMethSummary(GetUnarySelector("allocWithZone", Ctx), Summ);
-
   // Create the [NSAssertionHandler currentHander] summary.
   addClassMethSummary("NSAssertionHandler", "currentHandler",
                 getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::ObjC)));
@@ -1436,11 +1430,6 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   addClassMethSummary("NSAutoreleasePool", "addObject",
                       getPersistentSummary(RetEffect::MakeNoRet(),
                                            DoNothing, Autorelease));
-
-  // Create a summary for [NSCursor dragCopyCursor].
-  addClassMethSummary("NSCursor", "dragCopyCursor",
-                      getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,
-                                           DoNothing));
 
   // Create the summaries for [NSObject performSelector...].  We treat
   // these as 'stop tracking' for the arguments because they are often
@@ -1463,15 +1452,6 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
                     "withObject", "waitUntilDone", "modes", NULL);
   addClsMethSummary(NSObjectII, Summ, "performSelectorInBackground",
                     "withObject", NULL);
-
-  // Specially handle NSData.
-  RetainSummary *dataWithBytesNoCopySumm =
-    getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::ObjC), DoNothing,
-                         DoNothing);
-  addClsMethSummary("NSData", dataWithBytesNoCopySumm,
-                    "dataWithBytesNoCopy", "length", NULL);
-  addClsMethSummary("NSData", dataWithBytesNoCopySumm,
-                    "dataWithBytesNoCopy", "length", "freeWhenDone", NULL);
 }
 
 void RetainSummaryManager::InitializeMethodSummaries() {
@@ -1492,12 +1472,6 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   RetainSummary *AllocSumm = getPersistentSummary(ObjCAllocRetE);
   RetainSummary *CFAllocSumm =
     getPersistentSummary(RetEffect::MakeOwned(RetEffect::CF, true));
-
-  // Create the "copy" selector.
-  addNSObjectMethSummary(GetNullarySelector("copy", Ctx), AllocSumm);
-
-  // Create the "mutableCopy" selector.
-  addNSObjectMethSummary(GetNullarySelector("mutableCopy", Ctx), AllocSumm);
 
   // Create the "retain" selector.
   RetEffect E = RetEffect::MakeReceiverAlias();
