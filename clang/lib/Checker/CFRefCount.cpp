@@ -19,7 +19,7 @@
 #include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/BugReporter/PathDiagnostic.h"
 #include "clang/Checker/Checkers/LocalCheckers.h"
-#include "clang/Checker/DomainSpecific/CocoaConventions.h"
+#include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "clang/Checker/PathSensitive/GRExprEngineBuilders.h"
 #include "clang/Checker/PathSensitive/GRStateTrait.h"

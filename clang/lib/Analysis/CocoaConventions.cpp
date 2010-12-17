@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/DomainSpecific/CocoaConventions.h"
+#include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"

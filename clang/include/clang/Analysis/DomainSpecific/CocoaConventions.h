@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CHECKER_DS_COCOA
-#define LLVM_CLANG_CHECKER_DS_COCOA
+#ifndef LLVM_CLANG_ANALYSIS_DS_COCOA
+#define LLVM_CLANG_ANALYSIS_DS_COCOA
 
 #include "clang/AST/Type.h"
 

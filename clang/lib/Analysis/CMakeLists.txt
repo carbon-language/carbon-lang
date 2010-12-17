@@ -6,6 +6,7 @@ add_clang_library(clangAnalysis
   AnalysisContext.cpp
   CFG.cpp
   CFGStmtMap.cpp
+  CocoaConventions.cpp
   FormatString.cpp
   LiveVariables.cpp
   PrintfFormatString.cpp

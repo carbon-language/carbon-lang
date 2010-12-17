@@ -30,7 +30,6 @@ add_clang_library(clangChecker
   Checker.cpp
   CheckerHelpers.cpp
   ChrootChecker.cpp
-  CocoaConventions.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   Environment.cpp
