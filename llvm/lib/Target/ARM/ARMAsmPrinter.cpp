@@ -286,7 +286,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     case 'Q':
     case 'R':
     case 'H':
-      report_fatal_error("llvm does not support 'Q', 'R', and 'H' modifiers!");
+      // These modifiers are not yet supported.
       return true;
     }
   }
