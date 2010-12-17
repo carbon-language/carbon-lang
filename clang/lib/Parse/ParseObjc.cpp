@@ -421,7 +421,7 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
 
     case tok::objc_property:
       if (!getLang().ObjC2)
-        Diag(AtLoc, diag::err_objc_propertoes_require_objc2);
+        Diag(AtLoc, diag::err_objc_properties_require_objc2);
 
       ObjCDeclSpec OCDS;
       // Parse property attribute list, if any.
