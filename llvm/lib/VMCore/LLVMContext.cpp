@@ -31,7 +31,7 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   // Create the fixed metadata kinds. This is done in the same order as the
   // MD_* enum values so that they correspond.
 
-  // Create the 'dbg' metadata kind. 
+  // Create the 'dbg' metadata kind.
   unsigned DbgID = getMDKindID("dbg");
   assert(DbgID == MD_dbg && "dbg kind id drifted"); (void)DbgID;
 
@@ -54,7 +54,7 @@ void LLVMContext::removeModule(Module *M) {
 //===----------------------------------------------------------------------===//
 
 void LLVMContext::
-setInlineAsmDiagnosticHandler(InlineAsmDiagHandlerTy DiagHandler, 
+setInlineAsmDiagnosticHandler(InlineAsmDiagHandlerTy DiagHandler,
                               void *DiagContext) {
   pImpl->InlineAsmDiagHandler = DiagHandler;
   pImpl->InlineAsmDiagContext = DiagContext;
@@ -93,12 +93,11 @@ void LLVMContext::emitError(unsigned LocCookie, StringRef ErrorStr) {
     errs() << "error: " << ErrorStr << "\n";
     exit(1);
   }
-  
+
   // If we do have an error handler, we can report the error and keep going.
   SMDiagnostic Diag("", "error: " + ErrorStr.str());
-  
+
   pImpl->InlineAsmDiagHandler(Diag, pImpl->InlineAsmDiagContext, LocCookie);
-  
 }
 
 //===----------------------------------------------------------------------===//
@@ -110,10 +109,10 @@ void LLVMContext::emitError(unsigned LocCookie, StringRef ErrorStr) {
 static bool isValidName(StringRef MDName) {
   if (MDName.empty())
     return false;
-  
+
   if (!isalpha(MDName[0]))
     return false;
-  
+
   for (StringRef::iterator I = MDName.begin() + 1, E = MDName.end(); I != E;
        ++I) {
     if (!isalnum(*I) && *I != '_' && *I != '-' && *I != '.')
