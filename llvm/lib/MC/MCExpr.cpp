@@ -237,27 +237,7 @@ void MCTargetExpr::Anchor() {}
 
 /* *** */
 
-bool MCExpr::EvaluateAsAbsolute(int64_t &Res) const {
-  return EvaluateAsAbsolute(Res, 0, 0, 0);
-}
-
-bool MCExpr::EvaluateAsAbsolute(int64_t &Res,
-                                const MCAsmLayout &Layout) const {
-  return EvaluateAsAbsolute(Res, &Layout.getAssembler(), &Layout, 0);
-}
-
-bool MCExpr::EvaluateAsAbsolute(int64_t &Res,
-                                const MCAsmLayout &Layout,
-                                const SectionAddrMap &Addrs) const {
-  return EvaluateAsAbsolute(Res, &Layout.getAssembler(), &Layout, &Addrs);
-}
-
-bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const {
-  return EvaluateAsAbsolute(Res, &Asm, 0, 0);
-}
-
-bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
-                                const MCAsmLayout *Layout,
+bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout,
                                 const SectionAddrMap *Addrs) const {
   MCValue Value;
 
