@@ -1126,6 +1126,9 @@ public:
   bool IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
                                           const MCSymbolRefExpr *A,
                                           const MCSymbolRefExpr *B) const {
+    if (!TargetObjectWriter->useAggressiveSymbolFolding())
+      return false;
+
     // The effective address is
     //     addr(atom(A)) + offset(A)
     //   - addr(atom(B)) - offset(B)

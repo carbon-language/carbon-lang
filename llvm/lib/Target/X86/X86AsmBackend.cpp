@@ -50,7 +50,8 @@ class X86MachObjectWriter : public MCMachObjectTargetWriter {
 public:
   X86MachObjectWriter(bool Is64Bit, uint32_t CPUType,
                       uint32_t CPUSubtype)
-    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
+    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype,
+                               /*UseAggressiveSymbolFolding=*/Is64Bit) {}
 };
 
 class X86AsmBackend : public TargetAsmBackend {

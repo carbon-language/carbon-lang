@@ -19,10 +19,14 @@ class MCMachObjectTargetWriter {
   const unsigned Is64Bit : 1;
   const uint32_t CPUType;
   const uint32_t CPUSubtype;
+  // FIXME: Remove this, we should just always use it once we no longer care
+  // about Darwin 'as' compatibility.
+  const unsigned UseAggressiveSymbolFolding : 1;
 
 protected:
   MCMachObjectTargetWriter(bool Is64Bit_, uint32_t CPUType_,
-                           uint32_t CPUSubtype_);
+                           uint32_t CPUSubtype_,
+                           bool UseAggressiveSymbolFolding_ = false);
 
 public:
   virtual ~MCMachObjectTargetWriter();
@@ -31,6 +35,7 @@ public:
   /// @{
 
   bool is64Bit() const { return Is64Bit; }
+  bool useAggressiveSymbolFolding() const { return UseAggressiveSymbolFolding; }
   uint32_t getCPUType() const { return CPUType; }
   uint32_t getCPUSubtype() const { return CPUSubtype; }
 
