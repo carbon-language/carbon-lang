@@ -142,6 +142,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   switch (Kind) {
   default:
     llvm_unreachable("Unknown fixup kind!");
+  case FK_Data_1:
+  case FK_Data_2:
   case FK_Data_4:
     return Value;
   case ARM::fixup_arm_movt_hi16:
@@ -412,11 +414,13 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   default:
     llvm_unreachable("Unknown fixup kind!");
 
+  case FK_Data_1:
   case ARM::fixup_arm_thumb_bcc:
   case ARM::fixup_arm_thumb_cp:
   case ARM::fixup_thumb_adr_pcrel_10:
     return 1;
 
+  case FK_Data_2:
   case ARM::fixup_arm_thumb_br:
   case ARM::fixup_arm_thumb_cb:
     return 2;
