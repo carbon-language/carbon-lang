@@ -49,6 +49,9 @@ private:
   MachineLoopRange(const MachineLoop*, Allocator&, SlotIndexes&);
 
 public:
+  /// getLoop - Return the mapped machine loop.
+  const MachineLoop *getLoop() const { return Loop; }
+
   /// overlaps - Return true if this loop overlaps the given range of machine
   /// inteructions.
   bool overlaps(SlotIndex Start, SlotIndex Stop);

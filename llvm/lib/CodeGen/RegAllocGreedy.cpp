@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "regalloc"
 #include "AllocationOrder.h"
 #include "LiveIntervalUnion.h"
+#include "LiveRangeEdit.h"
 #include "RegAllocBase.h"
 #include "Spiller.h"
 #include "SplitKit.h"
@@ -26,6 +27,7 @@
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineLoopRanges.h"
@@ -52,8 +54,10 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
 
   // analyses
   LiveStacks *LS;
+  MachineDominatorTree *DomTree;
   MachineLoopInfo *Loops;
   MachineLoopRanges *LoopRanges;
+
   // state
   std::auto_ptr<Spiller> SpillerInstance;
   std::auto_ptr<SplitAnalysis> SA;
@@ -88,6 +92,8 @@ private:
   LiveInterval *getSingleInterference(LiveInterval&, unsigned);
   bool reassignVReg(LiveInterval &InterferingVReg, unsigned OldPhysReg);
   bool reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg);
+  unsigned findInterferenceFreeReg(MachineLoopRange*,
+                                   LiveInterval&, AllocationOrder&);
 
   unsigned tryReassign(LiveInterval&, AllocationOrder&);
   unsigned trySplit(LiveInterval&, AllocationOrder&,
@@ -126,8 +132,8 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<CalculateSpillWeights>();
   AU.addRequired<LiveStacks>();
   AU.addPreserved<LiveStacks>();
-  AU.addRequiredID(MachineDominatorsID);
-  AU.addPreservedID(MachineDominatorsID);
+  AU.addRequired<MachineDominatorTree>();
+  AU.addPreserved<MachineDominatorTree>();
   AU.addRequired<MachineLoopInfo>();
   AU.addPreserved<MachineLoopInfo>();
   AU.addRequired<MachineLoopRanges>();
@@ -257,6 +263,27 @@ unsigned RAGreedy::tryReassign(LiveInterval &VirtReg, AllocationOrder &Order) {
   return 0;
 }
 
+/// findInterferenceFreeReg - Find a physical register in Order where Loop has
+/// no interferences with VirtReg.
+unsigned RAGreedy::findInterferenceFreeReg(MachineLoopRange *Loop,
+                                           LiveInterval &VirtReg,
+                                           AllocationOrder &Order) {
+  Order.rewind();
+  while (unsigned PhysReg = Order.next()) {
+    bool interference = false;
+    for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
+      if (query(VirtReg, *AI).checkLoopInterference(Loop)) {
+        interference = true;
+        break;
+      }
+    }
+    if (!interference)
+      return PhysReg;
+  }
+  // No physreg found.
+  return 0;
+}
+
 /// trySplit - Try to split VirtReg or one of its interferences, making it
 /// assignable.
 /// @return Physreg when VirtReg may be assigned and/or new SplitVRegs.
@@ -266,29 +293,42 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SA->analyze(&VirtReg);
 
   // Get the set of loops that have VirtReg uses and are splittable.
-  SplitAnalysis::LoopPtrSet SplitLoops;
-  SA->getSplitLoops(SplitLoops);
+  SplitAnalysis::LoopPtrSet SplitLoopSet;
+  SA->getSplitLoops(SplitLoopSet);
 
-  Order.rewind();
-  while (unsigned PhysReg = Order.next()) {
-    for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
-      LiveIntervalUnion::Query &Q = query(VirtReg, *AI);
-      if (!Q.checkInterference())
-        continue;
-      LiveIntervalUnion::InterferenceResult IR = Q.firstInterference();
-      do {
-        DEBUG({dbgs() << "  "; IR.print(dbgs(), TRI);});
-        for (SplitAnalysis::LoopPtrSet::iterator I = SplitLoops.begin(),
-               E = SplitLoops.end(); I != E; ++I) {
-          MachineLoopRange *Range = LoopRanges->getLoopRange(*I);
-          if (!Range->overlaps(IR.start(), IR.stop()))
-            continue;
-          DEBUG(dbgs() << ", overlaps " << *Range);
-        }
-        DEBUG(dbgs() << '\n');
-      } while (Q.nextInterference(IR));
+  // Order loops by descending area.
+  SmallVector<MachineLoopRange*, 8> SplitLoops;
+  for (SplitAnalysis::LoopPtrSet::const_iterator I = SplitLoopSet.begin(),
+         E = SplitLoopSet.end(); I != E; ++I)
+    SplitLoops.push_back(LoopRanges->getLoopRange(*I));
+  array_pod_sort(SplitLoops.begin(), SplitLoops.end(),
+                 MachineLoopRange::byAreaDesc);
+
+  // Find the first loop that is interference-free for some register in the
+  // allocation order.
+  MachineLoopRange *Loop = 0;
+  for (unsigned i = 0, e = SplitLoops.size(); i != e; ++i) {
+    if (unsigned PhysReg = findInterferenceFreeReg(SplitLoops[i],
+                                                   VirtReg, Order)) {
+      Loop = SplitLoops[i];
+      DEBUG(dbgs() << "  " << TRI->getName(PhysReg)
+                   << " has no interferences in " << *Loop << '\n');
+      break;
     }
   }
+
+  if (!Loop) {
+    DEBUG(dbgs() << "  All candidate loops have interference.\n");
+    return 0;
+  }
+
+  // Execute the split around Loop.
+  SmallVector<LiveInterval*, 4> SpillRegs;
+  LiveRangeEdit LREdit(VirtReg, SplitVRegs, SpillRegs);
+  SplitEditor(*SA, *LIS, *VRM, *DomTree, LREdit)
+    .splitAroundLoop(Loop->getLoop());
+
+  // We have new split regs, don't assign anything.
   return 0;
 }
 
@@ -361,6 +401,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
 
   MF = &mf;
   RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
+  DomTree = &getAnalysis<MachineDominatorTree>();
   ReservedRegs = TRI->getReservedRegs(*MF);
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
   Loops = &getAnalysis<MachineLoopInfo>();
