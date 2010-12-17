@@ -940,6 +940,8 @@ class IntervalMap {
 
 public:
   typedef typename Sizer::Allocator Allocator;
+  typedef KeyT KeyType;
+  typedef ValT ValueType;
   typedef Traits KeyTraits;
 
 private:
@@ -2025,6 +2027,7 @@ iterator::overflow(unsigned Level) {
 ///
 template <typename MapA, typename MapB>
 class IntervalMapOverlaps {
+  typedef typename MapA::KeyType KeyType;
   typedef typename MapA::KeyTraits Traits;
   typename MapA::const_iterator posA;
   typename MapB::const_iterator posB;
@@ -2065,6 +2068,20 @@ public:
   /// b - access the right hand side in the overlap.
   const typename MapB::const_iterator &b() const { return posB; }
 
+  /// start - Beginning of the overlapping interval.
+  KeyType start() const {
+    KeyType ak = a().start();
+    KeyType bk = b().start();
+    return Traits::startLess(ak, bk) ? bk : ak;
+  }
+
+  /// stop - End of the overlaping interval.
+  KeyType stop() const {
+    KeyType ak = a().stop();
+    KeyType bk = b().stop();
+    return Traits::startLess(ak, bk) ? ak : bk;
+  }
+
   /// skipA - Move to the next overlap that doesn't involve a().
   void skipA() {
     ++posA;
@@ -2094,8 +2111,15 @@ public:
       skipA();
     return *this;
   }
-};
 
+  /// advanceTo - Move to the first overlapping interval with
+  /// stopLess(x, stop()).
+  void advanceTo(KeyType x) {
+    posA.advanceTo(x);
+    posB.advanceTo(x);
+    advance();
+  }
+};
 
 } // namespace llvm
 

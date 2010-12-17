@@ -29,15 +29,18 @@ class raw_ostream;
 /// MachineLoopRange - Range information for a single loop.
 class MachineLoopRange {
   friend class MachineLoopRanges;
-  typedef IntervalMap<SlotIndex, unsigned, 4> RangeMap;
-  typedef RangeMap::Allocator Allocator;
 
+public:
+  typedef IntervalMap<SlotIndex, unsigned, 4> Map;
+  typedef Map::Allocator Allocator;
+
+private:
   /// The mapped loop.
   const MachineLoop *const Loop;
 
   /// Map intervals to a bit mask.
   /// Bit 0 = inside loop block.
-  RangeMap Intervals;
+  Map Intervals;
 
   /// Create a MachineLoopRange, only accessible to MachineLoopRanges.
   MachineLoopRange(const MachineLoop*, Allocator&, SlotIndexes&);
@@ -46,6 +49,9 @@ public:
   /// overlaps - Return true if this loop overlaps the given range of machine
   /// inteructions.
   bool overlaps(SlotIndex Start, SlotIndex Stop);
+
+  /// getMap - Allow public read-only access for IntervalMapOverlaps.
+  const Map &getMap() { return Intervals; }
 
   /// print - Print loop ranges on OS.
   void print(raw_ostream&) const;

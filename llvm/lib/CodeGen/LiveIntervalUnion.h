@@ -24,6 +24,7 @@
 
 namespace llvm {
 
+class MachineLoopRange;
 class TargetRegisterInfo;
 
 #ifndef NDEBUG
@@ -75,6 +76,10 @@ public:
   SegmentIter find(SlotIndex x) { return Segments.find(x); }
   bool empty() const { return Segments.empty(); }
   SlotIndex startIndex() const { return Segments.start(); }
+
+  // Provide public access to the underlying map to allow overlap iteration.
+  typedef LiveSegments Map;
+  const Map &getMap() { return Segments; }
 
   // Add a live virtual register to this union and merge its segments.
   void unify(LiveInterval &VirtReg);
@@ -222,6 +227,10 @@ public:
     const SmallVectorImpl<LiveInterval*> &interferingVRegs() const {
       return InterferingVRegs;
     }
+
+    /// checkLoopInterference - Return true if there is interference overlapping
+    /// Loop.
+    bool checkLoopInterference(MachineLoopRange*);
 
     void print(raw_ostream &OS, const TargetRegisterInfo *TRI);
   private:

@@ -69,13 +69,13 @@ MachineLoopRange::MachineLoopRange(const MachineLoop *loop,
 /// overlaps - Return true if this loop overlaps the given range of machine
 /// instructions.
 bool MachineLoopRange::overlaps(SlotIndex Start, SlotIndex Stop) {
-  RangeMap::const_iterator I = Intervals.find(Start);
+  Map::const_iterator I = Intervals.find(Start);
   return I.valid() && Stop > I.start();
 }
 
 void MachineLoopRange::print(raw_ostream &OS) const {
   OS << "Loop#" << Loop->getHeader()->getNumber() << " =";
-  for (RangeMap::const_iterator I = Intervals.begin(); I.valid(); ++I)
+  for (Map::const_iterator I = Intervals.begin(); I.valid(); ++I)
     OS << " [" << I.start() << ';' << I.stop() << ')';
 }
 
