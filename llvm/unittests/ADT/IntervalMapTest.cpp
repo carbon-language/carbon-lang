@@ -586,7 +586,11 @@ TEST(IntervalMapOverlapsTest, SmallMaps) {
   ASSERT_TRUE(BA.valid());
   EXPECT_EQ(3u, BA.a().start());
   EXPECT_EQ(4u, BA.b().start());
-  ++BA;
+  // advance past end.
+  BA.advanceTo(6);
+  EXPECT_FALSE(BA.valid());
+  // advance an invalid iterator.
+  BA.advanceTo(7);
   EXPECT_FALSE(BA.valid());
 }
 

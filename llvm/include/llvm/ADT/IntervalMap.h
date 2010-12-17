@@ -2036,6 +2036,8 @@ class IntervalMapOverlaps {
   /// either meets end.
   /// Don't move the iterators if they are already overlapping.
   void advance() {
+    if (!valid())
+      return;
     for (;;) {
       // Make a.end > b.start.
       posA.advanceTo(posB.start());
@@ -2052,10 +2054,7 @@ public:
   /// IntervalMapOverlaps - Create an iterator for the overlaps of a and b.
   IntervalMapOverlaps(const MapA &a, const MapB &b)
     : posA(b.empty() ? a.end() : a.find(b.start())),
-      posB(posA.valid() ? b.find(posA.start()) : b.end()) {
-    if (valid())
-      advance();
-  }
+      posB(posA.valid() ? b.find(posA.start()) : b.end()) { advance(); }
 
   /// valid - Return true if iterator is at an overlap.
   bool valid() const {
@@ -2090,7 +2089,7 @@ public:
     // Second half-loop of advance().
     posB.advanceTo(posA.start());
     if (!posB.valid() || !Traits::stopLess(posA.stop(), posB.start()))
-      return ;
+      return;
     advance();
   }
 
@@ -2098,7 +2097,7 @@ public:
   void skipB() {
     ++posB;
     if (!posB.valid() || !Traits::stopLess(posA.stop(), posB.start()))
-        return;
+      return;
     advance();
   }
 
