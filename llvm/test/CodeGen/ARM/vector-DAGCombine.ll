@@ -61,3 +61,17 @@ define void @lshrIllegalType(<8 x i32>* %A) nounwind {
        ret void
 }
 
+; Test folding a binary vector operation with constant BUILD_VECTOR
+; operands with i16 elements.
+define void @test_i16_constant_fold() nounwind optsize {
+entry:
+  %0 = sext <4 x i1> zeroinitializer to <4 x i16>
+  %1 = add <4 x i16> %0, zeroinitializer
+  %2 = shufflevector <4 x i16> %1, <4 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  %3 = add <8 x i16> %2, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  %4 = trunc <8 x i16> %3 to <8 x i8>
+  tail call void @llvm.arm.neon.vst1.v8i8(i8* undef, <8 x i8> %4, i32 1)
+  unreachable
+}
+
+declare void @llvm.arm.neon.vst1.v8i8(i8*, <8 x i8>, i32) nounwind

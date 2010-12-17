@@ -6643,10 +6643,9 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
   // things. Simplifying them may result in a loss of legality.
   if (LegalOperations) return SDValue();
 
-  EVT VT = N->getValueType(0);
-  assert(VT.isVector() && "SimplifyVBinOp only works on vectors!");
+  assert(N->getValueType(0).isVector() &&
+         "SimplifyVBinOp only works on vectors!");
 
-  EVT EltType = VT.getVectorElementType();
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
   SDValue Shuffle = XformToShuffleWithZero(N);
@@ -6679,14 +6678,10 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
           break;
       }
 
-      // If the vector element type is not legal, the BUILD_VECTOR operands
-      // are promoted and implicitly truncated.  Make that explicit here.
-      if (LHSOp.getValueType() != EltType)
-        LHSOp = DAG.getNode(ISD::TRUNCATE, LHS.getDebugLoc(), EltType, LHSOp);
-      if (RHSOp.getValueType() != EltType)
-        RHSOp = DAG.getNode(ISD::TRUNCATE, RHS.getDebugLoc(), EltType, RHSOp);
-
-      SDValue FoldOp = DAG.getNode(N->getOpcode(), LHS.getDebugLoc(), EltType,
+      EVT VT = LHSOp.getValueType();
+      assert(RHSOp.getValueType() == VT &&
+             "SimplifyVBinOp with different BUILD_VECTOR element types");
+      SDValue FoldOp = DAG.getNode(N->getOpcode(), LHS.getDebugLoc(), VT,
                                    LHSOp, RHSOp);
       if (FoldOp.getOpcode() != ISD::UNDEF &&
           FoldOp.getOpcode() != ISD::Constant &&
@@ -6696,11 +6691,9 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
       AddToWorkList(FoldOp.getNode());
     }
 
-    if (Ops.size() == LHS.getNumOperands()) {
-      EVT VT = LHS.getValueType();
-      return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
-                         &Ops[0], Ops.size());
-    }
+    if (Ops.size() == LHS.getNumOperands())
+      return DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
+                         LHS.getValueType(), &Ops[0], Ops.size());
   }
 
   return SDValue();
