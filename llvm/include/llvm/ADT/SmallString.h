@@ -27,6 +27,9 @@ public:
   // Default ctor - Initialize to empty.
   SmallString() {}
 
+  // Initialize from a StringRef.
+  SmallString(StringRef S) : SmallVector<char, InternalLen>(S.begin(), S.end()) {}
+
   // Initialize with a range.
   template<typename ItTy>
   SmallString(ItTy S, ItTy E) : SmallVector<char, InternalLen>(S, E) {}

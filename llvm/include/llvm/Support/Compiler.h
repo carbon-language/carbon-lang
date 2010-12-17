@@ -15,6 +15,10 @@
 #ifndef LLVM_SUPPORT_COMPILER_H
 #define LLVM_SUPPORT_COMPILER_H
 
+#ifndef __has_feature
+# define __has_feature(x) 0
+#endif
+
 /// LLVM_LIBRARY_VISIBILITY - If a class marked with this attribute is linked
 /// into a shared library, then the class should be private to the library and
 /// not accessible from outside it.  Can also be used to mark variables and
@@ -105,6 +109,21 @@
 #define LLVM_ATTRIBUTE_NORETURN __declspec(noreturn)
 #else
 #define LLVM_ATTRIBUTE_NORETURN
+#endif
+
+// LLVM_ATTRIBUTE_DEPRECATED(decl, "message")
+#if __has_feature(attribute_deprecated_with_message)
+# define LLVM_ATTRIBUTE_DEPRECATED(decl, message) \
+  decl __attribute__((deprecated(message)))
+#elif defined(__GNUC__)
+# define LLVM_ATTRIBUTE_DEPRECATED(decl, message) \
+  decl __attribute__((deprecated))
+#elif defined(_MSC_VER)
+# define LLVM_ATTRIBUTE_DEPRECATED(decl, message) \
+  __declspec(deprecated(message)) decl
+#else
+# define LLVM_ATTRIBUTE_DEPRECATED(decl, message) \
+  decl
 #endif
 
 #endif

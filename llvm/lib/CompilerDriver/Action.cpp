@@ -56,7 +56,7 @@ namespace {
   int ExecuteProgram (const std::string& name, const StrVector& args) {
     sys::Path prog(name);
 
-    if (!prog.isAbsolute()) {
+    if (sys::path::is_relative(prog.str())) {
       prog = PrependMainExecutablePath(name, ProgramName,
                                        (void *)(intptr_t)&Main);
 

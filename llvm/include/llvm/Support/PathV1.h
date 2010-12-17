@@ -15,10 +15,14 @@
 #define LLVM_SYSTEM_PATH_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/TimeValue.h"
 #include <set>
 #include <string>
 #include <vector>
+
+#define LLVMV_PATH_DEPRECATED_MSG \
+  "PathV1 is being deprecated, please use the PathV2 API."
 
 namespace llvm {
 namespace sys {
@@ -300,12 +304,12 @@ namespace sys {
       /// This function determines if the path name is absolute, as opposed to
       /// relative.
       /// @brief Determine if the path is absolute.
-      bool isAbsolute() const;
+      LLVM_ATTRIBUTE_DEPRECATED(bool isAbsolute() const, LLVMV_PATH_DEPRECATED_MSG);
 
       /// This function determines if the path name is absolute, as opposed to
       /// relative.
       /// @brief Determine if the path is absolute.
-      static bool isAbsolute(const char *NameStart, unsigned NameLen);
+      LLVM_ATTRIBUTE_DEPRECATED(static bool isAbsolute(const char *NameStart, unsigned NameLen), LLVMV_PATH_DEPRECATED_MSG);
 
       /// This function opens the file associated with the path name provided by
       /// the Path object and reads its magic number. If the magic number at the
