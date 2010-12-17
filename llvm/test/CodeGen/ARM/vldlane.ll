@@ -432,3 +432,22 @@ declare %struct.__neon_float32x2x4_t @llvm.arm.neon.vld4lane.v2f32(i8*, <2 x flo
 declare %struct.__neon_int16x8x4_t @llvm.arm.neon.vld4lane.v8i16(i8*, <8 x i16>, <8 x i16>, <8 x i16>, <8 x i16>, i32, i32) nounwind readonly
 declare %struct.__neon_int32x4x4_t @llvm.arm.neon.vld4lane.v4i32(i8*, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, i32, i32) nounwind readonly
 declare %struct.__neon_float32x4x4_t @llvm.arm.neon.vld4lane.v4f32(i8*, <4 x float>, <4 x float>, <4 x float>, <4 x float>, i32, i32) nounwind readonly
+
+; Radar 8776599: If one of the operands to a QQQQ REG_SEQUENCE is a register
+; in the QPR_VFP2 regclass, it needs to be copied to a QPR regclass because
+; we don't currently have a QQQQ_VFP2 super-regclass.  (The "0" for the low
+; part of %ins67 is supposed to be loaded by a VLDRS instruction in this test.)
+define void @test_qqqq_regsequence_subreg([6 x i64] %b) nounwind {
+;CHECK: test_qqqq_regsequence_subreg
+;CHECK: vld3.16
+  %tmp63 = extractvalue [6 x i64] %b, 5
+  %tmp64 = zext i64 %tmp63 to i128
+  %tmp65 = shl i128 %tmp64, 64
+  %ins67 = or i128 %tmp65, 0
+  %tmp78 = bitcast i128 %ins67 to <8 x i16>
+  %vld3_lane = tail call %struct.__neon_int16x8x3_t @llvm.arm.neon.vld3lane.v8i16(i8* undef, <8 x i16> undef, <8 x i16> undef, <8 x i16> %tmp78, i32 1, i32 2)
+  call void @llvm.trap()
+  unreachable
+}
+
+declare void @llvm.trap() nounwind

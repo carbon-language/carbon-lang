@@ -1417,6 +1417,7 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
     SmallSet<unsigned, 4> Seen;
     for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
       unsigned SrcReg = MI->getOperand(i).getReg();
+      unsigned SubIdx = MI->getOperand(i+1).getImm();
       if (MI->getOperand(i).getSubReg() ||
           TargetRegisterInfo::isPhysicalRegister(SrcReg)) {
         DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << *MI);
@@ -1436,7 +1437,9 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
 
       bool isKill = MI->getOperand(i).isKill();
       if (!Seen.insert(SrcReg) || MI->getParent() != DefMI->getParent() ||
-          !isKill || HasOtherRegSequenceUses(SrcReg, MI, MRI)) {
+          !isKill || HasOtherRegSequenceUses(SrcReg, MI, MRI) ||
+          !TRI->getMatchingSuperRegClass(MRI->getRegClass(DstReg),
+                                         MRI->getRegClass(SrcReg), SubIdx)) {
         // REG_SEQUENCE cannot have duplicated operands, add a copy.
         // Also add an copy if the source is live-in the block. We don't want
         // to end up with a partial-redef of a livein, e.g.
@@ -1465,7 +1468,7 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
         MachineBasicBlock::iterator InsertLoc = MI;
         MachineInstr *CopyMI = BuildMI(*MI->getParent(), InsertLoc,
                                 MI->getDebugLoc(), TII->get(TargetOpcode::COPY))
-            .addReg(DstReg, RegState::Define, MI->getOperand(i+1).getImm())
+            .addReg(DstReg, RegState::Define, SubIdx)
             .addReg(SrcReg, getKillRegState(isKill));
         MI->getOperand(i).setReg(0);
         if (LV && isKill)
