@@ -98,10 +98,12 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S) {
       if (memcmp(s, "mutable", 7) == 0) {
         // Look at the next word to see if it is "Copy".
         s = wordEnd;
-        wordEnd = parseWord(s);
-        len = wordEnd - s;
-        if (len == 4 && memcmp(s, "Copy", 4) == 0)
-          return CreateRule;
+        if (*s != '\0') {
+          wordEnd = parseWord(s);
+          len = wordEnd - s;
+          if (len == 4 && memcmp(s, "Copy", 4) == 0)
+            return CreateRule;
+        }
       }
       return NoConvention;
   }

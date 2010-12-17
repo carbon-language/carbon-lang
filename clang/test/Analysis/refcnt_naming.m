@@ -13,6 +13,8 @@ typedef signed char BOOL;
 @interface NamingTest : NSObject {}
 -(NSObject*)copyPhoto;
 -(NSObject*)mutableCopyPhoto;
+-(NSObject*)mutable;
+-(NSObject*)mutableCopying;
 -(NSObject*)photocopy;    // read as "photocopy"
 -(NSObject*)photoCopy;    // read as "photo Copy"
 -(NSObject*)__blebPRCopy; // read as "bleb PRCopy"
@@ -49,6 +51,8 @@ typedef signed char BOOL;
 void testNames(NamingTest* x) {
   [x copyPhoto]; // expected-warning{{leak}}
   [x mutableCopyPhoto]; // expected-warning{{leak}}
+  [x mutable]; // no-warning
+  [x mutableCopying]; // no-warning
   [x photocopy]; // no-warning
   [x photoCopy]; // no-warning
   [x __blebPRCopy]; // no-warning
