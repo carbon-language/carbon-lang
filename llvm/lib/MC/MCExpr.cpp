@@ -304,8 +304,7 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
 ///
 /// \returns True on success, false if the result is not representable in an
 /// MCValue.
-static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
-                                const MCAsmLayout *Layout,
+static bool EvaluateSymbolicAdd(const MCAsmLayout *Layout,
                                 const SectionAddrMap *Addrs,
                                 bool InSet,
                                 const MCValue &LHS,const MCSymbolRefExpr *RHS_A,
@@ -337,17 +336,14 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
 
   // Absolutize symbol differences between defined symbols when we have a
   // layout object and the target requests it.
-
-  assert((!Layout || Asm) &&
-         "Must have an assembler object if layout is given!");
-
-  if (Asm && A && B) {
+  if (Layout && A && B) {
+    const MCAssembler &Asm = Layout->getAssembler();
     const MCSymbol &SA = A->getSymbol();
     const MCSymbol &SB = B->getSymbol();
-    const MCObjectFormat &F = Asm->getBackend().getObjectFormat();
+    const MCObjectFormat &F = Asm.getBackend().getObjectFormat();
     if (SA.isDefined() && SB.isDefined() && F.isAbsolute(InSet, SA, SB)) {
-      MCSymbolData &AD = Asm->getSymbolData(A->getSymbol());
-      MCSymbolData &BD = Asm->getSymbolData(B->getSymbol());
+      MCSymbolData &AD = Asm.getSymbolData(A->getSymbol());
+      MCSymbolData &BD = Asm.getSymbolData(B->getSymbol());
 
       if (AD.getFragment() == BD.getFragment()) {
         Res = MCValue::get(+ AD.getOffset()
@@ -474,13 +470,13 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
         return false;
       case MCBinaryExpr::Sub:
         // Negate RHS and add.
-        return EvaluateSymbolicAdd(Asm, Layout, Addrs, InSet, LHSValue,
+        return EvaluateSymbolicAdd(Layout, Addrs, InSet, LHSValue,
                                    RHSValue.getSymB(), RHSValue.getSymA(),
                                    -RHSValue.getConstant(),
                                    Res);
 
       case MCBinaryExpr::Add:
-        return EvaluateSymbolicAdd(Asm, Layout, Addrs, InSet, LHSValue,
+        return EvaluateSymbolicAdd(Layout, Addrs, InSet, LHSValue,
                                    RHSValue.getSymA(), RHSValue.getSymB(),
                                    RHSValue.getConstant(),
                                    Res);
