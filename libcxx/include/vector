@@ -318,8 +318,8 @@ protected:
     _LIBCPP_INLINE_VISIBILITY pointer&              __end_cap()       {return __end_cap_.first();}
     _LIBCPP_INLINE_VISIBILITY const pointer&        __end_cap() const {return __end_cap_.first();}
 
-    __vector_base();
-    __vector_base(const allocator_type& __a);
+    _LIBCPP_INLINE_VISIBILITY __vector_base();
+    _LIBCPP_INLINE_VISIBILITY __vector_base(const allocator_type& __a);
     ~__vector_base();
 
     _LIBCPP_INLINE_VISIBILITY void clear() {__destruct_at_end(__begin_);}
@@ -327,8 +327,8 @@ protected:
 
     _LIBCPP_INLINE_VISIBILITY void __destruct_at_end(const_pointer __new_last)
         {__destruct_at_end(__new_last, is_trivially_destructible<value_type>());}
-        void __destruct_at_end(const_pointer __new_last, false_type);
-        void __destruct_at_end(const_pointer __new_last, true_type);
+    _LIBCPP_INLINE_VISIBILITY void __destruct_at_end(const_pointer __new_last, false_type);
+    _LIBCPP_INLINE_VISIBILITY void __destruct_at_end(const_pointer __new_last, true_type);
 
     _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __vector_base& __c)
@@ -484,7 +484,9 @@ public:
     template <class _ForwardIterator>
         vector(_ForwardIterator __first, _ForwardIterator __last, const allocator_type& __a,
                typename enable_if<__is_forward_iterator<_ForwardIterator>::value>::type* = 0);
+    _LIBCPP_INLINE_VISIBILITY
     vector(initializer_list<value_type> __il);
+    _LIBCPP_INLINE_VISIBILITY
     vector(initializer_list<value_type> __il, const allocator_type& __a);
 #ifdef _LIBCPP_DEBUG
     _LIBCPP_INLINE_VISIBILITY
@@ -493,10 +495,14 @@ public:
 
     vector(const vector& __x);
     vector(const vector& __x, const allocator_type& __a);
+    _LIBCPP_INLINE_VISIBILITY
     vector& operator=(const vector& __x);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     vector(vector&& __x);
+    _LIBCPP_INLINE_VISIBILITY
     vector(vector&& __x, const allocator_type& __a);
+    _LIBCPP_INLINE_VISIBILITY
     vector& operator=(vector&& __x);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
@@ -526,10 +532,10 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY allocator_type get_allocator() const {return this->__alloc();}
 
-    iterator               begin();
-    const_iterator         begin()   const;
-    iterator               end();
-    const_iterator         end()     const;
+    _LIBCPP_INLINE_VISIBILITY iterator               begin();
+    _LIBCPP_INLINE_VISIBILITY const_iterator         begin()   const;
+    _LIBCPP_INLINE_VISIBILITY iterator               end();
+    _LIBCPP_INLINE_VISIBILITY const_iterator         end()     const;
 
     _LIBCPP_INLINE_VISIBILITY reverse_iterator       rbegin()         {return       reverse_iterator(end());}
     _LIBCPP_INLINE_VISIBILITY const_reverse_iterator rbegin()  const  {return const_reverse_iterator(end());}
@@ -563,7 +569,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY const value_type* data() const
         {return _STD::__to_raw_pointer(this->__begin_);}
 
-    void push_back(const_reference __x);
+    _LIBCPP_INLINE_VISIBILITY void push_back(const_reference __x);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void push_back(value_type&& __x);
 #ifndef _LIBCPP_HAS_NO_VARIADICS
@@ -601,7 +607,7 @@ public:
     iterator insert(const_iterator __position, initializer_list<value_type> __il)
         {return insert(__position, __il.begin(), __il.end());}
 
-    iterator erase(const_iterator __position);
+    _LIBCPP_INLINE_VISIBILITY iterator erase(const_iterator __position);
     iterator erase(const_iterator __first, const_iterator __last);
 
     _LIBCPP_INLINE_VISIBILITY void clear() {__base::clear();}
@@ -614,15 +620,17 @@ public:
     bool __invariants() const;
 
 private:
-    void __invalidate_all_iterators();
+    _LIBCPP_INLINE_VISIBILITY void __invalidate_all_iterators();
     void allocate(size_type __n);
     void deallocate();
-    size_type __recommend(size_type __new_size) const;
-    void __construct_at_end(size_type __n);
+    _LIBCPP_INLINE_VISIBILITY size_type __recommend(size_type __new_size) const;
+    _LIBCPP_INLINE_VISIBILITY void __construct_at_end(size_type __n);
         void __construct_at_end(size_type __n, false_type);
-        void __construct_at_end(size_type __n, true_type);
+    _LIBCPP_INLINE_VISIBILITY void __construct_at_end(size_type __n, true_type);
+    _LIBCPP_INLINE_VISIBILITY
     void __construct_at_end(size_type __n, const_reference __x);
-        void __construct_at_end(size_type __n, const_reference __x, false_type);
+    void __construct_at_end(size_type __n, const_reference __x, false_type);
+    _LIBCPP_INLINE_VISIBILITY
         void __construct_at_end(size_type __n, const_reference __x, true_type);
     template <class _ForwardIterator>
         typename enable_if
@@ -634,7 +642,9 @@ private:
     void __move_construct_at_end(pointer __first, pointer __last);
     void __append(size_type __n);
     void __append(size_type __n, const_reference __x);
+    _LIBCPP_INLINE_VISIBILITY
     iterator       __make_iter(pointer __p);
+    _LIBCPP_INLINE_VISIBILITY
     const_iterator __make_iter(const_pointer __p) const;
     void __swap_out_circular_buffer(__split_buffer<value_type, allocator_type&>& __v);
     pointer __swap_out_circular_buffer(__split_buffer<value_type, allocator_type&>& __v, pointer __p);
@@ -1757,8 +1767,8 @@ private:
         {return (__n - 1) / __bits_per_word + 1;}
 
 public:
-    vector();
-    explicit vector(const allocator_type& __a);
+    _LIBCPP_INLINE_VISIBILITY vector();
+    _LIBCPP_INLINE_VISIBILITY explicit vector(const allocator_type& __a);
     ~vector();
     explicit vector(size_type __n);
     vector(size_type __n, const value_type& __v);
@@ -1785,9 +1795,9 @@ public:
     vector(initializer_list<value_type> __il, const allocator_type& __a);
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    vector(vector&& __v);
+    _LIBCPP_INLINE_VISIBILITY vector(vector&& __v);
     vector(vector&& __v, const allocator_type& __a);
-    vector& operator=(vector&& __v);
+    _LIBCPP_INLINE_VISIBILITY vector& operator=(vector&& __v);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     vector& operator=(initializer_list<value_type> __il)
@@ -1874,7 +1884,7 @@ public:
     iterator insert(const_iterator __position, initializer_list<value_type> __il)
         {return insert(__position, __il.begin(), __il.end());}
 
-    iterator erase(const_iterator __position);
+    _LIBCPP_INLINE_VISIBILITY iterator erase(const_iterator __position);
     iterator erase(const_iterator __first, const_iterator __last);
 
     _LIBCPP_INLINE_VISIBILITY void clear() {__size_ = 0;}
@@ -1887,13 +1897,13 @@ public:
     bool __invariants() const;
 
 private:
-    void __invalidate_all_iterators();
+    _LIBCPP_INLINE_VISIBILITY void __invalidate_all_iterators();
     void allocate(size_type __n);
     void deallocate();
     _LIBCPP_INLINE_VISIBILITY static size_type __align(size_type __new_size)
         {return __new_size + (__bits_per_word-1) & ~(__bits_per_word-1);};
-    size_type __recommend(size_type __new_size) const;
-    void __construct_at_end(size_type __n, bool __x);
+    _LIBCPP_INLINE_VISIBILITY  size_type __recommend(size_type __new_size) const;
+    _LIBCPP_INLINE_VISIBILITY void __construct_at_end(size_type __n, bool __x);
     template <class _ForwardIterator>
         typename enable_if
         <
@@ -2250,7 +2260,6 @@ vector<bool, _Allocator>::vector(initializer_list<value_type> __il, const alloca
 }
 
 template <class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
 vector<bool, _Allocator>::~vector()
 {
     if (__begin_ != 0)

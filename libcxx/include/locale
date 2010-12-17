@@ -1768,7 +1768,7 @@ public:
 };
 
 template <class _CharT>
-class __time_get_c_storage
+class __time_get_c_storage  // purposefully not decorated
 {
 protected:
     typedef basic_string<_CharT> string_type;
@@ -2650,24 +2650,15 @@ protected:
     _LIBCPP_ALWAYS_INLINE
     ~moneypunct() {}
 
-    _LIBCPP_ALWAYS_INLINE
     virtual char_type   do_decimal_point() const {return numeric_limits<char_type>::max();}
-    _LIBCPP_ALWAYS_INLINE
     virtual char_type   do_thousands_sep() const {return numeric_limits<char_type>::max();}
-    _LIBCPP_ALWAYS_INLINE
     virtual string      do_grouping()      const {return string();}
-    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_curr_symbol()   const {return string_type();}
-    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_positive_sign() const {return string_type();}
-    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_negative_sign() const {return string_type(1, '-');}
-    _LIBCPP_ALWAYS_INLINE
     virtual int         do_frac_digits()   const {return 0;}
-    _LIBCPP_ALWAYS_INLINE
     virtual pattern     do_pos_format()    const
         {pattern __p = {symbol, sign, none, value}; return __p;}
-    _LIBCPP_ALWAYS_INLINE
     virtual pattern     do_neg_format()    const
         {pattern __p = {symbol, sign, none, value}; return __p;}
 };
@@ -2704,23 +2695,14 @@ protected:
     _LIBCPP_ALWAYS_INLINE
     ~moneypunct_byname() {}
 
-    _LIBCPP_ALWAYS_INLINE
     virtual char_type   do_decimal_point() const {return __decimal_point_;}
-    _LIBCPP_ALWAYS_INLINE
     virtual char_type   do_thousands_sep() const {return __thousands_sep_;}
-    _LIBCPP_ALWAYS_INLINE
     virtual string      do_grouping()      const {return __grouping_;}
-    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_curr_symbol()   const {return __curr_symbol_;}
-    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_positive_sign() const {return __positive_sign_;}
-    _LIBCPP_ALWAYS_INLINE
     virtual string_type do_negative_sign() const {return __negative_sign_;}
-    _LIBCPP_ALWAYS_INLINE
     virtual int         do_frac_digits()   const {return __frac_digits_;}
-    _LIBCPP_ALWAYS_INLINE
     virtual pattern     do_pos_format()    const {return __pos_format_;}
-    _LIBCPP_ALWAYS_INLINE
     virtual pattern     do_neg_format()    const {return __neg_format_;}
 
 private:

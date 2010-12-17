@@ -41,6 +41,7 @@ case $TRIPLE in
 			-compatibility_version 1 \
 			-install_name /usr/lib/libc++.dylib \
 			-Wl,-reexport_library,/usr/lib/libc++abi.dylib \
+			-Wl,-unexported_symbols_list,libc++unexp.exp  \
 			/usr/lib/libSystem.B.dylib"
 	else
 		LDSHARED_FLAGS="-o libc++.1.dylib \
@@ -49,6 +50,7 @@ case $TRIPLE in
 			-install_name /usr/lib/libc++.dylib \
 			${SDKROOT}/usr/lib/libc++abi.dylib \
 			-lSystem  \
+			-Wl,-unexported_symbols_list,libc++unexp.exp  \
 			-Wl,-reexported_symbols_list,libc++abi.exp \
 			-Wl,-force_symbols_not_weak_list,notweak.exp"
 	fi

@@ -297,7 +297,7 @@ public:
 
 class __assoc_sub_state;
 
-class __thread_struct_imp;
+class _LIBCPP_HIDDEN __thread_struct_imp;
 
 class __thread_struct
 {

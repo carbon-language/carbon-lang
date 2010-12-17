@@ -92,10 +92,25 @@ __thread_local_data()
 
 // __thread_struct_imp
 
-class __thread_struct_imp
+template <class T>
+class _LIBCPP_HIDDEN __hidden_allocator
 {
-    typedef vector<__assoc_sub_state*> _AsyncStates;
-    typedef vector<pair<condition_variable*, mutex*> > _Notify;
+public:
+    typedef T  value_type;
+    
+    T* allocate(size_t __n)
+        {return static_cast<T*>(::operator new(__n * sizeof(T)));}
+    void deallocate(T* __p, size_t) {::operator delete((void*)__p);}
+
+    size_t max_size() const {return size_t(~0) / sizeof(T);}
+};
+
+class _LIBCPP_HIDDEN __thread_struct_imp
+{
+    typedef vector<__assoc_sub_state*,
+                          __hidden_allocator<__assoc_sub_state*> > _AsyncStates;
+    typedef vector<pair<condition_variable*, mutex*>,
+               __hidden_allocator<pair<condition_variable*, mutex*> > > _Notify;
 
     _AsyncStates async_states_;
     _Notify notify_;

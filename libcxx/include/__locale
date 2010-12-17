@@ -55,7 +55,8 @@ public:
     explicit locale(const string&);
     locale(const locale&, const char*, category);
     locale(const locale&, const string&, category);
-    template <class _Facet> locale(const locale&, _Facet*);
+    template <class _Facet>
+        _LIBCPP_INLINE_VISIBILITY locale(const locale&, _Facet*);
     locale(const locale&, const locale&, category);
 
     ~locale() throw();

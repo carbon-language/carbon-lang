@@ -272,16 +272,16 @@ public:
     class Init;
 
     // 27.5.2.2 fmtflags state:
-    fmtflags flags() const;
-    fmtflags flags(fmtflags __fmtfl);
-    fmtflags setf(fmtflags __fmtfl);
-    fmtflags setf(fmtflags __fmtfl, fmtflags __mask);
-    void unsetf(fmtflags __mask);
+    _LIBCPP_INLINE_VISIBILITY fmtflags flags() const;
+    _LIBCPP_INLINE_VISIBILITY fmtflags flags(fmtflags __fmtfl);
+    _LIBCPP_INLINE_VISIBILITY fmtflags setf(fmtflags __fmtfl);
+    _LIBCPP_INLINE_VISIBILITY fmtflags setf(fmtflags __fmtfl, fmtflags __mask);
+    _LIBCPP_INLINE_VISIBILITY void unsetf(fmtflags __mask);
 
-    streamsize precision() const;
-    streamsize precision(streamsize __prec);
-    streamsize width() const;
-    streamsize width(streamsize __wide);
+    _LIBCPP_INLINE_VISIBILITY streamsize precision() const;
+    _LIBCPP_INLINE_VISIBILITY streamsize precision(streamsize __prec);
+    _LIBCPP_INLINE_VISIBILITY streamsize width() const;
+    _LIBCPP_INLINE_VISIBILITY streamsize width(streamsize __wide);
 
     // 27.5.2.3 locales:
     locale imbue(const locale& __loc);
@@ -307,17 +307,17 @@ private:
 public:
     static bool sync_with_stdio(bool __sync = true);
 
-    iostate rdstate() const;
+    _LIBCPP_INLINE_VISIBILITY iostate rdstate() const;
     void clear(iostate __state = goodbit);
-    void setstate(iostate __state);
+    _LIBCPP_INLINE_VISIBILITY void setstate(iostate __state);
 
-    bool good() const;
-    bool eof() const;
-    bool fail() const;
-    bool bad() const;
+    _LIBCPP_INLINE_VISIBILITY bool good() const;
+    _LIBCPP_INLINE_VISIBILITY bool eof() const;
+    _LIBCPP_INLINE_VISIBILITY bool fail() const;
+    _LIBCPP_INLINE_VISIBILITY bool bad() const;
 
-    iostate exceptions() const;
-    void exceptions(iostate __except);
+    _LIBCPP_INLINE_VISIBILITY iostate exceptions() const;
+    _LIBCPP_INLINE_VISIBILITY void exceptions(iostate __except);
 
     void __set_badbit_and_consider_rethrow();
     void __set_failbit_and_consider_rethrow();
@@ -587,38 +587,52 @@ public:
     _LIBCPP_ALWAYS_INLINE void exceptions(iostate __except) {ios_base::exceptions(__except);}
 
     // 27.5.4.1 Constructor/destructor:
+    _LIBCPP_INLINE_VISIBILITY
     explicit basic_ios(basic_streambuf<char_type,traits_type>* __sb);
     virtual ~basic_ios();
 
     // 27.5.4.2 Members:
+    _LIBCPP_INLINE_VISIBILITY 
     basic_ostream<char_type, traits_type>* tie() const;
+    _LIBCPP_INLINE_VISIBILITY 
     basic_ostream<char_type, traits_type>* tie(basic_ostream<char_type, traits_type>* __tiestr);
 
+    _LIBCPP_INLINE_VISIBILITY 
     basic_streambuf<char_type, traits_type>* rdbuf() const;
+    _LIBCPP_INLINE_VISIBILITY 
     basic_streambuf<char_type, traits_type>* rdbuf(basic_streambuf<char_type, traits_type>* __sb);
 
     basic_ios& copyfmt(const basic_ios& __rhs);
 
+    _LIBCPP_INLINE_VISIBILITY 
     char_type fill() const;
+    _LIBCPP_INLINE_VISIBILITY 
     char_type fill(char_type __ch);
 
+    _LIBCPP_INLINE_VISIBILITY 
     locale imbue(const locale& __loc);
 
+    _LIBCPP_INLINE_VISIBILITY 
     char narrow(char_type __c, char __dfault) const;
+    _LIBCPP_INLINE_VISIBILITY 
     char_type widen(char __c) const;
 
 protected:
     _LIBCPP_ALWAYS_INLINE
     basic_ios() {// purposefully does no initialization
                 }
+    _LIBCPP_INLINE_VISIBILITY 
     void init(basic_streambuf<char_type, traits_type>* __sb);
 
+    _LIBCPP_INLINE_VISIBILITY 
     void move(basic_ios& __rhs);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_ALWAYS_INLINE
     void move(basic_ios&& __rhs) {move(__rhs);}
 #endif
+    _LIBCPP_INLINE_VISIBILITY 
     void swap(basic_ios& __rhs);
+    _LIBCPP_INLINE_VISIBILITY 
     void set_rdbuf(basic_streambuf<char_type, traits_type>* __sb);
 private:
     basic_ostream<char_type, traits_type>* __tie_;
