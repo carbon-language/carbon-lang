@@ -2141,13 +2141,7 @@ SDNode *ARMDAGToDAGISel::SelectConcatVector(SDNode *N) {
   EVT VT = N->getValueType(0);
   if (!VT.is128BitVector() || N->getNumOperands() != 2)
     llvm_unreachable("unexpected CONCAT_VECTORS");
-  DebugLoc dl = N->getDebugLoc();
-  SDValue V0 = N->getOperand(0);
-  SDValue V1 = N->getOperand(1);
-  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::dsub_0, MVT::i32);
-  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::dsub_1, MVT::i32);
-  const SDValue Ops[] = { V0, SubReg0, V1, SubReg1 };
-  return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, dl, VT, Ops, 4);
+  return PairDRegs(VT, N->getOperand(0), N->getOperand(1));
 }
 
 SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
