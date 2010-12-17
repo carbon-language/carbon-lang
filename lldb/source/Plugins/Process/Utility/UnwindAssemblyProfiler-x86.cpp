@@ -841,14 +841,14 @@ UnwindAssemblyProfiler_x86::FirstNonPrologueInsn (AddressRange& func, Target& ta
     return asm_parse.find_first_non_prologue_insn (first_non_prologue_insn);
 }
 
-lldb_private::UnwindAssemblyProfiler *
-UnwindAssemblyProfiler_x86::CreateInstance (const lldb_private::ArchSpec &arch)
+UnwindAssemblyProfiler *
+UnwindAssemblyProfiler_x86::CreateInstance (const ArchSpec &arch)
 {
-   uint32_t cpu = arch.GetCPUType ();
-   if (cpu != CPU_TYPE_X86_64 && cpu != CPU_TYPE_I386)
+    ArchSpec::CPU cpu = arch.GetGenericCPUType ();
+    if (cpu != ArchSpec::eCPU_x86_64 && cpu != ArchSpec::eCPU_i386)
        return NULL;
 
-   return new UnwindAssemblyProfiler_x86 (cpu == CPU_TYPE_X86_64 ? k_x86_64 : k_i386);
+   return new UnwindAssemblyProfiler_x86 (cpu == ArchSpec::eCPU_x86_64 ? k_x86_64 : k_i386);
 }
 
 
