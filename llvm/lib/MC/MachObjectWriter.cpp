@@ -1126,6 +1126,31 @@ public:
   bool IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
                                           const MCSymbolRefExpr *A,
                                           const MCSymbolRefExpr *B) const {
+    // The effective address is
+    //     addr(atom(A)) + offset(A)
+    //   - addr(atom(B)) - offset(B)
+    // and the offsets are not relocatable, so the fixup is fully resolved when
+    //  addr(atom(A)) - addr(atom(B)) == 0.
+    const MCSymbolData *A_Base = 0, *B_Base = 0;
+
+    // Modified symbol references cannot be resolved.
+    if (A->getKind() != MCSymbolRefExpr::VK_None ||
+        B->getKind() != MCSymbolRefExpr::VK_None)
+      return false;
+
+    A_Base = Asm.getAtom(&Asm.getSymbolData(A->getSymbol()));
+    if (!A_Base)
+      return false;
+
+    B_Base = Asm.getAtom(&Asm.getSymbolData(B->getSymbol()));
+    if (!B_Base)
+      return false;
+
+    // If the atoms are the same, they are guaranteed to have the same address.
+    if (A_Base == B_Base)
+      return true;
+
+    // Otherwise, we can't prove this is fully resolved.
     return false;
   }
 
