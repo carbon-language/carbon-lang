@@ -63,72 +63,48 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S) {
 
   // A method/function name may contain a prefix.  We don't know it is there,
   // however, until we encounter the first '_'.
-  bool InPossiblePrefix = true;
-  bool AtBeginning = true;
-  NamingConvention C = NoConvention;
-
   while (*s != '\0') {
-    // Skip '_'.
-    if (*s == '_') {
-      if (InPossiblePrefix) {
-        // If we already have a convention, return it.  Otherwise, skip
-        // the prefix as if it wasn't there.
-        if (C != NoConvention)
-          break;
-        
-        InPossiblePrefix = false;
-        AtBeginning = true;
-        assert(C == NoConvention);
-      }
+    // Skip '_', numbers, ':', etc.
+    if (*s == '_' || !isalpha(*s)) {      
       ++s;
       continue;
     }
-
-    // Skip numbers, ':', etc.
-    if (!isalpha(*s)) {
-      ++s;
-      continue;
-    }
-
-    const char *wordEnd = parseWord(s);
-    assert(wordEnd > s);
-    unsigned len = wordEnd - s;
-
-    switch (len) {
-    default:
-      break;
-    case 3:
-      // Methods starting with 'new' follow the create rule.
-      if (AtBeginning && StringRef(s, len).equals_lower("new"))
-        C = CreateRule;
-      break;
-    case 4:
-      // Methods starting with 'alloc' or contain 'copy' follow the
-      // create rule
-      if (C == NoConvention && StringRef(s, len).equals_lower("copy"))
-        C = CreateRule;
-      else // Methods starting with 'init' follow the init rule.
-        if (AtBeginning && StringRef(s, len).equals_lower("init"))
-          C = InitRule;
-      break;
-    case 5:
-      if (AtBeginning && StringRef(s, len).equals_lower("alloc"))
-        C = CreateRule;
-      break;
-    }
-
-    // If we aren't in the prefix and have a derived convention then just
-    // return it now.
-    if (!InPossiblePrefix && C != NoConvention)
-      return C;
-
-    AtBeginning = false;
-    s = wordEnd;
+    break;
   }
 
-  // We will get here if there wasn't more than one word
-  // after the prefix.
-  return C;
+  // Parse the first word, and look for specific keywords.
+  const char *wordEnd = parseWord(s);
+  assert(wordEnd > s);
+  unsigned len = wordEnd - s;
+
+  switch (len) {
+    default:
+      return NoConvention;
+    case 3:
+      // Methods starting with 'new' follow the create rule.
+      return (memcmp(s, "new", 3) == 0) ? CreateRule : NoConvention;
+    case 4:
+      // Methods starting with 'copy' follow the create rule.
+      if (memcmp(s, "copy", 4) == 0)
+        return CreateRule;
+      // Methods starting with 'init' follow the init rule.
+      if (memcmp(s, "init", 4) == 0)
+        return InitRule;
+      return NoConvention;
+    case 5:
+      return (memcmp(s, "alloc", 5) == 0) ? CreateRule : NoConvention;
+    case 7:
+      // Methods starting with 'mutableCopy' follow the create rule.
+      if (memcmp(s, "mutable", 7) == 0) {
+        // Look at the next word to see if it is "Copy".
+        s = wordEnd;
+        wordEnd = parseWord(s);
+        len = wordEnd - s;
+        if (len == 4 && memcmp(s, "Copy", 4) == 0)
+          return CreateRule;
+      }
+      return NoConvention;
+  }
 }
 
 bool cocoa::isRefType(QualType RetTy, llvm::StringRef Prefix,

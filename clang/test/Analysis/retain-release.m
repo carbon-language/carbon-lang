@@ -762,13 +762,13 @@ int RDar6320065_test() {
 @end
 
 @implementation RDar6859457 
-- (NSString*) NoCopyString { return [[NSString alloc] init]; } // no-warning
-- (NSString*) noCopyString { return [[NSString alloc] init]; } // no-warning
+- (NSString*) NoCopyString { return [[NSString alloc] init]; } // expected-warning{{leak}}
+- (NSString*) noCopyString { return [[NSString alloc] init]; } // expected-warning{{leak}}
 @end
 
 void test_RDar6859457(RDar6859457 *x, void *bytes, NSUInteger dataLength) {
-  [x NoCopyString]; // expected-warning{{leak}}
-  [x noCopyString]; // expected-warning{{leak}}
+  [x NoCopyString]; // no-warning
+  [x noCopyString]; // no-warning
   [NSData dataWithBytesNoCopy:bytes length:dataLength];  // no-warning
   [NSData dataWithBytesNoCopy:bytes length:dataLength freeWhenDone:1]; // no-warning
 }
