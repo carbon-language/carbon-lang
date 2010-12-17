@@ -250,6 +250,7 @@ namespace llvm {
     /// position is in a hole, this method returns an iterator pointing to the
     /// LiveRange immediately after the hole.
     iterator advanceTo(iterator I, SlotIndex Pos) {
+      assert(I != end());
       if (Pos >= endIndex())
         return end();
       while (I->end <= Pos) ++I;

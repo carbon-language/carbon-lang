@@ -238,7 +238,7 @@ collectInterferingVRegs(unsigned MaxInterferingRegs) {
   InterferenceResult IR = firstInterference();
   LiveInterval::iterator VirtRegEnd = VirtReg->end();
   LiveInterval *RecentInterferingVReg = NULL;
-  while (IR.LiveUnionI.valid()) {
+  if (IR.VirtRegI != VirtRegEnd) while (IR.LiveUnionI.valid()) {
     // Advance the union's iterator to reach an unseen interfering vreg.
     do {
       if (IR.LiveUnionI.value() == RecentInterferingVReg)
