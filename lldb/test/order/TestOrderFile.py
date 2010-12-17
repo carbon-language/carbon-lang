@@ -29,7 +29,8 @@ class OrderFileTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Test that the debug symbols have Function f3 before Function f1.
-        self.runCmd("image dump symtab a.out")
+        # Use "-s address" option to sort by address.
+        self.runCmd("image dump symtab -s address a.out")
         output = self.res.GetOutput()
         mo_f3 = re.search("Code +.+f3", output)
         mo_f1 = re.search("Code +.+f1", output)
