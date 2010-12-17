@@ -621,8 +621,8 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
       return false;
   }
 
-  // If destination register has a sub-register index on it, make sure it mtches
-  // the instruction register class.
+  // If destination register has a sub-register index on it, make sure it
+  // matches the instruction register class.
   if (DstSubIdx) {
     const TargetInstrDesc &TID = DefMI->getDesc();
     if (TID.getNumDefs() != 1)
