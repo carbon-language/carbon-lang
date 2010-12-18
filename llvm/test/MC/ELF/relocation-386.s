@@ -174,6 +174,12 @@
 // CHECK-NEXT:  ('r_sym', 0x00000004)
 // CHECK-NEXT:  ('r_type', 0x00000020)
 // CHECK-NEXT: ),
+// Relocation 23 ($bar) is of type R_386_32 and uses the section
+// CHECK-NEXT: Relocation 0x00000017
+// CHECK-NEXT: (('r_offset',
+// CHECK-NEXT:  ('r_sym',
+// CHECK-NEXT:  ('r_type', 0x00000001)
+// CHECK-NEXT: ),
 
         .text
 bar:
@@ -209,6 +215,7 @@ bar2:
         movl zed@TLSLDM(%eax), %eax
         movl zed@TPOFF(%eax), %eax
         movl zed@DTPOFF(%eax), %eax
+        pushl $bar
 
         .section        zedsec,"awT",@progbits
 zed:
