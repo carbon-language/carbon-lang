@@ -13,6 +13,7 @@
 // C Includes
 #include <signal.h>
 #include <stdint.h>
+#include <string.h>
 
 // C++ Includes
 #include <string>
