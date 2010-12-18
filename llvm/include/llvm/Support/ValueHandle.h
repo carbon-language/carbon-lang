@@ -394,7 +394,7 @@ public:
   /// Called when a new Use is added to the use-list of this->getValPtr(),
   /// after the Use has been appended to the list.  Other VH kinds would ignore
   /// this callback, but clients can use it to trigger re-analysis of Values.
-  virtual void addedUse(Use &U) {}
+  virtual void addedUse(Use &) {}
 };
 
 // Specialize simplify_type to allow CallbackVH to participate in
