@@ -12,7 +12,6 @@
 #include "PPCFixupKinds.h"
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/MC/MCObjectFormat.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -82,13 +81,8 @@ public:
 // FIXME: This should be in a separate file.
 namespace {
   class DarwinPPCAsmBackend : public PPCAsmBackend {
-    MCMachOObjectFormat Format;
   public:
     DarwinPPCAsmBackend(const Target &T) : PPCAsmBackend(T) { }
-    
-    virtual const MCObjectFormat &getObjectFormat() const {
-      return Format;
-    }
     
     void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                     uint64_t Value) const {

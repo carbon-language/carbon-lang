@@ -352,6 +352,12 @@ namespace {
       return false;
     }
 
+    virtual bool isAbsolute(bool IsSet, const MCSymbol &A,
+                            const MCSymbol &B) const {
+      // On ELF A - B is absolute if A and B are in the same section.
+      return &A.getSection() == &B.getSection();
+    }
+
     virtual bool IsFixupFullyResolved(const MCAssembler &Asm,
                               const MCValue Target,
                               bool IsPCRel,

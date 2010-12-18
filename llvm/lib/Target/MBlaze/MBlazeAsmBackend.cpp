@@ -16,7 +16,6 @@
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCObjectFormat.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -108,17 +107,10 @@ bool MBlazeAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
 
 namespace {
 class ELFMBlazeAsmBackend : public MBlazeAsmBackend {
-  MCELFObjectFormat Format;
-
 public:
   Triple::OSType OSType;
   ELFMBlazeAsmBackend(const Target &T, Triple::OSType _OSType)
     : MBlazeAsmBackend(T), OSType(_OSType) { }
-
-  virtual const MCObjectFormat &getObjectFormat() const {
-    return Format;
-  }
-
 
   void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const;

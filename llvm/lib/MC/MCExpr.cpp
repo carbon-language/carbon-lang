@@ -14,7 +14,6 @@
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCObjectFormat.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
@@ -388,8 +387,8 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
   if (Asm && A && B) {
     const MCSymbol &SA = A->getSymbol();
     const MCSymbol &SB = B->getSymbol();
-    const MCObjectFormat &F = Asm->getBackend().getObjectFormat();
-    if (SA.isDefined() && SB.isDefined() && F.isAbsolute(InSet, SA, SB)) {
+    if (SA.isDefined() && SB.isDefined() &&
+        Asm->getWriter().isAbsolute(InSet, SA, SB)) {
       MCSymbolData &AD = Asm->getSymbolData(A->getSymbol());
       MCSymbolData &BD = Asm->getSymbolData(B->getSymbol());
 

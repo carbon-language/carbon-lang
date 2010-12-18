@@ -20,6 +20,7 @@ class MCAsmLayout;
 class MCAssembler;
 class MCFixup;
 class MCFragment;
+class MCSymbol;
 class MCSymbolRefExpr;
 class MCValue;
 class raw_ostream;
@@ -97,6 +98,9 @@ public:
                                     const MCValue Target,
                                     bool IsPCRel,
                                     const MCFragment *DF) const = 0;
+
+  virtual bool isAbsolute(bool IsSet, const MCSymbol &A,
+                          const MCSymbol &B) const = 0;
 
   /// Write the object file.
   ///

@@ -18,7 +18,6 @@
 namespace llvm {
 class MCFixup;
 class MCInst;
-class MCObjectFormat;
 class MCObjectWriter;
 class MCSection;
 template<typename T>
@@ -36,8 +35,6 @@ protected: // Can only create subclasses.
 
 public:
   virtual ~TargetAsmBackend();
-
-  virtual const MCObjectFormat &getObjectFormat() const = 0;
 
   /// createObjectWriter - Create a new MCObjectWriter instance for use by the
   /// assembler backend to emit the final object file.
