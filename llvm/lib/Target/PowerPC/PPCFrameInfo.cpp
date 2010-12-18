@@ -227,6 +227,17 @@ void PPCFrameInfo::determineFrameLayout(MachineFunction &MF) const {
 // pointer register.
 bool PPCFrameInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  // FIXME: This is pretty much broken by design: hasFP() might be called really
+  // early, before the stack layout was calculated and thus hasFP() might return
+  // true or false here depending on the time of call.
+  return (MFI->getStackSize()) && needsFP(MF);
+}
+
+// needsFP - Return true if the specified function should have a dedicated frame
+// pointer register.  This is true if the function has variable sized allocas or
+// if frame pointer elimination is disabled.
+bool PPCFrameInfo::needsFP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Naked functions have no stack frame pushed, so we don't have a frame
   // pointer.
@@ -267,6 +278,8 @@ void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
   MBBI = MBB.begin();
 
   // Work out frame sizes.
+  // FIXME: determineFrameLayout() may change the frame size. This should be
+  // moved upper, to some hook.
   determineFrameLayout(MF);
   unsigned FrameSize = MFI->getStackSize();
 
@@ -280,7 +293,7 @@ void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
   // Do we have a frame pointer for this function?
-  bool HasFP = hasFP(MF) && FrameSize;
+  bool HasFP = hasFP(MF);
 
   int LROffset = PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI);
 
@@ -516,7 +529,7 @@ void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
   // Do we have a frame pointer for this function?
-  bool HasFP = hasFP(MF) && FrameSize;
+  bool HasFP = hasFP(MF);
 
   int LROffset = PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI);
 
@@ -735,7 +748,7 @@ PPCFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // If the frame pointer save index hasn't been defined yet.
-  if (!FPSI && hasFP(MF)) {
+  if (!FPSI && needsFP(MF)) {
     // Find out what the fix offset of the frame pointer save area.
     int FPOffset = getFramePointerSaveOffset(isPPC64, isDarwinABI);
     // Allocate the frame index for frame pointer save area.
@@ -758,7 +771,7 @@ PPCFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //        r0 for now.
 
   if (RegInfo->requiresRegisterScavenging(MF)) // FIXME (64-bit): Enable.
-    if (hasFP(MF) || spillsCR(MF)) {
+    if (needsFP(MF) || spillsCR(MF)) {
       const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
       const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
       const TargetRegisterClass *RC = isPPC64 ? G8RC : GPRC;
@@ -779,7 +792,7 @@ void PPCFrameInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
   const std::vector<CalleeSavedInfo> &CSI = FFI->getCalleeSavedInfo();
 
   // Early exit if no callee saved registers are modified!
-  if (CSI.empty() && !hasFP(MF)) {
+  if (CSI.empty() && !needsFP(MF)) {
     return;
   }
 
@@ -869,7 +882,7 @@ void PPCFrameInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
 
   // Check whether the frame pointer register is allocated. If so, make sure it
   // is spilled to the correct offset.
-  if (hasFP(MF)) {
+  if (needsFP(MF)) {
     HasGPSaveArea = true;
 
     int FI = PFI->getFramePointerSaveIndex();

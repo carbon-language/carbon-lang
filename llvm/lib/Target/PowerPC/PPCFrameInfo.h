@@ -38,6 +38,7 @@ public:
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   bool hasFP(const MachineFunction &MF) const;
+  bool needsFP(const MachineFunction &MF) const;
   void getInitialFrameState(std::vector<MachineMove> &Moves) const;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,

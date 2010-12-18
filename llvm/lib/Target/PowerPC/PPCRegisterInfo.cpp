@@ -258,7 +258,8 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
-  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+  const PPCFrameInfo *PPCFI =
+    static_cast<const PPCFrameInfo*>(MF.getTarget().getFrameInfo());
 
   Reserved.set(PPC::R0);
   Reserved.set(PPC::R1);
@@ -305,7 +306,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     }
   }
 
-  if (TFI->hasFP(MF))
+  if (PPCFI->needsFP(MF))
     Reserved.set(PPC::R31);
 
   return Reserved;
