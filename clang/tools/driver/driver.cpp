@@ -287,7 +287,7 @@ int main(int argc_, const char **argv_) {
 
   TextDiagnosticPrinter *DiagClient
     = new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
-  DiagClient->setPrefix(Path.getBasename());
+  DiagClient->setPrefix(llvm::sys::path::stem(Path.str()));
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   Diagnostic Diags(DiagID, DiagClient);
 
@@ -331,7 +331,7 @@ int main(int argc_, const char **argv_) {
   //
   // We use *argv instead of argv[0] to work around a bogus g++ warning.
   const char *progname = argv_[0];
-  std::string ProgName(llvm::sys::Path(progname).getBasename());
+  std::string ProgName(llvm::sys::path::stem(progname));
   if (llvm::StringRef(ProgName).endswith("++") ||
       llvm::StringRef(ProgName).rsplit('-').first.endswith("++")) {
     TheDriver.CCCIsCXX = true;

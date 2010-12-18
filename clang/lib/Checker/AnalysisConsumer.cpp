@@ -50,8 +50,8 @@ static ExplodedNode::Auditor* CreateUbiViz();
 static PathDiagnosticClient*
 createPlistHTMLDiagnosticClient(const std::string& prefix,
                                 const Preprocessor &PP) {
-  llvm::sys::Path F(prefix);
-  PathDiagnosticClient *PD = createHTMLDiagnosticClient(F.getDirname(), PP);
+  PathDiagnosticClient *PD =
+    createHTMLDiagnosticClient(llvm::sys::path::parent_path(prefix), PP);
   return createPlistDiagnosticClient(prefix, PP, PD);
 }
 
