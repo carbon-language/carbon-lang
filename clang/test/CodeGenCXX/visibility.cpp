@@ -403,7 +403,7 @@ namespace Test20 {
     B<A<2> >::test4();
   }
 
-  // CHECK: declare void @_ZN6Test201BINS_1AILj2EEEE5test4Ev()
+  // CHECK: declare void @_ZN6Test201BINS_1AILj2EEEE5test5Ev()
   // (but explicit visibility on a template argument doesn't count as
   //  explicit visibility for the template for purposes of deciding
   //  whether an external symbol gets visibility)
