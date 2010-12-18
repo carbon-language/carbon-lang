@@ -1025,7 +1025,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
 
     // Make sure the Thumb jump table is 4-byte aligned.
-    if (Opc == ARM::tMOVr)
+    if (Opc == ARM::tMOVgpr2gpr)
       EmitAlignment(2);
 
     // Output the data for the jump table itself
