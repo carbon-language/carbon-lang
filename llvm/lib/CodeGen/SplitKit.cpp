@@ -1077,11 +1077,13 @@ void SplitEditor::splitAroundLoop(const MachineLoop *Loop) {
   // Create new live interval for the loop.
   openIntv();
 
-  // Insert copies in the predecessors.
-  for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Preds.begin(),
-       E = Blocks.Preds.end(); I != E; ++I) {
-    MachineBasicBlock &MBB = const_cast<MachineBasicBlock&>(**I);
-    enterIntvAtEnd(MBB);
+  // Insert copies in the predecessors if live-in to the header.
+  if (lis_.isLiveInToMBB(edit_.getParent(), Loop->getHeader())) {
+    for (SplitAnalysis::BlockPtrSet::iterator I = Blocks.Preds.begin(),
+           E = Blocks.Preds.end(); I != E; ++I) {
+      MachineBasicBlock &MBB = const_cast<MachineBasicBlock&>(**I);
+      enterIntvAtEnd(MBB);
+    }
   }
 
   // Switch all loop blocks.
