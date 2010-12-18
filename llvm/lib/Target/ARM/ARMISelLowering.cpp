@@ -778,9 +778,14 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::PRELOAD:       return "ARMISD::PRELOAD";
 
   case ARMISD::VCEQ:          return "ARMISD::VCEQ";
+  case ARMISD::VCEQZ:         return "ARMISD::VCEQZ";
   case ARMISD::VCGE:          return "ARMISD::VCGE";
+  case ARMISD::VCGEZ:         return "ARMISD::VCGEZ";
+  case ARMISD::VCLEZ:         return "ARMISD::VCLEZ";
   case ARMISD::VCGEU:         return "ARMISD::VCGEU";
   case ARMISD::VCGT:          return "ARMISD::VCGT";
+  case ARMISD::VCGTZ:         return "ARMISD::VCGTZ";
+  case ARMISD::VCLTZ:         return "ARMISD::VCLTZ";
   case ARMISD::VCGTU:         return "ARMISD::VCGTU";
   case ARMISD::VTST:          return "ARMISD::VTST";
 
