@@ -11,6 +11,7 @@
 #define utility_SharingPtr_h_
 
 #include <algorithm>
+#include <memory>
 
 namespace lldb_private {
 
