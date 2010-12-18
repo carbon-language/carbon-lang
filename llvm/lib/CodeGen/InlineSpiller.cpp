@@ -96,7 +96,7 @@ Spiller *createInlineSpiller(MachineFunctionPass &pass,
                              MachineFunction &mf,
                              VirtRegMap &vrm) {
   if (VerifySpills)
-    mf.verify(&pass);
+    mf.verify(&pass, "When creating inline spiller");
   return new InlineSpiller(pass, mf, vrm);
 }
 }
@@ -313,7 +313,7 @@ void InlineSpiller::spill(LiveInterval *li,
   LiveRangeEdit edit(*li, newIntervals, spillIs);
   spill(edit);
   if (VerifySpills)
-    mf_.verify(&pass_);
+    mf_.verify(&pass_, "After inline spill");
 }
 
 void InlineSpiller::spill(LiveRangeEdit &edit) {

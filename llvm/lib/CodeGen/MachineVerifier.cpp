@@ -46,14 +46,16 @@ using namespace llvm;
 namespace {
   struct MachineVerifier {
 
-    MachineVerifier(Pass *pass) :
+    MachineVerifier(Pass *pass, const char *b) :
       PASS(pass),
+      Banner(b),
       OutFileName(getenv("LLVM_VERIFY_MACHINEINSTRS"))
       {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
     Pass *const PASS;
+    const char *Banner;
     const char *const OutFileName;
     raw_ostream *OS;
     const MachineFunction *MF;
@@ -196,9 +198,10 @@ namespace {
 
   struct MachineVerifierPass : public MachineFunctionPass {
     static char ID; // Pass ID, replacement for typeid
+    const char *const Banner;
 
-    MachineVerifierPass()
-      : MachineFunctionPass(ID) {
+    MachineVerifierPass(const char *b = 0)
+      : MachineFunctionPass(ID), Banner(b) {
         initializeMachineVerifierPassPass(*PassRegistry::getPassRegistry());
       }
 
@@ -208,7 +211,7 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &MF) {
-      MF.verify(this);
+      MF.verify(this, Banner);
       return false;
     }
   };
@@ -219,12 +222,13 @@ char MachineVerifierPass::ID = 0;
 INITIALIZE_PASS(MachineVerifierPass, "machineverifier",
                 "Verify generated machine code", false, false)
 
-FunctionPass *llvm::createMachineVerifierPass() {
-  return new MachineVerifierPass();
+FunctionPass *llvm::createMachineVerifierPass(const char *Banner) {
+  return new MachineVerifierPass(Banner);
 }
 
-void MachineFunction::verify(Pass *p) const {
-  MachineVerifier(p).runOnMachineFunction(const_cast<MachineFunction&>(*this));
+void MachineFunction::verify(Pass *p, const char *Banner) const {
+  MachineVerifier(p, Banner)
+    .runOnMachineFunction(const_cast<MachineFunction&>(*this));
 }
 
 bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
@@ -297,8 +301,11 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
 void MachineVerifier::report(const char *msg, const MachineFunction *MF) {
   assert(MF);
   *OS << '\n';
-  if (!foundErrors++)
+  if (!foundErrors++) {
+    if (Banner)
+      *OS << "# " << Banner << '\n';
     MF->print(*OS, Indexes);
+  }
   *OS << "*** Bad machine code: " << msg << " ***\n"
       << "- function:    " << MF->getFunction()->getNameStr() << "\n";
 }

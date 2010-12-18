@@ -251,7 +251,7 @@ static void printAndVerify(PassManagerBase &PM,
     PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
 
   if (VerifyMachineCode)
-    PM.add(createMachineVerifierPass());
+    PM.add(createMachineVerifierPass(Banner));
 }
 
 /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for both

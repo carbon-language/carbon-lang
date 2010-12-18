@@ -329,7 +329,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
     .splitAroundLoop(Loop->getLoop());
 
   if (VerifyEnabled)
-    MF->verify(this);
+    MF->verify(this, "After splitting live range around loop");
 
   // We have new split regs, don't assign anything.
   return 0;
@@ -404,7 +404,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
 
   MF = &mf;
   if (VerifyEnabled)
-    MF->verify(this);
+    MF->verify(this, "Before greedy register allocator");
 
   RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
   DomTree = &getAnalysis<MachineDominatorTree>();

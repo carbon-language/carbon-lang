@@ -484,7 +484,7 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
     // spiller. Always use -spiller=inline with -verify-regalloc. Even with the
     // inline spiller, some tests fail to verify because the coalescer does not
     // always generate verifiable code.
-    MF->verify(this);
+    MF->verify(this, "In RABasic::verify");
 
     // Verify that LiveIntervals are partitioned into unions and disjoint within
     // the unions.
