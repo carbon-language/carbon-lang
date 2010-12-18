@@ -33,21 +33,41 @@ using namespace clang;
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
-static const VisibilityAttr *GetExplicitVisibility(const Decl *D) {
-  // If the decl is redeclarable, make sure we use the explicit
-  // visibility attribute from the most recent declaration.
-  //
-  // Note that this isn't necessary for tags, which can't have their
-  // visibility adjusted.
-  if (isa<VarDecl>(D)) {
-    return cast<VarDecl>(D)->getMostRecentDeclaration()
-      ->getAttr<VisibilityAttr>();
-  } else if (isa<FunctionDecl>(D)) {
-    return cast<FunctionDecl>(D)->getMostRecentDeclaration()
-      ->getAttr<VisibilityAttr>();
-  } else {
-    return D->getAttr<VisibilityAttr>();
+static const VisibilityAttr *GetExplicitVisibility(const Decl *d) {
+  // Use the most recent declaration of a variable.
+  if (const VarDecl *var = dyn_cast<VarDecl>(d))
+    return var->getMostRecentDeclaration()->getAttr<VisibilityAttr>();
+
+  // Use the most recent declaration of a function, and also handle
+  // function template specializations.
+  if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(d)) {
+    if (const VisibilityAttr *attr
+          = fn->getMostRecentDeclaration()->getAttr<VisibilityAttr>())
+      return attr;
+
+    // If the function is a specialization of a template with an
+    // explicit visibility attribute, use that.
+    if (FunctionTemplateSpecializationInfo *templateInfo
+          = fn->getTemplateSpecializationInfo())
+      return templateInfo->getTemplate()->getTemplatedDecl()
+        ->getAttr<VisibilityAttr>();
+
+    return 0;
   }
+
+  // Otherwise, just check the declaration itself first.
+  if (const VisibilityAttr *attr = d->getAttr<VisibilityAttr>())
+    return attr;
+
+  // If there wasn't explicit visibility there, and this is a
+  // specialization of a class template, check for visibility
+  // on the pattern.
+  if (const ClassTemplateSpecializationDecl *spec
+        = dyn_cast<ClassTemplateSpecializationDecl>(d))
+    return spec->getSpecializedTemplate()->getTemplatedDecl()
+      ->getAttr<VisibilityAttr>();
+
+  return 0;
 }
 
 static Visibility GetVisibilityFromAttr(const VisibilityAttr *A) {

@@ -356,3 +356,58 @@ namespace Test19 {
     foo<int>();
   }
 }
+
+// Various things with class template specializations.
+namespace Test20 {
+  template <unsigned> struct HIDDEN A {};
+
+  // An explicit specialization inherits the explicit visibility of
+  // the template.
+  template <> struct A<0> {
+    static void test0();
+    static void test1();
+  };
+
+  // CHECK: define hidden void @_ZN6Test201AILj0EE5test0Ev()
+  void A<0>::test0() {}
+
+  // CHECK: declare hidden void @_ZN6Test201AILj0EE5test1Ev()
+  void test1() {
+    A<0>::test1();
+  }
+
+  // ...unless that's explicitly overridden.
+  template <> struct DEFAULT A<1> {
+    static void test2();
+    static void test3();
+  };
+
+  // CHECK: define void @_ZN6Test201AILj1EE5test2Ev()
+  void A<1>::test2() {}
+
+  // CHECK: declare void @_ZN6Test201AILj1EE5test3Ev()
+  void test3() {
+    A<1>::test3();
+  }
+
+  // <rdar://problem/8778497>
+  // But we should assume that an unknown specialization has the
+  // explicit visibility settings of the template.
+  template <class T> struct B {
+    static void test4() {}
+    static void test5();
+  };
+
+  // CHECK: define linkonce_odr hidden void @_ZN6Test201BINS_1AILj2EEEE5test4Ev()
+  void test4() {
+    B<A<2> >::test4();
+  }
+
+  // CHECK: declare void @_ZN6Test201BINS_1AILj2EEEE5test4Ev()
+  // (but explicit visibility on a template argument doesn't count as
+  //  explicit visibility for the template for purposes of deciding
+  //  whether an external symbol gets visibility)
+  void test5() {
+    B<A<2> >::test5();
+  }
+}
