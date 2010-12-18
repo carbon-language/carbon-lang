@@ -21,8 +21,10 @@
 #include <string>
 #include <vector>
 
-#define LLVMV_PATH_DEPRECATED_MSG \
-  "PathV1 is being deprecated, please use the PathV2 API."
+#define LLVMV_PATH_DEPRECATED_MSG(replacement) \
+  "PathV1 has been deprecated and will be removed as soon as all LLVM and" \
+  " Clang clients have been moved over to PathV2. Please use `" #replacement \
+  "` from PathV2 instead."
 
 namespace llvm {
 namespace sys {
@@ -265,7 +267,7 @@ namespace sys {
       /// @brief Returns the last component of the path name.
       LLVM_ATTRIBUTE_DEPRECATED(
         StringRef getLast() const,
-        LLVMV_PATH_DEPRECATED_MSG);
+        LLVMV_PATH_DEPRECATED_MSG(path::filename));
 
       /// This function strips off the path and suffix of the file or directory
       /// name and returns just the basename. For example /a/foo.bar would cause
@@ -273,12 +275,12 @@ namespace sys {
       /// @returns StringRef containing the basename of the path
       /// @brief Get the base name of the path
       LLVM_ATTRIBUTE_DEPRECATED(StringRef getBasename() const,
-        LLVMV_PATH_DEPRECATED_MSG);
+        LLVMV_PATH_DEPRECATED_MSG(path::stem));
 
       /// This function strips off the suffix of the path beginning with the
       /// path separator ('/' on Unix, '\' on Windows) and returns the result.
       LLVM_ATTRIBUTE_DEPRECATED(StringRef getDirname() const,
-        LLVMV_PATH_DEPRECATED_MSG);
+        LLVMV_PATH_DEPRECATED_MSG(path::parent_path));
 
       /// This function strips off the path and basename(up to and
       /// including the last dot) of the file or directory name and
@@ -287,7 +289,7 @@ namespace sys {
       /// @returns StringRef containing the suffix of the path
       /// @brief Get the suffix of the path
       LLVM_ATTRIBUTE_DEPRECATED(StringRef getSuffix() const,
-        LLVMV_PATH_DEPRECATED_MSG);
+        LLVMV_PATH_DEPRECATED_MSG(path::extension));
 
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
@@ -311,14 +313,14 @@ namespace sys {
       /// @brief Determine if the path is absolute.
       LLVM_ATTRIBUTE_DEPRECATED(
         bool isAbsolute() const,
-        LLVMV_PATH_DEPRECATED_MSG);
+        LLVMV_PATH_DEPRECATED_MSG(path::is_absolute));
 
       /// This function determines if the path name is absolute, as opposed to
       /// relative.
       /// @brief Determine if the path is absolute.
       LLVM_ATTRIBUTE_DEPRECATED(
         static bool isAbsolute(const char *NameStart, unsigned NameLen),
-        LLVMV_PATH_DEPRECATED_MSG);
+        LLVMV_PATH_DEPRECATED_MSG(path::is_absolute));
 
       /// This function opens the file associated with the path name provided by
       /// the Path object and reads its magic number. If the magic number at the
