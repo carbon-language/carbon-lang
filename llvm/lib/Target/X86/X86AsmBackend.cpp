@@ -188,6 +188,9 @@ static unsigned getRelaxedOpcodeArith(unsigned Op) {
   case X86::CMP32mi8: return X86::CMP32mi;
   case X86::CMP64ri8: return X86::CMP64ri32;
   case X86::CMP64mi8: return X86::CMP64mi32;
+
+    // PUSH
+  case X86::PUSHi8: return X86::PUSHi32;
   }
 }
 
