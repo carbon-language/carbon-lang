@@ -85,7 +85,8 @@ private:
 
   bool coalesceStackAccess(MachineInstr *MI);
   bool foldMemoryOperand(MachineBasicBlock::iterator MI,
-                         const SmallVectorImpl<unsigned> &Ops);
+                         const SmallVectorImpl<unsigned> &Ops,
+                         MachineInstr *LoadMI = 0);
   void insertReload(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
   void insertSpill(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
 };
@@ -139,6 +140,14 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
         return false;
       }
     }
+  }
+
+  // Before rematerializing into a register for a single instruction, try to
+  // fold a load into the instruction. That avoids allocating a new register.
+  if (RM.OrigMI->getDesc().canFoldAsLoad() &&
+      foldMemoryOperand(MI, Ops, RM.OrigMI)) {
+    edit_->markRematerialized(RM.ParentVNI);
+    return true;
   }
 
   // Alocate a new register for the remat.
@@ -243,9 +252,13 @@ bool InlineSpiller::coalesceStackAccess(MachineInstr *MI) {
 }
 
 /// foldMemoryOperand - Try folding stack slot references in Ops into MI.
-/// Return true on success, and MI will be erased.
+/// @param MI     Instruction using or defining the current register.
+/// @param Ops    Operandices from readsWritesVirtualRegister().
+/// @param LoadMI Load instruction to use instead of stack slot when non-null.
+/// @return       True on success, and MI will be erased.
 bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
-                                      const SmallVectorImpl<unsigned> &Ops) {
+                                      const SmallVectorImpl<unsigned> &Ops,
+                                      MachineInstr *LoadMI) {
   // TargetInstrInfo::foldMemoryOperand only expects explicit, non-tied
   // operands.
   SmallVector<unsigned, 8> FoldOps;
@@ -262,11 +275,14 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
       FoldOps.push_back(Idx);
   }
 
-  MachineInstr *FoldMI = tii_.foldMemoryOperand(MI, FoldOps, stackSlot_);
+  MachineInstr *FoldMI =
+                LoadMI ? tii_.foldMemoryOperand(MI, FoldOps, LoadMI)
+                       : tii_.foldMemoryOperand(MI, FoldOps, stackSlot_);
   if (!FoldMI)
     return false;
   lis_.ReplaceMachineInstrInMaps(MI, FoldMI);
-  vrm_.addSpillSlotUse(stackSlot_, FoldMI);
+  if (!LoadMI)
+    vrm_.addSpillSlotUse(stackSlot_, FoldMI);
   MI->eraseFromParent();
   DEBUG(dbgs() << "\tfolded: " << *FoldMI);
   return true;

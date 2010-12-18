@@ -117,6 +117,12 @@ public:
                             const TargetInstrInfo&,
                             const TargetRegisterInfo&);
 
+  /// markRematerialized - explicitly mark a value as rematerialized after doing
+  /// it manually.
+  void markRematerialized(VNInfo *ParentVNI) {
+    rematted_.insert(ParentVNI);
+  }
+
   /// didRematerialize - Return true if ParentVNI was rematerialized anywhere.
   bool didRematerialize(VNInfo *ParentVNI) const {
     return rematted_.count(ParentVNI);
