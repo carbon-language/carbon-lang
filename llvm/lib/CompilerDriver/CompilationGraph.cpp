@@ -32,7 +32,8 @@ using namespace llvmc;
 namespace llvmc {
 
   const std::string* LanguageMap::GetLanguage(const sys::Path& File) const {
-    StringRef suf = File.getSuffix();
+    // Remove the '.'.
+    StringRef suf = sys::path::extension(File.str()).substr(1);
     LanguageMap::const_iterator Lang =
       this->find(suf.empty() ? "*empty*" : suf);
     if (Lang == this->end()) {

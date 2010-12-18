@@ -272,11 +272,13 @@ namespace sys {
       /// this function to return "foo".
       /// @returns StringRef containing the basename of the path
       /// @brief Get the base name of the path
-      StringRef getBasename() const;
+      LLVM_ATTRIBUTE_DEPRECATED(StringRef getBasename() const,
+        LLVMV_PATH_DEPRECATED_MSG);
 
       /// This function strips off the suffix of the path beginning with the
       /// path separator ('/' on Unix, '\' on Windows) and returns the result.
-      StringRef getDirname() const;
+      LLVM_ATTRIBUTE_DEPRECATED(StringRef getDirname() const,
+        LLVMV_PATH_DEPRECATED_MSG);
 
       /// This function strips off the path and basename(up to and
       /// including the last dot) of the file or directory name and
@@ -284,7 +286,8 @@ namespace sys {
       /// this function to return "bar".
       /// @returns StringRef containing the suffix of the path
       /// @brief Get the suffix of the path
-      StringRef getSuffix() const;
+      LLVM_ATTRIBUTE_DEPRECATED(StringRef getSuffix() const,
+        LLVMV_PATH_DEPRECATED_MSG);
 
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
