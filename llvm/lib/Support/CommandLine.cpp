@@ -505,7 +505,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   }
 
   // Copy the program name into ProgName, making sure not to overflow it.
-  std::string ProgName = sys::Path(argv[0]).getLast();
+  std::string ProgName = sys::path::filename(argv[0]);
   size_t Len = std::min(ProgName.size(), size_t(79));
   memcpy(ProgramName, ProgName.data(), Len);
   ProgramName[Len] = '\0';

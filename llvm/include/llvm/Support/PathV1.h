@@ -263,7 +263,9 @@ namespace sys {
       /// path name is returned (i.e. same as toString).
       /// @returns StringRef containing the last component of the path name.
       /// @brief Returns the last component of the path name.
-      StringRef getLast() const;
+      LLVM_ATTRIBUTE_DEPRECATED(
+        StringRef getLast() const,
+        LLVMV_PATH_DEPRECATED_MSG);
 
       /// This function strips off the path and suffix of the file or directory
       /// name and returns just the basename. For example /a/foo.bar would cause
