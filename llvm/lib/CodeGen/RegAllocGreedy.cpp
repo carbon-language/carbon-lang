@@ -308,13 +308,15 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   // allocation order.
   MachineLoopRange *Loop = 0;
   for (unsigned i = 0, e = SplitLoops.size(); i != e; ++i) {
+    DEBUG(dbgs() << "  Checking " << *SplitLoops[i]);
     if (unsigned PhysReg = findInterferenceFreeReg(SplitLoops[i],
                                                    VirtReg, Order)) {
       (void)PhysReg;
       Loop = SplitLoops[i];
-      DEBUG(dbgs() << "  " << TRI->getName(PhysReg)
-                   << " has no interferences in " << *Loop << '\n');
+      DEBUG(dbgs() << ": Use %" << TRI->getName(PhysReg) << '\n');
       break;
+    } else {
+      DEBUG(dbgs() << ": Interference.\n");
     }
   }
 
