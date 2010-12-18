@@ -327,7 +327,7 @@ static void AttemptToFoldSymbolOffsetDifference(const MCAsmLayout *Layout,
 /// NOTE: It is really important to have both the Asm and Layout arguments.
 /// They might look redundant, but this function can be used before layout
 /// is done (see the object streamer for example) and having the Asm argument
-/// lets us avoid relocations.
+/// lets us avoid relaxations early.
 static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
                                 const MCAsmLayout *Layout,
                                 const SectionAddrMap *Addrs,
