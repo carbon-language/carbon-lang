@@ -300,7 +300,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   }
 
   if (FilesMade)
-    FilesMade->push_back(H.getLast());
+    FilesMade->push_back(llvm::sys::path::filename(H.str()));
 
   // Emit the HTML to disk.
   for (RewriteBuffer::iterator I = Buf->begin(), E = Buf->end(); I!=E; ++I)

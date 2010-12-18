@@ -312,9 +312,9 @@ int main(int argc_, const char **argv_) {
   llvm::sys::Path InstalledPath(argv[0]);
 
   // Do a PATH lookup, if there are no directory components.
-  if (InstalledPath.getLast() == InstalledPath.str()) {
-    llvm::sys::Path Tmp =
-      llvm::sys::Program::FindProgramByName(InstalledPath.getLast());
+  if (llvm::sys::path::filename(InstalledPath.str()) == InstalledPath.str()) {
+    llvm::sys::Path Tmp = llvm::sys::Program::FindProgramByName(
+      llvm::sys::path::filename(InstalledPath.str()));
     if (!Tmp.empty())
       InstalledPath = Tmp;
   }

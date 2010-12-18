@@ -1195,8 +1195,8 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
   }
 
-  llvm::sys::Path BasePath(BaseInput);
-  std::string BaseName(BasePath.getLast());
+  llvm::SmallString<128> BasePath(BaseInput);
+  llvm::StringRef BaseName = llvm::sys::path::filename(BasePath);
 
   // Determine what the derived output name should be.
   const char *NamedOutput;
@@ -1217,11 +1217,11 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
 
   // As an annoying special case, PCH generation doesn't strip the pathname.
   if (JA.getType() == types::TY_PCH) {
-    BasePath.eraseComponent();
-    if (BasePath.isEmpty())
+    llvm::sys::path::remove_filename(BasePath);
+    if (BasePath.empty())
       BasePath = NamedOutput;
     else
-      BasePath.appendComponent(NamedOutput);
+      llvm::sys::path::append(BasePath, NamedOutput);
     return C.addResultFile(C.getArgs().MakeArgString(BasePath.c_str()));
   } else {
     return C.addResultFile(NamedOutput);

@@ -488,8 +488,7 @@ bool USRGenerator::GenLoc(const Decl *D) {
   const std::pair<FileID, unsigned> &Decomposed = SM.getDecomposedLoc(L);
   const FileEntry *FE = SM.getFileEntryForID(Decomposed.first);
   if (FE) {
-    llvm::sys::Path P(FE->getName());
-    Out << P.getLast();
+    Out << llvm::sys::path::filename(FE->getName());
   }
   else {
     // This case really isn't interesting.
