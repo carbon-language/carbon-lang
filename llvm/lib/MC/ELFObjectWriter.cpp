@@ -175,14 +175,6 @@ namespace {
 
     bool NeedsSymtabShndx;
 
-    unsigned Is64Bit : 1;
-
-    bool HasRelocationAddend;
-
-    Triple::OSType OSType;
-
-    uint16_t EMachine;
-
     // This holds the symbol table index of the last local symbol.
     unsigned LastLocalSymbolIndex;
     // This holds the .strtab section index.
@@ -197,22 +189,23 @@ namespace {
                                   const MCValue &Target,
                                   const MCFragment &F) const;
 
+    bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
+    bool hasRelocationAddend() const {
+      return TargetObjectWriter->hasRelocationAddend();
+    }
+
   public:
     ELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                    raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
-                    uint16_t _EMachine, bool _HasRelAddend,
-                    Triple::OSType _OSType)
+                    raw_ostream &_OS, bool IsLittleEndian)
       : MCObjectWriter(_OS, IsLittleEndian),
         TargetObjectWriter(MOTW),
-        NeedsGOT(false), NeedsSymtabShndx(false),
-        Is64Bit(_Is64Bit), HasRelocationAddend(_HasRelAddend),
-        OSType(_OSType), EMachine(_EMachine) {
+        NeedsGOT(false), NeedsSymtabShndx(false){
     }
 
     virtual ~ELFObjectWriter();
 
     void WriteWord(uint64_t W) {
-      if (Is64Bit)
+      if (is64Bit())
         Write64(W);
       else
         Write32(W);
@@ -382,9 +375,8 @@ namespace {
   class X86ELFObjectWriter : public ELFObjectWriter {
   public:
     X86ELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                       raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
-                       uint16_t _EMachine, bool _HasRelAddend,
-                       Triple::OSType _OSType);
+                       raw_ostream &_OS,
+                       bool IsLittleEndian);
 
     virtual ~X86ELFObjectWriter();
   protected:
@@ -399,9 +391,8 @@ namespace {
   class ARMELFObjectWriter : public ELFObjectWriter {
   public:
     ARMELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                       raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
-                       uint16_t _EMachine, bool _HasRelAddend,
-                       Triple::OSType _OSType);
+                       raw_ostream &_OS,
+                       bool IsLittleEndian);
 
     virtual ~ARMELFObjectWriter();
   protected:
@@ -415,9 +406,8 @@ namespace {
   class MBlazeELFObjectWriter : public ELFObjectWriter {
   public:
     MBlazeELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                          raw_ostream &_OS, bool _Is64Bit, bool IsLittleEndian,
-                          uint16_t _EMachine, bool _HasRelAddend,
-                          Triple::OSType _OSType);
+                          raw_ostream &_OS,
+                          bool IsLittleEndian);
 
     virtual ~MBlazeELFObjectWriter();
   protected:
@@ -446,14 +436,14 @@ void ELFObjectWriter::WriteHeader(uint64_t SectionDataSize,
   Write8('L');  // e_ident[EI_MAG2]
   Write8('F');  // e_ident[EI_MAG3]
 
-  Write8(Is64Bit ? ELF::ELFCLASS64 : ELF::ELFCLASS32); // e_ident[EI_CLASS]
+  Write8(is64Bit() ? ELF::ELFCLASS64 : ELF::ELFCLASS32); // e_ident[EI_CLASS]
 
   // e_ident[EI_DATA]
   Write8(isLittleEndian() ? ELF::ELFDATA2LSB : ELF::ELFDATA2MSB);
 
   Write8(ELF::EV_CURRENT);        // e_ident[EI_VERSION]
   // e_ident[EI_OSABI]
-  switch (OSType) {
+  switch (TargetObjectWriter->getOSType()) {
     case Triple::FreeBSD:  Write8(ELF::ELFOSABI_FREEBSD); break;
     case Triple::Linux:    Write8(ELF::ELFOSABI_LINUX); break;
     default:               Write8(ELF::ELFOSABI_NONE); break;
@@ -464,25 +454,25 @@ void ELFObjectWriter::WriteHeader(uint64_t SectionDataSize,
 
   Write16(ELF::ET_REL);             // e_type
 
-  Write16(EMachine); // e_machine = target
+  Write16(TargetObjectWriter->getEMachine()); // e_machine = target
 
   Write32(ELF::EV_CURRENT);         // e_version
   WriteWord(0);                    // e_entry, no entry point in .o file
   WriteWord(0);                    // e_phoff, no program header for .o
-  WriteWord(SectionDataSize + (Is64Bit ? sizeof(ELF::Elf64_Ehdr) :
+  WriteWord(SectionDataSize + (is64Bit() ? sizeof(ELF::Elf64_Ehdr) :
             sizeof(ELF::Elf32_Ehdr)));  // e_shoff = sec hdr table off in bytes
 
   // FIXME: Make this configurable.
   Write32(0);   // e_flags = whatever the target wants
 
   // e_ehsize = ELF header size
-  Write16(Is64Bit ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr));
+  Write16(is64Bit() ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr));
 
   Write16(0);                  // e_phentsize = prog header entry size
   Write16(0);                  // e_phnum = # prog header entries = 0
 
   // e_shentsize = Section header entry size
-  Write16(Is64Bit ? sizeof(ELF::Elf64_Shdr) : sizeof(ELF::Elf32_Shdr));
+  Write16(is64Bit() ? sizeof(ELF::Elf64_Shdr) : sizeof(ELF::Elf32_Shdr));
 
   // e_shnum     = # of section header ents
   if (NumberOfSections >= ELF::SHN_LORESERVE)
@@ -514,7 +504,7 @@ void ELFObjectWriter::WriteSymbolEntry(MCDataFragment *SymtabF,
   uint16_t Index = (shndx >= ELF::SHN_LORESERVE && !Reserved) ?
     uint16_t(ELF::SHN_XINDEX) : shndx;
 
-  if (Is64Bit) {
+  if (is64Bit()) {
     String32(*SymtabF, name);  // st_name
     String8(*SymtabF, info);   // st_info
     String8(*SymtabF, other);  // st_other
@@ -791,7 +781,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     }
     Addend = Value;
     // Compensate for the addend on i386.
-    if (Is64Bit)
+    if (is64Bit())
       Value = 0;
   }
 
@@ -802,7 +792,8 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
     Fixup.getOffset();
 
-  if (!HasRelocationAddend) Addend = 0;
+  if (!hasRelocationAddend())
+    Addend = 0;
   ELFRelocationEntry ERE(RelocOffset, Index, Type, RelocSymbol, Addend);
   Relocations[Fragment->getParent()].push_back(ERE);
 }
@@ -1008,22 +999,22 @@ void ELFObjectWriter::WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
       static_cast<const MCSectionELF&>(SD.getSection());
 
     const StringRef SectionName = Section.getSectionName();
-    std::string RelaSectionName = HasRelocationAddend ? ".rela" : ".rel";
+    std::string RelaSectionName = hasRelocationAddend() ? ".rela" : ".rel";
     RelaSectionName += SectionName;
 
     unsigned EntrySize;
-    if (HasRelocationAddend)
-      EntrySize = Is64Bit ? sizeof(ELF::Elf64_Rela) : sizeof(ELF::Elf32_Rela);
+    if (hasRelocationAddend())
+      EntrySize = is64Bit() ? sizeof(ELF::Elf64_Rela) : sizeof(ELF::Elf32_Rela);
     else
-      EntrySize = Is64Bit ? sizeof(ELF::Elf64_Rel) : sizeof(ELF::Elf32_Rel);
+      EntrySize = is64Bit() ? sizeof(ELF::Elf64_Rel) : sizeof(ELF::Elf32_Rel);
 
-    RelaSection = Ctx.getELFSection(RelaSectionName, HasRelocationAddend ?
+    RelaSection = Ctx.getELFSection(RelaSectionName, hasRelocationAddend() ?
                                     ELF::SHT_RELA : ELF::SHT_REL, 0,
                                     SectionKind::getReadOnly(),
                                     EntrySize, "");
 
     MCSectionData &RelaSD = Asm.getOrCreateSectionData(*RelaSection);
-    RelaSD.setAlignment(Is64Bit ? 8 : 4);
+    RelaSD.setAlignment(is64Bit() ? 8 : 4);
 
     MCDataFragment *F = new MCDataFragment(&RelaSD);
 
@@ -1065,14 +1056,14 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
       entry.Index = getSymbolIndexInSymbolTable(Asm, entry.Symbol);
     else
       entry.Index += LocalSymbolData.size();
-    if (Is64Bit) {
+    if (is64Bit()) {
       String64(*F, entry.r_offset);
 
       struct ELF::Elf64_Rela ERE64;
       ERE64.setSymbolAndType(entry.Index, entry.Type);
       String64(*F, ERE64.r_info);
 
-      if (HasRelocationAddend)
+      if (hasRelocationAddend())
         String64(*F, entry.r_addend);
     } else {
       String32(*F, entry.r_offset);
@@ -1081,7 +1072,7 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
       ERE32.setSymbolAndType(entry.Index, entry.Type);
       String32(*F, ERE32.r_info);
 
-      if (HasRelocationAddend)
+      if (hasRelocationAddend())
         String32(*F, entry.r_addend);
     }
   }
@@ -1093,7 +1084,7 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
   MCContext &Ctx = Asm.getContext();
   MCDataFragment *F;
 
-  unsigned EntrySize = Is64Bit ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
+  unsigned EntrySize = is64Bit() ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
 
   // We construct .shstrtab, .symtab and .strtab in this order to match gnu as.
   const MCSectionELF *ShstrtabSection =
@@ -1108,7 +1099,7 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
                       SectionKind::getReadOnly(),
                       EntrySize, "");
   MCSectionData &SymtabSD = Asm.getOrCreateSectionData(*SymtabSection);
-  SymtabSD.setAlignment(Is64Bit ? 8 : 4);
+  SymtabSD.setAlignment(is64Bit() ? 8 : 4);
   SymbolTableIndex = Asm.size();
 
   MCSectionData *SymtabShndxSD = NULL;
@@ -1393,8 +1384,9 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   // Add 1 for the null section.
   unsigned NumSections = Asm.size() + 1;
-  uint64_t NaturalAlignment = Is64Bit ? 8 : 4;
-  uint64_t HeaderSize = Is64Bit ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr);
+  uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
+  uint64_t HeaderSize = is64Bit() ? sizeof(ELF::Elf64_Ehdr) :
+                                    sizeof(ELF::Elf32_Ehdr);
   uint64_t FileOff = HeaderSize;
 
   std::vector<const MCSectionELF*> Sections;
@@ -1478,23 +1470,15 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
 MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
                                             raw_ostream &OS,
-                                            bool Is64Bit,
-                                            Triple::OSType OSType,
-                                            uint16_t EMachine,
-                                            bool IsLittleEndian,
-                                            bool HasRelocationAddend) {
-  switch (EMachine) {
+                                            bool IsLittleEndian) {
+  switch (MOTW->getEMachine()) {
     case ELF::EM_386:
     case ELF::EM_X86_64:
-      return new X86ELFObjectWriter(MOTW, OS, Is64Bit, IsLittleEndian, EMachine,
-                                    HasRelocationAddend, OSType); break;
+      return new X86ELFObjectWriter(MOTW, OS, IsLittleEndian); break;
     case ELF::EM_ARM:
-      return new ARMELFObjectWriter(MOTW, OS, Is64Bit, IsLittleEndian, EMachine,
-                                    HasRelocationAddend, OSType); break;
+      return new ARMELFObjectWriter(MOTW, OS, IsLittleEndian); break;
     case ELF::EM_MBLAZE:
-      return new MBlazeELFObjectWriter(MOTW, OS, Is64Bit, IsLittleEndian,
-                                       EMachine,
-                                       HasRelocationAddend, OSType); break;
+      return new MBlazeELFObjectWriter(MOTW, OS, IsLittleEndian); break;
     default: llvm_unreachable("Unsupported architecture"); break;
   }
 }
@@ -1504,12 +1488,9 @@ MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
 //===- ARMELFObjectWriter -------------------------------------------===//
 
 ARMELFObjectWriter::ARMELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                                       raw_ostream &_OS, bool _Is64Bit,
-                                       bool _IsLittleEndian,
-                                       uint16_t _EMachine, bool _HasRelocationAddend,
-                                       Triple::OSType _OSType)
-  : ELFObjectWriter(MOTW, _OS, _Is64Bit, _IsLittleEndian, _EMachine,
-                    _HasRelocationAddend, _OSType)
+                                       raw_ostream &_OS,
+                                       bool IsLittleEndian)
+  : ELFObjectWriter(MOTW, _OS, IsLittleEndian)
 {}
 
 ARMELFObjectWriter::~ARMELFObjectWriter()
@@ -1592,13 +1573,9 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
 //===- MBlazeELFObjectWriter -------------------------------------------===//
 
 MBlazeELFObjectWriter::MBlazeELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                                             raw_ostream &_OS, bool _Is64Bit,
-                                             bool _IsLittleEndian,
-                                             uint16_t _EMachine,
-                                             bool _HasRelocationAddend,
-                                             Triple::OSType _OSType)
-  : ELFObjectWriter(MOTW, _OS, _Is64Bit, _IsLittleEndian, _EMachine,
-                    _HasRelocationAddend, _OSType) {
+                                             raw_ostream &_OS,
+                                             bool IsLittleEndian)
+  : ELFObjectWriter(MOTW, _OS, IsLittleEndian) {
 }
 
 MBlazeELFObjectWriter::~MBlazeELFObjectWriter() {
@@ -1642,12 +1619,9 @@ unsigned MBlazeELFObjectWriter::GetRelocType(const MCValue &Target,
 
 
 X86ELFObjectWriter::X86ELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                                       raw_ostream &_OS, bool _Is64Bit,
-                                       bool _IsLittleEndian,
-                                       uint16_t _EMachine, bool _HasRelocationAddend,
-                                       Triple::OSType _OSType)
-  : ELFObjectWriter(MOTW, _OS, _Is64Bit, _IsLittleEndian, _EMachine,
-                    _HasRelocationAddend, _OSType)
+                                       raw_ostream &_OS,
+                                       bool IsLittleEndian)
+  : ELFObjectWriter(MOTW, _OS, IsLittleEndian)
 {}
 
 X86ELFObjectWriter::~X86ELFObjectWriter()
@@ -1663,7 +1637,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
   MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
     MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
   unsigned Type;
-  if (Is64Bit) {
+  if (is64Bit()) {
     if (IsPCRel) {
       switch (Modifier) {
       default:

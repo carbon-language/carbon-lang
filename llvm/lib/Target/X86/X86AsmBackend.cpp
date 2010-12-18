@@ -57,7 +57,9 @@ public:
 
 class X86ELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  X86ELFObjectWriter() : MCELFObjectTargetWriter() {}
+  X86ELFObjectWriter(bool is64Bit, Triple::OSType OSType, uint16_t EMachine,
+                     bool HasRelocationAddend)
+    : MCELFObjectTargetWriter(is64Bit, OSType, EMachine, HasRelocationAddend) {}
 };
 
 class X86AsmBackend : public TargetAsmBackend {
@@ -318,11 +320,9 @@ public:
     : ELFX86AsmBackend(T, OSType) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(new X86ELFObjectWriter(), OS,
-                                 /*Is64Bit=*/false,
-                                 OSType, ELF::EM_386,
-                                 /*IsLittleEndian=*/true,
-                                 /*HasRelocationAddend=*/false);
+    return createELFObjectWriter(new X86ELFObjectWriter(false, OSType,
+                                                        ELF::EM_386, false),
+                                 OS, /*IsLittleEndian*/ true);
   }
 };
 
@@ -332,10 +332,9 @@ public:
     : ELFX86AsmBackend(T, OSType) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(new X86ELFObjectWriter(), OS, /*Is64Bit=*/true,
-                                 OSType, ELF::EM_X86_64,
-                                 /*IsLittleEndian=*/true,
-                                 /*HasRelocationAddend=*/true);
+    return createELFObjectWriter(new X86ELFObjectWriter(true, OSType,
+                                                        ELF::EM_X86_64, true),
+                                 OS, /*IsLittleEndian*/ true);
   }
 };
 

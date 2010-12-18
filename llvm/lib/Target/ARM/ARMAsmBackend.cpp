@@ -39,7 +39,9 @@ public:
 
 class ARMELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  ARMELFObjectWriter() : MCELFObjectTargetWriter() {}
+  ARMELFObjectWriter(Triple::OSType OSType)
+    : MCELFObjectTargetWriter(/*Is64Bit*/ false, OSType, ELF::EM_ARM,
+                              /*HasRelocationAddend*/ false) {}
 };
 
 class ARMAsmBackend : public TargetAsmBackend {
@@ -363,11 +365,8 @@ public:
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(new ARMELFObjectWriter(), OS,
-                                 /*Is64Bit=*/false,
-                                 OSType, ELF::EM_ARM,
-                                 /*IsLittleEndian=*/true,
-                                 /*HasRelocationAddend=*/false);
+    return createELFObjectWriter(new ARMELFObjectWriter(OSType), OS,
+                              /*IsLittleEndian*/ true);
   }
 };
 
