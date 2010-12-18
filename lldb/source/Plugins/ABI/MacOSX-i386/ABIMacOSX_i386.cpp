@@ -97,9 +97,9 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
         
         if (thread.GetProcess().WriteMemory(sp, &this_argU32, sizeof(this_argU32), error) != sizeof(this_argU32))
             return false;
-        if (thread.GetProcess().WriteMemory(sp, &cmd_argU32, sizeof(cmd_argU32), error) != sizeof(cmd_argU32))
+        if (thread.GetProcess().WriteMemory(sp + 4, &cmd_argU32, sizeof(cmd_argU32), error) != sizeof(cmd_argU32))
             return false;
-        if (thread.GetProcess().WriteMemory(sp + 4, &argU32, sizeof(argU32), error) != sizeof(argU32))
+        if (thread.GetProcess().WriteMemory(sp + 8, &argU32, sizeof(argU32), error) != sizeof(argU32))
             return false;
     }
     else if (this_arg)
