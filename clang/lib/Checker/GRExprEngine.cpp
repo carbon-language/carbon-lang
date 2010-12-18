@@ -2804,6 +2804,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       assert(!U->isLValue());
       // FALL-THROUGH.
     case UO_Deref:
+    case UO_AddrOf:
     case UO_Extension: {
 
       // Unary "+" is a no-op, similar to a parentheses.  We still have places
@@ -2820,20 +2821,6 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         MakeNode(Dst, U, *I, state->BindExpr(U, state->getSVal(Ex)));
       }
 
-      return;
-    }
-
-    case UO_AddrOf: {
-      assert(!U->isLValue());
-      const Expr* Ex = U->getSubExpr()->IgnoreParens();
-      ExplodedNodeSet Tmp;
-      Visit(Ex, Pred, Tmp);
-      for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-        const GRState* state = GetState(*I);
-        SVal V = state->getSVal(Ex);
-        state = state->BindExpr(U, V);
-        MakeNode(Dst, U, *I, state);
-      }
       return;
     }
 
