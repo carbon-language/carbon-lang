@@ -310,6 +310,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   for (unsigned i = 0, e = SplitLoops.size(); i != e; ++i) {
     if (unsigned PhysReg = findInterferenceFreeReg(SplitLoops[i],
                                                    VirtReg, Order)) {
+      (void)PhysReg;
       Loop = SplitLoops[i];
       DEBUG(dbgs() << "  " << TRI->getName(PhysReg)
                    << " has no interferences in " << *Loop << '\n');
