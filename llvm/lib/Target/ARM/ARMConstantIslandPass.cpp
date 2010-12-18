@@ -327,7 +327,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
 
 
   /// Remove dead constant pool entries.
-  RemoveUnusedCPEntries();
+  MadeChange |= RemoveUnusedCPEntries();
 
   // Iteratively place constant pool entries and fix up branches until there
   // is no change.
