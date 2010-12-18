@@ -281,6 +281,16 @@ void Value::takeName(Value *V) {
 }
 
 
+/// addUse - This method should only be used by the Use class.
+///
+void Value::addUse(Use &U) {
+  U.addToList(&UseList);
+  
+  // Notify all ValueHandles (if present) that this value added a Use.
+  if (HasValueHandle)
+    ValueHandleBase::ValueAddedUse(U);
+}
+
 // uncheckedReplaceAllUsesWith - This is exactly the same as replaceAllUsesWith,
 // except that it doesn't have all of the asserts.  The asserts fail because we
 // are half-way done resolving types, which causes some types to exist as two
@@ -569,6 +579,34 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
   }
 }
 
+void ValueHandleBase::ValueAddedUse(Use &U) {
+  assert(U->HasValueHandle && "Should only be called if ValueHandles present");
+
+  // Get the linked list base, which is guaranteed to exist since the
+  // HasValueHandle flag is set.
+  LLVMContextImpl *pImpl = U->getContext().pImpl;
+  ValueHandleBase *Entry = pImpl->ValueHandles[U.get()];
+
+  assert(Entry && "Value bit set but no entries exist");
+
+  // We use a local ValueHandleBase as an iterator so that
+  // ValueHandles can add and remove themselves from the list without
+  // breaking our iteration.  This is not really an AssertingVH; we
+  // just have to give ValueHandleBase some kind.
+  for (ValueHandleBase Iterator(Assert, *Entry); Entry; Entry = Iterator.Next) {
+    Iterator.RemoveFromUseList();
+    Iterator.AddToExistingUseListAfter(Entry);
+    assert(Entry->Next == &Iterator && "Loop invariant broken.");
+
+    switch (Entry->getKind()) {
+    default:
+      break;
+    case Callback:
+      static_cast<CallbackVH*>(Entry)->addedUse(U);
+      break;
+    }
+  }
+}
 
 void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
   assert(Old->HasValueHandle &&"Should only be called if ValueHandles present");

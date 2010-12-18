@@ -105,6 +105,7 @@ private:
   // Callbacks made from Value.
   static void ValueIsDeleted(Value *V);
   static void ValueIsRAUWd(Value *Old, Value *New);
+  static void ValueAddedUse(Use &U);
 
   // Internal implementation details.
   ValueHandleBase **getPrevPtr() const { return PrevPair.getPointer(); }
@@ -389,6 +390,11 @@ public:
   /// implemented as a CallbackVH, it would use this method to call
   /// setValPtr(new_value).  AssertingVH would do nothing in this method.
   virtual void allUsesReplacedWith(Value *) {}
+  
+  /// Called when a new Use is added to the use-list of this->getValPtr(),
+  /// after the Use has been appended to the list.  Other VH kinds would ignore
+  /// this callback, but clients can use it to trigger re-analysis of Values.
+  virtual void addedUse(Use &U) {}
 };
 
 // Specialize simplify_type to allow CallbackVH to participate in
