@@ -10,6 +10,8 @@
 #ifndef LLDB_SBCommandReturnObject_h_
 #define LLDB_SBCommandReturnObject_h_
 
+#include <stdio.h>
+
 #include "lldb/API/SBDefines.h"
 
 namespace lldb {
