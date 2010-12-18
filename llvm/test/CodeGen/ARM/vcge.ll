@@ -182,3 +182,22 @@ define <8 x i8> @vclei8Z(<8 x i8>* %A) nounwind {
         %tmp4 = sext <8 x i1> %tmp3 to <8 x i8>
 	ret <8 x i8> %tmp4
 }
+
+; Radar 8782191
+; Floating-point comparisons against zero produce results with integer
+; elements, not floating-point elements.
+define void @test_vclez_fp() nounwind optsize {
+;CHECK: test_vclez_fp
+;CHECK: vcle.f32
+entry:
+  %0 = fcmp ole <4 x float> undef, zeroinitializer
+  %1 = sext <4 x i1> %0 to <4 x i16>
+  %2 = add <4 x i16> %1, zeroinitializer
+  %3 = shufflevector <4 x i16> %2, <4 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  %4 = add <8 x i16> %3, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  %5 = trunc <8 x i16> %4 to <8 x i8>
+  tail call void @llvm.arm.neon.vst1.v8i8(i8* undef, <8 x i8> %5, i32 1)
+  unreachable
+}
+
+declare void @llvm.arm.neon.vst1.v8i8(i8*, <8 x i8>, i32) nounwind
