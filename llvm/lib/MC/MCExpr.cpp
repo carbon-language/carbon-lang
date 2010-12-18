@@ -300,7 +300,7 @@ static void AttemptToFoldSymbolOffsetDifference(const MCAsmLayout *Layout,
   const MCAssembler &Asm = Layout->getAssembler();
 
   if (A && B &&
-      Asm.getWriter().IsSymbolRefDifferenceFullyResolved(Asm, A, B)) {
+      Asm.getWriter().IsSymbolRefDifferenceFullyResolved(Asm, A, B, false)) {
     // Eagerly evaluate.
     Addend += (Layout->getSymbolOffset(&Asm.getSymbolData(A->getSymbol())) -
                Layout->getSymbolOffset(&Asm.getSymbolData(B->getSymbol())));
@@ -385,10 +385,9 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
          "Must have an assembler object if layout is given!");
 
   if (Asm && A && B) {
-    const MCSymbol &SA = A->getSymbol();
-    const MCSymbol &SB = B->getSymbol();
-    if (SA.isDefined() && SB.isDefined() &&
-        Asm->getWriter().isAbsolute(InSet, SA, SB)) {
+    if (A->getSymbol().isDefined() && B->getSymbol().isDefined() &&
+        Asm->getWriter().IsSymbolRefDifferenceFullyResolved(*Asm, A, B,
+                                                            InSet)) {
       MCSymbolData &AD = Asm->getSymbolData(A->getSymbol());
       MCSymbolData &BD = Asm->getSymbolData(B->getSymbol());
 

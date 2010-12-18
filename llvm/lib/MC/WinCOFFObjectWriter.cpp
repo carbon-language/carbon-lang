@@ -179,20 +179,6 @@ public:
                         MCValue Target,
                         uint64_t &FixedValue);
 
-  virtual bool
-  IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
-                                     const MCSymbolRefExpr *A,
-                                     const MCSymbolRefExpr *B) const {
-    // FIXME: Implement this!
-    return false;
-  }
-
-  virtual bool isAbsolute(bool IsSet, const MCSymbol &A,
-                          const MCSymbol &B) const  {
-    // On COFF A - B is absolute if A and B are in the same section.
-    return &A.getSection() == &B.getSection();
-  }
-
   virtual bool IsFixupFullyResolved(const MCAssembler &Asm,
                                     const MCValue Target,
                                     bool IsPCRel,

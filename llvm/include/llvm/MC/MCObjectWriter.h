@@ -87,7 +87,8 @@ public:
   virtual bool
   IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
                                      const MCSymbolRefExpr *A,
-                                     const MCSymbolRefExpr *B) const = 0;
+                                     const MCSymbolRefExpr *B,
+                                     bool InSet) const;
 
   /// Check if a fixup is fully resolved.
   ///
@@ -98,9 +99,6 @@ public:
                                     const MCValue Target,
                                     bool IsPCRel,
                                     const MCFragment *DF) const = 0;
-
-  virtual bool isAbsolute(bool IsSet, const MCSymbol &A,
-                          const MCSymbol &B) const = 0;
 
   /// Write the object file.
   ///

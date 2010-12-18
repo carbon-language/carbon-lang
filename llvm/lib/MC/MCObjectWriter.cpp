@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCSymbol.h"
 
 using namespace llvm;
 
@@ -38,4 +40,23 @@ void MCObjectWriter::EncodeULEB128(uint64_t Value, raw_ostream &OS) {
       Byte |= 0x80; // Mark this byte that that more bytes will follow.
     OS << char(Byte);
   } while (Value != 0);
+}
+
+bool
+MCObjectWriter::IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
+                                                   const MCSymbolRefExpr *A,
+                                                   const MCSymbolRefExpr *B,
+                                                   bool InSet) const {
+  // Modified symbol references cannot be resolved.
+  if (A->getKind() != MCSymbolRefExpr::VK_None ||
+      B->getKind() != MCSymbolRefExpr::VK_None)
+    return false;
+
+  const MCSymbol &SA = A->getSymbol();
+  const MCSymbol &SB = B->getSymbol();
+  if (SA.isUndefined() || SB.isUndefined())
+    return false;
+
+  // On ELF and COFF A - B is absolute if A and B are in the same section.
+  return &SA.getSection() == &SB.getSection();
 }

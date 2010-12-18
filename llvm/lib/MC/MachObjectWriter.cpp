@@ -1123,15 +1123,13 @@ public:
                        UndefinedSymbolData);
   }
 
-  bool isAbsolute(bool IsSet, const MCSymbol &A,
-                                     const MCSymbol &B) const  {
-    // On MachO A - B is absolute only if in a set.
-    return IsSet;
-  }
-
   bool IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
                                           const MCSymbolRefExpr *A,
-                                          const MCSymbolRefExpr *B) const {
+                                          const MCSymbolRefExpr *B,
+                                          bool InSet) const {
+    if (InSet)
+      return true;
+
     if (!TargetObjectWriter->useAggressiveSymbolFolding())
       return false;
 
