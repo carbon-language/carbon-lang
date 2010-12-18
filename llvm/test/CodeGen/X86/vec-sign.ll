@@ -1,9 +1,11 @@
-; RUN: llc < %s -mcpu=nehalem | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=nehalem | FileCheck %s
 
 define <4 x i32> @psignd(<4 x i32> %a, <4 x i32> %b) nounwind ssp {
 entry:
+; CHECK: psignd:
 ; CHECK: psignd
 ; CHECK-NOT: sub
+; CHECK: ret
   %b.lobit = ashr <4 x i32> %b, <i32 31, i32 31, i32 31, i32 31>
   %sub = sub nsw <4 x i32> zeroinitializer, %a
   %0 = xor <4 x i32> %b.lobit, <i32 -1, i32 -1, i32 -1, i32 -1>
@@ -15,7 +17,9 @@ entry:
 
 define <4 x i32> @pblendvb(<4 x i32> %b, <4 x i32> %a, <4 x i32> %c) nounwind ssp {
 entry:
+; CHECK: pblendvb:
 ; CHECK: pblendvb
+; CHECK: ret
   %b.lobit = ashr <4 x i32> %b, <i32 31, i32 31, i32 31, i32 31>
   %sub = sub nsw <4 x i32> zeroinitializer, %a
   %0 = xor <4 x i32> %b.lobit, <i32 -1, i32 -1, i32 -1, i32 -1>
