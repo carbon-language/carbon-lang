@@ -60,6 +60,7 @@ private:
   AsmToken LexSlash();
   AsmToken LexLineComment();
   AsmToken LexDigit();
+  AsmToken LexSingleQuote();
   AsmToken LexQuote();
   AsmToken LexFloatLiteral();
 };

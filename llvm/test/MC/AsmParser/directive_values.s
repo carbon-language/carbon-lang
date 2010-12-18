@@ -40,3 +40,19 @@ TEST5:
         .value 8
 # CHECK: TEST5:
 # CHECK: .short 8
+
+TEST6:
+        .byte 'c'
+        .byte '\''
+        .byte '\\'
+        .byte '\#'
+        .byte '\t'
+        .byte '\n'
+
+# CHECK: TEST6
+# CHECK:        .byte   99
+# CHECK:        .byte   39
+# CHECK:        .byte   92
+# CHECK:        .byte   35
+# CHECK:        .byte   9
+# CHECK:        .byte   10

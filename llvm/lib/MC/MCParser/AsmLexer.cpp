@@ -265,6 +265,42 @@ AsmToken AsmLexer::LexDigit() {
   return AsmToken(AsmToken::Integer, Result, Value);
 }
 
+/// LexSingleQuote: Integer: 'b'
+AsmToken AsmLexer::LexSingleQuote() {
+  int CurChar = getNextChar();
+
+  if (CurChar == '\\')
+    CurChar = getNextChar();
+
+  if (CurChar == EOF)
+    return ReturnError(TokStart, "unterminated single quote");
+
+  CurChar = getNextChar();
+
+  if (CurChar != '\'')
+    return ReturnError(TokStart, "single quote way too long");
+
+  // The idea here being that 'c' is basically just an integral
+  // constant.
+  StringRef Res = StringRef(TokStart,CurPtr - TokStart);
+  long long Value;
+
+  if (Res.startswith("\'\\")) {
+    char theChar = Res[2];
+    switch (theChar) {
+      default: Value = theChar; break;
+      case '\'': Value = '\''; break;
+      case 't': Value = '\t'; break;
+      case 'n': Value = '\n'; break;
+      case 'b': Value = '\b'; break;
+    }
+  } else
+    Value = TokStart[1];
+
+  return AsmToken(AsmToken::Integer, Res, Value); 
+}
+
+
 /// LexQuote: String: "..."
 AsmToken AsmLexer::LexQuote() {
   int CurChar = getNextChar();
@@ -361,6 +397,7 @@ AsmToken AsmLexer::LexToken() {
   case '%': return AsmToken(AsmToken::Percent, StringRef(TokStart, 1));
   case '/': return LexSlash();
   case '#': return AsmToken(AsmToken::Hash, StringRef(TokStart, 1));
+  case '\'': return LexSingleQuote();
   case '"': return LexQuote();
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
