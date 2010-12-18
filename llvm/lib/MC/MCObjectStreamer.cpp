@@ -85,7 +85,7 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
 
   // Avoid fixups when possible.
   int64_t AbsValue;
-  if (AddValueSymbols(Value)->EvaluateAsAbsolute(AbsValue)) {
+  if (AddValueSymbols(Value)->EvaluateAsAbsolute(AbsValue, getAssembler())) {
     EmitIntValue(AbsValue, Size, AddrSpace);
     return;
   }
@@ -116,7 +116,7 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
 void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value,
                                         unsigned AddrSpace) {
   int64_t IntValue;
-  if (Value->EvaluateAsAbsolute(IntValue)) {
+  if (Value->EvaluateAsAbsolute(IntValue, getAssembler())) {
     EmitULEB128IntValue(IntValue, AddrSpace);
     return;
   }
@@ -126,7 +126,7 @@ void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value,
 void MCObjectStreamer::EmitSLEB128Value(const MCExpr *Value,
                                         unsigned AddrSpace) {
   int64_t IntValue;
-  if (Value->EvaluateAsAbsolute(IntValue)) {
+  if (Value->EvaluateAsAbsolute(IntValue, getAssembler())) {
     EmitSLEB128IntValue(IntValue, AddrSpace);
     return;
   }
@@ -206,7 +206,7 @@ void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
     MCBinaryExpr::Create(MCBinaryExpr::Sub, LabelRef, LastLabelRef,
                          getContext());
   int64_t Res;
-  if (AddrDelta->EvaluateAsAbsolute(Res)) {
+  if (AddrDelta->EvaluateAsAbsolute(Res, getAssembler())) {
     MCDwarfLineAddr::Emit(this, LineDelta, Res);
     return;
   }

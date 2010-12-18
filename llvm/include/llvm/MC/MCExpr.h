@@ -44,12 +44,14 @@ private:
   MCExpr(const MCExpr&); // DO NOT IMPLEMENT
   void operator=(const MCExpr&); // DO NOT IMPLEMENT
 
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout,
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
+                          const MCAsmLayout *Layout,
                           const SectionAddrMap *Addrs) const;
 protected:
   explicit MCExpr(ExprKind _Kind) : Kind(_Kind) {}
 
-  bool EvaluateAsRelocatableImpl(MCValue &Res, const MCAsmLayout *Layout,
+  bool EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
+                                 const MCAsmLayout *Layout,
                                  const SectionAddrMap *Addrs,
                                  bool InSet) const;
 public:
@@ -76,16 +78,11 @@ public:
   /// values. If not given, then only non-symbolic expressions will be
   /// evaluated.
   /// @result - True on success.
-  bool EvaluateAsAbsolute(int64_t &Res) const {
-    return EvaluateAsAbsolute(Res, 0, 0);
-  }
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout) const{
-    return EvaluateAsAbsolute(Res, &Layout, 0);
-  }
+  bool EvaluateAsAbsolute(int64_t &Res) const;
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const;
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout) const;
   bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout,
-                          const SectionAddrMap &Addrs) const {
-    return EvaluateAsAbsolute(Res, &Layout, &Addrs);
-  }
+                          const SectionAddrMap &Addrs) const;
 
   /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
   /// value, i.e. an expression of the fixed form (a - b + constant).
@@ -93,10 +90,7 @@ public:
   /// @param Res - The relocatable value, if evaluation succeeds.
   /// @param Layout - The assembler layout object to use for evaluating values.
   /// @result - True on success.
-  bool EvaluateAsRelocatable(MCValue &Res,
-                             const MCAsmLayout *Layout = 0) const {
-    return EvaluateAsRelocatableImpl(Res, Layout, 0, false);
-  }
+  bool EvaluateAsRelocatable(MCValue &Res, const MCAsmLayout *Layout = 0) const;
 
   /// @}
 
