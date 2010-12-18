@@ -267,7 +267,10 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
     return true;
   }
 
-  if (!EvaluateAsRelocatableImpl(Value, Asm, Layout, Addrs, Addrs) ||
+  // FIXME: The use if InSet = Addrs is a hack. Setting InSet causes us
+  // absolutize differences across sections and that is what the MachO writer
+  // uses Addrs for.
+  if (!EvaluateAsRelocatableImpl(Value, Asm, Layout, Addrs, /*InSet*/ Addrs) ||
       !Value.isAbsolute()) {
     // EvaluateAsAbsolute is defined to return the "current value" of
     // the expression if we are given a Layout object, even in cases
