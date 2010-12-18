@@ -315,8 +315,7 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
       // If we have "x ult 3" comparison, for example, then we can add 0,1,2 to
       // the set.
       ConstantRange Span =
-        ConstantRange::makeICmpRegion(ICI->getPredicate(),
-                                      ConstantRange(C->getValue()));
+        ConstantRange::makeICmpRegion(ICI->getPredicate(), C->getValue());
       
       // If this is an and/!= check then we want to optimize "x ugt 2" into
       // x != 0 && x != 1.
