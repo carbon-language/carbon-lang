@@ -43,7 +43,8 @@ namespace {
       return 0;
     }
     else if (SaveTemps == SaveTempsEnum::Obj && !OutputFilename.empty()) {
-      tempDir = sys::path::parent_path(OutputFilename);
+      tempDir = OutputFilename;
+      tempDir = tempDir.getDirname();
     }
     else {
       // SaveTemps == Cwd --> use current dir (leave tempDir empty).

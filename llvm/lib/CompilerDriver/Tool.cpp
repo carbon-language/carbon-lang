@@ -61,7 +61,7 @@ sys::Path Tool::OutFilename(const sys::Path& In,
       Out.appendSuffix(OutputSuffix);
     }
     else {
-      Out.set(sys::path::stem(In.str()));
+      Out.set(In.getBasename());
       Out.appendSuffix(OutputSuffix);
     }
   }
@@ -69,7 +69,7 @@ sys::Path Tool::OutFilename(const sys::Path& In,
     if (IsJoin())
       Out = MakeTempFile(TempDir, "tmp", OutputSuffix);
     else
-      Out = MakeTempFile(TempDir, sys::path::stem(In.str()), OutputSuffix);
+      Out = MakeTempFile(TempDir, In.getBasename(), OutputSuffix);
   }
   return Out;
 }

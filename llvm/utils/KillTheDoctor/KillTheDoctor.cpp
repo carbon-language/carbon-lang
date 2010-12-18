@@ -523,7 +523,7 @@ int main(int argc, char **argv) {
           errs().indent(ToolName.size()) << ": DLL Name : " << DLLName << '\n';
         }
 
-        if (NoUser32 && sys::path::stem(DLLName) == "user32") {
+        if (NoUser32 && sys::Path(DLLName).getBasename() == "user32") {
           // Program is loading user32.dll, in the applications we are testing,
           // this only happens if an assert has fired. By now the message has
           // already been printed, so simply close the program.
