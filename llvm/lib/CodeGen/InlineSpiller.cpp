@@ -253,7 +253,7 @@ bool InlineSpiller::coalesceStackAccess(MachineInstr *MI) {
 
 /// foldMemoryOperand - Try folding stack slot references in Ops into MI.
 /// @param MI     Instruction using or defining the current register.
-/// @param Ops    Operandices from readsWritesVirtualRegister().
+/// @param Ops    Operand indices from readsWritesVirtualRegister().
 /// @param LoadMI Load instruction to use instead of stack slot when non-null.
 /// @return       True on success, and MI will be erased.
 bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
