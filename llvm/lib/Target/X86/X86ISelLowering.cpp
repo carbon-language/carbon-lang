@@ -55,9 +55,6 @@ using namespace dwarf;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 
-static cl::opt<bool>
-DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
-
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
@@ -613,7 +610,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // FIXME: In order to prevent SSE instructions being expanded to MMX ones
   // with -msoft-float, disable use of MMX as well.
-  if (!UseSoftFloat && !DisableMMX && Subtarget->hasMMX()) {
+  if (!UseSoftFloat && Subtarget->hasMMX()) {
     addRegisterClass(MVT::x86mmx, X86::VR64RegisterClass);
     // No operations on x86mmx supported, everything uses intrinsics.
   }
@@ -8604,9 +8601,8 @@ SDValue X86TargetLowering::LowerBITCAST(SDValue Op,
                                             SelectionDAG &DAG) const {
   EVT SrcVT = Op.getOperand(0).getValueType();
   EVT DstVT = Op.getValueType();
-  assert((Subtarget->is64Bit() && !Subtarget->hasSSE2() &&
-          Subtarget->hasMMX() && !DisableMMX) &&
-         "Unexpected custom BITCAST");
+  assert(Subtarget->is64Bit() && !Subtarget->hasSSE2() &&
+         Subtarget->hasMMX() && "Unexpected custom BITCAST");
   assert((DstVT == MVT::i64 ||
           (DstVT.isVector() && DstVT.getSizeInBits()==64)) &&
          "Unexpected custom BITCAST");
@@ -11793,7 +11789,7 @@ TargetLowering::ConstraintWeight
         weight = CW_SpecificReg;
       break;
   case 'y':
-      if (type->isX86_MMXTy() && !DisableMMX && Subtarget->hasMMX())
+      if (type->isX86_MMXTy() && Subtarget->hasMMX())
         weight = CW_SpecificReg;
       break;
   case 'x':
