@@ -89,6 +89,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   TD = getTargetData();
 
   // Set up the TargetLowering object.
+  static MVT IntVTs[] = { MVT::i8, MVT::i16, MVT::i32, MVT::i64 };
 
   // X86 is weird, it always uses i8 for shift amounts and setcc results.
   setShiftAmountType(MVT::i8);
@@ -826,9 +827,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
   }
 
-  if (Subtarget->hasSSE42()) {
+  if (Subtarget->hasSSE42())
     setOperationAction(ISD::VSETCC,             MVT::v2i64, Custom);
-  }
 
   if (!UseSoftFloat && Subtarget->hasAVX()) {
     addRegisterClass(MVT::v8f32, X86::VR256RegisterClass);
@@ -942,28 +942,27 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
-  // Add/Sub/Mul with overflow operations are custom lowered.
-  setOperationAction(ISD::SADDO, MVT::i32, Custom);
-  setOperationAction(ISD::UADDO, MVT::i32, Custom);
-  setOperationAction(ISD::SSUBO, MVT::i32, Custom);
-  setOperationAction(ISD::USUBO, MVT::i32, Custom);
-  setOperationAction(ISD::SMULO, MVT::i32, Custom);
-  setOperationAction(ISD::UMULO, MVT::i32, Custom);
-
+    
   // Only custom-lower 64-bit SADDO and friends on 64-bit because we don't
   // handle type legalization for these operations here.
   //
   // FIXME: We really should do custom legalization for addition and
   // subtraction on x86-32 once PR3203 is fixed.  We really can't do much better
   // than generic legalization for 64-bit multiplication-with-overflow, though.
-  if (Subtarget->is64Bit()) {
-    setOperationAction(ISD::SADDO, MVT::i64, Custom);
-    setOperationAction(ISD::UADDO, MVT::i64, Custom);
-    setOperationAction(ISD::SSUBO, MVT::i64, Custom);
-    setOperationAction(ISD::USUBO, MVT::i64, Custom);
-    setOperationAction(ISD::SMULO, MVT::i64, Custom);
-    setOperationAction(ISD::UMULO, MVT::i64, Custom);
+  for (unsigned i = 0, e = 3+Subtarget->is64Bit(); i != e; ++i) {
+    // Add/Sub/Mul with overflow operations are custom lowered.
+    MVT VT = IntVTs[i];
+    setOperationAction(ISD::SADDO, VT, Custom);
+    setOperationAction(ISD::UADDO, VT, Custom);
+    setOperationAction(ISD::SSUBO, VT, Custom);
+    setOperationAction(ISD::USUBO, VT, Custom);
+    setOperationAction(ISD::SMULO, VT, Custom);
+    setOperationAction(ISD::UMULO, VT, Custom);
   }
+    
+  // There are no 8-bit 3-address imul/mul instructions
+  setOperationAction(ISD::SMULO, MVT::i8, Expand);
+  setOperationAction(ISD::UMULO, MVT::i8, Expand);
 
   if (!Subtarget->is64Bit()) {
     // These libcalls are not available in 32-bit.

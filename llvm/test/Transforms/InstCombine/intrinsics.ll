@@ -80,6 +80,15 @@ define i1 @uaddtest6(i8 %A, i8 %B) {
 ; CHECK-NEXT: ret i1 %z
 }
 
+define i8 @uaddtest7(i8 %A, i8 %B) {
+  %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %A, i8 %B)
+  %z = extractvalue %overflow.result %x, 0
+  ret i8 %z
+; CHECK: @uaddtest7
+; CHECK-NEXT: %z = add i8 %A, %B
+; CHECK-NEXT: ret i8 %z
+}
+
 
 define i8 @umultest1(i8 %A, i1* %overflowPtr) {
   %x = call %overflow.result @llvm.umul.with.overflow.i8(i8 0, i8 %A)
