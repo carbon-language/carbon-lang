@@ -74,6 +74,13 @@ public:
   }
 
   /// SetInsertPoint - This specifies that created instructions should be
+  /// inserted before the specified instruction.
+  void SetInsertPoint(Instruction *I) {
+    BB = I->getParent();
+    InsertPt = I;
+  }
+  
+  /// SetInsertPoint - This specifies that created instructions should be
   /// inserted at the specified point.
   void SetInsertPoint(BasicBlock *TheBB, BasicBlock::iterator IP) {
     BB = TheBB;
