@@ -18,6 +18,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <cctype>
 #include <cstdio>
 using namespace clang;
 

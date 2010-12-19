@@ -15,10 +15,11 @@
 #ifndef CLANG_LITERALSUPPORT_H
 #define CLANG_LITERALSUPPORT_H
 
-#include <string>
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
+#include <cctype>
+#include <string>
 
 namespace clang {
 

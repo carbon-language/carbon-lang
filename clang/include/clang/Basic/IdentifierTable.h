@@ -22,8 +22,9 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
-#include <string>
 #include <cassert>
+#include <cctype>
+#include <string>
 
 namespace llvm {
   template <typename T> struct DenseMapInfo;

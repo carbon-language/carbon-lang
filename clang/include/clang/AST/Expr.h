@@ -25,6 +25,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include <cctype>
 #include <vector>
 
 namespace clang {

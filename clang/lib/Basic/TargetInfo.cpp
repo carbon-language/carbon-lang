@@ -15,6 +15,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
+#include <cctype>
 #include <cstdlib>
 using namespace clang;
 

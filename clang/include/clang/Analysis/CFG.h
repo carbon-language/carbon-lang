@@ -22,6 +22,7 @@
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/Basic/SourceLocation.h"
 #include <cassert>
+#include <iterator>
 
 namespace llvm {
   class raw_ostream;
