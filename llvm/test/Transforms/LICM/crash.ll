@@ -59,3 +59,16 @@ for.end:                                          ; preds = %for.cond, %entry
 }
 
 declare i32* @test3helper(i32*)
+
+
+; PR8602
+@g_47 = external global i32, align 4
+
+define void @test4() noreturn nounwind {
+  br label %1
+
+; <label>:1                                       ; preds = %1, %0
+  volatile store i32* @g_47, i32** undef, align 8
+  store i32 undef, i32* @g_47, align 4
+  br label %1
+}
