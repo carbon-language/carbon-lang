@@ -293,22 +293,47 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
 }
 
 /// \brief Helper method for \see EvaluateSymbolAdd().
-static void AttemptToFoldSymbolOffsetDifference(const MCAsmLayout *Layout,
+static void AttemptToFoldSymbolOffsetDifference(const MCAssembler *Asm,
+                                                const MCAsmLayout *Layout,
+                                                const SectionAddrMap *Addrs,
+                                                bool InSet,
                                                 const MCSymbolRefExpr *&A,
                                                 const MCSymbolRefExpr *&B,
                                                 int64_t &Addend) {
-  const MCAssembler &Asm = Layout->getAssembler();
+  if (!A || !B ||
+      !Asm->getWriter().IsSymbolRefDifferenceFullyResolved(*Asm, A, B, InSet))
+    return;
 
-  if (A && B &&
-      Asm.getWriter().IsSymbolRefDifferenceFullyResolved(Asm, A, B, false)) {
-    // Eagerly evaluate.
-    Addend += (Layout->getSymbolOffset(&Asm.getSymbolData(A->getSymbol())) -
-               Layout->getSymbolOffset(&Asm.getSymbolData(B->getSymbol())));
+  MCSymbolData &AD = Asm->getSymbolData(A->getSymbol());
+  MCSymbolData &BD = Asm->getSymbolData(B->getSymbol());
+
+  if (AD.getFragment() == BD.getFragment()) {
+    Addend += (AD.getOffset() - BD.getOffset());
 
     // Clear the symbol expr pointers to indicate we have folded these
     // operands.
     A = B = 0;
+    return;
   }
+
+  if (!Layout)
+    return;
+
+  const MCSectionData &SecA = *AD.getFragment()->getParent();
+  const MCSectionData &SecB = *BD.getFragment()->getParent();
+
+  if ((&SecA != &SecB) && !Addrs)
+    return;
+
+  // Eagerly evaluate.
+  Addend += (Layout->getSymbolOffset(&Asm->getSymbolData(A->getSymbol())) -
+             Layout->getSymbolOffset(&Asm->getSymbolData(B->getSymbol())));
+  if (Addrs && (&SecA != &SecB))
+    Addend += (Addrs->lookup(&SecA) - Addrs->lookup(&SecB));
+
+  // Clear the symbol expr pointers to indicate we have folded these
+  // operands.
+  A = B = 0;
 }
 
 /// \brief Evaluate the result of an add between (conceptually) two MCValues.
@@ -346,8 +371,11 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
   // Fold the result constant immediately.
   int64_t Result_Cst = LHS_Cst + RHS_Cst;
 
+  assert((!Layout || Asm) &&
+         "Must have an assembler object if layout is given!");
+
   // If we have a layout, we can fold resolved differences.
-  if (Layout) {
+  if (Asm) {
     // First, fold out any differences which are fully resolved. By
     // reassociating terms in
     //   Result = (LHS_A - LHS_B + LHS_Cst) + (RHS_A - RHS_B + RHS_Cst).
@@ -358,10 +386,14 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
     //   (RHS_A - RHS_B).
     // Since we are attempting to be as aggresive as possible about folding, we
     // attempt to evaluate each possible alternative.
-    AttemptToFoldSymbolOffsetDifference(Layout, LHS_A, LHS_B, Result_Cst);
-    AttemptToFoldSymbolOffsetDifference(Layout, LHS_A, RHS_B, Result_Cst);
-    AttemptToFoldSymbolOffsetDifference(Layout, RHS_A, LHS_B, Result_Cst);
-    AttemptToFoldSymbolOffsetDifference(Layout, RHS_A, RHS_B, Result_Cst);
+    AttemptToFoldSymbolOffsetDifference(Asm, Layout, Addrs, InSet, LHS_A, LHS_B,
+                                        Result_Cst);
+    AttemptToFoldSymbolOffsetDifference(Asm, Layout, Addrs, InSet, LHS_A, RHS_B,
+                                        Result_Cst);
+    AttemptToFoldSymbolOffsetDifference(Asm, Layout, Addrs, InSet, RHS_A, LHS_B,
+                                        Result_Cst);
+    AttemptToFoldSymbolOffsetDifference(Asm, Layout, Addrs, InSet, RHS_A, RHS_B,
+                                        Result_Cst);
   }
 
   // We can't represent the addition or subtraction of two symbols.
@@ -377,44 +409,6 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
   // symbol in order to encode the expression.
   if (B && !A)
     return false;
-
-  // Absolutize symbol differences between defined symbols when we have a
-  // layout object and the target requests it.
-
-  assert((!Layout || Asm) &&
-         "Must have an assembler object if layout is given!");
-
-  if (Asm && A && B) {
-    if (A->getSymbol().isDefined() && B->getSymbol().isDefined() &&
-        Asm->getWriter().IsSymbolRefDifferenceFullyResolved(*Asm, A, B,
-                                                            InSet)) {
-      MCSymbolData &AD = Asm->getSymbolData(A->getSymbol());
-      MCSymbolData &BD = Asm->getSymbolData(B->getSymbol());
-
-      if (AD.getFragment() == BD.getFragment()) {
-        Res = MCValue::get(+ AD.getOffset()
-                           - BD.getOffset()
-                           + Result_Cst);
-        return true;
-      }
-
-      if (Layout) {
-        const MCSectionData &SecA = *AD.getFragment()->getParent();
-        const MCSectionData &SecB = *BD.getFragment()->getParent();
-        int64_t Val = + Layout->getSymbolOffset(&AD)
-                      - Layout->getSymbolOffset(&BD)
-                      + Result_Cst;
-        if (&SecA != &SecB) {
-          if (!Addrs)
-            return false;
-          Val += Addrs->lookup(&SecA);
-          Val -= Addrs->lookup(&SecB);
-        }
-        Res = MCValue::get(Val);
-        return true;
-      }
-    }
-  }
 
   Res = MCValue::get(A, B, Result_Cst);
   return true;
