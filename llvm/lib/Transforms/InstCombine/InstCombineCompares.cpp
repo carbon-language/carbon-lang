@@ -1585,6 +1585,11 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 
 /// ProcessUGT_ADDCST_ADD - The caller has matched a pattern of the form:
 ///   I = icmp ugt (add (add A, B), CI2), CI1
+/// If this is of the form:
+///   sum = a + b
+///   if (sum+128 >u 255)
+/// Then replace it with llvm.sadd.with.overflow.i8.
+///
 static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
                                           ConstantInt *CI2, ConstantInt *CI1,
                                           InstCombiner::BuilderTy *Builder) {
@@ -1595,9 +1600,41 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
   
   // In order to eliminate the add-with-constant, the compare can be its only
   // use.
-  Value *AddWithCst = I.getOperand(0);
+  Instruction *AddWithCst = cast<Instruction>(I.getOperand(0));
   if (!AddWithCst->hasOneUse()) return 0;
-
+  
+  // If CI2 is 2^7, 2^15, 2^31, then it might be an sadd.with.overflow.
+  if (!CI2->getValue().isPowerOf2()) return 0;
+  unsigned NewWidth = CI2->getValue().countTrailingZeros();
+  if (NewWidth != 7 && NewWidth != 15 && NewWidth != 31) return 0;
+    
+  // The width of the new add formed is 1 more than the bias.
+  ++NewWidth;
+  
+  // Check to see that CI1 is an all-ones value with NewWidth bits.
+  if (CI1->getBitWidth() == NewWidth ||
+      CI1->getValue() != APInt::getLowBitsSet(CI1->getBitWidth(), NewWidth))
+    return 0;
+  
+  // In order to replace the original add with a narrower 
+  // llvm.sadd.with.overflow, the only uses allowed are the add-with-constant
+  // and truncates that discard the high bits of the add.  Verify that this is
+  // the case.
+  Instruction *OrigAdd = cast<Instruction>(AddWithCst->getOperand(0));
+  for (Value::use_iterator UI = OrigAdd->use_begin(), E = OrigAdd->use_end();
+       UI != E; ++UI) {
+    if (*UI == AddWithCst) continue;
+    
+    // Only accept truncates for now.  We would really like a nice recursive
+    // predicate like SimplifyDemandedBits, but which goes downwards the use-def
+    // chain to see which bits of a value are actually demanded.  If the
+    // original add had another add which was then immediately truncated, we
+    // could still do the transformation.
+    TruncInst *TI = dyn_cast<TruncInst>(*UI);
+    if (TI == 0 ||
+        TI->getType()->getPrimitiveSizeInBits() > NewWidth) return 0;
+  }
+  
   const IntegerType *WideType = cast<IntegerType>(CI1->getType());
   unsigned WideWidth = WideType->getBitWidth();
   unsigned NarrowWidth = WideWidth / 2;
@@ -1630,8 +1667,6 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
   // If the pattern matches, truncate the inputs to the narrower type and
   // use the sadd_with_overflow intrinsic to efficiently compute both the
   // result and the overflow bit.
-  Instruction *OrigAdd =
-  cast<Instruction>(cast<Instruction>(I.getOperand(0))->getOperand(0));
   Builder->SetInsertPoint(OrigAdd->getParent(),
                           BasicBlock::iterator(OrigAdd));
   
