@@ -1592,7 +1592,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 ///
 static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
                                           ConstantInt *CI2, ConstantInt *CI1,
-                                          InstCombiner::BuilderTy *Builder) {
+                                          InstCombiner &IC) {
   // The transformation we're trying to do here is to transform this into an
   // llvm.sadd.with.overflow.  To do this, we have to replace the original add
   // with a narrower add, and discard the add-with-constant that is part of the
@@ -1644,6 +1644,8 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
   Value *F = Intrinsic::getDeclaration(M, Intrinsic::sadd_with_overflow,
                                        &NewType, 1);
 
+  InstCombiner::BuilderTy *Builder = IC.Builder;
+  
   // Put the new code above the original add, in case there are any uses of the
   // add between the add and the compare.
   Builder->SetInsertPoint(OrigAdd->getParent(), BasicBlock::iterator(OrigAdd));
@@ -1656,7 +1658,7 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
   
   // The inner add was the result of the narrow add, zero extended to the
   // wider type.  Replace it with the result computed by the intrinsic.
-  OrigAdd->replaceAllUsesWith(ZExt);
+  IC.ReplaceInstUsesWith(*OrigAdd, ZExt);
   
   // The original icmp gets replaced with the overflow value.
   return ExtractValueInst::Create(Call, 1, "sadd.overflow");
@@ -1751,7 +1753,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     ConstantInt *CI2;    // I = icmp ugt (add (add A, B), CI2), CI
     if (I.getPredicate() == ICmpInst::ICMP_UGT &&
         match(Op0, m_Add(m_Add(m_Value(A), m_Value(B)), m_ConstantInt(CI2))))
-      if (Instruction *Res = ProcessUGT_ADDCST_ADD(I, A, B, CI2, CI, Builder))
+      if (Instruction *Res = ProcessUGT_ADDCST_ADD(I, A, B, CI2, CI, *this))
         return Res;
     }
     
