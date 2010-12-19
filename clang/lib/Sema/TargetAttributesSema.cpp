@@ -71,6 +71,55 @@ namespace {
   };
 }
 
+static void HandleMBlazeInterruptHandlerAttr(Decl *d, const AttributeList &Attr,
+                                             Sema &S) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+
+  // FIXME: Check for decl - it should be void ()(void).
+
+  d->addAttr(::new (S.Context) MBlazeInterruptHandlerAttr(Attr.getLoc(),
+                                                          S.Context));
+  d->addAttr(::new (S.Context) UsedAttr(Attr.getLoc(), S.Context));
+}
+
+static void HandleMBlazeSaveVolatilesAttr(Decl *d, const AttributeList &Attr,
+                                          Sema &S) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+
+  // FIXME: Check for decl - it should be void ()(void).
+
+  d->addAttr(::new (S.Context) MBlazeSaveVolatilesAttr(Attr.getLoc(),
+                                                       S.Context));
+  d->addAttr(::new (S.Context) UsedAttr(Attr.getLoc(), S.Context));
+}
+
+
+namespace {
+  class MBlazeAttributesSema : public TargetAttributesSema {
+  public:
+    MBlazeAttributesSema() { }
+    bool ProcessDeclAttribute(Scope *scope, Decl *D, const AttributeList &Attr,
+                              Sema &S) const {
+      if (Attr.getName()->getName() == "interrupt_handler") {
+        HandleMBlazeInterruptHandlerAttr(D, Attr, S);
+        return true;
+      } else if (Attr.getName()->getName() == "save_volatiles") {
+        HandleMBlazeSaveVolatilesAttr(D, Attr, S);
+        return true;
+      }
+      return false;
+    }
+  };
+}
+
 static void HandleX86ForceAlignArgPointerAttr(Decl *D,
                                               const AttributeList& Attr,
                                               Sema &S) {
@@ -220,6 +269,8 @@ const TargetAttributesSema &Sema::getTargetAttributesSema() const {
 
   case llvm::Triple::msp430:
     return *(TheTargetAttributesSema = new MSP430AttributesSema);
+  case llvm::Triple::mblaze:
+    return *(TheTargetAttributesSema = new MBlazeAttributesSema);
   case llvm::Triple::x86:
     return *(TheTargetAttributesSema = new X86AttributesSema);
   }

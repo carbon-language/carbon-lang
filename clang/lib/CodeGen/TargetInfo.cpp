@@ -2530,6 +2530,116 @@ ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty) const {
 }
 
 //===----------------------------------------------------------------------===//
+// MBlaze ABI Implementation
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class MBlazeABIInfo : public ABIInfo {
+public:
+  MBlazeABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+
+  bool isPromotableIntegerType(QualType Ty) const;
+
+  ABIArgInfo classifyReturnType(QualType RetTy) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy) const;
+
+  virtual void computeInfo(CGFunctionInfo &FI) const {
+    FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
+    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+         it != ie; ++it)
+      it->info = classifyArgumentType(it->type);
+  }
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+};
+
+class MBlazeTargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  MBlazeTargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new MBlazeABIInfo(CGT)) {}
+  void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                           CodeGen::CodeGenModule &M) const;
+};
+
+}
+
+bool MBlazeABIInfo::isPromotableIntegerType(QualType Ty) const {
+  // MBlaze ABI requires all 8 and 16 bit quantities to be extended.
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>())
+    switch (BT->getKind()) {
+    case BuiltinType::Bool:
+    case BuiltinType::Char_S:
+    case BuiltinType::Char_U:
+    case BuiltinType::SChar:
+    case BuiltinType::UChar:
+    case BuiltinType::Short:
+    case BuiltinType::UShort:
+      return true;
+    default:
+      return false;
+    }
+  return false;
+}
+
+llvm::Value *MBlazeABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                      CodeGenFunction &CGF) const {
+  // FIXME: Implement
+  return 0;
+}
+
+
+ABIArgInfo MBlazeABIInfo::classifyReturnType(QualType RetTy) const {
+  if (RetTy->isVoidType())
+    return ABIArgInfo::getIgnore();
+  if (isAggregateTypeForABI(RetTy))
+    return ABIArgInfo::getIndirect(0);
+
+  return (isPromotableIntegerType(RetTy) ?
+          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+}
+
+ABIArgInfo MBlazeABIInfo::classifyArgumentType(QualType Ty) const {
+  if (isAggregateTypeForABI(Ty))
+    return ABIArgInfo::getIndirect(0);
+
+  return (isPromotableIntegerType(Ty) ?
+          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+}
+
+void MBlazeTargetCodeGenInfo::SetTargetAttributes(const Decl *D,
+                                                  llvm::GlobalValue *GV,
+                                                  CodeGen::CodeGenModule &M)
+                                                  const {
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD) return;
+  
+  llvm::CallingConv::ID CC = llvm::CallingConv::C;
+  if (FD->hasAttr<MBlazeInterruptHandlerAttr>())
+    CC = llvm::CallingConv::MBLAZE_INTR;
+  else if (FD->hasAttr<MBlazeSaveVolatilesAttr>())
+    CC = llvm::CallingConv::MBLAZE_SVOL;
+
+  if (CC != llvm::CallingConv::C) {
+      // Handle 'interrupt_handler' attribute:
+      llvm::Function *F = cast<llvm::Function>(GV);
+
+      // Step 1: Set ISR calling convention.
+      F->setCallingConv(CC);
+
+      // Step 2: Add attributes goodness.
+      F->addFnAttr(llvm::Attribute::NoInline);
+  }
+
+  // Step 3: Emit _interrupt_handler alias.
+  if (CC == llvm::CallingConv::MBLAZE_INTR)
+    new llvm::GlobalAlias(GV->getType(), llvm::Function::ExternalLinkage,
+                          "_interrupt_handler", GV, &M.getModule());
+}
+
+
+//===----------------------------------------------------------------------===//
 // MSP430 ABI Implementation
 //===----------------------------------------------------------------------===//
 
@@ -2653,6 +2763,9 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
   case llvm::Triple::systemz:
     return *(TheTargetCodeGenInfo = new SystemZTargetCodeGenInfo(Types));
+
+  case llvm::Triple::mblaze:
+    return *(TheTargetCodeGenInfo = new MBlazeTargetCodeGenInfo(Types));
 
   case llvm::Triple::msp430:
     return *(TheTargetCodeGenInfo = new MSP430TargetCodeGenInfo(Types));

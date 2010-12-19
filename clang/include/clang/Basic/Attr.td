@@ -279,6 +279,14 @@ def MSP430Interrupt : Attr {
   let Args = [UnsignedArgument<"Number">];
 }
 
+def MBlazeInterruptHandler : Attr {
+  let Spellings = [];
+}
+
+def MBlazeSaveVolatiles : Attr {
+  let Spellings = [];
+}
+
 def Naked : Attr {
   let Spellings = ["naked"];
 }
