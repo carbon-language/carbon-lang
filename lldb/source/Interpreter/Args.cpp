@@ -123,8 +123,6 @@ Args::SetCommandString (const char *command, size_t len)
 void
 Args::SetCommandString (const char *command)
 {
-    StreamFile s(stdout);
-    s.Printf("\nCOMMAND: %s\n", command);
     m_args.clear();
     m_argv.clear();
     m_args_quote_char.clear();
@@ -313,7 +311,6 @@ Args::SetCommandString (const char *command)
         }
         UpdateArgvFromArgs();
     }
-    Dump (&s);
 }
 
 void
