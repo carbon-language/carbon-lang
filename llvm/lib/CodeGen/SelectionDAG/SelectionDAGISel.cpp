@@ -43,6 +43,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -239,6 +240,44 @@ static bool FunctionCallsSetJmp(const Function *F) {
 #undef NUM_RETURNS_TWICE_FNS
 }
 
+/// SplitCriticalSideEffectEdges - Look for critical edges with a PHI value that
+/// may trap on it.  In this case we have to split the edge so that the path
+/// through the predecessor block that doesn't go to the phi block doesn't
+/// execute the possibly trapping instruction.
+///
+/// This is required for correctness, so it must be done at -O0.
+///
+static void SplitCriticalSideEffectEdges(Function &Fn, Pass *SDISel) {
+  // Loop for blocks with phi nodes.
+  for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+    PHINode *PN = dyn_cast<PHINode>(BB->begin());
+    if (PN == 0) continue;
+    
+  ReprocessBlock:
+    // For each block with a PHI node, check to see if any of the input values
+    // are potentially trapping constant expressions.  Constant expressions are
+    // the only potentially trapping value that can occur as the argument to a
+    // PHI.
+    for (BasicBlock::iterator I = BB->begin(); (PN = dyn_cast<PHINode>(I)); ++I)
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+        ConstantExpr *CE = dyn_cast<ConstantExpr>(PN->getIncomingValue(i));
+        if (CE == 0 || !CE->canTrap()) continue;
+        
+        // The only case we have to worry about is when the edge is critical.
+        // Since this block has a PHI Node, we assume it has multiple input
+        // edges: check to see if the pred has multiple successors.
+        BasicBlock *Pred = PN->getIncomingBlock(i);
+        if (Pred->getTerminator()->getNumSuccessors() == 1)
+          continue;
+        
+        // Okay, we have to split this edge.
+        SplitCriticalEdge(Pred->getTerminator(),
+                          GetSuccessorNumber(Pred, BB), SDISel, true);
+        goto ReprocessBlock;
+      }
+  }
+}
+
 bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // Do some sanity-checking on the command-line options.
   assert((!EnableFastISelVerbose || EnableFastISel) &&
@@ -257,6 +296,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   DEBUG(dbgs() << "\n\n\n=== " << Fn.getName() << "\n");
 
+  SplitCriticalSideEffectEdges(const_cast<Function&>(Fn), this);
+  
   CurDAG->init(*MF);
   FuncInfo->set(Fn, *MF);
   SDB->init(GFI, *AA);
