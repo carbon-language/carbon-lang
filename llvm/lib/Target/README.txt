@@ -74,26 +74,7 @@ This has a number of uses:
 //===---------------------------------------------------------------------===//
 
 We should recognized various "overflow detection" idioms and translate them into
-llvm.uadd.with.overflow and similar intrinsics.  For example, we compile this:
-
-size_t add(size_t a,size_t b) {
- if (a+b<a)
-   exit(0);
- return a+b;
-}
-
-into:
-
-	addq	%rdi, %rbx
-	cmpq	%rdi, %rbx
-	jae	LBB0_2
-
-when it would be better to generate:
-
-	addq	%rdi, %rbx
-	jno	LBB0_2
-
-Apparently some version of GCC knows this.  Here is a multiply idiom:
+llvm.uadd.with.overflow and similar intrinsics.  Here is a multiply idiom:
 
 unsigned int mul(unsigned int a,unsigned int b) {
  if ((unsigned long long)a*b>0xffffffff)

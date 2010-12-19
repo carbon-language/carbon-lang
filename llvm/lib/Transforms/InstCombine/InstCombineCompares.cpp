@@ -1648,7 +1648,7 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
   
   // Put the new code above the original add, in case there are any uses of the
   // add between the add and the compare.
-  Builder->SetInsertPoint(OrigAdd->getParent(), BasicBlock::iterator(OrigAdd));
+  Builder->SetInsertPoint(OrigAdd);
   
   Value *TruncA = Builder->CreateTrunc(A, NewType, A->getName()+".trunc");
   Value *TruncB = Builder->CreateTrunc(B, NewType, B->getName()+".trunc");
@@ -1662,6 +1662,35 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
   
   // The original icmp gets replaced with the overflow value.
   return ExtractValueInst::Create(Call, 1, "sadd.overflow");
+}
+
+static Instruction *ProcessUAddIdiom(Instruction &I, Value *OrigAddV,
+                                     InstCombiner &IC) {
+  // Don't bother doing this transformation for pointers, don't do it for
+  // vectors.
+  if (!isa<IntegerType>(OrigAddV->getType())) return 0;
+  
+  // If the add is a constant expr, then we don't bother transforming it.
+  Instruction *OrigAdd = dyn_cast<Instruction>(OrigAddV);
+  if (OrigAdd == 0) return 0;
+  
+  Value *LHS = OrigAdd->getOperand(0), *RHS = OrigAdd->getOperand(1);
+  
+  // Put the new code above the original add, in case there are any uses of the
+  // add between the add and the compare.
+  InstCombiner::BuilderTy *Builder = IC.Builder;
+  Builder->SetInsertPoint(OrigAdd);
+
+  Module *M = I.getParent()->getParent()->getParent();
+  const Type *Ty = LHS->getType();
+  Value *F = Intrinsic::getDeclaration(M, Intrinsic::uadd_with_overflow, &Ty,1);
+  CallInst *Call = Builder->CreateCall2(F, LHS, RHS, "uadd");
+  Value *Add = Builder->CreateExtractValue(Call, 0);
+
+  IC.ReplaceInstUsesWith(*OrigAdd, Add);
+
+  // The original icmp gets replaced with the overflow value.
+  return ExtractValueInst::Create(Call, 1, "uadd.overflow");
 }
 
 
@@ -1726,11 +1755,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   }
 
   unsigned BitWidth = 0;
-  if (TD)
-    BitWidth = TD->getTypeSizeInBits(Ty->getScalarType());
-  else if (Ty->isIntOrIntVectorTy())
+  if (Ty->isIntOrIntVectorTy())
     BitWidth = Ty->getScalarSizeInBits();
-
+  else if (TD)  // Pointers require TD info to get their size.
+    BitWidth = TD->getTypeSizeInBits(Ty->getScalarType());
+  
   bool isSignBit = false;
 
   // See if we are doing a comparison with a constant.
@@ -2225,6 +2254,22 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if (match(Op0, m_Not(m_Value(A))) &&
         match(Op1, m_Not(m_Value(B))))
       return new ICmpInst(I.getPredicate(), B, A);
+
+    // (a+b) <u a  --> llvm.uadd.with.overflow.
+    // (a+b) <u b  --> llvm.uadd.with.overflow.
+    if (I.getPredicate() == ICmpInst::ICMP_ULT &&
+        match(Op0, m_Add(m_Value(A), m_Value(B))) && 
+        (Op1 == A || Op1 == B))
+      if (Instruction *R = ProcessUAddIdiom(I, Op0, *this))
+        return R;
+                                 
+    // a >u (a+b)  --> llvm.uadd.with.overflow.
+    // b >u (a+b)  --> llvm.uadd.with.overflow.
+    if (I.getPredicate() == ICmpInst::ICMP_UGT &&
+        match(Op1, m_Add(m_Value(A), m_Value(B))) &&
+        (Op0 == A || Op0 == B))
+      if (Instruction *R = ProcessUAddIdiom(I, Op1, *this))
+        return R;
   }
   
   if (I.isEquality()) {

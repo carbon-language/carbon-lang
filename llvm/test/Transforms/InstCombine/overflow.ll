@@ -97,3 +97,37 @@ if.end:                                           ; preds = %entry
 ; CHECK: ret i8
 }
 
+; CHECK: @test5
+; CHECK: llvm.uadd.with.overflow
+; CHECK: ret i64
+define i64 @test5(i64 %a, i64 %b) nounwind ssp {
+entry:
+  %add = add i64 %b, %a
+  %cmp = icmp ult i64 %add, %a
+  %Q = select i1 %cmp, i64 %b, i64 42
+  ret i64 %Q
+}
+
+; CHECK: @test6
+; CHECK: llvm.uadd.with.overflow
+; CHECK: ret i64
+define i64 @test6(i64 %a, i64 %b) nounwind ssp {
+entry:
+  %add = add i64 %b, %a
+  %cmp = icmp ult i64 %add, %b
+  %Q = select i1 %cmp, i64 %b, i64 42
+  ret i64 %Q
+}
+
+; CHECK: @test7
+; CHECK: llvm.uadd.with.overflow
+; CHECK: ret i64
+define i64 @test7(i64 %a, i64 %b) nounwind ssp {
+entry:
+  %add = add i64 %b, %a
+  %cmp = icmp ugt i64 %b, %add
+  %Q = select i1 %cmp, i64 %b, i64 42
+  ret i64 %Q
+}
+
+
