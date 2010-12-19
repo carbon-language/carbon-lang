@@ -93,10 +93,8 @@ void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineLoopInfo>();
   AU.addPreserved<MachineLoopInfo>();
   AU.addPreservedID(MachineDominatorsID);
-  if (StrongPHIElim)
-    AU.addPreservedID(StrongPHIEliminationID);
-  else
-    AU.addPreservedID(PHIEliminationID);
+  AU.addPreservedID(StrongPHIEliminationID);
+  AU.addPreservedID(PHIEliminationID);
   AU.addPreservedID(TwoAddressInstructionPassID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }

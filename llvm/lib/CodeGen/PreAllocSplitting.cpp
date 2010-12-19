@@ -107,10 +107,8 @@ namespace {
       AU.addPreserved<LiveStacks>();
       AU.addPreserved<RegisterCoalescer>();
       AU.addPreserved<CalculateSpillWeights>();
-      if (StrongPHIElim)
-        AU.addPreservedID(StrongPHIEliminationID);
-      else
-        AU.addPreservedID(PHIEliminationID);
+      AU.addPreservedID(StrongPHIEliminationID);
+      AU.addPreservedID(PHIEliminationID);
       AU.addRequired<MachineDominatorTree>();
       AU.addRequired<MachineLoopInfo>();
       AU.addRequired<VirtRegMap>();

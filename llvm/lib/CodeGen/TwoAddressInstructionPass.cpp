@@ -148,10 +148,8 @@ namespace {
       AU.addPreserved<LiveVariables>();
       AU.addPreservedID(MachineLoopInfoID);
       AU.addPreservedID(MachineDominatorsID);
-      if (StrongPHIElim)
-        AU.addPreservedID(StrongPHIEliminationID);
-      else
-        AU.addPreservedID(PHIEliminationID);
+      AU.addPreservedID(StrongPHIEliminationID);
+      AU.addPreservedID(PHIEliminationID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
