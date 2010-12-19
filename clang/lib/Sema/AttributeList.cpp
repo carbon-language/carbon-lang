@@ -133,5 +133,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("launch_bounds", AT_launch_bounds)
     .Case("common", AT_common)
     .Case("nocommon", AT_nocommon)
+    .Case("uuid", AT_uuid)
     .Default(UnknownAttribute);
 }

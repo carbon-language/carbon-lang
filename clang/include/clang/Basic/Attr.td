@@ -422,6 +422,12 @@ def Used : Attr {
   let Spellings = ["used"];
 }
 
+def Uuid : Attr {
+  let Spellings = ["uuid"];
+  let Args = [StringArgument<"Guid">];
+  let Subjects = [CXXRecord];
+}
+
 def Visibility : Attr {
   let Spellings = ["visibility"];
   let Args = [EnumArgument<"Visibility", "VisibilityType",

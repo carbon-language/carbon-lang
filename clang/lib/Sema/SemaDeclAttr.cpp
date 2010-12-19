@@ -2516,7 +2516,29 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
 
 static bool isKnownDeclSpecAttr(const AttributeList &Attr) {
   return Attr.getKind() == AttributeList::AT_dllimport ||
-         Attr.getKind() == AttributeList::AT_dllexport;
+         Attr.getKind() == AttributeList::AT_dllexport ||
+         Attr.getKind() == AttributeList::AT_uuid;
+}
+
+//===----------------------------------------------------------------------===//
+// Microsoft specific attribute handlers.
+//===----------------------------------------------------------------------===//
+
+static void HandleUuidAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (S.LangOpts.Microsoft || S.LangOpts.Borland) {
+    // check the attribute arguments.
+    if (Attr.getNumArgs() != 1) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+      return;
+    }
+    Expr *Arg = Attr.getArg(0);
+    StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
+
+    d->addAttr(::new (S.Context) UuidAttr(Attr.getLoc(), S.Context, 
+                                          Str->getString()));
+  } else {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "uuid";
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -2645,6 +2667,9 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_thiscall:
   case AttributeList::AT_pascal:
     HandleCallConvAttr(D, Attr, S);
+    break;
+  case AttributeList::AT_uuid:
+    HandleUuidAttr(D, Attr, S);
     break;
   default:
     // Ask target about the attribute.
