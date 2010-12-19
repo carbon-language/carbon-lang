@@ -1918,36 +1918,35 @@ bool GVN::processInstruction(Instruction *I,
 
   // Allocations are always uniquely numbered, so we can save time and memory
   // by fast failing them.
-  if (isa<AllocaInst>(I) || isa<TerminatorInst>(I)) {
+  if (isa<AllocaInst>(I) || isa<TerminatorInst>(I) || isa<PHINode>(I)) {
     insert_table(Num, I);
     return false;
   }
 
-  if (isa<PHINode>(I)) {
-    insert_table(Num, I);
-  
   // If the number we were assigned was a brand new VN, then we don't
   // need to do a lookup to see if the number already exists
   // somewhere in the domtree: it can't!
-  } else if (Num == NextNum) {
+  if (Num == NextNum) {
     insert_table(Num, I);
-
+    return false;
+  }
+  
   // Perform fast-path value-number based elimination of values inherited from
   // dominators.
-  } else if (Value *repl = lookupNumber(I->getParent(), Num)) {
-    // Remove it!
-    VN.erase(I);
-    I->replaceAllUsesWith(repl);
-    if (MD && repl->getType()->isPointerTy())
-      MD->invalidateCachedPointerInfo(repl);
-    toErase.push_back(I);
-    return true;
-
-  } else {
+  Value *repl = lookupNumber(I->getParent(), Num);
+  if (repl == 0) {
+    // Failure, just remember this instance for future use.
     insert_table(Num, I);
+    return false;
   }
-
-  return false;
+  
+  // Remove it!
+  VN.erase(I);
+  I->replaceAllUsesWith(repl);
+  if (MD && repl->getType()->isPointerTy())
+    MD->invalidateCachedPointerInfo(repl);
+  toErase.push_back(I);
+  return true;
 }
 
 /// runOnFunction - This is the main transformation entry point for a function.
