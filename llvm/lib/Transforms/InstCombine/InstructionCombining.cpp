@@ -1151,9 +1151,10 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
         // If the normal result of the add is dead, and the RHS is a constant,
         // we can transform this into a range comparison.
         // overflow = uadd a, -4  -->  overflow = icmp ugt a, 3
-        if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getArgOperand(1)))
-          return new ICmpInst(ICmpInst::ICMP_UGT, II->getArgOperand(0),
-                              ConstantExpr::getNot(CI));
+        if (II->getIntrinsicID() == Intrinsic::uadd_with_overflow)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getArgOperand(1)))
+            return new ICmpInst(ICmpInst::ICMP_UGT, II->getArgOperand(0),
+                                ConstantExpr::getNot(CI));
         break;
       case Intrinsic::usub_with_overflow:
       case Intrinsic::ssub_with_overflow:
