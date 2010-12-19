@@ -555,6 +555,7 @@ void
 MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
   const MachineInstr *MI = MO->getParent();
   const TargetInstrDesc &TI = MI->getDesc();
+  const TargetOperandInfo &TOI = TI.OpInfo[MONum];
 
   // The first TI.NumDefs operands must be explicit register defines
   if (MONum < TI.getNumDefs()) {
@@ -568,8 +569,8 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     // Don't check if it's the last operand in a variadic instruction. See,
     // e.g., LDM_RET in the arm back end.
     if (MO->isReg() && !(TI.isVariadic() && MONum == TI.getNumOperands()-1)) {
-      if (MO->isDef())
-        report("Explicit operand marked as def", MO, MONum);
+      if (MO->isDef() && !TOI.isOptionalDef())
+          report("Explicit operand marked as def", MO, MONum);
       if (MO->isImplicit())
         report("Explicit operand marked as implicit", MO, MONum);
     }
@@ -706,7 +707,6 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
 
     // Check register classes.
     if (MONum < TI.getNumOperands() && !MO->isImplicit()) {
-      const TargetOperandInfo &TOI = TI.OpInfo[MONum];
       unsigned SubIdx = MO->getSubReg();
 
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
