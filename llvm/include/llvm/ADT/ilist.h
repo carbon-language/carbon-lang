@@ -38,6 +38,7 @@
 #ifndef LLVM_ADT_ILIST_H
 #define LLVM_ADT_ILIST_H
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <iterator>

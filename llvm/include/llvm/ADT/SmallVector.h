@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <iterator>
 #include <memory>
 
 #ifdef _MSC_VER

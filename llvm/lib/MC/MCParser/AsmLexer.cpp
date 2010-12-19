@@ -15,6 +15,7 @@
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include <cctype>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>

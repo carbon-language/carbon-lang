@@ -18,6 +18,7 @@
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include "llvm/Support/type_traits.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include <algorithm>
 #include <iterator>
 #include <new>
 #include <utility>

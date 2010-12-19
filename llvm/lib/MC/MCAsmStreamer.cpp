@@ -27,6 +27,7 @@
 #include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include <cctype>
 using namespace llvm;
 
 namespace {

@@ -27,6 +27,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Program.h"
+#include <cctype>
 using namespace llvm;
 
 /// These are manifest constants used by the bitcode writer. They do not need to

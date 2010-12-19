@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
+#include <new>
 #include <sys/types.h>
 #include <sys/stat.h>
 #if !defined(_MSC_VER) && !defined(__MINGW32__)

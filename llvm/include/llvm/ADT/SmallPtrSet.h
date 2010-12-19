@@ -16,6 +16,7 @@
 #define LLVM_ADT_SMALLPTRSET_H
 
 #include <cassert>
+#include <cstddef>
 #include <cstring>
 #include <iterator>
 #include "llvm/Support/DataTypes.h"

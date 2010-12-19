@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "Unix.h"
 #include <sys/utsname.h>
+#include <cctype>
 #include <string>
 
 using namespace llvm;

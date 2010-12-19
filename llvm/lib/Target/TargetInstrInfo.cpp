@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <cctype>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
