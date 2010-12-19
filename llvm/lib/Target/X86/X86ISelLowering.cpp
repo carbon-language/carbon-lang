@@ -67,14 +67,18 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
 
   if (TM.getSubtarget<X86Subtarget>().isTargetDarwin()) {
-    if (is64Bit) return new X8664_MachoTargetObjectFile();
+    if (is64Bit)
+      return new X8664_MachoTargetObjectFile();
     return new TargetLoweringObjectFileMachO();
-  } else if (TM.getSubtarget<X86Subtarget>().isTargetELF() ){
-    if (is64Bit) return new X8664_ELFTargetObjectFile(TM);
-    return new X8632_ELFTargetObjectFile(TM);
-  } else if (TM.getSubtarget<X86Subtarget>().isTargetCOFF()) {
-    return new TargetLoweringObjectFileCOFF();
   }
+  
+  if (TM.getSubtarget<X86Subtarget>().isTargetELF() ){
+    if (is64Bit)
+      return new X8664_ELFTargetObjectFile(TM);
+    return new X8632_ELFTargetObjectFile(TM);
+  }
+  if (TM.getSubtarget<X86Subtarget>().isTargetCOFF())
+    return new TargetLoweringObjectFileCOFF();
   llvm_unreachable("unknown subtarget type");
 }
 
@@ -246,30 +250,15 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // (low) operations are left as Legal, as there are single-result
   // instructions for this in x86. Using the two-result multiply instructions
   // when both high and low results are needed must be arranged by dagcombine.
-  setOperationAction(ISD::MULHS           , MVT::i8    , Expand);
-  setOperationAction(ISD::MULHU           , MVT::i8    , Expand);
-  setOperationAction(ISD::SDIV            , MVT::i8    , Expand);
-  setOperationAction(ISD::UDIV            , MVT::i8    , Expand);
-  setOperationAction(ISD::SREM            , MVT::i8    , Expand);
-  setOperationAction(ISD::UREM            , MVT::i8    , Expand);
-  setOperationAction(ISD::MULHS           , MVT::i16   , Expand);
-  setOperationAction(ISD::MULHU           , MVT::i16   , Expand);
-  setOperationAction(ISD::SDIV            , MVT::i16   , Expand);
-  setOperationAction(ISD::UDIV            , MVT::i16   , Expand);
-  setOperationAction(ISD::SREM            , MVT::i16   , Expand);
-  setOperationAction(ISD::UREM            , MVT::i16   , Expand);
-  setOperationAction(ISD::MULHS           , MVT::i32   , Expand);
-  setOperationAction(ISD::MULHU           , MVT::i32   , Expand);
-  setOperationAction(ISD::SDIV            , MVT::i32   , Expand);
-  setOperationAction(ISD::UDIV            , MVT::i32   , Expand);
-  setOperationAction(ISD::SREM            , MVT::i32   , Expand);
-  setOperationAction(ISD::UREM            , MVT::i32   , Expand);
-  setOperationAction(ISD::MULHS           , MVT::i64   , Expand);
-  setOperationAction(ISD::MULHU           , MVT::i64   , Expand);
-  setOperationAction(ISD::SDIV            , MVT::i64   , Expand);
-  setOperationAction(ISD::UDIV            , MVT::i64   , Expand);
-  setOperationAction(ISD::SREM            , MVT::i64   , Expand);
-  setOperationAction(ISD::UREM            , MVT::i64   , Expand);
+  for (unsigned i = 0, e = 4; i != e; ++i) {
+    MVT VT = IntVTs[i];
+    setOperationAction(ISD::MULHS, VT, Expand);
+    setOperationAction(ISD::MULHU, VT, Expand);
+    setOperationAction(ISD::SDIV, VT, Expand);
+    setOperationAction(ISD::UDIV, VT, Expand);
+    setOperationAction(ISD::SREM, VT, Expand);
+    setOperationAction(ISD::UREM, VT, Expand);
+  }
 
   setOperationAction(ISD::BR_JT            , MVT::Other, Expand);
   setOperationAction(ISD::BRCOND           , MVT::Other, Custom);
@@ -314,7 +303,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::SELECT          , MVT::i1   , Promote);
   // X86 wants to expand cmov itself.
   setOperationAction(ISD::SELECT          , MVT::i8   , Custom);
-  setOperationAction(ISD::SELECT        , MVT::i16  , Custom);
+  setOperationAction(ISD::SELECT          , MVT::i16  , Custom);
   setOperationAction(ISD::SELECT          , MVT::i32  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f32  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f64  , Custom);
@@ -371,16 +360,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setShouldFoldAtomicFences(true);
 
   // Expand certain atomics
-  setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i8, Custom);
-  setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i16, Custom);
-  setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i32, Custom);
-  setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i64, Custom);
-
-  setOperationAction(ISD::ATOMIC_LOAD_SUB, MVT::i8, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB, MVT::i16, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB, MVT::i32, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB, MVT::i64, Custom);
-
+  for (unsigned i = 0, e = 4; i != e; ++i) {
+    MVT VT = IntVTs[i];
+    setOperationAction(ISD::ATOMIC_CMP_SWAP, VT, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_SUB, VT, Custom);
+  }
+    
   if (!Subtarget->is64Bit()) {
     setOperationAction(ISD::ATOMIC_LOAD_ADD, MVT::i64, Custom);
     setOperationAction(ISD::ATOMIC_LOAD_SUB, MVT::i64, Custom);
