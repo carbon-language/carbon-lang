@@ -164,7 +164,7 @@ unsigned TargetInstrInfo::getInlineAsmLength(const char *Str,
   for (; *Str; ++Str) {
     if (*Str == '\n' || *Str == MAI.getSeparatorChar())
       atInsnStart = true;
-    if (atInsnStart && !isspace(*Str)) {
+    if (atInsnStart && !std::isspace(*Str)) {
       Length += MAI.getMaxInstLength();
       atInsnStart = false;
     }
