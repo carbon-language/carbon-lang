@@ -523,21 +523,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         return InsertValueInst::Create(Struct, Add, 0);
       }
     }
-    
-    // If the normal result of the add is dead, and the RHS is a constant, we
-    // can transform this into a range comparison.
-    // overflow = uadd a, -4  -->  overflow = icmp ugt a, 3
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
-      if (ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(II->use_back()))
-        if (II->hasOneUse() && EVI->getNumIndices() == 1 && !EVI->use_empty() &&
-            *EVI->idx_begin() == 1) {  // Extract of overflow result.
-          Builder->SetInsertPoint(EVI);
-          Value *R = Builder->CreateICmpUGT(LHS, ConstantExpr::getNot(CI));
-          R->takeName(EVI);
-          ReplaceInstUsesWith(*EVI, R);
-          return II;
-        }
-    
   }
   // FALL THROUGH uadd into sadd
   case Intrinsic::sadd_with_overflow:
@@ -565,7 +550,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         return InsertValueInst::Create(Struct, II->getArgOperand(0), 0);
       }
     }
-      
     break;
   case Intrinsic::usub_with_overflow:
   case Intrinsic::ssub_with_overflow:
