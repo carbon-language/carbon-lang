@@ -1,4 +1,4 @@
-; RUN: llc -march=x86 -mattr=+sse42 < %s -disable-mmx | FileCheck %s
+; RUN: llc -march=x86 -mattr=+sse42 < %s | FileCheck %s
 ; CHECK: paddw
 ; CHECK: pextrd
 ; CHECK: movd

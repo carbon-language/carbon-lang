@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx |  FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse42 |  FileCheck %s
 
 ; Widen a v3i8 to v16i8 to use a vector add
 

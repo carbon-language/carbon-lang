@@ -1,4 +1,4 @@
-; RUN: llc < %s -o - -march=x86-64 -mattr=+sse42 -disable-mmx | FileCheck %s
+; RUN: llc < %s -o - -march=x86-64 -mattr=+sse42 | FileCheck %s
 
 ; Test based on pr5626 to load/store
 ;

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=penryn -disable-mmx | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=penryn | FileCheck %s
 
 ; Shows a dag combine bug that will generate an illegal build vector
 ; with v2i64 build_vector i32, i32.

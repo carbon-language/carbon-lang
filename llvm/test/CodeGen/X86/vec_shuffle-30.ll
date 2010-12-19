@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=sse41 -disable-mmx -o %t
+; RUN: llc < %s -march=x86 -mattr=sse41 -o %t
 ; RUN: grep pshufhw %t | grep -- -95 | count 1
 ; RUN: grep shufps %t | count 1
 ; RUN: not grep pslldq %t

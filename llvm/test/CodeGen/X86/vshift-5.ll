@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -disable-mmx | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
 
 ; When loading the shift amount from memory, avoid generating the splat.
 

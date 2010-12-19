@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -disable-mmx >/dev/null
+; RUN: llc < %s -march=x86-64
 
 define void @foo(<8 x i32>* %p) nounwind {
   %t = load <8 x i32>* %p

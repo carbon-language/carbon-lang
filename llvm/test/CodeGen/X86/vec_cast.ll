@@ -1,5 +1,4 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=core2
-; RUN: llc < %s -march=x86-64 -mcpu=core2 -disable-mmx
 
 
 define <8 x i32> @a(<8 x i16> %a) nounwind {

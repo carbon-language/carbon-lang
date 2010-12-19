@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse42 | FileCheck %s
 ; CHECK: cvtsi2ss
 
 ; sign to float v2i16 to v2f32

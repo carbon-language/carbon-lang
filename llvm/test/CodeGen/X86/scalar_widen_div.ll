@@ -1,4 +1,4 @@
-; RUN: llc < %s -disable-mmx -march=x86-64 -mattr=+sse42 |  FileCheck %s
+; RUN: llc < %s -march=x86-64 -mattr=+sse42 |  FileCheck %s
 
 ; Verify when widening a divide/remainder operation, we only generate a
 ; divide/rem per element since divide/remainder can trap.
