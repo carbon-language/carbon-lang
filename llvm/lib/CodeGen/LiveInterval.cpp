@@ -769,6 +769,14 @@ unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
       // operand constraint?
       if (const VNInfo *UVNI = LI->getVNInfoAt(VNI->def.getUseIndex()))
         Connect(VNI->id, UVNI->id);
+
+      // Check for a tied operand constraint involving an early clobber def,
+      // where one VN ends right before the use index and the next VN is defined
+      // at the same use index.
+      if (VNI->def.isUse()) {
+        if (const VNInfo *PVNI = LI->getVNInfoAt(VNI->def.getLoadIndex()))
+          Connect(PVNI->id, VNI->id);
+      }
     }
   }
 
