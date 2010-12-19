@@ -194,7 +194,7 @@ protected:
 
     struct Entry
     {
-        enum { kInvalidSectIdx = 255 };
+        enum { kInvalidSectIdx = UINT32_MAX };
 
         Entry () :
             sect_idx (kInvalidSectIdx),
@@ -210,7 +210,7 @@ protected:
         {
         }
 
-        Entry ( uint8_t _sect_idx,
+        Entry ( uint32_t _sect_idx,
                 lldb::addr_t _sect_offset,
                 uint32_t _line,
                 uint16_t _column,
@@ -231,10 +231,10 @@ protected:
             is_epilogue_begin (_is_epilogue_begin),
             is_terminal_entry (_is_terminal_entry)
         {
-            // We have reserved 24 bits for the section offset which should
+            // We have reserved 32 bits for the section offset which should
             // be enough, but if it isn't then we need to make m_section_offset
             // bigger
-            assert((_sect_offset & 0xffffffffff000000ull) == 0);
+            assert(_sect_offset <= UINT32_MAX);
         }
 
         int
@@ -295,8 +295,8 @@ protected:
         //------------------------------------------------------------------
         // Member variables.
         //------------------------------------------------------------------
-        uint32_t    sect_idx:8,                 ///< The section index for this line entry.
-                    sect_offset:24;             ///< The offset into the section for this line entry.
+        uint32_t    sect_idx;                   ///< The section index for this line entry.
+        uint32_t    sect_offset;                ///< The offset into the section for this line entry.
         uint32_t    line;                       ///< The source line number, or zero if there is no line number information.
         uint16_t    column;                     ///< The column number of the source line, or zero if there is no column information.
         uint16_t    file_idx:11,                ///< The file index into CompileUnit's file table, or zero if there is no file information.

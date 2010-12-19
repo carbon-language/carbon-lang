@@ -57,10 +57,6 @@ LineTable::AppendLineEntry
 )
 {
     uint32_t sect_idx = m_section_list.AddUniqueSection (section_sp);
-    // Make sure we don't user more than 256 sections as that is all we have
-    // room for in the LineTable::Entry::m_sect_idx. If this assert fires,
-    // we will need to m_sect_idx have more bits...
-    assert((section_offset & 0xffffffffff000000ull) == 0);
     Entry entry(sect_idx, section_offset, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
     m_entries.push_back (entry);
 }
@@ -91,10 +87,6 @@ LineTable::InsertLineEntry
     }
 
     uint32_t sect_idx = m_section_list.AddUniqueSection (line_section_sp);
-    // Make sure we don't user more than 256 sections as that is all we have
-    // room for in the LineTable::Entry::m_sect_idx. If this assert fires,
-    // we will need to m_sect_idx have more bits...
-    assert((section_offset & 0xffffffffff000000ull) == 0);
     Entry entry(sect_idx, section_offset, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
 
     entry_collection::iterator begin_pos = m_entries.begin();
