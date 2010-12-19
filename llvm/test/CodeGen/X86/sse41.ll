@@ -200,11 +200,11 @@ define i32 @ptestz_2(<4 x float> %t1, <4 x float> %t2) nounwind {
         ret i32 %tmp1
 ; X32: _ptestz_2:
 ; X32:    ptest 	%xmm1, %xmm0
-; X32:    setb	%al
+; X32:    sbbl	%eax
 
 ; X64: _ptestz_2:
 ; X64:    ptest 	%xmm1, %xmm0
-; X64:    setb	%al
+; X64:    sbbl	%eax
 }
 
 define i32 @ptestz_3(<4 x float> %t1, <4 x float> %t2) nounwind {

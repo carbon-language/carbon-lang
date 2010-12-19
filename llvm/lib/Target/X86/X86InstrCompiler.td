@@ -193,7 +193,18 @@ def SETB_C64r : RI<0x19, MRMInitReg, (outs GR64:$dst), (ins), "",
 } // isCodeGenOnly
 
 
+def : Pat<(i16 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C16r)>;
+def : Pat<(i32 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C32r)>;
 def : Pat<(i64 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C64r)>;
+
+def : Pat<(i16 (sext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C16r)>;
+def : Pat<(i32 (sext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
+          (SETB_C32r)>;
+def : Pat<(i64 (sext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
           (SETB_C64r)>;
 
 

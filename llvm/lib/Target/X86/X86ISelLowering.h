@@ -92,7 +92,7 @@ namespace llvm {
 
       // Same as SETCC except it's materialized with a sbb and the value is all
       // one's or all zero's.
-      SETCC_CARRY,
+      SETCC_CARRY,  // R = carry_bit ? ~0 : 0
 
       /// X86 conditional moves. Operand 0 and operand 1 are the two values
       /// to select from. Operand 2 is the condition code, and operand 3 is the

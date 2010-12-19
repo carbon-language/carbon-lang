@@ -7053,17 +7053,9 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   if (X86CC == X86::COND_INVALID)
     return SDValue();
 
-  SDValue Cond = EmitCmp(Op0, Op1, X86CC, DAG);
-
-  // Use sbb x, x to materialize carry bit into a GPR.
-  if (X86CC == X86::COND_B)
-    return DAG.getNode(ISD::AND, dl, MVT::i8,
-                       DAG.getNode(X86ISD::SETCC_CARRY, dl, MVT::i8,
-                                   DAG.getConstant(X86CC, MVT::i8), Cond),
-                       DAG.getConstant(1, MVT::i8));
-
+  SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, DAG);
   return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-                     DAG.getConstant(X86CC, MVT::i8), Cond);
+                     DAG.getConstant(X86CC, MVT::i8), EFLAGS);
 }
 
 SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
@@ -11430,13 +11422,31 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+// Optimize  RES = X86ISD::SETCC CONDCODE, EFLAG_INPUT
+static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG) {
+  unsigned X86CC = N->getConstantOperandVal(0);
+  SDValue EFLAG = N->getOperand(1);
+  DebugLoc DL = N->getDebugLoc();
+  
+  // Materialize "setb reg" as "sbb reg,reg", since it can be extended without
+  // a zext and produces an all-ones bit which is more useful than 0/1 in some
+  // cases.
+  if (X86CC == X86::COND_B)
+    return DAG.getNode(ISD::AND, DL, MVT::i8,
+                       DAG.getNode(X86ISD::SETCC_CARRY, DL, MVT::i8,
+                                   DAG.getConstant(X86CC, MVT::i8), EFLAG),
+                       DAG.getConstant(1, MVT::i8));
+  
+  return SDValue();
+}
+
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
   switch (N->getOpcode()) {
   default: break;
   case ISD::EXTRACT_VECTOR_ELT:
-                        return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
+    return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
   case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
@@ -11452,6 +11462,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
   case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG);
+  case X86ISD::SETCC:       return PerformSETCCCombine(N, DAG);
   case X86ISD::SHUFPS:      // Handle all target specific shuffles
   case X86ISD::SHUFPD:
   case X86ISD::PALIGN:

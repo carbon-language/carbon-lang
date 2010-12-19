@@ -114,8 +114,8 @@ declare i32 @llvm.x86.sse2.comile.sd(<2 x double>, <2 x double>) nounwind readno
 
 define i32 @test_x86_sse2_comilt_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vcomisd
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbbl    %eax, %eax
+  ; CHECK: andl    $1, %eax
   %res = call i32 @llvm.x86.sse2.comilt.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -825,8 +825,7 @@ declare i32 @llvm.x86.sse2.ucomile.sd(<2 x double>, <2 x double>) nounwind readn
 
 define i32 @test_x86_sse2_ucomilt_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vucomisd
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbbl
   %res = call i32 @llvm.x86.sse2.ucomilt.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1183,8 +1182,7 @@ declare <2 x i64> @llvm.x86.sse41.pmuldq(<4 x i32>, <4 x i32>) nounwind readnone
 
 define i32 @test_x86_sse41_ptestc(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vptest 
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbbl
   %res = call i32 @llvm.x86.sse41.ptestc(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1455,8 +1453,7 @@ declare i32 @llvm.x86.sse.comile.ss(<4 x float>, <4 x float>) nounwind readnone
 
 define i32 @test_x86_sse_comilt_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vcomiss
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbb
   %res = call i32 @llvm.x86.sse.comilt.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1697,8 +1694,7 @@ declare i32 @llvm.x86.sse.ucomile.ss(<4 x float>, <4 x float>) nounwind readnone
 
 define i32 @test_x86_sse_ucomilt_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vucomiss
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbbl
   %res = call i32 @llvm.x86.sse.ucomilt.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2173,8 +2169,7 @@ declare void @llvm.x86.avx.movnt.ps.256(i8*, <8 x float>) nounwind
 
 define i32 @test_x86_avx_ptestc_256(<4 x i64> %a0, <4 x i64> %a1) {
   ; CHECK: vptest
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbbl
   %res = call i32 @llvm.x86.avx.ptestc.256(<4 x i64> %a0, <4 x i64> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2451,8 +2446,7 @@ declare <8 x float> @llvm.x86.avx.vpermilvar.ps.256(<8 x float>, <8 x i32>) noun
 
 define i32 @test_x86_avx_vtestc_pd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vtestpd
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbbl
   %res = call i32 @llvm.x86.avx.vtestc.pd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2461,8 +2455,7 @@ declare i32 @llvm.x86.avx.vtestc.pd(<2 x double>, <2 x double>) nounwind readnon
 
 define i32 @test_x86_avx_vtestc_pd_256(<4 x double> %a0, <4 x double> %a1) {
   ; CHECK: vtestpd
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbbl
   %res = call i32 @llvm.x86.avx.vtestc.pd.256(<4 x double> %a0, <4 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2471,8 +2464,7 @@ declare i32 @llvm.x86.avx.vtestc.pd.256(<4 x double>, <4 x double>) nounwind rea
 
 define i32 @test_x86_avx_vtestc_ps(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vtestps
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbbl
   %res = call i32 @llvm.x86.avx.vtestc.ps(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2481,8 +2473,7 @@ declare i32 @llvm.x86.avx.vtestc.ps(<4 x float>, <4 x float>) nounwind readnone
 
 define i32 @test_x86_avx_vtestc_ps_256(<8 x float> %a0, <8 x float> %a1) {
   ; CHECK: vtestps
-  ; CHECK: setb
-  ; CHECK: movzbl
+  ; CHECK: sbbl
   %res = call i32 @llvm.x86.avx.vtestc.ps.256(<8 x float> %a0, <8 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
