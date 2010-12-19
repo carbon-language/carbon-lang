@@ -211,6 +211,17 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
   const PHINode *DestBBPN = dyn_cast<PHINode>(DestBB->begin());
   if (!DestBBPN) return true;  // no conflict.
 
+  // Walk all the PHI nodes in DestBB.  If any of the input values to the PHI
+  // are trapping constant exprs, then merging this block would introduce the
+  // possible trap into new control flow if we have any critical predecessor
+  // edges.
+  for (BasicBlock::const_iterator I = DestBB->begin(); isa<PHINode>(I); ++I) {
+    const PHINode *PN = cast<PHINode>(I);
+    if (const Constant *C =dyn_cast<Constant>(PN->getIncomingValueForBlock(BB)))
+      if (C->canTrap())
+        return false;
+  }
+  
   // Collect the preds of BB.
   SmallPtrSet<const BasicBlock*, 16> BBPreds;
   if (const PHINode *BBPN = dyn_cast<PHINode>(BB->begin())) {
