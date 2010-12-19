@@ -1956,7 +1956,8 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     }
   }
   // fall through
-  case ISD::ADD: {
+  case ISD::ADD:
+  case ISD::ADDE: {
     // Output known-0 bits are known if clear or set in both the low clear bits
     // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
     // low 3 bits clear.
@@ -1971,7 +1972,17 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     KnownZeroOut = std::min(KnownZeroOut,
                             KnownZero2.countTrailingOnes());
 
-    KnownZero |= APInt::getLowBitsSet(BitWidth, KnownZeroOut);
+    if (Op.getOpcode() == ISD::ADD) {
+      KnownZero |= APInt::getLowBitsSet(BitWidth, KnownZeroOut);
+      return;
+    }
+
+    // With ADDE, a carry bit may be added in, so we can only use this
+    // information if we know (at least) that the low two bits are clear.  We
+    // then return to the caller that the low bit is unknown but that other bits
+    // are known zero.
+    if (KnownZeroOut >= 2) // ADDE
+      KnownZero |= APInt::getBitsSet(BitWidth, 1, KnownZeroOut);
     return;
   }
   case ISD::SREM:
