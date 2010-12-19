@@ -7018,8 +7018,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   // Lower (X & (1 << N)) == 0 to BT(X, N).
   // Lower ((X >>u N) & 1) != 0 to BT(X, N).
   // Lower ((X >>s N) & 1) != 0 to BT(X, N).
-  if (Op0.getOpcode() == ISD::AND &&
-      Op0.hasOneUse() &&
+  if (Op0.getOpcode() == ISD::AND && Op0.hasOneUse() &&
       Op1.getOpcode() == ISD::Constant &&
       cast<ConstantSDNode>(Op1)->isNullValue() &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
@@ -7028,19 +7027,25 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       return NewSetCC;
   }
 
-  // Look for "(setcc) == / != 1" to avoid unnecessary setcc.
-  if (Op0.getOpcode() == X86ISD::SETCC &&
-      Op1.getOpcode() == ISD::Constant &&
+  // Look for X == 0, X == 1, X != 0, or X != 1.  We can simplify some forms of
+  // these.
+  if (Op1.getOpcode() == ISD::Constant &&
       (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
        cast<ConstantSDNode>(Op1)->isNullValue()) &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
-    X86::CondCode CCode = (X86::CondCode)Op0.getConstantOperandVal(0);
-    bool Invert = (CC == ISD::SETNE) ^
-      cast<ConstantSDNode>(Op1)->isNullValue();
-    if (Invert)
+ 
+    // If the input is a setcc, then reuse the input setcc or use a new one with
+    // the inverted condition.
+    if (Op0.getOpcode() == X86ISD::SETCC) {
+      X86::CondCode CCode = (X86::CondCode)Op0.getConstantOperandVal(0);
+      bool Invert = (CC == ISD::SETNE) ^
+        cast<ConstantSDNode>(Op1)->isNullValue();
+      if (!Invert) return Op0;
+      
       CCode = X86::GetOppositeBranchCondition(CCode);
-    return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-                       DAG.getConstant(CCode, MVT::i8), Op0.getOperand(1));
+      return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                         DAG.getConstant(CCode, MVT::i8), Op0.getOperand(1));
+    }
   }
 
   bool isFP = Op1.getValueType().isFloatingPoint();
