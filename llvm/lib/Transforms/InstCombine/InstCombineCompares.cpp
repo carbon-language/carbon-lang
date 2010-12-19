@@ -1588,6 +1588,16 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
                                           ConstantInt *CI2, ConstantInt *CI1,
                                           InstCombiner::BuilderTy *Builder) {
+  // The transformation we're trying to do here is to transform this into an
+  // llvm.sadd.with.overflow.  To do this, we have to replace the original add
+  // with a narrower add, and discard the add-with-constant that is part of the
+  // range check (if we can't eliminate it, this isn't profitable).
+  
+  // In order to eliminate the add-with-constant, the compare can be its only
+  // use.
+  Value *AddWithCst = I.getOperand(0);
+  if (!AddWithCst->hasOneUse()) return 0;
+
   const IntegerType *WideType = cast<IntegerType>(CI1->getType());
   unsigned WideWidth = WideType->getBitWidth();
   unsigned NarrowWidth = WideWidth / 2;
