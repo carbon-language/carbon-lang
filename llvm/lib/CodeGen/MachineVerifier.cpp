@@ -690,7 +690,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           const LiveInterval &LI = LiveInts->getInterval(Reg);
           if (const VNInfo *VNI = LI.getVNInfoAt(DefIdx)) {
             assert(VNI && "NULL valno is not allowed");
-            if (VNI->def != DefIdx) {
+            if (VNI->def != DefIdx && !MO->isEarlyClobber()) {
               report("Inconsistent valno->def", MO, MONum);
               *OS << "Valno " << VNI->id << " is not defined at "
                   << DefIdx << " in " << LI << '\n';
