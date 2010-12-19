@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -verify %s
-// XFAIL: *
+
 typedef typeof(sizeof(int)) size_t;
 void malloc (size_t);
 

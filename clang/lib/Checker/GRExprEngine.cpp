@@ -2506,9 +2506,12 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
   //  time a function is called those values may not be current.
   ExplodedNodeSet Tmp;
 
-  if (InitEx)
-    Visit(InitEx, Pred, Tmp);
-  else
+  if (InitEx) {
+    if (VD->getType()->isReferenceType() && !InitEx->isLValue()) {
+      CreateCXXTemporaryObject(InitEx, Pred, Tmp);
+    } else
+      Visit(InitEx, Pred, Tmp);
+  } else
     Tmp.Add(Pred);
 
   ExplodedNodeSet Tmp2;
