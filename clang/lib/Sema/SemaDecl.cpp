@@ -1140,15 +1140,15 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   //
   // Note also that we DO NOT return at this point, because we still have
   // other tests to run.
-  const FunctionType *OldType = OldQType->getAs<FunctionType>();
+  const FunctionType *OldType = cast<FunctionType>(OldQType);
   const FunctionType *NewType = New->getType()->getAs<FunctionType>();
-  const FunctionType::ExtInfo OldTypeInfo = OldType->getExtInfo();
-  const FunctionType::ExtInfo NewTypeInfo = NewType->getExtInfo();
+  FunctionType::ExtInfo OldTypeInfo = OldType->getExtInfo();
+  FunctionType::ExtInfo NewTypeInfo = NewType->getExtInfo();
+  bool RequiresAdjustment = false;
   if (OldTypeInfo.getCC() != CC_Default &&
       NewTypeInfo.getCC() == CC_Default) {
-    NewQType = Context.getCallConvType(NewQType, OldTypeInfo.getCC());
-    New->setType(NewQType);
-    NewQType = Context.getCanonicalType(NewQType);
+    NewTypeInfo = NewTypeInfo.withCallingConv(OldTypeInfo.getCC());
+    RequiresAdjustment = true;
   } else if (!Context.isSameCallConv(OldTypeInfo.getCC(),
                                      NewTypeInfo.getCC())) {
     // Calling conventions really aren't compatible, so complain.
@@ -1162,25 +1162,29 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   }
 
   // FIXME: diagnose the other way around?
-  if (OldType->getNoReturnAttr() && !NewType->getNoReturnAttr()) {
-    NewQType = Context.getNoReturnType(NewQType);
-    New->setType(NewQType);
-    assert(NewQType.isCanonical());
+  if (OldTypeInfo.getNoReturn() && !NewTypeInfo.getNoReturn()) {
+    NewTypeInfo = NewTypeInfo.withNoReturn(true);
+    RequiresAdjustment = true;
   }
 
   // Merge regparm attribute.
-  if (OldType->getRegParmType() != NewType->getRegParmType()) {
-    if (NewType->getRegParmType()) {
+  if (OldTypeInfo.getRegParm() != NewTypeInfo.getRegParm()) {
+    if (NewTypeInfo.getRegParm()) {
       Diag(New->getLocation(), diag::err_regparm_mismatch)
         << NewType->getRegParmType()
         << OldType->getRegParmType();
       Diag(Old->getLocation(), diag::note_previous_declaration);      
       return true;
     }
-    
-    NewQType = Context.getRegParmType(NewQType, OldType->getRegParmType());
-    New->setType(NewQType);
-    assert(NewQType.isCanonical());    
+
+    NewTypeInfo = NewTypeInfo.withRegParm(OldTypeInfo.getRegParm());
+    RequiresAdjustment = true;
+  }
+
+  if (RequiresAdjustment) {
+    NewType = Context.adjustFunctionType(NewType, NewTypeInfo);
+    New->setType(QualType(NewType, 0));
+    NewQType = Context.getCanonicalType(New->getType());
   }
   
   if (getLangOptions().CPlusPlus) {
@@ -1188,10 +1192,8 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     //   Certain function declarations cannot be overloaded:
     //     -- Function declarations that differ only in the return type
     //        cannot be overloaded.
-    QualType OldReturnType
-      = cast<FunctionType>(OldQType.getTypePtr())->getResultType();
-    QualType NewReturnType
-      = cast<FunctionType>(NewQType.getTypePtr())->getResultType();
+    QualType OldReturnType = OldType->getResultType();
+    QualType NewReturnType = cast<FunctionType>(NewQType)->getResultType();
     QualType ResQT;
     if (OldReturnType != NewReturnType) {
       if (NewReturnType->isObjCObjectPointerType()
@@ -1261,9 +1263,19 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     // (C++98 8.3.5p3):
     //   All declarations for a function shall agree exactly in both the
     //   return type and the parameter-type-list.
-    // attributes should be ignored when comparing.
-    if (Context.getNoReturnType(OldQType, false) ==
-        Context.getNoReturnType(NewQType, false))
+    // We also want to respect all the extended bits except noreturn.
+
+    // noreturn should now match unless the old type info didn't have it.
+    QualType OldQTypeForComparison = OldQType;
+    if (!OldTypeInfo.getNoReturn() && NewTypeInfo.getNoReturn()) {
+      assert(OldQType == QualType(OldType, 0));
+      const FunctionType *OldTypeForComparison
+        = Context.adjustFunctionType(OldType, OldTypeInfo.withNoReturn(true));
+      OldQTypeForComparison = QualType(OldTypeForComparison, 0);
+      assert(OldQTypeForComparison.isCanonical());
+    }
+
+    if (OldQTypeForComparison == NewQType)
       return MergeCompatibleFunctionDecls(New, Old);
 
     // Fall through for conflicting redeclarations and redefinitions.

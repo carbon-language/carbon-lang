@@ -1895,8 +1895,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     if (CheckExceptionSpecCompatibility(From, ToType))
       return true;      
       
-    ImpCastExprToType(From, Context.getNoReturnType(From->getType(), false),
-                      CK_NoOp);
+    ImpCastExprToType(From, ToType, CK_NoOp);
     break;
       
   case ICK_Integral_Promotion:

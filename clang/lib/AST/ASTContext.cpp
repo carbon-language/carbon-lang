@@ -1140,8 +1140,27 @@ QualType ASTContext::getObjCGCQualType(QualType T,
   return getExtQualType(TypeNode, Quals);
 }
 
+const FunctionType *ASTContext::adjustFunctionType(const FunctionType *T,
+                                                   FunctionType::ExtInfo Info) {
+  if (T->getExtInfo() == Info)
+    return T;
+
+  QualType Result;
+  if (const FunctionNoProtoType *FNPT = dyn_cast<FunctionNoProtoType>(T)) {
+    Result = getFunctionNoProtoType(FNPT->getResultType(), Info);
+  } else {
+    const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
+    FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+    EPI.ExtInfo = Info;
+    Result = getFunctionType(FPT->getResultType(), FPT->arg_type_begin(),
+                             FPT->getNumArgs(), EPI);
+  }
+
+  return cast<FunctionType>(Result.getTypePtr());
+}
+
 static QualType getExtFunctionType(ASTContext& Context, QualType T,
-                                   const FunctionType::ExtInfo &Info) {
+                                   FunctionType::ExtInfo Info) {
   QualType ResultType;
   if (const PointerType *Pointer = T->getAs<PointerType>()) {
     QualType Pointee = Pointer->getPointeeType();
@@ -1175,20 +1194,7 @@ static QualType getExtFunctionType(ASTContext& Context, QualType T,
     ResultType = Context.getMemberPointerType(ResultType, 
                                               MemberPointer->getClass());
    } else if (const FunctionType *F = T->getAs<FunctionType>()) {
-    if (F->getExtInfo() == Info)
-      return T;
-
-    if (const FunctionNoProtoType *FNPT = dyn_cast<FunctionNoProtoType>(F)) {
-      ResultType = Context.getFunctionNoProtoType(FNPT->getResultType(),
-                                                  Info);
-    } else {
-      const FunctionProtoType *FPT = cast<FunctionProtoType>(F);
-      FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-      EPI.ExtInfo = Info;
-      ResultType = Context.getFunctionType(FPT->getResultType(),
-                                           FPT->arg_type_begin(),
-                                           FPT->getNumArgs(), EPI);
-    }
+    ResultType = QualType(Context.adjustFunctionType(F, Info), 0);
   } else
     return T;
 
@@ -1198,16 +1204,6 @@ static QualType getExtFunctionType(ASTContext& Context, QualType T,
 QualType ASTContext::getNoReturnType(QualType T, bool AddNoReturn) {
   FunctionType::ExtInfo Info = getFunctionExtInfo(T);
   return getExtFunctionType(*this, T, Info.withNoReturn(AddNoReturn));
-}
-
-QualType ASTContext::getCallConvType(QualType T, CallingConv CallConv) {
-  FunctionType::ExtInfo Info = getFunctionExtInfo(T);
-  return getExtFunctionType(*this, T, Info.withCallingConv(CallConv));
-}
-
-QualType ASTContext::getRegParmType(QualType T, unsigned RegParm) {
-  FunctionType::ExtInfo Info = getFunctionExtInfo(T);
-  return getExtFunctionType(*this, T, Info.withRegParm(RegParm));
 }
 
 /// getComplexType - Return the uniqued reference to the type for a complex

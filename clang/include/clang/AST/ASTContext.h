@@ -479,20 +479,14 @@ public:
   /// equivalent to calling T.withConst().
   QualType getConstType(QualType T) { return T.withConst(); }
 
+  /// adjustFunctionType - Change the ExtInfo on a function type.
+  const FunctionType *adjustFunctionType(const FunctionType *Fn,
+                                         FunctionType::ExtInfo EInfo);
+
   /// getNoReturnType - Add or remove the noreturn attribute to the given type 
   /// which must be a FunctionType or a pointer to an allowable type or a 
   /// BlockPointer.
   QualType getNoReturnType(QualType T, bool AddNoReturn = true);
-
-  /// getCallConvType - Adds the specified calling convention attribute to
-  /// the given type, which must be a FunctionType or a pointer to an
-  /// allowable type.
-  QualType getCallConvType(QualType T, CallingConv CallConv);
-
-  /// getRegParmType - Sets the specified regparm attribute to
-  /// the given type, which must be a FunctionType or a pointer to an
-  /// allowable type.
-  QualType getRegParmType(QualType T, unsigned RegParm);
 
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.
