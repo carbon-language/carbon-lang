@@ -101,10 +101,6 @@ public:
     /// @param[in] match_count
     ///     The number of regmatch_t objects in \a match_ptr
     ///
-    /// @param[out] match_ptr
-    ///     A pointer to at least \a match_count regmatch_t objects
-    ///     if \a match_count is non-zero.
-    ///
     /// @param[in] execute_flags
     ///     Flags to pass to the \c regexec() function.
     ///

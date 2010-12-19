@@ -100,7 +100,7 @@ RegularExpression::Execute(const char* s, size_t num_matches, int execute_flags)
         match_result = ::regexec (&m_preg,
                                   s,
                                   m_matches.size(),
-                                  &m_matches.front(),
+                                  &m_matches[0],
                                   execute_flags);
     }
     return match_result == 0;
@@ -111,9 +111,18 @@ RegularExpression::GetMatchAtIndex (const char* s, uint32_t idx, std::string& ma
 {
     if (idx <= m_preg.re_nsub && idx < m_matches.size())
     {
-        match_str.assign (s + m_matches[idx].rm_so,
-                          m_matches[idx].rm_eo - m_matches[idx].rm_so);
-        return true;
+        if (m_matches[idx].rm_eo == m_matches[idx].rm_so)
+        {
+            // Matched the empty string...
+            match_str.clear();
+            return true;
+        }
+        else if (m_matches[idx].rm_eo > m_matches[idx].rm_so)
+        {
+            match_str.assign (s + m_matches[idx].rm_so,
+                              m_matches[idx].rm_eo - m_matches[idx].rm_so);
+            return true;
+        }
     }
     return false;
 }

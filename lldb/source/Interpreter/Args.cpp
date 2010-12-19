@@ -23,10 +23,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static const char *k_space_characters = "\t\n\v\f\r ";
-static const char *k_space_characters_with_slash = "\t\n\v\f\r \\";
-
-
 //----------------------------------------------------------------------
 // Args constructor
 //----------------------------------------------------------------------
@@ -34,7 +30,8 @@ Args::Args (const char *command) :
     m_args(),
     m_argv()
 {
-    SetCommandString (command);
+    if (command)
+        SetCommandString (command);
 }
 
 
@@ -42,10 +39,9 @@ Args::Args (const char *command, size_t len) :
     m_args(),
     m_argv()
 {
-    SetCommandString (command, len);
+    if (command && len)
+        SetCommandString (command, len);
 }
-
-
 
 //----------------------------------------------------------------------
 // Destructor
@@ -97,20 +93,20 @@ bool
 Args::GetQuotedCommandString (std::string &command)
 {
     command.clear ();
-    int argc = GetArgumentCount ();
-    for (int i = 0; i < argc; ++i)
+    size_t argc = GetArgumentCount ();
+    for (size_t i = 0; i < argc; ++i)
     {
         if (i > 0)
-            command += ' ';
-        char quote_char = m_args_quote_char[i];
-        if (quote_char != '\0')
+            command.append (1, ' ');
+        char quote_char = GetArgumentQuoteCharAtIndex(i);
+        if (quote_char)
         {
-            command += quote_char;
-            command += m_argv[i];
-            command += quote_char;
+            command.append (1, quote_char);
+            command.append (m_argv[i]);
+            command.append (1, quote_char);
         }
         else
-            command += m_argv[i];
+            command.append (m_argv[i]);
     }
     return argc > 0;
 }
@@ -127,136 +123,197 @@ Args::SetCommandString (const char *command, size_t len)
 void
 Args::SetCommandString (const char *command)
 {
+    StreamFile s(stdout);
+    s.Printf("\nCOMMAND: %s\n", command);
     m_args.clear();
     m_argv.clear();
+    m_args_quote_char.clear();
+
     if (command && command[0])
     {
-        const char *arg_start;
-        const char *next_arg_start;
-        for (arg_start = command, next_arg_start = NULL;
-             arg_start && arg_start[0];
-             arg_start = next_arg_start, next_arg_start = NULL)
+        static const char *k_space_separators = " \t";
+        static const char *k_space_separators_with_slash_and_quotes = " \t \\'\"`";
+        const char *arg_end = NULL;
+        const char *arg_pos;
+        for (arg_pos = command;
+             arg_pos && arg_pos[0];
+             arg_pos = arg_end)
         {
-            // Skip any leading space characters
-            arg_start = ::strspn (arg_start, k_space_characters) + arg_start;
-
-            // If there were only space characters to the end of the line, then
+            // Skip any leading space separators
+            const char *arg_start = ::strspn (arg_pos, k_space_separators) + arg_pos;
+            
+            // If there were only space separators to the end of the line, then
             // we're done.
             if (*arg_start == '\0')
                 break;
 
+            // Arguments can be split into multiple discongituous pieces,
+            // for example:
+            //  "Hello ""World"
+            // this would result in a single argument "Hello World" (without/
+            // the quotes) since the quotes would be removed and there is 
+            // not space between the strings. So we need to keep track of the
+            // current start of each argument piece in "arg_piece_start"
+            const char *arg_piece_start = arg_start;
+            arg_pos = arg_piece_start;
+
             std::string arg;
-            const char *arg_end = NULL;
+            // Since we can have multiple quotes that form a single command
+            // in a command like: "Hello "world'!' (which will make a single
+            // argument "Hello world!") we remember the first quote character
+            // we encounter and use that for the quote character.
+            char first_quote_char = '\0';
+            char quote_char = '\0';
+            bool arg_complete = false;
 
-            switch (*arg_start)
+            do
             {
-            case '\'':
-            case '"':
-            case '`':
+                arg_end = ::strcspn (arg_pos, k_space_separators_with_slash_and_quotes) + arg_pos;
+
+                switch (arg_end[0])
                 {
-                    // Look for either a quote character, or the backslash
-                    // character
-                    const char quote_char = *arg_start;
-                    char find_chars[3] = { quote_char, '\\' , '\0'};
-                    bool is_backtick = (quote_char == '`');
-                    if (quote_char == '"' || quote_char == '`')
-                        m_args_quote_char.push_back(quote_char);
-                    else
-                        m_args_quote_char.push_back('\0');
+                default:
+                    assert (!"Unhandled case statement, we must handle this...");
+                    break;
 
-                    while (*arg_start != '\0')
+                case '\0':
+                    // End of C string
+                    if (arg_piece_start && arg_piece_start[0])
+                        arg.append (arg_piece_start);
+                    arg_complete = true;
+                    break;
+                    
+                case '\\':
+                    // Backslash character
+                    switch (arg_end[1])
                     {
-                        arg_end = ::strcspn (arg_start + 1, find_chars) + arg_start + 1;
-
-                        if (*arg_end == '\0')
-                        {
-                            arg.append (arg_start);
+                        case '\0':
+                            arg.append (arg_piece_start);
+                            arg_complete = true;
                             break;
-                        }
 
-                        // Watch out for quote characters prefixed with '\'
-                        if (*arg_end == '\\')
+                        default:
+                            arg_pos = arg_end + 2;
+                            break;
+                    }
+                    break;
+                
+                case '"':
+                case '\'':
+                case '`':
+                    // Quote characters 
+                    if (quote_char)
+                    {
+                        // We found a quote character while inside a quoted
+                        // character argument. If it matches our current quote
+                        // character, this ends the effect of the quotes. If it
+                        // doesn't we ignore it.
+                        if (quote_char == arg_end[0])
                         {
-                            if (arg_end[1] == quote_char)
+                            arg.append (arg_piece_start, arg_end - arg_piece_start);
+                            // Clear the quote character and let parsing
+                            // continue (we need to watch for things like:
+                            // "Hello ""World"
+                            // "Hello "World
+                            // "Hello "'World'
+                            // All of which will result in a single argument "Hello World"
+                            quote_char = '\0'; // Note that we are no longer inside quotes
+                            arg_pos = arg_end + 1; // Skip the quote character
+                            arg_piece_start = arg_pos; // Note we are starting from later in the string
+                        }
+                        else
+                        {
+                            // different quote, skip it and keep going
+                            arg_pos = arg_end + 1;
+                        }
+                    }
+                    else
+                    {
+                        // We found the start of a quote scope.
+                        // Make sure there isn't a string that predeces
+                        // the start of a quote scope like:
+                        // Hello" World"
+                        // If so, then add the "Hello" to the arg
+                        if (arg_end > arg_piece_start)
+                            arg.append (arg_piece_start, arg_end - arg_piece_start);
+                            
+                        // Enter into a quote scope
+                        quote_char = arg_end[0];
+                        
+                        if (first_quote_char == '\0')
+                            first_quote_char = quote_char;
+
+                        arg_pos = arg_end;
+                        
+                        if (quote_char != '`')
+                            ++arg_pos; // Skip the quote character if it is not a backtick
+
+                        arg_piece_start = arg_pos; // Note we are starting from later in the string
+                        
+                        // Skip till the next quote character
+                        const char *end_quote = ::strchr (arg_piece_start, quote_char);
+                        while (end_quote && end_quote[-1] == '\\')
+                        {
+                            // Don't skip the quote character if it is 
+                            // preceded by a '\' character
+                            end_quote = ::strchr (end_quote + 1, quote_char);
+                        }
+                        
+                        if (end_quote)
+                        {
+                            if (end_quote > arg_piece_start)
                             {
-                                // The character following the '\' is our quote
-                                // character so strip the backslash character
-                                arg.append (arg_start, arg_end);
+                                // Keep the backtick quote on commands
+                                if (quote_char == '`')
+                                    arg.append (arg_piece_start, end_quote + 1 - arg_piece_start);
+                                else
+                                    arg.append (arg_piece_start, end_quote - arg_piece_start);
+                            }
+
+                            // If the next character is a space or the end of 
+                            // string, this argument is complete...
+                            if (end_quote[1] == ' ' || end_quote[1] == '\t' || end_quote[1] == '\0')
+                            {
+                                arg_complete = true;
+                                arg_end = end_quote + 1;
                             }
                             else
                             {
-                                // The character following the '\' is NOT our
-                                // quote character, so include the backslash
-                                // and continue
-                                arg.append (arg_start, arg_end + 1);
+                                arg_pos = end_quote + 1;
+                                arg_piece_start = arg_pos;
                             }
-                            arg_start = arg_end + 1;
-                            continue;
-                        }
-                        else
-                        {
-                            arg.append (arg_start, arg_end + 1);
-                            next_arg_start = arg_end + 1;
-                            break;
+                            quote_char = '\0';
                         }
                     }
+                    break;
 
-                    // Skip single and double quotes, but leave backtick quotes
-                    if (!is_backtick)
+                case ' ':
+                case '\t':
+                    if (quote_char)
                     {
-                        char first_c = arg[0];
-                        arg.erase(0,1);
-                        // Only erase the last character if it is the same as the first.
-                        // Otherwise, we're parsing an incomplete command line, and we
-                        // would be stripping off the last character of that string.
-                        if (arg[arg.size() - 1] == first_c)
-                            arg.erase(arg.size() - 1, 1);
+                        // We are currently processing a quoted character and found
+                        // a space character, skip any spaces and keep trying to find
+                        // the end of the argument. 
+                        arg_pos = ::strspn (arg_end, k_space_separators) + arg_end;
                     }
-                }
-                break;
-            default:
-                {
-                    m_args_quote_char.push_back('\0');
-                    // Look for the next non-escaped space character
-                    while (*arg_start != '\0')
+                    else
                     {
-                        arg_end = ::strcspn (arg_start, k_space_characters_with_slash) + arg_start;
-
-                        if (arg_end == NULL)
-                        {
-                            arg.append(arg_start);
-                            break;
-                        }
-
-                        if (*arg_end == '\\')
-                        {
-                            // Append up to the '\' char
-                            arg.append (arg_start, arg_end);
-
-                            if (arg_end[1] == '\0')
-                                break;
-
-                            // Append the character following the '\' if it isn't
-                            // the end of the string
-                            arg.append (1, arg_end[1]);
-                            arg_start = arg_end + 2;
-                            continue;
-                        }
-                        else
-                        {
-                            arg.append (arg_start, arg_end);
-                            next_arg_start = arg_end;
-                            break;
-                        }
+                        // We are not inside any quotes, we just found a space after an
+                        // argument
+                        if (arg_end > arg_piece_start)
+                            arg.append (arg_piece_start, arg_end - arg_piece_start);
+                        arg_complete = true;
                     }
+                    break;
                 }
-                break;
-            }
+            } while (!arg_complete);
 
             m_args.push_back(arg);
+            m_args_quote_char.push_back (first_quote_char);
         }
+        UpdateArgvFromArgs();
     }
-    UpdateArgvFromArgs();
+    Dump (&s);
 }
 
 void
@@ -309,6 +366,9 @@ Args::UpdateArgvFromArgs()
     for (pos = m_args.begin(); pos != end; ++pos)
         m_argv.push_back(pos->c_str());
     m_argv.push_back(NULL);
+    // Make sure we have enough arg quote chars in the array
+    if (m_args_quote_char.size() < m_args.size())
+        m_args_quote_char.resize (m_argv.size());
 }
 
 size_t
@@ -359,7 +419,8 @@ Args::Shift ()
     {
         m_argv.erase(m_argv.begin());
         m_args.pop_front();
-        m_args_quote_char.erase(m_args_quote_char.begin());
+        if (!m_args_quote_char.empty())
+            m_args_quote_char.erase(m_args_quote_char.begin());
     }
 }
 
@@ -399,8 +460,13 @@ Args::InsertArgumentAtIndex (size_t idx, const char *arg_cstr, char quote_char)
 
     pos = m_args.insert(pos, arg_cstr);
     
-
-    m_args_quote_char.insert(m_args_quote_char.begin() + idx, quote_char);
+    if (idx >= m_args_quote_char.size())
+    {
+        m_args_quote_char.resize(idx + 1);
+        m_args_quote_char[idx] = quote_char;
+    }
+    else
+        m_args_quote_char.insert(m_args_quote_char.begin() + idx, quote_char);
     
     UpdateArgvFromArgs();
     return GetArgumentAtIndex(idx);
@@ -422,6 +488,8 @@ Args::ReplaceArgumentAtIndex (size_t idx, const char *arg_cstr, char quote_char)
         pos->assign(arg_cstr);
         assert(idx < m_argv.size() - 1);
         m_argv[idx] = pos->c_str();
+        if (idx >= m_args_quote_char.size())
+            m_args_quote_char.resize(idx + 1);
         m_args_quote_char[idx] = quote_char;
         return GetArgumentAtIndex(idx);
     }
@@ -444,7 +512,8 @@ Args::DeleteArgumentAtIndex (size_t idx)
         m_args.erase (pos);
         assert(idx < m_argv.size() - 1);
         m_argv.erase(m_argv.begin() + idx);
-        m_args_quote_char.erase(m_args_quote_char.begin() + idx);
+        if (idx < m_args_quote_char.size())
+            m_args_quote_char.erase(m_args_quote_char.begin() + idx);
     }
 }
 
@@ -462,7 +531,7 @@ Args::SetArguments (int argc, const char **argv)
     for (i=0; i<argc; ++i)
     {
         m_args.push_back (argv[i]);
-        if ((argv[i][0] == '"') || (argv[i][0] == '`'))
+        if ((argv[i][0] == '\'') || (argv[i][0] == '"') || (argv[i][0] == '`'))
             m_args_quote_char.push_back (argv[i][0]);
         else
             m_args_quote_char.push_back ('\0');

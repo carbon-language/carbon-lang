@@ -12,6 +12,7 @@
 
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -2102,34 +2103,32 @@ UserSettingsController::UpdateDictionaryVariable (lldb::VarSetOperationType op,
                 }
                 Args args (new_value);
                 size_t num_args = args.GetArgumentCount();
+                RegularExpression regex("(\\[\"?)?"                 // Regex match 1 (optional key prefix of '["' pr '[')
+                                        "([A-Za-z_][A-Za-z_0-9]*)"  // Regex match 2 (key string)
+                                        "(\"?\\])?"                 // Regex match 3 (optional key suffix of '"]' pr ']')
+                                        "="                         // The equal sign that is required
+                                        "(.*)");                    // Regex match 4 (value string)
+                std::string key, value;
+
                 for (size_t i = 0; i < num_args; ++i)
                 {
-                    std::string tmp_arg = args.GetArgumentAtIndex (i);
-                    size_t eq_sign = tmp_arg.find ('=');
-                    if (eq_sign != std::string::npos)
+                    const char *key_equal_value_arg = args.GetArgumentAtIndex (i);
+                    // Execute the regular expression on each arg.
+                    if (regex.Execute(key_equal_value_arg, 5))
                     {
-                        if (eq_sign > 4)
-                        {
-                            std::string tmp_key = tmp_arg.substr (0, eq_sign);
-                            std::string real_value = tmp_arg.substr (eq_sign+1);
-                            if ((tmp_key[0] == '[')
-                                && (tmp_key[1] == '"')
-                                && (tmp_key[eq_sign-2] == '"')
-                                && (tmp_key[eq_sign-1] == ']'))
-                              {
-                                std::string real_key = tmp_key.substr (2, eq_sign-4); 
-                                dictionary[real_key] = real_value;
-                              }
-                            else
-                                err.SetErrorString ("Invalid key format for dictionary assignment.  "
-                                                    "Expected '[\"<key>\"]'\n");
-                        }
-                        else
-                            err.SetErrorString ("Invalid key format for dictionary assignment.  "
-                                                "Expected '[\"<key>\"]'\n");
+                        // The regular expression succeeded. The match at index
+                        // zero will be the entire string that matched the entire
+                        // regular expression. The match at index 1 - 4 will be
+                        // as mentioned above by the creation of the regex pattern.
+                        // Match index 2 is the key, match index 4 is the value.
+                        regex.GetMatchAtIndex (key_equal_value_arg, 2, key);
+                        regex.GetMatchAtIndex (key_equal_value_arg, 4, value);
+                        dictionary[key] = value;
                     }
                     else
-                        err.SetErrorString ("Invalid format for dictionary value.  Expected '[\"<key>\"]=<value>'\n");
+                    {
+                        err.SetErrorString ("Invalid format for dictionary value.  Expected one of '[\"<key>\"]=<value>', '[<key>]=<value>', or '<key>=<value>'\n");
+                    }
                 }
             }  
             break;
