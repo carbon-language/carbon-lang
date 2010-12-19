@@ -1,7 +1,7 @@
 ; RUN: opt -S -instcombine < %s | FileCheck %s
 ; <rdar://problem/8558713>
 
-declare i32 @throwAnExceptionOrWhatever(...)
+declare void @throwAnExceptionOrWhatever()
 
 ; CHECK: @test1
 define i32 @test1(i32 %a, i32 %b) nounwind ssp {
@@ -16,7 +16,7 @@ entry:
   br i1 %0, label %if.then, label %if.end
 
 if.then:
-  %call = tail call i32 (...)* @throwAnExceptionOrWhatever() nounwind
+  tail call void @throwAnExceptionOrWhatever() nounwind
   br label %if.end
 
 if.end:
@@ -44,7 +44,7 @@ entry:
   br i1 %0, label %if.then, label %if.end
 
 if.then:
-  %call = tail call i32 (...)* @throwAnExceptionOrWhatever() nounwind
+  tail call void @throwAnExceptionOrWhatever() nounwind
   br label %if.end
 
 if.end:
@@ -54,6 +54,7 @@ if.end:
 }
 
 ; CHECK: test3
+; PR8816
 ; This is illegal to transform because the high bits of the original add are
 ; live out.
 define i64 @test3(i32 %a, i32 %b) nounwind ssp {
@@ -67,10 +68,32 @@ entry:
   br i1 %0, label %if.then, label %if.end
 
 if.then:
-  %call = tail call i32 (...)* @throwAnExceptionOrWhatever() nounwind
+  tail call void @throwAnExceptionOrWhatever() nounwind
   br label %if.end
 
 if.end:
   ret i64 %add
 ; CHECK: ret i64
 }
+
+; CHECK: @test4
+; Should be able to form an i8 sadd computed in an i32.
+define zeroext i8 @test4(i8 signext %a, i8 signext %b) nounwind ssp {
+entry:
+  %conv = sext i8 %a to i32
+  %conv2 = sext i8 %b to i32
+  %add = add nsw i32 %conv2, %conv
+  %add4 = add nsw i32 %add, 128
+  %cmp = icmp ugt i32 %add4, 255
+  br i1 %cmp, label %if.then, label %if.end
+; CHECK: llvm.sadd.with.overflow.i8
+if.then:                                          ; preds = %entry
+  tail call void @throwAnExceptionOrWhatever() nounwind
+  unreachable
+
+if.end:                                           ; preds = %entry
+  %conv7 = trunc i32 %add to i8
+  ret i8 %conv7
+; CHECK: ret i8
+}
+

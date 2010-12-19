@@ -1635,54 +1635,31 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
         TI->getType()->getPrimitiveSizeInBits() > NewWidth) return 0;
   }
   
-  const IntegerType *WideType = cast<IntegerType>(CI1->getType());
-  unsigned WideWidth = WideType->getBitWidth();
-  unsigned NarrowWidth = WideWidth / 2;
-  const IntegerType *NarrowType =
-  IntegerType::get(CI1->getContext(), NarrowWidth);
-  
-  // NarrowAllOnes and NarrowSignBit are the magic constants used to
-  // perform an overflow check in the wider type: 0x00..00FF..FF and
-  // 0x00..0010..00 respectively, where the highest set bit in each is
-  // what would be the sign bit in the narrower type.
-  ConstantInt *NarrowAllOnes = cast<ConstantInt>(ConstantInt::get(WideType,
-                          APInt::getAllOnesValue(NarrowWidth).zext(WideWidth)));
-  APInt SignBit(WideWidth, 0);
-  SignBit.setBit(NarrowWidth-1);
-  ConstantInt *NarrowSignBit =
-  cast<ConstantInt>(ConstantInt::get(WideType, SignBit));
-  
-  if (CI1 != NarrowAllOnes || CI2 != NarrowSignBit)
-    return 0;
-  
-  Module *M = I.getParent()->getParent()->getParent();
-  
-  const Type *IntrinsicType = NarrowType;
-  Value *F = Intrinsic::getDeclaration(M, Intrinsic::sadd_with_overflow,
-                                       &IntrinsicType, 1);
-  
-  BasicBlock *InitialBlock = Builder->GetInsertBlock();
-  BasicBlock::iterator InitialInsert = Builder->GetInsertPoint();
-  
   // If the pattern matches, truncate the inputs to the narrower type and
   // use the sadd_with_overflow intrinsic to efficiently compute both the
   // result and the overflow bit.
-  Builder->SetInsertPoint(OrigAdd->getParent(),
-                          BasicBlock::iterator(OrigAdd));
+  Module *M = I.getParent()->getParent()->getParent();
   
-  Value *TruncA = Builder->CreateTrunc(A, NarrowType, A->getName());
-  Value *TruncB = Builder->CreateTrunc(B, NarrowType, B->getName());
-  CallInst *Call = Builder->CreateCall2(F, TruncA, TruncB);
-  Value *Add = Builder->CreateExtractValue(Call, 0);
-  Value *ZExt = Builder->CreateZExt(Add, WideType);
+  const Type *NewType = IntegerType::get(OrigAdd->getContext(), NewWidth);
+  Value *F = Intrinsic::getDeclaration(M, Intrinsic::sadd_with_overflow,
+                                       &NewType, 1);
+
+  // Put the new code above the original add, in case there are any uses of the
+  // add between the add and the compare.
+  Builder->SetInsertPoint(OrigAdd->getParent(), BasicBlock::iterator(OrigAdd));
+  
+  Value *TruncA = Builder->CreateTrunc(A, NewType, A->getName()+".trunc");
+  Value *TruncB = Builder->CreateTrunc(B, NewType, B->getName()+".trunc");
+  CallInst *Call = Builder->CreateCall2(F, TruncA, TruncB, "sadd");
+  Value *Add = Builder->CreateExtractValue(Call, 0, "sadd.result");
+  Value *ZExt = Builder->CreateZExt(Add, OrigAdd->getType());
   
   // The inner add was the result of the narrow add, zero extended to the
   // wider type.  Replace it with the result computed by the intrinsic.
   OrigAdd->replaceAllUsesWith(ZExt);
   
-  Builder->SetInsertPoint(InitialBlock, InitialInsert);
-  
-  return ExtractValueInst::Create(Call, 1);
+  // The original icmp gets replaced with the overflow value.
+  return ExtractValueInst::Create(Call, 1, "sadd.overflow");
 }
 
 
