@@ -144,6 +144,10 @@ public:
   /// template instantiations.
   bool shouldVisitTemplateInstantiations() const { return false; }
 
+  /// \brief Return whether this visitor should recurse into the types of
+  /// TypeLocs.
+  bool shouldWalkTypesOfTypeLocs() const { return true; }
+  
   /// \brief Recursively visit a statement or expression, by
   /// dispatching to Traverse*() based on the argument's dynamic type.
   ///
@@ -760,14 +764,15 @@ DEF_TRAVERSE_TYPE(ObjCObjectPointerType, {
 // ----------------- TypeLoc traversal -----------------
 
 // This macro makes available a variable TL, the passed-in TypeLoc.
-// It calls WalkUpFrom* for the Type in the given TypeLoc, in addition
-// to WalkUpFrom* for the TypeLoc itself, such that existing clients
-// that override the WalkUpFrom*Type() and/or Visit*Type() methods
+// If requested, it calls WalkUpFrom* for the Type in the given TypeLoc, 
+// in addition to WalkUpFrom* for the TypeLoc itself, such that existing 
+// clients that override the WalkUpFrom*Type() and/or Visit*Type() methods
 // continue to work.
 #define DEF_TRAVERSE_TYPELOC(TYPE, CODE)                                \
   template<typename Derived>                                            \
   bool RecursiveASTVisitor<Derived>::Traverse##TYPE##Loc(TYPE##Loc TL) { \
-    TRY_TO(WalkUpFrom##TYPE(TL.getTypePtr()));                          \
+    if (getDerived().shouldWalkTypesOfTypeLocs())                       \
+      TRY_TO(WalkUpFrom##TYPE(TL.getTypePtr()));                        \
     TRY_TO(WalkUpFrom##TYPE##Loc(TL));                                  \
     { CODE; }                                                           \
     return true;                                                        \

@@ -38,6 +38,8 @@ namespace {
                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded)
       : Unexpanded(Unexpanded) { }
 
+    bool shouldWalkTypesOfTypeLocs() const { return false; }
+    
     //------------------------------------------------------------------------
     // Recording occurrences of (unexpanded) parameter packs.
     //------------------------------------------------------------------------
