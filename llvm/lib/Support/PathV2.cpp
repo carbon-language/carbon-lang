@@ -502,6 +502,13 @@ bool has_root_path(const Twine &path) {
   return !root_path(p).empty();
 }
 
+bool has_relative_path(const Twine &path) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  return !relative_path(p).empty();
+}
+
 bool has_filename(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
