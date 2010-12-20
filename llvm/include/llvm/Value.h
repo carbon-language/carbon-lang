@@ -195,7 +195,7 @@ public:
 
   /// addUse - This method should only be used by the Use class.
   ///
-  void addUse(Use &U);
+  void addUse(Use &U) { U.addToList(&UseList); }
 
   /// An enumeration for keeping track of the concrete subclass of Value that
   /// is actually instantiated. Values of this enumeration are kept in the 
