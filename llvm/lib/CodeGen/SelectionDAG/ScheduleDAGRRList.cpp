@@ -283,7 +283,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   Sequence.push_back(SU);
 
   AvailableQueue->ScheduledNode(SU);
-
+  
   ReleasePredecessors(SU, CurCycle);
 
   // Release all the implicit physical register defs that are live.
@@ -633,34 +633,28 @@ static EVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
 
 /// CheckForLiveRegDef - Return true and update live register vector if the
 /// specified register def of the specified SUnit clobbers any "live" registers.
-static bool CheckForLiveRegDef(SUnit *SU, unsigned Reg,
+static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
                                std::vector<SUnit*> &LiveRegDefs,
                                SmallSet<unsigned, 4> &RegAdded,
                                SmallVector<unsigned, 4> &LRegs,
                                const TargetRegisterInfo *TRI) {
-  bool Added = false;
   if (LiveRegDefs[Reg] && LiveRegDefs[Reg] != SU) {
-    if (RegAdded.insert(Reg)) {
+    if (RegAdded.insert(Reg))
       LRegs.push_back(Reg);
-      Added = true;
-    }
   }
   for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
     if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != SU) {
-      if (RegAdded.insert(*Alias)) {
+      if (RegAdded.insert(*Alias))
         LRegs.push_back(*Alias);
-        Added = true;
-      }
     }
-  return Added;
 }
 
 /// DelayForLiveRegsBottomUp - Returns true if it is necessary to delay
 /// scheduling of the given node to satisfy live physical register dependencies.
 /// If the specific node is the last one that's available to schedule, do
 /// whatever is necessary (i.e. backtracking or cloning) to make it possible.
-bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
-                                                 SmallVector<unsigned, 4> &LRegs){
+bool ScheduleDAGRRList::
+DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
   if (NumLiveRegs == 0)
     return false;
 
@@ -708,6 +702,8 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
     for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg)
       CheckForLiveRegDef(SU, *Reg, LiveRegDefs, RegAdded, LRegs, TRI);
   }
+  
+  
   return !LRegs.empty();
 }
 
