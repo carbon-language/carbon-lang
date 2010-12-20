@@ -587,7 +587,9 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       return;
 
     // Check Live Variables.
-    if (MO->isUndef()) {
+    if (MI->isDebugValue()) {
+      // Liveness checks are not valid for debug values.
+    } else if (MO->isUndef()) {
       // An <undef> doesn't refer to any register, so just skip it.
     } else if (MO->isUse()) {
       regsLiveInButUnused.erase(Reg);
