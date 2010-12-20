@@ -96,7 +96,7 @@ void AttrNonNullChecker::PreVisitCallExpr(CheckerContext &C,
     if (stateNull && !stateNotNull) {
       // Generate an error node.  Check for a null node in case
       // we cache out.
-      if (ExplodedNode *errorNode = C.GenerateSink(stateNull)) {
+      if (ExplodedNode *errorNode = C.generateSink(stateNull)) {
 
         // Lazily allocate the BugType object if it hasn't already been
         // created. Ownership is transferred to the BugReporter object once

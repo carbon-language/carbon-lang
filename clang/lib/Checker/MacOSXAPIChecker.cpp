@@ -73,7 +73,7 @@ static void CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
   if (!R || !isa<StackSpaceRegion>(R->getMemorySpace()))
     return;
 
-  ExplodedNode *N = C.GenerateSink(state);
+  ExplodedNode *N = C.generateSink(state);
   if (!N)
     return;
 

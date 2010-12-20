@@ -54,7 +54,7 @@ void FixedAddressChecker::PreVisitBinaryOperator(CheckerContext &C,
   if (!RV.isConstant() || RV.isZeroConstant())
     return;
 
-  if (ExplodedNode *N = C.GenerateNode()) {
+  if (ExplodedNode *N = C.generateNode()) {
     if (!BT)
       BT = new BuiltinBug("Use fixed address", 
                           "Using a fixed address is not portable because that "

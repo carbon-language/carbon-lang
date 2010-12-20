@@ -147,7 +147,7 @@ void ChrootChecker::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
   void* const* k = state->FindGDM(ChrootChecker::getTag());
   if (k)
     if (isRootChanged((intptr_t) *k))
-      if (ExplodedNode *N = C.GenerateNode()) {
+      if (ExplodedNode *N = C.generateNode()) {
         if (!BT_BreakJail)
           BT_BreakJail = new BuiltinBug("Break out of jail",
                                         "No call of chdir(\"/\") immediately "

@@ -64,7 +64,7 @@ void DivZeroChecker::PreVisitBinaryOperator(CheckerContext &C,
   llvm::tie(stateNotZero, stateZero) = CM.assumeDual(C.getState(), *DV);
 
   if (stateZero && !stateNotZero) {
-    if (ExplodedNode *N = C.GenerateSink(stateZero)) {
+    if (ExplodedNode *N = C.generateSink(stateZero)) {
       if (!BT)
         BT = new BuiltinBug("Division by zero");
 

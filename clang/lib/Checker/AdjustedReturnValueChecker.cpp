@@ -54,7 +54,7 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
   
   // Casting to void?  Discard the value.
   if (expectedResultTy->isVoidType()) {
-    C.GenerateNode(state->BindExpr(CE, UnknownVal()));
+    C.generateNode(state->BindExpr(CE, UnknownVal()));
     return;
   }                   
 
@@ -90,6 +90,6 @@ void AdjustedReturnValueChecker::PostVisitCallExpr(CheckerContext &C,
     // the cast avoids some assertion failures elsewhere.
     SValBuilder &svalBuilder = C.getSValBuilder();
     V = svalBuilder.evalCast(V, expectedResultTy, actualResultTy);
-    C.GenerateNode(state->BindExpr(CE, V));
+    C.generateNode(state->BindExpr(CE, V));
   }
 }

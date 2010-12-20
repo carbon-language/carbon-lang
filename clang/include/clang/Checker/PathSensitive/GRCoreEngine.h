@@ -66,7 +66,7 @@ private:
   ///  too many times.
   BlocksAborted blocksAborted;
 
-  void GenerateNode(const ProgramPoint& Loc, const GRState* State,
+  void generateNode(const ProgramPoint& Loc, const GRState* State,
                     ExplodedNode* Pred);
 
   void HandleBlockEdge(const BlockEdge& E, ExplodedNode* Pred);
@@ -515,7 +515,7 @@ public:
 
   unsigned getIndex() const { return Index; }
 
-  void GenerateNode(const GRState *state);
+  void generateNode(const GRState *state);
 };
 
 class GRCallExitNodeBuilder {
@@ -530,7 +530,7 @@ public:
 
   const GRState *getState() const { return Pred->getState(); }
 
-  void GenerateNode(const GRState *state);
+  void generateNode(const GRState *state);
 }; 
 } // end clang namespace
 

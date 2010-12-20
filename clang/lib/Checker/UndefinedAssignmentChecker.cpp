@@ -46,7 +46,7 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
   if (!val.isUndef())
     return;
 
-  ExplodedNode *N = C.GenerateSink();
+  ExplodedNode *N = C.generateSink();
 
   if (!N)
     return;

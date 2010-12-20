@@ -41,7 +41,7 @@ void
 UndefinedArraySubscriptChecker::PreVisitArraySubscriptExpr(CheckerContext &C, 
                                                 const ArraySubscriptExpr *A) {
   if (C.getState()->getSVal(A->getIdx()).isUndef()) {
-    if (ExplodedNode *N = C.GenerateSink()) {
+    if (ExplodedNode *N = C.generateSink()) {
       if (!BT)
         BT = new BuiltinBug("Array subscript is undefined");
 

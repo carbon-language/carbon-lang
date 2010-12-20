@@ -137,7 +137,7 @@ const GRState *CStringChecker::checkNonNull(CheckerContext &C,
   llvm::tie(stateNull, stateNonNull) = assumeZero(C, state, l, S->getType());
 
   if (stateNull && !stateNonNull) {
-    ExplodedNode *N = C.GenerateSink(stateNull);
+    ExplodedNode *N = C.generateSink(stateNull);
     if (!N)
       return NULL;
 
@@ -194,7 +194,7 @@ const GRState *CStringChecker::CheckLocation(CheckerContext &C,
   const GRState *StInBound = state->assumeInBound(Idx, Size, true);
   const GRState *StOutBound = state->assumeInBound(Idx, Size, false);
   if (StOutBound && !StInBound) {
-    ExplodedNode *N = C.GenerateSink(StOutBound);
+    ExplodedNode *N = C.generateSink(StOutBound);
     if (!N)
       return NULL;
 
@@ -406,7 +406,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
 
 void CStringChecker::emitOverlapBug(CheckerContext &C, const GRState *state,
                                     const Stmt *First, const Stmt *Second) {
-  ExplodedNode *N = C.GenerateSink(state);
+  ExplodedNode *N = C.generateSink(state);
   if (!N)
     return;
 
@@ -485,7 +485,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, const GRState *&state,
     // C string. In the context of locations, the only time we can issue such
     // a warning is for labels.
     if (loc::GotoLabel *Label = dyn_cast<loc::GotoLabel>(&Buf)) {
-      if (ExplodedNode *N = C.GenerateNode(state)) {
+      if (ExplodedNode *N = C.generateNode(state)) {
         if (!BT_NotCString)
           BT_NotCString = new BuiltinBug("API",
             "Argument is not a null-terminated string.");
@@ -541,7 +541,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, const GRState *&state,
     // Other regions (mostly non-data) can't have a reliable C string length.
     // In this case, an error is emitted and UndefinedVal is returned.
     // The caller should always be prepared to handle this case.
-    if (ExplodedNode *N = C.GenerateNode(state)) {
+    if (ExplodedNode *N = C.generateNode(state)) {
       if (!BT_NotCString)
         BT_NotCString = new BuiltinBug("API",
           "Argument is not a null-terminated string.");
@@ -1041,5 +1041,5 @@ void CStringChecker::evalDeadSymbols(CheckerContext &C, SymbolReaper &SR) {
   }
 
   state = state->set<CStringLength>(Entries);
-  C.GenerateNode(state);
+  C.generateNode(state);
 }

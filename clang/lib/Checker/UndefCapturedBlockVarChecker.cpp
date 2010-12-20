@@ -79,7 +79,7 @@ UndefCapturedBlockVarChecker::PostVisitBlockExpr(CheckerContext &C,
     VR = C.getSValBuilder().getRegionManager().getVarRegion(VD, LC);
 
     if (state->getSVal(VR).isUndef())
-      if (ExplodedNode *N = C.GenerateSink()) {
+      if (ExplodedNode *N = C.generateSink()) {
         if (!BT)
           BT = new BuiltinBug("Captured block variable is uninitialized");
 

@@ -41,7 +41,7 @@ void UndefResultChecker::PostVisitBinaryOperator(CheckerContext &C,
   const GRState *state = C.getState();
   if (state->getSVal(B).isUndef()) {
     // Generate an error node.
-    ExplodedNode *N = C.GenerateSink();
+    ExplodedNode *N = C.generateSink();
     if (!N)
       return;
     

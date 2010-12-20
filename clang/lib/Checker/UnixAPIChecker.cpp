@@ -118,7 +118,7 @@ static void CheckOpen(CheckerContext &C, UnixAPIChecker &UC,
     return;
 
   if (CE->getNumArgs() < 3) {
-    ExplodedNode *N = C.GenerateSink(trueState);
+    ExplodedNode *N = C.generateSink(trueState);
     if (!N)
       return;
 
@@ -153,7 +153,7 @@ static void CheckPthreadOnce(CheckerContext &C, UnixAPIChecker &,
   if (!R || !isa<StackSpaceRegion>(R->getMemorySpace()))
     return;
 
-  ExplodedNode *N = C.GenerateSink(state);
+  ExplodedNode *N = C.generateSink(state);
   if (!N)
     return;
 
@@ -199,7 +199,7 @@ static void CheckMallocZero(CheckerContext &C, UnixAPIChecker &UC,
   
   // Is the value perfectly constrained to zero?
   if (falseState && !trueState) {
-    ExplodedNode *N = C.GenerateSink(falseState);
+    ExplodedNode *N = C.generateSink(falseState);
     if (!N)
       return;
     

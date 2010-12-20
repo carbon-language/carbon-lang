@@ -50,7 +50,7 @@ bool BuiltinFunctionChecker::evalCallExpr(CheckerContext &C,const CallExpr *CE){
     // For __builtin_expect, just return the value of the subexpression.
     assert (CE->arg_begin() != CE->arg_end());
     SVal X = state->getSVal(*(CE->arg_begin()));
-    C.GenerateNode(state->BindExpr(CE, X));
+    C.generateNode(state->BindExpr(CE, X));
     return true;
   }
 
@@ -73,7 +73,7 @@ bool BuiltinFunctionChecker::evalCallExpr(CheckerContext &C,const CallExpr *CE){
       svalBuilder.evalEQ(state, Extent, Size);
     state = state->assume(extentMatchesSizeArg, true);
 
-    C.GenerateNode(state->BindExpr(CE, loc::MemRegionVal(R)));
+    C.generateNode(state->BindExpr(CE, loc::MemRegionVal(R)));
     return true;
   }
   }

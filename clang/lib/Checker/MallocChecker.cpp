@@ -352,7 +352,7 @@ const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
 
   // Check double free.
   if (RS->isReleased()) {
-    if (ExplodedNode *N = C.GenerateSink()) {
+    if (ExplodedNode *N = C.generateSink()) {
       if (!BT_DoubleFree)
         BT_DoubleFree
           = new BuiltinBug("Double free",
@@ -463,7 +463,7 @@ bool MallocChecker::SummarizeRegion(llvm::raw_ostream& os,
 
 void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
                                   SourceRange range) {
-  if (ExplodedNode *N = C.GenerateSink()) {
+  if (ExplodedNode *N = C.generateSink()) {
     if (!BT_BadFree)
       BT_BadFree = new BuiltinBug("Bad free");
     
@@ -573,7 +573,7 @@ void MallocChecker::evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper)
   for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
     if (SymReaper.isDead(I->first)) {
       if (I->second.isAllocated()) {
-        if (ExplodedNode *N = C.GenerateNode()) {
+        if (ExplodedNode *N = C.generateNode()) {
           if (!BT_Leak)
             BT_Leak = new BuiltinBug("Memory leak",
                      "Allocated memory never released. Potential memory leak.");
@@ -587,7 +587,7 @@ void MallocChecker::evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper)
       RS = F.remove(RS, I->first);
     }
   }
-  C.GenerateNode(state->set<RegionState>(RS));
+  C.generateNode(state->set<RegionState>(RS));
 }
 
 void MallocChecker::evalEndPath(GREndPathNodeBuilder &B, void *tag,
@@ -655,7 +655,7 @@ void MallocChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l) {
   if (Sym) {
     const RefState *RS = C.getState()->get<RegionState>(Sym);
     if (RS && RS->isReleased()) {
-      if (ExplodedNode *N = C.GenerateNode()) {
+      if (ExplodedNode *N = C.generateNode()) {
         if (!BT_UseFree)
           BT_UseFree = new BuiltinBug("Use dynamically allocated memory after"
                                       " it is freed.");

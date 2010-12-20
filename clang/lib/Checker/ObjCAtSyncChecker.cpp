@@ -47,7 +47,7 @@ void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
 
   // Uninitialized value used for the mutex?
   if (isa<UndefinedVal>(V)) {
-    if (ExplodedNode *N = C.GenerateSink()) {
+    if (ExplodedNode *N = C.generateSink()) {
       if (!BT_undef)
         BT_undef = new BuiltinBug("Uninitialized value used as mutex "
                                   "for @synchronized");
@@ -70,7 +70,7 @@ void ObjCAtSyncChecker::PreVisitObjCAtSynchronizedStmt(CheckerContext &C,
     if (!notNullState) {
       // Generate an error node.  This isn't a sink since
       // a null mutex just means no synchronization occurs.
-      if (ExplodedNode *N = C.GenerateNode(nullState)) {
+      if (ExplodedNode *N = C.generateNode(nullState)) {
         if (!BT_null)
           BT_null = new BuiltinBug("Nil value used as mutex for @synchronized() "
                                    "(no synchronization will occur)");

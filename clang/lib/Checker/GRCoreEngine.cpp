@@ -186,9 +186,9 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
 
     if (!InitState)
       // Generate the root.
-      GenerateNode(StartLoc, getInitialState(L), 0);
+      generateNode(StartLoc, getInitialState(L), 0);
     else
-      GenerateNode(StartLoc, InitState, 0);
+      generateNode(StartLoc, InitState, 0);
   }
 
   // Check if we have a steps limit
@@ -288,7 +288,7 @@ void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
   // FIXME: Should we allow ProcessBlockEntrance to also manipulate state?
 
   if (ProcessBlockEntrance(Blk, Pred, WList->getBlockCounter()))
-    GenerateNode(BlockEntrance(Blk, Pred->getLocationContext()),
+    generateNode(BlockEntrance(Blk, Pred->getLocationContext()),
                  Pred->State, Pred);
   else {
     blocksAborted.push_back(std::make_pair(L, Pred));
@@ -399,7 +399,7 @@ void GRCoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode* Pred) {
   assert (B->succ_size() == 1 &&
           "Blocks with no terminator should have at most 1 successor.");
 
-  GenerateNode(BlockEdge(B, *(B->succ_begin()), Pred->getLocationContext()),
+  generateNode(BlockEdge(B, *(B->succ_begin()), Pred->getLocationContext()),
                Pred->State, Pred);
 }
 
@@ -426,9 +426,9 @@ void GRCoreEngine::HandlePostStmt(const CFGBlock* B, unsigned StmtIdx,
   }
 }
 
-/// GenerateNode - Utility method to generate nodes, hook up successors,
+/// generateNode - Utility method to generate nodes, hook up successors,
 ///  and add nodes to the worklist.
-void GRCoreEngine::GenerateNode(const ProgramPoint& Loc,
+void GRCoreEngine::generateNode(const ProgramPoint& Loc,
                                 const GRState* State, ExplodedNode* Pred) {
 
   bool IsNew;
@@ -715,7 +715,7 @@ void GREndPathNodeBuilder::GenerateCallExitNode(const GRState *state) {
 }
                                                 
 
-void GRCallEnterNodeBuilder::GenerateNode(const GRState *state) {
+void GRCallEnterNodeBuilder::generateNode(const GRState *state) {
   // Check if the callee is in the same translation unit.
   if (CalleeCtx->getTranslationUnit() != 
       Pred->getLocationContext()->getTranslationUnit()) {
@@ -790,7 +790,7 @@ void GRCallEnterNodeBuilder::GenerateNode(const GRState *state) {
     Eng.WList->Enqueue(Node);
 }
 
-void GRCallExitNodeBuilder::GenerateNode(const GRState *state) {
+void GRCallExitNodeBuilder::generateNode(const GRState *state) {
   // Get the callee's location context.
   const StackFrameContext *LocCtx 
                          = cast<StackFrameContext>(Pred->getLocationContext());

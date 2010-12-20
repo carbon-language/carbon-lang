@@ -58,7 +58,7 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
 
   if (sizeV.isUndef()) {
     // Generate an error node.
-    ExplodedNode *N = C.GenerateSink();
+    ExplodedNode *N = C.generateSink();
     if (!N)
       return;
     
@@ -86,7 +86,7 @@ void VLASizeChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   llvm::tie(stateNotZero, stateZero) = state->assume(sizeD);
 
   if (stateZero && !stateNotZero) {
-    ExplodedNode* N = C.GenerateSink(stateZero);
+    ExplodedNode* N = C.generateSink(stateZero);
     if (!BT_zero)
       BT_zero = new BuiltinBug("Declared variable-length array (VLA) has zero "
                                "size");

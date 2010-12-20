@@ -71,7 +71,7 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
     return;
 
   if (regionSize % typeSize != 0) {
-    if (ExplodedNode *errorNode = C.GenerateSink()) {
+    if (ExplodedNode *errorNode = C.generateSink()) {
       if (!BT)
         BT = new BuiltinBug("Cast region with wrong size.",
                             "Cast a region whose size is not a multiple of the"

@@ -75,5 +75,5 @@ void NoReturnFunctionChecker::PostVisitCallExpr(CheckerContext &C,
   }
 
   if (BuildSinks)
-    C.GenerateSink(CE);
+    C.generateSink(CE);
 }

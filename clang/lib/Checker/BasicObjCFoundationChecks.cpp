@@ -99,7 +99,7 @@ void NilArgChecker::WarnNilArg(CheckerContext &C,
   if (!BT)
     BT = new APIMisuse("nil argument");
   
-  if (ExplodedNode *N = C.GenerateSink()) {
+  if (ExplodedNode *N = C.generateSink()) {
     llvm::SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
     os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
@@ -329,8 +329,8 @@ void CFNumberCreateChecker::PreVisitCallExpr(CheckerContext &C,
   // FIXME: We can actually create an abstract "CFNumber" object that has
   //  the bits initialized to the provided values.
   //
-  if (ExplodedNode *N = SourceSize < TargetSize ? C.GenerateSink() 
-                                                : C.GenerateNode()) {
+  if (ExplodedNode *N = SourceSize < TargetSize ? C.generateSink() 
+                                                : C.generateNode()) {
     llvm::SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
     
@@ -420,7 +420,7 @@ void CFRetainReleaseChecker::PreVisitCallExpr(CheckerContext& C,
   llvm::tie(stateTrue, stateFalse) = state->assume(ArgIsNull);
 
   if (stateTrue && !stateFalse) {
-    ExplodedNode *N = C.GenerateSink(stateTrue);
+    ExplodedNode *N = C.generateSink(stateTrue);
     if (!N)
       return;
 
@@ -492,7 +492,7 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   if (!(S == releaseS || S == retainS || S == autoreleaseS || S == drainS))
     return;
   
-  if (ExplodedNode *N = C.GenerateNode()) {
+  if (ExplodedNode *N = C.generateNode()) {
     llvm::SmallString<200> buf;
     llvm::raw_svector_ostream os(buf);
 

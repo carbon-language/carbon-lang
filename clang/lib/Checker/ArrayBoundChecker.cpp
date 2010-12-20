@@ -66,7 +66,7 @@ void ArrayBoundChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l){
   const GRState *StInBound = state->assumeInBound(Idx, NumElements, true);
   const GRState *StOutBound = state->assumeInBound(Idx, NumElements, false);
   if (StOutBound && !StInBound) {
-    ExplodedNode *N = C.GenerateSink(StOutBound);
+    ExplodedNode *N = C.generateSink(StOutBound);
     if (!N)
       return;
   

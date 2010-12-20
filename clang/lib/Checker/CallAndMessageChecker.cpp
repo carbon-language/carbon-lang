@@ -67,7 +67,7 @@ void clang::RegisterCallAndMessageChecker(GRExprEngine &Eng) {
 
 void CallAndMessageChecker::EmitBadCall(BugType *BT, CheckerContext &C,
                                         const CallExpr *CE) {
-  ExplodedNode *N = C.GenerateSink();
+  ExplodedNode *N = C.generateSink();
   if (!N)
     return;
 
@@ -85,7 +85,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
   const SVal &V = C.getState()->getSVal(Ex);
 
   if (V.isUndef()) {
-    if (ExplodedNode *N = C.GenerateSink()) {
+    if (ExplodedNode *N = C.generateSink()) {
       LazyInit_BT(BT_desc, BT);
 
       // Generate a report for this bug.
@@ -147,7 +147,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
                              D->getStore());
 
     if (F.Find(D->getRegion())) {
-      if (ExplodedNode *N = C.GenerateSink()) {
+      if (ExplodedNode *N = C.generateSink()) {
         LazyInit_BT(BT_desc, BT);
         llvm::SmallString<512> Str;
         llvm::raw_svector_ostream os(Str);
@@ -221,7 +221,7 @@ void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
   // FIXME: Handle 'super'?
   if (const Expr *receiver = ME->getInstanceReceiver())
     if (state->getSVal(receiver).isUndef()) {
-      if (ExplodedNode *N = C.GenerateSink()) {
+      if (ExplodedNode *N = C.generateSink()) {
         if (!BT_msg_undef)
           BT_msg_undef =
             new BuiltinBug("Receiver in message expression is an uninitialized value");
@@ -297,7 +297,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
     // have the "use of undefined value" be smarter about where the
     // undefined value came from.
     if (C.getPredecessor()->getParentMap().isConsumedExpr(ME)) {
-      if (ExplodedNode* N = C.GenerateSink(state))
+      if (ExplodedNode* N = C.generateSink(state))
         emitNilReceiverBug(C, ME, N);
       return;
     }
@@ -322,7 +322,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
            Ctx.LongDoubleTy == CanRetTy ||
            Ctx.LongLongTy == CanRetTy ||
            Ctx.UnsignedLongLongTy == CanRetTy))) {
-      if (ExplodedNode* N = C.GenerateSink(state))
+      if (ExplodedNode* N = C.generateSink(state))
         emitNilReceiverBug(C, ME, N);
       return;
     }
@@ -341,7 +341,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
     // of this case unless we have *a lot* more knowledge.
     //
     SVal V = C.getSValBuilder().makeZeroVal(ME->getType());
-    C.GenerateNode(state->BindExpr(ME, V));
+    C.generateNode(state->BindExpr(ME, V));
     return;
   }
 

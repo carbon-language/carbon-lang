@@ -89,7 +89,7 @@ SourceRange StackAddrLeakChecker::GenName(llvm::raw_ostream &os,
 
 void StackAddrLeakChecker::EmitStackError(CheckerContext &C, const MemRegion *R,
                                           const Expr *RetE) {
-  ExplodedNode *N = C.GenerateSink();
+  ExplodedNode *N = C.generateSink();
 
   if (!N)
     return;

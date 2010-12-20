@@ -68,7 +68,7 @@ void ReturnPointerRangeChecker::PreVisitReturnStmt(CheckerContext &C,
   const GRState *StInBound = state->assumeInBound(Idx, NumElements, true);
   const GRState *StOutBound = state->assumeInBound(Idx, NumElements, false);
   if (StOutBound && !StInBound) {
-    ExplodedNode *N = C.GenerateSink(StOutBound);
+    ExplodedNode *N = C.generateSink(StOutBound);
 
     if (!N)
       return;

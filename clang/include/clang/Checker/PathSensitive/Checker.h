@@ -91,47 +91,47 @@ public:
     return Eng.getSValBuilder();
   }
 
-  ExplodedNode *GenerateNode(bool autoTransition = true) {
+  ExplodedNode *generateNode(bool autoTransition = true) {
     assert(statement && "Only transitions with statements currently supported");
-    ExplodedNode *N = GenerateNodeImpl(statement, getState(), false);
+    ExplodedNode *N = generateNodeImpl(statement, getState(), false);
     if (N && autoTransition)
       Dst.Add(N);
     return N;
   }
   
-  ExplodedNode *GenerateNode(const Stmt *stmt, const GRState *state,
+  ExplodedNode *generateNode(const Stmt *stmt, const GRState *state,
                              bool autoTransition = true) {
     assert(state);
-    ExplodedNode *N = GenerateNodeImpl(stmt, state, false);
+    ExplodedNode *N = generateNodeImpl(stmt, state, false);
     if (N && autoTransition)
       addTransition(N);
     return N;
   }
 
-  ExplodedNode *GenerateNode(const GRState *state, ExplodedNode *pred,
+  ExplodedNode *generateNode(const GRState *state, ExplodedNode *pred,
                              bool autoTransition = true) {
    assert(statement && "Only transitions with statements currently supported");
-    ExplodedNode *N = GenerateNodeImpl(statement, state, pred, false);
+    ExplodedNode *N = generateNodeImpl(statement, state, pred, false);
     if (N && autoTransition)
       addTransition(N);
     return N;
   }
 
-  ExplodedNode *GenerateNode(const GRState *state, bool autoTransition = true) {
+  ExplodedNode *generateNode(const GRState *state, bool autoTransition = true) {
     assert(statement && "Only transitions with statements currently supported");
-    ExplodedNode *N = GenerateNodeImpl(statement, state, false);
+    ExplodedNode *N = generateNodeImpl(statement, state, false);
     if (N && autoTransition)
       addTransition(N);
     return N;
   }
 
-  ExplodedNode *GenerateSink(const Stmt *stmt, const GRState *state = 0) {
-    return GenerateNodeImpl(stmt, state ? state : getState(), true);
+  ExplodedNode *generateSink(const Stmt *stmt, const GRState *state = 0) {
+    return generateNodeImpl(stmt, state ? state : getState(), true);
   }
   
-  ExplodedNode *GenerateSink(const GRState *state = 0) {
+  ExplodedNode *generateSink(const GRState *state = 0) {
     assert(statement && "Only transitions with statements currently supported");
-    return GenerateNodeImpl(statement, state ? state : getState(), true);
+    return generateNodeImpl(statement, state ? state : getState(), true);
   }
 
   void addTransition(ExplodedNode *node) {
@@ -144,7 +144,7 @@ public:
     // is new.
     if (state != getState() || (ST && ST != B.GetState(Pred)))
       // state is new or equals to ST.
-      GenerateNode(state, true);
+      generateNode(state, true);
     else
       Dst.Add(Pred);
   }
@@ -166,7 +166,7 @@ public:
   }
 
 private:
-  ExplodedNode *GenerateNodeImpl(const Stmt* stmt, const GRState *state,
+  ExplodedNode *generateNodeImpl(const Stmt* stmt, const GRState *state,
                              bool markAsSink) {
     ExplodedNode *node = B.generateNode(stmt, state, Pred);
     if (markAsSink && node)
@@ -174,7 +174,7 @@ private:
     return node;
   }
 
-  ExplodedNode *GenerateNodeImpl(const Stmt* stmt, const GRState *state,
+  ExplodedNode *generateNodeImpl(const Stmt* stmt, const GRState *state,
                                  ExplodedNode *pred, bool markAsSink) {
    ExplodedNode *node = B.generateNode(stmt, state, pred);
     if (markAsSink && node)

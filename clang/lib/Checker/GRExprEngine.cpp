@@ -1450,7 +1450,7 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
 
 void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
   const GRState *state = B.getState()->EnterStackFrame(B.getCalleeContext());
-  B.GenerateNode(state);
+  B.generateNode(state);
 }
 
 void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
@@ -1486,7 +1486,7 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
     }
   }
 
-  B.GenerateNode(state);
+  B.generateNode(state);
 }
 
 //===----------------------------------------------------------------------===//

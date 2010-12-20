@@ -62,7 +62,7 @@ void PointerSubChecker::PreVisitBinaryOperator(CheckerContext &C,
   if (isa<SymbolicRegion>(BaseLR) || isa<SymbolicRegion>(BaseRR))
     return;
 
-  if (ExplodedNode *N = C.GenerateNode()) {
+  if (ExplodedNode *N = C.generateNode()) {
     if (!BT)
       BT = new BuiltinBug("Pointer subtraction", 
                           "Subtraction of two pointers that do not point to "

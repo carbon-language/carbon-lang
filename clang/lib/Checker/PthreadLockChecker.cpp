@@ -108,7 +108,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
     const GRState *lockFail;
     llvm::tie(lockFail, lockSucc) = state->assume(retVal);    
     assert(lockFail && lockSucc);
-    C.addTransition(C.GenerateNode(CE, lockFail));
+    C.addTransition(C.generateNode(CE, lockFail));
   }
   else {
       // Assume that the return value was 0.
@@ -119,7 +119,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
     // Record that the lock was acquired.  
   lockSucc = lockSucc->add<LockSet>(lockR);
   
-  C.addTransition(lockSucc != state ? C.GenerateNode(CE, lockSucc) :
+  C.addTransition(lockSucc != state ? C.generateNode(CE, lockSucc) :
                   C.getPredecessor());
 }
 
@@ -140,5 +140,5 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
   if (state == unlockState)
     return;
   
-  C.addTransition(C.GenerateNode(CE, unlockState));  
+  C.addTransition(C.generateNode(CE, unlockState));  
 }

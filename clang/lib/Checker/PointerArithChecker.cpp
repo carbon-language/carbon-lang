@@ -53,7 +53,7 @@ void PointerArithChecker::PreVisitBinaryOperator(CheckerContext &C,
   if (isa<VarRegion>(LR) || isa<CodeTextRegion>(LR) || 
       isa<CompoundLiteralRegion>(LR)) {
 
-    if (ExplodedNode *N = C.GenerateNode()) {
+    if (ExplodedNode *N = C.generateNode()) {
       if (!BT)
         BT = new BuiltinBug("Dangerous pointer arithmetic",
                             "Pointer arithmetic done on non-array variables "
