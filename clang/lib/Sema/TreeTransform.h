@@ -295,6 +295,24 @@ public:
   bool TransformTemplateArgument(const TemplateArgumentLoc &Input,
                                  TemplateArgumentLoc &Output);
 
+  /// \brief Transform the given set of template arguments.
+  ///
+  /// By default, this operation transforms all of the template arguments 
+  /// in the input set using \c TransformTemplateArgument(), and appends
+  /// the transformed arguments to the output list.
+  ///
+  /// \param Inputs The set of template arguments to be transformed.
+  ///
+  /// \param NumInputs The number of template arguments in \p Inputs.
+  ///
+  /// \param Outputs The set of transformed template arguments output by this
+  /// routine.
+  ///
+  /// Returns true if an error occurred.
+  bool TransformTemplateArguments(const TemplateArgumentLoc *Inputs,
+                                  unsigned NumInputs,
+                                  TemplateArgumentListInfo &Outputs);
+  
   /// \brief Fakes up a TemplateArgumentLoc for a given TemplateArgument.
   void InventTemplateArgumentLoc(const TemplateArgument &Arg,
                                  TemplateArgumentLoc &ArgLoc);
@@ -2398,6 +2416,22 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
   return true;
 }
 
+template<typename Derived>
+bool TreeTransform<Derived>::TransformTemplateArguments(
+                                            const TemplateArgumentLoc *Inputs,
+                                                        unsigned NumInputs,
+                                          TemplateArgumentListInfo &Outputs) {
+  for (unsigned I = 0; I != NumInputs; ++I) {
+    TemplateArgumentLoc Out;
+    if (getDerived().TransformTemplateArgument(Inputs[I], Out))
+      return true;
+    
+    Outputs.addArgument(Out);
+  }
+  
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Type transformation
 //===----------------------------------------------------------------------===//
@@ -4336,12 +4370,10 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
     TemplateArgs = &TransArgs;
     TransArgs.setLAngleLoc(E->getLAngleLoc());
     TransArgs.setRAngleLoc(E->getRAngleLoc());
-    for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-      TemplateArgumentLoc Loc;
-      if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I], Loc))
-        return ExprError();
-      TransArgs.addArgument(Loc);
-    }
+    if (getDerived().TransformTemplateArguments(E->getTemplateArgs(),
+                                                E->getNumTemplateArgs(),
+                                                TransArgs))
+      return ExprError();
   }
 
   return getDerived().RebuildDeclRefExpr(Qualifier, E->getQualifierRange(),
@@ -4624,12 +4656,10 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
   if (E->hasExplicitTemplateArgs()) {
     TransArgs.setLAngleLoc(E->getLAngleLoc());
     TransArgs.setRAngleLoc(E->getRAngleLoc());
-    for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-      TemplateArgumentLoc Loc;
-      if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I], Loc))
-        return ExprError();
-      TransArgs.addArgument(Loc);
-    }
+    if (getDerived().TransformTemplateArguments(E->getTemplateArgs(),
+                                                E->getNumTemplateArgs(),
+                                                TransArgs))
+      return ExprError();
   }
   
   // FIXME: Bogus source location for the operator
@@ -5653,12 +5683,10 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
   // If we have template arguments, rebuild them, then rebuild the
   // templateid expression.
   TemplateArgumentListInfo TransArgs(Old->getLAngleLoc(), Old->getRAngleLoc());
-  for (unsigned I = 0, N = Old->getNumTemplateArgs(); I != N; ++I) {
-    TemplateArgumentLoc Loc;
-    if (getDerived().TransformTemplateArgument(Old->getTemplateArgs()[I], Loc))
-      return ExprError();
-    TransArgs.addArgument(Loc);
-  }
+  if (getDerived().TransformTemplateArguments(Old->getTemplateArgs(),
+                                              Old->getNumTemplateArgs(),
+                                              TransArgs))
+    return ExprError();
 
   return getDerived().RebuildTemplateIdExpr(SS, R, Old->requiresADL(),
                                             TransArgs);
@@ -5736,12 +5764,10 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
   }
 
   TemplateArgumentListInfo TransArgs(E->getLAngleLoc(), E->getRAngleLoc());
-  for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-    TemplateArgumentLoc Loc;
-    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I], Loc))
-      return ExprError();
-    TransArgs.addArgument(Loc);
-  }
+  if (getDerived().TransformTemplateArguments(E->getTemplateArgs(),
+                                              E->getNumTemplateArgs(),
+                                              TransArgs))
+    return ExprError();
 
   return getDerived().RebuildDependentScopeDeclRefExpr(NNS,
                                                        E->getQualifierRange(),
@@ -5993,12 +6019,10 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
   }
 
   TemplateArgumentListInfo TransArgs(E->getLAngleLoc(), E->getRAngleLoc());
-  for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
-    TemplateArgumentLoc Loc;
-    if (getDerived().TransformTemplateArgument(E->getTemplateArgs()[I], Loc))
-      return ExprError();
-    TransArgs.addArgument(Loc);
-  }
+  if (getDerived().TransformTemplateArguments(E->getTemplateArgs(),
+                                              E->getNumTemplateArgs(),
+                                              TransArgs))
+    return ExprError();
 
   return getDerived().RebuildCXXDependentScopeMemberExpr(Base.get(),
                                                      BaseType,
@@ -6083,13 +6107,10 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
   if (Old->hasExplicitTemplateArgs()) {
     TransArgs.setLAngleLoc(Old->getLAngleLoc());
     TransArgs.setRAngleLoc(Old->getRAngleLoc());
-    for (unsigned I = 0, N = Old->getNumTemplateArgs(); I != N; ++I) {
-      TemplateArgumentLoc Loc;
-      if (getDerived().TransformTemplateArgument(Old->getTemplateArgs()[I],
-                                                 Loc))
-        return ExprError();
-      TransArgs.addArgument(Loc);
-    }
+    if (getDerived().TransformTemplateArguments(Old->getTemplateArgs(),
+                                                Old->getNumTemplateArgs(),
+                                                TransArgs))
+      return ExprError();
   }
 
   // FIXME: to do this check properly, we will need to preserve the
