@@ -2,7 +2,6 @@
 // RUN: %clang_cc1 -include-pch %t -isysroot %S/libroot %s -verify
 // RUN: not %clang_cc1 -include-pch %t %s
 // XFAIL: win32
-
 #include <reloc.h>
 
 int x = 2; // expected-error{{redefinition}}
