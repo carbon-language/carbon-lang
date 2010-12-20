@@ -518,6 +518,15 @@ static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout) {
     return Data.getCommonAlignment();
 
   const MCSymbol &Symbol = Data.getSymbol();
+
+  if (Symbol.isAbsolute() && Symbol.isVariable()) {
+    if (const MCExpr *Value = Symbol.getVariableValue()) {
+      int64_t IntValue;
+      if (Value->EvaluateAsAbsolute(IntValue, Layout))
+	return (uint64_t)IntValue;
+    }
+  }
+
   if (!Symbol.isInSection())
     return 0;
 
