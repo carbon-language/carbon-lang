@@ -286,6 +286,12 @@
     ON. You can use that option for disabling the generation of build
     targets for the LLVM unit tests.</dd>
 
+  <dt><b>LLVM_APPEND_VC_REV</b>:BOOL</dt>
+  <dd>Append version control revision info (svn revision number or git
+    revision id) to LLVM version string (stored in the PACKAGE_VERSION
+    macro). For this to work cmake must be invoked before the
+    build. Defaults to OFF.</dd>
+
   <dt><b>LLVM_ENABLE_THREADS</b>:BOOL</dt>
   <dd>Build with threads support, if available. Defaults to ON.</dd>
 

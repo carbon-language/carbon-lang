@@ -11,8 +11,15 @@ set(CMAKE_MODULE_PATH
   )
 
 set(PACKAGE_VERSION "2.9")
+
 include(VersionFromVCS)
-add_version_info_from_vcs(PACKAGE_VERSION)
+
+option(LLVM_APPEND_VC_REV
+  "Append the version control system revision id to LLVM version" OFF)
+
+if( LLVM_APPEND_VC_REV )
+  add_version_info_from_vcs(PACKAGE_VERSION)
+endif()
 
 set(PACKAGE_NAME llvm)
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
