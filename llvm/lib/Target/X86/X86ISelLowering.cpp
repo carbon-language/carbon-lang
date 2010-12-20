@@ -132,26 +132,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
 
-    setOperationAction(ISD::ADDC, MVT::i8, Custom);
-    setOperationAction(ISD::ADDC, MVT::i16, Custom);
-    setOperationAction(ISD::ADDC, MVT::i32, Custom);
-    setOperationAction(ISD::ADDC, MVT::i64, Custom);
-    
-    setOperationAction(ISD::ADDE, MVT::i8, Custom);
-    setOperationAction(ISD::ADDE, MVT::i16, Custom);
-    setOperationAction(ISD::ADDE, MVT::i32, Custom);
-    setOperationAction(ISD::ADDE, MVT::i64, Custom);
-
-    setOperationAction(ISD::SUBC, MVT::i8, Custom);
-    setOperationAction(ISD::SUBC, MVT::i16, Custom);
-    setOperationAction(ISD::SUBC, MVT::i32, Custom);
-    setOperationAction(ISD::SUBC, MVT::i64, Custom);
-    
-    setOperationAction(ISD::SUBE, MVT::i8, Custom);
-    setOperationAction(ISD::SUBE, MVT::i16, Custom);
-    setOperationAction(ISD::SUBE, MVT::i32, Custom);
-    setOperationAction(ISD::SUBE, MVT::i64, Custom);
-    
   // We don't accept any truncstore of integer registers.
   setTruncStoreAction(MVT::i64, MVT::i32, Expand);
   setTruncStoreAction(MVT::i64, MVT::i16, Expand);
@@ -275,6 +255,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::UDIV, VT, Expand);
     setOperationAction(ISD::SREM, VT, Expand);
     setOperationAction(ISD::UREM, VT, Expand);
+    
+    // Add/Sub overflow ops with MVT::Flags are lowered to EFLAGS dependences.
+    setOperationAction(ISD::ADDC, VT, Custom);
+    setOperationAction(ISD::ADDE, VT, Custom);
+    setOperationAction(ISD::SUBC, VT, Custom);
+    setOperationAction(ISD::SUBE, VT, Custom);
   }
 
   setOperationAction(ISD::BR_JT            , MVT::Other, Expand);
