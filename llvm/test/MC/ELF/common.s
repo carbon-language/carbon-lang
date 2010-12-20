@@ -13,8 +13,8 @@
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx',
-// CHECK-NEXT: ('st_value', 0x00000000)
-// CHECK-NEXT: ('st_size', 0x00000001)
+// CHECK-NEXT: ('st_value', 0x0000000000000000)
+// CHECK-NEXT: ('st_size', 0x0000000000000001)
 
 
 // Same as common1, but with directives in a different order.
@@ -27,8 +27,8 @@
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx',
-// CHECK-NEXT: ('st_value', 0x00000001)
-// CHECK-NEXT: ('st_size', 0x00000001)
+// CHECK-NEXT: ('st_value', 0x0000000000000001)
+// CHECK-NEXT: ('st_size', 0x0000000000000001)
 
         .local	common6
         .comm	common6,8,16
@@ -39,8 +39,8 @@
 // CHECK-NEXT:  ('st_type', 0x00000001)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x00000003)
-// CHECK-NEXT:  ('st_value', 0x00000010)
-// CHECK-NEXT:  ('st_size', 0x00000008)
+// CHECK-NEXT:  ('st_value', 0x0000000000000010)
+// CHECK-NEXT:  ('st_size', 0x0000000000000008)
 // CHECK-NEXT: ),
 
 // Test that without an explicit .local we produce a global.
@@ -52,8 +52,8 @@
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx', 0x0000fff2)
-// CHECK-NEXT: ('st_value', 0x00000004)
-// CHECK-NEXT: ('st_size', 0x00000004)
+// CHECK-NEXT: ('st_value', 0x0000000000000004)
+// CHECK-NEXT: ('st_size', 0x0000000000000004)
 
 
 // Test that without an explicit .local we produce a global, even if the first
@@ -72,8 +72,8 @@ foo:
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx', 0x0000fff2)
-// CHECK-NEXT: ('st_value', 0x00000010)
-// CHECK-NEXT: ('st_size', 0x00000028)
+// CHECK-NEXT: ('st_value', 0x0000000000000010)
+// CHECK-NEXT: ('st_size', 0x0000000000000028)
 
         .comm	common5,4,4
 
@@ -83,6 +83,6 @@ foo:
 // CHECK-NEXT:  ('st_type', 0x00000001)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x0000fff2)
-// CHECK-NEXT:  ('st_value', 0x00000004)
-// CHECK-NEXT:  ('st_size', 0x00000004)
+// CHECK-NEXT:  ('st_value', 0x0000000000000004)
+// CHECK-NEXT:  ('st_size', 0x0000000000000004)
 // CHECK-NEXT: ),

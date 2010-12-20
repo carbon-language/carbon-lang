@@ -75,8 +75,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
-// CHECK-NEXT:   ('st_value', 0x00000000)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000000)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000001
 // CHECK-NEXT:  (('st_name', 0x00000015) # 'bar6'
@@ -84,8 +84,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000018)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000018)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000002
 // CHECK-NEXT:  (('st_name', 0x0000001a) # 'bar7'
@@ -93,8 +93,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000018)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000018)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000003
 // CHECK-NEXT:  (('st_name', 0x0000001f) # 'bar8'
@@ -102,8 +102,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x0000001c)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x000000000000001c)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000004
 // CHECK-NEXT:  (('st_name', 0x00000024) # 'bar9'
@@ -111,8 +111,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000020)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000020)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000005
 // CHECK-NEXT:  (('st_name', 0x00000000) # ''
@@ -120,8 +120,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000003)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000000)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000000)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000006
 // CHECK-NEXT:  (('st_name', 0x00000000) # ''
@@ -129,8 +129,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000003)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000002)
-// CHECK-NEXT:   ('st_value', 0x00000000)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000000)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000007
 // CHECK-NEXT:  (('st_name', 0x00000000) # ''
@@ -138,8 +138,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000003)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000003)
-// CHECK-NEXT:   ('st_value', 0x00000000)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000000)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000008
 // CHECK-NEXT:  (('st_name', 0x00000029) # 'bar10'
@@ -147,8 +147,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000028)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000028)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000009
 // CHECK-NEXT:  (('st_name', 0x0000002f) # 'bar11'
@@ -156,8 +156,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000030)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000030)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x0000000a
 // CHECK-NEXT:  (('st_name', 0x00000035) # 'bar12'
@@ -165,8 +165,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000030)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000030)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x0000000b
 // CHECK-NEXT:  (('st_name', 0x0000003b) # 'bar13'
@@ -174,8 +174,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000034)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000034)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x0000000c
 // CHECK-NEXT:  (('st_name', 0x00000041) # 'bar14'
@@ -183,8 +183,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000038)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000038)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x0000000d
 // CHECK-NEXT:  (('st_name', 0x00000047) # 'bar15'
@@ -192,8 +192,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000001)
-// CHECK-NEXT:   ('st_value', 0x00000040)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000040)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x0000000e
 // CHECK-NEXT:  (('st_name', 0x00000001) # 'bar2'
@@ -201,8 +201,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
-// CHECK-NEXT:   ('st_value', 0x00000000)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000000)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x0000000f
 // CHECK-NEXT:  (('st_name', 0x00000006) # 'bar3'
@@ -210,8 +210,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
-// CHECK-NEXT:   ('st_value', 0x00000000)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000000)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000010
 // CHECK-NEXT:  (('st_name', 0x0000000b) # 'bar4'
@@ -219,8 +219,8 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
-// CHECK-NEXT:   ('st_value', 0x00000000)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000000)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 0x00000011
 // CHECK-NEXT:  (('st_name', 0x00000010) # 'bar5'
@@ -228,7 +228,7 @@ bar15:
 // CHECK-NEXT:   ('st_type', 0x00000000)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
-// CHECK-NEXT:   ('st_value', 0x00000000)
-// CHECK-NEXT:   ('st_size', 0x00000000)
+// CHECK-NEXT:   ('st_value', 0x0000000000000000)
+// CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT: ])

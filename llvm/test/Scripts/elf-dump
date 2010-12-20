@@ -121,8 +121,8 @@ def dumpSymtab(f, section, strtab):
         print "     ('st_other', %s)" % common_dump.HexDump(f.read8())
         print "     ('st_shndx', %s)" % common_dump.HexDump(f.read16())
         if f.is64Bit:
-            print "     ('st_value', %s)" % common_dump.HexDump(f.read64())
-            print "     ('st_size', %s)" % common_dump.HexDump(f.read64())
+            print "     ('st_value', %s)" % common_dump.HexDump(f.read64(), 64)
+            print "     ('st_size', %s)" % common_dump.HexDump(f.read64(), 64)
         print "    ),"
 
 def dumpRel(f, section, dumprela = False):

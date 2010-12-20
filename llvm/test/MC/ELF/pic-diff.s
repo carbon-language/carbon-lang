@@ -6,8 +6,8 @@
 // CHECK-NEXT:     ('st_type', 0x00000000)
 // CHECK-NEXT:     ('st_other', 0x00000000)
 // CHECK-NEXT:     ('st_shndx', 0x00000000)
-// CHECK-NEXT:     ('st_value', 0x00000000)
-// CHECK-NEXT:     ('st_size', 0x00000000)
+// CHECK-NEXT:     ('st_value', 0x0000000000000000)
+// CHECK-NEXT:     ('st_size', 0x0000000000000000)
 // CHECK-NEXT:    ),
 
 // CHECK:       ('_relocations', [
