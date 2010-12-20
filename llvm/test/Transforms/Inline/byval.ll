@@ -26,7 +26,8 @@ entry:
 	call void @f( %struct.ss* byval  %S ) nounwind 
 	ret i32 0
 ; CHECK: @test1()
-; CHECK: %b = alloca %struct.ss
+; CHECK: %S1 = alloca %struct.ss
+; CHECK: %S = alloca %struct.ss
 ; CHECK: call void @llvm.memcpy
 ; CHECK: ret i32 0
 }
@@ -74,9 +75,9 @@ entry:
 	call void @f3( %struct.ss* byval align 64 %S) nounwind 
 	ret void
 ; CHECK: @test3()
-; CHECK: %b = alloca %struct.ss, align 64
+; CHECK: %S1 = alloca %struct.ss, align 64
 ; CHECK: %S = alloca %struct.ss
 ; CHECK: call void @llvm.memcpy
-; CHECK: call void @g3(%struct.ss* %b)
+; CHECK: call void @g3(%struct.ss* %S1)
 ; CHECK: ret void
 }
