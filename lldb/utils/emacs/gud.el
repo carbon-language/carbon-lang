@@ -1001,9 +1001,9 @@ and source-file directory for your debugger."
   ;; Make lldb dump fullpath instead of basename for a file.
   ;; See also gud-lldb-marker-filter where gud-last-frame is grokked from lldb output.
   (progn
-    (gud-call "settings set frame-format 'frame #${frame.index}: ${frame.pc}{ ${module.file.basename}{`${function.name}${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}\\n'")
+    (gud-call "settings set frame-format frame #${frame.index}: ${frame.pc}{ ${module.file.basename}{`${function.name}${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}\\n")
     (sit-for 1)
-    (gud-call "settings set thread-format 'thread #${thread.index}: tid = ${thread.id}{, ${frame.pc}}{ ${module.file.basename}{`${function.name}${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}{, stop reason = ${thread.stop-reason}}\\n'")
+    (gud-call "settings set thread-format thread #${thread.index}: tid = ${thread.id}{, ${frame.pc}}{ ${module.file.basename}{`${function.name}${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}{, stop reason = ${thread.stop-reason}}\\n")
     (sit-for 1))
 
   (gud-def gud-listb  "breakpoint list"
