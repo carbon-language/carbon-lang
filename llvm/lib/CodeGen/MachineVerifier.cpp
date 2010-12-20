@@ -1078,7 +1078,7 @@ void MachineVerifier::verifyLiveIntervals() {
           bool hasDeadDef = false;
           for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
                MOE = MI->operands_end(); MOI != MOE; ++MOI) {
-            if (MOI->isReg() && MOI->isDef() && MOI->isDead()) {
+            if (MOI->isReg() && MOI->getReg() == LI.reg && MOI->isDef() && MOI->isDead()) {
               hasDeadDef = true;
               break;
             }
