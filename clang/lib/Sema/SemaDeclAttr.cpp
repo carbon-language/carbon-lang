@@ -2533,12 +2533,50 @@ static void HandleUuidAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     }
     Expr *Arg = Attr.getArg(0);
     StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
+    if (Str == 0 || Str->isWide()) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+        << "uuid" << 1;
+      return;
+    }
+
+    llvm::StringRef StrRef = Str->getString();
+
+    bool IsCurly = StrRef.size() > 1 && StrRef.front() == '{' &&
+                   StrRef.back() == '}';
+    
+    // Validate GUID length.
+    if (IsCurly && StrRef.size() != 38) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
+      return;
+    }
+    if (!IsCurly && StrRef.size() != 36) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
+      return;
+    }
+
+    // GUID format is "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or 
+    // "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
+    llvm::StringRef::iterator I = StrRef.begin();
+    if (IsCurly) // Skip the optional '{'
+       ++I;
+
+    for (int i = 0; i < 36; ++i) {
+      if (i == 8 || i == 13 || i == 18 || i == 23) {
+        if (*I != '-') {
+          S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
+          return;
+        }
+      } else if (!isxdigit(*I)) {
+        S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
+        return;
+      }
+      I++;
+    }
 
     d->addAttr(::new (S.Context) UuidAttr(Attr.getLoc(), S.Context, 
                                           Str->getString()));
-  } else {
+  } else
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "uuid";
-  }
 }
 
 //===----------------------------------------------------------------------===//

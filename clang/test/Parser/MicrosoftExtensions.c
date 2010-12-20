@@ -55,8 +55,16 @@ typedef struct _GUID
     unsigned short Data3;
     unsigned char  Data4[8];
 } GUID;
+
+struct __declspec(uuid(L"00000000-0000-0000-1234-000000000047")) uuid_attr_bad1 { };// expected-error {{'uuid' attribute requires parameter 1 to be a string}}
+struct __declspec(uuid(3)) uuid_attr_bad2 { };// expected-error {{'uuid' attribute requires parameter 1 to be a string}}
+struct __declspec(uuid("0000000-0000-0000-1234-0000500000047")) uuid_attr_bad3 { };// expected-error {{uuid attribute contains a malformed GUID}}
+struct __declspec(uuid("0000000-0000-0000-Z234-000000000047")) uuid_attr_bad4 { };// expected-error {{uuid attribute contains a malformed GUID}}
+struct __declspec(uuid("000000000000-0000-1234-000000000047")) uuid_attr_bad5 { };// expected-error {{uuid attribute contains a malformed GUID}}
+
+
 struct __declspec(uuid("00000000-0000-0000-3231-000000000046")) A { };
-struct __declspec(uuid("00000000-0000-0000-1234-000000000047")) B { };
+struct __declspec(uuid("{00000000-0000-0000-1234-000000000047}")) B { };
 class C {};
 
 void uuidof_test2()

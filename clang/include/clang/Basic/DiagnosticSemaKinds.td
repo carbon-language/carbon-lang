@@ -929,6 +929,8 @@ def err_attribute_argument_out_of_bounds : Error<
   "'%0' attribute parameter %1 is out of bounds">;
 def err_attribute_requires_objc_interface : Error<
   "attribute may only be applied to an Objective-C interface">;
+def err_attribute_uuid_malformed_guid : Error<
+  "uuid attribute contains a malformed GUID">;
 def warn_nonnull_pointers_only : Warning<
   "nonnull attribute only applies to pointer arguments">;
 def err_attribute_invalid_implicit_this_argument : Error<
