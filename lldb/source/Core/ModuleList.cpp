@@ -502,7 +502,17 @@ ModuleList::GetModuleSP (const Module *module_ptr)
     {
         ModuleList &shared_module_list = GetSharedModuleList ();
         module_sp = shared_module_list.FindModule (module_ptr);
-        assert (module_sp.get());   // This might fire off a few times and we need to make sure it never fires...
+        if (module_sp.get() == NULL)
+        {
+            char uuid_cstr[256];
+            const_cast<Module *>(module_ptr)->GetUUID().GetAsCString (uuid_cstr, sizeof(uuid_cstr));
+            const FileSpec &module_file_spec = module_ptr->GetFileSpec();
+            fprintf (stderr, "warning: module not in shared module list: %s (%s) \"%s/%s\"\n", 
+                     uuid_cstr,
+                     module_ptr->GetArchitecture().AsCString(),
+                     module_file_spec.GetDirectory().GetCString(),
+                     module_file_spec.GetFilename().GetCString());
+        }
     }
     return module_sp;
 }
