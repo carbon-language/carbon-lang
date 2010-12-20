@@ -252,7 +252,6 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
       CalledFunc->isDeclaration() || // call, or call to a vararg function!
       CalledFunc->getFunctionType()->isVarArg()) return false;
 
-
   // If the call to the callee is not a tail call, we must clear the 'tail'
   // flags on any calls that we inline.
   bool MustClearTailCallFlags =
@@ -308,14 +307,19 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
       if (CalledFunc->paramHasAttr(ArgNo+1, Attribute::ByVal) &&
           !CalledFunc->onlyReadsMemory()) {
         const Type *AggTy = cast<PointerType>(I->getType())->getElementType();
-        const Type *VoidPtrTy = 
-            Type::getInt8PtrTy(Context);
+        const Type *VoidPtrTy = Type::getInt8PtrTy(Context);
 
         // Create the alloca.  If we have TargetData, use nice alignment.
         unsigned Align = 1;
-        if (IFI.TD) Align = IFI.TD->getPrefTypeAlignment(AggTy);
-        Value *NewAlloca = new AllocaInst(AggTy, 0, Align, 
-                                          I->getName(), 
+        if (IFI.TD)
+          Align = IFI.TD->getPrefTypeAlignment(AggTy);
+        
+        // If the byval had an alignment specified, we *must* use at least that
+        // alignment, as it is required by the byval argument (and uses of the
+        // pointer inside the callee).
+        Align = std::max(Align, CalledFunc->getParamAlignment(ArgNo+1));
+        
+        Value *NewAlloca = new AllocaInst(AggTy, 0, Align, I->getName(), 
                                           &*Caller->begin()->begin());
         // Emit a memcpy.
         const Type *Tys[3] = {VoidPtrTy, VoidPtrTy, Type::getInt64Ty(Context)};

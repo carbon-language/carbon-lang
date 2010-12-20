@@ -56,3 +56,27 @@ entry:
 ; CHECK-NOT: call void @llvm.memcpy
 ; CHECK: ret i32
 }
+
+
+; Inlining a byval with an explicit alignment needs to use *at least* that
+; alignment on the generated alloca.
+; PR8769
+declare void @g3(%struct.ss* %p)
+
+define internal void @f3(%struct.ss* byval align 64 %b) nounwind {
+   call void @g3(%struct.ss* %b)  ;; Could make alignment assumptions!
+   ret void
+}
+
+define void @test3() nounwind  {
+entry:
+	%S = alloca %struct.ss, align 1  ;; May not be aligned.
+	call void @f3( %struct.ss* byval align 64 %S) nounwind 
+	ret void
+; CHECK: @test3()
+; CHECK: %b = alloca %struct.ss, align 64
+; CHECK: %S = alloca %struct.ss
+; CHECK: call void @llvm.memcpy
+; CHECK: call void @g3(%struct.ss* %b)
+; CHECK: ret void
+}
