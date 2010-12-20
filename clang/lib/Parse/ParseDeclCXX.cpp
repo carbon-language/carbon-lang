@@ -1875,8 +1875,8 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 /// [MS]    'throw' '(' '...' ')'
 ///
 ///       type-id-list:
-///         type-id
-///         type-id-list ',' type-id
+///         type-id ... [opt]
+///         type-id-list ',' type-id ... [opt]
 ///
 bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
                                          llvm::SmallVectorImpl<ParsedType>
@@ -1908,10 +1908,21 @@ bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
   SourceRange Range;
   while (Tok.isNot(tok::r_paren)) {
     TypeResult Res(ParseTypeName(&Range));
+    
+    if (Tok.is(tok::ellipsis)) {
+      // C++0x [temp.variadic]p5:
+      //   - In a dynamic-exception-specification (15.4); the pattern is a 
+      //     type-id.
+      SourceLocation Ellipsis = ConsumeToken();
+      if (!Res.isInvalid())
+        Res = Actions.ActOnPackExpansion(Res.get(), Ellipsis);
+    }
+    
     if (!Res.isInvalid()) {
       Exceptions.push_back(Res.get());
       Ranges.push_back(Range);
     }
+    
     if (Tok.is(tok::comma))
       ConsumeToken();
     else
