@@ -22,7 +22,7 @@ class SettingsCommandTestCase(TestBase):
         """Test that 'set prompt' actually changes the prompt."""
 
         # Set prompt to 'lldb2'.
-        self.runCmd("settings set prompt 'lldb2'")
+        self.runCmd("settings set prompt lldb2")
 
         # Immediately test the setting.
         self.expect("settings show prompt", SETTING_MSG("prompt"),
