@@ -376,3 +376,17 @@ define i32 @test35(i32 %a, i32 %b) {
   ; CHECK-NEXT: or i32 %a, %b
   ; CHECK-NEXT: or i32 %1, 1135
 }
+
+define i1 @test36(i32 %x) {
+  %cmp1 = icmp eq i32 %x, 23
+  %cmp2 = icmp eq i32 %x, 24
+  %ret1 = or i1 %cmp1, %cmp2
+  %cmp3 = icmp eq i32 %x, 25
+  %ret2 = or i1 %ret1, %cmp3
+  ret i1 %ret2
+; CHECK: @test36
+; CHECK-NEXT: %x.off = add i32 %x, -23
+; CHECK-NEXT: icmp ult i32 %x.off, 3
+; CHECK-NEXT: ret i1
+}
+

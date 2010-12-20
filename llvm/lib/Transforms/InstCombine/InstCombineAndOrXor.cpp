@@ -1450,7 +1450,16 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
     }
   }
-  
+
+  // (icmp ult (X + CA), C1) | (icmp eq X, C2) -> (icmp ult (X + CA), C1 + 1)
+  //   iff C2 + CA == C1.
+  if (LHSCC == ICmpInst::ICMP_ULT) {
+    ConstantInt *AddCst;
+    if (match(Val, m_Add(m_Specific(Val2), m_ConstantInt(AddCst))))
+      if (RHSCst->getValue() + AddCst->getValue() == LHSCst->getValue())
+        return Builder->CreateICmp(LHSCC, Val, AddOne(LHSCst));
+  }
+
   // From here on, we only handle:
   //    (icmp1 A, C1) | (icmp2 A, C2) --> something simpler.
   if (Val != Val2) return 0;
