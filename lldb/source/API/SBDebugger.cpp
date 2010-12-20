@@ -747,7 +747,7 @@ SBDebugger::GetInternalVariableValue (const char *var_name, const char *debugger
 {
     SBStringList ret_value;
     lldb::SettableVariableType var_type;
-    lldb_private:Error err;
+    lldb_private::Error err;
 
     lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
 
