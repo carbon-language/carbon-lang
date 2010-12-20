@@ -1,4 +1,4 @@
-; RUN: opt < %s -inline -S | grep {llvm.memcpy}
+; RUN: opt < %s -inline -S | FileCheck %s
 
 ; Inlining a byval struct should cause an explicit copy into an alloca.
 
@@ -16,7 +16,7 @@ entry:
 
 declare i32 @printf(i8*, ...) nounwind 
 
-define i32 @main() nounwind  {
+define i32 @caller() nounwind  {
 entry:
 	%S = alloca %struct.ss		; <%struct.ss*> [#uses=4]
 	%tmp1 = getelementptr %struct.ss* %S, i32 0, i32 0		; <i32*> [#uses=1]
@@ -25,4 +25,7 @@ entry:
 	store i64 2, i64* %tmp4, align 4
 	call void @f( %struct.ss* byval  %S ) nounwind 
 	ret i32 0
+; CHECK: @caller()
+; CHECK: %b = alloca %struct.ss
+; CHECK: call void @llvm.memcpy
 }
