@@ -1429,13 +1429,11 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       return getICmpValue(isSigned, Code, Op0, Op1, Builder);
     }
   }
-  
-  {
-    // handle (roughly):
-    // (icmp ne (A & B), C) | (icmp ne (A & D), E)
-    Value* fold = foldLogOpOfMaskedICmps(LHS, RHS, ICmpInst::ICMP_NE, Builder);
-    if (fold) return fold;
-  }
+
+  // handle (roughly):
+  // (icmp ne (A & B), C) | (icmp ne (A & D), E)
+  if (Value *V = foldLogOpOfMaskedICmps(LHS, RHS, ICmpInst::ICMP_NE, Builder))
+    return V;
 
   // This only handles icmp of constants: (icmp1 A, C1) | (icmp2 B, C2).
   Value *Val = LHS->getOperand(0), *Val2 = RHS->getOperand(0);
