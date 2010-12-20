@@ -380,11 +380,13 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
   // Count the number of landing pad successors.
-  unsigned LandingPadSuccs = 0;
+  SmallPtrSet<MachineBasicBlock*, 4> LandingPadSuccs;
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
-       E = MBB->succ_end(); I != E; ++I)
-    LandingPadSuccs += (*I)->isLandingPad();
-  if (LandingPadSuccs > 1)
+       E = MBB->succ_end(); I != E; ++I) {
+    if ((*I)->isLandingPad())
+      LandingPadSuccs.insert(*I);
+  }
+  if (LandingPadSuccs.size() > 1)
     report("MBB has more than one landing pad successor", MBB);
 
   // Call AnalyzeBranch. If it succeeds, there several more conditions to check.
@@ -402,11 +404,11 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
         // It's possible that the block legitimately ends with a noreturn
         // call or an unreachable, in which case it won't actually fall
         // out the bottom of the function.
-      } else if (MBB->succ_size() == LandingPadSuccs) {
+      } else if (MBB->succ_size() == LandingPadSuccs.size()) {
         // It's possible that the block legitimately ends with a noreturn
         // call or an unreachable, in which case it won't actuall fall
         // out of the block.
-      } else if (MBB->succ_size() != 1+LandingPadSuccs) {
+      } else if (MBB->succ_size() != 1+LandingPadSuccs.size()) {
         report("MBB exits via unconditional fall-through but doesn't have "
                "exactly one CFG successor!", MBB);
       } else if (!MBB->isSuccessor(MBBI)) {
@@ -424,7 +426,7 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
       }
     } else if (TBB && !FBB && Cond.empty()) {
       // Block unconditionally branches somewhere.
-      if (MBB->succ_size() != 1+LandingPadSuccs) {
+      if (MBB->succ_size() != 1+LandingPadSuccs.size()) {
         report("MBB exits via unconditional branch but doesn't have "
                "exactly one CFG successor!", MBB);
       } else if (!MBB->isSuccessor(TBB)) {
