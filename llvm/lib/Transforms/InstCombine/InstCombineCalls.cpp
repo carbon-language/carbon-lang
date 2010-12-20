@@ -234,7 +234,9 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
     const Type *ITy = IntegerType::get(MI->getContext(), Len*8);  // n=1 -> i8.
     
     Value *Dest = MI->getDest();
-    Dest = Builder->CreateBitCast(Dest, PointerType::getUnqual(ITy));
+    unsigned DstAddrSp = cast<PointerType>(Dest->getType())->getAddressSpace();
+    Type *NewDstPtrTy = PointerType::get(ITy, DstAddrSp);
+    Dest = Builder->CreateBitCast(Dest, NewDstPtrTy);
 
     // Alignment 0 is identity for alignment 1 for memset, but not store.
     if (Alignment == 0) Alignment = 1;
