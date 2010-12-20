@@ -344,6 +344,10 @@ public:
   /// in the input set using \c TransformTemplateArgument(), and appends
   /// the transformed arguments to the output list.
   ///
+  /// Note that this overload of \c TransformTemplateArguments() is merely
+  /// a convenience function. Subclasses that wish to override this behavior
+  /// should override the iterator-based member template version.
+  ///
   /// \param Inputs The set of template arguments to be transformed.
   ///
   /// \param NumInputs The number of template arguments in \p Inputs.
@@ -354,7 +358,9 @@ public:
   /// Returns true if an error occurred.
   bool TransformTemplateArguments(const TemplateArgumentLoc *Inputs,
                                   unsigned NumInputs,
-                                  TemplateArgumentListInfo &Outputs);
+                                  TemplateArgumentListInfo &Outputs) {
+    return TransformTemplateArguments(Inputs, Inputs + NumInputs, Outputs);
+  }
 
   /// \brief Transform the given set of template arguments.
   ///
@@ -362,17 +368,18 @@ public:
   /// in the input set using \c TransformTemplateArgument(), and appends
   /// the transformed arguments to the output list. 
   ///
-  /// \param Inputs The set of template arguments to be transformed. The
-  /// \c getArgLoc() function will be invoked on each argument indexed, while 
-  /// the number of arguments is determined via \c getNumArgs().
+  /// \param First An iterator to the first template argument.
+  ///
+  /// \param Last An iterator one step past the last template argument.
   ///
   /// \param Outputs The set of transformed template arguments output by this
   /// routine.
   ///
   /// Returns true if an error occurred.
-  template<typename InputsType>
-  bool TransformTemplateArgumentsFromArgLoc(const InputsType &Inputs,
-                                            TemplateArgumentListInfo &Outputs);
+  template<typename InputIterator>
+  bool TransformTemplateArguments(InputIterator First,
+                                  InputIterator Last,
+                                  TemplateArgumentListInfo &Outputs);
 
   /// \brief Fakes up a TemplateArgumentLoc for a given TemplateArgument.
   void InventTemplateArgumentLoc(const TemplateArgument &Arg,
@@ -2507,50 +2514,89 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
   return true;
 }
 
-template<typename Derived>
-bool TreeTransform<Derived>::TransformTemplateArguments(
-                                            const TemplateArgumentLoc *Inputs,
-                                                        unsigned NumInputs,
-                                          TemplateArgumentListInfo &Outputs) {
-  for (unsigned I = 0; I != NumInputs; ++I) {
-    TemplateArgumentLoc Out;
-    if (getDerived().TransformTemplateArgument(Inputs[I], Out))
-      return true;
+/// \brief Iterator adaptor that invents template argument location information
+/// for each of the template arguments in its underlying iterator.
+template<typename Derived, typename InputIterator>
+class TemplateArgumentLocInventIterator {
+  TreeTransform<Derived> &Self;
+  InputIterator Iter;
+  
+public:
+  typedef TemplateArgumentLoc value_type;
+  typedef TemplateArgumentLoc reference;
+  typedef typename std::iterator_traits<InputIterator>::difference_type
+    difference_type;
+  typedef std::input_iterator_tag iterator_category;
+  
+  class pointer {
+    TemplateArgumentLoc Arg;
     
-    Outputs.addArgument(Out);
+  public:
+    explicit pointer(TemplateArgumentLoc Arg) : Arg(Arg) { }
+    
+    const TemplateArgumentLoc *operator->() const { return &Arg; }
+  };
+  
+  TemplateArgumentLocInventIterator() { }
+  
+  explicit TemplateArgumentLocInventIterator(TreeTransform<Derived> &Self,
+                                             InputIterator Iter)
+    : Self(Self), Iter(Iter) { }
+  
+  TemplateArgumentLocInventIterator &operator++() {
+    ++Iter;
+    return *this;
   }
   
-  return false;
-}
+  TemplateArgumentLocInventIterator operator++(int) {
+    TemplateArgumentLocInventIterator Old(*this);
+    ++(*this);
+    return Old;
+  }
+  
+  reference operator*() const {
+    TemplateArgumentLoc Result;
+    Self.InventTemplateArgumentLoc(*Iter, Result);
+    return Result;
+  }
+  
+  pointer operator->() const { return pointer(**this); }
+  
+  friend bool operator==(const TemplateArgumentLocInventIterator &X,
+                         const TemplateArgumentLocInventIterator &Y) {
+    return X.Iter == Y.Iter;
+  }
 
+  friend bool operator!=(const TemplateArgumentLocInventIterator &X,
+                         const TemplateArgumentLocInventIterator &Y) {
+    return X.Iter != Y.Iter;
+  }
+};
+  
 template<typename Derived>
-template<typename InputsType>
-bool TreeTransform<Derived>::TransformTemplateArgumentsFromArgLoc(
-                                                     const InputsType &Inputs,
+template<typename InputIterator>
+bool TreeTransform<Derived>::TransformTemplateArguments(InputIterator First,
+                                                        InputIterator Last,
                                             TemplateArgumentListInfo &Outputs) {
-  for (unsigned I = 0, N = Inputs.getNumArgs(); I != N; ++I) {
+  for (; First != Last; ++First) {
     TemplateArgumentLoc Out;
-    TemplateArgumentLoc In = Inputs.getArgLoc(I);
+    TemplateArgumentLoc In = *First;
     
     if (In.getArgument().getKind() == TemplateArgument::Pack) {
       // Unpack argument packs, which we translate them into separate
       // arguments.
-      // FIXME: It would be far better to make this a recursive call using
-      // some kind of argument-pack adaptor.
-      for (TemplateArgument::pack_iterator P = In.getArgument().pack_begin(), 
-                                        PEnd = In.getArgument().pack_end();
-           P != PEnd; ++P) {
-        TemplateArgumentLoc PLoc;
-        
-        // FIXME: We could do much better if we could guarantee that the
-        // TemplateArgumentLocInfo for the pack expansion would be usable for
-        // all of the template arguments in the argument pack.
-        getDerived().InventTemplateArgumentLoc(*P, PLoc);
-        if (getDerived().TransformTemplateArgument(PLoc, Out))
-          return true;
-        
-        Outputs.addArgument(Out);
-      }
+      // FIXME: We could do much better if we could guarantee that the
+      // TemplateArgumentLocInfo for the pack expansion would be usable for
+      // all of the template arguments in the argument pack.
+      typedef TemplateArgumentLocInventIterator<Derived, 
+                                                TemplateArgument::pack_iterator>
+        PackLocIterator;
+      if (TransformTemplateArguments(PackLocIterator(*this, 
+                                                 In.getArgument().pack_begin()),
+                                     PackLocIterator(*this,
+                                                   In.getArgument().pack_end()),
+                                     Outputs))
+        return true;
       
       continue;
     }
@@ -3528,6 +3574,73 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
   return getDerived().TransformTemplateSpecializationType(TLB, TL, Template);
 }
 
+namespace {
+  /// \brief Simple iterator that traverses the template arguments in a 
+  /// container that provides a \c getArgLoc() member function.
+  ///
+  /// This iterator is intended to be used with the iterator form of
+  /// \c TreeTransform<Derived>::TransformTemplateArguments().
+  template<typename ArgLocContainer>
+  class TemplateArgumentLocContainerIterator {
+    ArgLocContainer *Container;
+    unsigned Index;
+    
+  public:
+    typedef TemplateArgumentLoc value_type;
+    typedef TemplateArgumentLoc reference;
+    typedef int difference_type;
+    typedef std::input_iterator_tag iterator_category;
+    
+    class pointer {
+      TemplateArgumentLoc Arg;
+      
+    public:
+      explicit pointer(TemplateArgumentLoc Arg) : Arg(Arg) { }
+      
+      const TemplateArgumentLoc *operator->() const {
+        return &Arg;
+      }
+    };
+    
+    
+    TemplateArgumentLocContainerIterator() {}
+    
+    TemplateArgumentLocContainerIterator(ArgLocContainer &Container,
+                                 unsigned Index)
+      : Container(&Container), Index(Index) { }
+    
+    TemplateArgumentLocContainerIterator &operator++() {
+      ++Index;
+      return *this;
+    }
+    
+    TemplateArgumentLocContainerIterator operator++(int) {
+      TemplateArgumentLocContainerIterator Old(*this);
+      ++(*this);
+      return Old;
+    }
+    
+    TemplateArgumentLoc operator*() const {
+      return Container->getArgLoc(Index);
+    }
+    
+    pointer operator->() const {
+      return pointer(Container->getArgLoc(Index));
+    }
+    
+    friend bool operator==(const TemplateArgumentLocContainerIterator &X,
+                           TemplateArgumentLocContainerIterator &Y) {
+      return X.Container == Y.Container && X.Index == Y.Index;
+    }
+    
+    friend bool operator!=(const TemplateArgumentLocContainerIterator &X,
+                           TemplateArgumentLocContainerIterator &Y) {
+      return !(X == Y);
+    }
+  };
+}
+  
+  
 template <typename Derived>
 QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
                                                         TypeLocBuilder &TLB,
@@ -3536,7 +3649,11 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
   TemplateArgumentListInfo NewTemplateArgs;
   NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());
   NewTemplateArgs.setRAngleLoc(TL.getRAngleLoc());
-  if (getDerived().TransformTemplateArgumentsFromArgLoc(TL, NewTemplateArgs))
+  typedef TemplateArgumentLocContainerIterator<TemplateSpecializationTypeLoc>
+    ArgIterator;
+  if (getDerived().TransformTemplateArguments(ArgIterator(TL, 0), 
+                                              ArgIterator(TL, TL.getNumArgs()),
+                                              NewTemplateArgs))
     return QualType();
 
   // FIXME: maybe don't rebuild if all the template arguments are the same.
@@ -3679,7 +3796,12 @@ QualType TreeTransform<Derived>::
   TemplateArgumentListInfo NewTemplateArgs;
   NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());
   NewTemplateArgs.setRAngleLoc(TL.getRAngleLoc());
-  if (getDerived().TransformTemplateArgumentsFromArgLoc(TL, NewTemplateArgs))
+            
+  typedef TemplateArgumentLocContainerIterator<
+                            DependentTemplateSpecializationTypeLoc> ArgIterator;
+  if (getDerived().TransformTemplateArguments(ArgIterator(TL, 0),
+                                              ArgIterator(TL, TL.getNumArgs()),
+                                              NewTemplateArgs))
     return QualType();
 
   QualType Result
