@@ -10,7 +10,7 @@
 #ifndef utility_UnwindAssemblyProfiler_h_
 #define utility_UnwindAssemblyProfiler_h_
 
-#include "lldb-private.h"
+#include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
 
 namespace lldb_private {

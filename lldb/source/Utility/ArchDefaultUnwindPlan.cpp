@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb-private.h"
+#include "lldb/lldb-private.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Utility/ArchDefaultUnwindPlan.h"
