@@ -2796,7 +2796,8 @@ public:
   /// enclosing the template arguments.
   static std::string PrintTemplateArgumentList(const TemplateArgument *Args,
                                                unsigned NumArgs,
-                                               const PrintingPolicy &Policy);
+                                               const PrintingPolicy &Policy,
+                                               bool SkipBrackets = false);
 
   static std::string PrintTemplateArgumentList(const TemplateArgumentLoc *Args,
                                                unsigned NumArgs,

@@ -12,4 +12,4 @@ struct tuple_of_refs {
 
 Tuple<int&, float&> *t_int_ref_float_ref;
 tuple_of_refs<int&, float&>::types *t_int_ref_float_ref_2 =  t_int_ref_float_ref;
-  
+

@@ -759,16 +759,23 @@ std::string
 TemplateSpecializationType::PrintTemplateArgumentList(
                                                 const TemplateArgument *Args,
                                                 unsigned NumArgs,
-                                                const PrintingPolicy &Policy) {
+                                                  const PrintingPolicy &Policy,
+                                                      bool SkipBrackets) {
   std::string SpecString;
-  SpecString += '<';
+  if (!SkipBrackets)
+    SpecString += '<';
+  
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
-    if (Arg)
+    if (SpecString.size() > !SkipBrackets)
       SpecString += ", ";
     
     // Print the argument into a string.
     std::string ArgString;
-    {
+    if (Args[Arg].getKind() == TemplateArgument::Pack) {
+      ArgString = PrintTemplateArgumentList(Args[Arg].pack_begin(), 
+                                            Args[Arg].pack_size(), 
+                                            Policy, true);
+    } else {
       llvm::raw_string_ostream ArgOut(ArgString);
       Args[Arg].print(Policy, ArgOut);
     }
@@ -788,7 +795,8 @@ TemplateSpecializationType::PrintTemplateArgumentList(
   if (SpecString[SpecString.size() - 1] == '>')
     SpecString += ' ';
   
-  SpecString += '>';
+  if (!SkipBrackets)
+    SpecString += '>';
   
   return SpecString;
 }
@@ -800,12 +808,17 @@ PrintTemplateArgumentList(const TemplateArgumentLoc *Args, unsigned NumArgs,
   std::string SpecString;
   SpecString += '<';
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
-    if (Arg)
+    if (SpecString.size() > 1)
       SpecString += ", ";
     
     // Print the argument into a string.
     std::string ArgString;
-    {
+    if (Args[Arg].getArgument().getKind() == TemplateArgument::Pack) {
+      ArgString = PrintTemplateArgumentList(
+                                           Args[Arg].getArgument().pack_begin(), 
+                                            Args[Arg].getArgument().pack_size(), 
+                                            Policy, true);
+    } else {
       llvm::raw_string_ostream ArgOut(ArgString);
       Args[Arg].getArgument().print(Policy, ArgOut);
     }

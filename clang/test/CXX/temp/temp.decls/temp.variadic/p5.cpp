@@ -30,7 +30,7 @@ ExpansionLengthMismatch<int, long>::Inner<unsigned int, unsigned long>::type
   *il_pairs;
 tuple<pair<int, unsigned int>, pair<long, unsigned long> >*il_pairs_2 = il_pairs;
 
-ExpansionLengthMismatch<short, int, long>::Inner<unsigned int, unsigned long>::type // expected-note{{in instantiation of}}
+ExpansionLengthMismatch<short, int, long>::Inner<unsigned int, unsigned long>::type // expected-note{{in instantiation of template class 'ExpansionLengthMismatch<short, int, long>::Inner<unsigned int, unsigned long>' requested here}}
   *il_pairs_bad; 
 
 
