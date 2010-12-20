@@ -92,3 +92,12 @@ define i64 @test6(i64 %A, i32 %B) nounwind {
 ; X64:	ret
 }
 
+define {i32, i1} @test7(i32 %v1, i32 %v2) nounwind {
+   %t = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %v1, i32 %v2)
+   ret {i32, i1} %t
+}
+
+; X64: test7:
+; X64: addl %esi, %eax
+; X64-NEXT: setb %dl
+; X64-NEXT: ret
