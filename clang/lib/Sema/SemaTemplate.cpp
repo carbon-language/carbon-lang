@@ -5937,91 +5937,32 @@ std::string
 Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
                                       const TemplateArgument *Args,
                                       unsigned NumArgs) {
-  std::string Result;
+  llvm::SmallString<128> Str;
+  llvm::raw_svector_ostream Out(Str);
 
   if (!Params || Params->size() == 0 || NumArgs == 0)
-    return Result;
+    return std::string();
   
   for (unsigned I = 0, N = Params->size(); I != N; ++I) {
     if (I >= NumArgs)
       break;
     
     if (I == 0)
-      Result += "[with ";
+      Out << "[with ";
     else
-      Result += ", ";
+      Out << ", ";
     
     if (const IdentifierInfo *Id = Params->getParam(I)->getIdentifier()) {
-      Result += Id->getName();
+      Out << Id->getName();
     } else {
-      Result += '$';
-      Result += llvm::utostr(I);
+      Out << '$' << I;
     }
     
-    Result += " = ";
-    
-    switch (Args[I].getKind()) {
-      case TemplateArgument::Null:
-        Result += "<no value>";
-        break;
-        
-      case TemplateArgument::Type: {
-        std::string TypeStr;
-        Args[I].getAsType().getAsStringInternal(TypeStr, 
-                                                Context.PrintingPolicy);
-        Result += TypeStr;
-        break;
-      }
-        
-      case TemplateArgument::Declaration: {
-        bool Unnamed = true;
-        if (NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Args[I].getAsDecl())) {
-          if (ND->getDeclName()) {
-            Unnamed = false;
-            Result += ND->getNameAsString();
-          }
-        }
-        
-        if (Unnamed) {
-          Result += "<anonymous>";
-        }
-        break;
-      }
-        
-      case TemplateArgument::Template: {
-        std::string Str;
-        llvm::raw_string_ostream OS(Str);
-        Args[I].getAsTemplate().print(OS, Context.PrintingPolicy);
-        Result += OS.str();
-        break;
-      }
-        
-      case TemplateArgument::Integral: {
-        Result += Args[I].getAsIntegral()->toString(10);
-        break;
-      }
-        
-      case TemplateArgument::Expression: {
-        // FIXME: This is non-optimal, since we're regurgitating the
-        // expression we were given.
-        std::string Str; 
-        {
-          llvm::raw_string_ostream OS(Str);
-          Args[I].getAsExpr()->printPretty(OS, Context, 0,
-                                           Context.PrintingPolicy);
-        }
-        Result += Str;
-        break;
-      }
-        
-      case TemplateArgument::Pack:
-        // FIXME: Format template argument packs
-        Result += "<template argument pack>";
-        break;        
-    }
+    Out << " = ";
+    Args[I].print(Context.PrintingPolicy, Out);
   }
-  
-  Result += ']';
-  return Result;
+
+  Out << ']';
+  return Out.str();
 }
 

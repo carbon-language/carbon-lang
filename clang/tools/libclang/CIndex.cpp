@@ -1224,12 +1224,9 @@ bool CursorVisitor::VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL) {
   switch (TAL.getArgument().getKind()) {
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
+  case TemplateArgument::Pack:
     return false;
       
-  case TemplateArgument::Pack:
-    // FIXME: Implement when variadic templates come along.
-    return false;
-
   case TemplateArgument::Type:
     if (TypeSourceInfo *TSInfo = TAL.getTypeSourceInfo())
       return Visit(TSInfo->getTypeLoc());

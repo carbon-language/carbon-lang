@@ -23,6 +23,7 @@
 
 namespace llvm {
   class FoldingSetNodeID;
+  class raw_ostream;
 }
 
 namespace clang {
@@ -30,6 +31,7 @@ namespace clang {
 class Decl;
 class DiagnosticBuilder;
 class Expr;
+struct PrintingPolicy;
 class TypeSourceInfo;
 
 /// \brief Represents a template argument within a class template
@@ -280,6 +282,9 @@ public:
   /// same.
   bool structurallyEquals(const TemplateArgument &Other) const;
 
+  /// \brief Print this template argument to the given output stream.
+  void print(const PrintingPolicy &Policy, llvm::raw_ostream &Out) const;
+             
   /// \brief Used to insert TemplateArguments into FoldingSets.
   void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context) const;
 };

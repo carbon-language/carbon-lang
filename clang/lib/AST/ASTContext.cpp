@@ -2741,6 +2741,9 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) {
       return TemplateArgument(getCanonicalType(Arg.getAsType()));
 
     case TemplateArgument::Pack: {
+      if (Arg.pack_size() == 0)
+        return Arg;
+      
       TemplateArgument *CanonArgs
         = new (*this) TemplateArgument[Arg.pack_size()];
       unsigned Idx = 0;

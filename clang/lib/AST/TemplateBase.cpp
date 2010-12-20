@@ -12,13 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/FoldingSet.h"
 #include "clang/AST/TemplateBase.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/FoldingSet.h"
 
 using namespace clang;
 
@@ -167,6 +168,69 @@ bool TemplateArgument::structurallyEquals(const TemplateArgument &Other) const {
   return false;
 }
 
+void TemplateArgument::print(const PrintingPolicy &Policy, 
+                             llvm::raw_ostream &Out) const {
+  switch (getKind()) {
+  case Null:
+    Out << "<no value>";
+    break;
+    
+  case Type: {
+    std::string TypeStr;
+    getAsType().getAsStringInternal(TypeStr, Policy);
+    Out << TypeStr;
+    break;
+  }
+    
+  case Declaration: {
+    bool Unnamed = true;
+    if (NamedDecl *ND = dyn_cast_or_null<NamedDecl>(getAsDecl())) {
+      if (ND->getDeclName()) {
+        Unnamed = false;
+        Out << ND->getNameAsString();
+      }
+    }
+    
+    if (Unnamed) {
+      Out << "<anonymous>";
+    }
+    break;
+  }
+    
+  case Template: {
+    getAsTemplate().print(Out, Policy);
+    break;
+  }
+    
+  case Integral: {
+    Out << getAsIntegral()->toString(10);
+    break;
+  }
+    
+  case Expression: {
+    // FIXME: This is non-optimal, since we're regurgitating the
+    // expression we were given.
+    getAsExpr()->printPretty(Out, 0, Policy);
+    break;
+  }
+    
+  case Pack:
+    Out << "<";
+    bool First = true;
+    for (TemplateArgument::pack_iterator P = pack_begin(), PEnd = pack_end();
+         P != PEnd; ++P) {
+      if (First)
+        First = false;
+      else
+        Out << ", ";
+      
+      P->print(Policy, Out);
+    }
+    Out << ">";
+    break;        
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // TemplateArgumentLoc Implementation
 //===----------------------------------------------------------------------===//
@@ -234,9 +298,16 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
     return DB << OS.str();
   }
       
-  case TemplateArgument::Pack:
-    // FIXME: Format arguments in a list!
-    return DB << "<parameter pack>";
+  case TemplateArgument::Pack: {
+    // FIXME: We're guessing at LangOptions!
+    llvm::SmallString<32> Str;
+    llvm::raw_svector_ostream OS(Str);
+    LangOptions LangOpts;
+    LangOpts.CPlusPlus = true;
+    PrintingPolicy Policy(LangOpts);
+    Arg.print(Policy, OS);
+    return DB << OS.str();
+  }
   }
   
   return DB;

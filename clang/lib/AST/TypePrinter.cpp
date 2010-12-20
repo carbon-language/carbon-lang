@@ -747,44 +747,6 @@ void TypePrinter::printObjCObjectPointer(const ObjCObjectPointerType *T,
   S = ObjCQIString + S;  
 }
 
-static void printTemplateArgument(std::string &Buffer,
-                                  const TemplateArgument &Arg,
-                                  const PrintingPolicy &Policy) {
-  switch (Arg.getKind()) {
-    case TemplateArgument::Null:
-      assert(false && "Null template argument");
-      break;
-      
-    case TemplateArgument::Type:
-      Arg.getAsType().getAsStringInternal(Buffer, Policy);
-      break;
-      
-    case TemplateArgument::Declaration:
-      Buffer = cast<NamedDecl>(Arg.getAsDecl())->getNameAsString();
-      break;
-      
-    case TemplateArgument::Template: {
-      llvm::raw_string_ostream s(Buffer);
-      Arg.getAsTemplate().print(s, Policy);
-      break;
-    }
-      
-    case TemplateArgument::Integral:
-      Buffer = Arg.getAsIntegral()->toString(10, true);
-      break;
-      
-    case TemplateArgument::Expression: {
-      llvm::raw_string_ostream s(Buffer);
-      Arg.getAsExpr()->printPretty(s, 0, Policy);
-      break;
-    }
-      
-    case TemplateArgument::Pack:
-      assert(0 && "FIXME: Implement!");
-      break;
-  }
-}
-
 std::string TemplateSpecializationType::
   PrintTemplateArgumentList(const TemplateArgumentListInfo &Args,
                             const PrintingPolicy &Policy) {
@@ -806,8 +768,11 @@ TemplateSpecializationType::PrintTemplateArgumentList(
     
     // Print the argument into a string.
     std::string ArgString;
-    printTemplateArgument(ArgString, Args[Arg], Policy);
-    
+    {
+      llvm::raw_string_ostream ArgOut(ArgString);
+      Args[Arg].print(Policy, ArgOut);
+    }
+   
     // If this is the first argument and its string representation
     // begins with the global scope specifier ('::foo'), add a space
     // to avoid printing the diagraph '<:'.
@@ -840,7 +805,10 @@ PrintTemplateArgumentList(const TemplateArgumentLoc *Args, unsigned NumArgs,
     
     // Print the argument into a string.
     std::string ArgString;
-    printTemplateArgument(ArgString, Args[Arg].getArgument(), Policy);
+    {
+      llvm::raw_string_ostream ArgOut(ArgString);
+      Args[Arg].getArgument().print(Policy, ArgOut);
+    }
     
     // If this is the first argument and its string representation
     // begins with the global scope specifier ('::foo'), add a space

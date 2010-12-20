@@ -335,7 +335,10 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
       break;
     }
     case TemplateArgument::Pack: {
-      // TODO
+      for (TemplateArgument::pack_iterator P = A.pack_begin(), 
+                                        PEnd = A.pack_end();
+           P != PEnd; ++P)
+        dispatch(*P);
       break;
     }
     }
