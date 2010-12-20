@@ -1072,10 +1072,24 @@ void MachineVerifier::verifyLiveIntervals() {
             << MBBStartIdx << '\n';
         } else if (TargetRegisterInfo::isVirtualRegister(LI.reg) &&
                    !MI->readsVirtualRegister(LI.reg)) {
-          // FIXME: Should we require a kill flag?
-          report("Instruction killing live segment doesn't read register", MI);
-          I->print(*OS);
-          *OS << " in " << LI << '\n';
+          // A live range can end with either a redefinition, a kill flag on a
+          // use, or a dead flag on a def.
+          // FIXME: Should we check for each of these?
+          bool hasDeadDef = false;
+          for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
+               MOE = MI->operands_end(); MOI != MOE; ++MOI) {
+            if (MOI->isReg() && MOI->isDef() && MOI->isDead()) {
+              hasDeadDef = true;
+              break;
+            }
+          }
+
+          if (!hasDeadDef) {
+            report("Instruction killing live segment neither defines nor reads "
+                   "register", MI);
+            I->print(*OS);
+            *OS << " in " << LI << '\n';
+          }
         }
       }
 
