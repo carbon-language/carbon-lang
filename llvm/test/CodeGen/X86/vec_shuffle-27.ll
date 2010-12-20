@@ -19,9 +19,10 @@ entry:
 	ret <8 x float> %add
 }
 
-
+; Test case for r122206
 define void @test2(<4 x i64>* %ap, <4 x i64>* %bp) nounwind {
 entry:
+; CHECK: movdqa
   %a = load <4 x i64> * %ap
   %b = load <4 x i64> * %bp
   %mulaa = mul <4 x i64> %a, %a
