@@ -492,7 +492,7 @@ void ScheduleDAGTopologicalSort::RemovePred(SUnit *M, SUnit *N) {
 /// all nodes affected by the edge insertion. These nodes will later get new
 /// topological indexes by means of the Shift method.
 void ScheduleDAGTopologicalSort::DFS(const SUnit *SU, int UpperBound,
-                                     bool& HasLoop) {
+                                     bool &HasLoop) {
   std::vector<const SUnit*> WorkList;
   WorkList.reserve(SUnits.size());
 

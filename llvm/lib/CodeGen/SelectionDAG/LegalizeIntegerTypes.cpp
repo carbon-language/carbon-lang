@@ -1285,31 +1285,32 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
       HiOps[2] = Lo.getValue(1);
       Hi = DAG.getNode(ISD::SUBE, dl, VTList, HiOps, 3);
     }
+    return;    
+  }
+  
+  if (N->getOpcode() == ISD::ADD) {
+    Lo = DAG.getNode(ISD::ADD, dl, NVT, LoOps, 2);
+    Hi = DAG.getNode(ISD::ADD, dl, NVT, HiOps, 2);
+    SDValue Cmp1 = DAG.getSetCC(dl, TLI.getSetCCResultType(NVT), Lo, LoOps[0],
+                                ISD::SETULT);
+    SDValue Carry1 = DAG.getNode(ISD::SELECT, dl, NVT, Cmp1,
+                                 DAG.getConstant(1, NVT),
+                                 DAG.getConstant(0, NVT));
+    SDValue Cmp2 = DAG.getSetCC(dl, TLI.getSetCCResultType(NVT), Lo, LoOps[1],
+                                ISD::SETULT);
+    SDValue Carry2 = DAG.getNode(ISD::SELECT, dl, NVT, Cmp2,
+                                 DAG.getConstant(1, NVT), Carry1);
+    Hi = DAG.getNode(ISD::ADD, dl, NVT, Hi, Carry2);
   } else {
-    if (N->getOpcode() == ISD::ADD) {
-      Lo = DAG.getNode(ISD::ADD, dl, NVT, LoOps, 2);
-      Hi = DAG.getNode(ISD::ADD, dl, NVT, HiOps, 2);
-      SDValue Cmp1 = DAG.getSetCC(dl, TLI.getSetCCResultType(NVT), Lo, LoOps[0],
-                                  ISD::SETULT);
-      SDValue Carry1 = DAG.getNode(ISD::SELECT, dl, NVT, Cmp1,
-                                   DAG.getConstant(1, NVT),
-                                   DAG.getConstant(0, NVT));
-      SDValue Cmp2 = DAG.getSetCC(dl, TLI.getSetCCResultType(NVT), Lo, LoOps[1],
-                                  ISD::SETULT);
-      SDValue Carry2 = DAG.getNode(ISD::SELECT, dl, NVT, Cmp2,
-                                   DAG.getConstant(1, NVT), Carry1);
-      Hi = DAG.getNode(ISD::ADD, dl, NVT, Hi, Carry2);
-    } else {
-      Lo = DAG.getNode(ISD::SUB, dl, NVT, LoOps, 2);
-      Hi = DAG.getNode(ISD::SUB, dl, NVT, HiOps, 2);
-      SDValue Cmp =
-        DAG.getSetCC(dl, TLI.getSetCCResultType(LoOps[0].getValueType()),
-                     LoOps[0], LoOps[1], ISD::SETULT);
-      SDValue Borrow = DAG.getNode(ISD::SELECT, dl, NVT, Cmp,
-                                   DAG.getConstant(1, NVT),
-                                   DAG.getConstant(0, NVT));
-      Hi = DAG.getNode(ISD::SUB, dl, NVT, Hi, Borrow);
-    }
+    Lo = DAG.getNode(ISD::SUB, dl, NVT, LoOps, 2);
+    Hi = DAG.getNode(ISD::SUB, dl, NVT, HiOps, 2);
+    SDValue Cmp =
+      DAG.getSetCC(dl, TLI.getSetCCResultType(LoOps[0].getValueType()),
+                   LoOps[0], LoOps[1], ISD::SETULT);
+    SDValue Borrow = DAG.getNode(ISD::SELECT, dl, NVT, Cmp,
+                                 DAG.getConstant(1, NVT),
+                                 DAG.getConstant(0, NVT));
+    Hi = DAG.getNode(ISD::SUB, dl, NVT, Hi, Borrow);
   }
 }
 
