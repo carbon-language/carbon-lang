@@ -329,9 +329,12 @@ namespace {
     // returned means that the work item was not completely processed and must
     // be revisited after going through the new items.
     bool solveBlockValue(Value *Val, BasicBlock *BB);
-    bool solveBlockValueNonLocal(Value *Val, BasicBlock *BB);
-    bool solveBlockValuePHINode(PHINode *PN, BasicBlock *BB);
-    bool solveBlockValueConstantRange(Instruction *BBI, BasicBlock *BB);
+    bool solveBlockValueNonLocal(LVILatticeVal &BBLV,
+                                 Value *Val, BasicBlock *BB);
+    bool solveBlockValuePHINode(LVILatticeVal &BBLV,
+                                PHINode *PN, BasicBlock *BB);
+    bool solveBlockValueConstantRange(LVILatticeVal &BBLV,
+                                      Instruction *BBI, BasicBlock *BB);
 
     void solve();
     
@@ -455,11 +458,11 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
   
   Instruction *BBI = dyn_cast<Instruction>(Val);
   if (BBI == 0 || BBI->getParent() != BB) {
-    return solveBlockValueNonLocal(Val, BB);
+    return solveBlockValueNonLocal(BBLV, Val, BB);
   }
 
   if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
-    return solveBlockValuePHINode(PN, BB);
+    return solveBlockValuePHINode(BBLV, PN, BB);
   }
 
   // We can only analyze the definitions of certain classes of instructions
@@ -469,8 +472,7 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
      !BBI->getType()->isIntegerTy()) {
     DEBUG(dbgs() << " compute BB '" << BB->getName()
                  << "' - overdefined because inst def found.\n");
-    Result.markOverdefined();
-    setBlockValue(Val, BB, Result, Cache);
+    BBLV.markOverdefined();
     return true;
   }
 
@@ -481,12 +483,11 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
     DEBUG(dbgs() << " compute BB '" << BB->getName()
                  << "' - overdefined because inst def found.\n");
 
-    Result.markOverdefined();
-    setBlockValue(Val, BB, Result, Cache);
+    BBLV.markOverdefined();
     return true;
   }
 
-  return solveBlockValueConstantRange(BBI, BB);
+  return solveBlockValueConstantRange(BBLV, BBI, BB);
 }
 
 static bool InstructionDereferencesPointer(Instruction *I, Value *Ptr) {
@@ -504,7 +505,8 @@ static bool InstructionDereferencesPointer(Instruction *I, Value *Ptr) {
   return false;
 }
 
-bool LazyValueInfoCache::solveBlockValueNonLocal(Value *Val, BasicBlock *BB) {
+bool LazyValueInfoCache::solveBlockValueNonLocal(LVILatticeVal &BBLV,
+                                                 Value *Val, BasicBlock *BB) {
   LVILatticeVal Result;  // Start Undefined.
 
   // If this is a pointer, and there's a load from that pointer in this BB,
@@ -529,7 +531,7 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(Value *Val, BasicBlock *BB) {
     } else {
       Result.markOverdefined();
     }
-    setBlockValue(Val, BB, Result);
+    BBLV = Result;
     return true;
   }
 
@@ -555,7 +557,8 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(Value *Val, BasicBlock *BB) {
         const PointerType *PTy = cast<PointerType>(Val->getType());
         Result = LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
       }
-      setBlockValue(Val, BB, Result);
+      
+      BBLV = Result;
       return true;
     }
   }
@@ -564,11 +567,12 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(Value *Val, BasicBlock *BB) {
 
   // Return the merged value, which is more precise than 'overdefined'.
   assert(!Result.isOverdefined());
-  setBlockValue(Val, BB, Result);
+  BBLV = Result;
   return true;
 }
   
-bool LazyValueInfoCache::solveBlockValuePHINode(PHINode *PN, BasicBlock *BB) {
+bool LazyValueInfoCache::solveBlockValuePHINode(LVILatticeVal &BBLV,
+                                                PHINode *PN, BasicBlock *BB) {
   LVILatticeVal Result;  // Start Undefined.
 
   // Loop over all of our predecessors, merging what we know from them into
@@ -589,7 +593,8 @@ bool LazyValueInfoCache::solveBlockValuePHINode(PHINode *PN, BasicBlock *BB) {
     if (Result.isOverdefined()) {
       DEBUG(dbgs() << " compute BB '" << BB->getName()
             << "' - overdefined because of pred.\n");
-      setBlockValue(PN, BB, Result);
+      
+      BBLV = Result;
       return true;
     }
   }
@@ -598,11 +603,12 @@ bool LazyValueInfoCache::solveBlockValuePHINode(PHINode *PN, BasicBlock *BB) {
 
   // Return the merged value, which is more precise than 'overdefined'.
   assert(!Result.isOverdefined() && "Possible PHI in entry block?");
-  setBlockValue(PN, BB, Result);
+  BBLV = Result;
   return true;
 }
 
-bool LazyValueInfoCache::solveBlockValueConstantRange(Instruction *BBI,
+bool LazyValueInfoCache::solveBlockValueConstantRange(LVILatticeVal &BBLV,
+                                                      Instruction *BBI,
                                                       BasicBlock *BB) {
   // Figure out the range of the LHS.  If that fails, bail.
   if (!hasBlockValue(BBI->getOperand(0), BB)) {
@@ -610,11 +616,9 @@ bool LazyValueInfoCache::solveBlockValueConstantRange(Instruction *BBI,
     return false;
   }
 
-  LVILatticeVal Result;
   LVILatticeVal LHSVal = getBlockValue(BBI->getOperand(0), BB);
   if (!LHSVal.isConstantRange()) {
-    Result.markOverdefined();
-    setBlockValue(BBI, BB, Result);
+    BBLV.markOverdefined();
     return true;
   }
   
@@ -625,8 +629,7 @@ bool LazyValueInfoCache::solveBlockValueConstantRange(Instruction *BBI,
     if (ConstantInt *RHS = dyn_cast<ConstantInt>(BBI->getOperand(1))) {
       RHSRange = ConstantRange(RHS->getValue());
     } else {
-      Result.markOverdefined();
-      setBlockValue(BBI, BB, Result);
+      BBLV.markOverdefined();
       return true;
     }
   }
@@ -634,6 +637,7 @@ bool LazyValueInfoCache::solveBlockValueConstantRange(Instruction *BBI,
   // NOTE: We're currently limited by the set of operations that ConstantRange
   // can evaluate symbolically.  Enhancing that set will allows us to analyze
   // more definitions.
+  LVILatticeVal Result;
   switch (BBI->getOpcode()) {
   case Instruction::Add:
     Result.markConstantRange(LHSRange.add(RHSRange));
@@ -680,7 +684,7 @@ bool LazyValueInfoCache::solveBlockValueConstantRange(Instruction *BBI,
     break;
   }
   
-  setBlockValue(BBI, BB, Result);
+  BBLV = Result;
   return true;
 }
 
