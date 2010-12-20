@@ -229,17 +229,56 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
   CallerNode->removeCallEdgeFor(CS);
 }
 
+/// HandleByValArgument - When inlining a call site that has a byval argument,
+/// we have to make the implicit memcpy explicit by adding it.
 static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
                                   const Function *CalledFunc,
                                   InlineFunctionInfo &IFI,
                                   unsigned ByValAlignment) {
-  if (CalledFunc->onlyReadsMemory())
-    return Arg;
+  const Type *AggTy = cast<PointerType>(Arg->getType())->getElementType();
+
+  // If the called function is readonly, then it could not mutate the caller's
+  // copy of the byval'd memory.  In this case, it is safe to elide the copy and
+  // temporary.
+  if (CalledFunc->onlyReadsMemory()) {
+    // If the byval argument has a specified alignment that is greater than the
+    // passed in pointer, then we either have to round up the input pointer or
+    // give up on this transformation.
+    if (ByValAlignment <= 1)  // 0 = unspecified, 1 = no particular alignment.
+      return Arg;
+
+    // See if the argument is a (bitcasted) pointer to an alloca.  If so, we can
+    // round up the alloca if needed.
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(Arg->stripPointerCasts())) {
+      unsigned AIAlign = AI->getAlignment();
+      
+      // If the alloca is known at least aligned as much as the byval, we can do
+      // this optimization.
+      if (AIAlign >= ByValAlignment)
+        return Arg;
+      
+      // If the alloca has a specified alignment that is less than the byval,
+      // then we can safely bump it up.
+      if (AIAlign) {
+        AI->setAlignment(ByValAlignment);
+        return Arg;
+      }
+      
+      // If the alignment has an unspecified alignment, then we can only modify
+      // it if we have TD information.  Doing so without TD info could end up
+      // with us rounding the alignment *down* accidentally, which is badness.
+      if (IFI.TD) {
+        AIAlign = std::max(ByValAlignment, IFI.TD->getPrefTypeAlignment(AggTy));
+        AI->setAlignment(AIAlign);
+        return Arg;
+      }
+    }
+    
+    // Otherwise, we have to make a memcpy to get a safe alignment, pretty lame.
+  }
   
   LLVMContext &Context = Arg->getContext();
 
-  
-  const Type *AggTy = cast<PointerType>(Arg->getType())->getElementType();
   const Type *VoidPtrTy = Type::getInt8PtrTy(Context);
   
   // Create the alloca.  If we have TargetData, use nice alignment.

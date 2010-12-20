@@ -81,3 +81,26 @@ entry:
 ; CHECK: call void @g3(%struct.ss* %S1)
 ; CHECK: ret void
 }
+
+
+; Inlining a byval struct should NOT cause an explicit copy 
+; into an alloca if the function is readonly, but should increase an alloca's
+; alignment to satisfy an explicit alignment request.
+
+define internal i32 @f4(%struct.ss* byval align 64 %b) nounwind readonly {
+        call void @g3(%struct.ss* %b)
+	ret i32 4
+}
+
+define i32 @test4() nounwind  {
+entry:
+	%S = alloca %struct.ss, align 2		; <%struct.ss*> [#uses=4]
+	%X = call i32 @f4( %struct.ss* byval align 64 %S ) nounwind 
+	ret i32 %X
+; CHECK: @test4()
+; CHECK: %S = alloca %struct.ss, align 64
+; CHECK-NOT: call void @llvm.memcpy
+; CHECK: call void @g3
+; CHECK: ret i32 4
+}
+
