@@ -301,7 +301,30 @@ namespace {
       deleted();
     }
   };
-  
+}
+
+namespace llvm {
+  template<>
+  struct DenseMapInfo<LVIValueHandle> {
+    typedef DenseMapInfo<Value*> PointerInfo;
+    static inline LVIValueHandle getEmptyKey() {
+      return LVIValueHandle(PointerInfo::getEmptyKey(),
+                            static_cast<LazyValueInfoCache*>(0));
+    }
+    static inline LVIValueHandle getTombstoneKey() {
+      return LVIValueHandle(PointerInfo::getTombstoneKey(),
+                            static_cast<LazyValueInfoCache*>(0));
+    }
+    static unsigned getHashValue(const LVIValueHandle &Val) {
+      return PointerInfo::getHashValue(Val);
+    }
+    static bool isEqual(const LVIValueHandle &LHS, const LVIValueHandle &RHS) {
+      return LHS == RHS;
+    }
+  };
+}
+
+namespace { 
   /// LazyValueInfoCache - This is the cache kept by LazyValueInfo which
   /// maintains information about queries across the clients' queries.
   class LazyValueInfoCache {
@@ -391,27 +414,6 @@ namespace {
     }
   };
 } // end anonymous namespace
-
-namespace llvm {
-  template<>
-  struct DenseMapInfo<LVIValueHandle> {
-    typedef DenseMapInfo<Value*> PointerInfo;
-    static inline LVIValueHandle getEmptyKey() {
-      return LVIValueHandle(PointerInfo::getEmptyKey(),
-                            static_cast<LazyValueInfoCache*>(0));
-    }
-    static inline LVIValueHandle getTombstoneKey() {
-      return LVIValueHandle(PointerInfo::getTombstoneKey(),
-                            static_cast<LazyValueInfoCache*>(0));
-    }
-    static unsigned getHashValue(const LVIValueHandle &Val) {
-      return PointerInfo::getHashValue(Val);
-    }
-    static bool isEqual(const LVIValueHandle &LHS, const LVIValueHandle &RHS) {
-      return LHS == RHS;
-    }
-  };
-}
 
 void LVIValueHandle::deleted() {
   for (std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator
