@@ -631,6 +631,15 @@ class BinOpRR_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
             [(set typeinfo.RegClass:$dst, EFLAGS,
                   (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))]>;
 
+// BinOpRR_RFF - Instructions like "adc reg, reg, reg", where the pattern has
+// both a regclass and EFLAGS as a result, and has EFLAGS as input.
+class BinOpRR_RFF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                  SDNode opnode>
+  : BinOpRR<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
+            [(set typeinfo.RegClass:$dst, EFLAGS,
+                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2,
+                          EFLAGS))]>;
+
 // BinOpRR_Rev - Instructions like "add reg, reg, reg" (reversed encoding).
 class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
   : ITy<opcode, MRMSrcReg, typeinfo,
@@ -669,6 +678,14 @@ class BinOpRM_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
             [(set typeinfo.RegClass:$dst, EFLAGS,
             (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2)))]>;
 
+// BinOpRM_RFF - Instructions like "adc reg, reg, [mem]".
+class BinOpRM_RFF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                 SDNode opnode>
+  : BinOpRM<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
+            [(set typeinfo.RegClass:$dst, EFLAGS,
+            (opnode typeinfo.RegClass:$src1, (typeinfo.LoadNode addr:$src2),
+                    EFLAGS))]>;
+
 // BinOpRI - Instructions like "add reg, reg, imm".
 class BinOpRI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               Format f, dag outlist, list<dag> pattern>
@@ -698,6 +715,14 @@ class BinOpRI_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   : BinOpRI<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
             [(set typeinfo.RegClass:$dst, EFLAGS, 
                 (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
+
+// BinOpRI_RFF - Instructions like "adc reg, reg, imm".
+class BinOpRI_RFF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                 SDNode opnode, Format f>
+  : BinOpRI<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
+            [(set typeinfo.RegClass:$dst, EFLAGS, 
+                (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2,
+                        EFLAGS))]>;
 
 // BinOpRI8 - Instructions like "add reg, reg, imm8".
 class BinOpRI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
@@ -729,6 +754,14 @@ class BinOpRI8_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
              [(set typeinfo.RegClass:$dst, EFLAGS,
                (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
 
+// BinOpRI8_RFF - Instructions like "adc reg, reg, imm8".
+class BinOpRI8_RFF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                   SDNode opnode, Format f>
+  : BinOpRI8<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
+             [(set typeinfo.RegClass:$dst, EFLAGS,
+               (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2,
+                       EFLAGS))]>;
+
 // BinOpMR - Instructions like "add [mem], reg".
 class BinOpMR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
               list<dag> pattern>
@@ -741,6 +774,14 @@ class BinOpMR_RMW<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode>
   : BinOpMR<opcode, mnemonic, typeinfo,
           [(store (opnode (load addr:$dst), typeinfo.RegClass:$src), addr:$dst),
+           (implicit EFLAGS)]>;
+
+// BinOpMR_RMW_FF - Instructions like "adc [mem], reg".
+class BinOpMR_RMW_FF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                    SDNode opnode>
+  : BinOpMR<opcode, mnemonic, typeinfo,
+          [(store (opnode (load addr:$dst), typeinfo.RegClass:$src, EFLAGS),
+                  addr:$dst),
            (implicit EFLAGS)]>;
 
 // BinOpMR_F - Instructions like "cmp [mem], reg".
@@ -766,6 +807,14 @@ class BinOpMI_RMW<string mnemonic, X86TypeInfo typeinfo,
                             typeinfo.ImmOperator:$src), addr:$dst),
              (implicit EFLAGS)]>;
 
+// BinOpMI_RMW_FF - Instructions like "adc [mem], imm".
+class BinOpMI_RMW_FF<string mnemonic, X86TypeInfo typeinfo,
+                  SDNode opnode, Format f>
+  : BinOpMI<mnemonic, typeinfo, f, 
+            [(store (opnode (typeinfo.VT (load addr:$dst)),
+                            typeinfo.ImmOperator:$src, EFLAGS), addr:$dst),
+             (implicit EFLAGS)]>;
+
 // BinOpMI_F - Instructions like "cmp [mem], imm".
 class BinOpMI_F<string mnemonic, X86TypeInfo typeinfo,
                 SDPatternOperator opnode, Format f, bits<8> opcode = 0x80>
@@ -789,6 +838,14 @@ class BinOpMI8_RMW<string mnemonic, X86TypeInfo typeinfo,
   : BinOpMI8<mnemonic, typeinfo, f,
              [(store (opnode (load addr:$dst),
                              typeinfo.Imm8Operator:$src), addr:$dst),
+              (implicit EFLAGS)]>;
+
+// BinOpMI8_RMW_FF - Instructions like "adc [mem], imm8".
+class BinOpMI8_RMW_FF<string mnemonic, X86TypeInfo typeinfo,
+                   SDNode opnode, Format f>
+  : BinOpMI8<mnemonic, typeinfo, f,
+             [(store (opnode (load addr:$dst),
+                             typeinfo.Imm8Operator:$src, EFLAGS), addr:$dst),
               (implicit EFLAGS)]>;
 
 // BinOpMI8_F - Instructions like "cmp [mem], imm8".
@@ -876,22 +933,24 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
   }                          
 }
 
-/// ArithBinOp_R - This is an arithmetic binary operator where the pattern is
-/// defined with "(set GPR:$dst, (...".  It would be really nice to find a way
-/// to factor this with the other ArithBinOp_*.
+/// ArithBinOp_RFF - This is an arithmetic binary operator where the pattern is
+/// defined with "(set GPR:$dst, EFLAGS, (node LHS, RHS, EFLAGS))" like ADC and
+/// SBB.
 ///
-multiclass ArithBinOp_R<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
-                        string mnemonic, Format RegMRM, Format MemMRM,
-                        SDNode opnode,
-                        bit CommutableRR, bit ConvertibleToThreeAddress> {
+/// It would be nice to get rid of the second and third argument here, but
+/// tblgen can't handle dependent type references aggressively enough: PR8330
+multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
+                          string mnemonic, Format RegMRM, Format MemMRM,
+                          SDNode opnode, bit CommutableRR,
+                           bit ConvertibleToThreeAddress> {
   let Defs = [EFLAGS] in {
     let Constraints = "$src1 = $dst" in {
       let isCommutable = CommutableRR,
           isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
-        def #NAME#8rr  : BinOpRR_R<BaseOpc, mnemonic, Xi8 , opnode>;
-        def #NAME#16rr : BinOpRR_R<BaseOpc, mnemonic, Xi16, opnode>;
-        def #NAME#32rr : BinOpRR_R<BaseOpc, mnemonic, Xi32, opnode>;
-        def #NAME#64rr : BinOpRR_R<BaseOpc, mnemonic, Xi64, opnode>;
+        def #NAME#8rr  : BinOpRR_RFF<BaseOpc, mnemonic, Xi8 , opnode>;
+        def #NAME#16rr : BinOpRR_RFF<BaseOpc, mnemonic, Xi16, opnode>;
+        def #NAME#32rr : BinOpRR_RFF<BaseOpc, mnemonic, Xi32, opnode>;
+        def #NAME#64rr : BinOpRR_RFF<BaseOpc, mnemonic, Xi64, opnode>;
       } // isCommutable
 
       def #NAME#8rr_REV  : BinOpRR_Rev<BaseOpc2, mnemonic, Xi8>;
@@ -899,40 +958,40 @@ multiclass ArithBinOp_R<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
       def #NAME#32rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi32>;
       def #NAME#64rr_REV : BinOpRR_Rev<BaseOpc2, mnemonic, Xi64>;
 
-      def #NAME#8rm   : BinOpRM_R<BaseOpc2, mnemonic, Xi8 , opnode>;
-      def #NAME#16rm  : BinOpRM_R<BaseOpc2, mnemonic, Xi16, opnode>;
-      def #NAME#32rm  : BinOpRM_R<BaseOpc2, mnemonic, Xi32, opnode>;
-      def #NAME#64rm  : BinOpRM_R<BaseOpc2, mnemonic, Xi64, opnode>;
+      def #NAME#8rm   : BinOpRM_RFF<BaseOpc2, mnemonic, Xi8 , opnode>;
+      def #NAME#16rm  : BinOpRM_RFF<BaseOpc2, mnemonic, Xi16, opnode>;
+      def #NAME#32rm  : BinOpRM_RFF<BaseOpc2, mnemonic, Xi32, opnode>;
+      def #NAME#64rm  : BinOpRM_RFF<BaseOpc2, mnemonic, Xi64, opnode>;
 
       let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
         // NOTE: These are order specific, we want the ri8 forms to be listed
         // first so that they are slightly preferred to the ri forms.
-        def #NAME#16ri8 : BinOpRI8_R<0x82, mnemonic, Xi16, opnode, RegMRM>;
-        def #NAME#32ri8 : BinOpRI8_R<0x82, mnemonic, Xi32, opnode, RegMRM>;
-        def #NAME#64ri8 : BinOpRI8_R<0x82, mnemonic, Xi64, opnode, RegMRM>;
+        def #NAME#16ri8 : BinOpRI8_RFF<0x82, mnemonic, Xi16, opnode, RegMRM>;
+        def #NAME#32ri8 : BinOpRI8_RFF<0x82, mnemonic, Xi32, opnode, RegMRM>;
+        def #NAME#64ri8 : BinOpRI8_RFF<0x82, mnemonic, Xi64, opnode, RegMRM>;
 
-        def #NAME#8ri   : BinOpRI_R<0x80, mnemonic, Xi8 , opnode, RegMRM>;
-        def #NAME#16ri  : BinOpRI_R<0x80, mnemonic, Xi16, opnode, RegMRM>;
-        def #NAME#32ri  : BinOpRI_R<0x80, mnemonic, Xi32, opnode, RegMRM>;
-        def #NAME#64ri32: BinOpRI_R<0x80, mnemonic, Xi64, opnode, RegMRM>;
+        def #NAME#8ri   : BinOpRI_RFF<0x80, mnemonic, Xi8 , opnode, RegMRM>;
+        def #NAME#16ri  : BinOpRI_RFF<0x80, mnemonic, Xi16, opnode, RegMRM>;
+        def #NAME#32ri  : BinOpRI_RFF<0x80, mnemonic, Xi32, opnode, RegMRM>;
+        def #NAME#64ri32: BinOpRI_RFF<0x80, mnemonic, Xi64, opnode, RegMRM>;
       }
     } // Constraints = "$src1 = $dst"
 
-    def #NAME#8mr    : BinOpMR_RMW<BaseOpc, mnemonic, Xi8 , opnode>;
-    def #NAME#16mr   : BinOpMR_RMW<BaseOpc, mnemonic, Xi16, opnode>;
-    def #NAME#32mr   : BinOpMR_RMW<BaseOpc, mnemonic, Xi32, opnode>;
-    def #NAME#64mr   : BinOpMR_RMW<BaseOpc, mnemonic, Xi64, opnode>;
+    def #NAME#8mr    : BinOpMR_RMW_FF<BaseOpc, mnemonic, Xi8 , opnode>;
+    def #NAME#16mr   : BinOpMR_RMW_FF<BaseOpc, mnemonic, Xi16, opnode>;
+    def #NAME#32mr   : BinOpMR_RMW_FF<BaseOpc, mnemonic, Xi32, opnode>;
+    def #NAME#64mr   : BinOpMR_RMW_FF<BaseOpc, mnemonic, Xi64, opnode>;
 
     // NOTE: These are order specific, we want the mi8 forms to be listed
     // first so that they are slightly preferred to the mi forms.
-    def #NAME#16mi8  : BinOpMI8_RMW<mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi8  : BinOpMI8_RMW<mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi8  : BinOpMI8_RMW<mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#16mi8  : BinOpMI8_RMW_FF<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi8  : BinOpMI8_RMW_FF<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi8  : BinOpMI8_RMW_FF<mnemonic, Xi64, opnode, MemMRM>;
                        
-    def #NAME#8mi    : BinOpMI_RMW<mnemonic, Xi8 , opnode, MemMRM>;
-    def #NAME#16mi   : BinOpMI_RMW<mnemonic, Xi16, opnode, MemMRM>;
-    def #NAME#32mi   : BinOpMI_RMW<mnemonic, Xi32, opnode, MemMRM>;
-    def #NAME#64mi32 : BinOpMI_RMW<mnemonic, Xi64, opnode, MemMRM>;
+    def #NAME#8mi    : BinOpMI_RMW_FF<mnemonic, Xi8 , opnode, MemMRM>;
+    def #NAME#16mi   : BinOpMI_RMW_FF<mnemonic, Xi16, opnode, MemMRM>;
+    def #NAME#32mi   : BinOpMI_RMW_FF<mnemonic, Xi32, opnode, MemMRM>;
+    def #NAME#64mi32 : BinOpMI_RMW_FF<mnemonic, Xi64, opnode, MemMRM>;
 
     def #NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL>;
     def #NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX>;
@@ -1018,12 +1077,11 @@ defm SUB : ArithBinOp_RF<0x28, 0x2A, 0x2C, "sub", MRM5r, MRM5m,
 
 // Arithmetic.
 let Uses = [EFLAGS] in {
-  // FIXME: Delete ArithBinOp_R if these switch off adde/sube.
-  defm ADC : ArithBinOp_R<0x10, 0x12, 0x14, "adc", MRM2r, MRM2m, adde, 1, 0>;
-  defm SBB : ArithBinOp_R<0x18, 0x1A, 0x1C, "sbb", MRM3r, MRM3m, sube, 0, 0>;
+  defm ADC : ArithBinOp_RFF<0x10, 0x12, 0x14, "adc", MRM2r, MRM2m, X86adc_flag,
+                            1, 0>;
+  defm SBB : ArithBinOp_RFF<0x18, 0x1A, 0x1C, "sbb", MRM3r, MRM3m, X86sbb_flag,
+                            0, 0>;
 }
-
-
 
 defm CMP : ArithBinOp_F<0x38, 0x3A, 0x3C, "cmp", MRM7r, MRM7m, X86cmp, 0, 0>;
 

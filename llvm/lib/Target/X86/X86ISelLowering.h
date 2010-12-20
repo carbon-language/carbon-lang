@@ -86,8 +86,8 @@ namespace llvm {
       /// X86 bit-test instructions.
       BT,
 
-      /// X86 SetCC. Operand 0 is condition code, and operand 1 is the flag
-      /// operand produced by a CMP instruction.
+      /// X86 SetCC. Operand 0 is condition code, and operand 1 is the EFLAGS
+      /// operand, usually produced by a CMP instruction.
       SETCC,
 
       // Same as SETCC except it's materialized with a sbb and the value is all
@@ -207,7 +207,7 @@ namespace llvm {
       PCMPGTB, PCMPGTW, PCMPGTD, PCMPGTQ,
 
       // ADD, SUB, SMUL, etc. - Arithmetic operations with FLAGS results.
-      ADD, SUB, SMUL,
+      ADD, SUB, ADC, SBB, SMUL,
       INC, DEC, OR, XOR, AND,
       
       UMUL, // LOW, HI, FLAGS = umul LHS, RHS

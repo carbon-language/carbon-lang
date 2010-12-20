@@ -35,6 +35,14 @@ def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
                                             [SDTCisSameAs<0, 2>,
                                              SDTCisSameAs<0, 3>,
                                              SDTCisInt<0>, SDTCisVT<1, i32>]>;
+
+// SDTBinaryArithWithFlagsInOut - RES1, EFLAGS = op LHS, RHS, EFLAGS 
+def SDTBinaryArithWithFlagsInOut : SDTypeProfile<2, 3,
+                                            [SDTCisSameAs<0, 2>,
+                                             SDTCisSameAs<0, 3>,
+                                             SDTCisInt<0>,
+                                             SDTCisVT<1, i32>,
+                                             SDTCisVT<4, i32>]>;
 // RES1, RES2, FLAGS = op LHS, RHS
 def SDT2ResultBinaryArithWithFlags : SDTypeProfile<3, 2,
                                             [SDTCisSameAs<0, 1>,
@@ -196,6 +204,8 @@ def X86smul_flag : SDNode<"X86ISD::SMUL", SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;
 def X86umul_flag : SDNode<"X86ISD::UMUL", SDT2ResultBinaryArithWithFlags,
                           [SDNPCommutative]>;
+def X86adc_flag  : SDNode<"X86ISD::ADC",  SDTBinaryArithWithFlagsInOut>;
+def X86sbb_flag  : SDNode<"X86ISD::SBB",  SDTBinaryArithWithFlagsInOut>;
 
 def X86inc_flag  : SDNode<"X86ISD::INC",  SDTUnaryArithWithFlags>;
 def X86dec_flag  : SDNode<"X86ISD::DEC",  SDTUnaryArithWithFlags>;

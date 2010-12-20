@@ -132,6 +132,26 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
 
+    setOperationAction(ISD::ADDC, MVT::i8, Custom);
+    setOperationAction(ISD::ADDC, MVT::i16, Custom);
+    setOperationAction(ISD::ADDC, MVT::i32, Custom);
+    setOperationAction(ISD::ADDC, MVT::i64, Custom);
+    
+    setOperationAction(ISD::ADDE, MVT::i8, Custom);
+    setOperationAction(ISD::ADDE, MVT::i16, Custom);
+    setOperationAction(ISD::ADDE, MVT::i32, Custom);
+    setOperationAction(ISD::ADDE, MVT::i64, Custom);
+
+    setOperationAction(ISD::SUBC, MVT::i8, Custom);
+    setOperationAction(ISD::SUBC, MVT::i16, Custom);
+    setOperationAction(ISD::SUBC, MVT::i32, Custom);
+    setOperationAction(ISD::SUBC, MVT::i64, Custom);
+    
+    setOperationAction(ISD::SUBE, MVT::i8, Custom);
+    setOperationAction(ISD::SUBE, MVT::i16, Custom);
+    setOperationAction(ISD::SUBE, MVT::i32, Custom);
+    setOperationAction(ISD::SUBE, MVT::i64, Custom);
+    
   // We don't accept any truncstore of integer registers.
   setTruncStoreAction(MVT::i64, MVT::i32, Expand);
   setTruncStoreAction(MVT::i64, MVT::i16, Expand);
@@ -7179,6 +7199,8 @@ static bool isX86LogicalCmp(SDValue Op) {
   if (Op.getResNo() == 1 &&
       (Opc == X86ISD::ADD ||
        Opc == X86ISD::SUB ||
+       Opc == X86ISD::ADC ||
+       Opc == X86ISD::SBB ||
        Opc == X86ISD::SMUL ||
        Opc == X86ISD::UMUL ||
        Opc == X86ISD::INC ||
@@ -8614,6 +8636,7 @@ SDValue X86TargetLowering::LowerBITCAST(SDValue Op,
   // All other conversions need to be expanded.
   return SDValue();
 }
+
 SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
   DebugLoc dl = Node->getDebugLoc();
@@ -8626,6 +8649,32 @@ SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) const {
                        Node->getOperand(1), negOp,
                        cast<AtomicSDNode>(Node)->getSrcValue(),
                        cast<AtomicSDNode>(Node)->getAlignment());
+}
+
+static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
+  EVT VT = Op.getNode()->getValueType(0);
+
+  // Let legalize expand this if it isn't a legal type yet.
+  if (!DAG.getTargetLoweringInfo().isTypeLegal(VT))
+    return SDValue();
+  
+  SDVTList VTs = DAG.getVTList(VT, MVT::i32);
+  
+  unsigned Opc;
+  bool ExtraOp = false;
+  switch (Op.getOpcode()) {
+  default: assert(0 && "Invalid code");
+  case ISD::ADDC: Opc = X86ISD::ADD; break;
+  case ISD::ADDE: Opc = X86ISD::ADC; ExtraOp = true; break;
+  case ISD::SUBC: Opc = X86ISD::SUB; break;
+  case ISD::SUBE: Opc = X86ISD::SBB; ExtraOp = true; break;
+  }
+  
+  if (!ExtraOp)
+    return DAG.getNode(Opc, Op->getDebugLoc(), VTs, Op.getOperand(0),
+                       Op.getOperand(1));
+  return DAG.getNode(Opc, Op->getDebugLoc(), VTs, Op.getOperand(0),
+                     Op.getOperand(1), Op.getOperand(2));
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -8686,6 +8735,10 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::UMULO:              return LowerXALUO(Op, DAG);
   case ISD::READCYCLECOUNTER:   return LowerREADCYCLECOUNTER(Op, DAG);
   case ISD::BITCAST:            return LowerBITCAST(Op, DAG);
+  case ISD::ADDC:
+  case ISD::ADDE:
+  case ISD::SUBC:
+  case ISD::SUBE:               return LowerADDC_ADDE_SUBC_SUBE(Op, DAG);
   }
 }
 
@@ -8721,6 +8774,12 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   switch (N->getOpcode()) {
   default:
     assert(false && "Do not know how to custom type legalize this operation!");
+    return;
+  case ISD::ADDC:
+  case ISD::ADDE:
+  case ISD::SUBC:
+  case ISD::SUBE:
+    // We don't want to expand or promote these.
     return;
   case ISD::FP_TO_SINT: {
     std::pair<SDValue,SDValue> Vals =
@@ -8885,6 +8944,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PCMPGTQ:            return "X86ISD::PCMPGTQ";
   case X86ISD::ADD:                return "X86ISD::ADD";
   case X86ISD::SUB:                return "X86ISD::SUB";
+  case X86ISD::ADC:                return "X86ISD::ADC";
+  case X86ISD::SBB:                return "X86ISD::SBB";
   case X86ISD::SMUL:               return "X86ISD::SMUL";
   case X86ISD::UMUL:               return "X86ISD::UMUL";
   case X86ISD::INC:                return "X86ISD::INC";
@@ -10324,6 +10385,8 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   default: break;
   case X86ISD::ADD:
   case X86ISD::SUB:
+  case X86ISD::ADC:
+  case X86ISD::SBB:
   case X86ISD::SMUL:
   case X86ISD::UMUL:
   case X86ISD::INC:
