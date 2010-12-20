@@ -83,7 +83,6 @@ def brtarget    : Operand<OtherVT>;
 def calltarget  : Operand<i32>;
 def simm16      : Operand<i32>;
 def uimm5       : Operand<i32>;
-def uimm14      : Operand<i32>;
 def uimm15      : Operand<i32>;
 def fimm        : Operand<f32>;
 
@@ -600,11 +599,11 @@ let isCodeGenOnly=1 in {
 //===----------------------------------------------------------------------===//
 // Misc. instructions
 //===----------------------------------------------------------------------===//
-def MFS : SPC<0x25, 0x2, (outs GPR:$dst), (ins uimm14:$rg),
-              "mfs       $dst, $rg", [], IIAlu>;
+def MFS : SPC<0x25, 0x2, (outs GPR:$dst), (ins SPR:$src),
+              "mfs       $dst, $src", [], IIAlu>;
 
-def MTS : SPC<0x25, 0x3, (outs), (ins uimm14:$dst, GPR:$rg),
-              "mts       $dst, $rg", [], IIAlu>;
+def MTS : SPC<0x25, 0x3, (outs SPR:$dst), (ins GPR:$src),
+              "mts       $dst, $src", [], IIAlu>;
 
 def MSRSET : MSR<0x25, 0x20, (outs GPR:$dst), (ins uimm15:$set),
                  "msrset    $dst, $set", [], IIAlu>;

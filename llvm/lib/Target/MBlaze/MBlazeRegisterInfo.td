@@ -82,7 +82,7 @@ let Namespace = "MBlaze" in {
   def REDR   : MBlazeSPRReg<0x000D, "redr">,   DwarfRegNum<[38]>;
   def RPID   : MBlazeSPRReg<0x1000, "rpid">,   DwarfRegNum<[39]>;
   def RZPR   : MBlazeSPRReg<0x1001, "rzpr">,   DwarfRegNum<[40]>;
-  def RTLBX  : MBlazeSPRReg<0x0002, "rtlbx">,  DwarfRegNum<[41]>;
+  def RTLBX  : MBlazeSPRReg<0x1002, "rtlbx">,  DwarfRegNum<[41]>;
   def RTLBLO : MBlazeSPRReg<0x1003, "rtlblo">, DwarfRegNum<[42]>;
   def RTLBHI : MBlazeSPRReg<0x1004, "rtlbhi">, DwarfRegNum<[43]>;
   def RPVR0  : MBlazeSPRReg<0x2000, "rpvr0">,  DwarfRegNum<[44]>;
@@ -135,6 +135,47 @@ def GPR : RegisterClass<"MBlaze", [i32,f32], 32,
     GPRClass::allocation_order_end(const MachineFunction &MF) const {
       // The last 10 registers on the list above are reserved
       return end()-10;
+    }
+  }];
+}
+
+def SPR : RegisterClass<"MBlaze", [i32], 32,
+  [
+  // Reserved
+  RPC,
+  RMSR,
+  REAR,
+  RESR,
+  RFSR,
+  RBTR,
+  REDR,
+  RPID,
+  RZPR,
+  RTLBX,
+  RTLBLO,
+  RTLBHI,
+  RPVR0,
+  RPVR1,
+  RPVR2,
+  RPVR3,
+  RPVR4,
+  RPVR5,
+  RPVR6,
+  RPVR7,
+  RPVR8,
+  RPVR9,
+  RPVR10,
+  RPVR11
+  ]>
+{
+  let MethodProtos = [{
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    SPRClass::iterator
+    SPRClass::allocation_order_end(const MachineFunction &MF) const {
+      // None of the special purpose registers are allocatable.
+      return end()-24;
     }
   }];
 }
