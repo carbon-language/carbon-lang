@@ -1,9 +1,13 @@
 // RUN: %clang -c -g %s -o /dev/null
 // Radar 8730409
+// XFAIL: win32
 
 // FIXME: This test crashes on Windows.
-#ifndef _WIN32
+#ifdef _WIN32
 
+#error this test must xfail
+
+#else
 class foo {
 public:
 #define x(a) virtual void v ## a (void)

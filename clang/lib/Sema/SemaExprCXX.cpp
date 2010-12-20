@@ -374,8 +374,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
 
 // Get the CXXRecordDecl associated with QT bypassing 1 level of pointer,
 // reference or array type.
-static CXXRecordDecl *GetCXXRecordOfUuidArg(QualType QT)
-{
+static CXXRecordDecl *GetCXXRecordOfUuidArg(QualType QT) {
   Type* Ty = QT.getTypePtr();;
   if (QT->isPointerType() || QT->isReferenceType())
     Ty = QT->getPointeeType().getTypePtr();
