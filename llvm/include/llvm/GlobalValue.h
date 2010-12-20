@@ -173,7 +173,9 @@ public:
   }
 
   /// isWeakForLinker - Whether the definition of this global may be replaced at
-  /// link time.
+  /// link time.  NB: Using this method outside of the code generators is almost
+  /// always a mistake: when working at the IR level use mayBeOverridden instead
+  /// as it knows about ODR semantics.
   static bool isWeakForLinker(LinkageTypes Linkage)  {
     return Linkage == AvailableExternallyLinkage ||
            Linkage == WeakAnyLinkage ||
