@@ -55,24 +55,27 @@ Arg *ArgList::getLastArgNoClaim(OptSpecifier Id) const {
 }
 
 Arg *ArgList::getLastArg(OptSpecifier Id) const {
-  Arg *A = getLastArgNoClaim(Id);
-  if (A)
-    A->claim();
-  return A;
+  Arg *Res = 0;
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
+    if ((*it)->getOption().matches(Id)) {
+      Res = *it;
+      Res->claim();
+    }
+  }
+
+  return Res;
 }
 
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1) const {
   Arg *Res = 0;
-  for (const_reverse_iterator it = rbegin(), ie = rend(); it != ie; ++it) {
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1)) {
       Res = *it;
-      break;
+      Res->claim();
+
     }
   }
-
-  if (Res)
-    Res->claim();
 
   return Res;
 }
@@ -80,17 +83,14 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1) const {
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
                          OptSpecifier Id2) const {
   Arg *Res = 0;
-  for (const_reverse_iterator it = rbegin(), ie = rend(); it != ie; ++it) {
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1) ||
         (*it)->getOption().matches(Id2)) {
       Res = *it;
-      break;
+      Res->claim();
     }
   }
-
-  if (Res)
-    Res->claim();
 
   return Res;
 }
@@ -98,18 +98,15 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
                          OptSpecifier Id2, OptSpecifier Id3) const {
   Arg *Res = 0;
-  for (const_reverse_iterator it = rbegin(), ie = rend(); it != ie; ++it) {
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1) ||
         (*it)->getOption().matches(Id2) ||
         (*it)->getOption().matches(Id3)) {
       Res = *it;
-      break;
+      Res->claim();
     }
   }
-
-  if (Res)
-    Res->claim();
 
   return Res;
 }
