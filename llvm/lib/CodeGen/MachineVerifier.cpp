@@ -1005,11 +1005,6 @@ void MachineVerifier::verifyLiveIntervals() {
         }
       } else {
         // Non-PHI def.
-        if (!VNI->def.isDef()) {
-          report("Non-PHI def must be at a DEF slot", MF);
-          *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
-              << " in " << LI << '\n';
-        }
         const MachineInstr *MI = LiveInts->getInstructionFromIndex(VNI->def);
         if (!MI) {
           report("No instruction at def index", MF);
@@ -1018,6 +1013,32 @@ void MachineVerifier::verifyLiveIntervals() {
         } else if (!MI->modifiesRegister(LI.reg, TRI)) {
           report("Defining instruction does not modify register", MI);
           *OS << "Valno #" << VNI->id << " in " << LI << '\n';
+        }
+
+        bool isEarlyClobber = false;
+        if (MI) {
+          for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
+               MOE = MI->operands_end(); MOI != MOE; ++MOI) {
+            if (MOI->isReg() && MOI->getReg() == LI.reg && MOI->isDef() &&
+                MOI->isEarlyClobber()) {
+              isEarlyClobber = true;
+              break;
+            }
+          }
+        }
+
+        // Early clobber defs begin at USE slots, but other defs must begin at
+        // DEF slots.
+        if (isEarlyClobber) {
+          if (!VNI->def.isUse()) {
+            report("Early clobber def must be at a USE slot", MF);
+            *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
+                << " in " << LI << '\n';
+          }
+        } else if (!VNI->def.isDef()) {
+          report("Non-PHI, non-early clobber def must be at a DEF slot", MF);
+          *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
+              << " in " << LI << '\n';
         }
       }
     }
