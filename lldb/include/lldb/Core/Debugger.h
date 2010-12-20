@@ -372,6 +372,9 @@ public:
                   const char **end);
 
 
+    void
+    CleanUpInputReaders ();
+
 protected:
 
     static void

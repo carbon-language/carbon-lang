@@ -58,6 +58,9 @@ SBDebugger::Clear ()
 
     if (log)
         log->Printf ("SBDebugger(%p)::Clear ()", m_opaque_sp.get());
+        
+    if (m_opaque_sp)
+        m_opaque_sp->CleanUpInputReaders ();
 
     m_opaque_sp.reset();
 }
