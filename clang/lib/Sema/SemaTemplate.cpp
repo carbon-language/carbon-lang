@@ -2295,8 +2295,6 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
                                 MultiLevelTemplateArgumentList(TemplateArgs)));
     if (!TempParm)
       return true;
-    
-    // FIXME: TempParam is leaked.
   }
     
   switch (Arg.getArgument().getKind()) {

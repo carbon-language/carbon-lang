@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -std=c++0x -fblocks -fsyntax-only -verify %s
 
 template<typename T, typename U> struct pair;
+template<typename ...> struct tuple;
 
 // A parameter pack whose name appears within the pattern of a pack
 // expansion is expanded by that pack expansion. An appearance of the
@@ -14,6 +15,24 @@ struct Expansion {
   typedef pair<Types, int...> expand_no_packs;  // expected-error{{pack expansion does not contain any unexpanded parameter packs}}
   typedef pair<pair<Types..., int>..., int> expand_with_expanded_nested; // expected-error{{pack expansion does not contain any unexpanded parameter packs}}
 };
+
+// All of the parameter packs expanded by a pack expansion shall have
+// the same number of arguments specified.
+template<typename ...Types>
+struct ExpansionLengthMismatch {
+  template<typename ...OtherTypes>
+  struct Inner {
+    typedef tuple<pair<Types, OtherTypes>...> type; // expected-error{{pack expansion contains parameter packs 'Types' and 'OtherTypes' that have different lengths (3 vs. 2)}}
+  };
+};
+
+ExpansionLengthMismatch<int, long>::Inner<unsigned int, unsigned long>::type 
+  *il_pairs;
+tuple<pair<int, unsigned int>, pair<long, unsigned long> >*il_pairs_2 = il_pairs;
+
+ExpansionLengthMismatch<short, int, long>::Inner<unsigned int, unsigned long>::type // expected-note{{in instantiation of}}
+  *il_pairs_bad; 
+
 
 // An appearance of a name of a parameter pack that is not expanded is
 // ill-formed.

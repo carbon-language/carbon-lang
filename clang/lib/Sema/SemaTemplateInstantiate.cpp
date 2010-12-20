@@ -589,7 +589,14 @@ namespace {
       this->Loc = Loc;
       this->Entity = Entity;
     }
-      
+
+    bool TryExpandParameterPacks(SourceLocation EllipsisLoc,
+                                 SourceRange PatternRange,
+                                 const UnexpandedParameterPack *Unexpanded,
+                                 unsigned NumUnexpanded,
+                                 bool &ShouldExpand,
+                                 unsigned &NumExpansions);
+
     /// \brief Transform the given declaration by instantiating a reference to
     /// this declaration.
     Decl *TransformDecl(SourceLocation Loc, Decl *D);
@@ -656,6 +663,79 @@ bool TemplateInstantiator::AlreadyTransformed(QualType T) {
   return true;
 }
 
+bool TemplateInstantiator::TryExpandParameterPacks(SourceLocation EllipsisLoc,
+                                                   SourceRange PatternRange,
+                                     const UnexpandedParameterPack *Unexpanded,
+                                                   unsigned NumUnexpanded,
+                                                   bool &ShouldExpand,
+                                                   unsigned &NumExpansions) {
+  ShouldExpand = true;
+  std::pair<IdentifierInfo *, SourceLocation> FirstPack;
+  bool HaveFirstPack = false;
+  
+  for (unsigned I = 0; I != NumUnexpanded; ++I) {
+    // Compute the depth and index for this parameter pack.
+    unsigned Depth;
+    unsigned Index;
+    IdentifierInfo *Name;
+    
+    if (const TemplateTypeParmType *TTP
+              = Unexpanded[I].first.dyn_cast<const TemplateTypeParmType *>()) {
+      Depth = TTP->getDepth();
+      Index = TTP->getIndex();
+      Name = TTP->getName();
+    } else {
+      NamedDecl *ND = Unexpanded[I].first.get<NamedDecl *>();
+      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(ND)) {
+        Depth = TTP->getDepth();
+        Index = TTP->getIndex();
+      } else if (NonTypeTemplateParmDecl *NTTP
+                                      = dyn_cast<NonTypeTemplateParmDecl>(ND)) {        
+        Depth = NTTP->getDepth();
+        Index = NTTP->getIndex();
+      } else {
+        TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(ND);
+        Depth = TTP->getDepth();
+        Index = TTP->getIndex();
+      }
+      // FIXME: Variadic templates function parameter packs?
+      Name = ND->getIdentifier();
+    }
+    
+    // If we don't have a template argument at this depth/index, then we 
+    // cannot expand the pack expansion. Make a note of this, but we still 
+    // want to check that any parameter packs we *do* have arguments for.
+    if (!TemplateArgs.hasTemplateArgument(Depth, Index)) {
+      ShouldExpand = false;
+      continue;
+    }
+
+    // Determine the size of the argument pack.
+    unsigned NewPackSize = TemplateArgs(Depth, Index).pack_size();
+    if (!HaveFirstPack) {
+      // The is the first pack we've seen for which we have an argument. 
+      // Record it.
+      NumExpansions = NewPackSize;
+      FirstPack.first = Name;
+      FirstPack.second = Unexpanded[I].second;
+      HaveFirstPack = true;
+      continue;
+    }
+    
+    if (NewPackSize != NumExpansions) {
+      // C++0x [temp.variadic]p5:
+      //   All of the parameter packs expanded by a pack expansion shall have 
+      //   the same number of arguments specified.
+      getSema().Diag(EllipsisLoc, diag::err_pack_expansion_length_conflict)
+        << FirstPack.first << Name << NumExpansions << NewPackSize
+        << SourceRange(FirstPack.second) << SourceRange(Unexpanded[I].second);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 Decl *TemplateInstantiator::TransformDecl(SourceLocation Loc, Decl *D) {
   if (!D)
     return 0;
@@ -670,6 +750,7 @@ Decl *TemplateInstantiator::TransformDecl(SourceLocation Loc, Decl *D) {
                                             TTP->getPosition()))
         return D;
 
+      // FIXME: Variadic templates index substitution.
       TemplateName Template
         = TemplateArgs(TTP->getDepth(), TTP->getPosition()).getAsTemplate();
       assert(!Template.isNull() && Template.getAsTemplateDecl() &&
@@ -702,6 +783,7 @@ TemplateInstantiator::TransformFirstQualifierInScope(NamedDecl *D,
     const TemplateTypeParmType *TTP 
       = cast<TemplateTypeParmType>(getSema().Context.getTypeDeclType(TTPD));
     if (TTP->getDepth() < TemplateArgs.getNumLevels()) {
+      // FIXME: Variadic templates index substitution.
       QualType T = TemplateArgs(TTP->getDepth(), TTP->getIndex()).getAsType();
       if (T.isNull())
         return cast_or_null<NamedDecl>(TransformDecl(Loc, D));
@@ -844,6 +926,7 @@ ExprResult
 TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
+    // FIXME: Variadic templates index substitution.
     if (NTTP->getDepth() < TemplateArgs.getNumLevels())
       return TransformTemplateParmRefExpr(E, NTTP);
     
@@ -895,12 +978,26 @@ TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
       return TL.getType();
     }
 
-    assert(TemplateArgs(T->getDepth(), T->getIndex()).getKind()
-             == TemplateArgument::Type &&
+    TemplateArgument Arg = TemplateArgs(T->getDepth(), T->getIndex());
+    
+    if (T->isParameterPack()) {
+      assert(Arg.getKind() == TemplateArgument::Pack && 
+             "Missing argument pack");
+      
+      if (getSema().ArgumentPackSubstitutionIndex == -1) {
+        // FIXME: Variadic templates fun case.
+        getSema().Diag(TL.getSourceRange().getBegin(), 
+                       diag::err_pack_expansion_mismatch_unsupported);
+        return QualType();
+      }
+      
+      Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
+    }
+    
+    assert(Arg.getKind() == TemplateArgument::Type &&
            "Template argument kind mismatch");
 
-    QualType Replacement
-      = TemplateArgs(T->getDepth(), T->getIndex()).getAsType();
+    QualType Replacement = Arg.getAsType();
 
     // TODO: only do this uniquing once, at the start of instantiation.
     QualType Result

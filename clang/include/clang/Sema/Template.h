@@ -242,8 +242,10 @@ namespace clang {
   };
 
   class TemplateDeclInstantiator
-    : public DeclVisitor<TemplateDeclInstantiator, Decl *> {
+    : public DeclVisitor<TemplateDeclInstantiator, Decl *> 
+  {
     Sema &SemaRef;
+    Sema::ArgumentPackSubstitutionIndexRAII SubstIndex;
     DeclContext *Owner;
     const MultiLevelTemplateArgumentList &TemplateArgs;
 
@@ -257,7 +259,8 @@ namespace clang {
   public:
     TemplateDeclInstantiator(Sema &SemaRef, DeclContext *Owner,
                              const MultiLevelTemplateArgumentList &TemplateArgs)
-      : SemaRef(SemaRef), Owner(Owner), TemplateArgs(TemplateArgs) { }
+      : SemaRef(SemaRef), SubstIndex(SemaRef, -1), Owner(Owner), 
+        TemplateArgs(TemplateArgs) { }
 
     // FIXME: Once we get closer to completion, replace these manually-written
     // declarations with automatically-generated ones from
@@ -347,7 +350,7 @@ namespace clang {
     InstantiateClassTemplatePartialSpecialization(
                                               ClassTemplateDecl *ClassTemplate,
                            ClassTemplatePartialSpecializationDecl *PartialSpec);
-  };
+  };  
 }
 
 #endif // LLVM_CLANG_SEMA_TEMPLATE_H

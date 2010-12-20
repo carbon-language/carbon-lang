@@ -185,6 +185,11 @@ public:
   static bool classof(const LocInfoType *) { return true; }
 };
 
+// FIXME: No way to easily map from TemplateTypeParmTypes to
+// TemplateTypeParmDecls, so we have this horrible PointerUnion.
+typedef std::pair<llvm::PointerUnion<const TemplateTypeParmType*, NamedDecl*>,
+                  SourceLocation> UnexpandedParameterPack;
+
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema {
   Sema(const Sema&);           // DO NOT IMPLEMENT
@@ -3236,6 +3241,14 @@ public:
                                        TemplateName Template,
                                        UnexpandedParameterPackContext UPPC);
 
+  /// \brief Collect the set of unexpanded parameter packs within the given
+  /// template argument.  
+  ///
+  /// \param Arg The template argument that will be traversed to find
+  /// unexpanded parameter packs.
+  void collectUnexpandedParameterPacks(TemplateArgumentLoc Arg,
+                    llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
+                                       
   /// \brief Invoked when parsing a template argument followed by an
   /// ellipsis, which creates a pack expansion.
   ///
@@ -3255,6 +3268,11 @@ public:
   /// \param EllipsisLoc The location of the ellipsis.
   TypeResult ActOnPackExpansion(ParsedType Type, SourceLocation EllipsisLoc);
 
+  /// \brief Construct a pack expansion type from the pattern of the pack
+  /// expansion.
+  TypeSourceInfo *CheckPackExpansion(TypeSourceInfo *Pattern,
+                                     SourceLocation EllipsisLoc);
+  
   /// \brief Describes the result of template argument deduction.
   ///
   /// The TemplateDeductionResult enumeration describes the result of
@@ -3517,6 +3535,35 @@ public:
   /// to implement it anywhere else.
   ActiveTemplateInstantiation LastTemplateInstantiationErrorContext;
 
+  /// \brief The current index into pack expansion arguments that will be
+  /// used for substitution of parameter packs.
+  ///
+  /// The pack expansion index will be -1 to indicate that parameter packs 
+  /// should be instantiated as themselves. Otherwise, the index specifies
+  /// which argument within the parameter pack will be used for substitution.
+  int ArgumentPackSubstitutionIndex;
+  
+  /// \brief RAII object used to change the argument pack substitution index
+  /// within a \c Sema object.
+  ///
+  /// See \c ArgumentPackSubstitutionIndex for more information.
+  class ArgumentPackSubstitutionIndexRAII {
+    Sema &Self;
+    int OldSubstitutionIndex;
+    
+  public:
+    ArgumentPackSubstitutionIndexRAII(Sema &Self, int NewSubstitutionIndex)
+      : Self(Self), OldSubstitutionIndex(Self.ArgumentPackSubstitutionIndex) {
+      Self.ArgumentPackSubstitutionIndex = NewSubstitutionIndex;
+    }
+    
+    ~ArgumentPackSubstitutionIndexRAII() {
+      Self.ArgumentPackSubstitutionIndex = OldSubstitutionIndex;
+    }
+  };
+  
+  friend class ArgumentPackSubstitutionRAII;
+  
   /// \brief The stack of calls expression undergoing template instantiation.
   ///
   /// The top of this stack is used by a fixit instantiating unresolved

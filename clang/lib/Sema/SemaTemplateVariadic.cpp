@@ -12,6 +12,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/SemaInternal.h"
+#include "clang/Sema/Template.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeLoc.h"
@@ -21,11 +22,6 @@ using namespace clang;
 //----------------------------------------------------------------------------
 // Visitor that collects unexpanded parameter packs
 //----------------------------------------------------------------------------
-
-// FIXME: No way to easily map from TemplateTypeParmTypes to
-// TemplateTypeParmDecls, so we have this horrible PointerUnion.
-typedef std::pair<llvm::PointerUnion<const TemplateTypeParmType*, NamedDecl*>,
-                  SourceLocation> UnexpandedParameterPack;
 
 namespace {
   /// \brief A class that collects unexpanded parameter packs.
@@ -255,6 +251,12 @@ bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
   return true;
 }
 
+void Sema::collectUnexpandedParameterPacks(TemplateArgumentLoc Arg,
+                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded) {
+  CollectUnexpandedParameterPacksVisitor(Unexpanded)
+    .TraverseTemplateArgumentLoc(Arg);
+}
+
 ParsedTemplateArgument 
 Sema::ActOnPackExpansion(const ParsedTemplateArgument &Arg,
                          SourceLocation EllipsisLoc) {
@@ -292,25 +294,34 @@ TypeResult Sema::ActOnPackExpansion(ParsedType Type,
   if (!TSInfo)
     return true;
 
+  TypeSourceInfo *TSResult = CheckPackExpansion(TSInfo, EllipsisLoc);
+  if (!TSResult)
+    return true;
+  
+  return CreateParsedType(TSResult->getType(), TSResult);
+}
+
+TypeSourceInfo *Sema::CheckPackExpansion(TypeSourceInfo *Pattern,
+                                         SourceLocation EllipsisLoc) {
   // C++0x [temp.variadic]p5:
   //   The pattern of a pack expansion shall name one or more
   //   parameter packs that are not expanded by a nested pack
   //   expansion.
-  if (!TSInfo->getType()->containsUnexpandedParameterPack()) {
+  if (!Pattern->getType()->containsUnexpandedParameterPack()) {
     Diag(EllipsisLoc, diag::err_pack_expansion_without_parameter_packs)
-      << TSInfo->getTypeLoc().getSourceRange();
-    return true;
+      << Pattern->getTypeLoc().getSourceRange();
+    return 0;
   }
-
+  
   // Create the pack expansion type and source-location information.
-  QualType Result = Context.getPackExpansionType(TSInfo->getType());
+  QualType Result = Context.getPackExpansionType(Pattern->getType());
   TypeSourceInfo *TSResult = Context.CreateTypeSourceInfo(Result);
   PackExpansionTypeLoc TL = cast<PackExpansionTypeLoc>(TSResult->getTypeLoc());
   TL.setEllipsisLoc(EllipsisLoc);
-
+  
   // Copy over the source-location information from the type.
   memcpy(TL.getNextTypeLoc().getOpaqueData(),
-         TSInfo->getTypeLoc().getOpaqueData(),
-         TSInfo->getTypeLoc().getFullDataSize());
-  return CreateParsedType(Result, TSResult);
+         Pattern->getTypeLoc().getOpaqueData(),
+         Pattern->getTypeLoc().getFullDataSize());
+  return TSResult;
 }

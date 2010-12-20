@@ -63,6 +63,29 @@ bool TemplateArgument::isDependent() const {
   return false;
 }
 
+bool TemplateArgument::isPackExpansion() const {
+  switch (getKind()) {
+  case Null:
+  case Declaration:
+  case Integral:
+  case Pack:    
+    return false;
+      
+  case Type:
+    return llvm::isa<PackExpansionType>(getAsType());
+      
+  case Template:
+    // FIXME: Template template pack expansions.
+    break;
+    
+  case Expression:
+    // FIXME: Expansion pack expansions.
+    break;  
+  }
+  
+  return false;
+}
+
 bool TemplateArgument::containsUnexpandedParameterPack() const {
   switch (getKind()) {
   case Null:
@@ -263,6 +286,47 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
 
   // Silence bonus gcc warning.
   return SourceRange();
+}
+
+TemplateArgumentLoc 
+TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
+                                             ASTContext &Context) const {
+  assert(Argument.isPackExpansion());
+  
+  switch (Argument.getKind()) {
+  case TemplateArgument::Type: {
+    PackExpansionTypeLoc Expansion
+      = cast<PackExpansionTypeLoc>(getTypeSourceInfo()->getTypeLoc());
+    Ellipsis = Expansion.getEllipsisLoc();
+    
+    TypeLoc Pattern = Expansion.getPatternLoc();
+    
+    // FIXME: This is horrible. We know where the source location data is for
+    // the pattern, and we have the pattern's type, but we are forced to copy
+    // them into an ASTContext because TypeSourceInfo bundles them together
+    // and TemplateArgumentLoc traffics in TypeSourceInfo pointers.
+    TypeSourceInfo *PatternTSInfo
+      = Context.CreateTypeSourceInfo(Pattern.getType(),
+                                     Pattern.getFullDataSize());
+    memcpy(PatternTSInfo->getTypeLoc().getOpaqueData(), 
+           Pattern.getOpaqueData(), Pattern.getFullDataSize());
+    return TemplateArgumentLoc(TemplateArgument(Pattern.getType()),
+                               PatternTSInfo);
+  }
+      
+  case TemplateArgument::Expression:
+  case TemplateArgument::Template:
+    // FIXME: Variadic templates.
+      llvm_unreachable("Expression and template pack expansions unsupported");
+    
+  case TemplateArgument::Declaration:
+  case TemplateArgument::Integral:
+  case TemplateArgument::Pack:
+  case TemplateArgument::Null:
+    return TemplateArgumentLoc();
+  }
+  
+  return TemplateArgumentLoc();
 }
 
 const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,

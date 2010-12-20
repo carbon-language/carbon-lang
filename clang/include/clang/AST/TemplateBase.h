@@ -197,6 +197,9 @@ public:
   /// parameter pack.
   bool containsUnexpandedParameterPack() const;
 
+  /// \brief Determine whether this template argument is a pack expansion.
+  bool isPackExpansion() const;
+  
   /// \brief Retrieve the template argument as a type.
   QualType getAsType() const {
     if (Kind != Type)
@@ -409,6 +412,13 @@ public:
     assert(Argument.getKind() == TemplateArgument::Template);
     return LocInfo.getTemplateNameLoc();
   }  
+  
+  /// \brief When the template argument is a pack expansion, returns 
+  /// the pattern of the pack expansion.
+  ///
+  /// \param Ellipsis Will be set to the location of the ellipsis.
+  TemplateArgumentLoc getPackExpansionPattern(SourceLocation &Ellipsis,
+                                              ASTContext &Context) const;
 };
 
 /// A convenient class for passing around template argument

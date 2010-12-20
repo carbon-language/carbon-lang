@@ -140,7 +140,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
     NumSFINAEErrors(0), SuppressAccessChecking(false),
-    NonInstantiationEntries(0), CurrentInstantiationScope(0), TyposCorrected(0),
+    NonInstantiationEntries(0), ArgumentPackSubstitutionIndex(-1),
+    CurrentInstantiationScope(0), TyposCorrected(0),
     AnalysisWarnings(*this)
 {
   TUScope = 0;

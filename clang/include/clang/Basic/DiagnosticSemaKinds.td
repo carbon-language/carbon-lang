@@ -1855,10 +1855,16 @@ def err_unexpanded_parameter_pack_3_or_more : Error<
 
 def err_pack_expansion_without_parameter_packs : Error<
   "pack expansion does not contain any unexpanded parameter packs">;
+def err_pack_expansion_length_conflict : Error<
+  "pack expansion contains parameter packs %0 and %1 that have different "
+  "lengths (%2 vs. %3)">;
+
 def err_pack_expansion_unsupported : Error<
   "clang does not yet support %select{non-type|template}0 pack expansions">;
 def err_pack_expansion_instantiation_unsupported : Error<
   "clang cannot yet instantiate pack expansions">;
+def err_pack_expansion_mismatch_unsupported : Error<
+  "clang cannot yet instantiate pack expansions with mismatched pack levels">;
 
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;
