@@ -3172,15 +3172,15 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   }
 
   // fold (srl (trunc (srl x, c1)), c2) -> 0 or (trunc (srl x, (add c1, c2)))
-  // This is only valid if the OpSizeInBits + c1 = size of inner shift
   if (N1C && N0.getOpcode() == ISD::TRUNCATE &&
       N0.getOperand(0).getOpcode() == ISD::SRL &&
-      N0.getOperand(0)->getOperand(1).getOpcode() == ISD::Constant) {
+      isa<ConstantSDNode>(N0.getOperand(0)->getOperand(1))) {
     uint64_t c1 = 
       cast<ConstantSDNode>(N0.getOperand(0)->getOperand(1))->getZExtValue();
     uint64_t c2 = N1C->getZExtValue();
     EVT InnerShiftVT = N0.getOperand(0)->getOperand(1).getValueType();
     uint64_t InnerShiftSize = InnerShiftVT.getScalarType().getSizeInBits();
+    // This is only valid if the OpSizeInBits + c1 = size of inner shift.
     if (c1 + OpSizeInBits == InnerShiftSize) {
       if (c1 + c2 >= InnerShiftSize)
         return DAG.getConstant(0, VT);

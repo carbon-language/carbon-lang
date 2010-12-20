@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
-; Formerly there were two shifts.  8771012.
+; Formerly there were two shifts.  rdar://8771012.
 
 define i32 @f9188_mul365384439_shift27(i32 %A) nounwind {
 ; CHECK:  imulq $365384439,
