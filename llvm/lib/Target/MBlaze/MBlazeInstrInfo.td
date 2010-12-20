@@ -599,11 +599,15 @@ let isCodeGenOnly=1 in {
 //===----------------------------------------------------------------------===//
 // Misc. instructions
 //===----------------------------------------------------------------------===//
-def MFS : SPC<0x25, 0x2, (outs GPR:$dst), (ins SPR:$src),
-              "mfs       $dst, $src", [], IIAlu>;
+let Form=FRCS in {
+  def MFS : SPC<0x25, 0x2, (outs GPR:$dst), (ins SPR:$src),
+                "mfs       $dst, $src", [], IIAlu>;
+}
 
-def MTS : SPC<0x25, 0x3, (outs SPR:$dst), (ins GPR:$src),
-              "mts       $dst, $src", [], IIAlu>;
+let Form=FCRCS in {
+  def MTS : SPC<0x25, 0x3, (outs SPR:$dst), (ins GPR:$src),
+                "mts       $dst, $src", [], IIAlu>;
+}
 
 def MSRSET : MSR<0x25, 0x20, (outs GPR:$dst), (ins uimm15:$set),
                  "msrset    $dst, $set", [], IIAlu>;

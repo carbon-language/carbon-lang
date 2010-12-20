@@ -69,8 +69,7 @@ static unsigned getRB(uint32_t insn) {
 }
 
 static int64_t getRS(uint32_t insn) {
-    int16_t val = (insn & 0x3FFF);
-    return val;
+  return MBlazeRegisterInfo::getSpecialRegisterFromNumbering(insn&0x3FFF);
 }
 
 static int64_t getIMM(uint32_t insn) {
@@ -606,12 +605,12 @@ bool MBlazeDisassembler::getInstruction(MCInst &instr,
 
   case MBlazeII::FRCS:
     instr.addOperand(MCOperand::CreateReg(getRD(insn)));
-    instr.addOperand(MCOperand::CreateImm(getRS(insn)));
+    instr.addOperand(MCOperand::CreateReg(getRS(insn)));
     break;
 
   case MBlazeII::FCRCS:
+    instr.addOperand(MCOperand::CreateReg(getRS(insn)));
     instr.addOperand(MCOperand::CreateReg(getRA(insn)));
-    instr.addOperand(MCOperand::CreateImm(getRS(insn)));
     break;
 
   case MBlazeII::FCRCX:
