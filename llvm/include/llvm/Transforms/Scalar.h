@@ -322,6 +322,13 @@ Pass *createLowerAtomicPass();
 //
 Pass *createCorrelatedValuePropagationPass();
 
+//===----------------------------------------------------------------------===//
+//
+// InstructionSimplifier - Remove redundant instructions.
+//
+FunctionPass *createInstructionSimplifierPass();
+extern char &InstructionSimplifierID;
+
 } // End llvm namespace
 
 #endif
