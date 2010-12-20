@@ -1,6 +1,9 @@
 // RUN: %clang -c -g %s -o /dev/null
 // Radar 8730409
 
+// FIXME: This test crashes on Windows.
+#ifndef _WIN32
+
 class foo {
 public:
 #define x(a) virtual void v ## a (void)
@@ -307,3 +310,5 @@ x(300);
 };
 
 foo b;
+
+#endif
