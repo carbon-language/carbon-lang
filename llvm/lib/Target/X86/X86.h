@@ -15,6 +15,7 @@
 #ifndef TARGET_X86_H
 #define TARGET_X86_H
 
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
