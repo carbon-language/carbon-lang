@@ -287,44 +287,6 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  /// LVIValueHandle - A callback value handle update the cache when
-  /// values are erased.
-  class LazyValueInfoCache;
-  struct LVIValueHandle : public CallbackVH {
-    LazyValueInfoCache *Parent;
-      
-    LVIValueHandle(Value *V, LazyValueInfoCache *P)
-      : CallbackVH(V), Parent(P) { }
-      
-    void deleted();
-    void allUsesReplacedWith(Value *V) {
-      deleted();
-    }
-  };
-}
-
-namespace llvm {
-  template<>
-  struct DenseMapInfo<LVIValueHandle> {
-    typedef DenseMapInfo<Value*> PointerInfo;
-    static inline LVIValueHandle getEmptyKey() {
-      return LVIValueHandle(PointerInfo::getEmptyKey(),
-                            static_cast<LazyValueInfoCache*>(0));
-    }
-    static inline LVIValueHandle getTombstoneKey() {
-      return LVIValueHandle(PointerInfo::getTombstoneKey(),
-                            static_cast<LazyValueInfoCache*>(0));
-    }
-    static unsigned getHashValue(const LVIValueHandle &Val) {
-      return PointerInfo::getHashValue(Val);
-    }
-    static bool isEqual(const LVIValueHandle &LHS, const LVIValueHandle &RHS) {
-      return LHS == RHS;
-    }
-  };
-}
-
-namespace { 
   /// LazyValueInfoCache - This is the cache kept by LazyValueInfo which
   /// maintains information about queries across the clients' queries.
   class LazyValueInfoCache {
@@ -335,7 +297,19 @@ namespace {
     typedef std::map<AssertingVH<BasicBlock>, LVILatticeVal> ValueCacheEntryTy;
 
   private:
-    friend struct LVIValueHandle;
+    /// LVIValueHandle - A callback value handle update the cache when
+    /// values are erased.
+    struct LVIValueHandle : public CallbackVH {
+      LazyValueInfoCache *Parent;
+      
+      LVIValueHandle(Value *V, LazyValueInfoCache *P)
+        : CallbackVH(V), Parent(P) { }
+      
+      void deleted();
+      void allUsesReplacedWith(Value *V) {
+        deleted();
+      }
+    };
     
     /// OverDefinedCacheUpdater - A helper object that ensures that the
     /// OverDefinedCache is updated whenever solveBlockValue returns.
@@ -358,7 +332,7 @@ namespace {
 
     /// ValueCache - This is all of the cached information for all values,
     /// mapped from Value* to key information.
-    DenseMap<LVIValueHandle, ValueCacheEntryTy> ValueCache;
+    std::map<LVIValueHandle, ValueCacheEntryTy> ValueCache;
     
     /// OverDefinedCache - This tracks, on a per-block basis, the set of 
     /// values that are over-defined at the end of that block.  This is required
@@ -415,7 +389,7 @@ namespace {
   };
 } // end anonymous namespace
 
-void LVIValueHandle::deleted() {
+void LazyValueInfoCache::LVIValueHandle::deleted() {
   for (std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator
        I = Parent->OverDefinedCache.begin(),
        E = Parent->OverDefinedCache.end();
@@ -440,7 +414,7 @@ void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
       OverDefinedCache.erase(tmp);
   }
 
-  for (DenseMap<LVIValueHandle, ValueCacheEntryTy>::iterator
+  for (std::map<LVIValueHandle, ValueCacheEntryTy>::iterator
        I = ValueCache.begin(), E = ValueCache.end(); I != E; ++I)
     I->second.erase(BB);
 }
