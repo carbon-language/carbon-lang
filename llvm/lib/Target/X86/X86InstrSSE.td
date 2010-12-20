@@ -4855,6 +4855,9 @@ defm BLENDVPD     : SS41I_ternary_int<0x15, "blendvpd", int_x86_sse41_blendvpd>;
 defm BLENDVPS     : SS41I_ternary_int<0x14, "blendvps", int_x86_sse41_blendvps>;
 defm PBLENDVB     : SS41I_ternary_int<0x10, "pblendvb", int_x86_sse41_pblendvb>;
 
+def : Pat<(X86pblendv VR128:$src1, VR128:$src2, XMM0),
+          (PBLENDVBrr0 VR128:$src1, VR128:$src2)>;
+
 let isAsmParserOnly = 1, Predicates = [HasAVX] in
 def VMOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                        "vmovntdqa\t{$src, $dst|$dst, $src}",

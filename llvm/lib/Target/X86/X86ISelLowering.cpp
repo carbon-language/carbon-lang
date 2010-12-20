@@ -8398,9 +8398,7 @@ SDValue X86TargetLowering::LowerSHL(SDValue Op, SelectionDAG &DAG) const {
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(4, MVT::i32));
-    R = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                    DAG.getConstant(Intrinsic::x86_sse41_pblendvb, MVT::i32),
-                    R, M, Op);
+    R = DAG.getNode(X86ISD::PBLENDVB, dl, VT, R, M, Op);
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
 
@@ -8415,15 +8413,12 @@ SDValue X86TargetLowering::LowerSHL(SDValue Op, SelectionDAG &DAG) const {
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(2, MVT::i32));
-    R = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                    DAG.getConstant(Intrinsic::x86_sse41_pblendvb, MVT::i32),
-                    R, M, Op);
+    R = DAG.getNode(X86ISD::PBLENDVB, dl, VT, R, M, Op);
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
 
     // return pblendv(r, r+r, a);
-    R = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                    DAG.getConstant(Intrinsic::x86_sse41_pblendvb, MVT::i32),
+    R = DAG.getNode(X86ISD::PBLENDVB, dl, VT, 
                     R, DAG.getNode(ISD::ADD, dl, VT, R, R), Op);
     return R;
   }
@@ -8897,6 +8892,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PSIGNB:             return "X86ISD::PSIGNB";
   case X86ISD::PSIGNW:             return "X86ISD::PSIGNW";
   case X86ISD::PSIGND:             return "X86ISD::PSIGND";
+  case X86ISD::PBLENDVB:           return "X86ISD::PBLENDVB";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
@@ -11209,12 +11205,10 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
         if (!Subtarget->hasSSE41())
           return SDValue();
         
-        unsigned IID = Intrinsic::x86_sse41_pblendvb;
         X = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, X);
         Y = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Y);
         Mask = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Mask);
-        Mask = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, MVT::v16i8,
-                           DAG.getConstant(IID, MVT::i32), X, Y, Mask);
+        Mask = DAG.getNode(X86ISD::PBLENDVB, DL, MVT::v16i8, X, Y, Mask);
         return DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, Mask);
       }
     }

@@ -166,6 +166,9 @@ namespace llvm {
       /// PSIGNB/W/D - Copy integer sign.
       PSIGNB, PSIGNW, PSIGND, 
       
+      /// PBLENDVB - Variable blend
+      PBLENDVB,
+      
       /// FMAX, FMIN - Floating point max and min.
       ///
       FMAX, FMIN,
