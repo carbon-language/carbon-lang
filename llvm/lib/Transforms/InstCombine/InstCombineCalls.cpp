@@ -852,11 +852,11 @@ Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const TargetData *TD) {
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
   bool Changed = false;
 
-  // If the callee is a constexpr cast of a function, attempt to move the cast
-  // to the arguments of the call/invoke.
-  if (transformConstExprCastCall(CS)) return 0;
-
+  // If the callee is a pointer to a function, attempt to move any casts to the
+  // arguments of the call/invoke.
   Value *Callee = CS.getCalledValue();
+  if (!isa<Function>(Callee) && transformConstExprCastCall(CS))
+    return 0;
 
   if (Function *CalleeF = dyn_cast<Function>(Callee))
     // If the call and callee calling conventions don't match, this call must
@@ -950,12 +950,10 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
 // attempt to move the cast to the arguments of the call/invoke.
 //
 bool InstCombiner::transformConstExprCastCall(CallSite CS) {
-  if (!isa<ConstantExpr>(CS.getCalledValue())) return false;
-  ConstantExpr *CE = cast<ConstantExpr>(CS.getCalledValue());
-  if (CE->getOpcode() != Instruction::BitCast || 
-      !isa<Function>(CE->getOperand(0)))
+  Function *Callee =
+    dyn_cast<Function>(CS.getCalledValue()->stripPointerCasts());
+  if (Callee == 0)
     return false;
-  Function *Callee = cast<Function>(CE->getOperand(0));
   Instruction *Caller = CS.getInstruction();
   const AttrListPtr &CallerPAL = CS.getAttributes();
 
@@ -1142,8 +1140,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Value *NV = NC;
   if (OldRetTy != NV->getType() && !Caller->use_empty()) {
     if (!NV->getType()->isVoidTy()) {
-      Instruction::CastOps opcode = CastInst::getCastOpcode(NC, false, 
-                                                            OldRetTy, false);
+      Instruction::CastOps opcode =
+        CastInst::getCastOpcode(NC, false, OldRetTy, false);
       NV = NC = CastInst::Create(opcode, NC, OldRetTy, "tmp");
 
       // If this is an invoke instruction, we should insert it after the first
@@ -1152,7 +1150,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         BasicBlock::iterator I = II->getNormalDest()->getFirstNonPHI();
         InsertNewInstBefore(NC, *I);
       } else {
-        // Otherwise, it's a call, just insert cast right after the call instr
+        // Otherwise, it's a call, just insert cast right after the call.
         InsertNewInstBefore(NC, *Caller);
       }
       Worklist.AddUsersToWorkList(*Caller);
@@ -1160,7 +1158,6 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       NV = UndefValue::get(Caller->getType());
     }
   }
-
 
   if (!Caller->use_empty())
     Caller->replaceAllUsesWith(NV);
