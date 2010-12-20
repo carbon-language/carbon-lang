@@ -782,9 +782,25 @@ TemplateInstantiator::TransformFirstQualifierInScope(NamedDecl *D,
   if (TemplateTypeParmDecl *TTPD = dyn_cast_or_null<TemplateTypeParmDecl>(D)) {
     const TemplateTypeParmType *TTP 
       = cast<TemplateTypeParmType>(getSema().Context.getTypeDeclType(TTPD));
+    
     if (TTP->getDepth() < TemplateArgs.getNumLevels()) {
-      // FIXME: Variadic templates index substitution.
-      QualType T = TemplateArgs(TTP->getDepth(), TTP->getIndex()).getAsType();
+      // FIXME: This needs testing w/ member access expressions.
+      TemplateArgument Arg = TemplateArgs(TTP->getDepth(), TTP->getIndex());
+      
+      if (TTP->isParameterPack()) {
+        assert(Arg.getKind() == TemplateArgument::Pack && 
+               "Missing argument pack");
+        
+        if (getSema().ArgumentPackSubstitutionIndex == -1) {
+          // FIXME: Variadic templates fun case.
+          getSema().Diag(Loc, diag::err_pack_expansion_mismatch_unsupported);
+          return 0;
+        }
+        
+        Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
+      }
+
+      QualType T = Arg.getAsType();
       if (T.isNull())
         return cast_or_null<NamedDecl>(TransformDecl(Loc, D));
       
