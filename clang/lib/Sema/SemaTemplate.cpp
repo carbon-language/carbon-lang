@@ -2377,29 +2377,39 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   //   a template-id shall match the type and form specified for the
   //   corresponding parameter declared by the template in its
   //   template-parameter-list.
+  llvm::SmallVector<TemplateArgument, 2> ArgumentPack;
+  TemplateParameterList::iterator Param = Params->begin(),
+                               ParamEnd = Params->end();
   unsigned ArgIdx = 0;
-  for (TemplateParameterList::iterator Param = Params->begin(),
-                                       ParamEnd = Params->end();
-       Param != ParamEnd; ++Param, ++ArgIdx) {
+  while (Param != ParamEnd) {
     if (ArgIdx > NumArgs && PartialTemplateArgs)
       break;
 
-    // If we have a template parameter pack, check every remaining template
-    // argument against that template parameter pack.
-    // FIXME: Variadic templates are unimplemented
-    if ((*Param)->isTemplateParameterPack()) {
-      Diag(TemplateLoc, diag::err_variadic_templates_unsupported);
-      return true;
-    }
-    
     if (ArgIdx < NumArgs) {
       // Check the template argument we were given.
       if (CheckTemplateArgument(*Param, TemplateArgs[ArgIdx], Template, 
                                 TemplateLoc, RAngleLoc, Converted))
         return true;
       
+      if ((*Param)->isTemplateParameterPack()) {
+        // The template parameter was a template parameter pack, so take the
+        // deduced argument and place it on the argument pack. Note that we
+        // stay on the same template parameter so that we can deduce more
+        // arguments.
+        ArgumentPack.push_back(Converted.back());
+        Converted.pop_back();
+      } else {
+        // Move to the next template parameter.
+        ++Param;
+      }
+      ++ArgIdx;
       continue;
     }
+    
+    // If we have a template parameter pack with no more corresponding 
+    // arguments, just break out now and we'll fill in the argument pack below.
+    if ((*Param)->isTemplateParameterPack())
+      break;
     
     // We have a default template argument that we will use.
     TemplateArgumentLoc Arg;
@@ -2475,8 +2485,31 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     if (CheckTemplateArgument(*Param, Arg, Template, TemplateLoc,
                               RAngleLoc, Converted))
       return true;
+    
+    // Move to the next template parameter and argument.
+    ++Param;
+    ++ArgIdx;
   }
-
+  
+  // Form argument packs for each of the parameter packs remaining.
+  while (Param != ParamEnd) {
+    if ((*Param)->isTemplateParameterPack()) {     
+      // The parameter pack takes the contents of the current argument pack,
+      // which we built up earlier.
+      if (ArgumentPack.empty()) {
+        Converted.push_back(TemplateArgument(0, 0));
+      } else {
+        TemplateArgument *PackedArgs
+          = new (Context) TemplateArgument [ArgumentPack.size()];
+        std::copy(ArgumentPack.begin(), ArgumentPack.end(), PackedArgs);
+        Converted.push_back(TemplateArgument(PackedArgs, ArgumentPack.size()));
+        ArgumentPack.clear();
+      }
+    }
+    
+    ++Param;
+  }
+  
   return Invalid;
 }
 
