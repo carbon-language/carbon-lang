@@ -29,6 +29,7 @@ set(sources
   X86ISelLowering.cpp
   X86InstrInfo.cpp
   X86JITInfo.cpp
+  X86MachObjectWriter.cpp
   X86MCAsmInfo.cpp
   X86MCCodeEmitter.cpp 
   X86MCInstLower.cpp

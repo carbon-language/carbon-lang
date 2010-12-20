@@ -46,13 +46,6 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
 }
 
 namespace {
-class X86MachObjectWriter : public MCMachObjectTargetWriter {
-public:
-  X86MachObjectWriter(bool Is64Bit, uint32_t CPUType,
-                      uint32_t CPUSubtype)
-    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype,
-                               /*UseAggressiveSymbolFolding=*/Is64Bit) {}
-};
 
 class X86ELFObjectWriter : public MCELFObjectTargetWriter {
 public:
@@ -357,11 +350,9 @@ public:
     : DarwinX86AsmBackend(T) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createMachObjectWriter(new X86MachObjectWriter(
-                                    /*Is64Bit=*/false,
-                                    object::mach::CTM_i386,
-                                    object::mach::CSX86_ALL),
-                                  OS, /*IsLittleEndian=*/true);
+    return createX86MachObjectWriter(OS, /*Is64Bit=*/false,
+                                     object::mach::CTM_i386,
+                                     object::mach::CSX86_ALL);
   }
 };
 
@@ -373,11 +364,9 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createMachObjectWriter(new X86MachObjectWriter(
-                                    /*Is64Bit=*/true,
-                                    object::mach::CTM_x86_64,
-                                    object::mach::CSX86_ALL),
-                                  OS, /*IsLittleEndian=*/true);
+    return createX86MachObjectWriter(OS, /*Is64Bit=*/true,
+                                     object::mach::CTM_x86_64,
+                                     object::mach::CSX86_ALL);
   }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {

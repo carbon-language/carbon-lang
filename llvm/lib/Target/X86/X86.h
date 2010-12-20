@@ -23,11 +23,13 @@ class FunctionPass;
 class JITCodeEmitter;
 class MCCodeEmitter;
 class MCContext;
+class MCObjectWriter;
 class MachineCodeEmitter;
 class Target;
 class TargetAsmBackend;
 class X86TargetMachine;
 class formatted_raw_ostream;
+class raw_ostream;
 
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
@@ -73,6 +75,13 @@ FunctionPass *createEmitX86CodeToMemory();
 /// reserved in case dynamic stack alignment is later required.
 ///
 FunctionPass *createX86MaxStackAlignmentHeuristicPass();
+
+
+/// createX86MachObjectWriter - Construct an X86 Mach-O object writer.
+MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS,
+                                          bool Is64Bit,
+                                          uint32_t CPUType,
+                                          uint32_t CPUSubtype);
 
 extern Target TheX86_32Target, TheX86_64Target;
 
