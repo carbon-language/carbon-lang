@@ -11493,6 +11493,32 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG) {
   
   return SDValue();
 }
+          
+// Optimize RES, EFLAGS = X86ISD::ADC LHS, RHS, EFLAGS
+static SDValue PerformADCCombine(SDNode *N, SelectionDAG &DAG,
+                                 X86TargetLowering::DAGCombinerInfo &DCI) {
+  // If the LHS and RHS of the ADC node are zero, then it can't overflow and
+  // the result is either zero or one (depending on the input carry bit).
+  // Strength reduce this down to a "set on carry" aka SETCC_CARRY&1.
+  if (X86::isZeroNode(N->getOperand(0)) &&
+      X86::isZeroNode(N->getOperand(1)) &&
+      // We don't have a good way to replace an EFLAGS use, so only do this when
+      // dead right now.
+      SDValue(N, 1).use_empty()) {
+    DebugLoc DL = N->getDebugLoc();
+    EVT VT = N->getValueType(0);
+    SDValue CarryOut = DAG.getConstant(0, N->getValueType(1));
+    SDValue Res1 = DAG.getNode(ISD::AND, DL, VT,
+                               DAG.getNode(X86ISD::SETCC_CARRY, DL, VT,
+                                           DAG.getConstant(X86::COND_B,MVT::i8),
+                                           N->getOperand(2)),
+                               DAG.getConstant(1, VT));
+    return DCI.CombineTo(N, Res1, CarryOut);
+  }
+
+  return SDValue();
+}
+
 
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
@@ -11503,6 +11529,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
     return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
+  case X86ISD::ADC:         return PerformADCCombine(N, DAG, DCI);
   case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
   case ISD::SHL:
   case ISD::SRA:
