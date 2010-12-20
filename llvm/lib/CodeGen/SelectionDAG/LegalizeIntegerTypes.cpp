@@ -548,6 +548,54 @@ SDValue DAGTypeLegalizer::PromoteIntRes_UADDSUBO(SDNode *N, unsigned ResNo) {
   return Res;
 }
 
+
+SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
+  // Promote the overflow bit trivially.
+  if (ResNo == 1)
+    return PromoteIntRes_Overflow(N);
+  
+  SDValue LHS = N->getOperand(0), RHS = N->getOperand(1);
+  DebugLoc DL = N->getDebugLoc();
+  unsigned SmallSize = LHS.getValueType().getSizeInBits();
+  
+  // To determine if the result overflowed in a larger type, we extend the input
+  // to the larger type, do the multiply, then check the high bits of the result
+  // to see if the overflow happened.
+  if (N->getOpcode() == ISD::SMULO) {
+    LHS = SExtPromotedInteger(LHS);
+    RHS = SExtPromotedInteger(RHS);
+  } else {
+    LHS = ZExtPromotedInteger(LHS);
+    RHS = ZExtPromotedInteger(RHS);
+  }
+  
+  SDValue Mul = DAG.getNode(ISD::MUL, DL, LHS.getValueType(), LHS, RHS);
+  
+  
+  // For an unsigned overflow, we check to see if the high part is != 0;
+  SDValue Overflow;
+  if (N->getOpcode() == ISD::UMULO) {
+    SDValue Hi = DAG.getNode(ISD::SRL, DL, Mul.getValueType(), Mul,
+                             DAG.getIntPtrConstant(SmallSize));
+    // Overflowed if and only if this is not equal to Res.
+    Overflow = DAG.getSetCC(DL, N->getValueType(1), Hi,
+                            DAG.getConstant(0, Hi.getValueType()), ISD::SETNE);
+  } else {
+    // Signed multiply overflowed if the high part is not 0 and not -1.
+    SDValue Hi = DAG.getNode(ISD::SRA, DL, Mul.getValueType(), Mul,
+                             DAG.getIntPtrConstant(SmallSize));
+    Hi = DAG.getNode(ISD::ADD, DL, Hi.getValueType(), Hi,
+                     DAG.getConstant(1, Hi.getValueType()));
+    Overflow = DAG.getSetCC(DL, N->getValueType(1), Hi,
+                            DAG.getConstant(1, Hi.getValueType()), ISD::SETUGT);
+  }
+
+  // Use the calculated overflow everywhere.
+  ReplaceValueWith(SDValue(N, 1), Overflow);
+  return Mul;
+}
+
+
 SDValue DAGTypeLegalizer::PromoteIntRes_UDIV(SDNode *N) {
   // Zero extend the input.
   SDValue LHS = ZExtPromotedInteger(N->getOperand(0));
@@ -599,11 +647,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
   ReplaceValueWith(SDValue(N, 1), Chain);
 
   return Res;
-}
-
-SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
-  assert(ResNo == 1 && "Only boolean result promotion currently supported!");
-  return PromoteIntRes_Overflow(N);
 }
 
 //===----------------------------------------------------------------------===//
