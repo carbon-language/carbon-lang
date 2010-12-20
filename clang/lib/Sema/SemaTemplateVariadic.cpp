@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===/
 
 #include "clang/Sema/Sema.h"
+#include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -254,3 +255,62 @@ bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
   return true;
 }
 
+ParsedTemplateArgument 
+Sema::ActOnPackExpansion(const ParsedTemplateArgument &Arg,
+                         SourceLocation EllipsisLoc) {
+  if (Arg.isInvalid())
+    return Arg;
+
+  switch (Arg.getKind()) {
+  case ParsedTemplateArgument::Type: {
+    TypeResult Result = ActOnPackExpansion(Arg.getAsType(), EllipsisLoc);
+    if (Result.isInvalid())
+      return ParsedTemplateArgument();
+
+    return ParsedTemplateArgument(Arg.getKind(), Result.get().getAsOpaquePtr(), 
+                                  Arg.getLocation());
+  }
+
+  case ParsedTemplateArgument::NonType:
+    Diag(EllipsisLoc, diag::err_pack_expansion_unsupported)
+      << 0;
+    return ParsedTemplateArgument();
+
+  case ParsedTemplateArgument::Template:
+    Diag(EllipsisLoc, diag::err_pack_expansion_unsupported)
+      << 1;
+    return ParsedTemplateArgument();
+  }
+  llvm_unreachable("Unhandled template argument kind?");
+  return ParsedTemplateArgument();
+}
+
+TypeResult Sema::ActOnPackExpansion(ParsedType Type, 
+                                    SourceLocation EllipsisLoc) {
+  TypeSourceInfo *TSInfo;
+  GetTypeFromParser(Type, &TSInfo);
+  if (!TSInfo)
+    return true;
+
+  // C++0x [temp.variadic]p5:
+  //   The pattern of a pack expansion shall name one or more
+  //   parameter packs that are not expanded by a nested pack
+  //   expansion.
+  if (!TSInfo->getType()->containsUnexpandedParameterPack()) {
+    Diag(EllipsisLoc, diag::err_pack_expansion_without_parameter_packs)
+      << TSInfo->getTypeLoc().getSourceRange();
+    return true;
+  }
+
+  // Create the pack expansion type and source-location information.
+  QualType Result = Context.getPackExpansionType(TSInfo->getType());
+  TypeSourceInfo *TSResult = Context.CreateTypeSourceInfo(Result);
+  PackExpansionTypeLoc TL = cast<PackExpansionTypeLoc>(TSResult->getTypeLoc());
+  TL.setEllipsisLoc(EllipsisLoc);
+
+  // Copy over the source-location information from the type.
+  memcpy(TL.getNextTypeLoc().getOpaqueData(),
+         TSInfo->getTypeLoc().getOpaqueData(),
+         TSInfo->getTypeLoc().getFullDataSize());
+  return CreateParsedType(Result, TSResult);
+}

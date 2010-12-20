@@ -1140,6 +1140,10 @@ void MicrosoftCXXNameMangler::mangleType(
          "Don't know how to mangle DependentTemplateSpecializationTypes yet!");
 }
 
+void MicrosoftCXXNameMangler::mangleType(const PackExpansionType *T) {
+  assert(false && "Don't know how to mangle PackExpansionTypes yet!");
+}
+
 void MicrosoftCXXNameMangler::mangleType(const TypeOfType *T) {
   assert(false && "Don't know how to mangle TypeOfTypes yet!");
 }

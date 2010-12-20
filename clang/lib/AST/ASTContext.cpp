@@ -2216,6 +2216,32 @@ ASTContext::getDependentTemplateSpecializationType(
   return QualType(T, 0);
 }
 
+QualType ASTContext::getPackExpansionType(QualType Pattern) {
+  llvm::FoldingSetNodeID ID;
+  PackExpansionType::Profile(ID, Pattern);
+
+  assert(Pattern->containsUnexpandedParameterPack() &&
+         "Pack expansions must expand one or more parameter packs");
+  void *InsertPos = 0;
+  PackExpansionType *T
+    = PackExpansionTypes.FindNodeOrInsertPos(ID, InsertPos);
+  if (T)
+    return QualType(T, 0);
+
+  QualType Canon;
+  if (!Pattern.isCanonical()) {
+    Canon = getPackExpansionType(getCanonicalType(Pattern));
+
+    // Find the insert position again.
+    PackExpansionTypes.FindNodeOrInsertPos(ID, InsertPos);
+  }
+
+  T = new (*this) PackExpansionType(Pattern, Canon);
+  Types.push_back(T);
+  PackExpansionTypes.InsertNode(T, InsertPos);
+  return QualType(T, 0);  
+}
+
 /// CmpProtocolNames - Comparison predicate for sorting protocols
 /// alphabetically.
 static bool CmpProtocolNames(const ObjCProtocolDecl *LHS,

@@ -2930,6 +2930,18 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getParenType(InnerType);
   }
 
+  case TYPE_PACK_EXPANSION: {
+    if (Record.size() != 1) {
+      Error("incorrect encoding of pack expansion type");
+      return QualType();
+    }
+    QualType Pattern = GetType(Record[0]);
+    if (Pattern.isNull())
+      return QualType();
+
+    return Context->getPackExpansionType(Pattern);
+  }
+
   case TYPE_ELABORATED: {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
@@ -3228,6 +3240,9 @@ void TypeLocReader::VisitDependentTemplateSpecializationTypeLoc(
         Reader.GetTemplateArgumentLocInfo(F,
                                           TL.getTypePtr()->getArg(I).getKind(),
                                           Record, Idx));
+}
+void TypeLocReader::VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL) {
+  TL.setEllipsisLoc(ReadSourceLocation(Record, Idx));
 }
 void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   TL.setNameLoc(ReadSourceLocation(Record, Idx));

@@ -2386,6 +2386,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
 
     // If we have a template parameter pack, check every remaining template
     // argument against that template parameter pack.
+    // FIXME: Variadic templates are unimplemented
     if ((*Param)->isTemplateParameterPack()) {
       Diag(TemplateLoc, diag::err_variadic_templates_unsupported);
       return true;
@@ -2638,6 +2639,11 @@ bool UnnamedLocalNoLinkageFinder::VisitDependentNameType(
 bool UnnamedLocalNoLinkageFinder::VisitDependentTemplateSpecializationType(
                                  const DependentTemplateSpecializationType* T) {
   return VisitNestedNameSpecifier(T->getQualifier());
+}
+
+bool UnnamedLocalNoLinkageFinder::VisitPackExpansionType(
+                                                   const PackExpansionType* T) {
+  return Visit(T->getPattern());
 }
 
 bool UnnamedLocalNoLinkageFinder::VisitObjCObjectType(const ObjCObjectType *) {

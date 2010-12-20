@@ -32,7 +32,9 @@ namespace clang {
       Template
     };
 
-    /// \brief Build an empty template argument. This template argument 
+    /// \brief Build an empty template argument. 
+    ///
+    /// This template argument is invalid.
     ParsedTemplateArgument() : Kind(Type), Arg(0) { }
     
     /// \brief Create a template type argument or non-type template argument.

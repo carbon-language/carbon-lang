@@ -338,6 +338,7 @@ public:
   // FIXME: Implement visitors here when the unimplemented TypeLocs get
   // implemented
   bool VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL);
+  bool VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL);
   bool VisitTypeOfTypeLoc(TypeOfTypeLoc TL);
 
   // Data-recursive visitor functions.
@@ -1433,6 +1434,10 @@ bool CursorVisitor::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
     return Visit(TSInfo->getTypeLoc());
 
   return false;
+}
+
+bool CursorVisitor::VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL) {
+  return Visit(TL.getPatternLoc());
 }
 
 bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {

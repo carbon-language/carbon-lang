@@ -106,6 +106,7 @@ class ASTContext {
   llvm::FoldingSet<DependentNameType> DependentNameTypes;
   llvm::ContextualFoldingSet<DependentTemplateSpecializationType, ASTContext&>
     DependentTemplateSpecializationTypes;
+  llvm::FoldingSet<PackExpansionType> PackExpansionTypes;
   llvm::FoldingSet<ObjCObjectTypeImpl> ObjCObjectTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
 
@@ -696,6 +697,8 @@ public:
                                                   const IdentifierInfo *Name,
                                                   unsigned NumArgs,
                                                   const TemplateArgument *Args);
+
+  QualType getPackExpansionType(QualType Pattern);
 
   QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl);
 

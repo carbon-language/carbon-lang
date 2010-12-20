@@ -3506,6 +3506,15 @@ QualType TreeTransform<Derived>::
 }
 
 template<typename Derived>
+QualType TreeTransform<Derived>::TransformPackExpansionType(TypeLocBuilder &TLB,
+                                                      PackExpansionTypeLoc TL) {
+  // FIXME: Implement!
+  getSema().Diag(TL.getEllipsisLoc(), 
+                 diag::err_pack_expansion_instantiation_unsupported);
+  return QualType();
+}
+
+template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformObjCInterfaceType(TypeLocBuilder &TLB,
                                                    ObjCInterfaceTypeLoc TL) {

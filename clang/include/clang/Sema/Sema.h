@@ -3236,6 +3236,25 @@ public:
                                        TemplateName Template,
                                        UnexpandedParameterPackContext UPPC);
 
+  /// \brief Invoked when parsing a template argument followed by an
+  /// ellipsis, which creates a pack expansion.
+  ///
+  /// \param Arg The template argument preceding the ellipsis, which
+  /// may already be invalid.
+  ///
+  /// \param EllipsisLoc The location of the ellipsis.
+  ParsedTemplateArgument ActOnPackExpansion(const ParsedTemplateArgument &Arg,
+                                            SourceLocation EllipsisLoc);
+
+  /// \brief Invoked when parsing a type follows by an ellipsis, which
+  /// creates a pack expansion.
+  ///
+  /// \param Type The type preceding the ellipsis, which will become
+  /// the pattern of the pack expansion.
+  ///
+  /// \param EllipsisLoc The location of the ellipsis.
+  TypeResult ActOnPackExpansion(ParsedType Type, SourceLocation EllipsisLoc);
+
   /// \brief Describes the result of template argument deduction.
   ///
   /// The TemplateDeductionResult enumeration describes the result of

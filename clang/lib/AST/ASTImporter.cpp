@@ -707,7 +707,14 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     }
     break;
   }
-  
+
+  case Type::PackExpansion:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<PackExpansionType>(T1)->getPattern(),
+                                  cast<PackExpansionType>(T2)->getPattern()))
+      return false;
+    break;
+
   case Type::ObjCInterface: {
     const ObjCInterfaceType *Iface1 = cast<ObjCInterfaceType>(T1);
     const ObjCInterfaceType *Iface2 = cast<ObjCInterfaceType>(T2);

@@ -2815,6 +2815,12 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
                                  OnlyDeduced, Depth, Used);
     break;
 
+  case Type::PackExpansion:
+    MarkUsedTemplateParameters(SemaRef, 
+                               cast<PackExpansionType>(T)->getPattern(),
+                               OnlyDeduced, Depth, Used);
+    break;
+
   // None of these types have any template parameters in them.
   case Type::Builtin:
   case Type::VariableArray:

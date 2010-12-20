@@ -1474,6 +1474,12 @@ void CXXNameMangler::mangleType(const DependentSizedExtVectorType *T) {
   mangleType(T->getElementType());
 }
 
+void CXXNameMangler::mangleType(const PackExpansionType *T) {
+  // FIXME: We may need to push this mangling into the callers
+  Out << "sp";
+  mangleType(T->getPattern());
+}
+
 void CXXNameMangler::mangleType(const ObjCInterfaceType *T) {
   mangleSourceName(T->getDecl()->getIdentifier());
 }

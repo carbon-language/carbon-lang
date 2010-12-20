@@ -1,10 +1,22 @@
 // RUN: %clang_cc1 -std=c++0x -fblocks -fsyntax-only -verify %s
 
+template<typename T, typename U> struct pair;
+
+// A parameter pack whose name appears within the pattern of a pack
+// expansion is expanded by that pack expansion. An appearance of the
+// name of a parameter pack is only expanded by the innermost
+// enclosing pack expansion. The pattern of a pack expansion shall
+// name one or more parameter packs that are not expanded by a nested
+// pack expansion.
+template<typename... Types>
+struct Expansion {
+  typedef pair<Types..., int> expand_with_pacs; // okay
+  typedef pair<Types, int...> expand_no_packs;  // expected-error{{pack expansion does not contain any unexpanded parameter packs}}
+  typedef pair<pair<Types..., int>..., int> expand_with_expanded_nested; // expected-error{{pack expansion does not contain any unexpanded parameter packs}}
+};
 
 // An appearance of a name of a parameter pack that is not expanded is
 // ill-formed.
-
-template<typename T, typename U> struct pair;
 
 // Test for unexpanded parameter packs in each of the type nodes.
 template<typename T, int N, typename ... Types>

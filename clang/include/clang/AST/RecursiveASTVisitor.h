@@ -738,6 +738,10 @@ DEF_TRAVERSE_TYPE(DependentTemplateSpecializationType, {
     TRY_TO(TraverseTemplateArguments(T->getArgs(), T->getNumArgs()));
   })
 
+DEF_TRAVERSE_TYPE(PackExpansionType, {
+    TRY_TO(TraverseType(T->getPattern()));
+  })
+
 DEF_TRAVERSE_TYPE(ObjCInterfaceType, { })
 
 DEF_TRAVERSE_TYPE(ObjCObjectType, {
@@ -941,6 +945,10 @@ DEF_TRAVERSE_TYPELOC(DependentTemplateSpecializationType, {
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
       TRY_TO(TraverseTemplateArgumentLoc(TL.getArgLoc(I)));
     }
+  })
+
+DEF_TRAVERSE_TYPELOC(PackExpansionType, {
+    TRY_TO(TraverseTypeLoc(TL.getPatternLoc()));
   })
 
 DEF_TRAVERSE_TYPELOC(ObjCInterfaceType, { })

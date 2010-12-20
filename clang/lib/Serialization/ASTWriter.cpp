@@ -298,6 +298,11 @@ ASTTypeWriter::VisitDependentTemplateSpecializationType(
   Code = TYPE_DEPENDENT_TEMPLATE_SPECIALIZATION;
 }
 
+void ASTTypeWriter::VisitPackExpansionType(const PackExpansionType *T) {
+  Writer.AddTypeRef(T->getPattern(), Record);
+  Code = TYPE_PACK_EXPANSION;
+}
+
 void ASTTypeWriter::VisitParenType(const ParenType *T) {
   Writer.AddTypeRef(T->getInnerType(), Record);
   Code = TYPE_PAREN;
@@ -498,6 +503,9 @@ void TypeLocWriter::VisitDependentTemplateSpecializationTypeLoc(
   for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I)
     Writer.AddTemplateArgumentLocInfo(TL.getArgLoc(I).getArgument().getKind(),
                                       TL.getArgLoc(I).getLocInfo(), Record);
+}
+void TypeLocWriter::VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getEllipsisLoc(), Record);
 }
 void TypeLocWriter::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);

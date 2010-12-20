@@ -36,7 +36,7 @@ namespace {
     void printTag(TagDecl *T, std::string &S);
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define TYPE(CLASS, PARENT) \
-  void print##CLASS(const CLASS##Type *T, std::string &S);
+    void print##CLASS(const CLASS##Type *T, std::string &S);
 #include "clang/AST/TypeNodes.def"
   };
 }
@@ -666,6 +666,12 @@ void TypePrinter::printDependentTemplateSpecialization(
     S.swap(MyString);
   else
     S = MyString + ' ' + S;
+}
+
+void TypePrinter::printPackExpansion(const PackExpansionType *T, 
+                                     std::string &S) {
+  print(T->getPattern(), S);
+  S += "...";
 }
 
 void TypePrinter::printObjCInterface(const ObjCInterfaceType *T, 

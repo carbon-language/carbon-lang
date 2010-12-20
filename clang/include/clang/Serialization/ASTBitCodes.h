@@ -551,7 +551,9 @@ namespace clang {
       /// \brief A DependentSizedArrayType record.
       TYPE_DEPENDENT_SIZED_ARRAY    = 33,
       /// \brief A ParenType record.
-      TYPE_PAREN                    = 34
+      TYPE_PAREN                    = 34,
+      /// \brief A PackExpansionType record.
+      TYPE_PACK_EXPANSION           = 35
     };
 
     /// \brief The type IDs for special types constructed by semantic

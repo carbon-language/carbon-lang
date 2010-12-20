@@ -1446,6 +1446,40 @@ private:
   }
 };
 
+
+struct PackExpansionTypeLocInfo {
+  SourceLocation EllipsisLoc;
+};
+
+class PackExpansionTypeLoc
+  : public ConcreteTypeLoc<UnqualTypeLoc, PackExpansionTypeLoc, 
+                           PackExpansionType, PackExpansionTypeLocInfo> {
+public:
+  SourceLocation getEllipsisLoc() const {
+    return this->getLocalData()->EllipsisLoc;
+  }
+
+  void setEllipsisLoc(SourceLocation Loc) {
+    this->getLocalData()->EllipsisLoc = Loc;
+  }
+
+  SourceRange getLocalSourceRange() const {
+    return SourceRange(getEllipsisLoc(), getEllipsisLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setEllipsisLoc(Loc);
+  }
+
+  TypeLoc getPatternLoc() const {
+    return getInnerTypeLoc();
+  }
+
+  QualType getInnerType() const {
+    return this->getTypePtr()->getPattern();
+  }
+};
+
 }
 
 #endif

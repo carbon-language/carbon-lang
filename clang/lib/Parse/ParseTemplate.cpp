@@ -1045,6 +1045,11 @@ bool
 Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
   while (true) {
     ParsedTemplateArgument Arg = ParseTemplateArgument();
+    if (Tok.is(tok::ellipsis)) {
+      SourceLocation EllipsisLoc  = ConsumeToken();
+      Arg = Actions.ActOnPackExpansion(Arg, EllipsisLoc);
+    }
+
     if (Arg.isInvalid()) {
       SkipUntil(tok::comma, tok::greater, true, true);
       return true;

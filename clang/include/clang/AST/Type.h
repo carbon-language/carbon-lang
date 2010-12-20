@@ -92,7 +92,6 @@ namespace clang {
   class TemplateArgument;
   class TemplateArgumentLoc;
   class TemplateArgumentListInfo;
-  class Type;
   class ElaboratedType;
   struct PrintingPolicy;
 
@@ -3187,6 +3186,65 @@ public:
     return T->getTypeClass() == DependentTemplateSpecialization;
   }
   static bool classof(const DependentTemplateSpecializationType *T) {
+    return true;
+  }  
+};
+
+/// \brief Represents a pack expansion of types.
+///
+/// Pack expansions are part of C++0x variadic templates. A pack
+/// expansion contains a pattern, which itself contains one or more
+/// "unexpanded" parameter packs. When instantiated, a pack expansion
+/// produces a series of types, each instantiated from the pattern of
+/// the expansion, where the Ith instantiation of the pattern uses the
+/// Ith arguments bound to each of the unexpanded parameter packs. The
+/// pack expansion is considered to "expand" these unexpanded
+/// parameter packs.
+///
+/// \code
+/// template<typename ...Types> struct tuple;
+///
+/// template<typename ...Types> 
+/// struct tuple_of_references {
+///   typedef tuple<Types&...> type;
+/// };
+/// \endcode
+///
+/// Here, the pack expansion \c Types&... is represented via a
+/// PackExpansionType whose pattern is Types&.
+class PackExpansionType : public Type, public llvm::FoldingSetNode {
+  /// \brief The pattern of the pack expansion.
+  QualType Pattern;
+
+  PackExpansionType(QualType Pattern, QualType Canon)
+    : Type(PackExpansion, Canon, /*Dependent=*/true,
+           /*VariableModified=*/Pattern->isVariablyModifiedType(),
+           /*ContainsUnexpandedParameterPack=*/false),
+      Pattern(Pattern) { }
+
+  friend class ASTContext;  // ASTContext creates these
+
+public:
+  /// \brief Retrieve the pattern of this pack expansion, which is the
+  /// type that will be repeatedly instantiated when instantiating the
+  /// pack expansion itself.
+  QualType getPattern() const { return Pattern; }
+
+  bool isSugared() const { return false; }
+  QualType desugar() const { return QualType(this, 0); }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getPattern());
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Pattern) {
+    ID.AddPointer(Pattern.getAsOpaquePtr());
+  }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == PackExpansion;
+  }
+  static bool classof(const PackExpansionType *T) {
     return true;
   }  
 };
