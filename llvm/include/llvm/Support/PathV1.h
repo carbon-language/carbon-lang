@@ -106,7 +106,7 @@ namespace sys {
       /// cannot be created, the function will throw an exception.
       /// @returns an invalid path (empty) on error
       /// @param ErrMsg Optional place for an error message if an error occurs
-      /// @brief Constrct a path to an new, unique, existing temporary
+      /// @brief Construct a path to an new, unique, existing temporary
       /// directory.
       static Path GetTemporaryDirectory(std::string* ErrMsg = 0);
 
@@ -260,7 +260,7 @@ namespace sys {
       bool isEmpty() const { return path.empty(); }
 
        /// This function returns the last component of the path name. The last
-      /// component is the file or directory name occuring after the last
+      /// component is the file or directory name occurring after the last
       /// directory separator. If no directory separator is present, the entire
       /// path name is returned (i.e. same as toString).
       /// @returns StringRef containing the last component of the path name.
