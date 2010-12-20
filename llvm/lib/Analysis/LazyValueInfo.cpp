@@ -310,6 +310,25 @@ namespace {
         deleted();
       }
     };
+    
+    /// OverDefinedCacheUpdater - A helper object that ensures that the
+    /// OverDefinedCache is updated whenever solveBlockValue returns.
+    struct OverDefinedCacheUpdater {
+      LazyValueInfoCache *Parent;
+      Value *Val;
+      BasicBlock *BB;
+      LVILatticeVal &BBLV;
+      
+      OverDefinedCacheUpdater(Value *V, BasicBlock *B, LVILatticeVal &LV,
+                       LazyValueInfoCache *P)
+        : Parent(P), Val(V), BB(B), BBLV(LV) { }
+      
+      bool markResult(bool changed) { 
+        if (changed && BBLV.isOverdefined())
+          Parent->OverDefinedCache.insert(std::make_pair(BB, Val));
+        return changed;
+      }
+    };
 
     /// ValueCache - This is all of the cached information for all values,
     /// mapped from Value* to key information.
@@ -342,21 +361,7 @@ namespace {
       return ValueCache[LVIValueHandle(V, this)];
     }
     
-    LVILatticeVal setBlockValue(Value *V, BasicBlock *BB, LVILatticeVal L,
-                                ValueCacheEntryTy &Cache) {
-      if (L.isOverdefined()) OverDefinedCache.insert(std::make_pair(BB, V));
-      return Cache[BB] = L;
-    }
-    LVILatticeVal setBlockValue(Value *V, BasicBlock *BB, LVILatticeVal L) {
-      return setBlockValue(V, BB, L, lookup(V));
-    }
-    
-    struct BlockStackEntry {
-      BlockStackEntry(Value *Val, BasicBlock *BB) : Val(Val), BB(BB) {}
-      Value *Val;
-      BasicBlock *BB;
-    };
-    std::stack<BlockStackEntry> block_value_stack;
+    std::stack<std::pair<BasicBlock*, Value*> > block_value_stack;
 
   public:
     /// getValueInBlock - This is the query interface to determine the lattice
@@ -416,8 +421,8 @@ void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
 
 void LazyValueInfoCache::solve() {
   while (!block_value_stack.empty()) {
-    BlockStackEntry &e = block_value_stack.top();
-    if (solveBlockValue(e.Val, e.BB))
+    std::pair<BasicBlock*, Value*> &e = block_value_stack.top();
+    if (solveBlockValue(e.second, e.first))
       block_value_stack.pop();
   }
 }
@@ -444,10 +449,21 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
 
   ValueCacheEntryTy &Cache = lookup(Val);
   LVILatticeVal &BBLV = Cache[BB];
+  
+  // OverDefinedCacheUpdater is a helper object that will update
+  // the OverDefinedCache for us when this method exits.  Make sure to
+  // call markResult on it as we exist, passing a bool to indicate if the
+  // cache needs updating, i.e. if we have solve a new value or not.
+  OverDefinedCacheUpdater ODCacheUpdater(Val, BB, BBLV, this);
 
   // If we've already computed this block's value, return it.
   if (!BBLV.isUndefined()) {
     DEBUG(dbgs() << "  reuse BB '" << BB->getName() << "' val=" << BBLV <<'\n');
+    
+    // Since we're reusing a cached value here, we don't need to update the 
+    // OverDefinedCahce.  The cache will have been properly updated 
+    // whenever the cached value was inserted.
+    ODCacheUpdater.markResult(false);
     return true;
   }
 
@@ -458,11 +474,11 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
   
   Instruction *BBI = dyn_cast<Instruction>(Val);
   if (BBI == 0 || BBI->getParent() != BB) {
-    return solveBlockValueNonLocal(BBLV, Val, BB);
+    return ODCacheUpdater.markResult(solveBlockValueNonLocal(BBLV, Val, BB));
   }
 
   if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
-    return solveBlockValuePHINode(BBLV, PN, BB);
+    return ODCacheUpdater.markResult(solveBlockValuePHINode(BBLV, PN, BB));
   }
 
   // We can only analyze the definitions of certain classes of instructions
@@ -473,7 +489,7 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
     DEBUG(dbgs() << " compute BB '" << BB->getName()
                  << "' - overdefined because inst def found.\n");
     BBLV.markOverdefined();
-    return true;
+    return ODCacheUpdater.markResult(true);
   }
 
   // FIXME: We're currently limited to binops with a constant RHS.  This should
@@ -484,10 +500,10 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
                  << "' - overdefined because inst def found.\n");
 
     BBLV.markOverdefined();
-    return true;
+    return ODCacheUpdater.markResult(true);
   }
 
-  return solveBlockValueConstantRange(BBLV, BBI, BB);
+  return ODCacheUpdater.markResult(solveBlockValueConstantRange(BBLV, BBI, BB));
 }
 
 static bool InstructionDereferencesPointer(Instruction *I, Value *Ptr) {
@@ -612,7 +628,7 @@ bool LazyValueInfoCache::solveBlockValueConstantRange(LVILatticeVal &BBLV,
                                                       BasicBlock *BB) {
   // Figure out the range of the LHS.  If that fails, bail.
   if (!hasBlockValue(BBI->getOperand(0), BB)) {
-    block_value_stack.push(BlockStackEntry(BBI->getOperand(0), BB));
+    block_value_stack.push(std::make_pair(BB, BBI->getOperand(0)));
     return false;
   }
 
@@ -791,7 +807,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
     Result = getBlockValue(Val, BBFrom);
     return true;
   }
-  block_value_stack.push(BlockStackEntry(Val, BBFrom));
+  block_value_stack.push(std::make_pair(BBFrom, Val));
   return false;
 }
 
@@ -799,7 +815,7 @@ LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB) {
   DEBUG(dbgs() << "LVI Getting block end value " << *V << " at '"
         << BB->getName() << "'\n");
   
-  block_value_stack.push(BlockStackEntry(V, BB));
+  block_value_stack.push(std::make_pair(BB, V));
   solve();
   LVILatticeVal Result = getBlockValue(V, BB);
 
