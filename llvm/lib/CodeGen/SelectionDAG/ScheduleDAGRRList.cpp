@@ -283,7 +283,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   Sequence.push_back(SU);
 
   AvailableQueue->ScheduledNode(SU);
-  
+
   ReleasePredecessors(SU, CurCycle);
 
   // Release all the implicit physical register defs that are live.
@@ -703,6 +703,19 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
       CheckForLiveRegDef(SU, *Reg, LiveRegDefs, RegAdded, LRegs, TRI);
   }
   
+  
+  // Okay, we now know all of the live registers that are defined by an
+  // immediate predecessor.  It is ok to kill these registers if we are also
+  // using it.
+  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    if (I->isAssignedRegDep() && 
+        LiveRegCycles[I->getReg()] == I->getSUnit()->getHeight()) {
+      unsigned Reg = I->getReg();
+      if (RegAdded.erase(Reg))
+        LRegs.erase(std::find(LRegs.begin(), LRegs.end(), Reg));
+    }
+  }
   
   return !LRegs.empty();
 }
