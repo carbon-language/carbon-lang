@@ -28,7 +28,7 @@ class DereferenceChecker : public Checker {
 public:
   DereferenceChecker() : BT_null(0), BT_undef(0) {}
   static void *getTag() { static int tag = 0; return &tag; }
-  void VisitLocation(CheckerContext &C, const Stmt *S, SVal location);
+  void visitLocation(CheckerContext &C, const Stmt *S, SVal location);
 
   std::pair<ExplodedNode * const*, ExplodedNode * const*>
   getImplicitNodes() const {
@@ -83,7 +83,7 @@ void DereferenceChecker::AddDerefSource(llvm::raw_ostream &os,
   }
 }
 
-void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
+void DereferenceChecker::visitLocation(CheckerContext &C, const Stmt *S,
                                        SVal l) {
   // Check for dereference of an undefined value.
   if (l.isUndef()) {

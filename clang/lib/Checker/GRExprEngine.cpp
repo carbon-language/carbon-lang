@@ -1854,7 +1854,7 @@ void GRExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
          NI != NE; ++NI) {
       // Use the 'state' argument only when the predecessor node is the
       // same as Pred.  This allows us to catch updates to the state.
-      checker->GR_VisitLocation(*CurrSet, *Builder, *this, S, *NI,
+      checker->GR_visitLocation(*CurrSet, *Builder, *this, S, *NI,
                                 *NI == Pred ? state : GetState(*NI),
                                 location, tag, isLoad);
     }

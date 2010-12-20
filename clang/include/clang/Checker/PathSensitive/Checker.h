@@ -233,7 +233,7 @@ private:
   }
   
   // FIXME: Remove the 'tag' option.
-  void GR_VisitLocation(ExplodedNodeSet &Dst,
+  void GR_visitLocation(ExplodedNodeSet &Dst,
                         GRStmtNodeBuilder &Builder,
                         GRExprEngine &Eng,
                         const Stmt *S,
@@ -243,7 +243,7 @@ private:
     CheckerContext C(Dst, Builder, Eng, Pred, tag,
                      isLoad ? ProgramPoint::PreLoadKind :
                      ProgramPoint::PreStoreKind, 0, S, state);
-    VisitLocation(C, S, location);
+    visitLocation(C, S, location);
   }
 
   void GR_evalDeadSymbols(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
@@ -258,7 +258,7 @@ public:
   virtual ~Checker();
   virtual void _PreVisit(CheckerContext &C, const Stmt *S) {}
   virtual void _PostVisit(CheckerContext &C, const Stmt *S) {}
-  virtual void VisitLocation(CheckerContext &C, const Stmt *S, SVal location) {}
+  virtual void visitLocation(CheckerContext &C, const Stmt *S, SVal location) {}
   virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
                             SVal location, SVal val) {}
   virtual void evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper) {}

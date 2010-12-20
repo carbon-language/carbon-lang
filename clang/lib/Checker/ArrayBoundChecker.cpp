@@ -24,9 +24,9 @@ class ArrayBoundChecker :
     public CheckerVisitor<ArrayBoundChecker> {      
   BuiltinBug *BT;
 public:
-    ArrayBoundChecker() : BT(0) {}
-    static void *getTag();
-    void VisitLocation(CheckerContext &C, const Stmt *S, SVal l);
+  ArrayBoundChecker() : BT(0) {}
+  static void *getTag() { static int x = 0; return &x; }
+  void visitLocation(CheckerContext &C, const Stmt *S, SVal l);
 };
 }
 
@@ -34,11 +34,7 @@ void clang::RegisterArrayBoundChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new ArrayBoundChecker());
 }
 
-void *ArrayBoundChecker::getTag() {
-  static int x = 0; return &x;
-}
-
-void ArrayBoundChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l){
+void ArrayBoundChecker::visitLocation(CheckerContext &C, const Stmt *S, SVal l){
   // Check for out of bound array element access.
   const MemRegion *R = l.getAsRegion();
   if (!R)
