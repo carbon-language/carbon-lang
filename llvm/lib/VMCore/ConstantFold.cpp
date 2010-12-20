@@ -1338,8 +1338,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
 
     // Given ((a + b) + c), if (b + c) folds to something interesting, return
     // (a + (b + c)).
-    if (Instruction::isAssociative(Opcode, C1->getType()) &&
-        CE1->getOpcode() == Opcode) {
+    if (Instruction::isAssociative(Opcode) && CE1->getOpcode() == Opcode) {
       Constant *T = ConstantExpr::get(Opcode, CE1->getOperand(1), C2);
       if (!isa<ConstantExpr>(T) || cast<ConstantExpr>(T)->getOpcode() != Opcode)
         return ConstantExpr::get(Opcode, CE1->getOperand(0), T);

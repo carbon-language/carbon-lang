@@ -200,11 +200,10 @@ public:
   ///
   ///   Associative operators satisfy:  x op (y op z) === (x op y) op z
   ///
-  /// In LLVM, the Add, Mul, And, Or, and Xor operators are associative, when
-  /// not applied to floating point types.
+  /// In LLVM, the Add, Mul, And, Or, and Xor operators are associative.
   ///
-  bool isAssociative() const { return isAssociative(getOpcode(), getType()); }
-  static bool isAssociative(unsigned op, const Type *Ty);
+  bool isAssociative() const { return isAssociative(getOpcode()); }
+  static bool isAssociative(unsigned op);
 
   /// isCommutative - Return true if the instruction is commutative:
   ///

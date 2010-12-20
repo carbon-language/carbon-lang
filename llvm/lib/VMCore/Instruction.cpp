@@ -348,7 +348,7 @@ bool Instruction::mayThrow() const {
 ///
 /// In LLVM, the Add, Mul, And, Or, and Xor operators are associative.
 ///
-bool Instruction::isAssociative(unsigned Opcode, const Type *Ty) {
+bool Instruction::isAssociative(unsigned Opcode) {
   return Opcode == And || Opcode == Or || Opcode == Xor ||
          Opcode == Add || Opcode == Mul;
 }
