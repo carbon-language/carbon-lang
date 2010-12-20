@@ -233,8 +233,7 @@ namespace llvm {
     SUnit *OrigNode;                    // If not this, the node from which
                                         // this node was cloned.
     
-    // Preds/Succs - The SUnits before/after us in the graph.  The boolean value
-    // is true if the edge is a token chain edge, false if it is a value edge. 
+    // Preds/Succs - The SUnits before/after us in the graph. 
     SmallVector<SDep, 4> Preds;  // All sunit predecessors.
     SmallVector<SDep, 4> Succs;  // All sunit successors.
 
