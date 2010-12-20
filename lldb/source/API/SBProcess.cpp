@@ -104,6 +104,7 @@ SBProcess::GetNumThreads ()
     uint32_t num_threads = 0;
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         const bool can_update = true;
         num_threads = m_opaque_sp->GetThreadList().GetSize(can_update);
     }
@@ -121,7 +122,10 @@ SBProcess::GetSelectedThread () const
 
     SBThread sb_thread;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_thread.SetThread (m_opaque_sp->GetThreadList().GetSelectedThread());
+    }
 
     if (log)
     {
@@ -153,7 +157,7 @@ SBProcess::PutSTDIN (const char *src, size_t src_len)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     size_t ret_val = 0;
-    if (m_opaque_sp != NULL)
+    if (m_opaque_sp)
     {
         Error error;
         ret_val =  m_opaque_sp->PutSTDIN (src, src_len, error);
@@ -173,7 +177,7 @@ size_t
 SBProcess::GetSTDOUT (char *dst, size_t dst_len) const
 {
     size_t bytes_read = 0;
-    if (m_opaque_sp != NULL)
+    if (m_opaque_sp)
     {
         Error error;
         bytes_read = m_opaque_sp->GetSTDOUT (dst, dst_len, error);
@@ -191,7 +195,7 @@ size_t
 SBProcess::GetSTDERR (char *dst, size_t dst_len) const
 {
     size_t bytes_read = 0;
-    if (m_opaque_sp != NULL)
+    if (m_opaque_sp)
     {
         Error error;
         bytes_read = m_opaque_sp->GetSTDERR (dst, dst_len, error);
@@ -211,7 +215,7 @@ SBProcess::ReportEventState (const SBEvent &event, FILE *out) const
     if (out == NULL)
         return;
 
-    if (m_opaque_sp != NULL)
+    if (m_opaque_sp)
     {
         const StateType event_state = SBProcess::GetStateFromEvent (event);
         char message[1024];
@@ -229,7 +233,7 @@ SBProcess::ReportEventState (const SBEvent &event, FILE *out) const
 void
 SBProcess::AppendEventStateReport (const SBEvent &event, SBCommandReturnObject &result)
 {
-    if (m_opaque_sp != NULL)
+    if (m_opaque_sp)
     {
         const StateType event_state = SBProcess::GetStateFromEvent (event);
         char message[1024];
@@ -246,8 +250,11 @@ SBProcess::AppendEventStateReport (const SBEvent &event, SBCommandReturnObject &
 bool
 SBProcess::SetSelectedThread (const SBThread &thread)
 {
-    if (m_opaque_sp != NULL)
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         return m_opaque_sp->GetThreadList().SetSelectedThreadByID (thread.GetThreadID());
+    }
     return false;
 }
 
@@ -257,8 +264,11 @@ SBProcess::SetSelectedThreadByID (uint32_t tid)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool ret_val = false;
-    if (m_opaque_sp != NULL)
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         ret_val = m_opaque_sp->GetThreadList().SetSelectedThreadByID (tid);
+    }
 
     if (log)
         log->Printf ("SBProcess(%p)::SetSelectedThreadByID (tid=0x%4.4x) => %s", 
@@ -274,7 +284,10 @@ SBProcess::GetThreadAtIndex (size_t index)
 
     SBThread thread;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         thread.SetThread (m_opaque_sp->GetThreadList().GetThreadAtIndex(index));
+    }
 
     if (log)
     {
@@ -290,8 +303,11 @@ SBProcess::GetState ()
 {
 
     StateType ret_val = eStateInvalid;
-    if (m_opaque_sp != NULL)
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         ret_val = m_opaque_sp->GetState();
+    }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -308,7 +324,10 @@ SBProcess::GetExitStatus ()
 {
     int exit_status = 0;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         exit_status = m_opaque_sp->GetExitStatus ();
+    }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetExitStatus () => %i (0x%8.8x)", 
@@ -321,8 +340,11 @@ const char *
 SBProcess::GetExitDescription ()
 {
     const char *exit_desc = NULL;
-    if (m_opaque_sp != NULL)
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         exit_desc = m_opaque_sp->GetExitDescription ();
+    }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetExitDescription () => %s", 
@@ -361,6 +383,8 @@ SBProcess::GetAddressByteSize () const
 SBError
 SBProcess::Continue ()
 {
+    Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::Continue ()...", m_opaque_sp.get());
@@ -397,6 +421,8 @@ SBProcess::Continue ()
 SBError
 SBProcess::Destroy ()
 {
+    Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+
     SBError sb_error;
     if (m_opaque_sp)
         sb_error.SetError(m_opaque_sp->Destroy());
@@ -418,10 +444,12 @@ SBProcess::Destroy ()
 SBError
 SBProcess::Stop ()
 {
-
     SBError sb_error;
     if (IsValid())
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_error.SetError (m_opaque_sp->Halt());
+    }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
     
@@ -442,10 +470,12 @@ SBProcess::Stop ()
 SBError
 SBProcess::Kill ()
 {
-
     SBError sb_error;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_error.SetError (m_opaque_sp->Destroy());
+    }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
 
@@ -463,43 +493,15 @@ SBProcess::Kill ()
     return sb_error;
 }
 
-
-SBError
-SBProcess::AttachByName (const char *name, bool wait_for_launch) // DEPRECATED
-{
-    SBError sb_error;
-    if (m_opaque_sp)
-        sb_error.SetError (m_opaque_sp->Attach (name, wait_for_launch));
-    else
-        sb_error.SetErrorString ("SBProcess is invalid");
-    return sb_error;
-}
-
-lldb::pid_t
-SBProcess::AttachByPID (lldb::pid_t attach_pid) // DEPRECATED
-{
-    Attach (attach_pid);
-    return GetProcessID();
-}
-
-
-SBError
-SBProcess::Attach (lldb::pid_t attach_pid) // DEPRECATED
-{
-    SBError sb_error;
-    if (m_opaque_sp)
-        sb_error.SetError  (m_opaque_sp->Attach (attach_pid));
-    else
-        sb_error.SetErrorString ("SBProcess is invalid");
-    return sb_error;
-}
-
 SBError
 SBProcess::Detach ()
 {
     SBError sb_error;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_error.SetError (m_opaque_sp->Detach());
+    }
     else
         sb_error.SetErrorString ("SBProcess is invalid");    
 
@@ -511,7 +513,10 @@ SBProcess::Signal (int signo)
 {
     SBError sb_error;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_error.SetError (m_opaque_sp->Signal (signo));
+    }
     else
         sb_error.SetErrorString ("SBProcess is invalid");    
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -533,7 +538,10 @@ SBProcess::GetThreadByID (tid_t tid)
 {
     SBThread sb_thread;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_thread.SetThread (m_opaque_sp->GetThreadList().FindThreadByID ((tid_t) tid));
+    }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -612,9 +620,10 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
                      sb_error.get());
     }
 
-    if (IsValid())
+    if (m_opaque_sp)
     {
         Error error;
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         bytes_read = m_opaque_sp->ReadMemory (addr, dst, dst_len, error);
         sb_error.SetError (error);
     }
@@ -656,9 +665,10 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
                      sb_error.get());
     }
 
-    if (IsValid())
+    if (m_opaque_sp)
     {
         Error error;
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         bytes_written = m_opaque_sp->WriteMemory (addr, src, src_len, error);
         sb_error.SetError (error);
     }
@@ -716,7 +726,10 @@ uint32_t
 SBProcess::LoadImage (lldb::SBFileSpec &sb_image_spec, lldb::SBError &sb_error)
 {
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         return m_opaque_sp->LoadImage (*sb_image_spec, sb_error.ref());
+    }
     return LLDB_INVALID_IMAGE_TOKEN;
 }
     
@@ -725,7 +738,10 @@ SBProcess::UnloadImage (uint32_t image_token)
 {
     lldb::SBError sb_error;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_error.SetError (m_opaque_sp->UnloadImage (image_token));
+    }
     else
         sb_error.SetErrorString("invalid process");
     return sb_error;

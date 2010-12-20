@@ -105,18 +105,19 @@ SBBreakpoint::GetID () const
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
+    break_id_t break_id = LLDB_INVALID_BREAK_ID;
     if (m_opaque_sp)
-    {
-        break_id_t break_id = m_opaque_sp->GetID();
-        if (log)
-            log->Printf ("SBBreakpoint(%p)::GetID () => %u", m_opaque_sp.get(), break_id);
-        return break_id;
-    }
+        break_id = m_opaque_sp->GetID();
 
     if (log)
-        log->Printf ("SBBreakpoint(%p)::GetID () => LLDB_INVALID_BREAK_ID", m_opaque_sp.get());
+    {
+        if (break_id == LLDB_INVALID_BREAK_ID)
+            log->Printf ("SBBreakpoint(%p)::GetID () => LLDB_INVALID_BREAK_ID", m_opaque_sp.get());
+        else
+            log->Printf ("SBBreakpoint(%p)::GetID () => %u", m_opaque_sp.get(), break_id);
+    }
 
-    return LLDB_INVALID_BREAK_ID;
+    return break_id;
 }
 
 
@@ -130,7 +131,10 @@ void
 SBBreakpoint::ClearAllBreakpointSites ()
 {
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         m_opaque_sp->ClearAllBreakpointSites ();
+    }
 }
 
 SBBreakpointLocation
@@ -142,6 +146,7 @@ SBBreakpoint::FindLocationByAddress (addr_t vm_addr)
     {
         if (vm_addr != LLDB_INVALID_ADDRESS)
         {
+            Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
             Address address;
             Target &target = m_opaque_sp->GetTarget();
             if (target.GetSectionLoadList().ResolveLoadAddress (vm_addr, address) == false)
@@ -158,24 +163,22 @@ SBBreakpoint::FindLocationByAddress (addr_t vm_addr)
 break_id_t
 SBBreakpoint::FindLocationIDByAddress (addr_t vm_addr)
 {
-    break_id_t lldb_id = (break_id_t) 0;
+    break_id_t break_id = LLDB_INVALID_BREAK_ID;
 
-    if (m_opaque_sp)
+    if (m_opaque_sp && vm_addr != LLDB_INVALID_ADDRESS)
     {
-        if (vm_addr != LLDB_INVALID_ADDRESS)
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        Address address;
+        Target &target = m_opaque_sp->GetTarget();
+        if (target.GetSectionLoadList().ResolveLoadAddress (vm_addr, address) == false)
         {
-            Address address;
-            Target &target = m_opaque_sp->GetTarget();
-            if (target.GetSectionLoadList().ResolveLoadAddress (vm_addr, address) == false)
-            {
-                address.SetSection (NULL);
-                address.SetOffset (vm_addr);
-            }
-            lldb_id = m_opaque_sp->FindLocationIDByAddress (address);
+            address.SetSection (NULL);
+            address.SetOffset (vm_addr);
         }
+        break_id = m_opaque_sp->FindLocationIDByAddress (address);
     }
 
-    return lldb_id;
+    return break_id;
 }
 
 SBBreakpointLocation
@@ -184,7 +187,10 @@ SBBreakpoint::FindLocationByID (break_id_t bp_loc_id)
     SBBreakpointLocation sb_bp_location;
 
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_bp_location.SetLocation (m_opaque_sp->FindLocationByID (bp_loc_id));
+    }
 
     return sb_bp_location;
 }
@@ -195,7 +201,10 @@ SBBreakpoint::GetLocationAtIndex (uint32_t index)
     SBBreakpointLocation sb_bp_location;
 
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_bp_location.SetLocation (m_opaque_sp->GetLocationAtIndex (index));
+    }
 
     return sb_bp_location;
 }
@@ -209,14 +218,20 @@ SBBreakpoint::SetEnabled (bool enable)
         log->Printf ("SBBreakpoint(%p)::SetEnabled (enabled=%i)", m_opaque_sp.get(), enable);
 
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         m_opaque_sp->SetEnabled (enable);
+    }
 }
 
 bool
 SBBreakpoint::IsEnabled ()
 {
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         return m_opaque_sp->IsEnabled();
+    }
     else
         return false;
 }
@@ -230,19 +245,31 @@ SBBreakpoint::SetIgnoreCount (uint32_t count)
         log->Printf ("SBBreakpoint(%p)::SetIgnoreCount (count=%u)", m_opaque_sp.get(), count);
         
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         m_opaque_sp->SetIgnoreCount (count);
+    }
 }
 
 void
 SBBreakpoint::SetCondition (const char *condition)
 {
-    m_opaque_sp->SetCondition (condition);
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        m_opaque_sp->SetCondition (condition);
+    }
 }
 
 const char *
 SBBreakpoint::GetCondition ()
 {
-    return m_opaque_sp->GetConditionText ();
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        return m_opaque_sp->GetConditionText ();
+    }
+    return NULL;
 }
 
 uint32_t
@@ -250,7 +277,10 @@ SBBreakpoint::GetHitCount () const
 {
     uint32_t count = 0;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         count = m_opaque_sp->GetHitCount();
+    }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -264,7 +294,10 @@ SBBreakpoint::GetIgnoreCount () const
 {
     uint32_t count = 0;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         count = m_opaque_sp->GetIgnoreCount();
+    }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -277,7 +310,10 @@ void
 SBBreakpoint::SetThreadID (tid_t tid)
 {
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         m_opaque_sp->SetThreadID (tid);
+    }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBBreakpoint(%p)::SetThreadID (tid=0x%4.4x)", m_opaque_sp.get(), tid);
@@ -289,7 +325,10 @@ SBBreakpoint::GetThreadID ()
 {
     tid_t tid = LLDB_INVALID_THREAD_ID;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         tid = m_opaque_sp->GetThreadID();
+    }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -304,7 +343,10 @@ SBBreakpoint::SetThreadIndex (uint32_t index)
     if (log)
         log->Printf ("SBBreakpoint(%p)::SetThreadIndex (%u)", m_opaque_sp.get(), index);
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         m_opaque_sp->GetOptions()->GetThreadSpec()->SetIndex (index);
+    }
 }
 
 uint32_t
@@ -313,7 +355,8 @@ SBBreakpoint::GetThreadIndex() const
     uint32_t thread_idx = UINT32_MAX;
     if (m_opaque_sp)
     {
-        const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpecNoCreate();
         if (thread_spec != NULL)
             thread_idx = thread_spec->GetIndex();
     }
@@ -333,7 +376,10 @@ SBBreakpoint::SetThreadName (const char *thread_name)
         log->Printf ("SBBreakpoint(%p)::SetThreadName (%s)", m_opaque_sp.get(), thread_name);
 
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         m_opaque_sp->GetOptions()->GetThreadSpec()->SetName (thread_name);
+    }
 }
 
 const char *
@@ -342,7 +388,8 @@ SBBreakpoint::GetThreadName () const
     const char *name = NULL;
     if (m_opaque_sp)
     {
-        const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpecNoCreate();
         if (thread_spec != NULL)
             name = thread_spec->GetName();
     }
@@ -360,7 +407,10 @@ SBBreakpoint::SetQueueName (const char *queue_name)
     if (log)
         log->Printf ("SBBreakpoint(%p)::SetQueueName (%s)", m_opaque_sp.get(), queue_name);
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         m_opaque_sp->GetOptions()->GetThreadSpec()->SetQueueName (queue_name);
+    }
 }
 
 const char *
@@ -369,7 +419,9 @@ SBBreakpoint::GetQueueName () const
     const char *name = NULL;
     if (m_opaque_sp)
     {
-        const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpec();
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        const ThreadSpec *thread_spec = m_opaque_sp->GetOptions()->GetThreadSpecNoCreate();
+        if (thread_spec)
             name = thread_spec->GetQueueName();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -384,7 +436,10 @@ SBBreakpoint::GetNumResolvedLocations() const
 {
     size_t num_resolved = 0;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         num_resolved = m_opaque_sp->GetNumResolvedLocations();
+    }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBBreakpoint(%p)::GetNumResolvedLocations () => %zu", m_opaque_sp.get(), num_resolved);
@@ -396,7 +451,10 @@ SBBreakpoint::GetNumLocations() const
 {
     size_t num_locs = 0;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         num_locs = m_opaque_sp->GetNumLocations();
+    }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBBreakpoint(%p)::GetNumLocations () => %zu", m_opaque_sp.get(), num_locs);
@@ -408,6 +466,7 @@ SBBreakpoint::GetDescription (SBStream &s)
 {
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         s.Printf("SBBreakpoint: id = %i, ", m_opaque_sp->GetID());
         m_opaque_sp->GetResolverDescription (s.get());
         m_opaque_sp->GetFilterDescription (s.get());
@@ -465,6 +524,7 @@ SBBreakpoint::SetCallback (BreakpointHitCallback callback, void *baton)
 
     if (m_opaque_sp.get())
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         BatonSP baton_sp(new SBBreakpointCallbackBaton (callback, baton));
         m_opaque_sp->SetCallback (SBBreakpoint::PrivateBreakpointHitCallback, baton_sp, false);
     }

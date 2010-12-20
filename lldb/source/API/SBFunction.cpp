@@ -125,9 +125,11 @@ SBFunction::GetInstructions (SBTarget target)
     SBInstructionList sb_instructions;
     if (m_opaque_ptr)
     {
+        Mutex::Locker api_locker;
         ExecutionContext exe_ctx;
         if (target.IsValid())
         {
+            api_locker.Reset (target->GetAPIMutex().GetMutex());
             target->CalculateExecutionContext (exe_ctx);
             exe_ctx.process = target->GetProcessSP().get();
         }

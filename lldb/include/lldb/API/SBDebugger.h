@@ -111,9 +111,6 @@ public:
     lldb::SBTarget
     GetSelectedTarget ();
 
-    void
-    UpdateSelectedThread (lldb::SBProcess &process);
-
     lldb::SBSourceManager &
     GetSourceManager ();
     
@@ -125,10 +122,10 @@ public:
     bool 
     GetUseExternalEditor ();
 
-    bool
+    static bool
     GetDefaultArchitecture (char *arch_name, size_t arch_name_len);
 
-    bool
+    static bool
     SetDefaultArchitecture (const char *arch_name);
 
     lldb::ScriptLanguage

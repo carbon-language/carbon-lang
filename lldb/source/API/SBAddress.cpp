@@ -12,6 +12,8 @@
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Host/Mutex.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -89,19 +91,22 @@ SBAddress::GetLoadAddress (const SBTarget &target) const
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
+    lldb::addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_ap.get())
     {
-        lldb::addr_t addr = m_opaque_ap->GetLoadAddress (target.get());
-        if (log)
-            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => 0x%llx", target.get(), addr);
-        return addr;
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        addr = m_opaque_ap->GetLoadAddress (target.get());
     }
-    else
+    
+    if (log)
     {
-        if (log)
+        if (addr == LLDB_INVALID_ADDRESS)
             log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => LLDB_INVALID_ADDRESS", target.get());
-        return LLDB_INVALID_ADDRESS;
+        else
+            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => 0x%llx", target.get(), addr);
     }
+
+    return addr;
 }
 
 bool

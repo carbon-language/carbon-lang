@@ -173,6 +173,12 @@ private:
 public:
     ~Target();
 
+    Mutex &
+    GetAPIMutex ()
+    {
+        return m_mutex;
+    }
+
     void
     DeleteCurrentProcess ();
 
@@ -472,6 +478,7 @@ protected:
     // Member variables.
     //------------------------------------------------------------------
     Debugger &      m_debugger;
+    Mutex           m_mutex;            ///< An API mutex that is used by the lldb::SB* classes make the SB interface thread safe
     ArchSpec        m_arch_spec;
     ModuleList      m_images;           ///< The list of images for this process (shared libraries and anything dynamically loaded).
     SectionLoadList m_section_load_list;

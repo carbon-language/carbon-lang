@@ -11,8 +11,6 @@
 #include "lldb/API/SBValueList.h"
 #include "lldb/API/SBValue.h"
 #include "lldb/API/SBStream.h"
-
-
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ValueObjectList.h"
 
@@ -35,16 +33,8 @@ SBValueList::SBValueList (const SBValueList &rhs) :
     if (log)
     {
         log->Printf ("SBValueList::SBValueList (rhs.ap=%p) => this.ap = %p",
-                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), m_opaque_ap.get());
-
-        uint32_t num_vars = GetSize();
-        for (uint32_t i = 0; i < num_vars; ++i)
-        {
-            SBValue value = GetValueAtIndex (i);
-            SBStream sstr;
-            value.GetDescription (sstr);
-            log->Printf ("  %s", sstr.GetData());
-        }
+                     (rhs.IsValid() ? rhs.m_opaque_ap.get() : NULL), 
+                     m_opaque_ap.get());
     }
 }
 
@@ -58,18 +48,9 @@ SBValueList::SBValueList (const lldb_private::ValueObjectList *lldb_object_ptr) 
 
     if (log)
     {
-        log->Printf ("SBValueList::SBValueList (lldb_object_ptr=%p) => this.ap = %p", lldb_object_ptr, 
+        log->Printf ("SBValueList::SBValueList (lldb_object_ptr=%p) => this.ap = %p", 
+                     lldb_object_ptr, 
                      m_opaque_ap.get());
-                     
-
-        uint32_t num_vars = GetSize();
-        for (uint32_t i = 0; i < num_vars; ++i)
-        {
-            SBValue value = GetValueAtIndex (i);
-            SBStream sstr;
-            value.GetDescription (sstr);
-            log->Printf ("  %s", sstr.GetData());
-        }
     }
 }
 
@@ -194,7 +175,7 @@ SBValue
 SBValueList::FindValueObjectByUID (lldb::user_id_t uid)
 {
     SBValue sb_value;
-    if ( m_opaque_ap.get())
+    if (m_opaque_ap.get())
         *sb_value = m_opaque_ap->FindValueObjectByUID (uid);
     return sb_value;
 }

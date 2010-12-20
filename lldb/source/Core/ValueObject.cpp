@@ -1203,7 +1203,7 @@ ValueObject::CreateConstantValue (ExecutionContextScope *exe_scope, const ConstS
 }
 
 lldb::ValueObjectSP
-ValueObject::Dereference (ExecutionContextScope *exe_scope, Error &error)
+ValueObject::Dereference (Error &error)
 {
     lldb::ValueObjectSP valobj_sp;
     const bool is_pointer_type = IsPointerType();

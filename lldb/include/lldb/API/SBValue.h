@@ -85,9 +85,6 @@ public:
     uint32_t
     GetNumChildren ();
 
-    bool
-    ValueIsStale ();
-
     void *
     GetOpaqueType();
 

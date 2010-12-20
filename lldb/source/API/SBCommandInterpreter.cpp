@@ -91,6 +91,10 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
     result.Clear();
     if (m_opaque_ptr)
     {
+        TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
+        Mutex::Locker api_locker;
+        if (target_sp)
+            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
         m_opaque_ptr->HandleCommand (command_line, add_to_history, result.ref());
     }
     else
@@ -163,10 +167,12 @@ SBCommandInterpreter::GetProcess ()
     SBProcess process;
     if (m_opaque_ptr)
     {
-        Debugger &debugger = m_opaque_ptr->GetDebugger();
-        Target *target = debugger.GetSelectedTarget().get();
-        if (target)
-            process.SetProcess(target->GetProcessSP());
+        TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
+        if (target_sp)
+        {
+            Mutex::Locker api_locker(target_sp->GetAPIMutex());
+            process.SetProcess(target_sp->GetProcessSP());
+        }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
@@ -229,6 +235,10 @@ SBCommandInterpreter::SourceInitFileInHomeDirectory (SBCommandReturnObject &resu
     result.Clear();
     if (m_opaque_ptr)
     {
+        TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
+        Mutex::Locker api_locker;
+        if (target_sp)
+            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
         m_opaque_ptr->SourceInitFile (false, result.ref());
     }
     else
@@ -250,6 +260,10 @@ SBCommandInterpreter::SourceInitFileInCurrentWorkingDirectory (SBCommandReturnOb
     result.Clear();
     if (m_opaque_ptr)
     {
+        TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
+        Mutex::Locker api_locker;
+        if (target_sp)
+            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
         m_opaque_ptr->SourceInitFile (true, result.ref());
     }
     else

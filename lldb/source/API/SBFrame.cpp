@@ -109,7 +109,10 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 
     SBSymbolContext sb_sym_ctx;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         sb_sym_ctx.SetSymbolContext(&m_opaque_sp->GetSymbolContext (resolve_scope));
+    }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -124,7 +127,10 @@ SBFrame::GetModule () const
 {
     SBModule sb_module;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         *sb_module = m_opaque_sp->GetSymbolContext (eSymbolContextModule).module_sp;
+    }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -139,7 +145,10 @@ SBFrame::GetCompileUnit () const
 {
     SBCompileUnit sb_comp_unit;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         sb_comp_unit.reset (m_opaque_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
+    }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetModule () => SBCompileUnit(%p)", 
@@ -153,7 +162,10 @@ SBFrame::GetFunction () const
 {
     SBFunction sb_function;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         sb_function.reset(m_opaque_sp->GetSymbolContext (eSymbolContextFunction).function);
+    }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFunction () => SBFunction(%p)", 
@@ -167,7 +179,10 @@ SBFrame::GetSymbol () const
 {
     SBSymbol sb_symbol;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         sb_symbol.reset(m_opaque_sp->GetSymbolContext (eSymbolContextSymbol).symbol);
+    }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSymbol () => SBSymbol(%p)", 
@@ -180,7 +195,10 @@ SBFrame::GetBlock () const
 {
     SBBlock sb_block;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         sb_block.reset (m_opaque_sp->GetSymbolContext (eSymbolContextBlock).block);
+    }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetBlock () => SBBlock(%p)", 
@@ -193,7 +211,10 @@ SBFrame::GetFrameBlock () const
 {
     SBBlock sb_block;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         sb_block.reset(m_opaque_sp->GetFrameBlock ());
+    }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFrameBlock () => SBBlock(%p)", 
@@ -206,7 +227,10 @@ SBFrame::GetLineEntry () const
 {
     SBLineEntry sb_line_entry;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         sb_line_entry.SetLineEntry (m_opaque_sp->GetSymbolContext (eSymbolContextLineEntry).line_entry);
+    }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetLineEntry () => SBLineEntry(%p)", 
@@ -231,7 +255,10 @@ SBFrame::GetPC () const
 {
     addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         addr = m_opaque_sp->GetFrameCodeAddress().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess().GetTarget());
+    }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -245,7 +272,10 @@ SBFrame::SetPC (addr_t new_pc)
 {
     bool ret_val = false;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         ret_val = m_opaque_sp->GetRegisterContext()->SetPC (new_pc);
+    }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -260,7 +290,10 @@ SBFrame::GetSP () const
 {
     addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         addr = m_opaque_sp->GetRegisterContext()->GetSP();
+    }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSP () => 0x%llx", m_opaque_sp.get(), addr);
@@ -274,7 +307,10 @@ SBFrame::GetFP () const
 {
     addr_t addr = LLDB_INVALID_ADDRESS;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         addr = m_opaque_sp->GetRegisterContext()->GetFP();
+    }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -288,7 +324,10 @@ SBFrame::GetPCAddress () const
 {
     SBAddress sb_addr;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         sb_addr.SetAddress (&m_opaque_sp->GetFrameCodeAddress());
+    }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetPCAddress () => SBAddress(%p)", m_opaque_sp.get(), sb_addr.get());
@@ -308,7 +347,7 @@ SBFrame::FindVariable (const char *name)
     if (m_opaque_sp && name && name[0])
     {
         VariableList variable_list;
-
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         SymbolContext sc (m_opaque_sp->GetSymbolContext (eSymbolContextBlock));
 
         if (sc.block)
@@ -346,6 +385,7 @@ SBFrame::FindValue (const char *name, ValueType value_type)
     SBValue sb_value;
     if (m_opaque_sp && name && name[0])
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
     
         switch (value_type)
         {
@@ -479,7 +519,10 @@ SBFrame::GetThread () const
 
     SBThread sb_thread;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         sb_thread.SetThread (m_opaque_sp->GetThread().GetSP());
+    }
 
     if (log)
     {
@@ -497,7 +540,10 @@ SBFrame::Disassemble () const
 {
     const char *disassembly = NULL;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         disassembly = m_opaque_sp->Disassemble();
+    }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
@@ -526,8 +572,14 @@ SBFrame::GetVariables (bool arguments,
     SBValueList value_list;
     if (m_opaque_sp)
     {
+
         size_t i;
-        VariableList *variable_list = m_opaque_sp->GetVariableList(true);
+        VariableList *variable_list = NULL;
+        // Scope for locker
+        {
+            Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
+            variable_list = m_opaque_sp->GetVariableList(true);
+        }
         if (variable_list)
         {
             const size_t num_variables = variable_list->GetSize();
@@ -587,6 +639,7 @@ SBFrame::GetRegisters ()
     SBValueList value_list;
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         RegisterContext *reg_ctx = m_opaque_sp->GetRegisterContext();
         if (reg_ctx)
         {
@@ -609,6 +662,7 @@ SBFrame::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         Stream &s = description.ref();
         m_opaque_sp->DumpUsingSettingsFormat (&s);
     }
@@ -621,6 +675,8 @@ SBFrame::GetDescription (SBStream &description)
 SBValue
 SBFrame::EvaluateExpression (const char *expr)
 {
+    Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
+
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     LogSP expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));

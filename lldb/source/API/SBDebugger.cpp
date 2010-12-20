@@ -216,6 +216,11 @@ SBDebugger::HandleCommand (const char *command)
 {
     if (m_opaque_sp)
     {
+        TargetSP target_sp (m_opaque_sp->GetSelectedTarget());
+        Mutex::Locker api_locker;
+        if (target_sp)
+            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
+
         SBCommandInterpreter sb_interpreter(GetCommandInterpreter ());
         SBCommandReturnObject result;
 
@@ -262,110 +267,41 @@ SBDebugger::GetListener ()
 void
 SBDebugger::HandleProcessEvent (const SBProcess &process, const SBEvent &event, FILE *out, FILE *err)
 {
-     const uint32_t event_type = event.GetType();
-     char stdio_buffer[1024];
-     size_t len;
+    if (!process.IsValid())
+        return;
 
-     if (event_type & Process::eBroadcastBitSTDOUT)
-     {
-         while ((len = process.GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
-             if (out != NULL)
-                 ::fwrite (stdio_buffer, 1, len, out);
-     }
-     else if (event_type & Process::eBroadcastBitSTDERR)
-     {
-         while ((len = process.GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
-             if (out != NULL)
-                 ::fwrite (stdio_buffer, 1, len, out);
-     }
-     else if (event_type & Process::eBroadcastBitStateChanged)
-     {
-         // Drain any stdout messages.
-         while ((len = process.GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
-             if (out != NULL)
-                 ::fwrite (stdio_buffer, 1, len, out);
+    const uint32_t event_type = event.GetType();
+    char stdio_buffer[1024];
+    size_t len;
 
-         // Drain any stderr messages.
-         while ((len = process.GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
-             if (out != NULL)
-                 ::fwrite (stdio_buffer, 1, len, out);
-
-         StateType event_state = SBProcess::GetStateFromEvent (event);
-
-         if (event_state == eStateInvalid)
-             return;
-
-         bool is_stopped = StateIsStoppedState (event_state);
-         if (!is_stopped)
-             process.ReportEventState (event, out);
-   }
-}
-
-void
-SBDebugger::UpdateSelectedThread (SBProcess &process)
-{
-    if (process.IsValid())
+    Mutex::Locker api_locker (process.GetTarget()->GetAPIMutex());
+    
+    if (event_type & (Process::eBroadcastBitSTDOUT | Process::eBroadcastBitStateChanged))
     {
-        SBThread curr_thread = process.GetSelectedThread ();
-        SBThread thread;
-        StopReason curr_thread_stop_reason = eStopReasonInvalid;
-        if (curr_thread.IsValid())
-        {
-            if (curr_thread.GetStopReason() != eStopReasonInvalid)
-                curr_thread_stop_reason = curr_thread.GetStopReason ();
-        }
-
-        if (! curr_thread.IsValid()
-            || curr_thread_stop_reason == eStopReasonInvalid
-            || curr_thread_stop_reason == eStopReasonNone)
-          {
-            // Prefer a thread that has just completed its plan over another thread as current thread.
-            SBThread plan_thread;
-            SBThread other_thread;
-            const size_t num_threads = process.GetNumThreads ();
-            size_t i;
-            for (i = 0; i < num_threads; ++i)
-            {
-                thread = process.GetThreadAtIndex(i);
-                if (thread.GetStopReason () != eStopReasonInvalid)
-                {
-                    switch (thread.GetStopReason ())
-                    {
-                        default:
-                        case eStopReasonInvalid:
-                        case eStopReasonNone:
-                            break;
-
-                        case eStopReasonTrace:
-                        case eStopReasonBreakpoint:
-                        case eStopReasonWatchpoint:
-                        case eStopReasonSignal:
-                        case eStopReasonException:
-                            if (! other_thread.IsValid())
-                                other_thread = thread;
-                            break;
-                        case eStopReasonPlanComplete:
-                            if (! plan_thread.IsValid())
-                                plan_thread = thread;
-                            break;
-                    }
-                }
-            }
-            if (plan_thread.IsValid())
-                process.SetSelectedThreadByID (plan_thread.GetThreadID());
-            else if (other_thread.IsValid())
-                process.SetSelectedThreadByID (other_thread.GetThreadID());
-            else
-            {
-                if (curr_thread.IsValid())
-                    thread = curr_thread;
-                else
-                    thread = process.GetThreadAtIndex(0);
-
-                if (thread.IsValid())
-                    process.SetSelectedThreadByID (thread.GetThreadID());
-            }
-        }
+        // Drain stdout when we stop just in case we have any bytes
+        while ((len = process.GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
+            if (out != NULL)
+                ::fwrite (stdio_buffer, 1, len, out);
+    }
+    
+    if (event_type & (Process::eBroadcastBitSTDERR | Process::eBroadcastBitStateChanged))
+    {
+        // Drain stderr when we stop just in case we have any bytes
+        while ((len = process.GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
+            if (err != NULL)
+                ::fwrite (stdio_buffer, 1, len, err);
+    }
+    
+    if (event_type & Process::eBroadcastBitStateChanged)
+    {
+        StateType event_state = SBProcess::GetStateFromEvent (event);
+        
+        if (event_state == eStateInvalid)
+            return;
+        
+        bool is_stopped = StateIsStoppedState (event_state);
+        if (!is_stopped)
+            process.ReportEventState (event, out);
     }
 }
 
@@ -415,6 +351,7 @@ SBDebugger::SetDefaultArchitecture (const char *arch_name)
 ScriptLanguage
 SBDebugger::GetScriptingLanguage (const char *script_language_name)
 {
+
     return Args::StringToScriptLanguage (script_language_name,
                                          eScriptLanguageDefault,
                                          NULL);
@@ -582,7 +519,10 @@ SBDebugger::GetTargetAtIndex (uint32_t idx)
 {
     SBTarget sb_target;
     if (m_opaque_sp)
+    {
+        // No need to lock, the target list is thread safe
         sb_target.reset(m_opaque_sp->GetTargetList().GetTargetAtIndex (idx));
+    }
     return sb_target;
 }
 
@@ -591,7 +531,10 @@ SBDebugger::FindTargetWithProcessID (pid_t pid)
 {
     SBTarget sb_target;
     if (m_opaque_sp)
+    {
+        // No need to lock, the target list is thread safe
         sb_target.reset(m_opaque_sp->GetTargetList().FindTargetWithProcessID (pid));
+    }
     return sb_target;
 }
 
@@ -601,6 +544,7 @@ SBDebugger::FindTargetWithFileAndArch (const char *filename, const char *arch_na
     SBTarget sb_target;
     if (m_opaque_sp && filename && filename[0])
     {
+        // No need to lock, the target list is thread safe
         ArchSpec arch;
         if (arch_name)
             arch.SetArch(arch_name);
@@ -615,7 +559,10 @@ SBDebugger::FindTargetWithLLDBProcess (const lldb::ProcessSP &process_sp)
 {
     SBTarget sb_target;
     if (m_opaque_sp)
+    {
+        // No need to lock, the target list is thread safe
         sb_target.reset(m_opaque_sp->GetTargetList().FindTargetWithProcess (process_sp.get()));
+    }
     return sb_target;
 }
 
@@ -624,7 +571,10 @@ uint32_t
 SBDebugger::GetNumTargets ()
 {
     if (m_opaque_sp)
+    {
+        // No need to lock, the target list is thread safe
         return m_opaque_sp->GetTargetList().GetNumTargets ();
+    }
     return 0;
 }
 
@@ -635,7 +585,10 @@ SBDebugger::GetSelectedTarget ()
 
     SBTarget sb_target;
     if (m_opaque_sp)
+    {
+        // No need to lock, the target list is thread safe
         sb_target.reset(m_opaque_sp->GetTargetList().GetSelectedTarget ());
+    }
 
     if (log)
     {
@@ -685,6 +638,10 @@ SBDebugger::PushInputReader (SBInputReader &reader)
 
     if (m_opaque_sp && reader.IsValid())
     {
+        TargetSP target_sp (m_opaque_sp->GetSelectedTarget());
+        Mutex::Locker api_locker;
+        if (target_sp)
+            api_locker.Reset(target_sp->GetAPIMutex().GetMutex());
         InputReaderSP reader_sp(*reader);
         m_opaque_sp->PushInputReader (reader_sp);
     }
@@ -713,6 +670,7 @@ SBDebugger::ref () const
 SBDebugger
 SBDebugger::FindDebuggerWithID (int id)
 {
+    // No need to lock, the debugger list is thread safe
     SBDebugger sb_debugger;
     lldb::DebuggerSP debugger_sp = Debugger::FindDebuggerWithID (id);
     if (debugger_sp)
@@ -816,19 +774,17 @@ void
 SBDebugger::SetScriptLanguage (lldb::ScriptLanguage script_lang)
 {
     if (m_opaque_sp)
+    {
         m_opaque_sp->SetScriptLanguage (script_lang);
+    }
 }
-
-
-
 
 bool
 SBDebugger::SetUseExternalEditor (bool value)
 {
     if (m_opaque_sp)
         return m_opaque_sp->SetUseExternalEditor (value);
-    else
-        return false;
+    return false;
 }
 
 bool
@@ -836,8 +792,7 @@ SBDebugger::GetUseExternalEditor ()
 {
     if (m_opaque_sp)
         return m_opaque_sp->GetUseExternalEditor ();
-    else
-        return false;
+    return false;
 }
 
 bool

@@ -111,17 +111,6 @@ public:
     lldb::SBError
     Destroy ();
 
-    lldb::pid_t
-    AttachByPID (lldb::pid_t pid);  // DEPRECATED
-
-    // DEPRECATED: relocated to "SBProcess SBTarget::AttachToProcess (lldb::pid_t pid, lldb::SBError& error)"
-    lldb::SBError
-    Attach (lldb::pid_t pid);
-
-    // DEPRECATED: relocated to "SBProcess SBTarget::AttachToProcess (const char *name, bool wait_for_launch, lldb::SBError& error)"
-    lldb::SBError
-    AttachByName (const char *name, bool wait_for_launch);
-
     lldb::SBError
     Continue ();
 

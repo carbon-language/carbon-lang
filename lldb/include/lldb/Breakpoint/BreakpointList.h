@@ -114,7 +114,11 @@ public:
     ///   The number of elements.
     //------------------------------------------------------------------
     size_t
-    GetSize() const { return m_breakpoints.size(); }
+    GetSize() const 
+    {
+        Mutex::Locker locker(m_mutex);
+        return m_breakpoints.size(); 
+    }
 
     //------------------------------------------------------------------
     /// Removes the breakpoint given by \b breakID from this list.

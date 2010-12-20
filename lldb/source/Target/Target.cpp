@@ -40,6 +40,7 @@ Target::Target(Debugger &debugger) :
     Broadcaster("lldb.target"),
     TargetInstanceSettings (*GetSettingsController()),
     m_debugger (debugger),
+    m_mutex (Mutex::eMutexTypeRecursive), 
     m_images(),
     m_section_load_list (),
     m_breakpoint_list (false),

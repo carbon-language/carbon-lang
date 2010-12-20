@@ -97,6 +97,7 @@ SBThread::GetStopReason()
     StopReason reason = eStopReasonInvalid;
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
         if (stop_info_sp)
             reason =  stop_info_sp->GetStopReason();
@@ -114,6 +115,7 @@ SBThread::GetStopReasonDataCount ()
 {
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
         if (stop_info_sp)
         {
@@ -158,6 +160,7 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
 {
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
         if (stop_info_sp)
         {
@@ -219,6 +222,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
         if (stop_info_sp)
         {
@@ -324,14 +328,14 @@ SBThread::GetThreadID () const
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    lldb::tid_t id = LLDB_INVALID_THREAD_ID;
+    lldb::tid_t tid = LLDB_INVALID_THREAD_ID;
     if (m_opaque_sp)
-        id = m_opaque_sp->GetID();
+        tid = m_opaque_sp->GetID();
 
     if (log)
-        log->Printf ("SBThread(%p)::GetThreadID () => 0x%4.4x", m_opaque_sp.get(), id);
+        log->Printf ("SBThread(%p)::GetThreadID () => 0x%4.4x", m_opaque_sp.get(), tid);
 
-    return id;
+    return tid;
 }
 
 uint32_t
@@ -346,7 +350,10 @@ SBThread::GetName () const
 {
     const char *name = NULL;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         name = m_opaque_sp->GetName();
+    }
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -360,7 +367,10 @@ SBThread::GetQueueName () const
 {
     const char *name = NULL;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         name = m_opaque_sp->GetQueueName();
+    }
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -381,6 +391,7 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
 
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         bool abort_other_plans = true;
         StackFrameSP frame_sp(m_opaque_sp->GetStackFrameAtIndex (0));
 
@@ -430,6 +441,7 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
 
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         bool abort_other_plans = true;
 
         StackFrameSP frame_sp(m_opaque_sp->GetStackFrameAtIndex (0));
@@ -476,6 +488,7 @@ SBThread::StepOut ()
 
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         bool abort_other_plans = true;
         bool stop_other_threads = true;
 
@@ -504,6 +517,7 @@ SBThread::StepInstruction (bool step_over)
 
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         m_opaque_sp->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
         Process &process = m_opaque_sp->GetProcess();
         process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
@@ -578,7 +592,10 @@ SBThread::GetNumFrames ()
 
     uint32_t num_frames = 0;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         num_frames = m_opaque_sp->GetStackFrameCount();
+    }
 
     if (log)
         log->Printf ("SBThread(%p)::GetNumFrames () => %u", m_opaque_sp.get(), num_frames);
@@ -593,7 +610,10 @@ SBThread::GetFrameAtIndex (uint32_t idx)
 
     SBFrame sb_frame;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         sb_frame.SetFrame (m_opaque_sp->GetStackFrameAtIndex (idx));
+    }
 
     if (log)
     {
@@ -613,7 +633,10 @@ SBThread::GetSelectedFrame ()
 
     SBFrame sb_frame;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         sb_frame.SetFrame (m_opaque_sp->GetSelectedFrame ());
+    }
 
     if (log)
     {
@@ -634,6 +657,7 @@ SBThread::SetSelectedFrame (uint32_t idx)
     SBFrame sb_frame;
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
         lldb::StackFrameSP frame_sp (m_opaque_sp->GetStackFrameAtIndex (idx));
         if (frame_sp)
         {

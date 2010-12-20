@@ -92,7 +92,10 @@ SBTarget::GetProcess ()
 
     SBProcess sb_process;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         sb_process.SetProcess (m_opaque_sp->GetProcessSP());
+    }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -112,28 +115,6 @@ SBTarget::GetDebugger () const
         debugger.reset (m_opaque_sp->GetDebugger().GetSP());
     return debugger;
 }
-
-
-// DEPRECATED
-SBProcess
-SBTarget::CreateProcess ()
-{
-
-    SBProcess sb_process;
-
-    if (m_opaque_sp)
-        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
-
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    if (log)
-    {
-        log->Printf ("SBTarget(%p)::CreateProcess () => SBProcess(%p)", 
-                     m_opaque_sp.get(), sb_process.get());
-    }
-
-    return sb_process;
-}
-
 
 SBProcess
 SBTarget::LaunchProcess
@@ -185,17 +166,8 @@ SBTarget::Launch
     SBProcess sb_process;
     if (m_opaque_sp)
     {
-        // DEPRECATED, this will change when CreateProcess is removed...
-        if (m_opaque_sp->GetProcessSP())
-        {
-            sb_process.SetProcess(m_opaque_sp->GetProcessSP());
-        }
-        else
-        {
-            // When launching, we always want to create a new process When
-            // SBTarget::CreateProcess is removed, this will always happen.
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
-        }
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
 
         if (sb_process.IsValid())
         {
@@ -253,17 +225,8 @@ SBTarget::AttachToProcessWithID
     SBProcess sb_process;
     if (m_opaque_sp)
     {
-        // DEPRECATED, this will change when CreateProcess is removed...
-        if (m_opaque_sp->GetProcessSP())
-        {
-            sb_process.SetProcess(m_opaque_sp->GetProcessSP());
-        }
-        else
-        {
-            // When launching, we always want to create a new process When
-            // SBTarget::CreateProcess is removed, this will always happen.
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
-        }
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
 
         if (sb_process.IsValid())
         {
@@ -293,17 +256,9 @@ SBTarget::AttachToProcessWithName
     SBProcess sb_process;
     if (m_opaque_sp)
     {
-        // DEPRECATED, this will change when CreateProcess is removed...
-        if (m_opaque_sp->GetProcessSP())
-        {
-            sb_process.SetProcess(m_opaque_sp->GetProcessSP());
-        }
-        else
-        {
-            // When launching, we always want to create a new process When
-            // SBTarget::CreateProcess is removed, this will always happen.
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
-        }
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
+
+        sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
 
         if (sb_process.IsValid())
         {
@@ -389,7 +344,10 @@ SBTarget::ResolveLoadAddress (lldb::addr_t vm_addr,
                               lldb::SBAddress& addr)
 {
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         return m_opaque_sp->GetSectionLoadList().ResolveLoadAddress (vm_addr, *addr);
+    }
 
     addr->Clear();
     return false;    
@@ -408,7 +366,10 @@ SBTarget::BreakpointCreateByLocation (const SBFileSpec &sb_file_spec, uint32_t l
 
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get() && line != 0)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         *sb_bp = m_opaque_sp->CreateBreakpoint (NULL, *sb_file_spec, line, true, false);
+    }
 
     if (log)
     {
@@ -435,6 +396,7 @@ SBTarget::BreakpointCreateByName (const char *symbol_name, const char *module_na
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get() && symbol_name && symbol_name[0])
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         if (module_name && module_name[0])
         {
             FileSpec module_file_spec(module_name, false);
@@ -463,6 +425,7 @@ SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *mo
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get() && symbol_name_regex && symbol_name_regex[0])
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         RegularExpression regexp(symbol_name_regex);
         
         if (module_name && module_name[0])
@@ -495,7 +458,10 @@ SBTarget::BreakpointCreateByAddress (addr_t address)
 
     SBBreakpoint sb_bp;
     if (m_opaque_sp.get())
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         *sb_bp = m_opaque_sp->CreateBreakpoint (address, false);
+    }
     
     if (log)
     {
@@ -512,7 +478,10 @@ SBTarget::FindBreakpointByID (break_id_t bp_id)
 
     SBBreakpoint sb_breakpoint;
     if (m_opaque_sp && bp_id != LLDB_INVALID_BREAK_ID)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         *sb_breakpoint = m_opaque_sp->GetBreakpointByID (bp_id);
+    }
 
     if (log)
     {
@@ -527,7 +496,10 @@ uint32_t
 SBTarget::GetNumBreakpoints () const
 {
     if (m_opaque_sp)
+    {
+        // The breakpoint list is thread safe, no need to lock
         return m_opaque_sp->GetBreakpointList().GetSize();
+    }
     return 0;
 }
 
@@ -536,7 +508,10 @@ SBTarget::GetBreakpointAtIndex (uint32_t idx) const
 {
     SBBreakpoint sb_breakpoint;
     if (m_opaque_sp)
+    {
+        // The breakpoint list is thread safe, no need to lock
         *sb_breakpoint = m_opaque_sp->GetBreakpointList().GetBreakpointAtIndex(idx);
+    }
     return sb_breakpoint;
 }
 
@@ -547,7 +522,10 @@ SBTarget::BreakpointDelete (break_id_t bp_id)
 
     bool result = false;
     if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         result = m_opaque_sp->RemoveBreakpointByID (bp_id);
+    }
 
     if (log)
     {
@@ -562,6 +540,7 @@ SBTarget::EnableAllBreakpoints ()
 {
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         m_opaque_sp->EnableAllBreakpoints ();
         return true;
     }
@@ -573,6 +552,7 @@ SBTarget::DisableAllBreakpoints ()
 {
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         m_opaque_sp->DisableAllBreakpoints ();
         return true;
     }
@@ -584,6 +564,7 @@ SBTarget::DeleteAllBreakpoints ()
 {
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         m_opaque_sp->RemoveAllBreakpoints ();
         return true;
     }
@@ -598,7 +579,10 @@ SBTarget::GetNumModules () const
 
     uint32_t num = 0;
     if (m_opaque_sp)
-        num =  m_opaque_sp->GetImages().GetSize();
+    {
+        // The module list is thread safe, no need to lock
+        num = m_opaque_sp->GetImages().GetSize();
+    }
 
     if (log)
         log->Printf ("SBTarget(%p)::GetNumModules () => %d", m_opaque_sp.get(), num);
@@ -623,7 +607,10 @@ SBTarget::FindModule (const SBFileSpec &sb_file_spec)
 {
     SBModule sb_module;
     if (m_opaque_sp && sb_file_spec.IsValid())
+    {
+        // The module list is thread safe, no need to lock
         sb_module.SetModule (m_opaque_sp->GetImages().FindFirstModuleForFileSpec (*sb_file_spec, NULL));
+    }
     return sb_module;
 }
 
@@ -634,7 +621,10 @@ SBTarget::GetModuleAtIndex (uint32_t idx)
 
     SBModule sb_module;
     if (m_opaque_sp)
+    {
+        // The module list is thread safe, no need to lock
         sb_module.SetModule(m_opaque_sp->GetImages().GetModuleAtIndex(idx));
+    }
 
     if (log)
     {
@@ -660,130 +650,6 @@ SBTarget::GetBroadcaster () const
     return broadcaster;
 }
 
-void
-SBTarget::Disassemble (lldb::addr_t start_addr, lldb::addr_t end_addr, const char *module_name)
-{
-    if (start_addr == LLDB_INVALID_ADDRESS)
-        return;
-
-    FILE *out = m_opaque_sp->GetDebugger().GetOutputFileHandle();
-    if (out == NULL)
-        return;
-
-    if (m_opaque_sp)
-    {
-        ModuleSP module_sp;
-        if (module_name != NULL)
-        {
-            FileSpec module_file_spec (module_name, false);
-            module_sp = m_opaque_sp->GetImages().FindFirstModuleForFileSpec (module_file_spec, NULL);
-        }
-        
-        AddressRange range;
-
-        // Make sure the process object is alive if we have one (it might be
-        // created but we might not be launched yet).
-        
-        Process *sb_process = m_opaque_sp->GetProcessSP().get();
-        if (sb_process && !sb_process->IsAlive())
-            sb_process = NULL;
-        
-        // If we are given a module, then "start_addr" is a file address in
-        // that module.
-        if (module_sp)
-        {
-            if (!module_sp->ResolveFileAddress (start_addr, range.GetBaseAddress()))
-                range.GetBaseAddress().SetOffset(start_addr);
-        }
-        else if (m_opaque_sp->GetSectionLoadList().IsEmpty() == false)
-        {
-            // We don't have a module, se we need to figure out if "start_addr"
-            // resolves to anything in a running process.
-            if (!m_opaque_sp->GetSectionLoadList().ResolveLoadAddress (start_addr, range.GetBaseAddress()))
-                range.GetBaseAddress().SetOffset(start_addr);
-        }
-        else
-        {
-            if (m_opaque_sp->GetImages().ResolveFileAddress (start_addr, range.GetBaseAddress()))
-                range.GetBaseAddress().SetOffset(start_addr);
-        }
-
-        // For now, we need a process;  the disassembly functions insist.  If we don't have one already,
-        // make one.
-
-        ExecutionContext exe_ctx;
-
-        if (sb_process)
-            sb_process->CalculateExecutionContext(exe_ctx);
-        else 
-            m_opaque_sp->CalculateExecutionContext(exe_ctx);
-
-        if (end_addr == LLDB_INVALID_ADDRESS || end_addr < start_addr)
-            range.SetByteSize( DEFAULT_DISASM_BYTE_SIZE);
-        else
-            range.SetByteSize(end_addr - start_addr);
-
-        StreamFile out_stream (out);
-
-        Disassembler::Disassemble (m_opaque_sp->GetDebugger(),
-                                   m_opaque_sp->GetArchitecture(),
-                                   exe_ctx,
-                                   range,
-                                   3,
-                                   false,
-                                   out_stream);
-    }
-}
-
-void
-SBTarget::Disassemble (const char *function_name, const char *module_name)
-{
-    if (function_name == NULL)
-        return;
-    
-    FILE *out = m_opaque_sp->GetDebugger().GetOutputFileHandle();
-    if (out == NULL)
-        return;
-
-    if (m_opaque_sp)
-    {
-        Disassembler *disassembler = Disassembler::FindPlugin (m_opaque_sp->GetArchitecture());
-        if (disassembler == NULL)
-          return;
-
-        ModuleSP module_sp;
-        if (module_name != NULL)
-        {
-            FileSpec module_file_spec (module_name, false);
-            module_sp = m_opaque_sp->GetImages().FindFirstModuleForFileSpec (module_file_spec, NULL);
-        }
-
-        ExecutionContext exe_ctx;
-        
-        // Make sure the process object is alive if we have one (it might be
-        // created but we might not be launched yet).
-        Process *sb_process = m_opaque_sp->GetProcessSP().get();
-        if (sb_process && !sb_process->IsAlive())
-            sb_process = NULL;
-        
-        if (sb_process)
-            sb_process->CalculateExecutionContext(exe_ctx);
-        else 
-            m_opaque_sp->CalculateExecutionContext(exe_ctx);
-
-
-        StreamFile out_stream (out);
-
-        Disassembler::Disassemble (m_opaque_sp->GetDebugger(),
-                                   m_opaque_sp->GetArchitecture(),
-                                   exe_ctx,
-                                   ConstString (function_name),
-                                   module_sp.get(),
-                                   3,
-                                   false,
-                                   out_stream);
-    }
-}
 
 bool
 SBTarget::GetDescription (SBStream &description, lldb::DescriptionLevel description_level)

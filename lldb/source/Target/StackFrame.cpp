@@ -688,7 +688,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool c
                 {
                     if (deref)
                     {
-                        ValueObjectSP deref_valobj_sp (valobj_sp->Dereference(this, error));
+                        ValueObjectSP deref_valobj_sp (valobj_sp->Dereference(error));
                         valobj_sp = deref_valobj_sp;
                     }
                     else if (address_of)

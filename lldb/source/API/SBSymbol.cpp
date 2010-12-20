@@ -120,9 +120,13 @@ SBSymbol::GetInstructions (SBTarget target)
     SBInstructionList sb_instructions;
     if (m_opaque_ptr)
     {
+        Mutex::Locker api_locker;
         ExecutionContext exe_ctx;
         if (target.IsValid())
+        {
+            api_locker.Reset (target->GetAPIMutex().GetMutex());
             target->CalculateExecutionContext (exe_ctx);
+        }
         const AddressRange *symbol_range = m_opaque_ptr->GetAddressRangePtr();
         if (symbol_range)
         {

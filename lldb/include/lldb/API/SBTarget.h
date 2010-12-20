@@ -52,13 +52,8 @@ public:
     IsValid() const;
 
     lldb::SBProcess
-    CreateProcess (); // DEPRECATED
-
-    lldb::SBProcess
     GetProcess ();
 
-    // DEPRECATED in favor of the function below that contains an SBError as the
-    // last parameter.
     lldb::SBProcess
     LaunchProcess (char const **argv,
                    char const **envp,
@@ -146,17 +141,6 @@ public:
 
     lldb::SBBroadcaster
     GetBroadcaster () const;
-
-    //void
-    //Disassemble ();
-
-    void
-    Disassemble (lldb::addr_t start_address, 
-                 lldb::addr_t end_address = LLDB_INVALID_ADDRESS,
-                 const char *module_name = NULL);
-
-    void
-    Disassemble (const char *function_name, const char *module_name = NULL);
 
 #ifndef SWIG
     bool
