@@ -285,3 +285,16 @@ entry:
   store i32 %19, i32* undef, align 8
   unreachable
 }
+
+
+; PR8807
+declare i32 @test14f(i8* (i8*)*) nounwind
+
+define void @test14() nounwind readnone {
+entry:
+  %tmp = bitcast i32 (i8* (i8*)*)* @test14f to i32 (i32*)*
+  %call10 = call i32 %tmp(i32* byval undef)
+  ret void
+}
+
+

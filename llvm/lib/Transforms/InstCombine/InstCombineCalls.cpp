@@ -1015,9 +1015,22 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (!CastInst::isCastable(ActTy, ParamTy))
       return false;   // Cannot transform this parameter value.
 
-    if (CallerPAL.getParamAttributes(i + 1) 
-        & Attribute::typeIncompatible(ParamTy))
+    unsigned Attrs = CallerPAL.getParamAttributes(i + 1);
+    if (Attrs & Attribute::typeIncompatible(ParamTy))
       return false;   // Attribute not compatible with transformed value.
+    
+    // If the parameter is passed as a byval argument, then we have to have a
+    // sized type and the sized type has to have the same size as the old type.
+    if (ParamTy != ActTy && (Attrs & Attribute::ByVal)) {
+      const PointerType *ParamPTy = dyn_cast<PointerType>(ParamTy);
+      if (ParamPTy == 0 || !ParamPTy->getElementType()->isSized() || TD == 0)
+        return false;
+      
+      const Type *CurElTy = cast<PointerType>(ActTy)->getElementType();
+      if (TD->getTypeAllocSize(CurElTy) !=
+          TD->getTypeAllocSize(ParamPTy->getElementType()))
+        return false;
+    }
 
     // Converting from one pointer type to another or between a pointer and an
     // integer of the same size is safe even if we do not have a body.
