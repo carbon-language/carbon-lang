@@ -312,7 +312,25 @@ public:
   bool TransformTemplateArguments(const TemplateArgumentLoc *Inputs,
                                   unsigned NumInputs,
                                   TemplateArgumentListInfo &Outputs);
-  
+
+  /// \brief Transform the given set of template arguments.
+  ///
+  /// By default, this operation transforms all of the template arguments 
+  /// in the input set using \c TransformTemplateArgument(), and appends
+  /// the transformed arguments to the output list. 
+  ///
+  /// \param Inputs The set of template arguments to be transformed. The
+  /// \c getArgLoc() function will be invoked on each argument indexed, while 
+  /// the number of arguments is determined via \c getNumArgs().
+  ///
+  /// \param Outputs The set of transformed template arguments output by this
+  /// routine.
+  ///
+  /// Returns true if an error occurred.
+  template<typename InputsType>
+  bool TransformTemplateArgumentsFromArgLoc(const InputsType &Inputs,
+                                            TemplateArgumentListInfo &Outputs);
+
   /// \brief Fakes up a TemplateArgumentLoc for a given TemplateArgument.
   void InventTemplateArgumentLoc(const TemplateArgument &Arg,
                                  TemplateArgumentLoc &ArgLoc);
@@ -2432,6 +2450,23 @@ bool TreeTransform<Derived>::TransformTemplateArguments(
   return false;
 }
 
+template<typename Derived>
+template<typename InputsType>
+bool TreeTransform<Derived>::TransformTemplateArgumentsFromArgLoc(
+                                                     const InputsType &Inputs,
+                                            TemplateArgumentListInfo &Outputs) {
+  for (unsigned I = 0, N = Inputs.getNumArgs(); I != N; ++I) {
+    TemplateArgumentLoc Out;
+    if (getDerived().TransformTemplateArgument(Inputs.getArgLoc(I), Out))
+      return true;
+    
+    Outputs.addArgument(Out);
+  }
+  
+  return false;
+
+}
+
 //===----------------------------------------------------------------------===//
 // Type transformation
 //===----------------------------------------------------------------------===//
@@ -3351,13 +3386,8 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
   TemplateArgumentListInfo NewTemplateArgs;
   NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());
   NewTemplateArgs.setRAngleLoc(TL.getRAngleLoc());
-
-  for (unsigned i = 0, e = T->getNumArgs(); i != e; ++i) {
-    TemplateArgumentLoc Loc;
-    if (getDerived().TransformTemplateArgument(TL.getArgLoc(i), Loc))
-      return QualType();
-    NewTemplateArgs.addArgument(Loc);
-  }
+  if (getDerived().TransformTemplateArgumentsFromArgLoc(TL, NewTemplateArgs))
+    return QualType();
 
   // FIXME: maybe don't rebuild if all the template arguments are the same.
 
@@ -3499,13 +3529,8 @@ QualType TreeTransform<Derived>::
   TemplateArgumentListInfo NewTemplateArgs;
   NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());
   NewTemplateArgs.setRAngleLoc(TL.getRAngleLoc());
-
-  for (unsigned I = 0, E = T->getNumArgs(); I != E; ++I) {
-    TemplateArgumentLoc Loc;
-    if (getDerived().TransformTemplateArgument(TL.getArgLoc(I), Loc))
-      return QualType();
-    NewTemplateArgs.addArgument(Loc);
-  }
+  if (getDerived().TransformTemplateArgumentsFromArgLoc(TL, NewTemplateArgs))
+    return QualType();
 
   QualType Result
     = getDerived().RebuildDependentTemplateSpecializationType(T->getKeyword(),
