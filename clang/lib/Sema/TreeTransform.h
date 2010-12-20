@@ -3381,8 +3381,6 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
                                                         TypeLocBuilder &TLB,
                                            TemplateSpecializationTypeLoc TL,
                                                       TemplateName Template) {
-  const TemplateSpecializationType *T = TL.getTypePtr();
-
   TemplateArgumentListInfo NewTemplateArgs;
   NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());
   NewTemplateArgs.setRAngleLoc(TL.getRAngleLoc());
