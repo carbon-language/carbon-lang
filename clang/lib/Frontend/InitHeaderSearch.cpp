@@ -65,7 +65,7 @@ public:
                                    llvm::StringRef Dir64,
                                    const llvm::Triple &triple);
 
-  /// AddMinGWCPlusPlusIncludePaths - Add the necessary paths to suport a MinGW
+  /// AddMinGWCPlusPlusIncludePaths - Add the necessary paths to support a MinGW
   ///  libstdc++.
   void AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
                                      llvm::StringRef Arch,
