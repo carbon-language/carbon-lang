@@ -312,7 +312,7 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: "}" [54:1 - 54:2] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "-" [55:1 - 55:2] ObjCInstanceMethodDecl=actionMethod::55:1
 // CHECK: Punctuation: "(" [55:3 - 55:4] ObjCInstanceMethodDecl=actionMethod::55:1
-// CHECK: Identifier: "IBAction" [55:4 - 55:12] macro instantiation=IBAction:146:9
+// CHECK: Identifier: "IBAction" [55:4 - 55:12] macro instantiation=IBAction
 // CHECK: Punctuation: ")" [55:12 - 55:13] ObjCInstanceMethodDecl=actionMethod::55:1
 // CHECK: Identifier: "actionMethod" [55:14 - 55:26] ObjCInstanceMethodDecl=actionMethod::55:1
 // CHECK: Punctuation: ":" [55:26 - 55:27] ObjCInstanceMethodDecl=actionMethod::55:1
