@@ -1522,6 +1522,8 @@ CINDEX_LINKAGE unsigned clang_CXCursorSet_insert(CXCursorSet cset,
  * In the example above, both declarations of \c C::f have \c C as their
  * semantic context, while the lexical context of the first \c C::f is \c C
  * and the lexical context of the second \c C::f is the translation unit.
+ *
+ * For global declarations, the semantic parent is the translation unit.
  */
 CINDEX_LINKAGE CXCursor clang_getCursorSemanticParent(CXCursor cursor);
 
@@ -1555,6 +1557,9 @@ CINDEX_LINKAGE CXCursor clang_getCursorSemanticParent(CXCursor cursor);
  * In the example above, both declarations of \c C::f have \c C as their
  * semantic context, while the lexical context of the first \c C::f is \c C
  * and the lexical context of the second \c C::f is the translation unit.
+ *
+ * For declarations written in the global scope, the lexical parent is
+ * the translation unit.
  */
 CINDEX_LINKAGE CXCursor clang_getCursorLexicalParent(CXCursor cursor);
 

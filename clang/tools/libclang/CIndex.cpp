@@ -4505,12 +4505,34 @@ CXLanguageKind clang_getCursorLanguage(CXCursor cursor) {
 
   return CXLanguage_Invalid;
 }
-  
+
+ /// \brief If the given cursor is the "templated" declaration
+ /// descibing a class or function template, return the class or
+ /// function template.
+static Decl *maybeGetTemplateCursor(Decl *D) {
+  if (!D)
+    return 0;
+
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    if (FunctionTemplateDecl *FunTmpl = FD->getDescribedFunctionTemplate())
+      return FunTmpl;
+
+  if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D))
+    if (ClassTemplateDecl *ClassTmpl = RD->getDescribedClassTemplate())
+      return ClassTmpl;
+
+  return D;
+}
+
 CXCursor clang_getCursorSemanticParent(CXCursor cursor) {
   if (clang_isDeclaration(cursor.kind)) {
     if (Decl *D = getCursorDecl(cursor)) {
       DeclContext *DC = D->getDeclContext();
-      return MakeCXCursor(cast<Decl>(DC), getCursorTU(cursor));
+      if (!DC)
+        return clang_getNullCursor();
+
+      return MakeCXCursor(maybeGetTemplateCursor(cast<Decl>(DC)), 
+                          getCursorTU(cursor));
     }
   }
   
@@ -4526,7 +4548,11 @@ CXCursor clang_getCursorLexicalParent(CXCursor cursor) {
   if (clang_isDeclaration(cursor.kind)) {
     if (Decl *D = getCursorDecl(cursor)) {
       DeclContext *DC = D->getLexicalDeclContext();
-      return MakeCXCursor(cast<Decl>(DC), getCursorTU(cursor));
+      if (!DC)
+        return clang_getNullCursor();
+
+      return MakeCXCursor(maybeGetTemplateCursor(cast<Decl>(DC)), 
+                          getCursorTU(cursor));
     }
   }
 
