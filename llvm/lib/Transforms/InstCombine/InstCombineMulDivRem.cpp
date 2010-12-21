@@ -14,6 +14,7 @@
 
 #include "InstCombine.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Support/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
@@ -50,8 +51,8 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (isa<UndefValue>(Op1))              // undef * X -> 0
-    return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+  if (Value *V = SimplifyMulInst(Op0, Op1, TD))
+    return ReplaceInstUsesWith(I, V);
 
   // Simplify mul instructions with a constant RHS.
   if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
@@ -64,10 +65,6 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
             return BinaryOperator::CreateMul(SI->getOperand(0),
                                         ConstantExpr::getShl(CI, ShOp));
 
-      if (CI->isZero())
-        return ReplaceInstUsesWith(I, Op1C);  // X * 0  == 0
-      if (CI->equalsInt(1))                  // X * 1  == X
-        return ReplaceInstUsesWith(I, Op0);
       if (CI->isAllOnesValue())              // X * -1 == 0 - X
         return BinaryOperator::CreateNeg(Op0, I.getName());
 

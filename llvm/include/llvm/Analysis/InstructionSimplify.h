@@ -39,6 +39,11 @@ namespace llvm {
   Value *SimplifyAndInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
                          const DominatorTree *DT = 0);
 
+  /// SimplifyMulInst - Given operands for a Mul, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifyMulInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
+                         const DominatorTree *DT = 0);
+
   /// SimplifyOrInst - Given operands for an Or, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyOrInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
