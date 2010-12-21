@@ -1699,14 +1699,19 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
   unsigned CallOpc;
-  if(isThumb)
+  if(isThumb) {
     CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLXi_r9 : ARM::tBLXi;
-  else
+    // Explicitly adding the predicate here.
+    MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                         TII.get(CallOpc)))
+                         .addExternalSymbol(TLI.getLibcallName(Call));
+  } else {
     CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
-  // Explicitly adding the predicate here.
-  MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                       TII.get(CallOpc)))
-        .addExternalSymbol(TLI.getLibcallName(Call));
+    // Explicitly adding the predicate here.
+    MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                         TII.get(CallOpc))
+          .addExternalSymbol(TLI.getLibcallName(Call)));
+  }
 
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
@@ -1813,15 +1818,21 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
   unsigned CallOpc;
-  if(isThumb)
-    CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLXi_r9 : ARM::tBLXi;
-  else
-    CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
   // Explicitly adding the predicate here.
-  MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                               TII.get(CallOpc)))
-        .addGlobalAddress(GV, 0, 0);
-
+  if(isThumb) {
+    CallOpc = Subtarget->isTargetDarwin() ? ARM::tBLXi_r9 : ARM::tBLXi;
+    // Explicitly adding the predicate here.
+    MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                         TII.get(CallOpc)))
+          .addGlobalAddress(GV, 0, 0);
+  } else {
+    CallOpc = Subtarget->isTargetDarwin() ? ARM::BLr9 : ARM::BL;
+    // Explicitly adding the predicate here.
+    MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                         TII.get(CallOpc))
+          .addGlobalAddress(GV, 0, 0));
+  }
+  
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
     MIB.addReg(RegArgs[i]);
