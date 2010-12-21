@@ -4052,6 +4052,10 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
     return true;
   }
 
+  if (!NamedContext->isDependentContext() &&
+      RequireCompleteDeclContext(const_cast<CXXScopeSpec&>(SS), NamedContext))
+    return true;
+
   if (getLangOptions().CPlusPlus0x) {
     // C++0x [namespace.udecl]p3:
     //   In a using-declaration used as a member-declaration, the

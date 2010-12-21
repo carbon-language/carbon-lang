@@ -108,3 +108,13 @@ namespace test2 {
     template <typename T> using A::f<T>; // expected-error {{cannot template a using declaration}}
   };
 }
+
+// PR8756
+namespace foo
+{
+  class Class1; // expected-note{{forward declaration}}
+  class Class2
+  {
+    using ::foo::Class1::Function; // expected-error{{incomplete type 'foo::Class1' named in nested name specifier}}
+  };
+}
