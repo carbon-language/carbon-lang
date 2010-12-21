@@ -5594,8 +5594,6 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
         FD->addAttr(::new (Context) ConstAttr(FD->getLocation(), Context));
     }
 
-    if (Context.BuiltinInfo.isNoReturn(BuiltinID))
-      FD->setType(Context.getNoReturnType(FD->getType()));
     if (Context.BuiltinInfo.isNoThrow(BuiltinID))
       FD->addAttr(::new (Context) NoThrowAttr(FD->getLocation(), Context));
     if (Context.BuiltinInfo.isConst(BuiltinID))

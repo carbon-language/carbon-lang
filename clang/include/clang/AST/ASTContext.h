@@ -484,11 +484,6 @@ public:
   const FunctionType *adjustFunctionType(const FunctionType *Fn,
                                          FunctionType::ExtInfo EInfo);
 
-  /// getNoReturnType - Add or remove the noreturn attribute to the given type 
-  /// which must be a FunctionType or a pointer to an allowable type or a 
-  /// BlockPointer.
-  QualType getNoReturnType(QualType T, bool AddNoReturn = true);
-
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.
   QualType getComplexType(QualType T);

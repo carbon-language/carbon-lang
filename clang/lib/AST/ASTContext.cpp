@@ -1159,53 +1159,6 @@ const FunctionType *ASTContext::adjustFunctionType(const FunctionType *T,
   return cast<FunctionType>(Result.getTypePtr());
 }
 
-static QualType getExtFunctionType(ASTContext& Context, QualType T,
-                                   FunctionType::ExtInfo Info) {
-  QualType ResultType;
-  if (const PointerType *Pointer = T->getAs<PointerType>()) {
-    QualType Pointee = Pointer->getPointeeType();
-    ResultType = getExtFunctionType(Context, Pointee, Info);
-    if (ResultType == Pointee)
-      return T;
-
-    ResultType = Context.getPointerType(ResultType);
-  } else if (const ParenType *Paren = T->getAs<ParenType>()) {
-    QualType Inner = Paren->getInnerType();
-    ResultType = getExtFunctionType(Context, Inner, Info);
-    if (ResultType == Inner)
-      return T;
-
-    ResultType = Context.getParenType(ResultType);
-  } else if (const BlockPointerType *BlockPointer
-                                              = T->getAs<BlockPointerType>()) {
-    QualType Pointee = BlockPointer->getPointeeType();
-    ResultType = getExtFunctionType(Context, Pointee, Info);
-    if (ResultType == Pointee)
-      return T;
-
-    ResultType = Context.getBlockPointerType(ResultType);
-  } else if (const MemberPointerType *MemberPointer 
-                                            = T->getAs<MemberPointerType>()) {
-    QualType Pointee = MemberPointer->getPointeeType();
-    ResultType = getExtFunctionType(Context, Pointee, Info);
-    if (ResultType == Pointee)
-      return T;
-    
-    ResultType = Context.getMemberPointerType(ResultType, 
-                                              MemberPointer->getClass());
-   } else if (const FunctionType *F = T->getAs<FunctionType>()) {
-    ResultType = QualType(Context.adjustFunctionType(F, Info), 0);
-  } else
-    return T;
-
-  return Context.getQualifiedType(ResultType, T.getLocalQualifiers());
-}
-
-QualType ASTContext::getNoReturnType(QualType T, bool AddNoReturn) {
-  FunctionType::ExtInfo Info = getFunctionExtInfo(T);
-  return getExtFunctionType(*this, T, Info.withNoReturn(AddNoReturn));
-}
-
 /// getComplexType - Return the uniqued reference to the type for a complex
 /// number with the specified element type.
 QualType ASTContext::getComplexType(QualType T) {
@@ -5595,13 +5548,18 @@ QualType ASTContext::GetBuiltinType(unsigned Id,
   assert((TypeStr[0] != '.' || TypeStr[1] == 0) &&
          "'.' should only occur at end of builtin type list!");
 
-  // handle untyped/variadic arguments "T c99Style();" or "T cppStyle(...);".
-  if (ArgTypes.size() == 0 && TypeStr[0] == '.')
-    return getFunctionNoProtoType(ResType);
+  FunctionType::ExtInfo EI;
+  if (BuiltinInfo.isNoReturn(Id)) EI = EI.withNoReturn(true);
+
+  bool Variadic = (TypeStr[0] == '.');
+
+  // We really shouldn't be making a no-proto type here, especially in C++.
+  if (ArgTypes.empty() && Variadic)
+    return getFunctionNoProtoType(ResType, EI);
 
   FunctionProtoType::ExtProtoInfo EPI;
-  EPI.Variadic = (TypeStr[0] == '.');
-  // FIXME: Should we create noreturn types?
+  EPI.ExtInfo = EI;
+  EPI.Variadic = Variadic;
 
   return getFunctionType(ResType, ArgTypes.data(), ArgTypes.size(), EPI);
 }

@@ -882,13 +882,44 @@ static bool IsNoReturnConversion(ASTContext &Context, QualType FromType,
   if (Context.hasSameUnqualifiedType(FromType, ToType))
     return false;
   
-  // Strip the noreturn off the type we're converting from; noreturn can
-  // safely be removed.
-  FromType = Context.getNoReturnType(FromType, false);
-  if (!Context.hasSameUnqualifiedType(FromType, ToType))
-    return false;
+  // Permit the conversion F(t __attribute__((noreturn))) -> F(t)
+  // where F adds one of the following at most once:
+  //   - a pointer
+  //   - a member pointer
+  //   - a block pointer
+  CanQualType CanTo = Context.getCanonicalType(ToType);
+  CanQualType CanFrom = Context.getCanonicalType(FromType);
+  Type::TypeClass TyClass = CanTo->getTypeClass();
+  if (TyClass != CanFrom->getTypeClass()) return false;
+  if (TyClass != Type::FunctionProto && TyClass != Type::FunctionNoProto) {
+    if (TyClass == Type::Pointer) {
+      CanTo = CanTo.getAs<PointerType>()->getPointeeType();
+      CanFrom = CanFrom.getAs<PointerType>()->getPointeeType();
+    } else if (TyClass == Type::BlockPointer) {
+      CanTo = CanTo.getAs<BlockPointerType>()->getPointeeType();
+      CanFrom = CanFrom.getAs<BlockPointerType>()->getPointeeType();
+    } else if (TyClass == Type::MemberPointer) {
+      CanTo = CanTo.getAs<MemberPointerType>()->getPointeeType();
+      CanFrom = CanFrom.getAs<MemberPointerType>()->getPointeeType();
+    } else {
+      return false;
+    }
 
-  ResultTy = FromType;
+    TyClass = CanTo->getTypeClass();
+    if (TyClass != CanFrom->getTypeClass()) return false;
+    if (TyClass != Type::FunctionProto && TyClass != Type::FunctionNoProto)
+      return false;
+  }
+
+  const FunctionType *FromFn = cast<FunctionType>(CanFrom);
+  FunctionType::ExtInfo EInfo = FromFn->getExtInfo();
+  if (!EInfo.getNoReturn()) return false;
+
+  FromFn = Context.adjustFunctionType(FromFn, EInfo.withNoReturn(false));
+  assert(QualType(FromFn, 0).isCanonical());
+  if (QualType(FromFn, 0) != CanTo) return false;
+
+  ResultTy = ToType;
   return true;
 }
  
