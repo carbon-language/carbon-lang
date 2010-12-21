@@ -2548,6 +2548,8 @@ public:
   }
   void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
+  virtual SourceRange getSourceRange() const;
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const BlockDecl *D) { return true; }

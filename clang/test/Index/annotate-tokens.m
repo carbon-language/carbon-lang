@@ -116,6 +116,21 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 @dynamic foo2;
 @end
 
+// <rdar://problem/8778404> Blocks don't get colored if annotation starts within the block itself
+@interface Rdar8778404
+@end
+
+@implementation Rdar8778404
+- (int)blah:(int)arg, ... { return arg; }
+- (int)blarg:(int)x {
+  (void)^ {
+    int result = [self blah:5, x];
+    Rdar8778404 *a = self;
+    return 0;
+  };
+}
+@end
+
 // RUN: c-index-test -test-annotate-tokens=%s:1:1:118:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
@@ -485,3 +500,22 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: "=" [115:17 - 115:18] UnexposedDecl=foo:110:33 (Definition)
 // CHECK: Identifier: "_foo" [115:19 - 115:23] MemberRef=_foo:107:8
 // CHECK: Punctuation: ";" [115:23 - 115:24] ObjCImplementationDecl=Rdar8595386:114:1 (Definition)
+
+// RUN: c-index-test -test-annotate-tokens=%s:127:1:130:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck -check-prefix=CHECK-INSIDE_BLOCK %s
+// CHECK-INSIDE_BLOCK: Keyword: "int" [127:5 - 127:8] VarDecl=result:127:9 (Definition)
+// CHECK-INSIDE_BLOCK: Identifier: "result" [127:9 - 127:15] VarDecl=result:127:9 (Definition)
+// CHECK-INSIDE_BLOCK: Punctuation: "=" [127:16 - 127:17] VarDecl=result:127:9 (Definition)
+// CHECK-INSIDE_BLOCK: Punctuation: "[" [127:18 - 127:19] ObjCMessageExpr=blah::124:1
+// CHECK-INSIDE_BLOCK: Identifier: "self" [127:19 - 127:23] DeclRefExpr=self:0:0
+// CHECK-INSIDE_BLOCK: Identifier: "blah" [127:24 - 127:28] ObjCMessageExpr=blah::124:1
+// CHECK-INSIDE_BLOCK: Punctuation: ":" [127:28 - 127:29] ObjCMessageExpr=blah::124:1
+// CHECK-INSIDE_BLOCK: Literal: "5" [127:29 - 127:30] UnexposedExpr=
+// CHECK-INSIDE_BLOCK: Punctuation: "," [127:30 - 127:31] ObjCMessageExpr=blah::124:1
+// CHECK-INSIDE_BLOCK: Identifier: "x" [127:32 - 127:33] DeclRefExpr=x:125:19
+// CHECK-INSIDE_BLOCK: Punctuation: "]" [127:33 - 127:34] ObjCMessageExpr=blah::124:1
+// CHECK-INSIDE_BLOCK: Punctuation: ";" [127:34 - 127:35] UnexposedStmt=
+// CHECK-INSIDE_BLOCK: Identifier: "Rdar8778404" [128:5 - 128:16] ObjCClassRef=Rdar8778404:120:12
+// CHECK-INSIDE_BLOCK: Punctuation: "*" [128:17 - 128:18] VarDecl=a:128:18 (Definition)
+// CHECK-INSIDE_BLOCK: Identifier: "a" [128:18 - 128:19] VarDecl=a:128:18 (Definition)
+// CHECK-INSIDE_BLOCK: Punctuation: "=" [128:20 - 128:21] VarDecl=a:128:18 (Definition)
+// CHECK-INSIDE_BLOCK: Identifier: "self" [128:22 - 128:26] DeclRefExpr=self:0:0
