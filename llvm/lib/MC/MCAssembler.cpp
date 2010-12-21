@@ -109,7 +109,7 @@ uint64_t MCAsmLayout::getSymbolOffset(const MCSymbolData *SD) const {
 uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
   // The size is the last fragment's end offset.
   const MCFragment &F = SD->getFragmentList().back();
-  return getFragmentOffset(&F) + getAssembler().ComputeFragmentSize(F);
+  return getFragmentOffset(&F) + getAssembler().ComputeFragmentSize(*this, F);
 }
 
 uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
@@ -272,7 +272,8 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   return IsResolved;
 }
 
-uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F) const {
+uint64_t MCAssembler::ComputeFragmentSize(const MCAsmLayout &Layout,
+                                          const MCFragment &F) const {
   switch (F.getKind()) {
   case MCFragment::FT_Data:
     return cast<MCDataFragment>(F).getContents().size();
@@ -284,11 +285,29 @@ uint64_t MCAssembler::ComputeFragmentSize(const MCFragment &F) const {
   case MCFragment::FT_LEB:
     return cast<MCLEBFragment>(F).getContents().size();
 
-  case MCFragment::FT_Align:
-    return cast<MCAlignFragment>(F).getSize();
+  case MCFragment::FT_Align: {
+    const MCAlignFragment &AF = cast<MCAlignFragment>(F);
+    unsigned Offset = Layout.getFragmentOffset(&AF);
+    unsigned Size = OffsetToAlignment(Offset, AF.getAlignment());
+    if (Size > AF.getMaxBytesToEmit())
+      return 0;
+    return Size;
+  }
 
-  case MCFragment::FT_Org:
-    return cast<MCOrgFragment>(F).getSize();
+  case MCFragment::FT_Org: {
+    MCOrgFragment &OF = cast<MCOrgFragment>(F);
+    int64_t TargetLocation;
+    if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, Layout))
+      report_fatal_error("expected assembly-time absolute expression");
+
+    // FIXME: We need a way to communicate this error.
+    uint64_t FragmentOffset = Layout.getFragmentOffset(&OF);
+    int64_t Size = TargetLocation - FragmentOffset;
+    if (Size < 0 || Size >= 0x40000000)
+      report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
+                         "' (at offset '" + Twine(FragmentOffset) + "')");
+    return Size;
+  }
 
   case MCFragment::FT_Dwarf:
     return cast<MCDwarfLineAddrFragment>(F).getContents().size();
@@ -313,7 +332,7 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
   // Compute fragment offset and size.
   uint64_t Offset = 0;
   if (Prev)
-    Offset += Prev->Offset + getAssembler().ComputeFragmentSize(*Prev);
+    Offset += Prev->Offset + getAssembler().ComputeFragmentSize(*this, *Prev);
 
   F->Offset = Offset;
   LastValidFragment[F->getParent()] = F;
@@ -329,7 +348,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
   ++stats::EmittedFragments;
 
   // FIXME: Embed in fragments instead?
-  uint64_t FragmentSize = Asm.ComputeFragmentSize(F);
+  uint64_t FragmentSize = Asm.ComputeFragmentSize(Layout, F);
   switch (F.getKind()) {
   case MCFragment::FT_Align: {
     MCAlignFragment &AF = cast<MCAlignFragment>(F);
@@ -649,23 +668,6 @@ bool MCAssembler::RelaxInstruction(MCAsmLayout &Layout,
   return true;
 }
 
-bool MCAssembler::RelaxOrg(MCAsmLayout &Layout, MCOrgFragment &OF) {
-  int64_t TargetLocation;
-  if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, Layout))
-    report_fatal_error("expected assembly-time absolute expression");
-
-  // FIXME: We need a way to communicate this error.
-  uint64_t FragmentOffset = Layout.getFragmentOffset(&OF);
-  int64_t Offset = TargetLocation - FragmentOffset;
-  if (Offset < 0 || Offset >= 0x40000000)
-    report_fatal_error("invalid .org offset '" + Twine(TargetLocation) +
-                       "' (at offset '" + Twine(FragmentOffset) + "')");
-
-  unsigned OldSize = OF.getSize();
-  OF.setSize(Offset);
-  return OldSize != OF.getSize();
-}
-
 bool MCAssembler::RelaxLEB(MCAsmLayout &Layout, MCLEBFragment &LF) {
   int64_t Value = 0;
   uint64_t OldSize = LF.getContents().size();
@@ -696,17 +698,6 @@ bool MCAssembler::RelaxDwarfLineAddr(MCAsmLayout &Layout,
   return OldSize != Data.size();
 }
 
-bool MCAssembler::RelaxAlignment(MCAsmLayout &Layout,
-				 MCAlignFragment &AF) {
-  unsigned Offset = Layout.getFragmentOffset(&AF);
-  unsigned Size = OffsetToAlignment(Offset, AF.getAlignment());
-  if (Size > AF.getMaxBytesToEmit())
-    Size = 0;
-  unsigned OldSize = AF.getSize();
-  AF.setSize(Size);
-  return OldSize != Size;
-}
-
 bool MCAssembler::LayoutSectionOnce(MCAsmLayout &Layout,
                                     MCSectionData &SD) {
   MCFragment *FirstInvalidFragment = NULL;
@@ -718,14 +709,8 @@ bool MCAssembler::LayoutSectionOnce(MCAsmLayout &Layout,
     switch(it2->getKind()) {
     default:
           break;
-    case MCFragment::FT_Align:
-      relaxedFrag = RelaxAlignment(Layout, *cast<MCAlignFragment>(it2));
-      break;
     case MCFragment::FT_Inst:
       relaxedFrag = RelaxInstruction(Layout, *cast<MCInstFragment>(it2));
-      break;
-    case MCFragment::FT_Org:
-      relaxedFrag = RelaxOrg(Layout, *cast<MCOrgFragment>(it2));
       break;
     case MCFragment::FT_Dwarf:
       relaxedFrag = RelaxDwarfLineAddr(Layout,
