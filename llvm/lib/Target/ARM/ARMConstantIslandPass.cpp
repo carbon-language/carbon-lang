@@ -1,4 +1,4 @@
-//===-- ARMConstantIslandPass.cpp - ARM constant islands --------*- C++ -*-===//
+//===-- ARMConstantIslandPass.cpp - ARM constant islands ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -482,7 +482,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
         HasInlineAsm = true;
   }
 
-  // Now go back through the instructions and build up our data structures
+  // Now go back through the instructions and build up our data structures.
   unsigned Offset = 0;
   for (MachineFunction::iterator MBBI = MF.begin(), E = MF.end();
        MBBI != E; ++MBBI) {
