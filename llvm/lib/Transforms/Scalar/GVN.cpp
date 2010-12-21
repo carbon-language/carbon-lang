@@ -657,46 +657,52 @@ namespace {
     
     /// NumberTable - A mapping from value numers to lists of Value*'s that
     /// have that value number.  Use lookupNumber to query it.
-    DenseMap<uint32_t, std::pair<Value*, void*> > NumberTable;
+    struct NumberTableEntry {
+      Value *Val;
+      BasicBlock *BB;
+      NumberTableEntry *Next;
+    };
+    DenseMap<uint32_t, NumberTableEntry> NumberTable;
     BumpPtrAllocator TableAllocator;
     
     /// insert_table - Push a new Value to the NumberTable onto the list for
     /// its value number.
-    void insert_table(uint32_t N, Value *V) {
-      std::pair<Value*, void*>& Curr = NumberTable[N];
-      if (!Curr.first) {
-        Curr.first = V;
+    void insert_table(uint32_t N, Value *V, BasicBlock *BB) {
+      NumberTableEntry& Curr = NumberTable[N];
+      if (!Curr.Val) {
+        Curr.Val = V;
+        Curr.BB = BB;
         return;
       }
       
-      std::pair<Value*, void*>* Node =
-        TableAllocator.Allocate<std::pair<Value*, void*> >();
-      Node->first = V;
-      Node->second = Curr.second;
-      Curr.second = Node;
+      NumberTableEntry* Node = TableAllocator.Allocate<NumberTableEntry>();
+      Node->Val = V;
+      Node->BB = BB;
+      Node->Next = Curr.Next;
+      Curr.Next = Node;
     }
     
     /// erase_table - Scan the list of values corresponding to a given value
     /// number, and remove the given value if encountered.
-    void erase_table(uint32_t N, Value *V) {
-      std::pair<Value*, void*>* Prev = 0;
-      std::pair<Value*, void*>* Curr = &NumberTable[N];
+    void erase_table(uint32_t N, Value *V, BasicBlock *BB) {
+      NumberTableEntry* Prev = 0;
+      NumberTableEntry* Curr = &NumberTable[N];
 
-      while (Curr->first != V) {
+      while (Curr->Val != V || Curr->BB != BB) {
         Prev = Curr;
-        Curr = static_cast<std::pair<Value*, void*>*>(Curr->second);
+        Curr = Curr->Next;
       }
       
       if (Prev) {
-        Prev->second = Curr->second;
+        Prev->Next = Curr->Next;
       } else {
-        if (!Curr->second) {
-          Curr->first = 0;
+        if (!Curr->Next) {
+          Curr->Val = 0;
+          Curr->BB = 0;
         } else {
-          std::pair<Value*, void*>* Next =
-            static_cast<std::pair<Value*, void*>*>(Curr->second);
-          Curr->first = Next->first;
-          Curr->second = Next->second;
+          NumberTableEntry* Next = Curr->Next;
+          Curr->Val = Next->Val;
+          Curr->BB = Next->BB;
         }
       }
     }
@@ -1837,28 +1843,26 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
 // question.  This is fast because dominator tree queries consist of only
 // a few comparisons of DFS numbers.
 Value *GVN::lookupNumber(BasicBlock *BB, uint32_t num) {
-  std::pair<Value*, void*> Vals = NumberTable[num];
-  if (!Vals.first) return 0;
-  Instruction *Inst = dyn_cast<Instruction>(Vals.first);
-  if (!Inst) return Vals.first;
-  BasicBlock *Parent = Inst->getParent();
-  if (DT->dominates(Parent, BB))
-    return Inst;
+  NumberTableEntry Vals = NumberTable[num];
+  if (!Vals.Val) return 0;
   
-  std::pair<Value*, void*>* Next =
-    static_cast<std::pair<Value*, void*>*>(Vals.second);
+  Value *Val = 0;
+  if (DT->dominates(Vals.BB, BB)) {
+    Val = Vals.Val;
+    if (isa<Constant>(Val)) return Val;
+  }
+  
+  NumberTableEntry* Next = Vals.Next;
   while (Next) {
-    Instruction *CurrInst = dyn_cast<Instruction>(Next->first);
-    if (!CurrInst) return Next->first;
+    if (DT->dominates(Next->BB, BB)) {
+      if (isa<Constant>(Next->Val)) return Next->Val;
+      if (!Val) Val = Next->Val;
+    }
     
-    BasicBlock *Parent = CurrInst->getParent();
-    if (DT->dominates(Parent, BB))
-      return CurrInst;
-    
-    Next = static_cast<std::pair<Value*, void*>*>(Next->second);
+    Next = Next->Next;
   }
 
-  return 0;
+  return Val;
 }
 
 
@@ -1888,7 +1892,7 @@ bool GVN::processInstruction(Instruction *I,
 
     if (!Changed) {
       unsigned Num = VN.lookup_or_add(LI);
-      insert_table(Num, LI);
+      insert_table(Num, LI, LI->getParent());
     }
 
     return Changed;
@@ -1897,10 +1901,36 @@ bool GVN::processInstruction(Instruction *I,
   uint32_t NextNum = VN.getNextUnusedValueNumber();
   unsigned Num = VN.lookup_or_add(I);
 
+  // For conditions branches, we can perform simple conditional propagation on
+  // the condition value itself.
+  if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
+    insert_table(Num, I, I->getParent());
+  
+    if (!BI->isConditional() || isa<Constant>(BI->getCondition()))
+      return false;
+    
+    Value *BranchCond = BI->getCondition();
+    uint32_t CondVN = VN.lookup_or_add(BranchCond);
+  
+    BasicBlock *TrueSucc = BI->getSuccessor(0);
+    BasicBlock *FalseSucc = BI->getSuccessor(1);
+  
+    if (TrueSucc->getSinglePredecessor())
+      insert_table(CondVN,
+                   ConstantInt::getTrue(TrueSucc->getContext()),
+                   TrueSucc);
+    if (FalseSucc->getSinglePredecessor())
+      insert_table(CondVN,
+                   ConstantInt::getFalse(TrueSucc->getContext()),
+                   FalseSucc);
+    
+    return false;
+  }
+
   // Allocations are always uniquely numbered, so we can save time and memory
   // by fast failing them.
   if (isa<AllocaInst>(I) || isa<TerminatorInst>(I) || isa<PHINode>(I)) {
-    insert_table(Num, I);
+    insert_table(Num, I, I->getParent());
     return false;
   }
 
@@ -1908,7 +1938,7 @@ bool GVN::processInstruction(Instruction *I,
   // need to do a lookup to see if the number already exists
   // somewhere in the domtree: it can't!
   if (Num == NextNum) {
-    insert_table(Num, I);
+    insert_table(Num, I, I->getParent());
     return false;
   }
   
@@ -1917,7 +1947,7 @@ bool GVN::processInstruction(Instruction *I,
   Value *repl = lookupNumber(I->getParent(), Num);
   if (repl == 0) {
     // Failure, just remember this instance for future use.
-    insert_table(Num, I);
+    insert_table(Num, I, I->getParent());
     return false;
   }
   
@@ -2144,7 +2174,7 @@ bool GVN::performPRE(Function &F) {
       ++NumGVNPRE;
 
       // Update the availability map to include the new instruction.
-      insert_table(ValNo, PREInstr);
+      insert_table(ValNo, PREInstr, PREPred);
 
       // Create a PHI to make the value available in this block.
       PHINode* Phi = PHINode::Create(CurInst->getType(),
@@ -2157,13 +2187,13 @@ bool GVN::performPRE(Function &F) {
       }
 
       VN.add(Phi, ValNo);
-      insert_table(ValNo, Phi);
+      insert_table(ValNo, Phi, CurrentBlock);
 
       CurInst->replaceAllUsesWith(Phi);
       if (MD && Phi->getType()->isPointerTy())
         MD->invalidateCachedPointerInfo(Phi);
       VN.erase(CurInst);
-      erase_table(ValNo, CurInst);
+      erase_table(ValNo, CurInst, CurrentBlock);
 
       DEBUG(dbgs() << "GVN PRE removed: " << *CurInst << '\n');
       if (MD) MD->removeInstruction(CurInst);
@@ -2226,14 +2256,14 @@ void GVN::verifyRemoved(const Instruction *Inst) const {
 
   // Walk through the value number scope to make sure the instruction isn't
   // ferreted away in it.
-  for (DenseMap<uint32_t, std::pair<Value*, void*> >::const_iterator
+  for (DenseMap<uint32_t, NumberTableEntry>::const_iterator
        I = NumberTable.begin(), E = NumberTable.end(); I != E; ++I) {
-    std::pair<Value*, void*> const * Node = &I->second;
-    assert(Node->first != Inst && "Inst still in value numbering scope!");
+    const NumberTableEntry *Node = &I->second;
+    assert(Node->Val != Inst && "Inst still in value numbering scope!");
     
-    while (Node->second) {
-      Node = static_cast<std::pair<Value*, void*>*>(Node->second);
-      assert(Node->first != Inst && "Inst still in value numbering scope!");
+    while (Node->Next) {
+      Node = Node->Next;
+      assert(Node->Val != Inst && "Inst still in value numbering scope!");
     }
   }
 }
