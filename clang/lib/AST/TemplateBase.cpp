@@ -295,8 +295,15 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
   
   switch (Argument.getKind()) {
   case TemplateArgument::Type: {
+    // FIXME: We shouldn't ever have to worry about missing
+    // type-source info!
+    TypeSourceInfo *ExpansionTSInfo = getTypeSourceInfo();
+    if (!ExpansionTSInfo)
+      ExpansionTSInfo = Context.getTrivialTypeSourceInfo(
+                                                     getArgument().getAsType(),
+                                                         Ellipsis);
     PackExpansionTypeLoc Expansion
-      = cast<PackExpansionTypeLoc>(getTypeSourceInfo()->getTypeLoc());
+      = cast<PackExpansionTypeLoc>(ExpansionTSInfo->getTypeLoc());
     Ellipsis = Expansion.getEllipsisLoc();
     
     TypeLoc Pattern = Expansion.getPatternLoc();
