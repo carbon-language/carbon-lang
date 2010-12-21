@@ -91,11 +91,10 @@ template<typename Derived>
 class TreeTransform {
 protected:
   Sema &SemaRef;
-  Sema::ArgumentPackSubstitutionIndexRAII SubstIndex;
   
 public:
   /// \brief Initializes a new tree transformer.
-  TreeTransform(Sema &SemaRef) : SemaRef(SemaRef), SubstIndex(SemaRef, -1) { }
+  TreeTransform(Sema &SemaRef) : SemaRef(SemaRef) { }
 
   /// \brief Retrieves a reference to the derived class.
   Derived &getDerived() { return static_cast<Derived&>(*this); }
@@ -186,7 +185,7 @@ public:
   /// given set of parameter packs into separate arguments by repeatedly
   /// transforming the pattern.
   ///
-  /// By default, the transformed never tries to expand pack expansions.
+  /// By default, the transformer never tries to expand pack expansions.
   /// Subclasses can override this routine to provide different behavior.
   ///
   /// \param EllipsisLoc The location of the ellipsis that identifies the

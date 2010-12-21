@@ -3249,7 +3249,15 @@ public:
   /// unexpanded parameter packs.
   void collectUnexpandedParameterPacks(TemplateArgumentLoc Arg,
                     llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
-                                       
+
+  /// \brief Collect the set of unexpanded parameter packs within the given
+  /// type.  
+  ///
+  /// \param Arg The template argument that will be traversed to find
+  /// unexpanded parameter packs.
+  void collectUnexpandedParameterPacks(QualType T,
+                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
+
   /// \brief Invoked when parsing a template argument followed by an
   /// ellipsis, which creates a pack expansion.
   ///
@@ -3274,6 +3282,42 @@ public:
   TypeSourceInfo *CheckPackExpansion(TypeSourceInfo *Pattern,
                                      SourceLocation EllipsisLoc);
   
+  /// \brief Determine whether we could expand a pack expansion with the
+  /// given set of parameter packs into separate arguments by repeatedly
+  /// transforming the pattern.
+  ///
+  /// \param EllipsisLoc The location of the ellipsis that identifies the
+  /// pack expansion.
+  ///
+  /// \param PatternRange The source range that covers the entire pattern of
+  /// the pack expansion.
+  ///
+  /// \param Unexpanded The set of unexpanded parameter packs within the 
+  /// pattern.
+  ///
+  /// \param NumUnexpanded The number of unexpanded parameter packs in
+  /// \p Unexpanded.
+  ///
+  /// \param ShouldExpand Will be set to \c true if the transformer should
+  /// expand the corresponding pack expansions into separate arguments. When
+  /// set, \c NumExpansions must also be set.
+  ///
+  /// \param NumExpansions The number of separate arguments that will be in
+  /// the expanded form of the corresponding pack expansion. Must be set when
+  /// \c ShouldExpand is \c true.
+  ///
+  /// \returns true if an error occurred (e.g., because the parameter packs 
+  /// are to be instantiated with arguments of different lengths), false 
+  /// otherwise. If false, \c ShouldExpand (and possibly \c NumExpansions) 
+  /// must be set.
+  bool CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
+                                       SourceRange PatternRange,
+                                     const UnexpandedParameterPack *Unexpanded,
+                                       unsigned NumUnexpanded,
+                             const MultiLevelTemplateArgumentList &TemplateArgs,
+                                       bool &ShouldExpand,
+                                       unsigned &NumExpansions);
+
   /// \brief Describes the result of template argument deduction.
   ///
   /// The TemplateDeductionResult enumeration describes the result of

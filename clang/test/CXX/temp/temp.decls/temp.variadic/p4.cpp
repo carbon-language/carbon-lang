@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++0x -fsyntax-only -fexceptions -verify %s
 
 template<typename... Types> struct tuple;
 
@@ -30,12 +30,9 @@ extract_nested_types<identity<int>, identity<float> >::types *t_int_float_2
 // In a dynamic-exception-specification (15.4); the pattern is a type-id.
 template<typename ...Types>
 struct f_with_except {
-  virtual void f() throw(Types...);
+  virtual void f() throw(Types...); // expected-note{{overridden virtual function is here}}
 };
 
-// FIXME: the code below requires the ability to instantiate pack
-// expansions whose pattern is a type-id.
-#if 0
 struct check_f_with_except_1 : f_with_except<int, float> {
   virtual void f() throw(int, float);
 };
@@ -43,4 +40,7 @@ struct check_f_with_except_1 : f_with_except<int, float> {
 struct check_f_with_except_2 : f_with_except<int, float> {
   virtual void f() throw(int);
 };
-#endif
+
+struct check_f_with_except_3 : f_with_except<int, float> {
+  virtual void f() throw(int, float, double); // expected-error{{exception specification of overriding function is more lax than base version}}
+};

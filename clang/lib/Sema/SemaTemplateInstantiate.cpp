@@ -595,7 +595,14 @@ namespace {
                                  const UnexpandedParameterPack *Unexpanded,
                                  unsigned NumUnexpanded,
                                  bool &ShouldExpand,
-                                 unsigned &NumExpansions);
+                                 unsigned &NumExpansions) {
+      return getSema().CheckParameterPacksForExpansion(EllipsisLoc, 
+                                                       PatternRange, Unexpanded,
+                                                       NumUnexpanded, 
+                                                       TemplateArgs, 
+                                                       ShouldExpand,
+                                                       NumExpansions);
+    }
 
     /// \brief Transform the given declaration by instantiating a reference to
     /// this declaration.
@@ -661,79 +668,6 @@ bool TemplateInstantiator::AlreadyTransformed(QualType T) {
   
   getSema().MarkDeclarationsReferencedInType(Loc, T);
   return true;
-}
-
-bool TemplateInstantiator::TryExpandParameterPacks(SourceLocation EllipsisLoc,
-                                                   SourceRange PatternRange,
-                                     const UnexpandedParameterPack *Unexpanded,
-                                                   unsigned NumUnexpanded,
-                                                   bool &ShouldExpand,
-                                                   unsigned &NumExpansions) {
-  ShouldExpand = true;
-  std::pair<IdentifierInfo *, SourceLocation> FirstPack;
-  bool HaveFirstPack = false;
-  
-  for (unsigned I = 0; I != NumUnexpanded; ++I) {
-    // Compute the depth and index for this parameter pack.
-    unsigned Depth;
-    unsigned Index;
-    IdentifierInfo *Name;
-    
-    if (const TemplateTypeParmType *TTP
-              = Unexpanded[I].first.dyn_cast<const TemplateTypeParmType *>()) {
-      Depth = TTP->getDepth();
-      Index = TTP->getIndex();
-      Name = TTP->getName();
-    } else {
-      NamedDecl *ND = Unexpanded[I].first.get<NamedDecl *>();
-      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(ND)) {
-        Depth = TTP->getDepth();
-        Index = TTP->getIndex();
-      } else if (NonTypeTemplateParmDecl *NTTP
-                                      = dyn_cast<NonTypeTemplateParmDecl>(ND)) {        
-        Depth = NTTP->getDepth();
-        Index = NTTP->getIndex();
-      } else {
-        TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(ND);
-        Depth = TTP->getDepth();
-        Index = TTP->getIndex();
-      }
-      // FIXME: Variadic templates function parameter packs?
-      Name = ND->getIdentifier();
-    }
-    
-    // If we don't have a template argument at this depth/index, then we 
-    // cannot expand the pack expansion. Make a note of this, but we still 
-    // want to check that any parameter packs we *do* have arguments for.
-    if (!TemplateArgs.hasTemplateArgument(Depth, Index)) {
-      ShouldExpand = false;
-      continue;
-    }
-
-    // Determine the size of the argument pack.
-    unsigned NewPackSize = TemplateArgs(Depth, Index).pack_size();
-    if (!HaveFirstPack) {
-      // The is the first pack we've seen for which we have an argument. 
-      // Record it.
-      NumExpansions = NewPackSize;
-      FirstPack.first = Name;
-      FirstPack.second = Unexpanded[I].second;
-      HaveFirstPack = true;
-      continue;
-    }
-    
-    if (NewPackSize != NumExpansions) {
-      // C++0x [temp.variadic]p5:
-      //   All of the parameter packs expanded by a pack expansion shall have 
-      //   the same number of arguments specified.
-      getSema().Diag(EllipsisLoc, diag::err_pack_expansion_length_conflict)
-        << FirstPack.first << Name << NumExpansions << NewPackSize
-        << SourceRange(FirstPack.second) << SourceRange(Unexpanded[I].second);
-      return true;
-    }
-  }
-  
-  return false;
 }
 
 Decl *TemplateInstantiator::TransformDecl(SourceLocation Loc, Decl *D) {
