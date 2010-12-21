@@ -29,9 +29,9 @@ entry:
   ret i8 %div
 
 ; CHECK: test3:
-; CHECK: imull	$171, %eax, %eax
-; CHECK-NEXT: shrb	%ah
-; CHECK-NEXT: movzbl	%ah, %eax
+; CHECK: movzbl  8(%esp), %eax
+; CHECK-NEXT: imull	$171, %eax, %eax
+; CHECK-NEXT: shrl	$9, %eax
 ; CHECK-NEXT: ret
 }
 
