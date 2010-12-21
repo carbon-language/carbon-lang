@@ -711,6 +711,8 @@ private:
   /// were adjusted.
   bool LayoutOnce(MCAsmLayout &Layout);
 
+  bool LayoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD);
+
   bool RelaxInstruction(MCAsmLayout &Layout, MCInstFragment &IF);
 
   bool RelaxOrg(MCAsmLayout &Layout, MCOrgFragment &OF);
