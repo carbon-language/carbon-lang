@@ -492,7 +492,8 @@ static Value *SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 
   /// i1 add -> xor.
   if (MaxRecurse && Op0->getType()->isIntegerTy(1))
-    return SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1);
+    if (Value *V = SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1))
+      return V;
 
   // Try some generic simplifications for associative operations.
   if (Value *V = SimplifyAssociativeBinOp(Instruction::Add, Op0, Op1, TD, DT,
@@ -555,7 +556,8 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 
   /// i1 sub -> xor.
   if (MaxRecurse && Op0->getType()->isIntegerTy(1))
-    return SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1);
+    if (Value *V = SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1))
+      return V;
 
   // Mul distributes over Sub.  Try some generic simplifications based on this.
   if (Value *V = FactorizeBinOp(Instruction::Sub, Op0, Op1, Instruction::Mul,
@@ -608,7 +610,8 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
 
   /// i1 mul -> and.
   if (MaxRecurse && Op0->getType()->isIntegerTy(1))
-    return SimplifyAndInst(Op0, Op1, TD, DT, MaxRecurse-1);
+    if (Value *V = SimplifyAndInst(Op0, Op1, TD, DT, MaxRecurse-1))
+      return V;
 
   // Try some generic simplifications for associative operations.
   if (Value *V = SimplifyAssociativeBinOp(Instruction::Mul, Op0, Op1, TD, DT,
