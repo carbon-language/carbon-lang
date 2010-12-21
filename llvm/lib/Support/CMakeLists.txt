@@ -22,6 +22,7 @@ add_llvm_library(LLVMSupport
   FoldingSet.cpp
   FormattedStream.cpp
   GraphWriter.cpp
+  IntEqClasses.cpp
   IntervalMap.cpp
   IsInf.cpp
   IsNAN.cpp
