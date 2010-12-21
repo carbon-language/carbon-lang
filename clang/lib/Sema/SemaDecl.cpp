@@ -4285,6 +4285,18 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     // during delayed parsing anyway.
     if (!CurContext->isRecord())
       CheckCXXDefaultArguments(NewFD);
+    
+    // If this function declares a builtin function, check the type of this
+    // declaration against the expected type for the builtin. 
+    if (unsigned BuiltinID = NewFD->getBuiltinID()) {
+      ASTContext::GetBuiltinTypeError Error;
+      QualType T = Context.GetBuiltinType(BuiltinID, Error);
+      if (!T.isNull() && !Context.hasSameType(T, NewFD->getType())) {
+        // The type of this function differs from the type of the builtin,
+        // so forget about the builtin entirely.
+        Context.BuiltinInfo.ForgetBuiltin(BuiltinID, Context.Idents);
+      }
+    }
   }
 }
 

@@ -117,6 +117,10 @@ public:
     return strchr(GetRecord(ID).Attributes, 'f') != 0;
   }
 
+  /// \brief Completely forget that the given ID was ever considered a builtin,
+  /// e.g., because the user provided a conflicting signature.
+  void ForgetBuiltin(unsigned ID, IdentifierTable &Table);
+  
   /// \brief If this is a library function that comes from a specific
   /// header, retrieve that header name.
   const char *getHeaderName(unsigned ID) const {
