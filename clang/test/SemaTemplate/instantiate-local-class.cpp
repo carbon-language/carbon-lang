@@ -55,11 +55,13 @@ namespace PR8801 {
   template<typename T>
   void foo() {
     class X;
-    int (X::*pmf)(T) = 0;
+    typedef int (X::*pmf_type)();
     class X : public T { };
+    
+    pmf_type pmf = &T::foo;
   }
 
-  struct Y { };
+  struct Y { int foo(); };
 
   template void foo<Y>();
 }

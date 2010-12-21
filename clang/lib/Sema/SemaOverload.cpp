@@ -1883,9 +1883,10 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
   // where D is derived from B (C++ 4.11p2).
   QualType FromClass(FromTypePtr->getClass(), 0);
   QualType ToClass(ToTypePtr->getClass(), 0);
-  // FIXME: What happens when these are dependent? Is this function even called?
 
-  if (IsDerivedFrom(ToClass, FromClass)) {
+  if (!Context.hasSameUnqualifiedType(FromClass, ToClass) &&
+      !RequireCompleteType(From->getLocStart(), ToClass, PDiag()) &&
+      IsDerivedFrom(ToClass, FromClass)) {
     ConvertedType = Context.getMemberPointerType(FromTypePtr->getPointeeType(),
                                                  ToClass.getTypePtr());
     return true;
