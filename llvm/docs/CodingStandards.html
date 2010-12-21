@@ -219,7 +219,7 @@ require less typing, don't have nesting problems, etc.  There are a few cases
 when it is useful to use C style (<tt>/* */</tt>) comments however:</p>
 
 <ol>
-  <li>When writing a C code: Obviously if you are writing C code, use C style
+  <li>When writing C code: Obviously if you are writing C code, use C style
       comments.</li>
   <li>When writing a header file that may be <tt>#include</tt>d by a C source
       file.</li>
@@ -259,7 +259,7 @@ order:</p>
   <li>System <tt>#includes</tt></li>
 </ol>
 
-<p>... and each category should be sorted by name.</p>
+<p>and each category should be sorted by name.</p>
 
 <p><a name="mmheader">The "Main Module Header"</a> file applies to <tt>.cpp</tt> files
 which implement an interface defined by a <tt>.h</tt> file.  This <tt>#include</tt>
@@ -292,7 +292,7 @@ value and would be detrimental to printing out code.  Also many other projects
 have standardized on 80 columns, so some people have already configured their
 editors for it (vs something else, like 90 columns).</p>
 
-<p>This is one of many contentious issues in coding standards, but is not up
+<p>This is one of many contentious issues in coding standards, but it is not up
 for debate.</p>
 
 </div>
@@ -306,12 +306,12 @@ for debate.</p>
 
 <p>In all cases, prefer spaces to tabs in source files.  People have different
 preferred indentation levels, and different styles of indentation that they
-like... this is fine.  What isn't is that different editors/viewers expand tabs
-out to different tab stops.  This can cause your code to look completely
+like; this is fine.  What isn't fine is that different editors/viewers expand
+tabs out to different tab stops.  This can cause your code to look completely
 unreadable, and it is not worth dealing with.</p>
 
 <p>As always, follow the <a href="#goldenrule">Golden Rule</a> above: follow the
-style of existing code if your are modifying and extending it.  If you like four
+style of existing code if you are modifying and extending it.  If you like four
 spaces of indentation, <b>DO NOT</b> do that in the middle of a chunk of code
 with two spaces of indentation.  Also, do not reindent a whole source file: it
 makes for incredible diffs that are absolutely worthless.</p>
@@ -345,17 +345,17 @@ Just do it.</p>
 
 <div class="doc_text">
 
-<p>If your code has compiler warnings in it, something is wrong: you aren't
-casting values correctly, your have "questionable" constructs in your code, or
-you are doing something legitimately wrong.  Compiler warnings can cover up
-legitimate errors in output and make dealing with a translation unit
+<p>If your code has compiler warnings in it, something is wrong &mdash; you
+aren't casting values correctly, your have "questionable" constructs in your
+code, or you are doing something legitimately wrong.  Compiler warnings can
+cover up legitimate errors in output and make dealing with a translation unit
 difficult.</p>
 
 <p>It is not possible to prevent all warnings from all compilers, nor is it
 desirable.  Instead, pick a standard compiler (like <tt>gcc</tt>) that provides
-a good thorough set of warnings, and stick to them.  At least in the case of
+a good thorough set of warnings, and stick to it.  At least in the case of
 <tt>gcc</tt>, it is possible to work around any spurious errors by changing the
-syntax of the code slightly.  For example, an warning that annoys me occurs when
+syntax of the code slightly.  For example, a warning that annoys me occurs when
 I write code like this:</p>
 
 <div class="doc_code">
@@ -379,11 +379,16 @@ if ((V = getValue())) {
 </pre>
 </div>
 
-<p>...which shuts <tt>gcc</tt> up.  Any <tt>gcc</tt> warning that annoys you can
+<p>which shuts <tt>gcc</tt> up.  Any <tt>gcc</tt> warning that annoys you can
 be fixed by massaging the code appropriately.</p>
 
-<p>These are the <tt>gcc</tt> warnings that I prefer to enable: <tt>-Wall
--Winline -W -Wwrite-strings -Wno-unused</tt></p>
+<p>These are the <tt>gcc</tt> warnings that I prefer to enable:</p>
+
+<div class="doc_code">
+<pre>
+-Wall -Winline -W -Wwrite-strings -Wno-unused
+</pre>
+</div>
 
 </div>
 
@@ -412,19 +417,18 @@ libSystem.</p>
 </div>
 <div class="doc_text">
 
-<p>LLVM does not use RTTI (e.g. dynamic_cast&lt;&gt;) or exceptions, in an
-effort to reduce code and executable size.  These two language features violate
-the general C++ principle of "you only pay for what you use", causing executable
-bloat even if exceptions are never used in a code base, or if RTTI is never used
-for a class.  Because of this, we turn them off globally in the code.
-</p>
+<p>In an effort to reduce code and executable size, LLVM does not use RTTI
+(e.g. <tt>dynamic_cast&lt;&gt;</tt>) or exceptions.  These two language features
+violate the general C++ principle of <i>"you only pay for what you use"</i>,
+causing executable bloat even if exceptions are never used in the code base, or
+if RTTI is never used for a class.  Because of this, we turn them off globally
+in the code.</p>
 
-<p>
-That said, LLVM does make extensive use of a hand-rolled form of RTTI that use
-templates like <a href="ProgrammersManual.html#isa">isa&lt;&gt;, cast&lt;&gt;,
-and dyn_cast&lt;&gt;</a>.  This form of RTTI is opt-in and can be added to any
-class.  It is also substantially more efficient than dynamic_cast&lt;&gt;.
-</p>
+<p>That said, LLVM does make extensive use of a hand-rolled form of RTTI that
+use templates like <a href="ProgrammersManual.html#isa"><tt>isa&lt;&gt;</tt>,
+<tt>cast&lt;&gt;</tt>, and <tt>dyn_cast&lt;&gt;</tt></a>.  This form of RTTI is
+opt-in and can be added to any class.  It is also substantially more efficient
+than <tt>dynamic_cast&lt;&gt;</tt>.</p>
 
 </div>
 
@@ -444,8 +448,9 @@ different symbols based on whether <tt>class</tt> or <tt>struct</tt> was used to
 declare the symbol.  This can lead to problems at link time.</p> 
 
 <p>So, the rule for LLVM is to always use the <tt>class</tt> keyword, unless
-<b>all</b> members are public and the type is a C++ "POD" type, in which case 
-<tt>struct</tt> is allowed.</p>
+<b>all</b> members are public and the type is a C++
+<a href="http://en.wikipedia.org/wiki/Plain_old_data_structure">POD</a> type, in
+which case <tt>struct</tt> is allowed.</p>
 
 </div>
 
@@ -473,18 +478,18 @@ declare the symbol.  This can lead to problems at link time.</p>
 <p>C++ doesn't do too well in the modularity department.  There is no real
 encapsulation or data hiding (unless you use expensive protocol classes), but it
 is what we have to work with.  When you write a public header file (in the LLVM
-source tree, they live in the top level "include" directory), you are defining a
-module of functionality.</p>
+source tree, they live in the top level "<tt>include</tt>" directory), you are
+defining a module of functionality.</p>
 
 <p>Ideally, modules should be completely independent of each other, and their
-header files should only include the absolute minimum number of headers
-possible. A module is not just a class, a function, or a namespace: <a
-href="http://www.cuj.com/articles/2000/0002/0002c/0002c.htm">it's a collection
-of these</a> that defines an interface.  This interface may be several
-functions, classes or data structures, but the important issue is how they work
-together.</p>
+header files should only <tt>#include</tt> the absolute minimum number of
+headers possible. A module is not just a class, a function, or a
+namespace: <a href="http://www.cuj.com/articles/2000/0002/0002c/0002c.htm">it's
+a collection of these</a> that defines an interface.  This interface may be
+several functions, classes, or data structures, but the important issue is how
+they work together.</p>
 
-<p>In general, a module should be implemented with one or more <tt>.cpp</tt>
+<p>In general, a module should be implemented by one or more <tt>.cpp</tt>
 files.  Each of these <tt>.cpp</tt> files should include the header that defines
 their interface first.  This ensures that all of the dependences of the module
 header have been properly added to the module header itself, and are not
@@ -503,29 +508,28 @@ translation unit.</p>
 <p><tt>#include</tt> hurts compile time performance.  Don't do it unless you
 have to, especially in header files.</p>
 
-<p>But wait, sometimes you need to have the definition of a class to use it, or
+<p>But wait! Sometimes you need to have the definition of a class to use it, or
 to inherit from it.  In these cases go ahead and <tt>#include</tt> that header
 file.  Be aware however that there are many cases where you don't need to have
 the full definition of a class.  If you are using a pointer or reference to a
 class, you don't need the header file.  If you are simply returning a class
 instance from a prototyped function or method, you don't need it.  In fact, for
-most cases, you simply don't need the definition of a class... and not
+most cases, you simply don't need the definition of a class. And not
 <tt>#include</tt>'ing speeds up compilation.</p>
 
 <p>It is easy to try to go too overboard on this recommendation, however.  You
-<b>must</b> include all of the header files that you are using -- you can 
-include them either directly
-or indirectly (through another header file).  To make sure that you don't
-accidentally forget to include a header file in your module header, make sure to
-include your module header <b>first</b> in the implementation file (as mentioned
-above).  This way there won't be any hidden dependencies that you'll find out
-about later...</p>
+<b>must</b> include all of the header files that you are using &mdash; you can
+include them either directly or indirectly (through another header file).  To
+make sure that you don't accidentally forget to include a header file in your
+module header, make sure to include your module header <b>first</b> in the
+implementation file (as mentioned above).  This way there won't be any hidden
+dependencies that you'll find out about later.</p>
 
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="hl_privateheaders">Keep "internal" Headers Private</a>
+  <a name="hl_privateheaders">Keep "Internal" Headers Private</a>
 </div>
 
 <div class="doc_text">
@@ -533,14 +537,14 @@ about later...</p>
 <p>Many modules have a complex implementation that causes them to use more than
 one implementation (<tt>.cpp</tt>) file.  It is often tempting to put the
 internal communication interface (helper classes, extra functions, etc) in the
-public module header file.  Don't do this.</p>
+public module header file.  Don't do this!</p>
 
 <p>If you really need to do something like this, put a private header file in
 the same directory as the source files, and include it locally.  This ensures
 that your private interface remains private and undisturbed by outsiders.</p>
 
-<p>Note however, that it's okay to put extra implementation methods a public
-class itself... just make them private (or protected), and all is well.</p>
+<p>Note however, that it's okay to put extra implementation methods in a public
+class itself. Just make them private (or protected) and all is well.</p>
 
 </div>
 
@@ -555,8 +559,8 @@ class itself... just make them private (or protected), and all is well.</p>
 decisions have to be remembered by the reader to understand a block of code.
 Aim to reduce indentation where possible when it doesn't make it more difficult
 to understand the code.  One great way to do this is by making use of early
-exits and the <tt>continue</tt> keyword in long loops.  As an example of using an early
-exit from a function, consider this "bad" code:</p>
+exits and the <tt>continue</tt> keyword in long loops.  As an example of using
+an early exit from a function, consider this "bad" code:</p>
 
 <div class="doc_code">
 <pre>
@@ -571,23 +575,23 @@ Value *DoSomething(Instruction *I) {
 </pre>
 </div>
 
-<p>This code has several problems if the body of the 'if' is large.  When you're
-looking at the top of the function, it isn't immediately clear that this
-<em>only</em> does interesting things with non-terminator instructions, and only
-applies to things with the other predicates.  Second, it is relatively difficult
-to describe (in comments) why these predicates are important because the if
-statement makes it difficult to lay out the comments.  Third, when you're deep
-within the body of the code, it is indented an extra level.   Finally, when
-reading the top of the function, it isn't clear what the result is if the
-predicate isn't true, you have to read to the end of the function to know that
-it returns null.</p>
+<p>This code has several problems if the body of the '<tt>if</tt>' is large.
+When you're looking at the top of the function, it isn't immediately clear that
+this <em>only</em> does interesting things with non-terminator instructions, and
+only applies to things with the other predicates.  Second, it is relatively
+difficult to describe (in comments) why these predicates are important because
+the <tt>if</tt> statement makes it difficult to lay out the comments.  Third,
+when you're deep within the body of the code, it is indented an extra level.
+Finally, when reading the top of the function, it isn't clear what the result is
+if the predicate isn't true; you have to read to the end of the function to know
+that it returns null.</p>
 
 <p>It is much preferred to format the code like this:</p>
 
 <div class="doc_code">
 <pre>
 Value *DoSomething(Instruction *I) {
-  // Terminators never need 'something' done to them because, ... 
+  // Terminators never need 'something' done to them because ... 
   if (isa&lt;TerminatorInst&gt;(I))
     return 0;
 
@@ -622,14 +626,13 @@ loops.  A silly example is something like this:</p>
 </pre>
 </div>
 
-<p>When you have very very small loops, this sort of structure is fine, but if
+<p>When you have very, very small loops, this sort of structure is fine. But if
 it exceeds more than 10-15 lines, it becomes difficult for people to read and
-understand at a glance.
-The problem with this sort of code is that it gets very nested very quickly,
-meaning that the reader of the code has to keep a lot of context in their brain
-to remember what is going immediately on in the loop, because they don't know
-if/when the if conditions will have elses etc.  It is strongly preferred to
-structure the loop like this:</p>
+understand at a glance. The problem with this sort of code is that it gets very
+nested very quickly. Meaning that the reader of the code has to keep a lot of
+context in their brain to remember what is going immediately on in the loop,
+because they don't know if/when the <tt>if</tt> conditions will have elses etc.
+It is strongly preferred to structure the loop like this:</p>
 
 <div class="doc_code">
 <pre>
@@ -640,16 +643,17 @@ structure the loop like this:</p>
     Value *LHS = BO-&gt;getOperand(0);
     Value *RHS = BO-&gt;getOperand(1);
     if (LHS == RHS) continue;
+
     ...
   }
 </pre>
 </div>
 
-<p>This has all the benefits of using early exits from functions: it reduces
+<p>This has all the benefits of using early exits for functions: it reduces
 nesting of the loop, it makes it easier to describe why the conditions are true,
-and it makes it obvious to the reader that there is no <tt>else</tt> coming up that
-they have to push context into their brain for.  If a loop is large, this can
-be a big understandability win.</p>
+and it makes it obvious to the reader that there is no <tt>else</tt> coming up
+that they have to push context into their brain for.  If a loop is large, this
+can be a big understandability win.</p>
 
 </div>
 
@@ -661,10 +665,10 @@ be a big understandability win.</p>
 <div class="doc_text">
 
 <p>For similar reasons above (reduction of indentation and easier reading),
-   please do not use <tt>else</tt> or '<tt>else if</tt>' after something that interrupts
-   control flow like <tt>return</tt>, <tt>break</tt>, <tt>continue</tt>, <tt>goto</tt>, etc.  For example, this is
-   "bad":</p>
-   
+please do not use '<tt>else</tt>' or '<tt>else if</tt>' after something that
+interrupts control flow &mdash; like <tt>return</tt>, <tt>break</tt>,
+<tt>continue</tt>, <tt>goto</tt>, etc. For example, this is <em>bad</em>:</p>
+
 <div class="doc_code">
 <pre>
   case 'J': {
@@ -673,24 +677,24 @@ be a big understandability win.</p>
       if (Type.isNull()) {
         Error = ASTContext::GE_Missing_sigjmp_buf;
         return QualType();
-      } else {
+      <b>} else {
         break;
-      }
+      }</b>
     } else {
       Type = Context.getjmp_bufType();
       if (Type.isNull()) {
         Error = ASTContext::GE_Missing_jmp_buf;
         return QualType();
-      } else {
+      <b>} else {
         break;
-      }
+      }</b>
     }
   }
   }
 </pre>
 </div>
 
-<p>It is better to write this something like:</p>
+<p>It is better to write it like this:</p>
 
 <div class="doc_code">
 <pre>
@@ -708,11 +712,11 @@ be a big understandability win.</p>
         return QualType();
       }
     }
-    break;
+    <b>break;</b>
 </pre>
 </div>
 
-<p>Or better yet (in this case), as:</p>
+<p>Or better yet (in this case) as:</p>
 
 <div class="doc_code">
 <pre>
@@ -727,12 +731,12 @@ be a big understandability win.</p>
                        ASTContext::GE_Missing_jmp_buf;
       return QualType();
     }
-    break;
+    <b>break;</b>
 </pre>
 </div>
 
 <p>The idea is to reduce indentation and the amount of code you have to keep
-   track of when reading the code.</p>
+track of when reading the code.</p>
               
 </div>
 
@@ -743,9 +747,9 @@ be a big understandability win.</p>
 
 <div class="doc_text">
 
-<p>It is very common to write small loops that just compute a boolean
-   value.  There are a number of ways that people commonly write these, but an
-   example of this sort of thing is:</p>
+<p>It is very common to write small loops that just compute a boolean value.
+There are a number of ways that people commonly write these, but an example of
+this sort of thing is:</p>
    
 <div class="doc_code">
 <pre>
@@ -766,9 +770,7 @@ be a big understandability win.</p>
 Instead of this sort of loop, we strongly prefer to use a predicate function
 (which may be <a href="#micro_anonns">static</a>) that uses
 <a href="#hl_earlyexit">early exits</a> to compute the predicate.  We prefer
-the code to be structured like this:
-</p>
-
+the code to be structured like this:</p>
 
 <div class="doc_code">
 <pre>
@@ -814,47 +816,43 @@ locality.</p>
 </div>
 
 <div class="doc_text">
-<p>Poorly-chosen names can mislead the reader and cause bugs. We cannot
-stress enough how important it is to use <em>descriptive</em> names.
-Pick names that match the semantics and role of the underlying
-entities, within reason.  Avoid abbreviations unless they are well
-known.  After picking a good name, make sure to use consistent capitalization
-for the name, as inconsistency requires clients to either memorize the APIs or
-to look it up to find the exact spelling.
-</p>
+
+<p>Poorly-chosen names can mislead the reader and cause bugs. We cannot stress
+enough how important it is to use <em>descriptive</em> names.  Pick names that
+match the semantics and role of the underlying entities, within reason.  Avoid
+abbreviations unless they are well known.  After picking a good name, make sure
+to use consistent capitalization for the name, as inconsistency requires clients
+to either memorize the APIs or to look it up to find the exact spelling.</p>
 
 <p>In general, names should be in camel case (e.g. <tt>TextFileReader</tt>
-and <tt>isLValue()</tt>).  Different kinds of declarations have different rules:
-</p>
+and <tt>isLValue()</tt>).  Different kinds of declarations have different
+rules:</p>
 
 <ul>
 <li><p><b>Type names</b> (including classes, structs, enums, typedefs, etc)
   should be nouns and start with an upper-case letter (e.g.
-  <tt>TextFileReader</tt>).</p>
-</li>
+  <tt>TextFileReader</tt>).</p></li>
   
 <li><p><b>Function names</b> should be verb phrases (as they represent
     actions), and command-like function should be imperative.  The name should
     be camel case, and start with a lower case letter (e.g. <tt>openFile()</tt>
-    or <tt>isFoo()</tt>).</p>
-</li>
+    or <tt>isFoo()</tt>).</p></li>
 
-<li><p><b>Enum declarations</b> (e.g. "enum Foo {...}") are types, so they
-should follow the naming conventions for types.  A common use for enums is as a
-  discriminator for a union, or an indicator of a subclass.  When an enum is
-  used for something like this, it should have a "Kind" suffix (e.g.
-  "ValueKind").</p>
-</li>
+<li><p><b>Enum declarations</b> (e.g. <tt>enum Foo {...}</tt>) are types, so
+    they should follow the naming conventions for types.  A common use for enums
+    is as a discriminator for a union, or an indicator of a subclass.  When an
+    enum is used for something like this, it should have a <tt>Kind</tt> suffix
+    (e.g. <tt>ValueKind</tt>).</p></li>
   
-<li><p><b>Enumerators</b> (e.g. enum { Foo, Bar }) and 
-<b>public member variables</b> should start with an upper-case letter, just
-like types.   Unless the enumerators are defined in their own small
-namespace or inside a class, enumerators should have a prefix corresponding
-to the enum declaration name.  For example, <tt>enum ValueKind { ... };</tt>
-may contain enumerators like <tt>VK_Argument</tt>, <tt>VK_BasicBlock</tt>,
-etc.  Enumerators that are just convenience constants are exempt from the
-requirement for a prefix.  For instance:</p>
-  
+<li><p><b>Enumerators</b> (e.g. <tt>enum { Foo, Bar }</tt>) and <b>public member
+    variables</b> should start with an upper-case letter, just like types.
+    Unless the enumerators are defined in their own small namespace or inside a
+    class, enumerators should have a prefix corresponding to the enum
+    declaration name.  For example, <tt>enum ValueKind { ... };</tt> may contain
+    enumerators like <tt>VK_Argument</tt>, <tt>VK_BasicBlock</tt>, etc.
+    Enumerators that are just convenience constants are exempt from the
+    requirement for a prefix.  For instance:</p>
+
 <div class="doc_code">
 <pre>
 enum {
@@ -863,16 +861,16 @@ enum {
 };
 </pre>
 </div>
-
 </li>
+
 </ul>
   
+<p>As an exception, classes that mimic STL classes can have member names in
+STL's style of lower-case words separated by underscores (e.g. <tt>begin()</tt>,
+<tt>push_back()</tt>, and <tt>empty()</tt>).</p>
 
-<p>As an exception, classes that mimic STL classes can have member names
-in STL's style of lower-case words separated by underscores
-(e.g. <tt>begin()</tt>, <tt>push_back()</tt>, and <tt>empty()</tt>).</p>
+<p>Here are some examples of good and bad names:</p>
 
-<p>Here are some examples of bad and good names:</p>
 <div class="doc_code">
 <pre>
 class VehicleMaker {
@@ -884,8 +882,8 @@ class VehicleMaker {
 };
 
 Vehicle MakeVehicle(VehicleType Type) {
-  VehicleMaker M;                     // Might be OK if having a short life-span.
-  Tire tmp1 = M.makeTire();  // Bad -- 'tmp1' provides no information.
+  VehicleMaker M;                         // Might be OK if having a short life-span.
+  Tire tmp1 = M.makeTire();               // Bad -- 'tmp1' provides no information.
   Light headlight = M.makeLight("head");  // Good -- descriptive.
   ...
 }
@@ -910,7 +908,7 @@ included by the header files you are using, so it doesn't cost anything to use
 it.</p>
 
 <p>To further assist with debugging, make sure to put some kind of error message
-in the assertion statement (which is printed if the assertion is tripped). This
+in the assertion statement, which is printed if the assertion is tripped. This
 helps the poor debugger make sense of why an assertion is being made and
 enforced, and hopefully what to do about it.  Here is one complete example:</p>
 
@@ -923,7 +921,7 @@ inline Value *getOperand(unsigned i) {
 </pre>
 </div>
 
-<p>Here are some examples:</p>
+<p>Here are more examples:</p>
 
 <div class="doc_code">
 <pre>
@@ -939,9 +937,9 @@ assert(isa&lt;PHINode&gt;(Succ-&gt;front()) &amp;&amp; "Only works on PHId BBs!"
 </pre>
 </div>
 
-<p>You get the idea...</p>
+<p>You get the idea.</p>
 
-<p>Please be aware when adding assert statements that not all compilers are aware of
+<p>Please be aware that, when adding assert statements, not all compilers are aware of
 the semantics of the assert.  In some places, asserts are used to indicate a piece of
 code that should not be reached.  These are typically of the form:</p>
 
@@ -965,33 +963,33 @@ return 0;
 </div>
 
 <p>Another issue is that values used only by assertions will produce an "unused
- value" warning when assertions are disabled.  For example, this code will warn:
-</p>
+value" warning when assertions are disabled.  For example, this code will
+warn:</p>
 
 <div class="doc_code">
 <pre>
-  unsigned Size = V.size(); 
-  assert(Size &gt; 42 &amp;&amp; "Vector smaller than it should be");
+unsigned Size = V.size();
+assert(Size &gt; 42 &amp;&amp; "Vector smaller than it should be");
 
-  bool NewToSet = Myset.insert(Value);
-  assert(NewToSet &amp;&amp; "The value shouldn't be in the set yet");  
+bool NewToSet = Myset.insert(Value);
+assert(NewToSet &amp;&amp; "The value shouldn't be in the set yet");
 </pre>
 </div>
 
-<p>These are two interesting different cases: in the first case, the call to 
+<p>These are two interesting different cases. In the first case, the call to
 V.size() is only useful for the assert, and we don't want it executed when
 assertions are disabled.  Code like this should move the call into the assert
 itself.  In the second case, the side effects of the call must happen whether
-the assert is enabled or not.  In this case, the value should be cast to void
-to disable the warning.  To be specific, it is preferred to write the code
-like this:</p>
+the assert is enabled or not.  In this case, the value should be cast to void to
+disable the warning.  To be specific, it is preferred to write the code like
+this:</p>
 
 <div class="doc_code">
 <pre>
-  assert(V.size() &gt; 42 &amp;&amp; "Vector smaller than it should be");
+assert(V.size() &gt; 42 &amp;&amp; "Vector smaller than it should be");
 
-  bool NewToSet = Myset.insert(Value); (void)NewToSet;
-  assert(NewToSet &amp;&amp; "The value shouldn't be in the set yet");  
+bool NewToSet = Myset.insert(Value); (void)NewToSet;
+assert(NewToSet &amp;&amp; "The value shouldn't be in the set yet");
 </pre>
 </div>
 
@@ -1000,10 +998,11 @@ like this:</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="ll_ns_std">Do not use '<tt>using namespace std</tt>'</a>
+  <a name="ll_ns_std">Do Not Use '<tt>using namespace std</tt>'</a>
 </div>
 
 <div class="doc_text">
+
 <p>In LLVM, we prefer to explicitly prefix all identifiers from the standard
 namespace with an "<tt>std::</tt>" prefix, rather than rely on
 "<tt>using namespace std;</tt>".</p>
@@ -1015,7 +1014,7 @@ clearly a bad thing.</p>
 <p>In implementation files (e.g. <tt>.cpp</tt> files), the rule is more of a stylistic
 rule, but is still important.  Basically, using explicit namespace prefixes
 makes the code <b>clearer</b>, because it is immediately obvious what facilities
-are being used and where they are coming from, and <b>more portable</b>, because
+are being used and where they are coming from. And <b>more portable</b>, because
 namespace clashes cannot occur between LLVM code and other namespaces.  The
 portability rule is important because different standard library implementations
 expose different symbols (potentially ones they shouldn't), and future revisions
@@ -1026,7 +1025,7 @@ such, we never use '<tt>using namespace std;</tt>' in LLVM.</p>
 the <tt>std</tt> namespace) is for implementation files.  For example, all of
 the code in the LLVM project implements code that lives in the 'llvm' namespace.
 As such, it is ok, and actually clearer, for the <tt>.cpp</tt> files to have a
-'<tt>using namespace llvm</tt>' directive at their top, after the
+'<tt>using namespace llvm;</tt>' directive at the top, after the
 <tt>#include</tt>s.  This reduces indentation in the body of the file for source
 editors that indent based on braces, and keeps the conceptual context cleaner.
 The general form of this rule is that any <tt>.cpp</tt> file that implements
@@ -1037,8 +1036,8 @@ use any others.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="ll_virtual_anch">Provide a virtual method anchor for classes
-  in headers</a>
+  <a name="ll_virtual_anch">Provide a Virtual Method Anchor for Classes
+  in Headers</a>
 </div>
 
 <div class="doc_text">
@@ -1054,15 +1053,16 @@ increasing link times.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="ll_end">Don't evaluate <tt>end()</tt> every time through a loop</a>
+  <a name="ll_end">Don't valuate <tt>end()</tt> every time through a loop</a>
 </div>
 
 <div class="doc_text">
 
-<p>Because C++ doesn't have a standard "foreach" loop (though it can be emulated
-with macros and may be coming in C++'0x) we end up writing a lot of loops that
-manually iterate from begin to end on a variety of containers or through other
-data structures.  One common mistake is to write a loop in this style:</p>
+<p>Because C++ doesn't have a standard "<tt>foreach</tt>" loop (though it can be
+emulated with macros and may be coming in C++'0x) we end up writing a lot of
+loops that manually iterate from begin to end on a variety of containers or
+through other data structures.  One common mistake is to write a loop in this
+style:</p>
 
 <div class="doc_code">
 <pre>
@@ -1093,10 +1093,10 @@ behavior, please write the loop in the first form and add a comment indicating
 that you did it intentionally.</p>
 
 <p>Why do we prefer the second form (when correct)?  Writing the loop in the
-first form has two problems: First it may be less efficient than evaluating it
-at the start of the loop.  In this case, the cost is probably minor: a few extra
-loads every time through the loop.  However, if the base expression is more
-complex, then the cost can rise quickly.  I've seen loops where the end
+first form has two problems. First it may be less efficient than evaluating it
+at the start of the loop.  In this case, the cost is probably minor &mdash; a
+few extra loads every time through the loop.  However, if the base expression is
+more complex, then the cost can rise quickly.  I've seen loops where the end
 expression was actually something like: "<tt>SomeMap[x]->end()</tt>" and map
 lookups really aren't cheap.  By writing it in the second form consistently, you
 eliminate the issue entirely and don't even have to think about it.</p>
@@ -1115,7 +1115,7 @@ prefer it.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="ll_iostream"><tt>#include &lt;iostream&gt;</tt> is forbidden</a>
+  <a name="ll_iostream"><tt>#include &lt;iostream&gt;</tt> is Forbidden</a>
 </div>
 
 <div class="doc_text">
@@ -1124,12 +1124,13 @@ prefer it.</p>
 hereby <b><em>forbidden</em></b>. The primary reason for doing this is to
 support clients using LLVM libraries as part of larger systems. In particular,
 we statically link LLVM into some dynamic libraries. Even if LLVM isn't used,
-the static c'tors are run whenever an application start up that uses the dynamic
-library. There are two problems with this:</p>
+the static constructors are run whenever an application starts up that uses the
+dynamic library. There are two problems with this:</p>
 
 <ol>
-  <li>The time to run the static c'tors impacts startup time of
-      applications&mdash;a critical time for GUI apps.</li>
+  <li>The time to run the static c'tors impacts startup time of applications
+      &mdash; a critical time for GUI apps.</li>
+
   <li>The static c'tors cause the app to pull many extra pages of memory off the
       disk: both the code for the static c'tors in each <tt>.o</tt> file and the
       small amount of data that gets touched. In addition, touched/dirty pages
@@ -1137,10 +1138,10 @@ library. There are two problems with this:</p>
 </ol>
 
 <p>Note that using the other stream headers (<tt>&lt;sstream&gt;</tt> for
-example) is not problematic in this regard (just <tt>&lt;iostream&gt;</tt>).
-However, <tt>raw_ostream</tt> provides various APIs that are better performing for almost
-every use than <tt>std::ostream</tt> style APIs.
-<b>Therefore new code should always
+example) is not problematic in this regard &mdash;
+just <tt>&lt;iostream&gt;</tt>. However, <tt>raw_ostream</tt> provides various
+APIs that are better performing for almost every use than <tt>std::ostream</tt>
+style APIs. <b>Therefore new code should always
 use <a href="#ll_raw_ostream"><tt>raw_ostream</tt></a> for writing, or
 the <tt>llvm::MemoryBuffer</tt> API for reading files.</b></p>
 
@@ -1155,9 +1156,9 @@ the <tt>llvm::MemoryBuffer</tt> API for reading files.</b></p>
 <div class="doc_text">
 
 <p>LLVM includes a lightweight, simple, and efficient stream implementation
-in <tt>llvm/Support/raw_ostream.h</tt> which provides all of the common features
-of <tt>std::ostream</tt>.  All new code should use <tt>raw_ostream</tt> instead
-of <tt>ostream</tt>.</p>
+in <tt>llvm/Support/raw_ostream.h</tt>, which provides all of the common
+features of <tt>std::ostream</tt>.  All new code should use <tt>raw_ostream</tt>
+instead of <tt>ostream</tt>.</p>
 
 <p>Unlike <tt>std::ostream</tt>, <tt>raw_ostream</tt> is not a template and can
 be forward declared as <tt>class raw_ostream</tt>.  Public headers should
@@ -1174,9 +1175,9 @@ declarations and constant references to <tt>raw_ostream</tt> instances.</p>
 
 <div class="doc_text">
 
-<p>The <tt>std::endl</tt> modifier, when used with iostreams outputs a newline
-to the output stream specified.  In addition to doing this, however, it also
-flushes the output stream.  In other words, these are equivalent:</p>
+<p>The <tt>std::endl</tt> modifier, when used with <tt>iostreams</tt> outputs a
+newline to the output stream specified.  In addition to doing this, however, it
+also flushes the output stream.  In other words, these are equivalent:</p>
 
 <div class="doc_code">
 <pre>
@@ -1213,48 +1214,48 @@ macros.  For example, this is good:</p>
 
 <div class="doc_code">
 <pre>
-  <b>if (</b>x) ...
-  <b>for (</b>i = 0; i != 100; ++i) ...
-  <b>while (</b>llvm_rocks) ...
+<b>if (</b>x) ...
+<b>for (</b>i = 0; i != 100; ++i) ...
+<b>while (</b>llvm_rocks) ...
 
-  <b>somefunc(</b>42);
-  <b><a href="#ll_assert">assert</a>(</b>3 != 4 &amp;&amp; "laws of math are failing me");
+<b>somefunc(</b>42);
+<b><a href="#ll_assert">assert</a>(</b>3 != 4 &amp;&amp; "laws of math are failing me");
   
-  a = <b>foo(</b>42, 92) + <b>bar(</b>x);
-  </pre>
+a = <b>foo(</b>42, 92) + <b>bar(</b>x);
+</pre>
 </div>
 
-<p>... and this is bad:</p>
+<p>and this is bad:</p>
 
 <div class="doc_code">
 <pre>
-  <b>if(</b>x) ...
-  <b>for(</b>i = 0; i != 100; ++i) ...
-  <b>while(</b>llvm_rocks) ...
+<b>if(</b>x) ...
+<b>for(</b>i = 0; i != 100; ++i) ...
+<b>while(</b>llvm_rocks) ...
 
-  <b>somefunc (</b>42);
-  <b><a href="#ll_assert">assert</a> (</b>3 != 4 &amp;&amp; "laws of math are failing me");
+<b>somefunc (</b>42);
+<b><a href="#ll_assert">assert</a> (</b>3 != 4 &amp;&amp; "laws of math are failing me");
   
-  a = <b>foo (</b>42, 92) + <b>bar (</b>x);
+a = <b>foo (</b>42, 92) + <b>bar (</b>x);
 </pre>
 </div>
 
 <p>The reason for doing this is not completely arbitrary.  This style makes
-   control flow operators stand out more, and makes expressions flow better. The
-   function call operator binds very tightly as a postfix operator.  Putting
-   a space after a function name (as in the last example) makes it appear that
-   the code might bind the arguments of the left-hand-side of a binary operator
-   with the argument list of a function and the name of the right side.  More
-   specifically, it is easy to misread the "a" example as:</p>
+control flow operators stand out more, and makes expressions flow better. The
+function call operator binds very tightly as a postfix operator.  Putting a
+space after a function name (as in the last example) makes it appear that the
+code might bind the arguments of the left-hand-side of a binary operator with
+the argument list of a function and the name of the right side.  More
+specifically, it is easy to misread the "a" example as:</p>
    
 <div class="doc_code">
 <pre>
-  a = foo <b>(</b>(42, 92) + bar<b>)</b> (x);
+a = foo <b>(</b>(42, 92) + bar<b>)</b> (x);
 </pre>
 </div>
 
-<p>... when skimming through the code.  By avoiding a space in a function, we
-avoid this misinterpretation.</p>
+<p>when skimming through the code.  By avoiding a space in a function, we avoid
+this misinterpretation.</p>
 
 </div>
 
