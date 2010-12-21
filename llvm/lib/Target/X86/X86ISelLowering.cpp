@@ -969,6 +969,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::SRL);
   setTargetDAGCombine(ISD::OR);
   setTargetDAGCombine(ISD::AND);
+  setTargetDAGCombine(ISD::ADD);
+  setTargetDAGCombine(ISD::SUB);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ZERO_EXTEND);
   if (Subtarget->is64Bit())
@@ -11513,6 +11515,44 @@ static SDValue PerformADCCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+// fold (add Y, (sete  X, 0)) -> adc  0, Y
+//      (add Y, (setne X, 0)) -> sbb -1, Y
+//      (sub (sete  X, 0), Y) -> sbb  0, Y
+//      (sub (setne X, 0), Y) -> adc -1, Y
+static SDValue OptimizeConditonalInDecrement(SDNode *N, SelectionDAG &DAG) {
+  DebugLoc DL = N->getDebugLoc();
+  
+  // Look through ZExts.
+  SDValue Ext = N->getOperand(N->getOpcode() == ISD::SUB ? 1 : 0);
+  if (Ext.getOpcode() != ISD::ZERO_EXTEND || !Ext.hasOneUse())
+    return SDValue();
+
+  SDValue SetCC = Ext.getOperand(0);
+  if (SetCC.getOpcode() != X86ISD::SETCC || !SetCC.hasOneUse())
+    return SDValue();
+
+  X86::CondCode CC = (X86::CondCode)SetCC.getConstantOperandVal(0);
+  if (CC != X86::COND_E && CC != X86::COND_NE)
+    return SDValue();
+
+  SDValue Cmp = SetCC.getOperand(1);
+  if (Cmp.getOpcode() != X86ISD::CMP || !Cmp.hasOneUse() ||
+      !X86::isZeroNode(Cmp.getOperand(1)))
+    return SDValue();
+
+  SDValue CmpOp0 = Cmp.getOperand(0);
+  SDValue NewCmp = DAG.getNode(X86ISD::CMP, DL, MVT::i32, CmpOp0,
+                               DAG.getConstant(1, CmpOp0.getValueType()));
+
+  SDValue OtherVal = N->getOperand(N->getOpcode() == ISD::SUB ? 0 : 1);
+  if (CC == X86::COND_NE)
+    return DAG.getNode(N->getOpcode() == ISD::SUB ? X86ISD::ADC : X86ISD::SBB,
+                       DL, OtherVal.getValueType(), OtherVal,
+                       DAG.getConstant(-1ULL, OtherVal.getValueType()), NewCmp);
+  return DAG.getNode(N->getOpcode() == ISD::SUB ? X86ISD::SBB : X86ISD::ADC,
+                     DL, OtherVal.getValueType(), OtherVal,
+                     DAG.getConstant(0, OtherVal.getValueType()), NewCmp);
+}
 
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
@@ -11523,6 +11563,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
     return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
+  case ISD::ADD:
+  case ISD::SUB:            return OptimizeConditonalInDecrement(N, DAG);
   case X86ISD::ADC:         return PerformADCCombine(N, DAG, DCI);
   case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
   case ISD::SHL:
