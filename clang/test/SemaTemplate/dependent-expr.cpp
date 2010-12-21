@@ -61,3 +61,13 @@ namespace test5 {
     }
   };
 }
+
+namespace PR8795 {
+  template <class _CharT> int test(_CharT t)
+  {
+    int data [] = {
+      sizeof(_CharT) > sizeof(char)
+    };
+    return data[0];
+  }
+}

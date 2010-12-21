@@ -2527,6 +2527,9 @@ static bool HasEnumType(Expr *E) {
 
 void CheckTrivialUnsignedComparison(Sema &S, BinaryOperator *E) {
   BinaryOperatorKind op = E->getOpcode();
+  if (E->isValueDependent())
+    return;
+
   if (op == BO_LT && IsZero(S, E->getRHS())) {
     S.Diag(E->getOperatorLoc(), diag::warn_lunsigned_always_true_comparison)
       << "< 0" << "false" << HasEnumType(E->getLHS())
