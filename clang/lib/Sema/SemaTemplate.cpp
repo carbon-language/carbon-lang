@@ -3937,16 +3937,27 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
     // specialization is identical to the implicit argument list of
     // the primary template. The caller may need to diagnostic this as
     // an error per C++ [temp.class.spec]p9b3.
+    TemplateArgument MirrorArg = ArgList[I];
+    if (MirrorsPrimaryTemplate && 
+        MirrorArg.getKind() == TemplateArgument::Pack) {
+      if (MirrorArg.pack_size() == 1)
+        MirrorArg = *MirrorArg.pack_begin();
+      else
+        MirrorsPrimaryTemplate = false;
+    }
+
     if (MirrorsPrimaryTemplate) {
       if (TemplateTypeParmDecl *TTP
-            = dyn_cast<TemplateTypeParmDecl>(TemplateParams->getParam(I))) {
-        if (Context.getCanonicalType(Context.getTypeDeclType(TTP)) !=
-              Context.getCanonicalType(ArgList[I].getAsType()))
+            = dyn_cast<TemplateTypeParmDecl>(TemplateParams->getParam(I))) {        
+        if (MirrorsPrimaryTemplate &&
+            !Context.hasSameType(Context.getTypeDeclType(TTP), 
+                                 MirrorArg.getAsType()))
           MirrorsPrimaryTemplate = false;
       } else if (TemplateTemplateParmDecl *TTP
                    = dyn_cast<TemplateTemplateParmDecl>(
                                                  TemplateParams->getParam(I))) {
-        TemplateName Name = ArgList[I].getAsTemplate();
+        // FIXME: Variadic templates pack expansion/parameter pack
+        TemplateName Name = MirrorArg.getAsTemplate();
         TemplateTemplateParmDecl *ArgDecl
           = dyn_cast_or_null<TemplateTemplateParmDecl>(Name.getAsTemplateDecl());
         if (!ArgDecl ||
@@ -3964,6 +3975,7 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
 
     Expr *ArgExpr = ArgList[I].getAsExpr();
     if (!ArgExpr) {
+      // FIXME: Variadic templates pack expansion/parameter pack
       MirrorsPrimaryTemplate = false;
       continue;
     }
