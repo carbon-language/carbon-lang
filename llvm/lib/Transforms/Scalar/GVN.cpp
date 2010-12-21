@@ -637,15 +637,6 @@ void ValueTable::verifyRemoved(const Value *V) const {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  struct ValueNumberScope {
-    ValueNumberScope* parent;
-    DenseMap<uint32_t, Value*> table;
-
-    ValueNumberScope(ValueNumberScope* p) : parent(p) { }
-  };
-}
-
-namespace {
 
   class GVN : public FunctionPass {
     bool runOnFunction(Function &F);
