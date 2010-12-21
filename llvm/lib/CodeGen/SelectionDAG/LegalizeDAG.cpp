@@ -255,8 +255,11 @@ void SelectionDAGLegalize::LegalizeDAG() {
 static SDNode *FindCallEndFromCallStart(SDNode *Node, int depth = 0) {
   if (Node->getOpcode() == ISD::CALLSEQ_START)
     depth++;
-  if ((Node->getOpcode() == ISD::CALLSEQ_END) && (depth == 1))
-    return Node;
+  else if (Node->getOpcode() == ISD::CALLSEQ_END) {
+      depth--;
+      if (depth == 0)
+        return Node;
+    }
   if (Node->use_empty())
     return 0;   // No CallSeqEnd
 
