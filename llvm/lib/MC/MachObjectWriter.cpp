@@ -765,8 +765,8 @@ public:
       // Note that there is no longer any semantic difference between these two
       // relocation types from the linkers point of view, this is done solely
       // for pedantic compatibility with 'as'.
-      Type = A_SD->isExternal() ? macho::RIT_Difference :
-        macho::RIT_Generic_LocalDifference;
+      Type = A_SD->isExternal() ? (unsigned)macho::RIT_Difference :
+        (unsigned)macho::RIT_Generic_LocalDifference;
       Value2 = getSymbolAddress(B_SD, Layout);
       FixedValue -= getSectionAddress(B_SD->getFragment()->getParent());
     }
