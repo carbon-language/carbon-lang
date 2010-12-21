@@ -491,7 +491,7 @@ static Value *SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     return Constant::getAllOnesValue(Op0->getType());
 
   /// i1 add -> xor.
-  if (!MaxRecurse && Op0->getType()->isIntegerTy(1))
+  if (MaxRecurse && Op0->getType()->isIntegerTy(1))
     return SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1);
 
   // Try some generic simplifications for associative operations.
@@ -554,7 +554,7 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     return X;
 
   /// i1 sub -> xor.
-  if (!MaxRecurse && Op0->getType()->isIntegerTy(1))
+  if (MaxRecurse && Op0->getType()->isIntegerTy(1))
     return SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1);
 
   // Mul distributes over Sub.  Try some generic simplifications based on this.
@@ -607,7 +607,7 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Op0;
 
   /// i1 mul -> and.
-  if (!MaxRecurse && Op0->getType()->isIntegerTy(1))
+  if (MaxRecurse && Op0->getType()->isIntegerTy(1))
     return SimplifyAndInst(Op0, Op1, TD, DT, MaxRecurse-1);
 
   // Try some generic simplifications for associative operations.
