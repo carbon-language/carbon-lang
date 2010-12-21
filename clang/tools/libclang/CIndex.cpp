@@ -410,7 +410,20 @@ CursorVisitor::getPreprocessedEntities() {
     = *AU->getPreprocessor().getPreprocessingRecord();
   
   bool OnlyLocalDecls
-    = !AU->isMainFileAST() && AU->getOnlyLocalDecls();
+    = !AU->isMainFileAST() && AU->getOnlyLocalDecls(); 
+  
+  if (OnlyLocalDecls && RegionOfInterest.isValid()) {
+    // If we would only look at local declarations but we have a region of 
+    // interest, check whether that region of interest is in the main file.
+    // If not, we should traverse all declarations.
+    // FIXME: My kingdom for a proper binary search approach to finding
+    // cursors!
+    std::pair<FileID, unsigned> Location
+      = AU->getSourceManager().getDecomposedInstantiationLoc(
+                                                   RegionOfInterest.getBegin());
+    if (Location.first != AU->getSourceManager().getMainFileID())
+      OnlyLocalDecls = false;
+  }
   
   PreprocessingRecord::iterator StartEntity, EndEntity;
   if (OnlyLocalDecls) {
