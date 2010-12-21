@@ -656,7 +656,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                 *this, dl);
     }
 
-    MI.setDesc(TII.get(ARM::tLDRr));
+    MI.setDesc(TII.get(UseRR ? ARM::tLDRr : ARM::tLDRi));
     MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
     if (UseRR)
       // Use [reg, reg] addrmode.
@@ -676,7 +676,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       } else
         emitThumbRegPlusImmediate(MBB, II, VReg, FrameReg, Offset, TII,
                                   *this, dl);
-      MI.setDesc(TII.get(ARM::tSTRr));
+      MI.setDesc(TII.get(UseRR ? ARM::tSTRr : ARM::tSTRi));
       MI.getOperand(i).ChangeToRegister(VReg, false, false, true);
       if (UseRR)  // Use [reg, reg] addrmode.
         MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
