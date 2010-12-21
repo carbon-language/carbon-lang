@@ -14,16 +14,16 @@ class EventAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-    def test_with_dsym(self):
-        """Exercise SBEvent APIs."""
+    def test_wait_for_event_with_dsym(self):
+        """Exercise SBListener.WaitForEvent() APIs."""
         self.buildDsym()
-        self.do_events()
+        self.do_wait_for_event()
 
     @python_api_test
-    def test_with_dwarf(self):
-        """Exercise SBEvent APIs."""
+    def test_wait_for_event_with_dwarf(self):
+        """Exercise SBListener.WaitForEvent() APIs."""
         self.buildDwarf()
-        self.do_events()
+        self.do_wait_for_event()
 
     def setUp(self):
         # Call super's setUp().
@@ -31,8 +31,8 @@ class EventAPITestCase(TestBase):
         # Find the line number to of function 'c'.
         self.line = line_number('main.c', '// Find the line number of function "c" here.')
 
-    def do_events(self):
-        """Get the listener associated with the debugger and exercise some event APIs."""
+    def do_wait_for_event(self):
+        """Get the listener associated with the debugger and exercise WaitForEvent API."""
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
