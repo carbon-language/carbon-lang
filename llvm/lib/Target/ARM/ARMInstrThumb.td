@@ -543,7 +543,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 
   def tBR_JTr : tPseudoInst<(outs),
                       (ins tGPR:$target, i32imm:$jt, i32imm:$id),
-                      Size2Bytes, IIC_Br,
+                      SizeSpecial, IIC_Br,
                       [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]> {
     list<Predicate> Predicates = [IsThumb, IsThumb1Only];
   }
