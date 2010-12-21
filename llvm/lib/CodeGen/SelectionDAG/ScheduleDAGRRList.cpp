@@ -401,7 +401,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   bool TryUnfold = false;
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
     EVT VT = N->getValueType(i);
-    if (VT == MVT::Flag)
+    if (VT == MVT::Glue)
       return NULL;
     else if (VT == MVT::Other)
       TryUnfold = true;
@@ -409,7 +409,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDValue &Op = N->getOperand(i);
     EVT VT = Op.getNode()->getValueType(Op.getResNo());
-    if (VT == MVT::Flag)
+    if (VT == MVT::Glue)
       return NULL;
   }
 
@@ -671,7 +671,7 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
     if (Node->getOpcode() == ISD::INLINEASM) {
       // Inline asm can clobber physical defs.
       unsigned NumOps = Node->getNumOperands();
-      if (Node->getOperand(NumOps-1).getValueType() == MVT::Flag)
+      if (Node->getOperand(NumOps-1).getValueType() == MVT::Glue)
         --NumOps;  // Ignore the flag operand.
 
       for (unsigned i = InlineAsm::Op_FirstOperand; i != NumOps;) {
@@ -1410,7 +1410,7 @@ namespace {
         unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
         for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
           EVT VT = N->getValueType(i);
-          if (VT == MVT::Flag || VT == MVT::Other)
+          if (VT == MVT::Glue || VT == MVT::Other)
             continue;
           if (!N->hasAnyUseOfValue(i))
             continue;
@@ -1724,7 +1724,7 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
       return false;
     for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
       EVT VT = N->getValueType(i);
-      if (VT == MVT::Flag || VT == MVT::Other)
+      if (VT == MVT::Glue || VT == MVT::Other)
         continue;
       if (!N->hasAnyUseOfValue(i))
         continue;

@@ -256,7 +256,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SREM, VT, Expand);
     setOperationAction(ISD::UREM, VT, Expand);
     
-    // Add/Sub overflow ops with MVT::Flags are lowered to EFLAGS dependences.
+    // Add/Sub overflow ops with MVT::Glues are lowered to EFLAGS dependences.
     setOperationAction(ISD::ADDC, VT, Custom);
     setOperationAction(ISD::ADDE, VT, Custom);
     setOperationAction(ISD::SUBC, VT, Custom);
@@ -1400,7 +1400,7 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
       if (CopyVT == MVT::f64) Opc = isST0 ? X86::FpGET_ST0_64:X86::FpGET_ST1_64;
       if (CopyVT == MVT::f80) Opc = isST0 ? X86::FpGET_ST0_80:X86::FpGET_ST1_80;
       SDValue Ops[] = { Chain, InFlag };
-      Chain = SDValue(DAG.getMachineNode(Opc, dl, CopyVT, MVT::Other, MVT::Flag,
+      Chain = SDValue(DAG.getMachineNode(Opc, dl, CopyVT, MVT::Other, MVT::Glue,
                                          Ops, 2), 1);
       Val = Chain.getValue(0);
 
@@ -2177,7 +2177,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   }
 
   // Returns a chain & a flag for retval copy to use.
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   SmallVector<SDValue, 8> Ops;
 
   if (!IsSibcall && isTailCall) {
@@ -6034,7 +6034,7 @@ GetTLSADDR(SelectionDAG &DAG, SDValue Chain, GlobalAddressSDNode *GA,
            SDValue *InFlag, const EVT PtrVT, unsigned ReturnReg,
            unsigned char OperandFlags) {
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   DebugLoc dl = GA->getDebugLoc();
   SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(), dl,
                                            GA->getValueType(0),
@@ -6183,7 +6183,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     // Lowering the machine isd will make sure everything is in the right
     // location.
     SDValue Chain = DAG.getEntryNode();
-    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
     SDValue Args[] = { Chain, Offset };
     Chain = DAG.getNode(X86ISD::TLSCALL, DL, NodeTys, Args, 2);
 
@@ -6290,7 +6290,7 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
   SDVTList Tys;
   bool useSSE = isScalarFPTypeInSSEReg(Op.getValueType());
   if (useSSE)
-    Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
+    Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Glue);
   else
     Tys = DAG.getVTList(Op.getValueType(), MVT::Other);
 
@@ -7313,7 +7313,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   // X86ISD::CMOV means set the result (which is operand 1) to the RHS if
   // condition is true.
-  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
   SDValue Ops[] = { Op2, Op1, CC, Cond };
   return DAG.getNode(X86ISD::CMOV, DL, VTs, Ops, array_lengthof(Ops));
 }
@@ -7514,7 +7514,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   Chain = DAG.getCopyToReg(Chain, dl, X86::EAX, Size, Flag);
   Flag = Chain.getValue(1);
 
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
 
   Chain = DAG.getNode(X86ISD::WIN_ALLOCA, dl, NodeTys, Chain, Flag);
   Flag = Chain.getValue(1);
@@ -8569,7 +8569,7 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) const {
                     Op.getOperand(3),
                     DAG.getTargetConstant(size, MVT::i8),
                     cpIn.getValue(1) };
-  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
   MachineMemOperand *MMO = cast<AtomicSDNode>(Op)->getMemOperand();
   SDValue Result = DAG.getMemIntrinsicNode(X86ISD::LCMPXCHG_DAG, DL, Tys,
                                            Ops, 5, T, MMO);
@@ -8581,7 +8581,7 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) const {
 SDValue X86TargetLowering::LowerREADCYCLECOUNTER(SDValue Op,
                                                  SelectionDAG &DAG) const {
   assert(Subtarget->is64Bit() && "Result not type legalized?");
-  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
   SDValue TheChain = Op.getOperand(0);
   DebugLoc dl = Op.getDebugLoc();
   SDValue rd = DAG.getNode(X86ISD::RDTSC_DAG, dl, Tys, &TheChain, 1);
@@ -8775,7 +8775,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   case ISD::READCYCLECOUNTER: {
-    SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+    SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
     SDValue TheChain = N->getOperand(0);
     SDValue rd = DAG.getNode(X86ISD::RDTSC_DAG, dl, Tys, &TheChain, 1);
     SDValue eax = DAG.getCopyFromReg(rd, dl, X86::EAX, MVT::i32,
@@ -8811,7 +8811,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     SDValue Ops[] = { swapInH.getValue(0),
                       N->getOperand(1),
                       swapInH.getValue(1) };
-    SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+    SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
     MachineMemOperand *MMO = cast<AtomicSDNode>(N)->getMemOperand();
     SDValue Result = DAG.getMemIntrinsicNode(X86ISD::LCMPXCHG8_DAG, dl, Tys,
                                              Ops, 3, T, MMO);

@@ -349,7 +349,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
       SDNode *AddCarry = CurDAG->getMachineNode(Mips::ADDu, dl, VT, 
                                                 SDValue(Carry,0), RHS);
 
-      return CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Flag,
+      return CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Glue,
                                   LHS, SDValue(AddCarry,0));
     }
 
@@ -367,11 +367,11 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
       else
         Op = (Opcode == ISD::UDIVREM ? Mips::DIVu : Mips::DIV);
 
-      SDNode *MulDiv = CurDAG->getMachineNode(Op, dl, MVT::Flag, Op1, Op2);
+      SDNode *MulDiv = CurDAG->getMachineNode(Op, dl, MVT::Glue, Op1, Op2);
 
       SDValue InFlag = SDValue(MulDiv, 0);
       SDNode *Lo = CurDAG->getMachineNode(Mips::MFLO, dl, MVT::i32, 
-                                          MVT::Flag, InFlag);
+                                          MVT::Glue, InFlag);
       InFlag = SDValue(Lo,1);
       SDNode *Hi = CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
 
@@ -395,7 +395,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
 
       unsigned MulOp  = (Opcode == ISD::MULHU ? Mips::MULTu : Mips::MULT);
       SDNode *MulNode = CurDAG->getMachineNode(MulOp, dl, 
-                                               MVT::Flag, MulOp1, MulOp2);
+                                               MVT::Glue, MulOp1, MulOp2);
 
       SDValue InFlag = SDValue(MulNode, 0);
 
@@ -421,7 +421,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
         Op  = (Opcode == ISD::SREM ? Mips::DIV : Mips::DIVu);
         MOp = Mips::MFHI;
       }
-      SDNode *Node = CurDAG->getMachineNode(Op, dl, MVT::Flag, Op1, Op2);
+      SDNode *Node = CurDAG->getMachineNode(Op, dl, MVT::Glue, Op1, Op2);
 
       SDValue InFlag = SDValue(Node, 0);
       return CurDAG->getMachineNode(MOp, dl, MVT::i32, InFlag);
@@ -474,7 +474,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
         SDValue InFlag;
 
         // Skip the incomming flag if present
-        if (Node->getOperand(LastOpNum).getValueType() == MVT::Flag)
+        if (Node->getOperand(LastOpNum).getValueType() == MVT::Glue)
           LastOpNum--;
 
         if ( (isa<GlobalAddressSDNode>(Callee)) ||
@@ -496,7 +496,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
           Chain = CurDAG->getCopyToReg(Chain, dl, Mips::T9, Callee, InFlag);
 
         // Map the JmpLink operands to JALR
-        SDVTList NodeTys = CurDAG->getVTList(MVT::Other, MVT::Flag);
+        SDVTList NodeTys = CurDAG->getVTList(MVT::Other, MVT::Glue);
         SmallVector<SDValue, 8> Ops;
         Ops.push_back(CurDAG->getRegister(Mips::T9, MVT::i32));
 

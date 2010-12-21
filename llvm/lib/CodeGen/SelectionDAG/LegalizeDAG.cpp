@@ -1085,7 +1085,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // Do not try to legalize the target-specific arguments (#1+), except for
     // an optional flag input.
-    if (Node->getOperand(Node->getNumOperands()-1).getValueType() != MVT::Flag){
+    if (Node->getOperand(Node->getNumOperands()-1).getValueType() != MVT::Glue){
       if (Tmp1 != Node->getOperand(0)) {
         SmallVector<SDValue, 8> Ops(Node->op_begin(), Node->op_end());
         Ops[0] = Tmp1;

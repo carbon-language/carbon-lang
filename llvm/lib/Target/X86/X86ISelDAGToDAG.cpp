@@ -1675,14 +1675,14 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
                         InFlag };
       SDNode *CNode =
-        CurDAG->getMachineNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
+        CurDAG->getMachineNode(MOpc, dl, MVT::Other, MVT::Glue, Ops,
                                array_lengthof(Ops));
       InFlag = SDValue(CNode, 1);
 
       // Update the chain.
       ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
     } else {
-      SDNode *CNode = CurDAG->getMachineNode(Opc, dl, MVT::Flag, N1, InFlag);
+      SDNode *CNode = CurDAG->getMachineNode(Opc, dl, MVT::Glue, N1, InFlag);
       InFlag = SDValue(CNode, 0);
     }
 
@@ -1807,7 +1807,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       if (isSigned && !signBitIsZero) {
         // Sign extend the low part into the high part.
         InFlag =
-          SDValue(CurDAG->getMachineNode(SExtOpcode, dl, MVT::Flag, InFlag),0);
+          SDValue(CurDAG->getMachineNode(SExtOpcode, dl, MVT::Glue, InFlag),0);
       } else {
         // Zero out the high part, effectively zero extending the input.
         SDValue ClrNode =
@@ -1821,14 +1821,14 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
                         InFlag };
       SDNode *CNode =
-        CurDAG->getMachineNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
+        CurDAG->getMachineNode(MOpc, dl, MVT::Other, MVT::Glue, Ops,
                                array_lengthof(Ops));
       InFlag = SDValue(CNode, 1);
       // Update the chain.
       ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
     } else {
       InFlag =
-        SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Flag, N1, InFlag), 0);
+        SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Glue, N1, InFlag), 0);
     }
 
     // Prevent use of AH in a REX instruction by referencing AX instead.

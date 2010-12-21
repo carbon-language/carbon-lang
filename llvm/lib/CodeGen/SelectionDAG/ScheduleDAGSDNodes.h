@@ -26,7 +26,7 @@ namespace llvm {
   /// SDNodes such as Constants, Registers, and a few others that are not
   /// interesting to schedulers are not allocated SUnits.
   ///
-  /// SDNodes with MVT::Flag operands are grouped along with the flagged
+  /// SDNodes with MVT::Glue operands are grouped along with the flagged
   /// nodes into a single SUnit so that they are scheduled together.
   ///
   /// SDNode-based scheduling graphs do not use SDep::Anti or SDep::Output

@@ -79,7 +79,7 @@ namespace llvm {
 
       x86mmx         =  33,   // This is an X86 MMX value
 
-      Flag           =  34,   // This glues nodes together during pre-RA sched
+      Glue           =  34,   // This glues nodes together during pre-RA sched
 
       isVoid         =  35,   // This has no value
 

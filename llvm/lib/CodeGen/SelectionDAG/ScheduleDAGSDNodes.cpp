@@ -118,13 +118,13 @@ static void AddFlags(SDNode *N, SDValue Flag, bool AddFlag,
   if (FlagDestNode == N) return;
 
   // Don't add a flag to something which already has a flag.
-  if (N->getValueType(N->getNumValues() - 1) == MVT::Flag) return;
+  if (N->getValueType(N->getNumValues() - 1) == MVT::Glue) return;
 
   for (unsigned I = 0, E = N->getNumValues(); I != E; ++I)
     VTs.push_back(N->getValueType(I));
 
   if (AddFlag)
-    VTs.push_back(MVT::Flag);
+    VTs.push_back(MVT::Glue);
 
   SmallVector<SDValue, 4> Ops;
   for (unsigned I = 0, E = N->getNumOperands(); I != E; ++I)
@@ -152,7 +152,7 @@ static void AddFlags(SDNode *N, SDValue Flag, bool AddFlag,
 
 /// ClusterNeighboringLoads - Force nearby loads together by "flagging" them.
 /// This function finds loads of the same base and different offsets. If the
-/// offsets are not far apart (target specific), it add MVT::Flag inputs and
+/// offsets are not far apart (target specific), it add MVT::Glue inputs and
 /// outputs to ensure they are scheduled together and in order. This
 /// optimization may benefit some targets by improving cache locality.
 void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
@@ -214,7 +214,7 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
   if (NumLoads == 0)
     return;
 
-  // Cluster loads by adding MVT::Flag outputs and inputs. This also
+  // Cluster loads by adding MVT::Glue outputs and inputs. This also
   // ensure they are scheduled in order of increasing addresses.
   SDNode *Lead = Loads[0];
   AddFlags(Lead, SDValue(0, 0), true, DAG);
@@ -297,7 +297,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     // Scan up to find flagged preds.
     SDNode *N = NI;
     while (N->getNumOperands() &&
-           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag) {
+           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Glue) {
       N = N->getOperand(N->getNumOperands()-1).getNode();
       assert(N->getNodeId() == -1 && "Node already inserted!");
       N->setNodeId(NodeSUnit->NodeNum);
@@ -307,7 +307,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     
     // Scan down to find any flagged succs.
     N = NI;
-    while (N->getValueType(N->getNumValues()-1) == MVT::Flag) {
+    while (N->getValueType(N->getNumValues()-1) == MVT::Glue) {
       SDValue FlagVal(N, N->getNumValues()-1);
       
       // There are either zero or one users of the Flag result.
@@ -382,7 +382,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         if (OpSU == SU) continue;           // In the same group.
 
         EVT OpVT = N->getOperand(i).getValueType();
-        assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
+        assert(OpVT != MVT::Glue && "Flagged nodes should be in same sunit!");
         bool isChain = OpVT == MVT::Other;
 
         unsigned PhysReg = 0;

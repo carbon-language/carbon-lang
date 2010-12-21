@@ -1075,7 +1075,7 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
                TLI.isOperationLegalOrCustom(ISD::ADDC,
                               TLI.getTypeToExpandTo(*DAG.getContext(), NVT))) {
       // Emit this X << 1 as X+X.
-      SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
+      SDVTList VTList = DAG.getVTList(NVT, MVT::Glue);
       SDValue LoOps[2] = { InL, InL };
       Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps, 2);
       SDValue HiOps[3] = { InH, InH, Lo.getValue(1) };
@@ -1310,7 +1310,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
   // Do not generate ADDC/ADDE or SUBC/SUBE if the target does not support
   // them.  TODO: Teach operation legalization how to expand unsupported
   // ADDC/ADDE/SUBC/SUBE.  The problem is that these operations generate
-  // a carry of type MVT::Flag, but there doesn't seem to be any way to
+  // a carry of type MVT::Glue, but there doesn't seem to be any way to
   // generate a value of this type in the expanded code sequence.
   bool hasCarry =
     TLI.isOperationLegalOrCustom(N->getOpcode() == ISD::ADD ?
@@ -1318,7 +1318,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
                                  TLI.getTypeToExpandTo(*DAG.getContext(), NVT));
 
   if (hasCarry) {
-    SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
+    SDVTList VTList = DAG.getVTList(NVT, MVT::Glue);
     if (N->getOpcode() == ISD::ADD) {
       Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps, 2);
       HiOps[2] = Lo.getValue(1);
@@ -1364,7 +1364,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBC(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
   GetExpandedInteger(N->getOperand(0), LHSL, LHSH);
   GetExpandedInteger(N->getOperand(1), RHSL, RHSH);
-  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
+  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Glue);
   SDValue LoOps[2] = { LHSL, RHSL };
   SDValue HiOps[3] = { LHSH, RHSH };
 
@@ -1390,7 +1390,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBE(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
   GetExpandedInteger(N->getOperand(0), LHSL, LHSH);
   GetExpandedInteger(N->getOperand(1), RHSL, RHSH);
-  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
+  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Glue);
   SDValue LoOps[3] = { LHSL, RHSL, N->getOperand(2) };
   SDValue HiOps[3] = { LHSH, RHSH };
 

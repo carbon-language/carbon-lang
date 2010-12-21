@@ -5922,7 +5922,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
   if (Flag.getNode()) AsmNodeOperands.push_back(Flag);
 
   Chain = DAG.getNode(ISD::INLINEASM, getCurDebugLoc(),
-                      DAG.getVTList(MVT::Other, MVT::Flag),
+                      DAG.getVTList(MVT::Other, MVT::Glue),
                       &AsmNodeOperands[0], AsmNodeOperands.size());
   Flag = Chain.getValue(1);
 

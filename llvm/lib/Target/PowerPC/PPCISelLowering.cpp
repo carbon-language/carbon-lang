@@ -2427,7 +2427,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  NodeTys.push_back(MVT::Glue);    // Returns a flag for retval copy to use.
 
   unsigned CallOpc = isSVR4ABI ? PPCISD::CALL_SVR4 : PPCISD::CALL_Darwin;
 
@@ -2514,7 +2514,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
 
       // Load the address of the function entry point from the function
       // descriptor.
-      SDVTList VTs = DAG.getVTList(MVT::i64, MVT::Other, MVT::Flag);
+      SDVTList VTs = DAG.getVTList(MVT::i64, MVT::Other, MVT::Glue);
       SDValue LoadFuncPtr = DAG.getNode(PPCISD::LOAD, dl, VTs, MTCTROps,
                                         InFlag.getNode() ? 3 : 2);
       Chain = LoadFuncPtr.getValue(1);
@@ -2541,7 +2541,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
       // prevents the register allocator from allocating it), resulting in an
       // additional register being allocated and an unnecessary move instruction
       // being generated.
-      VTs = DAG.getVTList(MVT::Other, MVT::Flag);
+      VTs = DAG.getVTList(MVT::Other, MVT::Glue);
       SDValue LoadTOCPtr = DAG.getNode(PPCISD::LOAD_TOC, dl, VTs, Chain,
                                        Callee, InFlag);
       Chain = LoadTOCPtr.getValue(0);
@@ -2558,7 +2558,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
 
     NodeTys.clear();
     NodeTys.push_back(MVT::Other);
-    NodeTys.push_back(MVT::Flag);
+    NodeTys.push_back(MVT::Glue);
     Ops.push_back(Chain);
     CallOpc = isSVR4ABI ? PPCISD::BCTRL_SVR4 : PPCISD::BCTRL_Darwin;
     Callee.setNode(0);
@@ -2672,7 +2672,7 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
   // stack frame. If caller and callee belong to the same module (and have the
   // same TOC), the NOP will remain unchanged.
   if (!isTailCall && PPCSubTarget.isSVR4ABI()&& PPCSubTarget.isPPC64()) {
-    SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Flag);
+    SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
     if (CallOpc == PPCISD::BCTRL_SVR4) {
       // This is a call through a function pointer.
       // Restore the caller TOC from the save area into R2.
@@ -2687,7 +2687,7 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
       InFlag = Chain.getValue(1);
     } else {
       // Otherwise insert NOP.
-      InFlag = DAG.getNode(PPCISD::NOP, dl, MVT::Flag, InFlag);
+      InFlag = DAG.getNode(PPCISD::NOP, dl, MVT::Glue, InFlag);
     }
   }
 
@@ -3627,7 +3627,7 @@ SDValue PPCTargetLowering::LowerFLT_ROUNDS_(SDValue Op,
 
   // Save FP Control Word to register
   NodeTys.push_back(MVT::f64);    // return register
-  NodeTys.push_back(MVT::Flag);   // unused in this context
+  NodeTys.push_back(MVT::Glue);   // unused in this context
   SDValue Chain = DAG.getNode(PPCISD::MFFS, dl, NodeTys, &InFlag, 0);
 
   // Save FP register to stack slot
@@ -4254,7 +4254,7 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   };
   std::vector<EVT> VTs;
   VTs.push_back(Op.getOperand(2).getValueType());
-  VTs.push_back(MVT::Flag);
+  VTs.push_back(MVT::Glue);
   SDValue CompNode = DAG.getNode(PPCISD::VCMPo, dl, VTs, Ops, 3);
 
   // Now that we have the comparison, emit a copy from the CR to a GPR.
@@ -4446,20 +4446,20 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
     SDValue Ops[4], Result, MFFSreg, InFlag, FPreg;
 
     NodeTys.push_back(MVT::f64);   // Return register
-    NodeTys.push_back(MVT::Flag);    // Returns a flag for later insns
+    NodeTys.push_back(MVT::Glue);    // Returns a flag for later insns
     Result = DAG.getNode(PPCISD::MFFS, dl, NodeTys, &InFlag, 0);
     MFFSreg = Result.getValue(0);
     InFlag = Result.getValue(1);
 
     NodeTys.clear();
-    NodeTys.push_back(MVT::Flag);   // Returns a flag
+    NodeTys.push_back(MVT::Glue);   // Returns a flag
     Ops[0] = DAG.getConstant(31, MVT::i32);
     Ops[1] = InFlag;
     Result = DAG.getNode(PPCISD::MTFSB1, dl, NodeTys, Ops, 2);
     InFlag = Result.getValue(0);
 
     NodeTys.clear();
-    NodeTys.push_back(MVT::Flag);   // Returns a flag
+    NodeTys.push_back(MVT::Glue);   // Returns a flag
     Ops[0] = DAG.getConstant(30, MVT::i32);
     Ops[1] = InFlag;
     Result = DAG.getNode(PPCISD::MTFSB0, dl, NodeTys, Ops, 2);
@@ -4467,7 +4467,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
 
     NodeTys.clear();
     NodeTys.push_back(MVT::f64);    // result of add
-    NodeTys.push_back(MVT::Flag);   // Returns a flag
+    NodeTys.push_back(MVT::Glue);   // Returns a flag
     Ops[0] = Lo;
     Ops[1] = Hi;
     Ops[2] = InFlag;
@@ -5273,7 +5273,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         DAG.getConstant(CompareOpc, MVT::i32)
       };
       VTs.push_back(LHS.getOperand(2).getValueType());
-      VTs.push_back(MVT::Flag);
+      VTs.push_back(MVT::Glue);
       SDValue CompNode = DAG.getNode(PPCISD::VCMPo, dl, VTs, Ops, 3);
 
       // Unpack the result based on how the target uses it.

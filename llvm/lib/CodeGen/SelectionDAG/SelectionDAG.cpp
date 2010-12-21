@@ -491,7 +491,7 @@ encodeMemSDNodeFlags(int ConvType, ISD::MemIndexedMode AM, bool isVolatile,
 
 /// doNotCSE - Return true if CSE should not be performed for this node.
 static bool doNotCSE(SDNode *N) {
-  if (N->getValueType(0) == MVT::Flag)
+  if (N->getValueType(0) == MVT::Glue)
     return true; // Never CSE anything that produces a flag.
 
   switch (N->getOpcode()) {
@@ -503,7 +503,7 @@ static bool doNotCSE(SDNode *N) {
 
   // Check that remaining values produced are not flags.
   for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
-    if (N->getValueType(i) == MVT::Flag)
+    if (N->getValueType(i) == MVT::Glue)
       return true; // Never CSE anything that produces a flag.
 
   return false;
@@ -649,7 +649,7 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   // Verify that the node was actually in one of the CSE maps, unless it has a
   // flag result (which cannot be CSE'd) or is one of the special cases that are
   // not subject to CSE.
-  if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
+  if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Glue &&
       !N->isMachineOpcode() && !doNotCSE(N)) {
     N->dump(this);
     dbgs() << "\n";
@@ -2564,7 +2564,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
 
   SDNode *N;
   SDVTList VTs = getVTList(VT);
-  if (VT != MVT::Flag) { // Don't CSE flag producing nodes
+  if (VT != MVT::Glue) { // Don't CSE flag producing nodes
     FoldingSetNodeID ID;
     SDValue Ops[1] = { Operand };
     AddNodeIDNode(ID, Opcode, VTs, Ops, 1);
@@ -3006,7 +3006,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   // Memoize this node if possible.
   SDNode *N;
   SDVTList VTs = getVTList(VT);
-  if (VT != MVT::Flag) {
+  if (VT != MVT::Glue) {
     SDValue Ops[] = { N1, N2 };
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTs, Ops, 2);
@@ -3074,7 +3074,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   // Memoize node if it doesn't produce a flag.
   SDNode *N;
   SDVTList VTs = getVTList(VT);
-  if (VT != MVT::Flag) {
+  if (VT != MVT::Glue) {
     SDValue Ops[] = { N1, N2, N3 };
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
@@ -3882,7 +3882,7 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
 
   // Memoize the node unless it returns a flag.
   MemIntrinsicSDNode *N;
-  if (VTList.VTs[VTList.NumVTs-1] != MVT::Flag) {
+  if (VTList.VTs[VTList.NumVTs-1] != MVT::Glue) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
     void *IP = 0;
@@ -4238,7 +4238,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   SDNode *N;
   SDVTList VTs = getVTList(VT);
 
-  if (VT != MVT::Flag) {
+  if (VT != MVT::Glue) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTs, Ops, NumOps);
     void *IP = 0;
@@ -4304,7 +4304,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
 
   // Memoize the node unless it returns a flag.
   SDNode *N;
-  if (VTList.VTs[VTList.NumVTs-1] != MVT::Flag) {
+  if (VTList.VTs[VTList.NumVTs-1] != MVT::Glue) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
     void *IP = 0;
@@ -4713,7 +4713,7 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
                                   unsigned NumOps) {
   // If an identical node already exists, use it.
   void *IP = 0;
-  if (VTs.VTs[VTs.NumVTs-1] != MVT::Flag) {
+  if (VTs.VTs[VTs.NumVTs-1] != MVT::Glue) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opc, VTs, Ops, NumOps);
     if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -4913,7 +4913,7 @@ SelectionDAG::getMachineNode(unsigned Opcode, DebugLoc dl,
 MachineSDNode *
 SelectionDAG::getMachineNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
                              const SDValue *Ops, unsigned NumOps) {
-  bool DoCSE = VTs.VTs[VTs.NumVTs-1] != MVT::Flag;
+  bool DoCSE = VTs.VTs[VTs.NumVTs-1] != MVT::Glue;
   MachineSDNode *N;
   void *IP;
 
@@ -4975,7 +4975,7 @@ SelectionDAG::getTargetInsertSubreg(int SRIdx, DebugLoc DL, EVT VT,
 /// else return NULL.
 SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
                                       const SDValue *Ops, unsigned NumOps) {
-  if (VTList.VTs[VTList.NumVTs-1] != MVT::Flag) {
+  if (VTList.VTs[VTList.NumVTs-1] != MVT::Glue) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
     void *IP = 0;

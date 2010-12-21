@@ -136,7 +136,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                             Dst, InFlag);
   InFlag = Chain.getValue(1);
 
-  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
   SDValue Ops[] = { Chain, DAG.getValueType(AVT), InFlag };
   Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops, array_lengthof(Ops));
 
@@ -150,7 +150,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                                                              X86::ECX,
                               Left, InFlag);
     InFlag = Chain.getValue(1);
-    Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+    Tys = DAG.getVTList(MVT::Other, MVT::Glue);
     SDValue Ops[] = { Chain, DAG.getValueType(MVT::i8), InFlag };
     Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops, array_lengthof(Ops));
   } else if (BytesLeft) {
@@ -230,7 +230,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                             Src, InFlag);
   InFlag = Chain.getValue(1);
 
-  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
   SDValue Ops[] = { Chain, DAG.getValueType(AVT), InFlag };
   SDValue RepMovs = DAG.getNode(X86ISD::REP_MOVS, dl, Tys, Ops,
                                 array_lengthof(Ops));

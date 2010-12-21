@@ -2379,7 +2379,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
                                MVT::i32);
     SDValue Ops[] = { N1, Tmp2, N3, Chain, InFlag };
     SDNode *ResNode = CurDAG->getMachineNode(Opc, dl, MVT::Other,
-                                             MVT::Flag, Ops, 5);
+                                             MVT::Glue, Ops, 5);
     Chain = SDValue(ResNode, 0);
     if (N->getNumValues() == 2) {
       InFlag = SDValue(ResNode, 1);

@@ -787,7 +787,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   
   // The non-chain and non-flag results of the newly emitted node get recorded.
   for (unsigned i = 0, e = ResultVTs.size(); i != e; ++i) {
-    if (ResultVTs[i] == MVT::Other || ResultVTs[i] == MVT::Flag) break;
+    if (ResultVTs[i] == MVT::Other || ResultVTs[i] == MVT::Glue) break;
     OutputOps.push_back(NextRecordedOperandNo++);
   }
 }

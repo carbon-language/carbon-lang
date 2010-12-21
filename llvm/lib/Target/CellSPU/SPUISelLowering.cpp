@@ -1423,7 +1423,7 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (InFlag.getNode())
     Ops.push_back(InFlag);
   // Returns a chain and a flag for retval copy to use.
-  Chain = DAG.getNode(CallOpc, dl, DAG.getVTList(MVT::Other, MVT::Flag),
+  Chain = DAG.getNode(CallOpc, dl, DAG.getVTList(MVT::Other, MVT::Glue),
                       &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 

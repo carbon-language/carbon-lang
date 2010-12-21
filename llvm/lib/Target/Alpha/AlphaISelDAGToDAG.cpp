@@ -240,7 +240,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDNode *N) {
     Chain = CurDAG->getCopyToReg(Chain, dl, Alpha::R27, N0, 
                                  Chain.getValue(1));
     SDNode *CNode =
-      CurDAG->getMachineNode(Alpha::JSRs, dl, MVT::Other, MVT::Flag, 
+      CurDAG->getMachineNode(Alpha::JSRs, dl, MVT::Other, MVT::Glue, 
                              Chain, Chain.getValue(1));
     Chain = CurDAG->getCopyFromReg(Chain, dl, Alpha::R27, MVT::i64, 
                                    SDValue(CNode, 1));
@@ -403,13 +403,13 @@ void AlphaDAGToDAGISel::SelectCALL(SDNode *N) {
      Chain = CurDAG->getCopyToReg(Chain, dl, Alpha::R29, GOT, InFlag);
      InFlag = Chain.getValue(1);
      Chain = SDValue(CurDAG->getMachineNode(Alpha::BSR, dl, MVT::Other, 
-                                            MVT::Flag, Addr.getOperand(0),
+                                            MVT::Glue, Addr.getOperand(0),
                                             Chain, InFlag), 0);
    } else {
      Chain = CurDAG->getCopyToReg(Chain, dl, Alpha::R27, Addr, InFlag);
      InFlag = Chain.getValue(1);
      Chain = SDValue(CurDAG->getMachineNode(Alpha::JSR, dl, MVT::Other,
-                                            MVT::Flag, Chain, InFlag), 0);
+                                            MVT::Glue, Chain, InFlag), 0);
    }
    InFlag = Chain.getValue(1);
 

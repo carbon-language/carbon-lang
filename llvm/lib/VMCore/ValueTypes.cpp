@@ -109,7 +109,7 @@ std::string EVT::getEVTString() const {
   case MVT::ppcf128: return "ppcf128";
   case MVT::isVoid:  return "isVoid";
   case MVT::Other:   return "ch";
-  case MVT::Flag:    return "flag";
+  case MVT::Glue:    return "glue";
   case MVT::x86mmx:  return "x86mmx";
   case MVT::v2i8:    return "v2i8";
   case MVT::v4i8:    return "v4i8";

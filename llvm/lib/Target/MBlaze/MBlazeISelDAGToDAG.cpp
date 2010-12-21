@@ -248,7 +248,7 @@ SDNode* MBlazeDAGToDAGISel::Select(SDNode *Node) {
 
         // Emit Jump and Link Register
         SDNode *ResNode = CurDAG->getMachineNode(MBlaze::BRLID, dl, MVT::Other,
-                                                 MVT::Flag, R20Reg, Chain);
+                                                 MVT::Glue, R20Reg, Chain);
         Chain  = SDValue(ResNode, 0);
         InFlag = SDValue(ResNode, 1);
         ReplaceUses(SDValue(Node, 0), Chain);

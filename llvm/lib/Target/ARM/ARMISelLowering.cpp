@@ -874,7 +874,7 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
 
   for (unsigned i = 0; i != NumVals; ++i) {
     EVT VT = N->getValueType(i);
-    if (VT == MVT::Flag || VT == MVT::Other)
+    if (VT == MVT::Glue || VT == MVT::Other)
       continue;
     if (VT.isFloatingPoint() || VT.isVector())
       return Sched::Latency;
@@ -1423,7 +1423,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (InFlag.getNode())
     Ops.push_back(InFlag);
 
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   if (isTailCall)
     return DAG.getNode(ARMISD::TC_RETURN, dl, NodeTys, &Ops[0], Ops.size());
 
@@ -2430,7 +2430,7 @@ ARMTargetLowering::getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
     break;
   }
   ARMcc = DAG.getConstant(CondCode, MVT::i32);
-  return DAG.getNode(CompareType, dl, MVT::Flag, LHS, RHS);
+  return DAG.getNode(CompareType, dl, MVT::Glue, LHS, RHS);
 }
 
 /// Returns a appropriate VFP CMP (fcmp{s|d}+fmstat) for the given operands.
@@ -2439,10 +2439,10 @@ ARMTargetLowering::getVFPCmp(SDValue LHS, SDValue RHS, SelectionDAG &DAG,
                              DebugLoc dl) const {
   SDValue Cmp;
   if (!isFloatingPointZero(RHS))
-    Cmp = DAG.getNode(ARMISD::CMPFP, dl, MVT::Flag, LHS, RHS);
+    Cmp = DAG.getNode(ARMISD::CMPFP, dl, MVT::Glue, LHS, RHS);
   else
-    Cmp = DAG.getNode(ARMISD::CMPFPw0, dl, MVT::Flag, LHS);
-  return DAG.getNode(ARMISD::FMSTAT, dl, MVT::Flag, Cmp);
+    Cmp = DAG.getNode(ARMISD::CMPFPw0, dl, MVT::Glue, LHS);
+  return DAG.getNode(ARMISD::FMSTAT, dl, MVT::Glue, Cmp);
 }
 
 SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
@@ -2633,7 +2633,7 @@ ARMTargetLowering::OptimizeVFPBrcond(SDValue Op, SelectionDAG &DAG) const {
     expandf64Toi32(RHS, DAG, RHS1, RHS2);
     ARMCC::CondCodes CondCode = IntCCToARMCC(CC);
     ARMcc = DAG.getConstant(CondCode, MVT::i32);
-    SDVTList VTList = DAG.getVTList(MVT::Other, MVT::Flag);
+    SDVTList VTList = DAG.getVTList(MVT::Other, MVT::Glue);
     SDValue Ops[] = { Chain, ARMcc, LHS1, LHS2, RHS1, RHS2, Dest };
     return DAG.getNode(ARMISD::BCC_i64, dl, VTList, Ops, 7);
   }
@@ -2673,7 +2673,7 @@ SDValue ARMTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue ARMcc = DAG.getConstant(CondCode, MVT::i32);
   SDValue Cmp = getVFPCmp(LHS, RHS, DAG, dl);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-  SDVTList VTList = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList VTList = DAG.getVTList(MVT::Other, MVT::Glue);
   SDValue Ops[] = { Chain, Dest, ARMcc, CCR, Cmp };
   SDValue Res = DAG.getNode(ARMISD::BRCOND, dl, VTList, Ops, 5);
   if (CondCode2 != ARMCC::AL) {
@@ -3029,7 +3029,7 @@ static SDValue Expand64BitShift(SDNode *N, SelectionDAG &DAG,
   // First, build a SRA_FLAG/SRL_FLAG op, which shifts the top part by one and
   // captures the result into a carry flag.
   unsigned Opc = N->getOpcode() == ISD::SRL ? ARMISD::SRL_FLAG:ARMISD::SRA_FLAG;
-  Hi = DAG.getNode(Opc, dl, DAG.getVTList(MVT::i32, MVT::Flag), &Hi, 1);
+  Hi = DAG.getNode(Opc, dl, DAG.getVTList(MVT::i32, MVT::Glue), &Hi, 1);
 
   // The low part is an ARMISD::RRX operand, which shifts the carry in.
   Lo = DAG.getNode(ARMISD::RRX, dl, MVT::i32, Lo, Hi.getValue(1));

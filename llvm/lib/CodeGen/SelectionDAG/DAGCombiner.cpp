@@ -1457,7 +1457,7 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
   if (N->hasNUsesOfValue(0, 1))
     return CombineTo(N, DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N1, N0),
                      DAG.getNode(ISD::CARRY_FALSE,
-                                 N->getDebugLoc(), MVT::Flag));
+                                 N->getDebugLoc(), MVT::Glue));
 
   // canonicalize constant to RHS.
   if (N0C && !N1C)
@@ -1466,7 +1466,7 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
   // fold (addc x, 0) -> x + no carry out
   if (N1C && N1C->isNullValue())
     return CombineTo(N, N0, DAG.getNode(ISD::CARRY_FALSE,
-                                        N->getDebugLoc(), MVT::Flag));
+                                        N->getDebugLoc(), MVT::Glue));
 
   // fold (addc a, b) -> (or a, b), CARRY_FALSE iff a and b share no bits.
   APInt LHSZero, LHSOne;
@@ -1483,7 +1483,7 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
         (LHSZero & (~RHSZero & Mask)) == (~RHSZero & Mask))
       return CombineTo(N, DAG.getNode(ISD::OR, N->getDebugLoc(), VT, N0, N1),
                        DAG.getNode(ISD::CARRY_FALSE,
-                                   N->getDebugLoc(), MVT::Flag));
+                                   N->getDebugLoc(), MVT::Glue));
   }
 
   return SDValue();

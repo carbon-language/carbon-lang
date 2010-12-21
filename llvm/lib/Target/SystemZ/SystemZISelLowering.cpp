@@ -471,7 +471,7 @@ SystemZTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), getPointerTy());
 
   // Returns a chain & a flag for retval copy to use.
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -710,7 +710,7 @@ SDValue SystemZTargetLowering::LowerSELECT_CC(SDValue Op,
   SDValue SystemZCC;
   SDValue Flag = EmitCmp(LHS, RHS, CC, SystemZCC, DAG);
 
-  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
   SmallVector<SDValue, 4> Ops;
   Ops.push_back(TrueV);
   Ops.push_back(FalseV);

@@ -926,7 +926,7 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   //             = Chain, Callee, Reg#1, Reg#2, ...  
   //
   // Returns a chain & a flag for retval copy to use.
-  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);

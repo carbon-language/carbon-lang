@@ -216,7 +216,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   bool TryUnfold = false;
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
     EVT VT = N->getValueType(i);
-    if (VT == MVT::Flag)
+    if (VT == MVT::Glue)
       return NULL;
     else if (VT == MVT::Other)
       TryUnfold = true;
@@ -224,7 +224,7 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDValue &Op = N->getOperand(i);
     EVT VT = Op.getNode()->getValueType(Op.getResNo());
-    if (VT == MVT::Flag)
+    if (VT == MVT::Glue)
       return NULL;
   }
 
@@ -480,7 +480,7 @@ bool ScheduleDAGFast::DelayForLiveRegsBottomUp(SUnit *SU,
     if (Node->getOpcode() == ISD::INLINEASM) {
       // Inline asm can clobber physical defs.
       unsigned NumOps = Node->getNumOperands();
-      if (Node->getOperand(NumOps-1).getValueType() == MVT::Flag)
+      if (Node->getOperand(NumOps-1).getValueType() == MVT::Glue)
         --NumOps;  // Ignore the flag operand.
 
       for (unsigned i = InlineAsm::Op_FirstOperand; i != NumOps;) {

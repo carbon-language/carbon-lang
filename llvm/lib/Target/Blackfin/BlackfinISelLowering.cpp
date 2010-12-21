@@ -365,7 +365,7 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   std::vector<EVT> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  NodeTys.push_back(MVT::Glue);    // Returns a flag for retval copy to use.
   SDValue Ops[] = { Chain, Callee, InFlag };
   Chain = DAG.getNode(BFISD::CALL, dl, NodeTys, Ops,
                       InFlag.getNode() ? 3 : 2);
@@ -432,7 +432,7 @@ SDValue BlackfinTargetLowering::LowerADDE(SDValue Op, SelectionDAG &DAG) const {
                                SDValue(CarryIn, 0));
 
   // Add operands, produce sum and carry flag
-  SDNode *Sum = DAG.getMachineNode(Opcode, dl, MVT::i32, MVT::Flag,
+  SDNode *Sum = DAG.getMachineNode(Opcode, dl, MVT::i32, MVT::Glue,
                                    Op.getOperand(0), Op.getOperand(1));
 
   // Store intermediate carry from Sum
@@ -440,11 +440,11 @@ SDValue BlackfinTargetLowering::LowerADDE(SDValue Op, SelectionDAG &DAG) const {
                                       /* flag= */ SDValue(Sum, 1));
 
   // Add incoming carry, again producing an output flag
-  Sum = DAG.getMachineNode(Opcode, dl, MVT::i32, MVT::Flag,
+  Sum = DAG.getMachineNode(Opcode, dl, MVT::i32, MVT::Glue,
                            SDValue(Sum, 0), SDValue(CarryIn, 0));
 
   // Update AC0 with the intermediate carry, producing a flag.
-  SDNode *CarryOut = DAG.getMachineNode(BF::OR_ac0_cc, dl, MVT::Flag,
+  SDNode *CarryOut = DAG.getMachineNode(BF::OR_ac0_cc, dl, MVT::Glue,
                                         SDValue(Carry1, 0));
 
   // Compose (i32, flag) pair

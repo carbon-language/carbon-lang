@@ -35,7 +35,7 @@ using namespace llvm;
 /// not go into the resulting MachineInstr).
 unsigned InstrEmitter::CountResults(SDNode *Node) {
   unsigned N = Node->getNumValues();
-  while (N && Node->getValueType(N - 1) == MVT::Flag)
+  while (N && Node->getValueType(N - 1) == MVT::Glue)
     --N;
   if (N && Node->getValueType(N - 1) == MVT::Other)
     --N;    // Skip over chain result.
@@ -48,7 +48,7 @@ unsigned InstrEmitter::CountResults(SDNode *Node) {
 /// MachineInstr.
 unsigned InstrEmitter::CountOperands(SDNode *Node) {
   unsigned N = Node->getNumOperands();
-  while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
+  while (N && Node->getOperand(N - 1).getValueType() == MVT::Glue)
     --N;
   if (N && Node->getOperand(N - 1).getValueType() == MVT::Other)
     --N; // Ignore chain if it exists.
@@ -96,7 +96,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
           if (Op.getNode() != Node || Op.getResNo() != ResNo)
             continue;
           EVT VT = Node->getValueType(Op.getResNo());
-          if (VT == MVT::Other || VT == MVT::Flag)
+          if (VT == MVT::Other || VT == MVT::Glue)
             continue;
           Match = false;
           if (User->isMachineOpcode()) {
@@ -264,7 +264,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
                                  DenseMap<SDValue, unsigned> &VRBaseMap,
                                  bool IsDebug, bool IsClone, bool IsCloned) {
   assert(Op.getValueType() != MVT::Other &&
-         Op.getValueType() != MVT::Flag &&
+         Op.getValueType() != MVT::Glue &&
          "Chain and flag operands should occur at end of operand list!");
   // Get/emit the operand.
   unsigned VReg = getVR(Op, VRBaseMap);
@@ -377,7 +377,7 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
                                             BA->getTargetFlags()));
   } else {
     assert(Op.getValueType() != MVT::Other &&
-           Op.getValueType() != MVT::Flag &&
+           Op.getValueType() != MVT::Glue &&
            "Chain and flag operands should occur at end of operand list!");
     AddRegisterOperand(MI, Op, IIOpNum, II, VRBaseMap,
                        IsDebug, IsClone, IsCloned);
@@ -671,7 +671,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   // The MachineInstr constructor adds implicit-def operands. Scan through
   // these to determine which are dead.
   if (MI->getNumOperands() != 0 &&
-      Node->getValueType(Node->getNumValues()-1) == MVT::Flag) {
+      Node->getValueType(Node->getNumValues()-1) == MVT::Glue) {
     // First, collect all used registers.
     SmallVector<unsigned, 8> UsedRegs;
     for (SDNode *F = Node->getFlaggedUser(); F; F = F->getFlaggedUser())
@@ -729,7 +729,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
       // MachineLICM/Sink can see that it's dead. Don't do this if the
       // node has a Flag value, for the benefit of targets still using
       // Flag for values in physregs.
-      else if (Node->getValueType(Node->getNumValues()-1) != MVT::Flag)
+      else if (Node->getValueType(Node->getNumValues()-1) != MVT::Glue)
         MI->addRegisterDead(Reg, TRI);
     }
   }
@@ -737,7 +737,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   // If the instruction has implicit defs and the node doesn't, mark the
   // implicit def as dead.  If the node has any flag outputs, we don't do this
   // because we don't know what implicit defs are being used by flagged nodes.
-  if (Node->getValueType(Node->getNumValues()-1) != MVT::Flag)
+  if (Node->getValueType(Node->getNumValues()-1) != MVT::Glue)
     if (const unsigned *IDList = II.getImplicitDefs()) {
       for (unsigned i = NumResults, e = II.getNumDefs()+II.getNumImplicitDefs();
            i != e; ++i)
@@ -793,7 +793,7 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
       
   case ISD::INLINEASM: {
     unsigned NumOps = Node->getNumOperands();
-    if (Node->getOperand(NumOps-1).getValueType() == MVT::Flag)
+    if (Node->getOperand(NumOps-1).getValueType() == MVT::Glue)
       --NumOps;  // Ignore the flag operand.
       
     // Create the inline asm machine instruction.

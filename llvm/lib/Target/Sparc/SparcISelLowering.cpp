@@ -488,7 +488,7 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   std::vector<EVT> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  NodeTys.push_back(MVT::Glue);    // Returns a flag for retval copy to use.
   SDValue Ops[] = { Chain, Callee, InFlag };
   Chain = DAG.getNode(SPISD::CALL, dl, NodeTys, Ops, InFlag.getNode() ? 3 : 2);
   InFlag = Chain.getValue(1);
@@ -834,13 +834,13 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
   if (LHS.getValueType() == MVT::i32) {
     std::vector<EVT> VTs;
     VTs.push_back(MVT::i32);
-    VTs.push_back(MVT::Flag);
+    VTs.push_back(MVT::Glue);
     SDValue Ops[2] = { LHS, RHS };
     CompareFlag = DAG.getNode(SPISD::CMPICC, dl, VTs, Ops, 2).getValue(1);
     if (SPCC == ~0U) SPCC = IntCondCCodeToICC(CC);
     Opc = SPISD::BRICC;
   } else {
-    CompareFlag = DAG.getNode(SPISD::CMPFCC, dl, MVT::Flag, LHS, RHS);
+    CompareFlag = DAG.getNode(SPISD::CMPFCC, dl, MVT::Glue, LHS, RHS);
     if (SPCC == ~0U) SPCC = FPCondCCodeToFCC(CC);
     Opc = SPISD::BRFCC;
   }
@@ -865,13 +865,13 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   if (LHS.getValueType() == MVT::i32) {
     std::vector<EVT> VTs;
     VTs.push_back(LHS.getValueType());   // subcc returns a value
-    VTs.push_back(MVT::Flag);
+    VTs.push_back(MVT::Glue);
     SDValue Ops[2] = { LHS, RHS };
     CompareFlag = DAG.getNode(SPISD::CMPICC, dl, VTs, Ops, 2).getValue(1);
     Opc = SPISD::SELECT_ICC;
     if (SPCC == ~0U) SPCC = IntCondCCodeToICC(CC);
   } else {
-    CompareFlag = DAG.getNode(SPISD::CMPFCC, dl, MVT::Flag, LHS, RHS);
+    CompareFlag = DAG.getNode(SPISD::CMPFCC, dl, MVT::Glue, LHS, RHS);
     Opc = SPISD::SELECT_FCC;
     if (SPCC == ~0U) SPCC = FPCondCCodeToFCC(CC);
   }

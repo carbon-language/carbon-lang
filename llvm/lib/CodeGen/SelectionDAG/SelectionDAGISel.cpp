@@ -1287,7 +1287,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
   Ops.push_back(InOps[InlineAsm::Op_IsAlignStack]);  // 3
 
   unsigned i = InlineAsm::Op_FirstOperand, e = InOps.size();
-  if (InOps[e-1].getValueType() == MVT::Flag)
+  if (InOps[e-1].getValueType() == MVT::Glue)
     --e;  // Don't process a flag operand if it is here.
 
   while (i != e) {
@@ -1435,7 +1435,7 @@ bool SelectionDAGISel::IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
   // If the node has flags, walk down the graph to the "lowest" node in the
   // flagged set.
   EVT VT = Root->getValueType(Root->getNumValues()-1);
-  while (VT == MVT::Flag) {
+  while (VT == MVT::Glue) {
     SDNode *FU = findFlagUse(Root);
     if (FU == NULL)
       break;
@@ -1460,7 +1460,7 @@ SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {
     
   std::vector<EVT> VTs;
   VTs.push_back(MVT::Other);
-  VTs.push_back(MVT::Flag);
+  VTs.push_back(MVT::Glue);
   SDValue New = CurDAG->getNode(ISD::INLINEASM, N->getDebugLoc(),
                                 VTs, &Ops[0], Ops.size());
   New->setNodeId(-1);
@@ -1521,7 +1521,7 @@ UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
         continue;
       
       SDValue ChainVal = SDValue(ChainNode, ChainNode->getNumValues()-1);
-      if (ChainVal.getValueType() == MVT::Flag)
+      if (ChainVal.getValueType() == MVT::Glue)
         ChainVal = ChainVal.getValue(ChainVal->getNumValues()-2);
       assert(ChainVal.getValueType() == MVT::Other && "Not a chain?");
       CurDAG->ReplaceAllUsesOfValueWith(ChainVal, InputChain, &ISU);
@@ -1544,7 +1544,7 @@ UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
       if (FRN->getOpcode() == ISD::DELETED_NODE)
         continue;
       
-      assert(FRN->getValueType(FRN->getNumValues()-1) == MVT::Flag &&
+      assert(FRN->getValueType(FRN->getNumValues()-1) == MVT::Glue &&
              "Doesn't have a flag result");
       CurDAG->ReplaceAllUsesOfValueWith(SDValue(FRN, FRN->getNumValues()-1),
                                         InputFlag, &ISU);
@@ -1752,7 +1752,7 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
   int OldFlagResultNo = -1, OldChainResultNo = -1;
 
   unsigned NTMNumResults = Node->getNumValues();
-  if (Node->getValueType(NTMNumResults-1) == MVT::Flag) {
+  if (Node->getValueType(NTMNumResults-1) == MVT::Glue) {
     OldFlagResultNo = NTMNumResults-1;
     if (NTMNumResults != 1 &&
         Node->getValueType(NTMNumResults-2) == MVT::Other)
@@ -2193,7 +2193,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_CaptureFlagInput:
       // If the current node has an input flag, capture it in InputFlag.
       if (N->getNumOperands() != 0 &&
-          N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag)
+          N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Glue)
         InputFlag = N->getOperand(N->getNumOperands()-1);
       continue;
         
@@ -2503,7 +2503,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (EmitNodeInfo & OPFL_Chain)
         VTs.push_back(MVT::Other);
       if (EmitNodeInfo & OPFL_FlagOutput)
-        VTs.push_back(MVT::Flag);
+        VTs.push_back(MVT::Glue);
       
       // This is hot code, so optimize the two most common cases of 1 and 2
       // results.
@@ -2539,7 +2539,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         for (unsigned i = FirstOpToCopy, e = NodeToMatch->getNumOperands();
              i != e; ++i) {
           SDValue V = NodeToMatch->getOperand(i);
-          if (V.getValueType() == MVT::Flag) break;
+          if (V.getValueType() == MVT::Glue) break;
           Ops.push_back(V);
         }
       }
@@ -2560,7 +2560,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         
         // Add all the non-flag/non-chain results to the RecordedNodes list.
         for (unsigned i = 0, e = VTs.size(); i != e; ++i) {
-          if (VTs[i] == MVT::Other || VTs[i] == MVT::Flag) break;
+          if (VTs[i] == MVT::Other || VTs[i] == MVT::Glue) break;
           RecordedNodes.push_back(std::pair<SDValue,SDNode*>(SDValue(Res, i),
                                                              (SDNode*) 0));
         }
@@ -2639,7 +2639,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         
         assert(i < NodeToMatch->getNumValues() &&
                NodeToMatch->getValueType(i) != MVT::Other &&
-               NodeToMatch->getValueType(i) != MVT::Flag &&
+               NodeToMatch->getValueType(i) != MVT::Glue &&
                "Invalid number of results to complete!");
         assert((NodeToMatch->getValueType(i) == Res.getValueType() ||
                 NodeToMatch->getValueType(i) == MVT::iPTR ||
@@ -2652,7 +2652,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
 
       // If the root node defines a flag, add it to the flag nodes to update
       // list.
-      if (NodeToMatch->getValueType(NodeToMatch->getNumValues()-1) == MVT::Flag)
+      if (NodeToMatch->getValueType(NodeToMatch->getNumValues()-1) == MVT::Glue)
         FlagResultNodesMatched.push_back(NodeToMatch);
       
       // Update chain and flag uses.

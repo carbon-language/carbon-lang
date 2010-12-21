@@ -528,7 +528,7 @@ public:
   /// to which the flag operand points. Otherwise return NULL.
   SDNode *getFlaggedNode() const {
     if (getNumOperands() != 0 &&
-      getOperand(getNumOperands()-1).getValueType() == MVT::Flag)
+      getOperand(getNumOperands()-1).getValueType() == MVT::Glue)
       return getOperand(getNumOperands()-1).getNode();
     return 0;
   }
@@ -553,7 +553,7 @@ public:
   /// the user (there is at most one). Otherwise return NULL.
   SDNode *getFlaggedUser() const {
     for (use_iterator UI = use_begin(), UE = use_end(); UI != UE; ++UI)
-      if (UI.getUse().get().getValueType() == MVT::Flag)
+      if (UI.getUse().get().getValueType() == MVT::Glue)
         return *UI;
     return 0;
   }
