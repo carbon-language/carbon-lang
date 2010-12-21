@@ -23,6 +23,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
@@ -540,9 +541,9 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   // Get the name of the main file.
   const SourceManager &SrcMgr = PP.getSourceManager();
   const FileEntry *MainFile = SrcMgr.getFileEntryForID(SrcMgr.getMainFileID());
-  llvm::sys::Path MainFilePath(MainFile->getName());
+  llvm::SmallString<128> MainFilePath(MainFile->getName());
 
-  MainFilePath.makeAbsolute();
+  llvm::sys::fs::make_absolute(MainFilePath);
 
   // Create the PTHWriter.
   PTHWriter PW(*OS, PP);

@@ -23,6 +23,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -309,19 +310,22 @@ int main(int argc_, const char **argv_) {
   // Attempt to find the original path used to invoke the driver, to determine
   // the installed path. We do this manually, because we want to support that
   // path being a symlink.
-  llvm::sys::Path InstalledPath(argv[0]);
+  {
+    llvm::SmallString<128> InstalledPath(argv[0]);
 
-  // Do a PATH lookup, if there are no directory components.
-  if (llvm::sys::path::filename(InstalledPath.str()) == InstalledPath.str()) {
-    llvm::sys::Path Tmp = llvm::sys::Program::FindProgramByName(
-      llvm::sys::path::filename(InstalledPath.str()));
-    if (!Tmp.empty())
-      InstalledPath = Tmp;
+    // Do a PATH lookup, if there are no directory components.
+    if (llvm::sys::path::filename(InstalledPath) == InstalledPath) {
+      llvm::sys::Path Tmp = llvm::sys::Program::FindProgramByName(
+        llvm::sys::path::filename(InstalledPath.str()));
+      if (!Tmp.empty())
+        InstalledPath = Tmp.str();
+    }
+    llvm::sys::fs::make_absolute(InstalledPath);
+    InstalledPath = llvm::sys::path::parent_path(InstalledPath);
+    bool exists;
+    if (!llvm::sys::fs::exists(InstalledPath.str(), exists) && exists)
+      TheDriver.setInstalledDir(InstalledPath);
   }
-  InstalledPath.makeAbsolute();
-  InstalledPath.eraseComponent();
-  if (InstalledPath.exists())
-    TheDriver.setInstalledDir(InstalledPath.str());
 
   // Check for ".*++" or ".*++-[^-]*" to determine if we are a C++
   // compiler. This matches things like "c++", "clang++", and "clang++-1.1".

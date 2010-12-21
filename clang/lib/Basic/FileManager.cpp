@@ -21,6 +21,7 @@
 #include "clang/Basic/FileSystemStatCache.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
@@ -384,9 +385,9 @@ FileManager::getVirtualFile(llvm::StringRef Filename, off_t Size,
     return UFE;
   
   UFE->FD = FileDescriptor;
-  llvm::sys::Path FilePath(UFE->Name);
-  FilePath.makeAbsolute();
-  FileEntries[FilePath.str()] = UFE;
+  llvm::SmallString<128> FilePath(UFE->Name);
+  llvm::sys::fs::make_absolute(FilePath);
+  FileEntries[FilePath] = UFE;
   return UFE;
 }
 

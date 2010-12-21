@@ -41,6 +41,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include <cstdio>
@@ -810,9 +811,9 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
     FileAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
     unsigned FileAbbrevCode = Stream.EmitAbbrev(FileAbbrev);
 
-    llvm::sys::Path MainFilePath(MainFile->getName());
+    llvm::SmallString<128> MainFilePath(MainFile->getName());
 
-    MainFilePath.makeAbsolute();
+    llvm::sys::fs::make_absolute(MainFilePath);
 
     const char *MainFileNameStr = MainFilePath.c_str();
     MainFileNameStr = adjustFilenameForRelocatablePCH(MainFileNameStr,
@@ -1176,8 +1177,8 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
 
         // Turn the file name into an absolute path, if it isn't already.
         const char *Filename = Content->Entry->getName();
-        llvm::sys::Path FilePath(Filename, strlen(Filename));
-        FilePath.makeAbsolute();
+        llvm::SmallString<128> FilePath(Filename);
+        llvm::sys::fs::make_absolute(FilePath);
         Filename = FilePath.c_str();
 
         Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);

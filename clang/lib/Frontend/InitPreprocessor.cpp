@@ -22,6 +22,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 using namespace clang;
@@ -55,9 +56,10 @@ std::string clang::NormalizeDashIncludePath(llvm::StringRef File) {
   // it has not file entry. For now, workaround this by using an
   // absolute path if we find the file here, and otherwise letting
   // header search handle it.
-  llvm::sys::Path Path(File);
-  Path.makeAbsolute();
-  if (!Path.exists())
+  llvm::SmallString<128> Path(File);
+  llvm::sys::fs::make_absolute(Path);
+  bool exists;
+  if (llvm::sys::fs::exists(Path.str(), exists) || !exists)
     Path = File;
 
   return Lexer::Stringify(Path.str());
