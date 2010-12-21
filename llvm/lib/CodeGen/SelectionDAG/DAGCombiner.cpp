@@ -4186,8 +4186,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     if (LegalOperations && !TLI.isLoadExtLegal(ISD::SEXTLOAD, ExtVT))
       return SDValue();
   } else if (Opc == ISD::SRL) {
-    // Annother special-case: SRL is basically zero-extending a narrower
-    // value.
+    // Another special-case: SRL is basically zero-extending a narrower value.
     ExtType = ISD::ZEXTLOAD;
     N0 = SDValue(N, 0);
     ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1));
