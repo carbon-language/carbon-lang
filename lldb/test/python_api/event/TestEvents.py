@@ -60,7 +60,7 @@ class EventAPITestCase(TestBase):
         event = lldb.SBEvent()
         self.assertFalse(event.IsValid(), "Event should not be valid initially")
 
-        # Get the debugger listenr.
+        # Get the debugger listener.
         listener = self.dbg.GetListener()
 
         # Create MyListeningThread to wait for any kind of event.
