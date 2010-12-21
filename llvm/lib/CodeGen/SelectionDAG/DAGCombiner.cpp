@@ -2972,6 +2972,32 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getConstant(c1 + c2, N1.getValueType()));
   }
+
+  // fold (shl (ext (shl x, c1)), c2) -> (ext (shl x, (add c1, c2)))
+  // For this to be valid, the second form must not preserve any of the bits
+  // that are shifted out by the inner shift in the first form.  This means
+  // the outer shift size must be >= the number of bits added by the ext.
+  // As a corollary, we don't care what kind of ext it is.
+  if (N1C && (N0.getOpcode() == ISD::ZERO_EXTEND ||
+              N0.getOpcode() == ISD::ANY_EXTEND ||
+              N0.getOpcode() == ISD::SIGN_EXTEND) &&
+      N0.getOperand(0).getOpcode() == ISD::SHL &&
+      isa<ConstantSDNode>(N0.getOperand(0)->getOperand(1))) {
+    uint64_t c1 = 
+      cast<ConstantSDNode>(N0.getOperand(0)->getOperand(1))->getZExtValue();
+    uint64_t c2 = N1C->getZExtValue();
+    EVT InnerShiftVT = N0.getOperand(0).getValueType();
+    uint64_t InnerShiftSize = InnerShiftVT.getScalarType().getSizeInBits();
+    if (c2 >= OpSizeInBits - InnerShiftSize) {
+      if (c1 + c2 >= OpSizeInBits)
+        return DAG.getConstant(0, VT);
+      return DAG.getNode(ISD::SHL, N0->getDebugLoc(), VT,
+                         DAG.getNode(N0.getOpcode(), N0->getDebugLoc(), VT,
+                                     N0.getOperand(0)->getOperand(0)),
+                         DAG.getConstant(c1 + c2, VT));
+    }
+  }
+
   // fold (shl (srl x, c1), c2) -> (shl (and x, (shl -1, c1)), (sub c2, c1)) or
   //                               (srl (and x, (shl -1, c1)), (sub c1, c2))
   if (N1C && N0.getOpcode() == ISD::SRL &&
