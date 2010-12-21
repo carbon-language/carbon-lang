@@ -127,16 +127,9 @@ namespace {
         return false;
       else if (function != other.function)
         return false;
-      else {
-        if (varargs.size() != other.varargs.size())
-          return false;
-
-        for (size_t i = 0; i < varargs.size(); ++i)
-          if (varargs[i] != other.varargs[i])
-            return false;
-
-        return true;
-      }
+      else if (varargs != other.varargs)
+        return false;
+      return true;
     }
 
     /*bool operator!=(const Expression &other) const {
@@ -214,9 +207,6 @@ template <> struct DenseMapInfo<Expression> {
     return LHS == RHS;
   }
 };
-  
-template <>
-struct isPodLike<Expression> { static const bool value = true; };
 
 }
 
