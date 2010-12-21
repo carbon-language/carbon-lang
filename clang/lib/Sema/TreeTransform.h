@@ -3628,12 +3628,12 @@ namespace {
     }
     
     friend bool operator==(const TemplateArgumentLocContainerIterator &X,
-                           TemplateArgumentLocContainerIterator &Y) {
+                           const TemplateArgumentLocContainerIterator &Y) {
       return X.Container == Y.Container && X.Index == Y.Index;
     }
     
     friend bool operator!=(const TemplateArgumentLocContainerIterator &X,
-                           TemplateArgumentLocContainerIterator &Y) {
+                           const TemplateArgumentLocContainerIterator &Y) {
       return !(X == Y);
     }
   };
