@@ -464,6 +464,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setTargetDAGCombine(ISD::SELECT_CC);
     setTargetDAGCombine(ISD::BUILD_VECTOR);
     setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
+    setTargetDAGCombine(ISD::INSERT_VECTOR_ELT);
+    setTargetDAGCombine(ISD::STORE);
   }
 
   computeRegisterProperties();
@@ -4862,17 +4864,111 @@ static SDValue PerformVMOVDRRCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+/// PerformSTORECombine - Target-specific dag combine xforms for
+/// ISD::STORE.
+static SDValue PerformSTORECombine(SDNode *N,
+                                   TargetLowering::DAGCombinerInfo &DCI) {
+  // Bitcast an i64 store extracted from a vector to f64.
+  // Otherwise, the i64 value will be legalized to a pair of i32 values.
+  StoreSDNode *St = cast<StoreSDNode>(N);
+  SDValue StVal = St->getValue();
+  if (!ISD::isNormalStore(St) || St->isVolatile() ||
+      StVal.getValueType() != MVT::i64 ||
+      StVal.getNode()->getOpcode() != ISD::EXTRACT_VECTOR_ELT)
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  DebugLoc dl = StVal.getDebugLoc();
+  SDValue IntVec = StVal.getOperand(0);
+  EVT FloatVT = EVT::getVectorVT(*DAG.getContext(), MVT::f64,
+                                 IntVec.getValueType().getVectorNumElements());
+  SDValue Vec = DAG.getNode(ISD::BITCAST, dl, FloatVT, IntVec);
+  SDValue ExtElt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64,
+                               Vec, StVal.getOperand(1));
+  dl = N->getDebugLoc();
+  SDValue V = DAG.getNode(ISD::BITCAST, dl, MVT::i64, ExtElt);
+  // Make the DAGCombiner fold the bitcasts.
+  DCI.AddToWorklist(Vec.getNode());
+  DCI.AddToWorklist(ExtElt.getNode());
+  DCI.AddToWorklist(V.getNode());
+  return DAG.getStore(St->getChain(), dl, V, St->getBasePtr(),
+                      St->getPointerInfo(), St->isVolatile(),
+                      St->isNonTemporal(), St->getAlignment(),
+                      St->getTBAAInfo());
+}
+
+/// hasNormalLoadOperand - Check if any of the operands of a BUILD_VECTOR node
+/// are normal, non-volatile loads.  If so, it is profitable to bitcast an
+/// i64 vector to have f64 elements, since the value can then be loaded
+/// directly into a VFP register.
+static bool hasNormalLoadOperand(SDNode *N) {
+  unsigned NumElts = N->getValueType(0).getVectorNumElements();
+  for (unsigned i = 0; i < NumElts; ++i) {
+    SDNode *Elt = N->getOperand(i).getNode();
+    if (ISD::isNormalLoad(Elt) && !cast<LoadSDNode>(Elt)->isVolatile())
+      return true;
+  }
+  return false;
+}
+
 /// PerformBUILD_VECTORCombine - Target-specific dag combine xforms for
 /// ISD::BUILD_VECTOR.
-static SDValue PerformBUILD_VECTORCombine(SDNode *N, SelectionDAG &DAG) {
+static SDValue PerformBUILD_VECTORCombine(SDNode *N,
+                                          TargetLowering::DAGCombinerInfo &DCI){
   // build_vector(N=ARMISD::VMOVRRD(X), N:1) -> bit_convert(X):
   // VMOVRRD is introduced when legalizing i64 types.  It forces the i64 value
   // into a pair of GPRs, which is fine when the value is used as a scalar,
   // but if the i64 value is converted to a vector, we need to undo the VMOVRRD.
-  if (N->getNumOperands() == 2)
-    return PerformVMOVDRRCombine(N, DAG);
+  SelectionDAG &DAG = DCI.DAG;
+  if (N->getNumOperands() == 2) {
+    SDValue RV = PerformVMOVDRRCombine(N, DAG);
+    if (RV.getNode())
+      return RV;
+  }
 
-  return SDValue();
+  // Load i64 elements as f64 values so that type legalization does not split
+  // them up into i32 values.
+  EVT VT = N->getValueType(0);
+  if (VT.getVectorElementType() != MVT::i64 || !hasNormalLoadOperand(N))
+    return SDValue();
+  DebugLoc dl = N->getDebugLoc();
+  SmallVector<SDValue, 8> Ops;
+  unsigned NumElts = VT.getVectorNumElements();
+  for (unsigned i = 0; i < NumElts; ++i) {
+    SDValue V = DAG.getNode(ISD::BITCAST, dl, MVT::f64, N->getOperand(i));
+    Ops.push_back(V);
+    // Make the DAGCombiner fold the bitcast.
+    DCI.AddToWorklist(V.getNode());
+  }
+  EVT FloatVT = EVT::getVectorVT(*DAG.getContext(), MVT::f64, NumElts);
+  SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, FloatVT, Ops.data(), NumElts);
+  return DAG.getNode(ISD::BITCAST, dl, VT, BV);
+}
+
+/// PerformInsertEltCombine - Target-specific dag combine xforms for
+/// ISD::INSERT_VECTOR_ELT.
+static SDValue PerformInsertEltCombine(SDNode *N,
+                                       TargetLowering::DAGCombinerInfo &DCI) {
+  // Bitcast an i64 load inserted into a vector to f64.
+  // Otherwise, the i64 value will be legalized to a pair of i32 values.
+  EVT VT = N->getValueType(0);
+  SDNode *Elt = N->getOperand(1).getNode();
+  if (VT.getVectorElementType() != MVT::i64 ||
+      !ISD::isNormalLoad(Elt) || cast<LoadSDNode>(Elt)->isVolatile())
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  DebugLoc dl = N->getDebugLoc();
+  EVT FloatVT = EVT::getVectorVT(*DAG.getContext(), MVT::f64,
+                                 VT.getVectorNumElements());
+  SDValue Vec = DAG.getNode(ISD::BITCAST, dl, FloatVT, N->getOperand(0));
+  SDValue V = DAG.getNode(ISD::BITCAST, dl, MVT::f64, N->getOperand(1));
+  // Make the DAGCombiner fold the bitcasts.
+  DCI.AddToWorklist(Vec.getNode());
+  DCI.AddToWorklist(V.getNode());
+  SDValue InsElt = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, FloatVT,
+                               Vec, V, N->getOperand(2));
+  return DAG.getNode(ISD::BITCAST, dl, VT, InsElt);
 }
 
 /// PerformVECTOR_SHUFFLECombine - Target-specific dag combine xforms for
@@ -5425,7 +5521,9 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ARMISD::BFI:     return PerformBFICombine(N, DCI);
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ARMISD::VMOVDRR: return PerformVMOVDRRCombine(N, DCI.DAG);
-  case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DCI.DAG);
+  case ISD::STORE:      return PerformSTORECombine(N, DCI);
+  case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DCI);
+  case ISD::INSERT_VECTOR_ELT: return PerformInsertEltCombine(N, DCI);
   case ISD::VECTOR_SHUFFLE: return PerformVECTOR_SHUFFLECombine(N, DCI.DAG);
   case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI);
   case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
