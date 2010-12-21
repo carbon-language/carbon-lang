@@ -35,7 +35,7 @@ void Matcher::printOne(raw_ostream &OS) const {
 Matcher *Matcher::unlinkNode(Matcher *Other) {
   if (this == Other)
     return takeNext();
- 
+
   // Scan until we find the predecessor of Other.
   Matcher *Cur = this;
   for (; Cur && Cur->getNext() != Other; Cur = Cur->getNext())
@@ -67,11 +67,11 @@ bool Matcher::canMoveBeforeNode(const Matcher *Other) const {
   // We can move simple predicates before record nodes.
   if (isSimplePredicateNode())
     return Other->isSimplePredicateOrRecordNode();
-  
+
   // We can move record nodes across simple predicates.
   if (isSimplePredicateOrRecordNode())
     return isSimplePredicateNode();
-  
+
   // We can't move record nodes across each other etc.
   return false;
 }
@@ -296,7 +296,7 @@ unsigned EmitMergeInputChainsMatcher::getHashImpl() const {
 
 bool CheckOpcodeMatcher::isEqualImpl(const Matcher *M) const {
   // Note: pointer equality isn't enough here, we have to check the enum names
-  // to ensure that the nodes are for the same opcode. 
+  // to ensure that the nodes are for the same opcode.
   return cast<CheckOpcodeMatcher>(M)->Opcode.getEnumName() ==
           Opcode.getEnumName();
 }
@@ -321,7 +321,7 @@ unsigned MarkFlagResultsMatcher::getHashImpl() const {
 }
 
 unsigned CompleteMatchMatcher::getHashImpl() const {
-  return HashUnsigneds(Results.begin(), Results.end()) ^ 
+  return HashUnsigneds(Results.begin(), Results.end()) ^
           ((unsigned)(intptr_t)&Pattern << 8);
 }
 
@@ -332,15 +332,15 @@ static bool TypesAreContradictory(MVT::SimpleValueType T1,
   // If the two types are the same, then they are the same, so they don't
   // contradict.
   if (T1 == T2) return false;
-  
+
   // If either type is about iPtr, then they don't conflict unless the other
   // one is not a scalar integer type.
   if (T1 == MVT::iPTR)
     return !MVT(T2).isInteger() || MVT(T2).isVector();
-  
+
   if (T2 == MVT::iPTR)
     return !MVT(T1).isInteger() || MVT(T1).isVector();
-  
+
   // Otherwise, they are two different non-iPTR types, they conflict.
   return true;
 }
@@ -349,10 +349,10 @@ bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
   if (const CheckOpcodeMatcher *COM = dyn_cast<CheckOpcodeMatcher>(M)) {
     // One node can't have two different opcodes!
     // Note: pointer equality isn't enough here, we have to check the enum names
-    // to ensure that the nodes are for the same opcode. 
+    // to ensure that the nodes are for the same opcode.
     return COM->getOpcode().getEnumName() != getOpcode().getEnumName();
   }
-  
+
   // If the node has a known type, and if the type we're checking for is
   // different, then we know they contradict.  For example, a check for
   // ISD::STORE will never be true at the same time a check for Type i32 is.
@@ -360,12 +360,12 @@ bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
     // If checking for a result the opcode doesn't have, it can't match.
     if (CT->getResNo() >= getOpcode().getNumResults())
       return true;
-    
+
     MVT::SimpleValueType NodeType = getOpcode().getKnownType(CT->getResNo());
     if (NodeType != MVT::Other)
       return TypesAreContradictory(NodeType, CT->getType());
   }
-  
+
   return false;
 }
 
@@ -381,12 +381,12 @@ bool CheckChildTypeMatcher::isContradictoryImpl(const Matcher *M) const {
     // conflict!
     if (CC->getChildNo() != getChildNo())
       return false;
-    
+
     return TypesAreContradictory(getType(), CC->getType());
   }
   return false;
 }
-  
+
 bool CheckIntegerMatcher::isContradictoryImpl(const Matcher *M) const {
   if (const CheckIntegerMatcher *CIM = dyn_cast<CheckIntegerMatcher>(M))
     return CIM->getValue() != getValue();

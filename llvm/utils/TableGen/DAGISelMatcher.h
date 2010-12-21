@@ -31,7 +31,7 @@ Matcher *OptimizeMatcher(Matcher *Matcher, const CodeGenDAGPatterns &CGP);
 void EmitMatcherTable(const Matcher *Matcher, const CodeGenDAGPatterns &CGP,
                       raw_ostream &OS);
 
-  
+
 /// Matcher - Base class for all the the DAG ISel Matcher representation
 /// nodes.
 class Matcher {
@@ -48,7 +48,7 @@ public:
     CaptureFlagInput,     // If the current node has an input flag, save it.
     MoveChild,            // Move current node to specified child.
     MoveParent,           // Move current node to parent.
-    
+
     // Predicate checking.
     CheckSame,            // Fail if not same as prev match.
     CheckPatternPredicate,
@@ -65,7 +65,7 @@ public:
     CheckAndImm,
     CheckOrImm,
     CheckFoldableChainNode,
-    
+
     // Node creation/emisssion.
     EmitInteger,          // Create a TargetConstant
     EmitStringInteger,    // Create a TargetConstant from a string.
@@ -85,7 +85,7 @@ protected:
   Matcher(KindTy K) : Kind(K) {}
 public:
   virtual ~Matcher() {}
-  
+
   KindTy getKind() const { return Kind; }
 
   Matcher *getNext() { return Next.get(); }
@@ -94,25 +94,25 @@ public:
   Matcher *takeNext() { return Next.take(); }
 
   OwningPtr<Matcher> &getNextPtr() { return Next; }
-  
+
   static inline bool classof(const Matcher *) { return true; }
-  
+
   bool isEqual(const Matcher *M) const {
     if (getKind() != M->getKind()) return false;
     return isEqualImpl(M);
   }
-  
+
   unsigned getHash() const {
     // Clear the high bit so we don't conflict with tombstones etc.
     return ((getHashImpl() << 4) ^ getKind()) & (~0U>>1);
   }
-  
+
   /// isSafeToReorderWithPatternPredicate - Return true if it is safe to sink a
   /// PatternPredicate node past this one.
   virtual bool isSafeToReorderWithPatternPredicate() const {
     return false;
   }
-  
+
   /// isSimplePredicateNode - Return true if this is a simple predicate that
   /// operates on the node or its children without potential side effects or a
   /// change of the current node.
@@ -134,28 +134,28 @@ public:
       return true;
     }
   }
-  
+
   /// isSimplePredicateOrRecordNode - Return true if this is a record node or
   /// a simple predicate.
   bool isSimplePredicateOrRecordNode() const {
     return isSimplePredicateNode() ||
            getKind() == RecordNode || getKind() == RecordChild;
   }
-  
+
   /// unlinkNode - Unlink the specified node from this chain.  If Other == this,
   /// we unlink the next pointer and return it.  Otherwise we unlink Other from
   /// the list and return this.
   Matcher *unlinkNode(Matcher *Other);
-  
+
   /// canMoveBefore - Return true if this matcher is the same as Other, or if
   /// we can move this matcher past all of the nodes in-between Other and this
   /// node.  Other must be equal to or before this.
   bool canMoveBefore(const Matcher *Other) const;
-  
+
   /// canMoveBefore - Return true if it is safe to move the current matcher
   /// across the specified one.
   bool canMoveBeforeNode(const Matcher *Other) const;
-  
+
   /// isContradictory - Return true of these two matchers could never match on
   /// the same node.
   bool isContradictory(const Matcher *Other) const {
@@ -167,7 +167,7 @@ public:
       return isContradictoryImpl(Other);
     return Other->isContradictoryImpl(this);
   }
-  
+
   void print(raw_ostream &OS, unsigned indent = 0) const;
   void printOne(raw_ostream &OS) const;
   void dump() const;
@@ -177,7 +177,7 @@ protected:
   virtual unsigned getHashImpl() const = 0;
   virtual bool isContradictoryImpl(const Matcher *M) const { return false; }
 };
-  
+
 /// ScopeMatcher - This attempts to match each of its children to find the first
 /// one that successfully matches.  If one child fails, it tries the next child.
 /// If none of the children match then this check fails.  It never has a 'next'.
@@ -188,12 +188,12 @@ public:
     : Matcher(Scope), Children(children, children+numchildren) {
   }
   virtual ~ScopeMatcher();
-  
+
   unsigned getNumChildren() const { return Children.size(); }
-  
+
   Matcher *getChild(unsigned i) { return Children[i]; }
   const Matcher *getChild(unsigned i) const { return Children[i]; }
-  
+
   void resetChild(unsigned i, Matcher *N) {
     delete Children[i];
     Children[i] = N;
@@ -204,7 +204,7 @@ public:
     Children[i] = 0;
     return Res;
   }
-  
+
   void setNumChildren(unsigned NC) {
     if (NC < Children.size()) {
       // delete any children we're about to lose pointers to.
@@ -217,7 +217,7 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == Scope;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return false; }
@@ -229,38 +229,38 @@ class RecordMatcher : public Matcher {
   /// WhatFor - This is a string indicating why we're recording this.  This
   /// should only be used for comment generation not anything semantic.
   std::string WhatFor;
-  
+
   /// ResultNo - The slot number in the RecordedNodes vector that this will be,
   /// just printed as a comment.
   unsigned ResultNo;
 public:
   RecordMatcher(const std::string &whatfor, unsigned resultNo)
     : Matcher(RecordNode), WhatFor(whatfor), ResultNo(resultNo) {}
-  
+
   const std::string &getWhatFor() const { return WhatFor; }
   unsigned getResultNo() const { return ResultNo; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == RecordNode;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
   virtual unsigned getHashImpl() const { return 0; }
 };
-  
+
 /// RecordChildMatcher - Save a numbered child of the current node, or fail
 /// the match if it doesn't exist.  This is logically equivalent to:
 ///    MoveChild N + RecordNode + MoveParent.
 class RecordChildMatcher : public Matcher {
   unsigned ChildNo;
-  
+
   /// WhatFor - This is a string indicating why we're recording this.  This
   /// should only be used for comment generation not anything semantic.
   std::string WhatFor;
-  
+
   /// ResultNo - The slot number in the RecordedNodes vector that this will be,
   /// just printed as a comment.
   unsigned ResultNo;
@@ -269,7 +269,7 @@ public:
                      unsigned resultNo)
   : Matcher(RecordChild), ChildNo(childno), WhatFor(whatfor),
     ResultNo(resultNo) {}
-  
+
   unsigned getChildNo() const { return ChildNo; }
   const std::string &getWhatFor() const { return WhatFor; }
   unsigned getResultNo() const { return ResultNo; }
@@ -277,7 +277,7 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == RecordChild;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -287,16 +287,16 @@ private:
   }
   virtual unsigned getHashImpl() const { return getChildNo(); }
 };
-  
+
 /// RecordMemRefMatcher - Save the current node's memref.
 class RecordMemRefMatcher : public Matcher {
 public:
   RecordMemRefMatcher() : Matcher(RecordMemRef) {}
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == RecordMemRef;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -305,17 +305,17 @@ private:
   virtual unsigned getHashImpl() const { return 0; }
 };
 
-  
+
 /// CaptureFlagInputMatcher - If the current record has a flag input, record
 /// it so that it is used as an input to the generated code.
 class CaptureFlagInputMatcher : public Matcher {
 public:
   CaptureFlagInputMatcher() : Matcher(CaptureFlagInput) {}
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CaptureFlagInput;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -323,20 +323,20 @@ private:
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
   virtual unsigned getHashImpl() const { return 0; }
 };
-  
+
 /// MoveChildMatcher - This tells the interpreter to move into the
 /// specified child node.
 class MoveChildMatcher : public Matcher {
   unsigned ChildNo;
 public:
   MoveChildMatcher(unsigned childNo) : Matcher(MoveChild), ChildNo(childNo) {}
-  
+
   unsigned getChildNo() const { return ChildNo; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == MoveChild;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -346,17 +346,17 @@ private:
   }
   virtual unsigned getHashImpl() const { return getChildNo(); }
 };
-  
+
 /// MoveParentMatcher - This tells the interpreter to move to the parent
 /// of the current node.
 class MoveParentMatcher : public Matcher {
 public:
   MoveParentMatcher() : Matcher(MoveParent) {}
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == MoveParent;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -373,13 +373,13 @@ class CheckSameMatcher : public Matcher {
 public:
   CheckSameMatcher(unsigned matchnumber)
     : Matcher(CheckSame), MatchNumber(matchnumber) {}
-  
+
   unsigned getMatchNumber() const { return MatchNumber; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckSame;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -389,7 +389,7 @@ private:
   }
   virtual unsigned getHashImpl() const { return getMatchNumber(); }
 };
-  
+
 /// CheckPatternPredicateMatcher - This checks the target-specific predicate
 /// to see if the entire pattern is capable of matching.  This predicate does
 /// not take a node as input.  This is used for subtarget feature checks etc.
@@ -398,13 +398,13 @@ class CheckPatternPredicateMatcher : public Matcher {
 public:
   CheckPatternPredicateMatcher(StringRef predicate)
     : Matcher(CheckPatternPredicate), Predicate(predicate) {}
-  
+
   StringRef getPredicate() const { return Predicate; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckPatternPredicate;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -414,7 +414,7 @@ private:
   }
   virtual unsigned getHashImpl() const;
 };
-  
+
 /// CheckPredicateMatcher - This checks the target-specific predicate to
 /// see if the node is acceptable.
 class CheckPredicateMatcher : public Matcher {
@@ -422,13 +422,13 @@ class CheckPredicateMatcher : public Matcher {
 public:
   CheckPredicateMatcher(StringRef predname)
     : Matcher(CheckPredicate), PredName(predname) {}
-  
+
   StringRef getPredicateName() const { return PredName; }
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckPredicate;
   }
-  
+
   // TODO: Ok?
   //virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
@@ -439,8 +439,8 @@ private:
   }
   virtual unsigned getHashImpl() const;
 };
-  
-  
+
+
 /// CheckOpcodeMatcher - This checks to see if the current node has the
 /// specified opcode, if not it fails to match.
 class CheckOpcodeMatcher : public Matcher {
@@ -448,13 +448,13 @@ class CheckOpcodeMatcher : public Matcher {
 public:
   CheckOpcodeMatcher(const SDNodeInfo &opcode)
     : Matcher(CheckOpcode), Opcode(opcode) {}
-  
+
   const SDNodeInfo &getOpcode() const { return Opcode; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckOpcode;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -478,19 +478,19 @@ public:
   static inline bool classof(const Matcher *N) {
     return N->getKind() == SwitchOpcode;
   }
-  
+
   unsigned getNumCases() const { return Cases.size(); }
-  
+
   const SDNodeInfo &getCaseOpcode(unsigned i) const { return *Cases[i].first; }
   Matcher *getCaseMatcher(unsigned i) { return Cases[i].second; }
   const Matcher *getCaseMatcher(unsigned i) const { return Cases[i].second; }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return false; }
   virtual unsigned getHashImpl() const { return 4123; }
 };
-  
+
 /// CheckTypeMatcher - This checks to see if the current node has the
 /// specified type at the specified result, if not it fails to match.
 class CheckTypeMatcher : public Matcher {
@@ -499,14 +499,14 @@ class CheckTypeMatcher : public Matcher {
 public:
   CheckTypeMatcher(MVT::SimpleValueType type, unsigned resno)
     : Matcher(CheckType), Type(type), ResNo(resno) {}
-  
+
   MVT::SimpleValueType getType() const { return Type; }
   unsigned getResNo() const { return ResNo; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckType;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -517,7 +517,7 @@ private:
   virtual unsigned getHashImpl() const { return Type; }
   virtual bool isContradictoryImpl(const Matcher *M) const;
 };
-  
+
 /// SwitchTypeMatcher - Switch based on the current node's type, dispatching
 /// to one matcher per case.  If the type doesn't match any of the cases,
 /// then the match fails.  This is semantically equivalent to a Scope node where
@@ -528,24 +528,24 @@ public:
   SwitchTypeMatcher(const std::pair<MVT::SimpleValueType, Matcher*> *cases,
                     unsigned numcases)
   : Matcher(SwitchType), Cases(cases, cases+numcases) {}
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == SwitchType;
   }
-  
+
   unsigned getNumCases() const { return Cases.size(); }
-  
+
   MVT::SimpleValueType getCaseType(unsigned i) const { return Cases[i].first; }
   Matcher *getCaseMatcher(unsigned i) { return Cases[i].second; }
   const Matcher *getCaseMatcher(unsigned i) const { return Cases[i].second; }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return false; }
   virtual unsigned getHashImpl() const { return 4123; }
 };
-  
-  
+
+
 /// CheckChildTypeMatcher - This checks to see if a child node has the
 /// specified type, if not it fails to match.
 class CheckChildTypeMatcher : public Matcher {
@@ -554,14 +554,14 @@ class CheckChildTypeMatcher : public Matcher {
 public:
   CheckChildTypeMatcher(unsigned childno, MVT::SimpleValueType type)
     : Matcher(CheckChildType), ChildNo(childno), Type(type) {}
-  
+
   unsigned getChildNo() const { return ChildNo; }
   MVT::SimpleValueType getType() const { return Type; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckChildType;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -573,7 +573,7 @@ private:
   virtual unsigned getHashImpl() const { return (Type << 3) | ChildNo; }
   virtual bool isContradictoryImpl(const Matcher *M) const;
 };
-  
+
 
 /// CheckIntegerMatcher - This checks to see if the current node is a
 /// ConstantSDNode with the specified integer value, if not it fails to match.
@@ -582,13 +582,13 @@ class CheckIntegerMatcher : public Matcher {
 public:
   CheckIntegerMatcher(int64_t value)
     : Matcher(CheckInteger), Value(value) {}
-  
+
   int64_t getValue() const { return Value; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckInteger;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -599,7 +599,7 @@ private:
   virtual unsigned getHashImpl() const { return Value; }
   virtual bool isContradictoryImpl(const Matcher *M) const;
 };
-  
+
 /// CheckCondCodeMatcher - This checks to see if the current node is a
 /// CondCodeSDNode with the specified condition, if not it fails to match.
 class CheckCondCodeMatcher : public Matcher {
@@ -607,13 +607,13 @@ class CheckCondCodeMatcher : public Matcher {
 public:
   CheckCondCodeMatcher(StringRef condcodename)
     : Matcher(CheckCondCode), CondCodeName(condcodename) {}
-  
+
   StringRef getCondCodeName() const { return CondCodeName; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckCondCode;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -623,7 +623,7 @@ private:
   }
   virtual unsigned getHashImpl() const;
 };
-  
+
 /// CheckValueTypeMatcher - This checks to see if the current node is a
 /// VTSDNode with the specified type, if not it fails to match.
 class CheckValueTypeMatcher : public Matcher {
@@ -631,13 +631,13 @@ class CheckValueTypeMatcher : public Matcher {
 public:
   CheckValueTypeMatcher(StringRef type_name)
     : Matcher(CheckValueType), TypeName(type_name) {}
-  
+
   StringRef getTypeName() const { return TypeName; }
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckValueType;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -648,21 +648,21 @@ private:
   virtual unsigned getHashImpl() const;
   bool isContradictoryImpl(const Matcher *M) const;
 };
-  
-  
-  
+
+
+
 /// CheckComplexPatMatcher - This node runs the specified ComplexPattern on
 /// the current node.
 class CheckComplexPatMatcher : public Matcher {
   const ComplexPattern &Pattern;
-  
-  /// MatchNumber - This is the recorded nodes slot that contains the node we want to
-  /// match against.
+
+  /// MatchNumber - This is the recorded nodes slot that contains the node we
+  /// want to match against.
   unsigned MatchNumber;
-  
+
   /// Name - The name of the node we're matching, for comment emission.
   std::string Name;
-  
+
   /// FirstResult - This is the first slot in the RecordedNodes list that the
   /// result of the match populates.
   unsigned FirstResult;
@@ -671,17 +671,17 @@ public:
                          const std::string &name, unsigned firstresult)
     : Matcher(CheckComplexPat), Pattern(pattern), MatchNumber(matchnumber),
       Name(name), FirstResult(firstresult) {}
-  
+
   const ComplexPattern &getPattern() const { return Pattern; }
   unsigned getMatchNumber() const { return MatchNumber; }
-  
+
   const std::string getName() const { return Name; }
   unsigned getFirstResult() const { return FirstResult; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckComplexPat;
   }
-  
+
   // Not safe to move a pattern predicate past a complex pattern.
   virtual bool isSafeToReorderWithPatternPredicate() const { return false; }
 
@@ -695,7 +695,7 @@ private:
     return (unsigned)(intptr_t)&Pattern ^ MatchNumber;
   }
 };
-  
+
 /// CheckAndImmMatcher - This checks to see if the current node is an 'and'
 /// with something equivalent to the specified immediate.
 class CheckAndImmMatcher : public Matcher {
@@ -703,13 +703,13 @@ class CheckAndImmMatcher : public Matcher {
 public:
   CheckAndImmMatcher(int64_t value)
     : Matcher(CheckAndImm), Value(value) {}
-  
+
   int64_t getValue() const { return Value; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckAndImm;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -727,13 +727,13 @@ class CheckOrImmMatcher : public Matcher {
 public:
   CheckOrImmMatcher(int64_t value)
     : Matcher(CheckOrImm), Value(value) {}
-  
+
   int64_t getValue() const { return Value; }
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckOrImm;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -750,11 +750,11 @@ class CheckFoldableChainNodeMatcher : public Matcher {
 public:
   CheckFoldableChainNodeMatcher()
     : Matcher(CheckFoldableChainNode) {}
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckFoldableChainNode;
   }
-  
+
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 
 private:
@@ -770,14 +770,14 @@ class EmitIntegerMatcher : public Matcher {
 public:
   EmitIntegerMatcher(int64_t val, MVT::SimpleValueType vt)
     : Matcher(EmitInteger), Val(val), VT(vt) {}
-  
+
   int64_t getValue() const { return Val; }
   MVT::SimpleValueType getVT() const { return VT; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitInteger;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -795,14 +795,14 @@ class EmitStringIntegerMatcher : public Matcher {
 public:
   EmitStringIntegerMatcher(const std::string &val, MVT::SimpleValueType vt)
     : Matcher(EmitStringInteger), Val(val), VT(vt) {}
-  
+
   const std::string &getValue() const { return Val; }
   MVT::SimpleValueType getVT() const { return VT; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitStringInteger;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -811,7 +811,7 @@ private:
   }
   virtual unsigned getHashImpl() const;
 };
-  
+
 /// EmitRegisterMatcher - This creates a new TargetConstant.
 class EmitRegisterMatcher : public Matcher {
   /// Reg - The def for the register that we're emitting.  If this is null, then
@@ -821,14 +821,14 @@ class EmitRegisterMatcher : public Matcher {
 public:
   EmitRegisterMatcher(Record *reg, MVT::SimpleValueType vt)
     : Matcher(EmitRegister), Reg(reg), VT(vt) {}
-  
+
   Record *getReg() const { return Reg; }
   MVT::SimpleValueType getVT() const { return VT; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitRegister;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -848,13 +848,13 @@ class EmitConvertToTargetMatcher : public Matcher {
 public:
   EmitConvertToTargetMatcher(unsigned slot)
     : Matcher(EmitConvertToTarget), Slot(slot) {}
-  
+
   unsigned getSlot() const { return Slot; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitConvertToTarget;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -862,7 +862,7 @@ private:
   }
   virtual unsigned getHashImpl() const { return Slot; }
 };
-  
+
 /// EmitMergeInputChainsMatcher - Emit a node that merges a list of input
 /// chains together with a token factor.  The list of nodes are the nodes in the
 /// matched pattern that have chain input/outputs.  This node adds all input
@@ -872,18 +872,18 @@ class EmitMergeInputChainsMatcher : public Matcher {
 public:
   EmitMergeInputChainsMatcher(const unsigned *nodes, unsigned NumNodes)
     : Matcher(EmitMergeInputChains), ChainNodes(nodes, nodes+NumNodes) {}
-  
+
   unsigned getNumNodes() const { return ChainNodes.size(); }
-  
+
   unsigned getNode(unsigned i) const {
     assert(i < ChainNodes.size());
     return ChainNodes[i];
-  }  
-  
+  }
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitMergeInputChains;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -891,7 +891,7 @@ private:
   }
   virtual unsigned getHashImpl() const;
 };
-  
+
 /// EmitCopyToRegMatcher - Emit a CopyToReg node from a value to a physreg,
 /// pushing the chain and flag results.
 ///
@@ -901,27 +901,27 @@ class EmitCopyToRegMatcher : public Matcher {
 public:
   EmitCopyToRegMatcher(unsigned srcSlot, Record *destPhysReg)
     : Matcher(EmitCopyToReg), SrcSlot(srcSlot), DestPhysReg(destPhysReg) {}
-  
+
   unsigned getSrcSlot() const { return SrcSlot; }
   Record *getDestPhysReg() const { return DestPhysReg; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitCopyToReg;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<EmitCopyToRegMatcher>(M)->SrcSlot == SrcSlot &&
-           cast<EmitCopyToRegMatcher>(M)->DestPhysReg == DestPhysReg; 
+           cast<EmitCopyToRegMatcher>(M)->DestPhysReg == DestPhysReg;
   }
   virtual unsigned getHashImpl() const {
     return SrcSlot ^ ((unsigned)(intptr_t)DestPhysReg << 4);
   }
 };
-  
-    
-  
+
+
+
 /// EmitNodeXFormMatcher - Emit an operation that runs an SDNodeXForm on a
 /// recorded node and records the result.
 class EmitNodeXFormMatcher : public Matcher {
@@ -930,25 +930,25 @@ class EmitNodeXFormMatcher : public Matcher {
 public:
   EmitNodeXFormMatcher(unsigned slot, Record *nodeXForm)
     : Matcher(EmitNodeXForm), Slot(slot), NodeXForm(nodeXForm) {}
-  
+
   unsigned getSlot() const { return Slot; }
   Record *getNodeXForm() const { return NodeXForm; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitNodeXForm;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<EmitNodeXFormMatcher>(M)->Slot == Slot &&
-           cast<EmitNodeXFormMatcher>(M)->NodeXForm == NodeXForm; 
+           cast<EmitNodeXFormMatcher>(M)->NodeXForm == NodeXForm;
   }
   virtual unsigned getHashImpl() const {
     return Slot ^ ((unsigned)(intptr_t)NodeXForm << 4);
   }
 };
-  
+
 /// EmitNodeMatcherCommon - Common class shared between EmitNode and
 /// MorphNodeTo.
 class EmitNodeMatcherCommon : public Matcher {
@@ -956,7 +956,7 @@ class EmitNodeMatcherCommon : public Matcher {
   const SmallVector<MVT::SimpleValueType, 3> VTs;
   const SmallVector<unsigned, 6> Operands;
   bool HasChain, HasInFlag, HasOutFlag, HasMemRefs;
-  
+
   /// NumFixedArityOperands - If this is a fixed arity node, this is set to -1.
   /// If this is a varidic node, this is set to the number of fixed arity
   /// operands in the root of the pattern.  The rest are appended to this node.
@@ -972,9 +972,9 @@ public:
       VTs(vts, vts+numvts), Operands(operands, operands+numops),
       HasChain(hasChain), HasInFlag(hasInFlag), HasOutFlag(hasOutFlag),
       HasMemRefs(hasmemrefs), NumFixedArityOperands(numfixedarityoperands) {}
-  
+
   const std::string &getOpcodeName() const { return OpcodeName; }
-  
+
   unsigned getNumVTs() const { return VTs.size(); }
   MVT::SimpleValueType getVT(unsigned i) const {
     assert(i < VTs.size());
@@ -986,27 +986,27 @@ public:
     assert(i < Operands.size());
     return Operands[i];
   }
-  
+
   const SmallVectorImpl<MVT::SimpleValueType> &getVTList() const { return VTs; }
   const SmallVectorImpl<unsigned> &getOperandList() const { return Operands; }
 
-  
+
   bool hasChain() const { return HasChain; }
   bool hasInFlag() const { return HasInFlag; }
   bool hasOutFlag() const { return HasOutFlag; }
   bool hasMemRefs() const { return HasMemRefs; }
   int getNumFixedArityOperands() const { return NumFixedArityOperands; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitNode || N->getKind() == MorphNodeTo;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const;
   virtual unsigned getHashImpl() const;
 };
-  
+
 /// EmitNodeMatcher - This signals a successful match and generates a node.
 class EmitNodeMatcher : public EmitNodeMatcherCommon {
   unsigned FirstResultSlot;
@@ -1021,15 +1021,15 @@ public:
                           hasInFlag, hasOutFlag, hasmemrefs,
                           numfixedarityoperands, false),
     FirstResultSlot(firstresultslot) {}
-  
+
   unsigned getFirstResultSlot() const { return FirstResultSlot; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitNode;
   }
-  
+
 };
-  
+
 class MorphNodeToMatcher : public EmitNodeMatcherCommon {
   const PatternToMatch &Pattern;
 public:
@@ -1044,14 +1044,14 @@ public:
                             numfixedarityoperands, true),
       Pattern(pattern) {
   }
-  
+
   const PatternToMatch &getPattern() const { return Pattern; }
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == MorphNodeTo;
   }
 };
-  
+
 /// MarkFlagResultsMatcher - This node indicates which non-root nodes in the
 /// pattern produce flags.  This allows CompleteMatchMatcher to update them
 /// with the output flag of the resultant code.
@@ -1060,18 +1060,18 @@ class MarkFlagResultsMatcher : public Matcher {
 public:
   MarkFlagResultsMatcher(const unsigned *nodes, unsigned NumNodes)
     : Matcher(MarkFlagResults), FlagResultNodes(nodes, nodes+NumNodes) {}
-  
+
   unsigned getNumNodes() const { return FlagResultNodes.size(); }
-  
+
   unsigned getNode(unsigned i) const {
     assert(i < FlagResultNodes.size());
     return FlagResultNodes[i];
-  }  
-  
+  }
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == MarkFlagResults;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -1095,11 +1095,11 @@ public:
   unsigned getNumResults() const { return Results.size(); }
   unsigned getResult(unsigned R) const { return Results[R]; }
   const PatternToMatch &getPattern() const { return Pattern; }
-  
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CompleteMatch;
   }
-  
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -1108,7 +1108,7 @@ private:
   }
   virtual unsigned getHashImpl() const;
 };
- 
+
 } // end namespace llvm
 
 #endif
