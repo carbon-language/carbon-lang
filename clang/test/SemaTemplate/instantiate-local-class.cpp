@@ -50,3 +50,16 @@ namespace local_class_with_virtual_functions {
   struct S { };
   void test() { f<S>(); }
 }
+
+namespace PR8801 {
+  template<typename T>
+  void foo() {
+    class X;
+    int (X::*pmf)(T) = 0;
+    class X : public T { };
+  }
+
+  struct Y { };
+
+  template void foo<Y>();
+}

@@ -1735,11 +1735,21 @@ Decl *LocalInstantiationScope::getInstantiationOf(const Decl *D) {
   for (LocalInstantiationScope *Current = this; Current; 
        Current = Current->Outer) {
     // Check if we found something within this scope.
-    llvm::DenseMap<const Decl *, Decl *>::iterator Found
-      = Current->LocalDecls.find(D);
-    if (Found != Current->LocalDecls.end())
-      return Found->second;
-   
+    const Decl *CheckD = D;
+    do {
+      llvm::DenseMap<const Decl *, Decl *>::iterator Found
+        = Current->LocalDecls.find(CheckD);
+      if (Found != Current->LocalDecls.end())
+        return Found->second;
+      
+      // If this is a tag declaration, it's possible that we need to look for
+      // a previous declaration.
+      if (const TagDecl *Tag = dyn_cast<TagDecl>(CheckD))
+        CheckD = Tag->getPreviousDeclaration();
+      else
+        CheckD = 0;
+    } while (CheckD);
+    
     // If we aren't combined with our outer scope, we're done. 
     if (!Current->CombineWithOuterScope)
       break;
