@@ -2967,7 +2967,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
     uint64_t c2 = N1C->getZExtValue();
-    if (c1 + c2 > OpSizeInBits)
+    if (c1 + c2 >= OpSizeInBits)
       return DAG.getConstant(0, VT);
     return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getConstant(c1 + c2, N1.getValueType()));
@@ -3165,7 +3165,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
     uint64_t c2 = N1C->getZExtValue();
-    if (c1 + c2 > OpSizeInBits)
+    if (c1 + c2 >= OpSizeInBits)
       return DAG.getConstant(0, VT);
     return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0.getOperand(0),
                        DAG.getConstant(c1 + c2, N1.getValueType()));
