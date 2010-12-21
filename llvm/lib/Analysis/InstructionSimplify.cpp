@@ -155,6 +155,10 @@ static Value *ThreadBinOpOverSelect(unsigned Opcode, Value *LHS, Value *RHS,
                                     const TargetData *TD,
                                     const DominatorTree *DT,
                                     unsigned MaxRecurse) {
+  // Recursion is always used, so bail out at once if we already hit the limit.
+  if (!MaxRecurse--)
+    return 0;
+
   SelectInst *SI;
   if (isa<SelectInst>(LHS)) {
     SI = cast<SelectInst>(LHS);
@@ -225,6 +229,10 @@ static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
                                   Value *RHS, const TargetData *TD,
                                   const DominatorTree *DT,
                                   unsigned MaxRecurse) {
+  // Recursion is always used, so bail out at once if we already hit the limit.
+  if (!MaxRecurse--)
+    return 0;
+
   // Make sure the select is on the LHS.
   if (!isa<SelectInst>(LHS)) {
     std::swap(LHS, RHS);
@@ -254,6 +262,10 @@ static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
 static Value *ThreadBinOpOverPHI(unsigned Opcode, Value *LHS, Value *RHS,
                                  const TargetData *TD, const DominatorTree *DT,
                                  unsigned MaxRecurse) {
+  // Recursion is always used, so bail out at once if we already hit the limit.
+  if (!MaxRecurse--)
+    return 0;
+
   PHINode *PI;
   if (isa<PHINode>(LHS)) {
     PI = cast<PHINode>(LHS);
@@ -294,6 +306,10 @@ static Value *ThreadBinOpOverPHI(unsigned Opcode, Value *LHS, Value *RHS,
 static Value *ThreadCmpOverPHI(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
                                const TargetData *TD, const DominatorTree *DT,
                                unsigned MaxRecurse) {
+  // Recursion is always used, so bail out at once if we already hit the limit.
+  if (!MaxRecurse--)
+    return 0;
+
   // Make sure the phi is on the LHS.
   if (!isa<PHINode>(LHS)) {
     std::swap(LHS, RHS);
@@ -485,16 +501,16 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
 
   // If the operation is with the result of a select instruction, check whether
   // operating on either branch of the select always yields the same value.
-  if (MaxRecurse && (isa<SelectInst>(Op0) || isa<SelectInst>(Op1)))
+  if (isa<SelectInst>(Op0) || isa<SelectInst>(Op1))
     if (Value *V = ThreadBinOpOverSelect(Instruction::And, Op0, Op1, TD, DT,
-                                         MaxRecurse-1))
+                                         MaxRecurse))
       return V;
 
   // If the operation is with the result of a phi instruction, check whether
   // operating on all incoming values of the phi always yields the same value.
-  if (MaxRecurse && (isa<PHINode>(Op0) || isa<PHINode>(Op1)))
+  if (isa<PHINode>(Op0) || isa<PHINode>(Op1))
     if (Value *V = ThreadBinOpOverPHI(Instruction::And, Op0, Op1, TD, DT,
-                                      MaxRecurse-1))
+                                      MaxRecurse))
       return V;
 
   return 0;
@@ -559,16 +575,16 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
 
   // If the operation is with the result of a select instruction, check whether
   // operating on either branch of the select always yields the same value.
-  if (MaxRecurse && (isa<SelectInst>(Op0) || isa<SelectInst>(Op1)))
+  if (isa<SelectInst>(Op0) || isa<SelectInst>(Op1))
     if (Value *V = ThreadBinOpOverSelect(Instruction::Or, Op0, Op1, TD, DT,
-                                         MaxRecurse-1))
+                                         MaxRecurse))
       return V;
 
   // If the operation is with the result of a phi instruction, check whether
   // operating on all incoming values of the phi always yields the same value.
-  if (MaxRecurse && (isa<PHINode>(Op0) || isa<PHINode>(Op1)))
+  if (isa<PHINode>(Op0) || isa<PHINode>(Op1))
     if (Value *V = ThreadBinOpOverPHI(Instruction::Or, Op0, Op1, TD, DT,
-                                      MaxRecurse-1))
+                                      MaxRecurse))
       return V;
 
   return 0;
@@ -700,14 +716,14 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
-  if (MaxRecurse && (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)))
-    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD, DT, MaxRecurse-1))
+  if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
+    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD, DT, MaxRecurse))
       return V;
 
   // If the comparison is with the result of a phi instruction, check whether
   // doing the compare with each incoming phi value yields a common result.
-  if (MaxRecurse && (isa<PHINode>(LHS) || isa<PHINode>(RHS)))
-    if (Value *V = ThreadCmpOverPHI(Pred, LHS, RHS, TD, DT, MaxRecurse-1))
+  if (isa<PHINode>(LHS) || isa<PHINode>(RHS))
+    if (Value *V = ThreadCmpOverPHI(Pred, LHS, RHS, TD, DT, MaxRecurse))
       return V;
 
   return 0;
@@ -795,14 +811,14 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
-  if (MaxRecurse && (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)))
-    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD, DT, MaxRecurse-1))
+  if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
+    if (Value *V = ThreadCmpOverSelect(Pred, LHS, RHS, TD, DT, MaxRecurse))
       return V;
 
   // If the comparison is with the result of a phi instruction, check whether
   // doing the compare with each incoming phi value yields a common result.
-  if (MaxRecurse && (isa<PHINode>(LHS) || isa<PHINode>(RHS)))
-    if (Value *V = ThreadCmpOverPHI(Pred, LHS, RHS, TD, DT, MaxRecurse-1))
+  if (isa<PHINode>(LHS) || isa<PHINode>(RHS))
+    if (Value *V = ThreadCmpOverPHI(Pred, LHS, RHS, TD, DT, MaxRecurse))
       return V;
 
   return 0;
@@ -947,15 +963,15 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 
     // If the operation is with the result of a select instruction, check whether
     // operating on either branch of the select always yields the same value.
-    if (MaxRecurse && (isa<SelectInst>(LHS) || isa<SelectInst>(RHS)))
+    if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
       if (Value *V = ThreadBinOpOverSelect(Opcode, LHS, RHS, TD, DT,
-                                           MaxRecurse-1))
+                                           MaxRecurse))
         return V;
 
     // If the operation is with the result of a phi instruction, check whether
     // operating on all incoming values of the phi always yields the same value.
-    if (MaxRecurse && (isa<PHINode>(LHS) || isa<PHINode>(RHS)))
-      if (Value *V = ThreadBinOpOverPHI(Opcode, LHS, RHS, TD, DT, MaxRecurse-1))
+    if (isa<PHINode>(LHS) || isa<PHINode>(RHS))
+      if (Value *V = ThreadBinOpOverPHI(Opcode, LHS, RHS, TD, DT, MaxRecurse))
         return V;
 
     return 0;
