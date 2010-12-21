@@ -426,8 +426,7 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
       ObjCDeclSpec OCDS;
       // Parse property attribute list, if any.
       if (Tok.is(tok::l_paren))
-        ParseObjCPropertyAttribute(OCDS, interfaceDecl,
-                                   allMethods.data(), allMethods.size());
+        ParseObjCPropertyAttribute(OCDS, interfaceDecl);
 
       ObjCPropertyCallback Callback(*this, interfaceDecl, allProperties,
                                     OCDS, AtLoc, MethodImplKind);
@@ -476,9 +475,7 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
 ///     copy
 ///     nonatomic
 ///
-void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl,
-                                        Decl **Methods, 
-                                        unsigned NumMethods) {
+void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl) {
   assert(Tok.getKind() == tok::l_paren);
   SourceLocation LHSLoc = ConsumeParen(); // consume '('
 
@@ -523,11 +520,9 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl,
 
       if (Tok.is(tok::code_completion)) {
         if (IsSetter)
-          Actions.CodeCompleteObjCPropertySetter(getCurScope(), ClassDecl,
-                                                 Methods, NumMethods);
+          Actions.CodeCompleteObjCPropertySetter(getCurScope(), ClassDecl);
         else
-          Actions.CodeCompleteObjCPropertyGetter(getCurScope(), ClassDecl,
-                                                 Methods, NumMethods);
+          Actions.CodeCompleteObjCPropertyGetter(getCurScope(), ClassDecl);
         ConsumeCodeCompletionToken();
       }
 

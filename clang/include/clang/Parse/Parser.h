@@ -983,8 +983,7 @@ private:
   Decl *ParseObjCMethodDecl(SourceLocation mLoc, tok::TokenKind mType,
                                 Decl *classDecl,
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
-  void ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl,
-                                  Decl **Methods, unsigned NumMethods);
+  void ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl);
 
   Decl *ParseObjCMethodDefinition();
 

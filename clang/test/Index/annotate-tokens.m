@@ -131,6 +131,11 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 }
 @end
 
+@interface Rdar8062781
++ (Foo*)getB;
+@property (readonly, nonatomic) Foo *blah;
+@end
+
 // RUN: c-index-test -test-annotate-tokens=%s:1:1:118:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
@@ -305,17 +310,17 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Identifier: "anOutlet" [53:21 - 53:29] ObjCIvarDecl=anOutlet:53:21 (Definition)
 // CHECK: Punctuation: ";" [53:29 - 53:30] ObjCInterfaceDecl=IBOutletTests:51:12
 // CHECK: Punctuation: "}" [54:1 - 54:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "-" [55:1 - 55:2] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "(" [55:3 - 55:4] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "IBAction" [55:4 - 55:12] macro instantiation=IBAction
-// CHECK: Punctuation: ")" [55:12 - 55:13] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "actionMethod" [55:14 - 55:26] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: ":" [55:26 - 55:27] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: "(" [55:27 - 55:28] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "id" [55:28 - 55:30] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: ")" [55:30 - 55:31] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Identifier: "arg" [55:31 - 55:34] ObjCInterfaceDecl=IBOutletTests:51:12
-// CHECK: Punctuation: ";" [55:34 - 55:35] ObjCInterfaceDecl=IBOutletTests:51:12
+// CHECK: Punctuation: "-" [55:1 - 55:2] ObjCInstanceMethodDecl=actionMethod::55:1
+// CHECK: Punctuation: "(" [55:3 - 55:4] ObjCInstanceMethodDecl=actionMethod::55:1
+// CHECK: Identifier: "IBAction" [55:4 - 55:12] macro instantiation=IBAction:146:9
+// CHECK: Punctuation: ")" [55:12 - 55:13] ObjCInstanceMethodDecl=actionMethod::55:1
+// CHECK: Identifier: "actionMethod" [55:14 - 55:26] ObjCInstanceMethodDecl=actionMethod::55:1
+// CHECK: Punctuation: ":" [55:26 - 55:27] ObjCInstanceMethodDecl=actionMethod::55:1
+// CHECK: Punctuation: "(" [55:27 - 55:28] ObjCInstanceMethodDecl=actionMethod::55:1
+// CHECK: Identifier: "id" [55:28 - 55:30] TypeRef=id:0:0
+// CHECK: Punctuation: ")" [55:30 - 55:31] ParmDecl=arg:55:31 (Definition)
+// CHECK: Identifier: "arg" [55:31 - 55:34] ParmDecl=arg:55:31 (Definition)
+// CHECK: Punctuation: ";" [55:34 - 55:35] ObjCInstanceMethodDecl=actionMethod::55:1
 // CHECK: Punctuation: "@" [56:1 - 56:2] ObjCPropertyDecl=aPropOutlet:56:26
 // CHECK: Keyword: "property" [56:2 - 56:10] ObjCPropertyDecl=aPropOutlet:56:26
 // CHECK: Identifier: "IBOutlet" [56:11 - 56:19] macro instantiation=IBOutlet
@@ -519,3 +524,27 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK-INSIDE_BLOCK: Identifier: "a" [128:18 - 128:19] VarDecl=a:128:18 (Definition)
 // CHECK-INSIDE_BLOCK: Punctuation: "=" [128:20 - 128:21] VarDecl=a:128:18 (Definition)
 // CHECK-INSIDE_BLOCK: Identifier: "self" [128:22 - 128:26] DeclRefExpr=self:0:0
+
+// RUN: c-index-test -test-annotate-tokens=%s:134:1:137:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck -check-prefix=CHECK-PROP-AFTER-METHOD %s
+// CHECK-PROP-AFTER-METHOD: Punctuation: "@" [134:1 - 134:2] ObjCInterfaceDecl=Rdar8062781:134:12
+// CHECK-PROP-AFTER-METHOD: Keyword: "interface" [134:2 - 134:11] ObjCInterfaceDecl=Rdar8062781:134:12
+// CHECK-PROP-AFTER-METHOD: Identifier: "Rdar8062781" [134:12 - 134:23] ObjCInterfaceDecl=Rdar8062781:134:12
+// CHECK-PROP-AFTER-METHOD: Punctuation: "+" [135:1 - 135:2] ObjCClassMethodDecl=getB:135:1
+// CHECK-PROP-AFTER-METHOD: Punctuation: "(" [135:3 - 135:4] ObjCClassMethodDecl=getB:135:1
+// CHECK-PROP-AFTER-METHOD: Identifier: "Foo" [135:4 - 135:7] ObjCClassRef=Foo:1:12
+// CHECK-PROP-AFTER-METHOD: Punctuation: "*" [135:7 - 135:8] ObjCClassMethodDecl=getB:135:1
+// CHECK-PROP-AFTER-METHOD: Punctuation: ")" [135:8 - 135:9] ObjCClassMethodDecl=getB:135:1
+// CHECK-PROP-AFTER-METHOD: Identifier: "getB" [135:9 - 135:13] ObjCClassMethodDecl=getB:135:1
+// CHECK-PROP-AFTER-METHOD: Punctuation: ";" [135:13 - 135:14] ObjCClassMethodDecl=getB:135:1
+// CHECK-PROP-AFTER-METHOD: Punctuation: "@" [136:1 - 136:2] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Keyword: "property" [136:2 - 136:10] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Punctuation: "(" [136:11 - 136:12] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Identifier: "readonly" [136:12 - 136:20] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Punctuation: "," [136:20 - 136:21] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Identifier: "nonatomic" [136:22 - 136:31] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Punctuation: ")" [136:31 - 136:32] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Identifier: "Foo" [136:33 - 136:36] ObjCClassRef=Foo:1:12
+// CHECK-PROP-AFTER-METHOD: Punctuation: "*" [136:37 - 136:38] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Identifier: "blah" [136:38 - 136:42] ObjCPropertyDecl=blah:136:38
+// CHECK-PROP-AFTER-METHOD: Punctuation: ";" [136:42 - 136:43] ObjCInterfaceDecl=Rdar8062781:134:12
+// CHECK-PROP-AFTER-METHOD: Punctuation: "@" [137:1 - 137:2] ObjCInterfaceDecl=Rdar8062781:134:12
