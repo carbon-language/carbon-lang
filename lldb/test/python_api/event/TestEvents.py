@@ -85,11 +85,20 @@ class EventAPITestCase(TestBase):
         my_thread = MyListeningThread()
         my_thread.start()
 
-        # Use Python API to continue the process.  The listening thread should be
-        # able to receive a state changed event.
-        self.process.Continue()
+        # Set the debugger to be in asynchronous mode since our listening thread
+        # is waiting for events to come.
+        self.dbg.SetAsync(True)
 
+        # Use Python API to kill the process.  The listening thread should be
+        # able to receive a state changed event.
+        self.process.Kill()
+
+        # Wait until the 'MyListeningThread' terminates.
         my_thread.join()
+
+        # Restore the original synchronous mode.
+        self.dbg.SetAsync(False)
+
         self.assertTrue(event.IsValid())
 
         
