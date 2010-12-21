@@ -1023,6 +1023,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
               break;
           }
         }
+        bool forwardClass = false;
         if (!Method) {
           // If we have implementations in scope, check "private" methods.
           Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
@@ -1033,14 +1034,15 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
             // compatibility. FIXME: should we deviate??
             if (OCIType->qual_empty()) {
               Method = LookupInstanceMethodInGlobalPool(Sel,
-                                                 SourceRange(LBracLoc, RBracLoc)); 
-              if (Method && !OCIType->getInterfaceDecl()->isForwardDecl())
+                                                 SourceRange(LBracLoc, RBracLoc));
+              forwardClass = OCIType->getInterfaceDecl()->isForwardDecl();
+              if (Method && !forwardClass)
                 Diag(Loc, diag::warn_maynot_respond)
                   << OCIType->getInterfaceDecl()->getIdentifier() << Sel;
             }
           }
         }
-        if (Method && DiagnoseUseOfDecl(Method, Loc))
+        if (Method && DiagnoseUseOfDecl(Method, Loc, forwardClass))
           return ExprError();
       } else if (!Context.getObjCIdType().isNull() &&
                  (ReceiverType->isPointerType() || 

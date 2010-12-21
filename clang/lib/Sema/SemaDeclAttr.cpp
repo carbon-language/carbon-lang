@@ -2903,7 +2903,8 @@ void Sema::HandleDelayedDeprecationCheck(DelayedDiagnostic &DD,
 }
 
 void Sema::EmitDeprecationWarning(NamedDecl *D, llvm::StringRef Message,
-                                  SourceLocation Loc) {
+                                  SourceLocation Loc,
+                                  bool UnkownObjCClass) {
   // Delay if we're currently parsing a declaration.
   if (ParsingDeclDepth) {
     DelayedDiagnostics.push_back(DelayedDiagnostic::makeDeprecation(Loc, D, 
@@ -2917,6 +2918,10 @@ void Sema::EmitDeprecationWarning(NamedDecl *D, llvm::StringRef Message,
   if (!Message.empty())
     Diag(Loc, diag::warn_deprecated_message) << D->getDeclName() 
                                              << Message;
-  else
-    Diag(Loc, diag::warn_deprecated) << D->getDeclName();
+  else {
+    if (!UnkownObjCClass)
+      Diag(Loc, diag::warn_deprecated) << D->getDeclName();
+    else
+      Diag(Loc, diag::warn_deprecated_fwdclass_message) << D->getDeclName();
+  }
 }

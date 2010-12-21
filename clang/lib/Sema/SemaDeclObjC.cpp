@@ -1302,7 +1302,21 @@ void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
   // signature.
   for (ObjCMethodList *List = &Entry; List; List = List->Next)
     if (MatchTwoMethodDeclarations(Method, List->Method)) {
-      List->Method->setDefined(impl);
+      ObjCMethodDecl *PrevObjCMethod = List->Method;
+      PrevObjCMethod->setDefined(impl);
+      // If a method is deprecated, push it in the global pool.
+      // This is used for better diagnostics.
+      if (Method->getAttr<DeprecatedAttr>()) {
+        if (!PrevObjCMethod->getAttr<DeprecatedAttr>())
+          List->Method = Method;
+      }
+      // If new method is unavailable, push it into global pool
+      // unless previous one is deprecated.
+      if (Method->getAttr<UnavailableAttr>()) {
+        if (!PrevObjCMethod->getAttr<UnavailableAttr>() &&
+            !PrevObjCMethod->getAttr<DeprecatedAttr>())
+          List->Method = Method;
+      }
       return;
     }
 

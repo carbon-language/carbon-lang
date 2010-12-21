@@ -49,13 +49,14 @@ using namespace sema;
 /// used, or produce an error (and return true) if a C++0x deleted
 /// function is being used.
 ///
-/// If IgnoreDeprecated is set to true, this should not want about deprecated
+/// If IgnoreDeprecated is set to true, this should not warn about deprecated
 /// decls.
 ///
 /// \returns true if there was an error (this declaration cannot be
 /// referenced), false otherwise.
 ///
-bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
+bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
+                             bool UnkownObjCClass) {
   if (getLangOptions().CPlusPlus && isa<FunctionDecl>(D)) {
     // If there were any diagnostics suppressed by template argument deduction,
     // emit them now.
@@ -76,13 +77,18 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
 
   // See if the decl is deprecated.
   if (const DeprecatedAttr *DA = D->getAttr<DeprecatedAttr>())
-    EmitDeprecationWarning(D, DA->getMessage(), Loc);
+    EmitDeprecationWarning(D, DA->getMessage(), Loc, UnkownObjCClass);
 
   // See if the decl is unavailable
   if (const UnavailableAttr *UA = D->getAttr<UnavailableAttr>()) {
-    if (UA->getMessage().empty())
-      Diag(Loc, diag::err_unavailable) << D->getDeclName();
-    else
+    if (UA->getMessage().empty()) {
+      if (!UnkownObjCClass)
+        Diag(Loc, diag::err_unavailable) << D->getDeclName();
+      else
+        Diag(Loc, diag::warn_unavailable_fwdclass_message) 
+             << D->getDeclName();
+    }
+    else 
       Diag(Loc, diag::err_unavailable_message) 
         << D->getDeclName() << UA->getMessage();
     Diag(D->getLocation(), diag::note_unavailable_here) << 0;

@@ -1878,10 +1878,15 @@ def warn_deprecated : Warning<"%0 is deprecated">,
     InGroup<DeprecatedDeclarations>;
 def warn_deprecated_message : Warning<"%0 is deprecated: %1">,
     InGroup<DeprecatedDeclarations>;
+def warn_deprecated_fwdclass_message : Warning<
+    "%0 maybe deprecated because receiver type is unknown">,
+    InGroup<DeprecatedDeclarations>;
 def err_unavailable : Error<"%0 is unavailable">;
 def err_unavailable_message : Error<"%0 is unavailable: %1">;
+def warn_unavailable_fwdclass_message : Warning<
+    "%0 maybe unavailable because receiver type is unknown">;
 def note_unavailable_here : Note<
-  "function has been explicitly marked %select{unavailable|deleted}0 here">;
+  "function has been explicitly marked %select{unavailable|deleted|deprecated}0 here">;
 def warn_not_enough_argument : Warning<
   "not enough variable arguments in %0 declaration to fit a sentinel">;
 def warn_missing_sentinel : Warning <
