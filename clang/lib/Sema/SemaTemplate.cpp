@@ -4087,6 +4087,12 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   if (TemplateParams && TemplateParams->size() > 0) {
     isPartialSpecialization = true;
 
+    if (TUK == TUK_Friend) {
+      Diag(KWLoc, diag::err_partial_specialization_friend)
+        << SourceRange(LAngleLoc, RAngleLoc);
+      return true;
+    }
+    
     // C++ [temp.class.spec]p10:
     //   The template parameter list of a specialization shall not
     //   contain default template argument values.
