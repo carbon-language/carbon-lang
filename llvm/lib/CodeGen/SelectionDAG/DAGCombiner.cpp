@@ -3178,7 +3178,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     uint64_t c1 = 
       cast<ConstantSDNode>(N0.getOperand(0)->getOperand(1))->getZExtValue();
     uint64_t c2 = N1C->getZExtValue();
-    EVT InnerShiftVT = N0.getOperand(0)->getOperand(1).getValueType();
+    EVT InnerShiftVT = N0.getOperand(0).getValueType();
     uint64_t InnerShiftSize = InnerShiftVT.getScalarType().getSizeInBits();
     // This is only valid if the OpSizeInBits + c1 = size of inner shift.
     if (c1 + OpSizeInBits == InnerShiftSize) {
