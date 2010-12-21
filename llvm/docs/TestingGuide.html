@@ -376,11 +376,6 @@ clang/test directory. </p>
   shell. Consequently the syntax differs from normal shell script syntax in a 
   few ways.  You can specify as many RUN lines as needed.</p>
 
-  <p>lit performs substitution on each RUN line to replace LLVM tool
-  names with the full paths to the executable built for each tool (in
-  $(LLVM_OBJ_ROOT)/$(BuildMode)/bin).  This ensures that lit does not
-  invoke any stray LLVM tools in the user's path during testing.</p>
-
   <p>Each RUN line is executed on its own, distinct from other lines unless
   its last character is <tt>\</tt>. This continuation character causes the RUN
   line to be concatenated with the next one. In this way you can build up long

@@ -8,8 +8,6 @@ import Util
 import platform
 import tempfile
 
-import re
-
 class InternalShellError(Exception):
     def __init__(self, command, message):
         self.command = command
@@ -446,13 +444,11 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
             if ln[ln.index('END.'):].strip() == 'END.':
                 break
 
-    # Apply substitutions to the script.  Allow full regular
-    # expression syntax.  Replace each matching occurrence of regular
-    # expression pattern a with substitution b in line ln.
+    # Apply substitutions to the script.
     def processLine(ln):
         # Apply substitutions
         for a,b in substitutions:
-            ln = re.sub(a, b, ln)
+            ln = ln.replace(a,b)
 
         # Strip the trailing newline and any extra whitespace.
         return ln.strip()
