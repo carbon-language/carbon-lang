@@ -317,17 +317,24 @@ namespace macho {
     RF_Scattered = 0x80000000
   };
 
+  /// Common relocation info types.
   enum RelocationInfoType {
     RIT_Vanilla             = 0,
     RIT_Pair                = 1,
-    RIT_Difference          = 2,
-    RIT_PreboundLazyPointer = 3,
-    RIT_LocalDifference     = 4,
-    RIT_TLV                 = 5
+    RIT_Difference          = 2
+  };
+
+  /// Generic relocation info types, which are shared by some (but not all)
+  /// platforms.
+  enum RelocationInfoType_Generic {
+    RIT_Generic_PreboundLazyPointer = 3,
+    RIT_Generic_LocalDifference     = 4,
+    RIT_Generic_TLV                 = 5
   };
 
   /// X86_64 uses its own relocation types.
   enum RelocationInfoTypeX86_64 {
+    // Note that x86_64 doesn't even share the common relocation types.
     RIT_X86_64_Unsigned   = 0,
     RIT_X86_64_Signed     = 1,
     RIT_X86_64_Branch     = 2,
@@ -342,11 +349,8 @@ namespace macho {
 
   /// ARM also has its own relocation types.
   enum RelocationInfoTypeARM {
-    RIT_ARM_Vanilla = 0,
-    RIT_ARM_Pair = 1,
-    RIT_ARM_Difference = 2,
     RIT_ARM_LocalDifference = 3,
-    RIT_ARM_PreboundLazyPointer =4,
+    RIT_ARM_PreboundLazyPointer = 4,
     RIT_ARM_Branch24Bit = 5,
     RIT_ARM_ThumbBranch22Bit = 6,
     RIT_ARM_ThumbBranch32Bit = 7

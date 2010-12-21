@@ -766,13 +766,14 @@ public:
       // relocation types from the linkers point of view, this is done solely
       // for pedantic compatibility with 'as'.
       Type = A_SD->isExternal() ? macho::RIT_Difference :
-        macho::RIT_LocalDifference;
+        macho::RIT_Generic_LocalDifference;
       Value2 = getSymbolAddress(B_SD, Layout);
       FixedValue -= getSectionAddress(B_SD->getFragment()->getParent());
     }
 
     // Relocations are written out in reverse order, so the PAIR comes first.
-    if (Type == macho::RIT_Difference || Type == macho::RIT_LocalDifference) {
+    if (Type == macho::RIT_Difference ||
+        Type == macho::RIT_Generic_LocalDifference) {
       macho::RelocationEntry MRE;
       MRE.Word0 = ((0         <<  0) |
                    (macho::RIT_Pair  << 24) |
@@ -830,11 +831,11 @@ public:
     // struct relocation_info (8 bytes)
     macho::RelocationEntry MRE;
     MRE.Word0 = Value;
-    MRE.Word1 = ((Index     <<  0) |
-                 (IsPCRel   << 24) |
-                 (Log2Size  << 25) |
-                 (1         << 27) | // Extern
-                 (macho::RIT_TLV   << 28)); // Type
+    MRE.Word1 = ((Index                  <<  0) |
+                 (IsPCRel                << 24) |
+                 (Log2Size               << 25) |
+                 (1                      << 27) | // Extern
+                 (macho::RIT_Generic_TLV << 28)); // Type
     Relocations[Fragment->getParent()].push_back(MRE);
   }
 
