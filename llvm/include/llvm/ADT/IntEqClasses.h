@@ -39,12 +39,19 @@ class IntEqClasses {
 
 public:
   /// IntEqClasses - Create an equivalence class mapping for 0 .. N-1.
-  IntEqClasses(unsigned N) : NumClasses(0) { grow(N); }
+  IntEqClasses(unsigned N = 0) : NumClasses(0) { grow(N); }
 
   /// grow - Increase capacity to hold 0 .. N-1, putting new integers in unique
   /// equivalence classes.
   /// This requires an uncompressed map.
   void grow(unsigned N);
+
+  /// clear - Clear all classes so that grow() will assign a unique class to
+  /// every integer.
+  void clear() {
+    EC.clear();
+    NumClasses = 0;
+  }
 
   /// join - Join the equivalence classes of a and b. After joining classes,
   /// findLeader(a) == findLeader(b).

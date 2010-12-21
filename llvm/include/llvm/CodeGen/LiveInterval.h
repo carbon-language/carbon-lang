@@ -21,7 +21,7 @@
 #ifndef LLVM_CODEGEN_LIVEINTERVAL_H
 #define LLVM_CODEGEN_LIVEINTERVAL_H
 
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/IntEqClasses.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/CodeGen/SlotIndexes.h"
@@ -561,11 +561,7 @@ namespace llvm {
 
   class ConnectedVNInfoEqClasses {
     LiveIntervals &lis_;
-
-    // Map each value number to its equivalence class.
-    // The invariant is that EqClass[x] <= x.
-    // Two values are connected iff EqClass[x] == EqClass[b].
-    SmallVector<unsigned, 8> eqClass_;
+    IntEqClasses eqClass_;
 
     // Note that values a and b are connected.
     void Connect(unsigned a, unsigned b);

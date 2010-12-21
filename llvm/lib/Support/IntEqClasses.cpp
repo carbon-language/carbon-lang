@@ -24,6 +24,7 @@ using namespace llvm;
 
 void IntEqClasses::grow(unsigned N) {
   assert(NumClasses == 0 && "grow() called after compress().");
+  EC.reserve(N);
   while (EC.size() < N)
     EC.push_back(EC.size());
 }
