@@ -184,7 +184,8 @@ public:
     InstantiationDepth = 1024;
 
     NumLargeByValueCopy = 0;
-
+    MSCVersion = 0;
+    
     Optimize = 0;
     OptimizeSize = 0;
 
