@@ -253,13 +253,15 @@ void SelectionDAGLegalize::LegalizeDAG() {
 /// FindCallEndFromCallStart - Given a chained node that is part of a call
 /// sequence, find the CALLSEQ_END node that terminates the call sequence.
 static SDNode *FindCallEndFromCallStart(SDNode *Node, int depth = 0) {
+  // Nested CALLSEQ_START/END constructs aren't yet legal,
+  // but we can DTRT and handle them correctly here.
   if (Node->getOpcode() == ISD::CALLSEQ_START)
     depth++;
   else if (Node->getOpcode() == ISD::CALLSEQ_END) {
-      depth--;
-      if (depth == 0)
-        return Node;
-    }
+    depth--;
+    if (depth == 0)
+      return Node;
+  }
   if (Node->use_empty())
     return 0;   // No CallSeqEnd
 
