@@ -660,9 +660,12 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
 
   SmallSet<unsigned, 4> RegAdded;
   // If this node would clobber any "live" register, then it's not ready.
+  //
+  // If SU is the currently live definition of the same register that it uses,
+  // then we are free to schedule it.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    if (I->isAssignedRegDep())
+    if (I->isAssignedRegDep() && LiveRegDefs[I->getReg()] != SU)
       CheckForLiveRegDef(I->getSUnit(), I->getReg(), LiveRegDefs,
                          RegAdded, LRegs, TRI);
   }
@@ -701,20 +704,6 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
       continue;
     for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg)
       CheckForLiveRegDef(SU, *Reg, LiveRegDefs, RegAdded, LRegs, TRI);
-  }
-
-
-  // Okay, we now know all of the live registers that are defined by an
-  // immediate predecessor.  It is ok to kill these registers if we are also
-  // using it.
-  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    if (I->isAssignedRegDep() &&
-        LiveRegCycles[I->getReg()] == I->getSUnit()->getHeight()) {
-      unsigned Reg = I->getReg();
-      if (RegAdded.erase(Reg))
-        LRegs.erase(std::find(LRegs.begin(), LRegs.end(), Reg));
-    }
   }
 
   return !LRegs.empty();
