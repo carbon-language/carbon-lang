@@ -354,6 +354,11 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
       PrintDeclContext(DC, Indentation+2);
       break;
     }
+    case Decl::IndirectField: {
+      IndirectFieldDecl* IFD = cast<IndirectFieldDecl>(*I);
+      Out << "<IndirectField> " << IFD << '\n';
+      break;
+    }
     case Decl::Field: {
       FieldDecl* FD = cast<FieldDecl>(*I);
       Out << "<field> " << FD << '\n';
