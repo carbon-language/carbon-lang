@@ -53,6 +53,100 @@ static bool ValueDominatesPHI(Value *V, PHINode *P, const DominatorTree *DT) {
   return false;
 }
 
+// SimplifyAssociativeBinOp - Generic simplifications for associative binary
+// operations.  Returns the simpler value, or null if none was found.
+static Value *SimplifyAssociativeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
+                                       const TargetData *TD,
+                                       const DominatorTree *DT,
+                                       unsigned MaxRecurse) {
+  assert(Instruction::isAssociative(Opcode) && "Not an associative operation!");
+
+  // Recursion is always used, so bail out at once if we already hit the limit.
+  if (!MaxRecurse--)
+    return 0;
+
+  BinaryOperator *Op0 = dyn_cast<BinaryOperator>(LHS);
+  BinaryOperator *Op1 = dyn_cast<BinaryOperator>(RHS);
+
+  // Transform: "(A op B) op C" ==> "A op (B op C)" if it simplifies completely.
+  if (Op0 && Op0->getOpcode() == Opcode) {
+    Value *A = Op0->getOperand(0);
+    Value *B = Op0->getOperand(1);
+    Value *C = RHS;
+
+    // Does "B op C" simplify?
+    if (Value *V = SimplifyBinOp(Opcode, B, C, TD, DT, MaxRecurse)) {
+      // It does!  Return "A op V" if it simplifies or is already available.
+      // If V equals B then "A op V" is just the LHS.
+      if (V == B)
+        return LHS;
+      // Otherwise return "A op V" if it simplifies.
+      if (Value *W = SimplifyBinOp(Opcode, A, V, TD, DT, MaxRecurse))
+        return W;
+    }
+  }
+
+  // Transform: "A op (B op C)" ==> "(A op B) op C" if it simplifies completely.
+  if (Op1 && Op1->getOpcode() == Opcode) {
+    Value *A = LHS;
+    Value *B = Op1->getOperand(0);
+    Value *C = Op1->getOperand(1);
+
+    // Does "A op B" simplify?
+    if (Value *V = SimplifyBinOp(Opcode, A, B, TD, DT, MaxRecurse)) {
+      // It does!  Return "V op C" if it simplifies or is already available.
+      // If V equals B then "V op C" is just the RHS.
+      if (V == B)
+        return RHS;
+      // Otherwise return "V op C" if it simplifies.
+      if (Value *W = SimplifyBinOp(Opcode, V, C, TD, DT, MaxRecurse))
+        return W;
+    }
+  }
+
+  // The remaining transforms require commutativity as well as associativity.
+  if (!Instruction::isCommutative(Opcode))
+    return 0;
+
+  // Transform: "(A op B) op C" ==> "(C op A) op B" if it simplifies completely.
+  if (Op0 && Op0->getOpcode() == Opcode) {
+    Value *A = Op0->getOperand(0);
+    Value *B = Op0->getOperand(1);
+    Value *C = RHS;
+
+    // Does "C op A" simplify?
+    if (Value *V = SimplifyBinOp(Opcode, C, A, TD, DT, MaxRecurse)) {
+      // It does!  Return "V op B" if it simplifies or is already available.
+      // If V equals A then "V op B" is just the LHS.
+      if (V == A)
+        return LHS;
+      // Otherwise return "V op B" if it simplifies.
+      if (Value *W = SimplifyBinOp(Opcode, V, B, TD, DT, MaxRecurse))
+        return W;
+    }
+  }
+
+  // Transform: "A op (B op C)" ==> "B op (C op A)" if it simplifies completely.
+  if (Op1 && Op1->getOpcode() == Opcode) {
+    Value *A = LHS;
+    Value *B = Op1->getOperand(0);
+    Value *C = Op1->getOperand(1);
+
+    // Does "C op A" simplify?
+    if (Value *V = SimplifyBinOp(Opcode, C, A, TD, DT, MaxRecurse)) {
+      // It does!  Return "B op V" if it simplifies or is already available.
+      // If V equals C then "B op V" is just the RHS.
+      if (V == C)
+        return RHS;
+      // Otherwise return "B op V" if it simplifies.
+      if (Value *W = SimplifyBinOp(Opcode, B, V, TD, DT, MaxRecurse))
+        return W;
+    }
+  }
+
+  return 0;
+}
+
 /// ThreadBinOpOverSelect - In the case of a binary operation with a select
 /// instruction as an operand, try to simplify the binop by seeing whether
 /// evaluating it on both branches of the select results in the same value.
@@ -266,6 +360,11 @@ static Value *SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
       match(Op1, m_Not(m_Specific(Op0))))
     return Constant::getAllOnesValue(Op0->getType());
 
+  // Try some generic simplifications for associative operations.
+  if (Value *V = SimplifyAssociativeBinOp(Instruction::Add, Op0, Op1, TD, DT,
+                                          MaxRecurse))
+    return V;
+
   // Threading Add over selects and phi nodes is pointless, so don't bother.
   // Threading over the select in "A + select(cond, B, C)" means evaluating
   // "A+B" and "A+C" and seeing if they are equal; but they are equal if and
@@ -379,15 +478,10 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
       (A == Op0 || B == Op0))
     return Op0;
 
-  // (A & B) & A -> A & B
-  if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
-      (A == Op1 || B == Op1))
-    return Op0;
-
-  // A & (A & B) -> A & B
-  if (match(Op1, m_And(m_Value(A), m_Value(B))) &&
-      (A == Op0 || B == Op0))
-    return Op1;
+  // Try some generic simplifications for associative operations.
+  if (Value *V = SimplifyAssociativeBinOp(Instruction::And, Op0, Op1, TD, DT,
+                                          MaxRecurse))
+    return V;
 
   // If the operation is with the result of a select instruction, check whether
   // operating on either branch of the select always yields the same value.
@@ -458,15 +552,10 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
       (A == Op0 || B == Op0))
     return Op0;
 
-  // (A | B) | A -> A | B
-  if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
-      (A == Op1 || B == Op1))
-    return Op0;
-
-  // A | (A | B) -> A | B
-  if (match(Op1, m_Or(m_Value(A), m_Value(B))) &&
-      (A == Op0 || B == Op0))
-    return Op1;
+  // Try some generic simplifications for associative operations.
+  if (Value *V = SimplifyAssociativeBinOp(Instruction::Or, Op0, Op1, TD, DT,
+                                          MaxRecurse))
+    return V;
 
   // If the operation is with the result of a select instruction, check whether
   // operating on either branch of the select always yields the same value.
@@ -518,20 +607,15 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Constant::getNullValue(Op0->getType());
 
   // A ^ ~A  =  ~A ^ A  =  -1
-  Value *A = 0, *B = 0;
+  Value *A = 0;
   if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
       (match(Op1, m_Not(m_Value(A))) && A == Op0))
     return Constant::getAllOnesValue(Op0->getType());
 
-  // (A ^ B) ^ A = B
-  if (match(Op0, m_Xor(m_Value(A), m_Value(B))) &&
-      (A == Op1 || B == Op1))
-    return A == Op1 ? B : A;
-
-  // A ^ (A ^ B) = B
-  if (match(Op1, m_Xor(m_Value(A), m_Value(B))) &&
-      (A == Op0 || B == Op0))
-    return A == Op0 ? B : A;
+  // Try some generic simplifications for associative operations.
+  if (Value *V = SimplifyAssociativeBinOp(Instruction::Xor, Op0, Op1, TD, DT,
+                                          MaxRecurse))
+    return V;
 
   // Threading Xor over selects and phi nodes is pointless, so don't bother.
   // Threading over the select in "A ^ select(cond, B, C)" means evaluating
@@ -854,6 +938,12 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
         Constant *COps[] = {CLHS, CRHS};
         return ConstantFoldInstOperands(Opcode, LHS->getType(), COps, 2, TD);
       }
+
+    // If the operation is associative, try some generic simplifications.
+    if (Instruction::isAssociative(Opcode))
+      if (Value *V = SimplifyAssociativeBinOp(Opcode, LHS, RHS, TD, DT,
+                                              MaxRecurse))
+        return V;
 
     // If the operation is with the result of a select instruction, check whether
     // operating on either branch of the select always yields the same value.
