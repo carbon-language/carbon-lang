@@ -2,7 +2,7 @@
 
 define i32 @factorize(i32 %x, i32 %y) {
 ; CHECK: @factorize
-; (X | 2) & (X | 2) -> X | (1 & 2) -> X
+; (X | 1) & (X | 2) -> X | (1 & 2) -> X
   %l = or i32 %x, 1
   %r = or i32 %x, 2
   %z = and i32 %l, %r
