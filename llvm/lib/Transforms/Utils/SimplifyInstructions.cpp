@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include <queue>
 using namespace llvm;
 
 STATISTIC(NumSimplified, "Number of redundant instructions removed");
@@ -45,8 +46,9 @@ namespace {
       const DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
       bool Changed = false;
 
-      // Add all interesting instructions to the worklist.
-      std::set<Instruction*> Worklist;
+      // Add all interesting instructions to the worklist.  These are processed
+      // in FIFO order, so instructions are usually visited before their uses.
+      std::queue<Instruction*> Worklist;
       for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
         for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
           Instruction *I = BI++;
@@ -57,29 +59,37 @@ namespace {
             continue;
           }
           // Add all others to the worklist.
-          Worklist.insert(I);
+          Worklist.push(I);
         }
 
       // Simplify everything in the worklist until the cows come home.
       while (!Worklist.empty()) {
-        Instruction *I = *Worklist.begin();
-        Worklist.erase(Worklist.begin());
+        Instruction *I = Worklist.front();
+        Worklist.pop();
+        // Don't bother simplifying unused instructions.
+        if (I->use_empty()) continue;
         Value *V = SimplifyInstruction(I, TD, DT);
         if (!V) continue;
 
         // This instruction simplifies!  Replace it with its simplification and
         // add all uses to the worklist, since they may now simplify.
+        ++NumSimplified;
         I->replaceAllUsesWith(V);
         for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
              UI != UE; ++UI)
-          // In unreachable code an instruction can use itself, in which case
-          // don't add it to the worklist since we are about to erase it.
-          if (*UI != I) Worklist.insert(cast<Instruction>(*UI));
-        if (isInstructionTriviallyDead(I))
-          I->eraseFromParent();
-        ++NumSimplified;
+          Worklist.push(cast<Instruction>(*UI));
         Changed = true;
       }
+
+      // Finally, run over the function zapping any dead instructions.
+      for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+        for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
+          Instruction *I = BI++;
+          if (isInstructionTriviallyDead(I)) {
+            I->eraseFromParent();
+            Changed = true;
+          }
+        }
 
       return Changed;
     }
