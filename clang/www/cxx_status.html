@@ -7,6 +7,7 @@
   <link type="text/css" rel="stylesheet" href="menu.css">
   <link type="text/css" rel="stylesheet" href="content.css">
   <style type="text/css">
+    .category { background-color: #FFFFCC; text-align: center; }
     .na { background-color: #C0C0C0; text-align: center; }
     .broken { background-color: #C11B17 }
     .basic  { background-color: #F88017 }
@@ -113,7 +114,9 @@ of support for a given section:
     <th>Many examples work</th>
     <th>Nearly everything works</th>
     <th>Complete</th>
+<!--
     <th>Complete (with tests for each paragraph)</th>
+-->
   </tr>
   <tr>
     <td></td>
@@ -122,10 +125,17 @@ of support for a given section:
     <td class="basic"></td>
     <td class="medium"></td>
     <td class="advanced"></td>
-    <td class="complete"></td>
+    <td class="complete">rXXXXXX</td>
+<!--
     <td class="complete" align="center">&#x2713;</td>
+-->
   </tr>
 </table>
+
+<p>In addition, boxes marked with &#x2713 have complete and passing tests.
+  Similarly, boxes marked with &#x2717 have complete tests, some of which
+  are failing, and a <b>?</b> indicates partial tests while not making any
+  statement about passing status.</p>
 
 <p>A feature is "complete" when the appropriate Clang component (Parse, AST,
 Sema, CodeGen) implements the behavior described in all of the
@@ -158,7 +168,7 @@ components are:</p>
 welcome!</p>
 
 <table width="689" border="1" cellspacing="0">
-<tr><td colspan="6" align="center" bgcolor="#ffffcc">C++0x Features</td>
+<tr><td colspan="7" align="center" bgcolor="#ffddaa">C++0x Features (current draft report <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3225.pdf">here</a>) </td>
 </tr>
   <tr>
     <th>Feature</th>
@@ -166,81 +176,500 @@ welcome!</p>
     <th>AST</th>
     <th>Sema</th>
     <th>CodeGen</th>
+    <th>Standard Sections</th>
     <th>Notes</th>
   </tr>
+<tr><td colspan="7" class="category">Control Flow Modifications</td></tr>
+<tr>
+  <td>Range-based for loop</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>6.5.4</td>
+  <td><a href="http://www.open-std.org/JTC1/SC22/WG21/docs/papers/2007/n2243.html">N2243</a></td>
+</tr>
 
+<tr><td colspan="7" class="category">Type System Modifications</td></tr>
 <tr>
-  <td>Explicit conversion operators (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2437.pdf">N2437</a>)</td>
-  <td class="complete" align="center"></td>
-  <td class="basic" align="center"></td>
-  <td class="basic" align="center"></td>
-  <td class="broken"></td>
-  <td>No name mangling; ASTs don't contain calls to conversion operators</td>
-</tr>
-<tr>
-  <td>Static assertions (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1720.pdf">N1720</a>)</td>
-  <td class="complete" align="center"></td>
-  <td class="complete" align="center"></td>
-  <td class="advanced" align="center"></td>
-  <td class="na">N/A</td>
-  <td></td>
-</tr>
-<tr>
-  <td>Deleted functions (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2346.htm">N2346</a>)</td>
-  <td class="complete" align="center"></td>
-  <td class="complete" align="center"></td>
-  <td class="medium" align="center"></td>
-  <td class="na">N/A</td>
-  <td></td>
-</tr>
-<tr>
-  <td>Rvalue references (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2118.html">N2118</a> + <a href="http://www.open-std.org/JTC1/SC22/WG21/docs/papers/2009/n2831.html">N2831</a>)</td>
+  <td>rvalue references</td>
   <td class="complete" align="center"></td>
   <td class="complete" align="center"></td>
   <td class="broken" align="center"></td>
   <td class="broken"></td>
-  <td></td>
+  <td>8.3.2</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2118.html">N2118</a>,
+      <a href="http://www.open-std.org/JTC1/SC22/WG21/docs/papers/2009/n2831.html">N2831</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2027.html">N2027</a>
+  </td>
 </tr>
 <tr>
-  <td>nullptr (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2431.pdf">N2431</a>)</td>
-  <td class="complete" align="center"></td>
-  <td class="complete" align="center"></td>
-  <td class="medium" align="center"></td>
-  <td class="broken"></td>
-  <td></td>
-</tr>
-<tr>
-  <td>Right angle brackets (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1757.html">N1757</a>)</td>
-  <td class="complete" align="center"></td>
-  <td class="na" align="center">N/A</td>
-  <td class="na" align="center">N/A</td>
-  <td class="na">N/A</td>
-  <td></td>
-</tr>
-<tr>
-  <td>Decltype (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2343.pdf">N2343</a>)</td>
+  <td>decltype</td>
   <td class="complete" align="center">&#x2713;</td>
   <td class="complete" align="center">&#x2713;</td>
   <td class="advanced" align="center"></td>
   <td class="na">N/A</td>
+  <td>7.1.6.2</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2343.pdf">N2343</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2003/n1478.pdf">N1478</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1978.pdf">N1978</a>
+  </td>
+</tr>
+<tr>
+  <td>auto type deduction</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>7.1.6.2, 7.1.6.4</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1984.pdf">N1984</a></td>
+</tr>
+<tr>
+  <td>nullptr</td>
+  <td class="complete" align="center"></td>
+  <td class="complete" align="center"></td>
+  <td class="medium" align="center"></td>
+  <td class="broken"></td>
+  <td>2.14.7, 4.10, 4.11</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2431.pdf">N2431</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2003/n1488.pdf">N1488</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2214.pdf">N2214</a>
+  </td>
+</tr>
+<tr>
+  <td>enum classes</td>
+  <td class="complete"></td>
+  <td class="advanced"></td>
+  <td class="advanced"></td>
+  <td></td>
+  <td>7.2</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2003/n1513.pdf">N1513</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2347.pdf">N2347</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2499.pdf">N2499</a>
+      Includes forward declaration capability
+  </td>
+</tr>
+<tr>
+  <td>long long</td>
+  <td class="complete"></td>
+  <td class="complete"></td>
+  <td class="complete"></td>
+  <td class="complete"></td>
+  <td>3.9.1</td>
+  <td>C99
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1811.pdf">N1811</a> 
+  </td>
+</tr>
+<tr>
+  <td>constexpr</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>3.6.2, 3.9, 5.19, 7.1.5</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2003/n1521.pdf">N1521</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2235.pdf">N2235</a>
+  </td>
+</tr>
+<tr>
+  <td>char16_t/char32_t</td>
+  <td class="medium"></td>
+  <td class="medium"></td>
+  <td class="medium"></td>
+  <td class="medium"></td>
+  <td></td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2249.html">N2249</a></td>
+</tr>
+<tr>
+  <td>Unicode string literal types</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>2.14.3, 2.14.5</td>
   <td></td>
 </tr>
 <tr>
-  <td>noexcept (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3050.html">N3050</a>)</td>
+  <td>Raw string literal types</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>2.14.5</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2053.html">N2053</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2442.html">N2442</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2378.pdf">N2378</a>
+  </td>
+</tr>
+<tr>
+  <td>user-defined literal types</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>2.14.8</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2378.pdf">N2378</a></td>
+</tr>
+<tr>
+  <td>POD defintion changes</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>3.9, 9</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2294.html">N2294</a></td>
+</tr>
+<tr>
+  <td>Unrestricted unions</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>9.5</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf">N2544</a></td>
+</tr>
+<tr>
+  <td>Tighter narrowing rules</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>8.5.4</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1890.pdf">N1890</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2215.pdf">N2215</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2640.pdf">N2640</a>
+  </td>
+</tr>
+<tr><td colspan="7" class="category">Class Modifications</td></tr>
+<tr>
+  <td>delegating constructors</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>12.6.2</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1986">N1986</a></td>
+</tr>
+<tr>
+  <td>inheriting constructors</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>12.9</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1890.pdf">N1890</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1898.pdf">N1898</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2512.html">N2512</a>
+  </td>
+</tr>
+<tr>
+  <td>In-declaration member initialization</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2628.html">N2628</a></td>
+</tr>
+<tr>
+  <td>Changes to implicitly generated methods</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>Includes implicit generation of move operations</td>
+</tr>
+<tr>
+  <td>defaulted methods</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1717.pdf">N1717</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2326.html">N2326</a>
+  </td>
+</tr>
+<tr>
+  <td>destructor defaults to noexcept</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>sizeof on members without object instance</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2150.html">N2150</a></td>
+</tr>
+<tr>
+  <td>virtual function safety modifications</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>Explicit conversion operators</td>
+  <td class="complete" align="center"></td>
+  <td class="basic" align="center"></td>
+  <td class="basic" align="center"></td>
+  <td class="broken"></td>
+  <td>12.3</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2437.pdf">N2437</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2333.html">N2333</a>
+      No name mangling; ASTs don't contain calls to conversion operators</td>
+</tr>
+<tr><td colspan="7" class="category">Template Modifications</td></tr>
+<tr>
+  <td>Right angle brackets</td>
+  <td class="complete" align="center"></td>
+  <td class="na" align="center">N/A</td>
+  <td class="na" align="center">N/A</td>
+  <td class="na">N/A</td>
+  <td></td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1757.html">N1757</a></td>
+</tr>
+<tr>
+  <td>variadic templates</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>14.6.3</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2151.pdf">N2151</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2080.pdf">N2080</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2087.pdf">N2087</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2772.pdf">N2772</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2551.pdf">N2551</a>
+  </td>
+</tr>
+<tr>
+  <td>template aliases</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>7.1.3, 14.6.7</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2003/n1489.pdf">N1489</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2258.pdf">N2258</a>
+      Includes non-template type aliasing
+  </td>
+</tr>
+<tr>
+  <td>Removal of export</td>
+  <td class="complete"></td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td></td>
+  <td>This was never implemented in C++03</td>
+</tr>
+<tr>
+  <td>extern templates</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>14.8.2</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2003/n1448.pdf">N1448</a></td>
+</tr>
+<tr>
+  <td>Local classes as template parameters</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2402.pdf">N2402</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2657.htm">N2657</a>
+  </td>
+</tr>
+<tr><td colspan="7" class="category">Exception Modifications</td></tr>
+<tr>
+  <td>Deprecation of exception specifications</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>15.4</td>
+  <td></td>
+</tr>
+<tr>
+  <td>noexcept</td>
   <td class="complete" align="center">&#x2713;</td>
   <td class="complete" align="center">&#x2713;</td>
   <td class="complete" align="center">&#x2713;</td>
   <td class="na">N/A</td>
+  <td>5.3.7, 15.4</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3050.html">N3050</a></td>
+</tr>
+<tr><td colspan="7" class="category">Preprocessor Modifications</td></tr>
+<tr>
+  <td>__STDC_HOSTED__</td>
+  <td></td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td>16.8</td>
+  <td>C99
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1568.htm">N1568</a>
+  </td>
+</tr>
+<tr>
+  <td>_Pragma</td>
+  <td class="complete"></td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td>16.9</td>
+  <td>C99
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1568.htm">N1568</a>
+  </td>
+</tr>
+<tr>
+  <td>Variable argument macros</td>
+  <td class="complete"></td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td>16.3</td>
+  <td>C99
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1568.htm">N1568</a>
+  </td>
+</tr>
+<tr>
+  <td>Empty macro arguments</td>
+  <td class="complete"></td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td>16.3</td>
+  <td>C99
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1568.htm">N1568</a>
+  </td>
+</tr>
+<tr>
+  <td>__func__</td>
+  <td class="complete"></td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td>8.4.1</td>
+  <td>C99
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1568.htm">N1568</a>
+  </td>
+</tr>
+<tr>
+  <td>__cplusplus</td>
+  <td class="complete"></td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td class="na">N/A</td>
+  <td>16.8</td>
+  <td></td>
+</tr>
+<tr><td colspan="7" class="category">Things Completely New</td></tr>
+<tr>
+  <td>lambda expressions</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>5.1.2</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1968.htm">N1968</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2550.pdf">N2550</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2859.pdf">N2859</a>
+  </td>
+</tr>
+<tr>
+  <td>Uniform initializers </td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>12.6</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2215.pdf">N2215</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2640.pdf">N2640</a>
+  </td>
+</tr>
+<tr>
+  <td>Memory model</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>1.7</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2556.html">N2556</a></td>
+</tr>
+<tr><td colspan="7" class="category">Miscellania</td></tr>
+<tr>
+  <td>Standard attribute syntax</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2418.pdf">N2418</a></td>
+</tr>
+<tr>
+  <td>alignment control</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
   <td></td>
 </tr>
 <tr>
-  <td>Inline namespaces (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2535.htm">N2535</a>)</td>
+  <td>Deleted functions</td>
+  <td class="complete" align="center"></td>
+  <td class="complete" align="center"></td>
+  <td class="medium" align="center"></td>
+  <td class="na">N/A</td>
+  <td>8.4.3</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2326.htm">N2326</a></br>
+      This also includes class methods.</td>
+</tr>
+<tr>
+  <td>static_assert</td>
+  <td class="complete" align="center"></td>
+  <td class="complete" align="center"></td>
+  <td class="advanced" align="center"></td>
+  <td class="na">N/A</td>
+  <td>7</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1381.htm">N1381</a>
+      <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1720.pdf">N1720</a>
+  </td>
+</tr>
+<tr>
+  <td>Inline namespaces</td>
   <td class="complete" align="center">&#x2713;</td>
   <td class="complete" align="center">&#x2713;</td>
   <td class="complete" align="center">&#x2713;</td>
   <td class="complete" align="center">N/A</td>
-  <td></td>
+  <td>7.3.1</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2535.htm">N2535</a></td>
 </tr>
+<tr>
+  <td>thread_local storage</td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td></td>
+  <td>3.7.2, 7.1.1</td>
+  <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2660.htm">N2660</a></td>
+</tr>
+<tr><td colspan="7" class="category">Standard Library Modifications, see <a href="http://libcxx.llvm.org/index.html">libc++</a> or <a href="http://gcc.gnu.org/onlinedocs/libstdc++/manual/bk01pt01ch01.html#manual.intro.status.standard.200x">libstdc++</a> or <a href="http://blogs.msdn.com/b/vcblog/archive/2010/07/02/video-introduction-to-the-stl-part-1.aspx">VC++ 2010</a></td></tr>
 </table>
 <br />
 </div>
