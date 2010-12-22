@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This defines NullDerefChecker and UndefDerefChecker, two builtin checks
-// in GRExprEngine that check for null and undefined pointers at loads
+// in ExprEngine that check for null and undefined pointers at loads
 // and stores.
 //
 //===----------------------------------------------------------------------===//
@@ -22,11 +22,11 @@ namespace clang {
 
 namespace GR {
 
-class GRExprEngine;
+class ExprEngine;
 class ExplodedNode;
 
 std::pair<ExplodedNode * const *, ExplodedNode * const *>
-GetImplicitNullDereferences(GRExprEngine &Eng);
+GetImplicitNullDereferences(ExprEngine &Eng);
 
 } // end GR namespace
 

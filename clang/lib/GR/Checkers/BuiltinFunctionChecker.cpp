@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/PathSensitive/Checker.h"
 #include "clang/Basic/Builtins.h"
 
@@ -28,7 +28,7 @@ public:
 
 }
 
-void GR::RegisterBuiltinFunctionChecker(GRExprEngine &Eng) {
+void GR::RegisterBuiltinFunctionChecker(ExprEngine &Eng) {
   Eng.registerCheck(new BuiltinFunctionChecker());
 }
 

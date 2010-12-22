@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/AST/StmtVisitor.h"
 
 using namespace clang;
@@ -23,18 +23,18 @@ namespace {
 /// is used for evaluating exprs of C++ object type. Evaluating such exprs
 /// requires a destination pointer pointing to the object being evaluated
 /// into. Passing such a pointer around would pollute the Visit* interface of
-/// GRExprEngine. AggExprVisitor encapsulates code that goes through various
+/// ExprEngine. AggExprVisitor encapsulates code that goes through various
 /// cast and construct exprs (and others), and at the final point, dispatches
-/// back to the GRExprEngine to let the real evaluation logic happen.
+/// back to the ExprEngine to let the real evaluation logic happen.
 class AggExprVisitor : public StmtVisitor<AggExprVisitor> {
   const MemRegion *Dest;
   ExplodedNode *Pred;
   ExplodedNodeSet &DstSet;
-  GRExprEngine &Eng;
+  ExprEngine &Eng;
 
 public:
   AggExprVisitor(const MemRegion *dest, ExplodedNode *N, ExplodedNodeSet &dst, 
-                 GRExprEngine &eng)
+                 ExprEngine &eng)
     : Dest(dest), Pred(N), DstSet(dst), Eng(eng) {}
 
   void VisitCastExpr(CastExpr *E);
@@ -57,7 +57,7 @@ void AggExprVisitor::VisitCXXConstructExpr(CXXConstructExpr *E) {
   Eng.VisitCXXConstructExpr(E, Dest, Pred, DstSet);
 }
 
-void GRExprEngine::VisitAggExpr(const Expr *E, const MemRegion *Dest, 
+void ExprEngine::VisitAggExpr(const Expr *E, const MemRegion *Dest, 
                                 ExplodedNode *Pred, ExplodedNodeSet &Dst) {
   AggExprVisitor(Dest, Pred, Dst, *this).Visit(const_cast<Expr *>(E));
 }

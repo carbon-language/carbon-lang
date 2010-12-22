@@ -14,7 +14,7 @@
 #include "clang/GR/BugReporter/BugReporter.h"
 
 // FIXME: Restructure checker registration.
-#include "Checkers/GRExprEngineExperimentalChecks.h"
+#include "Checkers/ExprEngineExperimentalChecks.h"
 
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -26,7 +26,7 @@ namespace {
 class AnalyzerStatsChecker : public CheckerVisitor<AnalyzerStatsChecker> {
 public:
   static void *getTag();
-  void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B, GRExprEngine &Eng);
+  void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B, ExprEngine &Eng);
 
 private:
   llvm::SmallPtrSet<const CFGBlock*, 256> reachable;
@@ -38,13 +38,13 @@ void *AnalyzerStatsChecker::getTag() {
   return &x;
 }
 
-void GR::RegisterAnalyzerStatsChecker(GRExprEngine &Eng) {
+void GR::RegisterAnalyzerStatsChecker(ExprEngine &Eng) {
   Eng.registerCheck(new AnalyzerStatsChecker());
 }
 
 void AnalyzerStatsChecker::VisitEndAnalysis(ExplodedGraph &G,
                                             BugReporter &B,
-                                            GRExprEngine &Eng) {
+                                            ExprEngine &Eng) {
   const CFG *C  = 0;
   const Decl *D = 0;
   const LocationContext *LC = 0;
@@ -109,8 +109,8 @@ void AnalyzerStatsChecker::VisitEndAnalysis(ExplodedGraph &G,
       D->getLocation());
 
   // Emit warning for each block we bailed out on
-  typedef GRCoreEngine::BlocksAborted::const_iterator AbortedIterator;
-  const GRCoreEngine &CE = Eng.getCoreEngine();
+  typedef CoreEngine::BlocksAborted::const_iterator AbortedIterator;
+  const CoreEngine &CE = Eng.getCoreEngine();
   for (AbortedIterator I = CE.blocks_aborted_begin(),
       E = CE.blocks_aborted_end(); I != E; ++I) {
     const BlockEdge &BE =  I->first;

@@ -49,12 +49,12 @@ class ExplodedGraph;
 
 class ExplodedNode : public llvm::FoldingSetNode {
   friend class ExplodedGraph;
-  friend class GRCoreEngine;
-  friend class GRStmtNodeBuilder;
-  friend class GRBranchNodeBuilder;
-  friend class GRIndirectGotoNodeBuilder;
-  friend class GRSwitchNodeBuilder;
-  friend class GREndPathNodeBuilder;
+  friend class CoreEngine;
+  friend class StmtNodeBuilder;
+  friend class BranchNodeBuilder;
+  friend class IndirectGotoNodeBuilder;
+  friend class SwitchNodeBuilder;
+  friend class EndPathNodeBuilder;
 
   class NodeGroup {
     enum { Size1 = 0x0, SizeOther = 0x1, AuxFlag = 0x2, Mask = 0x3 };
@@ -219,7 +219,7 @@ public:
 
 class ExplodedGraph {
 protected:
-  friend class GRCoreEngine;
+  friend class CoreEngine;
 
   // Type definitions.
   typedef llvm::SmallVector<ExplodedNode*,2>    RootsTy;

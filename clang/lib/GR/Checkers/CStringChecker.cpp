@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineExperimentalChecks.h"
+#include "ExprEngineExperimentalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "clang/GR/PathSensitive/GRStateTrait.h"
@@ -109,7 +109,7 @@ namespace GR {
 }
 }
 
-void GR::RegisterCStringChecker(GRExprEngine &Eng) {
+void GR::RegisterCStringChecker(ExprEngine &Eng) {
   Eng.registerCheck(new CStringChecker());
 }
 

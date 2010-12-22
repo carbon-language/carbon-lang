@@ -221,7 +221,7 @@ public:
   ///  type.  'Array' represents the lvalue of the array being decayed
   ///  to a pointer, and the returned SVal represents the decayed
   ///  version of that lvalue (i.e., a pointer to the first element of
-  ///  the array).  This is called by GRExprEngine when evaluating
+  ///  the array).  This is called by ExprEngine when evaluating
   ///  casts from arrays to pointers.
   SVal ArrayToPointer(Loc Array);
 
@@ -787,7 +787,7 @@ DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
 ///  type.  'Array' represents the lvalue of the array being decayed
 ///  to a pointer, and the returned SVal represents the decayed
 ///  version of that lvalue (i.e., a pointer to the first element of
-///  the array).  This is called by GRExprEngine when evaluating casts
+///  the array).  This is called by ExprEngine when evaluating casts
 ///  from arrays to pointers.
 SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   if (!isa<loc::MemRegionVal>(Array))

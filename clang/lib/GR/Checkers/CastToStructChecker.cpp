@@ -15,7 +15,7 @@
 
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 
 using namespace clang;
 using namespace GR;
@@ -74,6 +74,6 @@ void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
   }
 }
 
-void GR::RegisterCastToStructChecker(GRExprEngine &Eng) {
+void GR::RegisterCastToStructChecker(ExprEngine &Eng) {
   Eng.registerCheck(new CastToStructChecker());
 }

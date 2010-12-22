@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines DivZeroChecker, a builtin check in GRExprEngine that performs
+// This defines DivZeroChecker, a builtin check in ExprEngine that performs
 // checks for division by zeros.
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
@@ -29,7 +29,7 @@ public:
 };  
 } // end anonymous namespace
 
-void GR::RegisterDivZeroChecker(GRExprEngine &Eng) {
+void GR::RegisterDivZeroChecker(ExprEngine &Eng) {
   Eng.registerCheck(new DivZeroChecker());
 }
 

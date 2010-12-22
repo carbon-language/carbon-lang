@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineExperimentalChecks.h"
+#include "ExprEngineExperimentalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "clang/GR/PathSensitive/GRState.h"
@@ -78,7 +78,7 @@ public:
   static void *getTag();
   bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
   void evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper);
-  void evalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
+  void evalEndPath(EndPathNodeBuilder &B, void *tag, ExprEngine &Eng);
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
   const GRState *evalAssume(const GRState *state, SVal Cond, bool Assumption,
                             bool *respondsToCallback);
@@ -126,7 +126,7 @@ namespace GR {
 }
 }
 
-void GR::RegisterMallocChecker(GRExprEngine &Eng) {
+void GR::RegisterMallocChecker(ExprEngine &Eng) {
   Eng.registerCheck(new MallocChecker());
 }
 
@@ -593,8 +593,8 @@ void MallocChecker::evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper)
   C.generateNode(state->set<RegionState>(RS));
 }
 
-void MallocChecker::evalEndPath(GREndPathNodeBuilder &B, void *tag,
-                                GRExprEngine &Eng) {
+void MallocChecker::evalEndPath(EndPathNodeBuilder &B, void *tag,
+                                ExprEngine &Eng) {
   SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
   RegionStateTy M = state->get<RegionState>();

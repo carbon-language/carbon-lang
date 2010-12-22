@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
@@ -46,7 +46,7 @@ public:
 };
 } //end anonymous namespace
 
-void GR::RegisterUnixAPIChecker(GRExprEngine &Eng) {
+void GR::RegisterUnixAPIChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UnixAPIChecker());
 }
 
@@ -74,7 +74,7 @@ static void CheckOpen(CheckerContext &C, UnixAPIChecker &UC,
     else {
       // FIXME: We need a more general way of getting the O_CREAT value.
       // We could possibly grovel through the preprocessor state, but
-      // that would require passing the Preprocessor object to the GRExprEngine.
+      // that would require passing the Preprocessor object to the ExprEngine.
       return;
     }
   }

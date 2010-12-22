@@ -13,10 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
 using namespace GR;
@@ -32,7 +32,7 @@ public:
 };
 }
 
-void GR::RegisterReturnUndefChecker(GRExprEngine &Eng) {
+void GR::RegisterReturnUndefChecker(ExprEngine &Eng) {
   Eng.registerCheck(new ReturnUndefChecker());
 }
 

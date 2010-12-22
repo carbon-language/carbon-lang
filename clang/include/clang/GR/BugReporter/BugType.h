@@ -23,7 +23,7 @@ namespace clang {
 namespace GR {
 
 class ExplodedNode;
-class GRExprEngine;
+class ExprEngine;
 
 class BugType {
 private:

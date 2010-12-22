@@ -1,4 +1,4 @@
-//===-- GRExprEngine.h - Path-Sensitive Expression-Level Dataflow ---*- C++ -*-=
+//===-- ExprEngine.h - Path-Sensitive Expression-Level Dataflow ---*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,19 +8,19 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines a meta-engine for path-sensitive dataflow analysis that
-//  is built on GRCoreEngine, but provides the boilerplate to execute transfer
+//  is built on CoreEngine, but provides the boilerplate to execute transfer
 //  functions and build the ExplodedGraph at the expression level.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_GREXPRENGINE
-#define LLVM_CLANG_GR_GREXPRENGINE
+#ifndef LLVM_CLANG_GR_EXPRENGINE
+#define LLVM_CLANG_GR_EXPRENGINE
 
 #include "clang/GR/PathSensitive/AnalysisManager.h"
-#include "clang/GR/PathSensitive/GRSubEngine.h"
-#include "clang/GR/PathSensitive/GRCoreEngine.h"
+#include "clang/GR/PathSensitive/SubEngine.h"
+#include "clang/GR/PathSensitive/CoreEngine.h"
 #include "clang/GR/PathSensitive/GRState.h"
-#include "clang/GR/PathSensitive/GRTransferFuncs.h"
+#include "clang/GR/PathSensitive/TransferFuncs.h"
 #include "clang/GR/BugReporter/BugReporter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprObjC.h"
@@ -36,17 +36,17 @@ namespace GR {
 class AnalysisManager;
 class Checker;
 
-class GRExprEngine : public GRSubEngine {
+class ExprEngine : public SubEngine {
   AnalysisManager &AMgr;
 
-  GRCoreEngine CoreEngine;
+  CoreEngine Engine;
 
   /// G - the simulation graph.
   ExplodedGraph& G;
 
-  /// Builder - The current GRStmtNodeBuilder which is used when building the
+  /// Builder - The current StmtNodeBuilder which is used when building the
   ///  nodes for a given statement.
-  GRStmtNodeBuilder* Builder;
+  StmtNodeBuilder* Builder;
 
   /// StateMgr - Object that manages the data for all created states.
   GRStateManager StateMgr;
@@ -109,18 +109,18 @@ class GRExprEngine : public GRSubEngine {
 
   /// The BugReporter associated with this engine.  It is important that
   ///  this object be placed at the very end of member variables so that its
-  ///  destructor is called before the rest of the GRExprEngine is destroyed.
+  ///  destructor is called before the rest of the ExprEngine is destroyed.
   GRBugReporter BR;
   
-  llvm::OwningPtr<GRTransferFuncs> TF;
+  llvm::OwningPtr<TransferFuncs> TF;
 
 public:
-  GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf);
+  ExprEngine(AnalysisManager &mgr, TransferFuncs *tf);
 
-  ~GRExprEngine();
+  ~ExprEngine();
 
   void ExecuteWorkList(const LocationContext *L, unsigned Steps = 150000) {
-    CoreEngine.ExecuteWorkList(L, Steps, 0);
+    Engine.ExecuteWorkList(L, Steps, 0);
   }
 
   /// Execute the work list with an initial state. Nodes that reaches the exit
@@ -129,7 +129,7 @@ public:
   void ExecuteWorkListWithInitialState(const LocationContext *L, unsigned Steps,
                                        const GRState *InitState, 
                                        ExplodedNodeSet &Dst) {
-    CoreEngine.ExecuteWorkListWithInitialState(L, Steps, InitState, Dst);
+    Engine.ExecuteWorkListWithInitialState(L, Steps, InitState, Dst);
   }
 
   /// getContext - Return the ASTContext associated with this analysis.
@@ -139,14 +139,14 @@ public:
 
   SValBuilder &getSValBuilder() { return svalBuilder; }
 
-  GRTransferFuncs& getTF() { return *TF; }
+  TransferFuncs& getTF() { return *TF; }
 
   BugReporter& getBugReporter() { return BR; }
 
-  GRStmtNodeBuilder &getBuilder() { assert(Builder); return *Builder; }
+  StmtNodeBuilder &getBuilder() { assert(Builder); return *Builder; }
 
-  // FIXME: Remove once GRTransferFuncs is no longer referenced.
-  void setTransferFunction(GRTransferFuncs* tf);
+  // FIXME: Remove once TransferFuncs is no longer referenced.
+  void setTransferFunction(TransferFuncs* tf);
 
   /// ViewGraph - Visualize the ExplodedGraph created by executing the
   ///  simulation.
@@ -176,53 +176,53 @@ public:
      return static_cast<CHECKER*>(lookupChecker(CHECKER::getTag()));
   }
 
-  /// ProcessElement - Called by GRCoreEngine. Used to generate new successor
+  /// ProcessElement - Called by CoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a CFG element.
-  void ProcessElement(const CFGElement E, GRStmtNodeBuilder& builder);
+  void ProcessElement(const CFGElement E, StmtNodeBuilder& builder);
 
-  void ProcessStmt(const CFGStmt S, GRStmtNodeBuilder &builder);
+  void ProcessStmt(const CFGStmt S, StmtNodeBuilder &builder);
 
-  void ProcessInitializer(const CFGInitializer I, GRStmtNodeBuilder &builder);
+  void ProcessInitializer(const CFGInitializer I, StmtNodeBuilder &builder);
 
-  void ProcessImplicitDtor(const CFGImplicitDtor D, GRStmtNodeBuilder &builder);
+  void ProcessImplicitDtor(const CFGImplicitDtor D, StmtNodeBuilder &builder);
 
   void ProcessAutomaticObjDtor(const CFGAutomaticObjDtor D, 
-                            GRStmtNodeBuilder &builder);
-  void ProcessBaseDtor(const CFGBaseDtor D, GRStmtNodeBuilder &builder);
-  void ProcessMemberDtor(const CFGMemberDtor D, GRStmtNodeBuilder &builder);
+                            StmtNodeBuilder &builder);
+  void ProcessBaseDtor(const CFGBaseDtor D, StmtNodeBuilder &builder);
+  void ProcessMemberDtor(const CFGMemberDtor D, StmtNodeBuilder &builder);
   void ProcessTemporaryDtor(const CFGTemporaryDtor D, 
-                            GRStmtNodeBuilder &builder);
+                            StmtNodeBuilder &builder);
 
-  /// ProcessBlockEntrance - Called by GRCoreEngine when start processing
+  /// ProcessBlockEntrance - Called by CoreEngine when start processing
   ///  a CFGBlock.  This method returns true if the analysis should continue
   ///  exploring the given path, and false otherwise.
   bool ProcessBlockEntrance(const CFGBlock* B, const ExplodedNode *Pred,
-                            GRBlockCounter BC);
+                            BlockCounter BC);
 
-  /// ProcessBranch - Called by GRCoreEngine.  Used to generate successor
+  /// ProcessBranch - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
   void ProcessBranch(const Stmt* Condition, const Stmt* Term, 
-                     GRBranchNodeBuilder& builder);
+                     BranchNodeBuilder& builder);
 
-  /// ProcessIndirectGoto - Called by GRCoreEngine.  Used to generate successor
+  /// ProcessIndirectGoto - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a computed goto jump.
-  void ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder);
+  void ProcessIndirectGoto(IndirectGotoNodeBuilder& builder);
 
-  /// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
+  /// ProcessSwitch - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a switch statement.
-  void ProcessSwitch(GRSwitchNodeBuilder& builder);
+  void ProcessSwitch(SwitchNodeBuilder& builder);
 
-  /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
+  /// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
   ///  nodes when the control reaches the end of a function.
-  void ProcessEndPath(GREndPathNodeBuilder& builder);
+  void ProcessEndPath(EndPathNodeBuilder& builder);
 
   /// Generate the entry node of the callee.
-  void ProcessCallEnter(GRCallEnterNodeBuilder &builder);
+  void ProcessCallEnter(CallEnterNodeBuilder &builder);
 
   /// Generate the first post callsite node.
-  void ProcessCallExit(GRCallExitNodeBuilder &builder);
+  void ProcessCallExit(CallExitNodeBuilder &builder);
 
-  /// Called by GRCoreEngine when the analysis worklist has terminated.
+  /// Called by CoreEngine when the analysis worklist has terminated.
   void ProcessEndWorklist(bool hasWorkRemaining);
 
   /// evalAssume - Callback function invoked by the ConstraintManager when
@@ -260,13 +260,13 @@ public:
   const SymbolManager& getSymbolManager() const { return SymMgr; }
 
   // Functions for external checking of whether we have unfinished work
-  bool wasBlockAborted() const { return CoreEngine.wasBlockAborted(); }
-  bool hasEmptyWorkList() const { return !CoreEngine.getWorkList()->hasWork(); }
+  bool wasBlockAborted() const { return Engine.wasBlockAborted(); }
+  bool hasEmptyWorkList() const { return !Engine.getWorkList()->hasWork(); }
   bool hasWorkRemaining() const {
-    return wasBlockAborted() || CoreEngine.getWorkList()->hasWork();
+    return wasBlockAborted() || Engine.getWorkList()->hasWork();
   }
 
-  const GRCoreEngine &getCoreEngine() const { return CoreEngine; }
+  const CoreEngine &getCoreEngine() const { return Engine; }
 
 protected:
   const GRState* GetState(ExplodedNode* N) {
@@ -494,7 +494,7 @@ public:
 protected:
   void evalObjCMessageExpr(ExplodedNodeSet& Dst, const ObjCMessageExpr* ME, 
                            ExplodedNode* Pred, const GRState *state) {
-    assert (Builder && "GRStmtNodeBuilder must be defined.");
+    assert (Builder && "StmtNodeBuilder must be defined.");
     getTF().evalObjCMessageExpr(Dst, *this, *Builder, ME, Pred, state);
   }
 

@@ -39,7 +39,7 @@ class ExplodedNode;
 class ExplodedGraph;
 class BugReporter;
 class BugReporterContext;
-class GRExprEngine;
+class ExprEngine;
 class GRState;
 class BugType;
 
@@ -348,17 +348,17 @@ public:
 
 // FIXME: Get rid of GRBugReporter.  It's the wrong abstraction.
 class GRBugReporter : public BugReporter {
-  GRExprEngine& Eng;
+  ExprEngine& Eng;
   llvm::SmallSet<SymbolRef, 10> NotableSymbols;
 public:
-  GRBugReporter(BugReporterData& d, GRExprEngine& eng)
+  GRBugReporter(BugReporterData& d, ExprEngine& eng)
     : BugReporter(d, GRBugReporterKind), Eng(eng) {}
 
   virtual ~GRBugReporter();
 
   /// getEngine - Return the analysis engine used to analyze a given
   ///  function or method.
-  GRExprEngine &getEngine() { return Eng; }
+  ExprEngine &getEngine() { return Eng; }
 
   /// getGraph - Get the exploded graph created by the analysis engine
   ///  for the analyzed method or function.

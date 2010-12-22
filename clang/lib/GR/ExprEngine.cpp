@@ -1,4 +1,4 @@
-//=-- GRExprEngine.cpp - Path-Sensitive Expression-Level Dataflow ---*- C++ -*-=
+//=-- ExprEngine.cpp - Path-Sensitive Expression-Level Dataflow ---*- C++ -*-=
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,12 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 // FIXME: Restructure checker registration.
-#include "Checkers/GRExprEngineInternalChecks.h"
+#include "Checkers/ExprEngineInternalChecks.h"
 
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/AnalysisManager.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
-#include "clang/GR/PathSensitive/GRExprEngineBuilders.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngineBuilders.h"
 #include "clang/GR/PathSensitive/Checker.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/ParentMap.h"
@@ -65,7 +65,7 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 // Checker worklist routines.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
+void ExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
                                 ExplodedNodeSet &Src, CallbackKind Kind) {
 
   // Determine if we already have a cached 'CheckersOrdered' vector
@@ -145,7 +145,7 @@ void GRExprEngine::CheckerVisit(const Stmt *S, ExplodedNodeSet &Dst,
   // automatically.
 }
 
-void GRExprEngine::CheckerEvalNilReceiver(const ObjCMessageExpr *ME,
+void ExprEngine::CheckerEvalNilReceiver(const ObjCMessageExpr *ME,
                                           ExplodedNodeSet &Dst,
                                           const GRState *state,
                                           ExplodedNode *Pred) {
@@ -174,7 +174,7 @@ void GRExprEngine::CheckerEvalNilReceiver(const ObjCMessageExpr *ME,
 // CheckerEvalCall returns true if one of the checkers processed the node.
 // This may return void when all call evaluation logic goes to some checker
 // in the future.
-bool GRExprEngine::CheckerEvalCall(const CallExpr *CE,
+bool ExprEngine::CheckerEvalCall(const CallExpr *CE,
                                    ExplodedNodeSet &Dst,
                                    ExplodedNode *Pred) {
   bool evaluated = false;
@@ -202,7 +202,7 @@ bool GRExprEngine::CheckerEvalCall(const CallExpr *CE,
 
 // FIXME: This is largely copy-paste from CheckerVisit().  Need to
 // unify.
-void GRExprEngine::CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
+void ExprEngine::CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
                                     ExplodedNodeSet &Src, SVal location,
                                     SVal val, bool isPrevisit) {
 
@@ -243,16 +243,16 @@ void GRExprEngine::CheckerVisitBind(const Stmt *StoreE, ExplodedNodeSet &Dst,
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
 
-static void RegisterInternalChecks(GRExprEngine &Eng) {
+static void RegisterInternalChecks(ExprEngine &Eng) {
   // Register internal "built-in" BugTypes with the BugReporter. These BugTypes
   // are different than what probably many checks will do since they don't
-  // create BugReports on-the-fly but instead wait until GRExprEngine finishes
+  // create BugReports on-the-fly but instead wait until ExprEngine finishes
   // analyzing a function.  Generation of BugReport objects is done via a call
   // to 'FlushReports' from BugReporter.
   // The following checks do not need to have their associated BugTypes
   // explicitly registered with the BugReporter.  If they issue any BugReports,
   // their associated BugType will get registered with the BugReporter
-  // automatically.  Note that the check itself is owned by the GRExprEngine
+  // automatically.  Note that the check itself is owned by the ExprEngine
   // object.
   RegisterAdjustedReturnValueChecker(Eng);
   // CallAndMessageChecker should be registered before AttrNonNullChecker,
@@ -279,10 +279,10 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   RegisterMacOSXAPIChecker(Eng);
 }
 
-GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)
+ExprEngine::ExprEngine(AnalysisManager &mgr, TransferFuncs *tf)
   : AMgr(mgr),
-    CoreEngine(*this),
-    G(CoreEngine.getGraph()),
+    Engine(*this),
+    G(Engine.getGraph()),
     Builder(NULL),
     StateMgr(getContext(), mgr.getStoreManagerCreator(),
              mgr.getConstraintManagerCreator(), G.getAllocator(),
@@ -301,7 +301,7 @@ GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)
   TF->RegisterPrinters(getStateManager().Printers);
 }
 
-GRExprEngine::~GRExprEngine() {
+ExprEngine::~ExprEngine() {
   BR.FlushReports();
   delete [] NSExceptionInstanceRaiseSelectors;
   
@@ -318,7 +318,7 @@ GRExprEngine::~GRExprEngine() {
 // Utility methods.
 //===----------------------------------------------------------------------===//
 
-const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
+const GRState* ExprEngine::getInitialState(const LocationContext *InitLoc) {
   const GRState *state = StateMgr.getInitialState(InitLoc);
 
   // Preconditions.
@@ -384,7 +384,7 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
 
 /// evalAssume - Called by ConstraintManager. Used to call checker-specific
 ///  logic for handling assumptions on symbolic values.
-const GRState *GRExprEngine::ProcessAssume(const GRState *state, SVal cond,
+const GRState *ExprEngine::ProcessAssume(const GRState *state, SVal cond,
                                            bool assumption) {
   // Determine if we already have a cached 'CheckersOrdered' vector
   // specifically tailored for processing assumptions.  This
@@ -439,7 +439,7 @@ const GRState *GRExprEngine::ProcessAssume(const GRState *state, SVal cond,
   return TF->evalAssume(state, cond, assumption);
 }
 
-bool GRExprEngine::WantsRegionChangeUpdate(const GRState* state) {
+bool ExprEngine::WantsRegionChangeUpdate(const GRState* state) {
   CallbackTag K = GetCallbackTag(EvalRegionChangesCallback);
   CheckersOrdered *CO = COCache[K];
 
@@ -456,7 +456,7 @@ bool GRExprEngine::WantsRegionChangeUpdate(const GRState* state) {
 }
 
 const GRState *
-GRExprEngine::ProcessRegionChanges(const GRState *state,
+ExprEngine::ProcessRegionChanges(const GRState *state,
                                    const MemRegion * const *Begin,
                                    const MemRegion * const *End) {
   // FIXME: Most of this method is copy-pasted from ProcessAssume.
@@ -508,15 +508,15 @@ GRExprEngine::ProcessRegionChanges(const GRState *state,
   return state;
 }
 
-void GRExprEngine::ProcessEndWorklist(bool hasWorkRemaining) {
+void ExprEngine::ProcessEndWorklist(bool hasWorkRemaining) {
   for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
        I != E; ++I) {
     I->second->VisitEndAnalysis(G, BR, *this);
   }
 }
 
-void GRExprEngine::ProcessElement(const CFGElement E, 
-                                  GRStmtNodeBuilder& builder) {
+void ExprEngine::ProcessElement(const CFGElement E, 
+                                  StmtNodeBuilder& builder) {
   switch (E.getKind()) {
   case CFGElement::Statement:
     ProcessStmt(E.getAs<CFGStmt>(), builder);
@@ -533,7 +533,7 @@ void GRExprEngine::ProcessElement(const CFGElement E,
   }
 }
 
-void GRExprEngine::ProcessStmt(const CFGStmt S, GRStmtNodeBuilder& builder) {
+void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
   currentStmt = S.getStmt();
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 currentStmt->getLocStart(),
@@ -619,7 +619,7 @@ void GRExprEngine::ProcessStmt(const CFGStmt S, GRStmtNodeBuilder& builder) {
     Visit(currentStmt, *I, Dst);
 
     // Do we need to auto-generate a node?  We only need to do this to generate
-    // a node with a "cleaned" state; GRCoreEngine will actually handle
+    // a node with a "cleaned" state; CoreEngine will actually handle
     // auto-transitions for other cases.
     if (Dst.size() == 1 && *Dst.begin() == EntryNode
         && !Builder->HasGeneratedNode && !HasAutoGenerated) {
@@ -637,8 +637,8 @@ void GRExprEngine::ProcessStmt(const CFGStmt S, GRStmtNodeBuilder& builder) {
   Builder = NULL;
 }
 
-void GRExprEngine::ProcessInitializer(const CFGInitializer Init,
-                                      GRStmtNodeBuilder &builder) {
+void ExprEngine::ProcessInitializer(const CFGInitializer Init,
+                                    StmtNodeBuilder &builder) {
   // We don't set EntryNode and currentStmt. And we don't clean up state.
   const CXXBaseOrMemberInitializer *BMI = Init.getInitializer();
 
@@ -674,8 +674,8 @@ void GRExprEngine::ProcessInitializer(const CFGInitializer Init,
   }
 }
 
-void GRExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
-                                       GRStmtNodeBuilder &builder) {
+void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
+                                       StmtNodeBuilder &builder) {
   Builder = &builder;
 
   switch (D.getDtorKind()) {
@@ -696,8 +696,8 @@ void GRExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,
   }
 }
 
-void GRExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor dtor,
-                                           GRStmtNodeBuilder &builder) {
+void ExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor dtor,
+                                           StmtNodeBuilder &builder) {
   ExplodedNode *pred = builder.getBasePredecessor();
   const GRState *state = pred->getState();
   const VarDecl *varDecl = dtor.getVarDecl();
@@ -718,19 +718,19 @@ void GRExprEngine::ProcessAutomaticObjDtor(const CFGAutomaticObjDtor dtor,
                      dtor.getTriggerStmt(), pred, dstSet);
 }
 
-void GRExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
-                                   GRStmtNodeBuilder &builder) {
+void ExprEngine::ProcessBaseDtor(const CFGBaseDtor D,
+                                   StmtNodeBuilder &builder) {
 }
 
-void GRExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
-                                     GRStmtNodeBuilder &builder) {
+void ExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
+                                     StmtNodeBuilder &builder) {
 }
 
-void GRExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
-                                        GRStmtNodeBuilder &builder) {
+void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
+                                        StmtNodeBuilder &builder) {
 }
 
-void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred, 
+void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred, 
                          ExplodedNodeSet& Dst) {
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 S->getLocStart(),
@@ -1075,9 +1075,9 @@ void GRExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
 // Block entrance.  (Update counters).
 //===----------------------------------------------------------------------===//
 
-bool GRExprEngine::ProcessBlockEntrance(const CFGBlock* B, 
+bool ExprEngine::ProcessBlockEntrance(const CFGBlock* B, 
                                         const ExplodedNode *Pred,
-                                        GRBlockCounter BC) {
+                                        BlockCounter BC) {
   return BC.getNumVisited(Pred->getLocationContext()->getCurrentStackFrame(), 
                           B->getBlockID()) < AMgr.getMaxVisit();
 }
@@ -1086,10 +1086,10 @@ bool GRExprEngine::ProcessBlockEntrance(const CFGBlock* B,
 // Generic node creation.
 //===----------------------------------------------------------------------===//
 
-ExplodedNode* GRExprEngine::MakeNode(ExplodedNodeSet& Dst, const Stmt* S,
+ExplodedNode* ExprEngine::MakeNode(ExplodedNodeSet& Dst, const Stmt* S,
                                      ExplodedNode* Pred, const GRState* St,
                                      ProgramPoint::Kind K, const void *tag) {
-  assert (Builder && "GRStmtNodeBuilder not present.");
+  assert (Builder && "StmtNodeBuilder not present.");
   SaveAndRestore<const void*> OldTag(Builder->Tag);
   Builder->Tag = tag;
   return Builder->MakeNode(Dst, S, Pred, St, K);
@@ -1099,7 +1099,7 @@ ExplodedNode* GRExprEngine::MakeNode(ExplodedNodeSet& Dst, const Stmt* S,
 // Branch processing.
 //===----------------------------------------------------------------------===//
 
-const GRState* GRExprEngine::MarkBranch(const GRState* state,
+const GRState* ExprEngine::MarkBranch(const GRState* state,
                                         const Stmt* Terminator,
                                         bool branchTaken) {
 
@@ -1193,8 +1193,8 @@ static SVal RecoverCastedSymbol(GRStateManager& StateMgr, const GRState* state,
   return state->getSVal(Ex);
 }
 
-void GRExprEngine::ProcessBranch(const Stmt* Condition, const Stmt* Term,
-                                 GRBranchNodeBuilder& builder) {
+void ExprEngine::ProcessBranch(const Stmt* Condition, const Stmt* Term,
+                                 BranchNodeBuilder& builder) {
 
   // Check for NULL conditions; e.g. "for(;;)"
   if (!Condition) {
@@ -1263,9 +1263,9 @@ void GRExprEngine::ProcessBranch(const Stmt* Condition, const Stmt* Term,
   }
 }
 
-/// ProcessIndirectGoto - Called by GRCoreEngine.  Used to generate successor
+/// ProcessIndirectGoto - Called by CoreEngine.  Used to generate successor
 ///  nodes by processing the 'effects' of a computed goto jump.
-void GRExprEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) {
+void ExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
 
   const GRState *state = builder.getState();
   SVal V = state->getSVal(builder.getTarget());
@@ -1277,7 +1277,7 @@ void GRExprEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) {
   //   (3) We have no clue about the label.  Dispatch to all targets.
   //
 
-  typedef GRIndirectGotoNodeBuilder::iterator iterator;
+  typedef IndirectGotoNodeBuilder::iterator iterator;
 
   if (isa<loc::GotoLabel>(V)) {
     const LabelStmt* L = cast<loc::GotoLabel>(V).getLabel();
@@ -1309,7 +1309,7 @@ void GRExprEngine::ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) {
 }
 
 
-void GRExprEngine::VisitGuardedExpr(const Expr* Ex, const Expr* L, 
+void ExprEngine::VisitGuardedExpr(const Expr* Ex, const Expr* L, 
                                     const Expr* R,
                                     ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
@@ -1329,9 +1329,9 @@ void GRExprEngine::VisitGuardedExpr(const Expr* Ex, const Expr* L,
   MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, X, true));
 }
 
-/// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
+/// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
 ///  nodes when the control reaches the end of a function.
-void GRExprEngine::ProcessEndPath(GREndPathNodeBuilder& builder) {
+void ExprEngine::ProcessEndPath(EndPathNodeBuilder& builder) {
   getTF().evalEndPath(*this, builder);
   StateMgr.EndPath(builder.getState());
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E;++I){
@@ -1341,10 +1341,10 @@ void GRExprEngine::ProcessEndPath(GREndPathNodeBuilder& builder) {
   }
 }
 
-/// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
+/// ProcessSwitch - Called by CoreEngine.  Used to generate successor
 ///  nodes by processing the 'effects' of a switch statement.
-void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
-  typedef GRSwitchNodeBuilder::iterator iterator;
+void ExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
+  typedef SwitchNodeBuilder::iterator iterator;
   const GRState* state = builder.getState();
   const Expr* CondE = builder.getCondition();
   SVal  CondV_untested = state->getSVal(CondE);
@@ -1452,12 +1452,12 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
   builder.generateDefaultCaseNode(DefaultSt);
 }
 
-void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
+void ExprEngine::ProcessCallEnter(CallEnterNodeBuilder &B) {
   const GRState *state = B.getState()->EnterStackFrame(B.getCalleeContext());
   B.generateNode(state);
 }
 
-void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
+void ExprEngine::ProcessCallExit(CallExitNodeBuilder &B) {
   const GRState *state = B.getState();
   const ExplodedNode *Pred = B.getPredecessor();
   const StackFrameContext *calleeCtx = 
@@ -1490,7 +1490,7 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
 // Transfer functions: logical operations ('&&', '||').
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode* Pred,
+void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode* Pred,
                                     ExplodedNodeSet& Dst) {
 
   assert(B->getOpcode() == BO_LAnd ||
@@ -1544,7 +1544,7 @@ void GRExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode* Pred,
 // Transfer functions: Loads and stores.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
+void ExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
                                   ExplodedNodeSet &Dst) {
 
   ExplodedNodeSet Tmp;
@@ -1560,9 +1560,9 @@ void GRExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
   CheckerVisit(BE, Dst, Tmp, PostVisitStmtCallback);
 }
 
-void GRExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
-                                          ExplodedNode *Pred,
-                                          ExplodedNodeSet &Dst) {
+void ExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
+                                        ExplodedNode *Pred,
+                                        ExplodedNodeSet &Dst) {
   const GRState *state = GetState(Pred);
 
   if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
@@ -1599,9 +1599,9 @@ void GRExprEngine::VisitCommonDeclRefExpr(const Expr *Ex, const NamedDecl *D,
 }
 
 /// VisitArraySubscriptExpr - Transfer function for array accesses
-void GRExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr* A,
-                                               ExplodedNode* Pred,
-                                               ExplodedNodeSet& Dst){
+void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr* A,
+                                             ExplodedNode* Pred,
+                                             ExplodedNodeSet& Dst){
 
   const Expr* Base = A->getBase()->IgnoreParens();
   const Expr* Idx  = A->getIdx()->IgnoreParens();
@@ -1627,8 +1627,8 @@ void GRExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr* A,
 }
 
 /// VisitMemberExpr - Transfer function for member expressions.
-void GRExprEngine::VisitMemberExpr(const MemberExpr* M, ExplodedNode* Pred,
-                                    ExplodedNodeSet& Dst) {
+void ExprEngine::VisitMemberExpr(const MemberExpr* M, ExplodedNode* Pred,
+                                 ExplodedNodeSet& Dst) {
 
   Expr *baseExpr = M->getBase()->IgnoreParens();
   ExplodedNodeSet dstBase;
@@ -1663,7 +1663,7 @@ void GRExprEngine::VisitMemberExpr(const MemberExpr* M, ExplodedNode* Pred,
 
 /// evalBind - Handle the semantics of binding a value to a specific location.
 ///  This method is used by evalStore and (soon) VisitDeclStmt, and others.
-void GRExprEngine::evalBind(ExplodedNodeSet& Dst, const Stmt* StoreE,
+void ExprEngine::evalBind(ExplodedNodeSet& Dst, const Stmt* StoreE,
                             ExplodedNode* Pred, const GRState* state,
                             SVal location, SVal Val, bool atDeclInit) {
 
@@ -1701,14 +1701,14 @@ void GRExprEngine::evalBind(ExplodedNodeSet& Dst, const Stmt* StoreE,
       }
     }
 
-    // The next thing to do is check if the GRTransferFuncs object wants to
+    // The next thing to do is check if the TransferFuncs object wants to
     // update the state based on the new binding.  If the GRTransferFunc object
     // doesn't do anything, just auto-propagate the current state.
     
     // NOTE: We use 'AssignE' for the location of the PostStore if 'AssignE'
     // is non-NULL.  Checkers typically care about 
     
-    GRStmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, newState, StoreE,
+    StmtNodeBuilderRef BuilderRef(Dst, *Builder, *this, *I, newState, StoreE,
                                     true);
 
     getTF().evalBind(BuilderRef, location, Val);
@@ -1723,13 +1723,13 @@ void GRExprEngine::evalBind(ExplodedNodeSet& Dst, const Stmt* StoreE,
 ///  @param state The current simulation state
 ///  @param location The location to store the value
 ///  @param Val The value to be stored
-void GRExprEngine::evalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
+void ExprEngine::evalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
                              const Expr* LocationE,
                              ExplodedNode* Pred,
                              const GRState* state, SVal location, SVal Val,
                              const void *tag) {
 
-  assert(Builder && "GRStmtNodeBuilder must be defined.");
+  assert(Builder && "StmtNodeBuilder must be defined.");
 
   // Evaluate the location (checks for bad dereferences).
   ExplodedNodeSet Tmp;
@@ -1752,7 +1752,7 @@ void GRExprEngine::evalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
     evalBind(Dst, StoreE, *NI, GetState(*NI), location, Val);
 }
 
-void GRExprEngine::evalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
+void ExprEngine::evalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
                             ExplodedNode* Pred,
                             const GRState* state, SVal location,
                             const void *tag, QualType LoadTy) {
@@ -1784,7 +1784,7 @@ void GRExprEngine::evalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
   evalLoadCommon(Dst, Ex, Pred, state, location, tag, LoadTy);
 }
 
-void GRExprEngine::evalLoadCommon(ExplodedNodeSet& Dst, const Expr *Ex,
+void ExprEngine::evalLoadCommon(ExplodedNodeSet& Dst, const Expr *Ex,
                                   ExplodedNode* Pred,
                                   const GRState* state, SVal location,
                                   const void *tag, QualType LoadTy) {
@@ -1820,7 +1820,7 @@ void GRExprEngine::evalLoadCommon(ExplodedNodeSet& Dst, const Expr *Ex,
   }
 }
 
-void GRExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
+void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
                                 ExplodedNode* Pred,
                                 const GRState* state, SVal location,
                                 const void *tag, bool isLoad) {
@@ -1861,7 +1861,7 @@ void GRExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
   }
 }
 
-bool GRExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, 
+bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, 
                               ExplodedNode *Pred) {
   const GRState *state = GetState(Pred);
   const Expr *Callee = CE->getCallee();
@@ -1902,7 +1902,7 @@ bool GRExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
   return false;
 }
 
-void GRExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
+void ExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
                              CallExpr::const_arg_iterator AI,
                              CallExpr::const_arg_iterator AE,
                              ExplodedNodeSet& Dst) {
@@ -1964,7 +1964,7 @@ void GRExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
 
         // Dispatch to transfer function logic to handle the call itself.
         // FIXME: Allow us to chain together transfer functions.
-        assert(Builder && "GRStmtNodeBuilder must be defined.");
+        assert(Builder && "StmtNodeBuilder must be defined.");
         getTF().evalCall(DstTmp3, *this, *Builder, CE, L, Pred);
 
         // Handle the case where no nodes where generated.  Auto-generate that
@@ -1988,7 +1988,7 @@ void GRExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
 static std::pair<const void*,const void*> EagerlyAssumeTag
   = std::pair<const void*,const void*>(&EagerlyAssumeTag,static_cast<void*>(0));
 
-void GRExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
+void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
                                      const Expr *Ex) {
   for (ExplodedNodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {
     ExplodedNode *Pred = *I;
@@ -2032,7 +2032,7 @@ void GRExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
 // Transfer function: Objective-C @synchronized.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt *S,
+void ExprEngine::VisitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt *S,
                                                ExplodedNode *Pred,
                                                ExplodedNodeSet &Dst) {
 
@@ -2049,9 +2049,9 @@ void GRExprEngine::VisitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt *S,
 // Transfer function: Objective-C ivar references.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr* Ex, 
-                                            ExplodedNode* Pred,
-                                            ExplodedNodeSet& Dst) {
+void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr* Ex, 
+                                          ExplodedNode* Pred,
+                                          ExplodedNodeSet& Dst) {
 
   // Visit the base expression, which is needed for computing the lvalue
   // of the ivar.
@@ -2074,7 +2074,7 @@ void GRExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr* Ex,
 // Transfer function: Objective-C fast enumeration 'for' statements.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt* S,
+void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt* S,
                                      ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
   // ObjCForCollectionStmts are processed in two places.  This method
@@ -2121,7 +2121,7 @@ void GRExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt* S,
   }
 }
 
-void GRExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
+void ExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
                                        ExplodedNode* Pred, ExplodedNodeSet& Dst,
                                                  SVal ElementV) {
 
@@ -2183,7 +2183,7 @@ public:
 };
 } // end anonymous namespace
 
-void GRExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME, 
+void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME, 
                                         ExplodedNode* Pred,
                                         ExplodedNodeSet& Dst){
 
@@ -2339,8 +2339,8 @@ void GRExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
 // Transfer functions: Miscellaneous statements.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex, 
-                             ExplodedNode *Pred, ExplodedNodeSet &Dst) {
+void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex, 
+                           ExplodedNode *Pred, ExplodedNodeSet &Dst) {
   
   ExplodedNodeSet S1;
   Visit(Ex, Pred, S1);
@@ -2465,7 +2465,7 @@ void GRExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   }
 }
 
-void GRExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr* CL,
+void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr* CL,
                                             ExplodedNode* Pred,
                                             ExplodedNodeSet& Dst) {
   const InitListExpr* ILE 
@@ -2487,7 +2487,7 @@ void GRExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr* CL,
   }
 }
 
-void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
+void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                  ExplodedNodeSet& Dst) {
 
   // The CFG has one DeclStmt per Decl.
@@ -2556,7 +2556,7 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
   }
 }
 
-void GRExprEngine::VisitCondInit(const VarDecl *VD, const Stmt *S,
+void ExprEngine::VisitCondInit(const VarDecl *VD, const Stmt *S,
                                  ExplodedNode *Pred, ExplodedNodeSet& Dst) {
 
   const Expr* InitEx = VD->getInit();
@@ -2599,7 +2599,7 @@ public:
 }
 
 
-void GRExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
+void ExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
                                      ExplodedNodeSet& Dst) {
 
   const GRState* state = GetState(Pred);
@@ -2677,7 +2677,7 @@ void GRExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
 }
 
 /// VisitSizeOfAlignOfExpr - Transfer function for sizeof(type).
-void GRExprEngine::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr* Ex,
+void ExprEngine::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr* Ex,
                                           ExplodedNode* Pred,
                                           ExplodedNodeSet& Dst) {
   QualType T = Ex->getTypeOfArgument();
@@ -2742,7 +2742,7 @@ void GRExprEngine::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr* Ex,
               svalBuilder.makeIntVal(amt.getQuantity(), Ex->getType())));
 }
 
-void GRExprEngine::VisitOffsetOfExpr(const OffsetOfExpr* OOE, 
+void ExprEngine::VisitOffsetOfExpr(const OffsetOfExpr* OOE, 
                                      ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   Expr::EvalResult Res;
   if (OOE->Evaluate(Res, getContext()) && Res.Val.isInt()) {
@@ -2758,7 +2758,7 @@ void GRExprEngine::VisitOffsetOfExpr(const OffsetOfExpr* OOE,
   Dst.Add(Pred);
 }
 
-void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U, 
+void ExprEngine::VisitUnaryOperator(const UnaryOperator* U, 
                                       ExplodedNode* Pred,
                                       ExplodedNodeSet& Dst) {
 
@@ -2996,12 +2996,12 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
   }
 }
 
-void GRExprEngine::VisitAsmStmt(const AsmStmt* A, ExplodedNode* Pred,
+void ExprEngine::VisitAsmStmt(const AsmStmt* A, ExplodedNode* Pred,
                                 ExplodedNodeSet& Dst) {
   VisitAsmStmtHelperOutputs(A, A->begin_outputs(), A->end_outputs(), Pred, Dst);
 }
 
-void GRExprEngine::VisitAsmStmtHelperOutputs(const AsmStmt* A,
+void ExprEngine::VisitAsmStmtHelperOutputs(const AsmStmt* A,
                                              AsmStmt::const_outputs_iterator I,
                                              AsmStmt::const_outputs_iterator E,
                                      ExplodedNode* Pred, ExplodedNodeSet& Dst) {
@@ -3018,7 +3018,7 @@ void GRExprEngine::VisitAsmStmtHelperOutputs(const AsmStmt* A,
     VisitAsmStmtHelperOutputs(A, I, E, *NI, Dst);
 }
 
-void GRExprEngine::VisitAsmStmtHelperInputs(const AsmStmt* A,
+void ExprEngine::VisitAsmStmtHelperInputs(const AsmStmt* A,
                                             AsmStmt::const_inputs_iterator I,
                                             AsmStmt::const_inputs_iterator E,
                                             ExplodedNode* Pred,
@@ -3057,7 +3057,7 @@ void GRExprEngine::VisitAsmStmtHelperInputs(const AsmStmt* A,
     VisitAsmStmtHelperInputs(A, I, E, *NI, Dst);
 }
 
-void GRExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
+void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
   ExplodedNodeSet Src;
   if (const Expr *RetE = RS->getRetValue()) {
@@ -3084,7 +3084,7 @@ void GRExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I != E; ++I) {
 
-    assert(Builder && "GRStmtNodeBuilder must be defined.");
+    assert(Builder && "StmtNodeBuilder must be defined.");
 
     Pred = *I;
     unsigned size = Dst.size();
@@ -3105,7 +3105,7 @@ void GRExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
 // Transfer functions: Binary operators.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
+void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
                                        ExplodedNode* Pred,
                                        ExplodedNodeSet& Dst) {
   ExplodedNodeSet Tmp1;
@@ -3252,7 +3252,7 @@ void GRExprEngine::VisitBinaryOperator(const BinaryOperator* B,
 // Checker registration/lookup.
 //===----------------------------------------------------------------------===//
 
-Checker *GRExprEngine::lookupChecker(void *tag) const {
+Checker *ExprEngine::lookupChecker(void *tag) const {
   CheckerMap::const_iterator I = CheckerM.find(tag);
   return (I == CheckerM.end()) ? NULL : Checkers[I->second].second;
 }
@@ -3262,7 +3262,7 @@ Checker *GRExprEngine::lookupChecker(void *tag) const {
 //===----------------------------------------------------------------------===//
 
 #ifndef NDEBUG
-static GRExprEngine* GraphPrintCheckerState;
+static ExprEngine* GraphPrintCheckerState;
 static SourceManager* GraphPrintSourceManager;
 
 namespace llvm {
@@ -3272,7 +3272,7 @@ struct DOTGraphTraits<ExplodedNode*> :
 
   DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
 
-  // FIXME: Since we do not cache error nodes in GRExprEngine now, this does not
+  // FIXME: Since we do not cache error nodes in ExprEngine now, this does not
   // work.
   static std::string getNodeAttributes(const ExplodedNode* N, void*) {
 
@@ -3460,7 +3460,7 @@ GetGraphNode<llvm::DenseMap<ExplodedNode*, Expr*>::iterator>
 }
 #endif
 
-void GRExprEngine::ViewGraph(bool trim) {
+void ExprEngine::ViewGraph(bool trim) {
 #ifndef NDEBUG
   if (trim) {
     std::vector<ExplodedNode*> Src;
@@ -3487,7 +3487,7 @@ void GRExprEngine::ViewGraph(bool trim) {
     GraphPrintCheckerState = this;
     GraphPrintSourceManager = &getContext().getSourceManager();
 
-    llvm::ViewGraph(*G.roots_begin(), "GRExprEngine");
+    llvm::ViewGraph(*G.roots_begin(), "ExprEngine");
 
     GraphPrintCheckerState = NULL;
     GraphPrintSourceManager = NULL;
@@ -3495,7 +3495,7 @@ void GRExprEngine::ViewGraph(bool trim) {
 #endif
 }
 
-void GRExprEngine::ViewGraph(ExplodedNode** Beg, ExplodedNode** End) {
+void ExprEngine::ViewGraph(ExplodedNode** Beg, ExplodedNode** End) {
 #ifndef NDEBUG
   GraphPrintCheckerState = this;
   GraphPrintSourceManager = &getContext().getSourceManager();
@@ -3505,7 +3505,7 @@ void GRExprEngine::ViewGraph(ExplodedNode** Beg, ExplodedNode** End) {
   if (!TrimmedG.get())
     llvm::errs() << "warning: Trimmed ExplodedGraph is empty.\n";
   else
-    llvm::ViewGraph(*TrimmedG->roots_begin(), "TrimmedGRExprEngine");
+    llvm::ViewGraph(*TrimmedG->roots_begin(), "TrimmedExprEngine");
 
   GraphPrintCheckerState = NULL;
   GraphPrintSourceManager = NULL;

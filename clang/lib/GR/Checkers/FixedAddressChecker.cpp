@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
@@ -67,6 +67,6 @@ void FixedAddressChecker::PreVisitBinaryOperator(CheckerContext &C,
   }
 }
 
-void GR::RegisterFixedAddressChecker(GRExprEngine &Eng) {
+void GR::RegisterFixedAddressChecker(ExprEngine &Eng) {
   Eng.registerCheck(new FixedAddressChecker());
 }

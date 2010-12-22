@@ -15,7 +15,7 @@
 #include "SimpleConstraintManager.h"
 #include "clang/GR/PathSensitive/GRState.h"
 #include "clang/GR/PathSensitive/GRStateTrait.h"
-#include "clang/GR/PathSensitive/GRTransferFuncs.h"
+#include "clang/GR/PathSensitive/TransferFuncs.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -52,7 +52,7 @@ class BasicConstraintManager
   : public SimpleConstraintManager {
   GRState::IntSetTy::Factory ISetFactory;
 public:
-  BasicConstraintManager(GRStateManager &statemgr, GRSubEngine &subengine)
+  BasicConstraintManager(GRStateManager &statemgr, SubEngine &subengine)
     : SimpleConstraintManager(subengine), 
       ISetFactory(statemgr.getAllocator()) {}
 
@@ -99,7 +99,7 @@ public:
 } // end anonymous namespace
 
 ConstraintManager* GR::CreateBasicConstraintManager(GRStateManager& statemgr,
-                                                       GRSubEngine &subengine) {
+                                                       SubEngine &subengine) {
   return new BasicConstraintManager(statemgr, subengine);
 }
 

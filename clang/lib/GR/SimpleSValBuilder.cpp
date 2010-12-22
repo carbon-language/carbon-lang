@@ -358,7 +358,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const GRState *state,
         case BO_XorAssign:
         case BO_OrAssign:
         case BO_Comma:
-          assert(false && "'=' and ',' operators handled by GRExprEngine.");
+          assert(false && "'=' and ',' operators handled by ExprEngine.");
           return UnknownVal();
         case BO_PtrMemD:
         case BO_PtrMemI:

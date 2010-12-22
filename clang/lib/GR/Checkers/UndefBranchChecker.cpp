@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/Checker.h"
 
@@ -50,13 +50,13 @@ class UndefBranchChecker : public Checker {
 public:
   UndefBranchChecker() : BT(0) {}
   static void *getTag();
-  void VisitBranchCondition(GRBranchNodeBuilder &Builder, GRExprEngine &Eng,
+  void VisitBranchCondition(BranchNodeBuilder &Builder, ExprEngine &Eng,
                             const Stmt *Condition, void *tag);
 };
 
 }
 
-void GR::RegisterUndefBranchChecker(GRExprEngine &Eng) {
+void GR::RegisterUndefBranchChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UndefBranchChecker());
 }
 
@@ -65,8 +65,8 @@ void *UndefBranchChecker::getTag() {
   return &x;
 }
 
-void UndefBranchChecker::VisitBranchCondition(GRBranchNodeBuilder &Builder, 
-                                              GRExprEngine &Eng,
+void UndefBranchChecker::VisitBranchCondition(BranchNodeBuilder &Builder, 
+                                              ExprEngine &Eng,
                                               const Stmt *Condition, void *tag){
   const GRState *state = Builder.getState();
   SVal X = state->getSVal(Condition);

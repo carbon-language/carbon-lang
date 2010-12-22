@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines UndefinedArraySubscriptChecker, a builtin check in GRExprEngine
+// This defines UndefinedArraySubscriptChecker, a builtin check in ExprEngine
 // that performs checks for undefined array subscripts.
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
@@ -34,7 +34,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterUndefinedArraySubscriptChecker(GRExprEngine &Eng) {
+void GR::RegisterUndefinedArraySubscriptChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UndefinedArraySubscriptChecker());
 }
 

@@ -15,7 +15,7 @@
 #include "SimpleConstraintManager.h"
 #include "clang/GR/PathSensitive/GRState.h"
 #include "clang/GR/PathSensitive/GRStateTrait.h"
-#include "clang/GR/PathSensitive/GRTransferFuncs.h"
+#include "clang/GR/PathSensitive/TransferFuncs.h"
 #include "clang/GR/ManagerRegistry.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -208,7 +208,7 @@ namespace {
 class RangeConstraintManager : public SimpleConstraintManager{
   RangeSet GetRange(const GRState *state, SymbolRef sym);
 public:
-  RangeConstraintManager(GRSubEngine &subengine)
+  RangeConstraintManager(SubEngine &subengine)
     : SimpleConstraintManager(subengine) {}
 
   const GRState *assumeSymNE(const GRState* state, SymbolRef sym,
@@ -255,7 +255,7 @@ private:
 } // end anonymous namespace
 
 ConstraintManager* GR::CreateRangeConstraintManager(GRStateManager&,
-                                                    GRSubEngine &subeng) {
+                                                    SubEngine &subeng) {
   return new RangeConstraintManager(subeng);
 }
 

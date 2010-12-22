@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
@@ -67,6 +67,6 @@ void PointerArithChecker::PreVisitBinaryOperator(CheckerContext &C,
   }
 }
 
-void GR::RegisterPointerArithChecker(GRExprEngine &Eng) {
+void GR::RegisterPointerArithChecker(ExprEngine &Eng) {
   Eng.registerCheck(new PointerArithChecker());
 }

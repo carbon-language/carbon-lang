@@ -1,4 +1,4 @@
-//== GRTransferFuncs.h - Path-Sens. Transfer Functions Interface -*- C++ -*--=//
+//== TransferFuncs.h - Path-Sens. Transfer Functions Interface ---*- C++ -*--=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines GRTransferFuncs, which provides a base-class that
-//  defines an interface for transfer functions used by GRExprEngine.
+//  This file defines TransferFuncs, which provides a base-class that
+//  defines an interface for transfer functions used by ExprEngine.
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,56 +25,56 @@ class ObjCMessageExpr;
 namespace GR {
 class ExplodedNode;
 class ExplodedNodeSet;
-class GREndPathNodeBuilder;
-class GRExprEngine;
-class GRStmtNodeBuilder;
-class GRStmtNodeBuilderRef;
+class EndPathNodeBuilder;
+class ExprEngine;
+class StmtNodeBuilder;
+class StmtNodeBuilderRef;
 
-class GRTransferFuncs {
+class TransferFuncs {
 public:
-  GRTransferFuncs() {}
-  virtual ~GRTransferFuncs() {}
+  TransferFuncs() {}
+  virtual ~TransferFuncs() {}
 
   virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {}
-  virtual void RegisterChecks(GRExprEngine& Eng) {}
+  virtual void RegisterChecks(ExprEngine& Eng) {}
 
 
   // Calls.
 
   virtual void evalCall(ExplodedNodeSet& Dst,
-                        GRExprEngine& Engine,
-                        GRStmtNodeBuilder& Builder,
+                        ExprEngine& Engine,
+                        StmtNodeBuilder& Builder,
                         const CallExpr* CE, SVal L,
                         ExplodedNode* Pred) {}
 
   virtual void evalObjCMessageExpr(ExplodedNodeSet& Dst,
-                                   GRExprEngine& Engine,
-                                   GRStmtNodeBuilder& Builder,
+                                   ExprEngine& Engine,
+                                   StmtNodeBuilder& Builder,
                                    const ObjCMessageExpr* ME,
                                    ExplodedNode* Pred,
                                    const GRState *state) {}
 
   // Stores.
 
-  virtual void evalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {}
+  virtual void evalBind(StmtNodeBuilderRef& B, SVal location, SVal val) {}
 
   // End-of-path and dead symbol notification.
 
-  virtual void evalEndPath(GRExprEngine& Engine,
-                           GREndPathNodeBuilder& Builder) {}
+  virtual void evalEndPath(ExprEngine& Engine,
+                           EndPathNodeBuilder& Builder) {}
 
 
   virtual void evalDeadSymbols(ExplodedNodeSet& Dst,
-                               GRExprEngine& Engine,
-                               GRStmtNodeBuilder& Builder,
+                               ExprEngine& Engine,
+                               StmtNodeBuilder& Builder,
                                ExplodedNode* Pred,
                                const GRState* state,
                                SymbolReaper& SymReaper) {}
 
   // Return statements.
   virtual void evalReturn(ExplodedNodeSet& Dst,
-                          GRExprEngine& Engine,
-                          GRStmtNodeBuilder& Builder,
+                          ExprEngine& Engine,
+                          StmtNodeBuilder& Builder,
                           const ReturnStmt* S,
                           ExplodedNode* Pred) {}
 

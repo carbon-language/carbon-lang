@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineExperimentalChecks.h"
+#include "ExprEngineExperimentalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "clang/GR/PathSensitive/GRState.h"
@@ -75,7 +75,7 @@ public:
 
   virtual bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
   void evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper);
-  void evalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
+  void evalEndPath(EndPathNodeBuilder &B, void *tag, ExprEngine &Eng);
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
 
 private:
@@ -114,7 +114,7 @@ namespace GR {
 }
 }
 
-void GR::RegisterStreamChecker(GRExprEngine &Eng) {
+void GR::RegisterStreamChecker(ExprEngine &Eng) {
   Eng.registerCheck(new StreamChecker());
 }
 
@@ -421,8 +421,8 @@ void StreamChecker::evalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
   }
 }
 
-void StreamChecker::evalEndPath(GREndPathNodeBuilder &B, void *tag,
-                                GRExprEngine &Eng) {
+void StreamChecker::evalEndPath(EndPathNodeBuilder &B, void *tag,
+                                ExprEngine &Eng) {
   SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
   typedef llvm::ImmutableMap<SymbolRef, StreamState> SymMap;

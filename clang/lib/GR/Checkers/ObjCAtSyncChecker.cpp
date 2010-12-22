@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/Checkers/DereferenceChecker.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
 using namespace GR;
@@ -33,7 +33,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterObjCAtSyncChecker(GRExprEngine &Eng) {
+void GR::RegisterObjCAtSyncChecker(ExprEngine &Eng) {
   // @synchronized is an Objective-C 2 feature.
   if (Eng.getContext().getLangOptions().ObjC2)
     Eng.registerCheck(new ObjCAtSyncChecker());

@@ -37,7 +37,7 @@ class GRStateManager;
 class Checker;
 
 typedef ConstraintManager* (*ConstraintManagerCreator)(GRStateManager&,
-                                                       GRSubEngine&);
+                                                       SubEngine&);
 typedef StoreManager* (*StoreManagerCreator)(GRStateManager&);
 
 //===----------------------------------------------------------------------===//
@@ -153,7 +153,7 @@ public:
   // As constraints gradually accrue on symbolic values, added constraints
   // may conflict and indicate that a state is infeasible (as no real values
   // could satisfy all the constraints).  This is the principal mechanism
-  // for modeling path-sensitivity in GRExprEngine/GRState.
+  // for modeling path-sensitivity in ExprEngine/GRState.
   //
   // Various "assume" methods form the interface for adding constraints to
   // symbolic values.  A call to 'assume' indicates an assumption being placed
@@ -403,10 +403,10 @@ public:
 
 class GRStateManager {
   friend class GRState;
-  friend class GRExprEngine; // FIXME: Remove.
+  friend class ExprEngine; // FIXME: Remove.
 private:
-  /// Eng - The GRSubEngine that owns this state manager.
-  GRSubEngine &Eng;
+  /// Eng - The SubEngine that owns this state manager.
+  SubEngine &Eng;
 
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StoreMgr;
@@ -436,7 +436,7 @@ public:
                  StoreManagerCreator CreateStoreManager,
                  ConstraintManagerCreator CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc,
-                 GRSubEngine &subeng)
+                 SubEngine &subeng)
     : Eng(subeng),
       EnvMgr(alloc),
       GDMFactory(alloc),
@@ -482,7 +482,7 @@ public:
 
   StoreManager& getStoreManager() { return *StoreMgr; }
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
-  GRSubEngine& getOwningEngine() { return Eng; }
+  SubEngine& getOwningEngine() { return Eng; }
 
   const GRState* RemoveDeadBindings(const GRState* St,
                                     const StackFrameContext *LCtx,

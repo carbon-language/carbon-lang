@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/GR/BugReporter/BugReporter.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "BasicObjCFoundationChecks.h"
 #include "clang/AST/DeclObjC.h"
@@ -45,7 +45,7 @@ public:
 } // end anonymous namespace
 
 
-void GR::RegisterNSAutoreleasePoolChecks(GRExprEngine &Eng) {
+void GR::RegisterNSAutoreleasePoolChecks(ExprEngine &Eng) {
   ASTContext &Ctx = Eng.getContext();
   if (Ctx.getLangOptions().getGCMode() != LangOptions::NonGC) {    
     Eng.registerCheck(new NSAutoreleasePoolChecker(GetNullarySelector("release",

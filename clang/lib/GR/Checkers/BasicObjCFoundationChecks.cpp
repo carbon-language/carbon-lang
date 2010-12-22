@@ -17,7 +17,7 @@
 
 #include "clang/GR/PathSensitive/ExplodedGraph.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/GR/PathSensitive/GRState.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/MemRegion.h"
@@ -511,7 +511,7 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
 // Check registration.
 //===----------------------------------------------------------------------===//
   
-void GR::RegisterAppleChecks(GRExprEngine& Eng, const Decl &D) {
+void GR::RegisterAppleChecks(ExprEngine& Eng, const Decl &D) {
   Eng.registerCheck(new NilArgChecker());
   Eng.registerCheck(new CFNumberCreateChecker());
   RegisterNSErrorChecks(Eng.getBugReporter(), Eng, D);

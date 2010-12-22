@@ -25,13 +25,13 @@
 #include "clang/GR/BugReporter/PathDiagnostic.h"
 #include "clang/GR/PathSensitive/AnalysisManager.h"
 #include "clang/GR/BugReporter/BugReporter.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
-#include "clang/GR/PathSensitive/GRTransferFuncs.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
+#include "clang/GR/PathSensitive/TransferFuncs.h"
 #include "clang/GR/PathDiagnosticClients.h"
 
 // FIXME: Restructure checker registration.
-#include "Checkers/GRExprEngineExperimentalChecks.h"
-#include "Checkers/GRExprEngineInternalChecks.h"
+#include "Checkers/ExprEngineExperimentalChecks.h"
+#include "Checkers/ExprEngineInternalChecks.h"
 
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -328,18 +328,18 @@ static void ActionWarnUninitVals(AnalysisConsumer &C, AnalysisManager& mgr,
 }
 
 
-static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
+static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
                                Decl *D,
-                               GRTransferFuncs* tf) {
+                               TransferFuncs* tf) {
 
-  llvm::OwningPtr<GRTransferFuncs> TF(tf);
+  llvm::OwningPtr<TransferFuncs> TF(tf);
 
   // Construct the analysis engine.  We first query for the LiveVariables
   // information to see if the CFG is valid.
   // FIXME: Inter-procedural analysis will need to handle invalid CFGs.
   if (!mgr.getLiveVariables(D))
     return;
-  GRExprEngine Eng(mgr, TF.take());
+  ExprEngine Eng(mgr, TF.take());
 
   if (C.Opts.EnableExperimentalInternalChecks)
     RegisterExperimentalInternalChecks(Eng);
@@ -384,11 +384,11 @@ static void ActionGRExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
 static void ActionObjCMemCheckerAux(AnalysisConsumer &C, AnalysisManager& mgr,
                                   Decl *D, bool GCEnabled) {
 
-  GRTransferFuncs* TF = MakeCFRefCountTF(mgr.getASTContext(),
+  TransferFuncs* TF = MakeCFRefCountTF(mgr.getASTContext(),
                                          GCEnabled,
                                          mgr.getLangOptions());
 
-  ActionGRExprEngine(C, mgr, D, TF);
+  ActionExprEngine(C, mgr, D, TF);
 }
 
 static void ActionObjCMemChecker(AnalysisConsumer &C, AnalysisManager& mgr,

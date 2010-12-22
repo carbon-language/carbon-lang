@@ -7,18 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines VLASizeChecker, a builtin check in GRExprEngine that 
+// This defines VLASizeChecker, a builtin check in ExprEngine that 
 // performs checks for declaration of VLA of undefined or zero size.
 // In addition, VLASizeChecker is responsible for defining the extent
 // of the MemRegion that represents a VLA.
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
 using namespace GR;
@@ -35,7 +35,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterVLASizeChecker(GRExprEngine &Eng) {
+void GR::RegisterVLASizeChecker(ExprEngine &Eng) {
   Eng.registerCheck(new VLASizeChecker());
 }
 

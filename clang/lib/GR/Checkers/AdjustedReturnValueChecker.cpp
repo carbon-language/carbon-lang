@@ -13,9 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugReporter.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
@@ -35,7 +35,7 @@ public:
 };
 }
 
-void GR::RegisterAdjustedReturnValueChecker(GRExprEngine &Eng) {
+void GR::RegisterAdjustedReturnValueChecker(ExprEngine &Eng) {
   Eng.registerCheck(new AdjustedReturnValueChecker());
 }
 

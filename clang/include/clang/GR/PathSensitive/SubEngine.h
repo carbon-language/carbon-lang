@@ -1,4 +1,4 @@
-//== GRSubEngine.h - Interface of the subengine of GRCoreEngine ----*- C++ -*-//
+//== SubEngine.h - Interface of the subengine of CoreEngine --------*- C++ -*-//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the interface of a subengine of the GRCoreEngine.
+// This file defines the interface of a subengine of the CoreEngine.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_GR_GRSUBENGINE_H
-#define LLVM_CLANG_GR_GRSUBENGINE_H
+#ifndef LLVM_CLANG_GR_SUBENGINE_H
+#define LLVM_CLANG_GR_SUBENGINE_H
 
 #include "clang/GR/PathSensitive/SVals.h"
 
@@ -28,19 +28,19 @@ class AnalysisManager;
 class ExplodedNode;
 class GRState;
 class GRStateManager;
-class GRBlockCounter;
-class GRStmtNodeBuilder;
-class GRBranchNodeBuilder;
-class GRIndirectGotoNodeBuilder;
-class GRSwitchNodeBuilder;
-class GREndPathNodeBuilder;
-class GRCallEnterNodeBuilder;
-class GRCallExitNodeBuilder;
+class BlockCounter;
+class StmtNodeBuilder;
+class BranchNodeBuilder;
+class IndirectGotoNodeBuilder;
+class SwitchNodeBuilder;
+class EndPathNodeBuilder;
+class CallEnterNodeBuilder;
+class CallExitNodeBuilder;
 class MemRegion;
 
-class GRSubEngine {
+class SubEngine {
 public:
-  virtual ~GRSubEngine() {}
+  virtual ~SubEngine() {}
 
   virtual const GRState* getInitialState(const LocationContext *InitLoc) = 0;
 
@@ -48,38 +48,38 @@ public:
 
   virtual GRStateManager &getStateManager() = 0;
 
-  /// Called by GRCoreEngine. Used to generate new successor
+  /// Called by CoreEngine. Used to generate new successor
   /// nodes by processing the 'effects' of a block-level statement.
-  virtual void ProcessElement(const CFGElement E, GRStmtNodeBuilder& builder)=0;
+  virtual void ProcessElement(const CFGElement E, StmtNodeBuilder& builder)=0;
 
-  /// Called by GRCoreEngine when start processing
+  /// Called by CoreEngine when start processing
   /// a CFGBlock.  This method returns true if the analysis should continue
   /// exploring the given path, and false otherwise.
   virtual bool ProcessBlockEntrance(const CFGBlock* B, const ExplodedNode *Pred,
-                                    GRBlockCounter BC) = 0;
+                                    BlockCounter BC) = 0;
 
-  /// Called by GRCoreEngine.  Used to generate successor
+  /// Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
   virtual void ProcessBranch(const Stmt* Condition, const Stmt* Term,
-                             GRBranchNodeBuilder& builder) = 0;
+                             BranchNodeBuilder& builder) = 0;
 
-  /// Called by GRCoreEngine.  Used to generate successor
+  /// Called by CoreEngine.  Used to generate successor
   /// nodes by processing the 'effects' of a computed goto jump.
-  virtual void ProcessIndirectGoto(GRIndirectGotoNodeBuilder& builder) = 0;
+  virtual void ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) = 0;
 
-  /// Called by GRCoreEngine.  Used to generate successor
+  /// Called by CoreEngine.  Used to generate successor
   /// nodes by processing the 'effects' of a switch statement.
-  virtual void ProcessSwitch(GRSwitchNodeBuilder& builder) = 0;
+  virtual void ProcessSwitch(SwitchNodeBuilder& builder) = 0;
 
-  /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
+  /// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
   ///  nodes when the control reaches the end of a function.
-  virtual void ProcessEndPath(GREndPathNodeBuilder& builder) = 0;
+  virtual void ProcessEndPath(EndPathNodeBuilder& builder) = 0;
 
   // Generate the entry node of the callee.
-  virtual void ProcessCallEnter(GRCallEnterNodeBuilder &builder) = 0;
+  virtual void ProcessCallEnter(CallEnterNodeBuilder &builder) = 0;
 
   // Generate the first post callsite node.
-  virtual void ProcessCallExit(GRCallExitNodeBuilder &builder) = 0;
+  virtual void ProcessCallExit(CallExitNodeBuilder &builder) = 0;
 
   /// Called by ConstraintManager. Used to call checker-specific
   /// logic for handling assumptions on symbolic values.
@@ -101,7 +101,7 @@ public:
     return ProcessRegionChanges(state, &MR, &MR+1);
   }
 
-  /// Called by GRCoreEngine when the analysis worklist is either empty or the
+  /// Called by CoreEngine when the analysis worklist is either empty or the
   //  maximum number of analysis steps have been reached.
   virtual void ProcessEndWorklist(bool hasWorkRemaining) = 0;
 };

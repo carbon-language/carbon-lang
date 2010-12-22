@@ -42,14 +42,14 @@
 // - Finer grained false positive control (levels)
 // - Handling ~0 values
 
-#include "GRExprEngineExperimentalChecks.h"
+#include "ExprEngineExperimentalChecks.h"
 #include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Analyses/PseudoConstantAnalysis.h"
 #include "clang/GR/BugReporter/BugReporter.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerHelpers.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "clang/GR/PathSensitive/GRCoreEngine.h"
+#include "clang/GR/PathSensitive/CoreEngine.h"
 #include "clang/GR/PathSensitive/SVals.h"
 #include "clang/AST/Stmt.h"
 #include "llvm/ADT/DenseMap.h"
@@ -67,7 +67,7 @@ public:
   static void *getTag();
   void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
   void PostVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
-  void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B, GRExprEngine &Eng);
+  void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B, ExprEngine &Eng);
 
 private:
   // Our assumption about a particular operation.
@@ -84,7 +84,7 @@ private:
   bool PathWasCompletelyAnalyzed(const CFG *C,
                                  const CFGBlock *CB,
                                  const CFGStmtMap *CBM,
-                                 const GRCoreEngine &CE);
+                                 const CoreEngine &CE);
   static bool CanVary(const Expr *Ex,
                       AnalysisContext *AC);
   static bool isConstantOrPseudoConstant(const DeclRefExpr *DR,
@@ -130,7 +130,7 @@ void *IdempotentOperationChecker::getTag() {
   return &x;
 }
 
-void GR::RegisterIdempotentOperationChecker(GRExprEngine &Eng) {
+void GR::RegisterIdempotentOperationChecker(ExprEngine &Eng) {
   Eng.registerCheck(new IdempotentOperationChecker());
 }
 
@@ -364,7 +364,7 @@ void IdempotentOperationChecker::PostVisitBinaryOperator(
 
 void IdempotentOperationChecker::VisitEndAnalysis(ExplodedGraph &G,
                                                   BugReporter &BR,
-                                                  GRExprEngine &Eng) {
+                                                  ExprEngine &Eng) {
   BugType *BT = new BugType("Idempotent operation", "Dead code");
   // Iterate over the hash to see if we have any paths with definite
   // idempotent operations.
@@ -553,9 +553,9 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
                                                        const CFG *C,
                                                        const CFGBlock *CB,
                                                        const CFGStmtMap *CBM,
-                                                       const GRCoreEngine &CE) {
+                                                       const CoreEngine &CE) {
   // Test for reachability from any aborted blocks to this block
-  typedef GRCoreEngine::BlocksAborted::const_iterator AbortedIterator;
+  typedef CoreEngine::BlocksAborted::const_iterator AbortedIterator;
   for (AbortedIterator I = CE.blocks_aborted_begin(),
       E = CE.blocks_aborted_end(); I != E; ++I) {
     const BlockEdge &BE =  I->first;
@@ -569,7 +569,7 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
   
   // For the items still on the worklist, see if they are in blocks that
   // can eventually reach 'CB'.
-  class VisitWL : public GRWorkList::Visitor {
+  class VisitWL : public WorkList::Visitor {
     const CFGStmtMap *CBM;
     const CFGBlock *TargetBlock;
     CFGReachabilityAnalysis &CRA;
@@ -577,7 +577,7 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
     VisitWL(const CFGStmtMap *cbm, const CFGBlock *targetBlock,
             CFGReachabilityAnalysis &cra)
       : CBM(cbm), TargetBlock(targetBlock), CRA(cra) {}
-    virtual bool Visit(const GRWorkListUnit &U) {
+    virtual bool Visit(const WorkListUnit &U) {
       ProgramPoint P = U.getNode()->getLocation();
       const CFGBlock *B = 0;
       if (StmtPoint *SP = dyn_cast<StmtPoint>(&P)) {

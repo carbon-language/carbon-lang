@@ -21,7 +21,7 @@
 #include "clang/GR/PathSensitive/SVals.h"
 #include "clang/GR/PathSensitive/CheckerHelpers.h"
 #include "clang/GR/BugReporter/BugReporter.h"
-#include "GRExprEngineExperimentalChecks.h"
+#include "ExprEngineExperimentalChecks.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 // The number of CFGBlock pointers we want to reserve memory for. This is used
@@ -37,7 +37,7 @@ public:
   static void *getTag();
   void VisitEndAnalysis(ExplodedGraph &G,
                         BugReporter &B,
-                        GRExprEngine &Eng);
+                        ExprEngine &Eng);
 private:
   static inline const Stmt *getUnreachableStmt(const CFGBlock *CB);
   void FindUnreachableEntryPoints(const CFGBlock *CB);
@@ -54,13 +54,13 @@ void *UnreachableCodeChecker::getTag() {
   return &x;
 }
 
-void GR::RegisterUnreachableCodeChecker(GRExprEngine &Eng) {
+void GR::RegisterUnreachableCodeChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UnreachableCodeChecker());
 }
 
 void UnreachableCodeChecker::VisitEndAnalysis(ExplodedGraph &G,
                                               BugReporter &B,
-                                              GRExprEngine &Eng) {
+                                              ExprEngine &Eng) {
   // Bail out if we didn't cover all paths
   if (Eng.hasWorkRemaining())
     return;

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/GR/BugReporter/BugType.h"
@@ -62,7 +62,7 @@ private:
 };
 } // end anonymous namespace
 
-void GR::RegisterCallAndMessageChecker(GRExprEngine &Eng) {
+void GR::RegisterCallAndMessageChecker(ExprEngine &Eng) {
   Eng.registerCheck(new CallAndMessageChecker());
 }
 

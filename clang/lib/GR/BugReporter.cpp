@@ -14,7 +14,7 @@
 
 #include "clang/GR/BugReporter/BugReporter.h"
 #include "clang/GR/BugReporter/BugType.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/AST/Expr.h"

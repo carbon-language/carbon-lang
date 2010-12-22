@@ -15,7 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
@@ -45,7 +45,7 @@ public:
 };
 } //end anonymous namespace
 
-void GR::RegisterMacOSXAPIChecker(GRExprEngine &Eng) {
+void GR::RegisterMacOSXAPIChecker(ExprEngine &Eng) {
   if (Eng.getContext().Target.getTriple().getVendor() == llvm::Triple::Apple)
     Eng.registerCheck(new MacOSXAPIChecker());
 }

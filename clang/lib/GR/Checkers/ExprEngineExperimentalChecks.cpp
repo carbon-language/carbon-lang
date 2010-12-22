@@ -1,4 +1,4 @@
-//=-- GRExprEngineExperimentalChecks.h ------------------------------*- C++ -*-=
+//=-- ExprEngineExperimentalChecks.h ------------------------------*- C++ -*-=
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,20 +8,20 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines functions to instantiate and register experimental
-//  checks in GRExprEngine.
+//  checks in ExprEngine.
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
-#include "GRExprEngineExperimentalChecks.h"
+#include "ExprEngineInternalChecks.h"
+#include "ExprEngineExperimentalChecks.h"
 #include "clang/GR/Checkers/LocalCheckers.h"
 
 using namespace clang;
 using namespace GR;
 
-void GR::RegisterExperimentalChecks(GRExprEngine &Eng) {
+void GR::RegisterExperimentalChecks(ExprEngine &Eng) {
   // These are checks that never belong as internal checks
-  // within GRExprEngine.
+  // within ExprEngine.
   RegisterCStringChecker(Eng);
   RegisterChrootChecker(Eng);
   RegisterMallocChecker(Eng);
@@ -30,7 +30,7 @@ void GR::RegisterExperimentalChecks(GRExprEngine &Eng) {
   RegisterUnreachableCodeChecker(Eng);
 }
 
-void GR::RegisterExperimentalInternalChecks(GRExprEngine &Eng) {
+void GR::RegisterExperimentalInternalChecks(ExprEngine &Eng) {
   // These are internal checks that should eventually migrate to
   // RegisterInternalChecks() once they have been further tested.
   

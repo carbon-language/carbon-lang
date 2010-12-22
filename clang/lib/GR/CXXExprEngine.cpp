@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/GR/PathSensitive/AnalysisManager.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/AST/DeclCXX.h"
 
 using namespace clang;
@@ -29,7 +29,7 @@ public:
 };
 }
 
-void GRExprEngine::evalArguments(ConstExprIterator AI, ConstExprIterator AE,
+void ExprEngine::evalArguments(ConstExprIterator AI, ConstExprIterator AE,
                                  const FunctionProtoType *FnType, 
                                  ExplodedNode *Pred, ExplodedNodeSet &Dst,
                                  bool FstArgAsLValue) {
@@ -67,20 +67,20 @@ void GRExprEngine::evalArguments(ConstExprIterator AI, ConstExprIterator AE,
   }
 }
 
-const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
+const CXXThisRegion *ExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
                                                  const StackFrameContext *SFC) {
   Type *T = D->getTypeForDecl();
   QualType PT = getContext().getPointerType(QualType(T, 0));
   return svalBuilder.getRegionManager().getCXXThisRegion(PT, SFC);
 }
 
-const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXMethodDecl *decl,
+const CXXThisRegion *ExprEngine::getCXXThisRegion(const CXXMethodDecl *decl,
                                             const StackFrameContext *frameCtx) {
   return svalBuilder.getRegionManager().
                     getCXXThisRegion(decl->getThisType(getContext()), frameCtx);
 }
 
-void GRExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
+void ExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
                                             ExplodedNodeSet &Dst) {
   ExplodedNodeSet Tmp;
   Visit(Ex, Pred, Tmp);
@@ -100,7 +100,7 @@ void GRExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
   }
 }
 
-void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, 
+void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, 
                                          const MemRegion *Dest,
                                          ExplodedNode *Pred,
                                          ExplodedNodeSet &Dst) {
@@ -147,7 +147,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
   }
 }
 
-void GRExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
+void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
                                       const MemRegion *Dest,
                                       const Stmt *S,
                                       ExplodedNode *Pred, 
@@ -171,7 +171,7 @@ void GRExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
     Dst.Add(N);
 }
 
-void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, 
+void ExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, 
                                           ExplodedNode *Pred, 
                                           ExplodedNodeSet &Dst) {
   // Get the method type.
@@ -200,7 +200,7 @@ void GRExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE,
   evalMethodCall(MCE, MD, ObjArgExpr, Pred, AllargsEvaluated, Dst);
 }
 
-void GRExprEngine::VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *C,
+void ExprEngine::VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *C,
                                             ExplodedNode *Pred,
                                             ExplodedNodeSet &Dst) {
   const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(C->getCalleeDecl());
@@ -225,7 +225,7 @@ void GRExprEngine::VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *C,
   evalMethodCall(C, MD, C->getArg(0), Pred, argsEvaluated, Dst);
 }
 
-void GRExprEngine::evalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
+void ExprEngine::evalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
                                   const Expr *ThisExpr, ExplodedNode *Pred,
                                   ExplodedNodeSet &Src, ExplodedNodeSet &Dst) {
   // Allow checkers to pre-visit the member call.
@@ -254,7 +254,7 @@ void GRExprEngine::evalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
   }
 }
 
-void GRExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
+void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
   if (CNE->isArray()) {
     // FIXME: allocating an array has not been handled.
@@ -302,7 +302,7 @@ void GRExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   }
 }
 
-void GRExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE, 
+void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE, 
                                       ExplodedNode *Pred,ExplodedNodeSet &Dst) {
   // Should do more checking.
   ExplodedNodeSet Argevaluated;
@@ -314,7 +314,7 @@ void GRExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE,
   }
 }
 
-void GRExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,
+void ExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,
                                     ExplodedNodeSet &Dst) {
   // Get the this object region from StoreManager.
   const MemRegion *R =

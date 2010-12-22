@@ -16,7 +16,7 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/GR/BugReporter/BugReporter.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"

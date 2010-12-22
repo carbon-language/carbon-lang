@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "llvm/ADT/StringSwitch.h"
 
@@ -29,7 +29,7 @@ public:
 
 }
 
-void GR::RegisterNoReturnFunctionChecker(GRExprEngine &Eng) {
+void GR::RegisterNoReturnFunctionChecker(ExprEngine &Eng) {
   Eng.registerCheck(new NoReturnFunctionChecker());
 }
 

@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines AttrNonNullChecker, a builtin check in GRExprEngine that 
+// This defines AttrNonNullChecker, a builtin check in ExprEngine that 
 // performs checks for arguments declared to have nonnull attribute.
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
@@ -33,7 +33,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterAttrNonNullChecker(GRExprEngine &Eng) {
+void GR::RegisterAttrNonNullChecker(ExprEngine &Eng) {
   Eng.registerCheck(new AttrNonNullChecker());
 }
 

@@ -128,7 +128,7 @@ public:
     return UnknownVal();
   }
 
-  /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
+  /// ArrayToPointer - Used by ExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
   virtual SVal ArrayToPointer(Loc Array) = 0;
 
@@ -148,7 +148,7 @@ public:
 
   const ElementRegion *GetElementZeroRegion(const MemRegion *R, QualType T);
 
-  /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
+  /// CastRegion - Used by ExprEngine::VisitCast to handle casts from
   ///  a MemRegion* to a specific location type.  'R' is the region being
   ///  casted and 'CastToTy' the result type of the cast.
   const MemRegion *CastRegion(const MemRegion *region, QualType CastToTy);

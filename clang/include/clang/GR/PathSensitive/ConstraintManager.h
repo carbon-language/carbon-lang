@@ -27,7 +27,7 @@ namespace GR {
 
 class GRState;
 class GRStateManager;
-class GRSubEngine;
+class SubEngine;
 class SVal;
 
 class ConstraintManager {
@@ -59,15 +59,15 @@ public:
   /// canReasonAbout - Not all ConstraintManagers can accurately reason about
   ///  all SVal values.  This method returns true if the ConstraintManager can
   ///  reasonably handle a given SVal value.  This is typically queried by
-  ///  GRExprEngine to determine if the value should be replaced with a
+  ///  ExprEngine to determine if the value should be replaced with a
   ///  conjured symbolic value in order to recover some precision.
   virtual bool canReasonAbout(SVal X) const = 0;
 };
 
 ConstraintManager* CreateBasicConstraintManager(GRStateManager& statemgr,
-                                                GRSubEngine &subengine);
+                                                SubEngine &subengine);
 ConstraintManager* CreateRangeConstraintManager(GRStateManager& statemgr,
-                                                GRSubEngine &subengine);
+                                                SubEngine &subengine);
 
 } // end GR namespace
 

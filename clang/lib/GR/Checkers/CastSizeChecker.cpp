@@ -14,7 +14,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 
 using namespace clang;
 using namespace GR;
@@ -86,6 +86,6 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
 }
 
 
-void GR::RegisterCastSizeChecker(GRExprEngine &Eng) {
+void GR::RegisterCastSizeChecker(ExprEngine &Eng) {
   Eng.registerCheck(new CastSizeChecker());
 }

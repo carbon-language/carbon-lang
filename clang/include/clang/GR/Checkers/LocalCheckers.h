@@ -31,15 +31,15 @@ class TranslationUnitDecl;
 namespace GR {
 
 class PathDiagnosticClient;
-class GRTransferFuncs;
+class TransferFuncs;
 class BugType;
 class BugReporter;
-class GRExprEngine;
+class ExprEngine;
 
 void CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &map, 
                      BugReporter& BR);
 
-GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
+TransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                   const LangOptions& lopts);
 
 void CheckObjCDealloc(const ObjCImplementationDecl* D, const LangOptions& L,
@@ -50,15 +50,15 @@ void CheckObjCInstMethSignature(const ObjCImplementationDecl *ID,
 
 void CheckObjCUnusedIvar(const ObjCImplementationDecl *D, BugReporter& BR);
 
-void RegisterAppleChecks(GRExprEngine& Eng, const Decl &D);
-void RegisterExperimentalChecks(GRExprEngine &Eng);
-void RegisterExperimentalInternalChecks(GRExprEngine &Eng);
+void RegisterAppleChecks(ExprEngine& Eng, const Decl &D);
+void RegisterExperimentalChecks(ExprEngine &Eng);
+void RegisterExperimentalInternalChecks(ExprEngine &Eng);
 
 void CheckLLVMConventions(TranslationUnitDecl &TU, BugReporter &BR);
 void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
 void CheckSizeofPointer(const Decl *D, BugReporter &BR);
 
-void RegisterCallInliner(GRExprEngine &Eng);
+void RegisterCallInliner(ExprEngine &Eng);
 
 } // end GR namespace
 

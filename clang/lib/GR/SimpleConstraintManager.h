@@ -22,9 +22,9 @@ namespace clang {
 namespace GR {
 
 class SimpleConstraintManager : public ConstraintManager {
-  GRSubEngine &SU;
+  SubEngine &SU;
 public:
-  SimpleConstraintManager(GRSubEngine &subengine) : SU(subengine) {}
+  SimpleConstraintManager(SubEngine &subengine) : SU(subengine) {}
   virtual ~SimpleConstraintManager();
 
   //===------------------------------------------------------------------===//

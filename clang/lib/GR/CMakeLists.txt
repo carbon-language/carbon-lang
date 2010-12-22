@@ -19,10 +19,10 @@ add_clang_library(clangGRCore
   ExplodedGraph.cpp
   FlatStore.cpp
   FrontendActions.cpp
-  GRBlockCounter.cpp
-  GRCXXExprEngine.cpp
-  GRCoreEngine.cpp
-  GRExprEngine.cpp
+  BlockCounter.cpp
+  CXXExprEngine.cpp
+  CoreEngine.cpp
+  ExprEngine.cpp
   GRState.cpp
   HTMLDiagnostics.cpp
   ManagerRegistry.cpp

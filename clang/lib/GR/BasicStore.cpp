@@ -68,7 +68,7 @@ public:
     return store;
   }
 
-  /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
+  /// ArrayToPointer - Used by ExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
   SVal ArrayToPointer(Loc Array) { return Array; }
 

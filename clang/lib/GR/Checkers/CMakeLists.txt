@@ -17,7 +17,7 @@ add_clang_library(clangGRCheckers
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   FixedAddressChecker.cpp
-  GRExprEngineExperimentalChecks.cpp
+  ExprEngineExperimentalChecks.cpp
   IdempotentOperationChecker.cpp
   LLVMConventionsChecker.cpp
   MacOSXAPIChecker.cpp

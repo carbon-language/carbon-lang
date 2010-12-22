@@ -21,9 +21,9 @@
 #include "clang/GR/Checkers/LocalCheckers.h"
 #include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "clang/GR/PathSensitive/GRExprEngineBuilders.h"
+#include "clang/GR/PathSensitive/ExprEngineBuilders.h"
 #include "clang/GR/PathSensitive/GRStateTrait.h"
-#include "clang/GR/PathSensitive/GRTransferFuncs.h"
+#include "clang/GR/PathSensitive/TransferFuncs.h"
 #include "clang/GR/PathSensitive/SymbolManager.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -92,16 +92,16 @@ ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {
 
 namespace {
 class GenericNodeBuilder {
-  GRStmtNodeBuilder *SNB;
+  StmtNodeBuilder *SNB;
   const Stmt *S;
   const void *tag;
-  GREndPathNodeBuilder *ENB;
+  EndPathNodeBuilder *ENB;
 public:
-  GenericNodeBuilder(GRStmtNodeBuilder &snb, const Stmt *s,
+  GenericNodeBuilder(StmtNodeBuilder &snb, const Stmt *s,
                      const void *t)
   : SNB(&snb), S(s), tag(t), ENB(0) {}
 
-  GenericNodeBuilder(GREndPathNodeBuilder &enb)
+  GenericNodeBuilder(EndPathNodeBuilder &enb)
   : SNB(0), S(0), tag(0), ENB(&enb) {}
 
   ExplodedNode *MakeNode(const GRState *state, ExplodedNode *Pred) {
@@ -1620,7 +1620,7 @@ static const GRState * SendAutorelease(const GRState *state,
 
 namespace {
 
-class CFRefCount : public GRTransferFuncs {
+class CFRefCount : public TransferFuncs {
 public:
   class BindingsPrinter : public GRState::Printer {
   public:
@@ -1648,7 +1648,7 @@ private:
                     RefVal::Kind& hasErr);
 
   void ProcessNonLeakError(ExplodedNodeSet& Dst,
-                           GRStmtNodeBuilder& Builder,
+                           StmtNodeBuilder& Builder,
                            const Expr* NodeExpr, SourceRange ErrorRange,
                            ExplodedNode* Pred,
                            const GRState* St,
@@ -1660,7 +1660,7 @@ private:
   ExplodedNode* ProcessLeaks(const GRState * state,
                                       llvm::SmallVectorImpl<SymbolRef> &Leaked,
                                       GenericNodeBuilder &Builder,
-                                      GRExprEngine &Eng,
+                                      ExprEngine &Eng,
                                       ExplodedNode *Pred = 0);
 
 public:
@@ -1673,7 +1673,7 @@ public:
 
   virtual ~CFRefCount() {}
 
-  void RegisterChecks(GRExprEngine &Eng);
+  void RegisterChecks(ExprEngine &Eng);
 
   virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {
     Printers.push_back(new BindingsPrinter());
@@ -1690,8 +1690,8 @@ public:
   // Calls.
 
   void evalSummary(ExplodedNodeSet& Dst,
-                   GRExprEngine& Eng,
-                   GRStmtNodeBuilder& Builder,
+                   ExprEngine& Eng,
+                   StmtNodeBuilder& Builder,
                    const Expr* Ex,
                    InstanceReceiver Receiver,
                    const RetainSummary& Summ,
@@ -1700,42 +1700,42 @@ public:
                    ExplodedNode* Pred, const GRState *state);
 
   virtual void evalCall(ExplodedNodeSet& Dst,
-                        GRExprEngine& Eng,
-                        GRStmtNodeBuilder& Builder,
+                        ExprEngine& Eng,
+                        StmtNodeBuilder& Builder,
                         const CallExpr* CE, SVal L,
                         ExplodedNode* Pred);
 
 
   virtual void evalObjCMessageExpr(ExplodedNodeSet& Dst,
-                                   GRExprEngine& Engine,
-                                   GRStmtNodeBuilder& Builder,
+                                   ExprEngine& Engine,
+                                   StmtNodeBuilder& Builder,
                                    const ObjCMessageExpr* ME,
                                    ExplodedNode* Pred,
                                    const GRState *state);
   // Stores.
-  virtual void evalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val);
+  virtual void evalBind(StmtNodeBuilderRef& B, SVal location, SVal val);
 
   // End-of-path.
 
-  virtual void evalEndPath(GRExprEngine& Engine,
-                           GREndPathNodeBuilder& Builder);
+  virtual void evalEndPath(ExprEngine& Engine,
+                           EndPathNodeBuilder& Builder);
 
   virtual void evalDeadSymbols(ExplodedNodeSet& Dst,
-                               GRExprEngine& Engine,
-                               GRStmtNodeBuilder& Builder,
+                               ExprEngine& Engine,
+                               StmtNodeBuilder& Builder,
                                ExplodedNode* Pred,
                                const GRState* state,
                                SymbolReaper& SymReaper);
 
   std::pair<ExplodedNode*, const GRState *>
   HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd,
-                          ExplodedNode* Pred, GRExprEngine &Eng,
+                          ExplodedNode* Pred, ExprEngine &Eng,
                           SymbolRef Sym, RefVal V, bool &stop);
   // Return statements.
 
   virtual void evalReturn(ExplodedNodeSet& Dst,
-                          GRExprEngine& Engine,
-                          GRStmtNodeBuilder& Builder,
+                          ExprEngine& Engine,
+                          StmtNodeBuilder& Builder,
                           const ReturnStmt* S,
                           ExplodedNode* Pred);
 
@@ -1949,7 +1949,7 @@ namespace {
   public:
     CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
                     ExplodedNode *n, SymbolRef sym,
-                    GRExprEngine& Eng);
+                    ExprEngine& Eng);
 
     PathDiagnosticPiece* getEndPath(BugReporterContext& BRC,
                                     const ExplodedNode* N);
@@ -2407,7 +2407,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
 
 CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
                                  ExplodedNode *n,
-                                 SymbolRef sym, GRExprEngine& Eng)
+                                 SymbolRef sym, ExprEngine& Eng)
 : CFRefReport(D, tf, n, sym) {
 
   // Most bug reports are cached at the location where they occured.
@@ -2474,8 +2474,8 @@ static QualType GetReturnType(const Expr* RetE, ASTContext& Ctx) {
 }
 
 void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
-                             GRExprEngine& Eng,
-                             GRStmtNodeBuilder& Builder,
+                             ExprEngine& Eng,
+                             StmtNodeBuilder& Builder,
                              const Expr* Ex,
                              InstanceReceiver Receiver,
                              const RetainSummary& Summ,
@@ -2736,8 +2736,8 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
 
 
 void CFRefCount::evalCall(ExplodedNodeSet& Dst,
-                          GRExprEngine& Eng,
-                          GRStmtNodeBuilder& Builder,
+                          ExprEngine& Eng,
+                          StmtNodeBuilder& Builder,
                           const CallExpr* CE, SVal L,
                           ExplodedNode* Pred) {
 
@@ -2761,8 +2761,8 @@ void CFRefCount::evalCall(ExplodedNodeSet& Dst,
 }
 
 void CFRefCount::evalObjCMessageExpr(ExplodedNodeSet& Dst,
-                                     GRExprEngine& Eng,
-                                     GRStmtNodeBuilder& Builder,
+                                     ExprEngine& Eng,
+                                     StmtNodeBuilder& Builder,
                                      const ObjCMessageExpr* ME,
                                      ExplodedNode* Pred,
                                      const GRState *state) {
@@ -2792,7 +2792,7 @@ public:
 } // end anonymous namespace
 
 
-void CFRefCount::evalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
+void CFRefCount::evalBind(StmtNodeBuilderRef& B, SVal location, SVal val) {
   // Are we storing to something that causes the value to "escape"?
   bool escapes = false;
 
@@ -2832,8 +2832,8 @@ void CFRefCount::evalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {
  // Return statements.
 
 void CFRefCount::evalReturn(ExplodedNodeSet& Dst,
-                            GRExprEngine& Eng,
-                            GRStmtNodeBuilder& Builder,
+                            ExprEngine& Eng,
+                            StmtNodeBuilder& Builder,
                             const ReturnStmt* S,
                             ExplodedNode* Pred) {
 
@@ -3141,7 +3141,7 @@ const GRState * CFRefCount::Update(const GRState * state, SymbolRef sym,
 std::pair<ExplodedNode*, const GRState *>
 CFRefCount::HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd,
                                     ExplodedNode* Pred,
-                                    GRExprEngine &Eng,
+                                    ExprEngine &Eng,
                                     SymbolRef Sym, RefVal V, bool &stop) {
 
   unsigned ACnt = V.getAutoreleaseCount();
@@ -3225,7 +3225,7 @@ ExplodedNode*
 CFRefCount::ProcessLeaks(const GRState * state,
                          llvm::SmallVectorImpl<SymbolRef> &Leaked,
                          GenericNodeBuilder &Builder,
-                         GRExprEngine& Eng,
+                         ExprEngine& Eng,
                          ExplodedNode *Pred) {
 
   if (Leaked.empty())
@@ -3249,8 +3249,8 @@ CFRefCount::ProcessLeaks(const GRState * state,
   return N;
 }
 
-void CFRefCount::evalEndPath(GRExprEngine& Eng,
-                             GREndPathNodeBuilder& Builder) {
+void CFRefCount::evalEndPath(ExprEngine& Eng,
+                             EndPathNodeBuilder& Builder) {
 
   const GRState *state = Builder.getState();
   GenericNodeBuilder Bd(Builder);
@@ -3277,8 +3277,8 @@ void CFRefCount::evalEndPath(GRExprEngine& Eng,
 }
 
 void CFRefCount::evalDeadSymbols(ExplodedNodeSet& Dst,
-                                 GRExprEngine& Eng,
-                                 GRStmtNodeBuilder& Builder,
+                                 ExprEngine& Eng,
+                                 StmtNodeBuilder& Builder,
                                  ExplodedNode* Pred,
                                  const GRState* state,
                                  SymbolReaper& SymReaper) {
@@ -3331,7 +3331,7 @@ void CFRefCount::evalDeadSymbols(ExplodedNodeSet& Dst,
 }
 
 void CFRefCount::ProcessNonLeakError(ExplodedNodeSet& Dst,
-                                     GRStmtNodeBuilder& Builder,
+                                     StmtNodeBuilder& Builder,
                                      const Expr* NodeExpr, 
                                      SourceRange ErrorRange,
                                      ExplodedNode* Pred,
@@ -3430,7 +3430,7 @@ void RetainReleaseChecker::PostVisitBlockExpr(CheckerContext &C,
 // Transfer function creation for external clients.
 //===----------------------------------------------------------------------===//
 
-void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
+void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   BugReporter &BR = Eng.getBugReporter();
 
   useAfterRelease = new UseAfterRelease(this);
@@ -3488,13 +3488,13 @@ void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
   // Save the reference to the BugReporter.
   this->BR = &BR;
 
-  // Register the RetainReleaseChecker with the GRExprEngine object.
+  // Register the RetainReleaseChecker with the ExprEngine object.
   // Functionality in CFRefCount will be migrated to RetainReleaseChecker
   // over time.
   Eng.registerCheck(new RetainReleaseChecker(this));
 }
 
-GRTransferFuncs* GR::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
+TransferFuncs* GR::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                          const LangOptions& lopts) {
   return new CFRefCount(Ctx, GCEnabled, lopts);
 }

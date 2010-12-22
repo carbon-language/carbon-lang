@@ -8,14 +8,14 @@
 //===----------------------------------------------------------------------===//
 //
 // This defines PthreadLockChecker, a simple lock -> unlock checker.  Eventually
-// this shouldn't be registered with GRExprEngineInternalChecks.
+// this shouldn't be registered with ExprEngineInternalChecks.
 //
 //===----------------------------------------------------------------------===//
 
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "clang/GR/BugReporter/BugReporter.h"
 #include "clang/GR/PathSensitive/GRStateTrait.h"
-#include "GRExprEngineExperimentalChecks.h"
+#include "ExprEngineExperimentalChecks.h"
 #include "llvm/ADT/ImmutableSet.h"
 
 using namespace clang;
@@ -53,7 +53,7 @@ template <> struct GRStateTrait<LockSet> :
 } // end GR namespace
 } // end clang namespace
 
-void GR::RegisterPthreadLockChecker(GRExprEngine &Eng) {
+void GR::RegisterPthreadLockChecker(ExprEngine &Eng) {
   Eng.registerCheck(new PthreadLockChecker());
 }
 

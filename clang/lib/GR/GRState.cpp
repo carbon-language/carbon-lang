@@ -14,8 +14,8 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/GR/PathSensitive/GRStateTrait.h"
 #include "clang/GR/PathSensitive/GRState.h"
-#include "clang/GR/PathSensitive/GRSubEngine.h"
-#include "clang/GR/PathSensitive/GRTransferFuncs.h"
+#include "clang/GR/PathSensitive/SubEngine.h"
+#include "clang/GR/PathSensitive/TransferFuncs.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -114,7 +114,7 @@ const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
                                           StoreManager::InvalidatedSymbols *IS,
                                           bool invalidateGlobals) const {
   GRStateManager &Mgr = getStateManager();
-  GRSubEngine &Eng = Mgr.getOwningEngine();
+  SubEngine &Eng = Mgr.getOwningEngine();
 
   if (Eng.WantsRegionChangeUpdate(this)) {
     StoreManager::InvalidatedRegions Regions;

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "clang/GR/PathSensitive/GRState.h"
@@ -33,7 +33,7 @@ public:
     return &x;
   }
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *RS);
-  void evalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
+  void evalEndPath(EndPathNodeBuilder &B, void *tag, ExprEngine &Eng);
 private:
   void EmitStackError(CheckerContext &C, const MemRegion *R, const Expr *RetE);
   SourceRange GenName(llvm::raw_ostream &os, const MemRegion *R,
@@ -41,7 +41,7 @@ private:
 };
 }
 
-void GR::RegisterStackAddrLeakChecker(GRExprEngine &Eng) {
+void GR::RegisterStackAddrLeakChecker(ExprEngine &Eng) {
   Eng.registerCheck(new StackAddrLeakChecker());
 }
 
@@ -130,8 +130,8 @@ void StackAddrLeakChecker::PreVisitReturnStmt(CheckerContext &C,
   }
 }
 
-void StackAddrLeakChecker::evalEndPath(GREndPathNodeBuilder &B, void *tag,
-                                       GRExprEngine &Eng) {
+void StackAddrLeakChecker::evalEndPath(EndPathNodeBuilder &B, void *tag,
+                                       ExprEngine &Eng) {
   SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
 

@@ -17,7 +17,7 @@
 
 #include "clang/GR/Checkers/LocalCheckers.h"
 #include "clang/GR/BugReporter/BugType.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/GR/Checkers/DereferenceChecker.h"
 #include "BasicObjCFoundationChecks.h"
 #include "clang/AST/DeclObjC.h"
@@ -32,7 +32,7 @@ class NSErrorChecker : public BugType {
   const Decl &CodeDecl;
   const bool isNSErrorWarning;
   IdentifierInfo * const II;
-  GRExprEngine &Eng;
+  ExprEngine &Eng;
 
   void CheckSignature(const ObjCMethodDecl& MD, QualType& ResultTy,
                       llvm::SmallVectorImpl<VarDecl*>& ErrorParams);
@@ -49,7 +49,7 @@ class NSErrorChecker : public BugType {
   void EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl);
 
 public:
-  NSErrorChecker(const Decl &D, bool isNSError, GRExprEngine& eng)
+  NSErrorChecker(const Decl &D, bool isNSError, ExprEngine& eng)
     : BugType(isNSError ? "NSError** null dereference"
                         : "CFErrorRef* null dereference",
               "Coding conventions (Apple)"),
@@ -63,7 +63,7 @@ public:
 
 } // end anonymous namespace
 
-void GR::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng,
+void GR::RegisterNSErrorChecks(BugReporter& BR, ExprEngine &Eng,
                                   const Decl &D) {
   BR.Register(new NSErrorChecker(D, true, Eng));
   BR.Register(new NSErrorChecker(D, false, Eng));

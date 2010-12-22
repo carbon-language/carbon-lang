@@ -1,4 +1,4 @@
-//===-- GRExprEngineBuilders.h - "Builder" classes for GRExprEngine -*- C++ -*-=
+//===-- ExprEngineBuilders.h - "Builder" classes for ExprEngine ---*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,23 +8,23 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines smart builder "references" which are used to marshal
-//  builders between GRExprEngine objects and their related components.
+//  builders between ExprEngine objects and their related components.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_GREXPRENGINE_BUILDERS
-#define LLVM_CLANG_GR_GREXPRENGINE_BUILDERS
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#ifndef LLVM_CLANG_GR_EXPRENGINE_BUILDERS
+#define LLVM_CLANG_GR_EXPRENGINE_BUILDERS
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 
 namespace clang {
 
 namespace GR {
 
-class GRStmtNodeBuilderRef {
+class StmtNodeBuilderRef {
   ExplodedNodeSet &Dst;
-  GRStmtNodeBuilder &B;
-  GRExprEngine& Eng;
+  StmtNodeBuilder &B;
+  ExprEngine& Eng;
   ExplodedNode* Pred;
   const GRState* state;
   const Stmt* stmt;
@@ -35,14 +35,14 @@ class GRStmtNodeBuilderRef {
   SaveOr OldHasGen;
 
 private:
-  friend class GRExprEngine;
+  friend class ExprEngine;
 
-  GRStmtNodeBuilderRef(); // do not implement
-  void operator=(const GRStmtNodeBuilderRef&); // do not implement
+  StmtNodeBuilderRef(); // do not implement
+  void operator=(const StmtNodeBuilderRef&); // do not implement
 
-  GRStmtNodeBuilderRef(ExplodedNodeSet &dst,
-                       GRStmtNodeBuilder &builder,
-                       GRExprEngine& eng,
+  StmtNodeBuilderRef(ExplodedNodeSet &dst,
+                       StmtNodeBuilder &builder,
+                       ExprEngine& eng,
                        ExplodedNode* pred,
                        const GRState *st,
                        const Stmt* s, bool auto_create_node)
@@ -52,7 +52,7 @@ private:
 
 public:
 
-  ~GRStmtNodeBuilderRef() {
+  ~StmtNodeBuilderRef() {
     // Handle the case where no nodes where generated.  Auto-generate that
     // contains the updated state if we aren't generating sinks.
     if (!B.BuildSinks && Dst.size() == OldSize && !B.HasGeneratedNode) {

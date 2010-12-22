@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -32,7 +32,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterUndefCapturedBlockVarChecker(GRExprEngine &Eng) {
+void GR::RegisterUndefCapturedBlockVarChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UndefCapturedBlockVarChecker());
 }
 

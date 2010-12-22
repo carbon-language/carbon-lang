@@ -24,10 +24,10 @@ class Decl;
 namespace GR {
 
 class BugReporter;
-class GRExprEngine;
+class ExprEngine;
 
-void RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng, const Decl &D);
-void RegisterNSAutoreleasePoolChecks(GRExprEngine &Eng);
+void RegisterNSErrorChecks(BugReporter& BR, ExprEngine &Eng, const Decl &D);
+void RegisterNSAutoreleasePoolChecks(ExprEngine &Eng);
 
 } // end GR namespace
 

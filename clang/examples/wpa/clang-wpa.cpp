@@ -15,8 +15,8 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/GR/PathSensitive/AnalysisManager.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
-#include "clang/GR/PathSensitive/GRTransferFuncs.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
+#include "clang/GR/PathSensitive/TransferFuncs.h"
 #include "clang/GR/Checkers/LocalCheckers.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -140,9 +140,9 @@ int main(int argc, char **argv) {
                        /* TrimGraph */ false, /* InlineCall */ true, 
                        /* UseUnoptimizedCFG */ false);
 
-  GRTransferFuncs* TF = MakeCFRefCountTF(AMgr.getASTContext(), /*GC*/false,
+  TransferFuncs* TF = MakeCFRefCountTF(AMgr.getASTContext(), /*GC*/false,
                                          AMgr.getLangOptions());
-  GRExprEngine Eng(AMgr, TF);
+  ExprEngine Eng(AMgr, TF);
 
   Eng.ExecuteWorkList(AMgr.getStackFrame(FD, TU), AMgr.getMaxNodes());
   

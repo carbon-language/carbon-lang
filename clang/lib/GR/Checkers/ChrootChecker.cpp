@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineExperimentalChecks.h"
+#include "ExprEngineExperimentalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "clang/GR/PathSensitive/GRState.h"
@@ -59,7 +59,7 @@ private:
 
 } // end anonymous namespace
 
-void GR::RegisterChrootChecker(GRExprEngine &Eng) {
+void GR::RegisterChrootChecker(ExprEngine &Eng) {
   Eng.registerCheck(new ChrootChecker());
 }
 

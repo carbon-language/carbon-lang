@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/PathSensitive/Checker.h"
 #include "clang/Basic/Builtins.h"
 
@@ -31,7 +31,7 @@ private:
 
 }
 
-void GR::RegisterOSAtomicChecker(GRExprEngine &Eng) {
+void GR::RegisterOSAtomicChecker(ExprEngine &Eng) {
   Eng.registerCheck(new OSAtomicChecker());
 }
 
@@ -97,7 +97,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
   const void *OSAtomicStoreTag = &magic_store;
 
   // Load 'theValue'.
-  GRExprEngine &Engine = C.getEngine();
+  ExprEngine &Engine = C.getEngine();
   const GRState *state = C.getState();
   ExplodedNodeSet Tmp;
   SVal location = state->getSVal(theValueExpr);

@@ -7,16 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines NullDerefChecker, a builtin check in GRExprEngine that performs
+// This defines NullDerefChecker, a builtin check in ExprEngine that performs
 // checks for null pointers at loads and stores.
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/Checkers/DereferenceChecker.h"
 #include "clang/GR/PathSensitive/Checker.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
 using namespace GR;
@@ -43,12 +43,12 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterDereferenceChecker(GRExprEngine &Eng) {
+void GR::RegisterDereferenceChecker(ExprEngine &Eng) {
   Eng.registerCheck(new DereferenceChecker());
 }
 
 std::pair<ExplodedNode * const *, ExplodedNode * const *>
-GR::GetImplicitNullDereferences(GRExprEngine &Eng) {
+GR::GetImplicitNullDereferences(ExprEngine &Eng) {
   DereferenceChecker *checker = Eng.getChecker<DereferenceChecker>();
   if (!checker)
     return std::make_pair((ExplodedNode * const *) 0,

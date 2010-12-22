@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SimpleConstraintManager.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 #include "clang/GR/PathSensitive/GRState.h"
 #include "clang/GR/PathSensitive/Checker.h"
 

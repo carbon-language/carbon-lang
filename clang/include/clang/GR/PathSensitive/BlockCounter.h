@@ -1,4 +1,4 @@
-//==- GRBlockCounter.h - ADT for counting block visits -------------*- C++ -*-//
+//==- BlockCounter.h - ADT for counting block visits ---------------*- C++ -*-//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines GRBlockCounter, an abstract data type used to count
+//  This file defines BlockCounter, an abstract data type used to count
 //  the number of times a given block has been visited along a path
-//  analyzed by GRCoreEngine.
+//  analyzed by CoreEngine.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_GRBLOCKCOUNTER
-#define LLVM_CLANG_GR_GRBLOCKCOUNTER
+#ifndef LLVM_CLANG_GR_BLOCKCOUNTER
+#define LLVM_CLANG_GR_BLOCKCOUNTER
 
 namespace llvm {
   class BumpPtrAllocator;
@@ -26,13 +26,13 @@ class StackFrameContext;
 
 namespace GR {
 
-class GRBlockCounter {
+class BlockCounter {
   void* Data;
 
-  GRBlockCounter(void* D) : Data(D) {}
+  BlockCounter(void* D) : Data(D) {}
 
 public:
-  GRBlockCounter() : Data(0) {}
+  BlockCounter() : Data(0) {}
 
   unsigned getNumVisited(const StackFrameContext *CallSite, 
                          unsigned BlockID) const;
@@ -43,8 +43,8 @@ public:
     Factory(llvm::BumpPtrAllocator& Alloc);
     ~Factory();
 
-    GRBlockCounter GetEmptyCounter();
-    GRBlockCounter IncrementCount(GRBlockCounter BC, 
+    BlockCounter GetEmptyCounter();
+    BlockCounter IncrementCount(BlockCounter BC, 
                                   const StackFrameContext *CallSite,
                                   unsigned BlockID);
   };

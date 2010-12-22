@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines UndefinedAssginmentChecker, a builtin check in GRExprEngine that
+// This defines UndefinedAssginmentChecker, a builtin check in ExprEngine that
 // checks for assigning undefined values.
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
@@ -31,7 +31,7 @@ public:
 };
 }
 
-void GR::RegisterUndefinedAssignmentChecker(GRExprEngine &Eng){
+void GR::RegisterUndefinedAssignmentChecker(ExprEngine &Eng){
   Eng.registerCheck(new UndefinedAssignmentChecker());
 }
 

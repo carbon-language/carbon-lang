@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines BasicValueFactory, a class that manages the lifetime
-//  of APSInt objects and symbolic constraints used by GRExprEngine
+//  of APSInt objects and symbolic constraints used by ExprEngine
 //  and related classes.
 //
 //===----------------------------------------------------------------------===//

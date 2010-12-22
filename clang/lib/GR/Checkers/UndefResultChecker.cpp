@@ -7,15 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines UndefResultChecker, a builtin check in GRExprEngine that 
+// This defines UndefResultChecker, a builtin check in ExprEngine that 
 // performs checks for undefined results of non-assignment binary operators.
 //
 //===----------------------------------------------------------------------===//
 
-#include "GRExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
 using namespace GR;
@@ -33,7 +33,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterUndefResultChecker(GRExprEngine &Eng) {
+void GR::RegisterUndefResultChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UndefResultChecker());
 }
 

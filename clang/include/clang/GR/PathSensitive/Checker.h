@@ -16,7 +16,7 @@
 #define LLVM_CLANG_GR_CHECKER
 
 #include "clang/Analysis/Support/SaveAndRestore.h"
-#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/ExprEngine.h"
 
 //===----------------------------------------------------------------------===//
 // Checker interface.
@@ -28,8 +28,8 @@ namespace GR {
 
 class CheckerContext {
   ExplodedNodeSet &Dst;
-  GRStmtNodeBuilder &B;
-  GRExprEngine &Eng;
+  StmtNodeBuilder &B;
+  ExprEngine &Eng;
   ExplodedNode *Pred;
   SaveAndRestore<bool> OldSink;
   SaveAndRestore<const void*> OldTag;
@@ -41,8 +41,8 @@ class CheckerContext {
 public:
   bool *respondsToCallback;
 public:
-  CheckerContext(ExplodedNodeSet &dst, GRStmtNodeBuilder &builder,
-                 GRExprEngine &eng, ExplodedNode *pred,
+  CheckerContext(ExplodedNodeSet &dst, StmtNodeBuilder &builder,
+                 ExprEngine &eng, ExplodedNode *pred,
                  const void *tag, ProgramPoint::Kind K,
                  bool *respondsToCB = 0,
                  const Stmt *stmt = 0, const GRState *st = 0)
@@ -56,7 +56,7 @@ public:
 
   ~CheckerContext();
 
-  GRExprEngine &getEngine() {
+  ExprEngine &getEngine() {
     return Eng;
   }
 
@@ -73,7 +73,7 @@ public:
   }
 
   ExplodedNodeSet &getNodeSet() { return Dst; }
-  GRStmtNodeBuilder &getNodeBuilder() { return B; }
+  StmtNodeBuilder &getNodeBuilder() { return B; }
   ExplodedNode *&getPredecessor() { return Pred; }
   const GRState *getState() { return ST ? ST : B.GetState(Pred); }
 
@@ -152,7 +152,7 @@ public:
   }
 
   // Generate a node with a new program point different from the one that will
-  // be created by the GRStmtNodeBuilder.
+  // be created by the StmtNodeBuilder.
   void addTransition(const GRState *state, ProgramPoint Loc) {
     ExplodedNode *N = B.generateNode(Loc, state, Pred);
     if (N)
@@ -187,12 +187,12 @@ private:
 
 class Checker {
 private:
-  friend class GRExprEngine;
+  friend class ExprEngine;
 
   // FIXME: Remove the 'tag' option.
   void GR_Visit(ExplodedNodeSet &Dst,
-                GRStmtNodeBuilder &Builder,
-                GRExprEngine &Eng,
+                StmtNodeBuilder &Builder,
+                ExprEngine &Eng,
                 const Stmt *S,
                 ExplodedNode *Pred, void *tag, bool isPrevisit,
                 bool& respondsToCallback) {
@@ -205,16 +205,16 @@ private:
       _PostVisit(C, S);
   }
 
-  bool GR_evalNilReceiver(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
-                          GRExprEngine &Eng, const ObjCMessageExpr *ME,
+  bool GR_evalNilReceiver(ExplodedNodeSet &Dst, StmtNodeBuilder &Builder,
+                          ExprEngine &Eng, const ObjCMessageExpr *ME,
                           ExplodedNode *Pred, const GRState *state, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, ProgramPoint::PostStmtKind,
                      0, ME, state);
     return evalNilReceiver(C, ME);
   }
 
-  bool GR_evalCallExpr(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
-                       GRExprEngine &Eng, const CallExpr *CE,
+  bool GR_evalCallExpr(ExplodedNodeSet &Dst, StmtNodeBuilder &Builder,
+                       ExprEngine &Eng, const CallExpr *CE,
                        ExplodedNode *Pred, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, ProgramPoint::PostStmtKind,
                      0, CE);
@@ -223,7 +223,7 @@ private:
 
   // FIXME: Remove the 'tag' option.
   void GR_VisitBind(ExplodedNodeSet &Dst,
-                    GRStmtNodeBuilder &Builder, GRExprEngine &Eng,
+                    StmtNodeBuilder &Builder, ExprEngine &Eng,
                     const Stmt *StoreE, ExplodedNode *Pred, void *tag, 
                     SVal location, SVal val,
                     bool isPrevisit) {
@@ -236,8 +236,8 @@ private:
   
   // FIXME: Remove the 'tag' option.
   void GR_visitLocation(ExplodedNodeSet &Dst,
-                        GRStmtNodeBuilder &Builder,
-                        GRExprEngine &Eng,
+                        StmtNodeBuilder &Builder,
+                        ExprEngine &Eng,
                         const Stmt *S,
                         ExplodedNode *Pred, const GRState *state,
                         SVal location,
@@ -248,8 +248,8 @@ private:
     visitLocation(C, S, location);
   }
 
-  void GR_evalDeadSymbols(ExplodedNodeSet &Dst, GRStmtNodeBuilder &Builder,
-                          GRExprEngine &Eng, const Stmt *S, ExplodedNode *Pred,
+  void GR_evalDeadSymbols(ExplodedNodeSet &Dst, StmtNodeBuilder &Builder,
+                          ExprEngine &Eng, const Stmt *S, ExplodedNode *Pred,
                           SymbolReaper &SymReaper, void *tag) {
     CheckerContext C(Dst, Builder, Eng, Pred, tag, 
                      ProgramPoint::PostPurgeDeadSymbolsKind, 0, S);
@@ -264,13 +264,13 @@ public:
   virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
                             SVal location, SVal val) {}
   virtual void evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper) {}
-  virtual void evalEndPath(GREndPathNodeBuilder &B, void *tag,
-                           GRExprEngine &Eng) {}
+  virtual void evalEndPath(EndPathNodeBuilder &B, void *tag,
+                           ExprEngine &Eng) {}
 
   virtual void MarkLiveSymbols(const GRState *state, SymbolReaper &SymReaper) {}
 
-  virtual void VisitBranchCondition(GRBranchNodeBuilder &Builder,
-                                    GRExprEngine &Eng,
+  virtual void VisitBranchCondition(BranchNodeBuilder &Builder,
+                                    ExprEngine &Eng,
                                     const Stmt *Condition, void *tag) {}
 
   virtual bool evalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME) {
@@ -298,7 +298,7 @@ public:
   }
 
   virtual void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B,
-                                GRExprEngine &Eng) {}
+                                ExprEngine &Eng) {}
 };
 
 } // end GR namespace

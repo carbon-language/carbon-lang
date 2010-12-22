@@ -1,4 +1,4 @@
-//==- GRWorkList.h - Worklist class used by GRCoreEngine -----------*- C++ -*-//
+//==- WorkList.h - Worklist class used by CoreEngine ---------------*- C++ -*-//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,15 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines GRWorkList, a pure virtual class that represents an opaque
-//  worklist used by GRCoreEngine to explore the reachability state space.
+//  This file defines WorkList, a pure virtual class that represents an opaque
+//  worklist used by CoreEngine to explore the reachability state space.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_GRWORKLIST
-#define LLVM_CLANG_GR_GRWORKLIST
+#ifndef LLVM_CLANG_GR_WORKLIST
+#define LLVM_CLANG_GR_WORKLIST
 
-#include "clang/GR/PathSensitive/GRBlockCounter.h"
+#include "clang/GR/PathSensitive/BlockCounter.h"
 #include <cstddef>
 
 namespace clang {
@@ -27,64 +27,64 @@ namespace GR {
 class ExplodedNode;
 class ExplodedNodeImpl;
 
-class GRWorkListUnit {
+class WorkListUnit {
   ExplodedNode* Node;
-  GRBlockCounter Counter;
+  BlockCounter Counter;
   const CFGBlock* Block;
   unsigned BlockIdx; // This is the index of the next statement.
 
 public:
-  GRWorkListUnit(ExplodedNode* N, GRBlockCounter C,
+  WorkListUnit(ExplodedNode* N, BlockCounter C,
                  const CFGBlock* B, unsigned idx)
   : Node(N),
     Counter(C),
     Block(B),
     BlockIdx(idx) {}
 
-  explicit GRWorkListUnit(ExplodedNode* N, GRBlockCounter C)
+  explicit WorkListUnit(ExplodedNode* N, BlockCounter C)
   : Node(N),
     Counter(C),
     Block(NULL),
     BlockIdx(0) {}
 
   ExplodedNode* getNode()         const { return Node; }
-  GRBlockCounter    getBlockCounter() const { return Counter; }
+  BlockCounter    getBlockCounter() const { return Counter; }
   const CFGBlock*   getBlock()        const { return Block; }
   unsigned          getIndex()        const { return BlockIdx; }
 };
 
-class GRWorkList {
-  GRBlockCounter CurrentCounter;
+class WorkList {
+  BlockCounter CurrentCounter;
 public:
-  virtual ~GRWorkList();
+  virtual ~WorkList();
   virtual bool hasWork() const = 0;
 
-  virtual void Enqueue(const GRWorkListUnit& U) = 0;
+  virtual void Enqueue(const WorkListUnit& U) = 0;
 
   void Enqueue(ExplodedNode* N, const CFGBlock* B, unsigned idx) {
-    Enqueue(GRWorkListUnit(N, CurrentCounter, B, idx));
+    Enqueue(WorkListUnit(N, CurrentCounter, B, idx));
   }
 
   void Enqueue(ExplodedNode* N) {
-    Enqueue(GRWorkListUnit(N, CurrentCounter));
+    Enqueue(WorkListUnit(N, CurrentCounter));
   }
 
-  virtual GRWorkListUnit Dequeue() = 0;
+  virtual WorkListUnit Dequeue() = 0;
 
-  void setBlockCounter(GRBlockCounter C) { CurrentCounter = C; }
-  GRBlockCounter getBlockCounter() const { return CurrentCounter; }
+  void setBlockCounter(BlockCounter C) { CurrentCounter = C; }
+  BlockCounter getBlockCounter() const { return CurrentCounter; }
 
   class Visitor {
   public:
     Visitor() {}
     virtual ~Visitor();
-    virtual bool Visit(const GRWorkListUnit &U) = 0;
+    virtual bool Visit(const WorkListUnit &U) = 0;
   };
   virtual bool VisitItemsInWorkList(Visitor &V) = 0;
   
-  static GRWorkList *MakeDFS();
-  static GRWorkList *MakeBFS();
-  static GRWorkList *MakeBFSBlockDFSContents();
+  static WorkList *MakeDFS();
+  static WorkList *MakeBFS();
+  static WorkList *MakeBFSBlockDFSContents();
 };
 
 } // end GR namespace

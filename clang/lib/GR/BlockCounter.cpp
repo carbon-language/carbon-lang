@@ -1,4 +1,4 @@
-//==- GRBlockCounter.h - ADT for counting block visits -------------*- C++ -*-//
+//==- BlockCounter.h - ADT for counting block visits -------------*- C++ -*-//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines GRBlockCounter, an abstract data type used to count
+//  This file defines BlockCounter, an abstract data type used to count
 //  the number of times a given block has been visited along a path
-//  analyzed by GRCoreEngine.
+//  analyzed by CoreEngine.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/GR/PathSensitive/GRBlockCounter.h"
+#include "clang/GR/PathSensitive/BlockCounter.h"
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;
@@ -56,31 +56,31 @@ static inline CountMap::Factory& GetFactory(void* F) {
   return *static_cast<CountMap::Factory*>(F);
 }
 
-unsigned GRBlockCounter::getNumVisited(const StackFrameContext *CallSite, 
+unsigned BlockCounter::getNumVisited(const StackFrameContext *CallSite, 
                                        unsigned BlockID) const {
   CountMap M = GetMap(Data);
   CountMap::data_type* T = M.lookup(CountKey(CallSite, BlockID));
   return T ? *T : 0;
 }
 
-GRBlockCounter::Factory::Factory(llvm::BumpPtrAllocator& Alloc) {
+BlockCounter::Factory::Factory(llvm::BumpPtrAllocator& Alloc) {
   F = new CountMap::Factory(Alloc);
 }
 
-GRBlockCounter::Factory::~Factory() {
+BlockCounter::Factory::~Factory() {
   delete static_cast<CountMap::Factory*>(F);
 }
 
-GRBlockCounter
-GRBlockCounter::Factory::IncrementCount(GRBlockCounter BC, 
+BlockCounter
+BlockCounter::Factory::IncrementCount(BlockCounter BC, 
                                         const StackFrameContext *CallSite,
                                         unsigned BlockID) {
-  return GRBlockCounter(GetFactory(F).add(GetMap(BC.Data), 
+  return BlockCounter(GetFactory(F).add(GetMap(BC.Data), 
                                           CountKey(CallSite, BlockID),
                              BC.getNumVisited(CallSite, BlockID)+1).getRoot());
 }
 
-GRBlockCounter
-GRBlockCounter::Factory::GetEmptyCounter() {
-  return GRBlockCounter(GetFactory(F).getEmptyMap().getRoot());
+BlockCounter
+BlockCounter::Factory::GetEmptyCounter() {
+  return BlockCounter(GetFactory(F).getEmptyMap().getRoot());
 }
