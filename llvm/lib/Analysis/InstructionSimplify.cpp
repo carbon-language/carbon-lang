@@ -159,10 +159,11 @@ static Value *FactorizeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
     // Does "B op DD" simplify?
     if (Value *V = SimplifyBinOp(Opcode, B, DD, TD, DT, MaxRecurse)) {
       // It does!  Return "A op' V" if it simplifies or is already available.
-      // If V equals B then "A op' V" is just the LHS.
-      if (V == B) {
+      // If V equals B then "A op' V" is just the LHS.  If V equals DD then
+      // "A op' V" is just the RHS.
+      if (V == B || V == DD) {
         ++NumFactor;
-        return LHS;
+        return V == B ? LHS : RHS;
       }
       // Otherwise return "A op' V" if it simplifies.
       if (Value *W = SimplifyBinOp(OpcodeToExtract, A, V, TD, DT, MaxRecurse)) {
@@ -181,10 +182,11 @@ static Value *FactorizeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
     // Does "A op CC" simplify?
     if (Value *V = SimplifyBinOp(Opcode, A, CC, TD, DT, MaxRecurse)) {
       // It does!  Return "V op' B" if it simplifies or is already available.
-      // If V equals A then "V op' B" is just the LHS.
-      if (V == B) {
+      // If V equals A then "V op' B" is just the LHS.  If V equals CC then
+      // "V op' B" is just the RHS.
+      if (V == A || V == CC) {
         ++NumFactor;
-        return LHS;
+        return V == A ? LHS : RHS;
       }
       // Otherwise return "V op' B" if it simplifies.
       if (Value *W = SimplifyBinOp(OpcodeToExtract, V, B, TD, DT, MaxRecurse)) {
