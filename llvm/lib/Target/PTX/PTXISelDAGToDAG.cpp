@@ -32,6 +32,7 @@ class PTXDAGToDAGISel : public SelectionDAGISel {
     SDNode *Select(SDNode *Node);
 
     // Complex Pattern Selectors.
+    bool SelectADDRrr(SDValue &Addr, SDValue &R1, SDValue &R2);
     bool SelectADDRri(SDValue &Addr, SDValue &Base, SDValue &Offset);
     bool SelectADDRii(SDValue &Addr, SDValue &Base, SDValue &Offset);
 
@@ -39,8 +40,8 @@ class PTXDAGToDAGISel : public SelectionDAGISel {
 #include "PTXGenDAGISel.inc"
 
   private:
-    bool isImm (const SDValue &operand);
-    bool SelectImm (const SDValue &operand, SDValue &imm);
+    bool isImm(const SDValue &operand);
+    bool SelectImm(const SDValue &operand, SDValue &imm);
 }; // class PTXDAGToDAGISel
 } // namespace
 
@@ -60,35 +61,61 @@ SDNode *PTXDAGToDAGISel::Select(SDNode *Node) {
   return SelectCode(Node);
 }
 
-// Match memory operand of the form [reg+reg] and [reg+imm]
+// Match memory operand of the form [reg+reg]
+bool PTXDAGToDAGISel::SelectADDRrr(SDValue &Addr, SDValue &R1, SDValue &R2) {
+  if (Addr.getOpcode() != ISD::ADD || Addr.getNumOperands() < 2 ||
+      isImm(Addr.getOperand(0)) || isImm(Addr.getOperand(1)))
+    return false;
+
+  R1 = Addr.getOperand(0);
+  R2 = Addr.getOperand(1);
+  return true;
+}
+
+// Match memory operand of the form [reg], [imm+reg], and [reg+imm]
 bool PTXDAGToDAGISel::SelectADDRri(SDValue &Addr, SDValue &Base,
                                    SDValue &Offset) {
+  if (Addr.getOpcode() != ISD::ADD) {
+    if (isImm(Addr))
+      return false;
+    // is [reg] but not [imm]
+    Base = Addr;
+    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
+  }
+
+  // let SelectADDRii handle the [imm+imm] case
   if (Addr.getNumOperands() >= 2 &&
       isImm(Addr.getOperand(0)) && isImm(Addr.getOperand(1)))
-    return false; // let SelectADDRii handle the [imm+imm] case
+    return false;
 
   // try [reg+imm] and [imm+reg]
-  if (Addr.getOpcode() == ISD::ADD)
-    for (int i = 0; i < 2; i ++)
-      if (SelectImm(Addr.getOperand(1-i), Offset)) {
-        Base = Addr.getOperand(i);
-        return true;
-      }
+  for (int i = 0; i < 2; i ++)
+    if (SelectImm(Addr.getOperand(1-i), Offset)) {
+      Base = Addr.getOperand(i);
+      return true;
+    }
 
-  // okay, it's [reg+reg]
-  Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return true;
+  // either [reg+imm] and [imm+reg]
+  for (int i = 0; i < 2; i ++)
+    if (SelectImm(Addr.getOperand(1-i), Offset)) {
+      Base = Addr.getOperand(i);
+      return true;
+    }
+
+  return false;
 }
 
 // Match memory operand of the form [imm+imm] and [imm]
 bool PTXDAGToDAGISel::SelectADDRii(SDValue &Addr, SDValue &Base,
                                    SDValue &Offset) {
+  // is [imm+imm]?
   if (Addr.getOpcode() == ISD::ADD) {
     return SelectImm(Addr.getOperand(0), Base) &&
            SelectImm(Addr.getOperand(1), Offset);
   }
 
+  // is [imm]?
   if (SelectImm(Addr, Base)) {
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;

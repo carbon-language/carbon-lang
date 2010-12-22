@@ -29,8 +29,20 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::i1,  PTX::PredsRegisterClass);
   addRegisterClass(MVT::i32, PTX::RRegs32RegisterClass);
 
+  setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
+
+  // Customize translation of memory addresses
+  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+
   // Compute derived properties from the register classes
   computeRegisterProperties();
+}
+
+SDValue PTXTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
+  switch (Op.getOpcode()) {
+    default:                 llvm_unreachable("Unimplemented operand");
+    case ISD::GlobalAddress: return LowerGlobalAddress(Op, DAG);
+  }
 }
 
 const char *PTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -39,6 +51,18 @@ const char *PTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     case PTXISD::EXIT: return "PTXISD::EXIT";
     case PTXISD::RET:  return "PTXISD::RET";
   }
+}
+
+//===----------------------------------------------------------------------===//
+//                      Custom Lower Operation
+//===----------------------------------------------------------------------===//
+
+SDValue PTXTargetLowering::
+LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
+  EVT PtrVT = getPointerTy();
+  DebugLoc dl = Op.getDebugLoc();
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  return DAG.getTargetGlobalAddress(GV, dl, PtrVT);
 }
 
 //===----------------------------------------------------------------------===//

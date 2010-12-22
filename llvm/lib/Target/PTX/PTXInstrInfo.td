@@ -29,10 +29,15 @@ def load_global : PatFrag<(ops node:$ptr), (load node:$ptr), [{
 }]>;
 
 // Addressing modes.
+def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
 def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [], []>;
 def ADDRii : ComplexPattern<i32, 2, "SelectADDRii", [], []>;
 
 // Address operands
+def MEMrr : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops RRegs32, RRegs32);
+}
 def MEMri : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops RRegs32, i32imm);
@@ -88,6 +93,10 @@ multiclass INT3ntnc<string opcstr, SDNode opnode> {
 }
 
 multiclass PTX_LD<string opstr, RegisterClass RC, PatFrag pat_load> {
+  def rr : InstPTX<(outs RC:$d),
+                   (ins MEMrr:$a),
+                   !strconcat(opstr, ".%type\t$d, [$a]"),
+                   [(set RC:$d, (pat_load ADDRrr:$a))]>;
   def ri : InstPTX<(outs RC:$d),
                    (ins MEMri:$a),
                    !strconcat(opstr, ".%type\t$d, [$a]"),

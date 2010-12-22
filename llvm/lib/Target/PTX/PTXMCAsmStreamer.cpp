@@ -11,8 +11,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
@@ -102,8 +102,7 @@ public:
 
   virtual void SwitchSection(const MCSection *Section);
 
-  virtual void InitSections() {
-  }
+  virtual void InitSections() {}
 
   virtual void EmitLabel(MCSymbol *Symbol);
 
