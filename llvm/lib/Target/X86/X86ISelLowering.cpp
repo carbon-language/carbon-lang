@@ -7313,6 +7313,23 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     Cond = EmitTest(Cond, X86::COND_NE, DAG);
   }
 
+  // a <  b ? -1 :  0 -> RES = ~setcc_carry
+  // a <  b ?  0 : -1 -> RES = setcc_carry
+  // a >= b ? -1 :  0 -> RES = setcc_carry
+  // a >= b ?  0 : -1 -> RES = ~setcc_carry
+  if (Cond.getOpcode() == X86ISD::CMP) {
+    unsigned CondCode = cast<ConstantSDNode>(CC)->getZExtValue();
+
+    if ((CondCode == X86::COND_AE || CondCode == X86::COND_B) &&
+        (isAllOnes(Op1) || isAllOnes(Op2)) && (isZero(Op1) || isZero(Op2))) {
+      SDValue Res = DAG.getNode(X86ISD::SETCC_CARRY, DL, Op.getValueType(),
+                                DAG.getConstant(X86::COND_B, MVT::i8), Cond);
+      if (isAllOnes(Op1) != (CondCode == X86::COND_B))
+        return DAG.getNOT(DL, Res, Res.getValueType());
+      return Res;
+    }
+  }
+
   // X86ISD::CMOV means set the result (which is operand 1) to the RHS if
   // condition is true.
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);

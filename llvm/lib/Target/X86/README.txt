@@ -1165,58 +1165,6 @@ abs:
 
 //===---------------------------------------------------------------------===//
 
-Consider:
-int test(unsigned long a, unsigned long b) { return -(a < b); }
-
-We currently compile this to:
-
-define i32 @test(i32 %a, i32 %b) nounwind  {
-	%tmp3 = icmp ult i32 %a, %b		; <i1> [#uses=1]
-	%tmp34 = zext i1 %tmp3 to i32		; <i32> [#uses=1]
-	%tmp5 = sub i32 0, %tmp34		; <i32> [#uses=1]
-	ret i32 %tmp5
-}
-
-and
-
-_test:
-	movl	8(%esp), %eax
-	cmpl	%eax, 4(%esp)
-	setb	%al
-	movzbl	%al, %eax
-	negl	%eax
-	ret
-
-Several deficiencies here.  First, we should instcombine zext+neg into sext:
-
-define i32 @test2(i32 %a, i32 %b) nounwind  {
-	%tmp3 = icmp ult i32 %a, %b		; <i1> [#uses=1]
-	%tmp34 = sext i1 %tmp3 to i32		; <i32> [#uses=1]
-	ret i32 %tmp34
-}
-
-However, before we can do that, we have to fix the bad codegen that we get for
-sext from bool:
-
-_test2:
-	movl	8(%esp), %eax
-	cmpl	%eax, 4(%esp)
-	setb	%al
-	movzbl	%al, %eax
-	shll	$31, %eax
-	sarl	$31, %eax
-	ret
-
-This code should be at least as good as the code above.  Once this is fixed, we
-can optimize this specific case even more to:
-
-	movl	8(%esp), %eax
-	xorl	%ecx, %ecx
-        cmpl    %eax, 4(%esp)
-        sbbl    %ecx, %ecx
-
-//===---------------------------------------------------------------------===//
-
 Take the following code (from 
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16541):
 

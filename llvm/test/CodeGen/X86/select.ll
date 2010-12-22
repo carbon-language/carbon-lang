@@ -197,7 +197,24 @@ entry:
 
 declare { i64, i1 } @llvm.umul.with.overflow.i64(i64, i64) nounwind readnone
 
+define i32 @test13(i32 %a, i32 %b) nounwind {
+  %c = icmp ult i32 %a, %b
+  %d = sext i1 %c to i32
+  ret i32 %d
+; CHECK: test13:
+; CHECK: cmpl
+; CHECK-NEXT: sbbl
+; CHECK-NEXT: ret
+}
 
-
-
+define i32 @test14(i32 %a, i32 %b) nounwind {
+  %c = icmp uge i32 %a, %b
+  %d = sext i1 %c to i32
+  ret i32 %d
+; CHECK: test14:
+; CHECK: cmpl
+; CHECK-NEXT: sbbl
+; CHECK-NEXT: notl
+; CHECK-NEXT: ret
+}
 
