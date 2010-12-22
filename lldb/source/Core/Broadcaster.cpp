@@ -102,6 +102,9 @@ Broadcaster::AddInitialEventsToListener (Listener *listener, uint32_t requested_
 uint32_t
 Broadcaster::AddListener (Listener* listener, uint32_t event_mask)
 {
+    if (listener == NULL)
+        return 0;
+
     Mutex::Locker locker(m_listeners_mutex);
     collection::iterator pos, end = m_listeners.end();
 
