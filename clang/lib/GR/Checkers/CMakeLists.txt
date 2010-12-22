@@ -1,5 +1,6 @@
 add_clang_library(clangGRCheckers
   AdjustedReturnValueChecker.cpp
+  AnalysisConsumer.cpp
   ArrayBoundChecker.cpp
   AttrNonNullChecker.cpp
   BasicObjCFoundationChecks.cpp
@@ -16,8 +17,9 @@ add_clang_library(clangGRCheckers
   CStringChecker.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
-  FixedAddressChecker.cpp
+  ExprEngine.cpp
   ExprEngineExperimentalChecks.cpp
+  FixedAddressChecker.cpp
   IdempotentOperationChecker.cpp
   LLVMConventionsChecker.cpp
   MacOSXAPIChecker.cpp

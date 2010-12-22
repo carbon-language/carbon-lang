@@ -4,7 +4,6 @@ set(LLVM_USED_LIBS clangBasic clangLex clangAST clangFrontend clangRewrite)
 
 add_clang_library(clangGRCore
   AggExprVisitor.cpp
-  AnalysisConsumer.cpp
   AnalysisManager.cpp
   AnalyzerStatsChecker.cpp
   BasicConstraintManager.cpp
@@ -22,7 +21,6 @@ add_clang_library(clangGRCore
   BlockCounter.cpp
   CXXExprEngine.cpp
   CoreEngine.cpp
-  ExprEngine.cpp
   GRState.cpp
   HTMLDiagnostics.cpp
   ManagerRegistry.cpp
