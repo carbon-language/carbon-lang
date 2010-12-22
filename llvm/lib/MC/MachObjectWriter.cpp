@@ -1007,7 +1007,8 @@ public:
         FixedValue -= getSectionAddress(Fragment->getParent());
 
       // Determine the appropriate type based on the fixup kind.
-      Type = Is24BitBranch ? macho::RIT_ARM_Branch24Bit : macho::RIT_Vanilla;
+      Type = Is24BitBranch ? (unsigned)macho::RIT_ARM_Branch24Bit :
+        (unsigned)macho::RIT_Vanilla;
     }
 
     // struct relocation_info (8 bytes)
