@@ -269,13 +269,27 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
   // FIXME: The use if InSet = Addrs is a hack. Setting InSet causes us
   // absolutize differences across sections and that is what the MachO writer
   // uses Addrs for.
-  bool IsRelocatable =
-    EvaluateAsRelocatableImpl(Value, Asm, Layout, Addrs, /*InSet*/ Addrs);
+  if (!EvaluateAsRelocatableImpl(Value, Asm, Layout, Addrs, /*InSet*/ Addrs) ||
+      !Value.isAbsolute()) {
+    // EvaluateAsAbsolute is defined to return the "current value" of
+    // the expression if we are given a Layout object, even in cases
+    // when the value is not fixed.
+    if (Layout) {
+      Res = Value.getConstant();
+      if (Value.getSymA()) {
+       Res += Layout->getSymbolOffset(
+          &Layout->getAssembler().getSymbolData(Value.getSymA()->getSymbol()));
+      }
+      if (Value.getSymB()) {
+       Res -= Layout->getSymbolOffset(
+          &Layout->getAssembler().getSymbolData(Value.getSymB()->getSymbol()));
+      }
+    }
+    return false;
+  }
 
-  // Record the current value.
   Res = Value.getConstant();
-
-  return IsRelocatable && Value.isAbsolute();
+  return true;
 }
 
 /// \brief Helper method for \see EvaluateSymbolAdd().
