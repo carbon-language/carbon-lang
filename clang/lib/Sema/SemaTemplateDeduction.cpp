@@ -704,9 +704,10 @@ DeduceTemplateArguments(Sema &S,
       }
       if (const DependentSizedArrayType *DependentArrayArg
             = dyn_cast<DependentSizedArrayType>(ArrayArg))
-        return DeduceNonTypeTemplateArgument(S, NTTP,
-                                             DependentArrayArg->getSizeExpr(),
-                                             Info, Deduced);
+        if (DependentArrayArg->getSizeExpr())
+          return DeduceNonTypeTemplateArgument(S, NTTP,
+                                               DependentArrayArg->getSizeExpr(),
+                                               Info, Deduced);
 
       // Incomplete type does not match a dependently-sized array type
       return Sema::TDK_NonDeducedMismatch;
