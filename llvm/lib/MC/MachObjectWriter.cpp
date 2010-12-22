@@ -827,12 +827,7 @@ public:
                           "' can not be undefined in a subtraction expression");
 
       // Select the appropriate difference relocation type.
-      //
-      // Note that there is no longer any semantic difference between these two
-      // relocation types from the linkers point of view, this is done solely
-      // for pedantic compatibility with 'as'.
-      Type = A_SD->isExternal() ? (unsigned)macho::RIT_Difference :
-        (unsigned)macho::RIT_Generic_LocalDifference;
+      Type = macho::RIT_Difference;
       Value2 = getSymbolAddress(B_SD, Layout);
       FixedValue -= getSectionAddress(B_SD->getFragment()->getParent());
     }

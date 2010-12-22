@@ -7,24 +7,33 @@
 _f0:
         bl _printf
 
+        .data
+_d0:
+Ld0_0:  
+        .long Lsc0_0 - Ld0_0
+        
+	.section	__TEXT,__cstring,cstring_literals
+Lsc0_0:
+        .long 0
+
 @ CHECK: ('cputype', 12)
 @ CHECK: ('cpusubtype', 9)
 @ CHECK: ('filetype', 1)
 @ CHECK: ('num_load_commands', 3)
-@ CHECK: ('load_commands_size', 228)
+@ CHECK: ('load_commands_size', 364)
 @ CHECK: ('flag', 0)
 @ CHECK: ('load_commands', [
 @ CHECK:   # Load Command 0
 @ CHECK:  (('command', 1)
-@ CHECK:   ('size', 124)
+@ CHECK:   ('size', 260)
 @ CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 @ CHECK:   ('vm_addr', 0)
-@ CHECK:   ('vm_size', 4)
-@ CHECK:   ('file_offset', 256)
-@ CHECK:   ('file_size', 4)
+@ CHECK:   ('vm_size', 12)
+@ CHECK:   ('file_offset', 392)
+@ CHECK:   ('file_size', 12)
 @ CHECK:   ('maxprot', 7)
 @ CHECK:   ('initprot', 7)
-@ CHECK:   ('num_sections', 1)
+@ CHECK:   ('num_sections', 3)
 @ CHECK:   ('flags', 0)
 @ CHECK:   ('sections', [
 @ CHECK:     # Section 0
@@ -32,9 +41,9 @@ _f0:
 @ CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 @ CHECK:     ('address', 0)
 @ CHECK:     ('size', 4)
-@ CHECK:     ('offset', 256)
+@ CHECK:     ('offset', 392)
 @ CHECK:     ('alignment', 0)
-@ CHECK:     ('reloc_offset', 260)
+@ CHECK:     ('reloc_offset', 404)
 @ CHECK:     ('num_reloc', 1)
 @ CHECK:     ('flags', 0x80000400)
 @ CHECK:     ('reserved1', 0)
@@ -43,19 +52,57 @@ _f0:
 @ CHECK:   ('_relocations', [
 @ CHECK:     # Relocation 0
 @ CHECK:     (('word-0', 0x0),
-@ CHECK:      ('word-1', 0x5d000001)),
+@ CHECK:      ('word-1', 0x5d000002)),
 @ CHECK:   ])
 @ CHECK:   ('_section_data', 'feffffeb')
+@ CHECK:     # Section 1
+@ CHECK:    (('section_name', '__data\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+@ CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+@ CHECK:     ('address', 4)
+@ CHECK:     ('size', 4)
+@ CHECK:     ('offset', 396)
+@ CHECK:     ('alignment', 0)
+@ CHECK:     ('reloc_offset', 412)
+@ CHECK:     ('num_reloc', 2)
+@ CHECK:     ('flags', 0x0)
+@ CHECK:     ('reserved1', 0)
+@ CHECK:     ('reserved2', 0)
+@ CHECK:    ),
+@ CHECK:   ('_relocations', [
+@ CHECK:     # Relocation 0
+@ CHECK:     (('word-0', 0xa2000000),
+@ CHECK:      ('word-1', 0x8)),
+@ CHECK:     # Relocation 1
+@ CHECK:     (('word-0', 0xa1000000),
+@ CHECK:      ('word-1', 0x4)),
+@ CHECK:   ])
+@ CHECK:   ('_section_data', '04000000')
+@ CHECK:     # Section 2
+@ CHECK:    (('section_name', '__cstring\x00\x00\x00\x00\x00\x00\x00')
+@ CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+@ CHECK:     ('address', 8)
+@ CHECK:     ('size', 4)
+@ CHECK:     ('offset', 400)
+@ CHECK:     ('alignment', 0)
+@ CHECK:     ('reloc_offset', 0)
+@ CHECK:     ('num_reloc', 0)
+@ CHECK:     ('flags', 0x2)
+@ CHECK:     ('reserved1', 0)
+@ CHECK:     ('reserved2', 0)
+@ CHECK:    ),
+@ CHECK:   ('_relocations', [
+@ CHECK:   ])
+@ CHECK:   ('_section_data', '00000000')
 @ CHECK:   ])
 @ CHECK:  ),
 @ CHECK:   # Load Command 1
 @ CHECK:  (('command', 2)
 @ CHECK:   ('size', 24)
-@ CHECK:   ('symoff', 268)
-@ CHECK:   ('nsyms', 2)
-@ CHECK:   ('stroff', 292)
-@ CHECK:   ('strsize', 16)
-@ CHECK:   ('_string_data', '\x00_printf\x00_f0\x00\x00\x00\x00')
+@ CHECK:   ('symoff', 428)
+@ CHECK:   ('nsyms', 3)
+@ CHECK:   ('stroff', 464)
+@ CHECK:   ('strsize', 20)
+@ CHECK:   ('_string_data', '\x00_printf\x00_f0\x00_d0\x00\x00\x00\x00')
 @ CHECK:   ('_symbols', [
 @ CHECK:     # Symbol 0
 @ CHECK:    (('n_strx', 9)
@@ -66,6 +113,14 @@ _f0:
 @ CHECK:     ('_string', '_f0')
 @ CHECK:    ),
 @ CHECK:     # Symbol 1
+@ CHECK:    (('n_strx', 13)
+@ CHECK:     ('n_type', 0xe)
+@ CHECK:     ('n_sect', 2)
+@ CHECK:     ('n_desc', 0)
+@ CHECK:     ('n_value', 4)
+@ CHECK:     ('_string', '_d0')
+@ CHECK:    ),
+@ CHECK:     # Symbol 2
 @ CHECK:    (('n_strx', 1)
 @ CHECK:     ('n_type', 0x1)
 @ CHECK:     ('n_sect', 0)
@@ -79,10 +134,10 @@ _f0:
 @ CHECK:  (('command', 11)
 @ CHECK:   ('size', 80)
 @ CHECK:   ('ilocalsym', 0)
-@ CHECK:   ('nlocalsym', 1)
-@ CHECK:   ('iextdefsym', 1)
+@ CHECK:   ('nlocalsym', 2)
+@ CHECK:   ('iextdefsym', 2)
 @ CHECK:   ('nextdefsym', 0)
-@ CHECK:   ('iundefsym', 1)
+@ CHECK:   ('iundefsym', 2)
 @ CHECK:   ('nundefsym', 1)
 @ CHECK:   ('tocoff', 0)
 @ CHECK:   ('ntoc', 0)
