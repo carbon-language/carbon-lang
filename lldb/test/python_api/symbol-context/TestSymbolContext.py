@@ -47,7 +47,7 @@ class SymbolContextAPITestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchProcess([''], [''], os.ctermid(), 0, False)
+        self.process = target.LaunchProcess([], [], os.ctermid(), 0, False)
 
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
