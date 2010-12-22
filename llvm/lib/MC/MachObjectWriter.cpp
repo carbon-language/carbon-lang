@@ -236,7 +236,7 @@ public:
 
   bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
   bool isARM() const {
-    uint32_t CPUType = TargetObjectWriter->getCPUType() & mach::CTFM_ArchMask;
+    uint32_t CPUType = TargetObjectWriter->getCPUType() & ~mach::CTFM_ArchMask;
     return CPUType == mach::CTM_ARM;
   }
 
