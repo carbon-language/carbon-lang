@@ -63,12 +63,7 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
         if (CT->isVoidType())
           return UnknownVal();
         if (C->getCastKind() == CK_NoOp) {
-          // If the no-op cast has value, use it. Should we always propagate
-          // values through all levels of no-op casts?
-          if (const SVal* X = ExprBindings.lookup(C))
-            return *X;
-          else
-            E = C->getSubExpr();
+          E = C->getSubExpr();
           continue;
         }
         break;
