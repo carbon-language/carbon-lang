@@ -598,9 +598,13 @@ void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   DumpExpr(Node);
   if (Node->isImplicitProperty()) {
-    OS << " Kind=MethodRef Getter=\""
-       << Node->getImplicitPropertyGetter()->getSelector().getAsString()
-       << "\" Setter=\"";
+    OS << " Kind=MethodRef Getter=\"";
+    if (Node->getImplicitPropertyGetter())
+      OS << Node->getImplicitPropertyGetter()->getSelector().getAsString();
+    else
+      OS << "(null)";
+
+    OS << "\" Setter=\"";
     if (ObjCMethodDecl *Setter = Node->getImplicitPropertySetter())
       OS << Setter->getSelector().getAsString();
     else

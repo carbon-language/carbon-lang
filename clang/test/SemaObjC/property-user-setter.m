@@ -70,7 +70,7 @@ static int g_val;
 {
     int setterOnly;
 }
-- (void) setSetterOnly:(int)value;	// expected-note {{or because setter is declared here, but no getter method 'setterOnly' is found}}
+- (void) setSetterOnly:(int)value;
 @end
 
 @implementation Subclass
@@ -82,14 +82,14 @@ static int g_val;
 
 @interface C {}
 // - (int)Foo;
-- (void)setFoo:(int)value;	// expected-note 2 {{or because setter is declared here, but no getter method 'Foo' is found}}
+- (void)setFoo:(int)value;
 @end
 
 void g(int);
 
 void f(C *c) {
-    c.Foo = 17; // expected-error {{property 'Foo' not found on object of type 'C *'}}
-    g(c.Foo); // expected-error {{property 'Foo' not found on object of type 'C *'}}
+    c.Foo = 17; // OK 
+    g(c.Foo); // expected-error {{expected getter method not found on object of type 'C *'}}
 }
 
 
@@ -97,7 +97,7 @@ void abort(void);
 int main (void) {
     Subclass *x = [[Subclass alloc] init];
 
-    x.setterOnly = 4;  // expected-error {{property 'setterOnly' not found on object of type 'Subclass *'}}
+    x.setterOnly = 4;   // OK
     if (g_val != 4)
       abort ();
     return 0;

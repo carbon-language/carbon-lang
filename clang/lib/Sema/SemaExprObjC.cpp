@@ -439,8 +439,15 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
     return ExprError();
 
-  if (Getter) {
-    QualType PType = Getter->getSendResultType();
+  if (Getter || Setter) {
+    QualType PType;
+    if (Getter)
+      PType = Getter->getSendResultType();
+    else {
+      ParmVarDecl *ArgDecl = *Setter->param_begin();
+      PType = ArgDecl->getType();
+    }
+    
     ExprValueKind VK = VK_LValue;
     ExprObjectKind OK = OK_ObjCProperty;
     if (!getLangOptions().CPlusPlus && !PType.hasQualifiers() &&
@@ -476,9 +483,9 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   
   Diag(MemberLoc, diag::err_property_not_found)
     << MemberName << QualType(OPT, 0);
-  if (Setter && !Getter)
+  if (Setter)
     Diag(Setter->getLocation(), diag::note_getter_unavailable)
-      << MemberName << BaseExpr->getSourceRange();
+          << MemberName << BaseExpr->getSourceRange();
   return ExprError();
 }
 

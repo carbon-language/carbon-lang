@@ -7097,8 +7097,15 @@ void Sema::ConvertPropertyForRValue(Expr *&E) {
 
   ExprValueKind VK = VK_RValue;
   if (PRE->isImplicitProperty()) {
-    QualType Result = PRE->getImplicitPropertyGetter()->getResultType();
-    VK = Expr::getValueKindForType(Result);
+    if (const ObjCMethodDecl *GetterMethod = 
+          PRE->getImplicitPropertyGetter()) {
+      QualType Result = GetterMethod->getResultType();
+      VK = Expr::getValueKindForType(Result);
+    }
+    else {
+      Diag(PRE->getLocation(), diag::err_getter_not_found)
+            << PRE->getBase()->getType();
+    }
   }
 
   E = ImplicitCastExpr::Create(Context, E->getType(), CK_GetObjCProperty,
