@@ -846,9 +846,25 @@ public:
 
   static bool getARMFixupKindMachOInfo(unsigned Kind, bool &Is24BitBranch,
                                        unsigned &Log2Size) {
+    Is24BitBranch = false;
+    Log2Size = ~0U;
+
     switch (Kind) {
     default:
       return false;
+
+    case FK_Data_1:
+      Log2Size = llvm::Log2_32(1);
+      return true;
+    case FK_Data_2:
+      Log2Size = llvm::Log2_32(2);
+      return true;
+    case FK_Data_4:
+      Log2Size = llvm::Log2_32(4);
+      return true;
+    case FK_Data_8:
+      Log2Size = llvm::Log2_32(8);
+      return true;
 
       // Handle 24-bit branch kinds.
     case ARM::fixup_arm_ldst_pcrel_12:
