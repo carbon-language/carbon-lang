@@ -27,16 +27,16 @@ class EventAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-    def test_broadcast_event_with_dsym(self):
-        """Exercise SBBroadcaster.BroadcastEvent() API."""
+    def test_add_listener_to_broadcaster_dsym(self):
+        """Exercise some SBBroadcaster APIs."""
         self.buildDsym()
-        self.do_broadcast_event()
+        self.do_add_listener_to_broadcaster()
 
     @python_api_test
-    def test_broadcast_event_with_dwarf(self):
-        """Exercise SBBroadcaster.BroadcastEvent() API."""
+    def test_add_listener_to_broadcaster_dwarf(self):
+        """Exercise some SBBroadcaster APIs."""
         self.buildDwarf()
-        self.do_broadcast_event()
+        self.do_add_listener_to_broadcaster()
 
     def setUp(self):
         # Call super's setUp().
@@ -80,14 +80,11 @@ class EventAPITestCase(TestBase):
         import threading
         class MyListeningThread(threading.Thread):
             def run(self):
-                #print "Running MyListeningThread:", self
                 count = 0
                 # Let's only try at most 3 times to retrieve any kind of event.
                 while not count > 3:
                     if listener.WaitForEvent(5, event):
                         #print "Got a valid event:", event
-                        #print "Event type:", event.GetType()
-                        #print "Event broadcaster:", event.GetBroadcaster().GetName()
                         return
                     count = count + 1
                     print "Timeout: listener.WaitForEvent"
@@ -108,8 +105,8 @@ class EventAPITestCase(TestBase):
         self.assertTrue(event.IsValid(),
                         "My listening thread successfully received an event")
 
-    def do_broadcast_event(self):
-        """Get the broadcaster associated with the process and exercise BroadcastEvent API."""
+    def do_add_listener_to_broadcaster(self):
+        """Get the broadcaster associated with the process and wait for broadcaster events."""
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
@@ -163,11 +160,13 @@ class EventAPITestCase(TestBase):
                 # Let's only try at most 6 times to retrieve our events.
                 count = 0
                 while True:
-                    if listener.WaitForEvent(5, event):
+                    if listener.WaitForEventForBroadcasterWithType(5,
+                                                                   broadcaster,
+                                                                   lldb.SBProcess.eBroadcastBitStateChanged,
+                                                                   event):
                         stream = lldb.SBStream()
                         event.GetDescription(stream)
                         description = stream.GetData()
-                        #print "Event data flavor:", event.GetDataFlavor()
                         #print "Event description:", description
                         match = pattern.search(description)
                         if not match:
