@@ -6,7 +6,7 @@ set(LLVM_USED_LIBS
     clangDriver
     clangCodeGen
     clangSema
-    clangChecker
+    clangGRCore
     clangIndex
     clangAnalysis
     clangRewrite

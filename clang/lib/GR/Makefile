@@ -12,7 +12,7 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../..
-LIBRARYNAME := clangChecker
+LIBRARYNAME := clangGRCore
 
 include $(CLANG_LEVEL)/Makefile
 

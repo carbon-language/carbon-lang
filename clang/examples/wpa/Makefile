@@ -16,7 +16,7 @@ NO_INSTALL = 1
 TOOL_NO_EXPORTS = 1
 
 LINK_COMPONENTS := asmparser bitreader mc core
-USEDLIBS = clangChecker.a clangIndex.a clangFrontend.a clangDriver.a \
+USEDLIBS = clangGRCore.a clangIndex.a clangFrontend.a clangDriver.a \
 	   clangSema.a clangAnalysis.a clangSerialization.a \
            clangAST.a clangParse.a clangLex.a clangBasic.a
 
