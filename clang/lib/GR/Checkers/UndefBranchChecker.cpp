@@ -17,6 +17,7 @@
 #include "clang/GR/PathSensitive/Checker.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 
@@ -55,7 +56,7 @@ public:
 
 }
 
-void clang::RegisterUndefBranchChecker(GRExprEngine &Eng) {
+void GR::RegisterUndefBranchChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new UndefBranchChecker());
 }
 

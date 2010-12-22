@@ -18,6 +18,7 @@
 #include "clang/GR/PathSensitive/GRExprEngine.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class ArrayBoundChecker : 
@@ -30,7 +31,7 @@ public:
 };
 }
 
-void clang::RegisterArrayBoundChecker(GRExprEngine &Eng) {
+void GR::RegisterArrayBoundChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new ArrayBoundChecker());
 }
 

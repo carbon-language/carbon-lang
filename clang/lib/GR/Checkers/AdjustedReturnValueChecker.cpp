@@ -19,6 +19,7 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class AdjustedReturnValueChecker : 
@@ -34,7 +35,7 @@ public:
 };
 }
 
-void clang::RegisterAdjustedReturnValueChecker(GRExprEngine &Eng) {
+void GR::RegisterAdjustedReturnValueChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new AdjustedReturnValueChecker());
 }
 

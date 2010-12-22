@@ -19,6 +19,7 @@
 #include "clang/GR/PathSensitive/SymbolManager.h"
 #include "llvm/ADT/ImmutableMap.h"
 using namespace clang;
+using namespace GR;
 
 namespace {
 
@@ -58,7 +59,7 @@ private:
 
 } // end anonymous namespace
 
-void clang::RegisterChrootChecker(GRExprEngine &Eng) {
+void GR::RegisterChrootChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new ChrootChecker());
 }
 

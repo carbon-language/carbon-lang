@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_RVALUE_H
-#define LLVM_CLANG_ANALYSIS_RVALUE_H
+#ifndef LLVM_CLANG_GR_RVALUE_H
+#define LLVM_CLANG_GR_RVALUE_H
 
 #include "clang/GR/PathSensitive/SymbolManager.h"
 #include "llvm/Support/Casting.h"
@@ -28,6 +28,8 @@ namespace llvm {
 //==------------------------------------------------------------------------==//
 
 namespace clang {
+
+namespace GR {
 
 class CompoundValData;
 class LazyCompoundValData;
@@ -340,7 +342,7 @@ public:
 };
 
 class LocAsInteger : public NonLoc {
-  friend class clang::SValBuilder;
+  friend class GR::SValBuilder;
 
   explicit LocAsInteger(const std::pair<SVal, uintptr_t>& data) :
     NonLoc(LocAsIntegerKind, &data) {
@@ -374,7 +376,7 @@ public:
 };
 
 class CompoundVal : public NonLoc {
-  friend class clang::SValBuilder;
+  friend class GR::SValBuilder;
 
   explicit CompoundVal(const CompoundValData* D) : NonLoc(CompoundValKind, D) {}
 
@@ -397,7 +399,7 @@ public:
 };
 
 class LazyCompoundVal : public NonLoc {
-  friend class clang::SValBuilder;
+  friend class GR::SValBuilder;
 
   explicit LazyCompoundVal(const LazyCompoundValData *D)
     : NonLoc(LazyCompoundValKind, D) {}
@@ -417,7 +419,7 @@ public:
   }
 };
 
-} // end namespace clang::nonloc
+} // end namespace GR::nonloc
 
 //==------------------------------------------------------------------------==//
 //  Subclasses of Loc.
@@ -503,14 +505,18 @@ public:
   }
 };
 
-} // end clang::loc namespace
+} // end GR::loc namespace
+} // end GR namespace
+
 } // end clang namespace
 
 namespace llvm {
 static inline llvm::raw_ostream& operator<<(llvm::raw_ostream& os,
-                                            clang::SVal V) {
+                                            clang::GR::SVal V) {
   V.dumpToStream(os);
   return os;
 }
+
 } // end llvm namespace
+
 #endif

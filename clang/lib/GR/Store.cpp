@@ -16,6 +16,7 @@
 #include "clang/AST/CharUnits.h"
 
 using namespace clang;
+using namespace GR;
 
 StoreManager::StoreManager(GRStateManager &stateMgr)
   : svalBuilder(stateMgr.getSValBuilder()), StateMgr(stateMgr),

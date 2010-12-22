@@ -16,6 +16,7 @@
 #include "clang/Basic/Builtins.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 
@@ -27,7 +28,7 @@ public:
 
 }
 
-void clang::RegisterBuiltinFunctionChecker(GRExprEngine &Eng) {
+void GR::RegisterBuiltinFunctionChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new BuiltinFunctionChecker());
 }
 

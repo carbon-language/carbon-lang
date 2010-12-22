@@ -16,6 +16,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
+using namespace GR;
 using namespace llvm;
 
 namespace {
@@ -47,7 +48,7 @@ public:
 } // end anonymous namespace
 
 PathDiagnosticClient*
-clang::createTextPathDiagnosticClient(const std::string& out,
+GR::createTextPathDiagnosticClient(const std::string& out,
                                       const Preprocessor &PP) {
   return new TextPathDiagnostics(out, PP.getDiagnostics());
 }

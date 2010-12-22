@@ -18,6 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+using namespace GR;
 
 static bool isArc4RandomAvailable(const ASTContext &Ctx) {
   const llvm::Triple &T = Ctx.Target.getTriple();
@@ -496,7 +497,7 @@ void WalkAST::CheckUncheckedReturnValue(CallExpr *CE) {
 // Entry point for check.
 //===----------------------------------------------------------------------===//
 
-void clang::CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR) {
+void GR::CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR) {
   WalkAST walker(BR);
   walker.Visit(D->getBody());
 }

@@ -80,7 +80,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case RewriteMacros:          return new RewriteMacrosAction();
   case RewriteObjC:            return new RewriteObjCAction();
   case RewriteTest:            return new RewriteTestAction();
-  case RunAnalysis:            return new AnalysisAction();
+  case RunAnalysis:            return new GR::AnalysisAction();
   case RunPreprocessorOnly:    return new PreprocessOnlyAction();
   }
 }

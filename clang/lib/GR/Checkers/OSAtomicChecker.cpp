@@ -16,6 +16,7 @@
 #include "clang/Basic/Builtins.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 
@@ -30,7 +31,7 @@ private:
 
 }
 
-void clang::RegisterOSAtomicChecker(GRExprEngine &Eng) {
+void GR::RegisterOSAtomicChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new OSAtomicChecker());
 }
 

@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_GRBLOCKCOUNTER
-#define LLVM_CLANG_ANALYSIS_GRBLOCKCOUNTER
+#ifndef LLVM_CLANG_GR_GRBLOCKCOUNTER
+#define LLVM_CLANG_GR_GRBLOCKCOUNTER
 
 namespace llvm {
   class BumpPtrAllocator;
@@ -23,6 +23,8 @@ namespace llvm {
 namespace clang {
 
 class StackFrameContext;
+
+namespace GR {
 
 class GRBlockCounter {
   void* Data;
@@ -49,6 +51,8 @@ public:
 
   friend class Factory;
 };
+
+} // end GR namespace
 
 } // end clang namespace
 

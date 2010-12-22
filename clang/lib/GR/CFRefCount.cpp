@@ -34,6 +34,7 @@
 #include <stdarg.h>
 
 using namespace clang;
+using namespace GR;
 using llvm::StringRef;
 using llvm::StrInStrNoCase;
 
@@ -396,6 +397,7 @@ void RefVal::print(llvm::raw_ostream& Out) const {
 typedef llvm::ImmutableMap<SymbolRef, RefVal> RefBindings;
 
 namespace clang {
+namespace GR {
   template<>
   struct GRStateTrait<RefBindings> : public GRStatePartialTrait<RefBindings> {
     static void* GDMIndex() {
@@ -403,6 +405,7 @@ namespace clang {
       return &RefBIndex;
     }
   };
+}
 }
 
 //===----------------------------------------------------------------------===//
@@ -1576,6 +1579,7 @@ namespace { class AutoreleasePoolContents {}; }
 namespace { class AutoreleaseStack {}; }
 
 namespace clang {
+namespace GR {
 template<> struct GRStateTrait<AutoreleaseStack>
   : public GRStatePartialTrait<ARStack> {
   static inline void* GDMIndex() { return &AutoRBIndex; }
@@ -1585,6 +1589,7 @@ template<> struct GRStateTrait<AutoreleasePoolContents>
   : public GRStatePartialTrait<ARPoolContents> {
   static inline void* GDMIndex() { return &AutoRCIndex; }
 };
+} // end GR namespace
 } // end clang namespace
 
 static SymbolRef GetCurrentAutoreleasePool(const GRState* state) {
@@ -3489,7 +3494,7 @@ void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
   Eng.registerCheck(new RetainReleaseChecker(this));
 }
 
-GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
+GRTransferFuncs* GR::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                          const LangOptions& lopts) {
   return new CFRefCount(Ctx, GCEnabled, lopts);
 }

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_VALUESTATE_H
-#define LLVM_CLANG_ANALYSIS_VALUESTATE_H
+#ifndef LLVM_CLANG_GR_VALUESTATE_H
+#define LLVM_CLANG_GR_VALUESTATE_H
 
 #include "clang/GR/PathSensitive/ConstraintManager.h"
 #include "clang/GR/PathSensitive/Environment.h"
@@ -30,6 +30,9 @@ class raw_ostream;
 
 namespace clang {
 class ASTContext;
+
+namespace GR {
+
 class GRStateManager;
 class Checker;
 
@@ -749,6 +752,9 @@ CB GRState::scanReachableSymbols(const MemRegion * const *beg,
   scanReachableSymbols(beg, end, cb);
   return cb;
 }
+
+} // end GR namespace
+
 } // end clang namespace
 
 #endif

@@ -13,18 +13,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_BASICOBJCFOUNDATIONCHECKS
-#define LLVM_CLANG_ANALYSIS_BASICOBJCFOUNDATIONCHECKS
+#ifndef LLVM_CLANG_GR_BASICOBJCFOUNDATIONCHECKS
+#define LLVM_CLANG_GR_BASICOBJCFOUNDATIONCHECKS
 
 namespace clang {
 
 class ASTContext;
-class BugReporter;
 class Decl;
+
+namespace GR {
+
+class BugReporter;
 class GRExprEngine;
 
 void RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng, const Decl &D);
 void RegisterNSAutoreleasePoolChecks(GRExprEngine &Eng);
+
+} // end GR namespace
 
 } // end clang namespace
 

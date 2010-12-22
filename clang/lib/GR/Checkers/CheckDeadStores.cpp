@@ -24,6 +24,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 
@@ -280,7 +281,7 @@ public:
 } // end anonymous namespace
 
 
-void clang::CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &pmap, 
+void GR::CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &pmap, 
                             BugReporter& BR) {
   FindEscaped FS(&cfg);
   FS.getCFG().VisitBlockStmts(FS);

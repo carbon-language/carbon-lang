@@ -19,6 +19,7 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class CallAndMessageChecker
@@ -61,7 +62,7 @@ private:
 };
 } // end anonymous namespace
 
-void clang::RegisterCallAndMessageChecker(GRExprEngine &Eng) {
+void GR::RegisterCallAndMessageChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new CallAndMessageChecker());
 }
 

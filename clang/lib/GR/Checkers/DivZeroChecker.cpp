@@ -17,6 +17,7 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class DivZeroChecker : public CheckerVisitor<DivZeroChecker> {
@@ -28,7 +29,7 @@ public:
 };  
 } // end anonymous namespace
 
-void clang::RegisterDivZeroChecker(GRExprEngine &Eng) {
+void GR::RegisterDivZeroChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new DivZeroChecker());
 }
 

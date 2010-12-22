@@ -19,6 +19,7 @@
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;
+using namespace GR;
 
 typedef llvm::ImmutableMap<const MemRegion*,SVal> BindingsTy;
 
@@ -103,7 +104,7 @@ private:
 } // end anonymous namespace
 
 
-StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
+StoreManager* GR::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
 }
 

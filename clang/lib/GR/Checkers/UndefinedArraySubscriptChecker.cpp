@@ -17,6 +17,7 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class UndefinedArraySubscriptChecker
@@ -33,7 +34,7 @@ public:
 };
 } // end anonymous namespace
 
-void clang::RegisterUndefinedArraySubscriptChecker(GRExprEngine &Eng) {
+void GR::RegisterUndefinedArraySubscriptChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new UndefinedArraySubscriptChecker());
 }
 

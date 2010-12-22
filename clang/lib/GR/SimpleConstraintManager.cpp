@@ -19,6 +19,8 @@
 
 namespace clang {
 
+namespace GR {
+
 SimpleConstraintManager::~SimpleConstraintManager() {}
 
 bool SimpleConstraintManager::canReasonAbout(SVal X) const {
@@ -296,4 +298,6 @@ const GRState *SimpleConstraintManager::assumeSymRel(const GRState *state,
   } // end switch
 }
 
-}  // end of namespace clang
+} // end of namespace GR
+
+} // end of namespace clang

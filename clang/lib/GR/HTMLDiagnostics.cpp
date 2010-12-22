@@ -26,6 +26,7 @@
 #include "llvm/Support/Path.h"
 
 using namespace clang;
+using namespace GR;
 
 //===----------------------------------------------------------------------===//
 // Boilerplate.
@@ -77,7 +78,7 @@ HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix,
 }
 
 PathDiagnosticClient*
-clang::createHTMLDiagnosticClient(const std::string& prefix,
+GR::createHTMLDiagnosticClient(const std::string& prefix,
                                   const Preprocessor &PP) {
   return new HTMLDiagnostics(prefix, PP);
 }

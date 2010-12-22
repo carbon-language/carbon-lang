@@ -10,16 +10,21 @@
 // This file defines the interface of a subengine of the GRCoreEngine.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_ANALYSIS_GRSUBENGINE_H
-#define LLVM_CLANG_ANALYSIS_GRSUBENGINE_H
+#ifndef LLVM_CLANG_GR_GRSUBENGINE_H
+#define LLVM_CLANG_GR_GRSUBENGINE_H
 
 #include "clang/GR/PathSensitive/SVals.h"
 
 namespace clang {
 
-class AnalysisManager;
 class CFGBlock;
 class CFGElement;
+class LocationContext;
+class Stmt;
+
+namespace GR {
+
+class AnalysisManager;
 class ExplodedNode;
 class GRState;
 class GRStateManager;
@@ -31,9 +36,7 @@ class GRSwitchNodeBuilder;
 class GREndPathNodeBuilder;
 class GRCallEnterNodeBuilder;
 class GRCallExitNodeBuilder;
-class LocationContext;
 class MemRegion;
-class Stmt;
 
 class GRSubEngine {
 public:
@@ -102,6 +105,9 @@ public:
   //  maximum number of analysis steps have been reached.
   virtual void ProcessEndWorklist(bool hasWorkRemaining) = 0;
 };
-}
+
+} // end GR namespace
+
+} // end clang namespace
 
 #endif

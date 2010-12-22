@@ -12,21 +12,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_GRTF
-#define LLVM_CLANG_ANALYSIS_GRTF
+#ifndef LLVM_CLANG_GR_TRANSFERFUNCS
+#define LLVM_CLANG_GR_TRANSFERFUNCS
 
 #include "clang/GR/PathSensitive/GRState.h"
 #include "clang/GR/PathSensitive/SVals.h"
 #include <vector>
 
 namespace clang {
+class ObjCMessageExpr;
+
+namespace GR {
 class ExplodedNode;
 class ExplodedNodeSet;
 class GREndPathNodeBuilder;
 class GRExprEngine;
 class GRStmtNodeBuilder;
 class GRStmtNodeBuilderRef;
-class ObjCMessageExpr;
 
 class GRTransferFuncs {
 public:
@@ -82,6 +84,9 @@ public:
     return state;
   }  
 };
+
+} // end GR namespace
+
 } // end clang namespace
 
 #endif

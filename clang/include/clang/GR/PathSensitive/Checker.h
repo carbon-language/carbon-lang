@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_CHECKER
-#define LLVM_CLANG_ANALYSIS_CHECKER
+#ifndef LLVM_CLANG_GR_CHECKER
+#define LLVM_CLANG_GR_CHECKER
 
 #include "clang/Analysis/Support/SaveAndRestore.h"
 #include "clang/GR/PathSensitive/GRExprEngine.h"
@@ -23,6 +23,8 @@
 //===----------------------------------------------------------------------===//
 
 namespace clang {
+
+namespace GR {
 
 class CheckerContext {
   ExplodedNodeSet &Dst;
@@ -298,6 +300,9 @@ public:
   virtual void VisitEndAnalysis(ExplodedGraph &G, BugReporter &B,
                                 GRExprEngine &Eng) {}
 };
+
+} // end GR namespace
+
 } // end clang namespace
 
 #endif

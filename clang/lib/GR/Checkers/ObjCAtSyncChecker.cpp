@@ -19,6 +19,7 @@
 #include "clang/GR/PathSensitive/GRExprEngine.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class ObjCAtSyncChecker : public CheckerVisitor<ObjCAtSyncChecker> {
@@ -32,7 +33,7 @@ public:
 };
 } // end anonymous namespace
 
-void clang::RegisterObjCAtSyncChecker(GRExprEngine &Eng) {
+void GR::RegisterObjCAtSyncChecker(GRExprEngine &Eng) {
   // @synchronized is an Objective-C 2 feature.
   if (Eng.getContext().getLangOptions().ObjC2)
     Eng.registerCheck(new ObjCAtSyncChecker());

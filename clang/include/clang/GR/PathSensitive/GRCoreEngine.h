@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_GRENGINE
-#define LLVM_CLANG_ANALYSIS_GRENGINE
+#ifndef LLVM_CLANG_GR_GRENGINE
+#define LLVM_CLANG_GR_GRENGINE
 
 #include "clang/AST/Expr.h"
 #include "clang/GR/PathSensitive/ExplodedGraph.h"
@@ -23,6 +23,8 @@
 #include "llvm/ADT/OwningPtr.h"
 
 namespace clang {
+
+namespace GR {
 
 //===----------------------------------------------------------------------===//
 /// GRCoreEngine - Implements the core logic of the graph-reachability
@@ -532,6 +534,9 @@ public:
 
   void generateNode(const GRState *state);
 }; 
+
+} // end GR namespace
+
 } // end clang namespace
 
 #endif

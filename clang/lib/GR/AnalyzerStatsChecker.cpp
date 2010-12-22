@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class AnalyzerStatsChecker : public CheckerVisitor<AnalyzerStatsChecker> {
@@ -37,7 +38,7 @@ void *AnalyzerStatsChecker::getTag() {
   return &x;
 }
 
-void clang::RegisterAnalyzerStatsChecker(GRExprEngine &Eng) {
+void GR::RegisterAnalyzerStatsChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new AnalyzerStatsChecker());
 }
 

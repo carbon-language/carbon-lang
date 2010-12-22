@@ -17,6 +17,7 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class UndefinedAssignmentChecker
@@ -30,7 +31,7 @@ public:
 };
 }
 
-void clang::RegisterUndefinedAssignmentChecker(GRExprEngine &Eng){
+void GR::RegisterUndefinedAssignmentChecker(GRExprEngine &Eng){
   Eng.registerCheck(new UndefinedAssignmentChecker());
 }
 

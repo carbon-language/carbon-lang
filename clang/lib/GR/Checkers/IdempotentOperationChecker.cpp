@@ -58,6 +58,7 @@
 #include <deque>
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class IdempotentOperationChecker
@@ -129,7 +130,7 @@ void *IdempotentOperationChecker::getTag() {
   return &x;
 }
 
-void clang::RegisterIdempotentOperationChecker(GRExprEngine &Eng) {
+void GR::RegisterIdempotentOperationChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new IdempotentOperationChecker());
 }
 

@@ -19,6 +19,7 @@
 #include "clang/GR/PathSensitive/GRExprEngine.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class ReturnUndefChecker : 
@@ -31,7 +32,7 @@ public:
 };
 }
 
-void clang::RegisterReturnUndefChecker(GRExprEngine &Eng) {
+void GR::RegisterReturnUndefChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new ReturnUndefChecker());
 }
 

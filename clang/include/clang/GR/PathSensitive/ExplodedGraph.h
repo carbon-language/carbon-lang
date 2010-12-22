@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_EXPLODEDGRAPH
-#define LLVM_CLANG_ANALYSIS_EXPLODEDGRAPH
+#ifndef LLVM_CLANG_GR_EXPLODEDGRAPH
+#define LLVM_CLANG_GR_EXPLODEDGRAPH
 
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/Analysis/AnalysisContext.h"
@@ -34,8 +34,11 @@
 
 namespace clang {
 
-class GRState;
 class CFG;
+
+namespace GR {
+
+class GRState;
 class ExplodedGraph;
 
 //===----------------------------------------------------------------------===//
@@ -368,13 +371,15 @@ public:
   inline const_iterator end()   const { return Impl.end();   }
 };
 
+} // end GR namespace
+
 } // end clang namespace
 
 // GraphTraits
 
 namespace llvm {
-  template<> struct GraphTraits<clang::ExplodedNode*> {
-    typedef clang::ExplodedNode NodeType;
+  template<> struct GraphTraits<clang::GR::ExplodedNode*> {
+    typedef clang::GR::ExplodedNode NodeType;
     typedef NodeType::succ_iterator  ChildIteratorType;
     typedef llvm::df_iterator<NodeType*>      nodes_iterator;
 
@@ -399,8 +404,8 @@ namespace llvm {
     }
   };
 
-  template<> struct GraphTraits<const clang::ExplodedNode*> {
-    typedef const clang::ExplodedNode NodeType;
+  template<> struct GraphTraits<const clang::GR::ExplodedNode*> {
+    typedef const clang::GR::ExplodedNode NodeType;
     typedef NodeType::const_succ_iterator   ChildIteratorType;
     typedef llvm::df_iterator<NodeType*>       nodes_iterator;
 

@@ -29,6 +29,7 @@
 #define DEFAULT_CFGBLOCKS 256
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class UnreachableCodeChecker : public Checker {
@@ -53,7 +54,7 @@ void *UnreachableCodeChecker::getTag() {
   return &x;
 }
 
-void clang::RegisterUnreachableCodeChecker(GRExprEngine &Eng) {
+void GR::RegisterUnreachableCodeChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new UnreachableCodeChecker());
 }
 

@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef LLVM_CLANG_ANALYSIS_GRSTATETRAIT_H
-#define LLVM_CLANG_ANALYSIS_GRSTATETRAIT_H
+#ifndef LLVM_CLANG_GR_GRSTATETRAIT_H
+#define LLVM_CLANG_GR_GRSTATETRAIT_H
 
 namespace llvm {
   class BumpPtrAllocator;
@@ -26,6 +26,8 @@ namespace llvm {
 }
 
 namespace clang {
+
+namespace GR {
   template <typename T> struct GRStatePartialTrait;
 
   // Partial-specialization for ImmutableMap.
@@ -143,6 +145,8 @@ namespace clang {
       delete (typename data_type::Factory*) Ctx;
     }
   };
+} // end GR namespace
+
 } // end clang namespace
 
 #endif

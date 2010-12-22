@@ -23,6 +23,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace { class ConstraintRange {}; }
 static int ConstraintRangeIndex = 0;
@@ -194,11 +195,13 @@ public:
 typedef llvm::ImmutableMap<SymbolRef,RangeSet> ConstraintRangeTy;
 
 namespace clang {
+namespace GR {
 template<>
 struct GRStateTrait<ConstraintRange>
   : public GRStatePartialTrait<ConstraintRangeTy> {
   static inline void* GDMIndex() { return &ConstraintRangeIndex; }
 };
+}
 }
 
 namespace {
@@ -251,8 +254,8 @@ private:
 
 } // end anonymous namespace
 
-ConstraintManager* clang::CreateRangeConstraintManager(GRStateManager&,
-                                                       GRSubEngine &subeng) {
+ConstraintManager* GR::CreateRangeConstraintManager(GRStateManager&,
+                                                    GRSubEngine &subeng) {
   return new RangeConstraintManager(subeng);
 }
 

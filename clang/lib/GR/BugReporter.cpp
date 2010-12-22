@@ -30,6 +30,7 @@
 #include <queue>
 
 using namespace clang;
+using namespace GR;
 
 BugReporterVisitor::~BugReporterVisitor() {}
 BugReporterContext::~BugReporterContext() {

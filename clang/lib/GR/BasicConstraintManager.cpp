@@ -19,6 +19,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+using namespace GR;
 
 
 namespace { class ConstNotEq {}; }
@@ -31,6 +32,7 @@ static int ConstEqIndex = 0;
 static int ConstNotEqIndex = 0;
 
 namespace clang {
+namespace GR {
 template<>
 struct GRStateTrait<ConstNotEq> : public GRStatePartialTrait<ConstNotEqTy> {
   static inline void* GDMIndex() { return &ConstNotEqIndex; }
@@ -40,6 +42,7 @@ template<>
 struct GRStateTrait<ConstEq> : public GRStatePartialTrait<ConstEqTy> {
   static inline void* GDMIndex() { return &ConstEqIndex; }
 };
+}
 }
 
 namespace {
@@ -95,7 +98,7 @@ public:
 
 } // end anonymous namespace
 
-ConstraintManager* clang::CreateBasicConstraintManager(GRStateManager& statemgr,
+ConstraintManager* GR::CreateBasicConstraintManager(GRStateManager& statemgr,
                                                        GRSubEngine &subengine) {
   return new BasicConstraintManager(statemgr, subengine);
 }

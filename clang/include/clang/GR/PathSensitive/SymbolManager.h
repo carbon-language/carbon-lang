@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_SYMMGR_H
-#define LLVM_CLANG_ANALYSIS_SYMMGR_H
+#ifndef LLVM_CLANG_GR_SYMMGR_H
+#define LLVM_CLANG_GR_SYMMGR_H
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
@@ -29,12 +29,14 @@ class raw_ostream;
 
 namespace clang {
   class ASTContext;
+  class StackFrameContext;
+
+namespace GR {
   class BasicValueFactory;
   class MemRegion;
   class SubRegion;
   class TypedRegion;
   class VarRegion;
-  class StackFrameContext;
 
 class SymExpr : public llvm::FoldingSetNode {
 public:
@@ -473,11 +475,13 @@ public:
   virtual ~SymbolVisitor();
 };
 
+} // end GR namespace
+
 } // end clang namespace
 
 namespace llvm {
 static inline llvm::raw_ostream& operator<<(llvm::raw_ostream& os,
-                                            const clang::SymExpr *SE) {
+                                            const clang::GR::SymExpr *SE) {
   SE->dumpToStream(os);
   return os;
 }

@@ -25,6 +25,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class MacOSXAPIChecker : public CheckerVisitor<MacOSXAPIChecker> {
@@ -44,7 +45,7 @@ public:
 };
 } //end anonymous namespace
 
-void clang::RegisterMacOSXAPIChecker(GRExprEngine &Eng) {
+void GR::RegisterMacOSXAPIChecker(GRExprEngine &Eng) {
   if (Eng.getContext().Target.getTriple().getVendor() == llvm::Triple::Apple)
     Eng.registerCheck(new MacOSXAPIChecker());
 }

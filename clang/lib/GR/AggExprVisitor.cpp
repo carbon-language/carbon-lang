@@ -16,6 +16,7 @@
 #include "clang/AST/StmtVisitor.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 /// AggExprVisitor is designed after AggExprEmitter of the CodeGen module.  It

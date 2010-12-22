@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_CONSTRAINT_MANAGER_H
-#define LLVM_CLANG_ANALYSIS_CONSTRAINT_MANAGER_H
+#ifndef LLVM_CLANG_GR_CONSTRAINT_MANAGER_H
+#define LLVM_CLANG_GR_CONSTRAINT_MANAGER_H
 
 // FIXME: Typedef LiveSymbolsTy/DeadSymbolsTy at a more appropriate place.
 #include "clang/GR/PathSensitive/Store.h"
@@ -22,6 +22,8 @@ class APSInt;
 }
 
 namespace clang {
+
+namespace GR {
 
 class GRState;
 class GRStateManager;
@@ -66,6 +68,8 @@ ConstraintManager* CreateBasicConstraintManager(GRStateManager& statemgr,
                                                 GRSubEngine &subengine);
 ConstraintManager* CreateRangeConstraintManager(GRStateManager& statemgr,
                                                 GRSubEngine &subengine);
+
+} // end GR namespace
 
 } // end clang namespace
 

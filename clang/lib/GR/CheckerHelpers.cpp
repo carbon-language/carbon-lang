@@ -15,7 +15,7 @@
 #include "clang/AST/Expr.h"
 
 // Recursively find any substatements containing macros
-bool clang::containsMacro(const Stmt *S) {
+bool clang::GR::containsMacro(const Stmt *S) {
   if (S->getLocStart().isMacroID())
     return true;
 
@@ -32,7 +32,7 @@ bool clang::containsMacro(const Stmt *S) {
 }
 
 // Recursively find any substatements containing enum constants
-bool clang::containsEnum(const Stmt *S) {
+bool clang::GR::containsEnum(const Stmt *S) {
   const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S);
 
   if (DR && isa<EnumConstantDecl>(DR->getDecl()))
@@ -48,7 +48,7 @@ bool clang::containsEnum(const Stmt *S) {
 }
 
 // Recursively find any substatements containing static vars
-bool clang::containsStaticLocal(const Stmt *S) {
+bool clang::GR::containsStaticLocal(const Stmt *S) {
   const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S);
 
   if (DR)
@@ -66,7 +66,7 @@ bool clang::containsStaticLocal(const Stmt *S) {
 }
 
 // Recursively find any substatements containing __builtin_offsetof
-bool clang::containsBuiltinOffsetOf(const Stmt *S) {
+bool clang::GR::containsBuiltinOffsetOf(const Stmt *S) {
   if (isa<OffsetOfExpr>(S))
     return true;
 

@@ -11,12 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_MANAGER_REGISTRY_H
-#define LLVM_CLANG_ANALYSIS_MANAGER_REGISTRY_H
+#ifndef LLVM_CLANG_GR_MANAGER_REGISTRY_H
+#define LLVM_CLANG_GR_MANAGER_REGISTRY_H
 
 #include "clang/GR/PathSensitive/GRState.h"
 
 namespace clang {
+
+namespace GR {
 
 /// ManagerRegistry - This class records manager creators registered at
 /// runtime. The information is communicated to AnalysisManager through static
@@ -49,5 +51,8 @@ public:
   }
 };
 
-}
+} // end GR namespace
+
+} // end clang namespace
+
 #endif

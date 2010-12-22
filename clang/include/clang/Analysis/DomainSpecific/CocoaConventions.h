@@ -17,6 +17,7 @@
 #include "clang/AST/Type.h"
 
 namespace clang {
+namespace GR {
 namespace cocoa {
  
   enum NamingConvention { NoConvention, CreateRule, InitRule };
@@ -34,6 +35,6 @@ namespace cocoa {
   
   bool isCocoaObjectRef(QualType T);
 
-}}
+}}}
 
 #endif

@@ -20,6 +20,8 @@
 
 namespace clang {
 
+namespace GR {
+
 class ExplodedNode;
 class GRExprEngine;
 
@@ -67,6 +69,8 @@ public:
   
   llvm::StringRef getDescription() const { return desc; }
 };
+
+} // end GR namespace
 
 } // end clang namespace
 #endif

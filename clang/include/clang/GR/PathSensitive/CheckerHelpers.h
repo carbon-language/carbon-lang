@@ -11,12 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CHECKER_PATHSENSITIVE_CHECKERHELPERS
-#define LLVM_CLANG_CHECKER_PATHSENSITIVE_CHECKERHELPERS
+#ifndef LLVM_CLANG_GR_PATHSENSITIVE_CHECKERHELPERS
+#define LLVM_CLANG_GR_PATHSENSITIVE_CHECKERHELPERS
 
 #include "clang/AST/Stmt.h"
 
 namespace clang {
+
+namespace GR {
 
 bool containsMacro(const Stmt *S);
 bool containsEnum(const Stmt *S);
@@ -35,6 +37,8 @@ template <class T> bool containsStmt(const Stmt *S) {
   return false;
 }
 
-}
+} // end GR namespace
+
+} // end clang namespace
 
 #endif

@@ -17,6 +17,7 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class AttrNonNullChecker
@@ -32,7 +33,7 @@ public:
 };
 } // end anonymous namespace
 
-void clang::RegisterAttrNonNullChecker(GRExprEngine &Eng) {
+void GR::RegisterAttrNonNullChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new AttrNonNullChecker());
 }
 

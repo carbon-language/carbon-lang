@@ -20,12 +20,13 @@
 #include "clang/GR/PathSensitive/GRState.h"
 
 using namespace clang;
+using namespace GR;
 
 //===----------------------------------------------------------------------===//
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
-const Stmt *clang::bugreporter::GetDerefExpr(const ExplodedNode *N) {
+const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
   // Pattern match for a few useful cases (do something smarter later):
   //   a[0], p->f, *p
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
@@ -46,16 +47,14 @@ const Stmt *clang::bugreporter::GetDerefExpr(const ExplodedNode *N) {
   return NULL;
 }
 
-const Stmt*
-clang::bugreporter::GetDenomExpr(const ExplodedNode *N) {
+const Stmt *bugreporter::GetDenomExpr(const ExplodedNode *N) {
   const Stmt *S = N->getLocationAs<PreStmt>()->getStmt();
   if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(S))
     return BE->getRHS();
   return NULL;
 }
 
-const Stmt*
-clang::bugreporter::GetCalleeExpr(const ExplodedNode *N) {
+const Stmt *bugreporter::GetCalleeExpr(const ExplodedNode *N) {
   // Callee is checked as a PreVisit to the CallExpr.
   const Stmt *S = N->getLocationAs<PreStmt>()->getStmt();
   if (const CallExpr *CE = dyn_cast<CallExpr>(S))
@@ -63,8 +62,7 @@ clang::bugreporter::GetCalleeExpr(const ExplodedNode *N) {
   return NULL;
 }
 
-const Stmt*
-clang::bugreporter::GetRetValExpr(const ExplodedNode *N) {
+const Stmt *bugreporter::GetRetValExpr(const ExplodedNode *N) {
   const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();
   if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(S))
     return RS->getRetValue();
@@ -306,9 +304,9 @@ static void registerTrackConstraint(BugReporterContext& BRC,
   BRC.addVisitor(new TrackConstraintBRVisitor(Constraint, Assumption));
 }
 
-void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
-                                                       const void *data,
-                                                       const ExplodedNode* N) {
+void bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
+                                                const void *data,
+                                                const ExplodedNode* N) {
 
   const Stmt *S = static_cast<const Stmt*>(data);
 
@@ -354,9 +352,9 @@ void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
   }
 }
 
-void clang::bugreporter::registerFindLastStore(BugReporterContext& BRC,
-                                               const void *data,
-                                               const ExplodedNode* N) {
+void bugreporter::registerFindLastStore(BugReporterContext& BRC,
+                                        const void *data,
+                                        const ExplodedNode* N) {
 
   const MemRegion *R = static_cast<const MemRegion*>(data);
 
@@ -417,12 +415,12 @@ public:
 };
 } // end anonymous namespace
 
-void clang::bugreporter::registerNilReceiverVisitor(BugReporterContext &BRC) {
+void bugreporter::registerNilReceiverVisitor(BugReporterContext &BRC) {
   BRC.addVisitor(new NilReceiverVisitor());
 }
 
 // Registers every VarDecl inside a Stmt with a last store vistor.
-void clang::bugreporter::registerVarDeclsLastStore(BugReporterContext &BRC,
+void bugreporter::registerVarDeclsLastStore(BugReporterContext &BRC,
                                                    const void *stmt,
                                                    const ExplodedNode *N) {
   const Stmt *S = static_cast<const Stmt *>(stmt);

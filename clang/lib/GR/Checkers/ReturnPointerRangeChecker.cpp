@@ -18,6 +18,7 @@
 #include "clang/GR/PathSensitive/GRExprEngine.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class ReturnPointerRangeChecker : 
@@ -30,7 +31,7 @@ public:
 };
 }
 
-void clang::RegisterReturnPointerRangeChecker(GRExprEngine &Eng) {
+void GR::RegisterReturnPointerRangeChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new ReturnPointerRangeChecker());
 }
 

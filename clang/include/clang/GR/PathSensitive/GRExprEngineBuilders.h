@@ -12,12 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE_BUILDERS
-#define LLVM_CLANG_ANALYSIS_GREXPRENGINE_BUILDERS
+#ifndef LLVM_CLANG_GR_GREXPRENGINE_BUILDERS
+#define LLVM_CLANG_GR_GREXPRENGINE_BUILDERS
 #include "clang/GR/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 
 namespace clang {
+
+namespace GR {
 
 class GRStmtNodeBuilderRef {
   ExplodedNodeSet &Dst;
@@ -72,5 +74,8 @@ public:
   }
 };
 
+} // end GR namespace
+
 } // end clang namespace
+
 #endif

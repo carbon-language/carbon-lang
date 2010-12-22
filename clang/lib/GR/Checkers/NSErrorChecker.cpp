@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallVector.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class NSErrorChecker : public BugType {
@@ -62,7 +63,7 @@ public:
 
 } // end anonymous namespace
 
-void clang::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng,
+void GR::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng,
                                   const Decl &D) {
   BR.Register(new NSErrorChecker(D, true, Eng));
   BR.Register(new NSErrorChecker(D, false, Eng));

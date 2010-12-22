@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_ENVIRONMENT_H
-#define LLVM_CLANG_ANALYSIS_ENVIRONMENT_H
+#ifndef LLVM_CLANG_GR_ENVIRONMENT_H
+#define LLVM_CLANG_GR_ENVIRONMENT_H
 
 #include "clang/GR/PathSensitive/Store.h"
 #include "clang/GR/PathSensitive/SVals.h"
@@ -20,9 +20,12 @@
 
 namespace clang {
 
+class LiveVariables;
+
+namespace GR {
+
 class EnvironmentManager;
 class SValBuilder;
-class LiveVariables;
 
 /// Environment - An immutable map from Stmts to their current
 ///  symbolic values (SVals).
@@ -95,6 +98,8 @@ public:
                                  SymbolReaper &SymReaper, const GRState *ST,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 };
+
+} // end GR namespace
 
 } // end clang namespace
 

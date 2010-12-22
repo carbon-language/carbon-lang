@@ -20,6 +20,7 @@
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 
@@ -104,14 +105,16 @@ private:
 } // end anonymous namespace
 
 namespace clang {
+namespace GR {
   template <>
   struct GRStateTrait<StreamState> 
     : public GRStatePartialTrait<llvm::ImmutableMap<SymbolRef, StreamState> > {
     static void *GDMIndex() { return StreamChecker::getTag(); }
   };
 }
+}
 
-void clang::RegisterStreamChecker(GRExprEngine &Eng) {
+void GR::RegisterStreamChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new StreamChecker());
 }
 

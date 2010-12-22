@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_ANALYSISMANAGER_H
-#define LLVM_CLANG_ANALYSIS_ANALYSISMANAGER_H
+#ifndef LLVM_CLANG_GR_ANALYSISMANAGER_H
+#define LLVM_CLANG_GR_ANALYSISMANAGER_H
 
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/GR/BugReporter/BugReporter.h"
@@ -25,6 +25,8 @@ namespace idx {
   class Indexer;
   class TranslationUnit; 
 }
+
+namespace GR {
 
 class AnalysisManager : public BugReporterData {
   AnalysisContextManager AnaCtxMgr;
@@ -199,6 +201,8 @@ public:
   }
 };
 
-}
+} // end GR namespace
+
+} // end clang namespace
 
 #endif

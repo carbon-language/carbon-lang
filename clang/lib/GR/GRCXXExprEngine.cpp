@@ -16,6 +16,7 @@
 #include "clang/AST/DeclCXX.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class CallExprWLItem {

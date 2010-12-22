@@ -19,6 +19,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
+using namespace GR;
 
 namespace {
 class StackAddrLeakChecker : public CheckerVisitor<StackAddrLeakChecker> {
@@ -40,7 +41,7 @@ private:
 };
 }
 
-void clang::RegisterStackAddrLeakChecker(GRExprEngine &Eng) {
+void GR::RegisterStackAddrLeakChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new StackAddrLeakChecker());
 }
 

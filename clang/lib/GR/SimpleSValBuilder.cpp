@@ -15,6 +15,7 @@
 #include "clang/GR/PathSensitive/GRState.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class SimpleSValBuilder : public SValBuilder {
@@ -46,7 +47,7 @@ public:
 };
 } // end anonymous namespace
 
-SValBuilder *clang::createSimpleSValBuilder(llvm::BumpPtrAllocator &alloc,
+SValBuilder *GR::createSimpleSValBuilder(llvm::BumpPtrAllocator &alloc,
                                             ASTContext &context,
                                             GRStateManager &stateMgr) {
   return new SimpleSValBuilder(alloc, context, stateMgr);

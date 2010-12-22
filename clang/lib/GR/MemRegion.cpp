@@ -22,6 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+using namespace GR;
 
 //===----------------------------------------------------------------------===//
 // MemRegion Construction.

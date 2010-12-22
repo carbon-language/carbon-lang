@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_MEMREGION_H
-#define LLVM_CLANG_ANALYSIS_MEMREGION_H
+#ifndef LLVM_CLANG_GR_MEMREGION_H
+#define LLVM_CLANG_GR_MEMREGION_H
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -31,10 +31,13 @@ class raw_ostream;
 
 namespace clang {
 
-class MemRegionManager;
-class MemSpaceRegion;
 class LocationContext;
 class StackFrameContext;
+
+namespace GR {
+
+class MemRegionManager;
+class MemSpaceRegion;
 class SValBuilder;
 class VarRegion;
 class CodeTextRegion;
@@ -1055,6 +1058,8 @@ inline ASTContext& MemRegion::getContext() const {
   return getMemRegionManager()->getContext();
 }
   
+} // end GR namespace
+
 } // end clang namespace
 
 //===----------------------------------------------------------------------===//
@@ -1063,7 +1068,7 @@ inline ASTContext& MemRegion::getContext() const {
 
 namespace llvm {
 static inline raw_ostream& operator<<(raw_ostream& os,
-                                      const clang::MemRegion* R) {
+                                      const clang::GR::MemRegion* R) {
   R->dumpToStream(os);
   return os;
 }

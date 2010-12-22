@@ -19,6 +19,7 @@
 #include "clang/GR/PathSensitive/GRExprEngine.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class DereferenceChecker : public Checker {
@@ -42,12 +43,12 @@ public:
 };
 } // end anonymous namespace
 
-void clang::RegisterDereferenceChecker(GRExprEngine &Eng) {
+void GR::RegisterDereferenceChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new DereferenceChecker());
 }
 
 std::pair<ExplodedNode * const *, ExplodedNode * const *>
-clang::GetImplicitNullDereferences(GRExprEngine &Eng) {
+GR::GetImplicitNullDereferences(GRExprEngine &Eng) {
   DereferenceChecker *checker = Eng.getChecker<DereferenceChecker>();
   if (!checker)
     return std::make_pair((ExplodedNode * const *) 0,

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_BUGREPORTER
-#define LLVM_CLANG_ANALYSIS_BUGREPORTER
+#ifndef LLVM_CLANG_GR_BUGREPORTER
+#define LLVM_CLANG_GR_BUGREPORTER
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/GR/PathSensitive/GRState.h"
@@ -25,20 +25,23 @@
 
 namespace clang {
 
+class ASTContext;
+class Diagnostic;
+class Stmt;
+class ParentMap;
+
+namespace GR {
+
 class PathDiagnostic;
 class PathDiagnosticPiece;
 class PathDiagnosticClient;
-class ASTContext;
-class Diagnostic;
 class ExplodedNode;
 class ExplodedGraph;
 class BugReporter;
 class BugReporterContext;
 class GRExprEngine;
 class GRState;
-class Stmt;
 class BugType;
-class ParentMap;
 
 //===----------------------------------------------------------------------===//
 // Interface for individual bug reports.
@@ -475,6 +478,8 @@ void registerVarDeclsLastStore(BugReporterContext &BRC, const void *stmt,
 } // end namespace clang::bugreporter
 
 //===----------------------------------------------------------------------===//
+
+} // end GR namespace
 
 } // end clang namespace
 

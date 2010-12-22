@@ -11,13 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_SIMPLE_CONSTRAINT_MANAGER_H
-#define LLVM_CLANG_ANALYSIS_SIMPLE_CONSTRAINT_MANAGER_H
+#ifndef LLVM_CLANG_GR_SIMPLE_CONSTRAINT_MANAGER_H
+#define LLVM_CLANG_GR_SIMPLE_CONSTRAINT_MANAGER_H
 
 #include "clang/GR/PathSensitive/ConstraintManager.h"
 #include "clang/GR/PathSensitive/GRState.h"
 
 namespace clang {
+
+namespace GR {
 
 class SimpleConstraintManager : public ConstraintManager {
   GRSubEngine &SU;
@@ -84,6 +86,8 @@ protected:
   const GRState *assumeAux(const GRState *state, NonLoc Cond, bool Assumption);
 };
 
-}  // end clang namespace
+} // end GR namespace
+
+} // end clang namespace
 
 #endif

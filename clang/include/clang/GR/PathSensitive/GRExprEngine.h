@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE
-#define LLVM_CLANG_ANALYSIS_GREXPRENGINE
+#ifndef LLVM_CLANG_GR_GREXPRENGINE
+#define LLVM_CLANG_GR_GREXPRENGINE
 
 #include "clang/GR/PathSensitive/AnalysisManager.h"
 #include "clang/GR/PathSensitive/GRSubEngine.h"
@@ -28,9 +28,13 @@
 #include "clang/AST/StmtObjC.h"
 
 namespace clang {
+
+class ObjCForCollectionStmt;
+
+namespace GR {
+
 class AnalysisManager;
 class Checker;
-class ObjCForCollectionStmt;
 
 class GRExprEngine : public GRSubEngine {
   AnalysisManager &AMgr;
@@ -532,6 +536,8 @@ private:
 
   bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);
 };
+
+} // end GR namespace
 
 } // end clang namespace
 

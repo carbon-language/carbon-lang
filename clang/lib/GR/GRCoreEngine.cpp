@@ -25,11 +25,14 @@
 using llvm::cast;
 using llvm::isa;
 using namespace clang;
+using namespace GR;
 
 // This should be removed in the future.
 namespace clang {
+namespace GR {
 GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                   const LangOptions& lopts);
+}
 }
 
 //===----------------------------------------------------------------------===//

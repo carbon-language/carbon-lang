@@ -17,6 +17,7 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class PointerArithChecker 
@@ -66,6 +67,6 @@ void PointerArithChecker::PreVisitBinaryOperator(CheckerContext &C,
   }
 }
 
-void clang::RegisterPointerArithChecker(GRExprEngine &Eng) {
+void GR::RegisterPointerArithChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new PointerArithChecker());
 }

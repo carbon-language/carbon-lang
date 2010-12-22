@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CHECKER_ANALYSISCONSUMER_H
-#define LLVM_CLANG_CHECKER_ANALYSISCONSUMER_H
+#ifndef LLVM_CLANG_GR_ANALYSISCONSUMER_H
+#define LLVM_CLANG_GR_ANALYSISCONSUMER_H
 
 #include <string>
 
@@ -23,6 +23,8 @@ class AnalyzerOptions;
 class ASTConsumer;
 class Preprocessor;
 
+namespace GR {
+
 /// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
 /// analysis passes.  (The set of analyses run is controlled by command-line
 /// options.)
@@ -30,6 +32,8 @@ ASTConsumer* CreateAnalysisConsumer(const Preprocessor &pp,
                                     const std::string &output,
                                     const AnalyzerOptions& Opts);
 
-}
+} // end GR namespace
+
+} // end clang namespace
 
 #endif

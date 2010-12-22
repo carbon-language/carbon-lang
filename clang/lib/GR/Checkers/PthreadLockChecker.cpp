@@ -19,6 +19,7 @@
 #include "llvm/ADT/ImmutableSet.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class PthreadLockChecker
@@ -44,13 +45,15 @@ public:
 // GDM Entry for tracking lock state.
 namespace { class LockSet {}; }
 namespace clang {
+namespace GR {
 template <> struct GRStateTrait<LockSet> :
   public GRStatePartialTrait<llvm::ImmutableSet<const MemRegion*> > {
     static void* GDMIndex() { return PthreadLockChecker::getTag(); }
 };
+} // end GR namespace
 } // end clang namespace
 
-void clang::RegisterPthreadLockChecker(GRExprEngine &Eng) {
+void GR::RegisterPthreadLockChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new PthreadLockChecker());
 }
 

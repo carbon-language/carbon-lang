@@ -13,18 +13,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DEREFCHECKER
-#define LLVM_CLANG_DEREFCHECKER
+#ifndef LLVM_CLANG_GR_DEREFCHECKER
+#define LLVM_CLANG_GR_DEREFCHECKER
 
 #include <utility>
 
 namespace clang {
+
+namespace GR {
 
 class GRExprEngine;
 class ExplodedNode;
 
 std::pair<ExplodedNode * const *, ExplodedNode * const *>
 GetImplicitNullDereferences(GRExprEngine &Eng);
+
+} // end GR namespace
 
 } // end clang namespace
 

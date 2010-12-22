@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_GRWORKLIST
-#define LLVM_CLANG_ANALYSIS_GRWORKLIST
+#ifndef LLVM_CLANG_GR_GRWORKLIST
+#define LLVM_CLANG_GR_GRWORKLIST
 
 #include "clang/GR/PathSensitive/GRBlockCounter.h"
 #include <cstddef>
@@ -21,6 +21,9 @@
 namespace clang {
   
 class CFGBlock;
+
+namespace GR {
+
 class ExplodedNode;
 class ExplodedNodeImpl;
 
@@ -83,5 +86,9 @@ public:
   static GRWorkList *MakeBFS();
   static GRWorkList *MakeBFSBlockDFSContents();
 };
+
+} // end GR namespace
+
 } // end clang namespace
+
 #endif

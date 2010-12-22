@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_BASICVALUEFACTORY_H
-#define LLVM_CLANG_ANALYSIS_BASICVALUEFACTORY_H
+#ifndef LLVM_CLANG_GR_BASICVALUEFACTORY_H
+#define LLVM_CLANG_GR_BASICVALUEFACTORY_H
 
 #include "clang/GR/PathSensitive/SVals.h"
 #include "clang/AST/ASTContext.h"
@@ -23,6 +23,8 @@
 #include "llvm/ADT/ImmutableList.h"
 
 namespace clang {
+
+namespace GR {
 
   class GRState;
 
@@ -191,6 +193,8 @@ public:
 
   const SVal* getPersistentSVal(SVal X);
 };
+
+} // end GR namespace
 
 } // end clang namespace
 

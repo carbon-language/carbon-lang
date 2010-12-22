@@ -12,10 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GREXPRENGINE_EXPERIMENTAL_CHECKS
-#define LLVM_CLANG_GREXPRENGINE_EXPERIMENTAL_CHECKS
+#ifndef LLVM_CLANG_GR_GREXPRENGINE_EXPERIMENTAL_CHECKS
+#define LLVM_CLANG_GR_GREXPRENGINE_EXPERIMENTAL_CHECKS
 
 namespace clang {
+
+namespace GR {
 
 class GRExprEngine;
 
@@ -28,5 +30,8 @@ void RegisterPthreadLockChecker(GRExprEngine &Eng);
 void RegisterStreamChecker(GRExprEngine &Eng);
 void RegisterUnreachableCodeChecker(GRExprEngine &Eng);
 
+} // end GR namespace
+
 } // end clang namespace
+
 #endif

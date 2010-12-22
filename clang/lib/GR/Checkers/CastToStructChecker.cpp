@@ -18,6 +18,7 @@
 #include "GRExprEngineInternalChecks.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class CastToStructChecker 
@@ -73,6 +74,6 @@ void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
   }
 }
 
-void clang::RegisterCastToStructChecker(GRExprEngine &Eng) {
+void GR::RegisterCastToStructChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new CastToStructChecker());
 }

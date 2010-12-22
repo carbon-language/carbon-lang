@@ -11,15 +11,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CHECKER_PATH_DIAGNOSTIC_CLIENTS_H
-#define LLVM_CLANG_CHECKER_PATH_DIAGNOSTIC_CLiENTS_H
+#ifndef LLVM_CLANG_GR_PATH_DIAGNOSTIC_CLIENTS_H
+#define LLVM_CLANG_GR_PATH_DIAGNOSTIC_CLiENTS_H
 
 #include <string>
 
 namespace clang {
 
-class PathDiagnosticClient;
 class Preprocessor;
+
+namespace GR {
+
+class PathDiagnosticClient;
 
 PathDiagnosticClient*
 createHTMLDiagnosticClient(const std::string& prefix, const Preprocessor &PP);
@@ -32,5 +35,8 @@ PathDiagnosticClient*
 createTextPathDiagnosticClient(const std::string& prefix,
                                const Preprocessor &PP);
 
+} // end GR namespace
+
 } // end clang namespace
+
 #endif

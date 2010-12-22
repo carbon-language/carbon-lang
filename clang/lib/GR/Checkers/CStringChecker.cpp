@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class CStringChecker : public CheckerVisitor<CStringChecker> {
@@ -99,14 +100,16 @@ public:
 } //end anonymous namespace
 
 namespace clang {
+namespace GR {
   template <>
   struct GRStateTrait<CStringLength> 
     : public GRStatePartialTrait<CStringLength::EntryMap> {
     static void *GDMIndex() { return CStringChecker::getTag(); }
   };
 }
+}
 
-void clang::RegisterCStringChecker(GRExprEngine &Eng) {
+void GR::RegisterCStringChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new CStringChecker());
 }
 

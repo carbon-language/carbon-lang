@@ -27,6 +27,8 @@ class Decl;
 class SourceManager;
 class Stmt;
 
+namespace GR {
+
 //===----------------------------------------------------------------------===//
 // High-level interface for handlers of path-sensitive diagnostics.
 //===----------------------------------------------------------------------===//
@@ -490,5 +492,9 @@ public:
   
   void Profile(llvm::FoldingSetNodeID &ID) const;
 };  
+
+} // end GR namespace
+
 } //end clang namespace
+
 #endif

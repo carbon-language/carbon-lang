@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_LOCALCHECKERS_H
-#define LLVM_CLANG_ANALYSIS_LOCALCHECKERS_H
+#ifndef LLVM_CLANG_GR_LOCALCHECKERS_H
+#define LLVM_CLANG_GR_LOCALCHECKERS_H
 
 namespace clang {
 
@@ -21,17 +21,20 @@ class CFG;
 class Decl;
 class Diagnostic;
 class ASTContext;
-class PathDiagnosticClient;
-class GRTransferFuncs;
-class BugType;
 class LangOptions;
 class ParentMap;
 class LiveVariables;
-class BugReporter;
 class ObjCImplementationDecl;
 class LangOptions;
-class GRExprEngine;
 class TranslationUnitDecl;
+
+namespace GR {
+
+class PathDiagnosticClient;
+class GRTransferFuncs;
+class BugType;
+class BugReporter;
+class GRExprEngine;
 
 void CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &map, 
                      BugReporter& BR);
@@ -56,6 +59,9 @@ void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
 void CheckSizeofPointer(const Decl *D, BugReporter &BR);
 
 void RegisterCallInliner(GRExprEngine &Eng);
+
+} // end GR namespace
+
 } // end namespace clang
 
 #endif

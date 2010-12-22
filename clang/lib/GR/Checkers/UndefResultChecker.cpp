@@ -18,6 +18,7 @@
 #include "clang/GR/PathSensitive/GRExprEngine.h"
 
 using namespace clang;
+using namespace GR;
 
 namespace {
 class UndefResultChecker 
@@ -32,7 +33,7 @@ public:
 };
 } // end anonymous namespace
 
-void clang::RegisterUndefResultChecker(GRExprEngine &Eng) {
+void GR::RegisterUndefResultChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new UndefResultChecker());
 }
 

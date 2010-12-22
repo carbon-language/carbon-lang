@@ -17,8 +17,9 @@
 #include "clang/GR/Checkers/LocalCheckers.h"
 
 using namespace clang;
+using namespace GR;
 
-void clang::RegisterExperimentalChecks(GRExprEngine &Eng) {
+void GR::RegisterExperimentalChecks(GRExprEngine &Eng) {
   // These are checks that never belong as internal checks
   // within GRExprEngine.
   RegisterCStringChecker(Eng);
@@ -29,7 +30,7 @@ void clang::RegisterExperimentalChecks(GRExprEngine &Eng) {
   RegisterUnreachableCodeChecker(Eng);
 }
 
-void clang::RegisterExperimentalInternalChecks(GRExprEngine &Eng) {
+void GR::RegisterExperimentalInternalChecks(GRExprEngine &Eng) {
   // These are internal checks that should eventually migrate to
   // RegisterInternalChecks() once they have been further tested.
   

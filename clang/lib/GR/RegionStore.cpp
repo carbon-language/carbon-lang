@@ -29,6 +29,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+using namespace GR;
 using llvm::Optional;
 
 //===----------------------------------------------------------------------===//
@@ -403,12 +404,12 @@ public: // Part of public interface to class.
 // RegionStore creation.
 //===----------------------------------------------------------------------===//
 
-StoreManager *clang::CreateRegionStoreManager(GRStateManager& StMgr) {
+StoreManager *GR::CreateRegionStoreManager(GRStateManager& StMgr) {
   RegionStoreFeatures F = maximal_features_tag();
   return new RegionStoreManager(StMgr, F);
 }
 
-StoreManager *clang::CreateFieldsOnlyRegionStoreManager(GRStateManager &StMgr) {
+StoreManager *GR::CreateFieldsOnlyRegionStoreManager(GRStateManager &StMgr) {
   RegionStoreFeatures F = minimal_features_tag();
   F.enableFields(true);
   return new RegionStoreManager(StMgr, F);

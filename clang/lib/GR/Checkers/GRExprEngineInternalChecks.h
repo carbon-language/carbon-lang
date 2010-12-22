@@ -12,10 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GREXPRENGINE_INTERNAL_CHECKS
-#define LLVM_CLANG_GREXPRENGINE_INTERNAL_CHECKS
+#ifndef LLVM_CLANG_GR_GREXPRENGINE_INTERNAL_CHECKS
+#define LLVM_CLANG_GR_GREXPRENGINE_INTERNAL_CHECKS
 
 namespace clang {
+
+namespace GR {
 
 class GRExprEngine;
 
@@ -49,5 +51,8 @@ void RegisterMacOSXAPIChecker(GRExprEngine &Eng);
 void RegisterOSAtomicChecker(GRExprEngine &Eng);
 void RegisterUnixAPIChecker(GRExprEngine &Eng);
 
+} // end GR namespace
+
 } // end clang namespace
+
 #endif

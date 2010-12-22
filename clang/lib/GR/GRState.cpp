@@ -19,6 +19,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
+using namespace GR;
 
 // Give the vtable for ConstraintManager somewhere to live.
 // FIXME: Move this elsewhere.

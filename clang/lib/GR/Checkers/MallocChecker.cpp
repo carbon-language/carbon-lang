@@ -20,6 +20,7 @@
 #include "clang/GR/PathSensitive/SymbolManager.h"
 #include "llvm/ADT/ImmutableMap.h"
 using namespace clang;
+using namespace GR;
 
 namespace {
 
@@ -116,14 +117,16 @@ private:
 typedef llvm::ImmutableMap<SymbolRef, RefState> RegionStateTy;
 
 namespace clang {
+namespace GR {
   template <>
   struct GRStateTrait<RegionState> 
     : public GRStatePartialTrait<RegionStateTy> {
     static void *GDMIndex() { return MallocChecker::getTag(); }
   };
 }
+}
 
-void clang::RegisterMallocChecker(GRExprEngine &Eng) {
+void GR::RegisterMallocChecker(GRExprEngine &Eng) {
   Eng.registerCheck(new MallocChecker());
 }
 

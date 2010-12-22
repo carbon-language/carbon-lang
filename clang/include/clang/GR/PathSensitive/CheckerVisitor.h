@@ -11,11 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_CHECKERVISITOR
-#define LLVM_CLANG_ANALYSIS_CHECKERVISITOR
+#ifndef LLVM_CLANG_GR_CHECKERVISITOR
+#define LLVM_CLANG_GR_CHECKERVISITOR
 #include "clang/GR/PathSensitive/Checker.h"
 
 namespace clang {
+
+namespace GR {
 
 //===----------------------------------------------------------------------===//
 // Checker visitor interface.  Used by subclasses of Checker to specify their
@@ -101,6 +103,8 @@ void PostVisit ## NAME(CheckerContext &C, const NAME* S) {\
 }
 #include "clang/GR/PathSensitive/CheckerVisitor.def"
 };
+
+} // end GR namespace
 
 } // end clang namespace
 

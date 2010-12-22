@@ -7,12 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CHECKER_FRONTENDACTIONS_H
-#define LLVM_CLANG_CHECKER_FRONTENDACTIONS_H
+#ifndef LLVM_CLANG_GR_FRONTENDACTIONS_H
+#define LLVM_CLANG_GR_FRONTENDACTIONS_H
 
 #include "clang/Frontend/FrontendAction.h"
 
 namespace clang {
+
+namespace GR {
 
 //===----------------------------------------------------------------------===//
 // AST Consumer Actions
@@ -24,6 +26,8 @@ protected:
                                          llvm::StringRef InFile);
 };
 
-}  // end namespace clang
+} // end GR namespace
+
+} // end namespace clang
 
 #endif

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_STORE_H
-#define LLVM_CLANG_ANALYSIS_STORE_H
+#ifndef LLVM_CLANG_GR_STORE_H
+#define LLVM_CLANG_GR_STORE_H
 
 #include "clang/GR/PathSensitive/MemRegion.h"
 #include "clang/GR/PathSensitive/SValBuilder.h"
@@ -20,6 +20,13 @@
 #include "llvm/ADT/Optional.h"
 
 namespace clang {
+
+class Stmt;
+class Expr;
+class ObjCIvarDecl;
+class StackFrameContext;
+
+namespace GR {
 
 /// Store - This opaque type encapsulates an immutable mapping from
 ///  locations to values.  At a high-level, it represents the symbolic
@@ -29,11 +36,7 @@ typedef const void* Store;
 
 class GRState;
 class GRStateManager;
-class Stmt;
-class Expr;
-class ObjCIvarDecl;
 class SubRegionMap;
-class StackFrameContext;
 
 class StoreManager {
 protected:
@@ -248,6 +251,9 @@ StoreManager *CreateBasicStoreManager(GRStateManager& StMgr);
 StoreManager *CreateRegionStoreManager(GRStateManager& StMgr);
 StoreManager *CreateFieldsOnlyRegionStoreManager(GRStateManager& StMgr);
 StoreManager *CreateFlatStoreManager(GRStateManager &StMgr);
+
+} // end GR namespace
+
 } // end clang namespace
 
 #endif
