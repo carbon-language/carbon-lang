@@ -6,7 +6,7 @@ target triple = "x86_64-pc-linux-gnu"
 ; DAGCombiner should fold this code in finite time.
 ; rdar://8606584
 
-define void @D() nounwind readnone {
+define void @test1() nounwind readnone {
 bb.nph:
   br label %while.cond
 
@@ -33,10 +33,10 @@ while.end:                                        ; preds = %while.cond
 
 ; DAGCombiner shouldn't fold the sdiv (ashr) away.
 ; rdar://8636812
-; CHECK: main:
+; CHECK: test2:
 ; CHECK:   sarl
 
-define i32 @main() nounwind {
+define i32 @test2() nounwind {
 entry:
   %i = alloca i32, align 4
   %j = alloca i8, align 1
@@ -63,3 +63,21 @@ if.end:                                           ; preds = %entry
 declare void @abort() noreturn
 
 declare void @exit(i32) noreturn
+
+; DAG Combiner can't fold this into a load of the 1'th byte.
+; PR8757
+define i32 @test3(i32 *%P) nounwind ssp {
+  volatile store i32 128, i32* %P
+  %tmp4.pre = load i32* %P
+  %phitmp = trunc i32 %tmp4.pre to i16
+  %phitmp13 = shl i16 %phitmp, 8
+  %phitmp14 = ashr i16 %phitmp13, 8
+  %phitmp15 = lshr i16 %phitmp14, 8
+  %phitmp16 = zext i16 %phitmp15 to i32
+  ret i32 %phitmp16
+  
+; CHECK: movl	$128, (%rdi)
+; CHECK-NEXT: movsbl	(%rdi), %eax
+; CHECK-NEXT: movzbl	%ah, %eax
+; CHECK-NEXT: ret
+}
