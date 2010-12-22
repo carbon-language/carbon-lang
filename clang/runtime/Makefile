@@ -28,7 +28,7 @@ PROJ_resources_lib := $(PROJ_resources)/lib
 # Expect compiler-rt to be in llvm/projects/compiler-rt
 COMPILERRT_SRC_ROOT := $(LLVM_SRC_ROOT)/projects/compiler-rt
 
-ifndef CLANG_NO_RUNTIME
+ifneq ($(CLANG_NO_RUNTIME),1)
 ifeq ($(shell test -d $(COMPILERRT_SRC_ROOT) && echo OK),OK)
 
 # Select the compiler-rt configuration to use, and install directory.
