@@ -175,7 +175,6 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
   // Use the default for now
   setOperationAction(ISD::STACKSAVE,         MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,      MVT::Other, Expand);
-  setOperationAction(ISD::MEMBARRIER,        MVT::Other, Expand);
 
   // MBlaze doesn't have extending float->double load/store
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
@@ -213,172 +212,353 @@ SDValue MBlazeTargetLowering::LowerOperation(SDValue Op,
 //===----------------------------------------------------------------------===//
 MachineBasicBlock*
 MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                  MachineBasicBlock *BB) const {
+                                                  MachineBasicBlock *MBB)
+                                                  const {
+  switch (MI->getOpcode()) {
+  default: assert(false && "Unexpected instr type to insert");
+
+  case MBlaze::ShiftRL:
+  case MBlaze::ShiftRA:
+  case MBlaze::ShiftL:
+    return EmitCustomShift(MI, MBB);
+
+  case MBlaze::Select_FCC:
+  case MBlaze::Select_CC:
+    return EmitCustomSelect(MI, MBB);
+
+  case MBlaze::CAS32:
+  case MBlaze::SWP32:
+  case MBlaze::LAA32:
+  case MBlaze::LAS32:
+  case MBlaze::LAD32:
+  case MBlaze::LAO32:
+  case MBlaze::LAX32:
+  case MBlaze::LAN32:
+    return EmitCustomAtomic(MI, MBB);
+
+  case MBlaze::MEMBARRIER:
+    // The Microblaze does not need memory barriers. Just delete the pseudo
+    // instruction and finish.
+    MI->eraseFromParent();
+    return MBB;
+  }
+}
+
+MachineBasicBlock*
+MBlazeTargetLowering::EmitCustomShift(MachineInstr *MI,
+                                      MachineBasicBlock *MBB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
 
+  // To "insert" a shift left instruction, we actually have to insert a
+  // simple loop.  The incoming instruction knows the destination vreg to
+  // set, the source vreg to operate over and the shift amount.
+  const BasicBlock *LLVM_BB = MBB->getBasicBlock();
+  MachineFunction::iterator It = MBB;
+  ++It;
+
+  // start:
+  //   andi     samt, samt, 31
+  //   beqid    samt, finish
+  //   add      dst, src, r0
+  // loop:
+  //   addik    samt, samt, -1
+  //   sra      dst, dst
+  //   bneid    samt, loop
+  //   nop
+  // finish:
+  MachineFunction *F = MBB->getParent();
+  MachineRegisterInfo &R = F->getRegInfo();
+  MachineBasicBlock *loop = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *finish = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(It, loop);
+  F->insert(It, finish);
+
+  // Update machine-CFG edges by transfering adding all successors and
+  // remaining instructions from the current block to the new block which
+  // will contain the Phi node for the select.
+  finish->splice(finish->begin(), MBB,
+                 llvm::next(MachineBasicBlock::iterator(MI)),
+                 MBB->end());
+  finish->transferSuccessorsAndUpdatePHIs(MBB);
+
+  // Add the true and fallthrough blocks as its successors.
+  MBB->addSuccessor(loop);
+  MBB->addSuccessor(finish);
+
+  // Next, add the finish block as a successor of the loop block
+  loop->addSuccessor(finish);
+  loop->addSuccessor(loop);
+
+  unsigned IAMT = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+  BuildMI(MBB, dl, TII->get(MBlaze::ANDI), IAMT)
+    .addReg(MI->getOperand(2).getReg())
+    .addImm(31);
+
+  unsigned IVAL = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+  BuildMI(MBB, dl, TII->get(MBlaze::ADDIK), IVAL)
+    .addReg(MI->getOperand(1).getReg())
+    .addImm(0);
+
+  BuildMI(MBB, dl, TII->get(MBlaze::BEQID))
+    .addReg(IAMT)
+    .addMBB(finish);
+
+  unsigned DST = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+  unsigned NDST = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+  BuildMI(loop, dl, TII->get(MBlaze::PHI), DST)
+    .addReg(IVAL).addMBB(MBB)
+    .addReg(NDST).addMBB(loop);
+
+  unsigned SAMT = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+  unsigned NAMT = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+  BuildMI(loop, dl, TII->get(MBlaze::PHI), SAMT)
+    .addReg(IAMT).addMBB(MBB)
+    .addReg(NAMT).addMBB(loop);
+
+  if (MI->getOpcode() == MBlaze::ShiftL)
+    BuildMI(loop, dl, TII->get(MBlaze::ADD), NDST).addReg(DST).addReg(DST);
+  else if (MI->getOpcode() == MBlaze::ShiftRA)
+    BuildMI(loop, dl, TII->get(MBlaze::SRA), NDST).addReg(DST);
+  else if (MI->getOpcode() == MBlaze::ShiftRL)
+    BuildMI(loop, dl, TII->get(MBlaze::SRL), NDST).addReg(DST);
+  else
+    llvm_unreachable("Cannot lower unknown shift instruction");
+
+  BuildMI(loop, dl, TII->get(MBlaze::ADDIK), NAMT)
+    .addReg(SAMT)
+    .addImm(-1);
+
+  BuildMI(loop, dl, TII->get(MBlaze::BNEID))
+    .addReg(NAMT)
+    .addMBB(loop);
+
+  BuildMI(*finish, finish->begin(), dl,
+          TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
+    .addReg(IVAL).addMBB(MBB)
+    .addReg(NDST).addMBB(loop);
+
+  // The pseudo instruction is no longer needed so remove it
+  MI->eraseFromParent();
+  return finish;
+}
+
+MachineBasicBlock*
+MBlazeTargetLowering::EmitCustomSelect(MachineInstr *MI,
+                                       MachineBasicBlock *MBB) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+
+  // To "insert" a SELECT_CC instruction, we actually have to insert the
+  // diamond control-flow pattern.  The incoming instruction knows the
+  // destination vreg to set, the condition code register to branch on, the
+  // true/false values to select between, and a branch opcode to use.
+  const BasicBlock *LLVM_BB = MBB->getBasicBlock();
+  MachineFunction::iterator It = MBB;
+  ++It;
+
+  //  thisMBB:
+  //  ...
+  //   TrueVal = ...
+  //   setcc r1, r2, r3
+  //   bNE   r1, r0, copy1MBB
+  //   fallthrough --> copy0MBB
+  MachineFunction *F = MBB->getParent();
+  MachineBasicBlock *flsBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *dneBB = F->CreateMachineBasicBlock(LLVM_BB);
+
+  unsigned Opc;
+  switch (MI->getOperand(4).getImm()) {
+  default: llvm_unreachable("Unknown branch condition");
+  case MBlazeCC::EQ: Opc = MBlaze::BEQID; break;
+  case MBlazeCC::NE: Opc = MBlaze::BNEID; break;
+  case MBlazeCC::GT: Opc = MBlaze::BGTID; break;
+  case MBlazeCC::LT: Opc = MBlaze::BLTID; break;
+  case MBlazeCC::GE: Opc = MBlaze::BGEID; break;
+  case MBlazeCC::LE: Opc = MBlaze::BLEID; break;
+  }
+
+  F->insert(It, flsBB);
+  F->insert(It, dneBB);
+
+  // Transfer the remainder of MBB and its successor edges to dneBB.
+  dneBB->splice(dneBB->begin(), MBB,
+                llvm::next(MachineBasicBlock::iterator(MI)),
+                MBB->end());
+  dneBB->transferSuccessorsAndUpdatePHIs(MBB);
+
+  MBB->addSuccessor(flsBB);
+  MBB->addSuccessor(dneBB);
+  flsBB->addSuccessor(dneBB);
+
+  BuildMI(MBB, dl, TII->get(Opc))
+    .addReg(MI->getOperand(3).getReg())
+    .addMBB(dneBB);
+
+  //  sinkMBB:
+  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+  //  ...
+  //BuildMI(dneBB, dl, TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
+  //  .addReg(MI->getOperand(1).getReg()).addMBB(flsBB)
+  //  .addReg(MI->getOperand(2).getReg()).addMBB(BB);
+
+  BuildMI(*dneBB, dneBB->begin(), dl,
+          TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
+    .addReg(MI->getOperand(2).getReg()).addMBB(flsBB)
+    .addReg(MI->getOperand(1).getReg()).addMBB(MBB);
+
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return dneBB;
+}
+
+MachineBasicBlock*
+MBlazeTargetLowering::EmitCustomAtomic(MachineInstr *MI,
+                                       MachineBasicBlock *MBB) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+
+  // All atomic instructions on the Microblaze are implemented using the
+  // load-linked / store-conditional style atomic instruction sequences.
+  // Thus, all operations will look something like the following:
+  // 
+  //  start:
+  //    lwx     RV, RP, 0
+  //    <do stuff>
+  //    swx     RV, RP, 0
+  //    addic   RC, R0, 0
+  //    bneid   RC, start
+  //
+  //  exit:
+  //
+  // To "insert" a shift left instruction, we actually have to insert a
+  // simple loop.  The incoming instruction knows the destination vreg to
+  // set, the source vreg to operate over and the shift amount.
+  const BasicBlock *LLVM_BB = MBB->getBasicBlock();
+  MachineFunction::iterator It = MBB;
+  ++It;
+
+  // start:
+  //   andi     samt, samt, 31
+  //   beqid    samt, finish
+  //   add      dst, src, r0
+  // loop:
+  //   addik    samt, samt, -1
+  //   sra      dst, dst
+  //   bneid    samt, loop
+  //   nop
+  // finish:
+  MachineFunction *F = MBB->getParent();
+  MachineRegisterInfo &R = F->getRegInfo();
+
+  // Create the start and exit basic blocks for the atomic operation
+  MachineBasicBlock *start = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *exit = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(It, start);
+  F->insert(It, exit);
+
+  // Update machine-CFG edges by transfering adding all successors and
+  // remaining instructions from the current block to the new block which
+  // will contain the Phi node for the select.
+  exit->splice(exit->begin(), MBB, llvm::next(MachineBasicBlock::iterator(MI)),
+               MBB->end());
+  exit->transferSuccessorsAndUpdatePHIs(MBB);
+
+  // Add the fallthrough block as its successors.
+  MBB->addSuccessor(start);
+
+  BuildMI(start, dl, TII->get(MBlaze::LWX), MI->getOperand(0).getReg())
+    .addReg(MI->getOperand(1).getReg())
+    .addReg(MBlaze::R0);
+
+  MachineBasicBlock *final = start;
+  unsigned finalReg = 0;
+
   switch (MI->getOpcode()) {
-  default: assert(false && "Unexpected instr type to insert");
-  case MBlaze::ShiftRL:
-  case MBlaze::ShiftRA:
-  case MBlaze::ShiftL: {
-    // To "insert" a shift left instruction, we actually have to insert a
-    // simple loop.  The incoming instruction knows the destination vreg to
-    // set, the source vreg to operate over and the shift amount.
-    const BasicBlock *LLVM_BB = BB->getBasicBlock();
-    MachineFunction::iterator It = BB;
-    ++It;
+  default: llvm_unreachable("Cannot lower unknown atomic instruction!");
 
-    // start:
-    //   andi     samt, samt, 31
-    //   beqid    samt, finish
-    //   add      dst, src, r0
-    // loop:
-    //   addik    samt, samt, -1
-    //   sra      dst, dst
-    //   bneid    samt, loop
-    //   nop
-    // finish:
-    MachineFunction *F = BB->getParent();
-    MachineRegisterInfo &R = F->getRegInfo();
-    MachineBasicBlock *loop = F->CreateMachineBasicBlock(LLVM_BB);
-    MachineBasicBlock *finish = F->CreateMachineBasicBlock(LLVM_BB);
-    F->insert(It, loop);
-    F->insert(It, finish);
+  case MBlaze::SWP32:
+    finalReg = MI->getOperand(2).getReg();
+    start->addSuccessor(exit);
+    start->addSuccessor(start);
+    break;
 
-    // Update machine-CFG edges by transfering adding all successors and
-    // remaining instructions from the current block to the new block which
-    // will contain the Phi node for the select.
-    finish->splice(finish->begin(), BB,
-                   llvm::next(MachineBasicBlock::iterator(MI)),
-                   BB->end());
-    finish->transferSuccessorsAndUpdatePHIs(BB);
-
-    // Add the true and fallthrough blocks as its successors.
-    BB->addSuccessor(loop);
-    BB->addSuccessor(finish);
-
-    // Next, add the finish block as a successor of the loop block
-    loop->addSuccessor(finish);
-    loop->addSuccessor(loop);
-
-    unsigned IAMT = R.createVirtualRegister(MBlaze::GPRRegisterClass);
-    BuildMI(BB, dl, TII->get(MBlaze::ANDI), IAMT)
-      .addReg(MI->getOperand(2).getReg())
-      .addImm(31);
-
-    unsigned IVAL = R.createVirtualRegister(MBlaze::GPRRegisterClass);
-    BuildMI(BB, dl, TII->get(MBlaze::ADDIK), IVAL)
-      .addReg(MI->getOperand(1).getReg())
-      .addImm(0);
-
-    BuildMI(BB, dl, TII->get(MBlaze::BEQID))
-      .addReg(IAMT)
-      .addMBB(finish);
-
-    unsigned DST = R.createVirtualRegister(MBlaze::GPRRegisterClass);
-    unsigned NDST = R.createVirtualRegister(MBlaze::GPRRegisterClass);
-    BuildMI(loop, dl, TII->get(MBlaze::PHI), DST)
-      .addReg(IVAL).addMBB(BB)
-      .addReg(NDST).addMBB(loop);
-
-    unsigned SAMT = R.createVirtualRegister(MBlaze::GPRRegisterClass);
-    unsigned NAMT = R.createVirtualRegister(MBlaze::GPRRegisterClass);
-    BuildMI(loop, dl, TII->get(MBlaze::PHI), SAMT)
-      .addReg(IAMT).addMBB(BB)
-      .addReg(NAMT).addMBB(loop);
-
-    if (MI->getOpcode() == MBlaze::ShiftL)
-      BuildMI(loop, dl, TII->get(MBlaze::ADD), NDST).addReg(DST).addReg(DST);
-    else if (MI->getOpcode() == MBlaze::ShiftRA)
-      BuildMI(loop, dl, TII->get(MBlaze::SRA), NDST).addReg(DST);
-    else if (MI->getOpcode() == MBlaze::ShiftRL)
-      BuildMI(loop, dl, TII->get(MBlaze::SRL), NDST).addReg(DST);
-    else
-        llvm_unreachable("Cannot lower unknown shift instruction");
-
-    BuildMI(loop, dl, TII->get(MBlaze::ADDIK), NAMT)
-      .addReg(SAMT)
-      .addImm(-1);
-
-    BuildMI(loop, dl, TII->get(MBlaze::BNEID))
-      .addReg(NAMT)
-      .addMBB(loop);
-
-    BuildMI(*finish, finish->begin(), dl,
-            TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
-      .addReg(IVAL).addMBB(BB)
-      .addReg(NDST).addMBB(loop);
-
-    // The pseudo instruction is no longer needed so remove it
-    MI->eraseFromParent();
-    return finish;
+  case MBlaze::LAN32:
+  case MBlaze::LAX32:
+  case MBlaze::LAO32:
+  case MBlaze::LAD32:
+  case MBlaze::LAS32:
+  case MBlaze::LAA32: {
+    unsigned opcode = 0;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("Cannot lower unknown atomic load!");
+    case MBlaze::LAA32: opcode = MBlaze::ADDIK; break;
+    case MBlaze::LAS32: opcode = MBlaze::RSUBIK; break;
+    case MBlaze::LAD32: opcode = MBlaze::AND; break;
+    case MBlaze::LAO32: opcode = MBlaze::OR; break;
+    case MBlaze::LAX32: opcode = MBlaze::XOR; break;
+    case MBlaze::LAN32: opcode = MBlaze::AND; break;
     }
 
-  case MBlaze::Select_FCC:
-  case MBlaze::Select_CC: {
-    // To "insert" a SELECT_CC instruction, we actually have to insert the
-    // diamond control-flow pattern.  The incoming instruction knows the
-    // destination vreg to set, the condition code register to branch on, the
-    // true/false values to select between, and a branch opcode to use.
-    const BasicBlock *LLVM_BB = BB->getBasicBlock();
-    MachineFunction::iterator It = BB;
-    ++It;
+    finalReg = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+    start->addSuccessor(exit);
+    start->addSuccessor(start);
 
-    //  thisMBB:
-    //  ...
-    //   TrueVal = ...
-    //   setcc r1, r2, r3
-    //   bNE   r1, r0, copy1MBB
-    //   fallthrough --> copy0MBB
-    MachineFunction *F = BB->getParent();
-    MachineBasicBlock *flsBB = F->CreateMachineBasicBlock(LLVM_BB);
-    MachineBasicBlock *dneBB = F->CreateMachineBasicBlock(LLVM_BB);
+    BuildMI(start, dl, TII->get(opcode), finalReg)
+      .addReg(MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(2).getReg());
 
-    unsigned Opc;
-    switch (MI->getOperand(4).getImm()) {
-    default: llvm_unreachable("Unknown branch condition");
-    case MBlazeCC::EQ: Opc = MBlaze::BEQID; break;
-    case MBlazeCC::NE: Opc = MBlaze::BNEID; break;
-    case MBlazeCC::GT: Opc = MBlaze::BGTID; break;
-    case MBlazeCC::LT: Opc = MBlaze::BLTID; break;
-    case MBlazeCC::GE: Opc = MBlaze::BGEID; break;
-    case MBlazeCC::LE: Opc = MBlaze::BLEID; break;
+    if (MI->getOpcode() == MBlaze::LAN32) {
+      unsigned tmp = finalReg;
+      finalReg = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+      BuildMI(start, dl, TII->get(MBlaze::XORI), finalReg)
+        .addReg(tmp)
+        .addImm(-1);
     }
+    break;
+  }
 
-    F->insert(It, flsBB);
-    F->insert(It, dneBB);
+  case MBlaze::CAS32: {
+    finalReg = MI->getOperand(3).getReg();
+    final = F->CreateMachineBasicBlock(LLVM_BB);
 
-    // Transfer the remainder of BB and its successor edges to dneBB.
-    dneBB->splice(dneBB->begin(), BB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  BB->end());
-    dneBB->transferSuccessorsAndUpdatePHIs(BB);
+    F->insert(It, final);
+    start->addSuccessor(exit);
+    start->addSuccessor(final);
+    final->addSuccessor(exit);
+    final->addSuccessor(start);
 
-    BB->addSuccessor(flsBB);
-    BB->addSuccessor(dneBB);
-    flsBB->addSuccessor(dneBB);
+    unsigned CMP = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+    BuildMI(start, dl, TII->get(MBlaze::CMP), CMP)
+      .addReg(MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(2).getReg());
 
-    BuildMI(BB, dl, TII->get(Opc))
-      .addReg(MI->getOperand(3).getReg())
-      .addMBB(dneBB);
+    BuildMI(start, dl, TII->get(MBlaze::BNEID))
+      .addReg(CMP)
+      .addMBB(exit);
 
-    //  sinkMBB:
-    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
-    //  ...
-    //BuildMI(dneBB, dl, TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
-    //  .addReg(MI->getOperand(1).getReg()).addMBB(flsBB)
-    //  .addReg(MI->getOperand(2).getReg()).addMBB(BB);
-
-    BuildMI(*dneBB, dneBB->begin(), dl,
-            TII->get(MBlaze::PHI), MI->getOperand(0).getReg())
-      .addReg(MI->getOperand(2).getReg()).addMBB(flsBB)
-      .addReg(MI->getOperand(1).getReg()).addMBB(BB);
-
-    MI->eraseFromParent();   // The pseudo instruction is gone now.
-    return dneBB;
+    final->moveAfter(start);
+    exit->moveAfter(final);
+    break;
   }
   }
+
+  unsigned CHK = R.createVirtualRegister(MBlaze::GPRRegisterClass);
+  BuildMI(final, dl, TII->get(MBlaze::SWX))
+    .addReg(finalReg)
+    .addReg(MI->getOperand(1).getReg())
+    .addReg(MBlaze::R0);
+
+  BuildMI(final, dl, TII->get(MBlaze::ADDIC), CHK)
+    .addReg(MBlaze::R0)
+    .addImm(0);
+
+  BuildMI(final, dl, TII->get(MBlaze::BNEID))
+    .addReg(CHK)
+    .addMBB(start);
+
+  // The pseudo instruction is no longer needed so remove it
+  MI->eraseFromParent();
+  return exit;
 }
 
 //===----------------------------------------------------------------------===//

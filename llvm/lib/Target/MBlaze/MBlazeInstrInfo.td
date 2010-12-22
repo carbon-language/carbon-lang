@@ -669,6 +669,47 @@ def IMM : MBlazeInst<0x2C, FCCI, (outs), (ins simm16:$imm),
                      "imm       $imm", [], IIAlu>;
 
 //===----------------------------------------------------------------------===//
+// Pseudo instructions for atomic operations
+//===----------------------------------------------------------------------===//
+let usesCustomInserter=1 in {
+  def CAS32 : MBlazePseudo<(outs GPR:$dst), (ins GPR:$ptr, GPR:$cmp, GPR:$swp),
+    "# atomic compare and swap",
+    [(set GPR:$dst, (atomic_cmp_swap_32 GPR:$ptr, GPR:$cmp, GPR:$swp))]>;
+
+  def SWP32 : MBlazePseudo<(outs GPR:$dst), (ins GPR:$ptr, GPR:$swp),
+    "# atomic swap",
+    [(set GPR:$dst, (atomic_swap_32 GPR:$ptr, GPR:$swp))]>;
+
+  def LAA32 : MBlazePseudo<(outs GPR:$dst), (ins GPR:$ptr, GPR:$val),
+    "# atomic load and add",
+    [(set GPR:$dst, (atomic_load_add_32 GPR:$ptr, GPR:$val))]>;
+
+  def LAS32 : MBlazePseudo<(outs GPR:$dst), (ins GPR:$ptr, GPR:$val),
+    "# atomic load and sub",
+    [(set GPR:$dst, (atomic_load_sub_32 GPR:$ptr, GPR:$val))]>;
+
+  def LAD32 : MBlazePseudo<(outs GPR:$dst), (ins GPR:$ptr, GPR:$val),
+    "# atomic load and and",
+    [(set GPR:$dst, (atomic_load_and_32 GPR:$ptr, GPR:$val))]>;
+
+  def LAO32 : MBlazePseudo<(outs GPR:$dst), (ins GPR:$ptr, GPR:$val),
+    "# atomic load and or",
+    [(set GPR:$dst, (atomic_load_or_32 GPR:$ptr, GPR:$val))]>;
+
+  def LAX32 : MBlazePseudo<(outs GPR:$dst), (ins GPR:$ptr, GPR:$val),
+    "# atomic load and xor",
+    [(set GPR:$dst, (atomic_load_xor_32 GPR:$ptr, GPR:$val))]>;
+
+  def LAN32 : MBlazePseudo<(outs GPR:$dst), (ins GPR:$ptr, GPR:$val),
+    "# atomic load and nand",
+    [(set GPR:$dst, (atomic_load_nand_32 GPR:$ptr, GPR:$val))]>;
+
+  def MEMBARRIER : MBlazePseudo<(outs), (ins),
+    "# memory barrier",
+    [(membarrier (i32 imm), (i32 imm), (i32 imm), (i32 imm), (i32 imm))]>;
+}
+
+//===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
 

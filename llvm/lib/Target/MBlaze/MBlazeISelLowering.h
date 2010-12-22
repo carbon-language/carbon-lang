@@ -149,6 +149,15 @@ namespace llvm {
                   const SmallVectorImpl<SDValue> &OutVals,
                   DebugLoc dl, SelectionDAG &DAG) const;
 
+    virtual MachineBasicBlock*
+      EmitCustomShift(MachineInstr *MI, MachineBasicBlock *MBB) const;
+
+    virtual MachineBasicBlock*
+      EmitCustomSelect(MachineInstr *MI, MachineBasicBlock *MBB) const;
+
+    virtual MachineBasicBlock*
+            EmitCustomAtomic(MachineInstr *MI, MachineBasicBlock *MBB) const;
+
     virtual MachineBasicBlock *
       EmitInstrWithCustomInserter(MachineInstr *MI,
                                   MachineBasicBlock *MBB) const;
