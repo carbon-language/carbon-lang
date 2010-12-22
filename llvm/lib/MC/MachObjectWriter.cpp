@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetAsmBackend.h"
 
 // FIXME: Gross.
+#include "../Target/ARM/ARMFixupKinds.h"
 #include "../Target/X86/X86FixupKinds.h"
 
 #include <vector>
@@ -843,12 +844,33 @@ public:
     Relocations[Fragment->getParent()].push_back(MRE);
   }
 
+  static bool getARMFixupKindMachOInfo(unsigned Kind, bool &Is24BitBranch,
+                                       unsigned &Log2Size) {
+    switch (Kind) {
+    default:
+      return false;
+
+      // Handle 24-bit branch kinds.
+    case ARM::fixup_arm_ldst_pcrel_12:
+    case ARM::fixup_arm_pcrel_10:
+    case ARM::fixup_arm_adr_pcrel_12:
+    case ARM::fixup_arm_branch:
+      Is24BitBranch = true;
+      // Report as 'long', even though that is not quite accurate.
+      Log2Size = llvm::Log2_32(4);
+      return true;
+    }
+  }
   void RecordARMRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                            const MCFragment *Fragment, const MCFixup &Fixup,
                            MCValue Target, uint64_t &FixedValue) {
     unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
-    // FIXME: Eliminate this!
-    unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
+    unsigned Log2Size;
+    bool Is24BitBranch;
+    if (!getARMFixupKindMachOInfo(Fixup.getKind(), Is24BitBranch, Log2Size)) {
+      report_fatal_error("unknown ARM fixup kind!");
+      return;
+    }
 
     // If this is a difference or a defined symbol plus an offset, then we need
     // a scattered relocation entry.  Differences always require scattered
@@ -912,7 +934,8 @@ public:
       if (IsPCRel)
         FixedValue -= getSectionAddress(Fragment->getParent());
 
-      Type = macho::RIT_Vanilla;
+      // Determine the appropriate type based on the fixup kind.
+      Type = Is24BitBranch ? macho::RIT_ARM_Branch24Bit : macho::RIT_Vanilla;
     }
 
     // struct relocation_info (8 bytes)
