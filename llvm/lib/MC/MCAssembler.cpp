@@ -687,7 +687,9 @@ bool MCAssembler::RelaxDwarfLineAddr(MCAsmLayout &Layout,
 				     MCDwarfLineAddrFragment &DF) {
   int64_t AddrDelta = 0;
   uint64_t OldSize = DF.getContents().size();
-  DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, Layout);
+  bool IsAbs = DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, Layout);
+  (void)IsAbs;
+  assert(IsAbs);
   int64_t LineDelta;
   LineDelta = DF.getLineDelta();
   SmallString<8> &Data = DF.getContents();

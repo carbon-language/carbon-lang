@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
 
 #include "llvm/Support/ErrorHandling.h"
@@ -90,7 +91,7 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
     return;
   }
   DF->addFixup(MCFixup::Create(DF->getContents().size(),
-                               AddValueSymbols(Value),
+                               Value,
                                MCFixup::getKindForSize(Size, isPCRel)));
   DF->getContents().resize(DF->getContents().size() + Size, 0);
 }
@@ -209,6 +210,11 @@ void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
   if (AddrDelta->EvaluateAsAbsolute(Res, getAssembler())) {
     MCDwarfLineAddr::Emit(this, LineDelta, Res);
     return;
+  }
+  if (!getContext().getAsmInfo().hasAggressiveSymbolFolding()) {
+    MCSymbol *ABS = getContext().CreateTempSymbol();
+    EmitAssignment(ABS, AddrDelta);
+    AddrDelta = MCSymbolRefExpr::Create(ABS, getContext());
   }
   new MCDwarfLineAddrFragment(LineDelta, *AddrDelta, getCurrentSectionData());
 }
