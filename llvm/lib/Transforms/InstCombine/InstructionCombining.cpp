@@ -58,6 +58,8 @@ STATISTIC(NumCombined , "Number of insts combined");
 STATISTIC(NumConstProp, "Number of constant folds");
 STATISTIC(NumDeadInst , "Number of dead inst eliminated");
 STATISTIC(NumSunkInst , "Number of instructions sunk");
+STATISTIC(NumFactor   , "Number of factorizations");
+STATISTIC(NumReassoc  , "Number of reassociations");
 
 // Initialization Routines
 void llvm::initializeInstCombine(PassRegistry &Registry) {
@@ -155,6 +157,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(0, A);
           I.setOperand(1, V);
           Changed = true;
+          ++NumReassoc;
           continue;
         }
       }
@@ -171,6 +174,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(0, V);
           I.setOperand(1, C);
           Changed = true;
+          ++NumReassoc;
           continue;
         }
       }
@@ -189,6 +193,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(0, V);
           I.setOperand(1, B);
           Changed = true;
+          ++NumReassoc;
           continue;
         }
       }
@@ -205,6 +210,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(0, B);
           I.setOperand(1, V);
           Changed = true;
+          ++NumReassoc;
           continue;
         }
       }
@@ -321,8 +327,10 @@ Instruction *InstCombiner::SimplifyByFactorizing(BinaryOperator &I) {
       // operations "A op' B" and "C op' D" will be zapped since no longer used.
       if (!RHS && Op0->hasOneUse() && Op1->hasOneUse())
         RHS = Builder->CreateBinOp(OuterOpcode, B, D, Op1->getName());
-      if (RHS)
+      if (RHS) {
+        ++NumFactor;
         return BinaryOperator::Create(InnerOpcode, A, RHS);
+      }
     }
 
   // Does "(X op Y) op' Z" always equal "(X op' Z) op (Y op' Z)"?
@@ -339,8 +347,10 @@ Instruction *InstCombiner::SimplifyByFactorizing(BinaryOperator &I) {
       // operations "A op' B" and "C op' D" will be zapped since no longer used.
       if (!LHS && Op0->hasOneUse() && Op1->hasOneUse())
         LHS = Builder->CreateBinOp(OuterOpcode, A, C, Op0->getName());
-      if (LHS)
+      if (LHS) {
+        ++NumFactor;
         return BinaryOperator::Create(InnerOpcode, LHS, B);
+      }
     }
 
   return 0;

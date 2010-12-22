@@ -17,6 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "instsimplify"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
@@ -27,6 +29,10 @@ using namespace llvm;
 using namespace llvm::PatternMatch;
 
 #define RecursionLimit 3
+
+STATISTIC(NumExpand,  "Number of expansions");
+STATISTIC(NumFactor , "Number of factorizations");
+STATISTIC(NumReassoc, "Number of reassociations");
 
 static Value *SimplifyAndInst(Value *, Value *, const TargetData *,
                               const DominatorTree *, unsigned);
@@ -81,12 +87,17 @@ static Value *ExpandBinOp(unsigned Opcode, Value *LHS, Value *RHS,
         if (Value *R = SimplifyBinOp(Opcode, B, C, TD, DT, MaxRecurse)) {
           // They do! Return "L op' R" if it simplifies or is already available.
           // If "L op' R" equals "A op' B" then "L op' R" is just the LHS.
-          if ((L == A && R == B) ||
-              (Instruction::isCommutative(OpcodeToExpand) && L == B && R == A))
+          if ((L == A && R == B) || (Instruction::isCommutative(OpcodeToExpand)
+                                     && L == B && R == A)) {
+            ++NumExpand;
             return LHS;
+          }
           // Otherwise return "L op' R" if it simplifies.
-          if (Value *V = SimplifyBinOp(OpcodeToExpand, L, R, TD, DT,MaxRecurse))
+          if (Value *V = SimplifyBinOp(OpcodeToExpand, L, R, TD, DT,
+                                       MaxRecurse)) {
+            ++NumExpand;
             return V;
+          }
         }
     }
 
@@ -100,12 +111,17 @@ static Value *ExpandBinOp(unsigned Opcode, Value *LHS, Value *RHS,
         if (Value *R = SimplifyBinOp(Opcode, A, C, TD, DT, MaxRecurse)) {
           // They do! Return "L op' R" if it simplifies or is already available.
           // If "L op' R" equals "B op' C" then "L op' R" is just the RHS.
-          if ((L == B && R == C) ||
-              (Instruction::isCommutative(OpcodeToExpand) && L == C && R == B))
+          if ((L == B && R == C) || (Instruction::isCommutative(OpcodeToExpand)
+                                     && L == C && R == B)) {
+            ++NumExpand;
             return RHS;
+          }
           // Otherwise return "L op' R" if it simplifies.
-          if (Value *V = SimplifyBinOp(OpcodeToExpand, L, R, TD, DT,MaxRecurse))
+          if (Value *V = SimplifyBinOp(OpcodeToExpand, L, R, TD, DT,
+                                       MaxRecurse)) {
+            ++NumExpand;
             return V;
+          }
         }
     }
 
@@ -144,10 +160,15 @@ static Value *FactorizeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
     if (Value *V = SimplifyBinOp(Opcode, B, DD, TD, DT, MaxRecurse)) {
       // It does!  Return "A op' V" if it simplifies or is already available.
       // If V equals B then "A op' V" is just the LHS.
-      if (V == B) return LHS;
+      if (V == B) {
+        ++NumFactor;
+        return LHS;
+      }
       // Otherwise return "A op' V" if it simplifies.
-      if (Value *W = SimplifyBinOp(OpcodeToExtract, A, V, TD, DT, MaxRecurse))
+      if (Value *W = SimplifyBinOp(OpcodeToExtract, A, V, TD, DT, MaxRecurse)) {
+        ++NumFactor;
         return W;
+      }
     }
   }
 
@@ -161,10 +182,15 @@ static Value *FactorizeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
     if (Value *V = SimplifyBinOp(Opcode, A, CC, TD, DT, MaxRecurse)) {
       // It does!  Return "V op' B" if it simplifies or is already available.
       // If V equals A then "V op' B" is just the LHS.
-      if (V == B) return LHS;
+      if (V == B) {
+        ++NumFactor;
+        return LHS;
+      }
       // Otherwise return "V op' B" if it simplifies.
-      if (Value *W = SimplifyBinOp(OpcodeToExtract, V, B, TD, DT, MaxRecurse))
+      if (Value *W = SimplifyBinOp(OpcodeToExtract, V, B, TD, DT, MaxRecurse)) {
+        ++NumFactor;
         return W;
+      }
     }
   }
 
@@ -198,8 +224,10 @@ static Value *SimplifyAssociativeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
       // If V equals B then "A op V" is just the LHS.
       if (V == B) return LHS;
       // Otherwise return "A op V" if it simplifies.
-      if (Value *W = SimplifyBinOp(Opcode, A, V, TD, DT, MaxRecurse))
+      if (Value *W = SimplifyBinOp(Opcode, A, V, TD, DT, MaxRecurse)) {
+        ++NumReassoc;
         return W;
+      }
     }
   }
 
@@ -215,8 +243,10 @@ static Value *SimplifyAssociativeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
       // If V equals B then "V op C" is just the RHS.
       if (V == B) return RHS;
       // Otherwise return "V op C" if it simplifies.
-      if (Value *W = SimplifyBinOp(Opcode, V, C, TD, DT, MaxRecurse))
+      if (Value *W = SimplifyBinOp(Opcode, V, C, TD, DT, MaxRecurse)) {
+        ++NumReassoc;
         return W;
+      }
     }
   }
 
@@ -236,8 +266,10 @@ static Value *SimplifyAssociativeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
       // If V equals A then "V op B" is just the LHS.
       if (V == A) return LHS;
       // Otherwise return "V op B" if it simplifies.
-      if (Value *W = SimplifyBinOp(Opcode, V, B, TD, DT, MaxRecurse))
+      if (Value *W = SimplifyBinOp(Opcode, V, B, TD, DT, MaxRecurse)) {
+        ++NumReassoc;
         return W;
+      }
     }
   }
 
@@ -253,8 +285,10 @@ static Value *SimplifyAssociativeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
       // If V equals C then "B op V" is just the RHS.
       if (V == C) return RHS;
       // Otherwise return "B op V" if it simplifies.
-      if (Value *W = SimplifyBinOp(Opcode, B, V, TD, DT, MaxRecurse))
+      if (Value *W = SimplifyBinOp(Opcode, B, V, TD, DT, MaxRecurse)) {
+        ++NumReassoc;
         return W;
+      }
     }
   }
 
