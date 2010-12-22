@@ -4242,7 +4242,6 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       // of the extended byte.  This is not worth optimizing for.
       if (ShAmt >= VT.getSizeInBits())
         return SDValue();
-
     }
   }
 
@@ -4250,67 +4249,70 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   // we can fold the truncate through the shift.
   unsigned ShLeftAmt = 0;
   if (ShAmt == 0 && N0.getOpcode() == ISD::SHL && N0.hasOneUse() &&
-      ExtVT == VT &&
-      TLI.isNarrowingProfitable(N0.getValueType(), VT)) {
+      ExtVT == VT && TLI.isNarrowingProfitable(N0.getValueType(), VT)) {
     if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
       ShLeftAmt = N01->getZExtValue();
       N0 = N0.getOperand(0);
     }
   }
+  
+  // If we haven't found a load, we can't narrow it.  Don't transform one with
+  // multiple uses, this would require adding a new load.
+  if (!isa<LoadSDNode>(N0) || !N0.hasOneUse() ||
+      // Don't change the width of a volatile load.
+      cast<LoadSDNode>(N0)->isVolatile())
+    return SDValue();
 
   // Do not generate loads of non-round integer types since these can
   // be expensive (and would be wrong if the type is not byte sized).
-  if (isa<LoadSDNode>(N0) && N0.hasOneUse() && ExtVT.isRound() &&
-      cast<LoadSDNode>(N0)->getMemoryVT().getSizeInBits() >= EVTBits &&
-      // Do not change the width of a volatile load.
-      !cast<LoadSDNode>(N0)->isVolatile()) {
-    LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    EVT PtrType = N0.getOperand(1).getValueType();
+  if (!ExtVT.isRound() ||
+      cast<LoadSDNode>(N0)->getMemoryVT().getSizeInBits() < EVTBits)
+    return SDValue();
+  
+  LoadSDNode *LN0 = cast<LoadSDNode>(N0);
+  EVT PtrType = N0.getOperand(1).getValueType();
 
-    // For big endian targets, we need to adjust the offset to the pointer to
-    // load the correct bytes.
-    if (TLI.isBigEndian()) {
-      unsigned LVTStoreBits = LN0->getMemoryVT().getStoreSizeInBits();
-      unsigned EVTStoreBits = ExtVT.getStoreSizeInBits();
-      ShAmt = LVTStoreBits - EVTStoreBits - ShAmt;
-    }
-
-    uint64_t PtrOff =  ShAmt / 8;
-    unsigned NewAlign = MinAlign(LN0->getAlignment(), PtrOff);
-    SDValue NewPtr = DAG.getNode(ISD::ADD, LN0->getDebugLoc(),
-                                 PtrType, LN0->getBasePtr(),
-                                 DAG.getConstant(PtrOff, PtrType));
-    AddToWorkList(NewPtr.getNode());
-
-    SDValue Load = (ExtType == ISD::NON_EXTLOAD)
-      ? DAG.getLoad(VT, N0.getDebugLoc(), LN0->getChain(), NewPtr,
-                    LN0->getPointerInfo().getWithOffset(PtrOff),
-                    LN0->isVolatile(), LN0->isNonTemporal(), NewAlign)
-      : DAG.getExtLoad(ExtType, VT, N0.getDebugLoc(), LN0->getChain(), NewPtr,
-                       LN0->getPointerInfo().getWithOffset(PtrOff),
-                       ExtVT, LN0->isVolatile(), LN0->isNonTemporal(),
-                       NewAlign);
-
-    // Replace the old load's chain with the new load's chain.
-    WorkListRemover DeadNodes(*this);
-    DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1),
-                                  &DeadNodes);
-
-    // Shift the result left, if we've swallowed a left shift.
-    SDValue Result = Load;
-    if (ShLeftAmt != 0) {
-      EVT ShImmTy = getShiftAmountTy();
-      if (!isUIntN(ShImmTy.getSizeInBits(), ShLeftAmt))
-        ShImmTy = VT;
-      Result = DAG.getNode(ISD::SHL, N0.getDebugLoc(), VT,
-                           Result, DAG.getConstant(ShLeftAmt, ShImmTy));
-    }
-
-    // Return the new loaded value.
-    return Result;
+  // For big endian targets, we need to adjust the offset to the pointer to
+  // load the correct bytes.
+  if (TLI.isBigEndian()) {
+    unsigned LVTStoreBits = LN0->getMemoryVT().getStoreSizeInBits();
+    unsigned EVTStoreBits = ExtVT.getStoreSizeInBits();
+    ShAmt = LVTStoreBits - EVTStoreBits - ShAmt;
   }
 
-  return SDValue();
+  uint64_t PtrOff = ShAmt / 8;
+  unsigned NewAlign = MinAlign(LN0->getAlignment(), PtrOff);
+  SDValue NewPtr = DAG.getNode(ISD::ADD, LN0->getDebugLoc(),
+                               PtrType, LN0->getBasePtr(),
+                               DAG.getConstant(PtrOff, PtrType));
+  AddToWorkList(NewPtr.getNode());
+
+  SDValue Load = (ExtType == ISD::NON_EXTLOAD)
+    ? DAG.getLoad(VT, N0.getDebugLoc(), LN0->getChain(), NewPtr,
+                  LN0->getPointerInfo().getWithOffset(PtrOff),
+                  LN0->isVolatile(), LN0->isNonTemporal(), NewAlign)
+    : DAG.getExtLoad(ExtType, VT, N0.getDebugLoc(), LN0->getChain(), NewPtr,
+                     LN0->getPointerInfo().getWithOffset(PtrOff),
+                     ExtVT, LN0->isVolatile(), LN0->isNonTemporal(),
+                     NewAlign);
+
+  // Replace the old load's chain with the new load's chain.
+  WorkListRemover DeadNodes(*this);
+  DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1),
+                                &DeadNodes);
+
+  // Shift the result left, if we've swallowed a left shift.
+  SDValue Result = Load;
+  if (ShLeftAmt != 0) {
+    EVT ShImmTy = getShiftAmountTy();
+    if (!isUIntN(ShImmTy.getSizeInBits(), ShLeftAmt))
+      ShImmTy = VT;
+    Result = DAG.getNode(ISD::SHL, N0.getDebugLoc(), VT,
+                         Result, DAG.getConstant(ShLeftAmt, ShImmTy));
+  }
+
+  // Return the new loaded value.
+  return Result;
 }
 
 SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
