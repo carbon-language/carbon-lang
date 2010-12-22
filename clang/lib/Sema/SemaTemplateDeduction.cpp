@@ -12,6 +12,7 @@
 
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/SemaDiagnostic.h" // FIXME: temporary!
 #include "clang/Sema/Template.h"
 #include "clang/Sema/TemplateDeduction.h"
 #include "clang/AST/ASTContext.h"
@@ -81,6 +82,14 @@ DeduceTemplateArguments(Sema &S,
                         const TemplateArgument &Arg,
                         TemplateDeductionInfo &Info,
                     llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced);
+
+static Sema::TemplateDeductionResult
+DeduceTemplateArguments(Sema &S,
+                        TemplateParameterList *TemplateParams,
+                        const TemplateArgument *Params, unsigned NumParams,
+                        const TemplateArgument *Args, unsigned NumArgs,
+                        TemplateDeductionInfo &Info,
+                      llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced);
 
 /// \brief If the given expression is of a form that permits the deduction
 /// of a non-type template parameter, return the declaration of that
@@ -301,16 +310,13 @@ DeduceTemplateArguments(Sema &S,
 
     // Perform template argument deduction on each template
     // argument.
+    // FIXME: This "min" function isn't going to work in general. We should
+    // probably pass down a flag that allows too few/too many arguments.
     unsigned NumArgs = std::min(SpecArg->getNumArgs(), Param->getNumArgs());
-    for (unsigned I = 0; I != NumArgs; ++I)
-      if (Sema::TemplateDeductionResult Result
-            = DeduceTemplateArguments(S, TemplateParams,
-                                      Param->getArg(I),
-                                      SpecArg->getArg(I),
-                                      Info, Deduced))
-        return Result;
-
-    return Sema::TDK_Success;
+    return DeduceTemplateArguments(S, TemplateParams, 
+                                   Param->getArgs(), NumArgs, 
+                                   SpecArg->getArgs(), NumArgs,
+                                   Info, Deduced);
   }
 
   // If the argument type is a class template specialization, we
@@ -334,20 +340,12 @@ DeduceTemplateArguments(Sema &S,
                                   Info, Deduced))
     return Result;
 
-  unsigned NumArgs = Param->getNumArgs();
-  const TemplateArgumentList &ArgArgs = SpecArg->getTemplateArgs();
-  if (NumArgs != ArgArgs.size())
-    return Sema::TDK_NonDeducedMismatch;
-
-  for (unsigned I = 0; I != NumArgs; ++I)
-    if (Sema::TemplateDeductionResult Result
-          = DeduceTemplateArguments(S, TemplateParams,
-                                    Param->getArg(I),
-                                    ArgArgs.get(I),
-                                    Info, Deduced))
-      return Result;
-
-  return Sema::TDK_Success;
+  // Perform template argument deduction for the template arguments.
+  return DeduceTemplateArguments(S, TemplateParams, 
+                                 Param->getArgs(), Param->getNumArgs(),
+                                 SpecArg->getTemplateArgs().data(),
+                                 SpecArg->getTemplateArgs().size(),
+                                 Info, Deduced);
 }
 
 /// \brief Determines whether the given type is an opaque type that
@@ -664,6 +662,7 @@ DeduceTemplateArguments(Sema &S,
 
       for (unsigned I = 0, N = FunctionProtoParam->getNumArgs(); I != N; ++I) {
         // Check argument types.
+        // FIXME: Variadic templates.
         if (Sema::TemplateDeductionResult Result
               = DeduceTemplateArguments(S, TemplateParams,
                                         FunctionProtoParam->getArgType(I),
@@ -917,11 +916,78 @@ DeduceTemplateArguments(Sema &S,
     return Sema::TDK_Success;
   }
   case TemplateArgument::Pack:
-    // FIXME: Variadic templates
-    assert(0 && "FIXME: Implement!");
-    break;
+    llvm_unreachable("Argument packs should be expanded by the caller!");
   }
 
+  return Sema::TDK_Success;
+}
+
+/// \brief Determine whether there is a template argument to be used for
+/// deduction.
+///
+/// This routine "expands" argument packs in-place, overriding its input
+/// parameters so that \c Args[ArgIdx] will be the available template argument.
+///
+/// \returns true if there is another template argument (which will be at
+/// \c Args[ArgIdx]), false otherwise.
+static bool hasTemplateArgumentForDeduction(const TemplateArgument *&Args, 
+                                            unsigned &ArgIdx,
+                                            unsigned &NumArgs) {
+  if (ArgIdx == NumArgs)
+    return false;
+  
+  const TemplateArgument &Arg = Args[ArgIdx];
+  if (Arg.getKind() != TemplateArgument::Pack)
+    return true;
+
+  assert(ArgIdx == NumArgs - 1 && "Pack not at the end of argument list?");
+  Args = Arg.pack_begin();
+  NumArgs = Arg.pack_size();
+  ArgIdx = 0;
+  return ArgIdx < NumArgs;
+}
+
+static Sema::TemplateDeductionResult
+DeduceTemplateArguments(Sema &S,
+                        TemplateParameterList *TemplateParams,
+                        const TemplateArgument *Params, unsigned NumParams,
+                        const TemplateArgument *Args, unsigned NumArgs,
+                        TemplateDeductionInfo &Info,
+                    llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
+  unsigned ArgIdx = 0, ParamIdx = 0;
+  for (; hasTemplateArgumentForDeduction(Params, ParamIdx, NumParams); 
+       ++ParamIdx) {
+    if (!Params[ParamIdx].isPackExpansion()) {
+      // The simple case: deduce template arguments by matching P and A.
+      
+      // Check whether we have enough arguments.
+      if (!hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs))
+        return Sema::TDK_TooFewArguments;
+      
+      // Perform deduction for this P/A pair.
+      if (Sema::TemplateDeductionResult Result
+          = DeduceTemplateArguments(S, TemplateParams,
+                                    Params[ParamIdx], Args[ArgIdx],
+                                    Info, Deduced))
+        return Result;  
+      
+      // Move to the next argument.
+      ++ArgIdx;
+      continue;
+    }
+    
+    // FIXME: Variadic templates. 
+    // The parameter is a pack expansion, so we'll
+    // need to repeatedly unify arguments against the parameter, capturing
+    // the bindings for each expanded parameter pack.
+    S.Diag(Info.getLocation(), diag::err_pack_expansion_deduction);
+    return Sema::TDK_TooManyArguments;
+  }
+  
+  // If there is an argument remaining, then we had too many arguments.
+  if (hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs))
+    return Sema::TDK_TooManyArguments;
+  
   return Sema::TDK_Success;
 }
 
@@ -932,15 +998,10 @@ DeduceTemplateArguments(Sema &S,
                         const TemplateArgumentList &ArgList,
                         TemplateDeductionInfo &Info,
                     llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
-  assert(ParamList.size() == ArgList.size());
-  for (unsigned I = 0, N = ParamList.size(); I != N; ++I) {
-    if (Sema::TemplateDeductionResult Result
-          = DeduceTemplateArguments(S, TemplateParams,
-                                    ParamList[I], ArgList[I],
-                                    Info, Deduced))
-      return Result;
-  }
-  return Sema::TDK_Success;
+  return DeduceTemplateArguments(S, TemplateParams, 
+                                 ParamList.data(), ParamList.size(),
+                                 ArgList.data(), ArgList.size(),
+                                 Info, Deduced);
 }
 
 /// \brief Determine whether two template arguments are the same.
@@ -1087,6 +1148,7 @@ FinishTemplateArgumentDeduction(Sema &S,
       // When the argument is an expression, check the expression result
       // against the actual template parameter to get down to the canonical
       // template argument.
+      // FIXME: Variadic templates.
       Expr *InstExpr = InstArg.getAsExpr();
       if (NonTypeTemplateParmDecl *NTTP
             = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
@@ -1301,6 +1363,8 @@ Sema::SubstituteExplicitTemplateArguments(
   //
   // Take all of the explicitly-specified arguments and put them into the
   // set of deduced template arguments.
+  //
+  // FIXME: Variadic templates?
   Deduced.reserve(TemplateParams->size());
   for (unsigned I = 0, N = ExplicitArgumentList->size(); I != N; ++I)
     Deduced.push_back(ExplicitArgumentList->get(I));
@@ -1394,6 +1458,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   //   explicitly specified, template argument deduction fails.
   llvm::SmallVector<TemplateArgument, 4> Builder;
   for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
+    // FIXME: Variadic templates. Unwrap argument packs?
     NamedDecl *Param = FunctionTemplate->getTemplateParameters()->getParam(I);
     if (!Deduced[I].isNull()) {
       if (I < NumExplicitlySpecified) {

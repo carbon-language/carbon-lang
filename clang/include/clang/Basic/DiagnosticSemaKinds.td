@@ -1861,12 +1861,15 @@ def err_pack_expansion_length_conflict : Error<
   "pack expansion contains parameter packs %0 and %1 that have different "
   "lengths (%2 vs. %3)">;
 
+// Unsupported variadic templates features
 def err_pack_expansion_unsupported : Error<
   "clang does not yet support %select{non-type|template}0 pack expansions">;
 def err_pack_expansion_instantiation_unsupported : Error<
   "clang cannot yet instantiate pack expansions">;
 def err_pack_expansion_mismatch_unsupported : Error<
   "clang cannot yet instantiate pack expansions with mismatched pack levels">;
+def err_pack_expansion_deduction : Error<
+  "clang cannot yet perform template argument deduction for a pack expansion">;
 
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;
