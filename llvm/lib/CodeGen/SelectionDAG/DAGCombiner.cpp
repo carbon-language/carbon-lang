@@ -1443,6 +1443,15 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     }
   }
 
+  // add (sext i1), X -> sub X, (zext i1)
+  if (N0.getOpcode() == ISD::SIGN_EXTEND &&
+      N0.getOperand(0).getValueType() == MVT::i1 &&
+      !TLI.isOperationLegal(ISD::SIGN_EXTEND, MVT::i1)) {
+    DebugLoc DL = N->getDebugLoc();
+    SDValue ZExt = DAG.getNode(ISD::ZERO_EXTEND, DL, VT, N0.getOperand(0));
+    return DAG.getNode(ISD::SUB, DL, VT, N1, ZExt);
+  }
+
   return SDValue();
 }
 

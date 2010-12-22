@@ -120,3 +120,15 @@ entry:
 ; X64: addq
 ; X64-NEXT: sbbq
 ; X64-NEXT: testb
+
+define i32 @test9(i32 %x, i32 %y) nounwind readnone {
+  %cmp = icmp eq i32 %x, 10
+  %sub = sext i1 %cmp to i32
+  %cond = add i32 %sub, %y
+  ret i32 %cond
+; X64: test9:
+; X64: cmpl $10
+; X64: sete
+; X64: subl
+; X64: ret
+}
