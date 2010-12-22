@@ -210,6 +210,12 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_frame_type = eNotAValidFrame;
         return;
     }
+    // A pc value of 0 up on the stack indicates we've hit the end of the stack
+    if (pc == 0)
+    {
+        m_frame_type = eNotAValidFrame;
+        return;
+    }
     m_thread.GetProcess().GetTarget().GetSectionLoadList().ResolveLoadAddress (pc, m_current_pc);
 
     // If we don't have a Module for some reason, we're not going to find symbol/function information - just

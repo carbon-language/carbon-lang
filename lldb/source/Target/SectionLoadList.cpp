@@ -164,13 +164,15 @@ SectionLoadList::ResolveLoadAddress (addr_t load_addr, Address &so_addr) const
     {
         if (load_addr != pos->first && pos != m_collection.begin())
             --pos;
-        assert (load_addr >= pos->first);
-        addr_t offset = load_addr - pos->first;
-        if (offset < pos->second->GetByteSize())
+        if (load_addr >= pos->first)
         {
-            // We have found the top level section, now we need to find the
-            // deepest child section.
-            return pos->second->ResolveContainedAddress (offset, so_addr);
+            addr_t offset = load_addr - pos->first;
+            if (offset < pos->second->GetByteSize())
+            {
+                // We have found the top level section, now we need to find the
+                // deepest child section.
+                return pos->second->ResolveContainedAddress (offset, so_addr);
+            }
         }
     }
     so_addr.Clear();
