@@ -796,6 +796,70 @@ public:
     Relocations[Fragment->getParent()].push_back(MRE);
   }
 
+  void RecordARMScatteredRelocation(const MCAssembler &Asm,
+                                    const MCAsmLayout &Layout,
+                                    const MCFragment *Fragment,
+                                    const MCFixup &Fixup, MCValue Target,
+                                    uint64_t &FixedValue) {
+    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
+    unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
+    unsigned Type = macho::RIT_Vanilla;
+
+    // See <reloc.h>.
+    const MCSymbol *A = &Target.getSymA()->getSymbol();
+    MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+
+    if (!A_SD->getFragment())
+      report_fatal_error("symbol '" + A->getName() +
+                        "' can not be undefined in a subtraction expression");
+
+    uint32_t Value = getSymbolAddress(A_SD, Layout);
+    uint64_t SecAddr = getSectionAddress(A_SD->getFragment()->getParent());
+    FixedValue += SecAddr;
+    uint32_t Value2 = 0;
+
+    if (const MCSymbolRefExpr *B = Target.getSymB()) {
+      MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+
+      if (!B_SD->getFragment())
+        report_fatal_error("symbol '" + B->getSymbol().getName() +
+                          "' can not be undefined in a subtraction expression");
+
+      // Select the appropriate difference relocation type.
+      //
+      // Note that there is no longer any semantic difference between these two
+      // relocation types from the linkers point of view, this is done solely
+      // for pedantic compatibility with 'as'.
+      Type = A_SD->isExternal() ? (unsigned)macho::RIT_Difference :
+        (unsigned)macho::RIT_Generic_LocalDifference;
+      Value2 = getSymbolAddress(B_SD, Layout);
+      FixedValue -= getSectionAddress(B_SD->getFragment()->getParent());
+    }
+
+    // Relocations are written out in reverse order, so the PAIR comes first.
+    if (Type == macho::RIT_Difference ||
+        Type == macho::RIT_Generic_LocalDifference) {
+      macho::RelocationEntry MRE;
+      MRE.Word0 = ((0         <<  0) |
+                   (macho::RIT_Pair  << 24) |
+                   (Log2Size  << 28) |
+                   (IsPCRel   << 30) |
+                   macho::RF_Scattered);
+      MRE.Word1 = Value2;
+      Relocations[Fragment->getParent()].push_back(MRE);
+    }
+
+    macho::RelocationEntry MRE;
+    MRE.Word0 = ((FixupOffset <<  0) |
+                 (Type        << 24) |
+                 (Log2Size    << 28) |
+                 (IsPCRel     << 30) |
+                 macho::RF_Scattered);
+    MRE.Word1 = Value;
+    Relocations[Fragment->getParent()].push_back(MRE);
+  }
+
   void RecordTLVPRelocation(const MCAssembler &Asm,
                             const MCAsmLayout &Layout,
                             const MCFragment *Fragment,
@@ -889,8 +953,8 @@ public:
     // a scattered relocation entry.  Differences always require scattered
     // relocations.
     if (Target.getSymB())
-        return RecordScatteredRelocation(Asm, Layout, Fragment, Fixup,
-                                         Target, FixedValue);
+        return RecordARMScatteredRelocation(Asm, Layout, Fragment, Fixup,
+                                            Target, FixedValue);
 
     // Get the symbol data, if any.
     MCSymbolData *SD = 0;
@@ -906,8 +970,8 @@ public:
     if (IsPCRel)
       Offset += 1 << Log2Size;
     if (Offset && SD && !doesSymbolRequireExternRelocation(SD))
-      return RecordScatteredRelocation(Asm, Layout, Fragment, Fixup,
-                                       Target, FixedValue);
+      return RecordARMScatteredRelocation(Asm, Layout, Fragment, Fixup,
+                                          Target, FixedValue);
 
     // See <reloc.h>.
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
