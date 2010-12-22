@@ -30,8 +30,8 @@
 #include "clang/GR/PathDiagnosticClients.h"
 
 // FIXME: Restructure checker registration.
-#include "Checkers/ExprEngineExperimentalChecks.h"
-#include "Checkers/ExprEngineInternalChecks.h"
+#include "ExprEngineExperimentalChecks.h"
+#include "ExprEngineInternalChecks.h"
 
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
