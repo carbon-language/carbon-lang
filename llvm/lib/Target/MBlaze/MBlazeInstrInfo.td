@@ -330,26 +330,44 @@ class BranchCI<bits<6> op, bits<5> br, string instr_asm> :
 //===----------------------------------------------------------------------===//
 
 let isCommutable = 1, isAsCheapAsAMove = 1 in {
-  def ADD    :  Arith<0x00, 0x000, "add    ", addc, IIAlu>;
-  def ADDC   :  Arith<0x02, 0x000, "addc   ", adde, IIAlu>;
   def ADDK   :  Arith<0x04, 0x000, "addk   ", add,  IIAlu>;
-  def ADDKC  : ArithN<0x06, 0x000, "addkc  ", IIAlu>;
   def AND    :  Logic<0x21, 0x000, "and    ", and>;
   def OR     :  Logic<0x20, 0x000, "or     ", or>;
   def XOR    :  Logic<0x22, 0x000, "xor    ", xor>;
   def PCMPBF : PatCmp<0x20, 0x400, "pcmpbf ">;
   def PCMPEQ : PatCmp<0x22, 0x400, "pcmpeq ">;
   def PCMPNE : PatCmp<0x23, 0x400, "pcmpne ">;
+
+  let Defs = [CARRY] in {
+    def ADD    :  Arith<0x00, 0x000, "add    ", addc, IIAlu>;
+
+    let Uses = [CARRY] in {
+      def ADDC   :  Arith<0x02, 0x000, "addc   ", adde, IIAlu>;
+    }
+  }
+
+  let Uses = [CARRY] in {
+    def ADDKC  : ArithN<0x06, 0x000, "addkc  ", IIAlu>;
+  }
 }
 
 let isAsCheapAsAMove = 1 in {
   def ANDN   :  ArithN<0x23, 0x000, "andn   ", IIAlu>;
   def CMP    :  ArithN<0x05, 0x001, "cmp    ", IIAlu>;
   def CMPU   :  ArithN<0x05, 0x003, "cmpu   ", IIAlu>;
-  def RSUB   :  ArithR<0x01, 0x000, "rsub   ", subc, IIAlu>;
-  def RSUBC  :  ArithR<0x03, 0x000, "rsubc  ", sube, IIAlu>;
   def RSUBK  :  ArithR<0x05, 0x000, "rsubk  ", sub,  IIAlu>;
-  def RSUBKC : ArithRN<0x07, 0x000, "rsubkc ", IIAlu>;
+
+  let Defs = [CARRY] in {
+    def RSUB   :  ArithR<0x01, 0x000, "rsub   ", subc, IIAlu>;
+
+    let Uses = [CARRY] in {
+      def RSUBC  :  ArithR<0x03, 0x000, "rsubc  ", sube, IIAlu>;
+    }
+  }
+
+  let Uses = [CARRY] in {
+    def RSUBKC : ArithRN<0x07, 0x000, "rsubkc ", IIAlu>;
+  }
 }
 
 let isCommutable = 1, Predicates=[HasMul] in {
@@ -384,18 +402,27 @@ let Predicates=[HasDiv] in {
 //===----------------------------------------------------------------------===//
 
 let isAsCheapAsAMove = 1 in {
-  def ADDI    :   ArithI<0x08, "addi   ", addc, simm16, immSExt16>;
-  def ADDIC   :   ArithI<0x0A, "addic  ", adde, simm16, immSExt16>;
   def ADDIK   :   ArithI<0x0C, "addik  ", add,  simm16, immSExt16>;
-  def ADDIKC  :  ArithNI<0x0E, "addikc ", simm16, immSExt16>;
-  def RSUBI   :  ArithRI<0x09, "rsubi  ", subc,  simm16, immSExt16>;
-  def RSUBIC  :  ArithRI<0x0B, "rsubic ", sube, simm16, immSExt16>;
   def RSUBIK  :  ArithRI<0x0D, "rsubik ", sub, simm16, immSExt16>;
-  def RSUBIKC : ArithRNI<0x0F, "rsubikc", simm16, immSExt16>;
   def ANDNI   :  ArithNI<0x2B, "andni  ", uimm16, immZExt16>;
   def ANDI    :   LogicI<0x29, "andi   ", and>;
   def ORI     :   LogicI<0x28, "ori    ", or>;
   def XORI    :   LogicI<0x2A, "xori   ", xor>;
+
+  let Defs = [CARRY] in {
+    def ADDI    :   ArithI<0x08, "addi   ", addc, simm16, immSExt16>;
+    def RSUBI   :  ArithRI<0x09, "rsubi  ", subc,  simm16, immSExt16>;
+
+    let Uses = [CARRY] in {
+      def ADDIC   :   ArithI<0x0A, "addic  ", adde, simm16, immSExt16>;
+      def RSUBIC  :  ArithRI<0x0B, "rsubic ", sube, simm16, immSExt16>;
+    }
+  }
+
+  let Uses = [CARRY] in {
+    def ADDIKC  :  ArithNI<0x0E, "addikc ", simm16, immSExt16>;
+    def RSUBIKC : ArithRNI<0x0F, "rsubikc", simm16, immSExt16>;
+  }
 }
 
 let Predicates=[HasMul] in {
@@ -415,26 +442,32 @@ let canFoldAsLoad = 1, isReMaterializable = 1 in {
 
   def LW   :  LoadM<0x32, 0x000, "lw     ">;
   def LWR  :  LoadM<0x32, 0x200, "lwr    ">;
-  def LWX  :  LoadM<0x32, 0x400, "lwx    ">;
+
+  let Defs = [CARRY] in {
+    def LWX  :  LoadM<0x32, 0x400, "lwx    ">;
+  }
 
   def LBUI : LoadMI<0x38, "lbui   ", zextloadi8>;
   def LHUI : LoadMI<0x39, "lhui   ", zextloadi16>;
   def LWI  : LoadMI<0x3A, "lwi    ", load>;
 }
 
-  def SB  :  StoreM<0x34, 0x000, "sb     ">;
-  def SBR :  StoreM<0x34, 0x200, "sbr    ">;
+def SB  :  StoreM<0x34, 0x000, "sb     ">;
+def SBR :  StoreM<0x34, 0x200, "sbr    ">;
 
-  def SH  :  StoreM<0x35, 0x000, "sh     ">;
-  def SHR :  StoreM<0x35, 0x200, "shr    ">;
+def SH  :  StoreM<0x35, 0x000, "sh     ">;
+def SHR :  StoreM<0x35, 0x200, "shr    ">;
 
-  def SW  :  StoreM<0x36, 0x000, "sw     ">;
-  def SWR :  StoreM<0x36, 0x200, "swr    ">;
+def SW  :  StoreM<0x36, 0x000, "sw     ">;
+def SWR :  StoreM<0x36, 0x200, "swr    ">;
+
+let Defs = [CARRY] in {
   def SWX :  StoreM<0x36, 0x400, "swx    ">;
+}
 
-  def SBI : StoreMI<0x3C, "sbi    ", truncstorei8>;
-  def SHI : StoreMI<0x3D, "shi    ", truncstorei16>;
-  def SWI : StoreMI<0x3E, "swi    ", store>;
+def SBI : StoreMI<0x3C, "sbi    ", truncstorei8>;
+def SHI : StoreMI<0x3D, "shi    ", truncstorei16>;
+def SWI : StoreMI<0x3E, "swi    ", store>;
 
 //===----------------------------------------------------------------------===//
 // MBlaze branch instructions
@@ -501,21 +534,21 @@ let isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
 }
 
 let isCall =1, hasDelaySlot = 1,
-    Defs = [R3,R4,R5,R6,R7,R8,R9,R10,R11,R12],
+    Defs = [R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,CARRY],
     Uses = [R1] in {
   def BRLID  : BranchLI<0x2E, 0x14, "brlid  ">;
   def BRALID : BranchLI<0x2E, 0x1C, "bralid ">;
 }
 
 let isCall = 1, hasDelaySlot = 1,
-    Defs = [R3,R4,R5,R6,R7,R8,R9,R10,R11,R12],
+    Defs = [R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,CARRY],
     Uses = [R1] in {
   def BRLD   : BranchL<0x26, 0x14, 0x000, "brld   ">;
   def BRALD  : BranchL<0x26, 0x1C, 0x000, "brald  ">;
 }
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
-    hasCtrlDep=1, rd=0x10, Form=FCRI in {
+    rd=0x10, Form=FCRI in {
   def RTSD   : TB<0x2D, (outs), (ins GPR:$target, simm16:$imm),
                   "rtsd      $target, $imm",
                   [],
@@ -523,7 +556,7 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
 }
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
-    hasCtrlDep=1, rd=0x11, Form=FCRI in {
+    rd=0x11, Form=FCRI in {
   def RTID   : TB<0x2D, (outs), (ins GPR:$target, simm16:$imm),
                   "rtid      $target, $imm",
                   [],
@@ -531,7 +564,7 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
 }
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
-    hasCtrlDep=1, rd=0x12, Form=FCRI in {
+    rd=0x12, Form=FCRI in {
   def RTBD   : TB<0x2D, (outs), (ins GPR:$target, simm16:$imm),
                   "rtbd      $target, $imm",
                   [],
@@ -539,7 +572,7 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
 }
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
-    hasCtrlDep=1, rd=0x14, Form=FCRI in {
+    rd=0x14, Form=FCRI in {
   def RTED   : TB<0x2D, (outs), (ins GPR:$target, simm16:$imm),
                   "rted      $target, $imm",
                   [],
@@ -576,18 +609,21 @@ let usesCustomInserter = 1 in {
     []>;
 }
 
-
 let rb = 0 in {
   def SEXT16 : TA<0x24, 0x061, (outs GPR:$dst), (ins GPR:$src),
                   "sext16    $dst, $src", [], IIAlu>;
   def SEXT8  : TA<0x24, 0x060, (outs GPR:$dst), (ins GPR:$src),
                   "sext8     $dst, $src", [], IIAlu>;
-  def SRL    : TA<0x24, 0x041, (outs GPR:$dst), (ins GPR:$src),
-                  "srl       $dst, $src", [], IIAlu>;
-  def SRA    : TA<0x24, 0x001, (outs GPR:$dst), (ins GPR:$src),
-                  "sra       $dst, $src", [], IIAlu>;
-  def SRC    : TA<0x24, 0x021, (outs GPR:$dst), (ins GPR:$src),
-                  "src       $dst, $src", [], IIAlu>;
+  let Defs = [CARRY] in {
+    def SRL    : TA<0x24, 0x041, (outs GPR:$dst), (ins GPR:$src),
+                    "srl       $dst, $src", [], IIAlu>;
+    def SRA    : TA<0x24, 0x001, (outs GPR:$dst), (ins GPR:$src),
+                    "sra       $dst, $src", [], IIAlu>;
+    let Uses = [CARRY] in {
+      def SRC    : TA<0x24, 0x021, (outs GPR:$dst), (ins GPR:$src),
+                      "src       $dst, $src", [], IIAlu>;
+    }
+  }
 }
 
 let isCodeGenOnly=1 in {

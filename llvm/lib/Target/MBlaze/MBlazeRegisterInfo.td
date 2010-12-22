@@ -97,6 +97,11 @@ let Namespace = "MBlaze" in {
   def RPVR9  : MBlazeSPRReg<0x2009, "rpvr9">,  DwarfRegNum<[53]>;
   def RPVR10 : MBlazeSPRReg<0x200A, "rpvr10">, DwarfRegNum<[54]>;
   def RPVR11 : MBlazeSPRReg<0x200B, "rpvr11">, DwarfRegNum<[55]>;
+
+  // The carry bit. In the Microblaze this is really bit 29 of the
+  // MSR register but this is the only bit of that register that we
+  // are interested in modeling.
+  def CARRY  : MBlazeSPRReg<0x0000, "rmsr[c]">, DwarfRegNum<[33]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -178,4 +183,8 @@ def SPR : RegisterClass<"MBlaze", [i32], 32,
       return end()-24;
     }
   }];
+}
+
+def CRC : RegisterClass<"MBlaze", [i32], 32, [CARRY]> {
+  let CopyCost = -1;
 }
