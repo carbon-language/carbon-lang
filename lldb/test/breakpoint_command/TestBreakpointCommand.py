@@ -79,7 +79,7 @@ class BreakpointCommandTestCase(TestBase):
 
         # The 'output.txt' file should now exist.
         self.assertTrue(os.path.isfile("output.txt"),
-                        "'output.txt' exists due breakpoint command for breakpoint 2.")
+                        "'output.txt' exists due to breakpoint command for breakpoint 2.")
 
         # Read the output file produced by running the program.
         with open('output.txt', 'r') as f:
