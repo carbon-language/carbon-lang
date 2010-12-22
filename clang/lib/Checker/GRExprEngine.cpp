@@ -1475,15 +1475,8 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
       getCXXThisRegion(CCE->getConstructor()->getParent(), calleeCtx);
 
     SVal ThisV = state->getSVal(ThisR);
-
-    if (calleeCtx->evalAsLValue()) {
-      state = state->BindExpr(CCE, ThisV);
-    } else {
-      loc::MemRegionVal *V = cast<loc::MemRegionVal>(&ThisV);
-      SVal ObjVal = state->getSVal(V->getRegion());
-      assert(isa<nonloc::LazyCompoundVal>(ObjVal));
-      state = state->BindExpr(CCE, ObjVal);
-    }
+    // Always bind the region to the CXXConstructExpr.
+    state = state->BindExpr(CCE, ThisV);
   }
 
   B.generateNode(state);
@@ -2508,7 +2501,12 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
 
   if (InitEx) {
     if (VD->getType()->isReferenceType() && !InitEx->isLValue()) {
-      CreateCXXTemporaryObject(InitEx, Pred, Tmp);
+      // If the initializer is C++ record type, it should already has a 
+      // temp object.
+      if (!InitEx->getType()->isRecordType())
+        CreateCXXTemporaryObject(InitEx, Pred, Tmp);
+      else
+        Tmp.Add(Pred);
     } else
       Visit(InitEx, Pred, Tmp);
   } else
@@ -2526,6 +2524,14 @@ void GRExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
 
     if (InitEx) {
       SVal InitVal = state->getSVal(InitEx);
+
+      // We bound the temp obj region to the CXXConstructExpr. Now recover
+      // the lazy compound value when the variable is not a reference.
+      if (AMgr.getLangOptions().CPlusPlus && VD->getType()->isRecordType() && 
+          !VD->getType()->isReferenceType() && isa<loc::MemRegionVal>(InitVal)){
+        InitVal = state->getSVal(cast<loc::MemRegionVal>(InitVal).getRegion());
+        assert(isa<nonloc::LazyCompoundVal>(InitVal));
+      }
 
       // Recover some path-sensitivity if a scalar value evaluated to
       // UnknownVal.
