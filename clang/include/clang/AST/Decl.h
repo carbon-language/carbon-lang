@@ -2405,11 +2405,6 @@ public:
     AnonymousStructOrUnion = Anon;
   }
 
-  ValueDecl *getAnonymousStructOrUnionObject();
-  const ValueDecl *getAnonymousStructOrUnionObject() const {
-    return const_cast<RecordDecl*>(this)->getAnonymousStructOrUnionObject();
-  }
-
   bool hasObjectMember() const { return HasObjectMember; }
   void setHasObjectMember (bool val) { HasObjectMember = val; }
 

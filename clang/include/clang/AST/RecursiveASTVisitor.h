@@ -1306,11 +1306,7 @@ bool RecursiveASTVisitor<Derived>::TraverseRecordHelper(
     RecordDecl *D) {
   // We shouldn't traverse D->getTypeForDecl(); it's a result of
   // declaring the type, not something that was written in the source.
-  //
-  // The anonymous struct or union object is the variable or field
-  // whose type is the anonymous struct or union.  We shouldn't
-  // traverse D->getAnonymousStructOrUnionObject(), as it's not
-  // something that is explicitly written in the source.
+
   TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
   return true;
 }

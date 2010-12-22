@@ -2005,17 +2005,6 @@ void RecordDecl::completeDefinition() {
   TagDecl::completeDefinition();
 }
 
-ValueDecl *RecordDecl::getAnonymousStructOrUnionObject() {
-  // Force the decl chain to come into existence properly.
-  if (!getNextDeclInContext()) getParent()->decls_begin();
-
-  assert(isAnonymousStructOrUnion());
-  ValueDecl *D = cast<ValueDecl>(getNextDeclInContext());
-  assert(D->getType()->isRecordType());
-  assert(D->getType()->getAs<RecordType>()->getDecl() == this);
-  return D;
-}
-
 void RecordDecl::LoadFieldsFromExternalStorage() const {
   ExternalASTSource *Source = getASTContext().getExternalSource();
   assert(hasExternalLexicalStorage() && Source && "No external storage?");
