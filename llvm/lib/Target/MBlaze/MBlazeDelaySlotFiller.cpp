@@ -90,6 +90,20 @@ static bool hasImmInstruction(MachineBasicBlock::iterator &candidate) {
     return false;
 }
 
+static unsigned getLastRealOperand(MachineBasicBlock::iterator &instr) {
+  switch (instr->getOpcode()) {
+  default: return instr->getNumOperands();
+
+  // These instructions have a variable number of operands but the first two
+  // are the "real" operands that we care about during hazard detection.
+  case MBlaze::BRLID:
+  case MBlaze::BRALID:
+  case MBlaze::BRLD:
+  case MBlaze::BRALD:
+    return 2;
+  }
+}
+
 static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
                            MachineBasicBlock::iterator &slot) {
   // Hazard check
@@ -111,17 +125,23 @@ static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
   //    contains a store operation.
   bool a_is_memory = desc.mayLoad() || desc.mayStore();
 
+  // Determine the number of operands in the slot instruction and in the
+  // candidate instruction.
+  const unsigned aend = getLastRealOperand(a);
+  const unsigned bend = getLastRealOperand(b);
+
   // Check hazards type 1, 2 and 5 by scanning the middle bit
   MachineBasicBlock::iterator m = a;
   for (++m; m != b; ++m) {
-    for (unsigned aop = 0, aend = a->getNumOperands(); aop<aend; ++aop) {
+    for (unsigned aop = 0; aop<aend; ++aop) {
       bool aop_is_reg = a->getOperand(aop).isReg();
       if (!aop_is_reg) continue;
 
       bool aop_is_def = a->getOperand(aop).isDef();
       unsigned aop_reg = a->getOperand(aop).getReg();
 
-      for (unsigned mop = 0, mend = m->getNumOperands(); mop<mend; ++mop) {
+      const unsigned mend = getLastRealOperand(m);
+      for (unsigned mop = 0; mop<mend; ++mop) {
         bool mop_is_reg = m->getOperand(mop).isReg();
         if (!mop_is_reg) continue;
 
@@ -141,13 +161,12 @@ static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
   }
 
   // Check hazard type 3 & 4
-  for (unsigned aop = 0, aend = a->getNumOperands(); aop<aend; ++aop) {
+  for (unsigned aop = 0; aop<aend; ++aop) {
     if (a->getOperand(aop).isReg()) {
       unsigned aop_reg = a->getOperand(aop).getReg();
 
-      for (unsigned bop = 0, bend = b->getNumOperands(); bop<bend; ++bop) {
-        if (b->getOperand(bop).isReg() && !b->getOperand(bop).isImplicit() &&
-            !b->getOperand(bop).isKill()) {
+      for (unsigned bop = 0; bop<bend; ++bop) {
+        if (b->getOperand(bop).isReg() && !b->getOperand(bop).isImplicit()) {
           unsigned bop_reg = b->getOperand(bop).getReg();
           if (aop_reg == bop_reg)
             return true;
