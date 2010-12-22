@@ -9,12 +9,6 @@ def stop_if_called_from_a():
     # Perform synchronous interaction with the debugger.
     dbg.SetAsync(False)
 
-    # Get the command interpreter.
-    ci = dbg.GetCommandInterpreter()
-
-    # And the result object for ci interaction.
-    res = lldb.SBCommandReturnObject()
-
     # Retrieve the target, process, and the only thread.
     target = dbg.GetSelectedTarget()
     process = target.GetProcess()
@@ -34,7 +28,7 @@ def stop_if_called_from_a():
             pass
         else:
             #print >> sys.stdout, "Continuing..."
-            ci.HandleCommand("process continue", res)
+            process.Continue()
 
     return True
 
