@@ -584,3 +584,15 @@ define i32 @test41(i1 %cond, i32 %x, i32 %y) {
 ; CHECK-NEXT: and i32 %x, %y
 ; CHECK-NEXT: ret i32
 }
+
+define i32 @test42(i32 %x, i32 %y) {
+  %b = add i32 %y, -1
+  %cond = icmp eq i32 %x, 0
+  %c = select i1 %cond, i32 %b, i32 %y
+  ret i32 %c
+; CHECK: @test42
+; CHECK-NEXT: %cond = icmp eq i32 %x, 0
+; CHECK-NEXT: %b = sext i1 %cond to i32
+; CHECK-NEXT: %c = add i32 %b, %y
+; CHECK-NEXT: ret i32 %c
+}

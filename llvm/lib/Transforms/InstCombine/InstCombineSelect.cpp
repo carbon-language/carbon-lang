@@ -195,7 +195,10 @@ static bool isSelect01(Constant *C1, Constant *C2) {
   ConstantInt *C2I = dyn_cast<ConstantInt>(C2);
   if (!C2I)
     return false;
-  return (C1I->isZero() || C1I->isOne()) && (C2I->isZero() || C2I->isOne());
+  if (!C1I->isZero() && !C2I->isZero()) // One side must be zero.
+    return false;
+  return C1I->isOne() || C1I->isAllOnesValue() ||
+         C2I->isOne() || C2I->isAllOnesValue();
 }
 
 /// FoldSelectIntoOp - Try fold the select into one of the operands to
@@ -219,7 +222,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
           Constant *C = GetSelectFoldableConstant(TVI);
           Value *OOp = TVI->getOperand(2-OpToFold);
           // Avoid creating select between 2 constants unless it's selecting
-          // between 0 and 1.
+          // between 0, 1 and -1.
           if (!isa<Constant>(OOp) || isSelect01(C, cast<Constant>(OOp))) {
             Instruction *NewSel = SelectInst::Create(SI.getCondition(), OOp, C);
             InsertNewInstBefore(NewSel, SI);
@@ -248,7 +251,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
           Constant *C = GetSelectFoldableConstant(FVI);
           Value *OOp = FVI->getOperand(2-OpToFold);
           // Avoid creating select between 2 constants unless it's selecting
-          // between 0 and 1.
+          // between 0, 1 and -1.
           if (!isa<Constant>(OOp) || isSelect01(C, cast<Constant>(OOp))) {
             Instruction *NewSel = SelectInst::Create(SI.getCondition(), C, OOp);
             InsertNewInstBefore(NewSel, SI);
