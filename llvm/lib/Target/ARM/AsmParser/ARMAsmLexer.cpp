@@ -28,20 +28,20 @@
 using namespace llvm;
 
 namespace {
-  
+
   class ARMBaseAsmLexer : public TargetAsmLexer {
     const MCAsmInfo &AsmInfo;
-    
+
     const AsmToken &lexDefinite() {
       return getLexer()->Lex();
     }
-    
+
     AsmToken LexTokenUAL();
   protected:
     typedef std::map <std::string, unsigned> rmap_ty;
-    
+
     rmap_ty RegisterMap;
-    
+
     void InitRegisterMap(const TargetRegisterInfo *info) {
       unsigned numRegs = info->getNumRegs();
 
@@ -51,7 +51,7 @@ namespace {
           RegisterMap[regName] = i;
       }
     }
-    
+
     unsigned MatchRegisterName(StringRef Name) {
       rmap_ty::iterator iter = RegisterMap.find(Name.str());
       if (iter != RegisterMap.end())
@@ -59,13 +59,13 @@ namespace {
       else
         return 0;
     }
-    
+
     AsmToken LexToken() {
       if (!Lexer) {
         SetError(SMLoc(), "No MCAsmLexer installed");
         return AsmToken(AsmToken::Error, "", 0);
       }
-      
+
       switch (AsmInfo.getAssemblerDialect()) {
       default:
         SetError(SMLoc(), "Unhandled dialect");
@@ -79,26 +79,26 @@ namespace {
       : TargetAsmLexer(T), AsmInfo(MAI) {
     }
   };
-  
+
   class ARMAsmLexer : public ARMBaseAsmLexer {
   public:
     ARMAsmLexer(const Target &T, const MCAsmInfo &MAI)
       : ARMBaseAsmLexer(T, MAI) {
       std::string tripleString("arm-unknown-unknown");
       std::string featureString;
-      OwningPtr<const TargetMachine> 
+      OwningPtr<const TargetMachine>
         targetMachine(T.createTargetMachine(tripleString, featureString));
       InitRegisterMap(targetMachine->getRegisterInfo());
     }
   };
-  
+
   class ThumbAsmLexer : public ARMBaseAsmLexer {
   public:
     ThumbAsmLexer(const Target &T, const MCAsmInfo &MAI)
       : ARMBaseAsmLexer(T, MAI) {
       std::string tripleString("thumb-unknown-unknown");
       std::string featureString;
-      OwningPtr<const TargetMachine> 
+      OwningPtr<const TargetMachine>
         targetMachine(T.createTargetMachine(tripleString, featureString));
       InitRegisterMap(targetMachine->getRegisterInfo());
     }
@@ -107,7 +107,7 @@ namespace {
 
 AsmToken ARMBaseAsmLexer::LexTokenUAL() {
   const AsmToken &lexedToken = lexDefinite();
-  
+
   switch (lexedToken.getKind()) {
   default:
     return AsmToken(lexedToken);
@@ -119,9 +119,9 @@ AsmToken ARMBaseAsmLexer::LexTokenUAL() {
     std::string upperCase = lexedToken.getString().str();
     std::string lowerCase = LowercaseString(upperCase);
     StringRef lowerRef(lowerCase);
-    
+
     unsigned regID = MatchRegisterName(lowerRef);
-    
+
     if (regID) {
       return AsmToken(AsmToken::Register,
                       lexedToken.getString(),
