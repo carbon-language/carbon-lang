@@ -807,9 +807,15 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   return loc::MemRegionVal(MRMgr.getElementRegion(T, ZeroIdx, ArrayR, Ctx));
 }
 
-SVal RegionStoreManager::evalDerivedToBase(SVal derived, QualType basePtrType) {
-  const CXXRecordDecl *baseDecl = basePtrType->getCXXRecordDeclForPointerType();
+SVal RegionStoreManager::evalDerivedToBase(SVal derived, QualType baseType) {
+  const CXXRecordDecl *baseDecl;
+  if (baseType->isPointerType())
+    baseDecl = baseType->getCXXRecordDeclForPointerType();
+  else
+    baseDecl = baseType->getAsCXXRecordDecl();
+
   assert(baseDecl && "not a CXXRecordDecl?");
+
   loc::MemRegionVal &derivedRegVal = cast<loc::MemRegionVal>(derived);
   const MemRegion *baseReg = 
     MRMgr.getCXXBaseObjectRegion(baseDecl, derivedRegVal.getRegion());
