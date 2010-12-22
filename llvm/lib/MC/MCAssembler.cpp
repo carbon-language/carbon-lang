@@ -215,7 +215,7 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
                                 MCValue &Target, uint64_t &Value) const {
   ++stats::EvaluateFixup;
 
-  if (!Fixup.getValue()->EvaluateAsRelocatable(Target, &Layout))
+  if (!Fixup.getValue()->EvaluateAsRelocatable(Target, Layout))
     report_fatal_error("expected relocatable expression");
 
   // FIXME: How do non-scattered symbols work in ELF? I presume the linker
