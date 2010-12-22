@@ -4223,8 +4223,14 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   }
 
   unsigned EVTBits = ExtVT.getSizeInBits();
+  
+  // Do not generate loads of non-round integer types since these can
+  // be expensive (and would be wrong if the type is not byte sized).
+  if (!ExtVT.isRound())
+    return SDValue();
+  
   unsigned ShAmt = 0;
-  if (N0.getOpcode() == ISD::SRL && N0.hasOneUse() && ExtVT.isRound()) {
+  if (N0.getOpcode() == ISD::SRL && N0.hasOneUse()) {
     if (ConstantSDNode *N01 = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
       ShAmt = N01->getZExtValue();
       // Is the shift amount a multiple of size of VT?
@@ -4262,11 +4268,9 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
       // Don't change the width of a volatile load.
       cast<LoadSDNode>(N0)->isVolatile())
     return SDValue();
-
-  // Do not generate loads of non-round integer types since these can
-  // be expensive (and would be wrong if the type is not byte sized).
-  if (!ExtVT.isRound() ||
-      cast<LoadSDNode>(N0)->getMemoryVT().getSizeInBits() < EVTBits)
+  
+  // Verify that we are actually reducing a load width here.
+  if (cast<LoadSDNode>(N0)->getMemoryVT().getSizeInBits() < EVTBits)
     return SDValue();
   
   LoadSDNode *LN0 = cast<LoadSDNode>(N0);
@@ -4287,14 +4291,16 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
                                DAG.getConstant(PtrOff, PtrType));
   AddToWorkList(NewPtr.getNode());
 
-  SDValue Load = (ExtType == ISD::NON_EXTLOAD)
-    ? DAG.getLoad(VT, N0.getDebugLoc(), LN0->getChain(), NewPtr,
-                  LN0->getPointerInfo().getWithOffset(PtrOff),
-                  LN0->isVolatile(), LN0->isNonTemporal(), NewAlign)
-    : DAG.getExtLoad(ExtType, VT, N0.getDebugLoc(), LN0->getChain(), NewPtr,
-                     LN0->getPointerInfo().getWithOffset(PtrOff),
-                     ExtVT, LN0->isVolatile(), LN0->isNonTemporal(),
-                     NewAlign);
+  SDValue Load;
+  if (ExtType == ISD::NON_EXTLOAD)
+    Load =  DAG.getLoad(VT, N0.getDebugLoc(), LN0->getChain(), NewPtr,
+                        LN0->getPointerInfo().getWithOffset(PtrOff),
+                        LN0->isVolatile(), LN0->isNonTemporal(), NewAlign);
+  else
+    Load = DAG.getExtLoad(ExtType, VT, N0.getDebugLoc(), LN0->getChain(),NewPtr,
+                          LN0->getPointerInfo().getWithOffset(PtrOff),
+                          ExtVT, LN0->isVolatile(), LN0->isNonTemporal(),
+                          NewAlign);
 
   // Replace the old load's chain with the new load's chain.
   WorkListRemover DeadNodes(*this);
