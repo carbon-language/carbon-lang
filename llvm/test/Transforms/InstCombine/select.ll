@@ -581,6 +581,6 @@ define i32 @test41(i1 %cond, i32 %x, i32 %y) {
   %r = and i32 %x, %s
   ret i32 %r
 ; CHECK: @test41
-; CHECK: %r = and i32 %x, %y
-; CHECK: ret i32 %r
+; CHECK-NEXT: and i32 %x, %y
+; CHECK-NEXT: ret i32
 }
