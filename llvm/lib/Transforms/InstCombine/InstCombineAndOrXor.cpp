@@ -984,8 +984,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Value *V = SimplifyAndInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (Instruction *NV = SimplifyByFactorizing(I)) // (A|B)&(A|C) -> A|(B&C)
-    return NV;
+  // (A|B)&(A|C) -> A|(B&C) etc
+  if (Value *V = SimplifyUsingDistributiveLaws(I))
+    return ReplaceInstUsesWith(I, V);
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
@@ -1702,8 +1703,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (Value *V = SimplifyOrInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (Instruction *NV = SimplifyByFactorizing(I)) // (A&B)|(A&C) -> A&(B|C)
-    return NV;
+  // (A&B)|(A&C) -> A&(B|C) etc
+  if (Value *V = SimplifyUsingDistributiveLaws(I))
+    return ReplaceInstUsesWith(I, V);
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.
@@ -1973,8 +1975,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   if (Value *V = SimplifyXorInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (Instruction *NV = SimplifyByFactorizing(I)) // (A&B)^(A&C) -> A&(B^C)
-    return NV;
+  // (A&B)^(A&C) -> A&(B^C) etc
+  if (Value *V = SimplifyUsingDistributiveLaws(I))
+    return ReplaceInstUsesWith(I, V);
 
   // See if we can simplify any instructions used by the instruction whose sole 
   // purpose is to compute bits we don't care about.

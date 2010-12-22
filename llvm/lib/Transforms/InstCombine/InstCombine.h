@@ -290,11 +290,12 @@ private:
   /// operators which are associative or commutative.
   bool SimplifyAssociativeOrCommutative(BinaryOperator &I);
 
-  /// SimplifyByFactorizing - This tries to simplify binary operations which
-  /// some other binary operation distributes over by factorizing out a common
-  /// term (eg "(A*B)+(A*C)" -> "A*(B+C)").  Returns the simplified value, or
-  /// null if no simplification was performed.
-  Instruction *SimplifyByFactorizing(BinaryOperator &I);
+  /// SimplifyUsingDistributiveLaws - This tries to simplify binary operations
+  /// which some other binary operation distributes over either by factorizing
+  /// out common terms (eg "(A*B)+(A*C)" -> "A*(B+C)") or expanding out if this
+  /// results in simplifications (eg: "A & (B | C) -> (A&B) | (A&C)" if this is
+  /// a win).  Returns the simplified value, or null if it didn't simplify.
+  Value *SimplifyUsingDistributiveLaws(BinaryOperator &I);
 
   /// SimplifyDemandedUseBits - Attempts to replace V with a simpler value
   /// based on the demanded bits.

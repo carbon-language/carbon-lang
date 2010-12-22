@@ -54,6 +54,9 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   if (Value *V = SimplifyMulInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
+  if (Value *V = SimplifyUsingDistributiveLaws(I))
+    return ReplaceInstUsesWith(I, V);
+
   // Simplify mul instructions with a constant RHS.
   if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1C)) {

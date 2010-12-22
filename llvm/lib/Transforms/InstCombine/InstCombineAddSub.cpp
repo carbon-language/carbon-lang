@@ -91,9 +91,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
                                  I.hasNoUnsignedWrap(), TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (Instruction *NV = SimplifyByFactorizing(I)) // (A*B)+(A*C) -> A*(B+C)
-    return NV;
-  
+  // (A*B)+(A*C) -> A*(B+C) etc
+  if (Value *V = SimplifyUsingDistributiveLaws(I))
+    return ReplaceInstUsesWith(I, V);
+
   if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
       // X + (signbit) --> X ^ signbit
@@ -535,9 +536,10 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
                                  I.hasNoUnsignedWrap(), TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (Instruction *NV = SimplifyByFactorizing(I)) // (A*B)-(A*C) -> A*(B-C)
-    return NV;
-  
+  // (A*B)-(A*C) -> A*(B-C) etc
+  if (Value *V = SimplifyUsingDistributiveLaws(I))
+    return ReplaceInstUsesWith(I, V);
+
   // If this is a 'B = x-(-A)', change to B = x+A.  This preserves NSW/NUW.
   if (Value *V = dyn_castNegVal(Op1)) {
     BinaryOperator *Res = BinaryOperator::CreateAdd(Op0, V);
