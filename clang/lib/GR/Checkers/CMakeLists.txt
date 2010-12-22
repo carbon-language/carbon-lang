@@ -20,6 +20,7 @@ add_clang_library(clangGRCheckers
   ExprEngine.cpp
   ExprEngineExperimentalChecks.cpp
   FixedAddressChecker.cpp
+  FrontendActions.cpp
   IdempotentOperationChecker.cpp
   LLVMConventionsChecker.cpp
   MacOSXAPIChecker.cpp

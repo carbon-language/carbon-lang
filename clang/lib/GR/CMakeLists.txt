@@ -17,7 +17,6 @@ add_clang_library(clangGRCore
   Environment.cpp
   ExplodedGraph.cpp
   FlatStore.cpp
-  FrontendActions.cpp
   BlockCounter.cpp
   CXXExprEngine.cpp
   CoreEngine.cpp
