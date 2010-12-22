@@ -766,7 +766,7 @@ public:
     AU.setPreservesAll();
   }
 
-  inline bool dominates(DomTreeNode* A, DomTreeNode* B) const {
+  inline bool dominates(const DomTreeNode* A, const DomTreeNode* B) const {
     return DT->dominates(A, B);
   }
 
