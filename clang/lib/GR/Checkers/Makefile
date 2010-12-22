@@ -11,9 +11,7 @@
 #
 ##===----------------------------------------------------------------------===##
 
-CLANG_LEVEL := ../..
-LIBRARYNAME := clangGRCore
-PARALLEL_DIRS := Checkers
+CLANG_LEVEL := ../../..
+LIBRARYNAME := clangGRCheckers
 
 include $(CLANG_LEVEL)/Makefile
-

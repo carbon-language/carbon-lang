@@ -12,7 +12,10 @@
 //  functions and build the ExplodedGraph at the expression level.
 //
 //===----------------------------------------------------------------------===//
-#include "GRExprEngineInternalChecks.h"
+
+// FIXME: Restructure checker registration.
+#include "Checkers/GRExprEngineInternalChecks.h"
+
 #include "clang/GR/BugReporter/BugType.h"
 #include "clang/GR/PathSensitive/AnalysisManager.h"
 #include "clang/GR/PathSensitive/GRExprEngine.h"

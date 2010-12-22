@@ -10,6 +10,7 @@ set( LLVM_USED_LIBS
   clangCodeGen
   clangParse
   clangSema
+  clangGRCheckers
   clangGRCore
   clangAnalysis
   clangIndex

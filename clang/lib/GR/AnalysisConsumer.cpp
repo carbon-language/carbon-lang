@@ -28,8 +28,11 @@
 #include "clang/GR/PathSensitive/GRExprEngine.h"
 #include "clang/GR/PathSensitive/GRTransferFuncs.h"
 #include "clang/GR/PathDiagnosticClients.h"
-#include "GRExprEngineExperimentalChecks.h"
-#include "GRExprEngineInternalChecks.h"
+
+// FIXME: Restructure checker registration.
+#include "Checkers/GRExprEngineExperimentalChecks.h"
+#include "Checkers/GRExprEngineInternalChecks.h"
+
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/AnalyzerOptions.h"

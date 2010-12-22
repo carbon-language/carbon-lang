@@ -12,7 +12,10 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "clang/GR/PathSensitive/ExplodedGraph.h"
 #include "clang/GR/BugReporter/BugReporter.h"
-#include "GRExprEngineExperimentalChecks.h"
+
+// FIXME: Restructure checker registration.
+#include "Checkers/GRExprEngineExperimentalChecks.h"
+
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
 

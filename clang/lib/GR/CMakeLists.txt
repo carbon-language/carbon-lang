@@ -3,85 +3,41 @@ set(LLVM_NO_RTTI 1)
 set(LLVM_USED_LIBS clangBasic clangLex clangAST clangFrontend clangRewrite)
 
 add_clang_library(clangGRCore
-  AdjustedReturnValueChecker.cpp
   AggExprVisitor.cpp
   AnalysisConsumer.cpp
   AnalysisManager.cpp
   AnalyzerStatsChecker.cpp
-  ArrayBoundChecker.cpp
-  AttrNonNullChecker.cpp
   BasicConstraintManager.cpp
-  BasicObjCFoundationChecks.cpp
   BasicStore.cpp
   BasicValueFactory.cpp
   BugReporter.cpp
   BugReporterVisitors.cpp
-  BuiltinFunctionChecker.cpp
   CFRefCount.cpp
-  CStringChecker.cpp
-  CallAndMessageChecker.cpp
-  CastSizeChecker.cpp
-  CastToStructChecker.cpp
-  CheckDeadStores.cpp
-  CheckObjCDealloc.cpp
-  CheckObjCInstMethSignature.cpp
-  CheckSecuritySyntaxOnly.cpp
-  CheckSizeofPointer.cpp
   Checker.cpp
   CheckerHelpers.cpp
-  ChrootChecker.cpp
-  DereferenceChecker.cpp
-  DivZeroChecker.cpp
   Environment.cpp
   ExplodedGraph.cpp
-  FixedAddressChecker.cpp
   FlatStore.cpp
   FrontendActions.cpp
   GRBlockCounter.cpp
   GRCXXExprEngine.cpp
   GRCoreEngine.cpp
   GRExprEngine.cpp
-  GRExprEngineExperimentalChecks.cpp
   GRState.cpp
   HTMLDiagnostics.cpp
-  IdempotentOperationChecker.cpp
-  LLVMConventionsChecker.cpp
-  MacOSXAPIChecker.cpp
-  MallocChecker.cpp
   ManagerRegistry.cpp
   MemRegion.cpp
-  NSAutoreleasePoolChecker.cpp
-  NSErrorChecker.cpp
-  NoReturnFunctionChecker.cpp
-  OSAtomicChecker.cpp
-  ObjCAtSyncChecker.cpp
-  ObjCUnusedIVarsChecker.cpp
   PathDiagnostic.cpp
   PlistDiagnostics.cpp
-  PointerArithChecker.cpp
-  PointerSubChecker.cpp
-  PthreadLockChecker.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
-  ReturnPointerRangeChecker.cpp
-  ReturnUndefChecker.cpp
-  SValBuilder.cpp
-  SVals.cpp
   SimpleConstraintManager.cpp
   SimpleSValBuilder.cpp
-  StackAddrLeakChecker.cpp
   Store.cpp
-  StreamChecker.cpp
+  SValBuilder.cpp
+  SVals.cpp
   SymbolManager.cpp
   TextPathDiagnostics.cpp
-  UndefBranchChecker.cpp
-  UndefCapturedBlockVarChecker.cpp
-  UndefResultChecker.cpp
-  UndefinedArraySubscriptChecker.cpp
-  UndefinedAssignmentChecker.cpp
-  UnixAPIChecker.cpp
-  UnreachableCodeChecker.cpp
-  VLASizeChecker.cpp
   )
 
 add_dependencies(clangGRCore ClangAttrClasses ClangAttrList ClangDeclNodes
