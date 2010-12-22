@@ -81,7 +81,7 @@ DeduceTemplateArguments(Sema &S,
                         const TemplateArgument &Param,
                         const TemplateArgument &Arg,
                         TemplateDeductionInfo &Info,
-                    llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced);
+                      llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced);
 
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S,
@@ -89,7 +89,8 @@ DeduceTemplateArguments(Sema &S,
                         const TemplateArgument *Params, unsigned NumParams,
                         const TemplateArgument *Args, unsigned NumArgs,
                         TemplateDeductionInfo &Info,
-                      llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced);
+                        llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                        bool NumberOfArgumentsMustMatch = true);
 
 /// \brief If the given expression is of a form that permits the deduction
 /// of a non-type template parameter, return the declaration of that
@@ -309,14 +310,13 @@ DeduceTemplateArguments(Sema &S,
 
 
     // Perform template argument deduction on each template
-    // argument.
-    // FIXME: This "min" function isn't going to work in general. We should
-    // probably pass down a flag that allows too few/too many arguments.
-    unsigned NumArgs = std::min(SpecArg->getNumArgs(), Param->getNumArgs());
+    // argument. Ignore any missing/extra arguments, since they could be
+    // filled in by default arguments.
     return DeduceTemplateArguments(S, TemplateParams, 
-                                   Param->getArgs(), NumArgs, 
-                                   SpecArg->getArgs(), NumArgs,
-                                   Info, Deduced);
+                                   Param->getArgs(), Param->getNumArgs(), 
+                                   SpecArg->getArgs(), SpecArg->getNumArgs(),
+                                   Info, Deduced,
+                                   /*NumberOfArgumentsMustMatch=*/false);
   }
 
   // If the argument type is a class template specialization, we
@@ -953,7 +953,8 @@ DeduceTemplateArguments(Sema &S,
                         const TemplateArgument *Params, unsigned NumParams,
                         const TemplateArgument *Args, unsigned NumArgs,
                         TemplateDeductionInfo &Info,
-                    llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
+                    llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                        bool NumberOfArgumentsMustMatch) {
   unsigned ArgIdx = 0, ParamIdx = 0;
   for (; hasTemplateArgumentForDeduction(Params, ParamIdx, NumParams); 
        ++ParamIdx) {
@@ -962,7 +963,8 @@ DeduceTemplateArguments(Sema &S,
       
       // Check whether we have enough arguments.
       if (!hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs))
-        return Sema::TDK_TooFewArguments;
+        return NumberOfArgumentsMustMatch? Sema::TDK_TooFewArguments 
+                                         : Sema::TDK_Success;
       
       // Perform deduction for this P/A pair.
       if (Sema::TemplateDeductionResult Result
@@ -985,7 +987,8 @@ DeduceTemplateArguments(Sema &S,
   }
   
   // If there is an argument remaining, then we had too many arguments.
-  if (hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs))
+  if (NumberOfArgumentsMustMatch &&
+      hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs))
     return Sema::TDK_TooManyArguments;
   
   return Sema::TDK_Success;
