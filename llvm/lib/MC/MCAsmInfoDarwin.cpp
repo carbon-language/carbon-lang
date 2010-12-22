@@ -41,7 +41,9 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // FIXME: Darwin 10 and newer don't need this.
   LinkerRequiresNonEmptyDwarfLines = true;
 
-  NeedsSetToChangeDiffSize = true;
+  // FIXME: Change this once MC is the system assembler.
+  HasAggressiveSymbolFolding = false;
+
   HiddenVisibilityAttr = MCSA_PrivateExtern;
   // Doesn't support protected visibility.
   ProtectedVisibilityAttr = MCSA_Global;

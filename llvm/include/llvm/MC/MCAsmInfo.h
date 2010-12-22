@@ -197,12 +197,12 @@ namespace llvm {
     /// HasSetDirective - True if the assembler supports the .set directive.
     bool HasSetDirective;                    // Defaults to true.
 
-    /// NeedsSetToChangeDiffSize - True if the assembler requires that we do
+    /// HasAggressiveSymbolFolding - False if the assembler requires that we use
     /// Lc = a - b
     /// .long Lc
-    /// instead of doing
+    /// instead of
     /// .long a - b
-    bool NeedsSetToChangeDiffSize;           // Defaults to false.
+    bool HasAggressiveSymbolFolding;           // Defaults to true.
 
     /// HasLCOMMDirective - This is true if the target supports the .lcomm
     /// directive.
@@ -407,7 +407,9 @@ namespace llvm {
       return ExternDirective;
     }
     bool hasSetDirective() const { return HasSetDirective; }
-    bool needsSetToChangeDiffSize() const { return NeedsSetToChangeDiffSize; }
+    bool hasAggressiveSymbolFolding() const {
+      return HasAggressiveSymbolFolding;
+    }
     bool hasLCOMMDirective() const { return HasLCOMMDirective; }
     bool hasDotTypeDotSizeDirective() const {return HasDotTypeDotSizeDirective;}
     bool getCOMMDirectiveAlignmentIsInBytes() const {

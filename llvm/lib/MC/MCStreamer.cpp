@@ -77,7 +77,7 @@ void MCStreamer::EmitSLEB128IntValue(int64_t Value, unsigned AddrSpace) {
 
 void MCStreamer::EmitAbsValue(const MCExpr *Value, unsigned Size,
                               unsigned AddrSpace) {
-  if (!getContext().getAsmInfo().needsSetToChangeDiffSize()) {
+  if (getContext().getAsmInfo().hasAggressiveSymbolFolding()) {
     EmitValue(Value, Size, AddrSpace);
     return;
   }

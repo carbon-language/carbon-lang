@@ -54,7 +54,7 @@ MCAsmInfo::MCAsmInfo() {
   GPRel32Directive = 0;
   GlobalDirective = "\t.globl\t";
   HasSetDirective = true;
-  NeedsSetToChangeDiffSize = false;
+  HasAggressiveSymbolFolding = true;
   HasLCOMMDirective = false;
   COMMDirectiveAlignmentIsInBytes = true;
   HasDotTypeDotSizeDirective = true;
