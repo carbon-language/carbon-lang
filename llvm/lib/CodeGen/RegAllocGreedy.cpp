@@ -94,10 +94,13 @@ private:
   bool reassignInterferences(LiveInterval &VirtReg, unsigned PhysReg);
   unsigned findInterferenceFreeReg(MachineLoopRange*,
                                    LiveInterval&, AllocationOrder&);
+  float calcInterferenceWeight(LiveInterval&, unsigned);
 
   unsigned tryReassign(LiveInterval&, AllocationOrder&);
   unsigned trySplit(LiveInterval&, AllocationOrder&,
                     SmallVectorImpl<LiveInterval*>&);
+  unsigned trySpillInterferences(LiveInterval&, AllocationOrder&,
+                                 SmallVectorImpl<LiveInterval*>&);
 };
 } // end anonymous namespace
 
@@ -163,6 +166,11 @@ float RAGreedy::getPriority(LiveInterval *LI) {
   }
   return Priority;
 }
+
+
+//===----------------------------------------------------------------------===//
+//                         Register Reassignment
+//===----------------------------------------------------------------------===//
 
 // Check interference without using the cache.
 bool RAGreedy::checkUncachedInterference(LiveInterval &VirtReg,
@@ -263,6 +271,11 @@ unsigned RAGreedy::tryReassign(LiveInterval &VirtReg, AllocationOrder &Order) {
   return 0;
 }
 
+
+//===----------------------------------------------------------------------===//
+//                              Loop Splitting
+//===----------------------------------------------------------------------===//
+
 /// findInterferenceFreeReg - Find a physical register in Order where Loop has
 /// no interferences with VirtReg.
 unsigned RAGreedy::findInterferenceFreeReg(MachineLoopRange *Loop,
@@ -338,29 +351,81 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   return 0;
 }
 
-unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
-                                SmallVectorImpl<LiveInterval*> &SplitVRegs) {
-  // Populate a list of physical register spill candidates.
-  SmallVector<unsigned, 8> PhysRegSpillCands;
 
-  // Check for an available register in this class.
+//===----------------------------------------------------------------------===//
+//                                Spilling
+//===----------------------------------------------------------------------===//
+
+/// calcInterferenceWeight - Calculate the combined spill weight of
+/// interferences when assigning VirtReg to PhysReg.
+float RAGreedy::calcInterferenceWeight(LiveInterval &VirtReg, unsigned PhysReg){
+  float Sum = 0;
+  for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
+    LiveIntervalUnion::Query &Q = query(VirtReg, *AI);
+    Q.collectInterferingVRegs();
+    if (Q.seenUnspillableVReg())
+      return HUGE_VALF;
+    for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i)
+      Sum += Q.interferingVRegs()[i]->weight;
+  }
+  return Sum;
+}
+
+/// trySpillInterferences - Try to spill interfering registers instead of the
+/// current one. Only do it if the accumulated spill weight is smaller than the
+/// current spill weight.
+unsigned RAGreedy::trySpillInterferences(LiveInterval &VirtReg,
+                                         AllocationOrder &Order,
+                                     SmallVectorImpl<LiveInterval*> &NewVRegs) {
+  NamedRegionTimer T("Spill Interference", TimerGroupName, TimePassesIsEnabled);
+  unsigned BestPhys = 0;
+  float BestWeight;
+
+  Order.rewind();
+  while (unsigned PhysReg = Order.next()) {
+    float Weight = calcInterferenceWeight(VirtReg, PhysReg);
+    if (Weight == HUGE_VALF || Weight >= VirtReg.weight)
+      continue;
+    if (!BestPhys || Weight < BestWeight)
+      BestPhys = PhysReg, BestWeight = Weight;
+  }
+
+  // No candidates found.
+  if (!BestPhys)
+    return 0;
+
+  // Collect all interfering registers.
+  SmallVector<LiveInterval*, 8> Spills;
+  for (const unsigned *AI = TRI->getOverlaps(BestPhys); *AI; ++AI) {
+    LiveIntervalUnion::Query &Q = query(VirtReg, *AI);
+    Spills.append(Q.interferingVRegs().begin(), Q.interferingVRegs().end());
+    for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
+      LiveInterval *VReg = Q.interferingVRegs()[i];
+      PhysReg2LiveUnion[*AI].extract(*VReg);
+      VRM->clearVirt(VReg->reg);
+    }
+  }
+
+  // Spill them all.
+  DEBUG(dbgs() << "spilling " << Spills.size() << " interferences with weight "
+               << BestWeight << '\n');
+  for (unsigned i = 0, e = Spills.size(); i != e; ++i)
+    spiller().spill(Spills[i], NewVRegs, Spills);
+  return BestPhys;
+}
+
+
+//===----------------------------------------------------------------------===//
+//                            Main Entry Point
+//===----------------------------------------------------------------------===//
+
+unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
+                                 SmallVectorImpl<LiveInterval*> &SplitVRegs) {
+  // First try assigning a free register.
   AllocationOrder Order(VirtReg.reg, *VRM, ReservedRegs);
   while (unsigned PhysReg = Order.next()) {
-    // Check interference and as a side effect, intialize queries for this
-    // VirtReg and its aliases.
-    unsigned InterfReg = checkPhysRegInterference(VirtReg, PhysReg);
-    if (InterfReg == 0) {
-      // Found an available register.
+    if (!checkPhysRegInterference(VirtReg, PhysReg))
       return PhysReg;
-    }
-    assert(!VirtReg.empty() && "Empty VirtReg has interference");
-    LiveInterval *InterferingVirtReg =
-      Queries[InterfReg].firstInterference().liveUnionPos().value();
-
-    // The current VirtReg must either be spillable, or one of its interferences
-    // must have less spill weight.
-    if (InterferingVirtReg->weight < VirtReg.weight )
-      PhysRegSpillCands.push_back(PhysReg);
   }
 
   // Try to reassign interferences.
@@ -373,26 +438,13 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
     return PhysReg;
 
   // Try to spill another interfering reg with less spill weight.
+  PhysReg = trySpillInterferences(VirtReg, Order, SplitVRegs);
+  if (PhysReg)
+    return PhysReg;
+
+  // Finally spill VirtReg itself.
   NamedRegionTimer T("Spiller", TimerGroupName, TimePassesIsEnabled);
-  //
-  // FIXME: do this in two steps: (1) check for unspillable interferences while
-  // accumulating spill weight; (2) spill the interferences with lowest
-  // aggregate spill weight.
-  for (SmallVectorImpl<unsigned>::iterator PhysRegI = PhysRegSpillCands.begin(),
-         PhysRegE = PhysRegSpillCands.end(); PhysRegI != PhysRegE; ++PhysRegI) {
-
-    if (!spillInterferences(VirtReg, *PhysRegI, SplitVRegs)) continue;
-
-    assert(checkPhysRegInterference(VirtReg, *PhysRegI) == 0 &&
-           "Interference after spill.");
-    // Tell the caller to allocate to this newly freed physical register.
-    return *PhysRegI;
-  }
-
-  // No other spill candidates were found, so spill the current VirtReg.
-  DEBUG(dbgs() << "spilling: " << VirtReg << '\n');
   SmallVector<LiveInterval*, 1> pendingSpills;
-
   spiller().spill(&VirtReg, SplitVRegs, pendingSpills);
 
   // The live virtual register requesting allocation was spilled, so tell
