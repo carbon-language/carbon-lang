@@ -594,26 +594,15 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
 
   uint64_t Value = SymbolValue(Data, Layout);
   uint64_t Size = 0;
-  const MCExpr *ESize;
 
   assert(!(Data.isCommon() && !Data.isExternal()));
 
-  ESize = Data.getSize();
-  if (Data.getSize()) {
-    MCValue Res;
-    if (ESize->getKind() == MCExpr::Binary) {
-      const MCBinaryExpr *BE = static_cast<const MCBinaryExpr *>(ESize);
-
-      if (BE->EvaluateAsRelocatable(Res, &Layout)) {
-        assert(!Res.getSymA() || !Res.getSymA()->getSymbol().isDefined());
-        assert(!Res.getSymB() || !Res.getSymB()->getSymbol().isDefined());
-        Size = Res.getConstant();
-      }
-    } else if (ESize->getKind() == MCExpr::Constant) {
-      Size = static_cast<const MCConstantExpr *>(ESize)->getValue();
-    } else {
-      assert(0 && "Unsupported size expression");
-    }
+  const MCExpr *ESize = Data.getSize();
+  if (ESize) {
+    int64_t Res;
+    if (!ESize->EvaluateAsAbsolute(Res, Layout))
+      report_fatal_error("Size expression must be absolute.");
+    Size = Res;
   }
 
   // Write out the symbol table entry
