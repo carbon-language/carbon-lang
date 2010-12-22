@@ -846,7 +846,84 @@ public:
   void RecordARMRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                            const MCFragment *Fragment, const MCFixup &Fixup,
                            MCValue Target, uint64_t &FixedValue) {
-    // FIXME!
+    unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
+    // FIXME: Eliminate this!
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
+
+    // If this is a difference or a defined symbol plus an offset, then we need
+    // a scattered relocation entry.  Differences always require scattered
+    // relocations.
+    if (Target.getSymB())
+        return RecordScatteredRelocation(Asm, Layout, Fragment, Fixup,
+                                         Target, FixedValue);
+
+    // Get the symbol data, if any.
+    MCSymbolData *SD = 0;
+    if (Target.getSymA())
+      SD = &Asm.getSymbolData(Target.getSymA()->getSymbol());
+
+    // FIXME: For other platforms, we need to use scattered relocations for
+    // internal relocations with offsets.  If this is an internal relocation
+    // with an offset, it also needs a scattered relocation entry.
+    //
+    // Is this right for ARM?
+    uint32_t Offset = Target.getConstant();
+    if (IsPCRel)
+      Offset += 1 << Log2Size;
+    if (Offset && SD && !doesSymbolRequireExternRelocation(SD))
+      return RecordScatteredRelocation(Asm, Layout, Fragment, Fixup,
+                                       Target, FixedValue);
+
+    // See <reloc.h>.
+    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
+    unsigned Index = 0;
+    unsigned IsExtern = 0;
+    unsigned Type = 0;
+
+    if (Target.isAbsolute()) { // constant
+      // FIXME!
+      report_fatal_error("FIXME: relocations to absolute targets "
+                         "not yet implemented");
+    } else if (SD->getSymbol().isVariable()) {
+      int64_t Res;
+      if (SD->getSymbol().getVariableValue()->EvaluateAsAbsolute(
+            Res, Layout, SectionAddress)) {
+        FixedValue = Res;
+        return;
+      }
+
+      report_fatal_error("unsupported relocation of variable '" +
+                         SD->getSymbol().getName() + "'");
+    } else {
+      // Check whether we need an external or internal relocation.
+      if (doesSymbolRequireExternRelocation(SD)) {
+        IsExtern = 1;
+        Index = SD->getIndex();
+        // For external relocations, make sure to offset the fixup value to
+        // compensate for the addend of the symbol address, if it was
+        // undefined. This occurs with weak definitions, for example.
+        if (!SD->Symbol->isUndefined())
+          FixedValue -= Layout.getSymbolOffset(SD);
+      } else {
+        // The index is the section ordinal (1-based).
+        Index = SD->getFragment()->getParent()->getOrdinal() + 1;
+        FixedValue += getSectionAddress(SD->getFragment()->getParent());
+      }
+      if (IsPCRel)
+        FixedValue -= getSectionAddress(Fragment->getParent());
+
+      Type = macho::RIT_Vanilla;
+    }
+
+    // struct relocation_info (8 bytes)
+    macho::RelocationEntry MRE;
+    MRE.Word0 = FixupOffset;
+    MRE.Word1 = ((Index     <<  0) |
+                 (IsPCRel   << 24) |
+                 (Log2Size  << 25) |
+                 (IsExtern  << 27) |
+                 (Type      << 28));
+    Relocations[Fragment->getParent()].push_back(MRE);
   }
 
   void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
