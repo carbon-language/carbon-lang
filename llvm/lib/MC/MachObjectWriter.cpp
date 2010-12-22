@@ -235,6 +235,10 @@ public:
   /// @{
 
   bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
+  bool isARM() const {
+    uint32_t CPUType = TargetObjectWriter->getCPUType() & mach::CTFM_ArchMask;
+    return CPUType == mach::CTM_ARM;
+  }
 
   /// @}
 
@@ -839,9 +843,20 @@ public:
     Relocations[Fragment->getParent()].push_back(MRE);
   }
 
+  void RecordARMRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                           const MCFragment *Fragment, const MCFixup &Fixup,
+                           MCValue Target, uint64_t &FixedValue) {
+    // FIXME!
+  }
+
   void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, uint64_t &FixedValue) {
+    // FIXME: These needs to be factored into the target Mach-O writer.
+    if (isARM()) {
+      RecordARMRelocation(Asm, Layout, Fragment, Fixup, Target, FixedValue);
+      return;
+    }
     if (is64Bit()) {
       RecordX86_64Relocation(Asm, Layout, Fragment, Fixup, Target, FixedValue);
       return;
