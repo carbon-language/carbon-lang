@@ -106,6 +106,130 @@ static NonTypeTemplateParmDecl *getDeducedParameterFromExpr(Expr *E) {
   return 0;
 }
 
+/// \brief Determine whether two declaration pointers refer to the same
+/// declaration.
+static bool isSameDeclaration(Decl *X, Decl *Y) {
+  if (!X || !Y)
+    return !X && !Y;
+  
+  if (NamedDecl *NX = dyn_cast<NamedDecl>(X))
+    X = NX->getUnderlyingDecl();
+  if (NamedDecl *NY = dyn_cast<NamedDecl>(Y))
+    Y = NY->getUnderlyingDecl();
+  
+  return X->getCanonicalDecl() == Y->getCanonicalDecl();
+}
+
+/// \brief Verify that the given, deduced template arguments are compatible.
+///
+/// \returns The deduced template argument, or a NULL template argument if
+/// the deduced template arguments were incompatible.
+static DeducedTemplateArgument 
+checkDeducedTemplateArguments(ASTContext &Context,
+                              const DeducedTemplateArgument &X,
+                              const DeducedTemplateArgument &Y) {
+  // We have no deduction for one or both of the arguments; they're compatible.
+  if (X.isNull())
+    return Y;
+  if (Y.isNull())
+    return X;  
+
+  switch (X.getKind()) {
+  case TemplateArgument::Null:
+    llvm_unreachable("Non-deduced template arguments handled above");
+
+  case TemplateArgument::Type:
+    // If two template type arguments have the same type, they're compatible.
+    if (Y.getKind() == TemplateArgument::Type &&
+        Context.hasSameType(X.getAsType(), Y.getAsType()))
+      return X;
+      
+    return DeducedTemplateArgument();
+      
+  case TemplateArgument::Integral:
+    // If we deduced a constant in one case and either a dependent expression or
+    // declaration in another case, keep the integral constant.
+    // If both are integral constants with the same value, keep that value.
+    if (Y.getKind() == TemplateArgument::Expression ||
+        Y.getKind() == TemplateArgument::Declaration ||
+        (Y.getKind() == TemplateArgument::Integral &&
+         hasSameExtendedValue(*X.getAsIntegral(), *Y.getAsIntegral())))
+      return DeducedTemplateArgument(X, 
+                                     X.wasDeducedFromArrayBound() &&
+                                     Y.wasDeducedFromArrayBound());
+
+    // All other combinations are incompatible.
+    return DeducedTemplateArgument();
+          
+  case TemplateArgument::Template:
+    if (Y.getKind() == TemplateArgument::Template &&
+        Context.hasSameTemplateName(X.getAsTemplate(), Y.getAsTemplate()))
+      return X;
+    
+    // All other combinations are incompatible.
+    return DeducedTemplateArgument();      
+      
+  case TemplateArgument::Expression:
+    // If we deduced a dependent expression in one case and either an integral 
+    // constant or a declaration in another case, keep the integral constant 
+    // or declaration.
+    if (Y.getKind() == TemplateArgument::Integral ||
+        Y.getKind() == TemplateArgument::Declaration)
+      return DeducedTemplateArgument(Y, X.wasDeducedFromArrayBound() &&
+                                     Y.wasDeducedFromArrayBound());
+    
+    if (Y.getKind() == TemplateArgument::Expression) {
+      // Compare the expressions for equality
+      llvm::FoldingSetNodeID ID1, ID2;
+      X.getAsExpr()->Profile(ID1, Context, true);
+      Y.getAsExpr()->Profile(ID2, Context, true);
+      if (ID1 == ID2)
+        return X;
+    }
+    
+    // All other combinations are incompatible.
+    return DeducedTemplateArgument();
+    
+  case TemplateArgument::Declaration:
+    // If we deduced a declaration and a dependent expression, keep the
+    // declaration.
+    if (Y.getKind() == TemplateArgument::Expression)
+      return X;
+    
+    // If we deduced a declaration and an integral constant, keep the
+    // integral constant.
+    if (Y.getKind() == TemplateArgument::Integral)
+      return Y;
+    
+    // If we deduced two declarations, make sure they they refer to the
+    // same declaration.
+    if (Y.getKind() == TemplateArgument::Declaration &&
+        isSameDeclaration(X.getAsDecl(), Y.getAsDecl()))
+      return X;
+    
+    // All other combinations are incompatible.
+    return DeducedTemplateArgument();
+      
+  case TemplateArgument::Pack:
+    if (Y.getKind() != TemplateArgument::Pack ||
+        X.pack_size() != Y.pack_size())
+      return DeducedTemplateArgument();
+      
+    for (TemplateArgument::pack_iterator XA = X.pack_begin(), 
+                                      XAEnd = X.pack_end(),
+                                         YA = Y.pack_begin();
+         XA != XAEnd; ++XA, ++YA) {
+      // FIXME: We've lost the "deduced from array bound" bit.
+      if (checkDeducedTemplateArguments(Context, *XA, *YA).isNull())
+        return DeducedTemplateArgument();
+    }
+      
+    return X;
+  }
+  
+  return DeducedTemplateArgument();
+}
+
 /// \brief Deduce the value of the given non-type template parameter
 /// from the given constant.
 static Sema::TemplateDeductionResult
@@ -118,31 +242,18 @@ DeduceNonTypeTemplateArgument(Sema &S,
   assert(NTTP->getDepth() == 0 &&
          "Cannot deduce non-type template argument with depth > 0");
 
-  if (Deduced[NTTP->getIndex()].isNull()) {
-    Deduced[NTTP->getIndex()] = DeducedTemplateArgument(Value, ValueType,
-                                                        DeducedFromArrayBound);
-    return Sema::TDK_Success;
-  }
-
-  if (Deduced[NTTP->getIndex()].getKind() != TemplateArgument::Integral) {
+  DeducedTemplateArgument NewDeduced(Value, ValueType, DeducedFromArrayBound);
+  DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context, 
+                                                     Deduced[NTTP->getIndex()],
+                                                                 NewDeduced);
+  if (Result.isNull()) {
     Info.Param = NTTP;
     Info.FirstArg = Deduced[NTTP->getIndex()];
-    Info.SecondArg = TemplateArgument(Value, ValueType);
-    return Sema::TDK_Inconsistent;    
+    Info.SecondArg = NewDeduced;
+    return Sema::TDK_Inconsistent;        
   }
-
-  // Extent the smaller of the two values.
-  llvm::APSInt PrevValue = *Deduced[NTTP->getIndex()].getAsIntegral();
-  if (!hasSameExtendedValue(PrevValue, Value)) {
-    Info.Param = NTTP;
-    Info.FirstArg = Deduced[NTTP->getIndex()];
-    Info.SecondArg = TemplateArgument(Value, ValueType);
-    return Sema::TDK_Inconsistent;
-  }
-
-  if (!DeducedFromArrayBound)
-    Deduced[NTTP->getIndex()].setDeducedFromArrayBound(false);
-
+  
+  Deduced[NTTP->getIndex()] = Result;
   return Sema::TDK_Success;
 }
 
@@ -161,30 +272,19 @@ DeduceNonTypeTemplateArgument(Sema &S,
   assert((Value->isTypeDependent() || Value->isValueDependent()) &&
          "Expression template argument must be type- or value-dependent.");
 
-  if (Deduced[NTTP->getIndex()].isNull()) {
-    Deduced[NTTP->getIndex()] = TemplateArgument(Value);
-    return Sema::TDK_Success;
+  DeducedTemplateArgument NewDeduced(Value);
+  DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context, 
+                                                     Deduced[NTTP->getIndex()], 
+                                                                 NewDeduced);
+  
+  if (Result.isNull()) {
+    Info.Param = NTTP;
+    Info.FirstArg = Deduced[NTTP->getIndex()];
+    Info.SecondArg = NewDeduced;
+    return Sema::TDK_Inconsistent;        
   }
-
-  if (Deduced[NTTP->getIndex()].getKind() == TemplateArgument::Integral) {
-    // Okay, we deduced a constant in one case and a dependent expression
-    // in another case. FIXME: Later, we will check that instantiating the
-    // dependent expression gives us the constant value.
-    return Sema::TDK_Success;
-  }
-
-  if (Deduced[NTTP->getIndex()].getKind() == TemplateArgument::Expression) {
-    // Compare the expressions for equality
-    llvm::FoldingSetNodeID ID1, ID2;
-    Deduced[NTTP->getIndex()].getAsExpr()->Profile(ID1, S.Context, true);
-    Value->Profile(ID2, S.Context, true);
-    if (ID1 == ID2)
-      return Sema::TDK_Success;
-   
-    // FIXME: Fill in argument mismatch information
-    return Sema::TDK_NonDeducedMismatch;
-  }
-
+  
+  Deduced[NTTP->getIndex()] = Result;
   return Sema::TDK_Success;
 }
 
@@ -201,27 +301,18 @@ DeduceNonTypeTemplateArgument(Sema &S,
   assert(NTTP->getDepth() == 0 &&
          "Cannot deduce non-type template argument with depth > 0");
   
-  if (Deduced[NTTP->getIndex()].isNull()) {
-    Deduced[NTTP->getIndex()] = TemplateArgument(D->getCanonicalDecl());
-    return Sema::TDK_Success;
+  DeducedTemplateArgument NewDeduced(D? D->getCanonicalDecl() : 0);
+  DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context, 
+                                                     Deduced[NTTP->getIndex()],
+                                                                 NewDeduced);
+  if (Result.isNull()) {
+    Info.Param = NTTP;
+    Info.FirstArg = Deduced[NTTP->getIndex()];
+    Info.SecondArg = NewDeduced;
+    return Sema::TDK_Inconsistent;        
   }
   
-  if (Deduced[NTTP->getIndex()].getKind() == TemplateArgument::Expression) {
-    // Okay, we deduced a declaration in one case and a dependent expression
-    // in another case.
-    return Sema::TDK_Success;
-  }
-  
-  if (Deduced[NTTP->getIndex()].getKind() == TemplateArgument::Declaration) {
-    // Compare the declarations for equality
-    if (Deduced[NTTP->getIndex()].getAsDecl()->getCanonicalDecl() ==
-          D->getCanonicalDecl())
-      return Sema::TDK_Success;
-    
-    // FIXME: Fill in argument mismatch information
-    return Sema::TDK_NonDeducedMismatch;
-  }
-  
+  Deduced[NTTP->getIndex()] = Result;
   return Sema::TDK_Success;
 }
 
@@ -241,24 +332,19 @@ DeduceTemplateArguments(Sema &S,
   
   if (TemplateTemplateParmDecl *TempParam
         = dyn_cast<TemplateTemplateParmDecl>(ParamDecl)) {
-    // Bind the template template parameter to the given template name.
-    TemplateArgument &ExistingArg = Deduced[TempParam->getIndex()];
-    if (ExistingArg.isNull()) {
-      // This is the first deduction for this template template parameter.
-      ExistingArg = TemplateArgument(S.Context.getCanonicalTemplateName(Arg));
-      return Sema::TDK_Success;
+    DeducedTemplateArgument NewDeduced(S.Context.getCanonicalTemplateName(Arg));
+    DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context, 
+                                                 Deduced[TempParam->getIndex()],
+                                                                   NewDeduced);
+    if (Result.isNull()) {
+      Info.Param = TempParam;
+      Info.FirstArg = Deduced[TempParam->getIndex()];
+      Info.SecondArg = NewDeduced;
+      return Sema::TDK_Inconsistent;        
     }
     
-    // Verify that the previous binding matches this deduction.
-    assert(ExistingArg.getKind() == TemplateArgument::Template);
-    if (S.Context.hasSameTemplateName(ExistingArg.getAsTemplate(), Arg))
-      return Sema::TDK_Success;
-    
-    // Inconsistent deduction.
-    Info.Param = TempParam;
-    Info.FirstArg = ExistingArg;
-    Info.SecondArg = TemplateArgument(Arg);
-    return Sema::TDK_Inconsistent;
+    Deduced[TempParam->getIndex()] = Result;
+    return Sema::TDK_Success;    
   }
   
   // Verify that the two template names are equivalent.
@@ -469,24 +555,19 @@ DeduceTemplateArguments(Sema &S,
     if (RecanonicalizeArg)
       DeducedType = S.Context.getCanonicalType(DeducedType);
 
-    if (Deduced[Index].isNull())
-      Deduced[Index] = TemplateArgument(DeducedType);
-    else {
-      // C++ [temp.deduct.type]p2:
-      //   [...] If type deduction cannot be done for any P/A pair, or if for
-      //   any pair the deduction leads to more than one possible set of
-      //   deduced values, or if different pairs yield different deduced
-      //   values, or if any template argument remains neither deduced nor
-      //   explicitly specified, template argument deduction fails.
-      if (Deduced[Index].getAsType() != DeducedType) {
-        Info.Param
-          = cast<TemplateTypeParmDecl>(TemplateParams->getParam(Index));
-        Info.FirstArg = Deduced[Index];
-        Info.SecondArg = TemplateArgument(Arg);
-        return Sema::TDK_Inconsistent;
-      }
+    DeducedTemplateArgument NewDeduced(DeducedType);
+    DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context, 
+                                                                 Deduced[Index],
+                                                                   NewDeduced);
+    if (Result.isNull()) {
+      Info.Param = cast<TemplateTypeParmDecl>(TemplateParams->getParam(Index));
+      Info.FirstArg = Deduced[Index];
+      Info.SecondArg = NewDeduced;
+      return Sema::TDK_Inconsistent;        
     }
-    return Sema::TDK_Success;
+    
+    Deduced[Index] = Result;
+    return Sema::TDK_Success;    
   }
 
   // Set up the template argument deduction information for a failure.
@@ -966,6 +1047,17 @@ getDepthAndIndex(UnexpandedParameterPack UPP) {
   return std::make_pair(TTP->getDepth(), TTP->getIndex());
 }
 
+/// \brief Helper function to build a TemplateParameter when we don't
+/// know its type statically.
+static TemplateParameter makeTemplateParameter(Decl *D) {
+  if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(D))
+    return TemplateParameter(TTP);
+  else if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D))
+    return TemplateParameter(NTTP);
+  
+  return TemplateParameter(cast<TemplateTemplateParmDecl>(D));
+}
+
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S,
                         TemplateParameterList *TemplateParams,
@@ -1090,27 +1182,33 @@ DeduceTemplateArguments(Sema &S,
         continue;
       }
       
-      if (!SavedPacks[I].isNull()) {
-        // FIXME: Check against the existing argument pack.
-        S.Diag(Info.getLocation(), diag::err_pack_expansion_deduction_compare);
-        return Sema::TDK_TooFewArguments;
-      }
+      DeducedTemplateArgument NewPack;
       
       if (NewlyDeducedPacks[I].empty()) {
         // If we deduced an empty argument pack, create it now.
-        Deduced[PackIndices[I]]
-          = DeducedTemplateArgument(TemplateArgument(0, 0));
-        continue;
-      }
-                
-      TemplateArgument *ArgumentPack
-        = new (S.Context) TemplateArgument [NewlyDeducedPacks[I].size()];
-      std::copy(NewlyDeducedPacks[I].begin(), NewlyDeducedPacks[I].end(),
-                ArgumentPack);
-      Deduced[PackIndices[I]]
-        = DeducedTemplateArgument(TemplateArgument(ArgumentPack,
+        NewPack = DeducedTemplateArgument(TemplateArgument(0, 0));
+      } else {
+        TemplateArgument *ArgumentPack
+          = new (S.Context) TemplateArgument [NewlyDeducedPacks[I].size()];
+        std::copy(NewlyDeducedPacks[I].begin(), NewlyDeducedPacks[I].end(),
+                  ArgumentPack);
+        NewPack
+          = DeducedTemplateArgument(TemplateArgument(ArgumentPack,
                                                    NewlyDeducedPacks[I].size()),
-                            NewlyDeducedPacks[I][0].wasDeducedFromArrayBound());
+                            NewlyDeducedPacks[I][0].wasDeducedFromArrayBound());        
+      }
+
+      DeducedTemplateArgument Result
+        = checkDeducedTemplateArguments(S.Context, SavedPacks[I], NewPack);
+      if (Result.isNull()) {
+        Info.Param
+          = makeTemplateParameter(TemplateParams->getParam(PackIndices[I]));
+        Info.FirstArg = SavedPacks[I];
+        Info.SecondArg = NewPack;
+        return Sema::TDK_Inconsistent;
+      }
+      
+      Deduced[PackIndices[I]] = Result;
     }
   }
   
@@ -1186,17 +1284,6 @@ static bool isSameTemplateArg(ASTContext &Context,
   }
 
   return false;
-}
-
-/// \brief Helper function to build a TemplateParameter when we don't
-/// know its type statically.
-static TemplateParameter makeTemplateParameter(Decl *D) {
-  if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(D))
-    return TemplateParameter(TTP);
-  else if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D))
-    return TemplateParameter(NTTP);
-
-  return TemplateParameter(cast<TemplateTemplateParmDecl>(D));
 }
 
 /// Complete template argument deduction for a class template partial
