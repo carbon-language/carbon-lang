@@ -417,11 +417,6 @@ class DependentFunctionTemplateSpecializationInfo {
     return reinterpret_cast<FunctionTemplateDecl*const*>(this+1);
   }
 
-  const TemplateArgumentLoc *getTemplateArgs() const {
-    return reinterpret_cast<const TemplateArgumentLoc*>(
-             &getTemplates()[getNumTemplates()]);
-  }
-
 public:
   DependentFunctionTemplateSpecializationInfo(
                                  const UnresolvedSetImpl &Templates,
@@ -437,6 +432,12 @@ public:
   FunctionTemplateDecl *getTemplate(unsigned I) const {
     assert(I < getNumTemplates() && "template index out of range");
     return getTemplates()[I];
+  }
+
+  /// \brief Returns the explicit template arguments that were given.
+  const TemplateArgumentLoc *getTemplateArgs() const {
+    return reinterpret_cast<const TemplateArgumentLoc*>(
+                                                        &getTemplates()[getNumTemplates()]);
   }
 
   /// \brief Returns the number of explicit template arguments that were given.

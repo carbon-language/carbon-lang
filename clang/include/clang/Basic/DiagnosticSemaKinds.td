@@ -1868,8 +1868,8 @@ def err_pack_expansion_instantiation_unsupported : Error<
   "clang cannot yet instantiate pack expansions">;
 def err_pack_expansion_mismatch_unsupported : Error<
   "clang cannot yet instantiate pack expansions with mismatched pack levels">;
-def err_pack_expansion_deduction : Error<
-  "clang cannot yet perform template argument deduction for a pack expansion">;
+def err_pack_expansion_deduction_compare : Error<
+  "clang cannot yet compare deduced template argument packs">;
 
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;

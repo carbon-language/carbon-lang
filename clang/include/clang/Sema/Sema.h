@@ -3247,6 +3247,14 @@ public:
   ///
   /// \param Arg The template argument that will be traversed to find
   /// unexpanded parameter packs.
+  void collectUnexpandedParameterPacks(TemplateArgument Arg,
+                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
+
+  /// \brief Collect the set of unexpanded parameter packs within the given
+  /// template argument.  
+  ///
+  /// \param Arg The template argument that will be traversed to find
+  /// unexpanded parameter packs.
   void collectUnexpandedParameterPacks(TemplateArgumentLoc Arg,
                     llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
 
@@ -3862,7 +3870,8 @@ public:
   TemplateName
   SubstTemplateName(TemplateName Name, SourceLocation Loc,
                     const MultiLevelTemplateArgumentList &TemplateArgs);
-  bool Subst(const TemplateArgumentLoc &Arg, TemplateArgumentLoc &Result,
+  bool Subst(const TemplateArgumentLoc *Args, unsigned NumArgs,
+             TemplateArgumentListInfo &Result,
              const MultiLevelTemplateArgumentList &TemplateArgs);
 
   void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,

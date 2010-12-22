@@ -191,6 +191,28 @@ bool TemplateArgument::structurallyEquals(const TemplateArgument &Other) const {
   return false;
 }
 
+TemplateArgument TemplateArgument::getPackExpansionPattern() const {
+  assert(isPackExpansion());
+  
+  switch (getKind()) {
+    case Type:
+      return getAsType()->getAs<PackExpansionType>()->getPattern();
+      
+    case Expression:
+    case Template:
+      // FIXME: Variadic templates.
+      llvm_unreachable("Expression and template pack expansions unsupported");
+      
+    case Declaration:
+    case Integral:
+    case Pack:
+    case Null:
+      return TemplateArgument();
+  }
+  
+  return TemplateArgument();
+}
+
 void TemplateArgument::print(const PrintingPolicy &Policy, 
                              llvm::raw_ostream &Out) const {
   switch (getKind()) {

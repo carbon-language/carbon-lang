@@ -1095,13 +1095,9 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     // Instantiate the explicit template arguments.
     TemplateArgumentListInfo ExplicitArgs(Info->getLAngleLoc(),
                                           Info->getRAngleLoc());
-    for (unsigned I = 0, E = Info->getNumTemplateArgs(); I != E; ++I) {
-      TemplateArgumentLoc Loc;
-      if (SemaRef.Subst(Info->getTemplateArg(I), Loc, TemplateArgs))
-        return 0;
-
-      ExplicitArgs.addArgument(Loc);
-    }
+    if (SemaRef.Subst(Info->getTemplateArgs(), Info->getNumTemplateArgs(),
+                      ExplicitArgs, TemplateArgs))
+      return 0;
 
     // Map the candidate templates to their instantiations.
     for (unsigned I = 0, E = Info->getNumTemplates(); I != E; ++I) {
@@ -1791,19 +1787,12 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   
   // Substitute into the template arguments of the class template partial
   // specialization.
-  const TemplateArgumentLoc *PartialSpecTemplateArgs
-    = PartialSpec->getTemplateArgsAsWritten();
-  unsigned N = PartialSpec->getNumTemplateArgsAsWritten();
-
   TemplateArgumentListInfo InstTemplateArgs; // no angle locations
-  for (unsigned I = 0; I != N; ++I) {
-    TemplateArgumentLoc Loc;
-    if (SemaRef.Subst(PartialSpecTemplateArgs[I], Loc, TemplateArgs))
-      return 0;
-    InstTemplateArgs.addArgument(Loc);
-  }
+  if (SemaRef.Subst(PartialSpec->getTemplateArgsAsWritten(), 
+                    PartialSpec->getNumTemplateArgsAsWritten(), 
+                    InstTemplateArgs, TemplateArgs))
+    return 0;
   
-
   // Check that the template argument list is well-formed for this
   // class template.
   llvm::SmallVector<TemplateArgument, 4> Converted;

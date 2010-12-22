@@ -253,6 +253,12 @@ bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
   return true;
 }
 
+void Sema::collectUnexpandedParameterPacks(TemplateArgument Arg,
+                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded) {
+  CollectUnexpandedParameterPacksVisitor(Unexpanded)
+    .TraverseTemplateArgument(Arg);
+}
+
 void Sema::collectUnexpandedParameterPacks(TemplateArgumentLoc Arg,
                    llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded) {
   CollectUnexpandedParameterPacksVisitor(Unexpanded)

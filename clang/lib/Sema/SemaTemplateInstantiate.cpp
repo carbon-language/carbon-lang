@@ -1723,12 +1723,13 @@ Sema::SubstTemplateName(TemplateName Name, SourceLocation Loc,
   return Instantiator.TransformTemplateName(Name);
 }
 
-bool Sema::Subst(const TemplateArgumentLoc &Input, TemplateArgumentLoc &Output,
+bool Sema::Subst(const TemplateArgumentLoc *Args, unsigned NumArgs,
+                 TemplateArgumentListInfo &Result,
                  const MultiLevelTemplateArgumentList &TemplateArgs) {
   TemplateInstantiator Instantiator(*this, TemplateArgs, SourceLocation(),
                                     DeclarationName());
-
-  return Instantiator.TransformTemplateArgument(Input, Output);
+  
+  return Instantiator.TransformTemplateArguments(Args, NumArgs, Result);
 }
 
 Decl *LocalInstantiationScope::getInstantiationOf(const Decl *D) {
