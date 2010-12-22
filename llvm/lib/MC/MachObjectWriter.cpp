@@ -962,7 +962,7 @@ public:
     //
     // Is this right for ARM?
     uint32_t Offset = Target.getConstant();
-    if (IsPCRel)
+    if (IsPCRel && !Is24BitBranch)
       Offset += 1 << Log2Size;
     if (Offset && SD && !doesSymbolRequireExternRelocation(SD))
       return RecordARMScatteredRelocation(Asm, Layout, Fragment, Fixup,
