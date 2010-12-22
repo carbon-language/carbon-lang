@@ -714,7 +714,7 @@ let usesCustomInserter=1 in {
 //===----------------------------------------------------------------------===//
 
 // Small immediates
-def : Pat<(i32 0), (ADD (i32 R0), (i32 R0))>;
+def : Pat<(i32 0), (ADDK (i32 R0), (i32 R0))>;
 def : Pat<(i32 immSExt16:$imm), (ADDIK (i32 R0), imm:$imm)>;
 def : Pat<(i32 immZExt16:$imm), (ORI (i32 R0), imm:$imm)>;
 

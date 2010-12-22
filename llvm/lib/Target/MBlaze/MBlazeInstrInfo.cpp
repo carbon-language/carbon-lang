@@ -80,7 +80,7 @@ copyPhysReg(MachineBasicBlock &MBB,
             MachineBasicBlock::iterator I, DebugLoc DL,
             unsigned DestReg, unsigned SrcReg,
             bool KillSrc) const {
-  llvm::BuildMI(MBB, I, DL, get(MBlaze::ADD), DestReg)
+  llvm::BuildMI(MBB, I, DL, get(MBlaze::ADDK), DestReg)
     .addReg(SrcReg, getKillRegState(KillSrc)).addReg(MBlaze::R0);
 }
 
