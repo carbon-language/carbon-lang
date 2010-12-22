@@ -300,7 +300,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       ParsingPreprocessorDirective = false;
     }
 
-    if (Tok.is(tok::identifier)) {
+    if (Tok.is(tok::raw_identifier)) {
       PP.LookUpIdentifierInfo(Tok);
       EmitToken(Tok);
       continue;
@@ -320,13 +320,13 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       // this case, discard both tokens.
       if (NextTok.isAtStartOfLine())
         goto NextToken;
-      
+
       // The token is the start of a directive.  Emit it.
       EmitToken(Tok);
       Tok = NextTok;
 
       // Did we see 'include'/'import'/'include_next'?
-      if (Tok.isNot(tok::identifier)) {
+      if (Tok.isNot(tok::raw_identifier)) {
         EmitToken(Tok);
         continue;
       }
@@ -353,7 +353,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
         L.LexIncludeFilename(Tok);
         L.setParsingPreprocessorDirective(false);
         assert(!Tok.isAtStartOfLine());
-        if (Tok.is(tok::identifier))
+        if (Tok.is(tok::raw_identifier))
           PP.LookUpIdentifierInfo(Tok);
 
         break;

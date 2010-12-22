@@ -34,10 +34,10 @@ TokenRewriter::TokenRewriter(FileID FID, SourceManager &SM,
   RawLex.LexFromRawLexer(RawTok);
   while (RawTok.isNot(tok::eof)) {
 #if 0
-    if (Tok.is(tok::identifier)) {
+    if (Tok.is(tok::raw_identifier)) {
       // Look up the identifier info for the token.  This should use
       // IdentifierTable directly instead of PP.
-      Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+      PP.LookUpIdentifierInfo(Tok);
     }
 #endif
 

@@ -20,6 +20,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -378,14 +379,16 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
     unsigned TokLen = Tok.getLength();
     switch (Tok.getKind()) {
     default: break;
-    case tok::identifier: {
-      // Fill in Result.IdentifierInfo, looking up the identifier in the
-      // identifier table.
-      const IdentifierInfo *II =
-        PP.LookUpIdentifierInfo(Tok, BufferStart+TokOffs);
+    case tok::identifier:
+      llvm_unreachable("tok::identifier in raw lexing mode!");
+      break;
+    case tok::raw_identifier: {
+      // Fill in Result.IdentifierInfo and update the token kind,
+      // looking up the identifier in the identifier table.
+      PP.LookUpIdentifierInfo(Tok);
 
       // If this is a pp-identifier, for a keyword, highlight it as such.
-      if (II->getTokenID() != tok::identifier)
+      if (Tok.isNot(tok::identifier))
         HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
                        "<span class='keyword'>", "</span>");
       break;
@@ -473,11 +476,8 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
     // If this raw token is an identifier, the raw lexer won't have looked up
     // the corresponding identifier info for it.  Do this now so that it will be
     // macro expanded when we re-preprocess it.
-    if (Tok.is(tok::identifier)) {
-      // Change the kind of this identifier to the appropriate token kind, e.g.
-      // turning "for" into a keyword.
-      Tok.setKind(PP.LookUpIdentifierInfo(Tok)->getTokenID());
-    }
+    if (Tok.is(tok::raw_identifier))
+      PP.LookUpIdentifierInfo(Tok);
 
     TokenStream.push_back(Tok);
 

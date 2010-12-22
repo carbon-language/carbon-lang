@@ -78,7 +78,7 @@ static void LexRawTokensFromMainFile(Preprocessor &PP,
     // If we have an identifier with no identifier info for our raw token, look
     // up the indentifier info.  This is important for equality comparison of
     // identifier tokens.
-    if (RawTok.is(tok::identifier) && !RawTok.getIdentifierInfo())
+    if (RawTok.is(tok::raw_identifier))
       PP.LookUpIdentifierInfo(RawTok);
 
     RawTokens.push_back(RawTok);

@@ -13,6 +13,7 @@
 
 #include "clang/Lex/TokenConcatenation.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
 
@@ -165,7 +166,14 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
   }
 
   switch (PrevKind) {
-  default: assert(0 && "InitAvoidConcatTokenInfo built wrong");
+  default:
+    llvm_unreachable("InitAvoidConcatTokenInfo built wrong");
+    return true;
+
+  case tok::raw_identifier:
+    llvm_unreachable("tok::raw_identifier in non-raw lexing mode!");
+    return true;
+
   case tok::identifier:   // id+id or id+number or id+L"foo".
     // id+'.'... will not append.
     if (Tok.is(tok::numeric_constant))

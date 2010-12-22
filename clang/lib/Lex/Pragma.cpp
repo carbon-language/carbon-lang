@@ -292,7 +292,7 @@ void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
     if (Tok.is(tok::eom)) return;
 
     // Can only poison identifiers.
-    if (Tok.isNot(tok::identifier)) {
+    if (Tok.isNot(tok::raw_identifier)) {
       Diag(Tok, diag::err_pp_invalid_poison);
       return;
     }
@@ -599,7 +599,7 @@ IdentifierInfo *Preprocessor::ParsePragmaPushOrPopMacro(Token &Tok) {
   // Create a Token from the string.
   Token MacroTok;
   MacroTok.startToken();
-  MacroTok.setKind(tok::identifier);
+  MacroTok.setKind(tok::raw_identifier);
   CreateString(&StrVal[1], StrVal.size() - 2, MacroTok);
 
   // Get the IdentifierInfo of MacroToPushTok.

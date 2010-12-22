@@ -751,10 +751,10 @@ public:
   // Preprocessor callback methods.  These are invoked by a lexer as various
   // directives and events are found.
 
-  /// LookUpIdentifierInfo - Given a tok::identifier token, look up the
-  /// identifier information for the token and install it into the token.
-  IdentifierInfo *LookUpIdentifierInfo(Token &Identifier,
-                                       const char *BufPtr = 0) const;
+  /// LookUpIdentifierInfo - Given a tok::raw_identifier token, look up the
+  /// identifier information for the token and install it into the token,
+  /// updating the token kind accordingly.
+  IdentifierInfo *LookUpIdentifierInfo(Token &Identifier) const;
 
   /// HandleIdentifier - This callback is invoked when the lexer reads an
   /// identifier and has filled in the tokens IdentifierInfo member.  This

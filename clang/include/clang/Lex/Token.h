@@ -88,6 +88,12 @@ public:
   bool is(tok::TokenKind K) const { return Kind == (unsigned) K; }
   bool isNot(tok::TokenKind K) const { return Kind != (unsigned) K; }
 
+  /// isAnyIdentifier - Return true if this is a raw identifier (when lexing
+  /// in raw mode) or a non-keyword identifier (when lexing in non-raw mode).
+  bool isAnyIdentifier() const {
+    return is(tok::identifier) || is(tok::raw_identifier);
+  }
+
   /// isLiteral - Return true if this is a "literal", like a numeric
   /// constant, string, etc.
   bool isLiteral() const {
@@ -154,12 +160,27 @@ public:
   }
 
   IdentifierInfo *getIdentifierInfo() const {
-    assert(!isAnnotation() && "Used IdentInfo on annotation token!");
+    assert(isNot(tok::raw_identifier) &&
+           "getIdentifierInfo() on a tok::raw_identifier token!");
+    assert(!isAnnotation() &&
+           "getIdentifierInfo() on an annotation token!");
     if (isLiteral()) return 0;
     return (IdentifierInfo*) PtrData;
   }
   void setIdentifierInfo(IdentifierInfo *II) {
     PtrData = (void*) II;
+  }
+
+  /// getRawIdentifierData - For a raw identifier token (i.e., an identifier
+  /// lexed in raw mode), returns a pointer to the start of it in the text
+  /// buffer if known, null otherwise.
+  const char *getRawIdentifierData() const {
+    assert(is(tok::raw_identifier));
+    return reinterpret_cast<const char*>(PtrData);
+  }
+  void setRawIdentifierData(const char *Ptr) {
+    assert(is(tok::raw_identifier));
+    PtrData = const_cast<char*>(Ptr);
   }
 
   /// getLiteralData - For a literal token (numeric constant, string, etc), this

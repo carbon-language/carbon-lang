@@ -266,21 +266,23 @@ unsigned Lexer::getSpelling(const Token &Tok, const char *&Buffer,
                             const SourceManager &SourceMgr,
                             const LangOptions &Features, bool *Invalid) {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
-  
-  // If this token is an identifier, just return the string from the identifier
-  // table, which is very quick.
-  if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
+
+  const char *TokStart = 0;
+  // NOTE: this has to be checked *before* testing for an IdentifierInfo.
+  if (Tok.is(tok::raw_identifier))
+    TokStart = Tok.getRawIdentifierData();
+  else if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
+    // Just return the string from the identifier table, which is very quick.
     Buffer = II->getNameStart();
     return II->getLength();
   }
-  
-  // Otherwise, compute the start of the token in the input lexer buffer.
-  const char *TokStart = 0;
-  
+
+  // NOTE: this can be checked even after testing for an IdentifierInfo.
   if (Tok.isLiteral())
     TokStart = Tok.getLiteralData();
-  
+
   if (TokStart == 0) {
+    // Compute the start of the token in the input lexer buffer.
     bool CharDataInvalid = false;
     TokStart = SourceMgr.getCharacterData(Tok.getLocation(), &CharDataInvalid);
     if (Invalid)
@@ -290,13 +292,13 @@ unsigned Lexer::getSpelling(const Token &Tok, const char *&Buffer,
       return 0;
     }
   }
-  
+
   // If this token contains nothing interesting, return it directly.
   if (!Tok.needsCleaning()) {
     Buffer = TokStart;
     return Tok.getLength();
   }
-  
+
   // Otherwise, hard case, relex the characters into the string.
   char *OutBuf = const_cast<char*>(Buffer);
   for (const char *Ptr = TokStart, *End = TokStart+Tok.getLength();
@@ -307,7 +309,7 @@ unsigned Lexer::getSpelling(const Token &Tok, const char *&Buffer,
   }
   assert(unsigned(OutBuf-Buffer) != Tok.getLength() &&
          "NeedsCleaning flag set on something that didn't need cleaning!");
-  
+
   return OutBuf-Buffer;
 }
 
@@ -473,10 +475,9 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer, unsigned MaxLines) {
       // we don't have an identifier table available. Instead, just look at
       // the raw identifier to recognize and categorize preprocessor directives.
       TheLexer.LexFromRawLexer(TheTok);
-      if (TheTok.getKind() == tok::identifier && !TheTok.needsCleaning()) {
-        const char *IdStart = Buffer->getBufferStart() 
-                            + TheTok.getLocation().getRawEncoding() - 1;
-        llvm::StringRef Keyword(IdStart, TheTok.getLength());
+      if (TheTok.getKind() == tok::raw_identifier && !TheTok.needsCleaning()) {
+        llvm::StringRef Keyword(TheTok.getRawIdentifierData(),
+                                TheTok.getLength());
         PreambleDirectiveKind PDK
           = llvm::StringSwitch<PreambleDirectiveKind>(Keyword)
               .Case("include", PDK_Skipped)
@@ -1046,19 +1047,17 @@ void Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
   if (C != '\\' && C != '?' && (C != '$' || !Features.DollarIdents)) {
 FinishIdentifier:
     const char *IdStart = BufferPtr;
-    FormTokenWithChars(Result, CurPtr, tok::identifier);
+    FormTokenWithChars(Result, CurPtr, tok::raw_identifier);
+    Result.setRawIdentifierData(IdStart);
 
     // If we are in raw mode, return this identifier raw.  There is no need to
     // look up identifier information or attempt to macro expand it.
-    if (LexingRawMode) return;
+    if (LexingRawMode)
+      return;
 
-    // Fill in Result.IdentifierInfo, looking up the identifier in the
-    // identifier table.
-    IdentifierInfo *II = PP->LookUpIdentifierInfo(Result, IdStart);
-
-    // Change the kind of this identifier to the appropriate token kind, e.g.
-    // turning "for" into a keyword.
-    Result.setKind(II->getTokenID());
+    // Fill in Result.IdentifierInfo and update the token kind,
+    // looking up the identifier in the identifier table.
+    IdentifierInfo *II = PP->LookUpIdentifierInfo(Result);
 
     // Finally, now that we know we have an identifier, pass this off to the
     // preprocessor, which may macro expand it or something.

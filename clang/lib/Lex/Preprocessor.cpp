@@ -285,9 +285,12 @@ void Preprocessor::CodeCompleteNaturalLanguage() {
 llvm::StringRef Preprocessor::getSpelling(const Token &Tok,
                                           llvm::SmallVectorImpl<char> &Buffer,
                                           bool *Invalid) const {
-  // Try the fast path.
-  if (const IdentifierInfo *II = Tok.getIdentifierInfo())
-    return II->getName();
+  // NOTE: this has to be checked *before* testing for an IdentifierInfo.
+  if (Tok.isNot(tok::raw_identifier)) {
+    // Try the fast path.
+    if (const IdentifierInfo *II = Tok.getIdentifierInfo())
+      return II->getName();
+  }
 
   // Resize the buffer if we need to copy into it.
   if (Tok.needsCleaning())
@@ -313,8 +316,10 @@ void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
                                            InstantiationLoc, Len);
   Tok.setLocation(Loc);
 
-  // If this is a literal token, set the pointer data.
-  if (Tok.isLiteral())
+  // If this is a raw identifier or a literal token, set the pointer data.
+  if (Tok.is(tok::raw_identifier))
+    Tok.setRawIdentifierData(DestPtr);
+  else if (Tok.isLiteral())
     Tok.setLiteralData(DestPtr);
 }
 
@@ -369,25 +374,29 @@ void Preprocessor::EndSourceFile() {
 // Lexer Event Handling.
 //===----------------------------------------------------------------------===//
 
-/// LookUpIdentifierInfo - Given a tok::identifier token, look up the
-/// identifier information for the token and install it into the token.
-IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
-                                                   const char *BufPtr) const {
-  assert(Identifier.is(tok::identifier) && "Not an identifier!");
-  assert(Identifier.getIdentifierInfo() == 0 && "Identinfo already exists!");
+/// LookUpIdentifierInfo - Given a tok::raw_identifier token, look up the
+/// identifier information for the token and install it into the token,
+/// updating the token kind accordingly.
+IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier) const {
+  assert(Identifier.getRawIdentifierData() != 0 && "No raw identifier data!");
 
   // Look up this token, see if it is a macro, or if it is a language keyword.
   IdentifierInfo *II;
-  if (BufPtr && !Identifier.needsCleaning()) {
+  if (!Identifier.needsCleaning()) {
     // No cleaning needed, just use the characters from the lexed buffer.
-    II = getIdentifierInfo(llvm::StringRef(BufPtr, Identifier.getLength()));
+    II = getIdentifierInfo(llvm::StringRef(Identifier.getRawIdentifierData(),
+                                           Identifier.getLength()));
   } else {
     // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
     llvm::SmallString<64> IdentifierBuffer;
     llvm::StringRef CleanedStr = getSpelling(Identifier, IdentifierBuffer);
     II = getIdentifierInfo(CleanedStr);
   }
+
+  // Update the token info (identifier info and appropriate token kind).
   Identifier.setIdentifierInfo(II);
+  Identifier.setKind(II->getTokenID());
+
   return II;
 }
 

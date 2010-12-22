@@ -103,6 +103,7 @@ TOK(comment)             // Comment (only in -E -C[C] mode)
 
 // C99 6.4.2: Identifiers.
 TOK(identifier)          // abcde123
+TOK(raw_identifier)      // Used only in raw lexing mode.
 
 // C99 6.4.4.1: Integer Constants
 // C99 6.4.4.2: Floating Constants

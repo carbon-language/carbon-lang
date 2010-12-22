@@ -4010,27 +4010,18 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
     if (Tok.isLiteral()) {
       CXTok.int_data[0] = CXToken_Literal;
       CXTok.ptr_data = (void *)Tok.getLiteralData();
-    } else if (Tok.is(tok::identifier)) {
+    } else if (Tok.is(tok::raw_identifier)) {
       // Lookup the identifier to determine whether we have a keyword.
-      std::pair<FileID, unsigned> LocInfo
-        = SourceMgr.getDecomposedLoc(Tok.getLocation());
-      bool Invalid = false;
-      llvm::StringRef Buf
-        = CXXUnit->getSourceManager().getBufferData(LocInfo.first, &Invalid);
-      if (Invalid)
-        return;
-      
-      const char *StartPos = Buf.data() + LocInfo.second;
       IdentifierInfo *II
-        = CXXUnit->getPreprocessor().LookUpIdentifierInfo(Tok, StartPos);
+        = CXXUnit->getPreprocessor().LookUpIdentifierInfo(Tok);
 
       if ((II->getObjCKeywordID() != tok::objc_not_keyword) && previousWasAt) {
         CXTok.int_data[0] = CXToken_Keyword;
       }
       else {
-        CXTok.int_data[0] = II->getTokenID() == tok::identifier?
-                                CXToken_Identifier
-                              : CXToken_Keyword;
+        CXTok.int_data[0] = Tok.is(tok::identifier)
+          ? CXToken_Identifier
+          : CXToken_Keyword;
       }
       CXTok.ptr_data = II;
     } else if (Tok.is(tok::comment)) {

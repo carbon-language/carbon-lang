@@ -245,7 +245,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
 
     // If this isn't an identifier directive (e.g. is "# 1\n" or "#\n", or
     // something bogus), skip it.
-    if (Tok.isNot(tok::identifier)) {
+    if (Tok.isNot(tok::raw_identifier)) {
       CurPPLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
       if (CurLexer) CurLexer->SetCommentRetentionState(KeepComments);
@@ -257,12 +257,8 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // to spell an i/e in a strange way that is another letter.  Skipping this
     // allows us to avoid looking up the identifier info for #define/#undef and
     // other common directives.
-    bool Invalid = false;
-    const char *RawCharData = SourceMgr.getCharacterData(Tok.getLocation(),
-                                                         &Invalid);
-    if (Invalid)
-      return;
-    
+    const char *RawCharData = Tok.getRawIdentifierData();
+
     char FirstChar = RawCharData[0];
     if (FirstChar >= 'a' && FirstChar <= 'z' &&
         FirstChar != 'i' && FirstChar != 'e') {

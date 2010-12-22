@@ -435,12 +435,13 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     // Lex the resultant pasted token into Result.
     Token Result;
 
-    if (Tok.is(tok::identifier) && RHS.is(tok::identifier)) {
+    if (Tok.isAnyIdentifier() && RHS.isAnyIdentifier()) {
       // Common paste case: identifier+identifier = identifier.  Avoid creating
       // a lexer and other overhead.
       PP.IncrementPasteCounter(true);
       Result.startToken();
-      Result.setKind(tok::identifier);
+      Result.setKind(tok::raw_identifier);
+      Result.setRawIdentifierData(ResultTokStrPtr);
       Result.setLocation(ResultTokLoc);
       Result.setLength(LHSLen+RHSLen);
     } else {
@@ -524,10 +525,10 @@ bool TokenLexer::PasteTokens(Token &Tok) {
   // Now that we got the result token, it will be subject to expansion.  Since
   // token pasting re-lexes the result token in raw mode, identifier information
   // isn't looked up.  As such, if the result is an identifier, look up id info.
-  if (Tok.is(tok::identifier)) {
+  if (Tok.is(tok::raw_identifier)) {
     // Look up the identifier info for the token.  We disabled identifier lookup
     // by saying we're skipping contents, so we need to do this manually.
-    PP.LookUpIdentifierInfo(Tok, ResultTokStrPtr);
+    PP.LookUpIdentifierInfo(Tok);
   }
   return false;
 }
