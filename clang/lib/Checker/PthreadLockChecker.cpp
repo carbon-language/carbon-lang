@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
-#include "clang/Checker/PathSensitive/GRStateTrait.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/BugReporter/BugReporter.h"
+#include "clang/GR/PathSensitive/GRStateTrait.h"
 #include "GRExprEngineExperimentalChecks.h"
 #include "llvm/ADT/ImmutableSet.h"
 

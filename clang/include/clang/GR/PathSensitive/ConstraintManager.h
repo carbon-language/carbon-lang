@@ -15,7 +15,7 @@
 #define LLVM_CLANG_ANALYSIS_CONSTRAINT_MANAGER_H
 
 // FIXME: Typedef LiveSymbolsTy/DeadSymbolsTy at a more appropriate place.
-#include "clang/Checker/PathSensitive/Store.h"
+#include "clang/GR/PathSensitive/Store.h"
 
 namespace llvm {
 class APSInt;

@@ -14,10 +14,10 @@
 
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
-#include "clang/Checker/BugReporter/PathDiagnostic.h"
-#include "clang/Checker/PathSensitive/ExplodedGraph.h"
-#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/GR/BugReporter/BugReporter.h"
+#include "clang/GR/BugReporter/PathDiagnostic.h"
+#include "clang/GR/PathSensitive/ExplodedGraph.h"
+#include "clang/GR/PathSensitive/GRState.h"
 
 using namespace clang;
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/AnalysisManager.h"
-#include "clang/Checker/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/AnalysisManager.h"
+#include "clang/GR/PathSensitive/GRExprEngine.h"
 #include "clang/AST/DeclCXX.h"
 
 using namespace clang;

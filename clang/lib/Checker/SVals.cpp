@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/GRState.h"
 #include "clang/Basic/IdentifierTable.h"
 
 using namespace clang;

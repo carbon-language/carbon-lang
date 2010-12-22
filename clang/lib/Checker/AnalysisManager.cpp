@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/AnalysisManager.h"
+#include "clang/GR/PathSensitive/AnalysisManager.h"
 #include "clang/Index/Entity.h"
 #include "clang/Index/Indexer.h"
 

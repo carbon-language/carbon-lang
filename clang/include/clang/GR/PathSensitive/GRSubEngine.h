@@ -13,7 +13,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_GRSUBENGINE_H
 #define LLVM_CLANG_ANALYSIS_GRSUBENGINE_H
 
-#include "clang/Checker/PathSensitive/SVals.h"
+#include "clang/GR/PathSensitive/SVals.h"
 
 namespace clang {
 

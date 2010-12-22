@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/Checkers/LocalCheckers.h"
+#include "clang/GR/Checkers/LocalCheckers.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
-#include "clang/Checker/PathSensitive/GRExprEngine.h"
+#include "clang/GR/BugReporter/BugReporter.h"
+#include "clang/GR/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"

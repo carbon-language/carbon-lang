@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/MemRegion.h"
-#include "clang/Checker/PathSensitive/SVals.h"
-#include "clang/Checker/PathSensitive/SValBuilder.h"
-#include "clang/Checker/PathSensitive/GRState.h"
-#include "clang/Checker/PathSensitive/BasicValueFactory.h"
+#include "clang/GR/PathSensitive/MemRegion.h"
+#include "clang/GR/PathSensitive/SVals.h"
+#include "clang/GR/PathSensitive/SValBuilder.h"
+#include "clang/GR/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/BasicValueFactory.h"
 
 using namespace clang;
 

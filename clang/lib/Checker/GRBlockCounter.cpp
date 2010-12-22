@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/GRBlockCounter.h"
+#include "clang/GR/PathSensitive/GRBlockCounter.h"
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;

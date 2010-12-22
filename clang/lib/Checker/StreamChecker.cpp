@@ -12,11 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineExperimentalChecks.h"
-#include "clang/Checker/BugReporter/BugType.h"
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/PathSensitive/GRState.h"
-#include "clang/Checker/PathSensitive/GRStateTrait.h"
-#include "clang/Checker/PathSensitive/SymbolManager.h"
+#include "clang/GR/BugReporter/BugType.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/GRStateTrait.h"
+#include "clang/GR/PathSensitive/SymbolManager.h"
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;

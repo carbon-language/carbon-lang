@@ -13,9 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/Checkers/LocalCheckers.h"
-#include "clang/Checker/BugReporter/PathDiagnostic.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
+#include "clang/GR/Checkers/LocalCheckers.h"
+#include "clang/GR/BugReporter/PathDiagnostic.h"
+#include "clang/GR/BugReporter/BugReporter.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ASTContext.h"

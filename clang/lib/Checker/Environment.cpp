@@ -13,7 +13,7 @@
 
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
-#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/GRState.h"
 
 using namespace clang;
 

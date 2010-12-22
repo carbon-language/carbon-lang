@@ -14,8 +14,8 @@
 
 #include "GRExprEngineInternalChecks.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Checker/BugReporter/BugType.h"
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/BugReporter/BugType.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <fcntl.h>

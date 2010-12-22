@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/GRExprEngine.h"
 #include "clang/AST/StmtVisitor.h"
 
 using namespace clang;

@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/MemRegion.h"
-#include "clang/Checker/PathSensitive/SValBuilder.h"
+#include "clang/GR/PathSensitive/MemRegion.h"
+#include "clang/GR/PathSensitive/SValBuilder.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/AST/CharUnits.h"

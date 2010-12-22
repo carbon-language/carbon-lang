@@ -17,9 +17,9 @@
 
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
-#include "clang/Checker/PathSensitive/SVals.h"
-#include "clang/Checker/PathSensitive/BasicValueFactory.h"
-#include "clang/Checker/PathSensitive/MemRegion.h"
+#include "clang/GR/PathSensitive/SVals.h"
+#include "clang/GR/PathSensitive/BasicValueFactory.h"
+#include "clang/GR/PathSensitive/MemRegion.h"
 
 namespace clang {
 

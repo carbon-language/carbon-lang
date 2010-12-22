@@ -14,8 +14,8 @@
 
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/Checker/Checkers/LocalCheckers.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
+#include "clang/GR/Checkers/LocalCheckers.h"
+#include "clang/GR/BugReporter/BugReporter.h"
 #include <string>
 #include "llvm/ADT/StringRef.h"
 

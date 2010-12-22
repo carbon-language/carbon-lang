@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/Checker.h"
+#include "clang/GR/PathSensitive/Checker.h"
 using namespace clang;
 
 Checker::~Checker() {}

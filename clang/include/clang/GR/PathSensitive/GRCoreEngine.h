@@ -16,10 +16,10 @@
 #define LLVM_CLANG_ANALYSIS_GRENGINE
 
 #include "clang/AST/Expr.h"
-#include "clang/Checker/PathSensitive/ExplodedGraph.h"
-#include "clang/Checker/PathSensitive/GRWorkList.h"
-#include "clang/Checker/PathSensitive/GRBlockCounter.h"
-#include "clang/Checker/PathSensitive/GRSubEngine.h"
+#include "clang/GR/PathSensitive/ExplodedGraph.h"
+#include "clang/GR/PathSensitive/GRWorkList.h"
+#include "clang/GR/PathSensitive/GRBlockCounter.h"
+#include "clang/GR/PathSensitive/GRSubEngine.h"
 #include "llvm/ADT/OwningPtr.h"
 
 namespace clang {

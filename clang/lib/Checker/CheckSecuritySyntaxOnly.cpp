@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
-#include "clang/Checker/Checkers/LocalCheckers.h"
+#include "clang/GR/BugReporter/BugReporter.h"
+#include "clang/GR/Checkers/LocalCheckers.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Support/raw_ostream.h"
 

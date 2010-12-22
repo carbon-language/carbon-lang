@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/CheckerHelpers.h"
+#include "clang/GR/PathSensitive/CheckerHelpers.h"
 #include "clang/AST/Expr.h"
 
 // Recursively find any substatements containing macros

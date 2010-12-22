@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/BasicValueFactory.h"
+#include "clang/GR/PathSensitive/BasicValueFactory.h"
 
 using namespace clang;
 

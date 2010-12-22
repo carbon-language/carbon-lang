@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineInternalChecks.h"
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;

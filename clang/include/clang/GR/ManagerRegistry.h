@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_MANAGER_REGISTRY_H
 #define LLVM_CLANG_ANALYSIS_MANAGER_REGISTRY_H
 
-#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/GRState.h"
 
 namespace clang {
 

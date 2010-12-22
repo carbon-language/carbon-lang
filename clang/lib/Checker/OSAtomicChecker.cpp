@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineInternalChecks.h"
-#include "clang/Checker/PathSensitive/Checker.h"
+#include "clang/GR/PathSensitive/Checker.h"
 #include "clang/Basic/Builtins.h"
 
 using namespace clang;

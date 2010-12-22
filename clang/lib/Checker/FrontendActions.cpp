@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/FrontendActions.h"
+#include "clang/GR/FrontendActions.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Checker/AnalysisConsumer.h"
+#include "clang/GR/AnalysisConsumer.h"
 using namespace clang;
 
 ASTConsumer *AnalysisAction::CreateASTConsumer(CompilerInstance &CI,

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/AST/CharUnits.h"
-#include "clang/Checker/BugReporter/BugType.h"
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/BugReporter/BugType.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
 #include "GRExprEngineInternalChecks.h"
 
 using namespace clang;

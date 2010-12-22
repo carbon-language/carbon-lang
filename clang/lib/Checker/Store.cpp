@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/Store.h"
-#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/Store.h"
+#include "clang/GR/PathSensitive/GRState.h"
 #include "clang/AST/CharUnits.h"
 
 using namespace clang;

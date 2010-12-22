@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/ManagerRegistry.h"
+#include "clang/GR/ManagerRegistry.h"
 
 using namespace clang;
 

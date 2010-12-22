@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/BugReporter/BugReporter.h"
+#include "clang/GR/BugReporter/BugReporter.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/Checker/Checkers/LocalCheckers.h"
+#include "clang/GR/Checkers/LocalCheckers.h"
 
 using namespace clang;
 

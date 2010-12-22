@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/BugReporter/PathDiagnostic.h"
+#include "clang/GR/BugReporter/PathDiagnostic.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"

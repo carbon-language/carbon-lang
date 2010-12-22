@@ -18,7 +18,7 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/Checker/PathSensitive/SVals.h"
+#include "clang/GR/PathSensitive/SVals.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/FoldingSet.h"

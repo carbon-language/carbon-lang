@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_GRWORKLIST
 #define LLVM_CLANG_ANALYSIS_GRWORKLIST
 
-#include "clang/Checker/PathSensitive/GRBlockCounter.h"
+#include "clang/GR/PathSensitive/GRBlockCounter.h"
 #include <cstddef>
 
 namespace clang {

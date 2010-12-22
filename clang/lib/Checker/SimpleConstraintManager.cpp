@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "SimpleConstraintManager.h"
-#include "clang/Checker/PathSensitive/GRExprEngine.h"
-#include "clang/Checker/PathSensitive/GRState.h"
-#include "clang/Checker/PathSensitive/Checker.h"
+#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/Checker.h"
 
 namespace clang {
 

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/ExplodedGraph.h"
-#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/ExplodedGraph.h"
+#include "clang/GR/PathSensitive/GRState.h"
 #include "clang/AST/Stmt.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DenseMap.h"

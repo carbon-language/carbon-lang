@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineInternalChecks.h"
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/PathSensitive/GRExprEngine.h"
-#include "clang/Checker/BugReporter/BugType.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/BugReporter/BugType.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;

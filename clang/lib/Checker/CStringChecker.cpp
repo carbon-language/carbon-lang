@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineExperimentalChecks.h"
-#include "clang/Checker/BugReporter/BugType.h"
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/PathSensitive/GRStateTrait.h"
+#include "clang/GR/BugReporter/BugType.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/PathSensitive/GRStateTrait.h"
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;

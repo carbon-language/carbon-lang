@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_ANALYSIS_STORE_H
 #define LLVM_CLANG_ANALYSIS_STORE_H
 
-#include "clang/Checker/PathSensitive/MemRegion.h"
-#include "clang/Checker/PathSensitive/SValBuilder.h"
+#include "clang/GR/PathSensitive/MemRegion.h"
+#include "clang/GR/PathSensitive/SValBuilder.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Optional.h"
 

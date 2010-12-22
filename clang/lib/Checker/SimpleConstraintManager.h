@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_ANALYSIS_SIMPLE_CONSTRAINT_MANAGER_H
 #define LLVM_CLANG_ANALYSIS_SIMPLE_CONSTRAINT_MANAGER_H
 
-#include "clang/Checker/PathSensitive/ConstraintManager.h"
-#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/ConstraintManager.h"
+#include "clang/GR/PathSensitive/GRState.h"
 
 namespace clang {
 

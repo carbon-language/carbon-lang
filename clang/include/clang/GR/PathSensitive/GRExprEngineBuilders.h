@@ -14,7 +14,7 @@
 
 #ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE_BUILDERS
 #define LLVM_CLANG_ANALYSIS_GREXPRENGINE_BUILDERS
-#include "clang/Checker/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 
 namespace clang {

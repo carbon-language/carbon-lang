@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineInternalChecks.h"
-#include "clang/Checker/BugReporter/BugType.h"
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/GR/BugReporter/BugType.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/PathSensitive/GRState.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;

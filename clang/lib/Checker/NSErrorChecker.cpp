@@ -15,10 +15,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/Checkers/LocalCheckers.h"
-#include "clang/Checker/BugReporter/BugType.h"
-#include "clang/Checker/PathSensitive/GRExprEngine.h"
-#include "clang/Checker/Checkers/DereferenceChecker.h"
+#include "clang/GR/Checkers/LocalCheckers.h"
+#include "clang/GR/BugReporter/BugType.h"
+#include "clang/GR/PathSensitive/GRExprEngine.h"
+#include "clang/GR/Checkers/DereferenceChecker.h"
 #include "BasicObjCFoundationChecks.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Decl.h"

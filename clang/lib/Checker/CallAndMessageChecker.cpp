@@ -15,8 +15,8 @@
 #include "GRExprEngineInternalChecks.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Checker/BugReporter/BugType.h"
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/BugReporter/BugType.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 

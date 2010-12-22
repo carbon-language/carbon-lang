@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/AnalysisManager.h"
-#include "clang/Checker/PathSensitive/GRCoreEngine.h"
-#include "clang/Checker/PathSensitive/GRExprEngine.h"
+#include "clang/GR/PathSensitive/AnalysisManager.h"
+#include "clang/GR/PathSensitive/GRCoreEngine.h"
+#include "clang/GR/PathSensitive/GRExprEngine.h"
 #include "clang/Index/TranslationUnit.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Support/Casting.h"

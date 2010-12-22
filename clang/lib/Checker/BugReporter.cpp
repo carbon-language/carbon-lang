@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/BugReporter/BugReporter.h"
-#include "clang/Checker/BugReporter/BugType.h"
-#include "clang/Checker/PathSensitive/GRExprEngine.h"
+#include "clang/GR/BugReporter/BugReporter.h"
+#include "clang/GR/BugReporter/BugType.h"
+#include "clang/GR/PathSensitive/GRExprEngine.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/AST/Expr.h"
@@ -22,7 +22,7 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/ProgramPoint.h"
-#include "clang/Checker/BugReporter/PathDiagnostic.h"
+#include "clang/GR/BugReporter/PathDiagnostic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"

@@ -9,9 +9,9 @@
 // This file reports various statistics about analyzer visitation.
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/PathSensitive/ExplodedGraph.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
+#include "clang/GR/PathSensitive/CheckerVisitor.h"
+#include "clang/GR/PathSensitive/ExplodedGraph.h"
+#include "clang/GR/BugReporter/BugReporter.h"
 #include "GRExprEngineExperimentalChecks.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"

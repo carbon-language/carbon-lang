@@ -16,12 +16,12 @@
 #ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE
 #define LLVM_CLANG_ANALYSIS_GREXPRENGINE
 
-#include "clang/Checker/PathSensitive/AnalysisManager.h"
-#include "clang/Checker/PathSensitive/GRSubEngine.h"
-#include "clang/Checker/PathSensitive/GRCoreEngine.h"
-#include "clang/Checker/PathSensitive/GRState.h"
-#include "clang/Checker/PathSensitive/GRTransferFuncs.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
+#include "clang/GR/PathSensitive/AnalysisManager.h"
+#include "clang/GR/PathSensitive/GRSubEngine.h"
+#include "clang/GR/PathSensitive/GRCoreEngine.h"
+#include "clang/GR/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/GRTransferFuncs.h"
+#include "clang/GR/BugReporter/BugReporter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"

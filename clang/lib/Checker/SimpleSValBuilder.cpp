@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/SValBuilder.h"
-#include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/SValBuilder.h"
+#include "clang/GR/PathSensitive/GRState.h"
 
 using namespace clang;
 

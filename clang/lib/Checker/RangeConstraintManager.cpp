@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "SimpleConstraintManager.h"
-#include "clang/Checker/PathSensitive/GRState.h"
-#include "clang/Checker/PathSensitive/GRStateTrait.h"
-#include "clang/Checker/PathSensitive/GRTransferFuncs.h"
-#include "clang/Checker/ManagerRegistry.h"
+#include "clang/GR/PathSensitive/GRState.h"
+#include "clang/GR/PathSensitive/GRStateTrait.h"
+#include "clang/GR/PathSensitive/GRTransferFuncs.h"
+#include "clang/GR/ManagerRegistry.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableSet.h"
