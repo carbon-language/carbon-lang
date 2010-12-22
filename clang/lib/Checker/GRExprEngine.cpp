@@ -2918,11 +2918,11 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
   for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I!=E; ++I) {
 
     const GRState* state = GetState(*I);
-    SVal V1 = state->getSVal(Ex);
+    SVal loc = state->getSVal(Ex);
 
     // Perform a load.
     ExplodedNodeSet Tmp2;
-    evalLoad(Tmp2, Ex, *I, state, V1);
+    evalLoad(Tmp2, Ex, *I, state, loc);
 
     for (ExplodedNodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end();I2!=E2;++I2) {
 
@@ -2964,7 +2964,7 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         // propagate that constraint.
         if (Loc::IsLocType(U->getType())) {
           DefinedOrUnknownSVal Constraint =
-            svalBuilder.evalEQ(state, V2, svalBuilder.makeZeroVal(U->getType()));
+            svalBuilder.evalEQ(state, V2,svalBuilder.makeZeroVal(U->getType()));
 
           if (!state->assume(Constraint, true)) {
             // It isn't feasible for the original value to be null.
@@ -2979,10 +2979,15 @@ void GRExprEngine::VisitUnaryOperator(const UnaryOperator* U,
         }
       }
 
-      state = state->BindExpr(U, U->isPostfix() ? V2 : Result);
+      // Since the lvalue-to-rvalue conversion is explicit in the AST,
+      // we bind an l-value if the operator is prefix and an lvalue (in C++).
+      if (U->isPrefix() && U->isLValue())
+        state = state->BindExpr(U, loc);
+      else
+        state = state->BindExpr(U, V2);
 
       // Perform the store.
-      evalStore(Dst, NULL, U, *I2, state, V1, Result);
+      evalStore(Dst, NULL, U, *I2, state, loc, Result);
     }
   }
 }
