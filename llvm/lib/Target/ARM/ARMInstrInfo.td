@@ -412,32 +412,6 @@ def arm_i32imm : PatLeaf<(imm), [{
   return ARM_AM::isSOImmTwoPartVal((unsigned)N->getZExtValue());
 }]>;
 
-def so_imm2part_1 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getSOImmTwoPartFirst((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
-}]>;
-
-def so_imm2part_2 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getSOImmTwoPartSecond((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
-}]>;
-
-def so_neg_imm2part : Operand<i32>, PatLeaf<(imm), [{
-      return ARM_AM::isSOImmTwoPartVal(-(int)N->getZExtValue());
-    }]> {
-  let PrintMethod = "printSOImm2PartOperand";
-}
-
-def so_neg_imm2part_1 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getSOImmTwoPartFirst(-(int)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
-}]>;
-
-def so_neg_imm2part_2 : SDNodeXForm<imm, [{
-  unsigned V = ARM_AM::getSOImmTwoPartSecond(-(int)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
-}]>;
-
 /// imm0_31 predicate - True if the 32-bit immediate is in the range [0,31].
 def imm0_31 : Operand<i32>, PatLeaf<(imm), [{
   return (int32_t)N->getZExtValue() < 32;
