@@ -38,6 +38,7 @@ entry:
 ; FINITE: t2:
 ; FINITE-NOT: vldr
 ; FINITE: ldrd r0, [r0]
+; FINITE-NOT: b LBB
 ; FINITE: cmp r0, #0
 ; FINITE: cmpeq r1, #0
 ; FINITE-NOT: vcmpe.f32
