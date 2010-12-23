@@ -95,6 +95,14 @@ public:
   const ASTContext &getContext() const { return Context; }
 
   GRStateManager &getStateManager() { return StateMgr; }
+  
+  QualType getConditionType() const {
+    return  getContext().IntTy;
+  }
+  
+  QualType getArrayIndexType() const {
+    return ArrayIndexTy;
+  }
 
   BasicValueFactory &getBasicValueFactory() { return BasicVals; }
   const BasicValueFactory &getBasicValueFactory() const { return BasicVals; }
