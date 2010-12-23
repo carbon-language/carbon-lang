@@ -1708,9 +1708,10 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   //   [...] or if any template argument remains neither deduced nor
   //   explicitly specified, template argument deduction fails.
   llvm::SmallVector<TemplateArgument, 4> Builder;
-  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
+  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {    
     // FIXME: Variadic templates. Unwrap argument packs?
     NamedDecl *Param = FunctionTemplate->getTemplateParameters()->getParam(I);
+    
     if (!Deduced[I].isNull()) {
       if (I < NumExplicitlySpecified) {
         // We have already fully type-checked and converted this
@@ -1775,6 +1776,15 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
         return TDK_SubstitutionFailure;
       }
 
+      continue;
+    }
+    
+    // C++0x [temp.arg.explicit]p3:
+    //    A trailing template parameter pack (14.5.3) not otherwise deduced will 
+    //    be deduced to an empty sequence of template arguments.
+    // FIXME: Where did the word "trailing" come from?
+    if (Param->isTemplateParameterPack()) {
+      Builder.push_back(TemplateArgument(0, 0));
       continue;
     }
 
