@@ -45,7 +45,7 @@ public:
     RecordNode,           // Record the current node.
     RecordChild,          // Record a child of the current node.
     RecordMemRef,         // Record the memref in the current node.
-    CaptureFlagInput,     // If the current node has an input flag, save it.
+    CaptureGlueInput,     // If the current node has an input glue, save it.
     MoveChild,            // Move current node to specified child.
     MoveParent,           // Move current node to parent.
 
@@ -75,7 +75,7 @@ public:
     EmitCopyToReg,        // Emit a copytoreg into a physreg.
     EmitNode,             // Create a DAG node
     EmitNodeXForm,        // Run a SDNodeXForm
-    MarkFlagResults,      // Indicate which interior nodes have flag results.
+    MarkGlueResults,      // Indicate which interior nodes have glue results.
     CompleteMatch,        // Finish a match and update the results.
     MorphNodeTo           // Build a node, finish a match and update results.
   };
@@ -306,14 +306,14 @@ private:
 };
 
 
-/// CaptureFlagInputMatcher - If the current record has a flag input, record
+/// CaptureGlueInputMatcher - If the current record has a glue input, record
 /// it so that it is used as an input to the generated code.
-class CaptureFlagInputMatcher : public Matcher {
+class CaptureGlueInputMatcher : public Matcher {
 public:
-  CaptureFlagInputMatcher() : Matcher(CaptureFlagInput) {}
+  CaptureGlueInputMatcher() : Matcher(CaptureGlueInput) {}
 
   static inline bool classof(const Matcher *N) {
-    return N->getKind() == CaptureFlagInput;
+    return N->getKind() == CaptureGlueInput;
   }
 
   virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
@@ -893,7 +893,7 @@ private:
 };
 
 /// EmitCopyToRegMatcher - Emit a CopyToReg node from a value to a physreg,
-/// pushing the chain and flag results.
+/// pushing the chain and glue results.
 ///
 class EmitCopyToRegMatcher : public Matcher {
   unsigned SrcSlot; // Value to copy into the physreg.
@@ -965,12 +965,12 @@ public:
   EmitNodeMatcherCommon(const std::string &opcodeName,
                         const MVT::SimpleValueType *vts, unsigned numvts,
                         const unsigned *operands, unsigned numops,
-                        bool hasChain, bool hasInFlag, bool hasOutFlag,
+                        bool hasChain, bool hasInGlue, bool hasOutGlue,
                         bool hasmemrefs,
                         int numfixedarityoperands, bool isMorphNodeTo)
     : Matcher(isMorphNodeTo ? MorphNodeTo : EmitNode), OpcodeName(opcodeName),
       VTs(vts, vts+numvts), Operands(operands, operands+numops),
-      HasChain(hasChain), HasInFlag(hasInFlag), HasOutFlag(hasOutFlag),
+      HasChain(hasChain), HasInFlag(hasInGlue), HasOutFlag(hasOutGlue),
       HasMemRefs(hasmemrefs), NumFixedArityOperands(numfixedarityoperands) {}
 
   const std::string &getOpcodeName() const { return OpcodeName; }
@@ -1052,30 +1052,30 @@ public:
   }
 };
 
-/// MarkFlagResultsMatcher - This node indicates which non-root nodes in the
-/// pattern produce flags.  This allows CompleteMatchMatcher to update them
-/// with the output flag of the resultant code.
-class MarkFlagResultsMatcher : public Matcher {
-  SmallVector<unsigned, 3> FlagResultNodes;
+/// MarkGlueResultsMatcher - This node indicates which non-root nodes in the
+/// pattern produce glue.  This allows CompleteMatchMatcher to update them
+/// with the output glue of the resultant code.
+class MarkGlueResultsMatcher : public Matcher {
+  SmallVector<unsigned, 3> GlueResultNodes;
 public:
-  MarkFlagResultsMatcher(const unsigned *nodes, unsigned NumNodes)
-    : Matcher(MarkFlagResults), FlagResultNodes(nodes, nodes+NumNodes) {}
+  MarkGlueResultsMatcher(const unsigned *nodes, unsigned NumNodes)
+    : Matcher(MarkGlueResults), GlueResultNodes(nodes, nodes+NumNodes) {}
 
-  unsigned getNumNodes() const { return FlagResultNodes.size(); }
+  unsigned getNumNodes() const { return GlueResultNodes.size(); }
 
   unsigned getNode(unsigned i) const {
-    assert(i < FlagResultNodes.size());
-    return FlagResultNodes[i];
+    assert(i < GlueResultNodes.size());
+    return GlueResultNodes[i];
   }
 
   static inline bool classof(const Matcher *N) {
-    return N->getKind() == MarkFlagResults;
+    return N->getKind() == MarkGlueResults;
   }
 
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
-    return cast<MarkFlagResultsMatcher>(M)->FlagResultNodes == FlagResultNodes;
+    return cast<MarkGlueResultsMatcher>(M)->GlueResultNodes == GlueResultNodes;
   }
   virtual unsigned getHashImpl() const;
 };

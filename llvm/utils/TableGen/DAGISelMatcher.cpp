@@ -107,8 +107,8 @@ void RecordMemRefMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "RecordMemRef\n";
 }
 
-void CaptureFlagInputMatcher::printImpl(raw_ostream &OS, unsigned indent) const{
-  OS.indent(indent) << "CaptureFlagInput\n";
+void CaptureGlueInputMatcher::printImpl(raw_ostream &OS, unsigned indent) const{
+  OS.indent(indent) << "CaptureGlueInput\n";
 }
 
 void MoveChildMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
@@ -246,8 +246,8 @@ void EmitNodeMatcherCommon::printImpl(raw_ostream &OS, unsigned indent) const {
   OS << ")\n";
 }
 
-void MarkFlagResultsMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "MarkFlagResults <todo: args>\n";
+void MarkGlueResultsMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "MarkGlueResults <todo: args>\n";
 }
 
 void CompleteMatchMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
@@ -316,8 +316,8 @@ unsigned EmitNodeMatcherCommon::getHashImpl() const {
 }
 
 
-unsigned MarkFlagResultsMatcher::getHashImpl() const {
-  return HashUnsigneds(FlagResultNodes.begin(), FlagResultNodes.end());
+unsigned MarkGlueResultsMatcher::getHashImpl() const {
+  return HashUnsigneds(GlueResultNodes.begin(), GlueResultNodes.end());
 }
 
 unsigned CompleteMatchMatcher::getHashImpl() const {

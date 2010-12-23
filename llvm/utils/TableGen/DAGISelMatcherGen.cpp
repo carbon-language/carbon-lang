@@ -68,9 +68,9 @@ namespace {
     /// array of all of the recorded input nodes that have chains.
     SmallVector<unsigned, 2> MatchedChainNodes;
 
-    /// MatchedFlagResultNodes - This maintains the position in the recorded
-    /// nodes array of all of the recorded input nodes that have flag results.
-    SmallVector<unsigned, 2> MatchedFlagResultNodes;
+    /// MatchedGlueResultNodes - This maintains the position in the recorded
+    /// nodes array of all of the recorded input nodes that have glue results.
+    SmallVector<unsigned, 2> MatchedGlueResultNodes;
 
     /// MatchedComplexPatterns - This maintains a list of all of the
     /// ComplexPatterns that we need to check.  The patterns are known to have
@@ -356,7 +356,7 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
       // If it *is* an immediate child of the root, we can still need a check if
       // the root SDNode has multiple inputs.  For us, this means that it is an
       // intrinsic, has multiple operands, or has other inputs like chain or
-      // flag).
+      // glue).
       if (!NeedCheck) {
         const SDNodeInfo &PInfo = CGP.getSDNodeInfo(Root->getOperator());
         NeedCheck =
@@ -374,24 +374,24 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
     }
   }
 
-  // If this node has an output flag and isn't the root, remember it.
+  // If this node has an output glue and isn't the root, remember it.
   if (N->NodeHasProperty(SDNPOutFlag, CGP) &&
       N != Pattern.getSrcPattern()) {
-    // TODO: This redundantly records nodes with both flags and chains.
+    // TODO: This redundantly records nodes with both glues and chains.
 
     // Record the node and remember it in our chained nodes list.
     AddMatcher(new RecordMatcher("'" + N->getOperator()->getName() +
-                                         "' flag output node",
+                                         "' glue output node",
                                  NextRecordedOperandNo));
-    // Remember all of the nodes with output flags our pattern will match.
-    MatchedFlagResultNodes.push_back(NextRecordedOperandNo++);
+    // Remember all of the nodes with output glue our pattern will match.
+    MatchedGlueResultNodes.push_back(NextRecordedOperandNo++);
   }
 
-  // If this node is known to have an input flag or if it *might* have an input
-  // flag, capture it as the flag input of the pattern.
+  // If this node is known to have an input glue or if it *might* have an input
+  // glue, capture it as the glue input of the pattern.
   if (N->NodeHasProperty(SDNPOptInFlag, CGP) ||
       N->NodeHasProperty(SDNPInFlag, CGP))
-    AddMatcher(new CaptureFlagInputMatcher());
+    AddMatcher(new CaptureGlueInputMatcher());
 
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     // Get the code suitable for matching this child.  Move to the child, check
@@ -514,7 +514,7 @@ bool MatcherGen::EmitMatcherCode(unsigned Variant) {
       MatchedChainNodes.push_back(NextRecordedOperandNo-1);
     }
 
-    // TODO: Complex patterns can't have output flags, if they did, we'd want
+    // TODO: Complex patterns can't have output glues, if they did, we'd want
     // to record them.
   }
 
@@ -655,16 +655,16 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
 
   bool isRoot = N == Pattern.getDstPattern();
 
-  // TreeHasOutFlag - True if this tree has a flag.
-  bool TreeHasInFlag = false, TreeHasOutFlag = false;
+  // TreeHasOutGlue - True if this tree has glue.
+  bool TreeHasInGlue = false, TreeHasOutGlue = false;
   if (isRoot) {
     const TreePatternNode *SrcPat = Pattern.getSrcPattern();
-    TreeHasInFlag = SrcPat->TreeHasProperty(SDNPOptInFlag, CGP) ||
+    TreeHasInGlue = SrcPat->TreeHasProperty(SDNPOptInFlag, CGP) ||
                     SrcPat->TreeHasProperty(SDNPInFlag, CGP);
 
     // FIXME2: this is checking the entire pattern, not just the node in
     // question, doing this just for the root seems like a total hack.
-    TreeHasOutFlag = SrcPat->TreeHasProperty(SDNPOutFlag, CGP);
+    TreeHasOutGlue = SrcPat->TreeHasProperty(SDNPOutFlag, CGP);
   }
 
   // NumResults - This is the number of results produced by the instruction in
@@ -711,8 +711,8 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
     ++ChildNo;
   }
 
-  // If this node has an input flag or explicitly specified input physregs, we
-  // need to add chained and flagged copyfromreg nodes and materialize the flag
+  // If this node has input glue or explicitly specified input physregs, we
+  // need to add chained and glued copyfromreg nodes and materialize the glue
   // input.
   if (isRoot && !PhysRegInputs.empty()) {
     // Emit all of the CopyToReg nodes for the input physical registers.  These
@@ -720,12 +720,12 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
     for (unsigned i = 0, e = PhysRegInputs.size(); i != e; ++i)
       AddMatcher(new EmitCopyToRegMatcher(PhysRegInputs[i].second,
                                           PhysRegInputs[i].first));
-    // Even if the node has no other flag inputs, the resultant node must be
-    // flagged to the CopyFromReg nodes we just generated.
-    TreeHasInFlag = true;
+    // Even if the node has no other glue inputs, the resultant node must be
+    // glued to the CopyFromReg nodes we just generated.
+    TreeHasInGlue = true;
   }
 
-  // Result order: node results, chain, flags
+  // Result order: node results, chain, glue
 
   // Determine the result types.
   SmallVector<MVT::SimpleValueType, 4> ResultVTs;
@@ -775,17 +775,17 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   bool NodeHasMemRefs =
     isRoot && Pattern.getSrcPattern()->TreeHasProperty(SDNPMemOperand, CGP);
 
-  assert((!ResultVTs.empty() || TreeHasOutFlag || NodeHasChain) &&
+  assert((!ResultVTs.empty() || TreeHasOutGlue || NodeHasChain) &&
          "Node has no result");
 
   AddMatcher(new EmitNodeMatcher(II.Namespace+"::"+II.TheDef->getName(),
                                  ResultVTs.data(), ResultVTs.size(),
                                  InstOps.data(), InstOps.size(),
-                                 NodeHasChain, TreeHasInFlag, TreeHasOutFlag,
+                                 NodeHasChain, TreeHasInGlue, TreeHasOutGlue,
                                  NodeHasMemRefs, NumFixedArityOperands,
                                  NextRecordedOperandNo));
 
-  // The non-chain and non-flag results of the newly emitted node get recorded.
+  // The non-chain and non-glue results of the newly emitted node get recorded.
   for (unsigned i = 0, e = ResultVTs.size(); i != e; ++i) {
     if (ResultVTs[i] == MVT::Other || ResultVTs[i] == MVT::Glue) break;
     OutputOps.push_back(NextRecordedOperandNo++);
@@ -846,7 +846,7 @@ void MatcherGen::EmitResultCode() {
   // At this point, we have however many values the result pattern produces.
   // However, the input pattern might not need all of these.  If there are
   // excess values at the end (such as implicit defs of condition codes etc)
-  // just lop them off.  This doesn't need to worry about flags or chains, just
+  // just lop them off.  This doesn't need to worry about glue or chains, just
   // explicit results.
   //
   unsigned NumSrcResults = Pattern.getSrcPattern()->getNumTypes();
@@ -875,11 +875,11 @@ void MatcherGen::EmitResultCode() {
   assert(Ops.size() >= NumSrcResults && "Didn't provide enough results");
   Ops.resize(NumSrcResults);
 
-  // If the matched pattern covers nodes which define a flag result, emit a node
+  // If the matched pattern covers nodes which define a glue result, emit a node
   // that tells the matcher about them so that it can update their results.
-  if (!MatchedFlagResultNodes.empty())
-    AddMatcher(new MarkFlagResultsMatcher(MatchedFlagResultNodes.data(),
-                                          MatchedFlagResultNodes.size()));
+  if (!MatchedGlueResultNodes.empty())
+    AddMatcher(new MarkGlueResultsMatcher(MatchedGlueResultNodes.data(),
+                                          MatchedGlueResultNodes.size()));
 
   AddMatcher(new CompleteMatchMatcher(Ops.data(), Ops.size(), Pattern));
 }

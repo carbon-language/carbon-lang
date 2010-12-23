@@ -75,7 +75,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
   // MarkFlagResults->EmitNode->CompleteMatch when we can to encourage
   // MorphNodeTo formation.  This is safe because MarkFlagResults never refers
   // to the root of the pattern.
-  if (isa<EmitNodeMatcher>(N) && isa<MarkFlagResultsMatcher>(N->getNext()) &&
+  if (isa<EmitNodeMatcher>(N) && isa<MarkGlueResultsMatcher>(N->getNext()) &&
       isa<CompleteMatchMatcher>(N->getNext()->getNext())) {
     // Unlink the two nodes from the list.
     Matcher *EmitNode = MatcherPtr.take();
@@ -100,7 +100,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
         if (CM->getResult(i) != RootResultFirst+i)
           ResultsMatch = false;
       
-      // If the selected node defines a subset of the flag/chain results, we
+      // If the selected node defines a subset of the glue/chain results, we
       // can't use MorphNodeTo.  For example, we can't use MorphNodeTo if the
       // matched pattern has a chain but the root node doesn't.
       const PatternToMatch &Pattern = CM->getPattern();
@@ -109,10 +109,10 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
           Pattern.getSrcPattern()->NodeHasProperty(SDNPHasChain, CGP))
         ResultsMatch = false;
 
-      // If the matched node has a flag and the output root doesn't, we can't
+      // If the matched node has glue and the output root doesn't, we can't
       // use MorphNodeTo.
       //
-      // NOTE: Strictly speaking, we don't have to check for the flag here
+      // NOTE: Strictly speaking, we don't have to check for glue here
       // because the code in the pattern generator doesn't handle it right.  We
       // do it anyway for thoroughness.
       if (!EN->hasOutFlag() &&
@@ -121,11 +121,11 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
       
       
       // If the root result node defines more results than the source root node
-      // *and* has a chain or flag input, then we can't match it because it
-      // would end up replacing the extra result with the chain/flag.
+      // *and* has a chain or glue input, then we can't match it because it
+      // would end up replacing the extra result with the chain/glue.
 #if 0
-      if ((EN->hasFlag() || EN->hasChain()) &&
-          EN->getNumNonChainFlagVTs() > ... need to get no results reliably ...)
+      if ((EN->hasGlue() || EN->hasChain()) &&
+          EN->getNumNonChainGlueVTs() > ... need to get no results reliably ...)
         ResultMatch = false;
 #endif
           

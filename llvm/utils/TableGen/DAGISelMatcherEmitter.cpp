@@ -220,7 +220,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     OS << "OPC_RecordMemRef,\n";
     return 1;
       
-  case Matcher::CaptureFlagInput:
+  case Matcher::CaptureGlueInput:
     OS << "OPC_CaptureFlagInput,\n";
     return 1;
       
@@ -531,8 +531,8 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     
     return 6+EN->getNumVTs()+NumOperandBytes;
   }
-  case Matcher::MarkFlagResults: {
-    const MarkFlagResultsMatcher *CFR = cast<MarkFlagResultsMatcher>(N);
+  case Matcher::MarkGlueResults: {
+    const MarkGlueResultsMatcher *CFR = cast<MarkGlueResultsMatcher>(N);
     OS << "OPC_MarkFlagResults, " << CFR->getNumNodes() << ", ";
     unsigned NumOperandBytes = 0;
     for (unsigned i = 0, e = CFR->getNumNodes(); i != e; ++i)
@@ -742,7 +742,7 @@ void MatcherTableEmitter::EmitHistogram(const Matcher *M,
     case Matcher::RecordNode: OS << "OPC_RecordNode"; break; 
     case Matcher::RecordChild: OS << "OPC_RecordChild"; break;
     case Matcher::RecordMemRef: OS << "OPC_RecordMemRef"; break;
-    case Matcher::CaptureFlagInput: OS << "OPC_CaptureFlagInput"; break;
+    case Matcher::CaptureGlueInput: OS << "OPC_CaptureFlagInput"; break;
     case Matcher::MoveChild: OS << "OPC_MoveChild"; break;
     case Matcher::MoveParent: OS << "OPC_MoveParent"; break;
     case Matcher::CheckSame: OS << "OPC_CheckSame"; break;
@@ -771,7 +771,7 @@ void MatcherTableEmitter::EmitHistogram(const Matcher *M,
     case Matcher::EmitNode: OS << "OPC_EmitNode"; break;
     case Matcher::MorphNodeTo: OS << "OPC_MorphNodeTo"; break;
     case Matcher::EmitNodeXForm: OS << "OPC_EmitNodeXForm"; break;
-    case Matcher::MarkFlagResults: OS << "OPC_MarkFlagResults"; break;
+    case Matcher::MarkGlueResults: OS << "OPC_MarkFlagResults"; break;
     case Matcher::CompleteMatch: OS << "OPC_CompleteMatch"; break;    
     }
     
