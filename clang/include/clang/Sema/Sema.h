@@ -2912,8 +2912,7 @@ public:
 
   bool CheckClassTemplatePartialSpecializationArgs(
                                         TemplateParameterList *TemplateParams,
-                        llvm::SmallVectorImpl<TemplateArgument> &TemplateArgs,
-                                        bool &MirrorsPrimaryTemplate);
+                        llvm::SmallVectorImpl<TemplateArgument> &TemplateArgs);
 
   DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagUseKind TUK,
