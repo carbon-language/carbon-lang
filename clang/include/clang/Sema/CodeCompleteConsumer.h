@@ -689,7 +689,7 @@ public:
       : Kind(CK_Function), Function(Function) { }
 
     OverloadCandidate(FunctionTemplateDecl *FunctionTemplateDecl)
-      : Kind(CK_FunctionTemplate), FunctionTemplate(FunctionTemplate) { }
+      : Kind(CK_FunctionTemplate), FunctionTemplate(FunctionTemplateDecl) { }
 
     OverloadCandidate(const FunctionType *Type)
       : Kind(CK_FunctionType), Type(Type) { }

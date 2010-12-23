@@ -1179,7 +1179,7 @@ QualType ASTContext::getComplexType(QualType T) {
 
     // Get the new insert position for the node we care about.
     ComplexType *NewIP = ComplexTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
   ComplexType *New = new (*this, TypeAlignment) ComplexType(T, Canonical);
   Types.push_back(New);
@@ -1207,7 +1207,7 @@ QualType ASTContext::getPointerType(QualType T) {
 
     // Get the new insert position for the node we care about.
     PointerType *NewIP = PointerTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
   PointerType *New = new (*this, TypeAlignment) PointerType(T, Canonical);
   Types.push_back(New);
@@ -1238,7 +1238,7 @@ QualType ASTContext::getBlockPointerType(QualType T) {
     // Get the new insert position for the node we care about.
     BlockPointerType *NewIP =
       BlockPointerTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
   BlockPointerType *New
     = new (*this, TypeAlignment) BlockPointerType(T, Canonical);
@@ -1272,7 +1272,7 @@ QualType ASTContext::getLValueReferenceType(QualType T, bool SpelledAsLValue) {
     // Get the new insert position for the node we care about.
     LValueReferenceType *NewIP =
       LValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   LValueReferenceType *New
@@ -1309,7 +1309,7 @@ QualType ASTContext::getRValueReferenceType(QualType T) {
     // Get the new insert position for the node we care about.
     RValueReferenceType *NewIP =
       RValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   RValueReferenceType *New
@@ -1341,7 +1341,7 @@ QualType ASTContext::getMemberPointerType(QualType T, const Type *Cls) {
     // Get the new insert position for the node we care about.
     MemberPointerType *NewIP =
       MemberPointerTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
   MemberPointerType *New
     = new (*this, TypeAlignment) MemberPointerType(T, Cls, Canonical);
@@ -1383,7 +1383,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
     // Get the new insert position for the node we care about.
     ConstantArrayType *NewIP =
       ConstantArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   ConstantArrayType *New = new(*this,TypeAlignment)
@@ -1549,7 +1549,7 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
     // Get the new insert position for the node we care about.
     IncompleteArrayType *NewIP =
       IncompleteArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   IncompleteArrayType *New = new (*this, TypeAlignment)
@@ -1585,7 +1585,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
 
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
   VectorType *New = new (*this, TypeAlignment)
     VectorType(vecType, NumElts, Canonical, VecKind);
@@ -1618,7 +1618,7 @@ QualType ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) {
 
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
   ExtVectorType *New = new (*this, TypeAlignment)
     ExtVectorType(vecType, NumElts, Canonical);
@@ -1693,7 +1693,7 @@ QualType ASTContext::getFunctionNoProtoType(QualType ResultTy,
     // Get the new insert position for the node we care about.
     FunctionNoProtoType *NewIP =
       FunctionNoProtoTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   FunctionNoProtoType *New = new (*this, TypeAlignment)
@@ -1751,7 +1751,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,
     // Get the new insert position for the node we care about.
     FunctionProtoType *NewIP =
       FunctionProtoTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
+    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   // FunctionProtoType objects are allocated with extra bytes after them

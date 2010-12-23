@@ -1373,7 +1373,7 @@ void ExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
     // Sanity checks.  These go away in Release builds.
     assert(b && V1.Val.isInt() && !V1.HasSideEffects
              && "Case condition must evaluate to an integer constant.");
-    b = b; // silence unused variable warning
+    (void)b; // silence unused variable warning
     assert(V1.Val.getInt().getBitWidth() ==
            getContext().getTypeSize(CondE->getType()));
 
@@ -1384,7 +1384,7 @@ void ExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       b = E->Evaluate(V2, getContext());
       assert(b && V2.Val.isInt() && !V2.HasSideEffects
              && "Case condition must evaluate to an integer constant.");
-      b = b; // silence unused variable warning
+      (void)b; // silence unused variable warning
     }
     else
       V2 = V1;

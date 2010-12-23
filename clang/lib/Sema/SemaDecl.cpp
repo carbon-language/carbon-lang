@@ -5543,7 +5543,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   DeclSpec DS;
   unsigned DiagID;
   bool Error = DS.SetTypeSpecType(DeclSpec::TST_int, Loc, Dummy, DiagID);
-  Error = Error; // Silence warning.
+  (void)Error; // Silence warning.
   assert(!Error && "Error setting up implicit decl!");
   Declarator D(DS, Declarator::BlockContext);
   D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, SourceLocation(), 0,

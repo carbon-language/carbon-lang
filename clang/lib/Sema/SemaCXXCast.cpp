@@ -949,7 +949,7 @@ TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType,
     Paths.setRecordingPaths(true);
     bool StillOkay = Self.IsDerivedFrom(SrcClass, DestClass, Paths);
     assert(StillOkay);
-    StillOkay = StillOkay;
+    (void)StillOkay;
     std::string PathDisplayStr = Self.getAmbiguousPathsDisplayString(Paths);
     Self.Diag(OpRange.getBegin(), diag::err_ambiguous_memptr_conv)
       << 1 << SrcClass << DestClass << PathDisplayStr << OpRange;

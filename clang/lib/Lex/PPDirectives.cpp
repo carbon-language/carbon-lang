@@ -307,7 +307,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         PPConditionalInfo CondInfo;
         CondInfo.WasSkipping = true; // Silence bogus warning.
         bool InCond = CurPPLexer->popConditionalLevel(CondInfo);
-        InCond = InCond;  // Silence warning in no-asserts mode.
+        (void)InCond;  // Silence warning in no-asserts mode.
         assert(!InCond && "Can't be skipping if not in a conditional!");
 
         // If we popped the outermost skipping block, we're done skipping!
@@ -385,7 +385,7 @@ void Preprocessor::PTHSkipExcludedConditionalBlock() {
       // have been consumed by the PTHLexer.  Just pop off the condition level.
       PPConditionalInfo CondInfo;
       bool InCond = CurPTHLexer->popConditionalLevel(CondInfo);
-      InCond = InCond;  // Silence warning in no-asserts mode.
+      (void)InCond;  // Silence warning in no-asserts mode.
       assert(!InCond && "Can't be skipping if not in a conditional!");
       break;
     }
