@@ -1,5 +1,6 @@
 (* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_bitreader.cmxa llvm_executionengine.cmxa %s -o %t
  * RUN: %t </dev/null
+ * XFAIL: vg_leak
  *)
 let context = Llvm.global_context ()
 (* this used to crash, we must not use 'external' in .mli files, but 'val' if we
