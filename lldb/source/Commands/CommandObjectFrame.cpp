@@ -405,7 +405,8 @@ public:
                        "argument, local, file static and file global variables. "
                        "Children of aggregate variables can be specified such as "
                        "'var->child.x'.",
-                       NULL)
+                       NULL,
+                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
     {
         CommandArgumentEntry arg;
         CommandArgumentData var_name_arg;
