@@ -524,9 +524,9 @@ public:
     return X;
   }
 
-  /// getFlaggedNode - If this node has a flag operand, return the node
-  /// to which the flag operand points. Otherwise return NULL.
-  SDNode *getFlaggedNode() const {
+  /// getGluedNode - If this node has a glue operand, return the node
+  /// to which the glue operand points. Otherwise return NULL.
+  SDNode *getGluedNode() const {
     if (getNumOperands() != 0 &&
       getOperand(getNumOperands()-1).getValueType() == MVT::Glue)
       return getOperand(getNumOperands()-1).getNode();
@@ -534,14 +534,14 @@ public:
   }
 
   // If this is a pseudo op, like copyfromreg, look to see if there is a
-  // real target node flagged to it.  If so, return the target node.
-  const SDNode *getFlaggedMachineNode() const {
+  // real target node glued to it.  If so, return the target node.
+  const SDNode *getGluedMachineNode() const {
     const SDNode *FoundNode = this;
 
-    // Climb up flag edges until a machine-opcode node is found, or the
+    // Climb up glue edges until a machine-opcode node is found, or the
     // end of the chain is reached.
     while (!FoundNode->isMachineOpcode()) {
-      const SDNode *N = FoundNode->getFlaggedNode();
+      const SDNode *N = FoundNode->getGluedNode();
       if (!N) break;
       FoundNode = N;
     }
@@ -549,9 +549,9 @@ public:
     return FoundNode;
   }
 
-  /// getFlaggedUser - If this node has a flag value with a user, return
+  /// getGluedUser - If this node has a glue value with a user, return
   /// the user (there is at most one). Otherwise return NULL.
-  SDNode *getFlaggedUser() const {
+  SDNode *getGluedUser() const {
     for (use_iterator UI = use_begin(), UE = use_end(); UI != UE; ++UI)
       if (UI.getUse().get().getValueType() == MVT::Glue)
         return *UI;

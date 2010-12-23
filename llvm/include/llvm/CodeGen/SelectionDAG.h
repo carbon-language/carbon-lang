@@ -398,21 +398,21 @@ public:
   }
 
   // This version of the getCopyToReg method takes an extra operand, which
-  // indicates that there is potentially an incoming flag value (if Flag is not
-  // null) and that there should be a flag result.
+  // indicates that there is potentially an incoming glue value (if Glue is not
+  // null) and that there should be a glue result.
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, unsigned Reg, SDValue N,
-                       SDValue Flag) {
+                       SDValue Glue) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Glue);
-    SDValue Ops[] = { Chain, getRegister(Reg, N.getValueType()), N, Flag };
-    return getNode(ISD::CopyToReg, dl, VTs, Ops, Flag.getNode() ? 4 : 3);
+    SDValue Ops[] = { Chain, getRegister(Reg, N.getValueType()), N, Glue };
+    return getNode(ISD::CopyToReg, dl, VTs, Ops, Glue.getNode() ? 4 : 3);
   }
 
   // Similar to last getCopyToReg() except parameter Reg is a SDValue
   SDValue getCopyToReg(SDValue Chain, DebugLoc dl, SDValue Reg, SDValue N,
-                         SDValue Flag) {
+                         SDValue Glue) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Glue);
-    SDValue Ops[] = { Chain, Reg, N, Flag };
-    return getNode(ISD::CopyToReg, dl, VTs, Ops, Flag.getNode() ? 4 : 3);
+    SDValue Ops[] = { Chain, Reg, N, Glue };
+    return getNode(ISD::CopyToReg, dl, VTs, Ops, Glue.getNode() ? 4 : 3);
   }
 
   SDValue getCopyFromReg(SDValue Chain, DebugLoc dl, unsigned Reg, EVT VT) {
@@ -422,13 +422,13 @@ public:
   }
 
   // This version of the getCopyFromReg method takes an extra operand, which
-  // indicates that there is potentially an incoming flag value (if Flag is not
-  // null) and that there should be a flag result.
+  // indicates that there is potentially an incoming glue value (if Glue is not
+  // null) and that there should be a glue result.
   SDValue getCopyFromReg(SDValue Chain, DebugLoc dl, unsigned Reg, EVT VT,
-                           SDValue Flag) {
+                           SDValue Glue) {
     SDVTList VTs = getVTList(VT, MVT::Other, MVT::Glue);
-    SDValue Ops[] = { Chain, getRegister(Reg, VT), Flag };
-    return getNode(ISD::CopyFromReg, dl, VTs, Ops, Flag.getNode() ? 3 : 2);
+    SDValue Ops[] = { Chain, getRegister(Reg, VT), Glue };
+    return getNode(ISD::CopyFromReg, dl, VTs, Ops, Glue.getNode() ? 3 : 2);
   }
 
   SDValue getCondCode(ISD::CondCode Cond);
@@ -462,7 +462,7 @@ public:
   SDValue getNOT(DebugLoc DL, SDValue Val, EVT VT);
 
   /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have
-  /// a flag result (to ensure it's not CSE'd).  CALLSEQ_START does not have a
+  /// a glue result (to ensure it's not CSE'd).  CALLSEQ_START does not have a
   /// useful DebugLoc.
   SDValue getCALLSEQ_START(SDValue Chain, SDValue Op) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Glue);
@@ -471,18 +471,18 @@ public:
   }
 
   /// getCALLSEQ_END - Return a new CALLSEQ_END node, which always must have a
-  /// flag result (to ensure it's not CSE'd).  CALLSEQ_END does not have
+  /// glue result (to ensure it's not CSE'd).  CALLSEQ_END does not have
   /// a useful DebugLoc.
   SDValue getCALLSEQ_END(SDValue Chain, SDValue Op1, SDValue Op2,
-                           SDValue InFlag) {
+                           SDValue InGlue) {
     SDVTList NodeTys = getVTList(MVT::Other, MVT::Glue);
     SmallVector<SDValue, 4> Ops;
     Ops.push_back(Chain);
     Ops.push_back(Op1);
     Ops.push_back(Op2);
-    Ops.push_back(InFlag);
+    Ops.push_back(InGlue);
     return getNode(ISD::CALLSEQ_END, DebugLoc(), NodeTys, &Ops[0],
-                   (unsigned)Ops.size() - (InFlag.getNode() == 0 ? 1 : 0));
+                   (unsigned)Ops.size() - (InGlue.getNode() == 0 ? 1 : 0));
   }
 
   /// getUNDEF - Return an UNDEF node.  UNDEF does not have a useful DebugLoc.

@@ -110,7 +110,7 @@ public:
     OPC_RecordChild0, OPC_RecordChild1, OPC_RecordChild2, OPC_RecordChild3, 
     OPC_RecordChild4, OPC_RecordChild5, OPC_RecordChild6, OPC_RecordChild7,
     OPC_RecordMemRef,
-    OPC_CaptureFlagInput,
+    OPC_CaptureGlueInput,
     OPC_MoveChild,
     OPC_MoveParent,
     OPC_CheckSame,
@@ -140,12 +140,12 @@ public:
     OPC_EmitNodeXForm,
     OPC_EmitNode,
     OPC_MorphNodeTo,
-    OPC_MarkFlagResults,
+    OPC_MarkGlueResults,
     OPC_CompleteMatch
   };
   
   enum {
-    OPFL_None       = 0,  // Node has no chain or flag input and isn't variadic.
+    OPFL_None       = 0,  // Node has no chain or glue input and isn't variadic.
     OPFL_Chain      = 1,     // Node has a chain input.
     OPFL_GlueInput  = 2,     // Node has a glue input.
     OPFL_GlueOutput = 4,     // Node has a glue output.

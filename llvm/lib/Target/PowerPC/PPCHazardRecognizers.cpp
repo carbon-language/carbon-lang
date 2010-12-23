@@ -123,7 +123,7 @@ isLoadOfStoredAddress(unsigned LoadSize, SDValue Ptr1, SDValue Ptr2) const {
 /// pipeline flush.
 ScheduleHazardRecognizer::HazardType PPCHazardRecognizer970::
 getHazardType(SUnit *SU) {
-  const SDNode *Node = SU->getNode()->getFlaggedMachineNode();
+  const SDNode *Node = SU->getNode()->getGluedMachineNode();
   bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType = 
     GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
@@ -222,7 +222,7 @@ getHazardType(SUnit *SU) {
 }
 
 void PPCHazardRecognizer970::EmitInstruction(SUnit *SU) {
-  const SDNode *Node = SU->getNode()->getFlaggedMachineNode();
+  const SDNode *Node = SU->getNode()->getGluedMachineNode();
   bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType = 
     GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,

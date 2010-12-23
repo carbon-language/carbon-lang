@@ -31,7 +31,7 @@
 using namespace llvm;
 
 /// CountResults - The results of target nodes have register or immediate
-/// operands first, then an optional chain, and optional flag operands (which do
+/// operands first, then an optional chain, and optional glue operands (which do
 /// not go into the resulting MachineInstr).
 unsigned InstrEmitter::CountResults(SDNode *Node) {
   unsigned N = Node->getNumValues();
@@ -43,7 +43,7 @@ unsigned InstrEmitter::CountResults(SDNode *Node) {
 }
 
 /// CountOperands - The inputs to target nodes have any actual inputs first,
-/// followed by an optional chain operand, then an optional flag operand.
+/// followed by an optional chain operand, then an optional glue operand.
 /// Compute the number of actual operands that will go into the resulting
 /// MachineInstr.
 unsigned InstrEmitter::CountOperands(SDNode *Node) {
@@ -265,7 +265,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
                                  bool IsDebug, bool IsClone, bool IsCloned) {
   assert(Op.getValueType() != MVT::Other &&
          Op.getValueType() != MVT::Glue &&
-         "Chain and flag operands should occur at end of operand list!");
+         "Chain and glue operands should occur at end of operand list!");
   // Get/emit the operand.
   unsigned VReg = getVR(Op, VRBaseMap);
   assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
@@ -378,7 +378,7 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
   } else {
     assert(Op.getValueType() != MVT::Other &&
            Op.getValueType() != MVT::Glue &&
-           "Chain and flag operands should occur at end of operand list!");
+           "Chain and glue operands should occur at end of operand list!");
     AddRegisterOperand(MI, Op, IIOpNum, II, VRBaseMap,
                        IsDebug, IsClone, IsCloned);
   }
@@ -674,7 +674,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
       Node->getValueType(Node->getNumValues()-1) == MVT::Glue) {
     // First, collect all used registers.
     SmallVector<unsigned, 8> UsedRegs;
-    for (SDNode *F = Node->getFlaggedUser(); F; F = F->getFlaggedUser())
+    for (SDNode *F = Node->getGluedUser(); F; F = F->getGluedUser())
       if (F->getOpcode() == ISD::CopyFromReg)
         UsedRegs.push_back(cast<RegisterSDNode>(F->getOperand(1))->getReg());
       else {
@@ -727,16 +727,16 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
         EmitCopyFromReg(Node, i, IsClone, IsCloned, Reg, VRBaseMap);
       // If there are no uses, mark the register as dead now, so that
       // MachineLICM/Sink can see that it's dead. Don't do this if the
-      // node has a Flag value, for the benefit of targets still using
-      // Flag for values in physregs.
+      // node has a Glue value, for the benefit of targets still using
+      // Glue for values in physregs.
       else if (Node->getValueType(Node->getNumValues()-1) != MVT::Glue)
         MI->addRegisterDead(Reg, TRI);
     }
   }
   
   // If the instruction has implicit defs and the node doesn't, mark the
-  // implicit def as dead.  If the node has any flag outputs, we don't do this
-  // because we don't know what implicit defs are being used by flagged nodes.
+  // implicit def as dead.  If the node has any glue outputs, we don't do this
+  // because we don't know what implicit defs are being used by glued nodes.
   if (Node->getValueType(Node->getNumValues()-1) != MVT::Glue)
     if (const unsigned *IDList = II.getImplicitDefs()) {
       for (unsigned i = NumResults, e = II.getNumDefs()+II.getNumImplicitDefs();
@@ -794,7 +794,7 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
   case ISD::INLINEASM: {
     unsigned NumOps = Node->getNumOperands();
     if (Node->getOperand(NumOps-1).getValueType() == MVT::Glue)
-      --NumOps;  // Ignore the flag operand.
+      --NumOps;  // Ignore the glue operand.
       
     // Create the inline asm machine instruction.
     MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),

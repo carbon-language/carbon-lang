@@ -109,29 +109,28 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
   }
 }
 
-static void AddFlags(SDNode *N, SDValue Flag, bool AddFlag,
-                     SelectionDAG *DAG) {
+static void AddGlue(SDNode *N, SDValue Glue, bool AddGlue, SelectionDAG *DAG) {
   SmallVector<EVT, 4> VTs;
-  SDNode *FlagDestNode = Flag.getNode();
+  SDNode *GlueDestNode = Glue.getNode();
 
-  // Don't add a flag from a node to itself.
-  if (FlagDestNode == N) return;
+  // Don't add glue from a node to itself.
+  if (GlueDestNode == N) return;
 
-  // Don't add a flag to something which already has a flag.
+  // Don't add glue to something which already has glue.
   if (N->getValueType(N->getNumValues() - 1) == MVT::Glue) return;
 
   for (unsigned I = 0, E = N->getNumValues(); I != E; ++I)
     VTs.push_back(N->getValueType(I));
 
-  if (AddFlag)
+  if (AddGlue)
     VTs.push_back(MVT::Glue);
 
   SmallVector<SDValue, 4> Ops;
   for (unsigned I = 0, E = N->getNumOperands(); I != E; ++I)
     Ops.push_back(N->getOperand(I));
 
-  if (FlagDestNode)
-    Ops.push_back(Flag);
+  if (GlueDestNode)
+    Ops.push_back(Glue);
 
   SDVTList VTList = DAG->getVTList(&VTs[0], VTs.size());
   MachineSDNode::mmo_iterator Begin = 0, End = 0;
@@ -150,7 +149,7 @@ static void AddFlags(SDNode *N, SDValue Flag, bool AddFlag,
     MN->setMemRefs(Begin, End);
 }
 
-/// ClusterNeighboringLoads - Force nearby loads together by "flagging" them.
+/// ClusterNeighboringLoads - Force nearby loads together by "gluing" them.
 /// This function finds loads of the same base and different offsets. If the
 /// offsets are not far apart (target specific), it add MVT::Glue inputs and
 /// outputs to ensure they are scheduled together and in order. This
@@ -217,17 +216,17 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
   // Cluster loads by adding MVT::Glue outputs and inputs. This also
   // ensure they are scheduled in order of increasing addresses.
   SDNode *Lead = Loads[0];
-  AddFlags(Lead, SDValue(0, 0), true, DAG);
+  AddGlue(Lead, SDValue(0, 0), true, DAG);
 
-  SDValue InFlag = SDValue(Lead, Lead->getNumValues() - 1);
+  SDValue InGlue = SDValue(Lead, Lead->getNumValues() - 1);
   for (unsigned I = 1, E = Loads.size(); I != E; ++I) {
-    bool OutFlag = I < E - 1;
+    bool OutGlue = I < E - 1;
     SDNode *Load = Loads[I];
 
-    AddFlags(Load, InFlag, OutFlag, DAG);
+    AddGlue(Load, InGlue, OutGlue, DAG);
 
-    if (OutFlag)
-      InFlag = SDValue(Load, Load->getNumValues() - 1);
+    if (OutGlue)
+      InGlue = SDValue(Load, Load->getNumValues() - 1);
 
     ++LoadsClustered;
   }
@@ -290,11 +289,11 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     
     SUnit *NodeSUnit = NewSUnit(NI);
     
-    // See if anything is flagged to this node, if so, add them to flagged
-    // nodes.  Nodes can have at most one flag input and one flag output.  Flags
-    // are required to be the last operand and result of a node.
+    // See if anything is glued to this node, if so, add them to glued
+    // nodes.  Nodes can have at most one glue input and one glue output.  Glue
+    // is required to be the last operand and result of a node.
     
-    // Scan up to find flagged preds.
+    // Scan up to find glued preds.
     SDNode *N = NI;
     while (N->getNumOperands() &&
            N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Glue) {
@@ -305,17 +304,17 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
         NodeSUnit->isCall = true;
     }
     
-    // Scan down to find any flagged succs.
+    // Scan down to find any glued succs.
     N = NI;
     while (N->getValueType(N->getNumValues()-1) == MVT::Glue) {
-      SDValue FlagVal(N, N->getNumValues()-1);
+      SDValue GlueVal(N, N->getNumValues()-1);
       
-      // There are either zero or one users of the Flag result.
-      bool HasFlagUse = false;
+      // There are either zero or one users of the Glue result.
+      bool HasGlueUse = false;
       for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); 
            UI != E; ++UI)
-        if (FlagVal.isOperandOf(*UI)) {
-          HasFlagUse = true;
+        if (GlueVal.isOperandOf(*UI)) {
+          HasGlueUse = true;
           assert(N->getNodeId() == -1 && "Node already inserted!");
           N->setNodeId(NodeSUnit->NodeNum);
           N = *UI;
@@ -323,11 +322,11 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
             NodeSUnit->isCall = true;
           break;
         }
-      if (!HasFlagUse) break;
+      if (!HasGlueUse) break;
     }
     
-    // If there are flag operands involved, N is now the bottom-most node
-    // of the sequence of nodes that are flagged together.
+    // If there are glue operands involved, N is now the bottom-most node
+    // of the sequence of nodes that are glued together.
     // Update the SUnit.
     NodeSUnit->setNode(N);
     assert(N->getNodeId() == -1 && "Node already inserted!");
@@ -363,7 +362,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
     }
     
     // Find all predecessors and successors of the group.
-    for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode()) {
+    for (SDNode *N = SU->getNode(); N; N = N->getGluedNode()) {
       if (N->isMachineOpcode() &&
           TII->get(N->getMachineOpcode()).getImplicitDefs()) {
         SU->hasPhysRegClobbers = true;
@@ -382,7 +381,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
         if (OpSU == SU) continue;           // In the same group.
 
         EVT OpVT = N->getOperand(i).getValueType();
-        assert(OpVT != MVT::Glue && "Flagged nodes should be in same sunit!");
+        assert(OpVT != MVT::Glue && "Glued nodes should be in same sunit!");
         bool isChain = OpVT == MVT::Other;
 
         unsigned PhysReg = 0;
@@ -417,7 +416,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
 /// BuildSchedGraph - Build the SUnit graph from the selection dag that we
 /// are input.  This SUnit graph is similar to the SelectionDAG, but
 /// excludes nodes that aren't interesting to scheduling, and represents
-/// flagged together nodes with a single SUnit.
+/// glued together nodes with a single SUnit.
 void ScheduleDAGSDNodes::BuildSchedGraph(AliasAnalysis *AA) {
   // Cluster certain nodes which should be scheduled together.
   ClusterNodes();
@@ -440,9 +439,9 @@ void ScheduleDAGSDNodes::ComputeLatency(SUnit *SU) {
   }
   
   // Compute the latency for the node.  We use the sum of the latencies for
-  // all nodes flagged together into this SUnit.
+  // all nodes glued together into this SUnit.
   SU->Latency = 0;
-  for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
+  for (SDNode *N = SU->getNode(); N; N = N->getGluedNode())
     if (N->isMachineOpcode())
       SU->Latency += TII->getInstrLatency(InstrItins, N);
 }
@@ -482,14 +481,14 @@ void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {
 
   SU->getNode()->dump(DAG);
   dbgs() << "\n";
-  SmallVector<SDNode *, 4> FlaggedNodes;
-  for (SDNode *N = SU->getNode()->getFlaggedNode(); N; N = N->getFlaggedNode())
-    FlaggedNodes.push_back(N);
-  while (!FlaggedNodes.empty()) {
+  SmallVector<SDNode *, 4> GluedNodes;
+  for (SDNode *N = SU->getNode()->getGluedNode(); N; N = N->getGluedNode())
+    GluedNodes.push_back(N);
+  while (!GluedNodes.empty()) {
     dbgs() << "    ";
-    FlaggedNodes.back()->dump(DAG);
+    GluedNodes.back()->dump(DAG);
     dbgs() << "\n";
-    FlaggedNodes.pop_back();
+    GluedNodes.pop_back();
   }
 }
 
@@ -573,25 +572,25 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
     }
 
     // For pre-regalloc scheduling, create instructions corresponding to the
-    // SDNode and any flagged SDNodes and append them to the block.
+    // SDNode and any glued SDNodes and append them to the block.
     if (!SU->getNode()) {
       // Emit a copy.
       EmitPhysRegCopy(SU, CopyVRBaseMap);
       continue;
     }
 
-    SmallVector<SDNode *, 4> FlaggedNodes;
-    for (SDNode *N = SU->getNode()->getFlaggedNode(); N;
-         N = N->getFlaggedNode())
-      FlaggedNodes.push_back(N);
-    while (!FlaggedNodes.empty()) {
-      SDNode *N = FlaggedNodes.back();
-      Emitter.EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, SU->isCloned,
+    SmallVector<SDNode *, 4> GluedNodes;
+    for (SDNode *N = SU->getNode()->getGluedNode(); N;
+         N = N->getGluedNode())
+      GluedNodes.push_back(N);
+    while (!GluedNodes.empty()) {
+      SDNode *N = GluedNodes.back();
+      Emitter.EmitNode(GluedNodes.back(), SU->OrigNode != SU, SU->isCloned,
                        VRBaseMap);
       // Remember the source order of the inserted instruction.
       if (HasDbg)
         ProcessSourceNode(N, DAG, Emitter, VRBaseMap, Orders, Seen);
-      FlaggedNodes.pop_back();
+      GluedNodes.pop_back();
     }
     Emitter.EmitNode(SU->getNode(), SU->OrigNode != SU, SU->isCloned,
                      VRBaseMap);

@@ -407,7 +407,7 @@ void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, unsigned BtCycle) {
 
 static bool isOperandOf(const SUnit *SU, SDNode *N) {
   for (const SDNode *SUNode = SU->getNode(); SUNode;
-       SUNode = SUNode->getFlaggedNode()) {
+       SUNode = SUNode->getGluedNode()) {
     if (SUNode->isOperandOf(N))
       return true;
   }
@@ -417,7 +417,7 @@ static bool isOperandOf(const SUnit *SU, SDNode *N) {
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled
 /// successors to the newly created node.
 SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
-  if (SU->getNode()->getFlaggedNode())
+  if (SU->getNode()->getGluedNode())
     return NULL;
 
   SDNode *N = SU->getNode();
@@ -700,12 +700,12 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
                          RegAdded, LRegs, TRI);
   }
 
-  for (SDNode *Node = SU->getNode(); Node; Node = Node->getFlaggedNode()) {
+  for (SDNode *Node = SU->getNode(); Node; Node = Node->getGluedNode()) {
     if (Node->getOpcode() == ISD::INLINEASM) {
       // Inline asm can clobber physical defs.
       unsigned NumOps = Node->getNumOperands();
       if (Node->getOperand(NumOps-1).getValueType() == MVT::Glue)
-        --NumOps;  // Ignore the flag operand.
+        --NumOps;  // Ignore the glue operand.
 
       for (unsigned i = InlineAsm::Op_FirstOperand; i != NumOps;) {
         unsigned Flags =
@@ -1752,7 +1752,7 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
   const unsigned *ImpDefs = TII->get(N->getMachineOpcode()).getImplicitDefs();
   assert(ImpDefs && "Caller should check hasPhysRegDefs");
   for (const SDNode *SUNode = SU->getNode(); SUNode;
-       SUNode = SUNode->getFlaggedNode()) {
+       SUNode = SUNode->getGluedNode()) {
     if (!SUNode->isMachineOpcode())
       continue;
     const unsigned *SUImpDefs =
@@ -1908,7 +1908,7 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       continue;
 
     SDNode *Node = SU->getNode();
-    if (!Node || !Node->isMachineOpcode() || SU->getNode()->getFlaggedNode())
+    if (!Node || !Node->isMachineOpcode() || SU->getNode()->getGluedNode())
       continue;
 
     bool isLiveOut = hasOnlyLiveOutUses(SU);

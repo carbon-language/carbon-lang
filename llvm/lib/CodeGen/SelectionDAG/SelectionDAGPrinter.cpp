@@ -273,14 +273,14 @@ std::string ScheduleDAGSDNodes::getGraphNodeLabel(const SUnit *SU) const {
   raw_string_ostream O(s);
   O << "SU(" << SU->NodeNum << "): ";
   if (SU->getNode()) {
-    SmallVector<SDNode *, 4> FlaggedNodes;
-    for (SDNode *N = SU->getNode(); N; N = N->getFlaggedNode())
-      FlaggedNodes.push_back(N);
-    while (!FlaggedNodes.empty()) {
+    SmallVector<SDNode *, 4> GluedNodes;
+    for (SDNode *N = SU->getNode(); N; N = N->getGluedNode())
+      GluedNodes.push_back(N);
+    while (!GluedNodes.empty()) {
       O << DOTGraphTraits<SelectionDAG*>
-        ::getSimpleNodeLabel(FlaggedNodes.back(), DAG);
-      FlaggedNodes.pop_back();
-      if (!FlaggedNodes.empty())
+        ::getSimpleNodeLabel(GluedNodes.back(), DAG);
+      GluedNodes.pop_back();
+      if (!GluedNodes.empty())
         O << "\n    ";
     }
   } else {

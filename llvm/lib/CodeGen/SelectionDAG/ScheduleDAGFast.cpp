@@ -205,7 +205,7 @@ void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled
 /// successors to the newly created node.
 SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
-  if (SU->getNode()->getFlaggedNode())
+  if (SU->getNode()->getGluedNode())
     return NULL;
 
   SDNode *N = SU->getNode();
@@ -476,12 +476,12 @@ bool ScheduleDAGFast::DelayForLiveRegsBottomUp(SUnit *SU,
     }
   }
 
-  for (SDNode *Node = SU->getNode(); Node; Node = Node->getFlaggedNode()) {
+  for (SDNode *Node = SU->getNode(); Node; Node = Node->getGluedNode()) {
     if (Node->getOpcode() == ISD::INLINEASM) {
       // Inline asm can clobber physical defs.
       unsigned NumOps = Node->getNumOperands();
       if (Node->getOperand(NumOps-1).getValueType() == MVT::Glue)
-        --NumOps;  // Ignore the flag operand.
+        --NumOps;  // Ignore the glue operand.
 
       for (unsigned i = InlineAsm::Op_FirstOperand; i != NumOps;) {
         unsigned Flags =

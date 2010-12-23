@@ -2190,7 +2190,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       MatchedMemRefs.push_back(cast<MemSDNode>(N)->getMemOperand());
       continue;
         
-    case OPC_CaptureFlagInput:
+    case OPC_CaptureGlueInput:
       // If the current node has an input glue, capture it in InputGlue.
       if (N->getNumOperands() != 0 &&
           N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Glue)
@@ -2608,7 +2608,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
     }
         
-    case OPC_MarkFlagResults: {
+    case OPC_MarkGlueResults: {
       unsigned NumNodes = MatcherTable[MatcherIndex++];
       
       // Read and remember all the glue-result nodes.
@@ -2650,7 +2650,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         CurDAG->ReplaceAllUsesOfValueWith(SDValue(NodeToMatch, i), Res);
       }
 
-      // If the root node defines glue, add it to the flag nodes to update list.
+      // If the root node defines glue, add it to the glue nodes to update list.
       if (NodeToMatch->getValueType(NodeToMatch->getNumValues()-1) == MVT::Glue)
         GlueResultNodesMatched.push_back(NodeToMatch);
       
