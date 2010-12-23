@@ -315,14 +315,16 @@ StmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
     
     ColonProtection.restore();
 
+    SourceLocation ColonLoc;
     if (Tok.isNot(tok::colon)) {
-      Diag(Tok, diag::err_expected_colon_after) << "'case'";
-      SkipUntil(tok::colon);
-      return StmtError();
+      SourceLocation ExpectedLoc = PP.getLocForEndOfToken(PrevTokLocation);
+      Diag(ExpectedLoc, diag::err_expected_colon_after) << "'case'"
+        << FixItHint::CreateInsertion(ExpectedLoc, ":");
+      ColonLoc = ExpectedLoc;
+    } else {
+      ColonLoc = ConsumeToken();
     }
-
-    SourceLocation ColonLoc = ConsumeToken();
-
+    
     StmtResult Case =
       Actions.ActOnCaseStmt(CaseLoc, LHS.get(), DotDotDotLoc,
                             RHS.get(), ColonLoc);
@@ -384,14 +386,16 @@ StmtResult Parser::ParseDefaultStatement(AttributeList *Attr) {
   assert(Tok.is(tok::kw_default) && "Not a default stmt!");
   SourceLocation DefaultLoc = ConsumeToken();  // eat the 'default'.
 
+  SourceLocation ColonLoc;
   if (Tok.isNot(tok::colon)) {
-    Diag(Tok, diag::err_expected_colon_after) << "'default'";
-    SkipUntil(tok::colon);
-    return StmtError();
+    SourceLocation ExpectedLoc = PP.getLocForEndOfToken(PrevTokLocation);
+    Diag(ExpectedLoc, diag::err_expected_colon_after) << "'default'"
+      << FixItHint::CreateInsertion(ExpectedLoc, ":");
+    ColonLoc = ExpectedLoc;
+  } else {
+    ColonLoc = ConsumeToken();
   }
-
-  SourceLocation ColonLoc = ConsumeToken();
-
+  
   // Diagnose the common error "switch (X) {... default: }", which is not valid.
   if (Tok.is(tok::r_brace)) {
     Diag(Tok, diag::err_label_end_of_compound_statement);
