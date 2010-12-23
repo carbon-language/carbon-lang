@@ -186,9 +186,9 @@ DefinedOrUnknownSVal DeclRegion::getExtent(SValBuilder &svalBuilder) const {
   if (isa<IncompleteArrayType>(T))
     return UnknownVal();
 
-  CharUnits Size = Ctx.getTypeSizeInChars(T);
-  QualType SizeTy = Ctx.getSizeType();
-  return svalBuilder.makeIntVal(Size.getQuantity(), SizeTy);
+  CharUnits size = Ctx.getTypeSizeInChars(T);
+  QualType sizeTy = svalBuilder.getArrayIndexType();
+  return svalBuilder.makeIntVal(size.getQuantity(), sizeTy);
 }
 
 DefinedOrUnknownSVal FieldRegion::getExtent(SValBuilder &svalBuilder) const {
@@ -215,8 +215,8 @@ DefinedOrUnknownSVal SymbolicRegion::getExtent(SValBuilder &svalBuilder) const {
 }
 
 DefinedOrUnknownSVal StringRegion::getExtent(SValBuilder &svalBuilder) const {
-  QualType SizeTy = svalBuilder.getContext().getSizeType();
-  return svalBuilder.makeIntVal(getStringLiteral()->getByteLength()+1, SizeTy);
+  return svalBuilder.makeIntVal(getStringLiteral()->getByteLength()+1,
+                                svalBuilder.getArrayIndexType());
 }
 
 QualType CXXBaseObjectRegion::getValueType() const {
