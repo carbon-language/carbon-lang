@@ -105,7 +105,7 @@ if [ "$ARM_HOSTED_BUILD" = yes ]; then
       T=`xcrun -sdk $SDKROOT -find ${prog}`
     fi
     echo '#!/bin/sh' > $P || exit 1
-    echo 'exec '$T' -arch armv6 -isysroot '${SDKROOT}' "$@"' >> $P || exit 1
+    echo 'exec '$T' -arch armv7 -isysroot '${SDKROOT}' "$@"' >> $P || exit 1
     chmod a+x $P || exit 1
   done
 
