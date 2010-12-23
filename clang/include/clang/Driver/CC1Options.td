@@ -70,6 +70,8 @@ def analysis_WarnIdempotentOps : Flag<"-analyzer-check-idempotent-operations">,
   HelpText<"Warn about idempotent operations">;
 def analysis_AnalyzerStats : Flag<"-analyzer-stats">,
   HelpText<"Emit warnings with analyzer statistics">;
+def analysis_WarnBufferOverflows : Flag<"-analyzer-check-buffer-overflows">,
+  HelpText<"Warn about buffer overflows">;
 
 def analyzer_store : Separate<"-analyzer-store">,
   HelpText<"Source Code Analysis - Abstract Memory Store Models">;

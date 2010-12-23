@@ -117,7 +117,9 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
   if (Opts.EnableExperimentalInternalChecks)
     Res.push_back("-analyzer-experimental-internal-checks");
   if (Opts.IdempotentOps)
-      Res.push_back("-analyzer-check-idempotent-operations");
+    Res.push_back("-analyzer-check-idempotent-operations");
+  if (Opts.BufferOverflows)
+    Res.push_back("-analyzer-check-buffer-overflows");
 }
 
 static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
@@ -857,6 +859,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   Opts.MaxLoop = Args.getLastArgIntValue(OPT_analyzer_max_loop, 4, Diags);
   Opts.InlineCall = Args.hasArg(OPT_analyzer_inline_call);
   Opts.IdempotentOps = Args.hasArg(OPT_analysis_WarnIdempotentOps);
+  Opts.BufferOverflows = Args.hasArg(OPT_analysis_WarnBufferOverflows);
 }
 
 static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,

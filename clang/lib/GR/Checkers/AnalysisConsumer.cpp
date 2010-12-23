@@ -354,6 +354,9 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager& mgr,
   if (C.Opts.IdempotentOps || C.Opts.EnableExperimentalChecks
       || C.Opts.EnableExperimentalInternalChecks)
     RegisterIdempotentOperationChecker(Eng);
+  
+  if (C.Opts.BufferOverflows)
+    RegisterArrayBoundCheckerV2(Eng);
 
   // Enable AnalyzerStatsChecker if it was given as an argument
   if (C.Opts.AnalyzerStats)

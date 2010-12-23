@@ -2,9 +2,11 @@ add_clang_library(clangGRCheckers
   AdjustedReturnValueChecker.cpp
   AnalysisConsumer.cpp
   ArrayBoundChecker.cpp
+  ArrayBoundCheckerV2.cpp
   AttrNonNullChecker.cpp
   BasicObjCFoundationChecks.cpp
   BuiltinFunctionChecker.cpp
+  CStringChecker.cpp
   CallAndMessageChecker.cpp
   CastSizeChecker.cpp
   CastToStructChecker.cpp
@@ -14,7 +16,6 @@ add_clang_library(clangGRCheckers
   CheckSecuritySyntaxOnly.cpp
   CheckSizeofPointer.cpp
   ChrootChecker.cpp
-  CStringChecker.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   ExprEngine.cpp
