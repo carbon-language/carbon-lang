@@ -8,8 +8,8 @@ set( LLVM_USED_LIBS
   clangCodeGen
   clangParse
   clangSema
-  clangEntoCheckers
-  clangEntoCore
+  clangStaticAnalyzerCheckers
+  clangStaticAnalyzerCore
   clangAnalysis
   clangIndex
   clangRewrite
