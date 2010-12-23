@@ -697,7 +697,7 @@ implementations of ceil/floor/rint.
 Consider:
 
 int test() {
-  long long input[8] = {1,1,1,1,1,1,1,1};
+  long long input[8] = {1,0,1,0,1,0,1,0};
   foo(input);
 }
 
@@ -1432,14 +1432,7 @@ Those should be turned into a switch.
         
 This is interesting for a couple reasons.  First, in this:
 
-        %3073 = call i8* @strcpy(i8* %3072, i8* %3071) nounwind
-        %strlen = call i32 @strlen(i8* %3072)  
-
-The strlen could be replaced with: %strlen = sub %3072, %3073, because the
-strcpy call returns a pointer to the end of the string.  Based on that, the
-endptr GEP just becomes equal to 3073, which eliminates a strlen call and GEP.
-
-Second, the memcpy+strlen strlen can be replaced with:
+The memcpy+strlen strlen can be replaced with:
 
         %3074 = call i32 @strlen([5 x i8]* @"\01LC42") nounwind readonly 
 
@@ -1512,18 +1505,6 @@ This pattern repeats several times, basically doing:
   P[A-1] = 0;
   B = strlen(P);
   where it is "obvious" that B = A-1.
-
-//===---------------------------------------------------------------------===//
-
-186.crafty also contains this code:
-
-%1906 = call i32 @strlen(i8* getelementptr ([32 x i8]* @pgn_event, i32 0,i32 0))
-%1907 = getelementptr [32 x i8]* @pgn_event, i32 0, i32 %1906
-%1908 = call i8* @strcpy(i8* %1907, i8* %1905) nounwind align 1
-%1909 = call i32 @strlen(i8* getelementptr ([32 x i8]* @pgn_event, i32 0,i32 0))
-%1910 = getelementptr [32 x i8]* @pgn_event, i32 0, i32 %1909         
-
-The last strlen is computable as 1908-@pgn_event, which means 1910=1908.
 
 //===---------------------------------------------------------------------===//
 
