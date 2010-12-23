@@ -27,7 +27,7 @@ class Decl;
 class SourceManager;
 class Stmt;
 
-namespace GR {
+namespace ento {
 
 //===----------------------------------------------------------------------===//
 // High-level interface for handlers of path-sensitive diagnostics.

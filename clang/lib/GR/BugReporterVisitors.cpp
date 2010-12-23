@@ -20,7 +20,7 @@
 #include "clang/GR/PathSensitive/GRState.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 //===----------------------------------------------------------------------===//
 // Utility functions.

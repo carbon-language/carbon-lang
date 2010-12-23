@@ -30,7 +30,7 @@ class Diagnostic;
 class Stmt;
 class ParentMap;
 
-namespace GR {
+namespace ento {
 
 class PathDiagnostic;
 class PathDiagnosticPiece;

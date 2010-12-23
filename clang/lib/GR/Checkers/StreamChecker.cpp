@@ -20,7 +20,7 @@
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 
@@ -105,7 +105,7 @@ private:
 } // end anonymous namespace
 
 namespace clang {
-namespace GR {
+namespace ento {
   template <>
   struct GRStateTrait<StreamState> 
     : public GRStatePartialTrait<llvm::ImmutableMap<SymbolRef, StreamState> > {
@@ -114,7 +114,7 @@ namespace GR {
 }
 }
 
-void GR::RegisterStreamChecker(ExprEngine &Eng) {
+void ento::RegisterStreamChecker(ExprEngine &Eng) {
   Eng.registerCheck(new StreamChecker());
 }
 

@@ -23,7 +23,7 @@
 #include "clang/Basic/SourceManager.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 enum IVarState { Unused, Used };
 typedef llvm::DenseMap<const ObjCIvarDecl*,IVarState> IvarUsageMap;
@@ -98,7 +98,7 @@ static void Scan(IvarUsageMap &M, const DeclContext *C, const FileID FID,
     }
 }
 
-void GR::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
+void ento::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
                                 BugReporter &BR) {
 
   const ObjCInterfaceDecl* ID = D->getClassInterface();

@@ -21,7 +21,7 @@
 #include <vector>
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 //===----------------------------------------------------------------------===//
 // Node auditing.

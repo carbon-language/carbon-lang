@@ -21,7 +21,7 @@
 #include <fcntl.h>
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 using llvm::Optional;
 
 namespace {
@@ -46,7 +46,7 @@ public:
 };
 } //end anonymous namespace
 
-void GR::RegisterUnixAPIChecker(ExprEngine &Eng) {
+void ento::RegisterUnixAPIChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UnixAPIChecker());
 }
 

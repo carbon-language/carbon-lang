@@ -12,7 +12,7 @@
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 using llvm::Interval;
 
 // The actual store type.
@@ -84,7 +84,7 @@ private:
 };
 } // end anonymous namespace
 
-StoreManager *GR::CreateFlatStoreManager(GRStateManager &StMgr) {
+StoreManager *ento::CreateFlatStoreManager(GRStateManager &StMgr) {
   return new FlatStoreManager(StMgr);
 }
 

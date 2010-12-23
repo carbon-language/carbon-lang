@@ -18,7 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class UndefCapturedBlockVarChecker
@@ -32,7 +32,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterUndefCapturedBlockVarChecker(ExprEngine &Eng) {
+void ento::RegisterUndefCapturedBlockVarChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UndefCapturedBlockVarChecker());
 }
 

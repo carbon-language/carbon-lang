@@ -19,7 +19,7 @@
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 class StmtNodeBuilderRef {
   ExplodedNodeSet &Dst;

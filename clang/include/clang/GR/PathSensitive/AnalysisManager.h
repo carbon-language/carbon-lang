@@ -26,7 +26,7 @@ namespace idx {
   class TranslationUnit; 
 }
 
-namespace GR {
+namespace ento {
 
 class AnalysisManager : public BugReporterData {
   AnalysisContextManager AnaCtxMgr;

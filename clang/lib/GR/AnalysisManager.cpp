@@ -12,7 +12,7 @@
 #include "clang/Index/Indexer.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 AnalysisContext *
 AnalysisManager::getAnalysisContextInAnotherTU(const Decl *D) {

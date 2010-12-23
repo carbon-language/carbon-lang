@@ -18,7 +18,7 @@
 #include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class ReturnPointerRangeChecker : 
@@ -31,7 +31,7 @@ public:
 };
 }
 
-void GR::RegisterReturnPointerRangeChecker(ExprEngine &Eng) {
+void ento::RegisterReturnPointerRangeChecker(ExprEngine &Eng) {
   Eng.registerCheck(new ReturnPointerRangeChecker());
 }
 

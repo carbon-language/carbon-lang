@@ -34,7 +34,7 @@ namespace clang {
 class LocationContext;
 class StackFrameContext;
 
-namespace GR {
+namespace ento {
 
 class MemRegionManager;
 class MemSpaceRegion;
@@ -1068,7 +1068,7 @@ inline ASTContext& MemRegion::getContext() const {
 
 namespace llvm {
 static inline raw_ostream& operator<<(raw_ostream& os,
-                                      const clang::GR::MemRegion* R) {
+                                      const clang::ento::MemRegion* R) {
   R->dumpToStream(os);
   return os;
 }

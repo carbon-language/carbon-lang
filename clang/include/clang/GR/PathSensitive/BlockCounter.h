@@ -24,7 +24,7 @@ namespace clang {
 
 class StackFrameContext;
 
-namespace GR {
+namespace ento {
 
 class BlockCounter {
   void* Data;

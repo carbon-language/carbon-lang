@@ -29,7 +29,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 using llvm::Optional;
 
 //===----------------------------------------------------------------------===//
@@ -404,12 +404,12 @@ public: // Part of public interface to class.
 // RegionStore creation.
 //===----------------------------------------------------------------------===//
 
-StoreManager *GR::CreateRegionStoreManager(GRStateManager& StMgr) {
+StoreManager *ento::CreateRegionStoreManager(GRStateManager& StMgr) {
   RegionStoreFeatures F = maximal_features_tag();
   return new RegionStoreManager(StMgr, F);
 }
 
-StoreManager *GR::CreateFieldsOnlyRegionStoreManager(GRStateManager &StMgr) {
+StoreManager *ento::CreateFieldsOnlyRegionStoreManager(GRStateManager &StMgr) {
   RegionStoreFeatures F = minimal_features_tag();
   F.enableFields(true);
   return new RegionStoreManager(StMgr, F);

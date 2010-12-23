@@ -23,7 +23,7 @@ class APSInt;
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 class GRState;
 class GRStateManager;

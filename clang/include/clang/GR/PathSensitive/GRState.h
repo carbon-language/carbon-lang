@@ -31,7 +31,7 @@ class raw_ostream;
 namespace clang {
 class ASTContext;
 
-namespace GR {
+namespace ento {
 
 class GRStateManager;
 class Checker;

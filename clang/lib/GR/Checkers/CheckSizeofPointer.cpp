@@ -17,7 +17,7 @@
 #include "clang/GR/Checkers/LocalCheckers.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class WalkAST : public StmtVisitor<WalkAST> {
@@ -66,7 +66,7 @@ void WalkAST::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   }
 }
 
-void GR::CheckSizeofPointer(const Decl *D, BugReporter &BR) {
+void ento::CheckSizeofPointer(const Decl *D, BugReporter &BR) {
   WalkAST walker(BR);
   walker.Visit(D->getBody());
 }

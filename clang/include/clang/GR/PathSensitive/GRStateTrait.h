@@ -27,7 +27,7 @@ namespace llvm {
 
 namespace clang {
 
-namespace GR {
+namespace ento {
   template <typename T> struct GRStatePartialTrait;
 
   // Partial-specialization for ImmutableMap.

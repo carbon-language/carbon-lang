@@ -17,7 +17,7 @@
 #include "clang/AST/Type.h"
 
 namespace clang {
-namespace GR {
+namespace ento {
 namespace cocoa {
  
   enum NamingConvention { NoConvention, CreateRule, InitRule };

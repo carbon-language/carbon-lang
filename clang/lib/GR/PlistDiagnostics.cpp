@@ -21,7 +21,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
-using namespace GR;
+using namespace ento;
 using llvm::cast;
 
 typedef llvm::DenseMap<FileID, unsigned> FIDMap;
@@ -98,8 +98,8 @@ PlistDiagnostics::PlistDiagnostics(const std::string& output,
   : OutputFile(output), LangOpts(LO), SubPD(subPD), flushed(false) {}
 
 PathDiagnosticClient*
-GR::createPlistDiagnosticClient(const std::string& s, const Preprocessor &PP,
-                                   PathDiagnosticClient *subPD) {
+ento::createPlistDiagnosticClient(const std::string& s, const Preprocessor &PP,
+                                  PathDiagnosticClient *subPD) {
   return new PlistDiagnostics(s, PP.getLangOptions(), subPD);
 }
 

@@ -17,7 +17,7 @@
 #include "ExprEngineInternalChecks.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class CastSizeChecker : public CheckerVisitor<CastSizeChecker> {
@@ -86,6 +86,6 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
 }
 
 
-void GR::RegisterCastSizeChecker(ExprEngine &Eng) {
+void ento::RegisterCastSizeChecker(ExprEngine &Eng) {
   Eng.registerCheck(new CastSizeChecker());
 }

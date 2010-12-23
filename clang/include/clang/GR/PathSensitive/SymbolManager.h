@@ -31,7 +31,7 @@ namespace clang {
   class ASTContext;
   class StackFrameContext;
 
-namespace GR {
+namespace ento {
   class BasicValueFactory;
   class MemRegion;
   class SubRegion;
@@ -481,7 +481,7 @@ public:
 
 namespace llvm {
 static inline llvm::raw_ostream& operator<<(llvm::raw_ostream& os,
-                                            const clang::GR::SymExpr *SE) {
+                                            const clang::ento::SymExpr *SE) {
   SE->dumpToStream(os);
   return os;
 }

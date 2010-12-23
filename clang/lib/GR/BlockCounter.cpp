@@ -17,7 +17,7 @@
 #include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 

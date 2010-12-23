@@ -23,7 +23,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 static bool scan_dealloc(Stmt* S, Selector Dealloc) {
 
@@ -94,7 +94,7 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
   return false;
 }
 
-void GR::CheckObjCDealloc(const ObjCImplementationDecl* D,
+void ento::CheckObjCDealloc(const ObjCImplementationDecl* D,
                           const LangOptions& LOpts, BugReporter& BR) {
 
   assert (LOpts.getGCMode() != LangOptions::GCOnly);

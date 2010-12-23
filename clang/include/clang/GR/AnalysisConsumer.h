@@ -23,7 +23,7 @@ class AnalyzerOptions;
 class ASTConsumer;
 class Preprocessor;
 
-namespace GR {
+namespace ento {
 
 /// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
 /// analysis passes.  (The set of analyses run is controlled by command-line

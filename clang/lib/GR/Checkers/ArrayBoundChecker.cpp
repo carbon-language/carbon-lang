@@ -18,7 +18,7 @@
 #include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class ArrayBoundChecker : 
@@ -31,7 +31,7 @@ public:
 };
 }
 
-void GR::RegisterArrayBoundChecker(ExprEngine &Eng) {
+void ento::RegisterArrayBoundChecker(ExprEngine &Eng) {
   Eng.registerCheck(new ArrayBoundChecker());
 }
 

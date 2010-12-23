@@ -24,7 +24,7 @@
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 //===----------------------------------------------------------------------===//
 /// CoreEngine - Implements the core logic of the graph-reachability

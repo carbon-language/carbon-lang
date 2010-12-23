@@ -17,7 +17,7 @@
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 
@@ -29,7 +29,7 @@ public:
 
 }
 
-void GR::RegisterNoReturnFunctionChecker(ExprEngine &Eng) {
+void ento::RegisterNoReturnFunctionChecker(ExprEngine &Eng) {
   Eng.registerCheck(new NoReturnFunctionChecker());
 }
 

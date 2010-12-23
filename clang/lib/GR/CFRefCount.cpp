@@ -34,7 +34,7 @@
 #include <stdarg.h>
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 using llvm::StringRef;
 using llvm::StrInStrNoCase;
 
@@ -397,7 +397,7 @@ void RefVal::print(llvm::raw_ostream& Out) const {
 typedef llvm::ImmutableMap<SymbolRef, RefVal> RefBindings;
 
 namespace clang {
-namespace GR {
+namespace ento {
   template<>
   struct GRStateTrait<RefBindings> : public GRStatePartialTrait<RefBindings> {
     static void* GDMIndex() {
@@ -1579,7 +1579,7 @@ namespace { class AutoreleasePoolContents {}; }
 namespace { class AutoreleaseStack {}; }
 
 namespace clang {
-namespace GR {
+namespace ento {
 template<> struct GRStateTrait<AutoreleaseStack>
   : public GRStatePartialTrait<ARStack> {
   static inline void* GDMIndex() { return &AutoRBIndex; }
@@ -3494,7 +3494,7 @@ void CFRefCount::RegisterChecks(ExprEngine& Eng) {
   Eng.registerCheck(new RetainReleaseChecker(this));
 }
 
-TransferFuncs* GR::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
+TransferFuncs* ento::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                          const LangOptions& lopts) {
   return new CFRefCount(Ctx, GCEnabled, lopts);
 }

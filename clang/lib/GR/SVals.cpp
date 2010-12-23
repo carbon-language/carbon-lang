@@ -16,7 +16,7 @@
 #include "clang/Basic/IdentifierTable.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 using llvm::dyn_cast;
 using llvm::cast;
 using llvm::APSInt;

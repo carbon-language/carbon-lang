@@ -20,7 +20,7 @@ namespace clang {
 
 class Preprocessor;
 
-namespace GR {
+namespace ento {
 
 class PathDiagnosticClient;
 

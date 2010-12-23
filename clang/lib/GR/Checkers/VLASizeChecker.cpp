@@ -21,7 +21,7 @@
 #include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class VLASizeChecker : public CheckerVisitor<VLASizeChecker> {
@@ -35,7 +35,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterVLASizeChecker(ExprEngine &Eng) {
+void ento::RegisterVLASizeChecker(ExprEngine &Eng) {
   Eng.registerCheck(new VLASizeChecker());
 }
 

@@ -19,7 +19,7 @@
 #include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class ObjCAtSyncChecker : public CheckerVisitor<ObjCAtSyncChecker> {
@@ -33,7 +33,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterObjCAtSyncChecker(ExprEngine &Eng) {
+void ento::RegisterObjCAtSyncChecker(ExprEngine &Eng) {
   // @synchronized is an Objective-C 2 feature.
   if (Eng.getContext().getLangOptions().ObjC2)
     Eng.registerCheck(new ObjCAtSyncChecker());

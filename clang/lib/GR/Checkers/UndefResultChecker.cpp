@@ -18,7 +18,7 @@
 #include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class UndefResultChecker 
@@ -33,7 +33,7 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterUndefResultChecker(ExprEngine &Eng) {
+void ento::RegisterUndefResultChecker(ExprEngine &Eng) {
   Eng.registerCheck(new UndefResultChecker());
 }
 

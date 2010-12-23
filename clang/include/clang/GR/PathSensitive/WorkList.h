@@ -22,7 +22,7 @@ namespace clang {
   
 class CFGBlock;
 
-namespace GR {
+namespace ento {
 
 class ExplodedNode;
 class ExplodedNodeImpl;

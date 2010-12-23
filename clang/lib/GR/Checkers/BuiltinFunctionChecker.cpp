@@ -16,7 +16,7 @@
 #include "clang/Basic/Builtins.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 
@@ -28,7 +28,7 @@ public:
 
 }
 
-void GR::RegisterBuiltinFunctionChecker(ExprEngine &Eng) {
+void ento::RegisterBuiltinFunctionChecker(ExprEngine &Eng) {
   Eng.registerCheck(new BuiltinFunctionChecker());
 }
 

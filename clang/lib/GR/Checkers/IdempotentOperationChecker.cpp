@@ -58,7 +58,7 @@
 #include <deque>
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class IdempotentOperationChecker
@@ -130,7 +130,7 @@ void *IdempotentOperationChecker::getTag() {
   return &x;
 }
 
-void GR::RegisterIdempotentOperationChecker(ExprEngine &Eng) {
+void ento::RegisterIdempotentOperationChecker(ExprEngine &Eng) {
   Eng.registerCheck(new IdempotentOperationChecker());
 }
 

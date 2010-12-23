@@ -18,7 +18,7 @@
 #include "ExprEngineInternalChecks.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class CastToStructChecker 
@@ -74,6 +74,6 @@ void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
   }
 }
 
-void GR::RegisterCastToStructChecker(ExprEngine &Eng) {
+void ento::RegisterCastToStructChecker(ExprEngine &Eng) {
   Eng.registerCheck(new CastToStructChecker());
 }

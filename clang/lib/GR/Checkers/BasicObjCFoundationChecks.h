@@ -21,7 +21,7 @@ namespace clang {
 class ASTContext;
 class Decl;
 
-namespace GR {
+namespace ento {
 
 class BugReporter;
 class ExprEngine;

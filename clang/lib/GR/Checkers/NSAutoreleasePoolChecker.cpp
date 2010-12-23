@@ -23,7 +23,7 @@
 #include "clang/AST/Decl.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class NSAutoreleasePoolChecker
@@ -45,7 +45,7 @@ public:
 } // end anonymous namespace
 
 
-void GR::RegisterNSAutoreleasePoolChecks(ExprEngine &Eng) {
+void ento::RegisterNSAutoreleasePoolChecks(ExprEngine &Eng) {
   ASTContext &Ctx = Eng.getContext();
   if (Ctx.getLangOptions().getGCMode() != LangOptions::NonGC) {    
     Eng.registerCheck(new NSAutoreleasePoolChecker(GetNullarySelector("release",

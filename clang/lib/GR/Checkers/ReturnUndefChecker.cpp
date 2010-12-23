@@ -19,7 +19,7 @@
 #include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class ReturnUndefChecker : 
@@ -32,7 +32,7 @@ public:
 };
 }
 
-void GR::RegisterReturnUndefChecker(ExprEngine &Eng) {
+void ento::RegisterReturnUndefChecker(ExprEngine &Eng) {
   Eng.registerCheck(new ReturnUndefChecker());
 }
 

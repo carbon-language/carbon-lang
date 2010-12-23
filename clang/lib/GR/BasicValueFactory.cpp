@@ -16,7 +16,7 @@
 #include "clang/GR/PathSensitive/BasicValueFactory.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 void CompoundValData::Profile(llvm::FoldingSetNodeID& ID, QualType T,
                               llvm::ImmutableList<SVal> L) {

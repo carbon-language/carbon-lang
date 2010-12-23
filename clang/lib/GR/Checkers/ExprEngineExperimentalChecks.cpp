@@ -17,9 +17,9 @@
 #include "clang/GR/Checkers/LocalCheckers.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
-void GR::RegisterExperimentalChecks(ExprEngine &Eng) {
+void ento::RegisterExperimentalChecks(ExprEngine &Eng) {
   // These are checks that never belong as internal checks
   // within ExprEngine.
   RegisterCStringChecker(Eng);
@@ -30,7 +30,7 @@ void GR::RegisterExperimentalChecks(ExprEngine &Eng) {
   RegisterUnreachableCodeChecker(Eng);
 }
 
-void GR::RegisterExperimentalInternalChecks(ExprEngine &Eng) {
+void ento::RegisterExperimentalInternalChecks(ExprEngine &Eng) {
   // These are internal checks that should eventually migrate to
   // RegisterInternalChecks() once they have been further tested.
   

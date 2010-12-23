@@ -14,7 +14,7 @@
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 //===----------------------------------------------------------------------===//
 // AST Consumer Actions

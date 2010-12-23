@@ -26,7 +26,7 @@ class Expr;
 class ObjCIvarDecl;
 class StackFrameContext;
 
-namespace GR {
+namespace ento {
 
 /// Store - This opaque type encapsulates an immutable mapping from
 ///  locations to values.  At a high-level, it represents the symbolic

@@ -17,7 +17,7 @@
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 //===----------------------------------------------------------------------===//
 // Checker visitor interface.  Used by subclasses of Checker to specify their

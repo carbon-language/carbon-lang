@@ -19,7 +19,7 @@
 #include "clang/GR/PathSensitive/ExprEngine.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class DereferenceChecker : public Checker {
@@ -43,12 +43,12 @@ public:
 };
 } // end anonymous namespace
 
-void GR::RegisterDereferenceChecker(ExprEngine &Eng) {
+void ento::RegisterDereferenceChecker(ExprEngine &Eng) {
   Eng.registerCheck(new DereferenceChecker());
 }
 
 std::pair<ExplodedNode * const *, ExplodedNode * const *>
-GR::GetImplicitNullDereferences(ExprEngine &Eng) {
+ento::GetImplicitNullDereferences(ExprEngine &Eng) {
   DereferenceChecker *checker = Eng.getChecker<DereferenceChecker>();
   if (!checker)
     return std::make_pair((ExplodedNode * const *) 0,

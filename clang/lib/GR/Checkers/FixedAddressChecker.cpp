@@ -18,7 +18,7 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class FixedAddressChecker 
@@ -67,6 +67,6 @@ void FixedAddressChecker::PreVisitBinaryOperator(CheckerContext &C,
   }
 }
 
-void GR::RegisterFixedAddressChecker(ExprEngine &Eng) {
+void ento::RegisterFixedAddressChecker(ExprEngine &Eng) {
   Eng.registerCheck(new FixedAddressChecker());
 }

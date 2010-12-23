@@ -19,7 +19,7 @@
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class CStringChecker : public CheckerVisitor<CStringChecker> {
@@ -100,7 +100,7 @@ public:
 } //end anonymous namespace
 
 namespace clang {
-namespace GR {
+namespace ento {
   template <>
   struct GRStateTrait<CStringLength> 
     : public GRStatePartialTrait<CStringLength::EntryMap> {
@@ -109,7 +109,7 @@ namespace GR {
 }
 }
 
-void GR::RegisterCStringChecker(ExprEngine &Eng) {
+void ento::RegisterCStringChecker(ExprEngine &Eng) {
   Eng.registerCheck(new CStringChecker());
 }
 

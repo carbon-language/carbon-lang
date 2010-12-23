@@ -22,7 +22,7 @@ class CFGElement;
 class LocationContext;
 class Stmt;
 
-namespace GR {
+namespace ento {
 
 class AnalysisManager;
 class ExplodedNode;

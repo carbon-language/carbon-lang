@@ -18,7 +18,7 @@
 #include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 using llvm::StringRef;
 

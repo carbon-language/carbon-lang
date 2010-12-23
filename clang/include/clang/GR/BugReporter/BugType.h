@@ -20,7 +20,7 @@
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 class ExplodedNode;
 class ExprEngine;

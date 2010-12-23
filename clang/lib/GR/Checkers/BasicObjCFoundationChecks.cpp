@@ -29,7 +29,7 @@
 #include "clang/AST/ASTContext.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class APIMisuse : public BugType {
@@ -511,7 +511,7 @@ void ClassReleaseChecker::PreVisitObjCMessageExpr(CheckerContext &C,
 // Check registration.
 //===----------------------------------------------------------------------===//
   
-void GR::RegisterAppleChecks(ExprEngine& Eng, const Decl &D) {
+void ento::RegisterAppleChecks(ExprEngine& Eng, const Decl &D) {
   Eng.registerCheck(new NilArgChecker());
   Eng.registerCheck(new CFNumberCreateChecker());
   RegisterNSErrorChecks(Eng.getBugReporter(), Eng, D);

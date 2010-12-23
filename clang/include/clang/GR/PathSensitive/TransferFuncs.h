@@ -22,7 +22,7 @@
 namespace clang {
 class ObjCMessageExpr;
 
-namespace GR {
+namespace ento {
 class ExplodedNode;
 class ExplodedNodeSet;
 class EndPathNodeBuilder;

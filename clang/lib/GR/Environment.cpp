@@ -16,7 +16,7 @@
 #include "clang/GR/PathSensitive/GRState.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 SVal Environment::lookupExpr(const Stmt* E) const {
   const SVal* X = ExprBindings.lookup(E);

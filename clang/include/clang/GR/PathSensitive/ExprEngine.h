@@ -31,7 +31,7 @@ namespace clang {
 
 class ObjCForCollectionStmt;
 
-namespace GR {
+namespace ento {
 
 class AnalysisManager;
 class Checker;

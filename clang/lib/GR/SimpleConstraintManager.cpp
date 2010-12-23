@@ -19,7 +19,7 @@
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 SimpleConstraintManager::~SimpleConstraintManager() {}
 
@@ -298,6 +298,6 @@ const GRState *SimpleConstraintManager::assumeSymRel(const GRState *state,
   } // end switch
 }
 
-} // end of namespace GR
+} // end of namespace ento
 
 } // end of namespace clang

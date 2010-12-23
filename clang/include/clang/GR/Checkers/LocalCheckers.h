@@ -28,7 +28,7 @@ class ObjCImplementationDecl;
 class LangOptions;
 class TranslationUnitDecl;
 
-namespace GR {
+namespace ento {
 
 class PathDiagnosticClient;
 class TransferFuncs;

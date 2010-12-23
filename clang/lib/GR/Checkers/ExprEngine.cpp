@@ -37,7 +37,7 @@
 #endif
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
 using llvm::cast;

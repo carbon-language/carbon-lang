@@ -18,7 +18,7 @@
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 bool containsMacro(const Stmt *S);
 bool containsEnum(const Stmt *S);

@@ -29,7 +29,7 @@ namespace llvm {
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 class CompoundValData;
 class LazyCompoundValData;
@@ -342,7 +342,7 @@ public:
 };
 
 class LocAsInteger : public NonLoc {
-  friend class GR::SValBuilder;
+  friend class ento::SValBuilder;
 
   explicit LocAsInteger(const std::pair<SVal, uintptr_t>& data) :
     NonLoc(LocAsIntegerKind, &data) {
@@ -376,7 +376,7 @@ public:
 };
 
 class CompoundVal : public NonLoc {
-  friend class GR::SValBuilder;
+  friend class ento::SValBuilder;
 
   explicit CompoundVal(const CompoundValData* D) : NonLoc(CompoundValKind, D) {}
 
@@ -399,7 +399,7 @@ public:
 };
 
 class LazyCompoundVal : public NonLoc {
-  friend class GR::SValBuilder;
+  friend class ento::SValBuilder;
 
   explicit LazyCompoundVal(const LazyCompoundValData *D)
     : NonLoc(LazyCompoundValKind, D) {}
@@ -419,7 +419,7 @@ public:
   }
 };
 
-} // end namespace GR::nonloc
+} // end namespace ento::nonloc
 
 //==------------------------------------------------------------------------==//
 //  Subclasses of Loc.
@@ -505,14 +505,14 @@ public:
   }
 };
 
-} // end GR::loc namespace
+} // end ento::loc namespace
 } // end GR namespace
 
 } // end clang namespace
 
 namespace llvm {
 static inline llvm::raw_ostream& operator<<(llvm::raw_ostream& os,
-                                            clang::GR::SVal V) {
+                                            clang::ento::SVal V) {
   V.dumpToStream(os);
   return os;
 }

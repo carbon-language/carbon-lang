@@ -18,7 +18,7 @@
 #include "clang/GR/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class PointerSubChecker 
@@ -74,6 +74,6 @@ void PointerSubChecker::PreVisitBinaryOperator(CheckerContext &C,
   }
 }
 
-void GR::RegisterPointerSubChecker(ExprEngine &Eng) {
+void ento::RegisterPointerSubChecker(ExprEngine &Eng) {
   Eng.registerCheck(new PointerSubChecker());
 }

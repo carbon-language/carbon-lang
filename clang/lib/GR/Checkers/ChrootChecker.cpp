@@ -19,7 +19,7 @@
 #include "clang/GR/PathSensitive/SymbolManager.h"
 #include "llvm/ADT/ImmutableMap.h"
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 
@@ -59,7 +59,7 @@ private:
 
 } // end anonymous namespace
 
-void GR::RegisterChrootChecker(ExprEngine &Eng) {
+void ento::RegisterChrootChecker(ExprEngine &Eng) {
   Eng.registerCheck(new ChrootChecker());
 }
 

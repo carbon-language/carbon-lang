@@ -20,7 +20,7 @@
 #include "llvm/Support/Casting.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 using llvm::dyn_cast;
 using llvm::isa;
 

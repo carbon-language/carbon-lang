@@ -19,7 +19,7 @@
 #include "clang/AST/CharUnits.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 namespace {
 class ArrayBoundCheckerV2 : 
@@ -62,7 +62,7 @@ public:
 };
 }
 
-void GR::RegisterArrayBoundCheckerV2(ExprEngine &Eng) {
+void ento::RegisterArrayBoundCheckerV2(ExprEngine &Eng) {
   Eng.registerCheck(new ArrayBoundCheckerV2());
 }
 

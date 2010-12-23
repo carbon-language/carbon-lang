@@ -24,7 +24,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 static bool AreTypesCompatible(QualType Derived, QualType Ancestor,
                                ASTContext& C) {
@@ -70,7 +70,7 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
   }
 }
 
-void GR::CheckObjCInstMethSignature(const ObjCImplementationDecl* ID,
+void ento::CheckObjCInstMethSignature(const ObjCImplementationDecl* ID,
                                     BugReporter& BR) {
 
   const ObjCInterfaceDecl* D = ID->getClassInterface();

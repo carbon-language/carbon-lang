@@ -14,7 +14,7 @@
 #include "clang/GR/ManagerRegistry.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 StoreManagerCreator ManagerRegistry::StoreMgrCreator = 0;
 

@@ -11,7 +11,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/GR/AnalysisConsumer.h"
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 ASTConsumer *AnalysisAction::CreateASTConsumer(CompilerInstance &CI,
                                                llvm::StringRef InFile) {

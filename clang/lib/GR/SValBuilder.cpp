@@ -19,7 +19,7 @@
 #include "clang/GR/PathSensitive/BasicValueFactory.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 //===----------------------------------------------------------------------===//
 // Basic SVal creation.

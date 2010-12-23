@@ -22,7 +22,7 @@ namespace clang {
 
 class LiveVariables;
 
-namespace GR {
+namespace ento {
 
 class EnvironmentManager;
 class SValBuilder;

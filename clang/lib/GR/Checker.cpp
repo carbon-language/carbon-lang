@@ -14,7 +14,7 @@
 
 #include "clang/GR/PathSensitive/Checker.h"
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 Checker::~Checker() {}
 

@@ -43,7 +43,7 @@
 #include "llvm/ADT/OwningPtr.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 static ExplodedNode::Auditor* CreateUbiViz();
 
@@ -477,7 +477,7 @@ static void ActionWarnSizeofPointer(AnalysisConsumer &C, AnalysisManager &mgr,
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
 
-ASTConsumer* GR::CreateAnalysisConsumer(const Preprocessor& pp,
+ASTConsumer* ento::CreateAnalysisConsumer(const Preprocessor& pp,
                                            const std::string& OutDir,
                                            const AnalyzerOptions& Opts) {
   llvm::OwningPtr<AnalysisConsumer> C(new AnalysisConsumer(pp, OutDir, Opts));

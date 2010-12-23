@@ -20,7 +20,7 @@
 #include "llvm/ADT/StringRef.h"
 
 using namespace clang;
-using namespace GR;
+using namespace ento;
 
 //===----------------------------------------------------------------------===//
 // Generic type checking routines.
@@ -306,7 +306,7 @@ static void ScanCodeDecls(DeclContext *DC, BugReporter &BR) {
   }
 }
 
-void GR::CheckLLVMConventions(TranslationUnitDecl &TU,
+void ento::CheckLLVMConventions(TranslationUnitDecl &TU,
                                  BugReporter &BR) {
   ScanCodeDecls(&TU, BR);
 }

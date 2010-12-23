@@ -18,7 +18,7 @@
 
 namespace clang {
 
-namespace GR {
+namespace ento {
 
 /// ManagerRegistry - This class records manager creators registered at
 /// runtime. The information is communicated to AnalysisManager through static

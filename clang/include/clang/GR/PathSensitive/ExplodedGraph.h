@@ -36,7 +36,7 @@ namespace clang {
 
 class CFG;
 
-namespace GR {
+namespace ento {
 
 class GRState;
 class ExplodedGraph;
@@ -378,8 +378,8 @@ public:
 // GraphTraits
 
 namespace llvm {
-  template<> struct GraphTraits<clang::GR::ExplodedNode*> {
-    typedef clang::GR::ExplodedNode NodeType;
+  template<> struct GraphTraits<clang::ento::ExplodedNode*> {
+    typedef clang::ento::ExplodedNode NodeType;
     typedef NodeType::succ_iterator  ChildIteratorType;
     typedef llvm::df_iterator<NodeType*>      nodes_iterator;
 
@@ -404,8 +404,8 @@ namespace llvm {
     }
   };
 
-  template<> struct GraphTraits<const clang::GR::ExplodedNode*> {
-    typedef const clang::GR::ExplodedNode NodeType;
+  template<> struct GraphTraits<const clang::ento::ExplodedNode*> {
+    typedef const clang::ento::ExplodedNode NodeType;
     typedef NodeType::const_succ_iterator   ChildIteratorType;
     typedef llvm::df_iterator<NodeType*>       nodes_iterator;
 
