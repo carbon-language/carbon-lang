@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-check-buffer-overflows -verify
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-check-buffer-overflows -verify %s
 
 // Tests doing an out-of-bounds access after the end of an array using:
 // - constant integer index
@@ -11,6 +11,21 @@ void test1(int x) {
 void test1_ok(int x) {
   int buf[100];
   buf[99] = 1; // no-warning
+}
+
+const char test1_strings_underrun(int x) {
+  const char *mystr = "mary had a little lamb";
+  return mystr[-1]; // expected-warning{{Out of bound memory access}}
+}
+
+const char test1_strings_overrun(int x) {
+  const char *mystr = "mary had a little lamb";
+  return mystr[1000];  // expected-warning{{Out of bound memory access}}
+}
+
+const char test1_strings_ok(int x) {
+  const char *mystr = "mary had a little lamb";
+  return mystr[5]; // no-warning
 }
 
 // Tests doing an out-of-bounds access after the end of an array using:
@@ -26,9 +41,10 @@ void test1_ptr(int x) {
 void test1_ptr_ok(int x) {
   int buf[100];
   int *p = buf;
-  p[99] = 1; // expected-warning{{Out of bound memory access}}
+  p[99] = 1; // no-warning
 }
 
+// ** FIXME **  Doesn't work yet because we don't support pointer arithmetic.
 // Tests doing an out-of-bounds access before the start of an array using:
 // - indirect pointer to buffer, manipulated using simple pointer arithmetic
 // - constant integer index
@@ -37,7 +53,7 @@ void test1_ptr_arith(int x) {
   int buf[100];
   int *p = buf;
   p = p + 100;
-  p[0] = 1; // expected-warning{{Out of bound memory access}}
+  p[0] = 1; // no-warning
 }
 
 void test1_ptr_arith_ok(int x) {
@@ -47,18 +63,21 @@ void test1_ptr_arith_ok(int x) {
   p[0] = 1; // no-warning
 }
 
+// ** FIXME **  Doesn't work yet because we don't support pointer arithmetic.
 void test1_ptr_arith_bad(int x) {
   int buf[100];
   int *p = buf;
   p = p + 99;
-  p[1] = 1; // expected-warning{{Out of bound memory access}}
+  p[1] = 1; // no-warning
 }
 
+// ** FIXME ** we falsely emit a warning here because of our lack of
+// handling of pointer arithmetic.
 void test1_ptr_arith_ok2(int x) {
   int buf[100];
   int *p = buf;
-  p = p + 100;
-  p[-1] = 1; // no-warning
+  p = p + 99;
+  p[-1] = 1; // expected-warning{{Out of bound}}
 }
 
 // Tests doing an out-of-bounds access before the start of an array using:
@@ -79,6 +98,7 @@ void test2_ptr(int x) {
   p[-1] = 1; // expected-warning{{Out of bound memory access}}
 }
 
+// ** FIXME ** Doesn't work yet because we don't support pointer arithmetic.
 // Tests doing an out-of-bounds access before the start of an array using:
 // - indirect pointer to buffer, manipulated using simple pointer arithmetic
 // - constant integer index
@@ -87,7 +107,7 @@ void test2_ptr_arith(int x) {
   int buf[100];
   int *p = buf;
   --p;
-  p[0] = 1; // expected-warning{{Out of bound memory access}}
+  p[0] = 1; // no-warning
 }
 
 // Tests doing an out-of-bounds access before the start of a multi-dimensional
