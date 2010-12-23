@@ -1103,7 +1103,7 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   while (!AbstractTypeUsers.empty() && NewTy != this) {
     AbstractTypeUser *User = AbstractTypeUsers.back();
 
-    unsigned OldSize = AbstractTypeUsers.size(); OldSize=OldSize;
+    unsigned OldSize = AbstractTypeUsers.size(); (void)OldSize;
 #ifdef DEBUG_MERGE_TYPES
     DEBUG(dbgs() << " REFINING user " << OldSize-1 << "[" << (void*)User
                  << "] of abstract type [" << (void*)this << " "
@@ -1130,7 +1130,7 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
   DEBUG(dbgs() << "typeIsREFINED type: " << (void*)this << " " << *this <<"\n");
 #endif
 
-  unsigned OldSize = AbstractTypeUsers.size(); OldSize=OldSize;
+  unsigned OldSize = AbstractTypeUsers.size(); (void)OldSize;
   while (!AbstractTypeUsers.empty()) {
     AbstractTypeUser *ATU = AbstractTypeUsers.back();
     ATU->typeBecameConcrete(this);

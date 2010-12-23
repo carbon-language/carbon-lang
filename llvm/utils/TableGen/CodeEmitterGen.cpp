@@ -264,7 +264,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
   o << "  const unsigned opcode = MI.getOpcode();\n"
     << "  unsigned Value = InstBits[opcode];\n"
     << "  unsigned op = 0;\n"
-    << "  op = op;  // suppress warning\n"
+    << "  (void)op;  // suppress warning\n"
     << "  switch (opcode) {\n";
 
   // Emit each case statement

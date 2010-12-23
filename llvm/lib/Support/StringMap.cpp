@@ -155,7 +155,7 @@ int StringMapImpl::FindKey(StringRef Key) const {
 void StringMapImpl::RemoveKey(StringMapEntryBase *V) {
   const char *VStr = (char*)V + ItemSize;
   StringMapEntryBase *V2 = RemoveKey(StringRef(VStr, V->getKeyLength()));
-  V2 = V2;
+  (void)V2;
   assert(V == V2 && "Didn't find key?");
 }
 

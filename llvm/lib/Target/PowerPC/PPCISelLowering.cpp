@@ -1058,7 +1058,6 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
     VT = LD->getMemoryVT();
 
   } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    ST = ST;
     Ptr = ST->getBasePtr();
     VT  = ST->getMemoryVT();
   } else

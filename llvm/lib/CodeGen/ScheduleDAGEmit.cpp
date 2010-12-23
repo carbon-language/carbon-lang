@@ -57,7 +57,7 @@ void ScheduleDAG::EmitPhysRegCopy(SUnit *SU,
       assert(I->getReg() && "Unknown physical register!");
       unsigned VRBase = MRI.createVirtualRegister(SU->CopyDstRC);
       bool isNew = VRBaseMap.insert(std::make_pair(SU, VRBase)).second;
-      isNew = isNew; // Silence compiler warning.
+      (void)isNew; // Silence compiler warning.
       assert(isNew && "Node emitted out of order - early");
       BuildMI(*BB, InsertPos, DebugLoc(), TII->get(TargetOpcode::COPY), VRBase)
         .addReg(I->getReg());

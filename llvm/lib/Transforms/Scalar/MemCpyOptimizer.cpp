@@ -504,7 +504,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
     DEBUG(dbgs() << "Replace stores:\n";
           for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
             dbgs() << *Range.TheStores[i] << '\n';
-          dbgs() << "With: " << *C << '\n'); C=C;
+          dbgs() << "With: " << *C << '\n'); (void)C;
   
     // Don't invalidate the iterator
     BBI = BI;
@@ -932,6 +932,3 @@ bool MemCpyOpt::runOnFunction(Function &F) {
   MD = 0;
   return MadeChange;
 }
-
-
-

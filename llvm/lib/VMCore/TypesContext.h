@@ -317,7 +317,7 @@ public:
     // The old record is now out-of-date, because one of the children has been
     // updated.  Remove the obsolete entry from the map.
     unsigned NumErased = Map.erase(ValType::get(Ty));
-    assert(NumErased && "Element not found!"); NumErased = NumErased;
+    assert(NumErased && "Element not found!"); (void)NumErased;
 
     // Remember the structural hash for the type before we start hacking on it,
     // in case we need it later.

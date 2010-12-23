@@ -108,7 +108,7 @@ TEST_F(ValueHandle, WeakVH_NullOnDeletion) {
 TEST_F(ValueHandle, AssertingVH_BasicOperation) {
   AssertingVH<CastInst> AVH(BitcastV.get());
   CastInst *implicit_to_exact_type = AVH;
-  implicit_to_exact_type = implicit_to_exact_type;  // Avoid warning.
+  (void)implicit_to_exact_type;  // Avoid warning.
 
   AssertingVH<Value> GenericAVH(BitcastV.get());
   EXPECT_EQ(BitcastV.get(), GenericAVH);
@@ -125,7 +125,7 @@ TEST_F(ValueHandle, AssertingVH_Const) {
   const CastInst *ConstBitcast = BitcastV.get();
   AssertingVH<const CastInst> AVH(ConstBitcast);
   const CastInst *implicit_to_exact_type = AVH;
-  implicit_to_exact_type = implicit_to_exact_type;  // Avoid warning.
+  (void)implicit_to_exact_type;  // Avoid warning.
 }
 
 TEST_F(ValueHandle, AssertingVH_Comparisons) {

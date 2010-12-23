@@ -568,7 +568,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
                                   MemoryInst, Result);
     Matcher.IgnoreProfitability = true;
     bool Success = Matcher.MatchAddr(Address, 0);
-    Success = Success; assert(Success && "Couldn't select *anything*?");
+    (void)Success; assert(Success && "Couldn't select *anything*?");
 
     // If the match didn't cover I, then it won't be shared by it.
     if (std::find(MatchedAddrModeInsts.begin(), MatchedAddrModeInsts.end(),

@@ -90,7 +90,7 @@ public:
     bool Success = 
       AddressingModeMatcher(AddrModeInsts, TLI, AccessTy,
                             MemoryInst, Result).MatchAddr(V, 0);
-    Success = Success; assert(Success && "Couldn't select *anything*?");
+    (void)Success; assert(Success && "Couldn't select *anything*?");
     return Result;
   }
 private:

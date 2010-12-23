@@ -1216,7 +1216,7 @@ llvm::ConstantFoldCall(Function *F,
           Val.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven, &lost);
 
         // Conversion is always precise.
-        status = status;
+        (void)status;
         assert(status == APFloat::opOK && !lost &&
                "Precision lost during fp16 constfolding");
 
@@ -1313,4 +1313,3 @@ llvm::ConstantFoldCall(Function *F,
   }
   return 0;
 }
-

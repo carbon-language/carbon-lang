@@ -646,7 +646,7 @@ StackSlotColoring::UnfoldAndRewriteInstruction(MachineInstr *MI, int OldFI,
   } else {
     SmallVector<MachineInstr*, 4> NewMIs;
     bool Success = TII->unfoldMemoryOperand(MF, MI, Reg, false, false, NewMIs);
-    Success = Success; // Silence compiler warning.
+    (void)Success; // Silence compiler warning.
     assert(Success && "Failed to unfold!");
     MachineInstr *NewMI = NewMIs[0];
     MBB->insert(MI, NewMI);

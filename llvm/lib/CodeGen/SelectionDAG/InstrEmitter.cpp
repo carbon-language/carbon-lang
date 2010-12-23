@@ -67,7 +67,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
     if (IsClone)
       VRBaseMap.erase(Op);
     bool isNew = VRBaseMap.insert(std::make_pair(Op, SrcReg)).second;
-    isNew = isNew; // Silence compiler warning.
+    (void)isNew; // Silence compiler warning.
     assert(isNew && "Node emitted out of order - early");
     return;
   }
@@ -150,7 +150,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
   if (IsClone)
     VRBaseMap.erase(Op);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
-  isNew = isNew; // Silence compiler warning.
+  (void)isNew; // Silence compiler warning.
   assert(isNew && "Node emitted out of order - early");
 }
 
@@ -224,7 +224,7 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     if (IsClone)
       VRBaseMap.erase(Op);
     bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
-    isNew = isNew; // Silence compiler warning.
+    (void)isNew; // Silence compiler warning.
     assert(isNew && "Node emitted out of order - early");
   }
 }
@@ -496,7 +496,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
      
   SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
-  isNew = isNew; // Silence compiler warning.
+  (void)isNew; // Silence compiler warning.
   assert(isNew && "Node emitted out of order - early");
 }
 
@@ -518,7 +518,7 @@ InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
 
   SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, NewVReg)).second;
-  isNew = isNew; // Silence compiler warning.
+  (void)isNew; // Silence compiler warning.
   assert(isNew && "Node emitted out of order - early");
 }
 
@@ -555,7 +555,7 @@ void InstrEmitter::EmitRegSequence(SDNode *Node,
   MBB->insert(InsertPos, MI);
   SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, NewVReg)).second;
-  isNew = isNew; // Silence compiler warning.
+  (void)isNew; // Silence compiler warning.
   assert(isNew && "Node emitted out of order - early");
 }
 

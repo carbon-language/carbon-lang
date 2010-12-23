@@ -100,7 +100,7 @@ static void RemoveFromReverseMap(DenseMap<Instruction*,
   InstIt = ReverseMap.find(Inst);
   assert(InstIt != ReverseMap.end() && "Reverse map out of sync?");
   bool Found = InstIt->second.erase(Val);
-  assert(Found && "Invalid reverse map!"); Found=Found;
+  assert(Found && "Invalid reverse map!"); (void)Found;
   if (InstIt->second.empty())
     ReverseMap.erase(InstIt);
 }

@@ -129,7 +129,7 @@ AllocaInst* llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
   for (unsigned i = 0, e = P->getNumIncomingValues(); i < e; ++i) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(P->getIncomingValue(i))) {
       assert(II->getParent() != P->getIncomingBlock(i) &&
-             "Invoke edge not supported yet"); II=II;
+             "Invoke edge not supported yet"); (void)II;
     }
     new StoreInst(P->getIncomingValue(i), Slot,
                   P->getIncomingBlock(i)->getTerminator());

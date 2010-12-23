@@ -186,7 +186,7 @@ void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
-  FTy = FTy;  // silence warning.
+  (void)FTy;  // silence warning.
 
   assert((NumParams == FTy->getNumParams() ||
           (FTy->isVarArg() && NumParams > FTy->getNumParams())) &&
@@ -207,7 +207,7 @@ void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
-  FTy = FTy;  // silence warning.
+  (void)FTy;  // silence warning.
 
   assert((FTy->getNumParams() == 2 ||
           (FTy->isVarArg() && FTy->getNumParams() < 2)) &&
@@ -227,7 +227,7 @@ void CallInst::init(Value *Func, Value *Actual) {
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
-  FTy = FTy;  // silence warning.
+  (void)FTy;  // silence warning.
 
   assert((FTy->getNumParams() == 1 ||
           (FTy->isVarArg() && FTy->getNumParams() == 0)) &&
@@ -243,7 +243,7 @@ void CallInst::init(Value *Func) {
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
-  FTy = FTy;  // silence warning.
+  (void)FTy;  // silence warning.
 
   assert(FTy->getNumParams() == 0 && "Calling a function with bad signature");
 }
@@ -500,7 +500,7 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
   Op<-1>() = IfException;
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
-  FTy = FTy;  // silence warning.
+  (void)FTy;  // silence warning.
 
   assert(((NumArgs == FTy->getNumParams()) ||
           (FTy->isVarArg() && NumArgs > FTy->getNumParams())) &&
@@ -1579,7 +1579,7 @@ BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
 
 void BinaryOperator::init(BinaryOps iType) {
   Value *LHS = getOperand(0), *RHS = getOperand(1);
-  LHS = LHS; RHS = RHS; // Silence warnings.
+  (void)LHS; (void)RHS; // Silence warnings.
   assert(LHS->getType() == RHS->getType() &&
          "Binary operator operand types must match!");
 #ifndef NDEBUG

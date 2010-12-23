@@ -325,7 +325,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
     case ISD::SUBE: 
     case ISD::ADDE: {
       SDValue InFlag = Node->getOperand(2), CmpLHS;
-      unsigned Opc = InFlag.getOpcode(); Opc=Opc;
+      unsigned Opc = InFlag.getOpcode(); (void)Opc;
       assert(((Opc == ISD::ADDC || Opc == ISD::ADDE) || 
               (Opc == ISD::SUBC || Opc == ISD::SUBE)) &&  
              "(ADD|SUB)E flag operand must come from (ADD|SUB)C/E insn");

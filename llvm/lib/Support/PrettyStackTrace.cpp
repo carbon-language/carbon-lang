@@ -107,7 +107,7 @@ static bool RegisterCrashPrinter() {
 PrettyStackTraceEntry::PrettyStackTraceEntry() {
   // The first time this is called, we register the crash printer.
   static bool HandlerRegistered = RegisterCrashPrinter();
-  HandlerRegistered = HandlerRegistered;
+  (void)HandlerRegistered;
     
   // Link ourselves.
   NextEntry = PrettyStackTraceHead.get();
@@ -131,4 +131,3 @@ void PrettyStackTraceProgram::print(raw_ostream &OS) const {
     OS << ArgV[i] << ' ';
   OS << '\n';
 }
-
