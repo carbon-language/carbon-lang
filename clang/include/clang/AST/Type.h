@@ -2616,10 +2616,6 @@ public:
   // const, it needs to return false.
   bool hasConstFields() const { return false; }
 
-  // FIXME: RecordType needs to check when it is created that all fields are in
-  // the same address space, and return that.
-  unsigned getAddressSpace() const { return 0; }
-
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
@@ -3703,8 +3699,6 @@ inline unsigned QualType::getAddressSpace() const {
 
   if (const ArrayType *AT = dyn_cast<ArrayType>(CT))
     return AT->getElementType().getAddressSpace();
-  if (const RecordType *RT = dyn_cast<RecordType>(CT))
-    return RT->getAddressSpace();
   return 0;
 }
 

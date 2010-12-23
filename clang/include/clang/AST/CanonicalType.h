@@ -639,7 +639,6 @@ struct CanProxyAdaptor<RecordType> : public CanProxyBase<RecordType> {
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(RecordDecl *, getDecl)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isBeingDefined)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, hasConstFields)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getAddressSpace)
 };
 
 template<>
