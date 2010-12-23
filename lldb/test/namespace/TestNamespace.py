@@ -11,16 +11,16 @@ class NamespaceTestCase(TestBase):
 
     mydir = "namespace"
 
+    # rdar://problem/8668674
+    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""
         self.buildDsym()
         self.namespace_variable_commands()
 
-    # rdar://problem/8659840
-    # runCmd: frame variable -c -G i
-    # runCmd failed!
-    # error: can't find global variable 'i'
+    # rdar://problem/8668674
+    @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""
         self.buildDwarf()
@@ -81,24 +81,29 @@ class NamespaceTestCase(TestBase):
         self.runCmd("frame variable &i")
 
         # 'frame variable' with fully qualified name 'A::B::j' should work.
-        self.expect("frame variable 'A::B::j", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable A::B::j", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) A::B::j = 4')
 
         # So should the anonymous namespace case.
-        self.expect("frame variable '(anonymous namespace)::i", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable '(anonymous namespace)::i'", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) (anonymous namespace)::i = 3')
 
         # rdar://problem/8660275
         # test/namespace: 'expression -- i+j' not working
+        # This has been fixed.
         self.expect("expression -- i + j",
             startstr = "(int) $0 = 7")
         # (int) $0 = 7
 
+        self.runCmd("expression -- i")
+        self.runCmd("expression -- j")
+
         # rdar://problem/8668674
         # expression command with fully qualified namespace for a variable does not work
-        #self.runCmd("expression -- '(anonymous namespace)::i'")
-        #
-        #self.runCmd("expression -- 'A::B::j'")
+        self.expect("expression -- '(anonymous namespace)::i'", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = [" = 3"])
+        self.expect("expression -- 'A::B::j'", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = [" = 4"])
 
 
 if __name__ == '__main__':
