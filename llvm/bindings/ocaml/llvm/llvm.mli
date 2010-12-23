@@ -212,19 +212,19 @@ exception IoError of string
 
 (** [create_context ()] creates a context for storing the "global" state in
     LLVM. See the constructor [llvm::LLVMContext]. *)
-external create_context : unit -> llcontext = "llvm_create_context"
+val create_context : unit -> llcontext
 
 (** [destroy_context ()] destroys a context. See the destructor
     [llvm::LLVMContext::~LLVMContext]. *)
-external dispose_context : llcontext -> unit = "llvm_dispose_context"
+val dispose_context : llcontext -> unit
 
 (** See the function [llvm::getGlobalContext]. *)
-external global_context : unit -> llcontext = "llvm_global_context"
+val global_context : unit -> llcontext
 
 (** [mdkind_id context name] returns the MDKind ID that corresponds to the
     name [name] in the context [context].  See the function
     [llvm::LLVMContext::getMDKindID]. *)
-external mdkind_id : llcontext -> string -> int = "llvm_mdkind_id"
+val mdkind_id : llcontext -> string -> int
 
 
 (** {6 Modules} *)
@@ -233,71 +233,71 @@ external mdkind_id : llcontext -> string -> int = "llvm_mdkind_id"
     the context [context].  Modules are not garbage collected; it is mandatory
     to call {!dispose_module} to free memory. See the constructor
     [llvm::Module::Module]. *)
-external create_module : llcontext -> string -> llmodule = "llvm_create_module"
+val create_module : llcontext -> string -> llmodule
 
 (** [dispose_module m] destroys a module [m] and all of the IR objects it
     contained. All references to subordinate objects are invalidated;
     referencing them will invoke undefined behavior. See the destructor
     [llvm::Module::~Module]. *)
-external dispose_module : llmodule -> unit = "llvm_dispose_module"
+val dispose_module : llmodule -> unit
 
 (** [target_triple m] is the target specifier for the module [m], something like
     [i686-apple-darwin8]. See the method [llvm::Module::getTargetTriple]. *)
-external target_triple: llmodule -> string
-                      = "llvm_target_triple"
+val target_triple: llmodule -> string
+
 
 (** [target_triple triple m] changes the target specifier for the module [m] to
     the string [triple]. See the method [llvm::Module::setTargetTriple]. *)
-external set_target_triple: string -> llmodule -> unit
-                          = "llvm_set_target_triple"
+val set_target_triple: string -> llmodule -> unit
+
 
 (** [data_layout m] is the data layout specifier for the module [m], something
     like [e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-...-a0:0:64-f80:128:128]. See the
     method [llvm::Module::getDataLayout]. *)
-external data_layout: llmodule -> string
-                    = "llvm_data_layout"
+val data_layout: llmodule -> string
+
 
 (** [set_data_layout s m] changes the data layout specifier for the module [m]
     to the string [s]. See the method [llvm::Module::setDataLayout]. *)
-external set_data_layout: string -> llmodule -> unit
-                        = "llvm_set_data_layout"
+val set_data_layout: string -> llmodule -> unit
+
 
 (** [define_type_name name ty m] adds a named type to the module's symbol table.
     Returns [true] if successful. If such a name already exists, then no entry
     is added and [false] is returned. See the [llvm::Module::addTypeName]
     method. *)
-external define_type_name : string -> lltype -> llmodule -> bool
-                          = "llvm_add_type_name"
+val define_type_name : string -> lltype -> llmodule -> bool
+
 
 (** [delete_type_name name] removes a type name from the module's symbol
     table. *)
-external delete_type_name : string -> llmodule -> unit
-                          = "llvm_delete_type_name"
+val delete_type_name : string -> llmodule -> unit
+
 
 (** [type_by_name m n] returns the type in the module [m] named [n], or [None]
     if it does not exist. See the method [llvm::Module::getTypeByName]. *)
-external type_by_name : llmodule -> string -> lltype option
-                      = "llvm_type_by_name"
+val type_by_name : llmodule -> string -> lltype option
+
 
 (** [dump_module m] prints the .ll representation of the module [m] to standard
     error. See the method [llvm::Module::dump]. *)
-external dump_module : llmodule -> unit = "llvm_dump_module"
+val dump_module : llmodule -> unit
 
 (** [set_module_inline_asm m asm] sets the inline assembler for the module. See
     the method [llvm::Module::setModuleInlineAsm]. *)
-external set_module_inline_asm : llmodule -> string -> unit
-                               = "llvm_set_module_inline_asm"
+val set_module_inline_asm : llmodule -> string -> unit
+
 
 
 (** {6 Types} *)
 
 (** [classify_type ty] returns the {!TypeKind.t} corresponding to the type [ty].
     See the method [llvm::Type::getTypeID]. *)
-external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
+val classify_type : lltype -> TypeKind.t
 
 (** [type_context ty] returns the {!llcontext} corresponding to the type [ty].
     See the method [llvm::Type::getContext]. *)
-external type_context : lltype -> llcontext = "llvm_type_context"
+val type_context : lltype -> llcontext
 
 (** [string_of_lltype ty] returns a string describing the type [ty]. *)
 val string_of_lltype : lltype -> string
@@ -306,54 +306,54 @@ val string_of_lltype : lltype -> string
 
 (** [i1_type c] returns an integer type of bitwidth 1 in the context [c]. See
     [llvm::Type::Int1Ty]. *)
-external i1_type : llcontext -> lltype = "llvm_i1_type"
+val i1_type : llcontext -> lltype
 
 (** [i8_type c] returns an integer type of bitwidth 8 in the context [c]. See
     [llvm::Type::Int8Ty]. *)
-external i8_type : llcontext -> lltype = "llvm_i8_type"
+val i8_type : llcontext -> lltype
 
 (** [i16_type c] returns an integer type of bitwidth 16 in the context [c]. See
     [llvm::Type::Int16Ty]. *)
-external i16_type : llcontext -> lltype = "llvm_i16_type"
+val i16_type : llcontext -> lltype
 
 (** [i32_type c] returns an integer type of bitwidth 32 in the context [c]. See
     [llvm::Type::Int32Ty]. *)
-external i32_type : llcontext -> lltype = "llvm_i32_type"
+val i32_type : llcontext -> lltype
 
 (** [i64_type c] returns an integer type of bitwidth 64 in the context [c]. See
     [llvm::Type::Int64Ty]. *)
-external i64_type : llcontext -> lltype = "llvm_i64_type"
+val i64_type : llcontext -> lltype
 
 (** [integer_type c n] returns an integer type of bitwidth [n] in the context
     [c]. See the method [llvm::IntegerType::get]. *)
-external integer_type : llcontext -> int -> lltype = "llvm_integer_type"
+val integer_type : llcontext -> int -> lltype
 
 (** [integer_bitwidth c ty] returns the number of bits in the integer type [ty]
     in the context [c].  See the method [llvm::IntegerType::getBitWidth]. *)
-external integer_bitwidth : lltype -> int = "llvm_integer_bitwidth"
+val integer_bitwidth : lltype -> int
 
 
 (** {7 Operations on real types} *)
 
 (** [float_type c] returns the IEEE 32-bit floating point type in the context
     [c]. See [llvm::Type::FloatTy]. *)
-external float_type : llcontext -> lltype = "llvm_float_type"
+val float_type : llcontext -> lltype
 
 (** [double_type c] returns the IEEE 64-bit floating point type in the context
     [c]. See [llvm::Type::DoubleTy]. *)
-external double_type : llcontext -> lltype = "llvm_double_type"
+val double_type : llcontext -> lltype
 
 (** [x86fp80_type c] returns the x87 80-bit floating point type in the context
     [c]. See [llvm::Type::X86_FP80Ty]. *)
-external x86fp80_type : llcontext -> lltype = "llvm_x86fp80_type"
+val x86fp80_type : llcontext -> lltype
 
 (** [fp128_type c] returns the IEEE 128-bit floating point type in the context
     [c]. See [llvm::Type::FP128Ty]. *)
-external fp128_type : llcontext -> lltype = "llvm_fp128_type"
+val fp128_type : llcontext -> lltype
 
 (** [ppc_fp128_type c] returns the PowerPC 128-bit floating point type in the
     context [c]. See [llvm::Type::PPC_FP128Ty]. *)
-external ppc_fp128_type : llcontext -> lltype = "llvm_ppc_fp128_type"
+val ppc_fp128_type : llcontext -> lltype
 
 
 (** {7 Operations on function types} *)
@@ -361,26 +361,26 @@ external ppc_fp128_type : llcontext -> lltype = "llvm_ppc_fp128_type"
 (** [function_type ret_ty param_tys] returns the function type returning
     [ret_ty] and taking [param_tys] as parameters.
     See the method [llvm::FunctionType::get]. *)
-external function_type : lltype -> lltype array -> lltype = "llvm_function_type"
+val function_type : lltype -> lltype array -> lltype
 
 (** [va_arg_function_type ret_ty param_tys] is just like
     [function_type ret_ty param_tys] except that it returns the function type
     which also takes a variable number of arguments.
     See the method [llvm::FunctionType::get]. *)
-external var_arg_function_type : lltype -> lltype array -> lltype
-                               = "llvm_var_arg_function_type"
+val var_arg_function_type : lltype -> lltype array -> lltype
+
 
 (** [is_var_arg fty] returns [true] if [fty] is a varargs function type, [false]
     otherwise. See the method [llvm::FunctionType::isVarArg]. *)
-external is_var_arg : lltype -> bool = "llvm_is_var_arg"
+val is_var_arg : lltype -> bool
 
 (** [return_type fty] gets the return type of the function type [fty].
     See the method [llvm::FunctionType::getReturnType]. *)
-external return_type : lltype -> lltype = "LLVMGetReturnType"
+val return_type : lltype -> lltype
 
 (** [param_types fty] gets the parameter types of the function type [fty].
     See the method [llvm::FunctionType::getParamType]. *)
-external param_types : lltype -> lltype array = "llvm_param_types"
+val param_types : lltype -> lltype array
 
 
 (** {7 Operations on struct types} *)
@@ -388,61 +388,61 @@ external param_types : lltype -> lltype array = "llvm_param_types"
 (** [struct_type context tys] returns the structure type in the context
     [context] containing in the types in the array [tys]. See the method
     [llvm::StructType::get]. *)
-external struct_type : llcontext -> lltype array -> lltype
-                     = "llvm_struct_type"
+val struct_type : llcontext -> lltype array -> lltype
+
 
 (** [packed_struct_type context ys] returns the packed structure type in the
     context [context] containing in the types in the array [tys]. See the method
     [llvm::StructType::get]. *)
-external packed_struct_type : llcontext -> lltype array -> lltype
-                            = "llvm_packed_struct_type"
+val packed_struct_type : llcontext -> lltype array -> lltype
+
 
 (** [struct_element_types sty] returns the constituent types of the struct type
     [sty]. See the method [llvm::StructType::getElementType]. *)
-external struct_element_types : lltype -> lltype array
-                              = "llvm_struct_element_types"
+val struct_element_types : lltype -> lltype array
+
 
 (** [is_packed sty] returns [true] if the structure type [sty] is packed,
     [false] otherwise. See the method [llvm::StructType::isPacked]. *)
-external is_packed : lltype -> bool = "llvm_is_packed"
+val is_packed : lltype -> bool
 
 
 (** {7 Operations on pointer, vector, and array types} *)
 
 (** [array_type ty n] returns the array type containing [n] elements of type
     [ty]. See the method [llvm::ArrayType::get]. *)
-external array_type : lltype -> int -> lltype = "llvm_array_type"
+val array_type : lltype -> int -> lltype
 
 (** [pointer_type ty] returns the pointer type referencing objects of type
     [ty] in the default address space (0).
     See the method [llvm::PointerType::getUnqual]. *)
-external pointer_type : lltype -> lltype = "llvm_pointer_type"
+val pointer_type : lltype -> lltype
 
 (** [qualified_pointer_type ty as] returns the pointer type referencing objects
     of type [ty] in address space [as].
     See the method [llvm::PointerType::get]. *)
-external qualified_pointer_type : lltype -> int -> lltype
-                                = "llvm_qualified_pointer_type"
+val qualified_pointer_type : lltype -> int -> lltype
+
 
 (** [vector_type ty n] returns the array type containing [n] elements of the
     primitive type [ty]. See the method [llvm::ArrayType::get]. *)
-external vector_type : lltype -> int -> lltype = "llvm_vector_type"
+val vector_type : lltype -> int -> lltype
 
 (** [element_type ty] returns the element type of the pointer, vector, or array
     type [ty]. See the method [llvm::SequentialType::get]. *)
-external element_type : lltype -> lltype = "LLVMGetElementType"
+val element_type : lltype -> lltype
 
 (** [element_type aty] returns the element count of the array type [aty].
     See the method [llvm::ArrayType::getNumElements]. *)
-external array_length : lltype -> int = "llvm_array_length"
+val array_length : lltype -> int
 
 (** [address_space pty] returns the address space qualifier of the pointer type
     [pty]. See the method [llvm::PointerType::getAddressSpace]. *)
-external address_space : lltype -> int = "llvm_address_space"
+val address_space : lltype -> int
 
 (** [element_type ty] returns the element count of the vector type [ty].
     See the method [llvm::VectorType::getNumElements]. *)
-external vector_size : lltype -> int = "llvm_vector_size"
+val vector_size : lltype -> int
 
 
 (** {7 Operations on other types} *)
@@ -450,15 +450,15 @@ external vector_size : lltype -> int = "llvm_vector_size"
 (** [opaque_type c] creates a new opaque type distinct from any other in the
     context [c]. Opaque types are useful for building recursive types in
     combination with {!refine_type}. See [llvm::OpaqueType::get]. *)
-external opaque_type : llcontext -> lltype = "llvm_opaque_type"
+val opaque_type : llcontext -> lltype
 
 (** [void_type c] creates a type of a function which does not return any
     value in the context [c]. See [llvm::Type::VoidTy]. *)
-external void_type : llcontext -> lltype = "llvm_void_type"
+val void_type : llcontext -> lltype
 
 (** [label_type c] creates a type of a basic block in the context [c]. See
     [llvm::Type::LabelTy]. *)
-external label_type : llcontext -> lltype = "llvm_label_type"
+val label_type : llcontext -> lltype
 
 (** {7 Operations on type handles} *)
 
@@ -466,43 +466,43 @@ external label_type : llcontext -> lltype = "llvm_label_type"
     refined as a result of a call to {!refine_type}, the handle will be updated;
     any bare [lltype] references will become invalid.
     See the class [llvm::PATypeHolder]. *)
-external handle_to_type : lltype -> lltypehandle = "llvm_handle_to_type"
+val handle_to_type : lltype -> lltypehandle
 
 (** [type_of_handle tyh] resolves the type handle [tyh].
     See the method [llvm::PATypeHolder::get()]. *)
-external type_of_handle : lltypehandle -> lltype = "llvm_type_of_handle"
+val type_of_handle : lltypehandle -> lltype
 
 (** [refine_type opaque_ty ty] replaces the abstract type [opaque_ty] with the
     concrete type [ty] in all users. Warning: This may invalidate {!lltype}
     values! Use {!lltypehandle} to manipulate potentially abstract types. See
     the method [llvm::Type::refineAbstractType]. *)
-external refine_type : lltype -> lltype -> unit = "llvm_refine_type"
+val refine_type : lltype -> lltype -> unit
 
 
 (* {6 Values} *)
 
 (** [type_of v] returns the type of the value [v].
     See the method [llvm::Value::getType]. *)
-external type_of : llvalue -> lltype = "llvm_type_of"
+val type_of : llvalue -> lltype
 
 (** [value_name v] returns the name of the value [v]. For global values, this is
     the symbol name. For instructions and basic blocks, it is the SSA register
     name. It is meaningless for constants.
     See the method [llvm::Value::getName]. *)
-external value_name : llvalue -> string = "llvm_value_name"
+val value_name : llvalue -> string
 
 (** [set_value_name n v] sets the name of the value [v] to [n]. See the method
     [llvm::Value::setName]. *)
-external set_value_name : string -> llvalue -> unit = "llvm_set_value_name"
+val set_value_name : string -> llvalue -> unit
 
 (** [dump_value v] prints the .ll representation of the value [v] to standard
     error. See the method [llvm::Value::dump]. *)
-external dump_value : llvalue -> unit = "llvm_dump_value"
+val dump_value : llvalue -> unit
 
 (** [replace_all_uses_with old new] replaces all uses of the value [old]
  * with the value [new]. See the method [llvm::Value::replaceAllUsesWith]. *)
-external replace_all_uses_with : llvalue -> llvalue -> unit
-                               = "LLVMReplaceAllUsesWith"
+val replace_all_uses_with : llvalue -> llvalue -> unit
+
 
 
 (* {6 Uses} *)
@@ -510,19 +510,19 @@ external replace_all_uses_with : llvalue -> llvalue -> unit
 (** [use_begin v] returns the first position in the use list for the value [v].
     [use_begin] and [use_succ] can e used to iterate over the use list in order.
     See the method [llvm::Value::use_begin]. *)
-external use_begin : llvalue -> lluse option = "llvm_use_begin"
+val use_begin : llvalue -> lluse option
 
 (** [use_succ u] returns the use list position succeeding [u].
     See the method [llvm::use_value_iterator::operator++]. *)
-external use_succ : lluse -> lluse option = "llvm_use_succ"
+val use_succ : lluse -> lluse option
 
 (** [user u] returns the user of the use [u].
     See the method [llvm::Use::getUser]. *)
-external user : lluse -> llvalue = "llvm_user"
+val user : lluse -> llvalue
 
 (** [used_value u] returns the usee of the use [u].
     See the method [llvm::Use::getUsedValue]. *)
-external used_value : lluse -> llvalue = "llvm_used_value"
+val used_value : lluse -> llvalue
 
 (** [iter_uses f v] applies function [f] to each of the users of the value [v]
     in order. Tail recursive. *)
@@ -541,46 +541,46 @@ val fold_right_uses : (lluse -> 'a -> 'a) -> llvalue -> 'a -> 'a
 
 (** [operand v i] returns the operand at index [i] for the value [v]. See the
     method [llvm::User::getOperand]. *)
-external operand : llvalue -> int -> llvalue = "llvm_operand"
+val operand : llvalue -> int -> llvalue
 
 (** [set_operand v i o] sets the operand of the value [v] at the index [i] to
     the value [o].
     See the method [llvm::User::setOperand]. *)
-external set_operand : llvalue -> int -> llvalue -> unit = "llvm_set_operand"
+val set_operand : llvalue -> int -> llvalue -> unit
 
 (** [num_operands v] returns the number of operands for the value [v].
     See the method [llvm::User::getNumOperands]. *)
-external num_operands : llvalue -> int = "llvm_num_operands"
+val num_operands : llvalue -> int
 
 (** {7 Operations on constants of (mostly) any type} *)
 
 (** [is_constant v] returns [true] if the value [v] is a constant, [false]
     otherwise. Similar to [llvm::isa<Constant>]. *)
-external is_constant : llvalue -> bool = "llvm_is_constant"
+val is_constant : llvalue -> bool
 
 (** [const_null ty] returns the constant null (zero) of the type [ty].
     See the method [llvm::Constant::getNullValue]. *)
-external const_null : lltype -> llvalue = "LLVMConstNull"
+val const_null : lltype -> llvalue
 
 (** [const_all_ones ty] returns the constant '-1' of the integer or vector type
     [ty]. See the method [llvm::Constant::getAllOnesValue]. *)
-external const_all_ones : (*int|vec*)lltype -> llvalue = "LLVMConstAllOnes"
+val const_all_ones : (*int|vec*)lltype -> llvalue
 
 (** [const_pointer_null ty] returns the constant null (zero) pointer of the type
     [ty]. See the method [llvm::ConstantPointerNull::get]. *)
-external const_pointer_null : lltype -> llvalue = "LLVMConstPointerNull"
+val const_pointer_null : lltype -> llvalue
 
 (** [undef ty] returns the undefined value of the type [ty].
     See the method [llvm::UndefValue::get]. *)
-external undef : lltype -> llvalue = "LLVMGetUndef"
+val undef : lltype -> llvalue
 
 (** [is_null v] returns [true] if the value [v] is the null (zero) value.
     See the method [llvm::Constant::isNullValue]. *)
-external is_null : llvalue -> bool = "llvm_is_null"
+val is_null : llvalue -> bool
 
 (** [is_undef v] returns [true] if the value [v] is an undefined value, [false]
     otherwise. Similar to [llvm::isa<UndefValue>]. *)
-external is_undef : llvalue -> bool = "llvm_is_undef"
+val is_undef : llvalue -> bool
 
 
 (** {7 Operations on instructions} *)
@@ -588,58 +588,58 @@ external is_undef : llvalue -> bool = "llvm_is_undef"
 (** [has_metadata i] returns whether or not the instruction [i] has any
     metadata attached to it. See the function
     [llvm::Instruction::hasMetadata]. *)
-external has_metadata : llvalue -> bool = "llvm_has_metadata"
+val has_metadata : llvalue -> bool
 
 (** [metadata i kind] optionally returns the metadata associated with the
     kind [kind] in the instruction [i] See the function
     [llvm::Instruction::getMetadata]. *)
-external metadata : llvalue -> int -> llvalue option = "llvm_metadata"
+val metadata : llvalue -> int -> llvalue option
 
 (** [set_metadata i kind md] sets the metadata [md] of kind [kind] in the
     instruction [i]. See the function [llvm::Instruction::setMetadata]. *)
-external set_metadata : llvalue -> int -> llvalue -> unit = "llvm_set_metadata"
+val set_metadata : llvalue -> int -> llvalue -> unit
 
 (** [clear_metadata i kind] clears the metadata of kind [kind] in the
     instruction [i]. See the function [llvm::Instruction::setMetadata]. *)
-external clear_metadata : llvalue -> int -> unit = "llvm_clear_metadata"
+val clear_metadata : llvalue -> int -> unit
 
 
 (** {7 Operations on metadata} *)
 
 (** [mdstring c s] returns the MDString of the string [s] in the context [c].
     See the method [llvm::MDNode::get]. *)
-external mdstring : llcontext -> string -> llvalue = "llvm_mdstring"
+val mdstring : llcontext -> string -> llvalue
 
 (** [mdnode c elts] returns the MDNode containing the values [elts] in the
     context [c].
     See the method [llvm::MDNode::get]. *)
-external mdnode : llcontext -> llvalue array -> llvalue = "llvm_mdnode"
+val mdnode : llcontext -> llvalue array -> llvalue
 
 
 (** {7 Operations on scalar constants} *)
 
 (** [const_int ty i] returns the integer constant of type [ty] and value [i].
     See the method [llvm::ConstantInt::get]. *)
-external const_int : lltype -> int -> llvalue = "llvm_const_int"
+val const_int : lltype -> int -> llvalue
 
 (** [const_of_int64 ty i] returns the integer constant of type [ty] and value
     [i]. See the method [llvm::ConstantInt::get]. *)
-external const_of_int64 : lltype -> Int64.t -> bool -> llvalue
-                        = "llvm_const_of_int64"
+val const_of_int64 : lltype -> Int64.t -> bool -> llvalue
+
 
 (** [const_int_of_string ty s r] returns the integer constant of type [ty] and
  * value [s], with the radix [r]. See the method [llvm::ConstantInt::get]. *)
-external const_int_of_string : lltype -> string -> int -> llvalue
-                   = "llvm_const_int_of_string"
+val const_int_of_string : lltype -> string -> int -> llvalue
+
 
 (** [const_float ty n] returns the floating point constant of type [ty] and
     value [n]. See the method [llvm::ConstantFP::get]. *)
-external const_float : lltype -> float -> llvalue = "llvm_const_float"
+val const_float : lltype -> float -> llvalue
 
 (** [const_float_of_string ty s] returns the floating point constant of type
     [ty] and value [n]. See the method [llvm::ConstantFP::get]. *)
-external const_float_of_string : lltype -> string -> llvalue
-                               = "llvm_const_float_of_string"
+val const_float_of_string : lltype -> string -> llvalue
+
 
 
 (** {7 Operations on composite constants} *)
@@ -649,39 +649,39 @@ external const_float_of_string : lltype -> string -> llvalue
     null-terminated (but see {!const_stringz}). This value can in turn be used
     as the initializer for a global variable. See the method
     [llvm::ConstantArray::get]. *)
-external const_string : llcontext -> string -> llvalue = "llvm_const_string"
+val const_string : llcontext -> string -> llvalue
 
 (** [const_stringz c s] returns the constant [i8] array with the values of the
     characters in the string [s] and a null terminator in the context [c]. This
     value can in turn be used as the initializer for a global variable.
     See the method [llvm::ConstantArray::get]. *)
-external const_stringz : llcontext -> string -> llvalue = "llvm_const_stringz"
+val const_stringz : llcontext -> string -> llvalue
 
 (** [const_array ty elts] returns the constant array of type
     [array_type ty (Array.length elts)] and containing the values [elts].
     This value can in turn be used as the initializer for a global variable.
     See the method [llvm::ConstantArray::get]. *)
-external const_array : lltype -> llvalue array -> llvalue = "llvm_const_array"
+val const_array : lltype -> llvalue array -> llvalue
 
 (** [const_struct context elts] returns the structured constant of type
     [struct_type (Array.map type_of elts)] and containing the values [elts]
     in the context [context]. This value can in turn be used as the initializer
     for a global variable. See the method [llvm::ConstantStruct::get]. *)
-external const_struct : llcontext -> llvalue array -> llvalue
-                      = "llvm_const_struct"
+val const_struct : llcontext -> llvalue array -> llvalue
+
 
 (** [const_packed_struct context elts] returns the structured constant of
     type {!packed_struct_type} [(Array.map type_of elts)] and containing the
     values [elts] in the context [context]. This value can in turn be used as
     the initializer for a global variable. See the method
     [llvm::ConstantStruct::get]. *)
-external const_packed_struct : llcontext -> llvalue array -> llvalue
-                             = "llvm_const_packed_struct"
+val const_packed_struct : llcontext -> llvalue array -> llvalue
+
 
 (** [const_vector elts] returns the vector constant of type
     [vector_type (type_of elts.(0)) (Array.length elts)] and containing the
     values [elts]. See the method [llvm::ConstantVector::get]. *)
-external const_vector : llvalue array -> llvalue = "llvm_const_vector"
+val const_vector : llvalue array -> llvalue
 
 
 (** {7 Constant expressions} *)
@@ -690,286 +690,286 @@ external const_vector : llvalue array -> llvalue = "llvm_const_vector"
     equivalent to [const_ptrtoint (const_gep (const_null (pointer_type {i8,ty}))
     (const_int i32_type 0) (const_int i32_type 1)) i32_type], but considerably
     more readable.  See the method [llvm::ConstantExpr::getAlignOf]. *)
-external align_of : lltype -> llvalue = "LLVMAlignOf"
+val align_of : lltype -> llvalue
 
 (** [size_of ty] returns the sizeof constant for the type [ty]. This is
     equivalent to [const_ptrtoint (const_gep (const_null (pointer_type ty))
     (const_int i32_type 1)) i64_type], but considerably more readable.
     See the method [llvm::ConstantExpr::getSizeOf]. *)
-external size_of : lltype -> llvalue = "LLVMSizeOf"
+val size_of : lltype -> llvalue
 
 (** [const_neg c] returns the arithmetic negation of the constant [c].
     See the method [llvm::ConstantExpr::getNeg]. *)
-external const_neg : llvalue -> llvalue = "LLVMConstNeg"
+val const_neg : llvalue -> llvalue
 
 (** [const_nsw_neg c] returns the arithmetic negation of the constant [c] with
     no signed wrapping. The result is undefined if the negation overflows.
     See the method [llvm::ConstantExpr::getNSWNeg]. *)
-external const_nsw_neg : llvalue -> llvalue = "LLVMConstNSWNeg"
+val const_nsw_neg : llvalue -> llvalue
 
 (** [const_nuw_neg c] returns the arithmetic negation of the constant [c] with
     no unsigned wrapping. The result is undefined if the negation overflows.
     See the method [llvm::ConstantExpr::getNUWNeg]. *)
-external const_nuw_neg : llvalue -> llvalue = "LLVMConstNUWNeg"
+val const_nuw_neg : llvalue -> llvalue
 
 (** [const_fneg c] returns the arithmetic negation of the constant float [c].
     See the method [llvm::ConstantExpr::getFNeg]. *)
-external const_fneg : llvalue -> llvalue = "LLVMConstFNeg"
+val const_fneg : llvalue -> llvalue
 
 (** [const_not c] returns the bitwise inverse of the constant [c].
     See the method [llvm::ConstantExpr::getNot]. *)
-external const_not : llvalue -> llvalue = "LLVMConstNot"
+val const_not : llvalue -> llvalue
 
 (** [const_add c1 c2] returns the constant sum of two constants.
     See the method [llvm::ConstantExpr::getAdd]. *)
-external const_add : llvalue -> llvalue -> llvalue = "LLVMConstAdd"
+val const_add : llvalue -> llvalue -> llvalue
 
 (** [const_nsw_add c1 c2] returns the constant sum of two constants with no
     signed wrapping. The result is undefined if the sum overflows.
     See the method [llvm::ConstantExpr::getNSWAdd]. *)
-external const_nsw_add : llvalue -> llvalue -> llvalue = "LLVMConstNSWAdd"
+val const_nsw_add : llvalue -> llvalue -> llvalue
 
 (** [const_nuw_add c1 c2] returns the constant sum of two constants with no
     unsigned wrapping. The result is undefined if the sum overflows.
     See the method [llvm::ConstantExpr::getNSWAdd]. *)
-external const_nuw_add : llvalue -> llvalue -> llvalue = "LLVMConstNUWAdd"
+val const_nuw_add : llvalue -> llvalue -> llvalue
 
 (** [const_fadd c1 c2] returns the constant sum of two constant floats.
     See the method [llvm::ConstantExpr::getFAdd]. *)
-external const_fadd : llvalue -> llvalue -> llvalue = "LLVMConstFAdd"
+val const_fadd : llvalue -> llvalue -> llvalue
 
 (** [const_sub c1 c2] returns the constant difference, [c1 - c2], of two
     constants. See the method [llvm::ConstantExpr::getSub]. *)
-external const_sub : llvalue -> llvalue -> llvalue = "LLVMConstSub"
+val const_sub : llvalue -> llvalue -> llvalue
 
 (** [const_nsw_sub c1 c2] returns the constant difference of two constants with
     no signed wrapping. The result is undefined if the sum overflows.
     See the method [llvm::ConstantExpr::getNSWSub]. *)
-external const_nsw_sub : llvalue -> llvalue -> llvalue = "LLVMConstNSWSub"
+val const_nsw_sub : llvalue -> llvalue -> llvalue
 
 (** [const_nuw_sub c1 c2] returns the constant difference of two constants with
     no unsigned wrapping. The result is undefined if the sum overflows.
     See the method [llvm::ConstantExpr::getNSWSub]. *)
-external const_nuw_sub : llvalue -> llvalue -> llvalue = "LLVMConstNUWSub"
+val const_nuw_sub : llvalue -> llvalue -> llvalue
 
 (** [const_fsub c1 c2] returns the constant difference, [c1 - c2], of two
     constant floats. See the method [llvm::ConstantExpr::getFSub]. *)
-external const_fsub : llvalue -> llvalue -> llvalue = "LLVMConstFSub"
+val const_fsub : llvalue -> llvalue -> llvalue
 
 (** [const_mul c1 c2] returns the constant product of two constants.
     See the method [llvm::ConstantExpr::getMul]. *)
-external const_mul : llvalue -> llvalue -> llvalue = "LLVMConstMul"
+val const_mul : llvalue -> llvalue -> llvalue
 
 (** [const_nsw_mul c1 c2] returns the constant product of two constants with
     no signed wrapping. The result is undefined if the sum overflows.
     See the method [llvm::ConstantExpr::getNSWMul]. *)
-external const_nsw_mul : llvalue -> llvalue -> llvalue = "LLVMConstNSWMul"
+val const_nsw_mul : llvalue -> llvalue -> llvalue
 
 (** [const_nuw_mul c1 c2] returns the constant product of two constants with
     no unsigned wrapping. The result is undefined if the sum overflows.
     See the method [llvm::ConstantExpr::getNSWMul]. *)
-external const_nuw_mul : llvalue -> llvalue -> llvalue = "LLVMConstNUWMul"
+val const_nuw_mul : llvalue -> llvalue -> llvalue
 
 (** [const_fmul c1 c2] returns the constant product of two constants floats.
     See the method [llvm::ConstantExpr::getFMul]. *)
-external const_fmul : llvalue -> llvalue -> llvalue = "LLVMConstFMul"
+val const_fmul : llvalue -> llvalue -> llvalue
 
 (** [const_udiv c1 c2] returns the constant quotient [c1 / c2] of two unsigned
     integer constants.
     See the method [llvm::ConstantExpr::getUDiv]. *)
-external const_udiv : llvalue -> llvalue -> llvalue = "LLVMConstUDiv"
+val const_udiv : llvalue -> llvalue -> llvalue
 
 (** [const_sdiv c1 c2] returns the constant quotient [c1 / c2] of two signed
     integer constants.
     See the method [llvm::ConstantExpr::getSDiv]. *)
-external const_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstSDiv"
+val const_sdiv : llvalue -> llvalue -> llvalue
 
 (** [const_exact_sdiv c1 c2] returns the constant quotient [c1 / c2] of two
     signed integer constants. The result is undefined if the result is rounded
     or overflows. See the method [llvm::ConstantExpr::getExactSDiv]. *)
-external const_exact_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstExactSDiv"
+val const_exact_sdiv : llvalue -> llvalue -> llvalue
 
 (** [const_fdiv c1 c2] returns the constant quotient [c1 / c2] of two floating
     point constants.
     See the method [llvm::ConstantExpr::getFDiv]. *)
-external const_fdiv : llvalue -> llvalue -> llvalue = "LLVMConstFDiv"
+val const_fdiv : llvalue -> llvalue -> llvalue
 
 (** [const_urem c1 c2] returns the constant remainder [c1 MOD c2] of two
     unsigned integer constants.
     See the method [llvm::ConstantExpr::getURem]. *)
-external const_urem : llvalue -> llvalue -> llvalue = "LLVMConstURem"
+val const_urem : llvalue -> llvalue -> llvalue
 
 (** [const_srem c1 c2] returns the constant remainder [c1 MOD c2] of two
     signed integer constants.
     See the method [llvm::ConstantExpr::getSRem]. *)
-external const_srem : llvalue -> llvalue -> llvalue = "LLVMConstSRem"
+val const_srem : llvalue -> llvalue -> llvalue
 
 (** [const_frem c1 c2] returns the constant remainder [c1 MOD c2] of two
     signed floating point constants.
     See the method [llvm::ConstantExpr::getFRem]. *)
-external const_frem : llvalue -> llvalue -> llvalue = "LLVMConstFRem"
+val const_frem : llvalue -> llvalue -> llvalue
 
 (** [const_and c1 c2] returns the constant bitwise [AND] of two integer
     constants.
     See the method [llvm::ConstantExpr::getAnd]. *)
-external const_and : llvalue -> llvalue -> llvalue = "LLVMConstAnd"
+val const_and : llvalue -> llvalue -> llvalue
 
 (** [const_or c1 c2] returns the constant bitwise [OR] of two integer
     constants.
     See the method [llvm::ConstantExpr::getOr]. *)
-external const_or : llvalue -> llvalue -> llvalue = "LLVMConstOr"
+val const_or : llvalue -> llvalue -> llvalue
 
 (** [const_xor c1 c2] returns the constant bitwise [XOR] of two integer
     constants.
     See the method [llvm::ConstantExpr::getXor]. *)
-external const_xor : llvalue -> llvalue -> llvalue = "LLVMConstXor"
+val const_xor : llvalue -> llvalue -> llvalue
 
 (** [const_icmp pred c1 c2] returns the constant comparison of two integer
     constants, [c1 pred c2].
     See the method [llvm::ConstantExpr::getICmp]. *)
-external const_icmp : Icmp.t -> llvalue -> llvalue -> llvalue
-                    = "llvm_const_icmp"
+val const_icmp : Icmp.t -> llvalue -> llvalue -> llvalue
+
 
 (** [const_fcmp pred c1 c2] returns the constant comparison of two floating
     point constants, [c1 pred c2].
     See the method [llvm::ConstantExpr::getFCmp]. *)
-external const_fcmp : Fcmp.t -> llvalue -> llvalue -> llvalue
-                    = "llvm_const_fcmp"
+val const_fcmp : Fcmp.t -> llvalue -> llvalue -> llvalue
+
 
 (** [const_shl c1 c2] returns the constant integer [c1] left-shifted by the
     constant integer [c2].
     See the method [llvm::ConstantExpr::getShl]. *)
-external const_shl : llvalue -> llvalue -> llvalue = "LLVMConstShl"
+val const_shl : llvalue -> llvalue -> llvalue
 
 (** [const_lshr c1 c2] returns the constant integer [c1] right-shifted by the
     constant integer [c2] with zero extension.
     See the method [llvm::ConstantExpr::getLShr]. *)
-external const_lshr : llvalue -> llvalue -> llvalue = "LLVMConstLShr"
+val const_lshr : llvalue -> llvalue -> llvalue
 
 (** [const_ashr c1 c2] returns the constant integer [c1] right-shifted by the
     constant integer [c2] with sign extension.
     See the method [llvm::ConstantExpr::getAShr]. *)
-external const_ashr : llvalue -> llvalue -> llvalue = "LLVMConstAShr"
+val const_ashr : llvalue -> llvalue -> llvalue
 
 (** [const_gep pc indices] returns the constant [getElementPtr] of [p1] with the
     constant integers indices from the array [indices].
     See the method [llvm::ConstantExpr::getGetElementPtr]. *)
-external const_gep : llvalue -> llvalue array -> llvalue = "llvm_const_gep"
+val const_gep : llvalue -> llvalue array -> llvalue
 
 (** [const_in_bounds_gep pc indices] returns the constant [getElementPtr] of [p1]
     with the constant integers indices from the array [indices].
     See the method [llvm::ConstantExpr::getInBoundsGetElementPtr]. *)
-external const_in_bounds_gep : llvalue -> llvalue array -> llvalue
-                            = "llvm_const_in_bounds_gep"
+val const_in_bounds_gep : llvalue -> llvalue array -> llvalue
+
 
 (** [const_trunc c ty] returns the constant truncation of integer constant [c]
     to the smaller integer type [ty].
     See the method [llvm::ConstantExpr::getTrunc]. *)
-external const_trunc : llvalue -> lltype -> llvalue = "LLVMConstTrunc"
+val const_trunc : llvalue -> lltype -> llvalue
 
 (** [const_sext c ty] returns the constant sign extension of integer constant
     [c] to the larger integer type [ty].
     See the method [llvm::ConstantExpr::getSExt]. *)
-external const_sext : llvalue -> lltype -> llvalue = "LLVMConstSExt"
+val const_sext : llvalue -> lltype -> llvalue
 
 (** [const_zext c ty] returns the constant zero extension of integer constant
     [c] to the larger integer type [ty].
     See the method [llvm::ConstantExpr::getZExt]. *)
-external const_zext : llvalue -> lltype -> llvalue = "LLVMConstZExt"
+val const_zext : llvalue -> lltype -> llvalue
 
 (** [const_fptrunc c ty] returns the constant truncation of floating point
     constant [c] to the smaller floating point type [ty].
     See the method [llvm::ConstantExpr::getFPTrunc]. *)
-external const_fptrunc : llvalue -> lltype -> llvalue = "LLVMConstFPTrunc"
+val const_fptrunc : llvalue -> lltype -> llvalue
 
 (** [const_fpext c ty] returns the constant extension of floating point constant
     [c] to the larger floating point type [ty].
     See the method [llvm::ConstantExpr::getFPExt]. *)
-external const_fpext : llvalue -> lltype -> llvalue = "LLVMConstFPExt"
+val const_fpext : llvalue -> lltype -> llvalue
 
 (** [const_uitofp c ty] returns the constant floating point conversion of
     unsigned integer constant [c] to the floating point type [ty].
     See the method [llvm::ConstantExpr::getUIToFP]. *)
-external const_uitofp : llvalue -> lltype -> llvalue = "LLVMConstUIToFP"
+val const_uitofp : llvalue -> lltype -> llvalue
 
 (** [const_sitofp c ty] returns the constant floating point conversion of
     signed integer constant [c] to the floating point type [ty].
     See the method [llvm::ConstantExpr::getSIToFP]. *)
-external const_sitofp : llvalue -> lltype -> llvalue = "LLVMConstSIToFP"
+val const_sitofp : llvalue -> lltype -> llvalue
 
 (** [const_fptoui c ty] returns the constant unsigned integer conversion of
     floating point constant [c] to integer type [ty].
     See the method [llvm::ConstantExpr::getFPToUI]. *)
-external const_fptoui : llvalue -> lltype -> llvalue = "LLVMConstFPToUI"
+val const_fptoui : llvalue -> lltype -> llvalue
 
 (** [const_fptoui c ty] returns the constant unsigned integer conversion of
     floating point constant [c] to integer type [ty].
     See the method [llvm::ConstantExpr::getFPToSI]. *)
-external const_fptosi : llvalue -> lltype -> llvalue = "LLVMConstFPToSI"
+val const_fptosi : llvalue -> lltype -> llvalue
 
 (** [const_ptrtoint c ty] returns the constant integer conversion of
     pointer constant [c] to integer type [ty].
     See the method [llvm::ConstantExpr::getPtrToInt]. *)
-external const_ptrtoint : llvalue -> lltype -> llvalue = "LLVMConstPtrToInt"
+val const_ptrtoint : llvalue -> lltype -> llvalue
 
 (** [const_inttoptr c ty] returns the constant pointer conversion of
     integer constant [c] to pointer type [ty].
     See the method [llvm::ConstantExpr::getIntToPtr]. *)
-external const_inttoptr : llvalue -> lltype -> llvalue = "LLVMConstIntToPtr"
+val const_inttoptr : llvalue -> lltype -> llvalue
 
 (** [const_bitcast c ty] returns the constant bitwise conversion of constant [c]
     to type [ty] of equal size.
     See the method [llvm::ConstantExpr::getBitCast]. *)
-external const_bitcast : llvalue -> lltype -> llvalue = "LLVMConstBitCast"
+val const_bitcast : llvalue -> lltype -> llvalue
 
 (** [const_zext_or_bitcast c ty] returns a constant zext or bitwise cast
     conversion of constant [c] to type [ty].
     See the method [llvm::ConstantExpr::getZExtOrBitCast]. *)
-external const_zext_or_bitcast : llvalue -> lltype -> llvalue
-                               = "LLVMConstZExtOrBitCast"
+val const_zext_or_bitcast : llvalue -> lltype -> llvalue
+
 
 (** [const_sext_or_bitcast c ty] returns a constant sext or bitwise cast
     conversion of constant [c] to type [ty].
     See the method [llvm::ConstantExpr::getSExtOrBitCast]. *)
-external const_sext_or_bitcast : llvalue -> lltype -> llvalue
-                               = "LLVMConstSExtOrBitCast"
+val const_sext_or_bitcast : llvalue -> lltype -> llvalue
+
 
 (** [const_trunc_or_bitcast c ty] returns a constant trunc or bitwise cast
     conversion of constant [c] to type [ty].
     See the method [llvm::ConstantExpr::getTruncOrBitCast]. *)
-external const_trunc_or_bitcast : llvalue -> lltype -> llvalue
-                                = "LLVMConstTruncOrBitCast"
+val const_trunc_or_bitcast : llvalue -> lltype -> llvalue
+
 
 (** [const_pointercast c ty] returns a constant bitcast or a pointer-to-int
     cast conversion of constant [c] to type [ty] of equal size.
     See the method [llvm::ConstantExpr::getPointerCast]. *)
-external const_pointercast : llvalue -> lltype -> llvalue
-                           = "LLVMConstPointerCast"
+val const_pointercast : llvalue -> lltype -> llvalue
+
 
 (** [const_intcast c ty] returns a constant zext, bitcast, or trunc for integer
     -> integer casts of constant [c] to type [ty].
     See the method [llvm::ConstantExpr::getIntCast]. *)
-external const_intcast : llvalue -> lltype -> llvalue
-                       = "LLVMConstIntCast"
+val const_intcast : llvalue -> lltype -> llvalue
+
 
 (** [const_fpcast c ty] returns a constant fpext, bitcast, or fptrunc for fp ->
     fp casts of constant [c] to type [ty].
     See the method [llvm::ConstantExpr::getFPCast]. *)
-external const_fpcast : llvalue -> lltype -> llvalue
-                      = "LLVMConstFPCast"
+val const_fpcast : llvalue -> lltype -> llvalue
+
 
 (** [const_select cond t f] returns the constant conditional which returns value
     [t] if the boolean constant [cond] is true and the value [f] otherwise.
     See the method [llvm::ConstantExpr::getSelect]. *)
-external const_select : llvalue -> llvalue -> llvalue -> llvalue
-                      = "LLVMConstSelect"
+val const_select : llvalue -> llvalue -> llvalue -> llvalue
+
 
 (** [const_extractelement vec i] returns the constant [i]th element of
     constant vector [vec]. [i] must be a constant [i32] value unsigned less than
     the size of the vector.
     See the method [llvm::ConstantExpr::getExtractElement]. *)
-external const_extractelement : llvalue -> llvalue -> llvalue
-                              = "LLVMConstExtractElement"
+val const_extractelement : llvalue -> llvalue -> llvalue
+
 
 (** [const_insertelement vec v i] returns the constant vector with the same
     elements as constant vector [v] but the [i]th element replaced by the
@@ -977,82 +977,82 @@ external const_extractelement : llvalue -> llvalue -> llvalue
     elements. [i] must be a constant [i32] value unsigned less than the size
     of the vector.
     See the method [llvm::ConstantExpr::getInsertElement]. *)
-external const_insertelement : llvalue -> llvalue -> llvalue -> llvalue
-                             = "LLVMConstInsertElement"
+val const_insertelement : llvalue -> llvalue -> llvalue -> llvalue
+
 
 (** [const_shufflevector a b mask] returns a constant [shufflevector].
     See the LLVM Language Reference for details on the [shufflevector]
     instruction.
     See the method [llvm::ConstantExpr::getShuffleVector]. *)
-external const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
-                             = "LLVMConstShuffleVector"
+val const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
+
 
 (** [const_extractvalue agg idxs] returns the constant [idxs]th value of
     constant aggregate [agg]. Each [idxs] must be less than the size of the
     aggregate.  See the method [llvm::ConstantExpr::getExtractValue]. *)
-external const_extractvalue : llvalue -> int array -> llvalue
-                            = "llvm_const_extractvalue"
+val const_extractvalue : llvalue -> int array -> llvalue
+
 
 (** [const_insertvalue agg val idxs] inserts the value [val] in the specified
     indexs [idxs] in the aggegate [agg]. Each [idxs] must be less than the size
     of the aggregate. See the method [llvm::ConstantExpr::getInsertValue]. *)
-external const_insertvalue : llvalue -> llvalue -> int array -> llvalue
-                           = "llvm_const_insertvalue"
+val const_insertvalue : llvalue -> llvalue -> int array -> llvalue
+
 
 (** [const_inline_asm ty asm con side align] inserts a inline assembly string.
     See the method [llvm::InlineAsm::get]. *)
-external const_inline_asm : lltype -> string -> string -> bool -> bool ->
+val const_inline_asm : lltype -> string -> string -> bool -> bool ->
                             llvalue
-                          = "llvm_const_inline_asm"
+
 
 (** [block_address f bb] returns the address of the basic block [bb] in the
     function [f]. See the method [llvm::BasicBlock::get]. *)
-external block_address : llvalue -> llbasicblock -> llvalue = "LLVMBlockAddress"
+val block_address : llvalue -> llbasicblock -> llvalue
 
 
 (** {7 Operations on global variables, functions, and aliases (globals)} *)
 
 (** [global_parent g] is the enclosing module of the global value [g].
     See the method [llvm::GlobalValue::getParent]. *)
-external global_parent : llvalue -> llmodule = "LLVMGetGlobalParent"
+val global_parent : llvalue -> llmodule
 
 (** [is_declaration g] returns [true] if the global value [g] is a declaration
     only. Returns [false] otherwise.
     See the method [llvm::GlobalValue::isDeclaration]. *)
-external is_declaration : llvalue -> bool = "llvm_is_declaration"
+val is_declaration : llvalue -> bool
 
 (** [linkage g] returns the linkage of the global value [g].
     See the method [llvm::GlobalValue::getLinkage]. *)
-external linkage : llvalue -> Linkage.t = "llvm_linkage"
+val linkage : llvalue -> Linkage.t
 
 (** [set_linkage l g] sets the linkage of the global value [g] to [l].
     See the method [llvm::GlobalValue::setLinkage]. *)
-external set_linkage : Linkage.t -> llvalue -> unit = "llvm_set_linkage"
+val set_linkage : Linkage.t -> llvalue -> unit
 
 (** [section g] returns the linker section of the global value [g].
     See the method [llvm::GlobalValue::getSection]. *)
-external section : llvalue -> string = "llvm_section"
+val section : llvalue -> string
 
 (** [set_section s g] sets the linker section of the global value [g] to [s].
     See the method [llvm::GlobalValue::setSection]. *)
-external set_section : string -> llvalue -> unit = "llvm_set_section"
+val set_section : string -> llvalue -> unit
 
 (** [visibility g] returns the linker visibility of the global value [g].
     See the method [llvm::GlobalValue::getVisibility]. *)
-external visibility : llvalue -> Visibility.t = "llvm_visibility"
+val visibility : llvalue -> Visibility.t
 
 (** [set_visibility v g] sets the linker visibility of the global value [g] to
     [v]. See the method [llvm::GlobalValue::setVisibility]. *)
-external set_visibility : Visibility.t -> llvalue -> unit
-                        = "llvm_set_visibility"
+val set_visibility : Visibility.t -> llvalue -> unit
+
 
 (** [alignment g] returns the required alignment of the global value [g].
     See the method [llvm::GlobalValue::getAlignment]. *)
-external alignment : llvalue -> int = "llvm_alignment"
+val alignment : llvalue -> int
 
 (** [set_alignment n g] sets the required alignment of the global value [g] to
     [n] bytes. See the method [llvm::GlobalValue::setAlignment]. *)
-external set_alignment : int -> llvalue -> unit = "llvm_set_alignment"
+val set_alignment : int -> llvalue -> unit
 
 
 (** {7 Operations on global variables} *)
@@ -1061,55 +1061,55 @@ external set_alignment : int -> llvalue -> unit = "llvm_set_alignment"
     with name [name] in module [m] in the default address space (0). If such a
     global variable already exists, it is returned. If the type of the existing
     global differs, then a bitcast to [ty] is returned. *)
-external declare_global : lltype -> string -> llmodule -> llvalue
-                        = "llvm_declare_global"
+val declare_global : lltype -> string -> llmodule -> llvalue
+
 
 (** [declare_qualified_global ty name addrspace m] returns a new global variable
     of type [ty] and with name [name] in module [m] in the address space
     [addrspace]. If such a global variable already exists, it is returned. If
     the type of the existing global differs, then a bitcast to [ty] is
     returned. *)
-external declare_qualified_global : lltype -> string -> int -> llmodule ->
+val declare_qualified_global : lltype -> string -> int -> llmodule ->
                                     llvalue
-                                  = "llvm_declare_qualified_global"
+
 
 (** [define_global name init m] returns a new global with name [name] and
     initializer [init] in module [m] in the default address space (0). If the
     named global already exists, it is renamed.
     See the constructor of [llvm::GlobalVariable]. *)
-external define_global : string -> llvalue -> llmodule -> llvalue
-                       = "llvm_define_global"
+val define_global : string -> llvalue -> llmodule -> llvalue
+
 
 (** [define_qualified_global name init addrspace m] returns a new global with
     name [name] and initializer [init] in module [m] in the address space
     [addrspace]. If the named global already exists, it is renamed.
     See the constructor of [llvm::GlobalVariable]. *)
-external define_qualified_global : string -> llvalue -> int -> llmodule ->
+val define_qualified_global : string -> llvalue -> int -> llmodule ->
                                    llvalue
-                                 = "llvm_define_qualified_global"
+
 
 (** [lookup_global name m] returns [Some g] if a global variable with name
     [name] exists in module [m]. If no such global exists, returns [None].
     See the [llvm::GlobalVariable] constructor. *)
-external lookup_global : string -> llmodule -> llvalue option
-                       = "llvm_lookup_global"
+val lookup_global : string -> llmodule -> llvalue option
+
 
 (** [delete_global gv] destroys the global variable [gv].
     See the method [llvm::GlobalVariable::eraseFromParent]. *)
-external delete_global : llvalue -> unit = "llvm_delete_global"
+val delete_global : llvalue -> unit
 
 (** [global_begin m] returns the first position in the global variable list of
     the module [m]. [global_begin] and [global_succ] can be used to iterate
     over the global list in order.
     See the method [llvm::Module::global_begin]. *)
-external global_begin : llmodule -> (llmodule, llvalue) llpos
-                      = "llvm_global_begin"
+val global_begin : llmodule -> (llmodule, llvalue) llpos
+
 
 (** [global_succ gv] returns the global variable list position succeeding
     [Before gv].
     See the method [llvm::Module::global_iterator::operator++]. *)
-external global_succ : llvalue -> (llmodule, llvalue) llpos
-                     = "llvm_global_succ"
+val global_succ : llvalue -> (llmodule, llvalue) llpos
+
 
 (** [iter_globals f m] applies function [f] to each of the global variables of
     module [m] in order. Tail recursive. *)
@@ -1123,14 +1123,14 @@ val fold_left_globals : ('a -> llvalue -> 'a) -> 'a -> llmodule -> 'a
     module [m]. [global_end] and [global_pred] can be used to iterate over the
     global list in reverse.
     See the method [llvm::Module::global_end]. *)
-external global_end : llmodule -> (llmodule, llvalue) llrev_pos
-                    = "llvm_global_end"
+val global_end : llmodule -> (llmodule, llvalue) llrev_pos
+
 
 (** [global_pred gv] returns the global variable list position preceding
     [After gv].
     See the method [llvm::Module::global_iterator::operator--]. *)
-external global_pred : llvalue -> (llmodule, llvalue) llrev_pos
-                     = "llvm_global_pred"
+val global_pred : llvalue -> (llmodule, llvalue) llrev_pos
+
 
 (** [rev_iter_globals f m] applies function [f] to each of the global variables
     of module [m] in reverse order. Tail recursive. *)
@@ -1143,37 +1143,37 @@ val fold_right_globals : (llvalue -> 'a -> 'a) -> llmodule -> 'a -> 'a
 (** [is_global_constant gv] returns [true] if the global variabile [gv] is a
     constant. Returns [false] otherwise.
     See the method [llvm::GlobalVariable::isConstant]. *)
-external is_global_constant : llvalue -> bool = "llvm_is_global_constant"
+val is_global_constant : llvalue -> bool
 
 (** [set_global_constant c gv] sets the global variable [gv] to be a constant if
     [c] is [true] and not if [c] is [false].
     See the method [llvm::GlobalVariable::setConstant]. *)
-external set_global_constant : bool -> llvalue -> unit
-                             = "llvm_set_global_constant"
+val set_global_constant : bool -> llvalue -> unit
+
 
 (** [global_initializer gv] returns the initializer for the global variable
     [gv]. See the method [llvm::GlobalVariable::getInitializer]. *)
-external global_initializer : llvalue -> llvalue = "LLVMGetInitializer"
+val global_initializer : llvalue -> llvalue
 
 (** [set_initializer c gv] sets the initializer for the global variable
     [gv] to the constant [c].
     See the method [llvm::GlobalVariable::setInitializer]. *)
-external set_initializer : llvalue -> llvalue -> unit = "llvm_set_initializer"
+val set_initializer : llvalue -> llvalue -> unit
 
 (** [remove_initializer gv] unsets the initializer for the global variable
     [gv].
     See the method [llvm::GlobalVariable::setInitializer]. *)
-external remove_initializer : llvalue -> unit = "llvm_remove_initializer"
+val remove_initializer : llvalue -> unit
 
 (** [is_thread_local gv] returns [true] if the global variable [gv] is
     thread-local and [false] otherwise.
     See the method [llvm::GlobalVariable::isThreadLocal]. *)
-external is_thread_local : llvalue -> bool = "llvm_is_thread_local"
+val is_thread_local : llvalue -> bool
 
 (** [set_thread_local c gv] sets the global variable [gv] to be thread local if
     [c] is [true] and not otherwise.
     See the method [llvm::GlobalVariable::setThreadLocal]. *)
-external set_thread_local : bool -> llvalue -> unit = "llvm_set_thread_local"
+val set_thread_local : bool -> llvalue -> unit
 
 
 (** {7 Operations on aliases} *)
@@ -1181,8 +1181,8 @@ external set_thread_local : bool -> llvalue -> unit = "llvm_set_thread_local"
 (** [add_alias m t a n] inserts an alias in the module [m] with the type [t] and
     the aliasee [a] with the name [n].
     See the constructor for [llvm::GlobalAlias]. *)
-external add_alias : llmodule -> lltype -> llvalue -> string -> llvalue
-                   = "llvm_add_alias"
+val add_alias : llmodule -> lltype -> llvalue -> string -> llvalue
+
 
 
 (** {7 Operations on functions} *)
@@ -1191,38 +1191,38 @@ external add_alias : llmodule -> lltype -> llvalue -> string -> llvalue
     with name [name] in module [m]. If such a function already exists,
     it is returned. If the type of the existing function differs, then a bitcast
     to [ty] is returned. *)
-external declare_function : string -> lltype -> llmodule -> llvalue
-                          = "llvm_declare_function"
+val declare_function : string -> lltype -> llmodule -> llvalue
+
 
 (** [define_function name ty m] creates a new function with name [name] and
     type [ty] in module [m]. If the named function already exists, it is
     renamed. An entry basic block is created in the function.
     See the constructor of [llvm::GlobalVariable]. *)
-external define_function : string -> lltype -> llmodule -> llvalue
-                         = "llvm_define_function"
+val define_function : string -> lltype -> llmodule -> llvalue
+
 
 (** [lookup_function name m] returns [Some f] if a function with name
     [name] exists in module [m]. If no such function exists, returns [None].
     See the method [llvm::Module] constructor. *)
-external lookup_function : string -> llmodule -> llvalue option
-                         = "llvm_lookup_function"
+val lookup_function : string -> llmodule -> llvalue option
+
 
 (** [delete_function f] destroys the function [f].
     See the method [llvm::Function::eraseFromParent]. *)
-external delete_function : llvalue -> unit = "llvm_delete_function"
+val delete_function : llvalue -> unit
 
 (** [function_begin m] returns the first position in the function list of the
     module [m]. [function_begin] and [function_succ] can be used to iterate over
     the function list in order.
     See the method [llvm::Module::begin]. *)
-external function_begin : llmodule -> (llmodule, llvalue) llpos
-                        = "llvm_function_begin"
+val function_begin : llmodule -> (llmodule, llvalue) llpos
+
 
 (** [function_succ gv] returns the function list position succeeding
     [Before gv].
     See the method [llvm::Module::iterator::operator++]. *)
-external function_succ : llvalue -> (llmodule, llvalue) llpos
-                       = "llvm_function_succ"
+val function_succ : llvalue -> (llmodule, llvalue) llpos
+
 
 (** [iter_functions f m] applies function [f] to each of the functions of module
     [m] in order. Tail recursive. *)
@@ -1236,13 +1236,13 @@ val fold_left_functions : ('a -> llvalue -> 'a) -> 'a -> llmodule -> 'a
     the module [m]. [function_end] and [function_pred] can be used to iterate
     over the function list in reverse.
     See the method [llvm::Module::end]. *)
-external function_end : llmodule -> (llmodule, llvalue) llrev_pos
-                      = "llvm_function_end"
+val function_end : llmodule -> (llmodule, llvalue) llrev_pos
+
 
 (** [function_pred gv] returns the function list position preceding [After gv].
     See the method [llvm::Module::iterator::operator--]. *)
-external function_pred : llvalue -> (llmodule, llvalue) llrev_pos
-                       = "llvm_function_pred"
+val function_pred : llvalue -> (llmodule, llvalue) llrev_pos
+
 
 (** [rev_iter_functions f fn] applies function [f] to each of the functions of
     module [m] in reverse order. Tail recursive. *)
@@ -1254,26 +1254,26 @@ val fold_right_functions : (llvalue -> 'a -> 'a) -> llmodule -> 'a -> 'a
 
 (** [is_intrinsic f] returns true if the function [f] is an intrinsic.
     See the method [llvm::Function::isIntrinsic]. *)
-external is_intrinsic : llvalue -> bool = "llvm_is_intrinsic"
+val is_intrinsic : llvalue -> bool
 
 (** [function_call_conv f] returns the calling convention of the function [f].
     See the method [llvm::Function::getCallingConv]. *)
-external function_call_conv : llvalue -> int = "llvm_function_call_conv"
+val function_call_conv : llvalue -> int
 
 (** [set_function_call_conv cc f] sets the calling convention of the function
     [f] to the calling convention numbered [cc].
     See the method [llvm::Function::setCallingConv]. *)
-external set_function_call_conv : int -> llvalue -> unit
-                                = "llvm_set_function_call_conv"
+val set_function_call_conv : int -> llvalue -> unit
+
 
 (** [gc f] returns [Some name] if the function [f] has a garbage
     collection algorithm specified and [None] otherwise.
     See the method [llvm::Function::getGC]. *)
-external gc : llvalue -> string option = "llvm_gc"
+val gc : llvalue -> string option
 
 (** [set_gc gc f] sets the collection algorithm for the function [f] to
     [gc]. See the method [llvm::Function::setGC]. *)
-external set_gc : string option -> llvalue -> unit = "llvm_set_gc"
+val set_gc : string option -> llvalue -> unit
 
 (** [add_function_attr f a] adds attribute [a] to the return type of function
     [f]. *)
@@ -1287,26 +1287,26 @@ val remove_function_attr : llvalue -> Attribute.t -> unit
 
 (** [params f] returns the parameters of function [f].
     See the method [llvm::Function::getArgumentList]. *)
-external params : llvalue -> llvalue array = "llvm_params"
+val params : llvalue -> llvalue array
 
 (** [param f n] returns the [n]th parameter of function [f].
     See the method [llvm::Function::getArgumentList]. *)
-external param : llvalue -> int -> llvalue = "llvm_param"
+val param : llvalue -> int -> llvalue
 
 (** [param_parent p] returns the parent function that owns the parameter.
     See the method [llvm::Argument::getParent]. *)
-external param_parent : llvalue -> llvalue = "LLVMGetParamParent"
+val param_parent : llvalue -> llvalue
 
 (** [param_begin f] returns the first position in the parameter list of the
     function [f]. [param_begin] and [param_succ] can be used to iterate over
     the parameter list in order.
     See the method [llvm::Function::arg_begin]. *)
-external param_begin : llvalue -> (llvalue, llvalue) llpos = "llvm_param_begin"
+val param_begin : llvalue -> (llvalue, llvalue) llpos
 
 (** [param_succ bb] returns the parameter list position succeeding
     [Before bb].
     See the method [llvm::Function::arg_iterator::operator++]. *)
-external param_succ : llvalue -> (llvalue, llvalue) llpos = "llvm_param_succ"
+val param_succ : llvalue -> (llvalue, llvalue) llpos
 
 (** [iter_params f fn] applies function [f] to each of the parameters
     of function [fn] in order. Tail recursive. *)
@@ -1320,12 +1320,12 @@ val fold_left_params : ('a -> llvalue -> 'a) -> 'a -> llvalue -> 'a
     the function [f]. [param_end] and [param_pred] can be used to iterate
     over the parameter list in reverse.
     See the method [llvm::Function::arg_end]. *)
-external param_end : llvalue -> (llvalue, llvalue) llrev_pos = "llvm_param_end"
+val param_end : llvalue -> (llvalue, llvalue) llrev_pos
 
 (** [param_pred gv] returns the function list position preceding [After gv].
     See the method [llvm::Function::arg_iterator::operator--]. *)
-external param_pred : llvalue -> (llvalue, llvalue) llrev_pos
-                    = "llvm_param_pred"
+val param_pred : llvalue -> (llvalue, llvalue) llrev_pos
+
 
 (** [rev_iter_params f fn] applies function [f] to each of the parameters
     of function [fn] in reverse order. Tail recursive. *)
@@ -1342,51 +1342,51 @@ val add_param_attr : llvalue -> Attribute.t -> unit
 val remove_param_attr : llvalue -> Attribute.t -> unit
 
 (** [set_param_alignment p a] set the alignment of parameter [p] to [a]. *)
-external set_param_alignment : llvalue -> int -> unit
-                             = "llvm_set_param_alignment"
+val set_param_alignment : llvalue -> int -> unit
+
 
 (** {7 Operations on basic blocks} *)
 
 (** [basic_blocks fn] returns the basic blocks of the function [f].
     See the method [llvm::Function::getBasicBlockList]. *)
-external basic_blocks : llvalue -> llbasicblock array = "llvm_basic_blocks"
+val basic_blocks : llvalue -> llbasicblock array
 
 (** [entry_block fn] returns the entry basic block of the function [f].
     See the method [llvm::Function::getEntryBlock]. *)
-external entry_block : llvalue -> llbasicblock = "LLVMGetEntryBasicBlock"
+val entry_block : llvalue -> llbasicblock
 
 (** [delete_block bb] deletes the basic block [bb].
     See the method [llvm::BasicBlock::eraseFromParent]. *)
-external delete_block : llbasicblock -> unit = "llvm_delete_block"
+val delete_block : llbasicblock -> unit
 
 (** [append_block c name f] creates a new basic block named [name] at the end of
     function [f] in the context [c].
     See the constructor of [llvm::BasicBlock]. *)
-external append_block : llcontext -> string -> llvalue -> llbasicblock
-                      = "llvm_append_block"
+val append_block : llcontext -> string -> llvalue -> llbasicblock
+
 
 (** [insert_block c name bb] creates a new basic block named [name] before the
     basic block [bb] in the context [c].
     See the constructor of [llvm::BasicBlock]. *)
-external insert_block : llcontext -> string -> llbasicblock -> llbasicblock
-                      = "llvm_insert_block"
+val insert_block : llcontext -> string -> llbasicblock -> llbasicblock
+
 
 (** [block_parent bb] returns the parent function that owns the basic block.
     See the method [llvm::BasicBlock::getParent]. *)
-external block_parent : llbasicblock -> llvalue = "LLVMGetBasicBlockParent"
+val block_parent : llbasicblock -> llvalue
 
 (** [block_begin f] returns the first position in the basic block list of the
     function [f]. [block_begin] and [block_succ] can be used to iterate over
     the basic block list in order.
     See the method [llvm::Function::begin]. *)
-external block_begin : llvalue -> (llvalue, llbasicblock) llpos
-                     = "llvm_block_begin"
+val block_begin : llvalue -> (llvalue, llbasicblock) llpos
+
 
 (** [block_succ bb] returns the basic block list position succeeding
     [Before bb].
     See the method [llvm::Function::iterator::operator++]. *)
-external block_succ : llbasicblock -> (llvalue, llbasicblock) llpos
-                    = "llvm_block_succ"
+val block_succ : llbasicblock -> (llvalue, llbasicblock) llpos
+
 
 (** [iter_blocks f fn] applies function [f] to each of the basic blocks
     of function [fn] in order. Tail recursive. *)
@@ -1400,13 +1400,13 @@ val fold_left_blocks : ('a -> llbasicblock -> 'a) -> 'a -> llvalue -> 'a
     the function [f]. [block_end] and [block_pred] can be used to iterate
     over the basic block list in reverse.
     See the method [llvm::Function::end]. *)
-external block_end : llvalue -> (llvalue, llbasicblock) llrev_pos
-                   = "llvm_block_end"
+val block_end : llvalue -> (llvalue, llbasicblock) llrev_pos
+
 
 (** [block_pred gv] returns the function list position preceding [After gv].
     See the method [llvm::Function::iterator::operator--]. *)
-external block_pred : llbasicblock -> (llvalue, llbasicblock) llrev_pos
-                    = "llvm_block_pred"
+val block_pred : llbasicblock -> (llvalue, llbasicblock) llrev_pos
+
 
 (** [rev_iter_blocks f fn] applies function [f] to each of the basic blocks
     of function [fn] in reverse order. Tail recursive. *)
@@ -1417,34 +1417,34 @@ val rev_iter_blocks : (llbasicblock -> unit) -> llvalue -> unit
 val fold_right_blocks : (llbasicblock -> 'a -> 'a) -> llvalue -> 'a -> 'a
 
 (** [value_of_block bb] losslessly casts [bb] to an [llvalue]. *)
-external value_of_block : llbasicblock -> llvalue = "LLVMBasicBlockAsValue"
+val value_of_block : llbasicblock -> llvalue
 
 (** [value_is_block v] returns [true] if the value [v] is a basic block and
     [false] otherwise.
     Similar to [llvm::isa<BasicBlock>]. *)
-external value_is_block : llvalue -> bool = "llvm_value_is_block"
+val value_is_block : llvalue -> bool
 
 (** [block_of_value v] losslessly casts [v] to an [llbasicblock]. *)
-external block_of_value : llvalue -> llbasicblock = "LLVMValueAsBasicBlock"
+val block_of_value : llvalue -> llbasicblock
 
 
 (** {7 Operations on instructions} *)
 
 (** [instr_parent i] is the enclosing basic block of the instruction [i].
     See the method [llvm::Instruction::getParent]. *)
-external instr_parent : llvalue -> llbasicblock = "LLVMGetInstructionParent"
+val instr_parent : llvalue -> llbasicblock
 
 (** [instr_begin bb] returns the first position in the instruction list of the
     basic block [bb]. [instr_begin] and [instr_succ] can be used to iterate over
     the instruction list in order.
     See the method [llvm::BasicBlock::begin]. *)
-external instr_begin : llbasicblock -> (llbasicblock, llvalue) llpos
-                     = "llvm_instr_begin"
+val instr_begin : llbasicblock -> (llbasicblock, llvalue) llpos
+
 
 (** [instr_succ i] returns the instruction list position succeeding [Before i].
     See the method [llvm::BasicBlock::iterator::operator++]. *)
-external instr_succ : llvalue -> (llbasicblock, llvalue) llpos
-                     = "llvm_instr_succ"
+val instr_succ : llvalue -> (llbasicblock, llvalue) llpos
+
 
 (** [iter_instrs f bb] applies function [f] to each of the instructions of basic
     block [bb] in order. Tail recursive. *)
@@ -1458,13 +1458,13 @@ val fold_left_instrs: ('a -> llvalue -> 'a) -> 'a -> llbasicblock -> 'a
     basic block [bb]. [instr_end] and [instr_pred] can be used to iterate over
     the instruction list in reverse.
     See the method [llvm::BasicBlock::end]. *)
-external instr_end : llbasicblock -> (llbasicblock, llvalue) llrev_pos
-                     = "llvm_instr_end"
+val instr_end : llbasicblock -> (llbasicblock, llvalue) llrev_pos
+
 
 (** [instr_pred i] returns the instruction list position preceding [After i].
     See the method [llvm::BasicBlock::iterator::operator--]. *)
-external instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
-                     = "llvm_instr_pred"
+val instr_pred : llvalue -> (llbasicblock, llvalue) llrev_pos
+
 
 (** [fold_right_instrs f bb init] is [f (... (f init fN) ...) f1] where
     [f1,...,fN] are the instructions of basic block [bb]. Tail recursive. *)
@@ -1477,16 +1477,16 @@ val fold_right_instrs: (llvalue -> 'a -> 'a) -> llbasicblock -> 'a -> 'a
     instruction [ci], which may be one of the values from the module
     {!CallConv}. See the method [llvm::CallInst::getCallingConv] and
     [llvm::InvokeInst::getCallingConv]. *)
-external instruction_call_conv: llvalue -> int
-                              = "llvm_instruction_call_conv"
+val instruction_call_conv: llvalue -> int
+
 
 (** [set_instruction_call_conv cc ci] sets the calling convention for the call
     or invoke instruction [ci] to the integer [cc], which can be one of the
     values from the module {!CallConv}.
     See the method [llvm::CallInst::setCallingConv]
     and [llvm::InvokeInst::setCallingConv]. *)
-external set_instruction_call_conv: int -> llvalue -> unit
-                                  = "llvm_set_instruction_call_conv"
+val set_instruction_call_conv: int -> llvalue -> unit
+
 
 (** [add_instruction_param_attr ci i a] adds attribute [a] to the [i]th
     parameter of the call or invoke instruction [ci]. [i]=0 denotes the return
@@ -1503,23 +1503,23 @@ val remove_instruction_param_attr : llvalue -> int -> Attribute.t -> unit
 (** [is_tail_call ci] is [true] if the call instruction [ci] is flagged as
     eligible for tail call optimization, [false] otherwise.
     See the method [llvm::CallInst::isTailCall]. *)
-external is_tail_call : llvalue -> bool = "llvm_is_tail_call"
+val is_tail_call : llvalue -> bool
 
 (** [set_tail_call tc ci] flags the call instruction [ci] as eligible for tail
     call optimization if [tc] is [true], clears otherwise.
     See the method [llvm::CallInst::setTailCall]. *)
-external set_tail_call : bool -> llvalue -> unit = "llvm_set_tail_call"
+val set_tail_call : bool -> llvalue -> unit
 
 (** {7 Operations on phi nodes} *)
 
 (** [add_incoming (v, bb) pn] adds the value [v] to the phi node [pn] for use
     with branches from [bb]. See the method [llvm::PHINode::addIncoming]. *)
-external add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
-                      = "llvm_add_incoming"
+val add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
+
 
 (** [incoming pn] returns the list of value-block pairs for phi node [pn].
     See the method [llvm::PHINode::getIncomingValue]. *)
-external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
+val incoming : llvalue -> (llvalue * llbasicblock) list
 
 
 
@@ -1529,7 +1529,7 @@ external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
     the context [context]. It is invalid to use this builder until its position
     is set with {!position_before} or {!position_at_end}. See the constructor
     for [llvm::LLVMBuilder]. *)
-external builder : llcontext -> llbuilder = "llvm_builder"
+val builder : llcontext -> llbuilder
 
 (** [builder_at ip] creates an instruction builder positioned at [ip].
     See the constructor for [llvm::LLVMBuilder]. *)
@@ -1546,8 +1546,8 @@ val builder_at_end : llcontext -> llbasicblock -> llbuilder
 (** [position_builder ip bb] moves the instruction builder [bb] to the position
     [ip].
     See the constructor for [llvm::LLVMBuilder]. *)
-external position_builder : (llbasicblock, llvalue) llpos -> llbuilder -> unit
-                          = "llvm_position_builder"
+val position_builder : (llbasicblock, llvalue) llpos -> llbuilder -> unit
+
 
 (** [position_before ins b] moves the instruction builder [b] to before the
     instruction [isn]. See the method [llvm::LLVMBuilder::SetInsertPoint]. *)
@@ -1561,38 +1561,38 @@ val position_at_end : llbasicblock -> llbuilder -> unit
     positioned to insert into. Raises [Not_Found] if the instruction builder is
     uninitialized.
     See the method [llvm::LLVMBuilder::GetInsertBlock]. *)
-external insertion_block : llbuilder -> llbasicblock = "llvm_insertion_block"
+val insertion_block : llbuilder -> llbasicblock
 
 (** [insert_into_builder i name b] inserts the specified instruction [i] at the
     position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::Insert]. *)
-external insert_into_builder : llvalue -> string -> llbuilder -> unit
-                             = "llvm_insert_into_builder"
+val insert_into_builder : llvalue -> string -> llbuilder -> unit
+
 
 (** {7 Metadata} *)
 
 (** [set_current_debug_location b md] sets the current debug location [md] in
     the builder [b].
     See the method [llvm::IRBuilder::SetDebugLocation]. *)
-external set_current_debug_location : llbuilder -> llvalue -> unit
-                                    = "llvm_set_current_debug_location"
+val set_current_debug_location : llbuilder -> llvalue -> unit
+
 
 (** [clear_current_debug_location b] clears the current debug location in the
     builder [b]. *)
-external clear_current_debug_location : llbuilder -> unit
-                                      = "llvm_clear_current_debug_location"
+val clear_current_debug_location : llbuilder -> unit
+
 
 (** [current_debug_location b] returns the current debug location, or None
     if none is currently set.
     See the method [llvm::IRBuilder::GetDebugLocation]. *)
-external current_debug_location : llbuilder -> llvalue option
-                                = "llvm_current_debug_location"
+val current_debug_location : llbuilder -> llvalue option
+
 
 (** [set_inst_debug_location b i] sets the current debug location of the builder
     [b] to the instruction [i].
     See the method [llvm::IRBuilder::SetInstDebugLocation]. *)
-external set_inst_debug_location : llbuilder -> llvalue -> unit
-                                 = "llvm_set_inst_debug_location"
+val set_inst_debug_location : llbuilder -> llvalue -> unit
+
 
 (** {7 Terminators} *)
 
@@ -1600,81 +1600,81 @@ external set_inst_debug_location : llbuilder -> llvalue -> unit
     [ret void]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateRetVoid]. *)
-external build_ret_void : llbuilder -> llvalue = "llvm_build_ret_void"
+val build_ret_void : llbuilder -> llvalue
 
 (** [build_ret v b] creates a
     [ret %v]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateRet]. *)
-external build_ret : llvalue -> llbuilder -> llvalue = "llvm_build_ret"
+val build_ret : llvalue -> llbuilder -> llvalue
 
 (** [build_aggregate_ret vs b] creates a
     [ret {...} { %v1, %v2, ... } ]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateAggregateRet]. *)
-external build_aggregate_ret : llvalue array -> llbuilder -> llvalue
-                             = "llvm_build_aggregate_ret"
+val build_aggregate_ret : llvalue array -> llbuilder -> llvalue
+
 
 (** [build_br bb b] creates a
     [br %bb]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateBr]. *)
-external build_br : llbasicblock -> llbuilder -> llvalue = "llvm_build_br"
+val build_br : llbasicblock -> llbuilder -> llvalue
 
 (** [build_cond_br cond tbb fbb b] creates a
     [br %cond, %tbb, %fbb]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateCondBr]. *)
-external build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
-                         llvalue = "llvm_build_cond_br"
+val build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
+                         llvalue
 
 (** [build_switch case elsebb count b] creates an empty
     [switch %case, %elsebb]
     instruction at the position specified by the instruction builder [b] with
     space reserved for [count] cases.
     See the method [llvm::LLVMBuilder::CreateSwitch]. *)
-external build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
-                      = "llvm_build_switch"
+val build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
+
 
 (** [add_case sw onval bb] causes switch instruction [sw] to branch to [bb]
     when its input matches the constant [onval].
     See the method [llvm::SwitchInst::addCase]. **)
-external add_case : llvalue -> llvalue -> llbasicblock -> unit
-                  = "llvm_add_case"
+val add_case : llvalue -> llvalue -> llbasicblock -> unit
+
 
 (** [build_indirect_br addr count b] creates a
     [indirectbr %addr]
     instruction at the position specified by the instruction builder [b] with
     space reserved for [count] destinations.
     See the method [llvm::LLVMBuilder::CreateIndirectBr]. *)
-external build_indirect_br : llvalue -> int -> llbuilder -> llvalue
-                           = "llvm_build_indirect_br"
+val build_indirect_br : llvalue -> int -> llbuilder -> llvalue
+
 
 (** [add_destination br bb] adds the basic block [bb] as a possible branch
     location for the indirectbr instruction [br].
     See the method [llvm::IndirectBrInst::addDestination]. **)
-external add_destination : llvalue -> llbasicblock -> unit
-                         = "llvm_add_destination"
+val add_destination : llvalue -> llbasicblock -> unit
+
 
 (** [build_invoke fn args tobb unwindbb name b] creates an
     [%name = invoke %fn(args) to %tobb unwind %unwindbb]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateInvoke]. *)
-external build_invoke : llvalue -> llvalue array -> llbasicblock ->
+val build_invoke : llvalue -> llvalue array -> llbasicblock ->
                         llbasicblock -> string -> llbuilder -> llvalue
-                      = "llvm_build_invoke_bc" "llvm_build_invoke_nat"
+
 
 (** [build_unwind b] creates an
     [unwind]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateUnwind]. *)
-external build_unwind : llbuilder -> llvalue = "llvm_build_unwind"
+val build_unwind : llbuilder -> llvalue
 
 (** [build_unreachable b] creates an
     [unreachable]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateUnwind]. *)
-external build_unreachable : llbuilder -> llvalue = "llvm_build_unreachable"
+val build_unreachable : llbuilder -> llvalue
 
 
 (** {7 Arithmetic} *)
@@ -1683,216 +1683,216 @@ external build_unreachable : llbuilder -> llvalue = "llvm_build_unreachable"
     [%name = add %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateAdd]. *)
-external build_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                   = "llvm_build_add"
+val build_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_nsw_add x y name b] creates a
     [%name = nsw add %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNSWAdd]. *)
-external build_nsw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                      = "llvm_build_nsw_add"
+val build_nsw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_nuw_add x y name b] creates a
     [%name = nuw add %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNUWAdd]. *)
-external build_nuw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                      = "llvm_build_nuw_add"
+val build_nuw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_fadd x y name b] creates a
     [%name = fadd %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFAdd]. *)
-external build_fadd : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_fadd"
+val build_fadd : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_sub x y name b] creates a
     [%name = sub %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateSub]. *)
-external build_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                   = "llvm_build_sub"
+val build_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_nsw_sub x y name b] creates a
     [%name = nsw sub %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNSWSub]. *)
-external build_nsw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                       = "llvm_build_nsw_sub"
+val build_nsw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_nuw_sub x y name b] creates a
     [%name = nuw sub %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNUWSub]. *)
-external build_nuw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                       = "llvm_build_nuw_sub"
+val build_nuw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_fsub x y name b] creates a
     [%name = fsub %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFSub]. *)
-external build_fsub : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_fsub"
+val build_fsub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_mul x y name b] creates a
     [%name = mul %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateMul]. *)
-external build_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                   = "llvm_build_mul"
+val build_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_nsw_mul x y name b] creates a
     [%name = nsw mul %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNSWMul]. *)
-external build_nsw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                       = "llvm_build_nsw_mul"
+val build_nsw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_nuw_mul x y name b] creates a
     [%name = nuw mul %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNUWMul]. *)
-external build_nuw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                       = "llvm_build_nuw_mul"
+val build_nuw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_fmul x y name b] creates a
     [%name = fmul %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFMul]. *)
-external build_fmul : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_fmul"
+val build_fmul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_udiv x y name b] creates a
     [%name = udiv %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateUDiv]. *)
-external build_udiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_udiv"
+val build_udiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_sdiv x y name b] creates a
     [%name = sdiv %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateSDiv]. *)
-external build_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_sdiv"
+val build_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_exact_sdiv x y name b] creates a
     [%name = exact sdiv %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateExactSDiv]. *)
-external build_exact_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                          = "llvm_build_exact_sdiv"
+val build_exact_sdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_fdiv x y name b] creates a
     [%name = fdiv %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFDiv]. *)
-external build_fdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_fdiv"
+val build_fdiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_urem x y name b] creates a
     [%name = urem %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateURem]. *)
-external build_urem : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_urem"
+val build_urem : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_SRem x y name b] creates a
     [%name = srem %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateSRem]. *)
-external build_srem : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_srem"
+val build_srem : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_frem x y name b] creates a
     [%name = frem %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFRem]. *)
-external build_frem : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_frem"
+val build_frem : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_shl x y name b] creates a
     [%name = shl %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateShl]. *)
-external build_shl : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                   = "llvm_build_shl"
+val build_shl : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_lshr x y name b] creates a
     [%name = lshr %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateLShr]. *)
-external build_lshr : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_lshr"
+val build_lshr : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_ashr x y name b] creates a
     [%name = ashr %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateAShr]. *)
-external build_ashr : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_ashr"
+val build_ashr : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_and x y name b] creates a
     [%name = and %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateAnd]. *)
-external build_and : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                   = "llvm_build_and"
+val build_and : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_or x y name b] creates a
     [%name = or %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateOr]. *)
-external build_or : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                  = "llvm_build_or"
+val build_or : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_xor x y name b] creates a
     [%name = xor %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateXor]. *)
-external build_xor : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                   = "llvm_build_xor"
+val build_xor : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_neg x name b] creates a
     [%name = sub 0, %x]
     instruction at the position specified by the instruction builder [b].
     [-0.0] is used for floating point types to compute the correct sign.
     See the method [llvm::LLVMBuilder::CreateNeg]. *)
-external build_neg : llvalue -> string -> llbuilder -> llvalue
-                   = "llvm_build_neg"
+val build_neg : llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_nsw_neg x name b] creates a
     [%name = nsw sub 0, %x]
     instruction at the position specified by the instruction builder [b].
     [-0.0] is used for floating point types to compute the correct sign.
     See the method [llvm::LLVMBuilder::CreateNeg]. *)
-external build_nsw_neg : llvalue -> string -> llbuilder -> llvalue
-                       = "llvm_build_nsw_neg"
+val build_nsw_neg : llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_nuw_neg x name b] creates a
     [%name = nuw sub 0, %x]
     instruction at the position specified by the instruction builder [b].
     [-0.0] is used for floating point types to compute the correct sign.
     See the method [llvm::LLVMBuilder::CreateNeg]. *)
-external build_nuw_neg : llvalue -> string -> llbuilder -> llvalue
-                       = "llvm_build_nuw_neg"
+val build_nuw_neg : llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_fneg x name b] creates a
     [%name = fsub 0, %x]
     instruction at the position specified by the instruction builder [b].
     [-0.0] is used for floating point types to compute the correct sign.
     See the method [llvm::LLVMBuilder::CreateFNeg]. *)
-external build_fneg : llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_fneg"
+val build_fneg : llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_xor x name b] creates a
     [%name = xor %x, -1]
     instruction at the position specified by the instruction builder [b].
     [-1] is the correct "all ones" value for the type of [x].
     See the method [llvm::LLVMBuilder::CreateXor]. *)
-external build_not : llvalue -> string -> llbuilder -> llvalue
-                   = "llvm_build_not"
+val build_not : llvalue -> string -> llbuilder -> llvalue
+
 
 
 (** {7 Memory} *)
@@ -1901,63 +1901,63 @@ external build_not : llvalue -> string -> llbuilder -> llvalue
     [%name = alloca %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateAlloca]. *)
-external build_alloca : lltype -> string -> llbuilder -> llvalue
-                      = "llvm_build_alloca"
+val build_alloca : lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_array_alloca ty n name b] creates a
     [%name = alloca %ty, %n]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateAlloca]. *)
-external build_array_alloca : lltype -> llvalue -> string -> llbuilder ->
-                              llvalue = "llvm_build_array_alloca"
+val build_array_alloca : lltype -> llvalue -> string -> llbuilder ->
+                              llvalue
 
 (** [build_load v name b] creates a
     [%name = load %v]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateLoad]. *)
-external build_load : llvalue -> string -> llbuilder -> llvalue
-                    = "llvm_build_load"
+val build_load : llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_store v p b] creates a
     [store %v, %p]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateStore]. *)
-external build_store : llvalue -> llvalue -> llbuilder -> llvalue
-                     = "llvm_build_store"
+val build_store : llvalue -> llvalue -> llbuilder -> llvalue
+
 
 (** [build_gep p indices name b] creates a
     [%name = getelementptr %p, indices...]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateGetElementPtr]. *)
-external build_gep : llvalue -> llvalue array -> string -> llbuilder -> llvalue
-                   = "llvm_build_gep"
+val build_gep : llvalue -> llvalue array -> string -> llbuilder -> llvalue
+
 
 (** [build_in_bounds_gep p indices name b] creates a
     [%name = gelementptr inbounds %p, indices...]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateInBoundsGetElementPtr]. *)
-external build_in_bounds_gep : llvalue -> llvalue array -> string -> llbuilder ->
-                               llvalue = "llvm_build_in_bounds_gep"
+val build_in_bounds_gep : llvalue -> llvalue array -> string -> llbuilder ->
+                               llvalue
 
 (** [build_struct_gep p idx name b] creates a
     [%name = getelementptr %p, 0, idx]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateStructGetElementPtr]. *)
-external build_struct_gep : llvalue -> int -> string -> llbuilder ->
-                            llvalue = "llvm_build_struct_gep"
+val build_struct_gep : llvalue -> int -> string -> llbuilder ->
+                            llvalue
 
 (** [build_global_string str name b] creates a series of instructions that adds
     a global string at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateGlobalString]. *)
-external build_global_string : string -> string -> llbuilder -> llvalue
-                             = "llvm_build_global_string"
+val build_global_string : string -> string -> llbuilder -> llvalue
+
 
 (** [build_global_stringptr str name b] creates a series of instructions that
     adds a global string pointer at the position specified by the instruction
     builder [b].
     See the method [llvm::LLVMBuilder::CreateGlobalStringPtr]. *)
-external build_global_stringptr : string -> string -> llbuilder -> llvalue
-                                = "llvm_build_global_stringptr"
+val build_global_stringptr : string -> string -> llbuilder -> llvalue
+
 
 
 (** {7 Casts} *)
@@ -1966,121 +1966,121 @@ external build_global_stringptr : string -> string -> llbuilder -> llvalue
     [%name = trunc %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateTrunc]. *)
-external build_trunc : llvalue -> lltype -> string -> llbuilder -> llvalue
-                     = "llvm_build_trunc"
+val build_trunc : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_zext v ty name b] creates a
     [%name = zext %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateZExt]. *)
-external build_zext : llvalue -> lltype -> string -> llbuilder -> llvalue
-                    = "llvm_build_zext"
+val build_zext : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_sext v ty name b] creates a
     [%name = sext %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateSExt]. *)
-external build_sext : llvalue -> lltype -> string -> llbuilder -> llvalue
-                    = "llvm_build_sext"
+val build_sext : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_fptoui v ty name b] creates a
     [%name = fptoui %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFPToUI]. *)
-external build_fptoui : llvalue -> lltype -> string -> llbuilder -> llvalue
-                      = "llvm_build_fptoui"
+val build_fptoui : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_fptosi v ty name b] creates a
     [%name = fptosi %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFPToSI]. *)
-external build_fptosi : llvalue -> lltype -> string -> llbuilder -> llvalue
-                      = "llvm_build_fptosi"
+val build_fptosi : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_uitofp v ty name b] creates a
     [%name = uitofp %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateUIToFP]. *)
-external build_uitofp : llvalue -> lltype -> string -> llbuilder -> llvalue
-                      = "llvm_build_uitofp"
+val build_uitofp : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_sitofp v ty name b] creates a
     [%name = sitofp %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateSIToFP]. *)
-external build_sitofp : llvalue -> lltype -> string -> llbuilder -> llvalue
-                      = "llvm_build_sitofp"
+val build_sitofp : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_fptrunc v ty name b] creates a
     [%name = fptrunc %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFPTrunc]. *)
-external build_fptrunc : llvalue -> lltype -> string -> llbuilder -> llvalue
-                       = "llvm_build_fptrunc"
+val build_fptrunc : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_fpext v ty name b] creates a
     [%name = fpext %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFPExt]. *)
-external build_fpext : llvalue -> lltype -> string -> llbuilder -> llvalue
-                     = "llvm_build_fpext"
+val build_fpext : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_ptrtoint v ty name b] creates a
     [%name = prtotint %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreatePtrToInt]. *)
-external build_ptrtoint : llvalue -> lltype -> string -> llbuilder -> llvalue
-                        = "llvm_build_prttoint"
+val build_ptrtoint : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_inttoptr v ty name b] creates a
     [%name = inttoptr %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateIntToPtr]. *)
-external build_inttoptr : llvalue -> lltype -> string -> llbuilder -> llvalue
-                        = "llvm_build_inttoptr"
+val build_inttoptr : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_bitcast v ty name b] creates a
     [%name = bitcast %p to %ty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateBitCast]. *)
-external build_bitcast : llvalue -> lltype -> string -> llbuilder -> llvalue
-                       = "llvm_build_bitcast"
+val build_bitcast : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_zext_or_bitcast v ty name b] creates a zext or bitcast
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateZExtOrBitCast]. *)
-external build_zext_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
-                                 llvalue = "llvm_build_zext_or_bitcast"
+val build_zext_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
+                                 llvalue
 
 (** [build_sext_or_bitcast v ty name b] creates a sext or bitcast
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateSExtOrBitCast]. *)
-external build_sext_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
-                                 llvalue = "llvm_build_sext_or_bitcast"
+val build_sext_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
+                                 llvalue
 
 (** [build_trunc_or_bitcast v ty name b] creates a trunc or bitcast
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateZExtOrBitCast]. *)
-external build_trunc_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
-                                  llvalue = "llvm_build_trunc_or_bitcast"
+val build_trunc_or_bitcast : llvalue -> lltype -> string -> llbuilder ->
+                                  llvalue
 
 (** [build_pointercast v ty name b] creates a bitcast or pointer-to-int
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreatePointerCast]. *)
-external build_pointercast : llvalue -> lltype -> string -> llbuilder -> llvalue
-                           = "llvm_build_pointercast"
+val build_pointercast : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_intcast v ty name b] creates a zext, bitcast, or trunc
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateIntCast]. *)
-external build_intcast : llvalue -> lltype -> string -> llbuilder -> llvalue
-                       = "llvm_build_intcast"
+val build_intcast : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_fpcast v ty name b] creates a fpext, bitcast, or fptrunc
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFPCast]. *)
-external build_fpcast : llvalue -> lltype -> string -> llbuilder -> llvalue
-                      = "llvm_build_fpcast"
+val build_fpcast : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 
 (** {7 Comparisons} *)
@@ -2089,15 +2089,15 @@ external build_fpcast : llvalue -> lltype -> string -> llbuilder -> llvalue
     [%name = icmp %pred %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateICmp]. *)
-external build_icmp : Icmp.t -> llvalue -> llvalue -> string ->
-                      llbuilder -> llvalue = "llvm_build_icmp"
+val build_icmp : Icmp.t -> llvalue -> llvalue -> string ->
+                      llbuilder -> llvalue
 
 (** [build_fcmp pred x y name b] creates a
     [%name = fcmp %pred %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFCmp]. *)
-external build_fcmp : Fcmp.t -> llvalue -> llvalue -> string ->
-                      llbuilder -> llvalue = "llvm_build_fcmp"
+val build_fcmp : Fcmp.t -> llvalue -> llvalue -> string ->
+                      llbuilder -> llvalue
 
 
 (** {7 Miscellaneous instructions} *)
@@ -2107,85 +2107,85 @@ external build_fcmp : Fcmp.t -> llvalue -> llvalue -> string ->
     instruction at the position specified by the instruction builder [b].
     [incoming] is a list of [(llvalue, llbasicblock)] tuples.
     See the method [llvm::LLVMBuilder::CreatePHI]. *)
-external build_phi : (llvalue * llbasicblock) list -> string -> llbuilder ->
-                     llvalue = "llvm_build_phi"
+val build_phi : (llvalue * llbasicblock) list -> string -> llbuilder ->
+                     llvalue
 
 (** [build_call fn args name b] creates a
     [%name = call %fn(args...)]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateCall]. *)
-external build_call : llvalue -> llvalue array -> string -> llbuilder -> llvalue
-                    = "llvm_build_call"
+val build_call : llvalue -> llvalue array -> string -> llbuilder -> llvalue
+
 
 (** [build_select cond thenv elsev name b] creates a
     [%name = select %cond, %thenv, %elsev]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateSelect]. *)
-external build_select : llvalue -> llvalue -> llvalue -> string -> llbuilder ->
-                        llvalue = "llvm_build_select"
+val build_select : llvalue -> llvalue -> llvalue -> string -> llbuilder ->
+                        llvalue
 
 (** [build_va_arg valist argty name b] creates a
     [%name = va_arg %valist, %argty]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateVAArg]. *)
-external build_va_arg : llvalue -> lltype -> string -> llbuilder -> llvalue
-                      = "llvm_build_va_arg"
+val build_va_arg : llvalue -> lltype -> string -> llbuilder -> llvalue
+
 
 (** [build_extractelement vec i name b] creates a
     [%name = extractelement %vec, %i]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateExtractElement]. *)
-external build_extractelement : llvalue -> llvalue -> string -> llbuilder ->
-                                llvalue = "llvm_build_extractelement"
+val build_extractelement : llvalue -> llvalue -> string -> llbuilder ->
+                                llvalue
 
 (** [build_insertelement vec elt i name b] creates a
     [%name = insertelement %vec, %elt, %i]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateInsertElement]. *)
-external build_insertelement : llvalue -> llvalue -> llvalue -> string ->
-                               llbuilder -> llvalue = "llvm_build_insertelement"
+val build_insertelement : llvalue -> llvalue -> llvalue -> string ->
+                               llbuilder -> llvalue
 
 (** [build_shufflevector veca vecb mask name b] creates a
     [%name = shufflevector %veca, %vecb, %mask]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateShuffleVector]. *)
-external build_shufflevector : llvalue -> llvalue -> llvalue -> string ->
-                               llbuilder -> llvalue = "llvm_build_shufflevector"
+val build_shufflevector : llvalue -> llvalue -> llvalue -> string ->
+                               llbuilder -> llvalue
 
 (** [build_insertvalue agg idx name b] creates a
     [%name = extractvalue %agg, %idx]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateExtractValue]. *)
-external build_extractvalue : llvalue -> int -> string -> llbuilder -> llvalue
-                            = "llvm_build_extractvalue"
+val build_extractvalue : llvalue -> int -> string -> llbuilder -> llvalue
+
 
 (** [build_insertvalue agg val idx name b] creates a
     [%name = insertvalue %agg, %val, %idx]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateInsertValue]. *)
-external build_insertvalue : llvalue -> llvalue -> int -> string -> llbuilder ->
-                             llvalue = "llvm_build_insertvalue"
+val build_insertvalue : llvalue -> llvalue -> int -> string -> llbuilder ->
+                             llvalue
 
 (** [build_is_null val name b] creates a
     [%name = icmp eq %val, null]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateIsNull]. *)
-external build_is_null : llvalue -> string -> llbuilder -> llvalue
-                       = "llvm_build_is_null"
+val build_is_null : llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_is_not_null val name b] creates a
     [%name = icmp ne %val, null]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateIsNotNull]. *)
-external build_is_not_null : llvalue -> string -> llbuilder -> llvalue
-                           = "llvm_build_is_not_null"
+val build_is_not_null : llvalue -> string -> llbuilder -> llvalue
+
 
 (** [build_ptrdiff lhs rhs name b] creates a series of instructions that measure
     the difference between two pointer values at the position specified by the
     instruction builder [b].
     See the method [llvm::LLVMBuilder::CreatePtrDiff]. *)
-external build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
-                       = "llvm_build_ptrdiff"
+val build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
+
 
 
 (** {6 Memory buffers} *)
@@ -2194,14 +2194,14 @@ module MemoryBuffer : sig
   (** [of_file p] is the memory buffer containing the contents of the file at
       path [p]. If the file could not be read, then [IoError msg] is
       raised. *)
-  external of_file : string -> llmemorybuffer = "llvm_memorybuffer_of_file"
+  val of_file : string -> llmemorybuffer
   
   (** [stdin ()] is the memory buffer containing the contents of standard input.
       If standard input is empty, then [IoError msg] is raised. *)
-  external of_stdin : unit -> llmemorybuffer = "llvm_memorybuffer_of_stdin"
+  val of_stdin : unit -> llmemorybuffer
   
   (** Disposes of a memory buffer. *)
-  external dispose : llmemorybuffer -> unit = "llvm_memorybuffer_dispose"
+  val dispose : llmemorybuffer -> unit
 end
 
 
@@ -2216,44 +2216,44 @@ module PassManager : sig
       type of pipeline is suitable for link-time optimization and whole-module
       transformations.
       See the constructor of [llvm::PassManager]. *)
-  external create : unit -> [ `Module ] t = "llvm_passmanager_create"
+  val create : unit -> [ `Module ] t
   
   (** [PassManager.create_function m] constructs a new function-by-function
       pass pipeline over the module [m]. It does not take ownership of [m].
       This type of pipeline is suitable for code generation and JIT compilation
       tasks.
       See the constructor of [llvm::FunctionPassManager]. *)
-  external create_function : llmodule -> [ `Function ] t
-                           = "LLVMCreateFunctionPassManager"
+  val create_function : llmodule -> [ `Function ] t
+
   
   (** [run_module m pm] initializes, executes on the module [m], and finalizes
       all of the passes scheduled in the pass manager [pm]. Returns [true] if
       any of the passes modified the module, [false] otherwise.
       See the [llvm::PassManager::run] method. *)
-  external run_module : llmodule -> [ `Module ] t -> bool
-                      = "llvm_passmanager_run_module"
+  val run_module : llmodule -> [ `Module ] t -> bool
+
   
   (** [initialize fpm] initializes all of the function passes scheduled in the
       function pass manager [fpm]. Returns [true] if any of the passes modified
       the module, [false] otherwise.
       See the [llvm::FunctionPassManager::doInitialization] method. *)
-  external initialize : [ `Function ] t -> bool = "llvm_passmanager_initialize"
+  val initialize : [ `Function ] t -> bool
   
   (** [run_function f fpm] executes all of the function passes scheduled in the
       function pass manager [fpm] over the function [f]. Returns [true] if any
       of the passes modified [f], [false] otherwise.
       See the [llvm::FunctionPassManager::run] method. *)
-  external run_function : llvalue -> [ `Function ] t -> bool
-                        = "llvm_passmanager_run_function"
+  val run_function : llvalue -> [ `Function ] t -> bool
+
   
   (** [finalize fpm] finalizes all of the function passes scheduled in in the
       function pass manager [fpm]. Returns [true] if any of the passes
       modified the module, [false] otherwise.
       See the [llvm::FunctionPassManager::doFinalization] method. *)
-  external finalize : [ `Function ] t -> bool = "llvm_passmanager_finalize"
+  val finalize : [ `Function ] t -> bool
   
   (** Frees the memory of a pass pipeline. For function pipelines, does not free
       the module.
       See the destructor of [llvm::BasePassManager]. *)
-  external dispose : [< any ] t -> unit = "llvm_passmanager_dispose"
+  val dispose : [< any ] t -> unit
 end
