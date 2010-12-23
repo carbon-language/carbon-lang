@@ -3134,6 +3134,8 @@ public:
                                   const TemplateArgument *Args,
                                   unsigned NumArgs);
 
+#pragma mark C++ Variadic Templates (C++0x [temp.variadic])
+
   /// \brief The context in which an unexpanded parameter pack is
   /// being diagnosed.
   ///
@@ -3324,6 +3326,25 @@ public:
                              const MultiLevelTemplateArgumentList &TemplateArgs,
                                        bool &ShouldExpand,
                                        unsigned &NumExpansions);
+
+  /// \brief Determine whether the given declarator contains any unexpanded
+  /// parameter packs.
+  ///
+  /// This routine is used by the parser to disambiguate function declarators
+  /// with an ellipsis prior to the ')', e.g.,
+  ///
+  /// \code
+  ///   void f(T...);
+  /// \endcode
+  ///
+  /// To determine whether we have an (unnamed) function parameter pack or
+  /// a variadic function.
+  ///
+  /// \returns true if the declarator contains any unexpanded parameter packs,
+  /// false otherwise.
+  bool containsUnexpandedParameterPacks(Declarator &D);
+  
+#pragma mark C++ Template Argument Deduction (C++ [temp.deduct])
 
   /// \brief Describes the result of template argument deduction.
   ///

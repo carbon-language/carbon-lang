@@ -461,6 +461,7 @@ bool Parser::isCXX0XAttributeSpecifier (bool CheckClosing,
 ///         abstract-declarator:
 ///           ptr-operator abstract-declarator[opt]
 ///           direct-abstract-declarator
+///           ...
 ///
 ///         direct-abstract-declarator:
 ///           direct-abstract-declarator[opt]
@@ -483,7 +484,7 @@ bool Parser::isCXX0XAttributeSpecifier (bool CheckClosing,
 ///           'volatile'
 ///
 ///         declarator-id:
-///           id-expression
+///           '...'[opt] id-expression
 ///
 ///         id-expression:
 ///           unqualified-id
@@ -522,7 +523,9 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 
   // direct-declarator:
   // direct-abstract-declarator:
-
+  if (Tok.is(tok::ellipsis))
+    ConsumeToken();
+  
   if ((Tok.is(tok::identifier) ||
        (Tok.is(tok::annot_cxxscope) && NextToken().is(tok::identifier))) &&
       mayHaveIdentifier) {
@@ -565,6 +568,10 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 
   while (1) {
     TPResult TPR(TPResult::Ambiguous());
+
+    // abstract-declarator: ...
+    if (Tok.is(tok::ellipsis))
+      ConsumeToken();
 
     if (Tok.is(tok::l_paren)) {
       // Check whether we have a function declarator or a possible ctor-style
@@ -1165,8 +1172,8 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
     if (Tok.is(tok::equal)) {
       // '=' assignment-expression
       // Parse through assignment-expression.
-      tok::TokenKind StopToks[3] ={ tok::comma, tok::ellipsis, tok::r_paren };
-      if (!SkipUntil(StopToks, 3, true/*StopAtSemi*/, true/*DontConsume*/))
+      tok::TokenKind StopToks[2] ={ tok::comma, tok::r_paren };
+      if (!SkipUntil(StopToks, 2, true/*StopAtSemi*/, true/*DontConsume*/))
         return TPResult::Error();
     }
 

@@ -1186,6 +1186,10 @@ private:
   /// Extension - true if the declaration is preceded by __extension__.
   bool Extension : 1;
 
+  /// \brief If provided, the source location of the ellipsis used to describe
+  /// this declarator as a parameter pack.
+  SourceLocation EllipsisLoc;
+  
   friend struct DeclaratorChunk;
 
 public:
@@ -1427,6 +1431,10 @@ public:
 
   void setGroupingParens(bool flag) { GroupingParens = flag; }
   bool hasGroupingParens() const { return GroupingParens; }
+  
+  bool hasEllipsis() const { return EllipsisLoc.isValid(); }
+  SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
+  void setEllipsisLoc(SourceLocation EL) { EllipsisLoc = EL; }
 };
 
 /// FieldDeclarator - This little struct is used to capture information about

@@ -2819,7 +2819,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 /// [C++]   declarator-id
 ///
 ///       declarator-id: [C++ 8]
-///         id-expression
+///         '...'[opt] id-expression
 ///         '::'[opt] nested-name-specifier[opt] type-name
 ///
 ///       id-expression: [C++ 5.1]
@@ -2849,6 +2849,21 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         DeclScopeObj.EnterDeclaratorScope();
     }
 
+    // C++0x [dcl.fct]p14:
+    //   There is a syntactic ambiguity when an ellipsis occurs at the end
+    //   of a parameter-declaration-clause without a preceding comma. In 
+    //   this case, the ellipsis is parsed as part of the 
+    //   abstract-declarator if the type of the parameter names a template 
+    //   parameter pack that has not been expanded; otherwise, it is parsed
+    //   as part of the parameter-declaration-clause.
+    if (Tok.is(tok::ellipsis) &&
+        !((D.getContext() == Declarator::PrototypeContext ||
+           D.getContext() == Declarator::BlockLiteralContext) &&
+          getCurScope()->getTemplateParamParent() &&
+          NextToken().is(tok::r_paren) &&
+          !Actions.containsUnexpandedParameterPacks(D)))
+      D.setEllipsisLoc(ConsumeToken());
+    
     if (Tok.is(tok::identifier) || Tok.is(tok::kw_operator) ||
         Tok.is(tok::annot_template_id) || Tok.is(tok::tilde)) {
       // We found something that indicates the start of an unqualified-id.

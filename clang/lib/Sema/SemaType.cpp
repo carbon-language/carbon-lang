@@ -1465,6 +1465,64 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     T.addConst();
   }
 
+  // If there was an ellipsis in the declarator, the declaration declares a 
+  // parameter pack whose type may be a pack expansion type.
+  if (D.hasEllipsis() && !T.isNull()) {
+    // C++0x [dcl.fct]p13:
+    //   A declarator-id or abstract-declarator containing an ellipsis shall 
+    //   only be used in a parameter-declaration. Such a parameter-declaration
+    //   is a parameter pack (14.5.3). [...]
+    switch (D.getContext()) {
+    case Declarator::PrototypeContext:
+      // C++0x [dcl.fct]p13:
+      //   [...] When it is part of a parameter-declaration-clause, the 
+      //   parameter pack is a function parameter pack (14.5.3). The type T 
+      //   of the declarator-id of the function parameter pack shall contain
+      //   a template parameter pack; each template parameter pack in T is 
+      //   expanded by the function parameter pack.
+      //
+      // We represent function parameter packs as function parameters whose
+      // type is a pack expansion.
+      if (!T->containsUnexpandedParameterPack()) {
+        Diag(D.getEllipsisLoc(), 
+             diag::err_function_parameter_pack_without_parameter_packs)
+          << T <<  D.getSourceRange();
+        D.setEllipsisLoc(SourceLocation());
+      } else {
+        T = Context.getPackExpansionType(T);
+      }
+      break;
+        
+    case Declarator::TemplateParamContext:
+      // C++0x [temp.param]p15:
+      //   If a template-parameter is a [...] is a parameter-declaration that 
+      //   declares a parameter pack (8.3.5), then the template-parameter is a
+      //   template parameter pack (14.5.3).
+      //
+      // Note: core issue 778 clarifies that, if there are any unexpanded
+      // parameter packs in the type of the non-type template parameter, then
+      // it expands those parameter packs.
+      if (T->containsUnexpandedParameterPack())
+        T = Context.getPackExpansionType(T);
+      break;
+    
+    case Declarator::FileContext:
+    case Declarator::KNRTypeListContext:
+    case Declarator::TypeNameContext:
+    case Declarator::MemberContext:
+    case Declarator::BlockContext:
+    case Declarator::ForContext:
+    case Declarator::ConditionContext:
+    case Declarator::CXXCatchContext:
+    case Declarator::BlockLiteralContext:
+      // FIXME: We may want to allow parameter packs in block-literal contexts
+      // in the future.
+      Diag(D.getEllipsisLoc(), diag::err_ellipsis_in_declarator_not_parameter);
+      D.setEllipsisLoc(SourceLocation());
+      break;
+    }
+  }
+  
   // Process any function attributes we might have delayed from the
   // declaration-specifiers.
   ProcessDelayedFnAttrs(*this, T, FnAttrsFromDeclSpec);
@@ -1729,6 +1787,12 @@ Sema::GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
   TypeSourceInfo *TInfo = Context.CreateTypeSourceInfo(T);
   UnqualTypeLoc CurrTL = TInfo->getTypeLoc().getUnqualifiedLoc();
 
+  // Handle parameter packs whose type is a pack expansion.
+  if (isa<PackExpansionType>(T)) {
+    cast<PackExpansionTypeLoc>(CurrTL).setEllipsisLoc(D.getEllipsisLoc());
+    CurrTL = CurrTL.getNextTypeLoc().getUnqualifiedLoc();    
+  }
+  
   for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
     DeclaratorLocFiller(D.getTypeObject(i)).Visit(CurrTL);
     CurrTL = CurrTL.getNextTypeLoc().getUnqualifiedLoc();

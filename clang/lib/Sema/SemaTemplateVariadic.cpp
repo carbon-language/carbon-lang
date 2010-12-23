@@ -413,3 +413,72 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
   
   return false;
 }
+
+bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
+  const DeclSpec &DS = D.getDeclSpec();
+  switch (DS.getTypeSpecType()) {
+  case TST_typename:
+  case TST_typeofType: {
+    QualType T = DS.getRepAsType().get();
+    if (!T.isNull() && T->containsUnexpandedParameterPack())
+      return true;
+    break;
+  }
+      
+  case TST_typeofExpr:
+  case TST_decltype:
+    if (DS.getRepAsExpr() && 
+        DS.getRepAsExpr()->containsUnexpandedParameterPack())
+      return true;
+    break;
+      
+  case TST_unspecified:
+  case TST_void:
+  case TST_char:
+  case TST_wchar:
+  case TST_char16:
+  case TST_char32:
+  case TST_int:
+  case TST_float:
+  case TST_double:
+  case TST_bool:
+  case TST_decimal32:
+  case TST_decimal64:
+  case TST_decimal128:
+  case TST_enum:
+  case TST_union:
+  case TST_struct:
+  case TST_class:
+  case TST_auto:
+  case TST_error:
+    break;
+  }
+  
+  for (unsigned I = 0, N = D.getNumTypeObjects(); I != N; ++I) {
+    const DeclaratorChunk &Chunk = D.getTypeObject(I);
+    switch (Chunk.Kind) {
+    case DeclaratorChunk::Pointer:
+    case DeclaratorChunk::Reference:
+    case DeclaratorChunk::Paren:
+      // These declarator chunks cannot contain any parameter packs.
+      break;
+        
+    case DeclaratorChunk::Array:
+    case DeclaratorChunk::Function:
+    case DeclaratorChunk::BlockPointer:
+      // Syntactically, these kinds of declarator chunks all come after the
+      // declarator-id (conceptually), so the parser should not invoke this
+      // routine at this time.
+      llvm_unreachable("Could not have seen this kind of declarator chunk");
+      break;
+        
+    case DeclaratorChunk::MemberPointer:
+      if (Chunk.Mem.Scope().getScopeRep() &&
+          Chunk.Mem.Scope().getScopeRep()->containsUnexpandedParameterPack())
+        return true;
+      break;
+    }
+  }
+  
+  return false;
+}

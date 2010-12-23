@@ -1861,6 +1861,12 @@ def err_pack_expansion_length_conflict : Error<
   "pack expansion contains parameter packs %0 and %1 that have different "
   "lengths (%2 vs. %3)">;
 
+def err_function_parameter_pack_without_parameter_packs : Error<
+  "type %0 of function parameter pack does not contain any unexpanded "
+  "parameter packs">;
+def err_ellipsis_in_declarator_not_parameter : Error<
+  "only function and template parameters can be parameter packs">;
+
 // Unsupported variadic templates features
 def err_pack_expansion_unsupported : Error<
   "clang does not yet support %select{non-type|template}0 pack expansions">;
@@ -1868,6 +1874,10 @@ def err_pack_expansion_instantiation_unsupported : Error<
   "clang cannot yet instantiate pack expansions">;
 def err_pack_expansion_mismatch_unsupported : Error<
   "clang cannot yet instantiate pack expansions with mismatched pack levels">;
+def err_function_parameter_pack_unsupported : Error<
+  "clang does not yet support function parameter packs">;
+def err_non_type_parameter_pack_unsupported : Error<
+  "clang does not yet support non-type template parameter packs">;
 
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;
