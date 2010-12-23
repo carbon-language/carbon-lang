@@ -492,70 +492,69 @@ void X86RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+  bool reseveCallFrame = TFI->hasReservedCallFrame(MF);
+  int Opcode = I->getOpcode();
+  bool isDestroy = Opcode == getCallFrameDestroyOpcode();
+  DebugLoc DL = I->getDebugLoc();
+  uint64_t Amount = !reseveCallFrame ? I->getOperand(0).getImm() : 0;
+  uint64_t CalleeAmt = isDestroy ? I->getOperand(1).getImm() : 0;
+  I = MBB.erase(I);
 
-  if (!TFI->hasReservedCallFrame(MF)) {
+  if (!reseveCallFrame) {
     // If the stack pointer can be changed after prologue, turn the
     // adjcallstackup instruction into a 'sub ESP, <amt>' and the
     // adjcallstackdown instruction into 'add ESP, <amt>'
     // TODO: consider using push / pop instead of sub + store / add
-    MachineInstr *Old = I;
-    uint64_t Amount = Old->getOperand(0).getImm();
-    if (Amount != 0) {
-      // We need to keep the stack aligned properly.  To do this, we round the
-      // amount of space needed for the outgoing arguments up to the next
-      // alignment boundary.
-      Amount = (Amount + StackAlign - 1) / StackAlign * StackAlign;
+    if (Amount == 0)
+      return;
 
-      MachineInstr *New = 0;
-      if (Old->getOpcode() == getCallFrameSetupOpcode()) {
-        New = BuildMI(MF, Old->getDebugLoc(),
-                      TII.get(getSUBriOpcode(Is64Bit, Amount)),
-                      StackPtr)
-          .addReg(StackPtr)
-          .addImm(Amount);
-      } else {
-        assert(Old->getOpcode() == getCallFrameDestroyOpcode());
+    // We need to keep the stack aligned properly.  To do this, we round the
+    // amount of space needed for the outgoing arguments up to the next
+    // alignment boundary.
+    Amount = (Amount + StackAlign - 1) / StackAlign * StackAlign;
 
-        // Factor out the amount the callee already popped.
-        uint64_t CalleeAmt = Old->getOperand(1).getImm();
-        Amount -= CalleeAmt;
+    MachineInstr *New = 0;
+    if (Opcode == getCallFrameSetupOpcode()) {
+      New = BuildMI(MF, DL, TII.get(getSUBriOpcode(Is64Bit, Amount)),
+                    StackPtr)
+        .addReg(StackPtr)
+        .addImm(Amount);
+    } else {
+      assert(Opcode == getCallFrameDestroyOpcode());
+
+      // Factor out the amount the callee already popped.
+      Amount -= CalleeAmt;
   
       if (Amount) {
-          unsigned Opc = getADDriOpcode(Is64Bit, Amount);
-          New = BuildMI(MF, Old->getDebugLoc(), TII.get(Opc), StackPtr)
-            .addReg(StackPtr)
-            .addImm(Amount);
-        }
-      }
-
-      if (New) {
-        // The EFLAGS implicit def is dead.
-        New->getOperand(3).setIsDead();
-
-        // Replace the pseudo instruction with a new instruction.
-        MBB.insert(I, New);
+        unsigned Opc = getADDriOpcode(Is64Bit, Amount);
+        New = BuildMI(MF, DL, TII.get(Opc), StackPtr)
+          .addReg(StackPtr).addImm(Amount);
       }
     }
-  } else if (I->getOpcode() == getCallFrameDestroyOpcode()) {
+
+    if (New) {
+      // The EFLAGS implicit def is dead.
+      New->getOperand(3).setIsDead();
+
+      // Replace the pseudo instruction with a new instruction.
+      MBB.insert(I, New);
+    }
+
+    return;
+  }
+
+  if (Opcode == getCallFrameDestroyOpcode() && CalleeAmt) {
     // If we are performing frame pointer elimination and if the callee pops
     // something off the stack pointer, add it back.  We do this until we have
     // more advanced stack pointer tracking ability.
-    if (uint64_t CalleeAmt = I->getOperand(1).getImm()) {
-      unsigned Opc = getSUBriOpcode(Is64Bit, CalleeAmt);
-      MachineInstr *Old = I;
-      MachineInstr *New =
-        BuildMI(MF, Old->getDebugLoc(), TII.get(Opc), 
-                StackPtr)
-          .addReg(StackPtr)
-          .addImm(CalleeAmt);
+    unsigned Opc = getSUBriOpcode(Is64Bit, CalleeAmt);
+    MachineInstr *New = BuildMI(MF, DL, TII.get(Opc), StackPtr)
+      .addReg(StackPtr).addImm(CalleeAmt);
 
-      // The EFLAGS implicit def is dead.
-      New->getOperand(3).setIsDead();
-      MBB.insert(I, New);
-    }
+    // The EFLAGS implicit def is dead.
+    New->getOperand(3).setIsDead();
+    MBB.insert(I, New);
   }
-
-  MBB.erase(I);
 }
 
 void
