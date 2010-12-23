@@ -121,6 +121,24 @@ AsmToken ARMBaseAsmLexer::LexTokenUAL() {
     StringRef lowerRef(lowerCase);
 
     unsigned regID = MatchRegisterName(lowerRef);
+    // Check for register aliases.
+    //   r13 -> sp
+    //   r14 -> lr
+    //   r15 -> pc
+    //   ip  -> r12
+    //   FIXME: Some assemblers support lots of others. Do we want them all?
+    if (!regID) {
+     if (lowerCase.size() == 3 && lowerCase[0] == 'r'
+        && lowerCase[1] == '1') {
+       switch (lowerCase[2]) {
+       default: break;
+       case '3': regID = ARM::SP;
+       case '4': regID = ARM::LR;
+       case '5': regID = ARM::PC;
+       }
+     } else if (lowerCase == "ip")
+       regID = ARM::R12;
+    }
 
     if (regID) {
       return AsmToken(AsmToken::Register,
