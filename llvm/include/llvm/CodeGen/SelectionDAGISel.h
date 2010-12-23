@@ -145,10 +145,10 @@ public:
   };
   
   enum {
-    OPFL_None       = 0,     // Node has no chain or flag input and isn't variadic.
+    OPFL_None       = 0,  // Node has no chain or flag input and isn't variadic.
     OPFL_Chain      = 1,     // Node has a chain input.
-    OPFL_FlagInput  = 2,     // Node has a flag input.
-    OPFL_FlagOutput = 4,     // Node has a flag output.
+    OPFL_GlueInput  = 2,     // Node has a glue input.
+    OPFL_GlueOutput = 4,     // Node has a glue output.
     OPFL_MemRefs    = 8,     // Node gets accumulated MemRefs.
     OPFL_Variadic0  = 1<<4,  // Node is variadic, root has 0 fixed inputs.
     OPFL_Variadic1  = 2<<4,  // Node is variadic, root has 1 fixed inputs.
@@ -305,10 +305,10 @@ private:
   /// state machines that start with a OPC_SwitchOpcode node.
   std::vector<unsigned> OpcodeOffset;
   
-  void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
-                            const SmallVectorImpl<SDNode*> &ChainNodesMatched,
-                            SDValue InputFlag,const SmallVectorImpl<SDNode*> &F,
-                            bool isMorphNodeTo);
+  void UpdateChainsAndGlue(SDNode *NodeToMatch, SDValue InputChain,
+                           const SmallVectorImpl<SDNode*> &ChainNodesMatched,
+                           SDValue InputGlue, const SmallVectorImpl<SDNode*> &F,
+                           bool isMorphNodeTo);
     
 };
 
