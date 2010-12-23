@@ -22,6 +22,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
@@ -959,7 +960,15 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
   for (BasicBlock::iterator BBI = BB.begin(), E = BB.end(); BBI != E; ) {
     Instruction *I = BBI++;
 
-    if (CastInst *CI = dyn_cast<CastInst>(I)) {
+    if (PHINode *P = dyn_cast<PHINode>(I)) {
+      // It is possible for very late stage optimizations (such as SimplifyCFG)
+      // to introduce PHI nodes too late to be cleaned up.  If we detect such a
+      // trivial PHI, go ahead and zap it here.
+      if (Value *V = SimplifyInstruction(P)) {
+        P->replaceAllUsesWith(V);
+        P->eraseFromParent();
+      }
+    } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
       // If the source of the cast is a constant, then this should have
       // already been constant folded.  The only reason NOT to constant fold
       // it is if something (e.g. LSR) was careful to place the constant
