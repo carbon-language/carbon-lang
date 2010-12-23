@@ -247,6 +247,23 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
   }
 }
 
+/// Call ReleasePred for each predecessor, then update register live def/gen.
+/// Always update LiveRegDefs for a register dependence even if the current SU
+/// also defines the register. This effectively create one large live range
+/// across a sequence of two-address node. This is important because the
+/// entire chain must be scheduled together. Example:
+///
+/// flags = (3) add
+/// flags = (2) addc flags
+/// flags = (1) addc flags
+///
+/// results in
+///
+/// LiveRegDefs[flags] = 3
+/// LiveRegCycles[flags] = 1
+///
+/// If (2) addc is unscheduled, then (1) addc must also be unscheduled to avoid
+/// interference on flags.
 void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU, unsigned CurCycle) {
   // Bottom up: release predecessors
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
@@ -257,9 +274,12 @@ void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU, unsigned CurCycle) {
       // expensive to copy the register. Make sure nothing that can
       // clobber the register is scheduled between the predecessor and
       // this node.
-      if (!LiveRegDefs[I->getReg()]) {
+      SUnit *&RegDef = LiveRegDefs[I->getReg()];
+      assert((!RegDef || RegDef == SU || RegDef == I->getSUnit()) &&
+             "interference on register dependence");
+      RegDef = I->getSUnit();
+      if (!LiveRegCycles[I->getReg()]) {
         ++NumLiveRegs;
-        LiveRegDefs[I->getReg()] = I->getSUnit();
         LiveRegCycles[I->getReg()] = CurCycle;
       }
     }
@@ -284,20 +304,19 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
 
   AvailableQueue->ScheduledNode(SU);
 
+  // Update liveness of predecessors before successors to avoid treating a
+  // two-address node as a live range def.
   ReleasePredecessors(SU, CurCycle);
 
   // Release all the implicit physical register defs that are live.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (I->isAssignedRegDep()) {
-      if (LiveRegCycles[I->getReg()] == I->getSUnit()->getHeight()) {
-        assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
-        assert(LiveRegDefs[I->getReg()] == SU &&
-               "Physical register dependency violated?");
-        --NumLiveRegs;
-        LiveRegDefs[I->getReg()] = NULL;
-        LiveRegCycles[I->getReg()] = 0;
-      }
+    // LiveRegDegs[I->getReg()] != SU when SU is a two-address node.
+    if (I->isAssignedRegDep() && LiveRegDefs[I->getReg()] == SU) {
+      assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
+      --NumLiveRegs;
+      LiveRegDefs[I->getReg()] = NULL;
+      LiveRegCycles[I->getReg()] = 0;
     }
   }
 
@@ -341,8 +360,10 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isAssignedRegDep()) {
+      // This becomes the nearest def. Note that an earlier def may still be
+      // pending if this is a two-address node.
+      LiveRegDefs[I->getReg()] = SU;
       if (!LiveRegDefs[I->getReg()]) {
-        LiveRegDefs[I->getReg()] = SU;
         ++NumLiveRegs;
       }
       if (I->getSUnit()->getHeight() < LiveRegCycles[I->getReg()])
