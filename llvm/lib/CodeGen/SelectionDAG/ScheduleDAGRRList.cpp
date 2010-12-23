@@ -83,6 +83,9 @@ private:
   /// AvailableQueue - The priority queue to use for the available SUnits.
   SchedulingPriorityQueue *AvailableQueue;
 
+  /// CurCycle - The current scheduler state corresponds to this cycle.
+  unsigned CurCycle;
+
   /// LiveRegDefs - A set of physical registers and their definition
   /// that are "live". These nodes must be scheduled before any other nodes that
   /// modifies the registers can be scheduled.
@@ -99,7 +102,7 @@ public:
                     bool isbottomup, bool needlatency,
                     SchedulingPriorityQueue *availqueue)
     : ScheduleDAGSDNodes(mf), isBottomUp(isbottomup), NeedLatency(needlatency),
-      AvailableQueue(availqueue), Topo(SUnits) {
+      AvailableQueue(availqueue), CurCycle(0), Topo(SUnits) {
     }
 
   ~ScheduleDAGRRList() {
@@ -141,18 +144,20 @@ private:
   void ReleaseSucc(SUnit *SU, const SDep *SuccEdge);
   void ReleaseSuccessors(SUnit *SU);
   void CapturePred(SDep *PredEdge);
-  void ScheduleNodeBottomUp(SUnit*, unsigned);
-  void ScheduleNodeTopDown(SUnit*, unsigned);
+  void ScheduleNodeBottomUp(SUnit*);
   void UnscheduleNodeBottomUp(SUnit*);
-  void BacktrackBottomUp(SUnit*, unsigned, unsigned&);
+  void BacktrackBottomUp(SUnit*, unsigned);
   SUnit *CopyAndMoveSuccessors(SUnit*);
   void InsertCopiesAndMoveSuccs(SUnit*, unsigned,
                                 const TargetRegisterClass*,
                                 const TargetRegisterClass*,
                                 SmallVector<SUnit*, 2>&);
   bool DelayForLiveRegsBottomUp(SUnit*, SmallVector<unsigned, 4>&);
-  void ListScheduleTopDown();
+  SUnit *PickNodeToScheduleBottomUp();
   void ListScheduleBottomUp();
+
+  void ScheduleNodeTopDown(SUnit*);
+  void ListScheduleTopDown();
 
 
   /// CreateNewSUnit - Creates a new SUnit and returns a pointer to it.
@@ -192,6 +197,7 @@ void ScheduleDAGRRList::Schedule() {
         << "********** List Scheduling BB#" << BB->getNumber()
         << " '" << BB->getName() << "' **********\n");
 
+  CurCycle = 0;
   NumLiveRegs = 0;
   LiveRegDefs.resize(TRI->getNumRegs(), NULL);
   LiveRegGens.resize(TRI->getNumRegs(), NULL);
@@ -289,7 +295,7 @@ void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU) {
 /// ScheduleNodeBottomUp - Add the node to the schedule. Decrement the pending
 /// count of its predecessors. If a predecessor pending count is zero, add it to
 /// the Available queue.
-void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
+void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
   DEBUG(dbgs() << "\n*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
 
@@ -381,8 +387,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
 
 /// BacktrackBottomUp - Backtrack scheduling to a previous cycle specified in
 /// BTCycle in order to schedule a specific node.
-void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, unsigned BtCycle,
-                                          unsigned &CurCycle) {
+void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, unsigned BtCycle) {
   SUnit *OldSU = NULL;
   while (CurCycle > BtCycle) {
     OldSU = Sequence.back();
@@ -734,12 +739,143 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
   return !LRegs.empty();
 }
 
+/// Return a node that can be scheduled in this cycle. Requirements:
+/// (1) Ready: latency has been satisfied
+/// (2) No Hazards: resources are available (TBD)
+/// (3) No Interferences: may unschedule to break register interferences.
+SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
+  SmallVector<SUnit*, 4> Interferences;
+  DenseMap<SUnit*, SmallVector<unsigned, 4> > LRegsMap;
+
+  SUnit *CurSU = AvailableQueue->pop();
+  while (CurSU) {
+    SmallVector<unsigned, 4> LRegs;
+    if (!DelayForLiveRegsBottomUp(CurSU, LRegs))
+      break;
+    LRegsMap.insert(std::make_pair(CurSU, LRegs));
+
+    CurSU->isPending = true;  // This SU is not in AvailableQueue right now.
+    Interferences.push_back(CurSU);
+    CurSU = AvailableQueue->pop();
+  }
+  if (CurSU) {
+    // Add the nodes that aren't ready back onto the available list.
+    for (unsigned i = 0, e = Interferences.size(); i != e; ++i) {
+      Interferences[i]->isPending = false;
+      assert(Interferences[i]->isAvailable && "must still be available");
+      AvailableQueue->push(Interferences[i]);
+    }
+    return CurSU;
+  }
+
+  // All candidates are delayed due to live physical reg dependencies.
+  // Try backtracking, code duplication, or inserting cross class copies
+  // to resolve it.
+  for (unsigned i = 0, e = Interferences.size(); i != e; ++i) {
+    SUnit *TrySU = Interferences[i];
+    SmallVector<unsigned, 4> &LRegs = LRegsMap[TrySU];
+
+    // Try unscheduling up to the point where it's safe to schedule
+    // this node.
+    unsigned LiveCycle = CurCycle;
+    for (unsigned j = 0, ee = LRegs.size(); j != ee; ++j) {
+      unsigned Reg = LRegs[j];
+      unsigned LCycle = LiveRegGens[Reg]->getHeight();
+      LiveCycle = std::min(LiveCycle, LCycle);
+    }
+    SUnit *OldSU = Sequence[LiveCycle];
+    if (!WillCreateCycle(TrySU, OldSU))  {
+      BacktrackBottomUp(TrySU, LiveCycle);
+
+      // Force the current node to be scheduled before the node that
+      // requires the physical reg dep.
+      if (OldSU->isAvailable) {
+        OldSU->isAvailable = false;
+        if (!OldSU->isPending)
+          AvailableQueue->remove(OldSU);
+      }
+      AddPred(TrySU, SDep(OldSU, SDep::Order, /*Latency=*/1,
+                          /*Reg=*/0, /*isNormalMemory=*/false,
+                          /*isMustAlias=*/false, /*isArtificial=*/true));
+
+      // If one or more successors has been unscheduled, then the current
+      // node is no longer avaialable. Schedule a successor that's now
+      // available instead.
+      if (!TrySU->isAvailable) {
+        CurSU = AvailableQueue->pop();
+      }
+      else {
+        CurSU = TrySU;
+        TrySU->isPending = false;
+        Interferences.erase(Interferences.begin()+i);
+      }
+      break;
+    }
+  }
+
+  if (!CurSU) {
+    // Can't backtrack. If it's too expensive to copy the value, then try
+    // duplicate the nodes that produces these "too expensive to copy"
+    // values to break the dependency. In case even that doesn't work,
+    // insert cross class copies.
+    // If it's not too expensive, i.e. cost != -1, issue copies.
+    SUnit *TrySU = Interferences[0];
+    SmallVector<unsigned, 4> &LRegs = LRegsMap[TrySU];
+    assert(LRegs.size() == 1 && "Can't handle this yet!");
+    unsigned Reg = LRegs[0];
+    SUnit *LRDef = LiveRegDefs[Reg];
+    EVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
+    const TargetRegisterClass *RC =
+      TRI->getMinimalPhysRegClass(Reg, VT);
+    const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);
+
+    // If cross copy register class is null, then it must be possible copy
+    // the value directly. Do not try duplicate the def.
+    SUnit *NewDef = 0;
+    if (DestRC)
+      NewDef = CopyAndMoveSuccessors(LRDef);
+    else
+      DestRC = RC;
+    if (!NewDef) {
+      // Issue copies, these can be expensive cross register class copies.
+      SmallVector<SUnit*, 2> Copies;
+      InsertCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
+      DEBUG(dbgs() << "    Adding an edge from SU #" << TrySU->NodeNum
+            << " to SU #" << Copies.front()->NodeNum << "\n");
+      AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
+                          /*Reg=*/0, /*isNormalMemory=*/false,
+                          /*isMustAlias=*/false,
+                          /*isArtificial=*/true));
+      NewDef = Copies.back();
+    }
+
+    DEBUG(dbgs() << "    Adding an edge from SU #" << NewDef->NodeNum
+          << " to SU #" << TrySU->NodeNum << "\n");
+    LiveRegDefs[Reg] = NewDef;
+    AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
+                         /*Reg=*/0, /*isNormalMemory=*/false,
+                         /*isMustAlias=*/false,
+                         /*isArtificial=*/true));
+    TrySU->isAvailable = false;
+    CurSU = NewDef;
+  }
+
+  assert(CurSU && "Unable to resolve live physical register dependencies!");
+
+  // Add the nodes that aren't ready back onto the available list.
+  for (unsigned i = 0, e = Interferences.size(); i != e; ++i) {
+    Interferences[i]->isPending = false;
+    // May no longer be available due to backtracking.
+    if (Interferences[i]->isAvailable) {
+      AvailableQueue->push(Interferences[i]);
+    }
+  }
+  return CurSU;
+}
 
 /// ListScheduleBottomUp - The main loop of list scheduling for bottom-up
 /// schedulers.
 void ScheduleDAGRRList::ListScheduleBottomUp() {
-  unsigned CurCycle = 0;
-
   // Release any predecessors of the special Exit node.
   ReleasePredecessors(&ExitSU);
 
@@ -753,128 +889,15 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
 
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
-  SmallVector<SUnit*, 4> NotReady;
-  DenseMap<SUnit*, SmallVector<unsigned, 4> > LRegsMap;
   Sequence.reserve(SUnits.size());
   while (!AvailableQueue->empty()) {
-    bool Delayed = false;
-    LRegsMap.clear();
-    SUnit *CurSU = AvailableQueue->pop();
-    while (CurSU) {
-      SmallVector<unsigned, 4> LRegs;
-      if (!DelayForLiveRegsBottomUp(CurSU, LRegs))
-        break;
-      Delayed = true;
-      LRegsMap.insert(std::make_pair(CurSU, LRegs));
+    // Pick the best node to schedule taking all constraints into
+    // consideration.
+    SUnit *SU = PickNodeToScheduleBottomUp();
 
-      CurSU->isPending = true;  // This SU is not in AvailableQueue right now.
-      NotReady.push_back(CurSU);
-      CurSU = AvailableQueue->pop();
-    }
+    if (SU)
+      ScheduleNodeBottomUp(SU);
 
-    // All candidates are delayed due to live physical reg dependencies.
-    // Try backtracking, code duplication, or inserting cross class copies
-    // to resolve it.
-    if (Delayed && !CurSU) {
-      for (unsigned i = 0, e = NotReady.size(); i != e; ++i) {
-        SUnit *TrySU = NotReady[i];
-        SmallVector<unsigned, 4> &LRegs = LRegsMap[TrySU];
-
-        // Try unscheduling up to the point where it's safe to schedule
-        // this node.
-        unsigned LiveCycle = CurCycle;
-        for (unsigned j = 0, ee = LRegs.size(); j != ee; ++j) {
-          unsigned Reg = LRegs[j];
-          unsigned LCycle = LiveRegGens[Reg]->getHeight();
-          LiveCycle = std::min(LiveCycle, LCycle);
-        }
-        SUnit *OldSU = Sequence[LiveCycle];
-        if (!WillCreateCycle(TrySU, OldSU))  {
-          BacktrackBottomUp(TrySU, LiveCycle, CurCycle);
-          // Force the current node to be scheduled before the node that
-          // requires the physical reg dep.
-          if (OldSU->isAvailable) {
-            OldSU->isAvailable = false;
-            AvailableQueue->remove(OldSU);
-          }
-          AddPred(TrySU, SDep(OldSU, SDep::Order, /*Latency=*/1,
-                              /*Reg=*/0, /*isNormalMemory=*/false,
-                              /*isMustAlias=*/false, /*isArtificial=*/true));
-          // If one or more successors has been unscheduled, then the current
-          // node is no longer avaialable. Schedule a successor that's now
-          // available instead.
-          if (!TrySU->isAvailable)
-            CurSU = AvailableQueue->pop();
-          else {
-            CurSU = TrySU;
-            TrySU->isPending = false;
-            NotReady.erase(NotReady.begin()+i);
-          }
-          break;
-        }
-      }
-
-      if (!CurSU) {
-        // Can't backtrack. If it's too expensive to copy the value, then try
-        // duplicate the nodes that produces these "too expensive to copy"
-        // values to break the dependency. In case even that doesn't work,
-        // insert cross class copies.
-        // If it's not too expensive, i.e. cost != -1, issue copies.
-        SUnit *TrySU = NotReady[0];
-        SmallVector<unsigned, 4> &LRegs = LRegsMap[TrySU];
-        assert(LRegs.size() == 1 && "Can't handle this yet!");
-        unsigned Reg = LRegs[0];
-        SUnit *LRDef = LiveRegDefs[Reg];
-        EVT VT = getPhysicalRegisterVT(LRDef->getNode(), Reg, TII);
-        const TargetRegisterClass *RC =
-          TRI->getMinimalPhysRegClass(Reg, VT);
-        const TargetRegisterClass *DestRC = TRI->getCrossCopyRegClass(RC);
-
-        // If cross copy register class is null, then it must be possible copy
-        // the value directly. Do not try duplicate the def.
-        SUnit *NewDef = 0;
-        if (DestRC)
-          NewDef = CopyAndMoveSuccessors(LRDef);
-        else
-          DestRC = RC;
-        if (!NewDef) {
-          // Issue copies, these can be expensive cross register class copies.
-          SmallVector<SUnit*, 2> Copies;
-          InsertCopiesAndMoveSuccs(LRDef, Reg, DestRC, RC, Copies);
-          DEBUG(dbgs() << "    Adding an edge from SU #" << TrySU->NodeNum
-                       << " to SU #" << Copies.front()->NodeNum << "\n");
-          AddPred(TrySU, SDep(Copies.front(), SDep::Order, /*Latency=*/1,
-                              /*Reg=*/0, /*isNormalMemory=*/false,
-                              /*isMustAlias=*/false,
-                              /*isArtificial=*/true));
-          NewDef = Copies.back();
-        }
-
-        DEBUG(dbgs() << "    Adding an edge from SU #" << NewDef->NodeNum
-                     << " to SU #" << TrySU->NodeNum << "\n");
-        LiveRegDefs[Reg] = NewDef;
-        AddPred(NewDef, SDep(TrySU, SDep::Order, /*Latency=*/1,
-                             /*Reg=*/0, /*isNormalMemory=*/false,
-                             /*isMustAlias=*/false,
-                             /*isArtificial=*/true));
-        TrySU->isAvailable = false;
-        CurSU = NewDef;
-      }
-
-      assert(CurSU && "Unable to resolve live physical register dependencies!");
-    }
-
-    // Add the nodes that aren't ready back onto the available list.
-    for (unsigned i = 0, e = NotReady.size(); i != e; ++i) {
-      NotReady[i]->isPending = false;
-      // May no longer be available due to backtracking.
-      if (NotReady[i]->isAvailable)
-        AvailableQueue->push(NotReady[i]);
-    }
-    NotReady.clear();
-
-    if (CurSU)
-      ScheduleNodeBottomUp(CurSU, CurCycle);
     ++CurCycle;
     AvailableQueue->setCurCycle(CurCycle);
   }
@@ -928,7 +951,7 @@ void ScheduleDAGRRList::ReleaseSuccessors(SUnit *SU) {
 /// ScheduleNodeTopDown - Add the node to the schedule. Decrement the pending
 /// count of its successors. If a successor pending count is zero, add it to
 /// the Available queue.
-void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
+void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU) {
   DEBUG(dbgs() << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
 
@@ -966,7 +989,7 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
     SUnit *CurSU = AvailableQueue->pop();
 
     if (CurSU)
-      ScheduleNodeTopDown(CurSU, CurCycle);
+      ScheduleNodeTopDown(CurSU);
     ++CurCycle;
     AvailableQueue->setCurCycle(CurCycle);
   }
