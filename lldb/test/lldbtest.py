@@ -133,6 +133,10 @@ PROCESS_IS_VALID = "Process is valid"
 
 PROCESS_KILLED = "Process is killed successfully"
 
+PROCESS_EXITED = "Process exited successfully"
+
+PROCESS_STOPPED = "Process status should be stopped"
+
 RUN_SUCCEEDED = "Process is launched successfully"
 
 RUN_COMPLETED = "Process exited successfully"
@@ -154,8 +158,6 @@ BREAKPOINT_HIT_THRICE = "Breakpoint resolved with hit cout = 3"
 SOURCE_DISPLAYED_CORRECTLY = "Source code displayed correctly"
 
 STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
-
-PROCESS_STOPPED = "Process status should be stopped"
 
 STOPPED_DUE_TO_BREAKPOINT = "Process should be stopped due to breakpoint"
 
