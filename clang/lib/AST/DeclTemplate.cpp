@@ -300,10 +300,13 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
   if (!CommonPtr->InjectedClassNameType.isNull())
     return CommonPtr->InjectedClassNameType;
 
-  // FIXME: n2800 14.6.1p1 should say how the template arguments
-  // corresponding to template parameter packs should be pack
-  // expansions. We already say that in 14.6.2.1p2, so it would be
-  // better to fix that redundancy.
+  // C++0x [temp.dep.type]p2:
+  //  The template argument list of a primary template is a template argument 
+  //  list in which the nth template argument has the value of the nth template
+  //  parameter of the class template. If the nth template parameter is a 
+  //  template parameter pack (14.5.3), the nth template argument is a pack 
+  //  expansion (14.5.3) whose pattern is the name of the template parameter 
+  //  pack.
   ASTContext &Context = getASTContext();
   TemplateParameterList *Params = getTemplateParameters();
   llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
@@ -311,20 +314,34 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
   for (TemplateParameterList::iterator Param = Params->begin(),
                                     ParamEnd = Params->end();
        Param != ParamEnd; ++Param) {
-    if (isa<TemplateTypeParmDecl>(*Param)) {
-      QualType ParamType = Context.getTypeDeclType(cast<TypeDecl>(*Param));
-      TemplateArgs.push_back(TemplateArgument(ParamType));
+    TemplateArgument Arg;
+    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
+      QualType ArgType = Context.getTypeDeclType(TTP);
+      if (TTP->isParameterPack())
+        ArgType = Context.getPackExpansionType(ArgType);
+      
+      Arg = TemplateArgument(ArgType);
     } else if (NonTypeTemplateParmDecl *NTTP =
                  dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       Expr *E = new (Context) DeclRefExpr(NTTP,
                                   NTTP->getType().getNonLValueExprType(Context),
                                   Expr::getValueKindForType(NTTP->getType()),
                                           NTTP->getLocation());
-      TemplateArgs.push_back(TemplateArgument(E));
+      // FIXME: Variadic templates.
+      Arg = TemplateArgument(E);
     } else {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
-      TemplateArgs.push_back(TemplateArgument(TemplateName(TTP)));
+      // FIXME: Variadic templates.
+      Arg = TemplateArgument(TemplateName(TTP));
     }
+    
+    if ((*Param)->isTemplateParameterPack()) {
+      TemplateArgument *Pack = new (Context) TemplateArgument [1];
+      *Pack = Arg;
+      Arg = TemplateArgument(Pack, 1);
+    }
+    
+    TemplateArgs.push_back(Arg);
   }
 
   CommonPtr->InjectedClassNameType
