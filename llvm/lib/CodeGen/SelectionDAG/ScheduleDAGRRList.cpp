@@ -88,7 +88,7 @@ private:
   /// modifies the registers can be scheduled.
   unsigned NumLiveRegs;
   std::vector<SUnit*> LiveRegDefs;
-  std::vector<unsigned> LiveRegCycles;
+  std::vector<SUnit*> LiveRegGens;
 
   /// Topo - A topological ordering for SUnits which permits fast IsReachable
   /// and similar queries.
@@ -137,7 +137,7 @@ public:
 
 private:
   void ReleasePred(SUnit *SU, const SDep *PredEdge);
-  void ReleasePredecessors(SUnit *SU, unsigned CurCycle);
+  void ReleasePredecessors(SUnit *SU);
   void ReleaseSucc(SUnit *SU, const SDep *SuccEdge);
   void ReleaseSuccessors(SUnit *SU);
   void CapturePred(SDep *PredEdge);
@@ -194,7 +194,7 @@ void ScheduleDAGRRList::Schedule() {
 
   NumLiveRegs = 0;
   LiveRegDefs.resize(TRI->getNumRegs(), NULL);
-  LiveRegCycles.resize(TRI->getNumRegs(), 0);
+  LiveRegGens.resize(TRI->getNumRegs(), NULL);
 
   // Build the scheduling graph.
   BuildSchedGraph(NULL);
@@ -260,11 +260,11 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
 /// results in
 ///
 /// LiveRegDefs[flags] = 3
-/// LiveRegCycles[flags] = 1
+/// LiveRegGens[flags] = 1
 ///
 /// If (2) addc is unscheduled, then (1) addc must also be unscheduled to avoid
 /// interference on flags.
-void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU, unsigned CurCycle) {
+void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU) {
   // Bottom up: release predecessors
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
@@ -274,13 +274,13 @@ void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU, unsigned CurCycle) {
       // expensive to copy the register. Make sure nothing that can
       // clobber the register is scheduled between the predecessor and
       // this node.
-      SUnit *&RegDef = LiveRegDefs[I->getReg()];
+      SUnit *RegDef = LiveRegDefs[I->getReg()]; (void)RegDef;
       assert((!RegDef || RegDef == SU || RegDef == I->getSUnit()) &&
              "interference on register dependence");
-      RegDef = I->getSUnit();
-      if (!LiveRegCycles[I->getReg()]) {
+      LiveRegDefs[I->getReg()] = I->getSUnit();
+      if (!LiveRegGens[I->getReg()]) {
         ++NumLiveRegs;
-        LiveRegCycles[I->getReg()] = CurCycle;
+        LiveRegGens[I->getReg()] = SU;
       }
     }
   }
@@ -306,7 +306,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
 
   // Update liveness of predecessors before successors to avoid treating a
   // two-address node as a live range def.
-  ReleasePredecessors(SU, CurCycle);
+  ReleasePredecessors(SU);
 
   // Release all the implicit physical register defs that are live.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
@@ -316,7 +316,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
       assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
       --NumLiveRegs;
       LiveRegDefs[I->getReg()] = NULL;
-      LiveRegCycles[I->getReg()] = 0;
+      LiveRegGens[I->getReg()] = NULL;
     }
   }
 
@@ -347,13 +347,13 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     CapturePred(&*I);
-    if (I->isAssignedRegDep() && SU->getHeight() == LiveRegCycles[I->getReg()]){
+    if (I->isAssignedRegDep() && SU == LiveRegGens[I->getReg()]){
       assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
       assert(LiveRegDefs[I->getReg()] == I->getSUnit() &&
              "Physical register dependency violated?");
       --NumLiveRegs;
       LiveRegDefs[I->getReg()] = NULL;
-      LiveRegCycles[I->getReg()] = 0;
+      LiveRegGens[I->getReg()] = NULL;
     }
   }
 
@@ -366,8 +366,9 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
       if (!LiveRegDefs[I->getReg()]) {
         ++NumLiveRegs;
       }
-      if (I->getSUnit()->getHeight() < LiveRegCycles[I->getReg()])
-        LiveRegCycles[I->getReg()] = I->getSUnit()->getHeight();
+      if (LiveRegGens[I->getReg()] == NULL ||
+          I->getSUnit()->getHeight() < LiveRegGens[I->getReg()]->getHeight())
+        LiveRegGens[I->getReg()] = I->getSUnit();
     }
   }
 
@@ -740,7 +741,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   unsigned CurCycle = 0;
 
   // Release any predecessors of the special Exit node.
-  ReleasePredecessors(&ExitSU, CurCycle);
+  ReleasePredecessors(&ExitSU);
 
   // Add root to Available queue.
   if (!SUnits.empty()) {
@@ -784,7 +785,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
         unsigned LiveCycle = CurCycle;
         for (unsigned j = 0, ee = LRegs.size(); j != ee; ++j) {
           unsigned Reg = LRegs[j];
-          unsigned LCycle = LiveRegCycles[Reg];
+          unsigned LCycle = LiveRegGens[Reg]->getHeight();
           LiveCycle = std::min(LiveCycle, LCycle);
         }
         SUnit *OldSU = Sequence[LiveCycle];
