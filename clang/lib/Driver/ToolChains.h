@@ -176,6 +176,12 @@ public:
             getTriple().getArch() == llvm::Triple::x86_64);
 #endif
   }
+  
+  virtual bool IsObjCDefaultSynthPropertiesDefault() const {
+    // Always allow default synthesized properties on Darwin.
+    return true;
+  }
+
   virtual bool IsObjCNonFragileABIDefault() const {
     // Non-fragile ABI is default for everything but i386.
     return getTriple().getArch() != llvm::Triple::x86;

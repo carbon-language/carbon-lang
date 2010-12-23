@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wimplicit-atomic-properties -fobjc-nonfragile-abi2 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wimplicit-atomic-properties -fobjc-nonfragile-abi2 -fobjc-default-synthesize-properties -verify %s
 // rdar://8774580
 
 @interface Super

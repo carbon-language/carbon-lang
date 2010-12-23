@@ -129,6 +129,9 @@ def warn_pch_nonfragile_abi2 : Error<
     "PCH file was compiled with the %select{32-bit|enhanced non-fragile}0 "
     "Objective-C ABI but the %select{32-bit|enhanced non-fragile}1 "
     "Objective-C ABI is selected">;
+def warn_pch_objc_auto_properties : Error<
+    "PCH file was compiled %select{with|without}0 support for auto-synthesized "
+    "@properties but it is currently %select{disabled|enabled}1">;
 def warn_pch_no_constant_cfstrings : Error<
     "Objctive-C NSstring generation support was %select{disabled|enabled}0 "
     "in PCH file but currently %select{disabled|enabled}1">; 

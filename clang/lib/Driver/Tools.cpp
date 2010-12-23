@@ -1484,6 +1484,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           CmdArgs.push_back("-fobjc-dispatch-method=non-legacy");
       }
     }
+    
+    // -fobjc-default-synthesize-properties=0 is default.
+    if (Args.hasFlag(options::OPT_fobjc_default_synthesize_properties,
+                     options::OPT_fno_objc_default_synthesize_properties,
+                     getToolChain().IsObjCDefaultSynthPropertiesDefault())) {
+      CmdArgs.push_back("-fobjc-default-synthesize-properties");
+    }
   }
 
   if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,

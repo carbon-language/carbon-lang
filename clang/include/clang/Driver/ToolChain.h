@@ -108,10 +108,14 @@ public:
 
   /// IsBlocksDefault - Does this tool chain enable -fblocks by default.
   virtual bool IsBlocksDefault() const { return false; }
-
+  
   /// IsIntegratedAssemblerDefault - Does this tool chain enable -integrated-as
   /// by default.
   virtual bool IsIntegratedAssemblerDefault() const { return false; }
+
+  /// IsObjCDefaultSynthPropertiesDefault - Does this tool chain enable
+  /// -fobjc-default-synthesize-properties by default.
+  virtual bool IsObjCDefaultSynthPropertiesDefault() const { return false; }
 
   /// IsObjCNonFragileABIDefault - Does this tool chain set
   /// -fobjc-nonfragile-abi by default.

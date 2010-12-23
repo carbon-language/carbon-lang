@@ -44,6 +44,7 @@ public:
   unsigned ObjC2             : 1;  // Objective-C 2 support enabled.
   unsigned ObjCNonFragileABI : 1;  // Objective-C modern abi enabled
   unsigned ObjCNonFragileABI2 : 1;  // Objective-C enhanced modern abi enabled
+  unsigned ObjCDefaultSynthProperties : 1; // Objective-C auto-synthesized properties.
 
   unsigned PascalStrings     : 1;  // Allow Pascal strings
   unsigned WritableStrings   : 1;  // Allow writable strings
@@ -155,6 +156,7 @@ public:
     GNUMode = GNUKeywords = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
+    ObjCDefaultSynthProperties = 0;
     NoConstantCFStrings = 0; InlineVisibilityHidden = 0;
     C99 = Microsoft = Borland = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
