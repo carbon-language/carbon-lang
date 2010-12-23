@@ -67,19 +67,6 @@ cmovs, we should expand to a conditional branch like GCC produces.
 
 //===---------------------------------------------------------------------===//
 
-Compile this:
-_Bool f(_Bool a) { return a!=1; }
-
-into:
-        movzbl  %dil, %eax
-        xorl    $1, %eax
-        ret
-
-(Although note that this isn't a legal way to express the code that llvm-gcc
-currently generates for that function.)
-
-//===---------------------------------------------------------------------===//
-
 Some isel ideas:
 
 1. Dynamic programming based approach when compile time if not an
@@ -394,72 +381,8 @@ boundary to improve performance.
 
 //===---------------------------------------------------------------------===//
 
-Codegen:
-
-int f(int a, int b) {
-  if (a == 4 || a == 6)
-    b++;
-  return b;
-}
-
-
-as:
-
-or eax, 2
-cmp eax, 6
-jz label
-
-//===---------------------------------------------------------------------===//
-
 GCC's ix86_expand_int_movcc function (in i386.c) has a ton of interesting
-simplifications for integer "x cmp y ? a : b".  For example, instead of:
-
-int G;
-void f(int X, int Y) {
-  G = X < 0 ? 14 : 13;
-}
-
-compiling to:
-
-_f:
-        movl $14, %eax
-        movl $13, %ecx
-        movl 4(%esp), %edx
-        testl %edx, %edx
-        cmovl %eax, %ecx
-        movl %ecx, _G
-        ret
-
-it could be:
-_f:
-        movl    4(%esp), %eax
-        sarl    $31, %eax
-        notl    %eax
-        addl    $14, %eax
-        movl    %eax, _G
-        ret
-
-etc.
-
-Another is:
-int usesbb(unsigned int a, unsigned int b) {
-       return (a < b ? -1 : 0);
-}
-to:
-_usesbb:
-	movl	8(%esp), %eax
-	cmpl	%eax, 4(%esp)
-	sbbl	%eax, %eax
-	ret
-
-instead of:
-_usesbb:
-	xorl	%eax, %eax
-	movl	8(%esp), %ecx
-	cmpl	%ecx, 4(%esp)
-	movl	$4294967295, %ecx
-	cmovb	%ecx, %eax
-	ret
+simplifications for integer "x cmp y ? a : b".
 
 //===---------------------------------------------------------------------===//
 
@@ -1866,5 +1789,30 @@ It could narrow the loads and stores to emit this:
 The trouble is that there is a TokenFactor between the store and the
 load, making it non-trivial to determine if there's anything between
 the load and the store which would prohibit narrowing.
+
+//===---------------------------------------------------------------------===//
+
+This code:
+void foo(unsigned x) {
+  if (x == 0) bar();
+  else if (x == 1) qux();
+}
+
+currently compiles into:
+_foo:
+	movl	4(%esp), %eax
+	cmpl	$1, %eax
+	je	LBB0_3
+	testl	%eax, %eax
+	jne	LBB0_4
+
+the testl could be removed:
+_foo:
+	movl	4(%esp), %eax
+	cmpl	$1, %eax
+	je	LBB0_3
+	jb	LBB0_4
+
+0 is the only unsigned number < 1.
 
 //===---------------------------------------------------------------------===//
