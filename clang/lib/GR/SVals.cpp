@@ -292,8 +292,11 @@ void NonLoc::dumpToStream(llvm::raw_ostream& os) const {
   switch (getSubKind()) {
     case nonloc::ConcreteIntKind: {
       const nonloc::ConcreteInt& C = *cast<nonloc::ConcreteInt>(this);
-      os << C.getValue().getZExtValue()
-         << ' ' << ((C.getValue().isUnsigned()) ? 'U' : 'S')
+      if (C.getValue().isUnsigned())
+        os << C.getValue().getZExtValue();
+      else
+        os << C.getValue().getSExtValue();
+      os << ' ' << (C.getValue().isUnsigned() ? 'U' : 'S')
          << C.getValue().getBitWidth() << 'b';
       break;
     }
