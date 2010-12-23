@@ -1059,6 +1059,33 @@ static TemplateParameter makeTemplateParameter(Decl *D) {
   return TemplateParameter(cast<TemplateTemplateParmDecl>(D));
 }
 
+/// \brief Determine whether the given set of template arguments has a pack
+/// expansion that is not the last template argument.
+static bool hasPackExpansionBeforeEnd(const TemplateArgument *Args,
+                                      unsigned NumArgs) {
+  unsigned ArgIdx = 0;
+  while (ArgIdx < NumArgs) {
+    const TemplateArgument &Arg = Args[ArgIdx];
+    
+    // Unwrap argument packs.
+    if (Args[ArgIdx].getKind() == TemplateArgument::Pack) {
+      Args = Arg.pack_begin();
+      NumArgs = Arg.pack_size();
+      ArgIdx = 0;
+      continue;
+    }
+    
+    ++ArgIdx;
+    if (ArgIdx == NumArgs)
+      return false;
+    
+    if (Arg.isPackExpansion())
+      return true;
+  }
+  
+  return false;
+}
+
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S,
                         TemplateParameterList *TemplateParams,
@@ -1071,9 +1098,9 @@ DeduceTemplateArguments(Sema &S,
   //   If the template argument list of P contains a pack expansion that is not 
   //   the last template argument, the entire template argument list is a 
   //   non-deduced context.
-  // FIXME: Implement this.
-
-
+  if (hasPackExpansionBeforeEnd(Params, NumParams))
+    return Sema::TDK_Success;
+  
   // C++0x [temp.deduct.type]p9:
   //   If P has a form that contains <T> or <i>, then each argument Pi of the 
   //   respective template argument list P is compared with the corresponding 
@@ -3052,6 +3079,15 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
       = cast<TemplateSpecializationType>(T);
     MarkUsedTemplateParameters(SemaRef, Spec->getTemplateName(), OnlyDeduced,
                                Depth, Used);
+    
+    // C++0x [temp.deduct.type]p9:
+    //   If the template argument list of P contains a pack expansion that is not 
+    //   the last template argument, the entire template argument list is a 
+    //   non-deduced context.
+    if (OnlyDeduced && 
+        hasPackExpansionBeforeEnd(Spec->getArgs(), Spec->getNumArgs()))
+      break;
+
     for (unsigned I = 0, N = Spec->getNumArgs(); I != N; ++I)
       MarkUsedTemplateParameters(SemaRef, Spec->getArg(I), OnlyDeduced, Depth,
                                  Used);
@@ -3078,6 +3114,15 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
     if (!OnlyDeduced)
       MarkUsedTemplateParameters(SemaRef, Spec->getQualifier(),
                                  OnlyDeduced, Depth, Used);
+    
+    // C++0x [temp.deduct.type]p9:
+    //   If the template argument list of P contains a pack expansion that is not 
+    //   the last template argument, the entire template argument list is a 
+    //   non-deduced context.
+    if (OnlyDeduced && 
+        hasPackExpansionBeforeEnd(Spec->getArgs(), Spec->getNumArgs()))
+      break;
+
     for (unsigned I = 0, N = Spec->getNumArgs(); I != N; ++I)
       MarkUsedTemplateParameters(SemaRef, Spec->getArg(I), OnlyDeduced, Depth,
                                  Used);
@@ -3181,6 +3226,14 @@ void
 Sema::MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                  bool OnlyDeduced, unsigned Depth,
                                  llvm::SmallVectorImpl<bool> &Used) {
+  // C++0x [temp.deduct.type]p9:
+  //   If the template argument list of P contains a pack expansion that is not 
+  //   the last template argument, the entire template argument list is a 
+  //   non-deduced context.
+  if (OnlyDeduced && 
+      hasPackExpansionBeforeEnd(TemplateArgs.data(), TemplateArgs.size()))
+    return;
+
   for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
     ::MarkUsedTemplateParameters(*this, TemplateArgs[I], OnlyDeduced, 
                                  Depth, Used);
@@ -3196,6 +3249,7 @@ Sema::MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
   Deduced.clear();
   Deduced.resize(TemplateParams->size());
   
+  // FIXME: Variadic templates.
   FunctionDecl *Function = FunctionTemplate->getTemplatedDecl();
   for (unsigned I = 0, N = Function->getNumParams(); I != N; ++I)
     ::MarkUsedTemplateParameters(*this, Function->getParamDecl(I)->getType(),

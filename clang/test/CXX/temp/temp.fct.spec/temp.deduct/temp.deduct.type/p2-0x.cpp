@@ -18,6 +18,6 @@ struct same_tuple<tuple<Types1...>, tuple<Types1...> > {
   static const bool value = true;
 };
 
-//int same_tuple_check1[same_tuple<tuple<int, float>, tuple<int, double>>::value? -1 : 1];
+int same_tuple_check1[same_tuple<tuple<int, float>, tuple<int, double>>::value? -1 : 1];
 int same_tuple_check2[same_tuple<tuple<float, double>, tuple<float, double>>::value? 1 : -1];
 
