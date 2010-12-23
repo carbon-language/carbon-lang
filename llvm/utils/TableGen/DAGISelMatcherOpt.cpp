@@ -116,7 +116,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
       // because the code in the pattern generator doesn't handle it right.  We
       // do it anyway for thoroughness.
       if (!EN->hasOutFlag() &&
-          Pattern.getSrcPattern()->NodeHasProperty(SDNPOutFlag, CGP))
+          Pattern.getSrcPattern()->NodeHasProperty(SDNPOutGlue, CGP))
         ResultsMatch = false;
       
       

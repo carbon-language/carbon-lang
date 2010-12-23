@@ -216,9 +216,9 @@ class SDNodeProperty;
 def SDNPCommutative : SDNodeProperty;   // X op Y == Y op X
 def SDNPAssociative : SDNodeProperty;   // (X op Y) op Z == X op (Y op Z)
 def SDNPHasChain    : SDNodeProperty;   // R/W chain operand and result
-def SDNPOutFlag     : SDNodeProperty;   // Write a flag result
-def SDNPInFlag      : SDNodeProperty;   // Read a flag operand
-def SDNPOptInFlag   : SDNodeProperty;   // Optionally read a flag operand
+def SDNPOutGlue     : SDNodeProperty;   // Write a flag result
+def SDNPInGlue      : SDNodeProperty;   // Read a flag operand
+def SDNPOptInGlue   : SDNodeProperty;   // Optionally read a flag operand
 def SDNPMayStore    : SDNodeProperty;   // May write to memory, sets 'mayStore'.
 def SDNPMayLoad     : SDNodeProperty;   // May read memory, sets 'mayLoad'.
 def SDNPSideEffect  : SDNodeProperty;   // Sets 'HasUnmodelledSideEffects'.
@@ -312,13 +312,13 @@ def or         : SDNode<"ISD::OR"        , SDTIntBinOp,
 def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def addc       : SDNode<"ISD::ADDC"      , SDTIntBinOp,
-                        [SDNPCommutative, SDNPOutFlag]>;
+                        [SDNPCommutative, SDNPOutGlue]>;
 def adde       : SDNode<"ISD::ADDE"      , SDTIntBinOp,
-                        [SDNPCommutative, SDNPOutFlag, SDNPInFlag]>;
+                        [SDNPCommutative, SDNPOutGlue, SDNPInGlue]>;
 def subc       : SDNode<"ISD::SUBC"      , SDTIntBinOp,
-                        [SDNPOutFlag]>;
+                        [SDNPOutGlue]>;
 def sube       : SDNode<"ISD::SUBE"      , SDTIntBinOp,
-                        [SDNPOutFlag, SDNPInFlag]>;
+                        [SDNPOutGlue, SDNPInGlue]>;
 
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def bswap      : SDNode<"ISD::BSWAP"      , SDTIntUnaryOp>;

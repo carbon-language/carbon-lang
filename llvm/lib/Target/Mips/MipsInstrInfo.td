@@ -29,7 +29,7 @@ def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 
 // Call
 def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink,
-                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag,
+                         [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
                           SDNPVariadic]>;
 
 // Hi and Lo nodes are used to handle global addresses. Used on
@@ -41,13 +41,13 @@ def MipsGPRel : SDNode<"MipsISD::GPRel", SDTIntUnaryOp>;
 
 // Return
 def MipsRet : SDNode<"MipsISD::Ret", SDT_MipsRet, [SDNPHasChain,
-                     SDNPOptInFlag]>;
+                     SDNPOptInGlue]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeqStart,
-                           [SDNPHasChain, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 // Select Condition Code
 def MipsSelectCC  : SDNode<"MipsISD::SelectCC", SDT_MipsSelectCC>;

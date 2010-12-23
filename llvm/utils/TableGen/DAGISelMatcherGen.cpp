@@ -365,8 +365,8 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
           Root->getOperator() == CGP.get_intrinsic_wo_chain_sdnode() ||
           PInfo.getNumOperands() > 1 ||
           PInfo.hasProperty(SDNPHasChain) ||
-          PInfo.hasProperty(SDNPInFlag) ||
-          PInfo.hasProperty(SDNPOptInFlag);
+          PInfo.hasProperty(SDNPInGlue) ||
+          PInfo.hasProperty(SDNPOptInGlue);
       }
 
       if (NeedCheck)
@@ -375,7 +375,7 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   }
 
   // If this node has an output glue and isn't the root, remember it.
-  if (N->NodeHasProperty(SDNPOutFlag, CGP) &&
+  if (N->NodeHasProperty(SDNPOutGlue, CGP) &&
       N != Pattern.getSrcPattern()) {
     // TODO: This redundantly records nodes with both glues and chains.
 
@@ -389,8 +389,8 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
 
   // If this node is known to have an input glue or if it *might* have an input
   // glue, capture it as the glue input of the pattern.
-  if (N->NodeHasProperty(SDNPOptInFlag, CGP) ||
-      N->NodeHasProperty(SDNPInFlag, CGP))
+  if (N->NodeHasProperty(SDNPOptInGlue, CGP) ||
+      N->NodeHasProperty(SDNPInGlue, CGP))
     AddMatcher(new CaptureGlueInputMatcher());
 
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
@@ -659,12 +659,12 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   bool TreeHasInGlue = false, TreeHasOutGlue = false;
   if (isRoot) {
     const TreePatternNode *SrcPat = Pattern.getSrcPattern();
-    TreeHasInGlue = SrcPat->TreeHasProperty(SDNPOptInFlag, CGP) ||
-                    SrcPat->TreeHasProperty(SDNPInFlag, CGP);
+    TreeHasInGlue = SrcPat->TreeHasProperty(SDNPOptInGlue, CGP) ||
+                    SrcPat->TreeHasProperty(SDNPInGlue, CGP);
 
     // FIXME2: this is checking the entire pattern, not just the node in
     // question, doing this just for the root seems like a total hack.
-    TreeHasOutGlue = SrcPat->TreeHasProperty(SDNPOutFlag, CGP);
+    TreeHasOutGlue = SrcPat->TreeHasProperty(SDNPOutGlue, CGP);
   }
 
   // NumResults - This is the number of results produced by the instruction in

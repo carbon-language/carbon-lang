@@ -32,7 +32,7 @@ def SDT_MipsFPCmp : SDTypeProfile<1, 3, [SDTCisVT<0, i32>,
 def SDT_MipsFPSelectCC : SDTypeProfile<1, 4, [SDTCisInt<1>, SDTCisInt<4>,
                                   SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>]>;
 
-def MipsFPRound : SDNode<"MipsISD::FPRound", SDTFPRoundOp, [SDNPOptInFlag]>;
+def MipsFPRound : SDNode<"MipsISD::FPRound", SDTFPRoundOp, [SDNPOptInGlue]>;
 def MipsFPBrcond : SDNode<"MipsISD::FPBrcond", SDT_MipsFPBrcond, 
                           [SDNPHasChain]>; 
 def MipsFPCmp : SDNode<"MipsISD::FPCmp", SDT_MipsFPCmp>;

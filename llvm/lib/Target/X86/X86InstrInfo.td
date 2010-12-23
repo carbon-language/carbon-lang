@@ -128,10 +128,10 @@ def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC>;
 def X86setcc_c : SDNode<"X86ISD::SETCC_CARRY", SDTX86SetCC_C>;
 
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
+                        [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
                          SDNPMayLoad, SDNPMemOperand]>;
 def X86cas8 : SDNode<"X86ISD::LCMPXCHG8_DAG", SDTX86cas8,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
+                        [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
                          SDNPMayLoad, SDNPMemOperand]>;
 def X86AtomAdd64 : SDNode<"X86ISD::ATOMADD64_DAG", SDTX86atomicBinary,
                         [SDNPHasChain, SDNPMayStore,
@@ -155,7 +155,7 @@ def X86AtomSwap64 : SDNode<"X86ISD::ATOMSWAP64_DAG", SDTX86atomicBinary,
                         [SDNPHasChain, SDNPMayStore,
                          SDNPMayLoad, SDNPMemOperand]>;
 def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,
-                        [SDNPHasChain, SDNPOptInFlag, SDNPVariadic]>;
+                        [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 def X86vastart_save_xmm_regs :
                  SDNode<"X86ISD::VASTART_SAVE_XMM_REGS",
@@ -167,35 +167,35 @@ def X86vaarg64 :
                          SDNPMemOperand]>;
 def X86callseq_start :
                  SDNode<"ISD::CALLSEQ_START", SDT_X86CallSeqStart,
-                        [SDNPHasChain, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOutGlue]>;
 def X86callseq_end :
                  SDNode<"ISD::CALLSEQ_END",   SDT_X86CallSeqEnd,
-                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
-                        [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag,
+                        [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
                          SDNPVariadic]>;
 
 def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore]>;
+                        [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore]>;
 def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
+                        [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
                          SDNPMayLoad]>;
 
 def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG", SDTX86Void,
-                        [SDNPHasChain, SDNPOutFlag, SDNPSideEffect]>;
+                        [SDNPHasChain, SDNPOutGlue, SDNPSideEffect]>;
 
 def X86Wrapper    : SDNode<"X86ISD::Wrapper",     SDTX86Wrapper>;
 def X86WrapperRIP : SDNode<"X86ISD::WrapperRIP",  SDTX86Wrapper>;
 
 def X86tlsaddr : SDNode<"X86ISD::TLSADDR", SDT_X86TLSADDR,
-                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
                         [SDNPHasChain]>;
 
 def X86tcret : SDNode<"X86ISD::TC_RETURN", SDT_X86TCRET,
-                        [SDNPHasChain,  SDNPOptInFlag, SDNPVariadic]>;
+                        [SDNPHasChain,  SDNPOptInGlue, SDNPVariadic]>;
 
 def X86add_flag  : SDNode<"X86ISD::ADD",  SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;
@@ -219,10 +219,10 @@ def X86and_flag  : SDNode<"X86ISD::AND",  SDTBinaryArithWithFlags,
 def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
 
 def X86WinAlloca : SDNode<"X86ISD::WIN_ALLOCA", SDTX86Void,
-                          [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                          [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
 
 def X86TLSCall : SDNode<"X86ISD::TLSCALL", SDT_X86TLSCALL,
-                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.

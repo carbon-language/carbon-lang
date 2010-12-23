@@ -732,12 +732,12 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
       Properties |= 1 << SDNPAssociative;
     } else if (PropList[i]->getName() == "SDNPHasChain") {
       Properties |= 1 << SDNPHasChain;
-    } else if (PropList[i]->getName() == "SDNPOutFlag") {
-      Properties |= 1 << SDNPOutFlag;
-    } else if (PropList[i]->getName() == "SDNPInFlag") {
-      Properties |= 1 << SDNPInFlag;
-    } else if (PropList[i]->getName() == "SDNPOptInFlag") {
-      Properties |= 1 << SDNPOptInFlag;
+    } else if (PropList[i]->getName() == "SDNPOutGlue") {
+      Properties |= 1 << SDNPOutGlue;
+    } else if (PropList[i]->getName() == "SDNPInGlue") {
+      Properties |= 1 << SDNPInGlue;
+    } else if (PropList[i]->getName() == "SDNPOptInGlue") {
+      Properties |= 1 << SDNPOptInGlue;
     } else if (PropList[i]->getName() == "SDNPMayStore") {
       Properties |= 1 << SDNPMayStore;
     } else if (PropList[i]->getName() == "SDNPMayLoad") {

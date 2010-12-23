@@ -29,11 +29,11 @@ include "XCoreInstrFormats.td"
 // Call
 def SDT_XCoreBranchLink : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 def XCoreBranchLink     : SDNode<"XCoreISD::BL",SDT_XCoreBranchLink,
-                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                              SDNPVariadic]>;
 
 def XCoreRetsp       : SDNode<"XCoreISD::RETSP", SDTBrind,
-                         [SDNPHasChain, SDNPOptInFlag]>;
+                         [SDNPHasChain, SDNPOptInGlue]>;
 
 def SDT_XCoreBR_JT    : SDTypeProfile<0, 2,
                                       [SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
@@ -66,9 +66,9 @@ def SDT_XCoreCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
                                         SDTCisVT<1, i32> ]>;
 
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_XCoreCallSeqStart,
-                           [SDNPHasChain, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_XCoreCallSeqEnd,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff

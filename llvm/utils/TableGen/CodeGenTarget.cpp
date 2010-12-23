@@ -404,8 +404,8 @@ ComplexPattern::ComplexPattern(Record *R) {
   for (unsigned i = 0, e = PropList.size(); i != e; ++i)
     if (PropList[i]->getName() == "SDNPHasChain") {
       Properties |= 1 << SDNPHasChain;
-    } else if (PropList[i]->getName() == "SDNPOptInFlag") {
-      Properties |= 1 << SDNPOptInFlag;
+    } else if (PropList[i]->getName() == "SDNPOptInGlue") {
+      Properties |= 1 << SDNPOptInGlue;
     } else if (PropList[i]->getName() == "SDNPMayStore") {
       Properties |= 1 << SDNPMayStore;
     } else if (PropList[i]->getName() == "SDNPMayLoad") {

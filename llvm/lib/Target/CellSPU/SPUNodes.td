@@ -19,16 +19,16 @@ def SPU_GenControl : SDTypeProfile<1, 1, []>;
 def SPUshufmask    : SDNode<"SPUISD::SHUFFLE_MASK", SPU_GenControl, []>;
 
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPUCallSeq,
-                           [SDNPHasChain, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPUCallSeq,
-                           [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
 //===----------------------------------------------------------------------===//
 // Operand constraints:
 //===----------------------------------------------------------------------===//
 
 def SDT_SPUCall   : SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>;
 def SPUcall       : SDNode<"SPUISD::CALL", SDT_SPUCall,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                             SDNPVariadic]>;
 
 // Operand type constraints for vector shuffle/permute operations
@@ -156,4 +156,4 @@ class NoEncode<string E> {
 //===----------------------------------------------------------------------===//
 
 def retflag     : SDNode<"SPUISD::RET_FLAG", SDTNone,
-                         [SDNPHasChain, SDNPOptInFlag]>;
+                         [SDNPHasChain, SDNPOptInGlue]>;

@@ -68,17 +68,17 @@ def PPCstfiwx : SDNode<"PPCISD::STFIWX", SDT_PPCstfiwx,
 // This sequence is used for long double->int conversions.  It changes the
 // bits in the FPSCR which is not modelled.  
 def PPCmffs   : SDNode<"PPCISD::MFFS", SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>,
-                        [SDNPOutFlag]>;
+                        [SDNPOutGlue]>;
 def PPCmtfsb0 : SDNode<"PPCISD::MTFSB0", SDTypeProfile<0, 1, [SDTCisInt<0>]>,
-                       [SDNPInFlag, SDNPOutFlag]>;
+                       [SDNPInGlue, SDNPOutGlue]>;
 def PPCmtfsb1 : SDNode<"PPCISD::MTFSB1", SDTypeProfile<0, 1, [SDTCisInt<0>]>,
-                       [SDNPInFlag, SDNPOutFlag]>;
+                       [SDNPInGlue, SDNPOutGlue]>;
 def PPCfaddrtz: SDNode<"PPCISD::FADDRTZ", SDTFPBinOp,
-                       [SDNPInFlag, SDNPOutFlag]>;
+                       [SDNPInGlue, SDNPOutGlue]>;
 def PPCmtfsf  : SDNode<"PPCISD::MTFSF", SDTypeProfile<1, 3, 
                        [SDTCisVT<0, f64>, SDTCisInt<1>, SDTCisVT<2, f64>,
                         SDTCisVT<3, f64>]>,
-                       [SDNPInFlag]>;
+                       [SDNPInGlue]>;
 
 def PPCfsel   : SDNode<"PPCISD::FSEL",  
    // Type constraint for fsel.
@@ -105,45 +105,45 @@ def PPCstd_32     : SDNode<"PPCISD::STD_32"    , SDTStore,
 
 // These are target-independent nodes, but have target-specific formats.
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeqStart,
-                           [SDNPHasChain, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeqEnd,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 def SDT_PPCCall   : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
 def PPCcall_Darwin : SDNode<"PPCISD::CALL_Darwin", SDT_PPCCall,
-                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                              SDNPVariadic]>;
 def PPCcall_SVR4  : SDNode<"PPCISD::CALL_SVR4", SDT_PPCCall,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                             SDNPVariadic]>;
-def PPCnop : SDNode<"PPCISD::NOP", SDT_PPCnop, [SDNPInFlag, SDNPOutFlag]>;
+def PPCnop : SDNode<"PPCISD::NOP", SDT_PPCnop, [SDNPInGlue, SDNPOutGlue]>;
 def PPCload   : SDNode<"PPCISD::LOAD", SDTypeProfile<1, 1, []>,
-                       [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                       [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def PPCload_toc : SDNode<"PPCISD::LOAD_TOC", SDTypeProfile<0, 1, []>,
-                          [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                          [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
 def PPCtoc_restore : SDNode<"PPCISD::TOC_RESTORE", SDTypeProfile<0, 0, []>,
-                            [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                            [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def PPCbctrl_Darwin  : SDNode<"PPCISD::BCTRL_Darwin", SDTNone,
-                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                                SDNPVariadic]>;
 
 def PPCbctrl_SVR4  : SDNode<"PPCISD::BCTRL_SVR4", SDTNone,
-                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                              SDNPVariadic]>;
 
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDTNone,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPVariadic]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 def PPCtc_return : SDNode<"PPCISD::TC_RETURN", SDT_PPCTC_ret,
-                        [SDNPHasChain,  SDNPOptInFlag, SDNPVariadic]>;
+                        [SDNPHasChain,  SDNPOptInGlue, SDNPVariadic]>;
 
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
-def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutFlag]>;
+def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutGlue]>;
 
 def PPCcondbranch : SDNode<"PPCISD::COND_BRANCH", SDT_PPCcondbr,
-                           [SDNPHasChain, SDNPOptInFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue]>;
 
 def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx,
                            [SDNPHasChain, SDNPMayLoad]>;

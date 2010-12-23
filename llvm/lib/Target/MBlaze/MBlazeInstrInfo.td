@@ -28,21 +28,21 @@ def SDT_MBCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 //===----------------------------------------------------------------------===//
 
 def MBlazeRet     : SDNode<"MBlazeISD::Ret", SDT_MBlazeRet,
-                           [SDNPHasChain, SDNPOptInFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue]>;
 def MBlazeIRet    : SDNode<"MBlazeISD::IRet", SDT_MBlazeIRet,
-                           [SDNPHasChain, SDNPOptInFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue]>;
 
 def MBlazeJmpLink : SDNode<"MBlazeISD::JmpLink",SDT_MBlazeJmpLink,
-                           [SDNPHasChain,SDNPOptInFlag,SDNPOutFlag,
+                           [SDNPHasChain,SDNPOptInGlue,SDNPOutGlue,
                             SDNPVariadic]>;
 
 def MBWrapper   : SDNode<"MBlazeISD::Wrap", SDTIntUnaryOp>;
 
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_MBCallSeqStart,
-                           [SDNPHasChain, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOutGlue]>;
 
 def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_MBCallSeqEnd,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 //===----------------------------------------------------------------------===//
 // MBlaze Instruction Predicate Definitions.

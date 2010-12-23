@@ -27,7 +27,7 @@ def Alpha_gprelhi : SDNode<"AlphaISD::GPRelHi",   SDTIntBinOp, []>;
 def Alpha_rellit  : SDNode<"AlphaISD::RelLit",    SDTIntBinOp, [SDNPMayLoad]>;
 
 def retflag       : SDNode<"AlphaISD::RET_FLAG", SDTNone,
-                           [SDNPHasChain, SDNPOptInFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_AlphaCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i64> ]>;
@@ -35,9 +35,9 @@ def SDT_AlphaCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i64>,
                                            SDTCisVT<1, i64> ]>;
 
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeqStart,
-                           [SDNPHasChain, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeqEnd,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 //********************
 //Paterns for matching

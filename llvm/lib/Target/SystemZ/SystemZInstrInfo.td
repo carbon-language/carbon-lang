@@ -46,15 +46,15 @@ def SDT_Address             : SDTypeProfile<1, 1,
 // SystemZ Specific Node Definitions.
 //===----------------------------------------------------------------------===//
 def SystemZretflag : SDNode<"SystemZISD::RET_FLAG", SDTNone,
-                     [SDNPHasChain, SDNPOptInFlag]>;
+                     [SDNPHasChain, SDNPOptInGlue]>;
 def SystemZcall    : SDNode<"SystemZISD::CALL", SDT_SystemZCall,
-                     [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag, SDNPVariadic]>;
+                     [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue, SDNPVariadic]>;
 def SystemZcallseq_start :
                  SDNode<"ISD::CALLSEQ_START", SDT_SystemZCallSeqStart,
-                        [SDNPHasChain, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOutGlue]>;
 def SystemZcallseq_end :
                  SDNode<"ISD::CALLSEQ_END",   SDT_SystemZCallSeqEnd,
-                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def SystemZcmp     : SDNode<"SystemZISD::CMP", SDT_CmpTest>;
 def SystemZucmp    : SDNode<"SystemZISD::UCMP", SDT_CmpTest>;
 def SystemZbrcond  : SDNode<"SystemZISD::BRCOND", SDT_BrCond,

@@ -21,9 +21,9 @@ def arm_ftoui  : SDNode<"ARMISD::FTOUI",   SDT_FTOI>;
 def arm_ftosi  : SDNode<"ARMISD::FTOSI",   SDT_FTOI>;
 def arm_sitof  : SDNode<"ARMISD::SITOF",   SDT_ITOF>;
 def arm_uitof  : SDNode<"ARMISD::UITOF",   SDT_ITOF>;
-def arm_fmstat : SDNode<"ARMISD::FMSTAT",  SDTNone, [SDNPInFlag, SDNPOutFlag]>;
-def arm_cmpfp  : SDNode<"ARMISD::CMPFP",   SDT_ARMCmp, [SDNPOutFlag]>;
-def arm_cmpfp0 : SDNode<"ARMISD::CMPFPw0", SDT_CMPFP0, [SDNPOutFlag]>;
+def arm_fmstat : SDNode<"ARMISD::FMSTAT",  SDTNone, [SDNPInGlue, SDNPOutGlue]>;
+def arm_cmpfp  : SDNode<"ARMISD::CMPFP",   SDT_ARMCmp, [SDNPOutGlue]>;
+def arm_cmpfp0 : SDNode<"ARMISD::CMPFPw0", SDT_CMPFP0, [SDNPOutGlue]>;
 def arm_fmdrr  : SDNode<"ARMISD::VMOVDRR", SDT_VMOVDRR>;
 
 

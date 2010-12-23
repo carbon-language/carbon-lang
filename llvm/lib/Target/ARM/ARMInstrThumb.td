@@ -16,7 +16,7 @@
 //
 
 def ARMtcall : SDNode<"ARMISD::tCALL", SDT_ARMcall,
-                      [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                      [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                        SDNPVariadic]>;
 
 def imm_neg_XFORM : SDNodeXForm<imm, [{

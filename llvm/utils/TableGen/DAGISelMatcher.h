@@ -955,7 +955,7 @@ class EmitNodeMatcherCommon : public Matcher {
   std::string OpcodeName;
   const SmallVector<MVT::SimpleValueType, 3> VTs;
   const SmallVector<unsigned, 6> Operands;
-  bool HasChain, HasInFlag, HasOutFlag, HasMemRefs;
+  bool HasChain, HasInGlue, HasOutGlue, HasMemRefs;
 
   /// NumFixedArityOperands - If this is a fixed arity node, this is set to -1.
   /// If this is a varidic node, this is set to the number of fixed arity
@@ -970,7 +970,7 @@ public:
                         int numfixedarityoperands, bool isMorphNodeTo)
     : Matcher(isMorphNodeTo ? MorphNodeTo : EmitNode), OpcodeName(opcodeName),
       VTs(vts, vts+numvts), Operands(operands, operands+numops),
-      HasChain(hasChain), HasInFlag(hasInGlue), HasOutFlag(hasOutGlue),
+      HasChain(hasChain), HasInGlue(hasInGlue), HasOutGlue(hasOutGlue),
       HasMemRefs(hasmemrefs), NumFixedArityOperands(numfixedarityoperands) {}
 
   const std::string &getOpcodeName() const { return OpcodeName; }
@@ -992,8 +992,8 @@ public:
 
 
   bool hasChain() const { return HasChain; }
-  bool hasInFlag() const { return HasInFlag; }
-  bool hasOutFlag() const { return HasOutFlag; }
+  bool hasInFlag() const { return HasInGlue; }
+  bool hasOutFlag() const { return HasOutGlue; }
   bool hasMemRefs() const { return HasMemRefs; }
   int getNumFixedArityOperands() const { return NumFixedArityOperands; }
 

@@ -23,17 +23,17 @@ def SDT_BfinCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
                                         SDTCisVT<1, i32> ]>;
 
 def BfinCallseqStart : SDNode<"ISD::CALLSEQ_START", SDT_BfinCallSeqStart,
-                              [SDNPHasChain, SDNPOutFlag]>;
+                              [SDNPHasChain, SDNPOutGlue]>;
 def BfinCallseqEnd   : SDNode<"ISD::CALLSEQ_END",   SDT_BfinCallSeqEnd,
-                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 def SDT_BfinCall  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 def BfinCall      : SDNode<"BFISD::CALL", SDT_BfinCall,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                             SDNPVariadic]>;
 
 def BfinRet: SDNode<"BFISD::RET_FLAG", SDTNone,
-                    [SDNPHasChain, SDNPOptInFlag]>;
+                    [SDNPHasChain, SDNPOptInGlue]>;
 
 def BfinWrapper: SDNode<"BFISD::Wrapper", SDTIntUnaryOp>;
 
