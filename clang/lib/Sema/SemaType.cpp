@@ -1504,6 +1504,8 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       // it expands those parameter packs.
       if (T->containsUnexpandedParameterPack())
         T = Context.getPackExpansionType(T);
+      else if (!getLangOptions().CPlusPlus0x)
+        Diag(D.getEllipsisLoc(), diag::err_variadic_templates);
       break;
     
     case Declarator::FileContext:

@@ -632,16 +632,12 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
     Invalid = true;
   }
   
-  if (D.hasEllipsis()) {
-    // FIXME: Variadic templates.
-    Diag(D.getEllipsisLoc(), diag::err_non_type_parameter_pack_unsupported);
-    Invalid = true;
-  }
-      
+  bool IsParameterPack = D.hasEllipsis();
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
                                       D.getIdentifierLoc(),
-                                      Depth, Position, ParamName, T, TInfo);
+                                      Depth, Position, ParamName, T, 
+                                      IsParameterPack, TInfo);
   if (Invalid)
     Param->setInvalidDecl();
 
@@ -652,7 +648,7 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   }
   
   // Check the well-formedness of the default template argument, if provided.
-  if (Default) {  
+  if (Default) {
     // Check for unexpanded parameter packs.
     if (DiagnoseUnexpandedParameterPack(Default, UPPC_DefaultArgument))
       return Param;

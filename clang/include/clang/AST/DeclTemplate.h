@@ -990,17 +990,27 @@ class NonTypeTemplateParmDecl
   /// it was inherited.
   llvm::PointerIntPair<Expr*, 1, bool> DefaultArgumentAndInherited;
 
+  // FIXME: Collapse this into TemplateParamPosition; or, just move depth/index
+  // down here to save memory.
+    
+  /// \brief Whether this non-type template parameter is a parameter pack.
+  bool ParameterPack;
+    
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
                           unsigned P, IdentifierInfo *Id, QualType T,
-                          TypeSourceInfo *TInfo)
+                          bool ParameterPack, TypeSourceInfo *TInfo)
     : VarDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo, SC_None, SC_None),
-      TemplateParmPosition(D, P), DefaultArgumentAndInherited(0, false)
+      TemplateParmPosition(D, P), DefaultArgumentAndInherited(0, false),
+      ParameterPack(ParameterPack)
   { }
 
+  friend class ASTDeclReader;
+    
 public:
   static NonTypeTemplateParmDecl *
   Create(ASTContext &C, DeclContext *DC, SourceLocation L, unsigned D,
-         unsigned P, IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo);
+         unsigned P, IdentifierInfo *Id, QualType T, bool ParameterPack, 
+         TypeSourceInfo *TInfo);
 
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::setDepth;
@@ -1042,6 +1052,17 @@ public:
     DefaultArgumentAndInherited.setInt(false);
   }
 
+  /// \brief Whether this parameter is a non-type template parameter pack.
+  ///
+  /// If the parameter is a parameter pack, the type may be a
+  /// \c PackExpansionType. In the following example, the \c Dims parameter
+  /// is a parameter pack (whose type is 'unsigned').
+  ///
+  /// \code
+  /// template<typename T, unsigned ...Dims> struct multi_array;
+  /// \endcode
+  bool isParameterPack() const { return ParameterPack; }
+    
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NonTypeTemplateParmDecl *D) { return true; }

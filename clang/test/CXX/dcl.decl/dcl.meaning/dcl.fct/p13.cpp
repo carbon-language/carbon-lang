@@ -11,12 +11,12 @@ void f1(const Types &...args); // FIXME: temporary expected-error{{clang does no
 // [ Note: Otherwise, the parameter-declaration is part of a
 // template-parameter-list and the parameter pack is a template
 // parameter pack; see 14.1. -- end note ]
-template<int ...N> // FIXME: temporary expected-error{{clang does not yet support non-type template parameter packs}}
+template<int ...N>
 struct X0 { };
 
 template<typename ...Types>
 struct X1 {
-  template<Types ...Values> struct Inner; // FIXME: temporary expected-error{{clang does not yet support non-type template parameter packs}}
+  template<Types ...Values> struct Inner;
 };
 
 // A declarator-id or abstract-declarator containing an ellipsis shall

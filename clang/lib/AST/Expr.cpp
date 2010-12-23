@@ -208,8 +208,14 @@ void DeclRefExpr::computeDependence() {
   //          member of an unknown specialization.
   //        (handled by DependentScopeDeclRefExpr)
 
-  // FIXME: Variadic templates require that we compute whether this
-  // declaration reference contains an unexpanded parameter pack.
+  // Determine whether this expression contains any unexpanded parameter
+  // packs.
+  // Is the declaration a parameter pack?
+  if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
+    if (NTTP->isParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+  }
+  // FIXME: Variadic templates function parameter packs.
 }
 
 DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier, 

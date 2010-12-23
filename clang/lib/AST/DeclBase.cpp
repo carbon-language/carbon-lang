@@ -110,7 +110,9 @@ void Decl::add(Kind k) {
 bool Decl::isTemplateParameterPack() const {
   if (const TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(this))
     return TTP->isParameterPack();
-
+  if (const NonTypeTemplateParmDecl *NTTP
+                                = llvm::dyn_cast<NonTypeTemplateParmDecl>(this))
+    return NTTP->isParameterPack();
   return false;
 }
 

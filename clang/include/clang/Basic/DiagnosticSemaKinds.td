@@ -1876,8 +1876,6 @@ def err_pack_expansion_mismatch_unsupported : Error<
   "clang cannot yet instantiate pack expansions with mismatched pack levels">;
 def err_function_parameter_pack_unsupported : Error<
   "clang does not yet support function parameter packs">;
-def err_non_type_parameter_pack_unsupported : Error<
-  "clang does not yet support non-type template parameter packs">;
 
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;

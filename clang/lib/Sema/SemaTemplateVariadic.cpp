@@ -63,8 +63,21 @@ namespace {
       return true;
     }
 
-    // FIXME: Record occurrences of non-type and template template
-    // parameter packs.
+    /// \brief Record occurrences of (FIXME: function and) non-type template
+    /// parameter packs in an expression.
+    bool VisitDeclRefExpr(DeclRefExpr *E) {
+      if (NonTypeTemplateParmDecl *NTTP 
+                            = dyn_cast<NonTypeTemplateParmDecl>(E->getDecl())) {
+        if (NTTP->isParameterPack())
+          Unexpanded.push_back(std::make_pair(NTTP, E->getLocation()));
+      }
+      
+      // FIXME: Function parameter packs.
+      
+      return true;
+    }
+    
+    // FIXME: Record occurrences of template template parameter packs.
 
     // FIXME: Once we have pack expansions in the AST, block their
     // traversal.
@@ -95,8 +108,8 @@ namespace {
     /// \brief Suppress traversel into types with location information
     /// that do not contain unexpanded parameter packs.
     bool TraverseTypeLoc(TypeLoc TL) {
-      if (!TL.getType().isNull() && TL.
-          getType()->containsUnexpandedParameterPack())
+      if (!TL.getType().isNull() && 
+          TL.getType()->containsUnexpandedParameterPack())
         return inherited::TraverseTypeLoc(TL);
 
       return true;

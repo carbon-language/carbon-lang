@@ -3414,7 +3414,7 @@ ASTNodeImporter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
                                Importer.getToContext().getTranslationUnitDecl(),
                                          Loc, D->getDepth(), D->getPosition(),
                                          Name.getAsIdentifierInfo(),
-                                         T, TInfo);
+                                         T, D->isParameterPack(), TInfo);
 }
 
 Decl *

@@ -128,6 +128,26 @@ struct TestPPName
 };
 
 // FIXME: Test for unexpanded parameter packs in each of the expression nodes.
+template<int ...Values>
+void test_unexpanded_in_exprs() {
+  // PredefinedExpr is uninteresting
+  // DeclRefExpr
+  Values; // expected-error{{expression contains unexpanded parameter pack 'Values'}}
+  // IntegerLiteral is uninteresting
+  // FloatingLiteral is uninteresting
+  // ImaginaryLiteral is uninteresting
+  // StringLiteral is uninteresting
+  // CharacterLiteral is uninteresting
+  (Values); // expected-error{{expression contains unexpanded parameter pack 'Values'}}
+  // UnaryOperator
+  -Values; // expected-error{{expression contains unexpanded parameter pack 'Values'}}
+  // OffsetOfExpr
+  struct OffsetMe {
+    int array[17];
+  };
+  __builtin_offsetof(OffsetMe, array[Values]); // expected-error{{expression contains unexpanded parameter pack 'Values'}}
+  // FIXME: continue this...
+}
 
 template<typename ... Types>
 void TestPPNameFunc(int i) {

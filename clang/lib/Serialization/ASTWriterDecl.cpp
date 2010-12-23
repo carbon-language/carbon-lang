@@ -994,6 +994,7 @@ void ASTDeclWriter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   Record.push_back(D->getDepth());
   Record.push_back(D->getPosition());
   // Rest of NonTypeTemplateParmDecl.
+  Record.push_back(D->isParameterPack());
   Record.push_back(D->getDefaultArgument() != 0);
   if (D->getDefaultArgument()) {
     Writer.AddStmt(D->getDefaultArgument());

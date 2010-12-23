@@ -1506,11 +1506,12 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
     Invalid = true;
   }
   
+  // FIXME: Variadic templates.
   NonTypeTemplateParmDecl *Param
     = NonTypeTemplateParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
                                     D->getDepth() - TemplateArgs.getNumLevels(), 
                                       D->getPosition(), D->getIdentifier(), T, 
-                                      DI);
+                                      D->isParameterPack(), DI);
   if (Invalid)
     Param->setInvalidDecl();
   

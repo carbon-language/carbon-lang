@@ -109,6 +109,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
                                             SourceLocation(), NTTP->getDepth(),
                                             NTTP->getPosition(), 0, 
                                             getCanonicalType(NTTP->getType()),
+                                            NTTP->isParameterPack(),
                                             0));
     else
       CanonParams.push_back(getCanonicalTemplateTemplateParmDecl(

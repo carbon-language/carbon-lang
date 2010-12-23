@@ -1156,6 +1156,7 @@ void ASTDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   D->setDepth(Record[Idx++]);
   D->setPosition(Record[Idx++]);
   // Rest of NonTypeTemplateParmDecl.
+  D->ParameterPack = Record[Idx++];
   if (Record[Idx++]) {
     Expr *DefArg = Reader.ReadExpr(F);
     bool Inherited = Record[Idx++];
@@ -1429,7 +1430,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     break;
   case DECL_NON_TYPE_TEMPLATE_PARM:
     D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,
-                                        QualType(),0);
+                                        QualType(), false, 0);
     break;
   case DECL_TEMPLATE_TEMPLATE_PARM:
     D = TemplateTemplateParmDecl::Create(*Context, 0, SourceLocation(),0,0,0,0);

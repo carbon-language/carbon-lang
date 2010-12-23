@@ -3564,6 +3564,7 @@ class BlockDeclRefExpr : public Expr {
   Stmt *CopyConstructorVal;
 public:
   // FIXME: Fix type/value dependence!
+  // FIXME: Variadic templates.
   BlockDeclRefExpr(ValueDecl *d, QualType t, ExprValueKind VK,
                    SourceLocation l, bool ByRef, bool constAdded = false,
                    Stmt *copyConstructorVal = 0)
