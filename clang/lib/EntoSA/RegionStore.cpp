@@ -817,9 +817,12 @@ SVal RegionStoreManager::evalDerivedToBase(SVal derived, QualType baseType) {
 
   assert(baseDecl && "not a CXXRecordDecl?");
 
-  loc::MemRegionVal &derivedRegVal = cast<loc::MemRegionVal>(derived);
+  loc::MemRegionVal *derivedRegVal = dyn_cast<loc::MemRegionVal>(&derived);
+  if (!derivedRegVal)
+    return derived;
+
   const MemRegion *baseReg = 
-    MRMgr.getCXXBaseObjectRegion(baseDecl, derivedRegVal.getRegion());
+    MRMgr.getCXXBaseObjectRegion(baseDecl, derivedRegVal->getRegion());
   return loc::MemRegionVal(baseReg);
 }
 //===----------------------------------------------------------------------===//
