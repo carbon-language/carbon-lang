@@ -659,15 +659,18 @@ static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
                                SmallSet<unsigned, 4> &RegAdded,
                                SmallVector<unsigned, 4> &LRegs,
                                const TargetRegisterInfo *TRI) {
-  if (LiveRegDefs[Reg] && LiveRegDefs[Reg] != SU) {
+  for (const unsigned *AliasI = TRI->getOverlaps(Reg); *AliasI; ++AliasI) {
+
+    // Check if Ref is live.
+    if (!LiveRegDefs[Reg]) continue;
+
+    // Allow multiple uses of the same def.
+    if (LiveRegDefs[Reg] == SU) continue;
+
+    // Add Reg to the set of interfering live regs.
     if (RegAdded.insert(Reg))
       LRegs.push_back(Reg);
   }
-  for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
-    if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != SU) {
-      if (RegAdded.insert(*Alias))
-        LRegs.push_back(*Alias);
-    }
 }
 
 /// DelayForLiveRegsBottomUp - Returns true if it is necessary to delay
