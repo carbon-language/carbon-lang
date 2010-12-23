@@ -377,6 +377,7 @@
 		AF68D2561255416E002FF25B /* RegisterContextLLDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF68D2541255416E002FF25B /* RegisterContextLLDB.cpp */; };
 		AF68D3311255A111002FF25B /* UnwindLLDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */; };
 		AF94005911C03F6500085DB9 /* SymbolVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF94005711C03F6500085DB9 /* SymbolVendor.cpp */; };
+		B296983712C2FB98002D92C3 /* CommandObjectVersion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1081,6 +1082,8 @@
 		AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindLLDB.cpp; path = Utility/UnwindLLDB.cpp; sourceTree = "<group>"; };
 		AF68D3301255A110002FF25B /* UnwindLLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindLLDB.h; path = Utility/UnwindLLDB.h; sourceTree = "<group>"; };
 		AF94005711C03F6500085DB9 /* SymbolVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolVendor.cpp; path = source/Symbol/SymbolVendor.cpp; sourceTree = "<group>"; };
+		B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectVersion.cpp; path = source/Commands/CommandObjectVersion.cpp; sourceTree = "<group>"; };
+		B296983512C2FB2B002D92C3 /* CommandObjectVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectVersion.h; path = source/Commands/CommandObjectVersion.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1840,6 +1843,8 @@
 		26BC7D0D10F1B71D00F91463 /* Commands */ = {
 			isa = PBXGroup;
 			children = (
+				B296983512C2FB2B002D92C3 /* CommandObjectVersion.h */,
+				B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */,
 				4CA9637A11B6E99A00780E28 /* CommandObjectApropos.h */,
 				4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */,
 				499F381E11A5B3F300F5CE02 /* CommandObjectArgs.h */,
@@ -2358,7 +2363,6 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.1";
-			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
@@ -2786,6 +2790,7 @@
 				4CC2A149128C73ED001531C4 /* ThreadPlanTracer.cpp in Sources */,
 				266A42D6128E3FFB0090CF7C /* ClangNamespaceDecl.cpp in Sources */,
 				4C7CF7E61295E12B00B4FBB5 /* ThreadPlanCallUserExpression.cpp in Sources */,
+				B296983712C2FB98002D92C3 /* CommandObjectVersion.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

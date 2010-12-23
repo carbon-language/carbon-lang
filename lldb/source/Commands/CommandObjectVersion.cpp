@@ -1,0 +1,48 @@
+//===-- CommandObjectVersion.cpp --------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#include "CommandObjectVersion.h"
+
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
+#include "lldb/lldb-private.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
+
+using namespace lldb;
+using namespace lldb_private;
+
+//-------------------------------------------------------------------------
+// CommandObjectVersion
+//-------------------------------------------------------------------------
+
+CommandObjectVersion::CommandObjectVersion (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, "version", "Show version of LLDB debugger.", "version")
+{
+}
+
+CommandObjectVersion::~CommandObjectVersion ()
+{
+}
+
+bool
+CommandObjectVersion::Execute
+(
+    Args& args,
+    CommandReturnObject &result
+)
+{
+    StreamString &output_stream = result.GetOutputStream();
+    output_stream.Printf ("%s\n", lldb_private::GetVersion());
+    result.SetStatus (eReturnStatusSuccessFinishResult);
+    return true;
+}
+
