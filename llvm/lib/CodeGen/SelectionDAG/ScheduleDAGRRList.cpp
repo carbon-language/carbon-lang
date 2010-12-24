@@ -348,7 +348,10 @@ void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU) {
 /// Check to see if any of the pending instructions are ready to issue.  If
 /// so, add them to the available queue.
 void ScheduleDAGRRList::ReleasePending() {
-  assert(!EnableSchedCycles && "requires --enable-sched-cycles" );
+  if (!EnableSchedCycles) {
+    assert(PendingQueue.empty() && "pending instrs not allowed in this mode");
+    return;
+  }
 
   // If the available queue is empty, it is safe to reset MinAvailableCycle.
   if (AvailableQueue->empty())
@@ -634,8 +637,7 @@ void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, SUnit *BtSU) {
 
   RestoreHazardCheckerBottomUp();
 
-  if (EnableSchedCycles)
-    ReleasePending();
+  ReleasePending();
 
   ++NumBacktracks;
 }

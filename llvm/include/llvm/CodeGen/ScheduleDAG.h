@@ -328,7 +328,7 @@ namespace llvm {
 
     /// isInstr - Return true if this SUnit refers to a machine instruction as
     /// opposed to an SDNode.
-    bool isInstr() const { return !Node; }
+    bool isInstr() const { return Instr; }
 
     /// setInstr - Assign the instruction for the SUnit.
     /// This may be used during post-regalloc scheduling.
