@@ -3134,7 +3134,9 @@ public:
                                   const TemplateArgument *Args,
                                   unsigned NumArgs);
 
+#ifndef _MSC_VER
 #pragma mark C++ Variadic Templates (C++0x [temp.variadic])
+#endif
 
   /// \brief The context in which an unexpanded parameter pack is
   /// being diagnosed.
@@ -3344,7 +3346,9 @@ public:
   /// false otherwise.
   bool containsUnexpandedParameterPacks(Declarator &D);
   
+#ifndef _MSC_VER
 #pragma mark C++ Template Argument Deduction (C++ [temp.deduct])
+#endif
 
   /// \brief Describes the result of template argument deduction.
   ///
