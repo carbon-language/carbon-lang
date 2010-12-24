@@ -831,12 +831,17 @@ bool AsmParser::ParseStatement() {
     return false;
   }
 
-  // Statements always start with an identifier.
+  // Statements always start with an identifier or are a full line comment.
   AsmToken ID = getTok();
   SMLoc IDLoc = ID.getLoc();
   StringRef IDVal;
   int64_t LocalLabelVal = -1;
-  // GUESS allow an integer followed by a ':' as a directional local label
+  // A full line comment is a '#' as the first token.
+  if (Lexer.is(AsmToken::Hash)) {
+    EatToEndOfStatement();
+    return false;
+  }
+  // Allow an integer followed by a ':' as a directional local label.
   if (Lexer.is(AsmToken::Integer)) {
     LocalLabelVal = getTok().getIntVal();
     if (LocalLabelVal < 0) {
