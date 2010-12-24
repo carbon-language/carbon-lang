@@ -649,6 +649,14 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
   
   // Check the well-formedness of the default template argument, if provided.
   if (Default) {
+    // C++0x [temp.param]p9:
+    //   A default template-argument may be specified for any kind of
+    //   template-parameter that is not a template parameter pack.
+    if (IsParameterPack) {
+      Diag(EqualLoc, diag::err_template_param_pack_default_arg);
+      return Param;
+    }
+
     // Check for unexpanded parameter packs.
     if (DiagnoseUnexpandedParameterPack(Default, UPPC_DefaultArgument))
       return Param;
