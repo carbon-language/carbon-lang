@@ -1037,14 +1037,14 @@ getDepthAndIndex(UnexpandedParameterPack UPP) {
                           = UPP.first.dyn_cast<const TemplateTypeParmType *>())
     return std::make_pair(TTP->getDepth(), TTP->getIndex());
   
-  if (TemplateTypeParmDecl *TTP = UPP.first.dyn_cast<TemplateTypeParmDecl *>())
+  NamedDecl *ND = UPP.first.get<NamedDecl *>();
+  if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(ND))
     return std::make_pair(TTP->getDepth(), TTP->getIndex());
   
-  if (NonTypeTemplateParmDecl *NTTP 
-                              = UPP.first.dyn_cast<NonTypeTemplateParmDecl *>())
+  if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(ND))
     return std::make_pair(NTTP->getDepth(), NTTP->getIndex());
   
-  TemplateTemplateParmDecl *TTP = UPP.first.get<TemplateTemplateParmDecl *>();
+  TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(ND);
   return std::make_pair(TTP->getDepth(), TTP->getIndex());
 }
 
