@@ -32,6 +32,10 @@ namespace llvm {
     ///
     virtual const SPURegisterInfo &getRegisterInfo() const { return RI; }
 
+    ScheduleHazardRecognizer *
+    CreateTargetHazardRecognizer(const TargetMachine *TM,
+                                 const ScheduleDAG *DAG) const;
+
     unsigned isLoadFromStackSlot(const MachineInstr *MI,
                                  int &FrameIndex) const;
     unsigned isStoreToStackSlot(const MachineInstr *MI,

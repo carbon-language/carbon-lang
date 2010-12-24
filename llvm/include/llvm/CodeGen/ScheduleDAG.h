@@ -326,6 +326,10 @@ namespace llvm {
       return Node;
     }
 
+    /// isInstr - Return true if this SUnit refers to a machine instruction as
+    /// opposed to an SDNode.
+    bool isInstr() const { return !Node; }
+
     /// setInstr - Assign the instruction for the SUnit.
     /// This may be used during post-regalloc scheduling.
     void setInstr(MachineInstr *MI) {
@@ -421,9 +425,13 @@ namespace llvm {
   ///
   class SchedulingPriorityQueue {
     unsigned CurCycle;
+    bool HasReadyFilter;
   public:
-    SchedulingPriorityQueue() : CurCycle(0) {}
+    SchedulingPriorityQueue(bool rf = false):
+      CurCycle(0), HasReadyFilter(rf) {}
     virtual ~SchedulingPriorityQueue() {}
+
+    virtual bool isBottomUp() const = 0;
 
     virtual void initNodes(std::vector<SUnit> &SUnits) = 0;
     virtual void addNode(const SUnit *SU) = 0;
@@ -431,6 +439,13 @@ namespace llvm {
     virtual void releaseState() = 0;
 
     virtual bool empty() const = 0;
+
+    bool hasReadyFilter() const { return HasReadyFilter; }
+
+    virtual bool isReady(SUnit *U) const {
+      assert(!HasReadyFilter && "The ready filter must override isReady()");
+      return true;
+    }
     virtual void push(SUnit *U) = 0;
 
     void push_all(const std::vector<SUnit *> &Nodes) {
@@ -442,6 +457,8 @@ namespace llvm {
     virtual SUnit *pop() = 0;
 
     virtual void remove(SUnit *SU) = 0;
+
+    virtual void dump(ScheduleDAG *DAG) const {}
 
     /// ScheduledNode - As each node is scheduled, this method is invoked.  This
     /// allows the priority function to adjust the priority of related
@@ -478,6 +495,13 @@ namespace llvm {
     explicit ScheduleDAG(MachineFunction &mf);
 
     virtual ~ScheduleDAG();
+
+    /// getInstrDesc - Return the TargetInstrDesc of this SUnit.
+    /// Return NULL for SDNodes without a machine opcode.
+    const TargetInstrDesc *getInstrDesc(const SUnit *SU) const {
+      if (SU->isInstr()) return &SU->getInstr()->getDesc();
+      return getNodeDesc(SU->getNode());
+    }
 
     /// viewGraph - Pop up a GraphViz/gv window with the ScheduleDAG rendered
     /// using 'dot'.
@@ -542,6 +566,10 @@ namespace llvm {
     void EmitNoop();
 
     void EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
+
+  private:
+    // Return the TargetInstrDesc of this SDNode or NULL.
+    const TargetInstrDesc *getNodeDesc(const SDNode *Node) const;
   };
 
   class SUnitIterator : public std::iterator<std::forward_iterator_tag,

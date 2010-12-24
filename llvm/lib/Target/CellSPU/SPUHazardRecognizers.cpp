@@ -41,12 +41,14 @@ SPUHazardRecognizer::SPUHazardRecognizer(const TargetInstrInfo &tii) :
 ///
 /// \return NoHazard
 ScheduleHazardRecognizer::HazardType
-SPUHazardRecognizer::getHazardType(SUnit *SU)
+SPUHazardRecognizer::getHazardType(SUnit *SU, int Stalls)
 {
   // Initial thoughts on how to do this, but this code cannot work unless the
   // function's prolog and epilog code are also being scheduled so that we can
   // accurately determine which pipeline is being scheduled.
 #if 0
+  assert(Stalls == 0 && "SPU hazards don't yet support scoreboard lookahead");
+
   const SDNode *Node = SU->getNode()->getFlaggedMachineNode();
   ScheduleHazardRecognizer::HazardType retval = NoHazard;
   bool mustBeOdd = false;

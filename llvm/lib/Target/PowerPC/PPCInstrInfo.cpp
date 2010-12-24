@@ -17,6 +17,7 @@
 #include "PPCPredicates.h"
 #include "PPCGenInstrInfo.inc"
 #include "PPCTargetMachine.h"
+#include "PPCHazardRecognizers.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -38,6 +39,18 @@ using namespace llvm;
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
   : TargetInstrInfoImpl(PPCInsts, array_lengthof(PPCInsts)), TM(tm),
     RI(*TM.getSubtargetImpl(), *this) {}
+
+/// CreateTargetHazardRecognizer - Return the hazard recognizer to use for
+/// this target when scheduling the DAG.
+ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
+  const TargetMachine *TM,
+  const ScheduleDAG *DAG) const {
+  // Should use subtarget info to pick the right hazard recognizer.  For
+  // now, always return a PPC970 recognizer.
+  const TargetInstrInfo *TII = TM->getInstrInfo();
+  assert(TII && "No InstrInfo?");
+  return new PPCHazardRecognizer970(*TII);
+}
 
 unsigned PPCInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                            int &FrameIndex) const {

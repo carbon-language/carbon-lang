@@ -30,7 +30,7 @@ private:
 
 public:
   SPUHazardRecognizer(const TargetInstrInfo &TII);
-  virtual HazardType getHazardType(SUnit *SU);
+  virtual HazardType getHazardType(SUnit *SU, int Stalls);
   virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();
   virtual void EmitNoop();

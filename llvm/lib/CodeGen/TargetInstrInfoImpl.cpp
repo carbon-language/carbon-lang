@@ -414,8 +414,18 @@ bool TargetInstrInfoImpl::isSchedulingBoundary(const MachineInstr *MI,
   return false;
 }
 
+// Default implementation of CreateTargetPreRAHazardRecognizer.
+ScheduleHazardRecognizer *TargetInstrInfoImpl::
+CreateTargetHazardRecognizer(const TargetMachine *TM,
+                             const ScheduleDAG *DAG) const {
+  // Dummy hazard recognizer allows all instructions to issue.
+  return new ScheduleHazardRecognizer();
+}
+
 // Default implementation of CreateTargetPostRAHazardRecognizer.
 ScheduleHazardRecognizer *TargetInstrInfoImpl::
-CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II) const {
-  return (ScheduleHazardRecognizer *)new ScoreboardHazardRecognizer(II);
+CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
+                                   const ScheduleDAG *DAG) const {
+  return (ScheduleHazardRecognizer *)
+    new ScoreboardHazardRecognizer(II, DAG, "post-RA-sched");
 }

@@ -156,6 +156,8 @@ protected:
   std::string ParseSubtargetFeatures(const std::string &FS,
                                      const std::string &CPU);
 
+  void computeIssueWidth();
+
   bool hasV4TOps()  const { return ARMArchVersion >= V4T;  }
   bool hasV5TOps()  const { return ARMArchVersion >= V5T;  }
   bool hasV5TEOps() const { return ARMArchVersion >= V5TE; }

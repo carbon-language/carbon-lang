@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sched-hazard"
+#define DEBUG_TYPE ::llvm::ScoreboardHazardRecognizer::DebugType
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Debug.h"
@@ -23,29 +23,48 @@
 
 using namespace llvm;
 
+#ifndef NDEBUG
+const char *ScoreboardHazardRecognizer::DebugType = "";
+#endif
+
 ScoreboardHazardRecognizer::
-ScoreboardHazardRecognizer(const InstrItineraryData *LItinData) :
-  ScheduleHazardRecognizer(), ItinData(LItinData) {
+ScoreboardHazardRecognizer(const InstrItineraryData *II,
+                           const ScheduleDAG *SchedDAG,
+                           const char *ParentDebugType) :
+  ScheduleHazardRecognizer(), ItinData(II), DAG(SchedDAG), IssueWidth(0),
+  IssueCount(0) {
+
+#ifndef NDEBUG
+  DebugType = ParentDebugType;
+#endif
+
   // Determine the maximum depth of any itinerary. This determines the
   // depth of the scoreboard. We always make the scoreboard at least 1
   // cycle deep to avoid dealing with the boundary condition.
   unsigned ScoreboardDepth = 1;
   if (ItinData && !ItinData->isEmpty()) {
+    IssueWidth = ItinData->IssueWidth;
+
     for (unsigned idx = 0; ; ++idx) {
       if (ItinData->isEndMarker(idx))
         break;
 
       const InstrStage *IS = ItinData->beginStage(idx);
       const InstrStage *E = ItinData->endStage(idx);
+      unsigned CurCycle = 0;
       unsigned ItinDepth = 0;
-      for (; IS != E; ++IS)
-        ItinDepth += IS->getCycles();
+      for (; IS != E; ++IS) {
+        unsigned StageDepth = CurCycle + IS->getCycles();
+        if (ItinDepth < StageDepth) ItinDepth = StageDepth;
+        CurCycle += IS->getNextCycles();
+      }
 
       // Find the next power-of-2 >= ItinDepth
       while (ItinDepth > ScoreboardDepth) {
         ScoreboardDepth *= 2;
       }
     }
+    MaxLookAhead = ScoreboardDepth;
   }
 
   ReservedScoreboard.reset(ScoreboardDepth);
@@ -56,6 +75,7 @@ ScoreboardHazardRecognizer(const InstrItineraryData *LItinData) :
 }
 
 void ScoreboardHazardRecognizer::Reset() {
+  IssueCount = 0;
   RequiredScoreboard.reset();
   ReservedScoreboard.reset();
 }
@@ -76,24 +96,46 @@ void ScoreboardHazardRecognizer::Scoreboard::dump() const {
   }
 }
 
+bool ScoreboardHazardRecognizer::atIssueLimit() const {
+  if (IssueWidth == 0)
+    return false;
+
+  return IssueCount == IssueWidth;
+}
+
 ScheduleHazardRecognizer::HazardType
-ScoreboardHazardRecognizer::getHazardType(SUnit *SU) {
+ScoreboardHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
   if (!ItinData || ItinData->isEmpty())
     return NoHazard;
 
-  unsigned cycle = 0;
+  // Note that stalls will be negative for bottom-up scheduling.
+  int cycle = Stalls;
 
   // Use the itinerary for the underlying instruction to check for
   // free FU's in the scoreboard at the appropriate future cycles.
-  unsigned idx = SU->getInstr()->getDesc().getSchedClass();
+
+  const TargetInstrDesc *TID = DAG->getInstrDesc(SU);
+  if (TID == NULL) {
+    // Don't check hazards for non-machineinstr Nodes.
+    return NoHazard;
+  }
+  unsigned idx = TID->getSchedClass();
   for (const InstrStage *IS = ItinData->beginStage(idx),
          *E = ItinData->endStage(idx); IS != E; ++IS) {
     // We must find one of the stage's units free for every cycle the
     // stage is occupied. FIXME it would be more accurate to find the
     // same unit free in all the cycles.
     for (unsigned int i = 0; i < IS->getCycles(); ++i) {
-      assert(((cycle + i) < RequiredScoreboard.getDepth()) &&
-             "Scoreboard depth exceeded!");
+      int StageCycle = cycle + (int)i;
+      if (StageCycle < 0)
+        continue;
+
+      if (StageCycle >= (int)RequiredScoreboard.getDepth()) {
+        assert((StageCycle - Stalls) < (int)RequiredScoreboard.getDepth() &&
+               "Scoreboard depth exceeded!");
+        // This stage was stalled beyond pipeline depth, so cannot conflict.
+        break;
+      }
 
       unsigned freeUnits = IS->getUnits();
       switch (IS->getReservationKind()) {
@@ -101,18 +143,18 @@ ScoreboardHazardRecognizer::getHazardType(SUnit *SU) {
        assert(0 && "Invalid FU reservation");
       case InstrStage::Required:
         // Required FUs conflict with both reserved and required ones
-        freeUnits &= ~ReservedScoreboard[cycle + i];
+        freeUnits &= ~ReservedScoreboard[StageCycle];
         // FALLTHROUGH
       case InstrStage::Reserved:
         // Reserved FUs can conflict only with required ones.
-        freeUnits &= ~RequiredScoreboard[cycle + i];
+        freeUnits &= ~RequiredScoreboard[StageCycle];
         break;
       }
 
       if (!freeUnits) {
         DEBUG(dbgs() << "*** Hazard in cycle " << (cycle + i) << ", ");
         DEBUG(dbgs() << "SU(" << SU->NodeNum << "): ");
-        DEBUG(SU->getInstr()->dump());
+        DEBUG(DAG->dumpNode(SU));
         return Hazard;
       }
     }
@@ -128,11 +170,15 @@ void ScoreboardHazardRecognizer::EmitInstruction(SUnit *SU) {
   if (!ItinData || ItinData->isEmpty())
     return;
 
+  ++IssueCount;
+
   unsigned cycle = 0;
 
   // Use the itinerary for the underlying instruction to reserve FU's
   // in the scoreboard at the appropriate future cycles.
-  unsigned idx = SU->getInstr()->getDesc().getSchedClass();
+  const TargetInstrDesc *TID = DAG->getInstrDesc(SU);
+  assert(TID && "The scheduler must filter non-machineinstrs");
+  unsigned idx = TID->getSchedClass();
   for (const InstrStage *IS = ItinData->beginStage(idx),
          *E = ItinData->endStage(idx); IS != E; ++IS) {
     // We must reserve one of the stage's units for every cycle the
@@ -179,11 +225,13 @@ void ScoreboardHazardRecognizer::EmitInstruction(SUnit *SU) {
 }
 
 void ScoreboardHazardRecognizer::AdvanceCycle() {
+  IssueCount = 0;
   ReservedScoreboard[0] = 0; ReservedScoreboard.advance();
   RequiredScoreboard[0] = 0; RequiredScoreboard.advance();
 }
 
 void ScoreboardHazardRecognizer::RecedeCycle() {
+  IssueCount = 0;
   ReservedScoreboard[ReservedScoreboard.getDepth()-1] = 0;
   ReservedScoreboard.recede();
   RequiredScoreboard[RequiredScoreboard.getDepth()-1] = 0;

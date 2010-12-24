@@ -23,7 +23,15 @@ class SUnit;
 /// issued this cycle, and whether or not a noop needs to be inserted to handle
 /// the hazard.
 class ScheduleHazardRecognizer {
+protected:
+  /// MaxLookAhead - Indicate the number of cycles in the scoreboard
+  /// state. Important to restore the state after backtracking. Additionally,
+  /// MaxLookAhead=0 identifies a fake recognizer, allowing the client to
+  /// bypass virtual calls. Currently the PostRA scheduler ignores it.
+  unsigned MaxLookAhead;
+
 public:
+  ScheduleHazardRecognizer(): MaxLookAhead(0) {}
   virtual ~ScheduleHazardRecognizer();
 
   enum HazardType {
@@ -32,6 +40,12 @@ public:
     NoopHazard     // This instruction can't be emitted, and needs noops.
   };
 
+  unsigned getMaxLookAhead() const { return MaxLookAhead; }
+
+  /// atIssueLimit - Return true if no more instructions may be issued in this
+  /// cycle.
+  virtual bool atIssueLimit() const { return false; }
+
   /// getHazardType - Return the hazard type of emitting this node.  There are
   /// three possible results.  Either:
   ///  * NoHazard: it is legal to issue this instruction on this cycle.
@@ -39,7 +53,7 @@ public:
   ///     other instruction is available, issue it first.
   ///  * NoopHazard: issuing this instruction would break the program.  If
   ///     some other instruction can be issued, do so, otherwise issue a noop.
-  virtual HazardType getHazardType(SUnit *) {
+  virtual HazardType getHazardType(SUnit *m, int Stalls) {
     return NoHazard;
   }
 
@@ -52,11 +66,17 @@ public:
   /// emitted, to advance the hazard state.
   virtual void EmitInstruction(SUnit *) {}
 
-  /// AdvanceCycle - This callback is invoked when no instructions can be
-  /// issued on this cycle without a hazard.  This should increment the
+  /// AdvanceCycle - This callback is invoked whenever the next top-down
+  /// instruction to be scheduled cannot issue in the current cycle, either
+  /// because of latency or resource conflicts.  This should increment the
   /// internal state of the hazard recognizer so that previously "Hazard"
   /// instructions will now not be hazards.
   virtual void AdvanceCycle() {}
+
+  /// RecedeCycle - This callback is invoked whenever the next bottom-up
+  /// instruction to be scheduled cannot issue in the current cycle, either
+  /// because of latency or resource conflicts.
+  virtual void RecedeCycle() {}
 
   /// EmitNoop - This callback is invoked when a noop was added to the
   /// instruction stream.

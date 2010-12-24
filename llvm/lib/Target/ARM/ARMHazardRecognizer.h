@@ -29,7 +29,7 @@ class ARMHazardRecognizer : public ScoreboardHazardRecognizer {
   const ARMSubtarget &STI;
 
   MachineInstr *LastMI;
-  unsigned Stalls;
+  unsigned FpMLxStalls;
   unsigned ITBlockSize;  // No. of MIs in current IT block yet to be scheduled.
   MachineInstr *ITBlockMIs[4];
 
@@ -37,11 +37,12 @@ public:
   ARMHazardRecognizer(const InstrItineraryData *ItinData,
                       const ARMBaseInstrInfo &tii,
                       const ARMBaseRegisterInfo &tri,
-                      const ARMSubtarget &sti) :
-    ScoreboardHazardRecognizer(ItinData), TII(tii), TRI(tri), STI(sti),
-    LastMI(0), ITBlockSize(0) {}
+                      const ARMSubtarget &sti,
+                      const ScheduleDAG *DAG) :
+    ScoreboardHazardRecognizer(ItinData, DAG, "post-RA-sched"), TII(tii),
+    TRI(tri), STI(sti), LastMI(0), ITBlockSize(0) {}
 
-  virtual HazardType getHazardType(SUnit *SU);
+  virtual HazardType getHazardType(SUnit *SU, int Stalls);
   virtual void Reset();
   virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();

@@ -16,6 +16,7 @@
 #define DEBUG_TYPE "scheduler"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 bool latency_sort::operator()(const SUnit *LHS, const SUnit *RHS) const {
@@ -136,3 +137,16 @@ void LatencyPriorityQueue::remove(SUnit *SU) {
     std::swap(*I, Queue.back());
   Queue.pop_back();
 }
+
+#ifdef NDEBUG
+void LatencyPriorityQueue::dump(ScheduleDAG *DAG) const {}
+#else
+void LatencyPriorityQueue::dump(ScheduleDAG *DAG) const {
+  LatencyPriorityQueue q = *this;
+  while (!q.empty()) {
+    SUnit *su = q.pop();
+    dbgs() << "Height " << su->getHeight() << ": ";
+    su->dump(DAG);
+  }
+}
+#endif

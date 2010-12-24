@@ -98,11 +98,6 @@ public:
                             CodeGenOpt::Level OptLevel,
                             bool IgnoreChains = false);
 
-  /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
-  /// to use for this target when scheduling the DAG.
-  virtual ScheduleHazardRecognizer *CreateTargetHazardRecognizer();
-
-
   // Opcodes used by the DAG state machine:
   enum BuiltinOpcodes {
     OPC_Scope,

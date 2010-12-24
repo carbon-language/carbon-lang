@@ -122,7 +122,9 @@ isLoadOfStoredAddress(unsigned LoadSize, SDValue Ptr1, SDValue Ptr2) const {
 /// instructions that wouldn't terminate the dispatch group that would cause a
 /// pipeline flush.
 ScheduleHazardRecognizer::HazardType PPCHazardRecognizer970::
-getHazardType(SUnit *SU) {
+getHazardType(SUnit *SU, int Stalls) {
+  assert(Stalls == 0 && "PPC hazards don't support scoreboard lookahead");
+
   const SDNode *Node = SU->getNode()->getGluedMachineNode();
   bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType =

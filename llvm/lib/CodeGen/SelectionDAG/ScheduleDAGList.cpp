@@ -63,11 +63,12 @@ private:
 
 public:
   ScheduleDAGList(MachineFunction &mf,
-                  SchedulingPriorityQueue *availqueue,
-                  ScheduleHazardRecognizer *HR)
-    : ScheduleDAGSDNodes(mf),
-      AvailableQueue(availqueue), HazardRec(HR) {
-    }
+                  SchedulingPriorityQueue *availqueue)
+    : ScheduleDAGSDNodes(mf), AvailableQueue(availqueue) {
+
+    const TargetMachine &tm = mf.getTarget();
+    HazardRec = tm.getInstrInfo()->CreateTargetHazardRecognizer(&tm, this);
+  }
 
   ~ScheduleDAGList() {
     delete HazardRec;
@@ -202,7 +203,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       SUnit *CurSUnit = AvailableQueue->pop();
 
       ScheduleHazardRecognizer::HazardType HT =
-        HazardRec->getHazardType(CurSUnit);
+        HazardRec->getHazardType(CurSUnit, 0/*no stalls*/);
       if (HT == ScheduleHazardRecognizer::NoHazard) {
         FoundSUnit = CurSUnit;
         break;
@@ -257,12 +258,8 @@ void ScheduleDAGList::ListScheduleTopDown() {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-/// createTDListDAGScheduler - This creates a top-down list scheduler with a
-/// new hazard recognizer. This scheduler takes ownership of the hazard
-/// recognizer and deletes it when done.
+/// createTDListDAGScheduler - This creates a top-down list scheduler.
 ScheduleDAGSDNodes *
 llvm::createTDListDAGScheduler(SelectionDAGISel *IS, CodeGenOpt::Level) {
-  return new ScheduleDAGList(*IS->MF,
-                             new LatencyPriorityQueue(),
-                             IS->CreateTargetHazardRecognizer());
+  return new ScheduleDAGList(*IS->MF, new LatencyPriorityQueue());
 }

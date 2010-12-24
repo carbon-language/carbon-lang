@@ -47,6 +47,8 @@ namespace llvm {
     LatencyPriorityQueue() : Picker(this) {
     }
 
+    bool isBottomUp() const { return false; }
+
     void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       NumNodesSolelyBlocking.resize(SUnits->size(), 0);
@@ -80,6 +82,8 @@ namespace llvm {
     virtual SUnit *pop();
 
     virtual void remove(SUnit *SU);
+
+    virtual void dump(ScheduleDAG* DAG) const;
 
     // ScheduledNode - As nodes are scheduled, we look to see if there are any
     // successor nodes that have a single unscheduled predecessor.  If so, that

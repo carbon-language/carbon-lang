@@ -301,14 +301,6 @@ namespace {
       return "Cell SPU DAG->DAG Pattern Instruction Selection";
     }
 
-    /// CreateTargetHazardRecognizer - Return the hazard recognizer to use for
-    /// this target when scheduling the DAG.
-    virtual ScheduleHazardRecognizer *CreateTargetHazardRecognizer() {
-      const TargetInstrInfo *II = TM.getInstrInfo();
-      assert(II && "No InstrInfo?");
-      return new SPUHazardRecognizer(*II);
-    }
-
   private:
     SDValue getRC( MVT );
 

@@ -1201,10 +1201,6 @@ ScheduleDAGSDNodes *SelectionDAGISel::CreateScheduler() {
   return Ctor(this, OptLevel);
 }
 
-ScheduleHazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {
-  return new ScheduleHazardRecognizer();
-}
-
 //===----------------------------------------------------------------------===//
 // Helper functions used by the generated instruction selector.
 //===----------------------------------------------------------------------===//

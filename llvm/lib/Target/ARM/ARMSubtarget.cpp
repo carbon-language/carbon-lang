@@ -140,6 +140,9 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
     FSWithArch = FS;
   CPUString = ParseSubtargetFeatures(FSWithArch, CPUString);
 
+  // After parsing Itineraries, set ItinData.IssueWidth.
+  computeIssueWidth();
+
   // Thumb2 implies at least V6T2.
   if (ARMArchVersion >= V6T2)
     ThumbMode = Thumb2;
@@ -222,6 +225,21 @@ unsigned ARMSubtarget::getMispredictionPenalty() const {
 
   // Otherwise, just return a sensible default.
   return 10;
+}
+
+void ARMSubtarget::computeIssueWidth() {
+  unsigned allStage1Units = 0;
+  for (const InstrItinerary *itin = InstrItins.Itineraries;
+       itin->FirstStage != ~0U; ++itin) {
+    const InstrStage *IS = InstrItins.Stages + itin->FirstStage;
+    allStage1Units |= IS->getUnits();
+  }
+  InstrItins.IssueWidth = 0;
+  while (allStage1Units) {
+    ++InstrItins.IssueWidth;
+    // clear the lowest bit
+    allStage1Units ^= allStage1Units & ~(allStage1Units - 1);
+  }
 }
 
 bool ARMSubtarget::enablePostRAScheduler(

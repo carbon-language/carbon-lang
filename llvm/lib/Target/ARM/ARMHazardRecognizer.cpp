@@ -34,7 +34,9 @@ static bool hasRAWHazard(MachineInstr *DefMI, MachineInstr *MI,
 }
 
 ScheduleHazardRecognizer::HazardType
-ARMHazardRecognizer::getHazardType(SUnit *SU) {
+ARMHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
+  assert(Stalls == 0 && "ARM hazards don't support scoreboard lookahead");
+
   MachineInstr *MI = SU->getInstr();
 
   if (!MI->isDebugValue()) {
@@ -61,19 +63,19 @@ ARMHazardRecognizer::getHazardType(SUnit *SU) {
           (TII.canCauseFpMLxStall(MI->getOpcode()) ||
            hasRAWHazard(DefMI, MI, TRI))) {
         // Try to schedule another instruction for the next 4 cycles.
-        if (Stalls == 0)
-          Stalls = 4;
+        if (FpMLxStalls == 0)
+          FpMLxStalls = 4;
         return Hazard;
       }
     }
   }
 
-  return ScoreboardHazardRecognizer::getHazardType(SU);
+  return ScoreboardHazardRecognizer::getHazardType(SU, Stalls);
 }
 
 void ARMHazardRecognizer::Reset() {
   LastMI = 0;
-  Stalls = 0;
+  FpMLxStalls = 0;
   ITBlockSize = 0;
   ScoreboardHazardRecognizer::Reset();
 }
@@ -100,14 +102,14 @@ void ARMHazardRecognizer::EmitInstruction(SUnit *SU) {
 
   if (!MI->isDebugValue()) {
     LastMI = MI;
-    Stalls = 0;
+    FpMLxStalls = 0;
   }
 
   ScoreboardHazardRecognizer::EmitInstruction(SU);
 }
 
 void ARMHazardRecognizer::AdvanceCycle() {
-  if (Stalls && --Stalls == 0)
+  if (FpMLxStalls && --FpMLxStalls == 0)
     // Stalled for 4 cycles but still can't schedule any other instructions.
     LastMI = 0;
   ScoreboardHazardRecognizer::AdvanceCycle();

@@ -29,6 +29,7 @@ class MCInst;
 class SDNode;
 class ScheduleHazardRecognizer;
 class SelectionDAG;
+class ScheduleDAG;
 class TargetRegisterClass;
 class TargetRegisterInfo;
 
@@ -563,11 +564,19 @@ public:
   virtual unsigned getInlineAsmLength(const char *Str,
                                       const MCAsmInfo &MAI) const;
 
-  /// CreateTargetHazardRecognizer - Allocate and return a hazard recognizer
-  /// to use for this target when scheduling the machine instructions after
-  /// register allocation.
+  /// CreateTargetPreRAHazardRecognizer - Allocate and return a hazard
+  /// recognizer to use for this target when scheduling the machine instructions
+  /// before register allocation.
   virtual ScheduleHazardRecognizer*
-  CreateTargetPostRAHazardRecognizer(const InstrItineraryData*) const = 0;
+  CreateTargetHazardRecognizer(const TargetMachine *TM,
+                               const ScheduleDAG *DAG) const = 0;
+
+  /// CreateTargetPostRAHazardRecognizer - Allocate and return a hazard
+  /// recognizer to use for this target when scheduling the machine instructions
+  /// after register allocation.
+  virtual ScheduleHazardRecognizer*
+  CreateTargetPostRAHazardRecognizer(const InstrItineraryData*,
+                                     const ScheduleDAG *DAG) const = 0;
 
   /// AnalyzeCompare - For a comparison instruction, return the source register
   /// in SrcReg and the value it compares against in CmpValue. Return true if
@@ -674,7 +683,11 @@ public:
                                     const MachineFunction &MF) const;
 
   virtual ScheduleHazardRecognizer *
-  CreateTargetPostRAHazardRecognizer(const InstrItineraryData*) const;
+  CreateTargetHazardRecognizer(const TargetMachine*, const ScheduleDAG*) const;
+
+  virtual ScheduleHazardRecognizer *
+  CreateTargetPostRAHazardRecognizer(const InstrItineraryData*,
+                                     const ScheduleDAG*) const;
 };
 
 } // End llvm namespace

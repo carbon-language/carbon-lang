@@ -26,6 +26,8 @@
 namespace llvm {
 
 class InstrItineraryData;
+class TargetInstrDesc;
+class ScheduleDAG;
 class SUnit;
 
 class ScoreboardHazardRecognizer : public ScheduleHazardRecognizer {
@@ -84,16 +86,38 @@ class ScoreboardHazardRecognizer : public ScheduleHazardRecognizer {
     void dump() const;
   };
 
+#ifndef NDEBUG
+  // Support for tracing ScoreboardHazardRecognizer as a component within
+  // another module. Follows the current thread-unsafe model of tracing.
+  static const char *DebugType;
+#endif
+
   // Itinerary data for the target.
   const InstrItineraryData *ItinData;
+
+  const ScheduleDAG *DAG;
+
+  /// IssueWidth - Max issue per cycle. 0=Unknown.
+  unsigned IssueWidth;
+
+  /// IssueCount - Count instructions issued in this cycle.
+  unsigned IssueCount;
 
   Scoreboard ReservedScoreboard;
   Scoreboard RequiredScoreboard;
 
 public:
-  ScoreboardHazardRecognizer(const InstrItineraryData *ItinData);
+  ScoreboardHazardRecognizer(const InstrItineraryData *ItinData,
+                             const ScheduleDAG *DAG,
+                             const char *ParentDebugType = "");
 
-  virtual HazardType getHazardType(SUnit *SU);
+  /// atIssueLimit - Return true if no more instructions may be issued in this
+  /// cycle.
+  virtual bool atIssueLimit() const;
+
+  // Stalls provides an cycle offset at which SU will be scheduled. It will be
+  // negative for bottom-up scheduling.
+  virtual HazardType getHazardType(SUnit *SU, int Stalls);
   virtual void Reset();
   virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();

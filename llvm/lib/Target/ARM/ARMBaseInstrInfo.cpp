@@ -41,6 +41,13 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
+// Other targets already have a hazard recognizer enabled by default, so this
+// flag currently only affects ARM. It will be generalized when it becomes a
+// disabled flag.
+static cl::opt<bool> EnableHazardRecognizer(
+  "enable-sched-hazard", cl::Hidden,
+  cl::desc("Enable hazard detection during preRA scheduling"),
+  cl::init(false));
 
 /// ARM_MLxEntry - Record information about MLA / MLS instructions.
 struct ARM_MLxEntry {
@@ -85,12 +92,25 @@ ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
   }
 }
 
+// Use a ScoreboardHazardRecognizer for prepass ARM scheduling. TargetInstrImpl
+// currently defaults to no prepass hazard recognizer.
 ScheduleHazardRecognizer *ARMBaseInstrInfo::
-CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II) const {
+CreateTargetHazardRecognizer(const TargetMachine *TM,
+                             const ScheduleDAG *DAG) const {
+  if (EnableHazardRecognizer) {
+    const InstrItineraryData *II = TM->getInstrItineraryData();
+    return new ScoreboardHazardRecognizer(II, DAG, "pre-RA-sched");
+  }
+  return TargetInstrInfoImpl::CreateTargetHazardRecognizer(TM, DAG);
+}
+
+ScheduleHazardRecognizer *ARMBaseInstrInfo::
+CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
+                                   const ScheduleDAG *DAG) const {
   if (Subtarget.isThumb2() || Subtarget.hasVFP2())
     return (ScheduleHazardRecognizer *)
-      new ARMHazardRecognizer(II, *this, getRegisterInfo(), Subtarget);
-  return TargetInstrInfoImpl::CreateTargetPostRAHazardRecognizer(II);
+      new ARMHazardRecognizer(II, *this, getRegisterInfo(), Subtarget, DAG);
+  return TargetInstrInfoImpl::CreateTargetPostRAHazardRecognizer(II, DAG);
 }
 
 MachineInstr *

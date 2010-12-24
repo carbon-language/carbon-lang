@@ -113,11 +113,13 @@ public:
   const unsigned       *OperandCycles;  ///< Array of operand cycles selected
   const unsigned       *Forwardings;    ///< Array of pipeline forwarding pathes
   const InstrItinerary *Itineraries;    ///< Array of itineraries selected
+  unsigned              IssueWidth;     ///< Max issue per cycle. 0=Unknown.
 
   /// Ctors.
   ///
   InstrItineraryData() : Stages(0), OperandCycles(0), Forwardings(0),
-                         Itineraries(0) {}
+                         Itineraries(0), IssueWidth(0) {}
+
   InstrItineraryData(const InstrStage *S, const unsigned *OS,
                      const unsigned *F, const InstrItinerary *I)
     : Stages(S), OperandCycles(OS), Forwardings(F), Itineraries(I) {}

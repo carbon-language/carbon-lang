@@ -48,7 +48,7 @@ class PPCHazardRecognizer970 : public ScheduleHazardRecognizer {
 
 public:
   PPCHazardRecognizer970(const TargetInstrInfo &TII);
-  virtual HazardType getHazardType(SUnit *SU);
+  virtual HazardType getHazardType(SUnit *SU, int Stalls);
   virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();
 
