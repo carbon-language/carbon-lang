@@ -435,6 +435,13 @@ void ScheduleDAGRRList::AdvancePastStalls(SUnit *SU) {
 /// Record this SUnit in the HazardRecognizer.
 /// Does not update CurCycle.
 void ScheduleDAGRRList::EmitNode(SUnit *SU) {
+  if (!EnableSchedCycles || HazardRec->getMaxLookAhead() == 0)
+    return;
+
+  // Check for phys reg copy.
+  if (!SU->getNode())
+    return;
+
   switch (SU->getNode()->getOpcode()) {
   default:
     assert(SU->getNode()->isMachineOpcode() &&
@@ -645,11 +652,11 @@ static bool isOperandOf(const SUnit *SU, SDNode *N) {
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled
 /// successors to the newly created node.
 SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
-  if (SU->getNode()->getGluedNode())
-    return NULL;
-
   SDNode *N = SU->getNode();
   if (!N)
+    return NULL;
+
+  if (SU->getNode()->getGluedNode())
     return NULL;
 
   SUnit *NewSU;
