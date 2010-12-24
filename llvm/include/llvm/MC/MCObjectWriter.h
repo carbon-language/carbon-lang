@@ -21,6 +21,7 @@ class MCAssembler;
 class MCFixup;
 class MCFragment;
 class MCSymbol;
+class MCSymbolData;
 class MCSymbolRefExpr;
 class MCValue;
 class raw_ostream;
@@ -84,21 +85,19 @@ public:
   ///
   /// Clients are not required to answer precisely and may conservatively return
   /// false, even when a difference is fully resolved.
-  virtual bool
+  bool
   IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
                                      const MCSymbolRefExpr *A,
                                      const MCSymbolRefExpr *B,
                                      bool InSet) const;
 
-  /// Check if a fixup is fully resolved.
-  ///
-  /// This routine is used by the assembler to let the file format decide
-  /// if a fixup is not fully resolved. For example, one that crosses
-  /// two sections on ELF.
-  virtual bool IsFixupFullyResolved(const MCAssembler &Asm,
-                                    const MCValue Target,
-                                    bool IsPCRel,
-                                    const MCFragment *DF) const = 0;
+  virtual bool
+  IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+                                         const MCSymbolData &DataA,
+                                         const MCFragment &FB,
+                                         bool InSet,
+                                         bool IsPCRel) const = 0;
+
 
   /// Write the object file.
   ///

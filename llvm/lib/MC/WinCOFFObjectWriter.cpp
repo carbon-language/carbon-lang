@@ -179,10 +179,12 @@ public:
                         MCValue Target,
                         uint64_t &FixedValue);
 
-  virtual bool IsFixupFullyResolved(const MCAssembler &Asm,
-                                    const MCValue Target,
-                                    bool IsPCRel,
-                                    const MCFragment *DF) const;
+  virtual bool
+  IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+                                         const MCSymbolData &DataA,
+                                         const MCFragment &FB,
+                                         bool InSet,
+                                         bool IsPCRel) const;
 
   void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
 };
@@ -717,34 +719,17 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   coff_section->Relocations.push_back(Reloc);
 }
 
-bool WinCOFFObjectWriter::IsFixupFullyResolved(const MCAssembler &Asm,
-                                               const MCValue Target,
-                                               bool IsPCRel,
-                                               const MCFragment *DF) const {
-  // If this is a PCrel relocation, find the section this fixup value is
-  // relative to.
-  const MCSection *BaseSection = 0;
-  if (IsPCRel) {
-    BaseSection = &DF->getParent()->getSection();
-    assert(BaseSection);
-  }
-
-  const MCSection *SectionA = 0;
-  const MCSymbol *SymbolA = 0;
-  if (const MCSymbolRefExpr *A = Target.getSymA()) {
-    SymbolA = &A->getSymbol();
-    SectionA = &SymbolA->getSection();
-  }
-
-  const MCSection *SectionB = 0;
-  if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    SectionB = &B->getSymbol().getSection();
-  }
-
-  if (!BaseSection)
-    return SectionA == SectionB;
-
-  return !SectionB && BaseSection == SectionA;
+bool
+WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
+                                                      const MCAssembler &Asm,
+                                                      const MCSymbolData &DataA,
+                                                      const MCFragment &FB,
+                                                      bool InSet,
+                                                      bool IsPCRel) const {
+  const MCSection &SecA = DataA.getSymbol().AliasedSymbol().getSection();
+  const MCSection &SecB = FB.getParent()->getSection();
+  // On COFF A - B is absolute if A and B are in the same section.
+  return &SecA == &SecB;
 }
 
 void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,

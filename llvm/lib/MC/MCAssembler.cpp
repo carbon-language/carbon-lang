@@ -11,6 +11,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSection.h"
@@ -218,22 +219,37 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   if (!Fixup.getValue()->EvaluateAsRelocatable(Target, Layout))
     report_fatal_error("expected relocatable expression");
 
-  // FIXME: How do non-scattered symbols work in ELF? I presume the linker
-  // doesn't support small relocations, but then under what criteria does the
-  // assembler allow symbol differences?
+  bool IsPCRel = Backend.getFixupKindInfo(
+    Fixup.getKind()).Flags & MCFixupKindInfo::FKF_IsPCRel;
+
+  bool IsResolved;
+  if (IsPCRel) {
+    if (Target.getSymB()) {
+      IsResolved = false;
+    } else if (!Target.getSymA()) {
+      IsResolved = false;
+    } else {
+      const MCSymbol &SA = Target.getSymA()->getSymbol();
+      if (SA.AliasedSymbol().isUndefined()) {
+        IsResolved = false;
+      } else {
+        const MCSymbolData &DataA = getSymbolData(SA);
+        IsResolved =
+          getWriter().IsSymbolRefDifferenceFullyResolvedImpl(*this, DataA,
+                                                             *DF, false, true);
+      }
+    }
+  } else {
+    IsResolved = Target.isAbsolute();
+  }
 
   Value = Target.getConstant();
 
-  bool IsPCRel = Backend.getFixupKindInfo(
-    Fixup.getKind()).Flags & MCFixupKindInfo::FKF_IsPCRel;
-  bool IsResolved = true;
   bool IsThumb = false;
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
     const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
     if (Sym.isDefined())
       Value += Layout.getSymbolOffset(&getSymbolData(Sym));
-    else
-      IsResolved = false;
     if (isThumbFunc(&Sym))
       IsThumb = true;
   }
@@ -241,12 +257,8 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
     const MCSymbol &Sym = B->getSymbol().AliasedSymbol();
     if (Sym.isDefined())
       Value -= Layout.getSymbolOffset(&getSymbolData(Sym));
-    else
-      IsResolved = false;
   }
 
-  if (IsResolved)
-    IsResolved = getWriter().IsFixupFullyResolved(*this, Target, IsPCRel, DF);
 
   bool ShouldAlignPC = Backend.getFixupKindInfo(Fixup.getKind()).Flags &
                          MCFixupKindInfo::FKF_IsAlignedDownTo32Bits;

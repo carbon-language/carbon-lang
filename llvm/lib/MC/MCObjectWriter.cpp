@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSymbol.h"
@@ -54,9 +55,14 @@ MCObjectWriter::IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
 
   const MCSymbol &SA = A->getSymbol();
   const MCSymbol &SB = B->getSymbol();
-  if (SA.isUndefined() || SB.isUndefined())
+  if (SA.AliasedSymbol().isUndefined() || SB.AliasedSymbol().isUndefined())
     return false;
 
-  // On ELF and COFF A - B is absolute if A and B are in the same section.
-  return &SA.getSection() == &SB.getSection();
+  const MCSymbolData &DataA = Asm.getSymbolData(SA);
+  const MCSymbolData &DataB = Asm.getSymbolData(SB);
+
+  return IsSymbolRefDifferenceFullyResolvedImpl(Asm, DataA,
+                                                *DataB.getFragment(),
+                                                InSet,
+                                                false);
 }
