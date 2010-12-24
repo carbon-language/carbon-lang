@@ -1151,8 +1151,8 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
       return TPResult::True(); // '...' is a sign of a function declarator.
     }
 
-    if (getLang().Microsoft && Tok.is(tok::l_square))
-      ParseMicrosoftAttributes();
+    ParsedAttributes attrs;
+    MaybeParseMicrosoftAttributes(attrs);
 
     // decl-specifier-seq
     TPResult TPR = TryParseDeclarationSpecifier();

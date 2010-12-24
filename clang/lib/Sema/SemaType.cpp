@@ -402,7 +402,7 @@ static QualType ConvertDeclSpecToType(Sema &TheSema,
 
   // See if there are any attributes on the declspec that apply to the type (as
   // opposed to the decl).
-  if (const AttributeList *AL = DS.getAttributes())
+  if (const AttributeList *AL = DS.getAttributes().getList())
     ProcessTypeAttributeList(TheSema, Result, true, AL, Delayed);
 
   // Apply const/volatile/restrict qualifiers to T.

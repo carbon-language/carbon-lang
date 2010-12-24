@@ -1119,8 +1119,8 @@ QualType ASTContext::getObjCGCQualType(QualType T,
   if (CanT.getObjCGCAttr() == GCAttr)
     return T;
 
-  if (T->isPointerType()) {
-    QualType Pointee = T->getAs<PointerType>()->getPointeeType();
+  if (const PointerType *ptr = T->getAs<PointerType>()) {
+    QualType Pointee = ptr->getPointeeType();
     if (Pointee->isAnyPointerType()) {
       QualType ResultType = getObjCGCQualType(Pointee, GCAttr);
       return getPointerType(ResultType);

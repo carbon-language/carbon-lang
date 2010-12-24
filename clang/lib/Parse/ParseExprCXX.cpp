@@ -810,15 +810,11 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
   }
 
   // If attributes are present, parse them.
-  if (Tok.is(tok::kw___attribute)) {
-    SourceLocation Loc;
-    AttributeList *AttrList = ParseGNUAttributes(&Loc);
-    DeclaratorInfo.AddAttributes(AttrList, Loc);
-  }
+  MaybeParseGNUAttributes(DeclaratorInfo);
 
   // Type-check the declaration itself.
   DeclResult Dcl = Actions.ActOnCXXConditionDeclaration(getCurScope(), 
-                                                                DeclaratorInfo);
+                                                        DeclaratorInfo);
   DeclOut = Dcl.get();
   ExprOut = ExprError();
 
@@ -1729,7 +1725,8 @@ void Parser::ParseDirectNewDeclarator(Declarator &D) {
     first = false;
 
     SourceLocation RLoc = MatchRHSPunctuation(tok::r_square, LLoc);
-    D.AddTypeInfo(DeclaratorChunk::getArray(0, /*static=*/false, /*star=*/false,
+    D.AddTypeInfo(DeclaratorChunk::getArray(0, ParsedAttributes(),
+                                            /*static=*/false, /*star=*/false,
                                             Size.release(), LLoc, RLoc),
                   RLoc);
 

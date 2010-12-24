@@ -1522,7 +1522,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-    StmtResult Stmt(ParseCompoundStatement(0, true));
+    ParsedAttributes attrs;
+    StmtResult Stmt(ParseCompoundStatement(attrs, true));
     ExprType = CompoundStmt;
 
     // If the substmt parsed correctly, build the AST node.
@@ -1741,14 +1742,9 @@ void Parser::ParseBlockId() {
   ParseDeclarator(DeclaratorInfo);
 
   // We do this for: ^ __attribute__((noreturn)) {, as DS has the attributes.
-  DeclaratorInfo.AddAttributes(DS.TakeAttributes(),
-                               SourceLocation());
+  DeclaratorInfo.addAttributes(DS.takeAttributes());
 
-  if (Tok.is(tok::kw___attribute)) {
-    SourceLocation Loc;
-    AttributeList *AttrList = ParseGNUAttributes(&Loc);
-    DeclaratorInfo.AddAttributes(AttrList, Loc);
-  }
+  MaybeParseGNUAttributes(DeclaratorInfo);
 
   // Inform sema that we are starting a block.
   Actions.ActOnBlockArguments(DeclaratorInfo, getCurScope());
@@ -1806,11 +1802,7 @@ ExprResult Parser::ParseBlockLiteralExpression() {
       return ExprError();
     }
 
-    if (Tok.is(tok::kw___attribute)) {
-      SourceLocation Loc;
-      AttributeList *AttrList = ParseGNUAttributes(&Loc);
-      ParamInfo.AddAttributes(AttrList, Loc);
-    }
+    MaybeParseGNUAttributes(ParamInfo);
 
     // Inform sema that we are starting a block.
     Actions.ActOnBlockArguments(ParamInfo, getCurScope());
@@ -1818,7 +1810,8 @@ ExprResult Parser::ParseBlockLiteralExpression() {
     ParseBlockId();
   } else {
     // Otherwise, pretend we saw (void).
-    ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false,
+    ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(ParsedAttributes(),
+                                                       true, false,
                                                        SourceLocation(),
                                                        0, 0, 0,
                                                        false, SourceLocation(),
@@ -1827,11 +1820,7 @@ ExprResult Parser::ParseBlockLiteralExpression() {
                                                        ParamInfo),
                           CaretLoc);
 
-    if (Tok.is(tok::kw___attribute)) {
-      SourceLocation Loc;
-      AttributeList *AttrList = ParseGNUAttributes(&Loc);
-      ParamInfo.AddAttributes(AttrList, Loc);
-    }
+    MaybeParseGNUAttributes(ParamInfo);
 
     // Inform sema that we are starting a block.
     Actions.ActOnBlockArguments(ParamInfo, getCurScope());

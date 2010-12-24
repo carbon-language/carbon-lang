@@ -196,20 +196,18 @@ Parser::ParseSingleDeclarationAfterTemplate(
     return 0;
   }
 
-  CXX0XAttributeList PrefixAttrs;
-  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
-    PrefixAttrs = ParseCXX0XAttributes();
+  ParsedAttributesWithRange prefixAttrs;
+  MaybeParseCXX0XAttributes(prefixAttrs);
 
   if (Tok.is(tok::kw_using))
     return ParseUsingDirectiveOrDeclaration(Context, TemplateInfo, DeclEnd,
-                                            PrefixAttrs);
+                                            prefixAttrs);
 
   // Parse the declaration specifiers, stealing the accumulated
   // diagnostics from the template parameters.
   ParsingDeclSpec DS(DiagsFromTParams);
 
-  if (PrefixAttrs.HasAttr)
-    DS.AddAttributes(PrefixAttrs.AttrList);
+  DS.takeAttributesFrom(prefixAttrs);
 
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS,
                              getDeclSpecContextFromDeclaratorContext(Context));

@@ -2808,7 +2808,7 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
   }
 
   // Apply decl attributes from the DeclSpec if present.
-  if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes())
+  if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes().getList())
     ProcessDeclAttributeList(S, D, Attrs);
 
   // Walk the declarator structure, applying decl attributes that were in a type

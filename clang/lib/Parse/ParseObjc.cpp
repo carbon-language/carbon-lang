@@ -40,10 +40,14 @@ Decl *Parser::ParseObjCAtDirectives() {
   switch (Tok.getObjCKeywordID()) {
   case tok::objc_class:
     return ParseObjCAtClassDeclaration(AtLoc);
-  case tok::objc_interface:
-    return ParseObjCAtInterfaceDeclaration(AtLoc);
-  case tok::objc_protocol:
-    return ParseObjCAtProtocolDeclaration(AtLoc);
+  case tok::objc_interface: {
+    ParsedAttributes attrs;
+    return ParseObjCAtInterfaceDeclaration(AtLoc, attrs);
+  }
+  case tok::objc_protocol: {
+    ParsedAttributes attrs;
+    return ParseObjCAtProtocolDeclaration(AtLoc, attrs);
+  }
   case tok::objc_implementation:
     return ParseObjCAtImplementationDeclaration(AtLoc);
   case tok::objc_end:
@@ -124,8 +128,8 @@ Decl *Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
 ///     __attribute__((unavailable))
 ///     __attribute__((objc_exception)) - used by NSException on 64-bit
 ///
-Decl *Parser::ParseObjCAtInterfaceDeclaration(
-  SourceLocation atLoc, AttributeList *attrList) {
+Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
+                                              ParsedAttributes &attrs) {
   assert(Tok.isObjCAtKeyword(tok::objc_interface) &&
          "ParseObjCAtInterfaceDeclaration(): Expected @interface");
   ConsumeToken(); // the "interface" identifier
@@ -178,7 +182,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(
                                     LAngleLoc, EndProtoLoc))
       return 0;
 
-    if (attrList) // categories don't support attributes.
+    if (!attrs.empty()) // categories don't support attributes.
       Diag(Tok, diag::err_objc_no_attributes_on_category);
 
     Decl *CategoryType =
@@ -230,7 +234,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(
                                      superClassId, superClassLoc,
                                      ProtocolRefs.data(), ProtocolRefs.size(),
                                      ProtocolLocs.data(),
-                                     EndProtoLoc, attrList);
+                                     EndProtoLoc, attrs.getList());
 
   if (Tok.is(tok::l_brace))
     ParseObjCClassInstanceVariables(ClsType, tok::objc_protected, atLoc);
@@ -365,7 +369,8 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
 
       // FIXME: as the name implies, this rule allows function definitions.
       // We could pass a flag or check for functions during semantic analysis.
-      allTUVariables.push_back(ParseDeclarationOrFunctionDefinition(0));
+      ParsedAttributes attrs;
+      allTUVariables.push_back(ParseDeclarationOrFunctionDefinition(attrs));
       continue;
     }
 
@@ -830,9 +835,9 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     ReturnType = ParseObjCTypeName(DSRet, false);
 
   // If attributes exist before the method, parse them.
-  AttributeList *MethodAttrs = 0;
-  if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-    MethodAttrs = ParseGNUAttributes();
+  ParsedAttributes attrs;
+  if (getLang().ObjC2)
+    MaybeParseGNUAttributes(attrs);
 
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCMethodDecl(getCurScope(), mType == tok::minus, 
@@ -856,8 +861,8 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   llvm::SmallVector<DeclaratorChunk::ParamInfo, 8> CParamInfo;
   if (Tok.isNot(tok::colon)) {
     // If attributes exist after the method, parse them.
-    if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-      MethodAttrs = addAttributeLists(MethodAttrs, ParseGNUAttributes());
+    if (getLang().ObjC2)
+      MaybeParseGNUAttributes(attrs);
 
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     Decl *Result
@@ -865,7 +870,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                           mType, IDecl, DSRet, ReturnType, Sel,
                                           0, 
                                           CParamInfo.data(), CParamInfo.size(),
-                                          MethodAttrs, MethodImplKind);
+                                          attrs.getList(), MethodImplKind);
     PD.complete(Result);
     return Result;
   }
@@ -889,8 +894,11 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
     // If attributes exist before the argument name, parse them.
     ArgInfo.ArgAttrs = 0;
-    if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-      ArgInfo.ArgAttrs = ParseGNUAttributes();
+    if (getLang().ObjC2) {
+      ParsedAttributes attrs;
+      MaybeParseGNUAttributes(attrs);
+      ArgInfo.ArgAttrs = attrs.getList();
+    }
 
     // Code completion for the next piece of the selector.
     if (Tok.is(tok::code_completion)) {
@@ -964,8 +972,8 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
   // FIXME: Add support for optional parameter list...
   // If attributes exist after the method, parse them.
-  if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-    MethodAttrs = addAttributeLists(MethodAttrs, ParseGNUAttributes());
+  if (getLang().ObjC2)
+    MaybeParseGNUAttributes(attrs);
 
   if (KeyIdents.size() == 0)
     return 0;
@@ -976,7 +984,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                         mType, IDecl, DSRet, ReturnType, Sel,
                                         &ArgInfos[0], 
                                         CParamInfo.data(), CParamInfo.size(),
-                                        MethodAttrs,
+                                        attrs.getList(),
                                         MethodImplKind, isVariadic);
   PD.complete(Result);
   return Result;
@@ -1184,7 +1192,7 @@ void Parser::ParseObjCClassInstanceVariables(Decl *interfaceDecl,
 ///   identifier-list ;": objc-interface-decl-list may not start with a
 ///   semicolon in the first alternative if objc-protocol-refs are omitted.
 Decl *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
-                                                      AttributeList *attrList) {
+                                             ParsedAttributes &attrs) {
   assert(Tok.isObjCAtKeyword(tok::objc_protocol) &&
          "ParseObjCAtProtocolDeclaration(): Expected @protocol");
   ConsumeToken(); // the "protocol" identifier
@@ -1206,7 +1214,7 @@ Decl *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
     IdentifierLocPair ProtoInfo(protocolName, nameLoc);
     ConsumeToken();
     return Actions.ActOnForwardProtocolDeclaration(AtLoc, &ProtoInfo, 1,
-                                                   attrList);
+                                                   attrs.getList());
   }
 
   if (Tok.is(tok::comma)) { // list of forward declarations.
@@ -1235,7 +1243,7 @@ Decl *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
     return Actions.ActOnForwardProtocolDeclaration(AtLoc,
                                                    &ProtocolRefs[0],
                                                    ProtocolRefs.size(),
-                                                   attrList);
+                                                   attrs.getList());
   }
 
   // Last, and definitely not least, parse a protocol declaration.
@@ -1253,7 +1261,7 @@ Decl *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
                                         ProtocolRefs.data(),
                                         ProtocolRefs.size(),
                                         ProtocolLocs.data(),
-                                        EndProtoLoc, attrList);
+                                        EndProtoLoc, attrs.getList());
   ParseObjCInterfaceDeclList(ProtoType, tok::objc_protocol);
   return ProtoType;
 }

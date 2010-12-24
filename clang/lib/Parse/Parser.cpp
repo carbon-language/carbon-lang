@@ -402,13 +402,11 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
     return true;
   }
 
-  CXX0XAttributeList Attr;
-  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
-    Attr = ParseCXX0XAttributes();
-  if (getLang().Microsoft && Tok.is(tok::l_square))
-    ParseMicrosoftAttributes();
+  ParsedAttributesWithRange attrs;
+  MaybeParseCXX0XAttributes(attrs);
+  MaybeParseMicrosoftAttributes(attrs);
   
-  Result = ParseExternalDeclaration(Attr);
+  Result = ParseExternalDeclaration(attrs);
   return false;
 }
 
@@ -449,8 +447,9 @@ void Parser::ParseTranslationUnit() {
 ///           ';'
 ///
 /// [C++0x/GNU] 'extern' 'template' declaration
-Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
-                                                        ParsingDeclSpec *DS) {
+Parser::DeclGroupPtrTy
+Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
+                                 ParsingDeclSpec *DS) {
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
   
   Decl *SingleDecl = 0;
@@ -474,12 +473,10 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
     // __extension__ silences extension warnings in the subexpression.
     ExtensionRAIIObject O(Diags);  // Use RAII to do this.
     ConsumeToken();
-    return ParseExternalDeclaration(Attr);
+    return ParseExternalDeclaration(attrs);
   }
   case tok::kw_asm: {
-    if (Attr.HasAttr)
-      Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
-        << Attr.Range;
+    ProhibitAttributes(attrs);
 
     ExprResult Result(ParseSimpleAsm());
 
@@ -511,7 +508,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
                                    ObjCImpDecl? Sema::PCC_ObjCImplementation
                                               : Sema::PCC_Namespace);
     ConsumeCodeCompletionToken();
-    return ParseExternalDeclaration(Attr);
+    return ParseExternalDeclaration(attrs);
   case tok::kw_using:
   case tok::kw_namespace:
   case tok::kw_typedef:
@@ -522,7 +519,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
     {
       SourceLocation DeclEnd;
       StmtVector Stmts(Actions);
-      return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);
+      return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, attrs);
     }
 
   case tok::kw_static:
@@ -533,7 +530,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
         << 0;
       SourceLocation DeclEnd;
       StmtVector Stmts(Actions);
-      return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);  
+      return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, attrs);  
     }
     goto dont_know;
       
@@ -545,7 +542,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
       if (NextKind == tok::kw_namespace) {
         SourceLocation DeclEnd;
         StmtVector Stmts(Actions);
-        return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);
+        return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, attrs);
       }
       
       // Parse (then ignore) 'inline' prior to a template instantiation. This is
@@ -555,7 +552,7 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
           << 1;
         SourceLocation DeclEnd;
         StmtVector Stmts(Actions);
-        return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, Attr);  
+        return ParseDeclaration(Stmts, Declarator::FileContext, DeclEnd, attrs);  
       }
     }
     goto dont_know;
@@ -575,10 +572,12 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration(CXX0XAttributeList Attr,
   default:
   dont_know:
     // We can't tell whether this is a function-definition or declaration yet.
-    if (DS)
-      return ParseDeclarationOrFunctionDefinition(*DS, Attr.AttrList);
-    else
-      return ParseDeclarationOrFunctionDefinition(Attr.AttrList);
+    if (DS) {
+      DS->takeAttributesFrom(attrs);
+      return ParseDeclarationOrFunctionDefinition(*DS);
+    } else {
+      return ParseDeclarationOrFunctionDefinition(attrs);
+    }
   }
 
   // This routine returns a DeclGroup, if the thing we parsed only contains a
@@ -632,12 +631,8 @@ bool Parser::isStartOfFunctionDefinition(const ParsingDeclarator &Declarator) {
 ///
 Parser::DeclGroupPtrTy
 Parser::ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
-                                             AttributeList *Attr,
                                              AccessSpecifier AS) {
   // Parse the common declaration-specifiers piece.
-  if (Attr)
-    DS.AddAttributes(Attr);
-
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS, DSC_top_level);
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
@@ -690,10 +685,11 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
 }
 
 Parser::DeclGroupPtrTy
-Parser::ParseDeclarationOrFunctionDefinition(AttributeList *Attr,
+Parser::ParseDeclarationOrFunctionDefinition(ParsedAttributes &attrs,
                                              AccessSpecifier AS) {
   ParsingDeclSpec DS(*this);
-  return ParseDeclarationOrFunctionDefinition(DS, Attr, AS);
+  DS.takeAttributesFrom(attrs);
+  return ParseDeclarationOrFunctionDefinition(DS, AS);
 }
 
 /// ParseFunctionDefinition - We parsed and verified that the specified
@@ -835,11 +831,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
     // Handle the full declarator list.
     while (1) {
       // If attributes are present, parse them.
-      if (Tok.is(tok::kw___attribute)) {
-        SourceLocation Loc;
-        AttributeList *AttrList = ParseGNUAttributes(&Loc);
-        ParmDeclarator.AddAttributes(AttrList, Loc);
-      }
+      MaybeParseGNUAttributes(ParmDeclarator);
 
       // Ask the actions module to compute the type for this declarator.
       Decl *Param =

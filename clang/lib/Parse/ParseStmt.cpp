@@ -81,10 +81,8 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
 
-  CXX0XAttributeList Attr;
-  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
-    Attr = ParseCXX0XAttributes();
-  AttributeList *AttrList = Attr.AttrList;
+  ParsedAttributesWithRange attrs;
+  MaybeParseCXX0XAttributes(attrs);
 
   // Cases in this switch statement should fall through if the parser expects
   // the token to end in a semicolon (in which case SemiError should be set),
@@ -106,7 +104,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   case tok::identifier:
     if (NextToken().is(tok::colon)) { // C99 6.8.1: labeled-statement
       // identifier ':' statement
-      return ParseLabeledStatement(AttrList);
+      return ParseLabeledStatement(attrs);
     }
     // PASS THROUGH.
 
@@ -114,7 +112,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
     if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
       DeclGroupPtrTy Decl = ParseDeclaration(Stmts, Declarator::BlockContext,
-                                             DeclEnd, Attr);
+                                             DeclEnd, attrs);
       return Actions.ActOnDeclStmt(Decl, DeclStart, DeclEnd);
     }
 
@@ -141,52 +139,50 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
-    return ParseCaseStatement(AttrList);
+    return ParseCaseStatement(attrs);
   case tok::kw_default:             // C99 6.8.1: labeled-statement
-    return ParseDefaultStatement(AttrList);
+    return ParseDefaultStatement(attrs);
 
   case tok::l_brace:                // C99 6.8.2: compound-statement
-    return ParseCompoundStatement(AttrList);
+    return ParseCompoundStatement(attrs);
   case tok::semi: {                 // C99 6.8.3p3: expression[opt] ';'
     bool LeadingEmptyMacro = Tok.hasLeadingEmptyMacro();
     return Actions.ActOnNullStmt(ConsumeToken(), LeadingEmptyMacro);
   }
 
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
-    return ParseIfStatement(AttrList);
+    return ParseIfStatement(attrs);
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
-    return ParseSwitchStatement(AttrList);
+    return ParseSwitchStatement(attrs);
 
   case tok::kw_while:               // C99 6.8.5.1: while-statement
-    return ParseWhileStatement(AttrList);
+    return ParseWhileStatement(attrs);
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
-    Res = ParseDoStatement(AttrList);
+    Res = ParseDoStatement(attrs);
     SemiError = "do/while";
     break;
   case tok::kw_for:                 // C99 6.8.5.3: for-statement
-    return ParseForStatement(AttrList);
+    return ParseForStatement(attrs);
 
   case tok::kw_goto:                // C99 6.8.6.1: goto-statement
-    Res = ParseGotoStatement(AttrList);
+    Res = ParseGotoStatement(attrs);
     SemiError = "goto";
     break;
   case tok::kw_continue:            // C99 6.8.6.2: continue-statement
-    Res = ParseContinueStatement(AttrList);
+    Res = ParseContinueStatement(attrs);
     SemiError = "continue";
     break;
   case tok::kw_break:               // C99 6.8.6.3: break-statement
-    Res = ParseBreakStatement(AttrList);
+    Res = ParseBreakStatement(attrs);
     SemiError = "break";
     break;
   case tok::kw_return:              // C99 6.8.6.4: return-statement
-    Res = ParseReturnStatement(AttrList);
+    Res = ParseReturnStatement(attrs);
     SemiError = "return";
     break;
 
   case tok::kw_asm: {
-    if (Attr.HasAttr)
-      Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
-        << Attr.Range;
+    ProhibitAttributes(attrs);
     bool msAsm = false;
     Res = ParseAsmStatement(msAsm);
     Res = Actions.ActOnFinishFullStmt(Res.get());
@@ -196,7 +192,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   }
 
   case tok::kw_try:                 // C++ 15: try-block
-    return ParseCXXTryBlock(AttrList);
+    return ParseCXXTryBlock(attrs);
   }
 
   // If we reached this code, the statement must end in a semicolon.
@@ -220,7 +216,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
 ///         identifier ':' statement
 /// [GNU]   identifier ':' attributes[opt] statement
 ///
-StmtResult Parser::ParseLabeledStatement(AttributeList *Attr) {
+StmtResult Parser::ParseLabeledStatement(ParsedAttributes &attrs) {
   assert(Tok.is(tok::identifier) && Tok.getIdentifierInfo() &&
          "Not an identifier!");
 
@@ -233,8 +229,7 @@ StmtResult Parser::ParseLabeledStatement(AttributeList *Attr) {
   SourceLocation ColonLoc = ConsumeToken();
 
   // Read label attributes, if present.
-  if (Tok.is(tok::kw___attribute))
-    Attr = addAttributeLists(Attr, ParseGNUAttributes());
+  MaybeParseGNUAttributes(attrs);
 
   StmtResult SubStmt(ParseStatement());
 
@@ -244,7 +239,7 @@ StmtResult Parser::ParseLabeledStatement(AttributeList *Attr) {
 
   return Actions.ActOnLabelStmt(IdentTok.getLocation(),
                                 IdentTok.getIdentifierInfo(),
-                                ColonLoc, SubStmt.get(), Attr);
+                                ColonLoc, SubStmt.get(), attrs.getList());
 }
 
 /// ParseCaseStatement
@@ -252,7 +247,7 @@ StmtResult Parser::ParseLabeledStatement(AttributeList *Attr) {
 ///         'case' constant-expression ':' statement
 /// [GNU]   'case' constant-expression '...' constant-expression ':' statement
 ///
-StmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
+StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs) {
   assert(Tok.is(tok::kw_case) && "Not a case stmt!");
   // FIXME: Use attributes?
 
@@ -380,7 +375,7 @@ StmtResult Parser::ParseCaseStatement(AttributeList *Attr) {
 ///         'default' ':' statement
 /// Note that this does not parse the 'statement' at the end.
 ///
-StmtResult Parser::ParseDefaultStatement(AttributeList *Attr) {
+StmtResult Parser::ParseDefaultStatement(ParsedAttributes &attrs) {
   //FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_default) && "Not a default stmt!");
@@ -438,7 +433,7 @@ StmtResult Parser::ParseDefaultStatement(AttributeList *Attr) {
 /// [OMP]   barrier-directive
 /// [OMP]   flush-directive
 ///
-StmtResult Parser::ParseCompoundStatement(AttributeList *Attr,
+StmtResult Parser::ParseCompoundStatement(ParsedAttributes &attrs,
                                                         bool isStmtExpr) {
   //FIXME: Use attributes?
 
@@ -482,9 +477,8 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       while (Tok.is(tok::kw___extension__))
         ConsumeToken();
 
-      CXX0XAttributeList Attr;
-      if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
-        Attr = ParseCXX0XAttributes();
+      ParsedAttributesWithRange attrs;
+      MaybeParseCXX0XAttributes(attrs);
 
       // If this is the start of a declaration, parse it as such.
       if (isDeclarationStatement()) {
@@ -495,7 +489,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
         DeclGroupPtrTy Res = ParseDeclaration(Stmts,
                                               Declarator::BlockContext, DeclEnd,
-                                              Attr);
+                                              attrs);
         R = Actions.ActOnDeclStmt(Res, DeclStart, DeclEnd);
       } else {
         // Otherwise this was a unary __extension__ marker.
@@ -585,7 +579,7 @@ bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
 /// [C++]   'if' '(' condition ')' statement
 /// [C++]   'if' '(' condition ')' statement 'else' statement
 ///
-StmtResult Parser::ParseIfStatement(AttributeList *Attr) {
+StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_if) && "Not an if stmt!");
@@ -707,7 +701,7 @@ StmtResult Parser::ParseIfStatement(AttributeList *Attr) {
 ///       switch-statement:
 ///         'switch' '(' expression ')' statement
 /// [C++]   'switch' '(' condition ')' statement
-StmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
+StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_switch) && "Not a switch stmt!");
@@ -792,7 +786,7 @@ StmtResult Parser::ParseSwitchStatement(AttributeList *Attr) {
 ///       while-statement: [C99 6.8.5.1]
 ///         'while' '(' expression ')' statement
 /// [C++]   'while' '(' condition ')' statement
-StmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
+StmtResult Parser::ParseWhileStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_while) && "Not a while stmt!");
@@ -866,7 +860,7 @@ StmtResult Parser::ParseWhileStatement(AttributeList *Attr) {
 ///       do-statement: [C99 6.8.5.2]
 ///         'do' statement 'while' '(' expression ')' ';'
 /// Note: this lets the caller parse the end ';'.
-StmtResult Parser::ParseDoStatement(AttributeList *Attr) {
+StmtResult Parser::ParseDoStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_do) && "Not a do stmt!");
@@ -942,7 +936,7 @@ StmtResult Parser::ParseDoStatement(AttributeList *Attr) {
 /// [C++]   expression-statement
 /// [C++]   simple-declaration
 ///
-StmtResult Parser::ParseForStatement(AttributeList *Attr) {
+StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_for) && "Not a for stmt!");
@@ -1007,14 +1001,13 @@ StmtResult Parser::ParseForStatement(AttributeList *Attr) {
     if (!C99orCXXorObjC)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
 
-    AttributeList *AttrList = 0;
-    if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier())
-      AttrList = ParseCXX0XAttributes().AttrList;
+    ParsedAttributesWithRange attrs;
+    MaybeParseCXX0XAttributes(attrs);
 
     SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
     StmtVector Stmts(Actions);
     DeclGroupPtrTy DG = ParseSimpleDeclaration(Stmts, Declarator::ForContext, 
-                                               DeclEnd, AttrList, false);
+                                               DeclEnd, attrs, false);
     FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
 
     if (Tok.is(tok::semi)) {  // for (int x = 4;
@@ -1141,7 +1134,7 @@ StmtResult Parser::ParseForStatement(AttributeList *Attr) {
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-StmtResult Parser::ParseGotoStatement(AttributeList *Attr) {
+StmtResult Parser::ParseGotoStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_goto) && "Not a goto stmt!");
@@ -1176,7 +1169,7 @@ StmtResult Parser::ParseGotoStatement(AttributeList *Attr) {
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-StmtResult Parser::ParseContinueStatement(AttributeList *Attr) {
+StmtResult Parser::ParseContinueStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
   SourceLocation ContinueLoc = ConsumeToken();  // eat the 'continue'.
@@ -1189,7 +1182,7 @@ StmtResult Parser::ParseContinueStatement(AttributeList *Attr) {
 ///
 /// Note: this lets the caller parse the end ';'.
 ///
-StmtResult Parser::ParseBreakStatement(AttributeList *Attr) {
+StmtResult Parser::ParseBreakStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
   SourceLocation BreakLoc = ConsumeToken();  // eat the 'break'.
@@ -1199,7 +1192,7 @@ StmtResult Parser::ParseBreakStatement(AttributeList *Attr) {
 /// ParseReturnStatement
 ///       jump-statement:
 ///         'return' expression[opt] ';'
-StmtResult Parser::ParseReturnStatement(AttributeList *Attr) {
+StmtResult Parser::ParseReturnStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_return) && "Not a return stmt!");
@@ -1521,7 +1514,7 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl) {
 ///       try-block:
 ///         'try' compound-statement handler-seq
 ///
-StmtResult Parser::ParseCXXTryBlock(AttributeList* Attr) {
+StmtResult Parser::ParseCXXTryBlock(ParsedAttributes &attrs) {
   // FIXME: Add attributes?
 
   assert(Tok.is(tok::kw_try) && "Expected 'try'");
@@ -1546,16 +1539,15 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
   if (Tok.isNot(tok::l_brace))
     return StmtError(Diag(Tok, diag::err_expected_lbrace));
   // FIXME: Possible draft standard bug: attribute-specifier should be allowed?
-  StmtResult TryBlock(ParseCompoundStatement(0));
+  ParsedAttributesWithRange attrs;
+  StmtResult TryBlock(ParseCompoundStatement(attrs));
   if (TryBlock.isInvalid())
     return move(TryBlock);
 
   StmtVector Handlers(Actions);
-  if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
-    CXX0XAttributeList Attr = ParseCXX0XAttributes();
-    Diag(Attr.Range.getBegin(), diag::err_attributes_not_allowed)
-      << Attr.Range;
-  }
+  MaybeParseCXX0XAttributes(attrs);
+  ProhibitAttributes(attrs);
+
   if (Tok.isNot(tok::kw_catch))
     return StmtError(Diag(Tok, diag::err_expected_catch));
   while (Tok.is(tok::kw_catch)) {
@@ -1616,7 +1608,8 @@ StmtResult Parser::ParseCXXCatchBlock() {
     return StmtError(Diag(Tok, diag::err_expected_lbrace));
 
   // FIXME: Possible draft standard bug: attribute-specifier should be allowed?
-  StmtResult Block(ParseCompoundStatement(0));
+  ParsedAttributes attrs;
+  StmtResult Block(ParseCompoundStatement(attrs));
   if (Block.isInvalid())
     return move(Block);
 

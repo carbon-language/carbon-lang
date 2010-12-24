@@ -21,10 +21,10 @@ AttributeList::AttributeList(llvm::BumpPtrAllocator &Alloc,
                              IdentifierInfo *sName, SourceLocation sLoc,
                              IdentifierInfo *pName, SourceLocation pLoc,
                              Expr **ExprList, unsigned numArgs,
-                             AttributeList *n, bool declspec, bool cxx0x)
+                             bool declspec, bool cxx0x)
   : AttrName(aName), AttrLoc(aLoc), ScopeName(sName),
     ScopeLoc(sLoc),
-    ParmName(pName), ParmLoc(pLoc), NumArgs(numArgs), Next(n),
+    ParmName(pName), ParmLoc(pLoc), NumArgs(numArgs), Next(0),
     DeclspecAttribute(declspec), CXX0XAttribute(cxx0x), Invalid(false) {
 
   if (numArgs == 0)

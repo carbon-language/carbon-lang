@@ -46,7 +46,8 @@ void UnqualifiedId::setConstructorTemplateId(TemplateIdAnnotation *TemplateId) {
 
 /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
 /// "TheDeclarator" is the declarator that this will be added to.
-DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
+DeclaratorChunk DeclaratorChunk::getFunction(const ParsedAttributes &attrs,
+                                             bool hasProto, bool isVariadic,
                                              SourceLocation EllipsisLoc,
                                              ParamInfo *ArgInfo,
                                              unsigned NumArgs,
@@ -65,6 +66,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
   I.Kind                 = Function;
   I.Loc                  = LPLoc;
   I.EndLoc               = RPLoc;
+  I.Fun.AttrList         = attrs.getList();
   I.Fun.hasPrototype     = hasProto;
   I.Fun.isVariadic       = isVariadic;
   I.Fun.EllipsisLoc      = EllipsisLoc.getRawEncoding();
@@ -483,7 +485,7 @@ void DeclSpec::SaveWrittenBuiltinSpecs() {
   writtenBS.Type = getTypeSpecType();
   // Search the list of attributes for the presence of a mode attribute.
   writtenBS.ModeAttr = false;
-  AttributeList* attrs = getAttributes();
+  AttributeList* attrs = getAttributes().getList();
   while (attrs) {
     if (attrs->getKind() == AttributeList::AT_mode) {
       writtenBS.ModeAttr = true;

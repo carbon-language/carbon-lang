@@ -56,7 +56,7 @@ private:
                 IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
                 IdentifierInfo *ParmName, SourceLocation ParmLoc,
                 Expr **args, unsigned numargs,
-                AttributeList *Next, bool declspec, bool cxx0x);
+                bool declspec, bool cxx0x);
 public:
   class Factory {
     llvm::BumpPtrAllocator Alloc;
@@ -66,12 +66,11 @@ public:
     AttributeList *Create(IdentifierInfo *AttrName, SourceLocation AttrLoc,
       IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
       IdentifierInfo *ParmName, SourceLocation ParmLoc,
-      Expr **args, unsigned numargs,
-      AttributeList *Next, bool declspec = false, bool cxx0x = false) {
+      Expr **args, unsigned numargs, bool declspec = false, bool cxx0x = false) {
         AttributeList *Mem = Alloc.Allocate<AttributeList>();
         new (Mem) AttributeList(Alloc, AttrName, AttrLoc, ScopeName, ScopeLoc,
                                 ParmName, ParmLoc, args, numargs,
-                                Next, declspec, cxx0x);
+                                declspec, cxx0x);
         return Mem;
       }
   };
@@ -264,6 +263,47 @@ struct CXX0XAttributeList {
   CXX0XAttributeList ()
     : AttrList(0), Range(), HasAttr(false) {
   }
+};
+
+/// ParsedAttributes - A collection of parsed attributes.  Currently
+/// we don't differentiate between the various attribute syntaxes,
+/// which is basically silly.
+///
+/// Right now this is a very lightweight container, but the expectation
+/// is that this will become significantly more serious.
+class ParsedAttributes {
+public:
+  ParsedAttributes() : list(0) {}
+
+  bool empty() const { return list == 0; }
+
+  void add(AttributeList *newAttr) {
+    assert(newAttr);
+    assert(newAttr->getNext() == 0);
+    newAttr->setNext(list);
+    list = newAttr;
+  }
+
+  void append(AttributeList *newList) {
+    if (!newList) return;
+
+    AttributeList *lastInNewList = newList;
+    while (AttributeList *next = lastInNewList->getNext())
+      lastInNewList = next;
+
+    lastInNewList->setNext(list);
+    list = newList;
+  }
+
+  void set(AttributeList *newList) {
+    list = newList;
+  }
+
+  void clear() { list = 0; }
+  AttributeList *getList() const { return list; }
+
+private:
+  AttributeList *list;
 };
 
 }  // end namespace clang

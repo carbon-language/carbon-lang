@@ -1642,7 +1642,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   }
          
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
-    ProcessDeclAttributeList(S, Record, DS.getAttributes());
+    ProcessDeclAttributeList(S, Record, DS.getAttributes().getList());
     
     if (!Record->getDeclName() && Record->isDefinition() &&
         DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
@@ -5553,7 +5553,8 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   (void)Error; // Silence warning.
   assert(!Error && "Error setting up implicit decl!");
   Declarator D(DS, Declarator::BlockContext);
-  D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, SourceLocation(), 0,
+  D.AddTypeInfo(DeclaratorChunk::getFunction(ParsedAttributes(),
+                                             false, false, SourceLocation(), 0,
                                              0, 0, false, SourceLocation(),
                                              false, 0,0,0, Loc, Loc, D),
                 SourceLocation());
