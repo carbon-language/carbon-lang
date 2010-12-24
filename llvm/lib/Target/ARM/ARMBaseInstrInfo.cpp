@@ -1687,7 +1687,7 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
 
   // The number of uOps for load / store multiple are determined by the number
   // registers.
-  // 
+  //
   // On Cortex-A8, each pair of register loads / stores can be scheduled on the
   // same cycle. The scheduling for the first load / store must be done
   // separately by assuming the the address is not 64-bit aligned.

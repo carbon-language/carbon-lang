@@ -201,7 +201,7 @@ ARMSubtarget::GVIsIndirectSymbol(const GlobalValue *GV,
       // through a stub.
       if (!isDecl && !GV->isWeakForLinker())
         return false;
-    
+
       // Unless we have a symbol with hidden visibility, we have to go through a
       // normal $non_lazy_ptr stub because this symbol might be resolved late.
       if (!GV->hasHiddenVisibility())  // Non-hidden $non_lazy_ptr reference.
@@ -219,7 +219,7 @@ unsigned ARMSubtarget::getMispredictionPenalty() const {
     return 13;
   else if (isCortexA9())
     return 8;
-  
+
   // Otherwise, just return a sensible default.
   return 10;
 }

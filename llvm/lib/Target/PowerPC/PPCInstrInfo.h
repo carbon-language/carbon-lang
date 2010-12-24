@@ -32,7 +32,7 @@ enum {
   /// PPC970_First - This instruction starts a new dispatch group, so it will
   /// always be the first one in the group.
   PPC970_First = 0x1,
-  
+
   /// PPC970_Single - This instruction starts a new dispatch group and
   /// terminates it, so it will be the sole instruction in the group.
   PPC970_Single = 0x2,
@@ -40,7 +40,7 @@ enum {
   /// PPC970_Cracked - This instruction is cracked into two pieces, requiring
   /// two dispatch pipes to be available to issue.
   PPC970_Cracked = 0x4,
-  
+
   /// PPC970_Mask/Shift - This is a bitmask that selects the pipeline type that
   /// an instruction is issued to.
   PPC970_Shift = 3,
@@ -59,8 +59,8 @@ enum PPC970_Unit {
   PPC970_BRU    = 7 << PPC970_Shift    // Branch Unit
 };
 } // end namespace PPCII
-  
-  
+
+
 class PPCInstrInfo : public TargetInstrInfoImpl {
   PPCTargetMachine &TM;
   const PPCRegisterInfo RI;
@@ -69,7 +69,7 @@ class PPCInstrInfo : public TargetInstrInfoImpl {
                            unsigned SrcReg, bool isKill, int FrameIdx,
                            const TargetRegisterClass *RC,
                            SmallVectorImpl<MachineInstr*> &NewMIs) const;
-  void LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL, 
+  void LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                             unsigned DestReg, int FrameIdx,
                             const TargetRegisterClass *RC,
                             SmallVectorImpl<MachineInstr*> &NewMIs) const;
@@ -90,8 +90,8 @@ public:
   // commuteInstruction - We can commute rlwimi instructions, but only if the
   // rotate amt is zero.  We also have to munge the immediates a bit.
   virtual MachineInstr *commuteInstruction(MachineInstr *MI, bool NewMI) const;
-  
-  virtual void insertNoop(MachineBasicBlock &MBB, 
+
+  virtual void insertNoop(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MI) const;
 
 
@@ -109,7 +109,7 @@ public:
                            MachineBasicBlock::iterator I, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const;
-  
+
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MBBI,
                                    unsigned SrcReg, bool isKill, int FrameIndex,
@@ -121,7 +121,7 @@ public:
                                     unsigned DestReg, int FrameIndex,
                                     const TargetRegisterClass *RC,
                                     const TargetRegisterInfo *TRI) const;
-  
+
   virtual MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF,
                                                  int FrameIx,
                                                  uint64_t Offset,
@@ -130,7 +130,7 @@ public:
 
   virtual
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
-  
+
   /// GetInstSize - Return the number of bytes of code the specified
   /// instruction may be.  This returns the maximum number of bytes.
   ///

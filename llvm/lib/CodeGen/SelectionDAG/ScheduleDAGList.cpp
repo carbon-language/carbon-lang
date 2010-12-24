@@ -40,7 +40,7 @@ STATISTIC(NumStalls, "Number of pipeline stalls");
 static RegisterScheduler
   tdListDAGScheduler("list-td", "Top-down list scheduler",
                      createTDListDAGScheduler);
-   
+
 namespace {
 //===----------------------------------------------------------------------===//
 /// ScheduleDAGList - The actual list scheduler implementation.  This supports
@@ -51,7 +51,7 @@ private:
   /// AvailableQueue - The priority queue to use for the available SUnits.
   ///
   SchedulingPriorityQueue *AvailableQueue;
-  
+
   /// PendingQueue - This contains all of the instructions whose operands have
   /// been issued, but their results are not ready yet (due to the latency of
   /// the operation).  Once the operands become available, the instruction is
@@ -87,14 +87,14 @@ private:
 /// Schedule - Schedule the DAG using list scheduling.
 void ScheduleDAGList::Schedule() {
   DEBUG(dbgs() << "********** List Scheduling **********\n");
-  
+
   // Build the scheduling graph.
   BuildSchedGraph(NULL);
 
   AvailableQueue->initNodes(SUnits);
-  
+
   ListScheduleTopDown();
-  
+
   AvailableQueue->releaseState();
 }
 
@@ -118,7 +118,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, const SDep &D) {
   --SuccSU->NumPredsLeft;
 
   SuccSU->setDepthToAtLeast(SU->getDepth() + D.getLatency());
-  
+
   // If all the node's predecessors are scheduled, this node is ready
   // to be scheduled. Ignore the special ExitSU node.
   if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU)
@@ -142,7 +142,7 @@ void ScheduleDAGList::ReleaseSuccessors(SUnit *SU) {
 void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   DEBUG(dbgs() << "*** Scheduling [" << CurCycle << "]: ");
   DEBUG(SU->dump(this));
-  
+
   Sequence.push_back(SU);
   assert(CurCycle >= SU->getDepth() && "Node scheduled above its depth!");
   SU->setDepthToAtLeast(CurCycle);
@@ -168,7 +168,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       SUnits[i].isAvailable = true;
     }
   }
-  
+
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
   std::vector<SUnit*> NotReady;
@@ -187,7 +187,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
         assert(PendingQueue[i]->getDepth() > CurCycle && "Negative latency?");
       }
     }
-    
+
     // If there are no instructions available, don't try to issue anything, and
     // don't advance the hazard recognizer.
     if (AvailableQueue->empty()) {
@@ -196,24 +196,24 @@ void ScheduleDAGList::ListScheduleTopDown() {
     }
 
     SUnit *FoundSUnit = 0;
-    
+
     bool HasNoopHazards = false;
     while (!AvailableQueue->empty()) {
       SUnit *CurSUnit = AvailableQueue->pop();
-      
+
       ScheduleHazardRecognizer::HazardType HT =
         HazardRec->getHazardType(CurSUnit);
       if (HT == ScheduleHazardRecognizer::NoHazard) {
         FoundSUnit = CurSUnit;
         break;
       }
-    
+
       // Remember if this is a noop hazard.
       HasNoopHazards |= HT == ScheduleHazardRecognizer::NoopHazard;
-      
+
       NotReady.push_back(CurSUnit);
     }
-    
+
     // Add the nodes that aren't ready back onto the available list.
     if (!NotReady.empty()) {
       AvailableQueue->push_all(NotReady);
@@ -228,7 +228,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       // If this is a pseudo-op node, we don't want to increment the current
       // cycle.
       if (FoundSUnit->Latency)  // Don't increment CurCycle for pseudo-ops!
-        ++CurCycle;        
+        ++CurCycle;
     } else if (!HasNoopHazards) {
       // Otherwise, we have a pipeline stall, but no other problem, just advance
       // the current cycle and try again.

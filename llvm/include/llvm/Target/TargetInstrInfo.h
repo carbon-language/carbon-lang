@@ -134,7 +134,7 @@ public:
                                     int &FrameIndex) const {
     return 0;
   }
-  
+
   /// isStoreToStackSlot - If the specified machine instruction is a direct
   /// store to a stack slot, return the virtual or physical register number of
   /// the source reg along with the FrameIndex of the loaded stack slot.  If
@@ -267,7 +267,7 @@ public:
   /// This is only invoked in cases where AnalyzeBranch returns success. It
   /// returns the number of instructions that were removed.
   virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
+    assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!");
     return 0;
   }
 
@@ -285,7 +285,7 @@ public:
                                 MachineBasicBlock *FBB,
                                 const SmallVectorImpl<MachineOperand> &Cond,
                                 DebugLoc DL) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::InsertBranch!"); 
+    assert(0 && "Target didn't implement TargetInstrInfo::InsertBranch!");
     return 0;
   }
 
@@ -314,7 +314,7 @@ public:
                            float Probability, float Confidence) const {
     return false;
   }
-  
+
   /// isProfitableToIfCvt - Second variant of isProfitableToIfCvt, this one
   /// checks for the case where two basic blocks from true and false path
   /// of a if-then-else (diamond) are predicated on mutally exclusive
@@ -341,7 +341,7 @@ public:
                             float Probability, float Confidence) const {
     return false;
   }
-  
+
   /// copyPhysReg - Emit instructions to copy a pair of physical registers.
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
@@ -485,7 +485,7 @@ public:
                                        unsigned NumLoads) const {
     return false;
   }
-  
+
   /// ReverseBranchCondition - Reverses the branch condition of the specified
   /// condition list, returning false on success and true if it cannot be
   /// reversed.
@@ -493,19 +493,19 @@ public:
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
     return true;
   }
-  
+
   /// insertNoop - Insert a noop into the instruction stream at the specified
   /// point.
-  virtual void insertNoop(MachineBasicBlock &MBB, 
+  virtual void insertNoop(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MI) const;
-  
-  
+
+
   /// getNoopForMachoTarget - Return the noop instruction to use for a noop.
   virtual void getNoopForMachoTarget(MCInst &NopInst) const {
     // Default to just using 'nop' string.
   }
-  
-  
+
+
   /// isPredicated - Returns true if the instruction is already predicated.
   ///
   virtual bool isPredicated(const MachineInstr *MI) const {
@@ -585,7 +585,7 @@ public:
                                     const MachineRegisterInfo *MRI) const {
     return false;
   }
-  
+
   /// FoldImmediate - 'Reg' is known to be defined by a move immediate
   /// instruction, try to fold the immediate into the use instruction.
   virtual bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,

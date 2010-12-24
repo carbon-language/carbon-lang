@@ -20,25 +20,25 @@
 
 namespace llvm {
   class LatencyPriorityQueue;
-  
+
   /// Sorting functions for the Available queue.
   struct latency_sort : public std::binary_function<SUnit*, SUnit*, bool> {
     LatencyPriorityQueue *PQ;
     explicit latency_sort(LatencyPriorityQueue *pq) : PQ(pq) {}
-    
+
     bool operator()(const SUnit* left, const SUnit* right) const;
   };
 
   class LatencyPriorityQueue : public SchedulingPriorityQueue {
     // SUnits - The SUnits for the current graph.
     std::vector<SUnit> *SUnits;
-    
+
     /// NumNodesSolelyBlocking - This vector contains, for every node in the
     /// Queue, the number of nodes that the node is the sole unscheduled
     /// predecessor for.  This is used as a tie-breaker heuristic for better
     /// mobility.
     std::vector<unsigned> NumNodesSolelyBlocking;
-    
+
     /// Queue - The queue.
     std::vector<SUnit*> Queue;
     latency_sort Picker;
@@ -62,21 +62,21 @@ namespace llvm {
     void releaseState() {
       SUnits = 0;
     }
-    
+
     unsigned getLatency(unsigned NodeNum) const {
       assert(NodeNum < (*SUnits).size());
       return (*SUnits)[NodeNum].getHeight();
     }
-    
+
     unsigned getNumSolelyBlockNodes(unsigned NodeNum) const {
       assert(NodeNum < NumNodesSolelyBlocking.size());
       return NumNodesSolelyBlocking[NodeNum];
     }
-    
+
     bool empty() const { return Queue.empty(); }
-    
+
     virtual void push(SUnit *U);
-    
+
     virtual SUnit *pop();
 
     virtual void remove(SUnit *SU);

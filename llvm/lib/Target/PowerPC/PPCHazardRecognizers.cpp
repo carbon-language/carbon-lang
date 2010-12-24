@@ -26,7 +26,7 @@ using namespace llvm;
 //
 // This models the dispatch group formation of the PPC970 processor.  Dispatch
 // groups are bundles of up to five instructions that can contain various mixes
-// of instructions.  The PPC970 can dispatch a peak of 4 non-branch and one 
+// of instructions.  The PPC970 can dispatch a peak of 4 non-branch and one
 // branch instruction per-cycle.
 //
 // There are a number of restrictions to dispatch group formation: some
@@ -55,14 +55,14 @@ PPCHazardRecognizer970::PPCHazardRecognizer970(const TargetInstrInfo &tii)
 void PPCHazardRecognizer970::EndDispatchGroup() {
   DEBUG(errs() << "=== Start of dispatch group\n");
   NumIssued = 0;
-  
+
   // Structural hazard info.
   HasCTRSet = false;
   NumStores = 0;
 }
 
 
-PPCII::PPC970_Unit 
+PPCII::PPC970_Unit
 PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
                                      bool &isFirst, bool &isSingle,
                                      bool &isCracked,
@@ -72,14 +72,14 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
     return PPCII::PPC970_Pseudo;
   }
   Opcode = ~Opcode;
-  
+
   const TargetInstrDesc &TID = TII.get(Opcode);
-  
+
   isLoad  = TID.mayLoad();
   isStore = TID.mayStore();
-  
+
   uint64_t TSFlags = TID.TSFlags;
-  
+
   isFirst   = TSFlags & PPCII::PPC970_First;
   isSingle  = TSFlags & PPCII::PPC970_Single;
   isCracked = TSFlags & PPCII::PPC970_Cracked;
@@ -96,7 +96,7 @@ isLoadOfStoredAddress(unsigned LoadSize, SDValue Ptr1, SDValue Ptr2) const {
       return true;
     if (Ptr2 == StorePtr1[i] && Ptr1 == StorePtr2[i])
       return true;
-    
+
     // Okay, we don't have an exact match, if this is an indexed offset, see if
     // we have overlap (which happens during fp->int conversion for example).
     if (StorePtr2[i] == Ptr2) {
@@ -125,23 +125,23 @@ ScheduleHazardRecognizer::HazardType PPCHazardRecognizer970::
 getHazardType(SUnit *SU) {
   const SDNode *Node = SU->getNode()->getGluedMachineNode();
   bool isFirst, isSingle, isCracked, isLoad, isStore;
-  PPCII::PPC970_Unit InstrType = 
+  PPCII::PPC970_Unit InstrType =
     GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
                  isLoad, isStore);
-  if (InstrType == PPCII::PPC970_Pseudo) return NoHazard;  
+  if (InstrType == PPCII::PPC970_Pseudo) return NoHazard;
   unsigned Opcode = Node->getMachineOpcode();
 
   // We can only issue a PPC970_First/PPC970_Single instruction (such as
   // crand/mtspr/etc) if this is the first cycle of the dispatch group.
   if (NumIssued != 0 && (isFirst || isSingle))
     return Hazard;
-  
+
   // If this instruction is cracked into two ops by the decoder, we know that
   // it is not a branch and that it cannot issue if 3 other instructions are
   // already in the dispatch group.
   if (isCracked && NumIssued > 2)
     return Hazard;
-      
+
   switch (InstrType) {
   default: llvm_unreachable("Unknown instruction type!");
   case PPCII::PPC970_FXU:
@@ -159,11 +159,11 @@ getHazardType(SUnit *SU) {
   case PPCII::PPC970_BRU:
     break;
   }
-  
+
   // Do not allow MTCTR and BCTRL to be in the same dispatch group.
   if (HasCTRSet && (Opcode == PPC::BCTRL_Darwin || Opcode == PPC::BCTRL_SVR4))
     return NoopHazard;
-  
+
   // If this is a load following a store, make sure it's not to the same or
   // overlapping address.
   if (isLoad && NumStores) {
@@ -212,27 +212,27 @@ getHazardType(SUnit *SU) {
       LoadSize = 16;
       break;
     }
-    
-    if (isLoadOfStoredAddress(LoadSize, 
+
+    if (isLoadOfStoredAddress(LoadSize,
                               Node->getOperand(0), Node->getOperand(1)))
       return NoopHazard;
   }
-  
+
   return NoHazard;
 }
 
 void PPCHazardRecognizer970::EmitInstruction(SUnit *SU) {
   const SDNode *Node = SU->getNode()->getGluedMachineNode();
   bool isFirst, isSingle, isCracked, isLoad, isStore;
-  PPCII::PPC970_Unit InstrType = 
+  PPCII::PPC970_Unit InstrType =
     GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
                  isLoad, isStore);
-  if (InstrType == PPCII::PPC970_Pseudo) return;  
+  if (InstrType == PPCII::PPC970_Pseudo) return;
   unsigned Opcode = Node->getMachineOpcode();
 
   // Update structural hazard information.
   if (Opcode == PPC::MTCTR) HasCTRSet = true;
-  
+
   // Track the address stored to.
   if (isStore) {
     unsigned ThisStoreSize;
@@ -278,22 +278,22 @@ void PPCHazardRecognizer970::EmitInstruction(SUnit *SU) {
       ThisStoreSize = 16;
       break;
     }
-    
+
     StoreSize[NumStores] = ThisStoreSize;
     StorePtr1[NumStores] = Node->getOperand(1);
     StorePtr2[NumStores] = Node->getOperand(2);
     ++NumStores;
   }
-  
+
   if (InstrType == PPCII::PPC970_BRU || isSingle)
     NumIssued = 4;  // Terminate a d-group.
   ++NumIssued;
-  
+
   // If this instruction is cracked into two ops by the decoder, remember that
   // we issued two pieces.
   if (isCracked)
     ++NumIssued;
-  
+
   if (NumIssued == 5)
     EndDispatchGroup();
 }

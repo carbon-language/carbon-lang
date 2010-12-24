@@ -35,14 +35,14 @@ bool latency_sort::operator()(const SUnit *LHS, const SUnit *RHS) const {
   unsigned RHSLatency = PQ->getLatency(RHSNum);
   if (LHSLatency < RHSLatency) return true;
   if (LHSLatency > RHSLatency) return false;
-  
+
   // After that, if two nodes have identical latencies, look to see if one will
   // unblock more other nodes than the other.
   unsigned LHSBlocked = PQ->getNumSolelyBlockNodes(LHSNum);
   unsigned RHSBlocked = PQ->getNumSolelyBlockNodes(RHSNum);
   if (LHSBlocked < RHSBlocked) return true;
   if (LHSBlocked > RHSBlocked) return false;
-  
+
   // Finally, just to provide a stable ordering, use the node number as a
   // deciding factor.
   return LHSNum < RHSNum;
@@ -64,7 +64,7 @@ SUnit *LatencyPriorityQueue::getSingleUnscheduledPred(SUnit *SU) {
       OnlyAvailablePred = &Pred;
     }
   }
-      
+
   return OnlyAvailablePred;
 }
 
@@ -78,7 +78,7 @@ void LatencyPriorityQueue::push(SUnit *SU) {
       ++NumNodesBlocking;
   }
   NumNodesSolelyBlocking[SU->NodeNum] = NumNodesBlocking;
-  
+
   Queue.push_back(SU);
 }
 
@@ -102,10 +102,10 @@ void LatencyPriorityQueue::ScheduledNode(SUnit *SU) {
 /// node of the same priority that will not make a node available.
 void LatencyPriorityQueue::AdjustPriorityOfUnscheduledPreds(SUnit *SU) {
   if (SU->isAvailable) return;  // All preds scheduled.
-  
+
   SUnit *OnlyAvailablePred = getSingleUnscheduledPred(SU);
   if (OnlyAvailablePred == 0 || !OnlyAvailablePred->isAvailable) return;
-  
+
   // Okay, we found a single predecessor that is available, but not scheduled.
   // Since it is available, it must be in the priority queue.  First remove it.
   remove(OnlyAvailablePred);

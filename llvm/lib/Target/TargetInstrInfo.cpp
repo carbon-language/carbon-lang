@@ -128,7 +128,7 @@ bool TargetInstrInfo::hasLowDefLatency(const InstrItineraryData *ItinData,
 
 /// insertNoop - Insert a noop into the instruction stream at the specified
 /// point.
-void TargetInstrInfo::insertNoop(MachineBasicBlock &MBB, 
+void TargetInstrInfo::insertNoop(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI) const {
   llvm_unreachable("Target didn't implement insertNoop!");
 }
@@ -137,7 +137,7 @@ void TargetInstrInfo::insertNoop(MachineBasicBlock &MBB,
 bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   const TargetInstrDesc &TID = MI->getDesc();
   if (!TID.isTerminator()) return false;
-  
+
   // Conditional branch is a special case.
   if (TID.isBranch() && !TID.isBarrier())
     return true;
@@ -157,8 +157,8 @@ bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
 /// may be overloaded in the target code to do that.
 unsigned TargetInstrInfo::getInlineAsmLength(const char *Str,
                                              const MCAsmInfo &MAI) const {
-  
-  
+
+
   // Count the number of instructions in the asm.
   bool atInsnStart = true;
   unsigned Length = 0;
@@ -173,6 +173,6 @@ unsigned TargetInstrInfo::getInlineAsmLength(const char *Str,
                                strlen(MAI.getCommentString())) == 0)
       atInsnStart = false;
   }
-  
+
   return Length;
 }

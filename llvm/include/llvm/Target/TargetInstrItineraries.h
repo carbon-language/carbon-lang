@@ -121,7 +121,7 @@ public:
   InstrItineraryData(const InstrStage *S, const unsigned *OS,
                      const unsigned *F, const InstrItinerary *I)
     : Stages(S), OperandCycles(OS), Forwardings(F), Itineraries(I) {}
-  
+
   /// isEmpty - Returns true if there are no itineraries.
   ///
   bool isEmpty() const { return Itineraries == 0; }
@@ -135,14 +135,14 @@ public:
   }
 
   /// beginStage - Return the first stage of the itinerary.
-  /// 
+  ///
   const InstrStage *beginStage(unsigned ItinClassIndx) const {
     unsigned StageIdx = Itineraries[ItinClassIndx].FirstStage;
     return Stages + StageIdx;
   }
 
   /// endStage - Return the last+1 stage of the itinerary.
-  /// 
+  ///
   const InstrStage *endStage(unsigned ItinClassIndx) const {
     unsigned StageIdx = Itineraries[ItinClassIndx].LastStage;
     return Stages + StageIdx;

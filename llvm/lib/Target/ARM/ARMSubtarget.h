@@ -205,7 +205,7 @@ protected:
   const std::string & getCPUString() const { return CPUString; }
 
   unsigned getMispredictionPenalty() const;
-  
+
   /// enablePostRAScheduler - True at 'More' optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtarget::AntiDepBreakMode& Mode,

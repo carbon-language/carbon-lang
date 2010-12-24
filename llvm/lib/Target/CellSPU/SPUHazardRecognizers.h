@@ -20,7 +20,7 @@
 namespace llvm {
 
 class TargetInstrInfo;
-  
+
 /// SPUHazardRecognizer
 class SPUHazardRecognizer : public ScheduleHazardRecognizer
 {

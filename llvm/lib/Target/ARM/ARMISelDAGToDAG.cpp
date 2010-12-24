@@ -2039,7 +2039,7 @@ SelectARMCMOVImmOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
     SDValue Ops[] = { FalseVal, True, CC, CCR, InFlag };
     return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
   }
-  
+
   return 0;
 }
 
