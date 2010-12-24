@@ -808,6 +808,11 @@ SVal SimpleSValBuilder::evalBinOpLL(const GRState *state,
 SVal SimpleSValBuilder::evalBinOpLN(const GRState *state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, NonLoc rhs, QualType resultTy) {
+  
+  // Special case: rhs is a zero constant.
+  if (rhs.isZeroConstant())
+    return lhs;
+  
   // Special case: 'rhs' is an integer that has the same width as a pointer and
   // we are using the integer location in a comparison.  Normally this cannot be
   // triggered, but transfer functions like those for OSCommpareAndSwapBarrier32
@@ -858,11 +863,39 @@ SVal SimpleSValBuilder::evalBinOpLN(const GRState *state,
       return loc::ConcreteInt(getBasicValueFactory().getValue(rightI));
     }
   }
-  
 
-  // Delegate remaining pointer arithmetic to the StoreManager.
-  return state->getStateManager().getStoreManager().evalBinOp(op, lhs,
-                                                              rhs, resultTy);
+  // Handle cases where 'lhs' is a region.
+  if (const MemRegion *region = lhs.getAsRegion()) {
+    rhs = cast<NonLoc>(convertToArrayIndex(rhs));
+    SVal index = UnknownVal();
+    const MemRegion *superR = 0;
+    QualType elementType;
+
+    if (const ElementRegion *elemReg = dyn_cast<ElementRegion>(region)) {
+      index = evalBinOpNN(state, BO_Add, elemReg->getIndex(), rhs,
+                          getArrayIndexType());
+      superR = elemReg->getSuperRegion();
+      elementType = elemReg->getElementType();
+    }
+    else if (isa<SubRegion>(region)) {
+      superR = region;
+      index = rhs;
+      if (const PointerType *PT = resultTy->getAs<PointerType>()) {
+        elementType = PT->getPointeeType();
+      }
+      else {
+        const ObjCObjectPointerType *OT =
+          resultTy->getAs<ObjCObjectPointerType>();
+        elementType = OT->getPointeeType();
+      }
+    }
+
+    if (NonLoc *indexV = dyn_cast<NonLoc>(&index)) {
+      return loc::MemRegionVal(MemMgr.getElementRegion(elementType, *indexV,
+                                                       superR, getContext()));
+    }
+  }
+  return UnknownVal();  
 }
 
 const llvm::APSInt *SimpleSValBuilder::getKnownValue(const GRState *state,

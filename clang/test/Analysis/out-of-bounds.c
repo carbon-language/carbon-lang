@@ -44,7 +44,6 @@ void test1_ptr_ok(int x) {
   p[99] = 1; // no-warning
 }
 
-// ** FIXME **  Doesn't work yet because we don't support pointer arithmetic.
 // Tests doing an out-of-bounds access before the start of an array using:
 // - indirect pointer to buffer, manipulated using simple pointer arithmetic
 // - constant integer index
@@ -53,7 +52,7 @@ void test1_ptr_arith(int x) {
   int buf[100];
   int *p = buf;
   p = p + 100;
-  p[0] = 1; // no-warning
+  p[0] = 1; // expected-warning{{Out of bound memory access}}
 }
 
 void test1_ptr_arith_ok(int x) {
@@ -63,21 +62,18 @@ void test1_ptr_arith_ok(int x) {
   p[0] = 1; // no-warning
 }
 
-// ** FIXME **  Doesn't work yet because we don't support pointer arithmetic.
 void test1_ptr_arith_bad(int x) {
   int buf[100];
   int *p = buf;
   p = p + 99;
-  p[1] = 1; // no-warning
+  p[1] = 1; // expected-warning{{Out of bound memory access}}
 }
 
-// ** FIXME ** we falsely emit a warning here because of our lack of
-// handling of pointer arithmetic.
 void test1_ptr_arith_ok2(int x) {
   int buf[100];
   int *p = buf;
   p = p + 99;
-  p[-1] = 1; // expected-warning{{Out of bound}}
+  p[-1] = 1; // no-warning
 }
 
 // Tests doing an out-of-bounds access before the start of an array using:

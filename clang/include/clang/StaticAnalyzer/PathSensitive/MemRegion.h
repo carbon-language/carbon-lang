@@ -357,7 +357,11 @@ public:
 
   virtual QualType getLocationType() const {
     // FIXME: We can possibly optimize this later to cache this value.
-    return getContext().getPointerType(getValueType());
+    QualType T = getValueType();
+    ASTContext &ctx = getContext();
+    if (T->getAs<ObjCObjectType>())
+      return ctx.getObjCObjectPointerType(T);
+    return ctx.getPointerType(getValueType());
   }
 
   QualType getDesugaredValueType(ASTContext &Context) const {

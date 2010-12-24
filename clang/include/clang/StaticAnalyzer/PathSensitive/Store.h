@@ -153,13 +153,6 @@ public:
   ///  casted and 'CastToTy' the result type of the cast.
   const MemRegion *CastRegion(const MemRegion *region, QualType CastToTy);
 
-
-  /// evalBinOp - Perform pointer arithmetic.
-  virtual SVal evalBinOp(BinaryOperator::Opcode Op,
-                         Loc lhs, NonLoc rhs, QualType resultTy) {
-    return UnknownVal();
-  }
-
   virtual Store RemoveDeadBindings(Store store, const StackFrameContext *LCtx,
                                    SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;

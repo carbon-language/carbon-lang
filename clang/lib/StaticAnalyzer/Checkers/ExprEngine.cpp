@@ -2950,7 +2950,7 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       SVal RHS;
 
       if (U->getType()->isAnyPointerType())
-        RHS = svalBuilder.makeIntValWithPtrWidth(1, false);
+        RHS = svalBuilder.makeArrayIndex(1);
       else
         RHS = svalBuilder.makeIntVal(1, U->getType());
 
