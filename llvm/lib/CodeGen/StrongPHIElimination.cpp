@@ -189,19 +189,17 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr* PHI,
   SmallPtrSet<MachineBasicBlock*, 8> MBBsInsertedInto;
   for (unsigned i = 1; i < PHI->getNumOperands(); i += 2) {
     MachineOperand& SrcMO = PHI->getOperand(i);
+
+    // If a source is defined by an implicit def, there is no need to insert a
+    // copy in the predecessor.
+    if (SrcMO.isUndef())
+      continue;
+
     unsigned SrcReg = SrcMO.getReg();
     unsigned SrcSubReg = SrcMO.getSubReg();
 
     assert(TargetRegisterInfo::isVirtualRegister(SrcReg) &&
            "Machine PHI Operands must all be virtual registers!");
-
-    // If source is defined by an implicit def, there is no need to insert a
-    // copy.
-    // FIXME: For some reason, if LiveIntervals is run prior to PHI elimination
-    // implcit defs have no defining instruction. Is this expected?
-    MachineInstr* DefMI = MRI->getVRegDef(SrcReg);
-    if (!DefMI)
-      continue;
 
     MachineBasicBlock* PredBB = PHI->getOperand(i + 1).getMBB();
 
