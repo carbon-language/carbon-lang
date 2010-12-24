@@ -13,6 +13,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
@@ -128,16 +129,12 @@ AsmToken ARMBaseAsmLexer::LexTokenUAL() {
     //   ip  -> r12
     //   FIXME: Some assemblers support lots of others. Do we want them all?
     if (!regID) {
-     if (lowerCase.size() == 3 && lowerCase[0] == 'r'
-        && lowerCase[1] == '1') {
-       switch (lowerCase[2]) {
-       default: break;
-       case '3': regID = ARM::SP;
-       case '4': regID = ARM::LR;
-       case '5': regID = ARM::PC;
-       }
-     } else if (lowerCase == "ip")
-       regID = ARM::R12;
+      regID = StringSwitch<unsigned>(lowerCase)
+        .Case("r13", ARM::SP)
+        .Case("r14", ARM::LR)
+        .Case("r15", ARM::PC)
+        .Case("ip", ARM::R12)
+        .Default(0);
     }
 
     if (regID) {
