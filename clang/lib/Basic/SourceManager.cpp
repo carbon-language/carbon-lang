@@ -1198,6 +1198,13 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   if (LHS == RHS)
     return false;
 
+  // If both locations are macro instantiations, the order of their offsets
+  // reflect the order that the tokens, pointed to by these locations, were
+  // instantiated (during parsing each token that is instantiated by a macro,
+  // expands the SLocEntries).
+  if (LHS.isMacroID() && RHS.isMacroID())
+    return LHS.getOffset() < RHS.getOffset();
+
   std::pair<FileID, unsigned> LOffs = getDecomposedLoc(LHS);
   std::pair<FileID, unsigned> ROffs = getDecomposedLoc(RHS);
 

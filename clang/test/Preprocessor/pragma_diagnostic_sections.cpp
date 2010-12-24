@@ -68,3 +68,13 @@ struct S2 {
 };
 
 //------------------------------------------------------------------------------
+
+// rdar://8790245
+#define MYMACRO \
+    _Pragma("clang diagnostic push") \
+    _Pragma("clang diagnostic ignored \"-Wunknown-pragmas\"") \
+    _Pragma("clang diagnostic pop")
+MYMACRO
+#undef MYMACRO
+
+//------------------------------------------------------------------------------
