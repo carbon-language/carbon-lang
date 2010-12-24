@@ -1,6 +1,22 @@
 // RUN: %clang_cc1 -std=c++0x -fsyntax-only -fexceptions -verify %s
 
 template<typename... Types> struct tuple;
+template<int I> struct int_c;
+
+template<typename T>
+struct identity {
+  typedef T type;
+};
+
+template<typename T, typename U>
+struct is_same {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_same<T, T> {
+  static const bool value = true;
+};
 
 // FIXME: Many more bullets to go
 
@@ -18,14 +34,18 @@ struct extract_nested_types {
   typedef tuple<typename Types::type...> types;
 };
 
-template<typename T>
-struct identity {
-  typedef T type;
-};
-
 tuple<int, float> *t_int_float;
 extract_nested_types<identity<int>, identity<float> >::types *t_int_float_2 
   = t_int_float;
+
+template<int ...N>
+struct tuple_of_ints {
+  typedef tuple<int_c<N>...> type;
+};
+
+int check_temp_arg_1[is_same<tuple_of_ints<1, 2, 3, 4, 5>::type, 
+                             tuple<int_c<1>, int_c<2>, int_c<3>, int_c<4>, 
+                                   int_c<5>>>::value? 1 : -1];
 
 // In a dynamic-exception-specification (15.4); the pattern is a type-id.
 template<typename ...Types>

@@ -681,6 +681,9 @@ void DeclPrinter::VisitTemplateDecl(TemplateDecl *D) {
                  dyn_cast<NonTypeTemplateParmDecl>(Param)) {
       Out << NTTP->getType().getAsString(Policy);
 
+      if (NTTP->isParameterPack() && !isa<PackExpansionType>(NTTP->getType()))
+        Out << "...";
+        
       if (IdentifierInfo *Name = NTTP->getIdentifier()) {
         Out << ' ';
         Out << Name->getName();

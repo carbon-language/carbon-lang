@@ -395,7 +395,7 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
     
     // If we don't have a template argument at this depth/index, then we 
     // cannot expand the pack expansion. Make a note of this, but we still 
-    // want to check that any parameter packs we *do* have arguments for.
+    // want to check any parameter packs we *do* have arguments for.
     if (!TemplateArgs.hasTemplateArgument(Depth, Index)) {
       ShouldExpand = false;
       continue;

@@ -638,7 +638,7 @@ namespace {
     ExprResult TransformDeclRefExpr(DeclRefExpr *E);
     ExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     ExprResult TransformTemplateParmRefExpr(DeclRefExpr *E,
-                                                NonTypeTemplateParmDecl *D);
+                                            NonTypeTemplateParmDecl *D);
 
     QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
                                         FunctionProtoTypeLoc TL);
@@ -836,8 +836,19 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
                                         NTTP->getPosition()))
     return SemaRef.Owned(E);
 
-  const TemplateArgument &Arg = TemplateArgs(NTTP->getDepth(),
-                                             NTTP->getPosition());
+  TemplateArgument Arg = TemplateArgs(NTTP->getDepth(), NTTP->getPosition());
+  if (NTTP->isParameterPack()) {
+    assert(Arg.getKind() == TemplateArgument::Pack && 
+           "Missing argument pack");
+    
+    if (getSema().ArgumentPackSubstitutionIndex == -1) {
+      // FIXME: Variadic templates fun case.
+      getSema().Diag(Loc, diag::err_pack_expansion_mismatch_unsupported);
+      return ExprError();
+    }
+    
+    Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
+  }
 
   // The template argument itself might be an expression, in which
   // case we just return that expression.
@@ -876,7 +887,6 @@ ExprResult
 TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
-    // FIXME: Variadic templates index substitution.
     if (NTTP->getDepth() < TemplateArgs.getNumLevels())
       return TransformTemplateParmRefExpr(E, NTTP);
     
