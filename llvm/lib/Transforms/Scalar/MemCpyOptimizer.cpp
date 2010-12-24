@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "memcpyopt"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/SmallVector.h"
@@ -31,6 +32,7 @@ using namespace llvm;
 STATISTIC(NumMemCpyInstr, "Number of memcpy instructions deleted");
 STATISTIC(NumMemSetInfer, "Number of memsets inferred");
 STATISTIC(NumMoveToCpy,   "Number of memmoves converted to memcpy");
+STATISTIC(NumCpyToSet,    "Number of memcpys converted to memset");
 
 /// isBytewiseValue - If the specified value can be set by repeating the same
 /// byte in memory, return the i8 value that it is represented with.  This is
@@ -38,6 +40,13 @@ STATISTIC(NumMoveToCpy,   "Number of memmoves converted to memcpy");
 /// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
 /// byte store (e.g. i16 0x1234), return null.
 static Value *isBytewiseValue(Value *V) {
+  // Look through constant globals.
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    if (GV->mayBeOverridden() || !GV->isConstant() || !GV->hasInitializer())
+      return 0;
+    V = GV->getInitializer();
+  }
+
   // All byte-wide stores are splatable, even of arbitrary variables.
   if (V->getType()->isIntegerTy(8)) return V;
   
@@ -73,7 +82,24 @@ static Value *isBytewiseValue(Value *V) {
       return ConstantInt::get(V->getContext(), Val);
     }
   }
-  
+
+  // A ConstantArray is splatable if all its members are equal and also
+  // splatable.
+  if (ConstantArray *CA = dyn_cast<ConstantArray>(V)) {
+    if (CA->getNumOperands() == 0)
+      return 0;
+
+    Value *Val = isBytewiseValue(CA->getOperand(0));
+    if (!Val)
+      return 0;
+
+    for (unsigned I = 1, E = CA->getNumOperands(); I != E; ++I)
+      if (CA->getOperand(I-1) != CA->getOperand(I))
+        return 0;
+
+    return Val;
+  }
+
   // Conceptually, we could handle things like:
   //   %a = zext i8 %X to i16
   //   %b = shl i16 %a, 8
@@ -765,8 +791,24 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
     M->eraseFromParent();
     return false;
   }
-  
-  
+
+  // If copying from a constant, try to turn the memcpy into a memset.
+  if (Value *ByteVal = isBytewiseValue(M->getSource())) {
+    Value *Ops[] = {
+      M->getRawDest(), ByteVal,               // Start, value
+      CopySize,                               // Size
+      M->getAlignmentCst(),                   // Alignment
+      ConstantInt::getFalse(M->getContext()), // volatile
+    };
+    const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
+    Module *Mod = M->getParent()->getParent()->getParent();
+    Function *MemSetF = Intrinsic::getDeclaration(Mod, Intrinsic::memset, Tys, 2);
+    CallInst::Create(MemSetF, Ops, Ops+5, "", M);
+    M->eraseFromParent();
+    ++NumCpyToSet;
+    return true;
+  }
+
   // The are two possible optimizations we can do for memcpy:
   //   a) memcpy-memcpy xform which exposes redundance for DSE.
   //   b) call-memcpy xform for return slot optimization.
