@@ -40,13 +40,6 @@ STATISTIC(NumCpyToSet,    "Number of memcpys converted to memset");
 /// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
 /// byte store (e.g. i16 0x1234), return null.
 static Value *isBytewiseValue(Value *V) {
-  // Look through constant globals.
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
-    if (GV->mayBeOverridden() || !GV->isConstant() || !GV->hasInitializer())
-      return 0;
-    V = GV->getInitializer();
-  }
-
   // All byte-wide stores are splatable, even of arbitrary variables.
   if (V->getType()->isIntegerTy(8)) return V;
   
@@ -793,21 +786,25 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   }
 
   // If copying from a constant, try to turn the memcpy into a memset.
-  if (Value *ByteVal = isBytewiseValue(M->getSource())) {
-    Value *Ops[] = {
-      M->getRawDest(), ByteVal,               // Start, value
-      CopySize,                               // Size
-      M->getAlignmentCst(),                   // Alignment
-      ConstantInt::getFalse(M->getContext()), // volatile
-    };
-    const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
-    Module *Mod = M->getParent()->getParent()->getParent();
-    Function *MemSetF = Intrinsic::getDeclaration(Mod, Intrinsic::memset, Tys, 2);
-    CallInst::Create(MemSetF, Ops, Ops+5, "", M);
-    M->eraseFromParent();
-    ++NumCpyToSet;
-    return true;
-  }
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(M->getSource()))
+    if (!GV->mayBeOverridden() && GV->isConstant() && GV->hasInitializer())
+      if (Value *ByteVal = isBytewiseValue(GV->getInitializer())) {
+        Value *Ops[] = {
+          M->getRawDest(), ByteVal,               // Start, value
+          CopySize,                               // Size
+          M->getAlignmentCst(),                   // Alignment
+          ConstantInt::getFalse(M->getContext()), // volatile
+        };
+        const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
+        Module *Mod = M->getParent()->getParent()->getParent();
+        Function *MemSetF = Intrinsic::getDeclaration(Mod, Intrinsic::memset,
+                                                      Tys, 2);
+        CallInst::Create(MemSetF, Ops, Ops+5, "", M);
+        MD->removeInstruction(M);
+        M->eraseFromParent();
+        ++NumCpyToSet;
+        return true;
+      }
 
   // The are two possible optimizations we can do for memcpy:
   //   a) memcpy-memcpy xform which exposes redundance for DSE.
