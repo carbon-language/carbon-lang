@@ -931,6 +931,20 @@ public:
       // Report as 'long', even though that is not quite accurate.
       Log2Size = llvm::Log2_32(4);
       return true;
+
+      // Handle Thumb branches.
+    case ARM::fixup_arm_thumb_br:
+      Log2Size = llvm::Log2_32(2);
+      return true;
+
+    case ARM::fixup_arm_thumb_bl:
+      Log2Size = llvm::Log2_32(4);
+      return true;
+
+    case ARM::fixup_arm_thumb_blx:
+      // Report as 'long', even though that is not quite accurate.
+      Log2Size = llvm::Log2_32(4);
+      return true;
     }
   }
   void RecordARMRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
