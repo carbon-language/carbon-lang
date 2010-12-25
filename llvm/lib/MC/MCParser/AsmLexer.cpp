@@ -184,12 +184,12 @@ AsmToken AsmLexer::LexDigit() {
 
     long long Value;
     if (Result.getAsInteger(10, Value)) {
-      // We have to handle minint_as_a_positive_value specially, because
-      // - minint_as_a_positive_value = minint and it is valid.
-      if (Result == "9223372036854775808")
-        Value = -9223372036854775808ULL;
-      else
-        return ReturnError(TokStart, "Invalid decimal number");
+      // Allow positive values that are too large to fit into a signed 64-bit
+      // integer, but that do fit in an unsigned one, we just convert them over.
+      unsigned long long UValue;
+      if (Result.getAsInteger(10, UValue))
+        return ReturnError(TokStart, "invalid decimal number");
+      Value = (long long)UValue;
     }
     
     // The darwin/x86 (and x86-64) assembler accepts and ignores ULL and LL

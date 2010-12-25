@@ -916,3 +916,7 @@ movq	%mm5, %rbx // CHECK: movd %mm5, %rbx # encoding: [0x48,0x0f,0x7e,0xeb]
 
 rex64 // CHECK: rex64 # encoding: [0x48]
 data16 // CHECK: data16 # encoding: [0x66]
+
+// PR8855
+movq 18446744073709551615,%rbx   // CHECK: movq	-1, %rbx
+
