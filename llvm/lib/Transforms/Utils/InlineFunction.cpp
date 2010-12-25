@@ -24,6 +24,7 @@
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CallSite.h"
@@ -247,34 +248,14 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
     if (ByValAlignment <= 1)  // 0 = unspecified, 1 = no particular alignment.
       return Arg;
 
-    // See if the argument is a (bitcasted) pointer to an alloca.  If so, we can
-    // round up the alloca if needed.
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(Arg->stripPointerCasts())) {
-      unsigned AIAlign = AI->getAlignment();
-      
-      // If the alloca is known at least aligned as much as the byval, we can do
-      // this optimization.
-      if (AIAlign >= ByValAlignment)
-        return Arg;
-      
-      // If the alloca has a specified alignment that is less than the byval,
-      // then we can safely bump it up.
-      if (AIAlign) {
-        AI->setAlignment(ByValAlignment);
-        return Arg;
-      }
-      
-      // If the alignment has an unspecified alignment, then we can only modify
-      // it if we have TD information.  Doing so without TD info could end up
-      // with us rounding the alignment *down* accidentally, which is badness.
-      if (IFI.TD) {
-        AIAlign = std::max(ByValAlignment, IFI.TD->getPrefTypeAlignment(AggTy));
-        AI->setAlignment(AIAlign);
-        return Arg;
-      }
-    }
+    // If the pointer is already known to be sufficiently aligned, or if we can
+    // round it up to a larger alignment, then we don't need a temporary.
+    if (getOrEnforceKnownAlignment(Arg, ByValAlignment,
+                                   IFI.TD) >= ByValAlignment)
+      return Arg;
     
-    // Otherwise, we have to make a memcpy to get a safe alignment, pretty lame.
+    // Otherwise, we have to make a memcpy to get a safe alignment.  This is bad
+    // for code quality, but rarely happens and is required for correctness.
   }
   
   LLVMContext &Context = Arg->getContext();
