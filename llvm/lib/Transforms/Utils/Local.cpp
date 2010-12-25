@@ -715,7 +715,7 @@ unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
   unsigned BitWidth = TD ? TD->getPointerSizeInBits() : 64;
   APInt Mask = APInt::getAllOnesValue(BitWidth);
   APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-  ComputeMaskedBits(V, Mask, KnownZero, KnownOne);
+  ComputeMaskedBits(V, Mask, KnownZero, KnownOne, TD);
   unsigned TrailZ = KnownZero.countTrailingOnes();
   
   // Avoid trouble with rediculously large TrailZ values, such as
