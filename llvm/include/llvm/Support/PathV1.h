@@ -494,7 +494,9 @@ namespace sys {
 
       /// The current Path name is made absolute by prepending the
       /// current working directory if necessary.
-      void makeAbsolute();
+      LLVM_ATTRIBUTE_DEPRECATED(
+        void makeAbsolute(),
+        LLVMV_PATH_DEPRECATED_MSG(fs::make_absolute));
 
     /// @}
     /// @name Disk Mutators
