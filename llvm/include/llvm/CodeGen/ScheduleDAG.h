@@ -442,7 +442,7 @@ namespace llvm {
 
     bool hasReadyFilter() const { return HasReadyFilter; }
 
-    virtual bool isReady(SUnit *U) const {
+    virtual bool isReady(SUnit *) const {
       assert(!HasReadyFilter && "The ready filter must override isReady()");
       return true;
     }
@@ -458,7 +458,7 @@ namespace llvm {
 
     virtual void remove(SUnit *SU) = 0;
 
-    virtual void dump(ScheduleDAG *DAG) const {}
+    virtual void dump(ScheduleDAG *) const {}
 
     /// ScheduledNode - As each node is scheduled, this method is invoked.  This
     /// allows the priority function to adjust the priority of related
