@@ -17,6 +17,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
+#include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 
 /// getPromotedType - Return the specified type promoted as it would be to pass
@@ -29,100 +30,10 @@ static const Type *getPromotedType(const Type *Ty) {
   return Ty;
 }
 
-/// EnforceKnownAlignment - If the specified pointer points to an object that
-/// we control, modify the object's alignment to PrefAlign. This isn't
-/// often possible though. If alignment is important, a more reliable approach
-/// is to simply align all global variables and allocation instructions to
-/// their preferred alignment from the beginning.
-///
-static unsigned EnforceKnownAlignment(Value *V,
-                                      unsigned Align, unsigned PrefAlign) {
-
-  User *U = dyn_cast<User>(V);
-  if (!U) return Align;
-
-  switch (Operator::getOpcode(U)) {
-  default: break;
-  case Instruction::BitCast:
-    return EnforceKnownAlignment(U->getOperand(0), Align, PrefAlign);
-  case Instruction::GetElementPtr: {
-    // If all indexes are zero, it is just the alignment of the base pointer.
-    bool AllZeroOperands = true;
-    for (User::op_iterator i = U->op_begin() + 1, e = U->op_end(); i != e; ++i)
-      if (!isa<Constant>(*i) ||
-          !cast<Constant>(*i)->isNullValue()) {
-        AllZeroOperands = false;
-        break;
-      }
-
-    if (AllZeroOperands) {
-      // Treat this like a bitcast.
-      return EnforceKnownAlignment(U->getOperand(0), Align, PrefAlign);
-    }
-    return Align;
-  }
-  case Instruction::Alloca: {
-    AllocaInst *AI = cast<AllocaInst>(V);
-    // If there is a requested alignment and if this is an alloca, round up.
-    if (AI->getAlignment() >= PrefAlign)
-      return AI->getAlignment();
-    AI->setAlignment(PrefAlign);
-    return PrefAlign;
-  }
-  }
-
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    // If there is a large requested alignment and we can, bump up the alignment
-    // of the global.
-    if (GV->isDeclaration()) return Align;
-    
-    if (GV->getAlignment() >= PrefAlign)
-      return GV->getAlignment();
-    // We can only increase the alignment of the global if it has no alignment
-    // specified or if it is not assigned a section.  If it is assigned a
-    // section, the global could be densely packed with other objects in the
-    // section, increasing the alignment could cause padding issues.
-    if (!GV->hasSection() || GV->getAlignment() == 0)
-      GV->setAlignment(PrefAlign);
-    return GV->getAlignment();
-  }
-
-  return Align;
-}
-
-/// GetOrEnforceKnownAlignment - If the specified pointer has an alignment that
-/// we can determine, return it, otherwise return 0.  If PrefAlign is specified,
-/// and it is more than the alignment of the ultimate object, see if we can
-/// increase the alignment of the ultimate object, making this check succeed.
-unsigned InstCombiner::GetOrEnforceKnownAlignment(Value *V,
-                                                  unsigned PrefAlign) {
-  assert(V->getType()->isPointerTy() &&
-         "GetOrEnforceKnownAlignment expects a pointer!");
-  unsigned BitWidth = TD ? TD->getPointerSizeInBits() : 64;
-  APInt Mask = APInt::getAllOnesValue(BitWidth);
-  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-  ComputeMaskedBits(V, Mask, KnownZero, KnownOne);
-  unsigned TrailZ = KnownZero.countTrailingOnes();
-
-  // Avoid trouble with rediculously large TrailZ values, such as
-  // those computed from a null pointer.
-  TrailZ = std::min(TrailZ, unsigned(sizeof(unsigned) * CHAR_BIT - 1));
-
-  unsigned Align = 1u << std::min(BitWidth - 1, TrailZ);
-
-  // LLVM doesn't support alignments larger than this currently.
-  Align = std::min(Align, +Value::MaximumAlignment);
-
-  if (PrefAlign > Align)
-    Align = EnforceKnownAlignment(V, Align, PrefAlign);
-  
-    // We don't need to make any adjustment.
-  return Align;
-}
 
 Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
-  unsigned DstAlign = GetOrEnforceKnownAlignment(MI->getArgOperand(0));
-  unsigned SrcAlign = GetOrEnforceKnownAlignment(MI->getArgOperand(1));
+  unsigned DstAlign = getKnownAlignment(MI->getArgOperand(0), TD);
+  unsigned SrcAlign = getKnownAlignment(MI->getArgOperand(1), TD);
   unsigned MinAlign = std::min(DstAlign, SrcAlign);
   unsigned CopyAlign = MI->getAlignment();
 
@@ -211,7 +122,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
 }
 
 Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
-  unsigned Alignment = GetOrEnforceKnownAlignment(MI->getDest());
+  unsigned Alignment = getKnownAlignment(MI->getDest());
   if (MI->getAlignment() < Alignment) {
     MI->setAlignment(ConstantInt::get(MI->getAlignmentType(),
                                              Alignment, false));
@@ -611,7 +522,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_sse2_loadu_dq:
     // Turn PPC lvx     -> load if the pointer is known aligned.
     // Turn X86 loadups -> load if the pointer is known aligned.
-    if (GetOrEnforceKnownAlignment(II->getArgOperand(0), 16) >= 16) {
+    if (getOrEnforceKnownAlignment(II->getArgOperand(0), 16, TD) >= 16) {
       Value *Ptr = Builder->CreateBitCast(II->getArgOperand(0),
                                          PointerType::getUnqual(II->getType()));
       return new LoadInst(Ptr);
@@ -620,7 +531,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::ppc_altivec_stvx:
   case Intrinsic::ppc_altivec_stvxl:
     // Turn stvx -> store if the pointer is known aligned.
-    if (GetOrEnforceKnownAlignment(II->getArgOperand(1), 16) >= 16) {
+    if (getOrEnforceKnownAlignment(II->getArgOperand(1), 16, TD) >= 16) {
       const Type *OpPtrTy = 
         PointerType::getUnqual(II->getArgOperand(0)->getType());
       Value *Ptr = Builder->CreateBitCast(II->getArgOperand(1), OpPtrTy);
@@ -631,7 +542,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_sse2_storeu_pd:
   case Intrinsic::x86_sse2_storeu_dq:
     // Turn X86 storeu -> store if the pointer is known aligned.
-    if (GetOrEnforceKnownAlignment(II->getArgOperand(0), 16) >= 16) {
+    if (getOrEnforceKnownAlignment(II->getArgOperand(0), 16, TD) >= 16) {
       const Type *OpPtrTy = 
         PointerType::getUnqual(II->getArgOperand(1)->getType());
       Value *Ptr = Builder->CreateBitCast(II->getArgOperand(0), OpPtrTy);
@@ -718,7 +629,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::arm_neon_vst2lane:
   case Intrinsic::arm_neon_vst3lane:
   case Intrinsic::arm_neon_vst4lane: {
-    unsigned MemAlign = GetOrEnforceKnownAlignment(II->getArgOperand(0));
+    unsigned MemAlign = getKnownAlignment(II->getArgOperand(0));
     unsigned AlignArg = II->getNumArgOperands() - 1;
     ConstantInt *IntrAlign = dyn_cast<ConstantInt>(II->getArgOperand(AlignArg));
     if (IntrAlign && IntrAlign->getZExtValue() < MemAlign) {

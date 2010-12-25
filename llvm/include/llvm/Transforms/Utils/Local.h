@@ -145,6 +145,18 @@ AllocaInst *DemoteRegToStack(Instruction &X,
 /// The phi node is deleted and it returns the pointer to the alloca inserted. 
 AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = 0);
 
+/// getOrEnforceKnownAlignment - If the specified pointer has an alignment that
+/// we can determine, return it, otherwise return 0.  If PrefAlign is specified,
+/// and it is more than the alignment of the ultimate object, see if we can
+/// increase the alignment of the ultimate object, making this check succeed.
+unsigned getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
+                                    const TargetData *TD = 0);
+
+/// getKnownAlignment - Try to infer an alignment for the specified pointer.
+static inline unsigned getKnownAlignment(Value *V, const TargetData *TD = 0) {
+  return getOrEnforceKnownAlignment(V, 0, TD);
+}
+
 } // End llvm namespace
 
 #endif

@@ -25,6 +25,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ProfileInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
@@ -642,3 +643,94 @@ bool llvm::EliminateDuplicatePHINodes(BasicBlock *BB) {
 
   return Changed;
 }
+
+/// enforceKnownAlignment - If the specified pointer points to an object that
+/// we control, modify the object's alignment to PrefAlign. This isn't
+/// often possible though. If alignment is important, a more reliable approach
+/// is to simply align all global variables and allocation instructions to
+/// their preferred alignment from the beginning.
+///
+unsigned enforceKnownAlignment(Value *V, unsigned Align, unsigned PrefAlign) {
+
+  User *U = dyn_cast<User>(V);
+  if (!U) return Align;
+
+  switch (Operator::getOpcode(U)) {
+  default: break;
+  case Instruction::BitCast:
+    return enforceKnownAlignment(U->getOperand(0), Align, PrefAlign);
+  case Instruction::GetElementPtr: {
+    // If all indexes are zero, it is just the alignment of the base pointer.
+    bool AllZeroOperands = true;
+    for (User::op_iterator i = U->op_begin() + 1, e = U->op_end(); i != e; ++i)
+      if (!isa<Constant>(*i) ||
+          !cast<Constant>(*i)->isNullValue()) {
+        AllZeroOperands = false;
+        break;
+      }
+
+    if (AllZeroOperands) {
+      // Treat this like a bitcast.
+      return enforceKnownAlignment(U->getOperand(0), Align, PrefAlign);
+    }
+    return Align;
+  }
+  case Instruction::Alloca: {
+    AllocaInst *AI = cast<AllocaInst>(V);
+    // If there is a requested alignment and if this is an alloca, round up.
+    if (AI->getAlignment() >= PrefAlign)
+      return AI->getAlignment();
+    AI->setAlignment(PrefAlign);
+    return PrefAlign;
+  }
+  }
+
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    // If there is a large requested alignment and we can, bump up the alignment
+    // of the global.
+    if (GV->isDeclaration()) return Align;
+    
+    if (GV->getAlignment() >= PrefAlign)
+      return GV->getAlignment();
+    // We can only increase the alignment of the global if it has no alignment
+    // specified or if it is not assigned a section.  If it is assigned a
+    // section, the global could be densely packed with other objects in the
+    // section, increasing the alignment could cause padding issues.
+    if (!GV->hasSection() || GV->getAlignment() == 0)
+      GV->setAlignment(PrefAlign);
+    return GV->getAlignment();
+  }
+
+  return Align;
+}
+
+/// getOrEnforceKnownAlignment - If the specified pointer has an alignment that
+/// we can determine, return it, otherwise return 0.  If PrefAlign is specified,
+/// and it is more than the alignment of the ultimate object, see if we can
+/// increase the alignment of the ultimate object, making this check succeed.
+unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
+                                          const TargetData *TD) {
+  assert(V->getType()->isPointerTy() &&
+         "getOrEnforceKnownAlignment expects a pointer!");
+  unsigned BitWidth = TD ? TD->getPointerSizeInBits() : 64;
+  APInt Mask = APInt::getAllOnesValue(BitWidth);
+  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+  ComputeMaskedBits(V, Mask, KnownZero, KnownOne);
+  unsigned TrailZ = KnownZero.countTrailingOnes();
+  
+  // Avoid trouble with rediculously large TrailZ values, such as
+  // those computed from a null pointer.
+  TrailZ = std::min(TrailZ, unsigned(sizeof(unsigned) * CHAR_BIT - 1));
+  
+  unsigned Align = 1u << std::min(BitWidth - 1, TrailZ);
+  
+  // LLVM doesn't support alignments larger than this currently.
+  Align = std::min(Align, +Value::MaximumAlignment);
+  
+  if (PrefAlign > Align)
+    Align = enforceKnownAlignment(V, Align, PrefAlign);
+    
+  // We don't need to make any adjustment.
+  return Align;
+}
+

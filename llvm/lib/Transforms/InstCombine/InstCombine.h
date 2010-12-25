@@ -348,10 +348,6 @@ private:
 
 
   Value *EvaluateInDifferentType(Value *V, const Type *Ty, bool isSigned);
-
-  unsigned GetOrEnforceKnownAlignment(Value *V,
-                                      unsigned PrefAlign = 0);
-
 };
 
       
