@@ -1344,6 +1344,7 @@ public:
     Bool,     // This is bool and/or _Bool.
     Char_U,   // This is 'char' for targets where char is unsigned.
     UChar,    // This is explicitly qualified unsigned char.
+    WChar_U,  // This is 'wchar_t' for C++, when unsigned.
     Char16,   // This is 'char16_t' for C++.
     Char32,   // This is 'char32_t' for C++.
     UShort,
@@ -1354,7 +1355,7 @@ public:
 
     Char_S,   // This is 'char' for targets where char is signed.
     SChar,    // This is explicitly qualified signed char.
-    WChar,    // This is 'wchar_t' for C++.
+    WChar_S,  // This is 'wchar_t' for C++, when signed.
     Short,
     Int,
     Long,

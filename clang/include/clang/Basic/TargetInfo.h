@@ -151,7 +151,7 @@ public:
 
   /// isTypeSigned - Return whether an integer types is signed. Returns true if
   /// the type is signed; false otherwise.
-  bool isTypeSigned(IntType T) const;
+  static bool isTypeSigned(IntType T);
 
   /// getPointerWidth - Return the width of pointers on this target, for the
   /// specified address space.

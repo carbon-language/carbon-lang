@@ -194,7 +194,8 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
       return TST_char16;        
     case BuiltinType::Char32:
       return TST_char32;
-    case BuiltinType::WChar:
+    case BuiltinType::WChar_S:
+    case BuiltinType::WChar_U:
       return TST_wchar;
     case BuiltinType::UndeducedAuto:
       return TST_auto;

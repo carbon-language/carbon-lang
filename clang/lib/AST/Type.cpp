@@ -524,20 +524,28 @@ bool Type::isCharType() const {
 
 bool Type::isWideCharType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() == BuiltinType::WChar;
+    return BT->getKind() == BuiltinType::WChar_S ||
+           BT->getKind() == BuiltinType::WChar_U;
   return false;
 }
 
 /// \brief Determine whether this type is any of the built-in character
 /// types.
 bool Type::isAnyCharacterType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return (BT->getKind() >= BuiltinType::Char_U &&
-            BT->getKind() <= BuiltinType::Char32) ||
-           (BT->getKind() >= BuiltinType::Char_S &&
-            BT->getKind() <= BuiltinType::WChar);
-  
-  return false;
+  const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType);
+  if (BT == 0) return false;
+  switch (BT->getKind()) {
+  default: return false;
+  case BuiltinType::Char_U:
+  case BuiltinType::UChar:
+  case BuiltinType::WChar_U:
+  case BuiltinType::Char16:
+  case BuiltinType::Char32:
+  case BuiltinType::Char_S:
+  case BuiltinType::SChar:
+  case BuiltinType::WChar_S:
+    return true;
+  }
 }
 
 /// isSignedIntegerType - Return true if this is an integer type that is
@@ -1048,7 +1056,8 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   case Float:             return "float";
   case Double:            return "double";
   case LongDouble:        return "long double";
-  case WChar:             return "wchar_t";
+  case WChar_S:
+  case WChar_U:           return "wchar_t";
   case Char16:            return "char16_t";
   case Char32:            return "char32_t";
   case NullPtr:           return "nullptr_t";

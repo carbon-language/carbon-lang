@@ -228,7 +228,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::ULong:
     case BuiltinType::LongLong:
     case BuiltinType::ULongLong:
-    case BuiltinType::WChar:
+    case BuiltinType::WChar_S:
+    case BuiltinType::WChar_U:
     case BuiltinType::Char16:
     case BuiltinType::Char32:
       return llvm::IntegerType::get(getLLVMContext(),

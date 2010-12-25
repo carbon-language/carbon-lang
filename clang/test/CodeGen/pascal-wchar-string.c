@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm -o -  %s -fpascal-strings -fshort-wchar  | FileCheck %s
-// rdar: // 8020384
+// rdar://8020384
+
+#include <stddef.h>
 
 extern void abort (void);
 
@@ -29,3 +31,11 @@ int main(int argc, char* argv[])
 
 // CHECK: c"\03\00b\00a\00r\00\00\00"
 // CHECK: c"\04\00g\00o\00r\00f\00\00\00"
+
+
+// PR8856 - -fshort-wchar makes wchar_t be unsigned.
+// CHECK: @test2
+// CHECK: volatile store i32 1, i32* %isUnsigned
+void test2() {
+  volatile int isUnsigned = (wchar_t)-1 > (wchar_t)0;
+}

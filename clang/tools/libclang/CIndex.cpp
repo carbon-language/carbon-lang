@@ -1291,7 +1291,8 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
   case BuiltinType::UInt128:
   case BuiltinType::Char_S:
   case BuiltinType::SChar:
-  case BuiltinType::WChar:
+  case BuiltinType::WChar_U:
+  case BuiltinType::WChar_S:
   case BuiltinType::Short:
   case BuiltinType::Int:
   case BuiltinType::Long:

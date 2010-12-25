@@ -756,7 +756,8 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Int128: Out << "_L"; break;
   case BuiltinType::UInt128: Out << "_M"; break;
   case BuiltinType::Bool: Out << "_N"; break;
-  case BuiltinType::WChar: Out << "_W"; break;
+  case BuiltinType::WChar_S:
+  case BuiltinType::WChar_U: Out << "_W"; break;
 
   case BuiltinType::Overload:
   case BuiltinType::Dependent:

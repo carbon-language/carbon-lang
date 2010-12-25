@@ -1233,7 +1233,8 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::ULongLong: Out << 'y'; break;
   case BuiltinType::UInt128: Out << 'o'; break;
   case BuiltinType::SChar: Out << 'a'; break;
-  case BuiltinType::WChar: Out << 'w'; break;
+  case BuiltinType::WChar_S:
+  case BuiltinType::WChar_U: Out << 'w'; break;
   case BuiltinType::Char16: Out << "Ds"; break;
   case BuiltinType::Char32: Out << "Di"; break;
   case BuiltinType::Short: Out << 's'; break;

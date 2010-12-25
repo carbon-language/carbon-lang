@@ -41,7 +41,8 @@ static CXTypeKind GetBuiltinTypeKind(const BuiltinType *BT) {
     BTCASE(UInt128);
     BTCASE(Char_S);
     BTCASE(SChar);
-    BTCASE(WChar);
+    case BuiltinType::WChar_S: return CXType_WChar;
+    case BuiltinType::WChar_U: return CXType_WChar;
     BTCASE(Short);
     BTCASE(Int);
     BTCASE(Long);
@@ -286,7 +287,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(UInt128);
     TKIND(Char_S);
     TKIND(SChar);
-    TKIND(WChar);
+    case CXType_WChar: s = "WChar"; break;
     TKIND(Short);
     TKIND(Int);
     TKIND(Long);

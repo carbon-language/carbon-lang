@@ -316,9 +316,12 @@ void ASTContext::InitBuiltinTypes() {
   InitBuiltinType(Int128Ty,            BuiltinType::Int128);
   InitBuiltinType(UnsignedInt128Ty,    BuiltinType::UInt128);
 
-  if (LangOpts.CPlusPlus) // C++ 3.9.1p5
-    InitBuiltinType(WCharTy,           BuiltinType::WChar);
-  else // C99
+  if (LangOpts.CPlusPlus) { // C++ 3.9.1p5
+    if (!LangOpts.ShortWChar)
+      InitBuiltinType(WCharTy,           BuiltinType::WChar_S);
+    else  // -fshort-wchar makes wchar_t be unsigned.
+      InitBuiltinType(WCharTy,           BuiltinType::WChar_U);
+  } else // C99
     WCharTy = getFromTargetType(Target.getWCharType());
 
   if (LangOpts.CPlusPlus) // C++0x 3.9.1p5, extension for C++
@@ -676,7 +679,8 @@ ASTContext::getTypeInfo(const Type *T) {
       Width = Target.getCharWidth();
       Align = Target.getCharAlign();
       break;
-    case BuiltinType::WChar:
+    case BuiltinType::WChar_S:
+    case BuiltinType::WChar_U:
       Width = Target.getWCharWidth();
       Align = Target.getWCharAlign();
       break;
@@ -2946,7 +2950,8 @@ unsigned ASTContext::getIntegerRank(Type *T) {
   if (EnumType* ET = dyn_cast<EnumType>(T))
     T = ET->getDecl()->getPromotionType().getTypePtr();
 
-  if (T->isSpecificBuiltinType(BuiltinType::WChar))
+  if (T->isSpecificBuiltinType(BuiltinType::WChar_S) ||
+      T->isSpecificBuiltinType(BuiltinType::WChar_U))
     T = getFromTargetType(Target.getWCharType()).getTypePtr();
 
   if (T->isSpecificBuiltinType(BuiltinType::Char16))
@@ -3731,7 +3736,8 @@ static char ObjCEncodingForPrimitiveKind(const ASTContext *C, QualType T) {
     case BuiltinType::Char_S:
     case BuiltinType::SChar:      return 'c';
     case BuiltinType::Short:      return 's';
-    case BuiltinType::WChar:
+    case BuiltinType::WChar_S:
+    case BuiltinType::WChar_U:
     case BuiltinType::Int:        return 'i';
     case BuiltinType::Long:
       return

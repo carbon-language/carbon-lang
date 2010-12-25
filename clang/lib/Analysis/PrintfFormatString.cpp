@@ -394,7 +394,8 @@ bool PrintfSpecifier::fixType(QualType QT) {
     LM.setKind(LengthModifier::AsShort);
     break;
 
-  case BuiltinType::WChar:
+  case BuiltinType::WChar_S:
+  case BuiltinType::WChar_U:
   case BuiltinType::Long:
   case BuiltinType::ULong:
     LM.setKind(LengthModifier::AsLong);

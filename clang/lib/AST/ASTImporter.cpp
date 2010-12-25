@@ -1295,7 +1295,8 @@ QualType ASTNodeImporter::VisitBuiltinType(BuiltinType *T) {
     return Importer.getToContext().CharTy;
 
   case BuiltinType::SChar: return Importer.getToContext().SignedCharTy;
-  case BuiltinType::WChar:
+  case BuiltinType::WChar_S:
+  case BuiltinType::WChar_U:
     // FIXME: If not in C++, shall we translate to the C equivalent of
     // wchar_t?
     return Importer.getToContext().WCharTy;

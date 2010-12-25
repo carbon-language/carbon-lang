@@ -98,7 +98,8 @@ NODE_XML(BuiltinType, "FundamentalType")
 	  ENUM_XML(BuiltinType::Float, "float");
 	  ENUM_XML(BuiltinType::Double, "double");
 	  ENUM_XML(BuiltinType::LongDouble, "long double");
-	  ENUM_XML(BuiltinType::WChar, "wchar_t");
+	  ENUM_XML(BuiltinType::WChar_U, "wchar_t");
+	  ENUM_XML(BuiltinType::WChar_S, "wchar_t");
 	  ENUM_XML(BuiltinType::Char16, "char16_t");
 	  ENUM_XML(BuiltinType::Char32, "char32_t");
 	  ENUM_XML(BuiltinType::NullPtr, "nullptr_t");        // This is the type of C++0x 'nullptr'.
