@@ -41,15 +41,14 @@ class InitHeaderSearch {
   std::vector<DirectoryLookup> IncludeGroup[4];
   HeaderSearch& Headers;
   bool Verbose;
-  llvm::sys::Path IncludeSysroot;
+  std::string IncludeSysroot;
+  bool IsNotEmptyOrRoot;
 
 public:
 
   InitHeaderSearch(HeaderSearch &HS, bool verbose, llvm::StringRef sysroot)
-    : Headers(HS), Verbose(verbose),
-      IncludeSysroot((sysroot.empty() || sysroot == "/") ?
-                     llvm::sys::Path::GetRootDirectory() :
-                     llvm::sys::Path(sysroot)) {
+    : Headers(HS), Verbose(verbose), IncludeSysroot(sysroot),
+      IsNotEmptyOrRoot(!(sysroot.empty() || sysroot == "/")) {
   }
 
   /// AddPath - Add the specified path to the specified group list.
@@ -110,10 +109,10 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
   // Handle isysroot.
   if (Group == System && !IgnoreSysRoot &&
       llvm::sys::path::is_absolute(MappedPathStr) &&
-      IncludeSysroot != llvm::sys::Path::GetRootDirectory()) {
+      IsNotEmptyOrRoot) {
     MappedPathStorage.clear();
     MappedPathStr =
-      (IncludeSysroot.str() + Path).toStringRef(MappedPathStorage);
+      (IncludeSysroot + Path).toStringRef(MappedPathStorage);
   }
 
   // Compute the DirectoryLookup type.
