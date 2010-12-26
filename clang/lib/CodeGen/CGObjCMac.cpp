@@ -1157,7 +1157,8 @@ public:
 
   virtual llvm::Constant *GetPropertyGetFunction();
   virtual llvm::Constant *GetPropertySetFunction();
-  virtual llvm::Constant *GetCopyStructFunction();
+  virtual llvm::Constant *GetGetStructFunction();
+  virtual llvm::Constant *GetSetStructFunction();
   virtual llvm::Constant *EnumerationMutationFunction();
 
   virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
@@ -1402,7 +1403,10 @@ public:
     return ObjCTypes.getSetPropertyFn();
   }
   
-  virtual llvm::Constant *GetCopyStructFunction() {
+  virtual llvm::Constant *GetSetStructFunction() {
+    return ObjCTypes.getCopyStructFn();
+  }
+  virtual llvm::Constant *GetGetStructFunction() {
     return ObjCTypes.getCopyStructFn();
   }
   
@@ -2584,7 +2588,10 @@ llvm::Constant *CGObjCMac::GetPropertySetFunction() {
   return ObjCTypes.getSetPropertyFn();
 }
 
-llvm::Constant *CGObjCMac::GetCopyStructFunction() {
+llvm::Constant *CGObjCMac::GetGetStructFunction() {
+  return ObjCTypes.getCopyStructFn();
+}
+llvm::Constant *CGObjCMac::GetSetStructFunction() {
   return ObjCTypes.getCopyStructFn();
 }
 

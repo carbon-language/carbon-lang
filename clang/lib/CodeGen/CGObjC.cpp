@@ -222,11 +222,11 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
       bool IsStrong = false;
       if ((IsAtomic || (IsStrong = IvarTypeWithAggrGCObjects(Ivar->getType())))
           && CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect
-          && CGM.getObjCRuntime().GetCopyStructFunction()) {
+          && CGM.getObjCRuntime().GetGetStructFunction()) {
         LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
                                       Ivar, 0);
         llvm::Value *GetCopyStructFn =
-          CGM.getObjCRuntime().GetCopyStructFunction();
+          CGM.getObjCRuntime().GetGetStructFunction();
         CodeGenTypes &Types = CGM.getTypes();
         // objc_copyStruct (ReturnValue, &structIvar, 
         //                  sizeof (Type of Ivar), isAtomic, false);
@@ -353,11 +353,11 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   } else if (IsAtomic && hasAggregateLLVMType(Ivar->getType()) &&
              !Ivar->getType()->isAnyComplexType() &&
              IndirectObjCSetterArg(*CurFnInfo)
-             && CGM.getObjCRuntime().GetCopyStructFunction()) {
+             && CGM.getObjCRuntime().GetSetStructFunction()) {
     // objc_copyStruct (&structIvar, &Arg, 
     //                  sizeof (struct something), true, false);
     llvm::Value *GetCopyStructFn =
-      CGM.getObjCRuntime().GetCopyStructFunction();
+      CGM.getObjCRuntime().GetSetStructFunction();
     CodeGenTypes &Types = CGM.getTypes();
     CallArgList Args;
     LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), Ivar, 0);

@@ -176,8 +176,10 @@ public:
   /// Return the runtime function for setting properties.
   virtual llvm::Constant *GetPropertySetFunction() = 0;
 
-  // API for atomic copying of qualified aggregates in setter/getter.
-  virtual llvm::Constant *GetCopyStructFunction() = 0;
+  // API for atomic copying of qualified aggregates in getter.
+  virtual llvm::Constant *GetGetStructFunction() = 0;
+  // API for atomic copying of qualified aggregates in setter.
+  virtual llvm::Constant *GetSetStructFunction() = 0;
   
   /// GetClass - Return a reference to the class for the given
   /// interface decl.
