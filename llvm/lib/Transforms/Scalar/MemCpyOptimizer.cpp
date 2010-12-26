@@ -25,6 +25,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include <list>
@@ -332,8 +333,6 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
     }
   }
   
-  LLVMContext &Context = SI->getContext();
-
   // There are two cases that are interesting for this code to handle: memcpy
   // and memset.  Right now we only handle memset.
   
@@ -345,7 +344,6 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
     return false;
 
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  Module *M = SI->getParent()->getParent()->getParent();
 
   // Okay, so we now have a single store that can be splatable.  Scan to find
   // all subsequent stores of the same value to offset from the same pointer.
@@ -431,28 +429,10 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
       Alignment = TD->getABITypeAlignment(EltType);
     }
 
-    // Cast the start ptr to be i8* as memset requires.
-    const PointerType* StartPTy = cast<PointerType>(StartPtr->getType());
-    const PointerType *i8Ptr = Type::getInt8PtrTy(Context,
-                                                  StartPTy->getAddressSpace());
-    if (StartPTy!= i8Ptr)
-      StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getName(),
-                                 InsertPt);
-
-    Value *Ops[] = {
-      StartPtr, ByteVal,   // Start, value
-      // size
-      ConstantInt::get(Type::getInt64Ty(Context), Range.End-Range.Start),
-      // align
-      ConstantInt::get(Type::getInt32Ty(Context), Alignment),
-      // volatile
-      ConstantInt::getFalse(Context),
-    };
-    const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
-
-    Function *MemSetF = Intrinsic::getDeclaration(M, Intrinsic::memset, Tys, 2);
-
-    Value *C = CallInst::Create(MemSetF, Ops, Ops+5, "", InsertPt);
+    IRBuilder<> Builder(InsertPt);
+    Value *C = 
+      Builder.CreateMemSet(StartPtr, ByteVal, Range.End-Range.Start, Alignment);
+    
     DEBUG(dbgs() << "Replace stores:\n";
           for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
             dbgs() << *Range.TheStores[i] << '\n';
@@ -663,20 +643,11 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   // If the dest of the second might alias the source of the first, then the
   // source and dest might overlap.  We still want to eliminate the intermediate
   // value, but we have to generate a memmove instead of memcpy.
-  Intrinsic::ID ResultFn = Intrinsic::memcpy;
-  if (AA.alias(AA.getLocationForDest(M), AA.getLocationForSource(MDep)) !=
-      AliasAnalysis::NoAlias)
-    ResultFn = Intrinsic::memmove;
+  bool UseMemMove = false;
+  if (!AA.isNoAlias(AA.getLocationForDest(M), AA.getLocationForSource(MDep)))
+    UseMemMove = true;
   
   // If all checks passed, then we can transform M.
-  const Type *ArgTys[3] = {
-    M->getRawDest()->getType(),
-    MDep->getRawSource()->getType(),
-    M->getLength()->getType()
-  };
-  Function *MemCpyFun =
-    Intrinsic::getDeclaration(MDep->getParent()->getParent()->getParent(),
-                              ResultFn, ArgTys, 3);
   
   // Make sure to use the lesser of the alignment of the source and the dest
   // since we're changing where we're reading from, but don't want to increase
@@ -684,14 +655,14 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   // TODO: Is this worth it if we're creating a less aligned memcpy? For
   // example we could be moving from movaps -> movq on x86.
   unsigned Align = std::min(MDep->getAlignment(), M->getAlignment());
-  Value *Args[5] = {
-    M->getRawDest(),
-    MDep->getRawSource(), 
-    M->getLength(),
-    ConstantInt::get(Type::getInt32Ty(MemCpyFun->getContext()), Align), 
-    M->getVolatileCst()
-  };
-  CallInst::Create(MemCpyFun, Args, Args+5, "", M);
+  
+  IRBuilder<> Builder(M);
+  if (UseMemMove)
+    Builder.CreateMemMove(M->getRawDest(), MDep->getRawSource(), M->getLength(),
+                          Align, M->isVolatile());
+  else
+    Builder.CreateMemCpy(M->getRawDest(), MDep->getRawSource(), M->getLength(),
+                         Align, M->isVolatile());
 
   // Remove the instruction we're replacing.
   MD->removeInstruction(M);
@@ -722,17 +693,9 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(M->getSource()))
     if (GV->isConstant() && GV->hasDefinitiveInitializer())
       if (Value *ByteVal = isBytewiseValue(GV->getInitializer())) {
-        Value *Ops[] = {
-          M->getRawDest(), ByteVal,               // Start, value
-          CopySize,                               // Size
-          M->getAlignmentCst(),                   // Alignment
-          ConstantInt::getFalse(M->getContext()), // volatile
-        };
-        const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
-        Module *Mod = M->getParent()->getParent()->getParent();
-        Function *MemSetF = Intrinsic::getDeclaration(Mod, Intrinsic::memset,
-                                                      Tys, 2);
-        CallInst::Create(MemSetF, Ops, Ops+5, "", M);
+        IRBuilder<> Builder(M);
+        Builder.CreateMemSet(M->getRawDest(), ByteVal, CopySize,
+                             M->getAlignment(), false);
         MD->removeInstruction(M);
         M->eraseFromParent();
         ++NumCpyToSet;
@@ -765,9 +728,7 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
   // See if the pointers alias.
-  if (AA.alias(AA.getLocationForDest(M),
-               AA.getLocationForSource(M)) !=
-      AliasAnalysis::NoAlias)
+  if (!AA.isNoAlias(AA.getLocationForDest(M), AA.getLocationForSource(M)))
     return false;
   
   DEBUG(dbgs() << "MemCpyOpt: Optimizing memmove -> memcpy: " << *M << "\n");

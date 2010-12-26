@@ -425,7 +425,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
       continue;
     }
     
-    IRBuilder<> Builder(User->getParent(), User);
+    IRBuilder<> Builder(User);
     
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       // The load is a bit extract from NewAI shifted right by Offset bits.
@@ -1353,8 +1353,6 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
   }
   
   // Process each element of the aggregate.
-  Value *TheFn = MI->getCalledValue();
-  const Type *BytePtrTy = MI->getRawDest()->getType();
   bool SROADest = MI->getRawDest() == Inst;
   
   Constant *Zero = Constant::getNullValue(Type::getInt32Ty(MI->getContext()));
@@ -1448,55 +1446,24 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       // Otherwise, if we're storing a byte variable, use a memset call for
       // this element.
     }
-    
-    // Cast the element pointer to BytePtrTy.
-    if (EltPtr->getType() != BytePtrTy)
-      EltPtr = new BitCastInst(EltPtr, BytePtrTy, EltPtr->getName(), MI);
-    
-    // Cast the other pointer (if we have one) to BytePtrTy. 
-    if (OtherElt && OtherElt->getType() != BytePtrTy) {
-      // Preserve address space of OtherElt
-      const PointerType* OtherPTy = cast<PointerType>(OtherElt->getType());
-      const PointerType* PTy = cast<PointerType>(BytePtrTy);
-      if (OtherPTy->getElementType() != PTy->getElementType()) {
-        Type *NewOtherPTy = PointerType::get(PTy->getElementType(),
-                                             OtherPTy->getAddressSpace());
-        OtherElt = new BitCastInst(OtherElt, NewOtherPTy,
-                                   OtherElt->getName(), MI);
-      }
-    }
-    
+        
     unsigned EltSize = TD->getTypeAllocSize(EltTy);
     
+    IRBuilder<> Builder(MI);
+    
     // Finally, insert the meminst for this element.
-    if (isa<MemTransferInst>(MI)) {
-      Value *Ops[] = {
-        SROADest ? EltPtr : OtherElt,  // Dest ptr
-        SROADest ? OtherElt : EltPtr,  // Src ptr
-        ConstantInt::get(MI->getArgOperand(2)->getType(), EltSize), // Size
-        // Align
-        ConstantInt::get(Type::getInt32Ty(MI->getContext()), OtherEltAlign),
-        MI->getVolatileCst()
-      };
-      // In case we fold the address space overloaded memcpy of A to B
-      // with memcpy of B to C, change the function to be a memcpy of A to C.
-      const Type *Tys[] = { Ops[0]->getType(), Ops[1]->getType(),
-                            Ops[2]->getType() };
-      Module *M = MI->getParent()->getParent()->getParent();
-      TheFn = Intrinsic::getDeclaration(M, MI->getIntrinsicID(), Tys, 3);
-      CallInst::Create(TheFn, Ops, Ops + 5, "", MI);
+    if (isa<MemSetInst>(MI)) {
+      Builder.CreateMemSet(EltPtr, MI->getArgOperand(1), EltSize,
+                           MI->isVolatile());
     } else {
-      assert(isa<MemSetInst>(MI));
-      Value *Ops[] = {
-        EltPtr, MI->getArgOperand(1),  // Dest, Value,
-        ConstantInt::get(MI->getArgOperand(2)->getType(), EltSize), // Size
-        Zero,  // Align
-        ConstantInt::getFalse(MI->getContext()) // isVolatile
-      };
-      const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
-      Module *M = MI->getParent()->getParent()->getParent();
-      TheFn = Intrinsic::getDeclaration(M, Intrinsic::memset, Tys, 2);
-      CallInst::Create(TheFn, Ops, Ops + 5, "", MI);
+      assert(isa<MemTransferInst>(MI));
+      Value *Dst = SROADest ? EltPtr : OtherElt;  // Dest ptr
+      Value *Src = SROADest ? OtherElt : EltPtr;  // Src ptr
+      
+      if (isa<MemCpyInst>(MI))
+        Builder.CreateMemCpy(Dst, Src, EltSize, OtherEltAlign,MI->isVolatile());
+      else
+        Builder.CreateMemMove(Dst, Src, EltSize,OtherEltAlign,MI->isVolatile());
     }
   }
   DeadInsts.push_back(MI);
