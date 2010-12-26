@@ -3785,7 +3785,10 @@ static void EncodeBitField(const ASTContext *Context, std::string& S,
         break;
     }
     S += llvm::utostr(RL.getFieldOffset(i));
-    S += ObjCEncodingForPrimitiveKind(Context, T);
+    if (T->isEnumeralType())
+      S += 'i';
+    else
+      S += ObjCEncodingForPrimitiveKind(Context, T);
   }
   unsigned N = E->EvaluateAsInt(*Ctx).getZExtValue();
   S += llvm::utostr(N);
