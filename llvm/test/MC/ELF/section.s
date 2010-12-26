@@ -12,7 +12,7 @@
 // CHECK: ('sh_name', 0x00000033) # '.note.GNU-'
 // CHECK: ('sh_name', 0x0000003e) # '-.note.GNU'
 
-// Test that the dafults are used
+// Test that the defaults are used
 
 .section	.init
 .section	.fini
@@ -66,6 +66,19 @@
 // CHECK-NEXT:  ('sh_addralign', 0x00000001)
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
 // CHECK-NEXT: ),
+
+.section	.note.test,"",@note
+// CHECK:       (('sh_name', 0x00000061) # '.note.test'
+// CHECK-NEXT:   ('sh_type', 0x00000007)
+// CHECK-NEXT:   ('sh_flags', 0x00000000)
+// CHECK-NEXT:   ('sh_addr', 0x00000000)
+// CHECK-NEXT:   ('sh_offset', 0x00000050)
+// CHECK-NEXT:   ('sh_size', 0x00000000)
+// CHECK-NEXT:   ('sh_link', 0x00000000)
+// CHECK-NEXT:   ('sh_info', 0x00000000)
+// CHECK-NEXT:   ('sh_addralign', 0x00000001)
+// CHECK-NEXT:   ('sh_entsize', 0x00000000)
+// CHECK-NEXT:  ),
 
 // Test that we can parse these
 foo:

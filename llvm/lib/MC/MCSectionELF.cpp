@@ -92,6 +92,8 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
     OS << "preinit_array";
   else if (Type == MCSectionELF::SHT_NOBITS)
     OS << "nobits";
+  else if (Type == MCSectionELF::SHT_NOTE)
+    OS << "note";
   else if (Type == MCSectionELF::SHT_PROGBITS)
     OS << "progbits";
 

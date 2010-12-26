@@ -335,6 +335,8 @@ bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
       Type = MCSectionELF::SHT_NOBITS;
     else if (TypeName == "progbits")
       Type = MCSectionELF::SHT_PROGBITS;
+    else if (TypeName == "note")
+      Type = MCSectionELF::SHT_NOTE;
     else
       return TokError("unknown section type");
   }

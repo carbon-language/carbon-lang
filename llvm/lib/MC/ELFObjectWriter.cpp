@@ -1265,6 +1265,7 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
   case ELF::SHT_PROGBITS:
   case ELF::SHT_STRTAB:
   case ELF::SHT_NOBITS:
+  case ELF::SHT_NOTE:
   case ELF::SHT_NULL:
   case ELF::SHT_ARM_ATTRIBUTES:
     // Nothing to do.
