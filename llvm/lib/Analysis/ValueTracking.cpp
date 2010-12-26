@@ -989,6 +989,75 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
   return false;
 }
 
+/// isBytewiseValue - If the specified value can be set by repeating the same
+/// byte in memory, return the i8 value that it is represented with.  This is
+/// true for all i8 values obviously, but is also true for i32 0, i32 -1,
+/// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
+/// byte store (e.g. i16 0x1234), return null.
+Value *llvm::isBytewiseValue(Value *V) {
+  // All byte-wide stores are splatable, even of arbitrary variables.
+  if (V->getType()->isIntegerTy(8)) return V;
+  
+  // Constant float and double values can be handled as integer values if the
+  // corresponding integer value is "byteable".  An important case is 0.0. 
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
+    if (CFP->getType()->isFloatTy())
+      V = ConstantExpr::getBitCast(CFP, Type::getInt32Ty(V->getContext()));
+    if (CFP->getType()->isDoubleTy())
+      V = ConstantExpr::getBitCast(CFP, Type::getInt64Ty(V->getContext()));
+    // Don't handle long double formats, which have strange constraints.
+  }
+  
+  // We can handle constant integers that are power of two in size and a 
+  // multiple of 8 bits.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+    unsigned Width = CI->getBitWidth();
+    if (isPowerOf2_32(Width) && Width > 8) {
+      // We can handle this value if the recursive binary decomposition is the
+      // same at all levels.
+      APInt Val = CI->getValue();
+      APInt Val2;
+      while (Val.getBitWidth() != 8) {
+        unsigned NextWidth = Val.getBitWidth()/2;
+        Val2  = Val.lshr(NextWidth);
+        Val2 = Val2.trunc(Val.getBitWidth()/2);
+        Val = Val.trunc(Val.getBitWidth()/2);
+        
+        // If the top/bottom halves aren't the same, reject it.
+        if (Val != Val2)
+          return 0;
+      }
+      return ConstantInt::get(V->getContext(), Val);
+    }
+  }
+  
+  // A ConstantArray is splatable if all its members are equal and also
+  // splatable.
+  if (ConstantArray *CA = dyn_cast<ConstantArray>(V)) {
+    if (CA->getNumOperands() == 0)
+      return 0;
+    
+    Value *Val = isBytewiseValue(CA->getOperand(0));
+    if (!Val)
+      return 0;
+    
+    for (unsigned I = 1, E = CA->getNumOperands(); I != E; ++I)
+      if (CA->getOperand(I-1) != CA->getOperand(I))
+        return 0;
+    
+    return Val;
+  }
+  
+  // Conceptually, we could handle things like:
+  //   %a = zext i8 %X to i16
+  //   %b = shl i16 %a, 8
+  //   %c = or i16 %a, %b
+  // but until there is an example that actually needs this, it doesn't seem
+  // worth worrying about.
+  return 0;
+}
+
+
 // This is the recursive version of BuildSubAggregate. It takes a few different
 // arguments. Idxs is the index within the nested struct From that we are
 // looking at now (which is of type IndexedType). IdxSkip is the number of
