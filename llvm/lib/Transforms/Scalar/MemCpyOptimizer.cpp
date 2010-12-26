@@ -787,7 +787,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
 
   // If copying from a constant, try to turn the memcpy into a memset.
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(M->getSource()))
-    if (!GV->mayBeOverridden() && GV->isConstant() && GV->hasInitializer())
+    if (GV->isConstant() && GV->hasDefinitiveInitializer())
       if (Value *ByteVal = isBytewiseValue(GV->getInitializer())) {
         Value *Ops[] = {
           M->getRawDest(), ByteVal,               // Start, value
