@@ -52,6 +52,10 @@ namespace llvm {
     void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
                          bool isPCRel, unsigned AddrSpace);
 
+    std::vector<MCDwarfFrameInfo> FrameInfos;
+    MCDwarfFrameInfo *getCurrentFrameInfo();
+    void EnsureValidFrame();
+
   protected:
     MCStreamer(MCContext &Ctx);
 
@@ -62,10 +66,6 @@ namespace llvm {
     /// PrevSection - This is the previous section code is being emitted to, it
     /// is kept up to date by SwitchSection.
     const MCSection *PrevSection;
-
-    std::vector<MCDwarfFrameInfo> FrameInfos;
-    MCDwarfFrameInfo *getCurrentFrameInfo();
-    void EnsureValidFrame();
 
   public:
     virtual ~MCStreamer();

@@ -488,7 +488,7 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst) {
 }
 
 void MCELFStreamer::Finish() {
-  if (!FrameInfos.empty())
+  if (getNumFrameInfos())
     MCDwarfFrameEmitter::Emit(*this);
 
   for (std::vector<LocalCommon>::const_iterator i = LocalCommons.begin(),

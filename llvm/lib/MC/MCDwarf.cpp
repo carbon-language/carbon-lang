@@ -475,8 +475,8 @@ static void EmitFrameMoves(MCStreamer &streamer,
         streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_offset, 1);
       } else {
         streamer.EmitIntValue(dwarf::DW_CFA_def_cfa, 1);
-        streamer.EmitULEB128IntValue(asmInfo.getDwarfRegNum(Src.getReg(), isEH),
-                                     1);
+        streamer.EmitULEB128IntValue(asmInfo.getDwarfRegNum(Src.getReg(),
+                                                            isEH));
       }
 
       streamer.EmitULEB128IntValue(-Src.getOffset(), 1);
@@ -508,7 +508,8 @@ static void EmitFrameMoves(MCStreamer &streamer,
   }
 }
 
-static const MCSymbol &EmitCIE(MCStreamer &streamer) {
+static const MCSymbol &EmitCIE(MCStreamer &streamer,
+                               const MCSymbol *personality) {
   MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   const MCSection &section = *asmInfo.getEHFrameSection();
@@ -530,7 +531,10 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer) {
 
   // Augmentation String
   SmallString<8> Augmentation;
-  Augmentation += "zR";
+  Augmentation += "z";
+  if (personality)
+    Augmentation += "P";
+  Augmentation += "R";
   streamer.EmitBytes(Augmentation.str(), 0);
   streamer.EmitIntValue(0, 1);
 
@@ -553,6 +557,13 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer) {
 
   // Augmentation Data (optional)
   streamer.EmitLabel(augmentationStart);
+  if (personality) {
+    // Personality Encoding
+    streamer.EmitIntValue(dwarf::DW_EH_PE_absptr, 1);
+    // Personality
+    streamer.EmitSymbolValue(personality, 8);
+  }
+  // Encoding of the FDE pointers
   streamer.EmitIntValue(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4, 1);
   streamer.EmitLabel(augmentationEnd);
 
@@ -563,7 +574,7 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer) {
   EmitFrameMoves(streamer, Moves, NULL, true);
 
   // Padding
-  streamer.EmitValueToAlignment(asmInfo.getPointerSize());
+  streamer.EmitValueToAlignment(4);
 
   streamer.EmitLabel(sectionEnd);
   return *sectionStart;
@@ -608,13 +619,19 @@ static MCSymbol *EmitFDE(MCStreamer &streamer,
 void MCDwarfFrameEmitter::Emit(MCStreamer &streamer) {
   const MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
-  const MCSymbol &cieStart = EmitCIE(streamer);
   MCSymbol *fdeEnd = NULL;
+  DenseMap<const MCSymbol*, const MCSymbol*> Personalities;
+
   for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
-    fdeEnd = EmitFDE(streamer, cieStart, streamer.getFrameInfo(i));
+    const MCDwarfFrameInfo &frame = streamer.getFrameInfo(i);
+    const MCSymbol *&cieStart = Personalities[frame.Personality];
+    if (!cieStart)
+      cieStart = &EmitCIE(streamer, frame.Personality);
+    fdeEnd = EmitFDE(streamer, *cieStart, frame);
     if (i != n - 1)
       streamer.EmitLabel(fdeEnd);
   }
+
   streamer.EmitValueToAlignment(asmInfo.getPointerSize());
   if (fdeEnd)
     streamer.EmitLabel(fdeEnd);

@@ -2206,6 +2206,29 @@ bool GenericAsmParser::ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc) {
   return getStreamer().EmitCFIOffset(Register, Offset);
 }
 
+static bool isValidEncoding(int64_t Encoding) {
+  if (Encoding & ~0xff)
+    return false;
+
+  if (Encoding == dwarf::DW_EH_PE_omit)
+    return true;
+
+  const unsigned Format = Encoding & 0xf;
+  if (Format != dwarf::DW_EH_PE_absptr && Format != dwarf::DW_EH_PE_udata2 &&
+      Format != dwarf::DW_EH_PE_udata4 && Format != dwarf::DW_EH_PE_udata8 &&
+      Format != dwarf::DW_EH_PE_sdata2 && Format != dwarf::DW_EH_PE_sdata4 &&
+      Format != dwarf::DW_EH_PE_sdata8 && Format != dwarf::DW_EH_PE_signed)
+    return false;
+
+  const unsigned Application = Encoding & 0xf0;
+  if (Application != dwarf::DW_EH_PE_absptr &&
+      Application != dwarf::DW_EH_PE_pcrel &&
+      Application != dwarf::DW_EH_PE_indirect)
+    return false;
+
+  return true;
+}
+
 /// ParseDirectiveCFIPersonalityOrLsda
 /// ::= .cfi_personality encoding, [symbol_name]
 /// ::= .cfi_lsda encoding, [symbol_name]
@@ -2214,10 +2237,10 @@ bool GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda(StringRef IDVal,
   int64_t Encoding = 0;
   if (getParser().ParseAbsoluteExpression(Encoding))
     return true;
-  if (Encoding == 255)
+  if (Encoding == dwarf::DW_EH_PE_omit)
     return false;
 
-  if (Encoding != 0)
+  if (!isValidEncoding(Encoding))
     return TokError("unsupported encoding.");
 
   if (getLexer().isNot(AsmToken::Comma))
