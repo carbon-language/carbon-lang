@@ -118,66 +118,6 @@ Instead of doing an explicit test, we can use the flags off the sar.  This
 occurs in a bigger testcase like this, which is pretty common:
 
 #include <vector>
-
-
-int test1(std::vector<int> &X) {
-  int Sum = 0;
-  for (long i = 0, e = X.size(); i != e; ++i)
-    X[i] = 0;
-  return Sum;
-}
-compiles into:
-
-	movq	%rsi, %rbx
-	movl	%edi, %r14d
-	sarl	$2, %r14d
-	testl	%r14d, %r14d
-	je	LBB0_2
-
-Instead of doing an explicit test, we can use the flags off the sar.  This
-occurs in a bigger testcase like this, which is pretty common:
-
-#include <vector>
-
-
-int test1(std::vector<int> &X) {
-  int Sum = 0;
-  for (long i = 0, e = X.size(); i != e; ++i)
-    X[i] = 0;
-  return Sum;
-}
-compiles into:
-
-	movq	%rsi, %rbx
-	movl	%edi, %r14d
-	sarl	$2, %r14d
-	testl	%r14d, %r14d
-	je	LBB0_2
-
-Instead of doing an explicit test, we can use the flags off the sar.  This
-occurs in a bigger testcase like this, which is pretty common:
-
-#include <vector>
-
-
-int test1(std::vector<int> &X) {
-  int Sum = 0;
-  for (long i = 0, e = X.size(); i != e; ++i)
-    X[i] = 0;
-  return Sum;
-}
-compiles into:
-
-	movq	%rsi, %rbx
-	movl	%edi, %r14d
-	sarl	$2, %r14d
-	testl	%r14d, %r14d
-	je	LBB0_2
-
-Instead of doing an explicit test, we can use the flags off the sar.  This
-occurs in a bigger testcase like this, which is pretty common in bootstrap:
-
-#include <vector>
 int test1(std::vector<int> &X) {
   int Sum = 0;
   for (long i = 0, e = X.size(); i != e; ++i)
