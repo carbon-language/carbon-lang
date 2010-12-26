@@ -561,7 +561,7 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer,
     // Personality Encoding
     streamer.EmitIntValue(dwarf::DW_EH_PE_absptr, 1);
     // Personality
-    streamer.EmitSymbolValue(personality, 8);
+    streamer.EmitSymbolValue(personality, asmInfo.getPointerSize());
   }
   // Encoding of the FDE pointers
   streamer.EmitIntValue(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4, 1);
