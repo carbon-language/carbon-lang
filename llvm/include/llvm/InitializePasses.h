@@ -133,6 +133,7 @@ void initializeLoopSplitterPass(PassRegistry&);
 void initializeLoopStrengthReducePass(PassRegistry&);
 void initializeLoopUnrollPass(PassRegistry&);
 void initializeLoopUnswitchPass(PassRegistry&);
+void initializeLoopIdiomRecognizePass(PassRegistry&);
 void initializeLowerAtomicPass(PassRegistry&);
 void initializeLowerIntrinsicsPass(PassRegistry&);
 void initializeLowerInvokePass(PassRegistry&);

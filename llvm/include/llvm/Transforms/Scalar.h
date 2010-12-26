@@ -131,6 +131,12 @@ Pass *createLoopRotatePass();
 
 //===----------------------------------------------------------------------===//
 //
+// LoopIdiom - This pass recognizes and replaces idioms in loops.
+//
+Pass *createLoopIdiomPass();
+  
+//===----------------------------------------------------------------------===//
+//
 // PromoteMemoryToRegister - This pass is used to promote memory references to
 // be register references. A simple example of the transformation performed by
 // this pass is:
