@@ -98,7 +98,8 @@ namespace sys {
       /// it is file:///. Other operating systems may have different notions of
       /// what the root directory is or none at all. In that case, a consistent
       /// default root directory will be used.
-      static Path GetRootDirectory();
+      LLVM_ATTRIBUTE_DEPRECATED(static Path GetRootDirectory(),
+        LLVMV_PATH_DEPRECATED_MSG(NOTHING));
 
       /// Construct a path to a unique temporary directory that is created in
       /// a "standard" place for the operating system. The directory is

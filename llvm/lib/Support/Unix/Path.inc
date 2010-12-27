@@ -242,12 +242,11 @@ Path::GetLLVMDefaultConfigDir() {
 Path
 Path::GetUserHomeDirectory() {
   const char* home = getenv("HOME");
-  if (home) {
-    Path result;
-    if (result.set(home))
-      return result;
-  }
-  return GetRootDirectory();
+  Path result;
+  if (home && result.set(home))
+    return result;
+  result.set("/");
+  return result;
 }
 
 Path
