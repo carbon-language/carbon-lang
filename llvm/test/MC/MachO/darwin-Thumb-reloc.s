@@ -64,7 +64,7 @@ L_.str:
 @ CHECK:      ('word-1', 0x0)),
 @ CHECK:     # Relocation 2
 @ CHECK:     (('word-0', 0x0),
-@ CHECK-FIXME:      ('word-1', 0x6d000001)),
+@ CHECK:      ('word-1', 0x6d000001)),
 @ CHECK:   ])
 @ CHECK-FIXME:   ('_section_data', 'fff7feef 04000000')
 @ CHECK:     # Section 1

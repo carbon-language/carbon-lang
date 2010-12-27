@@ -820,9 +820,9 @@ public:
     Relocations[Fragment->getParent()].push_back(MRE);
   }
 
-  static bool getARMFixupKindMachOInfo(unsigned Kind, bool &Is24BitBranch,
+  static bool getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
                                        unsigned &Log2Size) {
-    Is24BitBranch = false;
+    RelocType = unsigned(macho::RIT_Vanilla);
     Log2Size = ~0U;
 
     switch (Kind) {
@@ -847,21 +847,24 @@ public:
     case ARM::fixup_arm_pcrel_10:
     case ARM::fixup_arm_adr_pcrel_12:
     case ARM::fixup_arm_branch:
-      Is24BitBranch = true;
+      RelocType = unsigned(macho::RIT_ARM_Branch24Bit);
       // Report as 'long', even though that is not quite accurate.
       Log2Size = llvm::Log2_32(4);
       return true;
 
       // Handle Thumb branches.
     case ARM::fixup_arm_thumb_br:
+      RelocType = unsigned(macho::RIT_ARM_ThumbBranch22Bit);
       Log2Size = llvm::Log2_32(2);
       return true;
 
     case ARM::fixup_arm_thumb_bl:
+      RelocType = unsigned(macho::RIT_ARM_ThumbBranch32Bit);
       Log2Size = llvm::Log2_32(4);
       return true;
 
     case ARM::fixup_arm_thumb_blx:
+      RelocType = unsigned(macho::RIT_ARM_ThumbBranch22Bit);
       // Report as 'long', even though that is not quite accurate.
       Log2Size = llvm::Log2_32(4);
       return true;
@@ -872,8 +875,8 @@ public:
                            MCValue Target, uint64_t &FixedValue) {
     unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
     unsigned Log2Size;
-    bool Is24BitBranch;
-    if (!getARMFixupKindMachOInfo(Fixup.getKind(), Is24BitBranch, Log2Size)) {
+    unsigned RelocType = macho::RIT_Vanilla;
+    if (!getARMFixupKindMachOInfo(Fixup.getKind(), RelocType, Log2Size)) {
       report_fatal_error("unknown ARM fixup kind!");
       return;
     }
@@ -896,7 +899,7 @@ public:
     //
     // Is this right for ARM?
     uint32_t Offset = Target.getConstant();
-    if (IsPCRel && !Is24BitBranch)
+    if (IsPCRel && RelocType == macho::RIT_Vanilla)
       Offset += 1 << Log2Size;
     if (Offset && SD && !doesSymbolRequireExternRelocation(SD))
       return RecordARMScatteredRelocation(Asm, Layout, Fragment, Fixup,
@@ -940,9 +943,8 @@ public:
       if (IsPCRel)
         FixedValue -= getSectionAddress(Fragment->getParent());
 
-      // Determine the appropriate type based on the fixup kind.
-      Type = Is24BitBranch ? (unsigned)macho::RIT_ARM_Branch24Bit :
-        (unsigned)macho::RIT_Vanilla;
+      // The type is determined by the fixup kind.
+      Type = RelocType;
     }
 
     // struct relocation_info (8 bytes)
