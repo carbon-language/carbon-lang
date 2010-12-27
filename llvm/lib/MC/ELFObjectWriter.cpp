@@ -1610,6 +1610,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         assert(Modifier == MCSymbolRefExpr::VK_None);
         Type = ELF::R_X86_64_PC64;
         break;
+      case X86::reloc_riprel_4byte_movq_load:
       case FK_Data_4: // FIXME?
       case X86::reloc_riprel_4byte:
       case FK_PCRel_4:
