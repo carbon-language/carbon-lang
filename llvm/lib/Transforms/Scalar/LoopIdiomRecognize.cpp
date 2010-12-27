@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "loop-idiom"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
@@ -59,6 +60,8 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
+      AU.addRequired<AliasAnalysis>();
+      AU.addPreserved<AliasAnalysis>();
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
       AU.addPreserved<DominatorTree>();
@@ -73,6 +76,7 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
                     false, false)
 
@@ -141,13 +145,15 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
     StoreInst *SI = dyn_cast<StoreInst>(I++);
     if (SI == 0 || SI->isVolatile()) continue;
     
-    WeakVH InstPtr;
-    if (processLoopStore(SI, BECount)) {
-      // If processing the store invalidated our iterator, start over from the
-      // head of the loop.
-      if (InstPtr == 0)
-        I = BB->begin();
-    }
+    WeakVH InstPtr(SI);
+    if (!processLoopStore(SI, BECount)) continue;
+    
+    MadeChange = true;
+    
+    // If processing the store invalidated our iterator, start over from the
+    // head of the loop.
+    if (InstPtr == 0)
+      I = BB->begin();
   }
   
   return MadeChange;
@@ -203,6 +209,10 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
   // this into a memset in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
   // or write to the aliased location.  Check for an alias.
+  
+  // FIXME: Need to get a base pointer that is valid.
+  //  if (LoopCanModRefLocation(SI->getPointerOperand())
+  
   
   // FIXME: TODO safety check.
   
