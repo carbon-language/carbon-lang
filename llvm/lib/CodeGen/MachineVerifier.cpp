@@ -1146,7 +1146,23 @@ void MachineVerifier::verifyLiveIntervals() {
             *OS << "Valno #" << VNI->id << " live into BB#" << MFI->getNumber()
                 << '@' << LiveInts->getMBBStartIdx(MFI) << ", not live at "
                 << PEnd << " in " << LI << '\n';
-          } else if (PVNI != VNI) {
+            continue;
+          }
+
+          if (VNI->isPHIDef() && VNI->def == LiveInts->getMBBStartIdx(MFI)) {
+            if (!PVNI->hasPHIKill()) {
+              report("Value live out of predecessor doesn't have PHIKill", MF);
+              *OS << "Valno #" << PVNI->id << " live out of BB#"
+                  << (*PI)->getNumber() << '@' << PEnd
+                  << " doesn't have PHIKill, but Valno #" << VNI->id
+                  << " is PHIDef and defined at the beginning of BB#"
+                  << MFI->getNumber() << '@' << LiveInts->getMBBStartIdx(MFI)
+                  << " in " << LI << '\n';
+            }
+            continue;
+          }
+
+          if (PVNI != VNI) {
             report("Different value live out of predecessor", *PI);
             *OS << "Valno #" << PVNI->id << " live out of BB#"
                 << (*PI)->getNumber() << '@' << PEnd
