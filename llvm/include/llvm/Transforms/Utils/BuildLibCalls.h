@@ -47,22 +47,12 @@ namespace llvm {
   /// specified pointer arguments and length.
   Value *EmitStrNCpy(Value *Dst, Value *Src, Value *Len, IRBuilder<> &B,
                     const TargetData *TD, StringRef Name = "strncpy");
-  
-  /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This
-  /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
-  Value *EmitMemCpy(Value *Dst, Value *Src, Value *Len, unsigned Align,
-                    bool isVolatile, IRBuilder<> &B, const TargetData *TD);
 
   /// EmitMemCpyChk - Emit a call to the __memcpy_chk function to the builder.
   /// This expects that the Len and ObjSize have type 'intptr_t' and Dst/Src
   /// are pointers.
   Value *EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
                        IRBuilder<> &B, const TargetData *TD);
-
-  /// EmitMemMove - Emit a call to the memmove function to the builder.  This
-  /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
-  Value *EmitMemMove(Value *Dst, Value *Src, Value *Len, unsigned Align,
-                     bool isVolatile, IRBuilder<> &B, const TargetData *TD);
 
   /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
   /// a pointer, Val is an i32 value, and Len is an 'intptr_t' value.
@@ -72,10 +62,6 @@ namespace llvm {
   /// EmitMemCmp - Emit a call to the memcmp function.
   Value *EmitMemCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilder<> &B,
                     const TargetData *TD);
-
-  /// EmitMemSet - Emit a call to the memset function
-  Value *EmitMemSet(Value *Dst, Value *Val, Value *Len, bool isVolatile,
-                    IRBuilder<> &B, const TargetData *TD);
 
   /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name'
   /// (e.g.  'floor').  This function is known to take a single of type matching

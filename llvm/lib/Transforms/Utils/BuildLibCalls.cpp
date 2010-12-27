@@ -131,21 +131,6 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
   return CI;
 }
 
-
-/// EmitMemCpy - Emit a call to the memcpy function to the builder.  This always
-/// expects that Len has type 'intptr_t' and Dst/Src are pointers.
-Value *llvm::EmitMemCpy(Value *Dst, Value *Src, Value *Len, unsigned Align,
-                        bool isVolatile, IRBuilder<> &B, const TargetData *TD) {
-  Module *M = B.GetInsertBlock()->getParent()->getParent();
-  Dst = CastToCStr(Dst, B);
-  Src = CastToCStr(Src, B);
-  const Type *ArgTys[3] = { Dst->getType(), Src->getType(), Len->getType() };
-  Value *MemCpy = Intrinsic::getDeclaration(M, Intrinsic::memcpy, ArgTys, 3);
-  return B.CreateCall5(MemCpy, Dst, Src, Len,
-                       ConstantInt::get(B.getInt32Ty(), Align),
-                       ConstantInt::get(B.getInt1Ty(), isVolatile));
-}
-
 /// EmitMemCpyChk - Emit a call to the __memcpy_chk function to the builder.
 /// This expects that the Len and ObjSize have type 'intptr_t' and Dst/Src
 /// are pointers.
@@ -168,22 +153,6 @@ Value *llvm::EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
   if (const Function *F = dyn_cast<Function>(MemCpy->stripPointerCasts()))
     CI->setCallingConv(F->getCallingConv());
   return CI;
-}
-
-/// EmitMemMove - Emit a call to the memmove function to the builder.  This
-/// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
-Value *llvm::EmitMemMove(Value *Dst, Value *Src, Value *Len, unsigned Align,
-                         bool isVolatile, IRBuilder<> &B, const TargetData *TD) {
-  Module *M = B.GetInsertBlock()->getParent()->getParent();
-  LLVMContext &Context = B.GetInsertBlock()->getContext();
-  const Type *ArgTys[3] = { Dst->getType(), Src->getType(),
-                            TD->getIntPtrType(Context) };
-  Value *MemMove = Intrinsic::getDeclaration(M, Intrinsic::memmove, ArgTys, 3);
-  Dst = CastToCStr(Dst, B);
-  Src = CastToCStr(Src, B);
-  Value *A = ConstantInt::get(B.getInt32Ty(), Align);
-  Value *Vol = ConstantInt::get(B.getInt1Ty(), isVolatile);
-  return B.CreateCall5(MemMove, Dst, Src, Len, A, Vol);
 }
 
 /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
@@ -231,18 +200,6 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
     CI->setCallingConv(F->getCallingConv());
 
   return CI;
-}
-
-/// EmitMemSet - Emit a call to the memset function
-Value *llvm::EmitMemSet(Value *Dst, Value *Val, Value *Len, bool isVolatile,
-                        IRBuilder<> &B, const TargetData *TD) {
- Module *M = B.GetInsertBlock()->getParent()->getParent();
- Intrinsic::ID IID = Intrinsic::memset;
- const Type *Tys[2] = { Dst->getType(), Len->getType() };
- Value *MemSet = Intrinsic::getDeclaration(M, IID, Tys, 2);
- Value *Align = ConstantInt::get(B.getInt32Ty(), 1);
- Value *Vol = ConstantInt::get(B.getInt1Ty(), isVolatile);
- return B.CreateCall5(MemSet, CastToCStr(Dst, B), Val, Len, Align, Vol);
 }
 
 /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name' (e.g.
@@ -422,8 +379,8 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
       return false;
 
     if (isFoldable(3, 2, false)) {
-      EmitMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),
-                 CI->getArgOperand(2), 1, false, B, TD);
+      B.CreateMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),
+                     CI->getArgOperand(2), 1);
       replaceCall(CI->getArgOperand(0));
       return true;
     }
@@ -445,8 +402,8 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
       return false;
 
     if (isFoldable(3, 2, false)) {
-      EmitMemMove(CI->getArgOperand(0), CI->getArgOperand(1),
-                  CI->getArgOperand(2), 1, false, B, TD);
+      B.CreateMemMove(CI->getArgOperand(0), CI->getArgOperand(1),
+                      CI->getArgOperand(2), 1);
       replaceCall(CI->getArgOperand(0));
       return true;
     }
@@ -465,8 +422,7 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
     if (isFoldable(3, 2, false)) {
       Value *Val = B.CreateIntCast(CI->getArgOperand(1), B.getInt8Ty(),
                                    false);
-      EmitMemSet(CI->getArgOperand(0), Val,  CI->getArgOperand(2),
-                 false, B, TD);
+      B.CreateMemSet(CI->getArgOperand(0), Val, CI->getArgOperand(2), 1);
       replaceCall(CI->getArgOperand(0));
       return true;
     }
