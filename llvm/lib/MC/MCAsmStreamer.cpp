@@ -190,7 +190,7 @@ public:
   virtual bool EmitCFIDefCfaRegister(int64_t Register);
   virtual bool EmitCFIOffset(int64_t Register, int64_t Offset);
   virtual bool EmitCFIPersonality(const MCSymbol *Sym, unsigned Encoding);
-  virtual bool EmitCFILsda(const MCSymbol *Sym);
+  virtual bool EmitCFILsda(const MCSymbol *Sym, unsigned Encoding);
 
   virtual void EmitInstruction(const MCInst &Inst);
 
@@ -769,11 +769,11 @@ bool MCAsmStreamer::EmitCFIPersonality(const MCSymbol *Sym,
   return false;
 }
 
-bool MCAsmStreamer::EmitCFILsda(const MCSymbol *Sym) {
-  if (this->MCStreamer::EmitCFILsda(Sym))
+bool MCAsmStreamer::EmitCFILsda(const MCSymbol *Sym, unsigned Encoding) {
+  if (this->MCStreamer::EmitCFILsda(Sym, Encoding))
     return true;
 
-  OS << ".cfi_lsda 0, " << *Sym;
+  OS << ".cfi_lsda " << Encoding << ", " << *Sym;
   EmitEOL();
 
   return false;

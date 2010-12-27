@@ -232,6 +232,7 @@ namespace llvm {
     const MCSymbol *Personality;
     const MCSymbol *Lsda;
     unsigned PersonalityEncoding;
+    unsigned LsdaEncoding;
   };
 
   class MCDwarfFrameEmitter {

@@ -396,7 +396,7 @@ namespace llvm {
     virtual bool EmitCFIOffset(int64_t Register, int64_t Offset);
     virtual bool EmitCFIPersonality(const MCSymbol *Sym,
                                     unsigned Encoding);
-    virtual bool EmitCFILsda(const MCSymbol *Sym);
+    virtual bool EmitCFILsda(const MCSymbol *Sym, unsigned Encoding);
 
     /// EmitInstruction - Emit the given @p Instruction into the current
     /// section.

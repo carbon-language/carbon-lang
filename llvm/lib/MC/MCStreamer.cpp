@@ -157,7 +157,7 @@ bool MCStreamer::EmitCFIStartProc() {
     report_fatal_error("Starting a frame before finishing the previous one!");
     return true;
   }
-  MCDwarfFrameInfo Frame = {0, 0, 0, 0};
+  MCDwarfFrameInfo Frame = {0, 0, 0, 0, 0, 0};
   Frame.Begin = getContext().CreateTempSymbol();
   EmitLabel(Frame.Begin);
   FrameInfos.push_back(Frame);
@@ -196,10 +196,11 @@ bool MCStreamer::EmitCFIPersonality(const MCSymbol *Sym,
   return false;
 }
 
-bool MCStreamer::EmitCFILsda(const MCSymbol *Sym) {
+bool MCStreamer::EmitCFILsda(const MCSymbol *Sym, unsigned Encoding) {
   EnsureValidFrame();
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Lsda = Sym;
+  CurFrame->LsdaEncoding = Encoding;
   return false;
 }
 

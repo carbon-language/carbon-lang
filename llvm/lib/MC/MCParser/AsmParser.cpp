@@ -2257,7 +2257,7 @@ bool GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda(StringRef IDVal,
     return getStreamer().EmitCFIPersonality(Sym, Encoding);
   else {
     assert(IDVal == ".cfi_lsda");
-    return getStreamer().EmitCFILsda(Sym);
+    return getStreamer().EmitCFILsda(Sym, Encoding);
   }
 }
 

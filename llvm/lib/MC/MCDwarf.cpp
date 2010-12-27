@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCAssembler.h"
@@ -508,9 +509,53 @@ static void EmitFrameMoves(MCStreamer &streamer,
   }
 }
 
+static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
+                       unsigned symbolEncoding) {
+  MCContext &context = streamer.getContext();
+  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  unsigned format = symbolEncoding & 0x0f;
+  unsigned application = symbolEncoding & 0xf0;
+  unsigned size;
+  switch (format) {
+  default:
+    assert(0 && "Unknown Encoding");
+    break;
+  case dwarf::DW_EH_PE_absptr:
+  case dwarf::DW_EH_PE_signed:
+    size = asmInfo.getPointerSize();
+    break;
+  case dwarf::DW_EH_PE_udata2:
+  case dwarf::DW_EH_PE_sdata2:
+    size = 2;
+    break;
+  case dwarf::DW_EH_PE_udata4:
+  case dwarf::DW_EH_PE_sdata4:
+    size = 4;
+    break;
+  case dwarf::DW_EH_PE_udata8:
+  case dwarf::DW_EH_PE_sdata8:
+    size = 8;
+    break;
+  }
+  switch (application) {
+  default:
+    assert(0 && "Unknown Encoding");
+    break;
+  case 0:
+  case dwarf::DW_EH_PE_indirect:
+    streamer.EmitSymbolValue(&symbol, size);
+    break;
+  case dwarf::DW_EH_PE_pcrel:
+    streamer.EmitPCRelSymbolValue(&symbol, size);
+    break;
+  }
+}
+
 static const MCSymbol &EmitCIE(MCStreamer &streamer,
                                const MCSymbol *personality,
-                               unsigned personalityEncoding) {
+                               unsigned personalityEncoding,
+                               const MCSymbol *lsda,
+                               unsigned lsdaEncoding) {
   MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   const MCSection &section = *asmInfo.getEHFrameSection();
@@ -535,6 +580,8 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer,
   Augmentation += "z";
   if (personality)
     Augmentation += "P";
+  if (lsda)
+    Augmentation += "L";
   Augmentation += "R";
   streamer.EmitBytes(Augmentation.str(), 0);
   streamer.EmitIntValue(0, 1);
@@ -562,42 +609,11 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer,
     // Personality Encoding
     streamer.EmitIntValue(personalityEncoding, 1);
     // Personality
-    unsigned format = personalityEncoding & 0x0f;
-    unsigned application = personalityEncoding & 0xf0;
-    unsigned size;
-    switch (format) {
-    default:
-      assert(0 && "Unknown Encoding");
-      break;
-    case dwarf::DW_EH_PE_absptr:
-    case dwarf::DW_EH_PE_signed:
-      size = asmInfo.getPointerSize();
-      break;
-    case dwarf::DW_EH_PE_udata2:
-    case dwarf::DW_EH_PE_sdata2:
-      size = 2;
-      break;
-    case dwarf::DW_EH_PE_udata4:
-    case dwarf::DW_EH_PE_sdata4:
-      size = 4;
-      break;
-    case dwarf::DW_EH_PE_udata8:
-    case dwarf::DW_EH_PE_sdata8:
-      size = 8;
-      break;
-    }
-    switch (application) {
-    default:
-      assert(0 && "Unknown Encoding");
-      break;
-    case 0:
-    case dwarf::DW_EH_PE_indirect:
-      streamer.EmitSymbolValue(personality, size);
-      break;
-    case dwarf::DW_EH_PE_pcrel:
-      streamer.EmitPCRelSymbolValue(personality, size);
-      break;
-    }
+    EmitSymbol(streamer, *personality, personalityEncoding);
+  }
+  if (lsda) {
+    // LSDA Encoding
+    streamer.EmitIntValue(lsdaEncoding, 1);
   }
   // Encoding of the FDE pointers
   streamer.EmitIntValue(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4, 1);
@@ -619,8 +635,9 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer,
 static MCSymbol *EmitFDE(MCStreamer &streamer,
                          const MCSymbol &cieStart,
                          const MCDwarfFrameInfo &frame) {
-  MCSymbol *fdeStart = streamer.getContext().CreateTempSymbol();
-  MCSymbol *fdeEnd = streamer.getContext().CreateTempSymbol();
+  MCContext &context = streamer.getContext();
+  MCSymbol *fdeStart = context.CreateTempSymbol();
+  MCSymbol *fdeEnd = context.CreateTempSymbol();
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *fdeStart, *fdeEnd, 0);
@@ -641,9 +658,18 @@ static MCSymbol *EmitFDE(MCStreamer &streamer,
   streamer.EmitValue(Range, 4);
 
   // Augmentation Data Length
-  streamer.EmitULEB128IntValue(0);
+  MCSymbol *augmentationStart = streamer.getContext().CreateTempSymbol();
+  MCSymbol *augmentationEnd = streamer.getContext().CreateTempSymbol();
+  const MCExpr *augmentationLength = MakeStartMinusEndExpr(streamer,
+                                                           *augmentationStart,
+                                                           *augmentationEnd, 0);
+  streamer.EmitULEB128Value(augmentationLength);
 
   // Augmentation Data
+  streamer.EmitLabel(augmentationStart);
+  if (frame.Lsda)
+    EmitSymbol(streamer, *frame.Lsda, frame.LsdaEncoding);
+  streamer.EmitLabel(augmentationEnd);
   // Call Frame Instructions
 
   // Padding
@@ -652,20 +678,63 @@ static MCSymbol *EmitFDE(MCStreamer &streamer,
   return fdeEnd;
 }
 
+struct CIEKey {
+  static const CIEKey EmptyKey;
+  static const CIEKey TombstoneKey;
+
+  CIEKey(const MCSymbol* Personality_, unsigned PersonalityEncoding_,
+         unsigned LsdaEncoding_) : Personality(Personality_),
+                                   PersonalityEncoding(PersonalityEncoding_),
+                                   LsdaEncoding(LsdaEncoding_) {
+  }
+  const MCSymbol* Personality;
+  unsigned PersonalityEncoding;
+  unsigned LsdaEncoding;
+};
+
+const CIEKey CIEKey::EmptyKey(0, 0, -1);
+const CIEKey CIEKey::TombstoneKey(0, -1, 0);
+
+namespace llvm {
+  template <>
+  struct DenseMapInfo<CIEKey> {
+    static CIEKey getEmptyKey() {
+      return CIEKey::EmptyKey;
+    }
+    static CIEKey getTombstoneKey() {
+      return CIEKey::TombstoneKey;
+    }
+    static unsigned getHashValue(const CIEKey &Key) {
+      FoldingSetNodeID ID;
+      ID.AddPointer(Key.Personality);
+      ID.AddInteger(Key.PersonalityEncoding);
+      ID.AddInteger(Key.LsdaEncoding);
+      return ID.ComputeHash();
+    }
+    static bool isEqual(const CIEKey &LHS,
+                        const CIEKey &RHS) {
+      return LHS.Personality == RHS.Personality &&
+        LHS.PersonalityEncoding == RHS.PersonalityEncoding &&
+        LHS.LsdaEncoding == RHS.LsdaEncoding;
+    }
+  };
+}
+
 void MCDwarfFrameEmitter::Emit(MCStreamer &streamer) {
   const MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   MCSymbol *fdeEnd = NULL;
-  typedef std::pair<const MCSymbol*, unsigned> personalityKey;
-  DenseMap<personalityKey, const MCSymbol*> personalities;
+  DenseMap<CIEKey, const MCSymbol*> CIEStarts;
 
   for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
     const MCDwarfFrameInfo &frame = streamer.getFrameInfo(i);
-    personalityKey key(frame.Personality, frame.PersonalityEncoding);
-    const MCSymbol *&cieStart = personalities[key];
+    CIEKey key(frame.Personality, frame.PersonalityEncoding,
+               frame.LsdaEncoding);
+    const MCSymbol *&cieStart = CIEStarts[key];
     if (!cieStart)
       cieStart = &EmitCIE(streamer, frame.Personality,
-                          frame.PersonalityEncoding);
+                          frame.PersonalityEncoding, frame.Lsda,
+                          frame.LsdaEncoding);
     fdeEnd = EmitFDE(streamer, *cieStart, frame);
     if (i != n - 1)
       streamer.EmitLabel(fdeEnd);
