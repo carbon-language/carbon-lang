@@ -1604,26 +1604,41 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
   unsigned Type;
   if (is64Bit()) {
     if (IsPCRel) {
-      switch (Modifier) {
-      default:
-        llvm_unreachable("Unimplemented");
-      case MCSymbolRefExpr::VK_None:
-        Type = ELF::R_X86_64_PC32;
+      switch ((unsigned)Fixup.getKind()) {
+      default: llvm_unreachable("invalid fixup kind!");
+      case FK_PCRel_8:
+        assert(Modifier == MCSymbolRefExpr::VK_None);
+        Type = ELF::R_X86_64_PC64;
         break;
-      case MCSymbolRefExpr::VK_PLT:
-        Type = ELF::R_X86_64_PLT32;
+      case FK_Data_4: // FIXME?
+      case X86::reloc_riprel_4byte:
+      case FK_PCRel_4:
+        switch (Modifier) {
+        default:
+          llvm_unreachable("Unimplemented");
+        case MCSymbolRefExpr::VK_None:
+          Type = ELF::R_X86_64_PC32;
+          break;
+        case MCSymbolRefExpr::VK_PLT:
+          Type = ELF::R_X86_64_PLT32;
+          break;
+        case MCSymbolRefExpr::VK_GOTPCREL:
+          Type = ELF::R_X86_64_GOTPCREL;
+          break;
+        case MCSymbolRefExpr::VK_GOTTPOFF:
+          Type = ELF::R_X86_64_GOTTPOFF;
         break;
-      case MCSymbolRefExpr::VK_GOTPCREL:
-        Type = ELF::R_X86_64_GOTPCREL;
+        case MCSymbolRefExpr::VK_TLSGD:
+          Type = ELF::R_X86_64_TLSGD;
+          break;
+        case MCSymbolRefExpr::VK_TLSLD:
+          Type = ELF::R_X86_64_TLSLD;
+          break;
+        }
         break;
-      case MCSymbolRefExpr::VK_GOTTPOFF:
-        Type = ELF::R_X86_64_GOTTPOFF;
-        break;
-      case MCSymbolRefExpr::VK_TLSGD:
-        Type = ELF::R_X86_64_TLSGD;
-        break;
-      case MCSymbolRefExpr::VK_TLSLD:
-        Type = ELF::R_X86_64_TLSLD;
+      case FK_PCRel_2:
+        assert(Modifier == MCSymbolRefExpr::VK_None);
+        Type = ELF::R_X86_64_PC16;
         break;
       }
     } else {
@@ -1631,7 +1646,6 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
       default: llvm_unreachable("invalid fixup kind!");
       case FK_Data_8: Type = ELF::R_X86_64_64; break;
       case X86::reloc_signed_4byte:
-      case FK_PCRel_4:
         assert(isInt<32>(Target.getConstant()));
         switch (Modifier) {
         default:

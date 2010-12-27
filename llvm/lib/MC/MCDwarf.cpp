@@ -509,7 +509,8 @@ static void EmitFrameMoves(MCStreamer &streamer,
 }
 
 static const MCSymbol &EmitCIE(MCStreamer &streamer,
-                               const MCSymbol *personality) {
+                               const MCSymbol *personality,
+                               unsigned personalityEncoding) {
   MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   const MCSection &section = *asmInfo.getEHFrameSection();
@@ -559,9 +560,44 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer,
   streamer.EmitLabel(augmentationStart);
   if (personality) {
     // Personality Encoding
-    streamer.EmitIntValue(dwarf::DW_EH_PE_absptr, 1);
+    streamer.EmitIntValue(personalityEncoding, 1);
     // Personality
-    streamer.EmitSymbolValue(personality, asmInfo.getPointerSize());
+    unsigned format = personalityEncoding & 0x0f;
+    unsigned application = personalityEncoding & 0xf0;
+    unsigned size;
+    switch (format) {
+    default:
+      assert(0 && "Unknown Encoding");
+      break;
+    case dwarf::DW_EH_PE_absptr:
+    case dwarf::DW_EH_PE_signed:
+      size = asmInfo.getPointerSize();
+      break;
+    case dwarf::DW_EH_PE_udata2:
+    case dwarf::DW_EH_PE_sdata2:
+      size = 2;
+      break;
+    case dwarf::DW_EH_PE_udata4:
+    case dwarf::DW_EH_PE_sdata4:
+      size = 4;
+      break;
+    case dwarf::DW_EH_PE_udata8:
+    case dwarf::DW_EH_PE_sdata8:
+      size = 8;
+      break;
+    }
+    switch (application) {
+    default:
+      assert(0 && "Unknown Encoding");
+      break;
+    case 0:
+    case dwarf::DW_EH_PE_indirect:
+      streamer.EmitSymbolValue(personality, size);
+      break;
+    case dwarf::DW_EH_PE_pcrel:
+      streamer.EmitPCRelSymbolValue(personality, size);
+      break;
+    }
   }
   // Encoding of the FDE pointers
   streamer.EmitIntValue(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4, 1);
@@ -620,13 +656,16 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &streamer) {
   const MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   MCSymbol *fdeEnd = NULL;
-  DenseMap<const MCSymbol*, const MCSymbol*> Personalities;
+  typedef std::pair<const MCSymbol*, unsigned> personalityKey;
+  DenseMap<personalityKey, const MCSymbol*> personalities;
 
   for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
     const MCDwarfFrameInfo &frame = streamer.getFrameInfo(i);
-    const MCSymbol *&cieStart = Personalities[frame.Personality];
+    personalityKey key(frame.Personality, frame.PersonalityEncoding);
+    const MCSymbol *&cieStart = personalities[key];
     if (!cieStart)
-      cieStart = &EmitCIE(streamer, frame.Personality);
+      cieStart = &EmitCIE(streamer, frame.Personality,
+                          frame.PersonalityEncoding);
     fdeEnd = EmitFDE(streamer, *cieStart, frame);
     if (i != n - 1)
       streamer.EmitLabel(fdeEnd);

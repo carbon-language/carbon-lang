@@ -25,6 +25,7 @@ enum MCFixupKind {
   FK_PCRel_1,    ///< A one-byte pc relative fixup.
   FK_PCRel_2,    ///< A two-byte pc relative fixup.
   FK_PCRel_4,    ///< A four-byte pc relative fixup.
+  FK_PCRel_8,    ///< A eight-byte pc relative fixup.
 
   FirstTargetFixupKind = 128,
 
@@ -86,9 +87,7 @@ public:
     case 1: return isPCRel ? FK_PCRel_1 : FK_Data_1;
     case 2: return isPCRel ? FK_PCRel_2 : FK_Data_2;
     case 4: return isPCRel ? FK_PCRel_4 : FK_Data_4;
-    case 8:
-      assert(!isPCRel && "8 byte pc relative fixup is not supported.");
-      return FK_Data_8;
+    case 8: return isPCRel ? FK_PCRel_8 : FK_Data_8;
     }
   }
 };

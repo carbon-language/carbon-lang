@@ -187,10 +187,12 @@ bool MCStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
   return false;
 }
 
-bool MCStreamer::EmitCFIPersonality(const MCSymbol *Sym) {
+bool MCStreamer::EmitCFIPersonality(const MCSymbol *Sym,
+                                    unsigned Encoding) {
   EnsureValidFrame();
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Personality = Sym;
+  CurFrame->PersonalityEncoding = Encoding;
   return false;
 }
 
