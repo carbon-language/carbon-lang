@@ -20,6 +20,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/raw_ostream.h"
@@ -77,6 +78,40 @@ INITIALIZE_PASS_END(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
 
 Pass *llvm::createLoopIdiomPass() { return new LoopIdiomRecognize(); }
 
+/// DeleteDeadInstruction - Delete this instruction.  Before we do, go through
+/// and zero out all the operands of this instruction.  If any of them become
+/// dead, delete them and the computation tree that feeds them.
+///
+static void DeleteDeadInstruction(Instruction *I, ScalarEvolution &SE) {
+  SmallVector<Instruction*, 32> NowDeadInsts;
+  
+  NowDeadInsts.push_back(I);
+  
+  // Before we touch this instruction, remove it from SE!
+  do {
+    Instruction *DeadInst = NowDeadInsts.pop_back_val();
+    
+    // This instruction is dead, zap it, in stages.  Start by removing it from
+    // SCEV.
+    SE.forgetValue(DeadInst);
+    
+    for (unsigned op = 0, e = DeadInst->getNumOperands(); op != e; ++op) {
+      Value *Op = DeadInst->getOperand(op);
+      DeadInst->setOperand(op, 0);
+      
+      // If this operand just became dead, add it to the NowDeadInsts list.
+      if (!Op->use_empty()) continue;
+      
+      if (Instruction *OpI = dyn_cast<Instruction>(Op))
+        if (isInstructionTriviallyDead(OpI))
+          NowDeadInsts.push_back(OpI);
+    }
+    
+    DeadInst->eraseFromParent();
+    
+  } while (!NowDeadInsts.empty());
+}
+
 bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   CurLoop = L;
   
@@ -106,8 +141,13 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
     StoreInst *SI = dyn_cast<StoreInst>(I++);
     if (SI == 0 || SI->isVolatile()) continue;
     
-    
-    MadeChange |= processLoopStore(SI, BECount);
+    WeakVH InstPtr;
+    if (processLoopStore(SI, BECount)) {
+      // If processing the store invalidated our iterator, start over from the
+      // head of the loop.
+      if (InstPtr == 0)
+        I = BB->begin();
+    }
   }
   
   return MadeChange;
@@ -205,10 +245,9 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
   DEBUG(dbgs() << "  Formed memset: " << *NewCall << "\n"
                << "    from store to: " << *Ev << " at: " << *SI << "\n");
   
-  // Okay, the memset has been formed.  Zap the original store.
-  // FIXME: We want to recursively delete dead instructions, but we have to
-  // update SCEV.
-  SI->eraseFromParent();  
+  // Okay, the memset has been formed.  Zap the original store and anything that
+  // feeds into it.
+  DeleteDeadInstruction(SI, *SE);
   return true;
 }
 
