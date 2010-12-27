@@ -283,7 +283,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
     LiveInterval& DestLI = LI->getInterval(DestReg);
     LiveInterval& NewLI = LI->getInterval(NewReg);
 
-    assert(DestLI.containsOneValue());
+    assert(DestLI.ranges.size() == 1);
     LiveRange* DestLR = DestLI.begin();
     VNInfo* NewVNI = NewLI.getVNInfoAt(DestLR->start);
     if (!NewVNI) {
