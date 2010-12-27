@@ -372,16 +372,23 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
   return BuildCXXTypeId(TypeInfoType, OpLoc, (Expr*)TyOrExpr, RParenLoc);
 }
 
-// Get the CXXRecordDecl associated with QT bypassing 1 level of pointer,
-// reference or array type.
-static CXXRecordDecl *GetCXXRecordOfUuidArg(QualType QT) {
-  Type* Ty = QT.getTypePtr();;
+/// Retrieve the UuidAttr associated with QT.
+static UuidAttr *GetUuidAttrOfType(QualType QT) {
+  // Optionally remove one level of pointer, reference or array indirection.
+  Type *Ty = QT.getTypePtr();;
   if (QT->isPointerType() || QT->isReferenceType())
     Ty = QT->getPointeeType().getTypePtr();
   else if (QT->isArrayType())
     Ty = cast<ArrayType>(QT)->getElementType().getTypePtr();
 
-  return Ty->getAsCXXRecordDecl();
+  // Loop all class definition and declaration looking for an uuid attribute.
+  CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
+  while (RD) {
+    if (UuidAttr *Uuid = RD->getAttr<UuidAttr>())
+      return Uuid;
+    RD = RD->getPreviousDeclaration();
+  }
+  return 0;
 }
 
 /// \brief Build a Microsoft __uuidof expression with a type operand.
@@ -389,11 +396,11 @@ ExprResult Sema::BuildCXXUuidof(QualType TypeInfoType,
                                 SourceLocation TypeidLoc,
                                 TypeSourceInfo *Operand,
                                 SourceLocation RParenLoc) {
-  // Make sure Operand has an associated GUID.
-  CXXRecordDecl* RD = GetCXXRecordOfUuidArg(Operand->getType());
-  if (!RD || !RD->getAttr<UuidAttr>())
-    return ExprError(Diag(TypeidLoc, diag::err_uuidof_without_guid));
-
+  if (!Operand->getType()->isDependentType()) {
+    if (!GetUuidAttrOfType(Operand->getType()))
+      return ExprError(Diag(TypeidLoc, diag::err_uuidof_without_guid));
+  }
+  
   // FIXME: add __uuidof semantic analysis for type operand.
   return Owned(new (Context) CXXUuidofExpr(TypeInfoType.withConst(),
                                            Operand,
@@ -405,14 +412,12 @@ ExprResult Sema::BuildCXXUuidof(QualType TypeInfoType,
                                 SourceLocation TypeidLoc,
                                 Expr *E,
                                 SourceLocation RParenLoc) {
-  // Make sure E has an associated GUID.
-  // 0 is fine also.
-  CXXRecordDecl* RD = GetCXXRecordOfUuidArg(E->getType());
-  if ((!RD || !RD->getAttr<UuidAttr>()) &&
-       !E->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
-    return ExprError(Diag(TypeidLoc, diag::err_uuidof_without_guid));
-
-  // FIXME: add __uuidof semantic analysis for expr operand.
+  if (!E->getType()->isDependentType()) {
+    if (!GetUuidAttrOfType(E->getType()) && 
+        !E->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
+      return ExprError(Diag(TypeidLoc, diag::err_uuidof_without_guid));
+  }
+  // FIXME: add __uuidof semantic analysis for type operand.
   return Owned(new (Context) CXXUuidofExpr(TypeInfoType.withConst(),
                                            E,
                                            SourceRange(TypeidLoc, RParenLoc)));  

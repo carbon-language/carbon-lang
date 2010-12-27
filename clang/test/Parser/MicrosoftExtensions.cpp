@@ -48,6 +48,11 @@ struct __declspec(uuid("000000A0-0000-0000-C000-000000000046"))
 struct_with_uuid { };
 struct struct_without_uuid { };
 
+struct __declspec(uuid("000000A0-0000-0000-C000-000000000049"))
+struct_with_uuid2;
+
+struct 
+struct_with_uuid2 {} ;
 
 int uuid_sema_test()
 {
@@ -55,6 +60,7 @@ int uuid_sema_test()
    struct_without_uuid var_without_uuid[1];
 
    __uuidof(struct_with_uuid);
+   __uuidof(struct_with_uuid2);
    __uuidof(struct_without_uuid); // expected-error {{cannot call operator __uuidof on a type with no GUID}}
    __uuidof(struct_with_uuid*);
    __uuidof(struct_without_uuid*); // expected-error {{cannot call operator __uuidof on a type with no GUID}}
@@ -68,4 +74,14 @@ int uuid_sema_test()
 
    __uuidof(0);
    __uuidof(1);// expected-error {{cannot call operator __uuidof on a type with no GUID}}
+}
+
+
+template <class T>
+void template_uuid()
+{
+   T expr;
+   
+   __uuidof(T);
+   __uuidof(expr);
 }
