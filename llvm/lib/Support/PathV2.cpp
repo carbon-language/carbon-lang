@@ -676,7 +676,7 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
   std::FILE *file = std::fopen(Path.data(), "rb");
   if (file == 0)
     return error_code(errno, posix_category());
-  int size = ::fread(BufferStorage.data(), 1, Magic.size(), file);
+  size_t size = ::fread(BufferStorage.data(), 1, Magic.size(), file);
   if (size != Magic.size()) {
     int error = errno;
     bool eof = std::feof(file) != 0;
