@@ -4501,7 +4501,8 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
   // Also, callers should have filtered out the invalid cases with
   // pointers.  Everything else should be possible.
 
-  QualType SrcTy = Src->getType();
+  QualType SrcTy = S.Context.getCanonicalType(Src->getType());
+  DestTy = S.Context.getCanonicalType(DestTy);
   if (S.Context.hasSameUnqualifiedType(SrcTy, DestTy))
     return CK_NoOp;
 
