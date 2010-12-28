@@ -140,7 +140,11 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
 
 bool
 Path::isArchive() const {
-  return hasMagicNumber("!<arch>\012");
+  std::string Magic;
+  if (getMagicNumber(Magic, 8))
+    if (IdentifyFileType(Magic.c_str(), Magic.length()) == Archive_FileType)
+      return true;
+  return false;
 }
 
 bool

@@ -329,7 +329,8 @@ namespace sys {
       /// cases (file not found, file not accessible, etc.) it returns false.
       /// @returns true if the magic number of the file matches \p magic.
       /// @brief Determine if file has a specific magic number
-      bool hasMagicNumber(StringRef magic) const;
+      LLVM_ATTRIBUTE_DEPRECATED(bool hasMagicNumber(StringRef magic) const,
+        LLVM_PATH_DEPRECATED_MSG(fs::has_magic));
 
       /// This function retrieves the first \p len bytes of the file associated
       /// with \p this. These bytes are returned as the "magic number" in the
