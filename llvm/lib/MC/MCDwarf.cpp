@@ -460,9 +460,11 @@ static void EmitFrameMoves(MCStreamer &streamer,
     if (BaseLabel && Label) {
       MCSymbol *ThisSym = Label;
       if (ThisSym != BaseLabel) {
+        // FIXME: We should relax this instead of using a DW_CFA_advance_loc4
+        // for every address change!
         streamer.EmitIntValue(dwarf::DW_CFA_advance_loc4, 1);
         const MCExpr *Length = MakeStartMinusEndExpr(streamer, *BaseLabel,
-                                                     *ThisSym, 4);
+                                                     *ThisSym, 0);
         streamer.EmitValue(Length, 4);
         BaseLabel = ThisSym;
       }
@@ -671,6 +673,8 @@ static MCSymbol *EmitFDE(MCStreamer &streamer,
     EmitSymbol(streamer, *frame.Lsda, frame.LsdaEncoding);
   streamer.EmitLabel(augmentationEnd);
   // Call Frame Instructions
+
+  EmitFrameMoves(streamer, frame.Moves, frame.Begin, true);
 
   // Padding
   streamer.EmitValueToAlignment(4);

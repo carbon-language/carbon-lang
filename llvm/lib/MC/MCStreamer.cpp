@@ -157,7 +157,7 @@ bool MCStreamer::EmitCFIStartProc() {
     report_fatal_error("Starting a frame before finishing the previous one!");
     return true;
   }
-  MCDwarfFrameInfo Frame = {0, 0, 0, 0, 0, 0};
+  MCDwarfFrameInfo Frame;
   Frame.Begin = getContext().CreateTempSymbol();
   EmitLabel(Frame.Begin);
   FrameInfos.push_back(Frame);
@@ -174,6 +174,13 @@ bool MCStreamer::EmitCFIEndProc() {
 
 bool MCStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
   EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+  MachineLocation Dest(MachineLocation::VirtualFP);
+  MachineLocation Source(MachineLocation::VirtualFP, -Offset);
+  MachineMove Move(Label, Dest, Source);
+  CurFrame->Moves.push_back(Move);
   return false;
 }
 

@@ -16,6 +16,7 @@
 #define LLVM_MC_MCDWARF_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/CodeGen/MachineLocation.h" // FIXME
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Dwarf.h"
@@ -227,10 +228,13 @@ namespace llvm {
   };
 
   struct MCDwarfFrameInfo {
+    MCDwarfFrameInfo() : Begin(0), End(0), Personality(0), Lsda(0), Moves(),
+                         PersonalityEncoding(0), LsdaEncoding(0) {}
     MCSymbol *Begin;
     MCSymbol *End;
     const MCSymbol *Personality;
     const MCSymbol *Lsda;
+    std::vector<MachineMove> Moves;
     unsigned PersonalityEncoding;
     unsigned LsdaEncoding;
   };
