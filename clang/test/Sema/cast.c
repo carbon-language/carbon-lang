@@ -16,3 +16,144 @@ long bar1(long *next) {
         return (long)(*next)++;  
 }
 
+typedef _Bool Bool;
+typedef int Int;
+typedef long Long;
+typedef float Float;
+typedef double Double;
+typedef _Complex int CInt;
+typedef _Complex long CLong;
+typedef _Complex float CFloat;
+typedef _Complex double CDouble;
+typedef void *VoidPtr;
+typedef char *CharPtr;
+
+void testBool(Bool v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (Float) v;
+  (void) (Double) v;
+  (void) (CInt) v;
+  (void) (CLong) v;
+  (void) (CFloat) v;
+  (void) (CDouble) v;
+  (void) (VoidPtr) v;
+  (void) (CharPtr) v;
+}
+
+void testInt(Int v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (Float) v;
+  (void) (Double) v;
+  (void) (CInt) v;
+  (void) (CLong) v;
+  (void) (CFloat) v;
+  (void) (CDouble) v;
+  (void) (VoidPtr) v;
+  (void) (CharPtr) v;
+}
+
+void testLong(Long v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (Float) v;
+  (void) (Double) v;
+  (void) (CInt) v;
+  (void) (CLong) v;
+  (void) (CFloat) v;
+  (void) (CDouble) v;
+  (void) (VoidPtr) v;
+  (void) (CharPtr) v;
+}
+
+void testFloat(Float v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (Float) v;
+  (void) (Double) v;
+  (void) (CInt) v;
+  (void) (CLong) v;
+  (void) (CFloat) v;
+  (void) (CDouble) v;
+}
+
+void testDouble(Double v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (Float) v;
+  (void) (Double) v;
+  (void) (CInt) v;
+  (void) (CLong) v;
+  (void) (CFloat) v;
+  (void) (CDouble) v;
+}
+
+void testCI(CInt v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (Float) v;
+  (void) (Double) v;
+  (void) (CInt) v;
+  (void) (CLong) v;
+  (void) (CFloat) v;
+  (void) (CDouble) v;
+}
+
+void testCLong(CLong v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (Float) v;
+  (void) (Double) v;
+  (void) (CInt) v;
+  (void) (CLong) v;
+  (void) (CFloat) v;
+  (void) (CDouble) v;
+}
+
+void testCFloat(CFloat v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (Float) v;
+  (void) (Double) v;
+  (void) (CInt) v;
+  (void) (CLong) v;
+  (void) (CFloat) v;
+  (void) (CDouble) v;
+}
+
+void testCDouble(CDouble v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (Float) v;
+  (void) (Double) v;
+  (void) (CInt) v;
+  (void) (CLong) v;
+  (void) (CFloat) v;
+  (void) (CDouble) v;
+}
+
+void testVoidPtr(VoidPtr v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (VoidPtr) v;
+  (void) (CharPtr) v;
+}
+
+void testCharPtr(CharPtr v) {
+  (void) (Bool) v;
+  (void) (Int) v;
+  (void) (Long) v;
+  (void) (VoidPtr) v;
+  (void) (CharPtr) v;
+}
