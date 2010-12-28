@@ -516,7 +516,6 @@ static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
   switch (format) {
   default:
     assert(0 && "Unknown Encoding");
-    break;
   case dwarf::DW_EH_PE_absptr:
   case dwarf::DW_EH_PE_signed:
     size = asmInfo.getPointerSize();
