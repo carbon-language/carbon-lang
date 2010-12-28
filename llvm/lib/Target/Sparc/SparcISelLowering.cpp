@@ -1012,6 +1012,8 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   MachineFunction *F = BB->getParent();
   MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(It, copy0MBB);
+  F->insert(It, sinkMBB);
 
   // Transfer the remainder of BB and its successor edges to sinkMBB.
   sinkMBB->splice(sinkMBB->begin(), BB,
@@ -1024,8 +1026,6 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   BB->addSuccessor(sinkMBB);
 
   BuildMI(BB, dl, TII.get(BROpcode)).addMBB(sinkMBB).addImm(CC);
-  F->insert(It, copy0MBB);
-  F->insert(It, sinkMBB);
 
   //  copy0MBB:
   //   %FalseValue = ...

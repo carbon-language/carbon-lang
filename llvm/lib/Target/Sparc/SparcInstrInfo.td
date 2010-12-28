@@ -233,7 +233,8 @@ let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
 // instruction selection into a branch sequence.  This has to handle all
 // permutations of selection between i32/f32/f64 on ICC and FCC.
-let usesCustomInserter = 1 in {   // Expanded after instruction selection.
+let Uses = [ICC],
+    usesCustomInserter = 1 in {   // Expanded after instruction selection.
   def SELECT_CC_Int_ICC
    : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_ICC PSEUDO!",
@@ -244,6 +245,9 @@ let usesCustomInserter = 1 in {   // Expanded after instruction selection.
             "; SELECT_CC_Int_FCC PSEUDO!",
             [(set IntRegs:$dst, (SPselectfcc IntRegs:$T, IntRegs:$F,
                                              imm:$Cond))]>;
+}
+
+let usesCustomInserter = 1, Uses = [FCC] in {
   def SELECT_CC_FP_ICC
    : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_FP_ICC PSEUDO!",
@@ -440,24 +444,29 @@ defm ADDX  : F3_12<"addx", 0b001000, adde>;
 
 // Section B.15 - Subtract Instructions, p. 110
 defm SUB    : F3_12  <"sub"  , 0b000100, sub>;
-defm SUBX   : F3_12  <"subx" , 0b001100, sube>;
+let Uses = [ICC] in 
+  defm SUBX   : F3_12  <"subx" , 0b001100, sube>;
 
-let Defs = [ICC] in {
+let Defs = [ICC] in 
   defm SUBCC  : F3_12  <"subcc", 0b010100, SPcmpicc>;
 
+let Uses = [ICC], Defs = [ICC] in
   def SUBXCCrr: F3_1<2, 0b011100, 
                 (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
                 "subxcc $b, $c, $dst", []>;
-}
+
 
 // Section B.18 - Multiply Instructions, p. 113
-defm UMUL : F3_12np<"umul", 0b001010>;
-defm SMUL : F3_12  <"smul", 0b001011, mul>;
-
+let Defs = [Y] in {
+  defm UMUL : F3_12np<"umul", 0b001010>;
+  defm SMUL : F3_12  <"smul", 0b001011, mul>;
+}
 
 // Section B.19 - Divide Instructions, p. 115
-defm UDIV : F3_12np<"udiv", 0b001110>;
-defm SDIV : F3_12np<"sdiv", 0b001111>;
+let Defs = [Y] in {
+  defm UDIV : F3_12np<"udiv", 0b001110>;
+  defm SDIV : F3_12np<"sdiv", 0b001111>;
+}
 
 // Section B.20 - SAVE and RESTORE, p. 117
 defm SAVE    : F3_12np<"save"   , 0b111100>;
@@ -527,18 +536,20 @@ let Uses = [O0, O1, O2, O3, O4, O5],
 }
 
 // Section B.28 - Read State Register Instructions
-def RDY : F3_1<2, 0b101000,
-               (outs IntRegs:$dst), (ins),
-               "rd %y, $dst", []>;
+let Uses = [Y] in 
+  def RDY : F3_1<2, 0b101000,
+                 (outs IntRegs:$dst), (ins),
+                 "rd %y, $dst", []>;
 
 // Section B.29 - Write State Register Instructions
-def WRYrr : F3_1<2, 0b110000,
-                 (outs), (ins IntRegs:$b, IntRegs:$c),
-                 "wr $b, $c, %y", []>;
-def WRYri : F3_2<2, 0b110000,
-                 (outs), (ins IntRegs:$b, i32imm:$c),
-                 "wr $b, $c, %y", []>;
-
+let Defs = [Y] in {
+  def WRYrr : F3_1<2, 0b110000,
+                   (outs), (ins IntRegs:$b, IntRegs:$c),
+                   "wr $b, $c, %y", []>;
+  def WRYri : F3_2<2, 0b110000,
+                   (outs), (ins IntRegs:$b, i32imm:$c),
+                   "wr $b, $c, %y", []>;
+}
 // Convert Integer to Floating-point Instructions, p. 141
 def FITOS : F3_3<2, 0b110100, 0b011000100,
                  (outs FPRegs:$dst), (ins FPRegs:$src),

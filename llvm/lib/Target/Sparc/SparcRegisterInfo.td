@@ -45,6 +45,9 @@ class Rd<bits<5> num, string n, list<Register> subregs> : SparcReg<n> {
 def ICC : SparcCtrlReg<"ICC">;
 def FCC : SparcCtrlReg<"FCC">;
 
+// Y register
+def Y : SparcCtrlReg<"Y">;
+
 // Integer registers
 def G0 : Ri< 0, "G0">, DwarfRegNum<[0]>;
 def G1 : Ri< 1, "G1">, DwarfRegNum<[1]>;
