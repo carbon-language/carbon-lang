@@ -780,7 +780,8 @@ void MCDwarfFrameEmitter::EmitAdvanceLoc(MCStreamer &Streamer,
 void MCDwarfFrameEmitter::EncodeAdvanceLoc(uint64_t AddrDelta,
                                            raw_ostream &OS) {
   // FIXME: Assumes the code alignment factor is 1.
-  if (isUIntN(6, AddrDelta)) {
+  if (AddrDelta == 0) {
+  } else if (isUIntN(6, AddrDelta)) {
     uint8_t Opcode = dwarf::DW_CFA_advance_loc | AddrDelta;
     OS << Opcode;
   } else if (isUInt<8>(AddrDelta)) {
