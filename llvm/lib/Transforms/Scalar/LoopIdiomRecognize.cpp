@@ -164,12 +164,9 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   Value *StoredVal = SI->getValueOperand();
   Value *StorePtr = SI->getPointerOperand();
   
-  // Check to see if the store updates all bits in memory.  We don't want to
-  // process things like a store of i3.  We also require that the store be a
-  // multiple of a byte.
+  // Reject stores that are so large that they overflow an unsigned.
   uint64_t SizeInBits = TD->getTypeSizeInBits(StoredVal->getType());
-  if ((SizeInBits & 7) || (SizeInBits >> 32) != 0 ||
-      SizeInBits != TD->getTypeStoreSizeInBits(StoredVal->getType()))
+  if ((SizeInBits & 7) || (SizeInBits >> 32) != 0)
     return false;
   
   // See if the pointer expression is an AddRec like {base,+,1} on the current
