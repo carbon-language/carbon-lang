@@ -1029,6 +1029,10 @@ public:
     // instruction.
     Instruction *I = dyn_cast<Instruction>(To);
     if (!I) return true;
+    // If both instructions are defined in the same basic block then replacement
+    // cannot break LCSSA form.
+    if (I->getParent() == From->getParent())
+      return true;
     // If the instruction is not defined in a loop then it can safely replace
     // anything.
     Loop *ToLoop = getLoopFor(I->getParent());
