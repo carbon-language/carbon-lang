@@ -31,7 +31,7 @@ TargetAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
     { "FK_PCRel_8", 0, 64, MCFixupKindInfo::FKF_IsPCRel }
   };
   
-  assert(Kind <= sizeof(Builtins) / sizeof(Builtins[0]) &&
+  assert((size_t)Kind <= sizeof(Builtins) / sizeof(Builtins[0]) &&
          "Unknown fixup kind");
   return Builtins[Kind];
 }

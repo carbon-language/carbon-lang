@@ -71,8 +71,9 @@ static bool ValueDominatesPHI(Value *V, PHINode *P, const DominatorTree *DT) {
 /// Also performs the transform "(A op' B) op C" -> "(A op C) op' (B op C)".
 /// Returns the simplified value, or null if no simplification was performed.
 static Value *ExpandBinOp(unsigned Opcode, Value *LHS, Value *RHS,
-                          unsigned OpcodeToExpand, const TargetData *TD,
+                          unsigned OpcToExpand, const TargetData *TD,
                           const DominatorTree *DT, unsigned MaxRecurse) {
+  Instruction::BinaryOps OpcodeToExpand = (Instruction::BinaryOps)OpcToExpand;
   // Recursion is always used, so bail out at once if we already hit the limit.
   if (!MaxRecurse--)
     return 0;
@@ -133,8 +134,9 @@ static Value *ExpandBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 /// OpCodeToExtract is Mul then this tries to turn "(A*B)+(A*C)" into "A*(B+C)".
 /// Returns the simplified value, or null if no simplification was performed.
 static Value *FactorizeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
-                             unsigned OpcodeToExtract, const TargetData *TD,
+                             unsigned OpcToExtract, const TargetData *TD,
                              const DominatorTree *DT, unsigned MaxRecurse) {
+  Instruction::BinaryOps OpcodeToExtract = (Instruction::BinaryOps)OpcToExtract;
   // Recursion is always used, so bail out at once if we already hit the limit.
   if (!MaxRecurse--)
     return 0;
@@ -201,10 +203,11 @@ static Value *FactorizeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 
 /// SimplifyAssociativeBinOp - Generic simplifications for associative binary
 /// operations.  Returns the simpler value, or null if none was found.
-static Value *SimplifyAssociativeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
+static Value *SimplifyAssociativeBinOp(unsigned Opc, Value *LHS, Value *RHS,
                                        const TargetData *TD,
                                        const DominatorTree *DT,
                                        unsigned MaxRecurse) {
+  Instruction::BinaryOps Opcode = (Instruction::BinaryOps)Opc;
   assert(Instruction::isAssociative(Opcode) && "Not an associative operation!");
 
   // Recursion is always used, so bail out at once if we already hit the limit.
