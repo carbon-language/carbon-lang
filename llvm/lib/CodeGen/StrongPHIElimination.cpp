@@ -472,8 +472,15 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
   for (MachineBasicBlock::iterator BBI = MBB.begin(), BBE = MBB.end();
   BBI != BBE; ++BBI) {
     for (MachineInstr::const_mop_iterator I = BBI->operands_begin(),
-         E = BBI->operands_end(); I != E && I->isReg() && I->isDef(); ++I) {
+         E = BBI->operands_end(); I != E; ++I) {
       const MachineOperand& MO = *I;
+
+      // FIXME: This would be faster if it were possible to bail out of checking
+      // an instruction's operands after the explicit defs, but this is incorrect
+      // for variadic instructions, which may appear before register allocation
+      // in the future.
+      if (!MO.isReg() || !MO.isDef())
+        continue;
 
       unsigned DestReg = MO.getReg();
       if (!DestReg || !TargetRegisterInfo::isVirtualRegister(DestReg))
