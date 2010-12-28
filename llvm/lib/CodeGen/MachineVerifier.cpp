@@ -1118,8 +1118,8 @@ void MachineVerifier::verifyLiveIntervals() {
 
       // Now check all the basic blocks in this live segment.
       MachineFunction::const_iterator MFI = MBB;
-      // Is LI live-in to MBB and not a PHIDef?
-      if (I->start == VNI->def) {
+      // Is this live range the beginning of a non-PHIDef VN?
+      if (I->start == VNI->def && !VNI->isPHIDef()) {
         // Not live-in to any blocks.
         if (MBB == EndMBB)
           continue;
@@ -1141,16 +1141,9 @@ void MachineVerifier::verifyLiveIntervals() {
              PE = MFI->pred_end(); PI != PE; ++PI) {
           SlotIndex PEnd = LiveInts->getMBBEndIdx(*PI).getPrevSlot();
           const VNInfo *PVNI = LI.getVNInfoAt(PEnd);
-          if (!PVNI) {
-            report("Register not marked live out of predecessor", *PI);
-            *OS << "Valno #" << VNI->id << " live into BB#" << MFI->getNumber()
-                << '@' << LiveInts->getMBBStartIdx(MFI) << ", not live at "
-                << PEnd << " in " << LI << '\n';
-            continue;
-          }
 
           if (VNI->isPHIDef() && VNI->def == LiveInts->getMBBStartIdx(MFI)) {
-            if (!PVNI->hasPHIKill()) {
+            if (PVNI && !PVNI->hasPHIKill()) {
               report("Value live out of predecessor doesn't have PHIKill", MF);
               *OS << "Valno #" << PVNI->id << " live out of BB#"
                   << (*PI)->getNumber() << '@' << PEnd
@@ -1159,6 +1152,14 @@ void MachineVerifier::verifyLiveIntervals() {
                   << MFI->getNumber() << '@' << LiveInts->getMBBStartIdx(MFI)
                   << " in " << LI << '\n';
             }
+            continue;
+          }
+
+          if (!PVNI) {
+            report("Register not marked live out of predecessor", *PI);
+            *OS << "Valno #" << VNI->id << " live into BB#" << MFI->getNumber()
+                << '@' << LiveInts->getMBBStartIdx(MFI) << ", not live at "
+                << PEnd << " in " << LI << '\n';
             continue;
           }
 
