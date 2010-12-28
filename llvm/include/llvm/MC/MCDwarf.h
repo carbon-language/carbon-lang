@@ -228,14 +228,39 @@ namespace llvm {
                       int64_t LineDelta, uint64_t AddrDelta);
   };
 
+  class MCCFIInstruction {
+  public:
+    enum OpType { Remember, Restore, Move };
+  private:
+    OpType Operation;
+    MCSymbol *Label;
+    // Move to & from location.
+    MachineLocation Destination;
+    MachineLocation Source;
+  public:
+    MCCFIInstruction(OpType Op, MCSymbol *L)
+      : Operation(Op), Label(L) {
+      assert(Op == Remember || Op == Restore);
+    }
+    MCCFIInstruction(MCSymbol *L, const MachineLocation &D,
+                     const MachineLocation &S)
+      : Operation(Move), Label(L), Destination(D), Source(S) {
+    }
+    OpType getOperation() const { return Operation; }
+    MCSymbol *getLabel() const { return Label; }
+    const MachineLocation &getDestination() const { return Destination; }
+    const MachineLocation &getSource() const { return Source; }
+  };
+
   struct MCDwarfFrameInfo {
-    MCDwarfFrameInfo() : Begin(0), End(0), Personality(0), Lsda(0), Moves(),
-                         PersonalityEncoding(0), LsdaEncoding(0) {}
+    MCDwarfFrameInfo() : Begin(0), End(0), Personality(0), Lsda(0),
+                         Instructions(), PersonalityEncoding(0),
+                         LsdaEncoding(0) {}
     MCSymbol *Begin;
     MCSymbol *End;
     const MCSymbol *Personality;
     const MCSymbol *Lsda;
-    std::vector<MachineMove> Moves;
+    std::vector<MCCFIInstruction> Instructions;
     unsigned PersonalityEncoding;
     unsigned LsdaEncoding;
   };

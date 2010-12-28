@@ -18,6 +18,7 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -438,23 +439,78 @@ static int getDataAlignmentFactor(MCStreamer &streamer) {
    return -size;
 }
 
+static void EmitCFIInstruction(MCStreamer &Streamer,
+                               const MCCFIInstruction &Instr,
+                               bool isEH) {
+  MCContext &context = Streamer.getContext();
+  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  int dataAlignmentFactor = getDataAlignmentFactor(Streamer);
+
+  switch (Instr.getOperation()) {
+  case MCCFIInstruction::Move: {
+    const MachineLocation &Dst = Instr.getDestination();
+    const MachineLocation &Src = Instr.getSource();
+
+    // If advancing cfa.
+    if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
+      assert(!Src.isReg() && "Machine move not supported yet.");
+
+      if (Src.getReg() == MachineLocation::VirtualFP) {
+        Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_offset, 1);
+      } else {
+        Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa, 1);
+        Streamer.EmitULEB128IntValue(asmInfo.getDwarfRegNum(Src.getReg(),
+                                                            isEH));
+      }
+
+      Streamer.EmitULEB128IntValue(-Src.getOffset(), 1);
+      return;
+    }
+
+    if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
+      assert(Dst.isReg() && "Machine move not supported yet.");
+      Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_register, 1);
+      Streamer.EmitULEB128IntValue(asmInfo.getDwarfRegNum(Dst.getReg(), isEH));
+      return;
+    }
+
+    unsigned Reg = asmInfo.getDwarfRegNum(Src.getReg(), isEH);
+    int Offset = Dst.getOffset() / dataAlignmentFactor;
+
+    if (Offset < 0) {
+      Streamer.EmitIntValue(dwarf::DW_CFA_offset_extended_sf, 1);
+      Streamer.EmitULEB128IntValue(Reg);
+      Streamer.EmitSLEB128IntValue(Offset);
+    } else if (Reg < 64) {
+      Streamer.EmitIntValue(dwarf::DW_CFA_offset + Reg, 1);
+      Streamer.EmitULEB128IntValue(Offset, 1);
+    } else {
+      Streamer.EmitIntValue(dwarf::DW_CFA_offset_extended, 1);
+      Streamer.EmitULEB128IntValue(Reg, 1);
+      Streamer.EmitULEB128IntValue(Offset, 1);
+    }
+    return;
+  }
+  case MCCFIInstruction::Remember:
+    Streamer.EmitIntValue(dwarf::DW_CFA_remember_state, 1);
+    return;
+  case MCCFIInstruction::Restore:
+    Streamer.EmitIntValue(dwarf::DW_CFA_restore_state, 1);
+    return;
+  }
+  llvm_unreachable("Unhandled case in switch");
+}
+
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the
 /// frame.
-static void EmitFrameMoves(MCStreamer &streamer,
-                           const std::vector<MachineMove> &Moves,
-                           MCSymbol *BaseLabel, bool isEH) {
-  MCContext &context = streamer.getContext();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
-  int dataAlignmentFactor = getDataAlignmentFactor(streamer);
-
-  for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
-    const MachineMove &Move = Moves[i];
-    MCSymbol *Label = Move.getLabel();
+static void EmitCFIInstructions(MCStreamer &streamer,
+                                const std::vector<MCCFIInstruction> &Instrs,
+                                MCSymbol *BaseLabel, bool isEH) {
+  for (unsigned i = 0, N = Instrs.size(); i < N; ++i) {
+    const MCCFIInstruction &Instr = Instrs[i];
+    MCSymbol *Label = Instr.getLabel();
     // Throw out move if the label is invalid.
     if (Label && !Label->isDefined()) continue; // Not emitted, in dead code.
-
-    const MachineLocation &Dst = Move.getDestination();
-    const MachineLocation &Src = Move.getSource();
 
     // Advance row if new location.
     if (BaseLabel && Label) {
@@ -465,44 +521,7 @@ static void EmitFrameMoves(MCStreamer &streamer,
       }
     }
 
-    // If advancing cfa.
-    if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
-      assert(!Src.isReg() && "Machine move not supported yet.");
-
-      if (Src.getReg() == MachineLocation::VirtualFP) {
-        streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_offset, 1);
-      } else {
-        streamer.EmitIntValue(dwarf::DW_CFA_def_cfa, 1);
-        streamer.EmitULEB128IntValue(asmInfo.getDwarfRegNum(Src.getReg(),
-                                                            isEH));
-      }
-
-      streamer.EmitULEB128IntValue(-Src.getOffset(), 1);
-      continue;
-    }
-
-    if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
-      assert(Dst.isReg() && "Machine move not supported yet.");
-      streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_register, 1);
-      streamer.EmitULEB128IntValue(asmInfo.getDwarfRegNum(Dst.getReg(), isEH));
-      continue;
-    }
-
-    unsigned Reg = asmInfo.getDwarfRegNum(Src.getReg(), isEH);
-    int Offset = Dst.getOffset() / dataAlignmentFactor;
-
-    if (Offset < 0) {
-      streamer.EmitIntValue(dwarf::DW_CFA_offset_extended_sf, 1);
-      streamer.EmitULEB128IntValue(Reg);
-      streamer.EmitSLEB128IntValue(Offset);
-    } else if (Reg < 64) {
-      streamer.EmitIntValue(dwarf::DW_CFA_offset + Reg, 1);
-      streamer.EmitULEB128IntValue(Offset, 1);
-    } else {
-      streamer.EmitIntValue(dwarf::DW_CFA_offset_extended, 1);
-      streamer.EmitULEB128IntValue(Reg, 1);
-      streamer.EmitULEB128IntValue(Offset, 1);
-    }
+    EmitCFIInstruction(streamer, Instr, isEH);
   }
 }
 
@@ -618,8 +637,15 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer,
   // Initial Instructions
 
   const std::vector<MachineMove> Moves = asmInfo.getInitialFrameState();
+  std::vector<MCCFIInstruction> Instructions;
 
-  EmitFrameMoves(streamer, Moves, NULL, true);
+  for (int i = 0, n = Moves.size(); i != n; ++i) {
+    MCCFIInstruction Inst(Moves[i].getLabel(), Moves[i].getDestination(),
+                          Moves[i].getSource());
+    Instructions.push_back(Inst);
+  }
+
+  EmitCFIInstructions(streamer, Instructions, NULL, true);
 
   // Padding
   streamer.EmitValueToAlignment(4);
@@ -668,7 +694,7 @@ static MCSymbol *EmitFDE(MCStreamer &streamer,
   streamer.EmitLabel(augmentationEnd);
   // Call Frame Instructions
 
-  EmitFrameMoves(streamer, frame.Moves, frame.Begin, true);
+  EmitCFIInstructions(streamer, frame.Instructions, frame.Begin, true);
 
   // Padding
   streamer.EmitValueToAlignment(4);

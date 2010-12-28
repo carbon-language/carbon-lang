@@ -254,6 +254,10 @@ public:
      &GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda>(".cfi_personality");
     AddDirectiveHandler<
             &GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda>(".cfi_lsda");
+    AddDirectiveHandler<
+      &GenericAsmParser::ParseDirectiveCFIRememberState>(".cfi_remember_state");
+    AddDirectiveHandler<
+      &GenericAsmParser::ParseDirectiveCFIRestoreState>(".cfi_restore_state");
 
     // Macro directives.
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveMacrosOnOff>(
@@ -278,6 +282,8 @@ public:
   bool ParseDirectiveCFIDefCfaRegister(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIPersonalityOrLsda(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIRememberState(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIRestoreState(StringRef, SMLoc DirectiveLoc);
 
   bool ParseDirectiveMacrosOnOff(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveMacro(StringRef, SMLoc DirectiveLoc);
@@ -2259,6 +2265,20 @@ bool GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda(StringRef IDVal,
     assert(IDVal == ".cfi_lsda");
     return getStreamer().EmitCFILsda(Sym, Encoding);
   }
+}
+
+/// ParseDirectiveCFIRememberState
+/// ::= .cfi_remember_state
+bool GenericAsmParser::ParseDirectiveCFIRememberState(StringRef IDVal,
+                                                      SMLoc DirectiveLoc) {
+  return getStreamer().EmitCFIRememberState();
+}
+
+/// ParseDirectiveCFIRestoreState
+/// ::= .cfi_remember_state
+bool GenericAsmParser::ParseDirectiveCFIRestoreState(StringRef IDVal,
+                                                     SMLoc DirectiveLoc) {
+  return getStreamer().EmitCFIRestoreState();
 }
 
 /// ParseDirectiveMacrosOnOff

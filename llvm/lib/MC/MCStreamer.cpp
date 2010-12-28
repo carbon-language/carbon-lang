@@ -179,8 +179,8 @@ bool MCStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
   EmitLabel(Label);
   MachineLocation Dest(MachineLocation::VirtualFP);
   MachineLocation Source(MachineLocation::VirtualFP, -Offset);
-  MachineMove Move(Label, Dest, Source);
-  CurFrame->Moves.push_back(Move);
+  MCCFIInstruction Instruction(Label, Dest, Source);
+  CurFrame->Instructions.push_back(Instruction);
   return false;
 }
 
@@ -208,6 +208,27 @@ bool MCStreamer::EmitCFILsda(const MCSymbol *Sym, unsigned Encoding) {
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   CurFrame->Lsda = Sym;
   CurFrame->LsdaEncoding = Encoding;
+  return false;
+}
+
+bool MCStreamer::EmitCFIRememberState() {
+  EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+  MCCFIInstruction Instruction(MCCFIInstruction::Remember, Label);
+  CurFrame->Instructions.push_back(Instruction);
+  return false;
+}
+
+bool MCStreamer::EmitCFIRestoreState() {
+  // FIXME: Error if there is no matching cfi_remember_state.
+  EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+  MCCFIInstruction Instruction(MCCFIInstruction::Restore, Label);
+  CurFrame->Instructions.push_back(Instruction);
   return false;
 }
 
