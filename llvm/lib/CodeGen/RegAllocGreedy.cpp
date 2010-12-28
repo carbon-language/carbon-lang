@@ -379,7 +379,7 @@ unsigned RAGreedy::trySpillInterferences(LiveInterval &VirtReg,
                                      SmallVectorImpl<LiveInterval*> &NewVRegs) {
   NamedRegionTimer T("Spill Interference", TimerGroupName, TimePassesIsEnabled);
   unsigned BestPhys = 0;
-  float BestWeight;
+  float BestWeight = 0;
 
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
