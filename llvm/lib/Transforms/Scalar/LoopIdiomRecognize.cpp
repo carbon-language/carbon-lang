@@ -254,6 +254,7 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
   
   DEBUG(dbgs() << "  Formed memset: " << *NewCall << "\n"
                << "    from store to: " << *Ev << " at: " << *SI << "\n");
+  (void)NewCall;
   
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
