@@ -15,6 +15,8 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cctype>
+#include <cstdio>
+#include <cstring>
 
 namespace {
   using llvm::StringRef;
@@ -657,6 +659,42 @@ void directory_entry::replace_filename(const Twine &filename, file_status st,
   Path = path.str();
   Status = st;
   SymlinkStatus = symlink_st;
+}
+
+error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
+  SmallString<128> PathStorage;
+  SmallString<32>  MagicStorage;
+  StringRef Path  = path.toNullTerminatedStringRef(PathStorage);
+  StringRef Magic = magic.toNullTerminatedStringRef(MagicStorage);
+
+  assert(Magic.size() > 0 && "magic must be non-empty!");
+
+  SmallString<32> BufferStorage;
+  BufferStorage.reserve(Magic.size());
+
+  // Open file.
+  std::FILE *file = std::fopen(Path.data(), "rb");
+  if (file == 0)
+    return error_code(errno, posix_category());
+  int size = ::fread(BufferStorage.data(), 1, Magic.size(), file);
+  if (size != Magic.size()) {
+    int error = errno;
+    bool eof = std::feof(file) != 0;
+    std::fclose(file);
+    if (eof) {
+      // EOF, return false.
+      result = false;
+      return success;
+    }
+    return error_code(error, posix_category());
+  }
+  std::fclose(file);
+
+  if (std::memcmp(BufferStorage.data(), Magic.data(), Magic.size()) != 0)
+    result = false;
+  else
+    result = true;
+  return success;
 }
 
 } // end namespace fs

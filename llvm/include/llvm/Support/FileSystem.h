@@ -448,7 +448,7 @@ error_code canonicalize(const Twine &path, SmallVectorImpl<char> &result);
 /// @param magic Byte sequence to compare \a path's first len(magic) bytes to.
 /// @results errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code has_magic(const Twine &path, const Twine &magic);
+error_code has_magic(const Twine &path, const Twine &magic, bool &result);
 
 /// @brief Get \a path's first \a len bytes.
 ///
