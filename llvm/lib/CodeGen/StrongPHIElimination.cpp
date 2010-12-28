@@ -471,10 +471,9 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
     DenseMap<unsigned, unsigned>& ImmediateDominatingParent) {
   for (MachineBasicBlock::iterator BBI = MBB.begin(), BBE = MBB.end();
   BBI != BBE; ++BBI) {
-    for (unsigned i = 0, e = BBI->getNumOperands(); i != e; ++i) {
-      MachineOperand& MO = BBI->getOperand(i);
-      if (!MO.isReg() || !MO.isDef())
-        continue;
+    for (MachineInstr::const_mop_iterator I = BBI->operands_begin(),
+         E = BBI->operands_end(); I != E && I->isReg() && I->isDef(); ++I) {
+      const MachineOperand& MO = *I;
 
       unsigned DestReg = MO.getReg();
       if (!DestReg || !TargetRegisterInfo::isVirtualRegister(DestReg))
