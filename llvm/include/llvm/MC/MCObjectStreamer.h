@@ -71,6 +71,8 @@ public:
   virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                         const MCSymbol *LastLabel,
                                         const MCSymbol *Label);
+  virtual void EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
+                                         const MCSymbol *Label);
   virtual void Finish();
 
   /// @}

@@ -323,6 +323,8 @@ uint64_t MCAssembler::ComputeFragmentSize(const MCAsmLayout &Layout,
 
   case MCFragment::FT_Dwarf:
     return cast<MCDwarfLineAddrFragment>(F).getContents().size();
+  case MCFragment::FT_DwarfFrame:
+    return cast<MCDwarfCallFrameFragment>(F).getContents().size();
   }
 
   assert(0 && "invalid fragment kind");
@@ -451,6 +453,11 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
   case MCFragment::FT_Dwarf: {
     const MCDwarfLineAddrFragment &OF = cast<MCDwarfLineAddrFragment>(F);
     OW->WriteBytes(OF.getContents().str());
+    break;
+  }
+  case MCFragment::FT_DwarfFrame: {
+    const MCDwarfCallFrameFragment &CF = cast<MCDwarfCallFrameFragment>(F);
+    OW->WriteBytes(CF.getContents().str());
     break;
   }
   }
@@ -712,6 +719,21 @@ bool MCAssembler::RelaxDwarfLineAddr(MCAsmLayout &Layout,
   return OldSize != Data.size();
 }
 
+bool MCAssembler::RelaxDwarfCallFrameFragment(MCAsmLayout &Layout,
+                                              MCDwarfCallFrameFragment &DF) {
+  int64_t AddrDelta = 0;
+  uint64_t OldSize = DF.getContents().size();
+  bool IsAbs = DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, Layout);
+  (void)IsAbs;
+  assert(IsAbs);
+  SmallString<8> &Data = DF.getContents();
+  Data.clear();
+  raw_svector_ostream OSE(Data);
+  MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OSE);
+  OSE.flush();
+  return OldSize != Data.size();
+}
+
 bool MCAssembler::LayoutSectionOnce(MCAsmLayout &Layout,
                                     MCSectionData &SD) {
   MCFragment *FirstInvalidFragment = NULL;
@@ -730,9 +752,14 @@ bool MCAssembler::LayoutSectionOnce(MCAsmLayout &Layout,
       relaxedFrag = RelaxDwarfLineAddr(Layout,
                                        *cast<MCDwarfLineAddrFragment>(it2));
       break;
-        case MCFragment::FT_LEB:
-          relaxedFrag = RelaxLEB(Layout, *cast<MCLEBFragment>(it2));
-          break;
+    case MCFragment::FT_DwarfFrame:
+      relaxedFrag =
+        RelaxDwarfCallFrameFragment(Layout,
+                                    *cast<MCDwarfCallFrameFragment>(it2));
+      break;
+    case MCFragment::FT_LEB:
+      relaxedFrag = RelaxLEB(Layout, *cast<MCLEBFragment>(it2));
+      break;
     }
     // Update the layout, and remember that we relaxed.
     if (relaxedFrag && !FirstInvalidFragment)
@@ -789,6 +816,7 @@ void MCFragment::dump() {
   case MCFragment::FT_Inst:  OS << "MCInstFragment"; break;
   case MCFragment::FT_Org:   OS << "MCOrgFragment"; break;
   case MCFragment::FT_Dwarf: OS << "MCDwarfFragment"; break;
+  case MCFragment::FT_DwarfFrame: OS << "MCDwarfCallFrameFragment"; break;
   case MCFragment::FT_LEB:   OS << "MCLEBFragment"; break;
   }
 
@@ -853,6 +881,12 @@ void MCFragment::dump() {
     OS << "\n       ";
     OS << " AddrDelta:" << OF->getAddrDelta()
        << " LineDelta:" << OF->getLineDelta();
+    break;
+  }
+  case MCFragment::FT_DwarfFrame:  {
+    const MCDwarfCallFrameFragment *CF = cast<MCDwarfCallFrameFragment>(this);
+    OS << "\n       ";
+    OS << " AddrDelta:" << CF->getAddrDelta();
     break;
   }
   case MCFragment::FT_LEB: {

@@ -52,6 +52,7 @@ public:
     FT_Inst,
     FT_Org,
     FT_Dwarf,
+    FT_DwarfFrame,
     FT_LEB
   };
 
@@ -369,7 +370,7 @@ class MCDwarfLineAddrFragment : public MCFragment {
 
 public:
   MCDwarfLineAddrFragment(int64_t _LineDelta, const MCExpr &_AddrDelta,
-                      MCSectionData *SD = 0)
+                      MCSectionData *SD)
     : MCFragment(FT_Dwarf, SD),
       LineDelta(_LineDelta), AddrDelta(&_AddrDelta) { Contents.push_back(0); }
 
@@ -389,6 +390,34 @@ public:
     return F->getKind() == MCFragment::FT_Dwarf;
   }
   static bool classof(const MCDwarfLineAddrFragment *) { return true; }
+};
+
+class MCDwarfCallFrameFragment : public MCFragment {
+  /// AddrDelta - The expression for the difference of the two symbols that
+  /// make up the address delta between two .cfi_* dwarf directives.
+  const MCExpr *AddrDelta;
+
+  SmallString<8> Contents;
+
+public:
+  MCDwarfCallFrameFragment(const MCExpr &_AddrDelta,  MCSectionData *SD)
+    : MCFragment(FT_DwarfFrame, SD),
+      AddrDelta(&_AddrDelta) { Contents.push_back(0); }
+
+  /// @name Accessors
+  /// @{
+
+  const MCExpr &getAddrDelta() const { return *AddrDelta; }
+
+  SmallString<8> &getContents() { return Contents; }
+  const SmallString<8> &getContents() const { return Contents; }
+
+  /// @}
+
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_DwarfFrame;
+  }
+  static bool classof(const MCDwarfCallFrameFragment *) { return true; }
 };
 
 // FIXME: Should this be a separate class, or just merged into MCSection? Since
@@ -705,6 +734,8 @@ private:
   bool RelaxLEB(MCAsmLayout &Layout, MCLEBFragment &IF);
 
   bool RelaxDwarfLineAddr(MCAsmLayout &Layout, MCDwarfLineAddrFragment &DF);
+  bool RelaxDwarfCallFrameFragment(MCAsmLayout &Layout,
+                                   MCDwarfCallFrameFragment &DF);
 
   /// FinishLayout - Finalize a layout, including fragment lowering.
   void FinishLayout(MCAsmLayout &Layout);

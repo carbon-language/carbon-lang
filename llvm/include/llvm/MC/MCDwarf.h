@@ -25,6 +25,7 @@
 namespace llvm {
   class MachineMove;
   class MCContext;
+  class MCExpr;
   class MCSection;
   class MCSectionData;
   class MCStreamer;
@@ -245,6 +246,8 @@ namespace llvm {
     // This emits the frame info section.
     //
     static void Emit(MCStreamer &streamer);
+    static void EmitAdvanceLoc(MCStreamer &Streamer, uint64_t AddrDelta);
+    static void EncodeAdvanceLoc(uint64_t AddrDelta, raw_ostream &OS);
   };
 } // end namespace llvm
 

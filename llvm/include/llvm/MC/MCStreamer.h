@@ -386,6 +386,10 @@ namespace llvm {
                                           const MCSymbol *LastLabel,
                                           const MCSymbol *Label) = 0;
 
+    virtual void EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
+                                           const MCSymbol *Label) {
+    }
+
     void EmitDwarfSetLineAddr(int64_t LineDelta, const MCSymbol *Label,
                               int PointerSize);
 

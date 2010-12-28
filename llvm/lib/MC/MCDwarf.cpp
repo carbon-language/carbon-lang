@@ -460,12 +460,7 @@ static void EmitFrameMoves(MCStreamer &streamer,
     if (BaseLabel && Label) {
       MCSymbol *ThisSym = Label;
       if (ThisSym != BaseLabel) {
-        // FIXME: We should relax this instead of using a DW_CFA_advance_loc4
-        // for every address change!
-        streamer.EmitIntValue(dwarf::DW_CFA_advance_loc4, 1);
-        const MCExpr *Length = MakeStartMinusEndExpr(streamer, *BaseLabel,
-                                                     *ThisSym, 0);
-        streamer.EmitValue(Length, 4);
+        streamer.EmitDwarfAdvanceFrameAddr(BaseLabel, ThisSym);
         BaseLabel = ThisSym;
       }
     }
@@ -747,4 +742,31 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &streamer) {
   streamer.EmitValueToAlignment(asmInfo.getPointerSize());
   if (fdeEnd)
     streamer.EmitLabel(fdeEnd);
+}
+
+void MCDwarfFrameEmitter::EmitAdvanceLoc(MCStreamer &Streamer,
+                                         uint64_t AddrDelta) {
+  SmallString<256> Tmp;
+  raw_svector_ostream OS(Tmp);
+  MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OS);
+  Streamer.EmitBytes(OS.str(), /*AddrSpace=*/0);
+}
+
+void MCDwarfFrameEmitter::EncodeAdvanceLoc(uint64_t AddrDelta,
+                                           raw_ostream &OS) {
+  // FIXME: Assumes the code alignment factor is 1.
+  if (isUIntN(6, AddrDelta)) {
+    uint8_t Opcode = dwarf::DW_CFA_advance_loc | AddrDelta;
+    OS << Opcode;
+  } else if (isUInt<8>(AddrDelta)) {
+    OS << uint8_t(dwarf::DW_CFA_advance_loc1);
+    OS << uint8_t(AddrDelta);
+  } else if (isUInt<16>(AddrDelta)) {
+    OS << uint8_t(dwarf::DW_CFA_advance_loc2);
+    OS << uint16_t(AddrDelta);
+  } else {
+    assert(isUInt<32>(AddrDelta));
+    OS << uint8_t(dwarf::DW_CFA_advance_loc4);
+    OS << uint32_t(AddrDelta);
+  }
 }

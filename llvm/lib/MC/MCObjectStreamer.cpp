@@ -190,6 +190,28 @@ void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
   getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups());
 }
 
+static const MCExpr *BuildSymbolDiff(MCContext &Context,
+                                     const MCSymbol *A, const MCSymbol *B) {
+  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+  const MCExpr *ARef =
+    MCSymbolRefExpr::Create(A, Variant, Context);
+  const MCExpr *BRef =
+    MCSymbolRefExpr::Create(B, Variant, Context);
+  const MCExpr *AddrDelta =
+    MCBinaryExpr::Create(MCBinaryExpr::Sub, ARef, BRef, Context);
+  return AddrDelta;
+}
+
+static const MCExpr *ForceExpAbs(MCObjectStreamer *Streamer,
+                                  MCContext &Context, const MCExpr* Expr) {
+ if (Context.getAsmInfo().hasAggressiveSymbolFolding())
+   return Expr;
+
+ MCSymbol *ABS = Context.CreateTempSymbol();
+ Streamer->EmitAssignment(ABS, Expr);
+ return MCSymbolRefExpr::Create(ABS, Context);
+}
+
 void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                                 const MCSymbol *LastLabel,
                                                 const MCSymbol *Label) {
@@ -198,25 +220,26 @@ void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
     EmitDwarfSetLineAddr(LineDelta, Label, PointerSize);
     return;
   }
-  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
-  const MCExpr *LabelRef =
-    MCSymbolRefExpr::Create(Label, Variant, getContext());
-  const MCExpr *LastLabelRef =
-    MCSymbolRefExpr::Create(LastLabel, Variant, getContext());
-  const MCExpr *AddrDelta =
-    MCBinaryExpr::Create(MCBinaryExpr::Sub, LabelRef, LastLabelRef,
-                         getContext());
+  const MCExpr *AddrDelta = BuildSymbolDiff(getContext(), Label, LastLabel);
   int64_t Res;
   if (AddrDelta->EvaluateAsAbsolute(Res, getAssembler())) {
     MCDwarfLineAddr::Emit(this, LineDelta, Res);
     return;
   }
-  if (!getContext().getAsmInfo().hasAggressiveSymbolFolding()) {
-    MCSymbol *ABS = getContext().CreateTempSymbol();
-    EmitAssignment(ABS, AddrDelta);
-    AddrDelta = MCSymbolRefExpr::Create(ABS, getContext());
-  }
+  AddrDelta = ForceExpAbs(this, getContext(), AddrDelta);
   new MCDwarfLineAddrFragment(LineDelta, *AddrDelta, getCurrentSectionData());
+}
+
+void MCObjectStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
+                                                 const MCSymbol *Label) {
+  const MCExpr *AddrDelta = BuildSymbolDiff(getContext(), Label, LastLabel);
+  int64_t Res;
+  if (AddrDelta->EvaluateAsAbsolute(Res, getAssembler())) {
+    MCDwarfFrameEmitter::EmitAdvanceLoc(*this, Res);
+    return;
+  }
+  AddrDelta = ForceExpAbs(this, getContext(), AddrDelta);
+  new MCDwarfCallFrameFragment(*AddrDelta, getCurrentSectionData());
 }
 
 void MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
