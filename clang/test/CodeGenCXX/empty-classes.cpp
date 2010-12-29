@@ -53,6 +53,19 @@ int f() {
   return 0;
 }
 
+namespace PR8796 {
+  struct FreeCell {
+  };
+  union ThingOrCell {
+    FreeCell t;
+    FreeCell cell;
+  };
+  struct Things {
+    ThingOrCell things;
+  };
+  Things x;
+}
+
 #ifdef HARNESS
 extern "C" void printf(const char *, ...);
 
