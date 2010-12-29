@@ -365,20 +365,24 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     SDValue Val = OutVals[i];
     EVT ObjectVT = Outs[i].VT;
     SDValue ValToStore(0, 0);
-    unsigned ObjSize;
+    SDValue ValToStore2(0, 0);
+    unsigned ArgOffset1 = 0, ArgOffset2 = 0;
     switch (ObjectVT.getSimpleVT().SimpleTy) {
     default: llvm_unreachable("Unhandled argument type!");
     case MVT::i32:
-      ObjSize = 4;
+      ArgOffset1 = ArgOffset;
+      ArgOffset += 4;
 
       if (RegsToPass.size() >= 6) {
         ValToStore = Val;
       } else {
         RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Val));
       }
+
       break;
     case MVT::f32:
-      ObjSize = 4;
+      ArgOffset1 = ArgOffset;
+      ArgOffset += 4;
       if (RegsToPass.size() >= 6) {
         ValToStore = Val;
       } else {
@@ -388,14 +392,17 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       }
       break;
     case MVT::f64: {
-      ObjSize = 8;
-      if (RegsToPass.size() >= 6) {
-        ValToStore = Val;    // Whole thing is passed in memory.
-        break;
-      }
 
+      if (RegsToPass.size() >= 6) {
+        if (ArgOffset % 8 == 0) {
+          ArgOffset1 = ArgOffset;
+          ArgOffset += 8;
+          ValToStore = Val;    // Whole thing is passed in memory.
+          break;
+        }
+      }
       // Break into top and bottom parts by storing to the stack and loading
-      // out the parts as integers.  Top part goes in a reg.
+      // out the parts as integers.
       SDValue StackPtr = DAG.CreateStackTemporary(MVT::f64, MVT::i32);
       SDValue Store = DAG.getStore(DAG.getEntryNode(), dl,
                                    Val, StackPtr, MachinePointerInfo(),
@@ -410,22 +417,31 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       SDValue Lo = DAG.getLoad(MVT::i32, dl, Store, StackPtr,
                                MachinePointerInfo(), false, false, 0);
 
-      RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
-
       if (RegsToPass.size() >= 6) {
-        ValToStore = Lo;
-        ArgOffset += 4;
-        ObjSize = 4;
+        ArgOffset1 = ArgOffset;
+        ValToStore = Hi;
+      } else {
+        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
+      }
+      ArgOffset += 4;
+      if (RegsToPass.size() >= 6) {
+        ArgOffset2 = ArgOffset;
+        ValToStore2 = Lo;
       } else {
         RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Lo));
       }
+      ArgOffset += 4;
       break;
     }
     case MVT::i64: {
-      ObjSize = 8;
+
       if (RegsToPass.size() >= 6) {
-        ValToStore = Val;    // Whole thing is passed in memory.
-        break;
+        if (ArgOffset % 8 == 0) {
+          ArgOffset1 = ArgOffset;
+          ArgOffset += 8;
+          ValToStore = Val;    // Whole thing is passed in memory.
+          break;
+        }
       }
 
       // Split the value into top and bottom part.  Top part goes in a reg.
@@ -433,28 +449,40 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                  DAG.getConstant(1, MVT::i32));
       SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Val,
                                  DAG.getConstant(0, MVT::i32));
-      RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
-
       if (RegsToPass.size() >= 6) {
-        ValToStore = Lo;
-        ArgOffset += 4;
-        ObjSize = 4;
+        ArgOffset1 = ArgOffset;
+        ValToStore = Hi;
+      } else {
+        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
+      }
+      ArgOffset += 4;
+      if (RegsToPass.size() >= 6) {
+        ArgOffset2 = ArgOffset;
+        ValToStore2 = Lo;
       } else {
         RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Lo));
       }
+      ArgOffset += 4;
       break;
     }
     }
 
     if (ValToStore.getNode()) {
       SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
-      SDValue PtrOff = DAG.getConstant(ArgOffset, MVT::i32);
+      SDValue PtrOff = DAG.getConstant(ArgOffset1, MVT::i32);
       PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
       MemOpChains.push_back(DAG.getStore(Chain, dl, ValToStore,
                                          PtrOff, MachinePointerInfo(),
                                          false, false, 0));
     }
-    ArgOffset += ObjSize;
+    if (ValToStore2.getNode()) {
+      SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
+      SDValue PtrOff = DAG.getConstant(ArgOffset2, MVT::i32);
+      PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
+      MemOpChains.push_back(DAG.getStore(Chain, dl, ValToStore2,
+                                         PtrOff, MachinePointerInfo(),
+                                         false, false, 0));
+    }
   }
 #endif
 
