@@ -186,6 +186,14 @@ bool MCStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
 
 bool MCStreamer::EmitCFIDefCfaRegister(int64_t Register) {
   EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+  MachineLocation Dest(Register);
+  MachineLocation Source(MachineLocation::VirtualFP);
+  MCCFIInstruction Instruction(Label, Dest, Source);
+  CurFrame->Instructions.push_back(Instruction);
+  return false;
   return false;
 }
 
