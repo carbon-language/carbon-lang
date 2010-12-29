@@ -1,5 +1,5 @@
-; RUN: llc < %s -enable-unsafe-fp-math -march=x86-64 | \
-; RUN:   not egrep {addsd|subsd|xor}
+; RUN: llc < %s -enable-unsafe-fp-math -march=x86-64 | FileCheck %s
+; CHECK-NOT:     {{addsd|subsd|xor}}
 
 declare double @sin(double %f)
 
