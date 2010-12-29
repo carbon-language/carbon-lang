@@ -799,11 +799,18 @@ void MCDwarfFrameEmitter::EncodeAdvanceLoc(uint64_t AddrDelta,
     OS << uint8_t(dwarf::DW_CFA_advance_loc1);
     OS << uint8_t(AddrDelta);
   } else if (isUInt<16>(AddrDelta)) {
+    // FIXME: check what is the correct behavior on a big endian machine.
     OS << uint8_t(dwarf::DW_CFA_advance_loc2);
-    OS << uint16_t(AddrDelta);
+    OS << uint8_t( AddrDelta       & 0xff);
+    OS << uint8_t((AddrDelta >> 8) & 0xff);
   } else {
+    // FIXME: check what is the correct behavior on a big endian machine.
     assert(isUInt<32>(AddrDelta));
     OS << uint8_t(dwarf::DW_CFA_advance_loc4);
-    OS << uint32_t(AddrDelta);
+    OS << uint8_t( AddrDelta        & 0xff);
+    OS << uint8_t((AddrDelta >> 8)  & 0xff);
+    OS << uint8_t((AddrDelta >> 16) & 0xff);
+    OS << uint8_t((AddrDelta >> 24) & 0xff);
+
   }
 }
