@@ -30,7 +30,7 @@
 // of registers, if a more sophisticated allocator chooses to do that.
 //
 // This framework provides a way to engineer the compile time vs. code
-// quality trade-off without relying a particular theoretical solver.
+// quality trade-off without relying on a particular theoretical solver.
 //
 //===----------------------------------------------------------------------===//
 
