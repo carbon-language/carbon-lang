@@ -283,7 +283,9 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
     LiveInterval& DestLI = LI->getInterval(DestReg);
     LiveInterval& NewLI = LI->getInterval(NewReg);
 
-    assert(DestLI.ranges.size() == 1);
+    assert(DestLI.ranges.size() == 1
+           && "PHI destination copy's live interval should be a single live "
+               "range from the beginning of the BB to the copy instruction.");
     LiveRange* DestLR = DestLI.begin();
     VNInfo* NewVNI = NewLI.getVNInfoAt(DestLR->start);
     if (!NewVNI) {
