@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mblaze-reg-info"
+#define DEBUG_TYPE "mblaze-frame-info"
 
 #include "MBlaze.h"
 #include "MBlazeSubtarget.h"
@@ -277,25 +277,32 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
   unsigned oi = i == 2 ? 1 : 2;
 
-  DEBUG(errs() << "\nFunction : " << MF.getFunction()->getName() << "\n";
-        errs() << "<--------->\n" << MI);
+  DEBUG(dbgs() << "\nFunction : " << MF.getFunction()->getName() << "\n";
+        dbgs() << "<--------->\n" << MI);
 
   int FrameIndex = MI.getOperand(i).getIndex();
   int stackSize  = MF.getFrameInfo()->getStackSize();
   int spOffset   = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
-  DEBUG(errs() << "FrameIndex : " << FrameIndex << "\n"
+  DEBUG(dbgs() << "FrameIndex : " << FrameIndex << "\n"
                << "spOffset   : " << spOffset << "\n"
-               << "stackSize  : " << stackSize << "\n");
+               << "stackSize  : " << stackSize << "\n"
+               << "isFixed    : " << MFI->isFixedObjectIndex(FrameIndex) << "\n"
+               << "isLiveIn   : " << MBlazeFI->isLiveIn(FrameIndex) << "\n"
+               << "isSpill    : " << MFI->isSpillSlotObjectIndex(FrameIndex)
+               << "\n" );
 
   // as explained on LowerFormalArguments, detect negative offsets
   // and adjust SPOffsets considering the final stack size.
   int Offset = (spOffset < 0) ? (stackSize - spOffset) : spOffset;
   Offset += MI.getOperand(oi).getImm();
-  if (!MFI->isFixedObjectIndex(FrameIndex) && !MBlazeFI->isLiveIn(FrameIndex) && spOffset >= 0)
+  if (!MFI->isFixedObjectIndex(FrameIndex) && 
+      !MFI->isSpillSlotObjectIndex(FrameIndex) &&
+      !MBlazeFI->isLiveIn(FrameIndex) && 
+      spOffset >= 0)
     Offset -= MBlazeFI->getStackAdjust();
 
-  DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
+  DEBUG(dbgs() << "Offset     : " << Offset << "\n" << "<--------->\n");
 
   MI.getOperand(oi).ChangeToImmediate(Offset);
   MI.getOperand(i).ChangeToRegister(getFrameRegister(MF), false);

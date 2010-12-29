@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "mblaze-frame-info"
+
 #include "MBlazeFrameInfo.h"
 #include "MBlazeInstrInfo.h"
 #include "MBlazeMachineFunction.h"
@@ -24,6 +26,9 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -66,6 +71,23 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
 
   int StackAdjust = 0;
   int StackOffset = -28;
+
+  // In this loop we are searching frame indexes that corrospond to incoming
+  // arguments that are already in the stack. We look for instruction sequences
+  // like the following:
+  //    
+  //    LWI REG, FI1, 0
+  //    ...
+  //    SWI REG, FI2, 0
+  //
+  // As long as there are no defs of REG in the ... part, we can eliminate
+  // the SWI instruction because the value has already been stored to the
+  // stack by the caller. All we need to do is locate FI at the correct
+  // stack location according to the calling convensions.
+  //
+  // Additionally, if the SWI operation kills the def of REG then we don't
+  // need the LWI operation so we can erase it as well.
+#if 1
   for (unsigned i = 0, e = LiveInFI.size(); i < e; ++i) {
     for (MachineBasicBlock::iterator I=MIB; I != MIE; ++I) {
       if (I->getOpcode() != MBlaze::LWI || I->getNumOperands() != 3 ||
@@ -75,60 +97,88 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
       unsigned FIReg = I->getOperand(0).getReg();
       MachineBasicBlock::iterator SI = I;
       for (SI++; SI != MIE; ++SI) {
-        if (!SI->getOperand(0).isReg()) continue;
-        if (!SI->getOperand(1).isFI()) continue;
-        if (SI->getOpcode() != MBlaze::SWI) continue;
+        if (!SI->getOperand(0).isReg() ||
+            !SI->getOperand(1).isFI() ||
+            SI->getOpcode() != MBlaze::SWI) continue;
 
         int FI = SI->getOperand(1).getIndex();
-        if (SI->getOperand(0).getReg() != FIReg) continue;
-        if (MFI->isFixedObjectIndex(FI)) continue;
-        if (MFI->getObjectSize(FI) != 4) continue;
+        if (SI->getOperand(0).getReg() != FIReg ||
+            MFI->isFixedObjectIndex(FI) ||
+            MFI->getObjectSize(FI) != 4) continue;
+
         if (SI->getOperand(0).isDef()) break;
 
-        if (SI->getOperand(0).isKill())
+        if (SI->getOperand(0).isKill()) {
+          DEBUG(dbgs() << "LWI for FI#" << I->getOperand(1).getIndex() 
+                       << " removed\n");
           EraseInstr.push_back(I);
+        }
+
         EraseInstr.push_back(SI);
+        DEBUG(dbgs() << "SWI for FI#" << FI << " removed\n");
+
         MBlazeFI->recordLoadArgsFI(FI, StackOffset);
+        DEBUG(dbgs() << "FI#" << FI << " relocated to " << StackOffset << "\n");
+
         StackOffset -= 4;
         StackAdjust += 4;
         break;
       }
     }
   }
+#endif
 
-  for (MachineBasicBlock::iterator I=MBB->begin(), E=MBB->end(); I != E; ++I) {
-    if (I->getOpcode() != MBlaze::SWI || I->getNumOperands() != 3 ||
-        !I->getOperand(1).isFI() || !I->getOperand(0).isReg() ||
-        I->getOperand(1).getIndex() < 0) continue;
+  // In this loop we are searching for frame indexes that corrospond to
+  // incoming arguments that are in registers. We look for instruction
+  // sequences like the following:
+  //    
+  //    ...  SWI REG, FI, 0
+  // 
+  // As long as the ... part does not define REG and if REG is an incoming
+  // parameter register then we know that, according to ABI convensions, the
+  // caller has allocated stack space for it already.  Instead of allocating
+  // stack space on our frame, we record the correct location in the callers
+  // frame.
+#if 1
+  for (MachineRegisterInfo::livein_iterator LI = LII; LI != LIE; ++LI) {
+    for (MachineBasicBlock::iterator I=MIB; I != MIE; ++I) {
+      if (I->definesRegister(LI->first))
+        break;
 
-    unsigned FIReg = 0;
-    for (MachineRegisterInfo::livein_iterator LI = LII; LI != LIE; ++LI) {
+      if (I->getOpcode() != MBlaze::SWI || I->getNumOperands() != 3 ||
+          !I->getOperand(1).isFI() || !I->getOperand(0).isReg() ||
+          I->getOperand(1).getIndex() < 0) continue;
+
       if (I->getOperand(0).getReg() == LI->first) {
-        FIReg = LI->first;
+        int FI = I->getOperand(1).getIndex();
+        MBlazeFI->recordLiveIn(FI);
+
+        int FILoc = 0;
+        switch (LI->first) {
+        default: llvm_unreachable("invalid incoming parameter!");
+        case MBlaze::R5:  FILoc = -4; break;
+        case MBlaze::R6:  FILoc = -8; break;
+        case MBlaze::R7:  FILoc = -12; break;
+        case MBlaze::R8:  FILoc = -16; break;
+        case MBlaze::R9:  FILoc = -20; break;
+        case MBlaze::R10: FILoc = -24; break;
+        }
+
+        StackAdjust += 4;
+        MBlazeFI->recordLoadArgsFI(FI, FILoc);
+        DEBUG(dbgs() << "FI#" << FI << " relocated to " << FILoc << "\n");
         break;
       }
     }
-
-    if (FIReg) {
-      int FI = I->getOperand(1).getIndex();
-      MBlazeFI->recordLiveIn(FI);
-
-      StackAdjust += 4;
-      switch (FIReg) {
-      default: llvm_unreachable("invalid incoming parameter!");
-      case MBlaze::R5:  MBlazeFI->recordLoadArgsFI(FI, -4); break;
-      case MBlaze::R6:  MBlazeFI->recordLoadArgsFI(FI, -8); break;
-      case MBlaze::R7:  MBlazeFI->recordLoadArgsFI(FI, -12); break;
-      case MBlaze::R8:  MBlazeFI->recordLoadArgsFI(FI, -16); break;
-      case MBlaze::R9:  MBlazeFI->recordLoadArgsFI(FI, -20); break;
-      case MBlaze::R10: MBlazeFI->recordLoadArgsFI(FI, -24); break;
-      }
-    }
   }
+#endif
 
+  // Go ahead and erase all of the instructions that we determined were
+  // no longer needed.
   for (int i = 0, e = EraseInstr.size(); i < e; ++i)
     MBB->erase(EraseInstr[i]);
 
+  DEBUG(dbgs() << "Final stack adjustment: " << StackAdjust << "\n");
   MBlazeFI->setStackAdjust(StackAdjust);
 }
 
@@ -230,7 +280,10 @@ static void determineFrameLayout(MachineFunction &MF) {
 
   // Get the number of bytes to allocate from the FrameInfo
   unsigned FrameSize = MFI->getStackSize();
+  DEBUG(dbgs() << "Original Frame Size: " << FrameSize << "\n" );
+
   FrameSize -= MBlazeFI->getStackAdjust();
+  DEBUG(dbgs() << "Adjusted Frame Size: " << FrameSize << "\n" );
 
   // Get the alignments provided by the target, and the maximum alignment
   // (if any) of the fixed frame objects.
@@ -241,6 +294,7 @@ static void determineFrameLayout(MachineFunction &MF) {
   // Make sure the frame is aligned.
   FrameSize = (FrameSize + AlignMask) & ~AlignMask;
   MFI->setStackSize(FrameSize);
+  DEBUG(dbgs() << "Aligned Frame Size: " << FrameSize << "\n" );
 }
 
 // hasFP - Return true if the specified function should have a dedicated frame
