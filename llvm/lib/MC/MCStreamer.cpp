@@ -206,7 +206,6 @@ bool MCStreamer::EmitCFIDefCfaRegister(int64_t Register) {
   MCCFIInstruction Instruction(Label, Dest, Source);
   CurFrame->Instructions.push_back(Instruction);
   return false;
-  return false;
 }
 
 bool MCStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
