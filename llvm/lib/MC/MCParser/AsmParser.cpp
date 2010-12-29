@@ -2248,10 +2248,9 @@ static bool isValidEncoding(int64_t Encoding) {
       Format != dwarf::DW_EH_PE_sdata8 && Format != dwarf::DW_EH_PE_signed)
     return false;
 
-  const unsigned Application = Encoding & 0xf0;
+  const unsigned Application = Encoding & 0x70;
   if (Application != dwarf::DW_EH_PE_absptr &&
-      Application != dwarf::DW_EH_PE_pcrel &&
-      Application != dwarf::DW_EH_PE_indirect)
+      Application != dwarf::DW_EH_PE_pcrel)
     return false;
 
   return true;

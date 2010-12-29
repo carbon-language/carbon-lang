@@ -526,7 +526,7 @@ static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
   MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   unsigned format = symbolEncoding & 0x0f;
-  unsigned application = symbolEncoding & 0xf0;
+  unsigned application = symbolEncoding & 0x70;
   unsigned size;
   switch (format) {
   default:
@@ -553,7 +553,6 @@ static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
     assert(0 && "Unknown Encoding");
     break;
   case 0:
-  case dwarf::DW_EH_PE_indirect:
     streamer.EmitSymbolValue(&symbol, size);
     break;
   case dwarf::DW_EH_PE_pcrel:
