@@ -637,7 +637,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
   case Instruction::SIToFP:
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       APInt api = CI->getValue();
-      APFloat apf(APInt::getNullValue(DestTy->getPrimitiveSizeInBits()));
+      APFloat apf(APInt::getNullValue(DestTy->getPrimitiveSizeInBits()), true);
       (void)apf.convertFromAPInt(api, 
                                  opc==Instruction::SIToFP,
                                  APFloat::rmNearestTiesToEven);

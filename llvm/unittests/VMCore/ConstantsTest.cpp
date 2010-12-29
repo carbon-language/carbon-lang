@@ -109,5 +109,14 @@ TEST(ConstantsTest, IntSigns) {
   EXPECT_EQ(0x3b, ConstantInt::get(Int8Ty, 0x13b)->getSExtValue());
 }
 
+TEST(ConstantsTest, FP128Test) {
+  const Type *FP128Ty = Type::getFP128Ty(getGlobalContext());
+
+  const IntegerType *Int128Ty = Type::getIntNTy(getGlobalContext(), 128);
+  Constant *Zero128 = Constant::getNullValue(Int128Ty);
+  Constant *X = ConstantExpr::getUIToFP(Zero128, FP128Ty);
+  EXPECT_TRUE(isa<ConstantFP>(X));
+}
+
 }  // end anonymous namespace
 }  // end namespace llvm
