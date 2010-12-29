@@ -34,6 +34,7 @@ namespace llvm {
     SF_ReferenceTypePrivateUndefinedLazy    = 0x0005,
 
     // Other 'desc' flags.
+    SF_ThumbFunc                            = 0x0008,
     SF_NoDeadStrip                          = 0x0020,
     SF_WeakReference                        = 0x0040,
     SF_WeakDefinition                       = 0x0080,

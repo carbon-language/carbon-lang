@@ -140,12 +140,16 @@ void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   }
 }
 
-void MCMachOStreamer::EmitThumbFunc(MCSymbol *Func) {
+void MCMachOStreamer::EmitThumbFunc(MCSymbol *Symbol) {
   // FIXME: Flag the function ISA as thumb with DW_AT_APPLE_isa.
 
   // Remember that the function is a thumb function. Fixup and relocation
   // values will need adjusted.
-  getAssembler().setIsThumbFunc(Func);
+  getAssembler().setIsThumbFunc(Symbol);
+
+  // Mark the thumb bit on the symbol.
+  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  SD.setFlags(SD.getFlags() | SF_ThumbFunc);
 }
 
 void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {

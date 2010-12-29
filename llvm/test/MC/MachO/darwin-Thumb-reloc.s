@@ -98,7 +98,7 @@ L_.str:
 @ CHECK:    (('n_strx', 1)
 @ CHECK:     ('n_type', 0xf)
 @ CHECK:     ('n_sect', 1)
-@ CHECK-FIXME:     ('n_desc', 8)
+@ CHECK:     ('n_desc', 8)
 @ CHECK:     ('n_value', 0)
 @ CHECK:     ('_string', '_main')
 @ CHECK:    ),
