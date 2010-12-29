@@ -53,3 +53,11 @@ add_llvm_target(ARMCodeGen
   Thumb2RegisterInfo.cpp
   Thumb2SizeReduction.cpp
   )
+
+# workaround for hanging compilation on MSVC10
+if( MSVC_VERSION EQUAL 1600 )
+set_property(
+  SOURCE ARMISelLowering.cpp
+  PROPERTY COMPILE_FLAGS "/Od"
+  )
+endif()
