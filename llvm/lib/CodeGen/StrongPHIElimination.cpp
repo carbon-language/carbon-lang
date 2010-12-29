@@ -107,8 +107,6 @@ namespace {
     /// Isolate a PHI.
     void isolatePHI(MachineInstr*);
 
-    void PartitionRegisters(MachineFunction& MF);
-
     /// Traverses a basic block, splitting any interferences found between
     /// registers in the same congruence class. It takes two DenseMaps as
     /// arguments that it also updates: CurrentDominatingParent, which maps
@@ -142,6 +140,10 @@ namespace {
 
     DenseMap<unsigned, Node*> RegNodeMap;
 
+    // Maps a basic block to a list of its defs of registers that appear as PHI
+    // sources.
+    DenseMap<MachineBasicBlock*, std::vector<MachineInstr*> > PHISrcDefs;
+
     // FIXME: Can these two data structures be combined? Would a std::multimap
     // be any better?
 
@@ -160,6 +162,16 @@ namespace {
     // instructions.
     typedef DenseMap<unsigned, MachineInstr*> DestCopyMap;
     DestCopyMap InsertedDestCopies;
+  };
+
+  struct MIIndexCompare {
+    MIIndexCompare(LiveIntervals* LiveIntervals) : LI(LiveIntervals) { }
+
+    bool operator()(const MachineInstr* LHS, const MachineInstr* RHS) const {
+      return LI->getInstructionIndex(LHS) < LI->getInstructionIndex(RHS);
+    }
+
+    LiveIntervals* LI;
   };
 } // namespace
 
@@ -207,7 +219,27 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
   DT = &getAnalysis<MachineDominatorTree>();
   LI = &getAnalysis<LiveIntervals>();
 
-  PartitionRegisters(MF);
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end();
+       I != E; ++I) {
+    for (MachineBasicBlock::iterator BBI = I->begin(), BBE = I->end();
+         BBI != BBE && BBI->isPHI(); ++BBI) {
+      unsigned DestReg = BBI->getOperand(0).getReg();
+      addReg(DestReg);
+      PHISrcDefs[I].push_back(BBI);
+
+      for (unsigned i = 1; i < BBI->getNumOperands(); i += 2) {
+        MachineOperand& SrcMO = BBI->getOperand(i);
+        unsigned SrcReg = SrcMO.getReg();
+        addReg(SrcReg);
+        unionRegs(DestReg, SrcReg);
+
+        for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(SrcReg),
+             DE = MRI->def_end(); DI != DE; ++DI) {
+          PHISrcDefs[DI->getParent()].push_back(&*DI);
+        }
+      }
+    }
+  }
 
   // Perform a depth-first traversal of the dominator tree, splitting
   // interferences amongst PHI-congruence classes.
@@ -232,7 +264,20 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
   // FIXME: Preserve the equivalence classes during copy insertion and use
   // the preversed equivalence classes instead of recomputing them.
   RegNodeMap.clear();
-  PartitionRegisters(MF);
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end();
+       I != E; ++I) {
+    for (MachineBasicBlock::iterator BBI = I->begin(), BBE = I->end();
+         BBI != BBE && BBI->isPHI(); ++BBI) {
+      unsigned DestReg = BBI->getOperand(0).getReg();
+      addReg(DestReg);
+
+      for (unsigned i = 1; i < BBI->getNumOperands(); i += 2) {
+        unsigned SrcReg = BBI->getOperand(i).getReg();
+        addReg(SrcReg);
+        unionRegs(DestReg, SrcReg);
+      }
+    }
+  }
 
   DenseMap<unsigned, unsigned> RegRenamingMap;
   bool Changed = false;
@@ -336,6 +381,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
 
   Allocator.Reset();
   RegNodeMap.clear();
+  PHISrcDefs.clear();
   InsertedSrcCopySet.clear();
   InsertedSrcCopyMap.clear();
   InsertedDestCopies.clear();
@@ -410,23 +456,6 @@ void StrongPHIElimination::isolatePHI(MachineInstr* PHI) {
   Node->parent.setInt(Node->parent.getInt() | Node::kPHIIsolatedFlag);
 }
 
-void StrongPHIElimination::PartitionRegisters(MachineFunction& MF) {
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end();
-       I != E; ++I) {
-    for (MachineBasicBlock::iterator BBI = I->begin(), BBE = I->end();
-         BBI != BBE && BBI->isPHI(); ++BBI) {
-      unsigned DestReg = BBI->getOperand(0).getReg();
-      addReg(DestReg);
-
-      for (unsigned i = 1; i < BBI->getNumOperands(); i += 2) {
-        unsigned SrcReg = BBI->getOperand(i).getReg();
-        addReg(SrcReg);
-        unionRegs(DestReg, SrcReg);
-      }
-    }
-  }
-}
-
 /// SplitInterferencesForBasicBlock - traverses a basic block, splitting any
 /// interferences found between registers in the same congruence class. It
 /// takes two DenseMaps as arguments that it also updates:
@@ -471,10 +500,15 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
     MachineBasicBlock& MBB,
     DenseMap<unsigned, unsigned>& CurrentDominatingParent,
     DenseMap<unsigned, unsigned>& ImmediateDominatingParent) {
-  for (MachineBasicBlock::iterator BBI = MBB.begin(), BBE = MBB.end();
-  BBI != BBE; ++BBI) {
-    for (MachineInstr::const_mop_iterator I = BBI->operands_begin(),
-         E = BBI->operands_end(); I != E; ++I) {
+  // Sort defs by their order in the original basic block, as the code below
+  // assumes that it is processing definitions in dominance order.
+  std::vector<MachineInstr*>& DefInstrs = PHISrcDefs[&MBB];
+  std::sort(DefInstrs.begin(), DefInstrs.end(), MIIndexCompare(LI));
+
+  for (std::vector<MachineInstr*>::const_iterator BBI = DefInstrs.begin(),
+       BBE = DefInstrs.end(); BBI != BBE; ++BBI) {
+    for (MachineInstr::const_mop_iterator I = (*BBI)->operands_begin(),
+         E = (*BBI)->operands_end(); I != E; ++I) {
       const MachineOperand& MO = *I;
 
       // FIXME: This would be faster if it were possible to bail out of checking
@@ -506,7 +540,7 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
 
       // Pop registers from the stack represented by ImmediateDominatingParent
       // until we find a parent that dominates the current instruction.
-      while (NewParent && (!DT->dominates(MRI->getVRegDef(NewParent), BBI)
+      while (NewParent && (!DT->dominates(MRI->getVRegDef(NewParent), *BBI)
                            || !getRegColor(NewParent)))
         NewParent = ImmediateDominatingParent[NewParent];
 
@@ -514,7 +548,7 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
       // instruction, so it is only necessary to check for the liveness of
       // NewParent in order to check for an interference.
       if (NewParent
-          && LI->getInterval(NewParent).liveAt(LI->getInstructionIndex(BBI))) {
+          && LI->getInterval(NewParent).liveAt(LI->getInstructionIndex(*BBI))) {
         // If there is an interference, always isolate the new register. This
         // could be improved by using a heuristic that decides which of the two
         // registers to isolate.
