@@ -395,6 +395,7 @@ namespace llvm {
 
     virtual bool EmitCFIStartProc();
     virtual bool EmitCFIEndProc();
+    virtual bool EmitCFIDefCfa(int64_t Register, int64_t Offset);
     virtual bool EmitCFIDefCfaOffset(int64_t Offset);
     virtual bool EmitCFIDefCfaRegister(int64_t Register);
     virtual bool EmitCFIOffset(int64_t Register, int64_t Offset);

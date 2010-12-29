@@ -172,6 +172,18 @@ bool MCStreamer::EmitCFIEndProc() {
   return false;
 }
 
+bool MCStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
+  EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+  MachineLocation Dest(MachineLocation::VirtualFP);
+  MachineLocation Source(Register, -Offset);
+  MCCFIInstruction Instruction(Label, Dest, Source);
+  CurFrame->Instructions.push_back(Instruction);
+  return false;
+}
+
 bool MCStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
   EnsureValidFrame();
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();

@@ -244,6 +244,8 @@ public:
                                                               ".cfi_startproc");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIEndProc>(
                                                                 ".cfi_endproc");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIDefCfa>(
+                                                         ".cfi_def_cfa");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIDefCfaOffset>(
                                                          ".cfi_def_cfa_offset");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIDefCfaRegister>(
@@ -278,6 +280,7 @@ public:
   bool ParseDirectiveStabs(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIStartProc(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIDefCfa(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIDefCfaOffset(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIDefCfaRegister(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc);
@@ -2170,6 +2173,25 @@ bool GenericAsmParser::ParseDirectiveCFIStartProc(StringRef,
 /// ::= .cfi_endproc
 bool GenericAsmParser::ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc) {
   return getStreamer().EmitCFIEndProc();
+}
+
+/// ParseDirectiveCFIDefCfa
+/// ::= .cfi_def_cfa register,  offset
+bool GenericAsmParser::ParseDirectiveCFIDefCfa(StringRef,
+                                               SMLoc DirectiveLoc) {
+  int64_t Register = 0;
+  if (getParser().ParseAbsoluteExpression(Register))
+    return true;
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("unexpected token in directive");
+  Lex();
+
+  int64_t Offset = 0;
+  if (getParser().ParseAbsoluteExpression(Offset))
+    return true;
+
+  return getStreamer().EmitCFIDefCfa(Register, Offset);
 }
 
 /// ParseDirectiveCFIDefCfaOffset

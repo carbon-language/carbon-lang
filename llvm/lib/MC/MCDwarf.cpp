@@ -440,10 +440,7 @@ static int getDataAlignmentFactor(MCStreamer &streamer) {
 }
 
 static void EmitCFIInstruction(MCStreamer &Streamer,
-                               const MCCFIInstruction &Instr,
-                               bool isEH) {
-  MCContext &context = Streamer.getContext();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+                               const MCCFIInstruction &Instr) {
   int dataAlignmentFactor = getDataAlignmentFactor(Streamer);
 
   switch (Instr.getOperation()) {
@@ -459,8 +456,7 @@ static void EmitCFIInstruction(MCStreamer &Streamer,
         Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_offset, 1);
       } else {
         Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa, 1);
-        Streamer.EmitULEB128IntValue(asmInfo.getDwarfRegNum(Src.getReg(),
-                                                            isEH));
+        Streamer.EmitULEB128IntValue(Src.getReg());
       }
 
       Streamer.EmitULEB128IntValue(-Src.getOffset(), 1);
@@ -470,11 +466,11 @@ static void EmitCFIInstruction(MCStreamer &Streamer,
     if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
       assert(Dst.isReg() && "Machine move not supported yet.");
       Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_register, 1);
-      Streamer.EmitULEB128IntValue(asmInfo.getDwarfRegNum(Dst.getReg(), isEH));
+      Streamer.EmitULEB128IntValue(Dst.getReg());
       return;
     }
 
-    unsigned Reg = asmInfo.getDwarfRegNum(Src.getReg(), isEH);
+    unsigned Reg = Src.getReg();
     int Offset = Dst.getOffset() / dataAlignmentFactor;
 
     if (Offset < 0) {
@@ -505,7 +501,7 @@ static void EmitCFIInstruction(MCStreamer &Streamer,
 /// frame.
 static void EmitCFIInstructions(MCStreamer &streamer,
                                 const std::vector<MCCFIInstruction> &Instrs,
-                                MCSymbol *BaseLabel, bool isEH) {
+                                MCSymbol *BaseLabel) {
   for (unsigned i = 0, N = Instrs.size(); i < N; ++i) {
     const MCCFIInstruction &Instr = Instrs[i];
     MCSymbol *Label = Instr.getLabel();
@@ -521,7 +517,7 @@ static void EmitCFIInstructions(MCStreamer &streamer,
       }
     }
 
-    EmitCFIInstruction(streamer, Instr, isEH);
+    EmitCFIInstruction(streamer, Instr);
   }
 }
 
@@ -564,6 +560,17 @@ static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
     streamer.EmitPCRelSymbolValue(&symbol, size);
     break;
   }
+}
+
+static const MachineLocation TranslateMachineLocation(
+                                                  const TargetAsmInfo &AsmInfo,
+                                                  const MachineLocation &Loc) {
+  unsigned Reg = Loc.getReg() == MachineLocation::VirtualFP ?
+    MachineLocation::VirtualFP :
+    unsigned(AsmInfo.getDwarfRegNum(Loc.getReg(), true));
+  const MachineLocation &NewLoc = Loc.isReg() ?
+    MachineLocation(Reg) : MachineLocation(Reg, Loc.getOffset());
+  return NewLoc;
 }
 
 static const MCSymbol &EmitCIE(MCStreamer &streamer,
@@ -640,12 +647,16 @@ static const MCSymbol &EmitCIE(MCStreamer &streamer,
   std::vector<MCCFIInstruction> Instructions;
 
   for (int i = 0, n = Moves.size(); i != n; ++i) {
-    MCCFIInstruction Inst(Moves[i].getLabel(), Moves[i].getDestination(),
-                          Moves[i].getSource());
+    MCSymbol *Label = Moves[i].getLabel();
+    const MachineLocation &Dst =
+      TranslateMachineLocation(asmInfo, Moves[i].getDestination());
+    const MachineLocation &Src =
+      TranslateMachineLocation(asmInfo, Moves[i].getSource());
+    MCCFIInstruction Inst(Label, Dst, Src);
     Instructions.push_back(Inst);
   }
 
-  EmitCFIInstructions(streamer, Instructions, NULL, true);
+  EmitCFIInstructions(streamer, Instructions, NULL);
 
   // Padding
   streamer.EmitValueToAlignment(4);
@@ -694,7 +705,7 @@ static MCSymbol *EmitFDE(MCStreamer &streamer,
   streamer.EmitLabel(augmentationEnd);
   // Call Frame Instructions
 
-  EmitCFIInstructions(streamer, frame.Instructions, frame.Begin, true);
+  EmitCFIInstructions(streamer, frame.Instructions, frame.Begin);
 
   // Padding
   streamer.EmitValueToAlignment(4);
