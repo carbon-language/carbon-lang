@@ -1,7 +1,7 @@
 ; Ensure constant propogation of logical instructions is working correctly.
 
-; RUN: opt < %s -constprop -die -S | \
-; RUN:   not egrep {and|or|xor}
+; RUN: opt < %s -constprop -die -S | FileCheck %s
+; CHECK-NOT:     {{and|or|xor}}
 
 define i32 @test1() {
         %R = and i32 4, 1234            ; <i32> [#uses=1]
