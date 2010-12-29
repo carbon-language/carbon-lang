@@ -568,6 +568,18 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-shared. Use "yes" or "no"]) ;;
 esac
 
+dnl Allow libstdc++ is embedded in LLVM.dll.
+AC_ARG_ENABLE(embed-stdcxx,
+  AS_HELP_STRING([--enable-embed-stdcxx],
+                 [Build a shared library with embedded libstdc++ for Win32 DLL (default is YES)]),,
+                 enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_EMBED_STDCXX,[1]) ;;
+  no)  AC_SUBST(ENABLE_EMBED_STDCXX,[0]) ;;
+  default) AC_SUBST(ENABLE_EMBED_STDCXX,[1]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-embed-stdcxx. Use "yes" or "no"]) ;;
+esac
+
 dnl Enable embedding timestamp information into build.
 AC_ARG_ENABLE(timestamps,
   AS_HELP_STRING([--enable-timestamps],

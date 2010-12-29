@@ -279,6 +279,9 @@ ENABLE_PIC := @ENABLE_PIC@
 # Do we want to build a shared library and link the tools with it?
 ENABLE_SHARED := @ENABLE_SHARED@
 
+# Do we want to link the stdc++ into a shared library? (Cygming)
+ENABLE_EMBED_STDCXX := @ENABLE_EMBED_STDCXX@
+
 # Use -fvisibility-inlines-hidden?
 ENABLE_VISIBILITY_INLINES_HIDDEN := @ENABLE_VISIBILITY_INLINES_HIDDEN@
 

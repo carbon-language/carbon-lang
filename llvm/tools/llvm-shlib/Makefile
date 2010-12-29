@@ -18,11 +18,12 @@ SHARED_LIBRARY = 1
 include $(LEVEL)/Makefile.config
 
 ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
-    EXPORTED_SYMBOL_FILE = $(ObjDir)/$(LIBRARYNAME).exports
+  EXPORTED_SYMBOL_FILE = $(ObjDir)/$(LIBRARYNAME).exports
 
+  ifeq (1,$(ENABLE_EMBED_STDCXX))
     # It is needed to force static-stdc++.a linked.
-    # FIXME: It should be omitted when configure detects system's stdc++.dll.
     SHLIB_FRAG_NAMES += stdc++.a.o
+  endif
 
 endif
 
