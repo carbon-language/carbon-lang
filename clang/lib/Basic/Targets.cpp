@@ -1063,6 +1063,9 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
            CPU == "athlon-fx") {
     setFeatureEnabled(Features, "sse2", true);
     setFeatureEnabled(Features, "3dnowa", true);
+  } else if (CPU == "k8-sse3") {
+    setFeatureEnabled(Features, "sse3", true);
+    setFeatureEnabled(Features, "3dnowa", true);
   } else if (CPU == "c3-2")
     setFeatureEnabled(Features, "sse", true);
 }
