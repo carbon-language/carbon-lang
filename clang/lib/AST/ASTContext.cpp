@@ -3526,6 +3526,42 @@ void ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr,
   }
 }
 
+void ASTContext::getObjCEncodingForFunctionDecl(const FunctionDecl *Decl,
+                                                std::string& S) {
+  // Encode result type.
+  getObjCEncodingForType(Decl->getResultType(), S);
+  CharUnits ParmOffset;
+  // Compute size of all parameters.
+  for (FunctionDecl::param_const_iterator PI = Decl->param_begin(),
+       E = Decl->param_end(); PI != E; ++PI) {
+    QualType PType = (*PI)->getType();
+    CharUnits sz = getObjCEncodingTypeSize(PType);
+    assert (sz.isPositive() && 
+        "getObjCEncodingForMethodDecl - Incomplete param type");
+    ParmOffset += sz;
+  }
+  S += charUnitsToString(ParmOffset);
+  ParmOffset = CharUnits::Zero();
+
+  // Argument types.
+  for (FunctionDecl::param_const_iterator PI = Decl->param_begin(),
+       E = Decl->param_end(); PI != E; ++PI) {
+    ParmVarDecl *PVDecl = *PI;
+    QualType PType = PVDecl->getOriginalType();
+    if (const ArrayType *AT =
+          dyn_cast<ArrayType>(PType->getCanonicalTypeInternal())) {
+      // Use array's original type only if it has known number of
+      // elements.
+      if (!isa<ConstantArrayType>(AT))
+        PType = PVDecl->getType();
+    } else if (PType->isFunctionType())
+      PType = PVDecl->getType();
+    getObjCEncodingForType(PType, S);
+    S += charUnitsToString(ParmOffset);
+    ParmOffset += getObjCEncodingTypeSize(PType);
+  }
+}
+
 /// getObjCEncodingForMethodDecl - Return the encoded type for this method
 /// declaration.
 void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,

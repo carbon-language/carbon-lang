@@ -828,6 +828,10 @@ public:
   void getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT,
                                        std::string &S) const;
 
+  /// getObjCEncodingForFunctionDecl - Returns the encoded type for this
+  //function.  This is in the same format as Objective-C method encodings.  
+  void getObjCEncodingForFunctionDecl(const FunctionDecl *Decl, std::string& S);
+
   /// getObjCEncodingForMethodDecl - Return the encoded type for this method
   /// declaration.
   void getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl, std::string &S);

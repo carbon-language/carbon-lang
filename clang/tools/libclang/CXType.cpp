@@ -353,4 +353,33 @@ unsigned clang_isPODType(CXType X) {
   return T->isPODType() ? 1 : 0;
 }
 
+CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
+  if ((C.kind < CXCursor_FirstDecl) || (C.kind > CXCursor_LastDecl))
+    return cxstring::createCXString("");
+
+  Decl *D = static_cast<Decl*>(C.data[0]);
+  CXTranslationUnit TU = static_cast<CXTranslationUnit>(C.data[2]);
+  ASTUnit *AU = static_cast<ASTUnit*>(TU->TUData);
+  ASTContext &Ctx = AU->getASTContext();
+  std::string encoding;
+
+  if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) 
+    Ctx.getObjCEncodingForMethodDecl(OMD, encoding);
+  else if (ObjCPropertyDecl *OPD = dyn_cast<ObjCPropertyDecl>(D)) 
+    Ctx.getObjCEncodingForPropertyDecl(OPD, NULL, encoding);
+  else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    Ctx.getObjCEncodingForFunctionDecl(FD, encoding);
+  else {
+    QualType Ty;
+    if (TypeDecl *TD = dyn_cast<TypeDecl>(D))
+      Ty = QualType(TD->getTypeForDecl(), 0);
+    if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+      Ty = VD->getType();
+    else return cxstring::createCXString("?");
+    Ctx.getObjCEncodingForType(Ty, encoding);
+  }
+
+  return cxstring::createCXString(encoding);
+}
+
 } // end: extern "C"

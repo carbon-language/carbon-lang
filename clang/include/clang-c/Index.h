@@ -1792,6 +1792,10 @@ CINDEX_LINKAGE CXType clang_getPointeeType(CXType T);
  */
 CINDEX_LINKAGE CXCursor clang_getTypeDeclaration(CXType T);
 
+/**
+ * Returns the Objective-C type encoding for the specified declaration.
+ */
+CINDEX_LINKAGE CXString clang_getDeclObjCTypeEncoding(CXCursor C);
 
 /**
  * \brief Retrieve the spelling of a given CXTypeKind.
