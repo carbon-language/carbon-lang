@@ -591,7 +591,7 @@ static bool shouldUseMemSetPlusStoresToInitialize(llvm::Constant *Init,
 }
 
 
-/// EmitLocalVarDecl - Emit code and set up an entry in LocalDeclMap for a
+/// EmitAutoVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
 void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
