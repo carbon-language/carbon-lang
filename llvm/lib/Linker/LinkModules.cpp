@@ -1218,10 +1218,13 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
       Src->getDataLayout() != Dest->getDataLayout())
     errs() << "WARNING: Linking two modules of different data layouts!\n";
   if (!Src->getTargetTriple().empty() &&
-      Dest->getTargetTriple() != Src->getTargetTriple())
-    errs() << "WARNING: Linking two modules of different target triples: '"
-           << Src->getTargetTriple() << "' and '" << Dest->getTargetTriple()
-           << "'\n";
+      Dest->getTargetTriple() != Src->getTargetTriple()) {
+    errs() << "WARNING: Linking two modules of different target triples: ";
+    if (!Src->getModuleIdentifier().empty())
+      errs() << Src->getModuleIdentifier() << ": ";
+    errs() << "'" << Src->getTargetTriple() << "' and '" 
+           << Dest->getTargetTriple() << "'\n";
+  }
 
   // Append the module inline asm string.
   if (!Src->getModuleInlineAsm().empty()) {
