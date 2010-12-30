@@ -712,31 +712,30 @@ static MCSymbol *EmitFDE(MCStreamer &streamer,
   return fdeEnd;
 }
 
-struct CIEKey {
-  static const CIEKey EmptyKey;
-  static const CIEKey TombstoneKey;
+namespace {
+  struct CIEKey {
+    static const CIEKey getEmptyKey() { return CIEKey(0, 0, -1); }
+    static const CIEKey getTombstoneKey() { return CIEKey(0, -1, 0); }
 
-  CIEKey(const MCSymbol* Personality_, unsigned PersonalityEncoding_,
-         unsigned LsdaEncoding_) : Personality(Personality_),
-                                   PersonalityEncoding(PersonalityEncoding_),
-                                   LsdaEncoding(LsdaEncoding_) {
-  }
-  const MCSymbol* Personality;
-  unsigned PersonalityEncoding;
-  unsigned LsdaEncoding;
-};
-
-const CIEKey CIEKey::EmptyKey(0, 0, -1);
-const CIEKey CIEKey::TombstoneKey(0, -1, 0);
+    CIEKey(const MCSymbol* Personality_, unsigned PersonalityEncoding_,
+           unsigned LsdaEncoding_) : Personality(Personality_),
+                                     PersonalityEncoding(PersonalityEncoding_),
+                                     LsdaEncoding(LsdaEncoding_) {
+    }
+    const MCSymbol* Personality;
+    unsigned PersonalityEncoding;
+    unsigned LsdaEncoding;
+  };
+}
 
 namespace llvm {
   template <>
   struct DenseMapInfo<CIEKey> {
     static CIEKey getEmptyKey() {
-      return CIEKey::EmptyKey;
+      return CIEKey::getEmptyKey();
     }
     static CIEKey getTombstoneKey() {
-      return CIEKey::TombstoneKey;
+      return CIEKey::getTombstoneKey();
     }
     static unsigned getHashValue(const CIEKey &Key) {
       FoldingSetNodeID ID;

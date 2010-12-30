@@ -650,7 +650,8 @@ bool llvm::EliminateDuplicatePHINodes(BasicBlock *BB) {
 /// is to simply align all global variables and allocation instructions to
 /// their preferred alignment from the beginning.
 ///
-unsigned enforceKnownAlignment(Value *V, unsigned Align, unsigned PrefAlign) {
+static unsigned enforceKnownAlignment(Value *V, unsigned Align,
+                                      unsigned PrefAlign) {
 
   User *U = dyn_cast<User>(V);
   if (!U) return Align;
