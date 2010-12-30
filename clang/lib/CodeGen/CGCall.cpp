@@ -878,15 +878,13 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           //
           // FIXME: We should have a common utility for generating an aggregate
           // copy.
-          const llvm::Type *I8PtrTy = llvm::Type::getInt8PtrTy(VMContext, 0);
+          const llvm::Type *I8PtrTy = Builder.getInt8PtrTy();
           unsigned Size = getContext().getTypeSize(Ty) / 8;
-          Builder.CreateCall5(CGM.getMemCpyFn(I8PtrTy, I8PtrTy, IntPtrTy),
-                              Builder.CreateBitCast(AlignedTemp, I8PtrTy),
-                              Builder.CreateBitCast(V, I8PtrTy),
-                              llvm::ConstantInt::get(IntPtrTy, Size),
-                              Builder.getInt32(ArgI.getIndirectAlign()),
-                              /*Volatile=*/Builder.getInt1(false));
-
+          Builder.CreateMemCpy(Builder.CreateBitCast(AlignedTemp, I8PtrTy),
+                               Builder.CreateBitCast(V, I8PtrTy),
+                               llvm::ConstantInt::get(IntPtrTy, Size),
+                               ArgI.getIndirectAlign(),
+                               false);
           V = AlignedTemp;
         }
       } else {

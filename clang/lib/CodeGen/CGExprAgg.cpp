@@ -806,16 +806,13 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
   
   // Okay, it seems like a good idea to use an initial memset, emit the call.
   llvm::Constant *SizeVal = CGF.Builder.getInt64(TypeInfo.first/8);
-  llvm::ConstantInt *AlignVal = CGF.Builder.getInt32(TypeInfo.second/8);
+  unsigned Align = TypeInfo.second/8;
 
   llvm::Value *Loc = Slot.getAddr();
   const llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   
   Loc = CGF.Builder.CreateBitCast(Loc, BP);
-  CGF.Builder.CreateCall5(CGF.CGM.getMemSetFn(Loc->getType(),
-                                              SizeVal->getType()),
-                          Loc, CGF.Builder.getInt8(0), SizeVal, AlignVal,
-                          CGF.Builder.getFalse());
+  CGF.Builder.CreateMemSet(Loc, CGF.Builder.getInt8(0), SizeVal, Align, false);
   
   // Tell the AggExprEmitter that the slot is known zero.
   Slot.setZeroed();
@@ -935,11 +932,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
     }
   }
   
-  Builder.CreateCall5(CGM.getMemCpyFn(DestPtr->getType(), SrcPtr->getType(),
-                                      IntPtrTy),
-                      DestPtr, SrcPtr,
-                      // TypeInfo.first describes size in bits.
-                      llvm::ConstantInt::get(IntPtrTy, TypeInfo.first/8),
-                      Builder.getInt32(TypeInfo.second/8),
-                      Builder.getInt1(isVolatile));
+  Builder.CreateMemCpy(DestPtr, SrcPtr,
+                       llvm::ConstantInt::get(IntPtrTy, TypeInfo.first/8),
+                       TypeInfo.second/8, isVolatile);
 }

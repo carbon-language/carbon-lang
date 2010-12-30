@@ -1465,27 +1465,6 @@ llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,
                                          (llvm::Intrinsic::ID)IID, Tys, NumTys);
 }
 
-
-llvm::Function *CodeGenModule::getMemCpyFn(const llvm::Type *DestType,
-                                           const llvm::Type *SrcType,
-                                           const llvm::Type *SizeType) {
-  const llvm::Type *ArgTypes[3] = {DestType, SrcType, SizeType };
-  return getIntrinsic(llvm::Intrinsic::memcpy, ArgTypes, 3);
-}
-
-llvm::Function *CodeGenModule::getMemMoveFn(const llvm::Type *DestType,
-                                            const llvm::Type *SrcType,
-                                            const llvm::Type *SizeType) {
-  const llvm::Type *ArgTypes[3] = {DestType, SrcType, SizeType };
-  return getIntrinsic(llvm::Intrinsic::memmove, ArgTypes, 3);
-}
-
-llvm::Function *CodeGenModule::getMemSetFn(const llvm::Type *DestType,
-                                           const llvm::Type *SizeType) {
-  const llvm::Type *ArgTypes[2] = { DestType, SizeType };
-  return getIntrinsic(llvm::Intrinsic::memset, ArgTypes, 2);
-}
-
 static llvm::StringMapEntry<llvm::Constant*> &
 GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
                          const StringLiteral *Literal,

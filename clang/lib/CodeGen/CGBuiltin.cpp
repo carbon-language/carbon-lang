@@ -526,12 +526,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_bzero: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Value *SizeVal = EmitScalarExpr(E->getArg(1));
-    Builder.CreateCall5(CGM.getMemSetFn(Address->getType(), SizeVal->getType()),
-                   Address,
-                   llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), 0),
-                   SizeVal,
-                   llvm::ConstantInt::get(Int32Ty, 1),
-                   llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), 0));
+    Builder.CreateMemSet(Address, Builder.getInt8(0), SizeVal, 1, false);
     return RValue::get(Address);
   }
   case Builtin::BImemcpy:
@@ -539,11 +534,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Address = EmitScalarExpr(E->getArg(0));
     Value *SrcAddr = EmitScalarExpr(E->getArg(1));
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
-    Builder.CreateCall5(CGM.getMemCpyFn(Address->getType(), SrcAddr->getType(),
-                                        SizeVal->getType()),
-                  Address, SrcAddr, SizeVal, 
-                  llvm::ConstantInt::get(Int32Ty, 1),
-                  llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), 0));
+    Builder.CreateMemCpy(Address, SrcAddr, SizeVal, 1, false);
     return RValue::get(Address);
   }
       
@@ -561,24 +552,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Address = EmitScalarExpr(E->getArg(0));
     Value *SrcAddr = EmitScalarExpr(E->getArg(1));
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
-    Builder.CreateCall5(CGM.getMemMoveFn(Address->getType(), SrcAddr->getType(),
-                                         SizeVal->getType()),
-                  Address, SrcAddr, SizeVal, 
-                  llvm::ConstantInt::get(Int32Ty, 1),
-                  llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), 0));
+    Builder.CreateMemMove(Address, SrcAddr, SizeVal, 1, false);
     return RValue::get(Address);
   }
   case Builtin::BImemset:
   case Builtin::BI__builtin_memset: {
     Value *Address = EmitScalarExpr(E->getArg(0));
+    Value *ByteVal = Builder.CreateTrunc(EmitScalarExpr(E->getArg(1)),
+                                         Builder.getInt8Ty());
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
-    Builder.CreateCall5(CGM.getMemSetFn(Address->getType(), SizeVal->getType()),
-                  Address,
-                  Builder.CreateTrunc(EmitScalarExpr(E->getArg(1)),
-                                      llvm::Type::getInt8Ty(VMContext)),
-                  SizeVal,
-                  llvm::ConstantInt::get(Int32Ty, 1),
-                  llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), 0));
+    Builder.CreateMemSet(Address, ByteVal, SizeVal, 1, false);
     return RValue::get(Address);
   }
   case Builtin::BI__builtin_dwarf_cfa: {

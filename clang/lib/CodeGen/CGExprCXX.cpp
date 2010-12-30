@@ -617,14 +617,9 @@ static void EmitZeroMemSet(CodeGenFunction &CGF, QualType T,
   const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
   if (NewPtr->getType() != BP)
     NewPtr = CGF.Builder.CreateBitCast(NewPtr, BP, "tmp");
-  
-  CGF.Builder.CreateCall5(CGF.CGM.getMemSetFn(BP, CGF.IntPtrTy), NewPtr,
-                llvm::Constant::getNullValue(llvm::Type::getInt8Ty(VMContext)),
-                          Size,
-                    llvm::ConstantInt::get(CGF.Int32Ty, 
-                                           CGF.getContext().getTypeAlign(T)/8),
-                          llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext),
-                                                 0));
+
+  CGF.Builder.CreateMemSet(NewPtr, CGF.Builder.getInt8(0), Size,
+                           CGF.getContext().getTypeAlign(T)/8, false);
 }
                        
 static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,

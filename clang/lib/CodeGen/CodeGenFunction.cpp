@@ -534,22 +534,20 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
   // Cast the dest ptr to the appropriate i8 pointer type.
   unsigned DestAS =
     cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
-  const llvm::Type *BP =
-    llvm::Type::getInt8PtrTy(VMContext, DestAS);
+  const llvm::Type *BP = Builder.getInt8PtrTy(DestAS);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
 
   // Get size and alignment info for this aggregate.
   std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
-  uint64_t Size = TypeInfo.first;
-  unsigned Align = TypeInfo.second;
+  uint64_t Size = TypeInfo.first / 8;
+  unsigned Align = TypeInfo.second / 8;
 
   // Don't bother emitting a zero-byte memset.
   if (Size == 0)
     return;
 
-  llvm::ConstantInt *SizeVal = llvm::ConstantInt::get(IntPtrTy, Size / 8);
-  llvm::ConstantInt *AlignVal = Builder.getInt32(Align / 8);
+  llvm::ConstantInt *SizeVal = llvm::ConstantInt::get(IntPtrTy, Size);
 
   // If the type contains a pointer to data member we can't memset it to zero.
   // Instead, create a null constant and copy it to the destination.
@@ -567,10 +565,7 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
     // FIXME: variable-size types?
 
     // Get and call the appropriate llvm.memcpy overload.
-    llvm::Constant *Memcpy =
-      CGM.getMemCpyFn(DestPtr->getType(), SrcPtr->getType(), IntPtrTy);
-    Builder.CreateCall5(Memcpy, DestPtr, SrcPtr, SizeVal, AlignVal,
-                        /*volatile*/ Builder.getFalse());
+    Builder.CreateMemCpy(DestPtr, SrcPtr, SizeVal, Align, false);
     return;
   } 
   
@@ -579,9 +574,7 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
   // handled above) are guaranteed to have a bit pattern of all zeros.
 
   // FIXME: Handle variable sized types.
-  Builder.CreateCall5(CGM.getMemSetFn(BP, IntPtrTy), DestPtr,
-                      Builder.getInt8(0),
-                      SizeVal, AlignVal, /*volatile*/ Builder.getFalse());
+  Builder.CreateMemSet(DestPtr, Builder.getInt8(0), SizeVal, Align, false);
 }
 
 llvm::BlockAddress *CodeGenFunction::GetAddrOfLabel(const LabelStmt *L) {

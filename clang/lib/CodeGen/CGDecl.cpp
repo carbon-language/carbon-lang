@@ -810,26 +810,20 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
       llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), Ty,this);
       assert(Init != 0 && "Wasn't a simple constant init?");
       
-      llvm::Value *AlignVal = Builder.getInt32(Align.getQuantity());
       llvm::Value *SizeVal =
       llvm::ConstantInt::get(CGF.IntPtrTy, 
                              getContext().getTypeSizeInChars(Ty).getQuantity());
       
-      const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
+      const llvm::Type *BP = Builder.getInt8PtrTy();
       if (Loc->getType() != BP)
         Loc = Builder.CreateBitCast(Loc, BP, "tmp");
-      
-      llvm::Value *NotVolatile = Builder.getFalse();
 
       // If the initializer is all or mostly zeros, codegen with memset then do
       // a few stores afterward.
       if (shouldUseMemSetPlusStoresToInitialize(Init, 
                       CGM.getTargetData().getTypeAllocSize(Init->getType()))) {
-        const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
-        
-        Builder.CreateCall5(CGM.getMemSetFn(BP, SizeVal->getType()),
-                            Loc, Builder.getInt8(0), SizeVal, AlignVal,
-                            NotVolatile);
+        Builder.CreateMemSet(Loc, Builder.getInt8(0), SizeVal,
+                             Align.getQuantity(), false);
         if (!Init->isNullValue()) {
           Loc = Builder.CreateBitCast(Loc, Init->getType()->getPointerTo());
           emitStoresForInitAfterMemset(Init, Loc, Builder);
@@ -849,9 +843,7 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
         if (SrcPtr->getType() != BP)
           SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
 
-        Builder.CreateCall5(CGM.getMemCpyFn(Loc->getType(), SrcPtr->getType(),
-                                            SizeVal->getType()),
-                            Loc, SrcPtr, SizeVal, AlignVal, NotVolatile);
+        Builder.CreateMemCpy(Loc, SrcPtr, SizeVal, Align.getQuantity(), false);
       }
     } else if (Ty->isReferenceType()) {
       RValue RV = EmitReferenceBindingToExpr(Init, &D);
