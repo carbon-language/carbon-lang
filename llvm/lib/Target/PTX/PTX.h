@@ -21,6 +21,16 @@ namespace llvm {
   class PTXTargetMachine;
   class FunctionPass;
 
+  namespace PTX {
+    enum StateSpace {
+      GLOBAL = 0, // default to global state space
+      CONSTANT = 1,
+      LOCAL = 2,
+      PARAMETER = 3,
+      SHARED = 4
+    };
+  } // namespace PTX
+
   FunctionPass *createPTXISelDag(PTXTargetMachine &TM,
                                  CodeGenOpt::Level OptLevel);
 

@@ -22,9 +22,47 @@ include "PTXInstrFormats.td"
 //===----------------------------------------------------------------------===//
 
 def load_global : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
-    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-      return PT->getAddressSpace() <= 255;
+  const Value *Src;
+  const PointerType *PT;
+  if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
+      (PT = dyn_cast<PointerType>(Src->getType())))
+    return PT->getAddressSpace() == PTX::GLOBAL;
+  return false;
+}]>;
+
+def load_constant : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  const Value *Src;
+  const PointerType *PT;
+  if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
+      (PT = dyn_cast<PointerType>(Src->getType())))
+    return PT->getAddressSpace() == PTX::CONSTANT;
+  return false;
+}]>;
+
+def load_local : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  const Value *Src;
+  const PointerType *PT;
+  if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
+      (PT = dyn_cast<PointerType>(Src->getType())))
+    return PT->getAddressSpace() == PTX::LOCAL;
+  return false;
+}]>;
+
+def load_parameter : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  const Value *Src;
+  const PointerType *PT;
+  if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
+      (PT = dyn_cast<PointerType>(Src->getType())))
+    return PT->getAddressSpace() == PTX::PARAMETER;
+  return false;
+}]>;
+
+def load_shared : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  const Value *Src;
+  const PointerType *PT;
+  if ((Src = cast<LoadSDNode>(N)->getSrcValue()) &&
+      (PT = dyn_cast<PointerType>(Src->getType())))
+    return PT->getAddressSpace() == PTX::SHARED;
   return false;
 }]>;
 
@@ -142,6 +180,10 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 }
 
 defm LDg : PTX_LD<"ld.global", RRegs32, load_global>;
+defm LDc : PTX_LD<"ld.const",  RRegs32, load_constant>;
+defm LDl : PTX_LD<"ld.local",  RRegs32, load_local>;
+defm LDp : PTX_LD<"ld.param",  RRegs32, load_parameter>;
+defm LDs : PTX_LD<"ld.shared", RRegs32, load_shared>;
 
 ///===- Control Flow Instructions -----------------------------------------===//
 

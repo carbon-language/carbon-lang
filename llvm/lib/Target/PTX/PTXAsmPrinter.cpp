@@ -103,11 +103,14 @@ static const char *getInstructionTypeName(const MachineInstr *MI) {
 }
 
 static const char *getStateSpaceName(unsigned addressSpace) {
-  if (addressSpace <= 255)
-    return "global";
-  // TODO Add more state spaces
-
-  llvm_unreachable("Unknown state space");
+  switch (addressSpace) {
+  default: llvm_unreachable("Unknown state space");
+  case PTX::GLOBAL:    return "global";
+  case PTX::CONSTANT:  return "const";
+  case PTX::LOCAL:     return "local";
+  case PTX::PARAMETER: return "param";
+  case PTX::SHARED:    return "shared";
+  }
   return NULL;
 }
 
