@@ -233,10 +233,9 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
         addReg(SrcReg);
         unionRegs(DestReg, SrcReg);
 
-        for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(SrcReg),
-             DE = MRI->def_end(); DI != DE; ++DI) {
-          PHISrcDefs[DI->getParent()].push_back(&*DI);
-        }
+        MachineInstr* DefMI = MRI->getVRegDef(SrcReg);
+        if (DefMI)
+          PHISrcDefs[DefMI->getParent()].push_back(DefMI);
       }
     }
   }
