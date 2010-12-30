@@ -104,9 +104,6 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
 /// EmitVarDecl - This method handles emission of any variable declaration
 /// inside a function, including static vars etc.
 void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
-  if (D.hasAttr<AsmLabelAttr>())
-    CGM.ErrorUnsupported(&D, "__asm__");
-
   switch (D.getStorageClass()) {
   case SC_None:
   case SC_Auto:

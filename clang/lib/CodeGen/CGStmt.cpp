@@ -919,6 +919,32 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
   return Result;
 }
 
+static std::string
+AddVariableConstraits(const std::string &Constraint, const Expr &AsmExpr,
+                      const TargetInfo &Target, CodeGenModule &CGM,
+                      const AsmStmt &Stmt) {
+  const DeclRefExpr *AsmDeclRef = dyn_cast<DeclRefExpr>(&AsmExpr);
+  if (!AsmDeclRef)
+    return Constraint;
+  const ValueDecl &Value = *AsmDeclRef->getDecl();
+  const VarDecl *Variable = dyn_cast<VarDecl>(&Value);
+  if (!Variable)
+    return Constraint;
+  AsmLabelAttr *Attr = Variable->getAttr<AsmLabelAttr>();
+  if (!Attr)
+    return Constraint;
+  llvm::StringRef Register = Attr->getLabel();
+  if (!Target.isValidGCCRegisterName(Register)) {
+    CGM.ErrorUnsupported(Variable, "__asm__");
+    return Constraint;
+  }
+  if (Constraint != "r") {
+    CGM.ErrorUnsupported(&Stmt, "__asm__");
+    return Constraint;
+  }
+  return "{" + Register.str() + "}";
+}
+
 llvm::Value*
 CodeGenFunction::EmitAsmInputLValue(const AsmStmt &S,
                                     const TargetInfo::ConstraintInfo &Info,
@@ -1056,6 +1082,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     const Expr *OutExpr = S.getOutputExpr(i);
     OutExpr = OutExpr->IgnoreParenNoopCasts(getContext());
 
+    OutputConstraint = AddVariableConstraits(OutputConstraint, *OutExpr, Target,
+                                             CGM, S);
+
     LValue Dest = EmitLValue(OutExpr);
     if (!Constraints.empty())
       Constraints += ',';
@@ -1132,6 +1161,11 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     std::string InputConstraint(S.getInputConstraint(i));
     InputConstraint = SimplifyConstraint(InputConstraint.c_str(), Target,
                                          &OutputConstraintInfos);
+
+    InputConstraint =
+      AddVariableConstraits(InputConstraint,
+                            *InputExpr->IgnoreParenNoopCasts(getContext()),
+                            Target, CGM, S);
 
     llvm::Value *Arg = EmitAsmInput(S, Info, InputExpr, Constraints);
 
