@@ -1465,14 +1465,15 @@ defm : FpUnaryAlias<"fucompi",  UCOM_FIPr>;
 
 
 // Handle "f{mulp,addp} st(0), $op" the same as "f{mulp,addp} $op", since they
-// commute.  We also allow fdivrp/fsubrp even though they don't commute, solely
-// because gas supports it.
+// commute.  We also allow fdiv[r]p/fsubrp even though they don't commute,
+// solely because gas supports it.
 def : InstAlias<"faddp %st(0), $op", (ADD_FPrST0 RST:$op)>;
 def : InstAlias<"fmulp %st(0), $op", (MUL_FPrST0 RST:$op)>;
 def : InstAlias<"fsubrp %st(0), $op", (SUB_FPrST0 RST:$op)>;
+def : InstAlias<"fdivp %st(0), $op", (DIVR_FPrST0 RST:$op)>;
 def : InstAlias<"fdivrp %st(0), $op", (DIV_FPrST0 RST:$op)>;
 
-// We accepts "fnstsw %eax" even though it only writes %ax.
+// We accept "fnstsw %eax" even though it only writes %ax.
 def : InstAlias<"fnstsw %eax", (FNSTSW8r)>;
 def : InstAlias<"fnstsw %al" , (FNSTSW8r)>;
 def : InstAlias<"fnstsw"     , (FNSTSW8r)>;

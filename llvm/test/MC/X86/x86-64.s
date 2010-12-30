@@ -504,6 +504,10 @@ fdivrp %st(1), %st(0) // CHECK: encoding: [0xde,0xf9]
 fsubrp %ST(0), %ST(1) // CHECK: encoding: [0xde,0xe9]
 fsubrp %ST(1), %ST(0) // CHECK: encoding: [0xde,0xe9]
 
+// also PR8861
+fdivp %st(0), %st(1) // CHECK: encoding: [0xde,0xf1]
+fdivp %st(1), %st(0) // CHECK: encoding: [0xde,0xf1]
+
 
 movl	foo(%rip), %eax
 // CHECK: movl	foo(%rip), %eax
