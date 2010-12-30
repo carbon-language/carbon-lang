@@ -1220,7 +1220,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   if (!Src->getTargetTriple().empty() &&
       Dest->getTargetTriple() != Src->getTargetTriple())
     errs() << "WARNING: Linking two modules of different target triples: '"
-           << Src->getTargetTriple() << "' and '" << Dest->getDataLayout()
+           << Src->getTargetTriple() << "' and '" << Dest->getTargetTriple()
            << "'\n";
 
   // Append the module inline asm string.
