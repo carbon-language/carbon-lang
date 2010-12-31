@@ -2610,7 +2610,7 @@ static void TryReferenceInitialization(Sema &S,
       //
       //   The constructor that would be used to make the copy shall
       //   be callable whether or not the copy is actually done.
-      if (!S.getLangOptions().CPlusPlus0x)
+      if (!S.getLangOptions().CPlusPlus0x && !S.getLangOptions().Microsoft)
         Sequence.AddExtraneousCopyToTemporary(cv2T2);
 
       if (DerivedToBase)
