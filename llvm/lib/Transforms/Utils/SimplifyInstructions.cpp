@@ -83,13 +83,8 @@ namespace {
 
       // Finally, run over the function zapping any dead instructions.
       for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-        for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
-          Instruction *I = BI++;
-          if (isInstructionTriviallyDead(I)) {
-            I->eraseFromParent();
-            Changed = true;
-          }
-        }
+        for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;)
+          Changed |= RecursivelyDeleteTriviallyDeadInstructions(BI++);
 
       return Changed;
     }
