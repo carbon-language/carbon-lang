@@ -1,4 +1,4 @@
-//===--- Tool.cpp - Compilation Tools -----------------------------------*-===//
+//===--- Tool.cpp - Compilation Tools -------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

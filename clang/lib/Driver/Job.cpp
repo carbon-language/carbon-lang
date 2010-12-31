@@ -1,4 +1,4 @@
-//===--- Job.cpp - Command to Execute -----------------------------------*-===//
+//===--- Job.cpp - Command to Execute -------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

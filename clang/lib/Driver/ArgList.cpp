@@ -1,4 +1,4 @@
-//===--- ArgList.cpp - Argument List Management -------------------------*-===//
+//===--- ArgList.cpp - Argument List Management ---------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

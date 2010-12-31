@@ -1,4 +1,4 @@
-//===--- Arg.cpp - Argument Implementations -----------------------------*-===//
+//===--- Arg.cpp - Argument Implementations -------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

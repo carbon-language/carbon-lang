@@ -1,4 +1,4 @@
-//===--- Types.cpp - Driver input & temporary type information ----------*-===//
+//===--- Types.cpp - Driver input & temporary type information ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

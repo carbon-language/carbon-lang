@@ -1,4 +1,4 @@
-//===--- Action.cpp - Abstract compilation steps ------------------------*-===//
+//===--- Action.cpp - Abstract compilation steps --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===--- DriverOptions.cpp - Driver Options Table -----------------------*-===//
+//===--- DriverOptions.cpp - Driver Options Table -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===--- Compilation.cpp - Compilation Task Implementation --------------*-===//
+//===--- Compilation.cpp - Compilation Task Implementation ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

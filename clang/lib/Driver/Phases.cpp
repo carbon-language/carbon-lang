@@ -1,4 +1,4 @@
-//===--- Phases.cpp - Transformations on Driver Types -------------------*-===//
+//===--- Phases.cpp - Transformations on Driver Types ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

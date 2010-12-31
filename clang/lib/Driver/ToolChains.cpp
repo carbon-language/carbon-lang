@@ -1,4 +1,4 @@
-//===--- ToolChains.cpp - ToolChain Implementations ---------------------*-===//
+//===--- ToolChains.cpp - ToolChain Implementations -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -1293,7 +1293,7 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   return UnknownDistro;
 }
 
-Linux::Linux(const HostInfo &Host, const llvm::Triple& Triple)
+Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   : Generic_ELF(Host, Triple) {
   llvm::Triple::ArchType Arch =
     llvm::Triple(getDriver().DefaultHostTriple).getArch();

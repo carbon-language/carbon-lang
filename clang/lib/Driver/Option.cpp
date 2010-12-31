@@ -1,4 +1,4 @@
-//===--- Option.cpp - Abstract Driver Options ---------------------------*-===//
+//===--- Option.cpp - Abstract Driver Options -----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
