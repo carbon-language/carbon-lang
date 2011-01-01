@@ -79,6 +79,9 @@ private:
   // Helper for ELF .o only
   void emitARMAttributeSection();
 
+  // Generic helper used to emit e.g. ARMv5 mul pseudos
+  void EmitPatchedInstruction(const MachineInstr *MI, unsigned TargetOpc);
+
 public:
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 

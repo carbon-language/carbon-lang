@@ -725,6 +725,16 @@ static void populateADROperands(MCInst &Inst, unsigned Dest,
   Inst.addOperand(MCOperand::CreateReg(ccreg));
 }
 
+void ARMAsmPrinter::EmitPatchedInstruction(const MachineInstr *MI,
+                                           unsigned Opcode) {
+  MCInst TmpInst;
+
+  // Emit the instruction as usual, just patch the opcode.
+  LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
+  TmpInst.setOpcode(Opcode);
+  OutStreamer.EmitInstruction(TmpInst);
+}
+
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   switch (MI->getOpcode()) {
   default: break;
@@ -1376,6 +1386,30 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
+  // These are the pseudos created to comply with stricter operand restrictions
+  // on ARMv5. Lower them now to "normal" instructions, since all the
+  // restrictions are already satisfied.
+  case ARM::MULv5:
+    EmitPatchedInstruction(MI, ARM::MUL);
+    return;
+  case ARM::MLAv5:
+    EmitPatchedInstruction(MI, ARM::MLA);
+    return;
+  case ARM::SMULLv5:
+    EmitPatchedInstruction(MI, ARM::SMULL);
+    return;
+  case ARM::UMULLv5:
+    EmitPatchedInstruction(MI, ARM::UMULL);
+    return;
+  case ARM::SMLALv5:
+    EmitPatchedInstruction(MI, ARM::SMLAL);
+    return;
+  case ARM::UMLALv5:
+    EmitPatchedInstruction(MI, ARM::UMLAL);
+    return;
+  case ARM::UMAALv5:
+    EmitPatchedInstruction(MI, ARM::UMAAL);
+    return;
   }
 
   MCInst TmpInst;

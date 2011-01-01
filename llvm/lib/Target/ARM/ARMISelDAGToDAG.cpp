@@ -2322,7 +2322,9 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       SDValue Ops[] = { N->getOperand(0), N->getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->getMachineNode(ARM::UMULL, dl, MVT::i32, MVT::i32, Ops, 5);
+      return CurDAG->getMachineNode(Subtarget->hasV6Ops() ?
+                                    ARM::UMULL : ARM::UMULLv5,
+                                    dl, MVT::i32, MVT::i32, Ops, 5);
     }
   }
   case ISD::SMUL_LOHI: {
@@ -2336,7 +2338,9 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       SDValue Ops[] = { N->getOperand(0), N->getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->getMachineNode(ARM::SMULL, dl, MVT::i32, MVT::i32, Ops, 5);
+      return CurDAG->getMachineNode(Subtarget->hasV6Ops() ?
+                                    ARM::SMULL : ARM::SMULLv5,
+                                    dl, MVT::i32, MVT::i32, Ops, 5);
     }
   }
   case ISD::LOAD: {

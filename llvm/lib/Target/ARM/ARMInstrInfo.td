@@ -149,6 +149,7 @@ def NoV4T            : Predicate<"!Subtarget->hasV4TOps()">;
 def HasV5T           : Predicate<"Subtarget->hasV5TOps()">;
 def HasV5TE          : Predicate<"Subtarget->hasV5TEOps()">, AssemblerPredicate;
 def HasV6            : Predicate<"Subtarget->hasV6Ops()">, AssemblerPredicate;
+def NoV6             : Predicate<"!Subtarget->hasV6Ops()">;
 def HasV6T2          : Predicate<"Subtarget->hasV6T2Ops()">, AssemblerPredicate;
 def NoV6T2           : Predicate<"!Subtarget->hasV6T2Ops()">;
 def HasV7            : Predicate<"Subtarget->hasV7Ops()">, AssemblerPredicate;
@@ -2504,14 +2505,31 @@ class AsMul1I64<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
   let Inst{3-0}   = Rn;
 }
 
-let isCommutable = 1 in
+let isCommutable = 1 in {
+let Constraints = "@earlyclobber $Rd" in
+def MULv5: PseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+                      IIC_iMUL32, [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>,
+                      Requires<[IsARM, NoV6]>;
+
 def MUL  : AsMul1I32<0b0000000, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                    IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm",
-                   [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>;
+                   [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>,
+                   Requires<[IsARM, HasV6]>;
+}
 
+let Constraints = "@earlyclobber $Rd" in
+def MLAv5: PseudoInst<(outs GPR:$Rd),
+                      (ins GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s),
+                      IIC_iMAC32, [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm),
+                                                      GPR:$Ra))]>, 
+                      Requires<[IsARM, NoV6]> {
+  bits<4> Ra;
+  let Inst{15-12} = Ra;
+}
 def MLA  : AsMul1I32<0b0000001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
                     IIC_iMAC32, "mla", "\t$Rd, $Rn, $Rm, $Ra",
-                   [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]> {
+                   [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]>,
+                   Requires<[IsARM, HasV6]> {
   bits<4> Ra;
   let Inst{15-12} = Ra;
 }
@@ -2534,23 +2552,54 @@ def MLS  : AMul1I<0b0000011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
 
 let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
+let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
+def SMULLv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                         IIC_iMUL64, []>,
+                         Requires<[IsARM, NoV6]>;
+
+def UMULLv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+                         IIC_iMUL64, []>,
+                         Requires<[IsARM, NoV6]>;
+}
+
 def SMULL : AsMul1I64<0b0000110, (outs GPR:$RdLo, GPR:$RdHi),
                                (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
-                    "smull", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
+                    "smull", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
+                    Requires<[IsARM, HasV6]>;
 
 def UMULL : AsMul1I64<0b0000100, (outs GPR:$RdLo, GPR:$RdHi),
                                (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
-                    "umull", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
+                    "umull", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
+                    Requires<[IsARM, HasV6]>;
 }
 
 // Multiply + accumulate
+let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
+def SMLALv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                         IIC_iMAC64, []>,
+                         Requires<[IsARM, NoV6]>;
+def UMLALv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                         IIC_iMAC64, []>,
+                         Requires<[IsARM, NoV6]>;
+def UMAALv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                         IIC_iMAC64, []>,
+                         Requires<[IsARM, NoV6]>;
+
+}
+
 def SMLAL : AsMul1I64<0b0000111, (outs GPR:$RdLo, GPR:$RdHi),
                                (ins GPR:$Rn, GPR:$Rm), IIC_iMAC64,
-                    "smlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
-
+                    "smlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
+                    Requires<[IsARM, HasV6]>;
 def UMLAL : AsMul1I64<0b0000101, (outs GPR:$RdLo, GPR:$RdHi),
                                (ins GPR:$Rn, GPR:$Rm), IIC_iMAC64,
-                    "umlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>;
+                    "umlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
+                    Requires<[IsARM, HasV6]>;
 
 def UMAAL : AMul1I <0b0000010, (outs GPR:$RdLo, GPR:$RdHi),
                                (ins GPR:$Rn, GPR:$Rm), IIC_iMAC64,
