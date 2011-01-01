@@ -383,7 +383,8 @@ unsigned int popcount(unsigned int input) {
 }
 
 This is a form of idiom recognition for loops, the same thing that could be
-useful for recognizing memset/memcpy.
+useful for recognizing memset/memcpy.  This sort of thing should be added to the
+loop idiom pass.
 
 //===---------------------------------------------------------------------===//
 
@@ -701,38 +702,31 @@ int test() {
   foo(input);
 }
 
-We currently compile this into a memcpy from a global array since the 
-initializer is fairly large and not memset'able.  This is good, but the memcpy
-gets lowered to load/stores in the code generator.  This is also ok, except
-that the codegen lowering for memcpy doesn't handle the case when the source
-is a constant global.  This gives us atrocious code like this:
+Clang compiles this into:
 
-	call	"L1$pb"
-"L1$pb":
-	popl	%eax
-	movl	_C.0.1444-"L1$pb"+32(%eax), %ecx
-	movl	%ecx, 40(%esp)
-	movl	_C.0.1444-"L1$pb"+20(%eax), %ecx
-	movl	%ecx, 28(%esp)
-	movl	_C.0.1444-"L1$pb"+36(%eax), %ecx
-	movl	%ecx, 44(%esp)
-	movl	_C.0.1444-"L1$pb"+44(%eax), %ecx
-	movl	%ecx, 52(%esp)
-	movl	_C.0.1444-"L1$pb"+40(%eax), %ecx
-	movl	%ecx, 48(%esp)
-	movl	_C.0.1444-"L1$pb"+12(%eax), %ecx
-	movl	%ecx, 20(%esp)
-	movl	_C.0.1444-"L1$pb"+4(%eax), %ecx
-...
+  call void @llvm.memset.p0i8.i64(i8* %tmp, i8 0, i64 64, i32 16, i1 false)
+  %0 = getelementptr [8 x i64]* %input, i64 0, i64 0
+  store i64 1, i64* %0, align 16
+  %1 = getelementptr [8 x i64]* %input, i64 0, i64 2
+  store i64 1, i64* %1, align 16
+  %2 = getelementptr [8 x i64]* %input, i64 0, i64 4
+  store i64 1, i64* %2, align 16
+  %3 = getelementptr [8 x i64]* %input, i64 0, i64 6
+  store i64 1, i64* %3, align 16
 
-instead of:
-	movl	$1, 16(%esp)
-	movl	$0, 20(%esp)
-	movl	$1, 24(%esp)
-	movl	$0, 28(%esp)
-	movl	$1, 32(%esp)
-	movl	$0, 36(%esp)
-	...
+Which gets codegen'd into:
+
+	pxor	%xmm0, %xmm0
+	movaps	%xmm0, -16(%rbp)
+	movaps	%xmm0, -32(%rbp)
+	movaps	%xmm0, -48(%rbp)
+	movaps	%xmm0, -64(%rbp)
+	movq	$1, -64(%rbp)
+	movq	$1, -48(%rbp)
+	movq	$1, -32(%rbp)
+	movq	$1, -16(%rbp)
+
+It would be better to have 4 movq's of 0 instead of the movaps's.
 
 //===---------------------------------------------------------------------===//
 
@@ -1717,6 +1711,10 @@ int foo() {
  p = __builtin_memcpy (&x, &y, sizeof (int *));
  return **p;
 }
+
+This can be seen at:
+$ clang t.c -S -o - -mkernel -O0 -emit-llvm | opt -functionattrs -S
+
 
 //===---------------------------------------------------------------------===//
 
