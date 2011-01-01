@@ -302,6 +302,9 @@ void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
     printSymbolOperand(MI->getOperand(Op+3), O);
   }
 
+  if (Modifier && strcmp(Modifier, "H") == 0)
+    O << "+8";
+
   if (HasParenPart) {
     assert(IndexReg.getReg() != X86::ESP &&
            "X86 doesn't allow scaling by ESP");
@@ -458,6 +461,9 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
     case 'q': // Print SImode register
       // These only apply to registers, ignore on mem.
       break;
+    case 'H':
+      printMemReference(MI, OpNo, O, "H");
+      return false;
     case 'P': // Don't print @PLT, but do print as memory.
       printMemReference(MI, OpNo, O, "no-rip");
       return false;
