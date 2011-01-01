@@ -28,7 +28,7 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
-#define RecursionLimit 3
+#define RecursionLimit 4
 
 STATISTIC(NumExpand,  "Number of expansions");
 STATISTIC(NumFactor , "Number of factorizations");
@@ -44,6 +44,53 @@ static Value *SimplifyOrInst(Value *, Value *, const TargetData *,
                              const DominatorTree *, unsigned);
 static Value *SimplifyXorInst(Value *, Value *, const TargetData *,
                               const DominatorTree *, unsigned);
+
+/// equal - Return true if the given values are known to be equal, false if they
+/// are not equal or it is not clear whether they are equal or not.
+static bool equal(Value *A, Value *B, unsigned MaxRecurse) {
+  // If the pointers are equal then the values are!
+  if (A == B)
+    return true;
+  // From this point on either recursion is used or the result is false, so bail
+  // out at once if we already hit the recursion limit.
+  if (!MaxRecurse--)
+    return false;
+  // If these are instructions, see if they compute the same value.
+  Instruction *AI = dyn_cast<Instruction>(A), *BI = dyn_cast<Instruction>(B);
+  if (!AI || !BI)
+    return false;
+  // If one of the instructions has extra flags attached then be conservative
+  // and say that the instructions differ.
+  if (!AI->hasSameSubclassOptionalData(BI))
+    return false;
+  // For some reason alloca's are not considered to read or write memory, yet
+  // each one nonetheless manages to return a different value...
+  if (isa<AllocaInst>(AI))
+    return false;
+  // Do not consider instructions to be equal if they may access memory.
+  if (AI->mayReadFromMemory() || AI->mayWriteToMemory())
+    return false;
+  // If the instructions do not perform the same computation then bail out.
+  if (!BI->isSameOperationAs(AI))
+    return false;
+
+  // Check whether all operands are equal.  If they are then the instructions
+  // have the same value.
+  bool AllOperandsEqual = true;
+  for (unsigned i = 0, e = AI->getNumOperands(); i != e; ++i)
+    if (!equal(AI->getOperand(i), BI->getOperand(i), MaxRecurse)) {
+      AllOperandsEqual = false;
+      break;
+    }
+  if (AllOperandsEqual)
+    return true;
+
+  // If the instructions are commutative and their operands are equal when
+  // swapped then the instructions have the same value.
+  return AI->isCommutative() &&
+    equal(AI->getOperand(0), BI->getOperand(1), MaxRecurse) &&
+    equal(AI->getOperand(1), BI->getOperand(0), MaxRecurse);
+}
 
 /// ValueDominatesPHI - Does the given value dominate the specified phi node?
 static bool ValueDominatesPHI(Value *V, PHINode *P, const DominatorTree *DT) {
@@ -88,8 +135,9 @@ static Value *ExpandBinOp(unsigned Opcode, Value *LHS, Value *RHS,
         if (Value *R = SimplifyBinOp(Opcode, B, C, TD, DT, MaxRecurse)) {
           // They do! Return "L op' R" if it simplifies or is already available.
           // If "L op' R" equals "A op' B" then "L op' R" is just the LHS.
-          if ((L == A && R == B) || (Instruction::isCommutative(OpcodeToExpand)
-                                     && L == B && R == A)) {
+          if ((equal(L, A, MaxRecurse) && equal(R, B, MaxRecurse)) ||
+              (Instruction::isCommutative(OpcodeToExpand) &&
+               equal(L, B, MaxRecurse) && equal(R, A, MaxRecurse))) {
             ++NumExpand;
             return LHS;
           }
@@ -112,8 +160,9 @@ static Value *ExpandBinOp(unsigned Opcode, Value *LHS, Value *RHS,
         if (Value *R = SimplifyBinOp(Opcode, A, C, TD, DT, MaxRecurse)) {
           // They do! Return "L op' R" if it simplifies or is already available.
           // If "L op' R" equals "B op' C" then "L op' R" is just the RHS.
-          if ((L == B && R == C) || (Instruction::isCommutative(OpcodeToExpand)
-                                     && L == C && R == B)) {
+          if ((equal(L, B, MaxRecurse) && equal(R, C, MaxRecurse)) ||
+              (Instruction::isCommutative(OpcodeToExpand) &&
+               equal(L, C, MaxRecurse) && equal(R, B, MaxRecurse))) {
             ++NumExpand;
             return RHS;
           }
@@ -155,17 +204,23 @@ static Value *FactorizeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
   // Use left distributivity, i.e. "X op' (Y op Z) = (X op' Y) op (X op' Z)".
   // Does the instruction have the form "(A op' B) op (A op' D)" or, in the
   // commutative case, "(A op' B) op (C op' A)"?
-  if (A == C || (Instruction::isCommutative(OpcodeToExtract) && A == D)) {
-    Value *DD = A == C ? D : C;
+  bool AEqualsC = equal(A, C, MaxRecurse);
+  if (AEqualsC || (Instruction::isCommutative(OpcodeToExtract) &&
+                   equal(A, D, MaxRecurse))) {
+    Value *DD = AEqualsC ? D : C;
     // Form "A op' (B op DD)" if it simplifies completely.
     // Does "B op DD" simplify?
     if (Value *V = SimplifyBinOp(Opcode, B, DD, TD, DT, MaxRecurse)) {
       // It does!  Return "A op' V" if it simplifies or is already available.
       // If V equals B then "A op' V" is just the LHS.  If V equals DD then
       // "A op' V" is just the RHS.
-      if (V == B || V == DD) {
+      if (equal(V, B, MaxRecurse)) {
         ++NumFactor;
-        return V == B ? LHS : RHS;
+        return LHS;
+      }
+      if (equal(V, DD, MaxRecurse)) {
+        ++NumFactor;
+        return RHS;
       }
       // Otherwise return "A op' V" if it simplifies.
       if (Value *W = SimplifyBinOp(OpcodeToExtract, A, V, TD, DT, MaxRecurse)) {
@@ -178,17 +233,23 @@ static Value *FactorizeBinOp(unsigned Opcode, Value *LHS, Value *RHS,
   // Use right distributivity, i.e. "(X op Y) op' Z = (X op' Z) op (Y op' Z)".
   // Does the instruction have the form "(A op' B) op (C op' B)" or, in the
   // commutative case, "(A op' B) op (B op' D)"?
-  if (B == D || (Instruction::isCommutative(OpcodeToExtract) && B == C)) {
-    Value *CC = B == D ? C : D;
+  bool BEqualsD = equal(B, D, MaxRecurse);
+  if (BEqualsD || (Instruction::isCommutative(OpcodeToExtract) &&
+                   equal(B, C, MaxRecurse))) {
+    Value *CC = BEqualsD ? C : D;
     // Form "(A op CC) op' B" if it simplifies completely..
     // Does "A op CC" simplify?
     if (Value *V = SimplifyBinOp(Opcode, A, CC, TD, DT, MaxRecurse)) {
       // It does!  Return "V op' B" if it simplifies or is already available.
       // If V equals A then "V op' B" is just the LHS.  If V equals CC then
       // "V op' B" is just the RHS.
-      if (V == A || V == CC) {
+      if (equal(V, A, MaxRecurse)) {
         ++NumFactor;
-        return V == A ? LHS : RHS;
+        return LHS;
+      }
+      if (equal(V, CC, MaxRecurse)) {
+        ++NumFactor;
+        return RHS;
       }
       // Otherwise return "V op' B" if it simplifies.
       if (Value *W = SimplifyBinOp(OpcodeToExtract, V, B, TD, DT, MaxRecurse)) {
@@ -227,7 +288,7 @@ static Value *SimplifyAssociativeBinOp(unsigned Opc, Value *LHS, Value *RHS,
     if (Value *V = SimplifyBinOp(Opcode, B, C, TD, DT, MaxRecurse)) {
       // It does!  Return "A op V" if it simplifies or is already available.
       // If V equals B then "A op V" is just the LHS.
-      if (V == B) return LHS;
+      if (equal(V, B, MaxRecurse)) return LHS;
       // Otherwise return "A op V" if it simplifies.
       if (Value *W = SimplifyBinOp(Opcode, A, V, TD, DT, MaxRecurse)) {
         ++NumReassoc;
@@ -246,7 +307,7 @@ static Value *SimplifyAssociativeBinOp(unsigned Opc, Value *LHS, Value *RHS,
     if (Value *V = SimplifyBinOp(Opcode, A, B, TD, DT, MaxRecurse)) {
       // It does!  Return "V op C" if it simplifies or is already available.
       // If V equals B then "V op C" is just the RHS.
-      if (V == B) return RHS;
+      if (equal(V, B, MaxRecurse)) return RHS;
       // Otherwise return "V op C" if it simplifies.
       if (Value *W = SimplifyBinOp(Opcode, V, C, TD, DT, MaxRecurse)) {
         ++NumReassoc;
@@ -269,7 +330,7 @@ static Value *SimplifyAssociativeBinOp(unsigned Opc, Value *LHS, Value *RHS,
     if (Value *V = SimplifyBinOp(Opcode, C, A, TD, DT, MaxRecurse)) {
       // It does!  Return "V op B" if it simplifies or is already available.
       // If V equals A then "V op B" is just the LHS.
-      if (V == A) return LHS;
+      if (equal(V, A, MaxRecurse)) return LHS;
       // Otherwise return "V op B" if it simplifies.
       if (Value *W = SimplifyBinOp(Opcode, V, B, TD, DT, MaxRecurse)) {
         ++NumReassoc;
@@ -288,7 +349,7 @@ static Value *SimplifyAssociativeBinOp(unsigned Opc, Value *LHS, Value *RHS,
     if (Value *V = SimplifyBinOp(Opcode, C, A, TD, DT, MaxRecurse)) {
       // It does!  Return "B op V" if it simplifies or is already available.
       // If V equals C then "B op V" is just the RHS.
-      if (V == C) return RHS;
+      if (equal(V, C, MaxRecurse)) return RHS;
       // Otherwise return "B op V" if it simplifies.
       if (Value *W = SimplifyBinOp(Opcode, B, V, TD, DT, MaxRecurse)) {
         ++NumReassoc;
@@ -331,9 +392,12 @@ static Value *ThreadBinOpOverSelect(unsigned Opcode, Value *LHS, Value *RHS,
     FV = SimplifyBinOp(Opcode, LHS, SI->getFalseValue(), TD, DT, MaxRecurse);
   }
 
-  // If they simplified to the same value, then return the common value.
   // If they both failed to simplify then return null.
-  if (TV == FV)
+  if (!TV && !FV)
+    return 0;
+
+  // If they simplified to the same value, then return the common value.
+  if (TV && FV && equal(TV, FV, MaxRecurse))
     return TV;
 
   // If one branch simplified to undef, return the other one.
@@ -344,7 +408,8 @@ static Value *ThreadBinOpOverSelect(unsigned Opcode, Value *LHS, Value *RHS,
 
   // If applying the operation did not change the true and false select values,
   // then the result of the binop is the select itself.
-  if (TV == SI->getTrueValue() && FV == SI->getFalseValue())
+  if (TV && equal(TV, SI->getTrueValue(), MaxRecurse) &&
+      FV && equal(FV, SI->getFalseValue(), MaxRecurse))
     return SI;
 
   // If one branch simplified and the other did not, and the simplified
@@ -361,12 +426,12 @@ static Value *ThreadBinOpOverSelect(unsigned Opcode, Value *LHS, Value *RHS,
       Value *UnsimplifiedBranch = FV ? SI->getTrueValue() : SI->getFalseValue();
       Value *UnsimplifiedLHS = SI == LHS ? UnsimplifiedBranch : LHS;
       Value *UnsimplifiedRHS = SI == LHS ? RHS : UnsimplifiedBranch;
-      if (Simplified->getOperand(0) == UnsimplifiedLHS &&
-          Simplified->getOperand(1) == UnsimplifiedRHS)
+      if (equal(Simplified->getOperand(0), UnsimplifiedLHS, MaxRecurse) &&
+          equal(Simplified->getOperand(1), UnsimplifiedRHS, MaxRecurse))
         return Simplified;
       if (Simplified->isCommutative() &&
-          Simplified->getOperand(1) == UnsimplifiedLHS &&
-          Simplified->getOperand(0) == UnsimplifiedRHS)
+          equal(Simplified->getOperand(1), UnsimplifiedLHS, MaxRecurse) &&
+          equal(Simplified->getOperand(0), UnsimplifiedRHS, MaxRecurse))
         return Simplified;
     }
   }
@@ -403,7 +468,7 @@ static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
                                       MaxRecurse))
       // It does!  If they simplified to the same value, then use it as the
       // result of the original comparison.
-      if (TCmp == FCmp)
+      if (equal(TCmp, FCmp, MaxRecurse))
         return TCmp;
   return 0;
 }
@@ -519,14 +584,14 @@ static Value *SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   // X + (Y - X) -> Y
   // (Y - X) + X -> Y
   // Eg: X + -X -> 0
-  Value *Y = 0;
-  if (match(Op1, m_Sub(m_Value(Y), m_Specific(Op0))) ||
-      match(Op0, m_Sub(m_Value(Y), m_Specific(Op1))))
+  Value *X = 0, *Y = 0;
+  if ((match(Op1, m_Sub(m_Value(Y), m_Value(X))) && equal(X, Op0, MaxRecurse))||
+      (match(Op0, m_Sub(m_Value(Y), m_Value(X))) && equal(X, Op1, MaxRecurse)))
     return Y;
 
   // X + ~X -> -1   since   ~X = -X-1
-  if (match(Op0, m_Not(m_Specific(Op1))) ||
-      match(Op1, m_Not(m_Specific(Op0))))
+  if ((match(Op0, m_Not(m_Value(X))) && equal(X, Op1, MaxRecurse)) ||
+      (match(Op1, m_Not(m_Value(X))) && equal(X, Op0, MaxRecurse)))
     return Constant::getAllOnesValue(Op0->getType());
 
   /// i1 add -> xor.
@@ -583,14 +648,14 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     return Op0;
 
   // X - X -> 0
-  if (Op0 == Op1)
+  if (equal(Op0, Op1, MaxRecurse))
     return Constant::getNullValue(Op0->getType());
 
   // (X + Y) - Y -> X
   // (Y + X) - Y -> X
-  Value *X = 0;
-  if (match(Op0, m_Add(m_Value(X), m_Specific(Op1))) ||
-      match(Op0, m_Add(m_Specific(Op1), m_Value(X))))
+  Value *X = 0, *Y = 0;
+  if ((match(Op0, m_Add(m_Value(X), m_Value(Y))) && equal(Y, Op1, MaxRecurse))||
+      (match(Op0, m_Add(m_Value(Y), m_Value(X))) && equal(Y, Op1, MaxRecurse)))
     return X;
 
   /// i1 sub -> xor.
@@ -704,7 +769,7 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Constant::getNullValue(Op0->getType());
 
   // X & X = X
-  if (Op0 == Op1)
+  if (equal(Op0, Op1, MaxRecurse))
     return Op0;
 
   // X & 0 = 0
@@ -717,18 +782,18 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
 
   // A & ~A  =  ~A & A  =  0
   Value *A = 0, *B = 0;
-  if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
-      (match(Op1, m_Not(m_Value(A))) && A == Op0))
+  if ((match(Op0, m_Not(m_Value(A))) && equal(A, Op1, MaxRecurse)) ||
+      (match(Op1, m_Not(m_Value(A))) && equal(A, Op0, MaxRecurse)))
     return Constant::getNullValue(Op0->getType());
 
   // (A | ?) & A = A
   if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
-      (A == Op1 || B == Op1))
+      (equal(A, Op1, MaxRecurse) || equal(B, Op1, MaxRecurse)))
     return Op1;
 
   // A & (A | ?) = A
   if (match(Op1, m_Or(m_Value(A), m_Value(B))) &&
-      (A == Op0 || B == Op0))
+      (equal(A, Op0, MaxRecurse) || equal(B, Op0, MaxRecurse)))
     return Op0;
 
   // Try some generic simplifications for associative operations.
@@ -793,7 +858,7 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Constant::getAllOnesValue(Op0->getType());
 
   // X | X = X
-  if (Op0 == Op1)
+  if (equal(Op0, Op1, MaxRecurse))
     return Op0;
 
   // X | 0 = X
@@ -806,18 +871,18 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
 
   // A | ~A  =  ~A | A  =  -1
   Value *A = 0, *B = 0;
-  if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
-      (match(Op1, m_Not(m_Value(A))) && A == Op0))
+  if ((match(Op0, m_Not(m_Value(A))) && equal(A, Op1, MaxRecurse)) ||
+      (match(Op1, m_Not(m_Value(A))) && equal(A, Op0, MaxRecurse)))
     return Constant::getAllOnesValue(Op0->getType());
 
   // (A & ?) | A = A
   if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
-      (A == Op1 || B == Op1))
+      (equal(A, Op1, MaxRecurse) || equal(B, Op1, MaxRecurse)))
     return Op1;
 
   // A | (A & ?) = A
   if (match(Op1, m_And(m_Value(A), m_Value(B))) &&
-      (A == Op0 || B == Op0))
+      (equal(A, Op0, MaxRecurse) || equal(B, Op0, MaxRecurse)))
     return Op0;
 
   // Try some generic simplifications for associative operations.
@@ -881,13 +946,13 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Op0;
 
   // A ^ A = 0
-  if (Op0 == Op1)
+  if (equal(Op0, Op1, MaxRecurse))
     return Constant::getNullValue(Op0->getType());
 
   // A ^ ~A  =  ~A ^ A  =  -1
   Value *A = 0;
-  if ((match(Op0, m_Not(m_Value(A))) && A == Op1) ||
-      (match(Op1, m_Not(m_Value(A))) && A == Op0))
+  if ((match(Op0, m_Not(m_Value(A))) && equal(A, Op1, MaxRecurse)) ||
+      (match(Op1, m_Not(m_Value(A))) && equal(A, Op0, MaxRecurse)))
     return Constant::getAllOnesValue(Op0->getType());
 
   // Try some generic simplifications for associative operations.
@@ -944,7 +1009,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   // icmp X, X -> true/false
   // X icmp undef -> true/false.  For example, icmp ugt %X, undef -> false
   // because X could be 0.
-  if (LHS == RHS || isa<UndefValue>(RHS))
+  if (isa<UndefValue>(RHS) || equal(LHS, RHS, MaxRecurse))
     return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
 
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
@@ -1028,7 +1093,7 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     return UndefValue::get(GetCompareTy(LHS));
 
   // fcmp x,x -> true/false.  Not all compares are foldable.
-  if (LHS == RHS) {
+  if (equal(LHS, RHS, MaxRecurse)) {
     if (CmpInst::isTrueWhenEqual(Pred))
       return ConstantInt::get(GetCompareTy(LHS), 1);
     if (CmpInst::isFalseWhenEqual(Pred))
@@ -1098,15 +1163,16 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 
 /// SimplifySelectInst - Given operands for a SelectInst, see if we can fold
 /// the result.  If not, this returns null.
-Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
-                                const TargetData *TD, const DominatorTree *) {
+static Value *SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
+                                 const TargetData *TD, const DominatorTree *,
+                                 unsigned MaxRecurse) {
   // select true, X, Y  -> X
   // select false, X, Y -> Y
   if (ConstantInt *CB = dyn_cast<ConstantInt>(CondVal))
     return CB->getZExtValue() ? TrueVal : FalseVal;
 
   // select C, X, X -> X
-  if (TrueVal == FalseVal)
+  if (equal(TrueVal, FalseVal, MaxRecurse))
     return TrueVal;
 
   if (isa<UndefValue>(TrueVal))   // select C, undef, X -> X
@@ -1120,6 +1186,12 @@ Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
   }
 
   return 0;
+}
+
+Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
+                                const TargetData *TD, const DominatorTree *DT) {
+  return ::SimplifySelectInst(CondVal, TrueVal, FalseVal, TD, DT,
+                              RecursionLimit);
 }
 
 /// SimplifyGEPInst - Given operands for an GetElementPtrInst, see if we can
