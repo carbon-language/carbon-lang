@@ -234,6 +234,11 @@ bool LoopIdiomRecognize::
 processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
                              Value *SplatValue,
                              const SCEVAddRecExpr *Ev, const SCEV *BECount) {
+  // Verify that the stored value is loop invariant.  If not, we can't promote
+  // the memset.
+  if (!CurLoop->isLoopInvariant(SplatValue))
+    return false;
+  
   // Temporarily remove the store from the loop, to avoid the mod/ref query from
   // seeing it.
   Instruction *InstAfterStore = ++BasicBlock::iterator(SI);

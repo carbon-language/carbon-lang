@@ -91,3 +91,26 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK-TODO: call void @llvm.memset.p0i8.i64(i8* %Base, i8 0, i64 100, i32 1, i1 false)
 ; CHECK-TODO-NOT: store
 }
+
+; This can't be promoted: the memset is a store of a loop variant value.
+define void @test5(i8* %Base, i64 %Size) nounwind ssp {
+bb.nph:                                           ; preds = %entry
+  br label %for.body
+
+for.body:                                         ; preds = %bb.nph, %for.body
+  %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
+  %I.0.014 = getelementptr i8* %Base, i64 %indvar
+  
+  %V = trunc i64 %indvar to i8
+  store i8 %V, i8* %I.0.014, align 1
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, %Size
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+; CHECK: @test5
+; CHECK-NOT: memset
+; CHECK: ret void
+}
+
