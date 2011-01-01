@@ -76,16 +76,6 @@ def store_global
   return false;
 }]>;
 
-def store_constant
-  : PatFrag<(ops node:$d, node:$ptr), (store node:$d, node:$ptr), [{
-  const Value *Src;
-  const PointerType *PT;
-  if ((Src = cast<StoreSDNode>(N)->getSrcValue()) &&
-      (PT = dyn_cast<PointerType>(Src->getType())))
-    return PT->getAddressSpace() == PTX::CONSTANT;
-  return false;
-}]>;
-
 def store_local
   : PatFrag<(ops node:$d, node:$ptr), (store node:$d, node:$ptr), [{
   const Value *Src;
@@ -122,10 +112,6 @@ def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [], []>;
 def ADDRii : ComplexPattern<i32, 2, "SelectADDRii", [], []>;
 
 // Address operands
-def MEMrr : Operand<i32> {
-  let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops RRegs32, RRegs32);
-}
 def MEMri : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops RRegs32, i32imm);
@@ -182,7 +168,7 @@ multiclass INT3ntnc<string opcstr, SDNode opnode> {
 
 multiclass PTX_LD<string opstr, RegisterClass RC, PatFrag pat_load> {
   def rr : InstPTX<(outs RC:$d),
-                   (ins MEMrr:$a),
+                   (ins MEMri:$a),
                    !strconcat(opstr, ".%type\t$d, [$a]"),
                    [(set RC:$d, (pat_load ADDRrr:$a))]>;
   def ri : InstPTX<(outs RC:$d),
@@ -197,7 +183,7 @@ multiclass PTX_LD<string opstr, RegisterClass RC, PatFrag pat_load> {
 
 multiclass PTX_ST<string opstr, RegisterClass RC, PatFrag pat_store> {
   def rr : InstPTX<(outs),
-                   (ins RC:$d, MEMrr:$a),
+                   (ins RC:$d, MEMri:$a),
                    !strconcat(opstr, ".%type\t[$a], $d"),
                    [(pat_store RC:$d, ADDRrr:$a)]>;
   def ri : InstPTX<(outs),
@@ -251,7 +237,6 @@ defm LDp : PTX_LD<"ld.param",  RRegs32, load_parameter>;
 defm LDs : PTX_LD<"ld.shared", RRegs32, load_shared>;
 
 defm STg : PTX_ST<"st.global", RRegs32, store_global>;
-defm STc : PTX_ST<"st.const",  RRegs32, store_constant>;
 defm STl : PTX_ST<"st.local",  RRegs32, store_local>;
 defm STp : PTX_ST<"st.param",  RRegs32, store_parameter>;
 defm STs : PTX_ST<"st.shared", RRegs32, store_shared>;

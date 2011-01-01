@@ -67,8 +67,8 @@ bool PTXDAGToDAGISel::SelectADDRrr(SDValue &Addr, SDValue &R1, SDValue &R2) {
       isImm(Addr.getOperand(0)) || isImm(Addr.getOperand(1)))
     return false;
 
-  R1 = Addr.getOperand(0);
-  R2 = Addr.getOperand(1);
+  R1 = Addr;
+  R2 = CurDAG->getTargetConstant(0, MVT::i32);
   return true;
 }
 
@@ -76,17 +76,20 @@ bool PTXDAGToDAGISel::SelectADDRrr(SDValue &Addr, SDValue &R1, SDValue &R2) {
 bool PTXDAGToDAGISel::SelectADDRri(SDValue &Addr, SDValue &Base,
                                    SDValue &Offset) {
   if (Addr.getOpcode() != ISD::ADD) {
+    // let SelectADDRii handle the [imm] case
     if (isImm(Addr))
       return false;
-    // is [reg] but not [imm]
+    // it is [reg]
     Base = Addr;
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
 
+  if (Addr.getNumOperands() < 2)
+    return false;
+
   // let SelectADDRii handle the [imm+imm] case
-  if (Addr.getNumOperands() >= 2 &&
-      isImm(Addr.getOperand(0)) && isImm(Addr.getOperand(1)))
+  if (isImm(Addr.getOperand(0)) && isImm(Addr.getOperand(1)))
     return false;
 
   // try [reg+imm] and [imm+reg]
@@ -96,13 +99,7 @@ bool PTXDAGToDAGISel::SelectADDRri(SDValue &Addr, SDValue &Base,
       return true;
     }
 
-  // either [reg+imm] and [imm+reg]
-  for (int i = 0; i < 2; i ++)
-    if (SelectImm(Addr.getOperand(1-i), Offset)) {
-      Base = Addr.getOperand(i);
-      return true;
-    }
-
+  // neither [reg+imm] nor [imm+reg]
   return false;
 }
 

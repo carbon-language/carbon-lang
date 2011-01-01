@@ -30,7 +30,8 @@ entry:
 define ptx_device i32 @t3(i32* %p, i32 %q) {
 entry:
 ;CHECK: shl.b32 r0, r2, 2;
-;CHECK: ld.global.s32 r0, [r1+r0];
+;CHECK: add.s32 r0, r1, r0;
+;CHECK: ld.global.s32 r0, [r0];
   %i = getelementptr i32* %p, i32 %q
   %x = load i32* %i
   ret i32 %x

@@ -31,7 +31,8 @@ define ptx_device void @t3(i32* %p, i32 %q, i32 %x) {
 ;CHECK: .reg .s32 r0;
 entry:
 ;CHECK: shl.b32 r0, r2, 2;
-;CHECK: st.global.s32 [r1+r0], r3;
+;CHECK: add.s32 r0, r1, r0;
+;CHECK: st.global.s32 [r0], r3;
   %i = getelementptr i32* %p, i32 %q
   store i32 %x, i32* %i
   ret void
@@ -42,14 +43,6 @@ entry:
 ;CHECK: st.global.s32 [array], r1;
   %i = getelementptr [10 x i32]* @array, i32 0, i32 0
   store i32 %x, i32* %i
-  ret void
-}
-
-define ptx_device void @t4_const(i32 %x) {
-entry:
-;CHECK: st.const.s32 [array_constant], r1;
-  %i = getelementptr [10 x i32] addrspace(1)* @array_constant, i32 0, i32 0
-  store i32 %x, i32 addrspace(1)* %i
   ret void
 }
 
