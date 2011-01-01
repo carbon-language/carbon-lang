@@ -167,6 +167,11 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
     const User *U = *UI;
     if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       GS.HasNonInstructionUser = true;
+      
+      // If the result of the constantexpr isn't pointer type, then we won't
+      // know to expect it in various places.  Just reject early.
+      if (!isa<PointerType>(CE->getType())) return true;
+      
       if (AnalyzeGlobal(CE, GS, PHIUsers)) return true;
     } else if (const Instruction *I = dyn_cast<Instruction>(U)) {
       if (!GS.HasMultipleAccessingFunctions) {
