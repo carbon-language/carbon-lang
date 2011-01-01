@@ -42,3 +42,26 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %Base1, i8 1, i64 %tmp, i32 4, i1 false)
 ; CHECK-NOT: store
 }
+
+; This is a case where there is an extra may-aliased store in the loop, we can't
+; promote the memset.
+define void @test3(i32* %Base, i64 %Size, i8 *%MayAlias) nounwind ssp {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %entry, %for.body
+  %i.011 = phi i64 [ %inc, %for.body ], [ 0, %entry ]
+  %add.ptr.i = getelementptr i32* %Base, i64 %i.011
+  store i32 16843009, i32* %add.ptr.i, align 4
+  
+  store i8 42, i8* %MayAlias
+  %inc = add nsw i64 %i.011, 1
+  %exitcond = icmp eq i64 %inc, %Size
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %entry
+  ret void
+; CHECK: @test3
+; CHECK-NOT: memset
+; CHECK: ret void
+}

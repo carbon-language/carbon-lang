@@ -180,6 +180,9 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   // know that every byte is touched in the loop.
   unsigned StoreSize = (unsigned)SizeInBits >> 3; 
   const SCEVConstant *Stride = dyn_cast<SCEVConstant>(Ev->getOperand(1));
+  
+  // TODO: Could also handle negative stride here someday, that will require the
+  // validity check in mayLoopModRefLocation to be updated though.
   if (Stride == 0 || StoreSize != Stride->getValue()->getValue())
     return false;
   
@@ -196,22 +199,46 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   return false;
 }
 
+/// mayLoopModRefLocation - Return true if the specified loop might do a load or
+/// store to the same location that the specified store could store to, which is
+/// a loop-strided access. 
+static bool mayLoopModRefLocation(StoreInst *SI, Loop *L, AliasAnalysis &AA) {
+  // Get the location that may be stored across the loop.  Since the access is
+  // strided positively through memory, we say that the modified location starts
+  // at the pointer and has infinite size.
+  // TODO: Could improve this for constant trip-count loops.
+  AliasAnalysis::Location StoreLoc =
+    AliasAnalysis::Location(SI->getPointerOperand());
+
+  for (Loop::block_iterator BI = L->block_begin(), E = L->block_end(); BI != E;
+       ++BI)
+    for (BasicBlock::iterator I = (*BI)->begin(), E = (*BI)->end(); I != E; ++I)
+      if (AA.getModRefInfo(I, StoreLoc) != AliasAnalysis::NoModRef)
+        return true;
+
+  return false;
+}
+
 /// processLoopStoreOfSplatValue - We see a strided store of a memsetable value.
 /// If we can transform this into a memset in the loop preheader, do so.
 bool LoopIdiomRecognize::
 processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
                              Value *SplatValue,
                              const SCEVAddRecExpr *Ev, const SCEV *BECount) {
+  // Temporarily remove the store from the loop, to avoid the mod/ref query from
+  // seeing it.
+  Instruction *InstAfterStore = ++BasicBlock::iterator(SI);
+  SI->removeFromParent();
+  
   // Okay, we have a strided store "p[i]" of a splattable value.  We can turn
   // this into a memset in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
   // or write to the aliased location.  Check for an alias.
+  bool Unsafe=mayLoopModRefLocation(SI, CurLoop, getAnalysis<AliasAnalysis>());
+
+  SI->insertBefore(InstAfterStore);
   
-  // FIXME: Need to get a base pointer that is valid.
-  //  if (LoopCanModRefLocation(SI->getPointerOperand())
-  
-  
-  // FIXME: TODO safety check.
+  if (Unsafe) return false;
   
   // Okay, everything looks good, insert the memset.
   BasicBlock *Preheader = CurLoop->getLoopPreheader();
