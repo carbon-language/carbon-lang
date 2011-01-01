@@ -49,6 +49,12 @@ PTXTargetMachine::PTXTargetMachine(const Target &T,
 bool PTXTargetMachine::addInstSelector(PassManagerBase &PM,
                                        CodeGenOpt::Level OptLevel) {
   PM.add(createPTXISelDag(*this, OptLevel));
+  return false;
+}
+
+bool PTXTargetMachine::addPostRegAlloc(PassManagerBase &PM,
+                                       CodeGenOpt::Level OptLevel) {
+  // PTXMFInfoExtract must after register allocation!
   PM.add(createPTXMFInfoExtract(*this, OptLevel));
   return false;
 }

@@ -22,6 +22,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
+// NOTE: PTXMFInfoExtract must after register allocation!
+
 namespace llvm {
   /// PTXMFInfoExtract - PTX specific code to extract of PTX machine
   /// function information for PTXAsmPrinter
@@ -50,22 +52,38 @@ bool PTXMFInfoExtract::runOnMachineFunction(MachineFunction &MF) {
   PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  DEBUG(dbgs() << "****** PTX FUNCTION LOCAL VAR REG DEF ******\n");
+  DEBUG(dbgs() << "******** PTX FUNCTION LOCAL VAR REG DEF ********\n");
 
-  unsigned reg_ret = MFI->retReg();
+  unsigned retreg = MFI->retReg();
+
+  DEBUG(dbgs()
+        << "PTX::NoRegister == " << PTX::NoRegister << "\n"
+        << "PTX::NUM_TARGET_REGS == " << PTX::NUM_TARGET_REGS << "\n");
+
+  DEBUG(for (unsigned reg = PTX::NoRegister + 1;
+             reg < PTX::NUM_TARGET_REGS; ++reg)
+          if (MRI.isPhysRegUsed(reg))
+            dbgs() << "Used Reg: " << reg << "\n";);
 
   // FIXME: This is a slow linear scanning
   for (unsigned reg = PTX::NoRegister + 1; reg < PTX::NUM_TARGET_REGS; ++reg)
-    if (MRI.isPhysRegUsed(reg) && reg != reg_ret && !MFI->isArgReg(reg))
+    if (MRI.isPhysRegUsed(reg) && reg != retreg && !MFI->isArgReg(reg))
       MFI->addLocalVarReg(reg);
 
   // Notify MachineFunctionInfo that I've done adding local var reg
   MFI->doneAddLocalVar();
 
+  DEBUG(dbgs() << "Return Reg: " << retreg << "\n");
+
+  DEBUG(for (PTXMachineFunctionInfo::reg_iterator
+             i = MFI->argRegBegin(), e = MFI->argRegEnd();
+	     i != e; ++i)
+        dbgs() << "Arg Reg: " << *i << "\n";);
+
   DEBUG(for (PTXMachineFunctionInfo::reg_iterator
              i = MFI->localVarRegBegin(), e = MFI->localVarRegEnd();
 	     i != e; ++i)
-        dbgs() << "Used Reg: " << *i << "\n";);
+        dbgs() << "Local Var Reg: " << *i << "\n";);
 
   return false;
 }

@@ -50,6 +50,8 @@ class PTXTargetMachine : public LLVMTargetMachine {
 
     virtual bool addInstSelector(PassManagerBase &PM,
                                  CodeGenOpt::Level OptLevel);
+    virtual bool addPostRegAlloc(PassManagerBase &PM,
+                                 CodeGenOpt::Level OptLevel);
 }; // class PTXTargetMachine
 } // namespace llvm
 
