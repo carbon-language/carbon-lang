@@ -919,10 +919,13 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
   return Result;
 }
 
+/// AddVariableConstraints - Look at AsmExpr and if it is a variable declared
+/// as using a particular register add that as a constraint that will be used
+/// in this asm stmt.
 static std::string
-AddVariableConstraits(const std::string &Constraint, const Expr &AsmExpr,
-                      const TargetInfo &Target, CodeGenModule &CGM,
-                      const AsmStmt &Stmt) {
+AddVariableConstraints(const std::string &Constraint, const Expr &AsmExpr,
+                       const TargetInfo &Target, CodeGenModule &CGM,
+                       const AsmStmt &Stmt) {
   const DeclRefExpr *AsmDeclRef = dyn_cast<DeclRefExpr>(&AsmExpr);
   if (!AsmDeclRef)
     return Constraint;
@@ -1082,7 +1085,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     const Expr *OutExpr = S.getOutputExpr(i);
     OutExpr = OutExpr->IgnoreParenNoopCasts(getContext());
 
-    OutputConstraint = AddVariableConstraits(OutputConstraint, *OutExpr, Target,
+    OutputConstraint = AddVariableConstraints(OutputConstraint, *OutExpr, Target,
                                              CGM, S);
 
     LValue Dest = EmitLValue(OutExpr);
@@ -1163,7 +1166,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
                                          &OutputConstraintInfos);
 
     InputConstraint =
-      AddVariableConstraits(InputConstraint,
+      AddVariableConstraints(InputConstraint,
                             *InputExpr->IgnoreParenNoopCasts(getContext()),
                             Target, CGM, S);
 
