@@ -193,8 +193,7 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
     return processLoopStoreOfSplatValue(SI, StoreSize, SplatValue, Ev, BECount);
 
   // Handle the memcpy case here.
-  errs() << "Found strided store: " << *Ev << "\n";
-  
+ // errs() << "Found strided store: " << *Ev << "\n";
 
   return false;
 }
@@ -202,13 +201,23 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
 /// mayLoopModRefLocation - Return true if the specified loop might do a load or
 /// store to the same location that the specified store could store to, which is
 /// a loop-strided access. 
-static bool mayLoopModRefLocation(StoreInst *SI, Loop *L, AliasAnalysis &AA) {
+static bool mayLoopModRefLocation(StoreInst *SI, Loop *L, const SCEV *BECount,
+                                  unsigned StoreSize, AliasAnalysis &AA) {
   // Get the location that may be stored across the loop.  Since the access is
   // strided positively through memory, we say that the modified location starts
   // at the pointer and has infinite size.
-  // TODO: Could improve this for constant trip-count loops.
-  AliasAnalysis::Location StoreLoc =
-    AliasAnalysis::Location(SI->getPointerOperand());
+  uint64_t AccessSize = AliasAnalysis::UnknownSize;
+
+  // If the loop iterates a fixed number of times, we can refine the access size
+  // to be exactly the size of the memset, which is (BECount+1)*StoreSize
+  if (const SCEVConstant *BECst = dyn_cast<SCEVConstant>(BECount))
+    AccessSize = (BECst->getValue()->getZExtValue()+1)*StoreSize;
+  
+  // TODO: For this to be really effective, we have to dive into the pointer
+  // operand in the store.  Store to &A[i] of 100 will always return may alias
+  // with store of &A[100], we need to StoreLoc to be "A" with size of 100,
+  // which will then no-alias a store to &A[100].
+  AliasAnalysis::Location StoreLoc(SI->getPointerOperand(), AccessSize);
 
   for (Loop::block_iterator BI = L->block_begin(), E = L->block_end(); BI != E;
        ++BI)
@@ -234,7 +243,8 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
   // this into a memset in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
   // or write to the aliased location.  Check for an alias.
-  bool Unsafe=mayLoopModRefLocation(SI, CurLoop, getAnalysis<AliasAnalysis>());
+  bool Unsafe = mayLoopModRefLocation(SI, CurLoop, BECount, StoreSize,
+                                      getAnalysis<AliasAnalysis>());
 
   SI->insertBefore(InstAfterStore);
   
