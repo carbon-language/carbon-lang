@@ -2074,3 +2074,20 @@ define i1 @g(i32 a) nounwind readnone {
 }
 
 //===---------------------------------------------------------------------===//
+
+This code can be seen in viterbi:
+
+  %64 = call noalias i8* @malloc(i64 %62) nounwind
+...
+  %67 = call i64 @llvm.objectsize.i64(i8* %64, i1 false) nounwind
+  %68 = call i8* @__memset_chk(i8* %64, i32 0, i64 %62, i64 %67) nounwind
+
+llvm.objectsize.i64 should be taught about malloc/calloc, allowing it to
+fold to %62.  This is a security win (overflows of malloc will get caught)
+and also a performance win by exposing more memsets to the optimizer.
+
+This occurs several times in viterbi.
+
+//===---------------------------------------------------------------------===//
+
+
