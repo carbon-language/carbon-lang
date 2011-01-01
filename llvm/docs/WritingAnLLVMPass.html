@@ -203,8 +203,8 @@ include $(LEVEL)/Makefile.common
 </pre></div>
 
 <p>This makefile specifies that all of the <tt>.cpp</tt> files in the current
-directory are to be compiled and linked together into a
-<tt>Debug+Asserts/lib/Hello.so</tt> shared object that can be dynamically loaded by
+directory are to be compiled and linked together into a shared object
+<tt>$(LEVEL)/Debug+Asserts/lib/Hello.so</tt> that can be dynamically loaded by
 the <tt>opt</tt> or <tt>bugpoint</tt> tools via their <tt>-load</tt> options.  
 If your operating system uses a suffix other than .so (such as windows or 
 Mac OS/X), the appropriate extension will be used.</p>
@@ -341,8 +341,9 @@ is supplied as fourth argument. </p>
 </pre></div>
 
 <p>Now that it's all together, compile the file with a simple "<tt>gmake</tt>"
-command in the local directory and you should get a new
-"<tt>Debug+Asserts/lib/Hello.so</tt> file.  Note that everything in this file is
+command in the local directory and you should get a new file
+"<tt>Debug+Asserts/lib/Hello.so</tt>" under the top level directory of the LLVM
+source tree (not in the local directory).  Note that everything in this file is
 contained in an anonymous namespace: this reflects the fact that passes are self
 contained units that do not need external interfaces (although they can have
 them) to be useful.</p>
