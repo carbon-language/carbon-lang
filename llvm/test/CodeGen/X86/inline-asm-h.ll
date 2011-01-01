@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnu < %s | FileCheck %s
 
 @foobar = common global i32 0, align 4
 
