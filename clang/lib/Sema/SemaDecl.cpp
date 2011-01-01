@@ -2995,8 +2995,12 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (Expr *E = (Expr*)D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
+    llvm::StringRef Label = SE->getString();
+    if (S->getFnParent() != 0 &&
+        !Context.Target.isValidGCCRegisterName(Label))
+      Diag(E->getExprLoc(), diag::err_asm_unknown_register_name) << Label;
     NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0), 
-                                                Context, SE->getString()));
+                                                Context, Label));
   }
 
   // Diagnose shadowed variables before filtering for scope.

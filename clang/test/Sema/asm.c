@@ -91,3 +91,7 @@ void test9(int i) {
   asm("" : [foo] "=r" (i), "=r"(i) : "1[foo]"(i)); // expected-error{{invalid input constraint '1[foo]' in asm}}
   asm("" : [foo] "=r" (i), "=r"(i) : "[foo]1"(i)); // expected-error{{invalid input constraint '[foo]1' in asm}}
 }
+
+void test10(void){
+        register unsigned long long bar asm("foo"); // expected-error {{unknown register name 'foo' in asm}}
+}

@@ -937,10 +937,7 @@ AddVariableConstraints(const std::string &Constraint, const Expr &AsmExpr,
   if (!Attr)
     return Constraint;
   llvm::StringRef Register = Attr->getLabel();
-  if (!Target.isValidGCCRegisterName(Register)) {
-    CGM.ErrorUnsupported(Variable, "__asm__");
-    return Constraint;
-  }
+  assert(Target.isValidGCCRegisterName(Register));
   if (Constraint != "r") {
     CGM.ErrorUnsupported(&Stmt, "__asm__");
     return Constraint;
