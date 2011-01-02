@@ -696,11 +696,24 @@ void MergeFunctions::Remove(Function *F) {
 // RemoveUsers - For each instruction used by the value, Remove() the function
 // that contains the instruction. This should happen right before a call to RAUW.
 void MergeFunctions::RemoveUsers(Value *V) {
-  for (Value::use_iterator UI = V->use_begin(), UE = V->use_end();
-       UI != UE; ++UI) {
-    Use &U = UI.getUse();
-    if (Instruction *I = dyn_cast<Instruction>(U.getUser())) {
-      Remove(I->getParent()->getParent());
+  std::vector<Value *> Worklist;
+  Worklist.push_back(V);
+  while (!Worklist.empty()) {
+    Value *V = Worklist.back();
+    Worklist.pop_back();
+
+    for (Value::use_iterator UI = V->use_begin(), UE = V->use_end();
+         UI != UE; ++UI) {
+      Use &U = UI.getUse();
+      if (Instruction *I = dyn_cast<Instruction>(U.getUser())) {
+        Remove(I->getParent()->getParent());
+      } else if (isa<GlobalValue>(U.getUser())) {
+	// do nothing
+      } else if (Constant *C = dyn_cast<Constant>(U.getUser())) {
+	for (Value::use_iterator CUI = C->use_begin(), CUE = C->use_end();
+	     CUI != CUE; ++CUI)
+          Worklist.push_back(*CUI);
+      }
     }
   }
 }
