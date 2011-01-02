@@ -165,4 +165,27 @@ for.end:                                          ; preds = %for.body, %entry
 }
 
 
+; This is a loop that was rotated but where the blocks weren't merged.  This
+; shouldn't perturb us.
+define void @test7(i8* %Base, i64 %Size) nounwind ssp {
+bb.nph:                                           ; preds = %entry
+  br label %for.body
+
+for.body:                                         ; preds = %bb.nph, %for.body
+  %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body.cont ]
+  br label %for.body.cont
+for.body.cont:
+  %I.0.014 = getelementptr i8* %Base, i64 %indvar
+  store i8 0, i8* %I.0.014, align 1
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, %Size
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+; CHECK: @test7
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %Base, i8 0, i64 %Size, i32 1, i1 false)
+; CHECK-NOT: store
+}
+
 

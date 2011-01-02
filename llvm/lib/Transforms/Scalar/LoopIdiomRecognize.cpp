@@ -58,6 +58,7 @@ namespace {
   class LoopIdiomRecognize : public LoopPass {
     Loop *CurLoop;
     const TargetData *TD;
+    DominatorTree *DT;
     ScalarEvolution *SE;
   public:
     static char ID;
@@ -66,6 +67,8 @@ namespace {
     }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
+    bool runOnLoopBlock(BasicBlock *BB, const SCEV *BECount,
+                        SmallVectorImpl<BasicBlock*> &ExitBlocks);
 
     bool processLoopStore(StoreInst *SI, const SCEV *BECount);
     
@@ -93,6 +96,7 @@ namespace {
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
       AU.addPreserved<DominatorTree>();
+      AU.addRequired<DominatorTree>();
     }
   };
 }
@@ -101,6 +105,7 @@ char LoopIdiomRecognize::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
                       false, false)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
@@ -157,16 +162,41 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   // We require target data for now.
   TD = getAnalysisIfAvailable<TargetData>();
   if (TD == 0) return false;
-  
-  // TODO: We currently only scan the header of the loop, because it is the only
-  // part that is known to execute and we don't want to make a conditional store
-  // into an unconditional one in the preheader.  However, there can be diamonds
-  // and other things in the loop that would make other blocks "always executed"
-  // we should get the full set and scan each block.
-  BasicBlock *BB = L->getHeader();
-  DEBUG(dbgs() << "loop-idiom Scanning: F[" << BB->getParent()->getName()
-               << "] Loop %" << BB->getName() << "\n");
 
+  DT = &getAnalysis<DominatorTree>();
+  LoopInfo &LI = getAnalysis<LoopInfo>();
+  
+  SmallVector<BasicBlock*, 8> ExitBlocks;
+  CurLoop->getUniqueExitBlocks(ExitBlocks);
+
+  bool MadeChange = false;
+  // Scan all the blocks in the loop that are not in subloops.
+  for (Loop::block_iterator BI = L->block_begin(), E = L->block_end(); BI != E;
+       ++BI) {
+    // Ignore blocks in subloops.
+    if (LI.getLoopFor(*BI) != CurLoop)
+      continue;
+    
+    MadeChange |= runOnLoopBlock(*BI, BECount, ExitBlocks);
+  }
+  return MadeChange;
+}
+
+/// runOnLoopBlock - Process the specified block, which lives in a counted loop
+/// with the specified backedge count.  This block is known to be in the current
+/// loop and not in any subloops.
+bool LoopIdiomRecognize::runOnLoopBlock(BasicBlock *BB, const SCEV *BECount,
+                                     SmallVectorImpl<BasicBlock*> &ExitBlocks) {
+  // We can only promote stores in this block if they are unconditionally
+  // executed in the loop.  For a block to be unconditionally executed, it has
+  // to dominate all the exit blocks of the loop.  Verify this now.
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+    if (!DT->dominates(BB, ExitBlocks[i]))
+      return false;
+  
+  DEBUG(dbgs() << "loop-idiom Scanning: F[" << BB->getParent()->getName()
+        << "] Loop %" << BB->getName() << "\n");
+  
   bool MadeChange = false;
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
     // Look for store instructions, which may be memsets.
@@ -186,6 +216,7 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   
   return MadeChange;
 }
+
 
 /// scanBlock - Look over a block to see if we can promote anything out of it.
 bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
