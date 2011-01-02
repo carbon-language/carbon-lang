@@ -238,13 +238,11 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
       }
     }
 
-    typename GraphT::NodeType* WParent = DT.Vertex[WInfo.Parent];
-
     // If V is a non-root vertex and sdom(V) = parent(V), then idom(V) is
     // necessarily parent(V). In this case, set idom(V) here and avoid placing
     // V into a bucket.
     if (WInfo.Semi == WInfo.Parent) {
-      DT.IDoms[W] = WParent;
+      DT.IDoms[W] = DT.Vertex[WInfo.Parent];
     } else {
       Buckets[i] = Buckets[WInfo.Semi];
       Buckets[WInfo.Semi] = i;
