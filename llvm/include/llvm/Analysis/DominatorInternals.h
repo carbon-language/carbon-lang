@@ -54,7 +54,7 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
     }
   }
 #else
-  bool IsChilOfArtificialExit = (N != 0);
+  bool IsChildOfArtificialExit = (N != 0);
 
   std::vector<std::pair<typename GraphT::NodeType*,
                         typename GraphT::ChildIteratorType> > Worklist;
@@ -76,10 +76,10 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
       //BBInfo[V].Child = 0;      // Child[v] = 0
       BBInfo.Size = 1;            // Size[v] = 1
 
-      if (IsChilOfArtificialExit)
+      if (IsChildOfArtificialExit)
         BBInfo.Parent = 1;
 
-      IsChilOfArtificialExit = false;
+      IsChildOfArtificialExit = false;
     }
 
     // store the DFS number of the current BB - the reference to BBInfo might
