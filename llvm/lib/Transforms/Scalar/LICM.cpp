@@ -131,10 +131,7 @@ namespace {
     ///
     bool inSubLoop(BasicBlock *BB) {
       assert(CurLoop->contains(BB) && "Only valid if BB is IN the loop");
-      for (Loop::iterator I = CurLoop->begin(), E = CurLoop->end(); I != E; ++I)
-        if ((*I)->contains(BB))
-          return true;  // A subloop actually contains this block!
-      return false;
+      return LI->getLoopFor(BB) != CurLoop;
     }
 
     /// sink - When an instruction is found to only be used outside of the loop,
