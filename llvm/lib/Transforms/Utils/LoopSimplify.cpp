@@ -91,7 +91,6 @@ namespace {
       AU.addPreserved<ScalarEvolution>();
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
       AU.addPreserved<DominanceFrontier>();
-      AU.addPreservedID(LCSSAID);
     }
 
     /// verifyAnalysis() - Verify LoopSimplifyForm's guarantees.
@@ -269,12 +268,11 @@ ReprocessLoop:
   PHINode *PN;
   for (BasicBlock::iterator I = L->getHeader()->begin();
        (PN = dyn_cast<PHINode>(I++)); )
-    if (Value *V = SimplifyInstruction(PN, 0, DT))
-      if (LI->replacementPreservesLCSSAForm(PN, V)) {
-          if (AA) AA->deleteValue(PN);
-          PN->replaceAllUsesWith(V);
-          PN->eraseFromParent();
-      }
+    if (Value *V = SimplifyInstruction(PN, 0, DT)) {
+      if (AA) AA->deleteValue(PN);
+      PN->replaceAllUsesWith(V);
+      PN->eraseFromParent();
+    }
 
   // If this loop has multiple exits and the exits all go to the same
   // block, attempt to merge the exits. This helps several passes, such
@@ -450,14 +448,13 @@ static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorTree *DT,
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
-    if (Value *V = SimplifyInstruction(PN, 0, DT))
-      if (LI->replacementPreservesLCSSAForm(PN, V)) {
-        // This is a degenerate PHI already, don't modify it!
-        PN->replaceAllUsesWith(V);
-        if (AA) AA->deleteValue(PN);
-        PN->eraseFromParent();
-        continue;
-      }
+    if (Value *V = SimplifyInstruction(PN, 0, DT)) {
+      // This is a degenerate PHI already, don't modify it!
+      PN->replaceAllUsesWith(V);
+      if (AA) AA->deleteValue(PN);
+      PN->eraseFromParent();
+      continue;
+    }
 
     // Scan this PHI node looking for a use of the PHI node by itself.
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
