@@ -86,9 +86,9 @@ unsigned DenseMapInfo<InstValue>::getHashValue(InstValue Val) {
   else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Inst))
     Res = getHash(BO->getOperand(0)) ^ (getHash(BO->getOperand(1)) << 1);
   else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
-    Res = getHash(CI->getOperand(0));
+    Res = getHash(GEP->getOperand(0));
     for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
-      Res ^= getHash(CI->getOperand(i)) << i;
+      Res ^= getHash(GEP->getOperand(i)) << i;
   } else if (CmpInst *CI = dyn_cast<CmpInst>(Inst)) {
       Res = getHash(CI->getOperand(0)) ^ (getHash(CI->getOperand(1)) << 1) ^
          CI->getPredicate();
@@ -97,9 +97,9 @@ unsigned DenseMapInfo<InstValue>::getHashValue(InstValue Val) {
             isa<InsertElementInst>(Inst) || isa<ShuffleVectorInst>(Inst) ||
             isa<ExtractValueInst>(Inst) || isa<InsertValueInst>(Inst)) &&
            "Unhandled instruction kind");
-    Res = getHash(CI->getType()) << 4;
+    Res = getHash(Inst->getType()) << 4;
     for (unsigned i = 0, e = Inst->getNumOperands(); i != e; ++i)
-      Res ^= getHash(CI->getOperand(i)) << i;
+      Res ^= getHash(Inst->getOperand(i)) << i;
   }
   
   return (Res << 1) ^ Inst->getOpcode();
