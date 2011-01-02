@@ -14,14 +14,20 @@
 
 #define DEBUG_TYPE "early-cse"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/ScopedHashTable.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+STATISTIC(NumSimplify, "Number of insts simplified or DCE'd");
+STATISTIC(NumCSE, "Number of insts CSE'd");
 
 namespace {
   /// InstValue - Instances of this struct represent available values in the
@@ -35,7 +41,11 @@ namespace {
     }
     
     static bool canHandle(Instruction *Inst) {
-      return isa<CastInst>(Inst);
+      return isa<CastInst>(Inst) || isa<BinaryOperator>(Inst) ||
+             isa<GetElementPtrInst>(Inst) || isa<CmpInst>(Inst) ||
+             isa<SelectInst>(Inst) || isa<ExtractElementInst>(Inst) ||
+             isa<InsertElementInst>(Inst) || isa<ShuffleVectorInst>(Inst) ||
+             isa<ExtractValueInst>(Inst) || isa<InsertValueInst>(Inst);
     }
     
     static InstValue get(Instruction *I) {
@@ -73,8 +83,24 @@ unsigned DenseMapInfo<InstValue>::getHashValue(InstValue Val) {
   unsigned Res = 0;
   if (CastInst *CI = dyn_cast<CastInst>(Inst))
     Res = getHash(CI->getOperand(0)) ^ getHash(CI->getType());
-  else
-    assert(0 && "Unhandled instruction kind");
+  else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Inst))
+    Res = getHash(BO->getOperand(0)) ^ (getHash(BO->getOperand(1)) << 1);
+  else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Inst)) {
+    Res = getHash(CI->getOperand(0));
+    for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
+      Res ^= getHash(CI->getOperand(i)) << i;
+  } else if (CmpInst *CI = dyn_cast<CmpInst>(Inst)) {
+      Res = getHash(CI->getOperand(0)) ^ (getHash(CI->getOperand(1)) << 1) ^
+         CI->getPredicate();
+  } else {
+    assert((isa<SelectInst>(Inst) || isa<ExtractElementInst>(Inst) ||
+            isa<InsertElementInst>(Inst) || isa<ShuffleVectorInst>(Inst) ||
+            isa<ExtractValueInst>(Inst) || isa<InsertValueInst>(Inst)) &&
+           "Unhandled instruction kind");
+    Res = getHash(CI->getType()) << 4;
+    for (unsigned i = 0, e = Inst->getNumOperands(); i != e; ++i)
+      Res ^= getHash(CI->getOperand(i)) << i;
+  }
   
   return (Res << 1) ^ Inst->getOpcode();
 }
@@ -152,17 +178,21 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     
     // Dead instructions should just be removed.
     if (isInstructionTriviallyDead(Inst)) {
+      DEBUG(dbgs() << "EarlyCSE DCE: " << *Inst << '\n');
       Inst->eraseFromParent();
       Changed = true;
+      ++NumSimplify;
       continue;
     }
     
     // If the instruction can be simplified (e.g. X+0 = X) then replace it with
     // its simpler value.
     if (Value *V = SimplifyInstruction(Inst, TD, DT)) {
+      DEBUG(dbgs() << "EarlyCSE Simplify: " << *Inst << "  to: " << *V << '\n');
       Inst->replaceAllUsesWith(V);
       Inst->eraseFromParent();
       Changed = true;
+      ++NumSimplify;
       continue;
     }
     
@@ -172,9 +202,11 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     
     // See if the instruction has an available value.  If so, use it.
     if (Instruction *V = AvailableValues->lookup(InstValue::get(Inst))) {
+      DEBUG(dbgs() << "EarlyCSE CSE: " << *Inst << "  to: " << *V << '\n');
       Inst->replaceAllUsesWith(V);
       Inst->eraseFromParent();
       Changed = true;
+      ++NumCSE;
       continue;
     }
     

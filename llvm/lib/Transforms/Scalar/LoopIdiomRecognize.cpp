@@ -31,7 +31,10 @@
 //   void foo(_Complex float *P)
 //     for (i) { __real__(*P) = 0;  __imag__(*P) = 0; }
 // this is also "Example 2" from http://blog.regehr.org/archives/320
-//  
+//
+// This could regognize common matrix multiplies and dot product idioms and
+// replace them with calls to BLAS (if linked in??).
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-idiom"
@@ -49,8 +52,6 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-// TODO: Recognize "N" size array multiplies: replace with call to blas or
-// something.
 STATISTIC(NumMemSet, "Number of memset's formed from loop stores");
 STATISTIC(NumMemCpy, "Number of memcpy's formed from loop load+stores");
 
