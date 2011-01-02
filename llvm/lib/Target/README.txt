@@ -414,14 +414,6 @@ this construct.
 
 //===---------------------------------------------------------------------===//
 
-[LOOP RECOGNITION]
-
-viterbi speeds up *significantly* if the various "history" related copy loops
-are turned into memcpy calls at the source level.  We need a "loops to memcpy"
-pass.
-
-//===---------------------------------------------------------------------===//
-
 [LOOP OPTIMIZATION]
 
 SingleSource/Benchmarks/Misc/dt.c shows several interesting optimization

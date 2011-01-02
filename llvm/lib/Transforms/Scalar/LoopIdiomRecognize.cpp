@@ -126,11 +126,6 @@ static void DeleteDeadInstruction(Instruction *I, ScalarEvolution &SE) {
 bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   CurLoop = L;
   
-  // We only look at trivial single basic block loops.
-  // TODO: eventually support more complex loops, scanning the header.
-  if (L->getBlocks().size() != 1)
-    return false;
-  
   // The trip count of the loop must be analyzable.
   SE = &getAnalysis<ScalarEvolution>();
   if (!SE->hasLoopInvariantBackedgeTakenCount(L))
@@ -142,6 +137,11 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   TD = getAnalysisIfAvailable<TargetData>();
   if (TD == 0) return false;
   
+  // TODO: We currently only scan the header of the loop, because it is the only
+  // part that is known to execute and we don't want to make a conditional store
+  // into an unconditional one in the preheader.  However, there can be diamonds
+  // and other things in the loop that would make other blocks "always executed"
+  // we should get the full set and scan each block.
   BasicBlock *BB = L->getHeader();
   DEBUG(dbgs() << "loop-idiom Scanning: F[" << BB->getParent()->getName()
                << "] Loop %" << BB->getName() << "\n");
