@@ -25,3 +25,35 @@ unsigned long long foo(unsigned long long addr, unsigned long long a0,
 }
 
 // CHECK: call i64 asm "call *$1", "={rax},r,{rdi},{rsi},{rdx},{rcx},{r8},{r9},~{dirflag},~{fpsr},~{flags}"
+
+unsigned long long foo2(unsigned long long addr, double a0,
+                       double a1, double a2,
+                       double a3, double a4,
+                       double a5, double a6, double a7) {
+  register double b0 asm("xmm0");
+  register double b1 asm("xmm1");
+  register double b2 asm("xmm2");
+  register double b3 asm("xmm3");
+  register double b4 asm("xmm4");
+  register double b5 asm("xmm5");
+  register double b6 asm("xmm6");
+  register double b7 asm("xmm7");
+
+  register unsigned long long result asm("rax");
+
+  b0 = a0;
+  b1 = a1;
+  b2 = a2;
+  b3 = a3;
+  b4 = a4;
+  b5 = a5;
+  b6 = a6;
+  b7 = a7;
+
+  asm("call *%1" : "=r" (result)
+      : "r"(addr), "x" (b0), "x" (b1), "x" (b2), "x" (b3), "x" (b4), "x" (b5), "x" (b6),
+        "x" (b7));
+  return result;
+}
+
+// CHECK: call i64 asm "call *$1", "={rax},r,{xmm0},{xmm1},{xmm2},{xmm3},{xmm4},{xmm5},{xmm6},{xmm7},~{dirflag},~{fpsr},~{flags}

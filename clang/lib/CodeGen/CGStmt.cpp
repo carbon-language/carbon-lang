@@ -938,7 +938,8 @@ AddVariableConstraints(const std::string &Constraint, const Expr &AsmExpr,
     return Constraint;
   llvm::StringRef Register = Attr->getLabel();
   assert(Target.isValidGCCRegisterName(Register));
-  if (Constraint != "r") {
+  // FIXME: We should check which registers are compatible with "r" or "x".
+  if (Constraint != "r" && Constraint != "x") {
     CGM.ErrorUnsupported(&Stmt, "__asm__");
     return Constraint;
   }
