@@ -579,7 +579,7 @@ static void HandleOwnershipAttr(Decl *d, const AttributeList &AL, Sema &S) {
                                              start, size));
 }
 
-static bool isStaticVarOrStaticFunciton(Decl *D) {
+static bool isStaticVarOrStaticFunction(Decl *D) {
   if (VarDecl *VD = dyn_cast<VarDecl>(D))
     return VD->getStorageClass() == SC_Static;
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
@@ -629,7 +629,7 @@ static void HandleWeakRefAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // This looks like a bug in gcc. We reject that for now. We should revisit
   // it if this behaviour is actually used.
 
-  if (!isStaticVarOrStaticFunciton(d)) {
+  if (!isStaticVarOrStaticFunction(d)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_static) <<
       dyn_cast<NamedDecl>(d)->getNameAsString();
     return;
@@ -1257,7 +1257,7 @@ static void HandleWeakAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
 
   /* weak only applies to non-static declarations */
-  if (isStaticVarOrStaticFunciton(D)) {
+  if (isStaticVarOrStaticFunction(D)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_weak_static) <<
       dyn_cast<NamedDecl>(D)->getNameAsString();
     return;
