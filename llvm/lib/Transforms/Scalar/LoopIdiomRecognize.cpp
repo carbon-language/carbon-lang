@@ -126,10 +126,6 @@ static void DeleteDeadInstruction(Instruction *I, ScalarEvolution &SE) {
 bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   CurLoop = L;
   
-  if (L->getHeader()->getName().startswith("bb29")) {
-    errs() << *L->getHeader();
-  }
-  
   // We only look at trivial single basic block loops.
   // TODO: eventually support more complex loops, scanning the header.
   if (L->getBlocks().size() != 1)
