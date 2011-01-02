@@ -1496,13 +1496,6 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
 ///
 /// @param SS       An optional C++ scope-specifier, e.g., "::N::M".
 ///
-/// @param Name     The name of the entity that name lookup will
-/// search for.
-///
-/// @param Loc      If provided, the source location where we're performing
-/// name lookup. At present, this is only used to produce diagnostics when
-/// C library functions (like "malloc") are implicitly declared.
-///
 /// @param EnteringContext Indicates whether we are going to enter the
 /// context of the scope-specifier SS (if present).
 ///
