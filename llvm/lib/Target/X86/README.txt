@@ -1507,6 +1507,8 @@ loop, the value comes into the loop as two values, and
 RegsForValue::getCopyFromRegs doesn't know how to put an AssertSext on the
 constructed BUILD_PAIR which represents the cast value.
 
+This can be handled by making CodeGenPrepare sink the cast.
+
 //===---------------------------------------------------------------------===//
 
 Test instructions can be eliminated by using EFLAGS values from arithmetic
@@ -1845,5 +1847,40 @@ _foo:
 	jb	LBB0_4
 
 0 is the only unsigned number < 1.
+
+//===---------------------------------------------------------------------===//
+
+This code:
+
+%0 = type { i32, i1 }
+
+define i32 @add32carry(i32 %sum, i32 %x) nounwind readnone ssp {
+entry:
+  %uadd = tail call %0 @llvm.uadd.with.overflow.i32(i32 %sum, i32 %x)
+  %cmp = extractvalue %0 %uadd, 1
+  %inc = zext i1 %cmp to i32
+  %add = add i32 %x, %sum
+  %z.0 = add i32 %add, %inc
+  ret i32 %z.0
+}
+
+declare %0 @llvm.uadd.with.overflow.i32(i32, i32) nounwind readnone
+
+compiles to:
+
+_add32carry:                            ## @add32carry
+	addl	%esi, %edi
+	sbbl	%ecx, %ecx
+	movl	%edi, %eax
+	subl	%ecx, %eax
+	ret
+
+But it could be:
+
+_add32carry:
+	leal	(%rsi,%rdi), %eax
+	cmpl	%esi, %eax
+	adcl	$0, %eax
+	ret
 
 //===---------------------------------------------------------------------===//

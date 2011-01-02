@@ -2,38 +2,6 @@ Target Independent Opportunities:
 
 //===---------------------------------------------------------------------===//
 
-We should recognize idioms for add-with-carry and turn it into the appropriate
-intrinsics.  This example:
-
-unsigned add32carry(unsigned sum, unsigned x) {
- unsigned z = sum + x;
- if (sum + x < x)
-     z++;
- return z;
-}
-
-Compiles to: clang t.c -S -o - -O3 -fomit-frame-pointer -m64 -mkernel
-
-_add32carry:                            ## @add32carry
-	addl	%esi, %edi
-	cmpl	%esi, %edi
-	sbbl	%eax, %eax
-	andl	$1, %eax
-	addl	%edi, %eax
-	ret
-
-with clang, but to:
-
-_add32carry:
-	leal	(%rsi,%rdi), %eax
-	cmpl	%esi, %eax
-	adcl	$0, %eax
-	ret
-
-with gcc.
-
-//===---------------------------------------------------------------------===//
-
 Dead argument elimination should be enhanced to handle cases when an argument is
 dead to an externally visible function.  Though the argument can't be removed
 from the externally visible function, the caller doesn't need to pass it in.
@@ -82,6 +50,9 @@ unsigned int mul(unsigned int a,unsigned int b) {
   return a*b;
 }
 
+The legalization code for mul-with-overflow needs to be made more robust before
+this can be implemented though.
+
 //===---------------------------------------------------------------------===//
 
 Get the C front-end to expand hypot(x,y) -> llvm.sqrt(x*x+y*y) when errno and
@@ -89,41 +60,6 @@ precision don't matter (ffastmath).  Misc/mandel will like this. :)  This isn't
 safe in general, even on darwin.  See the libm implementation of hypot for
 examples (which special case when x/y are exactly zero to get signed zeros etc
 right).
-
-//===---------------------------------------------------------------------===//
-
-Solve this DAG isel folding deficiency:
-
-int X, Y;
-
-void fn1(void)
-{
-  X = X | (Y << 3);
-}
-
-compiles to
-
-fn1:
-	movl Y, %eax
-	shll $3, %eax
-	orl X, %eax
-	movl %eax, X
-	ret
-
-The problem is the store's chain operand is not the load X but rather
-a TokenFactor of the load X and load Y, which prevents the folding.
-
-There are two ways to fix this:
-
-1. The dag combiner can start using alias analysis to realize that y/x
-   don't alias, making the store to X not dependent on the load from Y.
-2. The generated isel could be made smarter in the case it can't
-   disambiguate the pointers.
-
-Number 1 is the preferred solution.
-
-This has been "fixed" by a TableGen hack. But that is a short term workaround
-which will be removed once the proper fix is made.
 
 //===---------------------------------------------------------------------===//
 
@@ -339,14 +275,6 @@ unsigned long reverse(unsigned v) {
     return v ^ (t >> 8);
 }
 
-Neither is this (very standard idiom):
-
-int f(int n)
-{
-  return (((n) << 24) | (((n) & 0xff00) << 8) 
-       | (((n) >> 8) & 0xff00) | ((n) >> 24));
-}
-
 //===---------------------------------------------------------------------===//
 
 [LOOP RECOGNITION]
@@ -382,9 +310,7 @@ unsigned int popcount(unsigned int input) {
   return count;
 }
 
-This is a form of idiom recognition for loops, the same thing that could be
-useful for recognizing memset/memcpy.  This sort of thing should be added to the
-loop idiom pass.
+This sort of thing should be added to the loop idiom pass.
 
 //===---------------------------------------------------------------------===//
 
@@ -639,46 +565,21 @@ struct THotKey { short Key; bool Control; bool Shift; bool Alt; };
 extern THotKey m_HotKey;
 THotKey GetHotKey () { return m_HotKey; }
 
-into (-O3 -fno-exceptions -static -fomit-frame-pointer):
+into (-m64 -O3 -fno-exceptions -static -fomit-frame-pointer):
 
-__Z9GetHotKeyv:
-	pushl	%esi
-	movl	8(%esp), %eax
-	movb	_m_HotKey+3, %cl
-	movb	_m_HotKey+4, %dl
-	movb	_m_HotKey+2, %ch
-	movw	_m_HotKey, %si
-	movw	%si, (%eax)
-	movb	%ch, 2(%eax)
-	movb	%cl, 3(%eax)
-	movb	%dl, 4(%eax)
-	popl	%esi
-	ret	$4
-
-GCC produces:
-
-__Z9GetHotKeyv:
-	movl	_m_HotKey, %edx
-	movl	4(%esp), %eax
-	movl	%edx, (%eax)
-	movzwl	_m_HotKey+4, %edx
-	movw	%dx, 4(%eax)
-	ret	$4
-
-The LLVM IR contains the needed alignment info, so we should be able to 
-merge the loads and stores into 4-byte loads:
-
-	%struct.THotKey = type { i16, i8, i8, i8 }
-define void @_Z9GetHotKeyv(%struct.THotKey* sret  %agg.result) nounwind  {
-...
-	%tmp2 = load i16* getelementptr (@m_HotKey, i32 0, i32 0), align 8
-	%tmp5 = load i8* getelementptr (@m_HotKey, i32 0, i32 1), align 2
-	%tmp8 = load i8* getelementptr (@m_HotKey, i32 0, i32 2), align 1
-	%tmp11 = load i8* getelementptr (@m_HotKey, i32 0, i32 3), align 2
-
-Alternatively, we should use a small amount of base-offset alias analysis
-to make it so the scheduler doesn't need to hold all the loads in regs at
-once.
+__Z9GetHotKeyv:                         ## @_Z9GetHotKeyv
+	movq	_m_HotKey@GOTPCREL(%rip), %rax
+	movzwl	(%rax), %ecx
+	movzbl	2(%rax), %edx
+	shlq	$16, %rdx
+	orq	%rcx, %rdx
+	movzbl	3(%rax), %ecx
+	shlq	$24, %rcx
+	orq	%rdx, %rcx
+	movzbl	4(%rax), %eax
+	shlq	$32, %rax
+	orq	%rcx, %rax
+	ret
 
 //===---------------------------------------------------------------------===//
 
@@ -764,20 +665,6 @@ etc.  On X86, we miss a bunch of 'rotate by variable' cases because the rotate
 matching code in dag combine doesn't look through truncates aggressively 
 enough.  Here are some testcases reduces from GCC PR17886:
 
-unsigned long long f(unsigned long long x, int y) {
-  return (x << y) | (x >> 64-y); 
-} 
-unsigned f2(unsigned x, int y){
-  return (x << y) | (x >> 32-y); 
-} 
-unsigned long long f3(unsigned long long x){
-  int y = 9;
-  return (x << y) | (x >> 64-y); 
-} 
-unsigned f4(unsigned x){
-  int y = 10;
-  return (x << y) | (x >> 32-y); 
-}
 unsigned long long f5(unsigned long long x, unsigned long long y) {
   return (x << 8) | ((y >> 48) & 0xffull);
 }
@@ -795,11 +682,6 @@ unsigned long long f6(unsigned long long x, unsigned long long y, int z) {
     return (x << 40) | ((y >> 16) & 0xffffffffffull);
   }
 }
-
-On X86-64, we only handle f2/f3/f4 right.  On x86-32, a few of these 
-generate truly horrible code, instead of using shld and friends.  On
-ARM, we end up with calls to L___lshrdi3/L___ashldi3 in f, which is
-badness.  PPC64 misses f, f5 and f6.  CellSPU aborts in isel.
 
 //===---------------------------------------------------------------------===//
 
