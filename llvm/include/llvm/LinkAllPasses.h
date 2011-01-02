@@ -128,6 +128,7 @@ namespace {
       (void) llvm::createUnifyFunctionExitNodesPass();
       (void) llvm::createInstCountPass();
       (void) llvm::createCodeGenPreparePass();
+      (void) llvm::createEarlyCSEPass();
       (void) llvm::createGVNPass();
       (void) llvm::createMemCpyOptPass();
       (void) llvm::createLoopDeletionPass();

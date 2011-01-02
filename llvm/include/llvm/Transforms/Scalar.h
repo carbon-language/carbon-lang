@@ -260,6 +260,13 @@ extern char &LCSSAID;
 
 //===----------------------------------------------------------------------===//
 //
+// EarlyCSE - This pass performs a simple and fast CSE pass over the dominator
+// tree.
+//
+FunctionPass *createEarlyCSEPass();
+  
+//===----------------------------------------------------------------------===//
+//
 // GVN - This pass performs global value numbering and redundant load 
 // elimination cotemporaneously.
 //
