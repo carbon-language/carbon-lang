@@ -137,38 +137,6 @@ namespace {
       return false;
     }
 
-    /// isExitBlockDominatedByBlockInLoop - This method checks to see if the
-    /// specified exit block of the loop is dominated by the specified block
-    /// that is in the body of the loop.  We use these constraints to
-    /// dramatically limit the amount of the dominator tree that needs to be
-    /// searched.
-    bool isExitBlockDominatedByBlockInLoop(BasicBlock *ExitBlock,
-                                           BasicBlock *BlockInLoop) const {
-      // If the block in the loop is the loop header, it must be dominated!
-      BasicBlock *LoopHeader = CurLoop->getHeader();
-      if (BlockInLoop == LoopHeader)
-        return true;
-
-      DomTreeNode *BlockInLoopNode = DT->getNode(BlockInLoop);
-      DomTreeNode *IDom            = DT->getNode(ExitBlock);
-
-      // Because the exit block is not in the loop, we know we have to get _at
-      // least_ its immediate dominator.
-      IDom = IDom->getIDom();
-      
-      while (IDom && IDom != BlockInLoopNode) {
-        // If we have got to the header of the loop, then the instructions block
-        // did not dominate the exit node, so we can't hoist it.
-        if (IDom->getBlock() == LoopHeader)
-          return false;
-
-        // Get next Immediate Dominator.
-        IDom = IDom->getIDom();
-      };
-
-      return true;
-    }
-
     /// sink - When an instruction is found to only be used outside of the loop,
     /// this function moves it to the exit blocks and patches up SSA form as
     /// needed.
@@ -480,7 +448,7 @@ void LICM::sink(Instruction &I) {
   // enough that we handle it as a special (more efficient) case.  It is more
   // efficient to handle because there are no PHI nodes that need to be placed.
   if (ExitBlocks.size() == 1) {
-    if (!isExitBlockDominatedByBlockInLoop(ExitBlocks[0], I.getParent())) {
+    if (!DT->dominates(I.getParent(), ExitBlocks[0])) {
       // Instruction is not used, just delete it.
       CurAST->deleteValue(&I);
       // If I has users in unreachable blocks, eliminate.
@@ -531,7 +499,7 @@ void LICM::sink(Instruction &I) {
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
     
-    if (!isExitBlockDominatedByBlockInLoop(ExitBlock, InstOrigBB))
+    if (!DT->dominates(InstOrigBB, ExitBlock))
       continue;
     
     // Insert the code after the last PHI node.
@@ -622,10 +590,9 @@ bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
 
-  // For each exit block, get the DT node and walk up the DT until the
-  // instruction's basic block is found or we exit the loop.
+  // Verify that the block dominates each of the exit blocks of the loop.
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-    if (!isExitBlockDominatedByBlockInLoop(ExitBlocks[i], Inst.getParent()))
+    if (!DT->dominates(Inst.getParent(), ExitBlocks[i]))
       return false;
 
   return true;
