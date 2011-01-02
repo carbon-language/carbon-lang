@@ -25,10 +25,13 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 // TODO: Recognize "N" size array multiplies: replace with call to blas or
 // something.
+STATISTIC(NumMemSet, "Number of memset's formed from loop stores");
+STATISTIC(NumMemCpy, "Number of memcpy's formed from loop load+stores");
 
 namespace {
   class LoopIdiomRecognize : public LoopPass {
@@ -123,6 +126,10 @@ static void DeleteDeadInstruction(Instruction *I, ScalarEvolution &SE) {
 bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   CurLoop = L;
   
+  if (L->getHeader()->getName().startswith("bb29")) {
+    errs() << *L->getHeader();
+  }
+  
   // We only look at trivial single basic block loops.
   // TODO: eventually support more complex loops, scanning the header.
   if (L->getBlocks().size() != 1)
@@ -210,7 +217,7 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
       if (processLoopStoreOfLoopLoad(SI, StoreSize, StoreEv, LoadEv, BECount))
         return true;
   }
- // errs() << "UNHANDLED strided store: " << *Ev << " - " << *SI << "\n";
+  //errs() << "UNHANDLED strided store: " << *StoreEv << " - " << *SI << "\n";
 
   return false;
 }
@@ -309,6 +316,7 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
   DeleteDeadInstruction(SI, *SE);
+  ++NumMemSet;
   return true;
 }
 
@@ -379,5 +387,6 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
   DeleteDeadInstruction(SI, *SE);
+  ++NumMemCpy;
   return true;
 }
