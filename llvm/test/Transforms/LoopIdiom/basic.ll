@@ -188,4 +188,22 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK-NOT: store
 }
 
+; This is a loop should not be transformed, it only executes one iteration.
+define void @test8(i64* %Ptr, i64 %Size) nounwind ssp {
+bb.nph:                                           ; preds = %entry
+  br label %for.body
+
+for.body:                                         ; preds = %bb.nph, %for.body
+  %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
+  %PI = getelementptr i64* %Ptr, i64 %indvar
+  store i64 0, i64 *%PI
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, 1
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+; CHECK: @test8
+; CHECK: store i64 0, i64* %PI
+}
 

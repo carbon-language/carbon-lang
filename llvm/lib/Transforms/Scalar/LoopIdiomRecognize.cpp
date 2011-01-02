@@ -159,6 +159,12 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   const SCEV *BECount = SE->getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(BECount)) return false;
   
+  // If this loop executes exactly one time, then it should be peeled, not
+  // optimized by this pass.
+  if (const SCEVConstant *BECst = dyn_cast<SCEVConstant>(BECount))
+    if (BECst->getValue()->getValue() == 0)
+      return false;
+  
   // We require target data for now.
   TD = getAnalysisIfAvailable<TargetData>();
   if (TD == 0) return false;
