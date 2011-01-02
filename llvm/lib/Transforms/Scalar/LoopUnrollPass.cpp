@@ -16,7 +16,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Analysis/InlineCost.h"
+#include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
