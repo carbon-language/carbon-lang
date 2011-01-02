@@ -207,9 +207,9 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
 
     // Step #2: Implicitly define the immediate dominator of vertices
     for (unsigned j = i; Buckets[j] != i; j = Buckets[j]) {
-       typename GraphT::NodeType* V = DT.Vertex[Buckets[j]];
-       typename GraphT::NodeType* U = Eval<GraphT>(DT, V);
-       DT.IDoms[V] = DT.Info[U].Semi < i ? U : W;
+      typename GraphT::NodeType* V = DT.Vertex[Buckets[j]];
+      typename GraphT::NodeType* U = Eval<GraphT>(DT, V);
+      DT.IDoms[V] = DT.Info[U].Semi < i ? U : W;
     }
 
     // Step #3: Calculate the semidominators of all vertices
@@ -246,8 +246,8 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   if (N >= 1) {
     typename GraphT::NodeType* Root = DT.Vertex[1];
     for (unsigned j = 1; Buckets[j] != 1; j = Buckets[j]) {
-       typename GraphT::NodeType* V = DT.Vertex[Buckets[j]];
-       DT.IDoms[V] = Root;
+      typename GraphT::NodeType* V = DT.Vertex[Buckets[j]];
+      DT.IDoms[V] = Root;
     }
   }
 
