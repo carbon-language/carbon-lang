@@ -175,6 +175,10 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getUniqueExitBlocks(ExitBlocks);
 
+  DEBUG(dbgs() << "loop-idiom Scanning: F["
+               << L->getHeader()->getParent()->getName()
+               << "] Loop %" << L->getHeader()->getName() << "\n");
+  
   bool MadeChange = false;
   // Scan all the blocks in the loop that are not in subloops.
   for (Loop::block_iterator BI = L->block_begin(), E = L->block_end(); BI != E;
@@ -199,9 +203,6 @@ bool LoopIdiomRecognize::runOnLoopBlock(BasicBlock *BB, const SCEV *BECount,
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
     if (!DT->dominates(BB, ExitBlocks[i]))
       return false;
-  
-  DEBUG(dbgs() << "loop-idiom Scanning: F[" << BB->getParent()->getName()
-        << "] Loop %" << BB->getName() << "\n");
   
   bool MadeChange = false;
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
@@ -276,10 +277,11 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   return false;
 }
 
-/// mayLoopModRefLocation - Return true if the specified loop might do a load or
-/// store to the same location that the specified store could store to, which is
-/// a loop-strided access. 
-static bool mayLoopModRefLocation(Value *Ptr, Loop *L, const SCEV *BECount,
+/// mayLoopAccessLocation - Return true if the specified loop might access the
+/// specified pointer location, which is a loop-strided access.  The 'Access'
+/// argument specifies what the verboten forms of access are (read or write).
+static bool mayLoopAccessLocation(Value *Ptr,AliasAnalysis::ModRefResult Access,
+                                  Loop *L, const SCEV *BECount,
                                   unsigned StoreSize, AliasAnalysis &AA,
                                   StoreInst *IgnoredStore) {
   // Get the location that may be stored across the loop.  Since the access is
@@ -302,7 +304,7 @@ static bool mayLoopModRefLocation(Value *Ptr, Loop *L, const SCEV *BECount,
        ++BI)
     for (BasicBlock::iterator I = (*BI)->begin(), E = (*BI)->end(); I != E; ++I)
       if (&*I != IgnoredStore &&
-          AA.getModRefInfo(I, StoreLoc) != AliasAnalysis::NoModRef)
+          (AA.getModRefInfo(I, StoreLoc) & Access))
         return true;
 
   return false;
@@ -323,7 +325,8 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
   // this into a memset in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
   // or write to the aliased location.  Check for an alias.
-  if (mayLoopModRefLocation(SI->getPointerOperand(), CurLoop, BECount,
+  if (mayLoopAccessLocation(SI->getPointerOperand(), AliasAnalysis::ModRef,
+                            CurLoop, BECount,
                             StoreSize, getAnalysis<AliasAnalysis>(), SI))
     return false;
   
@@ -386,10 +389,18 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   // Okay, we have a strided store "p[i]" of a loaded value.  We can turn
   // this into a memcpy in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
-  // or write to the aliased location (including the load feeding the stores).
+  // or write to the stored location (including the load feeding the stores).
   // Check for an alias.
-  if (mayLoopModRefLocation(SI->getPointerOperand(), CurLoop, BECount,
-                            StoreSize, getAnalysis<AliasAnalysis>(), SI))
+  if (mayLoopAccessLocation(SI->getPointerOperand(), AliasAnalysis::ModRef,
+                            CurLoop, BECount, StoreSize,
+                            getAnalysis<AliasAnalysis>(), SI))
+    return false;
+
+  // For a memcpy, we have to make sure that the input array is not being
+  // mutated by the loop.
+  if (mayLoopAccessLocation(LI->getPointerOperand(), AliasAnalysis::Mod,
+                            CurLoop, BECount, StoreSize,
+                            getAnalysis<AliasAnalysis>(), SI))
     return false;
   
   // Okay, everything looks good, insert the memcpy.

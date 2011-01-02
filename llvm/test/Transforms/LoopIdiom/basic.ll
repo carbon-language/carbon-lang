@@ -207,3 +207,36 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK: store i64 0, i64* %PI
 }
 
+declare i8* @external(i8*)
+
+;; This cannot be transformed into a memcpy, because the read-from location is
+;; mutated by the loop.
+define void @test9(i64 %Size) nounwind ssp {
+bb.nph:
+  %Base = alloca i8, i32 10000
+  %Dest = alloca i8, i32 10000
+  
+  %BaseAlias = call i8* @external(i8* %Base)
+  br label %for.body
+
+for.body:                                         ; preds = %bb.nph, %for.body
+  %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
+  %I.0.014 = getelementptr i8* %Base, i64 %indvar
+  %DestI = getelementptr i8* %Dest, i64 %indvar
+  %V = load i8* %I.0.014, align 1
+  store i8 %V, i8* %DestI, align 1
+
+  ;; This store can clobber the input.
+  store i8 4, i8* %BaseAlias
+ 
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, %Size
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+; CHECK: @test9
+; CHECK-NOT: llvm.memcpy
+; CHECK: ret void
+}
+
