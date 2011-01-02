@@ -301,9 +301,6 @@ public:
     : DominatorBase<NodeT>(isPostDom), DFSInfoValid(false), SlowQueries(0) {}
   virtual ~DominatorTreeBase() { reset(); }
 
-  // FIXME: Should remove this
-  virtual bool runOnFunction(Function &F) { return false; }
-
   /// compare - Return false if the other dominator tree base matches this
   /// dominator tree base. Otherwise return true.
   bool compare(DominatorTreeBase &Other) const {
