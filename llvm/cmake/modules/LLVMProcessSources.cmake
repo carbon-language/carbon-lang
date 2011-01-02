@@ -54,6 +54,7 @@ function(llvm_process_sources OUT_VAR)
     endif()
   endif()
 
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE )
   set( ${OUT_VAR} ${sources} PARENT_SCOPE )
 endfunction(llvm_process_sources)
 
