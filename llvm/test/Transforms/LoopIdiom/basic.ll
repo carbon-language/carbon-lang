@@ -114,3 +114,31 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK: ret void
 }
 
+
+;; memcpy formation
+define void @test6(i64 %Size) nounwind ssp {
+bb.nph:
+  %Base = alloca i8, i32 10000
+  %Dest = alloca i8, i32 10000
+  br label %for.body
+
+for.body:                                         ; preds = %bb.nph, %for.body
+  %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
+  %I.0.014 = getelementptr i8* %Base, i64 %indvar
+  %DestI = getelementptr i8* %Dest, i64 %indvar
+  %V = load i8* %I.0.014, align 1
+  store i8 %V, i8* %DestI, align 1
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, %Size
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+; CHECK: @test6
+; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %Dest, i8* %Base, i64 %Size, i32 1, i1 false)
+; CHECK-NOT: store
+; CHECK: ret void
+}
+
+
+
