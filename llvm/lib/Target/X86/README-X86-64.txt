@@ -41,50 +41,6 @@ saved a few instructions.
 
 //===---------------------------------------------------------------------===//
 
-Poor codegen:
-
-int X[2];
-int b;
-void test(void) {
-  memset(X, b, 2*sizeof(X[0]));
-}
-
-llc:
-	movq _b@GOTPCREL(%rip), %rax
-	movzbq (%rax), %rax
-	movq %rax, %rcx
-	shlq $8, %rcx
-	orq %rax, %rcx
-	movq %rcx, %rax
-	shlq $16, %rax
-	orq %rcx, %rax
-	movq %rax, %rcx
-	shlq $32, %rcx
-	movq _X@GOTPCREL(%rip), %rdx
-	orq %rax, %rcx
-	movq %rcx, (%rdx)
-	ret
-
-gcc:
-	movq	_b@GOTPCREL(%rip), %rax
-	movabsq	$72340172838076673, %rdx
-	movzbq	(%rax), %rax
-	imulq	%rdx, %rax
-	movq	_X@GOTPCREL(%rip), %rdx
-	movq	%rax, (%rdx)
-	ret
-
-And the codegen is even worse for the following
-(from http://gcc.gnu.org/bugzilla/show_bug.cgi?id=33103):
-  void fill1(char *s, int a)
-  {
-    __builtin_memset(s, a, 15);
-  }
-
-For this version, we duplicate the computation of the constant to store.
-
-//===---------------------------------------------------------------------===//
-
 It's not possible to reference AH, BH, CH, and DH registers in an instruction
 requiring REX prefix. However, divb and mulb both produce results in AH. If isel
 emits a CopyFromReg which gets turned into a movb and that can be allocated a

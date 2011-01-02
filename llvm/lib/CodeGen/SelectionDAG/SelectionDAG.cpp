@@ -3527,16 +3527,34 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
   SmallVector<SDValue, 8> OutChains;
   uint64_t DstOff = 0;
   unsigned NumMemOps = MemOps.size();
+
+  // Find the largest store and generate the bit pattern for it.
+  EVT LargestVT = MemOps[0];
+  for (unsigned i = 1; i < NumMemOps; i++)
+    if (MemOps[i].bitsGT(LargestVT))
+      LargestVT = MemOps[i];
+  SDValue MemSetValue = getMemsetValue(Src, LargestVT, DAG, dl);
+
   for (unsigned i = 0; i < NumMemOps; i++) {
     EVT VT = MemOps[i];
-    unsigned VTSize = VT.getSizeInBits() / 8;
-    SDValue Value = getMemsetValue(Src, VT, DAG, dl);
+
+    // If this store is smaller than the largest store see whether we can get
+    // the smaller value for free with a truncate.
+    SDValue Value = MemSetValue;
+    if (VT.bitsLT(LargestVT)) {
+      if (!LargestVT.isVector() && !VT.isVector() &&
+          TLI.isTruncateFree(LargestVT, VT))
+        Value = DAG.getNode(ISD::TRUNCATE, dl, VT, MemSetValue);
+      else
+        Value = getMemsetValue(Src, VT, DAG, dl);
+    }
+    assert(Value.getValueType() == VT && "Value with wrong type.");
     SDValue Store = DAG.getStore(Chain, dl, Value,
                                  getMemBasePlusOffset(Dst, DstOff, DAG),
                                  DstPtrInfo.getWithOffset(DstOff),
                                  isVol, false, Align);
     OutChains.push_back(Store);
-    DstOff += VTSize;
+    DstOff += VT.getSizeInBits() / 8;
   }
 
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other,

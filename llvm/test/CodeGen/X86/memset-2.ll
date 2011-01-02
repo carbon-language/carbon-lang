@@ -28,3 +28,12 @@ entry:
 ; CHECK: imull $16843009
 }
 
+define void @t4(i8* nocapture %s, i8 %a) nounwind {
+entry:
+  tail call void @llvm.memset.p0i8.i32(i8* %s, i8 %a, i32 15, i32 1, i1 false)
+  ret void
+; CHECK: t4:
+; CHECK: imull $16843009
+; CHECK-NOT: imul
+; CHECK: ret
+}
