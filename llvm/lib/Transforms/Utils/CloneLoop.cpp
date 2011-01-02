@@ -14,7 +14,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/DominanceFrontier.h"
 
 
 using namespace llvm;

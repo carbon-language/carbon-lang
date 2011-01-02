@@ -26,7 +26,7 @@
 #include "llvm/Metadata.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/DebugInfo.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"

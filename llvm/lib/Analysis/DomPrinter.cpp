@@ -19,8 +19,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DomPrinter.h"
-
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/DOTGraphTraitsPass.h"
 #include "llvm/Analysis/PostDominators.h"
 

@@ -18,7 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Support/ToolOutputFile.h"
 using namespace llvm;
 
@@ -61,8 +61,7 @@ namespace llvm {
     static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph) {
       if (Node->getFunction())
         return ((Value*)Node->getFunction())->getName();
-      else
-        return "external node";
+      return "external node";
     }
   };
 }
@@ -109,10 +108,8 @@ namespace {
     }
 
     virtual bool runOnFunction(Function &F) {
-      DominatorTree &DT = getAnalysis<DominatorTree>();
-      DT.dump();
-      DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
-      DF.dump();
+      getAnalysis<DominatorTree>().dump();
+      getAnalysis<DominanceFrontier>().dump();
       return false;
     }
   };

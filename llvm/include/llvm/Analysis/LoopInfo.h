@@ -41,6 +41,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <map>
 
 namespace llvm {
 
@@ -54,6 +55,7 @@ static void RemoveFromVector(std::vector<T*> &V, T *N) {
 class DominatorTree;
 class LoopInfo;
 class Loop;
+class PHINode;
 template<class N, class M> class LoopInfoBase;
 template<class N, class M> class LoopBase;
 

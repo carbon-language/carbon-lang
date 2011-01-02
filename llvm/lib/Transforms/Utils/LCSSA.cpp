@@ -67,10 +67,7 @@ namespace {
       AU.setPreservesCFG();
 
       AU.addRequired<DominatorTree>();
-      AU.addPreserved<DominatorTree>();
-      AU.addPreserved<DominanceFrontier>();
       AU.addRequired<LoopInfo>();
-      AU.addPreserved<LoopInfo>();
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreserved<ScalarEvolution>();
     }

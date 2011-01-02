@@ -17,6 +17,7 @@
 #define DEBUG_TYPE "loop-delete"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallVector.h"

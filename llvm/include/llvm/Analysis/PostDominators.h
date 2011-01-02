@@ -14,7 +14,7 @@
 #ifndef LLVM_ANALYSIS_POST_DOMINATORS_H
 #define LLVM_ANALYSIS_POST_DOMINATORS_H
 
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/DominanceFrontier.h"
 
 namespace llvm {
 
