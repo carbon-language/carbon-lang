@@ -17,3 +17,14 @@ entry:
   call void @llvm.memset.i32( i8* undef, i8 %c, i32 76, i32 1 ) nounwind
   unreachable
 }
+
+declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
+
+define void @t3(i8* nocapture %s, i8 %a) nounwind {
+entry:
+  tail call void @llvm.memset.p0i8.i32(i8* %s, i8 %a, i32 8, i32 1, i1 false)
+  ret void
+; CHECK: t3:
+; CHECK: imull $16843009
+}
+
