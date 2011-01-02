@@ -12,6 +12,27 @@
 // performance win.
 //
 //===----------------------------------------------------------------------===//
+//
+// TODO List:
+//
+// Future loop memory idioms to recognize:
+//   memcmp, memmove, strlen, etc.
+// Future floating point idioms to recognize in -ffast-math mode:
+//   fpowi
+// Future integer operation idioms to recognize:
+//   ctpop, ctlz, cttz
+//
+// Beware that isel's default lowering for ctpop is highly inefficient for
+// i64 and larger types when i64 is legal and the value has few bits set.  It
+// would be good to enhance isel to emit a loop for ctpop in this case.
+//
+// We should enhance the memset/memcpy recognition to handle multiple stores in
+// the loop.  This would handle things like:
+//   void foo(_Complex float *P)
+//     for (i) { __real__(*P) = 0;  __imag__(*P) = 0; }
+// this is also "Example 2" from http://blog.regehr.org/archives/320
+//  
+//===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-idiom"
 #include "llvm/Transforms/Scalar.h"
@@ -326,7 +347,7 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   LoadInst *LI = cast<LoadInst>(SI->getValueOperand());
   
   // Okay, we have a strided store "p[i]" of a loaded value.  We can turn
-  // this into a memcmp in the loop preheader now if we want.  However, this
+  // this into a memcpy in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
   // or write to the aliased location (including the load feeding the stores).
   // Check for an alias.
