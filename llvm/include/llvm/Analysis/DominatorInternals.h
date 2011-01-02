@@ -257,12 +257,24 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   // infinite loops). In these cases an artificial exit node is required.
   MultipleRoots |= (DT.isPostDominator() && N != F.size());
 
+  std::vector<unsigned> Buckets;
+  Buckets.reserve(N + 1);
+  for (unsigned i = 1; i <= N; ++i)
+    Buckets[i] = i;
+
   for (unsigned i = N; i >= 2; --i) {
     typename GraphT::NodeType* W = DT.Vertex[i];
     typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo =
                                                                      DT.Info[W];
 
-    // Step #2: Calculate the semidominators of all vertices
+    // Step #2: Implicitly define the immediate dominator of vertices
+    for (unsigned j = i; Buckets[j] != i; j = Buckets[j]) {
+       typename GraphT::NodeType* V = DT.Vertex[Buckets[j]];
+       typename GraphT::NodeType* U = Eval<GraphT>(DT, V);
+       DT.IDoms[V] = DT.Info[U].Semi < i ? U : W;
+    }
+
+    // Step #3: Calculate the semidominators of all vertices
 
     // initialize the semi dominator to point to the parent node
     WInfo.Semi = WInfo.Parent;
@@ -283,21 +295,21 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
     // If V is a non-root vertex and sdom(V) = parent(V), then idom(V) is
     // necessarily parent(V). In this case, set idom(V) here and avoid placing
     // V into a bucket.
-    if (WInfo.Semi == WInfo.Parent)
+    if (WInfo.Semi == WInfo.Parent) {
       DT.IDoms[W] = WParent;
-    else
-      DT.Info[DT.Vertex[WInfo.Semi]].Bucket.push_back(W);
+    } else {
+      Buckets[i] = Buckets[WInfo.Semi];
+      Buckets[WInfo.Semi] = i;
+    }
 
     Link<GraphT>(DT, WInfo.Parent, W, WInfo);
+  }
 
-    // Step #3: Implicitly define the immediate dominator of vertices
-    std::vector<typename GraphT::NodeType*> &WParentBucket =
-                                                        DT.Info[WParent].Bucket;
-    while (!WParentBucket.empty()) {
-      typename GraphT::NodeType* V = WParentBucket.back();
-      WParentBucket.pop_back();
-      typename GraphT::NodeType* U = Eval<GraphT>(DT, V);
-      DT.IDoms[V] = DT.Info[U].Semi < DT.Info[V].Semi ? U : WParent;
+  if (N >= 1) {
+    typename GraphT::NodeType* Root = DT.Vertex[1];
+    for (unsigned j = 1; Buckets[j] != 1; j = Buckets[j]) {
+       typename GraphT::NodeType* V = DT.Vertex[Buckets[j]];
+       DT.IDoms[V] = Root;
     }
   }
 

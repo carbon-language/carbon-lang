@@ -210,8 +210,6 @@ protected:
     NodeT *Label, *Child;
     unsigned Parent, Ancestor;
 
-    std::vector<NodeT*> Bucket;
-
     InfoRec() : DFSNum(0), Semi(0), Size(0), Label(0), Child(0), Parent(0),
                 Ancestor(0) {}
   };
