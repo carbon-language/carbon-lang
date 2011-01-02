@@ -196,7 +196,7 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   MultipleRoots |= (DT.isPostDominator() && N != F.size());
 
   std::vector<unsigned> Buckets;
-  Buckets.reserve(N + 1);
+  Buckets.resize(N + 1);
   for (unsigned i = 1; i <= N; ++i)
     Buckets[i] = i;
 
