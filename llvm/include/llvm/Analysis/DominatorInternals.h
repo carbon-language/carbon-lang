@@ -195,6 +195,16 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   // infinite loops). In these cases an artificial exit node is required.
   MultipleRoots |= (DT.isPostDominator() && N != F.size());
 
+  // When naively implemented, the Lengauer-Tarjan algorithm requires a separate
+  // bucket for each vertex. However, this is unnecessary, because each vertex
+  // is only placed into a single bucket (that of its semidominator), and each
+  // vertex's bucket is processed before it is added to any bucket itself.
+  //
+  // Instead of using a bucket per vertex, we use a single array Buckets that
+  // has two purposes. Before the vertex V with preorder number i is processed,
+  // Buckets[i] stores the index of the first element in V's bucket. After V's
+  // bucket is processed, Buckets[i] stores the index of the next element in the
+  // bucket containing V, if any.
   std::vector<unsigned> Buckets;
   Buckets.resize(N + 1);
   for (unsigned i = 1; i <= N; ++i)
