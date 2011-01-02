@@ -22,13 +22,9 @@
 //   A Fast Algorithm for Finding Dominators in a Flowgraph
 //   T. Lengauer & R. Tarjan, ACM TOPLAS July 1979, pgs 121-141.
 //
-// This implements both the O(n*ack(n)) and the O(n*log(n)) versions of EVAL and
-// LINK, but it turns out that the theoretically slower O(n*log(n))
-// implementation is actually faster than the "efficient" algorithm (even for
-// large CFGs) because the constant overheads are substantially smaller.  The
-// lower-complexity version can be enabled with the following #define:
-//
-#define BALANCE_IDOM_TREE 0
+// This implements the O(n*log(n)) versions of EVAL and LINK, because it turns
+// out that the theoretically slower O(n*log(n)) implementation is actually
+// faster than the almost-linear O(n*alpha(n)) version, even for large CFGs.
 //
 //===----------------------------------------------------------------------===//
 
@@ -157,75 +153,17 @@ Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
      typename GraphT::NodeType *V) {
   typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInfo =
                                                                      DT.Info[V];
-#if !BALANCE_IDOM_TREE
-  // Higher-complexity but faster implementation
   if (VInfo.Ancestor == 0)
     return V;
   Compress<GraphT>(DT, V);
   return VInfo.Label;
-#else
-  // Lower-complexity but slower implementation
-  if (VInfo.Ancestor == 0)
-    return VInfo.Label;
-  Compress<GraphT>(DT, V);
-  GraphT::NodeType* VLabel = VInfo.Label;
-
-  GraphT::NodeType* VAncestorLabel = DT.Info[VInfo.Ancestor].Label;
-  if (DT.Info[VAncestorLabel].Semi >= DT.Info[VLabel].Semi)
-    return VLabel;
-  else
-    return VAncestorLabel;
-#endif
 }
 
 template<class GraphT>
 void Link(DominatorTreeBase<typename GraphT::NodeType>& DT,
           unsigned DFSNumV, typename GraphT::NodeType* W,
         typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo) {
-#if !BALANCE_IDOM_TREE
-  // Higher-complexity but faster implementation
   WInfo.Ancestor = DFSNumV;
-#else
-  // Lower-complexity but slower implementation
-  GraphT::NodeType* WLabel = WInfo.Label;
-  unsigned WLabelSemi = DT.Info[WLabel].Semi;
-  GraphT::NodeType* S = W;
-  InfoRec *SInfo = &DT.Info[S];
-
-  GraphT::NodeType* SChild = SInfo->Child;
-  InfoRec *SChildInfo = &DT.Info[SChild];
-
-  while (WLabelSemi < DT.Info[SChildInfo->Label].Semi) {
-    GraphT::NodeType* SChildChild = SChildInfo->Child;
-    if (SInfo->Size+DT.Info[SChildChild].Size >= 2*SChildInfo->Size) {
-      SChildInfo->Ancestor = S;
-      SInfo->Child = SChild = SChildChild;
-      SChildInfo = &DT.Info[SChild];
-    } else {
-      SChildInfo->Size = SInfo->Size;
-      S = SInfo->Ancestor = SChild;
-      SInfo = SChildInfo;
-      SChild = SChildChild;
-      SChildInfo = &DT.Info[SChild];
-    }
-  }
-
-  DominatorTreeBase::InfoRec &VInfo = DT.Info[V];
-  SInfo->Label = WLabel;
-
-  assert(V != W && "The optimization here will not work in this case!");
-  unsigned WSize = WInfo.Size;
-  unsigned VSize = (VInfo.Size += WSize);
-
-  if (VSize < 2*WSize)
-    std::swap(S, VInfo.Child);
-
-  while (S) {
-    SInfo = &DT.Info[S];
-    SInfo->Ancestor = V;
-    S = SInfo->Child;
-  }
-#endif
 }
 
 template<class FuncT, class NodeT>
