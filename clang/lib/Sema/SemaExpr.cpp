@@ -56,7 +56,7 @@ using namespace sema;
 /// referenced), false otherwise.
 ///
 bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
-                             bool UnkownObjCClass) {
+                             bool UnknownObjCClass) {
   if (getLangOptions().CPlusPlus && isa<FunctionDecl>(D)) {
     // If there were any diagnostics suppressed by template argument deduction,
     // emit them now.
@@ -77,12 +77,12 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
 
   // See if the decl is deprecated.
   if (const DeprecatedAttr *DA = D->getAttr<DeprecatedAttr>())
-    EmitDeprecationWarning(D, DA->getMessage(), Loc, UnkownObjCClass);
+    EmitDeprecationWarning(D, DA->getMessage(), Loc, UnknownObjCClass);
 
   // See if the decl is unavailable
   if (const UnavailableAttr *UA = D->getAttr<UnavailableAttr>()) {
     if (UA->getMessage().empty()) {
-      if (!UnkownObjCClass)
+      if (!UnknownObjCClass)
         Diag(Loc, diag::err_unavailable) << D->getDeclName();
       else
         Diag(Loc, diag::warn_unavailable_fwdclass_message) 
