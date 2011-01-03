@@ -26,9 +26,9 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-STATISTIC(NumSimplify, "Number of insts simplified or DCE'd");
-STATISTIC(NumCSE,      "Number of insts CSE'd");
-STATISTIC(NumCSEMem,   "Number of load and call insts CSE'd");
+STATISTIC(NumSimplify, "Number of instructions simplified or DCE'd");
+STATISTIC(NumCSE,      "Number of instructions CSE'd");
+STATISTIC(NumCSEMem,   "Number of load and call instructions CSE'd");
 
 static unsigned getHash(const void *V) {
   return DenseMapInfo<const void*>::getHashValue(V);
@@ -44,6 +44,10 @@ namespace {
   struct SimpleValue {
     Instruction *Inst;
     
+    SimpleValue(Instruction *I) : Inst(I) {
+      assert((isSentinel() || canHandle(I)) && "Inst can't be handled!");
+    }
+    
     bool isSentinel() const {
       return Inst == DenseMapInfo<Instruction*>::getEmptyKey() ||
              Inst == DenseMapInfo<Instruction*>::getTombstoneKey();
@@ -56,12 +60,6 @@ namespace {
              isa<InsertElementInst>(Inst) || isa<ShuffleVectorInst>(Inst) ||
              isa<ExtractValueInst>(Inst) || isa<InsertValueInst>(Inst);
     }
-    
-    static SimpleValue get(Instruction *I) {
-      SimpleValue X; X.Inst = I;
-      assert((X.isSentinel() || canHandle(I)) && "Inst can't be handled!");
-      return X;
-    }
   };
 }
 
@@ -73,10 +71,10 @@ template<> struct isPodLike<SimpleValue> {
 
 template<> struct DenseMapInfo<SimpleValue> {
   static inline SimpleValue getEmptyKey() {
-    return SimpleValue::get(DenseMapInfo<Instruction*>::getEmptyKey());
+    return DenseMapInfo<Instruction*>::getEmptyKey();
   }
   static inline SimpleValue getTombstoneKey() {
-    return SimpleValue::get(DenseMapInfo<Instruction*>::getTombstoneKey());
+    return DenseMapInfo<Instruction*>::getTombstoneKey();
   }
   static unsigned getHashValue(SimpleValue Val);
   static bool isEqual(SimpleValue LHS, SimpleValue RHS);
@@ -135,6 +133,10 @@ namespace {
   struct MemoryValue {
     Instruction *Inst;
     
+    MemoryValue(Instruction *I) : Inst(I) {
+      assert((isSentinel() || canHandle(I)) && "Inst can't be handled!");
+    }
+    
     bool isSentinel() const {
       return Inst == DenseMapInfo<Instruction*>::getEmptyKey() ||
              Inst == DenseMapInfo<Instruction*>::getTombstoneKey();
@@ -147,12 +149,6 @@ namespace {
         return CI->onlyReadsMemory();
       return false;
     }
-    
-    static MemoryValue get(Instruction *I) {
-      MemoryValue X; X.Inst = I;
-      assert((X.isSentinel() || canHandle(I)) && "Inst can't be handled!");
-      return X;
-    }
   };
 }
 
@@ -164,10 +160,10 @@ namespace llvm {
   
   template<> struct DenseMapInfo<MemoryValue> {
     static inline MemoryValue getEmptyKey() {
-      return MemoryValue::get(DenseMapInfo<Instruction*>::getEmptyKey());
+      return DenseMapInfo<Instruction*>::getEmptyKey();
     }
     static inline MemoryValue getTombstoneKey() {
-      return MemoryValue::get(DenseMapInfo<Instruction*>::getTombstoneKey());
+      return DenseMapInfo<Instruction*>::getTombstoneKey();
     }
     static unsigned getHashValue(MemoryValue Val);
     static bool isEqual(MemoryValue LHS, MemoryValue RHS);
@@ -317,7 +313,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     // If this is a simple instruction that we can value number, process it.
     if (SimpleValue::canHandle(Inst)) {
       // See if the instruction has an available value.  If so, use it.
-      if (Value *V = AvailableValues->lookup(SimpleValue::get(Inst))) {
+      if (Value *V = AvailableValues->lookup(Inst)) {
         DEBUG(dbgs() << "EarlyCSE CSE: " << *Inst << "  to: " << *V << '\n');
         Inst->replaceAllUsesWith(V);
         Inst->eraseFromParent();
@@ -327,7 +323,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       }
       
       // Otherwise, just remember that this value is available.
-      AvailableValues->insert(SimpleValue::get(Inst), Inst);
+      AvailableValues->insert(Inst, Inst);
       continue;
     }
     
@@ -335,8 +331,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     if (MemoryValue::canHandle(Inst)) {
       // If we have an available version of this value, and if it is the right
       // generation, replace this instruction.
-      std::pair<Value*, unsigned> InVal = 
-        AvailableMemValues->lookup(MemoryValue::get(Inst));
+      std::pair<Value*, unsigned> InVal = AvailableMemValues->lookup(Inst);
       if (InVal.first != 0 && InVal.second == CurrentGeneration) {
         DEBUG(dbgs() << "EarlyCSE CSE MEM: " << *Inst << "  to: "
                      << *InVal.first << '\n');
@@ -348,7 +343,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       }
       
       // Otherwise, remember that we have this instruction.
-      AvailableMemValues->insert(MemoryValue::get(Inst),
+      AvailableMemValues->insert(Inst,
                          std::pair<Value*, unsigned>(Inst, CurrentGeneration));
       continue;
     }
