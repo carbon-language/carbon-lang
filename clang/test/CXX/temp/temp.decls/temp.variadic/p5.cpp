@@ -212,7 +212,6 @@ struct TestUnexpandedDecls : T{
 // FIXME: Test for unexpanded parameter packs in each of the statements.
 
 // Test unexpanded parameter packs in partial specializations.
-
 template<typename ...Types>
 struct TestUnexpandedDecls<int, Types>; // expected-error{{partial specialization contains unexpanded parameter pack 'Types'}}
 

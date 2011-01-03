@@ -3937,7 +3937,7 @@ static bool CheckNonTypeClassTemplatePartialSpecializationArgs(Sema &S,
       continue;
     }
 
-    // We can have a pack expansion of any of the above.
+    // We can have a pack expansion of any of the bullets below.
     if (PackExpansionExpr *Expansion = dyn_cast<PackExpansionExpr>(ArgExpr))
       ArgExpr = Expansion->getPattern();
     

@@ -2102,11 +2102,18 @@ public:
   TemplateArgumentLoc RebuildPackExpansion(TemplateArgumentLoc Pattern,
                                            SourceLocation EllipsisLoc) {
     switch (Pattern.getArgument().getKind()) {
-    case TemplateArgument::Expression:
-        // FIXME: We should be able to handle this now!
+    case TemplateArgument::Expression: {
+      ExprResult Result
+        = getSema().ActOnPackExpansion(Pattern.getSourceExpression(),
+                                       EllipsisLoc);
+      if (Result.isInvalid())
+        return TemplateArgumentLoc();
+          
+      return TemplateArgumentLoc(Result.get(), Result.get());
+    }
         
     case TemplateArgument::Template:
-      llvm_unreachable("Unsupported pack expansion of expressions/templates");
+      llvm_unreachable("Unsupported pack expansion of templates");
         
     case TemplateArgument::Null:
     case TemplateArgument::Integral:
