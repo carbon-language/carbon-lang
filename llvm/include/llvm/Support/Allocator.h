@@ -23,6 +23,8 @@
 #include <cstddef>
 
 namespace llvm {
+template <typename T> struct ReferenceAdder { typedef T& result; };
+template <typename T> struct ReferenceAdder<T&> { typedef T result; };
 
 class MallocAllocator {
 public:

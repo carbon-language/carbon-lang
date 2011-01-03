@@ -242,9 +242,6 @@ public:
 };
 
 
-template <typename T> struct ReferenceAdder { typedef T& result; };
-template <typename T> struct ReferenceAdder<T&> { typedef T result; };
-
 /// StringMap - This is an unconventional map that is specialized for handling
 /// keys that are "strings", which are basically ranges of bytes. This does some
 /// funky memory allocation and hashing things to make it extremely efficient,
