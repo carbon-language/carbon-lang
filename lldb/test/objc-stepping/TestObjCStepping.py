@@ -17,7 +17,7 @@ class TestObjCStepping(TestBase):
         self.objc_stepping()
 
     @python_api_test
-    def test_with_dward_and_python_api(self):
+    def test_with_dwarf_and_python_api(self):
         """Test stepping through ObjC method dispatch in various forms."""
         self.buildDwarf()
         self.objc_stepping()
