@@ -1393,7 +1393,6 @@ public:
   }
 
   bool hasWrittenPrototype() const { return HasWrittenPrototype; }
-  void setHasWrittenPrototype(bool P) { HasWrittenPrototype = P; }
 
   /// \brief Whether this function inherited its prototype from a
   /// previous declaration.
@@ -1487,10 +1486,6 @@ public:
 
   StorageClass getStorageClassAsWritten() const {
     return StorageClass(SClassAsWritten);
-  }
-  void setStorageClassAsWritten(StorageClass SC) {
-    assert(isLegalForFunction(SC));
-    SClassAsWritten = SC;
   }
 
   /// \brief Determine whether the "inline" keyword was specified for this
