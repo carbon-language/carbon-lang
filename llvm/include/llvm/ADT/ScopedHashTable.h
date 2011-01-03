@@ -157,6 +157,11 @@ public:
     assert(CurScope == 0 && TopLevelMap.empty() && "Scope imbalance!");
   }
   
+  /// ScopeTy - This is a helpful typedef that allows clients to get easy access
+  /// to the name of the scope for this hash table.
+  typedef ScopedHashTableScope<K, V, KInfo, AllocatorTy> ScopeTy;
+
+  /// Access to the allocator.
   typedef typename ReferenceAdder<AllocatorTy>::result AllocatorRefTy;
   typedef typename ReferenceAdder<const AllocatorTy>::result AllocatorCRefTy;
   AllocatorRefTy getAllocator() { return Allocator; }
