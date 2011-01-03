@@ -12,7 +12,7 @@ endmacro(add_td_sources)
 
 
 macro(add_header_files srcs)
-  file(GLOB hds *.h)
+  file(GLOB hds *.h *.def)
   if( hds )
     set_source_files_properties(${hds} PROPERTIES HEADER_FILE_ONLY ON)
     list(APPEND ${srcs} ${hds})
