@@ -793,13 +793,13 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 
   case ASTContext::GE_Missing_stdio:
     if (ForRedeclaration)
-      Diag(Loc, diag::err_implicit_decl_requires_stdio)
+      Diag(Loc, diag::warn_implicit_decl_requires_stdio)
         << Context.BuiltinInfo.GetName(BID);
     return 0;
 
   case ASTContext::GE_Missing_setjmp:
     if (ForRedeclaration)
-      Diag(Loc, diag::err_implicit_decl_requires_setjmp)
+      Diag(Loc, diag::warn_implicit_decl_requires_setjmp)
         << Context.BuiltinInfo.GetName(BID);
     return 0;
   }

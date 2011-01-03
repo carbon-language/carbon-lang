@@ -22,7 +22,7 @@ void h() {
 }
 
 void f2() {
-  fprintf(0, "foo"); // expected-error{{implicit declaration of 'fprintf' requires inclusion of the header <stdio.h>}} \
+  fprintf(0, "foo"); // expected-warning{{declaration of built-in function 'fprintf' requires inclusion of the header <stdio.h>}} \
    expected-warning {{implicit declaration of function 'fprintf' is invalid in C99}}
 }
 
@@ -52,3 +52,6 @@ main(int argc, char *argv[])
 }
 
 void snprintf() { }
+
+// PR8316
+void longjmp(); // expected-warning{{declaration of built-in function 'longjmp' requires inclusion of the header <setjmp.h>}}

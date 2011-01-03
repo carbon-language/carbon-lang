@@ -483,12 +483,21 @@ static bool LookupBuiltin(Sema &S, LookupResult &R) {
             S.Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
           return false;
         
-        NamedDecl *D = S.LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
-                                             S.TUScope, R.isForRedeclaration(),
-                                             R.getNameLoc());
-        if (D) 
+        if (NamedDecl *D = S.LazilyCreateBuiltin((IdentifierInfo *)II, 
+                                                 BuiltinID, S.TUScope, 
+                                                 R.isForRedeclaration(),
+                                                 R.getNameLoc())) {
           R.addDecl(D);
-        return (D != NULL);
+          return true;
+        }
+
+        if (R.isForRedeclaration()) {
+          // If we're redeclaring this function anyway, forget that
+          // this was a builtin at all.
+          S.Context.BuiltinInfo.ForgetBuiltin(BuiltinID, S.Context.Idents);
+        }
+
+        return false;
       }
     }
   }
