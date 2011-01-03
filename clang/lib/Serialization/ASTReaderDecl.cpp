@@ -385,17 +385,17 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   // after everything else is read.
 
   FD->SClass = (StorageClass)Record[Idx++];
-  FD->setStorageClassAsWritten((StorageClass)Record[Idx++]);
+  FD->SClassAsWritten = (StorageClass)Record[Idx++];
   FD->IsInline = Record[Idx++];
   FD->IsInlineSpecified = Record[Idx++];
-  FD->setVirtualAsWritten(Record[Idx++]);
-  FD->setPure(Record[Idx++]);
-  FD->setHasInheritedPrototype(Record[Idx++]);
-  FD->setHasWrittenPrototype(Record[Idx++]);
-  FD->setDeleted(Record[Idx++]);
-  FD->setTrivial(Record[Idx++]);
-  FD->setHasImplicitReturnZero(Record[Idx++]);
-  FD->setLocEnd(ReadSourceLocation(Record, Idx));
+  FD->IsVirtualAsWritten = Record[Idx++];
+  FD->IsPure = Record[Idx++];
+  FD->HasInheritedPrototype = Record[Idx++];
+  FD->HasWrittenPrototype = Record[Idx++];
+  FD->IsDeleted = Record[Idx++];
+  FD->IsTrivial = Record[Idx++];
+  FD->HasImplicitReturnZero = Record[Idx++];
+  FD->EndRangeLoc = ReadSourceLocation(Record, Idx);
 
   // Read in the parameters.
   unsigned NumParams = Record[Idx++];
