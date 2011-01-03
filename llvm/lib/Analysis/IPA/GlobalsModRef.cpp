@@ -152,6 +152,7 @@ namespace {
 
     virtual void deleteValue(Value *V);
     virtual void copyValue(Value *From, Value *To);
+    virtual void addEscapingUse(Use &U);
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
@@ -595,4 +596,14 @@ void GlobalsModRef::deleteValue(Value *V) {
 
 void GlobalsModRef::copyValue(Value *From, Value *To) {
   AliasAnalysis::copyValue(From, To);
+}
+
+void GlobalsModRef::addEscapingUse(Use &U) {
+  // For the purposes of this analysis, it is conservatively correct to treat
+  // a newly escaping value equivalently to a deleted one.  We could perhaps
+  // be more precise by processing the new use and attempting to update our
+  // saved analysis results to accomodate it.
+  deleteValue(U);
+  
+  AliasAnalysis::addEscapingUse(U);
 }

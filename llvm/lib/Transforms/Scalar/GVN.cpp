@@ -1063,6 +1063,15 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   if (V->getType()->isPointerTy())
     for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i)
       AA->copyValue(LI, NewPHIs[i]);
+    
+    // Now that we've copied information to the new PHIs, scan through
+    // them again and inform alias analysis that we've added potentially
+    // escaping uses to any values that are operands to these PHIs.
+    for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i) {
+      PHINode *P = NewPHIs[i];
+      for (unsigned ii = 0, ee = P->getNumIncomingValues(); ii != ee; ++ii)
+        AA->addEscapingUse(P->getOperandUse(2*ii));
+    }
 
   return V;
 }
@@ -1957,8 +1966,16 @@ bool GVN::performPRE(Function &F) {
       insert_table(ValNo, Phi, CurrentBlock);
 
       CurInst->replaceAllUsesWith(Phi);
-      if (MD && Phi->getType()->isPointerTy())
-        MD->invalidateCachedPointerInfo(Phi);
+      if (Phi->getType()->isPointerTy()) {
+        // Because we have added a PHI-use of the pointer value, it has now
+        // "escaped" from alias analysis' perspective.  We need to inform
+        // AA of this.
+        for (unsigned ii = 0, ee = Phi->getNumIncomingValues(); ii != ee; ++ii)
+          VN.getAliasAnalysis()->addEscapingUse(Phi->getOperandUse(2*ii));
+        
+        if (MD)
+          MD->invalidateCachedPointerInfo(Phi);
+      }
       VN.erase(CurInst);
       erase_table(ValNo, CurInst, CurrentBlock);
 
