@@ -47,8 +47,6 @@ configure_file(
 
 # Add appropriate flags for GCC
 if (CMAKE_COMPILER_IS_GNUCXX)
-  # FIXME: Turn off exceptions, RTTI:
-  # -fno-exceptions -fno-rtti
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-common -Woverloaded-virtual -Wcast-qual -fno-strict-aliasing -pedantic -Wno-long-long -Wall -W -Wno-unused-parameter -Wwrite-strings")
 endif ()
 
@@ -57,10 +55,8 @@ if (APPLE)
 endif ()
 
 macro(add_clang_library name)
-  set(srcs ${ARGN})
+  llvm_process_sources(srcs ${ARGN})
   if(MSVC_IDE OR XCODE)
-    file( GLOB_RECURSE headers *.h *.td *.def)
-    set(srcs ${srcs} ${headers})
     string( REGEX MATCHALL "/[^/]+" split_path ${CMAKE_CURRENT_SOURCE_DIR})
     list( GET split_path -1 dir)
     file( GLOB_RECURSE headers
@@ -112,12 +108,7 @@ macro(add_clang_library name)
 endmacro(add_clang_library)
 
 macro(add_clang_executable name)
-  set(srcs ${ARGN})
-  if(MSVC_IDE)
-    file( GLOB_RECURSE headers *.h *.td *.def)
-    set(srcs ${srcs} ${headers})
-  endif(MSVC_IDE)
-  add_llvm_executable( ${name} ${srcs} )
+  add_llvm_executable( ${name} ${ARGN} )
 endmacro(add_clang_executable)
 
 include_directories(
