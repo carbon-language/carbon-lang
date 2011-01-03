@@ -29,10 +29,14 @@ using namespace llvm;
 STATISTIC(NumSimplify, "Number of insts simplified or DCE'd");
 STATISTIC(NumCSE, "Number of insts CSE'd");
 
+//===----------------------------------------------------------------------===//
+// SimpleValue 
+//===----------------------------------------------------------------------===//
+
 namespace {
-  /// InstValue - Instances of this struct represent available values in the
+  /// SimpleValue - Instances of this struct represent available values in the
   /// scoped hash table.
-  struct InstValue {
+  struct SimpleValue {
     Instruction *Inst;
     
     bool isSentinel() const {
@@ -48,8 +52,8 @@ namespace {
              isa<ExtractValueInst>(Inst) || isa<InsertValueInst>(Inst);
     }
     
-    static InstValue get(Instruction *I) {
-      InstValue X; X.Inst = I;
+    static SimpleValue get(Instruction *I) {
+      SimpleValue X; X.Inst = I;
       assert((X.isSentinel() || canHandle(I)) && "Inst can't be handled!");
       return X;
     }
@@ -57,20 +61,20 @@ namespace {
 }
 
 namespace llvm {
-// InstValue is POD.
-template<> struct isPodLike<InstValue> {
+// SimpleValue is POD.
+template<> struct isPodLike<SimpleValue> {
   static const bool value = true;
 };
 
-template<> struct DenseMapInfo<InstValue> {
-  static inline InstValue getEmptyKey() {
-    return InstValue::get(DenseMapInfo<Instruction*>::getEmptyKey());
+template<> struct DenseMapInfo<SimpleValue> {
+  static inline SimpleValue getEmptyKey() {
+    return SimpleValue::get(DenseMapInfo<Instruction*>::getEmptyKey());
   }
-  static inline InstValue getTombstoneKey() {
-    return InstValue::get(DenseMapInfo<Instruction*>::getTombstoneKey());
+  static inline SimpleValue getTombstoneKey() {
+    return SimpleValue::get(DenseMapInfo<Instruction*>::getTombstoneKey());
   }
-  static unsigned getHashValue(InstValue Val);
-  static bool isEqual(InstValue LHS, InstValue RHS);
+  static unsigned getHashValue(SimpleValue Val);
+  static bool isEqual(SimpleValue LHS, SimpleValue RHS);
 };
 }
 
@@ -78,7 +82,7 @@ unsigned getHash(const void *V) {
   return DenseMapInfo<const void*>::getHashValue(V);
 }
 
-unsigned DenseMapInfo<InstValue>::getHashValue(InstValue Val) {
+unsigned DenseMapInfo<SimpleValue>::getHashValue(SimpleValue Val) {
   Instruction *Inst = Val.Inst;
   
   // Hash in all of the operands as pointers.
@@ -110,7 +114,7 @@ unsigned DenseMapInfo<InstValue>::getHashValue(InstValue Val) {
   return (Res << 1) ^ Inst->getOpcode();
 }
 
-bool DenseMapInfo<InstValue>::isEqual(InstValue LHS, InstValue RHS) {
+bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
   Instruction *LHSI = LHS.Inst, *RHSI = RHS.Inst;
 
   if (LHS.isSentinel() || RHS.isSentinel())
@@ -120,6 +124,10 @@ bool DenseMapInfo<InstValue>::isEqual(InstValue LHS, InstValue RHS) {
   return LHSI->isIdenticalTo(RHSI);
 }
 
+
+//===----------------------------------------------------------------------===//
+// EarlyCSE pass 
+//===----------------------------------------------------------------------===//
 
 namespace {
   
@@ -134,14 +142,19 @@ public:
   const TargetData *TD;
   DominatorTree *DT;
   typedef RecyclingAllocator<BumpPtrAllocator,
-                      ScopedHashTableVal<InstValue, Instruction*> > AllocatorTy;
-  typedef ScopedHashTable<InstValue, Instruction*, DenseMapInfo<InstValue>,
+                      ScopedHashTableVal<SimpleValue, Value*> > AllocatorTy;
+  typedef ScopedHashTable<SimpleValue, Value*, DenseMapInfo<SimpleValue>,
                           AllocatorTy> ScopedHTType;
-  ScopedHTType *AvailableValues;
   
+  /// AvailableValues - This scoped hash table contains the current values of
+  /// all of our simple scalar expressions.  As we walk down the domtree, we
+  /// look to see if instructions are in this: if so, we replace them with what
+  /// we find, otherwise we insert them so that dominated values can succeed in
+  /// their lookup.
+  ScopedHTType *AvailableValues;
+   
   static char ID;
-  explicit EarlyCSE()
-      : FunctionPass(ID) {
+  explicit EarlyCSE() : FunctionPass(ID) {
     initializeEarlyCSEPass(*PassRegistry::getPassRegistry());
   }
 
@@ -171,8 +184,10 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_END(EarlyCSE, "early-cse", "Early CSE", false, false)
 
 bool EarlyCSE::processNode(DomTreeNode *Node) {
-  // Define a scope in the scoped hash table.
-  ScopedHashTableScope<InstValue, Instruction*, DenseMapInfo<InstValue>,
+  // Define a scope in the scoped hash table.  When we are done processing this
+  // domtree node and recurse back up to our parent domtree node, this will pop
+  // off all the values we install.
+  ScopedHashTableScope<SimpleValue, Value*, DenseMapInfo<SimpleValue>,
                        AllocatorTy> Scope(*AvailableValues);
   
   BasicBlock *BB = Node->getBlock();
@@ -205,11 +220,11 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     }
     
     // If this instruction is something that we can't value number, ignore it.
-    if (!InstValue::canHandle(Inst))
+    if (!SimpleValue::canHandle(Inst))
       continue;
     
     // See if the instruction has an available value.  If so, use it.
-    if (Instruction *V = AvailableValues->lookup(InstValue::get(Inst))) {
+    if (Value *V = AvailableValues->lookup(SimpleValue::get(Inst))) {
       DEBUG(dbgs() << "EarlyCSE CSE: " << *Inst << "  to: " << *V << '\n');
       Inst->replaceAllUsesWith(V);
       Inst->eraseFromParent();
@@ -219,7 +234,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     }
     
     // Otherwise, just remember that this value is available.
-    AvailableValues->insert(InstValue::get(Inst), Inst);
+    AvailableValues->insert(SimpleValue::get(Inst), Inst);
   }
   
   
@@ -234,6 +249,6 @@ bool EarlyCSE::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTree>();
   ScopedHTType AVTable;
   AvailableValues = &AVTable;
+
   return processNode(DT->getRootNode());
 }
-
