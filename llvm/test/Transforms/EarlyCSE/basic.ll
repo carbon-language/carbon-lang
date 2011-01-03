@@ -106,3 +106,16 @@ define void @test7(i32 *%P) {
   ; CHECK-NEXT: store i32 45
   ; CHECK-NEXT: ret void
 }
+
+;; Readnone functions aren't invalidated by stores.
+; CHECK: @test8
+define i32 @test8(i32 *%P) {
+  %V1 = call i32 @func(i32* %P) readnone
+  store i32 4, i32* %P
+  %V2 = call i32 @func(i32* %P) readnone
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK: ret i32 0
+}
+
+
