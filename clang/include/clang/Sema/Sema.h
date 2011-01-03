@@ -2910,10 +2910,6 @@ public:
                                               bool EnteringContext,
                                               TemplateTy &Template);
 
-  bool CheckClassTemplatePartialSpecializationArgs(
-                                        TemplateParameterList *TemplateParams,
-                        llvm::SmallVectorImpl<TemplateArgument> &TemplateArgs);
-
   DeclResult
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                    SourceLocation KWLoc,

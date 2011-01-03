@@ -3915,34 +3915,31 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   
   return false;
 }
-                                             
-/// \brief Check the non-type template arguments of a class template
-/// partial specialization according to C++ [temp.class.spec]p9.
-///
-/// \param TemplateParams the template parameters of the primary class
-/// template.
-///
-/// \param TemplateArg the template arguments of the class template
-/// partial specialization.
-///
-/// \returns true if there was an error, false otherwise.
-bool Sema::CheckClassTemplatePartialSpecializationArgs(
-                                        TemplateParameterList *TemplateParams,
-                       llvm::SmallVectorImpl<TemplateArgument> &TemplateArgs) {
-  const TemplateArgument *ArgList = TemplateArgs.data();
-
-  for (unsigned I = 0, N = TemplateParams->size(); I != N; ++I) {
-    NonTypeTemplateParmDecl *Param
-      = dyn_cast<NonTypeTemplateParmDecl>(TemplateParams->getParam(I));
-    if (!Param)
+                     
+/// \brief Subroutine of Sema::CheckClassTemplatePartialSpecializationArgs
+/// that checks non-type template partial specialization arguments.
+static bool CheckNonTypeClassTemplatePartialSpecializationArgs(Sema &S,
+                                                NonTypeTemplateParmDecl *Param,
+                                                  const TemplateArgument *Args,
+                                                        unsigned NumArgs) {
+  for (unsigned I = 0; I != NumArgs; ++I) {
+    if (Args[I].getKind() == TemplateArgument::Pack) {
+      if (CheckNonTypeClassTemplatePartialSpecializationArgs(S, Param,
+                                                           Args[I].pack_begin(), 
+                                                           Args[I].pack_size()))
+        return true;
+      
       continue;
-
-    Expr *ArgExpr = ArgList[I].getAsExpr();
+    }
+      
+    Expr *ArgExpr = Args[I].getAsExpr();
     if (!ArgExpr) {
       continue;
     }
 
-    // FIXME: Variadic templates. Unwrap argument packs.
+    // We can have a pack expansion of any of the above.
+    if (PackExpansionExpr *Expansion = dyn_cast<PackExpansionExpr>(ArgExpr))
+      ArgExpr = Expansion->getPattern();
     
     // C++ [temp.class.spec]p8:
     //   A non-type argument is non-specialized if it is the name of a
@@ -3964,23 +3961,52 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
     //        specialization except when the argument expression is a
     //        simple identifier.
     if (ArgExpr->isTypeDependent() || ArgExpr->isValueDependent()) {
-      Diag(ArgExpr->getLocStart(),
+      S.Diag(ArgExpr->getLocStart(),
            diag::err_dependent_non_type_arg_in_partial_spec)
         << ArgExpr->getSourceRange();
       return true;
     }
-
+    
     //     -- The type of a template parameter corresponding to a
     //        specialized non-type argument shall not be dependent on a
     //        parameter of the specialization.
     if (Param->getType()->isDependentType()) {
-      Diag(ArgExpr->getLocStart(),
+      S.Diag(ArgExpr->getLocStart(),
            diag::err_dependent_typed_non_type_arg_in_partial_spec)
         << Param->getType()
         << ArgExpr->getSourceRange();
-      Diag(Param->getLocation(), diag::note_template_param_here);
+      S.Diag(Param->getLocation(), diag::note_template_param_here);
       return true;
     }
+  }
+  
+  return false;
+}
+                                                        
+/// \brief Check the non-type template arguments of a class template
+/// partial specialization according to C++ [temp.class.spec]p9.
+///
+/// \param TemplateParams the template parameters of the primary class
+/// template.
+///
+/// \param TemplateArg the template arguments of the class template
+/// partial specialization.
+///
+/// \returns true if there was an error, false otherwise.
+static bool CheckClassTemplatePartialSpecializationArgs(Sema &S,
+                                        TemplateParameterList *TemplateParams,
+                       llvm::SmallVectorImpl<TemplateArgument> &TemplateArgs) {
+  const TemplateArgument *ArgList = TemplateArgs.data();
+
+  for (unsigned I = 0, N = TemplateParams->size(); I != N; ++I) {
+    NonTypeTemplateParmDecl *Param
+      = dyn_cast<NonTypeTemplateParmDecl>(TemplateParams->getParam(I));
+    if (!Param)
+      continue;
+
+    if (CheckNonTypeClassTemplatePartialSpecializationArgs(S, Param, 
+                                                           &ArgList[I], 1))
+      return true;
   }
 
   return false;
@@ -4145,7 +4171,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   // Find the class template (partial) specialization declaration that
   // corresponds to these arguments.
   if (isPartialSpecialization) {
-    if (CheckClassTemplatePartialSpecializationArgs(
+    if (CheckClassTemplatePartialSpecializationArgs(*this,
                                          ClassTemplate->getTemplateParameters(),
                                          Converted))
       return true;
