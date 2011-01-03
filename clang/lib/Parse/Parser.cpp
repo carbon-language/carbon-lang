@@ -214,7 +214,8 @@ bool Parser::ExpectAndConsumeSemi(unsigned DiagID) {
 /// If SkipUntil finds the specified token, it returns true, otherwise it
 /// returns false.
 bool Parser::SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
-                       bool StopAtSemi, bool DontConsume) {
+                       bool StopAtSemi, bool DontConsume,
+                       bool StopAtCodeCompletion) {
   // We always want this function to skip at least one token if the first token
   // isn't T and if not at EOF.
   bool isFirstTokenSkipped = true;
@@ -237,23 +238,24 @@ bool Parser::SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
       return false;
         
     case tok::code_completion:
-      ConsumeToken();
+      if (!StopAtCodeCompletion)
+        ConsumeToken();
       return false;
         
     case tok::l_paren:
       // Recursively skip properly-nested parens.
       ConsumeParen();
-      SkipUntil(tok::r_paren, false);
+      SkipUntil(tok::r_paren, false, false, StopAtCodeCompletion);
       break;
     case tok::l_square:
       // Recursively skip properly-nested square brackets.
       ConsumeBracket();
-      SkipUntil(tok::r_square, false);
+      SkipUntil(tok::r_square, false, false, StopAtCodeCompletion);
       break;
     case tok::l_brace:
       // Recursively skip properly-nested braces.
       ConsumeBrace();
-      SkipUntil(tok::r_brace, false);
+      SkipUntil(tok::r_brace, false, false, StopAtCodeCompletion);
       break;
 
     // Okay, we found a ']' or '}' or ')', which we think should be balanced.

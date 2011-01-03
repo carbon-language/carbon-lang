@@ -553,16 +553,17 @@ private:
   /// If SkipUntil finds the specified token, it returns true, otherwise it
   /// returns false.
   bool SkipUntil(tok::TokenKind T, bool StopAtSemi = true,
-                 bool DontConsume = false) {
-    return SkipUntil(&T, 1, StopAtSemi, DontConsume);
+                 bool DontConsume = false, bool StopAtCodeCompletion = false) {
+    return SkipUntil(&T, 1, StopAtSemi, DontConsume, StopAtCodeCompletion);
   }
   bool SkipUntil(tok::TokenKind T1, tok::TokenKind T2, bool StopAtSemi = true,
-                 bool DontConsume = false) {
+                 bool DontConsume = false, bool StopAtCodeCompletion = false) {
     tok::TokenKind TokArray[] = {T1, T2};
-    return SkipUntil(TokArray, 2, StopAtSemi, DontConsume);
+    return SkipUntil(TokArray, 2, StopAtSemi, DontConsume,StopAtCodeCompletion);
   }
   bool SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
-                 bool StopAtSemi = true, bool DontConsume = false);
+                 bool StopAtSemi = true, bool DontConsume = false,
+                 bool StopAtCodeCompletion = false);
 
   //===--------------------------------------------------------------------===//
   // Lexing and parsing of C++ inline methods.

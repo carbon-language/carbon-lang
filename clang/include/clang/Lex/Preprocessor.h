@@ -618,6 +618,9 @@ public:
   /// for which we are performing code completion.
   bool isCodeCompletionFile(SourceLocation FileLoc) const;
 
+  /// \brief Determine if we are performing code completion.
+  bool isCodeCompletionEnabled() const { return CodeCompletionFile != 0; }
+
   /// \brief Instruct the preprocessor to skip part of the main
   /// the main source file.
   ///
