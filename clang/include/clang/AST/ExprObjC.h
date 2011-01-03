@@ -746,11 +746,11 @@ public:
 
   /// \brief Retrieve the arguments to this message, not including the
   /// receiver.
-  Stmt **getArgs() {
-    return reinterpret_cast<Stmt **>(this + 1) + 1;
+  Expr **getArgs() {
+    return reinterpret_cast<Expr **>(this + 1) + 1;
   }
-  const Stmt * const *getArgs() const {
-    return reinterpret_cast<const Stmt * const *>(this + 1) + 1;
+  const Expr * const *getArgs() const {
+    return reinterpret_cast<const Expr * const *>(this + 1) + 1;
   }
 
   /// getArg - Return the specified argument.
@@ -792,10 +792,16 @@ public:
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;
 
-  arg_iterator arg_begin() { return getArgs(); }
-  arg_iterator arg_end()   { return getArgs() + NumArgs; }
-  const_arg_iterator arg_begin() const { return getArgs(); }
-  const_arg_iterator arg_end() const { return getArgs() + NumArgs; }
+  arg_iterator arg_begin() { return reinterpret_cast<Stmt **>(getArgs()); }
+  arg_iterator arg_end()   { 
+    return reinterpret_cast<Stmt **>(getArgs() + NumArgs); 
+  }
+  const_arg_iterator arg_begin() const { 
+    return reinterpret_cast<Stmt const * const*>(getArgs()); 
+  }
+  const_arg_iterator arg_end() const { 
+    return reinterpret_cast<Stmt const * const*>(getArgs() + NumArgs); 
+  }
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;

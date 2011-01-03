@@ -1694,6 +1694,9 @@ public:
   ///
   unsigned getNumArgs() const { return NumArgs; }
 
+  /// \brief Retrieve the call arguments.
+  Expr **getArgs() { return reinterpret_cast<Expr **>(SubExprs + ARGS_START); }
+  
   /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {
     assert(Arg < NumArgs && "Arg access out of range!");
@@ -2737,6 +2740,9 @@ public:
   /// pointers.
   unsigned getNumSubExprs() const { return NumExprs; }
 
+  /// \brief Retrieve the array of expressions.
+  Expr **getSubExprs() { return reinterpret_cast<Expr **>(SubExprs); }
+  
   /// getExpr - Return the Expr at the specified index.
   Expr *getExpr(unsigned Index) {
     assert((Index < NumExprs) && "Arg access out of range!");
@@ -2971,6 +2977,9 @@ public:
 
   unsigned getNumInits() const { return InitExprs.size(); }
 
+  /// \brief Retrieve the set of initializers.
+  Expr **getInits() { return reinterpret_cast<Expr **>(InitExprs.data()); }
+    
   const Expr *getInit(unsigned Init) const {
     assert(Init < getNumInits() && "Initializer access out of range!");
     return cast_or_null<Expr>(InitExprs[Init]);

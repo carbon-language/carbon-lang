@@ -21,11 +21,11 @@
 
 namespace clang {
 
-  class CXXConstructorDecl;
-  class CXXDestructorDecl;
-  class CXXMethodDecl;
-  class CXXTemporary;
-  class TemplateArgumentListInfo;
+class CXXConstructorDecl;
+class CXXDestructorDecl;
+class CXXMethodDecl;
+class CXXTemporary;
+class TemplateArgumentListInfo;
 
 //===--------------------------------------------------------------------===//
 // C++ Expressions.
@@ -1052,6 +1052,10 @@ public:
   }
 
   unsigned getNumPlacementArgs() const { return NumPlacementArgs; }
+  Expr **getPlacementArgs() { 
+    return reinterpret_cast<Expr **>(SubExprs + Array); 
+  }
+  
   Expr *getPlacementArg(unsigned i) {
     assert(i < NumPlacementArgs && "Index out of range");
     return cast<Expr>(SubExprs[Array + i]);
@@ -1070,6 +1074,11 @@ public:
   void setHasInitializer(bool V) { Initializer = V; }
 
   unsigned getNumConstructorArgs() const { return NumConstructorArgs; }
+  
+  Expr **getConstructorArgs() {
+    return reinterpret_cast<Expr **>(SubExprs + Array + NumPlacementArgs);
+  }
+  
   Expr *getConstructorArg(unsigned i) {
     assert(i < NumConstructorArgs && "Index out of range");
     return cast<Expr>(SubExprs[Array + NumPlacementArgs + i]);

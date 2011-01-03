@@ -2300,7 +2300,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   setReceiverPointer(Receiver);
-  Stmt **MyArgs = getArgs();
+  Expr **MyArgs = getArgs();
   for (unsigned I = 0; I != NumArgs; ++I) {
     if (Args[I]->isTypeDependent())
       ExprBits.TypeDependent = true;
@@ -2331,7 +2331,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
 {
   setReceiverPointer(Receiver);
-  Stmt **MyArgs = getArgs();
+  Expr **MyArgs = getArgs();
   for (unsigned I = 0; I != NumArgs; ++I) {
     if (Args[I]->isTypeDependent())
       ExprBits.TypeDependent = true;
@@ -2928,10 +2928,10 @@ Stmt::child_iterator ObjCProtocolExpr::child_end() {
 Stmt::child_iterator ObjCMessageExpr::child_begin() {
   if (getReceiverKind() == Instance)
     return reinterpret_cast<Stmt **>(this + 1);
-  return getArgs();
+  return reinterpret_cast<Stmt **>(getArgs());
 }
 Stmt::child_iterator ObjCMessageExpr::child_end() {
-  return getArgs() + getNumArgs();
+  return reinterpret_cast<Stmt **>(getArgs() + getNumArgs());
 }
 
 // Blocks
