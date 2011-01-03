@@ -557,7 +557,8 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
     return false;
 
   // Ignore class templates.
-  if (D->getDeclContext()->isDependentContext())
+  if (D->getDeclContext()->isDependentContext() ||
+      D->getLexicalDeclContext()->isDependentContext())
     return false;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {

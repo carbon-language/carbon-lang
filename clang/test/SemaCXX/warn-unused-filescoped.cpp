@@ -54,3 +54,19 @@ namespace {
   };
   template <> int TS2<int>::x;  // expected-warning{{unused}}
 }
+
+namespace PR8841 {
+  // Ensure that friends of class templates are considered to have a dependent
+  // context and not marked unused.
+  namespace {
+    template <typename T> struct X {
+      friend bool operator==(const X&, const X&) { return false; }
+    };
+  }
+  template <typename T> void template_test(X<T> x) {
+    (void)(x == x);
+  }
+  void test(X<int> x) {
+    template_test(x);
+  }
+}
