@@ -72,61 +72,19 @@ static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
 /// two values.
 namespace {
   struct Expression {
-    enum ExpressionOpcode { 
-      ADD = Instruction::Add,
-      FADD = Instruction::FAdd,
-      SUB = Instruction::Sub,
-      FSUB = Instruction::FSub,
-      MUL = Instruction::Mul,
-      FMUL = Instruction::FMul,
-      UDIV = Instruction::UDiv,
-      SDIV = Instruction::SDiv,
-      FDIV = Instruction::FDiv,
-      UREM = Instruction::URem,
-      SREM = Instruction::SRem,
-      FREM = Instruction::FRem,
-      SHL = Instruction::Shl,
-      LSHR = Instruction::LShr,
-      ASHR = Instruction::AShr,
-      AND = Instruction::And,
-      OR = Instruction::Or,
-      XOR = Instruction::Xor,
-      TRUNC = Instruction::Trunc,
-      ZEXT = Instruction::ZExt,
-      SEXT = Instruction::SExt,
-      FPTOUI = Instruction::FPToUI,
-      FPTOSI = Instruction::FPToSI,
-      UITOFP = Instruction::UIToFP,
-      SITOFP = Instruction::SIToFP,
-      FPTRUNC = Instruction::FPTrunc,
-      FPEXT = Instruction::FPExt,
-      PTRTOINT = Instruction::PtrToInt,
-      INTTOPTR = Instruction::IntToPtr,
-      BITCAST = Instruction::BitCast,
-      ICMPEQ, ICMPNE, ICMPUGT, ICMPUGE, ICMPULT, ICMPULE,
-      ICMPSGT, ICMPSGE, ICMPSLT, ICMPSLE, FCMPOEQ,
-      FCMPOGT, FCMPOGE, FCMPOLT, FCMPOLE, FCMPONE,
-      FCMPORD, FCMPUNO, FCMPUEQ, FCMPUGT, FCMPUGE,
-      FCMPULT, FCMPULE, FCMPUNE, EXTRACT, INSERT,
-      SHUFFLE, SELECT, GEP, CALL, CONSTANT,
-      INSERTVALUE, EXTRACTVALUE, EMPTY, TOMBSTONE };
-
-    ExpressionOpcode opcode;
+    uint32_t opcode;
     const Type* type;
     SmallVector<uint32_t, 4> varargs;
-    Value *function;
 
     Expression() { }
-    Expression(ExpressionOpcode o) : opcode(o) { }
+    Expression(uint32_t o) : opcode(o) { }
 
     bool operator==(const Expression &other) const {
       if (opcode != other.opcode)
         return false;
-      else if (opcode == EMPTY || opcode == TOMBSTONE)
+      else if (opcode == ~0U || opcode == ~1U)
         return true;
       else if (type != other.type)
-        return false;
-      else if (function != other.function)
         return false;
       else if (varargs != other.varargs)
         return false;
@@ -148,19 +106,7 @@ namespace {
 
       uint32_t nextValueNumber;
 
-      Expression::ExpressionOpcode getOpcode(CmpInst* C);
-      Expression create_expression(BinaryOperator* BO);
-      Expression create_expression(CmpInst* C);
-      Expression create_expression(ShuffleVectorInst* V);
-      Expression create_expression(ExtractElementInst* C);
-      Expression create_expression(InsertElementInst* V);
-      Expression create_expression(SelectInst* V);
-      Expression create_expression(CastInst* C);
-      Expression create_expression(GetElementPtrInst* G);
-      Expression create_expression(CallInst* C);
-      Expression create_expression(ExtractValueInst* C);
-      Expression create_expression(InsertValueInst* C);
-      
+      Expression create_expression(Instruction* I);
       uint32_t lookup_or_add_call(CallInst* C);
     public:
       ValueTable() : nextValueNumber(1) { }
@@ -181,11 +127,11 @@ namespace {
 namespace llvm {
 template <> struct DenseMapInfo<Expression> {
   static inline Expression getEmptyKey() {
-    return Expression(Expression::EMPTY);
+    return ~0U;
   }
 
   static inline Expression getTombstoneKey() {
-    return Expression(Expression::TOMBSTONE);
+    return ~1U;
   }
 
   static unsigned getHashValue(const Expression e) {
@@ -197,11 +143,7 @@ template <> struct DenseMapInfo<Expression> {
     for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(),
          E = e.varargs.end(); I != E; ++I)
       hash = *I + hash * 37;
-
-    hash = ((unsigned)((uintptr_t)e.function >> 4) ^
-            (unsigned)((uintptr_t)e.function >> 9)) +
-           hash * 37;
-
+    
     return hash;
   }
   static bool isEqual(const Expression &LHS, const Expression &RHS) {
@@ -215,185 +157,27 @@ template <> struct DenseMapInfo<Expression> {
 //                     ValueTable Internal Functions
 //===----------------------------------------------------------------------===//
 
-Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
-  if (isa<ICmpInst>(C)) {
-    switch (C->getPredicate()) {
-    default:  // THIS SHOULD NEVER HAPPEN
-      llvm_unreachable("Comparison with unknown predicate?");
-    case ICmpInst::ICMP_EQ:  return Expression::ICMPEQ;
-    case ICmpInst::ICMP_NE:  return Expression::ICMPNE;
-    case ICmpInst::ICMP_UGT: return Expression::ICMPUGT;
-    case ICmpInst::ICMP_UGE: return Expression::ICMPUGE;
-    case ICmpInst::ICMP_ULT: return Expression::ICMPULT;
-    case ICmpInst::ICMP_ULE: return Expression::ICMPULE;
-    case ICmpInst::ICMP_SGT: return Expression::ICMPSGT;
-    case ICmpInst::ICMP_SGE: return Expression::ICMPSGE;
-    case ICmpInst::ICMP_SLT: return Expression::ICMPSLT;
-    case ICmpInst::ICMP_SLE: return Expression::ICMPSLE;
-    }
-  } else {
-    switch (C->getPredicate()) {
-    default: // THIS SHOULD NEVER HAPPEN
-      llvm_unreachable("Comparison with unknown predicate?");
-    case FCmpInst::FCMP_OEQ: return Expression::FCMPOEQ;
-    case FCmpInst::FCMP_OGT: return Expression::FCMPOGT;
-    case FCmpInst::FCMP_OGE: return Expression::FCMPOGE;
-    case FCmpInst::FCMP_OLT: return Expression::FCMPOLT;
-    case FCmpInst::FCMP_OLE: return Expression::FCMPOLE;
-    case FCmpInst::FCMP_ONE: return Expression::FCMPONE;
-    case FCmpInst::FCMP_ORD: return Expression::FCMPORD;
-    case FCmpInst::FCMP_UNO: return Expression::FCMPUNO;
-    case FCmpInst::FCMP_UEQ: return Expression::FCMPUEQ;
-    case FCmpInst::FCMP_UGT: return Expression::FCMPUGT;
-    case FCmpInst::FCMP_UGE: return Expression::FCMPUGE;
-    case FCmpInst::FCMP_ULT: return Expression::FCMPULT;
-    case FCmpInst::FCMP_ULE: return Expression::FCMPULE;
-    case FCmpInst::FCMP_UNE: return Expression::FCMPUNE;
-    }
+
+Expression ValueTable::create_expression(Instruction *I) {
+  Expression e;
+  e.type = I->getType();
+  e.opcode = I->getOpcode();
+  for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
+       OI != OE; ++OI)
+    e.varargs.push_back(lookup_or_add(*OI));
+  
+  if (CmpInst *C = dyn_cast<CmpInst>(I))
+    e.opcode = (C->getOpcode() << 8) | C->getPredicate();
+  else if (ExtractValueInst *E = dyn_cast<ExtractValueInst>(I)) {
+    for (ExtractValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
+         II != IE; ++II)
+      e.varargs.push_back(*II);
+  } else if (InsertValueInst *E = dyn_cast<InsertValueInst>(I)) {
+    for (InsertValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
+         II != IE; ++II)
+      e.varargs.push_back(*II);
   }
-}
-
-Expression ValueTable::create_expression(CallInst* C) {
-  Expression e;
-
-  e.type = C->getType();
-  e.function = C->getCalledFunction();
-  e.opcode = Expression::CALL;
-
-  CallSite CS(C);
-  for (CallInst::op_iterator I = CS.arg_begin(), E = CS.arg_end();
-       I != E; ++I)
-    e.varargs.push_back(lookup_or_add(*I));
-
-  return e;
-}
-
-Expression ValueTable::create_expression(BinaryOperator* BO) {
-  Expression e;
-  e.varargs.push_back(lookup_or_add(BO->getOperand(0)));
-  e.varargs.push_back(lookup_or_add(BO->getOperand(1)));
-  e.function = 0;
-  e.type = BO->getType();
-  e.opcode = static_cast<Expression::ExpressionOpcode>(BO->getOpcode());
-
-  return e;
-}
-
-Expression ValueTable::create_expression(CmpInst* C) {
-  Expression e;
-
-  e.varargs.push_back(lookup_or_add(C->getOperand(0)));
-  e.varargs.push_back(lookup_or_add(C->getOperand(1)));
-  e.function = 0;
-  e.type = C->getType();
-  e.opcode = getOpcode(C);
-
-  return e;
-}
-
-Expression ValueTable::create_expression(CastInst* C) {
-  Expression e;
-
-  e.varargs.push_back(lookup_or_add(C->getOperand(0)));
-  e.function = 0;
-  e.type = C->getType();
-  e.opcode = static_cast<Expression::ExpressionOpcode>(C->getOpcode());
-
-  return e;
-}
-
-Expression ValueTable::create_expression(ShuffleVectorInst* S) {
-  Expression e;
-
-  e.varargs.push_back(lookup_or_add(S->getOperand(0)));
-  e.varargs.push_back(lookup_or_add(S->getOperand(1)));
-  e.varargs.push_back(lookup_or_add(S->getOperand(2)));
-  e.function = 0;
-  e.type = S->getType();
-  e.opcode = Expression::SHUFFLE;
-
-  return e;
-}
-
-Expression ValueTable::create_expression(ExtractElementInst* E) {
-  Expression e;
-
-  e.varargs.push_back(lookup_or_add(E->getOperand(0)));
-  e.varargs.push_back(lookup_or_add(E->getOperand(1)));
-  e.function = 0;
-  e.type = E->getType();
-  e.opcode = Expression::EXTRACT;
-
-  return e;
-}
-
-Expression ValueTable::create_expression(InsertElementInst* I) {
-  Expression e;
-
-  e.varargs.push_back(lookup_or_add(I->getOperand(0)));
-  e.varargs.push_back(lookup_or_add(I->getOperand(1)));
-  e.varargs.push_back(lookup_or_add(I->getOperand(2)));
-  e.function = 0;
-  e.type = I->getType();
-  e.opcode = Expression::INSERT;
-
-  return e;
-}
-
-Expression ValueTable::create_expression(SelectInst* I) {
-  Expression e;
-
-  e.varargs.push_back(lookup_or_add(I->getCondition()));
-  e.varargs.push_back(lookup_or_add(I->getTrueValue()));
-  e.varargs.push_back(lookup_or_add(I->getFalseValue()));
-  e.function = 0;
-  e.type = I->getType();
-  e.opcode = Expression::SELECT;
-
-  return e;
-}
-
-Expression ValueTable::create_expression(GetElementPtrInst* G) {
-  Expression e;
-
-  e.varargs.push_back(lookup_or_add(G->getPointerOperand()));
-  e.function = 0;
-  e.type = G->getType();
-  e.opcode = Expression::GEP;
-
-  for (GetElementPtrInst::op_iterator I = G->idx_begin(), E = G->idx_end();
-       I != E; ++I)
-    e.varargs.push_back(lookup_or_add(*I));
-
-  return e;
-}
-
-Expression ValueTable::create_expression(ExtractValueInst* E) {
-  Expression e;
-
-  e.varargs.push_back(lookup_or_add(E->getAggregateOperand()));
-  for (ExtractValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
-       II != IE; ++II)
-    e.varargs.push_back(*II);
-  e.function = 0;
-  e.type = E->getType();
-  e.opcode = Expression::EXTRACTVALUE;
-
-  return e;
-}
-
-Expression ValueTable::create_expression(InsertValueInst* E) {
-  Expression e;
-
-  e.varargs.push_back(lookup_or_add(E->getAggregateOperand()));
-  e.varargs.push_back(lookup_or_add(E->getInsertedValueOperand()));
-  for (InsertValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
-       II != IE; ++II)
-    e.varargs.push_back(*II);
-  e.function = 0;
-  e.type = E->getType();
-  e.opcode = Expression::INSERTVALUE;
-
+  
   return e;
 }
 
@@ -552,12 +336,8 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
     case Instruction::And:
     case Instruction::Or :
     case Instruction::Xor:
-      exp = create_expression(cast<BinaryOperator>(I));
-      break;
     case Instruction::ICmp:
     case Instruction::FCmp:
-      exp = create_expression(cast<CmpInst>(I));
-      break;
     case Instruction::Trunc:
     case Instruction::ZExt:
     case Instruction::SExt:
@@ -570,28 +350,14 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
     case Instruction::PtrToInt:
     case Instruction::IntToPtr:
     case Instruction::BitCast:
-      exp = create_expression(cast<CastInst>(I));
-      break;
     case Instruction::Select:
-      exp = create_expression(cast<SelectInst>(I));
-      break;
     case Instruction::ExtractElement:
-      exp = create_expression(cast<ExtractElementInst>(I));
-      break;
     case Instruction::InsertElement:
-      exp = create_expression(cast<InsertElementInst>(I));
-      break;
     case Instruction::ShuffleVector:
-      exp = create_expression(cast<ShuffleVectorInst>(I));
-      break;
     case Instruction::ExtractValue:
-      exp = create_expression(cast<ExtractValueInst>(I));
-      break;
     case Instruction::InsertValue:
-      exp = create_expression(cast<InsertValueInst>(I));
-      break;      
     case Instruction::GetElementPtr:
-      exp = create_expression(cast<GetElementPtrInst>(I));
+      exp = create_expression(I);
       break;
     default:
       valueNumbering[V] = nextValueNumber;
