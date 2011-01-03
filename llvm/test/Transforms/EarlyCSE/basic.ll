@@ -30,3 +30,48 @@ define void @test1(i8 %V, i32 *%P) {
   ; CHECK-NEXT: volatile store i32 %G
   ret void
 }
+
+
+;; Simple load value numbering.
+; CHECK: @test2
+define i32 @test2(i32 *%P) {
+  %V1 = load i32* %P
+  %V2 = load i32* %P
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK: ret i32 0
+}
+
+;; Cross block load value numbering.
+; CHECK: @test3
+define i32 @test3(i32 *%P, i1 %Cond) {
+  %V1 = load i32* %P
+  br i1 %Cond, label %T, label %F
+T:
+  store i32 4, i32* %P
+  ret i32 42
+F:
+  %V2 = load i32* %P
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK: F:
+  ; CHECK: ret i32 0
+}
+
+;; Cross block load value numbering stops when stores happen.
+; CHECK: @test4
+define i32 @test4(i32 *%P, i1 %Cond) {
+  %V1 = load i32* %P
+  br i1 %Cond, label %T, label %F
+T:
+  ret i32 42
+F:
+  ; Clobbers V1
+  store i32 42, i32* %P
+  
+  %V2 = load i32* %P
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK: F:
+  ; CHECK: ret i32 %Diff
+}
