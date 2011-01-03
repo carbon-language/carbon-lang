@@ -469,6 +469,17 @@ public:
   ///
   virtual void copyValue(Value *From, Value *To);
 
+  /// addEscapingUse - This method should be used whenever an escaping use is
+  /// added to a pointer value.  Analysis implementations may either return
+  /// conservative responses for that value in the future, or may recompute
+  /// some or all internal state to continue providing precise responses.
+  ///
+  /// Escaping uses are considered by anything _except_ the following:
+  ///  - GEPs or bitcasts of the pointer
+  ///  - Loads through the pointer
+  ///  - Stores through (but not of) the pointer
+  virtual void addEscapingUse(Use &U);
+
   /// replaceWithNewValue - This method is the obvious combination of the two
   /// above, and it provided as a helper to simplify client code.
   ///

@@ -65,6 +65,12 @@ void AliasAnalysis::copyValue(Value *From, Value *To) {
   AA->copyValue(From, To);
 }
 
+void AliasAnalysis::addEscapingUse(Use &U) {
+  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
+  AA->addEscapingUse(U);
+}
+
+
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
                              const Location &Loc) {

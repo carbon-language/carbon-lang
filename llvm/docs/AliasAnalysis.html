@@ -464,7 +464,7 @@ analysis results updated to reflect the changes made by these transformations.
 </p>
 
 <p>
-The <tt>AliasAnalysis</tt> interface exposes three methods which are used to
+The <tt>AliasAnalysis</tt> interface exposes four methods which are used to
 communicate program changes from the clients to the analysis implementations.
 Various alias analysis implementations should use these methods to ensure that
 their internal data structures are kept up-to-date as the program changes (for
@@ -503,6 +503,28 @@ This method is a simple helper method that is provided to make clients easier to
 use.  It is implemented by copying the old analysis information to the new
 value, then deleting the old value.  This method cannot be overridden by alias
 analysis implementations.
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">The <tt>addEscapingUse</tt> method</div>
+
+<div class="doc_text">
+<p>The <tt>addEscapingUse</tt> method is used when the uses of a pointer
+value have changed in ways that may invalidate precomputed analysis information. 
+Implementations may either use this callback to provide conservative responses
+for points whose uses have change since analysis time, or may recompute some
+or all of their internal state to continue providing accurate responses.</p>
+
+<p>In general, any new use of a pointer value is considered an escaping use,
+and must be reported through this callback, <em>except</em> for the
+uses below:</p>
+
+<ul>
+  <li>A <tt>bitcast</tt> or <tt>getelementptr</tt> of the pointer</li>
+  <li>A <tt>store</tt> through the pointer (but not a <tt>store</tt>
+      <em>of</em> the pointer)</li>
+  <li>A <tt>load</tt> through the pointer</li>
+</ul>
 </div>
 
 <!-- ======================================================================= -->
