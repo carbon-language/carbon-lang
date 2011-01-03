@@ -250,7 +250,7 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   const SCEVConstant *Stride = dyn_cast<SCEVConstant>(StoreEv->getOperand(1));
   
   // TODO: Could also handle negative stride here someday, that will require the
-  // validity check in mayLoopModRefLocation to be updated though.
+  // validity check in mayLoopAccessLocation to be updated though.
   if (Stride == 0 || StoreSize != Stride->getValue()->getValue())
     return false;
   
