@@ -96,3 +96,13 @@ define i32 @test6(i32 *%P) {
   ret i32 %V1
   ; CHECK: ret i32 42
 }
+
+;; Trivial dead store elimination.
+; CHECK: @test7
+define void @test7(i32 *%P) {
+  store i32 42, i32* %P
+  store i32 45, i32* %P
+  ret void
+  ; CHECK-NEXT: store i32 45
+  ; CHECK-NEXT: ret void
+}

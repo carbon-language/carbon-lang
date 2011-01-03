@@ -30,6 +30,7 @@ STATISTIC(NumSimplify, "Number of instructions simplified or DCE'd");
 STATISTIC(NumCSE,      "Number of instructions CSE'd");
 STATISTIC(NumCSELoad,  "Number of load instructions CSE'd");
 STATISTIC(NumCSECall,  "Number of call instructions CSE'd");
+STATISTIC(NumDSE,      "Number of trivial dead stores removed");
 
 static unsigned getHash(const void *V) {
   return DenseMapInfo<const void*>::getHashValue(V);
@@ -290,6 +291,12 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
   if (BB->getSinglePredecessor() == 0)
     ++CurrentGeneration;
   
+  /// LastStore - Keep track of the last non-volatile store that we saw... for
+  /// as long as there in no instruction that reads memory.  If we see a store
+  /// to the same location, we delete the dead store.  This zaps trivial dead
+  /// stores which can occur in bitfield code among other things.
+  StoreInst *LastStore = 0;
+  
   bool Changed = false;
 
   // See if any instructions in the block can be eliminated.  If so, do it.  If
@@ -337,7 +344,10 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     // If this is a non-volatile load, process it.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
       // Ignore volatile loads.
-      if (LI->isVolatile()) continue;
+      if (LI->isVolatile()) {
+        LastStore = 0;
+        continue;
+      }
       
       // If we have an available version of this load, and if it is the right
       // generation, replace this instruction.
@@ -356,8 +366,13 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       // Otherwise, remember that we have this instruction.
       AvailableLoads->insert(Inst->getOperand(0),
                           std::pair<Value*, unsigned>(Inst, CurrentGeneration));
+      LastStore = 0;
       continue;
     }
+    
+    // If this instruction may read from memory, forget LastStore.
+    if (Inst->mayReadFromMemory())
+      LastStore = 0;
     
     // If this is a read-only call, process it.
     if (CallValue::canHandle(Inst)) {
@@ -386,14 +401,31 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     if (Inst->mayWriteToMemory()) {
       ++CurrentGeneration;
      
-      // Okay, we just invalidated anything we knew about loaded values.  Try to
-      // salvage *something* by remembering that the stored value is a live
-      // version of the pointer.  It is safe to forward from volatile stores to
-      // non-volatile loads, so we don't have to check for volatility of the
-      // store.
       if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+        // We do a trivial form of DSE if there are two stores to the same
+        // location with no intervening loads.  Delete the earlier store.
+        if (LastStore &&
+            LastStore->getPointerOperand() == SI->getPointerOperand()) {
+          DEBUG(dbgs() << "EarlyCSE DEAD STORE: " << *LastStore << "  due to: "
+                << *Inst << '\n');
+          LastStore->eraseFromParent();
+          Changed = true;
+          ++NumDSE;
+          LastStore = 0;
+          continue;
+        }
+        
+        // Okay, we just invalidated anything we knew about loaded values.  Try
+        // to salvage *something* by remembering that the stored value is a live
+        // version of the pointer.  It is safe to forward from volatile stores
+        // to non-volatile loads, so we don't have to check for volatility of
+        // the store.
         AvailableLoads->insert(SI->getPointerOperand(),
          std::pair<Value*, unsigned>(SI->getValueOperand(), CurrentGeneration));
+        
+        // Remember that this was the last store we saw for DSE.
+        if (!SI->isVolatile())
+          LastStore = SI;
       }
     }
   }
