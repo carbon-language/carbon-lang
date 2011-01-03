@@ -310,8 +310,8 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
 /// [GNU]   '{' '}'
 ///
 ///       initializer-list:
-///         designation[opt] initializer
-///         initializer-list ',' designation[opt] initializer
+///         designation[opt] initializer ...[opt]
+///         initializer-list ',' designation[opt] initializer ...[opt]
 ///
 ExprResult Parser::ParseBraceInitializer() {
   InMessageExpressionRAIIObject InMessage(*this, false);
@@ -344,6 +344,9 @@ ExprResult Parser::ParseBraceInitializer() {
     else
       SubElt = ParseInitializer();
 
+    if (Tok.is(tok::ellipsis))
+      SubElt = Actions.ActOnPackExpansion(SubElt.get(), ConsumeToken());
+    
     // If we couldn't parse the subelement, bail out.
     if (!SubElt.isInvalid()) {
       InitExprs.push_back(SubElt.release());

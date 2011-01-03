@@ -172,8 +172,8 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///         = *= /= %= += -= <<= >>= &= ^= |=
 ///
 ///       expression: [C99 6.5.17]
-///         assignment-expression
-///         expression ',' assignment-expression
+///         assignment-expression ...[opt]
+///         expression ',' assignment-expression ...[opt]
 ///
 ExprResult Parser::ParseExpression() {
   ExprResult LHS(ParseAssignmentExpression());
@@ -1030,8 +1030,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///         '(' type-name ')' '{' initializer-list ',' '}'
 ///
 ///       argument-expression-list: [C99 6.5.2]
-///         argument-expression
-///         argument-expression-list ',' assignment-expression
+///         argument-expression ...[opt]
+///         argument-expression-list ',' assignment-expression ...[opt]
 ///
 ExprResult
 Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
@@ -1692,8 +1692,8 @@ ExprResult Parser::ParseStringLiteralExpression() {
 ///         argument-expression-list , assignment-expression
 ///
 /// [C++] expression-list:
-/// [C++]   assignment-expression
-/// [C++]   expression-list , assignment-expression
+/// [C++]   assignment-expression ...[opt]
+/// [C++]   expression-list , assignment-expression ...[opt]
 ///
 bool Parser::ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
                             llvm::SmallVectorImpl<SourceLocation> &CommaLocs,
@@ -1710,6 +1710,8 @@ bool Parser::ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
     }
     
     ExprResult Expr(ParseAssignmentExpression());
+    if (Tok.is(tok::ellipsis))
+      Expr = Actions.ActOnPackExpansion(Expr.get(), ConsumeToken());    
     if (Expr.isInvalid())
       return true;
 

@@ -20,6 +20,20 @@ struct is_same<T, T> {
 
 // FIXME: Many more bullets to go
 
+// In an initializer-list (8.5); the pattern is an initializer-clause.
+// Note: this also covers expression-lists, since expression-list is
+// just defined as initializer-list.
+void five_args(int, int, int, int, int); // expected-note{{candidate function not viable: requires 5 arguments, but 6 were provided}}
+
+template<int ...Values>
+void initializer_list_expansion() {
+  int values[5] = { Values... }; // expected-error{{excess elements in array initializer}}
+  five_args(Values...); // expected-error{{no matching function for call to 'five_args'}}
+}
+
+template void initializer_list_expansion<1, 2, 3, 4, 5>();
+template void initializer_list_expansion<1, 2, 3, 4, 5, 6>(); // expected-note{{in instantiation of function template specialization 'initializer_list_expansion<1, 2, 3, 4, 5, 6>' requested here}}
+
 // In a template-argument-list (14.3); the pattern is a template-argument.
 template<typename ...Types>
 struct tuple_of_refs {

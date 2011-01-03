@@ -2103,6 +2103,8 @@ public:
                                            SourceLocation EllipsisLoc) {
     switch (Pattern.getArgument().getKind()) {
     case TemplateArgument::Expression:
+        // FIXME: We should be able to handle this now!
+        
     case TemplateArgument::Template:
       llvm_unreachable("Unsupported pack expansion of expressions/templates");
         
@@ -2122,6 +2124,15 @@ public:
     }
     
     return TemplateArgumentLoc();
+  }
+  
+  /// \brief Build a new expression pack expansion.
+  ///
+  /// By default, performs semantic analysis to build a new pack expansion
+  /// for an expression. Subclasses may override this routine to provide 
+  /// different behavior.
+  ExprResult RebuildPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc) {
+    return getSema().ActOnPackExpansion(Pattern, EllipsisLoc);
   }
   
 private:
@@ -2198,6 +2209,60 @@ bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
         *ArgChanged = true;
       
       break;
+    }
+    
+    if (PackExpansionExpr *Expansion = dyn_cast<PackExpansionExpr>(Inputs[I])) {
+      Expr *Pattern = Expansion->getPattern();
+        
+      llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+      getSema().collectUnexpandedParameterPacks(Pattern, Unexpanded);
+      assert(!Unexpanded.empty() && "Pack expansion without parameter packs?");
+      
+      // Determine whether the set of unexpanded parameter packs can and should
+      // be expanded.
+      bool Expand = true;
+      unsigned NumExpansions = 0;
+      if (getDerived().TryExpandParameterPacks(Expansion->getEllipsisLoc(),
+                                               Pattern->getSourceRange(),
+                                               Unexpanded.data(),
+                                               Unexpanded.size(),
+                                               Expand, NumExpansions))
+        return true;
+        
+      if (!Expand) {
+        // The transform has determined that we should perform a simple
+        // transformation on the pack expansion, producing another pack 
+        // expansion.
+        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
+        ExprResult OutPattern = getDerived().TransformExpr(Pattern);
+        if (OutPattern.isInvalid())
+          return true;
+        
+        ExprResult Out = getDerived().RebuildPackExpansion(OutPattern.get(), 
+                                                Expansion->getEllipsisLoc());
+        if (Out.isInvalid())
+          return true;
+        
+        if (ArgChanged)
+          *ArgChanged = true;
+        Outputs.push_back(Out.get());
+        continue;
+      }
+      
+      // The transform has determined that we should perform an elementwise
+      // expansion of the pattern. Do so.
+      for (unsigned I = 0; I != NumExpansions; ++I) {
+        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), I);
+        ExprResult Out = getDerived().TransformExpr(Pattern);
+        if (Out.isInvalid())
+          return true;
+
+        if (ArgChanged)
+          *ArgChanged = true;  
+        Outputs.push_back(Out.get());
+      }
+        
+      continue;
     }
     
     ExprResult Result = getDerived().TransformExpr(Inputs[I]);
