@@ -105,6 +105,20 @@ namespace Math {
   };
 
   int check3[sum<1, 2, 3, 4, 5>::value == 15? 1 : -1];
+
+#if 0
+  // FIXME: Instantiation of this fails.
+  template<int ... Values>
+  struct lazy_sum {
+    int operator()() {
+      return sum<Values...>::value;
+    }
+  };
+
+  void f() {
+    lazy_sum<1, 2, 3, 4, 5>()();
+  }
+#endif
 }
 
 namespace Indices {
