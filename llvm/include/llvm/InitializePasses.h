@@ -128,6 +128,7 @@ void initializeLoopDeletionPass(PassRegistry&);
 void initializeLoopDependenceAnalysisPass(PassRegistry&);
 void initializeLoopExtractorPass(PassRegistry&);
 void initializeLoopInfoPass(PassRegistry&);
+void initializeLoopInstSimplifyPass(PassRegistry&);
 void initializeLoopRotatePass(PassRegistry&);
 void initializeLoopSimplifyPass(PassRegistry&);
 void initializeLoopSplitterPass(PassRegistry&);
