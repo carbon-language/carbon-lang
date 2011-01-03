@@ -191,7 +191,6 @@ class FoundationTestCase(TestBase):
                         self.line)
         self.runCmd("process continue")
 
-        # This currently fails.
         # rdar://problem/8542091
         # test/foundation: expr -o -- my not working?
         #
