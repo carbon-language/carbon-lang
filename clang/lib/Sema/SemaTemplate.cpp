@@ -4126,6 +4126,12 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   TemplateArgs.setRAngleLoc(RAngleLoc);
   translateTemplateArguments(TemplateArgsIn, TemplateArgs);
 
+  // Check for unexpanded parameter packs in any of the template arguments.
+  for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
+    if (DiagnoseUnexpandedParameterPack(TemplateArgs[I], 
+                                        UPPC_PartialSpecialization))
+      return true;
+  
   // Check that the template argument list is well-formed for this
   // template.
   llvm::SmallVector<TemplateArgument, 4> Converted;

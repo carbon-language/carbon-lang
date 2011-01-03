@@ -263,6 +263,20 @@ bool Sema::DiagnoseUnexpandedParameterPack(SourceLocation Loc,
   return true;
 }
 
+bool Sema::DiagnoseUnexpandedParameterPack(TemplateArgumentLoc Arg,
+                                         UnexpandedParameterPackContext UPPC) {
+  if (Arg.getArgument().isNull() || 
+      !Arg.getArgument().containsUnexpandedParameterPack())
+    return false;
+  
+  llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+  CollectUnexpandedParameterPacksVisitor(Unexpanded)
+    .TraverseTemplateArgumentLoc(Arg);
+  assert(!Unexpanded.empty() && "Unable to find unexpanded parameter packs");
+  DiagnoseUnexpandedParameterPacks(*this, Arg.getLocation(), UPPC, Unexpanded);
+  return true;  
+}
+
 void Sema::collectUnexpandedParameterPacks(TemplateArgument Arg,
                    llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded) {
   CollectUnexpandedParameterPacksVisitor(Unexpanded)

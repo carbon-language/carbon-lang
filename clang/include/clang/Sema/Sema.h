@@ -3187,7 +3187,10 @@ public:
     UPPC_NonTypeTemplateParameterType,
 
     /// \brief The type of an exception.
-    UPPC_ExceptionType
+    UPPC_ExceptionType,
+    
+    /// \brief Partial specialization.
+    UPPC_PartialSpecialization
   };
 
   /// \brief If the given type contains an unexpanded parameter pack,
@@ -3245,6 +3248,16 @@ public:
                                        TemplateName Template,
                                        UnexpandedParameterPackContext UPPC);
 
+  /// \brief If the given template argument contains an unexpanded parameter 
+  /// pack, diagnose the error.
+  ///
+  /// \param Arg The template argument that is being checked for unexpanded 
+  /// parameter packs.
+  ///
+  /// \returns true if an error ocurred, false otherwise.
+  bool DiagnoseUnexpandedParameterPack(TemplateArgumentLoc Arg,
+                                       UnexpandedParameterPackContext UPPC);
+  
   /// \brief Collect the set of unexpanded parameter packs within the given
   /// template argument.  
   ///
