@@ -3681,7 +3681,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
 
       assert(!FQT->isUnionType() &&
              "layout for array of unions not supported");
-      if (FQT->isRecordType()) {
+      if (FQT->isRecordType() && ElCount) {
         int OldIndex = IvarsInfo.size() - 1;
         int OldSkIndex = SkipIvars.size() -1;
 
