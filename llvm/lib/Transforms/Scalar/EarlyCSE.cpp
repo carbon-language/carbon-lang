@@ -145,9 +145,15 @@ namespace {
     }
     
     static bool canHandle(Instruction *Inst) {
-      if (CallInst *CI = dyn_cast<CallInst>(Inst))
-        return CI->onlyReadsMemory();
-      return false;
+      CallInst *CI = dyn_cast<CallInst>(Inst);
+      if (CI == 0 || !CI->onlyReadsMemory())
+        return false;
+      
+      // Check that there are no metadata operands.
+      for (unsigned i = 0, e = CI->getNumOperands(); i != e; ++i)
+        if (CI->getOperand(i)->getType()->isMetadataTy())
+          return false;
+      return true;
     }
   };
 }
@@ -407,7 +413,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         if (LastStore &&
             LastStore->getPointerOperand() == SI->getPointerOperand()) {
           DEBUG(dbgs() << "EarlyCSE DEAD STORE: " << *LastStore << "  due to: "
-                << *Inst << '\n');
+                       << *Inst << '\n');
           LastStore->eraseFromParent();
           Changed = true;
           ++NumDSE;
