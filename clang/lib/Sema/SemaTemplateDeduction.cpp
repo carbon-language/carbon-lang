@@ -2926,6 +2926,10 @@ MarkUsedTemplateParameters(Sema &SemaRef,
                            bool OnlyDeduced,
                            unsigned Depth,
                            llvm::SmallVectorImpl<bool> &Used) {
+  // We can deduce from a pack expansion.
+  if (const PackExpansionExpr *Expansion = dyn_cast<PackExpansionExpr>(E))
+    E = Expansion->getPattern();
+      
   // FIXME: if !OnlyDeduced, we have to walk the whole subexpression to 
   // find other occurrences of template parameters.
   const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);

@@ -1871,7 +1871,7 @@ def err_ellipsis_in_declarator_not_parameter : Error<
 
 // Unsupported variadic templates features
 def err_pack_expansion_unsupported : Error<
-  "clang does not yet support %select{non-type|template}0 pack expansions">;
+  "clang does not yet support template pack expansions">;
 def err_pack_expansion_instantiation_unsupported : Error<
   "clang cannot yet instantiate pack expansions">;
 def err_pack_expansion_mismatch_unsupported : Error<

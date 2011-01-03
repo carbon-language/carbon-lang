@@ -164,6 +164,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::ShuffleVectorExprClass: 
   case Stmt::BlockExprClass:  
   case Stmt::OpaqueValueExprClass:
+  case Stmt::PackExpansionExprClass:
     K = CXCursor_UnexposedExpr;
     break;
       

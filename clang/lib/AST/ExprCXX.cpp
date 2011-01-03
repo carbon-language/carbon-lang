@@ -1025,3 +1025,15 @@ Stmt::child_iterator CXXNoexceptExpr::child_begin() {
 Stmt::child_iterator CXXNoexceptExpr::child_end() {
   return child_iterator(&Operand + 1);
 }
+
+SourceRange PackExpansionExpr::getSourceRange() const {
+  return SourceRange(Pattern->getLocStart(), EllipsisLoc);
+}
+
+Stmt::child_iterator PackExpansionExpr::child_begin() {
+  return child_iterator(&Pattern);
+}
+
+Stmt::child_iterator PackExpansionExpr::child_end() {
+  return child_iterator(&Pattern + 1);
+}

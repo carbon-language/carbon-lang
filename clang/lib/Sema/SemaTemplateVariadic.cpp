@@ -79,9 +79,6 @@ namespace {
     
     // FIXME: Record occurrences of template template parameter packs.
 
-    // FIXME: Once we have pack expansions in the AST, block their
-    // traversal.
-
     //------------------------------------------------------------------------
     // Pruning the search for unexpanded parameter packs.
     //------------------------------------------------------------------------
@@ -299,14 +296,17 @@ Sema::ActOnPackExpansion(const ParsedTemplateArgument &Arg,
                                   Arg.getLocation());
   }
 
-  case ParsedTemplateArgument::NonType:
-    Diag(EllipsisLoc, diag::err_pack_expansion_unsupported)
-      << 0;
-    return ParsedTemplateArgument();
-
+  case ParsedTemplateArgument::NonType: {
+    ExprResult Result = ActOnPackExpansion(Arg.getAsExpr(), EllipsisLoc);
+    if (Result.isInvalid())
+      return ParsedTemplateArgument();
+    
+    return ParsedTemplateArgument(Arg.getKind(), Result.get(), 
+                                  Arg.getLocation());
+  }
+    
   case ParsedTemplateArgument::Template:
-    Diag(EllipsisLoc, diag::err_pack_expansion_unsupported)
-      << 1;
+    Diag(EllipsisLoc, diag::err_pack_expansion_unsupported);
     return ParsedTemplateArgument();
   }
   llvm_unreachable("Unhandled template argument kind?");
@@ -352,6 +352,24 @@ TypeSourceInfo *Sema::CheckPackExpansion(TypeSourceInfo *Pattern,
   return TSResult;
 }
 
+ExprResult Sema::ActOnPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc) {
+  if (!Pattern)
+    return ExprError();
+  
+  // C++0x [temp.variadic]p5:
+  //   The pattern of a pack expansion shall name one or more
+  //   parameter packs that are not expanded by a nested pack
+  //   expansion.
+  if (!Pattern->containsUnexpandedParameterPack()) {
+    Diag(EllipsisLoc, diag::err_pack_expansion_without_parameter_packs)
+    << Pattern->getSourceRange();
+    return ExprError();
+  }
+  
+  // Create the pack expansion expression and source-location information.
+  return Owned(new (Context) PackExpansionExpr(Context.DependentTy, Pattern,
+                                               EllipsisLoc));
+}
 
 bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
                                            SourceRange PatternRange,

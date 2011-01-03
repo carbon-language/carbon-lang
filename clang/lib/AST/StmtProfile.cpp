@@ -832,6 +832,10 @@ void StmtProfiler::VisitCXXNoexceptExpr(CXXNoexceptExpr *S) {
   VisitExpr(S);
 }
 
+void StmtProfiler::VisitPackExpansionExpr(PackExpansionExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);  
 }

@@ -64,3 +64,52 @@ namespace Replace {
   int check0[is_same<EverythingToInt<tuple<double, float>>::type, 
              tuple<int, int>>::value? 1 : -1];
 }
+
+namespace Multiply {
+  template<int ...Values>
+  struct double_values {
+    typedef int_tuple<Values*2 ...> type;
+  };
+
+  int check0[is_same<double_values<1, 2, -3>::type, 
+                     int_tuple<2, 4, -6>>::value? 1 : -1];
+
+  template<int ...Values>
+  struct square {
+    typedef int_tuple<(Values*Values)...> type;
+  };
+
+  int check1[is_same<square<1, 2, -3>::type, 
+                     int_tuple<1, 4, 9>>::value? 1 : -1];
+
+  template<typename IntTuple> struct square_tuple;
+
+  template<int ...Values>
+  struct square_tuple<int_tuple<Values...>> {
+    typedef int_tuple<(Values*Values)...> type;
+  };
+
+  int check2[is_same<square_tuple<int_tuple<1, 2, -3>>::type, 
+                     int_tuple<1, 4, 9>>::value? 1 : -1];
+}
+
+namespace Indices {
+  template<unsigned I, unsigned N, typename IntTuple>
+  struct build_indices_impl;
+
+  template<unsigned I, unsigned N, int ...Indices>
+  struct build_indices_impl<I, N, int_tuple<Indices...> >
+    : build_indices_impl<I+1, N, int_tuple<Indices..., I> > {
+  };
+
+  template<unsigned N, int ...Indices> 
+  struct build_indices_impl<N, N, int_tuple<Indices...> > {
+    typedef int_tuple<Indices...> type;
+  };
+
+  template<unsigned N>
+  struct build_indices : build_indices_impl<0, N, int_tuple<> > { };
+
+  int check0[is_same<build_indices<5>::type,
+                     int_tuple<0, 1, 2, 3, 4>>::value? 1 : -1];
+}

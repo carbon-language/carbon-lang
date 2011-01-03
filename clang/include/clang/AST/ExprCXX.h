@@ -2571,6 +2571,61 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief Represents a C++0x pack expansion that produces a sequence of 
+/// expressions.
+///
+/// A pack expansion expression contains a pattern (which itself is an
+/// expression) followed by an ellipsis. For example:
+///
+/// \code
+/// template<typename F, typename ...Types>
+/// void forward(F f, Types &&...args) {
+///   f(static_cast<Types&&>(args)...);
+/// }
+/// \endcode
+///
+/// Here, the argument to the function object \c f is a pack expansion whose
+/// pattern is \c static_cast<Types&&>(args). When the \c forward function 
+/// template is instantiated, the pack expansion will instantiate to zero or
+/// or more function arguments to the function object \c f.
+class PackExpansionExpr : public Expr {
+  SourceLocation EllipsisLoc;
+  Stmt *Pattern;
+  
+  friend class ASTStmtReader;
+  
+public:
+  PackExpansionExpr(QualType T, Expr *Pattern, SourceLocation EllipsisLoc)
+    : Expr(PackExpansionExprClass, T, Pattern->getValueKind(), 
+           Pattern->getObjectKind(), /*TypeDependent=*/true, 
+           /*ValueDependent=*/true, /*ContainsUnexpandedParameterPack=*/false),
+      EllipsisLoc(EllipsisLoc),
+      Pattern(Pattern) { }
+
+  PackExpansionExpr(EmptyShell Empty) : Expr(PackExpansionExprClass, Empty) { }
+  
+  /// \brief Retrieve the pattern of the pack expansion.
+  Expr *getPattern() { return reinterpret_cast<Expr *>(Pattern); }
+
+  /// \brief Retrieve the pattern of the pack expansion.
+  const Expr *getPattern() const { return reinterpret_cast<Expr *>(Pattern); }
+
+  /// \brief Retrieve the location of the ellipsis that describes this pack
+  /// expansion.
+  SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
+  
+  virtual SourceRange getSourceRange() const;
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == PackExpansionExprClass;
+  }
+  static bool classof(const PackExpansionExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+  
 inline ExplicitTemplateArgumentList &OverloadExpr::getExplicitTemplateArgs() {
   if (isa<UnresolvedLookupExpr>(this))
     return cast<UnresolvedLookupExpr>(this)->getExplicitTemplateArgs();

@@ -2043,7 +2043,11 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     Out << "LDnE";
     break;
   }
-
+      
+  case Expr::PackExpansionExprClass:
+    Out << "sp";
+    mangleExpression(cast<PackExpansionExpr>(E)->getPattern());
+    break;
   }
 }
 

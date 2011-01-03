@@ -17,6 +17,7 @@
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -72,15 +73,14 @@ bool TemplateArgument::isPackExpansion() const {
     return false;
       
   case Type:
-    return llvm::isa<PackExpansionType>(getAsType());
+    return isa<PackExpansionType>(getAsType());
       
   case Template:
     // FIXME: Template template pack expansions.
     break;
     
   case Expression:
-    // FIXME: Expansion pack expansions.
-    break;  
+    return isa<PackExpansionExpr>(getAsExpr());
   }
   
   return false;
@@ -199,9 +199,11 @@ TemplateArgument TemplateArgument::getPackExpansionPattern() const {
       return getAsType()->getAs<PackExpansionType>()->getPattern();
       
     case Expression:
+      return cast<PackExpansionExpr>(getAsExpr())->getPattern();
+      
     case Template:
       // FIXME: Variadic templates.
-      llvm_unreachable("Expression and template pack expansions unsupported");
+      llvm_unreachable("Template pack expansions unsupported");
       
     case Declaration:
     case Integral:
@@ -343,10 +345,14 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
                                PatternTSInfo);
   }
       
-  case TemplateArgument::Expression:
+  case TemplateArgument::Expression: {
+    Expr *Pattern = cast<PackExpansionExpr>(Argument.getAsExpr())->getPattern();
+    return TemplateArgumentLoc(Pattern, Pattern);
+  }
+      
   case TemplateArgument::Template:
     // FIXME: Variadic templates.
-      llvm_unreachable("Expression and template pack expansions unsupported");
+      llvm_unreachable("Template pack expansions unsupported");
     
   case TemplateArgument::Declaration:
   case TemplateArgument::Integral:

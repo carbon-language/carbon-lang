@@ -6439,6 +6439,13 @@ TreeTransform<Derived>::TransformCXXNoexceptExpr(CXXNoexceptExpr *E) {
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformPackExpansionExpr(PackExpansionExpr *E) {
+  llvm_unreachable("pack expansion expression in unhandled context");
+  return ExprError();
+}
+  
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformObjCStringLiteral(ObjCStringLiteral *E) {
   return SemaRef.Owned(E);
 }
