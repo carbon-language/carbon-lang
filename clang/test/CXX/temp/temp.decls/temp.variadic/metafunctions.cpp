@@ -65,7 +65,7 @@ namespace Replace {
              tuple<int, int>>::value? 1 : -1];
 }
 
-namespace Multiply {
+namespace Math {
   template<int ...Values>
   struct double_values {
     typedef int_tuple<Values*2 ...> type;
@@ -89,8 +89,22 @@ namespace Multiply {
     typedef int_tuple<(Values*Values)...> type;
   };
 
-  int check2[is_same<square_tuple<int_tuple<1, 2, -3>>::type, 
+  int check2[is_same<square_tuple<int_tuple<1, 2, -3> >::type, 
                      int_tuple<1, 4, 9>>::value? 1 : -1];
+
+  template<int ...Values> struct sum;
+
+  template<int First, int ...Rest> 
+  struct sum<First, Rest...> {
+    static const int value = First + sum<Rest...>::value;
+  };
+
+  template<>
+  struct sum<> {
+    static const int value = 0;
+  };
+
+  int check3[sum<1, 2, 3, 4, 5>::value == 15? 1 : -1];
 }
 
 namespace Indices {
