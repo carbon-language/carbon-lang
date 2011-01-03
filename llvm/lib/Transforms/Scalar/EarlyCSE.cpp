@@ -380,8 +380,19 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     // Okay, this isn't something we can CSE at all.  Check to see if it is
     // something that could modify memory.  If so, our available memory values
     // cannot be used so bump the generation count.
-    if (Inst->mayWriteToMemory())
+    if (Inst->mayWriteToMemory()) {
       ++CurrentGeneration;
+     
+      // Okay, we just invalidated anything we knew about loaded values.  Try to
+      // salvage *something* by remembering that the stored value is a live
+      // version of the pointer.  It is safe to forward from volatile stores to
+      // non-volatile loads, so we don't have to check for volatility of the
+      // store.
+      if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+        AvailableLoads->insert(SI->getPointerOperand(),
+         std::pair<Value*, unsigned>(SI->getValueOperand(), CurrentGeneration));
+      }
+    }
   }
   
   unsigned LiveOutGeneration = CurrentGeneration;

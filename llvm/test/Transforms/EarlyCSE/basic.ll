@@ -87,3 +87,12 @@ define i32 @test5(i32 *%P) {
   ret i32 %Diff
   ; CHECK: ret i32 0
 }
+
+;; Trivial Store->load forwarding
+; CHECK: @test6
+define i32 @test6(i32 *%P) {
+  store i32 42, i32* %P
+  %V1 = load i32* %P
+  ret i32 %V1
+  ; CHECK: ret i32 42
+}
