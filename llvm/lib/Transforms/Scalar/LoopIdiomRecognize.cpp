@@ -32,7 +32,7 @@
 //     for (i) { __real__(*P) = 0;  __imag__(*P) = 0; }
 // this is also "Example 2" from http://blog.regehr.org/archives/320
 //
-// This could regognize common matrix multiplies and dot product idioms and
+// This could recognize common matrix multiplies and dot product idioms and
 // replace them with calls to BLAS (if linked in??).
 //
 //===----------------------------------------------------------------------===//
