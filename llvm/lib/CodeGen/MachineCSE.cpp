@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/RecyclingAllocator.h"
 
 using namespace llvm;
 
@@ -65,10 +66,13 @@ namespace {
 
   private:
     const unsigned LookAheadLimit;
-    typedef ScopedHashTableScope<MachineInstr*, unsigned,
-                                 MachineInstrExpressionTrait> ScopeType;
+    typedef RecyclingAllocator<BumpPtrAllocator,
+        ScopedHashTableVal<MachineInstr*, unsigned> > AllocatorTy;
+    typedef ScopedHashTable<MachineInstr*, unsigned,
+        MachineInstrExpressionTrait, AllocatorTy> ScopedHTType;
+    typedef ScopedHTType::ScopeTy ScopeType;
     DenseMap<MachineBasicBlock*, ScopeType*> ScopeMap;
-    ScopedHashTable<MachineInstr*, unsigned, MachineInstrExpressionTrait> VNT;
+    ScopedHTType VNT;
     SmallVector<MachineInstr*, 64> Exps;
     unsigned CurrVN;
 
