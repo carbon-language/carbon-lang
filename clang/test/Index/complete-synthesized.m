@@ -51,6 +51,6 @@
 // RUN: c-index-test -code-completion-at=%s:34:2 -Xclang -fobjc-nonfragile-abi2 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: NotImplemented:{TypedText _Bool} (50)
 // CHECK-CC3: ObjCIvarDecl:{ResultType float}{TypedText _prop2} (35)
-// CHECK-CC3: ObjCIvarDecl:{ResultType double}{TypedText prop4}
+// CHECK-CC3: ObjCPropertyDecl:{ResultType double}{TypedText prop4}
 // CHECK-CC3-NOT: ObjCPropertyDecl:{ResultType double}{TypedText prop4} (35)
 // CHECK-CC1: restrict

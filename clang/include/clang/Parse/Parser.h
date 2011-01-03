@@ -1262,6 +1262,12 @@ private:
   Decl *ParseFunctionStatementBody(Decl *Decl);
   Decl *ParseFunctionTryBlock(Decl *Decl);
 
+  /// \brief When in code-completion, skip parsing of the function/method body
+  /// unless the body contains the code-completion point.
+  ///
+  /// \returns true if the function body was skipped.
+  bool MaybeSkipFunctionBodyForCodeCompletion();
+
   bool ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                         const ParsedTemplateInfo &TemplateInfo,
                         AccessSpecifier AS);
