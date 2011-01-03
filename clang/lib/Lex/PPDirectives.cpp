@@ -298,7 +298,10 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         DiscardUntilEndOfDirective();
         CurPPLexer->pushConditionalLevel(Tok.getLocation(), /*wasskipping*/true,
                                        /*foundnonskip*/false,
-                                       /*fnddelse*/false);
+                                       /*foundelse*/false);
+
+        if (Callbacks)
+          Callbacks->Endif();
       }
     } else if (Directive[0] == 'e') {
       llvm::StringRef Sub = Directive.substr(1);
@@ -326,6 +329,9 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // Note that we've seen a #else in this conditional.
         CondInfo.FoundElse = true;
 
+        if (Callbacks)
+          Callbacks->Else();
+
         // If the conditional is at the top level, and the #if block wasn't
         // entered, enter the #else block now.
         if (!CondInfo.WasSkipping && !CondInfo.FoundNonSkip) {
@@ -336,6 +342,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         PPConditionalInfo &CondInfo = CurPPLexer->peekConditionalLevel();
 
         bool ShouldEnter;
+        const SourceLocation ConditionalBegin = CurPPLexer->getSourceLocation();
         // If this is in a skipping block or if we're already handled this #if
         // block, don't bother parsing the condition.
         if (CondInfo.WasSkipping || CondInfo.FoundNonSkip) {
@@ -350,9 +357,13 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
           ShouldEnter = EvaluateDirectiveExpression(IfNDefMacro);
           CurPPLexer->LexingRawMode = true;
         }
+        const SourceLocation ConditionalEnd = CurPPLexer->getSourceLocation();
 
         // If this is a #elif with a #else before it, report the error.
         if (CondInfo.FoundElse) Diag(Tok, diag::pp_err_elif_after_else);
+
+        if (Callbacks)
+          Callbacks->Elif(SourceRange(ConditionalBegin, ConditionalEnd));
 
         // If this condition is true, enter it!
         if (ShouldEnter) {
