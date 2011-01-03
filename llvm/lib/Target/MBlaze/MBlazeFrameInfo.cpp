@@ -40,6 +40,35 @@ namespace llvm {
     cl::Hidden);
 }
 
+static void replaceFrameIndexes(MachineFunction &MF, 
+                                SmallVector<std::pair<int,int64_t>, 16> &FR) {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const SmallVector<std::pair<int,int64_t>, 16>::iterator FRB = FR.begin();
+  const SmallVector<std::pair<int,int64_t>, 16>::iterator FRE = FR.end();
+
+  SmallVector<std::pair<int,int64_t>, 16>::iterator FRI = FRB;
+  for (; FRI != FRE; ++FRI) {
+    MFI->RemoveStackObject(FRI->first);
+    int NFI = MFI->CreateFixedObject(4, FRI->second, true);
+
+    for (MachineFunction::iterator MB=MF.begin(), ME=MF.end(); MB!=ME; ++MB) {
+      MachineBasicBlock::iterator MBB = MB->begin();
+      const MachineBasicBlock::iterator MBE = MB->end();
+
+      for (; MBB != MBE; ++MBB) {
+        MachineInstr::mop_iterator MIB = MBB->operands_begin();
+        const MachineInstr::mop_iterator MIE = MBB->operands_end();
+
+        for (MachineInstr::mop_iterator MII = MIB; MII != MIE; ++MII) {
+          if (!MII->isFI() || MII->getIndex() != FRI->first) continue;
+          DEBUG(dbgs() << "FOUND FI#" << MII->getIndex() << "\n");
+          MII->setIndex(NFI);
+        }
+      }
+    }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Stack Frame Processing methods
@@ -64,6 +93,7 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
   MachineRegisterInfo::livein_iterator LIE = MRI.livein_end();
   const SmallVector<int, 16> &LiveInFI = MBlazeFI->getLiveIn();
   SmallVector<MachineInstr*, 16> EraseInstr;
+  SmallVector<std::pair<int,int64_t>, 16> FrameRelocate;
 
   MachineBasicBlock *MBB = MF.getBlockNumbered(0);
   MachineBasicBlock::iterator MIB = MBB->begin();
@@ -87,7 +117,6 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
   //
   // Additionally, if the SWI operation kills the def of REG then we don't
   // need the LWI operation so we can erase it as well.
-#if 1
   for (unsigned i = 0, e = LiveInFI.size(); i < e; ++i) {
     for (MachineBasicBlock::iterator I=MIB; I != MIE; ++I) {
       if (I->getOpcode() != MBlaze::LWI || I->getNumOperands() != 3 ||
@@ -117,7 +146,7 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
         EraseInstr.push_back(SI);
         DEBUG(dbgs() << "SWI for FI#" << FI << " removed\n");
 
-        MBlazeFI->recordLoadArgsFI(FI, StackOffset);
+        FrameRelocate.push_back(std::make_pair(FI,StackOffset));
         DEBUG(dbgs() << "FI#" << FI << " relocated to " << StackOffset << "\n");
 
         StackOffset -= 4;
@@ -126,7 +155,6 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
       }
     }
   }
-#endif
 
   // In this loop we are searching for frame indexes that corrospond to
   // incoming arguments that are in registers. We look for instruction
@@ -139,7 +167,6 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
   // caller has allocated stack space for it already.  Instead of allocating
   // stack space on our frame, we record the correct location in the callers
   // frame.
-#if 1
   for (MachineRegisterInfo::livein_iterator LI = LII; LI != LIE; ++LI) {
     for (MachineBasicBlock::iterator I=MIB; I != MIE; ++I) {
       if (I->definesRegister(LI->first))
@@ -165,21 +192,21 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
         }
 
         StackAdjust += 4;
-        MBlazeFI->recordLoadArgsFI(FI, FILoc);
+        FrameRelocate.push_back(std::make_pair(FI,FILoc));
         DEBUG(dbgs() << "FI#" << FI << " relocated to " << FILoc << "\n");
         break;
       }
     }
   }
-#endif
 
   // Go ahead and erase all of the instructions that we determined were
   // no longer needed.
   for (int i = 0, e = EraseInstr.size(); i < e; ++i)
     MBB->erase(EraseInstr[i]);
 
-  DEBUG(dbgs() << "Final stack adjustment: " << StackAdjust << "\n");
-  MBlazeFI->setStackAdjust(StackAdjust);
+  // Replace all of the frame indexes that we have relocated with new
+  // fixed object frame indexes.
+  replaceFrameIndexes(MF, FrameRelocate);
 }
 
 static void interruptFrameLayout(MachineFunction &MF) {
@@ -281,9 +308,6 @@ static void determineFrameLayout(MachineFunction &MF) {
   // Get the number of bytes to allocate from the FrameInfo
   unsigned FrameSize = MFI->getStackSize();
   DEBUG(dbgs() << "Original Frame Size: " << FrameSize << "\n" );
-
-  FrameSize -= MBlazeFI->getStackAdjust();
-  DEBUG(dbgs() << "Adjusted Frame Size: " << FrameSize << "\n" );
 
   // Get the alignments provided by the target, and the maximum alignment
   // (if any) of the fixed frame objects.

@@ -34,9 +34,6 @@ private:
   /// saved. This is used on Prologue and Epilogue to emit RA save/restore
   int RAStackOffset;
 
-  /// Holds the stack adjustment necessary for each function.
-  int StackAdjust;
-
   /// MBlazeFIHolder - Holds a FrameIndex and it's Stack Pointer Offset
   struct MBlazeFIHolder {
 
@@ -85,9 +82,9 @@ private:
 
 public:
   MBlazeFunctionInfo(MachineFunction& MF)
-  : FPStackOffset(0), RAStackOffset(0), StackAdjust(0), GPHolder(-1,-1),
-    HasLoadArgs(false), HasStoreVarArgs(false), SRetReturnReg(0),
-    GlobalBaseReg(0), VarArgsFrameIndex(0), LiveInFI()
+  : FPStackOffset(0), RAStackOffset(0), GPHolder(-1,-1), HasLoadArgs(false),
+    HasStoreVarArgs(false), SRetReturnReg(0), GlobalBaseReg(0),
+    VarArgsFrameIndex(0), LiveInFI()
   {}
 
   int getFPStackOffset() const { return FPStackOffset; }
@@ -95,9 +92,6 @@ public:
 
   int getRAStackOffset() const { return RAStackOffset; }
   void setRAStackOffset(int Off) { RAStackOffset = Off; }
-
-  int getStackAdjust() const { return StackAdjust; }
-  void setStackAdjust(int Adj) { StackAdjust = Adj; }
 
   int getGPStackOffset() const { return GPHolder.SPOffset; }
   int getGPFI() const { return GPHolder.FI; }
@@ -125,6 +119,7 @@ public:
     if (!HasLoadArgs) HasLoadArgs=true;
     FnLoadArgs.push_back(MBlazeFIHolder(FI, SPOffset));
   }
+
   void recordStoreVarArgsFI(int FI, int SPOffset) {
     if (!HasStoreVarArgs) HasStoreVarArgs=true;
     FnStoreVarArgs.push_back(MBlazeFIHolder(FI, SPOffset));
@@ -135,6 +130,7 @@ public:
     for (unsigned i = 0, e = FnLoadArgs.size(); i != e; ++i)
       MFI->setObjectOffset(FnLoadArgs[i].FI, FnLoadArgs[i].SPOffset);
   }
+
   void adjustStoreVarArgsFI(MachineFrameInfo *MFI) const {
     if (!hasStoreVarArgs()) return;
     for (unsigned i = 0, e = FnStoreVarArgs.size(); i != e; ++i)

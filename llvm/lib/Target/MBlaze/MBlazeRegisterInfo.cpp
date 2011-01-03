@@ -296,11 +296,6 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   // and adjust SPOffsets considering the final stack size.
   int Offset = (spOffset < 0) ? (stackSize - spOffset) : spOffset;
   Offset += MI.getOperand(oi).getImm();
-  if (!MFI->isFixedObjectIndex(FrameIndex) && 
-      !MFI->isSpillSlotObjectIndex(FrameIndex) &&
-      !MBlazeFI->isLiveIn(FrameIndex) && 
-      spOffset >= 0)
-    Offset -= MBlazeFI->getStackAdjust();
 
   DEBUG(dbgs() << "Offset     : " << Offset << "\n" << "<--------->\n");
 
