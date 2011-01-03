@@ -28,7 +28,8 @@ using namespace llvm;
 
 STATISTIC(NumSimplify, "Number of instructions simplified or DCE'd");
 STATISTIC(NumCSE,      "Number of instructions CSE'd");
-STATISTIC(NumCSEMem,   "Number of load and call instructions CSE'd");
+STATISTIC(NumCSELoad,  "Number of load instructions CSE'd");
+STATISTIC(NumCSECall,  "Number of call instructions CSE'd");
 
 static unsigned getHash(const void *V) {
   return DenseMapInfo<const void*>::getHashValue(V);
@@ -124,16 +125,16 @@ bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
 }
 
 //===----------------------------------------------------------------------===//
-// MemoryValue 
+// CallValue 
 //===----------------------------------------------------------------------===//
 
 namespace {
-  /// MemoryValue - Instances of this struct represent available load and call
-  /// values in the scoped hash table.
-  struct MemoryValue {
+  /// CallValue - Instances of this struct represent available call values in
+  /// the scoped hash table.
+  struct CallValue {
     Instruction *Inst;
     
-    MemoryValue(Instruction *I) : Inst(I) {
+    CallValue(Instruction *I) : Inst(I) {
       assert((isSentinel() || canHandle(I)) && "Inst can't be handled!");
     }
     
@@ -143,8 +144,6 @@ namespace {
     }
     
     static bool canHandle(Instruction *Inst) {
-      if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
-        return !LI->isVolatile();
       if (CallInst *CI = dyn_cast<CallInst>(Inst))
         return CI->onlyReadsMemory();
       return false;
@@ -153,23 +152,23 @@ namespace {
 }
 
 namespace llvm {
-  // MemoryValue is POD.
-  template<> struct isPodLike<MemoryValue> {
+  // CallValue is POD.
+  template<> struct isPodLike<CallValue> {
     static const bool value = true;
   };
   
-  template<> struct DenseMapInfo<MemoryValue> {
-    static inline MemoryValue getEmptyKey() {
+  template<> struct DenseMapInfo<CallValue> {
+    static inline CallValue getEmptyKey() {
       return DenseMapInfo<Instruction*>::getEmptyKey();
     }
-    static inline MemoryValue getTombstoneKey() {
+    static inline CallValue getTombstoneKey() {
       return DenseMapInfo<Instruction*>::getTombstoneKey();
     }
-    static unsigned getHashValue(MemoryValue Val);
-    static bool isEqual(MemoryValue LHS, MemoryValue RHS);
+    static unsigned getHashValue(CallValue Val);
+    static bool isEqual(CallValue LHS, CallValue RHS);
   };
 }
-unsigned DenseMapInfo<MemoryValue>::getHashValue(MemoryValue Val) {
+unsigned DenseMapInfo<CallValue>::getHashValue(CallValue Val) {
   Instruction *Inst = Val.Inst;
   // Hash in all of the operands as pointers.
   unsigned Res = 0;
@@ -179,13 +178,10 @@ unsigned DenseMapInfo<MemoryValue>::getHashValue(MemoryValue Val) {
   return (Res << 1) ^ Inst->getOpcode();
 }
 
-bool DenseMapInfo<MemoryValue>::isEqual(MemoryValue LHS, MemoryValue RHS) {
+bool DenseMapInfo<CallValue>::isEqual(CallValue LHS, CallValue RHS) {
   Instruction *LHSI = LHS.Inst, *RHSI = RHS.Inst;
-  
   if (LHS.isSentinel() || RHS.isSentinel())
     return LHSI == RHSI;
-  
-  if (LHSI->getOpcode() != RHSI->getOpcode()) return false;
   return LHSI->isIdenticalTo(RHSI);
 }
 
@@ -218,16 +214,20 @@ public:
   /// their lookup.
   ScopedHTType *AvailableValues;
   
-  typedef ScopedHashTable<MemoryValue, std::pair<Value*, unsigned> > MemHTType;
-  /// AvailableMemValues - This scoped hash table contains the current values of
-  /// loads and other read-only memory values.  This allows us to get efficient
-  /// access to dominating loads we we find a fully redundant load.  In addition
-  /// to the most recent load, we keep track of a generation count of the read,
-  /// which is compared against the current generation count.  The current
-  /// generation count is  incremented after every possibly writing memory
-  /// operation, which ensures that we only CSE loads with other loads that have
-  /// no intervening store.
-  MemHTType *AvailableMemValues;
+  /// AvailableLoads - This scoped hash table contains the current values
+  /// of loads.  This allows us to get efficient access to dominating loads when
+  /// we have a fully redundant load.  In addition to the most recent load, we
+  /// keep track of a generation count of the read, which is compared against
+  /// the current generation count.  The current generation count is
+  /// incremented after every possibly writing memory operation, which ensures
+  /// that we only CSE loads with other loads that have no intervening store.
+  typedef ScopedHashTable<Value*, std::pair<Value*, unsigned> > LoadHTType;
+  LoadHTType *AvailableLoads;
+  
+  /// AvailableCalls - This scoped hash table contains the current values
+  /// of read-only call values.  It uses the same generation count as loads.
+  typedef ScopedHashTable<CallValue, std::pair<Value*, unsigned> > CallHTType;
+  CallHTType *AvailableCalls;
   
   /// CurrentGeneration - This is the current generation of the memory value.
   unsigned CurrentGeneration;
@@ -268,9 +268,13 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
   // off all the values we install.
   ScopedHTType::ScopeTy Scope(*AvailableValues);
   
-  // Define a scope for the memory values so that anything we add will get
+  // Define a scope for the load values so that anything we add will get
   // popped when we recurse back up to our parent domtree node.
-  MemHTType::ScopeTy MemScope(*AvailableMemValues);
+  LoadHTType::ScopeTy LoadScope(*AvailableLoads);
+  
+  // Define a scope for the call values so that anything we add will get
+  // popped when we recurse back up to our parent domtree node.
+  CallHTType::ScopeTy CallScope(*AvailableCalls);
   
   BasicBlock *BB = Node->getBlock();
   
@@ -327,23 +331,48 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       continue;
     }
     
-    // If this is a read-only memory value, process it.
-    if (MemoryValue::canHandle(Inst)) {
-      // If we have an available version of this value, and if it is the right
+    // If this is a non-volatile load, process it.
+    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+      // Ignore volatile loads.
+      if (LI->isVolatile()) continue;
+      
+      // If we have an available version of this load, and if it is the right
       // generation, replace this instruction.
-      std::pair<Value*, unsigned> InVal = AvailableMemValues->lookup(Inst);
+      std::pair<Value*, unsigned> InVal =
+        AvailableLoads->lookup(Inst->getOperand(0));
       if (InVal.first != 0 && InVal.second == CurrentGeneration) {
-        DEBUG(dbgs() << "EarlyCSE CSE MEM: " << *Inst << "  to: "
-                     << *InVal.first << '\n');
+        DEBUG(dbgs() << "EarlyCSE CSE LOAD: " << *Inst << "  to: "
+              << *InVal.first << '\n');
         if (!Inst->use_empty()) Inst->replaceAllUsesWith(InVal.first);
         Inst->eraseFromParent();
         Changed = true;
-        ++NumCSEMem;
+        ++NumCSELoad;
         continue;
       }
       
       // Otherwise, remember that we have this instruction.
-      AvailableMemValues->insert(Inst,
+      AvailableLoads->insert(Inst->getOperand(0),
+                          std::pair<Value*, unsigned>(Inst, CurrentGeneration));
+      continue;
+    }
+    
+    // If this is a read-only call, process it.
+    if (CallValue::canHandle(Inst)) {
+      // If we have an available version of this call, and if it is the right
+      // generation, replace this instruction.
+      std::pair<Value*, unsigned> InVal = AvailableCalls->lookup(Inst);
+      if (InVal.first != 0 && InVal.second == CurrentGeneration) {
+        DEBUG(dbgs() << "EarlyCSE CSE CALL: " << *Inst << "  to: "
+                     << *InVal.first << '\n');
+        if (!Inst->use_empty()) Inst->replaceAllUsesWith(InVal.first);
+        Inst->eraseFromParent();
+        Changed = true;
+        ++NumCSECall;
+        continue;
+      }
+      
+      // Otherwise, remember that we have this instruction.
+      AvailableCalls->insert(Inst,
                          std::pair<Value*, unsigned>(Inst, CurrentGeneration));
       continue;
     }
@@ -368,11 +397,14 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 bool EarlyCSE::runOnFunction(Function &F) {
   TD = getAnalysisIfAvailable<TargetData>();
   DT = &getAnalysis<DominatorTree>();
+  
+  // Tables that the pass uses when walking the domtree.
   ScopedHTType AVTable;
   AvailableValues = &AVTable;
-
-  MemHTType MemTable;
-  AvailableMemValues = &MemTable;
+  LoadHTType LoadTable;
+  AvailableLoads = &LoadTable;
+  CallHTType CallTable;
+  AvailableCalls = &CallTable;
   
   CurrentGeneration = 0;
   return processNode(DT->getRootNode());
