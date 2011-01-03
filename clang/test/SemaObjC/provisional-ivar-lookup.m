@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -fobjc-nonfragile-abi2 -verify %s
+// RUN: %clang_cc1  -fsyntax-only -fobjc-default-synthesize-properties -fobjc-nonfragile-abi2 -verify %s
 
 // rdar:// 8565343
 @interface Foo  {

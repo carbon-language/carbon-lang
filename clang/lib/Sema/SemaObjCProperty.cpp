@@ -559,7 +559,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       return 0;
     }
     IC->addPropertyImplementation(PIDecl);
-    if (getLangOptions().ObjCNonFragileABI2) {
+    if (getLangOptions().ObjCDefaultSynthProperties &&
+        getLangOptions().ObjCNonFragileABI2) {
       // Diagnose if an ivar was lazily synthesdized due to a previous
       // use and if 1) property is @dynamic or 2) property is synthesized
       // but it requires an ivar of different name.

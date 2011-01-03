@@ -1470,7 +1470,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       Expr *Ex = E.takeAs<Expr>();
       if (Ex) return Owned(Ex);
       // Synthesize ivars lazily
-      if (getLangOptions().ObjCNonFragileABI2) {
+      if (getLangOptions().ObjCDefaultSynthProperties &&
+          getLangOptions().ObjCNonFragileABI2) {
         if (SynthesizeProvisionalIvar(*this, R, II, NameLoc)) {
           if (const ObjCPropertyDecl *Property = 
                 canSynthesizeProvisionalIvar(II)) {
@@ -1527,7 +1528,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
 
   if (VarDecl *Var = R.getAsSingle<VarDecl>()) {
     if (getLangOptions().ObjCNonFragileABI && IvarLookupFollowUp &&
-        !getLangOptions().ObjCNonFragileABI2 &&
+        !(getLangOptions().ObjCDefaultSynthProperties && 
+          getLangOptions().ObjCNonFragileABI2) &&
         Var->isFileVarDecl()) {
       ObjCPropertyDecl *Property = canSynthesizeProvisionalIvar(II);
       if (Property) {
