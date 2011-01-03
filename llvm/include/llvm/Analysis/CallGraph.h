@@ -138,6 +138,13 @@ public:
   /// not already exist.
   CallGraphNode *getOrInsertFunction(const Function *F);
 
+  /// spliceFunction - Replace the function represented by this node by another.
+  /// This does not rescan the body of the function, so it is suitable when
+  /// splicing the body of one function to another while also updating all
+  /// callers from the old function to the new.
+  ///
+  void spliceFunction(const Function *From, const Function *To);
+
   //===---------------------------------------------------------------------
   // Pass infrastructure interface glue code.
   //
@@ -163,8 +170,10 @@ protected:
 // CallGraphNode class definition.
 //
 class CallGraphNode {
-  AssertingVH<Function> F;
+  friend class CallGraph;
   
+  AssertingVH<Function> F;
+
   // CallRecord - This is a pair of the calling instruction (a call or invoke)
   // and the callgraph node being called.
 public:
