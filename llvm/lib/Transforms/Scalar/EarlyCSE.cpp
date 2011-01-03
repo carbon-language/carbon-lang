@@ -221,7 +221,10 @@ public:
   /// the current generation count.  The current generation count is
   /// incremented after every possibly writing memory operation, which ensures
   /// that we only CSE loads with other loads that have no intervening store.
-  typedef ScopedHashTable<Value*, std::pair<Value*, unsigned> > LoadHTType;
+  typedef RecyclingAllocator<BumpPtrAllocator,
+    ScopedHashTableVal<Value*, std::pair<Value*, unsigned> > > LoadMapAllocator;
+  typedef ScopedHashTable<Value*, std::pair<Value*, unsigned>,
+                          DenseMapInfo<Value*>, LoadMapAllocator> LoadHTType;
   LoadHTType *AvailableLoads;
   
   /// AvailableCalls - This scoped hash table contains the current values
