@@ -129,9 +129,9 @@ namespace llvm {
     
     // Start of function pass.
     PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
+    PM->add(createEarlyCSEPass());              // Catch trivial redundancies
     if (SimplifyLibCalls)
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
-    PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
     PM->add(createJumpThreadingPass());         // Thread jumps.
     PM->add(createCorrelatedValuePropagationPass()); // Propagate conditionals
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
