@@ -75,3 +75,15 @@ F:
   ; CHECK: F:
   ; CHECK: ret i32 %Diff
 }
+
+declare i32 @func(i32 *%P) readonly
+
+;; Simple call CSE'ing.
+; CHECK: @test5
+define i32 @test5(i32 *%P) {
+  %V1 = call i32 @func(i32* %P)
+  %V2 = call i32 @func(i32* %P)
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK: ret i32 0
+}
