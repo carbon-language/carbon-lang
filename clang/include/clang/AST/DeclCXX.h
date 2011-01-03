@@ -168,6 +168,10 @@ class CXXBaseSpecifier {
   /// specifier (if present).
   SourceRange Range;
 
+  /// \brief The source location of the ellipsis, if this is a pack
+  /// expansion.
+  SourceLocation EllipsisLoc;
+  
   /// Virtual - Whether this is a virtual base class or not.
   bool Virtual : 1;
 
@@ -192,8 +196,9 @@ public:
   CXXBaseSpecifier() { }
 
   CXXBaseSpecifier(SourceRange R, bool V, bool BC, AccessSpecifier A,
-                   TypeSourceInfo *TInfo)
-    : Range(R), Virtual(V), BaseOfClass(BC), Access(A), BaseTypeInfo(TInfo) { }
+                   TypeSourceInfo *TInfo, SourceLocation EllipsisLoc)
+    : Range(R), EllipsisLoc(EllipsisLoc), Virtual(V), BaseOfClass(BC), 
+      Access(A), BaseTypeInfo(TInfo) { }
 
   /// getSourceRange - Retrieves the source range that contains the
   /// entire base specifier.
@@ -206,6 +211,14 @@ public:
   /// \brief Determine whether this base class is a base of a class declared
   /// with the 'class' keyword (vs. one declared with the 'struct' keyword).
   bool isBaseOfClass() const { return BaseOfClass; }
+  
+  /// \brief Determine whether this base specifier is a pack expansion.
+  bool isPackExpansion() const { return EllipsisLoc.isValid(); }
+  
+  /// \brief For a pack expansion, determine the location of the ellipsis.
+  SourceLocation getEllipsisLoc() const {
+    return EllipsisLoc;
+  }
   
   /// getAccessSpecifier - Returns the access specifier for this base
   /// specifier. This is the actual base specifier as used for

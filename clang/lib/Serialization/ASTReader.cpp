@@ -4292,7 +4292,9 @@ ASTReader::ReadCXXBaseSpecifier(PerFileData &F,
   AccessSpecifier AS = static_cast<AccessSpecifier>(Record[Idx++]);
   TypeSourceInfo *TInfo = GetTypeSourceInfo(F, Record, Idx);
   SourceRange Range = ReadSourceRange(F, Record, Idx);
-  return CXXBaseSpecifier(Range, isVirtual, isBaseOfClass, AS, TInfo);
+  SourceLocation EllipsisLoc = ReadSourceLocation(F, Record, Idx);
+  return CXXBaseSpecifier(Range, isVirtual, isBaseOfClass, AS, TInfo, 
+                          EllipsisLoc);
 }
 
 std::pair<CXXBaseOrMemberInitializer **, unsigned>

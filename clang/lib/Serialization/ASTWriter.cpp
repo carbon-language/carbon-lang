@@ -3231,6 +3231,9 @@ void ASTWriter::AddCXXBaseSpecifier(const CXXBaseSpecifier &Base,
   Record.push_back(Base.getAccessSpecifierAsWritten());
   AddTypeSourceInfo(Base.getTypeSourceInfo(), Record);
   AddSourceRange(Base.getSourceRange(), Record);
+  AddSourceLocation(Base.isPackExpansion()? Base.getEllipsisLoc() 
+                                          : SourceLocation(),
+                    Record);
 }
 
 void ASTWriter::FlushCXXBaseSpecifiers() {

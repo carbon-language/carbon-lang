@@ -34,6 +34,24 @@ void initializer_list_expansion() {
 template void initializer_list_expansion<1, 2, 3, 4, 5>();
 template void initializer_list_expansion<1, 2, 3, 4, 5, 6>(); // expected-note{{in instantiation of function template specialization 'initializer_list_expansion<1, 2, 3, 4, 5, 6>' requested here}}
 
+// In a base-specifier-list (Clause 10); the pattern is a base-specifier.
+template<typename ...Mixins>
+struct HasMixins : public Mixins... { };
+
+struct A { };
+struct B { };
+struct C { };
+struct D { };
+
+A *checkA = new HasMixins<A, B, C, D>;
+B *checkB = new HasMixins<A, B, C, D>;
+D *checkD = new HasMixins<A, B, C, D>;
+C *checkC = new HasMixins<A, B, D>; // expected-error{{cannot initialize a variable of type 'C *' with an rvalue of type 'HasMixins<A, B, D> *'}}
+HasMixins<> *checkNone = new HasMixins<>;
+
+template<typename Mixins>
+struct BrokenMixins : public Mixins... { }; // expected-error{{pack expansion does not contain any unexpanded parameter packs}}
+
 // In a template-argument-list (14.3); the pattern is a template-argument.
 template<typename ...Types>
 struct tuple_of_refs {

@@ -464,7 +464,8 @@ CXXBaseSpecifier *
 Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
                          SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
-                         TypeSourceInfo *TInfo) {
+                         TypeSourceInfo *TInfo,
+                         SourceLocation EllipsisLoc) {
   QualType BaseType = TInfo->getType();
 
   // C++ [class.union]p1:
@@ -475,10 +476,17 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     return 0;
   }
 
+  if (EllipsisLoc.isValid() && 
+      !TInfo->getType()->containsUnexpandedParameterPack()) {
+    Diag(EllipsisLoc, diag::err_pack_expansion_without_parameter_packs)
+      << TInfo->getTypeLoc().getSourceRange();
+    EllipsisLoc = SourceLocation();
+  }
+  
   if (BaseType->isDependentType())
     return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
                                           Class->getTagKind() == TTK_Class,
-                                          Access, TInfo);
+                                          Access, TInfo, EllipsisLoc);
 
   SourceLocation BaseLoc = TInfo->getTypeLoc().getBeginLoc();
 
@@ -527,7 +535,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   // Create the base specifier.
   return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual,
                                         Class->getTagKind() == TTK_Class,
-                                        Access, TInfo);
+                                        Access, TInfo, EllipsisLoc);
 }
 
 /// ActOnBaseSpecifier - Parsed a base specifier. A base specifier is
@@ -538,7 +546,8 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
 BaseResult
 Sema::ActOnBaseSpecifier(Decl *classdecl, SourceRange SpecifierRange,
                          bool Virtual, AccessSpecifier Access,
-                         ParsedType basetype, SourceLocation BaseLoc) {
+                         ParsedType basetype, SourceLocation BaseLoc,
+                         SourceLocation EllipsisLoc) {
   if (!classdecl)
     return true;
 
@@ -550,12 +559,14 @@ Sema::ActOnBaseSpecifier(Decl *classdecl, SourceRange SpecifierRange,
   TypeSourceInfo *TInfo = 0;
   GetTypeFromParser(basetype, &TInfo);
 
-  if (DiagnoseUnexpandedParameterPack(SpecifierRange.getBegin(), TInfo, 
+  if (EllipsisLoc.isInvalid() &&
+      DiagnoseUnexpandedParameterPack(SpecifierRange.getBegin(), TInfo, 
                                       UPPC_BaseType))
     return true;
-
+  
   if (CXXBaseSpecifier *BaseSpec = CheckBaseSpecifier(Class, SpecifierRange,
-                                                      Virtual, Access, TInfo))
+                                                      Virtual, Access, TInfo,
+                                                      EllipsisLoc))
     return BaseSpec;
 
   return true;

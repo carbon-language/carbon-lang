@@ -1196,13 +1196,20 @@ Parser::BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
   if (BaseType.isInvalid())
     return true;
 
+  // Parse the optional ellipsis (for a pack expansion). The ellipsis is 
+  // actually part of the base-specifier-list grammar productions, but we
+  // parse it here for convenience.
+  SourceLocation EllipsisLoc;
+  if (Tok.is(tok::ellipsis))
+    EllipsisLoc = ConsumeToken();
+  
   // Find the complete source range for the base-specifier.
   SourceRange Range(StartLoc, EndLocation);
 
   // Notify semantic analysis that we have parsed a complete
   // base-specifier.
   return Actions.ActOnBaseSpecifier(ClassDecl, Range, IsVirtual, Access,
-                                    BaseType.get(), BaseLoc);
+                                    BaseType.get(), BaseLoc, EllipsisLoc);
 }
 
 /// getAccessSpecifierIfPresent - Determine whether the next token is

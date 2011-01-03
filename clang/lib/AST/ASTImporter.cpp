@@ -1709,6 +1709,10 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To) {
       QualType T = Importer.Import(Base1->getType());
       if (T.isNull())
         return true;
+
+      SourceLocation EllipsisLoc;
+      if (Base1->isPackExpansion())
+        EllipsisLoc = Importer.Import(Base1->getEllipsisLoc());
       
       Bases.push_back(
                     new (Importer.getToContext()) 
@@ -1716,7 +1720,8 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To) {
                                        Base1->isVirtual(),
                                        Base1->isBaseOfClass(),
                                        Base1->getAccessSpecifierAsWritten(),
-                                       Importer.Import(Base1->getTypeSourceInfo())));
+                                   Importer.Import(Base1->getTypeSourceInfo()),
+                                       EllipsisLoc));
     }
     if (!Bases.empty())
       ToCXX->setBases(Bases.data(), Bases.size());

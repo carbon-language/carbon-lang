@@ -294,6 +294,11 @@ void Sema::collectUnexpandedParameterPacks(QualType T,
   CollectUnexpandedParameterPacksVisitor(Unexpanded).TraverseType(T);  
 }  
 
+void Sema::collectUnexpandedParameterPacks(TypeLoc TL,
+                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded) {
+  CollectUnexpandedParameterPacksVisitor(Unexpanded).TraverseTypeLoc(TL);  
+}  
+
 ParsedTemplateArgument 
 Sema::ActOnPackExpansion(const ParsedTemplateArgument &Arg,
                          SourceLocation EllipsisLoc) {

@@ -127,6 +127,7 @@ namespace clang {
   class TemplateTemplateParmDecl;
   class Token;
   class TypedefDecl;
+  class TypeLoc;
   class UnqualifiedId;
   class UnresolvedLookupExpr;
   class UnresolvedMemberExpr;
@@ -2653,13 +2654,15 @@ public:
   CXXBaseSpecifier *CheckBaseSpecifier(CXXRecordDecl *Class,
                                        SourceRange SpecifierRange,
                                        bool Virtual, AccessSpecifier Access,
-                                       TypeSourceInfo *TInfo);
+                                       TypeSourceInfo *TInfo,
+                                       SourceLocation EllipsisLoc);
 
   BaseResult ActOnBaseSpecifier(Decl *classdecl,
                                 SourceRange SpecifierRange,
                                 bool Virtual, AccessSpecifier Access,
-                                ParsedType basetype, SourceLocation
-                                BaseLoc);
+                                ParsedType basetype, 
+                                SourceLocation BaseLoc,
+                                SourceLocation EllipsisLoc);
 
   bool AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
                             unsigned NumBases);
@@ -3273,9 +3276,17 @@ public:
   /// \brief Collect the set of unexpanded parameter packs within the given
   /// type.  
   ///
-  /// \param Arg The template argument that will be traversed to find
+  /// \param T The type that will be traversed to find
   /// unexpanded parameter packs.
   void collectUnexpandedParameterPacks(QualType T,
+                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
+
+  /// \brief Collect the set of unexpanded parameter packs within the given
+  /// type.  
+  ///
+  /// \param TL The type that will be traversed to find
+  /// unexpanded parameter packs.
+  void collectUnexpandedParameterPacks(TypeLoc TL,
                    llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
 
   /// \brief Invoked when parsing a template argument followed by an
