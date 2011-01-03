@@ -103,6 +103,8 @@ static bool isObjectSmallerThan(const Value *V, uint64_t Size,
                                 const TargetData &TD) {
   const Type *AccessTy;
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    if (!GV->hasDefinitiveInitializer())
+      return false;
     AccessTy = GV->getType()->getElementType();
   } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
     if (!AI->isArrayAllocation())
