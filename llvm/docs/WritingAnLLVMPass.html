@@ -559,11 +559,9 @@ href="#BasicBlockPass">BasicBlockPass</a></tt>, you should derive from
 
 <ol>
 
-<li>... <em>not allowed</em> to modify any <tt>Function</tt>s that are not in
-the current SCC.</li>
-
-<li>... <em>not allowed</em> to inspect any <tt>Function</tt>s other than those
-in the current SCC and the direct callers and direct callees of the SCC.</li>
+<li>... <em>not allowed</em> to inspect or modify any <tt>Function</tt>s other
+than those in the current SCC and the direct callers and direct callees of the
+SCC.</li>
 
 <li>... <em>required</em> to preserve the current CallGraph object, updating it
 to reflect any changes made to the program.</li>
