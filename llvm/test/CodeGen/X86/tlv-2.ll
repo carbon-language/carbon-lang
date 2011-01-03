@@ -26,7 +26,7 @@ entry:
   ; CHECK: movq    _d@TLVP(%rip), %rdi
   ; CHECK: callq   *(%rdi)
   ; CHECK: movl    $4, (%rax)
-  ; CHECK: addq    $8, %rsp
+  ; CHECK: popq
   
   ret void
 }

@@ -3,7 +3,7 @@
 ; MachineLICM should be able to hoist the sF reference out of the loop.
 
 ; CHECK: pushl %esi
-; CHECK: subl  $4, %esp
+; CHECK: pushl
 ; CHECK: movl  $176, %esi
 ; CHECK: addl  L___sF$non_lazy_ptr, %esi
 ; CHECK: .align  4, 0x90

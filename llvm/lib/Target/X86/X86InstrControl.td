@@ -26,7 +26,7 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
                     [(X86retflag timm:$amt)]>;
   def RETIW  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "retw\t$amt",
-                    [(X86retflag timm:$amt)]>, OpSize;
+                    []>, OpSize;
   def LRETL  : I   <0xCB, RawFrm, (outs), (ins),
                     "lretl", []>;
   def LRETQ  : RI  <0xCB, RawFrm, (outs), (ins),

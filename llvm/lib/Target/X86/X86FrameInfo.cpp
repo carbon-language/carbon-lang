@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/SmallSet.h"
 
 using namespace llvm;
 
@@ -75,12 +76,70 @@ static unsigned getADDriOpcode(unsigned is64Bit, int64_t Imm) {
   }
 }
 
+/// findDeadCallerSavedReg - Return a caller-saved register that isn't live
+/// when it reaches the "return" instruction. We can then pop a stack object
+/// to this register without worry about clobbering it.
+static unsigned findDeadCallerSavedReg(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator &MBBI,
+                                       const TargetRegisterInfo &TRI,
+                                       bool Is64Bit) {
+  const MachineFunction *MF = MBB.getParent();
+  const Function *F = MF->getFunction();
+  if (!F || MF->getMMI().callsEHReturn())
+    return 0;
+
+  static const unsigned CallerSavedRegs32Bit[] = {
+    X86::EAX, X86::EDX, X86::ECX
+  };
+
+  static const unsigned CallerSavedRegs64Bit[] = {
+    X86::RAX, X86::RDX, X86::RCX, X86::RSI, X86::RDI,
+    X86::R8,  X86::R9,  X86::R10, X86::R11
+  };
+
+  unsigned Opc = MBBI->getOpcode();
+  switch (Opc) {
+  default: return 0;
+  case X86::RET:
+  case X86::RETI:
+  case X86::TCRETURNdi:
+  case X86::TCRETURNri:
+  case X86::TCRETURNmi:
+  case X86::TCRETURNdi64:
+  case X86::TCRETURNri64:
+  case X86::TCRETURNmi64:
+  case X86::EH_RETURN:
+  case X86::EH_RETURN64: {
+    SmallSet<unsigned, 8> Uses;
+    for (unsigned i = 0, e = MBBI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MBBI->getOperand(i);
+      if (!MO.isReg() || MO.isDef())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (!Reg)
+        continue;
+      for (const unsigned *AsI = TRI.getOverlaps(Reg); *AsI; ++AsI)
+        Uses.insert(*AsI);
+    }
+
+    const unsigned *CS = Is64Bit ? CallerSavedRegs64Bit : CallerSavedRegs32Bit;
+    for (; *CS; ++CS)
+      if (!Uses.count(*CS))
+        return *CS;
+  }
+  }
+
+  return 0;
+}
+
+
 /// emitSPUpdate - Emit a series of instructions to increment / decrement the
 /// stack pointer by a constant value.
 static
 void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-                  unsigned StackPtr, int64_t NumBytes, bool Is64Bit,
-                  const TargetInstrInfo &TII) {
+                  unsigned StackPtr, int64_t NumBytes,
+                  bool Is64Bit, const TargetInstrInfo &TII,
+                  const TargetRegisterInfo &TRI) {
   bool isSub = NumBytes < 0;
   uint64_t Offset = isSub ? -NumBytes : NumBytes;
   unsigned Opc = isSub ?
@@ -91,10 +150,26 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
 
   while (Offset) {
     uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
+    if (ThisVal == (Is64Bit ? 8 : 4)) {
+      // Use push / pop instead.
+      unsigned Reg = isSub
+        ? (Is64Bit ? X86::RAX : X86::EAX)
+        : findDeadCallerSavedReg(MBB, MBBI, TRI, Is64Bit);
+      if (Reg) {
+        Opc = isSub
+          ? (Is64Bit ? X86::PUSH64r : X86::PUSH32r)
+          : (Is64Bit ? X86::POP64r  : X86::POP32r);
+        BuildMI(MBB, MBBI, DL, TII.get(Opc))
+          .addReg(Reg, getDefRegState(!isSub) | getUndefRegState(isSub));
+        Offset -= ThisVal;
+        continue;
+      }
+    }
+
     MachineInstr *MI =
       BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr)
-        .addReg(StackPtr)
-        .addImm(ThisVal);
+      .addReg(StackPtr)
+      .addImm(ThisVal);
     MI->getOperand(3).setIsDead(); // The EFLAGS implicit def is dead.
     Offset -= ThisVal;
   }
@@ -531,9 +606,11 @@ void X86FrameInfo::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, DL, TII.get(X86::WINCALL64pcrel32))
       .addExternalSymbol("__chkstk")
       .addReg(StackPtr, RegState::Define | RegState::Implicit);
-    emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
+    emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
+                 TII, *RegInfo);
   } else if (NumBytes)
-    emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
+    emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
+                 TII, *RegInfo);
 
   if ((NumBytes || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
@@ -651,7 +728,7 @@ void X86FrameInfo::emitEpilogue(MachineFunction &MF,
     // We cannot use LEA here, because stack pointer was realigned. We need to
     // deallocate local frame back.
     if (CSSize) {
-      emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
+      emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII, *RegInfo);
       MBBI = prior(LastCSPop);
     }
 
@@ -672,7 +749,7 @@ void X86FrameInfo::emitEpilogue(MachineFunction &MF,
     }
   } else if (NumBytes) {
     // Adjust stack pointer back: ESP += numbytes.
-    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
+    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII, *RegInfo);
   }
 
   // We're returning from function via eh_return.
@@ -707,7 +784,7 @@ void X86FrameInfo::emitEpilogue(MachineFunction &MF,
     if (Offset) {
       // Check for possible merge with preceeding ADD instruction.
       Offset += mergeSPUpdates(MBB, MBBI, StackPtr, true);
-      emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, TII);
+      emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, TII, *RegInfo);
     }
 
     // Jump to label or value in register.
@@ -751,7 +828,7 @@ void X86FrameInfo::emitEpilogue(MachineFunction &MF,
 
     // Check for possible merge with preceeding ADD instruction.
     delta += mergeSPUpdates(MBB, MBBI, StackPtr, true);
-    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, TII);
+    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, TII, *RegInfo);
   }
 }
 

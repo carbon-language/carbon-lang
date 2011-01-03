@@ -273,7 +273,7 @@ declare fastcc %union.tree_node* @default_conversion(%union.tree_node*) nounwind
 ; CHECK: foo:
 ; CHECK:        callq func
 ; CHECK-NEXT: .LBB4_2:
-; CHECK-NEXT:   addq $8, %rsp
+; CHECK-NEXT:   popq
 ; CHECK-NEXT:   ret
 
 define void @foo(i1* %V) nounwind {

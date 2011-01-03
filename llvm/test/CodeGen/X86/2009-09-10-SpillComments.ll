@@ -2,9 +2,9 @@
 
 ; This test shouldn't require spills.
 
-; CHECK: subq  $8, %rsp
+; CHECK: pushq
 ; CHECK-NOT: $rsp
-; CHECK: addq  $8, %rsp
+; CHECK: popq
 
 	%struct..0anon = type { i32 }
 	%struct.rtvec_def = type { i32, [1 x %struct..0anon] }
