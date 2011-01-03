@@ -21,6 +21,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -132,7 +133,11 @@ class EarlyCSE : public FunctionPass {
 public:
   const TargetData *TD;
   DominatorTree *DT;
-  ScopedHashTable<InstValue, Instruction*> *AvailableValues;
+  typedef RecyclingAllocator<BumpPtrAllocator,
+                      ScopedHashTableVal<InstValue, Instruction*> > AllocatorTy;
+  typedef ScopedHashTable<InstValue, Instruction*, DenseMapInfo<InstValue>,
+                          AllocatorTy> ScopedHTType;
+  ScopedHTType *AvailableValues;
   
   static char ID;
   explicit EarlyCSE()
@@ -165,11 +170,10 @@ INITIALIZE_PASS_BEGIN(EarlyCSE, "early-cse", "Early CSE", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_END(EarlyCSE, "early-cse", "Early CSE", false, false)
 
-// FIXME: Should bump pointer allocate entries in scoped hash table.
-
 bool EarlyCSE::processNode(DomTreeNode *Node) {
   // Define a scope in the scoped hash table.
-  ScopedHashTableScope<InstValue, Instruction*> Scope(*AvailableValues);
+  ScopedHashTableScope<InstValue, Instruction*, DenseMapInfo<InstValue>,
+                       AllocatorTy> Scope(*AvailableValues);
   
   BasicBlock *BB = Node->getBlock();
   
@@ -228,7 +232,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 bool EarlyCSE::runOnFunction(Function &F) {
   TD = getAnalysisIfAvailable<TargetData>();
   DT = &getAnalysis<DominatorTree>();
-  ScopedHashTable<InstValue, Instruction*> AVTable;
+  ScopedHTType AVTable;
   AvailableValues = &AVTable;
   return processNode(DT->getRootNode());
 }
