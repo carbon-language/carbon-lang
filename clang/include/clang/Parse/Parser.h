@@ -1287,7 +1287,8 @@ private:
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS, bool IsParameter);
 
   void ParseEnumSpecifier(SourceLocation TagLoc, DeclSpec &DS,
-                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),                          AccessSpecifier AS = AS_none);
+                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
+                AccessSpecifier AS = AS_none);
   void ParseEnumBody(SourceLocation StartLoc, Decl *TagDecl);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             Decl *TagDecl);
