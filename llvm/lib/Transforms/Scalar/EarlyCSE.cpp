@@ -145,14 +145,13 @@ namespace {
     }
     
     static bool canHandle(Instruction *Inst) {
+      // Don't value number anything that returns void.
+      if (Inst->getType()->isVoidTy())
+        return false;
+      
       CallInst *CI = dyn_cast<CallInst>(Inst);
       if (CI == 0 || !CI->onlyReadsMemory())
         return false;
-      
-      // Check that there are no metadata operands.
-      for (unsigned i = 0, e = CI->getNumOperands(); i != e; ++i)
-        if (CI->getOperand(i)->getType()->isMetadataTy())
-          return false;
       return true;
     }
   };
@@ -179,8 +178,12 @@ unsigned DenseMapInfo<CallValue>::getHashValue(CallValue Val) {
   Instruction *Inst = Val.Inst;
   // Hash in all of the operands as pointers.
   unsigned Res = 0;
-  for (unsigned i = 0, e = Inst->getNumOperands(); i != e; ++i)
+  for (unsigned i = 0, e = Inst->getNumOperands(); i != e; ++i) {
+    assert(!Inst->getOperand(i)->getType()->isMetadataTy() &&
+           "Cannot value number calls with metadata operands");
     Res ^= getHash(Inst->getOperand(i)) << i;
+  }
+  
   // Mix in the opcode.
   return (Res << 1) ^ Inst->getOpcode();
 }
