@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Target/Process.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 
 #include "LinuxThread.h"
@@ -58,26 +59,6 @@ const char *
 LinuxThread::GetInfo()
 {
     return NULL;
-}
-
-uint32_t
-LinuxThread::GetStackFrameCount()
-{
-    return 0;
-}
-
-lldb::StackFrameSP
-LinuxThread::GetStackFrameAtIndex(uint32_t idx)
-{
-    if (idx == 0)
-    {
-        RegisterContextLinux *regs = GetRegisterContext();
-        StackFrame *frame = new StackFrame(
-            idx, *this, regs->GetFP(), regs->GetPC());
-        return lldb::StackFrameSP(frame);
-    }
-    else
-        return lldb::StackFrameSP();
 }
 
 RegisterContextLinux *

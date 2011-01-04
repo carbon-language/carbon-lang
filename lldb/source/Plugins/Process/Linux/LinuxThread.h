@@ -38,12 +38,6 @@ public:
     const char *
     GetInfo();
 
-    uint32_t
-    GetStackFrameCount();
-
-    lldb::StackFrameSP
-    GetStackFrameAtIndex(uint32_t idx);
-
     RegisterContextLinux *
     GetRegisterContext();
 
