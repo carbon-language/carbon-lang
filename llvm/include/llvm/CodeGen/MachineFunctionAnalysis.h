@@ -37,6 +37,10 @@ public:
 
   MachineFunction &getMF() const { return *MF; }
   CodeGenOpt::Level getOptLevel() const { return OptLevel; }
+  
+  virtual const char* getPassName() const {
+    return "Machine Function Analysis";
+  }
 
 private:
   virtual bool doInitialization(Module &M);
