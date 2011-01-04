@@ -1843,8 +1843,6 @@
 		26BC7D0D10F1B71D00F91463 /* Commands */ = {
 			isa = PBXGroup;
 			children = (
-				B296983512C2FB2B002D92C3 /* CommandObjectVersion.h */,
-				B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */,
 				4CA9637A11B6E99A00780E28 /* CommandObjectApropos.h */,
 				4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */,
 				499F381E11A5B3F300F5CE02 /* CommandObjectArgs.h */,
@@ -1889,6 +1887,8 @@
 				269416AD119A024800FF2715 /* CommandObjectTarget.cpp */,
 				26BC7D2D10F1B76300F91463 /* CommandObjectThread.h */,
 				26BC7E4610F1B84700F91463 /* CommandObjectThread.cpp */,
+				B296983512C2FB2B002D92C3 /* CommandObjectVersion.h */,
+				B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */,
 			);
 			name = Commands;
 			sourceTree = "<group>";
@@ -2363,6 +2363,7 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
