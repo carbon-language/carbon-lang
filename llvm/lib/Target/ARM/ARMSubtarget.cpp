@@ -240,6 +240,7 @@ void ARMSubtarget::computeIssueWidth() {
     // clear the lowest bit
     allStage1Units ^= allStage1Units & ~(allStage1Units - 1);
   }
+  assert(InstrItins.IssueWidth <= 2 && "itinerary bug, too many stage 1 units");
 }
 
 bool ARMSubtarget::enablePostRAScheduler(
