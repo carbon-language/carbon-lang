@@ -78,6 +78,9 @@ private:
 
     lldb::StopInfoSP
     GetPrivateStopReason();
+
+    lldb_private::Unwind *
+    GetUnwinder();
 };
 
 #endif // #ifndef liblldb_LinuxThread_H_

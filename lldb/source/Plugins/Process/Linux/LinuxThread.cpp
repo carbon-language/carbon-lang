@@ -108,6 +108,12 @@ LinuxThread::GetPrivateStopReason()
     return stop_info;
 }
 
+Unwind *
+LinuxThread::GetUnwinder()
+{
+    return m_unwinder_ap.get();
+}
+
 bool
 LinuxThread::WillResume(lldb::StateType resume_state)
 {
