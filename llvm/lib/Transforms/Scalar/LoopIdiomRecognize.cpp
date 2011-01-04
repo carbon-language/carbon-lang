@@ -349,17 +349,13 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
   const Type *IntPtr = TD->getIntPtrType(SI->getContext());
-  unsigned BESize = SE->getTypeSizeInBits(BECount->getType());
-  if (BESize < TD->getPointerSizeInBits())
-    BECount = SE->getZeroExtendExpr(BECount, IntPtr);
-  else if (BESize > TD->getPointerSizeInBits())
-    BECount = SE->getTruncateExpr(BECount, IntPtr);
+  BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
   
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
-                                         true, true /*nooverflow*/);
+                                         true /*no unsigned overflow*/);
   if (StoreSize != 1)
     NumBytesS = SE->getMulExpr(NumBytesS, SE->getConstant(IntPtr, StoreSize),
-                               true, true /*nooverflow*/);
+                               true /*no unsigned overflow*/);
   
   Value *NumBytes = 
     Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());
@@ -426,17 +422,13 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
   const Type *IntPtr = TD->getIntPtrType(SI->getContext());
-  unsigned BESize = SE->getTypeSizeInBits(BECount->getType());
-  if (BESize < TD->getPointerSizeInBits())
-    BECount = SE->getZeroExtendExpr(BECount, IntPtr);
-  else if (BESize > TD->getPointerSizeInBits())
-    BECount = SE->getTruncateExpr(BECount, IntPtr);
+  BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
   
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
-                                         true, true /*nooverflow*/);
+                                         true /*no unsigned overflow*/);
   if (StoreSize != 1)
     NumBytesS = SE->getMulExpr(NumBytesS, SE->getConstant(IntPtr, StoreSize),
-                               true, true /*nooverflow*/);
+                               true /*no unsigned overflow*/);
   
   Value *NumBytes =
     Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());
