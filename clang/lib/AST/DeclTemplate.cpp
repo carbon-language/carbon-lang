@@ -14,6 +14,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/ASTMutationListener.h"
@@ -327,7 +328,10 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
                                   NTTP->getType().getNonLValueExprType(Context),
                                   Expr::getValueKindForType(NTTP->getType()),
                                           NTTP->getLocation());
-      // FIXME: Variadic templates.
+
+      if (NTTP->isParameterPack())
+        E = new (Context) PackExpansionExpr(Context.DependentTy, E,
+                                            NTTP->getLocation());
       Arg = TemplateArgument(E);
     } else {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
