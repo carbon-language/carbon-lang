@@ -129,7 +129,6 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
 {
     assert (m_parser_vars.get());
 
-    
     clang::ASTContext *context(m_parser_vars->m_exe_ctx->target->GetScratchClangASTContext()->getASTContext());
     
     TypeFromUser user_type(ClangASTContext::CopyType(context, 
@@ -137,24 +136,31 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
                                                      type.GetOpaqueQualType()),
                            context);
     
-    DataBufferHeap *heap_data_buf = new DataBufferHeap(ClangASTType::GetClangTypeBitWidth(user_type.GetASTContext(),
-                                                                                          user_type.GetOpaqueQualType()) / 8,
-                                                       '\0');
+    if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (name, 
+                                                                     user_type, 
+                                                                     m_parser_vars->m_exe_ctx->process->GetByteOrder(),
+                                                                     m_parser_vars->m_exe_ctx->process->GetAddressByteSize()))
+        return lldb::ClangExpressionVariableSP();
     
-    DataBufferSP data_sp(heap_data_buf);
+    ClangExpressionVariableSP pvar_sp (m_parser_vars->m_persistent_vars->GetVariable(name));
+    
+    if (!pvar_sp)
+        return lldb::ClangExpressionVariableSP();
+    
+    uint8_t *pvar_data = pvar_sp->GetValueBytes();
+    if (pvar_data == NULL)
+        return lldb::ClangExpressionVariableSP();
     
     uint64_t value64 = value.getLimitedValue();
     
     ByteOrder byte_order = m_parser_vars->m_exe_ctx->process->GetByteOrder();
     
     size_t num_val_bytes = sizeof(value64);
-    size_t num_data_bytes = heap_data_buf->GetByteSize();
+    size_t num_data_bytes = pvar_sp->GetByteSize();
     
     size_t num_bytes = num_val_bytes;
     if (num_bytes > num_data_bytes)
         num_bytes = num_data_bytes;
-    
-    uint8_t *data_bytes = heap_data_buf->GetBytes();
     
     for (off_t byte_idx = 0;
          byte_idx < num_bytes;
@@ -166,32 +172,23 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
         
         switch (byte_order)
         {
-        case eByteOrderBig:
-            //                    High         Low
-            // Original:         |AABBCCDDEEFFGGHH|
-            // Target:                   |EEFFGGHH|
-            
-            data_bytes[num_data_bytes - (1 + byte_idx)] = cur_byte;
-            break;
-        case eByteOrderLittle:
-            // Target:                   |HHGGFFEE|
-            data_bytes[byte_idx] = cur_byte;
-            break;
-        default:
-            return lldb::ClangExpressionVariableSP();    
+            case eByteOrderBig:
+                //                    High         Low
+                // Original:         |AABBCCDDEEFFGGHH|
+                // Target:                   |EEFFGGHH|
+                
+                pvar_data[num_data_bytes - (1 + byte_idx)] = cur_byte;
+                break;
+            case eByteOrderLittle:
+                // Target:                   |HHGGFFEE|
+                pvar_data[byte_idx] = cur_byte;
+                break;
+            default:
+                return lldb::ClangExpressionVariableSP();    
         }
     }
-    
-    ValueObjectSP valobj_sp(new ValueObjectConstResult(user_type.GetASTContext(),
-                                                       user_type.GetOpaqueQualType(),
-                                                       name,
-                                                       data_sp,
-                                                       m_parser_vars->m_exe_ctx->process->GetByteOrder(), 
-                                                       m_parser_vars->m_exe_ctx->process->GetAddressByteSize()));
-    
-    ClangExpressionVariableSP var_sp(new ClangExpressionVariable(valobj_sp));
-    
-    return var_sp;
+
+    return pvar_sp;
 }
 
 bool 
