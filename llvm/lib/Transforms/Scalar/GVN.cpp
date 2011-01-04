@@ -90,10 +90,6 @@ namespace {
         return false;
       return true;
     }
-
-    /*bool operator!=(const Expression &other) const {
-      return !(*this == other);
-    }*/
   };
 
   class ValueTable {
