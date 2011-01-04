@@ -17,18 +17,12 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 using namespace llvm;
 
-// Register this pass with PassInfo directly to avoid having to define
-// a default constructor.
-static PassInfo
-X("Machine Function Analysis", "machine-function-analysis",
-   &MachineFunctionAnalysis::ID, 0,
-  /*CFGOnly=*/false, /*is_analysis=*/true);
-
 char MachineFunctionAnalysis::ID = 0;
 
 MachineFunctionAnalysis::MachineFunctionAnalysis(const TargetMachine &tm,
                                                  CodeGenOpt::Level OL) :
   FunctionPass(ID), TM(tm), OptLevel(OL), MF(0) {
+  initializeMachineModuleInfoPass(*PassRegistry::getPassRegistry());
 }
 
 MachineFunctionAnalysis::~MachineFunctionAnalysis() {
