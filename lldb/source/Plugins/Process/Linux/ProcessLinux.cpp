@@ -105,6 +105,7 @@ Error
 ProcessLinux::DoLaunch(Module *module,
                        char const *argv[],
                        char const *envp[],
+                       uint32_t launch_flags,
                        const char *stdin_path,
                        const char *stdout_path,
                        const char *stderr_path)
@@ -155,7 +156,7 @@ ProcessLinux::DoResume()
 }
 
 Error
-ProcessLinux::DoHalt()
+ProcessLinux::DoHalt(bool &caused_stop)
 {
     return Error(1, eErrorTypeGeneric);
 }
