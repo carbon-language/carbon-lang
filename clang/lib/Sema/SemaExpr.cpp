@@ -7460,6 +7460,40 @@ static inline UnaryOperatorKind ConvertTokenKindToUnaryOpcode(
   return Opc;
 }
 
+/// DiagnoseSelfAssignment - Emits a warning if a value is assigned to itself.
+/// This warning is only emitted for builtin assignment operations. It is also
+/// suppressed in the event of macro expansions.
+static void DiagnoseSelfAssignment(Sema &S, Expr *lhs, Expr *rhs,
+                                   SourceLocation OpLoc) {
+  if (!S.ActiveTemplateInstantiations.empty())
+    return;
+  if (OpLoc.isInvalid() || OpLoc.isMacroID())
+    return;
+  lhs = lhs->IgnoreParenImpCasts();
+  rhs = rhs->IgnoreParenImpCasts();
+  const DeclRefExpr *LeftDeclRef = dyn_cast<DeclRefExpr>(lhs);
+  const DeclRefExpr *RightDeclRef = dyn_cast<DeclRefExpr>(rhs);
+  if (!LeftDeclRef || !RightDeclRef ||
+      LeftDeclRef->getLocation().isMacroID() ||
+      RightDeclRef->getLocation().isMacroID())
+    return;
+  const ValueDecl *LeftDecl =
+    cast<ValueDecl>(LeftDeclRef->getDecl()->getCanonicalDecl());
+  const ValueDecl *RightDecl =
+    cast<ValueDecl>(RightDeclRef->getDecl()->getCanonicalDecl());
+  if (LeftDecl != RightDecl)
+    return;
+  if (LeftDecl->getType().isVolatileQualified())
+    return;
+  if (const ReferenceType *RefTy = LeftDecl->getType()->getAs<ReferenceType>())
+    if (RefTy->getPointeeType().isVolatileQualified())
+      return;
+
+  S.Diag(OpLoc, diag::warn_self_assignment)
+      << LeftDeclRef->getType()
+      << lhs->getSourceRange() << rhs->getSourceRange();
+}
+
 /// CreateBuiltinBinOp - Creates a new built-in binary operation with
 /// operator @p Opc at location @c TokLoc. This routine only supports
 /// built-in operations; ActOnBinOp handles overloaded operators.
@@ -7482,6 +7516,8 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
       VK = lhs->getValueKind();
       OK = lhs->getObjectKind();
     }
+    if (!ResultTy.isNull())
+      DiagnoseSelfAssignment(*this, lhs, rhs, OpLoc);
     break;
   case BO_PtrMemD:
   case BO_PtrMemI:

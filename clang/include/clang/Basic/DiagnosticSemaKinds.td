@@ -2243,6 +2243,10 @@ def warn_logical_and_in_logical_or : Warning<
 def note_logical_and_in_logical_or_silence : Note<
   "place parentheses around the '&&' expression to silence this warning">;
 
+def warn_self_assignment : Warning<
+  "explicitly assigning a variable of type %0 to itself">,
+  InGroup<SelfAssignment>, DefaultIgnore;
+
 def err_sizeof_nonfragile_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
   "non-fragile ABI">;
