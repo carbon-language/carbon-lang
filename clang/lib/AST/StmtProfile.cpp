@@ -836,6 +836,11 @@ void StmtProfiler::VisitPackExpansionExpr(PackExpansionExpr *S) {
   VisitExpr(S);
 }
 
+void StmtProfiler::VisitSizeOfPackExpr(SizeOfPackExpr *S) {
+  VisitExpr(S);
+  VisitDecl(S->getPack());
+}
+
 void StmtProfiler::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);  
 }

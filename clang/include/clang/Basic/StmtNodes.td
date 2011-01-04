@@ -112,6 +112,7 @@ def UnresolvedLookupExpr : DStmt<OverloadExpr>;
 def UnresolvedMemberExpr : DStmt<OverloadExpr>;
 def CXXNoexceptExpr : DStmt<Expr>;
 def PackExpansionExpr : DStmt<Expr>;
+def SizeOfPackExpr : DStmt<Expr>;
 
 // Obj-C Expressions.
 def ObjCStringLiteral : DStmt<Expr>;

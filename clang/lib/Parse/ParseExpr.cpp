@@ -444,6 +444,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///         unary-operator cast-expression
 ///         'sizeof' unary-expression
 ///         'sizeof' '(' type-name ')'
+/// [C++0x] 'sizeof' '...' '(' identifier ')'
 /// [GNU]   '__alignof' unary-expression
 /// [GNU]   '__alignof' '(' type-name ')'
 /// [C++0x] 'alignof' '(' type-id ')'
@@ -1291,6 +1292,7 @@ Parser::ParseExprAfterTypeofSizeofAlignof(const Token &OpTok,
 ///       unary-expression:  [C99 6.5.3]
 ///         'sizeof' unary-expression
 ///         'sizeof' '(' type-name ')'
+/// [C++0x] 'sizeof' '...' '(' identifier ')'
 /// [GNU]   '__alignof' unary-expression
 /// [GNU]   '__alignof' '(' type-name ')'
 /// [C++0x] 'alignof' '(' type-id ')'
@@ -1301,6 +1303,46 @@ ExprResult Parser::ParseSizeofAlignofExpression() {
   Token OpTok = Tok;
   ConsumeToken();
 
+  // [C++0x] 'sizeof' '...' '(' identifier ')'
+  if (Tok.is(tok::ellipsis) && OpTok.is(tok::kw_sizeof)) {
+    SourceLocation EllipsisLoc = ConsumeToken();
+    SourceLocation LParenLoc, RParenLoc;
+    IdentifierInfo *Name = 0;
+    SourceLocation NameLoc;
+    if (Tok.is(tok::l_paren)) {
+      LParenLoc = ConsumeParen();
+      if (Tok.is(tok::identifier)) {
+        Name = Tok.getIdentifierInfo();
+        NameLoc = ConsumeToken();
+        RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+        if (RParenLoc.isInvalid())
+          RParenLoc = PP.getLocForEndOfToken(NameLoc);
+      } else {
+        Diag(Tok, diag::err_expected_parameter_pack);
+        SkipUntil(tok::r_paren);
+      }
+    } else if (Tok.is(tok::identifier)) {
+      Name = Tok.getIdentifierInfo();
+      NameLoc = ConsumeToken();
+      LParenLoc = PP.getLocForEndOfToken(EllipsisLoc);
+      RParenLoc = PP.getLocForEndOfToken(NameLoc);
+      Diag(LParenLoc, diag::err_paren_sizeof_parameter_pack)
+        << Name
+        << FixItHint::CreateInsertion(LParenLoc, "(")
+        << FixItHint::CreateInsertion(RParenLoc, ")");
+    } else {
+      Diag(Tok, diag::err_sizeof_parameter_pack);
+    }
+    
+    if (!Name)
+      return ExprError();
+    
+    return Actions.ActOnSizeofParameterPackExpr(getCurScope(),
+                                                OpTok.getLocation(), 
+                                                *Name, NameLoc,
+                                                RParenLoc);
+  }
+  
   bool isCastExpr;
   ParsedType CastTy;
   SourceRange CastRange;

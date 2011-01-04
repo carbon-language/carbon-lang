@@ -1817,7 +1817,11 @@ public:
 
   bool CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc,
                                  SourceRange R, bool isSizeof);
-
+  ExprResult ActOnSizeofParameterPackExpr(Scope *S,
+                                          SourceLocation OpLoc,
+                                          IdentifierInfo &Name,
+                                          SourceLocation NameLoc,
+                                          SourceLocation RParenLoc);
   ExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                                  tok::TokenKind Kind, Expr *Input);
 

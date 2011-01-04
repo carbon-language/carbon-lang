@@ -1871,6 +1871,9 @@ def err_function_parameter_pack_without_parameter_packs : Error<
 def err_ellipsis_in_declarator_not_parameter : Error<
   "only function and template parameters can be parameter packs">;
 
+def err_sizeof_pack_no_pack_name : Error<
+  "%0 does not refer to the name of a parameter pack">;
+
 // Unsupported variadic templates features
 def err_pack_expansion_unsupported : Error<
   "clang does not yet support template pack expansions">;
@@ -3568,6 +3571,9 @@ def err_using_directive_suggest : Error<
 def err_using_directive_member_suggest : Error<
   "no namespace named %0 in %1; did you mean %2?">;
 def note_namespace_defined_here : Note<"namespace %0 defined here">;
+def err_sizeof_pack_no_pack_name_suggest : Error<
+  "%0 does not refer to the name of a parameter pack; did you mean %1?">;
+def note_parameter_pack_here : Note<"parameter pack %0 declared here">;
 
 } // end of sema category
 } // end of sema component.

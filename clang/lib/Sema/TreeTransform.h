@@ -1913,6 +1913,16 @@ public:
     return SemaRef.BuildCXXNoexceptExpr(Range.getBegin(), Arg, Range.getEnd());
   }
 
+  /// \brief Build a new expression to compute the length of a parameter pack.
+  ExprResult RebuildSizeOfPackExpr(SourceLocation OperatorLoc, NamedDecl *Pack, 
+                                   SourceLocation PackLoc, 
+                                   SourceLocation RParenLoc,
+                                   unsigned Length) {
+    return new (SemaRef.Context) SizeOfPackExpr(SemaRef.Context.getSizeType(), 
+                                                OperatorLoc, Pack, PackLoc, 
+                                                RParenLoc, Length);
+  }
+                                   
   /// \brief Build a new Objective-C @encode expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -6499,7 +6509,36 @@ TreeTransform<Derived>::TransformPackExpansionExpr(PackExpansionExpr *E) {
   llvm_unreachable("pack expansion expression in unhandled context");
   return ExprError();
 }
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformSizeOfPackExpr(SizeOfPackExpr *E) {
+  // If E is not value-dependent, then nothing will change when we transform it.
+  // Note: This is an instantiation-centric view.
+  if (!E->isValueDependent())
+    return SemaRef.Owned(E);
+
+  // Note: None of the implementations of TryExpandParameterPacks can ever
+  // produce a diagnostic when given only a single unexpanded parameter pack,
+  // so 
+  UnexpandedParameterPack Unexpanded(E->getPack(), E->getPackLoc());
+  bool ShouldExpand = false;
+  unsigned NumExpansions = 0;
+  if (getDerived().TryExpandParameterPacks(E->getOperatorLoc(), E->getPackLoc(), 
+                                           &Unexpanded, 1, 
+                                           ShouldExpand, NumExpansions))
+    return ExprError();
   
+  if (!ShouldExpand)
+    return SemaRef.Owned(E);
+  
+  // We now know the length of the parameter pack, so build a new expression
+  // that stores that length.
+  return getDerived().RebuildSizeOfPackExpr(E->getOperatorLoc(), E->getPack(), 
+                                            E->getPackLoc(), E->getRParenLoc(), 
+                                            NumExpansions);
+}
+
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformObjCStringLiteral(ObjCStringLiteral *E) {

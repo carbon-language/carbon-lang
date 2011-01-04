@@ -177,6 +177,7 @@ namespace clang {
     void VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E);
     void VisitCXXNoexceptExpr(CXXNoexceptExpr *E);
     void VisitPackExpansionExpr(PackExpansionExpr *E);
+    void VisitSizeOfPackExpr(SizeOfPackExpr *E);
     
     void VisitOpaqueValueExpr(OpaqueValueExpr *E);
   };
@@ -1294,6 +1295,15 @@ void ASTStmtReader::VisitPackExpansionExpr(PackExpansionExpr *E) {
   E->Pattern = Reader.ReadSubExpr();  
 }
 
+void ASTStmtReader::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
+  VisitExpr(E);
+  E->OperatorLoc = ReadSourceLocation(Record, Idx);
+  E->PackLoc = ReadSourceLocation(Record, Idx);
+  E->RParenLoc = ReadSourceLocation(Record, Idx);
+  E->Length = Record[Idx++];
+  E->Pack = cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++]));
+}
+
 void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
 }
@@ -1818,6 +1828,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
 
     case EXPR_PACK_EXPANSION:
       S = new (Context) PackExpansionExpr(Empty);
+      break;
+        
+    case EXPR_SIZEOF_PACK:
+      S = new (Context) SizeOfPackExpr(Empty);
       break;
         
     case EXPR_OPAQUE_VALUE:

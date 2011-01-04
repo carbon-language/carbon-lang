@@ -151,6 +151,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::ObjCStringLiteralClass:
   case Expr::ParenListExprClass:
   case Expr::InitListExprClass:
+  case Expr::SizeOfPackExprClass:
     return Cl::CL_PRValue;
 
     // Next come the complicated cases.

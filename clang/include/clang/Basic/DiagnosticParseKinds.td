@@ -392,6 +392,13 @@ def warn_deleted_function_accepted_as_extension: ExtWarn<
 def err_scoped_enum_missing_identifier : Error<
   "scoped enumeration requires a name">;
 
+def err_expected_parameter_pack : Error<
+  "expected the name of a parameter pack">;
+def err_paren_sizeof_parameter_pack : Error<
+  "missing parentheses around the size of parameter pack %0">;
+def err_sizeof_parameter_pack : Error<
+  "expected parenthesized parameter pack name in 'sizeof...' expression">;
+
 // Language specific pragmas
 // - Generic warnings
 def warn_pragma_expected_lparen : Warning<

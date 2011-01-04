@@ -1037,3 +1037,15 @@ Stmt::child_iterator PackExpansionExpr::child_begin() {
 Stmt::child_iterator PackExpansionExpr::child_end() {
   return child_iterator(&Pattern + 1);
 }
+
+SourceRange SizeOfPackExpr::getSourceRange() const {
+  return SourceRange(OperatorLoc, RParenLoc);
+}
+
+Stmt::child_iterator SizeOfPackExpr::child_begin() {
+  return child_iterator();
+}
+
+Stmt::child_iterator SizeOfPackExpr::child_end() {
+  return child_iterator();
+}

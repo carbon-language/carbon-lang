@@ -2642,6 +2642,96 @@ inline ExplicitTemplateArgumentList &OverloadExpr::getExplicitTemplateArgs() {
     return cast<UnresolvedMemberExpr>(this)->getExplicitTemplateArgs();
 }
 
+/// \brief Represents an expression that computes the length of a parameter 
+/// pack.
+///
+/// \code
+/// template<typename ...Types>
+/// struct count {
+///   static const unsigned value = sizeof...(Types);
+/// };
+/// \endcode
+class SizeOfPackExpr : public Expr {
+  /// \brief The location of the 'sizeof' keyword.
+  SourceLocation OperatorLoc;
+  
+  /// \brief The location of the name of the parameter pack.
+  SourceLocation PackLoc;
+  
+  /// \brief The location of the closing parenthesis.
+  SourceLocation RParenLoc;
+  
+  /// \brief The length of the parameter pack, if known.
+  ///
+  /// When this expression is value-dependent, the length of the parameter pack
+  /// is unknown. When this expression is not value-dependent, the length is
+  /// known.
+  unsigned Length;
+  
+  /// \brief The parameter pack itself.
+  NamedDecl *Pack;
+  
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
+  
+public:
+  /// \brief Creates a value-dependent expression that computes the length of
+  /// the given parameter pack.
+  SizeOfPackExpr(QualType SizeType, SourceLocation OperatorLoc, NamedDecl *Pack, 
+                 SourceLocation PackLoc, SourceLocation RParenLoc)
+    : Expr(SizeOfPackExprClass, SizeType, VK_RValue, OK_Ordinary,
+           /*TypeDependent=*/false, /*ValueDependent=*/true,
+           /*ContainsUnexpandedParameterPack=*/false),
+      OperatorLoc(OperatorLoc), PackLoc(PackLoc), RParenLoc(RParenLoc),
+      Length(0), Pack(Pack) { }
+
+  /// \brief Creates an expression that computes the length of
+  /// the given parameter pack, which is already known.
+  SizeOfPackExpr(QualType SizeType, SourceLocation OperatorLoc, NamedDecl *Pack, 
+                 SourceLocation PackLoc, SourceLocation RParenLoc,
+                 unsigned Length)
+  : Expr(SizeOfPackExprClass, SizeType, VK_RValue, OK_Ordinary,
+         /*TypeDependent=*/false, /*ValueDependent=*/false,
+         /*ContainsUnexpandedParameterPack=*/false),
+    OperatorLoc(OperatorLoc), PackLoc(PackLoc), RParenLoc(RParenLoc),
+    Length(Length), Pack(Pack) { }
+
+  /// \brief Create an empty expression.
+  SizeOfPackExpr(EmptyShell Empty) : Expr(SizeOfPackExprClass, Empty) { }
+  
+  /// \brief Determine the location of the 'sizeof' keyword.
+  SourceLocation getOperatorLoc() const { return OperatorLoc; }
+
+  /// \brief Determine the location of the parameter pack.
+  SourceLocation getPackLoc() const { return PackLoc; }
+  
+  /// \brief Determine the location of the right parenthesis.
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  
+  /// \brief Retrieve the parameter pack.
+  NamedDecl *getPack() const { return Pack; }
+  
+  /// \brief Retrieve the length of the parameter pack.
+  ///
+  /// This routine may only be invoked when 
+  unsigned getPackLength() const {
+    assert(!isValueDependent() && 
+           "Cannot get the length of a value-dependent pack size expression");
+    return Length;
+  }
+  
+  virtual SourceRange getSourceRange() const;
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == SizeOfPackExprClass;
+  }
+  static bool classof(const SizeOfPackExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+  
 }  // end namespace clang
 
 #endif

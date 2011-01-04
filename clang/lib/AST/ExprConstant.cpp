@@ -291,6 +291,8 @@ public:
       if (Visit(E->getInit(i))) return true;
     return false;
   }
+    
+  bool VisitSizeOfPackExpr(SizeOfPackExpr *) { return false; }
 };
 
 } // end anonymous namespace
@@ -965,7 +967,8 @@ public:
   bool VisitUnaryImag(const UnaryOperator *E);
 
   bool VisitCXXNoexceptExpr(const CXXNoexceptExpr *E);
-
+  bool VisitSizeOfPackExpr(const SizeOfPackExpr *E);
+    
 private:
   CharUnits GetAlignOfExpr(const Expr *E);
   CharUnits GetAlignOfType(QualType T);
@@ -1759,6 +1762,10 @@ bool IntExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
   if (!E->getSubExpr()->isEvaluatable(Info.Ctx))
     Info.EvalResult.HasSideEffects = true;
   return Success(0, E);
+}
+
+bool IntExprEvaluator::VisitSizeOfPackExpr(const SizeOfPackExpr *E) {
+  return Success(E->getPackLength(), E);
 }
 
 bool IntExprEvaluator::VisitCXXNoexceptExpr(const CXXNoexceptExpr *E) {
@@ -2637,6 +2644,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::PackExpansionExprClass:
     return ICEDiag(2, E->getLocStart());
 
+  case Expr::SizeOfPackExprClass:
   case Expr::GNUNullExprClass:
     // GCC considers the GNU __null value to be an integral constant expression.
     return NoDiag();

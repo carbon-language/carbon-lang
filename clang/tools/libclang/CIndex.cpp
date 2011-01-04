@@ -1631,7 +1631,8 @@ public:
   void VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E);
   void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U);
   void VisitVAArgExpr(VAArgExpr *E);
-
+  // FIXME: Variadic templates SizeOfPackExpr!
+  
 private:
   void AddDeclarationNameInfo(Stmt *S);
   void AddNestedNameSpecifier(NestedNameSpecifier *NS, SourceRange R);

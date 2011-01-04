@@ -1821,6 +1821,7 @@ DEF_TRAVERSE_STMT(BinaryOperator, { })
 DEF_TRAVERSE_STMT(CompoundAssignOperator, { })
 DEF_TRAVERSE_STMT(CXXNoexceptExpr, { })
 DEF_TRAVERSE_STMT(PackExpansionExpr, { })
+DEF_TRAVERSE_STMT(SizeOfPackExpr, { })
 
 // These literals (all of them) do not need any action.
 DEF_TRAVERSE_STMT(IntegerLiteral, { })
