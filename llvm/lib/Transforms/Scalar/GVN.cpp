@@ -1685,6 +1685,10 @@ bool GVN::processInstruction(Instruction *I,
     return false;
   }
   
+  // Instructions with void type don't return a value, so there's
+  // no point in trying to find redudancies in them.
+  if (I->getType()->isVoidTy()) return false;
+  
   uint32_t NextNum = VN.getNextUnusedValueNumber();
   unsigned Num = VN.lookup_or_add(I);
 
