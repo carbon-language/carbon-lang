@@ -2776,7 +2776,7 @@ def err_not_tag_in_scope : Error<
 def err_cannot_form_pointer_to_member_of_reference_type : Error<
   "cannot form a pointer-to-member to member %0 of reference type %1">;
 def err_invalid_use_of_bound_member_func : Error<
-  "a bound member function may only be used to call it">;
+  "a bound member function may only be used to call itself">;
 def err_incomplete_object_call : Error<
   "incomplete type in call to object of type %0">;
 def err_incomplete_pointer_to_member_return : Error<
