@@ -37,6 +37,9 @@ public:
   /// bundle number for basic block #N
   unsigned getBundle(unsigned N, bool Out) const { return EC[2 * N + Out]; }
 
+  /// getNumBundles - Return the total number of bundles in the CFG.
+  unsigned getNumBundles() const { return EC.getNumClasses(); }
+
   /// getMachineFunction - Return the last machine function computed.
   const MachineFunction *getMachineFunction() const { return MF; }
 

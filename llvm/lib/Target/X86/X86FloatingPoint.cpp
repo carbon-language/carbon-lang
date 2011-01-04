@@ -97,7 +97,7 @@ namespace {
       // FixStack[i] == getStackEntry(i) for all i < FixCount.
       unsigned char FixStack[8];
 
-      LiveBundle(unsigned m = 0) : Mask(m), FixCount(0) {}
+      LiveBundle() : Mask(0), FixCount(0) {}
 
       // Have the live registers been assigned a stack order yet?
       bool isFixed() const { return !Mask || FixCount; }
@@ -107,10 +107,8 @@ namespace {
     // with no live FP registers.
     SmallVector<LiveBundle, 8> LiveBundles;
 
-    // Map each MBB in the current function to an (ingoing, outgoing) index into
-    // LiveBundles. Blocks with no FP registers live in or out map to (0, 0)
-    // and are not actually stored in the map.
-    DenseMap<MachineBasicBlock*, std::pair<unsigned, unsigned> > BlockBundle;
+    // The edge bundle analysis provides indices into the LiveBundles vector.
+    EdgeBundles *Bundles;
 
     // Return a bitmask of FP registers in block's live-in list.
     unsigned calcLiveInMask(MachineBasicBlock *MBB) {
@@ -287,6 +285,7 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   // Early exit.
   if (!FPIsUsed) return false;
 
+  Bundles = &getAnalysis<EdgeBundles>();
   TII = MF.getTarget().getInstrInfo();
 
   // Prepare cross-MBB liveness.
@@ -311,7 +310,6 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
       if (Processed.insert(BB))
         Changed |= processBasicBlock(MF, *BB);
 
-  BlockBundle.clear();
   LiveBundles.clear();
 
   return Changed;
@@ -324,90 +322,16 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
 /// registers may be implicitly defined, or not used by all successors.
 void FPS::bundleCFG(MachineFunction &MF) {
   assert(LiveBundles.empty() && "Stale data in LiveBundles");
-  assert(BlockBundle.empty() && "Stale data in BlockBundle");
-  SmallPtrSet<MachineBasicBlock*, 8> PropDown, PropUp;
+  LiveBundles.resize(Bundles->getNumBundles());
 
-  // LiveBundle[0] is the empty live-in set.
-  LiveBundles.resize(1);
-
-  // First gather the actual live-in masks for all MBBs.
+  // Gather the actual live-in masks for all MBBs.
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = I;
     const unsigned Mask = calcLiveInMask(MBB);
     if (!Mask)
       continue;
-    // Ingoing bundle index.
-    unsigned &Idx = BlockBundle[MBB].first;
-    // Already assigned an ingoing bundle?
-    if (Idx)
-      continue;
-    // Allocate a new LiveBundle struct for this block's live-ins.
-    const unsigned BundleIdx = Idx = LiveBundles.size();
-    DEBUG(dbgs() << "Creating LB#" << BundleIdx << ": in:BB#"
-                 << MBB->getNumber());
-    LiveBundles.push_back(Mask);
-    LiveBundle &Bundle = LiveBundles.back();
-
-    // Make sure all predecessors have the same live-out set.
-    PropUp.insert(MBB);
-
-    // Keep pushing liveness up and down the CFG until convergence.
-    // Only critical edges cause iteration here, but when they do, multiple
-    // blocks can be assigned to the same LiveBundle index.
-    do {
-      // Assign BundleIdx as liveout from predecessors in PropUp.
-      for (SmallPtrSet<MachineBasicBlock*, 16>::iterator I = PropUp.begin(),
-           E = PropUp.end(); I != E; ++I) {
-        MachineBasicBlock *MBB = *I;
-        for (MachineBasicBlock::const_pred_iterator LinkI = MBB->pred_begin(),
-             LinkE = MBB->pred_end(); LinkI != LinkE; ++LinkI) {
-          MachineBasicBlock *PredMBB = *LinkI;
-          // PredMBB's liveout bundle should be set to LIIdx.
-          unsigned &Idx = BlockBundle[PredMBB].second;
-          if (Idx) {
-            assert(Idx == BundleIdx && "Inconsistent CFG");
-            continue;
-          }
-          Idx = BundleIdx;
-          DEBUG(dbgs() << " out:BB#" << PredMBB->getNumber());
-          // Propagate to siblings.
-          if (PredMBB->succ_size() > 1)
-            PropDown.insert(PredMBB);
-        }
-      }
-      PropUp.clear();
-
-      // Assign BundleIdx as livein to successors in PropDown.
-      for (SmallPtrSet<MachineBasicBlock*, 16>::iterator I = PropDown.begin(),
-           E = PropDown.end(); I != E; ++I) {
-        MachineBasicBlock *MBB = *I;
-        for (MachineBasicBlock::const_succ_iterator LinkI = MBB->succ_begin(),
-             LinkE = MBB->succ_end(); LinkI != LinkE; ++LinkI) {
-          MachineBasicBlock *SuccMBB = *LinkI;
-          // LinkMBB's livein bundle should be set to BundleIdx.
-          unsigned &Idx = BlockBundle[SuccMBB].first;
-          if (Idx) {
-            assert(Idx == BundleIdx && "Inconsistent CFG");
-            continue;
-          }
-          Idx = BundleIdx;
-          DEBUG(dbgs() << " in:BB#" << SuccMBB->getNumber());
-          // Propagate to siblings.
-          if (SuccMBB->pred_size() > 1)
-            PropUp.insert(SuccMBB);
-          // Also accumulate the bundle liveness mask from the liveins here.
-          Bundle.Mask |= calcLiveInMask(SuccMBB);
-        }
-      }
-      PropDown.clear();
-    } while (!PropUp.empty());
-    DEBUG({
-      dbgs() << " live:";
-      for (unsigned i = 0; i < 8; ++i)
-        if (Bundle.Mask & (1<<i))
-          dbgs() << " %FP" << i;
-      dbgs() << '\n';
-    });
+    // Update MBB ingoing bundle mask.
+    LiveBundles[Bundles->getBundle(MBB->getNumber(), false)].Mask |= Mask;
   }
 }
 
@@ -495,13 +419,15 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
   return Changed;
 }
 
-/// setupBlockStack - Use the BlockBundle map to set up our model of the stack
+/// setupBlockStack - Use the live bundles to set up our model of the stack
 /// to match predecessors' live out stack.
 void FPS::setupBlockStack() {
   DEBUG(dbgs() << "\nSetting up live-ins for BB#" << MBB->getNumber()
                << " derived from " << MBB->getName() << ".\n");
   StackTop = 0;
-  const LiveBundle &Bundle = LiveBundles[BlockBundle.lookup(MBB).first];
+  // Get the live-in bundle for MBB.
+  const LiveBundle &Bundle =
+    LiveBundles[Bundles->getBundle(MBB->getNumber(), false)];
 
   if (!Bundle.Mask) {
     DEBUG(dbgs() << "Block has no FP live-ins.\n");
@@ -538,7 +464,8 @@ void FPS::finishBlockStack() {
   DEBUG(dbgs() << "Setting up live-outs for BB#" << MBB->getNumber()
                << " derived from " << MBB->getName() << ".\n");
 
-  unsigned BundleIdx = BlockBundle.lookup(MBB).second;
+  // Get MBB's live-out bundle.
+  unsigned BundleIdx = Bundles->getBundle(MBB->getNumber(), true);
   LiveBundle &Bundle = LiveBundles[BundleIdx];
 
   // We may need to kill and define some registers to match successors.
