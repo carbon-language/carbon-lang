@@ -33,9 +33,9 @@ namespace {
       initializeLoopInstSimplifyPass(*PassRegistry::getPassRegistry());
     }
 
-    bool runOnFunction(Function&);
+    bool runOnFunction(Function &);
 
-    virtual void getAnalysisUsage(AnalysisUsage& AU) const {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
@@ -57,10 +57,10 @@ Pass* llvm::createLoopInstSimplifyPass() {
   return new LoopInstSimplify();
 }
 
-bool LoopInstSimplify::runOnFunction(Function& F) {
-  DominatorTree* DT = getAnalysisIfAvailable<DominatorTree>();
-  LoopInfo* LI = &getAnalysis<LoopInfo>();
-  const TargetData* TD = getAnalysisIfAvailable<TargetData>();
+bool LoopInstSimplify::runOnFunction(Function &F) {
+  DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
+  LoopInfo *LI = &getAnalysis<LoopInfo>();
+  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
 
   bool Changed = false;
   bool LocalChanged;
@@ -70,10 +70,10 @@ bool LoopInstSimplify::runOnFunction(Function& F) {
     for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
          DE = df_end(&F.getEntryBlock()); DI != DE; ++DI)
       for (BasicBlock::iterator BI = DI->begin(), BE = DI->end(); BI != BE;) {
-        Instruction* I = BI++;
+        Instruction *I = BI++;
         // Don't bother simplifying unused instructions.
         if (!I->use_empty()) {
-          Value* V = SimplifyInstruction(I, TD, DT);
+          Value *V = SimplifyInstruction(I, TD, DT);
           if (V && LI->replacementPreservesLCSSAForm(I, V)) {
             I->replaceAllUsesWith(V);
             LocalChanged = true;
