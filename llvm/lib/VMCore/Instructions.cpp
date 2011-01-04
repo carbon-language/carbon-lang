@@ -2736,14 +2736,14 @@ void CmpInst::swapOperands() {
     cast<FCmpInst>(this)->swapOperands();
 }
 
-bool CmpInst::isCommutative() {
-  if (ICmpInst *IC = dyn_cast<ICmpInst>(this))
+bool CmpInst::isCommutative() const {
+  if (const ICmpInst *IC = dyn_cast<ICmpInst>(this))
     return IC->isCommutative();
   return cast<FCmpInst>(this)->isCommutative();
 }
 
-bool CmpInst::isEquality() {
-  if (ICmpInst *IC = dyn_cast<ICmpInst>(this))
+bool CmpInst::isEquality() const {
+  if (const ICmpInst *IC = dyn_cast<ICmpInst>(this))
     return IC->isEquality();
   return cast<FCmpInst>(this)->isEquality();
 }

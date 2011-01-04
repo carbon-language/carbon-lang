@@ -824,11 +824,11 @@ public:
 
   /// This is just a convenience that dispatches to the subclasses.
   /// @brief Determine if this CmpInst is commutative.
-  bool isCommutative();
+  bool isCommutative() const;
 
   /// This is just a convenience that dispatches to the subclasses.
   /// @brief Determine if this is an equals/not equals predicate.
-  bool isEquality();
+  bool isEquality() const;
 
   /// @returns true if the comparison is signed, false otherwise.
   /// @brief Determine if this instruction is using a signed comparison.
