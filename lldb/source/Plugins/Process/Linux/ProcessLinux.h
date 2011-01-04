@@ -71,9 +71,6 @@ public:
              const char *stdout_path,
              const char *stderr_path);
 
-    virtual void
-    DidLaunch();
-
     virtual lldb_private::Error
     DoResume();
 
