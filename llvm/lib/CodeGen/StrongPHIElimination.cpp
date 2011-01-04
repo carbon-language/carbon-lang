@@ -144,6 +144,10 @@ namespace {
     // sources.
     DenseMap<MachineBasicBlock*, std::vector<MachineInstr*> > PHISrcDefs;
 
+    // Maps a color to a pair of a MachineInstr* and a virtual register, which
+    // is the operand of that PHI corresponding to the current basic block.
+    DenseMap<unsigned, std::pair<MachineInstr*, unsigned> > CurrentPHIForColor;
+
     // FIXME: Can these two data structures be combined? Would a std::multimap
     // be any better?
 
@@ -567,12 +571,7 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
   // the predecessor block. The def of a PHI's destination register is processed
   // along with the other defs in a basic block.
 
-  // The map CurrentPHIForColor maps a color to a pair of a MachineInstr* and a
-  // virtual register, which is the operand of that PHI corresponding to the
-  // current basic block.
-  // FIXME: This should use a container that doesn't always perform heap
-  // allocation.
-  DenseMap<unsigned, std::pair<MachineInstr*, unsigned> > CurrentPHIForColor;
+  CurrentPHIForColor.clear();
 
   for (MachineBasicBlock::succ_iterator SI = MBB.succ_begin(),
        SE = MBB.succ_end(); SI != SE; ++SI) {
