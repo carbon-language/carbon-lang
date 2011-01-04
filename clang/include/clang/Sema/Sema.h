@@ -3011,7 +3011,7 @@ public:
 
   bool CheckTemplateArgument(NamedDecl *Param,
                              const TemplateArgumentLoc &Arg,
-                             TemplateDecl *Template,
+                             NamedDecl *Template,
                              SourceLocation TemplateLoc,
                              SourceLocation RAngleLoc,
                            llvm::SmallVectorImpl<TemplateArgument> &Converted,
@@ -3557,9 +3557,10 @@ public:
     /// \brief The point of instantiation within the source code.
     SourceLocation PointOfInstantiation;
 
-    /// \brief The template in which we are performing the instantiation,
-    /// for substitutions of prior template arguments.
-    TemplateDecl *Template;
+    /// \brief The template (or partial specialization) in which we are 
+    /// performing the instantiation, for substitutions of prior template 
+    /// arguments.
+    NamedDecl *Template;
 
     /// \brief The entity that is being instantiated.
     uintptr_t Entity;
@@ -3745,14 +3746,14 @@ public:
     /// \brief Note that we are substituting prior template arguments into a
     /// non-type or template template parameter.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
-                          TemplateDecl *Template,
+                          NamedDecl *Template,
                           NonTypeTemplateParmDecl *Param,
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs,
                           SourceRange InstantiationRange);
 
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
-                          TemplateDecl *Template,
+                          NamedDecl *Template,
                           TemplateTemplateParmDecl *Param,
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs,

@@ -2160,7 +2160,7 @@ Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
 /// template parameter.
 bool Sema::CheckTemplateArgument(NamedDecl *Param,
                                  const TemplateArgumentLoc &Arg,
-                                 TemplateDecl *Template,
+                                 NamedDecl *Template,
                                  SourceLocation TemplateLoc,
                                  SourceLocation RAngleLoc,
                             llvm::SmallVectorImpl<TemplateArgument> &Converted,
@@ -3940,6 +3940,10 @@ static bool CheckNonTypeClassTemplatePartialSpecializationArgs(Sema &S,
     // We can have a pack expansion of any of the bullets below.
     if (PackExpansionExpr *Expansion = dyn_cast<PackExpansionExpr>(ArgExpr))
       ArgExpr = Expansion->getPattern();
+
+    // Strip off any implicit casts we added as part of type checking.
+    while (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(ArgExpr))
+      ArgExpr = ICE->getSubExpr();
     
     // C++ [temp.class.spec]p8:
     //   A non-type argument is non-specialized if it is the name of a
@@ -3950,7 +3954,7 @@ static bool CheckNonTypeClassTemplatePartialSpecializationArgs(Sema &S,
     // specialized non-type arguments, so skip any non-specialized
     // arguments.
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ArgExpr))
-      if (llvm::isa<NonTypeTemplateParmDecl>(DRE->getDecl()))
+      if (isa<NonTypeTemplateParmDecl>(DRE->getDecl()))
         continue;
     
     // C++ [temp.class.spec]p9:

@@ -23,3 +23,28 @@ namespace DeductionForInstantiation {
   // FIXME: Extension of explicitly-specified arguments
   //  template void f0<short, int>(X<3, short&, int&, long&>);
 }
+
+namespace DeductionWithConversion {
+  template<char...> struct char_values {
+    static const unsigned value = 0;
+  };
+
+  template<int C1, char C3>
+  struct char_values<C1, 12, C3> {
+    static const unsigned value = 1;
+  };
+
+  int check0[char_values<1, 12, 3>::value == 1? 1 : -1];
+
+  template<int...> struct int_values {
+    static const unsigned value = 0;
+  };
+
+  template<unsigned char C1, unsigned char C3>
+  struct int_values<C1, 12, C3> {
+    static const unsigned value = 1;
+  };
+
+  int check1[int_values<256, 12, 3>::value == 0? 1 : -1];  
+  int check2[int_values<3, 12, 3>::value == 1? 1 : -1];  
+}

@@ -263,7 +263,7 @@ Sema::InstantiatingTemplate::InstantiatingTemplate(Sema &SemaRef,
 
 Sema::InstantiatingTemplate::
 InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
-                      TemplateDecl *Template,
+                      NamedDecl *Template,
                       NonTypeTemplateParmDecl *Param,
                       const TemplateArgument *TemplateArgs,
                       unsigned NumTemplateArgs,
@@ -286,7 +286,7 @@ InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
 
 Sema::InstantiatingTemplate::
 InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
-                      TemplateDecl *Template,
+                      NamedDecl *Template,
                       TemplateTemplateParmDecl *Param,
                       const TemplateArgument *TemplateArgs,
                       unsigned NumTemplateArgs,
@@ -490,13 +490,19 @@ void Sema::PrintInstantiationStack() {
       std::string Name;
       if (!Parm->getName().empty())
         Name = std::string(" '") + Parm->getName().str() + "'";
-                                        
+                    
+      TemplateParameterList *TemplateParams = 0;
+      if (TemplateDecl *Template = dyn_cast<TemplateDecl>(Active->Template))
+        TemplateParams = Template->getTemplateParameters();
+      else
+        TemplateParams =
+          cast<ClassTemplatePartialSpecializationDecl>(Active->Template)
+                                                      ->getTemplateParameters();
       Diags.Report(Active->PointOfInstantiation,
                    diag::note_prior_template_arg_substitution)
         << isa<TemplateTemplateParmDecl>(Parm)
         << Name
-        << getTemplateArgumentBindingsText(
-                                    Active->Template->getTemplateParameters(), 
+        << getTemplateArgumentBindingsText(TemplateParams, 
                                            Active->TemplateArgs, 
                                            Active->NumTemplateArgs)
         << Active->InstantiationRange;
@@ -504,10 +510,17 @@ void Sema::PrintInstantiationStack() {
     }
 
     case ActiveTemplateInstantiation::DefaultTemplateArgumentChecking: {
+      TemplateParameterList *TemplateParams = 0;
+      if (TemplateDecl *Template = dyn_cast<TemplateDecl>(Active->Template))
+        TemplateParams = Template->getTemplateParameters();
+      else
+        TemplateParams =
+          cast<ClassTemplatePartialSpecializationDecl>(Active->Template)
+                                                      ->getTemplateParameters();
+
       Diags.Report(Active->PointOfInstantiation,
                    diag::note_template_default_arg_checking)
-        << getTemplateArgumentBindingsText(
-                                     Active->Template->getTemplateParameters(), 
+        << getTemplateArgumentBindingsText(TemplateParams, 
                                            Active->TemplateArgs, 
                                            Active->NumTemplateArgs)
         << Active->InstantiationRange;
