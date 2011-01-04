@@ -85,26 +85,27 @@ LinuxThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
     return new RegisterContextLinux_x86_64(*this, frame);
 }
 
-bool
-LinuxThread::GetRawStopReason(StopInfo *stop_info)
+lldb::StopInfoSP
+LinuxThread::GetPrivateStopReason()
 {
-    stop_info->Clear();
+    lldb::StopInfoSP stop_info;
 
     switch (m_note)
     {
     default:
-        stop_info->SetStopReasonToNone();
         break;
 
     case eBreak:
-        stop_info->SetStopReasonWithBreakpointSiteID(m_breakpoint->GetID());
+        stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(
+            *this, m_breakpoint->GetID());
         break;
 
     case eTrace:
-        stop_info->SetStopReasonToTrace();
+        stop_info = StopInfo::CreateStopReasonToTrace(*this);
+        break;
     }
 
-    return true;
+    return stop_info;
 }
 
 bool
