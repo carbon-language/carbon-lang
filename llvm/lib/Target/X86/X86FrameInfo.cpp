@@ -153,7 +153,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
     if (ThisVal == (Is64Bit ? 8 : 4)) {
       // Use push / pop instead.
       unsigned Reg = isSub
-        ? (Is64Bit ? X86::RAX : X86::EAX)
+        ? (unsigned)(Is64Bit ? X86::RAX : X86::EAX)
         : findDeadCallerSavedReg(MBB, MBBI, TRI, Is64Bit);
       if (Reg) {
         Opc = isSub
