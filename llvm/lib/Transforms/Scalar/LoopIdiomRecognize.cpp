@@ -207,19 +207,22 @@ bool LoopIdiomRecognize::runOnLoopBlock(BasicBlock *BB, const SCEV *BECount,
   
   bool MadeChange = false;
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
-    // Look for store instructions, which may be memsets.
-    StoreInst *SI = dyn_cast<StoreInst>(I++);
-    if (SI == 0 || SI->isVolatile()) continue;
+    Instruction *Inst = I++;
+    // Look for store instructions, which may be optimized to memset/memcpy.
+    if (StoreInst *SI = dyn_cast<StoreInst>(Inst))  {
+      if (SI->isVolatile()) continue;
     
-    WeakVH InstPtr(SI);
-    if (!processLoopStore(SI, BECount)) continue;
+      WeakVH InstPtr(I);
+      if (!processLoopStore(SI, BECount)) continue;
+      MadeChange = true;
+      
+      // If processing the store invalidated our iterator, start over from the
+      // head of the loop.
+      if (InstPtr == 0)
+        I = BB->begin();
+      continue;
+    }
     
-    MadeChange = true;
-    
-    // If processing the store invalidated our iterator, start over from the
-    // head of the loop.
-    if (InstPtr == 0)
-      I = BB->begin();
   }
   
   return MadeChange;
