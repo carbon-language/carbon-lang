@@ -2600,7 +2600,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   // By default, atomic intrinsics are marked Legal and lowered. Targets
   // which don't support them directly, however, may want libcalls, in which
   // case they mark them Expand, and we get here.
-  // FIXME: Unimplemented for now. Add libcalls.
   case ISD::ATOMIC_SWAP:
   case ISD::ATOMIC_LOAD_ADD:
   case ISD::ATOMIC_LOAD_SUB:
