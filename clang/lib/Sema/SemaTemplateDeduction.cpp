@@ -1515,39 +1515,7 @@ FinishTemplateArgumentDeduction(Sema &S,
     = ClassTemplate->getTemplateParameters();
   for (unsigned I = 0, E = TemplateParams->size(); I != E; ++I) {
     TemplateArgument InstArg = ConvertedInstArgs.data()[I];
-
     Decl *Param = TemplateParams->getParam(I);
-
-    if (NonTypeTemplateParmDecl *NTTP
-        = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
-      // When the argument is an expression, check the expression result
-      // against the actual template parameter to get down to the canonical
-      // template argument.
-      Expr *InstExpr = 0;
-      if (InstArg.getKind() == TemplateArgument::Expression)
-        InstExpr = InstArg.getAsExpr();
-      else if (InstArg.getKind() == TemplateArgument::Integral) {
-        ExprResult InstExprFromArg
-          = S.BuildExpressionFromIntegralTemplateArgument(InstArg, 
-                                                          Info.getLocation());
-        if (InstExprFromArg.isInvalid()) {
-          Info.Param = makeTemplateParameter(Param);
-          Info.FirstArg = InstArg;
-          return Sema::TDK_SubstitutionFailure;
-        }
-        
-        InstExpr = InstExprFromArg.get();
-      }
-      
-      if (InstExpr) {
-        // FIXME: Variadic templates.
-        if (S.CheckTemplateArgument(NTTP, NTTP->getType(), InstExpr, InstArg)) {
-          Info.Param = makeTemplateParameter(Param);
-          Info.FirstArg = Partial->getTemplateArgs()[I];
-          return Sema::TDK_SubstitutionFailure;
-        }
-      }
-    }
 
     if (!isSameTemplateArg(S.Context, TemplateArgs[I], InstArg)) {
       Info.Param = makeTemplateParameter(Param);
