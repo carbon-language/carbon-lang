@@ -337,7 +337,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     // (ashr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // Compute the new bits that are at the top now.
-      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth);
+      uint64_t ShiftAmt = SA->getLimitedValue(BitWidth-1);
       
       // Signed shift right.
       APInt Mask2(Mask.shl(ShiftAmt));

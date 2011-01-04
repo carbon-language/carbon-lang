@@ -298,3 +298,40 @@ entry:
 }
 
 
+; PR8896
+@g_54 = external global [7 x i16]
+
+define void @test15(i32* %p_92) nounwind {
+entry:
+%0 = load i32* %p_92, align 4
+%1 = icmp ne i32 %0, 0
+%2 = zext i1 %1 to i32
+%3 = call i32 @func_14() nounwind
+%4 = trunc i32 %3 to i16
+%5 = sext i16 %4 to i32
+%6 = trunc i32 %5 to i16
+br i1 undef, label %"3", label %"5"
+
+"3":                                              ; preds = %entry
+%7 = sext i16 %6 to i32
+%8 = ashr i32 %7, -1649554541
+%9 = trunc i32 %8 to i16
+br label %"5"
+
+"5":                                              ; preds = %"3", %entry
+%10 = phi i16 [ %9, %"3" ], [ %6, %entry ]
+%11 = sext i16 %10 to i32
+%12 = xor i32 %2, %11
+%13 = sext i32 %12 to i64
+%14 = icmp ne i64 %13, 0
+br i1 %14, label %return, label %"7"
+
+"7":                                              ; preds = %"5"
+ret void
+
+return:                                           ; preds = %"5"
+ret void
+}
+
+declare i32 @func_14()
+
