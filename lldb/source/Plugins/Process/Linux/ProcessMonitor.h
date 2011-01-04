@@ -140,7 +140,7 @@ private:
     lldb::pid_t m_pid;
     int m_terminal_fd;
 
-    uint32_t m_monitor_handle;
+    uint32_t m_monitor_thread;
 
     lldb_private::Mutex m_server_mutex;
     int m_client_fd;
@@ -203,6 +203,9 @@ private:
 
     void
     DoOperation(Operation *op);
+
+    /// Stops the child monitor thread.
+    void StopMonitoringChildProcess();
 };
 
 #endif // #ifndef liblldb_ProcessMonitor_H_

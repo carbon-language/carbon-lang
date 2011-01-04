@@ -459,7 +459,7 @@ ProcessMonitor::ProcessMonitor(ProcessLinux *process,
       m_operation_thread(LLDB_INVALID_HOST_THREAD),
       m_pid(LLDB_INVALID_PROCESS_ID),
       m_terminal_fd(-1),
-      m_monitor_handle(0),
+      m_monitor_thread(LLDB_INVALID_HOST_THREAD),
       m_client_fd(-1),
       m_server_fd(-1)
 {
@@ -499,7 +499,7 @@ WAIT_AGAIN:
     }
 
     // Finally, start monitoring the child process for change in state.
-    if (!(m_monitor_handle = Host::StartMonitoringChildProcess(
+    if (!(m_monitor_thread = Host::StartMonitoringChildProcess(
               ProcessMonitor::MonitorCallback, this, GetPID(), true)))
     {
         error.SetErrorToGenericError();
@@ -510,7 +510,7 @@ WAIT_AGAIN:
 
 ProcessMonitor::~ProcessMonitor()
 {
-    Host::StopMonitoringChildProcess(m_monitor_handle);
+    StopMonitoringChildProcess();
     StopOperationThread();
 
     close(m_terminal_fd);
@@ -922,4 +922,17 @@ ProcessMonitor::DupDescriptor(const char *path, int fd, int flags)
         return false;
 
     return (dup2(fd, target_fd) == -1) ? false : true;
+}
+
+void
+ProcessMonitor::StopMonitoringChildProcess()
+{
+    lldb::thread_result_t thread_result;
+
+    if (m_monitor_thread != LLDB_INVALID_HOST_THREAD)
+    {
+        Host::ThreadCancel(m_monitor_thread, NULL);
+        Host::ThreadJoin(m_monitor_thread, &thread_result, NULL);
+        m_monitor_thread = LLDB_INVALID_HOST_THREAD;
+    }
 }
