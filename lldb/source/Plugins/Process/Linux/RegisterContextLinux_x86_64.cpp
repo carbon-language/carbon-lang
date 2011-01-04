@@ -644,7 +644,7 @@ RegisterContextLinux_x86_64::ConvertRegisterKindToRegisterNumber(uint32_t kind,
     }
     else if (kind == eRegisterKindLLDB)
     {
-        return reg;
+        return num;
     }
 
     return LLDB_INVALID_REGNUM;
