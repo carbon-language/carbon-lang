@@ -1169,8 +1169,8 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
                                           Unexpanded.data(), Unexpanded.size(),
                                           TemplateArgs, ShouldExpand, 
                                           NumExpansions)) {
-        continue;
         Invalid = true;
+        continue;
       }
       
       // If we should expand this pack expansion now, do so.

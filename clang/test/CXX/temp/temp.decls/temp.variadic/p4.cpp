@@ -36,9 +36,14 @@ template void initializer_list_expansion<1, 2, 3, 4, 5, 6>(); // expected-note{{
 
 // In a base-specifier-list (Clause 10); the pattern is a base-specifier.
 template<typename ...Mixins>
-struct HasMixins : public Mixins... { };
+struct HasMixins : public Mixins... { 
+  HasMixins();
+  HasMixins(const HasMixins&);
+  HasMixins(int i);
+};
 
-struct A { };
+struct A { }; // expected-note{{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const A' for 1st argument}} \
+// expected-note{{candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided}}
 struct B { };
 struct C { };
 struct D { };
@@ -51,6 +56,29 @@ HasMixins<> *checkNone = new HasMixins<>;
 
 template<typename Mixins>
 struct BrokenMixins : public Mixins... { }; // expected-error{{pack expansion does not contain any unexpanded parameter packs}}
+
+// In a mem-initializer-list (12.6.2); the pattern is a mem-initializer.
+template<typename ...Mixins>
+HasMixins<Mixins...>::HasMixins(): Mixins()... { }
+
+template<typename ...Mixins>
+HasMixins<Mixins...>::HasMixins(const HasMixins &other): Mixins(other)... { }
+
+template<typename ...Mixins>
+HasMixins<Mixins...>::HasMixins(int i): Mixins(i)... { } // expected-error{{no matching constructor for initialization of 'A'}}
+
+void test_has_mixins() {
+  HasMixins<A, B> ab;
+  HasMixins<A, B> ab2 = ab;
+  HasMixins<A, B> ab3(17); // expected-note{{in instantiation of member function 'HasMixins<A, B>::HasMixins' requested here}}
+}
+
+template<typename T>
+struct X {
+  T member;
+
+  X() : member()... { } // expected-error{{pack expansion for initialization of member 'member'}}
+};
 
 // In a template-argument-list (14.3); the pattern is a template-argument.
 template<typename ...Types>

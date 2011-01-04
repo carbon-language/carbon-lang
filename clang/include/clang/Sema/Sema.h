@@ -2541,7 +2541,8 @@ public:
                                     SourceLocation IdLoc,
                                     SourceLocation LParenLoc,
                                     Expr **Args, unsigned NumArgs,
-                                    SourceLocation RParenLoc);
+                                    SourceLocation RParenLoc,
+                                    SourceLocation EllipsisLoc);
 
   MemInitResult BuildMemberInitializer(ValueDecl *Member, Expr **Args,
                                        unsigned NumArgs, SourceLocation IdLoc,
@@ -2553,7 +2554,8 @@ public:
                                      Expr **Args, unsigned NumArgs,
                                      SourceLocation LParenLoc,
                                      SourceLocation RParenLoc,
-                                     CXXRecordDecl *ClassDecl);
+                                     CXXRecordDecl *ClassDecl,
+                                     SourceLocation EllipsisLoc);
 
   bool SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                    CXXBaseOrMemberInitializer **Initializers,

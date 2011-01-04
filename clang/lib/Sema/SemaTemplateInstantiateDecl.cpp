@@ -2362,6 +2362,69 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
     SourceLocation LParenLoc, RParenLoc;
     ASTOwningVector<Expr*> NewArgs(*this);
 
+    SourceLocation EllipsisLoc;
+    
+    if (Init->isPackExpansion()) {
+      // This is a pack expansion. We should expand it now.
+      TypeLoc BaseTL = Init->getBaseClassInfo()->getTypeLoc();
+      llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+      collectUnexpandedParameterPacks(BaseTL, Unexpanded);
+      bool ShouldExpand = false;
+      unsigned NumExpansions = 0;
+      if (CheckParameterPacksForExpansion(Init->getEllipsisLoc(), 
+                                          BaseTL.getSourceRange(),
+                                          Unexpanded.data(), 
+                                          Unexpanded.size(),
+                                          TemplateArgs, ShouldExpand, 
+                                          NumExpansions)) {
+        AnyErrors = true;
+        New->setInvalidDecl();
+        continue;
+      }
+      assert(ShouldExpand && "Partial instantiation of base initializer?");
+      
+      // Loop over all of the arguments in the argument pack(s), 
+      for (unsigned I = 0; I != NumExpansions; ++I) {
+        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(*this, I);
+
+        // Instantiate the initializer.
+        if (InstantiateInitializer(*this, Init->getInit(), TemplateArgs, 
+                                   LParenLoc, NewArgs, RParenLoc)) {
+          AnyErrors = true;
+          break;
+        }
+
+        // Instantiate the base type.
+        TypeSourceInfo *BaseTInfo = SubstType(Init->getBaseClassInfo(), 
+                                              TemplateArgs, 
+                                              Init->getSourceLocation(), 
+                                              New->getDeclName());
+        if (!BaseTInfo) {
+          AnyErrors = true;
+          break;
+        }
+
+        // Build the initializer.
+        MemInitResult NewInit = BuildBaseInitializer(BaseTInfo->getType(), 
+                                                     BaseTInfo,
+                                                     (Expr **)NewArgs.data(),
+                                                     NewArgs.size(),
+                                                     Init->getLParenLoc(),
+                                                     Init->getRParenLoc(),
+                                                     New->getParent(),
+                                                     SourceLocation());
+        if (NewInit.isInvalid()) {
+          AnyErrors = true;
+          break;
+        }
+        
+        NewInits.push_back(NewInit.get());
+        NewArgs.clear();
+      }
+      
+      continue;
+    }
+
     // Instantiate the initializer.
     if (InstantiateInitializer(*this, Init->getInit(), TemplateArgs, 
                                LParenLoc, NewArgs, RParenLoc)) {
@@ -2386,7 +2449,8 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                                      NewArgs.size(),
                                      Init->getLParenLoc(),
                                      Init->getRParenLoc(),
-                                     New->getParent());
+                                     New->getParent(),
+                                     EllipsisLoc);
     } else if (Init->isMemberInitializer()) {
       FieldDecl *Member = cast<FieldDecl>(FindInstantiatedDecl(
                                                      Init->getMemberLocation(),

@@ -1122,11 +1122,14 @@ public:
 /// @endcode
 class CXXBaseOrMemberInitializer {
   /// \brief Either the base class name (stored as a TypeSourceInfo*), an normal
-  /// field (FieldDecl) or an anonymous field (IndirectFieldDecl*) being initialized.
-  llvm::PointerUnion3<TypeSourceInfo *, FieldDecl *, IndirectFieldDecl *> BaseOrMember;
+  /// field (FieldDecl) or an anonymous field (IndirectFieldDecl*) being 
+  /// initialized.
+  llvm::PointerUnion3<TypeSourceInfo *, FieldDecl *, IndirectFieldDecl *> 
+    BaseOrMember;
   
-  /// \brief The source location for the field name.
-  SourceLocation MemberLocation;
+  /// \brief The source location for the field name or, for a base initializer
+  /// pack expansion, the location of the ellipsis.
+  SourceLocation MemberOrEllipsisLocation;
   
   /// \brief The argument used to initialize the base or member, which may
   /// end up constructing an object (when multiple arguments are involved).
@@ -1168,7 +1171,8 @@ public:
                              TypeSourceInfo *TInfo, bool IsVirtual,
                              SourceLocation L, 
                              Expr *Init,
-                             SourceLocation R);
+                             SourceLocation R,
+                             SourceLocation EllipsisLoc);
 
   /// CXXBaseOrMemberInitializer - Creates a new member initializer.
   explicit
@@ -1213,6 +1217,17 @@ public:
     return BaseOrMember.is<IndirectFieldDecl*>();
   }
 
+  /// \brief Determine whether this initializer is a pack expansion.
+  bool isPackExpansion() const { 
+    return isBaseInitializer() && MemberOrEllipsisLocation.isValid(); 
+  }
+  
+  // \brief For a pack expansion, returns the location of the ellipsis.
+  SourceLocation getEllipsisLoc() const {
+    assert(isPackExpansion() && "Initializer is not a pack expansion");
+    return MemberOrEllipsisLocation;
+  }
+           
   /// If this is a base class initializer, returns the type of the 
   /// base class with location information. Otherwise, returns an NULL
   /// type location.
@@ -1261,7 +1276,7 @@ public:
   }
 
   SourceLocation getMemberLocation() const { 
-    return MemberLocation;
+    return MemberOrEllipsisLocation;
   }
   
   /// \brief Determine the source location of the initializer.

@@ -1862,6 +1862,8 @@ def err_pack_expansion_without_parameter_packs : Error<
 def err_pack_expansion_length_conflict : Error<
   "pack expansion contains parameter packs %0 and %1 that have different "
   "lengths (%2 vs. %3)">;
+def err_pack_expansion_member_init : Error<
+  "pack expansion for initialization of member %0">;
 
 def err_function_parameter_pack_without_parameter_packs : Error<
   "type %0 of function parameter pack does not contain any unexpanded "

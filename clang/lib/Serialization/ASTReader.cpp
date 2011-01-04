@@ -4325,7 +4325,7 @@ ASTReader::ReadCXXBaseOrMemberInitializers(PerFileData &F,
         else
           Member = cast<FieldDecl>(GetDecl(Record[Idx++]));
       }
-      SourceLocation MemberLoc = ReadSourceLocation(F, Record, Idx);
+      SourceLocation MemberOrEllipsisLoc = ReadSourceLocation(F, Record, Idx);
       Expr *Init = ReadExpr(F);
       SourceLocation LParenLoc = ReadSourceLocation(F, Record, Idx);
       SourceLocation RParenLoc = ReadSourceLocation(F, Record, Idx);
@@ -4345,18 +4345,22 @@ ASTReader::ReadCXXBaseOrMemberInitializers(PerFileData &F,
       if (IsBaseInitializer) {
         BOMInit = new (C) CXXBaseOrMemberInitializer(C, BaseClassInfo,
                                                      IsBaseVirtual, LParenLoc,
-                                                     Init, RParenLoc);
+                                                     Init, RParenLoc,
+                                                     MemberOrEllipsisLoc);
       } else if (IsWritten) {
         if (Member)
-          BOMInit = new (C) CXXBaseOrMemberInitializer(C, Member, MemberLoc,
+          BOMInit = new (C) CXXBaseOrMemberInitializer(C, Member, 
+                                                       MemberOrEllipsisLoc,
                                                        LParenLoc, Init,
                                                        RParenLoc);
         else 
           BOMInit = new (C) CXXBaseOrMemberInitializer(C, IndirectMember,
-                                                       MemberLoc, LParenLoc,
+                                                       MemberOrEllipsisLoc,
+                                                       LParenLoc,
                                                        Init, RParenLoc);
       } else {
-        BOMInit = CXXBaseOrMemberInitializer::Create(C, Member, MemberLoc,
+        BOMInit = CXXBaseOrMemberInitializer::Create(C, Member, 
+                                                     MemberOrEllipsisLoc,
                                                      LParenLoc, Init, RParenLoc,
                                                      Indices.data(),
                                                      Indices.size());

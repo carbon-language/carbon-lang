@@ -1002,8 +1002,9 @@ bool CXXMethodDecl::hasInlineBody() const {
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
                            TypeSourceInfo *TInfo, bool IsVirtual,
-                           SourceLocation L, Expr *Init, SourceLocation R)
-  : BaseOrMember(TInfo), Init(Init), 
+                           SourceLocation L, Expr *Init, SourceLocation R,
+                           SourceLocation EllipsisLoc)
+  : BaseOrMember(TInfo), MemberOrEllipsisLocation(EllipsisLoc), Init(Init), 
     LParenLoc(L), RParenLoc(R), IsVirtual(IsVirtual), IsWritten(false),
     SourceOrderOrNumArrayIndices(0)
 {
@@ -1013,7 +1014,7 @@ CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
                            FieldDecl *Member, SourceLocation MemberLoc,
                            SourceLocation L, Expr *Init, SourceLocation R)
-  : BaseOrMember(Member), MemberLocation(MemberLoc), Init(Init),
+  : BaseOrMember(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
     LParenLoc(L), RParenLoc(R), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
@@ -1023,7 +1024,7 @@ CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(ASTContext &Context,
                            IndirectFieldDecl *Member, SourceLocation MemberLoc,
                            SourceLocation L, Expr *Init, SourceLocation R)
-  : BaseOrMember(Member), MemberLocation(MemberLoc), Init(Init),
+  : BaseOrMember(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
     LParenLoc(L), RParenLoc(R), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
@@ -1035,7 +1036,7 @@ CXXBaseOrMemberInitializer(ASTContext &Context,
                            SourceLocation L, Expr *Init, SourceLocation R,
                            VarDecl **Indices,
                            unsigned NumIndices)
-  : BaseOrMember(Member), MemberLocation(MemberLoc), Init(Init), 
+  : BaseOrMember(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init), 
     LParenLoc(L), RParenLoc(R), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(NumIndices)
 {

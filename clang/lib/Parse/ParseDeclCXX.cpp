@@ -1739,8 +1739,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 ///          ':' mem-initializer-list
 ///
 /// [C++]  mem-initializer-list:
-///          mem-initializer
-///          mem-initializer , mem-initializer-list
+///          mem-initializer ...[opt]
+///          mem-initializer ...[opt] , mem-initializer-list
 void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
   assert(Tok.is(tok::colon) && "Constructor initializer always starts with ':'");
 
@@ -1839,10 +1839,15 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
+  SourceLocation EllipsisLoc;
+  if (Tok.is(tok::ellipsis))
+    EllipsisLoc = ConsumeToken();
+  
   return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
                                      TemplateTypeTy, IdLoc,
                                      LParenLoc, ArgExprs.take(),
-                                     ArgExprs.size(), RParenLoc);
+                                     ArgExprs.size(), RParenLoc,
+                                     EllipsisLoc);
 }
 
 /// ParseExceptionSpecification - Parse a C++ exception-specification
