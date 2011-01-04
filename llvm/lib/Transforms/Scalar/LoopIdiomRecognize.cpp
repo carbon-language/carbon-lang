@@ -39,6 +39,7 @@
 
 #define DEBUG_TYPE "loop-idiom"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
@@ -72,9 +73,11 @@ namespace {
                         SmallVectorImpl<BasicBlock*> &ExitBlocks);
 
     bool processLoopStore(StoreInst *SI, const SCEV *BECount);
+    bool processLoopMemSet(MemSetInst *MSI, const SCEV *BECount);
     
-    bool processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
-                                      Value *SplatValue,
+    bool processLoopStoreOfSplatValue(Value *DestPtr, unsigned StoreSize,
+                                      unsigned StoreAlignment,
+                                      Value *SplatValue, Instruction *TheStore,
                                       const SCEVAddRecExpr *Ev,
                                       const SCEV *BECount);
     bool processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
@@ -210,27 +213,39 @@ bool LoopIdiomRecognize::runOnLoopBlock(BasicBlock *BB, const SCEV *BECount,
     Instruction *Inst = I++;
     // Look for store instructions, which may be optimized to memset/memcpy.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst))  {
-      if (SI->isVolatile()) continue;
-    
       WeakVH InstPtr(I);
       if (!processLoopStore(SI, BECount)) continue;
       MadeChange = true;
       
       // If processing the store invalidated our iterator, start over from the
-      // head of the loop.
+      // top of the block.
       if (InstPtr == 0)
         I = BB->begin();
       continue;
     }
     
+    // Look for memset instructions, which may be optimized to a larger memset.
+    if (MemSetInst *MSI = dyn_cast<MemSetInst>(Inst))  {
+      WeakVH InstPtr(I);
+      if (!processLoopMemSet(MSI, BECount)) continue;
+      MadeChange = true;
+      
+      // If processing the memset invalidated our iterator, start over from the
+      // top of the block.
+      if (InstPtr == 0)
+        I = BB->begin();
+      continue;
+    }
   }
   
   return MadeChange;
 }
 
 
-/// scanBlock - Look over a block to see if we can promote anything out of it.
+/// processLoopStore - See if this store can be promoted to a memset or memcpy.
 bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
+  if (SI->isVolatile()) return false;
+
   Value *StoredVal = SI->getValueOperand();
   Value *StorePtr = SI->getPointerOperand();
   
@@ -261,8 +276,8 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   // turned into a memset of i8 -1, assuming that all the consequtive bytes
   // are stored.  A store of i32 0x01020304 can never be turned into a memset.
   if (Value *SplatValue = isBytewiseValue(StoredVal))
-    if (processLoopStoreOfSplatValue(SI, StoreSize, SplatValue, StoreEv,
-                                     BECount))
+    if (processLoopStoreOfSplatValue(StorePtr, StoreSize, SI->getAlignment(),
+                                     SplatValue, SI, StoreEv, BECount))
       return true;
 
   // If the stored value is a strided load in the same loop with the same stride
@@ -281,13 +296,48 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   return false;
 }
 
+/// processLoopMemSet - See if this memset can be promoted to a large memset.
+bool LoopIdiomRecognize::
+processLoopMemSet(MemSetInst *MSI, const SCEV *BECount) {
+  // We can only handle non-volatile memsets with a constant size.
+  if (MSI->isVolatile() || !isa<ConstantInt>(MSI->getLength())) return false;
+
+  Value *Pointer = MSI->getDest();
+  
+  // See if the pointer expression is an AddRec like {base,+,1} on the current
+  // loop, which indicates a strided store.  If we have something else, it's a
+  // random store we can't handle.
+  const SCEVAddRecExpr *Ev = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(Pointer));
+  if (Ev == 0 || Ev->getLoop() != CurLoop || !Ev->isAffine())
+    return false;
+
+  // Reject memsets that are so large that they overflow an unsigned.
+  uint64_t SizeInBytes = cast<ConstantInt>(MSI->getLength())->getZExtValue();
+  if ((SizeInBytes >> 32) != 0)
+    return false;
+  
+  // Check to see if the stride matches the size of the memset.  If so, then we
+  // know that every byte is touched in the loop.
+  const SCEVConstant *Stride = dyn_cast<SCEVConstant>(Ev->getOperand(1));
+  
+  // TODO: Could also handle negative stride here someday, that will require the
+  // validity check in mayLoopAccessLocation to be updated though.
+  if (Stride == 0 || MSI->getLength() != Stride->getValue())
+    return false;
+  
+  return processLoopStoreOfSplatValue(Pointer, (unsigned)SizeInBytes,
+                                      MSI->getAlignment(), MSI->getValue(),
+                                      MSI, Ev, BECount);
+}
+
+
 /// mayLoopAccessLocation - Return true if the specified loop might access the
 /// specified pointer location, which is a loop-strided access.  The 'Access'
 /// argument specifies what the verboten forms of access are (read or write).
 static bool mayLoopAccessLocation(Value *Ptr,AliasAnalysis::ModRefResult Access,
                                   Loop *L, const SCEV *BECount,
                                   unsigned StoreSize, AliasAnalysis &AA,
-                                  StoreInst *IgnoredStore) {
+                                  Instruction *IgnoredStore) {
   // Get the location that may be stored across the loop.  Since the access is
   // strided positively through memory, we say that the modified location starts
   // at the pointer and has infinite size.
@@ -317,8 +367,9 @@ static bool mayLoopAccessLocation(Value *Ptr,AliasAnalysis::ModRefResult Access,
 /// processLoopStoreOfSplatValue - We see a strided store of a memsetable value.
 /// If we can transform this into a memset in the loop preheader, do so.
 bool LoopIdiomRecognize::
-processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
-                             Value *SplatValue,
+processLoopStoreOfSplatValue(Value *DestPtr, unsigned StoreSize, 
+                             unsigned StoreAlignment, Value *SplatValue, 
+                             Instruction *TheStore,
                              const SCEVAddRecExpr *Ev, const SCEV *BECount) {
   // Verify that the stored value is loop invariant.  If not, we can't promote
   // the memset.
@@ -329,9 +380,9 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
   // this into a memset in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
   // or write to the aliased location.  Check for an alias.
-  if (mayLoopAccessLocation(SI->getPointerOperand(), AliasAnalysis::ModRef,
+  if (mayLoopAccessLocation(DestPtr, AliasAnalysis::ModRef,
                             CurLoop, BECount,
-                            StoreSize, getAnalysis<AliasAnalysis>(), SI))
+                            StoreSize, getAnalysis<AliasAnalysis>(), TheStore))
     return false;
   
   // Okay, everything looks good, insert the memset.
@@ -344,14 +395,14 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
   // header.  Just insert code for it in the preheader.
   SCEVExpander Expander(*SE);
   
-  unsigned AddrSpace = SI->getPointerAddressSpace();
+  unsigned AddrSpace = cast<PointerType>(DestPtr->getType())->getAddressSpace();
   Value *BasePtr = 
     Expander.expandCodeFor(Ev->getStart(), Builder.getInt8PtrTy(AddrSpace),
                            Preheader->getTerminator());
   
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
-  const Type *IntPtr = TD->getIntPtrType(SI->getContext());
+  const Type *IntPtr = TD->getIntPtrType(SplatValue->getContext());
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
   
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
@@ -364,15 +415,15 @@ processLoopStoreOfSplatValue(StoreInst *SI, unsigned StoreSize,
     Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());
   
   Value *NewCall =
-    Builder.CreateMemSet(BasePtr, SplatValue, NumBytes, SI->getAlignment());
+    Builder.CreateMemSet(BasePtr, SplatValue, NumBytes, StoreAlignment);
   
   DEBUG(dbgs() << "  Formed memset: " << *NewCall << "\n"
-               << "    from store to: " << *Ev << " at: " << *SI << "\n");
+               << "    from store to: " << *Ev << " at: " << *TheStore << "\n");
   (void)NewCall;
   
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
-  DeleteDeadInstruction(SI, *SE);
+  DeleteDeadInstruction(TheStore, *SE);
   ++NumMemSet;
   return true;
 }

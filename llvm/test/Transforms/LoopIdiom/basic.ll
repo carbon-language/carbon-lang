@@ -240,3 +240,36 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK: ret void
 }
 
+; Two dimensional nested loop should be promoted to one big memset.
+define void @test10(i8* %X) nounwind ssp {
+entry:
+  br label %bb.nph
+
+bb.nph:                                           ; preds = %entry, %for.inc10
+  %i.04 = phi i32 [ 0, %entry ], [ %inc12, %for.inc10 ]
+  br label %for.body5
+
+for.body5:                                        ; preds = %for.body5, %bb.nph
+  %j.02 = phi i32 [ 0, %bb.nph ], [ %inc, %for.body5 ]
+  %mul = mul nsw i32 %i.04, 100
+  %add = add nsw i32 %j.02, %mul
+  %idxprom = sext i32 %add to i64
+  %arrayidx = getelementptr inbounds i8* %X, i64 %idxprom
+  store i8 0, i8* %arrayidx, align 1
+  %inc = add nsw i32 %j.02, 1
+  %cmp4 = icmp eq i32 %inc, 100
+  br i1 %cmp4, label %for.inc10, label %for.body5
+
+for.inc10:                                        ; preds = %for.body5
+  %inc12 = add nsw i32 %i.04, 1
+  %cmp = icmp eq i32 %inc12, 100
+  br i1 %cmp, label %for.end13, label %bb.nph
+
+for.end13:                                        ; preds = %for.inc10
+  ret void
+; CHECK: @test10
+; CHECK: entry:
+; CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* %X, i8 0, i64 10000, i32 1, i1 false)
+; CHECK-NOT: store
+; CHECK: ret void
+}
