@@ -16,6 +16,14 @@
 using namespace llvm;
 using namespace llvm::sys;
 
+#define ASSERT_NO_ERROR(x) \
+  if (error_code ec = x) { \
+    SmallString<128> Message; \
+    GTEST_FATAL_FAILURE_((Twine(#x) + ": did not return errc::success.\n" + \
+                         "error message: " + \
+                      x.message()).toNullTerminatedStringRef(Message).data()); \
+  } else {}
+
 namespace {
 
 TEST(Support, Path) {
@@ -100,9 +108,9 @@ TEST(Support, Path) {
     path::is_absolute(*i);
     path::is_relative(*i);
 
-    SmallString<16> temp_store;
+    SmallString<128> temp_store;
     temp_store = *i;
-    ASSERT_FALSE(fs::make_absolute(temp_store));
+    ASSERT_NO_ERROR(fs::make_absolute(temp_store));
     temp_store = *i;
     path::remove_filename(temp_store);
 
@@ -114,58 +122,58 @@ TEST(Support, Path) {
     EXPECT_EQ(*(--sys::path::end(filename)), (stem + ext).str());
 
     path::native(*i, temp_store);
-
-    outs().flush();
   }
 
   // Create a temp file.
   int FileDescriptor;
   SmallString<64> TempPath;
-  ASSERT_FALSE(fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
+  ASSERT_NO_ERROR(
+    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
 
   // Make sure it exists.
   bool TempFileExists;
-  ASSERT_FALSE(sys::fs::exists(Twine(TempPath), TempFileExists));
+  ASSERT_NO_ERROR(sys::fs::exists(Twine(TempPath), TempFileExists));
   EXPECT_TRUE(TempFileExists);
 
   // Create another temp tile.
   int FD2;
   SmallString<64> TempPath2;
-  ASSERT_FALSE(fs::unique_file("%%-%%-%%-%%.temp", FD2, TempPath2));
+  ASSERT_NO_ERROR(fs::unique_file("%%-%%-%%-%%.temp", FD2, TempPath2));
   ASSERT_NE(TempPath.str(), TempPath2.str());
 
   // Try to copy the first to the second.
-  EXPECT_EQ(fs::copy_file(Twine(TempPath), Twine(TempPath2)), errc::file_exists);
+  EXPECT_EQ(
+    fs::copy_file(Twine(TempPath), Twine(TempPath2)), errc::file_exists);
 
   ::close(FD2);
   // Try again with the proper options.
-  ASSERT_FALSE(fs::copy_file(Twine(TempPath), Twine(TempPath2),
-                             fs::copy_option::overwrite_if_exists));
+  ASSERT_NO_ERROR(fs::copy_file(Twine(TempPath), Twine(TempPath2),
+                                fs::copy_option::overwrite_if_exists));
   // Remove Temp2.
-  ASSERT_FALSE(fs::remove(Twine(TempPath2), TempFileExists));
+  ASSERT_NO_ERROR(fs::remove(Twine(TempPath2), TempFileExists));
   EXPECT_TRUE(TempFileExists);
 
   // Make sure Temp2 doesn't exist.
-  ASSERT_FALSE(fs::exists(Twine(TempPath2), TempFileExists));
+  ASSERT_NO_ERROR(fs::exists(Twine(TempPath2), TempFileExists));
   EXPECT_FALSE(TempFileExists);
 
   // Create a hard link to Temp1.
-  ASSERT_FALSE(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));
+  ASSERT_NO_ERROR(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));
   bool equal;
-  ASSERT_FALSE(fs::equivalent(Twine(TempPath), Twine(TempPath2), equal));
+  ASSERT_NO_ERROR(fs::equivalent(Twine(TempPath), Twine(TempPath2), equal));
   EXPECT_TRUE(equal);
 
   // Remove Temp1.
   ::close(FileDescriptor);
-  ASSERT_FALSE(fs::remove(Twine(TempPath), TempFileExists));
+  ASSERT_NO_ERROR(fs::remove(Twine(TempPath), TempFileExists));
   EXPECT_TRUE(TempFileExists);
 
   // Remove the hard link.
-  ASSERT_FALSE(fs::remove(Twine(TempPath2), TempFileExists));
+  ASSERT_NO_ERROR(fs::remove(Twine(TempPath2), TempFileExists));
   EXPECT_TRUE(TempFileExists);
 
   // Make sure Temp1 doesn't exist.
-  ASSERT_FALSE(fs::exists(Twine(TempPath), TempFileExists));
+  ASSERT_NO_ERROR(fs::exists(Twine(TempPath), TempFileExists));
   EXPECT_FALSE(TempFileExists);
 
   // I've yet to do directory iteration on Unix.
