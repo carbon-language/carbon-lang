@@ -1670,14 +1670,9 @@ bool GVN::processInstruction(Instruction *I,
     return Changed;
   }
 
-  uint32_t NextNum = VN.getNextUnusedValueNumber();
-  unsigned Num = VN.lookup_or_add(I);
-
   // For conditions branches, we can perform simple conditional propagation on
   // the condition value itself.
   if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
-    insert_table(Num, I, I->getParent());
-  
     if (!BI->isConditional() || isa<Constant>(BI->getCondition()))
       return false;
     
@@ -1698,6 +1693,9 @@ bool GVN::processInstruction(Instruction *I,
     
     return false;
   }
+
+  uint32_t NextNum = VN.getNextUnusedValueNumber();
+  unsigned Num = VN.lookup_or_add(I);
 
   // Allocations are always uniquely numbered, so we can save time and memory
   // by fast failing them.
