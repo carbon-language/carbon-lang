@@ -12,9 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-instsimplify"
-#include "llvm/Analysis/LoopPass.h"
+#include "llvm/Function.h"
+#include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -24,19 +26,17 @@ using namespace llvm;
 STATISTIC(NumSimplified, "Number of redundant instructions simplified");
 
 namespace {
-  class LoopInstSimplify : public LoopPass {
+  class LoopInstSimplify : public FunctionPass {
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopInstSimplify() : LoopPass(ID) {
+    LoopInstSimplify() : FunctionPass(ID) {
       initializeLoopInstSimplifyPass(*PassRegistry::getPassRegistry());
     }
 
-    bool runOnLoop(Loop*, LPPassManager&);
+    bool runOnFunction(Function&);
 
     virtual void getAnalysisUsage(AnalysisUsage& AU) const {
       AU.setPreservesCFG();
-      AU.addRequired<DominatorTree>();
-      AU.addPreserved<DominatorTree>();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
       AU.addPreservedID(LCSSAID);
@@ -57,9 +57,9 @@ Pass* llvm::createLoopInstSimplifyPass() {
   return new LoopInstSimplify();
 }
 
-bool LoopInstSimplify::runOnLoop(Loop* L, LPPassManager& LPM) {
-  DominatorTree* DT = &getAnalysis<DominatorTree>();
-  const LoopInfo* LI = &getAnalysis<LoopInfo>();
+bool LoopInstSimplify::runOnFunction(Function& F) {
+  DominatorTree* DT = getAnalysisIfAvailable<DominatorTree>();
+  LoopInfo* LI = &getAnalysis<LoopInfo>();
   const TargetData* TD = getAnalysisIfAvailable<TargetData>();
 
   bool Changed = false;
@@ -67,24 +67,14 @@ bool LoopInstSimplify::runOnLoop(Loop* L, LPPassManager& LPM) {
   do {
     LocalChanged = false;
 
-    SmallPtrSet<BasicBlock*, 32> Visited;
-    SmallVector<BasicBlock*, 32> VisitStack;
-
-    VisitStack.push_back(L->getHeader());
-
-    while (!VisitStack.empty()) {
-      BasicBlock* BB = VisitStack.back();
-      VisitStack.pop_back();
-
-      if (Visited.count(BB))
-        continue;
-      Visited.insert(BB);
-
-      for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
+    for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
+         DE = df_end(&F.getEntryBlock()); DI != DE; ++DI)
+      for (BasicBlock::iterator BI = DI->begin(), BE = DI->end(); BI != BE;) {
         Instruction* I = BI++;
         // Don't bother simplifying unused instructions.
         if (!I->use_empty()) {
-          if (Value* V = SimplifyInstruction(I, TD, DT)) {
+          Value* V = SimplifyInstruction(I, TD, DT);
+          if (V && LI->replacementPreservesLCSSAForm(I, V)) {
             I->replaceAllUsesWith(V);
             LocalChanged = true;
             ++NumSimplified;
@@ -92,21 +82,9 @@ bool LoopInstSimplify::runOnLoop(Loop* L, LPPassManager& LPM) {
         }
         LocalChanged |= RecursivelyDeleteTriviallyDeadInstructions(I);
       }
-      Changed |= LocalChanged;
 
-      DomTreeNode* Node = DT->getNode(BB);
-      const std::vector<DomTreeNode*>& Children = Node->getChildren();
-      for (unsigned i = 0; i < Children.size(); ++i) {
-        // Only visit children that are in the same loop.
-        BasicBlock* ChildBB = Children[i]->getBlock();
-        if (!Visited.count(ChildBB) && LI->getLoopFor(ChildBB) == L)
-          VisitStack.push_back(ChildBB);
-      }
-    }
+    Changed |= LocalChanged;
   } while (LocalChanged);
-
-  // Nothing that SimplifyInstruction() does should invalidate LCSSA form.
-  assert(L->isLCSSAForm(*DT));
 
   return Changed;
 }
