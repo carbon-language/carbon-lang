@@ -1677,6 +1677,55 @@ getTrivialTemplateArgumentLoc(Sema &S,
   return TemplateArgumentLoc();
 }
 
+/// \brief Convert the given deduced template argument and add it to the set of
+/// fully-converted template arguments.
+static bool ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param, 
+                                           DeducedTemplateArgument Arg,
+                                         FunctionTemplateDecl *FunctionTemplate, 
+                                           QualType NTTPType, 
+                                           TemplateDeductionInfo &Info,
+                       llvm::SmallVectorImpl<TemplateArgument> &Output) {
+  if (Arg.getKind() == TemplateArgument::Pack) {
+    // This is a template argument pack, so check each of its arguments against
+    // the template parameter.
+    llvm::SmallVector<TemplateArgument, 2> PackedArgsBuilder;
+    for (TemplateArgument::pack_iterator PA = Arg.pack_begin(), 
+                                      PAEnd = Arg.pack_end();
+         PA != PAEnd; ++PA) {
+      DeducedTemplateArgument InnerArg(*PA);
+      InnerArg.setDeducedFromArrayBound(Arg.wasDeducedFromArrayBound());
+      if (ConvertDeducedTemplateArgument(S, Param, InnerArg, FunctionTemplate, 
+                                         NTTPType, Info, PackedArgsBuilder))
+        return true;
+    }
+    
+    // Create the resulting argument pack.
+    TemplateArgument *PackedArgs = 0;
+    if (!PackedArgsBuilder.empty()) {
+      PackedArgs = new (S.Context) TemplateArgument[PackedArgsBuilder.size()];
+      std::copy(PackedArgsBuilder.begin(), PackedArgsBuilder.end(), PackedArgs);
+    }
+    Output.push_back(TemplateArgument(PackedArgs, PackedArgsBuilder.size()));
+    return false;
+  }
+  
+  // Convert the deduced template argument into a template
+  // argument that we can check, almost as if the user had written
+  // the template argument explicitly.
+  TemplateArgumentLoc ArgLoc = getTrivialTemplateArgumentLoc(S, Arg, NTTPType,
+                                                           Info.getLocation());
+
+  // Check the template argument, converting it as necessary.
+  return S.CheckTemplateArgument(Param, ArgLoc,
+                                 FunctionTemplate,
+                                 FunctionTemplate->getLocation(),
+                                 FunctionTemplate->getSourceRange().getEnd(),
+                                 Output,
+                                 Arg.wasDeducedFromArrayBound()
+                                  ? Sema::CTAK_DeducedFromArrayBound 
+                                  : Sema::CTAK_Deduced);
+}
+
 /// \brief Finish template argument deduction for a function template,
 /// checking the deduced template arguments for completeness and forming
 /// the function template specialization.
@@ -1708,9 +1757,8 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   //   [...] or if any template argument remains neither deduced nor
   //   explicitly specified, template argument deduction fails.
   llvm::SmallVector<TemplateArgument, 4> Builder;
-  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {    
-    // FIXME: Variadic templates. Unwrap argument packs?
-    NamedDecl *Param = FunctionTemplate->getTemplateParameters()->getParam(I);
+  for (unsigned I = 0, N = TemplateParams->size(); I != N; ++I) {
+    NamedDecl *Param = TemplateParams->getParam(I);
     
     if (!Deduced[I].isNull()) {
       if (I < NumExplicitlySpecified) {
@@ -1730,49 +1778,32 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
       QualType NTTPType;
       if (NonTypeTemplateParmDecl *NTTP 
                                 = dyn_cast<NonTypeTemplateParmDecl>(Param)) { 
-        if (Deduced[I].getKind() == TemplateArgument::Declaration) {
-          NTTPType = NTTP->getType();
-          if (NTTPType->isDependentType()) {
-            TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack, 
-                                              Builder.data(), Builder.size());
-            NTTPType = SubstType(NTTPType,
-                                 MultiLevelTemplateArgumentList(TemplateArgs),
-                                 NTTP->getLocation(),
-                                 NTTP->getDeclName());
-            if (NTTPType.isNull()) {
-              Info.Param = makeTemplateParameter(Param);
-              // FIXME: These template arguments are temporary. Free them!
-              Info.reset(TemplateArgumentList::CreateCopy(Context, 
-                                                          Builder.data(), 
-                                                          Builder.size()));
-              return TDK_SubstitutionFailure;
-            }
+        NTTPType = NTTP->getType();
+        if (NTTPType->isDependentType()) {
+          TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack, 
+                                            Builder.data(), Builder.size());
+          NTTPType = SubstType(NTTPType,
+                               MultiLevelTemplateArgumentList(TemplateArgs),
+                               NTTP->getLocation(),
+                               NTTP->getDeclName());
+          if (NTTPType.isNull()) {
+            Info.Param = makeTemplateParameter(Param);
+            // FIXME: These template arguments are temporary. Free them!
+            Info.reset(TemplateArgumentList::CreateCopy(Context, 
+                                                        Builder.data(), 
+                                                        Builder.size()));
+            return TDK_SubstitutionFailure;
           }
         }
       }
 
-      // Convert the deduced template argument into a template
-      // argument that we can check, almost as if the user had written
-      // the template argument explicitly.
-      TemplateArgumentLoc Arg = getTrivialTemplateArgumentLoc(*this,
-                                                              Deduced[I],
-                                                              NTTPType,
-                                                            Info.getLocation());
-
-      // Check the template argument, converting it as necessary.
-      if (CheckTemplateArgument(Param, Arg,
-                                FunctionTemplate,
-                                FunctionTemplate->getLocation(),
-                                FunctionTemplate->getSourceRange().getEnd(),
-                                Builder,
-                                Deduced[I].wasDeducedFromArrayBound()
-                                  ? CTAK_DeducedFromArrayBound 
-                                  : CTAK_Deduced)) {
-        Info.Param = makeTemplateParameter(
-                         const_cast<NamedDecl *>(TemplateParams->getParam(I)));
+      if (ConvertDeducedTemplateArgument(*this, Param, Deduced[I],
+                                         FunctionTemplate, NTTPType, Info,
+                                         Builder)) {
+        Info.Param = makeTemplateParameter(Param);
         // FIXME: These template arguments are temporary. Free them!
         Info.reset(TemplateArgumentList::CreateCopy(Context, Builder.data(), 
-                                                    Builder.size()));
+                                                    Builder.size()));  
         return TDK_SubstitutionFailure;
       }
 
