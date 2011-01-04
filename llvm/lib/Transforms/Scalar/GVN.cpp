@@ -466,6 +466,7 @@ namespace {
           NumberTableEntry* Next = Curr->Next;
           Curr->Val = Next->Val;
           Curr->BB = Next->BB;
+          Curr->Next = Next->Next;
         }
       }
     }
@@ -1693,7 +1694,7 @@ bool GVN::processInstruction(Instruction *I,
     
     return false;
   }
-
+  
   uint32_t NextNum = VN.getNextUnusedValueNumber();
   unsigned Num = VN.lookup_or_add(I);
 
