@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 template<typename> struct PassRefPtr { };
 template<typename T> struct RefPtr {
-  RefPtr& operator=(const RefPtr&) { int a[sizeof(T) ? -1 : -1];} // expected-error 2 {{array size is negative}}
+  RefPtr& operator=(const RefPtr&) { int a[sizeof(T) ? -1 : -1];} // expected-error 2 {{array with a negative size}}
   RefPtr& operator=(const PassRefPtr<T>&);
 };
 

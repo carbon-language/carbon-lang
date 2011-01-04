@@ -2167,6 +2167,8 @@ def err_illegal_message_expr_incomplete_type : Error<
   "objective-c message has incomplete result type %0">;
 def err_illegal_decl_array_of_references : Error<
   "'%0' declared as array of references of type %1">;
+def err_decl_negative_array_size : Error<
+  "'%0' declared as an array with a negative size">;
 def err_array_star_outside_prototype : Error<
   "star modifier used outside of function prototype">;
 def err_illegal_decl_pointer_to_reference : Error<

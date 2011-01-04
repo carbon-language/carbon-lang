@@ -151,7 +151,7 @@ namespace pr5301 {
 namespace PR5810 {
   template<typename T>
   struct allocator {
-    allocator() { int a[sizeof(T) ? -1 : -1]; } // expected-error2 {{array size is negative}}
+    allocator() { int a[sizeof(T) ? -1 : -1]; } // expected-error2 {{array with a negative size}}
   };
   
   template<typename T>

@@ -16,7 +16,7 @@ struct Abstract { virtual void fn() = 0; }; // expected-note {{pure virtual}}
 Abstract ar5[10]; // expected-error {{abstract class}}
 
 // If we have a size, it must be greater than zero.
-int ar6[-1]; // expected-error {{array size is negative}}
+int ar6[-1]; // expected-error {{array with a negative size}}
 int ar7[0u]; // expected-warning {{zero size arrays are an extension}}
 
 // An array with unknown bound is incomplete.
@@ -42,3 +42,13 @@ template <typename T> struct S {
   typename T::type x; // expected-error {{has no members}}
 };
 S<int> ar10[10]; // expected-note {{requested here}}
+
+// Ensure that negative array size errors include the name of the declared
+// array as this is often used to simulate static_assert with template
+// instantiations, placing the 'error message' in the declarator name.
+int
+user_error_message
+[-1]; // expected-error {{user_error_message}}
+typedef int
+another_user_error_message
+[-1]; // expected-error {{another_user_error_message}}

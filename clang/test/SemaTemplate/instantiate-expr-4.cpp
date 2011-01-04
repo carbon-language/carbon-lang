@@ -46,8 +46,8 @@ template struct Temporaries0<5, 7>;
 // Ensure that both the constructor and the destructor are instantiated by
 // checking for parse errors from each.
 template<int N> struct BadX {
-  BadX() { int a[-N]; } // expected-error {{array size is negative}}
-  ~BadX() { int a[-N]; } // expected-error {{array size is negative}}
+  BadX() { int a[-N]; } // expected-error {{array with a negative size}}
+  ~BadX() { int a[-N]; } // expected-error {{array with a negative size}}
 };
 
 template<int N>

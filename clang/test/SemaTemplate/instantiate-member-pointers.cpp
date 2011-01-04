@@ -61,7 +61,7 @@ namespace ValueDepMemberPointer {
     typedef instantiate_function<&S::instantiate> x; // expected-note{{instantiation}}
   };
   template <typename T> void S<T>::instantiate() {
-    int a[(int)sizeof(T)-42]; // expected-error{{array size is negative}}
+    int a[(int)sizeof(T)-42]; // expected-error{{array with a negative size}}
   }
   S<int> s; 
 }

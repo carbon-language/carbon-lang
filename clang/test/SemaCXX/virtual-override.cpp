@@ -121,7 +121,7 @@ namespace T9 {
   struct a { };
   
   template<typename T> struct b : a {
-    int a[sizeof(T) ? -1 : -1]; // expected-error {{array size is negative}}
+    int a[sizeof(T) ? -1 : -1]; // expected-error {{array with a negative size}}
   };
   
   class A {

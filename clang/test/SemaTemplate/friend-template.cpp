@@ -93,7 +93,7 @@ namespace test4 {
   };
 
   template<typename T> void f(const A<T>&) {
-    int a[sizeof(T) ? -1 : -1]; // expected-error {{array size is negative}}
+    int a[sizeof(T) ? -1 : -1]; // expected-error {{array with a negative size}}
   }
 
   void f() {

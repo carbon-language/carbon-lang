@@ -6,7 +6,7 @@ struct S {
 
 template<typename T>
 struct vector {
-  void push_back(const T&) { int a[sizeof(T) ? -1: -1]; } // expected-error {{array size is negative}}
+  void push_back(const T&) { int a[sizeof(T) ? -1: -1]; } // expected-error {{array with a negative size}}
 };
 
 class ExprEngine {

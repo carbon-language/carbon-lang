@@ -7,7 +7,7 @@ namespace attribute_aligned {
   };
 
   template <bool X> struct check {
-    int check_failed[X ? 1 : -1]; // expected-error {{array size is negative}}
+    int check_failed[X ? 1 : -1]; // expected-error {{array with a negative size}}
   };
 
   template <int N> struct check_alignment {

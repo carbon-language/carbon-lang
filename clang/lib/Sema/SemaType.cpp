@@ -711,9 +711,12 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     // C99 6.7.5.2p1: If the expression is a constant expression, it shall
     // have a value greater than zero.
     if (ConstVal.isSigned() && ConstVal.isNegative()) {
-      Diag(ArraySize->getLocStart(),
-           diag::err_typecheck_negative_array_size)
-        << ArraySize->getSourceRange();
+      if (Entity)
+        Diag(ArraySize->getLocStart(), diag::err_decl_negative_array_size)
+          << getPrintableNameForEntity(Entity) << ArraySize->getSourceRange();
+      else
+        Diag(ArraySize->getLocStart(), diag::err_typecheck_negative_array_size)
+          << ArraySize->getSourceRange();
       return QualType();
     }
     if (ConstVal == 0) {
