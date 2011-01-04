@@ -651,7 +651,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     // current.
     inferior.reset(new LinuxThread(process, pid));
     process.GetThreadList().AddThread(inferior);
-    process.GetThreadList().SetCurrentThreadByID(pid);
+    process.GetThreadList().SetSelectedThreadByID(pid);
 
     // Let our process instance know the thread has stopped.
     process.SendMessage(ProcessMessage::Trace(pid));
