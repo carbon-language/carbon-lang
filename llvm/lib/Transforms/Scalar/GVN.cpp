@@ -408,20 +408,20 @@ namespace {
 
     ValueTable VN;
     
-    /// NumberTable - A mapping from value numbers to lists of Value*'s that
+    /// LeaderTable - A mapping from value numbers to lists of Value*'s that
     /// have that value number.  Use findLeader to query it.
     struct LeaderTableEntry {
       Value *Val;
       BasicBlock *BB;
       LeaderTableEntry *Next;
     };
-    DenseMap<uint32_t, LeaderTableEntry> NumberTable;
+    DenseMap<uint32_t, LeaderTableEntry> LeaderTable;
     BumpPtrAllocator TableAllocator;
     
-    /// addToLeaderTable - Push a new Value to the NumberTable onto the list for
+    /// addToLeaderTable - Push a new Value to the LeaderTable onto the list for
     /// its value number.
     void addToLeaderTable(uint32_t N, Value *V, BasicBlock *BB) {
-      LeaderTableEntry& Curr = NumberTable[N];
+      LeaderTableEntry& Curr = LeaderTable[N];
       if (!Curr.Val) {
         Curr.Val = V;
         Curr.BB = BB;
@@ -435,11 +435,11 @@ namespace {
       Curr.Next = Node;
     }
     
-    /// removeFromLeaderTable - Scan the list of values corresponding to a given value
-    /// number, and remove the given value if encountered.
+    /// removeFromLeaderTable - Scan the list of values corresponding to a given
+    /// value number, and remove the given value if encountered.
     void removeFromLeaderTable(uint32_t N, Value *V, BasicBlock *BB) {
       LeaderTableEntry* Prev = 0;
-      LeaderTableEntry* Curr = &NumberTable[N];
+      LeaderTableEntry* Curr = &LeaderTable[N];
 
       while (Curr->Val != V || Curr->BB != BB) {
         Prev = Curr;
@@ -1365,8 +1365,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     //  @1 = getelementptr (i8* p, ...
     //  test p and branch if == 0
     //  load @1
-    // It is valid to have the getelementptr before the test, even if p can be 0,
-    // as getelementptr only does address arithmetic.
+    // It is valid to have the getelementptr before the test, even if p can
+    // be 0, as getelementptr only does address arithmetic.
     // If we are not pushing the value through any multiple-successor blocks
     // we do not have this case.  Otherwise, check that the load is safe to
     // put anywhere; this can be improved, but should be conservatively safe.
@@ -1606,7 +1606,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
 // question.  This is fast because dominator tree queries consist of only
 // a few comparisons of DFS numbers.
 Value *GVN::findLeader(BasicBlock *BB, uint32_t num) {
-  LeaderTableEntry Vals = NumberTable[num];
+  LeaderTableEntry Vals = LeaderTable[num];
   if (!Vals.Val) return 0;
   
   Value *Val = 0;
@@ -2014,7 +2014,7 @@ bool GVN::iterateOnFunction(Function &F) {
 
 void GVN::cleanupGlobalSets() {
   VN.clear();
-  NumberTable.clear();
+  LeaderTable.clear();
   TableAllocator.Reset();
 }
 
@@ -2026,7 +2026,7 @@ void GVN::verifyRemoved(const Instruction *Inst) const {
   // Walk through the value number scope to make sure the instruction isn't
   // ferreted away in it.
   for (DenseMap<uint32_t, LeaderTableEntry>::const_iterator
-       I = NumberTable.begin(), E = NumberTable.end(); I != E; ++I) {
+       I = LeaderTable.begin(), E = LeaderTable.end(); I != E; ++I) {
     const LeaderTableEntry *Node = &I->second;
     assert(Node->Val != Inst && "Inst still in value numbering scope!");
     
