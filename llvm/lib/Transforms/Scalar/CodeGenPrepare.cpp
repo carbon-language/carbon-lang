@@ -119,8 +119,10 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   // unconditional branch.
   EverMadeChange |= EliminateMostlyEmptyBlocks(F);
 
-  // Now find loop back edges.
-  findLoopBackEdges(F);
+  // Now find loop back edges, but only if they are being used to decide which
+  // critical edges to split.
+  if (CriticalEdgeSplit)
+    findLoopBackEdges(F);
 
   bool MadeChange = true;
   while (MadeChange) {
