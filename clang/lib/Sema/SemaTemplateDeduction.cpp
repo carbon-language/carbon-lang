@@ -1330,17 +1330,11 @@ FinishTemplateArgumentDeduction(Sema &S,
   // C++ [temp.deduct.type]p2:
   //   [...] or if any template argument remains neither deduced nor
   //   explicitly specified, template argument deduction fails.
-  // FIXME: Variadic templates Empty parameter packs?
   llvm::SmallVector<TemplateArgument, 4> Builder;
-  for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
+  TemplateParameterList *PartialParams = Partial->getTemplateParameters();
+  for (unsigned I = 0, N = PartialParams->size(); I != N; ++I) {
     if (Deduced[I].isNull()) {
-      unsigned ParamIdx = I;
-      if (ParamIdx >= Partial->getTemplateParameters()->size())
-        ParamIdx = Partial->getTemplateParameters()->size() - 1;
-      Decl *Param
-        = const_cast<NamedDecl *>(
-                          Partial->getTemplateParameters()->getParam(ParamIdx));
-      Info.Param = makeTemplateParameter(Param);
+      Info.Param = makeTemplateParameter(PartialParams->getParam(I));
       return Sema::TDK_Incomplete;
     }
     
@@ -3294,7 +3288,6 @@ Sema::MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
   Deduced.clear();
   Deduced.resize(TemplateParams->size());
   
-  // FIXME: Variadic templates.
   FunctionDecl *Function = FunctionTemplate->getTemplatedDecl();
   for (unsigned I = 0, N = Function->getNumParams(); I != N; ++I)
     ::MarkUsedTemplateParameters(*this, Function->getParamDecl(I)->getType(),
