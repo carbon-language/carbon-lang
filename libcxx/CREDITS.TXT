@@ -12,4 +12,7 @@ N: Howard Hinnant
 E: hhinnant@apple.com
 D: Architect and primary author of libc++
 
-
+N: Marshall Clow
+E: marshall@idio.com
+E: mclow@qualcomm.com
+D: Minor patches and bug fixes.
