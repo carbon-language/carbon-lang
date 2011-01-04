@@ -400,12 +400,18 @@ void StrongPHIElimination::addReg(unsigned Reg) {
 
 StrongPHIElimination::Node*
 StrongPHIElimination::Node::getLeader() {
-  Node* parentPointer = parent.getPointer();
-  if (parentPointer == this)
-    return this;
-  Node* newParent = parentPointer->getLeader();
-  parent.setPointer(newParent);
-  return newParent;
+  Node* N = this;
+  Node* Parent = parent.getPointer();
+  Node* Grandparent = Parent->parent.getPointer();
+
+  while (Parent != Grandparent) {
+    N->parent.setPointer(Grandparent);
+    N = Grandparent;
+    Parent = Parent->parent.getPointer();
+    Grandparent = Parent->parent.getPointer();
+  }
+
+  return Parent;
 }
 
 unsigned StrongPHIElimination::getRegColor(unsigned Reg) {
