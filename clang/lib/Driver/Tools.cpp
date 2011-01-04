@@ -1468,10 +1468,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
 
     if (Version == 2 || Version == 3) {
-      if (Version == 2)
-        CmdArgs.push_back("-fobjc-nonfragile-abi");
-      else
-        CmdArgs.push_back("-fobjc-nonfragile-abi2");
+      CmdArgs.push_back("-fobjc-nonfragile-abi");
 
       // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and
       // legacy is the default.

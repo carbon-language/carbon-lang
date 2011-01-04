@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-nonfragile-abi2 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-nonfragile-abi -verify %s
 // Do not issue error if 'ivar' used previously belongs to the inherited class
 // and has same name as @dynalic property in current class.
 

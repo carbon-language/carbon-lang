@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi2 -fobjc-default-synthesize-properties -emit-llvm -g %s -o %t 
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fobjc-default-synthesize-properties -emit-llvm -g %s -o %t 
 // RUN: grep DW_TAG_member %t | count 5
 // rdar://8493239
 
