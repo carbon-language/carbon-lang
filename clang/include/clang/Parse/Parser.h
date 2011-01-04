@@ -1266,7 +1266,7 @@ private:
   /// unless the body contains the code-completion point.
   ///
   /// \returns true if the function body was skipped.
-  bool MaybeSkipFunctionBodyForCodeCompletion();
+  bool trySkippingFunctionBodyForCodeCompletion();
 
   bool ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                         const ParsedTemplateInfo &TemplateInfo,

@@ -1718,8 +1718,9 @@ Decl *Parser::ParseObjCMethodDefinition() {
   // specified Declarator for the method.
   Actions.ActOnStartOfObjCMethodDef(getCurScope(), MDecl);
 
-  if (MaybeSkipFunctionBodyForCodeCompletion())
-    return Actions.ActOnFinishFunctionBody(MDecl, 0);
+  if (PP.isCodeCompletionEnabled())
+    if (trySkippingFunctionBodyForCodeCompletion())
+      return Actions.ActOnFinishFunctionBody(MDecl, 0);
 
   StmtResult FnBody(ParseCompoundStatementBody());
 

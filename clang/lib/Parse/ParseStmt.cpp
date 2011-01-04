@@ -1466,8 +1466,9 @@ Decl *Parser::ParseFunctionStatementBody(Decl *Decl) {
   assert(Tok.is(tok::l_brace));
   SourceLocation LBraceLoc = Tok.getLocation();
 
-  if (MaybeSkipFunctionBodyForCodeCompletion())
-    return Actions.ActOnFinishFunctionBody(Decl, 0);
+  if (PP.isCodeCompletionEnabled())
+    if (trySkippingFunctionBodyForCodeCompletion())
+      return Actions.ActOnFinishFunctionBody(Decl, 0);
 
   PrettyDeclStackTraceEntry CrashInfo(Actions, Decl, LBraceLoc,
                                       "parsing function body");
@@ -1501,8 +1502,9 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl) {
   if (Tok.is(tok::colon))
     ParseConstructorInitializer(Decl);
 
-  if (MaybeSkipFunctionBodyForCodeCompletion())
-    return Actions.ActOnFinishFunctionBody(Decl, 0);
+  if (PP.isCodeCompletionEnabled())
+    if (trySkippingFunctionBodyForCodeCompletion())
+      return Actions.ActOnFinishFunctionBody(Decl, 0);
 
   SourceLocation LBraceLoc = Tok.getLocation();
   StmtResult FnBody(ParseCXXTryBlockCommon(TryLoc));
@@ -1515,11 +1517,10 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl) {
   return Actions.ActOnFinishFunctionBody(Decl, FnBody.take());
 }
 
-bool Parser::MaybeSkipFunctionBodyForCodeCompletion() {
+bool Parser::trySkippingFunctionBodyForCodeCompletion() {
   assert(Tok.is(tok::l_brace));
-
-  if (!PP.isCodeCompletionEnabled())
-    return false;
+  assert(PP.isCodeCompletionEnabled() &&
+         "Should only be called when in code-completion mode");
 
   // We're in code-completion mode. Skip parsing for all function bodies unless
   // the body contains the code-completion point.
