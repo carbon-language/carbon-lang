@@ -408,7 +408,7 @@ namespace {
 
     ValueTable VN;
     
-    /// NumberTable - A mapping from value numers to lists of Value*'s that
+    /// NumberTable - A mapping from value numbers to lists of Value*'s that
     /// have that value number.  Use findLeader to query it.
     struct LeaderTableEntry {
       Value *Val;
