@@ -252,20 +252,25 @@ bool Inliner::shouldInline(CallSite CS) {
   if (Caller->hasLocalLinkage()) {
     int TotalSecondaryCost = 0;
     bool outerCallsFound = false;
-    bool allOuterCallsWillBeInlined = true;
-    bool someOuterCallWouldNotBeInlined = false;
+    // This bool tracks what happens if we do NOT inline C into B.
+    bool callerWillBeRemoved = true;
+    // This bool tracks what happens if we DO inline C into B.
+    bool inliningPreventsSomeOuterInline = false;
     for (Value::use_iterator I = Caller->use_begin(), E =Caller->use_end(); 
          I != E; ++I) {
       CallSite CS2(*I);
 
       // If this isn't a call to Caller (it could be some other sort
-      // of reference) skip it.
-      if (!CS2 || CS2.getCalledFunction() != Caller)
+      // of reference) skip it.  Such references will prevent the caller
+      // from being removed.
+      if (!CS2 || CS2.getCalledFunction() != Caller) {
+        callerWillBeRemoved = false;
         continue;
+      }
 
       InlineCost IC2 = getInlineCost(CS2);
       if (IC2.isNever())
-        allOuterCallsWillBeInlined = false;
+        callerWillBeRemoved = false;
       if (IC2.isAlways() || IC2.isNever())
         continue;
 
@@ -275,14 +280,14 @@ bool Inliner::shouldInline(CallSite CS) {
       float FudgeFactor2 = getInlineFudgeFactor(CS2);
 
       if (Cost2 >= (int)(CurrentThreshold2 * FudgeFactor2))
-        allOuterCallsWillBeInlined = false;
+        callerWillBeRemoved = false;
 
       // See if we have this case.  We subtract off the penalty
       // for the call instruction, which we would be deleting.
       if (Cost2 < (int)(CurrentThreshold2 * FudgeFactor2) &&
           Cost2 + Cost - (InlineConstants::CallPenalty + 1) >= 
                 (int)(CurrentThreshold2 * FudgeFactor2)) {
-        someOuterCallWouldNotBeInlined = true;
+        inliningPreventsSomeOuterInline = true;
         TotalSecondaryCost += Cost2;
       }
     }
@@ -290,10 +295,10 @@ bool Inliner::shouldInline(CallSite CS) {
     // one is set very low by getInlineCost, in anticipation that Caller will
     // be removed entirely.  We did not account for this above unless there
     // is only one caller of Caller.
-    if (allOuterCallsWillBeInlined && Caller->use_begin() != Caller->use_end())
+    if (callerWillBeRemoved && Caller->use_begin() != Caller->use_end())
       TotalSecondaryCost += InlineConstants::LastCallToStaticBonus;
 
-    if (outerCallsFound && someOuterCallWouldNotBeInlined && 
+    if (outerCallsFound && inliningPreventsSomeOuterInline &&
         TotalSecondaryCost < Cost) {
       DEBUG(dbgs() << "    NOT Inlining: " << *CS.getInstruction() << 
            " Cost = " << Cost << 
