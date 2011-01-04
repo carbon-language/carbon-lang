@@ -2302,9 +2302,6 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_pod
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
 
-template <class _Tp> struct __is_zero_default_constructible
-    : public integral_constant<bool, is_scalar<_Tp>::value || is_empty<_Tp>::value> {};
-
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 void

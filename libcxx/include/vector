@@ -624,14 +624,8 @@ private:
     void allocate(size_type __n);
     void deallocate();
     _LIBCPP_INLINE_VISIBILITY size_type __recommend(size_type __new_size) const;
-    _LIBCPP_INLINE_VISIBILITY void __construct_at_end(size_type __n);
-        void __construct_at_end(size_type __n, false_type);
-    _LIBCPP_INLINE_VISIBILITY void __construct_at_end(size_type __n, true_type);
-    _LIBCPP_INLINE_VISIBILITY
+    void __construct_at_end(size_type __n);
     void __construct_at_end(size_type __n, const_reference __x);
-    void __construct_at_end(size_type __n, const_reference __x, false_type);
-    _LIBCPP_INLINE_VISIBILITY
-        void __construct_at_end(size_type __n, const_reference __x, true_type);
     template <class _ForwardIterator>
         typename enable_if
         <
@@ -741,16 +735,8 @@ vector<_Tp, _Allocator>::__recommend(size_type __new_size) const
 //  Precondition:  size() + __n <= capacity()
 //  Postcondition:  size() == size() + __n
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
 void
 vector<_Tp, _Allocator>::__construct_at_end(size_type __n)
-{
-    __construct_at_end(__n, __is_zero_default_constructible<value_type>());
-}
-
-template <class _Tp, class _Allocator>
-void
-vector<_Tp, _Allocator>::__construct_at_end(size_type __n, false_type)
 {
     allocator_type& __a = this->__alloc();
     do
@@ -759,15 +745,6 @@ vector<_Tp, _Allocator>::__construct_at_end(size_type __n, false_type)
         ++this->__end_;
         --__n;
     } while (__n > 0);
-}
-
-template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-void
-vector<_Tp, _Allocator>::__construct_at_end(size_type __n, true_type)
-{
-    _STD::memset(this->__end_, 0, __n*sizeof(value_type));
-    this->__end_ += __n;
 }
 
 //  Copy constructs __n objects starting at __end_ from __x
@@ -781,14 +758,6 @@ _LIBCPP_INLINE_VISIBILITY inline
 void
 vector<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x)
 {
-    __construct_at_end(__n, __x, integral_constant<bool, is_trivially_copy_constructible<value_type>::value &&
-                                                         is_trivially_copy_assignable<value_type>::value>());
-}
-
-template <class _Tp, class _Allocator>
-void
-vector<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x, false_type)
-{
     allocator_type& __a = this->__alloc();
     do
     {
@@ -796,15 +765,6 @@ vector<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x, 
         ++this->__end_;
         --__n;
     } while (__n > 0);
-}
-
-template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-void
-vector<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x, true_type)
-{
-    _STD::fill_n(this->__end_, __n, __x);
-    this->__end_ += __n;
 }
 
 template <class _Tp, class _Allocator>
@@ -2763,10 +2723,6 @@ struct _LIBCPP_VISIBLE hash<vector<bool, _Allocator> >
     size_t operator()(const vector<bool, _Allocator>& __vec) const
         {return __vec.__hash_code();}
 };
-
-template <class _Tp, class _Allocator>
-struct __is_zero_default_constructible<vector<_Tp, _Allocator> >
-    : public integral_constant<bool, __is_zero_default_constructible<_Allocator>::value> {};
 
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline

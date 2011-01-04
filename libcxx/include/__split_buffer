@@ -98,11 +98,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY void pop_back() {__destruct_at_end(__end_-1);}
 
     void __construct_at_end(size_type __n);
-        void __construct_at_end(size_type __n, false_type);
-        void __construct_at_end(size_type __n, true_type);
     void __construct_at_end(size_type __n, const_reference __x);
-        void __construct_at_end(size_type __n, const_reference __x, false_type);
-        void __construct_at_end(size_type __n, const_reference __x, true_type);
     template <class _InputIter>
         typename enable_if
         <
@@ -192,16 +188,8 @@ __split_buffer<_Tp, _Allocator>::__invariants() const
 //  Precondition:  size() + __n <= capacity()
 //  Postcondition:  size() == size() + __n
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
 void
 __split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n)
-{
-    __construct_at_end(__n, __is_zero_default_constructible<value_type>());
-}
-
-template <class _Tp, class _Allocator>
-void
-__split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n, false_type)
 {
     __alloc_rr& __a = this->__alloc();
     do
@@ -212,15 +200,6 @@ __split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n, false_type)
     } while (__n > 0);
 }
 
-template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-void
-__split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n, true_type)
-{
-    _STD::memset(this->__end_, 0, __n*sizeof(value_type));
-    this->__end_ += __n;
-}
-
 //  Copy constructs __n objects starting at __end_ from __x
 //  throws if construction throws
 //  Precondition:  __n > 0
@@ -228,17 +207,8 @@ __split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n, true_type)
 //  Postcondition:  size() == old size() + __n
 //  Postcondition:  [i] == __x for all i in [size() - __n, __n)
 template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
 void
 __split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x)
-{
-    __construct_at_end(__n, __x, integral_constant<bool, is_trivially_copy_constructible<value_type>::value &&
-                                                         is_trivially_copy_assignable<value_type>::value>());
-}
-
-template <class _Tp, class _Allocator>
-void
-__split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x, false_type)
 {
     __alloc_rr& __a = this->__alloc();
     do
@@ -247,15 +217,6 @@ __split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n, const_referen
         ++this->__end_;
         --__n;
     } while (__n > 0);
-}
-
-template <class _Tp, class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-void
-__split_buffer<_Tp, _Allocator>::__construct_at_end(size_type __n, const_reference __x, true_type)
-{
-    _STD::fill_n(this->__end_, __n, __x);
-    this->__end_ += __n;
 }
 
 template <class _Tp, class _Allocator>
