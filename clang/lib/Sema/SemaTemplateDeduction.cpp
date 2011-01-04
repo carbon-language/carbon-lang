@@ -1608,8 +1608,6 @@ Sema::SubstituteExplicitTemplateArguments(
   //
   // Take all of the explicitly-specified arguments and put them into the
   // set of deduced template arguments.
-  //
-  // FIXME: Variadic templates?
   Deduced.reserve(TemplateParams->size());
   for (unsigned I = 0, N = ExplicitArgumentList->size(); I != N; ++I)
     Deduced.push_back(ExplicitArgumentList->get(I));
