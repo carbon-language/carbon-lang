@@ -4503,15 +4503,14 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
   // Also, callers should have filtered out the invalid cases with
   // pointers.  Everything else should be possible.
 
-  QualType SrcTy = S.Context.getCanonicalType(Src->getType());
-  DestTy = S.Context.getCanonicalType(DestTy);
+  QualType SrcTy = Src->getType();
   if (S.Context.hasSameUnqualifiedType(SrcTy, DestTy))
     return CK_NoOp;
 
   switch (SrcTy->getScalarTypeKind()) {
   case Type::STK_MemberPointer:
     llvm_unreachable("member pointer type in C");
-    
+
   case Type::STK_Pointer:
     switch (DestTy->getScalarTypeKind()) {
     case Type::STK_Pointer:
@@ -4544,11 +4543,11 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
     case Type::STK_Floating:
       return CK_IntegralToFloating;
     case Type::STK_IntegralComplex:
-      S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
+      S.ImpCastExprToType(Src, DestTy->getAs<ComplexType>()->getElementType(),
                           CK_IntegralCast);
       return CK_IntegralRealToComplex;
     case Type::STK_FloatingComplex:
-      S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
+      S.ImpCastExprToType(Src, DestTy->getAs<ComplexType>()->getElementType(),
                           CK_IntegralToFloating);
       return CK_FloatingRealToComplex;
     case Type::STK_MemberPointer:
@@ -4565,11 +4564,11 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
     case Type::STK_Integral:
       return CK_FloatingToIntegral;
     case Type::STK_FloatingComplex:
-      S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
+      S.ImpCastExprToType(Src, DestTy->getAs<ComplexType>()->getElementType(),
                           CK_FloatingCast);
       return CK_FloatingRealToComplex;
     case Type::STK_IntegralComplex:
-      S.ImpCastExprToType(Src, cast<ComplexType>(DestTy)->getElementType(),
+      S.ImpCastExprToType(Src, DestTy->getAs<ComplexType>()->getElementType(),
                           CK_FloatingToIntegral);
       return CK_IntegralRealToComplex;
     case Type::STK_Pointer:
@@ -4586,7 +4585,7 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
     case Type::STK_IntegralComplex:
       return CK_FloatingComplexToIntegralComplex;
     case Type::STK_Floating: {
-      QualType ET = cast<ComplexType>(SrcTy)->getElementType();
+      QualType ET = SrcTy->getAs<ComplexType>()->getElementType();
       if (S.Context.hasSameType(ET, DestTy))
         return CK_FloatingComplexToReal;
       S.ImpCastExprToType(Src, ET, CK_FloatingComplexToReal);
@@ -4595,7 +4594,7 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
     case Type::STK_Bool:
       return CK_FloatingComplexToBoolean;
     case Type::STK_Integral:
-      S.ImpCastExprToType(Src, cast<ComplexType>(SrcTy)->getElementType(),
+      S.ImpCastExprToType(Src, SrcTy->getAs<ComplexType>()->getElementType(),
                           CK_FloatingComplexToReal);
       return CK_FloatingToIntegral;
     case Type::STK_Pointer:
@@ -4612,7 +4611,7 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
     case Type::STK_IntegralComplex:
       return CK_IntegralComplexCast;
     case Type::STK_Integral: {
-      QualType ET = cast<ComplexType>(SrcTy)->getElementType();
+      QualType ET = SrcTy->getAs<ComplexType>()->getElementType();
       if (S.Context.hasSameType(ET, DestTy))
         return CK_IntegralComplexToReal;
       S.ImpCastExprToType(Src, ET, CK_IntegralComplexToReal);
@@ -4621,7 +4620,7 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
     case Type::STK_Bool:
       return CK_IntegralComplexToBoolean;
     case Type::STK_Floating:
-      S.ImpCastExprToType(Src, cast<ComplexType>(SrcTy)->getElementType(),
+      S.ImpCastExprToType(Src, SrcTy->getAs<ComplexType>()->getElementType(),
                           CK_IntegralComplexToReal);
       return CK_IntegralToFloating;
     case Type::STK_Pointer:
