@@ -51,7 +51,7 @@ public:
     CreateRegisterContextForFrame(lldb_private::StackFrame *frame);
 
     bool
-    GetRawStopReason(StopInfo *stop_info);
+    GetRawStopReason(lldb_private::StopInfo *stop_info);
 
     //--------------------------------------------------------------------------
     // These methods form a specialized interface to linux threads.
