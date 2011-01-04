@@ -54,6 +54,10 @@ namespace llvm {
   ///
   extern char &MachineDominatorsID;
 
+  /// EdgeBundles analysis - Bundle machine CFG edges.
+  ///
+  extern char &EdgeBundlesID;
+
   /// PHIElimination pass - This pass eliminates machine instruction PHI nodes
   /// by inserting copy instructions.  This destroys SSA information, but is the
   /// desired input for some register allocators.  This pass is "required" by

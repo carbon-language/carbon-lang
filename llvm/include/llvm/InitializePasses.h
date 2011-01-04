@@ -91,6 +91,7 @@ void initializeDomPrinterPass(PassRegistry&);
 void initializeDomViewerPass(PassRegistry&);
 void initializeDominanceFrontierPass(PassRegistry&);
 void initializeDominatorTreePass(PassRegistry&);
+void initializeEdgeBundlesPass(PassRegistry&);
 void initializeEdgeProfilerPass(PassRegistry&);
 void initializeEarlyCSEPass(PassRegistry&);
 void initializeExpandISelPseudosPass(PassRegistry&);

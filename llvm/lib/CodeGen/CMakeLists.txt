@@ -10,6 +10,7 @@ add_llvm_library(LLVMCodeGen
   CriticalAntiDepBreaker.cpp
   DeadMachineInstructionElim.cpp
   DwarfEHPrepare.cpp
+  EdgeBundles.cpp
   ELFCodeEmitter.cpp
   ELFWriter.cpp
   ExpandISelPseudos.cpp

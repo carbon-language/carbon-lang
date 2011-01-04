@@ -1,4 +1,4 @@
-//===-------- SplitKit.cpp - Toolkit for splitting live ranges --*- C++ -*-===//
+//===-------- SplitKit.h - Toolkit for splitting live ranges ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,11 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/IntEqClasses.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/SlotIndexes.h"
-
-#include <string>
 
 namespace llvm {
 
@@ -38,39 +35,6 @@ class raw_ostream;
 class MachineDominatorTree;
 template <class NodeT> class DomTreeNodeBase;
 typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
-
-
-/// EdgeBundles - Group CFG edges into equivalence classes where registers must
-/// be allocated identically. This annotates the CFG to form a bipartite graph
-/// where each block is connected to an ingoing and an outgoing bundle.
-/// Edge bundles are simply numbered, there is no object representation.
-class EdgeBundles {
-  const MachineFunction *MF;
-
-  /// EC - Each edge bundle is an equivalence class. The keys are:
-  ///   2*BB->getNumber()   -> Ingoing bundle.
-  ///   2*BB->getNumber()+1 -> Outgoing bundle.
-  IntEqClasses EC;
-
-public:
-  /// compute - Compute the edge bundles for MF. Bundles depend only on the CFG.
-  void compute(const MachineFunction *MF);
-
-  /// getBundle - Return the ingoing (Out = false) or outgoing (Out = true)
-  /// bundle number for basic block #N
-  unsigned getBundle(unsigned N, bool Out) const { return EC[2 * N + Out]; }
-
-  /// getMachineFunction - Return the last machine function computed.
-  const MachineFunction *getMachineFunction() const { return MF; }
-
-  /// view - Visualize the annotated bipartite CFG with Graphviz.
-  void view() const;
-};
-
-/// Specialize WriteGraph, the standard implementation won't work.
-raw_ostream &WriteGraph(raw_ostream &O, const EdgeBundles &G,
-                        bool ShortNames = false,
-                        const std::string &Title = "");
 
 
 /// SplitAnalysis - Analyze a LiveInterval, looking for live range splitting

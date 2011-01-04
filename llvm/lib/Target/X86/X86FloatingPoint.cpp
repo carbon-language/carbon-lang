@@ -32,6 +32,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/EdgeBundles.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -51,6 +52,7 @@ namespace {
   struct FPS : public MachineFunctionPass {
     static char ID;
     FPS() : MachineFunctionPass(ID) {
+      initializeEdgeBundlesPass(*PassRegistry::getPassRegistry());
       // This is really only to keep valgrind quiet.
       // The logic in isLive() is too much for it.
       memset(Stack, 0, sizeof(Stack));
@@ -59,6 +61,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<EdgeBundles>();
       AU.addPreservedID(MachineLoopInfoID);
       AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
