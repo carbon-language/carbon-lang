@@ -1451,7 +1451,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
       case CCValAssign::SExt: {
         bool Emitted = FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
                                          Arg, ArgVT, Arg);
-        assert(Emitted && "Failed to emit a sext!"); Emitted=Emitted;
+        assert(Emitted && "Failed to emit a sext!"); (void)Emitted;
         Emitted = true;
         ArgVT = VA.getLocVT();
         break;
@@ -1459,7 +1459,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
       case CCValAssign::ZExt: {
         bool Emitted = FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
                                          Arg, ArgVT, Arg);
-        assert(Emitted && "Failed to emit a zext!"); Emitted=Emitted;
+        assert(Emitted && "Failed to emit a zext!"); (void)Emitted;
         Emitted = true;
         ArgVT = VA.getLocVT();
         break;
@@ -1474,7 +1474,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
           Emitted = FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
                                       Arg, ArgVT, Arg);
 
-        assert(Emitted && "Failed to emit a aext!"); Emitted=Emitted;
+        assert(Emitted && "Failed to emit a aext!"); (void)Emitted;
         ArgVT = VA.getLocVT();
         break;
       }
