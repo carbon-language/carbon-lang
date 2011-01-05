@@ -639,16 +639,30 @@ error_code directory_iterator_construct(directory_iterator &it, StringRef path){
   if (!FindHandle)
     return windows_error(::GetLastError());
 
+  size_t FilenameLen = ::wcslen(FirstFind.cFileName);
+  while ((FilenameLen == 1 && FirstFind.cFileName[0] == L'.') ||
+         (FilenameLen == 2 && FirstFind.cFileName[0] == L'.' &&
+                              FirstFind.cFileName[1] == L'.'))
+    if (!::FindNextFileW(FindHandle, &FirstFind)) {
+      error_code ec = windows_error(::GetLastError());
+      // Check for end.
+      if (ec == windows_error::no_more_files)
+        return directory_iterator_destruct(it);
+      return ec;
+    } else
+      FilenameLen = ::wcslen(FirstFind.cFileName);
+
   // Construct the current directory entry.
-  SmallString<128> directory_entry_path_utf8;
+  SmallString<128> directory_entry_name_utf8;
   if (error_code ec = UTF16ToUTF8(FirstFind.cFileName,
                                   ::wcslen(FirstFind.cFileName),
-                                  directory_entry_path_utf8))
+                                  directory_entry_name_utf8))
     return ec;
 
   it.IterationHandle = intptr_t(FindHandle.take());
-  it.CurrentEntry = directory_entry(path);
-  it.CurrentEntry.replace_filename(Twine(directory_entry_path_utf8));
+  SmallString<128> directory_entry_path(path);
+  path::append(directory_entry_path, directory_entry_name_utf8.str());
+  it.CurrentEntry = directory_entry(directory_entry_path.str());
 
   return success;
 }
@@ -671,6 +685,12 @@ error_code directory_iterator_increment(directory_iterator& it) {
       return directory_iterator_destruct(it);
     return ec;
   }
+
+  size_t FilenameLen = ::wcslen(FindData.cFileName);
+  if ((FilenameLen == 1 && FindData.cFileName[0] == L'.') ||
+      (FilenameLen == 2 && FindData.cFileName[0] == L'.' &&
+                           FindData.cFileName[1] == L'.'))
+    return directory_iterator_increment(it);
 
   SmallString<128> directory_entry_path_utf8;
   if (error_code ec = UTF16ToUTF8(FindData.cFileName,
