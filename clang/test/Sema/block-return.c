@@ -97,7 +97,7 @@ bptr foo5(int j) {
 }
 
 int (*funcptr3[5])(long);
-int sz8 = sizeof(^int (*[5])(long) {return funcptr3;}); // expected-error {{block declared as returning an array}}
+int sz8 = sizeof(^int (*[5])(long) {return funcptr3;}); // expected-error {{function cannot return array type}} expected-warning {{incompatible pointer to integer conversion}}
 
 void foo6() {
   int (^b)(int) __attribute__((noreturn));

@@ -6748,15 +6748,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
     else if (BExprResultType != SemaRef.Context.DependentTy)
       CurBlock->ReturnType = getDerived().TransformType(BExprResultType);
   }
-    
-  // Transform the body
-  StmtResult Body = getDerived().TransformStmt(E->getBody());
-  if (Body.isInvalid())
-    return ExprError();
-  // Set the parameters on the block decl.
-  if (!Params.empty())
-    CurBlock->TheDecl->setParams(Params.data(), Params.size());
-    
+
   QualType FunctionType = getDerived().RebuildFunctionProtoType(
                                                         CurBlock->ReturnType,
                                                         ParamTypes.data(),
@@ -6764,8 +6756,17 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
                                                         BD->isVariadic(),
                                                         0,
                                                BExprFunctionType->getExtInfo());
-  
   CurBlock->FunctionType = FunctionType;
+
+  // Set the parameters on the block decl.
+  if (!Params.empty())
+    CurBlock->TheDecl->setParams(Params.data(), Params.size());
+    
+  // Transform the body
+  StmtResult Body = getDerived().TransformStmt(E->getBody());
+  if (Body.isInvalid())
+    return ExprError();
+
   return SemaRef.ActOnBlockStmtExpr(CaretLoc, Body.get(), /*Scope=*/0);
 }
 

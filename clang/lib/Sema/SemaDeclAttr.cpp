@@ -78,6 +78,13 @@ static bool isFunctionOrMethodOrBlock(const Decl *d) {
   return isa<BlockDecl>(d);
 }
 
+/// Return true if the given decl has a declarator that should have
+/// been processed by Sema::GetTypeForDeclarator.
+static bool hasDeclarator(const Decl *d) {
+  // In some sense, TypedefDecl really *ought* to be a DeclaratorDecl.
+  return isa<DeclaratorDecl>(d) || isa<BlockDecl>(d) || isa<TypedefDecl>(d);
+}
+
 /// hasFunctionProto - Return true if the given decl has a argument
 /// information. This decl should have already passed
 /// isFunctionOrMethod or isFunctionOrMethodOrBlock.
@@ -766,10 +773,28 @@ static void HandleCommonAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       << Attr.getName() << 12 /* variable */;
 }
 
-static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  /* Diagnostics (if any) was emitted by Sema::ProcessFnAttr(). */
-  assert(Attr.isInvalid() == false);
-  d->addAttr(::new (S.Context) NoReturnAttr(Attr.getLoc(), S.Context));
+static void HandleNoReturnAttr(Decl *d, const AttributeList &attr, Sema &S) {
+  if (hasDeclarator(d)) return;
+
+  if (S.CheckNoReturnAttr(attr)) return;
+
+  if (!isa<ObjCMethodDecl>(d)) {
+    S.Diag(attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << attr.getName() << 0 /*function*/;
+    return;
+  }
+
+  d->addAttr(::new (S.Context) NoReturnAttr(attr.getLoc(), S.Context));
+}
+
+bool Sema::CheckNoReturnAttr(const AttributeList &attr) {
+  if (attr.getNumArgs() != 0) {
+    Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    attr.setInvalid();
+    return true;
+  }
+
+  return false;
 }
 
 static void HandleAnalyzerNoReturnAttr(Decl *d, const AttributeList &Attr,
@@ -2251,26 +2276,36 @@ static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) GNUInlineAttr(Attr.getLoc(), S.Context));
 }
 
-static void HandleCallConvAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // Diagnostic is emitted elsewhere: here we store the (valid) Attr
-  // in the Decl node for syntactic reasoning, e.g., pretty-printing.
-  assert(Attr.isInvalid() == false);
+static void HandleCallConvAttr(Decl *d, const AttributeList &attr, Sema &S) {
+  if (hasDeclarator(d)) return;
 
-  switch (Attr.getKind()) {
+  // Diagnostic is emitted elsewhere: here we store the (valid) attr
+  // in the Decl node for syntactic reasoning, e.g., pretty-printing.
+  CallingConv CC;
+  if (S.CheckCallingConvAttr(attr, CC))
+    return;
+
+  if (!isa<ObjCMethodDecl>(d)) {
+    S.Diag(attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << attr.getName() << 0 /*function*/;
+    return;
+  }
+
+  switch (attr.getKind()) {
   case AttributeList::AT_fastcall:
-    d->addAttr(::new (S.Context) FastCallAttr(Attr.getLoc(), S.Context));
+    d->addAttr(::new (S.Context) FastCallAttr(attr.getLoc(), S.Context));
     return;
   case AttributeList::AT_stdcall:
-    d->addAttr(::new (S.Context) StdCallAttr(Attr.getLoc(), S.Context));
+    d->addAttr(::new (S.Context) StdCallAttr(attr.getLoc(), S.Context));
     return;
   case AttributeList::AT_thiscall:
-    d->addAttr(::new (S.Context) ThisCallAttr(Attr.getLoc(), S.Context));
+    d->addAttr(::new (S.Context) ThisCallAttr(attr.getLoc(), S.Context));
     return;
   case AttributeList::AT_cdecl:
-    d->addAttr(::new (S.Context) CDeclAttr(Attr.getLoc(), S.Context));
+    d->addAttr(::new (S.Context) CDeclAttr(attr.getLoc(), S.Context));
     return;
   case AttributeList::AT_pascal:
-    d->addAttr(::new (S.Context) PascalAttr(Attr.getLoc(), S.Context));
+    d->addAttr(::new (S.Context) PascalAttr(attr.getLoc(), S.Context));
     return;
   default:
     llvm_unreachable("unexpected attribute kind");
@@ -2278,42 +2313,83 @@ static void HandleCallConvAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 }
 
-static void HandleRegparmAttr(Decl *d, const AttributeList &Attr, Sema &S) {
-  // check the attribute arguments.
-  if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
+  if (attr.isInvalid())
+    return true;
+
+  if (attr.getNumArgs() != 0) {
+    Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    attr.setInvalid();
+    return true;
+  }
+
+  // TODO: diagnose uses of these conventions on the wrong target.
+  switch (attr.getKind()) {
+  case AttributeList::AT_cdecl: CC = CC_C; break;
+  case AttributeList::AT_fastcall: CC = CC_X86FastCall; break;
+  case AttributeList::AT_stdcall: CC = CC_X86StdCall; break;
+  case AttributeList::AT_thiscall: CC = CC_X86ThisCall; break;
+  case AttributeList::AT_pascal: CC = CC_X86Pascal; break;
+  default: llvm_unreachable("unexpected attribute kind"); return true;
+  }
+
+  return false;
+}
+
+static void HandleRegparmAttr(Decl *d, const AttributeList &attr, Sema &S) {
+  if (hasDeclarator(d)) return;
+
+  unsigned numParams;
+  if (S.CheckRegparmAttr(attr, numParams))
+    return;
+
+  if (!isa<ObjCMethodDecl>(d)) {
+    S.Diag(attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << attr.getName() << 0 /*function*/;
     return;
   }
 
-  if (!isFunctionOrMethod(d)) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-    << Attr.getName() << 0 /*function*/;
-    return;
+  d->addAttr(::new (S.Context) RegparmAttr(attr.getLoc(), S.Context, numParams));
+}
+
+/// Checks a regparm attribute, returning true if it is ill-formed and
+/// otherwise setting numParams to the appropriate value.
+bool Sema::CheckRegparmAttr(const AttributeList &attr, unsigned &numParams) {
+  if (attr.isInvalid())
+    return true;
+
+  if (attr.getNumArgs() != 1) {
+    Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    attr.setInvalid();
+    return true;
   }
 
-  Expr *NumParamsExpr = Attr.getArg(0);
+  Expr *NumParamsExpr = attr.getArg(0);
   llvm::APSInt NumParams(32);
   if (NumParamsExpr->isTypeDependent() || NumParamsExpr->isValueDependent() ||
-      !NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      !NumParamsExpr->isIntegerConstantExpr(NumParams, Context)) {
+    Diag(attr.getLoc(), diag::err_attribute_argument_not_int)
       << "regparm" << NumParamsExpr->getSourceRange();
-    return;
+    attr.setInvalid();
+    return true;
   }
 
-  if (S.Context.Target.getRegParmMax() == 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_regparm_wrong_platform)
+  if (Context.Target.getRegParmMax() == 0) {
+    Diag(attr.getLoc(), diag::err_attribute_regparm_wrong_platform)
       << NumParamsExpr->getSourceRange();
-    return;
+    attr.setInvalid();
+    return true;
   }
 
-  if (NumParams.getLimitedValue(255) > S.Context.Target.getRegParmMax()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_regparm_invalid_number)
-      << S.Context.Target.getRegParmMax() << NumParamsExpr->getSourceRange();
-    return;
+  numParams = NumParams.getZExtValue();
+  if (numParams > Context.Target.getRegParmMax()) {
+    Diag(attr.getLoc(), diag::err_attribute_regparm_invalid_number)
+      << Context.Target.getRegParmMax() << NumParamsExpr->getSourceRange();
+    attr.setInvalid();
+    return true;
   }
 
-  d->addAttr(::new (S.Context) RegparmAttr(Attr.getLoc(), S.Context,
-                                           NumParams.getZExtValue()));
+  return false;
 }
 
 static void HandleLaunchBoundsAttr(Decl *d, const AttributeList &Attr, Sema &S){

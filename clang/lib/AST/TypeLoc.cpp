@@ -94,13 +94,6 @@ void TypeLoc::initializeImpl(TypeLoc TL, SourceLocation Loc) {
   }
 }
 
-/// \brief Initializes a type location by copying all its data from
-/// another type location of the same type.
-void TypeLoc::initializeFullCopyImpl(TypeLoc TL, TypeLoc Other) {
-  assert(TL.getType() == Other.getType() && "Must copy from same type");
-  memcpy(TL.getOpaqueData(), Other.getOpaqueData(), TL.getFullDataSize());
-}
-
 SourceLocation TypeLoc::getBeginLoc() const {
   TypeLoc Cur = *this;
   while (true) {

@@ -1153,7 +1153,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   }
   QualType FnRetType = CurBlock->ReturnType;
 
-  if (CurBlock->TheDecl->hasAttr<NoReturnAttr>()) {
+  if (CurBlock->FunctionType->getAs<FunctionType>()->getNoReturnAttr()) {
     Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr)
       << getCurFunctionOrMethodDecl()->getDeclName();
     return StmtError();

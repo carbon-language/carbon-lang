@@ -1370,6 +1370,10 @@ public:
   void ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD);
   void ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AL);
 
+  bool CheckRegparmAttr(const AttributeList &attr, unsigned &value);
+  bool CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC);
+  bool CheckNoReturnAttr(const AttributeList &attr);
+
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl, unsigned DiagID);
   void WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethod,

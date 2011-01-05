@@ -133,7 +133,18 @@ public:
   /// \brief Initializes this by copying its information from another
   /// TypeLoc of the same type.
   void initializeFullCopy(TypeLoc Other) const {
-    initializeFullCopyImpl(*this, Other);
+    assert(getType() == Other.getType());
+    size_t Size = getFullDataSize();
+    memcpy(getOpaqueData(), Other.getOpaqueData(), Size);
+  }
+
+  /// \brief Initializes this by copying its information from another
+  /// TypeLoc of the same type.  The given size must be the full data
+  /// size.
+  void initializeFullCopy(TypeLoc Other, unsigned Size) const {
+    assert(getType() == Other.getType());
+    assert(getFullDataSize() == Size);
+    memcpy(getOpaqueData(), Other.getOpaqueData(), Size);
   }
 
   friend bool operator==(const TypeLoc &LHS, const TypeLoc &RHS) {
@@ -148,7 +159,6 @@ public:
 
 private:
   static void initializeImpl(TypeLoc TL, SourceLocation Loc);
-  static void initializeFullCopyImpl(TypeLoc TL, TypeLoc Other);
   static TypeLoc getNextTypeLocImpl(TypeLoc TL);
   static TypeLoc IgnoreParensImpl(TypeLoc TL);
   static SourceRange getLocalSourceRangeImpl(TypeLoc TL);

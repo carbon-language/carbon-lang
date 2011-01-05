@@ -3728,11 +3728,6 @@ inline Qualifiers::GC QualType::getObjCGCAttr() const {
 
   if (const ArrayType *AT = dyn_cast<ArrayType>(CT))
       return AT->getElementType().getObjCGCAttr();
-  if (const ObjCObjectPointerType *PT = CT->getAs<ObjCObjectPointerType>())
-    return PT->getPointeeType().getObjCGCAttr();
-  // We most look at all pointer types, not just pointer to interface types.
-  if (const PointerType *PT = CT->getAs<PointerType>())
-    return PT->getPointeeType().getObjCGCAttr();
   return Qualifiers::GCNone;
 }
 

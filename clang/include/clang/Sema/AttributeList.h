@@ -46,7 +46,10 @@ private:
   unsigned NumArgs;
   AttributeList *Next;
   bool DeclspecAttribute, CXX0XAttribute;
-  mutable bool Invalid; /// True if already diagnosed as invalid.
+
+  /// True if already diagnosed as invalid.
+  mutable bool Invalid;
+
   AttributeList(const AttributeList &); // DO NOT IMPLEMENT
   void operator=(const AttributeList &); // DO NOT IMPLEMENT
   void operator delete(void *); // DO NOT IMPLEMENT
@@ -301,6 +304,10 @@ public:
 
   void clear() { list = 0; }
   AttributeList *getList() const { return list; }
+
+  /// Returns a reference to the attribute list.  Try not to introduce
+  /// dependencies on this method, it may not be long-lived.
+  AttributeList *&getListRef() { return list; }
 
 private:
   AttributeList *list;

@@ -198,6 +198,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   llvm::Constant *C;
   llvm::Value *V;
 
+  bool hasWeakBlockVariable = false;
+
   {
     llvm::Constant *BlockVarLayout;
     // C = BuildBlockStructInitlist();
@@ -268,6 +270,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
       QualType Ty = E->getType();
       if (BDRE && BDRE->isByRef()) {
+        if (BDRE->getDecl()->getType().isObjCGCWeak())
+          hasWeakBlockVariable = true;
         Types[i+BlockFields] = 
           llvm::PointerType::get(BuildByRefType(BDRE->getDecl()), 0);
       } else if (BDRE && BDRE->getDecl()->getType()->isReferenceType()) {
@@ -404,18 +408,22 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
   QualType BPT = BE->getType();
   V = Builder.CreateBitCast(V, ConvertType(BPT));
-  // See if this is a __weak block variable and the must call objc_read_weak
-  // on it.
-  const FunctionType *ftype = BPT->getPointeeType()->getAs<FunctionType>();
-  QualType RES = ftype->getResultType();
-  if (RES.isObjCGCWeak()) {
+
+  // We must call objc_read_weak on the block literal itself if it closes
+  // on any __weak __block variables.  For some reason.
+  if (hasWeakBlockVariable) {
+    const llvm::Type *OrigTy = V->getType();
+
     // Must cast argument to id*
     const llvm::Type *ObjectPtrTy = 
       ConvertType(CGM.getContext().getObjCIdType());
     const llvm::Type *PtrObjectPtrTy = 
       llvm::PointerType::getUnqual(ObjectPtrTy);
     V = Builder.CreateBitCast(V, PtrObjectPtrTy);
-    V =  CGM.getObjCRuntime().EmitObjCWeakRead(*this, V);
+    V = CGM.getObjCRuntime().EmitObjCWeakRead(*this, V);
+
+    // Cast back to the original type.
+    V = Builder.CreateBitCast(V, OrigTy);
   }
   return V;
 }

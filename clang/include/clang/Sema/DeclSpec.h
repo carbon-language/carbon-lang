@@ -1002,6 +1002,7 @@ struct DeclaratorChunk {
   };
 
   union {
+    TypeInfoCommon        Common;
     PointerTypeInfo       Ptr;
     ReferenceTypeInfo     Ref;
     ArrayTypeInfo         Arr;
@@ -1026,19 +1027,12 @@ struct DeclaratorChunk {
   /// getAttrs - If there are attributes applied to this declaratorchunk, return
   /// them.
   const AttributeList *getAttrs() const {
-    switch (Kind) {
-    case Pointer:       return Ptr.AttrList;
-    case Reference:     return Ref.AttrList;
-    case MemberPointer: return Mem.AttrList;
-    case Array:         return Arr.AttrList;
-    case Function:      return Fun.AttrList;
-    case BlockPointer:  return Cls.AttrList;
-    case Paren:         return 0;
-    }
-    llvm_unreachable("Unknown declarator kind!");
-    return 0;
+    return Common.AttrList;
   }
 
+  AttributeList *&getAttrListRef() {
+    return Common.AttrList;
+  }
 
   /// getPointer - Return a DeclaratorChunk for a pointer.
   ///
@@ -1133,6 +1127,7 @@ struct DeclaratorChunk {
     I.Kind          = Paren;
     I.Loc           = LParenLoc;
     I.EndLoc        = RParenLoc;
+    I.Common.AttrList = 0;
     return I;
   }
 
@@ -1337,6 +1332,11 @@ public:
       SetRangeEnd(EndLoc);
   }
 
+  /// AddInnermostTypeInfo - Add a new innermost chunk to this declarator.
+  void AddInnermostTypeInfo(const DeclaratorChunk &TI) {
+    DeclTypeInfo.insert(DeclTypeInfo.begin(), TI);
+  }
+
   /// getNumTypeObjects() - Return the number of types applied to this
   /// declarator.
   unsigned getNumTypeObjects() const { return DeclTypeInfo.size(); }
@@ -1427,6 +1427,8 @@ public:
 
   const AttributeList *getAttributes() const { return AttrList; }
   AttributeList *getAttributes() { return AttrList; }
+
+  AttributeList *&getAttrListRef() { return AttrList; }
 
   /// hasAttributes - do we contain any attributes?
   bool hasAttributes() const {
