@@ -1299,9 +1299,10 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       Invalid = true;
     } else if (MissingDefaultArg) {
       // C++ [temp.param]p11:
-      //   If a template-parameter has a default template-argument,
-      //   all subsequent template-parameters shall have a default
-      //   template-argument supplied.
+      //   If a template-parameter of a class template has a default 
+      //   template-argument, each subsequent template- parameter shall either 
+      //   have a default template-argument supplied or be a template parameter
+      //   pack.
       Diag((*NewParam)->getLocation(),
            diag::err_template_param_default_arg_missing);
       Diag(PreviousDefaultArgLoc, diag::note_template_param_prev_default_arg);
