@@ -792,6 +792,18 @@ for ia in range(len(archs) if iterArchs else 1):
                 LLDBTestResult.__singleton__ = self
                 # Now put this singleton into the lldb module namespace.
                 lldb.test_result = self
+                # Computes the format string for displaying the counter.
+                global suite
+                counterWidth = len(str(suite.countTestCases()))
+                self.fmt = "%" + str(counterWidth) + "d: "
+                # This counts from 1 .. suite.countTestCases().
+                self.counter = 0
+
+            def startTest(self, test):
+                self.counter += 1
+                if self.showAll:
+                    self.stream.write(self.fmt % self.counter)
+                super(LLDBTestResult, self).startTest(test)
 
             def addError(self, test, err):
                 global sdir_has_content
