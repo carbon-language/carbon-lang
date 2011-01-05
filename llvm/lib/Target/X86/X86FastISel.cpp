@@ -1547,7 +1547,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     case CCValAssign::SExt: {
       bool Emitted = X86FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
                                        Arg, ArgVT, Arg);
-      assert(Emitted && "Failed to emit a sext!"); Emitted=Emitted;
+      assert(Emitted && "Failed to emit a sext!"); (void)Emitted;
       Emitted = true;
       ArgVT = VA.getLocVT();
       break;
@@ -1555,7 +1555,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     case CCValAssign::ZExt: {
       bool Emitted = X86FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
                                        Arg, ArgVT, Arg);
-      assert(Emitted && "Failed to emit a zext!"); Emitted=Emitted;
+      assert(Emitted && "Failed to emit a zext!"); (void)Emitted;
       Emitted = true;
       ArgVT = VA.getLocVT();
       break;
@@ -1573,7 +1573,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
         Emitted = X86FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
                                     Arg, ArgVT, Arg);
 
-      assert(Emitted && "Failed to emit a aext!"); Emitted=Emitted;
+      assert(Emitted && "Failed to emit a aext!"); (void)Emitted;
       ArgVT = VA.getLocVT();
       break;
     }
