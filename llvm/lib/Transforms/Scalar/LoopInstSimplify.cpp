@@ -12,11 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-instsimplify"
-#include "llvm/Function.h"
-#include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -26,19 +26,19 @@ using namespace llvm;
 STATISTIC(NumSimplified, "Number of redundant instructions simplified");
 
 namespace {
-  class LoopInstSimplify : public FunctionPass {
+  class LoopInstSimplify : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopInstSimplify() : FunctionPass(ID) {
+    LoopInstSimplify() : LoopPass(ID) {
       initializeLoopInstSimplifyPass(*PassRegistry::getPassRegistry());
     }
 
-    bool runOnFunction(Function &);
+    bool runOnLoop(Loop*, LPPassManager&);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<LoopInfo>();
-      AU.addPreserved<LoopInfo>();
+      AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
     }
   };
@@ -57,19 +57,34 @@ Pass* llvm::createLoopInstSimplifyPass() {
   return new LoopInstSimplify();
 }
 
-bool LoopInstSimplify::runOnFunction(Function &F) {
+bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
   LoopInfo *LI = &getAnalysis<LoopInfo>();
   const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+
+  SmallVector<BasicBlock*, 8> ExitBlocks;
+  L->getUniqueExitBlocks(ExitBlocks);
+  array_pod_sort(ExitBlocks.begin(), ExitBlocks.end());
+
+  SmallVector<BasicBlock*, 16> VisitStack;
+  SmallPtrSet<BasicBlock*, 32> Visited;
 
   bool Changed = false;
   bool LocalChanged;
   do {
     LocalChanged = false;
 
-    for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
-         DE = df_end(&F.getEntryBlock()); DI != DE; ++DI)
-      for (BasicBlock::iterator BI = DI->begin(), BE = DI->end(); BI != BE;) {
+    VisitStack.clear();
+    Visited.clear();
+
+    VisitStack.push_back(L->getHeader());
+
+    while (!VisitStack.empty()) {
+      BasicBlock *BB = VisitStack.back();
+      VisitStack.pop_back();
+
+      // Simplify instructions in the current basic block.
+      for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
         Instruction *I = BI++;
         // Don't bother simplifying unused instructions.
         if (!I->use_empty()) {
@@ -82,6 +97,17 @@ bool LoopInstSimplify::runOnFunction(Function &F) {
         }
         LocalChanged |= RecursivelyDeleteTriviallyDeadInstructions(I);
       }
+
+      // Add all successors to the worklist, except for loop exit blocks.
+      for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE;
+           ++SI) {
+        BasicBlock *SuccBB = *SI;
+        bool IsExitBlock = std::binary_search(ExitBlocks.begin(),
+                                             ExitBlocks.end(), SuccBB);
+        if (!IsExitBlock && Visited.insert(SuccBB))
+          VisitStack.push_back(SuccBB);
+      }
+    }
 
     Changed |= LocalChanged;
   } while (LocalChanged);
