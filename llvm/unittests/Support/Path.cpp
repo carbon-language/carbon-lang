@@ -19,9 +19,10 @@ using namespace llvm::sys;
 #define ASSERT_NO_ERROR(x) \
   if (error_code ec = x) { \
     SmallString<128> Message; \
-    GTEST_FATAL_FAILURE_((Twine(#x) + ": did not return errc::success.\n" + \
+    GTEST_FATAL_FAILURE_((Twine(#x ": did not return errc::success.\n") + \
+                         "error number: " + Twine(ec.value()) + "\n" + \
                          "error message: " + \
-                      x.message()).toNullTerminatedStringRef(Message).data()); \
+                     ec.message()).toNullTerminatedStringRef(Message).data()); \
   } else {}
 
 namespace {
@@ -132,16 +133,20 @@ protected:
   SmallString<128> TestDirectory;
 
   virtual void SetUp() {
-    /*int fd;
+    int fd;
     ASSERT_NO_ERROR(
-      fs::unique_file("%%-%%-%%-%%/test-directory.anchor", fd, TestDirectory));
+      fs::unique_file("file-system-test-%%-%%-%%-%%/test-directory.anchor", fd,
+                      TestDirectory));
     // We don't care about this specific file.
-    ::close(fd);*/
+    ::close(fd);
+    TestDirectory = path::parent_path(TestDirectory);
+    errs() << "Test Directory: " << TestDirectory << '\n';
+    errs().flush();
   }
 
   virtual void TearDown() {
-    /*uint32_t removed;
-    ASSERT_NO_ERROR(fs::remove_all(TestDirectory.str(), removed));*/
+    uint32_t removed;
+    ASSERT_NO_ERROR(fs::remove_all(TestDirectory.str(), removed));
   }
 };
 
