@@ -3402,26 +3402,16 @@ bool TreeTransform<Derived>::
         llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
 
         // Find the parameter packs that could be expanded.
-        SourceLocation EllipsisLoc;
-        SourceRange PatternRange;
-        if (OldParm->getTypeSourceInfo()) {
-          TypeLoc TL = OldParm->getTypeSourceInfo()->getTypeLoc();
-          PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(TL);
-          TypeLoc Pattern = ExpansionTL.getPatternLoc();
-          EllipsisLoc = ExpansionTL.getEllipsisLoc();
-          PatternRange = Pattern.getSourceRange();
-          SemaRef.collectUnexpandedParameterPacks(Pattern, Unexpanded);
-        } else {
-          SemaRef.collectUnexpandedParameterPacks(
-                    cast<PackExpansionType>(OldParm->getType())->getPattern(), 
-                                                  Unexpanded);
-          EllipsisLoc = OldParm->getLocation();
-        }
+        TypeLoc TL = OldParm->getTypeSourceInfo()->getTypeLoc();
+        PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(TL);
+        TypeLoc Pattern = ExpansionTL.getPatternLoc();
+        SemaRef.collectUnexpandedParameterPacks(Pattern, Unexpanded);
         
         // Determine whether we should expand the parameter packs.
         bool ShouldExpand = false;
         unsigned NumExpansions = 0;
-        if (getDerived().TryExpandParameterPacks(EllipsisLoc, PatternRange,
+        if (getDerived().TryExpandParameterPacks(ExpansionTL.getEllipsisLoc(),
+                                                 Pattern.getSourceRange(),
                                                  Unexpanded.data(), 
                                                  Unexpanded.size(),
                                                  ShouldExpand, NumExpansions)) {
