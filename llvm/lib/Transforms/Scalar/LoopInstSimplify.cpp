@@ -82,8 +82,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     VisitStack.push_back(L->getHeader());
 
     while (!VisitStack.empty()) {
-      BasicBlock *BB = VisitStack.back();
-      VisitStack.pop_back();
+      BasicBlock *BB = VisitStack.pop_back_val();
 
       // Simplify instructions in the current basic block.
       for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
