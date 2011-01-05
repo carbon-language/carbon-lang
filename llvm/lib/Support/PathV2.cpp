@@ -697,6 +697,43 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
   return success;
 }
 
+namespace {
+error_code remove_all_r(StringRef path, file_type ft, uint32_t &count) {
+  if (ft == file_type::directory_file) {
+    // This code would be a lot better with exceptions ;/.
+    error_code ec;
+    for (directory_iterator i(path, ec), e; i != e; i.increment(ec)) {
+      if (ec) return ec;
+      file_status st;
+      if (error_code ec = i->status(st)) return ec;
+      if (error_code ec = remove_all_r(i->path(), st.type(), count)) return ec;
+    }
+    bool obviously_this_exists;
+    if (error_code ec = remove(path, obviously_this_exists)) return ec;
+    assert(obviously_this_exists);
+    ++count; // Include the directory itself in the items removed.
+  } else {
+    bool obviously_this_exists;
+    if (error_code ec = remove(path, obviously_this_exists)) return ec;
+    assert(obviously_this_exists);
+    ++count;
+  }
+
+  return success;
+}
+}
+
+error_code remove_all(const Twine &path, uint32_t &num_removed) {
+  SmallString<128> path_storage;
+  StringRef p = path.toStringRef(path_storage);
+
+  file_status fs;
+  if (error_code ec = status(path, fs))
+    return ec;
+  num_removed = 0;
+  return remove_all_r(p, fs.type(), num_removed);
+}
+
 error_code directory_entry::status(file_status &result) const {
   return fs::status(Path, result);
 }
