@@ -1144,9 +1144,9 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
     bool MissingDefaultArg = false;
 
     // C++0x [temp.param]p11:
-    // If a template parameter of a class template is a template parameter pack,
-    // it must be the last template parameter.
-    if (SawParameterPack) {
+    //   If a template parameter of a primary class template is a template 
+    //   parameter pack, it shall be the last template parameter.
+    if (SawParameterPack && TPC == TPC_ClassTemplate) {
       Diag(ParameterPackLoc,
            diag::err_template_param_pack_must_be_last_template_parameter);
       Invalid = true;
@@ -1211,7 +1211,12 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       // Merge default arguments for non-type template parameters
       NonTypeTemplateParmDecl *OldNonTypeParm
         = OldParams? cast<NonTypeTemplateParmDecl>(*OldParam) : 0;
-      if (OldNonTypeParm && OldNonTypeParm->hasDefaultArgument() &&
+      if (NewNonTypeParm->isParameterPack()) {
+        assert(!NewNonTypeParm->hasDefaultArgument() &&
+               "Parameter packs can't have a default argument!");
+        SawParameterPack = true;
+        ParameterPackLoc = NewNonTypeParm->getLocation();
+      } else if (OldNonTypeParm && OldNonTypeParm->hasDefaultArgument() &&
           NewNonTypeParm->hasDefaultArgument()) {
         OldDefaultLoc = OldNonTypeParm->getDefaultArgumentLoc();
         NewDefaultLoc = NewNonTypeParm->getDefaultArgumentLoc();
@@ -1254,7 +1259,12 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       // Merge default arguments for template template parameters
       TemplateTemplateParmDecl *OldTemplateParm
         = OldParams? cast<TemplateTemplateParmDecl>(*OldParam) : 0;
-      if (OldTemplateParm && OldTemplateParm->hasDefaultArgument() &&
+      if (NewTemplateParm->isParameterPack()) {
+        assert(!NewTemplateParm->hasDefaultArgument() &&
+               "Parameter packs can't have a default argument!");
+        SawParameterPack = true;
+        ParameterPackLoc = NewTemplateParm->getLocation();
+      } else if (OldTemplateParm && OldTemplateParm->hasDefaultArgument() &&
           NewTemplateParm->hasDefaultArgument()) {
         OldDefaultLoc = OldTemplateParm->getDefaultArgument().getLocation();
         NewDefaultLoc = NewTemplateParm->getDefaultArgument().getLocation();
