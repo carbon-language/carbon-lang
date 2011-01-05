@@ -1084,7 +1084,7 @@ static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
     // TODO: currently we always rebuild expressions.  When we
     // properly get lazier about this, we should use the same
     // logic to avoid rebuilding prototypes here.
-    if (P->hasInit())
+    if (P->hasDefaultArg())
       return true;
   }
 
