@@ -796,8 +796,16 @@ for ia in range(len(archs) if iterArchs else 1):
                 global suite
                 counterWidth = len(str(suite.countTestCases()))
                 self.fmt = "%" + str(counterWidth) + "d: "
+                self.indentation = ' ' * (counterWidth + 2)
                 # This counts from 1 .. suite.countTestCases().
                 self.counter = 0
+
+            def getDescription(self, test):
+                doc_first_line = test.shortDescription()
+                if self.descriptions and doc_first_line:
+                    return '\n'.join((str(test), self.indentation + doc_first_line))
+                else:
+                    return str(test)
 
             def startTest(self, test):
                 self.counter += 1
