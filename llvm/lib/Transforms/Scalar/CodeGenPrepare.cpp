@@ -44,7 +44,15 @@
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
-STATISTIC(NumElim,  "Number of blocks eliminated");
+STATISTIC(NumBlocksElim, "Number of blocks eliminated");
+STATISTIC(NumCmpUses, "Number of uses of Cmp expressions replaced with uses of "
+                      "sunken Cmps");
+STATISTIC(NumCastUses, "Number of uses of Cast expressions replaced with uses "
+                       "of sunken Casts");
+STATISTIC(NumMemoryInsts, "Number of memory instructions whose address "
+                          "computations were sunk");
+STATISTIC(NumExtsMoved, "Number of [s|z]ext instructions combined with loads");
+STATISTIC(NumExtUses, "Number of uses of [s|z]ext instructions optimized");
 
 static cl::opt<bool>
 CriticalEdgeSplit("cgp-critical-edge-splitting",
@@ -310,7 +318,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
     PFI->removeEdge(ProfileInfo::getEdge(BB, DestBB));
   }
   BB->eraseFromParent();
-  ++NumElim;
+  ++NumBlocksElim;
 
   DEBUG(dbgs() << "AFTER:\n" << *DestBB << "\n\n\n");
 }
@@ -489,6 +497,7 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
 
     // Replace a use of the cast with a use of the new cast.
     TheUse = InsertedCast;
+    ++NumCastUses;
   }
 
   // If we removed all uses, nuke the cast.
@@ -546,6 +555,7 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
 
     // Replace a use of the cmp with a use of the new cmp.
     TheUse = InsertedCmp;
+    ++NumCmpUses;
   }
 
   // If we removed all uses, nuke the cmp.
@@ -793,6 +803,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     // we don't want to match some completely different instruction.
     SunkAddrs[Addr] = 0;
   }
+  ++NumMemoryInsts;
   return true;
 }
 
@@ -858,6 +869,7 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
   // can fold it.
   I->removeFromParent();
   I->insertAfter(LI);
+  ++NumExtsMoved;
   return true;
 }
 
@@ -929,7 +941,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
 
     // Replace a use of the {s|z}ext source with a use of the result.
     TheUse = InsertedTrunc;
-
+    ++NumExtUses;
     MadeChange = true;
   }
 
