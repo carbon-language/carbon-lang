@@ -2889,6 +2889,7 @@ void ASTWriter::AddTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
   case TemplateArgument::Template:
     AddSourceRange(Arg.getTemplateQualifierRange(), Record);
     AddSourceLocation(Arg.getTemplateNameLoc(), Record);
+    AddSourceLocation(Arg.getTemplateEllipsisLoc(), Record);
     break;
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
@@ -3176,6 +3177,7 @@ void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg,
     break;
   case TemplateArgument::Template:
     AddTemplateName(Arg.getAsTemplate(), Record);
+    Record.push_back(Arg.isPackExpansion());
     break;
   case TemplateArgument::Expression:
     AddStmt(Arg.getAsExpr());

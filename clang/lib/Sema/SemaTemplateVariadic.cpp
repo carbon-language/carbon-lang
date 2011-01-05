@@ -130,6 +130,22 @@ namespace {
 
       return true; 
     }
+
+    /// \brief Suppress traversal of template argument pack expansions.
+    bool TraverseTemplateArgument(const TemplateArgument &Arg) {
+      if (Arg.isPackExpansion())
+        return true;
+
+      return inherited::TraverseTemplateArgument(Arg);
+    }
+
+    /// \brief Suppress traversal of template argument pack expansions.
+    bool TraverseTemplateArgumentLoc(const TemplateArgumentLoc &ArgLoc) {
+      if (ArgLoc.getArgument().isPackExpansion())
+        return true;
+      
+      return inherited::TraverseTemplateArgumentLoc(ArgLoc);
+    }
   };
 }
 
@@ -335,8 +351,16 @@ Sema::ActOnPackExpansion(const ParsedTemplateArgument &Arg,
   }
     
   case ParsedTemplateArgument::Template:
-    Diag(EllipsisLoc, diag::err_pack_expansion_unsupported);
-    return ParsedTemplateArgument();
+    if (!Arg.getAsTemplate().get().containsUnexpandedParameterPack()) {
+      SourceRange R(Arg.getLocation());
+      if (Arg.getScopeSpec().isValid())
+        R.setBegin(Arg.getScopeSpec().getBeginLoc());
+      Diag(EllipsisLoc, diag::err_pack_expansion_without_parameter_packs)
+        << R;
+      return ParsedTemplateArgument();
+    }
+      
+    return Arg.getTemplatePackExpansion(EllipsisLoc);
   }
   llvm_unreachable("Unhandled template argument kind?");
   return ParsedTemplateArgument();

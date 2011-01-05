@@ -335,8 +335,7 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
       Arg = TemplateArgument(E);
     } else {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
-      // FIXME: Variadic templates.
-      Arg = TemplateArgument(TemplateName(TTP));
+      Arg = TemplateArgument(TemplateName(TTP), TTP->isParameterPack());
     }
     
     if ((*Param)->isTemplateParameterPack()) {

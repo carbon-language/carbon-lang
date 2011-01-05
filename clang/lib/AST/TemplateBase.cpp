@@ -76,8 +76,7 @@ bool TemplateArgument::isPackExpansion() const {
     return isa<PackExpansionType>(getAsType());
       
   case Template:
-    // FIXME: Template template pack expansions.
-    break;
+    return TemplateArg.PackExpansion;
     
   case Expression:
     return isa<PackExpansionExpr>(getAsExpr());
@@ -99,7 +98,8 @@ bool TemplateArgument::containsUnexpandedParameterPack() const {
     break;
 
   case Template:
-    if (getAsTemplate().containsUnexpandedParameterPack())
+    if (!TemplateArg.PackExpansion && 
+        getAsTemplate().containsUnexpandedParameterPack())
       return true;
     break;
         
@@ -135,12 +135,14 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
     break;
 
   case Template:
+    ID.AddBoolean(TemplateArg.PackExpansion);
     if (TemplateTemplateParmDecl *TTP
           = dyn_cast_or_null<TemplateTemplateParmDecl>(
                                        getAsTemplate().getAsTemplateDecl())) {
       ID.AddBoolean(true);
       ID.AddInteger(TTP->getDepth());
       ID.AddInteger(TTP->getPosition());
+      ID.AddBoolean(TTP->isParameterPack());
     } else {
       ID.AddBoolean(false);
       ID.AddPointer(Context.getCanonicalTemplateName(getAsTemplate())
@@ -171,10 +173,13 @@ bool TemplateArgument::structurallyEquals(const TemplateArgument &Other) const {
   case Null:
   case Type:
   case Declaration:
-  case Template:
   case Expression:
     return TypeOrValue == Other.TypeOrValue;
 
+  case Template:
+    return TemplateArg.Template == Other.TemplateArg.Template &&
+           TemplateArg.PackExpansion == Other.TemplateArg.PackExpansion;
+      
   case Integral:
     return getIntegralType() == Other.getIntegralType() &&
            *getAsIntegral() == *Other.getAsIntegral();
@@ -195,21 +200,20 @@ TemplateArgument TemplateArgument::getPackExpansionPattern() const {
   assert(isPackExpansion());
   
   switch (getKind()) {
-    case Type:
-      return getAsType()->getAs<PackExpansionType>()->getPattern();
-      
-    case Expression:
-      return cast<PackExpansionExpr>(getAsExpr())->getPattern();
-      
-    case Template:
-      // FIXME: Variadic templates.
-      llvm_unreachable("Template pack expansions unsupported");
-      
-    case Declaration:
-    case Integral:
-    case Pack:
-    case Null:
-      return TemplateArgument();
+  case Type:
+    return getAsType()->getAs<PackExpansionType>()->getPattern();
+    
+  case Expression:
+    return cast<PackExpansionExpr>(getAsExpr())->getPattern();
+    
+  case Template:
+    return TemplateArgument(getAsTemplate(), false);
+    
+  case Declaration:
+  case Integral:
+  case Pack:
+  case Null:
+    return TemplateArgument();
   }
   
   return TemplateArgument();
@@ -246,6 +250,8 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
     
   case Template: {
     getAsTemplate().print(Out, Policy);
+    if (TemplateArg.PackExpansion)
+      Out << "...";
     break;
   }
     
@@ -254,12 +260,9 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
     break;
   }
     
-  case Expression: {
-    // FIXME: This is non-optimal, since we're regurgitating the
-    // expression we were given.
+  case Expression:
     getAsExpr()->printPretty(Out, 0, Policy);
     break;
-  }
     
   case Pack:
     Out << "<";
@@ -296,12 +299,15 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
     else
       return SourceRange();
 
-  case TemplateArgument::Template:
+  case TemplateArgument::Template: {
+    SourceLocation End = getTemplateNameLoc();
+    if (getTemplateEllipsisLoc().isValid())
+      End = getTemplateEllipsisLoc();
     if (getTemplateQualifierRange().isValid())
-      return SourceRange(getTemplateQualifierRange().getBegin(),
-                         getTemplateNameLoc());
-    return SourceRange(getTemplateNameLoc());
-
+      return SourceRange(getTemplateQualifierRange().getBegin(), End);
+    return SourceRange(getTemplateNameLoc(), End);
+  }
+      
   case TemplateArgument::Integral:
   case TemplateArgument::Pack:
   case TemplateArgument::Null:
@@ -351,8 +357,9 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
   }
       
   case TemplateArgument::Template:
-    // FIXME: Variadic templates.
-      llvm_unreachable("Template pack expansions unsupported");
+    return TemplateArgumentLoc(Argument.getPackExpansionPattern(),
+                               getTemplateQualifierRange(),
+                               getTemplateNameLoc());
     
   case TemplateArgument::Declaration:
   case TemplateArgument::Integral:
@@ -382,7 +389,10 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
     return DB << Arg.getAsIntegral()->toString(10);
       
   case TemplateArgument::Template:
-    return DB << Arg.getAsTemplate();
+    DB << Arg.getAsTemplate();
+    if (Arg.isPackExpansion())
+      DB << "...";
+    return DB;
       
   case TemplateArgument::Expression: {
     // This shouldn't actually ever happen, so it's okay that we're

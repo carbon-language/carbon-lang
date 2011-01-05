@@ -1344,19 +1344,20 @@ getTrivialTemplateArgumentLoc(Sema &S,
     
   case TemplateArgument::Declaration: {
     Expr *E
-    = S.BuildExpressionFromDeclTemplateArgument(Arg, NTTPType, Loc)
+      = S.BuildExpressionFromDeclTemplateArgument(Arg, NTTPType, Loc)
     .takeAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(E), E);
   }
     
   case TemplateArgument::Integral: {
     Expr *E
-    = S.BuildExpressionFromIntegralTemplateArgument(Arg, Loc).takeAs<Expr>();
+      = S.BuildExpressionFromIntegralTemplateArgument(Arg, Loc).takeAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(E), E);
   }
     
   case TemplateArgument::Template:
-    return TemplateArgumentLoc(Arg, SourceRange(), Loc);
+    return TemplateArgumentLoc(Arg, SourceRange(), Loc,
+                               Arg.isPackExpansion()? Loc : SourceLocation());
     
   case TemplateArgument::Expression:
     return TemplateArgumentLoc(Arg, Arg.getAsExpr());

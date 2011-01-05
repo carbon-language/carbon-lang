@@ -437,6 +437,17 @@ TemplateDecl *Sema::AdjustDeclIfTemplate(Decl *&D) {
   return 0;
 }
 
+ParsedTemplateArgument ParsedTemplateArgument::getTemplatePackExpansion(
+                                             SourceLocation EllipsisLoc) const {
+  assert(Kind == Template && 
+         "Only template template arguments can be pack expansions here");
+  assert(getAsTemplate().get().containsUnexpandedParameterPack() &&
+         "Template template argument pack expansion without packs");
+  ParsedTemplateArgument Result(*this);
+  Result.EllipsisLoc = EllipsisLoc;
+  return Result;
+}
+
 static TemplateArgumentLoc translateTemplateArgument(Sema &SemaRef,
                                             const ParsedTemplateArgument &Arg) {
   
@@ -456,9 +467,11 @@ static TemplateArgumentLoc translateTemplateArgument(Sema &SemaRef,
     
   case ParsedTemplateArgument::Template: {
     TemplateName Template = Arg.getAsTemplate().get();
-    return TemplateArgumentLoc(TemplateArgument(Template),
+    return TemplateArgumentLoc(TemplateArgument(Template,
+                                                Arg.getEllipsisLoc().isValid()),
                                Arg.getScopeSpec().getRange(),
-                               Arg.getLocation());
+                               Arg.getLocation(),
+                               Arg.getEllipsisLoc());
   }
   }
   

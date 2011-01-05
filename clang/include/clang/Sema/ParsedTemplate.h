@@ -58,7 +58,7 @@ namespace clang {
                            SourceLocation TemplateLoc) 
       : Kind(ParsedTemplateArgument::Template),
         Arg(Template.getAsOpaquePtr()), 
-        Loc(TemplateLoc), SS(SS) { }
+        Loc(TemplateLoc), SS(SS), EllipsisLoc() { }
     
     /// \brief Determine whether the given template argument is invalid.
     bool isInvalid() const { return Arg == 0; }
@@ -95,6 +95,21 @@ namespace clang {
       return SS;
     }
     
+    /// \brief Retrieve the location of the ellipsis that makes a template
+    /// template argument into a pack expansion.
+    SourceLocation getEllipsisLoc() const {
+      assert(Kind == Template && 
+             "Only template template arguments can have an ellipsis");
+      return EllipsisLoc;
+    }
+    
+    /// \brief Retrieve a pack expansion of the given template template
+    /// argument.
+    ///
+    /// \param EllipsisLoc The location of the ellipsis.
+    ParsedTemplateArgument getTemplatePackExpansion(
+                                              SourceLocation EllipsisLoc) const;
+    
   private:
     KindType Kind;
     
@@ -109,6 +124,10 @@ namespace clang {
     /// \brief The nested-name-specifier that can accompany a template template
     /// argument.
     CXXScopeSpec SS;
+    
+    /// \brief The ellipsis location that can accompany a template template
+    /// argument (turning it into a template template argument expansion).
+    SourceLocation EllipsisLoc;
   };
   
   /// \brief Information about a template-id annotation
