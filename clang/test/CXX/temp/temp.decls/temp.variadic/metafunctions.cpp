@@ -118,6 +118,33 @@ namespace Math {
   }
 }
 
+namespace ListMath {
+  template<typename T, T ... V> struct add;
+
+  template<typename T, T i, T ... V>
+  struct add<T, i, V...> {
+    static const T value = i + add<T, V...>::value; 
+  };
+
+  template<typename T>
+  struct add<T> {
+    static const T value = T(); 
+  };
+
+  template<typename T, T ... V>
+  struct List {
+    struct sum {
+      static const T value = add<T, V...>::value;
+    };
+  };
+
+  template<int ... V>
+  struct ListI : public List<int, V...> {
+  };
+
+  int check0[ListI<1, 2, 3>::sum::value == 6? 1 : -1];
+}
+
 namespace Indices {
   template<unsigned I, unsigned N, typename IntTuple>
   struct build_indices_impl;

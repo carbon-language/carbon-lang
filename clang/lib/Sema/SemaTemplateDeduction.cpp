@@ -1402,12 +1402,19 @@ static bool ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
     for (TemplateArgument::pack_iterator PA = Arg.pack_begin(), 
          PAEnd = Arg.pack_end();
          PA != PAEnd; ++PA) {
+      // When converting the deduced template argument, append it to the
+      // general output list. We need to do this so that the template argument
+      // checking logic has all of the prior template arguments available.
       DeducedTemplateArgument InnerArg(*PA);
       InnerArg.setDeducedFromArrayBound(Arg.wasDeducedFromArrayBound());
       if (ConvertDeducedTemplateArgument(S, Param, InnerArg, Template, 
                                          NTTPType, Info, 
-                                         InFunctionTemplate, PackedArgsBuilder))
+                                         InFunctionTemplate, Output))
         return true;
+      
+      // Move the converted template argument into our argument pack.
+      PackedArgsBuilder.push_back(Output.back());
+      Output.pop_back();
     }
     
     // Create the resulting argument pack.
@@ -1472,9 +1479,26 @@ FinishTemplateArgumentDeduction(Sema &S,
     // corresponding non-type template parameter.
     QualType NTTPType;
     if (NonTypeTemplateParmDecl *NTTP 
-                                     = dyn_cast<NonTypeTemplateParmDecl>(Param))
+                                  = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
       NTTPType = NTTP->getType();
-    
+      if (NTTPType->isDependentType()) {
+        TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack, 
+                                          Builder.data(), Builder.size());
+        NTTPType = S.SubstType(NTTPType,
+                               MultiLevelTemplateArgumentList(TemplateArgs),
+                               NTTP->getLocation(),
+                               NTTP->getDeclName());
+        if (NTTPType.isNull()) {
+          Info.Param = makeTemplateParameter(Param);
+          // FIXME: These template arguments are temporary. Free them!
+          Info.reset(TemplateArgumentList::CreateCopy(S.Context, 
+                                                      Builder.data(), 
+                                                      Builder.size()));
+          return Sema::TDK_SubstitutionFailure;
+        }
+      }
+    }
+
     if (ConvertDeducedTemplateArgument(S, Param, Deduced[I],
                                        Partial, NTTPType, Info, false,
                                        Builder)) {
