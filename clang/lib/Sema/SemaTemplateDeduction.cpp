@@ -168,7 +168,16 @@ checkDeducedTemplateArguments(ASTContext &Context,
     
     // All other combinations are incompatible.
     return DeducedTemplateArgument();      
-      
+
+  case TemplateArgument::TemplateExpansion:
+    if (Y.getKind() == TemplateArgument::TemplateExpansion &&
+        Context.hasSameTemplateName(X.getAsTemplateOrTemplatePattern(), 
+                                    Y.getAsTemplateOrTemplatePattern()))
+      return X;
+    
+    // All other combinations are incompatible.
+    return DeducedTemplateArgument();      
+
   case TemplateArgument::Expression:
     // If we deduced a dependent expression in one case and either an integral 
     // constant or a declaration in another case, keep the integral constant 
@@ -934,7 +943,7 @@ DeduceTemplateArguments(Sema &S,
     Info.FirstArg = Param;
     Info.SecondArg = Arg;
     return Sema::TDK_NonDeducedMismatch;
-      
+
   case TemplateArgument::Template:
     if (Arg.getKind() == TemplateArgument::Template)
       return DeduceTemplateArguments(S, TemplateParams, 
@@ -943,6 +952,10 @@ DeduceTemplateArguments(Sema &S,
     Info.FirstArg = Param;
     Info.SecondArg = Arg;
     return Sema::TDK_NonDeducedMismatch;
+
+  case TemplateArgument::TemplateExpansion:
+    llvm_unreachable("caller should handle pack expansions");
+    break;
       
   case TemplateArgument::Declaration:
     if (Arg.getKind() == TemplateArgument::Declaration &&
@@ -1282,10 +1295,11 @@ static bool isSameTemplateArg(ASTContext &Context,
              Y.getAsDecl()->getCanonicalDecl();
 
     case TemplateArgument::Template:
-      return Context.getCanonicalTemplateName(X.getAsTemplate())
-               .getAsVoidPointer() ==
-             Context.getCanonicalTemplateName(Y.getAsTemplate())
-               .getAsVoidPointer();
+    case TemplateArgument::TemplateExpansion:
+      return Context.getCanonicalTemplateName(
+                    X.getAsTemplateOrTemplatePattern()).getAsVoidPointer() ==
+             Context.getCanonicalTemplateName(
+                    Y.getAsTemplateOrTemplatePattern()).getAsVoidPointer();
       
     case TemplateArgument::Integral:
       return *X.getAsIntegral() == *Y.getAsIntegral();
@@ -1356,9 +1370,11 @@ getTrivialTemplateArgumentLoc(Sema &S,
   }
     
   case TemplateArgument::Template:
-    return TemplateArgumentLoc(Arg, SourceRange(), Loc,
-                               Arg.isPackExpansion()? Loc : SourceLocation());
-    
+    return TemplateArgumentLoc(Arg, SourceRange(), Loc);
+
+  case TemplateArgument::TemplateExpansion:
+    return TemplateArgumentLoc(Arg, SourceRange(), Loc, Loc);
+
   case TemplateArgument::Expression:
     return TemplateArgumentLoc(Arg, Arg.getAsExpr());
     
@@ -3244,7 +3260,9 @@ MarkUsedTemplateParameters(Sema &SemaRef,
     break;
 
   case TemplateArgument::Template:
-    MarkUsedTemplateParameters(SemaRef, TemplateArg.getAsTemplate(), 
+  case TemplateArgument::TemplateExpansion:
+    MarkUsedTemplateParameters(SemaRef, 
+                               TemplateArg.getAsTemplateOrTemplatePattern(), 
                                OnlyDeduced, Depth, Used);
     break;
 

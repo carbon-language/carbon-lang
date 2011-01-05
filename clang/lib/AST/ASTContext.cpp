@@ -2692,7 +2692,12 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) {
 
     case TemplateArgument::Template:
       return TemplateArgument(getCanonicalTemplateName(Arg.getAsTemplate()));
-      
+
+    case TemplateArgument::TemplateExpansion:
+      return TemplateArgument(getCanonicalTemplateName(
+                                         Arg.getAsTemplateOrTemplatePattern()),
+                              true);
+
     case TemplateArgument::Integral:
       return TemplateArgument(*Arg.getAsIntegral(),
                               getCanonicalType(Arg.getIntegralType()));

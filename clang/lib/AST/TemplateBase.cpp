@@ -39,7 +39,10 @@ bool TemplateArgument::isDependent() const {
 
   case Template:
     return getAsTemplate().isDependent();
-      
+
+  case TemplateExpansion:
+    return true;
+
   case Declaration:
     if (DeclContext *DC = dyn_cast<DeclContext>(getAsDecl()))
       return DC->isDependentContext();
@@ -70,14 +73,15 @@ bool TemplateArgument::isPackExpansion() const {
   case Declaration:
   case Integral:
   case Pack:    
+  case Template:
     return false;
+      
+  case TemplateExpansion:
+    return true;
       
   case Type:
     return isa<PackExpansionType>(getAsType());
-      
-  case Template:
-    return TemplateArg.PackExpansion;
-    
+          
   case Expression:
     return isa<PackExpansionExpr>(getAsExpr());
   }
@@ -90,6 +94,7 @@ bool TemplateArgument::containsUnexpandedParameterPack() const {
   case Null:
   case Declaration:
   case Integral:
+  case TemplateExpansion:
     break;
 
   case Type:
@@ -98,8 +103,7 @@ bool TemplateArgument::containsUnexpandedParameterPack() const {
     break;
 
   case Template:
-    if (!TemplateArg.PackExpansion && 
-        getAsTemplate().containsUnexpandedParameterPack())
+    if (getAsTemplate().containsUnexpandedParameterPack())
       return true;
     break;
         
@@ -135,20 +139,22 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
     break;
 
   case Template:
-    ID.AddBoolean(TemplateArg.PackExpansion);
+  case TemplateExpansion: {
+    TemplateName Template = getAsTemplateOrTemplatePattern();
     if (TemplateTemplateParmDecl *TTP
           = dyn_cast_or_null<TemplateTemplateParmDecl>(
-                                       getAsTemplate().getAsTemplateDecl())) {
+                                                Template.getAsTemplateDecl())) {
       ID.AddBoolean(true);
       ID.AddInteger(TTP->getDepth());
       ID.AddInteger(TTP->getPosition());
       ID.AddBoolean(TTP->isParameterPack());
     } else {
       ID.AddBoolean(false);
-      ID.AddPointer(Context.getCanonicalTemplateName(getAsTemplate())
-                      .getAsVoidPointer());
+      ID.AddPointer(Context.getCanonicalTemplateName(Template)
+                                                          .getAsVoidPointer());
     }
     break;
+  }
       
   case Integral:
     getAsIntegral()->Profile(ID);
@@ -173,13 +179,11 @@ bool TemplateArgument::structurallyEquals(const TemplateArgument &Other) const {
   case Null:
   case Type:
   case Declaration:
-  case Expression:
+  case Expression:      
+  case Template:
+  case TemplateExpansion:
     return TypeOrValue == Other.TypeOrValue;
 
-  case Template:
-    return TemplateArg.Template == Other.TemplateArg.Template &&
-           TemplateArg.PackExpansion == Other.TemplateArg.PackExpansion;
-      
   case Integral:
     return getIntegralType() == Other.getIntegralType() &&
            *getAsIntegral() == *Other.getAsIntegral();
@@ -206,13 +210,14 @@ TemplateArgument TemplateArgument::getPackExpansionPattern() const {
   case Expression:
     return cast<PackExpansionExpr>(getAsExpr())->getPattern();
     
-  case Template:
-    return TemplateArgument(getAsTemplate(), false);
+  case TemplateExpansion:
+    return TemplateArgument(getAsTemplateOrTemplatePattern(), false);
     
   case Declaration:
   case Integral:
   case Pack:
   case Null:
+  case Template:
     return TemplateArgument();
   }
   
@@ -248,13 +253,15 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
     break;
   }
     
-  case Template: {
+  case Template:
     getAsTemplate().print(Out, Policy);
-    if (TemplateArg.PackExpansion)
-      Out << "...";
     break;
-  }
-    
+
+  case TemplateExpansion:
+    getAsTemplateOrTemplatePattern().print(Out, Policy);
+    Out << "...";
+    break;
+      
   case Integral: {
     Out << getAsIntegral()->toString(10);
     break;
@@ -299,15 +306,18 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
     else
       return SourceRange();
 
-  case TemplateArgument::Template: {
-    SourceLocation End = getTemplateNameLoc();
-    if (getTemplateEllipsisLoc().isValid())
-      End = getTemplateEllipsisLoc();
+  case TemplateArgument::Template:
     if (getTemplateQualifierRange().isValid())
-      return SourceRange(getTemplateQualifierRange().getBegin(), End);
-    return SourceRange(getTemplateNameLoc(), End);
-  }
-      
+      return SourceRange(getTemplateQualifierRange().getBegin(), 
+                         getTemplateNameLoc());
+    return SourceRange(getTemplateNameLoc());
+
+  case TemplateArgument::TemplateExpansion:
+    if (getTemplateQualifierRange().isValid())
+      return SourceRange(getTemplateQualifierRange().getBegin(), 
+                         getTemplateEllipsisLoc());
+    return SourceRange(getTemplateNameLoc(), getTemplateEllipsisLoc());
+
   case TemplateArgument::Integral:
   case TemplateArgument::Pack:
   case TemplateArgument::Null:
@@ -355,13 +365,14 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
     Expr *Pattern = cast<PackExpansionExpr>(Argument.getAsExpr())->getPattern();
     return TemplateArgumentLoc(Pattern, Pattern);
   }
-      
-  case TemplateArgument::Template:
+
+  case TemplateArgument::TemplateExpansion:
     return TemplateArgumentLoc(Argument.getPackExpansionPattern(),
                                getTemplateQualifierRange(),
                                getTemplateNameLoc());
     
   case TemplateArgument::Declaration:
+  case TemplateArgument::Template:
   case TemplateArgument::Integral:
   case TemplateArgument::Pack:
   case TemplateArgument::Null:
@@ -389,11 +400,11 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
     return DB << Arg.getAsIntegral()->toString(10);
       
   case TemplateArgument::Template:
-    DB << Arg.getAsTemplate();
-    if (Arg.isPackExpansion())
-      DB << "...";
-    return DB;
-      
+    return DB << Arg.getAsTemplate();
+
+  case TemplateArgument::TemplateExpansion:
+    return DB << Arg.getAsTemplateOrTemplatePattern() << "...";
+
   case TemplateArgument::Expression: {
     // This shouldn't actually ever happen, so it's okay that we're
     // regurgitating an expression here.

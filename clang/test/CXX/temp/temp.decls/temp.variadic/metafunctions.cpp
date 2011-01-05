@@ -163,4 +163,44 @@ namespace TemplateTemplateApply {
   int check0[is_same<apply_each<int, 
                                 add_reference, add_pointer, add_const>::type,
                      tuple<int&, int*, int const>>::value? 1 : -1];
+
+  template<typename T, template<class> class ...Meta>
+  struct apply_each_indirect {
+    typedef typename apply_each<T, Meta...>::type type;
+  };
+
+  int check1[is_same<apply_each_indirect<int, add_reference, add_pointer, 
+                                         add_const>::type,
+                     tuple<int&, int*, int const>>::value? 1 : -1];
+
+  template<typename T, typename ...Meta>
+  struct apply_each_nested {
+    typedef typename apply_each<T, Meta::template apply...>::type type;
+  };
+
+  struct add_reference_meta {
+    template<typename T>
+    struct apply {
+      typedef T& type;
+    };
+  };
+
+  struct add_pointer_meta {
+    template<typename T>
+    struct apply {
+      typedef T* type;
+    };
+  };
+
+  struct add_const_meta {
+    template<typename T>
+    struct apply {
+      typedef const T type;
+    };
+  };
+
+  int check2[is_same<apply_each_nested<int, add_reference_meta, 
+                                       add_pointer_meta, add_const_meta>::type,
+                     tuple<int&, int*, int const>>::value? 1 : -1];
+
 }

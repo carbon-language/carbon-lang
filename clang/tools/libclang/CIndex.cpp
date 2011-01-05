@@ -1256,7 +1256,8 @@ bool CursorVisitor::VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL) {
     return false;
   
   case TemplateArgument::Template:
-    return VisitTemplateName(TAL.getArgument().getAsTemplate(), 
+  case TemplateArgument::TemplateExpansion:
+    return VisitTemplateName(TAL.getArgument().getAsTemplateOrTemplatePattern(), 
                              TAL.getTemplateNameLoc());
   }
   

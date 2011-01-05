@@ -179,7 +179,9 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
       break;
 
     case TemplateArgument::Template:
-      if (TemplateDecl *Template = Args[I].getAsTemplate().getAsTemplateDecl())
+    case TemplateArgument::TemplateExpansion:
+      if (TemplateDecl *Template 
+                = Args[I].getAsTemplateOrTemplatePattern().getAsTemplateDecl())
         LV = merge(LV, getLVForDecl(Template, F));
       break;
 

@@ -18,7 +18,7 @@ struct is_same<T, T> {
   static const bool value = true;
 };
 
-// FIXME: Many more bullets to go
+// FIXME: Several more bullets to go
 
 // In an initializer-list (8.5); the pattern is an initializer-clause.
 // Note: this also covers expression-lists, since expression-list is

@@ -3381,6 +3381,12 @@ ASTReader::GetTemplateArgumentLocInfo(PerFileData &F,
   case TemplateArgument::Template: {
     SourceRange QualifierRange = ReadSourceRange(F, Record, Index);
     SourceLocation TemplateNameLoc = ReadSourceLocation(F, Record, Index);
+    return TemplateArgumentLocInfo(QualifierRange, TemplateNameLoc,
+                                   SourceLocation());
+  }
+  case TemplateArgument::TemplateExpansion: {
+    SourceRange QualifierRange = ReadSourceRange(F, Record, Index);
+    SourceLocation TemplateNameLoc = ReadSourceLocation(F, Record, Index);
     SourceLocation EllipsisLoc = ReadSourceLocation(F, Record, Index);
     return TemplateArgumentLocInfo(QualifierRange, TemplateNameLoc, 
                                    EllipsisLoc);
@@ -4216,7 +4222,8 @@ ASTReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
 TemplateArgument
 ASTReader::ReadTemplateArgument(PerFileData &F,
                                 const RecordData &Record, unsigned &Idx) {
-  switch ((TemplateArgument::ArgKind)Record[Idx++]) {
+  TemplateArgument::ArgKind Kind = (TemplateArgument::ArgKind)Record[Idx++];
+  switch (Kind) {
   case TemplateArgument::Null:
     return TemplateArgument();
   case TemplateArgument::Type:
@@ -4228,10 +4235,10 @@ ASTReader::ReadTemplateArgument(PerFileData &F,
     QualType T = GetType(Record[Idx++]);
     return TemplateArgument(Value, T);
   }
-  case TemplateArgument::Template: {
+  case TemplateArgument::Template: 
+  case TemplateArgument::TemplateExpansion: {
     TemplateName Name = ReadTemplateName(Record, Idx);
-    bool IsPackExpansion = Record[Idx++];
-    return TemplateArgument(Name, IsPackExpansion);
+    return TemplateArgument(Name, Kind == TemplateArgument::TemplateExpansion);
   }
   case TemplateArgument::Expression:
     return TemplateArgument(ReadExpr(F));

@@ -972,7 +972,8 @@ void StmtProfiler::VisitTemplateArgument(const TemplateArgument &Arg) {
     break;
 
   case TemplateArgument::Template:
-    VisitTemplateName(Arg.getAsTemplate());
+  case TemplateArgument::TemplateExpansion:
+    VisitTemplateName(Arg.getAsTemplateOrTemplatePattern());
     break;
       
   case TemplateArgument::Declaration:

@@ -2169,6 +2169,11 @@ void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
     // This is mangled as <type>.
     mangleType(A.getAsTemplate());
     break;
+  case TemplateArgument::TemplateExpansion:
+    // This is mangled as Dp <type>.
+    Out << "Dp";
+    mangleType(A.getAsTemplateOrTemplatePattern());
+    break;
   case TemplateArgument::Expression:
     Out << 'X';
     mangleExpression(A.getAsExpr());

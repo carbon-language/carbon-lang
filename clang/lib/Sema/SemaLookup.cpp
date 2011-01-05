@@ -1693,11 +1693,12 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
       addAssociatedClassesAndNamespaces(Result, Arg.getAsType());
       break;
 
-    case TemplateArgument::Template: {
+    case TemplateArgument::Template: 
+    case TemplateArgument::TemplateExpansion: {
       // [...] the namespaces in which any template template arguments are
       // defined; and the classes in which any member templates used as
       // template template arguments are defined.
-      TemplateName Template = Arg.getAsTemplate();
+      TemplateName Template = Arg.getAsTemplateOrTemplatePattern();
       if (ClassTemplateDecl *ClassTemplate
                  = dyn_cast<ClassTemplateDecl>(Template.getAsTemplateDecl())) {
         DeclContext *Ctx = ClassTemplate->getDeclContext();

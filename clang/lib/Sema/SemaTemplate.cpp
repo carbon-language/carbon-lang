@@ -2256,10 +2256,12 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
       break;
       
     case TemplateArgument::Template:
+    case TemplateArgument::TemplateExpansion:
       // We were given a template template argument. It may not be ill-formed;
       // see below.
       if (DependentTemplateName *DTN
-            = Arg.getArgument().getAsTemplate().getAsDependentTemplateName()) {
+            = Arg.getArgument().getAsTemplateOrTemplatePattern()
+                                              .getAsDependentTemplateName()) {
         // We have a template argument such as \c T::template X, which we
         // parsed as a template template argument. However, since we now
         // know that we need a non-type template argument, convert this
@@ -2272,6 +2274,17 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
                                                     DTN->getQualifier(),
                                                Arg.getTemplateQualifierRange(),
                                                     NameInfo);
+        
+        // If we parsed the template argument as a pack expansion, create a
+        // pack expansion expression.
+        if (Arg.getArgument().getKind() == TemplateArgument::TemplateExpansion){
+          ExprResult Expansion = ActOnPackExpansion(E, 
+                                                  Arg.getTemplateEllipsisLoc());
+          if (Expansion.isInvalid())
+            return true;
+          
+          E = Expansion.get();
+        }
         
         TemplateArgument Result;
         if (CheckTemplateArgument(NTTP, NTTPType, E, Result))
@@ -2348,6 +2361,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     return true;
     
   case TemplateArgument::Template:
+  case TemplateArgument::TemplateExpansion:
     if (CheckTemplateArgument(TempParm, Arg))
       return true;
       

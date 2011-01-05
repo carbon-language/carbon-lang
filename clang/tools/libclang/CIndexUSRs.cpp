@@ -708,7 +708,9 @@ void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
     break;
       
   case TemplateArgument::Template:
-    VisitTemplateName(Arg.getAsTemplate());
+  case TemplateArgument::TemplateExpansion:
+      // FIXME: variadic templates
+    VisitTemplateName(Arg.getAsTemplateOrTemplatePattern());
     break;
       
   case TemplateArgument::Expression:

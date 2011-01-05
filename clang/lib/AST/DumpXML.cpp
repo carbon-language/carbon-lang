@@ -319,6 +319,10 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
       break;
     }
     case TemplateArgument::Template:
+    case TemplateArgument::TemplateExpansion:
+      // FIXME: Implement!
+      break;
+        
     case TemplateArgument::Declaration: {
       visitDeclRef(A.getAsDecl());
       break;

@@ -2123,12 +2123,18 @@ public:
     }
         
     case TemplateArgument::Template:
-      llvm_unreachable("Unsupported pack expansion of templates");
+      return TemplateArgumentLoc(TemplateArgument(
+                                          Pattern.getArgument().getAsTemplate(),
+                                                  true),
+                                 Pattern.getTemplateQualifierRange(),
+                                 Pattern.getTemplateNameLoc(),
+                                 EllipsisLoc);
         
     case TemplateArgument::Null:
     case TemplateArgument::Integral:
     case TemplateArgument::Declaration:
     case TemplateArgument::Pack:
+    case TemplateArgument::TemplateExpansion:
       llvm_unreachable("Pack expansion pattern has no parameter packs");
         
     case TemplateArgument::Type:
@@ -2531,7 +2537,11 @@ void TreeTransform<Derived>::InventTemplateArgumentLoc(
   case TemplateArgument::Template:
     Output = TemplateArgumentLoc(Arg, SourceRange(), Loc);
     break;
-      
+
+  case TemplateArgument::TemplateExpansion:
+    Output = TemplateArgumentLoc(Arg, SourceRange(), Loc, Loc);
+    break;
+
   case TemplateArgument::Expression:
     Output = TemplateArgumentLoc(Arg, Arg.getAsExpr());
     break;
@@ -2600,7 +2610,10 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
                                  Input.getTemplateNameLoc());
     return false;
   }
-      
+
+  case TemplateArgument::TemplateExpansion:
+    llvm_unreachable("Caller should expand pack expansions");
+
   case TemplateArgument::Expression: {
     // Template argument expressions are not potentially evaluated.
     EnterExpressionEvaluationContext Unevaluated(getSema(),
