@@ -14,6 +14,7 @@
 #ifndef MBLAZE_MACHINE_FUNCTION_INFO_H
 #define MBLAZE_MACHINE_FUNCTION_INFO_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -62,6 +63,11 @@ private:
   // postponed to emitPrologue.
   SmallVector<MBlazeFIHolder, 4> FnStoreVarArgs;
   bool HasStoreVarArgs;
+
+  // When determining the final stack layout some of the frame indexes may
+  // be replaced by new frame indexes that reside in the caller's stack
+  // frame. The replacements are recorded in this structure.
+  DenseMap<int,int> FIReplacements;
 
   /// SRetReturnReg - Some subtargets require that sret lowering includes
   /// returning the value of the returned struct in a register. This field
@@ -114,6 +120,18 @@ public:
   }
 
   const SmallVector<int, 16>& getLiveIn() const { return LiveInFI; }
+
+  void recordReplacement(int OFI, int NFI) {
+    FIReplacements.insert(std::make_pair(OFI,NFI));
+  }
+
+  bool hasReplacement(int OFI) const {
+    return FIReplacements.find(OFI) != FIReplacements.end();
+  }
+
+  int getReplacement(int OFI) const {
+    return FIReplacements.lookup(OFI);
+  }
 
   void recordLoadArgsFI(int FI, int SPOffset) {
     if (!HasLoadArgs) HasLoadArgs=true;

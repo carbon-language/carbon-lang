@@ -43,6 +43,7 @@ namespace llvm {
 static void replaceFrameIndexes(MachineFunction &MF, 
                                 SmallVector<std::pair<int,int64_t>, 16> &FR) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
   const SmallVector<std::pair<int,int64_t>, 16>::iterator FRB = FR.begin();
   const SmallVector<std::pair<int,int64_t>, 16>::iterator FRE = FR.end();
 
@@ -50,6 +51,7 @@ static void replaceFrameIndexes(MachineFunction &MF,
   for (; FRI != FRE; ++FRI) {
     MFI->RemoveStackObject(FRI->first);
     int NFI = MFI->CreateFixedObject(4, FRI->second, true);
+    MBlazeFI->recordReplacement(FRI->first, NFI);
 
     for (MachineFunction::iterator MB=MF.begin(), ME=MF.end(); MB!=ME; ++MB) {
       MachineBasicBlock::iterator MBB = MB->begin();
@@ -319,6 +321,14 @@ static void determineFrameLayout(MachineFunction &MF) {
   FrameSize = (FrameSize + AlignMask) & ~AlignMask;
   MFI->setStackSize(FrameSize);
   DEBUG(dbgs() << "Aligned Frame Size: " << FrameSize << "\n" );
+}
+
+int MBlazeFrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) 
+  const {
+  const MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
+  if (MBlazeFI->hasReplacement(FI))
+    FI = MBlazeFI->getReplacement(FI);
+  return TargetFrameInfo::getFrameIndexOffset(MF,FI);
 }
 
 // hasFP - Return true if the specified function should have a dedicated frame

@@ -42,6 +42,8 @@ public:
 
   bool hasFP(const MachineFunction &MF) const;
 
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
+
   virtual void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                     RegScavenger *RS) const;
 };
