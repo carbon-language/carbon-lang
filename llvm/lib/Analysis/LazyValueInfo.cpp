@@ -351,13 +351,26 @@ namespace {
   /// LazyValueInfoCache - This is the cache kept by LazyValueInfo which
   /// maintains information about queries across the clients' queries.
   class LazyValueInfoCache {
-  public:
     /// ValueCacheEntryTy - This is all of the cached block information for
     /// exactly one Value*.  The entries are sorted by the BasicBlock* of the
     /// entries, allowing us to do a lookup with a binary search.
     typedef std::map<AssertingVH<BasicBlock>, LVILatticeVal> ValueCacheEntryTy;
 
-  private:
+    /// ValueCache - This is all of the cached information for all values,
+    /// mapped from Value* to key information.
+    DenseMap<LVIValueHandle, ValueCacheEntryTy> ValueCache;
+    
+    /// OverDefinedCache - This tracks, on a per-block basis, the set of 
+    /// values that are over-defined at the end of that block.  This is required
+    /// for cache updating.
+    typedef std::pair<AssertingVH<BasicBlock>, Value*> OverDefinedPairTy;
+    DenseSet<OverDefinedPairTy> OverDefinedCache;
+    
+    /// BlockValueStack - This stack holds the state of the value solver
+    /// during a query.  It basically emulates the callstack of the naive
+    /// recursive value lookup process.
+    std::stack<std::pair<BasicBlock*, Value*> > BlockValueStack;
+    
     friend struct LVIValueHandle;
     
     /// OverDefinedCacheUpdater - A helper object that ensures that the
@@ -378,16 +391,8 @@ namespace {
         return changed;
       }
     };
-
-    /// ValueCache - This is all of the cached information for all values,
-    /// mapped from Value* to key information.
-    DenseMap<LVIValueHandle, ValueCacheEntryTy> ValueCache;
     
-    /// OverDefinedCache - This tracks, on a per-block basis, the set of 
-    /// values that are over-defined at the end of that block.  This is required
-    /// for cache updating.
-    typedef std::pair<AssertingVH<BasicBlock>, Value*> OverDefinedPairTy;
-    DenseSet<OverDefinedPairTy> OverDefinedCache;
+
 
     LVILatticeVal getBlockValue(Value *Val, BasicBlock *BB);
     bool getEdgeValue(Value *V, BasicBlock *F, BasicBlock *T,
@@ -410,8 +415,6 @@ namespace {
     ValueCacheEntryTy &lookup(Value *V) {
       return ValueCache[LVIValueHandle(V, this)];
     }
-    
-    std::stack<std::pair<BasicBlock*, Value*> > block_value_stack;
 
   public:
     /// getValueInBlock - This is the query interface to determine the lattice
@@ -478,10 +481,10 @@ void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
 }
 
 void LazyValueInfoCache::solve() {
-  while (!block_value_stack.empty()) {
-    std::pair<BasicBlock*, Value*> &e = block_value_stack.top();
+  while (!BlockValueStack.empty()) {
+    std::pair<BasicBlock*, Value*> &e = BlockValueStack.top();
     if (solveBlockValue(e.second, e.first))
-      block_value_stack.pop();
+      BlockValueStack.pop();
   }
 }
 
@@ -688,7 +691,7 @@ bool LazyValueInfoCache::solveBlockValueConstantRange(LVILatticeVal &BBLV,
                                                       BasicBlock *BB) {
   // Figure out the range of the LHS.  If that fails, bail.
   if (!hasBlockValue(BBI->getOperand(0), BB)) {
-    block_value_stack.push(std::make_pair(BB, BBI->getOperand(0)));
+    BlockValueStack.push(std::make_pair(BB, BBI->getOperand(0)));
     return false;
   }
 
@@ -818,7 +821,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
           
           // Figure out the possible values of the query BEFORE this branch.  
           if (!hasBlockValue(Val, BBFrom)) {
-            block_value_stack.push(std::make_pair(BBFrom, Val));
+            BlockValueStack.push(std::make_pair(BBFrom, Val));
             return false;
           }
           
@@ -872,7 +875,7 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
     Result = getBlockValue(Val, BBFrom);
     return true;
   }
-  block_value_stack.push(std::make_pair(BBFrom, Val));
+  BlockValueStack.push(std::make_pair(BBFrom, Val));
   return false;
 }
 
@@ -880,7 +883,7 @@ LVILatticeVal LazyValueInfoCache::getValueInBlock(Value *V, BasicBlock *BB) {
   DEBUG(dbgs() << "LVI Getting block end value " << *V << " at '"
         << BB->getName() << "'\n");
   
-  block_value_stack.push(std::make_pair(BB, V));
+  BlockValueStack.push(std::make_pair(BB, V));
   solve();
   LVILatticeVal Result = getBlockValue(V, BB);
 
