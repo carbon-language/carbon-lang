@@ -228,8 +228,10 @@ checkDeducedTemplateArguments(ASTContext &Context,
                                       XAEnd = X.pack_end(),
                                          YA = Y.pack_begin();
          XA != XAEnd; ++XA, ++YA) {
-      // FIXME: We've lost the "deduced from array bound" bit.
-      if (checkDeducedTemplateArguments(Context, *XA, *YA).isNull())
+      if (checkDeducedTemplateArguments(Context, 
+                    DeducedTemplateArgument(*XA, X.wasDeducedFromArrayBound()), 
+                    DeducedTemplateArgument(*YA, Y.wasDeducedFromArrayBound()))
+            .isNull())
         return DeducedTemplateArgument();
     }
       
@@ -1400,7 +1402,7 @@ static bool ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
     // the template parameter.
     llvm::SmallVector<TemplateArgument, 2> PackedArgsBuilder;
     for (TemplateArgument::pack_iterator PA = Arg.pack_begin(), 
-         PAEnd = Arg.pack_end();
+                                      PAEnd = Arg.pack_end();
          PA != PAEnd; ++PA) {
       // When converting the deduced template argument, append it to the
       // general output list. We need to do this so that the template argument
@@ -1522,8 +1524,6 @@ FinishTemplateArgumentDeduction(Sema &S,
   // verify that the instantiated template arguments are both valid
   // and are equivalent to the template arguments originally provided
   // to the class template.
-  // FIXME: Do we have to correct the types of deduced non-type template 
-  // arguments (in particular, integral non-type template arguments?).
   LocalInstantiationScope InstScope(S);
   ClassTemplateDecl *ClassTemplate = Partial->getSpecializedTemplate();
   const TemplateArgumentLoc *PartialTemplateArgs
