@@ -176,8 +176,6 @@ TEST(Support, Path) {
   ASSERT_NO_ERROR(fs::exists(Twine(TempPath), TempFileExists));
   EXPECT_FALSE(TempFileExists);
 
-  // I've yet to do directory iteration on Unix.
-#ifdef LLVM_ON_WIN32
   error_code ec;
   for (fs::directory_iterator i(".", ec), e; i != e; i.increment(ec)) {
     if (ec) {
@@ -186,7 +184,6 @@ TEST(Support, Path) {
       report_fatal_error("Directory iteration failed!");
     }
   }
-#endif
 }
 
 } // anonymous namespace

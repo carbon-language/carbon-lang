@@ -23,6 +23,22 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#if HAVE_DIRENT_H
+# include <dirent.h>
+# define NAMLEN(dirent) strlen((dirent)->d_name)
+#else
+# define dirent direct
+# define NAMLEN(dirent) (dirent)->d_namlen
+# if HAVE_SYS_NDIR_H
+#  include <sys/ndir.h>
+# endif
+# if HAVE_SYS_DIR_H
+#  include <sys/dir.h>
+# endif
+# if HAVE_NDIR_H
+#  include <ndir.h>
+# endif
+#endif
 #if HAVE_STDIO_H
 #include <stdio.h>
 #endif
@@ -405,6 +421,44 @@ rety_open_create:
   result_path.append(d.begin(), d.end());
 
   result_fd = RandomFD;
+  return success;
+}
+
+error_code directory_iterator_construct(directory_iterator &it, StringRef path){
+  SmallString<128> path_null(path);
+  DIR *directory = ::opendir(path_null.c_str());
+  if (directory == 0)
+    return error_code(errno, system_category());
+
+  it.IterationHandle = reinterpret_cast<intptr_t>(directory);
+  // Add something for replace_filename to replace.
+  path::append(path_null, ".");
+  it.CurrentEntry = directory_entry(path_null.str());
+  return directory_iterator_increment(it);
+}
+
+error_code directory_iterator_destruct(directory_iterator& it) {
+  if (it.IterationHandle)
+    ::closedir(reinterpret_cast<DIR *>(it.IterationHandle));
+  it.IterationHandle = 0;
+  it.CurrentEntry = directory_entry();
+  return success;
+}
+
+error_code directory_iterator_increment(directory_iterator& it) {
+  errno = 0;
+  dirent *cur_dir = ::readdir(reinterpret_cast<DIR *>(it.IterationHandle));
+  if (cur_dir == 0 && errno != 0) {
+    return error_code(errno, system_category());
+  } else if (cur_dir != 0) {
+    StringRef name(cur_dir->d_name, NAMLEN(cur_dir));
+    if ((name.size() == 1 && name[0] == '.') ||
+        (name.size() == 2 && name[0] == '.' && name[1] == '.'))
+      return directory_iterator_increment(it);
+    it.CurrentEntry.replace_filename(name);
+  } else
+    return directory_iterator_destruct(it);
+
   return success;
 }
 
