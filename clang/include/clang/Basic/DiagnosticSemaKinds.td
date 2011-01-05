@@ -1875,10 +1875,6 @@ def err_sizeof_pack_no_pack_name : Error<
   "%0 does not refer to the name of a parameter pack">;
 
 // Unsupported variadic templates features
-def err_pack_expansion_unsupported : Error<
-  "clang does not yet support template pack expansions">;
-def err_pack_expansion_instantiation_unsupported : Error<
-  "clang cannot yet instantiate pack expansions">;
 def err_pack_expansion_mismatch_unsupported : Error<
   "clang cannot yet instantiate pack expansions with mismatched pack levels">;
 def err_function_parameter_pack_unsupported : Error<
