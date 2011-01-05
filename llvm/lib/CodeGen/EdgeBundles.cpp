@@ -15,9 +15,14 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/GraphWriter.h"
 
 using namespace llvm;
+
+static cl::opt<bool>
+ViewEdgeBundles("view-edge-bundles", cl::Hidden,
+                cl::desc("Pop up a window to show edge bundle graphs"));
 
 char EdgeBundles::ID = 0;
 
@@ -46,6 +51,8 @@ bool EdgeBundles::runOnMachineFunction(MachineFunction &mf) {
       EC.join(OutE, 2 * (*SI)->getNumber());
   }
   EC.compress();
+  if (ViewEdgeBundles)
+    view();
   return false;
 }
 
