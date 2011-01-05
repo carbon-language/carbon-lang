@@ -817,6 +817,11 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
           if (!isTrueDest) TrueValues = TrueValues.inverse();
           
           // Figure out the possible values of the query BEFORE this branch.  
+          if (!hasBlockValue(Val, BBFrom)) {
+            block_value_stack.push(std::make_pair(BBFrom, Val));
+            return false;
+          }
+          
           LVILatticeVal InBlock = getBlockValue(Val, BBFrom);
           if (!InBlock.isConstantRange()) {
             Result = LVILatticeVal::getRange(TrueValues);
