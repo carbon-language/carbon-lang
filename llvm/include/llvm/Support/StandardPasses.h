@@ -97,7 +97,7 @@ namespace llvm {
                                                 bool OptimizeSize,
                                                 bool UnitAtATime,
                                                 bool UnrollLoops,
-                                                bool SimplifyLibCalls,
+                                                bool OptimizeBuiltins,
                                                 bool HaveExceptions,
                                                 Pass *InliningPass) {
     createStandardAliasAnalysisPasses(PM);
@@ -130,7 +130,7 @@ namespace llvm {
     // Start of function pass.
     PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
     PM->add(createEarlyCSEPass());              // Catch trivial redundancies
-    if (SimplifyLibCalls)
+    if (OptimizeBuiltins)
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
     PM->add(createJumpThreadingPass());         // Thread jumps.
@@ -146,7 +146,8 @@ namespace llvm {
     PM->add(createLoopUnswitchPass(OptimizeSize || OptimizationLevel < 3));
     PM->add(createInstructionCombiningPass());  
     PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
-    PM->add(createLoopIdiomPass());             // Recognize idioms like memset.
+    if (OptimizeBuiltins)
+      PM->add(createLoopIdiomPass());           // Recognize idioms like memset.
     PM->add(createLoopDeletionPass());          // Delete dead loops
     if (UnrollLoops)
       PM->add(createLoopUnrollPass());          // Unroll small loops
