@@ -1398,10 +1398,8 @@ Decl *Parser::ParseObjCAtAliasDeclaration(SourceLocation atLoc) {
   }
   IdentifierInfo *classId = Tok.getIdentifierInfo();
   SourceLocation classLoc = ConsumeToken(); // consume class-name;
-  if (Tok.isNot(tok::semi)) {
-    Diag(Tok, diag::err_expected_semi_after) << "@compatibility_alias";
-    return 0;
-  }
+  ExpectAndConsume(tok::semi, diag::err_expected_semi_after, 
+                   "@compatibility_alias");
   return Actions.ActOnCompatiblityAlias(atLoc, aliasId, aliasLoc,
                                         classId, classLoc);
 }
@@ -1461,12 +1459,7 @@ Decl *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
       break;
     ConsumeToken(); // consume ','
   }
-  if (Tok.isNot(tok::semi)) {
-    Diag(Tok, diag::err_expected_semi_after) << "@synthesize";
-    SkipUntil(tok::semi);
-  }
-  else
-    ConsumeToken(); // consume ';'
+  ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@synthesize");
   return 0;
 }
 
@@ -1502,12 +1495,7 @@ Decl *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
       break;
     ConsumeToken(); // consume ','
   }
-  if (Tok.isNot(tok::semi)) {
-    Diag(Tok, diag::err_expected_semi_after) << "@dynamic";
-    SkipUntil(tok::semi);
-  }
-  else
-    ConsumeToken(); // consume ';'
+  ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@dynamic");
   return 0;
 }
 
