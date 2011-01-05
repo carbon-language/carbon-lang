@@ -123,7 +123,29 @@ TEST(Support, Path) {
 
     path::native(*i, temp_store);
   }
+}
 
+class FileSystemTest : public testing::Test {
+protected:
+  /// Unique temporary directory in which all created filesystem entities must
+  /// be placed. It is recursively removed at the end of each test.
+  SmallString<128> TestDirectory;
+
+  virtual void SetUp() {
+    /*int fd;
+    ASSERT_NO_ERROR(
+      fs::unique_file("%%-%%-%%-%%/test-directory.anchor", fd, TestDirectory));
+    // We don't care about this specific file.
+    ::close(fd);*/
+  }
+
+  virtual void TearDown() {
+    /*uint32_t removed;
+    ASSERT_NO_ERROR(fs::remove_all(TestDirectory.str(), removed));*/
+  }
+};
+
+TEST_F(FileSystemTest, TempFiles) {
   // Create a temp file.
   int FileDescriptor;
   SmallString<64> TempPath;
@@ -175,7 +197,9 @@ TEST(Support, Path) {
   // Make sure Temp1 doesn't exist.
   ASSERT_NO_ERROR(fs::exists(Twine(TempPath), TempFileExists));
   EXPECT_FALSE(TempFileExists);
+}
 
+TEST_F(FileSystemTest, DirectoryIteration) {
   error_code ec;
   for (fs::directory_iterator i(".", ec), e; i != e; i.increment(ec)) {
     if (ec) {
