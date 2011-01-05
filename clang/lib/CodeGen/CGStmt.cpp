@@ -907,7 +907,7 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
       bool result = Target.resolveSymbolicName(Constraint,
                                                &(*OutCons)[0],
                                                OutCons->size(), Index);
-      assert(result && "Could not resolve symbolic name"); result=result;
+      assert(result && "Could not resolve symbolic name"); (void)result;
       Result += llvm::utostr(Index);
       break;
     }
