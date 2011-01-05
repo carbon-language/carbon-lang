@@ -697,6 +697,10 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
   return success;
 }
 
+error_code directory_entry::status(file_status &result) const {
+  return fs::status(Path, result);
+}
+
 } // end namespace fs
 } // end namespace sys
 } // end namespace llvm
