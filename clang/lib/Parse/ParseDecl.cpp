@@ -2831,7 +2831,6 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     if (Tok.is(tok::ellipsis) &&
         !((D.getContext() == Declarator::PrototypeContext ||
            D.getContext() == Declarator::BlockLiteralContext) &&
-          getCurScope()->getTemplateParamParent() &&
           NextToken().is(tok::r_paren) &&
           !Actions.containsUnexpandedParameterPacks(D)))
       D.setEllipsisLoc(ConsumeToken());
