@@ -8,3 +8,7 @@ struct X0;
 template<int ...Values = 0> // expected-error{{template parameter pack cannot have a default argument}}
 struct X1;
 
+template<typename T> struct vector;
+
+template<template<class> class ...Templates = vector> // expected-error{{template parameter pack cannot have a default argument}}
+struct X2; 

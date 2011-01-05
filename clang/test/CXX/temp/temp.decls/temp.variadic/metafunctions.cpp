@@ -138,3 +138,29 @@ namespace Indices {
   int check0[is_same<build_indices<5>::type,
                      int_tuple<0, 1, 2, 3, 4>>::value? 1 : -1];
 }
+
+namespace TemplateTemplateApply {
+  template<typename T, template<class> class ...Meta>
+  struct apply_each {
+    typedef tuple<typename Meta<T>::type...> type;
+  };
+
+  template<typename T> 
+  struct add_reference {
+    typedef T& type;
+  };
+
+  template<typename T> 
+  struct add_pointer {
+    typedef T* type;
+  };
+
+  template<typename T> 
+  struct add_const {
+    typedef const T type;
+  };
+
+  int check0[is_same<apply_each<int, 
+                                add_reference, add_pointer, add_const>::type,
+                     tuple<int&, int*, int const>>::value? 1 : -1];
+}

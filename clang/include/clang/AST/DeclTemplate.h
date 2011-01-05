@@ -1084,18 +1084,22 @@ class TemplateTemplateParmDecl
   /// Whether or not the default argument was inherited.
   bool DefaultArgumentWasInherited;
 
+  /// \brief Whether this parameter is a parameter pack.
+  bool ParameterPack;
+    
   TemplateTemplateParmDecl(DeclContext *DC, SourceLocation L,
-                           unsigned D, unsigned P,
+                           unsigned D, unsigned P, bool ParameterPack,
                            IdentifierInfo *Id, TemplateParameterList *Params)
     : TemplateDecl(TemplateTemplateParm, DC, L, Id, Params),
       TemplateParmPosition(D, P), DefaultArgument(),
-      DefaultArgumentWasInherited(false)
+      DefaultArgumentWasInherited(false), ParameterPack(ParameterPack)
     { }
 
 public:
   static TemplateTemplateParmDecl *Create(ASTContext &C, DeclContext *DC,
                                           SourceLocation L, unsigned D,
-                                          unsigned P, IdentifierInfo *Id,
+                                          unsigned P, bool ParameterPack,
+                                          IdentifierInfo *Id,
                                           TemplateParameterList *Params);
 
   using TemplateParmPosition::getDepth;
@@ -1108,7 +1112,7 @@ public:
   /// \code
   /// template<template <class T> ...MetaFunctions> struct Apply;
   /// \endcode
-  bool isParameterPack() const { return /*FIXME: variadic templates*/false; }
+  bool isParameterPack() const { return ParameterPack; }
 
   /// \brief Determine whether this template parameter has a default
   /// argument.

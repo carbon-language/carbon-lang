@@ -1011,6 +1011,7 @@ void ASTDeclWriter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
   // Rest of TemplateTemplateParmDecl.
   Writer.AddTemplateArgumentLoc(D->getDefaultArgument(), Record);
   Record.push_back(D->defaultArgumentWasInherited());
+  Record.push_back(D->isParameterPack());
   Code = serialization::DECL_TEMPLATE_TEMPLATE_PARM;
 }
 

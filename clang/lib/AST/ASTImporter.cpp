@@ -3444,6 +3444,7 @@ ASTNodeImporter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
   return TemplateTemplateParmDecl::Create(Importer.getToContext(), 
                               Importer.getToContext().getTranslationUnitDecl(), 
                                           Loc, D->getDepth(), D->getPosition(),
+                                          D->isParameterPack(),
                                           Name.getAsIdentifierInfo(), 
                                           TemplateParams);
 }

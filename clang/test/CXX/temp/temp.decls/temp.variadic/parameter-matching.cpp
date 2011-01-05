@@ -19,3 +19,5 @@ template<template<typename T> class> struct X1tt; // expected-error{{template ty
 
 template<template<typename T> class> struct X2tt; // expected-note{{previous template type parameter declared here}}
 template<template<typename ...T> class> struct X2tt; // expected-error{{template type parameter pack conflicts with previous template type parameter}}
+
+// FIXME: Add checks for non-type template parameter packs, template parameter packs

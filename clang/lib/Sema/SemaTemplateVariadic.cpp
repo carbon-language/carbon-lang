@@ -78,7 +78,16 @@ namespace {
       return true;
     }
     
-    // FIXME: Record occurrences of template template parameter packs.
+    /// \brief Record occurrences of template template parameter packs.
+    bool TraverseTemplateName(TemplateName Template) {
+      if (TemplateTemplateParmDecl *TTP 
+            = dyn_cast_or_null<TemplateTemplateParmDecl>(
+                                                  Template.getAsTemplateDecl()))
+        if (TTP->isParameterPack())
+          Unexpanded.push_back(std::make_pair(TTP, SourceLocation()));
+      
+      return inherited::TraverseTemplateName(Template);
+    }
 
     //------------------------------------------------------------------------
     // Pruning the search for unexpanded parameter packs.
@@ -556,7 +565,6 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
                                               SourceLocation RParenLoc) {
   // C++0x [expr.sizeof]p5:
   //   The identifier in a sizeof... expression shall name a parameter pack.
-  
   LookupResult R(*this, &Name, NameLoc, LookupOrdinaryName);
   LookupName(R, S);
   

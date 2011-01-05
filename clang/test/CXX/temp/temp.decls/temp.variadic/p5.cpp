@@ -154,6 +154,11 @@ void TestPPNameFunc(int i) {
   f(static_cast<Types>(i)); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
 }
 
+template<typename T, template<class> class ...Meta>
+struct TestUnexpandedTTP {
+  typedef tuple<typename Meta<T>::type> type; // expected-error{{declaration type contains unexpanded parameter pack 'Meta'}}
+};
+
 // Test for unexpanded parameter packs in declarations.
 // FIXME: Attributes?
 template<typename T, typename... Types>

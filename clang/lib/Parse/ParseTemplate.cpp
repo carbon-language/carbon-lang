@@ -421,12 +421,14 @@ bool Parser::isStartOfTemplateTypeParameter() {
 ///         parameter-declaration
 ///
 ///       type-parameter: (see below)
-///         'class' ...[opt][C++0x] identifier[opt]
+///         'class' ...[opt] identifier[opt]
 ///         'class' identifier[opt] '=' type-id
-///         'typename' ...[opt][C++0x] identifier[opt]
+///         'typename' ...[opt] identifier[opt]
 ///         'typename' identifier[opt] '=' type-id
-///         'template' ...[opt][C++0x] '<' template-parameter-list '>' 'class' identifier[opt]
-///         'template' '<' template-parameter-list '>' 'class' identifier[opt] = id-expression
+///         'template' '<' template-parameter-list '>' 
+///               'class' ...[opt] identifier[opt]
+///         'template' '<' template-parameter-list '>' 'class' identifier[opt]
+///               = id-expression
 Decl *Parser::ParseTemplateParameter(unsigned Depth, unsigned Position) {
   if (isStartOfTemplateTypeParameter())
     return ParseTypeParameter(Depth, Position);
@@ -502,8 +504,10 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
 /// template parameters.
 ///
 ///       type-parameter:    [C++ temp.param]
-///         'template' '<' template-parameter-list '>' 'class' identifier[opt]
-///         'template' '<' template-parameter-list '>' 'class' identifier[opt] = id-expression
+///         'template' '<' template-parameter-list '>' 'class' 
+///                  ...[opt] identifier[opt]
+///         'template' '<' template-parameter-list '>' 'class' identifier[opt] 
+///                  = id-expression
 Decl *
 Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   assert(Tok.is(tok::kw_template) && "Expected 'template' keyword");
@@ -529,6 +533,15 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   }
   SourceLocation ClassLoc = ConsumeToken();
 
+  // Parse the ellipsis, if given.
+  SourceLocation EllipsisLoc;
+  if (Tok.is(tok::ellipsis)) {
+    EllipsisLoc = ConsumeToken();
+    
+    if (!getLang().CPlusPlus0x)
+      Diag(EllipsisLoc, diag::err_variadic_templates);
+  }
+      
   // Get the identifier, if given.
   SourceLocation NameLoc;
   IdentifierInfo* ParamName = 0;
@@ -569,9 +582,9 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   }
   
   return Actions.ActOnTemplateTemplateParameter(getCurScope(), TemplateLoc,
-                                                ParamList, ParamName,
-                                                NameLoc, Depth, Position,
-                                                EqualLoc, DefaultArg);
+                                                ParamList, EllipsisLoc, 
+                                                ParamName, NameLoc, Depth, 
+                                                Position, EqualLoc, DefaultArg);
 }
 
 /// ParseNonTypeTemplateParameter - Handle the parsing of non-type

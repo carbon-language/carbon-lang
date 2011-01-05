@@ -1542,8 +1542,8 @@ TemplateDeclInstantiator::VisitTemplateTemplateParmDecl(
   TemplateTemplateParmDecl *Param
     = TemplateTemplateParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
                                    D->getDepth() - TemplateArgs.getNumLevels(), 
-                                       D->getPosition(), D->getIdentifier(), 
-                                       InstParams);
+                                       D->getPosition(), D->isParameterPack(), 
+                                       D->getIdentifier(), InstParams);
   Param->setDefaultArgument(D->getDefaultArgument(), false);
   
   // Introduce this template parameter's instantiation into the instantiation 

@@ -1173,6 +1173,7 @@ void ASTDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
   TemplateArgumentLoc Arg = Reader.ReadTemplateArgumentLoc(F, Record, Idx);
   bool IsInherited = Record[Idx++];
   D->setDefaultArgument(Arg, IsInherited);
+  D->ParameterPack = Record[Idx++];
 }
 
 void ASTDeclReader::VisitStaticAssertDecl(StaticAssertDecl *D) {
@@ -1433,7 +1434,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
                                         QualType(), false, 0);
     break;
   case DECL_TEMPLATE_TEMPLATE_PARM:
-    D = TemplateTemplateParmDecl::Create(*Context, 0, SourceLocation(),0,0,0,0);
+    D = TemplateTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0, 0,
+                                         false, 0, 0);
     break;
   case DECL_STATIC_ASSERT:
     D = StaticAssertDecl::Create(*Context, 0, SourceLocation(), 0, 0);

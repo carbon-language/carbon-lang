@@ -522,6 +522,14 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
     IdResolver.AddDecl(Param);
   }
 
+  // C++0x [temp.param]p9:
+  //   A default template-argument may be specified for any kind of
+  //   template-parameter that is not a template parameter pack.
+  if (DefaultArg && Ellipsis) {
+    Diag(EqualLoc, diag::err_template_param_pack_default_arg);
+    DefaultArg = ParsedType();
+  }
+
   // Handle the default argument, if provided.
   if (DefaultArg) {
     TypeSourceInfo *DefaultTInfo;
@@ -529,14 +537,6 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
     
     assert(DefaultTInfo && "expected source information for type");
     
-    // C++0x [temp.param]p9:
-    // A default template-argument may be specified for any kind of
-    // template-parameter that is not a template parameter pack.
-    if (Ellipsis) {
-      Diag(EqualLoc, diag::err_template_param_pack_default_arg);
-      return Param;
-    }
-
     // Check for unexpanded parameter packs.
     if (DiagnoseUnexpandedParameterPack(Loc, DefaultTInfo, 
                                         UPPC_DefaultArgument))
@@ -647,16 +647,16 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
     IdResolver.AddDecl(Param);
   }
   
+  // C++0x [temp.param]p9:
+  //   A default template-argument may be specified for any kind of
+  //   template-parameter that is not a template parameter pack.
+  if (Default && IsParameterPack) {
+    Diag(EqualLoc, diag::err_template_param_pack_default_arg);
+    Default = 0;
+  }
+
   // Check the well-formedness of the default template argument, if provided.
   if (Default) {
-    // C++0x [temp.param]p9:
-    //   A default template-argument may be specified for any kind of
-    //   template-parameter that is not a template parameter pack.
-    if (IsParameterPack) {
-      Diag(EqualLoc, diag::err_template_param_pack_default_arg);
-      return Param;
-    }
-
     // Check for unexpanded parameter packs.
     if (DiagnoseUnexpandedParameterPack(Default, UPPC_DefaultArgument))
       return Param;
@@ -679,21 +679,24 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
 Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
                                            SourceLocation TmpLoc,
                                            TemplateParamsTy *Params,
+                                           SourceLocation EllipsisLoc,
                                            IdentifierInfo *Name,
                                            SourceLocation NameLoc,
                                            unsigned Depth,
                                            unsigned Position,
                                            SourceLocation EqualLoc,
-                                       const ParsedTemplateArgument &Default) {
+                                           ParsedTemplateArgument Default) {
   assert(S->isTemplateParamScope() &&
          "Template template parameter not in template parameter scope!");
 
   // Construct the parameter object.
+  bool IsParameterPack = EllipsisLoc.isValid();
+  // FIXME: Pack-ness is dropped
   TemplateTemplateParmDecl *Param =
     TemplateTemplateParmDecl::Create(Context, Context.getTranslationUnitDecl(),
                                      NameLoc.isInvalid()? TmpLoc : NameLoc, 
-                                     Depth, Position, Name,
-                                     Params);
+                                     Depth, Position, IsParameterPack, 
+                                     Name, Params);
 
   // If the template template parameter has a name, then link the identifier 
   // into the scope and lookup mechanisms.
@@ -708,6 +711,14 @@ Decl *Sema::ActOnTemplateTemplateParameter(Scope* S,
     Param->setInvalidDecl();
   }
 
+  // C++0x [temp.param]p9:
+  //   A default template-argument may be specified for any kind of
+  //   template-parameter that is not a template parameter pack.
+  if (IsParameterPack && !Default.isInvalid()) {
+    Diag(EqualLoc, diag::err_template_param_pack_default_arg);
+    Default = ParsedTemplateArgument();
+  }
+  
   if (!Default.isInvalid()) {
     // Check only that we have a template template argument. We don't want to
     // try to check well-formedness now, because our template template parameter
@@ -1212,7 +1223,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         // new declaration.
         SawDefaultArgument = true;
         // FIXME: We need to create a new kind of "default argument"
-        // expression that points to a previous template template
+        // expression that points to a previous non-type template
         // parameter.
         NewNonTypeParm->setDefaultArgument(
                                          OldNonTypeParm->getDefaultArgument(),

@@ -903,7 +903,7 @@ void StmtProfiler::VisitDecl(Decl *D) {
     if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
       ID.AddInteger(NTTP->getDepth());
       ID.AddInteger(NTTP->getIndex());
-      ID.AddInteger(NTTP->isParameterPack());
+      ID.AddBoolean(NTTP->isParameterPack());
       VisitType(NTTP->getType());
       return;
     }
@@ -921,6 +921,7 @@ void StmtProfiler::VisitDecl(Decl *D) {
     if (TemplateTemplateParmDecl *TTP = dyn_cast<TemplateTemplateParmDecl>(D)) {
       ID.AddInteger(TTP->getDepth());
       ID.AddInteger(TTP->getIndex());
+      ID.AddBoolean(TTP->isParameterPack());
       return;
     }
   }

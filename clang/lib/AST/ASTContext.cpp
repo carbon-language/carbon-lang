@@ -51,7 +51,7 @@ ASTContext::CanonicalTemplateTemplateParm::Profile(llvm::FoldingSetNodeID &ID,
                                                TemplateTemplateParmDecl *Parm) {
   ID.AddInteger(Parm->getDepth());
   ID.AddInteger(Parm->getPosition());
-  // FIXME: Parameter pack
+  ID.AddBoolean(Parm->isParameterPack());
 
   TemplateParameterList *Params = Parm->getTemplateParameters();
   ID.AddInteger(Params->size());
@@ -66,7 +66,7 @@ ASTContext::CanonicalTemplateTemplateParm::Profile(llvm::FoldingSetNodeID &ID,
     
     if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
       ID.AddInteger(1);
-      // FIXME: Parameter pack
+      ID.AddBoolean(NTTP->isParameterPack());
       ID.AddPointer(NTTP->getType().getAsOpaquePtr());
       continue;
     }
@@ -119,7 +119,9 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
   TemplateTemplateParmDecl *CanonTTP
     = TemplateTemplateParmDecl::Create(*this, getTranslationUnitDecl(), 
                                        SourceLocation(), TTP->getDepth(),
-                                       TTP->getPosition(), 0,
+                                       TTP->getPosition(), 
+                                       TTP->isParameterPack(),
+                                       0,
                          TemplateParameterList::Create(*this, SourceLocation(),
                                                        SourceLocation(),
                                                        CanonParams.data(),

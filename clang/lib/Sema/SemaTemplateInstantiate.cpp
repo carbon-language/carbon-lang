@@ -697,9 +697,22 @@ Decl *TemplateInstantiator::TransformDecl(SourceLocation Loc, Decl *D) {
                                             TTP->getPosition()))
         return D;
 
-      // FIXME: Variadic templates index substitution.
-      TemplateName Template
-        = TemplateArgs(TTP->getDepth(), TTP->getPosition()).getAsTemplate();
+      TemplateArgument Arg = TemplateArgs(TTP->getDepth(), TTP->getPosition());
+      
+      if (TTP->isParameterPack()) {
+        assert(Arg.getKind() == TemplateArgument::Pack && 
+               "Missing argument pack");
+        
+        if (getSema().ArgumentPackSubstitutionIndex == -1) {
+          // FIXME: Variadic templates fun case.
+          getSema().Diag(Loc,  diag::err_pack_expansion_mismatch_unsupported);
+          return 0;
+        }
+        
+        Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
+      }
+
+      TemplateName Template = Arg.getAsTemplate();
       assert(!Template.isNull() && Template.getAsTemplateDecl() &&
              "Wrong kind of template template argument");
       return Template.getAsTemplateDecl();

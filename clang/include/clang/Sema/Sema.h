@@ -2845,12 +2845,13 @@ public:
   Decl *ActOnTemplateTemplateParameter(Scope *S,
                                        SourceLocation TmpLoc,
                                        TemplateParamsTy *Params,
+                                       SourceLocation EllipsisLoc,
                                        IdentifierInfo *ParamName,
                                        SourceLocation ParamNameLoc,
                                        unsigned Depth,
                                        unsigned Position,
                                        SourceLocation EqualLoc,
-                                 const ParsedTemplateArgument &DefaultArg);
+                                       ParsedTemplateArgument DefaultArg);
 
   TemplateParamsTy *
   ActOnTemplateParameterList(unsigned Depth,
