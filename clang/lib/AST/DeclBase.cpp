@@ -119,6 +119,13 @@ bool Decl::isTemplateParameterPack() const {
   return false;
 }
 
+bool Decl::isParameterPack() const {
+  if (const ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(this))
+    return Parm->isParameterPack();
+  
+  return isTemplateParameterPack();
+}
+
 bool Decl::isFunctionOrFunctionTemplate() const {
   if (const UsingShadowDecl *UD = dyn_cast<UsingShadowDecl>(this))
     return UD->getTargetDecl()->isFunctionOrFunctionTemplate();

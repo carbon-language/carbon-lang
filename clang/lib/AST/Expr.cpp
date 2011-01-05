@@ -211,11 +211,8 @@ void DeclRefExpr::computeDependence() {
   // Determine whether this expression contains any unexpanded parameter
   // packs.
   // Is the declaration a parameter pack?
-  if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
-    if (NTTP->isParameterPack())
-      ExprBits.ContainsUnexpandedParameterPack = true;
-  }
-  // FIXME: Variadic templates function parameter packs.
+  if (D->isParameterPack())
+    ExprBits.ContainsUnexpandedParameterPack = true;
 }
 
 DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier, 

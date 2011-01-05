@@ -602,9 +602,8 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
   case LookupResult::NotFoundInCurrentInstantiation:
     if (DeclarationName CorrectedName = CorrectTypo(R, S, 0, 0, false, 
                                                     CTC_NoKeywords)) {
-      // FIXME: Variadic templates function parameter packs.
       if (NamedDecl *CorrectedResult = R.getAsSingle<NamedDecl>())
-        if (CorrectedResult->isTemplateParameterPack()) {
+        if (CorrectedResult->isParameterPack()) {
           ParameterPack = CorrectedResult;
           Diag(NameLoc, diag::err_sizeof_pack_no_pack_name_suggest)
             << &Name << CorrectedName
@@ -624,8 +623,7 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
     return ExprError();
   }
   
-  // FIXME: Variadic templates function parameter packs.
-  if (!ParameterPack || !ParameterPack->isTemplateParameterPack()) {
+  if (!ParameterPack || !ParameterPack->isParameterPack()) {
     Diag(NameLoc, diag::err_sizeof_pack_no_pack_name)
       << &Name;
     return ExprError();

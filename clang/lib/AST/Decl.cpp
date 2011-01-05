@@ -1221,6 +1221,10 @@ SourceRange ParmVarDecl::getDefaultArgRange() const {
   return SourceRange();
 }
 
+bool ParmVarDecl::isParameterPack() const {
+  return isa<PackExpansionType>(getType());
+}
+
 //===----------------------------------------------------------------------===//
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//
