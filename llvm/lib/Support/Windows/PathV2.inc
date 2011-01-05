@@ -268,17 +268,31 @@ error_code remove(const Twine &path, bool &existed) {
   SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
 
+  file_status st;
+  if (error_code ec = status(path, st))
+    return ec;
+
   if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
                                   path_utf16))
     return ec;
 
-  if (!::DeleteFileW(path_utf16.begin())) {
-    error_code ec = windows_error(::GetLastError());
-    if (ec != windows_error::file_not_found)
-      return ec;
-    existed = false;
-  } else
-    existed = true;
+  if (st.type() == file_type::directory_file) {
+    if (!::RemoveDirectoryW(c_str(path_utf16))) {
+      error_code ec = windows_error(::GetLastError());
+      if (ec != windows_error::file_not_found)
+        return ec;
+      existed = false;
+    } else
+      existed = true;
+  } else {
+    if (!::DeleteFileW(c_str(path_utf16))) {
+      error_code ec = windows_error(::GetLastError());
+      if (ec != windows_error::file_not_found)
+        return ec;
+      existed = false;
+    } else
+      existed = true;
+  }
 
   return success;
 }
