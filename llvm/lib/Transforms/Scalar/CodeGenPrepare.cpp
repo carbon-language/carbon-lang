@@ -45,6 +45,8 @@ using namespace llvm;
 using namespace llvm::PatternMatch;
 
 STATISTIC(NumBlocksElim, "Number of blocks eliminated");
+STATISTIC(NumPHIsElim, "Number of trivial PHIs eliminated");
+STATISTIC(NumGEPsElim, "Number of GEPs converted to casts");
 STATISTIC(NumCmpUses, "Number of uses of Cmp expressions replaced with uses of "
                       "sunken Cmps");
 STATISTIC(NumCastUses, "Number of uses of Cast expressions replaced with uses "
@@ -981,6 +983,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
       if (Value *V = SimplifyInstruction(P)) {
         P->replaceAllUsesWith(V);
         P->eraseFromParent();
+        ++NumPHIsElim;
       }
     } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
       // If the source of the cast is a constant, then this should have
@@ -1020,6 +1023,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
                                           GEPI->getName(), GEPI);
         GEPI->replaceAllUsesWith(NC);
         GEPI->eraseFromParent();
+        ++NumGEPsElim;
         MadeChange = true;
         BBI = NC;
       }
