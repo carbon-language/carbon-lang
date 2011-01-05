@@ -3396,34 +3396,128 @@ bool TreeTransform<Derived>::
   FunctionProtoType *T = TL.getTypePtr();
 
   for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
-    ParmVarDecl *OldParm = TL.getArg(i);
+    if (ParmVarDecl *OldParm = TL.getArg(i)) {
+      if (OldParm->isParameterPack()) {
+        // We have a function parameter pack that may need to be expanded.
+        llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
 
-    QualType NewType;
-    ParmVarDecl *NewParm;
-
-    if (OldParm) {
-      NewParm = getDerived().TransformFunctionTypeParam(OldParm);
+        // Find the parameter packs that could be expanded.
+        SourceLocation EllipsisLoc;
+        SourceRange PatternRange;
+        if (OldParm->getTypeSourceInfo()) {
+          TypeLoc TL = OldParm->getTypeSourceInfo()->getTypeLoc();
+          PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(TL);
+          TypeLoc Pattern = ExpansionTL.getPatternLoc();
+          EllipsisLoc = ExpansionTL.getEllipsisLoc();
+          PatternRange = Pattern.getSourceRange();
+          SemaRef.collectUnexpandedParameterPacks(Pattern, Unexpanded);
+        } else {
+          SemaRef.collectUnexpandedParameterPacks(
+                    cast<PackExpansionType>(OldParm->getType())->getPattern(), 
+                                                  Unexpanded);
+          EllipsisLoc = OldParm->getLocation();
+        }
+        
+        // Determine whether we should expand the parameter packs.
+        bool ShouldExpand = false;
+        unsigned NumExpansions = 0;
+        if (getDerived().TryExpandParameterPacks(EllipsisLoc, PatternRange,
+                                                 Unexpanded.data(), 
+                                                 Unexpanded.size(),
+                                                 ShouldExpand, NumExpansions)) {
+          return true;
+        }
+        
+        if (ShouldExpand) {
+          // Expand the function parameter pack into multiple, separate
+          // parameters.
+          for (unsigned I = 0; I != NumExpansions; ++I) {
+            Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), I);
+            ParmVarDecl *NewParm 
+              = getDerived().TransformFunctionTypeParam(OldParm);
+            if (!NewParm)
+              return true;
+            
+            PTypes.push_back(NewParm->getType());
+            PVars.push_back(NewParm);
+          }
+          
+          // We're done with the pack expansion.
+          continue;
+        }
+        
+        // We'll substitute the parameter now without expanding the pack 
+        // expansion.
+      }
+      
+      Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
+      ParmVarDecl *NewParm = getDerived().TransformFunctionTypeParam(OldParm);
       if (!NewParm)
         return true;
-      NewType = NewParm->getType();
+      
+      PTypes.push_back(NewParm->getType());
+      PVars.push_back(NewParm);
+      continue;
+    }
 
     // Deal with the possibility that we don't have a parameter
     // declaration for this parameter.
-    } else {
-      NewParm = 0;
-
-      QualType OldType = T->getArgType(i);
-      NewType = getDerived().TransformType(OldType);
-      if (NewType.isNull())
+    QualType OldType = T->getArgType(i);
+    bool IsPackExpansion = false;
+    if (const PackExpansionType *Expansion 
+                                       = dyn_cast<PackExpansionType>(OldType)) {
+      // We have a function parameter pack that may need to be expanded.
+      QualType Pattern = Expansion->getPattern();
+      llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+      getSema().collectUnexpandedParameterPacks(Pattern, Unexpanded);
+      
+      // Determine whether we should expand the parameter packs.
+      bool ShouldExpand = false;
+      unsigned NumExpansions = 0;
+      if (getDerived().TryExpandParameterPacks(TL.getBeginLoc(), SourceRange(),
+                                               Unexpanded.data(), 
+                                               Unexpanded.size(),
+                                               ShouldExpand, NumExpansions)) {
         return true;
-    }
+      }
+      
+      if (ShouldExpand) {
+        // Expand the function parameter pack into multiple, separate 
+        // parameters.
+        for (unsigned I = 0; I != NumExpansions; ++I) {
+          Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), I);
+          QualType NewType = getDerived().TransformType(Pattern);
+          if (NewType.isNull())
+            return true;
 
+          PTypes.push_back(NewType);
+          PVars.push_back(0);
+        }
+        
+        // We're done with the pack expansion.
+        continue;
+      }
+      
+      // We'll substitute the parameter now without expanding the pack 
+      // expansion.
+      OldType = Expansion->getPattern();
+      IsPackExpansion = true;
+    }
+    
+    Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
+    QualType NewType = getDerived().TransformType(OldType);
+    if (NewType.isNull())
+      return true;
+
+    if (IsPackExpansion)
+      NewType = getSema().Context.getPackExpansionType(NewType);
+      
     PTypes.push_back(NewType);
-    PVars.push_back(NewParm);
+    PVars.push_back(0);
   }
 
   return false;
-}
+  }
 
 template<typename Derived>
 QualType

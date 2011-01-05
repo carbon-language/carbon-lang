@@ -1877,8 +1877,6 @@ def err_sizeof_pack_no_pack_name : Error<
 // Unsupported variadic templates features
 def err_pack_expansion_mismatch_unsupported : Error<
   "clang cannot yet instantiate pack expansions with mismatched pack levels">;
-def err_function_parameter_pack_unsupported : Error<
-  "clang does not yet support function parameter packs">;
 
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;

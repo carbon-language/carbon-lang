@@ -231,3 +231,27 @@ namespace TemplateTemplateApply {
                      tuple<int&, int*, int const>>::value? 1 : -1];
 
 }
+
+namespace FunctionTypes {
+  template<typename FunctionType>
+  struct Arity;
+
+  template<typename R, typename ...Types>
+  struct Arity<R(Types...)> {
+    static const unsigned value = sizeof...(Types);
+  };
+
+  template<typename R, typename ...Types>
+  struct Arity<R(Types......)> {
+    static const unsigned value = sizeof...(Types);
+  };
+
+  template<typename R, typename T1, typename T2, typename T3, typename T4>
+  struct Arity<R(T1, T2, T3, T4)>; // expected-note{{template is declared here}}
+
+  int check0[Arity<int()>::value == 0? 1 : -1];
+  int check1[Arity<int(float, double)>::value == 2? 1 : -1];
+  int check2[Arity<int(float...)>::value == 1? 1 : -1];
+  int check3[Arity<int(float, double, long double...)>::value == 3? 1 : -1];
+  Arity<int(float, double, long double, char)> check4; // expected-error{{implicit instantiation of undefined template 'FunctionTypes::Arity<int (float, double, long double, char)>'}}
+}

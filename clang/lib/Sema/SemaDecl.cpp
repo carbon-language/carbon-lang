@@ -4986,12 +4986,6 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
         << D.getCXXScopeSpec().getRange();
       D.getCXXScopeSpec().clear();
     }
-
-    // FIXME: Variadic templates.
-    if (D.hasEllipsis()) {
-      Diag(D.getEllipsisLoc(), diag::err_function_parameter_pack_unsupported);
-      D.setInvalidType();
-    }
   }
 
   // Ensure we have a valid name

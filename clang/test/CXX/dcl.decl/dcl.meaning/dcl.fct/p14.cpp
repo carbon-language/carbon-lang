@@ -20,8 +20,8 @@ template<typename T> struct is_same<T, T> {
 
 template<typename T, typename ...Types>
 struct X0 {
-  typedef identity<T(Types...)> function_pack_1; // expected-error{{clang does not yet support function parameter packs}}
-  typedef identity<T(Types......)> variadic_function_pack_1;  // expected-error{{clang does not yet support function parameter packs}}
+  typedef identity<T(Types...)> function_pack_1;
+  typedef identity<T(Types......)> variadic_function_pack_1;
   typedef identity<T(T...)> variadic_1;
   typedef tuple<T(Types, ...)...> template_arg_expansion_1;
 };

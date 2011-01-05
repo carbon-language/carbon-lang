@@ -3,10 +3,10 @@
 // When it is part of a parameter-declaration-clause, the parameter
 // pack is a function parameter pack.
 template<typename ...Types>
-void f0(Types ...args); // FIXME: temporary expected-error{{clang does not yet support function parameter packs}}
+void f0(Types ...args);
 
 template<typename ...Types>
-void f1(const Types &...args); // FIXME: temporary expected-error{{clang does not yet support function parameter packs}}
+void f1(const Types &...args);
 
 // [ Note: Otherwise, the parameter-declaration is part of a
 // template-parameter-list and the parameter pack is a template

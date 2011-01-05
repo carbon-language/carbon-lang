@@ -1052,6 +1052,36 @@ TypeSourceInfo *Sema::SubstType(TypeSourceInfo *T,
   return Instantiator.TransformType(T);
 }
 
+TypeSourceInfo *Sema::SubstType(TypeLoc TL,
+                                const MultiLevelTemplateArgumentList &Args,
+                                SourceLocation Loc,
+                                DeclarationName Entity) {
+  assert(!ActiveTemplateInstantiations.empty() &&
+         "Cannot perform an instantiation without some context on the "
+         "instantiation stack");
+  
+  if (TL.getType().isNull())
+    return 0;
+
+  if (!TL.getType()->isDependentType() && 
+      !TL.getType()->isVariablyModifiedType()) {
+    // FIXME: Make a copy of the TypeLoc data here, so that we can
+    // return a new TypeSourceInfo. Inefficient!
+    TypeLocBuilder TLB;
+    TLB.pushFullCopy(TL);
+    return TLB.getTypeSourceInfo(Context, TL.getType());
+  }
+
+  TemplateInstantiator Instantiator(*this, Args, Loc, Entity);
+  TypeLocBuilder TLB;
+  TLB.reserve(TL.getFullDataSize());
+  QualType Result = Instantiator.TransformType(TLB, TL);
+  if (Result.isNull())
+    return 0;
+
+  return TLB.getTypeSourceInfo(Context, Result);
+}
+
 /// Deprecated form of the above.
 QualType Sema::SubstType(QualType T,
                          const MultiLevelTemplateArgumentList &TemplateArgs,
@@ -1122,8 +1152,34 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
 ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm, 
                           const MultiLevelTemplateArgumentList &TemplateArgs) {
   TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
-  TypeSourceInfo *NewDI = SubstType(OldDI, TemplateArgs, OldParm->getLocation(),
-                                    OldParm->getDeclName());
+  TypeSourceInfo *NewDI = 0;
+  
+  bool WasParameterPack = false;
+  bool IsParameterPack = false;
+  TypeLoc OldTL = OldDI->getTypeLoc();
+  if (isa<PackExpansionTypeLoc>(OldTL)) {    
+    PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(OldTL);
+    WasParameterPack = true;
+    
+    // We have a function parameter pack. Substitute into the pattern of the 
+    // expansion.
+    NewDI = SubstType(ExpansionTL.getPatternLoc(), TemplateArgs, 
+                      OldParm->getLocation(), OldParm->getDeclName());
+    if (!NewDI)
+      return 0;
+        
+    if (NewDI->getType()->containsUnexpandedParameterPack()) {
+      // We still have unexpanded parameter packs, which means that
+      // our function parameter is still a function parameter pack.
+      // Therefore, make its type a pack expansion type.
+      NewDI = CheckPackExpansion(NewDI, ExpansionTL.getEllipsisLoc());
+      IsParameterPack = true;
+    }
+  } else {
+    NewDI = SubstType(OldDI, TemplateArgs, OldParm->getLocation(), 
+                      OldParm->getDeclName());
+  }
+  
   if (!NewDI)
     return 0;
 
@@ -1153,7 +1209,11 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
 
   NewParm->setHasInheritedDefaultArg(OldParm->hasInheritedDefaultArg());
 
-  CurrentInstantiationScope->InstantiatedLocal(OldParm, NewParm);
+  // FIXME: When OldParm is a parameter pack and NewParm is not a parameter
+  // pack, we actually have a set of instantiated locations. Maintain this set!
+  if (!WasParameterPack || IsParameterPack)
+    CurrentInstantiationScope->InstantiatedLocal(OldParm, NewParm);  
+  
   // FIXME: OldParm may come from a FunctionProtoType, in which case CurContext
   // can be anything, is this right ?
   NewParm->setDeclContext(CurContext);
