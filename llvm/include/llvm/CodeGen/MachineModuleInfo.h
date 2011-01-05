@@ -209,7 +209,7 @@ public:
   /// hasDebugInfo - Returns true if valid debug info is present.
   ///
   bool hasDebugInfo() const { return DbgInfoAvailable; }
-  void setDebugInfoAvailability(bool avail) { DbgInfoAvailable = true; }
+  void setDebugInfoAvailability(bool avail) { DbgInfoAvailable = avail; }
 
   bool callsEHReturn() const { return CallsEHReturn; }
   void setCallsEHReturn(bool b) { CallsEHReturn = b; }
