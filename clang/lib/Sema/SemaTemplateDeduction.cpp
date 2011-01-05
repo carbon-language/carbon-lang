@@ -541,8 +541,12 @@ DeduceTemplateArguments(Sema &S,
                         TemplateDeductionInfo &Info,
                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                         unsigned TDF) {
-  // FIXME: Fast-path check with NumParams != NumArgs and there are no
-  // pack expansions around.
+  // Fast-path check to see if we have too many/too few arguments.
+  if (NumParams != NumArgs &&
+      !(NumParams && isa<PackExpansionType>(Params[NumParams - 1])) &&
+      !(NumArgs && isa<PackExpansionType>(Args[NumArgs - 1])))
+    return NumArgs < NumParams ? Sema::TDK_TooFewArguments 
+                               : Sema::TDK_TooManyArguments;
   
   // C++0x [temp.deduct.type]p10:
   //   Similarly, if P has a form that contains (T), then each parameter type 
