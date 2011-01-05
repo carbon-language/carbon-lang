@@ -66,6 +66,8 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   L->getUniqueExitBlocks(ExitBlocks);
   array_pod_sort(ExitBlocks.begin(), ExitBlocks.end());
 
+  SmallPtrSet<const Instruction*, 8> S1, S2, *ToSimplify = &S1, *Next = &S2;
+
   SmallVector<BasicBlock*, 16> VisitStack;
   SmallPtrSet<BasicBlock*, 32> Visited;
 
@@ -86,10 +88,22 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       // Simplify instructions in the current basic block.
       for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
         Instruction *I = BI++;
+
+        // The first time through the loop ToSimplify is empty and we try to
+        // simplify all instructions. On later iterations ToSimplify is not
+        // empty and we only bother simplifying instructions that are in it.
+        if (!ToSimplify->empty() && !ToSimplify->count(I))
+          continue;
+
         // Don't bother simplifying unused instructions.
         if (!I->use_empty()) {
           Value *V = SimplifyInstruction(I, TD, DT);
           if (V && LI->replacementPreservesLCSSAForm(I, V)) {
+            // Mark all uses for resimplification next time round the loop.
+            for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+                 UI != UE; ++UI)
+              Next->insert(cast<Instruction>(*UI));
+
             I->replaceAllUsesWith(V);
             LocalChanged = true;
             ++NumSimplified;
@@ -108,6 +122,11 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
           VisitStack.push_back(SuccBB);
       }
     }
+
+    // Place the list of instructions to simplify on the next loop iteration
+    // into ToSimplify.
+    std::swap(ToSimplify, Next);
+    Next->clear();
 
     Changed |= LocalChanged;
   } while (LocalChanged);
