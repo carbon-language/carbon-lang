@@ -1210,6 +1210,9 @@ DataExtractor::Dump
         if (item_byte_size != 4 && item_byte_size != 8)
             item_byte_size = s->GetAddressByteSize();
     }
+    
+    if (item_format == eFormatOSType && item_byte_size > 8)
+        item_format = eFormatHex;
 
     for (offset = start_offset, line_start_offset = start_offset, count = 0; ValidOffset(offset) && count < item_count; ++count)
     {
@@ -1280,7 +1283,7 @@ DataExtractor::Dump
                 if (item_count == 1 && item_format == eFormatChar)
                     s->PutChar('\'');
 
-                uint8_t ch = GetU8(&offset);
+                uint32_t ch = GetMaxU64(&offset, item_byte_size);
                 if (isprint(ch))
                     s->Printf ("%c", ch);
                 else if (item_format == eFormatChar)
@@ -1296,7 +1299,12 @@ DataExtractor::Dump
                     case '\t': s->Printf ("\\t", ch); break;
                     case '\v': s->Printf ("\\v", ch); break;
                     case '\0': s->Printf ("\\0", ch); break;
-                    default:   s->Printf ("\\x%2.2x", ch); break;
+                    default:   
+                        if (item_byte_size == 1)
+                            s->Printf ("\\x%2.2x", ch); 
+                        else
+                            s->Printf ("\\u%x", ch); 
+                        break;
                     }
                 }
                 else
@@ -1307,29 +1315,6 @@ DataExtractor::Dump
                 // If we are only printing one character surround it with single quotes
                 if (item_count == 1 && item_format == eFormatChar)
                     s->PutChar('\'');
-            }
-            break;
-
-        case eFormatComplex:
-            if (sizeof(float) * 2 == item_byte_size)
-            {
-                uint32_t a32 = GetU32(&offset);
-                uint32_t b32 = GetU32(&offset);
-
-                s->Printf ("%g + %gi", a32, b32);
-            }
-            else if (sizeof(double) * 2 == item_byte_size)
-            {
-                uint64_t a64 = GetU64(&offset);
-                uint64_t b64 = GetU64(&offset);
-
-                s->Printf ("%lg + %lgi", a64, b64);
-            }
-            else if (sizeof(long double) * 2 == item_byte_size && sizeof(long double) <= sizeof(uint64_t))
-            {
-                uint64_t a64 = GetU64(&offset);
-                uint64_t b64 = GetU64(&offset);
-                s->Printf ("%Lg + %Lgi", a64, b64);
             }
             break;
 
@@ -1348,6 +1333,40 @@ DataExtractor::Dump
                 s->Printf ("0%llo", GetMaxS64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
             break;
 
+        case eFormatOSType:
+            {
+                uint64_t uval64 = GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset);
+                s->PutChar('\'');
+                for (i=0; i<item_byte_size; ++i)
+                {
+                    uint8_t ch;
+                    if (i > 0)
+                        ch = (uint8_t)(uval64 >> ((item_byte_size - i - 1) * 8));
+                    else
+                        ch = (uint8_t)uval64;
+                    if (isprint(ch))
+                        s->Printf ("%c", ch);
+                    else
+                    {
+                        switch (ch)
+                        {
+                        case '\e': s->Printf ("\\e", (uint8_t)ch); break;
+                        case '\a': s->Printf ("\\a", ch); break;
+                        case '\b': s->Printf ("\\b", ch); break;
+                        case '\f': s->Printf ("\\f", ch); break;
+                        case '\n': s->Printf ("\\n", ch); break;
+                        case '\r': s->Printf ("\\r", ch); break;
+                        case '\t': s->Printf ("\\t", ch); break;
+                        case '\v': s->Printf ("\\v", ch); break;
+                        case '\0': s->Printf ("\\0", ch); break;
+                        default:   s->Printf ("\\x%2.2x", ch); break;
+                        }
+                    }
+                }
+                s->PutChar('\'');
+            }
+            break;
+            
         case eFormatEnum:
             // Print enum value as a signed integer when we don't get the enum type
             s->Printf ("%lld", GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
@@ -1370,6 +1389,34 @@ DataExtractor::Dump
         case eFormatPointer:
             s->Address(GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset), sizeof (addr_t));
             break;
+
+        case eFormatComplex:
+            if (sizeof(float) * 2 == item_byte_size)
+            {
+                float f32_1 = GetFloat (&offset);
+                float f32_2 = GetFloat (&offset);
+
+                s->Printf ("%g + %gi", f32_1, f32_2);
+                break;
+            }
+            else if (sizeof(double) * 2 == item_byte_size)
+            {
+                double d64_1 = GetDouble (&offset);
+                double d64_2 = GetDouble (&offset);
+
+                s->Printf ("%lg + %lgi", d64_1, d64_2);
+                break;
+            }
+            else if (sizeof(long double) * 2 == item_byte_size)
+            {
+                long double ld64_1 = GetLongDouble (&offset);
+                long double ld64_2 = GetLongDouble (&offset);
+                s->Printf ("%Lg + %Lgi", ld64_1, ld64_2);
+                break;
+            }
+            
+            // Fall through to hex for any other sizes
+            item_format = eFormatHex;
 
         default:
         case eFormatDefault:

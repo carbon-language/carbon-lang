@@ -260,6 +260,8 @@ public:
     void
     SetFormat (lldb::Format format)
     {
+        if (format != m_format)
+            m_value_str.clear();
         m_format = format;
     }
 

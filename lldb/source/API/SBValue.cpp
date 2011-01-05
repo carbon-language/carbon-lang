@@ -489,3 +489,19 @@ SBValue::GetDescription (SBStream &description)
 
     return true;
 }
+
+lldb::Format
+SBValue::GetFormat () const
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetFormat();
+    return eFormatDefault;
+}
+
+void
+SBValue::SetFormat (lldb::Format format)
+{
+    if (m_opaque_sp)
+        m_opaque_sp->SetFormat(format);
+}
+

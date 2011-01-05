@@ -155,6 +155,7 @@ typedef enum Format
     eFormatHex,
     eFormatFloat,
     eFormatOctal,
+    eFormatOSType,      // OS character codes encoded into an integer 'PICT' 'text' etc...
     eFormatUnicode16,
     eFormatUnicode32,
     eFormatUnsigned,

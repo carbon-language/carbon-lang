@@ -646,9 +646,33 @@ ClangASTType::DumpTypeValue
     else
     {
         const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+            
         switch (type_class)
         {
+        case clang::Type::Typedef:
+            {
+                clang::QualType typedef_qual_type = cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType();
+                if (format == eFormatDefault)
+                    format = ClangASTType::GetFormat(typedef_qual_type.getAsOpaquePtr());
+                std::pair<uint64_t, unsigned> typedef_type_info = ast_context->getTypeInfo(typedef_qual_type);
+                uint64_t typedef_byte_size = typedef_type_info.first / 8;
+
+                return ClangASTType::DumpTypeValue (ast_context,            // The clang AST context for this type
+                                                    typedef_qual_type.getAsOpaquePtr(),     // The clang type we want to dump
+                                                    s,
+                                                    format,                 // The format with which to display the element
+                                                    data,                   // Data buffer containing all bytes for this type
+                                                    byte_offset,            // Offset into "data" where to grab value from
+                                                    typedef_byte_size,      // Size of this type in bytes
+                                                    bitfield_bit_size,      // Size in bits of a bitfield value, if zero don't treat as a bitfield
+                                                    bitfield_bit_offset);   // Offset in bits of a bitfield value if bitfield_bit_size != 0
+            }
+            break;
+
         case clang::Type::Enum:
+            // If our format is enum or default, show the enumeration value as
+            // its enumeration string value, else just display it as requested.
+            if (format == eFormatEnum || format == eFormatDefault)
             {
                 const clang::EnumType *enum_type = cast<clang::EnumType>(qual_type.getTypePtr());
                 const clang::EnumDecl *enum_decl = enum_type->getDecl();
@@ -666,43 +690,75 @@ ClangASTType::DumpTypeValue
                 }
                 // If we have gotten here we didn't get find the enumerator in the
                 // enum decl, so just print the integer.
-
+                
                 s->Printf("%lli", enum_value);
                 return true;
             }
-            break;
-
-        case clang::Type::Typedef:
-            {
-                clang::QualType typedef_qual_type = cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType();
-                lldb::Format typedef_format = ClangASTType::GetFormat(typedef_qual_type.getAsOpaquePtr());
-                std::pair<uint64_t, unsigned> typedef_type_info = ast_context->getTypeInfo(typedef_qual_type);
-                uint64_t typedef_byte_size = typedef_type_info.first / 8;
-
-                return ClangASTType::DumpTypeValue(
-                            ast_context,            // The clang AST context for this type
-                            typedef_qual_type.getAsOpaquePtr(),     // The clang type we want to dump
-                            s,
-                            typedef_format,         // The format with which to display the element
-                            data,                   // Data buffer containing all bytes for this type
-                            byte_offset,            // Offset into "data" where to grab value from
-                            typedef_byte_size,      // Size of this type in bytes
-                            bitfield_bit_size,      // Size in bits of a bitfield value, if zero don't treat as a bitfield
-                            bitfield_bit_offset);   // Offset in bits of a bitfield value if bitfield_bit_size != 0
-            }
-            break;
-
+            // format was not enum, just fall through and dump the value as requested....
+                
         default:
             // We are down the a scalar type that we just need to display.
-            return data.Dump(s,
-                             byte_offset,
-                             format,
-                             byte_size,
-                             1,
-                             UINT32_MAX,
-                             LLDB_INVALID_ADDRESS,
-                             bitfield_bit_size,
-                             bitfield_bit_offset);
+            {
+                uint32_t item_count = 1;
+                // A few formats, we might need to modify our size and count for depending
+                // on how we are trying to display the value...
+                switch (format)
+                {
+                    default:
+                    case eFormatBoolean:
+                    case eFormatBinary:
+                    case eFormatComplex:
+                    case eFormatCString:         // NULL terminated C strings
+                    case eFormatDecimal:
+                    case eFormatEnum:
+                    case eFormatHex:
+                    case eFormatFloat:
+                    case eFormatOctal:
+                    case eFormatOSType:
+                    case eFormatUnsigned:
+                    case eFormatPointer:
+                    case eFormatVectorOfChar:
+                    case eFormatVectorOfSInt8:
+                    case eFormatVectorOfUInt8:
+                    case eFormatVectorOfSInt16:
+                    case eFormatVectorOfUInt16:
+                    case eFormatVectorOfSInt32:
+                    case eFormatVectorOfUInt32:
+                    case eFormatVectorOfSInt64:
+                    case eFormatVectorOfUInt64:
+                    case eFormatVectorOfFloat32:
+                    case eFormatVectorOfFloat64:
+                    case eFormatVectorOfUInt128:
+                        break;
+
+                    case eFormatChar: 
+                    case eFormatCharPrintable:  
+                    case eFormatBytes:
+                    case eFormatBytesWithASCII:
+                        item_count = (byte_size * item_count);
+                        byte_size = 1; 
+                        break;
+
+                    case eFormatUnicode16:
+                        item_count = (byte_size * item_count) / 2; 
+                        byte_size = 2; 
+                        break;
+
+                    case eFormatUnicode32:
+                        item_count = (byte_size * item_count) / 4; 
+                        byte_size = 4; 
+                        break;
+                }
+                return data.Dump (s,
+                                  byte_offset,
+                                  format,
+                                  byte_size,
+                                  item_count,
+                                  UINT32_MAX,
+                                  LLDB_INVALID_ADDRESS,
+                                  bitfield_bit_size,
+                                  bitfield_bit_offset);
+            }
             break;
         }
     }
