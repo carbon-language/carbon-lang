@@ -1515,10 +1515,8 @@ FinishTemplateArgumentDeduction(Sema &S,
     = ClassTemplate->getTemplateParameters();
   for (unsigned I = 0, E = TemplateParams->size(); I != E; ++I) {
     TemplateArgument InstArg = ConvertedInstArgs.data()[I];
-    Decl *Param = TemplateParams->getParam(I);
-
     if (!isSameTemplateArg(S.Context, TemplateArgs[I], InstArg)) {
-      Info.Param = makeTemplateParameter(Param);
+      Info.Param = makeTemplateParameter(TemplateParams->getParam(I));
       Info.FirstArg = TemplateArgs[I];
       Info.SecondArg = InstArg;
       return Sema::TDK_NonDeducedMismatch;

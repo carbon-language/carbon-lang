@@ -1079,6 +1079,14 @@ public:
   bool isIncompleteOrObjectType() const {
     return !isFunctionType();
   }
+  
+  /// \brief Determine whether this type is an object type.
+  bool isObjectType() const {
+    // C++ [basic.types]p8:
+    //   An object type is a (possibly cv-qualified) type that is not a 
+    //   function type, not a reference type, and not a void type.
+    return !isReferenceType() && !isFunctionType() && !isVoidType();
+  }
 
   /// isPODType - Return true if this is a plain-old-data type (C++ 3.9p10).
   bool isPODType() const;

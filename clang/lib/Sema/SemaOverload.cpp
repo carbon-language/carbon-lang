@@ -4821,7 +4821,7 @@ public:
            PtrEnd = CandidateTypes[0].pointer_end();
          Ptr != PtrEnd; ++Ptr) {
       // Skip pointer types that aren't pointers to object types.
-      if (!(*Ptr)->getPointeeType()->isIncompleteOrObjectType())
+      if (!(*Ptr)->getPointeeType()->isObjectType())
         continue;
 
       addPlusPlusMinusMinusStyleOverloads(*Ptr,
@@ -4847,6 +4847,9 @@ public:
          Ptr != PtrEnd; ++Ptr) {
       QualType ParamTy = *Ptr;
       QualType PointeeTy = ParamTy->getPointeeType();
+      if (!PointeeTy->isObjectType() && !PointeeTy->isFunctionType())
+        continue;
+      
       S.AddBuiltinCandidate(S.Context.getLValueReferenceType(PointeeTy),
                             &ParamTy, Args, 1, CandidateSet);
     }
@@ -5066,6 +5069,10 @@ public:
                 Ptr = CandidateTypes[Arg].pointer_begin(),
              PtrEnd = CandidateTypes[Arg].pointer_end();
            Ptr != PtrEnd; ++Ptr) {
+        QualType PointeeTy = (*Ptr)->getPointeeType();
+        if (!PointeeTy->isObjectType())
+          continue;
+
         AsymetricParamTypes[Arg] = *Ptr;
         if (Arg == 0 || Op == OO_Plus) {
           // operator+(T*, ptrdiff_t) or operator-(T*, ptrdiff_t)
@@ -5251,6 +5258,8 @@ public:
       // If this is operator=, keep track of the builtin candidates we added.
       if (isEqualOp)
         AddedTypes.insert(S.Context.getCanonicalType(*Ptr));
+      else if (!(*Ptr)->getPointeeType()->isObjectType())
+        continue;
 
       // non-volatile version
       QualType ParamTypes[2] = {
@@ -5443,6 +5452,9 @@ public:
          Ptr != PtrEnd; ++Ptr) {
       QualType ParamTypes[2] = { *Ptr, S.Context.getPointerDiffType() };
       QualType PointeeType = (*Ptr)->getPointeeType();
+      if (!PointeeType->isObjectType())
+        continue;
+      
       QualType ResultTy = S.Context.getLValueReferenceType(PointeeType);
 
       // T& operator[](T*, ptrdiff_t)
@@ -5455,6 +5467,9 @@ public:
          Ptr != PtrEnd; ++Ptr) {
       QualType ParamTypes[2] = { S.Context.getPointerDiffType(), *Ptr };
       QualType PointeeType = (*Ptr)->getPointeeType();
+      if (!PointeeType->isObjectType())
+        continue;
+
       QualType ResultTy = S.Context.getLValueReferenceType(PointeeType);
 
       // T& operator[](ptrdiff_t, T*)

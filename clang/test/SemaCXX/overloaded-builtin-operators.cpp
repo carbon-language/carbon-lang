@@ -220,3 +220,20 @@ namespace PR8477 {
     return foo[zero] == zero;
   }
 }
+
+namespace PR7851 {
+  struct X {
+    operator const void *() const;
+    operator void *();
+
+    operator const unsigned *() const;
+    operator unsigned *();
+  };
+
+  void f() {
+    X x;
+    x[0] = 1;
+    *x = 0;
+    (void)(x - x);
+  }
+}
