@@ -106,7 +106,8 @@ void PassRegistry::registerPass(const PassInfo &PI, bool ShouldFree) {
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   bool Inserted =
     Impl->PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
-  assert(Inserted && "Pass registered multiple times!"); Inserted=Inserted;
+  assert(Inserted && "Pass registered multiple times!");
+  (void)Inserted;
   Impl->PassInfoStringMap[PI.getPassArgument()] = &PI;
   
   // Notify any listeners.
