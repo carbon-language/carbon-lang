@@ -507,8 +507,8 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
     }
     assert(!isOnlyParens &&
            "non-empty abstract-declarator contained only parens!");
-#endif
   }
+#endif
 
   // Otherwise, we need to fake up a function declarator.
   SourceLocation loc = declarator.getSourceRange().getBegin();
