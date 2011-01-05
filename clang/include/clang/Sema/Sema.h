@@ -1801,7 +1801,7 @@ public:
   ExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks);
 
   // Binary/Unary Operators.  'Tok' is the token for the operator.
-  ExprResult CreateBuiltinUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
+  ExprResult CreateBuiltinUnaryOp(SourceLocation OpLoc, UnaryOperatorKind Opc,
                                   Expr *InputArg);
   ExprResult BuildUnaryOp(Scope *S, SourceLocation OpLoc,
                           UnaryOperatorKind Opc, Expr *input);
@@ -1932,7 +1932,7 @@ public:
   ExprResult BuildBinOp(Scope *S, SourceLocation OpLoc,
                         BinaryOperatorKind Opc, Expr *lhs, Expr *rhs);
   ExprResult CreateBuiltinBinOp(SourceLocation TokLoc,
-                                unsigned Opc, Expr *lhs, Expr *rhs);
+                                BinaryOperatorKind Opc, Expr *lhs, Expr *rhs);
 
   /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.

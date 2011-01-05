@@ -7497,10 +7497,9 @@ static void DiagnoseSelfAssignment(Sema &S, Expr *lhs, Expr *rhs,
 /// operator @p Opc at location @c TokLoc. This routine only supports
 /// built-in operations; ActOnBinOp handles overloaded operators.
 ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
-                                    unsigned Op,
+                                    BinaryOperatorKind Opc,
                                     Expr *lhs, Expr *rhs) {
   QualType ResultTy;     // Result type of the binary operator.
-  BinaryOperatorKind Opc = (BinaryOperatorKind) Op;
   // The following two variables are used for compound assignment operators
   QualType CompLHSTy;    // Type of LHS after promotions for computation
   QualType CompResultTy; // Type of computation result
@@ -7844,10 +7843,8 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
 }
 
 ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
-                                      unsigned OpcIn,
+                                      UnaryOperatorKind Opc,
                                       Expr *Input) {
-  UnaryOperatorKind Opc = static_cast<UnaryOperatorKind>(OpcIn);
-
   ExprValueKind VK = VK_RValue;
   ExprObjectKind OK = OK_Ordinary;
   QualType resultType;
@@ -7888,7 +7885,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     else if (resultType->isPlaceholderType()) {
       ExprResult PR = CheckPlaceholderExpr(Input, OpLoc);
       if (PR.isInvalid()) return ExprError();
-      return CreateBuiltinUnaryOp(OpLoc, OpcIn, PR.take());
+      return CreateBuiltinUnaryOp(OpLoc, Opc, PR.take());
     }
 
     return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
@@ -7908,7 +7905,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     else if (resultType->isPlaceholderType()) {
       ExprResult PR = CheckPlaceholderExpr(Input, OpLoc);
       if (PR.isInvalid()) return ExprError();
-      return CreateBuiltinUnaryOp(OpLoc, OpcIn, PR.take());
+      return CreateBuiltinUnaryOp(OpLoc, Opc, PR.take());
     } else {
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input->getSourceRange());
@@ -7925,7 +7922,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     } else if (resultType->isPlaceholderType()) {
       ExprResult PR = CheckPlaceholderExpr(Input, OpLoc);
       if (PR.isInvalid()) return ExprError();
-      return CreateBuiltinUnaryOp(OpLoc, OpcIn, PR.take());
+      return CreateBuiltinUnaryOp(OpLoc, Opc, PR.take());
     } else {
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input->getSourceRange());
