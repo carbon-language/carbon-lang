@@ -287,6 +287,67 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
 //===----------------------------------------------------------------------===//
 
 namespace {
+  /// LVIValueHandle - A callback value handle update the cache when
+  /// values are erased.
+  class LazyValueInfoCache;
+  struct LVIValueHandle : public CallbackVH {
+    LazyValueInfoCache *Parent;
+      
+    LVIValueHandle(Value *V, LazyValueInfoCache *P)
+      : CallbackVH(V), Parent(P) { }
+      
+    void deleted();
+    void allUsesReplacedWith(Value *V) {
+      deleted();
+    }
+  };
+}
+
+namespace llvm {
+  template<>
+  struct DenseMapInfo<LVIValueHandle> {
+    typedef DenseMapInfo<Value*> PointerInfo;
+    static inline LVIValueHandle getEmptyKey() {
+      return LVIValueHandle(PointerInfo::getEmptyKey(),
+                            static_cast<LazyValueInfoCache*>(0));
+    }
+    static inline LVIValueHandle getTombstoneKey() {
+      return LVIValueHandle(PointerInfo::getTombstoneKey(),
+                            static_cast<LazyValueInfoCache*>(0));
+    }
+    static unsigned getHashValue(const LVIValueHandle &Val) {
+      return PointerInfo::getHashValue(Val);
+    }
+    static bool isEqual(const LVIValueHandle &LHS, const LVIValueHandle &RHS) {
+      return LHS == RHS;
+    }
+  };
+  
+  template<>
+  struct DenseMapInfo<std::pair<AssertingVH<BasicBlock>, Value*> > {
+    typedef std::pair<AssertingVH<BasicBlock>, Value*> PairTy;
+    typedef DenseMapInfo<AssertingVH<BasicBlock> > APointerInfo;
+    typedef DenseMapInfo<Value*> BPointerInfo;
+    static inline PairTy getEmptyKey() {
+      return std::make_pair(APointerInfo::getEmptyKey(),
+                            BPointerInfo::getEmptyKey());
+    }
+    static inline PairTy getTombstoneKey() {
+      return std::make_pair(APointerInfo::getTombstoneKey(), 
+                            BPointerInfo::getTombstoneKey());
+    }
+    static unsigned getHashValue( const PairTy &Val) {
+      return APointerInfo::getHashValue(Val.first) ^ 
+             BPointerInfo::getHashValue(Val.second);
+    }
+    static bool isEqual(const PairTy &LHS, const PairTy &RHS) {
+      return APointerInfo::isEqual(LHS.first, RHS.first) &&
+             BPointerInfo::isEqual(LHS.second, RHS.second);
+    }
+  };
+}
+
+namespace { 
   /// LazyValueInfoCache - This is the cache kept by LazyValueInfo which
   /// maintains information about queries across the clients' queries.
   class LazyValueInfoCache {
@@ -297,19 +358,7 @@ namespace {
     typedef std::map<AssertingVH<BasicBlock>, LVILatticeVal> ValueCacheEntryTy;
 
   private:
-    /// LVIValueHandle - A callback value handle update the cache when
-    /// values are erased.
-    struct LVIValueHandle : public CallbackVH {
-      LazyValueInfoCache *Parent;
-      
-      LVIValueHandle(Value *V, LazyValueInfoCache *P)
-        : CallbackVH(V), Parent(P) { }
-      
-      void deleted();
-      void allUsesReplacedWith(Value *V) {
-        deleted();
-      }
-    };
+    friend struct LVIValueHandle;
     
     /// OverDefinedCacheUpdater - A helper object that ensures that the
     /// OverDefinedCache is updated whenever solveBlockValue returns.
@@ -332,12 +381,13 @@ namespace {
 
     /// ValueCache - This is all of the cached information for all values,
     /// mapped from Value* to key information.
-    std::map<LVIValueHandle, ValueCacheEntryTy> ValueCache;
+    DenseMap<LVIValueHandle, ValueCacheEntryTy> ValueCache;
     
     /// OverDefinedCache - This tracks, on a per-block basis, the set of 
     /// values that are over-defined at the end of that block.  This is required
     /// for cache updating.
-    std::set<std::pair<AssertingVH<BasicBlock>, Value*> > OverDefinedCache;
+    typedef std::pair<AssertingVH<BasicBlock>, Value*> OverDefinedPairTy;
+    DenseSet<OverDefinedPairTy> OverDefinedCache;
 
     LVILatticeVal getBlockValue(Value *Val, BasicBlock *BB);
     bool getEdgeValue(Value *V, BasicBlock *F, BasicBlock *T,
@@ -389,16 +439,21 @@ namespace {
   };
 } // end anonymous namespace
 
-void LazyValueInfoCache::LVIValueHandle::deleted() {
-  for (std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator
+void LVIValueHandle::deleted() {
+  typedef std::pair<AssertingVH<BasicBlock>, Value*> OverDefinedPairTy;
+  
+  SmallVector<OverDefinedPairTy, 4> ToErase;
+  for (DenseSet<OverDefinedPairTy>::iterator 
        I = Parent->OverDefinedCache.begin(),
        E = Parent->OverDefinedCache.end();
-       I != E; ) {
-    std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator tmp = I;
-    ++I;
-    if (tmp->second == getValPtr())
-      Parent->OverDefinedCache.erase(tmp);
+       I != E; ++I) {
+    if (I->second == getValPtr())
+      ToErase.push_back(*I);
   }
+  
+  for (SmallVector<OverDefinedPairTy, 4>::iterator I = ToErase.begin(),
+       E = ToErase.end(); I != E; ++I)
+    Parent->OverDefinedCache.erase(*I);
   
   // This erasure deallocates *this, so it MUST happen after we're done
   // using any and all members of *this.
@@ -406,15 +461,18 @@ void LazyValueInfoCache::LVIValueHandle::deleted() {
 }
 
 void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
-  for (std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator
-       I = OverDefinedCache.begin(), E = OverDefinedCache.end(); I != E; ) {
-    std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator tmp = I;
-    ++I;
-    if (tmp->first == BB)
-      OverDefinedCache.erase(tmp);
+  SmallVector<OverDefinedPairTy, 4> ToErase;
+  for (DenseSet<OverDefinedPairTy>::iterator  I = OverDefinedCache.begin(),
+       E = OverDefinedCache.end(); I != E; ++I) {
+    if (I->first == BB)
+      ToErase.push_back(*I);
   }
+  
+  for (SmallVector<OverDefinedPairTy, 4>::iterator I = ToErase.begin(),
+       E = ToErase.end(); I != E; ++I)
+    OverDefinedCache.erase(*I);
 
-  for (std::map<LVIValueHandle, ValueCacheEntryTy>::iterator
+  for (DenseMap<LVIValueHandle, ValueCacheEntryTy>::iterator
        I = ValueCache.begin(), E = ValueCache.end(); I != E; ++I)
     I->second.erase(BB);
 }
@@ -432,7 +490,9 @@ bool LazyValueInfoCache::hasBlockValue(Value *Val, BasicBlock *BB) {
   if (isa<Constant>(Val))
     return true;
 
-  return lookup(Val).count(BB);
+  LVIValueHandle ValHandle(Val, this);
+  if (!ValueCache.count(ValHandle)) return false;
+  return ValueCache[ValHandle].count(BB);
 }
 
 LVILatticeVal LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
@@ -856,8 +916,8 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
   worklist.push_back(OldSucc);
   
   DenseSet<Value*> ClearSet;
-  for (std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator
-       I = OverDefinedCache.begin(), E = OverDefinedCache.end(); I != E; ++I) {
+  for (DenseSet<OverDefinedPairTy>::iterator I = OverDefinedCache.begin(),
+       E = OverDefinedCache.end(); I != E; ++I) {
     if (I->first == OldSucc)
       ClearSet.insert(I->second);
   }
@@ -877,7 +937,7 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
     for (DenseSet<Value*>::iterator I = ClearSet.begin(), E = ClearSet.end();
          I != E; ++I) {
       // If a value was marked overdefined in OldSucc, and is here too...
-      std::set<std::pair<AssertingVH<BasicBlock>, Value*> >::iterator OI =
+      DenseSet<OverDefinedPairTy>::iterator OI =
         OverDefinedCache.find(std::make_pair(ToUpdate, *I));
       if (OI == OverDefinedCache.end()) continue;
 
