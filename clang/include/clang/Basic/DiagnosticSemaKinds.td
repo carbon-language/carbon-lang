@@ -1821,15 +1821,15 @@ def err_template_param_pack_must_be_last_template_parameter : Error<
   "template parameter pack must be the last template parameter">;
 
 def err_template_parameter_pack_non_pack : Error<
-  "template %select{type|non-type|template}0 parameter%select{| pack}1 "
-  "conflicts with previous template %select{type|non-type|template}0 "
-  "parameter%select{ pack|}1">;
+  "%select{template type|non-type template|template template}0 parameter"
+  "%select{| pack}1 conflicts with previous %select{template type|"
+  "non-type template|template template}0 parameter%select{ pack|}1">;
 def note_template_parameter_pack_non_pack : Note<
-  "template %select{type|non-type|template}0 parameter%select{| pack}1 "
-  "does not match template %select{type|non-type|template}0 "
-  "parameter%select{ pack|}1 in template argument">;
+  "%select{template type|non-type template|template template}0 parameter"
+  "%select{| pack}1 does not match %select{template type|non-type template"
+  "|template template}0 parameter%select{ pack|}1 in template argument">;
 def note_template_parameter_pack_here : Note<
-  "previous template %select{type|non-type|template}0 "
+  "previous %select{template type|non-type template|template template}0 "
   "parameter%select{| pack}1 declared here">;
   
 def err_unexpanded_parameter_pack_0 : Error<

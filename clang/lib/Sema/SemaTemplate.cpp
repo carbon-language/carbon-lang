@@ -3687,6 +3687,27 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
       NonTypeTemplateParmDecl *NewNTTP
         = cast<NonTypeTemplateParmDecl>(*NewParm);
       
+      if (OldNTTP->isParameterPack() != NewNTTP->isParameterPack()) {
+        // FIXME: Implement the rules in C++0x [temp.arg.template]p5 that
+        // allow one to match a template parameter pack in the template
+        // parameter list of a template template parameter to one or more
+        // template parameters in the template parameter list of the 
+        // corresponding template template argument.        
+        if (Complain) {
+          unsigned NextDiag = diag::err_template_parameter_pack_non_pack;
+          if (TemplateArgLoc.isValid()) {
+            Diag(TemplateArgLoc,
+                 diag::err_template_arg_template_params_mismatch);
+            NextDiag = diag::note_template_parameter_pack_non_pack;
+          }
+          Diag(NewNTTP->getLocation(), NextDiag)
+            << 1 << NewNTTP->isParameterPack();
+          Diag(OldNTTP->getLocation(), diag::note_template_parameter_pack_here)
+            << 1 << OldNTTP->isParameterPack();
+        }
+        return false;
+      }
+
       // If we are matching a template template argument to a template
       // template parameter and one of the non-type template parameter types
       // is dependent, then we must wait until template instantiation time
@@ -3723,6 +3744,28 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
         = cast<TemplateTemplateParmDecl>(*OldParm);
       TemplateTemplateParmDecl *NewTTP
         = cast<TemplateTemplateParmDecl>(*NewParm);
+      
+      if (OldTTP->isParameterPack() != NewTTP->isParameterPack()) {
+        // FIXME: Implement the rules in C++0x [temp.arg.template]p5 that
+        // allow one to match a template parameter pack in the template
+        // parameter list of a template template parameter to one or more
+        // template parameters in the template parameter list of the 
+        // corresponding template template argument.        
+        if (Complain) {
+          unsigned NextDiag = diag::err_template_parameter_pack_non_pack;
+          if (TemplateArgLoc.isValid()) {
+            Diag(TemplateArgLoc,
+                 diag::err_template_arg_template_params_mismatch);
+            NextDiag = diag::note_template_parameter_pack_non_pack;
+          }
+          Diag(NewTTP->getLocation(), NextDiag)
+            << 2 << NewTTP->isParameterPack();
+          Diag(OldTTP->getLocation(), diag::note_template_parameter_pack_here)
+            << 2 << OldTTP->isParameterPack();
+        }
+        return false;
+      }
+
       if (!TemplateParameterListsAreEqual(NewTTP->getTemplateParameters(),
                                           OldTTP->getTemplateParameters(),
                                           Complain,
