@@ -10,6 +10,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/PathV2.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "gtest/gtest.h"
 
@@ -17,12 +18,13 @@ using namespace llvm;
 using namespace llvm::sys;
 
 #define ASSERT_NO_ERROR(x) \
-  if (error_code ec = x) { \
-    SmallString<128> Message; \
-    GTEST_FATAL_FAILURE_((Twine(#x ": did not return errc::success.\n") + \
-                         "error number: " + Twine(ec.value()) + "\n" + \
-                         "error message: " + \
-                     ec.message()).toNullTerminatedStringRef(Message).data()); \
+  if (error_code ASSERT_NO_ERROR_ec = x) { \
+    SmallString<128> MessageStorage; \
+    raw_svector_ostream Message(MessageStorage); \
+    Message << #x ": did not return errc::success.\n" \
+            << "error number: " << ASSERT_NO_ERROR_ec.value() << "\n" \
+            << "error message: " << ASSERT_NO_ERROR_ec.message() << "\n"; \
+    GTEST_FATAL_FAILURE_(MessageStorage.c_str()); \
   } else {}
 
 namespace {
@@ -206,12 +208,9 @@ TEST_F(FileSystemTest, TempFiles) {
 
 TEST_F(FileSystemTest, DirectoryIteration) {
   error_code ec;
-  for (fs::directory_iterator i(".", ec), e; i != e; i.increment(ec)) {
-    if (ec) {
-      errs() << ec.message() << '\n';
-      errs().flush();
-      report_fatal_error("Directory iteration failed!");
-    }
+  for (fs::directory_iterator i(".", ec), e; i != e; i.increment(ec))
+    ASSERT_NO_ERROR(ec);
+}
   }
 }
 
