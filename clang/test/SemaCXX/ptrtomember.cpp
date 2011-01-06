@@ -22,11 +22,11 @@ struct S3 {
 };
 
 void f3(S3* p, void (S3::*m)()) {
-    p->*m; // expected-error {{a bound member function may only be used to call it}}
-    (void)(p->*m); // expected-error {{a bound member function may only be used to call it}}
-    (void)(void*)(p->*m); // expected-error {{a bound member function may only be used to call it}}
-    (void)reinterpret_cast<void*>(p->*m); // expected-error {{a bound member function may only be used to call it}}
-    if (p->*m) {} // expected-error {{a bound member function may only be used to call it}}
+    p->*m; // expected-error {{a bound member function may only be called}}
+    (void)(p->*m); // expected-error {{a bound member function may only be called}}
+    (void)(void*)(p->*m); // expected-error {{a bound member function may only be called}}
+    (void)reinterpret_cast<void*>(p->*m); // expected-error {{a bound member function may only be called}}
+    if (p->*m) {} // expected-error {{a bound member function may only be called}}
 
-    p->m; // expected-error {{a bound member function may only be used to call it}}
+    p->m; // expected-error {{a bound member function may only be called}}
 }
