@@ -933,13 +933,9 @@ LiveInterval *RALinScan::hasNextReloadInterval(LiveInterval *cur) {
 }
 
 void RALinScan::DowngradeRegister(LiveInterval *li, unsigned Reg) {
-  bool isNew = DowngradedRegs.insert(Reg);
-  (void)isNew; // Silence compiler warning.
-  assert(isNew && "Multiple reloads holding the same register?");
-  DowngradeMap.insert(std::make_pair(li->reg, Reg));
-  for (const unsigned *AS = tri_->getAliasSet(Reg); *AS; ++AS) {
-    isNew = DowngradedRegs.insert(*AS);
-    isNew = isNew; // Silence compiler warning.
+  for (const unsigned *AS = tri_->getOverlaps(Reg); *AS; ++AS) {
+    bool isNew = DowngradedRegs.insert(*AS);
+    (void)isNew; // Silence compiler warning.
     assert(isNew && "Multiple reloads holding the same register?");
     DowngradeMap.insert(std::make_pair(li->reg, *AS));
   }

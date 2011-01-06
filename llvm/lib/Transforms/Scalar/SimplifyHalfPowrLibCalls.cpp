@@ -97,7 +97,8 @@ InlineHalfPowrs(const std::vector<Instruction *> &HalfPowrs,
 
     InlineFunctionInfo IFI(0, TD);
     bool B = InlineFunction(Call, IFI);
-    assert(B && "half_powr didn't inline?"); B=B;
+    assert(B && "half_powr didn't inline?");
+    (void)B;
 
     BasicBlock *NewBody = NewBlock->getSinglePredecessor();
     assert(NewBody);
