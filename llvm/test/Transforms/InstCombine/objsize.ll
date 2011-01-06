@@ -150,3 +150,13 @@ declare i8* @__memset_chk(i8*, i32, i32, i32) nounwind
 declare noalias i8* @malloc(i32) nounwind
 
 declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
+
+define i32 @test7() {
+; CHECK: @test7
+  %alloc = call noalias i8* @malloc(i32 48) nounwind
+  %gep = getelementptr inbounds i8* %alloc, i32 16
+  %objsize = call i32 @llvm.objectsize.i32(i8* %gep, i1 false) nounwind readonly
+; CHECK-NEXT: ret i32 32
+  ret i32 %objsize
+}
+
