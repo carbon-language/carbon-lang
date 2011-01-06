@@ -1811,6 +1811,7 @@ public:
       .Cases("arm1136jf-s", "mpcorenovfp", "mpcore", "6K")
       .Cases("arm1156t2-s", "arm1156t2f-s", "6T2")
       .Cases("cortex-a8", "cortex-a9", "7A")
+      .Case("cortex-m3", "7M")
       .Default(0);
   }
   virtual bool setCPU(const std::string &Name) {
