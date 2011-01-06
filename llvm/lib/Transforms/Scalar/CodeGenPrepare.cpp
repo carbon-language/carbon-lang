@@ -1003,6 +1003,17 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
       MadeChange |= OptimizeMemoryInst(I, SI->getOperand(1),
                                        SI->getOperand(0)->getType(),
                                        SunkAddrs);
+  } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
+    if (GEPI->hasAllZeroIndices()) {
+      /// The GEP operand must be a pointer, so must its result -> BitCast
+      Instruction *NC = new BitCastInst(GEPI->getOperand(0), GEPI->getType(),
+                                        GEPI->getName(), GEPI);
+      GEPI->replaceAllUsesWith(NC);
+      GEPI->eraseFromParent();
+      ++NumGEPsElim;
+      MadeChange = true;
+      OptimizeInst(NC);
+    }
   }
 
   return MadeChange;
@@ -1031,18 +1042,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
   for (BasicBlock::iterator BBI = BB.begin(), E = BB.end(); BBI != E; ) {
     Instruction *I = BBI++;
 
-    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
-      if (GEPI->hasAllZeroIndices()) {
-        /// The GEP operand must be a pointer, so must its result -> BitCast
-        Instruction *NC = new BitCastInst(GEPI->getOperand(0), GEPI->getType(),
-                                          GEPI->getName(), GEPI);
-        GEPI->replaceAllUsesWith(NC);
-        GEPI->eraseFromParent();
-        ++NumGEPsElim;
-        MadeChange = true;
-        BBI = NC;
-      }
-    } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
+    if (CallInst *CI = dyn_cast<CallInst>(I)) {
       // If we found an inline asm expession, and if the target knows how to
       // lower it to normal LLVM code, do so now.
       if (TLI && isa<InlineAsm>(CI->getCalledValue())) {
