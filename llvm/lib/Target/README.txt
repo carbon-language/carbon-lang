@@ -2047,3 +2047,29 @@ entry:
 }
 //===---------------------------------------------------------------------===//
 
+clang -O3 currently compiles this code
+
+int g(unsigned int a) {
+  unsigned int c[100];
+  c[10] = a;
+  c[11] = a;
+  unsigned int b = c[10] + c[11];
+  if(b > a*2) a = 4;
+  else a = 8;
+  return a + 7;
+}
+
+into
+
+define i32 @g(i32 a) nounwind readnone {
+  %add = shl i32 %a, 1
+  %mul = shl i32 %a, 1
+  %cmp = icmp ugt i32 %add, %mul
+  %a.addr.0 = select i1 %cmp, i32 11, i32 15
+  ret i32 %a.addr.0
+}
+
+The icmp should fold to false. This CSE opportunity is only available
+after GVN and InstCombine have run.
+
+//===---------------------------------------------------------------------===//
