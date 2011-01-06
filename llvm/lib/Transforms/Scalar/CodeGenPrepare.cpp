@@ -98,6 +98,7 @@ namespace {
     bool CanMergeBlocks(const BasicBlock *BB, const BasicBlock *DestBB) const;
     void EliminateMostlyEmptyBlock(BasicBlock *BB);
     bool OptimizeBlock(BasicBlock &BB);
+    bool OptimizeInst(Instruction *I);
     bool OptimizeMemoryInst(Instruction *I, Value *Addr, const Type *AccessTy,
                             DenseMap<Value*,Value*> &SunkAddrs);
     bool OptimizeInlineAsmInst(Instruction *I, CallSite CS,
@@ -959,6 +960,54 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   return MadeChange;
 }
 
+bool CodeGenPrepare::OptimizeInst(Instruction *I) {
+  bool MadeChange = false;
+
+  if (PHINode *P = dyn_cast<PHINode>(I)) {
+    // It is possible for very late stage optimizations (such as SimplifyCFG)
+    // to introduce PHI nodes too late to be cleaned up.  If we detect such a
+    // trivial PHI, go ahead and zap it here.
+    if (Value *V = SimplifyInstruction(P)) {
+      P->replaceAllUsesWith(V);
+      P->eraseFromParent();
+      ++NumPHIsElim;
+    }
+  } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
+    // If the source of the cast is a constant, then this should have
+    // already been constant folded.  The only reason NOT to constant fold
+    // it is if something (e.g. LSR) was careful to place the constant
+    // evaluation in a block other than then one that uses it (e.g. to hoist
+    // the address of globals out of a loop).  If this is the case, we don't
+    // want to forward-subst the cast.
+    if (isa<Constant>(CI->getOperand(0)))
+      return false;
+
+    bool Change = false;
+    if (TLI) {
+      Change = OptimizeNoopCopyExpression(CI, *TLI);
+      MadeChange |= Change;
+    }
+
+    if (!Change && (isa<ZExtInst>(I) || isa<SExtInst>(I))) {
+      MadeChange |= MoveExtToFormExtLoad(I);
+      MadeChange |= OptimizeExtUses(I);
+    }
+  } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
+    MadeChange |= OptimizeCmpExpression(CI);
+  } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+    if (TLI)
+      MadeChange |= OptimizeMemoryInst(I, I->getOperand(0), LI->getType(),
+                                       SunkAddrs);
+  } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+    if (TLI)
+      MadeChange |= OptimizeMemoryInst(I, SI->getOperand(1),
+                                       SI->getOperand(0)->getType(),
+                                       SunkAddrs);
+  }
+
+  return MadeChange;
+}
+
 // In this pass we look for GEP and cast instructions that are used
 // across basic blocks and rewrite them to improve basic-block-at-a-time
 // selection.
@@ -982,47 +1031,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
   for (BasicBlock::iterator BBI = BB.begin(), E = BB.end(); BBI != E; ) {
     Instruction *I = BBI++;
 
-    if (PHINode *P = dyn_cast<PHINode>(I)) {
-      // It is possible for very late stage optimizations (such as SimplifyCFG)
-      // to introduce PHI nodes too late to be cleaned up.  If we detect such a
-      // trivial PHI, go ahead and zap it here.
-      if (Value *V = SimplifyInstruction(P)) {
-        P->replaceAllUsesWith(V);
-        P->eraseFromParent();
-        ++NumPHIsElim;
-      }
-    } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
-      // If the source of the cast is a constant, then this should have
-      // already been constant folded.  The only reason NOT to constant fold
-      // it is if something (e.g. LSR) was careful to place the constant
-      // evaluation in a block other than then one that uses it (e.g. to hoist
-      // the address of globals out of a loop).  If this is the case, we don't
-      // want to forward-subst the cast.
-      if (isa<Constant>(CI->getOperand(0)))
-        continue;
-
-      bool Change = false;
-      if (TLI) {
-        Change = OptimizeNoopCopyExpression(CI, *TLI);
-        MadeChange |= Change;
-      }
-
-      if (!Change && (isa<ZExtInst>(I) || isa<SExtInst>(I))) {
-        MadeChange |= MoveExtToFormExtLoad(I);
-        MadeChange |= OptimizeExtUses(I);
-      }
-    } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
-      MadeChange |= OptimizeCmpExpression(CI);
-    } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-      if (TLI)
-        MadeChange |= OptimizeMemoryInst(I, I->getOperand(0), LI->getType(),
-                                         SunkAddrs);
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-      if (TLI)
-        MadeChange |= OptimizeMemoryInst(I, SI->getOperand(1),
-                                         SI->getOperand(0)->getType(),
-                                         SunkAddrs);
-    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
+    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
       if (GEPI->hasAllZeroIndices()) {
         /// The GEP operand must be a pointer, so must its result -> BitCast
         Instruction *NC = new BitCastInst(GEPI->getOperand(0), GEPI->getType(),
@@ -1050,6 +1059,8 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
         // enclosing iterator here.
         MadeChange |= OptimizeCallInst(CI);
       }
+    } else {
+      MadeChange |= OptimizeInst(I);
     }
   }
 
