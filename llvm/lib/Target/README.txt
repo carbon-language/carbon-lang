@@ -1075,6 +1075,77 @@ int test (int a, int b, int c, int g) {
 It would be better to do the mul once to reduce codesize above the if.
 This is GCC PR38204.
 
+
+//===---------------------------------------------------------------------===//
+This simple function from 179.art:
+
+int winner, numf2s;
+struct { double y; int   reset; } *Y;
+
+void find_match() {
+   int i;
+   winner = 0;
+   for (i=0;i<numf2s;i++)
+       if (Y[i].y > Y[winner].y)
+              winner =i;
+}
+
+Compiles into (with clang TBAA):
+
+for.body:                                         ; preds = %for.inc, %bb.nph
+  %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.inc ]
+  %i.01718 = phi i32 [ 0, %bb.nph ], [ %i.01719, %for.inc ]
+  %tmp4 = getelementptr inbounds %struct.anon* %tmp3, i64 %indvar, i32 0
+  %tmp5 = load double* %tmp4, align 8, !tbaa !4
+  %idxprom7 = sext i32 %i.01718 to i64
+  %tmp10 = getelementptr inbounds %struct.anon* %tmp3, i64 %idxprom7, i32 0
+  %tmp11 = load double* %tmp10, align 8, !tbaa !4
+  %cmp12 = fcmp ogt double %tmp5, %tmp11
+  br i1 %cmp12, label %if.then, label %for.inc
+
+if.then:                                          ; preds = %for.body
+  %i.017 = trunc i64 %indvar to i32
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body, %if.then
+  %i.01719 = phi i32 [ %i.01718, %for.body ], [ %i.017, %if.then ]
+  %indvar.next = add i64 %indvar, 1
+  %exitcond = icmp eq i64 %indvar.next, %tmp22
+  br i1 %exitcond, label %for.cond.for.end_crit_edge, label %for.body
+
+
+It is good that we hoisted the reloads of numf2's, and Y out of the loop and
+sunk the store to winner out.
+
+However, this is awful on several levels: the conditional truncate in the loop
+(-indvars at fault? why can't we completely promote the IV to i64?).
+
+Beyond that, we have a partially redundant load in the loop: if "winner" (aka 
+%i.01718) isn't updated, we reload Y[winner].y the next time through the loop.
+Similarly, the addressing that feeds it (including the sext) is redundant. In
+the end we get this generated assembly:
+
+LBB0_2:                                 ## %for.body
+                                        ## =>This Inner Loop Header: Depth=1
+	movsd	(%rdi), %xmm0
+	movslq	%edx, %r8
+	shlq	$4, %r8
+	ucomisd	(%rcx,%r8), %xmm0
+	jbe	LBB0_4
+	movl	%esi, %edx
+LBB0_4:                                 ## %for.inc
+	addq	$16, %rdi
+	incq	%rsi
+	cmpq	%rsi, %rax
+	jne	LBB0_2
+
+All things considered this isn't too bad, but we shouldn't need the movslq or
+the shlq instruction, or the load folded into ucomisd every time through the
+loop.
+
+On an x86-specific topic, if the loop can't be restructure, the movl should be a
+cmov.
+
 //===---------------------------------------------------------------------===//
 
 [STORE SINKING]
@@ -1961,6 +2032,14 @@ fold to %62.  This is a security win (overflows of malloc will get caught)
 and also a performance win by exposing more memsets to the optimizer.
 
 This occurs several times in viterbi.
+
+Stuff like this occurs in drystone:
+
+  %call5 = call i8* @malloc(i32 48) optsize
+  %5 = getelementptr inbounds i8* %call5, i32 16
+  %6 = call i32 @llvm.objectsize.i32(i8* %5, i1 false)
+
+We should be able to constant fold that.
 
 //===---------------------------------------------------------------------===//
 
