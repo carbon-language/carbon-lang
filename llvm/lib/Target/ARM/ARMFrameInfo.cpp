@@ -658,7 +658,7 @@ bool ARMFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   unsigned FltOpc = ARM::VSTMDDB_UPD;
   emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea1Register);
   emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea2Register);
-  emitPushInst(MBB, MI, CSI, FltOpc,  0, true,  &isARMArea3Register);
+  emitPushInst(MBB, MI, CSI, FltOpc, 0, true, &isARMArea3Register);
 
   return true;
 }
@@ -678,7 +678,7 @@ bool ARMFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   unsigned PopOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_UPD : ARM::LDMIA_UPD;
   unsigned LdrOpc = AFI->isThumbFunction() ? ARM::t2LDR_POST : ARM::LDR_POST;
   unsigned FltOpc = ARM::VLDMDIA_UPD;
-  emitPopInst(MBB, MI, CSI, FltOpc, 0, isVarArg, true,  &isARMArea3Register);
+  emitPopInst(MBB, MI, CSI, FltOpc, 0, isVarArg, true, &isARMArea3Register);
   emitPopInst(MBB, MI, CSI, PopOpc, LdrOpc, isVarArg, false,
               &isARMArea2Register);
   emitPopInst(MBB, MI, CSI, PopOpc, LdrOpc, isVarArg, false,
