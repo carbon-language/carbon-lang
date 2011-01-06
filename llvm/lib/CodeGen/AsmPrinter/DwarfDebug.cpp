@@ -894,6 +894,39 @@ bool DwarfDebug::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
   return true;
 }
 
+/// addConstantValue - Add constant value entry in variable DIE.
+bool DwarfDebug::addConstantValue(DIE *Die, ConstantInt *CI,
+                                  bool Unsigned) {
+  if (CI->getBitWidth() <= 64) {
+    if (Unsigned)
+      addUInt(Die, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata,
+              CI->getZExtValue());
+    else
+      addSInt(Die, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata,
+              CI->getSExtValue());
+    return true;
+  }
+
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
+
+  // Get the raw data form of the large APInt.
+  const APInt Val = CI->getValue();
+  const char *Ptr = (const char*)Val.getRawData();
+
+  int NumBytes = Val.getBitWidth() / 8; // 8 bits per byte.
+  bool LittleEndian = Asm->getTargetData().isLittleEndian();
+  int Incr = (LittleEndian ? 1 : -1);
+  int Start = (LittleEndian ? 0 : NumBytes - 1);
+  int Stop = (LittleEndian ? NumBytes : -1);
+
+  // Output the constant to DWARF one byte at a time.
+  for (; Start != Stop; Start += Incr)
+    addUInt(Block, 0, dwarf::DW_FORM_data1,
+            (unsigned char)0xFF & Ptr[Start]);
+
+  addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
+  return true;
+}
 
 /// addToContextOwner - Add Die into the list of its context owner's children.
 void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
@@ -1957,16 +1990,10 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
     } else {
       addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
     } 
-  } else if (Constant *C = GV.getConstant()) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
-      if (isUnsignedDIType(GTy))
-          addUInt(VariableDIE, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata,
-                  CI->getZExtValue());
-        else
-          addSInt(VariableDIE, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata,
-                 CI->getSExtValue());
-    }
-  }
+  } else if (ConstantInt *CI = 
+             dyn_cast_or_null<ConstantInt>(GV.getConstant()))
+    addConstantValue(VariableDIE, CI, isUnsignedDIType(GTy));
+
   return;
 }
 

@@ -301,6 +301,7 @@ private:
 
   /// addConstantValue - Add constant value entry in variable DIE.
   bool addConstantValue(DIE *Die, const MachineOperand &MO);
+  bool addConstantValue(DIE *Die, ConstantInt *CI, bool Unsigned);
 
   /// addConstantFPValue - Add constant value entry in variable DIE.
   bool addConstantFPValue(DIE *Die, const MachineOperand &MO);
