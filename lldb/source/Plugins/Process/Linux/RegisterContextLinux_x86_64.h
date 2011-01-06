@@ -18,8 +18,8 @@ class RegisterContextLinux_x86_64
     : public RegisterContextLinux
 {
 public:
-    RegisterContextLinux_x86_64(lldb_private::Thread &thread,
-                                lldb_private::StackFrame *frame);
+    RegisterContextLinux_x86_64 (lldb_private::Thread &thread,
+                                 uint32_t concrete_frame_idx);
 
     ~RegisterContextLinux_x86_64();
 

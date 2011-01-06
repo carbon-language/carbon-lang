@@ -16,9 +16,9 @@
 
 // Other libraries and framework includes
 #include "lldb/Target/Thread.h"
-#include "RegisterContextLinux.h"
 
 class ProcessMonitor;
+class RegisterContextLinux;
 
 //------------------------------------------------------------------------------
 // @class LinuxThread
@@ -38,17 +38,17 @@ public:
     const char *
     GetInfo();
 
-    RegisterContextLinux *
+    virtual lldb::RegisterContextSP
     GetRegisterContext();
 
-    bool
+    virtual bool
     SaveFrameZeroState(RegisterCheckpoint &checkpoint);
 
-    bool
+    virtual bool
     RestoreSaveFrameZero(const RegisterCheckpoint &checkpoint);
 
-    RegisterContextLinux *
-    CreateRegisterContextForFrame(lldb_private::StackFrame *frame);
+    virtual lldb::RegisterContextSP
+    CreateRegisterContextForFrame (StackFrame *frame);
 
     //--------------------------------------------------------------------------
     // These methods form a specialized interface to linux threads.
@@ -60,8 +60,16 @@ public:
     void ExitNotify();
 
 private:
+    
+    RegisterContextLinux *
+    GetRegisterContextLinux ()
+    {
+        if (!m_reg_context_sp)
+            GetRegisterContext();
+        return (RegisterContextLinux *)m_reg_context_sp.get()
+    }
+    
     std::auto_ptr<lldb_private::StackFrame> m_frame_ap;
-    std::auto_ptr<RegisterContextLinux> m_register_ap;
 
     lldb::BreakpointSiteSP m_breakpoint;
 

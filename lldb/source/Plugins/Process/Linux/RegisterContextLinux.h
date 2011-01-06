@@ -24,8 +24,8 @@ class RegisterContextLinux
 {
 public:
     RegisterContextLinux(lldb_private::Thread &thread,
-                         lldb_private::StackFrame *frame)
-        : RegisterContext(thread, frame) { }
+                         uint32_t concrete_frame_idx)
+        : RegisterContext(thread, concrete_frame_idx) { }
 
     /// Updates the register state of the associated thread after hitting a
     /// breakpoint (if that make sense for the architecture).  Default

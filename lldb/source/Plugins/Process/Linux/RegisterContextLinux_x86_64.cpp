@@ -402,8 +402,8 @@ static unsigned GetRegOffset(unsigned reg)
 }
 
 RegisterContextLinux_x86_64::RegisterContextLinux_x86_64(Thread &thread,
-                                                         StackFrame *frame)
-    : RegisterContextLinux(thread, frame)
+                                                         uint32_t concrete_frame_idx)
+    : RegisterContextLinux(thread, concrete_frame_idx)
 {
 }
 

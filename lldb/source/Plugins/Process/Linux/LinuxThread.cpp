@@ -26,21 +26,8 @@ using namespace lldb_private;
 LinuxThread::LinuxThread(Process &process, lldb::tid_t tid)
     : Thread(process, tid),
       m_frame_ap(0),
-      m_register_ap(0),
       m_note(eNone)
 {
-    ArchSpec arch = process.GetTarget().GetArchitecture();
-
-    switch (arch.GetGenericCPUType())
-    {
-    default:
-        assert(false && "CPU type not supported!");
-        break;
-
-    case ArchSpec::eCPU_x86_64:
-        m_register_ap.reset(new RegisterContextLinux_x86_64(*this, NULL));
-        break;
-    }
 }
 
 ProcessMonitor &
@@ -61,10 +48,25 @@ LinuxThread::GetInfo()
     return NULL;
 }
 
-RegisterContextLinux *
+lldb::RegisterContextSP
 LinuxThread::GetRegisterContext()
 {
-    return m_register_ap.get();
+    if (!m_reg_context_sp)
+    {
+        ArchSpec arch = process.GetTarget().GetArchitecture();
+
+        switch (arch.GetGenericCPUType())
+        {
+        default:
+            assert(false && "CPU type not supported!");
+            break;
+
+        case ArchSpec::eCPU_x86_64:
+            m_reg_context_sp.reset(new RegisterContextLinux_x86_64(*this, 0));
+            break;
+        }
+    }
+    return m_reg_context_sp    
 }
 
 bool
@@ -79,10 +81,19 @@ LinuxThread::RestoreSaveFrameZero(const RegisterCheckpoint &checkpoint)
     return false;
 }
 
-RegisterContextLinux *
-LinuxThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
+lldb::RegisterContextSP
+LinuxThread::CreateRegisterContextForFrame (lldb_private::StackFrame *frame)
 {
-    return new RegisterContextLinux_x86_64(*this, frame);
+    lldb::RegisterContextSP reg_ctx_sp;
+    uint32_t concrete_frame_idx = 0;
+    if (frame)
+        concrete_frame_idx = frame->GetConcreteFrameIndex();
+        
+    if (concrete_frame_idx == 0)
+        reg_ctx_sp = GetRegisterContext();
+    else
+        reg_ctx_sp.reset (new RegisterContextLinux_x86_64(*this, frame->GetConcreteFrameIndex()));
+    return reg_ctx_sp;
 }
 
 lldb::StopInfoSP
@@ -159,14 +170,13 @@ LinuxThread::BreakNotify()
 {
     bool status;
 
-    status = GetRegisterContext()->UpdateAfterBreakpoint();
+    status = GetRegisterContextLinux()->UpdateAfterBreakpoint();
     assert(status && "Breakpoint update failed!");
 
     // With our register state restored, resolve the breakpoint object
     // corresponding to our current PC.
     lldb::addr_t pc = GetRegisterContext()->GetPC();
-    lldb::BreakpointSiteSP bp_site =
-        GetProcess().GetBreakpointSiteList().FindByAddress(pc);
+    lldb::BreakpointSiteSP bp_site(GetProcess().GetBreakpointSiteList().FindByAddress(pc));
     assert(bp_site && bp_site->ValidForThisThread(this));
 
     m_note = eBreak;
