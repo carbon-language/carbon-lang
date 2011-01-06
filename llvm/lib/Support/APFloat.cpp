@@ -194,11 +194,11 @@ totalExponent(StringRef::iterator p, StringRef::iterator end,
     assert(value < 10U && "Invalid character in exponent");
 
     unsignedExponent = unsignedExponent * 10 + value;
-    if (unsignedExponent > 65535)
+    if (unsignedExponent > 32767)
       overflow = true;
   }
 
-  if (exponentAdjustment > 65535 || exponentAdjustment < -65536)
+  if (exponentAdjustment > 32767 || exponentAdjustment < -32768)
     overflow = true;
 
   if (!overflow) {
@@ -206,12 +206,12 @@ totalExponent(StringRef::iterator p, StringRef::iterator end,
     if (negative)
       exponent = -exponent;
     exponent += exponentAdjustment;
-    if (exponent > 65535 || exponent < -65536)
+    if (exponent > 32767 || exponent < -32768)
       overflow = true;
   }
 
   if (overflow)
-    exponent = negative ? -65536: 65535;
+    exponent = negative ? -32768: 32767;
 
   return exponent;
 }
