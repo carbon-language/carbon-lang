@@ -575,8 +575,26 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
   // If this is a constant expr gep that is effectively computing an
   // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
   for (unsigned i = 1; i != NumOps; ++i)
-    if (!isa<ConstantInt>(Ops[i]))
+    if (!isa<ConstantInt>(Ops[i])) {
+      
+      // If this is "gep i8* Ptr, (sub 0, V)", fold this as:
+      // "inttoptr (sub (ptrtoint Ptr), V)"
+      if (NumOps == 2 &&
+          cast<PointerType>(ResultTy)->getElementType()->isIntegerTy(8)) {
+        ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[1]);
+        if (CE && CE->getOpcode() == Instruction::Sub &&
+            isa<ConstantInt>(CE->getOperand(0)) &&
+            cast<ConstantInt>(CE->getOperand(0))->isZero()) {
+          Constant *Res = ConstantExpr::getPtrToInt(Ptr, CE->getType());
+          Res = ConstantExpr::getSub(Res, CE->getOperand(1));
+          Res = ConstantExpr::getIntToPtr(Res, ResultTy);
+          if (ConstantExpr *ResCE = dyn_cast<ConstantExpr>(Res))
+            Res = ConstantFoldConstantExpression(ResCE, TD);
+          return Res;
+        }
+      }
       return 0;
+    }
   
   APInt Offset = APInt(BitWidth,
                        TD->getIndexedOffset(Ptr->getType(),

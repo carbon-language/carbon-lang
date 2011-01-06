@@ -53,3 +53,22 @@ define void @frob() {
   store i32 1, i32* getelementptr ([3 x %struct.X]* @Y, i64 0, i64 0, i32 0, i64 19), align 8
   ret void
 }
+
+
+; PR8883 - Constant fold exotic gep subtract
+; CHECK: @test2
+@X = global [1000 x i8] zeroinitializer, align 16
+
+define i64 @test2() {
+entry:
+  %A = bitcast i8* getelementptr inbounds ([1000 x i8]* @X, i64 1, i64 0) to i8*
+  %B = bitcast i8* getelementptr inbounds ([1000 x i8]* @X, i64 0, i64 0) to i8*
+
+  %B2 = ptrtoint i8* %B to i64
+  %C = sub i64 0, %B2
+  %D = getelementptr i8* %A, i64 %C
+  %E = ptrtoint i8* %D to i64
+
+  ret i64 %E
+  ; CHECK: ret i64 1000
+}
