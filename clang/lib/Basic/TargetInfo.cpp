@@ -26,6 +26,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   TLSSupported = true;
   NoAsmVariants = false;
   PointerWidth = PointerAlign = 32;
+  BoolWidth = BoolAlign = 8;
   IntWidth = IntAlign = 32;
   LongWidth = LongAlign = 32;
   LongLongWidth = LongLongAlign = 64;

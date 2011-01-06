@@ -66,6 +66,7 @@ protected:
   bool TLSSupported;
   bool NoAsmVariants;  // True if {|} are normal characters.
   unsigned char PointerWidth, PointerAlign;
+  unsigned char BoolWidth, BoolAlign;
   unsigned char IntWidth, IntAlign;
   unsigned char FloatWidth, FloatAlign;
   unsigned char DoubleWidth, DoubleAlign;
@@ -164,8 +165,8 @@ public:
 
   /// getBoolWidth/Align - Return the size of '_Bool' and C++ 'bool' for this
   /// target, in bits.
-  unsigned getBoolWidth(bool isWide = false) const { return 8; }  // FIXME
-  unsigned getBoolAlign(bool isWide = false) const { return 8; }  // FIXME
+  unsigned getBoolWidth() const { return BoolWidth; }
+  unsigned getBoolAlign() const { return BoolAlign; }
 
   unsigned getCharWidth() const { return 8; } // FIXME
   unsigned getCharAlign() const { return 8; } // FIXME

@@ -479,17 +479,6 @@ public:
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const;
 
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
-    // This is the right definition for ABI/V4: System V.4/eabi.
-    /*return "typedef struct __va_list_tag {"
-           "  unsigned char gpr;"
-           "  unsigned char fpr;"
-           "  unsigned short reserved;"
-           "  void* overflow_arg_area;"
-           "  void* reg_save_area;"
-           "} __builtin_va_list[1];";*/
-  }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
@@ -754,7 +743,18 @@ public:
                         "i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32";
 
     if (getTriple().getOS() == llvm::Triple::FreeBSD)
-        this->SizeType = TargetInfo::UnsignedInt;
+        SizeType = UnsignedInt;
+  }
+
+  virtual const char *getVAListDeclaration() const {
+    // This is the ELF definition, and is overridden by the Darwin sub-target
+    return "typedef struct __va_list_tag {"
+           "  unsigned char gpr;"
+           "  unsigned char fpr;"
+           "  unsigned short reserved;"
+           "  void* overflow_arg_area;"
+           "  void* reg_save_area;"
+           "} __builtin_va_list[1];";
   }
 };
 } // end anonymous namespace.
@@ -770,17 +770,24 @@ public:
     DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32:64";
   }
+  virtual const char *getVAListDeclaration() const {
+    return "typedef char* __builtin_va_list;";
+  }
 };
 } // end anonymous namespace.
 
 
 namespace {
-class DarwinPPCTargetInfo :
-  public DarwinTargetInfo<PPCTargetInfo> {
+class DarwinPPC32TargetInfo :
+  public DarwinTargetInfo<PPC32TargetInfo> {
 public:
-  DarwinPPCTargetInfo(const std::string& triple)
-    : DarwinTargetInfo<PPCTargetInfo>(triple) {
+  DarwinPPC32TargetInfo(const std::string& triple)
+    : DarwinTargetInfo<PPC32TargetInfo>(triple) {
     HasAlignMac68kSupport = true;
+    BoolWidth = BoolAlign = 32; //XXX support -mone-byte-bool?
+  }
+  virtual const char *getVAListDeclaration() const {
+    return "typedef char* __builtin_va_list;";
   }
 };
 
@@ -2578,7 +2585,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 
   case llvm::Triple::ppc:
     if (os == llvm::Triple::Darwin)
-      return new DarwinPPCTargetInfo(T);
+      return new DarwinPPC32TargetInfo(T);
     else if (os == llvm::Triple::FreeBSD)
       return new FreeBSDTargetInfo<PPC32TargetInfo>(T);
     return new PPC32TargetInfo(T);
