@@ -1014,6 +1014,13 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
       MadeChange = true;
       OptimizeInst(NC);
     }
+  } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
+    if (TLI && isa<InlineAsm>(CI->getCalledValue())) {
+      // Sink address computing for memory operands into the block.
+      MadeChange |= OptimizeInlineAsmInst(I, &(*CI), SunkAddrs);
+    } else {
+      MadeChange |= OptimizeCallInst(CI);
+    }
   }
 
   return MadeChange;
