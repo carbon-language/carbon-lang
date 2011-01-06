@@ -266,7 +266,6 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
 
   unsigned i = 0;
   while (!MI.getOperand(i).isFI()) {
@@ -281,10 +280,11 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
         dbgs() << "<--------->\n" << MI);
 
   int FrameIndex = MI.getOperand(i).getIndex();
-  int stackSize  = MF.getFrameInfo()->getStackSize();
-  int spOffset   = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+  int stackSize  = MFI->getStackSize();
+  int spOffset   = MFI->getObjectOffset(FrameIndex);
 
-  DEBUG(dbgs() << "FrameIndex : " << FrameIndex << "\n"
+  DEBUG(MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
+        dbgs() << "FrameIndex : " << FrameIndex << "\n"
                << "spOffset   : " << spOffset << "\n"
                << "stackSize  : " << stackSize << "\n"
                << "isFixed    : " << MFI->isFixedObjectIndex(FrameIndex) << "\n"
