@@ -654,6 +654,12 @@ TryAgain:
     // Return the # and the token after it.
     Toks[0] = SavedHash;
     Toks[1] = Result;
+    
+    // If the second token is a hashhash token, then we need to translate it to
+    // unknown so the token lexer doesn't try to perform token pasting.
+    if (Result.is(tok::hashhash))
+      Toks[1].setKind(tok::unknown);
+    
     // Enter this token stream so that we re-lex the tokens.  Make sure to
     // enable macro expansion, in case the token after the # is an identifier
     // that is expanded.

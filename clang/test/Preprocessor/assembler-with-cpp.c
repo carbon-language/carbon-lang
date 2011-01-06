@@ -72,3 +72,8 @@
 11: T11(b)
 // CHECK-Identifiers-True: 11: #0
 
+
+// This should not crash
+// rdar://8823139
+# ##
+// CHECK-Identifiers-False: # ##
