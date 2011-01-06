@@ -722,6 +722,8 @@ protected:
     NewInstruction = IC->ReplaceInstUsesWith(*CI, With);
   }
   bool isFoldable(unsigned SizeCIOp, unsigned SizeArgOp, bool isString) const {
+    if (CI->getArgOperand(SizeCIOp) == CI->getArgOperand(SizeArgOp))
+      return true;
     if (ConstantInt *SizeCI =
                            dyn_cast<ConstantInt>(CI->getArgOperand(SizeCIOp))) {
       if (SizeCI->isAllOnesValue())
