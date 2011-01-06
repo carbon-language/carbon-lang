@@ -35,6 +35,7 @@ def : DiagGroup<"declaration-after-statement">;
 def GNUDesignator : DiagGroup<"gnu-designator">;
 
 def DeprecatedDeclarations : DiagGroup<"deprecated-declarations">;
+def DeprecatedWritableStr : DiagGroup<"deprecated-writable-strings">;
 def Deprecated : DiagGroup<"deprecated", [ DeprecatedDeclarations] >,
                  DiagCategory<"Deprecations">;
 
