@@ -2073,3 +2073,16 @@ The icmp should fold to false. This CSE opportunity is only available
 after GVN and InstCombine have run.
 
 //===---------------------------------------------------------------------===//
+
+memcpyopt should turn this:
+
+define i8* @test10(i32 %x) {
+  %alloc = call noalias i8* @malloc(i32 %x) nounwind
+  call void @llvm.memset.p0i8.i32(i8* %alloc, i8 0, i32 %x, i32 1, i1 false)
+  ret i8* %alloc
+}
+
+into a call to calloc.  We should make sure that we analyze calloc as
+aggressively as malloc though.
+
+//===---------------------------------------------------------------------===//
