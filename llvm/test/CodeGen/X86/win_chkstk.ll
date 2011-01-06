@@ -16,7 +16,7 @@ entry:
 ; WIN_X32:    calll __chkstk
 ; WIN_X64:    callq __chkstk
 ; MINGW_X32:  calll __alloca
-; MINGW_X64:  callq _alloca
+; MINGW_X64:  callq __chkstk
 ; LINUX-NOT:  call __chkstk
   %array4096 = alloca [4096 x i8], align 16       ; <[4096 x i8]*> [#uses=0]
   ret i32 0
