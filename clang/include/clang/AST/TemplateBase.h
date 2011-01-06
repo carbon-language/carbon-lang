@@ -330,7 +330,7 @@ private:
   };
 
 public:
-  TemplateArgumentLocInfo() : Expression(0) {}
+  TemplateArgumentLocInfo();
   
   TemplateArgumentLocInfo(TypeSourceInfo *TInfo) : Declarator(TInfo) {}
   

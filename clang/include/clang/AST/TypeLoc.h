@@ -1115,8 +1115,11 @@ public:
                                 const TemplateArgument *Args,
                                 TemplateArgumentLocInfo *ArgInfos,
                                 SourceLocation Loc) {
-    for (unsigned i = 0, e = NumArgs; i != e; ++i)
+    for (unsigned i = 0, e = NumArgs; i != e; ++i) {
+      // FIXME: We can generate better location info here for type arguments,
+      // template template arguments, and template template pack expansions (?).
       ArgInfos[i] = TemplateArgumentLocInfo();
+    }
   }
 
   unsigned getExtraLocalDataSize() const {

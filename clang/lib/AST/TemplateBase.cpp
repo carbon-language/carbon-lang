@@ -292,6 +292,10 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
 // TemplateArgumentLoc Implementation
 //===----------------------------------------------------------------------===//
 
+TemplateArgumentLocInfo::TemplateArgumentLocInfo() {
+  memset(this, 0, sizeof(TemplateArgumentLocInfo));
+}
+
 SourceRange TemplateArgumentLoc::getSourceRange() const {
   switch (Argument.getKind()) {
   case TemplateArgument::Expression:
@@ -362,11 +366,15 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
   }
       
   case TemplateArgument::Expression: {
-    Expr *Pattern = cast<PackExpansionExpr>(Argument.getAsExpr())->getPattern();
+    PackExpansionExpr *Expansion
+      = cast<PackExpansionExpr>(Argument.getAsExpr());
+    Expr *Pattern = Expansion->getPattern();
+    Ellipsis = Expansion->getEllipsisLoc();
     return TemplateArgumentLoc(Pattern, Pattern);
   }
 
   case TemplateArgument::TemplateExpansion:
+    Ellipsis = getTemplateEllipsisLoc();
     return TemplateArgumentLoc(Argument.getPackExpansionPattern(),
                                getTemplateQualifierRange(),
                                getTemplateNameLoc());
