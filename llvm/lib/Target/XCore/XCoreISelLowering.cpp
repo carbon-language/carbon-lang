@@ -149,8 +149,9 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
   
-  maxStoresPerMemset = 4;
-  maxStoresPerMemmove = maxStoresPerMemcpy = 2;
+  maxStoresPerMemset = maxStoresPerMemsetOptSize = 4;
+  maxStoresPerMemmove = maxStoresPerMemmoveOptSize
+    = maxStoresPerMemcpy = maxStoresPerMemcpyOptSize = 2;
 
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::STORE);

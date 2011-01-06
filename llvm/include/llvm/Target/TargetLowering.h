@@ -642,21 +642,30 @@ public:
 
   /// This function returns the maximum number of store operations permitted
   /// to replace a call to llvm.memset. The value is set by the target at the
-  /// performance threshold for such a replacement.
+  /// performance threshold for such a replacement. If OptSize is true,
+  /// return the limit for functions that have OptSize attribute.
   /// @brief Get maximum # of store operations permitted for llvm.memset
-  unsigned getMaxStoresPerMemset() const { return maxStoresPerMemset; }
+  unsigned getMaxStoresPerMemset(bool OptSize) const {
+    return OptSize ? maxStoresPerMemsetOptSize : maxStoresPerMemset;
+  }
 
   /// This function returns the maximum number of store operations permitted
   /// to replace a call to llvm.memcpy. The value is set by the target at the
-  /// performance threshold for such a replacement.
+  /// performance threshold for such a replacement. If OptSize is true,
+  /// return the limit for functions that have OptSize attribute.
   /// @brief Get maximum # of store operations permitted for llvm.memcpy
-  unsigned getMaxStoresPerMemcpy() const { return maxStoresPerMemcpy; }
+  unsigned getMaxStoresPerMemcpy(bool OptSize) const {
+    return OptSize ? maxStoresPerMemcpyOptSize : maxStoresPerMemcpy;
+  }
 
   /// This function returns the maximum number of store operations permitted
   /// to replace a call to llvm.memmove. The value is set by the target at the
-  /// performance threshold for such a replacement.
+  /// performance threshold for such a replacement. If OptSize is true,
+  /// return the limit for functions that have OptSize attribute.
   /// @brief Get maximum # of store operations permitted for llvm.memmove
-  unsigned getMaxStoresPerMemmove() const { return maxStoresPerMemmove; }
+  unsigned getMaxStoresPerMemmove(bool OptSize) const {
+    return OptSize ? maxStoresPerMemmoveOptSize : maxStoresPerMemmove;
+  }
 
   /// This function returns true if the target allows unaligned memory accesses.
   /// of the specified type. This is used, for example, in situations where an
@@ -1776,6 +1785,10 @@ protected:
   /// @brief Specify maximum number of store instructions per memset call.
   unsigned maxStoresPerMemset;
 
+  /// Maximum number of stores operations that may be substituted for the call
+  /// to memset, used for functions with OptSize attribute.
+  unsigned maxStoresPerMemsetOptSize;
+
   /// When lowering \@llvm.memcpy this field specifies the maximum number of
   /// store operations that may be substituted for a call to memcpy. Targets
   /// must set this value based on the cost threshold for that target. Targets
@@ -1788,6 +1801,10 @@ protected:
   /// @brief Specify maximum bytes of store instructions per memcpy call.
   unsigned maxStoresPerMemcpy;
 
+  /// Maximum number of store operations that may be substituted for a call
+  /// to memcpy, used for functions with OptSize attribute.
+  unsigned maxStoresPerMemcpyOptSize;
+
   /// When lowering \@llvm.memmove this field specifies the maximum number of
   /// store instructions that may be substituted for a call to memmove. Targets
   /// must set this value based on the cost threshold for that target. Targets
@@ -1798,6 +1815,10 @@ protected:
   /// applies to copying a constant array of constant size.
   /// @brief Specify maximum bytes of store instructions per memmove call.
   unsigned maxStoresPerMemmove;
+
+  /// Maximum number of store instructions that may be substituted for a call
+  /// to memmove, used for functions with OpSize attribute.
+  unsigned maxStoresPerMemmoveOptSize;
 
   /// This field specifies whether the target can benefit from code placement
   /// optimization.

@@ -567,6 +567,8 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
   memset(TargetDAGCombineArray, 0, array_lengthof(TargetDAGCombineArray));
   maxStoresPerMemset = maxStoresPerMemcpy = maxStoresPerMemmove = 8;
+  maxStoresPerMemsetOptSize = maxStoresPerMemcpyOptSize
+    = maxStoresPerMemmoveOptSize = 4;
   benefitFromCodePlacementOpt = false;
   UseUnderscoreSetJmp = false;
   UseUnderscoreLongJmp = false;

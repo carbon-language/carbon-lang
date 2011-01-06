@@ -3281,15 +3281,6 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
       VT = LVT;
   }
 
-  // If we're optimizing for size, and there is a limit, bump the maximum number
-  // of operations inserted down to 4.  This is a wild guess that approximates
-  // the size of a call to memcpy or memset (3 arguments + call).
-  if (Limit != ~0U) {
-    const Function *F = DAG.getMachineFunction().getFunction();
-    if (F->hasFnAttr(Attribute::OptimizeForSize))
-      Limit = 4;
-  }
-
   unsigned NumMemOps = 0;
   while (Size != 0) {
     unsigned VTSize = VT.getSizeInBits() / 8;
@@ -3335,7 +3326,9 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   std::vector<EVT> MemOps;
   bool DstAlignCanChange = false;
-  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  bool OptSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
   FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Dst);
   if (FI && !MFI->isFixedObjectIndex(FI->getIndex()))
     DstAlignCanChange = true;
@@ -3345,7 +3338,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   std::string Str;
   bool CopyFromStr = isMemSrcFromString(Src, Str);
   bool isZeroStr = CopyFromStr && Str.empty();
-  unsigned Limit = AlwaysInline ? ~0U : TLI.getMaxStoresPerMemcpy();
+  unsigned Limit = AlwaysInline ? ~0U : TLI.getMaxStoresPerMemcpy(OptSize);
 
   if (!FindOptimalMemOpLowering(MemOps, Limit, Size,
                                 (DstAlignCanChange ? 0 : Align),
@@ -3426,14 +3419,16 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   std::vector<EVT> MemOps;
   bool DstAlignCanChange = false;
-  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  bool OptSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
   FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Dst);
   if (FI && !MFI->isFixedObjectIndex(FI->getIndex()))
     DstAlignCanChange = true;
   unsigned SrcAlign = DAG.InferPtrAlignment(Src);
   if (Align > SrcAlign)
     SrcAlign = Align;
-  unsigned Limit = AlwaysInline ? ~0U : TLI.getMaxStoresPerMemmove();
+  unsigned Limit = AlwaysInline ? ~0U : TLI.getMaxStoresPerMemmove(OptSize);
 
   if (!FindOptimalMemOpLowering(MemOps, Limit, Size,
                                 (DstAlignCanChange ? 0 : Align),
@@ -3502,13 +3497,15 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   std::vector<EVT> MemOps;
   bool DstAlignCanChange = false;
-  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  bool OptSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
   FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Dst);
   if (FI && !MFI->isFixedObjectIndex(FI->getIndex()))
     DstAlignCanChange = true;
   bool NonScalarIntSafe =
     isa<ConstantSDNode>(Src) && cast<ConstantSDNode>(Src)->isNullValue();
-  if (!FindOptimalMemOpLowering(MemOps, TLI.getMaxStoresPerMemset(),
+  if (!FindOptimalMemOpLowering(MemOps, TLI.getMaxStoresPerMemset(OptSize),
                                 Size, (DstAlignCanChange ? 0 : Align), 0,
                                 NonScalarIntSafe, false, DAG, TLI))
     return SDValue();
