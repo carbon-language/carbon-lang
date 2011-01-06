@@ -71,6 +71,12 @@ namespace {
     /// BackEdges - Keep a set of all the loop back edges.
     ///
     SmallSet<std::pair<const BasicBlock*, const BasicBlock*>, 8> BackEdges;
+
+    // Keeps track of non-local addresses that have been sunk into a block. This
+    // allows us to avoid inserting duplicate code for blocks with multiple
+    // load/stores of the same address.
+    DenseMap<Value*, Value*> SunkAddrs;
+
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit CodeGenPrepare(const TargetLowering *tli = 0)
@@ -141,6 +147,9 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
       MadeChange |= OptimizeBlock(*BB);
     EverMadeChange |= MadeChange;
   }
+
+  SunkAddrs.clear();
+
   return EverMadeChange;
 }
 
@@ -968,10 +977,7 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
     }
   }
 
-  // Keep track of non-local addresses that have been sunk into this block.
-  // This allows us to avoid inserting duplicate code for blocks with multiple
-  // load/stores of the same address.
-  DenseMap<Value*, Value*> SunkAddrs;
+  SunkAddrs.clear();
 
   for (BasicBlock::iterator BBI = BB.begin(), E = BB.end(); BBI != E; ) {
     Instruction *I = BBI++;
