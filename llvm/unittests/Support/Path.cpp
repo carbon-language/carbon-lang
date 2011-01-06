@@ -211,6 +211,29 @@ TEST_F(FileSystemTest, DirectoryIteration) {
   for (fs::directory_iterator i(".", ec), e; i != e; i.increment(ec))
     ASSERT_NO_ERROR(ec);
 }
+
+TEST_F(FileSystemTest, Magic) {
+  struct type {
+    const char *filename;
+    const char *magic_str;
+    size_t      magic_str_len;
+  } types [] = {{"magic.archive", "!<arch>\x0A", 8}};
+
+  // Create some files filled with magic.
+  for (type *i = types, *e = types + (sizeof(types) / sizeof(type)); i != e;
+                                                                     ++i) {
+    SmallString<128> file_pathname(TestDirectory);
+    path::append(file_pathname, i->filename);
+    std::string ErrMsg;
+    raw_fd_ostream file(file_pathname.c_str(), ErrMsg,
+                        raw_fd_ostream::F_Binary);
+    ASSERT_FALSE(file.has_error());
+    StringRef magic(i->magic_str, i->magic_str_len);
+    file << magic;
+    file.flush();
+    bool res = false;
+    ASSERT_NO_ERROR(fs::has_magic(file_pathname.c_str(), magic, res));
+    EXPECT_TRUE(res);
   }
 }
 
