@@ -73,7 +73,7 @@ TokenRewriter::AddToken(const Token &T, TokenRefTy Where) {
   bool InsertSuccess = TokenAtLoc.insert(std::make_pair(T.getLocation(),
                                                         Where)).second;
   assert(InsertSuccess && "Token location already in rewriter!");
-  InsertSuccess = InsertSuccess;
+  (void)InsertSuccess;
   return Where;
 }
 
