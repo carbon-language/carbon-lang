@@ -1063,12 +1063,8 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
   // linux.  This is because the stack realignment code can't handle certain
   // cases like PR2962.  This should be removed when PR2962 is fixed.
   const Function *F = MF.getFunction();
-  if (NonScalarIntSafe &&
-      !F->hasFnAttr(Attribute::NoImplicitFloat)) {
+  if (NonScalarIntSafe && !F->hasFnAttr(Attribute::NoImplicitFloat)) {
     if (Size >= 16 &&
-        (Subtarget->isUnalignedMemAccessFast() ||
-         ((DstAlign == 0 || DstAlign >= 16) &&
-          (SrcAlign == 0 || SrcAlign >= 16))) &&
         Subtarget->getStackAlignment() >= 16) {
       if (Subtarget->hasSSE2())
         return MVT::v4i32;

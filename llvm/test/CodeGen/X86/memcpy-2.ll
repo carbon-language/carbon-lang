@@ -1,5 +1,4 @@
 ; RUN: llc < %s -mattr=+sse2      -mtriple=i686-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=SSE2
-; RUN: llc < %s -mattr=+sse,-sse2 -mtriple=i686-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=SSE1
 ; RUN: llc < %s -mattr=-sse       -mtriple=i686-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=NOSSE
 ; RUN: llc < %s                 -mtriple=x86_64-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=X86-64
 
@@ -14,13 +13,6 @@ entry:
 ; SSE2: movb $0
 ; SSE2: movl $0
 ; SSE2: movl $0
-
-; SSE1: t1:
-; SSE1: movaps _.str, %xmm0
-; SSE1: movaps %xmm0
-; SSE1: movb $0
-; SSE1: movl $0
-; SSE1: movl $0
 
 ; NOSSE: t1:
 ; NOSSE: movb $0
@@ -51,10 +43,6 @@ entry:
 ; SSE2: movaps (%eax), %xmm0
 ; SSE2: movaps %xmm0, (%eax)
 
-; SSE1: t2:
-; SSE1: movaps (%eax), %xmm0
-; SSE1: movaps %xmm0, (%eax)
-
 ; NOSSE: t2:
 ; NOSSE: movl
 ; NOSSE: movl
@@ -79,22 +67,8 @@ entry:
 define void @t3(%struct.s0* nocapture %a, %struct.s0* nocapture %b) nounwind ssp {
 entry:
 ; SSE2: t3:
-; SSE2: movsd (%eax), %xmm0
-; SSE2: movsd 8(%eax), %xmm1
-; SSE2: movsd %xmm1, 8(%eax)
-; SSE2: movsd %xmm0, (%eax)
-
-; SSE1: t3:
-; SSE1: movl
-; SSE1: movl
-; SSE1: movl
-; SSE1: movl
-; SSE1: movl
-; SSE1: movl
-; SSE1: movl
-; SSE1: movl
-; SSE1: movl
-; SSE1: movl
+; SSE2: movups (%eax), %xmm0
+; SSE2: movups %xmm0, (%eax)
 
 ; NOSSE: t3:
 ; NOSSE: movl
@@ -109,10 +83,8 @@ entry:
 ; NOSSE: movl
 
 ; X86-64: t3:
-; X86-64: movq (%rsi), %rax
-; X86-64: movq 8(%rsi), %rcx
-; X86-64: movq %rcx, 8(%rdi)
-; X86-64: movq %rax, (%rdi)
+; X86-64: movups (%rsi), %xmm0
+; X86-64: movups %xmm0, (%rdi)
   %tmp2 = bitcast %struct.s0* %a to i8*           ; <i8*> [#uses=1]
   %tmp3 = bitcast %struct.s0* %b to i8*           ; <i8*> [#uses=1]
   tail call void @llvm.memcpy.i32(i8* %tmp2, i8* %tmp3, i32 16, i32 8)
@@ -122,24 +94,12 @@ entry:
 define void @t4() nounwind {
 entry:
 ; SSE2: t4:
-; SSE2: movw $120
+; SSE2: movups _.str2, %xmm0
+; SSE2: movaps %xmm0, (%esp)
+; SSE2: movw $120, 28(%esp)
 ; SSE2: movl $2021161080
 ; SSE2: movl $2021161080
 ; SSE2: movl $2021161080
-; SSE2: movl $2021161080
-; SSE2: movl $2021161080
-; SSE2: movl $2021161080
-; SSE2: movl $2021161080
-
-; SSE1: t4:
-; SSE1: movw $120
-; SSE1: movl $2021161080
-; SSE1: movl $2021161080
-; SSE1: movl $2021161080
-; SSE1: movl $2021161080
-; SSE1: movl $2021161080
-; SSE1: movl $2021161080
-; SSE1: movl $2021161080
 
 ; NOSSE: t4:
 ; NOSSE: movw $120
@@ -154,8 +114,8 @@ entry:
 ; X86-64: t4:
 ; X86-64: movabsq $8680820740569200760, %rax
 ; X86-64: movq %rax
-; X86-64: movq %rax
-; X86-64: movq %rax
+; X86-64: movups _.str2(%rip), %xmm0
+; X86-64: movaps %xmm0, -40(%rsp)
 ; X86-64: movw $120
 ; X86-64: movl $2021161080
   %tmp1 = alloca [30 x i8]

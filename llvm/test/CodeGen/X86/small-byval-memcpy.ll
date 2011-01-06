@@ -1,8 +1,12 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=core2   | grep movsd  | count 8
-; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=nehalem | grep movups | count 2
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=nehalem | FileCheck %s
 
 define void @ccosl({ x86_fp80, x86_fp80 }* noalias sret  %agg.result, { x86_fp80, x86_fp80 }* byval align 4  %z) nounwind  {
 entry:
+; CHECK: ccosl:
+; CHECK: movaps
+; CHECK: movaps
+; CHECK: movups
+; CHECK: movups
 	%iz = alloca { x86_fp80, x86_fp80 }		; <{ x86_fp80, x86_fp80 }*> [#uses=3]
 	%tmp1 = getelementptr { x86_fp80, x86_fp80 }* %z, i32 0, i32 1		; <x86_fp80*> [#uses=1]
 	%tmp2 = load x86_fp80* %tmp1, align 16		; <x86_fp80> [#uses=1]
