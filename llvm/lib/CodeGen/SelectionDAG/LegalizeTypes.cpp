@@ -714,6 +714,11 @@ void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
           if (M->getNodeId() == Processed)
             RemapValue(NewVal);
           DAG.ReplaceAllUsesOfValueWith(OldVal, NewVal, &NUL);
+          // OldVal may be a target of the ReplacedValues map which was marked
+          // NewNode to force reanalysis because it was updated.  Ensure that
+          // anything that ReplacedValues mapped to OldVal will now be mapped
+          // all the way to NewVal.
+          ReplacedValues[OldVal] = NewVal;
         }
         // The original node continues to exist in the DAG, marked NewNode.
       }
