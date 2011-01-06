@@ -203,6 +203,7 @@ void initializeSimplifyLibCallsPass(PassRegistry&);
 void initializeSingleLoopExtractorPass(PassRegistry&);
 void initializeSinkingPass(PassRegistry&);
 void initializeSlotIndexesPass(PassRegistry&);
+void initializeSpillPlacementPass(PassRegistry&);
 void initializeStackProtectorPass(PassRegistry&);
 void initializeStackSlotColoringPass(PassRegistry&);
 void initializeStripDeadDebugInfoPass(PassRegistry&);

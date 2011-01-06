@@ -88,6 +88,11 @@ namespace llvm {
   /// register allocators.
   extern char &TwoAddressInstructionPassID;
 
+  /// SpillPlacement analysis. Suggest optimal placement of spill code between
+  /// basic blocks.
+  ///
+  extern char &SpillPlacementID;
+
   /// UnreachableMachineBlockElimination pass - This pass removes unreachable
   /// machine basic blocks.
   extern char &UnreachableMachineBlockElimID;
