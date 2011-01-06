@@ -53,6 +53,10 @@ endif
 # We can revisit this when LLVM/Clang support it.
 CXX.Flags += -fno-strict-aliasing
 
+# Do not warn about pragmas.  In particular, we are looking to ignore the
+# "#pragma mark" construct which GCC warns about on platforms other than Darwin.
+EXTRA_OPTIONS += -Wno-unknown-pragmas
+
 ###
 # LLDB Top Level specific stuff.
 
