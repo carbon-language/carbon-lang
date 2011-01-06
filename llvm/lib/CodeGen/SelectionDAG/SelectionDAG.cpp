@@ -50,7 +50,6 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/Triple.h"
 #include <algorithm>
 #include <cmath>
 using namespace llvm;
@@ -3287,14 +3286,8 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
   // the size of a call to memcpy or memset (3 arguments + call).
   if (Limit != ~0U) {
     const Function *F = DAG.getMachineFunction().getFunction();
-    if (F->hasFnAttr(Attribute::OptimizeForSize)) {
-      Triple T(((LLVMTargetMachine&)TLI.getTargetMachine()).getTargetTriple());
-      if (T.getOS() != Triple::Darwin)
-        // A pretty terrible hack to defat the wild guess. On Darwin, -Os means
-        // optimize for size without hurting performance so we don't want to
-        // bump down the limit.
-        Limit = 4;
-    }
+    if (F->hasFnAttr(Attribute::OptimizeForSize))
+      Limit = 4;
   }
 
   unsigned NumMemOps = 0;

@@ -1,4 +1,4 @@
-; RUN: llc -O1 -mtriple=x86_64-unknown-linux-gnu -relocation-model=pic -disable-fp-elim < %s | FileCheck %s
+; RUN: llc -O1 -mtriple=x86_64-apple-darwin10 -relocation-model=pic -disable-fp-elim < %s | FileCheck %s
 ; <rdar://problem/8124405>
 
 %struct.type = type { %struct.subtype*, i32, i8, i32, i8, i32, i32, i32, i32, i32, i8, i32, i32, i32, i32, i32, [256 x i32], i32, [257 x i32], [257 x i32], i32*, i16*, i8*, i32, i32, i32, i32, i32, [256 x i8], [16 x i8], [256 x i8], [4096 x i8], [16 x i32], [18002 x i8], [18002 x i8], [6 x [258 x i8]], [6 x [258 x i32]], [6 x [258 x i32]], [6 x [258 x i32]], [6 x i32], i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32*, i32*, i32* }
@@ -21,9 +21,9 @@ bb:
 ; statement. It can be an ADD or LEA instruction, it's not important which one
 ; it is.
 ;
-; CHECK: # %bb
-; CHECK: addq $64036, %rdi
-; CHECK: rep;stosl
+;      CHECK: ## %bb
+; CHECK-NEXT: addq $64036, %rdi
+;      CHECK: rep;stosl
 
   %tmp5 = bitcast i32* %tmp4 to i8*
   call void @llvm.memset.p0i8.i64(i8* %tmp5, i8 0, i64 84, i32 4, i1 false)
