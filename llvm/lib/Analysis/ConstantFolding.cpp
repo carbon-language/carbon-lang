@@ -568,9 +568,8 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
   Constant *Ptr = Ops[0];
   if (!TD || !cast<PointerType>(Ptr->getType())->getElementType()->isSized())
     return 0;
-
-  unsigned BitWidth =
-    TD->getTypeSizeInBits(TD->getIntPtrType(Ptr->getContext()));
+  
+  const Type *IntPtrTy = TD->getIntPtrType(Ptr->getContext());
 
   // If this is a constant expr gep that is effectively computing an
   // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
@@ -582,9 +581,10 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
       if (NumOps == 2 &&
           cast<PointerType>(ResultTy)->getElementType()->isIntegerTy(8)) {
         ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[1]);
+        assert(CE->getType() == IntPtrTy &&
+               "CastGEPIndices didn't canonicalize index types!");
         if (CE && CE->getOpcode() == Instruction::Sub &&
-            isa<ConstantInt>(CE->getOperand(0)) &&
-            cast<ConstantInt>(CE->getOperand(0))->isZero()) {
+            CE->getOperand(0)->isNullValue()) {
           Constant *Res = ConstantExpr::getPtrToInt(Ptr, CE->getType());
           Res = ConstantExpr::getSub(Res, CE->getOperand(1));
           Res = ConstantExpr::getIntToPtr(Res, ResultTy);
@@ -596,6 +596,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
       return 0;
     }
   
+  unsigned BitWidth = TD->getTypeSizeInBits(IntPtrTy);
   APInt Offset = APInt(BitWidth,
                        TD->getIndexedOffset(Ptr->getType(),
                                             (Value**)Ops+1, NumOps-1));
