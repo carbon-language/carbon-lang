@@ -1324,6 +1324,8 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
     case Type::Decltype:
       T = cast<DecltypeType>(T)->getUnderlyingType();
       break;
+    case Type::Attributed:
+      T = cast<AttributedType>(T)->getEquivalentType();
     case Type::Elaborated:
       T = cast<ElaboratedType>(T)->getNamedType();
       break;
@@ -1423,6 +1425,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::MemberPointer:
     return CreateType(cast<MemberPointerType>(Ty), Unit);
 
+  case Type::Attributed:
   case Type::TemplateSpecialization:
   case Type::Elaborated:
   case Type::Paren:

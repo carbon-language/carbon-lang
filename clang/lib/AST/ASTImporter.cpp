@@ -557,6 +557,17 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       return false;
       
     break;
+
+  case Type::Attributed:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<AttributedType>(T1)->getModifiedType(),
+                                  cast<AttributedType>(T2)->getModifiedType()))
+      return false;
+    if (!IsStructurallyEquivalent(Context,
+                                cast<AttributedType>(T1)->getEquivalentType(),
+                                cast<AttributedType>(T2)->getEquivalentType()))
+      return false;
+    break;
       
   case Type::Paren:
     if (!IsStructurallyEquivalent(Context,

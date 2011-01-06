@@ -2924,6 +2924,17 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return T;
   }
 
+  case TYPE_ATTRIBUTED: {
+    if (Record.size() != 3) {
+      Error("incorrect encoding of attributed type");
+      return QualType();
+    }
+    QualType modifiedType = GetType(Record[0]);
+    QualType equivalentType = GetType(Record[1]);
+    AttributedType::Kind kind = static_cast<AttributedType::Kind>(Record[2]);
+    return Context->getAttributedType(kind, modifiedType, equivalentType);
+  }
+
   case TYPE_PAREN: {
     if (Record.size() != 1) {
       Error("incorrect encoding of paren type");
@@ -3196,6 +3207,22 @@ void TypeLocReader::VisitRecordTypeLoc(RecordTypeLoc TL) {
 }
 void TypeLocReader::VisitEnumTypeLoc(EnumTypeLoc TL) {
   TL.setNameLoc(ReadSourceLocation(Record, Idx));
+}
+void TypeLocReader::VisitAttributedTypeLoc(AttributedTypeLoc TL) {
+  TL.setAttrNameLoc(ReadSourceLocation(Record, Idx));
+  if (TL.hasAttrOperand()) {
+    SourceRange range;
+    range.setBegin(ReadSourceLocation(Record, Idx));
+    range.setEnd(ReadSourceLocation(Record, Idx));
+    TL.setAttrOperandParensRange(range);
+  }
+  if (TL.hasAttrExprOperand()) {
+    if (Record[Idx++])
+      TL.setAttrExprOperand(Reader.ReadExpr(F));
+    else
+      TL.setAttrExprOperand(0);
+  } else if (TL.hasAttrEnumOperand())
+    TL.setAttrEnumOperandLoc(ReadSourceLocation(Record, Idx));
 }
 void TypeLocReader::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
   TL.setNameLoc(ReadSourceLocation(Record, Idx));

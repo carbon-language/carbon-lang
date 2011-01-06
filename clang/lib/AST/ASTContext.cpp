@@ -844,6 +844,10 @@ ASTContext::getTypeInfo(const Type *T) {
   case Type::Elaborated:
     return getTypeInfo(cast<ElaboratedType>(T)->getNamedType().getTypePtr());
 
+  case Type::Attributed:
+    return getTypeInfo(
+                  cast<AttributedType>(T)->getEquivalentType().getTypePtr());
+
   case Type::TemplateSpecialization:
     assert(getCanonicalType(T) != T &&
            "Cannot request the size of a dependent type");
@@ -1874,6 +1878,27 @@ QualType ASTContext::getEnumType(const EnumDecl *Decl) {
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }
+
+QualType ASTContext::getAttributedType(AttributedType::Kind attrKind,
+                                       QualType modifiedType,
+                                       QualType equivalentType) {
+  llvm::FoldingSetNodeID id;
+  AttributedType::Profile(id, attrKind, modifiedType, equivalentType);
+
+  void *insertPos = 0;
+  AttributedType *type = AttributedTypes.FindNodeOrInsertPos(id, insertPos);
+  if (type) return QualType(type, 0);
+
+  QualType canon = getCanonicalType(equivalentType);
+  type = new (*this, TypeAlignment)
+           AttributedType(canon, attrKind, modifiedType, equivalentType);
+
+  Types.push_back(type);
+  AttributedTypes.InsertNode(type, insertPos);
+
+  return QualType(type, 0);
+}
+
 
 /// \brief Retrieve a substitution-result type.
 QualType

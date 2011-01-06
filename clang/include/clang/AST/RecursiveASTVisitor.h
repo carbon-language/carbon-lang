@@ -726,6 +726,10 @@ DEF_TRAVERSE_TYPE(TemplateSpecializationType, {
 
 DEF_TRAVERSE_TYPE(InjectedClassNameType, { })
 
+DEF_TRAVERSE_TYPE(AttributedType, {
+    TRY_TO(TraverseType(T->getModifiedType()));
+  })
+
 DEF_TRAVERSE_TYPE(ParenType, {
     TRY_TO(TraverseType(T->getInnerType()));
   })
@@ -934,6 +938,10 @@ DEF_TRAVERSE_TYPELOC(InjectedClassNameType, { })
 
 DEF_TRAVERSE_TYPELOC(ParenType, {
     TRY_TO(TraverseTypeLoc(TL.getInnerLoc()));
+  })
+
+DEF_TRAVERSE_TYPELOC(AttributedType, {
+    TRY_TO(TraverseTypeLoc(TL.getModifiedLoc()));
   })
 
 // FIXME: use the sourceloc on qualifier?

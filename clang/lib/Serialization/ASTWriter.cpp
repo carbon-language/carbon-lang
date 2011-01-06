@@ -228,6 +228,13 @@ void ASTTypeWriter::VisitEnumType(const EnumType *T) {
   Code = TYPE_ENUM;
 }
 
+void ASTTypeWriter::VisitAttributedType(const AttributedType *T) {
+  Writer.AddTypeRef(T->getModifiedType(), Record);
+  Writer.AddTypeRef(T->getEquivalentType(), Record);
+  Record.push_back(T->getAttrKind());
+  Code = TYPE_ATTRIBUTED;
+}
+
 void
 ASTTypeWriter::VisitSubstTemplateTypeParmType(
                                         const SubstTemplateTypeParmType *T) {
@@ -461,6 +468,21 @@ void TypeLocWriter::VisitRecordTypeLoc(RecordTypeLoc TL) {
 }
 void TypeLocWriter::VisitEnumTypeLoc(EnumTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitAttributedTypeLoc(AttributedTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getAttrNameLoc(), Record);
+  if (TL.hasAttrOperand()) {
+    SourceRange range = TL.getAttrOperandParensRange();
+    Writer.AddSourceLocation(range.getBegin(), Record);
+    Writer.AddSourceLocation(range.getEnd(), Record);
+  }
+  if (TL.hasAttrExprOperand()) {
+    Expr *operand = TL.getAttrExprOperand();
+    Record.push_back(operand ? 1 : 0);
+    if (operand) Writer.AddStmt(operand);
+  } else if (TL.hasAttrEnumOperand()) {
+    Writer.AddSourceLocation(TL.getAttrEnumOperandLoc(), Record);
+  }
 }
 void TypeLocWriter::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);

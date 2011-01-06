@@ -109,6 +109,7 @@ class ASTContext {
   llvm::FoldingSet<PackExpansionType> PackExpansionTypes;
   llvm::FoldingSet<ObjCObjectTypeImpl> ObjCObjectTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
+  llvm::FoldingSet<AttributedType> AttributedTypes;
 
   llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
   llvm::FoldingSet<DependentTemplateName> DependentTemplateNames;
@@ -647,6 +648,10 @@ public:
   QualType getEnumType(const EnumDecl *Decl);
 
   QualType getInjectedClassNameType(CXXRecordDecl *Decl, QualType TST);
+
+  QualType getAttributedType(AttributedType::Kind attrKind,
+                             QualType modifiedType,
+                             QualType equivalentType);
 
   QualType getSubstTemplateTypeParmType(const TemplateTypeParmType *Replaced,
                                         QualType Replacement);

@@ -993,9 +993,19 @@ protected:
     unsigned NumElements : 29 - NumTypeBits;
   };
 
+  class AttributedTypeBitfields {
+    friend class AttributedType;
+
+    unsigned : NumTypeBits;
+
+    /// AttrKind - an AttributedType::Kind
+    unsigned AttrKind : 32 - NumTypeBits;
+  };
+
   union {
     TypeBitfields TypeBits;
     ArrayTypeBitfields ArrayTypeBits;
+    AttributedTypeBitfields AttributedTypeBits;
     BuiltinTypeBitfields BuiltinTypeBits;
     FunctionTypeBitfields FunctionTypeBits;
     ObjCObjectTypeBitfields ObjCObjectTypeBits;
@@ -2655,6 +2665,91 @@ public:
     return isa<TagType>(T) && classof(cast<TagType>(T));
   }
   static bool classof(const EnumType *) { return true; }
+};
+
+/// AttributedType - An attributed type is a type to which a type
+/// attribute has been applied.  The "modified type" is the
+/// fully-sugared type to which the attributed type was applied;
+/// generally it is not canonically equivalent to the attributed type.
+/// The "equivalent type" is the minimally-desugared type which the
+/// type is canonically equivalent to.
+///
+/// For example, in the following attributed type:
+///     int32_t __attribute__((vector_size(16)))
+///   - the modified type is the TypedefType for int32_t
+///   - the equivalent type is VectorType(16, int32_t)
+///   - the canonical type is VectorType(16, int)
+class AttributedType : public Type, public llvm::FoldingSetNode {
+public:
+  // It is really silly to have yet another attribute-kind enum, but
+  // clang::attr::Kind doesn't currently cover the pure type attrs.
+  enum Kind {
+    // Expression operand.
+    address_space,
+    regparm,
+    vector_size,
+    neon_vector_type,
+    neon_polyvector_type,
+
+    FirstExprOperandKind = address_space,
+    LastExprOperandKind = neon_polyvector_type,
+
+    // Enumerated operand (string or keyword).
+    objc_gc,
+
+    FirstEnumOperandKind = objc_gc,
+    LastEnumOperandKind = objc_gc,
+
+    // No operand.
+    noreturn,
+    cdecl,
+    fastcall,
+    stdcall,
+    thiscall,
+    pascal
+  };
+
+private:
+  QualType ModifiedType;
+  QualType EquivalentType;
+
+  friend class ASTContext; // creates these
+
+  AttributedType(QualType canon, Kind attrKind,
+                 QualType modified, QualType equivalent)
+    : Type(Attributed, canon, canon->isDependentType(),
+           canon->isVariablyModifiedType(),
+           canon->containsUnexpandedParameterPack()),
+      ModifiedType(modified), EquivalentType(equivalent) {
+    AttributedTypeBits.AttrKind = attrKind;
+  }
+
+public:
+  Kind getAttrKind() const {
+    return static_cast<Kind>(AttributedTypeBits.AttrKind);
+  }
+
+  QualType getModifiedType() const { return ModifiedType; }
+  QualType getEquivalentType() const { return EquivalentType; }
+
+  bool isSugared() const { return true; }
+  QualType desugar() const { return getEquivalentType(); }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getAttrKind(), ModifiedType, EquivalentType);
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID, Kind attrKind,
+                      QualType modified, QualType equivalent) {
+    ID.AddInteger(attrKind);
+    ID.AddPointer(modified.getAsOpaquePtr());
+    ID.AddPointer(equivalent.getAsOpaquePtr());
+  }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == Attributed;
+  }
+  static bool classof(const AttributedType *T) { return true; }
 };
 
 class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {

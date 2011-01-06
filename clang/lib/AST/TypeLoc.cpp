@@ -229,4 +229,3 @@ TypeLoc TypeLoc::IgnoreParensImpl(TypeLoc TL) {
     TL = PTL->getInnerLoc();
   return TL;
 }
-

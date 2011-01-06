@@ -3778,7 +3778,6 @@ QualType TreeTransform<Derived>::TransformInjectedClassNameType(
   return T;
 }
 
-
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformTemplateTypeParmType(
                                                 TypeLocBuilder &TLB,
@@ -3943,6 +3942,43 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
   NewTL.setQualifierRange(TL.getQualifierRange());
 
   return Result;
+}
+
+template<typename Derived>
+QualType TreeTransform<Derived>::TransformAttributedType(
+                                                TypeLocBuilder &TLB,
+                                                AttributedTypeLoc TL) {
+  const AttributedType *oldType = TL.getTypePtr();
+  QualType modifiedType = getDerived().TransformType(TLB, TL.getModifiedLoc());
+  if (modifiedType.isNull())
+    return QualType();
+
+  QualType result = TL.getType();
+
+  // FIXME: dependent operand expressions?
+  if (getDerived().AlwaysRebuild() ||
+      modifiedType != oldType->getModifiedType()) {
+    // TODO: this is really lame; we should really be rebuilding the
+    // equivalent type from first principles.
+    QualType equivalentType
+      = getDerived().TransformType(oldType->getEquivalentType());
+    if (equivalentType.isNull())
+      return QualType();
+    result = SemaRef.Context.getAttributedType(oldType->getAttrKind(),
+                                               modifiedType,
+                                               equivalentType);
+  }
+
+  AttributedTypeLoc newTL = TLB.push<AttributedTypeLoc>(result);
+  newTL.setAttrNameLoc(TL.getAttrNameLoc());
+  if (TL.hasAttrOperand())
+    newTL.setAttrOperandParensRange(TL.getAttrOperandParensRange());
+  if (TL.hasAttrExprOperand())
+    newTL.setAttrExprOperand(TL.getAttrExprOperand());
+  else if (TL.hasAttrEnumOperand())
+    newTL.setAttrEnumOperandLoc(TL.getAttrEnumOperandLoc());
+
+  return result;
 }
 
 template<typename Derived>

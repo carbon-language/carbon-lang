@@ -553,7 +553,9 @@ namespace clang {
       /// \brief A ParenType record.
       TYPE_PAREN                    = 34,
       /// \brief A PackExpansionType record.
-      TYPE_PACK_EXPANSION           = 35
+      TYPE_PACK_EXPANSION           = 35,
+      /// \brief An AttributedType record.
+      TYPE_ATTRIBUTED               = 36
     };
 
     /// \brief The type IDs for special types constructed by semantic

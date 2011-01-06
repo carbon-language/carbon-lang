@@ -674,6 +674,84 @@ void TypePrinter::printPackExpansion(const PackExpansionType *T,
   S += "...";
 }
 
+void TypePrinter::printAttributed(const AttributedType *T,
+                                  std::string &S) {
+  print(T->getModifiedType(), S);
+
+  // TODO: not all attributes are GCC-style attributes.
+  S += "__attribute__((";
+  switch (T->getAttrKind()) {
+  case AttributedType::address_space:
+    S += "address_space(";
+    S += T->getEquivalentType().getAddressSpace();
+    S += ")";
+    break;
+
+  case AttributedType::vector_size: {
+    S += "__vector_size__(";
+    if (const VectorType *vector =T->getEquivalentType()->getAs<VectorType>()) {
+      S += vector->getNumElements();
+      S += " * sizeof(";
+
+      std::string tmp;
+      print(vector->getElementType(), tmp);
+      S += tmp;
+      S += ")";
+    }
+    S += ")";
+    break;
+  }
+
+  case AttributedType::neon_vector_type:
+  case AttributedType::neon_polyvector_type: {
+    if (T->getAttrKind() == AttributedType::neon_vector_type)
+      S += "neon_vector_type(";
+    else
+      S += "neon_polyvector_type(";
+    const VectorType *vector = T->getEquivalentType()->getAs<VectorType>();
+    S += llvm::utostr_32(vector->getNumElements());
+    S += ")";
+    break;
+  }
+
+  case AttributedType::regparm: {
+    S += "regparm(";
+    QualType t = T->getEquivalentType();
+    while (!t->isFunctionType())
+      t = t->getPointeeType();
+    S += t->getAs<FunctionType>()->getRegParmType();
+    S += ")";
+    break;
+  }
+
+  case AttributedType::objc_gc: {
+    S += "objc_gc(";
+
+    QualType tmp = T->getEquivalentType();
+    while (tmp.getObjCGCAttr() == Qualifiers::GCNone) {
+      QualType next = tmp->getPointeeType();
+      if (next == tmp) break;
+      tmp = next;
+    }
+
+    if (tmp.isObjCGCWeak())
+      S += "weak";
+    else
+      S += "strong";
+    S += ")";
+    break;
+  }
+
+  case AttributedType::noreturn: S += "noreturn"; break;
+  case AttributedType::cdecl: S += "cdecl"; break;
+  case AttributedType::fastcall: S += "fastcall"; break;
+  case AttributedType::stdcall: S += "stdcall"; break;
+  case AttributedType::thiscall: S += "thiscall"; break;
+  case AttributedType::pascal: S += "pascal"; break;
+  }
+  S += "))";
+}
+
 void TypePrinter::printObjCInterface(const ObjCInterfaceType *T, 
                                      std::string &S) { 
   if (!S.empty())    // Prefix the basic type, e.g. 'typedefname X'.
