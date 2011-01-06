@@ -959,7 +959,7 @@ Debugger::FormatPrompt
                                     }
                                     else if (::strncmp (var_name_begin, "reg.", strlen ("reg.")) == 0)
                                     {
-                                        reg_ctx = exe_ctx->frame->GetRegisterContext();
+                                        reg_ctx = exe_ctx->frame->GetRegisterContext().get();
                                         if (reg_ctx)
                                         {
                                             var_name_begin += ::strlen ("reg.");
@@ -1100,7 +1100,7 @@ Debugger::FormatPrompt
                                 else
                                 {
                                     if (reg_ctx == NULL)
-                                        reg_ctx = exe_ctx->frame->GetRegisterContext();
+                                        reg_ctx = exe_ctx->frame->GetRegisterContext().get();
 
                                     if (reg_ctx)
                                     {

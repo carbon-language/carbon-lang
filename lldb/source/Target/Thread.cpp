@@ -877,6 +877,13 @@ Thread::GetSelectedFrameIndex ()
     return GetStackFrameList().GetSelectedFrameIndex();
 }
 
+lldb::StackFrameSP
+Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
+{
+    return GetStackFrameList().GetFrameWithConcreteFrameIndex (unwind_idx);
+}
+
+
 
 lldb::StackFrameSP
 Thread::GetSelectedFrame ()

@@ -26,7 +26,7 @@ namespace lldb_private {
 class ValueObjectRegisterContext : public ValueObject
 {
 public:
-    ValueObjectRegisterContext (ValueObject *parent, RegisterContext *reg_ctx);
+    ValueObjectRegisterContext (ValueObject *parent, lldb::RegisterContextSP &reg_ctx_sp);
 
     virtual
     ~ValueObjectRegisterContext();
@@ -59,7 +59,7 @@ public:
     CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
 
 protected:
-    RegisterContext *m_reg_ctx;
+    lldb::RegisterContextSP m_reg_ctx;
 
 private:
     //------------------------------------------------------------------
@@ -71,7 +71,7 @@ private:
 class ValueObjectRegisterSet : public ValueObject
 {
 public:
-    ValueObjectRegisterSet (ValueObject *parent, RegisterContext *reg_ctx, uint32_t set_idx);
+    ValueObjectRegisterSet (ValueObject *parent, lldb::RegisterContextSP &reg_ctx_sp, uint32_t set_idx);
 
     virtual
     ~ValueObjectRegisterSet();
@@ -105,7 +105,7 @@ public:
 
 protected:
 
-    RegisterContext *m_reg_ctx;
+    lldb::RegisterContextSP m_reg_ctx;
     const lldb::RegisterSet *m_reg_set;
     uint32_t m_reg_set_idx;
 
@@ -119,7 +119,7 @@ private:
 class ValueObjectRegister : public ValueObject
 {
 public:
-    ValueObjectRegister (ValueObject *parent, RegisterContext *reg_ctx, uint32_t reg_num);
+    ValueObjectRegister (ValueObject *parent, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);
 
     virtual
     ~ValueObjectRegister();
@@ -150,7 +150,7 @@ public:
 
 protected:
 
-    RegisterContext *m_reg_ctx;
+    lldb::RegisterContextSP m_reg_ctx;
     const lldb::RegisterInfo *m_reg_info;
     uint32_t m_reg_num;
     ConstString m_type_name;

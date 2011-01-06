@@ -26,9 +26,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    RegisterContext (Thread &thread, StackFrame *frame);
-
-    RegisterContext (Thread &thread);
+    RegisterContext (Thread &thread, uint32_t concrete_frame_idx);
 
     virtual
     ~RegisterContext ();
@@ -147,9 +145,6 @@ public:
     bool
     ConvertBetweenRegisterKinds (int source_rk, uint32_t source_regnum, int target_rk, uint32_t& target_regnum);
 
-    void
-    SetStackFrame (StackFrame *frame);
-
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
@@ -172,8 +167,8 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from RegisterContext can see and modify these
     //------------------------------------------------------------------
-    Thread &m_thread;       // The thread that this register context belongs to.
-    StackFrame *m_frame;    // The stack frame for this context, or NULL if this is the root context
+    Thread &m_thread;               // The thread that this register context belongs to.
+    uint32_t m_concrete_frame_idx;    // The concrete frame index for this register context
 private:
     //------------------------------------------------------------------
     // For RegisterContext only

@@ -132,9 +132,10 @@ ThreadPlanAssemblyTracer::~ThreadPlanAssemblyTracer()
 {
 }
 
-void ThreadPlanAssemblyTracer::TracingStarted ()
+void 
+ThreadPlanAssemblyTracer::TracingStarted ()
 {
-    RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+    RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     
     if (m_register_values.size() == 0)
     {
@@ -145,7 +146,8 @@ void ThreadPlanAssemblyTracer::TracingStarted ()
     }
 }
 
-void ThreadPlanAssemblyTracer::TracingEnded ()
+void
+ThreadPlanAssemblyTracer::TracingEnded ()
 {
     for (uint32_t reg_index = 0, num_registers = m_register_values.size();
          reg_index < num_registers;
@@ -153,51 +155,26 @@ void ThreadPlanAssemblyTracer::TracingEnded ()
         m_register_values[reg_index] = 0;
 }
 
-static const char *Padding(int length)
-{
-    const int padding_size = 256;
-
-    static char* padding = NULL;
-    static int prev_length = 256;
-
-    if (!padding) {
-        padding = new char[padding_size];
-        memset(padding, ' ', padding_size);
-    }
-
-    if (length > 255)
-        length = 255;
-
-    if (prev_length < 256)
-        padding[prev_length] = ' ';
-
-    padding[length] = '\0';
-
-    prev_length = length;
-
-    return padding;
-}
-
-static void PadOutTo(StreamString &stream, int target)
+static void
+PadOutTo (StreamString &stream, int target)
 {
     stream.Flush();
 
     int length = stream.GetString().length();
 
     if (length + 1 < target)
-        stream.PutCString(Padding(target - (length + 1)));
-
-    stream.PutCString(" ");
+        stream.Printf("%*s", target - (length + 1) + 1, "");
 }
 
-void ThreadPlanAssemblyTracer::Log ()
+void 
+ThreadPlanAssemblyTracer::Log ()
 {
     Stream *stream = GetLogStream ();
     
     if (!stream)
         return;
             
-    RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+    RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     
     lldb::addr_t pc = reg_ctx->GetPC();
     Address pc_addr;

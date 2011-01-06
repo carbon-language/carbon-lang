@@ -21,18 +21,9 @@
 using namespace lldb;
 using namespace lldb_private;
 
-//----------------------------------------------------------------------
-// RegisterContext constructors
-//----------------------------------------------------------------------
-RegisterContext::RegisterContext (Thread &thread, StackFrame *frame) :
+RegisterContext::RegisterContext (Thread &thread, uint32_t concrete_frame_idx) :
     m_thread (thread),
-    m_frame (frame)
-{
-}
-
-RegisterContext::RegisterContext (Thread &thread) :
-    m_thread (thread),
-    m_frame (NULL)
+    m_concrete_frame_idx (concrete_frame_idx)
 {
 }
 
@@ -86,8 +77,9 @@ RegisterContext::SetPC(uint64_t pc)
     bool success = WriteRegisterFromUnsigned (reg, pc);
     if (success)
     {
-        if (m_frame)
-            m_frame->ChangePC(pc);
+        StackFrameSP frame_sp(m_thread.GetFrameWithConcreteFrameIndex (m_concrete_frame_idx));
+        if (frame_sp)
+            frame_sp->ChangePC(pc);
         else
             m_thread.ClearStackFrames ();
     }
@@ -207,12 +199,6 @@ RegisterContext::HardwareSingleStep (bool enable)
     return false;
 }
 
-void
-RegisterContext::SetStackFrame (StackFrame *frame)
-{
-    m_frame = frame;
-}
-
 Target *
 RegisterContext::CalculateTarget ()
 {
@@ -235,16 +221,16 @@ RegisterContext::CalculateThread ()
 StackFrame *
 RegisterContext::CalculateStackFrame ()
 {
-    return m_frame;
+    // Register contexts might belong to many frames if we have inlined 
+    // functions inside a frame since all inlined functions share the
+    // same registers, so we can't definitively say which frame we come from...
+    return NULL;
 }
 
 void
 RegisterContext::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
-    if (m_frame)
-        m_frame->CalculateExecutionContext (exe_ctx);
-    else
-        m_thread.CalculateExecutionContext (exe_ctx);
+    m_thread.CalculateExecutionContext (exe_ctx);
 }
 
 

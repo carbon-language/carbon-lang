@@ -32,11 +32,11 @@ using namespace lldb_private;
 GDBRemoteRegisterContext::GDBRemoteRegisterContext
 (
     ThreadGDBRemote &thread,
-    StackFrame *frame,
+    uint32_t concrete_frame_idx,
     GDBRemoteDynamicRegisterInfo &reg_info,
     bool read_all_at_once
 ) :
-    RegisterContext (thread, frame),
+    RegisterContext (thread, concrete_frame_idx),
     m_reg_info (reg_info),
     m_reg_valid (),
     m_reg_valid_stop_id (),

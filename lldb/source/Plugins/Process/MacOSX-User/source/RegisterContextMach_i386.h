@@ -22,7 +22,7 @@ class RegisterContextMach_i386 : public lldb_private::RegisterContext
 public:
 
     RegisterContextMach_i386(lldb_private::Thread &thread,
-                             lldb_private::StackFrame *frame);
+                             uint32_t concrete_frame_idx);
 
     virtual
     ~RegisterContextMach_i386();

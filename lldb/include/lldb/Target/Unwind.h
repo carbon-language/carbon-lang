@@ -46,7 +46,7 @@ public:
                          lldb::addr_t& cfa, 
                          lldb::addr_t& pc) = 0;
     
-    virtual RegisterContext *
+    virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (StackFrame *frame) = 0;
 
     Thread &

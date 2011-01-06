@@ -54,7 +54,7 @@ class RegisterContextMach_arm : public lldb_private::RegisterContext
 {
 public:
 
-    RegisterContextMach_arm(lldb_private::Thread &thread, lldb_private::StackFrame *frame);
+    RegisterContextMach_arm(lldb_private::Thread &thread, uint32_t concrete_frame_idx);
 
     virtual
     ~RegisterContextMach_arm();

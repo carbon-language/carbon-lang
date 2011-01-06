@@ -29,10 +29,10 @@ using namespace lldb_private;
 RegisterContextMacOSXFrameBackchain::RegisterContextMacOSXFrameBackchain
 (
     Thread &thread,
-    StackFrame *frame,
+    uint32_t concrete_frame_idx,
     const UnwindMacOSXFrameBackchain::Cursor &cursor
 ) :
-    RegisterContext (thread, frame),
+    RegisterContext (thread, concrete_frame_idx),
     m_cursor (cursor),
     m_cursor_is_valid (true)
 {

@@ -76,7 +76,7 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                     cmd_arg,
                     cmd_arg ? (uint64_t)*cmd_arg : (uint64_t)0);
     
-    RegisterContext *reg_ctx = thread.GetRegisterContext();
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return false;
 
@@ -293,7 +293,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
     
     // Extract the register context so we can read arguments from registers
     
-    RegisterContext *reg_ctx = thread.GetRegisterContext();
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     
     if (!reg_ctx)
         return false;
@@ -382,7 +382,7 @@ ABISysV_x86_64::GetReturnValue (Thread &thread,
             void *value_type = value.GetClangType();
             bool is_signed;
             
-            RegisterContext *reg_ctx = thread.GetRegisterContext();
+            RegisterContext *reg_ctx = thread.GetRegisterContext().get();
             
             if (!reg_ctx)
                 return false;

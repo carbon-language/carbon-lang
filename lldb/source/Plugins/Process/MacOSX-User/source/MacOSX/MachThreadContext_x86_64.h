@@ -36,7 +36,7 @@ public:
     virtual
     ~MachThreadContext_x86_64();
 
-    virtual lldb_private::RegisterContext *
+    virtual lldb::RegisterContextSP
     CreateRegisterContext (lldb_private::StackFrame *frame) const;
 
     virtual void

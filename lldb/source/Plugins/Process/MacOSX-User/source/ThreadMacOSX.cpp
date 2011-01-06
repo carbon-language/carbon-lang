@@ -444,7 +444,7 @@ ThreadMacOSX::Dump(Log *log, uint32_t index)
     default:                        thread_run_state = "???"; break;
     }
 
-    RegisterContext *reg_context = GetRegisterContext();
+    RegisterContext *reg_context = GetRegisterContext().get();
     log->Printf ("thread[%u] %4.4x (%u): pc: 0x%8.8llx sp: 0x%8.8llx breakID: %d  user: %d.%06.6d  system: %d.%06.6d  cpu: %d  policy: %d  run_state: %d (%s)  flags: %d suspend_count: %d (current %d) sleep_time: %d",
         index,
         GetID (),
@@ -597,15 +597,15 @@ ThreadMacOSX::NotifyException(MachException::Data& exc)
     return true;
 }
 
-RegisterContext *
+RegisterContextSP
 ThreadMacOSX::GetRegisterContext ()
 {
     if (m_reg_context_sp.get() == NULL)
-        m_reg_context_sp.reset (CreateRegisterContextForFrame (NULL));
-    return m_reg_context_sp.get();
+        m_reg_context_sp  = CreateRegisterContextForFrame (NULL);
+    return m_reg_context_sp;
 }
 
-RegisterContext *
+RegisterContextSP
 ThreadMacOSX::CreateRegisterContextForFrame (StackFrame *frame)
 {
     return m_context->CreateRegisterContext (frame);

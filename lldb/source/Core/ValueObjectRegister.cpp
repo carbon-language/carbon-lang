@@ -29,7 +29,7 @@ using namespace lldb_private;
 
 #pragma mark ValueObjectRegisterContext
 
-ValueObjectRegisterContext::ValueObjectRegisterContext (ValueObject *parent, RegisterContext *reg_ctx) :
+ValueObjectRegisterContext::ValueObjectRegisterContext (ValueObject *parent, RegisterContextSP &reg_ctx) :
     ValueObject (parent),
     m_reg_ctx (reg_ctx)
 {
@@ -81,9 +81,9 @@ ValueObjectRegisterContext::UpdateValue (ExecutionContextScope *exe_scope)
     if (frame)
         m_reg_ctx = frame->GetRegisterContext();
     else
-        m_reg_ctx = NULL;
+        m_reg_ctx.reset();
 
-    SetValueIsValid (m_reg_ctx != NULL);
+    SetValueIsValid (m_reg_ctx.get() != NULL);
 }
 
 ValueObjectSP
@@ -101,7 +101,7 @@ ValueObjectRegisterContext::CreateChildAtIndex (uint32_t idx, bool synthetic_arr
 #pragma mark -
 #pragma mark ValueObjectRegisterSet
 
-ValueObjectRegisterSet::ValueObjectRegisterSet (ValueObject *parent, RegisterContext *reg_ctx, uint32_t reg_set_idx) :
+ValueObjectRegisterSet::ValueObjectRegisterSet (ValueObject *parent, lldb::RegisterContextSP &reg_ctx, uint32_t reg_set_idx) :
     ValueObject (parent),
     m_reg_ctx (reg_ctx),
     m_reg_set (NULL),
@@ -159,7 +159,7 @@ ValueObjectRegisterSet::UpdateValue (ExecutionContextScope *exe_scope)
     SetValueDidChange (false);
     StackFrame *frame = exe_scope->CalculateStackFrame();
     if (frame == NULL)
-        m_reg_ctx = NULL;
+        m_reg_ctx.reset();
     else
     {
         m_reg_ctx = frame->GetRegisterContext ();
@@ -167,7 +167,7 @@ ValueObjectRegisterSet::UpdateValue (ExecutionContextScope *exe_scope)
         {
             const RegisterSet *reg_set = m_reg_ctx->GetRegisterSet (m_reg_set_idx);
             if (reg_set == NULL)
-                m_reg_ctx = NULL;
+                m_reg_ctx.reset();
             else if (m_reg_set != reg_set)
             {
                 SetValueDidChange (true);
@@ -204,7 +204,7 @@ ValueObjectRegisterSet::CreateChildAtIndex (uint32_t idx, bool synthetic_array_m
 #pragma mark -
 #pragma mark ValueObjectRegister
 
-ValueObjectRegister::ValueObjectRegister (ValueObject *parent, RegisterContext *reg_ctx, uint32_t reg_num) :
+ValueObjectRegister::ValueObjectRegister (ValueObject *parent, lldb::RegisterContextSP &reg_ctx, uint32_t reg_num) :
     ValueObject (parent),
     m_reg_ctx (reg_ctx),
     m_reg_info (NULL),
@@ -310,7 +310,7 @@ ValueObjectRegister::UpdateValue (ExecutionContextScope *exe_scope)
     }
     else
     {
-        m_reg_ctx = NULL;
+        m_reg_ctx.reset();
         m_reg_info = NULL;
     }
 

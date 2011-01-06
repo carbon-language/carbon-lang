@@ -95,7 +95,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     
     if (log)
     {
-        RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+        RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
         
         log->PutCString("Function call was set up.  Register state was:");
         
@@ -214,7 +214,7 @@ ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
         
         if (log)
         {
-            RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+            RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
 
             log->PutCString("Function completed.  Register state was:");
 

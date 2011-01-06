@@ -426,7 +426,7 @@ SBFrame::FindValue (const char *name, ValueType value_type)
 
         case eValueTypeRegister:            // stack frame register value
             {
-                RegisterContext *reg_ctx = m_opaque_sp->GetRegisterContext();
+                RegisterContextSP reg_ctx (m_opaque_sp->GetRegisterContext());
                 if (reg_ctx)
                 {
                     const uint32_t num_regs = reg_ctx->GetRegisterCount();
@@ -446,7 +446,7 @@ SBFrame::FindValue (const char *name, ValueType value_type)
 
         case eValueTypeRegisterSet:         // A collection of stack frame register values
             {
-                RegisterContext *reg_ctx = m_opaque_sp->GetRegisterContext();
+                RegisterContextSP reg_ctx (m_opaque_sp->GetRegisterContext());
                 if (reg_ctx)
                 {
                     const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
@@ -640,7 +640,7 @@ SBFrame::GetRegisters ()
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        RegisterContext *reg_ctx = m_opaque_sp->GetRegisterContext();
+        RegisterContextSP reg_ctx (m_opaque_sp->GetRegisterContext());
         if (reg_ctx)
         {
             const uint32_t num_sets = reg_ctx->GetRegisterSetCount();

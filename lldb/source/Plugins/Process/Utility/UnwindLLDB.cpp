@@ -47,26 +47,22 @@ UnwindLLDB::AddFirstFrame ()
     // First, set up the 0th (initial) frame
     CursorSP first_cursor_sp(new Cursor ());
     RegisterContextSP no_frame; 
-    RegisterContextLLDB *first_register_ctx = new RegisterContextLLDB(m_thread, no_frame, first_cursor_sp->sctx, 0);
-    if (!first_register_ctx->IsValid())
-    {
-        delete first_register_ctx;
+    std::auto_ptr<RegisterContextLLDB> first_register_ctx_ap (new RegisterContextLLDB(m_thread, no_frame, first_cursor_sp->sctx, 0));
+    if (first_register_ctx_ap.get() == NULL)
         return false;
-    }
-    if (!first_register_ctx->GetCFA (first_cursor_sp->cfa))
-    {
-        delete first_register_ctx;
+    
+    if (!first_register_ctx_ap->IsValid())
         return false;
-    }
-    if (!first_register_ctx->GetPC (first_cursor_sp->start_pc))
-    {
-        delete first_register_ctx;
+
+    if (!first_register_ctx_ap->GetCFA (first_cursor_sp->cfa))
         return false;
-    }
-    // Reuse the StackFrame provided by the processor native machine context for the first frame
-    first_register_ctx->SetStackFrame (m_thread.GetStackFrameAtIndex(0).get());
-    RegisterContextSP first_register_ctx_sp(first_register_ctx);
-    first_cursor_sp->reg_ctx = first_register_ctx_sp;
+
+    if (!first_register_ctx_ap->GetPC (first_cursor_sp->start_pc))
+        return false;
+
+    // Everything checks out, so release the auto pointer value and let the
+    // cursor own it in its shared pointer
+    first_cursor_sp->reg_ctx.reset(first_register_ctx_ap.release());
     m_frames.push_back (first_cursor_sp);
     return true;
 }
@@ -77,18 +73,21 @@ UnwindLLDB::AddOneMoreFrame ()
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     CursorSP cursor_sp(new Cursor ());
-    RegisterContextLLDB *register_ctx;
 
     // Frame zero is a little different
     if (m_frames.size() == 0)
         return false;
 
     uint32_t cur_idx = m_frames.size ();
-    register_ctx = new RegisterContextLLDB (m_thread, m_frames[cur_idx - 1]->reg_ctx, cursor_sp->sctx, cur_idx);
+    std::auto_ptr<RegisterContextLLDB> register_ctx_ap(new RegisterContextLLDB (m_thread, 
+                                                                                m_frames[cur_idx - 1]->reg_ctx, 
+                                                                                cursor_sp->sctx, 
+                                                                                cur_idx));
+    if (register_ctx_ap.get() == NULL)
+        return false;
 
-    if (!register_ctx->IsValid())
+    if (!register_ctx_ap->IsValid())
     {
-        delete register_ctx;
         if (log)
         {
             log->Printf("%*sFrame %d invalid RegisterContext for this frame, stopping stack walk", 
@@ -96,9 +95,8 @@ UnwindLLDB::AddOneMoreFrame ()
         }
         return false;
     }
-    if (!register_ctx->GetCFA (cursor_sp->cfa))
+    if (!register_ctx_ap->GetCFA (cursor_sp->cfa))
     {
-        delete register_ctx;
         if (log)
         {
             log->Printf("%*sFrame %d did not get CFA for this frame, stopping stack walk",
@@ -108,7 +106,6 @@ UnwindLLDB::AddOneMoreFrame ()
     }
     if (cursor_sp->cfa == (addr_t) -1 || cursor_sp->cfa == 1 || cursor_sp->cfa == 0)
     {
-        delete register_ctx;
         if (log)
         {
             log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
@@ -116,9 +113,8 @@ UnwindLLDB::AddOneMoreFrame ()
         }
         return false;
     }
-    if (!register_ctx->GetPC (cursor_sp->start_pc))
+    if (!register_ctx_ap->GetPC (cursor_sp->start_pc))
     {
-        delete register_ctx;
         if (log)
         {
             log->Printf("%*sFrame %d did not get PC for this frame, stopping stack walk",
@@ -126,9 +122,7 @@ UnwindLLDB::AddOneMoreFrame ()
         }
         return false;
     }
-    RegisterContextSP register_ctx_sp(register_ctx);
-    StackFrame *frame = new StackFrame(cur_idx, cur_idx, m_thread, register_ctx_sp, cursor_sp->cfa, cursor_sp->start_pc, &(cursor_sp->sctx));
-    register_ctx->SetStackFrame (frame);
+    RegisterContextSP register_ctx_sp(register_ctx_ap.release());
     cursor_sp->reg_ctx = register_ctx_sp;
     m_frames.push_back (cursor_sp);
     return true;
@@ -155,9 +149,10 @@ UnwindLLDB::GetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
     return false;
 }
 
-RegisterContext *
+lldb::RegisterContextSP
 UnwindLLDB::CreateRegisterContextForFrame (StackFrame *frame)
 {
+    lldb::RegisterContextSP reg_ctx_sp;
     uint32_t idx = frame->GetFrameIndex ();
 
     if (idx == 0)
@@ -168,13 +163,13 @@ UnwindLLDB::CreateRegisterContextForFrame (StackFrame *frame)
     if (m_frames.size() == 0)
     {
         if (!AddFirstFrame())
-            return NULL;
+            return reg_ctx_sp;
     }
 
     while (idx >= m_frames.size() && AddOneMoreFrame ())
         ;
 
     if (idx < m_frames.size ())
-        return m_frames[idx]->reg_ctx.get();
-    return NULL;
+        reg_ctx_sp = m_frames[idx]->reg_ctx;
+    return reg_ctx_sp;
 }

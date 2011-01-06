@@ -197,8 +197,8 @@ AssemblyParse_x86::AssemblyParse_x86 (Target& target, Thread* thread, int cpu, A
 
     if (m_thread && *initialized_flag == 0)
     {
-        RegisterContext *rctx = m_thread->GetRegisterContext();
-        if (rctx)
+        RegisterContext *reg_ctx = m_thread->GetRegisterContext().get();
+        if (reg_ctx)
         {
             struct regmap_ent *ent;
             int count, i;
@@ -214,7 +214,7 @@ AssemblyParse_x86::AssemblyParse_x86 (Target& target, Thread* thread, int cpu, A
             }
             for (i = 0; i < count; i++, ent++)
             {
-                const RegisterInfo *ri = rctx->GetRegisterInfoByName (ent->name);
+                const RegisterInfo *ri = reg_ctx->GetRegisterInfoByName (ent->name);
                 if (ri)
                     ent->lldb_regno = ri->kinds[eRegisterKindLLDB];
             }

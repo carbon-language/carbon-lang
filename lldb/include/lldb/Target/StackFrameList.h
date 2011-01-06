@@ -39,6 +39,9 @@ public:
     lldb::StackFrameSP
     GetFrameAtIndex (uint32_t idx);
 
+    lldb::StackFrameSP
+    GetFrameWithConcreteFrameIndex (uint32_t unwind_idx);
+
     // Mark a stack frame as the current frame
     uint32_t
     SetSelectedFrame (lldb_private::StackFrame *frame);

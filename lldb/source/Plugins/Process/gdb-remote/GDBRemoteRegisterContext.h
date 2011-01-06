@@ -178,7 +178,7 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     GDBRemoteRegisterContext (ThreadGDBRemote &thread,
-                              lldb_private::StackFrame *frame,
+                              uint32_t concrete_frame_idx,
                               GDBRemoteDynamicRegisterInfo &reg_info,
                               bool read_all_at_once);
 

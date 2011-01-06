@@ -34,14 +34,14 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     StackFrame (lldb::user_id_t frame_idx, 
-                lldb::user_id_t unwind_frame_idx, 
+                lldb::user_id_t concrete_frame_idx, 
                 Thread &thread, 
                 lldb::addr_t cfa, 
                 lldb::addr_t pc, 
                 const SymbolContext *sc_ptr);
 
     StackFrame (lldb::user_id_t frame_idx, 
-                lldb::user_id_t unwind_frame_idx, 
+                lldb::user_id_t concrete_frame_idx, 
                 Thread &thread, 
                 const lldb::RegisterContextSP &reg_context_sp, 
                 lldb::addr_t cfa, 
@@ -49,7 +49,7 @@ public:
                 const SymbolContext *sc_ptr);
     
     StackFrame (lldb::user_id_t frame_idx, 
-                lldb::user_id_t unwind_frame_idx, 
+                lldb::user_id_t concrete_frame_idx, 
                 Thread &thread, 
                 const lldb::RegisterContextSP &reg_context_sp, 
                 lldb::addr_t cfa, 
@@ -84,7 +84,7 @@ public:
     Block *
     GetFrameBlock ();
 
-    RegisterContext *
+    lldb::RegisterContextSP
     GetRegisterContext ();
 
     const lldb::RegisterContextSP &
@@ -121,9 +121,9 @@ public:
     }
 
     uint32_t
-    GetUnwindFrameIndex () const
+    GetConcreteFrameIndex () const
     {
-        return m_unwind_frame_index;
+        return m_concrete_frame_index;
     }
     
     lldb::ValueObjectSP
@@ -173,7 +173,7 @@ private:
     //------------------------------------------------------------------
     Thread &m_thread;
     uint32_t m_frame_index;
-    uint32_t m_unwind_frame_index;
+    uint32_t m_concrete_frame_index;
     lldb::RegisterContextSP m_reg_context_sp;
     StackID m_id;
     Address m_frame_code_addr;   // The frame code address (might not be the same as the actual PC for inlined frames) as a section/offset address

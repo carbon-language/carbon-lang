@@ -63,14 +63,15 @@ UnwindMacOSXFrameBackchain::GetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr
     return false;
 }
     
-RegisterContext *
+lldb::RegisterContextSP
 UnwindMacOSXFrameBackchain::CreateRegisterContextForFrame (StackFrame *frame)
 {
-    uint32_t idx = frame->GetUnwindFrameIndex ();
+    lldb::RegisterContextSP reg_ctx_sp;
+    uint32_t concrete_idx = frame->GetConcreteFrameIndex ();
     const uint32_t frame_count = GetFrameCount();
-    if (idx < frame_count)
-        return new RegisterContextMacOSXFrameBackchain (m_thread, frame, m_cursors[idx]);
-    return NULL;
+    if (concrete_idx < frame_count)
+        reg_ctx_sp.reset (new RegisterContextMacOSXFrameBackchain (m_thread, concrete_idx, m_cursors[concrete_idx]));
+    return reg_ctx_sp;
 }
 
 size_t
@@ -86,7 +87,7 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_i386 (StackFrame *first_frame)
         uint32_t pc;
     };
 
-    RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+    RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     assert (reg_ctx);
 
     Cursor cursor;
@@ -174,7 +175,7 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_x86_64 (StackFrame *first_frame)
         uint64_t pc;
     };
 
-    RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+    RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     assert (reg_ctx);
 
     Cursor cursor;

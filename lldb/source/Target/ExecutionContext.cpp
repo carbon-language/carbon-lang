@@ -88,9 +88,9 @@ RegisterContext *
 ExecutionContext::GetRegisterContext () const
 {
     if (frame)
-        return frame->GetRegisterContext();
+        return frame->GetRegisterContext().get();
     else if (thread)
-        return thread->GetRegisterContext();
+        return thread->GetRegisterContext().get();
     return NULL;
 }
 

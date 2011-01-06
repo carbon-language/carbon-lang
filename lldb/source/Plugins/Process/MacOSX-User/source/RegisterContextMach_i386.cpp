@@ -183,8 +183,8 @@ enum
     gdb_mm7        = 48
 };
 
-RegisterContextMach_i386::RegisterContextMach_i386 (Thread &thread, StackFrame *frame) :
-    RegisterContext(thread, frame),
+RegisterContextMach_i386::RegisterContextMach_i386 (Thread &thread, uint32_t concrete_frame_idx) :
+    RegisterContext(thread, concrete_frame_idx),
     gpr(),
     fpu(),
     exc()

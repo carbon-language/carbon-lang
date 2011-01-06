@@ -846,7 +846,7 @@ DWARFExpression::Evaluate
     std::vector<Value> stack;
 
     if (reg_ctx == NULL && exe_ctx && exe_ctx->frame)
-        reg_ctx = exe_ctx->frame->GetRegisterContext();
+        reg_ctx = exe_ctx->frame->GetRegisterContext().get();
 
     if (initial_value_ptr)
         stack.push_back(*initial_value_ptr);

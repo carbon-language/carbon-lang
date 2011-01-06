@@ -26,7 +26,7 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     RegisterContextMacOSXFrameBackchain (lldb_private::Thread &thread,
-                                         lldb_private::StackFrame *frame,
+                                         uint32_t concrete_frame_idx,
                                          const UnwindMacOSXFrameBackchain::Cursor &cursor);
 
     virtual

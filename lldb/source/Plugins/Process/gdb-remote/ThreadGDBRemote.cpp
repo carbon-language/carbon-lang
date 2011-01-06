@@ -173,28 +173,29 @@ ThreadGDBRemote::ShouldStop (bool &step_more)
 {
     return true;
 }
-RegisterContext *
+lldb::RegisterContextSP
 ThreadGDBRemote::GetRegisterContext ()
 {
     if (m_reg_context_sp.get() == NULL)
-        m_reg_context_sp.reset (CreateRegisterContextForFrame (NULL));
-    return m_reg_context_sp.get();
+        m_reg_context_sp = CreateRegisterContextForFrame (NULL);
+    return m_reg_context_sp;
 }
 
-RegisterContext *
+lldb::RegisterContextSP
 ThreadGDBRemote::CreateRegisterContextForFrame (StackFrame *frame)
 {
+    lldb::RegisterContextSP reg_ctx_sp;
     const bool read_all_registers_at_once = false;
-    uint32_t frame_idx = 0;
+    uint32_t concrete_frame_idx = 0;
     
     if (frame)
-        frame_idx = frame->GetFrameIndex ();
+        concrete_frame_idx = frame->GetConcreteFrameIndex ();
 
-    if (frame_idx == 0)
-        return new GDBRemoteRegisterContext (*this, frame, GetGDBProcess().m_register_info, read_all_registers_at_once);
+    if (concrete_frame_idx == 0)
+        reg_ctx_sp.reset (new GDBRemoteRegisterContext (*this, concrete_frame_idx, GetGDBProcess().m_register_info, read_all_registers_at_once));
     else if (m_unwinder_ap.get())
-        return m_unwinder_ap->CreateRegisterContextForFrame (frame);
-    return NULL;
+        reg_ctx_sp = m_unwinder_ap->CreateRegisterContextForFrame (frame);
+    return reg_ctx_sp;
 }
 
 bool

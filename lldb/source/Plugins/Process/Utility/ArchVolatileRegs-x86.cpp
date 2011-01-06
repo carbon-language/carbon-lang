@@ -56,7 +56,7 @@ ArchVolatileRegs_x86::initialize_regset(Thread& thread)
         return;
 
    
-    RegisterContext *rctx = thread.GetRegisterContext();
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     const RegisterInfo *ri;
 
     const char *x86_64_regnames[] = { "rbx", 
@@ -91,7 +91,7 @@ ArchVolatileRegs_x86::initialize_regset(Thread& thread)
 
     for (int i = 0; i < namecount; i++)
     {
-        ri = rctx->GetRegisterInfoByName (names[i]);
+        ri = reg_ctx->GetRegisterInfoByName (names[i]);
         if (ri)
             m_non_volatile_regs.insert (ri->kinds[eRegisterKindLLDB]);
      }

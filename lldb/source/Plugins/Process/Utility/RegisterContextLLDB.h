@@ -23,7 +23,7 @@ public:
     RegisterContextLLDB (lldb_private::Thread &thread,
                          const lldb::RegisterContextSP& next_frame,
                          lldb_private::SymbolContext& sym_ctx,
-                         int frame_number);
+                         uint32_t frame_number);
 
     ///
     // pure virtual functions from the base class that we must implement
@@ -156,8 +156,6 @@ private:
     lldb_private::Thread& m_thread;
     lldb::RegisterContextSP m_next_frame;
 
-    lldb_private::RegisterContext *m_base_reg_ctx;     // RegisterContext of frame 0 (live register values only)
-
     ///
     // The following tell us how to retrieve the CALLER's register values (ie the "previous" frame, aka the frame above)
     // i.e. where THIS frame saved them
@@ -186,7 +184,7 @@ private:
     lldb_private::SymbolContext& m_sym_ctx;
     bool m_sym_ctx_valid;                         // if ResolveSymbolContextForAddress fails, don't try to use m_sym_ctx
 
-    int m_frame_number;                           // What stack frame level this frame is - used for debug logging
+    uint32_t m_frame_number;                      // What stack frame level this frame is - used for debug logging
 
     std::map<uint32_t, RegisterLocation> m_registers; // where to find reg values for this frame
 

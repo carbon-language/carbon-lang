@@ -278,6 +278,9 @@ public:
 
     virtual lldb::StackFrameSP
     GetStackFrameAtIndex (uint32_t idx);
+    
+    virtual lldb::StackFrameSP
+    GetFrameWithConcreteFrameIndex (uint32_t unwind_idx);
 
     uint32_t
     GetSelectedFrameIndex ();
@@ -291,7 +294,7 @@ public:
     void
     SetSelectedFrameByIndex (uint32_t frame_idx);
 
-    virtual RegisterContext *
+    virtual lldb::RegisterContextSP
     GetRegisterContext () = 0;
 
     virtual bool
@@ -300,7 +303,7 @@ public:
     virtual bool
     RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint) = 0;
 
-    virtual RegisterContext *
+    virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (StackFrame *frame) = 0;
     
     virtual void

@@ -61,7 +61,7 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
                                     lldb::addr_t *this_arg,
                                     lldb::addr_t *cmd_arg) const
 {
-    RegisterContext *reg_ctx = thread.GetRegisterContext();
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return false;    
 #define CHAIN_EBP
@@ -154,7 +154,7 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
                                    lldb::addr_t returnAddress,
                                    ValueList &args) const
 {
-    RegisterContext *reg_ctx = thread.GetRegisterContext();
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return false;
     Error error;
@@ -422,7 +422,7 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
     // Get the pointer to the first stack argument so we have a place to start 
     // when reading data
     
-    RegisterContext *reg_ctx = thread.GetRegisterContext();
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     
     if (!reg_ctx)
         return false;
@@ -498,7 +498,7 @@ ABIMacOSX_i386::GetReturnValue (Thread &thread,
             // Get the pointer to the first stack argument so we have a place to start 
             // when reading data
             
-            RegisterContext *reg_ctx = thread.GetRegisterContext();
+            RegisterContext *reg_ctx = thread.GetRegisterContext().get();
             
             void *value_type = value.GetClangType();
             bool is_signed;

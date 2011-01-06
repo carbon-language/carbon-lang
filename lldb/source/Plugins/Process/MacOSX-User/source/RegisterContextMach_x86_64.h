@@ -21,7 +21,7 @@ class RegisterContextMach_x86_64 : public lldb_private::RegisterContext
 {
 public:
     RegisterContextMach_x86_64 (lldb_private::Thread &thread,
-                                lldb_private::StackFrame *frame);
+                                uint32_t concrete_frame_idx);
 
     virtual
     ~RegisterContextMach_x86_64();

@@ -44,7 +44,7 @@ public:
                          lldb::addr_t& cfa, 
                          lldb::addr_t& start_pc);
     
-    lldb_private::RegisterContext *
+    lldb::RegisterContextSP
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
 private:

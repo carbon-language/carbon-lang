@@ -49,7 +49,7 @@ MachThreadContext_x86_64::Initialize()
 void
 MachThreadContext_x86_64::InitializeInstance()
 {
-    RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+    RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     assert (reg_ctx != NULL);
     m_flags_reg = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS);
 }
@@ -90,7 +90,7 @@ MachThreadContext_x86_64::NotifyException(MachException::Data& exc)
     case EXC_BREAKPOINT:
         if (exc.exc_data.size() >= 2 && exc.exc_data[0] == 2)
         {
-            RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+            RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
             assert (reg_ctx);
             lldb::addr_t pc = reg_ctx->GetPC(LLDB_INVALID_ADDRESS);
             if (pc != LLDB_INVALID_ADDRESS && pc > 0)
@@ -158,10 +158,11 @@ MachThreadContext_x86_64::NotifyException(MachException::Data& exc)
 
 
 
-RegisterContext *
+RegisterContextSP
 MachThreadContext_x86_64::CreateRegisterContext (StackFrame *frame) const
 {
-    return new RegisterContextMach_x86_64(m_thread, frame);
+    lldb::RegisterContextSP reg_ctx_sp (new RegisterContextMach_x86_64(m_thread, frame->GetConcreteFrameIndex()));
+    return reg_ctx_sp;
 }
 
 
@@ -185,7 +186,7 @@ MachThreadContext_x86_64::GetStackFrameData(StackFrame *first_frame, std::vector
         uint64_t pc;
     };
 
-    RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+    RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     assert (reg_ctx);
 
     Frame_x86_64 frame = { reg_ctx->GetFP(0), reg_ctx->GetPC(LLDB_INVALID_ADDRESS) };

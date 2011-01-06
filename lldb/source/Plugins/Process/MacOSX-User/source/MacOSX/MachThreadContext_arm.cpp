@@ -71,17 +71,18 @@ MachThreadContext_arm::~MachThreadContext_arm()
 {
 }
 
-RegisterContext *
+lldb::RegisterContextSP
 MachThreadContext_arm::CreateRegisterContext (StackFrame *frame) const
 {
-    return new RegisterContextMach_arm(m_thread, frame);
+    lldb::RegisterContextSP reg_ctx_sp (new RegisterContextMach_arm(m_thread, frame->GetConcreteFrameIndex()));
+    return reg_ctx_sp;
 }
 
 // Instance init function
 void
 MachThreadContext_arm::InitializeInstance()
 {
-    RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+    RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     assert (reg_ctx != NULL);
     const RegisterInfo * reg_info;
     reg_info = reg_ctx->GetRegisterInfoByName ("bvr0");
@@ -342,7 +343,7 @@ MachThreadContext_arm::EnableHardwareSingleStep (bool enable)
     if (m_bvr0_reg == LLDB_INVALID_REGNUM || m_bcr0_reg == LLDB_INVALID_REGNUM)
         return KERN_INVALID_ARGUMENT;
 
-    RegisterContext *reg_ctx = m_thread.GetRegisterContext();
+    RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     uint32_t bvr = 0;
     uint32_t bcr = 0;
 

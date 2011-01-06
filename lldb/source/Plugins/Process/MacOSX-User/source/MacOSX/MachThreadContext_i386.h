@@ -30,7 +30,7 @@ public:
     virtual
     ~MachThreadContext_i386();
 
-    virtual lldb_private::RegisterContext *
+    virtual lldb::RegisterContextSP
     CreateRegisterContext (lldb_private::StackFrame *frame) const;
 
     virtual void            InitializeInstance();

@@ -206,8 +206,8 @@ enum gdb_regnums
     gdb_fpu_mxcsr   =  56,
 };
 
-RegisterContextMach_x86_64::RegisterContextMach_x86_64 (Thread &thread, StackFrame *frame) :
-    RegisterContext (thread, frame),
+RegisterContextMach_x86_64::RegisterContextMach_x86_64 (Thread &thread, uint32_t concrete_frame_idx) :
+    RegisterContext (thread, concrete_frame_idx),
     gpr(),
     fpu(),
     exc()

@@ -39,10 +39,10 @@ public:
     virtual const char *
     GetName ();
 
-    virtual lldb_private::RegisterContext *
+    virtual lldb::RegisterContextSP
     GetRegisterContext ();
 
-    virtual lldb_private::RegisterContext *
+    virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
     virtual bool

@@ -49,7 +49,7 @@ StackFrame::StackFrame
     const SymbolContext *sc_ptr
 ) :
     m_frame_index (frame_idx),
-    m_unwind_frame_index (unwind_frame_index),    
+    m_concrete_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (),
     m_id (pc, cfa, NULL),
@@ -79,7 +79,7 @@ StackFrame::StackFrame
     const SymbolContext *sc_ptr
 ) :
     m_frame_index (frame_idx),
-    m_unwind_frame_index (unwind_frame_index),    
+    m_concrete_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
     m_id (pc, cfa, NULL),
@@ -115,7 +115,7 @@ StackFrame::StackFrame
     const SymbolContext *sc_ptr
 ) :
     m_frame_index (frame_idx),
-    m_unwind_frame_index (unwind_frame_index),    
+    m_concrete_frame_index (unwind_frame_index),    
     m_thread (thread),
     m_reg_context_sp (reg_context_sp),
     m_id (pc_addr.GetLoadAddress (&thread.GetProcess().GetTarget()), cfa, NULL),
@@ -755,12 +755,12 @@ StackFrame::GetFrameBaseValue (Scalar &frame_base, Error *error_ptr)
     return m_frame_base_error.Success();
 }
 
-RegisterContext *
+RegisterContextSP
 StackFrame::GetRegisterContext ()
 {
-    if (m_reg_context_sp.get() == NULL)
-        m_reg_context_sp.reset (m_thread.CreateRegisterContextForFrame (this));
-    return m_reg_context_sp.get();
+    if (!m_reg_context_sp)
+        m_reg_context_sp = m_thread.CreateRegisterContextForFrame (this);
+    return m_reg_context_sp;
 }
 
 bool
@@ -916,7 +916,7 @@ StackFrame::UpdatePreviousFrameFromCurrentFrame (StackFrame &curr_frame)
     m_id.SetPC (curr_frame.m_id.GetPC());       // Update the Stack ID PC value
     assert (&m_thread == &curr_frame.m_thread);
     m_frame_index = curr_frame.m_frame_index;
-    m_unwind_frame_index = curr_frame.m_unwind_frame_index;
+    m_concrete_frame_index = curr_frame.m_concrete_frame_index;
     m_reg_context_sp = curr_frame.m_reg_context_sp;
     m_frame_code_addr = curr_frame.m_frame_code_addr;
     assert (m_sc.target_sp.get() == NULL || curr_frame.m_sc.target_sp.get() == NULL || m_sc.target_sp.get() == curr_frame.m_sc.target_sp.get());

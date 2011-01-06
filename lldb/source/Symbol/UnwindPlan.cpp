@@ -135,17 +135,16 @@ UnwindPlan::Row::Clear ()
 void
 UnwindPlan::Row::Dump (Stream& s, int register_kind, Thread* thread) const
 {
-    RegisterContext *rctx = NULL;
+    RegisterContext *reg_ctx = NULL;
     const RegisterInfo *rinfo = NULL;
     int translated_regnum;
     if (thread && thread->GetRegisterContext())
-    {
-        rctx = thread->GetRegisterContext();
-    }
+        reg_ctx = thread->GetRegisterContext().get();
+
     s.Printf ("offset %ld, CFA reg ", (long) GetOffset());
-    if (rctx
-        && (translated_regnum = rctx->ConvertRegisterKindToRegisterNumber (register_kind, GetCFARegister())) != -1
-        && (rinfo = rctx->GetRegisterInfoAtIndex (translated_regnum)) != NULL
+    if (reg_ctx
+        && (translated_regnum = reg_ctx->ConvertRegisterKindToRegisterNumber (register_kind, GetCFARegister())) != -1
+        && (rinfo = reg_ctx->GetRegisterInfoAtIndex (translated_regnum)) != NULL
         && rinfo->name != NULL
         && rinfo->name[0] != '\0')
     {
@@ -160,11 +159,10 @@ UnwindPlan::Row::Dump (Stream& s, int register_kind, Thread* thread) const
     {
         s.Printf (" [");
         bool printed_name = false;
-        if (thread && thread->GetRegisterContext())
+        if (reg_ctx)
         {
-            rctx = thread->GetRegisterContext();
-            translated_regnum = rctx->ConvertRegisterKindToRegisterNumber (register_kind, idx->first);
-            rinfo = rctx->GetRegisterInfoAtIndex (translated_regnum);
+            translated_regnum = reg_ctx->ConvertRegisterKindToRegisterNumber (register_kind, idx->first);
+            rinfo = reg_ctx->GetRegisterInfoAtIndex (translated_regnum);
             if (rinfo && rinfo->name)
             {
                 s.Printf ("%s ", rinfo->name);

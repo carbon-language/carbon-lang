@@ -2545,7 +2545,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         }
                         
                         ts.Printf("<");
-                        RegisterContext *register_context = thread->GetRegisterContext();
+                        RegisterContext *register_context = thread->GetRegisterContext().get();
                         
                         if (register_context)
                             ts.Printf("[ip 0x%llx] ", register_context->GetPC());
