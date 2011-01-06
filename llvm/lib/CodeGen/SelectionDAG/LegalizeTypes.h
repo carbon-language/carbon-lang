@@ -192,6 +192,10 @@ private:
   SDValue MakeLibCall(RTLIB::Libcall LC, EVT RetVT,
                       const SDValue *Ops, unsigned NumOps, bool isSigned,
                       DebugLoc dl);
+	std::pair<SDValue, SDValue> ExpandChainLibCall(RTLIB::Libcall LC,
+									                               SDNode *Node, bool isSigned);
+	std::pair<SDValue, SDValue> ExpandAtomic(SDNode *Node);
+
   SDValue PromoteTargetBoolean(SDValue Bool, EVT VT);
   void ReplaceValueWith(SDValue From, SDValue To);
   void SplitInteger(SDValue Op, SDValue &Lo, SDValue &Hi);
