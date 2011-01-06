@@ -1390,7 +1390,8 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
        ++MFI) {
     MachineBasicBlock &MBB = *MFI;
     Modified |= LoadStoreMultipleOpti(MBB);
-    Modified |= MergeReturnIntoLDM(MBB);
+    if (TM.getSubtarget<ARMSubtarget>().hasV5TOps())
+      Modified |= MergeReturnIntoLDM(MBB);
   }
 
   delete RS;

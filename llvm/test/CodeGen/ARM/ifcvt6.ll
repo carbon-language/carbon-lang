@@ -1,10 +1,9 @@
-; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin | \
-; RUN:   grep cmpne | count 1
-; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin | \
-; RUN:   grep ldmiahi | count 1
+; RUN: llc < %s -mtriple=armv7-apple-darwin | FileCheck %s
 
 define void @foo(i32 %X, i32 %Y) {
 entry:
+; CHECK: cmpne
+; CHECK: ldmiahi sp!
 	%tmp1 = icmp ult i32 %X, 4		; <i1> [#uses=1]
 	%tmp4 = icmp eq i32 %Y, 0		; <i1> [#uses=1]
 	%tmp7 = or i1 %tmp4, %tmp1		; <i1> [#uses=1]

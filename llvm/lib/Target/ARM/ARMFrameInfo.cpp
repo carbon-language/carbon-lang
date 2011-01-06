@@ -592,7 +592,7 @@ void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
       unsigned Reg = CSI[i-1].getReg();
       if (!(Func)(Reg, STI.isTargetDarwin())) continue;
 
-      if (Reg == ARM::LR && !isVarArg) {
+      if (Reg == ARM::LR && !isVarArg && STI.hasV5TOps()) {
         Reg = ARM::PC;
         LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
         // Fold the return instruction into the LDM.

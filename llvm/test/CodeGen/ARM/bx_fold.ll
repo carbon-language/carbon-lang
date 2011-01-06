@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=arm
-; RUN: llc < %s -march=arm | not grep bx
+; RUN: llc < %s -mtriple=armv5t-apple-darwin | FileCheck %s
 
 define void @test(i32 %Ptr, i8* %L) {
 entry:
@@ -24,6 +23,8 @@ bb1:		; preds = %bb, %entry
 	br i1 %bothcond, label %bb, label %bb18
 
 bb18:		; preds = %bb1
+; CHECK-NOT: bx
+; CHECK: ldmia sp!
 	ret void
 }
 
