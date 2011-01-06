@@ -530,9 +530,12 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
 void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
                                              MachineFrameInfo *MFI) {
   const TargetInstrInfo *TII = TM.getInstrInfo();
-  if (Subtarget->isTargetCygMing())
+  if (Subtarget->isTargetCygMing()) {
+    unsigned CallOp =
+      Subtarget->is64Bit() ? X86::CALL64pcrel32 : X86::CALLpcrel32;
     BuildMI(BB, DebugLoc(),
-            TII->get(X86::CALLpcrel32)).addExternalSymbol("__main");
+            TII->get(CallOp)).addExternalSymbol("__main");
+  }
 }
 
 void X86DAGToDAGISel::EmitFunctionEntryCode() {
