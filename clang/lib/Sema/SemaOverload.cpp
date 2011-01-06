@@ -6222,13 +6222,13 @@ void DiagnoseArityMismatch(Sema &S, OverloadCandidate *Cand,
   unsigned MinParams = Fn->getMinRequiredArguments();
   
   // at least / at most / exactly
-  // FIXME: variadic templates "at most" should account for parameter packs
   unsigned mode, modeCount;
   if (NumFormalArgs < MinParams) {
     assert((Cand->FailureKind == ovl_fail_too_few_arguments) ||
            (Cand->FailureKind == ovl_fail_bad_deduction &&
             Cand->DeductionFailure.Result == Sema::TDK_TooFewArguments));
-    if (MinParams != FnTy->getNumArgs() || FnTy->isVariadic())
+    if (MinParams != FnTy->getNumArgs() || 
+        FnTy->isVariadic() || FnTy->isTemplateVariadic())
       mode = 0; // "at least"
     else
       mode = 2; // "exactly"

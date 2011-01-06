@@ -2388,6 +2388,15 @@ public:
   }
 
   using FunctionType::isVariadic;
+  
+  /// \brief Determines whether this function prototype contains a
+  /// parameter pack at the end.
+  ///
+  /// A function template whose last parameter is a parameter pack can be
+  /// called with an arbitrary number of arguments, much like a variadic
+  /// function. However, 
+  bool isTemplateVariadic() const;
+  
   unsigned getTypeQuals() const { return FunctionType::getTypeQuals(); }
 
   typedef const QualType *arg_type_iterator;
