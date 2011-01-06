@@ -14,11 +14,11 @@ include $(LLDB_LEVEL)/../../Makefile.config
 
 DIRS := ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm  \
 	ObjectContainer/BSD-Archive ObjectFile/ELF SymbolFile/DWARF \
-	SymbolFile/Symtab
+	SymbolFile/Symtab Process/Utility
 
 ifeq ($(HOST_OS),Darwin)
 DIRS += DynamicLoader/MacOSX-DYLD ObjectContainer/Universal-Mach-O \
-	ObjectFile/Mach-O Process/gdb-remote Process/Utility \
+	ObjectFile/Mach-O Process/gdb-remote  \
 	SymbolVendor/MacOSX Process/MacOSX-User
 endif
 

@@ -33,11 +33,10 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginObjectFileELF.a \
 	lldbPluginSymbolFileDWARF.a \
 	lldbPluginSymbolFileSymtab.a \
+	lldbPluginUtility.a \
 	lldbSymbol.a \
 	lldbTarget.a \
 	lldbUtility.a \
-	plugin_llvmc_Base.a \
-	plugin_llvmc_Clang.a \
 	clangAnalysis.a \
 	clangAST.a \
 	clangBasic.a \
@@ -49,14 +48,14 @@ USEDLIBS = lldbAPI.a \
 	clangRewrite.a \
 	clangParse.a \
 	clangSema.a \
-	CompilerDriver.a \
+	clangSerialization.a \
 	EnhancedDisassembly.a \
 	clangChecker.a
 
 include $(LLDB_LEVEL)/../../Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
-                   ipo selectiondag jit
+                   ipo selectiondag jit mc
 
 ifeq ($(HOST_OS),Darwin)
   USEDLIBS += lldbHostMacOSX.a \
@@ -64,7 +63,6 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginObjectContainerUniversalMachO.a \
               lldbPluginObjectFileMachO.a \
               lldbPluginProcessGDBRemote.a \
-              lldbPluginUtility.a \
               lldbPluginSymbolVendorMacOSX.a
 endif
 
