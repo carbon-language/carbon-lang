@@ -258,15 +258,16 @@ private:
 
   struct BitTestBlock {
     BitTestBlock(APInt F, APInt R, const Value* SV,
-                 unsigned Rg, bool E,
+                 unsigned Rg, EVT RgVT, bool E,
                  MachineBasicBlock* P, MachineBasicBlock* D,
                  const BitTestInfo& C):
-      First(F), Range(R), SValue(SV), Reg(Rg), Emitted(E),
+      First(F), Range(R), SValue(SV), Reg(Rg), RegVT(RgVT), Emitted(E),
       Parent(P), Default(D), Cases(C) { }
     APInt First;
     APInt Range;
     const Value *SValue;
     unsigned Reg;
+    EVT RegVT;
     bool Emitted;
     MachineBasicBlock *Parent;
     MachineBasicBlock *Default;
@@ -435,7 +436,8 @@ public:
   void visitSwitchCase(CaseBlock &CB,
                        MachineBasicBlock *SwitchBB);
   void visitBitTestHeader(BitTestBlock &B, MachineBasicBlock *SwitchBB);
-  void visitBitTestCase(MachineBasicBlock* NextMBB,
+  void visitBitTestCase(BitTestBlock &BB,
+                        MachineBasicBlock* NextMBB,
                         unsigned Reg,
                         BitTestCase &B,
                         MachineBasicBlock *SwitchBB);

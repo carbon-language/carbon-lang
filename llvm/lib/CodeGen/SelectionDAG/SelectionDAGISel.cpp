@@ -1017,12 +1017,14 @@ SelectionDAGISel::FinishBasicBlock() {
       FuncInfo->InsertPt = FuncInfo->MBB->end();
       // Emit the code
       if (j+1 != ej)
-        SDB->visitBitTestCase(SDB->BitTestCases[i].Cases[j+1].ThisBB,
+        SDB->visitBitTestCase(SDB->BitTestCases[i],
+                              SDB->BitTestCases[i].Cases[j+1].ThisBB,
                               SDB->BitTestCases[i].Reg,
                               SDB->BitTestCases[i].Cases[j],
                               FuncInfo->MBB);
       else
-        SDB->visitBitTestCase(SDB->BitTestCases[i].Default,
+        SDB->visitBitTestCase(SDB->BitTestCases[i],
+                              SDB->BitTestCases[i].Default,
                               SDB->BitTestCases[i].Reg,
                               SDB->BitTestCases[i].Cases[j],
                               FuncInfo->MBB);

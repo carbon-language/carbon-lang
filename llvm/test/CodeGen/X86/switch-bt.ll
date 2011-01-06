@@ -49,3 +49,33 @@ sw.epilog:                                        ; preds = %sw.default, %sw.bb4
 }
 
 declare void @foo(i32)
+
+; Don't zero extend the test operands to pointer type if it can be avoided.
+; rdar://8781238
+define void @test2(i32 %x) nounwind ssp {
+; CHECK: test2:
+; CHECK: cmpl $6
+; CHECK: ja
+
+; CHECK-NEXT: movl $91
+; CHECK-NOT: movl
+; CHECK-NEXT: btl
+; CHECK-NEXT: jb
+entry:
+  switch i32 %x, label %if.end [
+    i32 6, label %if.then
+    i32 4, label %if.then
+    i32 3, label %if.then
+    i32 1, label %if.then
+    i32 0, label %if.then
+  ]
+
+if.then:                                          ; preds = %entry, %entry, %entry, %entry, %entry
+  tail call void @bar() nounwind
+  ret void
+
+if.end:                                           ; preds = %entry
+  ret void
+}
+
+declare void @bar()
