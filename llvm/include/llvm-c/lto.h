@@ -18,7 +18,6 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include "llvm/Support/DataTypes.h"
 
 #define LTO_API_VERSION 4
 
@@ -147,7 +146,7 @@ lto_module_set_target_triple(lto_module_t mod, const char *triple);
 /**
  * Returns the number of symbols in the object module.
  */
-extern uint32_t
+extern unsigned int
 lto_module_get_num_symbols(lto_module_t mod);
 
 
@@ -155,14 +154,14 @@ lto_module_get_num_symbols(lto_module_t mod);
  * Returns the name of the ith symbol in the object module.
  */
 extern const char*
-lto_module_get_symbol_name(lto_module_t mod, uint32_t index);
+lto_module_get_symbol_name(lto_module_t mod, unsigned int index);
 
 
 /**
  * Returns the attributes of the ith symbol in the object module.
  */
 extern lto_symbol_attributes
-lto_module_get_symbol_attribute(lto_module_t mod, uint32_t index);
+lto_module_get_symbol_attribute(lto_module_t mod, unsigned int index);
 
 
 /**
