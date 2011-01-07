@@ -96,7 +96,15 @@ class IterateFrameAndDisassembleTestCase(TestBase):
         for i in range(depth - 1):
             frame = thread.GetFrameAtIndex(i)
             function = frame.GetFunction()
-            self.runCmd("disassemble -n '%s'" % function.GetName())
+            # Print the function header.
+            print
+            print function
+            if function.IsValid():
+                # Get all instructions for this function and print them out.
+                insts = function.GetInstructions(target)
+                from lldbutil import lldb_iter
+                for i in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
+                    print i
 
 
 if __name__ == '__main__':
