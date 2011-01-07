@@ -3712,12 +3712,10 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op, SelectionDAG &DAG) con
       // break it down again in a shuffle.
       return SDValue();
     }
-        
-    unsigned SrcNumElts = SourceVecs[i].getValueType().getVectorNumElements();
     
     // Since only 64-bit and 128-bit vectors are legal on ARM and
     // we've eliminated the other cases...
-    assert(SrcNumElts == 2*NumElts);
+    assert(SourceVecs[i].getValueType().getVectorNumElements() == 2*NumElts);
     
     if (MaxElts[i] - MinElts[i] >= NumElts) {
       // Span too large for a VEXT to cope
