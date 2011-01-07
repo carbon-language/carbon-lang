@@ -482,6 +482,7 @@ namespace ISD {
     //   Operand #0   : Input chain.
     //   Operand #1   : a ExternalSymbolSDNode with a pointer to the asm string.
     //   Operand #2   : a MDNodeSDNode with the !srcloc metadata.
+    //   Operand #3   : IsAlignStack bit.
     //   After this, it is followed by a list of operands with this format:
     //     ConstantSDNode: Flags that encode whether it is a mem or not, the
     //                     of operands that follow, etc.  See InlineAsm.h.
