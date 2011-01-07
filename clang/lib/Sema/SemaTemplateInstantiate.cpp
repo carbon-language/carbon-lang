@@ -617,6 +617,10 @@ namespace {
                                                        NumExpansions);
     }
 
+    void ExpandingFunctionParameterPack(ParmVarDecl *Pack) { 
+      SemaRef.CurrentInstantiationScope->MakeInstantiatedLocalArgPack(Pack);
+    }
+    
     /// \brief Transform the given declaration by instantiating a reference to
     /// this declaration.
     Decl *TransformDecl(SourceLocation Loc, Decl *D);
@@ -1154,12 +1158,9 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
   TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
   TypeSourceInfo *NewDI = 0;
   
-  bool WasParameterPack = false;
-  bool IsParameterPack = false;
   TypeLoc OldTL = OldDI->getTypeLoc();
   if (isa<PackExpansionTypeLoc>(OldTL)) {    
     PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(OldTL);
-    WasParameterPack = true;
     
     // We have a function parameter pack. Substitute into the pattern of the 
     // expansion.
@@ -1173,7 +1174,6 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
       // our function parameter is still a function parameter pack.
       // Therefore, make its type a pack expansion type.
       NewDI = CheckPackExpansion(NewDI, ExpansionTL.getEllipsisLoc());
-      IsParameterPack = true;
     }
   } else {
     NewDI = SubstType(OldDI, TemplateArgs, OldParm->getLocation(), 
@@ -1211,8 +1211,13 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
 
   // FIXME: When OldParm is a parameter pack and NewParm is not a parameter
   // pack, we actually have a set of instantiated locations. Maintain this set!
-  if (!WasParameterPack || IsParameterPack)
+  if (OldParm->isParameterPack() && !NewParm->isParameterPack()) {
+    // Add the new parameter to 
+    CurrentInstantiationScope->InstantiatedLocalPackArg(OldParm, NewParm);
+  } else {
+    // Introduce an Old -> New mapping
     CurrentInstantiationScope->InstantiatedLocal(OldParm, NewParm);  
+  }
   
   // FIXME: OldParm may come from a FunctionProtoType, in which case CurContext
   // can be anything, is this right ?
@@ -1227,7 +1232,8 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
 bool Sema::SubstParmTypes(SourceLocation Loc, 
                           ParmVarDecl **Params, unsigned NumParams,
                           const MultiLevelTemplateArgumentList &TemplateArgs,
-                          llvm::SmallVectorImpl<QualType> &ParamTypes) {
+                          llvm::SmallVectorImpl<QualType> &ParamTypes,
+                          llvm::SmallVectorImpl<ParmVarDecl *> *OutParams) {
   assert(!ActiveTemplateInstantiations.empty() &&
          "Cannot perform an instantiation without some context on the "
          "instantiation stack");
@@ -1235,7 +1241,7 @@ bool Sema::SubstParmTypes(SourceLocation Loc,
   TemplateInstantiator Instantiator(*this, TemplateArgs, Loc, 
                                     DeclarationName());
   return Instantiator.TransformFunctionTypeParams(Loc, Params, NumParams, 0,
-                                                  ParamTypes, 0);
+                                                  ParamTypes, OutParams);
 }
 
 /// \brief Perform substitution on the base class specifiers of the
@@ -1899,15 +1905,27 @@ bool Sema::Subst(const TemplateArgumentLoc *Args, unsigned NumArgs,
 }
 
 Decl *LocalInstantiationScope::getInstantiationOf(const Decl *D) {
+  llvm::PointerUnion<Decl *, DeclArgumentPack *> *Found= findInstantiationOf(D);
+  if (!Found)
+    return 0;
+  
+  if (Found->is<Decl *>())
+    return Found->get<Decl *>();
+  
+  return (*Found->get<DeclArgumentPack *>())[
+                                        SemaRef.ArgumentPackSubstitutionIndex];
+}
+
+llvm::PointerUnion<Decl *, LocalInstantiationScope::DeclArgumentPack *> *
+LocalInstantiationScope::findInstantiationOf(const Decl *D) {
   for (LocalInstantiationScope *Current = this; Current; 
        Current = Current->Outer) {
     // Check if we found something within this scope.
     const Decl *CheckD = D;
     do {
-      llvm::DenseMap<const Decl *, Decl *>::iterator Found
-        = Current->LocalDecls.find(CheckD);
+      LocalDeclsMap::iterator Found = Current->LocalDecls.find(CheckD);
       if (Found != Current->LocalDecls.end())
-        return Found->second;
+        return &Found->second;
       
       // If this is a tag declaration, it's possible that we need to look for
       // a previous declaration.
@@ -1928,7 +1946,23 @@ Decl *LocalInstantiationScope::getInstantiationOf(const Decl *D) {
 }
 
 void LocalInstantiationScope::InstantiatedLocal(const Decl *D, Decl *Inst) {
-  Decl *&Stored = LocalDecls[D];
-  assert((!Stored || Stored == Inst)&& "Already instantiated this local");
+  llvm::PointerUnion<Decl *, DeclArgumentPack *> &Stored = LocalDecls[D];
+  assert((Stored.isNull() || 
+          (Stored.get<Decl *>() == Inst)) && "Already instantiated this local");
   Stored = Inst;
 }
+
+void LocalInstantiationScope::InstantiatedLocalPackArg(const Decl *D, 
+                                                       Decl *Inst) {
+  DeclArgumentPack *Pack = LocalDecls[D].get<DeclArgumentPack *>();
+  Pack->push_back(Inst);
+}
+
+void LocalInstantiationScope::MakeInstantiatedLocalArgPack(const Decl *D) {
+  llvm::PointerUnion<Decl *, DeclArgumentPack *> &Stored = LocalDecls[D];
+  assert(Stored.isNull() && "Already instantiated this local");
+  DeclArgumentPack *Pack = new DeclArgumentPack;
+  Stored = Pack;
+  ArgumentPacks.push_back(Pack);
+}
+

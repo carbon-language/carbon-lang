@@ -3893,7 +3893,8 @@ public:
   bool SubstParmTypes(SourceLocation Loc, 
                       ParmVarDecl **Params, unsigned NumParams,
                       const MultiLevelTemplateArgumentList &TemplateArgs,
-                      llvm::SmallVectorImpl<QualType> &ParamTypes);
+                      llvm::SmallVectorImpl<QualType> &ParamTypes,
+                      llvm::SmallVectorImpl<ParmVarDecl *> *OutParams = 0);
   ExprResult SubstExpr(Expr *E,
                        const MultiLevelTemplateArgumentList &TemplateArgs);
 

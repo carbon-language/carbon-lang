@@ -222,6 +222,10 @@ public:
     return false;
   }
   
+  /// \brief Note to the derived class when a function parameter pack is
+  /// being expanded.
+  void ExpandingFunctionParameterPack(ParmVarDecl *Pack) { }
+                                      
   /// \brief Transforms the given type into another type.
   ///
   /// By default, this routine transforms a type by creating a
@@ -3423,6 +3427,7 @@ bool TreeTransform<Derived>::
         if (ShouldExpand) {
           // Expand the function parameter pack into multiple, separate
           // parameters.
+          getDerived().ExpandingFunctionParameterPack(OldParm);
           for (unsigned I = 0; I != NumExpansions; ++I) {
             Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), I);
             ParmVarDecl *NewParm 
@@ -6875,6 +6880,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   llvm::SmallVector<QualType, 4> ParamTypes;
   
   // Parameter substitution.
+  // FIXME: Variadic templates
   const BlockDecl *BD = E->getBlockDecl();
   for (BlockDecl::param_const_iterator P = BD->param_begin(),
        EN = BD->param_end(); P != EN; ++P) {

@@ -1271,14 +1271,11 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   // synthesized in the method declaration.
   if (!isa<FunctionProtoType>(T.IgnoreParens())) {
     assert(!Params.size() && "Instantiating type could not yield parameters");
-    for (unsigned I = 0, N = D->getNumParams(); I != N; ++I) {
-      ParmVarDecl *P = SemaRef.SubstParmVarDecl(D->getParamDecl(I), 
-                                                TemplateArgs);
-      if (!P)
-        return 0;
-
-      Params.push_back(P);
-    }
+    llvm::SmallVector<QualType, 4> ParamTypes;
+    if (SemaRef.SubstParmTypes(D->getLocation(), D->param_begin(), 
+                               D->getNumParams(), TemplateArgs, ParamTypes, 
+                               &Params))
+      return 0;    
   }
 
   NestedNameSpecifier *Qualifier = D->getQualifier();
@@ -1904,12 +1901,31 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
       TypeLoc NewTL = NewTInfo->getTypeLoc().IgnoreParens();
       FunctionProtoTypeLoc *NewProtoLoc = cast<FunctionProtoTypeLoc>(&NewTL);
       assert(NewProtoLoc && "Missing prototype?");
-      for (unsigned i = 0, i_end = NewProtoLoc->getNumArgs(); i != i_end; ++i) {
-        // FIXME: Variadic templates will break this.
-        Params.push_back(NewProtoLoc->getArg(i));
-        SemaRef.CurrentInstantiationScope->InstantiatedLocal(
-                                                        OldProtoLoc->getArg(i),
-                                                        NewProtoLoc->getArg(i));
+      unsigned NewIdx = 0, NumNewParams = NewProtoLoc->getNumArgs();
+      for (unsigned OldIdx = 0, NumOldParams = OldProtoLoc->getNumArgs();
+           OldIdx != NumOldParams; ++OldIdx) {
+        ParmVarDecl *OldParam = OldProtoLoc->getArg(OldIdx);
+        if (!OldParam->isParameterPack() ||
+            (NewIdx < NumNewParams &&
+             NewProtoLoc->getArg(NewIdx)->isParameterPack())) {
+          // Simple case: normal parameter, or a parameter pack that's 
+          // instantiated to a (still-dependent) parameter pack.
+          ParmVarDecl *NewParam = NewProtoLoc->getArg(NewIdx++);
+          Params.push_back(NewParam);
+          SemaRef.CurrentInstantiationScope->InstantiatedLocal(OldParam,
+                                                               NewParam);
+          continue;
+        }
+        
+        // Parameter pack: make the instantiation an argument pack.
+        SemaRef.CurrentInstantiationScope->MakeInstantiatedLocalArgPack(
+                                                                      OldParam);
+        while (NewIdx < NumNewParams) {
+          ParmVarDecl *NewParam = NewProtoLoc->getArg(NewIdx++);
+          Params.push_back(NewParam);
+          SemaRef.CurrentInstantiationScope->InstantiatedLocalPackArg(OldParam,
+                                                                      NewParam);
+        }
       }
     }
   } else {
@@ -2179,11 +2195,28 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // Introduce the instantiated function parameters into the local
   // instantiation scope, and set the parameter names to those used
   // in the template.
+  unsigned FParamIdx = 0;
   for (unsigned I = 0, N = PatternDecl->getNumParams(); I != N; ++I) {
     const ParmVarDecl *PatternParam = PatternDecl->getParamDecl(I);
-    ParmVarDecl *FunctionParam = Function->getParamDecl(I);
-    FunctionParam->setDeclName(PatternParam->getDeclName());
-    Scope.InstantiatedLocal(PatternParam, FunctionParam);
+    if (!PatternParam->isParameterPack()) {
+      // Simple case: not a parameter pack.
+      assert(FParamIdx < Function->getNumParams());
+      ParmVarDecl *FunctionParam = Function->getParamDecl(I);
+      FunctionParam->setDeclName(PatternParam->getDeclName());
+      Scope.InstantiatedLocal(PatternParam, FunctionParam);
+      ++FParamIdx;
+      continue;
+    }
+    
+    // Expand the parameter pack.
+    Scope.MakeInstantiatedLocalArgPack(PatternParam);
+    for (unsigned NumFParams = Function->getNumParams(); 
+         FParamIdx < NumFParams; 
+         ++FParamIdx) {
+      ParmVarDecl *FunctionParam = Function->getParamDecl(FParamIdx);
+      FunctionParam->setDeclName(PatternParam->getDeclName());
+      Scope.InstantiatedLocalPackArg(PatternParam, FunctionParam);
+    }
   }
 
   // Enter the scope of this instantiation. We don't use

@@ -67,13 +67,8 @@ namespace {
     /// \brief Record occurrences of (FIXME: function and) non-type template
     /// parameter packs in an expression.
     bool VisitDeclRefExpr(DeclRefExpr *E) {
-      if (NonTypeTemplateParmDecl *NTTP 
-                            = dyn_cast<NonTypeTemplateParmDecl>(E->getDecl())) {
-        if (NTTP->isParameterPack())
-          Unexpanded.push_back(std::make_pair(NTTP, E->getLocation()));
-      }
-      
-      // FIXME: Function parameter packs.
+      if (E->getDecl()->isParameterPack())
+        Unexpanded.push_back(std::make_pair(E->getDecl(), E->getLocation()));
       
       return true;
     }
@@ -440,6 +435,7 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
     unsigned Depth;
     unsigned Index;
     IdentifierInfo *Name;
+    bool IsFunctionParameterPack = false;
     
     if (const TemplateTypeParmType *TTP
         = Unexpanded[I].first.dyn_cast<const TemplateTypeParmType *>()) {
@@ -455,26 +451,50 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
                  = dyn_cast<NonTypeTemplateParmDecl>(ND)) {        
         Depth = NTTP->getDepth();
         Index = NTTP->getIndex();
-      } else {
-        TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(ND);
+      } else if (TemplateTemplateParmDecl *TTP
+                                    = dyn_cast<TemplateTemplateParmDecl>(ND)) {
         Depth = TTP->getDepth();
         Index = TTP->getIndex();
+      } else {
+        assert(cast<ParmVarDecl>(ND)->isParameterPack());
+        IsFunctionParameterPack = true;
       }
-      // FIXME: Variadic templates function parameter packs?
       Name = ND->getIdentifier();
     }
     
-    // If we don't have a template argument at this depth/index, then we 
-    // cannot expand the pack expansion. Make a note of this, but we still 
-    // want to check any parameter packs we *do* have arguments for.
-    if (Depth >= TemplateArgs.getNumLevels() ||
-        !TemplateArgs.hasTemplateArgument(Depth, Index)) {
-      ShouldExpand = false;
-      continue;
+    // Determine the size of this argument pack.
+    unsigned NewPackSize;    
+    if (IsFunctionParameterPack) {
+      // Figure out whether we're instantiating to an argument pack or not.
+      typedef LocalInstantiationScope::DeclArgumentPack DeclArgumentPack;
+      
+      llvm::PointerUnion<Decl *, DeclArgumentPack *> *Instantiation
+        = CurrentInstantiationScope->findInstantiationOf(
+                                        Unexpanded[I].first.get<NamedDecl *>());
+      if (Instantiation &&
+          Instantiation->is<DeclArgumentPack *>()) {
+        // We could expand this function parameter pack.
+        NewPackSize = Instantiation->get<DeclArgumentPack *>()->size();
+      } else {
+        // We can't expand this function parameter pack, so we can't expand
+        // the pack expansion.
+        ShouldExpand = false;
+        continue;
+      }
+    } else {
+      // If we don't have a template argument at this depth/index, then we 
+      // cannot expand the pack expansion. Make a note of this, but we still 
+      // want to check any parameter packs we *do* have arguments for.
+      if (Depth >= TemplateArgs.getNumLevels() ||
+          !TemplateArgs.hasTemplateArgument(Depth, Index)) {
+        ShouldExpand = false;
+        continue;
+      }
+      
+      // Determine the size of the argument pack.
+      NewPackSize = TemplateArgs(Depth, Index).pack_size();
     }
     
-    // Determine the size of the argument pack.
-    unsigned NewPackSize = TemplateArgs(Depth, Index).pack_size();
     if (!HaveFirstPack) {
       // The is the first pack we've seen for which we have an argument. 
       // Record it.

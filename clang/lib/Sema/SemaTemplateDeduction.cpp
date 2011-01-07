@@ -542,7 +542,6 @@ DeduceTemplateArguments(Sema &S,
                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                         unsigned TDF) {
   // Fast-path check to see if we have too many/too few arguments.
-  // FIXME: Variadic templates broken!
   if (NumParams != NumArgs &&
       !(NumParams && isa<PackExpansionType>(Params[NumParams - 1])) &&
       !(NumArgs && isa<PackExpansionType>(Args[NumArgs - 1])))

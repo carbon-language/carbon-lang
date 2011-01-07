@@ -237,3 +237,30 @@ struct MemberTemplatePPNames {
   };
 };
 
+// Example from working paper
+namespace WorkingPaperExample {
+  template<typename...> struct Tuple {}; 
+  template<typename T1, typename T2> struct Pair {};
+  
+  template<class ... Args1> struct zip { 
+    template<class ... Args2> struct with {
+      typedef Tuple<Pair<Args1, Args2> ... > type; // expected-error{{pack expansion contains parameter packs 'Args1' and 'Args2' that have different lengths (1 vs. 2)}}
+    }; 
+  };
+
+  typedef zip<short, int>::with<unsigned short, unsigned>::type T1; // T1 is Tuple<Pair<short, unsigned short>, Pair<int, unsigned>>
+  typedef Tuple<Pair<short, unsigned short>, Pair<int, unsigned>> T1;
+
+  typedef zip<short>::with<unsigned short, unsigned>::type T2; // expected-note{{in instantiation of template class}}
+
+  template<class ... Args> void f(Args...);
+  template<class ... Args> void h(Args...);
+
+  template<class ... Args> 
+  void g(Args ... args) {
+    f(const_cast<const Args*>(&args)...); // OK: "Args" and "args" are expanded within f 
+    f(5 ...); // expected-error{{pack expansion does not contain any unexpanded parameter packs}}
+    f(args); // expected-error{{expression contains unexpanded parameter pack 'args'}}
+    f(h(args ...) + args ...);
+  }
+}

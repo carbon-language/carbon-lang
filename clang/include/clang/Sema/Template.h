@@ -166,10 +166,19 @@ namespace clang {
   /// instantiate a new function declaration, which will have its own
   /// set of parameter declarations.
   class LocalInstantiationScope {
+  public:
+    /// \brief A set of declarations.
+    typedef llvm::SmallVector<Decl *, 4> DeclArgumentPack;
+    
+  private:
     /// \brief Reference to the semantic analysis that is performing
     /// this template instantiation.
     Sema &SemaRef;
 
+    typedef llvm::DenseMap<const Decl *, 
+                           llvm::PointerUnion<Decl *, DeclArgumentPack *> >
+      LocalDeclsMap;
+    
     /// \brief A mapping from local declarations that occur
     /// within a template to their instantiations.
     ///
@@ -184,8 +193,15 @@ namespace clang {
     /// when we instantiate add<int>, we will introduce a mapping from
     /// the ParmVarDecl for 'x' that occurs in the template to the
     /// instantiated ParmVarDecl for 'x'.
-    llvm::DenseMap<const Decl *, Decl *> LocalDecls;
+    ///
+    /// For a parameter pack, the local instantiation scope may contain a
+    /// set of instantiated parameters. This is stored as a DeclArgumentPack
+    /// pointer.
+    LocalDeclsMap LocalDecls;
 
+    /// \brief The set of argument packs we've allocated.
+    llvm::SmallVector<DeclArgumentPack *, 1> ArgumentPacks;
+    
     /// \brief The outer scope, which contains local variable
     /// definitions from some other instantiation (that may not be
     /// relevant to this particular scope).
@@ -219,12 +235,26 @@ namespace clang {
       if (Exited)
         return;
       
+      for (unsigned I = 0, N = ArgumentPacks.size(); I != N; ++I)
+        delete ArgumentPacks[I];
+        
       SemaRef.CurrentInstantiationScope = Outer;
       Exited = true;
     }
 
     Decl *getInstantiationOf(const Decl *D);
 
+    /// \brief Find the instantiation of the declaration D within the current
+    /// instantiation scope.
+    ///
+    /// \param D The declaration whose instantiation we are searching for.
+    ///
+    /// \returns A pointer to the declaration or argument pack of declarations
+    /// to which the declaration \c D is instantiataed, if found. Otherwise,
+    /// returns NULL.
+    llvm::PointerUnion<Decl *, DeclArgumentPack *> *
+    findInstantiationOf(const Decl *D);
+                              
     VarDecl *getInstantiationOf(const VarDecl *Var) {
       return cast<VarDecl>(getInstantiationOf(cast<Decl>(Var)));
     }
@@ -239,6 +269,8 @@ namespace clang {
     }
 
     void InstantiatedLocal(const Decl *D, Decl *Inst);
+    void InstantiatedLocalPackArg(const Decl *D, Decl *Inst);
+    void MakeInstantiatedLocalArgPack(const Decl *D);
   };
 
   class TemplateDeclInstantiator
