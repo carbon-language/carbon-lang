@@ -9,7 +9,7 @@
 //
 // This pass assigns local frame indices to stack slots relative to one another
 // and allocates additional base registers to access them when the target
-// estimates the are likely to be out of range of stack pointer and frame
+// estimates they are likely to be out of range of stack pointer and frame
 // pointer relative addressing.
 //
 //===----------------------------------------------------------------------===//
