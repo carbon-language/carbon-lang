@@ -169,7 +169,8 @@ namespace pr6249 {
 }
 
 namespace PR6723 {
-  template<unsigned char C> void f(int (&a)[C]); // expected-note 2{{candidate template ignored}}
+  template<unsigned char C> void f(int (&a)[C]); // expected-note {{candidate template ignored}} \
+  // expected-note{{candidate function [with C = 0] not viable: no known conversion from 'int [512]' to 'int (&)[0]' for 1st argument}}
   void g() {
     int arr512[512];
     f(arr512); // expected-error{{no matching function for call}}

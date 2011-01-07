@@ -1889,19 +1889,11 @@ Sema::SubstituteExplicitTemplateArguments(
 
   // Instantiate the types of each of the function parameters given the
   // explicitly-specified template arguments.
-  for (FunctionDecl::param_iterator P = Function->param_begin(),
-                                PEnd = Function->param_end();
-       P != PEnd;
-       ++P) {
-    QualType ParamType
-      = SubstType((*P)->getType(),
-                  MultiLevelTemplateArgumentList(*ExplicitArgumentList),
-                  (*P)->getLocation(), (*P)->getDeclName());
-    if (ParamType.isNull() || Trap.hasErrorOccurred())
-      return TDK_SubstitutionFailure;
-
-    ParamTypes.push_back(ParamType);
-  }
+  if (SubstParmTypes(Function->getLocation(), 
+                     Function->param_begin(), Function->getNumParams(),
+                     MultiLevelTemplateArgumentList(*ExplicitArgumentList),
+                     ParamTypes))
+    return TDK_SubstitutionFailure;
 
   // If the caller wants a full function type back, instantiate the return
   // type and form that function type.

@@ -1008,11 +1008,6 @@ class FunctionTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
                                                FunctionTypeLoc,
                                                FunctionType,
                                                FunctionLocInfo> {
-  // ParmVarDecls* are stored after Info, one for each argument.
-  ParmVarDecl **getParmArray() const {
-    return (ParmVarDecl**) getExtraLocalData();
-  }
-
 public:
   SourceLocation getLParenLoc() const {
     return getLocalData()->LParenLoc;
@@ -1033,6 +1028,11 @@ public:
   }
   void setTrailingReturn(bool Trailing) {
     getLocalData()->TrailingReturn = Trailing;
+  }
+
+  // ParmVarDecls* are stored after Info, one for each argument.
+  ParmVarDecl **getParmArray() const {
+    return (ParmVarDecl**) getExtraLocalData();
   }
 
   unsigned getNumArgs() const {

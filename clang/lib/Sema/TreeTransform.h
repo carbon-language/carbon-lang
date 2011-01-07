@@ -439,9 +439,11 @@ public:
   /// variables vector are acceptable.
   ///
   /// Return true on error.
-  bool TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
+  bool TransformFunctionTypeParams(SourceLocation Loc,
+                                   ParmVarDecl **Params, unsigned NumParams,
+                                   const QualType *ParamTypes,
                                    llvm::SmallVectorImpl<QualType> &PTypes,
-                                   llvm::SmallVectorImpl<ParmVarDecl*> &PVars);
+                                   llvm::SmallVectorImpl<ParmVarDecl*> *PVars);
 
   /// \brief Transforms a single function-type parameter.  Return null
   /// on error.
@@ -3390,13 +3392,13 @@ TreeTransform<Derived>::TransformFunctionTypeParam(ParmVarDecl *OldParm) {
 
 template<typename Derived>
 bool TreeTransform<Derived>::
-  TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
-                              llvm::SmallVectorImpl<QualType> &PTypes,
-                              llvm::SmallVectorImpl<ParmVarDecl*> &PVars) {
-  FunctionProtoType *T = TL.getTypePtr();
-
-  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
-    if (ParmVarDecl *OldParm = TL.getArg(i)) {
+  TransformFunctionTypeParams(SourceLocation Loc,
+                              ParmVarDecl **Params, unsigned NumParams,
+                              const QualType *ParamTypes,
+                              llvm::SmallVectorImpl<QualType> &OutParamTypes,
+                              llvm::SmallVectorImpl<ParmVarDecl*> *PVars) {
+  for (unsigned i = 0; i != NumParams; ++i) {
+    if (ParmVarDecl *OldParm = Params[i]) {
       if (OldParm->isParameterPack()) {
         // We have a function parameter pack that may need to be expanded.
         llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
@@ -3428,8 +3430,9 @@ bool TreeTransform<Derived>::
             if (!NewParm)
               return true;
             
-            PTypes.push_back(NewParm->getType());
-            PVars.push_back(NewParm);
+            OutParamTypes.push_back(NewParm->getType());
+            if (PVars)
+              PVars->push_back(NewParm);
           }
           
           // We're done with the pack expansion.
@@ -3445,14 +3448,15 @@ bool TreeTransform<Derived>::
       if (!NewParm)
         return true;
       
-      PTypes.push_back(NewParm->getType());
-      PVars.push_back(NewParm);
+      OutParamTypes.push_back(NewParm->getType());
+      if (PVars)
+        PVars->push_back(NewParm);
       continue;
     }
 
     // Deal with the possibility that we don't have a parameter
     // declaration for this parameter.
-    QualType OldType = T->getArgType(i);
+    QualType OldType = ParamTypes[i];
     bool IsPackExpansion = false;
     if (const PackExpansionType *Expansion 
                                        = dyn_cast<PackExpansionType>(OldType)) {
@@ -3464,7 +3468,7 @@ bool TreeTransform<Derived>::
       // Determine whether we should expand the parameter packs.
       bool ShouldExpand = false;
       unsigned NumExpansions = 0;
-      if (getDerived().TryExpandParameterPacks(TL.getBeginLoc(), SourceRange(),
+      if (getDerived().TryExpandParameterPacks(Loc, SourceRange(),
                                                Unexpanded.data(), 
                                                Unexpanded.size(),
                                                ShouldExpand, NumExpansions)) {
@@ -3480,8 +3484,9 @@ bool TreeTransform<Derived>::
           if (NewType.isNull())
             return true;
 
-          PTypes.push_back(NewType);
-          PVars.push_back(0);
+          OutParamTypes.push_back(NewType);
+          if (PVars)
+            PVars->push_back(0);
         }
         
         // We're done with the pack expansion.
@@ -3502,8 +3507,9 @@ bool TreeTransform<Derived>::
     if (IsPackExpansion)
       NewType = getSema().Context.getPackExpansionType(NewType);
       
-    PTypes.push_back(NewType);
-    PVars.push_back(0);
+    OutParamTypes.push_back(NewType);
+    if (PVars)
+      PVars->push_back(0);
   }
 
   return false;
@@ -3530,7 +3536,11 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
   QualType ResultType;
 
   if (TL.getTrailingReturn()) {
-    if (getDerived().TransformFunctionTypeParams(TL, ParamTypes, ParamDecls))
+    if (getDerived().TransformFunctionTypeParams(TL.getBeginLoc(), 
+                                                 TL.getParmArray(),
+                                                 TL.getNumArgs(),
+                                             TL.getTypePtr()->arg_type_begin(),                                                
+                                                 ParamTypes, &ParamDecls))
       return QualType();
 
     ResultType = getDerived().TransformType(TLB, TL.getResultLoc());
@@ -3542,7 +3552,11 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
     if (ResultType.isNull())
       return QualType();
 
-    if (getDerived().TransformFunctionTypeParams(TL, ParamTypes, ParamDecls))
+    if (getDerived().TransformFunctionTypeParams(TL.getBeginLoc(), 
+                                                 TL.getParmArray(),
+                                                 TL.getNumArgs(),
+                                             TL.getTypePtr()->arg_type_begin(),                                                
+                                                 ParamTypes, &ParamDecls))
       return QualType();
   }
 

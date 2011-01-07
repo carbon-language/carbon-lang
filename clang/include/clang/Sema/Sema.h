@@ -3890,6 +3890,10 @@ public:
                                         DeclarationName Entity);
   ParmVarDecl *SubstParmVarDecl(ParmVarDecl *D,
                             const MultiLevelTemplateArgumentList &TemplateArgs);
+  bool SubstParmTypes(SourceLocation Loc, 
+                      ParmVarDecl **Params, unsigned NumParams,
+                      const MultiLevelTemplateArgumentList &TemplateArgs,
+                      llvm::SmallVectorImpl<QualType> &ParamTypes);
   ExprResult SubstExpr(Expr *E,
                        const MultiLevelTemplateArgumentList &TemplateArgs);
 
