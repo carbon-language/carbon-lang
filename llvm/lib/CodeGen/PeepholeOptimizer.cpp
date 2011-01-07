@@ -336,7 +336,9 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr *MI = &*MII++;
       LocalMIs.insert(MI);
 
-      if (MI->getDesc().hasUnmodeledSideEffects())
+      if (MI->isLabel() || MI->isPHI() || MI->isImplicitDef() ||
+          MI->isKill() || MI->isInlineAsm() || MI->isDebugValue() ||
+          MI->getDesc().hasUnmodeledSideEffects())
         continue;
 
       if (MI->getDesc().isCompare()) {

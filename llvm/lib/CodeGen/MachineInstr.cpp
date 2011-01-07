@@ -1115,7 +1115,9 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
     SawStore = true;
     return false;
   }
-  if (TID->isTerminator() || TID->hasUnmodeledSideEffects())
+
+  if (isLabel() || isDebugValue() ||
+      TID->isTerminator() || TID->hasUnmodeledSideEffects())
     return false;
 
   // See if this instruction does a load.  If so, we have to guarantee that the

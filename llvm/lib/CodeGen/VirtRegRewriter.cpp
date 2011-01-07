@@ -1620,7 +1620,8 @@ static bool isSafeToDelete(MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
   if (TID.mayLoad() || TID.mayStore() || TID.isCall() || TID.isTerminator() ||
       TID.isCall() || TID.isBarrier() || TID.isReturn() ||
-      TID.hasUnmodeledSideEffects())
+      TID.hasUnmodeledSideEffects() ||
+      MI.isLabel() || MI.isDebugValue())
     return false;
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
