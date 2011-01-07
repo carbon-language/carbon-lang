@@ -99,23 +99,6 @@ TEST(InstructionsTest, BranchInst) {
 
   EXPECT_EQ(b, b1->op_end());
 
-  // shrink it
-  b1->setUnconditionalDest(bb1);
-
-  // check num operands
-  EXPECT_EQ(b1->getNumOperands(), 1U);
-
-  User::const_op_iterator c(b1->op_begin());
-  EXPECT_NE(c, b1->op_end());
-
-  // check THEN
-  EXPECT_EQ(*c, bb1);
-  EXPECT_EQ(b1->getOperand(0), bb1);
-  EXPECT_EQ(b1->getSuccessor(0), bb1);
-  ++c;
-
-  EXPECT_EQ(c, b1->op_end());
-
   // clean up
   delete b0;
   delete b1;

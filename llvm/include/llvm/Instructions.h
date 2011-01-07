@@ -2100,19 +2100,6 @@ public:
     Op<-3>() = V;
   }
 
-  // setUnconditionalDest - Change the current branch to an unconditional branch
-  // targeting the specified block.
-  // FIXME: Eliminate this ugly method.
-  void setUnconditionalDest(BasicBlock *Dest) {
-    Op<-1>() = (Value*)Dest;
-    if (isConditional()) {  // Convert this to an uncond branch.
-      Op<-2>() = 0;
-      Op<-3>() = 0;
-      NumOperands = 1;
-      OperandList = op_begin();
-    }
-  }
-
   unsigned getNumSuccessors() const { return 1+isConditional(); }
 
   BasicBlock *getSuccessor(unsigned i) const {
