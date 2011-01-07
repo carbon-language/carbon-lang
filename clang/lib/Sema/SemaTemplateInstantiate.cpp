@@ -1868,6 +1868,18 @@ Sema::SubstExpr(Expr *E, const MultiLevelTemplateArgumentList &TemplateArgs) {
   return Instantiator.TransformExpr(E);
 }
 
+bool Sema::SubstExprs(Expr **Exprs, unsigned NumExprs, bool IsCall,
+                      const MultiLevelTemplateArgumentList &TemplateArgs,
+                      llvm::SmallVectorImpl<Expr *> &Outputs) {
+  if (NumExprs == 0)
+    return false;
+  
+  TemplateInstantiator Instantiator(*this, TemplateArgs,
+                                    SourceLocation(),
+                                    DeclarationName());
+  return Instantiator.TransformExprs(Exprs, NumExprs, IsCall, Outputs);
+}
+
 /// \brief Do template substitution on a nested-name-specifier.
 NestedNameSpecifier *
 Sema::SubstNestedNameSpecifier(NestedNameSpecifier *NNS,

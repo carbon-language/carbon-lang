@@ -3897,6 +3897,25 @@ public:
                       llvm::SmallVectorImpl<ParmVarDecl *> *OutParams = 0);
   ExprResult SubstExpr(Expr *E,
                        const MultiLevelTemplateArgumentList &TemplateArgs);
+  
+  /// \brief Substitute the given template arguments into a list of
+  /// expressions, expanding pack expansions if required.
+  ///
+  /// \param Exprs The list of expressions to substitute into.
+  ///
+  /// \param NumExprs The number of expressions in \p Exprs.
+  ///
+  /// \param IsCall Whether this is some form of call, in which case
+  /// default arguments will be dropped.
+  ///
+  /// \param TemplateArgs The set of template arguments to substitute.
+  ///
+  /// \param Outputs Will receive all of the substituted arguments.
+  ///
+  /// \returns true if an error occurred, false otherwise.
+  bool SubstExprs(Expr **Exprs, unsigned NumExprs, bool IsCall,
+                  const MultiLevelTemplateArgumentList &TemplateArgs,
+                  llvm::SmallVectorImpl<Expr *> &Outputs);
 
   StmtResult SubstStmt(Stmt *S,
                        const MultiLevelTemplateArgumentList &TemplateArgs);

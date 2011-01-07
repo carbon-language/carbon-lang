@@ -166,29 +166,6 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   return Typedef;
 }
 
-/// \brief Instantiate the arguments provided as part of initialization.
-///
-/// \returns true if an error occurred, false otherwise.
-static bool InstantiateInitializationArguments(Sema &SemaRef,
-                                               Expr **Args, unsigned NumArgs,
-                           const MultiLevelTemplateArgumentList &TemplateArgs,
-                           ASTOwningVector<Expr*> &InitArgs) {
-  for (unsigned I = 0; I != NumArgs; ++I) {
-    // When we hit the first defaulted argument, break out of the loop:
-    // we don't pass those default arguments on.
-    if (Args[I]->isDefaultArgument())
-      break;
-  
-    ExprResult Arg = SemaRef.SubstExpr(Args[I], TemplateArgs);
-    if (Arg.isInvalid())
-      return true;
-  
-    InitArgs.push_back(Arg.release());
-  }
-  
-  return false;
-}
-
 /// \brief Instantiate an initializer, breaking it into separate
 /// initialization arguments.
 ///
@@ -226,17 +203,14 @@ static bool InstantiateInitializer(Sema &S, Expr *Init,
   if (ParenListExpr *ParenList = dyn_cast<ParenListExpr>(Init)) {
     LParenLoc = ParenList->getLParenLoc();
     RParenLoc = ParenList->getRParenLoc();
-    return InstantiateInitializationArguments(S, ParenList->getExprs(),
-                                              ParenList->getNumExprs(),
-                                              TemplateArgs, NewArgs);
+    return S.SubstExprs(ParenList->getExprs(), ParenList->getNumExprs(),
+                        true, TemplateArgs, NewArgs);
   }
 
   if (CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(Init)) {
     if (!isa<CXXTemporaryObjectExpr>(Construct)) {
-      if (InstantiateInitializationArguments(S,
-                                             Construct->getArgs(),
-                                             Construct->getNumArgs(),
-                                             TemplateArgs, NewArgs))
+      if (S.SubstExprs(Construct->getArgs(), Construct->getNumArgs(), true,
+                       TemplateArgs, NewArgs))
         return true;
 
       // FIXME: Fake locations!
