@@ -1,5 +1,15 @@
 include(AddFileDependencies)
 
+macro(llvm_replace_compiler_option var old new)
+  # Replaces a compiler option or switch `old' in `var' by `new'.
+  # If `old' is not in `var', appends `new' to `var'.
+  # Example: llvm_replace_compiler_option(CMAKE_CXX_FLAGS_RELEASE "-O3" "-O2")
+  if( "${${var}}" MATCHES "(^| )${old}($| )" )
+    string( REGEX REPLACE "(^| )${old}($| )" " ${new}  " ${var} "${${var}}" )
+  else()
+    set( ${var} "${${var}} ${new}" )
+  endif()
+endmacro(llvm_replace_compiler_option)
 
 macro(add_td_sources srcs)
   file(GLOB tds *.td)
