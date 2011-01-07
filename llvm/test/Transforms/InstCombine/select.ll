@@ -596,3 +596,85 @@ define i32 @test42(i32 %x, i32 %y) {
 ; CHECK-NEXT: %c = add i32 %b, %y
 ; CHECK-NEXT: ret i32 %c
 }
+
+define i64 @test43(i32 %a) nounwind {
+	%a_ext = sext i32 %a to i64
+	%is_a_nonnegative = icmp sgt i32 %a, -1
+	%max = select i1 %is_a_nonnegative, i64 %a_ext, i64 0
+	ret i64 %max
+; CHECK: @test43
+; CHECK-NEXT: %a_ext = sext i32 %a to i64
+; CHECK-NEXT: %is_a_nonnegative = icmp slt i64 %a_ext, 0
+; CHECK-NEXT: %max = select i1 %is_a_nonnegative, i64 0, i64 %a_ext
+; CHECK-NEXT: ret i64 %max
+}
+
+define i64 @test44(i32 %a) nounwind {
+	%a_ext = sext i32 %a to i64
+	%is_a_nonpositive = icmp slt i32 %a, 1
+	%min = select i1 %is_a_nonpositive, i64 %a_ext, i64 0
+	ret i64 %min
+; CHECK: @test44
+; CHECK-NEXT: %a_ext = sext i32 %a to i64
+; CHECK-NEXT: %is_a_nonpositive = icmp sgt i64 %a_ext, 0
+; CHECK-NEXT: %min = select i1 %is_a_nonpositive, i64 0, i64 %a_ext
+; CHECK-NEXT: ret i64 %min
+}
+define i64 @test45(i32 %a) nounwind {
+	%a_ext = zext i32 %a to i64
+	%is_a_nonnegative = icmp ugt i32 %a, 2
+	%max = select i1 %is_a_nonnegative, i64 %a_ext, i64 3
+	ret i64 %max
+; CHECK: @test45
+; CHECK-NEXT: %a_ext = zext i32 %a to i64
+; CHECK-NEXT: %is_a_nonnegative = icmp ult i64 %a_ext, 3
+; CHECK-NEXT: %max = select i1 %is_a_nonnegative, i64 3, i64 %a_ext
+; CHECK-NEXT: ret i64 %max
+}
+
+define i64 @test46(i32 %a) nounwind {
+	%a_ext = zext i32 %a to i64
+	%is_a_nonpositive = icmp ult i32 %a, 3
+	%min = select i1 %is_a_nonpositive, i64 %a_ext, i64 2
+	ret i64 %min
+; CHECK: @test46
+; CHECK-NEXT: %a_ext = zext i32 %a to i64
+; CHECK-NEXT: %is_a_nonpositive = icmp ugt i64 %a_ext, 2
+; CHECK-NEXT: %min = select i1 %is_a_nonpositive, i64 2, i64 %a_ext
+; CHECK-NEXT: ret i64 %min
+}
+define i64 @test47(i32 %a) nounwind {
+	%a_ext = sext i32 %a to i64
+	%is_a_nonnegative = icmp ugt i32 %a, 2
+	%max = select i1 %is_a_nonnegative, i64 %a_ext, i64 3
+	ret i64 %max
+; CHECK: @test47
+; CHECK-NEXT: %a_ext = sext i32 %a to i64
+; CHECK-NEXT: %is_a_nonnegative = icmp ult i64 %a_ext, 3
+; CHECK-NEXT: %max = select i1 %is_a_nonnegative, i64 3, i64 %a_ext
+; CHECK-NEXT: ret i64 %max
+}
+
+define i64 @test48(i32 %a) nounwind {
+	%a_ext = sext i32 %a to i64
+	%is_a_nonpositive = icmp ult i32 %a, 3
+	%min = select i1 %is_a_nonpositive, i64 %a_ext, i64 2
+	ret i64 %min
+; CHECK: @test48
+; CHECK-NEXT: %a_ext = sext i32 %a to i64
+; CHECK-NEXT: %is_a_nonpositive = icmp ugt i64 %a_ext, 2
+; CHECK-NEXT: %min = select i1 %is_a_nonpositive, i64 2, i64 %a_ext
+; CHECK-NEXT: ret i64 %min
+}
+
+define i64 @test49(i32 %a) nounwind {
+	%a_ext = sext i32 %a to i64
+	%is_a_nonpositive = icmp ult i32 %a, 3
+	%min = select i1 %is_a_nonpositive, i64 2, i64 %a_ext
+	ret i64 %min
+; CHECK: @test49
+; CHECK-NEXT: %a_ext = sext i32 %a to i64
+; CHECK-NEXT: %is_a_nonpositive = icmp ugt i64 %a_ext, 2
+; CHECK-NEXT: %min = select i1 %is_a_nonpositive, i64 %a_ext, i64 2
+; CHECK-NEXT: ret i64 %min
+}

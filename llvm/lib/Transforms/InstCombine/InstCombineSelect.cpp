@@ -285,48 +285,83 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   // place here, so make sure the select is the only user.
   if (ICI->hasOneUse())
     if (ConstantInt *CI = dyn_cast<ConstantInt>(CmpRHS)) {
+      // X < MIN ? T : F  -->  F
+      if ((Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_ULT)
+          && CI->isMinValue(Pred == ICmpInst::ICMP_SLT))
+        return ReplaceInstUsesWith(SI, FalseVal);
+      // X > MAX ? T : F  -->  F
+      else if ((Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_UGT)
+               && CI->isMaxValue(Pred == ICmpInst::ICMP_SGT))
+        return ReplaceInstUsesWith(SI, FalseVal);
       switch (Pred) {
       default: break;
       case ICmpInst::ICMP_ULT:
-      case ICmpInst::ICMP_SLT: {
-        // X < MIN ? T : F  -->  F
-        if (CI->isMinValue(Pred == ICmpInst::ICMP_SLT))
-          return ReplaceInstUsesWith(SI, FalseVal);
-        // X < C ? X : C-1  -->  X > C-1 ? C-1 : X
-        Constant *AdjustedRHS =
-          ConstantInt::get(CI->getContext(), CI->getValue()-1);
-        if ((CmpLHS == TrueVal && AdjustedRHS == FalseVal) ||
-            (CmpLHS == FalseVal && AdjustedRHS == TrueVal)) {
-          Pred = ICmpInst::getSwappedPredicate(Pred);
-          CmpRHS = AdjustedRHS;
-          std::swap(FalseVal, TrueVal);
-          ICI->setPredicate(Pred);
-          ICI->setOperand(1, CmpRHS);
-          SI.setOperand(1, TrueVal);
-          SI.setOperand(2, FalseVal);
-          Changed = true;
-        }
-        break;
-      }
+      case ICmpInst::ICMP_SLT:
       case ICmpInst::ICMP_UGT:
       case ICmpInst::ICMP_SGT: {
-        // X > MAX ? T : F  -->  F
-        if (CI->isMaxValue(Pred == ICmpInst::ICMP_SGT))
-          return ReplaceInstUsesWith(SI, FalseVal);
+        Constant *AdjustedRHS;
+        if (Pred == ICmpInst::ICMP_UGT || Pred == ICmpInst::ICMP_SGT)
+          AdjustedRHS = ConstantInt::get(CI->getContext(), CI->getValue() + 1);
+        else // (Pred == ICmpInst::ICMP_ULT || Pred == ICmpInst::ICMP_SLT)
+          AdjustedRHS = ConstantInt::get(CI->getContext(), CI->getValue() - 1);
+
         // X > C ? X : C+1  -->  X < C+1 ? C+1 : X
-        Constant *AdjustedRHS =
-          ConstantInt::get(CI->getContext(), CI->getValue()+1);
+        // X < C ? X : C-1  -->  X > C-1 ? C-1 : X
         if ((CmpLHS == TrueVal && AdjustedRHS == FalseVal) ||
-            (CmpLHS == FalseVal && AdjustedRHS == TrueVal)) {
-          Pred = ICmpInst::getSwappedPredicate(Pred);
-          CmpRHS = AdjustedRHS;
-          std::swap(FalseVal, TrueVal);
-          ICI->setPredicate(Pred);
-          ICI->setOperand(1, CmpRHS);
-          SI.setOperand(1, TrueVal);
-          SI.setOperand(2, FalseVal);
-          Changed = true;
-        }
+            (CmpLHS == FalseVal && AdjustedRHS == TrueVal))
+          ; // Nothing to do here. Values match without any sign/zero extension.
+
+        // Types do not match. Instead of calculating this with mixed types
+        // promote all to the larger type. This enables scalar evolution to
+        // analyze this expression.
+        else if (CmpRHS->getType()->getScalarSizeInBits()
+                 < SI.getType()->getScalarSizeInBits()) {
+          Constant *sextRHS = ConstantExpr::getSExt(AdjustedRHS,
+                                                    SI.getType());
+
+          // X = sext x; x >s c ? X : C+1 --> X = sext x; X <s C+1 ? C+1 : X
+          // X = sext x; x <s c ? X : C-1 --> X = sext x; X >s C-1 ? C-1 : X
+          // X = sext x; x >u c ? X : C+1 --> X = sext x; X <u C+1 ? C+1 : X
+          // X = sext x; x <u c ? X : C-1 --> X = sext x; X >u C-1 ? C-1 : X
+          if (match(TrueVal, m_SExt(m_Specific(CmpLHS))) &&
+                sextRHS == FalseVal) {
+            CmpLHS = TrueVal;
+            AdjustedRHS = sextRHS;
+          } else if (match(FalseVal, m_SExt(m_Specific(CmpLHS))) &&
+                     sextRHS == TrueVal) {
+            CmpLHS = FalseVal;
+            AdjustedRHS = sextRHS;
+          } else if (ICI->isUnsigned()) {
+            Constant *zextRHS = ConstantExpr::getZExt(AdjustedRHS,
+                                                      SI.getType());
+            // X = zext x; x >u c ? X : C+1 --> X = zext x; X <u C+1 ? C+1 : X
+            // X = zext x; x <u c ? X : C-1 --> X = zext x; X >u C-1 ? C-1 : X
+            // zext + signed compare cannot be changed:
+            //    0xff <s 0x00, but 0x00ff >s 0x0000
+            if (match(TrueVal, m_ZExt(m_Specific(CmpLHS))) &&
+                zextRHS == FalseVal) {
+              CmpLHS = TrueVal;
+              AdjustedRHS = zextRHS;
+            } else if (match(FalseVal, m_ZExt(m_Specific(CmpLHS))) &&
+                       zextRHS == TrueVal) {
+              CmpLHS = FalseVal;
+              AdjustedRHS = zextRHS;
+            } else
+              break;
+          } else
+            break;
+        } else
+          break;
+
+        Pred = ICmpInst::getSwappedPredicate(Pred);
+        CmpRHS = AdjustedRHS;
+        std::swap(FalseVal, TrueVal);
+        ICI->setPredicate(Pred);
+        ICI->setOperand(0, CmpLHS);
+        ICI->setOperand(1, CmpRHS);
+        SI.setOperand(1, TrueVal);
+        SI.setOperand(2, FalseVal);
+        Changed = true;
         break;
       }
       }
