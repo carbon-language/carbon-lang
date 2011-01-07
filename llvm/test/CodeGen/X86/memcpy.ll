@@ -37,34 +37,26 @@ entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
   ret void
 ; LINUX: test3:
-; LINUX-NOT: memcpy
-; LINUX: movups
-; LINUX: movups
-; LINUX: movups
-; LINUX: movups
-; LINUX: movups
-; LINUX: movups
-; LINUX: movups
-; LINUX: movups
+; LINUX: memcpy
 
 ; DARWIN: test3:
 ; DARWIN-NOT: memcpy
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
-; DARWIN: movups
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
+; DARWIN: movq
 }
 
 ; Large constant memcpy's should be inlined when not optimizing for size.

@@ -10,12 +10,8 @@ entry:
   unreachable  
   ; CHECK: movq    _c@TLVP(%rip), %rdi
   ; CHECK-NEXT: callq   *(%rdi)
-  ; CHECK-NEXT: pxor	%xmm0, %xmm0
-  ; CHECK-NEXT: movups  %xmm0, 32(%rax)
-  ; CHECK-NEXT: movups  %xmm0, 16(%rax)
-  ; CHECK-NEXT: movups  %xmm0, (%rax)
-  ; CHECK-NEXT: movl $0, 56(%rax)
-  ; CHECK-NEXT: movq $0, 48(%rax)
+  ; CHECK-NEXT: movl    $0, 56(%rax)
+  ; CHECK-NEXT: movq    $0, 48(%rax)
 }
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind

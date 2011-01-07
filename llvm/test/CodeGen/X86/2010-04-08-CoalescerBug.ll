@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
 ; rdar://7842028
 
 ; Do not delete partially dead copy instructions.
@@ -9,7 +9,7 @@
 %struct.F = type { %struct.FC*, i32, i32, i8, i32, i32, i32 }
 %struct.FC = type { [10 x i8], [32 x i32], %struct.FC*, i32 }
 
-define void @t(%struct.F* %this) nounwind optsize {
+define void @t(%struct.F* %this) nounwind {
 entry:
 ; CHECK: t:
 ; CHECK: addq $12, %rsi
