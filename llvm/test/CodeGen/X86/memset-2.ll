@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=i386-apple-darwin < %s | FileCheck %s
+; RUN: llc -mtriple=i386-apple-darwin -mcpu=yonah < %s | FileCheck %s
 
 declare void @llvm.memset.i32(i8*, i8, i32, i32) nounwind
 
