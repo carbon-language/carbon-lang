@@ -39,6 +39,10 @@
 
 using namespace llvm;
 
+static cl::opt<bool>
+EnableLDV("live-debug-variables",
+          cl::desc("Enable the live debug variables pass"), cl::Hidden);
+
 char LiveDebugVariables::ID = 0;
 
 INITIALIZE_PASS_BEGIN(LiveDebugVariables, "livedebugvars",
@@ -618,6 +622,8 @@ bool LDVImpl::runOnMachineFunction(MachineFunction &mf) {
 }
 
 bool LiveDebugVariables::runOnMachineFunction(MachineFunction &mf) {
+  if (!EnableLDV)
+    return false;
   if (!pImpl)
     pImpl = new LDVImpl(this);
   return static_cast<LDVImpl*>(pImpl)->runOnMachineFunction(mf);
