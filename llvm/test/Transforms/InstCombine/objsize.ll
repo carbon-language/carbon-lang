@@ -160,30 +160,3 @@ define i32 @test7() {
   ret i32 %objsize
 }
 
-define i32 @test8(i32 %x) {
-; CHECK: @test8
-  %alloc = call noalias i8* @malloc(i32 %x) nounwind
-  %objsize = call i32 @llvm.objectsize.i32(i8* %alloc, i1 false) nounwind readonly
-; CHECK-NEXT: ret i32 %x
-  ret i32 %objsize
-}
-
-define i32 @test9(i32 %x) {
-; CHECK: @test9
-  %alloc = call noalias i8* @malloc(i32 %x) nounwind
-  %gep = getelementptr inbounds i8* %alloc, i32 16
-  %objsize = call i32 @llvm.objectsize.i32(i8* %gep, i1 false) nounwind readonly
-; CHECK-NOT: ret i32 %x
-  ret i32 %objsize
-}
-
-define i8* @test10(i32 %x) {
-; CHECK: @test10
-  %alloc = call noalias i8* @malloc(i32 %x) nounwind
-  %objsize = call i32 @llvm.objectsize.i32(i8* %alloc, i1 false) nounwind readonly
-  tail call i8* @__memset_chk(i8* %alloc, i32 0, i32 %x, i32 %objsize) nounwind
-; CHECK-NOT: @llvm.objectsize
-; CHECK: @llvm.memset
-  ret i8* %alloc
-; CHECK: ret i8*
-}

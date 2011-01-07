@@ -304,10 +304,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         if (Value *NElems = getMallocArraySize(MI, TD, true))
           if (ConstantInt *NElements = dyn_cast<ConstantInt>(NElems))
             Size = NElements->getZExtValue() * TD->getTypeAllocSize(MallocType);
-
-      // If there is no offset we can just return the size passed to malloc.
-      if (Offset == 0)
-        return ReplaceInstUsesWith(CI, MI->getArgOperand(0));
     }
 
     // Do not return "I don't know" here. Later optimization passes could

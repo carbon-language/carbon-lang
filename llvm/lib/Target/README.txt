@@ -2009,6 +2009,28 @@ entry:
 
 //===---------------------------------------------------------------------===//
 
+This code can be seen in viterbi:
+
+  %64 = call noalias i8* @malloc(i64 %62) nounwind
+...
+  %67 = call i64 @llvm.objectsize.i64(i8* %64, i1 false) nounwind
+  %68 = call i8* @__memset_chk(i8* %64, i32 0, i64 %62, i64 %67) nounwind
+
+llvm.objectsize.i64 should be taught about malloc/calloc, allowing it to
+fold to %62.  This is a security win (overflows of malloc will get caught)
+and also a performance win by exposing more memsets to the optimizer.
+
+This occurs several times in viterbi.
+
+Note that this would change the semantics of @llvm.objectsize which by its
+current definition always folds to a constant. We also should make sure that
+we remove checking in code like
+
+  char *p = malloc(strlen(s)+1);
+  __strcpy_chk(p, s, __builtin_objectsize(p, 0));
+
+//===---------------------------------------------------------------------===//
+
 This code (from Benchmarks/Dhrystone/dry.c):
 
 define i32 @Func1(i32, i32) nounwind readnone optsize ssp {
