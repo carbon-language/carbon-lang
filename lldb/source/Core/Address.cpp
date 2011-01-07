@@ -68,7 +68,8 @@ ReadBytes (ExecutionContextScope *exe_scope, const Address &address, void *dst, 
     if (target)
     {
         Error error;
-        return target->ReadMemory (address, dst, dst_len, error);
+        bool prefer_file_cache = false;
+        return target->ReadMemory (address, prefer_file_cache, dst, dst_len, error);
     }
     return 0;
 }

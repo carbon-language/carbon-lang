@@ -401,12 +401,27 @@ public:
     GetTargetTriple (ConstString &target_triple);
 
     size_t
+    ReadMemoryFromFileCache (const Address& addr, 
+                             void *dst, 
+                             size_t dst_len, 
+                             Error &error);
+
+    // Reading memory through the target allows us to skip going to the process
+    // for reading memory if possible and it allows us to try and read from 
+    // any constant sections in our object files on disk. If you always want
+    // live program memory, read straight from the process. If you possibly 
+    // want to read from const sections in object files, read from the target.
+    // This version of ReadMemory will try and read memory from the process
+    // if the process is alive. The order is:
+    // 1 - if (prefer_file_cache == true) then read from object file cache
+    // 2 - if there is a valid process, try and read from its memory
+    // 3 - if (prefer_file_cache == false) then read from object file cache
+    size_t
     ReadMemory (const Address& addr,
+                bool prefer_file_cache,
                 void *dst,
                 size_t dst_len,
                 Error &error);
-    
-    
 
     SectionLoadList&
     GetSectionLoadList()

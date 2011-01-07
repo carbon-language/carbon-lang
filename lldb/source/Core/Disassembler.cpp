@@ -422,7 +422,8 @@ Disassembler::ParseInstructions
     DataBufferSP data_sp(heap_buffer);
 
     Error error;
-    const size_t bytes_read = target->ReadMemory (range.GetBaseAddress(), heap_buffer->GetBytes(), heap_buffer->GetByteSize(), error);
+    bool prefer_file_cache = true;
+    const size_t bytes_read = target->ReadMemory (range.GetBaseAddress(), prefer_file_cache, heap_buffer->GetBytes(), heap_buffer->GetByteSize(), error);
     
     if (bytes_read > 0)
     {

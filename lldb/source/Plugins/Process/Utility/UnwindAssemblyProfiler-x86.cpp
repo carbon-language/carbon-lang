@@ -470,7 +470,8 @@ read_byte_for_edis (uint8_t *buf, uint64_t offset_address, void *arg)
 
     uint8_t onebyte_buf[1];
     Error error;
-    if (target->ReadMemory (read_addr, onebyte_buf, 1, error) != -1)
+    const bool prefer_file_cache = true;
+    if (target->ReadMemory (read_addr, prefer_file_cache, onebyte_buf, 1, error) != -1)
     {
         *buf = onebyte_buf[0];
         return 0;
@@ -550,6 +551,7 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
     row.SetRegisterInfo (m_lldb_ip_regnum, initial_regloc);
 
     unwind_plan.AppendRow (row);
+    const bool prefer_file_cache = true;
 
     while (m_func_bounds.ContainsFileAddress (m_cur_insn) && non_prologue_insn_count < 10)
     {
@@ -562,7 +564,7 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
             // An unrecognized/junk instruction
             break;
         }
-        if (m_target.ReadMemory (m_cur_insn, m_cur_insn_bytes, insn_len, error) == -1)
+        if (m_target.ReadMemory (m_cur_insn, prefer_file_cache, m_cur_insn_bytes, insn_len, error) == -1)
         {
            // Error reading the instruction out of the file, stop scanning
            break;
@@ -672,7 +674,7 @@ loopnext:
         Address last_insn (m_func_bounds.GetBaseAddress());
         last_insn.SetOffset (last_insn.GetOffset() + m_func_bounds.GetByteSize() - 1);
         uint8_t bytebuf[1];
-        if (m_target.ReadMemory (last_insn, bytebuf, 1, error) != -1)
+        if (m_target.ReadMemory (last_insn, prefer_file_cache, bytebuf, 1, error) != -1)
         {
             if (bytebuf[0] == 0xc3)   // ret aka retq
             {
@@ -723,7 +725,8 @@ AssemblyParse_x86::get_fast_unwind_plan (AddressRange& func, UnwindPlan &unwind_
 
     uint8_t bytebuf[4];
     Error error;
-    if (m_target.ReadMemory (func.GetBaseAddress(), bytebuf, sizeof (bytebuf), error) == -1)
+    const bool prefer_file_cache = true;
+    if (m_target.ReadMemory (func.GetBaseAddress(), prefer_file_cache, bytebuf, sizeof (bytebuf), error) == -1)
         return false;
 
     uint8_t i386_prologue[] = {0x55, 0x89, 0xe5};
@@ -781,6 +784,7 @@ AssemblyParse_x86::find_first_non_prologue_insn (Address &address)
         return false;
     }
 
+    const bool prefer_file_cache = true;
     while (m_func_bounds.ContainsFileAddress (m_cur_insn))
     {
         Error error;
@@ -790,7 +794,7 @@ AssemblyParse_x86::find_first_non_prologue_insn (Address &address)
             // An error parsing the instruction, i.e. probably data/garbage - stop scanning
             break;
         }
-        if (m_target.ReadMemory (m_cur_insn, m_cur_insn_bytes, insn_len, error) == -1)
+        if (m_target.ReadMemory (m_cur_insn, prefer_file_cache, m_cur_insn_bytes, insn_len, error) == -1)
         {
            // Error reading the instruction out of the file, stop scanning
            break;

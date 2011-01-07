@@ -589,12 +589,43 @@ Target::ModulesDidUnload (ModuleList &module_list)
 }
 
 size_t
-Target::ReadMemory (const Address& addr, void *dst, size_t dst_len, Error &error)
+Target::ReadMemoryFromFileCache (const Address& addr, void *dst, size_t dst_len, Error &error)
+{
+    const Section *section = addr.GetSection();
+    if (section && section->GetModule())
+    {
+        ObjectFile *objfile = section->GetModule()->GetObjectFile();
+        if (objfile)
+        {
+            size_t bytes_read = section->ReadSectionDataFromObjectFile (objfile, 
+                                                                        addr.GetOffset(), 
+                                                                        dst, 
+                                                                        dst_len);
+            if (bytes_read > 0)
+                return bytes_read;
+            else
+                error.SetErrorStringWithFormat("error reading data from section %s", section->GetName().GetCString());
+        }
+        else
+        {
+            error.SetErrorString("address isn't from a object file");
+        }
+    }
+    else
+    {
+        error.SetErrorString("address doesn't contain a section that points to a section in a object file");
+    }
+    return 0;
+}
+
+size_t
+Target::ReadMemory (const Address& addr, bool prefer_file_cache, void *dst, size_t dst_len, Error &error)
 {
     error.Clear();
-
+    
     bool process_is_valid = m_process_sp && m_process_sp->IsAlive();
 
+    size_t bytes_read = 0;
     Address resolved_addr(addr);
     if (!resolved_addr.IsSectionOffset())
     {
@@ -608,6 +639,12 @@ Target::ReadMemory (const Address& addr, void *dst, size_t dst_len, Error &error
         }
     }
     
+    if (prefer_file_cache)
+    {
+        bytes_read = ReadMemoryFromFileCache (resolved_addr, dst, dst_len, error);
+        if (bytes_read > 0)
+            return bytes_read;
+    }
     
     if (process_is_valid)
     {
@@ -623,7 +660,7 @@ Target::ReadMemory (const Address& addr, void *dst, size_t dst_len, Error &error
         }
         else
         {
-            size_t bytes_read = m_process_sp->ReadMemory(load_addr, dst, dst_len, error);
+            bytes_read = m_process_sp->ReadMemory(load_addr, dst, dst_len, error);
             if (bytes_read != dst_len)
             {
                 if (error.Success())
@@ -646,14 +683,11 @@ Target::ReadMemory (const Address& addr, void *dst, size_t dst_len, Error &error
         }
     }
     
-    const Section *section = resolved_addr.GetSection();
-    if (section && section->GetModule())
+    if (!prefer_file_cache)
     {
-        ObjectFile *objfile = section->GetModule()->GetObjectFile();
-        return section->ReadSectionDataFromObjectFile (objfile, 
-                                                       resolved_addr.GetOffset(), 
-                                                       dst, 
-                                                       dst_len);
+        // If we didn't already try and read from the object file cache, then
+        // try it after failing to read from the process.
+        return ReadMemoryFromFileCache (resolved_addr, dst, dst_len, error);
     }
     return 0;
 }
