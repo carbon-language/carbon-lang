@@ -59,7 +59,7 @@
      					<li>Classes can't inherit from any other classes.</li>
       					<li>Classes can't contain virtual methods.</li>
        					<li>Classes should be compatible with script bridging utilities like <a href="http://www.swig.org/">swig</a>.</li>
-       					<li>Classes should be lighweight and be backed by a single object pointer, shared pointer or global variable in the lldb_private.</li>
+       					<li>Classes should be lightweight and be backed by a single object pointer, shared pointer or global variable in the lldb_private.</li>
        					<li>The interface should be as minimal as possible in order to give a complete API.</li>
    				    </ul>
    				    <p>By adhering to these rules we should be able to continue to 
@@ -104,7 +104,7 @@
                        or <b>lldb_private::CommandObjectMultiword</b> object.</p>
                    <p><b>lldb_private::CommandObjectMultiword</b> are commands that
                       have subcommands and allow command line commands to be
-                      logically grouped into a hiearchy.</p>
+                      logically grouped into a hierarchy.</p>
                   <p><b>lldb_private::CommandObject</b> command line commands
                       are the objects that implement the functionality of the
                       command. They can optionally define
