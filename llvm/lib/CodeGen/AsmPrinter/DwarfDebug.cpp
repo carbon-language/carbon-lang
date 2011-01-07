@@ -2257,15 +2257,6 @@ DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction * MF,
   }
 }
 
-/// isDbgValueInUndefinedReg - Return true if debug value, encoded by
-/// DBG_VALUE instruction, is in undefined reg.
-static bool isDbgValueInUndefinedReg(const MachineInstr *MI) {
-  assert (MI->isDebugValue() && "Invalid DBG_VALUE machine instruction!");
-  if (MI->getOperand(0).isReg() && !MI->getOperand(0).getReg())
-    return true;
-  return false;
-}
-
 /// isDbgValueInDefinedReg - Return true if debug value, encoded by
 /// DBG_VALUE instruction, is in a defined reg.
 static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
@@ -2290,7 +2281,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
-      if (!MInsn->isDebugValue() || isDbgValueInUndefinedReg(MInsn))
+      if (!MInsn->isDebugValue())
         continue;
       DbgValues.push_back(MInsn);
     }
@@ -2312,19 +2303,18 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
            ME = DbgValues.end(); MI != ME; ++MI) {
       const MDNode *Var =
         (*MI)->getOperand((*MI)->getNumOperands()-1).getMetadata();
-      if (Var == DV && isDbgValueInDefinedReg(*MI) &&
+      if (Var == DV && 
           !PrevMI->isIdenticalTo(*MI))
         MultipleValues.push_back(*MI);
       PrevMI = *MI;
     }
 
-    DbgScope *Scope = findDbgScope(MInsn);
-    bool CurFnArg = false;
+    DbgScope *Scope = NULL;
     if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
         DISubprogram(DV.getContext()).describes(MF->getFunction()))
-      CurFnArg = true;
-    if (!Scope && CurFnArg)
       Scope = CurrentFnDbgScope;
+    else
+      Scope = findDbgScope(MInsn);
     // If variable scope is not found then skip this variable.
     if (!Scope)
       continue;
