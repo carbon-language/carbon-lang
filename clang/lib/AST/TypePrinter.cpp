@@ -681,13 +681,13 @@ void TypePrinter::printAttributed(const AttributedType *T,
   // TODO: not all attributes are GCC-style attributes.
   S += "__attribute__((";
   switch (T->getAttrKind()) {
-  case AttributedType::address_space:
+  case AttributedType::attr_address_space:
     S += "address_space(";
     S += T->getEquivalentType().getAddressSpace();
     S += ")";
     break;
 
-  case AttributedType::vector_size: {
+  case AttributedType::attr_vector_size: {
     S += "__vector_size__(";
     if (const VectorType *vector =T->getEquivalentType()->getAs<VectorType>()) {
       S += vector->getNumElements();
@@ -702,9 +702,9 @@ void TypePrinter::printAttributed(const AttributedType *T,
     break;
   }
 
-  case AttributedType::neon_vector_type:
-  case AttributedType::neon_polyvector_type: {
-    if (T->getAttrKind() == AttributedType::neon_vector_type)
+  case AttributedType::attr_neon_vector_type:
+  case AttributedType::attr_neon_polyvector_type: {
+    if (T->getAttrKind() == AttributedType::attr_neon_vector_type)
       S += "neon_vector_type(";
     else
       S += "neon_polyvector_type(";
@@ -714,7 +714,7 @@ void TypePrinter::printAttributed(const AttributedType *T,
     break;
   }
 
-  case AttributedType::regparm: {
+  case AttributedType::attr_regparm: {
     S += "regparm(";
     QualType t = T->getEquivalentType();
     while (!t->isFunctionType())
@@ -724,7 +724,7 @@ void TypePrinter::printAttributed(const AttributedType *T,
     break;
   }
 
-  case AttributedType::objc_gc: {
+  case AttributedType::attr_objc_gc: {
     S += "objc_gc(";
 
     QualType tmp = T->getEquivalentType();

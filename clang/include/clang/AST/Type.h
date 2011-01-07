@@ -2694,20 +2694,20 @@ public:
   // clang::attr::Kind doesn't currently cover the pure type attrs.
   enum Kind {
     // Expression operand.
-    address_space,
-    regparm,
-    vector_size,
-    neon_vector_type,
-    neon_polyvector_type,
+    attr_address_space,
+    attr_regparm,
+    attr_vector_size,
+    attr_neon_vector_type,
+    attr_neon_polyvector_type,
 
-    FirstExprOperandKind = address_space,
-    LastExprOperandKind = neon_polyvector_type,
+    FirstExprOperandKind = attr_address_space,
+    LastExprOperandKind = attr_neon_polyvector_type,
 
     // Enumerated operand (string or keyword).
-    objc_gc,
+    attr_objc_gc,
 
-    FirstEnumOperandKind = objc_gc,
-    LastEnumOperandKind = objc_gc,
+    FirstEnumOperandKind = attr_objc_gc,
+    LastEnumOperandKind = attr_objc_gc,
 
     // No operand.
     attr_noreturn,
