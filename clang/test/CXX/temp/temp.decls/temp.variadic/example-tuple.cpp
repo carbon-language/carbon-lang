@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
 
 // Example tuple implementation from the variadic templates proposal,
-// ISO C++ committee document nmber N2080.
+// ISO C++ committee document number N2080.
 
 // Helper type traits
 template<typename T>
