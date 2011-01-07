@@ -319,8 +319,12 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
       Unwinds.push_back(UI);
     }
   }
-  // If we don't have any invokes or unwinds, there's nothing to do.
-  if (Unwinds.empty() && Invokes.empty()) return false;
+
+  NumInvokes += Invokes.size();
+  NumUnwinds += Unwinds.size();
+
+  // If we don't have any invokes, there's nothing to do.
+  if (Invokes.empty()) return false;
 
   // Find the eh.selector.*, eh.exception and alloca calls.
   //
@@ -334,6 +338,7 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
   SmallVector<CallInst*,16> EH_Selectors;
   SmallVector<CallInst*,16> EH_Exceptions;
   SmallVector<Instruction*,16> JmpbufUpdatePoints;
+
   // Note: Skip the entry block since there's nothing there that interests
   // us. eh.selector and eh.exception shouldn't ever be there, and we
   // want to disregard any allocas that are there.
@@ -353,235 +358,230 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
       }
     }
   }
+
   // If we don't have any eh.selector calls, we can't determine the personality
   // function. Without a personality function, we can't process exceptions.
   if (!PersonalityFn) return false;
 
-  NumInvokes += Invokes.size();
-  NumUnwinds += Unwinds.size();
+  // We have invokes, so we need to add register/unregister calls to get this
+  // function onto the global unwind stack.
+  //
+  // First thing we need to do is scan the whole function for values that are
+  // live across unwind edges.  Each value that is live across an unwind edge we
+  // spill into a stack location, guaranteeing that there is nothing live across
+  // the unwind edge.  This process also splits all critical edges coming out of
+  // invoke's.
+  splitLiveRangesAcrossInvokes(Invokes);
 
-  if (!Invokes.empty()) {
-    // We have invokes, so we need to add register/unregister calls to get
-    // this function onto the global unwind stack.
-    //
-    // First thing we need to do is scan the whole function for values that are
-    // live across unwind edges.  Each value that is live across an unwind edge
-    // we spill into a stack location, guaranteeing that there is nothing live
-    // across the unwind edge.  This process also splits all critical edges
-    // coming out of invoke's.
-    splitLiveRangesAcrossInvokes(Invokes);
+  BasicBlock *EntryBB = F.begin();
+  // Create an alloca for the incoming jump buffer ptr and the new jump buffer
+  // that needs to be restored on all exits from the function.  This is an
+  // alloca because the value needs to be added to the global context list.
+  unsigned Align = 4; // FIXME: Should be a TLI check?
+  AllocaInst *FunctionContext =
+    new AllocaInst(FunctionContextTy, 0, Align,
+                   "fcn_context", F.begin()->begin());
 
-    BasicBlock *EntryBB = F.begin();
-    // Create an alloca for the incoming jump buffer ptr and the new jump buffer
-    // that needs to be restored on all exits from the function.  This is an
-    // alloca because the value needs to be added to the global context list.
-    unsigned Align = 4; // FIXME: Should be a TLI check?
-    AllocaInst *FunctionContext =
-      new AllocaInst(FunctionContextTy, 0, Align,
-                     "fcn_context", F.begin()->begin());
+  Value *Idxs[2];
+  const Type *Int32Ty = Type::getInt32Ty(F.getContext());
+  Value *Zero = ConstantInt::get(Int32Ty, 0);
+  // We need to also keep around a reference to the call_site field
+  Idxs[0] = Zero;
+  Idxs[1] = ConstantInt::get(Int32Ty, 1);
+  CallSite = GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
+                                       "call_site",
+                                       EntryBB->getTerminator());
 
-    Value *Idxs[2];
-    const Type *Int32Ty = Type::getInt32Ty(F.getContext());
-    Value *Zero = ConstantInt::get(Int32Ty, 0);
-    // We need to also keep around a reference to the call_site field
-    Idxs[0] = Zero;
-    Idxs[1] = ConstantInt::get(Int32Ty, 1);
-    CallSite = GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
-                                         "call_site",
-                                         EntryBB->getTerminator());
+  // The exception selector comes back in context->data[1]
+  Idxs[1] = ConstantInt::get(Int32Ty, 2);
+  Value *FCData = GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
+                                            "fc_data",
+                                            EntryBB->getTerminator());
+  Idxs[1] = ConstantInt::get(Int32Ty, 1);
+  Value *SelectorAddr = GetElementPtrInst::Create(FCData, Idxs, Idxs+2,
+                                                  "exc_selector_gep",
+                                                  EntryBB->getTerminator());
+  // The exception value comes back in context->data[0]
+  Idxs[1] = Zero;
+  Value *ExceptionAddr = GetElementPtrInst::Create(FCData, Idxs, Idxs+2,
+                                                   "exception_gep",
+                                                   EntryBB->getTerminator());
 
-    // The exception selector comes back in context->data[1]
-    Idxs[1] = ConstantInt::get(Int32Ty, 2);
-    Value *FCData = GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
-                                              "fc_data",
-                                              EntryBB->getTerminator());
-    Idxs[1] = ConstantInt::get(Int32Ty, 1);
-    Value *SelectorAddr = GetElementPtrInst::Create(FCData, Idxs, Idxs+2,
-                                                    "exc_selector_gep",
-                                                    EntryBB->getTerminator());
-    // The exception value comes back in context->data[0]
-    Idxs[1] = Zero;
-    Value *ExceptionAddr = GetElementPtrInst::Create(FCData, Idxs, Idxs+2,
-                                                     "exception_gep",
-                                                     EntryBB->getTerminator());
-
-    // The result of the eh.selector call will be replaced with a
-    // a reference to the selector value returned in the function
-    // context. We leave the selector itself so the EH analysis later
-    // can use it.
-    for (int i = 0, e = EH_Selectors.size(); i < e; ++i) {
-      CallInst *I = EH_Selectors[i];
-      Value *SelectorVal = new LoadInst(SelectorAddr, "select_val", true, I);
-      I->replaceAllUsesWith(SelectorVal);
-    }
-    // eh.exception calls are replaced with references to the proper
-    // location in the context. Unlike eh.selector, the eh.exception
-    // calls are removed entirely.
-    for (int i = 0, e = EH_Exceptions.size(); i < e; ++i) {
-      CallInst *I = EH_Exceptions[i];
-      // Possible for there to be duplicates, so check to make sure
-      // the instruction hasn't already been removed.
-      if (!I->getParent()) continue;
-      Value *Val = new LoadInst(ExceptionAddr, "exception", true, I);
-      const Type *Ty = Type::getInt8PtrTy(F.getContext());
-      Val = CastInst::Create(Instruction::IntToPtr, Val, Ty, "", I);
-
-      I->replaceAllUsesWith(Val);
-      I->eraseFromParent();
-    }
-
-    // The entry block changes to have the eh.sjlj.setjmp, with a conditional
-    // branch to a dispatch block for non-zero returns. If we return normally,
-    // we're not handling an exception and just register the function context
-    // and continue.
-
-    // Create the dispatch block.  The dispatch block is basically a big switch
-    // statement that goes to all of the invoke landing pads.
-    BasicBlock *DispatchBlock =
-            BasicBlock::Create(F.getContext(), "eh.sjlj.setjmp.catch", &F);
-
-    // Add a call to dispatch_setup at the start of the dispatch block. This
-    // is expanded to any target-specific setup that needs to be done.
-    Value *SetupArg =
-      CastInst::Create(Instruction::BitCast, FunctionContext,
-                       Type::getInt8PtrTy(F.getContext()), "",
-                       DispatchBlock);
-    CallInst::Create(DispatchSetupFn, SetupArg, "", DispatchBlock);
-
-    // Insert a load of the callsite in the dispatch block, and a switch on
-    // its value.  By default, we go to a block that just does an unwind
-    // (which is the correct action for a standard call).
-    BasicBlock *UnwindBlock =
-      BasicBlock::Create(F.getContext(), "unwindbb", &F);
-    Unwinds.push_back(new UnwindInst(F.getContext(), UnwindBlock));
-
-    Value *DispatchLoad = new LoadInst(CallSite, "invoke.num", true,
-                                       DispatchBlock);
-    SwitchInst *DispatchSwitch =
-      SwitchInst::Create(DispatchLoad, UnwindBlock, Invokes.size(),
-                         DispatchBlock);
-    // Split the entry block to insert the conditional branch for the setjmp.
-    BasicBlock *ContBlock = EntryBB->splitBasicBlock(EntryBB->getTerminator(),
-                                                     "eh.sjlj.setjmp.cont");
-
-    // Populate the Function Context
-    //   1. LSDA address
-    //   2. Personality function address
-    //   3. jmpbuf (save SP, FP and call eh.sjlj.setjmp)
-
-    // LSDA address
-    Idxs[0] = Zero;
-    Idxs[1] = ConstantInt::get(Int32Ty, 4);
-    Value *LSDAFieldPtr =
-      GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
-                                "lsda_gep",
-                                EntryBB->getTerminator());
-    Value *LSDA = CallInst::Create(LSDAAddrFn, "lsda_addr",
-                                   EntryBB->getTerminator());
-    new StoreInst(LSDA, LSDAFieldPtr, true, EntryBB->getTerminator());
-
-    Idxs[1] = ConstantInt::get(Int32Ty, 3);
-    Value *PersonalityFieldPtr =
-      GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
-                                "lsda_gep",
-                                EntryBB->getTerminator());
-    new StoreInst(PersonalityFn, PersonalityFieldPtr, true,
-                  EntryBB->getTerminator());
-
-    // Save the frame pointer.
-    Idxs[1] = ConstantInt::get(Int32Ty, 5);
-    Value *JBufPtr
-      = GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
-                                  "jbuf_gep",
-                                  EntryBB->getTerminator());
-    Idxs[1] = ConstantInt::get(Int32Ty, 0);
-    Value *FramePtr =
-      GetElementPtrInst::Create(JBufPtr, Idxs, Idxs+2, "jbuf_fp_gep",
-                                EntryBB->getTerminator());
-
-    Value *Val = CallInst::Create(FrameAddrFn,
-                                  ConstantInt::get(Int32Ty, 0),
-                                  "fp",
-                                  EntryBB->getTerminator());
-    new StoreInst(Val, FramePtr, true, EntryBB->getTerminator());
-
-    // Save the stack pointer.
-    Idxs[1] = ConstantInt::get(Int32Ty, 2);
-    Value *StackPtr =
-      GetElementPtrInst::Create(JBufPtr, Idxs, Idxs+2, "jbuf_sp_gep",
-                                EntryBB->getTerminator());
-
-    Val = CallInst::Create(StackAddrFn, "sp", EntryBB->getTerminator());
-    new StoreInst(Val, StackPtr, true, EntryBB->getTerminator());
-
-    // Call the setjmp instrinsic. It fills in the rest of the jmpbuf.
-    Value *SetjmpArg =
-      CastInst::Create(Instruction::BitCast, JBufPtr,
-                       Type::getInt8PtrTy(F.getContext()), "",
-                       EntryBB->getTerminator());
-    Value *DispatchVal = CallInst::Create(BuiltinSetjmpFn, SetjmpArg,
-                                          "dispatch",
-                                          EntryBB->getTerminator());
-    // check the return value of the setjmp. non-zero goes to dispatcher.
-    Value *IsNormal = new ICmpInst(EntryBB->getTerminator(),
-                                   ICmpInst::ICMP_EQ, DispatchVal, Zero,
-                                   "notunwind");
-    // Nuke the uncond branch.
-    EntryBB->getTerminator()->eraseFromParent();
-
-    // Put in a new condbranch in its place.
-    BranchInst::Create(ContBlock, DispatchBlock, IsNormal, EntryBB);
-
-    // Register the function context and make sure it's known to not throw
-    CallInst *Register =
-      CallInst::Create(RegisterFn, FunctionContext, "",
-                       ContBlock->getTerminator());
-    Register->setDoesNotThrow();
-
-    // At this point, we are all set up, update the invoke instructions
-    // to mark their call_site values, and fill in the dispatch switch
-    // accordingly.
-    for (unsigned i = 0, e = Invokes.size(); i != e; ++i)
-      markInvokeCallSite(Invokes[i], i+1, CallSite, DispatchSwitch);
-
-    // Mark call instructions that aren't nounwind as no-action
-    // (call_site == -1). Skip the entry block, as prior to then, no function
-    // context has been created for this function and any unexpected exceptions
-    // thrown will go directly to the caller's context, which is what we want
-    // anyway, so no need to do anything here.
-    for (Function::iterator BB = F.begin(), E = F.end(); ++BB != E;) {
-      for (BasicBlock::iterator I = BB->begin(), end = BB->end(); I != end; ++I)
-        if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          // Ignore calls to the EH builtins (eh.selector, eh.exception)
-          Constant *Callee = CI->getCalledFunction();
-          if (Callee != SelectorFn && Callee != ExceptionFn
-              && !CI->doesNotThrow())
-            insertCallSiteStore(CI, -1, CallSite);
-        }
-    }
-
-    // Replace all unwinds with a branch to the unwind handler.
-    // ??? Should this ever happen with sjlj exceptions?
-    for (unsigned i = 0, e = Unwinds.size(); i != e; ++i) {
-      BranchInst::Create(UnwindBlock, Unwinds[i]);
-      Unwinds[i]->eraseFromParent();
-    }
-
-    // Following any allocas not in the entry block, update the saved SP
-    // in the jmpbuf to the new value.
-    for (unsigned i = 0, e = JmpbufUpdatePoints.size(); i != e; ++i) {
-      Instruction *AI = JmpbufUpdatePoints[i];
-      Instruction *StackAddr = CallInst::Create(StackAddrFn, "sp");
-      StackAddr->insertAfter(AI);
-      Instruction *StoreStackAddr = new StoreInst(StackAddr, StackPtr, true);
-      StoreStackAddr->insertAfter(StackAddr);
-    }
-
-    // Finally, for any returns from this function, if this function contains an
-    // invoke, add a call to unregister the function context.
-    for (unsigned i = 0, e = Returns.size(); i != e; ++i)
-      CallInst::Create(UnregisterFn, FunctionContext, "", Returns[i]);
+  // The result of the eh.selector call will be replaced with a a reference to
+  // the selector value returned in the function context. We leave the selector
+  // itself so the EH analysis later can use it.
+  for (int i = 0, e = EH_Selectors.size(); i < e; ++i) {
+    CallInst *I = EH_Selectors[i];
+    Value *SelectorVal = new LoadInst(SelectorAddr, "select_val", true, I);
+    I->replaceAllUsesWith(SelectorVal);
   }
+
+  // eh.exception calls are replaced with references to the proper location in
+  // the context. Unlike eh.selector, the eh.exception calls are removed
+  // entirely.
+  for (int i = 0, e = EH_Exceptions.size(); i < e; ++i) {
+    CallInst *I = EH_Exceptions[i];
+    // Possible for there to be duplicates, so check to make sure the
+    // instruction hasn't already been removed.
+    if (!I->getParent()) continue;
+    Value *Val = new LoadInst(ExceptionAddr, "exception", true, I);
+    const Type *Ty = Type::getInt8PtrTy(F.getContext());
+    Val = CastInst::Create(Instruction::IntToPtr, Val, Ty, "", I);
+
+    I->replaceAllUsesWith(Val);
+    I->eraseFromParent();
+  }
+
+  // The entry block changes to have the eh.sjlj.setjmp, with a conditional
+  // branch to a dispatch block for non-zero returns. If we return normally,
+  // we're not handling an exception and just register the function context and
+  // continue.
+
+  // Create the dispatch block.  The dispatch block is basically a big switch
+  // statement that goes to all of the invoke landing pads.
+  BasicBlock *DispatchBlock =
+    BasicBlock::Create(F.getContext(), "eh.sjlj.setjmp.catch", &F);
+
+  // Add a call to dispatch_setup at the start of the dispatch block. This is
+  // expanded to any target-specific setup that needs to be done.
+  Value *SetupArg =
+    CastInst::Create(Instruction::BitCast, FunctionContext,
+                     Type::getInt8PtrTy(F.getContext()), "",
+                     DispatchBlock);
+  CallInst::Create(DispatchSetupFn, SetupArg, "", DispatchBlock);
+
+  // Insert a load of the callsite in the dispatch block, and a switch on its
+  // value.  By default, we go to a block that just does an unwind (which is the
+  // correct action for a standard call).
+  BasicBlock *UnwindBlock =
+    BasicBlock::Create(F.getContext(), "unwindbb", &F);
+  Unwinds.push_back(new UnwindInst(F.getContext(), UnwindBlock));
+
+  Value *DispatchLoad = new LoadInst(CallSite, "invoke.num", true,
+                                     DispatchBlock);
+  SwitchInst *DispatchSwitch =
+    SwitchInst::Create(DispatchLoad, UnwindBlock, Invokes.size(),
+                       DispatchBlock);
+  // Split the entry block to insert the conditional branch for the setjmp.
+  BasicBlock *ContBlock = EntryBB->splitBasicBlock(EntryBB->getTerminator(),
+                                                   "eh.sjlj.setjmp.cont");
+
+  // Populate the Function Context
+  //   1. LSDA address
+  //   2. Personality function address
+  //   3. jmpbuf (save SP, FP and call eh.sjlj.setjmp)
+
+  // LSDA address
+  Idxs[0] = Zero;
+  Idxs[1] = ConstantInt::get(Int32Ty, 4);
+  Value *LSDAFieldPtr =
+    GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
+                              "lsda_gep",
+                              EntryBB->getTerminator());
+  Value *LSDA = CallInst::Create(LSDAAddrFn, "lsda_addr",
+                                 EntryBB->getTerminator());
+  new StoreInst(LSDA, LSDAFieldPtr, true, EntryBB->getTerminator());
+
+  Idxs[1] = ConstantInt::get(Int32Ty, 3);
+  Value *PersonalityFieldPtr =
+    GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
+                              "lsda_gep",
+                              EntryBB->getTerminator());
+  new StoreInst(PersonalityFn, PersonalityFieldPtr, true,
+                EntryBB->getTerminator());
+
+  // Save the frame pointer.
+  Idxs[1] = ConstantInt::get(Int32Ty, 5);
+  Value *JBufPtr
+    = GetElementPtrInst::Create(FunctionContext, Idxs, Idxs+2,
+                                "jbuf_gep",
+                                EntryBB->getTerminator());
+  Idxs[1] = ConstantInt::get(Int32Ty, 0);
+  Value *FramePtr =
+    GetElementPtrInst::Create(JBufPtr, Idxs, Idxs+2, "jbuf_fp_gep",
+                              EntryBB->getTerminator());
+
+  Value *Val = CallInst::Create(FrameAddrFn,
+                                ConstantInt::get(Int32Ty, 0),
+                                "fp",
+                                EntryBB->getTerminator());
+  new StoreInst(Val, FramePtr, true, EntryBB->getTerminator());
+
+  // Save the stack pointer.
+  Idxs[1] = ConstantInt::get(Int32Ty, 2);
+  Value *StackPtr =
+    GetElementPtrInst::Create(JBufPtr, Idxs, Idxs+2, "jbuf_sp_gep",
+                              EntryBB->getTerminator());
+
+  Val = CallInst::Create(StackAddrFn, "sp", EntryBB->getTerminator());
+  new StoreInst(Val, StackPtr, true, EntryBB->getTerminator());
+
+  // Call the setjmp instrinsic. It fills in the rest of the jmpbuf.
+  Value *SetjmpArg =
+    CastInst::Create(Instruction::BitCast, JBufPtr,
+                     Type::getInt8PtrTy(F.getContext()), "",
+                     EntryBB->getTerminator());
+  Value *DispatchVal = CallInst::Create(BuiltinSetjmpFn, SetjmpArg,
+                                        "dispatch",
+                                        EntryBB->getTerminator());
+  // check the return value of the setjmp. non-zero goes to dispatcher.
+  Value *IsNormal = new ICmpInst(EntryBB->getTerminator(),
+                                 ICmpInst::ICMP_EQ, DispatchVal, Zero,
+                                 "notunwind");
+  // Nuke the uncond branch.
+  EntryBB->getTerminator()->eraseFromParent();
+
+  // Put in a new condbranch in its place.
+  BranchInst::Create(ContBlock, DispatchBlock, IsNormal, EntryBB);
+
+  // Register the function context and make sure it's known to not throw
+  CallInst *Register =
+    CallInst::Create(RegisterFn, FunctionContext, "",
+                     ContBlock->getTerminator());
+  Register->setDoesNotThrow();
+
+  // At this point, we are all set up, update the invoke instructions to mark
+  // their call_site values, and fill in the dispatch switch accordingly.
+  for (unsigned i = 0, e = Invokes.size(); i != e; ++i)
+    markInvokeCallSite(Invokes[i], i+1, CallSite, DispatchSwitch);
+
+  // Mark call instructions that aren't nounwind as no-action (call_site ==
+  // -1). Skip the entry block, as prior to then, no function context has been
+  // created for this function and any unexpected exceptions thrown will go
+  // directly to the caller's context, which is what we want anyway, so no need
+  // to do anything here.
+  for (Function::iterator BB = F.begin(), E = F.end(); ++BB != E;) {
+    for (BasicBlock::iterator I = BB->begin(), end = BB->end(); I != end; ++I)
+      if (CallInst *CI = dyn_cast<CallInst>(I)) {
+        // Ignore calls to the EH builtins (eh.selector, eh.exception)
+        Constant *Callee = CI->getCalledFunction();
+        if (Callee != SelectorFn && Callee != ExceptionFn
+            && !CI->doesNotThrow())
+          insertCallSiteStore(CI, -1, CallSite);
+      }
+  }
+
+  // Replace all unwinds with a branch to the unwind handler.
+  // ??? Should this ever happen with sjlj exceptions?
+  for (unsigned i = 0, e = Unwinds.size(); i != e; ++i) {
+    BranchInst::Create(UnwindBlock, Unwinds[i]);
+    Unwinds[i]->eraseFromParent();
+  }
+
+  // Following any allocas not in the entry block, update the saved SP in the
+  // jmpbuf to the new value.
+  for (unsigned i = 0, e = JmpbufUpdatePoints.size(); i != e; ++i) {
+    Instruction *AI = JmpbufUpdatePoints[i];
+    Instruction *StackAddr = CallInst::Create(StackAddrFn, "sp");
+    StackAddr->insertAfter(AI);
+    Instruction *StoreStackAddr = new StoreInst(StackAddr, StackPtr, true);
+    StoreStackAddr->insertAfter(StackAddr);
+  }
+
+  // Finally, for any returns from this function, if this function contains an
+  // invoke, add a call to unregister the function context.
+  for (unsigned i = 0, e = Returns.size(); i != e; ++i)
+    CallInst::Create(UnregisterFn, FunctionContext, "", Returns[i]);
 
   return true;
 }
