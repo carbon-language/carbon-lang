@@ -2710,12 +2710,12 @@ public:
     LastEnumOperandKind = objc_gc,
 
     // No operand.
-    noreturn,
-    cdecl,
-    fastcall,
-    stdcall,
-    thiscall,
-    pascal
+    attr_noreturn,
+    attr_cdecl,
+    attr_fastcall,
+    attr_stdcall,
+    attr_thiscall,
+    attr_pascal
   };
 
 private:

@@ -742,12 +742,12 @@ void TypePrinter::printAttributed(const AttributedType *T,
     break;
   }
 
-  case AttributedType::noreturn: S += "noreturn"; break;
-  case AttributedType::cdecl: S += "cdecl"; break;
-  case AttributedType::fastcall: S += "fastcall"; break;
-  case AttributedType::stdcall: S += "stdcall"; break;
-  case AttributedType::thiscall: S += "thiscall"; break;
-  case AttributedType::pascal: S += "pascal"; break;
+  case AttributedType::attr_noreturn: S += "noreturn"; break;
+  case AttributedType::attr_cdecl: S += "cdecl"; break;
+  case AttributedType::attr_fastcall: S += "fastcall"; break;
+  case AttributedType::attr_stdcall: S += "stdcall"; break;
+  case AttributedType::attr_thiscall: S += "thiscall"; break;
+  case AttributedType::attr_pascal: S += "pascal"; break;
   }
   S += "))";
 }
