@@ -576,9 +576,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
 
   std::string ts = TypeString(proto[0], typestr);
   std::string s;
-  if (op == OpHi || op == OpLo) {
-    s = "union { " + ts + " r; double d; } u; u.d = ";
-  } else if (!define) {
+  if (!define) {
     s = "return ";
   }
 
@@ -727,10 +725,12 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += ", (int64x1_t)__b, 0, 1);";
     break;
   case OpHi:
-    s += "(((float64x2_t)__a)[1]);";
+    s += "(" + ts +
+      ")__builtin_shufflevector((int64x2_t)__a, (int64x2_t)__a, 1);";
     break;
   case OpLo:
-    s += "(((float64x2_t)__a)[0]);";
+    s += "(" + ts +
+      ")__builtin_shufflevector((int64x2_t)__a, (int64x2_t)__a, 0);";
     break;
   case OpDup:
     s += Duplicate(nElts, typestr, "__a") + ";";
@@ -803,11 +803,6 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   default:
     throw "unknown OpKind!";
     break;
-  }
-  if (op == OpHi || op == OpLo) {
-    if (!define)
-      s += " return";
-    s += " u.r;";
   }
   return s;
 }
@@ -1134,11 +1129,6 @@ void NeonEmitter::run(raw_ostream &OS) {
     OS << TypeString('s', TDTypeVec[i]);
     OS << " " << TypeString('d', TDTypeVec[i]) << ";\n";
   }
-  OS << "\n";
-  OS << "typedef __attribute__((__vector_size__(8)))  "
-    "double float64x1_t;\n";
-  OS << "typedef __attribute__((__vector_size__(16))) "
-    "double float64x2_t;\n";
   OS << "\n";
 
   // Emit struct typedefs.
