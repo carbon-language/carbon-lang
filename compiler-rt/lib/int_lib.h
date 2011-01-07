@@ -20,6 +20,7 @@
 /* Assumption:  right shift of signed negative is arithmetic shift */
 
 #include <limits.h>
+#include <stdint.h>
 #include "endianness.h"
 #include <math.h>
 
