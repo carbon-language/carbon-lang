@@ -27,7 +27,7 @@ namespace clang {
     enum {
       DIAG_START_DRIVER   =                        300,
       DIAG_START_FRONTEND = DIAG_START_DRIVER   +  100,
-      DIAG_START_LEX      = DIAG_START_FRONTEND +  100,
+      DIAG_START_LEX      = DIAG_START_FRONTEND +  120,
       DIAG_START_PARSE    = DIAG_START_LEX      +  300,
       DIAG_START_AST      = DIAG_START_PARSE    +  300,
       DIAG_START_SEMA     = DIAG_START_AST      +  100,

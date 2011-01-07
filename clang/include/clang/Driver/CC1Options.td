@@ -462,7 +462,7 @@ def fobjc_gc : Flag<"-fobjc-gc">,
 def fobjc_gc_only : Flag<"-fobjc-gc-only">,
   HelpText<"Use GC exclusively for Objective-C related memory management">;
 def fapple_kext : Flag<"-fapple-kext">,
-  HelpText<"Use apple's kext abi">;
+  HelpText<"Use Apple's kernel extensions ABI">;
 def fobjc_dispatch_method_EQ : Joined<"-fobjc-dispatch-method=">,
   HelpText<"Objective-C dispatch method to use">;
 def fobjc_default_synthesize_properties : Flag<"-fobjc-default-synthesize-properties">,
