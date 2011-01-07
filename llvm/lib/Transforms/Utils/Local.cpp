@@ -67,9 +67,9 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       assert(BI->getParent() && "Terminator not inserted in block!");
       OldDest->removePredecessor(BI->getParent());
 
-      // Set the unconditional destination, and change the insn to be an
-      // unconditional branch.
-      BI->setUnconditionalDest(Destination);
+      // Replace the conditional branch with an unconditional one.
+      BranchInst::Create(Destination, BI);
+      BI->eraseFromParent();
       return true;
     }
     
@@ -82,8 +82,9 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       assert(BI->getParent() && "Terminator not inserted in block!");
       Dest1->removePredecessor(BI->getParent());
 
-      // Change a conditional branch to unconditional.
-      BI->setUnconditionalDest(Dest1);
+      // Replace the conditional branch with an unconditional one.
+      BranchInst::Create(Dest1, BI);
+      BI->eraseFromParent();
       return true;
     }
     return false;

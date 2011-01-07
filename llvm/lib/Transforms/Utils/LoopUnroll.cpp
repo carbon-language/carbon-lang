@@ -341,7 +341,9 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
       // iteration.
       Term->setSuccessor(!ContinueOnTrue, Dest);
     } else {
-      Term->setUnconditionalDest(Dest);
+      // Replace the conditional branch with an unconditional one.
+      BranchInst::Create(Dest, Term);
+      Term->eraseFromParent();
       // Merge adjacent basic blocks, if possible.
       if (BasicBlock *Fold = FoldBlockIntoPredecessor(Dest, LI)) {
         std::replace(Latches.begin(), Latches.end(), Dest, Fold);
