@@ -45,7 +45,8 @@ class HelpCommandTestCase(TestBase):
 
         except:
             # Just fallthrough...
-            print "Unexpected error:", sys.exc_info()[0]
+            import traceback
+            traceback.print_exc()
             pass
 
         # Use None to signify that we are not able to grok the version number.
