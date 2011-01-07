@@ -48,7 +48,7 @@ public:
     RestoreSaveFrameZero(const RegisterCheckpoint &checkpoint);
 
     virtual lldb::RegisterContextSP
-    CreateRegisterContextForFrame (StackFrame *frame);
+    CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
     //--------------------------------------------------------------------------
     // These methods form a specialized interface to linux threads.
@@ -66,7 +66,7 @@ private:
     {
         if (!m_reg_context_sp)
             GetRegisterContext();
-        return (RegisterContextLinux *)m_reg_context_sp.get()
+        return (RegisterContextLinux *)m_reg_context_sp.get();
     }
     
     std::auto_ptr<lldb_private::StackFrame> m_frame_ap;

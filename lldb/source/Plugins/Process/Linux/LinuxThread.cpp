@@ -33,8 +33,8 @@ LinuxThread::LinuxThread(Process &process, lldb::tid_t tid)
 ProcessMonitor &
 LinuxThread::GetMonitor()
 {
-    ProcessLinux *process = static_cast<ProcessLinux*>(CalculateProcess());
-    return process->GetMonitor();
+    ProcessLinux &process = static_cast<ProcessLinux&>(GetProcess());
+    return process.GetMonitor();
 }
 
 void
@@ -51,6 +51,8 @@ LinuxThread::GetInfo()
 lldb::RegisterContextSP
 LinuxThread::GetRegisterContext()
 {
+    ProcessLinux &process = static_cast<ProcessLinux&>(GetProcess());
+
     if (!m_reg_context_sp)
     {
         ArchSpec arch = process.GetTarget().GetArchitecture();
@@ -66,7 +68,7 @@ LinuxThread::GetRegisterContext()
             break;
         }
     }
-    return m_reg_context_sp    
+    return m_reg_context_sp;
 }
 
 bool
