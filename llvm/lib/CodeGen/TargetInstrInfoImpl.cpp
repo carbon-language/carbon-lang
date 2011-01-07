@@ -329,8 +329,13 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
   const TargetInstrDesc &TID = MI->getDesc();
 
   // Avoid instructions obviously unsafe for remat.
-  if (TID.hasUnmodeledSideEffects() || TID.isNotDuplicable() ||
-      TID.mayStore())
+  if (TID.isNotDuplicable() || TID.mayStore() ||
+      MI->hasUnmodeledSideEffects())
+    return false;
+
+  // Don't remat inline asm. We have no idea how expensive it is
+  // even if it's side effect free.
+  if (MI->isInlineAsm())
     return false;
 
   // Avoid instructions which load from potentially varying memory.

@@ -338,7 +338,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
       if (MI->isLabel() || MI->isPHI() || MI->isImplicitDef() ||
           MI->isKill() || MI->isInlineAsm() || MI->isDebugValue() ||
-          MI->getDesc().hasUnmodeledSideEffects())
+          MI->hasUnmodeledSideEffects())
         continue;
 
       if (MI->getDesc().isCompare()) {

@@ -1036,8 +1036,8 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
           }
 
           const TargetInstrDesc &TID = MI.getDesc();
-          if (TID.hasUnmodeledSideEffects() ||
-              TID.hasImplicitDefOfPhysReg(X86::EFLAGS))
+          if (TID.hasImplicitDefOfPhysReg(X86::EFLAGS) ||
+              MI.hasUnmodeledSideEffects())
             break;
         }
 

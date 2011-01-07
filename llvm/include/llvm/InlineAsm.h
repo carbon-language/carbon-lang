@@ -190,8 +190,15 @@ public:
     Op_InputChain = 0,
     Op_AsmString = 1,
     Op_MDNode = 2,
-    Op_IsAlignStack = 3,
+    Op_ExtraInfo = 3,    // HasSideEffects, IsAlignStack
     Op_FirstOperand = 4,
+
+    MIOp_AsmString = 0,
+    MIOp_ExtraInfo = 1,    // HasSideEffects, IsAlignStack
+    MIOp_FirstOperand = 2,
+
+    Extra_HasSideEffects = 1,
+    Extra_IsAlignStack = 2,
     
     Kind_RegUse = 1,
     Kind_RegDef = 2,

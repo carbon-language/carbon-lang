@@ -187,9 +187,8 @@ static bool isDelayFiller(MachineBasicBlock &MBB,
   return (brdesc.hasDelaySlot());
 }
 
-static bool hasUnknownSideEffects(MachineBasicBlock::iterator &I,
-                                  TargetInstrDesc &desc) {
-  if (!desc.hasUnmodeledSideEffects())
+static bool hasUnknownSideEffects(MachineBasicBlock::iterator &I) {
+  if (!I->hasUnmodeledSideEffects())
     return false;
 
   unsigned op = I->getOpcode();
@@ -215,7 +214,7 @@ findDelayInstr(MachineBasicBlock &MBB,MachineBasicBlock::iterator slot) {
     TargetInstrDesc desc = I->getDesc();
     if (desc.hasDelaySlot() || desc.isBranch() || isDelayFiller(MBB,I) ||
         desc.isCall() || desc.isReturn() || desc.isBarrier() ||
-        hasUnknownSideEffects(I,desc))
+        hasUnknownSideEffects(I))
       break;
 
     if (hasImmInstruction(I) || delayHasHazard(I,slot))

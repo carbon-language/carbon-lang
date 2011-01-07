@@ -237,6 +237,7 @@ public:
   bool isKill() const { return getOpcode() == TargetOpcode::KILL; }
   bool isImplicitDef() const { return getOpcode()==TargetOpcode::IMPLICIT_DEF; }
   bool isInlineAsm() const { return getOpcode() == TargetOpcode::INLINEASM; }
+  bool isStackAligningInlineAsm() const;
   bool isInsertSubreg() const {
     return getOpcode() == TargetOpcode::INSERT_SUBREG;
   }
@@ -431,6 +432,15 @@ public:
   /// merges together the same virtual register, return the register, otherwise
   /// return 0.
   unsigned isConstantValuePHI() const;
+
+  /// hasUnmodeledSideEffects - Return true if this instruction has side
+  /// effects that are not modeled by mayLoad / mayStore, etc.
+  /// For all instructions, the property is encoded in TargetInstrDesc::Flags
+  /// (see TargetInstrDesc::hasUnmodeledSideEffects(). The only exception is
+  /// INLINEASM instruction, in which case the side effect property is encoded
+  /// in one of its operands (see InlineAsm::Extra_HasSideEffect).
+  ///
+  bool hasUnmodeledSideEffects() const;
 
   /// allDefsAreDead - Return true if all the defs of this instruction are dead.
   ///

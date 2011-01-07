@@ -826,6 +826,14 @@ unsigned MachineInstr::getNumExplicitOperands() const {
   return NumOperands;
 }
 
+bool MachineInstr::isStackAligningInlineAsm() const {
+  if (isInlineAsm()) {
+    unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();
+    if (ExtraInfo & InlineAsm::Extra_IsAlignStack)
+      return true;
+  }
+  return false;
+}
 
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightens
@@ -925,14 +933,15 @@ int MachineInstr::findFirstPredOperandIdx() const {
 bool MachineInstr::
 isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx) const {
   if (isInlineAsm()) {
-    assert(DefOpIdx >= 3);
+    assert(DefOpIdx > InlineAsm::MIOp_FirstOperand);
     const MachineOperand &MO = getOperand(DefOpIdx);
     if (!MO.isReg() || !MO.isDef() || MO.getReg() == 0)
       return false;
     // Determine the actual operand index that corresponds to this index.
     unsigned DefNo = 0;
     unsigned DefPart = 0;
-    for (unsigned i = 2, e = getNumOperands(); i < e; ) {
+    for (unsigned i = InlineAsm::MIOp_FirstOperand, e = getNumOperands();
+         i < e; ) {
       const MachineOperand &FMO = getOperand(i);
       // After the normal asm operands there may be additional imp-def regs.
       if (!FMO.isImm())
@@ -947,7 +956,8 @@ isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx) const {
       }
       ++DefNo;
     }
-    for (unsigned i = 2, e = getNumOperands(); i != e; ++i) {
+    for (unsigned i = InlineAsm::MIOp_FirstOperand, e = getNumOperands();
+         i != e; ++i) {
       const MachineOperand &FMO = getOperand(i);
       if (!FMO.isImm())
         continue;
@@ -990,7 +1000,8 @@ isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx) const {
 
     // Find the flag operand corresponding to UseOpIdx
     unsigned FlagIdx, NumOps=0;
-    for (FlagIdx = 2; FlagIdx < UseOpIdx; FlagIdx += NumOps+1) {
+    for (FlagIdx = InlineAsm::MIOp_FirstOperand;
+         FlagIdx < UseOpIdx; FlagIdx += NumOps+1) {
       const MachineOperand &UFMO = getOperand(FlagIdx);
       // After the normal asm operands there may be additional imp-def regs.
       if (!UFMO.isImm())
@@ -1008,9 +1019,9 @@ isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx) const {
       if (!DefOpIdx)
         return true;
 
-      unsigned DefIdx = 2;
+      unsigned DefIdx = InlineAsm::MIOp_FirstOperand;
       // Remember to adjust the index. First operand is asm string, second is
-      // the AlignStack bit, then there is a flag for each.
+      // the HasSideEffects and AlignStack bits, then there is a flag for each.
       while (DefNo) {
         const MachineOperand &FMO = getOperand(DefIdx);
         assert(FMO.isImm());
@@ -1117,7 +1128,7 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
   }
 
   if (isLabel() || isDebugValue() ||
-      TID->isTerminator() || TID->hasUnmodeledSideEffects())
+      TID->isTerminator() || hasUnmodeledSideEffects())
     return false;
 
   // See if this instruction does a load.  If so, we have to guarantee that the
@@ -1168,7 +1179,7 @@ bool MachineInstr::hasVolatileMemoryRef() const {
   if (!TID->mayStore() &&
       !TID->mayLoad() &&
       !TID->isCall() &&
-      !TID->hasUnmodeledSideEffects())
+      !hasUnmodeledSideEffects())
     return false;
 
   // Otherwise, if the instruction has no memory reference information,
@@ -1240,6 +1251,18 @@ unsigned MachineInstr::isConstantValuePHI() const {
     if (getOperand(i).getReg() != Reg)
       return 0;
   return Reg;
+}
+
+bool MachineInstr::hasUnmodeledSideEffects() const {
+  if (getDesc().hasUnmodeledSideEffects())
+    return true;
+  if (isInlineAsm()) {
+    unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();
+    if (ExtraInfo & InlineAsm::Extra_HasSideEffects)
+      return true;
+  }
+
+  return false;
 }
 
 /// allDefsAreDead - Return true if all the defs of this instruction are dead.
@@ -1329,6 +1352,24 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   // Print the rest of the operands.
   bool OmittedAnyCallClobbers = false;
   bool FirstOp = true;
+
+  if (isInlineAsm()) {
+    // Print asm string.
+    OS << " ";
+    getOperand(InlineAsm::MIOp_AsmString).print(OS, TM);
+
+    // Print HasSideEffects, IsAlignStack
+    unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();
+    if (ExtraInfo & InlineAsm::Extra_HasSideEffects)
+      OS << " [sideeffect]";
+    if (ExtraInfo & InlineAsm::Extra_IsAlignStack)
+      OS << " [alignstack]";
+
+    StartOp = InlineAsm::MIOp_FirstOperand;
+    FirstOp = false;
+  }
+
+
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
 

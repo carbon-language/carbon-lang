@@ -21,6 +21,7 @@
 
 #define DEBUG_TYPE "pei"
 #include "PrologEpilogInserter.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -172,7 +173,8 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
         FrameSDOps.push_back(I);
       } else if (I->isInlineAsm()) {
         // Some inline asm's need a stack frame, as indicated by operand 1.
-        if (I->getOperand(1).getImm())
+        unsigned ExtraInfo = I->getOperand(InlineAsm::MIOp_ExtraInfo).getImm();
+        if (ExtraInfo & InlineAsm::Extra_IsAlignStack)
           AdjustsStack = true;
       }
 

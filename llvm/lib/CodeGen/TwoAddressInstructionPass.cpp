@@ -743,7 +743,7 @@ static bool isSafeToDelete(MachineInstr *MI,
   const TargetInstrDesc &TID = MI->getDesc();
   if (TID.mayStore() || TID.isCall())
     return false;
-  if (TID.isTerminator() || TID.hasUnmodeledSideEffects())
+  if (TID.isTerminator() || MI->hasUnmodeledSideEffects())
     return false;
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {

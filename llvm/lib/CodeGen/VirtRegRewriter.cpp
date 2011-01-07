@@ -1620,9 +1620,16 @@ static bool isSafeToDelete(MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
   if (TID.mayLoad() || TID.mayStore() || TID.isCall() || TID.isTerminator() ||
       TID.isCall() || TID.isBarrier() || TID.isReturn() ||
-      TID.hasUnmodeledSideEffects() ||
-      MI.isLabel() || MI.isDebugValue())
+      MI.isLabel() || MI.isDebugValue() ||
+      MI.hasUnmodeledSideEffects())
     return false;
+
+  // Technically speaking inline asm without side effects and no defs can still
+  // be deleted. But there is so much bad inline asm code out there, we should
+  // let them be.
+  if (MI.isInlineAsm())
+    return false;
+
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.getReg())

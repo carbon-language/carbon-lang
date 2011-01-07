@@ -1467,7 +1467,7 @@ static bool IsSafeAndProfitableToMove(bool isLd, unsigned Base,
     if (I->isDebugValue() || MemOps.count(&*I))
       continue;
     const TargetInstrDesc &TID = I->getDesc();
-    if (TID.isCall() || TID.isTerminator() || TID.hasUnmodeledSideEffects())
+    if (TID.isCall() || TID.isTerminator() || I->hasUnmodeledSideEffects())
       return false;
     if (isLd && TID.mayStore())
       return false;

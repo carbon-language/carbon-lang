@@ -410,7 +410,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
     // produce more precise dependence information.
 #define STORE_LOAD_LATENCY 1
     unsigned TrueMemOrderLatency = 0;
-    if (TID.isCall() || TID.hasUnmodeledSideEffects() ||
+    if (TID.isCall() || MI->hasUnmodeledSideEffects() ||
         (MI->hasVolatileMemoryRef() && 
          (!TID.mayLoad() || !MI->isInvariantLoad(AA)))) {
       // Be conservative with these and add dependencies on all memory

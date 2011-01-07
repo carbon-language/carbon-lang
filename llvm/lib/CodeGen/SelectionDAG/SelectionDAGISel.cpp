@@ -380,10 +380,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
              II = MBB->begin(), IE = MBB->end(); II != IE; ++II) {
         const TargetInstrDesc &TID = TM.getInstrInfo()->get(II->getOpcode());
 
-        // Operand 1 of an inline asm instruction indicates whether the asm
-        // needs stack or not.
-        if ((II->isInlineAsm() && II->getOperand(1).getImm()) ||
-            (TID.isCall() && !TID.isReturn())) {
+        if ((TID.isCall() && !TID.isReturn()) ||
+            II->isStackAligningInlineAsm()) {
           MFI->setHasCalls(true);
           goto done;
         }
@@ -1283,7 +1281,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
   Ops.push_back(InOps[InlineAsm::Op_InputChain]); // 0
   Ops.push_back(InOps[InlineAsm::Op_AsmString]);  // 1
   Ops.push_back(InOps[InlineAsm::Op_MDNode]);     // 2, !srcloc
-  Ops.push_back(InOps[InlineAsm::Op_IsAlignStack]);  // 3
+  Ops.push_back(InOps[InlineAsm::Op_ExtraInfo]);  // 3 (SideEffect, AlignStack)
 
   unsigned i = InlineAsm::Op_FirstOperand, e = InOps.size();
   if (InOps[e-1].getValueType() == MVT::Glue)

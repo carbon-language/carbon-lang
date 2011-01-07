@@ -54,6 +54,12 @@ FunctionPass *llvm::createDeadMachineInstructionElimPass() {
 }
 
 bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
+  // Technically speaking inline asm without side effects and no defs can still
+  // be deleted. But there is so much bad inline asm code out there, we should
+  // let them be.
+  if (MI->isInlineAsm())
+    return false;
+
   // Don't delete instructions with side effects.
   bool SawStore = false;
   if (!MI->isSafeToMove(TII, 0, SawStore) && !MI->isPHI())

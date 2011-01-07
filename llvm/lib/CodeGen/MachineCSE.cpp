@@ -262,7 +262,7 @@ bool MachineCSE::isCSECandidate(MachineInstr *MI) {
   // Ignore stuff that we obviously can't move.
   const TargetInstrDesc &TID = MI->getDesc();  
   if (TID.mayStore() || TID.isCall() || TID.isTerminator() ||
-      TID.hasUnmodeledSideEffects())
+      MI->hasUnmodeledSideEffects())
     return false;
 
   if (TID.mayLoad()) {
