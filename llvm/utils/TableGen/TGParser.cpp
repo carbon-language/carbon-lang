@@ -683,9 +683,9 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     TokError("unknown operation");
     return 0;
     break;
-  case tgtok::XCar:
-  case tgtok::XCdr:
-  case tgtok::XNull:
+  case tgtok::XHead:
+  case tgtok::XTail:
+  case tgtok::XEmpty:
   case tgtok::XCast: {  // Value ::= !unop '(' Value ')'
     UnOpInit::UnaryOp Code;
     RecTy *Type = 0;
@@ -704,17 +704,17 @@ Init *TGParser::ParseOperation(Record *CurRec) {
       }
 
       break;
-    case tgtok::XCar:
+    case tgtok::XHead:
       Lex.Lex();  // eat the operation
-      Code = UnOpInit::CAR;
+      Code = UnOpInit::HEAD;
       break;
-    case tgtok::XCdr:
+    case tgtok::XTail:
       Lex.Lex();  // eat the operation
-      Code = UnOpInit::CDR;
+      Code = UnOpInit::TAIL;
       break;
-    case tgtok::XNull:
+    case tgtok::XEmpty:
       Lex.Lex();  // eat the operation
-      Code = UnOpInit::LNULL;
+      Code = UnOpInit::EMPTY;
       Type = new IntRecTy;
       break;
     }
@@ -727,9 +727,9 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     Init *LHS = ParseValue(CurRec);
     if (LHS == 0) return 0;
 
-    if (Code == UnOpInit::CAR
-        || Code == UnOpInit::CDR
-        || Code == UnOpInit::LNULL) {
+    if (Code == UnOpInit::HEAD
+        || Code == UnOpInit::TAIL
+        || Code == UnOpInit::EMPTY) {
       ListInit *LHSl = dynamic_cast<ListInit*>(LHS);
       StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
       TypedInit *LHSt = dynamic_cast<TypedInit*>(LHS);
@@ -746,8 +746,8 @@ Init *TGParser::ParseOperation(Record *CurRec) {
         }
       }
 
-      if (Code == UnOpInit::CAR
-          || Code == UnOpInit::CDR) {
+      if (Code == UnOpInit::HEAD
+          || Code == UnOpInit::TAIL) {
         if (LHSl == 0 && LHSt == 0) {
           TokError("expected list type argumnet in unary operator");
           return 0;
@@ -764,7 +764,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
             TokError("untyped list element in unary operator");
             return 0;
           }
-          if (Code == UnOpInit::CAR) {
+          if (Code == UnOpInit::HEAD) {
             Type = Itemt->getType();
           } else {
             Type = new ListRecTy(Itemt->getType());
@@ -776,7 +776,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
             TokError("expected list type argumnet in unary operator");
             return 0;
           }
-          if (Code == UnOpInit::CAR) {
+          if (Code == UnOpInit::HEAD) {
             Type = LType->getElementType();
           } else {
             Type = LType;
@@ -1273,9 +1273,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
     return new DagInit(Operator, OperatorName, DagArgs);
   }
 
-  case tgtok::XCar:
-  case tgtok::XCdr:
-  case tgtok::XNull:
+  case tgtok::XHead:
+  case tgtok::XTail:
+  case tgtok::XEmpty:
   case tgtok::XCast:  // Value ::= !unop '(' Value ')'
   case tgtok::XConcat:
   case tgtok::XSRA:

@@ -66,19 +66,19 @@ def not : SDNode;
 multiclass scalar<bits<8> opcode, string asmstr = "", list<list<dag>> patterns = []> {
   def SSrr : Inst<opcode, (outs FR32:$dst), (ins FR32:$src),
                   !strconcat(asmstr, "\t$dst, $src"),
-                  !if(!null(patterns),[]<dag>,patterns[0])>;
+                  !if(!empty(patterns),[]<dag>,patterns[0])>;
   def SSrm : Inst<opcode, (outs FR32:$dst), (ins FR32:$src),
                   !strconcat(asmstr, "\t$dst, $src"),
-                  !if(!null(patterns),[]<dag>,!if(!null(!cdr(patterns)),patterns[0],patterns[1]))>;
+                  !if(!empty(patterns),[]<dag>,!if(!empty(!tail(patterns)),patterns[0],patterns[1]))>;
 }
 
 multiclass vscalar<bits<8> opcode, string asmstr = "", list<list<dag>> patterns = []> {
   def V#NAME#SSrr : Inst<opcode, (outs FR32:$dst), (ins FR32:$src),
                   !strconcat(asmstr, "\t$dst, $src"),
-                  !if(!null(patterns),[]<dag>,patterns[0])>;
+                  !if(!empty(patterns),[]<dag>,patterns[0])>;
   def V#NAME#SSrm : Inst<opcode, (outs FR32:$dst), (ins FR32:$src),
                   !strconcat(asmstr, "\t$dst, $src"),
-                  !if(!null(patterns),[]<dag>,!if(!null(!cdr(patterns)),patterns[0],patterns[1]))>;
+                  !if(!empty(patterns),[]<dag>,!if(!empty(!tail(patterns)),patterns[0],patterns[1]))>;
 }
 
 multiclass myscalar<bits<8> opcode, string asmstr = "", list<list<dag>> patterns = []> :

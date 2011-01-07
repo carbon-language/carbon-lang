@@ -15,7 +15,7 @@ class CDR<list<string> r, int n> {
 }
 
 class NameList<list<string> Names> :
-  List<Names>, CAR<!car(Names)>, CDR<!cdr(Names), !null(!cdr(Names))>;
+  List<Names>, CAR<!head(Names)>, CDR<!tail(Names), !empty(!tail(Names))>;
 
 def Three : NameList<["Tom", "Dick", "Harry"]>;
 

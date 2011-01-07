@@ -28,7 +28,7 @@ class C<bits<3> x, bits<4> y, bit z> {
 
 class A<list<list<int>> vals> {
   list<int> first = vals[0];
-  list<int> rest  = !if(!null(!cdr(vals)), vals[0], vals[1]);
+  list<int> rest  = !if(!empty(!tail(vals)), vals[0], vals[1]);
 }
 
 def One : A<[[1,2,3]]>;
@@ -38,7 +38,7 @@ class B<list<int> v> {
   list<int> vals = v;
 }
 
-class BB<list<list<int>> vals> : B<!if(!null(!cdr(vals)), vals[0], vals[1])>;
+class BB<list<list<int>> vals> : B<!if(!empty(!tail(vals)), vals[0], vals[1])>;
 class BBB<list<list<int>> vals> : BB<vals>;
 
 def OneB : BBB<[[1,2,3]]>;

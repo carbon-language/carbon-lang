@@ -590,7 +590,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     }
     break;
   }
-  case CAR: {
+  case HEAD: {
     ListInit *LHSl = dynamic_cast<ListInit*>(LHS);
     if (LHSl) {
       if (LHSl->getSize() == 0) {
@@ -601,7 +601,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     }
     break;
   }
-  case CDR: {
+  case TAIL: {
     ListInit *LHSl = dynamic_cast<ListInit*>(LHS);
     if (LHSl) {
       if (LHSl->getSize() == 0) {
@@ -614,7 +614,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     }
     break;
   }
-  case LNULL: {
+  case EMPTY: {
     ListInit *LHSl = dynamic_cast<ListInit*>(LHS);
     if (LHSl) {
       if (LHSl->getSize() == 0) {
@@ -650,9 +650,9 @@ std::string UnOpInit::getAsString() const {
   std::string Result;
   switch (Opc) {
   case CAST: Result = "!cast<" + getType()->getAsString() + ">"; break;
-  case CAR: Result = "!car"; break;
-  case CDR: Result = "!cdr"; break;
-  case LNULL: Result = "!null"; break;
+  case HEAD: Result = "!head"; break;
+  case TAIL: Result = "!tail"; break;
+  case EMPTY: Result = "!empty"; break;
   }
   return Result + "(" + LHS->getAsString() + ")";
 }

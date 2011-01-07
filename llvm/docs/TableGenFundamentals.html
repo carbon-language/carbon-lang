@@ -412,11 +412,11 @@ be an object defined by a 'def' construct.</dd>
   <dd>For each member 'b' of dag or list 'a' apply operator 'c.'  'b' is a 
 dummy variable that should be declared as a member variable of an instantiated 
 class.  This operation is analogous to $(foreach) in GNU make.</dd>
-<dt><tt>!car(a)</tt></dt>
+<dt><tt>!head(a)</tt></dt>
   <dd>The first element of list 'a.'</dd>
-<dt><tt>!cdr(a)</tt></dt>
+<dt><tt>!tail(a)</tt></dt>
   <dd>The 2nd-N elements of list 'a.'</dd>
-<dt><tt>!null(a)</tt></dt>
+<dt><tt>!empty(a)</tt></dt>
   <dd>An integer {0,1} indicating whether list 'a' is empty.</dd>
 <dt><tt>!if(a,b,c)</tt></dt>
   <dd>'b' if the result of 'int' or 'bit' operator 'a' is nonzero,

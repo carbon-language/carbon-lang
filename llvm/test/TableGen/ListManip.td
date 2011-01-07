@@ -7,6 +7,6 @@ class Bli<string _t>
 }
 
 class Bla<list<Bli> _bli>
-: Bli<!car(_bli).t>
+: Bli<!head(_bli).t>
 {
 }

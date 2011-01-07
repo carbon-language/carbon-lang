@@ -811,7 +811,7 @@ public:
 ///
 class UnOpInit : public OpInit {
 public:
-  enum UnaryOp { CAST, CAR, CDR, LNULL };
+  enum UnaryOp { CAST, HEAD, TAIL, EMPTY };
 private:
   UnaryOp Opc;
   Init *LHS;
