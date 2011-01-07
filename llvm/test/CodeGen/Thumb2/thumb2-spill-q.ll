@@ -15,7 +15,10 @@ define void @aaa(%quuz* %this, i8* %block) {
 ; CHECK: vst1.64 {{.*}}[{{.*}}, :128]
 ; CHECK: vld1.64 {{.*}}[{{.*}}, :128]
 entry:
-  %0 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
+  %aligned_vec = alloca <4 x float>, align 16
+  %"alloca point" = bitcast i32 0 to i32
+  %vecptr = bitcast <4 x float>* %aligned_vec to i8*
+  %0 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* %vecptr, i32 1) nounwind 
   store float 6.300000e+01, float* undef, align 4
   %1 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) nounwind ; <<4 x float>> [#uses=1]
   store float 0.000000e+00, float* undef, align 4

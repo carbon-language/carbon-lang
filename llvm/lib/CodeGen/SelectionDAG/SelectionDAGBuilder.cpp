@@ -2745,7 +2745,7 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
         } else {
           StartIdx[Input] = (MinRange[Input]/MaskNumElts)*MaskNumElts;
           if (MaxRange[Input] - StartIdx[Input] < (int)MaskNumElts &&
-              StartIdx[Input] + MaskNumElts < SrcNumElts)
+              StartIdx[Input] + MaskNumElts <= SrcNumElts)
             RangeUse[Input] = 1; // Extract from a multiple of the mask length.
         }
       }

@@ -4530,6 +4530,23 @@ def VREV16q8  : VREV16Q<0b00, "vrev16", "8", v16i8>;
 
 // Other Vector Shuffles.
 
+//  Aligned extractions: really just dropping registers
+
+class AlignedVEXTq<ValueType DestTy, ValueType SrcTy, SDNodeXForm LaneCVT>
+      : Pat<(DestTy (vector_extract_subvec (SrcTy QPR:$src), (i32 imm:$start))),
+             (EXTRACT_SUBREG (SrcTy QPR:$src), (LaneCVT imm:$start))>;
+
+def : AlignedVEXTq<v8i8, v16i8, DSubReg_i8_reg>;
+
+def : AlignedVEXTq<v4i16, v8i16, DSubReg_i16_reg>;
+
+def : AlignedVEXTq<v2i32, v4i32, DSubReg_i32_reg>;
+
+def : AlignedVEXTq<v1i64, v2i64, DSubReg_f64_reg>;
+
+def : AlignedVEXTq<v2f32, v4f32, DSubReg_i32_reg>;
+
+
 //   VEXT     : Vector Extract
 
 class VEXTd<string OpcodeStr, string Dt, ValueType Ty>
