@@ -730,31 +730,6 @@ BranchInst::BranchInst(const BranchInst &BI) :
   SubclassOptionalData = BI.SubclassOptionalData;
 }
 
-
-Use* Use::getPrefix() {
-  PointerIntPair<Use**, 2, PrevPtrTag> &PotentialPrefix(this[-1].Prev);
-  if (PotentialPrefix.getOpaqueValue())
-    return 0;
-
-  return reinterpret_cast<Use*>((char*)&PotentialPrefix + 1);
-}
-
-BranchInst::~BranchInst() {
-  if (NumOperands == 1) {
-    if (Use *Prefix = OperandList->getPrefix()) {
-      Op<-1>() = 0;
-      //
-      // mark OperandList to have a special value for scrutiny
-      // by baseclass destructors and operator delete
-      OperandList = Prefix;
-    } else {
-      NumOperands = 3;
-      OperandList = op_begin();
-    }
-  }
-}
-
-
 BasicBlock *BranchInst::getSuccessorV(unsigned idx) const {
   return getSuccessor(idx);
 }
@@ -3329,8 +3304,7 @@ ReturnInst *ReturnInst::clone_impl() const {
 }
 
 BranchInst *BranchInst::clone_impl() const {
-  unsigned Ops(getNumOperands());
-  return new(Ops, Ops == 1) BranchInst(*this);
+  return new(getNumOperands()) BranchInst(*this);
 }
 
 SwitchInst *SwitchInst::clone_impl() const {

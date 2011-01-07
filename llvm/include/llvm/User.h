@@ -61,7 +61,6 @@ protected:
   unsigned NumOperands;
 
   void *operator new(size_t s, unsigned Us);
-  void *operator new(size_t s, unsigned Us, bool Prefix);
   User(const Type *ty, unsigned vty, Use *OpList, unsigned NumOps)
     : Value(ty, vty), OperandList(OpList), NumOperands(NumOps) {}
   Use *allocHungoffUses(unsigned) const;
@@ -74,8 +73,7 @@ protected:
   }
 public:
   ~User() {
-    if ((intptr_t(OperandList) & 1) == 0)
-      Use::zap(OperandList, OperandList + NumOperands);
+    Use::zap(OperandList, OperandList + NumOperands);
   }
   /// operator delete - free memory allocated for User and Use objects
   void operator delete(void *Usr);

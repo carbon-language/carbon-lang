@@ -112,8 +112,6 @@ public:
   /// a User changes.
   static void zap(Use *Start, const Use *Stop, bool del = false);
 
-  /// getPrefix - Return deletable pointer if appropriate
-  Use *getPrefix();
 private:
   const Use* getImpliedUser() const;
   static Use *initTags(Use *Start, Use *Stop, ptrdiff_t Done = 0);
