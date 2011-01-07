@@ -645,16 +645,15 @@ void DAGTypeLegalizer::SplitVecRes_EXTRACT_SUBVECTOR(SDNode *N, SDValue &Lo,
                                                      SDValue &Hi) {
   SDValue Vec = N->getOperand(0);
   SDValue Idx = N->getOperand(1);
-  EVT IdxVT = Idx.getValueType();
   DebugLoc dl = N->getDebugLoc();
 
   EVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
   Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, LoVT, Vec, Idx);
-  Idx = DAG.getNode(ISD::ADD, dl, IdxVT, Idx,
-                    DAG.getConstant(LoVT.getVectorNumElements(), IdxVT));
-  Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, HiVT, Vec, Idx);
+  uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+  Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, HiVT, Vec,
+                   DAG.getIntPtrConstant(IdxVal + LoVT.getVectorNumElements()));
 }
 
 void DAGTypeLegalizer::SplitVecRes_FPOWI(SDNode *N, SDValue &Lo,
@@ -1051,8 +1050,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_BITCAST(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N) {
-  // We know that the extracted result type is legal.  For now, assume the index
-  // is a constant.
+  // We know that the extracted result type is legal.
   EVT SubVT = N->getValueType(0);
   SDValue Idx = N->getOperand(1);
   DebugLoc dl = N->getDebugLoc();
@@ -1791,39 +1789,25 @@ SDValue DAGTypeLegalizer::WidenVecRes_EXTRACT_SUBVECTOR(SDNode *N) {
 
   EVT InVT = InOp.getValueType();
 
-  ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx);
-  if (CIdx) {
-    unsigned IdxVal = CIdx->getZExtValue();
-    // Check if we can just return the input vector after widening.
-    if (IdxVal == 0 && InVT == WidenVT)
-      return InOp;
+  // Check if we can just return the input vector after widening.
+  uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+  if (IdxVal == 0 && InVT == WidenVT)
+    return InOp;
 
-    // Check if we can extract from the vector.
-    unsigned InNumElts = InVT.getVectorNumElements();
-    if (IdxVal % WidenNumElts == 0 && IdxVal + WidenNumElts < InNumElts)
-        return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, WidenVT, InOp, Idx);
-  }
+  // Check if we can extract from the vector.
+  unsigned InNumElts = InVT.getVectorNumElements();
+  if (IdxVal % WidenNumElts == 0 && IdxVal + WidenNumElts < InNumElts)
+    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, WidenVT, InOp, Idx);
 
   // We could try widening the input to the right length but for now, extract
   // the original elements, fill the rest with undefs and build a vector.
   SmallVector<SDValue, 16> Ops(WidenNumElts);
   EVT EltVT = VT.getVectorElementType();
-  EVT IdxVT = Idx.getValueType();
   unsigned NumElts = VT.getVectorNumElements();
   unsigned i;
-  if (CIdx) {
-    unsigned IdxVal = CIdx->getZExtValue();
-    for (i=0; i < NumElts; ++i)
-      Ops[i] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, InOp,
-                           DAG.getConstant(IdxVal+i, IdxVT));
-  } else {
-    Ops[0] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, InOp, Idx);
-    for (i=1; i < NumElts; ++i) {
-      SDValue NewIdx = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx,
-                                   DAG.getConstant(i, IdxVT));
-      Ops[i] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, InOp, NewIdx);
-    }
-  }
+  for (i=0; i < NumElts; ++i)
+    Ops[i] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, InOp,
+                         DAG.getIntPtrConstant(IdxVal+i));
 
   SDValue UndefVal = DAG.getUNDEF(EltVT);
   for (; i < WidenNumElts; ++i)

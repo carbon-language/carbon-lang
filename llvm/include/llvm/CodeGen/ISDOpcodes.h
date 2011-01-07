@@ -270,8 +270,8 @@ namespace ISD {
     CONCAT_VECTORS,
 
     /// EXTRACT_SUBVECTOR(VECTOR, IDX) - Returns a subvector from VECTOR (an
-    /// vector value) starting with the (potentially variable) element number
-    /// IDX, which must be a multiple of the result vector length.
+    /// vector value) starting with the element number IDX, which must be a
+    /// constant multiple of the result vector length.
     EXTRACT_SUBVECTOR,
 
     /// VECTOR_SHUFFLE(VEC1, VEC2) - Returns a vector, of the same type as
