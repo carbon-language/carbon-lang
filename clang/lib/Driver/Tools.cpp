@@ -1284,6 +1284,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  if (Args.getLastArg(options::OPT_fapple_kext))
+    CmdArgs.push_back("-fapple-kext");
+
   Args.AddLastArg(CmdArgs, options::OPT_fno_show_column);
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_sender_dependent_dispatch);
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_print_source_range_info);
@@ -1321,8 +1324,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
 
+  if (Args.hasArg(options::OPT_mkernel)) {
+    if (!Args.hasArg(options::OPT_fapple_kext))
+      CmdArgs.push_back("-fapple-kext");
+    if (!Args.hasArg(options::OPT_fbuiltin))
+      CmdArgs.push_back("-fno-builtin");
+  }
   // -fbuiltin is default.
-  if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin))
+  else if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin))
     CmdArgs.push_back("-fno-builtin");
 
   if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,
@@ -1519,9 +1528,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_mno_pascal_strings,
                    false))
     CmdArgs.push_back("-fpascal-strings");
-
+  
+  if (Args.hasArg(options::OPT_mkernel) ||
+      Args.hasArg(options::OPT_fapple_kext)) {
+    if (!Args.hasArg(options::OPT_fcommon))
+      CmdArgs.push_back("-fno-common");
+  }
   // -fcommon is default, only pass non-default.
-  if (!Args.hasFlag(options::OPT_fcommon, options::OPT_fno_common))
+  else if (!Args.hasFlag(options::OPT_fcommon, options::OPT_fno_common))
     CmdArgs.push_back("-fno-common");
 
   // -fsigned-bitfields is default, and clang doesn't yet support

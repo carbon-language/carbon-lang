@@ -639,6 +639,9 @@ static void LangOptsToArgs(const LangOptions &Opts,
       Res.push_back("-fobjc-gc-only");
     }
   }
+  if (Opts.AppleKext)
+    Res.push_back("-fapple-kext");
+  
   if (Opts.getVisibilityMode() != DefaultVisibility) {
     Res.push_back("-fvisibility");
     if (Opts.getVisibilityMode() == HiddenVisibility) {
@@ -1351,7 +1354,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     Opts.setGCMode(LangOptions::GCOnly);
   else if (Args.hasArg(OPT_fobjc_gc))
     Opts.setGCMode(LangOptions::HybridGC);
-
+  
+  if (Args.hasArg(OPT_fapple_kext))
+    Opts.AppleKext = 1;
   if (Args.hasArg(OPT_print_ivar_layout))
     Opts.ObjCGCBitmapPrint = 1;
   if (Args.hasArg(OPT_fno_constant_cfstrings))
