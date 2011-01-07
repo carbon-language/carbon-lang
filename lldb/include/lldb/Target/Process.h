@@ -1336,6 +1336,12 @@ public:
                 size_t size,
                 Error &error);
 
+    size_t
+    ReadMemoryFromInferior (lldb::addr_t vm_addr, 
+                            void *buf, 
+                            size_t size,
+                            Error &error);
+    
     //------------------------------------------------------------------
     /// Reads an unsigned integer of the specified byte size from 
     /// process memory.
@@ -1769,6 +1775,43 @@ public:
     GetSP ();
     
 protected:
+    class MemoryCache
+    {
+    public:
+        //------------------------------------------------------------------
+        // Constructors and Destructors
+        //------------------------------------------------------------------
+        MemoryCache ();
+        
+        ~MemoryCache ();
+        
+        void
+        Clear();
+        
+        void
+        Flush (lldb::addr_t addr, size_t size);
+
+        size_t
+        Read (Process *process,
+              lldb::addr_t addr, 
+              void *dst, 
+              size_t dst_len,
+              Error &error);
+        
+    protected:
+        typedef std::map<lldb::addr_t, lldb::DataBufferSP> collection;
+        //------------------------------------------------------------------
+        // Classes that inherit from MemoryCache can see and modify these
+        //------------------------------------------------------------------
+        uint32_t m_cache_line_byte_size;
+        Mutex m_cache_mutex;
+        collection m_cache;
+
+    private:
+        DISALLOW_COPY_AND_ASSIGN (MemoryCache);
+    };
+
+
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
@@ -1800,7 +1843,8 @@ protected:
     lldb_private::Communication m_stdio_communication;
     lldb_private::Mutex         m_stdio_communication_mutex;
     std::string                 m_stdout_data;
-    
+    MemoryCache                 m_memory_cache;
+
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;
 

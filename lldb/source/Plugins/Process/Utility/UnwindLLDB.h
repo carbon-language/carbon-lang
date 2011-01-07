@@ -72,6 +72,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN (UnwindLLDB);
 };
 
-}
+}   // namespace lldb_private
 
 #endif  // lldb_UnwindLLDB_h_

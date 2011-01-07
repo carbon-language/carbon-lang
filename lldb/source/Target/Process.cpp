@@ -37,6 +37,145 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+//----------------------------------------------------------------------
+// MemoryCache constructor
+//----------------------------------------------------------------------
+Process::MemoryCache::MemoryCache() :
+    m_cache_line_byte_size (512),
+    m_cache_mutex (Mutex::eMutexTypeRecursive),
+    m_cache ()
+{
+}
+
+//----------------------------------------------------------------------
+// Destructor
+//----------------------------------------------------------------------
+Process::MemoryCache::~MemoryCache()
+{
+}
+
+void
+Process::MemoryCache::Clear()
+{
+    Mutex::Locker locker (m_cache_mutex);
+    m_cache.clear();
+}
+
+void
+Process::MemoryCache::Flush (addr_t addr, size_t size)
+{
+    if (size == 0)
+        return;
+
+    const uint32_t cache_line_byte_size = m_cache_line_byte_size;
+    const addr_t end_addr = (addr + size - 1);
+    const addr_t flush_start_addr = addr - (addr % cache_line_byte_size);
+    const addr_t flush_end_addr = end_addr - (end_addr % cache_line_byte_size);
+    
+    Mutex::Locker locker (m_cache_mutex);
+    if (m_cache.empty())
+        return;
+
+    assert ((flush_start_addr % cache_line_byte_size) == 0);
+
+    for (addr_t curr_addr = flush_start_addr; curr_addr <= flush_end_addr; curr_addr += cache_line_byte_size)
+    {
+        collection::iterator pos = m_cache.find (curr_addr);
+        if (pos != m_cache.end())
+            m_cache.erase(pos);
+    }
+}
+
+size_t
+Process::MemoryCache::Read 
+(
+    Process *process,
+    addr_t addr, 
+    void *dst, 
+    size_t dst_len,
+    Error &error
+)
+{
+    size_t bytes_left = dst_len;
+    if (dst && bytes_left > 0)
+    {
+        const uint32_t cache_line_byte_size = m_cache_line_byte_size;
+        uint8_t *dst_buf = (uint8_t *)dst;
+        addr_t curr_addr = addr - (addr % cache_line_byte_size);
+        addr_t cache_offset = addr - curr_addr;
+        Mutex::Locker locker (m_cache_mutex);
+        
+        while (bytes_left > 0)
+        {
+            collection::const_iterator pos = m_cache.find (curr_addr);
+            collection::const_iterator end = m_cache.end ();
+
+            if (pos != end)
+            {
+                size_t curr_read_size = cache_line_byte_size - cache_offset;
+                if (curr_read_size > bytes_left)
+                    curr_read_size = bytes_left;
+                    
+                memcpy (dst_buf + dst_len - bytes_left, pos->second->GetBytes() + cache_offset, curr_read_size);
+
+                bytes_left -= curr_read_size;
+                curr_addr += curr_read_size + cache_offset;
+                cache_offset = 0;
+                
+                if (bytes_left > 0)
+                {
+                    // Get sequential cache page hits
+                    for (++pos; (pos != end) && (bytes_left > 0); ++pos)
+                    {
+                        assert ((curr_addr % cache_line_byte_size) == 0);
+
+                        if (pos->first != curr_addr)
+                            break;
+
+                        curr_read_size = pos->second->GetByteSize();
+                        if (curr_read_size > bytes_left)
+                            curr_read_size = bytes_left;
+
+                        memcpy (dst_buf + dst_len - bytes_left, pos->second->GetBytes(), curr_read_size);
+
+                        bytes_left -= curr_read_size;
+                        curr_addr += curr_read_size;
+                        
+                        // We have a cache page that succeeded to read some bytes
+                        // but not an entire page. If this happens, we must cap
+                        // off how much data we are able to read...
+                        if (pos->second->GetByteSize() != cache_line_byte_size)
+                            return dst_len - bytes_left;
+                    }
+                }
+            }
+            
+            // We need to read from the process
+            
+            if (bytes_left > 0)
+            {
+                assert ((curr_addr % cache_line_byte_size) == 0);
+                std::auto_ptr<DataBufferHeap> data_buffer_heap_ap(new DataBufferHeap (cache_line_byte_size, 0));
+                size_t process_bytes_read = process->ReadMemoryFromInferior (curr_addr, 
+                                                                             data_buffer_heap_ap->GetBytes(), 
+                                                                             data_buffer_heap_ap->GetByteSize(), 
+                                                                             error);
+                if (process_bytes_read == 0)
+                    return dst_len - bytes_left;
+
+                if (process_bytes_read != cache_line_byte_size)
+                    data_buffer_heap_ap->SetByteSize (process_bytes_read);
+                m_cache[curr_addr] = DataBufferSP (data_buffer_heap_ap.release());
+                // We have read data and put it into the cache, continue through the
+                // loop again to get the data out of the cache...
+            }
+        }
+    }
+    
+    return dst_len - bytes_left;
+}
+
 Process*
 Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener)
 {
@@ -97,7 +236,8 @@ Process::Process(Target &target, Listener &listener) :
     m_process_input_reader (),
     m_stdio_communication ("lldb.process.stdio"),
     m_stdio_communication_mutex (Mutex::eMutexTypeRecursive),
-    m_stdout_data ()
+    m_stdout_data (),
+    m_memory_cache ()
 {
     UpdateInstanceName();
 
@@ -508,6 +648,7 @@ Process::SetPrivateState (StateType new_state)
         if (StateIsStoppedState(new_state))
         {
             m_stop_id++;
+            m_memory_cache.Clear();
             if (log)
                 log->Printf("Process::SetPrivateState (%s) stop_id = %u", StateAsCString(new_state), m_stop_id);
         }
@@ -1043,9 +1184,67 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
 
 }
 
+// Comment out line below to disable memory caching
+#define ENABLE_MEMORY_CACHING
+// Uncomment to verify memory caching works after making changes to caching code
+//#define VERIFY_MEMORY_READS
+
+#if defined (ENABLE_MEMORY_CACHING)
+
+#if defined (VERIFY_MEMORY_READS)
 
 size_t
 Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
+{
+    // Memory caching is enabled, with debug verification
+    if (buf && size)
+    {
+        // Uncomment the line below to make sure memory caching is working.
+        // I ran this through the test suite and got no assertions, so I am 
+        // pretty confident this is working well. If any changes are made to
+        // memory caching, uncomment the line below and test your changes!
+
+        // Verify all memory reads by using the cache first, then redundantly
+        // reading the same memory from the inferior and comparing to make sure
+        // everything is exactly the same.
+        std::string verify_buf (size, '\0');
+        assert (verify_buf.size() == size);
+        const size_t cache_bytes_read = m_memory_cache.Read (this, addr, buf, size, error);
+        Error verify_error;
+        const size_t verify_bytes_read = ReadMemoryFromInferior (addr, const_cast<char *>(verify_buf.data()), verify_buf.size(), verify_error);
+        assert (cache_bytes_read == verify_bytes_read);
+        assert (memcmp(buf, verify_buf.data(), verify_buf.size()) == 0);
+        assert (verify_error.Success() == error.Success());
+        return cache_bytes_read;
+    }
+    return 0;
+}
+
+#else   // #if defined (VERIFY_MEMORY_READS)
+
+size_t
+Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
+{
+    // Memory caching enabled, no verification
+    return m_memory_cache.Read (this, addr, buf, size, error);
+}
+
+#endif  // #else for #if defined (VERIFY_MEMORY_READS)
+    
+#else   // #if defined (ENABLE_MEMORY_CACHING)
+
+size_t
+Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
+{
+    // Memory caching is disabled
+    return ReadMemoryFromInferior (addr, buf, size, error);
+}
+
+#endif  // #else for #if defined (ENABLE_MEMORY_CACHING)
+
+
+size_t
+Process::ReadMemoryFromInferior (addr_t addr, void *buf, size_t size, Error &error)
 {
     if (buf == NULL || size == 0)
         return 0;
@@ -1118,6 +1317,10 @@ Process::WriteMemoryPrivate (addr_t addr, const void *buf, size_t size, Error &e
 size_t
 Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
 {
+#if defined (ENABLE_MEMORY_CACHING)
+    m_memory_cache.Flush (addr, size);
+#endif
+
     if (buf == NULL || size == 0)
         return 0;
     // We need to write any data that would go where any current software traps
