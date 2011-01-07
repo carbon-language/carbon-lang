@@ -605,24 +605,14 @@ void CodeGenFunction::EmitStoreThroughPropertyRefLValue(RValue Src,
 void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::Constant *EnumerationMutationFn =
     CGM.getObjCRuntime().EnumerationMutationFunction();
-  llvm::Value *DeclAddress;
-  QualType ElementTy;
 
   if (!EnumerationMutationFn) {
     CGM.ErrorUnsupported(&S, "Obj-C fast enumeration for this runtime");
     return;
   }
 
-  if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
-    EmitStmt(SD);
-    assert(HaveInsertPoint() && "DeclStmt destroyed insert point!");
-    const Decl* D = SD->getSingleDecl();
-    ElementTy = cast<ValueDecl>(D)->getType();
-    DeclAddress = LocalDeclMap[D];
-  } else {
-    ElementTy = cast<Expr>(S.getElement())->getType();
-    DeclAddress = 0;
-  }
+  JumpDest LoopEnd = getJumpDestInCurrentScope("forcoll.end");
+  JumpDest AfterBody = getJumpDestInCurrentScope("forcoll.next");
 
   // Fast enumeration state.
   QualType StateTy = getContext().getObjCFastEnumerationStateType();
@@ -632,7 +622,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // Number of elements in the items array.
   static const unsigned NumItems = 16;
 
-  // Get selector
+  // Fetch the countByEnumeratingWithState:objects:count: selector.
   IdentifierInfo *II[] = {
     &CGM.getContext().Idents.get("countByEnumeratingWithState"),
     &CGM.getContext().Idents.get("objects"),
@@ -647,79 +637,92 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
                                       ArrayType::Normal, 0);
   llvm::Value *ItemsPtr = CreateMemTemp(ItemsTy, "items.ptr");
 
+  // Emit the collection pointer.
   llvm::Value *Collection = EmitScalarExpr(S.getCollection());
 
+  // Send it our message:
   CallArgList Args;
+
+  // The first argument is a temporary of the enumeration-state type.
   Args.push_back(std::make_pair(RValue::get(StatePtr),
                                 getContext().getPointerType(StateTy)));
 
+  // The second argument is a temporary array with space for NumItems
+  // pointers.  We'll actually be loading elements from the array
+  // pointer written into the control state; this buffer is so that
+  // collections that *aren't* backed by arrays can still queue up
+  // batches of elements.
   Args.push_back(std::make_pair(RValue::get(ItemsPtr),
                                 getContext().getPointerType(ItemsTy)));
 
+  // The third argument is the capacity of that temporary array.
   const llvm::Type *UnsignedLongLTy = ConvertType(getContext().UnsignedLongTy);
   llvm::Constant *Count = llvm::ConstantInt::get(UnsignedLongLTy, NumItems);
   Args.push_back(std::make_pair(RValue::get(Count),
                                 getContext().UnsignedLongTy));
 
+  // Start the enumeration.
   RValue CountRV =
     CGM.getObjCRuntime().GenerateMessageSend(*this, ReturnValueSlot(),
                                              getContext().UnsignedLongTy,
                                              FastEnumSel,
                                              Collection, Args);
 
-  llvm::Value *LimitPtr = CreateMemTemp(getContext().UnsignedLongTy,
-                                        "limit.ptr");
-  Builder.CreateStore(CountRV.getScalarVal(), LimitPtr);
+  // The initial number of objects that were returned in the buffer.
+  llvm::Value *initialBufferLimit = CountRV.getScalarVal();
 
-  llvm::BasicBlock *NoElements = createBasicBlock("noelements");
-  llvm::BasicBlock *SetStartMutations = createBasicBlock("setstartmutations");
+  llvm::BasicBlock *EmptyBB = createBasicBlock("forcoll.empty");
+  llvm::BasicBlock *LoopInitBB = createBasicBlock("forcoll.loopinit");
 
-  llvm::Value *Limit = Builder.CreateLoad(LimitPtr);
-  llvm::Value *Zero = llvm::Constant::getNullValue(UnsignedLongLTy);
+  llvm::Value *zero = llvm::Constant::getNullValue(UnsignedLongLTy);
 
-  llvm::Value *IsZero = Builder.CreateICmpEQ(Limit, Zero, "iszero");
-  Builder.CreateCondBr(IsZero, NoElements, SetStartMutations);
+  // If the limit pointer was zero to begin with, the collection is
+  // empty; skip all this.
+  Builder.CreateCondBr(Builder.CreateICmpEQ(initialBufferLimit, zero, "iszero"),
+                       EmptyBB, LoopInitBB);
 
-  EmitBlock(SetStartMutations);
+  // Otherwise, initialize the loop.
+  EmitBlock(LoopInitBB);
 
-  llvm::Value *StartMutationsPtr = CreateMemTemp(getContext().UnsignedLongTy);
-
+  // Save the initial mutations value.  This is the value at an
+  // address that was written into the state object by
+  // countByEnumeratingWithState:objects:count:.
   llvm::Value *StateMutationsPtrPtr =
     Builder.CreateStructGEP(StatePtr, 2, "mutationsptr.ptr");
   llvm::Value *StateMutationsPtr = Builder.CreateLoad(StateMutationsPtrPtr,
                                                       "mutationsptr");
 
-  llvm::Value *StateMutations = Builder.CreateLoad(StateMutationsPtr,
-                                                   "mutations");
+  llvm::Value *initialMutations =
+    Builder.CreateLoad(StateMutationsPtr, "forcoll.initial-mutations");
 
-  Builder.CreateStore(StateMutations, StartMutationsPtr);
+  // Start looping.  This is the point we return to whenever we have a
+  // fresh, non-empty batch of objects.
+  llvm::BasicBlock *LoopBodyBB = createBasicBlock("forcoll.loopbody");
+  EmitBlock(LoopBodyBB);
 
-  llvm::BasicBlock *LoopStart = createBasicBlock("loopstart");
-  EmitBlock(LoopStart);
+  // The current index into the buffer.
+  llvm::PHINode *index = Builder.CreatePHI(UnsignedLongLTy, "forcoll.index");
+  index->addIncoming(zero, LoopInitBB);
 
-  llvm::Value *CounterPtr = CreateMemTemp(getContext().UnsignedLongTy,
-                                       "counter.ptr");
-  Builder.CreateStore(Zero, CounterPtr);
+  // The current buffer size.
+  llvm::PHINode *count = Builder.CreatePHI(UnsignedLongLTy, "forcoll.count");
+  count->addIncoming(initialBufferLimit, LoopInitBB);
 
-  llvm::BasicBlock *LoopBody = createBasicBlock("loopbody");
-  EmitBlock(LoopBody);
-
+  // Check whether the mutations value has changed from where it was
+  // at start.  StateMutationsPtr should actually be invariant between
+  // refreshes.
   StateMutationsPtr = Builder.CreateLoad(StateMutationsPtrPtr, "mutationsptr");
-  StateMutations = Builder.CreateLoad(StateMutationsPtr, "statemutations");
+  llvm::Value *currentMutations
+    = Builder.CreateLoad(StateMutationsPtr, "statemutations");
 
-  llvm::Value *StartMutations = Builder.CreateLoad(StartMutationsPtr,
-                                                   "mutations");
-  llvm::Value *MutationsEqual = Builder.CreateICmpEQ(StateMutations,
-                                                     StartMutations,
-                                                     "tobool");
+  llvm::BasicBlock *WasMutatedBB = createBasicBlock("forcoll.mutated");
+  llvm::BasicBlock *WasNotMutatedBB = createBasicBlock("forcool.notmutated");
 
+  Builder.CreateCondBr(Builder.CreateICmpEQ(currentMutations, initialMutations),
+                       WasNotMutatedBB, WasMutatedBB);
 
-  llvm::BasicBlock *WasMutated = createBasicBlock("wasmutated");
-  llvm::BasicBlock *WasNotMutated = createBasicBlock("wasnotmutated");
-
-  Builder.CreateCondBr(MutationsEqual, WasNotMutated, WasMutated);
-
-  EmitBlock(WasMutated);
+  // If so, call the enumeration-mutation function.
+  EmitBlock(WasMutatedBB);
   llvm::Value *V =
     Builder.CreateBitCast(Collection,
                           ConvertType(getContext().getObjCIdType()),
@@ -733,81 +736,109 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
                                           FunctionType::ExtInfo()),
            EnumerationMutationFn, ReturnValueSlot(), Args2);
 
-  EmitBlock(WasNotMutated);
+  // Otherwise, or if the mutation function returns, just continue.
+  EmitBlock(WasNotMutatedBB);
 
+  // Initialize the element variable.
+  RunCleanupsScope elementVariableScope(*this);
+  bool elementIsDecl;
+  LValue elementLValue;
+  QualType elementType;
+  if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
+    EmitStmt(SD);
+    const VarDecl* D = cast<VarDecl>(SD->getSingleDecl());
+
+    DeclRefExpr tempDRE(const_cast<VarDecl*>(D), D->getType(),
+                        VK_LValue, SourceLocation());
+    elementLValue = EmitLValue(&tempDRE);
+    elementType = D->getType();
+    elementIsDecl = true;
+  } else {
+    elementLValue = LValue(); // suppress warning
+    elementType = cast<Expr>(S.getElement())->getType();
+    elementIsDecl = false;
+  }
+  const llvm::Type *convertedElementType = ConvertType(elementType);
+
+  // Fetch the buffer out of the enumeration state.
+  // TODO: this pointer should actually be invariant between
+  // refreshes, which would help us do certain loop optimizations.
   llvm::Value *StateItemsPtr =
     Builder.CreateStructGEP(StatePtr, 1, "stateitems.ptr");
+  llvm::Value *EnumStateItems =
+    Builder.CreateLoad(StateItemsPtr, "stateitems");
 
-  llvm::Value *Counter = Builder.CreateLoad(CounterPtr, "counter");
-
-  llvm::Value *EnumStateItems = Builder.CreateLoad(StateItemsPtr,
-                                                   "stateitems");
-
+  // Fetch the value at the current index from the buffer.
   llvm::Value *CurrentItemPtr =
-    Builder.CreateGEP(EnumStateItems, Counter, "currentitem.ptr");
+    Builder.CreateGEP(EnumStateItems, index, "currentitem.ptr");
+  llvm::Value *CurrentItem = Builder.CreateLoad(CurrentItemPtr);
 
-  llvm::Value *CurrentItem = Builder.CreateLoad(CurrentItemPtr, "currentitem");
+  // Cast that value to the right type.
+  CurrentItem = Builder.CreateBitCast(CurrentItem, convertedElementType,
+                                      "currentitem");
 
-  // Cast the item to the right type.
-  CurrentItem = Builder.CreateBitCast(CurrentItem,
-                                      ConvertType(ElementTy), "tmp");
+  // Make sure we have an l-value.  Yes, this gets evaluated every
+  // time through the loop.
+  if (!elementIsDecl)
+    elementLValue = EmitLValue(cast<Expr>(S.getElement()));
 
-  if (!DeclAddress) {
-    LValue LV = EmitLValue(cast<Expr>(S.getElement()));
+  EmitStoreThroughLValue(RValue::get(CurrentItem), elementLValue, elementType);
 
-    // Set the value to null.
-    Builder.CreateStore(CurrentItem, LV.getAddress());
-  } else
-    Builder.CreateStore(CurrentItem, DeclAddress);
-
-  // Increment the counter.
-  Counter = Builder.CreateAdd(Counter,
-                              llvm::ConstantInt::get(UnsignedLongLTy, 1));
-  Builder.CreateStore(Counter, CounterPtr);
-
-  JumpDest LoopEnd = getJumpDestInCurrentScope("loopend");
-  JumpDest AfterBody = getJumpDestInCurrentScope("afterbody");
-
+  // Perform the loop body, setting up break and continue labels.
   BreakContinueStack.push_back(BreakContinue(LoopEnd, AfterBody));
-
-  EmitStmt(S.getBody());
-
+  {
+    RunCleanupsScope Scope(*this);
+    EmitStmt(S.getBody());
+  }
   BreakContinueStack.pop_back();
 
+  // Destroy the element variable now.
+  elementVariableScope.ForceCleanup();
+
+  // Check whether there are more elements.
   EmitBlock(AfterBody.getBlock());
 
-  llvm::BasicBlock *FetchMore = createBasicBlock("fetchmore");
+  llvm::BasicBlock *FetchMoreBB = createBasicBlock("forcoll.refetch");
 
-  Counter = Builder.CreateLoad(CounterPtr);
-  Limit = Builder.CreateLoad(LimitPtr);
-  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, Limit, "isless");
-  Builder.CreateCondBr(IsLess, LoopBody, FetchMore);
+  // First we check in the local buffer.
+  llvm::Value *indexPlusOne
+    = Builder.CreateAdd(index, llvm::ConstantInt::get(UnsignedLongLTy, 1));
 
-  // Fetch more elements.
-  EmitBlock(FetchMore);
+  // If we haven't overrun the buffer yet, we can continue.
+  Builder.CreateCondBr(Builder.CreateICmpULT(indexPlusOne, count),
+                       LoopBodyBB, FetchMoreBB);
+
+  index->addIncoming(indexPlusOne, AfterBody.getBlock());
+  count->addIncoming(count, AfterBody.getBlock());
+
+  // Otherwise, we have to fetch more elements.
+  EmitBlock(FetchMoreBB);
 
   CountRV =
     CGM.getObjCRuntime().GenerateMessageSend(*this, ReturnValueSlot(),
                                              getContext().UnsignedLongTy,
                                              FastEnumSel,
                                              Collection, Args);
-  Builder.CreateStore(CountRV.getScalarVal(), LimitPtr);
-  Limit = Builder.CreateLoad(LimitPtr);
 
-  IsZero = Builder.CreateICmpEQ(Limit, Zero, "iszero");
-  Builder.CreateCondBr(IsZero, NoElements, LoopStart);
+  // If we got a zero count, we're done.
+  llvm::Value *refetchCount = CountRV.getScalarVal();
+
+  // (note that the message send might split FetchMoreBB)
+  index->addIncoming(zero, Builder.GetInsertBlock());
+  count->addIncoming(refetchCount, Builder.GetInsertBlock());
+
+  Builder.CreateCondBr(Builder.CreateICmpEQ(refetchCount, zero),
+                       EmptyBB, LoopBodyBB);
 
   // No more elements.
-  EmitBlock(NoElements);
+  EmitBlock(EmptyBB);
 
-  if (!DeclAddress) {
+  if (!elementIsDecl) {
     // If the element was not a declaration, set it to be null.
 
-    LValue LV = EmitLValue(cast<Expr>(S.getElement()));
-
-    // Set the value to null.
-    Builder.CreateStore(llvm::Constant::getNullValue(ConvertType(ElementTy)),
-                        LV.getAddress());
+    llvm::Value *null = llvm::Constant::getNullValue(convertedElementType);
+    elementLValue = EmitLValue(cast<Expr>(S.getElement()));
+    EmitStoreThroughLValue(RValue::get(null), elementLValue, elementType);
   }
 
   EmitBlock(LoopEnd.getBlock());
