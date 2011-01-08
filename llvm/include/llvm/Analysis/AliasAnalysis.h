@@ -402,7 +402,7 @@ public:
   ModRefResult getModRefInfo(const StoreInst *S, const Location &Loc);
 
   /// getModRefInfo (for stores) - A convenience wrapper.
-  ModRefResult getModRefInfo(const StoreInst *S, const Value *P, uint64_t Size) {
+  ModRefResult getModRefInfo(const StoreInst *S, const Value *P, uint64_t Size){
     return getModRefInfo(S, Location(P, Size));
   }
 
@@ -411,7 +411,7 @@ public:
   ModRefResult getModRefInfo(const VAArgInst* I, const Location &Loc);
 
   /// getModRefInfo (for va_args) - A convenience wrapper.
-  ModRefResult getModRefInfo(const VAArgInst* I, const Value* P, uint64_t Size) {
+  ModRefResult getModRefInfo(const VAArgInst* I, const Value* P, uint64_t Size){
     return getModRefInfo(I, Location(P, Size));
   }
 
