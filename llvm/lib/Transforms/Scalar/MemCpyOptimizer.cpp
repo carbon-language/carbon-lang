@@ -37,7 +37,7 @@ STATISTIC(NumMoveToCpy,   "Number of memmoves converted to memcpy");
 STATISTIC(NumCpyToSet,    "Number of memcpys converted to memset");
 
 static int64_t GetOffsetFromIndex(const GetElementPtrInst *GEP, unsigned Idx,
-                                  bool &VariableIdxFound, TargetData &TD) {
+                                  bool &VariableIdxFound, const TargetData &TD){
   // Skip over the first indices.
   gep_type_iterator GTI = gep_type_begin(GEP);
   for (unsigned i = 1; i != Idx; ++i, ++GTI)
@@ -70,7 +70,7 @@ static int64_t GetOffsetFromIndex(const GetElementPtrInst *GEP, unsigned Idx,
 /// constant offset, and return that constant offset.  For example, Ptr1 might
 /// be &A[42], and Ptr2 might be &A[40].  In this case offset would be -8.
 static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
-                            TargetData &TD) {
+                            const TargetData &TD) {
   // Right now we handle the case when Ptr1/Ptr2 are both GEPs with an identical
   // base.  After that base, they may have some number of common (and
   // potentially variable) indices.  After that they handle some constant
@@ -165,9 +165,9 @@ class MemsetRanges {
   /// because each element is relatively large and expensive to copy.
   std::list<MemsetRange> Ranges;
   typedef std::list<MemsetRange>::iterator range_iterator;
-  TargetData &TD;
+  const TargetData &TD;
 public:
-  MemsetRanges(TargetData &td) : TD(td) {}
+  MemsetRanges(const TargetData &td) : TD(td) {}
   
   typedef std::list<MemsetRange>::const_iterator const_iterator;
   const_iterator begin() const { return Ranges.begin(); }
@@ -175,6 +175,10 @@ public:
   bool empty() const { return Ranges.empty(); }
   
   void addStore(int64_t OffsetFromFirst, StoreInst *SI);
+  
+  void addInst(int64_t OffsetFromFirst, Instruction *Inst) {
+    addStore(OffsetFromFirst, cast<StoreInst>(Inst));
+  }
 };
   
 } // end anon namespace
@@ -252,13 +256,15 @@ void MemsetRanges::addStore(int64_t Start, StoreInst *SI) {
 namespace {
   class MemCpyOpt : public FunctionPass {
     MemoryDependenceAnalysis *MD;
-    bool runOnFunction(Function &F);
+    const TargetData *TD;
   public:
     static char ID; // Pass identification, replacement for typeid
     MemCpyOpt() : FunctionPass(ID) {
       initializeMemCpyOptPass(*PassRegistry::getPassRegistry());
       MD = 0;
     }
+
+    bool runOnFunction(Function &F);
 
   private:
     // This transformation requires dominator postdominator info
@@ -280,6 +286,9 @@ namespace {
     bool processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
                                        uint64_t MSize);
     bool processByValArgument(CallSite CS, unsigned ArgNo);
+    Instruction *tryMergingIntoMemset(Instruction *I, Value *StartPtr,
+                                      Value *ByteVal);
+
     bool iterateOnFunction(Function &F);
   };
   
@@ -297,15 +306,121 @@ INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(MemCpyOpt, "memcpyopt", "MemCpy Optimization",
                     false, false)
 
-/// processStore - When GVN is scanning forward over instructions, we look for
+/// tryMergingIntoMemset - When scanning forward over instructions, we look for
 /// some other patterns to fold away.  In particular, this looks for stores to
-/// neighboring locations of memory.  If it sees enough consequtive ones
-/// (currently 4) it attempts to merge them together into a memcpy/memset.
+/// neighboring locations of memory.  If it sees enough consequtive ones, it
+/// attempts to merge them together into a memcpy/memset.
+Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst, 
+                                             Value *StartPtr, Value *ByteVal) {
+  if (TD == 0) return 0;
+  
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  
+  // Okay, so we now have a single store that can be splatable.  Scan to find
+  // all subsequent stores of the same value to offset from the same pointer.
+  // Join these together into ranges, so we can decide whether contiguous blocks
+  // are stored.
+  MemsetRanges Ranges(*TD);
+  
+  BasicBlock::iterator BI = StartInst;
+  for (++BI; !isa<TerminatorInst>(BI); ++BI) {
+    if (isa<CallInst>(BI) || isa<InvokeInst>(BI)) { 
+      // If the call is readnone, ignore it, otherwise bail out.  We don't even
+      // allow readonly here because we don't want something like:
+      // A[1] = 2; strlen(A); A[2] = 2; -> memcpy(A, ...); strlen(A).
+      if (AA.getModRefBehavior(CallSite(BI)) ==
+          AliasAnalysis::DoesNotAccessMemory)
+        continue;
+      
+      // TODO: If this is a memset, try to join it in.
+      
+      break;
+    } else if (isa<VAArgInst>(BI) || isa<LoadInst>(BI))
+      break;
+    
+    // If this is a non-store instruction it is fine, ignore it.
+    StoreInst *NextStore = dyn_cast<StoreInst>(BI);
+    if (NextStore == 0) continue;
+    
+    // If this is a store, see if we can merge it in.
+    if (NextStore->isVolatile()) break;
+    
+    // Check to see if this stored value is of the same byte-splattable value.
+    if (ByteVal != isBytewiseValue(NextStore->getOperand(0)))
+      break;
+    
+    // Check to see if this store is to a constant offset from the start ptr.
+    int64_t Offset;
+    if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(), Offset, *TD))
+      break;
+    
+    Ranges.addStore(Offset, NextStore);
+  }
+  
+  // If we have no ranges, then we just had a single store with nothing that
+  // could be merged in.  This is a very common case of course.
+  if (Ranges.empty())
+    return 0;
+  
+  // If we had at least one store that could be merged in, add the starting
+  // store as well.  We try to avoid this unless there is at least something
+  // interesting as a small compile-time optimization.
+  Ranges.addInst(0, StartInst);
+
+  // If we create any memsets, we put it right before the first instruction that
+  // isn't part of the memset block.  This ensure that the memset is dominated
+  // by any addressing instruction needed by the start of the block.
+  IRBuilder<> Builder(BI);
+
+  // Now that we have full information about ranges, loop over the ranges and
+  // emit memset's for anything big enough to be worthwhile.
+  Instruction *AMemSet = 0;
+  for (MemsetRanges::const_iterator I = Ranges.begin(), E = Ranges.end();
+       I != E; ++I) {
+    const MemsetRange &Range = *I;
+    
+    if (Range.TheStores.size() == 1) continue;
+    
+    // If it is profitable to lower this range to memset, do so now.
+    if (!Range.isProfitableToUseMemset(*TD))
+      continue;
+    
+    // Otherwise, we do want to transform this!  Create a new memset.
+    // Get the starting pointer of the block.
+    StartPtr = Range.StartPtr;
+    
+    // Determine alignment
+    unsigned Alignment = Range.Alignment;
+    if (Alignment == 0) {
+      const Type *EltType = 
+        cast<PointerType>(StartPtr->getType())->getElementType();
+      Alignment = TD->getABITypeAlignment(EltType);
+    }
+    
+    AMemSet = 
+      Builder.CreateMemSet(StartPtr, ByteVal, Range.End-Range.Start, Alignment);
+    
+    DEBUG(dbgs() << "Replace stores:\n";
+          for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
+            dbgs() << *Range.TheStores[i] << '\n';
+          dbgs() << "With: " << *AMemSet << '\n');
+    
+    // Zap all the stores.
+    for (SmallVector<StoreInst*, 16>::const_iterator
+         SI = Range.TheStores.begin(),
+         SE = Range.TheStores.end(); SI != SE; ++SI)
+      (*SI)->eraseFromParent();
+    ++NumMemSetInfer;
+  }
+  
+  return AMemSet;
+}
+
+
 bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   if (SI->isVolatile()) return false;
   
-  TargetData *TD = getAnalysisIfAvailable<TargetData>();
-  if (!TD) return false;
+  if (TD == 0) return false;
 
   // Detect cases where we're performing call slot forwarding, but
   // happen to be using a load-store pair to implement it, rather than
@@ -339,118 +454,14 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   // Ensure that the value being stored is something that can be memset'able a
   // byte at a time like "0" or "-1" or any width, as well as things like
   // 0xA0A0A0A0 and 0.0.
-  Value *ByteVal = isBytewiseValue(SI->getOperand(0));
-  if (!ByteVal)
-    return false;
-
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-
-  // Okay, so we now have a single store that can be splatable.  Scan to find
-  // all subsequent stores of the same value to offset from the same pointer.
-  // Join these together into ranges, so we can decide whether contiguous blocks
-  // are stored.
-  MemsetRanges Ranges(*TD);
-  
-  Value *StartPtr = SI->getPointerOperand();
-  
-  BasicBlock::iterator BI = SI;
-  for (++BI; !isa<TerminatorInst>(BI); ++BI) {
-    if (isa<CallInst>(BI) || isa<InvokeInst>(BI)) { 
-      // If the call is readnone, ignore it, otherwise bail out.  We don't even
-      // allow readonly here because we don't want something like:
-      // A[1] = 2; strlen(A); A[2] = 2; -> memcpy(A, ...); strlen(A).
-      if (AA.getModRefBehavior(CallSite(BI)) ==
-            AliasAnalysis::DoesNotAccessMemory)
-        continue;
-      
-      // TODO: If this is a memset, try to join it in.
-      
-      break;
-    } else if (isa<VAArgInst>(BI) || isa<LoadInst>(BI))
-      break;
-
-    // If this is a non-store instruction it is fine, ignore it.
-    StoreInst *NextStore = dyn_cast<StoreInst>(BI);
-    if (NextStore == 0) continue;
-    
-    // If this is a store, see if we can merge it in.
-    if (NextStore->isVolatile()) break;
-    
-    // Check to see if this stored value is of the same byte-splattable value.
-    if (ByteVal != isBytewiseValue(NextStore->getOperand(0)))
-      break;
-
-    // Check to see if this store is to a constant offset from the start ptr.
-    int64_t Offset;
-    if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(), Offset, *TD))
-      break;
-
-    Ranges.addStore(Offset, NextStore);
-  }
-
-  // If we have no ranges, then we just had a single store with nothing that
-  // could be merged in.  This is a very common case of course.
-  if (Ranges.empty())
-    return false;
-  
-  // If we had at least one store that could be merged in, add the starting
-  // store as well.  We try to avoid this unless there is at least something
-  // interesting as a small compile-time optimization.
-  Ranges.addStore(0, SI);
-  
-  
-  // Now that we have full information about ranges, loop over the ranges and
-  // emit memset's for anything big enough to be worthwhile.
-  bool MadeChange = false;
-  for (MemsetRanges::const_iterator I = Ranges.begin(), E = Ranges.end();
-       I != E; ++I) {
-    const MemsetRange &Range = *I;
-
-    if (Range.TheStores.size() == 1) continue;
-    
-    // If it is profitable to lower this range to memset, do so now.
-    if (!Range.isProfitableToUseMemset(*TD))
-      continue;
-    
-    // Otherwise, we do want to transform this!  Create a new memset.  We put
-    // the memset right before the first instruction that isn't part of this
-    // memset block.  This ensure that the memset is dominated by any addressing
-    // instruction needed by the start of the block.
-    BasicBlock::iterator InsertPt = BI;
-
-    // Get the starting pointer of the block.
-    StartPtr = Range.StartPtr;
-
-    // Determine alignment
-    unsigned Alignment = Range.Alignment;
-    if (Alignment == 0) {
-      const Type *EltType = 
-         cast<PointerType>(StartPtr->getType())->getElementType();
-      Alignment = TD->getABITypeAlignment(EltType);
+  if (Value *ByteVal = isBytewiseValue(SI->getOperand(0)))
+    if (Instruction *I = tryMergingIntoMemset(SI, SI->getPointerOperand(),
+                                              ByteVal)) {
+      BBI = I;  // Don't invalidate iterator.
+      return true;
     }
-
-    IRBuilder<> Builder(InsertPt);
-    Value *C = 
-      Builder.CreateMemSet(StartPtr, ByteVal, Range.End-Range.Start, Alignment);
-    
-    DEBUG(dbgs() << "Replace stores:\n";
-          for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
-            dbgs() << *Range.TheStores[i] << '\n';
-          dbgs() << "With: " << *C << '\n'); (void)C;
   
-    // Don't invalidate the iterator
-    BBI = BI;
-  
-    // Zap all the stores.
-    for (SmallVector<StoreInst*, 16>::const_iterator
-         SI = Range.TheStores.begin(),
-         SE = Range.TheStores.end(); SI != SE; ++SI)
-      (*SI)->eraseFromParent();
-    ++NumMemSetInfer;
-    MadeChange = true;
-  }
-  
-  return MadeChange;
+  return false;
 }
 
 
@@ -484,8 +495,7 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
     return false;
 
   // Check that all of src is copied to dest.
-  TargetData *TD = getAnalysisIfAvailable<TargetData>();
-  if (!TD) return false;
+  if (TD == 0) return false;
 
   ConstantInt *srcArraySize = dyn_cast<ConstantInt>(srcAlloca->getArraySize());
   if (!srcArraySize)
@@ -751,8 +761,7 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
   
 /// processByValArgument - This is called on every byval argument in call sites.
 bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
-  TargetData *TD = getAnalysisIfAvailable<TargetData>();
-  if (!TD) return false;
+  if (TD == 0) return false;
 
   // Find out what feeds this byval argument.
   Value *ByValArg = CS.getArgument(ArgNo);
@@ -856,6 +865,7 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
 bool MemCpyOpt::runOnFunction(Function &F) {
   bool MadeChange = false;
   MD = &getAnalysis<MemoryDependenceAnalysis>();
+  TD = getAnalysisIfAvailable<TargetData>();
   while (1) {
     if (!iterateOnFunction(F))
       break;
