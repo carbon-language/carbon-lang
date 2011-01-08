@@ -357,7 +357,7 @@ DWARFDebugInfo::Parse(SymbolFileDWARF* dwarf2Data, Callback callback, void* user
             const dw_offset_t next_cu_offset = cu->GetNextCompileUnitOffset();
 
             depth = 0;
-            // Call the callback funtion with no DIE pointer for the compile unit
+            // Call the callback function with no DIE pointer for the compile unit
             // and get the offset that we are to continue to parse from
             offset = callback(dwarf2Data, cu, NULL, offset, depth, userData);
 
@@ -369,7 +369,7 @@ DWARFDebugInfo::Parse(SymbolFileDWARF* dwarf2Data, Callback callback, void* user
                 bool done = false;
                 while (!done && die.Extract(dwarf2Data, cu.get(), &offset))
                 {
-                    // Call the callback funtion with DIE pointer that falls within the compile unit
+                    // Call the callback function with DIE pointer that falls within the compile unit
                     offset = callback(dwarf2Data, cu, &die, offset, depth, userData);
 
                     if (die.IsNULL())
@@ -397,7 +397,7 @@ DWARFDebugInfo::Parse(SymbolFileDWARF* dwarf2Data, Callback callback, void* user
                 cu.reset(new DWARFCompileUnit(dwarf2Data));
 
 
-            // Make sure we start on a propper
+            // Make sure we start on a proper
             offset = next_cu_offset;
         }
     }
@@ -512,7 +512,7 @@ VerifyCallback
                 {
                     if (verifyInfo->sibling_errors++ == 0)
                         s->Printf("ERROR\n");
-                    s->Printf("    0x%8.8x: sibling attribyte (0x%8.8x) in this die is not valid: it is less than this DIE or some of its contents.\n", die->GetOffset(), sibling);
+                    s->Printf("    0x%8.8x: sibling attribute (0x%8.8x) in this die is not valid: it is less than this DIE or some of its contents.\n", die->GetOffset(), sibling);
                 }
                 else if (sibling > verifyInfo->die_ranges.back().hi_die_offset)
                 {
@@ -583,7 +583,7 @@ VerifyCallback
                 // the address ranges within it (if any) are contiguous. The DWARF
                 // spec states that if a compile unit TAG has high and low PC
                 // attributes, there must be no gaps in the address ranges of it's
-                // contained subtroutines. If there are gaps, the high and low PC
+                // contained subroutines. If there are gaps, the high and low PC
                 // must not be in the DW_TAG_compile_unit's attributes. Errors like
                 // this can crop up when optimized code is dead stripped and the debug
                 // information isn't properly fixed up for output.
@@ -698,7 +698,7 @@ VerifyCallback
     else
     {
     //  cu->Dump(ostrm_ptr); // Dump the compile unit for the DIE
-        // We have a new comile unit header
+        // We have a new compile unit header
         verifyInfo->die_ranges.clear();
         DIERange die_range;
         die_range.range.offset  = cu->GetOffset();

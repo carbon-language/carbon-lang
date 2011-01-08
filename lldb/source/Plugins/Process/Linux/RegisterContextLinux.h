@@ -30,7 +30,7 @@ public:
     /// Updates the register state of the associated thread after hitting a
     /// breakpoint (if that make sense for the architecture).  Default
     /// implementation simply returns true for architectures which do not
-    /// require any upadte.
+    /// require any update.
     ///
     /// @return
     ///    True if the operation succeeded and false otherwise.

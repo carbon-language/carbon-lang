@@ -152,7 +152,7 @@ public:
     /// environment that the inferior should be launched with.
     ///
     /// @param[in] name_equal_value
-    ///     A NULL terminated C string that contains a single enironment
+    ///     A NULL terminated C string that contains a single environment
     ///     in the format "NAME=VALUE".
     ///
     /// @param[in] timeout_seconds

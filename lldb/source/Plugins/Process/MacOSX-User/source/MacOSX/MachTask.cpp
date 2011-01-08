@@ -477,7 +477,7 @@ MachTask::ExceptionThread (void *arg)
     // MACH_RCV_TIMEOUT option with a zero timeout to grab all other current
     // exceptions for our process. After we have received the last pending
     // exception, we will get a timeout which enables us to then notify
-    // our main thread that we have an exception bundle avaiable. We then wait
+    // our main thread that we have an exception bundle available. We then wait
     // for the main thread to tell this exception thread to start trying to get
     // exceptions messages again and we start again with a mach_msg read with
     // infinite timeout.

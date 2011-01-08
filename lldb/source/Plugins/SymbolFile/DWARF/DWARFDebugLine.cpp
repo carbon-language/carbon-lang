@@ -796,7 +796,7 @@ DWARFDebugLine::ParseStatementTable
             // opcode divided by the line_range multiplied by the
             // minimum_instruction_length field from the header. That is:
             //
-            //  address increment = (adjusted opcode / line_range) * minimim_instruction_length
+            //  address increment = (adjusted opcode / line_range) * minimum_instruction_length
             //
             // The amount to increment the line register is the line_base plus
             // the result of the adjusted opcode modulo the line_range. That is:
@@ -1142,7 +1142,7 @@ DWARFDebugLine::Row::Insert(Row::collection& state_coll, const Row& state)
         // with the current one if the one it is replacing is an end_sequence entry.
         // We currently always place an extra end sequence when ever we exit a valid
         // address range for a function in case the functions get rearranged by
-        // optmimizations or by order specifications. These extra end sequences will
+        // optimizations or by order specifications. These extra end sequences will
         // disappear by getting replaced with valid consecutive entries within a
         // compile unit if there are no gaps.
         if (range.first == range.second)
@@ -1202,7 +1202,7 @@ void
 DWARFDebugLine::State::AppendRowToMatrix(dw_offset_t offset)
 {
     // Each time we are to add an entry into the line table matrix
-    // call the callback funtion so that someone can do something with
+    // call the callback function so that someone can do something with
     // the current state of the state machine (like build a line table
     // or dump the line table!)
     if (log)

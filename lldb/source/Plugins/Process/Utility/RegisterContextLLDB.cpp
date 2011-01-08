@@ -309,7 +309,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (m_sym_ctx_valid == false)
        decr_pc_and_recompute_addr_range = true;
 
-    // Or if we're in the middle of the stack (and not "above" an asynchornous event like sigtramp),
+    // Or if we're in the middle of the stack (and not "above" an asynchronous event like sigtramp),
     // and our "current" pc is the start of a function...
     if (m_sym_ctx_valid
         && ((RegisterContextLLDB*) m_next_frame.get())->m_frame_type != eSigtrampFrame

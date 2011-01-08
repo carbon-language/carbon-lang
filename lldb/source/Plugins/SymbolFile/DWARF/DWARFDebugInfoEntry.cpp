@@ -1999,7 +1999,7 @@ DWARFDebugInfoEntry::LookupAddress
                 }
                 else
                 {   // compile units may not have a valid high/low pc when there
-                    // are address gaps in subtroutines so we must always search
+                    // are address gaps in subroutines so we must always search
                     // if there is no valid high and low PC
                     check_children = (tag == DW_TAG_compile_unit) && ((function_die != NULL) || (block_die != NULL));
                 }

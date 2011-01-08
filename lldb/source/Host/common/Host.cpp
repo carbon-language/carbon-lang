@@ -662,7 +662,7 @@ Host::ResolveExecutableInBundle (FileSpec &file)
 bool
 Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
 {
-    // To get paths related to LLDB we get the path to the exectuable that
+    // To get paths related to LLDB we get the path to the executable that
     // contains this function. On MacOSX this will be "LLDB.framework/.../LLDB",
     // on linux this is assumed to be the "lldb" main executable. If LLDB on
     // linux is actually in a shared library (lldb.so??) then this function will

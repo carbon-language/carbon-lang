@@ -37,7 +37,7 @@
 #define BAS_IMVA_2_3            ((uint32_t)(3u << 7))
 #define BAS_IMVA_ALL            ((uint32_t)(0xfu << 5))
 
-// Break only in priveleged or user mode
+// Break only in privileged or user mode
 #define S_RSVD                  ((uint32_t)(0u << 1))
 #define S_PRIV                  ((uint32_t)(1u << 1))
 #define S_USER                  ((uint32_t)(2u << 1))

@@ -150,7 +150,7 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
                                     case DW_TAG_inlined_subroutine:
                                         // Even if this is a function level static, we don't add it. We could theoretically
                                         // add these if we wanted to by introspecting into the DW_AT_location and seeing
-                                        // if the location describes a hard coded address, but we dont want the performance
+                                        // if the location describes a hard coded address, but we don't want the performance
                                         // penalty of that right now.
                                         add_die = false;
 //                                      if (attributes.ExtractFormValueAtIndex(dwarf2Data, i, form_value))

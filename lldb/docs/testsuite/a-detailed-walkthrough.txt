@@ -119,7 +119,7 @@ binary for us.  The base class TestBase has defined three instance methods:
         if not module.buildDwarf(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dwarf")
 
-And the test/plugins/darwin.py provides the implmentation for all three build
+And the test/plugins/darwin.py provides the implementation for all three build
 methods using the makefile mechanism.  We envision that linux plugin can use a
 similar approach to accomplish the task of building the binaries.
 

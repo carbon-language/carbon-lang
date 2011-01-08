@@ -97,7 +97,7 @@ CommandObjectRegexCommand::ExecuteRawCommandString
                                       m_cmd_name.c_str());
         return false;
     }
-    result.AppendError("empty command passed to regular exression command");
+    result.AppendError("empty command passed to regular expression command");
     result.SetStatus(eReturnStatusFailed);
     return false;
 }

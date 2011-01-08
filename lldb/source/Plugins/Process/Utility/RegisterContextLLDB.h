@@ -121,11 +121,11 @@ private:
     InitializeNonZerothFrame();
 
     // Provide a location for where THIS function saved the CALLER's register value
-    // Or a frame "below" this one savedit, i.e. a function called by this one, preserved a register that this
+    // Or a frame "below" this one saved it, i.e. a function called by this one, preserved a register that this
     // function didn't modify/use.
     //
     // The RegisterLocation type may be set to eRegisterNotAvailable -- this will happen for a volatile register 
-    // bieng queried mid-stack.  Instead of floating frame 0's contents of that register up the stack (which may
+    // being queried mid-stack.  Instead of floating frame 0's contents of that register up the stack (which may
     // or may not be the value of that reg when the function was executing), we won't return any value.
     //
     // If a non-volatile register (a "preserved" register) is requested mid-stack and no frames "below" the requested

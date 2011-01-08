@@ -410,7 +410,7 @@ RegisterContextMach_i386::GetRegisterSet (uint32_t reg_set)
 
 
 //----------------------------------------------------------------------
-// Register information defintions for 32 bit i386.
+// Register information definitions for 32 bit i386.
 //----------------------------------------------------------------------
 int
 RegisterContextMach_i386::GetSetForNativeRegNum (int reg_num)

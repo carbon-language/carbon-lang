@@ -746,7 +746,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
     // the user could have specified an alias, and in translating the alias there may also be command options and/or
     // even data (including raw text strings) that need to be found and inserted into the command line as part of
     // the translation.  So this first step is plain look-up & replacement, resulting in three things:  1). the command
-    // object whose Execute method will actually be called; 2). a revised command string, with all substituitions &
+    // object whose Execute method will actually be called; 2). a revised command string, with all substitutions &
     // replacements taken care of; 3). whether or not the Execute function wants raw input or not.
 
     StreamString revised_command_line;

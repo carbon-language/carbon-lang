@@ -187,7 +187,7 @@ public:
 
         Prologue::shared_ptr prologue;
         lldb_private::Log *log;
-        Callback callback; // Callback funcation that gets called each time an entry it to be added to the matrix
+        Callback callback; // Callback function that gets called each time an entry is to be added to the matrix
         void* callbackUserData;
         int row; // The row number that starts at zero for the prologue, and increases for each row added to the matrix
     private:

@@ -167,7 +167,7 @@ ProcessGDBRemoteLog::ListLogCategories (Stream *strm)
         "\tprocess - log process events and activities\n"
         "\tthread - log thread events and activities\n"
         "\tstep - log step related activities\n"
-        "\tverbose - enable verbose loggging\n"
+        "\tverbose - enable verbose logging\n"
         "\twatch - log watchpoint related activities\n", ProcessGDBRemote::GetPluginNameStatic());
 }
 

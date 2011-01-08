@@ -114,7 +114,7 @@ DWARFAbbreviationDeclarationSet::AppendAbbrevDeclSequential(const DWARFAbbreviat
 // Encode
 //
 // Encode the abbreviation table onto the end of the buffer provided
-// into a byte represenation as would be found in a ".debug_abbrev"
+// into a byte representation as would be found in a ".debug_abbrev"
 // debug information section.
 //----------------------------------------------------------------------
 //void

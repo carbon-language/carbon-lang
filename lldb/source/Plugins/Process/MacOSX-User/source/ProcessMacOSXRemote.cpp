@@ -214,7 +214,7 @@ ProcessMacOSXRemote::GetSoftwareBreakpointTrapOpcode (BreakpointSite *bp_site)
         {
         case CPU_TYPE_ARM:
             // TODO: fill this in for ARM. We need to dig up the symbol for
-            // the address in the breakpoint locaiton and figure out if it is
+            // the address in the breakpoint location and figure out if it is
             // an ARM or Thumb breakpoint.
             trap_opcode = g_arm_breakpoint_opcode;
             trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
@@ -592,7 +592,7 @@ ProcessMacOSXRemote::DisableBreakpoint (BreakpointLocation *bp)
     const uint8_t * const break_op = bp->GetTrapOpcodeBytes();
     if (break_op_size > 0)
     {
-        // Clear a software breakoint instruction
+        // Clear a software breakpoint instruction
         uint8_t curr_break_op[break_op_size];
         bool break_op_found = false;
 
@@ -728,7 +728,7 @@ ProcessMacOSXRemote::DisableWatchpoint (WatchpointLocation *wp)
                 {
                     wp->SetEnabled(false);
                     if (log)
-                        log->Printf ("ProcessMacOSXRemote::Disablewatchpoint (watchID = %d) addr = 0x%8.8llx (hardware) => success", watchID, (uint64_t)addr);
+                        log->Printf ("ProcessMacOSXRemote::DisableWatchpoint (watchID = %d) addr = 0x%8.8llx (hardware) => success", watchID, (uint64_t)addr);
                     return true;
                 }
             }
@@ -1036,7 +1036,7 @@ ProcessMacOSXRemote::STDIOThread(void *arg)
     // MACH_RCV_TIMEOUT option with a zero timeout to grab all other current
     // exceptions for our process. After we have received the last pending
     // exception, we will get a timeout which enables us to then notify
-    // our main thread that we have an exception bundle avaiable. We then wait
+    // our main thread that we have an exception bundle available. We then wait
     // for the main thread to tell this exception thread to start trying to get
     // exceptions messages again and we start again with a mach_msg read with
     // infinite timeout.

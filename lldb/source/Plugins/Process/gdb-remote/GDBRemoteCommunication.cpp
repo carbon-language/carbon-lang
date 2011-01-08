@@ -164,7 +164,7 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
 //class ScopedValueChanger
 //{
 //public:
-//    // Take a value reference and the value to assing it to when this class
+//    // Take a value reference and the value to assign it to when this class
 //    // instance goes out of scope.
 //    ScopedValueChanger (_Tp &value_ref, _Tp value) :
 //        m_value_ref (value_ref),
@@ -180,7 +180,7 @@ GDBRemoteCommunication::SendPacketAndWaitForResponse
 //        m_value_ref = m_value;
 //    }
 //protected:
-//    _Tp &m_value_ref;   // A reference to the value we wil change when this object destructs
+//    _Tp &m_value_ref;   // A reference to the value we will change when this object destructs
 //    _Tp m_value;        // The value to assign to m_value_ref when this goes out of scope.
 //};
 

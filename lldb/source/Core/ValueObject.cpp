@@ -290,7 +290,7 @@ ValueObject::GetIndexOfChildWithName (const ConstString &name)
 ValueObjectSP
 ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
 {
-    // when getting a child by name, it could be burried inside some base
+    // when getting a child by name, it could be buried inside some base
     // classes (which really aren't part of the expression path), so we
     // need a vector of indexes that can get us down to the correct child
     std::vector<uint32_t> child_indexes;

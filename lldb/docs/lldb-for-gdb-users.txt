@@ -367,7 +367,7 @@ You can also choose particular variables to view:
 (SKTGraphicView *) self = 0x0000000100208b40
 
 The frame variable command is not a full expression parser but it
-does support some common operations like defererencing:
+does support some common operations like dereferencing:
 
 (lldb) fr v *self
 (SKTGraphicView *) self = 0x0000000100208b40

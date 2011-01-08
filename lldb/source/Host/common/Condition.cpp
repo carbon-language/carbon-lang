@@ -66,7 +66,7 @@ Condition::Signal ()
 
 //----------------------------------------------------------------------
 // The Wait() function atomically blocks the current thread
-// waiting on the owend condition variable, and unblocks the mutex
+// waiting on the owned condition variable, and unblocks the mutex
 // specified by "mutex".  The waiting thread unblocks only after
 // another thread calls Signal(), or Broadcast() with the same
 // condition variable, or if "abstime" is valid (non-NULL) this

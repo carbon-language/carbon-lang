@@ -72,7 +72,7 @@ Mutex::Locker::Locker (pthread_mutex_t *mutex_ptr) :
 }
 
 //----------------------------------------------------------------------
-// Desstructor
+// Destructor
 //
 // Unlocks any owned mutex object (if it is valid).
 //----------------------------------------------------------------------

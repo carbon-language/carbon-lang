@@ -145,7 +145,7 @@ Args::SetCommandString (const char *command)
             if (*arg_start == '\0')
                 break;
 
-            // Arguments can be split into multiple discongituous pieces,
+            // Arguments can be split into multiple discontiguous pieces,
             // for example:
             //  "Hello ""World"
             // this would result in a single argument "Hello World" (without/
@@ -228,7 +228,7 @@ Args::SetCommandString (const char *command)
                     else
                     {
                         // We found the start of a quote scope.
-                        // Make sure there isn't a string that predeces
+                        // Make sure there isn't a string that precedes
                         // the start of a quote scope like:
                         // Hello" World"
                         // If so, then add the "Hello" to the arg

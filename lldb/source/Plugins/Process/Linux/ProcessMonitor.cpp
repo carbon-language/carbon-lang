@@ -444,7 +444,7 @@ ProcessMonitor::LaunchArgs::~LaunchArgs()
 /// "drives" state changes in the debugger.
 ///
 /// The second thread (@see OperationThread) is responsible for two things 1)
-/// lauching or attaching to the inferior process, and then 2) servicing
+/// launching or attaching to the inferior process, and then 2) servicing
 /// operations such as register reads/writes, stepping, etc.  See the comments
 /// on the Operation class for more info as to why this is needed.
 ProcessMonitor::ProcessMonitor(ProcessLinux *process,
@@ -601,7 +601,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
         // Let us have our own process group.
         setpgid(0, 0);
 
-        // Dup file discriptors if needed.
+        // Dup file descriptors if needed.
         //
         // FIXME: If two or more of the paths are the same we needlessly open
         // the same file multiple times.

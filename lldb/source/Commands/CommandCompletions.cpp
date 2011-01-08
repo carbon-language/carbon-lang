@@ -141,7 +141,7 @@ DiskFilesOrDirectories
     memcpy(partial_name_copy, partial_file_name, partial_name_len);
     partial_name_copy[partial_name_len] = '\0';
     
-    // We'll need to save a copy of the remainder for comparision, which we do here.
+    // We'll need to save a copy of the remainder for comparison, which we do here.
     char remainder[PATH_MAX];
     
     // end_ptr will point past the last / in partial_name_copy, or if there is no slash to the beginning of the string.

@@ -131,7 +131,7 @@ public:
         FPU      i387;          // FPU registers.
         uint64_t tsize;         // Text segment size.
         uint64_t dsize;         // Data segment size.
-        uint64_t ssize;         // Stack segement size.
+        uint64_t ssize;         // Stack segment size.
         uint64_t start_code;    // VM address of text.
         uint64_t start_stack;   // VM address of stack bottom (top in rsp).
         int64_t  signal;        // Signal causing core dump.

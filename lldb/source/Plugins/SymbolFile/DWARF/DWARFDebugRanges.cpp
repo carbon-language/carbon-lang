@@ -131,7 +131,7 @@ DWARFDebugRanges::RangeList::Extract(SymbolFileDWARF* dwarf2Data, uint32_t* offs
             // End of range list
             break;
         }
-        // Extend 4 byte addresses that consits of 32 bits of 1's to be 64 bits
+        // Extend 4 byte addresses that consists of 32 bits of 1's to be 64 bits
         // of ones
         switch (addr_size)
         {

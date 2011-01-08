@@ -237,6 +237,6 @@ lldb_private::ListLogCategories (Stream *strm)
         "\tstate - log private and public process state changes\n"
         "\tstep - log step related activities\n"
         "\tunwind - log stack unwind activities\n"
-        "\tverbose - enable verbose loggging\n"
+        "\tverbose - enable verbose logging\n"
         "\twatch - log watchpoint related activities\n");
 }

@@ -55,7 +55,7 @@ public:
             // function, so we do it manually.
             auto_zone_register_thread(auto_zone());
 #else
-            // On SnowLoepard and later we just call the thread registration function.
+            // On SnowLeopard and later we just call the thread registration function.
             objc_registerThreadWithCollector();
 #endif
         }

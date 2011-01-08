@@ -52,7 +52,7 @@ CommandObjectScript::ExecuteRawCommandString
 
     if (script_interpreter == NULL)
     {
-        result.AppendError("no script interpeter");
+        result.AppendError("no script interpreter");
         result.SetStatus (eReturnStatusFailed);
     }
 

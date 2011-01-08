@@ -174,7 +174,7 @@ ProcessLinux::DoDestroy()
 
     if (!HasExited())
     {
-        // Shut down the private state thread as we will syncronize with events
+        // Shut down the private state thread as we will synchronize with events
         // ourselves.  Discard all current thread plans.
         PausePrivateStateThread();
         GetThreadList().DiscardThreadPlans();

@@ -127,7 +127,7 @@ ObjectContainerUniversalMachO::ParseHeader ()
         }
 
         // Now we should have enough data for all of the fat headers, so lets index
-        // them so we know how many architectures that this univeral binary contains.
+        // them so we know how many architectures that this universal binary contains.
         uint32_t arch_idx = 0;
         for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
         {

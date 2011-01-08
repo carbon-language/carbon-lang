@@ -41,7 +41,7 @@ main (int argc, char const *argv[])
     
     // The first argument is the file path we want to look something up in
     const char *exe_file_path = argv[1];
-    // The second arguemnt in the address that we want to lookup
+    // The second argument in the address that we want to lookup
     lldb::addr_t file_addr = strtoull (argv[2], NULL, 0);
     
     // Make a file spec out of our executable path

@@ -171,7 +171,7 @@ private:
     ParseSectionHeaders();
 
     /// Scans the dynamic section and locates all dependent modules (shared
-    /// libaries) populating m_filespec_ap.  This method will compute the
+    /// libraries) populating m_filespec_ap.  This method will compute the
     /// dependent module list only once.  Returns the number of dependent
     /// modules parsed.
     size_t

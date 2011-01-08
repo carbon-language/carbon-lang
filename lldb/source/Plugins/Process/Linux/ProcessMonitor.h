@@ -65,10 +65,10 @@ public:
     ProcessLinux &
     GetProcess() { return *m_process; }
 
-    /// Returns a file descriptor to the controling terminal of the inferior
+    /// Returns a file descriptor to the controlling terminal of the inferior
     /// process.
     ///
-    /// Reads from this file descriptor yeild both the standard output and
+    /// Reads from this file descriptor yield both the standard output and
     /// standard error of this debugee.  Even if stderr and stdout were
     /// redirected on launch it may still happen that data is available on this
     /// descriptor (if the inferior process opens /dev/tty, for example).

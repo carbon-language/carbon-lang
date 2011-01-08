@@ -23,7 +23,7 @@
 // is designed to mimic the std::auto_ptr<T> class and has all of the
 // same functions. The one thing to watch out for is the
 // CFCReleaser<T>::release() function won't actually CFRelease any owned
-// pointer, it is designed to relinquish ownwership of the pointer just
+// pointer, it is designed to relinquish ownership of the pointer just
 // like std:auto_ptr<T>::release() does.
 //----------------------------------------------------------------------
 template <class T>

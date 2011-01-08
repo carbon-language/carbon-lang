@@ -291,16 +291,16 @@ g_reg_sets[k_num_register_sets] =
     (offsetof(RegisterContextLinux_x86_64::UserArea, i387) + \
      offsetof(RegisterContextLinux_x86_64::FPU, regname))
 
-// Number of bytes needed to represet a GPR.
+// Number of bytes needed to represent a GPR.
 #define GPR_SIZE(reg) sizeof(((RegisterContextLinux_x86_64::GPR*)NULL)->reg)
 
-// Number of bytes needed to represet a FPR.
+// Number of bytes needed to represent a FPR.
 #define FPR_SIZE(reg) sizeof(((RegisterContextLinux_x86_64::FPU*)NULL)->reg)
 
-// Number of bytes needed to represet the i'th FP register.
+// Number of bytes needed to represent the i'th FP register.
 #define FP_SIZE sizeof(((RegisterContextLinux_x86_64::MMSReg*)NULL)->bytes)
 
-// Number of bytes needed to represet an XMM register.
+// Number of bytes needed to represent an XMM register.
 #define XMM_SIZE sizeof(RegisterContextLinux_x86_64::XMMReg)
 
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)        \

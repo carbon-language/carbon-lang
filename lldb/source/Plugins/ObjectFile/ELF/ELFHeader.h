@@ -68,9 +68,9 @@ struct ELFHeader
     elf_half      e_machine;          ///< Target architecture.
     elf_half      e_ehsize;           ///< Byte size of the ELF header.
     elf_half      e_phentsize;        ///< Size of a program header table entry.
-    elf_half      e_phnum;            ///< Number of program header entrys.
+    elf_half      e_phnum;            ///< Number of program header entries.
     elf_half      e_shentsize;        ///< Size of a section header table entry.
-    elf_half      e_shnum;            ///< Number of section header entrys.
+    elf_half      e_shnum;            ///< Number of section header entries.
     elf_half      e_shstrndx;         ///< String table section index.
 
     ELFHeader();
@@ -184,19 +184,19 @@ struct ELFSectionHeader
 /// @brief Generic representation of an ELF program header.
 struct ELFProgramHeader
 {
-    elf_word  p_type;           ///< Type of program segement.
-    elf_word  p_flags;          ///< Segement attibutes.
-    elf_off   p_offset;         ///< Start of segment from begining of file.
+    elf_word  p_type;           ///< Type of program segment.
+    elf_word  p_flags;          ///< Segment attributes.
+    elf_off   p_offset;         ///< Start of segment from beginning of file.
     elf_addr  p_vaddr;          ///< Virtual address of segment in memory.
     elf_addr  p_paddr;          ///< Physical address (for non-VM systems). 
     elf_xword p_filesz;         ///< Byte size of the segment in file.
     elf_xword p_memsz;          ///< Byte size of the segment in memory.
-    elf_xword p_align;          ///< Segement alignement constraint.
+    elf_xword p_align;          ///< Segment alignment constraint.
 
     ELFProgramHeader();
 
-    /// Parse an ELFProgramHeader entry from the given DataExtracter starting at
-    /// position \p offset.  The address size of the DataExtracter determines if
+    /// Parse an ELFProgramHeader entry from the given DataExtractor starting at
+    /// position \p offset.  The address size of the DataExtractor determines if
     /// a 32 or 64 bit object is to be parsed.
     ///
     /// @param[in] data
@@ -234,13 +234,13 @@ struct ELFSymbol
     /// Returns the type attribute of the st_info member.
     unsigned char getType() const { return st_info & 0x0F; }
 
-    /// Sets the bining and type of the st_info member.
+    /// Sets the binding and type of the st_info member.
     void setBindingAndType(unsigned char binding, unsigned char type) {
         st_info = (binding << 4) + (type & 0x0F);
     }
 
-    /// Parse an ELFSymbol entry from the given DataExtracter starting at
-    /// position \p offset.  The address size of the DataExtracter determines if
+    /// Parse an ELFSymbol entry from the given DataExtractor starting at
+    /// position \p offset.  The address size of the DataExtractor determines if
     /// a 32 or 64 bit object is to be parsed.
     ///
     /// @param[in] data
@@ -271,8 +271,8 @@ struct ELFDynamic
 
     ELFDynamic();
 
-    /// Parse an ELFDynamic entry from the given DataExtracter starting at
-    /// position \p offset.  The address size of the DataExtracter determines if
+    /// Parse an ELFDynamic entry from the given DataExtractor starting at
+    /// position \p offset.  The address size of the DataExtractor determines if
     /// a 32 or 64 bit object is to be parsed.
     ///
     /// @param[in] data

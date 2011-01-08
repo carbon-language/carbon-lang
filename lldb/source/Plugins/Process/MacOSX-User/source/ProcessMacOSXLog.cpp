@@ -159,7 +159,7 @@ ProcessMacOSXLog::ListLogCategories (Stream *strm)
         "\ttask - log mach task calls\n"
         "\tthread - log thread events and activities\n"
         "\tstep - log step related activities\n"
-        "\tverbose - enable verbose loggging\n"
+        "\tverbose - enable verbose logging\n"
         "\twatch - log watchpoint related activities\n", ProcessMacOSX::GetPluginNameStatic());
 }
 

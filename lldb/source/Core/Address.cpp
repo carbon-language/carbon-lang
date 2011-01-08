@@ -170,7 +170,7 @@ ReadCStringFromMemory (ExecutionContextScope *exe_scope, const Address &address,
     char buf[k_buf_len+1];
     buf[k_buf_len] = '\0'; // NULL terminate
 
-    // Byte order and adderss size don't matter for C string dumping..
+    // Byte order and address size don't matter for C string dumping..
     DataExtractor data (buf, sizeof(buf), eByteOrderHost, 4);
     size_t total_len = 0;
     size_t bytes_read;

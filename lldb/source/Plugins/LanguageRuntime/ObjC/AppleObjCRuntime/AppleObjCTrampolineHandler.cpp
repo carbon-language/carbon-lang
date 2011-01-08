@@ -560,7 +560,7 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (ProcessSP process_sp, Mo
         const Symbol *msgSend_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType (name_const_str, eSymbolTypeCode);
         if (msgSend_symbol)
         {
-            // FixMe: Make g_dispatch_functions static table of DisptachFunctions, and have the map be address->index.
+            // FixMe: Make g_dispatch_functions static table of DispatchFunctions, and have the map be address->index.
             // Problem is we also need to lookup the dispatch function.  For now we could have a side table of stret & non-stret
             // dispatch functions.  If that's as complex as it gets, we're fine.
             
