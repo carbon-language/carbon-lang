@@ -110,7 +110,7 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   if (isa<InvokeInst>(PredBB->getTerminator())) return false;
   
   succ_iterator SI(succ_begin(PredBB)), SE(succ_end(PredBB));
-  BasicBlock* OnlySucc = BB;
+  BasicBlock *OnlySucc = BB;
   for (; SI != SE; ++SI)
     if (*SI != OnlySucc) {
       OnlySucc = 0;     // There are multiple distinct successors!
@@ -131,10 +131,8 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   }
 
   // Begin by getting rid of unneeded PHIs.
-  while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
-    PN->replaceAllUsesWith(PN->getIncomingValue(0));
-    BB->getInstList().pop_front();  // Delete the phi node...
-  }
+  if (isa<PHINode>(BB->front()))
+    FoldSingleEntryPHINodes(BB);
   
   // Delete the unconditional branch from the predecessor...
   PredBB->getInstList().pop_back();
@@ -152,11 +150,9 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   
   // Finally, erase the old block and update dominator info.
   if (P) {
-    if (DominatorTree* DT = P->getAnalysisIfAvailable<DominatorTree>()) {
-      DomTreeNode* DTN = DT->getNode(BB);
-      DomTreeNode* PredDTN = DT->getNode(PredBB);
-  
-      if (DTN) {
+    if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>()) {
+      if (DomTreeNode *DTN = DT->getNode(BB)) {
+        DomTreeNode *PredDTN = DT->getNode(PredBB);
         SmallPtrSet<DomTreeNode*, 8> Children(DTN->begin(), DTN->end());
         for (SmallPtrSet<DomTreeNode*, 8>::iterator DI = Children.begin(),
              DE = Children.end(); DI != DE; ++DI)
@@ -164,12 +160,13 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
 
         DT->eraseNode(BB);
       }
+      
+      if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>())
+        LI->removeBlock(BB);
     }
   }
   
   BB->eraseFromParent();
-  
-  
   return true;
 }
 
@@ -276,7 +273,7 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
 
   // The new block lives in whichever loop the old one did. This preserves
   // LCSSA as well, because we force the split point to be after any PHI nodes.
-  if (LoopInfo* LI = P->getAnalysisIfAvailable<LoopInfo>())
+  if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>())
     if (Loop *L = LI->getLoopFor(Old))
       L->addBasicBlockToLoop(New, LI->getBase());
 
