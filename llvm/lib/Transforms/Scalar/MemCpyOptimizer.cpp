@@ -456,8 +456,10 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
     // Zap all the stores.
     for (SmallVector<Instruction*, 16>::const_iterator
          SI = Range.TheStores.begin(),
-         SE = Range.TheStores.end(); SI != SE; ++SI)
+         SE = Range.TheStores.end(); SI != SE; ++SI) {
+      MD->removeInstruction(*SI);
       (*SI)->eraseFromParent();
+    }
     ++NumMemSetInfer;
   }
   
@@ -912,7 +914,7 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
 
       // Reprocess the instruction if desired.
       if (RepeatInstruction) {
-        --BI;
+        if (BI != BB->begin()) --BI;
         MadeChange = true;
       }
     }
