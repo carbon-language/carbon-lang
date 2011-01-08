@@ -1922,7 +1922,21 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
 
         const char *thread_name = DNBThreadGetName (pid, tid);
         if (thread_name && thread_name[0])
-            ostrm << std::hex << "name:" << thread_name << ';';
+        {
+            size_t thread_name_len = strlen(thread_name);
+            
+            if (::strcspn (thread_name, "$#+-;:") == thread_name_len)
+                ostrm << std::hex << "name:" << thread_name << ';';
+            else
+            {
+                // the thread name contains special chars, send as hex bytes
+                ostrm << std::hex << "hexname:";
+                uint8_t *u_thread_name = (uint8_t *)thread_name;
+                for (int i = 0; i < thread_name_len; i++)
+                    ostrm << RAWHEX8(u_thread_name[i]);
+                ostrm << ';';
+            }
+        }
 
         thread_identifier_info_data_t thread_ident_info;
         if (DNBThreadGetIdentifierInfo (pid, tid, &thread_ident_info))

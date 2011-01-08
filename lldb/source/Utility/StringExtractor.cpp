@@ -336,6 +336,16 @@ StringExtractor::GetHexWithFixedSize (uint32_t byte_size, bool little_endian, ui
     return fail_value;
 }
 
+size_t
+StringExtractor::GetHexByteString (std::string &str)
+{
+    str.clear();
+    char ch;
+    while ((ch = GetHexU8()) != '\0')
+        str.append(1, ch);
+    return str.size();
+}
+
 bool
 StringExtractor::GetNameColonValue (std::string &name, std::string &value)
 {

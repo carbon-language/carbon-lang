@@ -1036,6 +1036,15 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     // thread in big endian hex
                     tid = Args::StringToUInt32 (value.c_str(), 0, 16);
                 }
+                else if (name.compare("hexname") == 0)
+                {
+                    StringExtractor name_extractor;
+                    // Swap "value" over into "name_extractor"
+                    name_extractor.GetStringRef().swap(value);
+                    // Now convert the HEX bytes into a string value
+                    name_extractor.GetHexByteString (value);
+                    thread_name.swap (value);
+                }
                 else if (name.compare("name") == 0)
                 {
                     thread_name.swap (value);

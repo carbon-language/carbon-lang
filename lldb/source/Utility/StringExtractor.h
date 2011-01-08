@@ -110,6 +110,9 @@ public:
     uint64_t
     GetHexWithFixedSize (uint32_t byte_size, bool little_endian, uint64_t fail_value);
 
+    size_t
+    GetHexByteString (std::string &str);
+
 protected:
     //------------------------------------------------------------------
     // For StringExtractor only
