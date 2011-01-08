@@ -335,3 +335,9 @@ ret void
 
 declare i32 @func_14()
 
+
+define double @test16(i32 %a) nounwind {
+  %cmp = icmp slt i32 %a, 2
+  %select = select i1 %cmp, double 2.000000e+00, double 3.141592e+00
+  ret double %select
+}

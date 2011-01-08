@@ -299,6 +299,11 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
       case ICmpInst::ICMP_SLT:
       case ICmpInst::ICMP_UGT:
       case ICmpInst::ICMP_SGT: {
+        // These transformations only work for selects over integers.
+        const IntegerType *SelectTy = dyn_cast<IntegerType>(SI.getType());
+        if (!SelectTy)
+          break;
+
         Constant *AdjustedRHS;
         if (Pred == ICmpInst::ICMP_UGT || Pred == ICmpInst::ICMP_SGT)
           AdjustedRHS = ConstantInt::get(CI->getContext(), CI->getValue() + 1);
@@ -315,9 +320,8 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
         // promote all to the larger type. This enables scalar evolution to
         // analyze this expression.
         else if (CmpRHS->getType()->getScalarSizeInBits()
-                 < SI.getType()->getScalarSizeInBits()) {
-          Constant *sextRHS = ConstantExpr::getSExt(AdjustedRHS,
-                                                    SI.getType());
+                 < SelectTy->getBitWidth()) {
+          Constant *sextRHS = ConstantExpr::getSExt(AdjustedRHS, SelectTy);
 
           // X = sext x; x >s c ? X : C+1 --> X = sext x; X <s C+1 ? C+1 : X
           // X = sext x; x <s c ? X : C-1 --> X = sext x; X >s C-1 ? C-1 : X
@@ -332,8 +336,7 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
             CmpLHS = FalseVal;
             AdjustedRHS = sextRHS;
           } else if (ICI->isUnsigned()) {
-            Constant *zextRHS = ConstantExpr::getZExt(AdjustedRHS,
-                                                      SI.getType());
+            Constant *zextRHS = ConstantExpr::getZExt(AdjustedRHS, SelectTy);
             // X = zext x; x >u c ? X : C+1 --> X = zext x; X <u C+1 ? C+1 : X
             // X = zext x; x <u c ? X : C-1 --> X = zext x; X >u C-1 ? C-1 : X
             // zext + signed compare cannot be changed:
