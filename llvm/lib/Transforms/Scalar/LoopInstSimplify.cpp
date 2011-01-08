@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-instsimplify"
+#include "llvm/Instructions.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -68,7 +69,10 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   SmallPtrSet<const Instruction*, 8> S1, S2, *ToSimplify = &S1, *Next = &S2;
 
-  SmallVector<BasicBlock*, 16> VisitStack;
+  // The bit we are stealing from the pointer represents whether this basic
+  // block is the header of a subloop, in which case we only process its phis.
+  typedef PointerIntPair<BasicBlock*, 1> WorklistItem;
+  SmallVector<WorklistItem, 16> VisitStack;
   SmallPtrSet<BasicBlock*, 32> Visited;
 
   bool Changed = false;
@@ -79,10 +83,12 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     VisitStack.clear();
     Visited.clear();
 
-    VisitStack.push_back(L->getHeader());
+    VisitStack.push_back(WorklistItem(L->getHeader(), false));
 
     while (!VisitStack.empty()) {
-      BasicBlock *BB = VisitStack.pop_back_val();
+      WorklistItem Item = VisitStack.pop_back_val();
+      BasicBlock* BB = Item.getPointer();
+      bool IsSubloopHeader = Item.getInt();
 
       // Simplify instructions in the current basic block.
       for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
@@ -109,16 +115,44 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
           }
         }
         LocalChanged |= RecursivelyDeleteTriviallyDeadInstructions(I);
+
+        if (IsSubloopHeader && !isa<PHINode>(I))
+          break;
       }
 
-      // Add all successors to the worklist, except for loop exit blocks.
+      // Add all successors to the worklist, except for loop exit blocks and the
+      // bodies of subloops. We visit the headers of loops so that we can process
+      // their phis, but we contract the rest of the subloop body and only follow
+      // edges leading back to the original loop.
       for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE;
            ++SI) {
         BasicBlock *SuccBB = *SI;
+        if (!Visited.insert(SuccBB))
+          continue;
+
+        const Loop *SuccLoop = LI->getLoopFor(SuccBB);
+        if (SuccLoop && SuccLoop->getHeader() == SuccBB
+                     && L->contains(SuccLoop)) {
+          VisitStack.push_back(WorklistItem(SuccBB, true));
+
+          SmallVector<BasicBlock*, 8> SubLoopExitBlocks;
+          SuccLoop->getExitBlocks(SubLoopExitBlocks);
+
+          for (unsigned i = 0; i < SubLoopExitBlocks.size(); ++i) {
+            BasicBlock *ExitBB = SubLoopExitBlocks[i];
+            if (LI->getLoopFor(ExitBB) == L && Visited.insert(ExitBB))
+              VisitStack.push_back(WorklistItem(ExitBB, false));
+          }
+
+          continue;
+        }
+
         bool IsExitBlock = std::binary_search(ExitBlocks.begin(),
-                                             ExitBlocks.end(), SuccBB);
-        if (!IsExitBlock && Visited.insert(SuccBB))
-          VisitStack.push_back(SuccBB);
+                                              ExitBlocks.end(), SuccBB);
+        if (IsExitBlock)
+          continue;
+
+        VisitStack.push_back(WorklistItem(SuccBB, false));
       }
     }
 
