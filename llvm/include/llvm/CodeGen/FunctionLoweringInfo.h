@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
 #ifndef NDEBUG
 #include "llvm/ADT/SmallSet.h"
@@ -27,6 +28,7 @@
 #include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <vector>
 
 namespace llvm {
@@ -104,9 +106,8 @@ public:
     LiveOutInfo() : NumSignBits(0), KnownOne(1, 0), KnownZero(1, 0) {}
   };
   
-  /// LiveOutRegInfo - Information about live out vregs, indexed by their
-  /// register number offset by 'FirstVirtualRegister'.
-  std::vector<LiveOutInfo> LiveOutRegInfo;
+  /// LiveOutRegInfo - Information about live out vregs.
+  IndexedMap<LiveOutInfo, VirtReg2IndexFunctor> LiveOutRegInfo;
 
   /// PHINodesToUpdate - A list of phi instructions whose operand list will
   /// be updated after processing the current basic block.

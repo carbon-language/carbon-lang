@@ -482,9 +482,7 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo() {
 
     // Only install this information if it tells us something.
     if (NumSignBits != 1 || KnownZero != 0 || KnownOne != 0) {
-      DestReg -= TargetRegisterInfo::FirstVirtualRegister;
-      if (DestReg >= FuncInfo->LiveOutRegInfo.size())
-        FuncInfo->LiveOutRegInfo.resize(DestReg+1);
+      FuncInfo->LiveOutRegInfo.grow(DestReg);
       FunctionLoweringInfo::LiveOutInfo &LOI =
         FuncInfo->LiveOutRegInfo[DestReg];
       LOI.NumSignBits = NumSignBits;

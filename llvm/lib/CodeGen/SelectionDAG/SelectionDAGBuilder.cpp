@@ -44,7 +44,6 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Analysis/DebugInfo.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -642,14 +641,12 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
       // If the source register was virtual and if we know something about it,
       // add an assert node.
       if (!TargetRegisterInfo::isVirtualRegister(Regs[Part+i]) ||
-          !RegisterVT.isInteger() || RegisterVT.isVector())
+          !RegisterVT.isInteger() || RegisterVT.isVector() ||
+          !FuncInfo.LiveOutRegInfo.inBounds(Regs[Part+i]))
         continue;
       
-      unsigned SlotNo = Regs[Part+i]-TargetRegisterInfo::FirstVirtualRegister;
-      if (SlotNo >= FuncInfo.LiveOutRegInfo.size()) continue;
-      
       const FunctionLoweringInfo::LiveOutInfo &LOI =
-        FuncInfo.LiveOutRegInfo[SlotNo];
+        FuncInfo.LiveOutRegInfo[Regs[Part+i]];
 
       unsigned RegSize = RegisterVT.getSizeInBits();
       unsigned NumSignBits = LOI.NumSignBits;

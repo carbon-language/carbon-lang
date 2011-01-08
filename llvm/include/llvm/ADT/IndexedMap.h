@@ -65,6 +65,10 @@ namespace llvm {
         storage_.resize(NewSize, nullVal_);
     }
 
+    bool inBounds(IndexT n) const {
+      return toIndex_(n) < storage_.size();
+    }
+
     typename StorageT::size_type size() const {
       return storage_.size();
     }
