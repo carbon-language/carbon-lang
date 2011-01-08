@@ -450,6 +450,9 @@ public:
   /// more than one type.
   ArgTypeResult getArgType(ASTContext &Ctx) const;
 
+  const OptionalFlag &hasThousandsGrouping() const { 
+      return HasThousandsGrouping;
+  }
   const OptionalFlag &isLeftJustified() const { return IsLeftJustified; }
   const OptionalFlag &hasPlusPrefix() const { return HasPlusPrefix; }
   const OptionalFlag &hasAlternativeForm() const { return HasAlternativeForm; }
@@ -470,6 +473,7 @@ public:
   bool hasValidLeadingZeros() const;
   bool hasValidSpacePrefix() const;
   bool hasValidLeftJustified() const;
+  bool hasValidThousandsGroupingPrefix() const;
 
   bool hasValidPrecision() const;
   bool hasValidFieldWidth() const;

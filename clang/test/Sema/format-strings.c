@@ -336,4 +336,7 @@ void posix_extensions() {
   // Test %'d, "thousands grouping".
   // <rdar://problem/8816343>
   printf("%'d\n", 123456789); // no-warning
+  printf("%'i\n", 123456789); // no-warning
+  printf("%'f\n", (float) 1.0); // no-warning
+  printf("%'p\n", (void*) 0); // expected-warning{{results in undefined behavior with 'p' conversion specifier}}
 }

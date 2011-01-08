@@ -590,6 +590,24 @@ bool PrintfSpecifier::hasValidLeftJustified() const {
   }
 }
 
+bool PrintfSpecifier::hasValidThousandsGroupingPrefix() const {
+  if (!HasThousandsGrouping)
+    return true;
+  
+  switch (CS.getKind()) {
+    case ConversionSpecifier::dArg:
+    case ConversionSpecifier::iArg:
+    case ConversionSpecifier::uArg:
+    case ConversionSpecifier::fArg:
+    case ConversionSpecifier::FArg:
+    case ConversionSpecifier::gArg:
+    case ConversionSpecifier::GArg:
+      return true;
+    default:
+      return false;
+  }
+}
+
 bool PrintfSpecifier::hasValidPrecision() const {
   if (Precision.getHowSpecified() == OptionalAmount::NotSpecified)
     return true;

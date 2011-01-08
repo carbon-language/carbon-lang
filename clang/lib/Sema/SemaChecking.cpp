@@ -1491,6 +1491,8 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
   }
 
   // Check each flag does not conflict with any other component.
+  if (!FS.hasValidThousandsGroupingPrefix())
+    HandleFlag(FS, FS.hasThousandsGrouping(), startSpecifier, specifierLen);
   if (!FS.hasValidLeadingZeros())
     HandleFlag(FS, FS.hasLeadingZeros(), startSpecifier, specifierLen);
   if (!FS.hasValidPlusPrefix())
