@@ -340,7 +340,7 @@ private:
   CFGBlock *addStmt(Stmt *S) {
     return Visit(S, AddStmtChoice::AlwaysAdd);
   }
-  CFGBlock *addInitializer(CXXBaseOrMemberInitializer *I);
+  CFGBlock *addInitializer(CXXCtorInitializer *I);
   void addAutomaticObjDtors(LocalScope::const_iterator B,
                             LocalScope::const_iterator E, Stmt* S);
   void addImplicitDtorsForDestructor(const CXXDestructorDecl *DD);
@@ -359,7 +359,7 @@ private:
                   AddStmtChoice asc = AddStmtChoice::AlwaysAdd) {
     B->appendStmt(S, cfg->getBumpVectorContext());
   }
-  void appendInitializer(CFGBlock *B, CXXBaseOrMemberInitializer *I) {
+  void appendInitializer(CFGBlock *B, CXXCtorInitializer *I) {
     B->appendInitializer(I, cfg->getBumpVectorContext());
   }
   void appendBaseDtor(CFGBlock *B, const CXXBaseSpecifier *BS) {
@@ -526,7 +526,7 @@ CFGBlock* CFGBuilder::createBlock(bool add_successor) {
 }
 
 /// addInitializer - Add C++ base or member initializer element to CFG.
-CFGBlock *CFGBuilder::addInitializer(CXXBaseOrMemberInitializer *I) {
+CFGBlock *CFGBuilder::addInitializer(CXXCtorInitializer *I) {
   if (!BuildOpts.AddInitializers)
     return Block;
 
@@ -3050,7 +3050,7 @@ static void print_elem(llvm::raw_ostream &OS, StmtPrinterHelper* Helper,
       OS << '\n';
 
   } else if (CFGInitializer IE = E.getAs<CFGInitializer>()) {
-    CXXBaseOrMemberInitializer* I = IE;
+    CXXCtorInitializer* I = IE;
     if (I->isBaseInitializer())
       OS << I->getBaseClass()->getAsCXXRecordDecl()->getName();
     else OS << I->getAnyMember()->getName();

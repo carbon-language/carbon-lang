@@ -3294,12 +3294,13 @@ void ASTWriter::FlushCXXBaseSpecifiers() {
   CXXBaseSpecifiersToWrite.clear();
 }
 
-void ASTWriter::AddCXXBaseOrMemberInitializers(
-                        const CXXBaseOrMemberInitializer * const *BaseOrMembers,
-                        unsigned NumBaseOrMembers, RecordDataImpl &Record) {
-  Record.push_back(NumBaseOrMembers);
-  for (unsigned i=0; i != NumBaseOrMembers; ++i) {
-    const CXXBaseOrMemberInitializer *Init = BaseOrMembers[i];
+void ASTWriter::AddCXXCtorInitializers(
+                             const CXXCtorInitializer * const *CtorInitializers,
+                             unsigned NumCtorInitializers,
+                             RecordDataImpl &Record) {
+  Record.push_back(NumCtorInitializers);
+  for (unsigned i=0; i != NumCtorInitializers; ++i) {
+    const CXXCtorInitializer *Init = CtorInitializers[i];
 
     Record.push_back(Init->isBaseInitializer());
     if (Init->isBaseInitializer()) {

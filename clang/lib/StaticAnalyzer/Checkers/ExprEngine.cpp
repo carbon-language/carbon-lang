@@ -640,7 +640,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
 void ExprEngine::ProcessInitializer(const CFGInitializer Init,
                                     StmtNodeBuilder &builder) {
   // We don't set EntryNode and currentStmt. And we don't clean up state.
-  const CXXBaseOrMemberInitializer *BMI = Init.getInitializer();
+  const CXXCtorInitializer *BMI = Init.getInitializer();
 
   ExplodedNode *Pred = builder.getBasePredecessor();
   const LocationContext *LC = Pred->getLocationContext();

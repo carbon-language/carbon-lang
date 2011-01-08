@@ -3602,7 +3602,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
 }
 
 void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
-                                    CXXBaseOrMemberInitializer** Initializers,
+                                              CXXCtorInitializer** Initializers,
                                               unsigned NumInitializers) {
   CXXConstructorDecl *Constructor
     = static_cast<CXXConstructorDecl *>(ConstructorD);

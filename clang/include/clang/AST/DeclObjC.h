@@ -28,7 +28,7 @@ class ObjCProtocolDecl;
 class ObjCCategoryDecl;
 class ObjCPropertyDecl;
 class ObjCPropertyImplDecl;
-class CXXBaseOrMemberInitializer;
+class CXXCtorInitializer;
 
 class ObjCListBase {
   void operator=(const ObjCListBase &);     // DO NOT IMPLEMENT
@@ -1213,7 +1213,7 @@ class ObjCImplementationDecl : public ObjCImplDecl {
   ObjCInterfaceDecl *SuperClass;
   /// Support for ivar initialization.
   /// IvarInitializers - The arguments used to initialize the ivars
-  CXXBaseOrMemberInitializer **IvarInitializers;
+  CXXCtorInitializer **IvarInitializers;
   unsigned NumIvarInitializers;
   
   /// true of class extension has at least one bitfield ivar.
@@ -1232,10 +1232,10 @@ public:
                                         ObjCInterfaceDecl *superDecl);
   
   /// init_iterator - Iterates through the ivar initializer list.
-  typedef CXXBaseOrMemberInitializer **init_iterator;
+  typedef CXXCtorInitializer **init_iterator;
   
   /// init_const_iterator - Iterates through the ivar initializer list.
-  typedef CXXBaseOrMemberInitializer * const * init_const_iterator;
+  typedef CXXCtorInitializer * const * init_const_iterator;
   
   /// init_begin() - Retrieve an iterator to the first initializer.
   init_iterator       init_begin()       { return IvarInitializers; }
@@ -1260,7 +1260,7 @@ public:
   }
   
   void setIvarInitializers(ASTContext &C,
-                           CXXBaseOrMemberInitializer ** initializers,
+                           CXXCtorInitializer ** initializers,
                            unsigned numInitializers);
   
   bool hasSynthBitfield() const { return HasSynthBitfield; }

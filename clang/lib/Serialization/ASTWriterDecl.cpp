@@ -503,8 +503,8 @@ void ASTDeclWriter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
 void ASTDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   VisitObjCImplDecl(D);
   Writer.AddDeclRef(D->getSuperClass(), Record);
-  Writer.AddCXXBaseOrMemberInitializers(D->IvarInitializers,
-                                        D->NumIvarInitializers, Record);
+  Writer.AddCXXCtorInitializers(D->IvarInitializers, D->NumIvarInitializers,
+                                Record);
   Record.push_back(D->hasSynthBitfield());
   Code = serialization::DECL_OBJC_IMPLEMENTATION;
 }
@@ -781,8 +781,8 @@ void ASTDeclWriter::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 
   Record.push_back(D->IsExplicitSpecified);
   Record.push_back(D->ImplicitlyDefined);
-  Writer.AddCXXBaseOrMemberInitializers(D->BaseOrMemberInitializers,
-                                        D->NumBaseOrMemberInitializers, Record);
+  Writer.AddCXXCtorInitializers(D->CtorInitializers, D->NumCtorInitializers,
+                                Record);
 
   Code = serialization::DECL_CXX_CONSTRUCTOR;
 }

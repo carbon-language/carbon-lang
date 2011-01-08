@@ -203,7 +203,7 @@ public:
   typedef OpaquePtr<QualType> TypeTy;
   typedef Attr AttrTy;
   typedef CXXBaseSpecifier BaseTy;
-  typedef CXXBaseOrMemberInitializer MemInitTy;
+  typedef CXXCtorInitializer MemInitTy;
   typedef Expr ExprTy;
   typedef Stmt StmtTy;
   typedef TemplateParameterList TemplateParamsTy;
@@ -2573,9 +2573,9 @@ public:
                                            CXXRecordDecl *ClassDecl,
                                            SourceLocation EllipsisLoc);
 
-  bool SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
-                                   CXXBaseOrMemberInitializer **Initializers,
-                                   unsigned NumInitializers, bool AnyErrors);
+  bool SetCtorInitializers(CXXConstructorDecl *Constructor,
+                           CXXCtorInitializer **Initializers,
+                           unsigned NumInitializers, bool AnyErrors);
   
   void SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation);
                            
@@ -4746,7 +4746,7 @@ public:
   void CodeCompleteNamespaceAliasDecl(Scope *S);
   void CodeCompleteOperatorName(Scope *S);
   void CodeCompleteConstructorInitializer(Decl *Constructor,
-                                    CXXBaseOrMemberInitializer** Initializers,
+                                          CXXCtorInitializer** Initializers,
                                           unsigned NumInitializers);
   
   void CodeCompleteObjCAtDirective(Scope *S, Decl *ObjCImpDecl,

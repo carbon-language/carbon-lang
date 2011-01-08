@@ -53,7 +53,7 @@ class Decl;
 class DeclContext;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
-class CXXBaseOrMemberInitializer;
+class CXXCtorInitializer;
 class GotoStmt;
 class LabelStmt;
 class MacroDefinition;
@@ -1098,10 +1098,10 @@ public:
   CXXBaseSpecifier ReadCXXBaseSpecifier(PerFileData &F,
                                         const RecordData &Record,unsigned &Idx);
 
-  /// \brief Read a CXXBaseOrMemberInitializer array.
-  std::pair<CXXBaseOrMemberInitializer **, unsigned>
-  ReadCXXBaseOrMemberInitializers(PerFileData &F,
-                                  const RecordData &Record, unsigned &Idx);
+  /// \brief Read a CXXCtorInitializer array.
+  std::pair<CXXCtorInitializer **, unsigned>
+  ReadCXXCtorInitializers(PerFileData &F, const RecordData &Record,
+                          unsigned &Idx);
 
   /// \brief Read a source location from raw form.
   SourceLocation ReadSourceLocation(PerFileData &Module, unsigned Raw) {

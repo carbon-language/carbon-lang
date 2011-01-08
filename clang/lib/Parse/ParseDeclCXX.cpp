@@ -1746,7 +1746,7 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
 
   SourceLocation ColonLoc = ConsumeToken();
 
-  llvm::SmallVector<CXXBaseOrMemberInitializer*, 4> MemInitializers;
+  llvm::SmallVector<CXXCtorInitializer*, 4> MemInitializers;
   bool AnyErrors = false;
 
   do {

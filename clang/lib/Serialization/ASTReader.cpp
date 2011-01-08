@@ -4338,17 +4338,16 @@ ASTReader::ReadCXXBaseSpecifier(PerFileData &F,
                           EllipsisLoc);
 }
 
-std::pair<CXXBaseOrMemberInitializer **, unsigned>
-ASTReader::ReadCXXBaseOrMemberInitializers(PerFileData &F,
-                                           const RecordData &Record,
-                                           unsigned &Idx) {
-  CXXBaseOrMemberInitializer **BaseOrMemberInitializers = 0;
+std::pair<CXXCtorInitializer **, unsigned>
+ASTReader::ReadCXXCtorInitializers(PerFileData &F, const RecordData &Record,
+                                   unsigned &Idx) {
+  CXXCtorInitializer **CtorInitializers = 0;
   unsigned NumInitializers = Record[Idx++];
   if (NumInitializers) {
     ASTContext &C = *getContext();
 
-    BaseOrMemberInitializers
-        = new (C) CXXBaseOrMemberInitializer*[NumInitializers];
+    CtorInitializers
+        = new (C) CXXCtorInitializer*[NumInitializers];
     for (unsigned i=0; i != NumInitializers; ++i) {
       TypeSourceInfo *BaseClassInfo = 0;
       bool IsBaseVirtual = false;
@@ -4382,38 +4381,32 @@ ASTReader::ReadCXXBaseOrMemberInitializers(PerFileData &F,
           Indices.push_back(cast<VarDecl>(GetDecl(Record[Idx++])));
       }
 
-      CXXBaseOrMemberInitializer *BOMInit;
+      CXXCtorInitializer *BOMInit;
       if (IsBaseInitializer) {
-        BOMInit = new (C) CXXBaseOrMemberInitializer(C, BaseClassInfo,
-                                                     IsBaseVirtual, LParenLoc,
-                                                     Init, RParenLoc,
-                                                     MemberOrEllipsisLoc);
+        BOMInit = new (C) CXXCtorInitializer(C, BaseClassInfo, IsBaseVirtual,
+                                             LParenLoc, Init, RParenLoc,
+                                             MemberOrEllipsisLoc);
       } else if (IsWritten) {
         if (Member)
-          BOMInit = new (C) CXXBaseOrMemberInitializer(C, Member, 
-                                                       MemberOrEllipsisLoc,
-                                                       LParenLoc, Init,
-                                                       RParenLoc);
+          BOMInit = new (C) CXXCtorInitializer(C, Member, MemberOrEllipsisLoc,
+                                               LParenLoc, Init, RParenLoc);
         else 
-          BOMInit = new (C) CXXBaseOrMemberInitializer(C, IndirectMember,
-                                                       MemberOrEllipsisLoc,
-                                                       LParenLoc,
-                                                       Init, RParenLoc);
+          BOMInit = new (C) CXXCtorInitializer(C, IndirectMember,
+                                               MemberOrEllipsisLoc, LParenLoc,
+                                               Init, RParenLoc);
       } else {
-        BOMInit = CXXBaseOrMemberInitializer::Create(C, Member, 
-                                                     MemberOrEllipsisLoc,
-                                                     LParenLoc, Init, RParenLoc,
-                                                     Indices.data(),
-                                                     Indices.size());
+        BOMInit = CXXCtorInitializer::Create(C, Member, MemberOrEllipsisLoc,
+                                             LParenLoc, Init, RParenLoc,
+                                             Indices.data(), Indices.size());
       }
 
       if (IsWritten)
         BOMInit->setSourceOrder(SourceOrderOrNumArrayIndices);
-      BaseOrMemberInitializers[i] = BOMInit;
+      CtorInitializers[i] = BOMInit;
     }
   }
 
-  return std::make_pair(BaseOrMemberInitializers, NumInitializers);
+  return std::make_pair(CtorInitializers, NumInitializers);
 }
 
 NestedNameSpecifier *

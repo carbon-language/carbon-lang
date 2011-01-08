@@ -23,7 +23,7 @@
 
 namespace clang {
   class Attr;
-  class CXXBaseOrMemberInitializer;
+  class CXXCtorInitializer;
   class CXXBaseSpecifier;
   class Decl;
   class DeclGroupRef;
@@ -417,7 +417,7 @@ namespace clang {
   template<> struct IsResultPtrLowBitFree<CXXBaseSpecifier*> {
     static const bool value = true;
   };
-  template<> struct IsResultPtrLowBitFree<CXXBaseOrMemberInitializer*> {
+  template<> struct IsResultPtrLowBitFree<CXXCtorInitializer*> {
     static const bool value = true;
   };
 
@@ -430,7 +430,7 @@ namespace clang {
   typedef ActionResult<Stmt*> StmtResult;
   typedef ActionResult<ParsedType> TypeResult;
   typedef ActionResult<CXXBaseSpecifier*> BaseResult;
-  typedef ActionResult<CXXBaseOrMemberInitializer*> MemInitResult;
+  typedef ActionResult<CXXCtorInitializer*> MemInitResult;
 
   typedef ActionResult<Decl*> DeclResult;
   typedef OpaquePtr<TemplateName> ParsedTemplateTy;

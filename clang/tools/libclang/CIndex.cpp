@@ -689,11 +689,11 @@ bool CursorVisitor::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 }
 
 /// \brief Compare two base or member initializers based on their source order.
-static int CompareCXXBaseOrMemberInitializers(const void* Xp, const void *Yp) {
-  CXXBaseOrMemberInitializer const * const *X
-    = static_cast<CXXBaseOrMemberInitializer const * const *>(Xp);
-  CXXBaseOrMemberInitializer const * const *Y
-    = static_cast<CXXBaseOrMemberInitializer const * const *>(Yp);
+static int CompareCXXCtorInitializers(const void* Xp, const void *Yp) {
+  CXXCtorInitializer const * const *X
+    = static_cast<CXXCtorInitializer const * const *>(Xp);
+  CXXCtorInitializer const * const *Y
+    = static_cast<CXXCtorInitializer const * const *>(Yp);
   
   if ((*X)->getSourceOrder() < (*Y)->getSourceOrder())
     return -1;
@@ -738,7 +738,7 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
   if (ND->isThisDeclarationADefinition()) {
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(ND)) {
       // Find the initializers that were written in the source.
-      llvm::SmallVector<CXXBaseOrMemberInitializer *, 4> WrittenInits;
+      llvm::SmallVector<CXXCtorInitializer *, 4> WrittenInits;
       for (CXXConstructorDecl::init_iterator I = Constructor->init_begin(),
                                           IEnd = Constructor->init_end();
            I != IEnd; ++I) {
@@ -750,11 +750,11 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
       
       // Sort the initializers in source order
       llvm::array_pod_sort(WrittenInits.begin(), WrittenInits.end(),
-                           &CompareCXXBaseOrMemberInitializers);
+                           &CompareCXXCtorInitializers);
       
       // Visit the initializers in source order
       for (unsigned I = 0, N = WrittenInits.size(); I != N; ++I) {
-        CXXBaseOrMemberInitializer *Init = WrittenInits[I];
+        CXXCtorInitializer *Init = WrittenInits[I];
         if (Init->isAnyMemberInitializer()) {
           if (Visit(MakeCursorMemberRef(Init->getAnyMember(),
                                         Init->getMemberLocation(), TU)))

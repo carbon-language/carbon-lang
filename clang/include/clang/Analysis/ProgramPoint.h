@@ -307,7 +307,7 @@ public:
 
 class PostInitializer : public ProgramPoint {
 public:
-  PostInitializer(const CXXBaseOrMemberInitializer *I, 
+  PostInitializer(const CXXCtorInitializer *I, 
                   const LocationContext *L)
     : ProgramPoint(I, PostInitializerKind, L) {}
 

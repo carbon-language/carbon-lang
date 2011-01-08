@@ -2359,7 +2359,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
   for (CXXConstructorDecl::init_const_iterator Inits = Tmpl->init_begin(),
                                             InitsEnd = Tmpl->init_end();
        Inits != InitsEnd; ++Inits) {
-    CXXBaseOrMemberInitializer *Init = *Inits;
+    CXXCtorInitializer *Init = *Inits;
 
     // Only instantiate written initializers, let Sema re-construct implicit
     // ones.

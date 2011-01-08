@@ -41,7 +41,7 @@ class ASTContext;
 class ASTSerializationListener;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
-class CXXBaseOrMemberInitializer;
+class CXXCtorInitializer;
 class LabelStmt;
 class MacroDefinition;
 class MemorizeStatCalls;
@@ -482,10 +482,11 @@ public:
   /// \brief Emit a C++ base specifier.
   void AddCXXBaseSpecifier(const CXXBaseSpecifier &Base, RecordDataImpl &Record);
 
-  /// \brief Emit a CXXBaseOrMemberInitializer array.
-  void AddCXXBaseOrMemberInitializers(
-                        const CXXBaseOrMemberInitializer * const *BaseOrMembers,
-                        unsigned NumBaseOrMembers, RecordDataImpl &Record);
+  /// \brief Emit a CXXCtorInitializer array.
+  void AddCXXCtorInitializers(
+                             const CXXCtorInitializer * const *CtorInitializers,
+                             unsigned NumCtorInitializers,
+                             RecordDataImpl &Record);
 
   void AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Record);
 

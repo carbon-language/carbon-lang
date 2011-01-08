@@ -34,7 +34,7 @@ namespace clang {
   class Expr;
   class FieldDecl;
   class VarDecl;
-  class CXXBaseOrMemberInitializer;
+  class CXXCtorInitializer;
   class CXXBaseSpecifier;
   class CXXBindTemporaryExpr;
   class CFG;
@@ -110,13 +110,13 @@ public:
 class CFGInitializer : public CFGElement {
 public:
   CFGInitializer() {}
-  CFGInitializer(CXXBaseOrMemberInitializer* I)
+  CFGInitializer(CXXCtorInitializer* I)
       : CFGElement(I, Initializer) {}
 
-  CXXBaseOrMemberInitializer* getInitializer() const {
-    return static_cast<CXXBaseOrMemberInitializer*>(Data1.getPointer());
+  CXXCtorInitializer* getInitializer() const {
+    return static_cast<CXXCtorInitializer*>(Data1.getPointer());
   }
-  operator CXXBaseOrMemberInitializer*() const { return getInitializer(); }
+  operator CXXCtorInitializer*() const { return getInitializer(); }
 
   static bool classof(const CFGElement *E) {
     return E->getKind() == Initializer;
@@ -492,7 +492,7 @@ public:
     Elements.push_back(CFGStmt(statement), C);
   }
 
-  void appendInitializer(CXXBaseOrMemberInitializer *initializer,
+  void appendInitializer(CXXCtorInitializer *initializer,
                         BumpVectorContext& C) {
     Elements.push_back(CFGInitializer(initializer), C);
   }

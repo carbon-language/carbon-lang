@@ -1981,14 +1981,14 @@ void Sema::CollectIvarsToConstructOrDestruct(ObjCInterfaceDecl *OI,
 }
 
 void ObjCImplementationDecl::setIvarInitializers(ASTContext &C,
-                                    CXXBaseOrMemberInitializer ** initializers,
+                                             CXXCtorInitializer ** initializers,
                                                  unsigned numInitializers) {
   if (numInitializers > 0) {
     NumIvarInitializers = numInitializers;
-    CXXBaseOrMemberInitializer **ivarInitializers =
-    new (C) CXXBaseOrMemberInitializer*[NumIvarInitializers];
+    CXXCtorInitializer **ivarInitializers =
+    new (C) CXXCtorInitializer*[NumIvarInitializers];
     memcpy(ivarInitializers, initializers,
-           numInitializers * sizeof(CXXBaseOrMemberInitializer*));
+           numInitializers * sizeof(CXXCtorInitializer*));
     IvarInitializers = ivarInitializers;
   }
 }

@@ -420,17 +420,17 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
 void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
                                                  ObjCMethodDecl *MD,
                                                  bool ctor) {
-  llvm::SmallVector<CXXBaseOrMemberInitializer *, 8> IvarInitializers;
+  llvm::SmallVector<CXXCtorInitializer *, 8> IvarInitializers;
   MD->createImplicitParams(CGM.getContext(), IMP->getClassInterface());
   StartObjCMethod(MD, IMP->getClassInterface());
   for (ObjCImplementationDecl::init_const_iterator B = IMP->init_begin(),
        E = IMP->init_end(); B != E; ++B) {
-    CXXBaseOrMemberInitializer *Member = (*B);
+    CXXCtorInitializer *Member = (*B);
     IvarInitializers.push_back(Member);
   }
   if (ctor) {
     for (unsigned I = 0, E = IvarInitializers.size(); I != E; ++I) {
-      CXXBaseOrMemberInitializer *IvarInit = IvarInitializers[I];
+      CXXCtorInitializer *IvarInit = IvarInitializers[I];
       FieldDecl *Field = IvarInit->getAnyMember();
       QualType FieldType = Field->getType();
       ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);

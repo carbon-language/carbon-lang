@@ -162,7 +162,7 @@ public:
   typedef Stmt StmtTy;
   typedef OpaquePtr<DeclGroupRef> DeclGroupPtrTy;
   typedef CXXBaseSpecifier BaseTy;
-  typedef CXXBaseOrMemberInitializer MemInitTy;
+  typedef CXXCtorInitializer MemInitTy;
   typedef NestedNameSpecifier CXXScopeTy;
   typedef TemplateParameterList TemplateParamsTy;
   typedef OpaquePtr<TemplateName> TemplateTy;

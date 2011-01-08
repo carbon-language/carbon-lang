@@ -999,43 +999,46 @@ bool CXXMethodDecl::hasInlineBody() const {
   return CheckFn->hasBody(fn) && !fn->isOutOfLine();
 }
 
-CXXBaseOrMemberInitializer::
-CXXBaseOrMemberInitializer(ASTContext &Context,
-                           TypeSourceInfo *TInfo, bool IsVirtual,
-                           SourceLocation L, Expr *Init, SourceLocation R,
-                           SourceLocation EllipsisLoc)
+CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
+                                       TypeSourceInfo *TInfo, bool IsVirtual,
+                                       SourceLocation L, Expr *Init,
+                                       SourceLocation R,
+                                       SourceLocation EllipsisLoc)
   : BaseOrMember(TInfo), MemberOrEllipsisLocation(EllipsisLoc), Init(Init), 
     LParenLoc(L), RParenLoc(R), IsVirtual(IsVirtual), IsWritten(false),
     SourceOrderOrNumArrayIndices(0)
 {
 }
 
-CXXBaseOrMemberInitializer::
-CXXBaseOrMemberInitializer(ASTContext &Context,
-                           FieldDecl *Member, SourceLocation MemberLoc,
-                           SourceLocation L, Expr *Init, SourceLocation R)
+CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
+                                       FieldDecl *Member,
+                                       SourceLocation MemberLoc,
+                                       SourceLocation L, Expr *Init,
+                                       SourceLocation R)
   : BaseOrMember(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
     LParenLoc(L), RParenLoc(R), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
 }
 
-CXXBaseOrMemberInitializer::
-CXXBaseOrMemberInitializer(ASTContext &Context,
-                           IndirectFieldDecl *Member, SourceLocation MemberLoc,
-                           SourceLocation L, Expr *Init, SourceLocation R)
+CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
+                                       IndirectFieldDecl *Member,
+                                       SourceLocation MemberLoc,
+                                       SourceLocation L, Expr *Init,
+                                       SourceLocation R)
   : BaseOrMember(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
     LParenLoc(L), RParenLoc(R), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
 }
 
-CXXBaseOrMemberInitializer::
-CXXBaseOrMemberInitializer(ASTContext &Context,
-                           FieldDecl *Member, SourceLocation MemberLoc,
-                           SourceLocation L, Expr *Init, SourceLocation R,
-                           VarDecl **Indices,
-                           unsigned NumIndices)
+CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
+                                       FieldDecl *Member,
+                                       SourceLocation MemberLoc,
+                                       SourceLocation L, Expr *Init,
+                                       SourceLocation R,
+                                       VarDecl **Indices,
+                                       unsigned NumIndices)
   : BaseOrMember(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init), 
     LParenLoc(L), RParenLoc(R), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(NumIndices)
@@ -1044,51 +1047,49 @@ CXXBaseOrMemberInitializer(ASTContext &Context,
   memcpy(MyIndices, Indices, NumIndices * sizeof(VarDecl *));
 }
 
-CXXBaseOrMemberInitializer *
-CXXBaseOrMemberInitializer::Create(ASTContext &Context,
-                                   FieldDecl *Member, 
-                                   SourceLocation MemberLoc,
-                                   SourceLocation L,
-                                   Expr *Init,
-                                   SourceLocation R,
-                                   VarDecl **Indices,
-                                   unsigned NumIndices) {
-  void *Mem = Context.Allocate(sizeof(CXXBaseOrMemberInitializer) +
+CXXCtorInitializer *CXXCtorInitializer::Create(ASTContext &Context,
+                                               FieldDecl *Member, 
+                                               SourceLocation MemberLoc,
+                                               SourceLocation L, Expr *Init,
+                                               SourceLocation R,
+                                               VarDecl **Indices,
+                                               unsigned NumIndices) {
+  void *Mem = Context.Allocate(sizeof(CXXCtorInitializer) +
                                sizeof(VarDecl *) * NumIndices,
-                               llvm::alignOf<CXXBaseOrMemberInitializer>());
-  return new (Mem) CXXBaseOrMemberInitializer(Context, Member, MemberLoc,
+                               llvm::alignOf<CXXCtorInitializer>());
+  return new (Mem) CXXCtorInitializer(Context, Member, MemberLoc,
                                               L, Init, R, Indices, NumIndices);
 }
 
-TypeLoc CXXBaseOrMemberInitializer::getBaseClassLoc() const {
+TypeLoc CXXCtorInitializer::getBaseClassLoc() const {
   if (isBaseInitializer())
     return BaseOrMember.get<TypeSourceInfo*>()->getTypeLoc();
   else
     return TypeLoc();
 }
 
-Type *CXXBaseOrMemberInitializer::getBaseClass() {
+Type *CXXCtorInitializer::getBaseClass() {
   if (isBaseInitializer())
     return BaseOrMember.get<TypeSourceInfo*>()->getType().getTypePtr();
   else
     return 0;
 }
 
-const Type *CXXBaseOrMemberInitializer::getBaseClass() const {
+const Type *CXXCtorInitializer::getBaseClass() const {
   if (isBaseInitializer())
     return BaseOrMember.get<TypeSourceInfo*>()->getType().getTypePtr();
   else
     return 0;
 }
 
-SourceLocation CXXBaseOrMemberInitializer::getSourceLocation() const {
+SourceLocation CXXCtorInitializer::getSourceLocation() const {
   if (isAnyMemberInitializer())
     return getMemberLocation();
   
   return getBaseClassLoc().getLocalSourceRange().getBegin();
 }
 
-SourceRange CXXBaseOrMemberInitializer::getSourceRange() const {
+SourceRange CXXCtorInitializer::getSourceRange() const {
   return SourceRange(getSourceLocation(), getRParenLoc());
 }
 

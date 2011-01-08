@@ -609,7 +609,7 @@ void ASTDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   D->setSuperClass(
               cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
   llvm::tie(D->IvarInitializers, D->NumIvarInitializers)
-      = Reader.ReadCXXBaseOrMemberInitializers(F, Record, Idx);
+      = Reader.ReadCXXCtorInitializers(F, Record, Idx);
   D->setHasSynthBitfield(Record[Idx++]);
 }
 
@@ -903,8 +903,8 @@ void ASTDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   
   D->IsExplicitSpecified = Record[Idx++];
   D->ImplicitlyDefined = Record[Idx++];
-  llvm::tie(D->BaseOrMemberInitializers, D->NumBaseOrMemberInitializers)
-      = Reader.ReadCXXBaseOrMemberInitializers(F, Record, Idx);
+  llvm::tie(D->CtorInitializers, D->NumCtorInitializers)
+      = Reader.ReadCXXCtorInitializers(F, Record, Idx);
 }
 
 void ASTDeclReader::VisitCXXDestructorDecl(CXXDestructorDecl *D) {

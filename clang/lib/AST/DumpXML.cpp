@@ -502,7 +502,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   // CXXDestructorDecl ?
   // CXXConversionDecl ?
 
-  void dispatch(CXXBaseOrMemberInitializer *Init) {
+  void dispatch(CXXCtorInitializer *Init) {
     // TODO
   }
 

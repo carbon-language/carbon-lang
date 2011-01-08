@@ -215,7 +215,7 @@ public:
   /// be overridden for clients that need access to the name.
   ///
   /// \returns false if the visitation was terminated early, true otherwise.
-  bool TraverseConstructorInitializer(CXXBaseOrMemberInitializer *Init);
+  bool TraverseConstructorInitializer(CXXCtorInitializer *Init);
 
   // ---- Methods on Stmts ----
 
@@ -600,7 +600,7 @@ bool RecursiveASTVisitor<Derived>::TraverseTemplateArguments(
 
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseConstructorInitializer(
-                                            CXXBaseOrMemberInitializer *Init) {
+                                                     CXXCtorInitializer *Init) {
   // FIXME: recurse on TypeLoc of the base initializer if isBaseInitializer()?
   if (Init->isWritten())
     TRY_TO(TraverseStmt(Init->getInit()));
