@@ -112,8 +112,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
     const BasicBlock &BB = *BI;
 
     // Create a new basic block and copy instructions into it!
-    BasicBlock *CBB = CloneBasicBlock(&BB, VMap, NameSuffix, NewFunc,
-                                      CodeInfo);
+    BasicBlock *CBB = CloneBasicBlock(&BB, VMap, NameSuffix, NewFunc, CodeInfo);
     VMap[&BB] = CBB;                       // Add basic block mapping.
 
     if (ReturnInst *RI = dyn_cast<ReturnInst>(CBB->getTerminator()))
@@ -122,12 +121,12 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 
   // Loop over all of the instructions in the function, fixing up operand
   // references as we go.  This uses VMap to do all the hard work.
-  //
   for (Function::iterator BB = cast<BasicBlock>(VMap[OldFunc->begin()]),
          BE = NewFunc->end(); BB != BE; ++BB)
     // Loop over all instructions, fixing each one as we find it...
     for (BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II)
-      RemapInstruction(II, VMap, ModuleLevelChanges);
+      RemapInstruction(II, VMap,
+                       ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
 }
 
 /// CloneFunction - Return a copy of the specified function, but without
@@ -138,8 +137,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// updated to include mappings from all of the instructions and basicblocks in
 /// the function from their old to new values.
 ///
-Function *llvm::CloneFunction(const Function *F,
-                              ValueToValueMapTy &VMap,
+Function *llvm::CloneFunction(const Function *F, ValueToValueMapTy &VMap,
                               bool ModuleLevelChanges,
                               ClonedCodeInfo *CodeInfo) {
   std::vector<const Type*> ArgTypes;
@@ -322,7 +320,8 @@ ConstantFoldMappedInstruction(const Instruction *I) {
   SmallVector<Constant*, 8> Ops;
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
     if (Constant *Op = dyn_cast_or_null<Constant>(MapValue(I->getOperand(i),
-                                                   VMap, ModuleLevelChanges)))
+                                                           VMap,
+                  ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges)))
       Ops.push_back(Op);
     else
       return 0;  // All operands not constant!
@@ -460,7 +459,8 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
           I->setDebugLoc(DebugLoc());
         }
       }
-      RemapInstruction(I, VMap, ModuleLevelChanges);
+      RemapInstruction(I, VMap,
+                       ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
     }
   }
   
@@ -480,10 +480,10 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       PHINode *PN = cast<PHINode>(VMap[OPN]);
       for (unsigned pred = 0, e = NumPreds; pred != e; ++pred) {
         Value *V = VMap[PN->getIncomingBlock(pred)];
-        if (BasicBlock *MappedBlock = 
-            cast_or_null<BasicBlock>(V)) {
+        if (BasicBlock *MappedBlock = cast_or_null<BasicBlock>(V)) {
           Value *InVal = MapValue(PN->getIncomingValue(pred),
-                                  VMap, ModuleLevelChanges);
+                                  VMap, 
+                        ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
           assert(InVal && "Unknown input value?");
           PN->setIncomingValue(pred, InVal);
           PN->setIncomingBlock(pred, MappedBlock);

@@ -89,8 +89,7 @@ Module *llvm::CloneModule(const Module *M,
     GlobalVariable *GV = cast<GlobalVariable>(VMap[I]);
     if (I->hasInitializer())
       GV->setInitializer(cast<Constant>(MapValue(I->getInitializer(),
-                                                 VMap,
-                                                 true)));
+                                                 VMap, RF_None)));
     GV->setLinkage(I->getLinkage());
     GV->setThreadLocal(I->isThreadLocal());
     GV->setConstant(I->isConstant());
@@ -121,7 +120,7 @@ Module *llvm::CloneModule(const Module *M,
     GlobalAlias *GA = cast<GlobalAlias>(VMap[I]);
     GA->setLinkage(I->getLinkage());
     if (const Constant* C = I->getAliasee())
-      GA->setAliasee(cast<Constant>(MapValue(C, VMap, true)));
+      GA->setAliasee(cast<Constant>(MapValue(C, VMap, RF_None)));
   }
 
   // And named metadata....
@@ -130,7 +129,8 @@ Module *llvm::CloneModule(const Module *M,
     const NamedMDNode &NMD = *I;
     NamedMDNode *NewNMD = New->getOrInsertNamedMetadata(NMD.getName());
     for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
-      NewNMD->addOperand(cast<MDNode>(MapValue(NMD.getOperand(i), VMap, true)));
+      NewNMD->addOperand(cast<MDNode>(MapValue(NMD.getOperand(i), VMap,
+                                               RF_None)));
   }
 
   return New;

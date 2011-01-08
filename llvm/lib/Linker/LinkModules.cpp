@@ -451,8 +451,7 @@ static void LinkNamedMDNodes(Module *Dest, Module *Src,
     // Add Src elements into Dest node.
     for (unsigned i = 0, e = SrcNMD->getNumOperands(); i != e; ++i)
       DestNMD->addOperand(cast<MDNode>(MapValue(SrcNMD->getOperand(i),
-                                                ValueMap,
-                                                true)));
+                                                ValueMap)));
   }
 }
 
@@ -814,9 +813,9 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
     const GlobalVariable *SGV = I;
 
     if (SGV->hasInitializer()) {      // Only process initialized GV's
-      // Figure out what the initializer looks like in the dest module...
+      // Figure out what the initializer looks like in the dest module.
       Constant *SInit =
-        cast<Constant>(MapValue(SGV->getInitializer(), ValueMap, true));
+        cast<Constant>(MapValue(SGV->getInitializer(), ValueMap));
       // Grab destination global variable or alias.
       GlobalValue *DGV = cast<GlobalValue>(ValueMap[SGV]->stripPointerCasts());
 
@@ -996,32 +995,10 @@ static bool LinkFunctionBody(Function *Dest, Function *Src,
   // At this point, all of the instructions and values of the function are now
   // copied over.  The only problem is that they are still referencing values in
   // the Source function as operands.  Loop through all of the operands of the
-  // functions and patch them up to point to the local versions...
-  //
-  // This is the same as RemapInstruction, except that it avoids remapping
-  // instruction and basic block operands.
-  //
+  // functions and patch them up to point to the local versions.
   for (Function::iterator BB = Dest->begin(), BE = Dest->end(); BB != BE; ++BB)
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      // Remap operands.
-      for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
-           OI != OE; ++OI)
-        if (!isa<Instruction>(*OI) && !isa<BasicBlock>(*OI))
-          *OI = MapValue(*OI, ValueMap, true);
-
-      // Remap attached metadata.
-      SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
-      I->getAllMetadata(MDs);
-      for (SmallVectorImpl<std::pair<unsigned, MDNode *> >::iterator
-           MI = MDs.begin(), ME = MDs.end(); MI != ME; ++MI) {
-        Value *Old = MI->second;
-        if (!isa<Instruction>(Old) && !isa<BasicBlock>(Old)) {
-          Value *New = MapValue(Old, ValueMap, true);
-          if (New != Old)
-            I->setMetadata(MI->first, cast<MDNode>(New));
-        }
-      }
-    }
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      RemapInstruction(I, ValueMap, RF_IgnoreMissingEntries);
 
   // There is no need to map the arguments anymore.
   for (Function::arg_iterator I = Src->arg_begin(), E = Src->arg_end();

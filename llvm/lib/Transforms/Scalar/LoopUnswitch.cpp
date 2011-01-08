@@ -457,19 +457,6 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
   return true;
 }
 
-// RemapInstruction - Convert the instruction operands from referencing the
-// current values into those specified by VMap.
-//
-static inline void RemapInstruction(Instruction *I,
-                                    ValueToValueMapTy &VMap) {
-  for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
-    Value *Op = I->getOperand(op);
-    ValueToValueMapTy::iterator It = VMap.find(Op);
-    if (It != VMap.end()) Op = It->second;
-    I->setOperand(op, Op);
-  }
-}
-
 /// CloneLoop - Recursively clone the specified loop and all of its children,
 /// mapping the blocks with the specified map.
 static Loop *CloneLoop(Loop *L, Loop *PL, ValueToValueMapTy &VM,
@@ -664,7 +651,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   for (unsigned i = 0, e = NewBlocks.size(); i != e; ++i)
     for (BasicBlock::iterator I = NewBlocks[i]->begin(),
            E = NewBlocks[i]->end(); I != E; ++I)
-      RemapInstruction(I, VMap);
+      RemapInstruction(I, VMap,RF_NoModuleLevelChanges|RF_IgnoreMissingEntries);
   
   // Rewrite the original preheader to select between versions of the loop.
   BranchInst *OldBR = cast<BranchInst>(loopPreheader->getTerminator());

@@ -22,7 +22,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -205,6 +204,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     
     // Otherwise, create a duplicate of the instruction.
     Instruction *C = Inst->clone();
+    
     C->setName(Inst->getName());
     C->insertBefore(LoopEntryBranch);
     ValueMap[Inst] = C;
