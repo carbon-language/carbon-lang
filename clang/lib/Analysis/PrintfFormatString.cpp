@@ -100,6 +100,10 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
   for ( ; I != E; ++I) {
     switch (*I) {
       default: hasMore = false; break;
+      case '\'': 
+        // FIXME: POSIX specific.  Always accept?
+        FS.setHasThousandsGrouping(I);
+        break;
       case '-': FS.setIsLeftJustified(I); break;
       case '+': FS.setHasPlusPrefix(I); break;
       case ' ': FS.setHasSpacePrefix(I); break;
@@ -185,7 +189,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     case 's': k = ConversionSpecifier::sArg;      break;
     case 'u': k = ConversionSpecifier::uArg; break;
     case 'x': k = ConversionSpecifier::xArg; break;
-    // Mac OS X (unicode) specific
+    // POSIX specific.
     case 'C': k = ConversionSpecifier::CArg; break;
     case 'S': k = ConversionSpecifier::SArg; break;
     // Objective-C.

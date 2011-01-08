@@ -379,6 +379,7 @@ using analyze_format_string::OptionalAmount;
 using analyze_format_string::OptionalFlag;
 
 class PrintfSpecifier : public analyze_format_string::FormatSpecifier {
+  OptionalFlag HasThousandsGrouping; // ''', POSIX extension.
   OptionalFlag IsLeftJustified; // '-'
   OptionalFlag HasPlusPrefix; // '+'
   OptionalFlag HasSpacePrefix; // ' '
@@ -388,14 +389,18 @@ class PrintfSpecifier : public analyze_format_string::FormatSpecifier {
 public:
   PrintfSpecifier() :
     FormatSpecifier(/* isPrintf = */ true),
-    IsLeftJustified("-"), HasPlusPrefix("+"), HasSpacePrefix(" "),
-    HasAlternativeForm("#"), HasLeadingZeroes("0") {}
+    HasThousandsGrouping("'"), IsLeftJustified("-"), HasPlusPrefix("+"),
+    HasSpacePrefix(" "), HasAlternativeForm("#"), HasLeadingZeroes("0") {}
 
   static PrintfSpecifier Parse(const char *beg, const char *end);
 
     // Methods for incrementally constructing the PrintfSpecifier.
   void setConversionSpecifier(const PrintfConversionSpecifier &cs) {
     CS = cs;
+  }
+  void setHasThousandsGrouping(const char *position) {
+    HasThousandsGrouping = true;
+    HasThousandsGrouping.setPosition(position);
   }
   void setIsLeftJustified(const char *position) {
     IsLeftJustified = true;

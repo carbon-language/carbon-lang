@@ -331,3 +331,9 @@ void pr8641() {
   printf("%#x\n", 10);
   printf("%#X\n", 10);
 }
+
+void posix_extensions() {
+  // Test %'d, "thousands grouping".
+  // <rdar://problem/8816343>
+  printf("%'d\n", 123456789); // no-warning
+}
