@@ -32,7 +32,7 @@ private:
 public:
   enum {
     // The target register number for an abstract frame pointer. The value is
-    // an arbitrary value greater than TargetRegisterInfo::FirstVirtualRegister.
+    // an arbitrary value that doesn't collide with any real target register.
     VirtualFP = ~0U
   };
   MachineLocation()
