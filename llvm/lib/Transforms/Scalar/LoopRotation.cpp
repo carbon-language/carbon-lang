@@ -98,28 +98,21 @@ bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
 
 /// Rotate loop LP. Return true if the loop is rotated.
 bool LoopRotate::rotateLoop(Loop *L) {
-  BasicBlock *OrigPreHeader = L->getLoopPreheader();
-  if (!OrigPreHeader) return false;
-
-  BasicBlock *OrigLatch = L->getLoopLatch();
-  if (!OrigLatch) return false;
-
-  BasicBlock *OrigHeader =  L->getHeader();
-
   // If the loop has only one block then there is not much to rotate.
   if (L->getBlocks().size() == 1)
     return false;
-
+  
+  BasicBlock *OrigHeader = L->getHeader();
+  
+  BranchInst *BI = dyn_cast<BranchInst>(OrigHeader->getTerminator());
+  if (BI == 0 || BI->isUnconditional())
+    return false;
+  
   // If the loop header is not one of the loop exiting blocks then
   // either this loop is already rotated or it is not
   // suitable for loop rotation transformations.
   if (!L->isLoopExiting(OrigHeader))
     return false;
-
-  BranchInst *BI = dyn_cast<BranchInst>(OrigHeader->getTerminator());
-  if (!BI)
-    return false;
-  assert(BI->isConditional() && "Branch Instruction is not conditional");
 
   // Updating PHInodes in loops with multiple exits adds complexity. 
   // Keep it simple, and restrict loop rotation to loops with one exit only.
@@ -139,6 +132,9 @@ bool LoopRotate::rotateLoop(Loop *L) {
   }
 
   // Now, this loop is suitable for rotation.
+  BasicBlock *OrigPreHeader = L->getLoopPreheader();
+  BasicBlock *OrigLatch = L->getLoopLatch();
+  assert(OrigPreHeader && OrigLatch && "Loop not in canonical form?");
 
   // Anything ScalarEvolution may know about this loop or the PHI nodes
   // in its header will soon be invalidated.
@@ -300,7 +296,7 @@ bool LoopRotate::rotateLoop(Loop *L) {
   // Also, since this original header only has one predecessor, zap its
   // PHI nodes, which are now trivial.
   FoldSingleEntryPHINodes(OrigHeader);
-
+  
   // TODO: We could just go ahead and merge OrigHeader into its predecessor
   // at this point, if we don't mind updating dominator info.
 
