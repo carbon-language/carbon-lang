@@ -165,10 +165,11 @@ struct _LIBCPP_VISIBLE integral_constant
     static constexpr _Tp      value = __v;
     typedef _Tp               value_type;
     typedef integral_constant type;
-#ifndef _LIBCPP_HAS_NO_CONSTEXPR
     _LIBCPP_INLINE_VISIBILITY
-    constexpr operator value_type() {return value;}
+#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+    constexpr
 #endif
+         operator value_type() const {return value;}
 };
 
 template <class _Tp, _Tp __v>

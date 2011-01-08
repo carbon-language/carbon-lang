@@ -92,6 +92,8 @@ typedef fpos<char_traits<wchar_t>::state_type> wstreampos;
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+class ios_base;
+
 template<class _CharT>  struct _LIBCPP_VISIBLE char_traits;
 template<class _Tp>     class _LIBCPP_VISIBLE allocator;
 
