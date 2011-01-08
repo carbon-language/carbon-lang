@@ -432,12 +432,12 @@ namespace llvm {
 
     /// @brief Mark the specified register as being implicitly defined.
     void setIsImplicitlyDefined(unsigned VirtReg) {
-      ImplicitDefed.set(VirtReg-TargetRegisterInfo::FirstVirtualRegister);
+      ImplicitDefed.set(TargetRegisterInfo::virtReg2Index(VirtReg));
     }
 
     /// @brief Returns true if the virtual register is implicitly defined.
     bool isImplicitlyDefined(unsigned VirtReg) const {
-      return ImplicitDefed[VirtReg-TargetRegisterInfo::FirstVirtualRegister];
+      return ImplicitDefed[TargetRegisterInfo::virtReg2Index(VirtReg)];
     }
 
     /// @brief Updates information about the specified virtual register's value

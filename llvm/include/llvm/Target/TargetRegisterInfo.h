@@ -321,6 +321,12 @@ public:
     return Reg >= FirstVirtualRegister;
   }
 
+  /// virtReg2Index - Convert a virtual register number to a 0-based index.
+  /// The first virtual register in a function will get the index 0.
+  static unsigned virtReg2Index(unsigned Reg) {
+    return Reg - FirstVirtualRegister;
+  }
+
   /// index2VirtReg - Convert a 0-based index to a virtual register number.
   /// This is the inverse operation of VirtReg2IndexFunctor below.
   static unsigned index2VirtReg(unsigned Index) {
@@ -743,7 +749,7 @@ public:
 // This is useful when building IndexedMaps keyed on virtual registers
 struct VirtReg2IndexFunctor : public std::unary_function<unsigned, unsigned> {
   unsigned operator()(unsigned Reg) const {
-    return Reg - TargetRegisterInfo::FirstVirtualRegister;
+    return TargetRegisterInfo::virtReg2Index(Reg);
   }
 };
 
