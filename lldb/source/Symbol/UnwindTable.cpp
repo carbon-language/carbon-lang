@@ -15,6 +15,7 @@
 
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
+//#include "lldb/Core/StreamFile.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -28,11 +29,12 @@
 using namespace lldb;
 using namespace lldb_private;
 
-UnwindTable::UnwindTable (ObjectFile& objfile) : m_object_file(objfile), 
-                                                 m_unwinds(),
-                                                 m_initialized(false),
-                                                 m_eh_frame(NULL),
-                                                 m_assembly_profiler(NULL)
+UnwindTable::UnwindTable (ObjectFile& objfile) : 
+    m_object_file (objfile), 
+    m_unwinds (),
+    m_initialized (false),
+    m_eh_frame (NULL),
+    m_assembly_profiler (NULL)
 {
 }
 
@@ -40,7 +42,7 @@ UnwindTable::UnwindTable (ObjectFile& objfile) : m_object_file(objfile),
 // until needed for something.
 
 void
-UnwindTable::initialize ()
+UnwindTable::Initialize ()
 {
     if (m_initialized)
         return;
@@ -75,31 +77,21 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
 {
     FuncUnwindersSP no_unwind_found;
 
-    initialize();
+    Initialize();
 
-    // Create a FuncUnwinders object for the binary search below
-    AddressRange search_range(addr, 1);
-    FuncUnwindersSP search_unwind(new FuncUnwinders (*this, NULL, search_range));
+    // There is an UnwindTable per object file, so we can safely use file handles
+    addr_t file_addr = addr.GetFileAddress();
+    iterator end = m_unwinds.end ();
+    iterator insert_pos = end;
+    if (!m_unwinds.empty())
+    {
+        insert_pos = m_unwinds.lower_bound (file_addr);
+        iterator pos = insert_pos;
+        if ((pos == m_unwinds.end ()) || (pos != m_unwinds.begin() && pos->second->GetFunctionStartAddress() != addr))
+            --pos;
 
-    const_iterator idx;
-    idx = std::lower_bound (m_unwinds.begin(), m_unwinds.end(), search_unwind);
-
-    bool found_match = true;
-    if (m_unwinds.size() == 0)
-    {
-        found_match = false;
-    }
-    else if (idx == m_unwinds.end())
-    {
-        --idx;
-    }
-    if (idx != m_unwinds.begin() && (*idx)->GetFunctionStartAddress().GetOffset() != addr.GetOffset())
-    {
-       --idx;
-    }
-    if (found_match && (*idx)->ContainsAddress (addr))
-    {
-        return *idx;
+        if (pos->second->ContainsAddress (addr))
+            return pos->second;
     }
 
     AddressRange range;
@@ -112,15 +104,29 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
         }
     }
 
-    FuncUnwindersSP unw(new FuncUnwinders(*this, m_assembly_profiler, range));
-    m_unwinds.push_back (unw);
-    std::sort (m_unwinds.begin(), m_unwinds.end());
-    return unw;
+    FuncUnwindersSP func_unwinder_sp(new FuncUnwinders(*this, m_assembly_profiler, range));
+    m_unwinds.insert (insert_pos, std::make_pair(range.GetBaseAddress().GetFileAddress(), func_unwinder_sp));
+//    StreamFile s(stdout);
+//    Dump (s);
+    return func_unwinder_sp;
+}
+
+void
+UnwindTable::Dump (Stream &s)
+{
+    s.Printf("UnwindTable for %s/%s:\n", m_object_file.GetFileSpec().GetDirectory().GetCString(), m_object_file.GetFileSpec().GetFilename().GetCString());
+    const_iterator begin = m_unwinds.begin();
+    const_iterator end = m_unwinds.end();
+    for (const_iterator pos = begin; pos != end; ++pos)
+    {
+        s.Printf ("[%zu] 0x%16.16llx\n", std::distance (begin, pos), pos->first);
+    }
+    s.EOL();
 }
 
 DWARFCallFrameInfo *
 UnwindTable::GetEHFrameInfo ()
 {
-    initialize();
+    Initialize();
     return m_eh_frame;
 }

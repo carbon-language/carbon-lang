@@ -24,109 +24,101 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-FuncUnwinders::FuncUnwinders (UnwindTable& unwind_table, UnwindAssemblyProfiler *assembly_profiler, AddressRange range) : 
-        m_unwind_table(unwind_table), 
-        m_assembly_profiler(assembly_profiler), 
-        m_range(range), 
-        m_unwind_at_call_site(NULL), 
-        m_unwind_at_non_call_site(NULL), 
-        m_fast_unwind(NULL), 
-        m_arch_default_unwind(NULL), 
-        m_first_non_prologue_insn() { }
+FuncUnwinders::FuncUnwinders
+(
+    UnwindTable& unwind_table, 
+    UnwindAssemblyProfiler *assembly_profiler, 
+    AddressRange range
+) : 
+    m_unwind_table(unwind_table), 
+    m_assembly_profiler(assembly_profiler), 
+    m_range(range), 
+    m_unwind_at_call_site_ap (), 
+    m_unwind_at_non_call_site_ap (), 
+    m_fast_unwind_ap (), 
+    m_arch_default_unwind (NULL), 
+    m_tried_unwind_at_call_site (false),
+    m_tried_unwind_at_non_call_site (false),
+    m_tried_fast_unwind (false),
+    m_tried_arch_default_unwind (false),
+    m_first_non_prologue_insn() 
+{
+}
 
 FuncUnwinders::~FuncUnwinders () 
 { 
-  if (m_unwind_at_call_site)
-      delete m_unwind_at_call_site;
-  if (m_unwind_at_non_call_site)
-      delete m_unwind_at_non_call_site;
-  if (m_fast_unwind)
-      delete m_fast_unwind;
-  if (m_arch_default_unwind)
-      delete m_arch_default_unwind;
 }
 
 UnwindPlan*
 FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
 {
-    if (m_unwind_at_call_site != NULL)
-        return m_unwind_at_call_site;
-    if (!m_range.GetBaseAddress().IsValid())
-        return NULL;
-
-    // We have cases (e.g. with _sigtramp on Mac OS X) where the hand-written eh_frame unwind info for a
-    // function does not cover the entire range of the function and so the FDE only lists a subset of the
-    // address range.  If we try to look up the unwind info by the starting address of the function 
-    // (i.e. m_range.GetBaseAddress()) we may not find the eh_frame FDE.  We need to use the actual byte offset
-    // into the function when looking it up.
-
-    Address current_pc (m_range.GetBaseAddress ());
-    if (current_offset != -1)
-        current_pc.SetOffset (current_pc.GetOffset() + current_offset);
-
-    DWARFCallFrameInfo *eh_frame = m_unwind_table.GetEHFrameInfo();
-    UnwindPlan *up = NULL;
-    if (eh_frame)
+    if (m_tried_unwind_at_call_site == false && m_unwind_at_call_site_ap.get() == NULL)
     {
-        up = new UnwindPlan;
-        if (!eh_frame->GetUnwindPlan (current_pc, *up))
+        m_tried_unwind_at_call_site = true;
+        // We have cases (e.g. with _sigtramp on Mac OS X) where the hand-written eh_frame unwind info for a
+        // function does not cover the entire range of the function and so the FDE only lists a subset of the
+        // address range.  If we try to look up the unwind info by the starting address of the function 
+        // (i.e. m_range.GetBaseAddress()) we may not find the eh_frame FDE.  We need to use the actual byte offset
+        // into the function when looking it up.
+
+        if (m_range.GetBaseAddress().IsValid())
         {
-            delete up;
-            return NULL;
+            Address current_pc (m_range.GetBaseAddress ());
+            if (current_offset != -1)
+                current_pc.SetOffset (current_pc.GetOffset() + current_offset);
+
+            DWARFCallFrameInfo *eh_frame = m_unwind_table.GetEHFrameInfo();
+            if (eh_frame)
+            {
+                m_unwind_at_call_site_ap.reset (new UnwindPlan);
+                if (!eh_frame->GetUnwindPlan (current_pc, *m_unwind_at_call_site_ap))
+                    m_unwind_at_call_site_ap.reset();
+            }
         }
     }
-    if (!up)
-        return NULL;
-
-    m_unwind_at_call_site = up;
-    return m_unwind_at_call_site;
+    return m_unwind_at_call_site_ap.get();
 }
 
 UnwindPlan*
 FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
 {
-    if (m_unwind_at_non_call_site != NULL)
-        return m_unwind_at_non_call_site;
-    UnwindPlan *up = new UnwindPlan;
-    if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *up))
+    if (m_tried_unwind_at_non_call_site == false && m_unwind_at_non_call_site_ap.get() == NULL)
     {
-        delete up;
-        return NULL;
+        m_tried_unwind_at_non_call_site = true;
+        m_unwind_at_non_call_site_ap.reset (new UnwindPlan);
+        if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_at_non_call_site_ap))
+            m_unwind_at_non_call_site_ap.reset();
     }
-    m_unwind_at_non_call_site = up;
-    return m_unwind_at_non_call_site;
+    return m_unwind_at_non_call_site_ap.get();
 }
 
 UnwindPlan*
 FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
 {
-    if (m_fast_unwind != NULL)
-        return m_fast_unwind;
-    UnwindPlan *up = new UnwindPlan;
-    if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *up))
+    if (m_tried_fast_unwind == false && m_fast_unwind_ap.get() == NULL)
     {
-        delete up;
-        return NULL;
+        m_tried_fast_unwind = true;
+        m_fast_unwind_ap.reset (new UnwindPlan);
+        if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_fast_unwind_ap))
+            m_fast_unwind_ap.reset();
     }
-    m_fast_unwind = up;
-    return m_fast_unwind;
+    return m_fast_unwind_ap.get();
 }
 
 UnwindPlan*
 FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
 {
-    if (m_arch_default_unwind != NULL)
-        return m_arch_default_unwind;
-
-    Address current_pc;
-    Target *target = thread.CalculateTarget();
-    if (target)
+    if (m_tried_arch_default_unwind == false && m_arch_default_unwind == NULL)
     {
-        ArchSpec arch = target->GetArchitecture ();
-        ArchDefaultUnwindPlan *arch_default = ArchDefaultUnwindPlan::FindPlugin (arch);
-        if (arch_default)
+        m_tried_arch_default_unwind = true;
+        Address current_pc;
+        Target *target = thread.CalculateTarget();
+        if (target)
         {
-            m_arch_default_unwind = arch_default->GetArchDefaultUnwindPlan (thread, current_pc);
+            ArchSpec arch = target->GetArchitecture ();
+            ArchDefaultUnwindPlan *arch_default = ArchDefaultUnwindPlan::FindPlugin (arch);
+            if (arch_default)
+                m_arch_default_unwind = arch_default->GetArchDefaultUnwindPlan (thread, current_pc);
         }
     }
 

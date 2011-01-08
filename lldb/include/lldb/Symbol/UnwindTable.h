@@ -11,7 +11,7 @@
 #ifndef liblldb_UnwindTable_h
 #define liblldb_UnwindTable_h
 
-#include <vector>
+#include <map>
 
 #include "lldb/lldb-private.h"
 
@@ -34,11 +34,14 @@ public:
     GetFuncUnwindersContainingAddress (const Address& addr, SymbolContext &sc);
 
 private:
-    void initialize ();
+    void
+    Dump (Stream &s);
+    
+    void Initialize ();
 
-    typedef std::vector<lldb::FuncUnwindersSP>     collection;
-    typedef collection::iterator        iterator;
-    typedef collection::const_iterator  const_iterator;
+    typedef std::map<lldb::addr_t, lldb::FuncUnwindersSP> collection;
+    typedef collection::iterator iterator;
+    typedef collection::const_iterator const_iterator;
 
     ObjectFile&         m_object_file;
     collection          m_unwinds;

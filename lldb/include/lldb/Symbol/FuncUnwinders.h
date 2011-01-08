@@ -72,25 +72,21 @@ private:
     UnwindAssemblyProfiler *m_assembly_profiler;
     AddressRange m_range;
 
-    UnwindPlan* m_unwind_at_call_site;
-    UnwindPlan* m_unwind_at_non_call_site;
-    UnwindPlan* m_fast_unwind;
-    UnwindPlan* m_arch_default_unwind;
+    std::auto_ptr<UnwindPlan> m_unwind_at_call_site_ap;
+    std::auto_ptr<UnwindPlan> m_unwind_at_non_call_site_ap;
+    std::auto_ptr<UnwindPlan> m_fast_unwind_ap;
+    UnwindPlan *m_arch_default_unwind;
 
+    bool m_tried_unwind_at_call_site:1,
+         m_tried_unwind_at_non_call_site:1,
+         m_tried_fast_unwind:1,
+         m_tried_arch_default_unwind:1;
+         
     Address m_first_non_prologue_insn;
 
     DISALLOW_COPY_AND_ASSIGN (FuncUnwinders);
 
 }; // class FuncUnwinders
-
-inline bool 
-operator<(const FuncUnwinders& a, const FuncUnwinders& b)
-{
-    if (a.GetFunctionStartAddress().GetOffset() < b.GetFunctionStartAddress().GetOffset())
-        return true;
-    else
-        return false;
-}
 
 } // namespace lldb_private
 

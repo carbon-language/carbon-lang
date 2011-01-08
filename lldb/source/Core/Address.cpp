@@ -18,46 +18,6 @@
 using namespace lldb;
 using namespace lldb_private;
 
-//static size_t
-//ReadBytes (ExecutionContextScope *exe_scope, const Address &address, void *dst, size_t dst_len)
-//{
-//    if (exe_scope == NULL)
-//        return 0;
-//
-//    lldb::AddressType addr_type = eAddressTypeInvalid;
-//    addr_t addr = LLDB_INVALID_ADDRESS;
-//
-//    Process *process = exe_scope->CalculateProcess();
-//
-//    if (process && process->IsAlive())
-//    {
-//        addr = address.GetLoadAddress(process);
-//        if (addr != LLDB_INVALID_ADDRESS)
-//            addr_type = eAddressTypeLoad;
-//    }
-//
-//    if (addr == LLDB_INVALID_ADDRESS)
-//    {
-//        addr = address.GetFileAddress();
-//        if (addr != LLDB_INVALID_ADDRESS)
-//            addr_type = eAddressTypeFile;
-//    }
-//
-//    if (addr_type == eAddressTypeInvalid)
-//        return false;
-//
-//    Target *target = exe_scope->CalculateTarget();
-//    if (target)
-//    {
-//        Error error;
-//        ObjectFile *objfile = NULL;
-//        if (address.GetModule())
-//            objfile = address.GetModule()->GetObjectFile();
-//        return target->ReadMemory (addr_type, addr, dst, dst_len, error, objfile);
-//    }
-//    return 0;
-//}
-
 static size_t
 ReadBytes (ExecutionContextScope *exe_scope, const Address &address, void *dst, size_t dst_len)
 {
@@ -282,25 +242,6 @@ Address::ResolveAddressUsingFileSections (addr_t addr, const SectionList *sectio
     return false;       // Failed to resolve this address to a section offset value
 }
 
-//bool
-//Address::ResolveAddressUsingLoadSections (addr_t addr, const SectionList *sections)
-//{
-//    if (sections)
-//        m_section = sections->FindSectionContainingLoadAddress(addr).get();
-//    else
-//        m_section = NULL;
-//
-//    if (m_section != NULL)
-//    {
-//        assert( m_section->ContainsLoadAddress(addr) );
-//        m_offset = addr - m_section->GetLoadBaseAddress();
-//        return true;    // Successfully transformed addr into a section offset address
-//    }
-//
-//    m_offset = addr;
-//    return false;       // Failed to resolve this address to a section offset value
-//}
-//
 Module *
 Address::GetModule () const
 {
@@ -308,16 +249,6 @@ Address::GetModule () const
         return m_section->GetModule();
     return NULL;
 }
-
-//addr_t
-//Address::Address() const
-//{
-//  addr_t addr = GetLoadAddress();
-//  if (addr != LLDB_INVALID_ADDRESS)
-//      return addr;
-//  return GetFileAddress();
-//}
-//
 
 addr_t
 Address::GetFileAddress () const
@@ -717,12 +648,6 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     return true;
 }
 
-//Stream& operator << (Stream& s, const Address& so_addr)
-//{
-//    so_addr.Dump(&s, Address::DumpStyleSectionNameOffset);
-//    return s;
-//}
-//
 void
 Address::CalculateSymbolContext (SymbolContext *sc)
 {
@@ -795,63 +720,57 @@ Address::MemorySize () const
 }
 
 
-/// The only comparisons that make sense are the load addresses
-//bool
-//lldb::operator< (const Address& lhs, const Address& rhs)
-//{
-//    lldb::addr_t lhs_addr = lhs.GetLoadAddress();
-//    lldb::addr_t rhs_addr = rhs.GetLoadAddress();
+//----------------------------------------------------------------------
+// NOTE: Be careful using this operator. It can correctly compare two 
+// addresses from the same Module correctly. It can't compare two 
+// addresses from different modules in any meaningful way, but it will
+// compare the module pointers.
+// 
+// To sum things up:
+// - works great for addresses within the same module
+// - it works for addresses across multiple modules, but don't expect the
+//   address results to make much sense
 //
-//    if (lhs_addr == rhs_addr)
-//    {
-//        lhs_addr = lhs.GetFileAddress();
-//        rhs_addr = rhs.GetFileAddress();
-//    }
-//    return lhs_addr < rhs_addr;
-//}
-//
-//bool
-//lldb::operator<=    (const Address& lhs, const Address& rhs)
-//{
-//    lldb::addr_t lhs_addr = lhs.GetLoadAddress();
-//    lldb::addr_t rhs_addr = rhs.GetLoadAddress();
-//
-//    if (lhs_addr == rhs_addr)
-//    {
-//        lhs_addr = lhs.GetFileAddress();
-//        rhs_addr = rhs.GetFileAddress();
-//    }
-//    return lhs_addr <= rhs_addr;
-//}
-//
-//bool
-//lldb::operator> (const Address& lhs, const Address& rhs)
-//{
-//    lldb::addr_t lhs_addr = lhs.GetLoadAddress();
-//    lldb::addr_t rhs_addr = rhs.GetLoadAddress();
-//
-//    if (lhs_addr == rhs_addr)
-//    {
-//        lhs_addr = lhs.GetFileAddress();
-//        rhs_addr = rhs.GetFileAddress();
-//    }
-//    return lhs_addr > rhs_addr;
-//}
-//
-//bool
-//lldb::operator>=    (const Address& lhs, const Address& rhs)
-//{
-//    lldb::addr_t lhs_addr = lhs.GetLoadAddress();
-//    lldb::addr_t rhs_addr = rhs.GetLoadAddress();
-//
-//    if (lhs_addr == rhs_addr)
-//    {
-//        lhs_addr = lhs.GetFileAddress();
-//        rhs_addr = rhs.GetFileAddress();
-//    }
-//    return lhs_addr >= rhs_addr;
-//}
-//
+// This basically lets Address objects be used in ordered collection 
+// classes.
+//----------------------------------------------------------------------
+
+bool
+lldb_private::operator< (const Address& lhs, const Address& rhs)
+{
+    Module *lhs_module = lhs.GetModule();
+    Module *rhs_module = rhs.GetModule();    
+    if (lhs_module == rhs_module)
+    {
+        // Addresses are in the same module, just compare the file addresses
+        return lhs.GetFileAddress() < rhs.GetFileAddress();
+    }
+    else
+    {
+        // The addresses are from different modules, just use the module
+        // pointer value to get consistent ordering
+        return lhs_module < rhs_module;
+    }
+}
+
+bool
+lldb_private::operator> (const Address& lhs, const Address& rhs)
+{
+    Module *lhs_module = lhs.GetModule();
+    Module *rhs_module = rhs.GetModule();    
+    if (lhs_module == rhs_module)
+    {
+        // Addresses are in the same module, just compare the file addresses
+        return lhs.GetFileAddress() > rhs.GetFileAddress();
+    }
+    else
+    {
+        // The addresses are from different modules, just use the module
+        // pointer value to get consistent ordering
+        return lhs_module > rhs_module;
+    }
+}
+
 
 // The operator == checks for exact equality only (same section, same offset)
 bool

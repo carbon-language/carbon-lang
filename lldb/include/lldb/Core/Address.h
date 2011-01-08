@@ -434,14 +434,28 @@ protected:
     lldb::addr_t m_offset;      ///< Offset into section if \a m_section != NULL, else the absolute address value.
 };
 
-//bool operator<  (const Address& lhs, const Address& rhs);
-//bool operator<= (const Address& lhs, const Address& rhs);
-//bool operator>  (const Address& lhs, const Address& rhs);
-//bool operator>= (const Address& lhs, const Address& rhs);
+
+//----------------------------------------------------------------------
+// NOTE: Be careful using this operator. It can correctly compare two 
+// addresses from the same Module correctly. It can't compare two 
+// addresses from different modules in any meaningful way, but it will
+// compare the module pointers.
+// 
+// To sum things up:
+// - works great for addresses within the same module
+// - it works for addresses across multiple modules, but don't expect the
+//   address results to make much sense
+//
+// This basically lets Address objects be used in ordered collection 
+// classes.
+//----------------------------------------------------------------------
+bool operator<  (const Address& lhs, const Address& rhs);
+bool operator>  (const Address& lhs, const Address& rhs);
+
+
+
 bool operator== (const Address& lhs, const Address& rhs);
 bool operator!= (const Address& lhs, const Address& rhs);
-
-//Stream& operator << (Stream& strm, const Address& so_addr);
 
 } // namespace lldb_private
 
