@@ -70,6 +70,7 @@ namespace {
     void preserveCanonicalLoopForm(LPPassManager &LPM);
 
   private:
+    LoopInfo *LI;
     Loop *L;
     BasicBlock *OrigHeader;
     BasicBlock *OrigPreHeader;
@@ -89,21 +90,31 @@ INITIALIZE_PASS_END(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
 
 Pass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 
+/// Initialize local data
+void LoopRotate::initialize() {
+  L = NULL;
+  OrigHeader = NULL;
+  OrigPreHeader = NULL;
+  NewHeader = NULL;
+  Exit = NULL;
+}
+
 /// Rotate Loop L as many times as possible. Return true if
 /// the loop is rotated at least once.
 bool LoopRotate::runOnLoop(Loop *Lp, LPPassManager &LPM) {
+  LI = &getAnalysis<LoopInfo>();
 
-  bool RotatedOneLoop = false;
   initialize();
   LPM_Ptr = &LPM;
 
   // One loop can be rotated multiple times.
+  bool MadeChange = false;
   while (rotateLoop(Lp,LPM)) {
-    RotatedOneLoop = true;
+    MadeChange = true;
     initialize();
   }
 
-  return RotatedOneLoop;
+  return MadeChange;
 }
 
 /// Rotate loop LP. Return true if the loop is rotated.
@@ -213,7 +224,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // With the operands remapped, see if the instruction constant folds or is
     // otherwise simplifyable.  This commonly occurs because the entry from PHI
     // nodes allows icmps and other instructions to fold.
-    if (Value *V = SimplifyInstruction(C)) {
+    Value *V = SimplifyInstruction(C);
+    if (V && LI->replacementPreservesLCSSAForm(C, V)) {
       // If so, then delete the temporary instruction and stick the folded value
       // in the map.
       delete C;
@@ -322,14 +334,6 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   return true;
 }
 
-/// Initialize local data
-void LoopRotate::initialize() {
-  L = NULL;
-  OrigHeader = NULL;
-  OrigPreHeader = NULL;
-  NewHeader = NULL;
-  Exit = NULL;
-}
 
 /// After loop rotation, loop pre-header has multiple sucessors.
 /// Insert one forwarding basic block to ensure that loop pre-header
