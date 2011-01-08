@@ -172,12 +172,13 @@ void PPCDAGToDAGISel::InsertVRSaveCode(MachineFunction &Fn) {
   // In this case, there will be virtual registers of vector type created
   // by the scheduler.  Detect them now.
   bool HasVectorVReg = false;
-  for (unsigned i = TargetRegisterInfo::FirstVirtualRegister,
-       e = RegInfo->getLastVirtReg()+1; i != e; ++i)
-    if (RegInfo->getRegClass(i) == &PPC::VRRCRegClass) {
+  for (unsigned i = 0, e = RegInfo->getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+    if (RegInfo->getRegClass(Reg) == &PPC::VRRCRegClass) {
       HasVectorVReg = true;
       break;
     }
+  }
   if (!HasVectorVReg) return;  // nothing to do.
 
   // If we have a vector register, we want to emit code into the entry and exit

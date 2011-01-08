@@ -814,13 +814,13 @@ namespace {
       // Be over-conservative: scan over all vreg defs and find whether vector
       // registers are used. If yes, there is a possibility that vector register
       // will be spilled and thus require dynamic stack realignment.
-      for (unsigned RegNum = TargetRegisterInfo::FirstVirtualRegister;
-           RegNum < RI.getLastVirtReg(); ++RegNum)
-        if (RI.getRegClass(RegNum)->getAlignment() > StackAlignment) {
+      for (unsigned i = 0, e = RI.getNumVirtRegs(); i != e; ++i) {
+        unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+        if (RI.getRegClass(Reg)->getAlignment() > StackAlignment) {
           FuncInfo->setReserveFP(true);
           return true;
         }
-
+      }
       // Nothing to do
       return false;
     }
