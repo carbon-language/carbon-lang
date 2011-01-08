@@ -328,9 +328,8 @@ void LoopRotate::preserveCanonicalLoopForm(Loop *L, BasicBlock *OrigHeader,
   BasicBlock *NewPreHeader =
     BasicBlock::Create(OrigHeader->getContext(), "bb.nph",
                        OrigHeader->getParent(), NewHeader);
-  LoopInfo &LI = getAnalysis<LoopInfo>();
-  if (Loop *PL = LI.getLoopFor(OrigPreHeader))
-    PL->addBasicBlockToLoop(NewPreHeader, LI.getBase());
+  if (Loop *PL = LI->getLoopFor(OrigPreHeader))
+    PL->addBasicBlockToLoop(NewPreHeader, LI->getBase());
   BranchInst::Create(NewHeader, NewPreHeader);
   
   BranchInst *OrigPH_BI = cast<BranchInst>(OrigPreHeader->getTerminator());
