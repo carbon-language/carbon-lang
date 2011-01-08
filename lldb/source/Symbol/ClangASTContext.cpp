@@ -2053,7 +2053,43 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
     const clang::Type::TypeClass type_class = qual_type->getTypeClass();
     switch (type_class)
     {
-    case clang::Type::Builtin:                  return 1;
+    case clang::Type::Builtin:                  
+        switch (cast<clang::BuiltinType>(qual_type)->getKind())
+        {
+        case clang::BuiltinType::Void:
+        case clang::BuiltinType::NullPtr:  
+            return 0;
+        case clang::BuiltinType::Bool:
+        case clang::BuiltinType::Char_U:
+        case clang::BuiltinType::UChar:
+        case clang::BuiltinType::Char16:
+        case clang::BuiltinType::Char32:
+        case clang::BuiltinType::UShort:
+        case clang::BuiltinType::UInt:
+        case clang::BuiltinType::ULong:
+        case clang::BuiltinType::ULongLong:
+        case clang::BuiltinType::UInt128:
+        case clang::BuiltinType::Char_S:
+        case clang::BuiltinType::SChar:
+        case clang::BuiltinType::WChar:
+        case clang::BuiltinType::Short:
+        case clang::BuiltinType::Int:
+        case clang::BuiltinType::Long:
+        case clang::BuiltinType::LongLong:
+        case clang::BuiltinType::Int128:
+        case clang::BuiltinType::Float:
+        case clang::BuiltinType::Double:
+        case clang::BuiltinType::LongDouble:
+        case clang::BuiltinType::Dependent:
+        case clang::BuiltinType::Overload:
+        case clang::BuiltinType::UndeducedAuto:
+        case clang::BuiltinType::ObjCId:
+        case clang::BuiltinType::ObjCClass:
+        case clang::BuiltinType::ObjCSel:
+            return 1;
+        }
+        break;
+
     case clang::Type::Complex:                  return 2;
     case clang::Type::Pointer:                  return 1;
     case clang::Type::BlockPointer:             return 0;   // If block pointers don't have debug info, then no children for them
@@ -2403,6 +2439,10 @@ ClangASTContext::GetChildClangTypeAtIndex
             {
                 PointerType *pointer_type = cast<PointerType>(parent_qual_type.getTypePtr());
                 QualType pointee_type = pointer_type->getPointeeType();
+                
+                // Don't dereference "void *" pointers
+                if (pointee_type->isVoidType())
+                    return NULL;
 
                 if (transparent_pointers && ClangASTContext::IsAggregateType (pointee_type.getAsOpaquePtr()))
                 {

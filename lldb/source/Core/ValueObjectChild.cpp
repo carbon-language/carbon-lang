@@ -47,7 +47,6 @@ ValueObjectChild::ValueObjectChild
 {
     assert (bitfield_bit_size   < (sizeof(m_bitfield_bit_size  ) * CHAR_BIT));
     assert (bitfield_bit_offset < (sizeof(m_bitfield_bit_offset) * CHAR_BIT));
-    assert(byte_size != 0 && "TEMPORARY DEBUGGING ASSERT");
     m_name = name;
 }
 
