@@ -71,13 +71,30 @@ static int64_t GetOffsetFromIndex(const GetElementPtrInst *GEP, unsigned Idx,
 /// be &A[42], and Ptr2 might be &A[40].  In this case offset would be -8.
 static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
                             const TargetData &TD) {
+  Ptr1 = Ptr1->stripPointerCasts();
+  Ptr2 = Ptr2->stripPointerCasts();
+  GetElementPtrInst *GEP1 = dyn_cast<GetElementPtrInst>(Ptr1);
+  GetElementPtrInst *GEP2 = dyn_cast<GetElementPtrInst>(Ptr2);
+  
+  bool VariableIdxFound = false;
+
+  // If one pointer is a GEP and the other isn't, then see if the GEP is a
+  // constant offset from the base, as in "P" and "gep P, 1".
+  if (GEP1 && GEP2 == 0 && GEP1->getOperand(0)->stripPointerCasts() == Ptr2) {
+    Offset = -GetOffsetFromIndex(GEP1, 1, VariableIdxFound, TD);
+    return !VariableIdxFound;
+  }
+
+  if (GEP2 && GEP1 == 0 && GEP2->getOperand(0)->stripPointerCasts() == Ptr1) {
+    Offset = GetOffsetFromIndex(GEP2, 1, VariableIdxFound, TD);
+    return !VariableIdxFound;
+  }
+  
   // Right now we handle the case when Ptr1/Ptr2 are both GEPs with an identical
   // base.  After that base, they may have some number of common (and
   // potentially variable) indices.  After that they handle some constant
   // offset, which determines their offset from each other.  At this point, we
   // handle no other case.
-  GetElementPtrInst *GEP1 = dyn_cast<GetElementPtrInst>(Ptr1);
-  GetElementPtrInst *GEP2 = dyn_cast<GetElementPtrInst>(Ptr2);
   if (!GEP1 || !GEP2 || GEP1->getOperand(0) != GEP2->getOperand(0))
     return false;
   
@@ -87,7 +104,6 @@ static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
     if (GEP1->getOperand(Idx) != GEP2->getOperand(Idx))
       break;
 
-  bool VariableIdxFound = false;
   int64_t Offset1 = GetOffsetFromIndex(GEP1, Idx, VariableIdxFound, TD);
   int64_t Offset2 = GetOffsetFromIndex(GEP2, Idx, VariableIdxFound, TD);
   if (VariableIdxFound) return false;
