@@ -1559,18 +1559,25 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
    </p>
 
 <p>Virtual registers are also denoted by integer numbers. Contrary to physical
-   registers, different virtual registers never share the same number. The
-   smallest virtual register is normally assigned the number 1024. This may
-   change, so, in order to know which is the first virtual register, you should
-   access <tt>TargetRegisterInfo::FirstVirtualRegister</tt>. Any register whose
-   number is greater than or equal
-   to <tt>TargetRegisterInfo::FirstVirtualRegister</tt> is considered a virtual
-   register. Whereas physical registers are statically defined in
-   a <tt>TargetRegisterInfo.td</tt> file and cannot be created by the
-   application developer, that is not the case with virtual registers.  In order
-   to create new virtual registers, use the
+   registers, different virtual registers never share the same number. Whereas
+   physical registers are statically defined in a <tt>TargetRegisterInfo.td</tt>
+   file and cannot be created by the application developer, that is not the case
+   with virtual registers. In order to create new virtual registers, use the
    method <tt>MachineRegisterInfo::createVirtualRegister()</tt>. This method
-   will return a virtual register with the highest code.</p>
+   will return a new virtual register. Use an <tt>IndexedMap&lt;Foo,
+   VirtReg2IndexFunctor&gt;</tt> to hold information per virtual register. If you
+   need to enumerate all virtual registers, use the function
+   <tt>TargetRegisterInfo::index2VirtReg()</tt> to find the virtual register
+   numbers:</p>
+
+<div class="doc_code">
+<pre>
+  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
+    unsigned VirtReg = TargetRegisterInfo::index2VirtReg(i);
+    stuff(VirtReg);
+  }
+</pre>
+</div>
 
 <p>Before register allocation, the operands of an instruction are mostly virtual
    registers, although physical registers may also be used. In order to check if
