@@ -167,7 +167,7 @@ lldb::RegisterContextSP
 UnwindLLDB::CreateRegisterContextForFrame (StackFrame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
-    uint32_t idx = frame->GetFrameIndex ();
+    uint32_t idx = frame->GetConcreteFrameIndex ();
 
     if (idx == 0)
     {
