@@ -16,6 +16,8 @@
 #ifndef LLVM_ANALYSIS_CODEMETRICS_H
 #define LLVM_ANALYSIS_CODEMETRICS_H
 
+#include "llvm/ADT/DenseMap.h"
+
 namespace llvm {
   // CodeMetrics - Calculate size and a few similar metrics for a set of
   // basic blocks.
