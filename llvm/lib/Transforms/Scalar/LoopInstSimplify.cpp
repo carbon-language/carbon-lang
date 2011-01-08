@@ -54,7 +54,7 @@ INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_END(LoopInstSimplify, "loop-instsimplify",
                 "Simplify instructions in loops", false, false)
 
-Pass* llvm::createLoopInstSimplifyPass() {
+Pass *llvm::createLoopInstSimplifyPass() {
   return new LoopInstSimplify();
 }
 
@@ -87,7 +87,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
     while (!VisitStack.empty()) {
       WorklistItem Item = VisitStack.pop_back_val();
-      BasicBlock* BB = Item.getPointer();
+      BasicBlock *BB = Item.getPointer();
       bool IsSubloopHeader = Item.getInt();
 
       // Simplify instructions in the current basic block.
