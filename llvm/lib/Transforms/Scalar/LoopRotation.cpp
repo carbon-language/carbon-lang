@@ -38,10 +38,6 @@ namespace {
       initializeLoopRotatePass(*PassRegistry::getPassRegistry());
     }
 
-    // Rotate Loop L as many times as possible. Return true if
-    // loop is rotated at least once.
-    bool runOnLoop(Loop *L, LPPassManager &LPM);
-
     // LCSSA form makes instruction renaming easier.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorTree>();
@@ -54,19 +50,9 @@ namespace {
       AU.addPreserved<ScalarEvolution>();
     }
 
-    // Helper functions
-
-    /// Do actual work
+    bool runOnLoop(Loop *L, LPPassManager &LPM);
     bool rotateLoop(Loop *L);
     
-    /// After loop rotation, loop pre-header has multiple sucessors.
-    /// Insert one forwarding basic block to ensure that loop pre-header
-    /// has only one successor.
-    void preserveCanonicalLoopForm(Loop *L, BasicBlock *OrigHeader,
-                                   BasicBlock *OrigPreHeader,
-                                   BasicBlock *OrigLatch, BasicBlock *NewHeader,
-                                   BasicBlock *Exit);
-
   private:
     LoopInfo *LI;
   };
@@ -295,27 +281,12 @@ bool LoopRotate::rotateLoop(Loop *L) {
   // PHI nodes, which are now trivial.
   FoldSingleEntryPHINodes(OrigHeader);
 
-  // TODO: We could just go ahead and merge OrigHeader into its predecessor
-  // at this point, if we don't mind updating dominator info.
-
-  // Establish a new preheader, update dominators, etc.
-  preserveCanonicalLoopForm(L, OrigHeader, OrigPreHeader, OrigLatch,
-                            NewHeader, Exit);
-
-  ++NumRotated;
-  return true;
-}
-
-
-/// Update LoopInfo, DominatorTree, and DomFrontiers to reflect the CFG change
-/// we just made.  Then split edges as necessary to preserve LoopSimplify form.
-void LoopRotate::preserveCanonicalLoopForm(Loop *L, BasicBlock *OrigHeader,
-                                           BasicBlock *OrigPreHeader,
-                                           BasicBlock *OrigLatch,
-                                           BasicBlock *NewHeader,
-                                           BasicBlock *Exit) {
+  
+  
+  // Update DominatorTree to reflect the CFG change we just made.  Then split
+  // edges as necessary to preserve LoopSimplify form.
   assert(L->getHeader() == NewHeader && "Latch block is our new header");
-
+  
   if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
     // Since OrigPreheader now has the conditional branch to Exit block, it is
     // the dominator of Exit.
@@ -331,13 +302,20 @@ void LoopRotate::preserveCanonicalLoopForm(Loop *L, BasicBlock *OrigHeader,
   BasicBlock *NewPH = SplitCriticalEdge(OrigPreHeader, NewHeader, this);
   NewPH->setName(NewHeader->getName() + ".lr.ph");
   
-  // Preserve canonical loop form, which means Exit block should have only one
+  // Preserve canonical loop form, which means that 'Exit' should have only one
   // predecessor.
   SplitCriticalEdge(L->getLoopLatch(), Exit, this);
-
-  assert(NewHeader && L->getHeader() == NewHeader &&
-         "Invalid loop header after loop rotation");
+  
   assert(L->getLoopPreheader() == NewPH &&
          "Invalid loop preheader after loop rotation");
   assert(L->getLoopLatch() && "Invalid loop latch after loop rotation");
+
+  
+  // TODO: We could just go ahead and merge OrigHeader into its predecessor
+  // at this point, if we don't mind updating dominator info.
+  
+  ++NumRotated;
+  return true;
 }
+
+
