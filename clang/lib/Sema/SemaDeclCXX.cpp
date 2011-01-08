@@ -1392,6 +1392,22 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr **Args,
 }
 
 MemInitResult
+Sema::BuildDelegatingInitializer(TypeSourceInfo *TInfo,
+                                 Expr **Args, unsigned NumArgs,
+                                 SourceLocation LParenLoc,
+                                 SourceLocation RParenLoc,
+                                 CXXRecordDecl *ClassDecl,
+                                 SourceLocation EllipsisLoc) {
+  SourceLocation Loc = TInfo->getTypeLoc().getLocalSourceRange().getBegin();
+  if (!LangOpts.CPlusPlus0x)
+    return Diag(Loc, diag::err_delegation_0x_only)
+      << TInfo->getTypeLoc().getLocalSourceRange();
+
+  return Diag(Loc, diag::err_delegation_unimplemented)
+    << TInfo->getTypeLoc().getLocalSourceRange();
+}
+
+MemInitResult
 Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
                            Expr **Args, unsigned NumArgs, 
                            SourceLocation LParenLoc, SourceLocation RParenLoc, 
@@ -1438,6 +1454,12 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   const CXXBaseSpecifier *DirectBaseSpec = 0;
   const CXXBaseSpecifier *VirtualBaseSpec = 0;
   if (!Dependent) { 
+    if (Context.hasSameUnqualifiedType(QualType(ClassDecl->getTypeForDecl(),0),
+                                       BaseType))
+      return BuildDelegatingInitializer(BaseTInfo, Args, NumArgs,
+                                        LParenLoc, RParenLoc, ClassDecl,
+                                        EllipsisLoc);
+
     FindBaseInitializer(*this, ClassDecl, BaseType, DirectBaseSpec, 
                         VirtualBaseSpec);
 

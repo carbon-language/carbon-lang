@@ -893,6 +893,12 @@ def err_enum_redeclare_fixed_mismatch : Error<
   "enumeration previously declared with %select{non|}0fixed underlying type">;
 def err_enum_redeclare_scoped_mismatch : Error<
   "enumeration previously declared as %select{un|}0scoped">;
+
+// C++0x delegating constructors
+def err_delegation_0x_only : Error<
+  "Delegating constructors are permitted only in C++0x.">;
+def err_delegation_unimplemented : Error<
+  "Delegating constructors are not fully implemented.">;
   
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<

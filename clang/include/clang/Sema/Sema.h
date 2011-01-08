@@ -2566,6 +2566,13 @@ public:
                                      CXXRecordDecl *ClassDecl,
                                      SourceLocation EllipsisLoc);
 
+  MemInitResult BuildDelegatingInitializer(TypeSourceInfo *TInfo,
+                                           Expr **Args, unsigned NumArgs,
+                                           SourceLocation RParenLoc,
+                                           SourceLocation LParenLoc,
+                                           CXXRecordDecl *ClassDecl,
+                                           SourceLocation EllipsisLoc);
+
   bool SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                    CXXBaseOrMemberInitializer **Initializers,
                                    unsigned NumInitializers, bool AnyErrors);
