@@ -129,11 +129,14 @@ DisassemblerLLVM::InstructionLLVM::Dump
     if (bytes)
     {
         uint32_t bytes_dumped = bytes->Dump(s, bytes_offset, eFormatBytes, 1, EDInstByteSize(m_inst), UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0) - bytes_offset;
-        // Allow for 8 bytes of opcodes normally
-        const uint32_t default_num_opcode_bytes = 9;
+        // Allow for 15 bytes of opcodes since this is the max for x86_64.
+        // TOOD: We need to taylor this better for different architectures. For 
+        // ARM we would want to show 16 bit opcodes for Thumb as properly byte
+        // swapped uint16_t values, or 32 bit values swapped values for ARM.
+        const uint32_t default_num_opcode_bytes = 15;
         if (bytes_dumped * 3 < (default_num_opcode_bytes*3))
         {
-            uint32_t indent_level = (default_num_opcode_bytes*3) - (bytes_dumped * 3);
+            uint32_t indent_level = (default_num_opcode_bytes*3) - (bytes_dumped * 3) + 1;
             s->Printf("%*.*s", indent_level, indent_level, "");
         }
     }
