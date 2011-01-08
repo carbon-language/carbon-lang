@@ -1004,7 +1004,7 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        SourceLocation L, Expr *Init,
                                        SourceLocation R,
                                        SourceLocation EllipsisLoc)
-  : BaseOrMember(TInfo), MemberOrEllipsisLocation(EllipsisLoc), Init(Init), 
+  : Initializee(TInfo), MemberOrEllipsisLocation(EllipsisLoc), Init(Init), 
     LParenLoc(L), RParenLoc(R), IsVirtual(IsVirtual), IsWritten(false),
     SourceOrderOrNumArrayIndices(0)
 {
@@ -1015,7 +1015,7 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        SourceLocation MemberLoc,
                                        SourceLocation L, Expr *Init,
                                        SourceLocation R)
-  : BaseOrMember(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
+  : Initializee(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
     LParenLoc(L), RParenLoc(R), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
@@ -1026,7 +1026,7 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        SourceLocation MemberLoc,
                                        SourceLocation L, Expr *Init,
                                        SourceLocation R)
-  : BaseOrMember(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
+  : Initializee(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init),
     LParenLoc(L), RParenLoc(R), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(0)
 {
@@ -1039,7 +1039,7 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        SourceLocation R,
                                        VarDecl **Indices,
                                        unsigned NumIndices)
-  : BaseOrMember(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init), 
+  : Initializee(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init), 
     LParenLoc(L), RParenLoc(R), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(NumIndices)
 {
@@ -1057,27 +1057,27 @@ CXXCtorInitializer *CXXCtorInitializer::Create(ASTContext &Context,
   void *Mem = Context.Allocate(sizeof(CXXCtorInitializer) +
                                sizeof(VarDecl *) * NumIndices,
                                llvm::alignOf<CXXCtorInitializer>());
-  return new (Mem) CXXCtorInitializer(Context, Member, MemberLoc,
-                                              L, Init, R, Indices, NumIndices);
+  return new (Mem) CXXCtorInitializer(Context, Member, MemberLoc, L, Init, R,
+                                      Indices, NumIndices);
 }
 
 TypeLoc CXXCtorInitializer::getBaseClassLoc() const {
   if (isBaseInitializer())
-    return BaseOrMember.get<TypeSourceInfo*>()->getTypeLoc();
+    return Initializee.get<TypeSourceInfo*>()->getTypeLoc();
   else
     return TypeLoc();
 }
 
 Type *CXXCtorInitializer::getBaseClass() {
   if (isBaseInitializer())
-    return BaseOrMember.get<TypeSourceInfo*>()->getType().getTypePtr();
+    return Initializee.get<TypeSourceInfo*>()->getType().getTypePtr();
   else
     return 0;
 }
 
 const Type *CXXCtorInitializer::getBaseClass() const {
   if (isBaseInitializer())
-    return BaseOrMember.get<TypeSourceInfo*>()->getType().getTypePtr();
+    return Initializee.get<TypeSourceInfo*>()->getType().getTypePtr();
   else
     return 0;
 }

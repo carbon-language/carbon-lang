@@ -1124,8 +1124,8 @@ class CXXCtorInitializer {
   /// \brief Either the base class name (stored as a TypeSourceInfo*), an normal
   /// field (FieldDecl) or an anonymous field (IndirectFieldDecl*) being 
   /// initialized.
-  llvm::PointerUnion3<TypeSourceInfo *, FieldDecl *, IndirectFieldDecl *> 
-    BaseOrMember;
+  llvm::PointerUnion3<TypeSourceInfo *, FieldDecl *, IndirectFieldDecl *>
+    Initializee;
   
   /// \brief The source location for the field name or, for a base initializer
   /// pack expansion, the location of the ellipsis.
@@ -1187,18 +1187,18 @@ public:
   
   /// isBaseInitializer - Returns true when this initializer is
   /// initializing a base class.
-  bool isBaseInitializer() const { return BaseOrMember.is<TypeSourceInfo*>(); }
+  bool isBaseInitializer() const { return Initializee.is<TypeSourceInfo*>(); }
 
   /// isMemberInitializer - Returns true when this initializer is
   /// initializing a non-static data member.
-  bool isMemberInitializer() const { return BaseOrMember.is<FieldDecl*>(); }
+  bool isMemberInitializer() const { return Initializee.is<FieldDecl*>(); }
 
   bool isAnyMemberInitializer() const { 
     return isMemberInitializer() || isIndirectMemberInitializer();
   }
 
   bool isIndirectMemberInitializer() const {
-    return BaseOrMember.is<IndirectFieldDecl*>();
+    return Initializee.is<IndirectFieldDecl*>();
   }
 
   /// \brief Determine whether this initializer is a pack expansion.
@@ -1231,7 +1231,7 @@ public:
 
   /// \brief Returns the declarator information for a base class initializer.
   TypeSourceInfo *getBaseClassInfo() const {
-    return BaseOrMember.dyn_cast<TypeSourceInfo *>();
+    return Initializee.dyn_cast<TypeSourceInfo *>();
   }
   
   /// getMember - If this is a member initializer, returns the
@@ -1239,22 +1239,22 @@ public:
   /// initialized. Otherwise, returns NULL.
   FieldDecl *getMember() const {
     if (isMemberInitializer())
-      return BaseOrMember.get<FieldDecl*>();
+      return Initializee.get<FieldDecl*>();
     else
       return 0;
   }
   FieldDecl *getAnyMember() const {
     if (isMemberInitializer())
-      return BaseOrMember.get<FieldDecl*>();
+      return Initializee.get<FieldDecl*>();
     else if (isIndirectMemberInitializer())
-      return BaseOrMember.get<IndirectFieldDecl*>()->getAnonField();
+      return Initializee.get<IndirectFieldDecl*>()->getAnonField();
     else
       return 0;
   }
 
   IndirectFieldDecl *getIndirectMember() const {
     if (isIndirectMemberInitializer())
-      return BaseOrMember.get<IndirectFieldDecl*>();
+      return Initializee.get<IndirectFieldDecl*>();
     else
       return 0;
   }
