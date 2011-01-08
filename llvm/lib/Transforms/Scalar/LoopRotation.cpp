@@ -264,6 +264,7 @@ bool LoopRotate::rotateLoop(Loop *L) {
 
   // NewHeader is now the header of the loop.
   L->moveToHeader(NewHeader);
+  assert(L->getHeader() == NewHeader && "Latch block is our new header");
 
   // Move the original header to the bottom of the loop, where it now more
   // naturally belongs. This isn't necessary for correctness, and CodeGen can
@@ -277,16 +278,9 @@ bool LoopRotate::rotateLoop(Loop *L) {
          "Original loop header has too many predecessors after loop rotation!");
   OrigHeader->moveAfter(OrigHeader->getSinglePredecessor());
 
-  // Also, since this original header only has one predecessor, zap its
-  // PHI nodes, which are now trivial.
-  FoldSingleEntryPHINodes(OrigHeader);
-
-  
   
   // Update DominatorTree to reflect the CFG change we just made.  Then split
   // edges as necessary to preserve LoopSimplify form.
-  assert(L->getHeader() == NewHeader && "Latch block is our new header");
-  
   if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
     // Since OrigPreheader now has the conditional branch to Exit block, it is
     // the dominator of Exit.
@@ -310,12 +304,14 @@ bool LoopRotate::rotateLoop(Loop *L) {
          "Invalid loop preheader after loop rotation");
   assert(L->getLoopLatch() && "Invalid loop latch after loop rotation");
 
-  
-  // TODO: We could just go ahead and merge OrigHeader into its predecessor
-  // at this point, if we don't mind updating dominator info.
+  // Now that the CFG and DomTree are in a consistent state again, merge the
+  // OrigHeader block into OrigLatch.  We know that they are joined by an
+  // unconditional branch.  This is just a cleanup so the emitted code isn't
+  // too gross.
+  bool DidIt = MergeBlockIntoPredecessor(OrigHeader, this);
+  assert(DidIt && "Block merge failed??"); (void)DidIt;
   
   ++NumRotated;
   return true;
 }
-
 
