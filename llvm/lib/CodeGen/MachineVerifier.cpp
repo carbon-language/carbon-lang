@@ -925,8 +925,8 @@ void MachineVerifier::visitMachineFunctionAfter() {
 
 void MachineVerifier::verifyLiveVariables() {
   assert(LiveVars && "Don't call verifyLiveVariables without LiveVars");
-  for (unsigned Reg = TargetRegisterInfo::FirstVirtualRegister,
-         RegE = MRI->getLastVirtReg()-1; Reg != RegE; ++Reg) {
+  for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     LiveVariables::VarInfo &VI = LiveVars->getVarInfo(Reg);
     for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
          MFI != MFE; ++MFI) {
