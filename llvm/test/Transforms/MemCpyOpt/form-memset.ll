@@ -162,3 +162,21 @@ entry:
 }
 
 declare void @foo(%struct.MV*, %struct.MV*, i8*)
+
+
+define void @test3(i32* nocapture %P) nounwind ssp {
+entry:
+  %arrayidx = getelementptr inbounds i32* %P, i64 1
+  store i32 0, i32* %arrayidx, align 4
+  %add.ptr = getelementptr inbounds i32* %P, i64 2
+  %0 = bitcast i32* %add.ptr to i8*
+  tail call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 11, i32 1, i1 false)
+  ret void
+; CHECK: @test3
+; CHECK-NOT: store
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
+}
+
+declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
+
+

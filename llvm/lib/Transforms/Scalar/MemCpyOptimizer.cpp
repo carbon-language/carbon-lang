@@ -121,7 +121,7 @@ struct MemsetRange {
   unsigned Alignment;
   
   /// TheStores - The actual stores that make up this range.
-  SmallVector<StoreInst*, 16> TheStores;
+  SmallVector<Instruction*, 16> TheStores;
   
   bool isProfitableToUseMemset(const TargetData &TD) const;
 
@@ -131,10 +131,19 @@ struct MemsetRange {
 bool MemsetRange::isProfitableToUseMemset(const TargetData &TD) const {
   // If we found more than 8 stores to merge or 64 bytes, use memset.
   if (TheStores.size() >= 8 || End-Start >= 64) return true;
+
+  // If there is nothing to merge, don't do anything.
+  if (TheStores.size() < 2) return false;
+  
+  // If any of the stores are a memset, then it is always good to extend the
+  // memset.
+  for (unsigned i = 0, e = TheStores.size(); i != e; ++i)
+    if (!isa<StoreInst>(TheStores[i]))
+      return true;
   
   // Assume that the code generator is capable of merging pairs of stores
   // together if it wants to.
-  if (TheStores.size() <= 2) return false;
+  if (TheStores.size() == 2) return false;
   
   // If we have fewer than 8 stores, it can still be worthwhile to do this.
   // For example, merging 4 i8 stores into an i32 store is useful almost always.
@@ -174,26 +183,44 @@ public:
   const_iterator end() const { return Ranges.end(); }
   bool empty() const { return Ranges.empty(); }
   
-  void addStore(int64_t OffsetFromFirst, StoreInst *SI);
-  
   void addInst(int64_t OffsetFromFirst, Instruction *Inst) {
-    addStore(OffsetFromFirst, cast<StoreInst>(Inst));
+    if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
+      addStore(OffsetFromFirst, SI);
+    else
+      addMemSet(OffsetFromFirst, cast<MemSetInst>(Inst));
   }
+
+  void addStore(int64_t OffsetFromFirst, StoreInst *SI) {
+    int64_t StoreSize = TD.getTypeStoreSize(SI->getOperand(0)->getType());
+    
+    addRange(OffsetFromFirst, StoreSize,
+             SI->getPointerOperand(), SI->getAlignment(), SI);
+  }
+  
+  void addMemSet(int64_t OffsetFromFirst, MemSetInst *MSI) {
+    int64_t Size = cast<ConstantInt>(MSI->getLength())->getZExtValue();
+    addRange(OffsetFromFirst, Size, MSI->getDest(), MSI->getAlignment(), MSI);
+  }
+  
+  void addRange(int64_t Start, int64_t Size, Value *Ptr,
+                unsigned Alignment, Instruction *Inst);
+
 };
   
 } // end anon namespace
 
 
-/// addStore - Add a new store to the MemsetRanges data structure.  This adds a
+/// addRange - Add a new store to the MemsetRanges data structure.  This adds a
 /// new range for the specified store at the specified offset, merging into
 /// existing ranges as appropriate.
-void MemsetRanges::addStore(int64_t Start, StoreInst *SI) {
-  int64_t End = Start+TD.getTypeStoreSize(SI->getOperand(0)->getType());
-  
-  // Do a linear search of the ranges to see if this can be joined and/or to
-  // find the insertion point in the list.  We keep the ranges sorted for
-  // simplicity here.  This is a linear search of a linked list, which is ugly,
-  // however the number of ranges is limited, so this won't get crazy slow.
+///
+/// Do a linear search of the ranges to see if this can be joined and/or to
+/// find the insertion point in the list.  We keep the ranges sorted for
+/// simplicity here.  This is a linear search of a linked list, which is ugly,
+/// however the number of ranges is limited, so this won't get crazy slow.
+void MemsetRanges::addRange(int64_t Start, int64_t Size, Value *Ptr,
+                            unsigned Alignment, Instruction *Inst) {
+  int64_t End = Start+Size;
   range_iterator I = Ranges.begin(), E = Ranges.end();
   
   while (I != E && Start > I->End)
@@ -206,14 +233,14 @@ void MemsetRanges::addStore(int64_t Start, StoreInst *SI) {
     MemsetRange &R = *Ranges.insert(I, MemsetRange());
     R.Start        = Start;
     R.End          = End;
-    R.StartPtr     = SI->getPointerOperand();
-    R.Alignment    = SI->getAlignment();
-    R.TheStores.push_back(SI);
+    R.StartPtr     = Ptr;
+    R.Alignment    = Alignment;
+    R.TheStores.push_back(Inst);
     return;
   }
-
+  
   // This store overlaps with I, add it.
-  I->TheStores.push_back(SI);
+  I->TheStores.push_back(Inst);
   
   // At this point, we may have an interval that completely contains our store.
   // If so, just add it to the interval and return.
@@ -228,8 +255,8 @@ void MemsetRanges::addStore(int64_t Start, StoreInst *SI) {
   // stopped on *it*.
   if (Start < I->Start) {
     I->Start = Start;
-    I->StartPtr = SI->getPointerOperand();
-    I->Alignment = SI->getAlignment();
+    I->StartPtr = Ptr;
+    I->Alignment = Alignment;
   }
     
   // Now we know that Start <= I->End and Start >= I->Start (so the startpoint
@@ -314,8 +341,6 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
                                              Value *StartPtr, Value *ByteVal) {
   if (TD == 0) return 0;
   
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  
   // Okay, so we now have a single store that can be splatable.  Scan to find
   // all subsequent stores of the same value to offset from the same pointer.
   // Join these together into ranges, so we can decide whether contiguous blocks
@@ -324,37 +349,43 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
   
   BasicBlock::iterator BI = StartInst;
   for (++BI; !isa<TerminatorInst>(BI); ++BI) {
-    if (isa<CallInst>(BI) || isa<InvokeInst>(BI)) { 
-      // If the call is readnone, ignore it, otherwise bail out.  We don't even
-      // allow readonly here because we don't want something like:
+    if (!isa<StoreInst>(BI) && !isa<MemSetInst>(BI)) {
+      // If the instruction is readnone, ignore it, otherwise bail out.  We
+      // don't even allow readonly here because we don't want something like:
       // A[1] = 2; strlen(A); A[2] = 2; -> memcpy(A, ...); strlen(A).
-      if (AA.getModRefBehavior(CallSite(BI)) ==
-          AliasAnalysis::DoesNotAccessMemory)
-        continue;
+      if (BI->mayWriteToMemory() || BI->mayReadFromMemory())
+        break;
+      continue;
+    }
+    
+    if (StoreInst *NextStore = dyn_cast<StoreInst>(BI)) {
+      // If this is a store, see if we can merge it in.
+      if (NextStore->isVolatile()) break;
+    
+      // Check to see if this stored value is of the same byte-splattable value.
+      if (ByteVal != isBytewiseValue(NextStore->getOperand(0)))
+        break;
       
-      // TODO: If this is a memset, try to join it in.
+      // Check to see if this store is to a constant offset from the start ptr.
+      int64_t Offset;
+      if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(), Offset, *TD))
+        break;
       
-      break;
-    } else if (isa<VAArgInst>(BI) || isa<LoadInst>(BI))
-      break;
-    
-    // If this is a non-store instruction it is fine, ignore it.
-    StoreInst *NextStore = dyn_cast<StoreInst>(BI);
-    if (NextStore == 0) continue;
-    
-    // If this is a store, see if we can merge it in.
-    if (NextStore->isVolatile()) break;
-    
-    // Check to see if this stored value is of the same byte-splattable value.
-    if (ByteVal != isBytewiseValue(NextStore->getOperand(0)))
-      break;
-    
-    // Check to see if this store is to a constant offset from the start ptr.
-    int64_t Offset;
-    if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(), Offset, *TD))
-      break;
-    
-    Ranges.addStore(Offset, NextStore);
+      Ranges.addStore(Offset, NextStore);
+    } else {
+      MemSetInst *MSI = cast<MemSetInst>(BI);
+      
+      if (MSI->isVolatile() || ByteVal != MSI->getValue() ||
+          !isa<ConstantInt>(MSI->getLength()))
+        break;
+      
+      // Check to see if this store is to a constant offset from the start ptr.
+      int64_t Offset;
+      if (!IsPointerOffset(StartPtr, MSI->getDest(), Offset, *TD))
+        break;
+      
+      Ranges.addMemSet(Offset, MSI);
+    }
   }
   
   // If we have no ranges, then we just had a single store with nothing that
@@ -406,7 +437,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
           dbgs() << "With: " << *AMemSet << '\n');
     
     // Zap all the stores.
-    for (SmallVector<StoreInst*, 16>::const_iterator
+    for (SmallVector<Instruction*, 16>::const_iterator
          SI = Range.TheStores.begin(),
          SE = Range.TheStores.end(); SI != SE; ++SI)
       (*SI)->eraseFromParent();
@@ -573,8 +604,7 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   // the use analysis, we also need to know that it does not sneakily
   // access dest.  We rely on AA to figure this out for us.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  if (AA.getModRefInfo(C, cpyDest, srcSize) !=
-      AliasAnalysis::NoModRef)
+  if (AA.getModRefInfo(C, cpyDest, srcSize) != AliasAnalysis::NoModRef)
     return false;
 
   // All the checks have passed, so do the transformation.
