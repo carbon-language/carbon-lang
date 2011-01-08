@@ -21,10 +21,10 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 #define MAX_HEADER_SIZE 16
@@ -177,7 +177,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // Begin by walking OrigHeader and populating ValueMap with an entry for
   // each Instruction.
   BasicBlock::iterator I = OrigHeader->begin(), E = OrigHeader->end();
-  DenseMap<const Value *, Value *> ValueMap;
+  ValueToValueMapTy ValueMap;
 
   // For PHI nodes, the value available in OldPreHeader is just the
   // incoming value from OldPreHeader.
@@ -233,6 +233,11 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     Value *OrigHeaderVal = I;
     Value *OrigPreHeaderVal = ValueMap[OrigHeaderVal];
 
+    // If there are no uses of the value (e.g. because it returns void), there
+    // is nothing to rewrite.
+    if (OrigHeaderVal->use_empty() && OrigPreHeaderVal->use_empty())
+      continue;
+    
     // The value now exits in two versions: the initial value in the preheader
     // and the loop "next" value in the original header.
     SSA.Initialize(OrigHeaderVal->getType(), OrigHeaderVal->getName());
