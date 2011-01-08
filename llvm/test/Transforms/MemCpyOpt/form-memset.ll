@@ -164,6 +164,7 @@ entry:
 declare void @foo(%struct.MV*, %struct.MV*, i8*)
 
 
+; Store followed by memset.
 define void @test3(i32* nocapture %P) nounwind ssp {
 entry:
   %arrayidx = getelementptr inbounds i32* %P, i64 1
@@ -177,6 +178,7 @@ entry:
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
 }
 
+; store followed by memset, different offset scenario
 define void @test4(i32* nocapture %P) nounwind ssp {
 entry:
   store i32 0, i32* %P, align 4
@@ -191,4 +193,30 @@ entry:
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
+; Memset followed by store.
+define void @test5(i32* nocapture %P) nounwind ssp {
+entry:
+  %add.ptr = getelementptr inbounds i32* %P, i64 2
+  %0 = bitcast i32* %add.ptr to i8*
+  tail call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 11, i32 1, i1 false)
+  %arrayidx = getelementptr inbounds i32* %P, i64 1
+  store i32 0, i32* %arrayidx, align 4
+  ret void
+; CHECK: @test5
+; CHECK-NOT: store
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
+}
+
+;; Memset followed by memset.
+define void @test6(i32* nocapture %P) nounwind ssp {
+entry:
+  %0 = bitcast i32* %P to i8*
+  tail call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 12, i32 1, i1 false)
+  %add.ptr = getelementptr inbounds i32* %P, i64 3
+  %1 = bitcast i32* %add.ptr to i8*
+  tail call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 12, i32 1, i1 false)
+  ret void
+; CHECK: @test6
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %2, i8 0, i64 24, i32 1, i1 false)
+}
 

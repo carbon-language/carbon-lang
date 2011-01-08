@@ -322,6 +322,7 @@ namespace {
   
     // Helper fuctions
     bool processStore(StoreInst *SI, BasicBlock::iterator &BBI);
+    bool processMemSet(MemSetInst *SI, BasicBlock::iterator &BBI);
     bool processMemCpy(MemCpyInst *M);
     bool processMemMove(MemMoveInst *M);
     bool performCallSlotOptzn(Instruction *cpy, Value *cpyDst, Value *cpySrc,
@@ -508,6 +509,17 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
       return true;
     }
   
+  return false;
+}
+
+bool MemCpyOpt::processMemSet(MemSetInst *MSI, BasicBlock::iterator &BBI) {
+  // See if there is another memset or store neighboring this memset which
+  // allows us to widen out the memset to do a single larger store.
+  if (Instruction *I = tryMergingIntoMemset(MSI, MSI->getDest(),
+                                            MSI->getValue())) {
+    BBI = I;  // Don't invalidate iterator.
+    return true;
+  }
   return false;
 }
 
@@ -775,6 +787,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
       return true;
     }
   }
+  
   return false;
 }
 
@@ -884,11 +897,13 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
       
       if (StoreInst *SI = dyn_cast<StoreInst>(I))
         MadeChange |= processStore(SI, BI);
-      else if (MemCpyInst *M = dyn_cast<MemCpyInst>(I)) {
+      else if (MemSetInst *M = dyn_cast<MemSetInst>(I))
+        RepeatInstruction = processMemSet(M, BI);
+      else if (MemCpyInst *M = dyn_cast<MemCpyInst>(I))
         RepeatInstruction = processMemCpy(M);
-      } else if (MemMoveInst *M = dyn_cast<MemMoveInst>(I)) {
+      else if (MemMoveInst *M = dyn_cast<MemMoveInst>(I))
         RepeatInstruction = processMemMove(M);
-      } else if (CallSite CS = (Value*)I) {
+      else if (CallSite CS = (Value*)I) {
         for (unsigned i = 0, e = CS.arg_size(); i != e; ++i)
           if (CS.paramHasAttr(i+1, Attribute::ByVal))
             MadeChange |= processByValArgument(CS, i);
