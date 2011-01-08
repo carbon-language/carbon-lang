@@ -254,13 +254,13 @@ BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
     assert(SP == BB && "CFG broken");
     SP = NULL;
     return SplitBlock(Succ, Succ->begin(), P);
-  } else {
-    // Otherwise, if BB has a single successor, split it at the bottom of the
-    // block.
-    assert(BB->getTerminator()->getNumSuccessors() == 1 &&
-           "Should have a single succ!"); 
-    return SplitBlock(BB, BB->getTerminator(), P);
   }
+  
+  // Otherwise, if BB has a single successor, split it at the bottom of the
+  // block.
+  assert(BB->getTerminator()->getNumSuccessors() == 1 &&
+         "Should have a single succ!"); 
+  return SplitBlock(BB, BB->getTerminator(), P);
 }
 
 /// SplitBlock - Split the specified block at the specified instruction - every
