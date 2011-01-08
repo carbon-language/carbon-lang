@@ -282,30 +282,57 @@ bool LoopRotate::rotateLoop(Loop *L) {
   L->moveToHeader(NewHeader);
   assert(L->getHeader() == NewHeader && "Latch block is our new header");
 
-  // Update DominatorTree to reflect the CFG change we just made.  Then split
-  // edges as necessary to preserve LoopSimplify form.
-  if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
-    // Since OrigPreheader now has the conditional branch to Exit block, it is
-    // the dominator of Exit.
-    DT->changeImmediateDominator(Exit, OrigPreheader);
-    DT->changeImmediateDominator(NewHeader, OrigPreheader);
+  
+  // At this point, we've finished our major CFG changes.  As part of cloning
+  // the loop into the preheader we've simplified instructions and the
+  // duplicated conditional branch may now be branching on a constant.  If it is
+  // branching on a constant and if that constant means that we enter the loop,
+  // then we fold away the cond branch to an uncond branch.  This simplifies the
+  // loop in cases important for nested loops, and it also means we don't have
+  // to split as many edges.
+  BranchInst *PHBI = cast<BranchInst>(OrigPreheader->getTerminator());
+  assert(PHBI->isConditional() && "Should be clone of BI condbr!");
+  if (!isa<ConstantInt>(PHBI->getCondition()) ||
+      PHBI->getSuccessor(cast<ConstantInt>(PHBI->getCondition())->isZero())
+          != NewHeader) {
+    // The conditional branch can't be folded, handle the general case.
+    // Update DominatorTree to reflect the CFG change we just made.  Then split
+    // edges as necessary to preserve LoopSimplify form.
+    if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
+      // Since OrigPreheader now has the conditional branch to Exit block, it is
+      // the dominator of Exit.
+      DT->changeImmediateDominator(Exit, OrigPreheader);
+      DT->changeImmediateDominator(NewHeader, OrigPreheader);
+      
+      // Update OrigHeader to be dominated by the new header block.
+      DT->changeImmediateDominator(OrigHeader, OrigLatch);
+    }
     
-    // Update OrigHeader to be dominated by the new header block.
-    DT->changeImmediateDominator(OrigHeader, OrigLatch);
+    // Right now OrigPreHeader has two successors, NewHeader and ExitBlock, and
+    // thus is not a preheader anymore.  Split the edge to form a real preheader.
+    BasicBlock *NewPH = SplitCriticalEdge(OrigPreheader, NewHeader, this);
+    NewPH->setName(NewHeader->getName() + ".lr.ph");
+    
+    // Preserve canonical loop form, which means that 'Exit' should have only one
+    // predecessor.
+    BasicBlock *ExitSplit = SplitCriticalEdge(L->getLoopLatch(), Exit, this);
+    ExitSplit->moveBefore(Exit);
+  } else {
+    // We can fold the conditional branch in the preheader, this makes things
+    // simpler. The first step is to remove the extra edge to the Exit block.
+    Exit->removePredecessor(OrigPreheader, true /*preserve LCSSA*/);
+    BranchInst::Create(NewHeader, PHBI);
+    PHBI->eraseFromParent();
+    
+    // With our CFG finalized, update DomTree if it is available.
+    if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
+      // Update OrigHeader to be dominated by the new header block.
+      DT->changeImmediateDominator(NewHeader, OrigPreheader);
+      DT->changeImmediateDominator(OrigHeader, OrigLatch);
+    }
   }
   
-  // Right now OrigPreHeader has two successors, NewHeader and ExitBlock, and
-  // thus is not a preheader anymore.  Split the edge to form a real preheader.
-  BasicBlock *NewPH = SplitCriticalEdge(OrigPreheader, NewHeader, this);
-  NewPH->setName(NewHeader->getName() + ".lr.ph");
-  
-  // Preserve canonical loop form, which means that 'Exit' should have only one
-  // predecessor.
-  BasicBlock *ExitSplit = SplitCriticalEdge(L->getLoopLatch(), Exit, this);
-  ExitSplit->moveBefore(Exit);
-  
-  assert(L->getLoopPreheader() == NewPH &&
-         "Invalid loop preheader after loop rotation");
+  assert(L->getLoopPreheader() && "Invalid loop preheader after loop rotation");
   assert(L->getLoopLatch() && "Invalid loop latch after loop rotation");
 
   // Now that the CFG and DomTree are in a consistent state again, merge the
