@@ -59,25 +59,18 @@ namespace {
     // Helper functions
 
     /// Do actual work
-    bool rotateLoop(Loop *L, LPPassManager &LPM);
+    bool rotateLoop(Loop *L);
     
-    /// Initialize local data
-    void initialize();
-
     /// After loop rotation, loop pre-header has multiple sucessors.
     /// Insert one forwarding basic block to ensure that loop pre-header
     /// has only one successor.
-    void preserveCanonicalLoopForm(LPPassManager &LPM);
+    void preserveCanonicalLoopForm(Loop *L, BasicBlock *OrigHeader,
+                                   BasicBlock *OrigPreHeader,
+                                   BasicBlock *OrigLatch, BasicBlock *NewHeader,
+                                   BasicBlock *Exit);
 
   private:
     LoopInfo *LI;
-    Loop *L;
-    BasicBlock *OrigHeader;
-    BasicBlock *OrigPreHeader;
-    BasicBlock *OrigLatch;
-    BasicBlock *NewHeader;
-    BasicBlock *Exit;
-    LPPassManager *LPM_Ptr;
   };
 }
   
@@ -90,44 +83,28 @@ INITIALIZE_PASS_END(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
 
 Pass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 
-/// Initialize local data
-void LoopRotate::initialize() {
-  L = NULL;
-  OrigHeader = NULL;
-  OrigPreHeader = NULL;
-  NewHeader = NULL;
-  Exit = NULL;
-}
-
 /// Rotate Loop L as many times as possible. Return true if
 /// the loop is rotated at least once.
-bool LoopRotate::runOnLoop(Loop *Lp, LPPassManager &LPM) {
+bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
-
-  initialize();
-  LPM_Ptr = &LPM;
 
   // One loop can be rotated multiple times.
   bool MadeChange = false;
-  while (rotateLoop(Lp,LPM)) {
+  while (rotateLoop(L))
     MadeChange = true;
-    initialize();
-  }
 
   return MadeChange;
 }
 
 /// Rotate loop LP. Return true if the loop is rotated.
-bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
-  L = Lp;
-
-  OrigPreHeader = L->getLoopPreheader();
+bool LoopRotate::rotateLoop(Loop *L) {
+  BasicBlock *OrigPreHeader = L->getLoopPreheader();
   if (!OrigPreHeader) return false;
 
-  OrigLatch = L->getLoopLatch();
+  BasicBlock *OrigLatch = L->getLoopLatch();
   if (!OrigLatch) return false;
 
-  OrigHeader =  L->getHeader();
+  BasicBlock *OrigHeader =  L->getHeader();
 
   // If the loop has only one block then there is not much to rotate.
   if (L->getBlocks().size() == 1)
@@ -171,8 +148,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // Find new Loop header. NewHeader is a Header's one and only successor
   // that is inside loop.  Header's other successor is outside the
   // loop.  Otherwise loop is not suitable for rotation.
-  Exit = BI->getSuccessor(0);
-  NewHeader = BI->getSuccessor(1);
+  BasicBlock *Exit = BI->getSuccessor(0);
+  BasicBlock *NewHeader = BI->getSuccessor(1);
   if (L->contains(Exit))
     std::swap(Exit, NewHeader);
   assert(NewHeader && "Unable to determine new loop header");
@@ -328,7 +305,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // at this point, if we don't mind updating dominator info.
 
   // Establish a new preheader, update dominators, etc.
-  preserveCanonicalLoopForm(LPM);
+  preserveCanonicalLoopForm(L, OrigHeader, OrigPreHeader, OrigLatch,
+                            NewHeader, Exit);
 
   ++NumRotated;
   return true;
@@ -338,15 +316,18 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 /// After loop rotation, loop pre-header has multiple sucessors.
 /// Insert one forwarding basic block to ensure that loop pre-header
 /// has only one successor.
-void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
+void LoopRotate::preserveCanonicalLoopForm(Loop *L, BasicBlock *OrigHeader,
+                                           BasicBlock *OrigPreHeader,
+                                           BasicBlock *OrigLatch,
+                                           BasicBlock *NewHeader,
+                                           BasicBlock *Exit) {
 
   // Right now original pre-header has two successors, new header and
   // exit block. Insert new block between original pre-header and
   // new header such that loop's new pre-header has only one successor.
-  BasicBlock *NewPreHeader = BasicBlock::Create(OrigHeader->getContext(),
-                                                "bb.nph",
-                                                OrigHeader->getParent(), 
-                                                NewHeader);
+  BasicBlock *NewPreHeader =
+    BasicBlock::Create(OrigHeader->getContext(), "bb.nph",
+                       OrigHeader->getParent(), NewHeader);
   LoopInfo &LI = getAnalysis<LoopInfo>();
   if (Loop *PL = LI.getLoopFor(OrigPreHeader))
     PL->addBasicBlockToLoop(NewPreHeader, LI.getBase());
@@ -431,19 +412,19 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
       for (Loop::block_iterator BI = L->block_begin(), BE = L->block_end();
            BI != BE; ++BI) {
         BasicBlock *B = *BI;
-        if (DT->dominates(B, NewLatch)) {
-          DominanceFrontier::iterator BDFI = DF->find(B);
-          if (BDFI != DF->end()) {
-            DominanceFrontier::DomSetType &BSet = BDFI->second;
-            BSet.erase(NewLatch);
-            BSet.insert(L->getHeader());
-            BSet.insert(Exit);
-          } else {
-            DominanceFrontier::DomSetType BSet;
-            BSet.insert(L->getHeader());
-            BSet.insert(Exit);
-            DF->addBasicBlock(B, BSet);
-          }
+        if (!DT->dominates(B, NewLatch)) continue;
+        
+        DominanceFrontier::iterator BDFI = DF->find(B);
+        if (BDFI != DF->end()) {
+          DominanceFrontier::DomSetType &BSet = BDFI->second;
+          BSet.erase(NewLatch);
+          BSet.insert(L->getHeader());
+          BSet.insert(Exit);
+        } else {
+          DominanceFrontier::DomSetType BSet;
+          BSet.insert(L->getHeader());
+          BSet.insert(Exit);
+          DF->addBasicBlock(B, BSet);
         }
       }
     }
