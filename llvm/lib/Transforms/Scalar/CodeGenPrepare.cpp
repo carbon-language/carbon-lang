@@ -22,6 +22,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -66,6 +67,7 @@ namespace {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
     const TargetLowering *TLI;
+    DominatorTree *DT;
     ProfileInfo *PFI;
 
     /// BackEdges - Keep a set of all the loop back edges.
@@ -86,6 +88,7 @@ namespace {
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addPreserved<DominatorTree>();
       AU.addPreserved<ProfileInfo>();
     }
 
@@ -131,6 +134,7 @@ void CodeGenPrepare::findLoopBackEdges(const Function &F) {
 bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
 
+  DT = getAnalysisIfAvailable<DominatorTree>();
   PFI = getAnalysisIfAvailable<ProfileInfo>();
   // First pass, eliminate blocks that contain only PHI nodes and an
   // unconditional branch.
@@ -325,6 +329,13 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   // The PHIs are now updated, change everything that refers to BB to use
   // DestBB and remove BB.
   BB->replaceAllUsesWith(DestBB);
+  if (DT) {
+    BasicBlock *BBIDom  = DT->getNode(BB)->getIDom()->getBlock();
+    BasicBlock *DestBBIDom = DT->getNode(DestBB)->getIDom()->getBlock();
+    BasicBlock *NewIDom = DT->findNearestCommonDominator(BBIDom, DestBBIDom);
+    DT->changeImmediateDominator(DestBB, NewIDom);
+    DT->eraseNode(BB);
+  }
   if (PFI) {
     PFI->replaceAllUses(BB, DestBB);
     PFI->removeEdge(ProfileInfo::getEdge(BB, DestBB));

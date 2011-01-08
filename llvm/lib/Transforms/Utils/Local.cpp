@@ -22,6 +22,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ProfileInfo.h"
@@ -401,6 +402,12 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   PredBB->replaceAllUsesWith(DestBB);
   
   if (P) {
+    DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
+    if (DT) {
+      BasicBlock *PredBBIDom = DT->getNode(PredBB)->getIDom()->getBlock();
+      DT->changeImmediateDominator(DestBB, PredBBIDom);
+      DT->eraseNode(PredBB);
+    }
     ProfileInfo *PI = P->getAnalysisIfAvailable<ProfileInfo>();
     if (PI) {
       PI->replaceAllUses(PredBB, DestBB);

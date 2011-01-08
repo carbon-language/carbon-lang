@@ -26,6 +26,7 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -48,6 +49,7 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addPreserved<DominatorTree>();
       AU.addPreserved<ProfileInfo>();
     }
   };

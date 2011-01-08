@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -146,6 +147,7 @@ const char *LowerIntrinsics::getPassName() const {
 void LowerIntrinsics::getAnalysisUsage(AnalysisUsage &AU) const {
   FunctionPass::getAnalysisUsage(AU);
   AU.addRequired<GCModuleInfo>();
+  AU.addPreserved<DominatorTree>();
 }
 
 /// doInitialization - If this module uses the GC intrinsics, find them now.
@@ -256,9 +258,16 @@ bool LowerIntrinsics::runOnFunction(Function &F) {
   if (NeedsDefaultLoweringPass(S))
     MadeChange |= PerformDefaultLowering(F, S);
   
-  if (NeedsCustomLoweringPass(S))
+  bool UseCustomLoweringPass = NeedsCustomLoweringPass(S);
+  if (UseCustomLoweringPass)
     MadeChange |= S.performCustomLowering(F);
-  
+
+  // Custom lowering may modify the CFG, so dominators must be recomputed.
+  if (UseCustomLoweringPass) {
+    if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>())
+      DT->DT->recalculate(F);
+  }
+
   return MadeChange;
 }
 
