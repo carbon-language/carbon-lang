@@ -30,12 +30,11 @@ static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R1,
   unsigned sn = 0;
   R1 = R2 = SourceRange();
 
-top:
   if (sn < b.size()) {
     CFGStmt CS = b[sn].getAs<CFGStmt>();
     if (!CS)
-      goto top;
-    
+      return SourceLocation();
+
     S = CS.getStmt(); 
   } else if (b.getTerminator())
     S = b.getTerminator();
