@@ -79,7 +79,7 @@ namespace {
       };
       Node(unsigned v) : value(v), rank(0) { parent.setPointer(this); }
 
-      Node* getLeader();
+      Node *getLeader();
 
       PointerIntPair<Node*, 2> parent;
       unsigned value;
@@ -119,8 +119,8 @@ namespace {
     /// of the dominator tree.
     void SplitInterferencesForBasicBlock(
       MachineBasicBlock&,
-      DenseMap<unsigned, unsigned>& CurrentDominatingParent,
-      DenseMap<unsigned, unsigned>& ImmediateDominatingParent);
+      DenseMap<unsigned, unsigned> &CurrentDominatingParent,
+      DenseMap<unsigned, unsigned> &ImmediateDominatingParent);
 
     // Lowers a PHI instruction, inserting copies of the source and destination
     // registers as necessary.
@@ -131,10 +131,10 @@ namespace {
     // overlapping lifetimes.
     void MergeLIsAndRename(unsigned Reg, unsigned NewReg);
 
-    MachineRegisterInfo* MRI;
-    const TargetInstrInfo* TII;
-    MachineDominatorTree* DT;
-    LiveIntervals* LI;
+    MachineRegisterInfo *MRI;
+    const TargetInstrInfo *TII;
+    MachineDominatorTree *DT;
+    LiveIntervals *LI;
 
     BumpPtrAllocator Allocator;
 
@@ -169,13 +169,13 @@ namespace {
   };
 
   struct MIIndexCompare {
-    MIIndexCompare(LiveIntervals* LiveIntervals) : LI(LiveIntervals) { }
+    MIIndexCompare(LiveIntervals *LiveIntervals) : LI(LiveIntervals) { }
 
-    bool operator()(const MachineInstr* LHS, const MachineInstr* RHS) const {
+    bool operator()(const MachineInstr *LHS, const MachineInstr *RHS) const {
       return LI->getInstructionIndex(LHS) < LI->getInstructionIndex(RHS);
     }
 
-    LiveIntervals* LI;
+    LiveIntervals *LI;
   };
 } // namespace
 
@@ -190,7 +190,7 @@ INITIALIZE_PASS_END(StrongPHIElimination, "strong-phi-node-elimination",
 
 char &llvm::StrongPHIEliminationID = StrongPHIElimination::ID;
 
-void StrongPHIElimination::getAnalysisUsage(AnalysisUsage& AU) const {
+void StrongPHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addRequired<MachineDominatorTree>();
   AU.addRequired<SlotIndexes>();
@@ -200,16 +200,16 @@ void StrongPHIElimination::getAnalysisUsage(AnalysisUsage& AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-static MachineOperand* findLastUse(MachineBasicBlock* MBB, unsigned Reg) {
+static MachineOperand *findLastUse(MachineBasicBlock *MBB, unsigned Reg) {
   // FIXME: This only needs to check from the first terminator, as only the
   // first terminator can use a virtual register.
   for (MachineBasicBlock::reverse_iterator RI = MBB->rbegin(); ; ++RI) {
     assert (RI != MBB->rend());
-    MachineInstr* MI = &*RI;
+    MachineInstr *MI = &*RI;
 
     for (MachineInstr::mop_iterator OI = MI->operands_begin(),
          OE = MI->operands_end(); OI != OE; ++OI) {
-      MachineOperand& MO = *OI;
+      MachineOperand &MO = *OI;
       if (MO.isReg() && MO.isUse() && MO.getReg() == Reg)
         return &MO;
     }
@@ -217,7 +217,7 @@ static MachineOperand* findLastUse(MachineBasicBlock* MBB, unsigned Reg) {
   return NULL;
 }
 
-bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
+bool StrongPHIElimination::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   TII = MF.getTarget().getInstrInfo();
   DT = &getAnalysis<MachineDominatorTree>();
@@ -232,12 +232,12 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
       PHISrcDefs[I].push_back(BBI);
 
       for (unsigned i = 1; i < BBI->getNumOperands(); i += 2) {
-        MachineOperand& SrcMO = BBI->getOperand(i);
+        MachineOperand &SrcMO = BBI->getOperand(i);
         unsigned SrcReg = SrcMO.getReg();
         addReg(SrcReg);
         unionRegs(DestReg, SrcReg);
 
-        MachineInstr* DefMI = MRI->getVRegDef(SrcReg);
+        MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
         if (DefMI)
           PHISrcDefs[DefMI->getParent()].push_back(DefMI);
       }
@@ -288,7 +288,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
        I != E; ++I) {
     MachineBasicBlock::iterator BBI = I->begin(), BBE = I->end();
     while (BBI != BBE && BBI->isPHI()) {
-      MachineInstr* PHI = BBI;
+      MachineInstr *PHI = BBI;
 
       assert(PHI->getNumOperands() > 0);
 
@@ -328,17 +328,17 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
     unsigned DestColor = getRegColor(DestReg);
     unsigned NewReg = RegRenamingMap[DestColor];
 
-    LiveInterval& DestLI = LI->getInterval(DestReg);
-    LiveInterval& NewLI = LI->getInterval(NewReg);
+    LiveInterval &DestLI = LI->getInterval(DestReg);
+    LiveInterval &NewLI = LI->getInterval(NewReg);
 
     assert(DestLI.ranges.size() == 1
            && "PHI destination copy's live interval should be a single live "
                "range from the beginning of the BB to the copy instruction.");
-    LiveRange* DestLR = DestLI.begin();
-    VNInfo* NewVNI = NewLI.getVNInfoAt(DestLR->start);
+    LiveRange *DestLR = DestLI.begin();
+    VNInfo *NewVNI = NewLI.getVNInfoAt(DestLR->start);
     if (!NewVNI) {
       NewVNI = NewLI.createValueCopy(DestLR->valno, LI->getVNInfoAllocator());
-      MachineInstr* CopyInstr = I->second;
+      MachineInstr *CopyInstr = I->second;
       CopyInstr->getOperand(1).setIsKill(true);
     }
 
@@ -354,12 +354,12 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
   // register.
   for (SrcCopySet::iterator I = InsertedSrcCopySet.begin(),
        E = InsertedSrcCopySet.end(); I != E; ++I) {
-    MachineBasicBlock* MBB = I->first;
+    MachineBasicBlock *MBB = I->first;
     unsigned SrcReg = I->second;
     if (unsigned RenamedRegister = RegRenamingMap[getRegColor(SrcReg)])
       SrcReg = RenamedRegister;
 
-    LiveInterval& SrcLI = LI->getInterval(SrcReg);
+    LiveInterval &SrcLI = LI->getInterval(SrcReg);
 
     bool isLiveOut = false;
     for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
@@ -373,7 +373,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction& MF) {
     if (isLiveOut)
       continue;
 
-    MachineOperand* LastUse = findLastUse(MBB, SrcReg);
+    MachineOperand *LastUse = findLastUse(MBB, SrcReg);
     assert(LastUse);
     SlotIndex LastUseIndex = LI->getInstructionIndex(LastUse->getParent());
     SrcLI.removeRange(LastUseIndex.getDefIndex(), LI->getMBBEndIdx(MBB));
@@ -400,9 +400,9 @@ void StrongPHIElimination::addReg(unsigned Reg) {
 
 StrongPHIElimination::Node*
 StrongPHIElimination::Node::getLeader() {
-  Node* N = this;
-  Node* Parent = parent.getPointer();
-  Node* Grandparent = Parent->parent.getPointer();
+  Node *N = this;
+  Node *Parent = parent.getPointer();
+  Node *Grandparent = Parent->parent.getPointer();
 
   while (Parent != Grandparent) {
     N->parent.setPointer(Grandparent);
@@ -418,15 +418,15 @@ unsigned StrongPHIElimination::getRegColor(unsigned Reg) {
   DenseMap<unsigned, Node*>::iterator RI = RegNodeMap.find(Reg);
   if (RI == RegNodeMap.end())
     return 0;
-  Node* Node = RI->second;
+  Node *Node = RI->second;
   if (Node->parent.getInt() & Node::kRegisterIsolatedFlag)
     return 0;
   return Node->getLeader()->value;
 }
 
 void StrongPHIElimination::unionRegs(unsigned Reg1, unsigned Reg2) {
-  Node* Node1 = RegNodeMap[Reg1]->getLeader();
-  Node* Node2 = RegNodeMap[Reg2]->getLeader();
+  Node *Node1 = RegNodeMap[Reg1]->getLeader();
+  Node *Node2 = RegNodeMap[Reg2]->getLeader();
 
   if (Node1->rank > Node2->rank) {
     Node2->parent.setPointer(Node1->getLeader());
@@ -439,15 +439,15 @@ void StrongPHIElimination::unionRegs(unsigned Reg1, unsigned Reg2) {
 }
 
 void StrongPHIElimination::isolateReg(unsigned Reg) {
-  Node* Node = RegNodeMap[Reg];
+  Node *Node = RegNodeMap[Reg];
   Node->parent.setInt(Node->parent.getInt() | Node::kRegisterIsolatedFlag);
 }
 
-unsigned StrongPHIElimination::getPHIColor(MachineInstr* PHI) {
+unsigned StrongPHIElimination::getPHIColor(MachineInstr *PHI) {
   assert(PHI->isPHI());
 
   unsigned DestReg = PHI->getOperand(0).getReg();
-  Node* DestNode = RegNodeMap[DestReg];
+  Node *DestNode = RegNodeMap[DestReg];
   if (DestNode->parent.getInt() & Node::kPHIIsolatedFlag)
     return 0;
 
@@ -459,9 +459,9 @@ unsigned StrongPHIElimination::getPHIColor(MachineInstr* PHI) {
   return 0;
 }
 
-void StrongPHIElimination::isolatePHI(MachineInstr* PHI) {
+void StrongPHIElimination::isolatePHI(MachineInstr *PHI) {
   assert(PHI->isPHI());
-  Node* Node = RegNodeMap[PHI->getOperand(0).getReg()];
+  Node *Node = RegNodeMap[PHI->getOperand(0).getReg()];
   Node->parent.setInt(Node->parent.getInt() | Node::kPHIIsolatedFlag);
 }
 
@@ -506,19 +506,19 @@ void StrongPHIElimination::isolatePHI(MachineInstr* PHI) {
 /// interference in multiple distinct sets at once.
 void
 StrongPHIElimination::SplitInterferencesForBasicBlock(
-    MachineBasicBlock& MBB,
-    DenseMap<unsigned, unsigned>& CurrentDominatingParent,
-    DenseMap<unsigned, unsigned>& ImmediateDominatingParent) {
+    MachineBasicBlock &MBB,
+    DenseMap<unsigned, unsigned> &CurrentDominatingParent,
+    DenseMap<unsigned, unsigned> &ImmediateDominatingParent) {
   // Sort defs by their order in the original basic block, as the code below
   // assumes that it is processing definitions in dominance order.
-  std::vector<MachineInstr*>& DefInstrs = PHISrcDefs[&MBB];
+  std::vector<MachineInstr*> &DefInstrs = PHISrcDefs[&MBB];
   std::sort(DefInstrs.begin(), DefInstrs.end(), MIIndexCompare(LI));
 
   for (std::vector<MachineInstr*>::const_iterator BBI = DefInstrs.begin(),
        BBE = DefInstrs.end(); BBI != BBE; ++BBI) {
     for (MachineInstr::const_mop_iterator I = (*BBI)->operands_begin(),
          E = (*BBI)->operands_end(); I != E; ++I) {
-      const MachineOperand& MO = *I;
+      const MachineOperand &MO = *I;
 
       // FIXME: This would be faster if it were possible to bail out of checking
       // an instruction's operands after the explicit defs, but this is incorrect
@@ -583,7 +583,7 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
        SE = MBB.succ_end(); SI != SE; ++SI) {
     for (MachineBasicBlock::iterator BBI = (*SI)->begin(), BBE = (*SI)->end();
          BBI != BBE && BBI->isPHI(); ++BBI) {
-      MachineInstr* PHI = BBI;
+      MachineInstr *PHI = BBI;
 
       // If a PHI is already isolated, either by being isolated directly or
       // having all of its operands isolated, ignore it.
@@ -631,13 +631,13 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
   }
 }
 
-void StrongPHIElimination::InsertCopiesForPHI(MachineInstr* PHI,
-                                              MachineBasicBlock* MBB) {
+void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
+                                              MachineBasicBlock *MBB) {
   assert(PHI->isPHI());
   unsigned PHIColor = getPHIColor(PHI);
 
   for (unsigned i = 1; i < PHI->getNumOperands(); i += 2) {
-    MachineOperand& SrcMO = PHI->getOperand(i);
+    MachineOperand &SrcMO = PHI->getOperand(i);
 
     // If a source is defined by an implicit def, there is no need to insert a
     // copy in the predecessor.
@@ -648,15 +648,15 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr* PHI,
     assert(TargetRegisterInfo::isVirtualRegister(SrcReg) &&
            "Machine PHI Operands must all be virtual registers!");
 
-    MachineBasicBlock* PredBB = PHI->getOperand(i + 1).getMBB();
+    MachineBasicBlock *PredBB = PHI->getOperand(i + 1).getMBB();
     unsigned SrcColor = getRegColor(SrcReg);
 
     // If neither the PHI nor the operand were isolated, then we only need to
     // set the phi-kill flag on the VNInfo at this PHI.
     if (PHIColor && SrcColor == PHIColor) {
-      LiveInterval& SrcInterval = LI->getInterval(SrcReg);
+      LiveInterval &SrcInterval = LI->getInterval(SrcReg);
       SlotIndex PredIndex = LI->getMBBEndIdx(PredBB);
-      VNInfo* SrcVNI = SrcInterval.getVNInfoAt(PredIndex.getPrevIndex());
+      VNInfo *SrcVNI = SrcInterval.getVNInfoAt(PredIndex.getPrevIndex());
       assert(SrcVNI);
       SrcVNI->setHasPHIKill(true);
       continue;
@@ -671,13 +671,13 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr* PHI,
     }
 
     if (!CopyReg) {
-      const TargetRegisterClass* RC = MRI->getRegClass(SrcReg);
+      const TargetRegisterClass *RC = MRI->getRegClass(SrcReg);
       CopyReg = MRI->createVirtualRegister(RC);
 
       MachineBasicBlock::iterator
         CopyInsertPoint = findPHICopyInsertPoint(PredBB, MBB, SrcReg);
       unsigned SrcSubReg = SrcMO.getSubReg();
-      MachineInstr* CopyInstr = BuildMI(*PredBB,
+      MachineInstr *CopyInstr = BuildMI(*PredBB,
                                         CopyInsertPoint,
                                         PHI->getDebugLoc(),
                                         TII->get(TargetOpcode::COPY),
@@ -710,7 +710,7 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr* PHI,
     // never rely on LiveIntervals being correct while inserting copies.
     // FIXME: Should this just count uses at PHIs like the normal PHIElimination
     // pass does?
-    LiveInterval& SrcLI = LI->getInterval(SrcReg);
+    LiveInterval &SrcLI = LI->getInterval(SrcReg);
     SlotIndex MBBStartIndex = LI->getMBBStartIdx(MBB);
     SlotIndex PHIIndex = LI->getInstructionIndex(PHI);
     SlotIndex NextInstrIndex = PHIIndex.getNextIndex();
@@ -722,11 +722,11 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr* PHI,
   unsigned DestColor = getRegColor(DestReg);
 
   if (PHIColor && DestColor == PHIColor) {
-    LiveInterval& DestLI = LI->getInterval(DestReg);
+    LiveInterval &DestLI = LI->getInterval(DestReg);
 
     // Set the phi-def flag for the VN at this PHI.
     SlotIndex PHIIndex = LI->getInstructionIndex(PHI);
-    VNInfo* DestVNI = DestLI.getVNInfoAt(PHIIndex.getDefIndex());
+    VNInfo *DestVNI = DestLI.getVNInfoAt(PHIIndex.getDefIndex());
     assert(DestVNI);
     DestVNI->setIsPHIDef(true);
   
@@ -742,10 +742,10 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr* PHI,
     return;
   }
 
-  const TargetRegisterClass* RC = MRI->getRegClass(DestReg);
+  const TargetRegisterClass *RC = MRI->getRegClass(DestReg);
   unsigned CopyReg = MRI->createVirtualRegister(RC);
 
-  MachineInstr* CopyInstr = BuildMI(*MBB,
+  MachineInstr *CopyInstr = BuildMI(*MBB,
                                     MBB->SkipPHIsAndLabels(MBB->begin()),
                                     PHI->getDebugLoc(),
                                     TII->get(TargetOpcode::COPY),
@@ -755,10 +755,10 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr* PHI,
 
   // Add the region from the beginning of MBB to the copy instruction to
   // CopyReg's live interval, and give the VNInfo the phidef flag.
-  LiveInterval& CopyLI = LI->getOrCreateInterval(CopyReg);
+  LiveInterval &CopyLI = LI->getOrCreateInterval(CopyReg);
   SlotIndex MBBStartIndex = LI->getMBBStartIdx(MBB);
   SlotIndex DestCopyIndex = LI->getInstructionIndex(CopyInstr);
-  VNInfo* CopyVNI = CopyLI.getNextValue(MBBStartIndex,
+  VNInfo *CopyVNI = CopyLI.getNextValue(MBBStartIndex,
                                         CopyInstr,
                                         LI->getVNInfoAllocator());
   CopyVNI->setIsPHIDef(true);
@@ -768,11 +768,11 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr* PHI,
 
   // Adjust DestReg's live interval to adjust for its new definition at
   // CopyInstr.
-  LiveInterval& DestLI = LI->getOrCreateInterval(DestReg);
+  LiveInterval &DestLI = LI->getOrCreateInterval(DestReg);
   SlotIndex PHIIndex = LI->getInstructionIndex(PHI);
   DestLI.removeRange(PHIIndex.getDefIndex(), DestCopyIndex.getDefIndex());
 
-  VNInfo* DestVNI = DestLI.getVNInfoAt(DestCopyIndex.getDefIndex());
+  VNInfo *DestVNI = DestLI.getVNInfoAt(DestCopyIndex.getDefIndex());
   assert(DestVNI);
   DestVNI->def = DestCopyIndex.getDefIndex();
 
@@ -783,17 +783,17 @@ void StrongPHIElimination::MergeLIsAndRename(unsigned Reg, unsigned NewReg) {
   if (Reg == NewReg)
     return;
 
-  LiveInterval& OldLI = LI->getInterval(Reg);
-  LiveInterval& NewLI = LI->getInterval(NewReg);
+  LiveInterval &OldLI = LI->getInterval(Reg);
+  LiveInterval &NewLI = LI->getInterval(NewReg);
 
   // Merge the live ranges of the two registers.
   DenseMap<VNInfo*, VNInfo*> VNMap;
   for (LiveInterval::iterator LRI = OldLI.begin(), LRE = OldLI.end();
        LRI != LRE; ++LRI) {
     LiveRange OldLR = *LRI;
-    VNInfo* OldVN = OldLR.valno;
+    VNInfo *OldVN = OldLR.valno;
 
-    VNInfo*& NewVN = VNMap[OldVN];
+    VNInfo *&NewVN = VNMap[OldVN];
     if (!NewVN) {
       NewVN = NewLI.createValueCopy(OldVN, LI->getVNInfoAllocator());
       VNMap[OldVN] = NewVN;
