@@ -48,6 +48,11 @@ namespace llvm {
     /// be capable of handling this kind of change.
     ///
     void LowerIntrinsicCall(CallInst *CI);
+
+    /// LowerToByteSwap - Replace a call instruction into a call to bswap
+    /// intrinsic. Return false if it has determined the call is not a
+    /// simple integer bswap.
+    static bool LowerToByteSwap(CallInst *CI);
   };
 }
 

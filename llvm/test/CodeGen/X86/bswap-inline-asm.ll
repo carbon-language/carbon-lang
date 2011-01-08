@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86-64 > %t
-; RUN: not grep APP %t
+; RUN: llc < %s -mtriple=x86_64-apple-darwin > %t
+; RUN: not grep InlineAsm %t
 ; RUN: FileCheck %s < %t
 
 ; CHECK: foo:

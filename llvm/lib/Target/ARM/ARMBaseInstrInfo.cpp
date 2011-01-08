@@ -2071,7 +2071,6 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   if (!ItinData || ItinData->isEmpty())
     return DefTID.mayLoad() ? 3 : 1;
 
-
   const TargetInstrDesc &UseTID = UseMI->getDesc();
   const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
   if (DefMO.getReg() == ARM::CPSR) {

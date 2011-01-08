@@ -257,6 +257,8 @@ namespace llvm {
                                                 unsigned Depth) const;
 
 
+    virtual bool ExpandInlineAsm(CallInst *CI) const;
+
     ConstraintType getConstraintType(const std::string &Constraint) const;
 
     /// Examine constraint string and operand type and determine a weight value.
