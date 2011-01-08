@@ -15,7 +15,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/CodeMetrics.h"
-#include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -46,7 +45,6 @@ namespace {
     // LCSSA form makes instruction renaming easier.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorTree>();
-      AU.addPreserved<DominanceFrontier>();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
@@ -296,7 +294,7 @@ bool LoopRotate::rotateLoop(Loop *L) {
   // Also, since this original header only has one predecessor, zap its
   // PHI nodes, which are now trivial.
   FoldSingleEntryPHINodes(OrigHeader);
-  
+
   // TODO: We could just go ahead and merge OrigHeader into its predecessor
   // at this point, if we don't mind updating dominator info.
 
@@ -309,130 +307,37 @@ bool LoopRotate::rotateLoop(Loop *L) {
 }
 
 
-/// After loop rotation, loop pre-header has multiple sucessors.
-/// Insert one forwarding basic block to ensure that loop pre-header
-/// has only one successor.
+/// Update LoopInfo, DominatorTree, and DomFrontiers to reflect the CFG change
+/// we just made.  Then split edges as necessary to preserve LoopSimplify form.
 void LoopRotate::preserveCanonicalLoopForm(Loop *L, BasicBlock *OrigHeader,
                                            BasicBlock *OrigPreHeader,
                                            BasicBlock *OrigLatch,
                                            BasicBlock *NewHeader,
                                            BasicBlock *Exit) {
-
-  // Right now original pre-header has two successors, new header and
-  // exit block. Insert new block between original pre-header and
-  // new header such that loop's new pre-header has only one successor.
-  BasicBlock *NewPreHeader =
-    BasicBlock::Create(OrigHeader->getContext(), "bb.nph",
-                       OrigHeader->getParent(), NewHeader);
-  if (Loop *PL = LI->getLoopFor(OrigPreHeader))
-    PL->addBasicBlockToLoop(NewPreHeader, LI->getBase());
-  BranchInst::Create(NewHeader, NewPreHeader);
-  
-  BranchInst *OrigPH_BI = cast<BranchInst>(OrigPreHeader->getTerminator());
-  if (OrigPH_BI->getSuccessor(0) == NewHeader)
-    OrigPH_BI->setSuccessor(0, NewPreHeader);
-  else {
-    assert(OrigPH_BI->getSuccessor(1) == NewHeader &&
-           "Unexpected original pre-header terminator");
-    OrigPH_BI->setSuccessor(1, NewPreHeader);
-  }
-
-  PHINode *PN;
-  for (BasicBlock::iterator I = NewHeader->begin();
-       (PN = dyn_cast<PHINode>(I)); ++I) {
-    int index = PN->getBasicBlockIndex(OrigPreHeader);
-    assert(index != -1 && "Expected incoming value from Original PreHeader");
-    PN->setIncomingBlock(index, NewPreHeader);
-    assert(PN->getBasicBlockIndex(OrigPreHeader) == -1 && 
-           "Expected only one incoming value from Original PreHeader");
-  }
+  assert(L->getHeader() == NewHeader && "Latch block is our new header");
 
   if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
-    DT->addNewBlock(NewPreHeader, OrigPreHeader);
-    DT->changeImmediateDominator(L->getHeader(), NewPreHeader);
+    // Since OrigPreheader now has the conditional branch to Exit block, it is
+    // the dominator of Exit.
     DT->changeImmediateDominator(Exit, OrigPreHeader);
-    for (Loop::block_iterator BI = L->block_begin(), BE = L->block_end();
-         BI != BE; ++BI) {
-      BasicBlock *B = *BI;
-      if (L->getHeader() != B) {
-        DomTreeNode *Node = DT->getNode(B);
-        if (Node && Node->getBlock() == OrigHeader)
-          DT->changeImmediateDominator(*BI, L->getHeader());
-      }
-    }
+    DT->changeImmediateDominator(NewHeader, OrigPreHeader);
+    
+    // Update OrigHeader to be dominated by the new header block.
     DT->changeImmediateDominator(OrigHeader, OrigLatch);
   }
-
-  if (DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>()) {
-    // New Preheader's dominance frontier is Exit block.
-    DominanceFrontier::DomSetType NewPHSet;
-    NewPHSet.insert(Exit);
-    DF->addBasicBlock(NewPreHeader, NewPHSet);
-
-    // New Header's dominance frontier now includes itself and Exit block
-    DominanceFrontier::iterator HeadI = DF->find(L->getHeader());
-    if (HeadI != DF->end()) {
-      DominanceFrontier::DomSetType & HeaderSet = HeadI->second;
-      HeaderSet.clear();
-      HeaderSet.insert(L->getHeader());
-      HeaderSet.insert(Exit);
-    } else {
-      DominanceFrontier::DomSetType HeaderSet;
-      HeaderSet.insert(L->getHeader());
-      HeaderSet.insert(Exit);
-      DF->addBasicBlock(L->getHeader(), HeaderSet);
-    }
-
-    // Original header (new Loop Latch)'s dominance frontier is Exit.
-    DominanceFrontier::iterator LatchI = DF->find(L->getLoopLatch());
-    if (LatchI != DF->end()) {
-      DominanceFrontier::DomSetType &LatchSet = LatchI->second;
-      LatchSet = LatchI->second;
-      LatchSet.clear();
-      LatchSet.insert(Exit);
-    } else {
-      DominanceFrontier::DomSetType LatchSet;
-      LatchSet.insert(Exit);
-      DF->addBasicBlock(L->getHeader(), LatchSet);
-    }
-
-    // If a loop block dominates new loop latch then add to its frontiers
-    // new header and Exit and remove new latch (which is equal to original
-    // header).
-    BasicBlock *NewLatch = L->getLoopLatch();
-
-    assert(NewLatch == OrigHeader && "NewLatch is inequal to OrigHeader");
-
-    if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>()) {
-      for (Loop::block_iterator BI = L->block_begin(), BE = L->block_end();
-           BI != BE; ++BI) {
-        BasicBlock *B = *BI;
-        if (!DT->dominates(B, NewLatch)) continue;
-        
-        DominanceFrontier::iterator BDFI = DF->find(B);
-        if (BDFI != DF->end()) {
-          DominanceFrontier::DomSetType &BSet = BDFI->second;
-          BSet.erase(NewLatch);
-          BSet.insert(L->getHeader());
-          BSet.insert(Exit);
-        } else {
-          DominanceFrontier::DomSetType BSet;
-          BSet.insert(L->getHeader());
-          BSet.insert(Exit);
-          DF->addBasicBlock(B, BSet);
-        }
-      }
-    }
-  }
-
-  // Preserve canonical loop form, which means Exit block should
-  // have only one predecessor.
-  SplitEdge(L->getLoopLatch(), Exit, this);
+  
+  // Right now OrigPreHeader has two successors, NewHeader and ExitBlock, and
+  // thus is not a preheader anymore.  Split the edge to form a real preheader.
+  BasicBlock *NewPH = SplitCriticalEdge(OrigPreHeader, NewHeader, this);
+  NewPH->setName(NewHeader->getName() + ".lr.ph");
+  
+  // Preserve canonical loop form, which means Exit block should have only one
+  // predecessor.
+  SplitCriticalEdge(L->getLoopLatch(), Exit, this);
 
   assert(NewHeader && L->getHeader() == NewHeader &&
          "Invalid loop header after loop rotation");
-  assert(NewPreHeader && L->getLoopPreheader() == NewPreHeader &&
+  assert(L->getLoopPreheader() == NewPH &&
          "Invalid loop preheader after loop rotation");
-  assert(L->getLoopLatch() &&
-         "Invalid loop latch after loop rotation");
+  assert(L->getLoopLatch() && "Invalid loop latch after loop rotation");
 }

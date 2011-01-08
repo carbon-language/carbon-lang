@@ -34,9 +34,9 @@ for.end:                                          ; preds = %for.cond
 
 ; CHECK:      define void @test
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   br i1 true, label %bb.nph, label %for.end
+; CHECK-NEXT:   br i1 true, label %for.body.lr.ph, label %for.end
 ; CHECK-NOT:  :
-; CHECK:      bb.nph:
+; CHECK:      for.body.lr.ph:
 ; CHECK-NEXT:   br label %for.body
 ; CHECK-NOT:  :
 ; CHECK:      for.body:
