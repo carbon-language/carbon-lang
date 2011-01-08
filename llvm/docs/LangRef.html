@@ -846,6 +846,10 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
    region of memory, and all memory objects in LLVM are accessed through
    pointers.</p>
 
+<p>Global variables can be marked with <tt>unnamed_addr</tt> which indicates
+  that the address is not significant, only the content. Constants marked
+  like this can be merged if they have the same content.</p>
+
 <p>A global variable may be declared to reside in a target-specific numbered
    address space. For targets that support them, address spaces may affect how
    optimizations are performed and/or what target instructions are used to
@@ -885,7 +889,8 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 <p>LLVM function definitions consist of the "<tt>define</tt>" keyword, an
    optional <a href="#linkage">linkage type</a>, an optional
    <a href="#visibility">visibility style</a>, an optional
-   <a href="#callingconv">calling convention</a>, a return type, an optional
+   <a href="#callingconv">calling convention</a>,
+   an optional <tt>unnamed_addr</tt> attribute, a return type, an optional
    <a href="#paramattrs">parameter attribute</a> for the return type, a function
    name, a (possibly empty) argument list (each with optional
    <a href="#paramattrs">parameter attributes</a>), optional
@@ -896,7 +901,8 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 <p>LLVM function declarations consist of the "<tt>declare</tt>" keyword, an
    optional <a href="#linkage">linkage type</a>, an optional
    <a href="#visibility">visibility style</a>, an optional
-   <a href="#callingconv">calling convention</a>, a return type, an optional
+   <a href="#callingconv">calling convention</a>,
+   an optional <tt>unnamed_addr</tt> attribute, a return type, an optional
    <a href="#paramattrs">parameter attribute</a> for the return type, a function
    name, a possibly empty list of arguments, an optional alignment, and an
    optional <a href="#gc">garbage collector name</a>.</p>
@@ -921,6 +927,9 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
    target to whatever it feels convenient.  If an explicit alignment is
    specified, the function is forced to have at least that much alignment.  All
    alignments must be a power of 2.</p>
+
+<p>If the <tt>unnamed_addr</tt> attribute is given, the address is know to not
+  be significant and two identical functions can be merged</p>.
 
 <h5>Syntax:</h5>
 <pre class="doc_code">

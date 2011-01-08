@@ -1422,7 +1422,8 @@ bool BitcodeReader::ParseModule() {
       break;
     }
     // GLOBALVAR: [pointer type, isconst, initid,
-    //             linkage, alignment, section, visibility, threadlocal]
+    //             linkage, alignment, section, visibility, threadlocal,
+    //             unnamed_addr]
     case bitc::MODULE_CODE_GLOBALVAR: {
       if (Record.size() < 6)
         return Error("Invalid MODULE_CODE_GLOBALVAR record");
@@ -1449,6 +1450,10 @@ bool BitcodeReader::ParseModule() {
       if (Record.size() > 7)
         isThreadLocal = Record[7];
 
+      bool UnnamedAddr = false;
+      if (Record.size() > 8)
+        UnnamedAddr = Record[8];
+
       GlobalVariable *NewGV =
         new GlobalVariable(*TheModule, Ty, isConstant, Linkage, 0, "", 0,
                            isThreadLocal, AddressSpace);
@@ -1457,6 +1462,7 @@ bool BitcodeReader::ParseModule() {
         NewGV->setSection(Section);
       NewGV->setVisibility(Visibility);
       NewGV->setThreadLocal(isThreadLocal);
+      NewGV->setUnnamedAddr(UnnamedAddr);
 
       ValueList.push_back(NewGV);
 
@@ -1466,7 +1472,7 @@ bool BitcodeReader::ParseModule() {
       break;
     }
     // FUNCTION:  [type, callingconv, isproto, linkage, paramattr,
-    //             alignment, section, visibility, gc]
+    //             alignment, section, visibility, gc, unnamed_addr]
     case bitc::MODULE_CODE_FUNCTION: {
       if (Record.size() < 8)
         return Error("Invalid MODULE_CODE_FUNCTION record");
@@ -1499,6 +1505,10 @@ bool BitcodeReader::ParseModule() {
           return Error("Invalid GC ID");
         Func->setGC(GCTable[Record[8]-1].c_str());
       }
+      bool UnnamedAddr = false;
+      if (Record.size() > 9)
+        UnnamedAddr = Record[9];
+      Func->setUnnamedAddr(UnnamedAddr);
       ValueList.push_back(Func);
 
       // If this is a function with a body, remember the prototype we are

@@ -1459,6 +1459,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->isThreadLocal()) Out << "thread_local ";
   if (unsigned AddressSpace = GV->getType()->getAddressSpace())
     Out << "addrspace(" << AddressSpace << ") ";
+  if (GV->hasUnnamedAddr()) Out << "unnamed_addr ";
   Out << (GV->isConstant() ? "constant " : "global ");
   TypePrinter.print(GV->getType()->getElementType(), Out);
 
@@ -1589,6 +1590,8 @@ void AssemblyWriter::printFunction(const Function *F) {
   Attributes RetAttrs = Attrs.getRetAttributes();
   if (RetAttrs != Attribute::None)
     Out <<  Attribute::getAsString(Attrs.getRetAttributes()) << ' ';
+  if (F->hasUnnamedAddr())
+    Out << "unnamed_addr ";
   TypePrinter.print(F->getReturnType(), Out);
   Out << ' ';
   WriteAsOperandInternal(Out, F, &TypePrinter, &Machine, F->getParent());

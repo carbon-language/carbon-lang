@@ -194,7 +194,8 @@ bool LLParser::ParseTopLevelEntities() {
     // The Global variable production with no name can have many different
     // optional leading prefixes, the production is:
     // GlobalVar ::= OptionalLinkage OptionalVisibility OptionalThreadLocal
-    //               OptionalAddrSpace ('constant'|'global') ...
+    //               OptionalAddrSpace OptionalUnNammedAddr
+    //               ('constant'|'global') ...
     case lltok::kw_private:             // OptionalLinkage
     case lltok::kw_linker_private:      // OptionalLinkage
     case lltok::kw_linker_private_weak: // OptionalLinkage
@@ -682,9 +683,9 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 
 /// ParseGlobal
 ///   ::= GlobalVar '=' OptionalLinkage OptionalVisibility OptionalThreadLocal
-///       OptionalAddrSpace GlobalType Type Const
+///       OptionalAddrSpace OptionalUnNammedAddr GlobalType Type Const
 ///   ::= OptionalLinkage OptionalVisibility OptionalThreadLocal
-///       OptionalAddrSpace GlobalType Type Const
+///       OptionalAddrSpace OptionalUnNammedAddr GlobalType Type Const
 ///
 /// Everything through visibility has been parsed already.
 ///
@@ -692,12 +693,13 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                            unsigned Linkage, bool HasLinkage,
                            unsigned Visibility) {
   unsigned AddrSpace;
-  bool ThreadLocal, IsConstant;
+  bool ThreadLocal, IsConstant, UnnamedAddr;
   LocTy TyLoc;
 
   PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseOptionalToken(lltok::kw_thread_local, ThreadLocal) ||
       ParseOptionalAddrSpace(AddrSpace) ||
+      ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr) ||
       ParseGlobalType(IsConstant) ||
       ParseType(Ty, TyLoc))
     return true;
@@ -755,6 +757,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   GV->setLinkage((GlobalValue::LinkageTypes)Linkage);
   GV->setVisibility((GlobalValue::VisibilityTypes)Visibility);
   GV->setThreadLocal(ThreadLocal);
+  GV->setUnnamedAddr(UnnamedAddr);
 
   // Parse attributes on the global.
   while (Lex.getKind() == lltok::comma) {
@@ -2657,7 +2660,7 @@ bool LLParser::ParseTypeAndBasicBlock(BasicBlock *&BB, LocTy &Loc,
 
 /// FunctionHeader
 ///   ::= OptionalLinkage OptionalVisibility OptionalCallingConv OptRetAttrs
-///       Type GlobalName '(' ArgList ')' OptFuncAttrs OptSection
+///       OptUnnamedAddr Type GlobalName '(' ArgList ')' OptFuncAttrs OptSection
 ///       OptionalAlign OptGC
 bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   // Parse the linkage.
@@ -2665,6 +2668,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   unsigned Linkage;
 
   unsigned Visibility, RetAttrs;
+  bool UnnamedAddr;
   CallingConv::ID CC;
   PATypeHolder RetType(Type::getVoidTy(Context));
   LocTy RetTypeLoc = Lex.getLoc();
@@ -2672,6 +2676,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       ParseOptionalVisibility(Visibility) ||
       ParseOptionalCallingConv(CC) ||
       ParseOptionalAttrs(RetAttrs, 1) ||
+      ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr) ||
       ParseType(RetType, RetTypeLoc, true /*void allowed*/))
     return true;
 
@@ -2841,6 +2846,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   Fn->setVisibility((GlobalValue::VisibilityTypes)Visibility);
   Fn->setCallingConv(CC);
   Fn->setAttributes(PAL);
+  Fn->setUnnamedAddr(UnnamedAddr);
   Fn->setAlignment(Alignment);
   Fn->setSection(Section);
   if (!GC.empty()) Fn->setGC(GC.c_str());

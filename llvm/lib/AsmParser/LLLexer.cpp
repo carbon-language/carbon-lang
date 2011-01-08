@@ -509,6 +509,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(default);
   KEYWORD(hidden);
   KEYWORD(protected);
+  KEYWORD(unnamed_addr);
   KEYWORD(extern_weak);
   KEYWORD(external);
   KEYWORD(thread_local);

@@ -60,7 +60,8 @@ protected:
   GlobalValue(const Type *ty, ValueTy vty, Use *Ops, unsigned NumOps,
               LinkageTypes linkage, const Twine &Name)
     : Constant(ty, vty, Ops, NumOps), Parent(0),
-      Linkage(linkage), Visibility(DefaultVisibility), Alignment(0) {
+      Linkage(linkage), Visibility(DefaultVisibility), Alignment(0),
+      UnnamedAddr(0) {
     setName(Name);
   }
 
@@ -70,6 +71,7 @@ protected:
   LinkageTypes Linkage : 5;   // The linkage of this global
   unsigned Visibility : 2;    // The visibility style of this global
   unsigned Alignment : 16;    // Alignment of this symbol, must be power of two
+  unsigned UnnamedAddr : 1;   // This value's address is not significant
   std::string Section;        // Section to emit this into, empty mean default
 public:
   ~GlobalValue() {
@@ -80,6 +82,9 @@ public:
     return (1u << Alignment) >> 1;
   }
   void setAlignment(unsigned Align);
+
+  bool hasUnnamedAddr() const { return UnnamedAddr; }
+  void setUnnamedAddr(bool Val) { UnnamedAddr = Val; }
 
   VisibilityTypes getVisibility() const { return VisibilityTypes(Visibility); }
   bool hasDefaultVisibility() const { return Visibility == DefaultVisibility; }

@@ -42,6 +42,7 @@ namespace lltok {
     kw_linkonce, kw_linkonce_odr, kw_weak, kw_weak_odr, kw_appending,
     kw_dllimport, kw_dllexport, kw_common, kw_available_externally,
     kw_default, kw_hidden, kw_protected,
+    kw_unnamed_addr,
     kw_extern_weak,
     kw_external, kw_thread_local,
     kw_zeroinitializer,
