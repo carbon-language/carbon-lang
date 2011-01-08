@@ -32,8 +32,10 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SparseBitVector.h"
@@ -121,10 +123,9 @@ public:
 
 private:
   /// VirtRegInfo - This list is a mapping from virtual register number to
-  /// variable information.  FirstVirtualRegister is subtracted from the virtual
-  /// register number before indexing into this list.
+  /// variable information.
   ///
-  std::vector<VarInfo> VirtRegInfo;
+  IndexedMap<VarInfo, VirtReg2IndexFunctor> VirtRegInfo;
 
   /// PHIJoins - list of virtual registers that are PHI joins. These registers
   /// may have multiple definitions, and they require special handling when

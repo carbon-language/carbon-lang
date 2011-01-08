@@ -216,10 +216,14 @@ public:
   ///
   unsigned createVirtualRegister(const TargetRegisterClass *RegClass);
 
+  /// getNumVirtRegs - Return the number of virtual registers created.
+  ///
+  unsigned getNumVirtRegs() const { return VRegInfo.size(); }
+
   /// getLastVirtReg - Return the highest currently assigned virtual register.
   ///
   unsigned getLastVirtReg() const {
-    return (unsigned)VRegInfo.size()+TargetRegisterInfo::FirstVirtualRegister-1;
+    return TargetRegisterInfo::index2VirtReg(getNumVirtRegs() - 1);
   }
 
   /// getRegClassVirtRegs - Return the list of virtual registers of the given

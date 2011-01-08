@@ -321,6 +321,12 @@ public:
     return Reg >= FirstVirtualRegister;
   }
 
+  /// index2VirtReg - Convert a 0-based index to a virtual register number.
+  /// This is the inverse operation of VirtReg2IndexFunctor below.
+  static unsigned index2VirtReg(unsigned Index) {
+    return Index + FirstVirtualRegister;
+  }
+
   /// printReg - Print a virtual or physical register on OS.
   void printReg(unsigned Reg, raw_ostream &OS) const;
 
