@@ -97,13 +97,13 @@ UnwindPlan::Row::RegisterLocation::Dump (Stream &s) const
     switch (m_type)
     {
         case unspecified: 
-            s.Printf ("unspecified"); 
+            s.PutCString ("unspecified"); 
             break;
         case isUndefined: 
-            s.Printf ("isUndefined"); 
+            s.PutCString ("isUndefined"); 
             break;
         case isSame: 
-            s.Printf ("isSame"); 
+            s.PutCString ("isSame"); 
             break;
         case atCFAPlusOffset: 
             s.Printf ("atCFAPlusOffset %d", m_location.offset); 
@@ -115,10 +115,10 @@ UnwindPlan::Row::RegisterLocation::Dump (Stream &s) const
             s.Printf ("inOtherRegister %d", m_location.reg_num); 
             break;
         case atDWARFExpression: 
-            s.Printf ("atDWARFExpression");
+            s.PutCString ("atDWARFExpression");
             break;
         case isDWARFExpression: 
-            s.Printf ("isDWARFExpression");
+            s.PutCString ("isDWARFExpression");
             break;
     }
 }
@@ -157,7 +157,7 @@ UnwindPlan::Row::Dump (Stream& s, int register_kind, Thread* thread) const
     s.Printf ("CFA offset %d", (int) GetCFAOffset ());
     for (collection::const_iterator idx = m_register_locations.begin (); idx != m_register_locations.end (); ++idx)
     {
-        s.Printf (" [");
+        s.PutCString (" [");
         bool printed_name = false;
         if (reg_ctx)
         {
@@ -174,9 +174,9 @@ UnwindPlan::Row::Dump (Stream& s, int register_kind, Thread* thread) const
             s.Printf ("reg %d ", idx->first);
         }
         idx->second.Dump(s);
-        s.Printf ("]");
+        s.PutCString ("]");
     }
-    s.Printf ("\n");
+    s.EOL();
 }
 
 UnwindPlan::Row::Row() :
@@ -218,23 +218,24 @@ UnwindPlan::AppendRow (const UnwindPlan::Row &row)
 const UnwindPlan::Row *
 UnwindPlan::GetRowForFunctionOffset (int offset) const
 {
-    const UnwindPlan::Row *rowp = NULL;
-    if (offset == -1 && m_row_list.size() > 0)
+    const UnwindPlan::Row *row_ptr = NULL;
+    if (!m_row_list.empty())
     {
-        return &m_row_list[m_row_list.size() - 1];
-    }
-    for (int i = 0; i < m_row_list.size(); ++i)
-    {
-        if (m_row_list[i].GetOffset() <= offset)
-        {
-            rowp = &m_row_list[i];
-        }
+        if (offset == -1)
+            row_ptr = &m_row_list.back();
         else
         {
-            break;
+            collection::const_iterator pos, end = m_row_list.end();
+            for (pos = m_row_list.begin(); pos != end; ++pos)
+            {
+                if (pos->GetOffset() <= offset)
+                    row_ptr = &*pos;
+                else
+                    break;
+            }
         }
     }
-    return rowp;
+    return row_ptr;
 }
 
 bool
@@ -247,6 +248,7 @@ const UnwindPlan::Row&
 UnwindPlan::GetRowAtIndex (uint32_t idx) const
 {
     // You must call IsValidRowIndex(idx) first before calling this!!!
+    assert (idx < m_row_list.size());
     return m_row_list[idx];
 }
 
@@ -272,11 +274,7 @@ void
 UnwindPlan::SetPlanValidAddressRange (const AddressRange& range)
 {
    if (range.GetBaseAddress().IsValid() && range.GetByteSize() != 0)
-   {
        m_plan_valid_address_range = range;
-   }
-// .GetBaseAddress() = addr;
-//    m_plan_valid_address_range.SetByteSize (range.GetByteSize());
 }
 
 bool
@@ -303,25 +301,25 @@ UnwindPlan::Dump (Stream& s, Thread *thread) const
     }
     if (m_plan_valid_address_range.GetBaseAddress().IsValid() && m_plan_valid_address_range.GetByteSize() > 0)
     {
-        s.Printf ("Address range of this UnwindPlan: ");
+        s.PutCString ("Address range of this UnwindPlan: ");
         m_plan_valid_address_range.Dump (&s, &thread->GetProcess().GetTarget(), Address::DumpStyleSectionNameOffset);
-        s.Printf ("\n");
+        s.EOL();
     }
     else
     {
-        s.Printf ("No valid address range recorded for this UnwindPlan.\n");
+        s.PutCString ("No valid address range recorded for this UnwindPlan.\n");
     }
     s.Printf ("UnwindPlan register kind %d", m_register_kind);
     switch (m_register_kind)
     {
-        case eRegisterKindGCC: s.Printf (" [eRegisterKindGCC]"); break;
-        case eRegisterKindDWARF: s.Printf (" [eRegisterKindDWARF]"); break;
-        case eRegisterKindGeneric: s.Printf (" [eRegisterKindGeneric]"); break;
-        case eRegisterKindGDB: s.Printf (" [eRegisterKindGDB]"); break;
-        case eRegisterKindLLDB: s.Printf (" [eRegisterKindLLDB]"); break;
+        case eRegisterKindGCC:      s.PutCString (" [eRegisterKindGCC]"); break;
+        case eRegisterKindDWARF:    s.PutCString (" [eRegisterKindDWARF]"); break;
+        case eRegisterKindGeneric:  s.PutCString (" [eRegisterKindGeneric]"); break;
+        case eRegisterKindGDB:      s.PutCString (" [eRegisterKindGDB]"); break;
+        case eRegisterKindLLDB:     s.PutCString (" [eRegisterKindLLDB]"); break;
         default: break;
     }
-    s.Printf ("\n");
+    s.EOL();
     for (int i = 0; IsValidRowIndex (i); i++)
     {
         s.Printf ("UnwindPlan row at index %d: ", i);

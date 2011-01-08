@@ -204,7 +204,11 @@ public:
 
 public:
 
-    UnwindPlan () : m_register_kind(-1), m_row_list(), m_plan_valid_address_range(), m_source_name()
+    UnwindPlan () : 
+        m_register_kind(-1), 
+        m_row_list(), 
+        m_plan_valid_address_range(), 
+        m_source_name()
     { 
         m_plan_valid_address_range.SetByteSize (0);
     }

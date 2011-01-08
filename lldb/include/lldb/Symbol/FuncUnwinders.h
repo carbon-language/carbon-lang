@@ -1,12 +1,13 @@
 #ifndef liblldb_FuncUnwinders_h
 #define liblldb_FuncUnwinders_h
 
-#include "lldb/lldb-private.h"
-#include "lldb/lldb-forward.h"
-#include "lldb/lldb-forward-rtti.h"
+
+#include <memory>
+
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/ArchSpec.h"
-#include <memory>
+#include "lldb/Core/AddressRange.h"
+#include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
 
@@ -72,15 +73,16 @@ private:
     UnwindAssemblyProfiler *m_assembly_profiler;
     AddressRange m_range;
 
+    Mutex m_mutex;
     std::auto_ptr<UnwindPlan> m_unwind_at_call_site_ap;
     std::auto_ptr<UnwindPlan> m_unwind_at_non_call_site_ap;
-    std::auto_ptr<UnwindPlan> m_fast_unwind_ap;
-    UnwindPlan *m_arch_default_unwind;
+    std::auto_ptr<UnwindPlan> m_unwind_fast_ap;
+    UnwindPlan *m_unwind_arch_default;
 
     bool m_tried_unwind_at_call_site:1,
          m_tried_unwind_at_non_call_site:1,
-         m_tried_fast_unwind:1,
-         m_tried_arch_default_unwind:1;
+         m_tried_unwind_fast:1,
+         m_tried_unwind_arch_default:1;
          
     Address m_first_non_prologue_insn;
 
