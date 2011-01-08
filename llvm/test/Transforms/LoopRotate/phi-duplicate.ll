@@ -34,14 +34,13 @@ for.end:                                          ; preds = %for.cond
 
 ; CHECK:      define void @test
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   icmp slt i64
-; CHECK-NEXT:   br i1
+; CHECK-NEXT:   br i1 true, label %bb.nph, label %for.end
 ; CHECK-NOT:  :
 ; CHECK:      bb.nph:
 ; CHECK-NEXT:   br label %for.body
 ; CHECK-NOT:  :
 ; CHECK:      for.body:
-; CHECK-NEXT:   %j.02 = phi i64
+; CHECK-NEXT:   %j.01 = phi i64
 ; CHECK-NOT:    phi
 ; CHECK:        ret void
 ; CHECK-NEXT: }

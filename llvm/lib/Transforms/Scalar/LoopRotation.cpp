@@ -14,9 +14,10 @@
 #define DEBUG_TYPE "loop-rotate"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
-#include "llvm/Analysis/LoopPass.h"
-#include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -205,9 +206,24 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // Otherwise, create a duplicate of the instruction.
     Instruction *C = Inst->clone();
     
-    C->setName(Inst->getName());
-    C->insertBefore(LoopEntryBranch);
-    ValueMap[Inst] = C;
+    // Eagerly remap the operands of the instruction.
+    RemapInstruction(C, ValueMap,
+                     RF_NoModuleLevelChanges|RF_IgnoreMissingEntries);
+    
+    // With the operands remapped, see if the instruction constant folds or is
+    // otherwise simplifyable.  This commonly occurs because the entry from PHI
+    // nodes allows icmps and other instructions to fold.
+    if (Value *V = SimplifyInstruction(C)) {
+      // If so, then delete the temporary instruction and stick the folded value
+      // in the map.
+      delete C;
+      ValueMap[Inst] = V;
+    } else {
+      // Otherwise, stick the new instruction into the new block!
+      C->setName(Inst->getName());
+      C->insertBefore(LoopEntryBranch);
+      ValueMap[Inst] = C;
+    }
   }
 
   // Along with all the other instructions, we just cloned OrigHeader's
