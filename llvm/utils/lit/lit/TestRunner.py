@@ -451,12 +451,10 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
     # expression pattern a with substitution b in line ln.
     def processLine(ln):
         # Apply substitutions
-		# FIXME: Investigate why re.sub doesn't work on Windows
         for a,b in substitutions:
             if kIsWindows:
-                ln = ln.replace(a,b)
-            else:
-                ln = re.sub(a, b, ln)
+                b = b.replace("\\","\\\\")
+            ln = re.sub(a, b, ln)
 
         # Strip the trailing newline and any extra whitespace.
         return ln.strip()
