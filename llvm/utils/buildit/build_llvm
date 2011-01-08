@@ -174,11 +174,6 @@ if [ "x$MAJ_VER" != "x4" -o "x$MIN_VER" != "x0" ]; then
     # Figure out how many make processes to run.
     SYSCTL=`sysctl -n hw.activecpu`
 
-    # hw.activecpu only available in 10.2.6 and later
-    if [ -z "$SYSCTL" ]; then
-        SYSCTL=`sysctl -n hw.ncpu`
-    fi
-
     # sysctl -n hw.* does not work when invoked via B&I chroot /BuildRoot.
     # Builders can default to 2, since even if they are single processor,
     # nothing else is running on the machine.
