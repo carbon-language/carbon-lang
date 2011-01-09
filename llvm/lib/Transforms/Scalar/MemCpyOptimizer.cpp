@@ -517,6 +517,9 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
 }
 
 bool MemCpyOpt::processMemSet(MemSetInst *MSI, BasicBlock::iterator &BBI) {
+  // Temporarily disable this.
+  return false;
+  
   // See if there is another memset or store neighboring this memset which
   // allows us to widen out the memset to do a single larger store.
   if (isa<ConstantInt>(MSI->getLength()) && !MSI->isVolatile())
