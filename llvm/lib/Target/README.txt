@@ -2143,7 +2143,8 @@ clang -O3 -fno-exceptions currently compiles this code:
 
 void f(int N) {
   std::vector<int> v(N);
-  g(v);
+
+  extern void sink(void*); sink(&v);
 }
 
 into
@@ -2198,7 +2199,10 @@ clang -O3 -fno-exceptions currently compiles this code:
 
 void f(int N) {
   std::vector<int> v(N);
-  g(v);
+  for (int k = 0; k < N; ++k)
+    v[k] = 0;
+
+  extern void sink(void*); sink(&v);
 }
 
 into almost the same as the previous note, but replace its final BB with:
