@@ -89,7 +89,15 @@ namespace {
     /// Add a register in a new congruence class containing only itself.
     void addReg(unsigned);
 
-    /// Join the congruence classes of two registers.
+    /// Join the congruence classes of two registers. This function is biased
+    /// towards the left argument, i.e. after
+    ///
+    /// addReg(r2);
+    /// unionRegs(r1, r2);
+    ///
+    /// the leader of the unioned congruence class is the same as the leader of
+    /// r1's congruence class prior to the union. This is actually relied upon
+    /// in the copy insertion code.
     void unionRegs(unsigned, unsigned);
 
     /// Get the color of a register. The color is 0 if the register has been
