@@ -551,7 +551,8 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
       // handle it here by tracking defining machine instructions rather than
       // virtual registers. For now, we just handle the situation conservatively
       // in a way that will possibly lead to false interferences.
-      unsigned NewParent = CurrentDominatingParent[DestColor];
+      unsigned &CurrentParent = CurrentDominatingParent[DestColor];
+      unsigned NewParent = CurrentParent;
       if (NewParent == DestReg)
         continue;
 
@@ -570,12 +571,12 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
         // could be improved by using a heuristic that decides which of the two
         // registers to isolate.
         isolateReg(DestReg);
-        CurrentDominatingParent[DestColor] = NewParent;
+        CurrentParent = NewParent;
       } else {
         // If there is no interference, update ImmediateDominatingParent and set
         // the CurrentDominatingParent for this color to the current register.
         ImmediateDominatingParent[DestReg] = NewParent;
-        CurrentDominatingParent[DestColor] = DestReg;
+        CurrentParent = DestReg;
       }
     }
   }
@@ -610,12 +611,13 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
 
       // Pop registers from the stack represented by ImmediateDominatingParent
       // until we find a parent that dominates the current instruction.
-      unsigned NewParent = CurrentDominatingParent[Color];
+      unsigned &CurrentParent = CurrentDominatingParent[Color];
+      unsigned NewParent = CurrentParent;
       while (NewParent
              && (!DT->dominates(MRI->getVRegDef(NewParent)->getParent(), &MBB)
                  || !getRegColor(NewParent)))
         NewParent = ImmediateDominatingParent[NewParent];
-      CurrentDominatingParent[Color] = NewParent;
+      CurrentParent = NewParent;
 
       // If there is an interference with a register, always isolate the
       // register rather than the PHI. It is also possible to isolate the
@@ -625,7 +627,8 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
                     && NewParent != PredOperandReg)
         isolateReg(NewParent);
 
-      std::pair<MachineInstr*, unsigned> CurrentPHI = CurrentPHIForColor[Color];
+      std::pair<MachineInstr*, unsigned>
+        &CurrentPHI = CurrentPHIForColor[Color];
 
       // If two PHIs have the same operand from every shared predecessor, then
       // they don't actually interfere. Otherwise, isolate the current PHI. This
@@ -634,7 +637,7 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
       if (CurrentPHI.first && CurrentPHI.second != PredOperandReg)
         isolatePHI(PHI);
       else
-        CurrentPHIForColor[Color] = std::make_pair(PHI, PredOperandReg);
+        CurrentPHI = std::make_pair(PHI, PredOperandReg);
     }
   }
 }
