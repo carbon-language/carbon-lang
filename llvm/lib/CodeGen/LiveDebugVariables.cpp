@@ -63,105 +63,6 @@ LiveDebugVariables::LiveDebugVariables() : MachineFunctionPass(ID), pImpl(0) {
   initializeLiveDebugVariablesPass(*PassRegistry::getPassRegistry());
 }
 
-/// Location - All the different places a user value can reside.
-/// Note that this includes immediate values that technically aren't locations.
-namespace {
-struct Location {
-  /// kind - What kind of location is this?
-  enum Kind {
-    locUndef = 0,
-    locImm   = 0x80000000,
-    locFPImm
-  };
-  /// Kind - One of the following:
-  /// 1. locUndef
-  /// 2. Register number (physical or virtual), data.SubIdx is the subreg index.
-  /// 3. ~Frame index, data.Offset is the offset.
-  /// 4. locImm, data.ImmVal is the constant integer value.
-  /// 5. locFPImm, data.CFP points to the floating point constant.
-  unsigned Kind;
-
-  /// Data - Extra data about location.
-  union {
-    unsigned SubIdx;          ///< For virtual registers.
-    int64_t Offset;           ///< For frame indices.
-    int64_t ImmVal;           ///< For locImm.
-    const ConstantFP *CFP;    ///< For locFPImm.
-  } Data;
-
-  Location(const MachineOperand &MO) {
-    switch(MO.getType()) {
-    case MachineOperand::MO_Register:
-      Kind = MO.getReg();
-      Data.SubIdx = MO.getSubReg();
-      return;
-    case MachineOperand::MO_Immediate:
-      Kind = locImm;
-      Data.ImmVal = MO.getImm();
-      return;
-    case MachineOperand::MO_FPImmediate:
-      Kind = locFPImm;
-      Data.CFP = MO.getFPImm();
-      return;
-    case MachineOperand::MO_FrameIndex:
-      Kind = ~MO.getIndex();
-      // FIXME: MO_FrameIndex should support an offset.
-      Data.Offset = 0;
-      return;
-    default:
-      Kind = locUndef;
-      return;
-    }
-  }
-
-  /// addOperand - Add this location as a machine operand to MI.
-  MachineInstrBuilder addOperand(MachineInstrBuilder MI) const {
-    switch (Kind) {
-    case locImm:
-      return MI.addImm(Data.ImmVal);
-    case locFPImm:
-      return MI.addFPImm(Data.CFP);
-    default:
-      if (isFrameIndex())
-        return MI.addFrameIndex(getFrameIndex());
-      else
-        return MI.addReg(Kind);  // reg and undef.
-    }
-  }
-
-  bool operator==(const Location &RHS) const {
-    if (Kind != RHS.Kind)
-      return false;
-    switch (Kind) {
-    case locUndef:
-      return true;
-    case locImm:
-      return Data.ImmVal == RHS.Data.ImmVal;
-    case locFPImm:
-      return Data.CFP == RHS.Data.CFP;
-    default:
-      if (isReg())
-        return Data.SubIdx == RHS.Data.SubIdx;
-      else
-         return Data.Offset == RHS.Data.Offset;
-    }
-  }
-
-  /// isUndef - is this the singleton undef?
-  bool isUndef() const { return Kind == locUndef; }
-
-  /// isReg - is this a register location?
-  bool isReg() const { return Kind && Kind < locImm; }
-
-  /// isFrameIndex - is this a frame index location?
-  bool isFrameIndex() const { return Kind > locFPImm; }
-
-  int getFrameIndex() const { return ~Kind; }
-
-  void print(raw_ostream&, const TargetRegisterInfo*);
-};
-}
-
 /// LocMap - Map of where a user value is live, and its location.
 typedef IntervalMap<SlotIndex, unsigned, 4> LocMap;
 
@@ -183,7 +84,7 @@ class UserValue {
   UserValue *next;        ///< Next value in equivalence class, or null.
 
   /// Numbered locations referenced by locmap.
-  SmallVector<Location, 4> locations;
+  SmallVector<MachineOperand, 4> locations;
 
   /// Map of slot indices where this value is live.
   LocMap locInts;
@@ -242,14 +143,16 @@ public:
   }
 
   /// getLocationNo - Return the location number that matches Loc.
-  unsigned getLocationNo(Location Loc) {
-    if (Loc.isUndef())
+  unsigned getLocationNo(const MachineOperand &LocMO) {
+    if (LocMO.isReg() && LocMO.getReg() == 0)
       return ~0u;
-    unsigned n = std::find(locations.begin(), locations.end(), Loc) -
-                 locations.begin();
-    if (n == locations.size())
-      locations.push_back(Loc);
-    return n;
+    for (unsigned i = 0, e = locations.size(); i != e; ++i)
+      if (LocMO.isIdenticalTo(locations[i]))
+        return i;
+    locations.push_back(LocMO);
+    // We are storing a MachineOperand outside a MachineInstr.
+    locations.back().clearParent();
+    return locations.size() - 1;
   }
 
   /// addDef - Add a definition point to this value.
@@ -361,29 +264,6 @@ public:
 };
 } // namespace
 
-void Location::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
-  switch (Kind) {
-  case locUndef:
-    OS << "undef";
-    return;
-  case locImm:
-    OS << "int:" << Data.ImmVal;
-    return;
-  case locFPImm:
-    OS << "fp:" << Data.CFP->getValueAPF().convertToDouble();
-    return;
-  default:
-    if (isReg()) {
-      OS << PrintReg(Kind, TRI, Data.SubIdx);
-    } else {
-      OS << "fi#" << ~Kind;
-      if (Data.Offset)
-        OS << '+' << Data.Offset;
-    }
-    return;
-  }
-}
-
 void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
   if (const MDString *MDS = dyn_cast<MDString>(variable->getOperand(2)))
     OS << "!\"" << MDS->getString() << "\"\t";
@@ -396,10 +276,8 @@ void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
     else
       OS << I.value();
   }
-  for (unsigned i = 0, e = locations.size(); i != e; ++i) {
-    OS << " Loc" << i << '=';
-    locations[i].print(OS, TRI);
-  }
+  for (unsigned i = 0, e = locations.size(); i != e; ++i)
+    OS << " Loc" << i << '=' << locations[i];
   OS << '\n';
 }
 
@@ -410,17 +288,21 @@ void LDVImpl::print(raw_ostream &OS) {
 }
 
 void UserValue::coalesceLocation(unsigned LocNo) {
-  unsigned KeepLoc = std::find(locations.begin(), locations.begin() + LocNo,
-                               locations[LocNo]) - locations.begin();
-  unsigned EraseLoc = LocNo;
-  if (KeepLoc == LocNo) {
-    EraseLoc = std::find(locations.begin() + LocNo + 1, locations.end(),
-                         locations[LocNo]) - locations.begin();
-    // No matches.
-    if (EraseLoc == locations.size())
-      return;
+  unsigned KeepLoc = 0;
+  for (unsigned e = locations.size(); KeepLoc != e; ++KeepLoc) {
+    if (KeepLoc == LocNo)
+      continue;
+    if (locations[KeepLoc].isIdenticalTo(locations[LocNo]))
+      break;
   }
-  assert(KeepLoc < EraseLoc);
+  // No matches.
+  if (KeepLoc == locations.size())
+    return;
+
+  // Keep the smaller location, erase the larger one.
+  unsigned EraseLoc = LocNo;
+  if (KeepLoc > EraseLoc)
+    std::swap(KeepLoc, EraseLoc);
   locations.erase(locations.begin() + EraseLoc);
 
   // Rewrite values.
@@ -576,11 +458,11 @@ UserValue::computeIntervals(LiveIntervals &LIS, MachineDominatorTree &MDT) {
   for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
     SlotIndex Idx = Defs[i].first;
     unsigned LocNo = Defs[i].second;
-    const Location &Loc = locations[LocNo];
+    const MachineOperand &Loc = locations[LocNo];
 
     // Register locations are constrained to where the register value is live.
-    if (Loc.isReg() && LIS.hasInterval(Loc.Kind)) {
-      LiveInterval *LI = &LIS.getInterval(Loc.Kind);
+    if (Loc.isReg() && LIS.hasInterval(Loc.getReg())) {
+      LiveInterval *LI = &LIS.getInterval(Loc.getReg());
       const VNInfo *VNI = LI->getVNInfoAt(Idx);
       extendDef(Idx, LocNo, LI, VNI, LIS, MDT);
     } else
@@ -639,12 +521,13 @@ renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx,
                const TargetRegisterInfo *TRI) {
   for (unsigned i = locations.size(); i; --i) {
     unsigned LocNo = i - 1;
-    Location &Loc = locations[LocNo];
-    if (Loc.Kind != OldReg)
+    MachineOperand &Loc = locations[LocNo];
+    if (!Loc.isReg() || Loc.getReg() != OldReg)
       continue;
-    Loc.Kind = NewReg;
-    if (SubIdx && Loc.Data.SubIdx)
-      Loc.Data.SubIdx = TRI->composeSubRegIndices(SubIdx, Loc.Data.SubIdx);
+    if (TargetRegisterInfo::isPhysicalRegister(NewReg))
+      Loc.substPhysReg(NewReg, *TRI);
+    else
+      Loc.substVirtReg(NewReg, SubIdx, *TRI);
     coalesceLocation(LocNo);
   }
 }
@@ -676,23 +559,20 @@ UserValue::rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI) {
   // Iterate over locations in reverse makes it easier to handle coalescing.
   for (unsigned i = locations.size(); i ; --i) {
     unsigned LocNo = i-1;
-    Location &Loc = locations[LocNo];
+    MachineOperand &Loc = locations[LocNo];
     // Only virtual registers are rewritten.
-    if (!Loc.isReg() || !TargetRegisterInfo::isVirtualRegister(Loc.Kind))
+    if (!Loc.isReg() || !Loc.getReg() ||
+        !TargetRegisterInfo::isVirtualRegister(Loc.getReg()))
       continue;
-    unsigned VirtReg = Loc.Kind;
+    unsigned VirtReg = Loc.getReg();
     if (VRM.isAssignedReg(VirtReg)) {
-      unsigned PhysReg = VRM.getPhys(VirtReg);
-      if (Loc.Data.SubIdx)
-        PhysReg = TRI.getSubReg(PhysReg, Loc.Data.SubIdx);
-      Loc.Kind = PhysReg;
-      Loc.Data.SubIdx = 0;
+      Loc.substPhysReg(VRM.getPhys(VirtReg), TRI);
     } else if (VRM.getStackSlot(VirtReg) != VirtRegMap::NO_STACK_SLOT) {
-      Loc.Kind = ~VRM.getStackSlot(VirtReg);
       // FIXME: Translate SubIdx to a stackslot offset.
-      Loc.Data.Offset = 0;
+      Loc = MachineOperand::CreateFI(VRM.getStackSlot(VirtReg));
     } else {
-      Loc.Kind = Location::locUndef;
+      Loc.setReg(0);
+      Loc.setSubReg(0);
     }
     coalesceLocation(LocNo);
   }
@@ -730,21 +610,20 @@ void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
                                  const TargetInstrInfo &TII) {
   DebugLoc DL;
   MachineBasicBlock::iterator I = findInsertLocation(MBB, Idx, DL, LIS);
-  Location &Loc = locations[LocNo];
+  MachineOperand &Loc = locations[LocNo];
 
   // Frame index locations may require a target callback.
-  if (Loc.isFrameIndex()) {
+  if (Loc.isFI()) {
     MachineInstr *MI = TII.emitFrameIndexDebugValue(*MBB->getParent(),
-                                          Loc.getFrameIndex(),
-                                          offset, variable, DL);
+                                          Loc.getIndex(), offset, variable, DL);
     if (MI) {
       MBB->insert(I, MI);
       return;
     }
   }
   // This is not a frame index, or the target is happy with a standard FI.
-  Loc.addOperand(BuildMI(*MBB, I, DL, TII.get(TargetOpcode::DBG_VALUE)))
-    .addImm(offset).addMetadata(variable);
+  BuildMI(*MBB, I, DL, TII.get(TargetOpcode::DBG_VALUE))
+    .addOperand(Loc).addImm(offset).addMetadata(variable);
 }
 
 void UserValue::insertDebugKill(MachineBasicBlock *MBB, SlotIndex Idx,

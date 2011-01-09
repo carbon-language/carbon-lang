@@ -153,6 +153,16 @@ public:
   MachineInstr *getParent() { return ParentMI; }
   const MachineInstr *getParent() const { return ParentMI; }
 
+  /// clearParent - Reset the parent pointer.
+  ///
+  /// The MachineOperand copy constructor also copies ParentMI, expecting the
+  /// original to be deleted. If a MachineOperand is ever stored outside a
+  /// MachineInstr, the parent pointer must be cleared.
+  ///
+  /// Never call clearParent() on an operand in a MachineInstr.
+  ///
+  void clearParent() { ParentMI = 0; }
+
   void print(raw_ostream &os, const TargetMachine *TM = 0) const;
 
   //===--------------------------------------------------------------------===//
