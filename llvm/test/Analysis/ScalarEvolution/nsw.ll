@@ -75,4 +75,6 @@ for.cond.for.end_crit_edge.i.i:                   ; preds = %for.body.i.i
 
 _ZSt4fillIPiiEvT_S1_RKT0_.exit:                   ; preds = %entry, %for.cond.for.end_crit_edge.i.i
   ret void
+  
+; CHECK: Loop %for.body.i.i: backedge-taken count is ((-4 + (-1 * %begin) + %end) /u 4)
 }
