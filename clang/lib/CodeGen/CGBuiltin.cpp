@@ -1034,7 +1034,8 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
   }
 }
 
-const llvm::VectorType *GetNeonType(LLVMContext &C, unsigned type, bool q) {
+static const llvm::VectorType *GetNeonType(LLVMContext &C, unsigned type,
+                                           bool q) {
   switch (type) {
     default: break;
     case 0: 
