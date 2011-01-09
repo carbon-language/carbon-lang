@@ -45,8 +45,6 @@ ValueObjectChild::ValueObjectChild
     m_bitfield_bit_offset (bitfield_bit_offset),
     m_is_base_class (is_base_class)
 {
-    assert (bitfield_bit_size   < (sizeof(m_bitfield_bit_size  ) * CHAR_BIT));
-    assert (bitfield_bit_offset < (sizeof(m_bitfield_bit_offset) * CHAR_BIT));
     m_name = name;
 }
 
