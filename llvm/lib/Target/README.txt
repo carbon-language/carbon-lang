@@ -2138,3 +2138,58 @@ _ZSt4fillIPiiEvT_S1_RKT0_.exit:                   ; preds = %for.body.i.i, %entr
 It should compile it to a memset.
 
 //===---------------------------------------------------------------------===//
+
+clang -O3 -fno-exceptions currently compiles this code:
+
+void f(int N) {
+  std::vector<int> v(N);
+  g(v);
+}
+
+into
+
+define void @_Z1fi(i32 %N) nounwind {
+entry:
+  %v2 = alloca [3 x i32*], align 8
+  %v2.sub = getelementptr inbounds [3 x i32*]* %v2, i64 0, i64 0
+  %tmpcast = bitcast [3 x i32*]* %v2 to %"class.std::vector"*
+  %conv = sext i32 %N to i64
+  store i32* null, i32** %v2.sub, align 8, !tbaa !0
+  %tmp3.i.i.i.i.i = getelementptr inbounds [3 x i32*]* %v2, i64 0, i64 1
+  store i32* null, i32** %tmp3.i.i.i.i.i, align 8, !tbaa !0
+  %tmp4.i.i.i.i.i = getelementptr inbounds [3 x i32*]* %v2, i64 0, i64 2
+  store i32* null, i32** %tmp4.i.i.i.i.i, align 8, !tbaa !0
+  %cmp.i.i.i.i = icmp eq i32 %N, 0
+  br i1 %cmp.i.i.i.i, label %_ZNSt12_Vector_baseIiSaIiEEC2EmRKS0_.exit.thread.i.i, label %cond.true.i.i.i.i
+
+_ZNSt12_Vector_baseIiSaIiEEC2EmRKS0_.exit.thread.i.i: ; preds = %entry
+  store i32* null, i32** %v2.sub, align 8, !tbaa !0
+  store i32* null, i32** %tmp3.i.i.i.i.i, align 8, !tbaa !0
+  %add.ptr.i5.i.i = getelementptr inbounds i32* null, i64 %conv
+  store i32* %add.ptr.i5.i.i, i32** %tmp4.i.i.i.i.i, align 8, !tbaa !0
+  br label %_ZNSt6vectorIiSaIiEEC1EmRKiRKS0_.exit
+
+cond.true.i.i.i.i:                                ; preds = %entry
+  %cmp.i.i.i.i.i = icmp slt i32 %N, 0
+  br i1 %cmp.i.i.i.i.i, label %if.then.i.i.i.i.i, label %_ZNSt12_Vector_baseIiSaIiEEC2EmRKS0_.exit.i.i
+
+if.then.i.i.i.i.i:                                ; preds = %cond.true.i.i.i.i
+  call void @_ZSt17__throw_bad_allocv() noreturn nounwind
+  unreachable
+
+_ZNSt12_Vector_baseIiSaIiEEC2EmRKS0_.exit.i.i:    ; preds = %cond.true.i.i.i.i
+  %mul.i.i.i.i.i = shl i64 %conv, 2
+  %call3.i.i.i.i.i = call noalias i8* @_Znwm(i64 %mul.i.i.i.i.i) nounwind
+  %0 = bitcast i8* %call3.i.i.i.i.i to i32*
+  store i32* %0, i32** %v2.sub, align 8, !tbaa !0
+  store i32* %0, i32** %tmp3.i.i.i.i.i, align 8, !tbaa !0
+  %add.ptr.i.i.i = getelementptr inbounds i32* %0, i64 %conv
+  store i32* %add.ptr.i.i.i, i32** %tmp4.i.i.i.i.i, align 8, !tbaa !0
+  call void @llvm.memset.p0i8.i64(i8* %call3.i.i.i.i.i, i8 0, i64 %mul.i.i.i.i.i, i32 4, i1 false)
+  br label %_ZNSt6vectorIiSaIiEEC1EmRKiRKS0_.exit
+
+This is just the handling the construction of the vector. Most surprising here
+is the fact that all three null stores in %entry are dead, but not eliminated.
+Also surprising is that %conv isn't simplified to 0 in %....exit.thread.i.i.
+
+//===---------------------------------------------------------------------===//
