@@ -40,6 +40,7 @@ namespace {
       AU.setPreservesCFG();
       AU.addRequired<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
+      AU.addPreservedID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
     }
   };
