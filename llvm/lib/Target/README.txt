@@ -2115,7 +2115,7 @@ void f1(int* begin, int* end) {
   std::fill(begin, end, 0);
 }
 
-int a memset.  This is PR8942.
+into a memset.  This is PR8942.
 
 //===---------------------------------------------------------------------===//
 
