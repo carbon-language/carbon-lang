@@ -4863,6 +4863,7 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // the stride is.  As such, NUW addrec's will always become zero in
   // "start / -stride" steps, and we know that the division is exact.
   if (AddRec->hasNoUnsignedWrap())
+    // FIXME: We really want an "isexact" bit for udiv.
     return getUDivExpr(Start, getNegativeSCEV(Step));
   
   // For now we handle only constant steps.
