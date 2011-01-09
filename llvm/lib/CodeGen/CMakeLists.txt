@@ -56,7 +56,6 @@ add_llvm_library(LLVMCodeGen
   PHIEliminationUtils.cpp
   Passes.cpp
   PeepholeOptimizer.cpp
-  ScoreboardHazardRecognizer.cpp
   PostRASchedulerList.cpp
   PreAllocSplitting.cpp
   ProcessImplicitDefs.cpp
@@ -74,6 +73,7 @@ add_llvm_library(LLVMCodeGen
   ScheduleDAGEmit.cpp
   ScheduleDAGInstrs.cpp
   ScheduleDAGPrinter.cpp
+  ScoreboardHazardRecognizer.cpp
   ShadowStackGC.cpp
   ShrinkWrapping.cpp
   SimpleRegisterCoalescing.cpp
