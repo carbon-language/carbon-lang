@@ -555,7 +555,7 @@ public:
       o << "Inorder PostDominator Tree: ";
     else
       o << "Inorder Dominator Tree: ";
-    if (this->DFSInfoValid)
+    if (!this->DFSInfoValid)
       o << "DFSNumbers invalid: " << SlowQueries << " slow queries.";
     o << "\n";
 
