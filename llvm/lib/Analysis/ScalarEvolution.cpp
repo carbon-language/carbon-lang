@@ -4807,47 +4807,14 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   if (!AddRec || AddRec->getLoop() != L)
     return getCouldNotCompute();
 
-  if (AddRec->isAffine()) {
-    // If this is an affine expression, the execution count of this branch is
-    // the minimum unsigned root of the following equation:
-    //
-    //     Start + Step*N = 0 (mod 2^BW)
-    //
-    // equivalent to:
-    //
-    //             Step*N = -Start (mod 2^BW)
-    //
-    // where BW is the common bit width of Start and Step.
-
-    // Get the initial value for the loop.
-    const SCEV *Start = getSCEVAtScope(AddRec->getStart(),
-                                       L->getParentLoop());
-    const SCEV *Step = getSCEVAtScope(AddRec->getOperand(1),
-                                      L->getParentLoop());
-
-    if (const SCEVConstant *StepC = dyn_cast<SCEVConstant>(Step)) {
-      // For now we handle only constant steps.
-
-      // First, handle unitary steps.
-      if (StepC->getValue()->equalsInt(1))      // 1*N = -Start (mod 2^BW), so:
-        return getNegativeSCEV(Start);          //   N = -Start (as unsigned)
-      if (StepC->getValue()->isAllOnesValue())  // -1*N = -Start (mod 2^BW), so:
-        return Start;                           //    N = Start (as unsigned)
-
-      // Then, try to solve the above equation provided that Start is constant.
-      if (const SCEVConstant *StartC = dyn_cast<SCEVConstant>(Start))
-        return SolveLinEquationWithOverflow(StepC->getValue()->getValue(),
-                                            -StartC->getValue()->getValue(),
-                                            *this);
-    }
-  } else if (AddRec->isQuadratic() && AddRec->getType()->isIntegerTy()) {
-    // If this is a quadratic (3-term) AddRec {L,+,M,+,N}, find the roots of
-    // the quadratic equation to solve it.
-    std::pair<const SCEV *,const SCEV *> Roots = SolveQuadraticEquation(AddRec,
-                                                                    *this);
+  // If this is a quadratic (3-term) AddRec {L,+,M,+,N}, find the roots of
+  // the quadratic equation to solve it.
+  if (AddRec->isQuadratic() && AddRec->getType()->isIntegerTy()) {
+    std::pair<const SCEV *,const SCEV *> Roots =
+      SolveQuadraticEquation(AddRec, *this);
     const SCEVConstant *R1 = dyn_cast<SCEVConstant>(Roots.first);
     const SCEVConstant *R2 = dyn_cast<SCEVConstant>(Roots.second);
-    if (R1) {
+    if (R1 && R2) {
 #if 0
       dbgs() << "HFTZ: " << *V << " - sol#1: " << *R1
              << "  sol#2: " << *R2 << "\n";
@@ -4855,10 +4822,10 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
           dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT,
-                                   R1->getValue(), R2->getValue()))) {
+                                                      R1->getValue(), R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
-
+        
         // We can only use this value if the chrec ends up with an exact zero
         // value at this index.  When solving for "X*X != 5", for example, we
         // should not accept a root of 2.
@@ -4867,8 +4834,45 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
           return R1;  // We found a quadratic root!
       }
     }
+    return getCouldNotCompute();
   }
 
+  // Otherwise we can only handle this if it is affine.
+  if (!AddRec->isAffine())
+    return getCouldNotCompute();
+
+  // If this is an affine expression, the execution count of this branch is
+  // the minimum unsigned root of the following equation:
+  //
+  //     Start + Step*N = 0 (mod 2^BW)
+  //
+  // equivalent to:
+  //
+  //             Step*N = -Start (mod 2^BW)
+  //
+  // where BW is the common bit width of Start and Step.
+
+  // Get the initial value for the loop.
+  const SCEV *Start = getSCEVAtScope(AddRec->getStart(), L->getParentLoop());
+  const SCEV *Step = getSCEVAtScope(AddRec->getOperand(1), L->getParentLoop());
+
+  // For now we handle only constant steps.
+  const SCEVConstant *StepC = dyn_cast<SCEVConstant>(Step);
+  if (StepC == 0)
+    return getCouldNotCompute();
+
+  // First, handle unitary steps.
+  if (StepC->getValue()->equalsInt(1))      // 1*N = -Start (mod 2^BW), so:
+    return getNegativeSCEV(Start);          //   N = -Start (as unsigned)
+  
+  if (StepC->getValue()->isAllOnesValue())  // -1*N = -Start (mod 2^BW), so:
+    return Start;                           //    N = Start (as unsigned)
+
+  // Then, try to solve the above equation provided that Start is constant.
+  if (const SCEVConstant *StartC = dyn_cast<SCEVConstant>(Start))
+    return SolveLinEquationWithOverflow(StepC->getValue()->getValue(),
+                                        -StartC->getValue()->getValue(),
+                                        *this);
   return getCouldNotCompute();
 }
 
