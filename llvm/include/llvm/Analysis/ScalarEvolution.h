@@ -539,7 +539,8 @@ namespace llvm {
 
     /// getMinusSCEV - Return LHS-RHS.
     ///
-    const SCEV *getMinusSCEV(const SCEV *LHS, const SCEV *RHS);
+    const SCEV *getMinusSCEV(const SCEV *LHS, const SCEV *RHS,
+                             bool HasNUW = false, bool HasNSW = false);
 
     /// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion
     /// of the input value to the specified type.  If the type must be
