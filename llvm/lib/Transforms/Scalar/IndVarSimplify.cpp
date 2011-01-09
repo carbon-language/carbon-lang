@@ -243,8 +243,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 /// happen later, except that it's more powerful in some cases, because it's
 /// able to brute-force evaluate arbitrary instructions as long as they have
 /// constant operands at the beginning of the loop.
-void IndVarSimplify::RewriteLoopExitValues(Loop *L,
-                                           SCEVExpander &Rewriter) {
+void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
   // Verify the input to the pass in already in LCSSA form.
   assert(L->isLCSSAForm(*DT));
 
@@ -348,7 +347,7 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
   // If there are, change them into integer recurrences, permitting analysis by
   // the SCEV routines.
   //
-  BasicBlock *Header    = L->getHeader();
+  BasicBlock *Header = L->getHeader();
 
   SmallVector<WeakVH, 8> PHIs;
   for (BasicBlock::iterator I = Header->begin();

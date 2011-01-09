@@ -157,6 +157,10 @@ void SCEV::print(raw_ostream &OS) const {
     for (unsigned i = 1, e = AR->getNumOperands(); i != e; ++i)
       OS << ",+," << *AR->getOperand(i);
     OS << "}<";
+    if (AR->hasNoUnsignedWrap())
+      OS << "nuw><";
+    if (AR->hasNoSignedWrap())
+      OS << "nsw><";
     WriteAsOperand(OS, AR->getLoop()->getHeader(), /*PrintType=*/false);
     OS << ">";
     return;
@@ -3608,60 +3612,61 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   // backedge-taken count, which could result in infinite recursion.
   std::pair<std::map<const Loop *, BackedgeTakenInfo>::iterator, bool> Pair =
     BackedgeTakenCounts.insert(std::make_pair(L, getCouldNotCompute()));
-  if (Pair.second) {
-    BackedgeTakenInfo BECount = ComputeBackedgeTakenCount(L);
-    if (BECount.Exact != getCouldNotCompute()) {
-      assert(isLoopInvariant(BECount.Exact, L) &&
-             isLoopInvariant(BECount.Max, L) &&
-             "Computed backedge-taken count isn't loop invariant for loop!");
-      ++NumTripCountsComputed;
+  if (!Pair.second)
+    return Pair.first->second;
 
+  BackedgeTakenInfo BECount = ComputeBackedgeTakenCount(L);
+  if (BECount.Exact != getCouldNotCompute()) {
+    assert(isLoopInvariant(BECount.Exact, L) &&
+           isLoopInvariant(BECount.Max, L) &&
+           "Computed backedge-taken count isn't loop invariant for loop!");
+    ++NumTripCountsComputed;
+
+    // Update the value in the map.
+    Pair.first->second = BECount;
+  } else {
+    if (BECount.Max != getCouldNotCompute())
       // Update the value in the map.
       Pair.first->second = BECount;
-    } else {
-      if (BECount.Max != getCouldNotCompute())
-        // Update the value in the map.
-        Pair.first->second = BECount;
-      if (isa<PHINode>(L->getHeader()->begin()))
-        // Only count loops that have phi nodes as not being computable.
-        ++NumTripCountsNotComputed;
-    }
+    if (isa<PHINode>(L->getHeader()->begin()))
+      // Only count loops that have phi nodes as not being computable.
+      ++NumTripCountsNotComputed;
+  }
 
-    // Now that we know more about the trip count for this loop, forget any
-    // existing SCEV values for PHI nodes in this loop since they are only
-    // conservative estimates made without the benefit of trip count
-    // information. This is similar to the code in forgetLoop, except that
-    // it handles SCEVUnknown PHI nodes specially.
-    if (BECount.hasAnyInfo()) {
-      SmallVector<Instruction *, 16> Worklist;
-      PushLoopPHIs(L, Worklist);
+  // Now that we know more about the trip count for this loop, forget any
+  // existing SCEV values for PHI nodes in this loop since they are only
+  // conservative estimates made without the benefit of trip count
+  // information. This is similar to the code in forgetLoop, except that
+  // it handles SCEVUnknown PHI nodes specially.
+  if (BECount.hasAnyInfo()) {
+    SmallVector<Instruction *, 16> Worklist;
+    PushLoopPHIs(L, Worklist);
 
-      SmallPtrSet<Instruction *, 8> Visited;
-      while (!Worklist.empty()) {
-        Instruction *I = Worklist.pop_back_val();
-        if (!Visited.insert(I)) continue;
+    SmallPtrSet<Instruction *, 8> Visited;
+    while (!Worklist.empty()) {
+      Instruction *I = Worklist.pop_back_val();
+      if (!Visited.insert(I)) continue;
 
-        ValueExprMapType::iterator It =
-          ValueExprMap.find(static_cast<Value *>(I));
-        if (It != ValueExprMap.end()) {
-          const SCEV *Old = It->second;
+      ValueExprMapType::iterator It =
+        ValueExprMap.find(static_cast<Value *>(I));
+      if (It != ValueExprMap.end()) {
+        const SCEV *Old = It->second;
 
-          // SCEVUnknown for a PHI either means that it has an unrecognized
-          // structure, or it's a PHI that's in the progress of being computed
-          // by createNodeForPHI.  In the former case, additional loop trip
-          // count information isn't going to change anything. In the later
-          // case, createNodeForPHI will perform the necessary updates on its
-          // own when it gets to that point.
-          if (!isa<PHINode>(I) || !isa<SCEVUnknown>(Old)) {
-            forgetMemoizedResults(Old);
-            ValueExprMap.erase(It);
-          }
-          if (PHINode *PN = dyn_cast<PHINode>(I))
-            ConstantEvolutionLoopExitValue.erase(PN);
+        // SCEVUnknown for a PHI either means that it has an unrecognized
+        // structure, or it's a PHI that's in the progress of being computed
+        // by createNodeForPHI.  In the former case, additional loop trip
+        // count information isn't going to change anything. In the later
+        // case, createNodeForPHI will perform the necessary updates on its
+        // own when it gets to that point.
+        if (!isa<PHINode>(I) || !isa<SCEVUnknown>(Old)) {
+          forgetMemoizedResults(Old);
+          ValueExprMap.erase(It);
         }
-
-        PushDefUseChildren(I, Worklist);
+        if (PHINode *PN = dyn_cast<PHINode>(I))
+          ConstantEvolutionLoopExitValue.erase(PN);
       }
+
+      PushDefUseChildren(I, Worklist);
     }
   }
   return Pair.first->second;
