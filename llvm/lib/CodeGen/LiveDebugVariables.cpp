@@ -374,12 +374,7 @@ void Location::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
     return;
   default:
     if (isReg()) {
-      if (TargetRegisterInfo::isVirtualRegister(Kind)) {
-        OS << "%reg" << Kind;
-        if (Data.SubIdx)
-          OS << ':' << TRI->getSubRegIndexName(Data.SubIdx);
-      } else
-        OS << '%' << TRI->getName(Kind);
+      OS << PrintReg(Kind, TRI, Data.SubIdx);
     } else {
       OS << "fi#" << ~Kind;
       if (Data.Offset)

@@ -985,23 +985,19 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     return false;
   }
 
-  DEBUG(dbgs() << "\tConsidering merging %reg" << CP.getSrcReg());
+  DEBUG(dbgs() << "\tConsidering merging " << PrintReg(CP.getSrcReg(), tri_));
 
   // Enforce policies.
   if (CP.isPhys()) {
-    DEBUG(dbgs() <<" with physreg %" << tri_->getName(CP.getDstReg()) << "\n");
+    DEBUG(dbgs() <<" with physreg " << PrintReg(CP.getDstReg(), tri_) << "\n");
     // Only coalesce to allocatable physreg.
     if (!li_->isAllocatable(CP.getDstReg())) {
       DEBUG(dbgs() << "\tRegister is an unallocatable physreg.\n");
       return false;  // Not coalescable.
     }
   } else {
-    DEBUG({
-      dbgs() << " with reg%" << CP.getDstReg();
-      if (CP.getSubIdx())
-        dbgs() << ":" << tri_->getSubRegIndexName(CP.getSubIdx());
-      dbgs() << " to " << CP.getNewRC()->getName() << "\n";
-    });
+    DEBUG(dbgs() << " with " << PrintReg(CP.getDstReg(), tri_, CP.getSubIdx())
+                 << " to " << CP.getNewRC()->getName() << "\n");
 
     // Avoid constraining virtual register regclass too much.
     if (CP.isCrossClass()) {

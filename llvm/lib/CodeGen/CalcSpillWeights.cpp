@@ -222,7 +222,7 @@ void VirtRegAuxInfo::CalculateRegClass(unsigned reg) {
 
   if (rc == orc)
     return;
-  DEBUG(dbgs() << "Inflating " << orc->getName() << ":%reg" << reg << " to "
-               << rc->getName() <<".\n");
+  DEBUG(dbgs() << "Inflating " << orc->getName() << ':' << PrintReg(reg)
+               << " to " << rc->getName() <<".\n");
   mri.setRegClass(reg, rc);
 }

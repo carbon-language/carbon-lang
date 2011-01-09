@@ -227,24 +227,11 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
       if (const MachineBasicBlock *MBB = MI->getParent())
         if (const MachineFunction *MF = MBB->getParent())
           TM = &MF->getTarget();
+  const TargetRegisterInfo *TRI = TM ? TM->getRegisterInfo() : 0;
 
   switch (getType()) {
   case MachineOperand::MO_Register:
-    if (getReg() == 0 || TargetRegisterInfo::isVirtualRegister(getReg())) {
-      OS << "%reg" << getReg();
-    } else {
-      if (TM)
-        OS << "%" << TM->getRegisterInfo()->get(getReg()).Name;
-      else
-        OS << "%physreg" << getReg();
-    }
-
-    if (getSubReg() != 0) {
-      if (TM)
-        OS << ':' << TM->getRegisterInfo()->getSubRegIndexName(getSubReg());
-      else
-        OS << ':' << getSubReg();
-    }
+    OS << PrintReg(getReg(), TRI, getSubReg());
 
     if (isDef() || isKill() || isDead() || isImplicit() || isUndef() ||
         isEarlyClobber()) {
@@ -1448,14 +1435,14 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     if (!HaveSemi) OS << ";"; HaveSemi = true;
     for (unsigned i = 0; i != VirtRegs.size(); ++i) {
       const TargetRegisterClass *RC = MRI->getRegClass(VirtRegs[i]);
-      OS << " " << RC->getName() << ":%reg" << VirtRegs[i];
+      OS << " " << RC->getName() << ':' << PrintReg(VirtRegs[i]);
       for (unsigned j = i+1; j != VirtRegs.size();) {
         if (MRI->getRegClass(VirtRegs[j]) != RC) {
           ++j;
           continue;
         }
         if (VirtRegs[i] != VirtRegs[j])
-          OS << "," << VirtRegs[j];
+          OS << "," << PrintReg(VirtRegs[j]);
         VirtRegs.erase(VirtRegs.begin()+j);
       }
     }

@@ -6021,12 +6021,7 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
       OS << LBB->getName() << " ";
     OS << (const void*)BBDN->getBasicBlock() << ">";
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(this)) {
-    if (G && R->getReg() &&
-        TargetRegisterInfo::isPhysicalRegister(R->getReg())) {
-      OS << " %" << G->getTarget().getRegisterInfo()->getName(R->getReg());
-    } else {
-      OS << " %reg" << R->getReg();
-    }
+    OS << ' ' << PrintReg(R->getReg(), G ? G->getTarget().getRegisterInfo() :0);
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
     OS << "'" << ES->getSymbol() << "'";

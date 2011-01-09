@@ -211,7 +211,7 @@ void PHIElimination::LowerAtomicPHINode(
       IncomingReg = entry;
       reusedIncoming = true;
       ++NumReused;
-      DEBUG(dbgs() << "Reusing %reg" << IncomingReg << " for " << *MPhi);
+      DEBUG(dbgs() << "Reusing " << PrintReg(IncomingReg) << " for " << *MPhi);
     } else {
       const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(DestReg);
       entry = IncomingReg = MF.getRegInfo().createVirtualRegister(RC);

@@ -936,13 +936,13 @@ void MachineVerifier::verifyLiveVariables() {
       if (MInfo.vregsRequired.count(Reg)) {
         if (!VI.AliveBlocks.test(MFI->getNumber())) {
           report("LiveVariables: Block missing from AliveBlocks", MFI);
-          *OS << "Virtual register %reg" << Reg
+          *OS << "Virtual register " << PrintReg(Reg)
               << " must be live through the block.\n";
         }
       } else {
         if (VI.AliveBlocks.test(MFI->getNumber())) {
           report("LiveVariables: Block should not be in AliveBlocks", MFI);
-          *OS << "Virtual register %reg" << Reg
+          *OS << "Virtual register " << PrintReg(Reg)
               << " is not needed live through the block.\n";
         }
       }

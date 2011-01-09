@@ -263,20 +263,16 @@ void VirtRegMap::print(raw_ostream &OS, const Module* M) const {
   for (unsigned i = 0, e = MRI.getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (Virt2PhysMap[Reg] != (unsigned)VirtRegMap::NO_PHYS_REG) {
-      OS << '[';
-      TRI->printReg(Reg, OS);
-      OS << " -> ";
-      TRI->printReg(Virt2PhysMap[Reg], OS);
-      OS << "] " << MRI.getRegClass(i)->getName() << "\n";
+      OS << '[' << PrintReg(Reg, TRI) << " -> "
+         << PrintReg(Virt2PhysMap[Reg], TRI) << "] "
+         << MRI.getRegClass(Reg)->getName() << "\n";
     }
   }
 
   for (unsigned i = 0, e = MRI.getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (Virt2StackSlotMap[Reg] != VirtRegMap::NO_STACK_SLOT) {
-      OS << '[';
-      TRI->printReg(Reg, OS);
-      OS << " -> fi#" << Virt2StackSlotMap[Reg]
+      OS << '[' << PrintReg(Reg, TRI) << " -> fi#" << Virt2StackSlotMap[Reg]
          << "] " << MRI.getRegClass(Reg)->getName() << "\n";
     }
   }

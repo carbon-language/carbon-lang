@@ -69,23 +69,22 @@ void LiveIntervalUnion::extract(LiveInterval &VirtReg) {
 
 void
 LiveIntervalUnion::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
-  OS << "LIU ";
-  TRI->printReg(RepReg, OS);
+  OS << "LIU " << PrintReg(RepReg, TRI);
   if (empty()) {
     OS << " empty\n";
     return;
   }
   for (LiveSegments::const_iterator SI = Segments.begin(); SI.valid(); ++SI) {
-    OS << " [" << SI.start() << ' ' << SI.stop() << "):";
-    TRI->printReg(SI.value()->reg, OS);
+    OS << " [" << SI.start() << ' ' << SI.stop() << "):"
+       << PrintReg(SI.value()->reg, TRI);
   }
   OS << '\n';
 }
 
 void LiveIntervalUnion::InterferenceResult::print(raw_ostream &OS,
                                           const TargetRegisterInfo *TRI) const {
-  OS << '[' << start() << ';' << stop() << "):";
-  TRI->printReg(interference()->reg, OS);
+  OS << '[' << start() << ';' << stop() << "):"
+     << PrintReg(interference()->reg, TRI);
 }
 
 void LiveIntervalUnion::Query::print(raw_ostream &OS,

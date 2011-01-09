@@ -245,15 +245,6 @@ bool LiveIntervals::conflictsWithAliasRef(LiveInterval &li, unsigned Reg,
   return false;
 }
 
-#ifndef NDEBUG
-static void printRegName(unsigned reg, const TargetRegisterInfo* tri_) {
-  if (TargetRegisterInfo::isPhysicalRegister(reg))
-    dbgs() << tri_->getName(reg);
-  else
-    dbgs() << "%reg" << reg;
-}
-#endif
-
 static
 bool MultipleDefsBySameMI(const MachineInstr &MI, unsigned MOIdx) {
   unsigned Reg = MI.getOperand(MOIdx).getReg();
@@ -295,10 +286,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              MachineOperand& MO,
                                              unsigned MOIdx,
                                              LiveInterval &interval) {
-  DEBUG({
-      dbgs() << "\t\tregister: ";
-      printRegName(interval.reg, tri_);
-    });
+  DEBUG(dbgs() << "\t\tregister: " << PrintReg(interval.reg, tri_));
 
   // Virtual registers may be defined multiple times (due to phi
   // elimination and 2-addr elimination).  Much of what we do only has to be
@@ -498,10 +486,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineInstr *CopyMI) {
   // A physical register cannot be live across basic block, so its
   // lifetime must end somewhere in its defining basic block.
-  DEBUG({
-      dbgs() << "\t\tregister: ";
-      printRegName(interval.reg, tri_);
-    });
+  DEBUG(dbgs() << "\t\tregister: " << PrintReg(interval.reg, tri_));
 
   SlotIndex baseIndex = MIIdx;
   SlotIndex start = baseIndex.getDefIndex();
@@ -605,10 +590,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
 void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
                                          SlotIndex MIIdx,
                                          LiveInterval &interval, bool isAlias) {
-  DEBUG({
-      dbgs() << "\t\tlivein register: ";
-      printRegName(interval.reg, tri_);
-    });
+  DEBUG(dbgs() << "\t\tlivein register: " << PrintReg(interval.reg, tri_));
 
   // Look for kills, if it reaches a def before it's killed, then it shouldn't
   // be considered a livein.

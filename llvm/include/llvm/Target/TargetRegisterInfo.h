@@ -333,9 +333,6 @@ public:
     return Index + FirstVirtualRegister;
   }
 
-  /// printReg - Print a virtual or physical register on OS.
-  void printReg(unsigned Reg, raw_ostream &OS) const;
-
   /// getMinimalPhysRegClass - Returns the Register Class of a physical
   /// register of the given type, picking the most sub register class of
   /// the right type that contains this physreg.
@@ -757,6 +754,33 @@ struct VirtReg2IndexFunctor : public std::unary_function<unsigned, unsigned> {
 /// if there is no common subclass.
 const TargetRegisterClass *getCommonSubClass(const TargetRegisterClass *A,
                                              const TargetRegisterClass *B);
+
+/// PrintReg - Helper class for printing registers on a raw_ostream.
+/// Prints virtual and physical registers with or without a TRI instance.
+///
+/// The format is:
+///   %noreg         - NoRegister
+///   %reg5          - a virtual register.
+///   %reg5:sub_8bit - a virtual register with sub-register index (with TRI).
+///   %EAX           - a physical register
+///   %physreg17     - a physical register when no TRI instance given.
+///
+/// Usage: OS << PrintReg(Reg, TRI) << '\n';
+///
+class PrintReg {
+  const TargetRegisterInfo *TRI;
+  unsigned Reg;
+  unsigned SubIdx;
+public:
+  PrintReg(unsigned reg, const TargetRegisterInfo *tri = 0, unsigned subidx = 0)
+    : TRI(tri), Reg(reg), SubIdx(subidx) {}
+  void print(raw_ostream&) const;
+};
+
+static inline raw_ostream &operator<<(raw_ostream &OS, const PrintReg &PR) {
+  PR.print(OS);
+  return OS;
+}
 
 } // End llvm namespace
 

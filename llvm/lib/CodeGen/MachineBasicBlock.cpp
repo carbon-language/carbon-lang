@@ -166,17 +166,6 @@ void MachineBasicBlock::dump() const {
   print(dbgs());
 }
 
-static inline void OutputReg(raw_ostream &os, unsigned RegNo,
-                             const TargetRegisterInfo *TRI = 0) {
-  if (RegNo != 0 && TargetRegisterInfo::isPhysicalRegister(RegNo)) {
-    if (TRI)
-      os << " %" << TRI->get(RegNo).Name;
-    else
-      os << " %physreg" << RegNo;
-  } else
-    os << " %reg" << RegNo;
-}
-
 StringRef MachineBasicBlock::getName() const {
   if (const BasicBlock *LBB = getBasicBlock())
     return LBB->getName();
@@ -214,7 +203,7 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
     if (Indexes) OS << '\t';
     OS << "    Live Ins:";
     for (livein_iterator I = livein_begin(),E = livein_end(); I != E; ++I)
-      OutputReg(OS, *I, TRI);
+      OS << PrintReg(*I, TRI);
     OS << '\n';
   }
   // Print the preds of this block according to the CFG.
