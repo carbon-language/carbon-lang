@@ -4821,8 +4821,9 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
 #endif
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
-          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT,
-                                                      R1->getValue(), R2->getValue()))) {
+          dyn_cast<ConstantInt>(ConstantExpr::getICmp(CmpInst::ICMP_ULT,
+                                                      R1->getValue(),
+                                                      R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
         
@@ -4856,6 +4857,14 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   const SCEV *Start = getSCEVAtScope(AddRec->getStart(), L->getParentLoop());
   const SCEV *Step = getSCEVAtScope(AddRec->getOperand(1), L->getParentLoop());
 
+  // If the AddRec is NUW, then (in an unsigned sense) it cannot be counting up
+  // to wrap to 0, it must be counting down to equal 0.  Also, while counting
+  // down, it cannot "miss" 0 (which would cause it to wrap), regardless of what
+  // the stride is.  As such, NUW addrec's will always become zero in
+  // "start / -stride" steps, and we know that the division is exact.
+  if (AddRec->hasNoUnsignedWrap())
+    return getUDivExpr(Start, getNegativeSCEV(Step));
+  
   // For now we handle only constant steps.
   const SCEVConstant *StepC = dyn_cast<SCEVConstant>(Step);
   if (StepC == 0)
