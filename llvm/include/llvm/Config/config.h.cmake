@@ -31,7 +31,7 @@
 #define CXX_INCLUDE_64BIT_DIR "${CXX_INCLUDE_64BIT_DIR}"
 
 /* Define if position independent code is enabled */
-#cmakedefine ENABLE_PIC ${ENABLE_PIC}
+#cmakedefine ENABLE_PIC
 
 /* Define if threads enabled */
 #cmakedefine ENABLE_THREADS ${ENABLE_THREADS}

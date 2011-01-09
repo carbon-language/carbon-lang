@@ -195,26 +195,28 @@ else(WIN32)
   endif(UNIX)
 endif(WIN32)
 
-include(config-ix)
-
 option(LLVM_ENABLE_PIC "Build Position-Independent Code" ON)
 
-set(ENABLE_PIC 0)
 if( LLVM_ENABLE_PIC )
- if( XCODE )
-   # Xcode has -mdynamic-no-pic on by default, which overrides -fPIC. I don't
-   # know how to disable this, so just force ENABLE_PIC off for now.
-   message(STATUS "Warning: -fPIC not supported with Xcode.")
- else( XCODE )
-   if( SUPPORTS_FPIC_FLAG )
+  if( XCODE )
+    # Xcode has -mdynamic-no-pic on by default, which overrides -fPIC. I don't
+    # know how to disable this, so just force ENABLE_PIC off for now.
+    message(WARNING "-fPIC not supported with Xcode.")
+  elseif( WIN32 )
+    # On Windows all code is PIC. MinGW warns if -fPIC is used.
+  else()
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("-fPIC" SUPPORTS_FPIC_FLAG)
+    if( SUPPORTS_FPIC_FLAG )
       message(STATUS "Building with -fPIC")
-      add_llvm_definitions(-fPIC)
-      set(ENABLE_PIC 1)
-   else( SUPPORTS_FPIC_FLAG )
-      message(STATUS "Warning: -fPIC not supported.")
-   endif()
- endif()
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    else( SUPPORTS_FPIC_FLAG )
+      message(WARNING "-fPIC not supported.")
+    endif()
+  endif()
 endif()
+
+include(config-ix)
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LLVM_TOOLS_BINARY_DIR} )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LLVM_BINARY_DIR}/lib )

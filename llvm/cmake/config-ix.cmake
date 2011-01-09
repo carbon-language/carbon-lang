@@ -162,12 +162,9 @@ llvm_find_program(dotty)
 # Define LLVM_MULTITHREADED if gcc atomic builtins exists.
 include(CheckAtomic)
 
+set(ENABLE_PIC ${LLVM_ENABLE_PIC})
+
 include(CheckCXXCompilerFlag)
-# On windows all code is position-independent and mingw warns if -fPIC
-# is in the command-line.
-if( NOT WIN32 )
-  check_cxx_compiler_flag("-fPIC" SUPPORTS_FPIC_FLAG)
-endif()
 
 check_cxx_compiler_flag("-Wno-variadic-macros" SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 
