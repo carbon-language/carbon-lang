@@ -385,7 +385,8 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
       
       // Check to see if this store is to a constant offset from the start ptr.
       int64_t Offset;
-      if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(), Offset, *TD))
+      if (!IsPointerOffset(StartPtr, NextStore->getPointerOperand(),
+                           Offset, *TD))
         break;
       
       Ranges.addStore(Offset, NextStore);
@@ -490,6 +491,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
         if (changed) {
           MD->removeInstruction(SI);
           SI->eraseFromParent();
+          MD->removeInstruction(LI);
           LI->eraseFromParent();
           ++NumMemCpyInstr;
           return true;
@@ -786,6 +788,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   if (CallInst *C = dyn_cast<CallInst>(DepInfo.getInst())) {
     if (performCallSlotOptzn(M, M->getDest(), M->getSource(),
                              CopySize->getZExtValue(), C)) {
+      MD->removeInstruction(M);
       M->eraseFromParent();
       return true;
     }
