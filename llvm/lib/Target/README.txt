@@ -2193,3 +2193,36 @@ is the fact that all three null stores in %entry are dead, but not eliminated.
 Also surprising is that %conv isn't simplified to 0 in %....exit.thread.i.i.
 
 //===---------------------------------------------------------------------===//
+
+clang -O3 -fno-exceptions currently compiles this code:
+
+void f(int N) {
+  std::vector<int> v(N);
+  g(v);
+}
+
+into almost the same as the previous note, but replace its final BB with:
+
+for.body.lr.ph:                                   ; preds = %cond.true.i.i.i.i
+  %mul.i.i.i.i.i = shl i64 %conv, 2
+  %call3.i.i.i.i.i = call noalias i8* @_Znwm(i64 %mul.i.i.i.i.i) nounwind
+  %0 = bitcast i8* %call3.i.i.i.i.i to i32*
+  store i32* %0, i32** %v8.sub, align 8, !tbaa !0
+  %add.ptr.i.i.i = getelementptr inbounds i32* %0, i64 %conv
+  store i32* %add.ptr.i.i.i, i32** %tmp4.i.i.i.i.i, align 8, !tbaa !0
+  call void @llvm.memset.p0i8.i64(i8* %call3.i.i.i.i.i, i8 0, i64 %mul.i.i.i.i.i, i32 4, i1 false)
+  store i32* %add.ptr.i.i.i, i32** %tmp3.i.i.i.i.i, align 8, !tbaa !0
+  %tmp18 = add i32 %N, -1
+  %tmp19 = zext i32 %tmp18 to i64
+  %tmp20 = shl i64 %tmp19, 2
+  %tmp21 = add i64 %tmp20, 4
+  call void @llvm.memset.p0i8.i64(i8* %call3.i.i.i.i.i, i8 0, i64 %tmp21, i32 4, i1 false)
+  br label %for.end
+
+First off, why (((zext %N - 1) << 2) + 4) instead of the ((sext %N) << 2) done
+previously? (or better yet, re-use that one?)
+
+Then, the really painful one is the second memset, of the same memory, to the
+same value.
+
+//===---------------------------------------------------------------------===//
