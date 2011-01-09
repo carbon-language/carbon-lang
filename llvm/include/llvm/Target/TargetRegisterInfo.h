@@ -295,11 +295,16 @@ protected:
   virtual ~TargetRegisterInfo();
 public:
 
-  enum {                        // Define some target independent constants
-    /// NoRegister - This physical register is not a real target register.  It
-    /// is useful as a sentinel.
-    NoRegister = 0
-  };
+  // Register numbers can represent physical registers, virtual registers, and
+  // sometimes stack slots. The unsigned values are divided into these ranges:
+  //
+  //   0           Not a register, can be used as a sentinel.
+  //   [1;2^30)    Physical registers assigned by TableGen.
+  //   [2^30;2^31) Stack slots. (Rarely used.)
+  //   [2^31;2^32) Virtual registers assigned by MachineRegisterInfo.
+  //
+  // Further sentinels can be allocated from the small negative integers.
+  // DenseMapInfo<unsigned> uses -1u and -2u.
 
   /// isStackSlot - Sometimes it is useful the be able to store a non-negative
   /// frame index in a variable that normally holds a register. isStackSlot()
