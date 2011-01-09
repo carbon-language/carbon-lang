@@ -80,7 +80,7 @@ namespace llvm {
 
     /// Virt2SplitKillMap - This is splitted virtual register to its last use
     /// (kill) index mapping.
-    IndexedMap<SlotIndex> Virt2SplitKillMap;
+    IndexedMap<SlotIndex, VirtReg2IndexFunctor> Virt2SplitKillMap;
 
     /// ReMatMap - This is virtual register to re-materialized instruction
     /// mapping. Each virtual register whose definition is going to be
