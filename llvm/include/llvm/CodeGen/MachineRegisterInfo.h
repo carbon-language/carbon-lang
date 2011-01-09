@@ -216,12 +216,6 @@ public:
   ///
   unsigned getNumVirtRegs() const { return VRegInfo.size(); }
 
-  /// getLastVirtReg - Return the highest currently assigned virtual register.
-  ///
-  unsigned getLastVirtReg() const {
-    return TargetRegisterInfo::index2VirtReg(getNumVirtRegs() - 1);
-  }
-
   /// getRegClassVirtRegs - Return the list of virtual registers of the given
   /// target register class.
   const std::vector<unsigned> &

@@ -1024,8 +1024,7 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
-  unsigned LastVirtReg = MRI->getLastVirtReg();
-  StackSlotForVirtReg.grow(LastVirtReg);
+  StackSlotForVirtReg.resize(MRI->getNumVirtRegs());
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBBi = Fn.begin(), MBBe = Fn.end();

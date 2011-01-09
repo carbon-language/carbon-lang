@@ -88,14 +88,14 @@ bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
 }
 
 void VirtRegMap::grow() {
-  unsigned LastVirtReg = MF->getRegInfo().getLastVirtReg();
-  Virt2PhysMap.grow(LastVirtReg);
-  Virt2StackSlotMap.grow(LastVirtReg);
-  Virt2ReMatIdMap.grow(LastVirtReg);
-  Virt2SplitMap.grow(LastVirtReg);
-  Virt2SplitKillMap.grow(LastVirtReg);
-  ReMatMap.grow(LastVirtReg);
-  ImplicitDefed.resize(MF->getRegInfo().getNumVirtRegs());
+  unsigned NumRegs = MF->getRegInfo().getNumVirtRegs();
+  Virt2PhysMap.resize(NumRegs);
+  Virt2StackSlotMap.resize(NumRegs);
+  Virt2ReMatIdMap.resize(NumRegs);
+  Virt2SplitMap.resize(NumRegs);
+  Virt2SplitKillMap.resize(NumRegs);
+  ReMatMap.resize(NumRegs);
+  ImplicitDefed.resize(NumRegs);
 }
 
 unsigned VirtRegMap::createSpillSlot(const TargetRegisterClass *RC) {
