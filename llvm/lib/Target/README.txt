@@ -2108,3 +2108,33 @@ into a call to calloc.  We should make sure that we analyze calloc as
 aggressively as malloc though.
 
 //===---------------------------------------------------------------------===//
+
+clang -03 currently compiles this code
+
+void f1(int* begin, int* end) {
+  std::fill(begin, end, 0);
+}
+
+into
+
+define void @_Z2f1PiS_(i32* %begin, i32* %end) nounwind {
+entry:
+  %cmp7.i.i = icmp eq i32* %begin, %end
+  br i1 %cmp7.i.i, label %_ZSt4fillIPiiEvT_S1_RKT0_.exit, label %for.body.i.i
+
+for.body.i.i:                                     ; preds = %entry, %for.body.i.i
+  %indvar.i.i = phi i64 [ %tmp, %for.body.i.i ], [ 0, %entry ]
+  %tmp = add i64 %indvar.i.i, 1
+  %ptrincdec.i.i = getelementptr i32* %begin, i64 %tmp
+  %__first.addr.08.i.i = getelementptr i32* %begin, i64 %indvar.i.i
+  store i32 0, i32* %__first.addr.08.i.i, align 4, !tbaa !0
+  %cmp.i.i = icmp eq i32* %ptrincdec.i.i, %end
+  br i1 %cmp.i.i, label %_ZSt4fillIPiiEvT_S1_RKT0_.exit, label %for.body.i.i
+
+_ZSt4fillIPiiEvT_S1_RKT0_.exit:                   ; preds = %for.body.i.i, %entry
+  ret void
+}
+
+It should compile it to a memset.
+
+//===---------------------------------------------------------------------===//
