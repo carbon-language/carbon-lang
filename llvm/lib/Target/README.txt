@@ -2230,3 +2230,22 @@ Then, the really painful one is the second memset, of the same memory, to the
 same value.
 
 //===---------------------------------------------------------------------===//
+
+clang -O3 -fno-exceptions currently compiles this code:
+
+struct S {
+  unsigned short m1, m2;
+  unsigned char m3, m4;
+};
+
+void f(int N) {
+  std::vector<S> v(N);
+  extern void sink(void*); sink(&v);
+}
+
+into poor code for zero-initializing 'v' when N is >0. The problem is that
+S is only 6 bytes, but each element is 8 byte-aligned. We generate a loop and
+4 stores on each iteration. If the struct were 8 bytes, this gets turned into
+a memset.
+
+//===---------------------------------------------------------------------===//
