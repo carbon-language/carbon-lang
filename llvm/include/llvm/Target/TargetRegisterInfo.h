@@ -759,11 +759,11 @@ const TargetRegisterClass *getCommonSubClass(const TargetRegisterClass *A,
 /// Prints virtual and physical registers with or without a TRI instance.
 ///
 /// The format is:
-///   %noreg         - NoRegister
-///   %reg5          - a virtual register.
-///   %reg5:sub_8bit - a virtual register with sub-register index (with TRI).
-///   %EAX           - a physical register
-///   %physreg17     - a physical register when no TRI instance given.
+///   %noreg          - NoRegister
+///   %vreg5          - a virtual register.
+///   %vreg5:sub_8bit - a virtual register with sub-register index (with TRI).
+///   %EAX            - a physical register
+///   %physreg17      - a physical register when no TRI instance given.
 ///
 /// Usage: OS << PrintReg(Reg, TRI) << '\n';
 ///
