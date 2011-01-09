@@ -281,8 +281,8 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   Value *FalseVal = SI.getFalseValue();
 
   // Check cases where the comparison is with a constant that
-  // can be adjusted to fit the min/max idiom. We may edit ICI in
-  // place here, so make sure the select is the only user.
+  // can be adjusted to fit the min/max idiom. We may move or edit ICI
+  // here, so make sure the select is the only user.
   if (ICI->hasOneUse())
     if (ConstantInt *CI = dyn_cast<ConstantInt>(CmpRHS)) {
       // X < MIN ? T : F  -->  F
@@ -364,6 +364,11 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
         ICI->setOperand(1, CmpRHS);
         SI.setOperand(1, TrueVal);
         SI.setOperand(2, FalseVal);
+
+        // Move ICI instruction right before the select instruction. Otherwise
+        // the sext/zext value may be defined after the ICI instruction uses it.
+        ICI->moveBefore(&SI);
+
         Changed = true;
         break;
       }

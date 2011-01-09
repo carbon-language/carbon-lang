@@ -678,3 +678,14 @@ define i64 @test49(i32 %a) nounwind {
 ; CHECK-NEXT: %min = select i1 %is_a_nonpositive, i64 %a_ext, i64 2
 ; CHECK-NEXT: ret i64 %min
 }
+define i64 @test50(i32 %a) nounwind {
+	%is_a_nonpositive = icmp ult i32 %a, 3
+	%a_ext = sext i32 %a to i64
+	%min = select i1 %is_a_nonpositive, i64 2, i64 %a_ext
+	ret i64 %min
+; CHECK: @test50
+; CHECK-NEXT: %a_ext = sext i32 %a to i64
+; CHECK-NEXT: %is_a_nonpositive = icmp ugt i64 %a_ext, 2
+; CHECK-NEXT: %min = select i1 %is_a_nonpositive, i64 %a_ext, i64 2
+; CHECK-NEXT: ret i64 %min
+}
