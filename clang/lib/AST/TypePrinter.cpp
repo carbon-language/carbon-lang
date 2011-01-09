@@ -870,7 +870,7 @@ TemplateSpecializationType::PrintTemplateArgumentList(
   // If the last character of our string is '>', add another space to
   // keep the two '>''s separate tokens. We don't *have* to do this in
   // C++0x, but it's still good hygiene.
-  if (SpecString[SpecString.size() - 1] == '>')
+  if (!SpecString.empty() && SpecString[SpecString.size() - 1] == '>')
     SpecString += ' ';
   
   if (!SkipBrackets)
