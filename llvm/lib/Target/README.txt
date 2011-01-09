@@ -2249,3 +2249,27 @@ S is only 6 bytes, but each element is 8 byte-aligned. We generate a loop and
 a memset.
 
 //===---------------------------------------------------------------------===//
+
+clang -O3 currently compiles this code:
+
+extern const int magic;
+double f() { return 0.0 * magic; }
+
+into
+
+@magic = external constant i32
+
+define double @_Z1fv() nounwind readnone {
+entry:
+  %tmp = load i32* @magic, align 4, !tbaa !0
+  %conv = sitofp i32 %tmp to double
+  %mul = fmul double %conv, 0.000000e+00
+  ret double %mul
+}
+
+We should be able to fold away this fmul to a constant, there is no 32-bit
+integer which after sitofp will generate a NaN, inf, or -0.0. We should fold
+this whenever the floating point type has enough exponent bits to represent
+the largest integer value as < inf.
+
+//===---------------------------------------------------------------------===//
