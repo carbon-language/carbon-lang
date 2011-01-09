@@ -39,7 +39,6 @@ GDBRemoteRegisterContext::GDBRemoteRegisterContext
     RegisterContext (thread, concrete_frame_idx),
     m_reg_info (reg_info),
     m_reg_valid (),
-    m_reg_valid_stop_id (),
     m_reg_data (),
     m_read_all_at_once (read_all_at_once)
 {
@@ -74,7 +73,7 @@ GDBRemoteRegisterContext::GetGDBThread()
 }
 
 void
-GDBRemoteRegisterContext::Invalidate ()
+GDBRemoteRegisterContext::InvalidateAllRegisters ()
 {
     SetAllRegisterValid (false);
 }
@@ -179,25 +178,41 @@ GDBRemoteRegisterContext::ReadRegisterValue (uint32_t reg, Scalar &value)
     return false;
 }
 
+void
+GDBRemoteRegisterContext::PrivateSetRegisterValue (uint32_t reg, StringExtractor &response)
+{
+    const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
+    assert (reg_info);
+
+    // Invalidate if needed
+    InvalidateIfNeeded(false);
+
+    const uint32_t reg_byte_size = reg_info->byte_size;
+    const size_t bytes_copied = response.GetHexBytes (const_cast<uint8_t*>(m_reg_data.PeekData(reg_info->byte_offset, reg_byte_size)), reg_byte_size, '\xcc');
+    bool success = bytes_copied == reg_byte_size;
+    if (success)
+    {
+        m_reg_valid[reg] = true;
+    }
+    else if (bytes_copied > 0)
+    {
+        // Only set register is valid to false if we copied some bytes, else 
+        // leave it as it was.
+        m_reg_valid[reg] = false;
+    }
+}
+
 
 bool
 GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
 {
     GDBRemoteCommunication &gdb_comm = GetGDBProcess().GetGDBRemote();
-// FIXME: This check isn't right because IsRunning checks the Public state, but this
-// is work you need to do - for instance in ShouldStop & friends - before the public 
-// state has been changed.
-//    if (gdb_comm.IsRunning())
-//        return false;
 
-    if (m_reg_valid_stop_id != m_thread.GetProcess().GetStopID())
-    {
-        Invalidate();
-        m_reg_valid_stop_id = m_thread.GetProcess().GetStopID();
-    }
+    InvalidateIfNeeded(false);
+
     const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
     assert (reg_info);
-    if (m_reg_valid[reg] == false)
+    if (!m_reg_valid[reg])
     {
         Mutex::Locker locker;
         if (gdb_comm.GetSequenceMutex (locker))
@@ -225,28 +240,27 @@ GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
                     packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
                     assert (packet_len < (sizeof(packet) - 1));
                     if (gdb_comm.SendPacketAndWaitForResponse(packet, response, 1, false))
-                        if (response.GetHexBytes (const_cast<uint8_t*>(m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size)), reg_info->byte_size, '\xcc') == reg_info->byte_size)
-                            m_reg_valid[reg] = true;
+                        PrivateSetRegisterValue (reg, response);
                 }
             }
         }
+
+        // Make sure we got a valid register value after reading it
+        if (!m_reg_valid[reg])
+            return false;
     }
 
-    bool reg_is_valid = m_reg_valid[reg];
-    if (reg_is_valid)
+    if (&data != &m_reg_data)
     {
-        if (&data != &m_reg_data)
-        {
-            // If we aren't extracting into our own buffer (which
-            // only happens when this function is called from
-            // ReadRegisterValue(uint32_t, Scalar&)) then
-            // we transfer bytes from our buffer into the data
-            // buffer that was passed in
-            data.SetByteOrder (m_reg_data.GetByteOrder());
-            data.SetData (m_reg_data, reg_info->byte_offset, reg_info->byte_size);
-        }
+        // If we aren't extracting into our own buffer (which
+        // only happens when this function is called from
+        // ReadRegisterValue(uint32_t, Scalar&)) then
+        // we transfer bytes from our buffer into the data
+        // buffer that was passed in
+        data.SetByteOrder (m_reg_data.GetByteOrder());
+        data.SetData (m_reg_data, reg_info->byte_offset, reg_info->byte_size);
     }
-    return reg_is_valid;
+    return true;
 }
 
 
@@ -323,8 +337,8 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
                                               eByteOrderHost);
                     
                     // Invalidate all register values
-                    Invalidate ();
-                    
+                    InvalidateIfNeeded (true);
+
                     if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
                                                               packet.GetString().size(),
                                                               response,

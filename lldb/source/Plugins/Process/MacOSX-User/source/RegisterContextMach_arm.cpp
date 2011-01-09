@@ -394,7 +394,7 @@ g_exc_regnums[] =
 static size_t k_num_register_infos = (sizeof(g_register_infos)/sizeof(RegisterInfo));
 
 void
-RegisterContextMach_arm::Invalidate ()
+RegisterContextMach_arm::InvalidateAllRegisters ()
 {
     InvalidateAllRegisterStates();
 }

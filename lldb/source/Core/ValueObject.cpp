@@ -1245,7 +1245,7 @@ ValueObject::Dereference (Error &error)
                                                                       child_bitfield_bit_size,
                                                                       child_bitfield_bit_offset,
                                                                       child_is_base_class);
-        if (child_clang_type && child_byte_offset)
+        if (child_clang_type && child_byte_size)
         {
             ConstString child_name;
             if (!child_name_str.empty())

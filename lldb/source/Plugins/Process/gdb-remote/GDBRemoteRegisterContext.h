@@ -25,6 +25,7 @@
 
 class ThreadGDBRemote;
 class ProcessGDBRemote;
+class StringExtractor;
 
 class GDBRemoteDynamicRegisterInfo
 {
@@ -189,7 +190,7 @@ public:
     // Subclasses must override these functions
     //------------------------------------------------------------------
     virtual void
-    Invalidate ();
+    InvalidateAllRegisters ();
 
     virtual size_t
     GetRegisterCount ();
@@ -225,7 +226,11 @@ public:
     ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num);
 
 protected:
+    friend class ThreadGDBRemote;
 
+    void
+    PrivateSetRegisterValue (uint32_t reg, StringExtractor &response);
+    
     void
     SetAllRegisterValid (bool b);
 
@@ -237,7 +242,6 @@ protected:
 
     GDBRemoteDynamicRegisterInfo &m_reg_info;
     std::vector<bool> m_reg_valid;
-    uint32_t m_reg_valid_stop_id;
     lldb_private::DataExtractor m_reg_data;
     bool m_read_all_at_once;
 

@@ -311,7 +311,7 @@ static size_t k_num_register_infos = (sizeof(g_register_infos)/sizeof(RegisterIn
 
 
 void
-RegisterContextMach_x86_64::Invalidate ()
+RegisterContextMach_x86_64::InvalidateAllRegisters ()
 {
     InvalidateAllRegisterStates();
 }

@@ -16,6 +16,7 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 
 using namespace lldb;
@@ -23,7 +24,8 @@ using namespace lldb_private;
 
 RegisterContext::RegisterContext (Thread &thread, uint32_t concrete_frame_idx) :
     m_thread (thread),
-    m_concrete_frame_idx (concrete_frame_idx)
+    m_concrete_frame_idx (concrete_frame_idx),
+    m_stop_id (thread.GetProcess().GetStopID())
 {
 }
 
@@ -33,6 +35,19 @@ RegisterContext::RegisterContext (Thread &thread, uint32_t concrete_frame_idx) :
 RegisterContext::~RegisterContext()
 {
 }
+
+void
+RegisterContext::InvalidateIfNeeded (bool force)
+{
+    const uint32_t this_stop_id = GetStopID();
+    const uint32_t process_stop_id = m_thread.GetProcess().GetStopID();    
+    if (force || process_stop_id != this_stop_id)
+    {
+        InvalidateAllRegisters ();
+        SetStopID (process_stop_id);
+    }
+}
+
 
 const RegisterInfo *
 RegisterContext::GetRegisterInfoByName (const char *reg_name, uint32_t start_idx)

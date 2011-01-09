@@ -633,7 +633,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
 
 
 void
-RegisterContextLLDB::Invalidate ()
+RegisterContextLLDB::InvalidateAllRegisters ()
 {
     m_frame_type = eNotAValidFrame;
 }

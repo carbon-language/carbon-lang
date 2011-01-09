@@ -27,7 +27,7 @@ public:
     ~RegisterContextMach_x86_64();
 
     virtual void
-    Invalidate ();
+    InvalidateAllRegisters ();
 
     virtual size_t
     GetRegisterCount ();

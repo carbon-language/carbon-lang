@@ -713,13 +713,9 @@ ClangExpressionDeclMap::DoMaterialize
     {
         ClangExpressionVariableSP member_sp(m_struct_members.GetVariableAtIndex(member_index));
         
-        ClangExpressionVariableSP entity_sp (m_found_entities.GetVariable(member_sp->GetName()));
-         
-        ClangExpressionVariableSP persistent_var_sp (persistent_vars.GetVariable(member_sp->GetName()));
-        
-        if (entity_sp)
+        if (m_found_entities.ContainsVariable (member_sp))
         {
-            RegisterInfo *reg_info = entity_sp->GetRegisterInfo ();
+            RegisterInfo *reg_info = member_sp->GetRegisterInfo ();
             if (reg_info)
             {
                 // This is a register variable
@@ -752,34 +748,36 @@ ClangExpressionDeclMap::DoMaterialize
                     return false;
             }
         }
-        else if (persistent_var_sp)
-        {
-            if (member_sp->GetName() == m_struct_vars->m_result_name)
-            {
-                if (!dematerialize)
-                    continue;
-                
-                if (log)
-                    log->PutCString("Found result member in the struct");
-                
-                if (result_sp_ptr)
-                    *result_sp_ptr = member_sp;
-            }
-            
-            if (log)
-                log->Printf("Searched for persistent variable %s and found %s", member_sp->GetName().GetCString(), persistent_var_sp->GetName().GetCString());
-            
-            if (!DoMaterializeOnePersistentVariable (dematerialize, 
-                                                     exe_ctx, 
-                                                     persistent_var_sp, 
-                                                     m_material_vars->m_materialized_location + member_sp->m_jit_vars->m_offset, 
-                                                     err))
-                return false;
-        }
         else
         {
-            err.SetErrorStringWithFormat("Unexpected variable %s", member_sp->GetName().GetCString());
-            return false;
+            // No need to look for presistent variables if the name doesn't start 
+            // with with a '$' character...
+            if (member_sp->GetName().AsCString ("!")[0] == '$' && persistent_vars.ContainsVariable(member_sp))
+            {
+                if (member_sp->GetName() == m_struct_vars->m_result_name)
+                {
+                    if (!dematerialize)
+                        continue;
+                    
+                    if (log)
+                        log->PutCString("Found result member in the struct");
+                    
+                    if (result_sp_ptr)
+                        *result_sp_ptr = member_sp;
+                }
+
+                if (!DoMaterializeOnePersistentVariable (dematerialize, 
+                                                         exe_ctx, 
+                                                         member_sp, 
+                                                         m_material_vars->m_materialized_location + member_sp->m_jit_vars->m_offset, 
+                                                         err))
+                    return false;
+            }
+            else
+            {
+                err.SetErrorStringWithFormat("Unexpected variable %s", member_sp->GetName().GetCString());
+                return false;
+            }
         }
     }
     

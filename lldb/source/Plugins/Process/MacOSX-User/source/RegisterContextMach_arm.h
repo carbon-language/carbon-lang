@@ -60,7 +60,7 @@ public:
     ~RegisterContextMach_arm();
 
     virtual void
-    Invalidate ();
+    InvalidateAllRegisters ();
 
     virtual size_t
     GetRegisterCount ();

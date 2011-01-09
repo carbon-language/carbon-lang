@@ -46,7 +46,7 @@ RegisterContextMacOSXFrameBackchain::~RegisterContextMacOSXFrameBackchain()
 }
 
 void
-RegisterContextMacOSXFrameBackchain::Invalidate ()
+RegisterContextMacOSXFrameBackchain::InvalidateAllRegisters ()
 {
     m_cursor_is_valid = false;
 }

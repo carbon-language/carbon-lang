@@ -33,7 +33,7 @@ public:
     ~RegisterContextLLDB () { }
 
     virtual void
-    Invalidate ();
+    InvalidateAllRegisters ();
 
     virtual size_t
     GetRegisterCount ();

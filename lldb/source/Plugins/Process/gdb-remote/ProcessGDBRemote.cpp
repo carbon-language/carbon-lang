@@ -975,9 +975,7 @@ ProcessGDBRemote::UpdateThreadListIfNeeded ()
                     if (tid != LLDB_INVALID_THREAD_ID)
                     {
                         ThreadSP thread_sp (GetThreadList().FindThreadByID (tid, false));
-                        if (thread_sp)
-                            thread_sp->GetRegisterContext()->Invalidate();
-                        else
+                        if (!thread_sp)
                             thread_sp.reset (new ThreadGDBRemote (*this, tid));
                         curr_thread_list.AddThread(thread_sp);
                     }
@@ -1014,6 +1012,8 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
             uint32_t tid = LLDB_INVALID_THREAD_ID;
             addr_t thread_dispatch_qaddr = LLDB_INVALID_ADDRESS;
             uint32_t exc_data_count = 0;
+            ThreadSP thread_sp;
+
             while (stop_packet.GetNameColonValue(name, value))
             {
                 if (name.compare("metype") == 0)
@@ -1035,6 +1035,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     // thread in big endian hex
                     tid = Args::StringToUInt32 (value.c_str(), 0, 16);
+                    thread_sp = m_thread_list.FindThreadByID(tid, false);
                 }
                 else if (name.compare("hexname") == 0)
                 {
@@ -1053,8 +1054,25 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     thread_dispatch_qaddr = Args::StringToUInt64 (value.c_str(), 0, 16);
                 }
+                else if (name.size() == 2 && ::isxdigit(name[0]) && ::isxdigit(name[1]))
+                {
+                    // We have a register number that contains an expedited
+                    // register value. Lets supply this register to our thread
+                    // so it won't have to go and read it.
+                    if (thread_sp)
+                    {
+                        uint32_t reg = Args::StringToUInt32 (name.c_str(), UINT32_MAX, 16);
+
+                        if (reg != UINT32_MAX)
+                        {
+                            StringExtractor reg_value_extractor;
+                            // Swap "value" over into "reg_value_extractor"
+                            reg_value_extractor.GetStringRef().swap(value);
+                            static_cast<ThreadGDBRemote *> (thread_sp.get())->PrivateSetRegisterValue (reg, reg_value_extractor);
+                        }
+                    }
+                }
             }
-            ThreadSP thread_sp (m_thread_list.FindThreadByID(tid, false));
 
             if (thread_sp)
             {

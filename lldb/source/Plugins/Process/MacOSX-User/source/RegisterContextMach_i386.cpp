@@ -275,7 +275,7 @@ static RegisterInfo g_register_infos[] =
 static size_t k_num_register_infos = (sizeof(g_register_infos)/sizeof(RegisterInfo));
 
 void
-RegisterContextMach_i386::Invalidate ()
+RegisterContextMach_i386::InvalidateAllRegisters ()
 {
     InvalidateAllRegisterStates();
 }

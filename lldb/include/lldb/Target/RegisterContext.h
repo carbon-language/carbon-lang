@@ -31,11 +31,14 @@ public:
     virtual
     ~RegisterContext ();
 
+    void
+    InvalidateIfNeeded (bool force);
+
     //------------------------------------------------------------------
     // Subclasses must override these functions
     //------------------------------------------------------------------
     virtual void
-    Invalidate () = 0;
+    InvalidateAllRegisters () = 0;
 
     virtual size_t
     GetRegisterCount () = 0;
@@ -163,12 +166,25 @@ public:
     virtual void
     CalculateExecutionContext (ExecutionContext &exe_ctx);
 
+    uint32_t
+    GetStopID () const
+    {
+        return m_stop_id;
+    }
+
+    void
+    SetStopID (uint32_t stop_id)
+    {
+        m_stop_id = stop_id;
+    }
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from RegisterContext can see and modify these
     //------------------------------------------------------------------
     Thread &m_thread;               // The thread that this register context belongs to.
     uint32_t m_concrete_frame_idx;    // The concrete frame index for this register context
+    uint32_t m_stop_id;             // The stop ID that any data in this context is valid for
 private:
     //------------------------------------------------------------------
     // For RegisterContext only

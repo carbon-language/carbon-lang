@@ -36,7 +36,7 @@ public:
     // Subclasses must override these functions
     //------------------------------------------------------------------
     virtual void
-    Invalidate ();
+    InvalidateAllRegisters ();
 
     virtual size_t
     GetRegisterCount ();

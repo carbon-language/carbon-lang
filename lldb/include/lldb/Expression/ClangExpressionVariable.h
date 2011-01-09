@@ -226,13 +226,13 @@ public:
     //----------------------------------------------------------------------
     /// Implementation of methods in ClangExpressionVariableListBase
     //----------------------------------------------------------------------
-    virtual size_t 
+    size_t 
     GetSize()
     {
         return m_variables.size();
     }
     
-    virtual lldb::ClangExpressionVariableSP
+    lldb::ClangExpressionVariableSP
     GetVariableAtIndex(size_t index)
     {
         lldb::ClangExpressionVariableSP var_sp;
@@ -241,11 +241,23 @@ public:
         return var_sp;
     }
     
-    virtual size_t
+    size_t
     AddVariable (const lldb::ClangExpressionVariableSP &var_sp)
     {
         m_variables.push_back(var_sp);
         return m_variables.size() - 1;
+    }
+
+    bool
+    ContainsVariable (const lldb::ClangExpressionVariableSP &var_sp)
+    {
+        const size_t size = m_variables.size();
+        for (size_t index = 0; index < size; ++index)
+        {
+            if (m_variables[index].get() == var_sp.get())
+                return true;
+        }
+        return false;
     }
 
     //----------------------------------------------------------------------

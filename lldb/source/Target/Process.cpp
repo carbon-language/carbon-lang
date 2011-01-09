@@ -234,7 +234,7 @@ Process::Process(Target &target, Listener &listener) :
     m_addr_byte_size (0),
     m_abi_sp (),
     m_process_input_reader (),
-    m_stdio_communication ("lldb.process.stdio"),
+    m_stdio_communication ("process.stdio"),
     m_stdio_communication_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data (),
     m_memory_cache ()
@@ -2004,7 +2004,9 @@ Process::StartPrivateStateThread ()
 
     // Create a thread that watches our internal state and controls which
     // events make it to clients (into the DCProcess event queue).
-    m_private_state_thread = Host::ThreadCreate ("<lldb.process.internal-state>", Process::PrivateStateThread, this, NULL);
+    char thread_name[1024];
+    snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%i)>", GetID());
+    m_private_state_thread = Host::ThreadCreate (thread_name, Process::PrivateStateThread, this, NULL);
     return m_private_state_thread != LLDB_INVALID_HOST_THREAD;
 }
 

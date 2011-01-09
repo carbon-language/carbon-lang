@@ -961,7 +961,11 @@ Target::EvaluateExpression
     {
         // Make sure we aren't just trying to see the value of a persistent 
         // variable (something like "$0")
-        lldb::ClangExpressionVariableSP persistent_var_sp (m_persistent_variables.GetVariable (expr_cstr));
+        lldb::ClangExpressionVariableSP persistent_var_sp;
+        // Only check for persistent variables the expression starts with a '$' 
+        if (expr_cstr[0] == '$')
+            persistent_var_sp = m_persistent_variables.GetVariable (expr_cstr);
+
         if (persistent_var_sp)
         {
             result_valobj_sp = persistent_var_sp->GetValueObject ();

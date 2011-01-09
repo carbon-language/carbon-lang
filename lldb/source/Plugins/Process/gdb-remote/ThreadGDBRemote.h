@@ -108,12 +108,20 @@ public:
     }
 
 protected:
+    
+    friend class ProcessGDBRemote;
+
+    void
+    PrivateSetRegisterValue (uint32_t reg, 
+                             StringExtractor &response);
+                             
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
     std::string m_thread_name;
     std::string m_dispatch_queue_name;
     lldb::addr_t m_thread_dispatch_qaddr;
+    uint32_t m_thread_stop_reason_stop_id;
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------

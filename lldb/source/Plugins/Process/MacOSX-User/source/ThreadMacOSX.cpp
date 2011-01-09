@@ -198,7 +198,7 @@ void
 ThreadMacOSX::RefreshStateAfterStop()
 {
     // Invalidate all registers in our register context
-    GetRegisterContext()->Invalidate();
+    GetRegisterContext()->InvalidateIfNeeded (false);
 
     m_context->RefreshStateAfterStop();
 
@@ -650,7 +650,7 @@ ThreadMacOSX::RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint)
 
         // Clear out all stack frames as our world just changed.
         ClearStackFrames();
-        frame_sp->GetRegisterContext()->Invalidate();
+        frame_sp->GetRegisterContext()->InvalidateIfNeeded(true);
 
         return ret;
     }

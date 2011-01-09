@@ -35,6 +35,7 @@ UnwindLLDB::GetFrameCount()
     {
 //#define DEBUG_FRAME_SPEED 1
 #if DEBUG_FRAME_SPEED
+#define FRAME_COUNT 10000
         TimeValue time_value (TimeValue::Now());
 #endif
         if (!AddFirstFrame ())
@@ -42,11 +43,15 @@ UnwindLLDB::GetFrameCount()
         while (AddOneMoreFrame ())
         {
 #if DEBUG_FRAME_SPEED
-            if ((m_frames.size() % 10000) == 0)
+            if ((m_frames.size() % FRAME_COUNT) == 0)
             {
                 TimeValue now(TimeValue::Now());
                 uint64_t delta_t = now - time_value;
-                printf ("10000 frames in %llu.%09llu ms\n", delta_t / NSEC_PER_SEC, delta_t % NSEC_PER_SEC);
+                printf ("%u frames in %llu.%09llu ms (%g frames/sec)\n", 
+                        FRAME_COUNT,
+                        delta_t / NSEC_PER_SEC, 
+                        delta_t % NSEC_PER_SEC,
+                        (float)FRAME_COUNT / ((float)delta_t / (float)NSEC_PER_SEC));
                 time_value = now;
             }
 #endif
