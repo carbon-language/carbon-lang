@@ -80,7 +80,7 @@ protected:
     assert(li->weight != HUGE_VALF &&
            "Attempting to spill already spilled value.");
 
-    assert(!li->isStackSlot() &&
+    assert(!TargetRegisterInfo::isStackSlot(li->reg) &&
            "Trying to spill a stack slot.");
 
     DEBUG(dbgs() << "Trivial spill everywhere of reg" << li->reg << "\n");

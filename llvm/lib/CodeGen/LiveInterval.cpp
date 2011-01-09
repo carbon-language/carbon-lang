@@ -650,12 +650,7 @@ void LiveRange::dump() const {
 }
 
 void LiveInterval::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
-  if (isStackSlot())
-    OS << "SS#" << getStackSlotIndex();
-  else
-    OS << PrintReg(reg, TRI);
-
-  OS << ',' << weight;
+  OS << PrintReg(reg, TRI) << ',' << weight;
 
   if (empty())
     OS << " EMPTY";

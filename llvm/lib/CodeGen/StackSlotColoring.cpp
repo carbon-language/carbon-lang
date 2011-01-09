@@ -218,7 +218,7 @@ void StackSlotColoring::InitializeSlots() {
   for (LiveStacks::iterator i = LS->begin(), e = LS->end(); i != e; ++i) {
     LiveInterval &li = i->second;
     DEBUG(li.dump());
-    int FI = li.getStackSlotIndex();
+    int FI = TargetRegisterInfo::stackSlot2Index(li.reg);
     if (MFI->isDeadObjectIndex(FI))
       continue;
     SSIntervals.push_back(&li);
@@ -261,7 +261,7 @@ StackSlotColoring::ColorSlotsWithFreeRegs(SmallVector<int, 16> &SlotMapping,
   DEBUG(dbgs() << "Assigning unused registers to spill slots:\n");
   for (unsigned i = 0, e = SSIntervals.size(); i != e; ++i) {
     LiveInterval *li = SSIntervals[i];
-    int SS = li->getStackSlotIndex();
+    int SS = TargetRegisterInfo::stackSlot2Index(li->reg);
     if (!UsedColors[SS] || li->weight < 20)
       // If the weight is < 20, i.e. two references in a loop with depth 1,
       // don't bother with it.
@@ -350,7 +350,7 @@ int StackSlotColoring::ColorSlot(LiveInterval *li) {
 
   // Record the assignment.
   Assignments[Color].push_back(li);
-  int FI = li->getStackSlotIndex();
+  int FI = TargetRegisterInfo::stackSlot2Index(li->reg);
   DEBUG(dbgs() << "Assigning fi#" << FI << " to fi#" << Color << "\n");
 
   // Change size and alignment of the allocated slot. If there are multiple
@@ -379,7 +379,7 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
   bool Changed = false;
   for (unsigned i = 0, e = SSIntervals.size(); i != e; ++i) {
     LiveInterval *li = SSIntervals[i];
-    int SS = li->getStackSlotIndex();
+    int SS = TargetRegisterInfo::stackSlot2Index(li->reg);
     int NewSS = ColorSlot(li);
     assert(NewSS >= 0 && "Stack coloring failed?");
     SlotMapping[SS] = NewSS;
@@ -392,7 +392,7 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
   DEBUG(dbgs() << "\nSpill slots after coloring:\n");
   for (unsigned i = 0, e = SSIntervals.size(); i != e; ++i) {
     LiveInterval *li = SSIntervals[i];
-    int SS = li->getStackSlotIndex();
+    int SS = TargetRegisterInfo::stackSlot2Index(li->reg);
     li->weight = SlotWeights[SS];
   }
   // Sort them by new weight.

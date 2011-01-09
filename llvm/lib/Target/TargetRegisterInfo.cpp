@@ -43,9 +43,11 @@ TargetRegisterInfo::~TargetRegisterInfo() {}
 void PrintReg::print(raw_ostream &OS) const {
   if (!Reg)
     OS << "%noreg";
+  else if (TargetRegisterInfo::isStackSlot(Reg))
+    OS << "SS#" << TargetRegisterInfo::stackSlot2Index(Reg);
   else if (TargetRegisterInfo::isVirtualRegister(Reg))
     OS << "%vreg" << TargetRegisterInfo::virtReg2Index(Reg);
-  else if (TRI)
+  else if (TRI && Reg < TRI->getNumRegs())
     OS << '%' << TRI->getName(Reg);
   else
     OS << "%physreg" << Reg;

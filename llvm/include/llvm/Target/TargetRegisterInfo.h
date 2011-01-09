@@ -307,6 +307,31 @@ public:
     FirstVirtualRegister = 16384
   };
 
+  /// isStackSlot - Sometimes it is useful the be able to store a non-negative
+  /// frame index in a variable that normally holds a register. isStackSlot()
+  /// returns true if Reg is in the range used for stack slots.
+  ///
+  /// Note that isVirtualRegister() and isPhysicalRegister() may also return
+  /// true for such a value. In that case, isStackSlot() takes precedence.
+  ///
+  static bool isStackSlot(unsigned Reg) {
+    return Reg >= (1u << 31);
+  }
+
+  /// stackSlot2Index - Compute the frame index from a register value
+  /// representing a stack slot.
+  static int stackSlot2Index(unsigned Reg) {
+    assert(isStackSlot(Reg) && "Not a stack slot");
+    return int(Reg - (1u << 31));
+  }
+
+  /// index2StackSlot - Convert a non-negative frame index to a stack slot
+  /// register value.
+  static unsigned index2StackSlot(int FI) {
+    assert(FI >= 0 && "Cannot hold a negative frame index.");
+    return FI + (1u << 31);
+  }
+
   /// isPhysicalRegister - Return true if the specified register number is in
   /// the physical register namespace.
   static bool isPhysicalRegister(unsigned Reg) {
@@ -317,7 +342,7 @@ public:
   /// isVirtualRegister - Return true if the specified register number is in
   /// the virtual register namespace.
   static bool isVirtualRegister(unsigned Reg) {
-    assert(Reg && "this is not a register!");
+    assert(!isStackSlot(Reg) && "this is not a register!");
     return Reg >= FirstVirtualRegister;
   }
 

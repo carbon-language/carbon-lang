@@ -52,19 +52,7 @@ namespace llvm {
 
     unsigned getNumIntervals() const { return (unsigned)S2IMap.size(); }
 
-    LiveInterval &getOrCreateInterval(int Slot, const TargetRegisterClass *RC) {
-      assert(Slot >= 0 && "Spill slot indice must be >= 0");
-      SS2IntervalMap::iterator I = S2IMap.find(Slot);
-      if (I == S2IMap.end()) {
-        I = S2IMap.insert(I,std::make_pair(Slot, LiveInterval(Slot,0.0F,true)));
-        S2RCMap.insert(std::make_pair(Slot, RC));
-      } else {
-        // Use the largest common subclass register class.
-        const TargetRegisterClass *OldRC = S2RCMap[Slot];
-        S2RCMap[Slot] = getCommonSubClass(OldRC, RC);
-      }
-      return I->second;
-    }
+    LiveInterval &getOrCreateInterval(int Slot, const TargetRegisterClass *RC);
 
     LiveInterval &getInterval(int Slot) {
       assert(Slot >= 0 && "Spill slot indice must be >= 0");
