@@ -16,6 +16,7 @@
 
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/IndexedMap.h"
 #include <vector>
 
 namespace llvm {
@@ -24,13 +25,12 @@ namespace llvm {
 /// registers, including vreg register classes, use/def chains for registers,
 /// etc.
 class MachineRegisterInfo {
-  /// VRegInfo - Information we keep for each virtual register.  The entries in
-  /// this vector are actually converted to vreg numbers by adding the 
-  /// TargetRegisterInfo::FirstVirtualRegister delta to their index.
+  /// VRegInfo - Information we keep for each virtual register.
   ///
   /// Each element in this list contains the register class of the vreg and the
   /// start of the use/def list for the register.
-  std::vector<std::pair<const TargetRegisterClass*, MachineOperand*> > VRegInfo;
+  IndexedMap<std::pair<const TargetRegisterClass*, MachineOperand*>,
+             VirtReg2IndexFunctor> VRegInfo;
 
   /// RegClassVRegMap - This vector acts as a map from TargetRegisterClass to
   /// virtual registers. For each target register class, it keeps a list of
@@ -44,7 +44,7 @@ class MachineRegisterInfo {
   /// register for allocation. For example, if the hint is <0, 1024>, it means
   /// the allocator should prefer the physical register allocated to the virtual
   /// register of the hint.
-  std::vector<std::pair<unsigned, unsigned> > RegAllocHints;
+  IndexedMap<std::pair<unsigned, unsigned>, VirtReg2IndexFunctor> RegAllocHints;
   
   /// PhysRegUseDefLists - This is an array of the head of the use/def list for
   /// physical registers.
@@ -159,16 +159,14 @@ public:
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
   MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
-    if (RegNo < TargetRegisterInfo::FirstVirtualRegister)
+    if (!RegNo || TargetRegisterInfo::isPhysicalRegister(RegNo))
       return PhysRegUseDefLists[RegNo];
-    RegNo -= TargetRegisterInfo::FirstVirtualRegister;
     return VRegInfo[RegNo].second;
   }
   
   MachineOperand *getRegUseDefListHead(unsigned RegNo) const {
-    if (RegNo < TargetRegisterInfo::FirstVirtualRegister)
+    if (!RegNo || TargetRegisterInfo::isPhysicalRegister(RegNo))
       return PhysRegUseDefLists[RegNo];
-    RegNo -= TargetRegisterInfo::FirstVirtualRegister;
     return VRegInfo[RegNo].second;
   }
 
@@ -194,8 +192,6 @@ public:
   /// getRegClass - Return the register class of the specified virtual register.
   ///
   const TargetRegisterClass *getRegClass(unsigned Reg) const {
-    Reg -= TargetRegisterInfo::FirstVirtualRegister;
-    assert(Reg < VRegInfo.size() && "Invalid vreg!");
     return VRegInfo[Reg].first;
   }
 
@@ -236,8 +232,6 @@ public:
   /// setRegAllocationHint - Specify a register allocation hint for the
   /// specified virtual register.
   void setRegAllocationHint(unsigned Reg, unsigned Type, unsigned PrefReg) {
-    Reg -= TargetRegisterInfo::FirstVirtualRegister;
-    assert(Reg < VRegInfo.size() && "Invalid vreg!");
     RegAllocHints[Reg].first  = Type;
     RegAllocHints[Reg].second = PrefReg;
   }
@@ -246,8 +240,6 @@ public:
   /// specified virtual register.
   std::pair<unsigned, unsigned>
   getRegAllocationHint(unsigned Reg) const {
-    Reg -= TargetRegisterInfo::FirstVirtualRegister;
-    assert(Reg < VRegInfo.size() && "Invalid vreg!");
     return RegAllocHints[Reg];
   }
 

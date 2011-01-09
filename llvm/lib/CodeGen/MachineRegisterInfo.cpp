@@ -30,8 +30,9 @@ MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI) {
 
 MachineRegisterInfo::~MachineRegisterInfo() {
 #ifndef NDEBUG
-  for (unsigned i = 0, e = VRegInfo.size(); i != e; ++i)
-    assert(VRegInfo[i].second == 0 && "Vreg use list non-empty still?");
+  for (unsigned i = 0, e = getNumVirtRegs(); i != e; ++i)
+    assert(VRegInfo[TargetRegisterInfo::index2VirtReg(i)].second == 0 &&
+           "Vreg use list non-empty still?");
   for (unsigned i = 0, e = UsedPhysRegs.size(); i != e; ++i)
     assert(!PhysRegUseDefLists[i] &&
            "PhysRegUseDefLists has entries after all instructions are deleted");
@@ -44,20 +45,18 @@ MachineRegisterInfo::~MachineRegisterInfo() {
 ///
 void
 MachineRegisterInfo::setRegClass(unsigned Reg, const TargetRegisterClass *RC) {
-  unsigned VR = Reg;
-  Reg -= TargetRegisterInfo::FirstVirtualRegister;
-  assert(Reg < VRegInfo.size() && "Invalid vreg!");
   const TargetRegisterClass *OldRC = VRegInfo[Reg].first;
   VRegInfo[Reg].first = RC;
 
   // Remove from old register class's vregs list. This may be slow but
   // fortunately this operation is rarely needed.
   std::vector<unsigned> &VRegs = RegClass2VRegMap[OldRC->getID()];
-  std::vector<unsigned>::iterator I = std::find(VRegs.begin(), VRegs.end(), VR);
+  std::vector<unsigned>::iterator I =
+    std::find(VRegs.begin(), VRegs.end(), Reg);
   VRegs.erase(I);
 
   // Add to new register class's vregs list.
-  RegClass2VRegMap[RC->getID()].push_back(VR);
+  RegClass2VRegMap[RC->getID()].push_back(Reg);
 }
 
 const TargetRegisterClass *
@@ -80,17 +79,22 @@ MachineRegisterInfo::constrainRegClass(unsigned Reg,
 unsigned
 MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
   assert(RegClass && "Cannot create register without RegClass!");
-  // Add a reg, but keep track of whether the vector reallocated or not.
-  void *ArrayBase = VRegInfo.empty() ? 0 : &VRegInfo[0];
-  VRegInfo.push_back(std::make_pair(RegClass, (MachineOperand*)0));
-  RegAllocHints.push_back(std::make_pair(0, 0));
 
-  if (!((&VRegInfo[0] == ArrayBase || VRegInfo.size() == 1)))
+  // New virtual register number.
+  unsigned Reg = TargetRegisterInfo::index2VirtReg(getNumVirtRegs());
+
+  // Add a reg, but keep track of whether the vector reallocated or not.
+  const unsigned FirstVirtReg = TargetRegisterInfo::index2VirtReg(0);
+  void *ArrayBase = getNumVirtRegs() == 0 ? 0 : &VRegInfo[FirstVirtReg];
+  VRegInfo.grow(Reg);
+  VRegInfo[Reg].first = RegClass;
+  RegAllocHints.grow(Reg);
+
+  if (ArrayBase && &VRegInfo[FirstVirtReg] != ArrayBase)
     // The vector reallocated, handle this now.
     HandleVRegListReallocation();
-  unsigned VR = getLastVirtReg();
-  RegClass2VRegMap[RegClass->getID()].push_back(VR);
-  return VR;
+  RegClass2VRegMap[RegClass->getID()].push_back(Reg);
+  return Reg;
 }
 
 /// HandleVRegListReallocation - We just added a virtual register to the
@@ -99,11 +103,12 @@ MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
 void MachineRegisterInfo::HandleVRegListReallocation() {
   // The back pointers for the vreg lists point into the previous vector.
   // Update them to point to their correct slots.
-  for (unsigned i = 0, e = VRegInfo.size(); i != e; ++i) {
-    MachineOperand *List = VRegInfo[i].second;
+  for (unsigned i = 0, e = getNumVirtRegs(); i != e; ++i) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
+    MachineOperand *List = VRegInfo[Reg].second;
     if (!List) continue;
     // Update the back-pointer to be accurate once more.
-    List->Contents.Reg.Prev = &VRegInfo[i].second;
+    List->Contents.Reg.Prev = &VRegInfo[Reg].second;
   }
 }
 
@@ -126,8 +131,6 @@ void MachineRegisterInfo::replaceRegWith(unsigned FromReg, unsigned ToReg) {
 /// register or null if none is found.  This assumes that the code is in SSA
 /// form, so there should only be one definition.
 MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
-  assert(Reg-TargetRegisterInfo::FirstVirtualRegister < VRegInfo.size() &&
-         "Invalid vreg!");
   // Since we are in SSA form, we can use the first definition.
   if (!def_empty(Reg))
     return &*def_begin(Reg);

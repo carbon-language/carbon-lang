@@ -55,6 +55,10 @@ namespace llvm {
       return storage_[toIndex_(n)];
     }
 
+    void reserve(typename StorageT::size_type s) {
+      storage_.reserve(s);
+    }
+
     void clear() {
       storage_.clear();
     }
