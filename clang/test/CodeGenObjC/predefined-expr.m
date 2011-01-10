@@ -1,15 +1,15 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin9 %s -emit-llvm -o - | FileCheck %s
 
-// CHECK: @"__func__.-[Foo instanceTest1]" = private constant [21 x i8] c"-[Foo instanceTest1]\00"
-// CHECK: @"__func__.-[Foo instanceTest2:]" = private constant [22 x i8] c"-[Foo instanceTest2:]\00"
-// CHECK: @"__func__.-[Foo instanceTest3:withB:]" = private constant [28 x i8] c"-[Foo instanceTest3:withB:]\00"
-// CHECK: @"__func__.-[Foo instanceTest4]" = private constant [21 x i8] c"-[Foo instanceTest4]\00"
-// CHECK: @"__func__.+[Foo classTest1]" = private constant [18 x i8] c"+[Foo classTest1]\00"
-// CHECK: @"__func__.+[Foo classTest2:]" = private constant [19 x i8] c"+[Foo classTest2:]\00"
-// CHECK: @"__func__.+[Foo classTest3:withB:]" = private constant [25 x i8] c"+[Foo classTest3:withB:]\00"
-// CHECK: @"__func__.+[Foo classTest4]" = private constant [18 x i8] c"+[Foo classTest4]\00"
-// CHECK: @"__func__.-[Foo(Category) instanceTestWithCategory]" = private constant [42 x i8] c"-[Foo(Category) instanceTestWithCategory]\00"
-// CHECK: @"__func__.+[Foo(Category) classTestWithCategory]" = private constant [39 x i8] c"+[Foo(Category) classTestWithCategory]\00"
+// CHECK: @"__func__.-[Foo instanceTest1]" = private unnamed_addr constant [21 x i8] c"-[Foo instanceTest1]\00"
+// CHECK: @"__func__.-[Foo instanceTest2:]" = private unnamed_addr constant [22 x i8] c"-[Foo instanceTest2:]\00"
+// CHECK: @"__func__.-[Foo instanceTest3:withB:]" = private unnamed_addr constant [28 x i8] c"-[Foo instanceTest3:withB:]\00"
+// CHECK: @"__func__.-[Foo instanceTest4]" = private unnamed_addr constant [21 x i8] c"-[Foo instanceTest4]\00"
+// CHECK: @"__func__.+[Foo classTest1]" = private unnamed_addr constant [18 x i8] c"+[Foo classTest1]\00"
+// CHECK: @"__func__.+[Foo classTest2:]" = private unnamed_addr constant [19 x i8] c"+[Foo classTest2:]\00"
+// CHECK: @"__func__.+[Foo classTest3:withB:]" = private unnamed_addr constant [25 x i8] c"+[Foo classTest3:withB:]\00"
+// CHECK: @"__func__.+[Foo classTest4]" = private unnamed_addr constant [18 x i8] c"+[Foo classTest4]\00"
+// CHECK: @"__func__.-[Foo(Category) instanceTestWithCategory]" = private unnamed_addr constant [42 x i8] c"-[Foo(Category) instanceTestWithCategory]\00"
+// CHECK: @"__func__.+[Foo(Category) classTestWithCategory]" = private unnamed_addr constant [39 x i8] c"+[Foo(Category) classTestWithCategory]\00"
 
 int printf(const char * _Format, ...);
 

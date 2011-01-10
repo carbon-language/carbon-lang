@@ -1,82 +1,82 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
-// CHECK: private constant [15 x i8] c"externFunction\00"
-// CHECK: private constant [26 x i8] c"void NS::externFunction()\00"
+// CHECK: private unnamed_addr constant [15 x i8] c"externFunction\00"
+// CHECK: private unnamed_addr constant [26 x i8] c"void NS::externFunction()\00"
 
-// CHECK: private constant [22 x i8] c"classTemplateFunction\00"
-// CHECK: private constant [60 x i8] c"void NS::ClassTemplate<NS::Base *>::classTemplateFunction()\00"
-// CHECK: private constant [53 x i8] c"void NS::ClassTemplate<int>::classTemplateFunction()\00"
+// CHECK: private unnamed_addr constant [22 x i8] c"classTemplateFunction\00"
+// CHECK: private unnamed_addr constant [60 x i8] c"void NS::ClassTemplate<NS::Base *>::classTemplateFunction()\00"
+// CHECK: private unnamed_addr constant [53 x i8] c"void NS::ClassTemplate<int>::classTemplateFunction()\00"
 
-// CHECK: private constant [18 x i8] c"functionTemplate1\00"
-// CHECK: private constant [45 x i8] c"void NS::Base::functionTemplate1(NS::Base *)\00"
-// CHECK: private constant [38 x i8] c"void NS::Base::functionTemplate1(int)\00"
+// CHECK: private unnamed_addr constant [18 x i8] c"functionTemplate1\00"
+// CHECK: private unnamed_addr constant [45 x i8] c"void NS::Base::functionTemplate1(NS::Base *)\00"
+// CHECK: private unnamed_addr constant [38 x i8] c"void NS::Base::functionTemplate1(int)\00"
 
-// CHECK: private constant [23 x i8] c"anonymousUnionFunction\00"
-// CHECK: private constant [83 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous union>::anonymousUnionFunction()\00"
+// CHECK: private unnamed_addr constant [23 x i8] c"anonymousUnionFunction\00"
+// CHECK: private unnamed_addr constant [83 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous union>::anonymousUnionFunction()\00"
 
-// CHECK: private constant [24 x i8] c"anonymousStructFunction\00"
-// CHECK: private constant [85 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous struct>::anonymousStructFunction()\00"
+// CHECK: private unnamed_addr constant [24 x i8] c"anonymousStructFunction\00"
+// CHECK: private unnamed_addr constant [85 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous struct>::anonymousStructFunction()\00"
 
-// CHECK: private constant [23 x i8] c"anonymousClassFunction\00"
-// CHECK: private constant [83 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous class>::anonymousClassFunction()\00"
+// CHECK: private unnamed_addr constant [23 x i8] c"anonymousClassFunction\00"
+// CHECK: private unnamed_addr constant [83 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous class>::anonymousClassFunction()\00"
 
-// CHECK: private constant [12 x i8] c"~Destructor\00"
-// CHECK: private constant [30 x i8] c"NS::Destructor::~Destructor()\00"
+// CHECK: private unnamed_addr constant [12 x i8] c"~Destructor\00"
+// CHECK: private unnamed_addr constant [30 x i8] c"NS::Destructor::~Destructor()\00"
 
-// CHECK: private constant [12 x i8] c"Constructor\00"
-// CHECK: private constant [41 x i8] c"NS::Constructor::Constructor(NS::Base *)\00"
-// CHECK: private constant [34 x i8] c"NS::Constructor::Constructor(int)\00"
-// CHECK: private constant [31 x i8] c"NS::Constructor::Constructor()\00"
+// CHECK: private unnamed_addr constant [12 x i8] c"Constructor\00"
+// CHECK: private unnamed_addr constant [41 x i8] c"NS::Constructor::Constructor(NS::Base *)\00"
+// CHECK: private unnamed_addr constant [34 x i8] c"NS::Constructor::Constructor(int)\00"
+// CHECK: private unnamed_addr constant [31 x i8] c"NS::Constructor::Constructor()\00"
 
-// CHECK: private constant [16 x i8] c"virtualFunction\00"
-// CHECK: private constant [44 x i8] c"virtual void NS::Derived::virtualFunction()\00"
+// CHECK: private unnamed_addr constant [16 x i8] c"virtualFunction\00"
+// CHECK: private unnamed_addr constant [44 x i8] c"virtual void NS::Derived::virtualFunction()\00"
 
-// CHECK: private constant [22 x i8] c"constVolatileFunction\00"
-// CHECK: private constant [54 x i8] c"void NS::Base::constVolatileFunction() const volatile\00"
+// CHECK: private unnamed_addr constant [22 x i8] c"constVolatileFunction\00"
+// CHECK: private unnamed_addr constant [54 x i8] c"void NS::Base::constVolatileFunction() const volatile\00"
 
-// CHECK: private constant [17 x i8] c"volatileFunction\00"
-// CHECK: private constant [43 x i8] c"void NS::Base::volatileFunction() volatile\00"
+// CHECK: private unnamed_addr constant [17 x i8] c"volatileFunction\00"
+// CHECK: private unnamed_addr constant [43 x i8] c"void NS::Base::volatileFunction() volatile\00"
 
-// CHECK: private constant [14 x i8] c"constFunction\00"
-// CHECK: private constant [37 x i8] c"void NS::Base::constFunction() const\00"
+// CHECK: private unnamed_addr constant [14 x i8] c"constFunction\00"
+// CHECK: private unnamed_addr constant [37 x i8] c"void NS::Base::constFunction() const\00"
 
-// CHECK: private constant [26 x i8] c"functionReturingTemplate2\00"
-// CHECK: private constant [64 x i8] c"ClassTemplate<NS::Base *> NS::Base::functionReturingTemplate2()\00"
+// CHECK: private unnamed_addr constant [26 x i8] c"functionReturingTemplate2\00"
+// CHECK: private unnamed_addr constant [64 x i8] c"ClassTemplate<NS::Base *> NS::Base::functionReturingTemplate2()\00"
 
-// CHECK: private constant [26 x i8] c"functionReturingTemplate1\00"
-// CHECK: private constant [57 x i8] c"ClassTemplate<int> NS::Base::functionReturingTemplate1()\00"
+// CHECK: private unnamed_addr constant [26 x i8] c"functionReturingTemplate1\00"
+// CHECK: private unnamed_addr constant [57 x i8] c"ClassTemplate<int> NS::Base::functionReturingTemplate1()\00"
 
-// CHECK: private constant [23 x i8] c"withTemplateParameter2\00"
-// CHECK: private constant [65 x i8] c"void NS::Base::withTemplateParameter2(ClassTemplate<NS::Base *>)\00"
+// CHECK: private unnamed_addr constant [23 x i8] c"withTemplateParameter2\00"
+// CHECK: private unnamed_addr constant [65 x i8] c"void NS::Base::withTemplateParameter2(ClassTemplate<NS::Base *>)\00"
 
-// CHECK: private constant [23 x i8] c"withTemplateParameter1\00"
-// CHECK: private constant [58 x i8] c"void NS::Base::withTemplateParameter1(ClassTemplate<int>)\00"
+// CHECK: private unnamed_addr constant [23 x i8] c"withTemplateParameter1\00"
+// CHECK: private unnamed_addr constant [58 x i8] c"void NS::Base::withTemplateParameter1(ClassTemplate<int>)\00"
 
-// CHECK: private constant [23 x i8] c"functionReturningClass\00"
-// CHECK: private constant [45 x i8] c"NS::Base *NS::Base::functionReturningClass()\00"
+// CHECK: private unnamed_addr constant [23 x i8] c"functionReturningClass\00"
+// CHECK: private unnamed_addr constant [45 x i8] c"NS::Base *NS::Base::functionReturningClass()\00"
 
-// CHECK: private constant [23 x i8] c"functionWithParameters\00"
-// CHECK: private constant [64 x i8] c"void NS::Base::functionWithParameters(int, float *, NS::Base *)\00"
+// CHECK: private unnamed_addr constant [23 x i8] c"functionWithParameters\00"
+// CHECK: private unnamed_addr constant [64 x i8] c"void NS::Base::functionWithParameters(int, float *, NS::Base *)\00"
 
-// CHECK: private constant [17 x i8] c"variadicFunction\00"
-// CHECK: private constant [42 x i8] c"void NS::Base::variadicFunction(int, ...)\00"
+// CHECK: private unnamed_addr constant [17 x i8] c"variadicFunction\00"
+// CHECK: private unnamed_addr constant [42 x i8] c"void NS::Base::variadicFunction(int, ...)\00"
 
-// CHECK: private constant [41 x i8] c"virtual void NS::Base::virtualFunction()\00"
+// CHECK: private unnamed_addr constant [41 x i8] c"virtual void NS::Base::virtualFunction()\00"
 
-// CHECK: private constant [15 x i8] c"inlineFunction\00"
-// CHECK: private constant [32 x i8] c"void NS::Base::inlineFunction()\00"
+// CHECK: private unnamed_addr constant [15 x i8] c"inlineFunction\00"
+// CHECK: private unnamed_addr constant [32 x i8] c"void NS::Base::inlineFunction()\00"
 
-// CHECK: private constant [15 x i8] c"staticFunction\00"
-// CHECK: private constant [39 x i8] c"static void NS::Base::staticFunction()\00"
+// CHECK: private unnamed_addr constant [15 x i8] c"staticFunction\00"
+// CHECK: private unnamed_addr constant [39 x i8] c"static void NS::Base::staticFunction()\00"
 
-// CHECK: private constant [26 x i8] c"topLevelNamespaceFunction\00"
-// CHECK: private constant [59 x i8] c"void ClassInTopLevelNamespace::topLevelNamespaceFunction()\00"
+// CHECK: private unnamed_addr constant [26 x i8] c"topLevelNamespaceFunction\00"
+// CHECK: private unnamed_addr constant [59 x i8] c"void ClassInTopLevelNamespace::topLevelNamespaceFunction()\00"
 
-// CHECK: private constant [27 x i8] c"anonymousNamespaceFunction\00"
-// CHECK: private constant [84 x i8] c"void <anonymous namespace>::ClassInAnonymousNamespace::anonymousNamespaceFunction()\00"
+// CHECK: private unnamed_addr constant [27 x i8] c"anonymousNamespaceFunction\00"
+// CHECK: private unnamed_addr constant [84 x i8] c"void <anonymous namespace>::ClassInAnonymousNamespace::anonymousNamespaceFunction()\00"
 
-// CHECK: private constant [19 x i8] c"localClassFunction\00"
-// CHECK: private constant [59 x i8] c"void NS::localClass(int)::LocalClass::localClassFunction()\00"
+// CHECK: private unnamed_addr constant [19 x i8] c"localClassFunction\00"
+// CHECK: private unnamed_addr constant [59 x i8] c"void NS::localClass(int)::LocalClass::localClassFunction()\00"
 
 int printf(const char * _Format, ...);
 

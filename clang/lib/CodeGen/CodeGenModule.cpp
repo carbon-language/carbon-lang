@@ -1749,9 +1749,12 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
       llvm::ConstantArray::get(CGM.getLLVMContext(), str, false);
 
   // Create a global variable for this string
-  return new llvm::GlobalVariable(CGM.getModule(), C->getType(), constant,
-                                  llvm::GlobalValue::PrivateLinkage,
-                                  C, GlobalName);
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(CGM.getModule(), C->getType(), constant,
+                             llvm::GlobalValue::PrivateLinkage,
+                             C, GlobalName);
+  GV->setUnnamedAddr(true);
+  return GV;
 }
 
 /// GetAddrOfConstantString - Returns a pointer to a character array

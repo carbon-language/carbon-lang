@@ -1,14 +1,14 @@
 // RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin9 %s -emit-llvm -o - | FileCheck %s -check-prefix=X64
 // RUN: %clang_cc1 -fblocks -triple i686-apple-darwin9 %s -emit-llvm -o - | FileCheck %s -check-prefix=X32
 
-// X64: @.str = private constant [6 x i8] c"v8@?0\00" 
+// X64: @.str = private unnamed_addr constant [6 x i8] c"v8@?0\00" 
 // X64: @__block_literal_global = internal constant %1 { i8** @_NSConcreteGlobalBlock, i32 1342177280,
-// X64: @.str1 = private constant [12 x i8] c"i16@?0c8f12\00"
+// X64: @.str1 = private unnamed_addr constant [12 x i8] c"i16@?0c8f12\00"
 // X64:   store i32 1073741824, i32*
 
-// X32: @.str = private constant [6 x i8] c"v4@?0\00" 
+// X32: @.str = private unnamed_addr constant [6 x i8] c"v4@?0\00" 
 // X32: @__block_literal_global = internal constant %1 { i8** @_NSConcreteGlobalBlock, i32 1342177280,
-// X32: @.str1 = private constant [11 x i8] c"i12@?0c4f8\00"
+// X32: @.str1 = private unnamed_addr constant [11 x i8] c"i12@?0c4f8\00"
 // X32:   store i32 1073741824, i32*
 
 // rdar://7635294
