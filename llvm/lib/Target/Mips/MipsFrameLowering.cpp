@@ -1,4 +1,4 @@
-//=======- MipsFrameInfo.cpp - Mips Frame Information ----------*- C++ -*-====//
+//=======- MipsFrameLowering.cpp - Mips Frame Information ------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Mips implementation of TargetFrameInfo class.
+// This file contains the Mips implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsFrameInfo.h"
+#include "MipsFrameLowering.h"
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
 #include "llvm/Function.h"
@@ -82,16 +82,16 @@ using namespace llvm;
 // hasFP - Return true if the specified function should have a dedicated frame
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
-bool MipsFrameInfo::hasFP(const MachineFunction &MF) const {
+bool MipsFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
 }
 
-void MipsFrameInfo::adjustMipsStackFrame(MachineFunction &MF) const {
+void MipsFrameLowering::adjustMipsStackFrame(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-  unsigned StackAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned StackAlign = getStackAlignment();
   unsigned RegSize = STI.isGP32bit() ? 4 : 8;
   bool HasGP = MipsFI->needGPSaveRestore();
 
@@ -203,7 +203,7 @@ void MipsFrameInfo::adjustMipsStackFrame(MachineFunction &MF) const {
     MipsFI->setFPUTopSavedRegOff(TopFPUSavedRegOff-StackOffset);
 }
 
-void MipsFrameInfo::emitPrologue(MachineFunction &MF) const {
+void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB   = MF.front();
   MachineFrameInfo *MFI    = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
@@ -264,7 +264,7 @@ void MipsFrameInfo::emitPrologue(MachineFunction &MF) const {
       .addImm(MipsFI->getGPStackOffset());
 }
 
-void MipsFrameInfo::emitEpilogue(MachineFunction &MF,
+void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
                                  MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineFrameInfo *MFI            = MF.getFrameInfo();

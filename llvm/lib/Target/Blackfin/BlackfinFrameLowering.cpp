@@ -1,4 +1,4 @@
-//====- BlackfinFrameInfo.cpp - Blackfin Frame Information ------*- C++ -*-===//
+//====- BlackfinFrameLowering.cpp - Blackfin Frame Information --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Blackfin implementation of TargetFrameInfo class.
+// This file contains the Blackfin implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "BlackfinFrameInfo.h"
+#include "BlackfinFrameLowering.h"
 #include "BlackfinInstrInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -25,7 +25,7 @@ using namespace llvm;
 // hasFP - Return true if the specified function should have a dedicated frame
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
-bool BlackfinFrameInfo::hasFP(const MachineFunction &MF) const {
+bool BlackfinFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return DisableFramePointerElim(MF) ||
     MFI->adjustsStack() || MFI->hasVarSizedObjects();
@@ -34,7 +34,7 @@ bool BlackfinFrameInfo::hasFP(const MachineFunction &MF) const {
 // Emit a prologue that sets up a stack frame.
 // On function entry, R0-R2 and P0 may hold arguments.
 // R3, P1, and P2 may be used as scratch registers
-void BlackfinFrameInfo::emitPrologue(MachineFunction &MF) const {
+void BlackfinFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -83,7 +83,7 @@ void BlackfinFrameInfo::emitPrologue(MachineFunction &MF) const {
 
 }
 
-void BlackfinFrameInfo::emitEpilogue(MachineFunction &MF,
+void BlackfinFrameLowering::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const BlackfinRegisterInfo *RegInfo =
@@ -107,7 +107,7 @@ void BlackfinFrameInfo::emitEpilogue(MachineFunction &MF,
   BuildMI(MBB, MBBI, dl, TII.get(BF::UNLINK));
 }
 
-void BlackfinFrameInfo::
+void BlackfinFrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();

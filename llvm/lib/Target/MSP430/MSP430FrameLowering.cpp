@@ -1,4 +1,4 @@
-//=======- MSP430FrameInfo.cpp - MSP430 Frame Information ------*- C++ -*-====//
+//======-- MSP430FrameLowering.cpp - MSP430 Frame Information -------=========//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the MSP430 implementation of TargetFrameInfo class.
+// This file contains the MSP430 implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "MSP430FrameInfo.h"
+#include "MSP430FrameLowering.h"
 #include "MSP430InstrInfo.h"
 #include "MSP430MachineFunctionInfo.h"
 #include "llvm/Function.h"
@@ -26,7 +26,7 @@
 
 using namespace llvm;
 
-bool MSP430FrameInfo::hasFP(const MachineFunction &MF) const {
+bool MSP430FrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
 
   return (DisableFramePointerElim(MF) ||
@@ -34,11 +34,11 @@ bool MSP430FrameInfo::hasFP(const MachineFunction &MF) const {
           MFI->isFrameAddressTaken());
 }
 
-bool MSP430FrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
+bool MSP430FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-void MSP430FrameInfo::emitPrologue(MachineFunction &MF) const {
+void MSP430FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MSP430MachineFunctionInfo *MSP430FI = MF.getInfo<MSP430MachineFunctionInfo>();
@@ -103,8 +103,8 @@ void MSP430FrameInfo::emitPrologue(MachineFunction &MF) const {
   }
 }
 
-void MSP430FrameInfo::emitEpilogue(MachineFunction &MF,
-                                   MachineBasicBlock &MBB) const {
+void MSP430FrameLowering::emitEpilogue(MachineFunction &MF,
+                                       MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MSP430MachineFunctionInfo *MSP430FI = MF.getInfo<MSP430MachineFunctionInfo>();
   const MSP430InstrInfo &TII =
@@ -177,7 +177,7 @@ void MSP430FrameInfo::emitEpilogue(MachineFunction &MF,
 
 // FIXME: Can we eleminate these in favour of generic code?
 bool
-MSP430FrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+MSP430FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
                                         const TargetRegisterInfo *TRI) const {
@@ -203,8 +203,8 @@ MSP430FrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 }
 
 bool
-MSP430FrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                             MachineBasicBlock::iterator MI,
+MSP430FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                                 MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
                                         const TargetRegisterInfo *TRI) const {
   if (CSI.empty())

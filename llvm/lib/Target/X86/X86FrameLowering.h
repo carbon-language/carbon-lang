@@ -1,4 +1,4 @@
-//===-- MSP430FrameInfo.h - Define TargetFrameInfo for MSP430 --*- C++ -*--===//
+//=-- X86TargetFrameLowering.h - Define frame lowering for X86 ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,38 +7,48 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//
+// This class implements X86-specific bits of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MSP430_FRAMEINFO_H
-#define MSP430_FRAMEINFO_H
+#ifndef X86_FRAMELOWERING_H
+#define X86_FRAMELOWERING_H
 
-#include "MSP430.h"
-#include "MSP430Subtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "X86Subtarget.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class MSP430Subtarget;
+  class MCSymbol;
+  class X86TargetMachine;
 
-class MSP430FrameInfo : public TargetFrameInfo {
-protected:
-  const MSP430Subtarget &STI;
-
+class X86FrameLowering : public TargetFrameLowering {
+  const X86TargetMachine &TM;
+  const X86Subtarget &STI;
 public:
-  explicit MSP430FrameInfo(const MSP430Subtarget &sti)
-    : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 2, -2), STI(sti) {
+  explicit X86FrameLowering(const X86TargetMachine &tm, const X86Subtarget &sti)
+    : TargetFrameLowering(StackGrowsDown,
+                          sti.getStackAlignment(),
+                          (sti.isTargetWin64() ? -40 :
+                           (sti.is64Bit() ? -8 : -4))),
+      TM(tm), STI(sti) {
   }
+
+  void emitCalleeSavedFrameMoves(MachineFunction &MF, MCSymbol *Label,
+                                 unsigned FramePtr) const;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS = NULL) const;
+
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI,
                                  const TargetRegisterInfo *TRI) const;
+
   bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
                                    const std::vector<CalleeSavedInfo> &CSI,
@@ -46,6 +56,9 @@ public:
 
   bool hasFP(const MachineFunction &MF) const;
   bool hasReservedCallFrame(const MachineFunction &MF) const;
+
+  void getInitialFrameState(std::vector<MachineMove> &Moves) const;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 };
 
 } // End llvm namespace

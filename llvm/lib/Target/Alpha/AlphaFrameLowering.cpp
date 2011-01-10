@@ -1,4 +1,4 @@
-//=====- AlphaFrameInfo.cpp - Alpha Frame Information ----------*- C++ -*-====//
+//=====- AlphaFrameLowering.cpp - Alpha Frame Information ------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Alpha implementation of TargetFrameInfo class.
+// This file contains the Alpha implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "AlphaFrameInfo.h"
+#include "AlphaFrameLowering.h"
 #include "AlphaInstrInfo.h"
 #include "AlphaMachineFunctionInfo.h"
 #include "llvm/Function.h"
@@ -38,12 +38,12 @@ static long getLower16(long l) {
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
 //
-bool AlphaFrameInfo::hasFP(const MachineFunction &MF) const {
+bool AlphaFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return MFI->hasVarSizedObjects();
 }
 
-void AlphaFrameInfo::emitPrologue(MachineFunction &MF) const {
+void AlphaFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -101,7 +101,7 @@ void AlphaFrameInfo::emitPrologue(MachineFunction &MF) const {
 
 }
 
-void AlphaFrameInfo::emitEpilogue(MachineFunction &MF,
+void AlphaFrameLowering::emitEpilogue(MachineFunction &MF,
                                   MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());

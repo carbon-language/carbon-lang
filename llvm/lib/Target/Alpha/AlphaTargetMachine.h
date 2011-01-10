@@ -16,12 +16,12 @@
 
 #include "AlphaInstrInfo.h"
 #include "AlphaISelLowering.h"
-#include "AlphaFrameInfo.h"
+#include "AlphaFrameLowering.h"
 #include "AlphaSelectionDAGInfo.h"
 #include "AlphaSubtarget.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
 
@@ -30,7 +30,7 @@ class GlobalValue;
 class AlphaTargetMachine : public LLVMTargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
   AlphaInstrInfo InstrInfo;
-  AlphaFrameInfo FrameInfo;
+  AlphaFrameLowering FrameLowering;
   AlphaSubtarget Subtarget;
   AlphaTargetLowering TLInfo;
   AlphaSelectionDAGInfo TSInfo;
@@ -40,7 +40,9 @@ public:
                      const std::string &FS);
 
   virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
-  virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
+  virtual const TargetFrameLowering  *getFrameLowering() const {
+    return &FrameLowering;
+  }
   virtual const AlphaSubtarget   *getSubtargetImpl() const{ return &Subtarget; }
   virtual const AlphaRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();

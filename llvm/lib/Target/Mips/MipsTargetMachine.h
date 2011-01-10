@@ -17,11 +17,11 @@
 #include "MipsSubtarget.h"
 #include "MipsInstrInfo.h"
 #include "MipsISelLowering.h"
-#include "MipsFrameInfo.h"
+#include "MipsFrameLowering.h"
 #include "MipsSelectionDAGInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
   class formatted_raw_ostream;
@@ -30,7 +30,7 @@ namespace llvm {
     MipsSubtarget       Subtarget;
     const TargetData    DataLayout; // Calculates type size & alignment
     MipsInstrInfo       InstrInfo;
-    MipsFrameInfo       FrameInfo;
+    MipsFrameLowering   FrameLowering;
     MipsTargetLowering  TLInfo;
     MipsSelectionDAGInfo TSInfo;
   public:
@@ -39,8 +39,8 @@ namespace llvm {
 
     virtual const MipsInstrInfo   *getInstrInfo()     const
     { return &InstrInfo; }
-    virtual const TargetFrameInfo *getFrameInfo()     const
-    { return &FrameInfo; }
+    virtual const TargetFrameLowering *getFrameLowering()     const
+    { return &FrameLowering; }
     virtual const MipsSubtarget   *getSubtargetImpl() const
     { return &Subtarget; }
     virtual const TargetData      *getTargetData()    const

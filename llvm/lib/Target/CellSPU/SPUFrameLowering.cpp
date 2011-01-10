@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SPU.h"
-#include "SPUFrameInfo.h"
+#include "SPUFrameLowering.h"
 #include "SPURegisterNames.h"
 #include "SPUInstrBuilder.h"
 #include "SPUInstrInfo.h"
@@ -29,11 +29,11 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// SPUFrameInfo:
+// SPUFrameLowering:
 //===----------------------------------------------------------------------===//
 
-SPUFrameInfo::SPUFrameInfo(const SPUSubtarget &sti)
-  : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
+SPUFrameLowering::SPUFrameLowering(const SPUSubtarget &sti)
+  : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 16, 0),
     Subtarget(sti) {
   LR[0].first = SPU::R0;
   LR[0].second = 16;
@@ -44,7 +44,7 @@ SPUFrameInfo::SPUFrameInfo(const SPUSubtarget &sti)
 // hasFP - Return true if the specified function actually has a dedicated frame
 // pointer register.  This is true if the function needs a frame pointer and has
 // a non-zero stack size.
-bool SPUFrameInfo::hasFP(const MachineFunction &MF) const {
+bool SPUFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
 
   return MFI->getStackSize() &&
@@ -54,7 +54,7 @@ bool SPUFrameInfo::hasFP(const MachineFunction &MF) const {
 
 /// determineFrameLayout - Determine the size of the frame and maximum call
 /// frame size.
-void SPUFrameInfo::determineFrameLayout(MachineFunction &MF) const {
+void SPUFrameLowering::determineFrameLayout(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Get the number of bytes to allocate from the FrameInfo
@@ -62,7 +62,7 @@ void SPUFrameInfo::determineFrameLayout(MachineFunction &MF) const {
 
   // Get the alignments provided by the target, and the maximum alignment
   // (if any) of the fixed frame objects.
-  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned TargetAlign = getStackAlignment();
   unsigned Align = std::max(TargetAlign, MFI->getMaxAlignment());
   assert(isPowerOf2_32(Align) && "Alignment is not power of 2");
   unsigned AlignMask = Align - 1;
@@ -88,7 +88,7 @@ void SPUFrameInfo::determineFrameLayout(MachineFunction &MF) const {
   MFI->setStackSize(FrameSize);
 }
 
-void SPUFrameInfo::emitPrologue(MachineFunction &MF) const {
+void SPUFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -113,7 +113,7 @@ void SPUFrameInfo::emitPrologue(MachineFunction &MF) const {
 
   // the "empty" frame size is 16 - just the register scavenger spill slot
   if (FrameSize > 16 || MFI->adjustsStack()) {
-    FrameSize = -(FrameSize + SPUFrameInfo::minStackSize());
+    FrameSize = -(FrameSize + SPUFrameLowering::minStackSize());
     if (hasDebugInfo) {
       // Mark effective beginning of when frame pointer becomes valid.
       FrameLabel = MMI.getContext().CreateTempSymbol();
@@ -186,7 +186,7 @@ void SPUFrameInfo::emitPrologue(MachineFunction &MF) const {
     // This is a leaf function -- insert a branch hint iff there are
     // sufficient number instructions in the basic block. Note that
     // this is just a best guess based on the basic block's size.
-    if (MBB.size() >= (unsigned) SPUFrameInfo::branchHintPenalty()) {
+    if (MBB.size() >= (unsigned) SPUFrameLowering::branchHintPenalty()) {
       MachineBasicBlock::iterator MBBI = prior(MBB.end());
       dl = MBBI->getDebugLoc();
 
@@ -197,14 +197,14 @@ void SPUFrameInfo::emitPrologue(MachineFunction &MF) const {
   }
 }
 
-void SPUFrameInfo::emitEpilogue(MachineFunction &MF,
+void SPUFrameLowering::emitEpilogue(MachineFunction &MF,
                                 MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   const SPUInstrInfo &TII =
     *static_cast<const SPUInstrInfo*>(MF.getTarget().getInstrInfo());
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   int FrameSize = MFI->getStackSize();
-  int LinkSlotOffset = SPUFrameInfo::stackSlotSize();
+  int LinkSlotOffset = SPUFrameLowering::stackSlotSize();
   DebugLoc dl = MBBI->getDebugLoc();
 
   assert(MBBI->getOpcode() == SPU::RET &&
@@ -213,7 +213,7 @@ void SPUFrameInfo::emitEpilogue(MachineFunction &MF,
 
   // the "empty" frame size is 16 - just the register scavenger spill slot
   if (FrameSize > 16 || MFI->adjustsStack()) {
-    FrameSize = FrameSize + SPUFrameInfo::minStackSize();
+    FrameSize = FrameSize + SPUFrameLowering::minStackSize();
     if (isInt<10>(FrameSize + LinkSlotOffset)) {
       // Reload $lr, adjust $sp by required amount
       // Note: We do this to slightly improve dual issue -- not by much, but it
@@ -250,14 +250,15 @@ void SPUFrameInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void SPUFrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
+void SPUFrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves)
+                                                                         const {
   // Initial state of the frame pointer is R1.
   MachineLocation Dst(MachineLocation::VirtualFP);
   MachineLocation Src(SPU::R1, 0);
   Moves.push_back(MachineMove(0, Dst, Src));
 }
 
-void SPUFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+void SPUFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                         RegScavenger *RS) const{
   // Mark LR and SP unused, since the prolog spills them to stack and
   // we don't want anyone else to spill them for us.

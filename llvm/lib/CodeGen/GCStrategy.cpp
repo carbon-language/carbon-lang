@@ -24,7 +24,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -382,7 +382,7 @@ void MachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
 }
 
 void MachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
-  const TargetFrameInfo *TFI = TM->getFrameInfo();
+  const TargetFrameLowering *TFI = TM->getFrameLowering();
   assert(TFI && "TargetRegisterInfo not available!");
   
   for (GCFunctionInfo::roots_iterator RI = FI->roots_begin(),

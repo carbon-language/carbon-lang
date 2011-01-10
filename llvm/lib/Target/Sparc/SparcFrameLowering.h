@@ -1,4 +1,4 @@
-//====---- PTXFrameInfo.h - Define TargetFrameInfo for PTX --*- C++ -*----====//
+//===- SparcFrameLowering.h - Define frame lowering for Sparc --*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,23 +11,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PTX_FRAMEINFO_H
-#define PTX_FRAMEINFO_H
+#ifndef SPARC_FRAMEINFO_H
+#define SPARC_FRAMEINFO_H
 
-#include "PTX.h"
-#include "PTXSubtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "Sparc.h"
+#include "SparcSubtarget.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class PTXSubtarget;
+  class SparcSubtarget;
 
-class PTXFrameInfo : public TargetFrameInfo {
-protected:
-  const PTXSubtarget &STI;
-
+class SparcFrameLowering : public TargetFrameLowering {
+  const SparcSubtarget &STI;
 public:
-  explicit PTXFrameInfo(const PTXSubtarget &sti)
-    : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 2, -2), STI(sti) {
+  explicit SparcFrameLowering(const SparcSubtarget &sti)
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8, 0), STI(sti) {
   }
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into

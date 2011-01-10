@@ -1,4 +1,4 @@
-//=======- PTXFrameInfo.cpp - PTX Frame Information -----------*- C++ -*-=====//
+//=======- PTXFrameLowering.cpp - PTX Frame Information -------*- C++ -*-=====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,18 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the PTX implementation of TargetFrameInfo class.
+// This file contains the PTX implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "PTXFrameInfo.h"
+#include "PTXFrameLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
 using namespace llvm;
 
-void PTXFrameInfo::emitPrologue(MachineFunction &MF) const {
+void PTXFrameLowering::emitPrologue(MachineFunction &MF) const {
 }
 
-void PTXFrameInfo::emitEpilogue(MachineFunction &MF,
-                                MachineBasicBlock &MBB) const {
+void PTXFrameLowering::emitEpilogue(MachineFunction &MF,
+                                    MachineBasicBlock &MBB) const {
 }

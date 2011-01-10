@@ -1,4 +1,4 @@
-//=====- SystemZFrameInfo.cpp - SystemZ Frame Information ------*- C++ -*-====//
+//=====- SystemZFrameLowering.cpp - SystemZ Frame Information ------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the SystemZ implementation of TargetFrameInfo class.
+// This file contains the SystemZ implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "SystemZFrameInfo.h"
+#include "SystemZFrameLowering.h"
 #include "SystemZInstrBuilder.h"
 #include "SystemZInstrInfo.h"
 #include "SystemZMachineFunctionInfo.h"
@@ -27,8 +27,8 @@
 
 using namespace llvm;
 
-SystemZFrameInfo::SystemZFrameInfo(const SystemZSubtarget &sti)
-  : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 8, -160), STI(sti) {
+SystemZFrameLowering::SystemZFrameLowering(const SystemZSubtarget &sti)
+  : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8, -160), STI(sti) {
   // Fill the spill offsets map
   static const unsigned SpillOffsTab[][2] = {
     { SystemZ::R2D,  0x10 },
@@ -56,7 +56,7 @@ SystemZFrameInfo::SystemZFrameInfo(const SystemZSubtarget &sti)
 /// needsFP - Return true if the specified function should have a dedicated
 /// frame pointer register.  This is true if the function has variable sized
 /// allocas or if frame pointer elimination is disabled.
-bool SystemZFrameInfo::hasFP(const MachineFunction &MF) const {
+bool SystemZFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
 }
@@ -91,9 +91,8 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
   }
 }
 
-void SystemZFrameInfo::emitPrologue(MachineFunction &MF) const {
+void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
-  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const SystemZInstrInfo &TII =
     *static_cast<const SystemZInstrInfo*>(MF.getTarget().getInstrInfo());
@@ -108,7 +107,7 @@ void SystemZFrameInfo::emitPrologue(MachineFunction &MF) const {
   uint64_t StackSize = MFI->getStackSize();
   StackSize -= SystemZMFI->getCalleeSavedFrameSize();
 
-  uint64_t NumBytes = StackSize - TFI.getOffsetOfLocalArea();
+  uint64_t NumBytes = StackSize - getOffsetOfLocalArea();
 
   // Skip the callee-saved push instructions.
   while (MBBI != MBB.end() &&
@@ -139,10 +138,9 @@ void SystemZFrameInfo::emitPrologue(MachineFunction &MF) const {
   }
 }
 
-void SystemZFrameInfo::emitEpilogue(MachineFunction &MF,
+void SystemZFrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   const SystemZInstrInfo &TII =
     *static_cast<const SystemZInstrInfo*>(MF.getTarget().getInstrInfo());
@@ -161,7 +159,7 @@ void SystemZFrameInfo::emitEpilogue(MachineFunction &MF,
   // 'undo' the stack movement.
   uint64_t StackSize =
     MFI->getStackSize() - SystemZMFI->getCalleeSavedFrameSize();
-  uint64_t NumBytes = StackSize - TFI.getOffsetOfLocalArea();
+  uint64_t NumBytes = StackSize - getOffsetOfLocalArea();
 
   // Skip the final terminator instruction.
   while (MBBI != MBB.begin()) {
@@ -202,7 +200,7 @@ void SystemZFrameInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-int SystemZFrameInfo::getFrameIndexOffset(const MachineFunction &MF,
+int SystemZFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
                                           int FI) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const SystemZMachineFunctionInfo *SystemZMFI =
@@ -224,7 +222,7 @@ int SystemZFrameInfo::getFrameIndexOffset(const MachineFunction &MF,
 }
 
 bool
-SystemZFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+SystemZFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                             MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
                                           const TargetRegisterInfo *TRI) const {
@@ -299,7 +297,7 @@ SystemZFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 }
 
 bool
-SystemZFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+SystemZFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                               MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
                                           const TargetRegisterInfo *TRI) const {
@@ -353,7 +351,7 @@ SystemZFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 }
 
 void
-SystemZFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+SystemZFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                        RegScavenger *RS) const {
   // Determine whether R15/R14 will ever be clobbered inside the function. And
   // if yes - mark it as 'callee' saved.

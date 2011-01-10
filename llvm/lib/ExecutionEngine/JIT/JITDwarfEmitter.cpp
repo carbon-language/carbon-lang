@@ -26,7 +26,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
@@ -43,9 +43,9 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
 
   const TargetMachine& TM = F.getTarget();
   TD = TM.getTargetData();
-  stackGrowthDirection = TM.getFrameInfo()->getStackGrowthDirection();
+  stackGrowthDirection = TM.getFrameLowering()->getStackGrowthDirection();
   RI = TM.getRegisterInfo();
-  TFI = TM.getFrameInfo();
+  TFI = TM.getFrameLowering();
   JCE = &jce;
   
   unsigned char* ExceptionTable = EmitExceptionTable(&F, StartFunction,
@@ -67,7 +67,7 @@ void
 JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
                                 const std::vector<MachineMove> &Moves) const {
   unsigned PointerSize = TD->getPointerSize();
-  int stackGrowth = stackGrowthDirection == TargetFrameInfo::StackGrowsUp ?
+  int stackGrowth = stackGrowthDirection == TargetFrameLowering::StackGrowsUp ?
           PointerSize : -PointerSize;
   MCSymbol *BaseLabel = 0;
 
@@ -482,7 +482,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
 unsigned char*
 JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   unsigned PointerSize = TD->getPointerSize();
-  int stackGrowth = stackGrowthDirection == TargetFrameInfo::StackGrowsUp ?
+  int stackGrowth = stackGrowthDirection == TargetFrameLowering::StackGrowsUp ?
           PointerSize : -PointerSize;
   
   unsigned char* StartCommonPtr = (unsigned char*)JCE->getCurrentPCValue();

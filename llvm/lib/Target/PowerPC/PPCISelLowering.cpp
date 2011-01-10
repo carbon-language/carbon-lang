@@ -1565,7 +1565,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
                  *DAG.getContext());
 
   // Reserve space for the linkage area on the stack.
-  CCInfo.AllocateStack(PPCFrameInfo::getLinkageSize(false, false), PtrByteSize);
+  CCInfo.AllocateStack(PPCFrameLowering::getLinkageSize(false, false), PtrByteSize);
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_PPC_SVR4);
 
@@ -1641,9 +1641,9 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
 
   MinReservedArea =
     std::max(MinReservedArea,
-             PPCFrameInfo::getMinCallFrameSize(false, false));
+             PPCFrameLowering::getMinCallFrameSize(false, false));
 
-  unsigned TargetAlign = DAG.getMachineFunction().getTarget().getFrameInfo()->
+  unsigned TargetAlign = DAG.getMachineFunction().getTarget().getFrameLowering()->
     getStackAlignment();
   unsigned AlignMask = TargetAlign-1;
   MinReservedArea = (MinReservedArea + AlignMask) & ~AlignMask;
@@ -1749,7 +1749,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
   bool isImmutable = !(GuaranteedTailCallOpt && (CallConv==CallingConv::Fast));
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
-  unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64, true);
+  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(isPPC64, true);
   // Area that is at least reserved in caller of this function.
   unsigned MinReservedArea = ArgOffset;
 
@@ -2041,8 +2041,8 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
   }
   MinReservedArea =
     std::max(MinReservedArea,
-             PPCFrameInfo::getMinCallFrameSize(isPPC64, true));
-  unsigned TargetAlign = DAG.getMachineFunction().getTarget().getFrameInfo()->
+             PPCFrameLowering::getMinCallFrameSize(isPPC64, true));
+  unsigned TargetAlign = DAG.getMachineFunction().getTarget().getFrameLowering()->
     getStackAlignment();
   unsigned AlignMask = TargetAlign-1;
   MinReservedArea = (MinReservedArea + AlignMask) & ~AlignMask;
@@ -2100,7 +2100,7 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.  We start with 24/48 bytes, which is
   // prereserved space for [SP][CR][LR][3 x unused].
-  unsigned NumBytes = PPCFrameInfo::getLinkageSize(isPPC64, true);
+  unsigned NumBytes = PPCFrameLowering::getLinkageSize(isPPC64, true);
   unsigned NumOps = Outs.size();
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
@@ -2141,11 +2141,11 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
   // conservatively assume that it is needed.  As such, make sure we have at
   // least enough stack space for the caller to store the 8 GPRs.
   NumBytes = std::max(NumBytes,
-                      PPCFrameInfo::getMinCallFrameSize(isPPC64, true));
+                      PPCFrameLowering::getMinCallFrameSize(isPPC64, true));
 
   // Tail call needs the stack to be aligned.
   if (CC==CallingConv::Fast && GuaranteedTailCallOpt) {
-    unsigned TargetAlign = DAG.getMachineFunction().getTarget().getFrameInfo()->
+    unsigned TargetAlign = DAG.getMachineFunction().getTarget().getFrameLowering()->
       getStackAlignment();
     unsigned AlignMask = TargetAlign-1;
     NumBytes = (NumBytes + AlignMask) & ~AlignMask;
@@ -2269,7 +2269,7 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
   if (SPDiff) {
     // Calculate the new stack slot for the return address.
     int SlotSize = isPPC64 ? 8 : 4;
-    int NewRetAddrLoc = SPDiff + PPCFrameInfo::getReturnSaveOffset(isPPC64,
+    int NewRetAddrLoc = SPDiff + PPCFrameLowering::getReturnSaveOffset(isPPC64,
                                                                    isDarwinABI);
     int NewRetAddr = MF.getFrameInfo()->CreateFixedObject(SlotSize,
                                                           NewRetAddrLoc, true);
@@ -2283,7 +2283,7 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
     // slot as the FP is never overwritten.
     if (isDarwinABI) {
       int NewFPLoc =
-        SPDiff + PPCFrameInfo::getFramePointerSaveOffset(isPPC64, isDarwinABI);
+        SPDiff + PPCFrameLowering::getFramePointerSaveOffset(isPPC64, isDarwinABI);
       int NewFPIdx = MF.getFrameInfo()->CreateFixedObject(SlotSize, NewFPLoc,
                                                           true);
       SDValue NewFramePtrIdx = DAG.getFrameIndex(NewFPIdx, VT);
@@ -2760,7 +2760,7 @@ PPCTargetLowering::LowerCall_SVR4(SDValue Chain, SDValue Callee,
                  ArgLocs, *DAG.getContext());
 
   // Reserve space for the linkage area on the stack.
-  CCInfo.AllocateStack(PPCFrameInfo::getLinkageSize(false, false), PtrByteSize);
+  CCInfo.AllocateStack(PPCFrameLowering::getLinkageSize(false, false), PtrByteSize);
 
   if (isVarArg) {
     // Handle fixed and variable vector arguments differently.
@@ -2997,7 +2997,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   // memory.  Also, if this is a vararg function, floating point operations
   // must be stored to our stack, and loaded into integer regs as well, if
   // any integer regs are available for argument passing.
-  unsigned ArgOffset = PPCFrameInfo::getLinkageSize(isPPC64, true);
+  unsigned ArgOffset = PPCFrameLowering::getLinkageSize(isPPC64, true);
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
 
   static const unsigned GPR_32[] = {           // 32-bit registers.
@@ -3379,7 +3379,7 @@ PPCTargetLowering::getReturnAddrFrameIndex(SelectionDAG & DAG) const {
   // If the frame pointer save index hasn't been defined yet.
   if (!RASI) {
     // Find out what the fix offset of the frame pointer save area.
-    int LROffset = PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI);
+    int LROffset = PPCFrameLowering::getReturnSaveOffset(isPPC64, isDarwinABI);
     // Allocate the frame index for frame pointer save area.
     RASI = MF.getFrameInfo()->CreateFixedObject(isPPC64? 8 : 4, LROffset, true);
     // Save the result.
@@ -3403,7 +3403,7 @@ PPCTargetLowering::getFramePointerFrameIndex(SelectionDAG & DAG) const {
   // If the frame pointer save index hasn't been defined yet.
   if (!FPSI) {
     // Find out what the fix offset of the frame pointer save area.
-    int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(isPPC64,
+    int FPOffset = PPCFrameLowering::getFramePointerSaveOffset(isPPC64,
                                                            isDarwinABI);
 
     // Allocate the frame index for frame pointer save area.
@@ -5567,7 +5567,7 @@ SDValue PPCTargetLowering::LowerRETURNADDR(SDValue Op,
     SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
     SDValue Offset =
 
-      DAG.getConstant(PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI),
+      DAG.getConstant(PPCFrameLowering::getReturnSaveOffset(isPPC64, isDarwinABI),
                       isPPC64? MVT::i64 : MVT::i32);
     return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
                        DAG.getNode(ISD::ADD, dl, getPointerTy(),

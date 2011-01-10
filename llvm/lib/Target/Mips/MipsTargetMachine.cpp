@@ -41,7 +41,7 @@ MipsTargetMachine(const Target &T, const std::string &TT, const std::string &FS,
   DataLayout(isLittle ? std::string("e-p:32:32:32-i8:8:32-i16:16:32-n32") :
                         std::string("E-p:32:32:32-i8:8:32-i16:16:32-n32")),
   InstrInfo(*this),
-  FrameInfo(Subtarget),
+  FrameLowering(Subtarget),
   TLInfo(*this), TSInfo(*this) {
   // Abicall enables PIC by default
   if (getRelocationModel() == Reloc::Default) {

@@ -140,7 +140,7 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                   const TargetRegisterInfo *TRI) const
 {
   unsigned opc;
-  bool isValidFrameIdx = (FrameIdx < SPUFrameInfo::maxFrameOffset());
+  bool isValidFrameIdx = (FrameIdx < SPUFrameLowering::maxFrameOffset());
   if (RC == SPU::GPRCRegisterClass) {
     opc = (isValidFrameIdx ? SPU::STQDr128 : SPU::STQXr128);
   } else if (RC == SPU::R64CRegisterClass) {
@@ -175,7 +175,7 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                    const TargetRegisterInfo *TRI) const
 {
   unsigned opc;
-  bool isValidFrameIdx = (FrameIdx < SPUFrameInfo::maxFrameOffset());
+  bool isValidFrameIdx = (FrameIdx < SPUFrameLowering::maxFrameOffset());
   if (RC == SPU::GPRCRegisterClass) {
     opc = (isValidFrameIdx ? SPU::LQDr128 : SPU::LQXr128);
   } else if (RC == SPU::R64CRegisterClass) {

@@ -79,7 +79,7 @@ def GR8 : RegisterClass<"MSP430", [i8], 8,
     GR8Class::iterator
     GR8Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       // Depending on whether the function uses frame pointer or not, last 5 or 4
       // registers on the list above are reserved
       if (TFI->hasFP(MF))
@@ -106,7 +106,7 @@ def GR16 : RegisterClass<"MSP430", [i16], 16,
     GR16Class::iterator
     GR16Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       // Depending on whether the function uses frame pointer or not, last 5 or 4
       // registers on the list above are reserved
       if (TFI->hasFP(MF))

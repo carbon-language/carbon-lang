@@ -433,7 +433,7 @@ static int getDataAlignmentFactor(MCStreamer &streamer) {
   MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   int size = asmInfo.getPointerSize();
-  if (asmInfo.getStackGrowthDirection() == TargetFrameInfo::StackGrowsUp)
+  if (asmInfo.getStackGrowthDirection() == TargetFrameLowering::StackGrowsUp)
     return size;
  else
    return -size;

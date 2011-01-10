@@ -1,4 +1,4 @@
-//=======- MBlazeFrameInfo.cpp - MBlaze Frame Information ------*- C++ -*-====//
+//=======- MBlazeFrameLowering.cpp - MBlaze Frame Information ------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the MBlaze implementation of TargetFrameInfo class.
+// This file contains the MBlaze implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mblaze-frame-info"
+#define DEBUG_TYPE "mblaze-frame-lowering"
 
-#include "MBlazeFrameInfo.h"
+#include "MBlazeFrameLowering.h"
 #include "MBlazeInstrInfo.h"
 #include "MBlazeMachineFunction.h"
 #include "InstPrinter/MBlazeInstPrinter.h"
@@ -314,7 +314,7 @@ static void determineFrameLayout(MachineFunction &MF) {
   // Get the alignments provided by the target, and the maximum alignment
   // (if any) of the fixed frame objects.
   // unsigned MaxAlign = MFI->getMaxAlignment();
-  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned TargetAlign = MF.getTarget().getFrameLowering()->getStackAlignment();
   unsigned AlignMask = TargetAlign - 1;
 
   // Make sure the frame is aligned.
@@ -334,12 +334,12 @@ int MBlazeFrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI)
 // hasFP - Return true if the specified function should have a dedicated frame
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
-bool MBlazeFrameInfo::hasFP(const MachineFunction &MF) const {
+bool MBlazeFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
 }
 
-void MBlazeFrameInfo::emitPrologue(MachineFunction &MF) const {
+void MBlazeFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB   = MF.front();
   MachineFrameInfo *MFI    = MF.getFrameInfo();
   const MBlazeInstrInfo &TII =
@@ -384,7 +384,7 @@ void MBlazeFrameInfo::emitPrologue(MachineFunction &MF) const {
   }
 }
 
-void MBlazeFrameInfo::emitEpilogue(MachineFunction &MF,
+void MBlazeFrameLowering::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineFrameInfo *MFI            = MF.getFrameInfo();
@@ -427,8 +427,9 @@ void MBlazeFrameInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void MBlazeFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,                                                            RegScavenger *RS)
-                                                           const {
+void MBlazeFrameLowering::
+processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                     RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
   llvm::CallingConv::ID CallConv = MF.getFunction()->getCallingConv();

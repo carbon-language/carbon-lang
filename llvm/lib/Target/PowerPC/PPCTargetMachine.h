@@ -14,7 +14,7 @@
 #ifndef PPC_TARGETMACHINE_H
 #define PPC_TARGETMACHINE_H
 
-#include "PPCFrameInfo.h"
+#include "PPCFrameLowering.h"
 #include "PPCSubtarget.h"
 #include "PPCJITInfo.h"
 #include "PPCInstrInfo.h"
@@ -33,7 +33,7 @@ class PPCTargetMachine : public LLVMTargetMachine {
   PPCSubtarget        Subtarget;
   const TargetData    DataLayout;       // Calculates type size & alignment
   PPCInstrInfo        InstrInfo;
-  PPCFrameInfo        FrameInfo;
+  PPCFrameLowering    FrameLowering;
   PPCJITInfo          JITInfo;
   PPCTargetLowering   TLInfo;
   PPCSelectionDAGInfo TSInfo;
@@ -43,16 +43,18 @@ public:
   PPCTargetMachine(const Target &T, const std::string &TT,
                    const std::string &FS, bool is64Bit);
 
-  virtual const PPCInstrInfo     *getInstrInfo() const { return &InstrInfo; }
-  virtual const PPCFrameInfo     *getFrameInfo() const { return &FrameInfo; }
-  virtual       PPCJITInfo       *getJITInfo()         { return &JITInfo; }
+  virtual const PPCInstrInfo      *getInstrInfo() const { return &InstrInfo; }
+  virtual const PPCFrameLowering  *getFrameLowering() const {
+    return &FrameLowering;
+  }
+  virtual       PPCJITInfo        *getJITInfo()         { return &JITInfo; }
   virtual const PPCTargetLowering *getTargetLowering() const { 
    return &TLInfo;
   }
   virtual const PPCSelectionDAGInfo* getSelectionDAGInfo() const {
     return &TSInfo;
   }
-  virtual const PPCRegisterInfo  *getRegisterInfo() const {
+  virtual const PPCRegisterInfo   *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   

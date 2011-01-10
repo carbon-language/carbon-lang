@@ -1,4 +1,4 @@
-//===-- ARMTargetFrameInfo.h - Define TargetFrameInfo for ARM ---*- C++ -*-===//
+//==-- ARMTargetFrameLowering.h - Define frame lowering for ARM --*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,18 +16,19 @@
 
 #include "ARM.h"
 #include "ARMSubtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
   class ARMSubtarget;
 
-class ARMFrameInfo : public TargetFrameInfo {
+class ARMFrameLowering : public TargetFrameLowering {
 protected:
   const ARMSubtarget &STI;
 
 public:
-  explicit ARMFrameInfo(const ARMSubtarget &sti)
-    : TargetFrameInfo(StackGrowsDown, sti.getStackAlignment(), 0, 4), STI(sti) {
+  explicit ARMFrameLowering(const ARMSubtarget &sti)
+    : TargetFrameLowering(StackGrowsDown, sti.getStackAlignment(), 0, 4),
+      STI(sti) {
   }
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into

@@ -1,4 +1,4 @@
-//===-- Thumb1FrameInfo.h - Thumb1-specific frame info stuff ----*- C++ -*-===//
+//=- SystemZFrameLowering.h - Define frame lowering for z/System -*- C++ -*--=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,24 +11,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __THUMB_FRAMEINFO_H_
-#define __THUMM_FRAMEINFO_H_
+#ifndef SYSTEMZ_FRAMEINFO_H
+#define SYSTEMZ_FRAMEINFO_H
 
-#include "ARM.h"
-#include "ARMFrameInfo.h"
-#include "ARMSubtarget.h"
-#include "Thumb1InstrInfo.h"
-#include "Thumb1RegisterInfo.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "SystemZ.h"
+#include "SystemZSubtarget.h"
+#include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/ADT/IndexedMap.h"
 
 namespace llvm {
-  class ARMSubtarget;
+  class SystemZSubtarget;
 
-class Thumb1FrameInfo : public ARMFrameInfo {
+class SystemZFrameLowering : public TargetFrameLowering {
+  IndexedMap<unsigned> RegSpillOffsets;
+protected:
+  const SystemZSubtarget &STI;
+
 public:
-  explicit Thumb1FrameInfo(const ARMSubtarget &sti)
-    : ARMFrameInfo(sti) {
-  }
+  explicit SystemZFrameLowering(const SystemZSubtarget &sti);
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
@@ -44,7 +44,12 @@ public:
                                    const std::vector<CalleeSavedInfo> &CSI,
                                    const TargetRegisterInfo *TRI) const;
 
-  bool hasReservedCallFrame(const MachineFunction &MF) const;
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS) const;
+
+  bool hasReservedCallFrame(const MachineFunction &MF) const { return true; }
+  bool hasFP(const MachineFunction &MF) const;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 };
 
 } // End llvm namespace

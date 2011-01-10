@@ -301,8 +301,8 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
       // When using the 32-bit SVR4 ABI, r13 is reserved for the Small Data Area
       // pointer.
       const PPCSubtarget &Subtarget = MF.getTarget().getSubtarget<PPCSubtarget>();
-      const PPCFrameInfo *PPCFI =
-        static_cast<const PPCFrameInfo*>(MF.getTarget().getFrameInfo());
+      const PPCFrameLowering *PPCFI =
+        static_cast<const PPCFrameLowering*>(MF.getTarget().getFrameLowering());
    
       if (Subtarget.isPPC64() || Subtarget.isSVR4ABI())
         return end()-5;  // don't allocate R13, R31, R0, R1, LR
@@ -332,8 +332,8 @@ def G8RC : RegisterClass<"PPC", [i64], 64,
     }
     G8RCClass::iterator
     G8RCClass::allocation_order_end(const MachineFunction &MF) const {
-      const PPCFrameInfo *PPCFI =
-        static_cast<const PPCFrameInfo*>(MF.getTarget().getFrameInfo());
+      const PPCFrameLowering *PPCFI =
+        static_cast<const PPCFrameLowering*>(MF.getTarget().getFrameLowering());
       if (PPCFI->needsFP(MF))
         return end()-5;
       else

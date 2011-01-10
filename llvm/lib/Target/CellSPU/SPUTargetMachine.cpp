@@ -29,7 +29,7 @@ extern "C" void LLVMInitializeCellSPUTarget() {
 }
 
 const std::pair<unsigned, int> *
-SPUFrameInfo::getCalleeSaveSpillSlots(unsigned &NumEntries) const {
+SPUFrameLowering::getCalleeSaveSpillSlots(unsigned &NumEntries) const {
   NumEntries = 1;
   return &LR[0];
 }
@@ -40,7 +40,7 @@ SPUTargetMachine::SPUTargetMachine(const Target &T, const std::string &TT,
     Subtarget(TT, FS),
     DataLayout(Subtarget.getTargetDataString()),
     InstrInfo(*this),
-    FrameInfo(Subtarget),
+    FrameLowering(Subtarget),
     TLInfo(*this),
     TSInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {

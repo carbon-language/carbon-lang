@@ -1,4 +1,4 @@
-//===--- AlphaFrameInfo.h - Define TargetFrameInfo for Alpha --*- C++ -*---===//
+//===--- PTXFrameLowering.h - Define frame lowering for PTX --*- C++ -*----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,23 +11,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ALPHA_FRAMEINFO_H
-#define ALPHA_FRAMEINFO_H
+#ifndef PTX_FRAMEINFO_H
+#define PTX_FRAMEINFO_H
 
-#include "Alpha.h"
-#include "AlphaSubtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "PTX.h"
+#include "PTXSubtarget.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class AlphaSubtarget;
+  class PTXSubtarget;
 
-class AlphaFrameInfo : public TargetFrameInfo {
-  const AlphaSubtarget &STI;
-  // FIXME: This should end in MachineFunctionInfo, not here!
-  mutable int curgpdist;
+class PTXFrameLowering : public TargetFrameLowering {
+protected:
+  const PTXSubtarget &STI;
+
 public:
-  explicit AlphaFrameInfo(const AlphaSubtarget &sti)
-    : TargetFrameInfo(StackGrowsDown, 16, 0), STI(sti), curgpdist(0) {
+  explicit PTXFrameLowering(const PTXSubtarget &sti)
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 2, -2), STI(sti) {
   }
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
@@ -35,7 +35,7 @@ public:
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
-  bool hasFP(const MachineFunction &MF) const;
+  bool hasFP(const MachineFunction &MF) const { return false; }
 };
 
 } // End llvm namespace

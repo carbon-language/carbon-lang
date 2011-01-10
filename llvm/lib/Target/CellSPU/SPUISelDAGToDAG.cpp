@@ -15,7 +15,7 @@
 #include "SPU.h"
 #include "SPUTargetMachine.h"
 #include "SPUHazardRecognizers.h"
-#include "SPUFrameInfo.h"
+#include "SPUFrameLowering.h"
 #include "SPURegisterNames.h"
 #include "SPUTargetMachine.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -390,8 +390,8 @@ bool
 SPUDAGToDAGISel::SelectDFormAddr(SDNode *Op, SDValue N, SDValue &Base,
                                  SDValue &Index) {
   return DFormAddressPredicate(Op, N, Base, Index,
-                               SPUFrameInfo::minFrameOffset(),
-                               SPUFrameInfo::maxFrameOffset());
+                               SPUFrameLowering::minFrameOffset(),
+                               SPUFrameLowering::maxFrameOffset());
 }
 
 bool
@@ -407,7 +407,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
     int FI = int(FIN->getIndex());
     DEBUG(errs() << "SelectDFormAddr: ISD::FrameIndex = "
                << FI << "\n");
-    if (SPUFrameInfo::FItoStackOffset(FI) < maxOffset) {
+    if (SPUFrameLowering::FItoStackOffset(FI) < maxOffset) {
       Base = CurDAG->getTargetConstant(0, PtrTy);
       Index = CurDAG->getTargetFrameIndex(FI, PtrTy);
       return true;
@@ -433,7 +433,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
         DEBUG(errs() << "SelectDFormAddr: ISD::ADD offset = " << offset
                    << " frame index = " << FI << "\n");
 
-        if (SPUFrameInfo::FItoStackOffset(FI) < maxOffset) {
+        if (SPUFrameLowering::FItoStackOffset(FI) < maxOffset) {
           Base = CurDAG->getTargetConstant(offset, PtrTy);
           Index = CurDAG->getTargetFrameIndex(FI, PtrTy);
           return true;
@@ -454,7 +454,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDNode *Op, SDValue N, SDValue &Base,
         DEBUG(errs() << "SelectDFormAddr: ISD::ADD offset = " << offset
                    << " frame index = " << FI << "\n");
 
-        if (SPUFrameInfo::FItoStackOffset(FI) < maxOffset) {
+        if (SPUFrameLowering::FItoStackOffset(FI) < maxOffset) {
           Base = CurDAG->getTargetConstant(offset, PtrTy);
           Index = CurDAG->getTargetFrameIndex(FI, PtrTy);
           return true;

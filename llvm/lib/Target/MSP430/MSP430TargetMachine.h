@@ -17,12 +17,12 @@
 
 #include "MSP430InstrInfo.h"
 #include "MSP430ISelLowering.h"
-#include "MSP430FrameInfo.h"
+#include "MSP430FrameLowering.h"
 #include "MSP430SelectionDAGInfo.h"
 #include "MSP430RegisterInfo.h"
 #include "MSP430Subtarget.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -35,13 +35,15 @@ class MSP430TargetMachine : public LLVMTargetMachine {
   MSP430InstrInfo        InstrInfo;
   MSP430TargetLowering   TLInfo;
   MSP430SelectionDAGInfo TSInfo;
-  MSP430FrameInfo        FrameInfo;
+  MSP430FrameLowering    FrameLowering;
 
 public:
   MSP430TargetMachine(const Target &T, const std::string &TT,
                       const std::string &FS);
 
-  virtual const TargetFrameInfo *getFrameInfo() const { return &FrameInfo; }
+  virtual const TargetFrameLowering *getFrameLowering() const {
+    return &FrameLowering;
+  }
   virtual const MSP430InstrInfo *getInstrInfo() const  { return &InstrInfo; }
   virtual const TargetData *getTargetData() const     { return &DataLayout;}
   virtual const MSP430Subtarget *getSubtargetImpl() const { return &Subtarget; }

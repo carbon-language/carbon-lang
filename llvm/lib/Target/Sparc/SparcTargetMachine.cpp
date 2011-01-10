@@ -35,7 +35,7 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, const std::string &TT,
     Subtarget(TT, FS, is64bit),
     DataLayout(Subtarget.getDataLayout()),
     TLInfo(*this), TSInfo(*this), InstrInfo(Subtarget),
-    FrameInfo(Subtarget) {
+    FrameLowering(Subtarget) {
 }
 
 bool SparcTargetMachine::addInstSelector(PassManagerBase &PM,

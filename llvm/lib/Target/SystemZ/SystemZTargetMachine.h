@@ -17,12 +17,12 @@
 
 #include "SystemZInstrInfo.h"
 #include "SystemZISelLowering.h"
-#include "SystemZFrameInfo.h"
+#include "SystemZFrameLowering.h"
 #include "SystemZSelectionDAGInfo.h"
 #include "SystemZRegisterInfo.h"
 #include "SystemZSubtarget.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -35,12 +35,14 @@ class SystemZTargetMachine : public LLVMTargetMachine {
   SystemZInstrInfo        InstrInfo;
   SystemZTargetLowering   TLInfo;
   SystemZSelectionDAGInfo TSInfo;
-  SystemZFrameInfo        FrameInfo;
+  SystemZFrameLowering    FrameLowering;
 public:
   SystemZTargetMachine(const Target &T, const std::string &TT,
                        const std::string &FS);
 
-  virtual const TargetFrameInfo *getFrameInfo() const { return &FrameInfo; }
+  virtual const TargetFrameLowering *getFrameLowering() const {
+    return &FrameLowering;
+  }
   virtual const SystemZInstrInfo *getInstrInfo() const  { return &InstrInfo; }
   virtual const TargetData *getTargetData() const     { return &DataLayout;}
   virtual const SystemZSubtarget *getSubtargetImpl() const { return &Subtarget; }

@@ -61,7 +61,7 @@ def GRRegs : RegisterClass<"XCore", [i32], 32,
     GRRegsClass::iterator
     GRRegsClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return end()-1;  // don't allocate R10
       else

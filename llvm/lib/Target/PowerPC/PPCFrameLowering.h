@@ -1,4 +1,4 @@
-//===-- PPCFrameInfo.h - Define TargetFrameInfo for PowerPC -----*- C++ -*-===//
+//==-- PPCFrameLowering.h - Define frame lowering for PowerPC ----*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,19 +15,20 @@
 
 #include "PPC.h"
 #include "PPCSubtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 
 namespace llvm {
   class PPCSubtarget;
 
-class PPCFrameInfo: public TargetFrameInfo {
+class PPCFrameLowering: public TargetFrameLowering {
   const PPCSubtarget &Subtarget;
 
 public:
-  PPCFrameInfo(const PPCSubtarget &sti)
-    : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), Subtarget(sti) {
+  PPCFrameLowering(const PPCSubtarget &sti)
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 16, 0),
+      Subtarget(sti) {
   }
 
   void determineFrameLayout(MachineFunction &MF) const;

@@ -190,7 +190,7 @@ def GR32 : RegisterClass<"SystemZ", [i32], 32,
     GR32Class::iterator
     GR32Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_REG32_nofp;
       else
@@ -199,7 +199,7 @@ def GR32 : RegisterClass<"SystemZ", [i32], 32,
     GR32Class::iterator
     GR32Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_REG32_nofp + (sizeof(SystemZ_REG32_nofp) / sizeof(unsigned));
       else
@@ -237,7 +237,7 @@ def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
     ADDR32Class::iterator
     ADDR32Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_ADDR32_nofp;
       else
@@ -246,7 +246,7 @@ def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
     ADDR32Class::iterator
     ADDR32Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_ADDR32_nofp + (sizeof(SystemZ_ADDR32_nofp) / sizeof(unsigned));
       else
@@ -284,7 +284,7 @@ def GR64 : RegisterClass<"SystemZ", [i64], 64,
     GR64Class::iterator
     GR64Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_REG64_nofp;
       else
@@ -293,7 +293,7 @@ def GR64 : RegisterClass<"SystemZ", [i64], 64,
     GR64Class::iterator
     GR64Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_REG64_nofp + (sizeof(SystemZ_REG64_nofp) / sizeof(unsigned));
       else
@@ -331,7 +331,7 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
     ADDR64Class::iterator
     ADDR64Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_ADDR64_nofp;
       else
@@ -340,7 +340,7 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
     ADDR64Class::iterator
     ADDR64Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_ADDR64_nofp + (sizeof(SystemZ_ADDR64_nofp) / sizeof(unsigned));
       else
@@ -368,7 +368,7 @@ def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
     GR64PClass::iterator
     GR64PClass::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_REG64P_nofp;
       else
@@ -377,7 +377,7 @@ def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
     GR64PClass::iterator
     GR64PClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_REG64P_nofp + (sizeof(SystemZ_REG64P_nofp) / sizeof(unsigned));
       else
@@ -405,7 +405,7 @@ def GR128 : RegisterClass<"SystemZ", [v2i64], 128,
     GR128Class::iterator
     GR128Class::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_REG128_nofp;
       else
@@ -414,7 +414,7 @@ def GR128 : RegisterClass<"SystemZ", [v2i64], 128,
     GR128Class::iterator
     GR128Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
-      const TargetFrameInfo *TFI = TM.getFrameInfo();
+      const TargetFrameLowering *TFI = TM.getFrameLowering();
       if (TFI->hasFP(MF))
         return SystemZ_REG128_nofp + (sizeof(SystemZ_REG128_nofp) / sizeof(unsigned));
       else

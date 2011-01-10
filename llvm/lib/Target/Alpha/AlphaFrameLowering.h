@@ -1,4 +1,4 @@
-//=- BlackfinFrameInfo.h - Define TargetFrameInfo for Blackfin --*- C++ -*--==//
+//==-- AlphaFrameLowering.h - Define frame lowering for Alpha --*- C++ -*---==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,20 +14,20 @@
 #ifndef ALPHA_FRAMEINFO_H
 #define ALPHA_FRAMEINFO_H
 
-#include "Blackfin.h"
-#include "BlackfinSubtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "Alpha.h"
+#include "AlphaSubtarget.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class BlackfinSubtarget;
+  class AlphaSubtarget;
 
-class BlackfinFrameInfo : public TargetFrameInfo {
-protected:
-  const BlackfinSubtarget &STI;
-
+class AlphaFrameLowering : public TargetFrameLowering {
+  const AlphaSubtarget &STI;
+  // FIXME: This should end in MachineFunctionInfo, not here!
+  mutable int curgpdist;
 public:
-  explicit BlackfinFrameInfo(const BlackfinSubtarget &sti)
-    : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 4, 0), STI(sti) {
+  explicit AlphaFrameLowering(const AlphaSubtarget &sti)
+    : TargetFrameLowering(StackGrowsDown, 16, 0), STI(sti), curgpdist(0) {
   }
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
@@ -36,9 +36,6 @@ public:
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   bool hasFP(const MachineFunction &MF) const;
-
-  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                            RegScavenger *RS) const;
 };
 
 } // End llvm namespace

@@ -33,7 +33,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/GraphWriter.h"
@@ -60,7 +60,7 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
   else
     RegInfo = 0;
   MFInfo = 0;
-  FrameInfo = new (Allocator) MachineFrameInfo(*TM.getFrameInfo());
+  FrameInfo = new (Allocator) MachineFrameInfo(*TM.getFrameLowering());
   if (Fn->hasFnAttr(Attribute::StackAlignment))
     FrameInfo->setMaxAlignment(Attribute::getStackAlignmentFromAttrs(
         Fn->getAttributes().getFnAttributes()));
@@ -492,7 +492,7 @@ MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {
 void MachineFrameInfo::print(const MachineFunction &MF, raw_ostream &OS) const{
   if (Objects.empty()) return;
 
-  const TargetFrameInfo *FI = MF.getTarget().getFrameInfo();
+  const TargetFrameLowering *FI = MF.getTarget().getFrameLowering();
   int ValOffset = (FI ? FI->getOffsetOfLocalArea() : 0);
 
   OS << "Frame Objects:\n";

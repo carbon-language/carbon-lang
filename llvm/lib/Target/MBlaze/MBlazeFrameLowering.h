@@ -1,4 +1,4 @@
-//=-- MBlazeFrameInfo.h - Define TargetFrameInfo for MicroBlaze --*- C++ -*--=//
+//=- MBlazeFrameLowering.h - Define frame lowering for MicroBlaze -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,18 +16,18 @@
 
 #include "MBlaze.h"
 #include "MBlazeSubtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
   class MBlazeSubtarget;
 
-class MBlazeFrameInfo : public TargetFrameInfo {
+class MBlazeFrameLowering : public TargetFrameLowering {
 protected:
   const MBlazeSubtarget &STI;
 
 public:
-  explicit MBlazeFrameInfo(const MBlazeSubtarget &sti)
-    : TargetFrameInfo(TargetFrameInfo::StackGrowsUp, 4, 0), STI(sti) {
+  explicit MBlazeFrameLowering(const MBlazeSubtarget &sti)
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsUp, 4, 0), STI(sti) {
   }
 
   /// targetHandlesStackFrameRounding - Returns true if the target is

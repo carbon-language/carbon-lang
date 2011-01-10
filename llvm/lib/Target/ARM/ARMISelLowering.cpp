@@ -902,10 +902,11 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
   return Sched::RegPressure;
 }
 
+// FIXME: Move to RegInfo
 unsigned
 ARMTargetLowering::getRegPressureLimit(const TargetRegisterClass *RC,
                                        MachineFunction &MF) const {
-  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
   switch (RC->getID()) {
   default:
@@ -2317,7 +2318,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
     unsigned NumGPRs = CCInfo.getFirstUnallocated
       (GPRArgRegs, sizeof(GPRArgRegs) / sizeof(GPRArgRegs[0]));
 
-    unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+    unsigned Align = MF.getTarget().getFrameLowering()->getStackAlignment();
     unsigned VARegSize = (4 - NumGPRs) * 4;
     unsigned VARegSaveSize = (VARegSize + Align - 1) & ~(Align - 1);
     unsigned ArgOffset = CCInfo.getNextStackOffset();

@@ -18,7 +18,7 @@
 #include "SPUInstrBuilder.h"
 #include "SPUSubtarget.h"
 #include "SPUMachineFunction.h"
-#include "SPUFrameInfo.h"
+#include "SPUFrameLowering.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/ValueTypes.h"
@@ -30,7 +30,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -283,7 +283,7 @@ SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   MachineOperand &MO = MI.getOperand(OpNo);
 
   // Offset is biased by $lr's slot at the bottom.
-  Offset += MO.getImm() + MFI->getStackSize() + SPUFrameInfo::minStackSize();
+  Offset += MO.getImm() + MFI->getStackSize() + SPUFrameLowering::minStackSize();
   assert((Offset & 0xf) == 0
          && "16-byte alignment violated in eliminateFrameIndex");
 

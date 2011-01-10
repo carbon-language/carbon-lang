@@ -85,7 +85,7 @@ MBlazeTargetMachine(const Target &T, const std::string &TT,
   Subtarget(TT, FS),
   DataLayout("E-p:32:32:32-i8:8:8-i16:16:16"),
   InstrInfo(*this),
-  FrameInfo(Subtarget),
+  FrameLowering(Subtarget),
   TLInfo(*this), TSInfo(*this), ELFWriterInfo(*this) {
   if (getRelocationModel() == Reloc::Default) {
       setRelocationModel(Reloc::Static);

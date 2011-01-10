@@ -34,13 +34,13 @@ extern "C" void LLVMInitializePTXTarget() {
   TargetRegistry::RegisterAsmStreamer(ThePTXTarget, createPTXAsmStreamer);
 }
 
-// DataLayout and FrameInfo are filled with dummy data
+// DataLayout and FrameLowering are filled with dummy data
 PTXTargetMachine::PTXTargetMachine(const Target &T,
                                    const std::string &TT,
                                    const std::string &FS)
   : LLVMTargetMachine(T, TT),
     DataLayout("e-p:32:32-i64:32:32-f64:32:32-v128:32:128-v64:32:64-n32:64"),
-    FrameInfo(Subtarget),
+    FrameLowering(Subtarget),
     InstrInfo(*this),
     TLInfo(*this),
     Subtarget(TT, FS) {

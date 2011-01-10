@@ -23,7 +23,7 @@ class MachineFunction;
 class MachineModuleInfo;
 class MachineMove;
 class TargetData;
-class TargetFrameInfo;
+class TargetFrameLowering;
 class TargetMachine;
 class TargetRegisterInfo;
 
@@ -31,7 +31,7 @@ class JITDwarfEmitter {
   const TargetData* TD;
   JITCodeEmitter* JCE;
   const TargetRegisterInfo* RI;
-  const TargetFrameInfo *TFI;
+  const TargetFrameLowering *TFI;
   MachineModuleInfo* MMI;
   JIT& Jit;
   bool stackGrowthDirection;

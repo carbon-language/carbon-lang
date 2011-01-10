@@ -1,4 +1,4 @@
-//=======- PPCFrameInfo.cpp - PPC Frame Information ------------*- C++ -*-====//
+//=====- PPCFrameLowering.cpp - PPC Frame Information -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the PPC implementation of TargetFrameInfo class.
+// This file contains the PPC implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "PPCFrameInfo.h"
+#include "PPCFrameLowering.h"
 #include "PPCInstrInfo.h"
 #include "PPCMachineFunctionInfo.h"
 #include "llvm/Function.h"
@@ -170,7 +170,7 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
 
 /// determineFrameLayout - Determine the size of the frame and maximum call
 /// frame size.
-void PPCFrameInfo::determineFrameLayout(MachineFunction &MF) const {
+void PPCFrameLowering::determineFrameLayout(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Get the number of bytes to allocate from the FrameInfo
@@ -179,7 +179,7 @@ void PPCFrameInfo::determineFrameLayout(MachineFunction &MF) const {
   // Get the alignments provided by the target, and the maximum alignment
   // (if any) of the fixed frame objects.
   unsigned MaxAlign = MFI->getMaxAlignment();
-  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned TargetAlign = getStackAlignment();
   unsigned AlignMask = TargetAlign - 1;  //
 
   // If we are a leaf function, and use up to 224 bytes of stack space,
@@ -225,7 +225,7 @@ void PPCFrameInfo::determineFrameLayout(MachineFunction &MF) const {
 
 // hasFP - Return true if the specified function actually has a dedicated frame
 // pointer register.
-bool PPCFrameInfo::hasFP(const MachineFunction &MF) const {
+bool PPCFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   // FIXME: This is pretty much broken by design: hasFP() might be called really
   // early, before the stack layout was calculated and thus hasFP() might return
@@ -236,7 +236,7 @@ bool PPCFrameInfo::hasFP(const MachineFunction &MF) const {
 // needsFP - Return true if the specified function should have a dedicated frame
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
-bool PPCFrameInfo::needsFP(const MachineFunction &MF) const {
+bool PPCFrameLowering::needsFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Naked functions have no stack frame pushed, so we don't have a frame
@@ -249,7 +249,7 @@ bool PPCFrameInfo::needsFP(const MachineFunction &MF) const {
 }
 
 
-void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
+void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -295,7 +295,7 @@ void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF);
 
-  int LROffset = PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI);
+  int LROffset = PPCFrameLowering::getReturnSaveOffset(isPPC64, isDarwinABI);
 
   int FPOffset = 0;
   if (HasFP) {
@@ -305,7 +305,7 @@ void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
       assert(FPIndex && "No Frame Pointer Save Slot!");
       FPOffset = FFI->getObjectOffset(FPIndex);
     } else {
-      FPOffset = PPCFrameInfo::getFramePointerSaveOffset(isPPC64, isDarwinABI);
+      FPOffset = PPCFrameLowering::getFramePointerSaveOffset(isPPC64, isDarwinABI);
     }
   }
 
@@ -345,7 +345,7 @@ void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
   if (!FrameSize) return;
 
   // Get stack alignments.
-  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned TargetAlign = getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
 
   // Adjust stack pointer: r1 += NegFrameSize.
@@ -495,7 +495,7 @@ void PPCFrameInfo::emitPrologue(MachineFunction &MF) const {
   }
 }
 
-void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
+void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
                                 MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   const PPCInstrInfo &TII =
@@ -515,7 +515,7 @@ void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
 
   // Get alignment info so we know how to restore r1
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned TargetAlign = getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
 
   // Get the number of bytes allocated from the FrameInfo.
@@ -531,7 +531,7 @@ void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF);
 
-  int LROffset = PPCFrameInfo::getReturnSaveOffset(isPPC64, isDarwinABI);
+  int LROffset = PPCFrameLowering::getReturnSaveOffset(isPPC64, isDarwinABI);
 
   int FPOffset = 0;
   if (HasFP) {
@@ -541,7 +541,7 @@ void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
       assert(FPIndex && "No Frame Pointer Save Slot!");
       FPOffset = FFI->getObjectOffset(FPIndex);
     } else {
-      FPOffset = PPCFrameInfo::getFramePointerSaveOffset(isPPC64, isDarwinABI);
+      FPOffset = PPCFrameLowering::getFramePointerSaveOffset(isPPC64, isDarwinABI);
     }
   }
 
@@ -704,7 +704,7 @@ void PPCFrameInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void PPCFrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
+void PPCFrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves) const {
   // Initial state of the frame pointer is R1.
   MachineLocation Dst(MachineLocation::VirtualFP);
   MachineLocation Src(PPC::R1, 0);
@@ -731,7 +731,7 @@ static bool MustSaveLR(const MachineFunction &MF, unsigned LR) {
 }
 
 void
-PPCFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                    RegScavenger *RS) const {
   const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
 
@@ -752,7 +752,7 @@ PPCFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // Find out what the fix offset of the frame pointer save area.
     int FPOffset = getFramePointerSaveOffset(isPPC64, isDarwinABI);
     // Allocate the frame index for frame pointer save area.
-    FPSI = MF.getFrameInfo()->CreateFixedObject(isPPC64? 8 : 4, FPOffset, true);
+    FPSI = MFI->CreateFixedObject(isPPC64? 8 : 4, FPOffset, true);
     // Save the result.
     FI->setFramePointerSaveIndex(FPSI);
   }
@@ -760,7 +760,7 @@ PPCFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // Reserve stack space to move the linkage area to in case of a tail call.
   int TCSPDelta = 0;
   if (GuaranteedTailCallOpt && (TCSPDelta = FI->getTailCallSPDelta()) < 0) {
-    MF.getFrameInfo()->CreateFixedObject(-1 * TCSPDelta, TCSPDelta, true);
+    MFI->CreateFixedObject(-1 * TCSPDelta, TCSPDelta, true);
   }
 
   // Reserve a slot closest to SP or frame pointer if we have a dynalloc or
@@ -781,7 +781,7 @@ PPCFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     }
 }
 
-void PPCFrameInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
+void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF)
                                                                         const {
   // Early exit if not using the SVR4 ABI.
   if (!Subtarget.isSVR4ABI())

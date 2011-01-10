@@ -16,7 +16,7 @@
 
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
@@ -28,7 +28,7 @@ namespace llvm {
 class TargetAsmInfo {
   unsigned PointerSize;
   bool IsLittleEndian;
-  TargetFrameInfo::StackDirection StackDir;
+  TargetFrameLowering::StackDirection StackDir;
   const TargetRegisterInfo *TRI;
   std::vector<MachineMove> InitialFrameState;
   const TargetLoweringObjectFile *TLOF;
@@ -46,7 +46,7 @@ public:
     return IsLittleEndian;
   }
 
-  TargetFrameInfo::StackDirection getStackGrowthDirection() const {
+  TargetFrameLowering::StackDirection getStackGrowthDirection() const {
     return StackDir;
   }
 

@@ -19,7 +19,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -214,8 +214,8 @@ void AsmPrinter::EmitFrameMoves(const std::vector<MachineMove> &Moves,
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
   
   int stackGrowth = TM.getTargetData()->getPointerSize();
-  if (TM.getFrameInfo()->getStackGrowthDirection() !=
-      TargetFrameInfo::StackGrowsUp)
+  if (TM.getFrameLowering()->getStackGrowthDirection() !=
+      TargetFrameLowering::StackGrowsUp)
     stackGrowth *= -1;
   
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {

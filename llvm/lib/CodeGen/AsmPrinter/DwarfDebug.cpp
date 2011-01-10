@@ -24,7 +24,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -594,7 +594,7 @@ void DwarfDebug::addSourceLine(DIE *Die, DINameSpace NS) {
 void DwarfDebug::addVariableAddress(DbgVariable *&DV, DIE *Die, int64_t FI) {
   MachineLocation Location;
   unsigned FrameReg;
-  const TargetFrameInfo *TFI = Asm->TM.getFrameInfo();
+  const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
   int Offset = TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
   Location.set(FrameReg, Offset);
 
@@ -3294,8 +3294,8 @@ void DwarfDebug::emitCommonDebugFrame() {
     return;
 
   int stackGrowth = Asm->getTargetData().getPointerSize();
-  if (Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
-      TargetFrameInfo::StackGrowsDown)
+  if (Asm->TM.getFrameLowering()->getStackGrowthDirection() ==
+      TargetFrameLowering::StackGrowsDown)
     stackGrowth *= -1;
 
   // Start the dwarf frame section.
@@ -3318,7 +3318,7 @@ void DwarfDebug::emitCommonDebugFrame() {
   Asm->EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
   Asm->OutStreamer.AddComment("CIE RA Column");
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
-  const TargetFrameInfo *TFI = Asm->TM.getFrameInfo();
+  const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), false));
 
   std::vector<MachineMove> Moves;

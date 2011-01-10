@@ -28,7 +28,7 @@ AlphaTargetMachine::AlphaTargetMachine(const Target &T, const std::string &TT,
                                        const std::string &FS)
   : LLVMTargetMachine(T, TT),
     DataLayout("e-f128:128:128-n64"),
-    FrameInfo(Subtarget),
+    FrameLowering(Subtarget),
     Subtarget(TT, FS),
     TLInfo(*this),
     TSInfo(*this) {

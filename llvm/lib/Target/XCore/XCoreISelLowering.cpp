@@ -1033,7 +1033,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_XCore);
 
-  unsigned StackSlotSize = XCoreFrameInfo::stackSlotSize();
+  unsigned StackSlotSize = XCoreFrameLowering::stackSlotSize();
 
   unsigned LRSaveSize = StackSlotSize;
   

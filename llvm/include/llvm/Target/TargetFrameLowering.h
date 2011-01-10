@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetFrameInfo.h ---------------------------*- C++ -*-===//
+//===-- llvm/Target/TargetFrameLowering.h ---------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETFRAMEINFO_H
-#define LLVM_TARGET_TARGETFRAMEINFO_H
+#ifndef LLVM_TARGET_TARGETFRAMELOWERING_H
+#define LLVM_TARGET_TARGETFRAMELOWERING_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 
@@ -33,7 +33,7 @@ namespace llvm {
 /// The offset to the local area is the offset from the stack pointer on
 /// function entry to the first location where function data (local variables,
 /// spill locations) can be stored.
-class TargetFrameInfo {
+class TargetFrameLowering {
 public:
   enum StackDirection {
     StackGrowsUp,        // Adding to the stack increases the stack address
@@ -51,12 +51,12 @@ private:
   unsigned TransientStackAlignment;
   int LocalAreaOffset;
 public:
-  TargetFrameInfo(StackDirection D, unsigned StackAl, int LAO,
-                  unsigned TransAl = 1)
+  TargetFrameLowering(StackDirection D, unsigned StackAl, int LAO,
+                      unsigned TransAl = 1)
     : StackDir(D), StackAlignment(StackAl), TransientStackAlignment(TransAl),
       LocalAreaOffset(LAO) {}
 
-  virtual ~TargetFrameInfo();
+  virtual ~TargetFrameLowering();
 
   // These methods return information that describes the abstract stack layout
   // of the target machine.

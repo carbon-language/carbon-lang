@@ -1,4 +1,4 @@
-//==- SystemZFrameInfo.h - Define TargetFrameInfo for z/System --*- C++ -*--==//
+//==- MSP430FrameLowering.h - Define frame lowering for MSP430 --*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,24 +11,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZ_FRAMEINFO_H
-#define SYSTEMZ_FRAMEINFO_H
+#ifndef MSP430_FRAMEINFO_H
+#define MSP430_FRAMEINFO_H
 
-#include "SystemZ.h"
-#include "SystemZSubtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/ADT/IndexedMap.h"
+#include "MSP430.h"
+#include "MSP430Subtarget.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class SystemZSubtarget;
+  class MSP430Subtarget;
 
-class SystemZFrameInfo : public TargetFrameInfo {
-  IndexedMap<unsigned> RegSpillOffsets;
+class MSP430FrameLowering : public TargetFrameLowering {
 protected:
-  const SystemZSubtarget &STI;
+  const MSP430Subtarget &STI;
 
 public:
-  explicit SystemZFrameInfo(const SystemZSubtarget &sti);
+  explicit MSP430FrameLowering(const MSP430Subtarget &sti)
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 2, -2), STI(sti) {
+  }
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
@@ -44,12 +44,8 @@ public:
                                    const std::vector<CalleeSavedInfo> &CSI,
                                    const TargetRegisterInfo *TRI) const;
 
-  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                            RegScavenger *RS) const;
-
-  bool hasReservedCallFrame(const MachineFunction &MF) const { return true; }
   bool hasFP(const MachineFunction &MF) const;
-  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
+  bool hasReservedCallFrame(const MachineFunction &MF) const;
 };
 
 } // End llvm namespace

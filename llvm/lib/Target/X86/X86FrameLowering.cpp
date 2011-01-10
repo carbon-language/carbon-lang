@@ -1,4 +1,4 @@
-//=======- X86FrameInfo.cpp - X86 Frame Information ------------*- C++ -*-====//
+//=======- X86FrameLowering.cpp - X86 Frame Information ------------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the X86 implementation of TargetFrameInfo class.
+// This file contains the X86 implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "X86FrameInfo.h"
+#include "X86FrameLowering.h"
 #include "X86InstrBuilder.h"
 #include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
@@ -32,14 +32,14 @@ using namespace llvm;
 // FIXME: completely move here.
 extern cl::opt<bool> ForceStackAlign;
 
-bool X86FrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
+bool X86FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
 /// hasFP - Return true if the specified function should have a dedicated frame
 /// pointer register.  This is true if the function has variable sized allocas
 /// or if frame pointer elimination is disabled.
-bool X86FrameInfo::hasFP(const MachineFunction &MF) const {
+bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const MachineModuleInfo &MMI = MF.getMMI();
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
@@ -276,7 +276,7 @@ static bool isEAXLiveIn(MachineFunction &MF) {
   return false;
 }
 
-void X86FrameInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
+void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
                                              MCSymbol *Label,
                                              unsigned FramePtr) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -292,8 +292,8 @@ void X86FrameInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
 
   // Calculate amount of bytes used for return address storing.
   int stackGrowth =
-    (TM.getFrameInfo()->getStackGrowthDirection() ==
-     TargetFrameInfo::StackGrowsUp ?
+    (TM.getFrameLowering()->getStackGrowthDirection() ==
+     TargetFrameLowering::StackGrowsUp ?
      TD->getPointerSize() : -TD->getPointerSize());
 
   // FIXME: This is dirty hack. The code itself is pretty mess right now.
@@ -347,7 +347,7 @@ void X86FrameInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
 /// automatically adjust the stack pointer. Adjust the stack pointer to allocate
 /// space for local variables. Also emit labels used by the exception handler to
 /// generate the exception handling frames.
-void X86FrameInfo::emitPrologue(MachineFunction &MF) const {
+void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front(); // Prologue goes in entry BB.
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -640,7 +640,7 @@ void X86FrameInfo::emitPrologue(MachineFunction &MF) const {
   }
 }
 
-void X86FrameInfo::emitEpilogue(MachineFunction &MF,
+void X86FrameLowering::emitEpilogue(MachineFunction &MF,
                                 MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
@@ -835,7 +835,7 @@ void X86FrameInfo::emitEpilogue(MachineFunction &MF,
 }
 
 void
-X86FrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
+X86FrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves) const {
   // Calculate amount of bytes used for return address storing
   int stackGrowth = (STI.is64Bit() ? -8 : -4);
   const X86RegisterInfo *RI = TM.getRegisterInfo();
@@ -851,7 +851,7 @@ X86FrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves) const {
   Moves.push_back(MachineMove(0, CSDst, CSSrc));
 }
 
-int X86FrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
+int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
   const X86RegisterInfo *RI =
     static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());
   const MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -886,7 +886,7 @@ int X86FrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
   return Offset;
 }
 
-bool X86FrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                              MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
                                           const TargetRegisterInfo *TRI) const {
@@ -927,7 +927,7 @@ bool X86FrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-bool X86FrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+bool X86FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                                MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
                                           const TargetRegisterInfo *TRI) const {
@@ -958,7 +958,7 @@ bool X86FrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 }
 
 void
-X86FrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                    RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const X86RegisterInfo *RegInfo = TM.getRegisterInfo();
@@ -984,7 +984,7 @@ X86FrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (hasFP(MF)) {
     assert((TailCallReturnAddrDelta <= 0) &&
            "The Delta should always be zero or negative");
-    const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
+    const TargetFrameLowering &TFI = *MF.getTarget().getFrameLowering();
 
     // Create a frame entry for the EBP register that must be saved.
     int FrameIdx = MFI->CreateFixedObject(SlotSize,

@@ -697,7 +697,7 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
+  const TargetFrameLowering &TFI = *MF.getTarget().getFrameLowering();
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;

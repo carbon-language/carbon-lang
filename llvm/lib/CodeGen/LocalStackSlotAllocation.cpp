@@ -34,7 +34,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 using namespace llvm;
 
@@ -152,9 +152,9 @@ void LocalStackSlotPass::AdjustStackOffset(MachineFrameInfo *MFI,
 void LocalStackSlotPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *MFI = Fn.getFrameInfo();
-  const TargetFrameInfo &TFI = *Fn.getTarget().getFrameInfo();
+  const TargetFrameLowering &TFI = *Fn.getTarget().getFrameLowering();
   bool StackGrowsDown =
-    TFI.getStackGrowthDirection() == TargetFrameInfo::StackGrowsDown;
+    TFI.getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
   int64_t Offset = 0;
   unsigned MaxAlign = 0;
 
@@ -227,9 +227,9 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
 
   MachineFrameInfo *MFI = Fn.getFrameInfo();
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
-  const TargetFrameInfo &TFI = *Fn.getTarget().getFrameInfo();
+  const TargetFrameLowering &TFI = *Fn.getTarget().getFrameLowering();
   bool StackGrowsDown =
-    TFI.getStackGrowthDirection() == TargetFrameInfo::StackGrowsDown;
+    TFI.getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
 
   // Collect all of the instructions in the block that reference
   // a frame index. Also store the frame index referenced to ease later

@@ -125,7 +125,7 @@ static void printHex32(unsigned int Value, raw_ostream &O) {
 // Create a bitmask with all callee saved registers for CPU or Floating Point
 // registers. For CPU registers consider RA, GP and FP for saving if necessary.
 void MBlazeAsmPrinter::printSavedRegsBitmask() {
-  const TargetFrameInfo *TFI = TM.getFrameInfo();
+  const TargetFrameLowering *TFI = TM.getFrameLowering();
   const TargetRegisterInfo &RI = *TM.getRegisterInfo();
 
   // CPU Saved Registers Bitmasks

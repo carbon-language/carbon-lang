@@ -1,4 +1,4 @@
-//=======- ARMFrameInfo.cpp - ARM Frame Information ------------*- C++ -*-====//
+//=======- ARMFrameLowering.cpp - ARM Frame Information --------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the ARM implementation of TargetFrameInfo class.
+// This file contains the ARM implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMFrameInfo.h"
+#include "ARMFrameLowering.h"
 #include "ARMAddressingModes.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
@@ -28,7 +28,7 @@ using namespace llvm;
 /// pointer register.  This is true if the function has variable sized allocas
 /// or if frame pointer elimination is disabled.
 ///
-bool ARMFrameInfo::hasFP(const MachineFunction &MF) const {
+bool ARMFrameLowering::hasFP(const MachineFunction &MF) const {
   const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
 
   // Mac OS X requires FP not to be clobbered for backtracing purpose.
@@ -48,7 +48,7 @@ bool ARMFrameInfo::hasFP(const MachineFunction &MF) const {
 // immediately on entry to the current function. This eliminates the need for
 // add/sub sp brackets around call sites. Returns true if the call frame is
 // included as part of the stack frame.
-bool ARMFrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
+bool ARMFrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
   const MachineFrameInfo *FFI = MF.getFrameInfo();
   unsigned CFSize = FFI->getMaxCallFrameSize();
   // It's not always a good idea to include the call frame as part of the
@@ -65,7 +65,7 @@ bool ARMFrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
 // call frame pseudos can be simplified. Unlike most targets, having a FP
 // is not sufficient here since we still may reference some objects via SP
 // even when FP is available in Thumb2 mode.
-bool ARMFrameInfo::canSimplifyCallFramePseudos(const MachineFunction &MF)const {
+bool ARMFrameLowering::canSimplifyCallFramePseudos(const MachineFunction &MF)const {
   return hasReservedCallFrame(MF) || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
@@ -115,7 +115,7 @@ emitSPUpdate(bool isARM,
                            Pred, PredReg, TII);
 }
 
-void ARMFrameInfo::emitPrologue(MachineFunction &MF) const {
+void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
@@ -293,7 +293,7 @@ void ARMFrameInfo::emitPrologue(MachineFunction &MF) const {
     AFI->setShouldRestoreSPFromFP(true);
 }
 
-void ARMFrameInfo::emitEpilogue(MachineFunction &MF,
+void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
                                 MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   assert(MBBI->getDesc().isReturn() &&
@@ -418,13 +418,13 @@ void ARMFrameInfo::emitEpilogue(MachineFunction &MF,
 // FIXME: This can go wrong when references are SP-relative and simple call
 //        frames aren't used.
 int
-ARMFrameInfo::getFrameIndexReference(const MachineFunction &MF, int FI,
+ARMFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
                                      unsigned &FrameReg) const {
   return ResolveFrameIndexReference(MF, FI, FrameReg, 0);
 }
 
 int
-ARMFrameInfo::ResolveFrameIndexReference(const MachineFunction &MF,
+ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
                                          int FI,
                                          unsigned &FrameReg,
                                          int SPAdj) const {
@@ -499,12 +499,12 @@ ARMFrameInfo::ResolveFrameIndexReference(const MachineFunction &MF,
   return Offset;
 }
 
-int ARMFrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
+int ARMFrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
   unsigned FrameReg;
   return getFrameIndexReference(MF, FI, FrameReg);
 }
 
-void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
+void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI,
                                 unsigned StmOpc, unsigned StrOpc, bool NoGap,
@@ -572,7 +572,7 @@ void ARMFrameInfo::emitPushInst(MachineBasicBlock &MBB,
   }
 }
 
-void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
+void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator MI,
                                const std::vector<CalleeSavedInfo> &CSI,
                                unsigned LdmOpc, unsigned LdrOpc,
@@ -642,7 +642,7 @@ void ARMFrameInfo::emitPopInst(MachineBasicBlock &MBB,
   }
 }
 
-bool ARMFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+bool ARMFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                              MachineBasicBlock::iterator MI,
                                        const std::vector<CalleeSavedInfo> &CSI,
                                        const TargetRegisterInfo *TRI) const {
@@ -663,7 +663,7 @@ bool ARMFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-bool ARMFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+bool ARMFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                                MachineBasicBlock::iterator MI,
                                        const std::vector<CalleeSavedInfo> &CSI,
                                          const TargetRegisterInfo *TRI) const {
@@ -726,7 +726,7 @@ static unsigned estimateStackSize(MachineFunction &MF) {
 /// instructions will require a scratch register during their expansion later.
 // FIXME: Move to TII?
 static unsigned estimateRSStackSizeLimit(MachineFunction &MF,
-                                         const TargetFrameInfo *TFI) {
+                                         const TargetFrameLowering *TFI) {
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   unsigned Limit = (1 << 12) - 1;
   for (MachineFunction::iterator BB = MF.begin(),E = MF.end(); BB != E; ++BB) {
@@ -775,7 +775,7 @@ static unsigned estimateRSStackSizeLimit(MachineFunction &MF,
 }
 
 void
-ARMFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                    RegScavenger *RS) const {
   // This tells PEI to spill the FP as if it is any other callee-save register
   // to take advantage the eliminateFrameIndex machinery. This also ensures it
@@ -933,7 +933,7 @@ ARMFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // If stack and double are 8-byte aligned and we are spilling an odd number
     // of GPRs, spill one extra callee save GPR so we won't have to pad between
     // the integer and double callee save areas.
-    unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+    unsigned TargetAlign = getStackAlignment();
     if (TargetAlign == 8 && (NumGPRSpills & 1)) {
       if (CS1Spilled && !UnspilledCS1GPRs.empty()) {
         for (unsigned i = 0, e = UnspilledCS1GPRs.size(); i != e; ++i) {

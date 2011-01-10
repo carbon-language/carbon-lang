@@ -1,4 +1,4 @@
-//====--- MipsFrameInfo.h - Define TargetFrameInfo for Mips --*- C++ -*---====//
+//=- BlackfinFrameLowering.h - Define frame lowering for Blackfin -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,24 +14,21 @@
 #ifndef ALPHA_FRAMEINFO_H
 #define ALPHA_FRAMEINFO_H
 
-#include "Mips.h"
-#include "MipsSubtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "Blackfin.h"
+#include "BlackfinSubtarget.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class MipsSubtarget;
+  class BlackfinSubtarget;
 
-class MipsFrameInfo : public TargetFrameInfo {
+class BlackfinFrameLowering : public TargetFrameLowering {
 protected:
-  const MipsSubtarget &STI;
+  const BlackfinSubtarget &STI;
 
 public:
-  explicit MipsFrameInfo(const MipsSubtarget &sti)
-    // FIXME: Is this correct at all?
-    : TargetFrameInfo(StackGrowsUp, 8, 0), STI(sti) {
+  explicit BlackfinFrameLowering(const BlackfinSubtarget &sti)
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 4, 0), STI(sti) {
   }
-
-  void adjustMipsStackFrame(MachineFunction &MF) const;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
@@ -39,6 +36,9 @@ public:
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   bool hasFP(const MachineFunction &MF) const;
+
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS) const;
 };
 
 } // End llvm namespace

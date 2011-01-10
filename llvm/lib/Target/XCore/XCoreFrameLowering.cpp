@@ -1,4 +1,4 @@
-//===-- XCoreFrameInfo.cpp - Frame info for XCore Target ---------*- C++ -*-==//
+//===-- XCoreFrameLowering.cpp - Frame info for XCore Target -----*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "XCore.h"
-#include "XCoreFrameInfo.h"
+#include "XCoreFrameLowering.h"
 #include "XCoreInstrInfo.h"
 #include "XCoreMachineFunctionInfo.h"
 #include "llvm/Function.h"
@@ -74,20 +74,20 @@ static void storeToStack(MachineBasicBlock &MBB,
 
 
 //===----------------------------------------------------------------------===//
-// XCoreFrameInfo:
+// XCoreFrameLowering:
 //===----------------------------------------------------------------------===//
 
-XCoreFrameInfo::XCoreFrameInfo(const XCoreSubtarget &sti)
-  : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 4, 0),
+XCoreFrameLowering::XCoreFrameLowering(const XCoreSubtarget &sti)
+  : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 4, 0),
     STI(sti) {
   // Do nothing
 }
 
-bool XCoreFrameInfo::hasFP(const MachineFunction &MF) const {
+bool XCoreFrameLowering::hasFP(const MachineFunction &MF) const {
   return DisableFramePointerElim(MF) || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-void XCoreFrameInfo::emitPrologue(MachineFunction &MF) const {
+void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -205,7 +205,7 @@ void XCoreFrameInfo::emitPrologue(MachineFunction &MF) const {
   }
 }
 
-void XCoreFrameInfo::emitEpilogue(MachineFunction &MF,
+void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   MachineFrameInfo *MFI            = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
@@ -265,7 +265,7 @@ void XCoreFrameInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void XCoreFrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
+void XCoreFrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves)
                                                                         const {
   // Initial state of the frame pointer is SP.
   MachineLocation Dst(MachineLocation::VirtualFP);
@@ -273,7 +273,7 @@ void XCoreFrameInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
   Moves.push_back(MachineMove(0, Dst, Src));
 }
 
-bool XCoreFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+bool XCoreFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                                MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
                                           const TargetRegisterInfo *TRI) const {
@@ -307,7 +307,7 @@ bool XCoreFrameInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-bool XCoreFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+bool XCoreFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                                  MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
                                             const TargetRegisterInfo *TRI) const{
@@ -339,7 +339,7 @@ bool XCoreFrameInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 }
 
 void
-XCoreFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+XCoreFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                      RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
@@ -376,7 +376,7 @@ XCoreFrameInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 }
 
-void XCoreFrameInfo::
+void XCoreFrameLowering::
 processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
 
 }

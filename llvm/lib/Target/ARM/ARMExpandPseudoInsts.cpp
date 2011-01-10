@@ -24,7 +24,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/raw_ostream.h" // FIXME: for debug only. remove!
 using namespace llvm;
@@ -639,7 +639,7 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
         int32_t NumBytes = AFI->getFramePtrSpillOffset();
         unsigned FramePtr = RI.getFrameRegister(MF);
-        assert(MF.getTarget().getFrameInfo()->hasFP(MF) &&
+        assert(MF.getTarget().getFrameLowering()->hasFP(MF) &&
                "base pointer without frame pointer?");
 
         if (AFI->isThumb2Function()) {

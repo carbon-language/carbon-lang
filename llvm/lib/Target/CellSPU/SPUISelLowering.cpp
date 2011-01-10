@@ -1,4 +1,3 @@
-//
 //===-- SPUISelLowering.cpp - Cell SPU DAG Lowering Implementation --------===//
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,7 +13,7 @@
 #include "SPURegisterNames.h"
 #include "SPUISelLowering.h"
 #include "SPUTargetMachine.h"
-#include "SPUFrameInfo.h"
+#include "SPUFrameLowering.h"
 #include "SPUMachineFunction.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -1123,9 +1122,9 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
   SPUFunctionInfo *FuncInfo = MF.getInfo<SPUFunctionInfo>();
 
-  unsigned ArgOffset = SPUFrameInfo::minStackSize();
+  unsigned ArgOffset = SPUFrameLowering::minStackSize();
   unsigned ArgRegIdx = 0;
-  unsigned StackSlotSize = SPUFrameInfo::stackSlotSize();
+  unsigned StackSlotSize = SPUFrameLowering::stackSlotSize();
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
 
@@ -1274,7 +1273,7 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   const SPUSubtarget *ST = SPUTM.getSubtargetImpl();
   unsigned NumOps     = Outs.size();
-  unsigned StackSlotSize = SPUFrameInfo::stackSlotSize();
+  unsigned StackSlotSize = SPUFrameLowering::stackSlotSize();
 
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
@@ -1295,7 +1294,7 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Figure out which arguments are going to go in registers, and which in
   // memory.
-  unsigned ArgOffset = SPUFrameInfo::minStackSize(); // Just below [LR]
+  unsigned ArgOffset = SPUFrameLowering::minStackSize(); // Just below [LR]
   unsigned ArgRegIdx = 0;
 
   // Keep track of registers passing arguments
@@ -1342,7 +1341,7 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Accumulate how many bytes are to be pushed on the stack, including the
   // linkage area, and parameter passing area.  According to the SPU ABI,
   // we minimally need space for [LR] and [SP].
-  unsigned NumStackBytes = ArgOffset - SPUFrameInfo::minStackSize();
+  unsigned NumStackBytes = ArgOffset - SPUFrameLowering::minStackSize();
 
   // Insert a call sequence start
   Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumStackBytes,

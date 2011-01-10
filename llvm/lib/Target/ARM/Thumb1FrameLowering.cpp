@@ -1,4 +1,4 @@
-//=======- Thumb1FrameInfo.cpp - Thumb1 Frame Information ------*- C++ -*-====//
+//======- Thumb1FrameLowering.cpp - Thumb1 Frame Information ---*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Thumb1 implementation of TargetFrameInfo class.
+// This file contains the Thumb1 implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "Thumb1FrameInfo.h"
+#include "Thumb1FrameLowering.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -21,7 +21,7 @@
 
 using namespace llvm;
 
-bool Thumb1FrameInfo::hasReservedCallFrame(const MachineFunction &MF) const {
+bool Thumb1FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
   const MachineFrameInfo *FFI = MF.getFrameInfo();
   unsigned CFSize = FFI->getMaxCallFrameSize();
   // It's not always a good idea to include the call frame as part of the
@@ -43,7 +43,7 @@ static void emitSPUpdate(MachineBasicBlock &MBB,
                             MRI, dl);
 }
 
-void Thumb1FrameInfo::emitPrologue(MachineFunction &MF) const {
+void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
@@ -181,7 +181,7 @@ static bool isCSRestore(MachineInstr *MI, const unsigned *CSRegs) {
   return false;
 }
 
-void Thumb1FrameInfo::emitEpilogue(MachineFunction &MF,
+void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   assert((MBBI->getOpcode() == ARM::tBX_RET ||
@@ -265,7 +265,7 @@ void Thumb1FrameInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-bool Thumb1FrameInfo::
+bool Thumb1FrameLowering::
 spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MI,
                           const std::vector<CalleeSavedInfo> &CSI,
@@ -303,7 +303,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-bool Thumb1FrameInfo::
+bool Thumb1FrameLowering::
 restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             const std::vector<CalleeSavedInfo> &CSI,

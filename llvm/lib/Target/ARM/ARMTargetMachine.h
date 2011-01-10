@@ -16,13 +16,13 @@
 
 #include "ARMInstrInfo.h"
 #include "ARMELFWriterInfo.h"
-#include "ARMFrameInfo.h"
+#include "ARMFrameLowering.h"
 #include "ARMJITInfo.h"
 #include "ARMSubtarget.h"
 #include "ARMISelLowering.h"
 #include "ARMSelectionDAGInfo.h"
 #include "Thumb1InstrInfo.h"
-#include "Thumb1FrameInfo.h"
+#include "Thumb1FrameLowering.h"
 #include "Thumb2InstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
@@ -67,7 +67,7 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   ARMELFWriterInfo    ELFWriterInfo;
   ARMTargetLowering   TLInfo;
   ARMSelectionDAGInfo TSInfo;
-  ARMFrameInfo        FrameInfo;
+  ARMFrameLowering    FrameLowering;
  public:
   ARMTargetMachine(const Target &T, const std::string &TT,
                    const std::string &FS);
@@ -83,7 +83,9 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   virtual const ARMSelectionDAGInfo* getSelectionDAGInfo() const {
     return &TSInfo;
   }
-  virtual const ARMFrameInfo     *getFrameInfo() const { return &FrameInfo; }
+  virtual const ARMFrameLowering *getFrameLowering() const {
+    return &FrameLowering;
+  }
 
   virtual const ARMInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
@@ -103,8 +105,8 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   ARMELFWriterInfo    ELFWriterInfo;
   ARMTargetLowering   TLInfo;
   ARMSelectionDAGInfo TSInfo;
-  // Either Thumb1FrameInfo or ARMFrameInfo.
-  OwningPtr<ARMFrameInfo> FrameInfo;
+  // Either Thumb1FrameLowering or ARMFrameLowering.
+  OwningPtr<ARMFrameLowering> FrameLowering;
 public:
   ThumbTargetMachine(const Target &T, const std::string &TT,
                      const std::string &FS);
@@ -126,9 +128,9 @@ public:
   virtual const ARMBaseInstrInfo *getInstrInfo() const {
     return InstrInfo.get();
   }
-  /// returns either Thumb1FrameInfo or ARMFrameInfo
-  virtual const ARMFrameInfo     *getFrameInfo() const {
-    return FrameInfo.get();
+  /// returns either Thumb1FrameLowering or ARMFrameLowering
+  virtual const ARMFrameLowering *getFrameLowering() const {
+    return FrameLowering.get();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
   virtual const ARMELFWriterInfo *getELFWriterInfo() const {

@@ -1,4 +1,4 @@
-//===-- SPUFrameInfo.h - Top-level interface for Cell SPU Target -*- C++ -*-==//
+//=====-- SPUFrameLowering.h - SPU Frame Lowering stuff -*- C++ -*----========//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,18 +16,18 @@
 #define SPU_FRAMEINFO_H
 
 #include "SPURegisterInfo.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
   class SPUSubtarget;
 
-  class SPUFrameInfo: public TargetFrameInfo {
+  class SPUFrameLowering: public TargetFrameLowering {
     const SPUSubtarget &Subtarget;
     std::pair<unsigned, int> LR[1];
 
   public:
-    SPUFrameInfo(const SPUSubtarget &sti);
+    SPUFrameLowering(const SPUSubtarget &sti);
 
     //! Determine the frame's layour
     void determineFrameLayout(MachineFunction &MF) const;

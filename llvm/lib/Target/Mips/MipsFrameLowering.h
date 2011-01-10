@@ -1,4 +1,4 @@
-//===--- SparcFrameInfo.h - Define TargetFrameInfo for Sparc --*- C++ -*---===//
+//==--- MipsFrameLowering.h - Define frame lowering for Mips --*- C++ -*---===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,29 +11,34 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_FRAMEINFO_H
-#define SPARC_FRAMEINFO_H
+#ifndef ALPHA_FRAMEINFO_H
+#define ALPHA_FRAMEINFO_H
 
-#include "Sparc.h"
-#include "SparcSubtarget.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "Mips.h"
+#include "MipsSubtarget.h"
+#include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class SparcSubtarget;
+  class MipsSubtarget;
 
-class SparcFrameInfo : public TargetFrameInfo {
-  const SparcSubtarget &STI;
+class MipsFrameLowering : public TargetFrameLowering {
+protected:
+  const MipsSubtarget &STI;
+
 public:
-  explicit SparcFrameInfo(const SparcSubtarget &sti)
-    : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0), STI(sti) {
+  explicit MipsFrameLowering(const MipsSubtarget &sti)
+    // FIXME: Is this correct at all?
+    : TargetFrameLowering(StackGrowsUp, 8, 0), STI(sti) {
   }
+
+  void adjustMipsStackFrame(MachineFunction &MF) const;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
-  bool hasFP(const MachineFunction &MF) const { return false; }
+  bool hasFP(const MachineFunction &MF) const;
 };
 
 } // End llvm namespace

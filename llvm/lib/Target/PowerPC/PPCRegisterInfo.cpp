@@ -17,7 +17,7 @@
 #include "PPCInstrBuilder.h"
 #include "PPCMachineFunctionInfo.h"
 #include "PPCRegisterInfo.h"
-#include "PPCFrameInfo.h"
+#include "PPCFrameLowering.h"
 #include "PPCSubtarget.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
@@ -31,7 +31,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -258,8 +258,8 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
-  const PPCFrameInfo *PPCFI =
-    static_cast<const PPCFrameInfo*>(MF.getTarget().getFrameInfo());
+  const PPCFrameLowering *PPCFI =
+    static_cast<const PPCFrameLowering*>(MF.getTarget().getFrameLowering());
 
   Reserved.set(PPC::R0);
   Reserved.set(PPC::R1);
@@ -395,7 +395,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   unsigned FrameSize = MFI->getStackSize();
   
   // Get stack alignments.
-  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned TargetAlign = MF.getTarget().getFrameLowering()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
   if (MaxAlign > TargetAlign)
     report_fatal_error("Dynamic alloca with large aligns not supported");
@@ -541,7 +541,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineFunction &MF = *MBB.getParent();
   // Get the frame info.
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   DebugLoc dl = MI.getDebugLoc();
 
   // Find out which operand is the frame index.
@@ -670,7 +670,7 @@ unsigned PPCRegisterInfo::getRARegister() const {
 }
 
 unsigned PPCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  const TargetFrameInfo *TFI = MF.getTarget().getFrameInfo();
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
   if (!Subtarget.isPPC64())
     return TFI->hasFP(MF) ? PPC::R31 : PPC::R1;

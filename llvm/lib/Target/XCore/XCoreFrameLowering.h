@@ -1,4 +1,4 @@
-//===-- XCoreFrameInfo.h - Frame info for XCore Target -----------*- C++ -*-==//
+//===-- XCoreFrameLowering.h - Frame info for XCore Target -------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,16 +15,16 @@
 #ifndef XCOREFRAMEINFO_H
 #define XCOREFRAMEINFO_H
 
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
   class XCoreSubtarget;
 
-  class XCoreFrameInfo: public TargetFrameInfo {
+  class XCoreFrameLowering: public TargetFrameLowering {
     const XCoreSubtarget &STI;
   public:
-    XCoreFrameInfo(const XCoreSubtarget &STI);
+    XCoreFrameLowering(const XCoreSubtarget &STI);
 
     /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
     /// the function.

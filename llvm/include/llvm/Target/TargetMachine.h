@@ -29,7 +29,7 @@ class TargetIntrinsicInfo;
 class TargetJITInfo;
 class TargetLowering;
 class TargetSelectionDAGInfo;
-class TargetFrameInfo;
+class TargetFrameLowering;
 class JITCodeEmitter;
 class MCContext;
 class TargetRegisterInfo;
@@ -117,11 +117,11 @@ public:
   // -- Stack frame information
   // -- Selection DAG lowering information
   //
-  virtual const TargetInstrInfo        *getInstrInfo() const { return 0; }
-  virtual const TargetFrameInfo        *getFrameInfo() const { return 0; }
+  virtual const TargetInstrInfo         *getInstrInfo() const { return 0; }
+  virtual const TargetFrameLowering *getFrameLowering() const { return 0; }
   virtual const TargetLowering    *getTargetLowering() const { return 0; }
   virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const{ return 0; }
-  virtual const TargetData            *getTargetData() const { return 0; }
+  virtual const TargetData             *getTargetData() const { return 0; }
 
   /// getMCAsmInfo - Return target specific asm information.
   ///

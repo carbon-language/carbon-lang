@@ -1,4 +1,4 @@
-//=======- SparcFrameInfo.cpp - Sparc Frame Information --------*- C++ -*-====//
+//====- SparcFrameLowering.cpp - Sparc Frame Information -------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Sparc implementation of TargetFrameInfo class.
+// This file contains the Sparc implementation of TargetFrameLowering class.
 //
 //===----------------------------------------------------------------------===//
 
-#include "SparcFrameInfo.h"
+#include "SparcFrameLowering.h"
 #include "SparcInstrInfo.h"
 #include "SparcMachineFunctionInfo.h"
 #include "llvm/Function.h"
@@ -26,7 +26,7 @@
 
 using namespace llvm;
 
-void SparcFrameInfo::emitPrologue(MachineFunction &MF) const {
+void SparcFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const SparcInstrInfo &TII =
@@ -67,7 +67,7 @@ void SparcFrameInfo::emitPrologue(MachineFunction &MF) const {
   }
 }
 
-void SparcFrameInfo::emitEpilogue(MachineFunction &MF,
+void SparcFrameLowering::emitEpilogue(MachineFunction &MF,
                                   MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   const SparcInstrInfo &TII =
