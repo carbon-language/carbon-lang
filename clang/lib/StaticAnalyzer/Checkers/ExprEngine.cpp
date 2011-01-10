@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 // FIXME: Restructure checker registration.
-#include "Checkers/ExprEngineInternalChecks.h"
+#include "ExprEngineInternalChecks.h"
 
 #include "clang/StaticAnalyzer/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/PathSensitive/AnalysisManager.h"
