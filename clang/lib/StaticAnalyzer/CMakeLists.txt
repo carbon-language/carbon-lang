@@ -4,7 +4,6 @@ set(LLVM_USED_LIBS clangBasic clangLex clangAST clangFrontend clangRewrite)
 
 add_clang_library(clangStaticAnalyzerCore
   AggExprVisitor.cpp
-  AnalysisConsumer.cpp
   AnalysisManager.cpp
   AnalyzerStatsChecker.cpp
   BasicConstraintManager.cpp
@@ -17,7 +16,6 @@ add_clang_library(clangStaticAnalyzerCore
   CheckerHelpers.cpp
   Environment.cpp
   ExplodedGraph.cpp
-  ExprEngine.cpp
   FlatStore.cpp
   BlockCounter.cpp
   CXXExprEngine.cpp

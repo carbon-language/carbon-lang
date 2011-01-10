@@ -4,6 +4,7 @@ set(LLVM_USED_LIBS clangBasic clangAST)
 
 add_clang_library(clangStaticAnalyzerCheckers
   AdjustedReturnValueChecker.cpp
+  AnalysisConsumer.cpp
   ArrayBoundChecker.cpp
   ArrayBoundCheckerV2.cpp
   AttrNonNullChecker.cpp
@@ -21,6 +22,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   ChrootChecker.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
+  ExprEngine.cpp
   ExprEngineExperimentalChecks.cpp
   FixedAddressChecker.cpp
   FrontendActions.cpp
