@@ -12,7 +12,6 @@ class FrameAPITestCase(TestBase):
 
     mydir = os.path.join("python_api", "frame")
 
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_get_arg_vals_for_call_stack_with_dsym(self):
@@ -20,7 +19,6 @@ class FrameAPITestCase(TestBase):
         self.buildDsym()
         self.do_get_arg_vals()
 
-    @unittest2.expectedFailure
     @python_api_test
     def test_get_arg_vals_for_call_stack_with_dwarf(self):
         """Exercise SBFrame.GetVariables() API to get argument vals."""
@@ -103,8 +101,6 @@ class FrameAPITestCase(TestBase):
         #     o a((int)val=3, (char)ch='A')
         print "Full stack traces when stopped on the breakpoint 'c':"
         print session.getvalue()
-        # rdar://problem/8801262
-        # test failure: ./dotest.py -v -w -t -p TestFrames (argument values are wrong)
         self.expect(session.getvalue(), "Argugment values displayed correctly",
                     exe=False,
             substrs = ["a((int)val=1, (char)ch='A')",

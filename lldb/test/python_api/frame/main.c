@@ -20,9 +20,9 @@ int a(int val, char ch)
     char my_ch = ch;
     printf("a(val=%d, ch='%c')\n", val, ch);
     if (val <= 1)
-        return b(++val, ++ch);
+        return b(val+1, ch+1);
     else if (val >= 3)
-        return c(++val, ++ch);
+        return c(val+1, ch+1);
 
     return val;
 }
@@ -32,7 +32,7 @@ int b(int val, char ch)
     int my_val = val;
     char my_ch = ch;
     printf("b(val=%d, ch='%c')\n", val, ch);
-    return c(++val, ++ch);
+    return c(val+1, ch+1);
 }
 
 int c(int val, char ch)
