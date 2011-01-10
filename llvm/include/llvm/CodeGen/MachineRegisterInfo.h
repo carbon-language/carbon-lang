@@ -159,15 +159,15 @@ public:
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
   MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
-    if (!RegNo || TargetRegisterInfo::isPhysicalRegister(RegNo))
-      return PhysRegUseDefLists[RegNo];
-    return VRegInfo[RegNo].second;
+    if (TargetRegisterInfo::isVirtualRegister(RegNo))
+      return VRegInfo[RegNo].second;
+    return PhysRegUseDefLists[RegNo];
   }
   
   MachineOperand *getRegUseDefListHead(unsigned RegNo) const {
-    if (!RegNo || TargetRegisterInfo::isPhysicalRegister(RegNo))
-      return PhysRegUseDefLists[RegNo];
-    return VRegInfo[RegNo].second;
+    if (TargetRegisterInfo::isVirtualRegister(RegNo))
+      return VRegInfo[RegNo].second;
+    return PhysRegUseDefLists[RegNo];
   }
 
   /// getVRegDef - Return the machine instr that defines the specified virtual

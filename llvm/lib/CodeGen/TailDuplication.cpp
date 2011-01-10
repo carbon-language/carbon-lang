@@ -350,7 +350,7 @@ void TailDuplicatePass::DuplicateInstruction(MachineInstr *MI,
     if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
-    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
     if (MO.isDef()) {
       const TargetRegisterClass *RC = MRI->getRegClass(Reg);

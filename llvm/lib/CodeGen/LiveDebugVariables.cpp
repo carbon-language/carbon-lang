@@ -359,7 +359,7 @@ bool LDVImpl::handleDebugValue(MachineInstr *MI, SlotIndex Idx) {
   // If the location is a virtual register, make sure it is mapped.
   if (MI->getOperand(0).isReg()) {
     unsigned Reg = MI->getOperand(0).getReg();
-    if (Reg && TargetRegisterInfo::isVirtualRegister(Reg))
+    if (TargetRegisterInfo::isVirtualRegister(Reg))
       mapVirtReg(Reg, UV);
   }
 

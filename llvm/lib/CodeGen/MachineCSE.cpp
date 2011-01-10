@@ -116,7 +116,7 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
     if (!MO.isReg() || !MO.isUse())
       continue;
     unsigned Reg = MO.getReg();
-    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
     if (!MRI->hasOneNonDBGUse(Reg))
       // Only coalesce single use copies. This ensure the copy will be
@@ -300,7 +300,7 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
   bool HasVRegUse = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isUse() && MO.getReg() &&
+    if (MO.isReg() && MO.isUse() &&
         TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
       HasVRegUse = true;
       break;

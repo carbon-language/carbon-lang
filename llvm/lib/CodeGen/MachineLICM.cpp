@@ -622,7 +622,7 @@ void MachineLICM::InitRegPressure(MachineBasicBlock *BB) {
       if (!MO.isReg() || MO.isImplicit())
         continue;
       unsigned Reg = MO.getReg();
-      if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+      if (!TargetRegisterInfo::isVirtualRegister(Reg))
         continue;
 
       bool isNew = RegSeen.insert(Reg);
@@ -655,7 +655,7 @@ void MachineLICM::UpdateRegPressure(const MachineInstr *MI) {
     if (!MO.isReg() || MO.isImplicit())
       continue;
     unsigned Reg = MO.getReg();
-    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
 
     bool isNew = RegSeen.insert(Reg);
@@ -889,7 +889,7 @@ void MachineLICM::UpdateBackTraceRegPressure(const MachineInstr *MI) {
     if (!MO.isReg() || MO.isImplicit())
       continue;
     unsigned Reg = MO.getReg();
-    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
 
     const TargetRegisterClass *RC = MRI->getRegClass(Reg);
@@ -952,7 +952,7 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
       if (!MO.isReg() || MO.isImplicit())
         continue;
       unsigned Reg = MO.getReg();
-      if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+      if (!TargetRegisterInfo::isVirtualRegister(Reg))
         continue;
       if (MO.isDef()) {
         if (HasHighOperandLatency(MI, i, Reg)) {

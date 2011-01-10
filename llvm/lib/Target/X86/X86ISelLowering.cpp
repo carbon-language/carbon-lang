@@ -2323,7 +2323,7 @@ bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
   int FI = INT_MAX;
   if (Arg.getOpcode() == ISD::CopyFromReg) {
     unsigned VR = cast<RegisterSDNode>(Arg.getOperand(1))->getReg();
-    if (!VR || TargetRegisterInfo::isPhysicalRegister(VR))
+    if (!TargetRegisterInfo::isVirtualRegister(VR))
       return false;
     MachineInstr *Def = MRI->getVRegDef(VR);
     if (!Def)

@@ -656,7 +656,8 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg()) continue;
     unsigned Reg = MO.getReg();
-    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
+      continue;
     if (MO.isEarlyClobber() || MI->isRegTiedToDefOperand(i) ||
         (MO.getSubReg() && MI->readsVirtualRegister(Reg))) {
       if (ThroughRegs.insert(Reg))
@@ -688,7 +689,7 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg()) continue;
     unsigned Reg = MO.getReg();
-    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+    if (!TargetRegisterInfo::isVirtualRegister(Reg)) continue;
     if (MO.isUse()) {
       unsigned DefIdx = 0;
       if (!MI->isRegTiedToDefOperand(i, &DefIdx)) continue;
@@ -794,7 +795,7 @@ void RAFast::AllocateBasicBlock() {
           MachineOperand &MO = MI->getOperand(i);
           if (!MO.isReg()) continue;
           unsigned Reg = MO.getReg();
-          if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+          if (!TargetRegisterInfo::isVirtualRegister(Reg)) continue;
           LiveDbgValueMap[Reg] = MI;
           LiveRegMap::iterator LRI = LiveVirtRegs.find(Reg);
           if (LRI != LiveVirtRegs.end())
@@ -909,7 +910,7 @@ void RAFast::AllocateBasicBlock() {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg()) continue;
       unsigned Reg = MO.getReg();
-      if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
+      if (!TargetRegisterInfo::isVirtualRegister(Reg)) continue;
       if (MO.isUse()) {
         LiveRegMap::iterator LRI = reloadVirtReg(MI, i, Reg, CopyDst);
         unsigned PhysReg = LRI->second.PhysReg;

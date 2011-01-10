@@ -1326,7 +1326,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     if (StartOp != 0) OS << ", ";
     getOperand(StartOp).print(OS, TM);
     unsigned Reg = getOperand(StartOp).getReg();
-    if (Reg && TargetRegisterInfo::isVirtualRegister(Reg))
+    if (TargetRegisterInfo::isVirtualRegister(Reg))
       VirtRegs.push_back(Reg);
   }
 
@@ -1360,8 +1360,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
 
-    if (MO.isReg() && MO.getReg() &&
-        TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+    if (MO.isReg() && TargetRegisterInfo::isVirtualRegister(MO.getReg()))
       VirtRegs.push_back(MO.getReg());
 
     // Omit call-clobbered registers which aren't used anywhere. This makes
@@ -1371,7 +1370,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     if (MF && getDesc().isCall() &&
         MO.isReg() && MO.isImplicit() && MO.isDef()) {
       unsigned Reg = MO.getReg();
-      if (Reg != 0 && TargetRegisterInfo::isPhysicalRegister(Reg)) {
+      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
         const MachineRegisterInfo &MRI = MF->getRegInfo();
         if (MRI.use_empty(Reg) && !MRI.isLiveOut(Reg)) {
           bool HasAliasLive = false;
@@ -1620,8 +1619,7 @@ MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
     switch (MO.getType()) {
     default: break;
     case MachineOperand::MO_Register:
-      if (MO.isDef() && MO.getReg() &&
-          TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+      if (MO.isDef() && TargetRegisterInfo::isVirtualRegister(MO.getReg()))
         continue;  // Skip virtual register defs.
       Key |= MO.getReg();
       break;

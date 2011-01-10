@@ -954,7 +954,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
           if (LV) {
             for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
               MachineOperand &MO = mi->getOperand(i);
-              if (MO.isReg() && MO.getReg() != 0 &&
+              if (MO.isReg() && 
                   TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
                 if (MO.isUse()) {
                   if (MO.isKill()) {

@@ -1421,8 +1421,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
   std::pair<unsigned, unsigned> Hint = mri_->getRegAllocationHint(cur->reg);
   // Resolve second part of the hint (if possible) given the current allocation.
   unsigned physReg = Hint.second;
-  if (physReg &&
-      TargetRegisterInfo::isVirtualRegister(physReg) && vrm_->hasPhys(physReg))
+  if (TargetRegisterInfo::isVirtualRegister(physReg) && vrm_->hasPhys(physReg))
     physReg = vrm_->getPhys(physReg);
 
   TargetRegisterClass::iterator I, E;

@@ -33,7 +33,7 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
   Hint = HintPair.second;
 
   // Translate to physreg, or 0 if not assigned yet.
-  if (Hint && TargetRegisterInfo::isVirtualRegister(Hint))
+  if (TargetRegisterInfo::isVirtualRegister(Hint))
     Hint = VRM.getPhys(Hint);
 
   // The remaining allocation order may depend on the hint.

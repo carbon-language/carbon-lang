@@ -703,7 +703,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
         for (unsigned i = 0, e = F->getNumOperands(); i != e; ++i)
           if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(F->getOperand(i))) {
             unsigned Reg = R->getReg();
-            if (Reg != 0 && TargetRegisterInfo::isPhysicalRegister(Reg))
+            if (TargetRegisterInfo::isPhysicalRegister(Reg))
               UsedRegs.push_back(Reg);
           }
       }

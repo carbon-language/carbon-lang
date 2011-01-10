@@ -988,7 +988,7 @@ void LiveIntervals::rewriteImplicitOps(const LiveInterval &li,
     if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
-    if (Reg == 0 || TargetRegisterInfo::isPhysicalRegister(Reg))
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
     if (!vrm.isReMaterialized(Reg))
       continue;
@@ -1022,7 +1022,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
     if (!mop.isReg())
       continue;
     unsigned Reg = mop.getReg();
-    if (Reg == 0 || TargetRegisterInfo::isPhysicalRegister(Reg))
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
     if (Reg != li.reg)
       continue;
