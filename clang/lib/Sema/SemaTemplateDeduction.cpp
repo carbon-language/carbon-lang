@@ -636,8 +636,7 @@ DeduceTemplateArguments(Sema &S,
   if (NumParams != NumArgs &&
       !(NumParams && isa<PackExpansionType>(Params[NumParams - 1])) &&
       !(NumArgs && isa<PackExpansionType>(Args[NumArgs - 1])))
-    return NumArgs < NumParams ? Sema::TDK_TooFewArguments 
-                               : Sema::TDK_TooManyArguments;
+    return Sema::TDK_NonDeducedMismatch;
   
   // C++0x [temp.deduct.type]p10:
   //   Similarly, if P has a form that contains (T), then each parameter type 
@@ -654,7 +653,7 @@ DeduceTemplateArguments(Sema &S,
       
       // Make sure we have an argument.
       if (ArgIdx >= NumArgs)
-        return Sema::TDK_TooFewArguments;
+        return Sema::TDK_NonDeducedMismatch;
           
       if (Sema::TemplateDeductionResult Result
           = DeduceTemplateArguments(S, TemplateParams,
@@ -736,7 +735,7 @@ DeduceTemplateArguments(Sema &S,
   
   // Make sure we don't have any extra arguments.
   if (ArgIdx < NumArgs)
-    return Sema::TDK_TooManyArguments;
+    return Sema::TDK_NonDeducedMismatch;
   
   return Sema::TDK_Success;
 }
@@ -788,10 +787,8 @@ DeduceTemplateArguments(Sema &S,
 
   // If the parameter type is not dependent, there is nothing to deduce.
   if (!Param->isDependentType()) {
-    if (!(TDF & TDF_SkipNonDependent) && Param != Arg) {
-      
+    if (!(TDF & TDF_SkipNonDependent) && Param != Arg)
       return Sema::TDK_NonDeducedMismatch;
-    }
     
     return Sema::TDK_Success;
   }
@@ -1365,7 +1362,7 @@ DeduceTemplateArguments(Sema &S,
       
       // Check whether we have enough arguments.
       if (!hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs))
-        return NumberOfArgumentsMustMatch? Sema::TDK_TooFewArguments 
+        return NumberOfArgumentsMustMatch? Sema::TDK_NonDeducedMismatch
                                          : Sema::TDK_Success;
       
       // Perform deduction for this Pi/Ai pair.
@@ -1459,7 +1456,7 @@ DeduceTemplateArguments(Sema &S,
   // If there is an argument remaining, then we had too many arguments.
   if (NumberOfArgumentsMustMatch &&
       hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs))
-    return Sema::TDK_TooManyArguments;
+    return Sema::TDK_NonDeducedMismatch;
   
   return Sema::TDK_Success;
 }

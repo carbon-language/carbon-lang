@@ -43,3 +43,26 @@ void test_explicit_spec_extension(double *dp) {
   double *dp1 = first_arg<>(dp);
 }
 
+template<typename ...Types> 
+struct tuple { };
+
+template<typename ...Types>
+void accept_tuple(tuple<Types...>);
+
+void test_explicit_spec_extension_targs(tuple<int, float, double> t3) {
+  accept_tuple(t3);
+  accept_tuple<int, float, double>(t3);
+  accept_tuple<int>(t3);
+  accept_tuple<int, float>(t3);
+}
+
+template<typename R, typename ...ParmTypes>
+void accept_function_ptr(R(*)(ParmTypes...));
+
+void test_explicit_spec_extension_funcparms(int (*f3)(int, float, double)) {
+  accept_function_ptr(f3);
+  accept_function_ptr<int>(f3);
+  accept_function_ptr<int, int>(f3);
+  accept_function_ptr<int, int, float>(f3);
+  accept_function_ptr<int, int, float, double>(f3);
+}
