@@ -537,7 +537,7 @@ private:
   bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);
 };
 
-} // end GR namespace
+} // end ento namespace
 
 } // end clang namespace
 
