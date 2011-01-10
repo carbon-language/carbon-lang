@@ -1411,7 +1411,7 @@ unsigned FunctionDecl::getBuiltinID() const {
 
 
 /// getNumParams - Return the number of parameters this function must have
-/// based on its FunctionType.  This is the length of the PararmInfo array
+/// based on its FunctionType.  This is the length of the ParamInfo array
 /// after it has been created.
 unsigned FunctionDecl::getNumParams() const {
   const FunctionType *FT = getType()->getAs<FunctionType>();
