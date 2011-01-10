@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Host.h"
@@ -224,9 +225,10 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       bool FoundPTH = false;
       bool FoundPCH = false;
       llvm::sys::Path P(A->getValue(Args));
+      bool Exists;
       if (UsePCH) {
         P.appendSuffix("pch");
-        if (P.exists())
+        if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
           FoundPCH = true;
         else
           P.eraseSuffix();
@@ -234,7 +236,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
 
       if (!FoundPCH) {
         P.appendSuffix("pth");
-        if (P.exists())
+        if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
           FoundPTH = true;
         else
           P.eraseSuffix();
@@ -242,7 +244,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
 
       if (!FoundPCH && !FoundPTH) {
         P.appendSuffix("gch");
-        if (P.exists()) {
+        if (!llvm::sys::fs::exists(P.str(), Exists) && Exists) {
           FoundPCH = UsePCH;
           FoundPTH = !UsePCH;
         }

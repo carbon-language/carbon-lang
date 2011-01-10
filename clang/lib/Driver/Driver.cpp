@@ -1229,7 +1229,8 @@ std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
   if (!PrefixDir.empty()) {
     llvm::sys::Path P(PrefixDir);
     P.appendComponent(Name);
-    if (P.exists())
+    bool Exists;
+    if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
       return P.str();
   }
 
@@ -1238,7 +1239,8 @@ std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
          it = List.begin(), ie = List.end(); it != ie; ++it) {
     llvm::sys::Path P(*it);
     P.appendComponent(Name);
-    if (P.exists())
+    bool Exists;
+    if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
       return P.str();
   }
 
@@ -1252,7 +1254,9 @@ std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
   if (!PrefixDir.empty()) {
     llvm::sys::Path P(PrefixDir);
     P.appendComponent(Name);
-    if (WantFile ? P.exists() : P.canExecute())
+    bool Exists;
+    if (WantFile ? !llvm::sys::fs::exists(P.str(), Exists) && Exists
+                 : P.canExecute())
       return P.str();
   }
 
@@ -1261,7 +1265,9 @@ std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
          it = List.begin(), ie = List.end(); it != ie; ++it) {
     llvm::sys::Path P(*it);
     P.appendComponent(Name);
-    if (WantFile ? P.exists() : P.canExecute())
+    bool Exists;
+    if (WantFile ? !llvm::sys::fs::exists(P.str(), Exists) && Exists
+                 : P.canExecute())
       return P.str();
   }
 

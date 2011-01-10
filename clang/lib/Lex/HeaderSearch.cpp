@@ -15,6 +15,7 @@
 #include "clang/Lex/HeaderMap.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/ADT/SmallString.h"
 #include <cstdio>
@@ -170,8 +171,8 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(llvm::StringRef Filename,
 
     // If the framework dir doesn't exist, we fail.
     // FIXME: It's probably more efficient to query this with FileMgr.getDir.
-    if (!llvm::sys::Path(std::string(FrameworkName.begin(),
-                                     FrameworkName.end())).exists())
+    bool Exists;
+    if (llvm::sys::fs::exists(FrameworkName.str(), Exists) || !Exists)
       return 0;
 
     // Otherwise, if it does, remember that this is the right direntry for this

@@ -23,6 +23,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
@@ -148,7 +149,8 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple)
 
   // Try the next major version if that tool chain dir is invalid.
   std::string Tmp = "/usr/lib/gcc/" + ToolChainDir;
-  if (!llvm::sys::Path(Tmp).exists()) {
+  bool Exists;
+  if (llvm::sys::fs::exists(Tmp, Exists) || Exists) {
     std::string Next = "i686-apple-darwin";
     Next += llvm::utostr(DarwinVersion[0] + 1);
     Next += "/";
@@ -162,7 +164,7 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple)
     //
     // FIXME: Drop dependency on gcc's tool chain.
     Tmp = "/usr/lib/gcc/" + Next;
-    if (llvm::sys::Path(Tmp).exists())
+    if (!llvm::sys::fs::exists(Tmp, Exists) && Exists)
       ToolChainDir = Next;
   }
 
@@ -307,19 +309,20 @@ void DarwinGCC::AddLinkSearchPathArgs(const ArgList &Args,
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/" + ToolChainDir));
 
   Tmp = getDriver().Dir + "/../lib/gcc/" + ToolChainDir;
-  if (llvm::sys::Path(Tmp).exists())
+  bool Exists;
+  if (!llvm::sys::fs::exists(Tmp, Exists) && Exists)
     CmdArgs.push_back(Args.MakeArgString("-L" + Tmp));
   Tmp = getDriver().Dir + "/../lib/gcc";
-  if (llvm::sys::Path(Tmp).exists())
+  if (!llvm::sys::fs::exists(Tmp, Exists) && Exists)
     CmdArgs.push_back(Args.MakeArgString("-L" + Tmp));
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir));
   // Intentionally duplicated for (temporary) gcc bug compatibility.
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir));
   Tmp = getDriver().Dir + "/../lib/" + ToolChainDir;
-  if (llvm::sys::Path(Tmp).exists())
+  if (!llvm::sys::fs::exists(Tmp, Exists) && Exists)
     CmdArgs.push_back(Args.MakeArgString("-L" + Tmp));
   Tmp = getDriver().Dir + "/../lib";
-  if (llvm::sys::Path(Tmp).exists())
+  if (!llvm::sys::fs::exists(Tmp, Exists) && Exists)
     CmdArgs.push_back(Args.MakeArgString("-L" + Tmp));
   CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir +
                                        "/../../../" + ToolChainDir));
@@ -457,12 +460,14 @@ void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
 
   if (ArchSpecificDir) {
     P.appendComponent(ArchSpecificDir);
-    if (P.exists())
+    bool Exists;
+    if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
       CmdArgs.push_back(Args.MakeArgString("-L" + P.str()));
     P.eraseComponent();
   }
 
-  if (P.exists())
+  bool Exists;
+  if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
     CmdArgs.push_back(Args.MakeArgString("-L" + P.str()));
 }
 
@@ -528,7 +533,8 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
 
     // For now, allow missing resource libraries to support developers who may
     // not have compiler-rt checked out or integrated into their build.
-    if (P.exists())
+    bool Exists;
+    if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
       CmdArgs.push_back(Args.MakeArgString(P.str()));
   }
 }
@@ -622,16 +628,17 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
     // explicitly if we can't see an obvious -lstdc++ candidate.
 
     // Check in the sysroot first.
+    bool Exists;
     if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
       llvm::sys::Path P(A->getValue(Args));
       P.appendComponent("usr");
       P.appendComponent("lib");
       P.appendComponent("libstdc++.dylib");
 
-      if (!P.exists()) {
+      if (llvm::sys::fs::exists(P.str(), Exists) || !Exists) {
         P.eraseComponent();
         P.appendComponent("libstdc++.6.dylib");
-        if (P.exists()) {
+        if (!llvm::sys::fs::exists(P.str(), Exists) && Exists) {
           CmdArgs.push_back(Args.MakeArgString(P.str()));
           return;
         }
@@ -639,8 +646,8 @@ void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
     }
 
     // Otherwise, look in the root.
-    if (!llvm::sys::Path("/usr/lib/libstdc++.dylib").exists() &&
-        llvm::sys::Path("/usr/lib/libstdc++.6.dylib").exists()) {
+    if ((llvm::sys::fs::exists("/usr/lib/libstdc++.dylib", Exists) || !Exists)&&
+      (!llvm::sys::fs::exists("/usr/lib/libstdc++.6.dylib", Exists) && Exists)){
       CmdArgs.push_back("/usr/lib/libstdc++.6.dylib");
       return;
     }
@@ -666,7 +673,8 @@ void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
   
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build.
-  if (P.exists())
+  bool Exists;
+  if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
     CmdArgs.push_back(Args.MakeArgString(P.str()));
 }
 
@@ -1233,7 +1241,9 @@ static bool IsDebianBased(enum LinuxDistro Distro) {
 
 static bool HasMultilib(llvm::Triple::ArchType Arch, enum LinuxDistro Distro) {
   if (Arch == llvm::Triple::x86_64) {
-    if (Distro == Exherbo && !llvm::sys::Path("/usr/lib32/libc.so").exists())
+    bool Exists;
+    if (Distro == Exherbo &&
+        (llvm::sys::fs::exists("/usr/lib32/libc.so", Exists) || !Exists))
       return false;
 
     return true;
@@ -1287,7 +1297,8 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  if (llvm::sys::Path("/etc/exherbo-release").exists())
+  bool Exists;
+  if (!llvm::sys::fs::exists("/etc/exherbo-release", Exists) && Exists)
     return Exherbo;
 
   return UnknownDistro;
@@ -1308,39 +1319,51 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
 
   std::string Lib32 = "lib";
 
-  if (  llvm::sys::Path("/lib32").exists())
+  bool Exists;
+  if (!llvm::sys::fs::exists("/lib32", Exists) && Exists)
     Lib32 = "lib32";
 
   std::string Lib64 = "lib";
   llvm::sys::Path Lib64Path("/lib64");
-  if (Lib64Path.exists() && !Lib64Path.isSymLink())
+  if (!llvm::sys::fs::exists(Lib64Path.str(), Exists) && Exists &&
+      !Lib64Path.isSymLink())
     Lib64 = "lib64";
 
   std::string GccTriple = "";
   if (Arch == llvm::Triple::arm) {
-    if (llvm::sys::Path("/usr/lib/gcc/arm-linux-gnueabi").exists())
+    if (!llvm::sys::fs::exists("/usr/lib/gcc/arm-linux-gnueabi", Exists) &&
+        Exists)
       GccTriple = "arm-linux-gnueabi";
   } else if (Arch == llvm::Triple::x86_64) {
-    if (llvm::sys::Path("/usr/lib/gcc/x86_64-linux-gnu").exists())
+    if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-linux-gnu", Exists) &&
+        Exists)
       GccTriple = "x86_64-linux-gnu";
-    else if (llvm::sys::Path("/usr/lib/gcc/x86_64-unknown-linux-gnu").exists())
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-unknown-linux-gnu",
+             Exists) && Exists)
       GccTriple = "x86_64-unknown-linux-gnu";
-    else if (llvm::sys::Path("/usr/lib/gcc/x86_64-pc-linux-gnu").exists())
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-pc-linux-gnu",
+             Exists) && Exists)
       GccTriple = "x86_64-pc-linux-gnu";
-    else if (llvm::sys::Path("/usr/lib/gcc/x86_64-redhat-linux").exists())
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-redhat-linux",
+             Exists) && Exists)
       GccTriple = "x86_64-redhat-linux";
-    else if (llvm::sys::Path("/usr/lib64/gcc/x86_64-suse-linux").exists())
+    else if (!llvm::sys::fs::exists("/usr/lib64/gcc/x86_64-suse-linux",
+             Exists) && Exists)
       GccTriple = "x86_64-suse-linux";
   } else if (Arch == llvm::Triple::x86) {
-    if (llvm::sys::Path("/usr/lib/gcc/i686-linux-gnu").exists())
+    if (!llvm::sys::fs::exists("/usr/lib/gcc/i686-linux-gnu", Exists) && Exists)
       GccTriple = "i686-linux-gnu";
-    else if (llvm::sys::Path("/usr/lib/gcc/i686-pc-linux-gnu").exists())
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i686-pc-linux-gnu", Exists) &&
+             Exists)
       GccTriple = "i686-pc-linux-gnu";
-    else if (llvm::sys::Path("/usr/lib/gcc/i486-linux-gnu").exists())
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i486-linux-gnu", Exists) &&
+             Exists)
       GccTriple = "i486-linux-gnu";
-    else if (llvm::sys::Path("/usr/lib/gcc/i686-redhat-linux").exists())
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i686-redhat-linux", Exists) &&
+             Exists)
       GccTriple = "i686-redhat-linux";
-    else if (llvm::sys::Path("/usr/lib/gcc/i586-suse-linux").exists())
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i586-suse-linux", Exists) &&
+             Exists)
       GccTriple = "i586-suse-linux";
   }
 
@@ -1350,12 +1373,12 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
     std::string Suffix = GccTriple + "/" + GccVersions[i];
     std::string t1 = "/usr/lib/gcc/" + Suffix;
-    if (llvm::sys::Path(t1 + "/crtbegin.o").exists()) {
+    if (!llvm::sys::fs::exists(t1 + "/crtbegin.o", Exists) && Exists) {
       Base = t1;
       break;
     }
     std::string t2 = "/usr/lib64/gcc/" + Suffix;
-    if (llvm::sys::Path(t2 + "/crtbegin.o").exists()) {
+    if (!llvm::sys::fs::exists(t2 + "/crtbegin.o", Exists) && Exists) {
       Base = t2;
       break;
     }
@@ -1376,7 +1399,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   }
 
   llvm::sys::Path LinkerPath(Base + "/../../../../" + GccTriple + "/bin/ld");
-  if (LinkerPath.exists())
+  if (!llvm::sys::fs::exists(LinkerPath.str(), Exists) && Exists)
     Linker = LinkerPath.str();
   else
     Linker = GetProgramPath("ld");

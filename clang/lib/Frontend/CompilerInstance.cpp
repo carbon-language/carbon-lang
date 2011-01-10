@@ -28,6 +28,7 @@
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
@@ -433,7 +434,8 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
     llvm::sys::Path OutPath(OutFile);
     // Only create the temporary if we can actually write to OutPath, otherwise
     // we want to fail early.
-    if (!OutPath.exists() ||
+    bool Exists;
+    if ((llvm::sys::fs::exists(OutPath.str(), Exists) || !Exists) ||
         (OutPath.isRegularFile() && OutPath.canWrite())) {
       // Create a temporary file.
       llvm::sys::Path TempPath(OutFile);
