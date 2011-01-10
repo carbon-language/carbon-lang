@@ -288,7 +288,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   }
 
   // If the frame has variable sized objects then the epilogue must restore
-  // the sp from fp.
+  // the sp from fp. We can assume there's an FP here since hasFP already
+  // checks for hasVarSizedObjects.
   if (MFI->hasVarSizedObjects())
     AFI->setShouldRestoreSPFromFP(true);
 }
