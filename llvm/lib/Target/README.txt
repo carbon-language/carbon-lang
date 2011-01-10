@@ -2109,7 +2109,7 @@ aggressively as malloc though.
 
 //===---------------------------------------------------------------------===//
 
-clang -03 doesn't optimize this:
+clang -O3 doesn't optimize this:
 
 void f1(int* begin, int* end) {
   std::fill(begin, end, 0);
@@ -2253,9 +2253,25 @@ not an INF.  The CannotBeNegativeZero predicate in value tracking should be
 extended to support general "fpclassify" operations that can return 
 yes/no/unknown for each of these predicates.
 
-In this predicate, we know that [us]itofp is trivially never NaN or -0.0, and
+In this predicate, we know that uitofp is trivially never NaN or -0.0, and
 we know that it isn't +/-Inf if the floating point type has enough exponent bits
 to represent the largest integer value as < inf.
+
+//===---------------------------------------------------------------------===//
+
+When optimizing a transformation that can change the sign of 0.0 (such as the
+0.0*val -> 0.0 transformation above), it might be provable that the sign of the
+expression doesn't matter.  For example, by the above rules, we can't transform
+fmul(sitofp(x), 0.0) into 0.0, because x might be -1 and the result of the
+expression is defined to be -0.0.
+
+If we look at the uses of the fmul for example, we might be able to prove that
+all uses don't care about the sign of zero.  For example, if we have:
+
+  fadd(fmul(sitofp(x), 0.0), 2.0)
+
+Since we know that x+2.0 doesn't care about the sign of any zeros in X, we can
+transform the fmul to 0.0, and then the fadd to 2.0.
 
 //===---------------------------------------------------------------------===//
 
@@ -2270,7 +2286,7 @@ into
 define i32 @_Z1fd(double %x) nounwind readnone {
 entry:
   %vecinit.i = insertelement <2 x double> undef, double %x, i32 0
-  %vecinit1.i = insertelement <2 x double> %vecinit.i, double 0.000000e+00, i32 1
+  %vecinit1.i = insertelement <2 x double> %vecinit.i, double 0.000000e+00,i32 1
   %0 = tail call i32 @llvm.x86.sse2.cvtsd2si(<2 x double> %vecinit1.i) nounwind
   ret i32 %0
 }
