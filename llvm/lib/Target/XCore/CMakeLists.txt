@@ -12,7 +12,7 @@ tablegen(XCoreGenSubtarget.inc -gen-subtarget)
 
 add_llvm_target(XCoreCodeGen
   XCoreAsmPrinter.cpp
-  XCoreFrameInfo.cpp
+  XCoreFrameLowering.cpp
   XCoreInstrInfo.cpp
   XCoreISelDAGToDAG.cpp
   XCoreISelLowering.cpp

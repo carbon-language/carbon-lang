@@ -17,7 +17,7 @@ add_llvm_target(SparcCodeGen
   SparcInstrInfo.cpp
   SparcISelDAGToDAG.cpp
   SparcISelLowering.cpp
-  SparcFrameInfo.cpp
+  SparcFrameLowering.cpp
   SparcMCAsmInfo.cpp
   SparcRegisterInfo.cpp
   SparcSubtarget.cpp

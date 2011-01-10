@@ -14,7 +14,7 @@ add_llvm_target(PTXCodeGen
   PTXISelDAGToDAG.cpp
   PTXISelLowering.cpp
   PTXInstrInfo.cpp
-  PTXFrameInfo.cpp
+  PTXFrameLowering.cpp
   PTXMCAsmInfo.cpp
   PTXMCAsmStreamer.cpp
   PTXMFInfoExtract.cpp
