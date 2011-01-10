@@ -2247,10 +2247,15 @@ entry:
   ret double %mul
 }
 
-We should be able to fold away this fmul to a constant, there is no 32-bit
-integer which after sitofp will generate a NaN, inf, or -0.0. We should fold
-this whenever the floating point type has enough exponent bits to represent
-the largest integer value as < inf.
+We should be able to fold away this fmul to 0.0.  More generally, fmul(x,0.0)
+can be folded to 0.0 if we can prove that the LHS is not -0.0, not a NaN, and
+not an INF.  The CannotBeNegativeZero predicate in value tracking should be
+extended to support general "fpclassify" operations that can return 
+yes/no/unknown for each of these predicates.
+
+In this predicate, we know that [us]itofp is trivially never NaN or -0.0, and
+we know that it isn't +/-Inf if the floating point type has enough exponent bits
+to represent the largest integer value as < inf.
 
 //===---------------------------------------------------------------------===//
 
