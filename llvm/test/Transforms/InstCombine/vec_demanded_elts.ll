@@ -36,6 +36,54 @@ define i32 @test2(float %f) {
   ret i32 %tmp21
 }
 
+define i64 @test3(float %f, double %d) {
+; CHECK: @test3
+; CHECK-NOT: insertelement {{.*}} 0.00
+; CHECK: ret
+entry:
+  %v00 = insertelement <4 x float> undef, float %f, i32 0
+  %v01 = insertelement <4 x float> %v00, float 0.000000e+00, i32 1
+  %v02 = insertelement <4 x float> %v01, float 0.000000e+00, i32 2
+  %v03 = insertelement <4 x float> %v02, float 0.000000e+00, i32 3
+  %tmp0 = tail call i32 @llvm.x86.sse.cvtss2si(<4 x float> %v03)
+  %v10 = insertelement <4 x float> undef, float %f, i32 0
+  %v11 = insertelement <4 x float> %v10, float 0.000000e+00, i32 1
+  %v12 = insertelement <4 x float> %v11, float 0.000000e+00, i32 2
+  %v13 = insertelement <4 x float> %v12, float 0.000000e+00, i32 3
+  %tmp1 = tail call i64 @llvm.x86.sse.cvtss2si64(<4 x float> %v13)
+  %v20 = insertelement <4 x float> undef, float %f, i32 0
+  %v21 = insertelement <4 x float> %v20, float 0.000000e+00, i32 1
+  %v22 = insertelement <4 x float> %v21, float 0.000000e+00, i32 2
+  %v23 = insertelement <4 x float> %v22, float 0.000000e+00, i32 3
+  %tmp2 = tail call i32 @llvm.x86.sse.cvttss2si(<4 x float> %v23)
+  %v30 = insertelement <4 x float> undef, float %f, i32 0
+  %v31 = insertelement <4 x float> %v30, float 0.000000e+00, i32 1
+  %v32 = insertelement <4 x float> %v31, float 0.000000e+00, i32 2
+  %v33 = insertelement <4 x float> %v32, float 0.000000e+00, i32 3
+  %tmp3 = tail call i64 @llvm.x86.sse.cvttss2si64(<4 x float> %v33)
+  %v40 = insertelement <2 x double> undef, double %d, i32 0
+  %v41 = insertelement <2 x double> %v40, double 0.000000e+00, i32 1
+  %tmp4 = tail call i32 @llvm.x86.sse2.cvtsd2si(<2 x double> %v41)
+  %v50 = insertelement <2 x double> undef, double %d, i32 0
+  %v51 = insertelement <2 x double> %v50, double 0.000000e+00, i32 1
+  %tmp5 = tail call i64 @llvm.x86.sse2.cvtsd2si64(<2 x double> %v51)
+  %v60 = insertelement <2 x double> undef, double %d, i32 0
+  %v61 = insertelement <2 x double> %v60, double 0.000000e+00, i32 1
+  %tmp6 = tail call i32 @llvm.x86.sse2.cvttsd2si(<2 x double> %v61)
+  %v70 = insertelement <2 x double> undef, double %d, i32 0
+  %v71 = insertelement <2 x double> %v70, double 0.000000e+00, i32 1
+  %tmp7 = tail call i64 @llvm.x86.sse2.cvttsd2si64(<2 x double> %v71)
+  %tmp8 = add i32 %tmp0, %tmp2
+  %tmp9 = add i32 %tmp4, %tmp6
+  %tmp10 = add i32 %tmp8, %tmp9
+  %tmp11 = sext i32 %tmp10 to i64
+  %tmp12 = add i64 %tmp1, %tmp3
+  %tmp13 = add i64 %tmp5, %tmp7
+  %tmp14 = add i64 %tmp12, %tmp13
+  %tmp15 = add i64 %tmp11, %tmp14
+  ret i64 %tmp15
+}
+
 define void @get_image() nounwind {
 ; CHECK: @get_image
 ; CHECK-NOT: extractelement
@@ -80,4 +128,11 @@ declare <4 x float> @llvm.x86.sse.min.ss(<4 x float>, <4 x float>)
 
 declare <4 x float> @llvm.x86.sse.max.ss(<4 x float>, <4 x float>)
 
+declare i32 @llvm.x86.sse.cvtss2si(<4 x float>)
+declare i64 @llvm.x86.sse.cvtss2si64(<4 x float>)
 declare i32 @llvm.x86.sse.cvttss2si(<4 x float>)
+declare i64 @llvm.x86.sse.cvttss2si64(<4 x float>)
+declare i32 @llvm.x86.sse2.cvtsd2si(<2 x double>)
+declare i64 @llvm.x86.sse2.cvtsd2si64(<2 x double>)
+declare i32 @llvm.x86.sse2.cvttsd2si(<2 x double>)
+declare i64 @llvm.x86.sse2.cvttsd2si64(<2 x double>)

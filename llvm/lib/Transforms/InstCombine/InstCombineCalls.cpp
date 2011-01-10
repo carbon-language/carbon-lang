@@ -540,9 +540,16 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return new StoreInst(II->getArgOperand(1), Ptr);
     }
     break;
-    
-  case Intrinsic::x86_sse_cvttss2si: {
-    // These intrinsics only demands the 0th element of its input vector.  If
+
+  case Intrinsic::x86_sse_cvtss2si:
+  case Intrinsic::x86_sse_cvtss2si64:
+  case Intrinsic::x86_sse_cvttss2si:
+  case Intrinsic::x86_sse_cvttss2si64:
+  case Intrinsic::x86_sse2_cvtsd2si:
+  case Intrinsic::x86_sse2_cvtsd2si64:
+  case Intrinsic::x86_sse2_cvttsd2si:
+  case Intrinsic::x86_sse2_cvttsd2si64: {
+    // These intrinsics only demand the 0th element of their input vectors. If
     // we can simplify the input based on that, do so now.
     unsigned VWidth =
       cast<VectorType>(II->getArgOperand(0)->getType())->getNumElements();
@@ -555,7 +562,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
     break;
   }
-    
+
   case Intrinsic::ppc_altivec_vperm:
     // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
     if (ConstantVector *Mask = dyn_cast<ConstantVector>(II->getArgOperand(2))) {
