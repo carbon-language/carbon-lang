@@ -323,12 +323,12 @@ static void determineFrameLayout(MachineFunction &MF) {
   DEBUG(dbgs() << "Aligned Frame Size: " << FrameSize << "\n" );
 }
 
-int MBlazeFrameInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) 
+int MBlazeFrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) 
   const {
   const MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
   if (MBlazeFI->hasReplacement(FI))
     FI = MBlazeFI->getReplacement(FI);
-  return TargetFrameInfo::getFrameIndexOffset(MF,FI);
+  return TargetFrameLowering::getFrameIndexOffset(MF,FI);
 }
 
 // hasFP - Return true if the specified function should have a dedicated frame
