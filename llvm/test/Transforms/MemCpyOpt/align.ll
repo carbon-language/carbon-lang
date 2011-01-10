@@ -2,7 +2,7 @@
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
 
 ; The resulting memset is only 4-byte aligned, despite containing
-; a 16-byte alignmed store in the middle.
+; a 16-byte aligned store in the middle.
 
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* {{.*}}, i8 0, i64 16, i32 4, i1 false)
 
