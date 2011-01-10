@@ -1802,13 +1802,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    Match_Success, Match_MnemonicFail, Match_InvalidOperand,\n";
   OS << "    Match_MissingFeature\n";
   OS << "  };\n";
-  OS << "  MatchResultTy MatchInstructionImpl(const "
-     << "SmallVectorImpl<MCParsedAsmOperand*>"
-     << " &Operands, MCInst &Inst, unsigned &ErrorInfo);\n\n";
+  OS << "  MatchResultTy MatchInstructionImpl(\n";
+  OS << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
+  OS << "    MCInst &Inst, unsigned &ErrorInfo);\n\n";
   OS << "#endif // GET_ASSEMBLER_HEADER_INFO\n\n";
-
-
-
 
   OS << "\n#ifdef GET_REGISTER_MATCHER\n";
   OS << "#undef GET_REGISTER_MATCHER\n\n";
