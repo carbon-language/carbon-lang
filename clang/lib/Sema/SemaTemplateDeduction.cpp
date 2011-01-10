@@ -543,6 +543,61 @@ static void PrepareArgumentPackDeduction(Sema &S,
   }
 }
 
+/// \brief Finish template argument deduction for a set of argument packs,
+/// producing the argument packs and checking for consistency with prior
+/// deductions.
+static Sema::TemplateDeductionResult
+FinishArgumentPackDeduction(Sema &S,
+                            TemplateParameterList *TemplateParams,
+                            bool HasAnyArguments,
+                        llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced, 
+                            const llvm::SmallVectorImpl<unsigned> &PackIndices,
+                    llvm::SmallVectorImpl<DeducedTemplateArgument> &SavedPacks, 
+        llvm::SmallVectorImpl<
+          llvm::SmallVector<DeducedTemplateArgument, 4> > &NewlyDeducedPacks,
+                            TemplateDeductionInfo &Info) {
+  // Build argument packs for each of the parameter packs expanded by this
+  // pack expansion.
+  for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
+    if (HasAnyArguments && NewlyDeducedPacks[I].empty()) {
+      // We were not able to deduce anything for this parameter pack,
+      // so just restore the saved argument pack.
+      Deduced[PackIndices[I]] = SavedPacks[I];
+      continue;
+    }
+    
+    DeducedTemplateArgument NewPack;
+    
+    if (NewlyDeducedPacks[I].empty()) {
+      // If we deduced an empty argument pack, create it now.
+      NewPack = DeducedTemplateArgument(TemplateArgument(0, 0));
+    } else {
+      TemplateArgument *ArgumentPack
+      = new (S.Context) TemplateArgument [NewlyDeducedPacks[I].size()];
+      std::copy(NewlyDeducedPacks[I].begin(), NewlyDeducedPacks[I].end(),
+                ArgumentPack);
+      NewPack
+      = DeducedTemplateArgument(TemplateArgument(ArgumentPack,
+                                                 NewlyDeducedPacks[I].size()),
+                                NewlyDeducedPacks[I][0].wasDeducedFromArrayBound());        
+    }
+    
+    DeducedTemplateArgument Result
+      = checkDeducedTemplateArguments(S.Context, SavedPacks[I], NewPack);
+    if (Result.isNull()) {
+      Info.Param
+        = makeTemplateParameter(TemplateParams->getParam(PackIndices[I]));
+      Info.FirstArg = SavedPacks[I];
+      Info.SecondArg = NewPack;
+      return Sema::TDK_Inconsistent;
+    }
+    
+    Deduced[PackIndices[I]] = Result;
+  }
+  
+  return Sema::TDK_Success;
+}
+
 /// \brief Deduce the template arguments by comparing the list of parameter
 /// types to the list of argument types, as in the parameter-type-lists of 
 /// function types (C++ [temp.deduct.type]p10). 
@@ -672,42 +727,11 @@ DeduceTemplateArguments(Sema &S,
     
     // Build argument packs for each of the parameter packs expanded by this
     // pack expansion.
-    for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-      if (HasAnyArguments && NewlyDeducedPacks[I].empty()) {
-        // We were not able to deduce anything for this parameter pack,
-        // so just restore the saved argument pack.
-        Deduced[PackIndices[I]] = SavedPacks[I];
-        continue;
-      }
-      
-      DeducedTemplateArgument NewPack;
-      
-      if (NewlyDeducedPacks[I].empty()) {
-        // If we deduced an empty argument pack, create it now.
-        NewPack = DeducedTemplateArgument(TemplateArgument(0, 0));
-      } else {
-        TemplateArgument *ArgumentPack
-          = new (S.Context) TemplateArgument [NewlyDeducedPacks[I].size()];
-        std::copy(NewlyDeducedPacks[I].begin(), NewlyDeducedPacks[I].end(),
-                  ArgumentPack);
-        NewPack
-          = DeducedTemplateArgument(TemplateArgument(ArgumentPack,
-                                                   NewlyDeducedPacks[I].size()),
-                            NewlyDeducedPacks[I][0].wasDeducedFromArrayBound());        
-      }
-      
-      DeducedTemplateArgument Result
-        = checkDeducedTemplateArguments(S.Context, SavedPacks[I], NewPack);
-      if (Result.isNull()) {
-        Info.Param
-          = makeTemplateParameter(TemplateParams->getParam(PackIndices[I]));
-        Info.FirstArg = SavedPacks[I];
-        Info.SecondArg = NewPack;
-        return Sema::TDK_Inconsistent;
-      }
-      
-      Deduced[PackIndices[I]] = Result;
-    }
+    if (Sema::TemplateDeductionResult Result
+          = FinishArgumentPackDeduction(S, TemplateParams, HasAnyArguments, 
+                                        Deduced, PackIndices, SavedPacks,
+                                        NewlyDeducedPacks, Info))
+      return Result;    
   }
   
   // Make sure we don't have any extra arguments.
@@ -1425,42 +1449,11 @@ DeduceTemplateArguments(Sema &S,
     
     // Build argument packs for each of the parameter packs expanded by this
     // pack expansion.
-    for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-      if (HasAnyArguments && NewlyDeducedPacks[I].empty()) {
-        // We were not able to deduce anything for this parameter pack,
-        // so just restore the saved argument pack.
-        Deduced[PackIndices[I]] = SavedPacks[I];
-        continue;
-      }
-      
-      DeducedTemplateArgument NewPack;
-      
-      if (NewlyDeducedPacks[I].empty()) {
-        // If we deduced an empty argument pack, create it now.
-        NewPack = DeducedTemplateArgument(TemplateArgument(0, 0));
-      } else {
-        TemplateArgument *ArgumentPack
-          = new (S.Context) TemplateArgument [NewlyDeducedPacks[I].size()];
-        std::copy(NewlyDeducedPacks[I].begin(), NewlyDeducedPacks[I].end(),
-                  ArgumentPack);
-        NewPack
-          = DeducedTemplateArgument(TemplateArgument(ArgumentPack,
-                                                   NewlyDeducedPacks[I].size()),
-                            NewlyDeducedPacks[I][0].wasDeducedFromArrayBound());        
-      }
-
-      DeducedTemplateArgument Result
-        = checkDeducedTemplateArguments(S.Context, SavedPacks[I], NewPack);
-      if (Result.isNull()) {
-        Info.Param
-          = makeTemplateParameter(TemplateParams->getParam(PackIndices[I]));
-        Info.FirstArg = SavedPacks[I];
-        Info.SecondArg = NewPack;
-        return Sema::TDK_Inconsistent;
-      }
-      
-      Deduced[PackIndices[I]] = Result;
-    }
+    if (Sema::TemplateDeductionResult Result
+          = FinishArgumentPackDeduction(S, TemplateParams, HasAnyArguments, 
+                                        Deduced, PackIndices, SavedPacks,
+                                        NewlyDeducedPacks, Info))
+      return Result;    
   }
   
   // If there is an argument remaining, then we had too many arguments.
@@ -2557,42 +2550,11 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     
     // Build argument packs for each of the parameter packs expanded by this
     // pack expansion.
-    for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-      if (HasAnyArguments && NewlyDeducedPacks[I].empty()) {
-        // We were not able to deduce anything for this parameter pack,
-        // so just restore the saved argument pack.
-        Deduced[PackIndices[I]] = SavedPacks[I];
-        continue;
-      }
-      
-      DeducedTemplateArgument NewPack;
-      
-      if (NewlyDeducedPacks[I].empty()) {
-        // If we deduced an empty argument pack, create it now.
-        NewPack = DeducedTemplateArgument(TemplateArgument(0, 0));
-      } else {
-        TemplateArgument *ArgumentPack
-          = new (Context) TemplateArgument [NewlyDeducedPacks[I].size()];
-        std::copy(NewlyDeducedPacks[I].begin(), NewlyDeducedPacks[I].end(),
-                  ArgumentPack);
-        NewPack
-          = DeducedTemplateArgument(TemplateArgument(ArgumentPack,
-                                                   NewlyDeducedPacks[I].size()),
-                                  NewlyDeducedPacks[I][0].wasDeducedFromArrayBound());        
-      }
-      
-      DeducedTemplateArgument Result
-        = checkDeducedTemplateArguments(Context, SavedPacks[I], NewPack);
-      if (Result.isNull()) {
-        Info.Param
-          = makeTemplateParameter(TemplateParams->getParam(PackIndices[I]));
-        Info.FirstArg = SavedPacks[I];
-        Info.SecondArg = NewPack;
-        return Sema::TDK_Inconsistent;
-      }
-      
-      Deduced[PackIndices[I]] = Result;
-    }
+    if (Sema::TemplateDeductionResult Result
+          = FinishArgumentPackDeduction(*this, TemplateParams, HasAnyArguments, 
+                                        Deduced, PackIndices, SavedPacks,
+                                        NewlyDeducedPacks, Info))
+      return Result;    
 
     // After we've matching against a parameter pack, we're done.
     break;
