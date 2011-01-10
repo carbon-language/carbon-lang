@@ -36,6 +36,42 @@ define i32 @test2(float %f) {
   ret i32 %tmp21
 }
 
+define void @get_image() nounwind {
+; CHECK: @get_image
+; CHECK-NOT: extractelement
+; CHECK: unreachable
+entry:
+  %0 = call i32 @fgetc(i8* null) nounwind               ; <i32> [#uses=1]
+  %1 = trunc i32 %0 to i8         ; <i8> [#uses=1]
+  %tmp2 = insertelement <100 x i8> zeroinitializer, i8 %1, i32 1          ; <<100 x i8>> [#uses=1]
+  %tmp1 = extractelement <100 x i8> %tmp2, i32 0          ; <i8> [#uses=1]
+  %2 = icmp eq i8 %tmp1, 80               ; <i1> [#uses=1]
+  br i1 %2, label %bb2, label %bb3
+
+bb2:            ; preds = %entry
+  br label %bb3
+
+bb3:            ; preds = %bb2, %entry
+  unreachable
+}
+
+; PR4340
+define void @vac(<4 x float>* nocapture %a) nounwind {
+; CHECK: @vac
+; CHECK-NOT: load
+; CHECK: ret
+entry:
+	%tmp1 = load <4 x float>* %a		; <<4 x float>> [#uses=1]
+	%vecins = insertelement <4 x float> %tmp1, float 0.000000e+00, i32 0	; <<4 x float>> [#uses=1]
+	%vecins4 = insertelement <4 x float> %vecins, float 0.000000e+00, i32 1; <<4 x float>> [#uses=1]
+	%vecins6 = insertelement <4 x float> %vecins4, float 0.000000e+00, i32 2; <<4 x float>> [#uses=1]
+	%vecins8 = insertelement <4 x float> %vecins6, float 0.000000e+00, i32 3; <<4 x float>> [#uses=1]
+	store <4 x float> %vecins8, <4 x float>* %a
+	ret void
+}
+
+declare i32 @fgetc(i8*)
+
 declare <4 x float> @llvm.x86.sse.sub.ss(<4 x float>, <4 x float>)
 
 declare <4 x float> @llvm.x86.sse.mul.ss(<4 x float>, <4 x float>)
