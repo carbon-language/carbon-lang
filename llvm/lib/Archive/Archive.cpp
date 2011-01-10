@@ -15,6 +15,7 @@
 #include "ArchiveInternals.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Module.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/system_error.h"
@@ -66,8 +67,9 @@ ArchiveMember::ArchiveMember(Archive* PAR)
 // different file, presumably as an update to the member. It also makes sure
 // the flags are reset correctly.
 bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
-  if (!newFile.exists()) {
-    if (ErrMsg) 
+  bool Exists;
+  if (sys::fs::exists(newFile.str(), Exists) || !Exists) {
+    if (ErrMsg)
       *ErrMsg = "Can not replace an archive member with a non-existent file";
     return true;
   }

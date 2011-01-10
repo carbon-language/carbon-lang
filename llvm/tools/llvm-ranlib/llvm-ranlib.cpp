@@ -15,6 +15,7 @@
 #include "llvm/Module.h"
 #include "llvm/Bitcode/Archive.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Format.h"
@@ -69,7 +70,8 @@ int main(int argc, char **argv) {
       throw std::string("Archive name invalid: ") + ArchiveName;
 
     // Make sure it exists, we don't create empty archives
-    if (!ArchivePath.exists())
+    bool Exists;
+    if (llvm::sys::fs::exists(ArchivePath.str(), Exists) || !Exists)
       throw std::string("Archive file does not exist");
 
     std::string err_msg;

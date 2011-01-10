@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/Bitcode/Archive.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Format.h"
@@ -310,7 +311,8 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
     if (!aPath.set(Members[i]))
       throw std::string("File member name invalid: ") + Members[i];
     if (checkExistence) {
-      if (!aPath.exists())
+      bool Exists;
+      if (sys::fs::exists(aPath.str(), Exists) || !Exists)
         throw std::string("File does not exist: ") + Members[i];
       std::string Err;
       sys::PathWithStatus PwS(aPath);
@@ -715,7 +717,8 @@ int main(int argc, char **argv) {
       throw std::string("Archive name invalid: ") + ArchiveName;
 
     // Create or open the archive object.
-    if (!ArchivePath.exists()) {
+    bool Exists;
+    if (llvm::sys::fs::exists(ArchivePath.str(), Exists) || !Exists) {
       // Produce a warning if we should and we're creating the archive
       if (!Create)
         errs() << argv[0] << ": creating " << ArchivePath.str() << "\n";

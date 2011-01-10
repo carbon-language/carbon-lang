@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <llvm/Config/config.h>
+#include "llvm/Support/FileSystem.h"
 #include "Unix.h"
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -355,7 +356,8 @@ Program::Wait(const sys::Path &path,
     // Following the POSIX convention for command-line tools (which posix_spawn
     // itself apparently does not), check to see if the failure was due to some
     // reason other than the file not existing, and return 126 in this case.
-    if (result == 127 && path.exists())
+    bool Exists;
+    if (result == 127 && !llvm::sys::fs::exists(path.str(), Exists) && Exists)
       result = 126;
 #endif
     if (result == 127) {

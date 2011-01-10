@@ -380,7 +380,8 @@ namespace sys {
       /// directory.
       /// @brief Determines if the path is a file or directory in
       /// the file system.
-      bool exists() const;
+      LLVM_ATTRIBUTE_DEPRECATED(bool exists() const,
+        LLVM_PATH_DEPRECATED_MSG(fs::exists));
 
       /// This function determines if the path name references an
       /// existing directory.

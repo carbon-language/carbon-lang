@@ -16,6 +16,7 @@
 #include "llvm/CompilerDriver/CompilationGraph.h"
 #include "llvm/CompilerDriver/Error.h"
 
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
 
@@ -50,7 +51,8 @@ namespace {
       return 0;
     }
 
-    if (!tempDir.exists()) {
+    bool Exists;
+    if (llvm::sys::fs::exists(tempDir.str(), Exists) || !Exists) {
       std::string ErrMsg;
       if (tempDir.createDirectoryOnDisk(true, &ErrMsg)) {
         PrintError(ErrMsg);

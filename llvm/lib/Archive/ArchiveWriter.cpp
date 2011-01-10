@@ -15,6 +15,7 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
@@ -156,7 +157,8 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
 bool
 Archive::addFileBefore(const sys::Path& filePath, iterator where, 
                         std::string* ErrMsg) {
-  if (!filePath.exists()) {
+  bool Exists;
+  if (sys::fs::exists(filePath.str(), Exists) || !Exists) {
     if (ErrMsg)
       *ErrMsg = "Can not add a non-existent file to archive";
     return true;

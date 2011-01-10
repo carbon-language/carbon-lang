@@ -811,7 +811,8 @@ sys::CopyFile(const sys::Path &Dest, const sys::Path &Src, std::string* ErrMsg){
 
 bool
 Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
-  if (reuse_current && !exists())
+  bool Exists;
+  if (reuse_current && (fs::exists(path, Exists) || !Exists))
     return false; // File doesn't exist already, just use it!
 
   // Append an XXXXXX pattern to the end of the file for use with mkstemp,
