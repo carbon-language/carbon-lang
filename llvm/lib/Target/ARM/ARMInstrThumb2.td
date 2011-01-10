@@ -553,7 +553,7 @@ multiclass T2I_rbin_irs<bits<4> opcod, string opc, PatFrag opnode> {
 
 /// T2I_bin_s_irs - Similar to T2I_bin_irs except it sets the 's' bit so the
 /// instruction modifies the CPSR register.
-let Defs = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass T2I_bin_s_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                          PatFrag opnode, bit Commutable = 0> {
@@ -700,7 +700,7 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 }
 
 // Carry setting variants
-let Defs = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass T2I_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                                bit Commutable = 0> {
    // shifted imm
@@ -746,7 +746,7 @@ multiclass T2I_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
 
 /// T2I_rbin_s_is - Same as T2I_rbin_irs except sets 's' bit and the register
 /// version is not needed since this is only for codegen.
-let Defs = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass T2I_rbin_s_is<bits<4> opcod, string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2TwoRegImm<
@@ -2035,7 +2035,7 @@ def t2RRX : T2sTwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iMOVsi,
 }
 }
 
-let Defs = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR] in {
 def t2MOVsrl_flag : T2TwoRegShiftImm<
                         (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iMOVsi,
                         "lsrs", ".w\t$Rd, $Rm, #1",
