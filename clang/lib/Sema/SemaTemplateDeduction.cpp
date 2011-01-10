@@ -512,6 +512,37 @@ static TemplateParameter makeTemplateParameter(Decl *D) {
   return TemplateParameter(cast<TemplateTemplateParmDecl>(D));
 }
 
+/// \brief Prepare to perform template argument deduction for all of the
+/// arguments in a set of argument packs.
+static void PrepareArgumentPackDeduction(Sema &S, 
+                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced, 
+                             const llvm::SmallVectorImpl<unsigned> &PackIndices,
+                     llvm::SmallVectorImpl<DeducedTemplateArgument> &SavedPacks, 
+         llvm::SmallVectorImpl<
+           llvm::SmallVector<DeducedTemplateArgument, 4> > &NewlyDeducedPacks) {
+  // Save the deduced template arguments for each parameter pack expanded
+  // by this pack expansion, then clear out the deduction.
+  for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
+    // Save the previously-deduced argument pack, then clear it out so that we
+    // can deduce a new argument pack.
+    SavedPacks[I] = Deduced[PackIndices[I]];
+    Deduced[PackIndices[I]] = TemplateArgument();      
+    
+    // If the template arugment pack was explicitly specified, add that to
+    // the set of deduced arguments.
+    const TemplateArgument *ExplicitArgs;
+    unsigned NumExplicitArgs;
+    if (NamedDecl *PartiallySubstitutedPack 
+        = S.CurrentInstantiationScope->getPartiallySubstitutedPack(
+                                                           &ExplicitArgs,
+                                                           &NumExplicitArgs)) {
+      if (getDepthAndIndex(PartiallySubstitutedPack).second == PackIndices[I])
+        NewlyDeducedPacks[I].append(ExplicitArgs, 
+                                    ExplicitArgs + NumExplicitArgs);
+    }
+  }
+}
+
 /// \brief Deduce the template arguments by comparing the list of parameter
 /// types to the list of argument types, as in the parameter-type-lists of 
 /// function types (C++ [temp.deduct.type]p10). 
@@ -612,28 +643,10 @@ DeduceTemplateArguments(Sema &S,
     // template argument (the inner SmallVectors).
     llvm::SmallVector<llvm::SmallVector<DeducedTemplateArgument, 4>, 2>
       NewlyDeducedPacks(PackIndices.size());
-
-    // Save the deduced template arguments for each parameter pack expanded
-    // by this pack expansion, then clear out the deduction.
     llvm::SmallVector<DeducedTemplateArgument, 2> 
-    SavedPacks(PackIndices.size());
-    for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-      SavedPacks[I] = Deduced[PackIndices[I]];
-      Deduced[PackIndices[I]] = DeducedTemplateArgument();
-      
-      // If the template arugment pack was explicitly specified, add that to
-      // the set of deduced arguments.
-      const TemplateArgument *ExplicitArgs;
-      unsigned NumExplicitArgs;
-      if (NamedDecl *PartiallySubstitutedPack 
-            = S.CurrentInstantiationScope->getPartiallySubstitutedPack(
-                                                           &ExplicitArgs,
-                                                           &NumExplicitArgs)) {
-        if (getDepthAndIndex(PartiallySubstitutedPack).second == PackIndices[I])
-          NewlyDeducedPacks[I].append(ExplicitArgs, 
-                                      ExplicitArgs + NumExplicitArgs);
-      }
-    }
+      SavedPacks(PackIndices.size());
+    PrepareArgumentPackDeduction(S, Deduced, PackIndices, SavedPacks, 
+                                 NewlyDeducedPacks);
     
     bool HasAnyArguments = false;
     for (; ArgIdx < NumArgs; ++ArgIdx) {
@@ -1378,16 +1391,14 @@ DeduceTemplateArguments(Sema &S,
     // by this pack expansion, then clear out the deduction.
     llvm::SmallVector<DeducedTemplateArgument, 2> 
       SavedPacks(PackIndices.size());
-    for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-      SavedPacks[I] = Deduced[PackIndices[I]];
-      Deduced[PackIndices[I]] = DeducedTemplateArgument();
-    }
+    llvm::SmallVector<llvm::SmallVector<DeducedTemplateArgument, 4>, 2>
+      NewlyDeducedPacks(PackIndices.size());
+    PrepareArgumentPackDeduction(S, Deduced, PackIndices, SavedPacks, 
+                                 NewlyDeducedPacks);
 
     // Keep track of the deduced template arguments for each parameter pack
     // expanded by this pack expansion (the outer index) and for each 
     // template argument (the inner SmallVectors).
-    llvm::SmallVector<llvm::SmallVector<DeducedTemplateArgument, 4>, 2>
-      NewlyDeducedPacks(PackIndices.size());
     bool HasAnyArguments = false;
     while (hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs)) {
       HasAnyArguments = true;
@@ -2505,31 +2516,10 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     // template argument (the inner SmallVectors).
     llvm::SmallVector<llvm::SmallVector<DeducedTemplateArgument, 4>, 2>
       NewlyDeducedPacks(PackIndices.size());
-    
-    // Save the deduced template arguments for each parameter pack expanded
-    // by this pack expansion, then clear out the deduction.
     llvm::SmallVector<DeducedTemplateArgument, 2> 
       SavedPacks(PackIndices.size());
-    for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
-      // Save the previously-deduced argument pack, then clear it out so that we
-      // can deduce a new argument pack.
-      SavedPacks[I] = Deduced[PackIndices[I]];
-      Deduced[PackIndices[I]] = TemplateArgument();      
-      
-      // If the template arugment pack was explicitly specified, add that to
-      // the set of deduced arguments.
-      const TemplateArgument *ExplicitArgs;
-      unsigned NumExplicitArgs;
-      if (NamedDecl *PartiallySubstitutedPack 
-            = CurrentInstantiationScope->getPartiallySubstitutedPack(
-                                                                &ExplicitArgs,
-                                                            &NumExplicitArgs)) {
-        if (getDepthAndIndex(PartiallySubstitutedPack).second == PackIndices[I])
-          NewlyDeducedPacks[I].append(ExplicitArgs, 
-                                      ExplicitArgs + NumExplicitArgs);
-      }
-    }
-    
+    PrepareArgumentPackDeduction(*this, Deduced, PackIndices, SavedPacks,
+                                 NewlyDeducedPacks);    
     bool HasAnyArguments = false;
     for (; ArgIdx < NumArgs; ++ArgIdx) {
       HasAnyArguments = true;
