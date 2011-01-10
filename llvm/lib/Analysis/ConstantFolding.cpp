@@ -1127,7 +1127,7 @@ llvm::ConstantFoldCall(Function *F,
   const Type *Ty = F->getReturnType();
   if (NumOperands == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
-      if (Name == "llvm.convert.to.fp16") {
+      if (F->getIntrinsicID() == Intrinsic::convert_to_fp16) {
         APFloat Val(Op->getValueAPF());
 
         bool lost = false;
@@ -1185,8 +1185,8 @@ llvm::ConstantFoldCall(Function *F,
           return ConstantFoldFP(log, V, Ty);
         else if (Name == "log10" && V > 0)
           return ConstantFoldFP(log10, V, Ty);
-        else if (Name == "llvm.sqrt.f32" ||
-                 Name == "llvm.sqrt.f64") {
+        else if (F->getIntrinsicID() == Intrinsic::sqrt &&
+                 (Ty->isFloatTy() || Ty->isDoubleTy())) {
           if (V >= -0.0)
             return ConstantFoldFP(sqrt, V, Ty);
           else // Undefined
@@ -1216,18 +1216,18 @@ llvm::ConstantFoldCall(Function *F,
       }
       return 0;
     }
-    
-    
+
     if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
-      if (Name.startswith("llvm.bswap"))
+      switch (F->getIntrinsicID()) {
+      case Intrinsic::bswap:
         return ConstantInt::get(F->getContext(), Op->getValue().byteSwap());
-      else if (Name.startswith("llvm.ctpop"))
+      case Intrinsic::ctpop:
         return ConstantInt::get(Ty, Op->getValue().countPopulation());
-      else if (Name.startswith("llvm.cttz"))
+      case Intrinsic::cttz:
         return ConstantInt::get(Ty, Op->getValue().countTrailingZeros());
-      else if (Name.startswith("llvm.ctlz"))
+      case Intrinsic::ctlz:
         return ConstantInt::get(Ty, Op->getValue().countLeadingZeros());
-      else if (Name == "llvm.convert.from.fp16") {
+      case Intrinsic::convert_from_fp16: {
         APFloat Val(Op->getValue());
 
         bool lost = false;
@@ -1241,18 +1241,20 @@ llvm::ConstantFoldCall(Function *F,
 
         return ConstantFP::get(F->getContext(), Val);
       }
-      return 0;
+      default:
+        return 0;
+      }
     }
-    
+
     if (isa<UndefValue>(Operands[0])) {
-      if (Name.startswith("llvm.bswap"))
+      if (F->getIntrinsicID() == Intrinsic::bswap)
         return Operands[0];
       return 0;
     }
 
     return 0;
   }
-  
+
   if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
       if (!Ty->isFloatTy() && !Ty->isDoubleTy())
@@ -1275,11 +1277,11 @@ llvm::ConstantFoldCall(Function *F,
         if (Name == "atan2")
           return ConstantFoldBinaryFP(atan2, Op1V, Op2V, Ty);
       } else if (ConstantInt *Op2C = dyn_cast<ConstantInt>(Operands[1])) {
-        if (Name == "llvm.powi.f32")
+        if (F->getIntrinsicID() == Intrinsic::powi && Ty->isFloatTy())
           return ConstantFP::get(F->getContext(),
                                  APFloat((float)std::pow((float)Op1V,
                                                  (int)Op2C->getZExtValue())));
-        if (Name == "llvm.powi.f64")
+        if (F->getIntrinsicID() == Intrinsic::powi && Ty->isDoubleTy())
           return ConstantFP::get(F->getContext(),
                                  APFloat((double)std::pow((double)Op1V,
                                                    (int)Op2C->getZExtValue())));
