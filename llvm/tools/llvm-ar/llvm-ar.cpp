@@ -274,7 +274,7 @@ ArchiveOperation parseCommandLine() {
 // finds with all the files in that directory (recursively). It uses the
 // sys::Path::getDirectoryContent method to perform the actual directory scans.
 bool
-recurseDirectories(const sys::Path& path, 
+recurseDirectories(const sys::Path& path,
                    std::set<sys::Path>& result, std::string* ErrMsg) {
   result.clear();
   if (RecurseDirectories) {
@@ -380,7 +380,7 @@ bool doPrint(std::string* ErrMsg) {
 
 // putMode - utility function for printing out the file mode when the 't'
 // operation is in verbose mode.
-void 
+void
 printMode(unsigned mode) {
   if (mode & 004)
     outs() << "r";
@@ -400,7 +400,7 @@ printMode(unsigned mode) {
 // the file names of each of the members. However, if verbose mode is requested
 // ('v' modifier) then the file type, permission mode, user, group, size, and
 // modification time are also printed.
-bool 
+bool
 doDisplayTable(std::string* ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
@@ -438,7 +438,7 @@ doDisplayTable(std::string* ErrMsg) {
 
 // doExtract - Implement the 'x' operation. This function extracts files back to
 // the file system, making sure to uncompress any that were compressed
-bool 
+bool
 doExtract(std::string* ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
@@ -451,7 +451,7 @@ doExtract(std::string* ErrMsg) {
       if (I->hasPath()) {
         sys::Path dirs(I->getPath());
         dirs.eraseComponent();
-        if (dirs.createDirectoryOnDisk(/*create_parents=*/true, ErrMsg)) 
+        if (dirs.createDirectoryOnDisk(/*create_parents=*/true, ErrMsg))
           return true;
       }
 
@@ -481,11 +481,11 @@ doExtract(std::string* ErrMsg) {
 // members from the archive. Note that if the count is specified, there should
 // be no more than one path in the Paths list or else this algorithm breaks.
 // That check is enforced in parseCommandLine (above).
-bool 
+bool
 doDelete(std::string* ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
-  if (Paths.empty()) 
+  if (Paths.empty())
     return false;
   unsigned countDown = Count;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
@@ -514,9 +514,9 @@ doDelete(std::string* ErrMsg) {
 // order of the archive members so that when the archive is written the move
 // of the members is accomplished. Note the use of the RelPos variable to
 // determine where the items should be moved to.
-bool 
+bool
 doMove(std::string* ErrMsg) {
-  if (buildPaths(false, ErrMsg)) 
+  if (buildPaths(false, ErrMsg))
     return true;
 
   // By default and convention the place to move members to is the end of the
@@ -567,12 +567,12 @@ doMove(std::string* ErrMsg) {
 
 // doQuickAppend - Implements the 'q' operation. This function just
 // indiscriminantly adds the members to the archive and rebuilds it.
-bool 
+bool
 doQuickAppend(std::string* ErrMsg) {
   // Get the list of paths to append.
   if (buildPaths(true, ErrMsg))
     return true;
-  if (Paths.empty()) 
+  if (Paths.empty())
     return false;
 
   // Append them quickly.
@@ -592,13 +592,13 @@ doQuickAppend(std::string* ErrMsg) {
 
 // doReplaceOrInsert - Implements the 'r' operation. This function will replace
 // any existing files or insert new ones into the archive.
-bool 
+bool
 doReplaceOrInsert(std::string* ErrMsg) {
 
   // Build the list of files to be added/replaced.
   if (buildPaths(true, ErrMsg))
     return true;
-  if (Paths.empty()) 
+  if (Paths.empty())
     return false;
 
   // Keep track of the paths that remain to be inserted.
@@ -638,7 +638,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
 
     if (found != remaining.end()) {
       std::string Err;
-      sys::PathWithStatus PwS(*found); 
+      sys::PathWithStatus PwS(*found);
       const sys::FileStatus *si = PwS.getFileStatus(false, &Err);
       if (!si)
         return true;

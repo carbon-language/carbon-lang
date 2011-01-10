@@ -155,7 +155,7 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
 // Insert a file into the archive before some other member. This also takes care
 // of extracting the necessary flags and information from the file.
 bool
-Archive::addFileBefore(const sys::Path& filePath, iterator where, 
+Archive::addFileBefore(const sys::Path& filePath, iterator where,
                         std::string* ErrMsg) {
   bool Exists;
   if (sys::fs::exists(filePath.str(), Exists) || !Exists) {
@@ -232,7 +232,7 @@ Archive::writeMember(
     std::vector<std::string> symbols;
     std::string FullMemberName = archPath.str() + "(" + member.getPath().str()
       + ")";
-    Module* M = 
+    Module* M =
       GetBitcodeSymbols(data, fSize, FullMemberName, Context, symbols, ErrMsg);
 
     // If the bitcode parsed successfully
@@ -421,7 +421,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     }
     const char* base = arch->getBufferStart();
 
-    // Open another temporary file in order to avoid invalidating the 
+    // Open another temporary file in order to avoid invalidating the
     // mmapped data
     if (FinalFilePath.createTemporaryFileOnDisk(ErrMsg))
       return true;
@@ -462,17 +462,17 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
     // Close up shop
     FinalFile.close();
     } // free arch.
-    
+
     // Move the final file over top of TmpArchive
     if (FinalFilePath.renamePathOnDisk(TmpArchive, ErrMsg))
       return true;
   }
-  
+
   // Before we replace the actual archive, we need to forget all the
   // members, since they point to data in that old archive. We need to do
   // this because we cannot replace an open file on Windows.
   cleanUpMemory();
-  
+
   if (TmpArchive.renamePathOnDisk(archPath, ErrMsg))
     return true;
 

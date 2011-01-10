@@ -166,19 +166,19 @@ void Archive::cleanUpMemory() {
   delete mapfile;
   mapfile = 0;
   base = 0;
-  
+
   // Forget the entire symbol table
   symTab.clear();
   symTabSize = 0;
-  
+
   firstFileOffset = 0;
-  
+
   // Free the foreign symbol table member
   if (foreignST) {
     delete foreignST;
     foreignST = 0;
   }
-  
+
   // Delete any Modules and ArchiveMember's we've allocated as a result of
   // symbol table searches.
   for (ModuleMap::iterator I=modules.begin(), E=modules.end(); I != E; ++I ) {
@@ -200,7 +200,7 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
     if (!GI->isDeclaration() && !GI->hasLocalLinkage())
       if (!GI->getName().empty())
         symbols.push_back(GI->getName());
-  
+
   // Loop over functions
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI)
     if (!FI->isDeclaration() && !FI->hasLocalLinkage())
@@ -226,14 +226,14 @@ bool llvm::GetBitcodeSymbols(const sys::Path& fName,
                         + ec.message();
     return true;
   }
-  
+
   Module *M = ParseBitcodeFile(Buffer.get(), Context, ErrMsg);
   if (!M)
     return true;
-  
+
   // Get the symbols
   getSymbols(M, symbols);
-  
+
   // Done with the module.
   delete M;
   return true;
@@ -248,14 +248,14 @@ llvm::GetBitcodeSymbols(const char *BufPtr, unsigned Length,
   // Get the module.
   OwningPtr<MemoryBuffer> Buffer(
     MemoryBuffer::getMemBufferCopy(StringRef(BufPtr, Length),ModuleID.c_str()));
-  
+
   Module *M = ParseBitcodeFile(Buffer.get(), Context, ErrMsg);
   if (!M)
     return 0;
-  
+
   // Get the symbols
   getSymbols(M, symbols);
-  
+
   // Done with the module. Note that it's the caller's responsibility to delete
   // the Module.
   return M;
