@@ -1,17 +1,13 @@
-; RUN: opt < %s -instcombine -S | \
-; RUN:   grep {fadd float}
-; RUN: opt < %s -instcombine -S | \
-; RUN:   grep {fmul float}
-; RUN: opt < %s -instcombine -S | \
-; RUN:   not grep {insertelement.*0.00}
-; RUN: opt < %s -instcombine -S | \
-; RUN:   not grep {call.*llvm.x86.sse.mul}
-; RUN: opt < %s -instcombine -S | \
-; RUN:   not grep {call.*llvm.x86.sse.sub}
-; END.
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
 define i16 @test1(float %f) {
 entry:
+; CHECK: @test1
+; CHECK: fmul float
+; CHECK-NOT: insertelement {{.*}} 0.00
+; CHECK-NOT: call {{.*}} @llvm.x86.sse.mul
+; CHECK-NOT: call {{.*}} @llvm.x86.sse.sub
+; CHECK: ret
 	%tmp = insertelement <4 x float> undef, float %f, i32 0		; <<4 x float>> [#uses=1]
 	%tmp10 = insertelement <4 x float> %tmp, float 0.000000e+00, i32 1		; <<4 x float>> [#uses=1]
 	%tmp11 = insertelement <4 x float> %tmp10, float 0.000000e+00, i32 2		; <<4 x float>> [#uses=1]
@@ -26,14 +22,18 @@ entry:
 }
 
 define i32 @test2(float %f) {
-        %tmp5 = fmul float %f, %f
-        %tmp9 = insertelement <4 x float> undef, float %tmp5, i32 0             
-        %tmp10 = insertelement <4 x float> %tmp9, float 0.000000e+00, i32 1    
-        %tmp11 = insertelement <4 x float> %tmp10, float 0.000000e+00, i32 2  
-        %tmp12 = insertelement <4 x float> %tmp11, float 0.000000e+00, i32 3 
-        %tmp19 = bitcast <4 x float> %tmp12 to <4 x i32>  
-        %tmp21 = extractelement <4 x i32> %tmp19, i32 0  
-        ret i32 %tmp21
+; CHECK: @test2
+; CHECK-NOT: insertelement
+; CHECK-NOT: extractelement
+; CHECK: ret
+  %tmp5 = fmul float %f, %f
+  %tmp9 = insertelement <4 x float> undef, float %tmp5, i32 0
+  %tmp10 = insertelement <4 x float> %tmp9, float 0.000000e+00, i32 1
+  %tmp11 = insertelement <4 x float> %tmp10, float 0.000000e+00, i32 2
+  %tmp12 = insertelement <4 x float> %tmp11, float 0.000000e+00, i32 3
+  %tmp19 = bitcast <4 x float> %tmp12 to <4 x i32>
+  %tmp21 = extractelement <4 x i32> %tmp19, i32 0
+  ret i32 %tmp21
 }
 
 declare <4 x float> @llvm.x86.sse.sub.ss(<4 x float>, <4 x float>)
