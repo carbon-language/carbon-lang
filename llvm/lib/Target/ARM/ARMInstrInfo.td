@@ -617,7 +617,7 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
 
 /// AI1_bin_s_irs - Similar to AsI1_bin_irs except it sets the 's' bit so the
 /// instruction modifies the CPSR register.
-let Defs = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                          PatFrag opnode, bit Commutable = 0> {
@@ -852,7 +852,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   }
 }
 // Carry setting variants
-let Defs = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                              bit Commutable = 0> {
   def Sri : AXI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
@@ -2067,6 +2067,8 @@ defm ADC : AI1_adde_sube_irs<0b0101, "adc",
                           BinOpFrag<(adde_dead_carry node:$LHS, node:$RHS)>, 1>;
 defm SBC : AI1_adde_sube_irs<0b0110, "sbc",
                           BinOpFrag<(sube_dead_carry node:$LHS, node:$RHS)>>;
+
+// ADC and SUBC with 's' bit set.
 defm ADCS : AI1_adde_sube_s_irs<0b0101, "adcs",
                           BinOpFrag<(adde_live_carry node:$LHS, node:$RHS)>, 1>;
 defm SBCS : AI1_adde_sube_s_irs<0b0110, "sbcs",
@@ -2112,7 +2114,7 @@ def RSBrs : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
 }
 
 // RSB with 's' bit set.
-let Defs = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR] in {
 def RSBSri : AI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
                  IIC_iALUi, "rsbs", "\t$Rd, $Rn, $imm",
                  [(set GPR:$Rd, (subc so_imm:$imm, GPR:$Rn))]> {
@@ -2181,7 +2183,7 @@ def RSCrs : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
 }
 
 // FIXME: Allow these to be predicated.
-let Defs = [CPSR], Uses = [CPSR] in {
+let isCodeGenOnly = 1, Defs = [CPSR], Uses = [CPSR] in {
 def RSCSri : AXI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                   DPFrm, IIC_iALUi, "rscs\t$Rd, $Rn, $imm",
                   [(set GPR:$Rd, (sube_dead_carry so_imm:$imm, GPR:$Rn))]>,
