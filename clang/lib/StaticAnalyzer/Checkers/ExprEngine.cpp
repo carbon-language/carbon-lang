@@ -2987,7 +2987,7 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
 
       // Since the lvalue-to-rvalue conversion is explicit in the AST,
       // we bind an l-value if the operator is prefix and an lvalue (in C++).
-      if (U->isPrefix() && U->isLValue())
+      if (U->isLValue())
         state = state->BindExpr(U, loc);
       else
         state = state->BindExpr(U, V2);
