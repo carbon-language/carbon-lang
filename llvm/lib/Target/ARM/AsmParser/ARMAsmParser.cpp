@@ -866,19 +866,20 @@ bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands){
   }
 }
 
-/// Parse an arm instruction mnemonic followed by its operands.
-bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
-                               SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // Create the leading tokens for the mnemonic, split by '.' characters.
-  size_t Start = 0, Next = Name.find('.');
-  StringRef Head = Name.slice(Start, Next);
+// FIXME: Would be nice to autogen this.
+static unsigned SplitMnemonicAndCC(StringRef &Mnemonic) {
+  // Ignore some mnemonics we know aren't predicated forms.
+  if (Mnemonic == "movs" ||
+      Mnemonic == "vmls" ||
+      Mnemonic == "vnmls")
+    return ARMCC::AL;
 
-  // Determine the predicate, if any.
+  // Otherwise, determine the predicate.
   //
   // FIXME: We need a way to check whether a prefix supports predication,
   // otherwise we will end up with an ambiguity for instructions that happen to
   // end with a predicate name.
-  unsigned CC = StringSwitch<unsigned>(Head.substr(Head.size()-2))
+  unsigned CC = StringSwitch<unsigned>(Mnemonic.substr(Mnemonic.size()-2))
     .Case("eq", ARMCC::EQ)
     .Case("ne", ARMCC::NE)
     .Case("hs", ARMCC::HS)
@@ -895,20 +896,31 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     .Case("le", ARMCC::LE)
     .Case("al", ARMCC::AL)
     .Default(~0U);
-
-  if (CC == ~0U ||
-      (CC == ARMCC::LS && (Head == "vmls" || Head == "vnmls"))) {
-    CC = ARMCC::AL;
-  } else {
-    Head = Head.slice(0, Head.size() - 2);
+  if (CC != ~0U) {
+    Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 2);
+    return CC;
   }
+
+  return ARMCC::AL;
+}
+
+/// Parse an arm instruction mnemonic followed by its operands.
+bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
+                               SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Create the leading tokens for the mnemonic, split by '.' characters.
+  size_t Start = 0, Next = Name.find('.');
+  StringRef Head = Name.slice(Start, Next);
+
+  // Determine the predicate, if any.
+  unsigned CC = SplitMnemonicAndCC(Head);
 
   Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
 
-  if (Head != "trap")
-    // FIXME: Should only add this operand for predicated instructions
+  // FIXME: Should only add this operand for predicated instructions
+  if (Head != "trap") {
     Operands.push_back(ARMOperand::CreateCondCode(ARMCC::CondCodes(CC),
                                                   NameLoc));
+  }
 
   // Add the remaining tokens in the mnemonic.
   while (Next != StringRef::npos) {
