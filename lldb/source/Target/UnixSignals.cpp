@@ -66,7 +66,7 @@ UnixSignals::Reset ()
     AddSignal (3,    "SIGQUIT",   "QUIT",    false,     true,  true,  "quit");
     AddSignal (4,    "SIGILL",    "ILL",     false,     true,  true,  "illegal instruction");
     AddSignal (5,    "SIGTRAP",   "TRAP",    true,      true,  true,  "trace trap (not reset when caught)");
-    AddSignal (6,    "SIGABRT",   "ABRT",    false,     true,  true,  "abort()");
+    AddSignal (6,    "SIGABRT",   "ABRT",    true,      true,  true,  "abort()");
     AddSignal (7,    "SIGEMT",    "EMT",     false,     true,  true,  "pollable event");
     AddSignal (8,    "SIGFPE",    "FPE",     false,     true,  true,  "floating point exception");
     AddSignal (9,    "SIGKILL",   "KILL",    false,     true,  true,  "kill");
