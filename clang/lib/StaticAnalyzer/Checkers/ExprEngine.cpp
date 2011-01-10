@@ -3241,8 +3241,14 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
           LHSVal = svalBuilder.evalCast(Result, LTy, CTy);
         }
 
-        evalStore(Tmp3, B, LHS, *I4, state->BindExpr(B, Result),
-                  location, LHSVal);
+        // In C++, assignment and compound assignment operators return an 
+        // lvalue.
+        if (B->isLValue())
+          state = state->BindExpr(B, location);
+        else
+          state = state->BindExpr(B, Result);
+
+        evalStore(Tmp3, B, LHS, *I4, state, location, LHSVal);
       }
     }
   }
