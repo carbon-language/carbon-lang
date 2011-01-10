@@ -26,7 +26,7 @@
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
-// The shift types for register controlled shifts in arm memory addressing
+/// Shift types used for register controlled shifts in ARM memory addressing.
 enum ShiftType {
   Lsl,
   Lsr,
@@ -134,7 +134,7 @@ class ARMOperand : public MCParsedAsmOperand {
       const MCExpr *Val;
     } Imm;
 
-    // This is for all forms of ARM address expressions
+    /// Combined record for all forms of ARM address expressions.
     struct {
       unsigned BaseRegNum;
       unsigned OffsetRegNum;         // used when OffsetIsReg is true
@@ -436,7 +436,7 @@ public:
 void ARMOperand::dump(raw_ostream &OS) const {
   switch (Kind) {
   case CondCode:
-    OS << ARMCondCodeToString(getCondCode());
+    OS << "<ARMCC::" << ARMCondCodeToString(getCondCode()) << ">";
     break;
   case CCOut:
     OS << "<ccout " << getReg() << ">";
