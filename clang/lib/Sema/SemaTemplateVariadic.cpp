@@ -419,14 +419,29 @@ ExprResult Sema::ActOnPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc) {
                                                EllipsisLoc));
 }
 
+/// \brief Retrieve the depth and index of a parameter pack.
+static std::pair<unsigned, unsigned> 
+getDepthAndIndex(NamedDecl *ND) {
+  if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(ND))
+    return std::make_pair(TTP->getDepth(), TTP->getIndex());
+  
+  if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(ND))
+    return std::make_pair(NTTP->getDepth(), NTTP->getIndex());
+  
+  TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(ND);
+  return std::make_pair(TTP->getDepth(), TTP->getIndex());
+}
+
 bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
                                            SourceRange PatternRange,
                                      const UnexpandedParameterPack *Unexpanded,
                                            unsigned NumUnexpanded,
                              const MultiLevelTemplateArgumentList &TemplateArgs,
                                            bool &ShouldExpand,
+                                           bool &RetainExpansion,
                                            unsigned &NumExpansions) {                                        
   ShouldExpand = true;
+  RetainExpansion = false;
   std::pair<IdentifierInfo *, SourceLocation> FirstPack;
   bool HaveFirstPack = false;
   
@@ -444,21 +459,11 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
       Name = TTP->getName();
     } else {
       NamedDecl *ND = Unexpanded[I].first.get<NamedDecl *>();
-      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(ND)) {
-        Depth = TTP->getDepth();
-        Index = TTP->getIndex();
-      } else if (NonTypeTemplateParmDecl *NTTP
-                 = dyn_cast<NonTypeTemplateParmDecl>(ND)) {        
-        Depth = NTTP->getDepth();
-        Index = NTTP->getIndex();
-      } else if (TemplateTemplateParmDecl *TTP
-                                    = dyn_cast<TemplateTemplateParmDecl>(ND)) {
-        Depth = TTP->getDepth();
-        Index = TTP->getIndex();
-      } else {
-        assert(cast<ParmVarDecl>(ND)->isParameterPack());
+      if (isa<ParmVarDecl>(ND))
         IsFunctionParameterPack = true;
-      }
+      else
+        llvm::tie(Depth, Index) = getDepthAndIndex(ND);        
+      
       Name = ND->getIdentifier();
     }
     
@@ -495,6 +500,18 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
       NewPackSize = TemplateArgs(Depth, Index).pack_size();
     }
     
+    // C++0x [temp.arg.explicit]p9:
+    //   Template argument deduction can extend the sequence of template 
+    //   arguments corresponding to a template parameter pack, even when the
+    //   sequence contains explicitly specified template arguments.
+    if (NamedDecl *PartialPack 
+                  = CurrentInstantiationScope->getPartiallySubstitutedPack()) {
+      unsigned PartialDepth, PartialIndex;
+      llvm::tie(PartialDepth, PartialIndex) = getDepthAndIndex(PartialPack);
+      if (PartialDepth == Depth && PartialIndex == Index)
+        RetainExpansion = true;
+    }
+
     if (!HaveFirstPack) {
       // The is the first pack we've seen for which we have an argument. 
       // Record it.

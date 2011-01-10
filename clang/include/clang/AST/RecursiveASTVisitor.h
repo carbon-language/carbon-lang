@@ -1801,7 +1801,7 @@ DEF_TRAVERSE_STMT(CXXDefaultArgExpr, { })
 DEF_TRAVERSE_STMT(CXXDeleteExpr, { })
 DEF_TRAVERSE_STMT(ExprWithCleanups, { })
 DEF_TRAVERSE_STMT(CXXNullPtrLiteralExpr, { })
-DEF_TRAVERSE_STMT(CXXPseudoDestructorExpr, { })
+  DEF_TRAVERSE_STMT(CXXPseudoDestructorExpr, { }) // FIXME: Incomplete!
 DEF_TRAVERSE_STMT(CXXThisExpr, { })
 DEF_TRAVERSE_STMT(CXXThrowExpr, { })
 DEF_TRAVERSE_STMT(DesignatedInitExpr, { })
@@ -1820,8 +1820,18 @@ DEF_TRAVERSE_STMT(ParenListExpr, { })
 DEF_TRAVERSE_STMT(PredefinedExpr, { })
 DEF_TRAVERSE_STMT(ShuffleVectorExpr, { })
 DEF_TRAVERSE_STMT(StmtExpr, { })
-DEF_TRAVERSE_STMT(UnresolvedLookupExpr, { })
-DEF_TRAVERSE_STMT(UnresolvedMemberExpr, { })
+DEF_TRAVERSE_STMT(UnresolvedLookupExpr, {
+  TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
+  TRY_TO(TraverseTemplateArgumentLocsHelper(S->getTemplateArgs(), 
+                                            S->getNumTemplateArgs()));
+})
+  
+DEF_TRAVERSE_STMT(UnresolvedMemberExpr, {
+  TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
+  TRY_TO(TraverseTemplateArgumentLocsHelper(S->getTemplateArgs(), 
+                                            S->getNumTemplateArgs()));
+})
+
 DEF_TRAVERSE_STMT(CXXOperatorCallExpr, { })
 DEF_TRAVERSE_STMT(OpaqueValueExpr, { })
 

@@ -3361,6 +3361,11 @@ public:
   /// expand the corresponding pack expansions into separate arguments. When
   /// set, \c NumExpansions must also be set.
   ///
+  /// \param RetainExpansion Whether the caller should add an unexpanded
+  /// pack expansion after all of the expanded arguments. This is used
+  /// when extending explicitly-specified template argument packs per
+  /// C++0x [temp.arg.explicit]p9.
+  ///
   /// \param NumExpansions The number of separate arguments that will be in
   /// the expanded form of the corresponding pack expansion. Must be set when
   /// \c ShouldExpand is \c true.
@@ -3375,6 +3380,7 @@ public:
                                        unsigned NumUnexpanded,
                              const MultiLevelTemplateArgumentList &TemplateArgs,
                                        bool &ShouldExpand,
+                                       bool &RetainExpansion,
                                        unsigned &NumExpansions);
 
   /// \brief Determine whether the given declarator contains any unexpanded

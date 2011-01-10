@@ -77,7 +77,7 @@ private:
       void *Type;
     } Integer;
     struct {
-      TemplateArgument *Args;
+      const TemplateArgument *Args;
       unsigned NumArgs;
     } Args;
   };
@@ -136,7 +136,7 @@ public:
   ///
   /// We assume that storage for the template arguments provided
   /// outlives the TemplateArgument itself.
-  TemplateArgument(TemplateArgument *Args, unsigned NumArgs) : Kind(Pack) {
+  TemplateArgument(const TemplateArgument *Args, unsigned NumArgs) : Kind(Pack){
     this->Args.Args = Args;
     this->Args.NumArgs = NumArgs;
   }

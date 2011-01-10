@@ -89,6 +89,23 @@ using namespace sema;
 /// (\c getBaseLocation(), \c getBaseEntity()).
 template<typename Derived>
 class TreeTransform {
+  /// \brief Private RAII object that helps us forget and then re-remember
+  /// the template argument corresponding to a partially-substituted parameter
+  /// pack.
+  class ForgetPartiallySubstitutedPackRAII {
+    Derived &Self;
+    TemplateArgument Old;
+    
+  public:
+    ForgetPartiallySubstitutedPackRAII(Derived &Self) : Self(Self) {
+      Old = Self.ForgetPartiallySubstitutedPack();
+    }
+    
+    ~ForgetPartiallySubstitutedPackRAII() {
+      Self.RememberPartiallySubstitutedPack(Old);
+    }
+  };
+  
 protected:
   Sema &SemaRef;
   
@@ -204,6 +221,11 @@ public:
   /// expand the corresponding pack expansions into separate arguments. When
   /// set, \c NumExpansions must also be set.
   ///
+  /// \param RetainExpansion Whether the caller should add an unexpanded
+  /// pack expansion after all of the expanded arguments. This is used
+  /// when extending explicitly-specified template argument packs per
+  /// C++0x [temp.arg.explicit]p9.
+  ///
   /// \param NumExpansions The number of separate arguments that will be in
   /// the expanded form of the corresponding pack expansion. Must be set when
   /// \c ShouldExpand is \c true.
@@ -217,10 +239,27 @@ public:
                                const UnexpandedParameterPack *Unexpanded,
                                unsigned NumUnexpanded,
                                bool &ShouldExpand,
+                               bool &RetainExpansion,
                                unsigned &NumExpansions) {
     ShouldExpand = false;
     return false;
   }
+  
+  /// \brief "Forget" about the partially-substituted pack template argument,
+  /// when performing an instantiation that must preserve the parameter pack
+  /// use.
+  ///
+  /// This routine is meant to be overridden by the template instantiator.
+  TemplateArgument ForgetPartiallySubstitutedPack() {
+    return TemplateArgument();
+  }
+  
+  /// \brief "Remember" the partially-substituted pack template argument
+  /// after performing an instantiation that must preserve the parameter pack
+  /// use.
+  ///
+  /// This routine is meant to be overridden by the template instantiator.
+  void RememberPartiallySubstitutedPack(TemplateArgument Arg) { }
   
   /// \brief Note to the derived class when a function parameter pack is
   /// being expanded.
@@ -2250,12 +2289,14 @@ bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
       // Determine whether the set of unexpanded parameter packs can and should
       // be expanded.
       bool Expand = true;
+      bool RetainExpansion = false;
       unsigned NumExpansions = 0;
       if (getDerived().TryExpandParameterPacks(Expansion->getEllipsisLoc(),
                                                Pattern->getSourceRange(),
                                                Unexpanded.data(),
                                                Unexpanded.size(),
-                                               Expand, NumExpansions))
+                                               Expand, RetainExpansion,
+                                               NumExpansions))
         return true;
         
       if (!Expand) {
@@ -2770,12 +2811,15 @@ bool TreeTransform<Derived>::TransformTemplateArguments(InputIterator First,
       // Determine whether the set of unexpanded parameter packs can and should
       // be expanded.
       bool Expand = true;
+      bool RetainExpansion = false;
       unsigned NumExpansions = 0;
       if (getDerived().TryExpandParameterPacks(Ellipsis,
                                                Pattern.getSourceRange(),
                                                Unexpanded.data(),
                                                Unexpanded.size(),
-                                               Expand, NumExpansions))
+                                               Expand, 
+                                               RetainExpansion,
+                                               NumExpansions))
         return true;
       
       if (!Expand) {
@@ -2805,6 +2849,8 @@ bool TreeTransform<Derived>::TransformTemplateArguments(InputIterator First,
         
         Outputs.addArgument(Out);
       }
+      
+      // FIXME: Variadic templates retain expansion!
       
       continue;
     }
@@ -3415,12 +3461,15 @@ bool TreeTransform<Derived>::
         
         // Determine whether we should expand the parameter packs.
         bool ShouldExpand = false;
+        bool RetainExpansion = false;
         unsigned NumExpansions = 0;
         if (getDerived().TryExpandParameterPacks(ExpansionTL.getEllipsisLoc(),
                                                  Pattern.getSourceRange(),
                                                  Unexpanded.data(), 
                                                  Unexpanded.size(),
-                                                 ShouldExpand, NumExpansions)) {
+                                                 ShouldExpand, 
+                                                 RetainExpansion,
+                                                 NumExpansions)) {
           return true;
         }
         
@@ -3439,7 +3488,21 @@ bool TreeTransform<Derived>::
             if (PVars)
               PVars->push_back(NewParm);
           }
-          
+
+          // If we're supposed to retain a pack expansion, do so by temporarily
+          // forgetting the partially-substituted parameter pack.
+          if (RetainExpansion) {
+            ForgetPartiallySubstitutedPackRAII Forget(getDerived());
+            ParmVarDecl *NewParm 
+              = getDerived().TransformFunctionTypeParam(OldParm);
+            if (!NewParm)
+              return true;
+            
+            OutParamTypes.push_back(NewParm->getType());
+            if (PVars)
+              PVars->push_back(NewParm);
+          }
+
           // We're done with the pack expansion.
           continue;
         }
@@ -3472,11 +3535,14 @@ bool TreeTransform<Derived>::
       
       // Determine whether we should expand the parameter packs.
       bool ShouldExpand = false;
+      bool RetainExpansion = false;
       unsigned NumExpansions = 0;
       if (getDerived().TryExpandParameterPacks(Loc, SourceRange(),
                                                Unexpanded.data(), 
                                                Unexpanded.size(),
-                                               ShouldExpand, NumExpansions)) {
+                                               ShouldExpand, 
+                                               RetainExpansion,
+                                               NumExpansions)) {
         return true;
       }
       
@@ -3498,6 +3564,8 @@ bool TreeTransform<Derived>::
         continue;
       }
       
+      // FIXME: Variadic templates retain pack expansion!
+
       // We'll substitute the parameter now without expanding the pack 
       // expansion.
       OldType = Expansion->getPattern();
@@ -6674,13 +6742,15 @@ TreeTransform<Derived>::TransformSizeOfPackExpr(SizeOfPackExpr *E) {
   // so 
   UnexpandedParameterPack Unexpanded(E->getPack(), E->getPackLoc());
   bool ShouldExpand = false;
+  bool RetainExpansion = false;
   unsigned NumExpansions = 0;
   if (getDerived().TryExpandParameterPacks(E->getOperatorLoc(), E->getPackLoc(), 
                                            &Unexpanded, 1, 
-                                           ShouldExpand, NumExpansions))
+                                           ShouldExpand, RetainExpansion,
+                                           NumExpansions))
     return ExprError();
   
-  if (!ShouldExpand)
+  if (!ShouldExpand || RetainExpansion)
     return SemaRef.Owned(E);
   
   // We now know the length of the parameter pack, so build a new expression

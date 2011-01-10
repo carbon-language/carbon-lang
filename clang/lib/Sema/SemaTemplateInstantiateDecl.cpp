@@ -1973,13 +1973,16 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                "Pack expansion without parameter packs?");
         
         bool Expand = false;
+        bool RetainExpansion = false;
         unsigned NumExpansions = 0;
         if (SemaRef.CheckParameterPacksForExpansion(New->getLocation(), 
                                                     SourceRange(),
                                                     Unexpanded.data(), 
                                                     Unexpanded.size(),
                                                     TemplateArgs,
-                                                    Expand, NumExpansions))
+                                                    Expand, 
+                                                    RetainExpansion,
+                                                    NumExpansions))
           break;
                       
         if (!Expand) {
@@ -2377,12 +2380,14 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
       collectUnexpandedParameterPacks(BaseTL, Unexpanded);
       bool ShouldExpand = false;
+      bool RetainExpansion = false;
       unsigned NumExpansions = 0;
       if (CheckParameterPacksForExpansion(Init->getEllipsisLoc(), 
                                           BaseTL.getSourceRange(),
                                           Unexpanded.data(), 
                                           Unexpanded.size(),
                                           TemplateArgs, ShouldExpand, 
+                                          RetainExpansion,
                                           NumExpansions)) {
         AnyErrors = true;
         New->setInvalidDecl();

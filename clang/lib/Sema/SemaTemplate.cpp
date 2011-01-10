@@ -2550,10 +2550,13 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   
   // Form argument packs for each of the parameter packs remaining.
   while (Param != ParamEnd) {
+    // If we're checking a partial list of template arguments, don't fill
+    // in arguments for non-template parameter packs.
+    
     if ((*Param)->isTemplateParameterPack()) {     
-      // The parameter pack takes the contents of the current argument pack,
-      // which we built up earlier.
-      if (ArgumentPack.empty()) {
+      if (PartialTemplateArgs && ArgumentPack.empty()) {
+        Converted.push_back(TemplateArgument());
+      } else if (ArgumentPack.empty()) {
         Converted.push_back(TemplateArgument(0, 0));
       } else {
         TemplateArgument *PackedArgs
@@ -3600,7 +3603,7 @@ ExprResult
 Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
                                                   SourceLocation Loc) {
   assert(Arg.getKind() == TemplateArgument::Integral &&
-         "Operation is only value for integral template arguments");
+         "Operation is only valid for integral template arguments");
   QualType T = Arg.getIntegralType();
   if (T->isCharType() || T->isWideCharType())
     return Owned(new (Context) CharacterLiteral(

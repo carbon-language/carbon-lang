@@ -81,6 +81,16 @@ namespace clang {
       return !(*this)(Depth, Index).isNull();
     }
     
+    /// \brief Clear out a specific template argument.
+    void setArgument(unsigned Depth, unsigned Index,
+                     TemplateArgument Arg) {
+      assert(Depth < TemplateArgumentLists.size());
+      assert(Index < TemplateArgumentLists[getNumLevels() - Depth - 1].second);
+      const_cast<TemplateArgument&>(
+                TemplateArgumentLists[getNumLevels() - Depth - 1].first[Index])
+        = Arg;
+    }
+    
     /// \brief Add a new outermost level to the multi-level template argument 
     /// list.
     void addOuterTemplateArguments(const TemplateArgumentList *TemplateArgs) {
@@ -141,7 +151,7 @@ namespace clang {
       : TemplateArgument(Arg), DeducedFromArrayBound(DeducedFromArrayBound) { }
 
     /// \brief Construct an integral non-type template argument that
-    /// has been deduced, possible from an array bound.
+    /// has been deduced, possibly from an array bound.
     DeducedTemplateArgument(const llvm::APSInt &Value,
                             QualType ValueType,
                             bool DeducedFromArrayBound)
@@ -214,6 +224,19 @@ namespace clang {
     /// lookup will search our outer scope.
     bool CombineWithOuterScope;
     
+    /// \brief If non-NULL, the template parameter pack that has been
+    /// partially substituted per C++0x [temp.arg.explicit]p9.
+    NamedDecl *PartiallySubstitutedPack;
+    
+    /// \brief If \c PartiallySubstitutedPack is non-null, the set of
+    /// explicitly-specified template arguments in that pack.
+    const TemplateArgument *ArgsInPartiallySubstitutedPack;    
+    
+    /// \brief If \c PartiallySubstitutedPack, the number of 
+    /// explicitly-specified template arguments in 
+    /// ArgsInPartiallySubstitutedPack.
+    unsigned NumArgsInPartiallySubstitutedPack;
+
     // This class is non-copyable
     LocalInstantiationScope(const LocalInstantiationScope &);
     LocalInstantiationScope &operator=(const LocalInstantiationScope &);
@@ -221,7 +244,8 @@ namespace clang {
   public:
     LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false)
       : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope),
-        Exited(false), CombineWithOuterScope(CombineWithOuterScope)
+        Exited(false), CombineWithOuterScope(CombineWithOuterScope),
+        PartiallySubstitutedPack(0)
     {
       SemaRef.CurrentInstantiationScope = this;
     }
@@ -271,6 +295,29 @@ namespace clang {
     void InstantiatedLocal(const Decl *D, Decl *Inst);
     void InstantiatedLocalPackArg(const Decl *D, Decl *Inst);
     void MakeInstantiatedLocalArgPack(const Decl *D);
+    
+    /// \brief Note that the given parameter pack has been partially substituted
+    /// via explicit specification of template arguments 
+    /// (C++0x [temp.arg.explicit]p9).
+    ///
+    /// \param Pack The parameter pack, which will always be a template
+    /// parameter pack.
+    ///
+    /// \param ExplicitArgs The explicitly-specified template arguments provided
+    /// for this parameter pack.
+    ///
+    /// \param NumExplicitArgs The number of explicitly-specified template
+    /// arguments provided for this parameter pack.
+    void SetPartiallySubstitutedPack(NamedDecl *Pack, 
+                                     const TemplateArgument *ExplicitArgs,
+                                     unsigned NumExplicitArgs);
+    
+    /// \brief Retrieve the partially-substitued template parameter pack.
+    ///
+    /// If there is no partially-substituted parameter pack, returns NULL.
+    NamedDecl *getPartiallySubstitutedPack(
+                                      const TemplateArgument **ExplicitArgs = 0,
+                                           unsigned *NumExplicitArgs = 0) const;
   };
 
   class TemplateDeclInstantiator

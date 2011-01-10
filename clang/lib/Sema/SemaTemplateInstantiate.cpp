@@ -564,6 +564,19 @@ TemplateDeductionInfo *Sema::isSFINAEContext() const {
   return 0;
 }
 
+/// \brief Retrieve the depth and index of a parameter pack.
+static std::pair<unsigned, unsigned> 
+getDepthAndIndex(NamedDecl *ND) {
+  if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(ND))
+    return std::make_pair(TTP->getDepth(), TTP->getIndex());
+  
+  if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(ND))
+    return std::make_pair(NTTP->getDepth(), NTTP->getIndex());
+  
+  TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(ND);
+  return std::make_pair(TTP->getDepth(), TTP->getIndex());
+}
+
 //===----------------------------------------------------------------------===/
 // Template Instantiation for Types
 //===----------------------------------------------------------------------===/
@@ -608,12 +621,14 @@ namespace {
                                  const UnexpandedParameterPack *Unexpanded,
                                  unsigned NumUnexpanded,
                                  bool &ShouldExpand,
+                                 bool &RetainExpansion,
                                  unsigned &NumExpansions) {
       return getSema().CheckParameterPacksForExpansion(EllipsisLoc, 
                                                        PatternRange, Unexpanded,
                                                        NumUnexpanded, 
                                                        TemplateArgs, 
                                                        ShouldExpand,
+                                                       RetainExpansion,
                                                        NumExpansions);
     }
 
@@ -621,6 +636,37 @@ namespace {
       SemaRef.CurrentInstantiationScope->MakeInstantiatedLocalArgPack(Pack);
     }
     
+    TemplateArgument ForgetPartiallySubstitutedPack() {
+      TemplateArgument Result;
+      if (NamedDecl *PartialPack
+            = SemaRef.CurrentInstantiationScope->getPartiallySubstitutedPack()){
+        MultiLevelTemplateArgumentList &TemplateArgs
+          = const_cast<MultiLevelTemplateArgumentList &>(this->TemplateArgs);
+        unsigned Depth, Index;
+        llvm::tie(Depth, Index) = getDepthAndIndex(PartialPack);
+        if (TemplateArgs.hasTemplateArgument(Depth, Index)) {
+          Result = TemplateArgs(Depth, Index);
+          TemplateArgs.setArgument(Depth, Index, TemplateArgument());
+        }
+      }
+      
+      return Result;
+    }
+    
+    void RememberPartiallySubstitutedPack(TemplateArgument Arg) {
+      if (Arg.isNull())
+        return;
+      
+      if (NamedDecl *PartialPack
+            = SemaRef.CurrentInstantiationScope->getPartiallySubstitutedPack()){
+        MultiLevelTemplateArgumentList &TemplateArgs
+        = const_cast<MultiLevelTemplateArgumentList &>(this->TemplateArgs);
+        unsigned Depth, Index;
+        llvm::tie(Depth, Index) = getDepthAndIndex(PartialPack);
+        TemplateArgs.setArgument(Depth, Index, Arg);
+      }
+    }
+
     /// \brief Transform the given declaration by instantiating a reference to
     /// this declaration.
     Decl *TransformDecl(SourceLocation Loc, Decl *D);
@@ -713,6 +759,7 @@ Decl *TemplateInstantiator::TransformDecl(SourceLocation Loc, Decl *D) {
           return 0;
         }
         
+        assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
         Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
       }
 
@@ -761,6 +808,7 @@ TemplateInstantiator::TransformFirstQualifierInScope(NamedDecl *D,
           return 0;
         }
         
+        assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
         Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
       }
 
@@ -877,6 +925,7 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
       return ExprError();
     }
     
+    assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
     Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
   }
 
@@ -981,6 +1030,7 @@ TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
         return QualType();
       }
       
+      assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
       Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
     }
     
@@ -1272,11 +1322,13 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
       collectUnexpandedParameterPacks(Base->getTypeSourceInfo()->getTypeLoc(),
                                       Unexpanded);
       bool ShouldExpand = false;
+      bool RetainExpansion = false;
       unsigned NumExpansions = 0;
       if (CheckParameterPacksForExpansion(Base->getEllipsisLoc(), 
                                           Base->getSourceRange(),
                                           Unexpanded.data(), Unexpanded.size(),
                                           TemplateArgs, ShouldExpand, 
+                                          RetainExpansion,
                                           NumExpansions)) {
         Invalid = true;
         continue;
@@ -1959,9 +2011,13 @@ LocalInstantiationScope::findInstantiationOf(const Decl *D) {
 
 void LocalInstantiationScope::InstantiatedLocal(const Decl *D, Decl *Inst) {
   llvm::PointerUnion<Decl *, DeclArgumentPack *> &Stored = LocalDecls[D];
-  assert((Stored.isNull() || 
-          (Stored.get<Decl *>() == Inst)) && "Already instantiated this local");
-  Stored = Inst;
+  if (Stored.isNull())
+    Stored = Inst;
+  else if (Stored.is<Decl *>()) {
+    assert(Stored.get<Decl *>() == Inst && "Already instantiated this local");
+    Stored = Inst;
+  } else
+    LocalDecls[D].get<DeclArgumentPack *>()->push_back(Inst);
 }
 
 void LocalInstantiationScope::InstantiatedLocalPackArg(const Decl *D, 
@@ -1978,3 +2034,41 @@ void LocalInstantiationScope::MakeInstantiatedLocalArgPack(const Decl *D) {
   ArgumentPacks.push_back(Pack);
 }
 
+void LocalInstantiationScope::SetPartiallySubstitutedPack(NamedDecl *Pack, 
+                                          const TemplateArgument *ExplicitArgs,
+                                                    unsigned NumExplicitArgs) {
+  assert((!PartiallySubstitutedPack || PartiallySubstitutedPack == Pack) &&
+         "Already have a partially-substituted pack");
+  assert((!PartiallySubstitutedPack 
+          || NumArgsInPartiallySubstitutedPack == NumExplicitArgs) &&
+         "Wrong number of arguments in partially-substituted pack");
+  PartiallySubstitutedPack = Pack;
+  ArgsInPartiallySubstitutedPack = ExplicitArgs;
+  NumArgsInPartiallySubstitutedPack = NumExplicitArgs;
+}
+
+NamedDecl *LocalInstantiationScope::getPartiallySubstitutedPack(
+                                         const TemplateArgument **ExplicitArgs,
+                                              unsigned *NumExplicitArgs) const {
+  if (ExplicitArgs)
+    *ExplicitArgs = 0;
+  if (NumExplicitArgs)
+    *NumExplicitArgs = 0;
+  
+  for (const LocalInstantiationScope *Current = this; Current; 
+       Current = Current->Outer) {
+    if (Current->PartiallySubstitutedPack) {
+      if (ExplicitArgs)
+        *ExplicitArgs = Current->ArgsInPartiallySubstitutedPack;
+      if (NumExplicitArgs)
+        *NumExplicitArgs = Current->NumArgsInPartiallySubstitutedPack;
+      
+      return Current->PartiallySubstitutedPack;
+    }
+
+    if (!Current->CombineWithOuterScope)
+      break;
+  }
+  
+  return 0;
+}
