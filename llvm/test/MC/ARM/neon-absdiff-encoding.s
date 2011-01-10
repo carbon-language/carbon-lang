@@ -1,6 +1,4 @@
 @ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
-@ XFAIL: *
-@ NOTE: This currently fails because the ASM parser doesn't parse vabal.
 
 @ CHECK: vabd.s8	d16, d16, d17           @ encoding: [0xa1,0x07,0x40,0xf2]
 	vabd.s8	d16, d16, d17

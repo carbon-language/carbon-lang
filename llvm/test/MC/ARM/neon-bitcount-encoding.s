@@ -1,5 +1,4 @@
 @ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
-@ XFAIL: *
 
 @ CHECK: vcnt.8	d16, d16                @ encoding: [0x20,0x05,0xf0,0xf3]
 	vcnt.8	d16, d16
