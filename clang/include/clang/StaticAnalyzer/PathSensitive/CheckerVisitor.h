@@ -42,10 +42,6 @@ public:
       default:
         assert(false && "Unsupport statement.");
         return;
-      case Stmt::CompoundAssignOperatorClass:
-        static_cast<ImplClass*>(this)->PreVisitBinaryOperator(C,
-                                         static_cast<const BinaryOperator*>(S));
-        break;
 
 #define PREVISIT(NAME, FALLBACK) \
 case Stmt::NAME ## Class:\
@@ -60,10 +56,6 @@ break;
       default:
         assert(false && "Unsupport statement.");
         return;
-      case Stmt::CompoundAssignOperatorClass:
-        static_cast<ImplClass*>(this)->PostVisitBinaryOperator(C,
-                                         static_cast<const BinaryOperator*>(S));
-        break;
 
 #define POSTVISIT(NAME, FALLBACK) \
 case Stmt::NAME ## Class:\
