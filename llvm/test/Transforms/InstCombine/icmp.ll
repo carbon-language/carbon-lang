@@ -192,3 +192,20 @@ define i1 @test20(i32 %x) nounwind {
 ; CHECK-NEXT: %cmp = icmp eq i32 %x, 3
 }
 
+define i1 @test21(i8 %x, i8 %y) {
+; CHECK: @test21
+; CHECK-NOT: or i8
+; CHECK: icmp ugt
+  %A = or i8 %x, 1
+  %B = icmp ugt i8 %A, 3
+  ret i1 %B
+}
+
+define i1 @test22(i8 %x, i8 %y) {
+; CHECK: @test22
+; CHECK-NOT: or i8
+; CHECK: icmp ult
+  %A = or i8 %x, 1
+  %B = icmp ult i8 %A, 4
+  ret i1 %B
+}

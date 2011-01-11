@@ -1693,6 +1693,45 @@ static Instruction *ProcessUAddIdiom(Instruction &I, Value *OrigAddV,
   return ExtractValueInst::Create(Call, 1, "uadd.overflow");
 }
 
+// DemandedBitsLHSMask - When performing a comparison against a constant,
+// it is possible that not all the bits in the LHS are demanded.  This helper
+// method computes the mask that IS demanded.
+static APInt DemandedBitsLHSMask(ICmpInst &I,
+                                 unsigned BitWidth, bool isSignCheck) {
+  if (isSignCheck)
+    return APInt::getSignBit(BitWidth);
+  
+  ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1));
+  if (!CI) return APInt::getAllOnesValue(BitWidth);
+  
+  APInt RHS = CI->getValue();
+  APInt Mask(BitWidth, 0);
+  
+  switch (I.getPredicate()) {
+  // For a UGT comparison, we don't care about any bits that 
+  // correspond to the trailing ones of the comparand.  The value of these
+  // bits doesn't impact the outcome of the comparison, because any value
+  // greater than the RHS must differ in a bit higher than these due to carry.
+  case ICmpInst::ICMP_UGT: {
+    unsigned trailingOnes = RHS.countTrailingOnes();
+    APInt lowBitsSet = APInt::getLowBitsSet(BitWidth, trailingOnes);
+    return ~lowBitsSet;
+  }
+  
+  // Similarly, for a ULT comparison, we don't care about the trailing zeros.
+  // Any value less than the RHS must differ in a higher bit because of carries.
+  case ICmpInst::ICMP_ULT: {
+    unsigned trailingZeros = RHS.countTrailingZeros();
+    APInt lowBitsSet = APInt::getLowBitsSet(BitWidth, trailingZeros);
+    return ~lowBitsSet;
+  }
+  
+  default:
+    return APInt::getAllOnesValue(BitWidth);
+  }
+  
+  return Mask;
+}
 
 Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   bool Changed = false;
@@ -1830,8 +1869,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     APInt Op1KnownZero(BitWidth, 0), Op1KnownOne(BitWidth, 0);
 
     if (SimplifyDemandedBits(I.getOperandUse(0),
-                             isSignBit ? APInt::getSignBit(BitWidth)
-                                       : APInt::getAllOnesValue(BitWidth),
+                             DemandedBitsLHSMask(I, BitWidth, isSignBit),
                              Op0KnownZero, Op0KnownOne, 0))
       return &I;
     if (SimplifyDemandedBits(I.getOperandUse(1),

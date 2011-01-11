@@ -1627,21 +1627,6 @@ int bar() { return foo("abcd"); }
 
 //===---------------------------------------------------------------------===//
 
-InstCombine should use SimplifyDemandedBits to remove the or instruction:
-
-define i1 @test(i8 %x, i8 %y) {
-  %A = or i8 %x, 1
-  %B = icmp ugt i8 %A, 3
-  ret i1 %B
-}
-
-Currently instcombine calls SimplifyDemandedBits with either all bits or just
-the sign bit, if the comparison is obviously a sign test. In this case, we only
-need all but the bottom two bits from %A, and if we gave that mask to SDB it
-would delete the or instruction for us.
-
-//===---------------------------------------------------------------------===//
-
 functionattrs doesn't know much about memcpy/memset.  This function should be
 marked readnone rather than readonly, since it only twiddles local memory, but
 functionattrs doesn't handle memset/memcpy/memmove aggressively:
