@@ -537,8 +537,9 @@ namespace llvm {
     ///
     const SCEV *getNotSCEV(const SCEV *V);
 
-    /// getMinusSCEV - Return LHS-RHS.
-    ///
+    /// getMinusSCEV - Return LHS-RHS.  Minus is represented in SCEV as A+B*-1,
+    /// and thus the HasNUW and HasNSW bits apply to the resultant add, not
+    /// whether the sub would have overflowed.
     const SCEV *getMinusSCEV(const SCEV *LHS, const SCEV *RHS,
                              bool HasNUW = false, bool HasNSW = false);
 

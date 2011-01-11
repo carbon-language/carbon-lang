@@ -2446,8 +2446,9 @@ const SCEV *ScalarEvolution::getNotSCEV(const SCEV *V) {
   return getMinusSCEV(AllOnes, V);
 }
 
-/// getMinusSCEV - Return a SCEV corresponding to LHS - RHS.
-///
+/// getMinusSCEV - Return LHS-RHS.  Minus is represented in SCEV as A+B*-1,
+/// and thus the HasNUW and HasNSW bits apply to the resultant add, not
+/// whether the sub would have overflowed.
 const SCEV *ScalarEvolution::getMinusSCEV(const SCEV *LHS, const SCEV *RHS,
                                           bool HasNUW, bool HasNSW) {
   // Fast path: X - X --> 0.
@@ -4021,7 +4022,7 @@ static const SCEV *getMinusSCEVForExitTest(const SCEV *LHS, const SCEV *RHS,
     cast<SCEVConstant>(RHSA->getOperand(1))->getValue();
   
   // If the strides are equal, then this is just a (complex) loop invariant
-  // comparison of a/b.
+  // comparison of a and b.
   if (LHSStride == RHSStride)
     return SE.getMinusSCEV(LHSA->getStart(), RHSA->getStart());
   
