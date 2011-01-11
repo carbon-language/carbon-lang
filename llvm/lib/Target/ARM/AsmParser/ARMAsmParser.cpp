@@ -55,6 +55,10 @@ class ARMAsmParser : public TargetAsmParser {
   bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool ParsePrefix(MCSymbolRefExpr::VariantKind &RefKind);
+  const MCExpr *ApplyPrefixToExpr(const MCExpr *E,
+                                  MCSymbolRefExpr::VariantKind Variant);
+
 
   bool ParseMemoryOffsetReg(bool &Negative,
                             bool &OffsetRegShifted,
@@ -864,7 +868,109 @@ bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands){
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     Operands.push_back(ARMOperand::CreateImm(ImmVal, S, E));
     return false;
+  case AsmToken::Colon: {
+    // ":lower16:" and ":upper16:" expression prefixes
+    MCSymbolRefExpr::VariantKind RefKind;
+    if (ParsePrefix(RefKind))
+      return true;
+
+    const MCExpr *ExprVal;
+    if (getParser().ParseExpression(ExprVal))
+      return true;
+
+    // TODO: Attach the prefix to the entire expression
+    // instead of just the first symbol.
+    const MCExpr *ModExprVal = ApplyPrefixToExpr(ExprVal, RefKind);
+    if (!ModExprVal) {
+      return TokError("invalid modifier '" + getTok().getIdentifier() +
+                      "' (no symbols present)");
+    }
+
+    E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+    Operands.push_back(ARMOperand::CreateImm(ModExprVal, S, E));
+    return false;
   }
+  }
+}
+
+// FIXME: The next 2 routines are hacks to get ARMAsmParser to understand
+// :lower16: and :upper16:
+// It still attaches VK_ARM_HI/LO16 to MCSymbolRefExpr, but it really
+// should be attached to the entire MCExpr as a whole - perhaps using
+// MCTargetExpr?
+bool ARMAsmParser::ParsePrefix(MCSymbolRefExpr::VariantKind &RefKind) {
+  RefKind = MCSymbolRefExpr::VK_None;
+
+  // :lower16: and :upper16: modifiers
+  if (getLexer().isNot(AsmToken::Colon)) {
+    Error(Parser.getTok().getLoc(), "expected :");
+    return true;
+  }
+  Parser.Lex(); // Eat ':'
+
+  if (getLexer().isNot(AsmToken::Identifier)) {
+    Error(Parser.getTok().getLoc(), "expected prefix identifier in operand");
+    return true;
+  }
+
+  StringRef IDVal = Parser.getTok().getIdentifier();
+  if (IDVal == "lower16") {
+    RefKind = MCSymbolRefExpr::VK_ARM_LO16;
+  } else if (IDVal == "upper16") {
+    RefKind = MCSymbolRefExpr::VK_ARM_HI16;
+  } else {
+    Error(Parser.getTok().getLoc(), "unexpected prefix in operand");
+    return true;
+  }
+  Parser.Lex();
+
+  if (getLexer().isNot(AsmToken::Colon)) {
+    Error(Parser.getTok().getLoc(), "unexpected token after prefix");
+    return true;
+  }
+  Parser.Lex(); // Eat the last ':'
+  return false;
+}
+
+const MCExpr *
+ARMAsmParser::ApplyPrefixToExpr(const MCExpr *E,
+                                MCSymbolRefExpr::VariantKind Variant) {
+  // Recurse over the given expression, rebuilding it to apply the given variant
+  // to the leftmost symbol.
+  if (Variant == MCSymbolRefExpr::VK_None)
+    return E;
+
+  switch (E->getKind()) {
+  case MCExpr::Target:
+    llvm_unreachable("Can't handle target expr yet");
+  case MCExpr::Constant:
+    llvm_unreachable("Can't handle lower16/upper16 of constant yet");
+
+  case MCExpr::SymbolRef: {
+    const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(E);
+
+    if (SRE->getKind() != MCSymbolRefExpr::VK_None)
+      return 0;
+
+    return MCSymbolRefExpr::Create(&SRE->getSymbol(), Variant, getContext());
+  }
+
+  case MCExpr::Unary:
+    llvm_unreachable("Can't handle unary expressions yet");
+
+  case MCExpr::Binary: {
+    const MCBinaryExpr *BE = cast<MCBinaryExpr>(E);
+    const MCExpr *LHS = ApplyPrefixToExpr(BE->getLHS(), Variant);
+    const MCExpr *RHS = BE->getRHS();
+    if (!LHS)
+      return 0;
+
+    return MCBinaryExpr::Create(BE->getOpcode(), LHS, RHS, getContext());
+  }
+  }
+
+  assert(0 && "Invalid expression kind!");
+  return 0;
 }
 
 /// \brief Given a mnemonic, split out possible predication code and carry
