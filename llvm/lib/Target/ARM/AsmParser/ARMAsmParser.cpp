@@ -937,9 +937,24 @@ static StringRef SplitMnemonicAndCC(StringRef Mnemonic,
 // FIXME: It would be nice to autogen this.
 static void GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
                                   bool &CanAcceptPredicationCode) {
-  CanAcceptCarrySet = false;
+  if (Mnemonic == "and" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
+      Mnemonic == "rrx" || Mnemonic == "ror" || Mnemonic == "sub" ||
+      Mnemonic == "smull" || Mnemonic == "add" || Mnemonic == "adc" ||
+      Mnemonic == "mul" || Mnemonic == "bic" || Mnemonic == "asr" ||
+      Mnemonic == "umlal" || Mnemonic == "orr" || Mnemonic == "mov" ||
+      Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
+      Mnemonic == "sbc" || Mnemonic == "mla" || Mnemonic == "umull" ||
+      Mnemonic == "eor" || Mnemonic == "smlal" || Mnemonic == "mvn") {
+    CanAcceptCarrySet = true;
+  } else {
+    CanAcceptCarrySet = false;
+  }
 
-  if (Mnemonic == "trap") {
+  if (Mnemonic == "cbnz" || Mnemonic == "setend" || Mnemonic == "dmb" ||
+      Mnemonic == "cps" || Mnemonic == "mcr2" || Mnemonic == "it" ||
+      Mnemonic == "mcrr2" || Mnemonic == "cbz" || Mnemonic == "cdp2" ||
+      Mnemonic == "trap" || Mnemonic == "mrc2" || Mnemonic == "mrrc2" ||
+      Mnemonic == "dsb" || Mnemonic == "movs") {
     CanAcceptPredicationCode = false;
   } else {
     CanAcceptPredicationCode = true;
