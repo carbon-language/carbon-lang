@@ -930,6 +930,20 @@ static StringRef SplitMnemonicAndCC(StringRef Mnemonic,
 
   return Mnemonic;
 }
+
+/// \brief Given a canonical mnemonic, determine if the instruction ever allows
+/// inclusion of carry set or predication code operands.
+//
+// FIXME: It would be nice to autogen this.
+static void GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
+                                  bool &CanAcceptPredicationCode) {
+  CanAcceptCarrySet = false;
+
+  if (Mnemonic == "trap") {
+    CanAcceptPredicationCode = false;
+  } else {
+    CanAcceptPredicationCode = true;
+  }
 }
 
 /// Parse an arm instruction mnemonic followed by its operands.
@@ -946,10 +960,40 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
 
   Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
 
-  // FIXME: Should only add this operand for predicated instructions
-  if (Head != "trap") {
-    Operands.push_back(ARMOperand::CreateCondCode(ARMCC::CondCodes(CC),
-                                                  NameLoc));
+  // Next, add the CCOut and ConditionCode operands, if needed.
+  //
+  // For mnemonics which can ever incorporate a carry setting bit or predication
+  // code, our matching model involves us always generating CCOut and
+  // ConditionCode operands to match the mnemonic "as written" and then we let
+  // the matcher deal with finding the right instruction or generating an
+  // appropriate error.
+  bool CanAcceptCarrySet, CanAcceptPredicationCode;
+  GetMnemonicAcceptInfo(Head, CanAcceptCarrySet, CanAcceptPredicationCode);
+
+  // Add the carry setting operand, if necessary.
+  //
+  // FIXME: It would be awesome if we could somehow invent a location such that
+  // match errors on this operand would print a nice diagnostic about how the
+  // 's' character in the mnemonic resulted in a CCOut operand.
+  if (CanAcceptCarrySet) {
+    Operands.push_back(ARMOperand::CreateCCOut(CarrySetting ? ARM::CPSR : 0,
+                                               NameLoc));
+  } else {
+    // This mnemonic can't ever accept a carry set, but the user wrote one (or
+    // misspelled another mnemonic).
+
+    // FIXME: Issue a nice error.
+  }
+
+  // Add the predication code operand, if necessary.
+  if (CanAcceptPredicationCode) {
+    Operands.push_back(ARMOperand::CreateCondCode(
+                         ARMCC::CondCodes(PredicationCode), NameLoc));
+  } else {
+    // This mnemonic can't ever accept a predication code, but the user wrote
+    // one (or misspelled another mnemonic).
+
+    // FIXME: Issue a nice error.
   }
 
   // Add the remaining tokens in the mnemonic.
