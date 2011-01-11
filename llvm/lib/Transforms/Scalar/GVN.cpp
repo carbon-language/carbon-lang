@@ -2011,6 +2011,7 @@ bool GVN::iterateOnFunction(Function &F) {
        RE = RPOT.end(); RI != RE; ++RI)
     Changed |= processBlock(*RI);
 #else
+  DT->DT->recalculate(F);
   for (df_iterator<DomTreeNode*> DI = df_begin(DT->getRootNode()),
        DE = df_end(DT->getRootNode()); DI != DE; ++DI)
     Changed |= processBlock(DI->getBlock());
