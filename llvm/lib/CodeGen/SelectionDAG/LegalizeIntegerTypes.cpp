@@ -1065,6 +1065,93 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
     SetExpandedInteger(SDValue(N, ResNo), Lo, Hi);
 }
 
+/// Lower an atomic node to the appropriate builtin call.
+std::pair <SDValue, SDValue> DAGTypeLegalizer::ExpandAtomic(SDNode *Node) {
+  unsigned Opc = Node->getOpcode();
+  MVT VT = cast<AtomicSDNode>(Node)->getMemoryVT().getSimpleVT();
+  RTLIB::Libcall LC;
+
+  switch (Opc) {
+  default:
+    llvm_unreachable("Unhandled atomic intrinsic Expand!");
+    break;
+  case ISD::ATOMIC_SWAP:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_LOCK_TEST_AND_SET_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_LOCK_TEST_AND_SET_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_LOCK_TEST_AND_SET_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_LOCK_TEST_AND_SET_8; break;
+    }
+    break;
+  case ISD::ATOMIC_CMP_SWAP:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_VAL_COMPARE_AND_SWAP_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_VAL_COMPARE_AND_SWAP_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_VAL_COMPARE_AND_SWAP_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_VAL_COMPARE_AND_SWAP_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_ADD:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_ADD_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_ADD_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_ADD_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_ADD_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_SUB:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_SUB_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_SUB_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_SUB_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_SUB_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_AND:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_AND_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_AND_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_AND_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_AND_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_OR:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_OR_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_OR_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_OR_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_OR_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_XOR:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_XOR_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_XOR_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_XOR_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_XOR_8; break;
+    }
+    break;
+  case ISD::ATOMIC_LOAD_NAND:
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type for atomic!");
+    case MVT::i8:  LC = RTLIB::SYNC_FETCH_AND_NAND_1; break;
+    case MVT::i16: LC = RTLIB::SYNC_FETCH_AND_NAND_2; break;
+    case MVT::i32: LC = RTLIB::SYNC_FETCH_AND_NAND_4; break;
+    case MVT::i64: LC = RTLIB::SYNC_FETCH_AND_NAND_8; break;
+    }
+    break;
+  }
+
+  return ExpandChainLibCall(LC, Node, false);
+}
+
 /// ExpandShiftByConstant - N is a shift by a value that needs to be expanded,
 /// and the shift amount is a constant 'Amt'.  Expand the operation.
 void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
