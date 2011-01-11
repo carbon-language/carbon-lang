@@ -22,9 +22,13 @@
 //   A Fast Algorithm for Finding Dominators in a Flowgraph
 //   T. Lengauer & R. Tarjan, ACM TOPLAS July 1979, pgs 121-141.
 //
-// This implements the O(n*log(n)) versions of EVAL and LINK, because it turns
-// out that the theoretically slower O(n*log(n)) implementation is actually
-// faster than the almost-linear O(n*alpha(n)) version, even for large CFGs.
+// This implements both the O(n*ack(n)) and the O(n*log(n)) versions of EVAL and
+// LINK, but it turns out that the theoretically slower O(n*log(n))
+// implementation is actually faster than the "efficient" algorithm (even for
+// large CFGs) because the constant overheads are substantially smaller.  The
+// lower-complexity version can be enabled with the following #define:
+//
+#define BALANCE_IDOM_TREE 0
 //
 //===----------------------------------------------------------------------===//
 
@@ -54,7 +58,7 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
     }
   }
 #else
-  bool IsChildOfArtificialExit = (N != 0);
+  bool IsChilOfArtificialExit = (N != 0);
 
   std::vector<std::pair<typename GraphT::NodeType*,
                         typename GraphT::ChildIteratorType> > Worklist;
@@ -76,10 +80,10 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
       //BBInfo[V].Child = 0;      // Child[v] = 0
       BBInfo.Size = 1;            // Size[v] = 1
 
-      if (IsChildOfArtificialExit)
+      if (IsChilOfArtificialExit)
         BBInfo.Parent = 1;
 
-      IsChildOfArtificialExit = false;
+      IsChilOfArtificialExit = false;
     }
 
     // store the DFS number of the current BB - the reference to BBInfo might
@@ -153,17 +157,75 @@ Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
      typename GraphT::NodeType *V) {
   typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInfo =
                                                                      DT.Info[V];
+#if !BALANCE_IDOM_TREE
+  // Higher-complexity but faster implementation
   if (VInfo.Ancestor == 0)
     return V;
   Compress<GraphT>(DT, V);
   return VInfo.Label;
+#else
+  // Lower-complexity but slower implementation
+  if (VInfo.Ancestor == 0)
+    return VInfo.Label;
+  Compress<GraphT>(DT, V);
+  GraphT::NodeType* VLabel = VInfo.Label;
+
+  GraphT::NodeType* VAncestorLabel = DT.Info[VInfo.Ancestor].Label;
+  if (DT.Info[VAncestorLabel].Semi >= DT.Info[VLabel].Semi)
+    return VLabel;
+  else
+    return VAncestorLabel;
+#endif
 }
 
 template<class GraphT>
 void Link(DominatorTreeBase<typename GraphT::NodeType>& DT,
           unsigned DFSNumV, typename GraphT::NodeType* W,
         typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo) {
+#if !BALANCE_IDOM_TREE
+  // Higher-complexity but faster implementation
   WInfo.Ancestor = DFSNumV;
+#else
+  // Lower-complexity but slower implementation
+  GraphT::NodeType* WLabel = WInfo.Label;
+  unsigned WLabelSemi = DT.Info[WLabel].Semi;
+  GraphT::NodeType* S = W;
+  InfoRec *SInfo = &DT.Info[S];
+
+  GraphT::NodeType* SChild = SInfo->Child;
+  InfoRec *SChildInfo = &DT.Info[SChild];
+
+  while (WLabelSemi < DT.Info[SChildInfo->Label].Semi) {
+    GraphT::NodeType* SChildChild = SChildInfo->Child;
+    if (SInfo->Size+DT.Info[SChildChild].Size >= 2*SChildInfo->Size) {
+      SChildInfo->Ancestor = S;
+      SInfo->Child = SChild = SChildChild;
+      SChildInfo = &DT.Info[SChild];
+    } else {
+      SChildInfo->Size = SInfo->Size;
+      S = SInfo->Ancestor = SChild;
+      SInfo = SChildInfo;
+      SChild = SChildChild;
+      SChildInfo = &DT.Info[SChild];
+    }
+  }
+
+  DominatorTreeBase::InfoRec &VInfo = DT.Info[V];
+  SInfo->Label = WLabel;
+
+  assert(V != W && "The optimization here will not work in this case!");
+  unsigned WSize = WInfo.Size;
+  unsigned VSize = (VInfo.Size += WSize);
+
+  if (VSize < 2*WSize)
+    std::swap(S, VInfo.Child);
+
+  while (S) {
+    SInfo = &DT.Info[S];
+    SInfo->Ancestor = V;
+    S = SInfo->Child;
+  }
+#endif
 }
 
 template<class FuncT, class NodeT>
@@ -195,34 +257,12 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   // infinite loops). In these cases an artificial exit node is required.
   MultipleRoots |= (DT.isPostDominator() && N != F.size());
 
-  // When naively implemented, the Lengauer-Tarjan algorithm requires a separate
-  // bucket for each vertex. However, this is unnecessary, because each vertex
-  // is only placed into a single bucket (that of its semidominator), and each
-  // vertex's bucket is processed before it is added to any bucket itself.
-  //
-  // Instead of using a bucket per vertex, we use a single array Buckets that
-  // has two purposes. Before the vertex V with preorder number i is processed,
-  // Buckets[i] stores the index of the first element in V's bucket. After V's
-  // bucket is processed, Buckets[i] stores the index of the next element in the
-  // bucket containing V, if any.
-  std::vector<unsigned> Buckets;
-  Buckets.resize(N + 1);
-  for (unsigned i = 1; i <= N; ++i)
-    Buckets[i] = i;
-
   for (unsigned i = N; i >= 2; --i) {
     typename GraphT::NodeType* W = DT.Vertex[i];
     typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo =
                                                                      DT.Info[W];
 
-    // Step #2: Implicitly define the immediate dominator of vertices
-    for (unsigned j = i; Buckets[j] != i; j = Buckets[j]) {
-      typename GraphT::NodeType* V = DT.Vertex[Buckets[j]];
-      typename GraphT::NodeType* U = Eval<GraphT>(DT, V);
-      DT.IDoms[V] = DT.Info[U].Semi < i ? U : W;
-    }
-
-    // Step #3: Calculate the semidominators of all vertices
+    // Step #2: Calculate the semidominators of all vertices
 
     // initialize the semi dominator to point to the parent node
     WInfo.Semi = WInfo.Parent;
@@ -238,24 +278,26 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
       }
     }
 
+    typename GraphT::NodeType* WParent = DT.Vertex[WInfo.Parent];
+
     // If V is a non-root vertex and sdom(V) = parent(V), then idom(V) is
     // necessarily parent(V). In this case, set idom(V) here and avoid placing
     // V into a bucket.
-    if (WInfo.Semi == WInfo.Parent) {
-      DT.IDoms[W] = DT.Vertex[WInfo.Parent];
-    } else {
-      Buckets[i] = Buckets[WInfo.Semi];
-      Buckets[WInfo.Semi] = i;
-    }
+    if (WInfo.Semi == WInfo.Parent)
+      DT.IDoms[W] = WParent;
+    else
+      DT.Info[DT.Vertex[WInfo.Semi]].Bucket.push_back(W);
 
     Link<GraphT>(DT, WInfo.Parent, W, WInfo);
-  }
 
-  if (N >= 1) {
-    typename GraphT::NodeType* Root = DT.Vertex[1];
-    for (unsigned j = 1; Buckets[j] != 1; j = Buckets[j]) {
-      typename GraphT::NodeType* V = DT.Vertex[Buckets[j]];
-      DT.IDoms[V] = Root;
+    // Step #3: Implicitly define the immediate dominator of vertices
+    std::vector<typename GraphT::NodeType*> &WParentBucket =
+                                                        DT.Info[WParent].Bucket;
+    while (!WParentBucket.empty()) {
+      typename GraphT::NodeType* V = WParentBucket.back();
+      WParentBucket.pop_back();
+      typename GraphT::NodeType* U = Eval<GraphT>(DT, V);
+      DT.IDoms[V] = DT.Info[U].Semi < DT.Info[V].Semi ? U : WParent;
     }
   }
 
