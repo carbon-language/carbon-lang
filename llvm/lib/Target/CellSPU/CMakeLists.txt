@@ -23,4 +23,5 @@ add_llvm_target(CellSPUCodeGen
   SPUSubtarget.cpp
   SPUTargetMachine.cpp
   SPUSelectionDAGInfo.cpp
+  SPUNopFiller.cpp
   )

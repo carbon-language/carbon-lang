@@ -59,3 +59,12 @@ bool SPUTargetMachine::addInstSelector(PassManagerBase &PM,
   PM.add(createSPUISelDag(*this));
   return false;
 }
+
+// passes to run just before printing the assembly
+bool SPUTargetMachine::
+addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel) 
+{
+  //align instructions with nops/lnops for dual issue
+  PM.add(createSPUNopFillerPass(*this));
+  return true;
+}

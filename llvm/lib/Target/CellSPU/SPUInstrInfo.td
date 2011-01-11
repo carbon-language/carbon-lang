@@ -4216,7 +4216,7 @@ def : Pat<(fabs (v4f32 VECREG:$rA)),
 // in the odd pipeline)
 //===----------------------------------------------------------------------===//
 
-def ENOP : SPUInstr<(outs), (ins), "enop", ExecNOP> {
+def ENOP : SPUInstr<(outs), (ins), "nop", ExecNOP> {
   let Pattern = [];
 
   let Inst{0-10} = 0b10000000010;

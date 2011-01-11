@@ -23,6 +23,7 @@ namespace llvm {
   class formatted_raw_ostream;
 
   FunctionPass *createSPUISelDag(SPUTargetMachine &TM);
+  FunctionPass *createSPUNopFillerPass(SPUTargetMachine &tm);
 
   extern Target TheCellSPUTarget;
 }
