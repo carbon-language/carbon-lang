@@ -1262,9 +1262,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
   
   assert(!NonLocalDeps.count(RemInst) && "RemInst got reinserted?");
   AA->deleteValue(RemInst);
-#ifndef NDEBUG
-  verifyRemoved(RemInst);
-#endif
+  DEBUG(verifyRemoved(RemInst));
 }
 /// verifyRemoved - Verify that the specified instruction does not occur
 /// in our internal data structures.
