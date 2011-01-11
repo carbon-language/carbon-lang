@@ -1077,11 +1077,22 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
 // Block entrance.  (Update counters).
 //===----------------------------------------------------------------------===//
 
-bool ExprEngine::processCFGBlockEntrance(const CFGBlock* B, 
-                                        const ExplodedNode *Pred,
-                                        BlockCounter BC) {
-  return BC.getNumVisited(Pred->getLocationContext()->getCurrentStackFrame(), 
-                          B->getBlockID()) < AMgr.getMaxVisit();
+void ExprEngine::processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
+                               GenericNodeBuilder<BlockEntrance> &nodeBuilder){
+  
+  // FIXME: Refactor this into a checker.
+  const CFGBlock *block = nodeBuilder.getProgramPoint().getBlock();
+  ExplodedNode *pred = nodeBuilder.getPredecessor();
+  
+  if (nodeBuilder.getBlockCounter().getNumVisited(
+                       pred->getLocationContext()->getCurrentStackFrame(), 
+                       block->getBlockID()) >= AMgr.getMaxVisit()) {
+
+    static int tag = 0;
+    const BlockEntrance &BE = nodeBuilder.getProgramPoint();
+    BlockEntrance BE_tagged(BE.getBlock(), BE.getLocationContext(), &tag);
+    nodeBuilder.generateNode(pred->getState(), pred, BE_tagged, true);
+  }
 }
 
 //===----------------------------------------------------------------------===//

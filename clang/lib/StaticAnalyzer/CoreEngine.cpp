@@ -288,13 +288,29 @@ void CoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
     return;
   }
 
-  // FIXME: Should we allow processCFGBlockEntrance to also manipulate state?
+  // Call into the subengine to process entering the CFGBlock.
+  ExplodedNodeSet dstNodes;
+  BlockEntrance BE(Blk, Pred->getLocationContext());
+  GenericNodeBuilder<BlockEntrance> nodeBuilder(*this, Pred, BE);
+  SubEng.processCFGBlockEntrance(dstNodes, nodeBuilder);
 
-  if (SubEng.processCFGBlockEntrance(Blk, Pred, WList->getBlockCounter()))
-    generateNode(BlockEntrance(Blk, Pred->getLocationContext()),
-                 Pred->State, Pred);
+  if (dstNodes.empty()) {
+    if (!nodeBuilder.hasGeneratedNode()) {
+      // Auto-generate a node and enqueue it to the worklist.
+      generateNode(BE, Pred->State, Pred);    
+    }
+  }
   else {
-    blocksAborted.push_back(std::make_pair(L, Pred));
+    for (ExplodedNodeSet::iterator I = dstNodes.begin(), E = dstNodes.end();
+         I != E; ++I) {
+      WList->enqueue(*I);
+    }
+  }
+
+  for (llvm::SmallVectorImpl<ExplodedNode*>::const_iterator
+       I = nodeBuilder.sinks().begin(), E = nodeBuilder.sinks().end();
+       I != E; ++I) {
+    blocksAborted.push_back(std::make_pair(L, *I));
   }
 }
 
@@ -444,6 +460,27 @@ void CoreEngine::generateNode(const ProgramPoint& Loc,
 
   // Only add 'Node' to the worklist if it was freshly generated.
   if (IsNew) WList->enqueue(Node);
+}
+
+ExplodedNode *
+GenericNodeBuilderImpl::generateNodeImpl(const GRState *state,
+                                         ExplodedNode *pred,
+                                         ProgramPoint programPoint,
+                                         bool asSink) {
+  
+  HasGeneratedNode = true;
+  bool isNew;
+  ExplodedNode *node = engine.getGraph().getNode(programPoint, state, &isNew);
+  if (pred)
+    node->addPredecessor(pred, engine.getGraph());
+  if (isNew) {
+    if (asSink) {
+      node->markAsSink();
+      sinksGenerated.push_back(node);
+    }
+    return node;
+  }
+  return 0;
 }
 
 StmtNodeBuilder::StmtNodeBuilder(const CFGBlock* b, unsigned idx,

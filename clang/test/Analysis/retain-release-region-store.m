@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store=region -analyzer-max-loop 6 -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

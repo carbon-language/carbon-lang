@@ -193,12 +193,10 @@ public:
   void ProcessTemporaryDtor(const CFGTemporaryDtor D, 
                             StmtNodeBuilder &builder);
 
-  /// processCFGBlockEntrance - Called by CoreEngine when start processing
-  ///  a CFGBlock.  This method returns true if the analysis should continue
-  ///  exploring the given path, and false otherwise.
-  bool processCFGBlockEntrance(const CFGBlock* B, const ExplodedNode *Pred,
-                            BlockCounter BC);
-
+  /// Called by CoreEngine when processing the entrance of a CFGBlock.
+  virtual void processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
+                                GenericNodeBuilder<BlockEntrance> &nodeBuilder);
+  
   /// ProcessBranch - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
   void processBranch(const Stmt* Condition, const Stmt* Term, 

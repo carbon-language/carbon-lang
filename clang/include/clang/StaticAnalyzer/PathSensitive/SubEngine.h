@@ -13,6 +13,7 @@
 #ifndef LLVM_CLANG_GR_SUBENGINE_H
 #define LLVM_CLANG_GR_SUBENGINE_H
 
+#include "clang/Analysis/ProgramPoint.h"
 #include "clang/StaticAnalyzer/PathSensitive/SVals.h"
 
 namespace clang {
@@ -23,8 +24,10 @@ class LocationContext;
 class Stmt;
 
 namespace ento {
-
+  
+template <typename PP> class GenericNodeBuilder;
 class AnalysisManager;
+class ExplodedNodeSet;
 class ExplodedNode;
 class GRState;
 class GRStateManager;
@@ -52,12 +55,11 @@ public:
   /// nodes by processing the 'effects' of a block-level statement.
   virtual void processCFGElement(const CFGElement E, StmtNodeBuilder& builder)=0;
 
-  /// Called by CoreEngine when start processing
-  /// a CFGBlock.  This method returns true if the analysis should continue
-  /// exploring the given path, and false otherwise.
-  virtual bool processCFGBlockEntrance(const CFGBlock* B,
-                                       const ExplodedNode *Pred,
-                                       BlockCounter BC) = 0;
+  /// Called by CoreEngine when it starts processing a CFGBlock.  The
+  /// SubEngine is expected to populate dstNodes with new nodes representing
+  /// updated analysis state, or generate no nodes at all if it doesn't.
+  virtual void processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
+                            GenericNodeBuilder<BlockEntrance> &nodeBuilder) = 0;
 
   /// Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.

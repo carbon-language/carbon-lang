@@ -37,6 +37,7 @@ namespace ento {
 ///   any transfer function logic and the sub-expression level (if any).
 class CoreEngine {
   friend class StmtNodeBuilder;
+  friend class GenericNodeBuilderImpl;
   friend class BranchNodeBuilder;
   friend class IndirectGotoNodeBuilder;
   friend class SwitchNodeBuilder;
@@ -395,6 +396,50 @@ public:
   const Expr* getCondition() const { return Condition; }
 
   const GRState* getState() const { return Pred->State; }
+};
+
+class GenericNodeBuilderImpl {
+protected:
+  CoreEngine &engine;
+  ExplodedNode *pred;
+  bool HasGeneratedNode;
+  ProgramPoint pp;
+  llvm::SmallVector<ExplodedNode*, 2> sinksGenerated;  
+
+  ExplodedNode *generateNodeImpl(const GRState *state, ExplodedNode *pred,
+                                 ProgramPoint programPoint, bool asSink);
+
+  GenericNodeBuilderImpl(CoreEngine &eng, ExplodedNode *pr, ProgramPoint p)
+    : engine(eng), pred(pr), HasGeneratedNode(false), pp(p) {}
+
+public:
+  bool hasGeneratedNode() const { return HasGeneratedNode; }
+  
+  WorkList &getWorkList() { return *engine.WList; }
+  
+  ExplodedNode* getPredecessor() const { return pred; }
+  
+  BlockCounter getBlockCounter() const {
+    return engine.WList->getBlockCounter();
+  }
+  
+  const llvm::SmallVectorImpl<ExplodedNode*> &sinks() const {
+    return sinksGenerated;
+  }
+};
+
+template <typename PP>
+class GenericNodeBuilder : public GenericNodeBuilderImpl {
+public:
+  GenericNodeBuilder(CoreEngine &eng, ExplodedNode *pr, const PP &p)
+    : GenericNodeBuilderImpl(eng, pr, p) {}
+
+  ExplodedNode *generateNode(const GRState *state, ExplodedNode *pred,
+                             PP programPoint, bool asSink) {
+    return generateNodeImpl(state, pred, programPoint, asSink);
+  }
+  
+  const PP &getProgramPoint() const { return cast<PP>(pp); }
 };
 
 class EndOfFunctionNodeBuilder {
