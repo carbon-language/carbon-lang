@@ -866,9 +866,19 @@ bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands){
   }
 }
 
+/// \brief Given a mnemonic, split out possible predication code and carry
+/// setting letters to form a canonical mnemonic and flags.
+//
 // FIXME: Would be nice to autogen this.
-static unsigned SplitMnemonicAndCC(StringRef &Mnemonic) {
+static StringRef SplitMnemonicAndCC(StringRef Mnemonic,
+                                    unsigned &PredicationCode,
+                                    bool &CarrySetting) {
+  PredicationCode = ARMCC::AL;
+  CarrySetting = false;
+
   // Ignore some mnemonics we know aren't predicated forms.
+  //
+  // FIXME: Would be nice to autogen this.
   if (Mnemonic == "teq" || Mnemonic == "vceq" ||
       Mnemonic == "movs" ||
       Mnemonic == "svc" ||
@@ -881,13 +891,9 @@ static unsigned SplitMnemonicAndCC(StringRef &Mnemonic) {
       (Mnemonic == "smlal" || Mnemonic == "umaal" || Mnemonic == "umlal" ||
        Mnemonic == "vabal" || Mnemonic == "vmlal" || Mnemonic == "vpadal" ||
        Mnemonic == "vqdmlal"))
-    return ARMCC::AL;
+    return Mnemonic;
 
-  // Otherwise, determine the predicate.
-  //
-  // FIXME: We need a way to check whether a prefix supports predication,
-  // otherwise we will end up with an ambiguity for instructions that happen to
-  // end with a predicate name.
+  // First, split out any predication code.
   unsigned CC = StringSwitch<unsigned>(Mnemonic.substr(Mnemonic.size()-2))
     .Case("eq", ARMCC::EQ)
     .Case("ne", ARMCC::NE)
@@ -907,10 +913,23 @@ static unsigned SplitMnemonicAndCC(StringRef &Mnemonic) {
     .Default(~0U);
   if (CC != ~0U) {
     Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 2);
-    return CC;
+    PredicationCode = CC;
   }
 
-  return ARMCC::AL;
+  // Next, determine if we have a carry setting bit. We explicitly ignore all
+  // the instructions we know end in 's'.
+  if (Mnemonic.endswith("s") &&
+      !(Mnemonic == "asrs" || Mnemonic == "cps" || Mnemonic == "mls" ||
+        Mnemonic == "movs" || Mnemonic == "mrs" || Mnemonic == "smmls" ||
+        Mnemonic == "vabs" || Mnemonic == "vcls" || Mnemonic == "vmls" ||
+        Mnemonic == "vmrs" || Mnemonic == "vnmls" || Mnemonic == "vqabs" ||
+        Mnemonic == "vrecps" || Mnemonic == "vrsqrts")) {
+    Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 1);
+    CarrySetting = true;
+  }
+
+  return Mnemonic;
+}
 }
 
 /// Parse an arm instruction mnemonic followed by its operands.
@@ -920,8 +939,10 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   size_t Start = 0, Next = Name.find('.');
   StringRef Head = Name.slice(Start, Next);
 
-  // Determine the predicate, if any.
-  unsigned CC = SplitMnemonicAndCC(Head);
+  // Split out the predication code and carry setting flag from the mnemonic.
+  unsigned PredicationCode;
+  bool CarrySetting;
+  Head = SplitMnemonicAndCC(Head, PredicationCode, CarrySetting);
 
   Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
 
