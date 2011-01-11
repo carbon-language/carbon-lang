@@ -123,7 +123,7 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB)
     else {
       J++;
       DEBUG( dbgs() <<"Padding basic block with LNOP\n"; );
-      BuildMI(MBB, J, J->getDebugLoc(), TII->get(SPU::LNOP));
+      BuildMI(MBB, J, DebugLoc(), TII->get(SPU::LNOP));
     }
     isEvenPlace=true;
   }
