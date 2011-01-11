@@ -1703,9 +1703,7 @@ static APInt DemandedBitsLHSMask(ICmpInst &I,
   
   ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1));
   if (!CI) return APInt::getAllOnesValue(BitWidth);
-  
-  APInt RHS = CI->getValue();
-  APInt Mask(BitWidth, 0);
+  const APInt &RHS = CI->getValue();
   
   switch (I.getPredicate()) {
   // For a UGT comparison, we don't care about any bits that 
@@ -1730,7 +1728,6 @@ static APInt DemandedBitsLHSMask(ICmpInst &I,
     return APInt::getAllOnesValue(BitWidth);
   }
   
-  return Mask;
 }
 
 Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
