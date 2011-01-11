@@ -31,3 +31,12 @@ bb:
 ; CHECK: @test2
 ; CHECK: ret i1 true
 }
+
+define i1 @TNAN() {
+; CHECK: @TNAN
+; CHECK: ret i1 true
+  %A = fcmp uno double 0x7FF8000000000000, 1.000000e+00
+  %B = fcmp uno double 1.230000e+02, 1.000000e+00
+  %C = or i1 %A, %B
+  ret i1 %C
+}
