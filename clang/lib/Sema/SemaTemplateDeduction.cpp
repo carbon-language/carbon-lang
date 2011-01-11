@@ -666,6 +666,13 @@ DeduceTemplateArguments(Sema &S,
       continue;
     }
     
+    // C++0x [temp.deduct.type]p5:
+    //   The non-deduced contexts are:
+    //     - A function parameter pack that does not occur at the end of the 
+    //       parameter-declaration-clause.
+    if (ParamIdx + 1 < NumParams)
+      return Sema::TDK_Success;
+
     // C++0x [temp.deduct.type]p10:
     //   If the parameter-declaration corresponding to Pi is a function 
     //   parameter pack, then the type of its declarator- id is compared with
@@ -2483,7 +2490,12 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     //   the call is compared with the type P of the declarator-id of the 
     //   function parameter pack. Each comparison deduces template arguments 
     //   for subsequent positions in the template parameter packs expanded by 
-    //   the function parameter pack.
+    //   the function parameter pack. For a function parameter pack that does
+    //   not occur at the end of the parameter-declaration-list, the type of 
+    //   the parameter pack is a non-deduced context.
+    if (ParamIdx + 1 < NumParams)
+      break;
+    
     QualType ParamPattern = ParamExpansion->getPattern();
     llvm::SmallVector<unsigned, 2> PackIndices;
     {

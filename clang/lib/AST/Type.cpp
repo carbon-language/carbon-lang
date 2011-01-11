@@ -1144,7 +1144,11 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
 }
 
 bool FunctionProtoType::isTemplateVariadic() const {
-  return getNumArgs() && isa<PackExpansionType>(getArgType(getNumArgs() - 1));
+  for (unsigned ArgIdx = getNumArgs(); ArgIdx; --ArgIdx)
+    if (isa<PackExpansionType>(getArgType(ArgIdx - 1)))
+      return true;
+  
+  return false;
 }
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,

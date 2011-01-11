@@ -74,3 +74,18 @@ void test_pair_deduction(int *ip, float *fp, double *dp) {
 
   first_arg_pair(make_pair(ip, 17), 16); // expected-error{{no matching function for call to 'first_arg_pair'}}
 }
+
+// For a function parameter pack that does not occur at the end of the
+// parameter-declaration-list, the type of the parameter pack is a
+// non-deduced context.
+// FIXME: We're not in a position to handle this yet.
+#if 0
+template<typename ...Types> struct tuple { };
+
+template<typename ...Types>
+void pack_not_at_end(tuple<Types...>, Types... values, int);
+
+void test_pack_not_at_end(tuple<int*, double*> t2) {
+  pack_not_at_end(t2, 0, 0, 0);
+}
+#endif
