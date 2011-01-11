@@ -7,7 +7,7 @@
 // CHECK-WITH-HIDDEN: @_ZTSPK2T4 = weak_odr hidden constant 
 // CHECK-WITH-HIDDEN: @_ZTS2T4 = weak_odr hidden constant 
 // CHECK-WITH-HIDDEN: @_ZTI2T4 = weak_odr hidden constant 
-// CHECK-WITH-HIDDEN: @_ZTIPK2T4 = weak_odr hidden constant 
+// CHECK-WITH-HIDDEN: @_ZTIPK2T4 = weak_odr hidden unnamed_addr constant 
 
 // CHECK: _ZTSP1C = internal constant
 // CHECK: _ZTS1C = internal constant
@@ -25,7 +25,7 @@
 // CHECK: _ZTIM1CPS_ = internal constant
 // CHECK: _ZTSM1A1C = internal constant
 // CHECK: _ZTS1A = weak_odr constant
-// CHECK: _ZTI1A = weak_odr hidden constant
+// CHECK: _ZTI1A = weak_odr hidden unnamed_addr constant
 // CHECK: _ZTIM1A1C = internal constant
 // CHECK: _ZTSM1AP1C = internal constant
 // CHECK: _ZTIM1AP1C = internal constant
@@ -39,12 +39,12 @@
 // CHECK: _ZTIFvN12_GLOBAL__N_11DEE = internal constant
 // CHECK: _ZTSPFvvE = weak_odr constant
 // CHECK: _ZTSFvvE = weak_odr constant
-// CHECK: _ZTIFvvE = weak_odr hidden constant
-// CHECK: _ZTIPFvvE = weak_odr hidden constant
+// CHECK: _ZTIFvvE = weak_odr hidden unnamed_addr constant
+// CHECK: _ZTIPFvvE = weak_odr hidden unnamed_addr constant
 // CHECK: _ZTSN12_GLOBAL__N_11EE = internal constant
 // CHECK: _ZTIN12_GLOBAL__N_11EE = internal constant
 // CHECK: _ZTSA10_i = weak_odr constant
-// CHECK: _ZTIA10_i = weak_odr hidden constant
+// CHECK: _ZTIA10_i = weak_odr hidden unnamed_addr constant
 // CHECK: _ZTI1TILj0EE = weak_odr constant
 // CHECK: _ZTI1TILj1EE = weak_odr constant
 // CHECK: _ZTI1TILj2EE = external constant

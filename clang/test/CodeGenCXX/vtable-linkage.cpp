@@ -108,7 +108,7 @@ void use_F() {
 // CHECK-2: @_ZTI1C = weak_odr constant
 // CHECK-2-HIDDEN: @_ZTV1C = weak_odr hidden unnamed_addr constant
 // CHECK-2-HIDDEN: @_ZTS1C = weak_odr constant
-// CHECK-2-HIDDEN: @_ZTI1C = weak_odr hidden constant
+// CHECK-2-HIDDEN: @_ZTI1C = weak_odr hidden unnamed_addr constant
 
 // D has a key function that is defined in this translation unit so its vtable is
 // defined in the translation unit.

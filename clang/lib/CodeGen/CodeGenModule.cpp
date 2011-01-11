@@ -251,6 +251,7 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
 
   // Otherwise, drop the visibility to hidden.
   GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  GV->setUnnamedAddr(true);
 }
 
 llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
