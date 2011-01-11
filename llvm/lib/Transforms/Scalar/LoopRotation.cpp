@@ -335,12 +335,11 @@ bool LoopRotate::rotateLoop(Loop *L) {
   assert(L->getLoopPreheader() && "Invalid loop preheader after loop rotation");
   assert(L->getLoopLatch() && "Invalid loop latch after loop rotation");
 
-  // Now that the CFG and DomTree are in a consistent state again, merge the
-  // OrigHeader block into OrigLatch.  We know that they are joined by an
-  // unconditional branch.  This is just a cleanup so the emitted code isn't
-  // too gross.
-  bool DidIt = MergeBlockIntoPredecessor(OrigHeader, this);
-  assert(DidIt && "Block merge failed??"); (void)DidIt;
+  // Now that the CFG and DomTree are in a consistent state again, try to merge
+  // the OrigHeader block into OrigLatch.  This will succeed if they are
+  // connected by an unconditional branch.  This is just a cleanup so the
+  // emitted code isn't too gross in this common case.
+  MergeBlockIntoPredecessor(OrigHeader, this);
   
   ++NumRotated;
   return true;
