@@ -13,10 +13,10 @@ struct identity {
 };
 
 template <class T> 
-  T* f2(int, typename identity<T>::type = 0); // expected-note{{candidate}}
+  T* f2(int, typename identity<T>::type = 0);
 template <class T, class U> 
-  T& f2(U, typename identity<T>::type = 0); // expected-note{{candidate}}
+  T& f2(U, typename identity<T>::type = 0);
 
 void g2() {
-  f2<int>(1); // expected-error{{ambiguous}}
+  int* ip = f2<int>(1);
 }

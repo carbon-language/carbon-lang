@@ -3510,10 +3510,12 @@ public:
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                                    FunctionTemplateDecl *FT2,
                                                    SourceLocation Loc,
-                                           TemplatePartialOrderingContext TPOC);
+                                           TemplatePartialOrderingContext TPOC,
+                                                   unsigned NumCallArguments);
   UnresolvedSetIterator getMostSpecialized(UnresolvedSetIterator SBegin,
                                            UnresolvedSetIterator SEnd,
                                            TemplatePartialOrderingContext TPOC,
+                                           unsigned NumCallArguments,
                                            SourceLocation Loc,
                                            const PartialDiagnostic &NoneDiag,
                                            const PartialDiagnostic &AmbigDiag,

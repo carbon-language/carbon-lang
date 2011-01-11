@@ -84,6 +84,15 @@ DeduceTemplateArguments(Sema &S,
                         TemplateDeductionInfo &Info,
                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced);
 
+/// \brief Stores the result of comparing the qualifiers of two types, used
+/// when 
+enum DeductionQualifierComparison { 
+  NeitherMoreQualified = 0, 
+  ParamMoreQualified, 
+  ArgMoreQualified 
+};
+
+
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S,
                         TemplateParameterList *TemplateParams,
@@ -91,7 +100,10 @@ DeduceTemplateArguments(Sema &S,
                         QualType Arg,
                         TemplateDeductionInfo &Info,
                         llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                        unsigned TDF);
+                        unsigned TDF,
+                        bool PartialOrdering = false,
+                        llvm::SmallVectorImpl<DeductionQualifierComparison> *
+                                                      QualifierComparisons = 0);
 
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S,
@@ -621,6 +633,13 @@ FinishArgumentPackDeduction(Sema &S,
 /// \param TDF bitwise OR of the TemplateDeductionFlags bits that describe
 /// how template argument deduction is performed.
 ///
+/// \param PartialOrdering If true, we are performing template argument
+/// deduction for during partial ordering for a call 
+/// (C++0x [temp.deduct.partial]).
+///
+/// \param QualifierComparisons If we're performing template argument deduction
+/// in the context of partial ordering, the set of qualifier comparisons.
+///
 /// \returns the result of template argument deduction so far. Note that a
 /// "success" result means that template argument deduction has not yet failed,
 /// but it may still fail, later, for other reasons.
@@ -631,7 +650,10 @@ DeduceTemplateArguments(Sema &S,
                         const QualType *Args, unsigned NumArgs,
                         TemplateDeductionInfo &Info,
                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                        unsigned TDF) {
+                        unsigned TDF,
+                        bool PartialOrdering = false,
+                        llvm::SmallVectorImpl<DeductionQualifierComparison> *
+                                                     QualifierComparisons = 0) {
   // Fast-path check to see if we have too many/too few arguments.
   if (NumParams != NumArgs &&
       !(NumParams && isa<PackExpansionType>(Params[NumParams - 1])) &&
@@ -655,11 +677,14 @@ DeduceTemplateArguments(Sema &S,
       if (ArgIdx >= NumArgs)
         return Sema::TDK_NonDeducedMismatch;
           
+      
       if (Sema::TemplateDeductionResult Result
-          = DeduceTemplateArguments(S, TemplateParams,
-                                    Params[ParamIdx],
-                                    Args[ArgIdx],
-                                    Info, Deduced, TDF))
+            = DeduceTemplateArguments(S, TemplateParams,
+                                      Params[ParamIdx],
+                                      Args[ArgIdx],
+                                      Info, Deduced, TDF,
+                                      PartialOrdering,
+                                      QualifierComparisons))
         return Result;
       
       ++ArgIdx;
@@ -716,7 +741,8 @@ DeduceTemplateArguments(Sema &S,
       // Deduce template arguments from the pattern.
       if (Sema::TemplateDeductionResult Result 
           = DeduceTemplateArguments(S, TemplateParams, Pattern, Args[ArgIdx],
-                                    Info, Deduced))
+                                    Info, Deduced, PartialOrdering,
+                                    QualifierComparisons))
         return Result;
       
       // Capture the deduced template arguments for each parameter pack expanded
@@ -765,6 +791,12 @@ DeduceTemplateArguments(Sema &S,
 /// \param TDF bitwise OR of the TemplateDeductionFlags bits that describe
 /// how template argument deduction is performed.
 ///
+/// \param PartialOrdering Whether we're performing template argument deduction
+/// in the context of partial ordering (C++0x [temp.deduct.partial]).
+///
+/// \param QualifierComparisons If we're performing template argument deduction
+/// in the context of partial ordering, the set of qualifier comparisons.
+///
 /// \returns the result of template argument deduction so far. Note that a
 /// "success" result means that template argument deduction has not yet failed,
 /// but it may still fail, later, for other reasons.
@@ -774,24 +806,68 @@ DeduceTemplateArguments(Sema &S,
                         QualType ParamIn, QualType ArgIn,
                         TemplateDeductionInfo &Info,
                      llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                        unsigned TDF) {
+                        unsigned TDF,
+                        bool PartialOrdering,
+    llvm::SmallVectorImpl<DeductionQualifierComparison> *QualifierComparisons) {
   // We only want to look at the canonical types, since typedefs and
   // sugar are not part of template argument deduction.
   QualType Param = S.Context.getCanonicalType(ParamIn);
   QualType Arg = S.Context.getCanonicalType(ArgIn);
 
-  // C++0x [temp.deduct.call]p4 bullet 1:
-  //   - If the original P is a reference type, the deduced A (i.e., the type
-  //     referred to by the reference) can be more cv-qualified than the
-  //     transformed A.
-  if (TDF & TDF_ParamWithReferenceType) {
-    Qualifiers Quals;
-    QualType UnqualParam = S.Context.getUnqualifiedArrayType(Param, Quals);
-    Quals.setCVRQualifiers(Quals.getCVRQualifiers() &
-                           Arg.getCVRQualifiersThroughArrayTypes());
-    Param = S.Context.getQualifiedType(UnqualParam, Quals);
+  if (PartialOrdering) {
+    // C++0x [temp.deduct.partial]p5:
+    //   Before the partial ordering is done, certain transformations are 
+    //   performed on the types used for partial ordering: 
+    //     - If P is a reference type, P is replaced by the type referred to. 
+    const ReferenceType *ParamRef = Param->getAs<ReferenceType>();
+    if (ParamRef)
+      Param = ParamRef->getPointeeType();
+    
+    //     - If A is a reference type, A is replaced by the type referred to.
+    const ReferenceType *ArgRef = Arg->getAs<ReferenceType>();
+    if (ArgRef)
+      Arg = ArgRef->getPointeeType();
+    
+    if (QualifierComparisons && ParamRef && ArgRef) {
+      // C++0x [temp.deduct.partial]p6:
+      //   If both P and A were reference types (before being replaced with the 
+      //   type referred to above), determine which of the two types (if any) is 
+      //   more cv-qualified than the other; otherwise the types are considered
+      //   to be equally cv-qualified for partial ordering purposes. The result 
+      //   of this determination will be used below.
+      //
+      // We save this information for later, using it only when deduction 
+      // succeeds in both directions.
+      DeductionQualifierComparison QualifierResult = NeitherMoreQualified;
+      if (Param.isMoreQualifiedThan(Arg))
+        QualifierResult = ParamMoreQualified;
+      else if (Arg.isMoreQualifiedThan(Param))
+        QualifierResult = ArgMoreQualified;
+      QualifierComparisons->push_back(QualifierResult);
+    }
+    
+    // C++0x [temp.deduct.partial]p7:
+    //   Remove any top-level cv-qualifiers:
+    //     - If P is a cv-qualified type, P is replaced by the cv-unqualified 
+    //       version of P.
+    Param = Param.getUnqualifiedType();
+    //     - If A is a cv-qualified type, A is replaced by the cv-unqualified 
+    //       version of A.
+    Arg = Arg.getUnqualifiedType();
+  } else {
+    // C++0x [temp.deduct.call]p4 bullet 1:
+    //   - If the original P is a reference type, the deduced A (i.e., the type
+    //     referred to by the reference) can be more cv-qualified than the
+    //     transformed A.
+    if (TDF & TDF_ParamWithReferenceType) {
+      Qualifiers Quals;
+      QualType UnqualParam = S.Context.getUnqualifiedArrayType(Param, Quals);
+      Quals.setCVRQualifiers(Quals.getCVRQualifiers() &
+                             Arg.getCVRQualifiersThroughArrayTypes());
+      Param = S.Context.getQualifiedType(UnqualParam, Quals);
+    }
   }
-
+  
   // If the parameter type is not dependent, there is nothing to deduce.
   if (!Param->isDependentType()) {
     if (!(TDF & TDF_SkipNonDependent) && Param != Arg)
@@ -2300,7 +2376,7 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
     //   for type deduction.
     ParamType = ParamRefType->getPointeeType();
   }
-  
+    
   // Overload sets usually make this parameter an undeduced
   // context, but there are sometimes special circumstances.
   if (ArgType == S.Context.OverloadTy) {
@@ -2786,90 +2862,6 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                                  QualType(), Specialization, Info);
 }
 
-/// \brief Stores the result of comparing the qualifiers of two types.
-enum DeductionQualifierComparison { 
-  NeitherMoreQualified = 0, 
-  ParamMoreQualified, 
-  ArgMoreQualified 
-};
-
-/// \brief Deduce the template arguments during partial ordering by comparing 
-/// the parameter type and the argument type (C++0x [temp.deduct.partial]).
-///
-/// \param S the semantic analysis object within which we are deducing
-///
-/// \param TemplateParams the template parameters that we are deducing
-///
-/// \param ParamIn the parameter type
-///
-/// \param ArgIn the argument type
-///
-/// \param Info information about the template argument deduction itself
-///
-/// \param Deduced the deduced template arguments
-///
-/// \returns the result of template argument deduction so far. Note that a
-/// "success" result means that template argument deduction has not yet failed,
-/// but it may still fail, later, for other reasons.
-static Sema::TemplateDeductionResult
-DeduceTemplateArgumentsDuringPartialOrdering(Sema &S,
-                                        TemplateParameterList *TemplateParams,
-                                             QualType ParamIn, QualType ArgIn,
-                                             TemplateDeductionInfo &Info,
-                      llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-   llvm::SmallVectorImpl<DeductionQualifierComparison> *QualifierComparisons) {
-  CanQualType Param = S.Context.getCanonicalType(ParamIn);
-  CanQualType Arg = S.Context.getCanonicalType(ArgIn);
-
-  // C++0x [temp.deduct.partial]p5:
-  //   Before the partial ordering is done, certain transformations are 
-  //   performed on the types used for partial ordering: 
-  //     - If P is a reference type, P is replaced by the type referred to. 
-  CanQual<ReferenceType> ParamRef = Param->getAs<ReferenceType>();
-  if (!ParamRef.isNull())
-    Param = ParamRef->getPointeeType();
-  
-  //     - If A is a reference type, A is replaced by the type referred to.
-  CanQual<ReferenceType> ArgRef = Arg->getAs<ReferenceType>();
-  if (!ArgRef.isNull())
-    Arg = ArgRef->getPointeeType();
-  
-  if (QualifierComparisons && !ParamRef.isNull() && !ArgRef.isNull()) {
-    // C++0x [temp.deduct.partial]p6:
-    //   If both P and A were reference types (before being replaced with the 
-    //   type referred to above), determine which of the two types (if any) is 
-    //   more cv-qualified than the other; otherwise the types are considered to 
-    //   be equally cv-qualified for partial ordering purposes. The result of this
-    //   determination will be used below.
-    //
-    // We save this information for later, using it only when deduction 
-    // succeeds in both directions.
-    DeductionQualifierComparison QualifierResult = NeitherMoreQualified;
-    if (Param.isMoreQualifiedThan(Arg))
-      QualifierResult = ParamMoreQualified;
-    else if (Arg.isMoreQualifiedThan(Param))
-      QualifierResult = ArgMoreQualified;
-    QualifierComparisons->push_back(QualifierResult);
-  }
-  
-  // C++0x [temp.deduct.partial]p7:
-  //   Remove any top-level cv-qualifiers:
-  //     - If P is a cv-qualified type, P is replaced by the cv-unqualified 
-  //       version of P.
-  Param = Param.getUnqualifiedType();
-  //     - If A is a cv-qualified type, A is replaced by the cv-unqualified 
-  //       version of A.
-  Arg = Arg.getUnqualifiedType();
-  
-  // C++0x [temp.deduct.partial]p8:
-  //   Using the resulting types P and A the deduction is then done as 
-  //   described in 14.9.2.5. If deduction succeeds for a given type, the type
-  //   from the argument template is considered to be at least as specialized
-  //   as the type from the parameter template.
-  return DeduceTemplateArguments(S, TemplateParams, Param, Arg, Info,
-                                 Deduced, TDF_None);
-}
-
 static void
 MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
                            bool OnlyDeduced,
@@ -2907,6 +2899,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
                                      FunctionTemplateDecl *FT1,
                                      FunctionTemplateDecl *FT2,
                                      TemplatePartialOrderingContext TPOC,
+                                     unsigned NumCallArguments,
     llvm::SmallVectorImpl<DeductionQualifierComparison> *QualifierComparisons) {
   FunctionDecl *FD1 = FT1->getTemplatedDecl();
   FunctionDecl *FD2 = FT2->getTemplatedDecl();  
@@ -2951,7 +2944,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
     unsigned Skip1 = !S.getLangOptions().CPlusPlus0x && 
       IsNonStatic2 && !IsNonStatic1;
     if (S.getLangOptions().CPlusPlus0x && IsNonStatic1 && !IsNonStatic2)
-      MaybeAddImplicitObjectParameterType(S.Context, Method1, Args1);
+      MaybeAddImplicitObjectParameterType(S.Context, Method1, Args1);    
     Args1.insert(Args1.end(), 
                  Proto1->arg_type_begin() + Skip1, Proto1->arg_type_end());
 
@@ -2962,16 +2955,18 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
       MaybeAddImplicitObjectParameterType(S.Context, Method2, Args2);
     Args2.insert(Args2.end(), 
                  Proto2->arg_type_begin() + Skip2, Proto2->arg_type_end());
-
-    unsigned NumParams = std::min(Args1.size(), Args2.size());
-    for (unsigned I = 0; I != NumParams; ++I)
-      if (DeduceTemplateArgumentsDuringPartialOrdering(S,
-                                                       TemplateParams,
-                                                       Args2[I],
-                                                       Args1[I],
-                                                       Info,
-                                                       Deduced,
-                                                       QualifierComparisons))
+    
+    // C++ [temp.func.order]p5:
+    //   The presence of unused ellipsis and default arguments has no effect on
+    //   the partial ordering of function templates.
+    if (Args1.size() > NumCallArguments)
+      Args1.resize(NumCallArguments);
+    if (Args2.size() > NumCallArguments)
+      Args2.resize(NumCallArguments);
+    if (DeduceTemplateArguments(S, TemplateParams, Args2.data(), Args2.size(),
+                                Args1.data(), Args1.size(), Info, Deduced,
+                                TDF_None, /*PartialOrdering=*/true,
+                                QualifierComparisons))
         return false;
     
     break;
@@ -2980,26 +2975,21 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   case TPOC_Conversion:
     //   - In the context of a call to a conversion operator, the return types
     //     of the conversion function templates are used.
-    if (DeduceTemplateArgumentsDuringPartialOrdering(S,
-                                                     TemplateParams,
-                                                     Proto2->getResultType(),
-                                                     Proto1->getResultType(),
-                                                     Info,
-                                                     Deduced,
-                                                     QualifierComparisons))
+    if (DeduceTemplateArguments(S, TemplateParams, Proto2->getResultType(),
+                                Proto1->getResultType(), Info, Deduced,
+                                TDF_None, /*PartialOrdering=*/true,
+                                QualifierComparisons))
       return false;
     break;
     
   case TPOC_Other:
     //   - In other contexts (14.6.6.2) the function template’s function type 
     //     is used.
-    if (DeduceTemplateArgumentsDuringPartialOrdering(S,
-                                                     TemplateParams,
-                                                     FD2->getType(),
-                                                     FD1->getType(),
-                                                     Info,
-                                                     Deduced,
-                                                     QualifierComparisons))
+    // FIXME: Don't we actually want to perform the adjustments on the parameter
+    // types?
+    if (DeduceTemplateArguments(S, TemplateParams, FD2->getType(), 
+                                FD1->getType(), Info, Deduced, TDF_None,
+                                /*PartialOrdering=*/true, QualifierComparisons))
       return false;
     break;
   }
@@ -3026,7 +3016,9 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   UsedParameters.resize(TemplateParams->size());
   switch (TPOC) {
   case TPOC_Call: {
-    unsigned NumParams = std::min(Proto1->getNumArgs(), Proto2->getNumArgs());
+    unsigned NumParams = std::min(NumCallArguments, 
+                                  std::min(Proto1->getNumArgs(), 
+                                           Proto2->getNumArgs()));
     if (S.getLangOptions().CPlusPlus0x && IsNonStatic2 && !IsNonStatic1)
       ::MarkUsedTemplateParameters(S, Method2->getThisType(S.Context), false, 
                                    TemplateParams->getDepth(), UsedParameters);
@@ -3070,16 +3062,22 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
 /// \param TPOC the context in which we are performing partial ordering of
 /// function templates.
 ///
+/// \param NumCallArguments The number of arguments in a call, used only
+/// when \c TPOC is \c TPOC_Call.
+///
 /// \returns the more specialized function template. If neither
 /// template is more specialized, returns NULL.
 FunctionTemplateDecl *
 Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                  FunctionTemplateDecl *FT2,
                                  SourceLocation Loc,
-                                 TemplatePartialOrderingContext TPOC) {
+                                 TemplatePartialOrderingContext TPOC,
+                                 unsigned NumCallArguments) {
   llvm::SmallVector<DeductionQualifierComparison, 4> QualifierComparisons;
-  bool Better1 = isAtLeastAsSpecializedAs(*this, Loc, FT1, FT2, TPOC, 0);
+  bool Better1 = isAtLeastAsSpecializedAs(*this, Loc, FT1, FT2, TPOC, 
+                                          NumCallArguments, 0);
   bool Better2 = isAtLeastAsSpecializedAs(*this, Loc, FT2, FT1, TPOC, 
+                                          NumCallArguments,
                                           &QualifierComparisons);
   
   if (Better1 != Better2) // We have a clear winner
@@ -3156,6 +3154,9 @@ static bool isSameTemplate(TemplateDecl *T1, TemplateDecl *T2) {
 /// \param TPOC the partial ordering context to use to compare the function
 /// template specializations.
 ///
+/// \param NumCallArguments The number of arguments in a call, used only
+/// when \c TPOC is \c TPOC_Call.
+///
 /// \param Loc the location where the ambiguity or no-specializations 
 /// diagnostic should occur.
 ///
@@ -3181,8 +3182,9 @@ static bool isSameTemplate(TemplateDecl *T1, TemplateDecl *T2) {
 /// template argument deduction.
 UnresolvedSetIterator
 Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
-                         UnresolvedSetIterator SpecEnd,
+                        UnresolvedSetIterator SpecEnd,
                          TemplatePartialOrderingContext TPOC,
+                         unsigned NumCallArguments,
                          SourceLocation Loc,
                          const PartialDiagnostic &NoneDiag,
                          const PartialDiagnostic &AmbigDiag,
@@ -3206,7 +3208,7 @@ Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
       = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     assert(Challenger && "Not a function template specialization?");
     if (isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger,
-                                                  Loc, TPOC),
+                                                  Loc, TPOC, NumCallArguments),
                        Challenger)) {
       Best = I;
       BestTemplate = Challenger;
@@ -3221,7 +3223,7 @@ Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
       = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     if (I != Best &&
         !isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger, 
-                                                   Loc, TPOC),
+                                                   Loc, TPOC, NumCallArguments),
                         BestTemplate)) {
       Ambiguous = true;
       break;
@@ -3293,13 +3295,10 @@ Sema::getMoreSpecializedPartialSpecialization(
   
   // Determine whether PS1 is at least as specialized as PS2
   Deduced.resize(PS2->getTemplateParameters()->size());
-  bool Better1 = !DeduceTemplateArgumentsDuringPartialOrdering(*this,
-                                                  PS2->getTemplateParameters(),
-                                                               PT2,
-                                                               PT1,
-                                                               Info,
-                                                               Deduced,
-                                                               0);
+  bool Better1 = !::DeduceTemplateArguments(*this, PS2->getTemplateParameters(),
+                                            PT2, PT1, Info, Deduced, TDF_None,
+                                            /*PartialOrdering=*/true, 
+                                            /*QualifierComparisons=*/0);
   if (Better1) {
     InstantiatingTemplate Inst(*this, PS2->getLocation(), PS2,
                                Deduced.data(), Deduced.size(), Info);
@@ -3311,13 +3310,10 @@ Sema::getMoreSpecializedPartialSpecialization(
   // Determine whether PS2 is at least as specialized as PS1
   Deduced.clear();
   Deduced.resize(PS1->getTemplateParameters()->size());
-  bool Better2 = !DeduceTemplateArgumentsDuringPartialOrdering(*this,
-                                                  PS1->getTemplateParameters(),
-                                                               PT1,
-                                                               PT2,
-                                                               Info,
-                                                               Deduced,
-                                                               0);
+  bool Better2 = !::DeduceTemplateArguments(*this, PS1->getTemplateParameters(),
+                                            PT1, PT2, Info, Deduced, TDF_None,
+                                            /*PartialOrdering=*/true,
+                                            /*QualifierComparisons=*/0);
   if (Better2) {
     InstantiatingTemplate Inst(*this, PS1->getLocation(), PS1,
                                Deduced.data(), Deduced.size(), Info);

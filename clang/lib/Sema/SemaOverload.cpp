@@ -5897,7 +5897,8 @@ isBetterOverloadCandidate(Sema &S,
                                          Cand2.Function->getPrimaryTemplate(),
                                          Loc,
                        isa<CXXConversionDecl>(Cand1.Function)? TPOC_Conversion 
-                                                             : TPOC_Call))
+                                                             : TPOC_Call,
+                                         NumArgs))
       return BetterTemplate == Cand1.Function->getPrimaryTemplate();
 
   //   -- the context is an initialization by user-defined conversion
@@ -6926,7 +6927,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     
     UnresolvedSetIterator Result =
         getMostSpecialized(MatchesCopy.begin(), MatchesCopy.end(),
-                           TPOC_Other, From->getLocStart(),
+                           TPOC_Other, 0, From->getLocStart(),
                            PDiag(),
                            PDiag(diag::err_addr_ovl_ambiguous)
                                << Matches[0].second->getDeclName(),
