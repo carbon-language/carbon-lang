@@ -20,3 +20,5 @@ void f(const X<int> x) {
   X<X<int>> *x1;
 }
 
+template<typename T = void> struct X1 { };
+X1<X1<>> x1a;
