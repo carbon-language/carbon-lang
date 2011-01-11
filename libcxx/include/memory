@@ -1487,7 +1487,7 @@ struct _LIBCPP_VISIBLE uses_allocator
 {
 };
 
-#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 // uses-allocator construction
 
@@ -1505,7 +1505,7 @@ struct __uses_alloc_ctor
     : integral_constant<int, __uses_alloc_ctor_imp<_Tp, _Alloc, _Args...>::value>
     {};
 
-#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 // allocator
 
