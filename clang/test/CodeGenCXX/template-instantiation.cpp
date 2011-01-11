@@ -7,7 +7,7 @@
 // CHECK-NOT: _ZTVN5test31SIiEE
 // CHECK-NOT: _ZTSN5test31SIiEE
 
-// CHECK: define linkonce_odr void @_ZN5test21CIiEC1Ev(
+// CHECK: define linkonce_odr unnamed_addr void @_ZN5test21CIiEC1Ev(
 // CHECK: define linkonce_odr void @_ZN5test21CIiE6foobarIdEEvT_(
 // CHECK: define available_externally void @_ZN5test21CIiE6zedbarEd(
 

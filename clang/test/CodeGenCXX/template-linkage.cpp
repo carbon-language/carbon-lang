@@ -37,7 +37,7 @@ template<typename T> void X1<T>::blarg() { }
 extern template struct X0<char>;
 extern template struct X1<char>;
 
-// CHECK: define linkonce_odr void @_ZN2X1IcED1Ev(
+// CHECK: define linkonce_odr unnamed_addr void @_ZN2X1IcED1Ev(
 void test_X1() {
   X1<char> i1c;
 }

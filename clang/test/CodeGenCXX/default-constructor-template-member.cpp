@@ -6,5 +6,5 @@ void a() {
   B b;
 }
 // CHECK: call void @_ZN1BC1Ev
-// CHECK: define linkonce_odr void @_ZN1BC1Ev
+// CHECK: define linkonce_odr unnamed_addr void @_ZN1BC1Ev
 // CHECK: call void @_ZN1AIiEC1Ev

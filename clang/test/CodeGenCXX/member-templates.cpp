@@ -15,8 +15,8 @@ struct B {
 
 template<typename T> B::B(T) {}
 
-// CHECK: define weak_odr void @_ZN1BC1IiEET_(%struct.B* %this, i32)
-// CHECK: define weak_odr void @_ZN1BC2IiEET_(%struct.B* %this, i32)
+// CHECK: define weak_odr unnamed_addr void @_ZN1BC1IiEET_(%struct.B* %this, i32)
+// CHECK: define weak_odr unnamed_addr void @_ZN1BC2IiEET_(%struct.B* %this, i32)
 template B::B(int);
 
 template<typename T>

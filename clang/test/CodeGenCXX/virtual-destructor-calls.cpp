@@ -21,12 +21,12 @@ struct B : A {
 // CHECK: @_ZN1CD2Ev = alias bitcast {{.*}} @_ZN1BD2Ev
 
 // Deleting dtor: defers to the complete dtor.
-// CHECK: define void @_ZN1BD0Ev
+// CHECK: define unnamed_addr void @_ZN1BD0Ev
 // CHECK: call void @_ZN1BD1Ev
 // CHECK: call void @_ZdlPv
 
 // Base dtor: actually calls A's base dtor.
-// CHECK: define void @_ZN1BD2Ev
+// CHECK: define unnamed_addr void @_ZN1BD2Ev
 // CHECK: call void @_ZN6MemberD1Ev
 // CHECK: call void @_ZN1AD2Ev
 
@@ -41,7 +41,7 @@ C::~C() { }
 // Complete dtor: just an alias (checked above).
 
 // Deleting dtor: defers to the complete dtor.
-// CHECK: define void @_ZN1CD0Ev
+// CHECK: define unnamed_addr void @_ZN1CD0Ev
 // CHECK: call void @_ZN1CD1Ev
 // CHECK: call void @_ZdlPv
 

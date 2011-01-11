@@ -42,10 +42,10 @@ struct C {
  C();
 };
 
-// CHECK: define void @_ZN1CC1Ev(
+// CHECK: define unnamed_addr void @_ZN1CC1Ev(
 // CHECK: call void @_ZN1CC2Ev(
 
-// CHECK: define void @_ZN1CC2Ev(
+// CHECK: define unnamed_addr void @_ZN1CC2Ev(
 // CHECK: call void @_ZN2A1C1Ev(
 // CHECK: call void @_ZN2A2C1Ev(
 // CHECK: call void @_ZN1BC1ERK2A1RK2A2(

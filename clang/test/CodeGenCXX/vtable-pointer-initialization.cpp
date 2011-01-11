@@ -19,14 +19,14 @@ struct A : Base {
   Field field;
 };
 
-// CHECK: define void @_ZN1AC2Ev(
+// CHECK: define unnamed_addr void @_ZN1AC2Ev(
 // CHECK: call void @_ZN4BaseC2Ev(
 // CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1A, i64 0, i64 2)
 // CHECK: call void @_ZN5FieldC1Ev(
 // CHECK: ret void
 A::A() { }
 
-// CHECK: define void @_ZN1AD2Ev(
+// CHECK: define unnamed_addr void @_ZN1AD2Ev(
 // CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1A, i64 0, i64 2)
 // CHECK: call void @_ZN5FieldD1Ev(
 // CHECK: call void @_ZN4BaseD2Ev(
@@ -41,16 +41,16 @@ struct B : Base {
 
 void f() { B b; }
 
-// CHECK: define linkonce_odr void @_ZN1BC1Ev(
+// CHECK: define linkonce_odr unnamed_addr void @_ZN1BC1Ev(
 // CHECK: call void @_ZN1BC2Ev(
 
-// CHECK: define linkonce_odr void @_ZN1BD1Ev(
+// CHECK: define linkonce_odr unnamed_addr void @_ZN1BD1Ev(
 // CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1B, i64 0, i64 2)
 // CHECK: call void @_ZN5FieldD1Ev(
 // CHECK: call void @_ZN4BaseD2Ev(
 // CHECK: ret void
 
-// CHECK: define linkonce_odr void @_ZN1BC2Ev(
+// CHECK: define linkonce_odr unnamed_addr void @_ZN1BC2Ev(
 // CHECK: call void @_ZN4BaseC2Ev(
 // CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1B, i64 0, i64 2)
 // CHECK: call void @_ZN5FieldC1Ev

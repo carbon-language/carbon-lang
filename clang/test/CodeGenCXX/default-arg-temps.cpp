@@ -61,7 +61,7 @@ namespace test1 {
     C c;
     A a;
 
-    // CHECK: define linkonce_odr void @_ZN5test11DC2Ev(
+    // CHECK: define linkonce_odr unnamed_addr void @_ZN5test11DC2Ev(
     // CHECK:      call void @_ZN5test11BC1Ev(
     // CHECK-NEXT: call void @_ZN5test11CC1ERKNS_1BE(
     // CHECK-NEXT: call void @_ZN5test11BD1Ev(

@@ -44,7 +44,7 @@ namespace test1 {
     a.bar();
   }
 
-  // CHECK: define linkonce_odr [[A]]* @_ZN5test11AC1Ei([[A]]*
+  // CHECK: define linkonce_odr unnamed_addr [[A]]* @_ZN5test11AC1Ei([[A]]*
   // CHECK:   [[RET:%.*]] = alloca [[A]]*, align 4
   // CHECK:   [[THIS:%.*]] = alloca [[A]]*, align 4
   // CHECK:   store [[A]]* {{.*}}, [[A]]** [[THIS]]
@@ -54,7 +54,7 @@ namespace test1 {
   // CHECK:   [[THIS2:%.*]] = load [[A]]** [[RET]]
   // CHECK:   ret [[A]]* [[THIS2]]
 
-  // CHECK: define linkonce_odr [[A]]* @_ZN5test11AD1Ev([[A]]*
+  // CHECK: define linkonce_odr unnamed_addr [[A]]* @_ZN5test11AD1Ev([[A]]*
   // CHECK:   [[RET:%.*]] = alloca [[A]]*, align 4
   // CHECK:   [[THIS:%.*]] = alloca [[A]]*, align 4
   // CHECK:   store [[A]]* {{.*}}, [[A]]** [[THIS]]

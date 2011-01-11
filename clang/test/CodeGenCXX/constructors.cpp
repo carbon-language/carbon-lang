@@ -21,18 +21,18 @@ struct A {
 A::A(struct Undeclared &ref) : mem(0) {}
 
 // Check that delegation works.
-// CHECK: define void @_ZN1AC1ER10Undeclared(
+// CHECK: define unnamed_addr void @_ZN1AC1ER10Undeclared(
 // CHECK: call void @_ZN1AC2ER10Undeclared(
 
-// CHECK: define void @_ZN1AC2ER10Undeclared(
+// CHECK: define unnamed_addr void @_ZN1AC2ER10Undeclared(
 // CHECK: call void @_ZN6MemberC1Ei(
 
 A::A(ValueClass v) : mem(v.y - v.x) {}
 
-// CHECK: define void @_ZN1AC1E10ValueClass(
+// CHECK: define unnamed_addr void @_ZN1AC1E10ValueClass(
 // CHECK: call void @_ZN1AC2E10ValueClass(
 
-// CHECK: define void @_ZN1AC2E10ValueClass(
+// CHECK: define unnamed_addr void @_ZN1AC2E10ValueClass(
 // CHECK: call void @_ZN6MemberC1Ei(
 
 
@@ -44,10 +44,10 @@ struct B : A {
 
 B::B(struct Undeclared &ref) : A(ref), mem(1) {}
 
-// CHECK: define void @_ZN1BC1ER10Undeclared(
+// CHECK: define unnamed_addr void @_ZN1BC1ER10Undeclared(
 // CHECK: call void @_ZN1BC2ER10Undeclared(
 
-// CHECK: define void @_ZN1BC2ER10Undeclared(
+// CHECK: define unnamed_addr void @_ZN1BC2ER10Undeclared(
 // CHECK: call void @_ZN1AC2ER10Undeclared(
 // CHECK: call void @_ZN6MemberC1Ei(
 
@@ -64,12 +64,12 @@ struct C : virtual A {
 };
 C::C(int x) : A(ValueClass(x, x+1)), mem(x * x) {}
 
-// CHECK: define void @_ZN1CC1Ei(
+// CHECK: define unnamed_addr void @_ZN1CC1Ei(
 // CHECK: call void @_ZN10ValueClassC1Eii(
 // CHECK: call void @_ZN1AC2E10ValueClass(
 // CHECK: call void @_ZN6MemberC1Ei(
 
-// CHECK: define void @_ZN1CC2Ei(
+// CHECK: define unnamed_addr void @_ZN1CC2Ei(
 // CHECK: call void @_ZN6MemberC1Ei(
 
 
@@ -83,12 +83,12 @@ struct D : A {
 
 D::D(int x, ...) : A(ValueClass(x, x+1)), mem(x*x) {}
 
-// CHECK: define void @_ZN1DC1Eiz(
+// CHECK: define unnamed_addr void @_ZN1DC1Eiz(
 // CHECK: call void @_ZN10ValueClassC1Eii(
 // CHECK: call void @_ZN1AC2E10ValueClass(
 // CHECK: call void @_ZN6MemberC1Ei(
 
-// CHECK: define void @_ZN1DC2Eiz(
+// CHECK: define unnamed_addr void @_ZN1DC2Eiz(
 // CHECK: call void @_ZN10ValueClassC1Eii(
 // CHECK: call void @_ZN1AC2E10ValueClass(
 // CHECK: call void @_ZN6MemberC1Ei(

@@ -433,6 +433,9 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   if (D->hasAttr<NoInlineAttr>())
     F->addFnAttr(llvm::Attribute::NoInline);
 
+  if (isa<CXXConstructorDecl>(D) || isa<CXXDestructorDecl>(D))
+    F->setUnnamedAddr(true);
+
   if (Features.getStackProtectorMode() == LangOptions::SSPOn)
     F->addFnAttr(llvm::Attribute::StackProtect);
   else if (Features.getStackProtectorMode() == LangOptions::SSPReq)
