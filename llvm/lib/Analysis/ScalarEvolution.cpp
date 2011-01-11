@@ -2722,11 +2722,12 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                   HasNUW = true;
                 if (OBO->hasNoSignedWrap())
                   HasNSW = true;
-              } else if (isa<GEPOperator>(BEValueV)) {
+              } else if (const GEPOperator *GEP = 
+                            dyn_cast<GEPOperator>(BEValueV)) {
                 // If the increment is a GEP, then we know it won't perform an
                 // unsigned overflow, because the address space cannot be
                 // wrapped around.
-                HasNUW = true;
+                HasNUW |= GEP->isInBounds();
               }
 
               const SCEV *StartVal = getSCEV(StartValueV);
