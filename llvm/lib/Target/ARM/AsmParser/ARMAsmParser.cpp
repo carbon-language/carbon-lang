@@ -9,6 +9,7 @@
 
 #include "ARM.h"
 #include "ARMAddressingModes.h"
+#include "ARMBaseRegisterInfo.h"
 #include "ARMSubtarget.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"

@@ -13,6 +13,7 @@
 
 #include "ARMSubtarget.h"
 #include "ARMGenSubtarget.inc"
+#include "ARMBaseRegisterInfo.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
@@ -56,7 +57,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , AllowsUnalignedMem(false)
   , stackAlignment(4)
   , CPUString("generic")
-  , TargetType(isELF) // Default to ELF unless otherwise specified.
+  , TargetTriple(TT)
   , TargetABI(ARM_ABI_APCS) {
   // Default to soft float ABI
   if (FloatABIType == FloatABI::Default)
@@ -116,12 +117,6 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
         ARMArchFeature = "";
       }
     }
-  }
-
-  if (Len >= 10) {
-    if (TT.find("-darwin") != std::string::npos)
-      // arm-darwin
-      TargetType = isDarwin;
   }
 
   if (TT.find("eabi") != std::string::npos)

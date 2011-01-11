@@ -17,7 +17,7 @@
 #include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSubtarget.h"
-#include "ARMBaseRegisterInfo.h"
+#include "llvm/ADT/Triple.h"
 #include <string>
 
 namespace llvm {
@@ -126,6 +126,9 @@ protected:
   /// CPUString - String name of used CPU.
   std::string CPUString;
 
+  /// TargetTriple - What processor and OS we're targeting.
+  Triple TargetTriple;
+
   /// Selected instruction itineraries (one entry per itinerary class.)
   InstrItineraryData InstrItins;
 
@@ -187,8 +190,8 @@ protected:
   bool hasFP16() const { return HasFP16; }
   bool hasD16() const { return HasD16; }
 
-  bool isTargetDarwin() const { return TargetType == isDarwin; }
-  bool isTargetELF() const { return TargetType == isELF; }
+  bool isTargetDarwin() const { return TargetTriple.getOS() == Triple::Darwin; }
+  bool isTargetELF() const { return !isTargetDarwin(); }
 
   bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
   bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
