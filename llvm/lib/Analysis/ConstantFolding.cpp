@@ -1047,6 +1047,14 @@ llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::smul_with_overflow:
   case Intrinsic::convert_from_fp16:
   case Intrinsic::convert_to_fp16:
+  case Intrinsic::x86_sse_cvtss2si:
+  case Intrinsic::x86_sse_cvtss2si64:
+  case Intrinsic::x86_sse_cvttss2si:
+  case Intrinsic::x86_sse_cvttss2si64:
+  case Intrinsic::x86_sse2_cvtsd2si:
+  case Intrinsic::x86_sse2_cvtsd2si64:
+  case Intrinsic::x86_sse2_cvttsd2si:
+  case Intrinsic::x86_sse2_cvttsd2si64:
     return true;
   default:
     return false;
@@ -1114,6 +1122,36 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
     return ConstantFP::get(Ty->getContext(), APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
+}
+
+/// ConstantFoldConvertToInt - Attempt to an SSE floating point to integer
+/// conversion of a constant floating point. If roundTowardZero is false, the
+/// default IEEE rounding is used (toward nearest, ties to even). This matches
+/// the behavior of the non-truncating SSE instructions in the default rounding
+/// mode. The desired integer type Ty is used to select how many bits are
+/// available for the result. Returns null if the conversion cannot be
+/// performed, otherwise returns the Constant value resulting from the
+/// conversion.
+static Constant *ConstantFoldConvertToInt(ConstantFP *Op, bool roundTowardZero,
+                                          const Type *Ty) {
+  assert(Op && "Called with NULL operand");
+  APFloat Val(Op->getValueAPF());
+
+  // All of these conversion intrinsics form an integer of at most 64bits.
+  unsigned ResultWidth = cast<IntegerType>(Ty)->getBitWidth();
+  assert(ResultWidth <= 64 &&
+         "Can only constant fold conversions to 64 and 32 bit ints");
+
+  uint64_t UIntVal;
+  bool isExact = false;
+  APFloat::roundingMode mode = roundTowardZero? APFloat::rmTowardZero
+                                              : APFloat::rmNearestTiesToEven;
+  APFloat::opStatus status = Val.convertToInteger(&UIntVal, ResultWidth,
+                                                  /*isSigned=*/true, mode,
+                                                  &isExact);
+  if (status != APFloat::opOK && status != APFloat::opInexact)
+    return 0;
+  return ConstantInt::get(Ty, UIntVal, /*isSigned=*/true);
 }
 
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
@@ -1243,6 +1281,24 @@ llvm::ConstantFoldCall(Function *F,
       }
       default:
         return 0;
+      }
+    }
+
+    if (ConstantVector *Op = dyn_cast<ConstantVector>(Operands[0])) {
+      switch (F->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::x86_sse_cvtss2si:
+      case Intrinsic::x86_sse_cvtss2si64:
+      case Intrinsic::x86_sse2_cvtsd2si:
+      case Intrinsic::x86_sse2_cvtsd2si64:
+        if (ConstantFP *FPOp = dyn_cast<ConstantFP>(Op->getOperand(0)))
+          return ConstantFoldConvertToInt(FPOp, /*roundTowardZero=*/false, Ty);
+      case Intrinsic::x86_sse_cvttss2si:
+      case Intrinsic::x86_sse_cvttss2si64:
+      case Intrinsic::x86_sse2_cvttsd2si:
+      case Intrinsic::x86_sse2_cvttsd2si64:
+        if (ConstantFP *FPOp = dyn_cast<ConstantFP>(Op->getOperand(0)))
+          return ConstantFoldConvertToInt(FPOp, /*roundTowardZero=*/true, Ty);
       }
     }
 
