@@ -262,7 +262,7 @@ private:
 };
 
 template <>
-struct OperandTraits<StoreInst> : public FixedNumOperandTraits<2> {
+struct OperandTraits<StoreInst> : public FixedNumOperandTraits<StoreInst, 2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(StoreInst, Value)
@@ -524,7 +524,8 @@ public:
 };
 
 template <>
-struct OperandTraits<GetElementPtrInst> : public VariadicOperandTraits<1> {
+struct OperandTraits<GetElementPtrInst> :
+  public VariadicOperandTraits<GetElementPtrInst, 1> {
 };
 
 template<typename RandomAccessIterator>
@@ -1087,7 +1088,7 @@ private:
 };
 
 template <>
-struct OperandTraits<CallInst> : public VariadicOperandTraits<1> {
+struct OperandTraits<CallInst> : public VariadicOperandTraits<CallInst, 1> {
 };
 
 template<typename RandomAccessIterator>
@@ -1195,7 +1196,7 @@ public:
 };
 
 template <>
-struct OperandTraits<SelectInst> : public FixedNumOperandTraits<3> {
+struct OperandTraits<SelectInst> : public FixedNumOperandTraits<SelectInst, 3> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SelectInst, Value)
@@ -1292,7 +1293,8 @@ public:
 };
 
 template <>
-struct OperandTraits<ExtractElementInst> : public FixedNumOperandTraits<2> {
+struct OperandTraits<ExtractElementInst> :
+  public FixedNumOperandTraits<ExtractElementInst, 2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractElementInst, Value)
@@ -1350,7 +1352,8 @@ public:
 };
 
 template <>
-struct OperandTraits<InsertElementInst> : public FixedNumOperandTraits<3> {
+struct OperandTraits<InsertElementInst> :
+  public FixedNumOperandTraits<InsertElementInst, 3> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertElementInst, Value)
@@ -1407,7 +1410,8 @@ public:
 };
 
 template <>
-struct OperandTraits<ShuffleVectorInst> : public FixedNumOperandTraits<3> {
+struct OperandTraits<ShuffleVectorInst> :
+  public FixedNumOperandTraits<ShuffleVectorInst, 3> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ShuffleVectorInst, Value)
@@ -1751,7 +1755,8 @@ public:
 };
 
 template <>
-struct OperandTraits<InsertValueInst> : public FixedNumOperandTraits<2> {
+struct OperandTraits<InsertValueInst> :
+  public FixedNumOperandTraits<InsertValueInst, 2> {
 };
 
 template<typename RandomAccessIterator>
@@ -2032,7 +2037,7 @@ public:
 };
 
 template <>
-struct OperandTraits<ReturnInst> : public VariadicOperandTraits<> {
+struct OperandTraits<ReturnInst> : public VariadicOperandTraits<ReturnInst> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ReturnInst, Value)
@@ -2125,7 +2130,8 @@ private:
 };
 
 template <>
-struct OperandTraits<BranchInst> : public VariadicOperandTraits<1> {};
+struct OperandTraits<BranchInst> : public VariadicOperandTraits<BranchInst, 1> {
+};
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BranchInst, Value)
 
@@ -2616,7 +2622,7 @@ private:
 };
 
 template <>
-struct OperandTraits<InvokeInst> : public VariadicOperandTraits<3> {
+struct OperandTraits<InvokeInst> : public VariadicOperandTraits<InvokeInst, 3> {
 };
 
 template<typename RandomAccessIterator>

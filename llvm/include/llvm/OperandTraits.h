@@ -27,12 +27,12 @@ namespace llvm {
 /// when it is a prefix to the User object, and the number of Use objects is
 /// known at compile time.
 
-template <unsigned ARITY>
+template <typename SubClass, unsigned ARITY>
 struct FixedNumOperandTraits {
-  static Use *op_begin(User* U) {
+  static Use *op_begin(SubClass* U) {
     return reinterpret_cast<Use*>(U) - ARITY;
   }
-  static Use *op_end(User* U) {
+  static Use *op_end(SubClass* U) {
     return reinterpret_cast<Use*>(U);
   }
   static unsigned operands(const User*) {
@@ -57,8 +57,8 @@ struct FixedNumOperandTraits {
 /// OptionalOperandTraits - when the number of operands may change at runtime.
 /// Naturally it may only decrease, because the allocations may not change.
 
-template <unsigned ARITY = 1>
-struct OptionalOperandTraits : public FixedNumOperandTraits<ARITY> {
+template <typename SubClass, unsigned ARITY = 1>
+struct OptionalOperandTraits : public FixedNumOperandTraits<SubClass, ARITY> {
   static unsigned operands(const User *U) {
     return U->getNumOperands();
   }
@@ -72,12 +72,12 @@ struct OptionalOperandTraits : public FixedNumOperandTraits<ARITY> {
 /// when it is a prefix to the User object, and the number of Use objects is
 /// only known at allocation time.
 
-template <unsigned MINARITY = 0>
+template <typename SubClass, unsigned MINARITY = 0>
 struct VariadicOperandTraits {
-  static Use *op_begin(User* U) {
-    return reinterpret_cast<Use*>(U) - U->getNumOperands();
+  static Use *op_begin(SubClass* U) {
+    return reinterpret_cast<Use*>(U) - static_cast<User*>(U)->getNumOperands();
   }
-  static Use *op_end(User* U) {
+  static Use *op_end(SubClass* U) {
     return reinterpret_cast<Use*>(U);
   }
   static unsigned operands(const User *U) {
