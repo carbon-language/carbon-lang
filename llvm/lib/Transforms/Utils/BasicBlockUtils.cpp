@@ -169,8 +169,8 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
     if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>()) {
       if (DomTreeNode *DTN = DT->getNode(BB)) {
         DomTreeNode *PredDTN = DT->getNode(PredBB);
-        SmallPtrSet<DomTreeNode*, 8> Children(DTN->begin(), DTN->end());
-        for (SmallPtrSet<DomTreeNode*, 8>::iterator DI = Children.begin(),
+        SmallVector<DomTreeNode*, 8> Children(DTN->begin(), DTN->end());
+        for (SmallVector<DomTreeNode*, 8>::iterator DI = Children.begin(),
              DE = Children.end(); DI != DE; ++DI)
           DT->changeImmediateDominator(*DI, PredDTN);
 
