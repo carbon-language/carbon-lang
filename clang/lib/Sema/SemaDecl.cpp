@@ -2997,10 +2997,24 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
     llvm::StringRef Label = SE->getString();
-    if (S->getFnParent() != 0 &&
-        !Context.Target.isValidGCCRegisterName(Label))
-      Diag(E->getExprLoc(), diag::err_asm_unknown_register_name) << Label;
-    NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0), 
+    if (S->getFnParent() != 0) {
+      switch (SC) {
+      case SC_None:
+      case SC_Auto:
+        Diag(E->getExprLoc(), diag::warn_asm_label_on_auto_decl) << Label;
+        break;
+      case SC_Register:
+        if (!Context.Target.isValidGCCRegisterName(Label))
+          Diag(E->getExprLoc(), diag::err_asm_unknown_register_name) << Label;
+        break;
+      case SC_Static:
+      case SC_Extern:
+      case SC_PrivateExtern:
+        break;
+      }
+    }
+
+    NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0),
                                                 Context, Label));
   }
 

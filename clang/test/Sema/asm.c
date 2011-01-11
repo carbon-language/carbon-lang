@@ -92,6 +92,16 @@ void test9(int i) {
   asm("" : [foo] "=r" (i), "=r"(i) : "[foo]1"(i)); // expected-error{{invalid input constraint '[foo]1' in asm}}
 }
 
+register int g asm("dx"); // expected-error{{global register variables are not supported}}
+
 void test10(void){
-        register unsigned long long bar asm("foo"); // expected-error {{unknown register name 'foo' in asm}}
+  static int g asm ("g_asm") = 0;
+  extern int gg asm ("gg_asm");
+  __private_extern__ int ggg asm ("ggg_asm");
+
+  int a asm ("a_asm"); // expected-warning{{ignored asm label 'a_asm' on automatic variable}}
+  auto int aa asm ("aa_asm"); // expected-warning{{ignored asm label 'aa_asm' on automatic variable}}
+
+  register int r asm ("cx");
+  register int rr asm ("rr_asm"); // expected-error{{unknown register name 'rr_asm' in asm}}
 }

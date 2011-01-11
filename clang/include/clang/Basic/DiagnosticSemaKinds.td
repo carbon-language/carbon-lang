@@ -3029,6 +3029,8 @@ let CategoryName = "Inline Assembly Issue" in {
   def err_asm_tying_incompatible_types : Error<
     "unsupported inline asm: input with type %0 matching output with type %1">;
   def err_asm_unknown_register_name : Error<"unknown register name '%0' in asm">;
+  def warn_asm_label_on_auto_decl : Warning<
+    "ignored asm label '%0' on automatic variable">;
   def err_invalid_asm_cast_lvalue : Error<
     "invalid use of a cast in a inline asm context requiring an l-value: "
     "remove the cast or build with -fheinous-gnu-extensions">;
