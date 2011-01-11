@@ -39,6 +39,6 @@ entry:
 !13 = metadata !{i32 7, i32 0, metadata !14, null}
 !14 = metadata !{i32 524299, metadata !8, i32 6, i32 0} ; [ DW_TAG_lexical_block ]
 
-;CHECK:	        DEBUG_VALUE: bar:x <- EBX+0
-;CHECK-NEXT:Ltmp
-;CHECK-NEXT:	DEBUG_VALUE: foo:y <- 1+0
+;CHECK: DEBUG_VALUE: bar:x <- E
+;CHECK: Ltmp
+;CHECK:	DEBUG_VALUE: foo:y <- 1+0
