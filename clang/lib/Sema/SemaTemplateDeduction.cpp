@@ -80,7 +80,7 @@ static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S,
                         TemplateParameterList *TemplateParams,
                         const TemplateArgument &Param,
-                        const TemplateArgument &Arg,
+                        TemplateArgument Arg,
                         TemplateDeductionInfo &Info,
                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced);
 
@@ -677,6 +677,13 @@ DeduceTemplateArguments(Sema &S,
       if (ArgIdx >= NumArgs)
         return Sema::TDK_NonDeducedMismatch;
           
+      if (isa<PackExpansionType>(Args[ArgIdx])) {
+        // C++0x [temp.deduct.type]p22:
+        //   If the original function parameter associated with A is a function
+        //   parameter pack and the function parameter associated with P is not
+        //   a function parameter pack, then template argument deduction fails.
+        return Sema::TDK_NonDeducedMismatch;
+      }
       
       if (Sema::TemplateDeductionResult Result
             = DeduceTemplateArguments(S, TemplateParams,
@@ -814,6 +821,12 @@ DeduceTemplateArguments(Sema &S,
   QualType Param = S.Context.getCanonicalType(ParamIn);
   QualType Arg = S.Context.getCanonicalType(ArgIn);
 
+  // If the argument type is a pack expansion, look at its pattern.
+  // This isn't explicitly called out 
+  if (const PackExpansionType *ArgExpansion
+                                            = dyn_cast<PackExpansionType>(Arg))
+    Arg = ArgExpansion->getPattern();
+      
   if (PartialOrdering) {
     // C++0x [temp.deduct.partial]p5:
     //   Before the partial ordering is done, certain transformations are 
@@ -1273,9 +1286,15 @@ static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S,
                         TemplateParameterList *TemplateParams,
                         const TemplateArgument &Param,
-                        const TemplateArgument &Arg,
+                        TemplateArgument Arg,
                         TemplateDeductionInfo &Info,
                     llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
+  // If the template argument is a pack expansion, perform template argument
+  // deduction against the pattern of that expansion. This only occurs during
+  // partial ordering.
+  if (Arg.isPackExpansion())
+    Arg = Arg.getPackExpansionPattern();
+  
   switch (Param.getKind()) {
   case TemplateArgument::Null:
     assert(false && "Null template argument in parameter list");
@@ -1448,11 +1467,17 @@ DeduceTemplateArguments(Sema &S,
         return NumberOfArgumentsMustMatch? Sema::TDK_NonDeducedMismatch
                                          : Sema::TDK_Success;
       
+      if (Args[ArgIdx].isPackExpansion()) {
+        // FIXME: We follow the logic of C++0x [temp.deduct.type]p22 here,
+        // but applied to pack expansions that are template arguments.
+        return Sema::TDK_NonDeducedMismatch;
+      }
+      
       // Perform deduction for this Pi/Ai pair.
       if (Sema::TemplateDeductionResult Result
-          = DeduceTemplateArguments(S, TemplateParams,
-                                    Params[ParamIdx], Args[ArgIdx],
-                                    Info, Deduced))
+            = DeduceTemplateArguments(S, TemplateParams,
+                                      Params[ParamIdx], Args[ArgIdx],
+                                      Info, Deduced))
         return Result;  
       
       // Move to the next argument.
@@ -1792,7 +1817,7 @@ FinishTemplateArgumentDeduction(Sema &S,
       return Sema::TDK_SubstitutionFailure;
     }
   }
-  
+    
   // Form the template argument list from the deduced template arguments.
   TemplateArgumentList *DeducedArgumentList
     = TemplateArgumentList::CreateCopy(S.Context, Builder.data(), 

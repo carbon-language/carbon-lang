@@ -2327,6 +2327,12 @@ bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
         if (Out.isInvalid())
           return true;
 
+        if (Out.get()->containsUnexpandedParameterPack()) {
+          Out = RebuildPackExpansion(Out.get(), Expansion->getEllipsisLoc());
+          if (Out.isInvalid())
+            return true;
+        }
+        
         if (ArgChanged)
           *ArgChanged = true;  
         Outputs.push_back(Out.get());
@@ -2847,6 +2853,12 @@ bool TreeTransform<Derived>::TransformTemplateArguments(InputIterator First,
         if (getDerived().TransformTemplateArgument(Pattern, Out))
           return true;
         
+        if (Out.getArgument().containsUnexpandedParameterPack()) {
+          Out = getDerived().RebuildPackExpansion(Out, Ellipsis);
+          if (Out.getArgument().isNull())
+            return true;
+        }
+          
         Outputs.addArgument(Out);
       }
       
