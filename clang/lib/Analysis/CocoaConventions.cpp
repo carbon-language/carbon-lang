@@ -54,7 +54,8 @@ static const char* parseWord(const char* s) {
   return s;
 }
 
-cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S) {
+cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S,
+                                                      bool ignorePrefix) {
   IdentifierInfo *II = S.getIdentifierInfoForSlot(0);
 
   if (!II)
@@ -62,6 +63,7 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S) {
 
   const char *s = II->getNameStart();
 
+  const char *orig = s;
   // A method/function name may contain a prefix.  We don't know it is there,
   // however, until we encounter the first '_'.
   while (*s != '\0') {
@@ -72,6 +74,9 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S) {
     }
     break;
   }
+
+  if (!ignorePrefix && s != orig)
+    return NoConvention;
 
   // Parse the first word, and look for specific keywords.
   const char *wordEnd = parseWord(s);
