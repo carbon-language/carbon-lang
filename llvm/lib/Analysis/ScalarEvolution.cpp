@@ -1560,14 +1560,10 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
       AddRecOps[0] = getAddExpr(LIOps);
 
       // Build the new addrec. Propagate the NUW and NSW flags if both the
-      // outer add and the inner addrec are guaranteed to have no overflow or if
-      // there is no outer part.
-      if (Ops.size() != 1) {
-        HasNUW &= AddRec->hasNoUnsignedWrap();
-        HasNSW &= AddRec->hasNoSignedWrap();
-      }
-      
-      const SCEV *NewRec = getAddRecExpr(AddRecOps, AddRecLoop, HasNUW, HasNSW);
+      // outer add and the inner addrec are guaranteed to have no overflow.
+      const SCEV *NewRec = getAddRecExpr(AddRecOps, AddRecLoop,
+                                         HasNUW && AddRec->hasNoUnsignedWrap(),
+                                         HasNSW && AddRec->hasNoSignedWrap());
 
       // If all of the other operands were loop invariant, we are done.
       if (Ops.size() == 1) return NewRec;
