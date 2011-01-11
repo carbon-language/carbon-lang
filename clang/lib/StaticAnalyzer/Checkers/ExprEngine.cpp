@@ -384,7 +384,7 @@ const GRState* ExprEngine::getInitialState(const LocationContext *InitLoc) {
 
 /// evalAssume - Called by ConstraintManager. Used to call checker-specific
 ///  logic for handling assumptions on symbolic values.
-const GRState *ExprEngine::ProcessAssume(const GRState *state, SVal cond,
+const GRState *ExprEngine::processAssume(const GRState *state, SVal cond,
                                            bool assumption) {
   // Determine if we already have a cached 'CheckersOrdered' vector
   // specifically tailored for processing assumptions.  This
@@ -392,7 +392,7 @@ const GRState *ExprEngine::ProcessAssume(const GRState *state, SVal cond,
   CheckersOrdered *CO = &Checkers;
   llvm::OwningPtr<CheckersOrdered> NewCO;
 
-  CallbackTag K = GetCallbackTag(ProcessAssumeCallback);
+  CallbackTag K = GetCallbackTag(processAssumeCallback);
   CheckersOrdered *& CO_Ref = COCache[K];
 
   if (!CO_Ref) {
@@ -439,7 +439,7 @@ const GRState *ExprEngine::ProcessAssume(const GRState *state, SVal cond,
   return TF->evalAssume(state, cond, assumption);
 }
 
-bool ExprEngine::WantsRegionChangeUpdate(const GRState* state) {
+bool ExprEngine::wantsRegionChangeUpdate(const GRState* state) {
   CallbackTag K = GetCallbackTag(EvalRegionChangesCallback);
   CheckersOrdered *CO = COCache[K];
 
@@ -448,7 +448,7 @@ bool ExprEngine::WantsRegionChangeUpdate(const GRState* state) {
 
   for (CheckersOrdered::iterator I = CO->begin(), E = CO->end(); I != E; ++I) {
     Checker *C = I->second;
-    if (C->WantsRegionChangeUpdate(state))
+    if (C->wantsRegionChangeUpdate(state))
       return true;
   }
 
@@ -456,10 +456,10 @@ bool ExprEngine::WantsRegionChangeUpdate(const GRState* state) {
 }
 
 const GRState *
-ExprEngine::ProcessRegionChanges(const GRState *state,
+ExprEngine::processRegionChanges(const GRState *state,
                                    const MemRegion * const *Begin,
                                    const MemRegion * const *End) {
-  // FIXME: Most of this method is copy-pasted from ProcessAssume.
+  // FIXME: Most of this method is copy-pasted from processAssume.
 
   // Determine if we already have a cached 'CheckersOrdered' vector
   // specifically tailored for processing region changes.  This
@@ -508,14 +508,14 @@ ExprEngine::ProcessRegionChanges(const GRState *state,
   return state;
 }
 
-void ExprEngine::ProcessEndWorklist(bool hasWorkRemaining) {
+void ExprEngine::processEndWorklist(bool hasWorkRemaining) {
   for (CheckersOrdered::iterator I = Checkers.begin(), E = Checkers.end();
        I != E; ++I) {
     I->second->VisitEndAnalysis(G, BR, *this);
   }
 }
 
-void ExprEngine::ProcessElement(const CFGElement E, 
+void ExprEngine::processCFGElement(const CFGElement E, 
                                   StmtNodeBuilder& builder) {
   switch (E.getKind()) {
   case CFGElement::Statement:
@@ -1077,7 +1077,7 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
 // Block entrance.  (Update counters).
 //===----------------------------------------------------------------------===//
 
-bool ExprEngine::ProcessBlockEntrance(const CFGBlock* B, 
+bool ExprEngine::processCFGBlockEntrance(const CFGBlock* B, 
                                         const ExplodedNode *Pred,
                                         BlockCounter BC) {
   return BC.getNumVisited(Pred->getLocationContext()->getCurrentStackFrame(), 
@@ -1195,7 +1195,7 @@ static SVal RecoverCastedSymbol(GRStateManager& StateMgr, const GRState* state,
   return state->getSVal(Ex);
 }
 
-void ExprEngine::ProcessBranch(const Stmt* Condition, const Stmt* Term,
+void ExprEngine::processBranch(const Stmt* Condition, const Stmt* Term,
                                  BranchNodeBuilder& builder) {
 
   // Check for NULL conditions; e.g. "for(;;)"
@@ -1265,9 +1265,9 @@ void ExprEngine::ProcessBranch(const Stmt* Condition, const Stmt* Term,
   }
 }
 
-/// ProcessIndirectGoto - Called by CoreEngine.  Used to generate successor
+/// processIndirectGoto - Called by CoreEngine.  Used to generate successor
 ///  nodes by processing the 'effects' of a computed goto jump.
-void ExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
+void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder& builder) {
 
   const GRState *state = builder.getState();
   SVal V = state->getSVal(builder.getTarget());
@@ -1333,7 +1333,7 @@ void ExprEngine::VisitGuardedExpr(const Expr* Ex, const Expr* L,
 
 /// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
 ///  nodes when the control reaches the end of a function.
-void ExprEngine::ProcessEndPath(EndPathNodeBuilder& builder) {
+void ExprEngine::processEndOfFunction(EndOfFunctionNodeBuilder& builder) {
   getTF().evalEndPath(*this, builder);
   StateMgr.EndPath(builder.getState());
   for (CheckersOrdered::iterator I=Checkers.begin(),E=Checkers.end(); I!=E;++I){
@@ -1345,7 +1345,7 @@ void ExprEngine::ProcessEndPath(EndPathNodeBuilder& builder) {
 
 /// ProcessSwitch - Called by CoreEngine.  Used to generate successor
 ///  nodes by processing the 'effects' of a switch statement.
-void ExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
+void ExprEngine::processSwitch(SwitchNodeBuilder& builder) {
   typedef SwitchNodeBuilder::iterator iterator;
   const GRState* state = builder.getState();
   const Expr* CondE = builder.getCondition();
@@ -1454,12 +1454,12 @@ void ExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   builder.generateDefaultCaseNode(DefaultSt);
 }
 
-void ExprEngine::ProcessCallEnter(CallEnterNodeBuilder &B) {
+void ExprEngine::processCallEnter(CallEnterNodeBuilder &B) {
   const GRState *state = B.getState()->EnterStackFrame(B.getCalleeContext());
   B.generateNode(state);
 }
 
-void ExprEngine::ProcessCallExit(CallExitNodeBuilder &B) {
+void ExprEngine::processCallExit(CallExitNodeBuilder &B) {
   const GRState *state = B.getState();
   const ExplodedNode *Pred = B.getPredecessor();
   const StackFrameContext *calleeCtx = 
@@ -3064,7 +3064,7 @@ void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
   ExplodedNodeSet Src;
   if (const Expr *RetE = RS->getRetValue()) {
     // Record the returned expression in the state. It will be used in
-    // ProcessCallExit to bind the return value to the call expr.
+    // processCallExit to bind the return value to the call expr.
     {
       static int Tag = 0;
       SaveAndRestore<const void *> OldTag(Builder->Tag, &Tag);

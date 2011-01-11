@@ -34,7 +34,7 @@ public:
   void PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS);
   void MarkLiveSymbols(const GRState *state, SymbolReaper &SR);
   void evalDeadSymbols(CheckerContext &C, SymbolReaper &SR);
-  bool WantsRegionChangeUpdate(const GRState *state);
+  bool wantsRegionChangeUpdate(const GRState *state);
 
   const GRState *EvalRegionChanges(const GRState *state,
                                    const MemRegion * const *Begin,
@@ -957,7 +957,7 @@ void CStringChecker::PreVisitDeclStmt(CheckerContext &C, const DeclStmt *DS) {
   C.addTransition(state);
 }
 
-bool CStringChecker::WantsRegionChangeUpdate(const GRState *state) {
+bool CStringChecker::wantsRegionChangeUpdate(const GRState *state) {
   CStringLength::EntryMap Entries = state->get<CStringLength>();
   return !Entries.isEmpty();
 }

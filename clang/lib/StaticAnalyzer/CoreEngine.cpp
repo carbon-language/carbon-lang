@@ -243,7 +243,7 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
     }
   }
 
-  SubEng.ProcessEndWorklist(hasWorkRemaining());
+  SubEng.processEndWorklist(hasWorkRemaining());
   return WList->hasWork();
 }
 
@@ -262,12 +262,12 @@ void CoreEngine::HandleCallEnter(const CallEnter &L, const CFGBlock *Block,
                                    unsigned Index, ExplodedNode *Pred) {
   CallEnterNodeBuilder Builder(*this, Pred, L.getCallExpr(), 
                                  L.getCalleeContext(), Block, Index);
-  ProcessCallEnter(Builder);
+  processCallEnter(Builder);
 }
 
 void CoreEngine::HandleCallExit(const CallExit &L, ExplodedNode *Pred) {
   CallExitNodeBuilder Builder(*this, Pred);
-  ProcessCallExit(Builder);
+  processCallExit(Builder);
 }
 
 void CoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
@@ -281,16 +281,16 @@ void CoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
             && "EXIT block cannot contain Stmts.");
 
     // Process the final state transition.
-    EndPathNodeBuilder Builder(Blk, Pred, this);
-    ProcessEndPath(Builder);
+    EndOfFunctionNodeBuilder Builder(Blk, Pred, this);
+    processEndOfFunction(Builder);
 
     // This path is done. Don't enqueue any more nodes.
     return;
   }
 
-  // FIXME: Should we allow ProcessBlockEntrance to also manipulate state?
+  // FIXME: Should we allow processCFGBlockEntrance to also manipulate state?
 
-  if (ProcessBlockEntrance(Blk, Pred, WList->getBlockCounter()))
+  if (processCFGBlockEntrance(Blk, Pred, WList->getBlockCounter()))
     generateNode(BlockEntrance(Blk, Pred->getLocationContext()),
                  Pred->State, Pred);
   else {
@@ -312,7 +312,7 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance& L,
   if (CFGElement E = L.getFirstElement()) {
     StmtNodeBuilder Builder(L.getBlock(), 0, Pred, this,
                               SubEng.getStateManager());
-    ProcessElement(E, Builder);
+    processCFGElement(E, Builder);
   }
   else
     HandleBlockExit(L.getBlock(), Pred);
@@ -366,7 +366,7 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode* Pred) {
            builder(Pred, B, cast<IndirectGotoStmt>(Term)->getTarget(),
                    *(B->succ_begin()), this);
 
-        ProcessIndirectGoto(builder);
+        processIndirectGoto(builder);
         return;
       }
 
@@ -389,7 +389,7 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode* Pred) {
         SwitchNodeBuilder builder(Pred, B, cast<SwitchStmt>(Term)->getCond(),
                                     this);
 
-        ProcessSwitch(builder);
+        processSwitch(builder);
         return;
       }
 
@@ -413,7 +413,7 @@ void CoreEngine::HandleBranch(const Stmt* Cond, const Stmt* Term,
   BranchNodeBuilder Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),
                               Pred, this);
 
-  ProcessBranch(Cond, Term, Builder);
+  processBranch(Cond, Term, Builder);
 }
 
 void CoreEngine::HandlePostStmt(const CFGBlock* B, unsigned StmtIdx, 
@@ -425,7 +425,7 @@ void CoreEngine::HandlePostStmt(const CFGBlock* B, unsigned StmtIdx,
   else {
     StmtNodeBuilder Builder(B, StmtIdx, Pred, this,
                               SubEng.getStateManager());
-    ProcessElement((*B)[StmtIdx], Builder);
+    processCFGElement((*B)[StmtIdx], Builder);
   }
 }
 
@@ -669,7 +669,7 @@ SwitchNodeBuilder::generateDefaultCaseNode(const GRState* St, bool isSink) {
   return NULL;
 }
 
-EndPathNodeBuilder::~EndPathNodeBuilder() {
+EndOfFunctionNodeBuilder::~EndOfFunctionNodeBuilder() {
   // Auto-generate an EOP node if one has not been generated.
   if (!HasGeneratedNode) {
     // If we are in an inlined call, generate CallExit node.
@@ -681,7 +681,7 @@ EndPathNodeBuilder::~EndPathNodeBuilder() {
 }
 
 ExplodedNode*
-EndPathNodeBuilder::generateNode(const GRState* State, const void *tag,
+EndOfFunctionNodeBuilder::generateNode(const GRState* State, const void *tag,
                                    ExplodedNode* P) {
   HasGeneratedNode = true;
   bool IsNew;
@@ -699,7 +699,7 @@ EndPathNodeBuilder::generateNode(const GRState* State, const void *tag,
   return NULL;
 }
 
-void EndPathNodeBuilder::GenerateCallExitNode(const GRState *state) {
+void EndOfFunctionNodeBuilder::GenerateCallExitNode(const GRState *state) {
   HasGeneratedNode = true;
   // Create a CallExit node and enqueue it.
   const StackFrameContext *LocCtx

@@ -25,7 +25,7 @@ class ObjCMessageExpr;
 namespace ento {
 class ExplodedNode;
 class ExplodedNodeSet;
-class EndPathNodeBuilder;
+class EndOfFunctionNodeBuilder;
 class ExprEngine;
 class StmtNodeBuilder;
 class StmtNodeBuilderRef;
@@ -61,7 +61,7 @@ public:
   // End-of-path and dead symbol notification.
 
   virtual void evalEndPath(ExprEngine& Engine,
-                           EndPathNodeBuilder& Builder) {}
+                           EndOfFunctionNodeBuilder& Builder) {}
 
 
   virtual void evalDeadSymbols(ExplodedNodeSet& Dst,

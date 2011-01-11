@@ -264,7 +264,7 @@ public:
   virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
                             SVal location, SVal val) {}
   virtual void evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper) {}
-  virtual void evalEndPath(EndPathNodeBuilder &B, void *tag,
+  virtual void evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
                            ExprEngine &Eng) {}
 
   virtual void MarkLiveSymbols(const GRState *state, SymbolReaper &SymReaper) {}
@@ -287,7 +287,7 @@ public:
     return state;
   }
 
-  virtual bool WantsRegionChangeUpdate(const GRState *state) { return false; }
+  virtual bool wantsRegionChangeUpdate(const GRState *state) { return false; }
 
   virtual const GRState *EvalRegionChanges(const GRState *state,
                                            const MemRegion * const *Begin,

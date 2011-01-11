@@ -40,7 +40,7 @@ class CoreEngine {
   friend class BranchNodeBuilder;
   friend class IndirectGotoNodeBuilder;
   friend class SwitchNodeBuilder;
-  friend class EndPathNodeBuilder;
+  friend class EndOfFunctionNodeBuilder;
   friend class CallEnterNodeBuilder;
   friend class CallExitNodeBuilder;
 
@@ -87,41 +87,41 @@ private:
     return SubEng.getInitialState(InitLoc);
   }
 
-  void ProcessEndPath(EndPathNodeBuilder& Builder) {
-    SubEng.ProcessEndPath(Builder);
+  void processEndOfFunction(EndOfFunctionNodeBuilder& Builder) {
+    SubEng.processEndOfFunction(Builder);
   }
 
-  void ProcessElement(const CFGElement E, StmtNodeBuilder& Builder) {
-    SubEng.ProcessElement(E, Builder);
+  void processCFGElement(const CFGElement E, StmtNodeBuilder& Builder) {
+    SubEng.processCFGElement(E, Builder);
   }
 
-  bool ProcessBlockEntrance(const CFGBlock* Blk, const ExplodedNode *Pred,
+  bool processCFGBlockEntrance(const CFGBlock* Blk, const ExplodedNode *Pred,
                             BlockCounter BC) {
-    return SubEng.ProcessBlockEntrance(Blk, Pred, BC);
+    return SubEng.processCFGBlockEntrance(Blk, Pred, BC);
   }
 
 
-  void ProcessBranch(const Stmt* Condition, const Stmt* Terminator,
+  void processBranch(const Stmt* Condition, const Stmt* Terminator,
                      BranchNodeBuilder& Builder) {
-    SubEng.ProcessBranch(Condition, Terminator, Builder);
+    SubEng.processBranch(Condition, Terminator, Builder);
   }
 
 
-  void ProcessIndirectGoto(IndirectGotoNodeBuilder& Builder) {
-    SubEng.ProcessIndirectGoto(Builder);
+  void processIndirectGoto(IndirectGotoNodeBuilder& Builder) {
+    SubEng.processIndirectGoto(Builder);
   }
 
 
-  void ProcessSwitch(SwitchNodeBuilder& Builder) {
-    SubEng.ProcessSwitch(Builder);
+  void processSwitch(SwitchNodeBuilder& Builder) {
+    SubEng.processSwitch(Builder);
   }
 
-  void ProcessCallEnter(CallEnterNodeBuilder &Builder) {
-    SubEng.ProcessCallEnter(Builder);
+  void processCallEnter(CallEnterNodeBuilder &Builder) {
+    SubEng.processCallEnter(Builder);
   }
 
-  void ProcessCallExit(CallExitNodeBuilder &Builder) {
-    SubEng.ProcessCallExit(Builder);
+  void processCallExit(CallExitNodeBuilder &Builder) {
+    SubEng.processCallExit(Builder);
   }
 
 private:
@@ -439,7 +439,7 @@ public:
   const GRState* getState() const { return Pred->State; }
 };
 
-class EndPathNodeBuilder {
+class EndOfFunctionNodeBuilder {
   CoreEngine &Eng;
   const CFGBlock& B;
   ExplodedNode* Pred;
@@ -448,10 +448,10 @@ public:
   bool HasGeneratedNode;
 
 public:
-  EndPathNodeBuilder(const CFGBlock* b, ExplodedNode* N, CoreEngine* e)
+  EndOfFunctionNodeBuilder(const CFGBlock* b, ExplodedNode* N, CoreEngine* e)
     : Eng(*e), B(*b), Pred(N), HasGeneratedNode(false) {}
 
-  ~EndPathNodeBuilder();
+  ~EndOfFunctionNodeBuilder();
 
   WorkList &getWorkList() { return *Eng.WList; }
 

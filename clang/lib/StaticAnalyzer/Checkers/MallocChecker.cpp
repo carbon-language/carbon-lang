@@ -78,7 +78,7 @@ public:
   static void *getTag();
   bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
   void evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper);
-  void evalEndPath(EndPathNodeBuilder &B, void *tag, ExprEngine &Eng);
+  void evalEndPath(EndOfFunctionNodeBuilder &B, void *tag, ExprEngine &Eng);
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
   const GRState *evalAssume(const GRState *state, SVal Cond, bool Assumption,
                             bool *respondsToCallback);
@@ -593,7 +593,7 @@ void MallocChecker::evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper)
   C.generateNode(state->set<RegionState>(RS));
 }
 
-void MallocChecker::evalEndPath(EndPathNodeBuilder &B, void *tag,
+void MallocChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
                                 ExprEngine &Eng) {
   SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();

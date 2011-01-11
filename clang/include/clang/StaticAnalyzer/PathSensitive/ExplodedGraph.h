@@ -54,7 +54,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
   friend class BranchNodeBuilder;
   friend class IndirectGotoNodeBuilder;
   friend class SwitchNodeBuilder;
-  friend class EndPathNodeBuilder;
+  friend class EndOfFunctionNodeBuilder;
 
   class NodeGroup {
     enum { Size1 = 0x0, SizeOther = 0x1, AuxFlag = 0x2, Mask = 0x3 };

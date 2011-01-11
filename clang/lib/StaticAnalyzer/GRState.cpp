@@ -95,7 +95,7 @@ const GRState *GRState::bindLoc(Loc LV, SVal V) const {
 
   const MemRegion *MR = LV.getAsRegion();
   if (MR)
-    return Mgr.getOwningEngine().ProcessRegionChange(new_state, MR);
+    return Mgr.getOwningEngine().processRegionChange(new_state, MR);
 
   return new_state;
 }
@@ -105,7 +105,7 @@ const GRState *GRState::bindDefault(SVal loc, SVal V) const {
   const MemRegion *R = cast<loc::MemRegionVal>(loc).getRegion();
   Store new_store = Mgr.StoreMgr->BindDefault(St, R, V);
   const GRState *new_state = makeWithStore(new_store);
-  return Mgr.getOwningEngine().ProcessRegionChange(new_state, R);
+  return Mgr.getOwningEngine().processRegionChange(new_state, R);
 }
 
 const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
@@ -116,7 +116,7 @@ const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
   GRStateManager &Mgr = getStateManager();
   SubEngine &Eng = Mgr.getOwningEngine();
 
-  if (Eng.WantsRegionChangeUpdate(this)) {
+  if (Eng.wantsRegionChangeUpdate(this)) {
     StoreManager::InvalidatedRegions Regions;
 
     Store new_store = Mgr.StoreMgr->InvalidateRegions(St, Begin, End,
@@ -125,7 +125,7 @@ const GRState *GRState::InvalidateRegions(const MemRegion * const *Begin,
                                                       &Regions);
     const GRState *new_state = makeWithStore(new_store);
 
-    return Eng.ProcessRegionChanges(new_state,
+    return Eng.processRegionChanges(new_state,
                                     &Regions.front(),
                                     &Regions.back()+1);
   }

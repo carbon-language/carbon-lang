@@ -75,7 +75,7 @@ public:
 
   virtual bool evalCallExpr(CheckerContext &C, const CallExpr *CE);
   void evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper);
-  void evalEndPath(EndPathNodeBuilder &B, void *tag, ExprEngine &Eng);
+  void evalEndPath(EndOfFunctionNodeBuilder &B, void *tag, ExprEngine &Eng);
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
 
 private:
@@ -421,7 +421,7 @@ void StreamChecker::evalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
   }
 }
 
-void StreamChecker::evalEndPath(EndPathNodeBuilder &B, void *tag,
+void StreamChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
                                 ExprEngine &Eng) {
   SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();

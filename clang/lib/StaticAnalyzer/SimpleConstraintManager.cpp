@@ -69,7 +69,7 @@ const GRState *SimpleConstraintManager::assume(const GRState *state,
 const GRState *SimpleConstraintManager::assume(const GRState *state, Loc cond,
                                                bool assumption) {
   state = assumeAux(state, cond, assumption);
-  return SU.ProcessAssume(state, cond, assumption);
+  return SU.processAssume(state, cond, assumption);
 }
 
 const GRState *SimpleConstraintManager::assumeAux(const GRState *state,
@@ -118,7 +118,7 @@ const GRState *SimpleConstraintManager::assume(const GRState *state,
                                                NonLoc cond,
                                                bool assumption) {
   state = assumeAux(state, cond, assumption);
-  return SU.ProcessAssume(state, cond, assumption);
+  return SU.processAssume(state, cond, assumption);
 }
 
 static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {

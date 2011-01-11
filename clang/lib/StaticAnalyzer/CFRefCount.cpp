@@ -95,13 +95,13 @@ class GenericNodeBuilder {
   StmtNodeBuilder *SNB;
   const Stmt *S;
   const void *tag;
-  EndPathNodeBuilder *ENB;
+  EndOfFunctionNodeBuilder *ENB;
 public:
   GenericNodeBuilder(StmtNodeBuilder &snb, const Stmt *s,
                      const void *t)
   : SNB(&snb), S(s), tag(t), ENB(0) {}
 
-  GenericNodeBuilder(EndPathNodeBuilder &enb)
+  GenericNodeBuilder(EndOfFunctionNodeBuilder &enb)
   : SNB(0), S(0), tag(0), ENB(&enb) {}
 
   ExplodedNode *MakeNode(const GRState *state, ExplodedNode *Pred) {
@@ -1718,7 +1718,7 @@ public:
   // End-of-path.
 
   virtual void evalEndPath(ExprEngine& Engine,
-                           EndPathNodeBuilder& Builder);
+                           EndOfFunctionNodeBuilder& Builder);
 
   virtual void evalDeadSymbols(ExplodedNodeSet& Dst,
                                ExprEngine& Engine,
@@ -3250,7 +3250,7 @@ CFRefCount::ProcessLeaks(const GRState * state,
 }
 
 void CFRefCount::evalEndPath(ExprEngine& Eng,
-                             EndPathNodeBuilder& Builder) {
+                             EndOfFunctionNodeBuilder& Builder) {
 
   const GRState *state = Builder.getState();
   GenericNodeBuilder Bd(Builder);

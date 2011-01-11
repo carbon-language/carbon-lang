@@ -33,7 +33,7 @@ public:
     return &x;
   }
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *RS);
-  void evalEndPath(EndPathNodeBuilder &B, void *tag, ExprEngine &Eng);
+  void evalEndPath(EndOfFunctionNodeBuilder &B, void *tag, ExprEngine &Eng);
 private:
   void EmitStackError(CheckerContext &C, const MemRegion *R, const Expr *RetE);
   SourceRange GenName(llvm::raw_ostream &os, const MemRegion *R,
@@ -130,7 +130,7 @@ void StackAddrLeakChecker::PreVisitReturnStmt(CheckerContext &C,
   }
 }
 
-void StackAddrLeakChecker::evalEndPath(EndPathNodeBuilder &B, void *tag,
+void StackAddrLeakChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
                                        ExprEngine &Eng) {
   SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
