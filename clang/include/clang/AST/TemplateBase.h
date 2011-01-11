@@ -191,6 +191,12 @@ public:
       getAsIntegral()->~APSInt();
   }
 
+  /// \brief Create a new template argument pack by copying the given set of
+  /// template arguments.
+  static TemplateArgument CreatePackCopy(ASTContext &Context,
+                                         const TemplateArgument *Args,
+                                         unsigned NumArgs);
+  
   /// \brief Return the kind of stored template argument.
   ArgKind getKind() const { return (ArgKind)Kind; }
 

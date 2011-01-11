@@ -585,13 +585,13 @@ FinishArgumentPackDeduction(Sema &S,
       NewPack = DeducedTemplateArgument(TemplateArgument(0, 0));
     } else {
       TemplateArgument *ArgumentPack
-      = new (S.Context) TemplateArgument [NewlyDeducedPacks[I].size()];
+        = new (S.Context) TemplateArgument [NewlyDeducedPacks[I].size()];
       std::copy(NewlyDeducedPacks[I].begin(), NewlyDeducedPacks[I].end(),
                 ArgumentPack);
       NewPack
-      = DeducedTemplateArgument(TemplateArgument(ArgumentPack,
-                                                 NewlyDeducedPacks[I].size()),
-                                NewlyDeducedPacks[I][0].wasDeducedFromArrayBound());        
+        = DeducedTemplateArgument(TemplateArgument(ArgumentPack,
+                                                   NewlyDeducedPacks[I].size()),
+                            NewlyDeducedPacks[I][0].wasDeducedFromArrayBound());        
     }
     
     DeducedTemplateArgument Result
@@ -1726,12 +1726,9 @@ static bool ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
     }
     
     // Create the resulting argument pack.
-    TemplateArgument *PackedArgs = 0;
-    if (!PackedArgsBuilder.empty()) {
-      PackedArgs = new (S.Context) TemplateArgument[PackedArgsBuilder.size()];
-      std::copy(PackedArgsBuilder.begin(), PackedArgsBuilder.end(), PackedArgs);
-    }
-    Output.push_back(TemplateArgument(PackedArgs, PackedArgsBuilder.size()));
+    Output.push_back(TemplateArgument::CreatePackCopy(S.Context, 
+                                                      PackedArgsBuilder.data(),
+                                                     PackedArgsBuilder.size()));
     return false;
   }
   

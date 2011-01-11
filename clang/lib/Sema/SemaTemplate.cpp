@@ -2556,13 +2556,12 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     if ((*Param)->isTemplateParameterPack()) {     
       if (PartialTemplateArgs && ArgumentPack.empty()) {
         Converted.push_back(TemplateArgument());
-      } else if (ArgumentPack.empty()) {
+      } else if (ArgumentPack.empty())
         Converted.push_back(TemplateArgument(0, 0));
-      } else {
-        TemplateArgument *PackedArgs
-          = new (Context) TemplateArgument [ArgumentPack.size()];
-        std::copy(ArgumentPack.begin(), ArgumentPack.end(), PackedArgs);
-        Converted.push_back(TemplateArgument(PackedArgs, ArgumentPack.size()));
+      else {
+        Converted.push_back(TemplateArgument::CreatePackCopy(Context, 
+                                                          ArgumentPack.data(), 
+                                                         ArgumentPack.size()));
         ArgumentPack.clear();
       }
     }

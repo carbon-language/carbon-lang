@@ -21,12 +21,24 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/FoldingSet.h"
+#include <algorithm>
 
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
 // TemplateArgument Implementation
 //===----------------------------------------------------------------------===//
+
+TemplateArgument TemplateArgument::CreatePackCopy(ASTContext &Context,
+                                                  const TemplateArgument *Args,
+                                                  unsigned NumArgs) {
+  if (NumArgs == 0)
+    return TemplateArgument(0, 0);
+  
+  TemplateArgument *Storage = new (Context) TemplateArgument [NumArgs];
+  std::copy(Args, Args + NumArgs, Storage);
+  return TemplateArgument(Storage, NumArgs);
+}
 
 bool TemplateArgument::isDependent() const {
   switch (getKind()) {

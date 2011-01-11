@@ -338,11 +338,8 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
       Arg = TemplateArgument(TemplateName(TTP), TTP->isParameterPack());
     }
     
-    if ((*Param)->isTemplateParameterPack()) {
-      TemplateArgument *Pack = new (Context) TemplateArgument [1];
-      *Pack = Arg;
-      Arg = TemplateArgument(Pack, 1);
-    }
+    if ((*Param)->isTemplateParameterPack())
+      Arg = TemplateArgument::CreatePackCopy(Context, &Arg, 1);
     
     TemplateArgs.push_back(Arg);
   }
