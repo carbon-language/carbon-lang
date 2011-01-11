@@ -112,3 +112,16 @@ void foo(void)
   A *im = [A create:(void (*)(void *cgl_ctx, X r, void *data)) fun
              callbackData:ptr];
 }
+
+// <rdar://problem/8807070>
+template<typename T> struct X1; // expected-note{{template is declared here}}
+
+@interface B
++ (X1<int>)blah;
++ (X1<float>&)blarg;
+@end
+
+void f() {
+  [B blah]; // expected-error{{implicit instantiation of undefined template 'X1<int>'}}
+  [B blarg];
+}

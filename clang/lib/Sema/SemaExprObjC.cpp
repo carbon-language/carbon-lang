@@ -840,6 +840,11 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                 LBracLoc, RBracLoc, ReturnType, VK))
     return ExprError();
 
+  if (Method && !Method->getResultType()->isVoidType() &&
+      RequireCompleteType(LBracLoc, Method->getResultType(), 
+                          diag::err_illegal_message_expr_incomplete_type))
+    return ExprError();
+
   // Construct the appropriate ObjCMessageExpr.
   Expr *Result;
   if (SuperLoc.isValid())
@@ -1105,11 +1110,10 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                 LBracLoc, RBracLoc, ReturnType, VK))
     return ExprError();
   
-  if (!ReturnType->isVoidType()) {
-    if (RequireCompleteType(LBracLoc, ReturnType, 
-                            diag::err_illegal_message_expr_incomplete_type))
-      return ExprError();
-  }
+  if (Method && !Method->getResultType()->isVoidType() &&
+      RequireCompleteType(LBracLoc, Method->getResultType(), 
+                          diag::err_illegal_message_expr_incomplete_type))
+    return ExprError();
 
   // Construct the appropriate ObjCMessageExpr instance.
   Expr *Result;
