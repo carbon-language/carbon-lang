@@ -156,6 +156,12 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   // to reference locals.
   if (RegInfo->hasBasePointer(MF))
     BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr), BasePtr).addReg(ARM::SP);
+    
+  // If the frame has variable sized objects then the epilogue must restore
+  // the sp from fp. We can assume there's an FP here since hasFP already
+  // checks for hasVarSizedObjects.
+  if (MFI->hasVarSizedObjects())
+    AFI->setShouldRestoreSPFromFP(true);
 }
 
 static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
@@ -221,7 +227,8 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
     if (AFI->shouldRestoreSPFromFP()) {
       NumBytes = AFI->getFramePtrSpillOffset() - NumBytes;
       // Reset SP based on frame pointer only if the stack frame extends beyond
-      // frame pointer stack slot or target is ELF and the function has FP.
+      // frame pointer stack slot, the target is ELF and the function has FP, or
+      // the target uses var sized objects.
       if (NumBytes) {
         assert(MF.getRegInfo().isPhysRegUsed(ARM::R4) &&
                "No scratch register to restore SP from FP!");
