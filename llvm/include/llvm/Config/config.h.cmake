@@ -6,11 +6,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-/* Define if dlopen(0) will open the symbols of the program */
-#undef CAN_DLOPEN_SELF
-
 /* Define if CBE is enabled for printf %a output */
-#undef ENABLE_CBE_PRINTF_A
+#cmakedefine ENABLE_CBE_PRINTF_A ${ENABLE_CBE_PRINTF_A}
 
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR "${CLANG_RESOURCE_DIR}"
@@ -32,6 +29,9 @@
 
 /* Define if position independent code is enabled */
 #cmakedefine ENABLE_PIC
+
+/* Define if timestamp information (e.g., __DATE___) is allowed */
+#cmakedefine ENABLE_TIMESTAMPS ${ENABLE_TIMESTAMPS}
 
 /* Define if threads enabled */
 #cmakedefine ENABLE_THREADS ${ENABLE_THREADS}
@@ -76,7 +76,7 @@
 #undef HAVE_CLOSEDIR
 
 /* Define to 1 if you have the <ctype.h> header file. */
-#undef HAVE_CTYPE_H
+#cmakedefine HAVE_CTYPE_H ${HAVE_CTYPE_H}
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
@@ -130,6 +130,9 @@
 /* Define to 1 if you have the `floorf' function. */
 #cmakedefine HAVE_FLOORF ${HAVE_FLOORF}
 
+/* Define to 1 if you have the `fmodf' function. */
+#cmakedefine HAVE_FMODF ${HAVE_FMODF}
+
 /* Does not have forward iterator */
 #undef HAVE_FWD_ITERATOR
 
@@ -170,7 +173,7 @@
 #undef HAVE_INDEX
 
 /* Define to 1 if the system has the type `int64_t'. */
-#undef HAVE_INT64_T
+#cmakedefine HAVE_INT64_T ${HAVE_INT64_T}
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #cmakedefine HAVE_INTTYPES_H ${HAVE_INTTYPES_H}
@@ -450,7 +453,7 @@
 #cmakedefine HAVE_TWOPI ${HAVE_TWOPI}
 
 /* Define to 1 if the system has the type `uint64_t'. */
-#undef HAVE_UINT64_T
+#cmakedefine HAVE_UINT64_T ${HAVE_UINT64_T}
 
 /* Define to 1 if you have the <termios.h> header file. */
 #cmakedefine HAVE_TERMIOS_H ${HAVE_TERMIOS_H}
@@ -462,7 +465,7 @@
 #cmakedefine HAVE_UTIME_H ${HAVE_UTIME_H}
 
 /* Define to 1 if the system has the type `u_int64_t'. */
-#undef HAVE_U_INT64_T
+#cmakedefine HAVE_U_INT64_T ${HAVE_U_INT64_T}
 
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #cmakedefine HAVE_VALGRIND_VALGRIND_H ${HAVE_VALGRIND_VALGRIND_H}

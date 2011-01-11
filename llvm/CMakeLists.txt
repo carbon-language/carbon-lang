@@ -104,6 +104,16 @@ endif( MSVC )
 set(CLANG_RESOURCE_DIR "" CACHE STRING
   "Relative directory from the Clang binary to its resource files.")
 
+option(LLVM_ENABLE_CBE_PRINTF_A "Set to ON if CBE is enabled for printf %a output" ON)
+if(LLVM_ENABLE_CBE_PRINTF_A)
+  set(ENABLE_CBE_PRINTF_A 1)
+endif()
+
+option(LLVM_ENABLE_TIMESTAMPS "Enable embedding timestamp information in build" ON)
+if(LLVM_ENABLE_TIMESTAMPS)
+  set(ENABLE_TIMESTAMPS 1)
+endif()
+
 set(C_INCLUDE_DIRS "" CACHE STRING
   "Colon separated list of directories clang will search for headers.")
 

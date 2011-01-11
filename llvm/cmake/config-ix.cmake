@@ -31,6 +31,7 @@ endfunction()
 # include checks
 check_include_file(argz.h HAVE_ARGZ_H)
 check_include_file(assert.h HAVE_ASSERT_H)
+check_include_file(ctype.h HAVE_CTYPE_H)
 check_include_file(dirent.h HAVE_DIRENT_H)
 check_include_file(dl.h HAVE_DL_H)
 check_include_file(dld.h HAVE_DLD_H)
@@ -92,6 +93,7 @@ check_symbol_exists(isnan cmath HAVE_ISNAN_IN_CMATH)
 check_symbol_exists(isnan math.h HAVE_ISNAN_IN_MATH_H)
 check_symbol_exists(ceilf math.h HAVE_CEILF)
 check_symbol_exists(floorf math.h HAVE_FLOORF)
+check_symbol_exists(fmodf math.h HAVE_FMODF)
 check_symbol_exists(nearbyintf math.h HAVE_NEARBYINTF)
 check_symbol_exists(mallinfo malloc.h HAVE_MALLINFO)
 check_symbol_exists(malloc_zone_statistics malloc/malloc.h
@@ -135,6 +137,7 @@ if (HAVE_STDINT_H)
   set(headers ${headers} "stdint.h")
 endif()
 
+check_type_exists(int64_t "${headers}" HAVE_INT64_T)
 check_type_exists(uint64_t "${headers}" HAVE_UINT64_T)
 check_type_exists(u_int64_t "${headers}" HAVE_U_INT64_T)
 
