@@ -1741,8 +1741,8 @@ bool GVN::runOnFunction(Function& F) {
   // Merge unconditional branches, allowing PRE to catch more
   // optimization opportunities.
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ) {
-    BasicBlock *BB = FI;
-    ++FI;
+    BasicBlock *BB = FI++;
+    
     bool removedBlock = MergeBlockIntoPredecessor(BB, this);
     if (removedBlock) ++NumGVNBlocks;
 
