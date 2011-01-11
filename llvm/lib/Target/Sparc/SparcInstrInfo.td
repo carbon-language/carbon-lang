@@ -233,36 +233,39 @@ let Predicates = [HasNoV9] in {  // Only emit these in V8 mode.
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
 // instruction selection into a branch sequence.  This has to handle all
 // permutations of selection between i32/f32/f64 on ICC and FCC.
-let Uses = [ICC],
-    usesCustomInserter = 1 in {   // Expanded after instruction selection.
+  // Expanded after instruction selection.
+let Uses = [ICC], usesCustomInserter = 1 in { 
   def SELECT_CC_Int_ICC
    : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, i32imm:$Cond),
             "; SELECT_CC_Int_ICC PSEUDO!",
             [(set IntRegs:$dst, (SPselecticc IntRegs:$T, IntRegs:$F,
                                              imm:$Cond))]>;
-  def SELECT_CC_Int_FCC
-   : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, i32imm:$Cond),
-            "; SELECT_CC_Int_FCC PSEUDO!",
-            [(set IntRegs:$dst, (SPselectfcc IntRegs:$T, IntRegs:$F,
-                                             imm:$Cond))]>;
-}
-
-let usesCustomInserter = 1, Uses = [FCC] in {
   def SELECT_CC_FP_ICC
    : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_FP_ICC PSEUDO!",
             [(set FPRegs:$dst, (SPselecticc FPRegs:$T, FPRegs:$F,
                                             imm:$Cond))]>;
-  def SELECT_CC_FP_FCC
-   : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, i32imm:$Cond),
-            "; SELECT_CC_FP_FCC PSEUDO!",
-            [(set FPRegs:$dst, (SPselectfcc FPRegs:$T, FPRegs:$F,
-                                            imm:$Cond))]>;
+
   def SELECT_CC_DFP_ICC
    : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_DFP_ICC PSEUDO!",
             [(set DFPRegs:$dst, (SPselecticc DFPRegs:$T, DFPRegs:$F,
                                              imm:$Cond))]>;
+}
+
+let usesCustomInserter = 1, Uses = [FCC] in {
+
+  def SELECT_CC_Int_FCC
+   : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_Int_FCC PSEUDO!",
+            [(set IntRegs:$dst, (SPselectfcc IntRegs:$T, IntRegs:$F,
+                                             imm:$Cond))]>;
+
+  def SELECT_CC_FP_FCC
+   : Pseudo<(outs FPRegs:$dst), (ins FPRegs:$T, FPRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_FP_FCC PSEUDO!",
+            [(set FPRegs:$dst, (SPselectfcc FPRegs:$T, FPRegs:$F,
+                                            imm:$Cond))]>;
   def SELECT_CC_DFP_FCC
    : Pseudo<(outs DFPRegs:$dst), (ins DFPRegs:$T, DFPRegs:$F, i32imm:$Cond),
             "; SELECT_CC_DFP_FCC PSEUDO!",
@@ -440,7 +443,8 @@ def LEA_ADDri   : F3_2<2, 0b000000,
 let Defs = [ICC] in                   
   defm ADDCC  : F3_12<"addcc", 0b010000, addc>;
 
-defm ADDX  : F3_12<"addx", 0b001000, adde>;
+let Uses = [ICC] in
+  defm ADDX  : F3_12<"addx", 0b001000, adde>;
 
 // Section B.15 - Subtract Instructions, p. 110
 defm SUB    : F3_12  <"sub"  , 0b000100, sub>;
