@@ -924,3 +924,5 @@ data16 // CHECK: data16 # encoding: [0x66]
 // PR8855
 movq 18446744073709551615,%rbx   // CHECK: movq	-1, %rbx
 
+// PR8946
+movdqu	%xmm0, %xmm1 // CHECK: movdqu	%xmm0, %xmm1 # encoding: [0xf3,0x0f,0x6f,0xc8]
