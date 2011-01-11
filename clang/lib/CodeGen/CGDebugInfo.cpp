@@ -1740,7 +1740,36 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     
   llvm::StringRef Name = VD->getName();
   if (!Name.empty()) {
-    // Create the descriptor for the variable.
+    if (VD->hasAttr<BlocksAttr>()) {
+      CharUnits offset = CharUnits::fromQuantity(32);
+      llvm::SmallVector<llvm::Value *, 9> addr;
+      const llvm::Type *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
+      addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
+      // offset of __forwarding field
+      offset = 
+        CharUnits::fromQuantity(CGM.getContext().Target.getPointerWidth(0)/8);
+      addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
+      addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpDeref));
+      addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIFactory::OpPlus));
+      // offset of x field
+      offset = CharUnits::fromQuantity(XOffset/8);
+      addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
+
+      // Create the descriptor for the variable.
+      llvm::DIVariable D =
+        DBuilder.CreateComplexVariable(Tag, 
+                                       llvm::DIDescriptor(RegionStack.back()),
+                                       VD->getName(), Unit, Line, Ty,
+                                       addr.data(), addr.size());
+      
+      // Insert an llvm.dbg.declare into the current block.
+      llvm::Instruction *Call =
+        DBuilder.InsertDeclare(Storage, D, Builder.GetInsertBlock());
+      
+      Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
+      return;
+    } 
+      // Create the descriptor for the variable.
     llvm::DIVariable D =
       DBuilder.CreateLocalVariable(Tag, llvm::DIDescriptor(Scope), 
                                    Name, Unit, Line, Ty, 
