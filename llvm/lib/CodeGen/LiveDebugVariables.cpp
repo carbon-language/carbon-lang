@@ -587,6 +587,13 @@ findInsertLocation(MachineBasicBlock *MBB, SlotIndex Idx, DebugLoc &DL,
   SlotIndex Start = LIS.getMBBStartIdx(MBB);
   Idx = Idx.getBaseIndex();
 
+  // Don't insert anything after the first terminator.
+  MachineBasicBlock::iterator Term = MBB->getFirstTerminator();
+  if (Term != MBB->end() && Idx >= LIS.getInstructionIndex(Term)) {
+    DL = Term->getDebugLoc();
+    return Term;
+  }
+
   // Try to find an insert location by going backwards from Idx.
   MachineInstr *MI;
   while (!(MI = LIS.getInstructionFromIndex(Idx))) {
