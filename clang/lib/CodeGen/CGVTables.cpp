@@ -2979,8 +2979,11 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(Int8PtrTy, getNumVTableComponents(RD));
 
-  return GetGlobalVariable(CGM.getModule(), Name, ArrayType, 
-                           llvm::GlobalValue::ExternalLinkage);
+  llvm::GlobalVariable *GV =
+    GetGlobalVariable(CGM.getModule(), Name, ArrayType,
+                      llvm::GlobalValue::ExternalLinkage);
+  GV->setUnnamedAddr(true);
+  return GV;
 }
 
 void

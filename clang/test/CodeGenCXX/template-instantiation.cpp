@@ -2,7 +2,7 @@
 
 // CHECK-NOT: @_ZTVN5test118stdio_sync_filebufIwEE = constant
 // CHECK-NOT: _ZTVN5test315basic_fstreamXXIcEE
-// CHECK: @_ZTVN5test018stdio_sync_filebufIwEE = constant
+// CHECK: @_ZTVN5test018stdio_sync_filebufIwEE = unnamed_addr constant
 
 // CHECK-NOT: _ZTVN5test31SIiEE
 // CHECK-NOT: _ZTSN5test31SIiEE
