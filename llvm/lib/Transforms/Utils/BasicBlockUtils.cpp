@@ -179,6 +179,10 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
       
       if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>())
         LI->removeBlock(BB);
+      
+      if (MemoryDependenceAnalysis *MD =
+            P->getAnalysisIfAvailable<MemoryDependenceAnalysis>())
+        MD->invalidateCachedPredecessors();
     }
   }
   
