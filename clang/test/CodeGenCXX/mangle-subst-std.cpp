@@ -6,11 +6,11 @@
 // CHECK: @_ZTVSd = weak_odr unnamed_addr constant 
 // CHECK: @_ZTCSd0_Si = internal constant 
 // CHECK: @_ZTCSd16_So = internal constant
-// CHECK: @_ZTTSd = weak_odr constant
+// CHECK: @_ZTTSd = weak_odr unnamed_addr constant
 // CHECK: @_ZTVSo = weak_odr unnamed_addr constant
-// CHECK: @_ZTTSo = weak_odr constant
+// CHECK: @_ZTTSo = weak_odr unnamed_addr constant
 // CHECK: @_ZTVSi = weak_odr unnamed_addr constant
-// CHECK: @_ZTTSi = weak_odr constant
+// CHECK: @_ZTTSi = weak_odr unnamed_addr constant
 namespace std {
   struct A { A(); };
   

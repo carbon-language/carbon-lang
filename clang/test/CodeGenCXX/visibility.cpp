@@ -26,7 +26,7 @@
 // CHECK: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr global i64
 // CHECK-HIDDEN: @_ZZN6Test193fooIiEEvvE1a = linkonce_odr hidden global
 // CHECK-HIDDEN: @_ZGVZN6Test193fooIiEEvvE1a = linkonce_odr hidden global i64
-// CHECK-HIDDEN: @_ZTTN6Test161AIcEE = external constant
+// CHECK-HIDDEN: @_ZTTN6Test161AIcEE = external unnamed_addr constant
 // CHECK-HIDDEN: @_ZTVN6Test161AIcEE = external unnamed_addr constant
 // CHECK: @_ZTVN5Test63fooE = weak_odr hidden unnamed_addr constant 
 
