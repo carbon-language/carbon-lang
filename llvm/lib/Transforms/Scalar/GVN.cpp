@@ -1383,8 +1383,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   }
 
   if (!CanDoPRE) {
-    while (!NewInsts.empty())
-      NewInsts.pop_back_val()->eraseFromParent();
+    while (!NewInsts.empty()) {
+      Instruction *I = NewInsts.pop_back_val();
+      if (MD) MD->removeInstruction(I);
+      I->eraseFromParent();
+    }
     return false;
   }
 
