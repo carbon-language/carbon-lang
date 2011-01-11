@@ -16,6 +16,7 @@
 //
 // The process of unrolling can produce extraneous basic blocks linked with
 // unconditional branches.  This will be corrected in the future.
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "loop-unroll"
@@ -30,12 +31,11 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
-
 using namespace llvm;
 
 // TODO: Should these be here or in LoopUnroll?
 STATISTIC(NumCompletelyUnrolled, "Number of loops completely unrolled");
-STATISTIC(NumUnrolled,    "Number of loops unrolled (completely or otherwise)");
+STATISTIC(NumUnrolled, "Number of loops unrolled (completely or otherwise)");
 
 /// RemapInstruction - Convert the instruction operands from referencing the
 /// current values into those specified by VMap.

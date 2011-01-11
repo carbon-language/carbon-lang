@@ -123,7 +123,6 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls) {
 }
 
 bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
-  
   LoopInfo *LI = &getAnalysis<LoopInfo>();
 
   BasicBlock *Header = L->getHeader();
