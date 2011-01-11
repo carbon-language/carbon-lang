@@ -428,18 +428,19 @@ public:
   }
 };
 
-template <typename PP>
+template <typename PP_T>
 class GenericNodeBuilder : public GenericNodeBuilderImpl {
 public:
-  GenericNodeBuilder(CoreEngine &eng, ExplodedNode *pr, const PP &p)
+  GenericNodeBuilder(CoreEngine &eng, ExplodedNode *pr, const PP_T &p)
     : GenericNodeBuilderImpl(eng, pr, p) {}
 
   ExplodedNode *generateNode(const GRState *state, ExplodedNode *pred,
-                             PP programPoint, bool asSink) {
-    return generateNodeImpl(state, pred, programPoint, asSink);
+                             const void *tag, bool asSink) {
+    return generateNodeImpl(state, pred, cast<PP_T>(pp).withTag(tag),
+                            asSink);
   }
   
-  const PP &getProgramPoint() const { return cast<PP>(pp); }
+  const PP_T &getProgramPoint() const { return cast<PP_T>(pp); }
 };
 
 class EndOfFunctionNodeBuilder {

@@ -119,6 +119,12 @@ public:
     return B->empty() ? CFGElement() : B->front();
   }
   
+  /// Create a new BlockEntrance object that is the same as the original
+  /// except for using the specified tag value.
+  BlockEntrance withTag(const void *tag) {
+    return BlockEntrance(getBlock(), getLocationContext(), tag);
+  }
+  
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == BlockEntranceKind;
   }

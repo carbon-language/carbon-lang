@@ -1089,9 +1089,7 @@ void ExprEngine::processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
                        block->getBlockID()) >= AMgr.getMaxVisit()) {
 
     static int tag = 0;
-    const BlockEntrance &BE = nodeBuilder.getProgramPoint();
-    BlockEntrance BE_tagged(BE.getBlock(), BE.getLocationContext(), &tag);
-    nodeBuilder.generateNode(pred->getState(), pred, BE_tagged, true);
+    nodeBuilder.generateNode(pred->getState(), pred, &tag, true);
   }
 }
 
