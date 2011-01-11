@@ -615,7 +615,6 @@ def VTOUIZS : AVConv1InsS_Encode<0b11101, 0b11, 0b1100, 0b1010,
 }
 
 // And the Z bit '0' variants, i.e. use the rounding mode specified by FPSCR.
-// For disassembly only.
 let Uses = [FPSCR] in {
 // FIXME: Verify encoding after integrated assembler is working.
 def VTOSIRD : AVConv1IsD_Encode<0b11101, 0b11, 0b1101, 0b1011,
