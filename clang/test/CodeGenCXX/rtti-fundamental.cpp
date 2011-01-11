@@ -15,102 +15,102 @@ namespace __cxxabiv1 {
 }
 
 // void
-// CHECK: @_ZTIv = constant
-// CHECK: @_ZTIPv = constant
-// CHECK: @_ZTIPKv = constant
+// CHECK: @_ZTIv = unnamed_addr constant
+// CHECK: @_ZTIPv = unnamed_addr constant
+// CHECK: @_ZTIPKv = unnamed_addr constant
 
 // std::nullptr_t
-// CHECK: @_ZTIDn = constant
-// CHECK: @_ZTIPDn = constant
-// CHECK: @_ZTIPKDn = constant
+// CHECK: @_ZTIDn = unnamed_addr constant
+// CHECK: @_ZTIPDn = unnamed_addr constant
+// CHECK: @_ZTIPKDn = unnamed_addr constant
 
 // bool
-// CHECK: @_ZTIb = constant
-// CHECK: @_ZTIPb = constant
-// CHECK: @_ZTIPKb = constant
+// CHECK: @_ZTIb = unnamed_addr constant
+// CHECK: @_ZTIPb = unnamed_addr constant
+// CHECK: @_ZTIPKb = unnamed_addr constant
 
 // wchar_t
-// CHECK: @_ZTIw = constant
-// CHECK: @_ZTIPw = constant
-// CHECK: @_ZTIPKw = constant
+// CHECK: @_ZTIw = unnamed_addr constant
+// CHECK: @_ZTIPw = unnamed_addr constant
+// CHECK: @_ZTIPKw = unnamed_addr constant
 
 // char
-// CHECK: @_ZTIc = constant
-// CHECK: @_ZTIPc = constant
-// CHECK: @_ZTIPKc = constant
+// CHECK: @_ZTIc = unnamed_addr constant
+// CHECK: @_ZTIPc = unnamed_addr constant
+// CHECK: @_ZTIPKc = unnamed_addr constant
 
 // unsigned char
-// CHECK: @_ZTIh = constant
-// CHECK: @_ZTIPh = constant
-// CHECK: @_ZTIPKh = constant
+// CHECK: @_ZTIh = unnamed_addr constant
+// CHECK: @_ZTIPh = unnamed_addr constant
+// CHECK: @_ZTIPKh = unnamed_addr constant
 
 // signed char
-// CHECK: @_ZTIa = constant
-// CHECK: @_ZTIPa = constant
-// CHECK: @_ZTIPKa = constant
+// CHECK: @_ZTIa = unnamed_addr constant
+// CHECK: @_ZTIPa = unnamed_addr constant
+// CHECK: @_ZTIPKa = unnamed_addr constant
 
 // short
-// CHECK: @_ZTIs = constant
-// CHECK: @_ZTIPs = constant
-// CHECK: @_ZTIPKs = constant
+// CHECK: @_ZTIs = unnamed_addr constant
+// CHECK: @_ZTIPs = unnamed_addr constant
+// CHECK: @_ZTIPKs = unnamed_addr constant
 
 // unsigned short
-// CHECK: @_ZTIt = constant
-// CHECK: @_ZTIPt = constant
-// CHECK: @_ZTIPKt = constant
+// CHECK: @_ZTIt = unnamed_addr constant
+// CHECK: @_ZTIPt = unnamed_addr constant
+// CHECK: @_ZTIPKt = unnamed_addr constant
 
 // int
-// CHECK: @_ZTIi = constant
-// CHECK: @_ZTIPi = constant
-// CHECK: @_ZTIPKi = constant
+// CHECK: @_ZTIi = unnamed_addr constant
+// CHECK: @_ZTIPi = unnamed_addr constant
+// CHECK: @_ZTIPKi = unnamed_addr constant
 
 // unsigned int
-// CHECK: @_ZTIj = constant
-// CHECK: @_ZTIPj = constant
-// CHECK: @_ZTIPKj = constant
+// CHECK: @_ZTIj = unnamed_addr constant
+// CHECK: @_ZTIPj = unnamed_addr constant
+// CHECK: @_ZTIPKj = unnamed_addr constant
 
 // long
-// CHECK: @_ZTIl = constant
-// CHECK: @_ZTIPl = constant
-// CHECK: @_ZTIPKl = constant
+// CHECK: @_ZTIl = unnamed_addr constant
+// CHECK: @_ZTIPl = unnamed_addr constant
+// CHECK: @_ZTIPKl = unnamed_addr constant
 
 // unsigned long
-// CHECK: @_ZTIm = constant
-// CHECK: @_ZTIPm = constant
-// CHECK: @_ZTIPKm = constant
+// CHECK: @_ZTIm = unnamed_addr constant
+// CHECK: @_ZTIPm = unnamed_addr constant
+// CHECK: @_ZTIPKm = unnamed_addr constant
 
 // long long
-// CHECK: @_ZTIx = constant
-// CHECK: @_ZTIPx = constant
-// CHECK: @_ZTIPKx = constant
+// CHECK: @_ZTIx = unnamed_addr constant
+// CHECK: @_ZTIPx = unnamed_addr constant
+// CHECK: @_ZTIPKx = unnamed_addr constant
 
 // unsigned long long
-// CHECK: @_ZTIy = constant
-// CHECK: @_ZTIPy = constant
-// CHECK: @_ZTIPKy = constant
+// CHECK: @_ZTIy = unnamed_addr constant
+// CHECK: @_ZTIPy = unnamed_addr constant
+// CHECK: @_ZTIPKy = unnamed_addr constant
 
 // float
-// CHECK: @_ZTIf = constant
-// CHECK: @_ZTIPf = constant
-// CHECK: @_ZTIPKf = constant
+// CHECK: @_ZTIf = unnamed_addr constant
+// CHECK: @_ZTIPf = unnamed_addr constant
+// CHECK: @_ZTIPKf = unnamed_addr constant
 
 // double
-// CHECK: @_ZTId = constant
-// CHECK: @_ZTIPd = constant
-// CHECK: @_ZTIPKd = constant
+// CHECK: @_ZTId = unnamed_addr constant
+// CHECK: @_ZTIPd = unnamed_addr constant
+// CHECK: @_ZTIPKd = unnamed_addr constant
 
 // long double
-// CHECK: @_ZTIe = constant
-// CHECK: @_ZTIPe = constant
-// CHECK: @_ZTIPKe = constant
+// CHECK: @_ZTIe = unnamed_addr constant
+// CHECK: @_ZTIPe = unnamed_addr constant
+// CHECK: @_ZTIPKe = unnamed_addr constant
 
 // char16_t
-// CHECK: @_ZTIDs = constant
-// CHECK: @_ZTIPDs = constant
-// CHECK: @_ZTIPKDs = constant
+// CHECK: @_ZTIDs = unnamed_addr constant
+// CHECK: @_ZTIPDs = unnamed_addr constant
+// CHECK: @_ZTIPKDs = unnamed_addr constant
 
 // char32_t
-// CHECK: @_ZTIDi = constant
-// CHECK: @_ZTIPDi = constant
-// CHECK: @_ZTIPKDi = constant
+// CHECK: @_ZTIDi = unnamed_addr constant
+// CHECK: @_ZTIPDi = unnamed_addr constant
+// CHECK: @_ZTIPKDi = unnamed_addr constant
 

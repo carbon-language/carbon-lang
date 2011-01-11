@@ -642,11 +642,9 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
            (CGM.getCodeGenOpts().HiddenWeakVTables &&
             Linkage == llvm::GlobalValue::WeakODRLinkage)) {
     GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-
-    // FIXME: Should we set this for all type infos?
-    GV->setUnnamedAddr(true);
   }
-  
+  GV->setUnnamedAddr(true);
+
   return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
 }
 
