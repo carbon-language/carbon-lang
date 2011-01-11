@@ -91,17 +91,17 @@ ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {
 }
 
 namespace {
-class GenericNodeBuilder {
+class GenericNodeBuilderRefCount {
   StmtNodeBuilder *SNB;
   const Stmt *S;
   const void *tag;
   EndOfFunctionNodeBuilder *ENB;
 public:
-  GenericNodeBuilder(StmtNodeBuilder &snb, const Stmt *s,
+  GenericNodeBuilderRefCount(StmtNodeBuilder &snb, const Stmt *s,
                      const void *t)
   : SNB(&snb), S(s), tag(t), ENB(0) {}
 
-  GenericNodeBuilder(EndOfFunctionNodeBuilder &enb)
+  GenericNodeBuilderRefCount(EndOfFunctionNodeBuilder &enb)
   : SNB(0), S(0), tag(0), ENB(&enb) {}
 
   ExplodedNode *MakeNode(const GRState *state, ExplodedNode *Pred) {
@@ -1659,7 +1659,7 @@ private:
 
   ExplodedNode* ProcessLeaks(const GRState * state,
                                       llvm::SmallVectorImpl<SymbolRef> &Leaked,
-                                      GenericNodeBuilder &Builder,
+                                      GenericNodeBuilderRefCount &Builder,
                                       ExprEngine &Eng,
                                       ExplodedNode *Pred = 0);
 
@@ -1728,7 +1728,7 @@ public:
                                SymbolReaper& SymReaper);
 
   std::pair<ExplodedNode*, const GRState *>
-  HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd,
+  HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilderRefCount Bd,
                           ExplodedNode* Pred, ExprEngine &Eng,
                           SymbolRef Sym, RefVal V, bool &stop);
   // Return statements.
@@ -2891,7 +2891,7 @@ void CFRefCount::evalReturn(ExplodedNodeSet& Dst,
 
   // Update the autorelease counts.
   static unsigned autoreleasetag = 0;
-  GenericNodeBuilder Bd(Builder, S, &autoreleasetag);
+  GenericNodeBuilderRefCount Bd(Builder, S, &autoreleasetag);
   bool stop = false;
   llvm::tie(Pred, state) = HandleAutoreleaseCounts(state , Bd, Pred, Eng, Sym,
                                                    X, stop);
@@ -3139,7 +3139,8 @@ const GRState * CFRefCount::Update(const GRState * state, SymbolRef sym,
 //===----------------------------------------------------------------------===//
 
 std::pair<ExplodedNode*, const GRState *>
-CFRefCount::HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilder Bd,
+CFRefCount::HandleAutoreleaseCounts(const GRState * state, 
+                                    GenericNodeBuilderRefCount Bd,
                                     ExplodedNode* Pred,
                                     ExprEngine &Eng,
                                     SymbolRef Sym, RefVal V, bool &stop) {
@@ -3224,7 +3225,7 @@ CFRefCount::HandleSymbolDeath(const GRState * state, SymbolRef sid, RefVal V,
 ExplodedNode*
 CFRefCount::ProcessLeaks(const GRState * state,
                          llvm::SmallVectorImpl<SymbolRef> &Leaked,
-                         GenericNodeBuilder &Builder,
+                         GenericNodeBuilderRefCount &Builder,
                          ExprEngine& Eng,
                          ExplodedNode *Pred) {
 
@@ -3253,7 +3254,7 @@ void CFRefCount::evalEndPath(ExprEngine& Eng,
                              EndOfFunctionNodeBuilder& Builder) {
 
   const GRState *state = Builder.getState();
-  GenericNodeBuilder Bd(Builder);
+  GenericNodeBuilderRefCount Bd(Builder);
   RefBindings B = state->get<RefBindings>();
   ExplodedNode *Pred = 0;
 
@@ -3292,7 +3293,7 @@ void CFRefCount::evalDeadSymbols(ExplodedNodeSet& Dst,
     if (const RefVal* T = B.lookup(Sym)){
       // Use the symbol as the tag.
       // FIXME: This might not be as unique as we would like.
-      GenericNodeBuilder Bd(Builder, S, Sym);
+      GenericNodeBuilderRefCount Bd(Builder, S, Sym);
       bool stop = false;
       llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred, Eng,
                                                        Sym, *T, stop);
@@ -3312,7 +3313,7 @@ void CFRefCount::evalDeadSymbols(ExplodedNodeSet& Dst,
 
   static unsigned LeakPPTag = 0;
   {
-    GenericNodeBuilder Bd(Builder, S, &LeakPPTag);
+    GenericNodeBuilderRefCount Bd(Builder, S, &LeakPPTag);
     Pred = ProcessLeaks(state, Leaked, Bd, Eng, Pred);
   }
 
