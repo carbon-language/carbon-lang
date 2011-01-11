@@ -823,7 +823,8 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   Buf.resize(path.size()+8);
   char *FNBuffer = &Buf[0];
     path.copy(FNBuffer,path.size());
-  if (isDirectory())
+  bool isdir;
+  if (!fs::is_directory(path, isdir) && isdir)
     strcpy(FNBuffer+path.size(), "/XXXXXX");
   else
     strcpy(FNBuffer+path.size(), "-XXXXXX");

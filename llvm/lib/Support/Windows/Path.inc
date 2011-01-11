@@ -410,9 +410,10 @@ Path::canExecute() const {
 
 bool
 Path::isRegularFile() const {
-  if (isDirectory())
+  bool res;
+  if (fs::is_regular_file(path, res))
     return false;
-  return true;
+  return res;
 }
 
 StringRef

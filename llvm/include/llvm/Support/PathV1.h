@@ -387,7 +387,8 @@ namespace sys {
       /// existing directory.
       /// @returns true if the pathname references an existing directory.
       /// @brief Determines if the path is a directory in the file system.
-      bool isDirectory() const;
+      LLVM_ATTRIBUTE_DEPRECATED(bool isDirectory() const,
+        LLVM_PATH_DEPRECATED_MSG(fs::is_directory));
 
       /// This function determines if the path name references an
       /// existing symbolic link.

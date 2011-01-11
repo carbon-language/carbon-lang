@@ -636,8 +636,24 @@ bool is_directory(file_status status) {
   return status.type() == file_type::directory_file;
 }
 
+error_code is_directory(const Twine &path, bool &result) {
+  file_status st;
+  if (error_code ec = status(path, st))
+    return ec;
+  result = is_directory(st);
+  return success;
+}
+
 bool is_regular_file(file_status status) {
   return status.type() == file_type::regular_file;
+}
+
+error_code is_regular_file(const Twine &path, bool &result) {
+  file_status st;
+  if (error_code ec = status(path, st))
+    return ec;
+  result = is_regular_file(st);
+  return success;
 }
 
 bool is_symlink(file_status status) {
