@@ -2497,6 +2497,8 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
         // Does it fit in a unsigned long long?
         if (ResultVal.isIntN(LongLongSize)) {
           // Does it fit in a signed long long?
+          // To be compatible with MSVC, hex integer literals ending with the
+          // LL or i64 suffix are always signed in Microsoft mode.
           if (!Literal.isUnsigned && (ResultVal[LongLongSize-1] == 0 ||
               (getLangOptions().Microsoft && Literal.isLongLong)))
             Ty = Context.LongLongTy;
