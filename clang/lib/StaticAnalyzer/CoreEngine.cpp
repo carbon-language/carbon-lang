@@ -49,21 +49,21 @@ public:
     return !Stack.empty();
   }
 
-  virtual void Enqueue(const WorkListUnit& U) {
+  virtual void enqueue(const WorkListUnit& U) {
     Stack.push_back(U);
   }
 
-  virtual WorkListUnit Dequeue() {
+  virtual WorkListUnit dequeue() {
     assert (!Stack.empty());
     const WorkListUnit& U = Stack.back();
     Stack.pop_back(); // This technically "invalidates" U, but we are fine.
     return U;
   }
   
-  virtual bool VisitItemsInWorkList(Visitor &V) {
+  virtual bool visitItemsInWorkList(Visitor &V) {
     for (llvm::SmallVectorImpl<WorkListUnit>::iterator
          I = Stack.begin(), E = Stack.end(); I != E; ++I) {
-      if (V.Visit(*I))
+      if (V.visit(*I))
         return true;
     }
     return false;
@@ -77,20 +77,20 @@ public:
     return !Queue.empty();
   }
 
-  virtual void Enqueue(const WorkListUnit& U) {
+  virtual void enqueue(const WorkListUnit& U) {
     Queue.push_front(U);
   }
 
-  virtual WorkListUnit Dequeue() {
+  virtual WorkListUnit dequeue() {
     WorkListUnit U = Queue.front();
     Queue.pop_front();
     return U;
   }
   
-  virtual bool VisitItemsInWorkList(Visitor &V) {
+  virtual bool visitItemsInWorkList(Visitor &V) {
     for (std::deque<WorkListUnit>::iterator
          I = Queue.begin(), E = Queue.end(); I != E; ++I) {
-      if (V.Visit(*I))
+      if (V.visit(*I))
         return true;
     }
     return false;
@@ -103,8 +103,8 @@ public:
 // functions, and we the code for the dstor generated in one compilation unit.
 WorkList::~WorkList() {}
 
-WorkList *WorkList::MakeDFS() { return new DFS(); }
-WorkList *WorkList::MakeBFS() { return new BFS(); }
+WorkList *WorkList::makeDFS() { return new DFS(); }
+WorkList *WorkList::makeBFS() { return new BFS(); }
 
 namespace {
   class BFSBlockDFSContents : public WorkList {
@@ -115,14 +115,14 @@ namespace {
       return !Queue.empty() || !Stack.empty();
     }
 
-    virtual void Enqueue(const WorkListUnit& U) {
+    virtual void enqueue(const WorkListUnit& U) {
       if (isa<BlockEntrance>(U.getNode()->getLocation()))
         Queue.push_front(U);
       else
         Stack.push_back(U);
     }
 
-    virtual WorkListUnit Dequeue() {
+    virtual WorkListUnit dequeue() {
       // Process all basic blocks to completion.
       if (!Stack.empty()) {
         const WorkListUnit& U = Stack.back();
@@ -137,15 +137,15 @@ namespace {
       Queue.pop_front();
       return U;
     }
-    virtual bool VisitItemsInWorkList(Visitor &V) {
+    virtual bool visitItemsInWorkList(Visitor &V) {
       for (llvm::SmallVectorImpl<WorkListUnit>::iterator
            I = Stack.begin(), E = Stack.end(); I != E; ++I) {
-        if (V.Visit(*I))
+        if (V.visit(*I))
           return true;
       }
       for (std::deque<WorkListUnit>::iterator
            I = Queue.begin(), E = Queue.end(); I != E; ++I) {
-        if (V.Visit(*I))
+        if (V.visit(*I))
           return true;
       }
       return false;
@@ -154,7 +154,7 @@ namespace {
   };
 } // end anonymous namespace
 
-WorkList* WorkList::MakeBFSBlockDFSContents() {
+WorkList* WorkList::makeBFSBlockDFSContents() {
   return new BFSBlockDFSContents();
 }
 
@@ -204,7 +204,7 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
       --Steps;
     }
 
-    const WorkListUnit& WU = WList->Dequeue();
+    const WorkListUnit& WU = WList->dequeue();
 
     // Set the current block counter.
     WList->setBlockCounter(WU.getBlockCounter());
@@ -445,7 +445,7 @@ void CoreEngine::generateNode(const ProgramPoint& Loc,
   }
 
   // Only add 'Node' to the worklist if it was freshly generated.
-  if (IsNew) WList->Enqueue(Node);
+  if (IsNew) WList->enqueue(Node);
 }
 
 StmtNodeBuilder::StmtNodeBuilder(const CFGBlock* b, unsigned idx,
@@ -471,13 +471,13 @@ void StmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
   if (isa<CallEnter>(N->getLocation())) {
     // Still use the index of the CallExpr. It's needed to create the callee
     // StackFrameContext.
-    Eng.WList->Enqueue(N, &B, Idx);
+    Eng.WList->enqueue(N, &B, Idx);
     return;
   }
 
   // Do not create extra nodes. Move to the next CFG element.
   if (isa<PostInitializer>(N->getLocation())) {
-    Eng.WList->Enqueue(N, &B, Idx+1);
+    Eng.WList->enqueue(N, &B, Idx+1);
     return;
   }
 
@@ -486,7 +486,7 @@ void StmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
   if (Loc == N->getLocation()) {
     // Note: 'N' should be a fresh node because otherwise it shouldn't be
     // a member of Deferred.
-    Eng.WList->Enqueue(N, &B, Idx+1);
+    Eng.WList->enqueue(N, &B, Idx+1);
     return;
   }
 
@@ -495,7 +495,7 @@ void StmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
   Succ->addPredecessor(N, *Eng.G);
 
   if (IsNew)
-    Eng.WList->Enqueue(Succ, &B, Idx+1);
+    Eng.WList->enqueue(Succ, &B, Idx+1);
 }
 
 ExplodedNode* StmtNodeBuilder::MakeNode(ExplodedNodeSet& Dst, const Stmt* S, 
@@ -598,7 +598,7 @@ BranchNodeBuilder::~BranchNodeBuilder() {
   if (!GeneratedFalse) generateNode(Pred->State, false);
 
   for (DeferredTy::iterator I=Deferred.begin(), E=Deferred.end(); I!=E; ++I)
-    if (!(*I)->isSink()) Eng.WList->Enqueue(*I);
+    if (!(*I)->isSink()) Eng.WList->enqueue(*I);
 }
 
 
@@ -617,7 +617,7 @@ IndirectGotoNodeBuilder::generateNode(const iterator& I, const GRState* St,
     if (isSink)
       Succ->markAsSink();
     else
-      Eng.WList->Enqueue(Succ);
+      Eng.WList->enqueue(Succ);
 
     return Succ;
   }
@@ -636,7 +636,7 @@ SwitchNodeBuilder::generateCaseStmtNode(const iterator& I, const GRState* St){
   Succ->addPredecessor(Pred, *Eng.G);
 
   if (IsNew) {
-    Eng.WList->Enqueue(Succ);
+    Eng.WList->enqueue(Succ);
     return Succ;
   }
 
@@ -661,7 +661,7 @@ SwitchNodeBuilder::generateDefaultCaseNode(const GRState* St, bool isSink) {
     if (isSink)
       Succ->markAsSink();
     else
-      Eng.WList->Enqueue(Succ);
+      Eng.WList->enqueue(Succ);
 
     return Succ;
   }
@@ -714,7 +714,7 @@ void EndOfFunctionNodeBuilder::GenerateCallExitNode(const GRState *state) {
   Node->addPredecessor(Pred, *Eng.G);
 
   if (isNew)
-    Eng.WList->Enqueue(Node);
+    Eng.WList->enqueue(Node);
 }
                                                 
 
@@ -790,7 +790,7 @@ void CallEnterNodeBuilder::generateNode(const GRState *state) {
   Node->addPredecessor(const_cast<ExplodedNode*>(Pred), *Eng.G);
 
   if (isNew)
-    Eng.WList->Enqueue(Node);
+    Eng.WList->enqueue(Node);
 }
 
 void CallExitNodeBuilder::generateNode(const GRState *state) {
@@ -804,6 +804,6 @@ void CallExitNodeBuilder::generateNode(const GRState *state) {
   ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);
   Node->addPredecessor(const_cast<ExplodedNode*>(Pred), *Eng.G);
   if (isNew)
-    Eng.WList->Enqueue(Node, LocCtx->getCallSiteBlock(),
+    Eng.WList->enqueue(Node, LocCtx->getCallSiteBlock(),
                        LocCtx->getIndex() + 1);
 }

@@ -28,29 +28,36 @@ class ExplodedNode;
 class ExplodedNodeImpl;
 
 class WorkListUnit {
-  ExplodedNode* Node;
-  BlockCounter Counter;
-  const CFGBlock* Block;
-  unsigned BlockIdx; // This is the index of the next statement.
+  ExplodedNode* node;
+  BlockCounter counter;
+  const CFGBlock* block;
+  unsigned blockIdx; // This is the index of the next statement.
 
 public:
   WorkListUnit(ExplodedNode* N, BlockCounter C,
-                 const CFGBlock* B, unsigned idx)
-  : Node(N),
-    Counter(C),
-    Block(B),
-    BlockIdx(idx) {}
+               const CFGBlock* B, unsigned idx)
+  : node(N),
+    counter(C),
+    block(B),
+    blockIdx(idx) {}
 
   explicit WorkListUnit(ExplodedNode* N, BlockCounter C)
-  : Node(N),
-    Counter(C),
-    Block(NULL),
-    BlockIdx(0) {}
+  : node(N),
+    counter(C),
+    block(NULL),
+    blockIdx(0) {}
 
-  ExplodedNode* getNode()         const { return Node; }
-  BlockCounter    getBlockCounter() const { return Counter; }
-  const CFGBlock*   getBlock()        const { return Block; }
-  unsigned          getIndex()        const { return BlockIdx; }
+  /// Returns the node associated with the worklist unit.
+  ExplodedNode *getNode() const { return node; }
+  
+  /// Returns the block counter map associated with the worklist unit.
+  BlockCounter getBlockCounter() const { return counter; }
+
+  /// Returns the CFGblock associated with the worklist unit.
+  const CFGBlock *getBlock() const { return block; }
+  
+  /// Return the index within the CFGBlock for the worklist unit.
+  unsigned getIndex() const { return blockIdx; }
 };
 
 class WorkList {
@@ -59,17 +66,17 @@ public:
   virtual ~WorkList();
   virtual bool hasWork() const = 0;
 
-  virtual void Enqueue(const WorkListUnit& U) = 0;
+  virtual void enqueue(const WorkListUnit& U) = 0;
 
-  void Enqueue(ExplodedNode* N, const CFGBlock* B, unsigned idx) {
-    Enqueue(WorkListUnit(N, CurrentCounter, B, idx));
+  void enqueue(ExplodedNode *N, const CFGBlock *B, unsigned idx) {
+    enqueue(WorkListUnit(N, CurrentCounter, B, idx));
   }
 
-  void Enqueue(ExplodedNode* N) {
-    Enqueue(WorkListUnit(N, CurrentCounter));
+  void enqueue(ExplodedNode *N) {
+    enqueue(WorkListUnit(N, CurrentCounter));
   }
 
-  virtual WorkListUnit Dequeue() = 0;
+  virtual WorkListUnit dequeue() = 0;
 
   void setBlockCounter(BlockCounter C) { CurrentCounter = C; }
   BlockCounter getBlockCounter() const { return CurrentCounter; }
@@ -78,13 +85,13 @@ public:
   public:
     Visitor() {}
     virtual ~Visitor();
-    virtual bool Visit(const WorkListUnit &U) = 0;
+    virtual bool visit(const WorkListUnit &U) = 0;
   };
-  virtual bool VisitItemsInWorkList(Visitor &V) = 0;
+  virtual bool visitItemsInWorkList(Visitor &V) = 0;
   
-  static WorkList *MakeDFS();
-  static WorkList *MakeBFS();
-  static WorkList *MakeBFSBlockDFSContents();
+  static WorkList *makeDFS();
+  static WorkList *makeBFS();
+  static WorkList *makeBFSBlockDFSContents();
 };
 
 } // end GR namespace

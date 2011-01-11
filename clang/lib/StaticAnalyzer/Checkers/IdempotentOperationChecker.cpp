@@ -577,7 +577,7 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
     VisitWL(const CFGStmtMap *cbm, const CFGBlock *targetBlock,
             CFGReachabilityAnalysis &cra)
       : CBM(cbm), TargetBlock(targetBlock), CRA(cra) {}
-    virtual bool Visit(const WorkListUnit &U) {
+    virtual bool visit(const WorkListUnit &U) {
       ProgramPoint P = U.getNode()->getLocation();
       const CFGBlock *B = 0;
       if (StmtPoint *SP = dyn_cast<StmtPoint>(&P)) {
@@ -601,7 +601,7 @@ bool IdempotentOperationChecker::PathWasCompletelyAnalyzed(
   VisitWL visitWL(CBM, CB, CRA);
   // Were there any items in the worklist that could potentially reach
   // this block?
-  if (CE.getWorkList()->VisitItemsInWorkList(visitWL))
+  if (CE.getWorkList()->visitItemsInWorkList(visitWL))
     return false;
 
   // Verify that this block is reachable from the entry block

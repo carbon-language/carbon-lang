@@ -133,7 +133,7 @@ public:
   ///  a DFS exploration of the exploded graph.
   CoreEngine(SubEngine& subengine)
     : SubEng(subengine), G(new ExplodedGraph()),
-      WList(WorkList::MakeBFS()),
+      WList(WorkList::makeBFS()),
       BCounterFactory(G->getAllocator()) {}
 
   /// Construct a CoreEngine object to analyze the provided CFG and to
