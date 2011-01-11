@@ -2070,6 +2070,8 @@ void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr* Ex,
   const Expr *baseExpr = Ex->getBase();
   Visit(baseExpr, Pred, dstBase);
 
+  ExplodedNodeSet dstIvar;
+
   // Using the base, compute the lvalue of the instance variable.
   for (ExplodedNodeSet::iterator I = dstBase.begin(), E = dstBase.end();
        I!=E; ++I) {
@@ -2077,8 +2079,12 @@ void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr* Ex,
     const GRState *state = GetState(nodeBase);
     SVal baseVal = state->getSVal(baseExpr);
     SVal location = state->getLValue(Ex->getDecl(), baseVal);
-    MakeNode(Dst, Ex, *I, state->BindExpr(Ex, location));
+    MakeNode(dstIvar, Ex, *I, state->BindExpr(Ex, location));
   }
+
+  // Perform the post-condition check of the ObjCIvarRefExpr and store
+  // the created nodes in 'Dst'.
+  CheckerVisit(Ex, Dst, dstIvar, PostVisitStmtCallback);
 }
 
 //===----------------------------------------------------------------------===//

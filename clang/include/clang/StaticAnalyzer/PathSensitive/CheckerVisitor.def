@@ -41,6 +41,7 @@ POSTVISIT(CompoundAssignOperator, BinaryOperator)
 POSTVISIT(CXXOperatorCallExpr, GenericCall)
 POSTVISIT(CXXMemberCallExpr, GenericCall)
 POSTVISIT(ObjCMessageExpr, Stmt)
+POSTVISIT(ObjCIvarRefExpr, Stmt)
 
 #undef PREVISIT
 #undef POSTVISIT
