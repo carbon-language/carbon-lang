@@ -2497,7 +2497,8 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
         // Does it fit in a unsigned long long?
         if (ResultVal.isIntN(LongLongSize)) {
           // Does it fit in a signed long long?
-          if (!Literal.isUnsigned && ResultVal[LongLongSize-1] == 0)
+          if (!Literal.isUnsigned && (ResultVal[LongLongSize-1] == 0 ||
+              (getLangOptions().Microsoft && Literal.isLongLong)))
             Ty = Context.LongLongTy;
           else if (AllowUnsigned)
             Ty = Context.UnsignedLongLongTy;
