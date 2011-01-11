@@ -1728,6 +1728,62 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   return true;
 }
 
+// SimplifyTerminatorOnSelect - Simplifies a terminator by replacing it with a
+// branch to TrueBB if Cond is true or to FalseBB if Cond is false.
+// Takes care of updating the successors and removing the old terminator.
+// Also makes sure not to introduce new successors by assuming that edges to
+// non-successor TrueBBs and FalseBBs aren't reachable.
+static bool SimplifyTerminatorOnSelect(TerminatorInst *OldTerm, Value *Cond,
+                                       BasicBlock *TrueBB, BasicBlock *FalseBB){
+  // Remove any superfluous successor edges from the CFG.
+  // First, figure out which successors to preserve.
+  // If TrueBB and FalseBB are equal, only try to preserve one copy of that
+  // successor.
+  BasicBlock *KeepEdge1 = TrueBB;
+  BasicBlock *KeepEdge2 = TrueBB != FalseBB ? FalseBB : 0;
+
+  // Then remove the rest.
+  for (unsigned I = 0, E = OldTerm->getNumSuccessors(); I != E; ++I) {
+    BasicBlock *Succ = OldTerm->getSuccessor(I);
+    // Make sure only to keep exactly one copy of each edge.
+    if (Succ == KeepEdge1)
+      KeepEdge1 = 0;
+    else if (Succ == KeepEdge2)
+      KeepEdge2 = 0;
+    else
+      Succ->removePredecessor(OldTerm->getParent());
+  }
+
+  // Insert an appropriate new terminator.
+  if ((KeepEdge1 == 0) && (KeepEdge2 == 0)) {
+    if (TrueBB == FalseBB)
+      // We were only looking for one successor, and it was present.
+      // Create an unconditional branch to it.
+      BranchInst::Create(TrueBB, OldTerm);
+    else
+      // We found both of the successors we were looking for.
+      // Create a conditional branch sharing the condition of the select.
+      BranchInst::Create(TrueBB, FalseBB, Cond, OldTerm);
+  } else if (KeepEdge1 && (KeepEdge2 || TrueBB == FalseBB)) {
+    // Neither of the selected blocks were successors, so this
+    // terminator must be unreachable.
+    new UnreachableInst(OldTerm->getContext(), OldTerm);
+  } else {
+    // One of the selected values was a successor, but the other wasn't.
+    // Insert an unconditional branch to the one that was found;
+    // the edge to the one that wasn't must be unreachable.
+    if (KeepEdge1 == 0)
+      // Only TrueBB was found.
+      BranchInst::Create(TrueBB, OldTerm);
+    else
+      // Only FalseBB was found.
+      BranchInst::Create(FalseBB, OldTerm);
+  }
+
+  EraseTerminatorInstAndDCECond(OldTerm);
+  return true;
+}
+
 // SimplifyIndirectBrOnSelect - Replaces
 //   (indirectbr (select cond, blockaddress(@fn, BlockA),
 //                             blockaddress(@fn, BlockB)))
@@ -1744,53 +1800,8 @@ static bool SimplifyIndirectBrOnSelect(IndirectBrInst *IBI, SelectInst *SI) {
   BasicBlock *TrueBB = TBA->getBasicBlock();
   BasicBlock *FalseBB = FBA->getBasicBlock();
 
-  // Remove any superfluous successor edges from the CFG.
-  // First, figure out which successors to preserve.
-  // If TrueBB and FalseBB are equal, only try to preserve one copy of that
-  // successor.
-  BasicBlock *KeepEdge1 = TrueBB;
-  BasicBlock *KeepEdge2 = TrueBB != FalseBB ? FalseBB : 0;
-
-  // Then remove the rest.
-  for (unsigned I = 0, E = IBI->getNumSuccessors(); I != E; ++I) {
-    BasicBlock *Succ = IBI->getSuccessor(I);
-    // Make sure only to keep exactly one copy of each edge.
-    if (Succ == KeepEdge1)
-      KeepEdge1 = 0;
-    else if (Succ == KeepEdge2)
-      KeepEdge2 = 0;
-    else
-      Succ->removePredecessor(IBI->getParent());
-  }
-
-  // Insert an appropriate new terminator.
-  if ((KeepEdge1 == 0) && (KeepEdge2 == 0)) {
-    if (TrueBB == FalseBB)
-      // We were only looking for one successor, and it was present.
-      // Create an unconditional branch to it.
-      BranchInst::Create(TrueBB, IBI);
-    else
-      // We found both of the successors we were looking for.
-      // Create a conditional branch sharing the condition of the select.
-      BranchInst::Create(TrueBB, FalseBB, SI->getCondition(), IBI);
-  } else if (KeepEdge1 && (KeepEdge2 || TrueBB == FalseBB)) {
-    // Neither of the selected blocks were successors, so this
-    // indirectbr must be unreachable.
-    new UnreachableInst(IBI->getContext(), IBI);
-  } else {
-    // One of the selected values was a successor, but the other wasn't.
-    // Insert an unconditional branch to the one that was found;
-    // the edge to the one that wasn't must be unreachable.
-    if (KeepEdge1 == 0)
-      // Only TrueBB was found.
-      BranchInst::Create(TrueBB, IBI);
-    else
-      // Only FalseBB was found.
-      BranchInst::Create(FalseBB, IBI);
-  }
-
-  EraseTerminatorInstAndDCECond(IBI);
-  return true;
+  // Perform the actual simplification.
+  return SimplifyTerminatorOnSelect(IBI, SI->getCondition(), TrueBB, FalseBB);
 }
 
 /// TryToSimplifyUncondBranchWithICmpInIt - This is called when we find an icmp
