@@ -82,48 +82,6 @@ private:
                        unsigned Index, ExplodedNode *Pred);
   void HandleCallExit(const CallExit &L, ExplodedNode *Pred);
 
-  /// Get the initial state from the subengine.
-  const GRState* getInitialState(const LocationContext *InitLoc) {
-    return SubEng.getInitialState(InitLoc);
-  }
-
-  void processEndOfFunction(EndOfFunctionNodeBuilder& Builder) {
-    SubEng.processEndOfFunction(Builder);
-  }
-
-  void processCFGElement(const CFGElement E, StmtNodeBuilder& Builder) {
-    SubEng.processCFGElement(E, Builder);
-  }
-
-  bool processCFGBlockEntrance(const CFGBlock* Blk, const ExplodedNode *Pred,
-                            BlockCounter BC) {
-    return SubEng.processCFGBlockEntrance(Blk, Pred, BC);
-  }
-
-
-  void processBranch(const Stmt* Condition, const Stmt* Terminator,
-                     BranchNodeBuilder& Builder) {
-    SubEng.processBranch(Condition, Terminator, Builder);
-  }
-
-
-  void processIndirectGoto(IndirectGotoNodeBuilder& Builder) {
-    SubEng.processIndirectGoto(Builder);
-  }
-
-
-  void processSwitch(SwitchNodeBuilder& Builder) {
-    SubEng.processSwitch(Builder);
-  }
-
-  void processCallEnter(CallEnterNodeBuilder &Builder) {
-    SubEng.processCallEnter(Builder);
-  }
-
-  void processCallExit(CallExitNodeBuilder &Builder) {
-    SubEng.processCallExit(Builder);
-  }
-
 private:
   CoreEngine(const CoreEngine&); // Do not implement.
   CoreEngine& operator=(const CoreEngine&);

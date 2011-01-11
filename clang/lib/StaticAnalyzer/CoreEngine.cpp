@@ -189,7 +189,7 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
 
     if (!InitState)
       // Generate the root.
-      generateNode(StartLoc, getInitialState(L), 0);
+      generateNode(StartLoc, SubEng.getInitialState(L), 0);
     else
       generateNode(StartLoc, InitState, 0);
   }
@@ -262,12 +262,12 @@ void CoreEngine::HandleCallEnter(const CallEnter &L, const CFGBlock *Block,
                                    unsigned Index, ExplodedNode *Pred) {
   CallEnterNodeBuilder Builder(*this, Pred, L.getCallExpr(), 
                                  L.getCalleeContext(), Block, Index);
-  processCallEnter(Builder);
+  SubEng.processCallEnter(Builder);
 }
 
 void CoreEngine::HandleCallExit(const CallExit &L, ExplodedNode *Pred) {
   CallExitNodeBuilder Builder(*this, Pred);
-  processCallExit(Builder);
+  SubEng.processCallExit(Builder);
 }
 
 void CoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
@@ -282,7 +282,7 @@ void CoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
 
     // Process the final state transition.
     EndOfFunctionNodeBuilder Builder(Blk, Pred, this);
-    processEndOfFunction(Builder);
+    SubEng.processEndOfFunction(Builder);
 
     // This path is done. Don't enqueue any more nodes.
     return;
@@ -290,7 +290,7 @@ void CoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
 
   // FIXME: Should we allow processCFGBlockEntrance to also manipulate state?
 
-  if (processCFGBlockEntrance(Blk, Pred, WList->getBlockCounter()))
+  if (SubEng.processCFGBlockEntrance(Blk, Pred, WList->getBlockCounter()))
     generateNode(BlockEntrance(Blk, Pred->getLocationContext()),
                  Pred->State, Pred);
   else {
@@ -312,7 +312,7 @@ void CoreEngine::HandleBlockEntrance(const BlockEntrance& L,
   if (CFGElement E = L.getFirstElement()) {
     StmtNodeBuilder Builder(L.getBlock(), 0, Pred, this,
                               SubEng.getStateManager());
-    processCFGElement(E, Builder);
+    SubEng.processCFGElement(E, Builder);
   }
   else
     HandleBlockExit(L.getBlock(), Pred);
@@ -366,7 +366,7 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode* Pred) {
            builder(Pred, B, cast<IndirectGotoStmt>(Term)->getTarget(),
                    *(B->succ_begin()), this);
 
-        processIndirectGoto(builder);
+        SubEng.processIndirectGoto(builder);
         return;
       }
 
@@ -389,7 +389,7 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode* Pred) {
         SwitchNodeBuilder builder(Pred, B, cast<SwitchStmt>(Term)->getCond(),
                                     this);
 
-        processSwitch(builder);
+        SubEng.processSwitch(builder);
         return;
       }
 
@@ -408,12 +408,10 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode* Pred) {
 
 void CoreEngine::HandleBranch(const Stmt* Cond, const Stmt* Term, 
                                 const CFGBlock * B, ExplodedNode* Pred) {
-  assert (B->succ_size() == 2);
-
+  assert(B->succ_size() == 2);
   BranchNodeBuilder Builder(B, *(B->succ_begin()), *(B->succ_begin()+1),
-                              Pred, this);
-
-  processBranch(Cond, Term, Builder);
+                            Pred, this);
+  SubEng.processBranch(Cond, Term, Builder);
 }
 
 void CoreEngine::HandlePostStmt(const CFGBlock* B, unsigned StmtIdx, 
@@ -425,7 +423,7 @@ void CoreEngine::HandlePostStmt(const CFGBlock* B, unsigned StmtIdx,
   else {
     StmtNodeBuilder Builder(B, StmtIdx, Pred, this,
                               SubEng.getStateManager());
-    processCFGElement((*B)[StmtIdx], Builder);
+    SubEng.processCFGElement((*B)[StmtIdx], Builder);
   }
 }
 
