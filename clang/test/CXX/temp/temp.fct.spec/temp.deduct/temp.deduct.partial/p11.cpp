@@ -20,3 +20,14 @@ template <class T, class U>
 void g2() {
   int* ip = f2<int>(1);
 }
+
+template<class T, class U> struct A { };
+
+template<class T, class U> inline int *f3( U, A<U,T>* p = 0 ); // #1 expected-note{{candidate function [with T = int, U = int]}}
+template<         class U> inline float *f3( U, A<U,U>* p = 0 ); // #2 expected-note{{candidate function [with U = int]}}
+
+void g3() {
+   float *fp = f3<int>( 42, (A<int,int>*)0 );  // Ok, picks #2.
+   f3<int>( 42 );                  // expected-error{{call to 'f3' is ambiguous}}
+   
+}
