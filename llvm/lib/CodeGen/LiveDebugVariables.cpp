@@ -40,7 +40,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-EnableLDV("live-debug-variables", cl::init(true),
+EnableLDV("live-debug-variables",
           cl::desc("Enable the live debug variables pass"), cl::Hidden);
 
 char LiveDebugVariables::ID = 0;
