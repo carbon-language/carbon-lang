@@ -21,6 +21,7 @@
 #include "clang/Rewrite/HTMLRewrite.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
@@ -121,7 +122,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
     std::string ErrorMsg;
     Directory.createDirectoryOnDisk(true, &ErrorMsg);
 
-    if (!Directory.isDirectory()) {
+    bool IsDirectory;
+    if (llvm::sys::fs::is_directory(Directory.str(), IsDirectory) ||
+        !IsDirectory) {
       llvm::errs() << "warning: could not create directory '"
                    << Directory.str() << "'\n"
                    << "reason: " << ErrorMsg << '\n';
