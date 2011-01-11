@@ -703,7 +703,7 @@ typedef CFTypeRef OtherRef;
   NSString *_foo;
 }
 - (id)initReturningNewClass;
-- (id)initReturningNewClassBad;
+- (id)_initReturningNewClassBad;
 - (id)initReturningNewClassBad2;
 @end
 
@@ -716,7 +716,7 @@ typedef CFTypeRef OtherRef;
   self = [[RDar6320065Subclass alloc] init]; // no-warning
   return self;
 }
-- (id)initReturningNewClassBad {
+- (id)_initReturningNewClassBad {
   [self release];
   [[RDar6320065Subclass alloc] init]; // expected-warning {{leak}}
   return self;

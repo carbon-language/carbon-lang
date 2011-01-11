@@ -46,6 +46,7 @@ void RegisterUndefResultChecker(ExprEngine &Eng);
 void RegisterUndefinedArraySubscriptChecker(ExprEngine &Eng);
 void RegisterUndefinedAssignmentChecker(ExprEngine &Eng);
 void RegisterVLASizeChecker(ExprEngine &Eng);
+void registerObjCSelfInitChecker(ExprEngine &Eng);
 
 // API checks.
 void RegisterMacOSXAPIChecker(ExprEngine &Eng);
