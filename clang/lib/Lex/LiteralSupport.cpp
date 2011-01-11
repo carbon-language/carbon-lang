@@ -446,22 +446,33 @@ NumericLiteralParser(const char *begin, const char *end,
               break;
             case '1':
               if (s + 2 == ThisTokEnd) break;
-              if (s[2] == '6') s += 3; // i16 suffix
+              if (s[2] == '6') {
+                s += 3; // i16 suffix
+                isMicrosoftInteger = true;
+              }
               else if (s[2] == '2') {
                 if (s + 3 == ThisTokEnd) break;
-                if (s[3] == '8') s += 4; // i128 suffix
+                if (s[3] == '8') {
+                  s += 4; // i128 suffix
+                  isMicrosoftInteger = true;
+                }
               }
-              isMicrosoftInteger = true;
               break;
             case '3':
               if (s + 2 == ThisTokEnd) break;
-              if (s[2] == '2') s += 3; // i32 suffix
-              isMicrosoftInteger = true;
+              if (s[2] == '2') {
+                s += 3; // i32 suffix
+                isLong = true;
+                isMicrosoftInteger = true;
+              }
               break;
             case '6':
               if (s + 2 == ThisTokEnd) break;
-              if (s[2] == '4') s += 3; // i64 suffix
-              isMicrosoftInteger = true;
+              if (s[2] == '4') {
+                s += 3; // i64 suffix
+                isLongLong = true;
+                isMicrosoftInteger = true;
+              }
               break;
             default:
               break;
