@@ -27,7 +27,7 @@ class ArrayBoundChecker :
 public:
   ArrayBoundChecker() : BT(0) {}
   static void *getTag() { static int x = 0; return &x; }
-  void visitLocation(CheckerContext &C, const Stmt *S, SVal l);
+  void visitLocation(CheckerContext &C, const Stmt *S, SVal l, bool isLoad);
 };
 }
 
@@ -35,7 +35,8 @@ void ento::RegisterArrayBoundChecker(ExprEngine &Eng) {
   Eng.registerCheck(new ArrayBoundChecker());
 }
 
-void ArrayBoundChecker::visitLocation(CheckerContext &C, const Stmt *S, SVal l){
+void ArrayBoundChecker::visitLocation(CheckerContext &C, const Stmt *S, SVal l,
+                                      bool isLoad) {
   // Check for out of bound array element access.
   const MemRegion *R = l.getAsRegion();
   if (!R)

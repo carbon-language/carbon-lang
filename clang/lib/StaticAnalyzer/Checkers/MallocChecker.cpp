@@ -82,7 +82,7 @@ public:
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
   const GRState *evalAssume(const GRState *state, SVal Cond, bool Assumption,
                             bool *respondsToCallback);
-  void visitLocation(CheckerContext &C, const Stmt *S, SVal l);
+  void visitLocation(CheckerContext &C, const Stmt *S, SVal l, bool isLoad);
   virtual void PreVisitBind(CheckerContext &C, const Stmt *StoreE,
                             SVal location, SVal val);
 
@@ -653,7 +653,8 @@ const GRState *MallocChecker::evalAssume(const GRState *state, SVal Cond,
 }
 
 // Check if the location is a freed symbolic region.
-void MallocChecker::visitLocation(CheckerContext &C, const Stmt *S, SVal l) {
+void MallocChecker::visitLocation(CheckerContext &C, const Stmt *S, SVal l,
+                                  bool isLoad) {
   SymbolRef Sym = l.getLocSymbolInBase();
   if (Sym) {
     const RefState *RS = C.getState()->get<RegionState>(Sym);

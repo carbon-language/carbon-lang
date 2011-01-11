@@ -34,7 +34,7 @@ class ArrayBoundCheckerV2 :
 public:
   ArrayBoundCheckerV2() : BT(0) {}
   static void *getTag() { static int x = 0; return &x; }
-  void visitLocation(CheckerContext &C, const Stmt *S, SVal l);      
+  void visitLocation(CheckerContext &C, const Stmt *S, SVal l, bool isLoad);
 };
 
 // FIXME: Eventually replace RegionRawOffset with this class.
@@ -68,7 +68,7 @@ void ento::RegisterArrayBoundCheckerV2(ExprEngine &Eng) {
 
 void ArrayBoundCheckerV2::visitLocation(CheckerContext &checkerContext,
                                         const Stmt *S,
-                                        SVal location) {
+                                        SVal location, bool isLoad) {
 
   // NOTE: Instead of using GRState::assumeInBound(), we are prototyping
   // some new logic here that reasons directly about memory region extents.
