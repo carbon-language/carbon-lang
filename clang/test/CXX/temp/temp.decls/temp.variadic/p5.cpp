@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fblocks -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++0x -fblocks -fms-extensions -fsyntax-only -verify %s
 
 template<typename T, typename U> struct pair;
 template<typename ...> struct tuple;
@@ -215,6 +215,133 @@ struct TestUnexpandedDecls : T{
 };
 
 // FIXME: Test for unexpanded parameter packs in each of the statements.
+struct X {
+  void f(int, int);
+  template<typename ...Types>
+  void f(Types...);
+};
+
+namespace std {
+  class type_info;
+}
+
+typedef struct _GUID {
+     unsigned long  Data1;
+     unsigned short Data2;
+     unsigned short Data3;
+     unsigned char  Data4[ 8 ];
+} GUID;
+
+template<typename T, typename ...Types>
+void test_unexpanded_exprs(Types ...values) {
+  // CXXOperatorCallExpr
+  (void)(values + 0); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  (void)(0 + values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // CXXMemberCallExpr
+  values.f(); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  X x;
+  x.f(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  x.Types::f(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+  x.f<Types>(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+
+  // CXXStaticCastExpr
+  (void)static_cast<Types&>(values); // expected-error{{expression contains unexpanded parameter packs 'Types' and 'values'}}
+
+  // CXXDynamicCastExpr
+  (void)dynamic_cast<Types&>(values); // expected-error{{expression contains unexpanded parameter packs 'Types' and 'values'}}
+
+  // CXXReinterpretCastExpr
+  (void)reinterpret_cast<Types&>(values); // expected-error{{expression contains unexpanded parameter packs 'Types' and 'values'}}
+
+  // CXXConstCastExpr
+  (void)const_cast<Types&>(values); // expected-error{{expression contains unexpanded parameter packs 'Types' and 'values'}}
+
+  // CXXTypeidExpr
+  (void)typeid(Types); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+  (void)typeid(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // CXXUuidofExpr
+  (void)__uuidof(Types); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+  (void)__uuidof(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // CXXThisExpr is uninteresting
+
+  // CXXThrowExpr
+  throw Types(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+  throw values; // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // CXXDefaultArgExpr is uninteresting
+
+  // CXXBindTemporaryExpr is uninteresting
+
+  // CXXConstructExpr is uninteresting
+
+  // CXXFunctionalCastExpr
+  (void)Types(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+
+  // CXXTemporaryObjectExpr
+  (void)X(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // CXXScalarValueInitExpr is uninteresting
+
+  // CXXNewExpr
+  (void)new Types; // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+  (void)new X(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  (void)new (values) X(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  (void)new X [values]; // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // CXXDeleteExpr
+  delete values; // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  delete [] values; // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // CXXPseudoDestructorExpr
+  T t;
+  values.~T(); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  t.~Types(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+  t.Types::~T(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+
+  // UnaryTypeTraitExpr
+  __is_pod(Types); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+
+  // BinaryTypeTraitExpr
+  __is_base_of(Types, T); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+  __is_base_of(T, Types); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+
+  // UnresolvedLookupExpr
+  test_unexpanded_exprs(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  test_unexpanded_exprs<Types>(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+
+  // DependentScopeDeclRefExpr
+  Types::test_unexpanded_exprs(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+  T::template test_unexpanded_exprs<Types>(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+
+  // CXXUnresolvedConstructExpr
+  Types(5); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+
+  // CXXDependentScopeMemberExpr
+  values.foo(); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+  t.foo(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // FIXME: There's an evil ambiguity here, because we don't know if
+  // Types refers to the template type parameter pack in scope or a
+  // non-pack member.
+  //  t.Types::foo();
+
+  t.template foo<Types>(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+
+  // UnresolvedMemberExpr
+  x.f<Types>(); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+  x.f(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // CXXNoexceptExpr
+  noexcept(values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  // PackExpansionExpr is uninteresting
+  // SizeOfPackExpr is uninteresting
+
+  // FIXME: Objective-C expressions will need to go elsewhere
+}
 
 // Test unexpanded parameter packs in partial specializations.
 template<typename ...Types>

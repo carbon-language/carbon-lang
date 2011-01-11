@@ -1639,11 +1639,11 @@ DEF_TRAVERSE_STMT(WhileStmt, { })
 
 
 DEF_TRAVERSE_STMT(CXXDependentScopeMemberExpr, {
+    TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
     if (S->hasExplicitTemplateArgs()) {
       TRY_TO(TraverseTemplateArgumentLocsHelper(
           S->getTemplateArgs(), S->getNumTemplateArgs()));
     }
-    TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
   })
 
 DEF_TRAVERSE_STMT(DeclRefExpr, {
@@ -1801,7 +1801,13 @@ DEF_TRAVERSE_STMT(CXXDefaultArgExpr, { })
 DEF_TRAVERSE_STMT(CXXDeleteExpr, { })
 DEF_TRAVERSE_STMT(ExprWithCleanups, { })
 DEF_TRAVERSE_STMT(CXXNullPtrLiteralExpr, { })
-  DEF_TRAVERSE_STMT(CXXPseudoDestructorExpr, { }) // FIXME: Incomplete!
+DEF_TRAVERSE_STMT(CXXPseudoDestructorExpr, { 
+  TRY_TO(TraverseNestedNameSpecifier(S->getQualifier()));
+  if (TypeSourceInfo *ScopeInfo = S->getScopeTypeInfo())
+    TRY_TO(TraverseTypeLoc(ScopeInfo->getTypeLoc()));
+  if (TypeSourceInfo *DestroyedTypeInfo = S->getDestroyedTypeInfo())
+    TRY_TO(TraverseTypeLoc(DestroyedTypeInfo->getTypeLoc()));
+})
 DEF_TRAVERSE_STMT(CXXThisExpr, { })
 DEF_TRAVERSE_STMT(CXXThrowExpr, { })
 DEF_TRAVERSE_STMT(DesignatedInitExpr, { })
