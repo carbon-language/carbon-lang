@@ -536,6 +536,50 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
   return false;
 }
 
+unsigned Sema::getNumArgumentsInExpansion(QualType T, 
+                          const MultiLevelTemplateArgumentList &TemplateArgs) {
+  QualType Pattern = cast<PackExpansionType>(T)->getPattern();
+  llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+  CollectUnexpandedParameterPacksVisitor(Unexpanded).TraverseType(Pattern);
+
+  for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
+    // Compute the depth and index for this parameter pack.
+    unsigned Depth;
+    unsigned Index;
+    
+    if (const TemplateTypeParmType *TTP
+          = Unexpanded[I].first.dyn_cast<const TemplateTypeParmType *>()) {
+      Depth = TTP->getDepth();
+      Index = TTP->getIndex();
+    } else {      
+      NamedDecl *ND = Unexpanded[I].first.get<NamedDecl *>();
+      if (isa<ParmVarDecl>(ND)) {
+        // Function parameter pack.
+        typedef LocalInstantiationScope::DeclArgumentPack DeclArgumentPack;
+        
+        llvm::PointerUnion<Decl *, DeclArgumentPack *> *Instantiation
+          = CurrentInstantiationScope->findInstantiationOf(
+                                        Unexpanded[I].first.get<NamedDecl *>());
+        if (Instantiation && Instantiation->is<DeclArgumentPack *>())
+          return Instantiation->get<DeclArgumentPack *>()->size();
+        
+        continue;
+      }
+      
+      llvm::tie(Depth, Index) = getDepthAndIndex(ND);        
+    }
+    if (Depth >= TemplateArgs.getNumLevels() ||
+        !TemplateArgs.hasTemplateArgument(Depth, Index))
+      continue;
+    
+    // Determine the size of the argument pack.
+    return TemplateArgs(Depth, Index).pack_size();
+  }
+  
+  llvm_unreachable("No unexpanded parameter packs in type expansion.");
+  return 0;
+}
+
 bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
   const DeclSpec &DS = D.getDeclSpec();
   switch (DS.getTypeSpecType()) {

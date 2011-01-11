@@ -1894,9 +1894,10 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
         // Parameter pack: make the instantiation an argument pack.
         SemaRef.CurrentInstantiationScope->MakeInstantiatedLocalArgPack(
                                                                       OldParam);
-        // FIXME: Variadic templates. Figure out how many arguments are in the
-        // expansion of OldParam, so we don't gobble all of the arguments here.
-        while (NewIdx < NumNewParams) {
+        unsigned NumArgumentsInExpansion
+          = SemaRef.getNumArgumentsInExpansion(OldParam->getType(),
+                                               TemplateArgs);
+        while (NumArgumentsInExpansion--) {
           ParmVarDecl *NewParam = NewProtoLoc->getArg(NewIdx++);
           Params.push_back(NewParam);
           SemaRef.CurrentInstantiationScope->InstantiatedLocalPackArg(OldParam,

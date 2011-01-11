@@ -3383,6 +3383,15 @@ public:
                                        bool &RetainExpansion,
                                        unsigned &NumExpansions);
 
+  /// \brief Determine the number of arguments in the given pack expansion
+  /// type.
+  ///
+  /// This routine already assumes that the pack expansion type can be
+  /// expanded and that the number of arguments in the expansion is
+  /// consistent across all of the unexpanded parameter packs in its pattern.
+  unsigned getNumArgumentsInExpansion(QualType T, 
+                            const MultiLevelTemplateArgumentList &TemplateArgs);
+  
   /// \brief Determine whether the given declarator contains any unexpanded
   /// parameter packs.
   ///
