@@ -138,7 +138,7 @@ Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connectio
                                          timeout_usec, 
                                          m_connection_sp.get());
 
-    if (m_read_thread != LLDB_INVALID_HOST_THREAD)
+    if (m_read_thread_enabled)
     {
         // We have a dedicated read thread that is getting data for us
         size_t cached_bytes = GetCachedBytes (dst, dst_len);
@@ -257,8 +257,9 @@ Communication::StopReadThread (Error *error_ptr)
 
     Host::ThreadCancel (m_read_thread, error_ptr);
 
-    return Host::ThreadJoin (m_read_thread, NULL, error_ptr);
+    bool status = Host::ThreadJoin (m_read_thread, NULL, error_ptr);
     m_read_thread = LLDB_INVALID_HOST_THREAD;
+    return status;
 }
 
 
@@ -317,7 +318,7 @@ Communication::ReadFromConnection (void *dst, size_t dst_len, ConnectionStatus &
 bool
 Communication::ReadThreadIsRunning ()
 {
-    return m_read_thread != LLDB_INVALID_HOST_THREAD;
+    return m_read_thread_enabled;
 }
 
 void *
@@ -370,7 +371,7 @@ Communication::ReadThread (void *p)
 
     // Let clients know that this thread is exiting
     comm->BroadcastEvent (eBroadcastBitReadThreadDidExit);
-    comm->m_read_thread = LLDB_INVALID_HOST_THREAD;
+    comm->m_read_thread_enabled = false;
     comm->Disconnect();
     return NULL;
 }
