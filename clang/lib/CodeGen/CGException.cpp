@@ -577,8 +577,10 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
       Builder.CreateUnreachable();
     }
 
-    // Clear the insertion point to indicate we are in unreachable code.
-    Builder.ClearInsertionPoint();
+    // throw is an expression, and the expression emitters expect us
+    // to leave ourselves at a valid insertion point.
+    EmitBlock(createBasicBlock("throw.cont"));
+
     return;
   }
 
@@ -627,12 +629,9 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
     Builder.CreateUnreachable();
   }
 
-  // Clear the insertion point to indicate we are in unreachable code.
-  Builder.ClearInsertionPoint();
-
-  // FIXME: For now, emit a dummy basic block because expr emitters in generally
-  // are not ready to handle emitting expressions at unreachable points.
-  EnsureInsertPoint();
+  // throw is an expression, and the expression emitters expect us
+  // to leave ourselves at a valid insertion point.
+  EmitBlock(createBasicBlock("throw.cont"));
 }
 
 void CodeGenFunction::EmitStartEHSpec(const Decl *D) {

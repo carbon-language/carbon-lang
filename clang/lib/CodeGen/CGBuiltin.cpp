@@ -357,11 +357,15 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall(F));
   }
   case Builtin::BI__builtin_unreachable: {
-    if (CatchUndefined && HaveInsertPoint())
+    if (CatchUndefined)
       EmitBranch(getTrapBB());
-    Value *V = Builder.CreateUnreachable();
-    Builder.ClearInsertionPoint();
-    return RValue::get(V);
+    else
+      Builder.CreateUnreachable();
+
+    // We do need to preserve an insertion point.
+    CGF.EmitBlock(createBasicBlock("unreachable.cont"));
+
+    return RValue::get(0);
   }
       
   case Builtin::BI__builtin_powi:
@@ -629,9 +633,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                                   : Intrinsic::eh_return_i64,
                                 0, 0);
     Builder.CreateCall2(F, Int, Ptr);
-    Value *V = Builder.CreateUnreachable();
-    Builder.ClearInsertionPoint();
-    return RValue::get(V);
+    Builder.CreateUnreachable();
+
+    // We do need to preserve an insertion point.
+    CGF.EmitBlock(CGF.createBasicBlock("builtin_eh_return.cont"));
+
+    return RValue::get(0);
   }
   case Builtin::BI__builtin_unwind_init: {
     Value *F = CGM.getIntrinsic(Intrinsic::eh_unwind_init, 0, 0);
@@ -694,10 +701,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     // Call LLVM's EH longjmp, which is lightweight.
     Builder.CreateCall(CGM.getIntrinsic(Intrinsic::eh_sjlj_longjmp), Buf);
 
-    // longjmp doesn't return; mark this as unreachable
-    Value *V = Builder.CreateUnreachable();
-    Builder.ClearInsertionPoint();
-    return RValue::get(V);
+    // longjmp doesn't return; mark this as unreachable.
+    Builder.CreateUnreachable();
+
+    // We do need to preserve an insertion point.
+    CGF.EmitBlock(CGF.createBasicBlock("longjmp.cont"));
+
+    return RValue::get(0);
   }
   case Builtin::BI__sync_fetch_and_add:
   case Builtin::BI__sync_fetch_and_sub:

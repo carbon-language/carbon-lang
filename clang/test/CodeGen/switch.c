@@ -194,3 +194,20 @@ int f13(unsigned x) {
     return 0;
   }
 }
+
+// Don't delete a basic block that we want to introduce later references to.
+// This isn't really specific to switches, but it's easy to show with them.
+// rdar://problem/8837067
+int f14(int x) {
+  switch (x) {
+
+  // case range so that the case block has no predecessors
+  case 0 ... 15:
+    // any expression which doesn't introduce a new block
+    (void) 0;
+    // kaboom
+
+  default:
+    return x;
+  }
+}
