@@ -1006,7 +1006,9 @@ void ASTStmtReader::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
 
 void ASTStmtReader::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
   VisitExplicitCastExpr(E);
-  E->setOperatorLoc(ReadSourceLocation(Record, Idx));
+  SourceRange R = ReadSourceRange(Record, Idx);
+  E->Loc = R.getBegin();
+  E->RParenLoc = R.getEnd();
 }
 
 void ASTStmtReader::VisitCXXStaticCastExpr(CXXStaticCastExpr *E) {

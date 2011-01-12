@@ -172,7 +172,8 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
       CheckConstCast(*this, Ex, DestType, VK, OpRange, DestRange);
     return Owned(CXXConstCastExpr::Create(Context,
                                         DestType.getNonLValueExprType(Context),
-                                          VK, Ex, DestTInfo, OpLoc));
+                                          VK, Ex, DestTInfo, OpLoc,
+                                          Parens.getEnd()));
 
   case tok::kw_dynamic_cast: {
     CastKind Kind = CK_Dependent;
@@ -183,7 +184,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     return Owned(CXXDynamicCastExpr::Create(Context,
                                           DestType.getNonLValueExprType(Context),
                                             VK, Kind, Ex, &BasePath, DestTInfo,
-                                            OpLoc));
+                                            OpLoc, Parens.getEnd()));
   }
   case tok::kw_reinterpret_cast: {
     CastKind Kind = CK_Dependent;
@@ -192,7 +193,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     return Owned(CXXReinterpretCastExpr::Create(Context,
                                   DestType.getNonLValueExprType(Context),
                                   VK, Kind, Ex, 0,
-                                  DestTInfo, OpLoc));
+                                  DestTInfo, OpLoc, Parens.getEnd()));
   }
   case tok::kw_static_cast: {
     CastKind Kind = CK_Dependent;
@@ -203,7 +204,7 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     return Owned(CXXStaticCastExpr::Create(Context,
                                          DestType.getNonLValueExprType(Context),
                                            VK, Kind, Ex, &BasePath,
-                                           DestTInfo, OpLoc));
+                                           DestTInfo, OpLoc, Parens.getEnd()));
   }
   }
 

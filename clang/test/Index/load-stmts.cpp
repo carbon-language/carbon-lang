@@ -113,6 +113,10 @@ void considered_harmful(int x) {
     goto start_over;
 }
 
+void casts(int *ip) {
+  (void)reinterpret_cast<float *>(ip);
+}
+
 // RUN: c-index-test -test-load-source all %s | FileCheck %s
 // CHECK: load-stmts.cpp:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:13 - 1:14]
 // CHECK: load-stmts.cpp:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
@@ -221,3 +225,5 @@ void considered_harmful(int x) {
 // CHECK: load-stmts.cpp:108:2: LabelStmt=start_over Extent=[108:2 - 109:28]
 // CHECK: load-stmts.cpp:109:17: LabelRef=start_over:108:2 Extent=[109:17 - 109:27]
 // CHECK: load-stmts.cpp:113:10: LabelRef=start_over:108:2 Extent=[113:10 - 113:20]
+// CHECK: load-stmts.cpp:117:9: UnexposedExpr=ip:116:17 Extent=[117:9 - 117:38]
+

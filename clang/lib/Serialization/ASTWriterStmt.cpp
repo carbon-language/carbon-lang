@@ -984,7 +984,8 @@ void ASTStmtWriter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
 
 void ASTStmtWriter::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
   VisitExplicitCastExpr(E);
-  Writer.AddSourceLocation(E->getOperatorLoc(), Record);
+  Writer.AddSourceRange(SourceRange(E->getOperatorLoc(), E->getRParenLoc()),
+                        Record);
 }
 
 void ASTStmtWriter::VisitCXXStaticCastExpr(CXXStaticCastExpr *E) {

@@ -525,12 +525,14 @@ CXXStaticCastExpr *CXXStaticCastExpr::Create(ASTContext &C, QualType T,
                                              CastKind K, Expr *Op,
                                              const CXXCastPath *BasePath,
                                              TypeSourceInfo *WrittenTy,
-                                             SourceLocation L) {
+                                             SourceLocation L, 
+                                             SourceLocation RParenLoc) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
   void *Buffer = C.Allocate(sizeof(CXXStaticCastExpr)
                             + PathSize * sizeof(CXXBaseSpecifier*));
   CXXStaticCastExpr *E =
-    new (Buffer) CXXStaticCastExpr(T, VK, K, Op, PathSize, WrittenTy, L);
+    new (Buffer) CXXStaticCastExpr(T, VK, K, Op, PathSize, WrittenTy, L,
+                                   RParenLoc);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -547,12 +549,14 @@ CXXDynamicCastExpr *CXXDynamicCastExpr::Create(ASTContext &C, QualType T,
                                                CastKind K, Expr *Op,
                                                const CXXCastPath *BasePath,
                                                TypeSourceInfo *WrittenTy,
-                                               SourceLocation L) {
+                                               SourceLocation L, 
+                                               SourceLocation RParenLoc) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
   void *Buffer = C.Allocate(sizeof(CXXDynamicCastExpr)
                             + PathSize * sizeof(CXXBaseSpecifier*));
   CXXDynamicCastExpr *E =
-    new (Buffer) CXXDynamicCastExpr(T, VK, K, Op, PathSize, WrittenTy, L);
+    new (Buffer) CXXDynamicCastExpr(T, VK, K, Op, PathSize, WrittenTy, L,
+                                    RParenLoc);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -568,12 +572,14 @@ CXXReinterpretCastExpr *
 CXXReinterpretCastExpr::Create(ASTContext &C, QualType T, ExprValueKind VK,
                                CastKind K, Expr *Op,
                                const CXXCastPath *BasePath,
-                               TypeSourceInfo *WrittenTy, SourceLocation L) {
+                               TypeSourceInfo *WrittenTy, SourceLocation L, 
+                               SourceLocation RParenLoc) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
   void *Buffer =
     C.Allocate(sizeof(CXXReinterpretCastExpr) + PathSize * sizeof(CXXBaseSpecifier*));
   CXXReinterpretCastExpr *E =
-    new (Buffer) CXXReinterpretCastExpr(T, VK, K, Op, PathSize, WrittenTy, L);
+    new (Buffer) CXXReinterpretCastExpr(T, VK, K, Op, PathSize, WrittenTy, L,
+                                        RParenLoc);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -588,8 +594,9 @@ CXXReinterpretCastExpr::CreateEmpty(ASTContext &C, unsigned PathSize) {
 CXXConstCastExpr *CXXConstCastExpr::Create(ASTContext &C, QualType T,
                                            ExprValueKind VK, Expr *Op,
                                            TypeSourceInfo *WrittenTy,
-                                           SourceLocation L) {
-  return new (C) CXXConstCastExpr(T, VK, Op, WrittenTy, L);
+                                           SourceLocation L, 
+                                           SourceLocation RParenLoc) {
+  return new (C) CXXConstCastExpr(T, VK, Op, WrittenTy, L, RParenLoc);
 }
 
 CXXConstCastExpr *CXXConstCastExpr::CreateEmpty(ASTContext &C) {
