@@ -171,6 +171,10 @@ namespace llvm {
       r2iMap_.erase(I);
     }
 
+    SlotIndexes *getSlotIndexes() const {
+      return indexes_;
+    }
+
     SlotIndex getZeroIndex() const {
       return indexes_->getZeroIndex();
     }

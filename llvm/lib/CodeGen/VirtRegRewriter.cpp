@@ -1133,7 +1133,7 @@ bool LocalRewriter::runOnMachineFunction(MachineFunction &MF, VirtRegMap &vrm,
         << MF.getFunction()->getName() << "':\n");
   DEBUG(dbgs() << "**** Machine Instrs (NOTE! Does not include spills and"
         " reloads!) ****\n");
-  DEBUG(MF.dump());
+  DEBUG(MF.print(dbgs(), LIs->getSlotIndexes()));
 
   // Spills - Keep track of which spilled values are available in physregs
   // so that we can choose to reuse the physregs instead of emitting
@@ -1184,7 +1184,7 @@ bool LocalRewriter::runOnMachineFunction(MachineFunction &MF, VirtRegMap &vrm,
   }
 
   DEBUG(dbgs() << "**** Post Machine Instrs ****\n");
-  DEBUG(MF.dump());
+  DEBUG(MF.print(dbgs(), LIs->getSlotIndexes()));
 
   // Mark unused spill slots.
   MachineFrameInfo *MFI = MF.getFrameInfo();
