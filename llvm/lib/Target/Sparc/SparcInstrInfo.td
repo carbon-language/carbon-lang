@@ -119,9 +119,10 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeqStart,
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
-def SDT_SPCall    : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+def SDT_SPCall    : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
 def call          : SDNode<"SPISD::CALL", SDT_SPCall,
-                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                            SDNPVariadic]>;
 
 def retflag       : SDNode<"SPISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInGlue]>;
@@ -517,11 +518,11 @@ let Uses = [FCC] in
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
-let Uses = [O0, O1, O2, O3, O4, O5],
+let Uses = [O6],
     hasDelaySlot = 1, isCall = 1,
     Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
     D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in { 
-  def CALL : InstSP<(outs), (ins calltarget:$dst),
+  def CALL : InstSP<(outs), (ins calltarget:$dst, variable_ops),
                     "call $dst", []> {
     bits<30> disp;
     let op = 1;
@@ -530,11 +531,11 @@ let Uses = [O0, O1, O2, O3, O4, O5],
   
   // indirect calls
   def JMPLrr : F3_1<2, 0b111000,
-                    (outs), (ins MEMrr:$ptr),
+                    (outs), (ins MEMrr:$ptr, variable_ops),
                     "call $ptr",
                     [(call ADDRrr:$ptr)]>;
   def JMPLri : F3_2<2, 0b111000,
-                    (outs), (ins MEMri:$ptr),
+                    (outs), (ins MEMri:$ptr, variable_ops),
                     "call $ptr",
                     [(call ADDRri:$ptr)]>;
 }

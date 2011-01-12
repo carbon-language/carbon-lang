@@ -1,3 +1,4 @@
+
 //===-- SparcISelLowering.cpp - Sparc DAG Lowering Implementation ---------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -514,11 +515,22 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
 
-  std::vector<EVT> NodeTys;
-  NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Glue);    // Returns a flag for retval copy to use.
-  SDValue Ops[] = { Chain, Callee, InFlag };
-  Chain = DAG.getNode(SPISD::CALL, dl, NodeTys, Ops, InFlag.getNode() ? 3 : 2);
+  // Returns a chain & a flag for retval copy to use
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    unsigned Reg = RegsToPass[i].first;
+    if (Reg >= SP::I0 && Reg <= SP::I7)
+      Reg = Reg-SP::I0+SP::O0;
+
+    Ops.push_back(DAG.getRegister(Reg, RegsToPass[i].second.getValueType()));
+  }
+  if (InFlag.getNode())
+    Ops.push_back(InFlag);
+
+  Chain = DAG.getNode(SPISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(ArgsSize, true),
