@@ -189,10 +189,10 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     int64_t Imm = MO.getImm();
     O << '#';
     if ((Modifier && strcmp(Modifier, "lo16") == 0) ||
-        (TF & ARMII::MO_LO16))
+        (TF == ARMII::MO_LO16))
       O << ":lower16:";
     else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
-             (TF & ARMII::MO_HI16))
+             (TF == ARMII::MO_HI16))
       O << ":upper16:";
     O << Imm;
     break;
