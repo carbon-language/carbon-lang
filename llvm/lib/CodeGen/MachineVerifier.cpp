@@ -273,6 +273,11 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
     visitMachineBasicBlockBefore(MFI);
     for (MachineBasicBlock::const_iterator MBBI = MFI->begin(),
            MBBE = MFI->end(); MBBI != MBBE; ++MBBI) {
+      if (MBBI->getParent() != MFI) {
+        report("Bad instruction parent pointer", MFI);
+        *OS << "Instruction: " << *MBBI;
+        continue;
+      }
       visitMachineInstrBefore(MBBI);
       for (unsigned I = 0, E = MBBI->getNumOperands(); I != E; ++I)
         visitMachineOperand(&MBBI->getOperand(I), I);
