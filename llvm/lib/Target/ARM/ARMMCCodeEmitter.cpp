@@ -129,7 +129,7 @@ public:
                                SmallVectorImpl<MCFixup> &Fixups) const {
     ARM_AM::AMSubMode Mode = (ARM_AM::AMSubMode)MI.getOperand(OpIdx).getImm();
     switch (Mode) {
-    default: assert(0 && "Unknown addressing sub-mode!");
+    default: llvm_unreachable("Unknown addressing sub-mode!");
     case ARM_AM::da: return 0;
     case ARM_AM::ia: return 1;
     case ARM_AM::db: return 2;
@@ -648,7 +648,7 @@ static bool EvaluateAsPCRel(const MCExpr *Expr) {
   switch (Expr->getKind()) {
   case MCExpr::SymbolRef: return false;
   case MCExpr::Binary: return true;
-  default: assert(0 && "Unexpected expression type");
+  default: llvm_unreachable("Unexpected expression type");
   }
 }
 
@@ -669,7 +669,7 @@ getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
     const MCExpr *OrigExpr = MO.getExpr();
     MCFixupKind Kind;
     switch (Expr->getKind()) {
-    default: assert(0 && "Unsupported ARMFixup");
+    default: llvm_unreachable("Unsupported ARMFixup");
     case MCSymbolRefExpr::VK_ARM_HI16:
       Kind = MCFixupKind(ARM::fixup_arm_movt_hi16);
       if (EvaluateAsPCRel(OrigExpr)) 
