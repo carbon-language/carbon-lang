@@ -71,7 +71,6 @@ lldb_private::Initialize ()
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
         SymbolFileDWARF::Initialize();
-        SymbolFileDWARFDebugMap::Initialize();
         SymbolFileSymtab::Initialize();
         UnwindAssemblyProfiler_x86::Initialize();
         ArchDefaultUnwindPlan_x86::Initialize();
@@ -81,6 +80,7 @@ lldb_private::Initialize ()
         ABIMacOSX_i386::Initialize();
         ABISysV_x86_64::Initialize();
         DynamicLoaderMacOSXDYLD::Initialize();
+        SymbolFileDWARFDebugMap::Initialize();
         ItaniumABILanguageRuntime::Initialize();
         AppleObjCRuntimeV2::Initialize();
         AppleObjCRuntimeV1::Initialize();
@@ -110,7 +110,6 @@ lldb_private::Terminate ()
     ObjectContainerBSDArchive::Terminate();
     ObjectFileELF::Terminate();
     SymbolFileDWARF::Terminate();
-    SymbolFileDWARFDebugMap::Terminate();
     SymbolFileSymtab::Terminate();
     UnwindAssemblyProfiler_x86::Terminate();
     ArchDefaultUnwindPlan_x86::Terminate();
@@ -118,6 +117,7 @@ lldb_private::Terminate ()
 
 #ifdef __APPLE__
     DynamicLoaderMacOSXDYLD::Terminate();
+    SymbolFileDWARFDebugMap::Terminate();
     ItaniumABILanguageRuntime::Terminate();
     AppleObjCRuntimeV2::Terminate();
     AppleObjCRuntimeV1::Terminate();
