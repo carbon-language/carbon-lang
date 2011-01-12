@@ -945,7 +945,7 @@ public:
   /// getObjCGCAttr - Returns one of GCNone, Weak or Strong objc's
   /// garbage collection attribute.
   ///
-  Qualifiers::GC getObjCGCAttrKind(const QualType &Ty) const;
+  Qualifiers::GC getObjCGCAttrKind(QualType Ty) const;
 
   /// areCompatibleVectorTypes - Return true if the given vector types
   /// are of the same unqualified type or if they are equivalent to the same

@@ -4339,24 +4339,30 @@ bool ASTContext::isObjCNSObjectType(QualType Ty) const {
 /// getObjCGCAttr - Returns one of GCNone, Weak or Strong objc's
 /// garbage collection attribute.
 ///
-Qualifiers::GC ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
-  Qualifiers::GC GCAttrs = Qualifiers::GCNone;
-  if (getLangOptions().ObjC1 &&
-      getLangOptions().getGCMode() != LangOptions::NonGC) {
-    GCAttrs = Ty.getObjCGCAttr();
-    // Default behavious under objective-c's gc is for objective-c pointers
-    // (or pointers to them) be treated as though they were declared
-    // as __strong.
-    if (GCAttrs == Qualifiers::GCNone) {
-      if (Ty->isObjCObjectPointerType() || Ty->isBlockPointerType())
-        GCAttrs = Qualifiers::Strong;
-      else if (Ty->isPointerType())
-        return getObjCGCAttrKind(Ty->getAs<PointerType>()->getPointeeType());
-    }
-    // Non-pointers have none gc'able attribute regardless of the attribute
-    // set on them.
-    else if (!Ty->isAnyPointerType() && !Ty->isBlockPointerType())
-      return Qualifiers::GCNone;
+Qualifiers::GC ASTContext::getObjCGCAttrKind(QualType Ty) const {
+  if (getLangOptions().getGCMode() == LangOptions::NonGC)
+    return Qualifiers::GCNone;
+
+  assert(getLangOptions().ObjC1);
+  Qualifiers::GC GCAttrs = Ty.getObjCGCAttr();
+
+  // Default behaviour under objective-C's gc is for ObjC pointers
+  // (or pointers to them) be treated as though they were declared
+  // as __strong.
+  if (GCAttrs == Qualifiers::GCNone) {
+    if (Ty->isObjCObjectPointerType() || Ty->isBlockPointerType())
+      return Qualifiers::Strong;
+    else if (Ty->isPointerType())
+      return getObjCGCAttrKind(Ty->getAs<PointerType>()->getPointeeType());
+  } else {
+    // It's not valid to set GC attributes on anything that isn't a
+    // pointer.
+#ifndef NDEBUG
+    QualType CT = Ty->getCanonicalTypeInternal();
+    while (const ArrayType *AT = dyn_cast<ArrayType>(CT))
+      CT = AT->getElementType();
+    assert(CT->isAnyPointerType() || CT->isBlockPointerType());
+#endif
   }
   return GCAttrs;
 }

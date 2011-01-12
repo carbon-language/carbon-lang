@@ -310,7 +310,7 @@ distributeObjCPointerTypeAttrFromDeclarator(TypeProcessingState &state,
     case DeclaratorChunk::Pointer:
     case DeclaratorChunk::BlockPointer:
       innermost = i;
-      return;
+      continue;
 
     case DeclaratorChunk::Reference:
     case DeclaratorChunk::MemberPointer:
