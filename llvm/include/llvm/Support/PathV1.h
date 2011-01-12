@@ -394,7 +394,8 @@ namespace sys {
       /// existing symbolic link.
       /// @returns true if the pathname references an existing symlink.
       /// @brief Determines if the path is a symlink in the file system.
-      bool isSymLink() const;
+      LLVM_ATTRIBUTE_DEPRECATED(bool isSymLink() const,
+        LLVM_PATH_DEPRECATED_MSG(fs::is_symlink));
 
       /// This function determines if the path name references a readable file
       /// or directory in the file system. This function checks for

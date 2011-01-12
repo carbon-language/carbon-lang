@@ -660,6 +660,14 @@ bool is_symlink(file_status status) {
   return status.type() == file_type::symlink_file;
 }
 
+error_code is_symlink(const Twine &path, bool &result) {
+  file_status st;
+  if (error_code ec = status(path, st))
+    return ec;
+  result = is_symlink(st);
+  return success;
+}
+
 bool is_other(file_status status) {
   return exists(status) &&
          !is_regular_file(status) &&
