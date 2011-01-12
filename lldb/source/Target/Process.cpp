@@ -1080,7 +1080,7 @@ Process::EnableSoftwareBreakpoint (BreakpointSite *bp_site)
         else
             error.SetErrorString("Unable to read memory at breakpoint address.");
     }
-    if (log)
+    if (log && error.Fail())
         log->Printf ("Process::EnableSoftwareBreakpoint (site_id = %d) addr = 0x%llx -- FAILED: %s",
                      bp_site->GetID(),
                      (uint64_t)bp_addr,
@@ -2628,13 +2628,14 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             // Right now this is the only way to tell we've timed out...
             // We should interrupt the process here...
             // Not really sure what to do if Halt fails here...
-            if (log)
+            if (log) {
                 if (try_all_threads)
                     log->Printf ("Running function with timeout: %d timed out, trying with all threads enabled.",
                                  single_thread_timeout_usec);
                 else
                     log->Printf ("Running function with timeout: %d timed out, abandoning execution.", 
                                  single_thread_timeout_usec);
+            }
             
             if (exe_ctx.process->Halt().Success())
             {
