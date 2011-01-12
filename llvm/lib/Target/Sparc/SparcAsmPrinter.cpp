@@ -145,6 +145,8 @@ bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum,
   case MachineOperand::MO_Register:
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Operand is not a physical register ");
+    assert(MO.getReg() != SP::O7 && 
+           "%o7 is assigned as destination for getpcx!");
     operand = "%" + LowercaseString(getRegisterName(MO.getReg()));
     break;
   }
@@ -156,8 +158,8 @@ bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum,
   O << "\tcall\t.LLGETPC" << mfNum << '_' << bbNum << '\n' ;
 
   O << "\t  sethi\t"
-    << "%hi(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << mfNum << '_' << bbNum << ")), "  
-    << operand << '\n' ;
+    << "%hi(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << mfNum << '_' << bbNum 
+    << ")), "  << operand << '\n' ;
 
   O << ".LLGETPC" << mfNum << '_' << bbNum << ":\n" ;
   O << "\tor\t" << operand  

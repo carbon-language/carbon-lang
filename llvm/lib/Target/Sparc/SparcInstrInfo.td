@@ -205,7 +205,7 @@ class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
    : InstSP<outs, ins, asmstr, pattern>;
 
 // GETPCX for PIC
-let Defs = [O7], Uses = [O7] in {
+let Defs = [O7] in {
   def GETPCX : Pseudo<(outs getPCX:$getpcseq), (ins), "$getpcseq", [] >;
 }
 
