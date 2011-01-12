@@ -136,7 +136,7 @@ bool TemplateArgument::containsUnexpandedParameterPack() const {
 }
 
 void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
-                               ASTContext &Context) const {
+                               const ASTContext &Context) const {
   ID.AddInteger(Kind);
   switch (Kind) {
   case Null:

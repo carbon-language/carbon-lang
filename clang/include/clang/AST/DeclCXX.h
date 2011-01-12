@@ -481,12 +481,12 @@ public:
 
   bool hasDefinition() const { return DefinitionData != 0; }
 
-  static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
+  static CXXRecordDecl *Create(const ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                SourceLocation TKL = SourceLocation(),
                                CXXRecordDecl* PrevDecl=0,
                                bool DelayTypeCreation = false);
-  static CXXRecordDecl *Create(ASTContext &C, EmptyShell Empty);
+  static CXXRecordDecl *Create(const ASTContext &C, EmptyShell Empty);
 
   bool isDynamicClass() const {
     return data().Polymorphic || data().NumVBases != 0;
@@ -591,10 +591,10 @@ public:
   
   /// hasConstCopyConstructor - Determines whether this class has a
   /// copy constructor that accepts a const-qualified argument.
-  bool hasConstCopyConstructor(ASTContext &Context) const;
+  bool hasConstCopyConstructor(const ASTContext &Context) const;
 
   /// getCopyConstructor - Returns the copy constructor for this class
-  CXXConstructorDecl *getCopyConstructor(ASTContext &Context,
+  CXXConstructorDecl *getCopyConstructor(const ASTContext &Context,
                                          unsigned TypeQuals) const;
 
   /// \brief Retrieve the copy-assignment operator for this class, if available.

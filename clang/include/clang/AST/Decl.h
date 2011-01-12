@@ -1725,8 +1725,8 @@ protected:
   }
 
 public:
-  static FieldDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                           IdentifierInfo *Id, QualType T,
+  static FieldDecl *Create(const ASTContext &C, DeclContext *DC,
+                           SourceLocation L, IdentifierInfo *Id, QualType T,
                            TypeSourceInfo *TInfo, Expr *BW, bool Mutable);
 
   /// isMutable - Determines whether this field is mutable (C++ only).
@@ -2371,11 +2371,11 @@ protected:
              RecordDecl *PrevDecl, SourceLocation TKL);
 
 public:
-  static RecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
+  static RecordDecl *Create(const ASTContext &C, TagKind TK, DeclContext *DC,
                             SourceLocation L, IdentifierInfo *Id,
                             SourceLocation TKL = SourceLocation(),
                             RecordDecl* PrevDecl = 0);
-  static RecordDecl *Create(ASTContext &C, EmptyShell Empty);
+  static RecordDecl *Create(const ASTContext &C, EmptyShell Empty);
 
   const RecordDecl *getPreviousDeclaration() const {
     return cast_or_null<RecordDecl>(TagDecl::getPreviousDeclaration());

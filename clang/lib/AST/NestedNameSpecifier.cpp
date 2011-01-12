@@ -22,7 +22,7 @@
 using namespace clang;
 
 NestedNameSpecifier *
-NestedNameSpecifier::FindOrInsert(ASTContext &Context,
+NestedNameSpecifier::FindOrInsert(const ASTContext &Context,
                                   const NestedNameSpecifier &Mockup) {
   llvm::FoldingSetNodeID ID;
   Mockup.Profile(ID);
@@ -39,8 +39,8 @@ NestedNameSpecifier::FindOrInsert(ASTContext &Context,
 }
 
 NestedNameSpecifier *
-NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
-                            IdentifierInfo *II) {
+NestedNameSpecifier::Create(const ASTContext &Context,
+                            NestedNameSpecifier *Prefix, IdentifierInfo *II) {
   assert(II && "Identifier cannot be NULL");
   assert((!Prefix || Prefix->isDependent()) && "Prefix must be dependent");
 
@@ -52,8 +52,8 @@ NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
 }
 
 NestedNameSpecifier *
-NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
-                            NamespaceDecl *NS) {
+NestedNameSpecifier::Create(const ASTContext &Context,
+                            NestedNameSpecifier *Prefix, NamespaceDecl *NS) {
   assert(NS && "Namespace cannot be NULL");
   assert((!Prefix ||
           (Prefix->getAsType() == 0 && Prefix->getAsIdentifier() == 0)) &&
@@ -66,7 +66,8 @@ NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
 }
 
 NestedNameSpecifier *
-NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
+NestedNameSpecifier::Create(const ASTContext &Context,
+                            NestedNameSpecifier *Prefix,
                             bool Template, Type *T) {
   assert(T && "Type cannot be NULL");
   NestedNameSpecifier Mockup;
@@ -77,7 +78,7 @@ NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
 }
 
 NestedNameSpecifier *
-NestedNameSpecifier::Create(ASTContext &Context, IdentifierInfo *II) {
+NestedNameSpecifier::Create(const ASTContext &Context, IdentifierInfo *II) {
   assert(II && "Identifier cannot be NULL");
   NestedNameSpecifier Mockup;
   Mockup.Prefix.setPointer(0);
@@ -86,7 +87,8 @@ NestedNameSpecifier::Create(ASTContext &Context, IdentifierInfo *II) {
   return FindOrInsert(Context, Mockup);
 }
 
-NestedNameSpecifier *NestedNameSpecifier::GlobalSpecifier(ASTContext &Context) {
+NestedNameSpecifier *
+NestedNameSpecifier::GlobalSpecifier(const ASTContext &Context) {
   if (!Context.GlobalNestedNameSpecifier)
     Context.GlobalNestedNameSpecifier = new (Context, 4) NestedNameSpecifier();
   return Context.GlobalNestedNameSpecifier;

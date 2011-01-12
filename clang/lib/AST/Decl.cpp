@@ -1855,8 +1855,8 @@ bool FunctionDecl::isOutOfLine() const {
 // FieldDecl Implementation
 //===----------------------------------------------------------------------===//
 
-FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                             IdentifierInfo *Id, QualType T,
+FieldDecl *FieldDecl::Create(const ASTContext &C, DeclContext *DC,
+                             SourceLocation L, IdentifierInfo *Id, QualType T,
                              TypeSourceInfo *TInfo, Expr *BW, bool Mutable) {
   return new (C) FieldDecl(Decl::Field, DC, L, Id, T, TInfo, BW, Mutable);
 }
@@ -2000,7 +2000,7 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
 }
 
-RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
+RecordDecl *RecordDecl::Create(const ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                SourceLocation TKL, RecordDecl* PrevDecl) {
 
@@ -2009,7 +2009,7 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
   return R;
 }
 
-RecordDecl *RecordDecl::Create(ASTContext &C, EmptyShell Empty) {
+RecordDecl *RecordDecl::Create(const ASTContext &C, EmptyShell Empty) {
   return new (C) RecordDecl(Record, TTK_Struct, 0, SourceLocation(), 0, 0,
                             SourceLocation());
 }

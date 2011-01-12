@@ -53,7 +53,7 @@ class TemplateParameterList {
                         SourceLocation RAngleLoc);
 
 public:
-  static TemplateParameterList *Create(ASTContext &C,
+  static TemplateParameterList *Create(const ASTContext &C,
                                        SourceLocation TemplateLoc,
                                        SourceLocation LAngleLoc,
                                        NamedDecl **Params,
@@ -915,11 +915,11 @@ class TemplateTypeParmDecl : public TypeDecl {
   }
 
 public:
-  static TemplateTypeParmDecl *Create(ASTContext &C, DeclContext *DC,
+  static TemplateTypeParmDecl *Create(const ASTContext &C, DeclContext *DC,
                                       SourceLocation L, unsigned D, unsigned P,
                                       IdentifierInfo *Id, bool Typename,
                                       bool ParameterPack);
-  static TemplateTypeParmDecl *Create(ASTContext &C, EmptyShell Empty);
+  static TemplateTypeParmDecl *Create(const ASTContext &C, EmptyShell Empty);
 
   /// \brief Whether this template type parameter was declared with
   /// the 'typename' keyword. If not, it was declared with the 'class'
@@ -1008,7 +1008,7 @@ class NonTypeTemplateParmDecl
     
 public:
   static NonTypeTemplateParmDecl *
-  Create(ASTContext &C, DeclContext *DC, SourceLocation L, unsigned D,
+  Create(const ASTContext &C, DeclContext *DC, SourceLocation L, unsigned D,
          unsigned P, IdentifierInfo *Id, QualType T, bool ParameterPack, 
          TypeSourceInfo *TInfo);
 
@@ -1096,7 +1096,7 @@ class TemplateTemplateParmDecl
     { }
 
 public:
-  static TemplateTemplateParmDecl *Create(ASTContext &C, DeclContext *DC,
+  static TemplateTemplateParmDecl *Create(const ASTContext &C, DeclContext *DC,
                                           SourceLocation L, unsigned D,
                                           unsigned P, bool ParameterPack,
                                           IdentifierInfo *Id,

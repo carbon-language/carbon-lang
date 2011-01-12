@@ -90,7 +90,7 @@ private:
 
   /// \brief Either find or insert the given nested name specifier
   /// mockup in the given context.
-  static NestedNameSpecifier *FindOrInsert(ASTContext &Context,
+  static NestedNameSpecifier *FindOrInsert(const ASTContext &Context,
                                            const NestedNameSpecifier &Mockup);
 
 public:
@@ -99,17 +99,17 @@ public:
   /// The prefix must be dependent, since nested name specifiers
   /// referencing an identifier are only permitted when the identifier
   /// cannot be resolved.
-  static NestedNameSpecifier *Create(ASTContext &Context,
+  static NestedNameSpecifier *Create(const ASTContext &Context,
                                      NestedNameSpecifier *Prefix,
                                      IdentifierInfo *II);
 
   /// \brief Builds a nested name specifier that names a namespace.
-  static NestedNameSpecifier *Create(ASTContext &Context,
+  static NestedNameSpecifier *Create(const ASTContext &Context,
                                      NestedNameSpecifier *Prefix,
                                      NamespaceDecl *NS);
 
   /// \brief Builds a nested name specifier that names a type.
-  static NestedNameSpecifier *Create(ASTContext &Context,
+  static NestedNameSpecifier *Create(const ASTContext &Context,
                                      NestedNameSpecifier *Prefix,
                                      bool Template, Type *T);
 
@@ -119,11 +119,12 @@ public:
   /// prefix because the prefix is implied by something outside of the
   /// nested name specifier, e.g., in "x->Base::f", the "x" has a dependent
   /// type.
-  static NestedNameSpecifier *Create(ASTContext &Context, IdentifierInfo *II);
+  static NestedNameSpecifier *Create(const ASTContext &Context,
+                                     IdentifierInfo *II);
 
   /// \brief Returns the nested name specifier representing the global
   /// scope.
-  static NestedNameSpecifier *GlobalSpecifier(ASTContext &Context);
+  static NestedNameSpecifier *GlobalSpecifier(const ASTContext &Context);
 
   /// \brief Return the prefix of this nested name specifier.
   ///

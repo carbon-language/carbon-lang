@@ -309,7 +309,7 @@ public:
   /// parameters are identified by index/level rather than their
   /// declaration pointers) or the exact representation of the statement as
   /// written in the source.
-  void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+  void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context,
                bool Canonical);
 };
 

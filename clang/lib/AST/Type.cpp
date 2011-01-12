@@ -63,7 +63,7 @@ unsigned ConstantArrayType::getMaxSizeBits(ASTContext &Context) {
   return Bits;
 }
 
-DependentSizedArrayType::DependentSizedArrayType(ASTContext &Context, 
+DependentSizedArrayType::DependentSizedArrayType(const ASTContext &Context, 
                                                  QualType et, QualType can,
                                                  Expr *e, ArraySizeModifier sm,
                                                  unsigned tq,
@@ -76,7 +76,7 @@ DependentSizedArrayType::DependentSizedArrayType(ASTContext &Context,
 }
 
 void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID,
-                                      ASTContext &Context,
+                                      const ASTContext &Context,
                                       QualType ET,
                                       ArraySizeModifier SizeMod,
                                       unsigned TypeQuals,
@@ -87,7 +87,8 @@ void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID,
   E->Profile(ID, Context, true);
 }
 
-DependentSizedExtVectorType::DependentSizedExtVectorType(ASTContext &Context, 
+DependentSizedExtVectorType::DependentSizedExtVectorType(const
+                                                         ASTContext &Context,
                                                          QualType ElementType,
                                                          QualType can, 
                                                          Expr *SizeExpr, 
@@ -103,7 +104,7 @@ DependentSizedExtVectorType::DependentSizedExtVectorType(ASTContext &Context,
 
 void
 DependentSizedExtVectorType::Profile(llvm::FoldingSetNodeID &ID,
-                                     ASTContext &Context,
+                                     const ASTContext &Context,
                                      QualType ElementType, Expr *SizeExpr) {
   ID.AddPointer(ElementType.getAsOpaquePtr());
   SizeExpr->Profile(ID, Context, true);
@@ -193,7 +194,7 @@ QualType QualType::getUnqualifiedTypeSlow() const {
 /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
 /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
 /// concrete.
-QualType QualType::getDesugaredType(QualType T, ASTContext &Context) {
+QualType QualType::getDesugaredType(QualType T, const ASTContext &Context) {
   SplitQualType split = getSplitDesugaredType(T);
   return Context.getQualifiedType(split.first, split.second);
 }
@@ -996,7 +997,7 @@ DependentTemplateSpecializationType::DependentTemplateSpecializationType(
 
 void
 DependentTemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
-                                             ASTContext &Context,
+                                             const ASTContext &Context,
                                              ElaboratedTypeKeyword Keyword,
                                              NestedNameSpecifier *Qualifier,
                                              const IdentifierInfo *Name,
@@ -1187,7 +1188,7 @@ QualType TypeOfExprType::desugar() const {
 }
 
 void DependentTypeOfExprType::Profile(llvm::FoldingSetNodeID &ID,
-                                      ASTContext &Context, Expr *E) {
+                                      const ASTContext &Context, Expr *E) {
   E->Profile(ID, Context, true);
 }
 
@@ -1199,11 +1200,11 @@ DecltypeType::DecltypeType(Expr *E, QualType underlyingType, QualType can)
   UnderlyingType(underlyingType) {
 }
 
-DependentDecltypeType::DependentDecltypeType(ASTContext &Context, Expr *E)
+DependentDecltypeType::DependentDecltypeType(const ASTContext &Context, Expr *E)
   : DecltypeType(E, Context.DependentTy), Context(Context) { }
 
 void DependentDecltypeType::Profile(llvm::FoldingSetNodeID &ID,
-                                    ASTContext &Context, Expr *E) {
+                                    const ASTContext &Context, Expr *E) {
   E->Profile(ID, Context, true);
 }
 
@@ -1299,20 +1300,22 @@ TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
                                     TemplateName T,
                                     const TemplateArgument *Args,
                                     unsigned NumArgs,
-                                    ASTContext &Context) {
+                                    const ASTContext &Context) {
   T.Profile(ID);
   for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
     Args[Idx].Profile(ID, Context);
 }
 
-QualType QualifierCollector::apply(ASTContext &Context, QualType QT) const {
+QualType
+QualifierCollector::apply(const ASTContext &Context, QualType QT) const {
   if (!hasNonFastQualifiers())
     return QT.withFastQualifiers(getFastQualifiers());
 
   return Context.getQualifiedType(QT, *this);
 }
 
-QualType QualifierCollector::apply(ASTContext &Context, const Type *T) const {
+QualType
+QualifierCollector::apply(const ASTContext &Context, const Type *T) const {
   if (!hasNonFastQualifiers())
     return QualType(T, getFastQualifiers());
 

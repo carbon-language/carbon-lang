@@ -57,7 +57,7 @@ struct BaseSubobjectInfo {
 /// EmptySubobjectMap - Keeps track of which empty subobjects exist at different
 /// offsets while laying out a C++ class.
 class EmptySubobjectMap {
-  ASTContext &Context;
+  const ASTContext &Context;
   uint64_t CharWidth;
   
   /// Class - The class whose empty entries we're keeping track of.
@@ -125,7 +125,7 @@ public:
   /// any empty classes.
   CharUnits SizeOfLargestEmptySubobject;
 
-  EmptySubobjectMap(ASTContext &Context, const CXXRecordDecl *Class)
+  EmptySubobjectMap(const ASTContext &Context, const CXXRecordDecl *Class)
   : Context(Context), CharWidth(Context.getCharWidth()), Class(Class) {
       ComputeEmptySubobjectSizes();
   }
@@ -548,7 +548,7 @@ protected:
   // FIXME: Remove this and make the appropriate fields public.
   friend class clang::ASTContext;
 
-  ASTContext &Context;
+  const ASTContext &Context;
 
   EmptySubobjectMap *EmptySubobjects;
 
@@ -613,7 +613,8 @@ protected:
   /// avoid visiting virtual bases more than once.
   llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
 
-  RecordLayoutBuilder(ASTContext &Context, EmptySubobjectMap *EmptySubobjects)
+  RecordLayoutBuilder(const ASTContext &Context, EmptySubobjectMap
+                      *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), Alignment(8),
       UnpackedAlignment(Alignment), Packed(false), IsUnion(false),
       IsMac68kAlign(false), UnfilledBitsInLastByte(0), MaxFieldAlignment(0),
@@ -1609,7 +1610,8 @@ namespace {
   // This class implements layout specific to the Microsoft ABI.
   class MSRecordLayoutBuilder : public RecordLayoutBuilder {
   public:
-    MSRecordLayoutBuilder(ASTContext& Ctx, EmptySubobjectMap *EmptySubobjects) :
+    MSRecordLayoutBuilder(const ASTContext& Ctx,
+                          EmptySubobjectMap *EmptySubobjects) :
       RecordLayoutBuilder(Ctx, EmptySubobjects) {}
 
     virtual uint64_t GetVirtualPointersSize(const CXXRecordDecl *RD) const;
@@ -1628,7 +1630,8 @@ MSRecordLayoutBuilder::GetVirtualPointersSize(const CXXRecordDecl *RD) const {
 /// getASTRecordLayout - Get or compute information about the layout of the
 /// specified record (struct/union/class), which indicates its size and field
 /// position information.
-const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
+const ASTRecordLayout &
+ASTContext::getASTRecordLayout(const RecordDecl *D) const {
   D = D->getDefinition();
   assert(D && "Cannot get layout of forward declarations!");
 
@@ -1714,7 +1717,7 @@ const CXXMethodDecl *ASTContext::getKeyFunction(const CXXRecordDecl *RD) {
 /// implementation. This may differ by including synthesized ivars.
 const ASTRecordLayout &
 ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
-                          const ObjCImplementationDecl *Impl) {
+                          const ObjCImplementationDecl *Impl) const {
   assert(!D->isForwardDecl() && "Invalid interface decl!");
 
   // Look up this layout, if already laid out, return what we have.
@@ -1755,7 +1758,7 @@ static void PrintOffset(llvm::raw_ostream &OS,
 }
 
 static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
-                                const CXXRecordDecl *RD, ASTContext &C,
+                                const CXXRecordDecl *RD, const ASTContext &C,
                                 CharUnits Offset,
                                 unsigned IndentLevel,
                                 const char* Description,
@@ -1845,7 +1848,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
 }
 
 void ASTContext::DumpRecordLayout(const RecordDecl *RD,
-                                  llvm::raw_ostream &OS) {
+                                  llvm::raw_ostream &OS) const {
   const ASTRecordLayout &Info = getASTRecordLayout(RD);
 
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))

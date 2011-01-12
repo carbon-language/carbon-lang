@@ -386,7 +386,7 @@ void DeclarationName::dump() const {
   llvm::errs() << '\n';
 }
 
-DeclarationNameTable::DeclarationNameTable(ASTContext &C) : Ctx(C) {
+DeclarationNameTable::DeclarationNameTable(const ASTContext &C) : Ctx(C) {
   CXXSpecialNamesImpl = new llvm::FoldingSet<CXXSpecialName>;
   CXXLiteralOperatorNames = new llvm::FoldingSet<CXXLiteralOperatorIdName>;
 

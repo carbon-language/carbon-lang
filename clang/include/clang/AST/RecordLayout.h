@@ -82,13 +82,13 @@ class ASTRecordLayout {
 
   friend class ASTContext;
 
-  ASTRecordLayout(ASTContext &Ctx, uint64_t size, unsigned alignment,
+  ASTRecordLayout(const ASTContext &Ctx, uint64_t size, unsigned alignment,
                   unsigned datasize, const uint64_t *fieldoffsets,
                   unsigned fieldcount);
 
   // Constructor for C++ records.
   typedef CXXRecordLayoutInfo::BaseOffsetsMapTy BaseOffsetsMapTy;
-  ASTRecordLayout(ASTContext &Ctx,
+  ASTRecordLayout(const ASTContext &Ctx,
                   uint64_t size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,

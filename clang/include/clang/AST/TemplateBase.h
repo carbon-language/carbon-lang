@@ -319,7 +319,7 @@ public:
   void print(const PrintingPolicy &Policy, llvm::raw_ostream &Out) const;
              
   /// \brief Used to insert TemplateArguments into FoldingSets.
-  void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context) const;
+  void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context) const;
 };
 
 /// Location information for a TemplateArgument.

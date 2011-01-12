@@ -682,7 +682,7 @@ public:
   /// concrete.
   ///
   /// Qualifiers are left in place.
-  QualType getDesugaredType(ASTContext &Context) const {
+  QualType getDesugaredType(const ASTContext &Context) const {
     return getDesugaredType(*this, Context);
   }
 
@@ -759,7 +759,7 @@ private:
   // "static"-ize them to avoid creating temporary QualTypes in the
   // caller.
   static bool isConstant(QualType T, ASTContext& Ctx);
-  static QualType getDesugaredType(QualType T, ASTContext &Context);
+  static QualType getDesugaredType(QualType T, const ASTContext &Context);
   static SplitQualType getSplitDesugaredType(QualType T);
   static QualType IgnoreParens(QualType T);
 };
@@ -1922,7 +1922,7 @@ public:
 /// until template instantiation occurs, at which point this will
 /// become either a ConstantArrayType or a VariableArrayType.
 class DependentSizedArrayType : public ArrayType {
-  ASTContext &Context;
+  const ASTContext &Context;
 
   /// \brief An assignment expression that will instantiate to the
   /// size of the array.
@@ -1934,7 +1934,7 @@ class DependentSizedArrayType : public ArrayType {
   /// Brackets - The left and right array brackets.
   SourceRange Brackets;
 
-  DependentSizedArrayType(ASTContext &Context, QualType et, QualType can,
+  DependentSizedArrayType(const ASTContext &Context, QualType et, QualType can,
                           Expr *e, ArraySizeModifier sm, unsigned tq,
                           SourceRange brackets);
 
@@ -1966,7 +1966,7 @@ public:
             getSizeModifier(), getIndexTypeCVRQualifiers(), getSizeExpr());
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+  static void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context,
                       QualType ET, ArraySizeModifier SizeMod,
                       unsigned TypeQuals, Expr *E);
 };
@@ -1980,13 +1980,13 @@ public:
 /// }
 /// @endcode
 class DependentSizedExtVectorType : public Type, public llvm::FoldingSetNode {
-  ASTContext &Context;
+  const ASTContext &Context;
   Expr *SizeExpr;
   /// ElementType - The element type of the array.
   QualType ElementType;
   SourceLocation loc;
 
-  DependentSizedExtVectorType(ASTContext &Context, QualType ElementType,
+  DependentSizedExtVectorType(const ASTContext &Context, QualType ElementType,
                               QualType can, Expr *SizeExpr, SourceLocation loc);
 
   friend class ASTContext;
@@ -2008,7 +2008,7 @@ public:
     Profile(ID, Context, getElementType(), getSizeExpr());
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+  static void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context,
                       QualType ElementType, Expr *SizeExpr);
 };
 
@@ -2512,10 +2512,10 @@ public:
 /// of this class via TypeOfExprType nodes.
 class DependentTypeOfExprType
   : public TypeOfExprType, public llvm::FoldingSetNode {
-  ASTContext &Context;
+  const ASTContext &Context;
 
 public:
-  DependentTypeOfExprType(ASTContext &Context, Expr *E)
+  DependentTypeOfExprType(const ASTContext &Context, Expr *E)
     : TypeOfExprType(E), Context(Context) { }
 
   bool isSugared() const { return false; }
@@ -2525,7 +2525,7 @@ public:
     Profile(ID, Context, getUnderlyingExpr());
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+  static void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context,
                       Expr *E);
 };
 
@@ -2585,10 +2585,10 @@ public:
 /// canonical, dependent types, only. Clients will only see instances
 /// of this class via DecltypeType nodes.
 class DependentDecltypeType : public DecltypeType, public llvm::FoldingSetNode {
-  ASTContext &Context;
+  const ASTContext &Context;
 
 public:
-  DependentDecltypeType(ASTContext &Context, Expr *E);
+  DependentDecltypeType(const ASTContext &Context, Expr *E);
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -2597,7 +2597,7 @@ public:
     Profile(ID, Context, getUnderlyingExpr());
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+  static void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context,
                       Expr *E);
 };
 
@@ -2946,14 +2946,14 @@ public:
   }
   QualType desugar() const { return getCanonicalTypeInternal(); }
 
-  void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Ctx) {
+  void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Ctx) {
     Profile(ID, Template, getArgs(), NumArgs, Ctx);
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, TemplateName T,
                       const TemplateArgument *Args,
                       unsigned NumArgs,
-                      ASTContext &Context);
+                      const ASTContext &Context);
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == TemplateSpecialization;
@@ -3280,12 +3280,12 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
-  void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context) {
+  void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context) {
     Profile(ID, Context, getKeyword(), NNS, Name, NumArgs, getArgs());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID,
-                      ASTContext &Context,
+                      const ASTContext &Context,
                       ElaboratedTypeKeyword Keyword,
                       NestedNameSpecifier *Qualifier,
                       const IdentifierInfo *Name,
@@ -3696,10 +3696,10 @@ public:
   }
 
   /// Apply the collected qualifiers to the given type.
-  QualType apply(ASTContext &Context, QualType QT) const;
+  QualType apply(const ASTContext &Context, QualType QT) const;
 
   /// Apply the collected qualifiers to the given type.
-  QualType apply(ASTContext &Context, const Type* T) const;
+  QualType apply(const ASTContext &Context, const Type* T) const;
 };
 
 

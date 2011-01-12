@@ -724,7 +724,7 @@ void CallExpr::setNumArgs(ASTContext& C, unsigned NumArgs) {
 
 /// isBuiltinCall - If this is a call to a builtin, return the builtin ID.  If
 /// not, return 0.
-unsigned CallExpr::isBuiltinCall(ASTContext &Context) const {
+unsigned CallExpr::isBuiltinCall(const ASTContext &Context) const {
   // All simple function calls (e.g. func()) are implicitly cast to pointer to
   // function. As a result, we try and obtain the DeclRefExpr from the
   // ImplicitCastExpr.
@@ -2453,7 +2453,7 @@ ObjCInterfaceDecl *ObjCMessageExpr::getReceiverInterface() const {
   return 0;
 }
 
-bool ChooseExpr::isConditionTrue(ASTContext &C) const {
+bool ChooseExpr::isConditionTrue(const ASTContext &C) const {
   return getCond()->EvaluateAsInt(C) != 0;
 }
 

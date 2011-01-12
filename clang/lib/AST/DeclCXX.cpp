@@ -48,9 +48,9 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
     DefinitionData(PrevDecl ? PrevDecl->DefinitionData : 0),
     TemplateOrInstantiation() { }
 
-CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
-                                     SourceLocation L, IdentifierInfo *Id,
-                                     SourceLocation TKL,
+CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, TagKind TK,
+                                     DeclContext *DC, SourceLocation L,
+                                     IdentifierInfo *Id, SourceLocation TKL,
                                      CXXRecordDecl* PrevDecl,
                                      bool DelayTypeCreation) {
   CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TK, DC, L, Id,
@@ -62,7 +62,7 @@ CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
   return R;
 }
 
-CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, EmptyShell Empty) {
+CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, EmptyShell Empty) {
   return new (C) CXXRecordDecl(CXXRecord, TTK_Struct, 0, SourceLocation(), 0, 0,
                                SourceLocation());
 }
@@ -214,7 +214,7 @@ bool CXXRecordDecl::hasAnyDependentBases() const {
   return !forallBases(SawBase, 0);
 }
 
-bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
+bool CXXRecordDecl::hasConstCopyConstructor(const ASTContext &Context) const {
   return getCopyConstructor(Context, Qualifiers::Const) != 0;
 }
 
@@ -241,7 +241,7 @@ GetBestOverloadCandidateSimple(
   return Cands[Best].first;
 }
 
-CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
+CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(const ASTContext &Context,
                                                       unsigned TypeQuals) const{
   QualType ClassType
     = Context.getTypeDeclType(const_cast<CXXRecordDecl*>(this));
