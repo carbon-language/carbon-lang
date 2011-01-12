@@ -195,6 +195,11 @@ public:
     return Builder.CreateBitCast(V, ConvertType(E->getType()));
   }
 
+  Value *VisitSizeOfPackExpr(SizeOfPackExpr *E) {
+    return llvm::ConstantInt::get(ConvertType(E->getType()), 
+                                  E->getPackLength());
+  }
+    
   // l-values.
   Value *VisitDeclRefExpr(DeclRefExpr *E) {
     Expr::EvalResult Result;
