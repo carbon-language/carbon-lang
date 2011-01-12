@@ -636,6 +636,9 @@
 		1ACB57E31105820D0047B991 /* VerifyDiagnosticsClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VerifyDiagnosticsClient.cpp; path = lib/Frontend/VerifyDiagnosticsClient.cpp; sourceTree = "<group>"; };
 		1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiateDecl.cpp; path = lib/Sema/SemaTemplateInstantiateDecl.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AE4EE3B103B89CA00888A23 /* TreeTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TreeTransform.h; path = lib/Sema/TreeTransform.h; sourceTree = "<group>"; tabWidth = 2; };
+		1AECEFAF12DE387800F1D539 /* AnalysisContext.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AnalysisContext.h; path = clang/Analysis/AnalysisContext.h; sourceTree = "<group>"; tabWidth = 2; };
+		1AECEFB012DE387800F1D539 /* CFG.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CFG.h; path = clang/Analysis/CFG.h; sourceTree = "<group>"; tabWidth = 2; };
+		1AECEFB112DE387800F1D539 /* CFGStmtMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CFGStmtMap.h; path = clang/Analysis/CFGStmtMap.h; sourceTree = "<group>"; tabWidth = 2; };
 		1AF1B50E109A4FB800AFAFAC /* CGException.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGException.cpp; path = lib/CodeGen/CGException.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AFDD8701161085D00AE030A /* ASTMerge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTMerge.cpp; path = lib/Frontend/ASTMerge.cpp; sourceTree = "<group>"; };
 		1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGRecordLayoutBuilder.cpp; path = lib/CodeGen/CGRecordLayoutBuilder.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -667,7 +670,6 @@
 		35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiate.cpp; path = lib/Sema/SemaTemplateInstantiate.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaOverload.cpp; path = lib/Sema/SemaOverload.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3558F76F0E267C9A00A5B0DF /* Store.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Store.h; path = clang/Analysis/PathSensitive/Store.h; sourceTree = "<group>"; };
-		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
 		35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = SourceLocation.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		357EA27C0F2526F300439B60 /* SemaLookup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaLookup.cpp; path = lib/Sema/SemaLookup.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35847BE30CC7DB9000C40FFF /* StmtIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = StmtIterator.h; path = clang/AST/StmtIterator.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -680,8 +682,7 @@
 		35A057D20EAE2D2B0069249F /* SVals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SVals.h; path = clang/Analysis/PathSensitive/SVals.h; sourceTree = "<group>"; };
 		35A3E7000DD3874400757F74 /* CGDebugInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGDebugInfo.cpp; path = lib/CodeGen/CGDebugInfo.cpp; sourceTree = "<group>"; tabWidth = 2; wrapsLines = 1; };
 		35A3E7010DD3874400757F74 /* CGDebugInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CGDebugInfo.h; path = lib/CodeGen/CGDebugInfo.h; sourceTree = "<group>"; tabWidth = 2; };
-		35A8FCF60D9B4ADD001C2F97 /* ProgramPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProgramPoint.h; path = clang/Analysis/ProgramPoint.h; sourceTree = "<group>"; };
-		35A8FCF70D9B4ADD001C2F97 /* PathDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PathDiagnostic.h; path = clang/Analysis/PathDiagnostic.h; sourceTree = "<group>"; };
+		35A8FCF60D9B4ADD001C2F97 /* ProgramPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ProgramPoint.h; path = clang/Analysis/ProgramPoint.h; sourceTree = "<group>"; tabWidth = 2; };
 		35B820740ECB811A0020BEC0 /* PreprocessorLexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreprocessorLexer.h; sourceTree = "<group>"; };
 		35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ASTConsumer.h; path = clang/AST/ASTConsumer.h; sourceTree = "<group>"; tabWidth = 2; };
 		35CEA05A0DF9E82700A41296 /* ExprObjC.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ExprObjC.h; path = clang/AST/ExprObjC.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1040,7 +1041,7 @@
 		DEF165230F8D46980098507F /* Phases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Phases.h; path = clang/Driver/Phases.h; sourceTree = "<group>"; };
 		DEF165240F8D46980098507F /* DriverDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DriverDiagnostic.h; path = clang/Driver/DriverDiagnostic.h; sourceTree = "<group>"; };
 		DEF169220F9645960098507F /* FrontendDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FrontendDiagnostic.h; path = clang/Frontend/FrontendDiagnostic.h; sourceTree = "<group>"; };
-		DEF1692C0F9645BF0098507F /* AnalysisDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisDiagnostic.h; path = clang/Analysis/AnalysisDiagnostic.h; sourceTree = "<group>"; };
+		DEF1692C0F9645BF0098507F /* AnalysisDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AnalysisDiagnostic.h; path = clang/Analysis/AnalysisDiagnostic.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEF16BE40FA13A5B0098507F /* TypeNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = TypeNodes.def; path = clang/AST/TypeNodes.def; sourceTree = "<group>"; tabWidth = 2; };
 		DEF16BE50FA13A650098507F /* TypeOrdering.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TypeOrdering.h; path = clang/AST/TypeOrdering.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = InternalsManual.html; path = docs/InternalsManual.html; sourceTree = "<group>"; };
@@ -1243,10 +1244,11 @@
 		356EF9AF0C8F7DA4006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				1AECEFAF12DE387800F1D539 /* AnalysisContext.h */,
+				1AECEFB012DE387800F1D539 /* CFG.h */,
+				1AECEFB112DE387800F1D539 /* CFGStmtMap.h */,
 				DEF1692C0F9645BF0098507F /* AnalysisDiagnostic.h */,
 				35A8FCF60D9B4ADD001C2F97 /* ProgramPoint.h */,
-				35A8FCF70D9B4ADD001C2F97 /* PathDiagnostic.h */,
-				355CF6820C90A8B600A08AA3 /* LocalCheckers.h */,
 				35F9B1540D1C6AFC00DDFDAE /* Analyses */,
 				35D1DDCF0CA9C6BE0096E967 /* FlowSensitive */,
 				DE4121130D7F1B980080F80A /* PathSensitive */,
@@ -2063,6 +2065,7 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
 			compatibilityVersion = "Xcode 2.4";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
