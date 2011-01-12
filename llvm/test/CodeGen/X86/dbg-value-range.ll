@@ -1,5 +1,4 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin < %s | FileCheck %s
-; XFAIL: *
 
 %struct.a = type { i32 }
 

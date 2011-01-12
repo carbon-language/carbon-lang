@@ -61,6 +61,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 ; CHECK-NEXT: .short  1
 ; CHECK-NEXT: .byte   85
 ; CHECK-NEXT: .quad   Ltmp3
-; CHECK-NEXT: .quad   Lfunc_end
+; CHECK-NEXT: .quad   Ltmp6
 ; CHECK-NEXT: .short  1
 ; CHECK-NEXT: .byte   83
