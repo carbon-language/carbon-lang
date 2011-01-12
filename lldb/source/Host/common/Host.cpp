@@ -620,9 +620,11 @@ Host::GetProgramFileSpec ()
         }
 #elif defined (__linux__)
         char exe_path[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path));
-        if (len >= 0)
+        ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
+        if (len > 0) {
+            exe_path[len] = 0;
             g_program_filespec = FileSpec(exe_path, true);
+        }
 #elif defined (__FreeBSD__)
         int exe_path_mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, getpid() };
         size_t exe_path_size;
