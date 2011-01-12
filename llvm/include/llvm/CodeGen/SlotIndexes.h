@@ -625,6 +625,9 @@ namespace llvm {
     SlotIndex insertMachineInstrInMaps(MachineInstr *mi,
                                         bool *deferredRenumber = 0) {
       assert(mi2iMap.find(mi) == mi2iMap.end() && "Instr already indexed.");
+      // Numbering DBG_VALUE instructions could cause code generation to be
+      // affected by debug information.
+      assert(!mi->isDebugValue() && "Cannot number DBG_VALUE instructions.");
 
       MachineBasicBlock *mbb = mi->getParent();
 
