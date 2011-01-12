@@ -194,13 +194,13 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // be deleted from the reference counting scheme.
   DominatorTree& DT = getAnalysis<DominatorTree>();
   DominanceFrontier* DF = getAnalysisIfAvailable<DominanceFrontier>();
-  SmallPtrSet<DomTreeNode*, 8> ChildNodes;
+  SmallVector<DomTreeNode*, 8> ChildNodes;
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI) {
     // Move all of the block's children to be children of the preheader, which
     // allows us to remove the domtree entry for the block.
-    ChildNodes.insert(DT[*LI]->begin(), DT[*LI]->end());
-    for (SmallPtrSet<DomTreeNode*, 8>::iterator DI = ChildNodes.begin(),
+    ChildNodes.insert(ChildNodes.begin(), DT[*LI]->begin(), DT[*LI]->end());
+    for (SmallVector<DomTreeNode*, 8>::iterator DI = ChildNodes.begin(),
          DE = ChildNodes.end(); DI != DE; ++DI) {
       DT.changeImmediateDominator(*DI, DT[preheader]);
       if (DF) DF->changeImmediateDominator((*DI)->getBlock(), preheader, &DT);
