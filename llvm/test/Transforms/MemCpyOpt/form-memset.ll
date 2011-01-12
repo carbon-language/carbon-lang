@@ -202,10 +202,9 @@ entry:
   %arrayidx = getelementptr inbounds i32* %P, i64 1
   store i32 0, i32* %arrayidx, align 4
   ret void
-  ; FIXME: Disabled.
 ; CHECK: @test5
-; CHECK: store
-; CHECK-NOT: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
+; CHECK-NOT: store
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
 }
 
 ;; Memset followed by memset.
@@ -218,6 +217,6 @@ entry:
   tail call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 12, i32 1, i1 false)
   ret void
 ; CHECK: @test6
-; CHECK-NOT: call void @llvm.memset.p0i8.i64(i8* %2, i8 0, i64 24, i32 1, i1 false)
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %2, i8 0, i64 24, i32 1, i1 false)
 }
 
