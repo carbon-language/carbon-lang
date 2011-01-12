@@ -568,7 +568,8 @@ UserValue::rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI) {
     if (VRM.isAssignedReg(VirtReg) &&
         TargetRegisterInfo::isPhysicalRegister(VRM.getPhys(VirtReg))) {
       Loc.substPhysReg(VRM.getPhys(VirtReg), TRI);
-    } else if (VRM.getStackSlot(VirtReg) != VirtRegMap::NO_STACK_SLOT) {
+    } else if (VRM.getStackSlot(VirtReg) != VirtRegMap::NO_STACK_SLOT &&
+               VRM.isSpillSlotUsed(VRM.getStackSlot(VirtReg))) {
       // FIXME: Translate SubIdx to a stackslot offset.
       Loc = MachineOperand::CreateFI(VRM.getStackSlot(VirtReg));
     } else {
