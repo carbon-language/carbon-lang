@@ -743,6 +743,8 @@ const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case SPISD::ITOF:       return "SPISD::ITOF";
   case SPISD::CALL:       return "SPISD::CALL";
   case SPISD::RET_FLAG:   return "SPISD::RET_FLAG";
+  case SPISD::GLOBAL_BASE_REG: return "SPISD::GLOBAL_BASE_REG";
+  case SPISD::FLUSH:      return "SPISD::FLUSH";
   }
 }
 
@@ -990,13 +992,82 @@ static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) {
 }
 
 
+static SDValue getFLUSH(SDValue Op, SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue Chain = DAG.getNode(SPISD::FLUSH,
+                              dl, MVT::Other, DAG.getEntryNode());
+  return Chain;
+}
+
+static SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) {
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MFI->setFrameAddressIsTaken(true);
+
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
+  unsigned FrameReg = SP::I6;
+
+  uint64_t depth = Op.getConstantOperandVal(0);
+
+  SDValue FrameAddr;
+  if (depth == 0) 
+    FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, FrameReg, VT);
+  else {
+    // flush first to make sure the windowed registers' values are in stack
+    SDValue Chain = getFLUSH(Op, DAG);
+    FrameAddr = DAG.getCopyFromReg(Chain, dl, FrameReg, VT);
+    
+    for (uint64_t i = 0; i != depth; ++i) {
+      SDValue Ptr = DAG.getNode(ISD::ADD, 
+                                dl, MVT::i32,
+                                FrameAddr, DAG.getIntPtrConstant(56));
+      FrameAddr = DAG.getLoad(MVT::i32, dl, 
+                              Chain, 
+                              Ptr,
+                              MachinePointerInfo(), false, false, 0);
+    }
+  }
+  return FrameAddr;
+}
+
+static SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) {
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MFI->setReturnAddressIsTaken(true);
+
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
+  unsigned RetReg = SP::I7;
+
+  uint64_t depth = Op.getConstantOperandVal(0);
+
+  SDValue RetAddr;
+  if (depth == 0) 
+    RetAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, RetReg, VT);
+  else {
+    // flush first to make sure the windowed registers' values are in stack
+    SDValue Chain = getFLUSH(Op, DAG);
+    RetAddr = DAG.getCopyFromReg(Chain, dl, SP::I6, VT);
+    
+    for (uint64_t i = 0; i != depth; ++i) {
+      SDValue Ptr = DAG.getNode(ISD::ADD, 
+                                dl, MVT::i32,
+                                RetAddr, 
+                                DAG.getIntPtrConstant((i == depth-1)?60:56));
+      RetAddr = DAG.getLoad(MVT::i32, dl, 
+                            Chain, 
+                            Ptr,
+                            MachinePointerInfo(), false, false, 0);
+    }
+  }
+  return RetAddr;
+}
+
 SDValue SparcTargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Should not custom lower this!");
-  // Frame & Return address.  Currently unimplemented
-  case ISD::RETURNADDR: return SDValue();
-  case ISD::FRAMEADDR:  return SDValue();
+  case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
+  case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
   case ISD::GlobalTLSAddress:
     llvm_unreachable("TLS not implemented for Sparc.");
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);

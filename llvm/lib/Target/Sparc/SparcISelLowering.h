@@ -36,7 +36,8 @@ namespace llvm {
 
       CALL,        // A call instruction.
       RET_FLAG,    // Return with a flag operand.
-      GLOBAL_BASE_REG // Global base reg for PIC
+      GLOBAL_BASE_REG, // Global base reg for PIC
+      FLUSH        // FLUSH registers to stack
     };
   }
 

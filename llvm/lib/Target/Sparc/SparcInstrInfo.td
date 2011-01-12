@@ -127,6 +127,9 @@ def call          : SDNode<"SPISD::CALL", SDT_SPCall,
 def retflag       : SDNode<"SPISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInGlue]>;
 
+def flush         : SDNode<"SPISD::FLUSH", SDTNone,
+                           [SDNPHasChain]>;
+
 def getPCX        : Operand<i32> {
   let PrintMethod = "printGetPCX";
 }  
@@ -217,6 +220,12 @@ def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
                             "!ADJCALLSTACKUP $amt1",
                             [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
+
+let hasSideEffects = 1, mayStore = 1 in
+  let rs2 = 0 in
+    def FLUSH : F3_1<0b10, 0b101011, (outs), (ins),
+                     "flushw",
+                     [(flush)]>;
 
 // FpMOVD/FpNEGD/FpABSD - These are lowered to single-precision ops by the 
 // fpmover pass.
