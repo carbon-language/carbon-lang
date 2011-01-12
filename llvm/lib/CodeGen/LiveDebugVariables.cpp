@@ -565,7 +565,8 @@ UserValue::rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI) {
         !TargetRegisterInfo::isVirtualRegister(Loc.getReg()))
       continue;
     unsigned VirtReg = Loc.getReg();
-    if (VRM.isAssignedReg(VirtReg)) {
+    if (VRM.isAssignedReg(VirtReg) &&
+        TargetRegisterInfo::isPhysicalRegister(VRM.getPhys(VirtReg))) {
       Loc.substPhysReg(VRM.getPhys(VirtReg), TRI);
     } else if (VRM.getStackSlot(VirtReg) != VirtRegMap::NO_STACK_SLOT) {
       // FIXME: Translate SubIdx to a stackslot offset.
