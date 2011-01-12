@@ -1325,8 +1325,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
 
   std::string Lib64 = "lib";
   llvm::sys::Path Lib64Path("/lib64");
+  bool Symlink;
   if (!llvm::sys::fs::exists(Lib64Path.str(), Exists) && Exists &&
-      !Lib64Path.isSymLink())
+      (llvm::sys::fs::is_symlink(Lib64Path.str(), Symlink) || !Symlink))
     Lib64 = "lib64";
 
   std::string GccTriple = "";
