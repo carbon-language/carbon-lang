@@ -257,6 +257,7 @@ public:
   LinuxTargetInfo(const std::string& triple)
     : OSTargetInfo<Target>(triple) {
     this->UserLabelPrefix = "";
+    this->WIntType = TargetInfo::UnsignedInt;
   }
 };
 
