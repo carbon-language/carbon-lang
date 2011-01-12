@@ -3331,7 +3331,13 @@ public:
   /// expansion.
   TypeSourceInfo *CheckPackExpansion(TypeSourceInfo *Pattern,
                                      SourceLocation EllipsisLoc);
-  
+
+  /// \brief Construct a pack expansion type from the pattern of the pack
+  /// expansion.
+  QualType CheckPackExpansion(QualType Pattern,
+                              SourceRange PatternRange,
+                              SourceLocation EllipsisLoc);
+
   /// \brief Invoked when parsing an expression followed by an ellipsis, which
   /// creates a pack expansion.
   ///

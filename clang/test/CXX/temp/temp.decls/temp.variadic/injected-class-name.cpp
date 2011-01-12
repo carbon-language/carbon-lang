@@ -39,3 +39,21 @@ template<typename T, typename ...Types>
 template<typename ...InnerTypes>
 template<typename ...ReallyInner>
 void X0<T, T, Types...>::Inner<InnerTypes...>::f4() { }
+
+namespace rdar8848837 {
+  // Out-of-line definitions that cause rebuilding in the current
+  // instantiation.
+  template<typename F> struct X;
+
+  template<typename R, typename ...ArgTypes>
+  struct X<R(ArgTypes...)> {
+    X<R(ArgTypes...)> f();
+  };
+
+  template<typename R, typename ...ArgTypes>
+  X<R(ArgTypes...)> X<R(ArgTypes...)>::f() { return *this; }
+
+
+  X<int(float, double)> xif;
+
+}
