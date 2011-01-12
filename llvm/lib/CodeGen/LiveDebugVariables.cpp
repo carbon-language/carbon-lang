@@ -405,7 +405,7 @@ void UserValue::extendDef(SlotIndex Idx, unsigned LocNo,
     SlotIndex Start = Todo.pop_back_val();
     MachineBasicBlock *MBB = LIS.getMBBFromIndex(Start);
     SlotIndex Stop = LIS.getMBBEndIdx(MBB);
-    LocMap::iterator I = locInts.find(Idx);
+    LocMap::iterator I = locInts.find(Start);
 
     // Limit to VNI's live range.
     bool ToEnd = true;
