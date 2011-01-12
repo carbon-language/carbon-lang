@@ -626,6 +626,32 @@ getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
   return Binary;
 }
 
+// FIXME: This routine needs to handle more MCExpr types
+static const MCSymbolRefExpr *FindLHSymExpr(const MCExpr *E) {
+  // recurse left child until finding a MCSymbolRefExpr
+  switch (E->getKind()) {
+  case MCExpr::SymbolRef:
+    return cast<MCSymbolRefExpr>(E);
+  case MCExpr::Binary:
+    return FindLHSymExpr(cast<MCBinaryExpr>(E)->getLHS());
+  default:
+    return NULL;
+  }
+}
+
+// FIXME: This routine assumes that a binary
+// expression will always result in a PCRel expression
+// In reality, its only true if one or more subexpressions
+// is itself a PCRel (i.e. "." in asm or some other pcrel construct)
+// but this is good enough for now.
+static bool EvaluateAsPCRel(const MCExpr *Expr) {
+  switch (Expr->getKind()) {
+  case MCExpr::SymbolRef: return false;
+  case MCExpr::Binary: return true;
+  default: assert(0 && "Unexpected expression type");
+  }
+}
+
 uint32_t ARMMCCodeEmitter::
 getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
                   SmallVectorImpl<MCFixup> &Fixups) const {
@@ -635,18 +661,27 @@ getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
   if (MO.isImm()) {
     return static_cast<unsigned>(MO.getImm());
   } else if (const MCSymbolRefExpr *Expr =
-             dyn_cast<MCSymbolRefExpr>(MO.getExpr())) {
+             FindLHSymExpr(MO.getExpr())) {
+    // FIXME: :lower16: and :upper16: should be applicable to
+    // to whole expression, not just symbolrefs
+    // Until that change takes place, this hack is required to
+    // generate working code.
+    const MCExpr *OrigExpr = MO.getExpr();
     MCFixupKind Kind;
     switch (Expr->getKind()) {
     default: assert(0 && "Unsupported ARMFixup");
     case MCSymbolRefExpr::VK_ARM_HI16:
       Kind = MCFixupKind(ARM::fixup_arm_movt_hi16);
+      if (EvaluateAsPCRel(OrigExpr)) 
+        Kind = MCFixupKind(ARM::fixup_arm_movt_hi16_pcrel);
       break;
     case MCSymbolRefExpr::VK_ARM_LO16:
       Kind = MCFixupKind(ARM::fixup_arm_movw_lo16);
+      if (EvaluateAsPCRel(OrigExpr)) 
+        Kind = MCFixupKind(ARM::fixup_arm_movw_lo16_pcrel);
       break;
     }
-    Fixups.push_back(MCFixup::Create(0, Expr, Kind));
+    Fixups.push_back(MCFixup::Create(0, OrigExpr, Kind));
     return 0;
   };
   llvm_unreachable("Unsupported MCExpr type in MCOperand!");

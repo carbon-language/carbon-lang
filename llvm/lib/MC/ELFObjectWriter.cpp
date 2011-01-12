@@ -1268,6 +1268,9 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
   case ELF::SHT_NOTE:
   case ELF::SHT_NULL:
   case ELF::SHT_ARM_ATTRIBUTES:
+  case ELF::SHT_INIT_ARRAY:
+  case ELF::SHT_FINI_ARRAY:
+  case ELF::SHT_PREINIT_ARRAY:
     // Nothing to do.
     break;
 
@@ -1490,6 +1493,13 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
       default:
         Type = ELF::R_ARM_CALL; break;
       } break;
+    case ARM::fixup_arm_movt_hi16:
+    case ARM::fixup_arm_movt_hi16_pcrel:
+      Type = ELF::R_ARM_MOVT_PREL; break;
+    case ARM::fixup_arm_movw_lo16:
+    case ARM::fixup_arm_movw_lo16_pcrel:
+      Type = ELF::R_ARM_MOVW_PREL_NC; break;
+
     }
   } else {
     switch ((unsigned)Fixup.getKind()) {

@@ -78,6 +78,8 @@ public:
 { "fixup_arm_thumb_bcc",     1,             8,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_movt_hi16",     0,            16,  0 },
 { "fixup_arm_movw_lo16",     0,            16,  0 },
+{ "fixup_arm_movt_hi16_pcrel", 0,          16,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_movw_lo16_pcrel", 0,          16,  MCFixupKindInfo::FKF_IsPCRel },
     };
 
     if (Kind < FirstTargetFixupKind)
@@ -156,7 +158,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case FK_Data_4:
     return Value;
   case ARM::fixup_arm_movt_hi16:
-  case ARM::fixup_arm_movw_lo16: {
+  case ARM::fixup_arm_movw_lo16:
+  case ARM::fixup_arm_movt_hi16_pcrel:
+  case ARM::fixup_arm_movw_lo16_pcrel: {
     unsigned Hi4 = (Value & 0xF000) >> 12;
     unsigned Lo12 = Value & 0x0FFF;
     // inst{19-16} = Hi4;
