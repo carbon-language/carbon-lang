@@ -68,7 +68,7 @@ LPCRELL0:
 
 //===---------------------------------------------------------------------===//
 
-We compiles the following:
+We compile the following:
 
 define i16 @func_entry_2E_ce(i32 %i) {
         switch i32 %i, label %bb12.exitStub [
@@ -246,3 +246,22 @@ Thumb2.
 Rather than having tBR_JTr print a ".align 2" and constant island pass pad it,
 add a target specific ALIGN instruction instead. That way, GetInstSizeInBytes
 won't have to over-estimate. It can also be used for loop alignment pass.
+
+//===---------------------------------------------------------------------===//
+
+We generate conditional code for icmp when we don't need to. This code:
+
+  int foo(int s) {
+    return s == 1;
+  }
+
+produces:
+
+foo:
+        cmp     r0, #1
+        mov.w   r0, #0
+        it      eq
+        moveq   r0, #1
+        bx      lr
+
+when it could use subs + adcs. This is GCC PR46975.
