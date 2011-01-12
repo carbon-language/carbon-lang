@@ -1056,6 +1056,7 @@ class LocalRewriter : public VirtRegRewriter {
   const TargetRegisterInfo *TRI;
   const TargetInstrInfo *TII;
   VirtRegMap *VRM;
+  LiveIntervals *LIs;
   BitVector AllocatableRegs;
   DenseMap<MachineInstr*, unsigned> DistanceMap;
   DenseMap<int, SmallVector<MachineInstr*,4> > Slot2DbgValues;
@@ -1068,6 +1069,11 @@ public:
                             LiveIntervals* LIs);
 
 private:
+  void EraseInstr(MachineInstr *MI) {
+    VRM->RemoveMachineInstrFromMaps(MI);
+    LIs->RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
+  }
 
   bool OptimizeByUnfold2(unsigned VirtReg, int SS,
                          MachineBasicBlock::iterator &MII,
@@ -1123,11 +1129,12 @@ private:
 }
 
 bool LocalRewriter::runOnMachineFunction(MachineFunction &MF, VirtRegMap &vrm,
-                                         LiveIntervals* LIs) {
+                                         LiveIntervals* lis) {
   MRI = &MF.getRegInfo();
   TRI = MF.getTarget().getRegisterInfo();
   TII = MF.getTarget().getInstrInfo();
   VRM = &vrm;
+  LIs = lis;
   AllocatableRegs = TRI->getAllocatableSet(MF);
   DEBUG(dbgs() << "\n**** Local spiller rewriting function '"
         << MF.getFunction()->getName() << "':\n");
@@ -1196,10 +1203,8 @@ bool LocalRewriter::runOnMachineFunction(MachineFunction &MF, VirtRegMap &vrm,
         MFI->RemoveStackObject(SS);
         for (unsigned j = 0, ee = DbgValues.size(); j != ee; ++j) {
           MachineInstr *DVMI = DbgValues[j];
-          MachineBasicBlock *DVMBB = DVMI->getParent();
           DEBUG(dbgs() << "Removing debug info referencing FI#" << SS << '\n');
-          VRM->RemoveMachineInstrFromMaps(DVMI);
-          DVMBB->erase(DVMI);
+          EraseInstr(DVMI);
         }
         ++NumDSS;
       }
@@ -1279,8 +1284,7 @@ OptimizeByUnfold2(unsigned VirtReg, int SS,
   VRM->transferRestorePts(&MI, NewMIs[0]);
   MII = MBB->insert(MII, NewMIs[0]);
   InvalidateKills(MI, TRI, RegKills, KillOps);
-  VRM->RemoveMachineInstrFromMaps(&MI);
-  MBB->erase(&MI);
+  EraseInstr(&MI);
   ++NumModRefUnfold;
 
   // Unfold next instructions that fold the same SS.
@@ -1295,8 +1299,7 @@ OptimizeByUnfold2(unsigned VirtReg, int SS,
     VRM->transferRestorePts(&NextMI, NewMIs[0]);
     MBB->insert(NextMII, NewMIs[0]);
     InvalidateKills(NextMI, TRI, RegKills, KillOps);
-    VRM->RemoveMachineInstrFromMaps(&NextMI);
-    MBB->erase(&NextMI);
+    EraseInstr(&NextMI);
     ++NumModRefUnfold;
     // Skip over dbg_value instructions.
     while (NextMII != MBB->end() && NextMII->isDebugValue())
@@ -1423,8 +1426,7 @@ OptimizeByUnfold(MachineBasicBlock::iterator &MII,
         VRM->virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
         MII = FoldedMI;
         InvalidateKills(MI, TRI, RegKills, KillOps);
-        VRM->RemoveMachineInstrFromMaps(&MI);
-        MBB->erase(&MI);
+        EraseInstr(&MI);
         return true;
       }
     }
@@ -1530,14 +1532,11 @@ CommuteToFoldReload(MachineBasicBlock::iterator &MII,
 
     // Delete all 3 old instructions.
     InvalidateKills(*ReloadMI, TRI, RegKills, KillOps);
-    VRM->RemoveMachineInstrFromMaps(ReloadMI);
-    MBB->erase(ReloadMI);
+    EraseInstr(ReloadMI);
     InvalidateKills(*DefMI, TRI, RegKills, KillOps);
-    VRM->RemoveMachineInstrFromMaps(DefMI);
-    MBB->erase(DefMI);
+    EraseInstr(DefMI);
     InvalidateKills(MI, TRI, RegKills, KillOps);
-    VRM->RemoveMachineInstrFromMaps(&MI);
-    MBB->erase(&MI);
+    EraseInstr(&MI);
 
     // If NewReg was previously holding value of some SS, it's now clobbered.
     // This has to be done now because it's a physical register. When this
@@ -1580,8 +1579,7 @@ SpillRegToStackSlot(MachineBasicBlock::iterator &MII,
     bool CheckDef = PrevMII != MBB->begin();
     if (CheckDef)
       --PrevMII;
-    VRM->RemoveMachineInstrFromMaps(LastStore);
-    MBB->erase(LastStore);
+    EraseInstr(LastStore);
     if (CheckDef) {
       // Look at defs of killed registers on the store. Mark the defs
       // as dead since the store has been deleted and they aren't
@@ -1592,8 +1590,7 @@ SpillRegToStackSlot(MachineBasicBlock::iterator &MII,
           MachineInstr *DeadDef = PrevMII;
           if (ReMatDefs.count(DeadDef) && !HasOtherDef) {
             // FIXME: This assumes a remat def does not have side effects.
-            VRM->RemoveMachineInstrFromMaps(DeadDef);
-            MBB->erase(DeadDef);
+            EraseInstr(DeadDef);
             ++NumDRM;
           }
         }
@@ -1689,8 +1686,7 @@ TransferDeadness(unsigned Reg, BitVector &RegKills,
         LastUD->setIsDead();
         break;
       }
-      VRM->RemoveMachineInstrFromMaps(LastUDMI);
-      MBB->erase(LastUDMI);
+      EraseInstr(LastUDMI);
     } else {
       LastUD->setIsKill();
       RegKills.set(Reg);
@@ -2203,8 +2199,7 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
     if (DeadStore) {
       DEBUG(dbgs() << "Removed dead store:\t" << *DeadStore);
       InvalidateKills(*DeadStore, TRI, RegKills, KillOps);
-      VRM->RemoveMachineInstrFromMaps(DeadStore);
-      MBB->erase(DeadStore);
+      EraseInstr(DeadStore);
       MaybeDeadStores[PDSSlot] = NULL;
       ++NumDSE;
     }
@@ -2332,8 +2327,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
             }
 
             InvalidateKills(MI, TRI, RegKills, KillOps);
-            VRM->RemoveMachineInstrFromMaps(&MI);
-            MBB->erase(&MI);
+            EraseInstr(&MI);
             Erased = true;
             goto ProcessNextInst;
           }
@@ -2344,8 +2338,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
               TII->unfoldMemoryOperand(MF, &MI, PhysReg, false, false, NewMIs)){
             MBB->insert(MII, NewMIs[0]);
             InvalidateKills(MI, TRI, RegKills, KillOps);
-            VRM->RemoveMachineInstrFromMaps(&MI);
-            MBB->erase(&MI);
+            EraseInstr(&MI);
             Erased = true;
             --NextMII;  // backtrack to the unfolded instruction.
             BackTracked = true;
@@ -2381,8 +2374,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
               MBB->insert(MII, NewStore);
               VRM->addSpillSlotUse(SS, NewStore);
               InvalidateKills(MI, TRI, RegKills, KillOps);
-              VRM->RemoveMachineInstrFromMaps(&MI);
-              MBB->erase(&MI);
+              EraseInstr(&MI);
               Erased = true;
               --NextMII;
               --NextMII;  // backtrack to the unfolded instruction.
@@ -2397,8 +2389,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
           // If we get here, the store is dead, nuke it now.
           DEBUG(dbgs() << "Removed dead store:\t" << *DeadStore);
           InvalidateKills(*DeadStore, TRI, RegKills, KillOps);
-          VRM->RemoveMachineInstrFromMaps(DeadStore);
-          MBB->erase(DeadStore);
+          EraseInstr(DeadStore);
           if (!NewStore)
             ++NumDSE;
         }
@@ -2475,8 +2466,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
             // Last def is now dead.
             TransferDeadness(MI.getOperand(1).getReg(), RegKills, KillOps);
           }
-          VRM->RemoveMachineInstrFromMaps(&MI);
-          MBB->erase(&MI);
+          EraseInstr(&MI);
           Erased = true;
           Spills.disallowClobberPhysReg(VirtReg);
           goto ProcessNextInst;
@@ -2552,8 +2542,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
           ++NumDCE;
           DEBUG(dbgs() << "Removing now-noop copy: " << MI);
           InvalidateKills(MI, TRI, RegKills, KillOps);
-          VRM->RemoveMachineInstrFromMaps(&MI);
-          MBB->erase(&MI);
+          EraseInstr(&MI);
           Erased = true;
           UpdateKills(*LastStore, TRI, RegKills, KillOps);
           goto ProcessNextInst;
@@ -2564,8 +2553,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
     // Delete dead instructions without side effects.
     if (!Erased && !BackTracked && isSafeToDelete(MI)) {
       InvalidateKills(MI, TRI, RegKills, KillOps);
-      VRM->RemoveMachineInstrFromMaps(&MI);
-      MBB->erase(&MI);
+      EraseInstr(&MI);
       Erased = true;
     }
     if (!Erased)
