@@ -75,6 +75,8 @@ enum Fixups {
   fixup_arm_movw_lo16, // :lower16:
 
   // It is possible to create an "immediate" that happens to be pcrel.
+  // movw r0, :lower16:Foo-(Bar+8) and movt  r0, :upper16:Foo-(Bar+8)
+  // result in different reloc tags than the above two.
   // Needed to support ELF::R_ARM_MOVT_PREL and ELF::R_ARM_MOVW_PREL_NC
   fixup_arm_movt_hi16_pcrel, // :upper16:
   fixup_arm_movw_lo16_pcrel, // :lower16:
