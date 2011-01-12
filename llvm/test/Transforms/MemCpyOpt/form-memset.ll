@@ -173,24 +173,22 @@ entry:
   %0 = bitcast i32* %add.ptr to i8*
   tail call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 11, i32 1, i1 false)
   ret void
-  ;; DISABLED
 ; CHECK: @test3
-; HECK-NOT: store
-; CHECK-NOT: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
+; CHECK-NOT: store
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
 }
 
 ; store followed by memset, different offset scenario
 define void @test4(i32* nocapture %P) nounwind ssp {
 entry:
-  ;; DISABLED
   store i32 0, i32* %P, align 4
   %add.ptr = getelementptr inbounds i32* %P, i64 1
   %0 = bitcast i32* %add.ptr to i8*
   tail call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 11, i32 1, i1 false)
   ret void
 ; CHECK: @test4
-; HECK-NOT: store
-; CHECK-NOT: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
+; CHECK-NOT: store
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
 }
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind

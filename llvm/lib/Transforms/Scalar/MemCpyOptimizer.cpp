@@ -391,8 +391,6 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
       
       Ranges.addStore(Offset, NextStore);
     } else {
-      break;
-      
       MemSetInst *MSI = cast<MemSetInst>(BI);
       
       if (MSI->isVolatile() || ByteVal != MSI->getValue() ||
