@@ -1378,7 +1378,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                                Result.getValueType(),
                                Result, DAG.getValueType(SrcVT));
         else
-          ValRes = DAG.getZeroExtendInReg(Result, dl, SrcVT);
+          ValRes = DAG.getZeroExtendInReg(Result, dl,
+                                          SrcVT.getVectorElementType());
         Tmp1 = LegalizeOp(ValRes);  // Relegalize new nodes.
         Tmp2 = LegalizeOp(Result.getValue(1));  // Relegalize new nodes.
         break;
