@@ -74,6 +74,8 @@ namespace {
     RegVector regsDefined, regsDead, regsKilled;
     RegSet regsLiveInButUnused;
 
+    SlotIndex lastIndex;
+
     // Add Reg and any sub-registers to RV
     void addRegWithSubRegs(RegVector &RV, unsigned Reg) {
       RV.push_back(Reg);
@@ -356,6 +358,7 @@ void MachineVerifier::markReachable(const MachineBasicBlock *MBB) {
 }
 
 void MachineVerifier::visitMachineFunctionBefore() {
+  lastIndex = SlotIndex();
   regsReserved = TRI->getReservedRegs(*MF);
 
   // A sub-register of a reserved register is also reserved
@@ -524,6 +527,9 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
 
   regsKilled.clear();
   regsDefined.clear();
+
+  if (Indexes)
+    lastIndex = Indexes->getMBBStartIdx(MBB);
 }
 
 void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
@@ -793,12 +799,31 @@ void MachineVerifier::visitMachineInstrAfter(const MachineInstr *MI) {
   set_subtract(regsLive, regsKilled); regsKilled.clear();
   set_subtract(regsLive, regsDead);   regsDead.clear();
   set_union(regsLive, regsDefined);   regsDefined.clear();
+
+  if (Indexes && Indexes->hasIndex(MI)) {
+    SlotIndex idx = Indexes->getInstructionIndex(MI);
+    if (!(idx > lastIndex)) {
+      report("Instruction index out of order", MI);
+      *OS << "Last instruction was at " << lastIndex << '\n';
+    }
+    lastIndex = idx;
+  }
 }
 
 void
 MachineVerifier::visitMachineBasicBlockAfter(const MachineBasicBlock *MBB) {
   MBBInfoMap[MBB].regsLiveOut = regsLive;
   regsLive.clear();
+
+  if (Indexes) {
+    SlotIndex stop = Indexes->getMBBEndIdx(MBB);
+    if (!(stop > lastIndex)) {
+      report("Block ends before last instruction index", MBB);
+      *OS << "Block ends at " << stop
+          << " last instruction was at " << lastIndex << '\n';
+    }
+    lastIndex = stop;
+  }
 }
 
 // Calculate the largest possible vregsPassed sets. These are the registers that
