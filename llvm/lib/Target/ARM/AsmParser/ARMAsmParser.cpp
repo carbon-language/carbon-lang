@@ -583,15 +583,15 @@ ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SmallVectorImpl<std::pair<unsigned, SMLoc> >::const_iterator
     RI = Registers.begin(), RE = Registers.end();
 
-  DenseMap<unsigned, bool> RegMap;
-  RegMap[RI->first] = true;
-
-  unsigned HighRegNum = RI->first;
+  unsigned HighRegNum = getARMRegisterNumbering(RI->first);
   bool EmittedWarning = false;
+
+  DenseMap<unsigned, bool> RegMap;
+  RegMap[HighRegNum] = true;
 
   for (++RI; RI != RE; ++RI) {
     const std::pair<unsigned, SMLoc> &RegInfo = *RI;
-    unsigned Reg = RegInfo.first;
+    unsigned Reg = getARMRegisterNumbering(RegInfo.first);
 
     if (RegMap[Reg]) {
       Error(RegInfo.second, "register duplicated in register list");
