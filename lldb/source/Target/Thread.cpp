@@ -85,30 +85,6 @@ Thread::DestroyThread ()
     m_destroy_called = true;
 }
 
-int
-Thread::GetResumeSignal () const
-{
-    return m_resume_signal;
-}
-
-void
-Thread::SetResumeSignal (int signal)
-{
-    m_resume_signal = signal;
-}
-
-StateType
-Thread::GetResumeState () const
-{
-    return m_resume_state;
-}
-
-void
-Thread::SetResumeState (StateType state)
-{
-    m_resume_state = state;
-}
-
 lldb::StopInfoSP
 Thread::GetStopInfo ()
 {

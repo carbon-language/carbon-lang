@@ -90,6 +90,36 @@ public:
     void
     RunToAddress (lldb::addr_t addr);
 
+    //--------------------------------------------------------------------------
+    // LLDB currently supports process centric debugging which means when any
+    // thread in a process stops, all other threads are stopped. The Suspend()
+    // call here tells our process to suspend a thread and not let it run when
+    // the other threads in a process are allowed to run. So when 
+    // SBProcess::Continue() is called, any threads that aren't suspended will
+    // be allowed to run. If any of the SBThread functions for stepping are 
+    // called (StepOver, StepInto, StepOut, StepInstruction, RunToAddres), the
+    // thread will now be allowed to run and these funtions will simply return.
+    //
+    // Eventually we plan to add support for thread centric debugging where each
+    // thread is controlled individually and each thread would broadcast its
+    // state, but we haven't implemented this yet.
+    // 
+    // Likewise the SBThread::Resume() call will again allow the thread to run
+    // when the process is continued.
+    //
+    // The Suspend() and Resume() functions are not currently reference counted,
+    // if anyone has the need for them to be reference counted, please let us
+    // know.
+    //--------------------------------------------------------------------------
+    bool
+    Suspend();
+    
+    bool
+    Resume ();
+    
+    bool
+    IsSuspended();
+
     uint32_t
     GetNumFrames ();
 

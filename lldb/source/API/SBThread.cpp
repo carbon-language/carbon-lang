@@ -562,6 +562,36 @@ SBThread::RunToAddress (lldb::addr_t addr)
 
 }
 
+bool
+SBThread::Suspend()
+{
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->SetResumeState (eStateSuspended);
+        return true;
+    }
+    return false;
+}
+
+bool
+SBThread::Resume ()
+{
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->SetResumeState (eStateRunning);
+        return true;
+    }
+    return false;
+}
+
+bool
+SBThread::IsSuspended()
+{
+    if (m_opaque_sp)
+        m_opaque_sp->GetResumeState () == eStateSuspended;
+    return false;
+}
+
 SBProcess
 SBThread::GetProcess ()
 {

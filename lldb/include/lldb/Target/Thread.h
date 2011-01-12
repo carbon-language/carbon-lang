@@ -186,10 +186,16 @@ public:
     GetProcess() const { return m_process; }
 
     int
-    GetResumeSignal () const;
+    GetResumeSignal () const
+    {
+        return m_resume_signal;
+    }
 
     void
-    SetResumeSignal (int signal);
+    SetResumeSignal (int signal)
+    {
+        m_resume_signal = signal;
+    }
 
     lldb::StateType
     GetState() const;
@@ -201,10 +207,16 @@ public:
     SetState (lldb::StateType state);
 
     lldb::StateType
-    GetResumeState () const;
+    GetResumeState () const
+    {
+        return m_resume_state;
+    }
 
     void
-    SetResumeState (lldb::StateType state);
+    SetResumeState (lldb::StateType state)
+    {
+        m_resume_state = state;
+    }
 
     // This function is called on all the threads before "WillResume" in case
     // a thread needs to change its state before the ThreadList polls all the
