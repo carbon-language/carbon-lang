@@ -339,6 +339,8 @@ void PHIElimination::LowerAtomicPHINode(
 #ifndef NDEBUG
         for (MachineBasicBlock::iterator TI = llvm::next(Term);
              TI != opBlock.end(); ++TI) {
+          if (TI->isDebugValue())
+            continue;
           assert(!TI->readsRegister(SrcReg) &&
                  "Terminator instructions cannot use virtual registers unless"
                  "they are the first terminator in a block!");
