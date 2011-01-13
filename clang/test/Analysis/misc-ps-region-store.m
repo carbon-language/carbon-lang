@@ -1203,3 +1203,17 @@ void rdar_8642434_funcB(struct rdar_8642434_typeA *x, struct rdar_8642434_typeA 
     rdar_8642434_funcA(y); // expected-warning{{Null pointer passed as an argument to a 'nonnull' parameter}}
 }
 
+// <rdar://problem/8848957> - Handle loads and stores from a symbolic index
+// into array without warning about an uninitialized value being returned.
+// While RegionStore can't fully reason about this example, it shouldn't
+// warn here either.
+typedef struct s_test_rdar8848957 {
+  int x, y, z;
+} s_test_rdar8848957;
+
+s_test_rdar8848957 foo_rdar8848957();
+int rdar8848957(int index) {
+  s_test_rdar8848957 vals[10];
+  vals[index] = foo_rdar8848957();
+  return vals[index].x; // no-warning
+}
