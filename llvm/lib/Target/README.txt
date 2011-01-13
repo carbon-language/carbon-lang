@@ -2259,3 +2259,51 @@ Since we know that x+2.0 doesn't care about the sign of any zeros in X, we can
 transform the fmul to 0.0, and then the fadd to 2.0.
 
 //===---------------------------------------------------------------------===//
+
+We should enhance memcpy/memcpy/memset to allow a metadata node on them
+indicating that some bytes of the transfer are undefined.  This is useful for
+frontends like clang when lowering struct lowering, when some elements of the
+struct are undefined.  Consider something like this:
+
+struct x {
+  char a;
+  int b[4];
+};
+void foo(struct x*P);
+struct x testfunc() {
+  struct x V1, V2;
+  foo(&V1);
+  V2 = V1;
+
+  return V2;
+}
+
+We currently compile this to:
+$ clang t.c -S -o - -O0 -emit-llvm | opt -scalarrepl -S
+
+
+%struct.x = type { i8, [4 x i32] }
+
+define void @testfunc(%struct.x* sret %agg.result) nounwind ssp {
+entry:
+  %V1 = alloca %struct.x, align 4
+  call void @foo(%struct.x* %V1)
+  %tmp1 = bitcast %struct.x* %V1 to i8*
+  %0 = bitcast %struct.x* %V1 to i160*
+  %srcval1 = load i160* %0, align 4
+  %tmp2 = bitcast %struct.x* %agg.result to i8*
+  %1 = bitcast %struct.x* %agg.result to i160*
+  store i160 %srcval1, i160* %1, align 4
+  ret void
+}
+
+This happens because SRoA sees that the temp alloca has is being memcpy'd into
+and out of and it has holes and it has to be conservative.  If we knew about the
+holes, then this could be much much better.
+
+Having information about these holes would also improve memcpy (etc) lowering at
+llc time when it gets inlined, because we can use smaller transfers.  This also
+avoids partial register stalls in some important cases.
+
+//===---------------------------------------------------------------------===//
+
