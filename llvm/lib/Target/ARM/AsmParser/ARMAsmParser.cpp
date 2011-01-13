@@ -1351,10 +1351,20 @@ bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
     return Error(Parser.getTok().getLoc(), "unexpected token in directive");
   Parser.Lex();
 
-  if (Val == 16)
+  // FIXME: We need to be able switch subtargets at this point so that
+  // MatchInstructionImpl() will work when it gets the AvailableFeatures which
+  // includes Feature_IsThumb or not to match the right instructions.  This is
+  // blocked on the FIXME in llvm-mc.cpp when creating the TargetMachine.
+  if (Val == 16){
+    assert(TM.getSubtarget<ARMSubtarget>().isThumb() &&
+	   "switching between arm/thumb not yet suppported via .code 16)");
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
-  else
+  }
+  else{
+    assert(!TM.getSubtarget<ARMSubtarget>().isThumb() &&
+           "switching between thumb/arm not yet suppported via .code 32)");
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
+   }
 
   return false;
 }
