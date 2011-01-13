@@ -2262,7 +2262,7 @@ transform the fmul to 0.0, and then the fadd to 2.0.
 
 We should enhance memcpy/memcpy/memset to allow a metadata node on them
 indicating that some bytes of the transfer are undefined.  This is useful for
-frontends like clang when lowering struct lowering, when some elements of the
+frontends like clang when lowering struct copies, when some elements of the
 struct are undefined.  Consider something like this:
 
 struct x {
