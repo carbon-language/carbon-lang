@@ -76,10 +76,33 @@ entry:
   %var = alloca %arr, align 4
   %vari8 = bitcast %arr* %var to i8*
   %pi8 = bitcast %arr* %p to i8*
-  call void @llvm.memcpy.i32(i8* %vari8, i8* %pi8, i32 16, i32 4)
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %vari8, i8* %pi8, i32 16, i32 4, i1 false)
   %qi8 = bitcast %arr* %q to i8*
-  call void @llvm.memcpy.i32(i8* %qi8, i8* %vari8, i32 16, i32 4)
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %qi8, i8* %vari8, i32 16, i32 4, i1 false)
   ret void
 }
 
-declare void @llvm.memcpy.i32(i8* nocapture, i8* nocapture, i32, i32) nounwind
+;; Check that an array alloca can be split up when it is also accessed with
+;; a load or store as a homogeneous structure with the same element type and
+;; number of elements as the array.
+%homogeneous = type { <8 x i16>, <8 x i16>, <8 x i16> }
+%wrapped_array = type { [3 x <8 x i16>] }
+define void @test6(i8* %p, %wrapped_array* %arr) {
+entry:
+; CHECK: test6
+; CHECK: store <8 x i16>
+; CHECK: store <8 x i16>
+; CHECK: store <8 x i16>
+  %var = alloca %wrapped_array, align 16
+  %res = call %homogeneous @test6callee(i8* %p)
+  %varcast = bitcast %wrapped_array* %var to %homogeneous*
+  store %homogeneous %res, %homogeneous* %varcast
+  %tmp1 = bitcast %wrapped_array* %arr to i8*
+  %tmp2 = bitcast %wrapped_array* %var to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp1, i8* %tmp2, i32 48, i32 16, i1 false)
+  ret void
+}
+
+declare %homogeneous @test6callee(i8* nocapture) nounwind
+
+declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind

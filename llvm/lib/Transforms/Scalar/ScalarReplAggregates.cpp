@@ -1076,6 +1076,46 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
     MarkUnsafe(Info);
 }
 
+/// isHomogeneousAggregate - Check if type T is a struct or array containing
+/// elements of the same type (which is always true for arrays).  If so,
+/// return true with NumElts and EltTy set to the number of elements and the
+/// element type, respectively.
+static bool isHomogeneousAggregate(const Type *T, unsigned &NumElts,
+                                   const Type *&EltTy) {
+  if (const ArrayType *AT = dyn_cast<ArrayType>(T)) {
+    NumElts = AT->getNumElements();
+    EltTy = AT->getElementType();
+    return true;
+  }
+  if (const StructType *ST = dyn_cast<StructType>(T)) {
+    NumElts = ST->getNumContainedTypes();
+    EltTy = ST->getContainedType(0);
+    for (unsigned n = 1; n < NumElts; ++n) {
+      if (ST->getContainedType(n) != EltTy)
+        return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+/// isCompatibleAggregate - Check if T1 and T2 are either the same type or are
+/// "homogeneous" aggregates with the same element type and number of elements.
+static bool isCompatibleAggregate(const Type *T1, const Type *T2) {
+  if (T1 == T2)
+    return true;
+
+  unsigned NumElts1, NumElts2;
+  const Type *EltTy1, *EltTy2;
+  if (isHomogeneousAggregate(T1, NumElts1, EltTy1) &&
+      isHomogeneousAggregate(T2, NumElts2, EltTy2) &&
+      NumElts1 == NumElts2 &&
+      EltTy1 == EltTy2)
+    return true;
+
+  return false;
+}
+
 /// isSafeMemAccess - Check if a load/store/memcpy operates on the entire AI
 /// alloca or has an offset and size that corresponds to a component element
 /// within it.  The offset checked here may have been formed from a GEP with a
@@ -1085,20 +1125,23 @@ void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
                            AllocaInfo &Info) {
   // Check if this is a load/store of the entire alloca.
   if (Offset == 0 && MemSize == TD->getTypeAllocSize(AI->getAllocatedType())) {
-    bool UsesAggregateType = (MemOpType == AI->getAllocatedType());
-    // This is safe for MemIntrinsics (where MemOpType is 0), integer types
-    // (which are essentially the same as the MemIntrinsics, especially with
-    // regard to copying padding between elements), or references using the
-    // aggregate type of the alloca.
-    if (!MemOpType || MemOpType->isIntegerTy() || UsesAggregateType) {
-      if (!UsesAggregateType) {
-        if (isStore)
-          Info.isMemCpyDst = true;
-        else
-          Info.isMemCpySrc = true;
-      }
+    // This can be safe for MemIntrinsics (where MemOpType is 0) and integer
+    // loads/stores (which are essentially the same as the MemIntrinsics with
+    // regard to copying padding between elements).  But, if an alloca is
+    // flagged as both a source and destination of such operations, we'll need
+    // to check later for padding between elements.
+    if (!MemOpType || MemOpType->isIntegerTy()) {
+      if (isStore)
+        Info.isMemCpyDst = true;
+      else
+        Info.isMemCpySrc = true;
       return;
     }
+    // This is also safe for references using a type that is compatible with
+    // the type of the alloca, so that loads/stores can be rewritten using
+    // insertvalue/extractvalue.
+    if (isCompatibleAggregate(MemOpType, AI->getAllocatedType()))
+      return;
   }
   // Check if the offset/size correspond to a component within the alloca type.
   const Type *T = AI->getAllocatedType();
@@ -1159,7 +1202,7 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
       // address operand will be updated, so nothing else needs to be done.
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       const Type *LIType = LI->getType();
-      if (LIType == AI->getAllocatedType()) {
+      if (isCompatibleAggregate(LIType, AI->getAllocatedType())) {
         // Replace:
         //   %res = load { i32, i32 }* %alloc
         // with:
@@ -1184,7 +1227,7 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       Value *Val = SI->getOperand(0);
       const Type *SIType = Val->getType();
-      if (SIType == AI->getAllocatedType()) {
+      if (isCompatibleAggregate(SIType, AI->getAllocatedType())) {
         // Replace:
         //   store { i32, i32 } %val, { i32, i32 }* %alloc
         // with:
