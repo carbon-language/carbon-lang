@@ -902,10 +902,7 @@ bool ARMAsmParser::ParsePrefix(MCSymbolRefExpr::VariantKind &RefKind) {
   RefKind = MCSymbolRefExpr::VK_None;
 
   // :lower16: and :upper16: modifiers
-  if (getLexer().isNot(AsmToken::Colon)) {
-    Error(Parser.getTok().getLoc(), "expected :");
-    return true;
-  }
+  assert(getLexer().is(AsmToken::Colon) && "expected a :");
   Parser.Lex(); // Eat ':'
 
   if (getLexer().isNot(AsmToken::Identifier)) {
