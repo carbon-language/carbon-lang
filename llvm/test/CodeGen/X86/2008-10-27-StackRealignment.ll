@@ -1,8 +1,8 @@
 ; Linux doesn't support stack realignment for functions with allocas (PR2888).
 ; Until it does, we shouldn't use movaps to access the stack.  On targets with
 ; sufficiently aligned stack (e.g. darwin) we should.
-
-; RUN: llc < %s -mtriple=i386-pc-linux-gnu -mcpu=yonah | not grep movaps
+; PR8969 - make 32-bit linux have a 16-byte aligned stack
+; RUN: llc < %s -mtriple=i386-pc-linux-gnu -mcpu=yonah | grep movaps | count 2
 ; RUN: llc < %s -mtriple=i686-apple-darwin9 -mcpu=yonah | grep movaps | count 2
 
 

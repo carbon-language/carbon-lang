@@ -342,9 +342,9 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   assert((!Is64Bit || HasX86_64) &&
          "64-bit code requested on a subtarget that doesn't support it!");
 
-  // Stack alignment is 16 bytes on Darwin (both 32 and 64 bit) and for all 64
-  // bit targets.
-  if (isTargetDarwin() || Is64Bit)
+  // Stack alignment is 16 bytes on Darwin and Linux (both 32 and 64 bit) and 
+  // for all 64-bit targets.
+  if (isTargetDarwin() || isTargetLinux() || Is64Bit)
     stackAlignment = 16;
 
   if (StackAlignment)

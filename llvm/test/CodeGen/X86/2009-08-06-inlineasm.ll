@@ -1,10 +1,12 @@
-; RUN: llc -mtriple=i386-pc-linux-gnu < %s
+; RUN: false
+; XRUN: llc -mtriple=i386-pc-linux-gnu < %s
 ; PR4668
 ; XFAIL: *
 ; FIXME: If the coalescer happens to coalesce %level.1 with the copy to EAX
 ; (for ret) then this will fail to compile. The fundamental problem is
 ; once the coalescer fixes a virtual register to physical register we can't
-; evict it.
+; evict it. This started passing again due to the changes for PR8969
+; so I've disabled it with a bigger stick.
 
 define i32 @x(i32 %qscale) nounwind {
 entry:

@@ -8375,7 +8375,7 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: lcallee:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	x
 ; LINUX-32-STATIC-NEXT: 	calll	x
 ; LINUX-32-STATIC-NEXT: 	calll	x
@@ -8383,11 +8383,11 @@ entry:
 ; LINUX-32-STATIC-NEXT: 	calll	x
 ; LINUX-32-STATIC-NEXT: 	calll	x
 ; LINUX-32-STATIC-NEXT: 	calll	x
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: lcallee:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	x
 ; LINUX-32-PIC-NEXT: 	calll	x
 ; LINUX-32-PIC-NEXT: 	calll	x
@@ -8395,7 +8395,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	calll	x
 ; LINUX-32-PIC-NEXT: 	calll	x
 ; LINUX-32-PIC-NEXT: 	calll	x
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: lcallee:
@@ -8506,7 +8507,7 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: dcallee:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	y
 ; LINUX-32-STATIC-NEXT: 	calll	y
 ; LINUX-32-STATIC-NEXT: 	calll	y
@@ -8514,11 +8515,11 @@ entry:
 ; LINUX-32-STATIC-NEXT: 	calll	y
 ; LINUX-32-STATIC-NEXT: 	calll	y
 ; LINUX-32-STATIC-NEXT: 	calll	y
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: dcallee:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	y
 ; LINUX-32-PIC-NEXT: 	calll	y
 ; LINUX-32-PIC-NEXT: 	calll	y
@@ -8526,7 +8527,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	calll	y
 ; LINUX-32-PIC-NEXT: 	calll	y
 ; LINUX-32-PIC-NEXT: 	calll	y
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: dcallee:
@@ -8770,17 +8772,18 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: caller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	callee
 ; LINUX-32-STATIC-NEXT: 	calll	callee
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: caller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	callee
 ; LINUX-32-PIC-NEXT: 	calll	callee
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: caller:
@@ -8844,17 +8847,18 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: dcaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	dcallee
 ; LINUX-32-STATIC-NEXT: 	calll	dcallee
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: dcaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	dcallee
 ; LINUX-32-PIC-NEXT: 	calll	dcallee
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: dcaller:
@@ -8918,17 +8922,18 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: lcaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	lcallee
 ; LINUX-32-STATIC-NEXT: 	calll	lcallee
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: lcaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	lcallee
 ; LINUX-32-PIC-NEXT: 	calll	lcallee
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: lcaller:
@@ -8990,15 +8995,16 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: tailcaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	callee
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: tailcaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	callee
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: tailcaller:
@@ -9053,15 +9059,16 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: dtailcaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	dcallee
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: dtailcaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	dcallee
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: dtailcaller:
@@ -9116,15 +9123,16 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ltailcaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	lcallee
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ltailcaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	lcallee
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ltailcaller:
@@ -9183,17 +9191,18 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: icaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*ifunc
 ; LINUX-32-STATIC-NEXT: 	calll	*ifunc
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: icaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*ifunc
 ; LINUX-32-PIC-NEXT: 	calll	*ifunc
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: icaller:
@@ -9272,17 +9281,18 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: dicaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*difunc
 ; LINUX-32-STATIC-NEXT: 	calll	*difunc
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: dicaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*difunc
 ; LINUX-32-PIC-NEXT: 	calll	*difunc
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: dicaller:
@@ -9354,17 +9364,18 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: licaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*lifunc
 ; LINUX-32-STATIC-NEXT: 	calll	*lifunc
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: licaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*lifunc
 ; LINUX-32-PIC-NEXT: 	calll	*lifunc
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: licaller:
@@ -9435,17 +9446,18 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: itailcaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*ifunc
 ; LINUX-32-STATIC-NEXT: 	calll	*ifunc
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: itailcaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*ifunc
 ; LINUX-32-PIC-NEXT: 	calll	*ifunc
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: itailcaller:
@@ -9521,15 +9533,16 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ditailcaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*difunc
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ditailcaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*difunc
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ditailcaller:
@@ -9588,15 +9601,16 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: litailcaller:
-; LINUX-32-STATIC: 	pushl
+; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*lifunc
-; LINUX-32-STATIC-NEXT: 	popl
+; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: litailcaller:
-; LINUX-32-PIC: 	pushl
+; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*lifunc
-; LINUX-32-PIC-NEXT: 	popl
+; LINUX-32-PIC-NEXT: 	addl
+
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: litailcaller:
