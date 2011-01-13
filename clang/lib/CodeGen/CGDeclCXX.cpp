@@ -36,10 +36,11 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
   if (!CGF.hasAggregateLLVMType(T)) {
     llvm::Value *V = CGF.EmitScalarExpr(Init);
     CodeGenModule &CGM = CGF.CGM;
-    if (CGF.getContext().getObjCGCAttrKind(T) == Qualifiers::Strong)
+    Qualifiers::GC GCAttr = CGM.getContext().getObjCGCAttrKind(T);
+    if (GCAttr == Qualifiers::Strong)
       CGM.getObjCRuntime().EmitObjCGlobalAssign(CGF, V, DeclPtr,
                                                 D.isThreadSpecified());
-    else if (CGF.getContext().getObjCGCAttrKind(T) == Qualifiers::Weak)
+    else if (GCAttr == Qualifiers::Weak)
       CGM.getObjCRuntime().EmitObjCWeakAssign(CGF, V, DeclPtr);
     else
       CGF.EmitStoreOfScalar(V, DeclPtr, isVolatile, Alignment, T);
