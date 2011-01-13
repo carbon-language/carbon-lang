@@ -399,7 +399,8 @@ CodeGenVTables::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
     GV = new llvm::GlobalVariable(CGM.getModule(), Type, /*isConstant=*/true, 
                                   Linkage, Init, Name);
     CGM.setGlobalVisibility(GV, RD, /*ForDefinition*/ GenerateDefinition);
-    GV->setUnnamedAddr(true);
+    if (GenerateDefinition)
+      GV->setUnnamedAddr(true);
     
     if (OldGV) {
       GV->takeName(OldGV);

@@ -2982,7 +2982,6 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::GlobalVariable *GV =
     GetGlobalVariable(CGM.getModule(), Name, ArrayType,
                       llvm::GlobalValue::ExternalLinkage);
-  GV->setUnnamedAddr(true);
   return GV;
 }
 
@@ -3074,6 +3073,7 @@ CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
   }
 
   VTable = GetAddrOfVTable(RD);
+  VTable->setUnnamedAddr(true);
   EmitVTableDefinition(VTable, Linkage, RD);
 
   GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
