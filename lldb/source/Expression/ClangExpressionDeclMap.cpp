@@ -213,7 +213,7 @@ ClangExpressionDeclMap::AddPersistentVariable
     TypeFromUser user_type(ClangASTContext::CopyType(context, 
                                                      parser_type.GetASTContext(),
                                                      parser_type.GetOpaqueQualType()),
-                            context);
+                           context);
     
     if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (name, 
                                                                      user_type, 
@@ -939,7 +939,8 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
                 return false;
             }
             
-            if (var_sp->m_flags & ClangExpressionVariable::EVNeedsFreezeDry)
+            if (var_sp->m_flags & ClangExpressionVariable::EVNeedsFreezeDry ||
+                var_sp->m_flags & ClangExpressionVariable::EVKeepInTarget)
             {
                 mem = var_sp->m_live_sp->GetValue().GetScalar().ULongLong();
                 

@@ -816,6 +816,8 @@ bool
 IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc,
                                      llvm::Module &llvm_module)
 {
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
     AllocaInst *alloc = dyn_cast<AllocaInst>(persistent_alloc);
     
     MDNode *alloc_md = alloc->getMetadata("clang.decl.ptr");
@@ -842,8 +844,8 @@ IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc,
     if (!m_decl_map->AddPersistentVariable(decl, persistent_variable_name, result_decl_type, false, false))
         return false;
     
-    GlobalVariable *persistent_global = new GlobalVariable(llvm_module, 
-                                                           alloc->getType()->getElementType(),
+    GlobalVariable *persistent_global = new GlobalVariable(llvm_module,
+                                                           alloc->getType(),
                                                            false, /* not constant */
                                                            GlobalValue::ExternalLinkage,
                                                            NULL, /* no initializer */
@@ -861,7 +863,17 @@ IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc,
     MDNode *persistent_global_md = MDNode::get(llvm_module.getContext(), values, 2);
     named_metadata->addOperand(persistent_global_md);
     
-    alloc->replaceAllUsesWith(persistent_global);
+    // Now, since the variable is a pointer variable, we will drop in a load of that
+    // pointer variable.
+    
+    LoadInst *persistent_load = new LoadInst (persistent_global, "", alloc);
+    
+    if (log)
+        log->Printf("Replacing \"%s\" with \"%s\"",
+                    PrintValue(alloc).c_str(),
+                    PrintValue(persistent_load).c_str());
+    
+    alloc->replaceAllUsesWith(persistent_load);
     alloc->eraseFromParent();
     
     return true;
@@ -1006,7 +1018,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
         clang::QualType qual_type;
         const Type *value_type;
         
-        if (!name.compare("$__lldb_expr_result"))
+        if (name[0] == '$')
         {
             // The $__lldb_expr_result name indicates the the return value has allocated as
             // a static variable.  Per the comment at ASTResultSynthesizer::SynthesizeBodyResult,
@@ -1015,6 +1027,8 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
             //
             // Consequently, when reporting the size of the type, we report a pointer type pointing
             // to the type of $__lldb_expr_result, not the type itself.
+            //
+            // We also do this for any user-declared persistent variables.
             
             qual_type = ast_context->getPointerType(clang::QualType::getFromOpaquePtr(opaque_type));
             value_type = PointerType::get(global_variable->getType(), 0);
@@ -1029,7 +1043,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
         off_t value_alignment = (ast_context->getTypeAlign(qual_type) + 7) / 8;
         
         if (log)
-            log->Printf("Type of \"%s\" is [clang \"%s\", lldb \"%s\"] [size %d, align %d]", 
+            log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %d, align %d]", 
                         name.c_str(), 
                         qual_type.getAsString().c_str(), 
                         PrintType(value_type).c_str(), 
