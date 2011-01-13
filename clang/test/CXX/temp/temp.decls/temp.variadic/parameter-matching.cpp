@@ -25,3 +25,19 @@ template<int Values> struct X1nt; // expected-error{{non-type template parameter
 
 template<template<class T> class> class X1tt; // expected-note{{previous template template parameter declared here}}
 template<template<class T> class...> class X1tt; // expected-error{{template template parameter pack conflicts with previous template template parameter}}
+
+// Check for matching with out-of-line definitions
+namespace rdar8859985 {
+  template<typename ...> struct tuple { };
+  template<int ...> struct int_tuple { };
+
+  template<typename T>
+  struct X {
+    template<typename ...Args1, int ...Indices1>
+    X(tuple<Args1...>, int_tuple<Indices1...>);
+  };
+
+  template<typename T>
+  template<typename ...Args1, int ...Indices1>
+  X<T>::X(tuple<Args1...>, int_tuple<Indices1...>) {}
+}

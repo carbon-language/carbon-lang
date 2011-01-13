@@ -3801,7 +3801,8 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
   for (TemplateParameterList::iterator OldParm = Old->begin(),
                                     OldParmEnd = Old->end();
        OldParm != OldParmEnd; ++OldParm) {
-    if (!(*OldParm)->isTemplateParameterPack()) {
+    if (Kind != TPL_TemplateTemplateArgumentMatch ||
+        !(*OldParm)->isTemplateParameterPack()) {
       if (NewParm == NewParmEnd) {
         if (Complain)
           DiagnoseTemplateParameterListArityMismatch(*this, New, Old, Kind,
