@@ -14,12 +14,12 @@ add_clang_library(clangStaticAnalyzerCheckers
   CallAndMessageChecker.cpp
   CastSizeChecker.cpp
   CastToStructChecker.cpp
-  CheckDeadStores.cpp
   CheckObjCDealloc.cpp
   CheckObjCInstMethSignature.cpp
   CheckSecuritySyntaxOnly.cpp
   CheckSizeofPointer.cpp
   ChrootChecker.cpp
+  DeadStoresChecker.cpp
   DereferenceChecker.cpp
   DivZeroChecker.cpp
   ExprEngine.cpp
