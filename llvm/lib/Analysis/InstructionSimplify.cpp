@@ -1024,12 +1024,15 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
-  // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
-  // addresses never equal each other!  We already know that Op0 != Op1.
-  if ((isa<GlobalValue>(LHS) || isa<AllocaInst>(LHS) ||
-       isa<ConstantPointerNull>(LHS)) &&
-      (isa<GlobalValue>(RHS) || isa<AllocaInst>(RHS) ||
-       isa<ConstantPointerNull>(RHS)))
+  // icmp <alloca*>, <global/alloca*/null> - Different stack variables have
+  // different addresses, and what's more the address of a stack variable is
+  // never null or equal to the address of a global.  Note that generalizing
+  // to the case where LHS is a global variable address or null is pointless,
+  // since if both LHS and RHS are constants then we already constant folded
+  // the compare, and if only one of them is then we moved it to RHS already.
+  if (isa<AllocaInst>(LHS) && (isa<GlobalValue>(RHS) || isa<AllocaInst>(RHS) ||
+                               isa<ConstantPointerNull>(RHS)))
+    // We already know that LHS != LHS.
     return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
 
   // If the comparison is with the result of a select instruction, check whether
