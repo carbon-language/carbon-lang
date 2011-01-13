@@ -155,22 +155,11 @@ MachineBasicBlock::SkipPHIsAndLabels(MachineBasicBlock::iterator I) {
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
-  iterator B = begin(), I = end();
-  iterator Term = I;
-  while (I != B) {
-    --I;
-    // Ignore any debug values after the first terminator.
-    if (I->isDebugValue())
-      continue;
-    // Stop once we see a non-debug non-terminator.
-    if (!I->getDesc().isTerminator())
-      break;
-    // Earliest terminator so far.
-    Term = I;
-  }
-  // Return the first terminator, or end().
-  // Everything after Term is terminators and debug values.
-  return Term;
+  iterator I = end();
+  while (I != begin() && (--I)->getDesc().isTerminator())
+    ; /*noop */
+  if (I != end() && !I->getDesc().isTerminator()) ++I;
+  return I;
 }
 
 void MachineBasicBlock::dump() const {
