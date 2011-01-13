@@ -632,7 +632,7 @@ Host::GetProgramFileSpec ()
         {
           char *exe_path = new char[exe_path_size];
           if (sysctl(exe_path_mib, 4, exe_path, &exe_path_size, NULL, 0) == 0)
-              g_program_filespec = FileSpec(exe_path, false);
+              g_program_filespec.SetFile(exe_path, false);
         }
 #endif
     }
