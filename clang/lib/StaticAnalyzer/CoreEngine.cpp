@@ -295,7 +295,7 @@ void CoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
   SubEng.processCFGBlockEntrance(dstNodes, nodeBuilder);
 
   if (dstNodes.empty()) {
-    if (!nodeBuilder.hasGeneratedNode()) {
+    if (!nodeBuilder.hasGeneratedNode) {
       // Auto-generate a node and enqueue it to the worklist.
       generateNode(BE, Pred->State, Pred);    
     }
@@ -468,7 +468,7 @@ GenericNodeBuilderImpl::generateNodeImpl(const GRState *state,
                                          ProgramPoint programPoint,
                                          bool asSink) {
   
-  HasGeneratedNode = true;
+  hasGeneratedNode = true;
   bool isNew;
   ExplodedNode *node = engine.getGraph().getNode(programPoint, state, &isNew);
   if (pred)
@@ -487,7 +487,7 @@ StmtNodeBuilder::StmtNodeBuilder(const CFGBlock* b, unsigned idx,
                                      ExplodedNode* N, CoreEngine* e,
                                      GRStateManager &mgr)
   : Eng(*e), B(*b), Idx(idx), Pred(N), Mgr(mgr),
-    PurgingDeadSymbols(false), BuildSinks(false), HasGeneratedNode(false),
+    PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
     PointKind(ProgramPoint::PostStmtKind), Tag(0) {
   Deferred.insert(N);
   CleanedState = Pred->getState();
@@ -706,7 +706,7 @@ SwitchNodeBuilder::generateDefaultCaseNode(const GRState* St, bool isSink) {
 
 EndOfFunctionNodeBuilder::~EndOfFunctionNodeBuilder() {
   // Auto-generate an EOP node if one has not been generated.
-  if (!HasGeneratedNode) {
+  if (!hasGeneratedNode) {
     // If we are in an inlined call, generate CallExit node.
     if (Pred->getLocationContext()->getParent())
       GenerateCallExitNode(Pred->State);
@@ -718,7 +718,7 @@ EndOfFunctionNodeBuilder::~EndOfFunctionNodeBuilder() {
 ExplodedNode*
 EndOfFunctionNodeBuilder::generateNode(const GRState* State, const void *tag,
                                    ExplodedNode* P) {
-  HasGeneratedNode = true;
+  hasGeneratedNode = true;
   bool IsNew;
 
   ExplodedNode* Node = Eng.G->getNode(BlockEntrance(&B,
@@ -735,7 +735,7 @@ EndOfFunctionNodeBuilder::generateNode(const GRState* State, const void *tag,
 }
 
 void EndOfFunctionNodeBuilder::GenerateCallExitNode(const GRState *state) {
-  HasGeneratedNode = true;
+  hasGeneratedNode = true;
   // Create a CallExit node and enqueue it.
   const StackFrameContext *LocCtx
                          = cast<StackFrameContext>(Pred->getLocationContext());

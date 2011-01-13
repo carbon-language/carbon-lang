@@ -50,7 +50,7 @@ public:
       OldSink(B.BuildSinks),
       checkerTag(tag),
       OldPointKind(B.PointKind, K),
-      OldHasGen(B.HasGeneratedNode),
+      OldHasGen(B.hasGeneratedNode),
       ST(st), statement(stmt), size(Dst.size()),
       respondsToCallback(respondsToCB) {}
 

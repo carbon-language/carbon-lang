@@ -31,7 +31,6 @@ class StmtNodeBuilderRef {
   const unsigned OldSize;
   const bool AutoCreateNode;
   SaveAndRestore<bool> OldSink;
-  SaveAndRestore<const void*> OldTag;
   SaveOr OldHasGen;
 
 private:
@@ -48,14 +47,14 @@ private:
                        const Stmt* s, bool auto_create_node)
   : Dst(dst), B(builder), Eng(eng), Pred(pred),
     state(st), stmt(s), OldSize(Dst.size()), AutoCreateNode(auto_create_node),
-    OldSink(B.BuildSinks), OldTag(B.Tag), OldHasGen(B.HasGeneratedNode) {}
+    OldSink(B.BuildSinks), OldHasGen(B.hasGeneratedNode) {}
 
 public:
 
   ~StmtNodeBuilderRef() {
     // Handle the case where no nodes where generated.  Auto-generate that
     // contains the updated state if we aren't generating sinks.
-    if (!B.BuildSinks && Dst.size() == OldSize && !B.HasGeneratedNode) {
+    if (!B.BuildSinks && Dst.size() == OldSize && !B.hasGeneratedNode) {
       if (AutoCreateNode)
         B.MakeNode(Dst, const_cast<Stmt*>(stmt), Pred, state);
       else

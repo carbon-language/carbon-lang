@@ -145,7 +145,7 @@ class StmtNodeBuilder {
 public:
   bool PurgingDeadSymbols;
   bool BuildSinks;
-  bool HasGeneratedNode;
+  bool hasGeneratedNode;
   ProgramPoint::Kind PointKind;
   const void *Tag;
 
@@ -163,7 +163,7 @@ public:
 
   ~StmtNodeBuilder();
 
-  ExplodedNode* getBasePredecessor() const { return Pred; }
+  ExplodedNode* getPredecessor() const { return Pred; }
 
   // FIXME: This should not be exposed.
   WorkList *getWorkList() { return Eng.WList; }
@@ -181,14 +181,14 @@ public:
   }
 
   ExplodedNode* generateNode(PostStmt PP,const GRState* St,ExplodedNode* Pred) {
-    HasGeneratedNode = true;
+    hasGeneratedNode = true;
     return generateNodeInternal(PP, St, Pred);
   }
 
   ExplodedNode* generateNode(const Stmt *S, const GRState *St,
                              ExplodedNode *Pred, ProgramPoint::Kind K,
                              const void *tag = 0) {
-    HasGeneratedNode = true;
+    hasGeneratedNode = true;
 
     if (PurgingDeadSymbols)
       K = ProgramPoint::PostPurgeDeadSymbolsKind;
@@ -203,7 +203,7 @@ public:
 
   ExplodedNode *generateNode(const ProgramPoint &PP, const GRState* State,
                              ExplodedNode* Pred) {
-    HasGeneratedNode = true;
+    hasGeneratedNode = true;
     return generateNodeInternal(PP, State, Pred);
   }
 
@@ -233,7 +233,7 @@ public:
   unsigned getIndex() const { return Idx; }
 
   const GRState* GetState(ExplodedNode* Pred) const {
-    if (Pred == getBasePredecessor())
+    if (Pred == getPredecessor())
       return CleanedState;
     else
       return Pred->getState();
@@ -403,7 +403,6 @@ class GenericNodeBuilderImpl {
 protected:
   CoreEngine &engine;
   ExplodedNode *pred;
-  bool HasGeneratedNode;
   ProgramPoint pp;
   llvm::SmallVector<ExplodedNode*, 2> sinksGenerated;  
 
@@ -411,10 +410,10 @@ protected:
                                  ProgramPoint programPoint, bool asSink);
 
   GenericNodeBuilderImpl(CoreEngine &eng, ExplodedNode *pr, ProgramPoint p)
-    : engine(eng), pred(pr), HasGeneratedNode(false), pp(p) {}
+    : engine(eng), pred(pr), pp(p), hasGeneratedNode(false) {}
 
 public:
-  bool hasGeneratedNode() const { return HasGeneratedNode; }
+  bool hasGeneratedNode;
   
   WorkList &getWorkList() { return *engine.WList; }
   
@@ -450,11 +449,11 @@ class EndOfFunctionNodeBuilder {
   ExplodedNode* Pred;
 
 public:
-  bool HasGeneratedNode;
+  bool hasGeneratedNode;
 
 public:
   EndOfFunctionNodeBuilder(const CFGBlock* b, ExplodedNode* N, CoreEngine* e)
-    : Eng(*e), B(*b), Pred(N), HasGeneratedNode(false) {}
+    : Eng(*e), B(*b), Pred(N), hasGeneratedNode(false) {}
 
   ~EndOfFunctionNodeBuilder();
 
