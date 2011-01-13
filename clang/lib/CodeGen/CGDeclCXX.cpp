@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFunction.h"
+#include "CGObjCRuntime.h"
 #include "CGCXXABI.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Intrinsics.h"
@@ -34,7 +35,14 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
   unsigned Alignment = Context.getDeclAlign(&D).getQuantity();
   if (!CGF.hasAggregateLLVMType(T)) {
     llvm::Value *V = CGF.EmitScalarExpr(Init);
-    CGF.EmitStoreOfScalar(V, DeclPtr, isVolatile, Alignment, T);
+    CodeGenModule &CGM = CGF.CGM;
+    if (CGF.getContext().getObjCGCAttrKind(T) == Qualifiers::Strong)
+      CGM.getObjCRuntime().EmitObjCGlobalAssign(CGF, V, DeclPtr,
+                                                D.isThreadSpecified());
+    else if (CGF.getContext().getObjCGCAttrKind(T) == Qualifiers::Weak)
+      CGM.getObjCRuntime().EmitObjCWeakAssign(CGF, V, DeclPtr);
+    else
+      CGF.EmitStoreOfScalar(V, DeclPtr, isVolatile, Alignment, T);
   } else if (T->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(Init, DeclPtr, isVolatile);
   } else {
