@@ -659,8 +659,9 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.setDesc(TII.get(UseRR ? ARM::tLDRr : ARM::tLDRi));
     MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
     if (UseRR)
-      // Use [reg, reg] addrmode.
-      MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
+      // Use [reg, reg] addrmode. Replace the immediate operand w/ the frame
+      // register. The offset is already handled in the vreg value.
+      MI.getOperand(i+1).ChangeToRegister(FrameReg, false, false, false);
   } else if (Desc.mayStore()) {
       VReg = MF.getRegInfo().createVirtualRegister(ARM::tGPRRegisterClass);
       bool UseRR = false;
@@ -678,8 +679,10 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                   *this, dl);
       MI.setDesc(TII.get(UseRR ? ARM::tSTRr : ARM::tSTRi));
       MI.getOperand(i).ChangeToRegister(VReg, false, false, true);
-      if (UseRR)  // Use [reg, reg] addrmode.
-        MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
+      if (UseRR)
+        // Use [reg, reg] addrmode. Replace the immediate operand w/ the frame
+        // register. The offset is already handled in the vreg value.
+        MI.getOperand(i+1).ChangeToRegister(FrameReg, false, false, false);
   } else {
     assert(false && "Unexpected opcode!");
   }
