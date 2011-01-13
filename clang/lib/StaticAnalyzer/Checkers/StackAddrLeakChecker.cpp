@@ -132,7 +132,7 @@ void StackAddrLeakChecker::PreVisitReturnStmt(CheckerContext &C,
 
 void StackAddrLeakChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
                                        ExprEngine &Eng) {
-  SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
+
   const GRState *state = B.getState();
 
   // Iterate over all bindings to global variables and see if it contains

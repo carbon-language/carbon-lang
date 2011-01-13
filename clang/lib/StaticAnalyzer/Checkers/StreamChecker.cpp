@@ -423,7 +423,6 @@ void StreamChecker::evalDeadSymbols(CheckerContext &C,SymbolReaper &SymReaper) {
 
 void StreamChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
                                 ExprEngine &Eng) {
-  SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
   typedef llvm::ImmutableMap<SymbolRef, StreamState> SymMap;
   SymMap M = state->get<StreamState>();

@@ -595,7 +595,6 @@ void MallocChecker::evalDeadSymbols(CheckerContext &C, SymbolReaper &SymReaper)
 
 void MallocChecker::evalEndPath(EndOfFunctionNodeBuilder &B, void *tag,
                                 ExprEngine &Eng) {
-  SaveAndRestore<bool> OldHasGen(B.HasGeneratedNode);
   const GRState *state = B.getState();
   RegionStateTy M = state->get<RegionState>();
 
