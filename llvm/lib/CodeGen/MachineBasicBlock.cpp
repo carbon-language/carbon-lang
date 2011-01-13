@@ -162,6 +162,18 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   return I;
 }
 
+MachineBasicBlock::iterator MachineBasicBlock::getLastNonDebugInstr() {
+  iterator B = begin(), I = end();
+  while (I != B) {
+    --I;
+    if (I->isDebugValue())
+      continue;
+    return I;
+  }
+  // The block is all debug values.
+  return end();
+}
+
 void MachineBasicBlock::dump() const {
   print(dbgs());
 }

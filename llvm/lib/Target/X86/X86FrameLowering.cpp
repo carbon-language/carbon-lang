@@ -646,7 +646,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   const X86RegisterInfo *RegInfo = TM.getRegisterInfo();
   const X86InstrInfo &TII = *TM.getInstrInfo();
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
+  assert(MBBI != MBB.end() && "Returning block has no instructions");
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc DL = MBBI->getDebugLoc();
   bool Is64Bit = STI.is64Bit();
@@ -709,7 +710,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     MachineBasicBlock::iterator PI = prior(MBBI);
     unsigned Opc = PI->getOpcode();
 
-    if (Opc != X86::POP32r && Opc != X86::POP64r &&
+    if (Opc != X86::POP32r && Opc != X86::POP64r && Opc != X86::DBG_VALUE &&
         !PI->getDesc().isTerminator())
       break;
 
@@ -756,7 +757,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
   // We're returning from function via eh_return.
   if (RetOpcode == X86::EH_RETURN || RetOpcode == X86::EH_RETURN64) {
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getLastNonDebugInstr();
     MachineOperand &DestAddr  = MBBI->getOperand(0);
     assert(DestAddr.isReg() && "Offset should be in register!");
     BuildMI(MBB, MBBI, DL,
@@ -768,7 +769,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
              RetOpcode == X86::TCRETURNmi64) {
     bool isMem = RetOpcode == X86::TCRETURNmi || RetOpcode == X86::TCRETURNmi64;
     // Tail call return: adjust the stack pointer and jump to callee.
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getFirstTerminator();
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     MachineOperand &StackAdjust = MBBI->getOperand(isMem ? 5 : 1);
     assert(StackAdjust.isImm() && "Expecting immediate value.");
@@ -826,7 +827,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
              (X86FI->getTCReturnAddrDelta() < 0)) {
     // Add the return addr area delta back since we are not tail calling.
     int delta = -1*X86FI->getTCReturnAddrDelta();
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getLastNonDebugInstr();
 
     // Check for possible merge with preceeding ADD instruction.
     delta += mergeSPUpdates(MBB, MBBI, StackPtr, true);

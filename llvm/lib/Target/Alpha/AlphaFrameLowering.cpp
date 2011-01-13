@@ -104,7 +104,7 @@ void AlphaFrameLowering::emitPrologue(MachineFunction &MF) const {
 void AlphaFrameLowering::emitEpilogue(MachineFunction &MF,
                                   MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
 
   assert((MBBI->getOpcode() == Alpha::RETDAG ||

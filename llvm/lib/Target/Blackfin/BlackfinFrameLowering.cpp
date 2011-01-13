@@ -90,7 +90,7 @@ void BlackfinFrameLowering::emitEpilogue(MachineFunction &MF,
     static_cast<const BlackfinRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const BlackfinInstrInfo &TII =
     *static_cast<const BlackfinInstrInfo*>(MF.getTarget().getInstrInfo());
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   DebugLoc dl = MBBI->getDebugLoc();
 
   int FrameSize = MFI->getStackSize();

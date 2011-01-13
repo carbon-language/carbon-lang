@@ -187,7 +187,7 @@ void SPUFrameLowering::emitPrologue(MachineFunction &MF) const {
     // sufficient number instructions in the basic block. Note that
     // this is just a best guess based on the basic block's size.
     if (MBB.size() >= (unsigned) SPUFrameLowering::branchHintPenalty()) {
-      MachineBasicBlock::iterator MBBI = prior(MBB.end());
+      MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
       dl = MBBI->getDebugLoc();
 
       // Insert terminator label
@@ -199,7 +199,7 @@ void SPUFrameLowering::emitPrologue(MachineFunction &MF) const {
 
 void SPUFrameLowering::emitEpilogue(MachineFunction &MF,
                                 MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const SPUInstrInfo &TII =
     *static_cast<const SPUInstrInfo*>(MF.getTarget().getInstrInfo());
   const MachineFrameInfo *MFI = MF.getFrameInfo();

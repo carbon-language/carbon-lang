@@ -497,7 +497,8 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
 void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
                                 MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
+  assert(MBBI != MBB.end() && "Returning block has no terminator");
   const PPCInstrInfo &TII =
     *static_cast<const PPCInstrInfo*>(MF.getTarget().getInstrInfo());
 
@@ -676,29 +677,29 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
           .addReg(TmpReg);
      }
   } else if (RetOpcode == PPC::TCRETURNdi) {
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getLastNonDebugInstr();
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILB)).
       addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset());
   } else if (RetOpcode == PPC::TCRETURNri) {
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getLastNonDebugInstr();
     assert(MBBI->getOperand(0).isReg() && "Expecting register operand.");
     BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBCTR));
   } else if (RetOpcode == PPC::TCRETURNai) {
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getLastNonDebugInstr();
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBA)).addImm(JumpTarget.getImm());
   } else if (RetOpcode == PPC::TCRETURNdi8) {
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getLastNonDebugInstr();
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILB8)).
       addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset());
   } else if (RetOpcode == PPC::TCRETURNri8) {
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getLastNonDebugInstr();
     assert(MBBI->getOperand(0).isReg() && "Expecting register operand.");
     BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBCTR8));
   } else if (RetOpcode == PPC::TCRETURNai8) {
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getLastNonDebugInstr();
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBA8)).addImm(JumpTarget.getImm());
   }

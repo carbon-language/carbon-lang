@@ -297,7 +297,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
 void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   assert(MBBI->getDesc().isReturn() &&
          "Can only insert epilog into returning blocks");
   unsigned RetOpcode = MBBI->getOpcode();
@@ -378,7 +378,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
   if (RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNdiND ||
       RetOpcode == ARM::TCRETURNri || RetOpcode == ARM::TCRETURNriND) {
     // Tail call return: adjust the stack pointer and jump to callee.
-    MBBI = prior(MBB.end());
+    MBBI = MBB.getLastNonDebugInstr();
     MachineOperand &JumpTarget = MBBI->getOperand(0);
 
     // Jump to label or value in register.

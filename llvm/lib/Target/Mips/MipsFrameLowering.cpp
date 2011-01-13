@@ -266,7 +266,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
 
 void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
                                  MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   MachineFrameInfo *MFI            = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI         = MF.getInfo<MipsFunctionInfo>();
   const MipsInstrInfo &TII =

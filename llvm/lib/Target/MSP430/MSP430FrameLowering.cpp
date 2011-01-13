@@ -110,7 +110,7 @@ void MSP430FrameLowering::emitEpilogue(MachineFunction &MF,
   const MSP430InstrInfo &TII =
     *static_cast<const MSP430InstrInfo*>(MF.getTarget().getInstrInfo());
 
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc DL = MBBI->getDebugLoc();
 

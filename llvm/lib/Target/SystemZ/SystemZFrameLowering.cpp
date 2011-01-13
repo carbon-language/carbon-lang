@@ -141,7 +141,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
 void SystemZFrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const SystemZInstrInfo &TII =
     *static_cast<const SystemZInstrInfo*>(MF.getTarget().getInstrInfo());
   SystemZMachineFunctionInfo *SystemZMFI =

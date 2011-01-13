@@ -189,7 +189,7 @@ static bool isCSRestore(MachineInstr *MI, const unsigned *CSRegs) {
 
 void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   assert((MBBI->getOpcode() == ARM::tBX_RET ||
           MBBI->getOpcode() == ARM::tPOP_RET) &&
          "Can only insert epilog into returning blocks");
