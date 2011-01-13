@@ -822,7 +822,8 @@ SVal RegionStoreManager::evalDerivedToBase(SVal derived, QualType baseType) {
     return derived;
 
   const MemRegion *baseReg = 
-    MRMgr.getCXXBaseObjectRegion(baseDecl, derivedRegVal->getRegion());
+    MRMgr.getCXXBaseObjectRegion(baseDecl, derivedRegVal->getRegion()); 
+
   return loc::MemRegionVal(baseReg);
 }
 //===----------------------------------------------------------------------===//
@@ -1104,6 +1105,17 @@ RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R) {
     if (X.second)
       return std::make_pair(X.first,
                             MRMgr.getFieldRegionWithSuper(FR, X.second));
+  }
+  // C++ base object region is another kind of region that we should blast
+  // through to look for lazy compound value. It is like a field region.
+  else if (const CXXBaseObjectRegion *baseReg = 
+                            dyn_cast<CXXBaseObjectRegion>(R)) {
+    const std::pair<Store, const MemRegion *> &X =
+      GetLazyBinding(B, baseReg->getSuperRegion());
+    
+    if (X.second)
+      return std::make_pair(X.first,
+                     MRMgr.getCXXBaseObjectRegionWithSuper(baseReg, X.second));
   }
   // The NULL MemRegion indicates an non-existent lazy binding. A NULL Store is
   // possible for a valid lazy binding.
@@ -1572,7 +1584,6 @@ Store RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
 
 Store RegionStoreManager::KillStruct(Store store, const TypedRegion* R,
                                      SVal DefaultVal) {
-  
   BindingKey key = BindingKey::Make(R, BindingKey::Default);
   
   // The BindingKey may be "invalid" if we cannot handle the region binding
@@ -1582,7 +1593,7 @@ Store RegionStoreManager::KillStruct(Store store, const TypedRegion* R,
   // the case of nested symbolic indices, we need to march up the region
   // hierarchy untile we reach a region whose binding we can reason about.
   const SubRegion *subReg = R;
-  
+
   while (!key.isValid()) {
     if (const SubRegion *tmp = dyn_cast<SubRegion>(subReg->getSuperRegion())) {
       subReg = tmp;

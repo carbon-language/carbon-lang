@@ -643,36 +643,52 @@ void ExprEngine::ProcessInitializer(const CFGInitializer Init,
   // We don't set EntryNode and currentStmt. And we don't clean up state.
   const CXXCtorInitializer *BMI = Init.getInitializer();
 
-  ExplodedNode *Pred = builder.getPredecessor();
-  const LocationContext *LC = Pred->getLocationContext();
+  ExplodedNode *pred = builder.getPredecessor();
+
+  const StackFrameContext *stackFrame = cast<StackFrameContext>(pred->getLocationContext());
+  const CXXConstructorDecl *decl = cast<CXXConstructorDecl>(stackFrame->getDecl());
+  const CXXThisRegion *thisReg = getCXXThisRegion(decl, stackFrame);
+
+  SVal thisVal = pred->getState()->getSVal(thisReg);
 
   if (BMI->isAnyMemberInitializer()) {
     ExplodedNodeSet Dst;
 
     // Evaluate the initializer.
-    Visit(BMI->getInit(), Pred, Dst);
+    Visit(BMI->getInit(), pred, Dst);
 
     for (ExplodedNodeSet::iterator I = Dst.begin(), E = Dst.end(); I != E; ++I){
       ExplodedNode *Pred = *I;
       const GRState *state = Pred->getState();
 
       const FieldDecl *FD = BMI->getAnyMember();
-      const RecordDecl *RD = FD->getParent();
-      const CXXThisRegion *ThisR = getCXXThisRegion(cast<CXXRecordDecl>(RD),
-                           cast<StackFrameContext>(LC));
 
-      SVal ThisV = state->getSVal(ThisR);
-      SVal FieldLoc = state->getLValue(FD, ThisV);
+      SVal FieldLoc = state->getLValue(FD, thisVal);
       SVal InitVal = state->getSVal(BMI->getInit());
       state = state->bindLoc(FieldLoc, InitVal);
 
       // Use a custom node building process.
-      PostInitializer PP(BMI, LC);
+      PostInitializer PP(BMI, stackFrame);
       // Builder automatically add the generated node to the deferred set,
       // which are processed in the builder's dtor.
       builder.generateNode(PP, state, Pred);
     }
+    return;
   }
+
+  assert(BMI->isBaseInitializer());
+
+  // Get the base class declaration.
+  const CXXConstructExpr *ctorExpr = cast<CXXConstructExpr>(BMI->getInit());
+
+  // Create the base object region.
+  SVal baseVal = 
+    getStoreManager().evalDerivedToBase(thisVal, ctorExpr->getType());
+  const MemRegion *baseReg = baseVal.getAsRegion();
+  assert(baseReg);
+  Builder = &builder;
+  ExplodedNodeSet dst;
+  VisitCXXConstructExpr(ctorExpr, baseReg, pred, dst);
 }
 
 void ExprEngine::ProcessImplicitDtor(const CFGImplicitDtor D,

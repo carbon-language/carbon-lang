@@ -872,6 +872,8 @@ class CXXBaseObjectRegion : public TypedRegion {
                             const CXXRecordDecl *decl, const MemRegion *sReg);
 
 public:
+  const CXXRecordDecl *getDecl() const { return decl; }
+
   QualType getValueType() const;
 
   void dumpToStream(llvm::raw_ostream& os) const;
@@ -1011,6 +1013,14 @@ public:
 
   const CXXBaseObjectRegion *getCXXBaseObjectRegion(const CXXRecordDecl *decl,
                                                   const MemRegion *superRegion);
+
+  /// Create a CXXBaseObjectRegion with the same CXXRecordDecl but a different
+  /// super region.
+  const CXXBaseObjectRegion *
+  getCXXBaseObjectRegionWithSuper(const CXXBaseObjectRegion *baseReg, 
+                                  const MemRegion *superRegion) {
+    return getCXXBaseObjectRegion(baseReg->getDecl(), superRegion);
+  }
 
   const FunctionTextRegion *getFunctionTextRegion(const FunctionDecl *FD);
   const BlockTextRegion *getBlockTextRegion(const BlockDecl *BD,
