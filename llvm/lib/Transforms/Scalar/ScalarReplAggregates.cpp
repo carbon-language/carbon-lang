@@ -77,7 +77,7 @@ namespace {
 
   private:
     TargetData *TD;
-    
+
     /// DeadInsts - Keep track of instructions we have made dead, so that
     /// we can remove them after we are done working.
     SmallVector<Value*, 32> DeadInsts;
@@ -88,7 +88,7 @@ namespace {
     struct AllocaInfo {
       /// isUnsafe - This is set to true if the alloca cannot be SROA'd.
       bool isUnsafe : 1;
-      
+
       /// isMemCpySrc - This is true if this aggregate is memcpy'd from.
       bool isMemCpySrc : 1;
 
@@ -98,7 +98,7 @@ namespace {
       AllocaInfo()
         : isUnsafe(false), isMemCpySrc(false), isMemCpyDst(false) {}
     };
-    
+
     unsigned SRThreshold;
 
     void MarkUnsafe(AllocaInfo &I) { I.isUnsafe = true; }
@@ -114,11 +114,11 @@ namespace {
     bool TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size);
     uint64_t FindElementAndOffset(const Type *&T, uint64_t &Offset,
                                   const Type *&IdxTy);
-    
-    void DoScalarReplacement(AllocaInst *AI, 
+
+    void DoScalarReplacement(AllocaInst *AI,
                              std::vector<AllocaInst*> &WorkList);
     void DeleteDeadInstructions();
-   
+
     void RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
                               SmallVector<AllocaInst*, 32> &NewElts);
     void RewriteBitCast(BitCastInst *BC, AllocaInst *AI, uint64_t Offset,
@@ -132,7 +132,7 @@ namespace {
                                        SmallVector<AllocaInst*, 32> &NewElts);
     void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
-    
+
     static MemTransferInst *isOnlyCopiedFromConstantGlobal(AllocaInst *AI);
   };
 }
@@ -146,7 +146,7 @@ INITIALIZE_PASS_END(SROA, "scalarrepl",
                 "Scalar Replacement of Aggregates", false, false)
 
 // Public interface to the ScalarReplAggregates pass
-FunctionPass *llvm::createScalarReplAggregatesPass(signed int Threshold) { 
+FunctionPass *llvm::createScalarReplAggregatesPass(signed int Threshold) {
   return new SROA(Threshold);
 }
 
@@ -163,16 +163,16 @@ class ConvertToScalarInfo {
   /// AllocaSize - The size of the alloca being considered.
   unsigned AllocaSize;
   const TargetData &TD;
- 
+
   /// IsNotTrivial - This is set to true if there is some access to the object
   /// which means that mem2reg can't promote it.
   bool IsNotTrivial;
-  
+
   /// VectorTy - This tracks the type that we should promote the vector to if
   /// it is possible to turn it into a vector.  This starts out null, and if it
   /// isn't possible to turn into a vector type, it gets set to VoidTy.
   const Type *VectorTy;
-  
+
   /// HadAVector - True if there is at least one vector access to the alloca.
   /// We don't want to turn random arrays into vectors and use vector element
   /// insert/extract, but if there are element accesses to something that is
@@ -186,14 +186,14 @@ public:
     VectorTy = 0;
     HadAVector = false;
   }
-  
+
   AllocaInst *TryConvert(AllocaInst *AI);
-  
+
 private:
   bool CanConvertToScalar(Value *V, uint64_t Offset);
   void MergeInType(const Type *In, uint64_t Offset);
   void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
-  
+
   Value *ConvertScalar_ExtractValue(Value *NV, const Type *ToType,
                                     uint64_t Offset, IRBuilder<> &Builder);
   Value *ConvertScalar_InsertValue(Value *StoredVal, Value *ExistingVal,
@@ -210,7 +210,7 @@ static bool IsVerbotenVectorType(const VectorType *VTy, const Instruction *I) {
   if (!Triple.startswith("i386") &&
       !Triple.startswith("x86_64"))
     return false;
-  
+
   // Reject all the MMX vector types.
   switch (VTy->getNumElements()) {
   default: return false;
@@ -230,7 +230,7 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
   // out.
   if (!CanConvertToScalar(AI, 0) || !IsNotTrivial)
     return 0;
-  
+
   // If we were able to find a vector type that can handle this with
   // insert/extract elements, and if there was at least one use that had
   // a vector type, promote this to a vector.  We don't want to promote
@@ -270,7 +270,7 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
   // nothing to be done.
   if (VectorTy && VectorTy->isVoidTy())
     return;
-  
+
   // If this could be contributing to a vector, analyze it.
 
   // If the In type is a vector that is the same size as the alloca, see if it
@@ -278,7 +278,7 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
   if (const VectorType *VInTy = dyn_cast<VectorType>(In)) {
     // Remember if we saw a vector type.
     HadAVector = true;
-    
+
     if (VInTy->getBitWidth()/8 == AllocaSize && Offset == 0) {
       // If we're storing/loading a vector of the right size, allow it as a
       // vector.  If this the first vector we see, remember the type so that
@@ -297,7 +297,7 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
     // compatible with it.
     unsigned EltSize = In->getPrimitiveSizeInBits()/8;
     if (Offset % EltSize == 0 && AllocaSize % EltSize == 0 &&
-        (VectorTy == 0 || 
+        (VectorTy == 0 ||
          cast<VectorType>(VectorTy)->getElementType()
                ->getPrimitiveSizeInBits()/8 == EltSize)) {
       if (VectorTy == 0)
@@ -305,7 +305,7 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
       return;
     }
   }
-  
+
   // Otherwise, we have a case that we can't handle with an optimized vector
   // form.  We can still turn this into a large integer.
   VectorTy = Type::getVoidTy(In->getContext());
@@ -323,7 +323,7 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
 bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
-    
+
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       // Don't break volatile loads.
       if (LI->isVolatile())
@@ -334,7 +334,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       MergeInType(LI->getType(), Offset);
       continue;
     }
-    
+
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Storing the pointer, not into the value?
       if (SI->getOperand(0) == V || SI->isVolatile()) return false;
@@ -344,7 +344,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       MergeInType(SI->getOperand(0)->getType(), Offset);
       continue;
     }
-    
+
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(User)) {
       IsNotTrivial = true;  // Can't be mem2reg'd.
       if (!CanConvertToScalar(BCI, Offset))
@@ -356,7 +356,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       // If this is a GEP with a variable indices, we can't handle it.
       if (!GEP->hasAllConstantIndices())
         return false;
-      
+
       // Compute the offset that this GEP adds to the pointer.
       SmallVector<Value*, 8> Indices(GEP->op_begin()+1, GEP->op_end());
       uint64_t GEPOffset = TD.getIndexedOffset(GEP->getPointerOperandType(),
@@ -385,15 +385,15 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       ConstantInt *Len = dyn_cast<ConstantInt>(MTI->getLength());
       if (Len == 0 || Len->getZExtValue() != AllocaSize || Offset != 0)
         return false;
-      
+
       IsNotTrivial = true;  // Can't be mem2reg'd.
       continue;
     }
-    
+
     // Otherwise, we cannot handle this!
     return false;
   }
-  
+
   return true;
 }
 
@@ -424,9 +424,9 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
       GEP->eraseFromParent();
       continue;
     }
-    
+
     IRBuilder<> Builder(User);
-    
+
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       // The load is a bit extract from NewAI shifted right by Offset bits.
       Value *LoadedVal = Builder.CreateLoad(NewAI, "tmp");
@@ -436,7 +436,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
       LI->eraseFromParent();
       continue;
     }
-    
+
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
       Instruction *Old = Builder.CreateLoad(NewAI, NewAI->getName()+".in");
@@ -444,14 +444,14 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
                                              Builder);
       Builder.CreateStore(New, NewAI);
       SI->eraseFromParent();
-      
+
       // If the load we just inserted is now dead, then the inserted store
       // overwrote the entire thing.
       if (Old->use_empty())
         Old->eraseFromParent();
       continue;
     }
-    
+
     // If this is a constant sized memset of a constant value (e.g. 0) we can
     // transform it into a store of the expanded constant value.
     if (MemSetInst *MSI = dyn_cast<MemSetInst>(User)) {
@@ -459,7 +459,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
       unsigned NumBytes = cast<ConstantInt>(MSI->getLength())->getZExtValue();
       if (NumBytes != 0) {
         unsigned Val = cast<ConstantInt>(MSI->getValue())->getZExtValue();
-        
+
         // Compute the value replicated the right number of times.
         APInt APVal(NumBytes*8, Val);
 
@@ -467,17 +467,17 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
         if (Val)
           for (unsigned i = 1; i != NumBytes; ++i)
             APVal |= APVal << 8;
-        
+
         Instruction *Old = Builder.CreateLoad(NewAI, NewAI->getName()+".in");
         Value *New = ConvertScalar_InsertValue(
                                     ConstantInt::get(User->getContext(), APVal),
                                                Old, Offset, Builder);
         Builder.CreateStore(New, NewAI);
-        
+
         // If the load we just inserted is now dead, then the memset overwrote
         // the entire thing.
         if (Old->use_empty())
-          Old->eraseFromParent();        
+          Old->eraseFromParent();
       }
       MSI->eraseFromParent();
       continue;
@@ -487,12 +487,12 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
     // can handle it like a load or store of the scalar type.
     if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(User)) {
       assert(Offset == 0 && "must be store to start of alloca");
-      
+
       // If the source and destination are both to the same alloca, then this is
       // a noop copy-to-self, just delete it.  Otherwise, emit a load and store
       // as appropriate.
       AllocaInst *OrigAI = cast<AllocaInst>(GetUnderlyingObject(Ptr, 0));
-      
+
       if (GetUnderlyingObject(MTI->getSource(), 0) != OrigAI) {
         // Dest must be OrigAI, change this to be a load from the original
         // pointer (bitcasted), then a store to our new alloca.
@@ -532,7 +532,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
       MTI->eraseFromParent();
       continue;
     }
-    
+
     llvm_unreachable("Unsupported operation!");
   }
 }
@@ -574,7 +574,7 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
       V = Builder.CreateBitCast(V, ToType, "tmp");
     return V;
   }
-  
+
   // If ToType is a first class aggregate, extract out each of the pieces and
   // use insertvalue's to form the FCA.
   if (const StructType *ST = dyn_cast<StructType>(ToType)) {
@@ -588,7 +588,7 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
     }
     return Res;
   }
-  
+
   if (const ArrayType *AT = dyn_cast<ArrayType>(ToType)) {
     uint64_t EltSize = TD.getTypeAllocSizeInBits(AT->getElementType());
     Value *Res = UndefValue::get(AT);
@@ -624,7 +624,7 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
                                  ConstantInt::get(FromVal->getType(),
                                                            ShAmt), "tmp");
   else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
-    FromVal = Builder.CreateShl(FromVal, 
+    FromVal = Builder.CreateShl(FromVal,
                                 ConstantInt::get(FromVal->getType(),
                                                           -ShAmt), "tmp");
 
@@ -632,11 +632,11 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   unsigned LIBitWidth = TD.getTypeSizeInBits(ToType);
   if (LIBitWidth < NTy->getBitWidth())
     FromVal =
-      Builder.CreateTrunc(FromVal, IntegerType::get(FromVal->getContext(), 
+      Builder.CreateTrunc(FromVal, IntegerType::get(FromVal->getContext(),
                                                     LIBitWidth), "tmp");
   else if (LIBitWidth > NTy->getBitWidth())
     FromVal =
-       Builder.CreateZExt(FromVal, IntegerType::get(FromVal->getContext(), 
+       Builder.CreateZExt(FromVal, IntegerType::get(FromVal->getContext(),
                                                     LIBitWidth), "tmp");
 
   // If the result is an integer, this is a trunc or bitcast.
@@ -673,7 +673,7 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
   if (const VectorType *VTy = dyn_cast<VectorType>(AllocaType)) {
     uint64_t VecSize = TD.getTypeAllocSizeInBits(VTy);
     uint64_t ValSize = TD.getTypeAllocSizeInBits(SV->getType());
-    
+
     // Changing the whole vector with memset or with an access of a different
     // vector type?
     if (ValSize == VecSize)
@@ -683,28 +683,28 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
 
     // Must be an element insertion.
     unsigned Elt = Offset/EltSize;
-    
+
     if (SV->getType() != VTy->getElementType())
       SV = Builder.CreateBitCast(SV, VTy->getElementType(), "tmp");
-    
-    SV = Builder.CreateInsertElement(Old, SV, 
+
+    SV = Builder.CreateInsertElement(Old, SV,
                      ConstantInt::get(Type::getInt32Ty(SV->getContext()), Elt),
                                      "tmp");
     return SV;
   }
-  
+
   // If SV is a first-class aggregate value, insert each value recursively.
   if (const StructType *ST = dyn_cast<StructType>(SV->getType())) {
     const StructLayout &Layout = *TD.getStructLayout(ST);
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
       Value *Elt = Builder.CreateExtractValue(SV, i, "tmp");
-      Old = ConvertScalar_InsertValue(Elt, Old, 
+      Old = ConvertScalar_InsertValue(Elt, Old,
                                       Offset+Layout.getElementOffsetInBits(i),
                                       Builder);
     }
     return Old;
   }
-  
+
   if (const ArrayType *AT = dyn_cast<ArrayType>(SV->getType())) {
     uint64_t EltSize = TD.getTypeAllocSizeInBits(AT->getElementType());
     for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
@@ -868,7 +868,7 @@ bool SROA::performScalarRepl(Function &F) {
   while (!WorkList.empty()) {
     AllocaInst *AI = WorkList.back();
     WorkList.pop_back();
-    
+
     // Handle dead allocas trivially.  These can be formed by SROA'ing arrays
     // with unused elements.
     if (AI->use_empty()) {
@@ -880,7 +880,7 @@ bool SROA::performScalarRepl(Function &F) {
     // If this alloca is impossible for us to promote, reject it early.
     if (AI->isArrayAllocation() || !AI->getAllocatedType()->isSized())
       continue;
-    
+
     // Check to see if this allocation is only modified by a memcpy/memmove from
     // a constant global.  If this is the case, we can change all users to use
     // the constant global instead.  This is commonly produced by the CFE by
@@ -897,7 +897,7 @@ bool SROA::performScalarRepl(Function &F) {
       Changed = true;
       continue;
     }
-    
+
     // Check to see if we can perform the core SROA transformation.  We cannot
     // transform the allocation instruction if it is an array allocation
     // (allocations OF arrays are ok though), and an allocation of a scalar
@@ -906,10 +906,10 @@ bool SROA::performScalarRepl(Function &F) {
 
     // Do not promote [0 x %struct].
     if (AllocaSize == 0) continue;
-    
+
     // Do not promote any struct whose size is too big.
     if (AllocaSize > SRThreshold) continue;
-    
+
     // If the alloca looks like a good candidate for scalar replacement, and if
     // all its users can be transformed, then split up the aggregate into its
     // separate elements.
@@ -932,8 +932,8 @@ bool SROA::performScalarRepl(Function &F) {
       ++NumConverted;
       Changed = true;
       continue;
-    }      
-    
+    }
+
     // Otherwise, couldn't process this alloca.
   }
 
@@ -942,14 +942,14 @@ bool SROA::performScalarRepl(Function &F) {
 
 /// DoScalarReplacement - This alloca satisfied the isSafeAllocaToScalarRepl
 /// predicate, do SROA now.
-void SROA::DoScalarReplacement(AllocaInst *AI, 
+void SROA::DoScalarReplacement(AllocaInst *AI,
                                std::vector<AllocaInst*> &WorkList) {
   DEBUG(dbgs() << "Found inst to SROA: " << *AI << '\n');
   SmallVector<AllocaInst*, 32> ElementAllocas;
   if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
     ElementAllocas.reserve(ST->getNumContainedTypes());
     for (unsigned i = 0, e = ST->getNumContainedTypes(); i != e; ++i) {
-      AllocaInst *NA = new AllocaInst(ST->getContainedType(i), 0, 
+      AllocaInst *NA = new AllocaInst(ST->getContainedType(i), 0,
                                       AI->getAlignment(),
                                       AI->getName() + "." + Twine(i), AI);
       ElementAllocas.push_back(NA);
@@ -997,7 +997,7 @@ void SROA::DeleteDeadInstructions() {
     I->eraseFromParent();
   }
 }
-    
+
 /// isSafeForScalarRepl - Check if instruction I is a safe use with regard to
 /// performing scalar replacement of alloca AI.  The results are flagged in
 /// the Info parameter.  Offset indicates the position within AI that is
@@ -1374,7 +1374,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     // function is only called for mem intrinsics that access the whole
     // aggregate, so non-zero GEPs are not an issue here.)
     OtherPtr = OtherPtr->stripPointerCasts();
-    
+
     // Copying the alloca to itself is a no-op: just delete it.
     if (OtherPtr == AI || OtherPtr == NewElts[0]) {
       // This code will run twice for a no-op memcpy -- once for each operand.
@@ -1385,26 +1385,26 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       DeadInsts.push_back(MI);
       return;
     }
-    
+
     // If the pointer is not the right type, insert a bitcast to the right
     // type.
     const Type *NewTy =
       PointerType::get(AI->getType()->getElementType(), AddrSpace);
-    
+
     if (OtherPtr->getType() != NewTy)
       OtherPtr = new BitCastInst(OtherPtr, NewTy, OtherPtr->getName(), MI);
   }
-  
+
   // Process each element of the aggregate.
   bool SROADest = MI->getRawDest() == Inst;
-  
+
   Constant *Zero = Constant::getNullValue(Type::getInt32Ty(MI->getContext()));
 
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // If this is a memcpy/memmove, emit a GEP of the other element address.
     Value *OtherElt = 0;
     unsigned OtherEltAlign = MemAlignment;
-    
+
     if (OtherPtr) {
       Value *Idx[2] = { Zero,
                       ConstantInt::get(Type::getInt32Ty(MI->getContext()), i) };
@@ -1420,7 +1420,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
         const Type *EltTy = cast<SequentialType>(OtherTy)->getElementType();
         EltOffset = TD->getTypeAllocSize(EltTy)*i;
       }
-      
+
       // The alignment of the other pointer is the guaranteed alignment of the
       // element, which is affected by both the known alignment of the whole
       // mem intrinsic and the alignment of the element.  If the alignment of
@@ -1428,10 +1428,10 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       // known alignment is just 4 bytes.
       OtherEltAlign = (unsigned)MinAlign(OtherEltAlign, EltOffset);
     }
-    
+
     Value *EltPtr = NewElts[i];
     const Type *EltTy = cast<PointerType>(EltPtr->getType())->getElementType();
-    
+
     // If we got down to a scalar, insert a load or store as appropriate.
     if (EltTy->isSingleValueType()) {
       if (isa<MemTransferInst>(MI)) {
@@ -1447,7 +1447,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
         continue;
       }
       assert(isa<MemSetInst>(MI));
-      
+
       // If the stored element is zero (common case), just store a null
       // constant.
       Constant *StoreVal;
@@ -1467,7 +1467,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
             TotalVal = TotalVal.shl(8);
             TotalVal |= OneVal;
           }
-          
+
           // Convert the integer value to the appropriate type.
           StoreVal = ConstantInt::get(CI->getContext(), TotalVal);
           if (ValTy->isPointerTy())
@@ -1475,7 +1475,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
           else if (ValTy->isFloatingPointTy())
             StoreVal = ConstantExpr::getBitCast(StoreVal, ValTy);
           assert(StoreVal->getType() == ValTy && "Type mismatch!");
-          
+
           // If the requested value was a vector constant, create it.
           if (EltTy != ValTy) {
             unsigned NumElts = cast<VectorType>(ValTy)->getNumElements();
@@ -1489,11 +1489,11 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       // Otherwise, if we're storing a byte variable, use a memset call for
       // this element.
     }
-        
+
     unsigned EltSize = TD->getTypeAllocSize(EltTy);
-    
+
     IRBuilder<> Builder(MI);
-    
+
     // Finally, insert the meminst for this element.
     if (isa<MemSetInst>(MI)) {
       Builder.CreateMemSet(EltPtr, MI->getArgOperand(1), EltSize,
@@ -1502,7 +1502,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       assert(isa<MemTransferInst>(MI));
       Value *Dst = SROADest ? EltPtr : OtherElt;  // Dest ptr
       Value *Src = SROADest ? OtherElt : EltPtr;  // Src ptr
-      
+
       if (isa<MemCpyInst>(MI))
         Builder.CreateMemCpy(Dst, Src, EltSize, OtherEltAlign,MI->isVolatile());
       else
@@ -1522,11 +1522,11 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
   Value *SrcVal = SI->getOperand(0);
   const Type *AllocaEltTy = AI->getAllocatedType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
-  
+
   // Handle tail padding by extending the operand
   if (TD->getTypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
     SrcVal = new ZExtInst(SrcVal,
-                          IntegerType::get(SI->getContext(), AllocaSizeBits), 
+                          IntegerType::get(SI->getContext(), AllocaSizeBits),
                           "", SI);
 
   DEBUG(dbgs() << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << '\n' << *SI
@@ -1536,28 +1536,28 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
   // have different ways to compute the element offset.
   if (const StructType *EltSTy = dyn_cast<StructType>(AllocaEltTy)) {
     const StructLayout *Layout = TD->getStructLayout(EltSTy);
-    
+
     for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
       // Get the number of bits to shift SrcVal to get the value.
       const Type *FieldTy = EltSTy->getElementType(i);
       uint64_t Shift = Layout->getElementOffsetInBits(i);
-      
+
       if (TD->isBigEndian())
         Shift = AllocaSizeBits-Shift-TD->getTypeAllocSizeInBits(FieldTy);
-      
+
       Value *EltVal = SrcVal;
       if (Shift) {
         Value *ShiftVal = ConstantInt::get(EltVal->getType(), Shift);
         EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
                                             "sroa.store.elt", SI);
       }
-      
+
       // Truncate down to an integer of the right size.
       uint64_t FieldSizeBits = TD->getTypeSizeInBits(FieldTy);
-      
+
       // Ignore zero sized fields like {}, they obviously contain no data.
       if (FieldSizeBits == 0) continue;
-      
+
       if (FieldSizeBits != AllocaSizeBits)
         EltVal = new TruncInst(EltVal,
                              IntegerType::get(SI->getContext(), FieldSizeBits),
@@ -1576,7 +1576,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
       }
       new StoreInst(EltVal, DestField, SI);
     }
-    
+
   } else {
     const ArrayType *ATy = cast<ArrayType>(AllocaEltTy);
     const Type *ArrayEltTy = ATy->getElementType();
@@ -1584,28 +1584,28 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
     uint64_t ElementSizeBits = TD->getTypeSizeInBits(ArrayEltTy);
 
     uint64_t Shift;
-    
+
     if (TD->isBigEndian())
       Shift = AllocaSizeBits-ElementOffset;
-    else 
+    else
       Shift = 0;
-    
+
     for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
       // Ignore zero sized fields like {}, they obviously contain no data.
       if (ElementSizeBits == 0) continue;
-      
+
       Value *EltVal = SrcVal;
       if (Shift) {
         Value *ShiftVal = ConstantInt::get(EltVal->getType(), Shift);
         EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
                                             "sroa.store.elt", SI);
       }
-      
+
       // Truncate down to an integer of the right size.
       if (ElementSizeBits != AllocaSizeBits)
-        EltVal = new TruncInst(EltVal, 
-                               IntegerType::get(SI->getContext(), 
-                                                ElementSizeBits),"",SI);
+        EltVal = new TruncInst(EltVal,
+                               IntegerType::get(SI->getContext(),
+                                                ElementSizeBits), "", SI);
       Value *DestField = NewElts[i];
       if (EltVal->getType() == ArrayEltTy) {
         // Storing to an integer field of this size, just do it.
@@ -1620,14 +1620,14 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
                                     "", SI);
       }
       new StoreInst(EltVal, DestField, SI);
-      
+
       if (TD->isBigEndian())
         Shift -= ElementOffset;
-      else 
+      else
         Shift += ElementOffset;
     }
   }
-  
+
   DeadInsts.push_back(SI);
 }
 
@@ -1639,10 +1639,10 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
   // and form the result value.
   const Type *AllocaEltTy = AI->getAllocatedType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
-  
+
   DEBUG(dbgs() << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << '\n' << *LI
                << '\n');
-  
+
   // There are two forms here: AI could be an array or struct.  Both cases
   // have different ways to compute the element offset.
   const StructLayout *Layout = 0;
@@ -1652,11 +1652,11 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
   } else {
     const Type *ArrayEltTy = cast<ArrayType>(AllocaEltTy)->getElementType();
     ArrayEltBitOffset = TD->getTypeAllocSizeInBits(ArrayEltTy);
-  }    
-  
-  Value *ResultVal = 
+  }
+
+  Value *ResultVal =
     Constant::getNullValue(IntegerType::get(LI->getContext(), AllocaSizeBits));
-  
+
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // Load the value from the alloca.  If the NewElt is an aggregate, cast
     // the pointer to an integer of the same size before doing the load.
@@ -1664,11 +1664,11 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
     const Type *FieldTy =
       cast<PointerType>(SrcField->getType())->getElementType();
     uint64_t FieldSizeBits = TD->getTypeSizeInBits(FieldTy);
-    
+
     // Ignore zero sized fields like {}, they obviously contain no data.
     if (FieldSizeBits == 0) continue;
-    
-    const IntegerType *FieldIntTy = IntegerType::get(LI->getContext(), 
+
+    const IntegerType *FieldIntTy = IntegerType::get(LI->getContext(),
                                                      FieldSizeBits);
     if (!FieldTy->isIntegerTy() && !FieldTy->isFloatingPointTy() &&
         !FieldTy->isVectorTy())
@@ -1686,17 +1686,17 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
     // we can shift and insert it.
     if (SrcField->getType() != ResultVal->getType())
       SrcField = new ZExtInst(SrcField, ResultVal->getType(), "", LI);
-    
+
     // Determine the number of bits to shift SrcField.
     uint64_t Shift;
     if (Layout) // Struct case.
       Shift = Layout->getElementOffsetInBits(i);
     else  // Array case.
       Shift = i*ArrayEltBitOffset;
-    
+
     if (TD->isBigEndian())
       Shift = AllocaSizeBits-Shift-FieldIntTy->getBitWidth();
-    
+
     if (Shift) {
       Value *ShiftVal = ConstantInt::get(SrcField->getType(), Shift);
       SrcField = BinaryOperator::CreateShl(SrcField, ShiftVal, "", LI);
@@ -1761,13 +1761,13 @@ bool SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // Loop over the use list of the alloca.  We can only transform it if all of
   // the users are safe to transform.
   AllocaInfo Info;
-  
+
   isSafeForScalarRepl(AI, AI, 0, Info);
   if (Info.isUnsafe) {
     DEBUG(dbgs() << "Cannot transform: " << *AI << '\n');
     return false;
   }
-  
+
   // Okay, we know all the users are promotable.  If the aggregate is a memcpy
   // source and destination, we have to be careful.  In particular, the memcpy
   // could be moving around elements that live in structure padding of the LLVM
@@ -1789,7 +1789,7 @@ static bool PointsToConstantGlobal(Value *V) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     return GV->isConstant();
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    if (CE->getOpcode() == Instruction::BitCast || 
+    if (CE->getOpcode() == Instruction::BitCast ||
         CE->getOpcode() == Instruction::GetElementPtr)
       return PointsToConstantGlobal(CE->getOperand(0));
   return false;
@@ -1812,7 +1812,7 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       if (LI->isVolatile()) return false;
       continue;
     }
-    
+
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
       // If uses of the bitcast are ok, we are ok.
       if (!isOnlyCopiedFromConstantGlobal(BCI, TheCopy, isOffset))
@@ -1827,7 +1827,7 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
         return false;
       continue;
     }
-    
+
     if (CallSite CS = U) {
       // If this is a readonly/readnone call site, then we know it is just a
       // load and we can ignore it.
@@ -1838,20 +1838,20 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       // ignore it.
       if (CS.isCallee(UI))
         continue;
-      
+
       // If this is being passed as a byval argument, the caller is making a
       // copy, so it is only a read of the alloca.
       unsigned ArgNo = CS.getArgumentNo(UI);
       if (CS.paramHasAttr(ArgNo+1, Attribute::ByVal))
         continue;
     }
-    
+
     // If this is isn't our memcpy/memmove, reject it as something we can't
     // handle.
     MemTransferInst *MI = dyn_cast<MemTransferInst>(U);
     if (MI == 0)
       return false;
-    
+
     // If the transfer is using the alloca as a source of the transfer, then
     // ignore it since it is a load (unless the transfer is volatile).
     if (UI.getOperandNo() == 1) {
@@ -1861,18 +1861,18 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
 
     // If we already have seen a copy, reject the second one.
     if (TheCopy) return false;
-    
+
     // If the pointer has been offset from the start of the alloca, we can't
     // safely handle this.
     if (isOffset) return false;
 
     // If the memintrinsic isn't using the alloca as the dest, reject it.
     if (UI.getOperandNo() != 0) return false;
-    
+
     // If the source of the memcpy/move is not a constant global, reject it.
     if (!PointsToConstantGlobal(MI->getSource()))
       return false;
-    
+
     // Otherwise, the transform is safe.  Remember the copy instruction.
     TheCopy = MI;
   }
