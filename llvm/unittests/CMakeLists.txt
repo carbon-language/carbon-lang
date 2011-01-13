@@ -18,6 +18,12 @@ add_custom_target(UnitTests)
 
 include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
 add_definitions(-DGTEST_HAS_RTTI=0)
+if( CMAKE_COMPILER_IS_GNUCXX )
+  llvm_replace_compiler_option(CMAKE_CXX_FLAGS "-frtti" "-fno-rtti")
+elseif( MSVC )
+  llvm_replace_compiler_option(CMAKE_CXX_FLAGS "/GR" "/GR-")
+endif()
+
 if (NOT LLVM_ENABLE_THREADS)
   add_definitions(-DGTEST_HAS_PTHREAD=0)
 endif()
