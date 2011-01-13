@@ -1084,12 +1084,12 @@ static bool isHomogeneousAggregate(const Type *T, unsigned &NumElts,
                                    const Type *&EltTy) {
   if (const ArrayType *AT = dyn_cast<ArrayType>(T)) {
     NumElts = AT->getNumElements();
-    EltTy = AT->getElementType();
+    EltTy = (NumElts == 0 ? 0 : AT->getElementType());
     return true;
   }
   if (const StructType *ST = dyn_cast<StructType>(T)) {
     NumElts = ST->getNumContainedTypes();
-    EltTy = ST->getContainedType(0);
+    EltTy = (NumElts == 0 ? 0 : ST->getContainedType(0));
     for (unsigned n = 1; n < NumElts; ++n) {
       if (ST->getContainedType(n) != EltTy)
         return false;
