@@ -14,6 +14,7 @@ struct is_same<T, T> {
 
 template<typename...> struct tuple { };
 template<int ...> struct int_tuple { };
+template<typename T, typename U> struct pair { };
 
 namespace Count {
   template<typename Head, typename ...Tail>
@@ -254,4 +255,20 @@ namespace FunctionTypes {
   int check2[Arity<int(float...)>::value == 1? 1 : -1];
   int check3[Arity<int(float, double, long double...)>::value == 3? 1 : -1];
   Arity<int(float, double, long double, char)> check4; // expected-error{{implicit instantiation of undefined template 'FunctionTypes::Arity<int (float, double, long double, char)>'}}
+}
+
+namespace SuperReplace {
+  template<typename T>
+  struct replace_with_int {
+    typedef int type;
+  };
+  
+  template<template<typename ...> class TT, typename ...Types>
+  struct replace_with_int<TT<Types...>> {
+    typedef TT<typename replace_with_int<Types>::type...> type;
+  };
+  
+  int check0[is_same<replace_with_int<pair<tuple<float, double, short>,
+                                           pair<char, unsigned char>>>::type,
+                     pair<tuple<int, int, int>, pair<int, int>>>::value? 1 : -1];
 }

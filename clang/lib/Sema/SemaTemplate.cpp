@@ -3651,7 +3651,12 @@ static bool MatchTemplateParameterKind(Sema &S, NamedDecl *New, NamedDecl *Old,
   }
 
   // Check that both are parameter packs are neither are parameter packs. 
-  if (Old->isTemplateParameterPack() != New->isTemplateParameterPack()) {
+  // However, if we are matching a template template argument to a 
+  // template template parameter, the template template parameter can have
+  // a parameter pack where the template template argument does not.
+  if (Old->isTemplateParameterPack() != New->isTemplateParameterPack() &&
+      !(Kind == Sema::TPL_TemplateTemplateArgumentMatch &&
+        Old->isTemplateParameterPack())) {
     if (Complain) {
       unsigned NextDiag = diag::err_template_parameter_pack_non_pack;
       if (TemplateArgLoc.isValid()) {
@@ -3726,6 +3731,28 @@ static bool MatchTemplateParameterKind(Sema &S, NamedDecl *New, NamedDecl *Old,
   return true;
 }
 
+/// \brief Diagnose a known arity mismatch when comparing template argument
+/// lists.
+static
+void DiagnoseTemplateParameterListArityMismatch(Sema &S, 
+                                                TemplateParameterList *New,
+                                                TemplateParameterList *Old,
+                                      Sema::TemplateParameterListEqualKind Kind,
+                                                SourceLocation TemplateArgLoc) {
+  unsigned NextDiag = diag::err_template_param_list_different_arity;
+  if (TemplateArgLoc.isValid()) {
+    S.Diag(TemplateArgLoc, diag::err_template_arg_template_params_mismatch);
+    NextDiag = diag::note_template_param_list_different_arity;
+  }
+  S.Diag(New->getTemplateLoc(), NextDiag)
+    << (New->size() > Old->size())
+    << (Kind != Sema::TPL_TemplateMatch)
+    << SourceRange(New->getTemplateLoc(), New->getRAngleLoc());
+  S.Diag(Old->getTemplateLoc(), diag::note_template_prev_declaration)
+    << (Kind != Sema::TPL_TemplateMatch)
+    << SourceRange(Old->getTemplateLoc(), Old->getRAngleLoc());
+}
+
 /// \brief Determine whether the given template parameter lists are
 /// equivalent.
 ///
@@ -3755,21 +3782,10 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
                                      bool Complain,
                                      TemplateParameterListEqualKind Kind,
                                      SourceLocation TemplateArgLoc) {
-  if (Old->size() != New->size()) {
-    if (Complain) {
-      unsigned NextDiag = diag::err_template_param_list_different_arity;
-      if (TemplateArgLoc.isValid()) {
-        Diag(TemplateArgLoc, diag::err_template_arg_template_params_mismatch);
-        NextDiag = diag::note_template_param_list_different_arity;
-      }
-      Diag(New->getTemplateLoc(), NextDiag)
-          << (New->size() > Old->size())
-          << (Kind != TPL_TemplateMatch)
-          << SourceRange(New->getTemplateLoc(), New->getRAngleLoc());
-      Diag(Old->getTemplateLoc(), diag::note_template_prev_declaration)
-        << (Kind != TPL_TemplateMatch)
-        << SourceRange(Old->getTemplateLoc(), Old->getRAngleLoc());
-    }
+  if (Old->size() != New->size() && Kind != TPL_TemplateTemplateArgumentMatch) {
+    if (Complain)
+      DiagnoseTemplateParameterListArityMismatch(*this, New, Old, Kind,
+                                                 TemplateArgLoc);
 
     return false;
   }
@@ -3779,15 +3795,52 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
   //   when each of the template parameters in the template-parameter-list of 
   //   the template-argument’s corresponding class template or template alias
   //   (call it A) matches the corresponding template parameter in the 
-  //   template-parameter-list of P.
+  //   template-parameter-list of P. [...]
+  TemplateParameterList::iterator NewParm = New->begin();
+  TemplateParameterList::iterator NewParmEnd = New->end();
   for (TemplateParameterList::iterator OldParm = Old->begin(),
-         OldParmEnd = Old->end(), NewParm = New->begin();
-       OldParm != OldParmEnd; ++OldParm, ++NewParm) {
-    if (!MatchTemplateParameterKind(*this, *NewParm, *OldParm, Complain,
-                                    Kind, TemplateArgLoc))
-      return false;    
+                                    OldParmEnd = Old->end();
+       OldParm != OldParmEnd; ++OldParm) {
+    if (!(*OldParm)->isTemplateParameterPack()) {
+      if (NewParm == NewParmEnd) {
+        if (Complain)
+          DiagnoseTemplateParameterListArityMismatch(*this, New, Old, Kind,
+                                                     TemplateArgLoc);
+        
+        return false;
+      }
+      
+      if (!MatchTemplateParameterKind(*this, *NewParm, *OldParm, Complain,
+                                      Kind, TemplateArgLoc))
+        return false;    
+      
+      ++NewParm;
+      continue;
+    }
+    
+    // C++0x [temp.arg.template]p3:
+    //   [...] When P’s template- parameter-list contains a template parameter
+    //   pack (14.5.3), the template parameter pack will match zero or more 
+    //   template parameters or template parameter packs in the 
+    //   template-parameter-list of A with the same type and form as the
+    //   template parameter pack in P (ignoring whether those template
+    //   parameters are template parameter packs).
+    for (; NewParm != NewParmEnd; ++NewParm) {
+      if (!MatchTemplateParameterKind(*this, *NewParm, *OldParm, Complain,
+                                      Kind, TemplateArgLoc))
+        return false;          
+    }
   }
-
+  
+  // Make sure we exhausted all of the arguments.
+  if (NewParm != NewParmEnd) {
+    if (Complain)
+      DiagnoseTemplateParameterListArityMismatch(*this, New, Old, Kind,
+                                                 TemplateArgLoc);
+      
+    return false;
+  }
+  
   return true;
 }
 
