@@ -6787,8 +6787,14 @@ TreeTransform<Derived>::TransformCXXNoexceptExpr(CXXNoexceptExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformPackExpansionExpr(PackExpansionExpr *E) {
-  llvm_unreachable("pack expansion expression in unhandled context");
-  return ExprError();
+  ExprResult Pattern = getDerived().TransformExpr(E->getPattern());
+  if (Pattern.isInvalid())
+    return ExprError();
+  
+  if (!getDerived().AlwaysRebuild() && Pattern.get() == E->getPattern())
+    return SemaRef.Owned(E);
+
+  return getDerived().RebuildPackExpansion(Pattern.get(), E->getEllipsisLoc());
 }
 
 template<typename Derived>

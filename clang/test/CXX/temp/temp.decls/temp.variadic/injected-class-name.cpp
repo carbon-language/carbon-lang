@@ -56,4 +56,20 @@ namespace rdar8848837 {
 
   X<int(float, double)> xif;
 
+  template<unsigned> struct unsigned_c { };
+  template<typename ...ArgTypes> int g(ArgTypes...);
+
+  template<typename F> struct X1;
+
+  template<typename R, typename ...ArgTypes>
+  struct X1<R(ArgTypes...)> {
+    unsigned_c<sizeof(1 + g(ArgTypes()...))> f();
+  };
+
+  template<typename R, typename ...ArgTypes>
+  unsigned_c<sizeof(1 + g(ArgTypes()...))> X1<R(ArgTypes...)>::f() { 
+    return unsigned_c<sizeof(int)>();
+  }
+
+  X1<int(float, double)> xif2;
 }
