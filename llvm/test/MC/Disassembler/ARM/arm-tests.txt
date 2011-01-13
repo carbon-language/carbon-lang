@@ -45,7 +45,7 @@
 # CHECK:	lsls	r0, r2, #31
 0x82 0x0f 0xb0 0xe1
 
-# CHECK:	mcr2	p0, #0, r2, cr1, cr0, #7
+# CHECK:	mcr2	p0, #0, r2, c1, c0, #7
 0xf0 0x20 0x01 0xfe
 
 # CHECK:	movt	r8, #65535
