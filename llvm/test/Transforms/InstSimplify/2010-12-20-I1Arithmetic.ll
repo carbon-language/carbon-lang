@@ -20,3 +20,10 @@ define i1 @mul(i1 %x) {
   ret i1 %z
 ; CHECK: ret i1 %x
 }
+
+define i1 @ne(i1 %x) {
+; CHECK: @ne
+  %z = icmp ne i1 %x, 0
+  ret i1 %z
+; CHECK: ret i1 %x
+}

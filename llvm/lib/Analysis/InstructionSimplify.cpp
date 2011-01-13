@@ -938,14 +938,91 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     Pred = CmpInst::getSwappedPredicate(Pred);
   }
 
-  // ITy - This is the return type of the compare we're considering.
-  const Type *ITy = GetCompareTy(LHS);
+  const Type *ITy = GetCompareTy(LHS); // The return type.
+  const Type *OpTy = LHS->getType();   // The operand type.
 
   // icmp X, X -> true/false
   // X icmp undef -> true/false.  For example, icmp ugt %X, undef -> false
   // because X could be 0.
   if (LHS == RHS || isa<UndefValue>(RHS))
     return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
+
+  // Special case logic when the operands have i1 type.
+  if (OpTy->isIntegerTy(1) || (OpTy->isVectorTy() &&
+       cast<VectorType>(OpTy)->getElementType()->isIntegerTy(1))) {
+    switch (Pred) {
+    default: break;
+    case ICmpInst::ICMP_EQ:
+      // X == 1 -> X
+      if (match(RHS, m_One()))
+        return LHS;
+      break;
+    case ICmpInst::ICMP_NE:
+      // X != 0 -> X
+      if (match(RHS, m_Zero()))
+        return LHS;
+      break;
+    case ICmpInst::ICMP_UGT:
+      // X >u 0 -> X
+      if (match(RHS, m_Zero()))
+        return LHS;
+      break;
+    case ICmpInst::ICMP_UGE:
+      // X >=u 1 -> X
+      if (match(RHS, m_One()))
+        return LHS;
+      break;
+    case ICmpInst::ICMP_SLT:
+      // X <s 0 -> X
+      if (match(RHS, m_Zero()))
+        return LHS;
+      break;
+    case ICmpInst::ICMP_SLE:
+      // X <=s -1 -> X
+      if (match(RHS, m_One()))
+        return LHS;
+      break;
+    }
+  }
+
+  // See if we are doing a comparison with a constant.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
+    switch (Pred) {
+    default: break;
+    case ICmpInst::ICMP_UGT:
+      if (CI->isMaxValue(false))                 // A >u MAX -> FALSE
+        return ConstantInt::getFalse(CI->getContext());
+      break;
+    case ICmpInst::ICMP_UGE:
+      if (CI->isMinValue(false))                 // A >=u MIN -> TRUE
+        return ConstantInt::getTrue(CI->getContext());
+      break;
+    case ICmpInst::ICMP_ULT:
+      if (CI->isMinValue(false))                 // A <u MIN -> FALSE
+        return ConstantInt::getFalse(CI->getContext());
+      break;
+    case ICmpInst::ICMP_ULE:
+      if (CI->isMaxValue(false))                 // A <=u MAX -> TRUE
+        return ConstantInt::getTrue(CI->getContext());
+      break;
+    case ICmpInst::ICMP_SGT:
+      if (CI->isMaxValue(true))                  // A >s MAX -> FALSE
+        return ConstantInt::getFalse(CI->getContext());
+      break;
+    case ICmpInst::ICMP_SGE:
+      if (CI->isMinValue(true))                  // A >=s MIN -> TRUE
+        return ConstantInt::getTrue(CI->getContext());
+      break;
+    case ICmpInst::ICMP_SLT:
+      if (CI->isMinValue(true))                  // A <s MIN -> FALSE
+        return ConstantInt::getFalse(CI->getContext());
+      break;
+    case ICmpInst::ICMP_SLE:
+      if (CI->isMaxValue(true))                  // A <=s MAX -> TRUE
+        return ConstantInt::getTrue(CI->getContext());
+      break;
+    }
+  }
 
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
@@ -954,32 +1031,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       (isa<GlobalValue>(RHS) || isa<AllocaInst>(RHS) ||
        isa<ConstantPointerNull>(RHS)))
     return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
-
-  // See if we are doing a comparison with a constant.
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
-    // If we have an icmp le or icmp ge instruction, turn it into the
-    // appropriate icmp lt or icmp gt instruction.  This allows us to rely on
-    // them being folded in the code below.
-    switch (Pred) {
-    default: break;
-    case ICmpInst::ICMP_ULE:
-      if (CI->isMaxValue(false))                 // A <=u MAX -> TRUE
-        return ConstantInt::getTrue(CI->getContext());
-      break;
-    case ICmpInst::ICMP_SLE:
-      if (CI->isMaxValue(true))                  // A <=s MAX -> TRUE
-        return ConstantInt::getTrue(CI->getContext());
-      break;
-    case ICmpInst::ICMP_UGE:
-      if (CI->isMinValue(false))                 // A >=u MIN -> TRUE
-        return ConstantInt::getTrue(CI->getContext());
-      break;
-    case ICmpInst::ICMP_SGE:
-      if (CI->isMinValue(true))                  // A >=s MIN -> TRUE
-        return ConstantInt::getTrue(CI->getContext());
-      break;
-    }
-  }
 
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
