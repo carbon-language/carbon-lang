@@ -352,6 +352,8 @@ static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
   unsigned Alignment = std::max(DestGV->getAlignment(), SrcGV->getAlignment());
   DestGV->copyAttributesFrom(SrcGV);
   DestGV->setAlignment(Alignment);
+  if (SrcGV->hasUnnamedAddr())
+    DestGV->setUnnamedAddr(true);
 }
 
 /// GetLinkageResult - This analyzes the two global values and determines what
