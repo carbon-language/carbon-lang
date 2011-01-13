@@ -32,18 +32,20 @@ namespace clang {
   class CXXMethodDecl;
   class CXXRecordDecl;
   class FieldDecl;
+  class MangleContext;
 
 namespace CodeGen {
   class CodeGenFunction;
   class CodeGenModule;
-  class MangleContext;
 
 /// Implements C++ ABI-specific code generation functions.
 class CGCXXABI {
 protected:
   CodeGenModule &CGM;
+  llvm::OwningPtr<MangleContext> MangleCtx;
 
-  CGCXXABI(CodeGenModule &CGM) : CGM(CGM) {}
+  CGCXXABI(CodeGenModule &CGM)
+    : CGM(CGM), MangleCtx(CGM.getContext().createMangleContext()) {}
 
 protected:
   ImplicitParamDecl *&getThisDecl(CodeGenFunction &CGF) {
@@ -74,7 +76,9 @@ public:
   virtual ~CGCXXABI();
 
   /// Gets the mangle context.
-  virtual MangleContext &getMangleContext() = 0;
+  MangleContext &getMangleContext() {
+    return *MangleCtx;
+  }
 
   /// Find the LLVM type used to represent the given member pointer
   /// type.

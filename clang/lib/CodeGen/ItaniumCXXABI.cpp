@@ -22,7 +22,7 @@
 #include "CGRecordLayout.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include "Mangle.h"
+#include <clang/AST/Mangle.h>
 #include <clang/AST/Type.h>
 #include <llvm/Target/TargetData.h>
 #include <llvm/Value.h>
@@ -35,7 +35,6 @@ class ItaniumCXXABI : public CodeGen::CGCXXABI {
 private:
   const llvm::IntegerType *PtrDiffTy;
 protected:
-  CodeGen::MangleContext MangleCtx;
   bool IsARM;
 
   // It's a little silly for us to cache this.
@@ -52,12 +51,7 @@ protected:
 
 public:
   ItaniumCXXABI(CodeGen::CodeGenModule &CGM, bool IsARM = false) :
-    CGCXXABI(CGM), PtrDiffTy(0), MangleCtx(getContext(), CGM.getDiags()),
-    IsARM(IsARM) { }
-
-  CodeGen::MangleContext &getMangleContext() {
-    return MangleCtx;
-  }
+    CGCXXABI(CGM), PtrDiffTy(0), IsARM(IsARM) { }
 
   bool isZeroInitializable(const MemberPointerType *MPT);
 

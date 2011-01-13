@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/GlobalVariable.h"
+#include "clang/Basic/ABI.h"
 #include "GlobalDecl.h"
 
 namespace clang {
@@ -23,94 +24,6 @@ namespace clang {
 
 namespace CodeGen {
   class CodeGenModule;
-
-/// ReturnAdjustment - A return adjustment.
-struct ReturnAdjustment {
-  /// NonVirtual - The non-virtual adjustment from the derived object to its
-  /// nearest virtual base.
-  int64_t NonVirtual;
-  
-  /// VBaseOffsetOffset - The offset (in bytes), relative to the address point 
-  /// of the virtual base class offset.
-  int64_t VBaseOffsetOffset;
-  
-  ReturnAdjustment() : NonVirtual(0), VBaseOffsetOffset(0) { }
-  
-  bool isEmpty() const { return !NonVirtual && !VBaseOffsetOffset; }
-
-  friend bool operator==(const ReturnAdjustment &LHS, 
-                         const ReturnAdjustment &RHS) {
-    return LHS.NonVirtual == RHS.NonVirtual && 
-      LHS.VBaseOffsetOffset == RHS.VBaseOffsetOffset;
-  }
-
-  friend bool operator<(const ReturnAdjustment &LHS,
-                        const ReturnAdjustment &RHS) {
-    if (LHS.NonVirtual < RHS.NonVirtual)
-      return true;
-    
-    return LHS.NonVirtual == RHS.NonVirtual && 
-      LHS.VBaseOffsetOffset < RHS.VBaseOffsetOffset;
-  }
-};
-  
-/// ThisAdjustment - A 'this' pointer adjustment.
-struct ThisAdjustment {
-  /// NonVirtual - The non-virtual adjustment from the derived object to its
-  /// nearest virtual base.
-  int64_t NonVirtual;
-
-  /// VCallOffsetOffset - The offset (in bytes), relative to the address point,
-  /// of the virtual call offset.
-  int64_t VCallOffsetOffset;
-  
-  ThisAdjustment() : NonVirtual(0), VCallOffsetOffset(0) { }
-
-  bool isEmpty() const { return !NonVirtual && !VCallOffsetOffset; }
-
-  friend bool operator==(const ThisAdjustment &LHS, 
-                         const ThisAdjustment &RHS) {
-    return LHS.NonVirtual == RHS.NonVirtual && 
-      LHS.VCallOffsetOffset == RHS.VCallOffsetOffset;
-  }
-  
-  friend bool operator<(const ThisAdjustment &LHS,
-                        const ThisAdjustment &RHS) {
-    if (LHS.NonVirtual < RHS.NonVirtual)
-      return true;
-    
-    return LHS.NonVirtual == RHS.NonVirtual && 
-      LHS.VCallOffsetOffset < RHS.VCallOffsetOffset;
-  }
-};
-
-/// ThunkInfo - The 'this' pointer adjustment as well as an optional return
-/// adjustment for a thunk.
-struct ThunkInfo {
-  /// This - The 'this' pointer adjustment.
-  ThisAdjustment This;
-    
-  /// Return - The return adjustment.
-  ReturnAdjustment Return;
-
-  ThunkInfo() { }
-
-  ThunkInfo(const ThisAdjustment &This, const ReturnAdjustment &Return)
-    : This(This), Return(Return) { }
-
-  friend bool operator==(const ThunkInfo &LHS, const ThunkInfo &RHS) {
-    return LHS.This == RHS.This && LHS.Return == RHS.Return;
-  }
-
-  friend bool operator<(const ThunkInfo &LHS, const ThunkInfo &RHS) {
-    if (LHS.This < RHS.This)
-      return true;
-      
-    return LHS.This == RHS.This && LHS.Return < RHS.Return;
-  }
-
-  bool isEmpty() const { return This.isEmpty() && Return.isEmpty(); }
-};  
 
 // BaseSubobject - Uniquely identifies a direct or indirect base class. 
 // Stores both the base class decl and the offset from the most derived class to

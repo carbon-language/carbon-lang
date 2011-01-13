@@ -18,7 +18,6 @@
 #include "CGCall.h"
 #include "CGCXXABI.h"
 #include "CGObjCRuntime.h"
-#include "Mangle.h"
 #include "TargetInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/AST/ASTContext.h"
@@ -26,6 +25,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/Mangle.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
@@ -275,7 +275,7 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   else if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
     getCXXABI().getMangleContext().mangleCXXDtor(D, GD.getDtorType(), Buffer);
   else if (const BlockDecl *BD = dyn_cast<BlockDecl>(ND))
-    getCXXABI().getMangleContext().mangleBlock(GD, BD, Buffer);
+    getCXXABI().getMangleContext().mangleBlock(BD, Buffer);
   else
     getCXXABI().getMangleContext().mangleName(ND, Buffer);
 
@@ -289,9 +289,18 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   return Str;
 }
 
-void CodeGenModule::getMangledName(GlobalDecl GD, MangleBuffer &Buffer,
-                                   const BlockDecl *BD) {
-  getCXXABI().getMangleContext().mangleBlock(GD, BD, Buffer.getBuffer());
+void CodeGenModule::getBlockMangledName(GlobalDecl GD, MangleBuffer &Buffer,
+                                        const BlockDecl *BD) {
+  MangleContext &MangleCtx = getCXXABI().getMangleContext();
+  const Decl *D = GD.getDecl();
+  if (D == 0)
+    MangleCtx.mangleGlobalBlock(BD, Buffer.getBuffer());
+  else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
+    MangleCtx.mangleCtorBlock(CD, GD.getCtorType(), BD, Buffer.getBuffer());
+  else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))
+    MangleCtx.mangleDtorBlock(DD, GD.getDtorType(), BD, Buffer.getBuffer());
+  else
+    MangleCtx.mangleBlock(cast<DeclContext>(D), BD, Buffer.getBuffer());
 }
 
 llvm::GlobalValue *CodeGenModule::GetGlobalValue(llvm::StringRef Name) {
@@ -1304,7 +1313,6 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
   const llvm::FunctionType *Ty = getTypes().GetFunctionType(GD);
-  getCXXABI().getMangleContext().mangleInitDiscriminator();
   // Get or create the prototype for the function.
   llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);
 

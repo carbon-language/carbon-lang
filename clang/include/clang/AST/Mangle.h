@@ -7,20 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Implements C++ name mangling according to the Itanium C++ ABI,
-// which is used in GCC 3.2 and newer (and many compilers that are
-// ABI-compatible with GCC):
-//
-//   http://www.codesourcery.com/public/cxx-abi/abi.html
+// Defines the C++ name mangling interface.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CODEGEN_MANGLE_H
-#define LLVM_CLANG_CODEGEN_MANGLE_H
+#ifndef LLVM_CLANG_AST_MANGLE_H
+#define LLVM_CLANG_AST_MANGLE_H
 
-#include "CGCXX.h"
-#include "GlobalDecl.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/ABI.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
@@ -36,8 +31,6 @@ namespace clang {
   class NamedDecl;
   class ObjCMethodDecl;
   class VarDecl;
-
-namespace CodeGen {
   struct ThisAdjustment;
   struct ThunkInfo;
 
@@ -74,9 +67,6 @@ class MangleContext {
   ASTContext &Context;
   Diagnostic &Diags;
 
-  llvm::DenseMap<const TagDecl *, uint64_t> AnonStructIds;
-  unsigned Discriminator;
-  llvm::DenseMap<const NamedDecl*, unsigned> Uniquifier;
   llvm::DenseMap<const BlockDecl*, unsigned> GlobalBlockIds;
   llvm::DenseMap<const BlockDecl*, unsigned> LocalBlockIds;
   
@@ -91,15 +81,8 @@ public:
 
   Diagnostic &getDiags() const { return Diags; }
 
-  void startNewFunction() { LocalBlockIds.clear(); }
+  virtual void startNewFunction() { LocalBlockIds.clear(); }
   
-  uint64_t getAnonymousStructId(const TagDecl *TD) {
-    std::pair<llvm::DenseMap<const TagDecl *,
-      uint64_t>::iterator, bool> Result =
-      AnonStructIds.insert(std::make_pair(TD, AnonStructIds.size()));
-    return Result.first->second;
-  }
-
   unsigned getBlockId(const BlockDecl *BD, bool Local) {
     llvm::DenseMap<const BlockDecl *, unsigned> &BlockIds
       = Local? LocalBlockIds : GlobalBlockIds;
@@ -111,69 +94,57 @@ public:
   /// @name Mangler Entry Points
   /// @{
 
-  virtual bool shouldMangleDeclName(const NamedDecl *D);
-  virtual void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
+  virtual bool shouldMangleDeclName(const NamedDecl *D) = 0;
+  virtual void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &)=0;
   virtual void mangleThunk(const CXXMethodDecl *MD,
                           const ThunkInfo &Thunk,
-                          llvm::SmallVectorImpl<char> &);
+                          llvm::SmallVectorImpl<char> &) = 0;
   virtual void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
                                   const ThisAdjustment &ThisAdjustment,
-                                  llvm::SmallVectorImpl<char> &);
+                                  llvm::SmallVectorImpl<char> &) = 0;
   virtual void mangleReferenceTemporary(const VarDecl *D,
-                                        llvm::SmallVectorImpl<char> &);
+                                        llvm::SmallVectorImpl<char> &) = 0;
   virtual void mangleCXXVTable(const CXXRecordDecl *RD,
-                               llvm::SmallVectorImpl<char> &);
+                               llvm::SmallVectorImpl<char> &) = 0;
   virtual void mangleCXXVTT(const CXXRecordDecl *RD,
-                            llvm::SmallVectorImpl<char> &);
+                            llvm::SmallVectorImpl<char> &) = 0;
   virtual void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
                                    const CXXRecordDecl *Type,
-                                   llvm::SmallVectorImpl<char> &);
-  virtual void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &);
-  virtual void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &);
+                                   llvm::SmallVectorImpl<char> &) = 0;
+  virtual void mangleCXXRTTI(QualType T, llvm::SmallVectorImpl<char> &) = 0;
+  virtual void mangleCXXRTTIName(QualType T, llvm::SmallVectorImpl<char> &) = 0;
   virtual void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                             llvm::SmallVectorImpl<char> &);
+                             llvm::SmallVectorImpl<char> &) = 0;
   virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                             llvm::SmallVectorImpl<char> &);
-  void mangleBlock(GlobalDecl GD,
-                   const BlockDecl *BD, llvm::SmallVectorImpl<char> &);
+                             llvm::SmallVectorImpl<char> &) = 0;
+
+  void mangleGlobalBlock(const BlockDecl *BD,
+                         llvm::SmallVectorImpl<char> &Res);
+  void mangleCtorBlock(const CXXConstructorDecl *CD, CXXCtorType CT,
+                       const BlockDecl *BD, llvm::SmallVectorImpl<char> &Res);
+  void mangleDtorBlock(const CXXDestructorDecl *CD, CXXDtorType DT,
+                       const BlockDecl *BD, llvm::SmallVectorImpl<char> &Res);
+  void mangleBlock(const DeclContext *DC, const BlockDecl *BD,
+                   llvm::SmallVectorImpl<char> &Res);
+  // Do the right thing.
+  void mangleBlock(const BlockDecl *BD, llvm::SmallVectorImpl<char> &Res);
+
+  void mangleObjCMethodName(const ObjCMethodDecl *MD,
+                            llvm::SmallVectorImpl<char> &);
 
   // This is pretty lame.
-  void mangleItaniumGuardVariable(const VarDecl *D,
-                                  llvm::SmallVectorImpl<char> &);
-
-  void mangleInitDiscriminator() {
-    Discriminator = 0;
-  }
-
-  bool getNextDiscriminator(const NamedDecl *ND, unsigned &disc) {
-    unsigned &discriminator = Uniquifier[ND];
-    if (!discriminator)
-      discriminator = ++Discriminator;
-    if (discriminator == 1)
-      return false;
-    disc = discriminator-2;
-    return true;
+  virtual void mangleItaniumGuardVariable(const VarDecl *D,
+                                          llvm::SmallVectorImpl<char> &) {
+    assert(0 && "Target does not support mangling guard variables");
   }
   /// @}
 };
 
-/// MiscNameMangler - Mangles Objective-C method names and blocks.
-class MiscNameMangler {
-  MangleContext &Context;
-  llvm::raw_svector_ostream Out;
-  
-  ASTContext &getASTContext() const { return Context.getASTContext(); }
+MangleContext *createItaniumMangleContext(ASTContext &Context,
+                                          Diagnostic &Diags);
+MangleContext *createMicrosoftMangleContext(ASTContext &Context,
+                                            Diagnostic &Diags);
 
-public:
-  MiscNameMangler(MangleContext &C, llvm::SmallVectorImpl<char> &Res);
-
-  llvm::raw_svector_ostream &getStream() { return Out; }
-  
-  void mangleBlock(GlobalDecl GD, const BlockDecl *BD);
-  void mangleObjCMethodName(const ObjCMethodDecl *MD);
-};
-
-}
 }
 
 #endif

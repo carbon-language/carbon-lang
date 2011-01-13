@@ -799,7 +799,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, IsVariadic);
 
   MangleBuffer Name;
-  CGM.getMangledName(GD, Name, BD);
+  CGM.getBlockMangledName(GD, Name, BD);
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage, 
                            Name.getString(), &CGM.getModule());

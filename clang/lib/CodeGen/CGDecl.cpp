@@ -148,7 +148,7 @@ static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D,
     const DeclContext *DC = ND->getDeclContext();
     if (const BlockDecl *BD = dyn_cast<BlockDecl>(DC)) {
       MangleBuffer Name;
-      CGM.getMangledName(GlobalDecl(), Name, BD);
+      CGM.getBlockMangledName(GlobalDecl(), Name, BD);
       ContextName = Name.getString();
     }
     else

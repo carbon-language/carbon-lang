@@ -22,6 +22,7 @@
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/AST/Mangle.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -5833,6 +5834,18 @@ CallingConv ASTContext::getDefaultMethodCallConv() {
 bool ASTContext::isNearlyEmpty(const CXXRecordDecl *RD) const {
   // Pass through to the C++ ABI object
   return ABI->isNearlyEmpty(RD);
+}
+
+MangleContext *ASTContext::createMangleContext() {
+  switch (Target.getCXXABI()) {
+  case CXXABI_ARM:
+  case CXXABI_Itanium:
+    return createItaniumMangleContext(*this, getDiagnostics());
+  case CXXABI_Microsoft:
+    return createMicrosoftMangleContext(*this, getDiagnostics());
+  }
+  assert(0 && "Unsupported ABI");
+  return 0;
 }
 
 CXXABI::~CXXABI() {}

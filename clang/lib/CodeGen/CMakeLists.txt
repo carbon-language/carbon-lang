@@ -35,7 +35,6 @@ add_clang_library(clangCodeGen
   CodeGenTBAA.cpp
   CodeGenTypes.cpp
   ItaniumCXXABI.cpp
-  Mangle.cpp
   MicrosoftCXXABI.cpp
   ModuleBuilder.cpp
   TargetInfo.cpp

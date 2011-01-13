@@ -26,7 +26,10 @@ add_clang_library(clangAST
   ExprCXX.cpp
   InheritViz.cpp
   ItaniumCXXABI.cpp
+  ItaniumMangle.cpp
+  Mangle.cpp
   MicrosoftCXXABI.cpp
+  MicrosoftMangle.cpp
   NestedNameSpecifier.cpp
   ParentMap.cpp
   RecordLayout.cpp

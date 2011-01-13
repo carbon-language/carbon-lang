@@ -57,6 +57,7 @@ namespace clang {
   class CXXRecordDecl;
   class Decl;
   class FieldDecl;
+  class MangleContext;
   class ObjCIvarDecl;
   class ObjCIvarRefExpr;
   class ObjCPropertyDecl;
@@ -1057,6 +1058,8 @@ public:
   const CXXMethodDecl *getKeyFunction(const CXXRecordDecl *RD);
 
   bool isNearlyEmpty(const CXXRecordDecl *RD) const;
+
+  MangleContext *createMangleContext();
 
   void ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars)

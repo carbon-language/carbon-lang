@@ -18,6 +18,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/CharUnits.h"
+#include "clang/Basic/ABI.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -26,7 +27,6 @@
 #include "CGBlocks.h"
 #include "CGBuilder.h"
 #include "CGCall.h"
-#include "CGCXX.h"
 #include "CGValue.h"
 
 namespace llvm {

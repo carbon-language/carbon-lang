@@ -15,9 +15,9 @@
 #ifndef CLANG_CODEGEN_GLOBALDECL_H
 #define CLANG_CODEGEN_GLOBALDECL_H
 
-#include "CGCXX.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/Basic/ABI.h"
 
 namespace clang {
 

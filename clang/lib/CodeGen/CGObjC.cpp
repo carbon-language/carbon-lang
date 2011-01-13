@@ -137,6 +137,8 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
        E = OMD->param_end(); PI != E; ++PI)
     Args.push_back(std::make_pair(*PI, (*PI)->getType()));
 
+  CurGD = OMD;
+
   StartFunction(OMD, OMD->getResultType(), Fn, Args, OMD->getLocStart());
 }
 

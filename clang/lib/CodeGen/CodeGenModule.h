@@ -14,17 +14,17 @@
 #ifndef CLANG_CODEGEN_CODEGENMODULE_H
 #define CLANG_CODEGEN_CODEGENMODULE_H
 
+#include "clang/Basic/ABI.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/Mangle.h"
 #include "CGBlocks.h"
 #include "CGCall.h"
-#include "CGCXX.h"
 #include "CGVTables.h"
 #include "CodeGenTypes.h"
 #include "GlobalDecl.h"
-#include "Mangle.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
@@ -66,6 +66,7 @@ namespace clang {
   class Diagnostic;
   class AnnotateAttr;
   class CXXDestructorDecl;
+  class MangleBuffer;
 
 namespace CodeGen {
 
@@ -74,7 +75,6 @@ namespace CodeGen {
   class CGCXXABI;
   class CGDebugInfo;
   class CGObjCRuntime;
-  class MangleBuffer;
   
   struct OrderGlobalInits {
     unsigned int priority;
@@ -480,7 +480,8 @@ public:
                               unsigned &CallingConv);
 
   llvm::StringRef getMangledName(GlobalDecl GD);
-  void getMangledName(GlobalDecl GD, MangleBuffer &Buffer, const BlockDecl *BD);
+  void getBlockMangledName(GlobalDecl GD, MangleBuffer &Buffer,
+                           const BlockDecl *BD);
 
   void EmitTentativeDefinition(const VarDecl *D);
 

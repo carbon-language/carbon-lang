@@ -26,11 +26,11 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class LangOptions;
+  class MangleContext;
   class QualType;
   class Type;
 
 namespace CodeGen {
-  class MangleContext;
   class CGRecordLayout;
 
 /// CodeGenTBAA - This class organizes the cross-module state that is used
