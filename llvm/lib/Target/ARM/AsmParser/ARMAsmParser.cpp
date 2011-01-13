@@ -840,10 +840,12 @@ bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands){
   default:
     Error(Parser.getTok().getLoc(), "unexpected token in operand");
     return true;
-  case AsmToken::Identifier: {
+  case AsmToken::Identifier:
     if (!TryParseRegisterWithWriteBack(Operands))
       return false;
-
+    // Fall though for the Identifier case that is not a register
+  case AsmToken::Integer: // things like 1f and 2b as a branch targets
+  case AsmToken::Dot: {   // . as a branch target
     // This was not a register so parse other operands that start with an
     // identifier (like labels) as expressions and create them as immediates.
     const MCExpr *IdVal;
