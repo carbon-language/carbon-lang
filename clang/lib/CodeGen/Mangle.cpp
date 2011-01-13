@@ -1476,7 +1476,7 @@ void CXXNameMangler::mangleType(const DependentSizedExtVectorType *T) {
 }
 
 void CXXNameMangler::mangleType(const PackExpansionType *T) {
-  // FIXME: We may need to push this mangling into the callers
+  // <type>  ::= Dp <type>          # pack expansion (C++0x)
   Out << "sp";
   mangleType(T->getPattern());
 }
@@ -1626,6 +1626,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   //              ::= sr <type> <unqualified-name>                   # dependent name
   //              ::= sr <type> <unqualified-name> <template-args>   # dependent template-id
   //              ::= sZ <template-param>                            # size of a parameter pack
+  //              ::= sZ <function-param>    # size of a function parameter pack
   //              ::= <expr-primary>
   // <expr-primary> ::= L <type> <value number> E    # integer literal
   //                ::= L <type <value float> E      # floating literal
@@ -2050,7 +2051,6 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     break;
       
   case Expr::SizeOfPackExprClass: {
-    // FIXME: Variadic templates missing mangling for function parameter packs?
     Out << "sZ";
     const NamedDecl *Pack = cast<SizeOfPackExpr>(E)->getPack();
     if (const TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Pack))
@@ -2062,7 +2062,8 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
                                     = dyn_cast<TemplateTemplateParmDecl>(Pack))
       mangleTemplateParameter(TempTP->getIndex());
     else {
-      // FIXME: This case isn't handled by the Itanium C++ ABI
+      // Note: proposed by Mike Herrick on 11/30/10
+      // <expression> ::= sZ <function-param>  # size of function parameter pack
       Diagnostic &Diags = Context.getDiags();
       unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
                             "cannot mangle sizeof...(function parameter pack)");
@@ -2156,7 +2157,7 @@ void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
   // <template-arg> ::= <type>              # type or template
   //                ::= X <expression> E    # expression
   //                ::= <expr-primary>      # simple expressions
-  //                ::= I <template-arg>* E # argument pack
+  //                ::= J <template-arg>* E # argument pack
   //                ::= sp <expression>     # pack expansion of (C++0x)
   switch (A.getKind()) {
   case TemplateArgument::Null:
@@ -2170,7 +2171,7 @@ void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
     mangleType(A.getAsTemplate());
     break;
   case TemplateArgument::TemplateExpansion:
-    // This is mangled as Dp <type>.
+    // <type>  ::= Dp <type>          # pack expansion (C++0x)
     Out << "Dp";
     mangleType(A.getAsTemplateOrTemplatePattern());
     break;
