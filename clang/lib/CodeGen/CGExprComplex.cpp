@@ -313,8 +313,7 @@ ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
 ComplexPairTy ComplexExprEmitter::
 VisitImaginaryLiteral(const ImaginaryLiteral *IL) {
   llvm::Value *Imag = CGF.EmitScalarExpr(IL->getSubExpr());
-  return
-        ComplexPairTy(llvm::Constant::getNullValue(Imag->getType()), Imag);
+  return ComplexPairTy(llvm::Constant::getNullValue(Imag->getType()), Imag);
 }
 
 
@@ -326,7 +325,9 @@ ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitStmtExpr(const StmtExpr *E) {
-  return CGF.EmitCompoundStmt(*E->getSubStmt(), true).getComplexVal();
+  RValue result = CGF.EmitCompoundStmt(*E->getSubStmt(), true);
+  CGF.EnsureInsertPoint();
+  return result.getComplexVal();
 }
 
 /// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
@@ -635,7 +636,6 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 
 ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
   CGF.EmitIgnoredExpr(E->getLHS());
-  CGF.EnsureInsertPoint();
   return Visit(E->getRHS());
 }
 

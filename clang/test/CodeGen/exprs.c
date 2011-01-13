@@ -166,3 +166,11 @@ void f15() {
   // CHECK-NOT: load
   // CHECK: ret void
 }
+
+// PR8967: this was crashing
+// CHECK: define void @f16()
+void f16() {
+  __extension__({ goto lbl; });
+ lbl:
+  ;
+}

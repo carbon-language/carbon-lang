@@ -368,6 +368,7 @@ void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
 
 void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
   CGF.EmitCompoundStmt(*E->getSubStmt(), true, Dest);
+  CGF.EnsureInsertPoint();
 }
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {

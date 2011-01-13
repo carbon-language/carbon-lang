@@ -1204,8 +1204,10 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
 }
 
 Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
-  return CGF.EmitCompoundStmt(*E->getSubStmt(),
-                              !E->getType()->isVoidType()).getScalarVal();
+  RValue value = CGF.EmitCompoundStmt(*E->getSubStmt(),
+                                      !E->getType()->isVoidType());
+  CGF.EnsureInsertPoint();
+  return value.getScalarVal();
 }
 
 Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
