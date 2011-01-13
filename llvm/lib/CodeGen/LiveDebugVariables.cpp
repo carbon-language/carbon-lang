@@ -589,14 +589,6 @@ findInsertLocation(MachineBasicBlock *MBB, SlotIndex Idx, DebugLoc &DL,
   SlotIndex Start = LIS.getMBBStartIdx(MBB);
   Idx = Idx.getBaseIndex();
 
-  // Don't insert anything after the first terminator.
-  MachineBasicBlock::iterator Term = MBB->getFirstTerminator();
-  if (Term != MBB->end() && !LIS.isNotInMIMap(Term) &&
-      Idx >= LIS.getInstructionIndex(Term)) {
-    DL = Term->getDebugLoc();
-    return Term;
-  }
-
   // Try to find an insert location by going backwards from Idx.
   MachineInstr *MI;
   while (!(MI = LIS.getInstructionFromIndex(Idx))) {
@@ -611,7 +603,9 @@ findInsertLocation(MachineBasicBlock *MBB, SlotIndex Idx, DebugLoc &DL,
   }
   // We found an instruction. The insert point is after the instr.
   DL = MI->getDebugLoc();
-  return llvm::next(MachineBasicBlock::iterator(MI));
+  // Don't insert anything after the first terminator, though.
+  return MI->getDesc().isTerminator() ? MBB->getFirstTerminator() :
+                                    llvm::next(MachineBasicBlock::iterator(MI));
 }
 
 void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
