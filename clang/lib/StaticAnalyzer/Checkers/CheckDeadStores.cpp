@@ -1,4 +1,4 @@
-//==- DeadStores.cpp - Check for stores to dead variables --------*- C++ -*-==//
+//==- DeadStoresChecker.cpp - Check for stores to dead variables -*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -70,11 +70,10 @@ public:
         break;
 
       case Enclosing:
-        BugType = "Dead nested assignment";
-        msg = "Although the value stored to '" + name +
-          "' is used in the enclosing expression, the value is never actually"
-          " read from '" + name + "'";
-        break;
+        // Don't report issues in this case, e.g.: "if (x = foo())",
+        // where 'x' is unused later.  We have yet to see a case where 
+        // this is a real bug.
+        return;
     }
 
     BR.EmitBasicReport(BugType, "Dead store", msg, L, R);

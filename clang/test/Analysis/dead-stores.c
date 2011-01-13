@@ -75,9 +75,11 @@ int f7d(int *p) {
   return 1;
 }
 
+// Don't warn for dead stores in nested expressions.  We have yet
+// to see a real bug in this scenario.
 int f8(int *p) {
   extern int *baz();
-  if ((p = baz())) // expected-warning{{Although the value}}
+  if ((p = baz())) // no-warning
     return 1;
   return 0;
 }
@@ -148,9 +150,11 @@ void f15(unsigned x, unsigned y) {
   int z[count]; // expected-warning{{unused variable 'z'}}
 }
 
+// Don't warn for dead stores in nested expressions.  We have yet
+// to see a real bug in this scenario.
 int f16(int x) {
   x = x * 2;
-  x = sizeof(int [x = (x || x + 1) * 2]) // expected-warning{{Although the value stored to 'x' is used}} expected-warning{{The left operand to '*' is always 1}} expected-warning{{The left operand to '+' is always 0}}
+  x = sizeof(int [x = (x || x + 1) * 2]) // expected-warning{{The left operand to '+' is always 0}} expected-warning{{The left operand to '*' is always 1}}
       ? 5 : 8;
   return x;
 }
@@ -175,7 +179,9 @@ int f18() {
       x = 10;   // expected-warning{{Value stored to 'x' is never read}}
    while (1);
 
-   return (x = 10); // expected-warning{{Although the value stored to 'x' is used in the enclosing expression, the value is never actually read from 'x'}}
+   // Don't warn for dead stores in nested expressions.  We have yet
+   // to see a real bug in this scenario.
+   return (x = 10); // no-warning
 }
 
 // PR 3514: false positive `dead initialization` warning for init to global
