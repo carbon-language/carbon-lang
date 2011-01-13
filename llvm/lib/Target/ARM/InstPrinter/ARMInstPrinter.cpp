@@ -453,6 +453,16 @@ void ARMInstPrinter::printNoHashImmediate(const MCInst *MI, unsigned OpNum,
   O << MI->getOperand(OpNum).getImm();
 }
 
+void ARMInstPrinter::printPImmediate(const MCInst *MI, unsigned OpNum,
+                                          raw_ostream &O) {
+  O << "p" << MI->getOperand(OpNum).getImm();
+}
+
+void ARMInstPrinter::printCImmediate(const MCInst *MI, unsigned OpNum,
+                                          raw_ostream &O) {
+  O << "c" << MI->getOperand(OpNum).getImm();
+}
+
 void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O) {
   llvm_unreachable("Unhandled PC-relative pseudo-instruction!");

@@ -52,10 +52,11 @@ class ARMAsmParser : public TargetAsmParser {
   bool Error(SMLoc L, const Twine &Msg) { return Parser.Error(L, Msg); }
 
   int TryParseRegister();
+  bool TryParseMCRName(SmallVectorImpl<MCParsedAsmOperand*>&);
   bool TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
-  bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &, bool isMCR);
   bool ParsePrefix(ARMMCExpr::VariantKind &RefKind);
   const MCExpr *ApplyPrefixToExpr(const MCExpr *E,
                                   MCSymbolRefExpr::VariantKind Variant);
@@ -527,6 +528,67 @@ TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return false;
 }
 
+static int MatchMCRName(StringRef Name) {
+  // Use the same layout as the tablegen'erated register name matcher. Ugly,
+  // but efficient.
+  switch (Name.size()) {
+  default: break;
+  case 2:
+    if (Name[0] != 'p' && Name[0] != 'c')
+      return -1;
+    switch (Name[1]) {
+    default:  return -1;
+    case '0': return 0;
+    case '1': return 1;
+    case '2': return 2;
+    case '3': return 3;
+    case '4': return 4;
+    case '5': return 5;
+    case '6': return 6;
+    case '7': return 7;
+    case '8': return 8;
+    case '9': return 9;
+    }
+    break;
+  case 3:
+    if ((Name[0] != 'p' && Name[0] != 'c') || Name[1] != '1')
+      return -1;
+    switch (Name[2]) {
+    default:  return -1;
+    case '0': return 10;
+    case '1': return 11;
+    case '2': return 12;
+    case '3': return 13;
+    case '4': return 14;
+    case '5': return 15;
+    }
+    break;
+  }
+
+  llvm_unreachable("Unhandled coprocessor operand string!");
+  return -1;
+}
+
+/// TryParseMCRName - Try to parse an MCR/MRC symbolic operand
+/// name.  The token must be an Identifier when called, and if it is a MCR 
+/// operand name, the token is eaten and the operand is added to the
+/// operand list.
+bool ARMAsmParser::
+TryParseMCRName(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  SMLoc S = Parser.getTok().getLoc();
+  const AsmToken &Tok = Parser.getTok();
+  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+
+  int Num = MatchMCRName(Tok.getString());
+  if (Num == -1)
+    return true;
+
+  Parser.Lex(); // Eat identifier token.
+  Operands.push_back(ARMOperand::CreateImm(
+       MCConstantExpr::Create(Num, getContext()), S, Parser.getTok().getLoc()));
+  return false;
+}
+
 /// Parse a register list, return it if successful else return null.  The first
 /// token must be a '{' when called.
 bool ARMAsmParser::
@@ -834,7 +896,8 @@ bool ARMAsmParser::ParseShift(ShiftType &St, const MCExpr *&ShiftAmount,
 
 /// Parse a arm instruction operand.  For now this parses the operand regardless
 /// of the mnemonic.
-bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands){
+bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                                bool isMCR){
   SMLoc S, E;
   switch (getLexer().getKind()) {
   default:
@@ -843,7 +906,11 @@ bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands){
   case AsmToken::Identifier:
     if (!TryParseRegisterWithWriteBack(Operands))
       return false;
-    // Fall though for the Identifier case that is not a register
+    if (isMCR && !TryParseMCRName(Operands))
+      return false;
+
+    // Fall though for the Identifier case that is not a register or a
+    // special name.
   case AsmToken::Integer: // things like 1f and 2b as a branch targets
   case AsmToken::Dot: {   // . as a branch target
     // This was not a register so parse other operands that start with an
@@ -1120,10 +1187,15 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
   }
 
+  bool isMCR = (Head == "mcr"  || Head == "mcr2" ||
+                Head == "mcrr" || Head == "mcrr2" ||
+                Head == "mrc"  || Head == "mrc2" ||
+                Head == "mrrc" || Head == "mrrc2");
+
   // Read the remaining operands.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
-    if (ParseOperand(Operands)) {
+    if (ParseOperand(Operands, isMCR)) {
       Parser.EatToEndOfStatement();
       return true;
     }
@@ -1132,7 +1204,7 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
       Parser.Lex();  // Eat the comma.
 
       // Parse and remember the operand.
-      if (ParseOperand(Operands)) {
+      if (ParseOperand(Operands, isMCR)) {
         Parser.EatToEndOfStatement();
         return true;
       }
