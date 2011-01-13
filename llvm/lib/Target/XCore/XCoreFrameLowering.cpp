@@ -208,7 +208,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
 void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
   MachineFrameInfo *MFI            = MF.getFrameInfo();
-  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const XCoreInstrInfo &TII =
     *static_cast<const XCoreInstrInfo*>(MF.getTarget().getInstrInfo());
   DebugLoc dl = MBBI->getDebugLoc();

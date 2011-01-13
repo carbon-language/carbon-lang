@@ -769,7 +769,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
              RetOpcode == X86::TCRETURNmi64) {
     bool isMem = RetOpcode == X86::TCRETURNmi || RetOpcode == X86::TCRETURNmi64;
     // Tail call return: adjust the stack pointer and jump to callee.
-    MBBI = MBB.getFirstTerminator();
+    MBBI = MBB.getLastNonDebugInstr();
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     MachineOperand &StackAdjust = MBBI->getOperand(isMem ? 5 : 1);
     assert(StackAdjust.isImm() && "Expecting immediate value.");
