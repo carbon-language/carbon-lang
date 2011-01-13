@@ -1676,46 +1676,39 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
 }
 
 /// HasPadding - Return true if the specified type has any structure or
-/// alignment padding, false otherwise.
+/// alignment padding in between the elements that would be split apart
+/// by SROA; return false otherwise.
 static bool HasPadding(const Type *Ty, const TargetData &TD) {
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty))
-    return HasPadding(ATy->getElementType(), TD);
-  
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return HasPadding(VTy->getElementType(), TD);
-  
-  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    const StructLayout *SL = TD.getStructLayout(STy);
-    unsigned PrevFieldBitOffset = 0;
-    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      unsigned FieldBitOffset = SL->getElementOffsetInBits(i);
-
-      // Padding in sub-elements?
-      if (HasPadding(STy->getElementType(i), TD))
-        return true;
-
-      // Check to see if there is any padding between this element and the
-      // previous one.
-      if (i) {
-        unsigned PrevFieldEnd =
-        PrevFieldBitOffset+TD.getTypeSizeInBits(STy->getElementType(i-1));
-        if (PrevFieldEnd < FieldBitOffset)
-          return true;
-      }
-
-      PrevFieldBitOffset = FieldBitOffset;
-    }
-
-    //  Check for tail padding.
-    if (unsigned EltCount = STy->getNumElements()) {
-      unsigned PrevFieldEnd = PrevFieldBitOffset +
-                   TD.getTypeSizeInBits(STy->getElementType(EltCount-1));
-      if (PrevFieldEnd < SL->getSizeInBits())
-        return true;
-    }
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    Ty = ATy->getElementType();
+    return TD.getTypeSizeInBits(Ty) != TD.getTypeAllocSizeInBits(Ty);
   }
-  
-  return TD.getTypeSizeInBits(Ty) != TD.getTypeAllocSizeInBits(Ty);
+
+  // SROA currently handles only Arrays and Structs.
+  const StructType *STy = cast<StructType>(Ty);
+  const StructLayout *SL = TD.getStructLayout(STy);
+  unsigned PrevFieldBitOffset = 0;
+  for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+    unsigned FieldBitOffset = SL->getElementOffsetInBits(i);
+
+    // Check to see if there is any padding between this element and the
+    // previous one.
+    if (i) {
+      unsigned PrevFieldEnd =
+        PrevFieldBitOffset+TD.getTypeSizeInBits(STy->getElementType(i-1));
+      if (PrevFieldEnd < FieldBitOffset)
+        return true;
+    }
+    PrevFieldBitOffset = FieldBitOffset;
+  }
+  // Check for tail padding.
+  if (unsigned EltCount = STy->getNumElements()) {
+    unsigned PrevFieldEnd = PrevFieldBitOffset +
+      TD.getTypeSizeInBits(STy->getElementType(EltCount-1));
+    if (PrevFieldEnd < SL->getSizeInBits())
+      return true;
+  }
+  return false;
 }
 
 /// isSafeStructAllocaToScalarRepl - Check to see if the specified allocation of
