@@ -37,22 +37,22 @@
 #cmakedefine ENABLE_THREADS ${ENABLE_THREADS}
 
 /* Define to 1 if you have the `argz_append' function. */
-#undef HAVE_ARGZ_APPEND
+#cmakedefine HAVE_ARGZ_APPEND ${HAVE_ARGZ_APPEND}
 
 /* Define to 1 if you have the `argz_create_sep' function. */
-#undef HAVE_ARGZ_CREATE_SEP
+#cmakedefine HAVE_ARGZ_CREATE_SEP ${HAVE_ARGZ_CREATE_SEP}
 
 /* Define to 1 if you have the <argz.h> header file. */
 #cmakedefine HAVE_ARGZ_H ${HAVE_ARGZ_H}
 
 /* Define to 1 if you have the `argz_insert' function. */
-#undef HAVE_ARGZ_INSERT
+#cmakedefine HAVE_ARGZ_INSERT ${HAVE_ARGZ_INSERT}
 
 /* Define to 1 if you have the `argz_next' function. */
-#undef HAVE_ARGZ_NEXT
+#cmakedefine HAVE_ARGZ_NEXT ${HAVE_ARGZ_NEXT}
 
 /* Define to 1 if you have the `argz_stringify' function. */
-#undef HAVE_ARGZ_STRINGIFY
+#cmakedefine HAVE_ARGZ_STRINGIFY ${HAVE_ARGZ_STRINGIFY}
 
 /* Define to 1 if you have the <assert.h> header file. */
 #cmakedefine HAVE_ASSERT_H ${HAVE_ASSERT_H}
