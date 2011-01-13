@@ -11,8 +11,8 @@ barf:                                   @ @barf
 	movw	r0, :lower16:GOT-(.LPC0_2+8)
 	movt	r0, :upper16:GOT-(.LPC0_2+16)
 .LPC0_2:
-@ ASM:          movw    r0, :lower16:GOT-(.LPC0_2+8)
-@ ASM-NEXT:     movt    r0, :upper16:GOT-(.LPC0_2+16)
+@ ASM:          movw    r0, :lower16:(GOT-(.LPC0_2+8))
+@ ASM-NEXT:     movt    r0, :upper16:(GOT-(.LPC0_2+16))
 
 @@ make sure that the text section fixups are sane too
 @ OBJ:                 '.text'

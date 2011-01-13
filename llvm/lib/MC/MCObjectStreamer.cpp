@@ -56,7 +56,10 @@ MCDataFragment *MCObjectStreamer::getOrCreateDataFragment() const {
 
 const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
   switch (Value->getKind()) {
-  case MCExpr::Target: llvm_unreachable("Can't handle target exprs yet!");
+  case MCExpr::Target:
+    cast<MCTargetExpr>(Value)->AddValueSymbols(Assembler);
+    break;
+
   case MCExpr::Constant:
     break;
 

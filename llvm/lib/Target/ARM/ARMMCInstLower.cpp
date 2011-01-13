@@ -14,6 +14,7 @@
 
 #include "ARM.h"
 #include "ARMAsmPrinter.h"
+#include "ARMMCExpr.h"
 #include "llvm/Constants.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/MC/MCExpr.h"
@@ -27,16 +28,25 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   MCContext &Ctx = Printer.OutContext;
   const MCExpr *Expr;
   switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on symbol operand");
-  case 0:
+  default: {
     Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, Ctx);
+    switch (MO.getTargetFlags()) {
+    default:
+      assert(0 && "Unknown target flag on symbol operand");
+    case 0:
+      break;
+    case ARMII::MO_LO16:
+      Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, Ctx);
+      Expr = ARMMCExpr::CreateLower16(Expr, Ctx);
+      break;
+    case ARMII::MO_HI16:
+      Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, Ctx);
+      Expr = ARMMCExpr::CreateUpper16(Expr, Ctx);
+      break;
+    }
     break;
-  case ARMII::MO_LO16:
-    Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_LO16, Ctx);
-    break;
-  case ARMII::MO_HI16:
-    Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_HI16, Ctx);
-    break;
+  }
+
   case ARMII::MO_PLT:
     Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_ARM_PLT, Ctx);
     break;

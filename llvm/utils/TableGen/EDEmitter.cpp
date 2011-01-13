@@ -564,7 +564,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   REG("QQQQPR");
 
   IMM("i32imm");
-  IMM("movt_imm");
+  IMM("i32imm_hilo16");
   IMM("bf_inv_mask_imm");
   IMM("jtblock_operand");
   IMM("nohash_imm");

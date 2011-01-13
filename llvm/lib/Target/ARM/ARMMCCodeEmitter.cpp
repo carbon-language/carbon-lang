@@ -16,6 +16,7 @@
 #include "ARMAddressingModes.h"
 #include "ARMFixupKinds.h"
 #include "ARMInstrInfo.h"
+#include "ARMMCExpr.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -53,9 +54,11 @@ public:
   unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO,
                              SmallVectorImpl<MCFixup> &Fixups) const;
 
-  /// getMovtImmOpValue - Return the encoding for the movw/movt pair
-  uint32_t getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+  /// getHiLo16ImmOpValue - Return the encoding for the hi / low 16-bit of
+  /// the specified operand. This is used for operands with :lower16: and 
+  /// :upper16: prefixes.
+  uint32_t getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
+                               SmallVectorImpl<MCFixup> &Fixups) const;
 
   bool EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx,
                               unsigned &Reg, unsigned &Imm,
@@ -626,19 +629,6 @@ getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
   return Binary;
 }
 
-// FIXME: This routine needs to handle more MCExpr types
-static const MCSymbolRefExpr *FindLHSymExpr(const MCExpr *E) {
-  // recurse left child until finding a MCSymbolRefExpr
-  switch (E->getKind()) {
-  case MCExpr::SymbolRef:
-    return cast<MCSymbolRefExpr>(E);
-  case MCExpr::Binary:
-    return FindLHSymExpr(cast<MCBinaryExpr>(E)->getLHS());
-  default:
-    return NULL;
-  }
-}
-
 // FIXME: This routine assumes that a binary
 // expression will always result in a PCRel expression
 // In reality, its only true if one or more subexpressions
@@ -652,38 +642,40 @@ static bool EvaluateAsPCRel(const MCExpr *Expr) {
   }
 }
 
-uint32_t ARMMCCodeEmitter::
-getMovtImmOpValue(const MCInst &MI, unsigned OpIdx,
-                  SmallVectorImpl<MCFixup> &Fixups) const {
+uint32_t
+ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
+                                      SmallVectorImpl<MCFixup> &Fixups) const {
   // {20-16} = imm{15-12}
   // {11-0}  = imm{11-0}
   const MCOperand &MO = MI.getOperand(OpIdx);
-  if (MO.isImm()) {
+  if (MO.isImm())
+    // Hi / lo 16 bits already extracted during earlier passes.
     return static_cast<unsigned>(MO.getImm());
-  } else if (const MCSymbolRefExpr *Expr =
-             FindLHSymExpr(MO.getExpr())) {
-    // FIXME: :lower16: and :upper16: should be applicable to
-    // to whole expression, not just symbolrefs
-    // Until that change takes place, this hack is required to
-    // generate working code.
-    const MCExpr *OrigExpr = MO.getExpr();
+
+  // Handle :upper16: and :lower16: assembly prefixes.
+  const MCExpr *E = MO.getExpr();
+  if (E->getKind() == MCExpr::Target) {
+    const ARMMCExpr *ARM16Expr = cast<ARMMCExpr>(E);
+    E = ARM16Expr->getSubExpr();
+
     MCFixupKind Kind;
-    switch (Expr->getKind()) {
+    switch (ARM16Expr->getKind()) {
     default: assert(0 && "Unsupported ARMFixup");
-    case MCSymbolRefExpr::VK_ARM_HI16:
+    case ARMMCExpr::VK_ARM_HI16:
       Kind = MCFixupKind(ARM::fixup_arm_movt_hi16);
-      if (EvaluateAsPCRel(OrigExpr)) 
+      if (EvaluateAsPCRel(E)) 
         Kind = MCFixupKind(ARM::fixup_arm_movt_hi16_pcrel);
       break;
-    case MCSymbolRefExpr::VK_ARM_LO16:
+    case ARMMCExpr::VK_ARM_LO16:
       Kind = MCFixupKind(ARM::fixup_arm_movw_lo16);
-      if (EvaluateAsPCRel(OrigExpr)) 
+      if (EvaluateAsPCRel(E)) 
         Kind = MCFixupKind(ARM::fixup_arm_movw_lo16_pcrel);
       break;
     }
-    Fixups.push_back(MCFixup::Create(0, OrigExpr, Kind));
+    Fixups.push_back(MCFixup::Create(0, E, Kind));
     return 0;
   };
+
   llvm_unreachable("Unsupported MCExpr type in MCOperand!");
   return 0;
 }
@@ -1173,8 +1165,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case ARMII::Size4Bytes: Size = 4; break;
   }
   uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
-  // Thumb 32-bit wide instructions need to be have the high order halfword
-  // emitted first.
+  // Thumb 32-bit wide instructions need to emit the high order halfword
+  // first.
   if (Subtarget.isThumb() && Size == 4) {
     EmitConstant(Binary >> 16, 2, OS);
     EmitConstant(Binary & 0xffff, 2, OS);

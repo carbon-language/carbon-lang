@@ -9,6 +9,7 @@
 
 #include "ARM.h"
 #include "ARMAddressingModes.h"
+#include "ARMMCExpr.h"
 #include "ARMBaseRegisterInfo.h"
 #include "ARMSubtarget.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
@@ -55,7 +56,7 @@ class ARMAsmParser : public TargetAsmParser {
   bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &);
-  bool ParsePrefix(MCSymbolRefExpr::VariantKind &RefKind);
+  bool ParsePrefix(ARMMCExpr::VariantKind &RefKind);
   const MCExpr *ApplyPrefixToExpr(const MCExpr *E,
                                   MCSymbolRefExpr::VariantKind Variant);
 
@@ -870,36 +871,29 @@ bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands){
     return false;
   case AsmToken::Colon: {
     // ":lower16:" and ":upper16:" expression prefixes
-    MCSymbolRefExpr::VariantKind RefKind;
+    // FIXME: Check it's an expression prefix,
+    // e.g. (FOO - :lower16:BAR) isn't legal.
+    ARMMCExpr::VariantKind RefKind;
     if (ParsePrefix(RefKind))
       return true;
 
-    const MCExpr *ExprVal;
-    if (getParser().ParseExpression(ExprVal))
+    const MCExpr *SubExprVal;
+    if (getParser().ParseExpression(SubExprVal))
       return true;
 
-    // TODO: Attach the prefix to the entire expression
-    // instead of just the first symbol.
-    const MCExpr *ModExprVal = ApplyPrefixToExpr(ExprVal, RefKind);
-    if (!ModExprVal) {
-      return TokError("invalid modifier '" + getTok().getIdentifier() +
-                      "' (no symbols present)");
-    }
-
+    const MCExpr *ExprVal = ARMMCExpr::Create(RefKind, SubExprVal,
+                                                   getContext());
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-    Operands.push_back(ARMOperand::CreateImm(ModExprVal, S, E));
+    Operands.push_back(ARMOperand::CreateImm(ExprVal, S, E));
     return false;
   }
   }
 }
 
-// FIXME: The next 2 routines are hacks to get ARMAsmParser to understand
-// :lower16: and :upper16:
-// It still attaches VK_ARM_HI/LO16 to MCSymbolRefExpr, but it really
-// should be attached to the entire MCExpr as a whole - perhaps using
-// MCTargetExpr?
-bool ARMAsmParser::ParsePrefix(MCSymbolRefExpr::VariantKind &RefKind) {
-  RefKind = MCSymbolRefExpr::VK_None;
+// ParsePrefix - Parse ARM 16-bit relocations expression prefix, i.e.
+//  :lower16: and :upper16:.
+bool ARMAsmParser::ParsePrefix(ARMMCExpr::VariantKind &RefKind) {
+  RefKind = ARMMCExpr::VK_ARM_None;
 
   // :lower16: and :upper16: modifiers
   assert(getLexer().is(AsmToken::Colon) && "expected a :");
@@ -912,9 +906,9 @@ bool ARMAsmParser::ParsePrefix(MCSymbolRefExpr::VariantKind &RefKind) {
 
   StringRef IDVal = Parser.getTok().getIdentifier();
   if (IDVal == "lower16") {
-    RefKind = MCSymbolRefExpr::VK_ARM_LO16;
+    RefKind = ARMMCExpr::VK_ARM_LO16;
   } else if (IDVal == "upper16") {
-    RefKind = MCSymbolRefExpr::VK_ARM_HI16;
+    RefKind = ARMMCExpr::VK_ARM_HI16;
   } else {
     Error(Parser.getTok().getLoc(), "unexpected prefix in operand");
     return true;

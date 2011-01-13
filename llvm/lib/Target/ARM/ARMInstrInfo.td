@@ -425,11 +425,11 @@ def imm0_31_m1 : Operand<i32>, PatLeaf<(imm), [{
   let EncoderMethod = "getImmMinusOneOpValue";
 }
 
-// For movt/movw - sets the MC Encoder method.
+// i32imm_hilo16 - For movt/movw - sets the MC Encoder method.
 // The imm is split into imm{15-12}, imm{11-0}
 //
-def movt_imm : Operand<i32> {
-  let EncoderMethod = "getMovtImmOpValue";
+def i32imm_hilo16 : Operand<i32> {
+  let EncoderMethod = "getHiLo16ImmOpValue";
 }
 
 /// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
@@ -1907,7 +1907,7 @@ def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm, IIC_iMOVi,
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
-def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins movt_imm:$imm),
+def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins i32imm_hilo16:$imm),
                  DPFrm, IIC_iMOVi,
                  "movw", "\t$Rd, $imm",
                  [(set GPR:$Rd, imm0_65535:$imm)]>,
@@ -1922,7 +1922,7 @@ def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins movt_imm:$imm),
 }
 
 let Constraints = "$src = $Rd" in
-def MOVTi16 : AI1<0b1010, (outs GPR:$Rd), (ins GPR:$src, movt_imm:$imm),
+def MOVTi16 : AI1<0b1010, (outs GPR:$Rd), (ins GPR:$src, i32imm_hilo16:$imm),
                   DPFrm, IIC_iMOVi,
                   "movt", "\t$Rd, $imm",
                   [(set GPR:$Rd,
@@ -3050,7 +3050,7 @@ def MOVCCs : AI1<0b1101, (outs GPR:$Rd),
 }
 
 let isMoveImm = 1 in
-def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, movt_imm:$imm),
+def MOVCCi16 : AI1<0b1000, (outs GPR:$Rd), (ins GPR:$false, i32imm_hilo16:$imm),
                  DPFrm, IIC_iMOVi,
                  "movw", "\t$Rd, $imm",
                  []>,

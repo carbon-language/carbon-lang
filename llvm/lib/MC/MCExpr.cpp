@@ -42,10 +42,6 @@ void MCExpr::print(raw_ostream &OS) const {
     // absolute names.
     bool UseParens = Sym.getName()[0] == '$';
 
-    if (SRE.getKind() == MCSymbolRefExpr::VK_ARM_HI16 ||
-        SRE.getKind() == MCSymbolRefExpr::VK_ARM_LO16)
-      OS << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
-
     if (SRE.getKind() == MCSymbolRefExpr::VK_PPC_HA16 ||
         SRE.getKind() == MCSymbolRefExpr::VK_PPC_LO16) {
       OS << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
@@ -65,8 +61,6 @@ void MCExpr::print(raw_ostream &OS) const {
         SRE.getKind() == MCSymbolRefExpr::VK_ARM_GOTTPOFF)
       OS << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
     else if (SRE.getKind() != MCSymbolRefExpr::VK_None &&
-             SRE.getKind() != MCSymbolRefExpr::VK_ARM_HI16 &&
-             SRE.getKind() != MCSymbolRefExpr::VK_ARM_LO16 &&
              SRE.getKind() != MCSymbolRefExpr::VK_PPC_HA16 &&
              SRE.getKind() != MCSymbolRefExpr::VK_PPC_LO16)
       OS << '@' << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
@@ -196,8 +190,6 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_TPOFF: return "TPOFF";
   case VK_DTPOFF: return "DTPOFF";
   case VK_TLVP: return "TLVP";
-  case VK_ARM_HI16: return ":upper16:";
-  case VK_ARM_LO16: return ":lower16:";
   case VK_ARM_PLT: return "(PLT)";
   case VK_ARM_GOT: return "(GOT)";
   case VK_ARM_GOTOFF: return "(GOTOFF)";

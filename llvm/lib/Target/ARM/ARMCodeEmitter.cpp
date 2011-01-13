@@ -251,7 +251,7 @@ namespace {
       return Binary;
     }
 
-    unsigned getMovtImmOpValue(const MachineInstr &MI, unsigned Op) const {
+    unsigned getHiLo16ImmOpValue(const MachineInstr &MI, unsigned Op) const {
       return 0;
     }
 

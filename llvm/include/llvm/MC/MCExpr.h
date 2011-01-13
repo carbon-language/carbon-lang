@@ -155,8 +155,6 @@ public:
     VK_TPOFF,
     VK_DTPOFF,
     VK_TLVP,      // Mach-O thread local variable relocation
-    VK_ARM_HI16,  // The R_ARM_MOVT_ABS relocation (:upper16: in the .s file)
-    VK_ARM_LO16,  // The R_ARM_MOVW_ABS_NC relocation (:lower16: in the .w file)
     // FIXME: We'd really like to use the generic Kinds listed above for these.
     VK_ARM_PLT,   // ARM-style PLT references. i.e., (PLT) instead of @PLT
     VK_ARM_TLSGD, //   ditto for TLSGD, GOT, GOTOFF, TPOFF and GOTTPOFF
@@ -421,7 +419,7 @@ public:
   virtual void PrintImpl(raw_ostream &OS) const = 0;
   virtual bool EvaluateAsRelocatableImpl(MCValue &Res,
                                          const MCAsmLayout *Layout) const = 0;
-
+  virtual void AddValueSymbols(MCAssembler *) const = 0;
 
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Target;

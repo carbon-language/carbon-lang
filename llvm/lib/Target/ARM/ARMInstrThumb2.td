@@ -1677,7 +1677,7 @@ def t2MOVi : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), IIC_iMOVi,
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
-def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm:$imm), IIC_iMOVi,
+def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm_hilo16:$imm), IIC_iMOVi,
                    "movw", "\t$Rd, $imm",
                    [(set rGPR:$Rd, imm0_65535:$imm)]> {
   let Inst{31-27} = 0b11110;
@@ -1697,7 +1697,8 @@ def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm:$imm), IIC_iMOVi,
 }
 
 let Constraints = "$src = $Rd" in
-def t2MOVTi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$src, i32imm:$imm), IIC_iMOVi,
+def t2MOVTi16 : T2I<(outs rGPR:$Rd),
+                    (ins rGPR:$src, i32imm_hilo16:$imm), IIC_iMOVi,
                     "movt", "\t$Rd, $imm",
                     [(set rGPR:$Rd,
                           (or (and rGPR:$src, 0xffff), lo16AllZero:$imm))]> {
@@ -2684,7 +2685,7 @@ def t2MOVCCi : T2OneRegImm<(outs rGPR:$Rd), (ins rGPR:$false, t2_so_imm:$imm),
 }
 
 let isMoveImm = 1 in
-def t2MOVCCi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$false, i32imm:$imm),
+def t2MOVCCi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$false, i32imm_hilo16:$imm),
                       IIC_iCMOVi,
                       "movw", "\t$Rd, $imm", []>,
                       RegConstraint<"$false = $Rd"> {
