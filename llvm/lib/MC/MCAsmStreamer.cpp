@@ -824,8 +824,12 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
       if (MapEntry == 0) {
         OS << format("0x%02x", uint8_t(Code[i]));
       } else {
-        assert(Code[i] == 0 && "Encoder wrote into fixed up bit!");
-        OS << char('A' + MapEntry - 1);
+        if (Code[i]) {
+          // some of the 8 bits require fix up.
+          OS << format("0x%02x", uint8_t(Code[i])) << '\''
+             << char('A' + MapEntry - 1) << '\'';
+        } else
+          OS << char('A' + MapEntry - 1);
       }
     } else {
       // Otherwise, write out in binary.
