@@ -134,40 +134,49 @@ Loop *Region::outermostLoopInRegion(LoopInfo *LI, BasicBlock* BB) const {
   return outermostLoopInRegion(L);
 }
 
-bool Region::isSimple() const {
-  bool isSimple = true;
-  bool found = false;
-
-  BasicBlock *entry = getEntry(), *exit = getExit();
-
-  if (isTopLevelRegion())
-    return false;
+BasicBlock *Region::getEnteringBlock() const {
+  BasicBlock *entry = getEntry();
+  BasicBlock *Pred;
+  BasicBlock *enteringBlock = 0;
 
   for (pred_iterator PI = pred_begin(entry), PE = pred_end(entry); PI != PE;
        ++PI) {
-    BasicBlock *Pred = *PI;
+    Pred = *PI;
     if (DT->getNode(Pred) && !contains(Pred)) {
-      if (found) {
-        isSimple = false;
-        break;
-      }
-      found = true;
+      if (enteringBlock)
+        return 0;
+
+      enteringBlock = Pred;
     }
   }
 
-  found = false;
+  return enteringBlock;
+}
+
+BasicBlock *Region::getExitingBlock() const {
+  BasicBlock *exit = getExit();
+  BasicBlock *Pred;
+  BasicBlock *exitingBlock = 0;
+
+  if (!exit)
+    return 0;
 
   for (pred_iterator PI = pred_begin(exit), PE = pred_end(exit); PI != PE;
-       ++PI)
-    if (contains(*PI)) {
-      if (found) {
-        isSimple = false;
-        break;
-      }
-      found = true;
-    }
+       ++PI) {
+    Pred = *PI;
+    if (contains(Pred)) {
+      if (exitingBlock)
+        return 0;
 
-  return isSimple;
+      exitingBlock = Pred;
+    }
+  }
+
+  return exitingBlock;
+}
+
+bool Region::isSimple() const {
+  return !isTopLevelRegion() && getEnteringBlock() && getExitingBlock();
 }
 
 std::string Region::getNameStr() const {

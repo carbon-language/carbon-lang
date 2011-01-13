@@ -305,6 +305,20 @@ public:
   ///         NULL if such a basic block does not exist.
   Region *getExpandedRegion() const;
 
+  /// @brief Return the first block of this region's single entry edge,
+  ///        if existing.
+  ///
+  /// @return The BasicBlock starting this region's single entry edge,
+  ///         else NULL.
+  BasicBlock *getEnteringBlock() const;
+
+  /// @brief Return the first block of this region's single exit edge,
+  ///        if existing.
+  ///
+  /// @return The BasicBlock starting this region's single exit edge,
+  ///         else NULL.
+  BasicBlock *getExitingBlock() const;
+
   /// @brief Is this a simple region?
   ///
   /// A region is simple if it has exactly one exit and one entry edge.
