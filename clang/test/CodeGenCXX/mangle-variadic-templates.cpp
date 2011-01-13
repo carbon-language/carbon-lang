@@ -9,13 +9,13 @@ template<typename ...Types> struct tuple { };
 template<int ...Values> struct int_tuple { };
 template<template<typename> class ...Templates> struct template_tuple { };
 
-// CHECK: define weak_odr void @_Z2f0IJEEv1XIXsZT_EJspRT_EE
+// CHECK: define weak_odr void @_Z2f0IJEEv1XIXsZT_EJDpRT_EE
 template<typename ...Types>
 void f0(X<sizeof...(Types), Types&...>) { }
 
 template void f0(X<0>);
 
-// CHECK: define weak_odr void @_Z2f0IJifdEEv1XIXsZT_EJspRT_EE
+// CHECK: define weak_odr void @_Z2f0IJifdEEv1XIXsZT_EJDpRT_EE
 template void f0<int, float, double>(X<3, int&, float&, double&>);
 
 // Mangling for template argument packs
@@ -29,30 +29,30 @@ template void f1<int, float>();
 
 // Mangling function parameter packs
 template<typename ...Types> void f2(Types...) {}
-// CHECK: define weak_odr void @_Z2f2IJEEvspT_
+// CHECK: define weak_odr void @_Z2f2IJEEvDpT_
 template void f2<>();
-// CHECK: define weak_odr void @_Z2f2IJiEEvspT_
+// CHECK: define weak_odr void @_Z2f2IJiEEvDpT_
 template void f2<int>(int);
-// CHECK: define weak_odr void @_Z2f2IJifEEvspT_
+// CHECK: define weak_odr void @_Z2f2IJifEEvDpT_
 template void f2<int, float>(int, float);
 
 // Mangling non-trivial function parameter packs
 template<typename ...Types> void f3(const Types *...) {}
-// CHECK: define weak_odr void @_Z2f3IJEEvspPKT_
+// CHECK: define weak_odr void @_Z2f3IJEEvDpPKT_
 template void f3<>();
-// CHECK: define weak_odr void @_Z2f3IJiEEvspPKT_
+// CHECK: define weak_odr void @_Z2f3IJiEEvDpPKT_
 template void f3<int>(const int*);
-// CHECK: define weak_odr void @_Z2f3IJifEEvspPKT_
+// CHECK: define weak_odr void @_Z2f3IJifEEvDpPKT_
 template void f3<int, float>(const int*, const float*);
 
 // Mangling of type pack expansions in a template argument
 template<typename ...Types> tuple<Types...> f4() {}
-// CHECK: define weak_odr void @_Z2f4IJifdEE5tupleIJspT_EEv
+// CHECK: define weak_odr void @_Z2f4IJifdEE5tupleIJDpT_EEv
 template tuple<int, float, double> f4();
 
 // Mangling of type pack expansions in a function type
 template<typename R, typename ...ArgTypes> identity<R(ArgTypes...)> f5() {}
-// CHECK: define weak_odr void @_Z2f5IiJifdEE8identityIFT_spT0_EEv
+// CHECK: define weak_odr void @_Z2f5IiJifdEE8identityIFT_DpT0_EEv
 template identity<int(int, float, double)> f5();
 
 // Mangling of non-type template argument expansions

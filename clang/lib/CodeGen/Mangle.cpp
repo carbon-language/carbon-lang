@@ -1477,7 +1477,7 @@ void CXXNameMangler::mangleType(const DependentSizedExtVectorType *T) {
 
 void CXXNameMangler::mangleType(const PackExpansionType *T) {
   // <type>  ::= Dp <type>          # pack expansion (C++0x)
-  Out << "sp";
+  Out << "Dp";
   mangleType(T->getPattern());
 }
 
