@@ -448,12 +448,14 @@ private:
     /// Flags
     bool                                    m_resolve_vars;             ///< True if external variable references and persistent variable references should be resolved
     std::string                             m_func_name;                ///< The name of the function to translate
+    lldb_private::ConstString               m_result_name;              ///< The name of the result variable ($0, $1, ...)
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
     lldb::ClangExpressionVariableSP        *m_const_result;             ///< If non-NULL, this value should be set to the return value of the expression if it is constant and the expression has no side effects
     
     bool                                    m_has_side_effects;         ///< True if the function's result cannot be simply determined statically
+    bool                                    m_result_is_pointer;        ///< True if the function's result in the AST is a pointer (see comments in ASTResultSynthesizer::SynthesizeBodyResult)
     
 private:
     //------------------------------------------------------------------

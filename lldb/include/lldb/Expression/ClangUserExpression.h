@@ -81,6 +81,10 @@ public:
     ///     The type that the expression should be coerced to.  If NULL,
     ///     inferred from the expression itself.
     ///
+    /// @param[in] keep_result_in_memory
+    ///     True if the resulting persistent variable should reside in 
+    ///     target memory, if applicable.
+    ///
     /// @param[out] const_result
     ///     If this is non-NULL, the expression has no side effects, and 
     ///     the expression returns a constant result, then that result 
@@ -93,6 +97,7 @@ public:
     Parse (Stream &error_stream, 
            ExecutionContext &exe_ctx,
            TypeFromUser desired_type,
+           bool keep_result_in_memory,
            lldb::ClangExpressionVariableSP *const_result = NULL);
     
     //------------------------------------------------------------------
@@ -109,6 +114,7 @@ public:
     ///     If true, and the execution stops before completion, we unwind the
     ///     function call, and return the program state to what it was before the
     ///     execution.  If false, we leave the program in the stopped state.
+    ///
     /// @param[in] shared_ptr_to_me
     ///     This is a shared pointer to this ClangUserExpression.  This is
     ///     needed because Execute can push a thread plan that will hold onto
@@ -127,12 +133,14 @@ public:
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
              bool discard_on_error,
+             bool keep_in_memory,
              ClangUserExpressionSP &shared_ptr_to_me,
              lldb::ClangExpressionVariableSP &result);
              
     ThreadPlan *
     GetThreadPlanToExecuteJITExpression (Stream &error_stream,
                                          ExecutionContext &exe_ctx);
+    
     bool
     FinalizeJITExecution (Stream &error_stream,
                           ExecutionContext &exe_ctx,
@@ -232,6 +240,14 @@ public:
     /// @param[in] exe_ctx
     ///     The execution context to use when evaluating the expression.
     ///
+    /// @param[in] discard_on_error
+    ///     True if the thread's state should be restored in the case 
+    ///     of an error.
+    ///
+    /// @param[in] keep_in_memory
+    ///     True if the resulting persistent variable should reside in 
+    ///     target memory, if applicable.
+    ///
     /// @param[in] expr_cstr
     ///     A C string containing the expression to be evaluated.
     ///
@@ -248,6 +264,7 @@ public:
     static lldb::ExecutionResults
     Evaluate (ExecutionContext &exe_ctx, 
               bool discard_on_error,
+              bool keep_in_memory,
               const char *expr_cstr,
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp);

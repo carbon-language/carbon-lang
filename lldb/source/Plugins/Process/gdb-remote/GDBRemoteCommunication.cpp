@@ -859,7 +859,7 @@ GDBRemoteCommunication::DeallocateMemory (addr_t addr, uint32_t timeout_seconds)
     StringExtractorGDBRemote response;
     if (SendPacketAndWaitForResponse (packet, response, timeout_seconds, false))
     {
-        if (!response.IsOKPacket())
+        if (response.IsOKPacket())
             return true;
     }
     return false;

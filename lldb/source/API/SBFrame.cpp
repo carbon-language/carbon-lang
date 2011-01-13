@@ -689,8 +689,9 @@ SBFrame::EvaluateExpression (const char *expr)
     {
         ExecutionResults exe_results;
         const bool unwind_on_error = true;
+        const bool keep_in_memory = false;
 
-        exe_results = m_opaque_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, m_opaque_sp.get(), unwind_on_error, *expr_result);
+        exe_results = m_opaque_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, m_opaque_sp.get(), unwind_on_error, keep_in_memory, *expr_result);
     }
     
     if (expr_log)

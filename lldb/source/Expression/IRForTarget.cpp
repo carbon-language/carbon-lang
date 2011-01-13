@@ -43,7 +43,8 @@ IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
     m_func_name(func_name),
     m_resolve_vars(resolve_vars),
     m_const_result(const_result),
-    m_has_side_effects(NULL)
+    m_has_side_effects(false),
+    m_result_is_pointer(false)
 {
 }
 
@@ -153,10 +154,19 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
          vi != ve;
          ++vi)
     {
+        if (strstr(vi->first(), "$__lldb_expr_result_ptr") &&
+            !strstr(vi->first(), "GV"))
+        {
+            result_name = vi->first();
+            m_result_is_pointer = true;
+            break;
+        }
+        
         if (strstr(vi->first(), "$__lldb_expr_result") &&
             !strstr(vi->first(), "GV")) 
         {
             result_name = vi->first();
+            m_result_is_pointer = false;
             break;
         }
     }
@@ -178,7 +188,7 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     {
         if (log)
             log->PutCString("Result variable had no data");
-                
+        
         return false;
     }
         
@@ -240,14 +250,43 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     // Get the next available result name from m_decl_map and create the persistent
     // variable for it
     
-    lldb_private::TypeFromParser result_decl_type (result_decl->getType().getAsOpaquePtr(),
-                                                   &result_decl->getASTContext());
-
-    lldb_private::ConstString new_result_name (m_decl_map->GetPersistentResultName());
-    m_decl_map->AddPersistentVariable(result_decl, new_result_name, result_decl_type);
+    lldb_private::TypeFromParser result_decl_type;
+    
+    if (m_result_is_pointer)
+    {
+        clang::QualType pointer_qual_type = result_decl->getType();
+        clang::Type *pointer_type = pointer_qual_type.getTypePtr();
+        clang::PointerType *pointer_pointertype = dyn_cast<clang::PointerType>(pointer_type);
+        
+        if (!pointer_pointertype)
+        {
+            if (log)
+                log->PutCString("Expected result to have pointer type, but it did not");
+            return false;
+        }
+        
+        clang::QualType element_qual_type = pointer_pointertype->getPointeeType();
+        
+        result_decl_type = lldb_private::TypeFromParser(element_qual_type.getAsOpaquePtr(),
+                                                        &result_decl->getASTContext());
+    }
+    else
+    {
+        result_decl_type = lldb_private::TypeFromParser(result_decl->getType().getAsOpaquePtr(),
+                                                        &result_decl->getASTContext());
+    }
+    
+    m_result_name = m_decl_map->GetPersistentResultName();
+    // If the result is an Lvalue, it is emitted as a pointer; see
+    // ASTResultSynthesizer::SynthesizeBodyResult.
+    m_decl_map->AddPersistentVariable(result_decl, 
+                                      m_result_name, 
+                                      result_decl_type,
+                                      true,
+                                      m_result_is_pointer);
     
     if (log)
-        log->Printf("Creating a new result global: \"%s\"", new_result_name.GetCString());
+        log->Printf("Creating a new result global: \"%s\"", m_result_name.GetCString());
         
     // Construct a new result global and set up its metadata
     
@@ -256,7 +295,7 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
                                                            false, /* not constant */
                                                            GlobalValue::ExternalLinkage,
                                                            NULL, /* no initializer */
-                                                           new_result_name.GetCString ());
+                                                           m_result_name.GetCString ());
     
     // It's too late in compilation to create a new VarDecl for this, but we don't
     // need to.  We point the metadata at the old VarDecl.  This creates an odd
@@ -307,7 +346,7 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
         if (!m_has_side_effects)
         {
             MaybeSetConstantResult (initializer, 
-                                    new_result_name, 
+                                    m_result_name, 
                                     result_decl_type);
         }
                 
@@ -800,7 +839,7 @@ IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc,
     
     StringRef decl_name (decl->getName());
     lldb_private::ConstString persistent_variable_name (decl_name.data(), decl_name.size());
-    if (!m_decl_map->AddPersistentVariable(decl, persistent_variable_name, result_decl_type))
+    if (!m_decl_map->AddPersistentVariable(decl, persistent_variable_name, result_decl_type, false, false))
         return false;
     
     GlobalVariable *persistent_global = new GlobalVariable(llvm_module, 
@@ -964,9 +1003,27 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
             return false;
         }
         
-        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_type));
+        clang::QualType qual_type;
+        const Type *value_type;
+        
+        if (!name.compare("$__lldb_expr_result"))
+        {
+            // The $__lldb_expr_result name indicates the the return value has allocated as
+            // a static variable.  Per the comment at ASTResultSynthesizer::SynthesizeBodyResult,
+            // accesses to this static variable need to be redirected to the result of dereferencing
+            // a pointer that is passed in as one of the arguments.
+            //
+            // Consequently, when reporting the size of the type, we report a pointer type pointing
+            // to the type of $__lldb_expr_result, not the type itself.
             
-        const Type *value_type = global_variable->getType();
+            qual_type = ast_context->getPointerType(clang::QualType::getFromOpaquePtr(opaque_type));
+            value_type = PointerType::get(global_variable->getType(), 0);
+        }
+        else
+        {
+            qual_type = clang::QualType::getFromOpaquePtr(opaque_type);
+            value_type = global_variable->getType();
+        }
                 
         size_t value_size = (ast_context->getTypeSize(qual_type) + 7) / 8;
         off_t value_alignment = (ast_context->getTypeAlign(qual_type) + 7) / 8;
@@ -1479,12 +1536,31 @@ IRForTarget::ReplaceVariables (Module &llvm_module, Function &llvm_function)
         
         ConstantInt *offset_int(ConstantInt::getSigned(offset_type, offset));
         GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument, offset_int, "", FirstEntryInstruction);
-        BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType(), "", FirstEntryInstruction);
+                
+        Value *replacement;
         
-        if (Constant *constant = dyn_cast<Constant>(value))
-            UnfoldConstant(constant, bit_cast, FirstEntryInstruction);
+        // Per the comment at ASTResultSynthesizer::SynthesizeBodyResult, in cases where the result
+        // variable is an rvalue, we have to synthesize a dereference of the appropriate structure
+        // entry in order to produce the static variable that the AST thinks it is accessing.
+        if (name == m_result_name && !m_result_is_pointer)
+        {
+            BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType()->getPointerTo(), "", FirstEntryInstruction);
+        
+            LoadInst *load = new LoadInst(bit_cast, "", FirstEntryInstruction);
+            
+            replacement = load;
+        }
         else
-            value->replaceAllUsesWith(bit_cast);
+        {
+            BitCastInst *bit_cast = new BitCastInst(get_element_ptr, value->getType(), "", FirstEntryInstruction);
+
+            replacement = bit_cast;
+        }
+            
+        if (Constant *constant = dyn_cast<Constant>(value))
+            UnfoldConstant(constant, replacement, FirstEntryInstruction);
+        else
+            value->replaceAllUsesWith(replacement);
         
         if (GlobalVariable *var = dyn_cast<GlobalVariable>(value))
             var->eraseFromParent();
@@ -1507,7 +1583,7 @@ IRForTarget::runOnModule (Module &llvm_module)
     {
         if (log)
             log->Printf("Couldn't find \"%s()\" in the module", m_func_name.c_str());
-        
+
         return false;
     }
         

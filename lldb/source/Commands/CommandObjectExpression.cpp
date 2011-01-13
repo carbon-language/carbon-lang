@@ -237,7 +237,10 @@ CommandObjectExpression::EvaluateExpression
         lldb::ValueObjectSP result_valobj_sp;
 
         lldb::ExecutionResults exe_results;
-        exe_results = m_exe_ctx.target->EvaluateExpression(expr, m_exe_ctx.frame, m_options.unwind_on_error, result_valobj_sp);
+        
+        bool keep_in_memory = true;
+        
+        exe_results = m_exe_ctx.target->EvaluateExpression(expr, m_exe_ctx.frame, m_options.unwind_on_error, keep_in_memory, result_valobj_sp);
         
         if (exe_results == eExecutionInterrupted && !m_options.unwind_on_error)
         {

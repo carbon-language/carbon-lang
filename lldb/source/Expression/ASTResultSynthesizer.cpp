@@ -246,6 +246,49 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         // No auxiliary variable necessary; expression returns void
         return true;
     
+    // is_lvalue is used to record whether the expression returns an assignable Lvalue or an
+    // Rvalue.  This is relevant because they are handled differently.
+    //
+    // For Lvalues
+    //
+    //   - In AST result synthesis (here!) the expression E is transformed into an initialization
+    //     T *$__lldb_expr_result_ptr = &E.
+    //
+    //   - In structure allocation, a pointer-sized slot is allocated in the struct that is to be
+    //     passed into the expression.
+    //
+    //   - In IR transformations, reads and writes to $__lldb_expr_result_ptr are redirected at
+    //     an entry in the struct ($__lldb_arg) passed into the expression.  (Other persistent
+    //     variables are treated similarly, having been materialized as references, but in those
+    //     cases the value of the reference itself is never modified.)
+    //
+    //   - During materialization, $0 (the result persistent variable) is ignored.
+    //
+    //   - During dematerialization, $0 is marked up as a load address with value equal to the
+    //     contents of the structure entry.
+    //
+    // For Rvalues
+    //
+    //   - In AST result synthesis the expression E is transformed into an initialization
+    //     static T $__lldb_expr_result = E.
+    //
+    //   - In structure allocation, a pointer-sized slot is allocated in the struct that is to be
+    //     passed into the expression.
+    //
+    //   - In IR transformations, an instruction is inserted at the beginning of the function to
+    //     dereference the pointer resident in the slot.  Reads and writes to $__lldb_expr_result
+    //     are redirected at that dereferenced version.  Guard variables for the static variable 
+    //     are excised.
+    //
+    //   - During materialization, $0 (the result persistent variable) is populated with the location
+    //     of a newly-allocated area of memory.
+    //
+    //   - During dematerialization, $0 is ignored.
+
+    bool is_lvalue = 
+        (last_expr->getValueKind() == VK_LValue || last_expr->getValueKind() == VK_XValue) &&
+        (last_expr->getObjectKind() == OK_Ordinary);
+    
     QualType expr_qual_type = last_expr->getType();
     clang::Type *expr_type = expr_qual_type.getTypePtr();
     
@@ -259,22 +302,51 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
     {
         std::string s = expr_qual_type.getAsString();
         
-        log->Printf("Last statement's type: %s", s.c_str());
+        log->Printf("Last statement is an %s with type: %s", (is_lvalue ? "lvalue" : "rvalue"), s.c_str());
     }
     
-    IdentifierInfo &result_id = Ctx.Idents.get("$__lldb_expr_result");
-        
-    clang::VarDecl *result_decl = VarDecl::Create(Ctx, 
-                                                  DC, 
-                                                  SourceLocation(), 
-                                                  &result_id, 
-                                                  expr_qual_type, 
-                                                  NULL, 
-                                                  SC_Static, 
-                                                  SC_Static);
+    clang::VarDecl *result_decl;
     
-    if (!result_decl)
-        return false;
+    if (is_lvalue)
+    {
+        IdentifierInfo &result_ptr_id = Ctx.Idents.get("$__lldb_expr_result_ptr");
+        
+        QualType ptr_qual_type = Ctx.getPointerType(expr_qual_type);
+        
+        result_decl = VarDecl::Create(Ctx,
+                                      DC,
+                                      SourceLocation(),
+                                      &result_ptr_id,
+                                      ptr_qual_type,
+                                      NULL,
+                                      SC_Static,
+                                      SC_Static);
+        
+        if (!result_decl)
+            return false;
+                
+        ExprResult address_of_expr = m_sema->CreateBuiltinUnaryOp(SourceLocation(), UO_AddrOf, last_expr);
+        
+        m_sema->AddInitializerToDecl(result_decl, address_of_expr.take());
+    }
+    else
+    {
+        IdentifierInfo &result_id = Ctx.Idents.get("$__lldb_expr_result");
+        
+        result_decl = VarDecl::Create(Ctx, 
+                                      DC, 
+                                      SourceLocation(), 
+                                      &result_id, 
+                                      expr_qual_type, 
+                                      NULL, 
+                                      SC_Static, 
+                                      SC_Static);
+        
+        if (!result_decl)
+            return false;
+        
+        m_sema->AddInitializerToDecl(result_decl, last_expr);
+    }
     
     DC->addDecl(result_decl);
     
@@ -282,7 +354,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
     // call AddInitializerToDecl
     //
         
-    m_sema->AddInitializerToDecl(result_decl, last_expr);
+    //m_sema->AddInitializerToDecl(result_decl, last_expr);
     
     /////////////////////////////////
     // call ConvertDeclToDeclGroup

@@ -1316,7 +1316,7 @@ ValueObject::AddressOf (Error &error)
                                                                  ClangASTContext::CreatePointerType (ast, clang_type),
                                                                  ConstString (name.c_str()),
                                                                  addr, 
-                                                                 address_type,
+                                                                 eAddressTypeInvalid,
                                                                  m_data.GetAddressByteSize()));
                 }
             }

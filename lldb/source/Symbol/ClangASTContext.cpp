@@ -3615,18 +3615,20 @@ ClangASTContext::CreatePointerType (clang::ASTContext *ast, clang_type_t clang_t
 }
 
 clang_type_t
-ClangASTContext::CreateLValueReferenceType (clang_type_t clang_type)
+ClangASTContext::CreateLValueReferenceType (clang::ASTContext *ast,
+                                            clang_type_t clang_type)
 {
     if (clang_type)
-        return getASTContext()->getLValueReferenceType (QualType::getFromOpaquePtr(clang_type)).getAsOpaquePtr();
+        return ast->getLValueReferenceType (QualType::getFromOpaquePtr(clang_type)).getAsOpaquePtr();
     return NULL;
 }
 
 clang_type_t
-ClangASTContext::CreateRValueReferenceType (clang_type_t clang_type)
+ClangASTContext::CreateRValueReferenceType (clang::ASTContext *ast,
+                                            clang_type_t clang_type)
 {
     if (clang_type)
-        return getASTContext()->getRValueReferenceType (QualType::getFromOpaquePtr(clang_type)).getAsOpaquePtr();
+        return ast->getRValueReferenceType (QualType::getFromOpaquePtr(clang_type)).getAsOpaquePtr();
     return NULL;
 }
 

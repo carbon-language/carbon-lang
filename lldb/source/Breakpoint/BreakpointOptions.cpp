@@ -199,7 +199,7 @@ BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx,
     ClangASTContext *ast_context = exe_ctx.target->GetScratchClangASTContext();
     TypeFromUser bool_type(ast_context->GetBuiltInType_bool(), ast_context->getASTContext());
 
-    if (!m_condition_ap->Parse (error_stream, exe_ctx, bool_type))
+    if (!m_condition_ap->Parse (error_stream, exe_ctx, bool_type, false /* keep_in_memory */))
     {
         // Errors mean we should stop.
         return NULL;

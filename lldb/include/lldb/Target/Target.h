@@ -476,6 +476,7 @@ public:
     EvaluateExpression (const char *expression,
                         StackFrame *frame,
                         bool unwind_on_error,
+                        bool keep_in_memory,
                         lldb::ValueObjectSP &result_valobj_sp);
 
     ClangPersistentVariables &

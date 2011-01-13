@@ -45,11 +45,12 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace clang;
 
-ClangExpressionDeclMap::ClangExpressionDeclMap () :
+ClangExpressionDeclMap::ClangExpressionDeclMap (bool keep_result_in_memory) :
     m_found_entities (),
     m_struct_members (),
     m_parser_vars (),
-    m_struct_vars ()
+    m_struct_vars (),
+    m_keep_result_in_memory (keep_result_in_memory)
 {
     EnableStructVars();
 }
@@ -187,6 +188,8 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
                 return lldb::ClangExpressionVariableSP();    
         }
     }
+    
+    pvar_sp->m_flags |= ClangExpressionVariable::EVIsFreezeDried;
 
     return pvar_sp;
 }
@@ -196,10 +199,14 @@ ClangExpressionDeclMap::AddPersistentVariable
 (
     const clang::NamedDecl *decl, 
     const ConstString &name, 
-    TypeFromParser parser_type
+    TypeFromParser parser_type,
+    bool is_result,
+    bool is_lvalue
 )
 {
     assert (m_parser_vars.get());
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     clang::ASTContext *context(m_parser_vars->m_exe_ctx->target->GetScratchClangASTContext()->getASTContext());
     
@@ -218,6 +225,24 @@ ClangExpressionDeclMap::AddPersistentVariable
     
     if (!var_sp)
         return false;
+    
+    if (is_result)
+        var_sp->m_flags |= ClangExpressionVariable::EVNeedsFreezeDry;
+    else
+        var_sp->m_flags |= ClangExpressionVariable::EVKeepInTarget; // explicitly-declared persistent variables should persist
+    
+    if (is_lvalue)
+    {
+        var_sp->m_flags |= ClangExpressionVariable::EVIsProgramReference;
+    }
+    else
+    {
+        var_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+        var_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+    }
+    
+    if (log)
+        log->Printf("Created persistent variable with flags 0x%hx", var_sp->m_flags);
     
     var_sp->EnableParserVars();
     
@@ -441,7 +466,7 @@ ClangExpressionDeclMap::Materialize
     
     m_material_vars->m_process = exe_ctx.process;
     
-    bool result = DoMaterialize(false, exe_ctx, NULL, err);
+    bool result = DoMaterialize(false /* dematerialize */, exe_ctx, NULL, err);
     
     if (result)
         struct_address = m_material_vars->m_materialized_location;
@@ -740,9 +765,8 @@ ClangExpressionDeclMap::DoMaterialize
                 
                 if (!DoMaterializeOneVariable (dematerialize, 
                                                exe_ctx, 
-                                               sym_ctx, 
-                                               member_sp->GetName(), 
-                                               member_sp->GetTypeFromUser(), 
+                                               sym_ctx,
+                                               member_sp,
                                                m_material_vars->m_materialized_location + member_sp->m_jit_vars->m_offset, 
                                                err))
                     return false;
@@ -754,20 +778,21 @@ ClangExpressionDeclMap::DoMaterialize
             // with with a '$' character...
             if (member_sp->GetName().AsCString ("!")[0] == '$' && persistent_vars.ContainsVariable(member_sp))
             {
+                bool keep_this_in_memory = false;
+                
                 if (member_sp->GetName() == m_struct_vars->m_result_name)
                 {
-                    if (!dematerialize)
-                        continue;
-                    
                     if (log)
                         log->PutCString("Found result member in the struct");
-                    
+
                     if (result_sp_ptr)
                         *result_sp_ptr = member_sp;
+                    
+                    keep_this_in_memory = m_keep_result_in_memory;
                 }
 
                 if (!DoMaterializeOnePersistentVariable (dematerialize, 
-                                                         exe_ctx, 
+                                                         exe_ctx,
                                                          member_sp, 
                                                          m_material_vars->m_materialized_location + member_sp->m_jit_vars->m_offset, 
                                                          err))
@@ -784,6 +809,63 @@ ClangExpressionDeclMap::DoMaterialize
     return true;
 }
 
+static bool WriteAddressInto
+(
+    ExecutionContext &exe_ctx,
+    lldb::addr_t target,
+    lldb::addr_t address,
+    Error &err
+)
+{
+    size_t pointer_byte_size = exe_ctx.process->GetAddressByteSize();
+    
+    StreamString str (0 | Stream::eBinary,
+                      pointer_byte_size,
+                      exe_ctx.process->GetByteOrder());
+    
+    switch (pointer_byte_size)
+    {
+        default:
+            assert(!"Unhandled byte size");
+        case 4:
+        {
+            uint32_t address32 = address & 0xffffffffll;
+            str.PutRawBytes(&address32, sizeof(address32), eByteOrderHost, eByteOrderInvalid);
+        }
+        break;
+        case 8:
+        {
+            uint64_t address64 = address;
+            str.PutRawBytes(&address64, sizeof(address64), eByteOrderHost, eByteOrderInvalid);
+        }
+        break;
+    }
+        
+    return (exe_ctx.process->WriteMemory (target, str.GetData(), pointer_byte_size, err) == pointer_byte_size);
+}
+
+static lldb::addr_t ReadAddressFrom
+(
+    ExecutionContext &exe_ctx,
+    lldb::addr_t source,
+    Error &err
+)
+{
+    size_t pointer_byte_size = exe_ctx.process->GetAddressByteSize();
+
+    DataBufferHeap *buf = new DataBufferHeap(pointer_byte_size, 0);
+    DataBufferSP buf_sp(buf);
+    
+    if (exe_ctx.process->ReadMemory (source, buf->GetBytes(), pointer_byte_size, err) != pointer_byte_size)
+        return LLDB_INVALID_ADDRESS;
+        
+    DataExtractor extractor (buf_sp, exe_ctx.process->GetByteOrder(), exe_ctx.process->GetAddressByteSize());
+    
+    uint32_t offset = 0;
+    
+    return (lldb::addr_t)extractor.GetPointer(&offset);
+}
+
 bool
 ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
 (
@@ -794,6 +876,8 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
     Error &err
 )
 {
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
     if (!var_sp)
     {
         err.SetErrorString("Invalid persistent variable");
@@ -808,20 +892,167 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
     
     Error error;
     
+    lldb::addr_t mem; // The address of a spare memory area used to hold the persistent variable.
+    
     if (dematerialize)
     {
-        var_sp->ValueUpdated ();
-        if (exe_ctx.process->ReadMemory (addr, pvar_data, pvar_byte_size, error) != pvar_byte_size)
+        if (log)
+            log->Printf("Dematerializing persistent variable with flags 0x%hx", var_sp->m_flags);
+        
+        if ((var_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated) ||
+            (var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference))
         {
-            err.SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
+            // Get the location of the target out of the struct.
+            
+            Error read_error;
+            mem = ReadAddressFrom(exe_ctx, addr, read_error);
+            
+            if (mem == LLDB_INVALID_ADDRESS)
+            {
+                err.SetErrorStringWithFormat("Couldn't read address of %s from struct: %s", var_sp->GetName().GetCString(), error.AsCString());
+                return false;
+            }
+            
+            if (var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference &&
+                !var_sp->m_live_sp)
+            {
+                // If the reference comes from the program, then the ClangExpressionVariable's
+                // live variable data hasn't been set up yet.  Do this now.
+                
+                var_sp->m_live_sp.reset(new lldb_private::ValueObjectConstResult(var_sp->GetTypeFromUser().GetASTContext(),
+                                                                                 var_sp->GetTypeFromUser().GetOpaqueQualType(),
+                                                                                 var_sp->GetName(),
+                                                                                 mem,
+                                                                                 lldb::eAddressTypeLoad,
+                                                                                 pvar_byte_size));
+            }
+            
+            if (!var_sp->m_live_sp)
+            {
+                err.SetErrorStringWithFormat("Couldn't find the memory area used to store %s", var_sp->GetName().GetCString());
+                return false;
+            }
+            
+            if (var_sp->m_live_sp->GetValue().GetValueAddressType() != lldb::eAddressTypeLoad)
+            {
+                err.SetErrorStringWithFormat("The address of the memory area for %s is in an incorrect format", var_sp->GetName().GetCString());
+                return false;
+            }
+            
+            if (var_sp->m_flags & ClangExpressionVariable::EVNeedsFreezeDry)
+            {
+                mem = var_sp->m_live_sp->GetValue().GetScalar().ULongLong();
+                
+                if (log)
+                    log->Printf("Dematerializing %s from 0x%llx", var_sp->GetName().GetCString(), (uint64_t)mem);
+                
+                // Read the contents of the spare memory area
+                
+                if (log)
+                    log->Printf("Read");
+                
+                var_sp->ValueUpdated ();
+                if (exe_ctx.process->ReadMemory (mem, pvar_data, pvar_byte_size, error) != pvar_byte_size)
+                {
+                    err.SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
+                    return false;
+                }
+                
+                var_sp->m_flags &= ~ClangExpressionVariable::EVNeedsFreezeDry;
+            }
+            
+            if (var_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation &&
+                !(var_sp->m_flags & ClangExpressionVariable::EVKeepInTarget))
+            {
+                if (m_keep_result_in_memory)
+                {
+                    var_sp->m_flags |= ClangExpressionVariable::EVKeepInTarget;
+                }
+                else
+                {
+                    Error deallocate_error = exe_ctx.process->DeallocateMemory(mem);
+                    
+                    if (!err.Success())
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't deallocate memory for %s: %s", var_sp->GetName().GetCString(), deallocate_error.AsCString());
+                        return false;
+                    }
+                }
+            }
+        }
+        else
+        {
+            err.SetErrorStringWithFormat("Persistent variables without separate allocations are not currently supported.");
             return false;
         }
     }
     else 
     {
-        if (exe_ctx.process->WriteMemory (addr, pvar_data, pvar_byte_size, error) != pvar_byte_size)
+        if (log)
+            log->Printf("Materializing persistent variable with flags 0x%hx", var_sp->m_flags);
+        
+        if (var_sp->m_flags & ClangExpressionVariable::EVNeedsAllocation)
         {
-            err.SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());
+            // Allocate a spare memory area to store the persistent variable's contents.
+            
+            Error allocate_error;
+            
+            mem = exe_ctx.process->AllocateMemory(pvar_byte_size, 
+                                                  lldb::ePermissionsReadable | lldb::ePermissionsWritable, 
+                                                  allocate_error);
+            
+            if (mem == LLDB_INVALID_ADDRESS)
+            {
+                err.SetErrorStringWithFormat("Couldn't allocate a memory area to store %s: %s", var_sp->GetName().GetCString(), allocate_error.AsCString());
+                return false;
+            }
+            
+            if (log)
+                log->Printf("Allocated %s (0x%llx) sucessfully", var_sp->GetName().GetCString(), mem);
+            
+            // Put the location of the spare memory into the live data of the ValueObject.
+            
+            var_sp->m_live_sp.reset(new lldb_private::ValueObjectConstResult(var_sp->GetTypeFromUser().GetASTContext(),
+                                                                             var_sp->GetTypeFromUser().GetOpaqueQualType(),
+                                                                             var_sp->GetName(),
+                                                                             mem,
+                                                                             lldb::eAddressTypeLoad,
+                                                                             pvar_byte_size));
+            
+            // Clear the flag if the variable will never be deallocated.
+            
+            if (var_sp->m_flags & ClangExpressionVariable::EVKeepInTarget)
+                var_sp->m_flags &= ~ClangExpressionVariable::EVNeedsAllocation;
+            
+            // Write the contents of the variable to the area.
+            
+            if (exe_ctx.process->WriteMemory (mem, pvar_data, pvar_byte_size, error) != pvar_byte_size)
+            {
+                err.SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());
+                return false;
+            }
+        }
+        
+        if ((var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference && var_sp->m_live_sp) ||
+            var_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated)
+        {
+            mem = var_sp->m_live_sp->GetValue().GetScalar().ULongLong();
+            
+            // Now write the location of the area into the struct.
+            
+            Error write_error;
+            if (!WriteAddressInto(exe_ctx, addr, mem, write_error))
+            {
+                err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", var_sp->GetName().GetCString(), write_error.AsCString());
+                return false;
+            }
+            
+            if (log)
+                log->Printf("Materialized %s into 0x%llx", var_sp->GetName().GetCString(), (uint64_t)mem);
+        }
+        else if (!var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference)
+        {
+            err.SetErrorStringWithFormat("Persistent variables without separate allocations are not currently supported.");
             return false;
         }
     }
@@ -835,8 +1066,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     bool dematerialize,
     ExecutionContext &exe_ctx,
     const SymbolContext &sym_ctx,
-    const ConstString &name,
-    TypeFromUser type,
+    ClangExpressionVariableSP &expr_var,
     lldb::addr_t addr, 
     Error &err
 )
@@ -845,6 +1075,11 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     
     if (!exe_ctx.frame || !exe_ctx.process)
         return false;
+    
+    // Vital information about the value
+    
+    const ConstString &name(expr_var->GetName());
+    TypeFromUser type(expr_var->GetTypeFromUser());
     
     Variable *var = FindVariableInScope (*exe_ctx.frame, name, &type);
     
@@ -869,8 +1104,8 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
 
     // The size of the type contained in addr
     
-    size_t addr_bit_size = ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType());
-    size_t addr_byte_size = addr_bit_size % 8 ? ((addr_bit_size + 8) / 8) : (addr_bit_size / 8);
+    size_t value_bit_size = ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType());
+    size_t value_byte_size = value_bit_size % 8 ? ((value_bit_size + 8) / 8) : (value_bit_size / 8);
     
     Value::ValueType value_type = location_value->GetValueType();
     
@@ -888,40 +1123,21 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
         break;
     case Value::eValueTypeLoadAddress:
         {
-            lldb::addr_t value_addr = location_value->GetScalar().ULongLong();
-            
-            DataBufferHeap data;
-            data.SetByteSize(addr_byte_size);
-            
-            lldb::addr_t src_addr;
-            lldb::addr_t dest_addr;
-            
-            if (dematerialize)
+            if (!dematerialize)
             {
-                src_addr = addr;
-                dest_addr = value_addr;
+                lldb::addr_t value_addr = location_value->GetScalar().ULongLong();
+                                
+                Error error;
+
+                if (!WriteAddressInto(exe_ctx,
+                                      addr,
+                                      value_addr,
+                                      error))
+                {
+                    err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", name.GetCString(), error.AsCString());
+                    return false;
+                }
             }
-            else
-            {
-                src_addr = value_addr;
-                dest_addr = addr;
-            }
-            
-            Error error;
-            if (exe_ctx.process->ReadMemory (src_addr, data.GetBytes(), addr_byte_size, error) != addr_byte_size)
-            {
-                err.SetErrorStringWithFormat ("Couldn't read %s from the target: %s", name.GetCString(), error.AsCString());
-                return false;
-            }
-            
-            if (exe_ctx.process->WriteMemory (dest_addr, data.GetBytes(), addr_byte_size, error) != addr_byte_size)
-            {
-                err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", name.GetCString(), error.AsCString());
-                return false;
-            }
-            
-            if (log)
-                log->Printf("Copied from 0x%llx to 0x%llx", (uint64_t)src_addr, (uint64_t)addr);
         }
         break;
     case Value::eValueTypeScalar:
@@ -929,12 +1145,13 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
             if (location_value->GetContextType() != Value::eContextTypeRegisterInfo)
             {
                 StreamString ss;
-                
                 location_value->Dump(&ss);
                 
                 err.SetErrorStringWithFormat("%s is a scalar of unhandled type: %s", name.GetCString(), ss.GetString().c_str());
                 return false;
             }
+            
+            lldb::addr_t mem; // The address of a spare memory area aused to hold the variable.
             
             lldb::RegisterInfo *register_info = location_value->GetRegisterInfo();
             
@@ -957,6 +1174,22 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
             
             if (dematerialize)
             {
+                // Get the location of the spare memory area out of the variable's live data.
+                
+                if (!expr_var->m_live_sp)
+                {
+                    err.SetErrorStringWithFormat("Couldn't find the memory area used to store %s", name.GetCString());
+                    return false;
+                }
+                
+                if (expr_var->m_live_sp->GetValue().GetValueAddressType() != lldb::eAddressTypeLoad)
+                {
+                    err.SetErrorStringWithFormat("The address of the memory area for %s is in an incorrect format", name.GetCString());
+                    return false;
+                }
+                
+                mem = expr_var->m_live_sp->GetValue().GetScalar().ULongLong();
+                
                 // Moving from addr into a register
                 //
                 // Case 1: addr_byte_size and register_byte_size are the same
@@ -974,7 +1207,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                 //   |AABB0000| Register contents [on little-endian hardware]
                 //   |0000AABB| Register contents [on big-endian hardware]
                 
-                if (addr_byte_size > register_byte_size)
+                if (value_byte_size > register_byte_size)
                 {
                     err.SetErrorStringWithFormat("%s is too big to store in %s", name.GetCString(), register_info->name);
                     return false;
@@ -991,14 +1224,14 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                     register_offset = 0;
                     break;
                 case lldb::eByteOrderBig:
-                    register_offset = register_byte_size - addr_byte_size;
+                    register_offset = register_byte_size - value_byte_size;
                     break;
                 }
                 
                 DataBufferHeap register_data (register_byte_size, 0);
                 
                 Error error;
-                if (exe_ctx.process->ReadMemory (addr, register_data.GetBytes() + register_offset, addr_byte_size, error) != addr_byte_size)
+                if (exe_ctx.process->ReadMemory (mem, register_data.GetBytes() + register_offset, value_byte_size, error) != value_byte_size)
                 {
                     err.SetErrorStringWithFormat ("Couldn't read %s from the target: %s", name.GetCString(), error.AsCString());
                     return false;
@@ -1011,9 +1244,54 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                     err.SetErrorStringWithFormat("Couldn't read %s from %s", name.GetCString(), register_info->name);
                     return false;
                 }
+                
+                // Deallocate the spare area and clear the variable's live data.
+                
+                Error deallocate_error = exe_ctx.process->DeallocateMemory(mem);
+                
+                if (!deallocate_error.Success())
+                {
+                    err.SetErrorStringWithFormat("Couldn't deallocate spare memory area for %s: %s", name.GetCString(), deallocate_error.AsCString());
+                    return false;
+                }
+                
+                expr_var->m_live_sp.reset();
             }
             else
             {
+                // Allocate a spare memory area to place the register's contents into.  This memory area will be pointed to by the slot in the
+                // struct.
+                
+                Error allocate_error;
+                
+                mem = exe_ctx.process->AllocateMemory(value_byte_size, 
+                                                      lldb::ePermissionsReadable | lldb::ePermissionsWritable, 
+                                                      allocate_error);
+                
+                if (mem == LLDB_INVALID_ADDRESS)
+                {
+                    err.SetErrorStringWithFormat("Couldn't allocate a memory area to store %s: %s", name.GetCString(), allocate_error.AsCString());
+                    return false;
+                }
+                
+                // Put the location of the spare memory into the live data of the ValueObject.
+                
+                expr_var->m_live_sp.reset(new lldb_private::ValueObjectConstResult(type.GetASTContext(),
+                                                                                   type.GetOpaqueQualType(),
+                                                                                   name,
+                                                                                   mem,
+                                                                                   lldb::eAddressTypeLoad,
+                                                                                   value_byte_size));
+                
+                // Now write the location of the area into the struct.
+                
+                Error write_error;
+                if (!WriteAddressInto(exe_ctx, addr, mem, write_error))
+                {
+                    err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", name.GetCString(), write_error.AsCString());
+                    return false;
+                }
+                
                 // Moving from a register into addr
                 //
                 // Case 1: addr_byte_size and register_byte_size are the same
@@ -1031,7 +1309,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                 //   |AABB|     Address contents on little-endian hardware
                 //       |CCDD| Address contents on big-endian hardware
                 
-                if (addr_byte_size > register_byte_size)
+                if (value_byte_size > register_byte_size)
                 {
                     err.SetErrorStringWithFormat("%s is too big to store in %s", name.GetCString(), register_info->name);
                     return false;
@@ -1048,7 +1326,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                         register_offset = 0;
                         break;
                     case lldb::eByteOrderBig:
-                        register_offset = register_byte_size - addr_byte_size;
+                        register_offset = register_byte_size - value_byte_size;
                         break;
                 }
                 
@@ -1060,7 +1338,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                     return false;
                 }
                 
-                const void *register_data = register_extractor.GetData(&register_offset, addr_byte_size);
+                const void *register_data = register_extractor.GetData(&register_offset, value_byte_size);
                 
                 if (!register_data)
                 {
@@ -1068,10 +1346,9 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                     return false;
                 }
                 
-                Error error;
-                if (exe_ctx.process->WriteMemory (addr, register_data, addr_byte_size, error) != addr_byte_size)
+                if (exe_ctx.process->WriteMemory (mem, register_data, value_byte_size, write_error) != value_byte_size)
                 {
-                    err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", error.AsCString());
+                    err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s", write_error.AsCString());
                     return false;
                 }
             }
@@ -1581,7 +1858,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
     if (!var_location)
         return;
     
-    NamedDecl *var_decl = context.AddVarDecl(pt.GetOpaqueQualType());
+    NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::CreateLValueReferenceType(pt.GetASTContext(), pt.GetOpaqueQualType()));
     std::string decl_name(context.m_decl_name.getAsString());
     ConstString entity_name(decl_name.c_str());
     ClangExpressionVariableSP entity(m_found_entities.CreateVariable (entity_name, 
@@ -1619,7 +1896,7 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                                 user_type.GetOpaqueQualType()),
                                 context.GetASTContext());
     
-    NamedDecl *var_decl = context.AddVarDecl(parser_type.GetOpaqueQualType());
+    NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::CreateLValueReferenceType(parser_type.GetASTContext(), parser_type.GetOpaqueQualType()));
     
     pvar_sp->EnableParserVars();
     pvar_sp->m_parser_vars->m_parser_type = parser_type;

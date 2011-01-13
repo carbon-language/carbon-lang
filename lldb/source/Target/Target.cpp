@@ -910,6 +910,7 @@ Target::EvaluateExpression
     const char *expr_cstr,
     StackFrame *frame,
     bool unwind_on_error,
+    bool keep_in_memory,
     lldb::ValueObjectSP &result_valobj_sp
 )
 {
@@ -952,10 +953,32 @@ Target::EvaluateExpression
             const_valobj_sp = result_valobj_sp->CreateConstantValue (exe_ctx.GetBestExecutionContextScope(), 
                                                                      persistent_variable_name);
 
+        lldb::ValueObjectSP live_valobj_sp = result_valobj_sp;
+        
         result_valobj_sp = const_valobj_sp;
 
-        ClangExpressionVariableSP clang_expr_variable_sp(m_persistent_variables.CreatePersistentVariable(result_valobj_sp));
-        assert (clang_expr_variable_sp.get());        
+        ClangExpressionVariableSP clang_expr_variable_sp(m_persistent_variables.CreatePersistentVariable(result_valobj_sp));        
+        assert (clang_expr_variable_sp.get());
+        
+        // Set flags and live data as appropriate
+
+        const Value &result_value = live_valobj_sp->GetValue();
+        
+        switch (result_value.GetValueType())
+        {
+        case Value::eValueTypeHostAddress:
+        case Value::eValueTypeFileAddress:
+            // we don't do anything with these for now
+            break;
+        case Value::eValueTypeScalar:
+            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+            break;
+        case Value::eValueTypeLoadAddress:
+            clang_expr_variable_sp->m_live_sp = live_valobj_sp;
+            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsProgramReference;
+            break;
+        }
     }
     else
     {
@@ -976,7 +999,8 @@ Target::EvaluateExpression
             const char *prefix = GetExpressionPrefixContentsAsCString();
         
             execution_results = ClangUserExpression::Evaluate (exe_ctx, 
-                                                               unwind_on_error, 
+                                                               unwind_on_error,
+                                                               keep_in_memory,
                                                                expr_cstr, 
                                                                prefix, 
                                                                result_valobj_sp);

@@ -144,6 +144,7 @@ bool
 ClangUserExpression::Parse (Stream &error_stream, 
                             ExecutionContext &exe_ctx,
                             TypeFromUser desired_type,
+                            bool keep_result_in_memory,
                             lldb::ClangExpressionVariableSP *const_result)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -248,7 +249,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     m_desired_type = desired_type;
     
-    m_expr_decl_map.reset(new ClangExpressionDeclMap());
+    m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory));
     
     m_expr_decl_map->WillParse(exe_ctx);
     
@@ -398,7 +399,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
 
 ThreadPlan *
 ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
-                                       ExecutionContext &exe_ctx)
+                                                          ExecutionContext &exe_ctx)
 {
     lldb::addr_t struct_address;
             
@@ -460,6 +461,7 @@ lldb::ExecutionResults
 ClangUserExpression::Execute (Stream &error_stream,
                               ExecutionContext &exe_ctx,
                               bool discard_on_error,
+                              bool keep_in_memory,
                               ClangUserExpression::ClangUserExpressionSP &shared_ptr_to_me,
                               lldb::ClangExpressionVariableSP &result)
 {
@@ -556,6 +558,7 @@ ClangUserExpression::DwarfOpcodeStream ()
 lldb::ExecutionResults
 ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, 
                                bool discard_on_error,
+                               bool keep_in_memory,
                                const char *expr_cstr,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp)
@@ -619,7 +622,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     {
         lldb::ClangExpressionVariableSP expr_result;
 
-        if (const_result.get())
+        if (const_result.get() && !keep_in_memory)
         {
             if (log)
                 log->Printf("== [ClangUserExpression::Evaluate] Expression evaluated as a constant ==");
@@ -635,7 +638,8 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
 
             execution_results = user_expression_sp->Execute (error_stream, 
                                                              exe_ctx, 
-                                                             discard_on_error, 
+                                                             discard_on_error,
+                                                             keep_in_memory,
                                                              user_expression_sp, 
                                                              expr_result);
             

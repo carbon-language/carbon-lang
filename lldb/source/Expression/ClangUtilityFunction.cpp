@@ -99,7 +99,9 @@ ClangUtilityFunction::Install (Stream &error_stream,
     // Parse the expression
     //
     
-    m_expr_decl_map.reset(new ClangExpressionDeclMap());
+    bool keep_result_in_memory = false;
+    
+    m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory));
     
     m_expr_decl_map->WillParse(exe_ctx);
         

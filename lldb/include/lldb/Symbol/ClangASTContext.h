@@ -529,11 +529,25 @@ public:
     CreatePointerType (clang::ASTContext *ast, 
                        lldb::clang_type_t clang_type);
 
+    static lldb::clang_type_t
+    CreateLValueReferenceType (clang::ASTContext *ast_context,
+                               lldb::clang_type_t clang_type);
+    
+    static lldb::clang_type_t
+    CreateRValueReferenceType (clang::ASTContext *ast_context,
+                               lldb::clang_type_t clang_type);
+    
     lldb::clang_type_t
-    CreateLValueReferenceType (lldb::clang_type_t clang_type);
+    CreateLValueReferenceType (lldb::clang_type_t clang_type)
+    {
+        return ClangASTContext::CreateLValueReferenceType(getASTContext(), clang_type);
+    }
 
     lldb::clang_type_t
-    CreateRValueReferenceType (lldb::clang_type_t clang_type);
+    CreateRValueReferenceType (lldb::clang_type_t clang_type)
+    {
+        return ClangASTContext::CreateRValueReferenceType(getASTContext(), clang_type);
+    }
 
     lldb::clang_type_t
     CreateMemberPointerType (lldb::clang_type_t  clang_pointee_type,
