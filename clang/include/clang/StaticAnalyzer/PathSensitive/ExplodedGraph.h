@@ -47,6 +47,9 @@ class ExplodedGraph;
 // on top of these classes.
 //===----------------------------------------------------------------------===//
 
+// ExplodedNode is not constified all over the engine because we need to add
+// successors to it at any time after creating it.
+
 class ExplodedNode : public llvm::FoldingSetNode {
   friend class ExplodedGraph;
   friend class CoreEngine;
