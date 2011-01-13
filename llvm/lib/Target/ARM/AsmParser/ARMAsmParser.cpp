@@ -24,6 +24,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
@@ -495,9 +496,19 @@ int ARMAsmParser::TryParseRegister() {
 
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
-  unsigned RegNum = MatchRegisterName(Tok.getString());
-  if (RegNum == 0)
-    return -1;
+  std::string upperCase = Tok.getString().str();
+  std::string lowerCase = LowercaseString(upperCase);
+  unsigned RegNum = MatchRegisterName(lowerCase);
+  if (!RegNum) {
+    RegNum = StringSwitch<unsigned>(lowerCase)
+      .Case("r13", ARM::SP)
+      .Case("r14", ARM::LR)
+      .Case("r15", ARM::PC)
+      .Case("ip", ARM::R12)
+      .Default(0);
+  }
+  if (!RegNum) return -1;
+  
   Parser.Lex(); // Eat identifier token.
   return RegNum;
 }
