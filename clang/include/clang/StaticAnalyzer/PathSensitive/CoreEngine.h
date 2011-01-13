@@ -186,18 +186,19 @@ public:
   }
 
   ExplodedNode* generateNode(const Stmt *S, const GRState *St,
-                             ExplodedNode *Pred, ProgramPoint::Kind K) {
+                             ExplodedNode *Pred, ProgramPoint::Kind K,
+                             const void *tag = 0) {
     HasGeneratedNode = true;
 
     if (PurgingDeadSymbols)
       K = ProgramPoint::PostPurgeDeadSymbolsKind;
 
-    return generateNodeInternal(S, St, Pred, K, Tag);
+    return generateNodeInternal(S, St, Pred, K, tag ? tag : Tag);
   }
 
   ExplodedNode* generateNode(const Stmt *S, const GRState *St,
-                             ExplodedNode *Pred) {
-    return generateNode(S, St, Pred, PointKind);
+                             ExplodedNode *Pred, const void *tag = 0) {
+    return generateNode(S, St, Pred, PointKind, tag);
   }
 
   ExplodedNode *generateNode(const ProgramPoint &PP, const GRState* State,

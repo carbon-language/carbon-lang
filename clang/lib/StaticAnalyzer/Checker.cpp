@@ -27,8 +27,7 @@ CheckerContext::~CheckerContext() {
   if (Dst.size() == size && !B.BuildSinks && !B.HasGeneratedNode) {
     if (ST && ST != B.GetState(Pred)) {
       static int autoTransitionTag = 0;
-      B.Tag = &autoTransitionTag;
-      addTransition(ST);
+      addTransition(ST, &autoTransitionTag);
     }
     else
       Dst.Add(Pred);
