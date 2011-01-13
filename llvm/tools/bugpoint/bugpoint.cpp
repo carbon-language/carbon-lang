@@ -27,6 +27,10 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Valgrind.h"
 #include "llvm/LinkAllVMCore.h"
+
+// Enable this macro to debug bugpoint itself.
+#define DEBUG_BUGPOINT 0
+
 using namespace llvm;
 
 static cl::opt<bool> 
@@ -71,9 +75,11 @@ OverrideTriple("mtriple", cl::desc("Override target triple for module"));
 /// BugpointIsInterrupted - Set to true when the user presses ctrl-c.
 bool llvm::BugpointIsInterrupted = false;
 
+#ifndef DEBUG_BUGPOINT
 static void BugpointInterruptFunction() {
   BugpointIsInterrupted = true;
 }
+#endif
 
 // Hack to capture a pass list.
 namespace {
@@ -91,9 +97,11 @@ namespace {
 }
 
 int main(int argc, char **argv) {
+#ifndef DEBUG_BUGPOINT
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+#endif
   
   // Initialize passes
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
@@ -111,7 +119,9 @@ int main(int argc, char **argv) {
                               "LLVM automatic testcase reducer. See\nhttp://"
                               "llvm.org/cmds/bugpoint.html"
                               " for more information.\n");
+#ifndef DEBUG_BUGPOINT
   sys::SetInterruptFunction(BugpointInterruptFunction);
+#endif
 
   LLVMContext& Context = getGlobalContext();
   // If we have an override, set it and then track the triple we want Modules
@@ -160,7 +170,9 @@ int main(int argc, char **argv) {
 
   // Bugpoint has the ability of generating a plethora of core files, so to
   // avoid filling up the disk, we prevent it
+#ifndef DEBUG_BUGPOINT
   sys::Process::PreventCoreFiles();
+#endif
 
   std::string Error;
   bool Failure = D.run(Error);
