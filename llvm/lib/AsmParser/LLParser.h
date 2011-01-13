@@ -162,10 +162,12 @@ namespace llvm {
       Lex.Lex();
       return true;
     }
-    bool ParseOptionalToken(lltok::Kind T, bool &Present) {
+    bool ParseOptionalToken(lltok::Kind T, bool &Present, LocTy *Loc = 0) {
       if (Lex.getKind() != T) {
         Present = false;
       } else {
+        if (Loc)
+          *Loc = Lex.getLoc();
         Lex.Lex();
         Present = true;
       }

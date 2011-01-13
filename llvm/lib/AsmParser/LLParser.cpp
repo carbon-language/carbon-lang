@@ -694,12 +694,14 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                            unsigned Visibility) {
   unsigned AddrSpace;
   bool ThreadLocal, IsConstant, UnnamedAddr;
+  LocTy UnnamedAddrLoc;
   LocTy TyLoc;
 
   PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseOptionalToken(lltok::kw_thread_local, ThreadLocal) ||
       ParseOptionalAddrSpace(AddrSpace) ||
-      ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr) ||
+      ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
+                         &UnnamedAddrLoc) ||
       ParseGlobalType(IsConstant) ||
       ParseType(Ty, TyLoc))
     return true;
@@ -713,6 +715,9 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
     if (ParseGlobalValue(Ty, Init))
       return true;
   }
+
+  if (!Init && UnnamedAddr)
+    return Error(UnnamedAddrLoc, "only definitions can have unnamed_addr");
 
   if (Ty->isFunctionTy() || Ty->isLabelTy())
     return Error(TyLoc, "invalid type for global variable");
@@ -2669,6 +2674,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
   unsigned Visibility, RetAttrs;
   bool UnnamedAddr;
+  LocTy UnnamedAddrLoc;
   CallingConv::ID CC;
   PATypeHolder RetType(Type::getVoidTy(Context));
   LocTy RetTypeLoc = Lex.getLoc();
@@ -2676,9 +2682,13 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       ParseOptionalVisibility(Visibility) ||
       ParseOptionalCallingConv(CC) ||
       ParseOptionalAttrs(RetAttrs, 1) ||
-      ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr) ||
+      ParseOptionalToken(lltok::kw_unnamed_addr, UnnamedAddr,
+                         &UnnamedAddrLoc) ||
       ParseType(RetType, RetTypeLoc, true /*void allowed*/))
     return true;
+
+  if (!isDefine && UnnamedAddr)
+    return Error(UnnamedAddrLoc, "only definitions can have unnamed_addr");
 
   // Verify that the linkage is ok.
   switch ((GlobalValue::LinkageTypes)Linkage) {

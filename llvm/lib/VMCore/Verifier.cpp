@@ -469,6 +469,8 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
     Assert1(GV.hasExternalLinkage() || GV.hasDLLImportLinkage() ||
             GV.hasExternalWeakLinkage(),
             "invalid linkage type for global declaration", &GV);
+    Assert1(!GV.hasUnnamedAddr(), "only definitions can have unnamed_addr",
+            &GV);
   }
 
   visitGlobalValue(GV);
@@ -725,6 +727,7 @@ void Verifier::visitFunction(Function &F) {
     Assert1(F.hasExternalLinkage() || F.hasDLLImportLinkage() ||
             F.hasExternalWeakLinkage(),
             "invalid linkage type for function declaration", &F);
+    Assert1(!F.hasUnnamedAddr(), "only definitions can have unnamed_addr", &F);
   } else {
     // Verify that this function (which has a body) is not named "llvm.*".  It
     // is not legal to define intrinsics.
