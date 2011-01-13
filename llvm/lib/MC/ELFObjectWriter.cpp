@@ -1480,26 +1480,34 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
       switch (Modifier) {
       default: llvm_unreachable("Unsupported Modifier");
       case MCSymbolRefExpr::VK_None:
-        Type = ELF::R_ARM_BASE_PREL; break;
+        Type = ELF::R_ARM_BASE_PREL;
+        break;
       case MCSymbolRefExpr::VK_ARM_TLSGD:
-        assert(0 && "unimplemented"); break;
+        assert(0 && "unimplemented");
+        break;
       case MCSymbolRefExpr::VK_ARM_GOTTPOFF:
         Type = ELF::R_ARM_TLS_IE32;
-      } break;
+        break;
+      }
+      break;
     case ARM::fixup_arm_branch:
       switch (Modifier) {
       case MCSymbolRefExpr::VK_ARM_PLT:
-        Type = ELF::R_ARM_PLT32; break;
+        Type = ELF::R_ARM_PLT32;
+        break;
       default:
-        Type = ELF::R_ARM_CALL; break;
-      } break;
+        Type = ELF::R_ARM_CALL;
+        break;
+      }
+      break;
     case ARM::fixup_arm_movt_hi16:
     case ARM::fixup_arm_movt_hi16_pcrel:
-      Type = ELF::R_ARM_MOVT_PREL; break;
+      Type = ELF::R_ARM_MOVT_PREL;
+      break;
     case ARM::fixup_arm_movw_lo16:
     case ARM::fixup_arm_movw_lo16_pcrel:
-      Type = ELF::R_ARM_MOVW_PREL_NC; break;
-
+      Type = ELF::R_ARM_MOVW_PREL_NC;
+      break;
     }
   } else {
     switch ((unsigned)Fixup.getKind()) {
@@ -1508,18 +1516,25 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
       switch (Modifier) {
       default: llvm_unreachable("Unsupported Modifier"); break;
       case MCSymbolRefExpr::VK_ARM_GOT:
-        Type = ELF::R_ARM_GOT_BREL; break;
+        Type = ELF::R_ARM_GOT_BREL;
+        break;
       case MCSymbolRefExpr::VK_ARM_TLSGD:
-        Type = ELF::R_ARM_TLS_GD32; break;
+        Type = ELF::R_ARM_TLS_GD32;
+        break;
       case MCSymbolRefExpr::VK_ARM_TPOFF:
-        Type = ELF::R_ARM_TLS_LE32; break;
+        Type = ELF::R_ARM_TLS_LE32;
+        break;
       case MCSymbolRefExpr::VK_ARM_GOTTPOFF:
-        Type = ELF::R_ARM_TLS_IE32; break;
+        Type = ELF::R_ARM_TLS_IE32;
+        break;
       case MCSymbolRefExpr::VK_None:
-        Type = ELF::R_ARM_ABS32; break;
+        Type = ELF::R_ARM_ABS32;
+        break;
       case MCSymbolRefExpr::VK_ARM_GOTOFF:
-        Type = ELF::R_ARM_GOTOFF32; break;
-      } break;
+        Type = ELF::R_ARM_GOTOFF32;
+        break;
+      }
+      break;
     case ARM::fixup_arm_ldst_pcrel_12:
     case ARM::fixup_arm_pcrel_10:
     case ARM::fixup_arm_adr_pcrel_12:
@@ -1527,15 +1542,19 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
     case ARM::fixup_arm_thumb_cb:
     case ARM::fixup_arm_thumb_cp:
     case ARM::fixup_arm_thumb_br:
-      assert(0 && "Unimplemented"); break;
+      assert(0 && "Unimplemented");
+      break;
     case ARM::fixup_arm_branch:
       // FIXME: Differentiate between R_ARM_CALL and
       // R_ARM_JUMP24 (latter used for conditional jumps)
-      Type = ELF::R_ARM_CALL; break;
-    case ARM::fixup_arm_movt_hi16: 
-      Type = ELF::R_ARM_MOVT_ABS; break;
+      Type = ELF::R_ARM_CALL;
+      break;
+    case ARM::fixup_arm_movt_hi16:
+      Type = ELF::R_ARM_MOVT_ABS;
+      break;
     case ARM::fixup_arm_movw_lo16:
-      Type = ELF::R_ARM_MOVW_ABS_NC; break;
+      Type = ELF::R_ARM_MOVW_ABS_NC;
+      break;
     }
   }
 
