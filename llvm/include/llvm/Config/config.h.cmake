@@ -73,7 +73,7 @@
 #cmakedefine HAVE_CIRCO ${HAVE_CIRCO}
 
 /* Define to 1 if you have the `closedir' function. */
-#undef HAVE_CLOSEDIR
+#cmakedefine HAVE_CLOSEDIR ${HAVE_CLOSEDIR}
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #cmakedefine HAVE_CTYPE_H ${HAVE_CTYPE_H}
@@ -137,19 +137,19 @@
 #undef HAVE_FWD_ITERATOR
 
 /* Define to 1 if you have the `getcwd' function. */
-#undef HAVE_GETCWD
+#cmakedefine HAVE_GETCWD ${HAVE_GETCWD}
 
 /* Define to 1 if you have the `getpagesize' function. */
 #cmakedefine HAVE_GETPAGESIZE ${HAVE_GETPAGESIZE}
 
 /* Define to 1 if you have the `getrlimit' function. */
-#undef HAVE_GETRLIMIT
+#cmakedefine HAVE_GETRLIMIT ${HAVE_GETRLIMIT}
 
 /* Define to 1 if you have the `getrusage' function. */
 #cmakedefine HAVE_GETRUSAGE ${HAVE_GETRUSAGE}
 
 /* Define to 1 if you have the `gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
+#cmakedefine HAVE_GETTIMEOFDAY ${HAVE_GETTIMEOFDAY}
 
 /* Does not have <hash_map> */
 #undef HAVE_GLOBAL_HASH_MAP
@@ -243,10 +243,10 @@
 #cmakedefine HAVE_MALLOC_ZONE_STATISTICS ${HAVE_MALLOC_ZONE_STATISTICS}
 
 /* Define to 1 if you have the `memcpy' function. */
-#undef HAVE_MEMCPY
+#cmakedefine HAVE_MEMCPY ${HAVE_MEMCPY}
 
 /* Define to 1 if you have the `memmove' function. */
-#undef HAVE_MEMMOVE
+#cmakedefine HAVE_MEMMOVE ${HAVE_MEMMOVE}
 
 /* Define to 1 if you have the <memory.h> header file. */
 #cmakedefine HAVE_MEMORY_H ${HAVE_MEMORY_H}
@@ -283,7 +283,7 @@
 #cmakedefine HAVE_NEATO ${HAVE_NEATO}
 
 /* Define to 1 if you have the `opendir' function. */
-#undef HAVE_OPENDIR
+#cmakedefine HAVE_OPENDIR ${HAVE_OPENDIR}
 
 /* Define if libtool can extract symbol lists from object files. */
 #undef HAVE_PRELOADED_SYMBOLS
