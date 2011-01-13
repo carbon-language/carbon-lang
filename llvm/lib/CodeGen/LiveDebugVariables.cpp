@@ -591,7 +591,8 @@ findInsertLocation(MachineBasicBlock *MBB, SlotIndex Idx, DebugLoc &DL,
 
   // Don't insert anything after the first terminator.
   MachineBasicBlock::iterator Term = MBB->getFirstTerminator();
-  if (Term != MBB->end() && Idx >= LIS.getInstructionIndex(Term)) {
+  if (Term != MBB->end() && !LIS.isNotInMIMap(Term) &&
+      Idx >= LIS.getInstructionIndex(Term)) {
     DL = Term->getDebugLoc();
     return Term;
   }
