@@ -15,7 +15,7 @@
 #ifndef CLANG_BASIC_ABI_H
 #define CLANG_BASIC_ABI_H
 
-#include <stdint.h>
+#include "llvm/Support/DataTypes.h"
 
 namespace clang {
 
