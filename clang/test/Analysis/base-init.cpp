@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store region -analyzer-inline-call -cfg-add-initializers -verify -analyzer-no-purge-dead %s
+// RUN: %clang_cc1 -analyze -analyzer-check-objc-mem -analyzer-store region -analyzer-inline-call -cfg-add-initializers -verify %s
 
 class A {
   int x;

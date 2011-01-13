@@ -770,6 +770,7 @@ const MemRegion *MemRegion::getBaseRegion() const {
       case MemRegion::ElementRegionKind:
       case MemRegion::FieldRegionKind:
       case MemRegion::ObjCIvarRegionKind:
+      case MemRegion::CXXBaseObjectRegionKind:
         R = cast<SubRegion>(R)->getSuperRegion();
         continue;
       default:
