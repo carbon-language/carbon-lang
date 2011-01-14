@@ -83,7 +83,7 @@ namespace llvm {
       createStandardAliasAnalysisPasses(PM);
       PM->add(createCFGSimplificationPass());
       PM->add(createScalarReplAggregatesPass());
-      PM->add(createInstructionCombiningPass());
+      PM->add(createEarlyCSEPass());
     }
   }
 
