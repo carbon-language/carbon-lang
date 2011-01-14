@@ -53,7 +53,8 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeRegToMemPass(Registry);
   initializeSCCPPass(Registry);
   initializeIPSCCPPass(Registry);
-  initializeSROAPass(Registry);
+  initializeSROA_DFPass(Registry);
+  initializeSROA_SSAUpPass(Registry);
   initializeCFGSimplifyPassPass(Registry);
   initializeSimplifyHalfPowrLibCallsPass(Registry);
   initializeSimplifyLibCallsPass(Registry);

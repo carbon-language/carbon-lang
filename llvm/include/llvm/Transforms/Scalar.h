@@ -73,7 +73,8 @@ FunctionPass *createAggressiveDCEPass();
 // ScalarReplAggregates - Break up alloca's of aggregates into multiple allocas
 // if possible.
 //
-FunctionPass *createScalarReplAggregatesPass(signed Threshold = -1);
+FunctionPass *createScalarReplAggregatesPass(signed Threshold = -1,
+                                             bool UseDomFrontier = true);
 
 //===----------------------------------------------------------------------===//
 //

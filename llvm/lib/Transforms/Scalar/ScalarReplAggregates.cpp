@@ -52,15 +52,10 @@ STATISTIC(NumPromoted,  "Number of allocas promoted");
 STATISTIC(NumConverted, "Number of aggregates converted to scalar");
 STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 
-enum {
-  UsePromoteMemToReg = 1
-};
-
 namespace {
   struct SROA : public FunctionPass {
-    static char ID; // Pass identification, replacement for typeid
-    explicit SROA(signed T = -1) : FunctionPass(ID) {
-      initializeSROAPass(*PassRegistry::getPassRegistry());
+    SROA(int T, bool hasDF, char &ID)
+      : FunctionPass(ID), HasDomFrontiers(hasDF) {
       if (T == -1)
         SRThreshold = 128;
       else
@@ -72,17 +67,8 @@ namespace {
     bool performScalarRepl(Function &F);
     bool performPromotion(Function &F);
 
-    // getAnalysisUsage - This pass does not require any passes, but we know it
-    // will not alter the CFG, so say so.
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      if (UsePromoteMemToReg) {
-        AU.addRequired<DominatorTree>();
-        AU.addRequired<DominanceFrontier>();
-      }
-      AU.setPreservesCFG();
-    }
-
   private:
+    bool HasDomFrontiers;
     TargetData *TD;
 
     /// DeadInsts - Keep track of instructions we have made dead, so that
@@ -142,19 +128,62 @@ namespace {
 
     static MemTransferInst *isOnlyCopiedFromConstantGlobal(AllocaInst *AI);
   };
+  
+  // SROA_DF - SROA that uses DominanceFrontier.
+  struct SROA_DF : public SROA {
+    static char ID;
+  public:
+    SROA_DF(int T = -1) : SROA(T, true, ID) {
+      initializeSROA_DFPass(*PassRegistry::getPassRegistry());
+    }
+    
+    // getAnalysisUsage - This pass does not require any passes, but we know it
+    // will not alter the CFG, so say so.
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<DominatorTree>();
+      AU.addRequired<DominanceFrontier>();
+      AU.setPreservesCFG();
+    }
+  };
+  
+  // SROA_SSAUp - SROA that uses SSAUpdater.
+  struct SROA_SSAUp : public SROA {
+    static char ID;
+  public:
+    SROA_SSAUp(int T = -1) : SROA(T, false, ID) {
+      initializeSROA_SSAUpPass(*PassRegistry::getPassRegistry());
+    }
+    
+    // getAnalysisUsage - This pass does not require any passes, but we know it
+    // will not alter the CFG, so say so.
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+    }
+  };
+  
 }
 
-char SROA::ID = 0;
-INITIALIZE_PASS_BEGIN(SROA, "scalarrepl",
-                "Scalar Replacement of Aggregates", false, false)
+char SROA_DF::ID = 0;
+char SROA_SSAUp::ID = 0;
+
+INITIALIZE_PASS_BEGIN(SROA_DF, "scalarrepl",
+                "Scalar Replacement of Aggregates (DF)", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
-INITIALIZE_PASS_END(SROA, "scalarrepl",
-                "Scalar Replacement of Aggregates", false, false)
+INITIALIZE_PASS_END(SROA_DF, "scalarrepl",
+                "Scalar Replacement of Aggregates (DF)", false, false)
+
+INITIALIZE_PASS_BEGIN(SROA_SSAUp, "scalarrepl-ssa",
+                      "Scalar Replacement of Aggregates (SSAUp)", false, false)
+INITIALIZE_PASS_END(SROA_SSAUp, "scalarrepl-ssa",
+                    "Scalar Replacement of Aggregates (SSAUp)", false, false)
 
 // Public interface to the ScalarReplAggregates pass
-FunctionPass *llvm::createScalarReplAggregatesPass(signed int Threshold) {
-  return new SROA(Threshold);
+FunctionPass *llvm::createScalarReplAggregatesPass(int Threshold,
+                                                   bool UseDomFrontier) {
+  if (UseDomFrontier)
+    return new SROA_DF(Threshold);
+  return new SROA_SSAUp(Threshold);
 }
 
 
@@ -954,7 +983,7 @@ bool SROA::performPromotion(Function &F) {
   std::vector<AllocaInst*> Allocas;
   DominatorTree *DT = 0;
   DominanceFrontier *DF = 0;
-  if (UsePromoteMemToReg) {
+  if (HasDomFrontiers) {
     DT = &getAnalysis<DominatorTree>();
     DF = &getAnalysis<DominanceFrontier>();
   }
@@ -975,7 +1004,7 @@ bool SROA::performPromotion(Function &F) {
 
     if (Allocas.empty()) break;
 
-    if (UsePromoteMemToReg)
+    if (HasDomFrontiers)
       PromoteMemToReg(Allocas, *DT, *DF);
     else {
       SSAUpdater SSA;
