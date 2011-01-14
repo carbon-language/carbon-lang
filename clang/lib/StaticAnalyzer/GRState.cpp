@@ -149,8 +149,8 @@ const GRState *GRState::unbindLoc(Loc LV) const {
   return makeWithStore(NewStore);
 }
 
-const GRState *GRState::EnterStackFrame(const StackFrameContext *frame) const {
-  Store new_store = getStateManager().StoreMgr->EnterStackFrame(this, frame);
+const GRState *GRState::enterStackFrame(const StackFrameContext *frame) const {
+  Store new_store = getStateManager().StoreMgr->enterStackFrame(this, frame);
   return makeWithStore(new_store);
 }
 

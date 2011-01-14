@@ -362,7 +362,7 @@ public: // Part of public interface to class.
                            SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
-  Store EnterStackFrame(const GRState *state, const StackFrameContext *frame);
+  Store enterStackFrame(const GRState *state, const StackFrameContext *frame);
 
   //===------------------------------------------------------------------===//
   // Region "extents".
@@ -1865,7 +1865,7 @@ Store RegionStoreManager::RemoveDeadBindings(Store store,
 }
 
 
-Store RegionStoreManager::EnterStackFrame(const GRState *state,
+Store RegionStoreManager::enterStackFrame(const GRState *state,
                                           const StackFrameContext *frame) {
   FunctionDecl const *FD = cast<FunctionDecl>(frame->getDecl());
   FunctionDecl::param_const_iterator PI = FD->param_begin(), 

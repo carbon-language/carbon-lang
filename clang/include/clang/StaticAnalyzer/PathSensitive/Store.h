@@ -191,9 +191,9 @@ public:
                                   bool invalidateGlobals,
                                   InvalidatedRegions *Regions) = 0;
 
-  /// EnterStackFrame - Let the StoreManager to do something when execution
+  /// enterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.
-  virtual Store EnterStackFrame(const GRState *state,
+  virtual Store enterStackFrame(const GRState *state,
                                 const StackFrameContext *frame);
 
   virtual void print(Store store, llvm::raw_ostream& Out,

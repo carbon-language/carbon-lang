@@ -1481,7 +1481,7 @@ void ExprEngine::processSwitch(SwitchNodeBuilder& builder) {
 }
 
 void ExprEngine::processCallEnter(CallEnterNodeBuilder &B) {
-  const GRState *state = B.getState()->EnterStackFrame(B.getCalleeContext());
+  const GRState *state = B.getState()->enterStackFrame(B.getCalleeContext());
   B.generateNode(state);
 }
 

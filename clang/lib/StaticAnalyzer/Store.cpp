@@ -22,7 +22,7 @@ StoreManager::StoreManager(GRStateManager &stateMgr)
   : svalBuilder(stateMgr.getSValBuilder()), StateMgr(stateMgr),
     MRMgr(svalBuilder.getRegionManager()), Ctx(stateMgr.getContext()) {}
 
-Store StoreManager::EnterStackFrame(const GRState *state,
+Store StoreManager::enterStackFrame(const GRState *state,
                                     const StackFrameContext *frame) {
   return state->getStore();
 }

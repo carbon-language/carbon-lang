@@ -237,9 +237,9 @@ public:
                                    StoreManager::InvalidatedSymbols *IS,
                                    bool invalidateGlobals) const;
 
-  /// EnterStackFrame - Returns the state for entry to the given stack frame,
+  /// enterStackFrame - Returns the state for entry to the given stack frame,
   ///  preserving the current state.
-  const GRState *EnterStackFrame(const StackFrameContext *frame) const;
+  const GRState *enterStackFrame(const StackFrameContext *frame) const;
 
   /// Get the lvalue for a variable reference.
   Loc getLValue(const VarDecl *D, const LocationContext *LC) const;
