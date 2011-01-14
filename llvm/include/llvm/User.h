@@ -37,10 +37,6 @@ struct OperandTraits<User> {
   static inline Use *op_begin(User*);
   static inline Use *op_end(User*);
   static inline unsigned operands(const User*);
-  template <class U>
-  struct Layout {
-    typedef U overlay;
-  };
 };
 
 class User : public Value {

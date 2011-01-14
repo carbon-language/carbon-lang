@@ -38,16 +38,6 @@ struct FixedNumOperandTraits {
   static unsigned operands(const User*) {
     return ARITY;
   }
-  struct prefix {
-    Use Ops[ARITY];
-    prefix(); // DO NOT IMPLEMENT
-  };
-  template <class U>
-  struct Layout {
-    struct overlay : public prefix, public U {
-      overlay(); // DO NOT IMPLEMENT
-    };
-  };
 };
 
 //===----------------------------------------------------------------------===//
