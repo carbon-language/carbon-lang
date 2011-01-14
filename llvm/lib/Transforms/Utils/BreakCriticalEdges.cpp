@@ -283,7 +283,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
          I != E; ++I) {
       BasicBlock *P = *I;
       if (P != NewBB)
-          OtherPreds.push_back(P);
+        OtherPreds.push_back(P);
     }
   }
 
