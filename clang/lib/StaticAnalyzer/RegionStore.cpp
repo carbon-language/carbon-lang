@@ -1868,17 +1868,20 @@ Store RegionStoreManager::RemoveDeadBindings(Store store,
 Store RegionStoreManager::EnterStackFrame(const GRState *state,
                                           const StackFrameContext *frame) {
   FunctionDecl const *FD = cast<FunctionDecl>(frame->getDecl());
-  FunctionDecl::param_const_iterator PI = FD->param_begin();
+  FunctionDecl::param_const_iterator PI = FD->param_begin(), 
+                                     PE = FD->param_end();
   Store store = state->getStore();
 
   if (CallExpr const *CE = dyn_cast<CallExpr>(frame->getCallSite())) {
     CallExpr::const_arg_iterator AI = CE->arg_begin(), AE = CE->arg_end();
 
-    // Copy the arg expression value to the arg variables.
-    for (; AI != AE; ++AI, ++PI) {
+    // Copy the arg expression value to the arg variables.  We check that
+    // PI != PE because the actual number of arguments may be different than
+    // the function declaration.
+    for (; AI != AE && PI != PE; ++AI, ++PI) {
       SVal ArgVal = state->getSVal(*AI);
       store = Bind(store,
-                   svalBuilder.makeLoc(MRMgr.getVarRegion(*PI,frame)), ArgVal);
+                   svalBuilder.makeLoc(MRMgr.getVarRegion(*PI, frame)), ArgVal);
     }
   } else if (const CXXConstructExpr *CE =
                dyn_cast<CXXConstructExpr>(frame->getCallSite())) {
