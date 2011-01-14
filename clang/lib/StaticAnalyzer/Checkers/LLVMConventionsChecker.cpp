@@ -38,15 +38,13 @@ static bool IsLLVMStringRef(QualType T) {
 /// Check whether the declaration is semantically inside the top-level
 /// namespace named by ns.
 static bool InNamespace(const Decl *D, llvm::StringRef NS) {
-  const DeclContext *DC = D->getDeclContext();
   const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D->getDeclContext());
   if (!ND)
     return false;
   const IdentifierInfo *II = ND->getIdentifier();
   if (!II || !II->getName().equals(NS))
     return false;
-  DC = ND->getDeclContext();
-  return isa<TranslationUnitDecl>(DC);
+  return isa<TranslationUnitDecl>(ND->getDeclContext());
 }
 
 static bool IsStdString(QualType T) {
