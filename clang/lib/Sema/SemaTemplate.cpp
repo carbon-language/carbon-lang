@@ -3929,14 +3929,11 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   // Keep these "kind" numbers in sync with the %select statements in the
   // various diagnostics emitted by this routine.
   int EntityKind = 0;
-  bool isTemplateSpecialization = false;
-  if (isa<ClassTemplateDecl>(Specialized)) {
+  if (isa<ClassTemplateDecl>(Specialized))
     EntityKind = IsPartialSpecialization? 1 : 0;
-    isTemplateSpecialization = true;
-  } else if (isa<FunctionTemplateDecl>(Specialized)) {
+  else if (isa<FunctionTemplateDecl>(Specialized))
     EntityKind = 2;
-    isTemplateSpecialization = true;
-  } else if (isa<CXXMethodDecl>(Specialized))
+  else if (isa<CXXMethodDecl>(Specialized))
     EntityKind = 3;
   else if (isa<VarDecl>(Specialized))
     EntityKind = 4;
