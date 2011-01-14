@@ -1135,7 +1135,7 @@ SelectionDAGISel::FinishBasicBlock() {
   // additional DAGs necessary.
   for (unsigned i = 0, e = SDB->SwitchCases.size(); i != e; ++i) {
     // Set the current basic block to the mbb we wish to insert the code into
-    MachineBasicBlock *ThisBB = FuncInfo->MBB = SDB->SwitchCases[i].ThisBB;
+    FuncInfo->MBB = SDB->SwitchCases[i].ThisBB;
     FuncInfo->InsertPt = FuncInfo->MBB->end();
 
     // Determine the unique successors.
@@ -1144,13 +1144,15 @@ SelectionDAGISel::FinishBasicBlock() {
     if (SDB->SwitchCases[i].TrueBB != SDB->SwitchCases[i].FalseBB)
       Succs.push_back(SDB->SwitchCases[i].FalseBB);
 
-    // Emit the code. Note that this could result in ThisBB being split, so
-    // we need to check for updates.
+    // Emit the code. Note that this could result in FuncInfo->MBB being split.
     SDB->visitSwitchCase(SDB->SwitchCases[i], FuncInfo->MBB);
     CurDAG->setRoot(SDB->getRoot());
     SDB->clear();
     CodeGenAndEmitDAG();
-    ThisBB = FuncInfo->MBB;
+
+    // Remember the last block, now that any splitting is done, for use in
+    // populating PHI nodes in successors.
+    MachineBasicBlock *ThisBB = FuncInfo->MBB;
 
     // Handle any PHI nodes in successors of this chunk, as if we were coming
     // from the original BB before switch expansion.  Note that PHI nodes can
