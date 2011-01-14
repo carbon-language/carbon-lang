@@ -2173,7 +2173,6 @@ Process::RunPrivateStateThread ()
     if (log)
         log->Printf ("Process::%s (arg = %p, pid = %i) thread exiting...", __FUNCTION__, this, GetID());
 
-    m_private_state_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;
 }
 
