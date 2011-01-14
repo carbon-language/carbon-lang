@@ -156,9 +156,10 @@ MachineBasicBlock::SkipPHIsAndLabels(MachineBasicBlock::iterator I) {
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   iterator I = end();
-  while (I != begin() && (--I)->getDesc().isTerminator())
+  while (I != begin() && ((--I)->getDesc().isTerminator() || I->isDebugValue()))
     ; /*noop */
-  if (I != end() && !I->getDesc().isTerminator()) ++I;
+  while (I != end() && !I->getDesc().isTerminator())
+    ++I;
   return I;
 }
 

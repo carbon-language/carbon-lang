@@ -339,6 +339,8 @@ void PHIElimination::LowerAtomicPHINode(
 #ifndef NDEBUG
         for (MachineBasicBlock::iterator TI = llvm::next(Term);
              TI != opBlock.end(); ++TI) {
+          if (TI->isDebugValue())
+            continue;
           assert(!TI->readsRegister(SrcReg) &&
                  "Terminator instructions cannot use virtual registers unless"
                  "they are the first terminator in a block!");
@@ -347,9 +349,13 @@ void PHIElimination::LowerAtomicPHINode(
       } else if (reusedIncoming || !IncomingReg) {
         // We may have to rewind a bit if we didn't insert a copy this time.
         KillInst = Term;
-        while (KillInst != opBlock.begin())
-          if ((--KillInst)->readsRegister(SrcReg))
+        while (KillInst != opBlock.begin()) {
+          --KillInst;
+          if (KillInst->isDebugValue())
+            continue;
+          if (KillInst->readsRegister(SrcReg))
             break;
+        }
       } else {
         // We just inserted this copy.
         KillInst = prior(InsertPos);
