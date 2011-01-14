@@ -5274,7 +5274,6 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   
   ClassTemplateSpecializationDecl *Specialization = 0;
 
-  bool ReusedDecl = false;
   bool HasNoEffect = false;
   if (PrevDecl) {
     if (CheckSpecializationInstantiationRedecl(TemplateNameLoc, TSK,
@@ -5296,7 +5295,6 @@ Sema::ActOnExplicitInstantiation(Scope *S,
       Specialization = PrevDecl;
       Specialization->setLocation(TemplateNameLoc);
       PrevDecl = 0;
-      ReusedDecl = true;
     }
   }
 
