@@ -317,7 +317,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
                                                        State);
   if (MappingInfo == 0) {
     MappingInfo = GetDefaultDiagMapping(DiagID);
-    Diag.setDiagnosticMappingInternal(DiagID, MappingInfo, State, false);
+    Diag.setDiagnosticMappingInternal(DiagID, MappingInfo, State, false, false);
   }
 
   switch (MappingInfo & 7) {

@@ -168,18 +168,26 @@ private:
   /// clear, then the low bits are set to the default value, and should be
   /// mapped with -pedantic, -Werror, etc.
   ///
-  /// Contrary to DiagMappings, a new DiagState is created and kept around when
-  /// diagnostic pragmas modify the state so that we know what is the diagnostic
-  /// state at any given source location.
+  /// A new DiagState is created and kept around when diagnostic pragmas modify
+  /// the state so that we know what is the diagnostic state at any given
+  /// source location.
   class DiagState {
-    mutable llvm::DenseMap<unsigned, unsigned> DiagMap;
+    llvm::DenseMap<unsigned, unsigned> DiagMap;
 
   public:
+    typedef llvm::DenseMap<unsigned, unsigned>::const_iterator iterator;
+
     void setMapping(diag::kind Diag, unsigned Map) { DiagMap[Diag] = Map; }
 
     diag::Mapping getMapping(diag::kind Diag) const {
-      return (diag::Mapping)DiagMap[Diag];
+      iterator I = DiagMap.find(Diag);
+      if (I != DiagMap.end())
+        return (diag::Mapping)I->second;
+      return diag::Mapping();
     }
+
+    iterator begin() const { return DiagMap.begin(); }
+    iterator end() const { return DiagMap.end(); }
   };
 
   /// \brief Keeps and automatically disposes all DiagStates that we create.
@@ -525,8 +533,10 @@ private:
   }
 
   void setDiagnosticMappingInternal(unsigned DiagId, unsigned Map,
-                                    DiagState *State, bool isUser) const {
+                                    DiagState *State,
+                                    bool isUser, bool isPragma) const {
     if (isUser) Map |= 8;  // Set the high bit for user mappings.
+    if (isPragma) Map |= 0x10;  // Set the bit for diagnostic pragma mappings.
     State->setMapping((diag::kind)DiagId, Map);
   }
 

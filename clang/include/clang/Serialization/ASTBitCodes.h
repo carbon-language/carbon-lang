@@ -343,8 +343,8 @@ namespace clang {
       /// sets.
       CXX_BASE_SPECIFIER_OFFSETS = 37,
 
-      /// \brief Record code for diagnostic mappings specified by the user.
-      DIAG_USER_MAPPINGS = 38
+      /// \brief Record code for #pragma diagnostic mappings.
+      DIAG_PRAGMA_MAPPINGS = 38
     };
 
     /// \brief Record types used within a source manager block.

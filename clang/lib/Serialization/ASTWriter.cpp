@@ -1507,18 +1507,30 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   }
 }
 
-void ASTWriter::WriteUserDiagnosticMappings(const Diagnostic &Diag) {
+void ASTWriter::WritePragmaDiagnosticMappings(const Diagnostic &Diag) {
   RecordData Record;
-  for (unsigned i = 0; i != diag::DIAG_UPPER_LIMIT; ++i) {
-    diag::Mapping Map = Diag.getDiagnosticMappingInfo(i,Diag.GetCurDiagState());
-    if (Map & 0x8) { // user mapping.
-      Record.push_back(i);
-      Record.push_back(Map & 0x7);
+  for (Diagnostic::DiagStatePointsTy::const_iterator
+         I = Diag.DiagStatePoints.begin(), E = Diag.DiagStatePoints.end();
+         I != E; ++I) {
+    const Diagnostic::DiagStatePoint &point = *I; 
+    if (point.Loc.isInvalid())
+      continue;
+
+    Record.push_back(point.Loc.getRawEncoding());
+    for (Diagnostic::DiagState::iterator
+           I = point.State->begin(), E = point.State->end(); I != E; ++I) {
+      unsigned diag = I->first, map = I->second;
+      if (map & 0x10) { // mapping from a diagnostic pragma.
+        Record.push_back(diag);
+        Record.push_back(map & 0x7);
+      }
     }
+    Record.push_back(-1); // mark the end of the diag/map pairs for this
+                          // location.
   }
 
   if (!Record.empty())
-    Stream.EmitRecord(DIAG_USER_MAPPINGS, Record);
+    Stream.EmitRecord(DIAG_PRAGMA_MAPPINGS, Record);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2483,7 +2495,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteIdentifierTable(PP);
 
   WriteTypeDeclOffsets();
-  WriteUserDiagnosticMappings(Context.getDiagnostics());
+  WritePragmaDiagnosticMappings(Context.getDiagnostics());
 
   // Write the C++ base-specifier set offsets.
   if (!CXXBaseSpecifiersOffsets.empty()) {
@@ -2719,7 +2731,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteTypeDeclOffsets();
   // FIXME: For chained PCH only write the new mappings (we currently
   // write all of them again).
-  WriteUserDiagnosticMappings(Context.getDiagnostics());
+  WritePragmaDiagnosticMappings(Context.getDiagnostics());
 
   /// Build a record containing first declarations from a chained PCH and the
   /// most recent declarations in this AST that they point to.

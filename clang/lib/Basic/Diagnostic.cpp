@@ -147,12 +147,13 @@ void Diagnostic::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
          "Cannot map errors into warnings!");
   assert(!DiagStatePoints.empty());
 
+  bool isPragma = L.isValid();
   FullSourceLoc Loc(L, *SourceMgr);
   FullSourceLoc LastStateChangePos = DiagStatePoints.back().Loc;
 
   // Common case; setting all the diagnostics of a group in one place.
   if (Loc.isInvalid() || Loc == LastStateChangePos) {
-    setDiagnosticMappingInternal(Diag, Map, GetCurDiagState(), true);
+    setDiagnosticMappingInternal(Diag, Map, GetCurDiagState(), true, isPragma);
     return;
   }
 
@@ -165,7 +166,7 @@ void Diagnostic::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
     // the new state became active.
     DiagStates.push_back(*GetCurDiagState());
     PushDiagStatePoint(&DiagStates.back(), Loc);
-    setDiagnosticMappingInternal(Diag, Map, GetCurDiagState(), true);
+    setDiagnosticMappingInternal(Diag, Map, GetCurDiagState(), true, isPragma);
     return;
   }
 
@@ -178,12 +179,12 @@ void Diagnostic::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
   // Update all diagnostic states that are active after the given location.
   for (DiagStatePointsTy::iterator
          I = Pos+1, E = DiagStatePoints.end(); I != E; ++I) {
-    setDiagnosticMappingInternal(Diag, Map, I->State, true);
+    setDiagnosticMappingInternal(Diag, Map, I->State, true, isPragma);
   }
 
   // If the location corresponds to an existing point, just update its state.
   if (Pos->Loc == Loc) {
-    setDiagnosticMappingInternal(Diag, Map, Pos->State, true);
+    setDiagnosticMappingInternal(Diag, Map, Pos->State, true, isPragma);
     return;
   }
 
@@ -192,7 +193,7 @@ void Diagnostic::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
   Pos->Loc.isBeforeInTranslationUnitThan(Loc);
   DiagStates.push_back(*Pos->State);
   DiagState *NewState = &DiagStates.back();
-  setDiagnosticMappingInternal(Diag, Map, NewState, true);
+  setDiagnosticMappingInternal(Diag, Map, NewState, true, isPragma);
   DiagStatePoints.insert(Pos+1, DiagStatePoint(NewState,
                                                FullSourceLoc(Loc, *SourceMgr)));
 }
