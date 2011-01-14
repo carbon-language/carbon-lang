@@ -13,6 +13,7 @@
 
 #include "InstCombine.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Support/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
@@ -20,25 +21,6 @@ using namespace PatternMatch;
 Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
   assert(I.getOperand(1)->getType() == I.getOperand(0)->getType());
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-
-  // shl X, 0 == X and shr X, 0 == X
-  // shl 0, X == 0 and shr 0, X == 0
-  if (Op1 == Constant::getNullValue(Op1->getType()) ||
-      Op0 == Constant::getNullValue(Op0->getType()))
-    return ReplaceInstUsesWith(I, Op0);
-  
-  if (isa<UndefValue>(Op0)) {            
-    if (I.getOpcode() == Instruction::AShr) // undef >>s X -> undef
-      return ReplaceInstUsesWith(I, Op0);
-    else                                    // undef << X -> 0, undef >>u X -> 0
-      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-  }
-  if (isa<UndefValue>(Op1)) {
-    if (I.getOpcode() == Instruction::AShr)  // X >>s undef -> X
-      return ReplaceInstUsesWith(I, Op0);          
-    else                                     // X << undef, X >>u undef -> 0
-      return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
-  }
 
   // See if we can fold away this shift.
   if (SimplifyDemandedInstructionBits(I))
@@ -635,10 +617,15 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
 }
 
 Instruction *InstCombiner::visitShl(BinaryOperator &I) {
+  if (Value *V = SimplifyShlInst(I.getOperand(0), I.getOperand(1), TD))
+    return ReplaceInstUsesWith(I, V);
   return commonShiftTransforms(I);
 }
 
 Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
+  if (Value *V = SimplifyLShrInst(I.getOperand(0), I.getOperand(1), TD))
+    return ReplaceInstUsesWith(I, V);
+
   if (Instruction *R = commonShiftTransforms(I))
     return R;
   
@@ -665,17 +652,14 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
+  if (Value *V = SimplifyAShrInst(I.getOperand(0), I.getOperand(1), TD))
+    return ReplaceInstUsesWith(I, V);
+
   if (Instruction *R = commonShiftTransforms(I))
     return R;
   
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-  
-  if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0)) {
-    // ashr int -1, X = -1   (for any arithmetic shift rights of ~0)
-    if (CSI->isAllOnesValue())
-      return ReplaceInstUsesWith(I, CSI);
-  }
-  
+
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     // If the input is a SHL by the same constant (ashr (shl X, C), C), then we
     // have a sign-extend idiom.

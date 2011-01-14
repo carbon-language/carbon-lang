@@ -977,8 +977,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       return Constant::getNullValue(C1->getType()); // X lshr undef -> 0
                                                     // undef lshr X -> 0
     case Instruction::AShr:
-      if (!isa<UndefValue>(C2))
-        return C1;                                  // undef ashr X --> undef
+      if (!isa<UndefValue>(C2))                     // undef ashr X --> all ones
+        return Constant::getAllOnesValue(C1->getType());
       else if (isa<UndefValue>(C1)) 
         return C1;                                  // undef ashr undef -> undef
       else

@@ -35,15 +35,29 @@ define i32 @test4(i8 %A) {
 
 define i32 @test5(i32 %A) {
 ; CHECK: @test5
-; CHECK: ret i32 0
+; CHECK: ret i32 undef
         %B = lshr i32 %A, 32  ;; shift all bits out 
         ret i32 %B
 }
 
 define i32 @test5a(i32 %A) {
 ; CHECK: @test5a
-; CHECK: ret i32 0
+; CHECK: ret i32 undef
         %B = shl i32 %A, 32     ;; shift all bits out 
+        ret i32 %B
+}
+
+define i32 @test5b() {
+; CHECK: @test5b
+; CHECK: ret i32 -1
+        %B = ashr i32 undef, 2  ;; top two bits must be equal, so not undef
+        ret i32 %B
+}
+
+define i32 @test5b2(i32 %A) {
+; CHECK: @test5b2
+; CHECK: ret i32 -1
+        %B = ashr i32 undef, %A  ;; top %A bits must be equal, so not undef
         ret i32 %B
 }
 
