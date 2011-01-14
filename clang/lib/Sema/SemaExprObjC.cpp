@@ -684,7 +684,6 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
       Diag(NameLoc, diag::err_unknown_receiver_suggest)
         << Name << Corrected
         << FixItHint::CreateReplacement(SourceRange(NameLoc), "super");
-      Name = Corrected.getAsIdentifierInfo();
       return ObjCSuperMessage;
     }
   }
