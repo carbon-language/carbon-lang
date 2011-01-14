@@ -890,10 +890,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           if (Inst != Begin)
             BeforeInst = llvm::prior(llvm::prior(BI));
           if (BeforeInst && isa<LoadInst>(BeforeInst) &&
-              BeforeInst->hasOneUse() && *BeforeInst->use_begin() == Inst &&
-              TryToFoldFastISelLoad(cast<LoadInst>(BeforeInst), FastIS)) {
-            // If we succeeded, don't re-select the load.
-            --BI;
+              BeforeInst->hasOneUse() && *BeforeInst->use_begin() == Inst) {
+            FastIS->recomputeInsertPt();
+            if (TryToFoldFastISelLoad(cast<LoadInst>(BeforeInst), FastIS))
+              --BI; // If we succeeded, don't re-select the load.
           }
           continue;
         }
