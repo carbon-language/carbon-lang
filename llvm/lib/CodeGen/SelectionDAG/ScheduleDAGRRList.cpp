@@ -137,6 +137,8 @@ public:
 
   void Schedule();
 
+  ScheduleHazardRecognizer *getHazardRec() { return HazardRec; }
+
   /// IsReachable - Checks if SU is reachable from TargetSU.
   bool IsReachable(const SUnit *SU, const SUnit *TargetSU) {
     return Topo.IsReachable(SU, TargetSU);
@@ -1246,101 +1248,286 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
 
 
 //===----------------------------------------------------------------------===//
-//                RegReductionPriorityQueue Implementation
+//                RegReductionPriorityQueue Definition
 //===----------------------------------------------------------------------===//
 //
 // This is a SchedulingPriorityQueue that schedules using Sethi Ullman numbers
 // to reduce register pressure.
 //
 namespace {
-  template<class SF>
-  class RegReductionPriorityQueue;
+class RegReductionPQBase;
 
-  struct queue_sort : public std::binary_function<SUnit*, SUnit*, bool> {
-    bool isReady(SUnit* SU, unsigned CurCycle) const { return true; }
+struct queue_sort : public std::binary_function<SUnit*, SUnit*, bool> {
+  bool isReady(SUnit* SU, unsigned CurCycle) const { return true; }
+};
+
+/// bu_ls_rr_sort - Priority function for bottom up register pressure
+// reduction scheduler.
+struct bu_ls_rr_sort : public queue_sort {
+  enum {
+    IsBottomUp = true,
+    HasReadyFilter = false
   };
 
-  /// bu_ls_rr_sort - Priority function for bottom up register pressure
-  // reduction scheduler.
-  struct bu_ls_rr_sort : public queue_sort {
-    enum {
-      IsBottomUp = true,
-      HasReadyFilter = false
-    };
+  RegReductionPQBase *SPQ;
+  bu_ls_rr_sort(RegReductionPQBase *spq) : SPQ(spq) {}
+  bu_ls_rr_sort(const bu_ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
 
-    RegReductionPriorityQueue<bu_ls_rr_sort> *SPQ;
-    bu_ls_rr_sort(RegReductionPriorityQueue<bu_ls_rr_sort> *spq) : SPQ(spq) {}
-    bu_ls_rr_sort(const bu_ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
+  bool operator()(SUnit* left, SUnit* right) const;
+};
 
-    bool operator()(const SUnit* left, const SUnit* right) const;
+// td_ls_rr_sort - Priority function for top down register pressure reduction
+// scheduler.
+struct td_ls_rr_sort : public queue_sort {
+  enum {
+    IsBottomUp = false,
+    HasReadyFilter = false
   };
 
-  // td_ls_rr_sort - Priority function for top down register pressure reduction
-  // scheduler.
-  struct td_ls_rr_sort : public queue_sort {
-    enum {
-      IsBottomUp = false,
-      HasReadyFilter = false
-    };
+  RegReductionPQBase *SPQ;
+  td_ls_rr_sort(RegReductionPQBase *spq) : SPQ(spq) {}
+  td_ls_rr_sort(const td_ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
 
-      RegReductionPriorityQueue<td_ls_rr_sort> *SPQ;
-    td_ls_rr_sort(RegReductionPriorityQueue<td_ls_rr_sort> *spq) : SPQ(spq) {}
-    td_ls_rr_sort(const td_ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
+  bool operator()(const SUnit* left, const SUnit* right) const;
+};
 
-    bool operator()(const SUnit* left, const SUnit* right) const;
+// src_ls_rr_sort - Priority function for source order scheduler.
+struct src_ls_rr_sort : public queue_sort {
+  enum {
+    IsBottomUp = true,
+    HasReadyFilter = false
   };
 
-  // src_ls_rr_sort - Priority function for source order scheduler.
-  struct src_ls_rr_sort : public queue_sort {
-    enum {
-      IsBottomUp = true,
-      HasReadyFilter = false
-    };
+  RegReductionPQBase *SPQ;
+  src_ls_rr_sort(RegReductionPQBase *spq)
+    : SPQ(spq) {}
+  src_ls_rr_sort(const src_ls_rr_sort &RHS)
+    : SPQ(RHS.SPQ) {}
 
-    RegReductionPriorityQueue<src_ls_rr_sort> *SPQ;
-    src_ls_rr_sort(RegReductionPriorityQueue<src_ls_rr_sort> *spq)
-      : SPQ(spq) {}
-    src_ls_rr_sort(const src_ls_rr_sort &RHS)
-      : SPQ(RHS.SPQ) {}
+  bool operator()(SUnit* left, SUnit* right) const;
+};
 
-    bool operator()(const SUnit* left, const SUnit* right) const;
+// hybrid_ls_rr_sort - Priority function for hybrid scheduler.
+struct hybrid_ls_rr_sort : public queue_sort {
+  enum {
+    IsBottomUp = true,
+    HasReadyFilter = true
   };
 
-  // hybrid_ls_rr_sort - Priority function for hybrid scheduler.
-  struct hybrid_ls_rr_sort : public queue_sort {
-    enum {
-      IsBottomUp = true,
-      HasReadyFilter = false
-    };
+  RegReductionPQBase *SPQ;
+  hybrid_ls_rr_sort(RegReductionPQBase *spq)
+    : SPQ(spq) {}
+  hybrid_ls_rr_sort(const hybrid_ls_rr_sort &RHS)
+    : SPQ(RHS.SPQ) {}
 
-    RegReductionPriorityQueue<hybrid_ls_rr_sort> *SPQ;
-    hybrid_ls_rr_sort(RegReductionPriorityQueue<hybrid_ls_rr_sort> *spq)
-      : SPQ(spq) {}
-    hybrid_ls_rr_sort(const hybrid_ls_rr_sort &RHS)
-      : SPQ(RHS.SPQ) {}
+  bool isReady(SUnit *SU, unsigned CurCycle) const;
 
-    bool operator()(const SUnit* left, const SUnit* right) const;
+  bool operator()(SUnit* left, SUnit* right) const;
+};
+
+// ilp_ls_rr_sort - Priority function for ILP (instruction level parallelism)
+// scheduler.
+struct ilp_ls_rr_sort : public queue_sort {
+  enum {
+    IsBottomUp = true,
+    HasReadyFilter = true
   };
 
-  // ilp_ls_rr_sort - Priority function for ILP (instruction level parallelism)
-  // scheduler.
-  struct ilp_ls_rr_sort : public queue_sort {
-    enum {
-      IsBottomUp = true,
-      HasReadyFilter = true
-    };
+  RegReductionPQBase *SPQ;
+  ilp_ls_rr_sort(RegReductionPQBase *spq)
+    : SPQ(spq) {}
+  ilp_ls_rr_sort(const ilp_ls_rr_sort &RHS)
+    : SPQ(RHS.SPQ) {}
 
-    RegReductionPriorityQueue<ilp_ls_rr_sort> *SPQ;
-    ilp_ls_rr_sort(RegReductionPriorityQueue<ilp_ls_rr_sort> *spq)
-      : SPQ(spq) {}
-    ilp_ls_rr_sort(const ilp_ls_rr_sort &RHS)
-      : SPQ(RHS.SPQ) {}
+  bool isReady(SUnit *SU, unsigned CurCycle) const;
 
-    bool isReady(SUnit *SU, unsigned CurCycle) const;
+  bool operator()(SUnit* left, SUnit* right) const;
+};
 
-    bool operator()(const SUnit* left, const SUnit* right) const;
-  };
-}  // end anonymous namespace
+class RegReductionPQBase : public SchedulingPriorityQueue {
+protected:
+  std::vector<SUnit*> Queue;
+  unsigned CurQueueId;
+  bool TracksRegPressure;
+
+  // SUnits - The SUnits for the current graph.
+  std::vector<SUnit> *SUnits;
+
+  MachineFunction &MF;
+  const TargetInstrInfo *TII;
+  const TargetRegisterInfo *TRI;
+  const TargetLowering *TLI;
+  ScheduleDAGRRList *scheduleDAG;
+
+  // SethiUllmanNumbers - The SethiUllman number for each node.
+  std::vector<unsigned> SethiUllmanNumbers;
+
+  /// RegPressure - Tracking current reg pressure per register class.
+  ///
+  std::vector<unsigned> RegPressure;
+
+  /// RegLimit - Tracking the number of allocatable registers per register
+  /// class.
+  std::vector<unsigned> RegLimit;
+
+public:
+  RegReductionPQBase(MachineFunction &mf,
+                     bool hasReadyFilter,
+                     bool tracksrp,
+                     const TargetInstrInfo *tii,
+                     const TargetRegisterInfo *tri,
+                     const TargetLowering *tli)
+    : SchedulingPriorityQueue(hasReadyFilter),
+      CurQueueId(0), TracksRegPressure(tracksrp),
+      MF(mf), TII(tii), TRI(tri), TLI(tli), scheduleDAG(NULL) {
+    if (TracksRegPressure) {
+      unsigned NumRC = TRI->getNumRegClasses();
+      RegLimit.resize(NumRC);
+      RegPressure.resize(NumRC);
+      std::fill(RegLimit.begin(), RegLimit.end(), 0);
+      std::fill(RegPressure.begin(), RegPressure.end(), 0);
+      for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
+             E = TRI->regclass_end(); I != E; ++I)
+        RegLimit[(*I)->getID()] = tli->getRegPressureLimit(*I, MF);
+    }
+  }
+
+  void setScheduleDAG(ScheduleDAGRRList *scheduleDag) {
+    scheduleDAG = scheduleDag;
+  }
+
+  ScheduleHazardRecognizer* getHazardRec() {
+    return scheduleDAG->getHazardRec();
+  }
+
+  void initNodes(std::vector<SUnit> &sunits);
+
+  void addNode(const SUnit *SU);
+
+  void updateNode(const SUnit *SU);
+
+  void releaseState() {
+    SUnits = 0;
+    SethiUllmanNumbers.clear();
+    std::fill(RegPressure.begin(), RegPressure.end(), 0);
+  }
+
+  unsigned getNodePriority(const SUnit *SU) const;
+
+  unsigned getNodeOrdering(const SUnit *SU) const {
+    return scheduleDAG->DAG->GetOrdering(SU->getNode());
+  }
+
+  bool empty() const { return Queue.empty(); }
+
+  void push(SUnit *U) {
+    assert(!U->NodeQueueId && "Node in the queue already");
+    U->NodeQueueId = ++CurQueueId;
+    Queue.push_back(U);
+  }
+
+  void remove(SUnit *SU) {
+    assert(!Queue.empty() && "Queue is empty!");
+    assert(SU->NodeQueueId != 0 && "Not in queue!");
+    std::vector<SUnit *>::iterator I = std::find(Queue.begin(), Queue.end(),
+                                                 SU);
+    if (I != prior(Queue.end()))
+      std::swap(*I, Queue.back());
+    Queue.pop_back();
+    SU->NodeQueueId = 0;
+  }
+
+  void dumpRegPressure() const;
+
+  bool HighRegPressure(const SUnit *SU) const;
+
+  bool MayReduceRegPressure(SUnit *SU);
+
+  void ScheduledNode(SUnit *SU);
+
+  void UnscheduledNode(SUnit *SU);
+
+protected:
+  bool canClobber(const SUnit *SU, const SUnit *Op);
+  void AddPseudoTwoAddrDeps();
+  void PrescheduleNodesWithMultipleUses();
+  void CalculateSethiUllmanNumbers();
+};
+
+template<class SF>
+class RegReductionPriorityQueue : public RegReductionPQBase {
+  static SUnit *popFromQueue(std::vector<SUnit*> &Q, SF &Picker) {
+    std::vector<SUnit *>::iterator Best = Q.begin();
+    for (std::vector<SUnit *>::iterator I = llvm::next(Q.begin()),
+           E = Q.end(); I != E; ++I)
+      if (Picker(*Best, *I))
+        Best = I;
+    SUnit *V = *Best;
+    if (Best != prior(Q.end()))
+      std::swap(*Best, Q.back());
+    Q.pop_back();
+    return V;
+  }
+
+  SF Picker;
+
+public:
+  RegReductionPriorityQueue(MachineFunction &mf,
+                            bool tracksrp,
+                            const TargetInstrInfo *tii,
+                            const TargetRegisterInfo *tri,
+                            const TargetLowering *tli)
+    : RegReductionPQBase(mf, SF::HasReadyFilter, tracksrp, tii, tri, tli),
+      Picker(this) {}
+
+  bool isBottomUp() const { return SF::IsBottomUp; }
+
+  bool isReady(SUnit *U) const {
+    return Picker.HasReadyFilter && Picker.isReady(U, getCurCycle());
+  }
+
+  SUnit *pop() {
+    if (Queue.empty()) return NULL;
+
+    SUnit *V = popFromQueue(Queue, Picker);
+    V->NodeQueueId = 0;
+    return V;
+  }
+
+  void dump(ScheduleDAG *DAG) const {
+    // Emulate pop() without clobbering NodeQueueIds.
+    std::vector<SUnit*> DumpQueue = Queue;
+    SF DumpPicker = Picker;
+    while (!DumpQueue.empty()) {
+      SUnit *SU = popFromQueue(DumpQueue, DumpPicker);
+      if (isBottomUp())
+        dbgs() << "Height " << SU->getHeight() << ": ";
+      else
+        dbgs() << "Depth " << SU->getDepth() << ": ";
+      SU->dump(DAG);
+    }
+  }
+};
+
+typedef RegReductionPriorityQueue<bu_ls_rr_sort>
+BURegReductionPriorityQueue;
+
+typedef RegReductionPriorityQueue<td_ls_rr_sort>
+TDRegReductionPriorityQueue;
+
+typedef RegReductionPriorityQueue<src_ls_rr_sort>
+SrcRegReductionPriorityQueue;
+
+typedef RegReductionPriorityQueue<hybrid_ls_rr_sort>
+HybridBURRPriorityQueue;
+
+typedef RegReductionPriorityQueue<ilp_ls_rr_sort>
+ILPBURRPriorityQueue;
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+//           Static Node Priority for Register Pressure Reduction
+//===----------------------------------------------------------------------===//
 
 /// CalcNodeSethiUllmanNumber - Compute Sethi Ullman number.
 /// Smaller number is the higher priority.
@@ -1371,435 +1558,323 @@ CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
   return SethiUllmanNumber;
 }
 
-namespace {
-  template<class SF>
-  class RegReductionPriorityQueue : public SchedulingPriorityQueue {
-    static SUnit *popFromQueue(std::vector<SUnit*> &Q, SF &Picker) {
-      std::vector<SUnit *>::iterator Best = Q.begin();
-      for (std::vector<SUnit *>::iterator I = llvm::next(Q.begin()),
-             E = Q.end(); I != E; ++I)
-        if (Picker(*Best, *I))
-          Best = I;
-      SUnit *V = *Best;
-      if (Best != prior(Q.end()))
-        std::swap(*Best, Q.back());
-      Q.pop_back();
-      return V;
-    }
+/// CalculateSethiUllmanNumbers - Calculate Sethi-Ullman numbers of all
+/// scheduling units.
+void RegReductionPQBase::CalculateSethiUllmanNumbers() {
+  SethiUllmanNumbers.assign(SUnits->size(), 0);
 
-    std::vector<SUnit*> Queue;
-    SF Picker;
-    unsigned CurQueueId;
-    bool TracksRegPressure;
-
-  protected:
-    // SUnits - The SUnits for the current graph.
-    std::vector<SUnit> *SUnits;
-
-    MachineFunction &MF;
-    const TargetInstrInfo *TII;
-    const TargetRegisterInfo *TRI;
-    const TargetLowering *TLI;
-    ScheduleDAGRRList *scheduleDAG;
-
-    // SethiUllmanNumbers - The SethiUllman number for each node.
-    std::vector<unsigned> SethiUllmanNumbers;
-
-    /// RegPressure - Tracking current reg pressure per register class.
-    ///
-    std::vector<unsigned> RegPressure;
-
-    /// RegLimit - Tracking the number of allocatable registers per register
-    /// class.
-    std::vector<unsigned> RegLimit;
-
-  public:
-    RegReductionPriorityQueue(MachineFunction &mf,
-                              bool tracksrp,
-                              const TargetInstrInfo *tii,
-                              const TargetRegisterInfo *tri,
-                              const TargetLowering *tli)
-      : SchedulingPriorityQueue(SF::HasReadyFilter), Picker(this),
-        CurQueueId(0), TracksRegPressure(tracksrp),
-        MF(mf), TII(tii), TRI(tri), TLI(tli), scheduleDAG(NULL) {
-      if (TracksRegPressure) {
-        unsigned NumRC = TRI->getNumRegClasses();
-        RegLimit.resize(NumRC);
-        RegPressure.resize(NumRC);
-        std::fill(RegLimit.begin(), RegLimit.end(), 0);
-        std::fill(RegPressure.begin(), RegPressure.end(), 0);
-        for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
-               E = TRI->regclass_end(); I != E; ++I)
-          RegLimit[(*I)->getID()] = tli->getRegPressureLimit(*I, MF);
-      }
-    }
-
-    bool isBottomUp() const { return SF::IsBottomUp; }
-
-    void initNodes(std::vector<SUnit> &sunits) {
-      SUnits = &sunits;
-      // Add pseudo dependency edges for two-address nodes.
-      AddPseudoTwoAddrDeps();
-      // Reroute edges to nodes with multiple uses.
-      PrescheduleNodesWithMultipleUses();
-      // Calculate node priorities.
-      CalculateSethiUllmanNumbers();
-    }
-
-    void addNode(const SUnit *SU) {
-      unsigned SUSize = SethiUllmanNumbers.size();
-      if (SUnits->size() > SUSize)
-        SethiUllmanNumbers.resize(SUSize*2, 0);
-      CalcNodeSethiUllmanNumber(SU, SethiUllmanNumbers);
-    }
-
-    void updateNode(const SUnit *SU) {
-      SethiUllmanNumbers[SU->NodeNum] = 0;
-      CalcNodeSethiUllmanNumber(SU, SethiUllmanNumbers);
-    }
-
-    void releaseState() {
-      SUnits = 0;
-      SethiUllmanNumbers.clear();
-      std::fill(RegPressure.begin(), RegPressure.end(), 0);
-    }
-
-    unsigned getNodePriority(const SUnit *SU) const {
-      assert(SU->NodeNum < SethiUllmanNumbers.size());
-      unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
-      if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
-        // CopyToReg should be close to its uses to facilitate coalescing and
-        // avoid spilling.
-        return 0;
-      if (Opc == TargetOpcode::EXTRACT_SUBREG ||
-          Opc == TargetOpcode::SUBREG_TO_REG ||
-          Opc == TargetOpcode::INSERT_SUBREG)
-        // EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG nodes should be
-        // close to their uses to facilitate coalescing.
-        return 0;
-      if (SU->NumSuccs == 0 && SU->NumPreds != 0)
-        // If SU does not have a register use, i.e. it doesn't produce a value
-        // that would be consumed (e.g. store), then it terminates a chain of
-        // computation.  Give it a large SethiUllman number so it will be
-        // scheduled right before its predecessors that it doesn't lengthen
-        // their live ranges.
-        return 0xffff;
-      if (SU->NumPreds == 0 && SU->NumSuccs != 0)
-        // If SU does not have a register def, schedule it close to its uses
-        // because it does not lengthen any live ranges.
-        return 0;
-      return SethiUllmanNumbers[SU->NodeNum];
-    }
-
-    unsigned getNodeOrdering(const SUnit *SU) const {
-      return scheduleDAG->DAG->GetOrdering(SU->getNode());
-    }
-
-    bool empty() const { return Queue.empty(); }
-
-    bool isReady(SUnit *U) const {
-      return Picker.HasReadyFilter && Picker.isReady(U, getCurCycle());
-    }
-
-    void push(SUnit *U) {
-      assert(!U->NodeQueueId && "Node in the queue already");
-      U->NodeQueueId = ++CurQueueId;
-      Queue.push_back(U);
-    }
-
-    SUnit *pop() {
-      if (Queue.empty()) return NULL;
-
-      SUnit *V = popFromQueue(Queue, Picker);
-      V->NodeQueueId = 0;
-      return V;
-    }
-
-    void remove(SUnit *SU) {
-      assert(!Queue.empty() && "Queue is empty!");
-      assert(SU->NodeQueueId != 0 && "Not in queue!");
-      std::vector<SUnit *>::iterator I = std::find(Queue.begin(), Queue.end(),
-                                                   SU);
-      if (I != prior(Queue.end()))
-        std::swap(*I, Queue.back());
-      Queue.pop_back();
-      SU->NodeQueueId = 0;
-    }
-
-    bool HighRegPressure(const SUnit *SU) const {
-      if (!TLI)
-        return false;
-
-      for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
-           I != E; ++I) {
-        if (I->isCtrl())
-          continue;
-        SUnit *PredSU = I->getSUnit();
-        const SDNode *PN = PredSU->getNode();
-        if (!PN->isMachineOpcode()) {
-          if (PN->getOpcode() == ISD::CopyFromReg) {
-            EVT VT = PN->getValueType(0);
-            unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-            unsigned Cost = TLI->getRepRegClassCostFor(VT);
-            if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
-              return true;
-          }
-          continue;
-        }
-        unsigned POpc = PN->getMachineOpcode();
-        if (POpc == TargetOpcode::IMPLICIT_DEF)
-          continue;
-        if (POpc == TargetOpcode::EXTRACT_SUBREG) {
-          EVT VT = PN->getOperand(0).getValueType();
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          unsigned Cost = TLI->getRepRegClassCostFor(VT);
-          // Check if this increases register pressure of the specific register
-          // class to the point where it would cause spills.
-          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
-            return true;
-          continue;
-        } else if (POpc == TargetOpcode::INSERT_SUBREG ||
-                   POpc == TargetOpcode::SUBREG_TO_REG) {
-          EVT VT = PN->getValueType(0);
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          unsigned Cost = TLI->getRepRegClassCostFor(VT);
-          // Check if this increases register pressure of the specific register
-          // class to the point where it would cause spills.
-          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
-            return true;
-          continue;
-        }
-        unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
-        for (unsigned i = 0; i != NumDefs; ++i) {
-          EVT VT = PN->getValueType(i);
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          if (RegPressure[RCId] >= RegLimit[RCId])
-            return true; // Reg pressure already high.
-          unsigned Cost = TLI->getRepRegClassCostFor(VT);
-          if (!PN->hasAnyUseOfValue(i))
-            continue;
-          // Check if this increases register pressure of the specific register
-          // class to the point where it would cause spills.
-          if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
-            return true;
-        }
-      }
-
-      return false;
-    }
-
-    void ScheduledNode(SUnit *SU) {
-      if (!TracksRegPressure)
-        return;
-
-      const SDNode *N = SU->getNode();
-      if (!N->isMachineOpcode()) {
-        if (N->getOpcode() != ISD::CopyToReg)
-          return;
-      } else {
-        unsigned Opc = N->getMachineOpcode();
-        if (Opc == TargetOpcode::EXTRACT_SUBREG ||
-            Opc == TargetOpcode::INSERT_SUBREG ||
-            Opc == TargetOpcode::SUBREG_TO_REG ||
-            Opc == TargetOpcode::REG_SEQUENCE ||
-            Opc == TargetOpcode::IMPLICIT_DEF)
-          return;
-      }
-
-      for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-           I != E; ++I) {
-        if (I->isCtrl())
-          continue;
-        SUnit *PredSU = I->getSUnit();
-        if (PredSU->NumSuccsLeft != PredSU->NumSuccs)
-          continue;
-        const SDNode *PN = PredSU->getNode();
-        if (!PN->isMachineOpcode()) {
-          if (PN->getOpcode() == ISD::CopyFromReg) {
-            EVT VT = PN->getValueType(0);
-            unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-            RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-          }
-          continue;
-        }
-        unsigned POpc = PN->getMachineOpcode();
-        if (POpc == TargetOpcode::IMPLICIT_DEF)
-          continue;
-        if (POpc == TargetOpcode::EXTRACT_SUBREG) {
-          EVT VT = PN->getOperand(0).getValueType();
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-          continue;
-        } else if (POpc == TargetOpcode::INSERT_SUBREG ||
-                   POpc == TargetOpcode::SUBREG_TO_REG) {
-          EVT VT = PN->getValueType(0);
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-          continue;
-        }
-        unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
-        for (unsigned i = 0; i != NumDefs; ++i) {
-          EVT VT = PN->getValueType(i);
-          if (!PN->hasAnyUseOfValue(i))
-            continue;
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-        }
-      }
-
-      // Check for isMachineOpcode() as PrescheduleNodesWithMultipleUses()
-      // may transfer data dependencies to CopyToReg.
-      if (SU->NumSuccs && N->isMachineOpcode()) {
-        unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
-        for (unsigned i = 0; i != NumDefs; ++i) {
-          EVT VT = N->getValueType(i);
-          if (!N->hasAnyUseOfValue(i))
-            continue;
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT))
-            // Register pressure tracking is imprecise. This can happen.
-            RegPressure[RCId] = 0;
-          else
-            RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
-        }
-      }
-
-      dumpRegPressure();
-    }
-
-    void UnscheduledNode(SUnit *SU) {
-      if (!TracksRegPressure)
-        return;
-
-      const SDNode *N = SU->getNode();
-      if (!N->isMachineOpcode()) {
-        if (N->getOpcode() != ISD::CopyToReg)
-          return;
-      } else {
-        unsigned Opc = N->getMachineOpcode();
-        if (Opc == TargetOpcode::EXTRACT_SUBREG ||
-            Opc == TargetOpcode::INSERT_SUBREG ||
-            Opc == TargetOpcode::SUBREG_TO_REG ||
-            Opc == TargetOpcode::REG_SEQUENCE ||
-            Opc == TargetOpcode::IMPLICIT_DEF)
-          return;
-      }
-
-      for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-           I != E; ++I) {
-        if (I->isCtrl())
-          continue;
-        SUnit *PredSU = I->getSUnit();
-        if (PredSU->NumSuccsLeft != PredSU->NumSuccs)
-          continue;
-        const SDNode *PN = PredSU->getNode();
-        if (!PN->isMachineOpcode()) {
-          if (PN->getOpcode() == ISD::CopyFromReg) {
-            EVT VT = PN->getValueType(0);
-            unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-            RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-          }
-          continue;
-        }
-        unsigned POpc = PN->getMachineOpcode();
-        if (POpc == TargetOpcode::IMPLICIT_DEF)
-          continue;
-        if (POpc == TargetOpcode::EXTRACT_SUBREG) {
-          EVT VT = PN->getOperand(0).getValueType();
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-          continue;
-        } else if (POpc == TargetOpcode::INSERT_SUBREG ||
-                   POpc == TargetOpcode::SUBREG_TO_REG) {
-          EVT VT = PN->getValueType(0);
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-          continue;
-        }
-        unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
-        for (unsigned i = 0; i != NumDefs; ++i) {
-          EVT VT = PN->getValueType(i);
-          if (!PN->hasAnyUseOfValue(i))
-            continue;
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT))
-            // Register pressure tracking is imprecise. This can happen.
-            RegPressure[RCId] = 0;
-          else
-            RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
-        }
-      }
-
-      // Check for isMachineOpcode() as PrescheduleNodesWithMultipleUses()
-      // may transfer data dependencies to CopyToReg.
-      if (SU->NumSuccs && N->isMachineOpcode()) {
-        unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
-        for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
-          EVT VT = N->getValueType(i);
-          if (VT == MVT::Glue || VT == MVT::Other)
-            continue;
-          if (!N->hasAnyUseOfValue(i))
-            continue;
-          unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-          RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-        }
-      }
-
-      dumpRegPressure();
-    }
-
-    void setScheduleDAG(ScheduleDAGRRList *scheduleDag) {
-      scheduleDAG = scheduleDag;
-    }
-
-    void dumpRegPressure() const {
-      for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
-             E = TRI->regclass_end(); I != E; ++I) {
-        const TargetRegisterClass *RC = *I;
-        unsigned Id = RC->getID();
-        unsigned RP = RegPressure[Id];
-        if (!RP) continue;
-        DEBUG(dbgs() << RC->getName() << ": " << RP << " / " << RegLimit[Id]
-              << '\n');
-      }
-    }
-
-    void dump(ScheduleDAG *DAG) const {
-      // Emulate pop() without clobbering NodeQueueIds.
-      std::vector<SUnit*> DumpQueue = Queue;
-      SF DumpPicker = Picker;
-      while (!DumpQueue.empty()) {
-        SUnit *SU = popFromQueue(DumpQueue, DumpPicker);
-        if (isBottomUp())
-          dbgs() << "Height " << SU->getHeight() << ": ";
-        else
-          dbgs() << "Depth " << SU->getDepth() << ": ";
-        SU->dump(DAG);
-      }
-    }
-
-  protected:
-    bool canClobber(const SUnit *SU, const SUnit *Op);
-    void AddPseudoTwoAddrDeps();
-    void PrescheduleNodesWithMultipleUses();
-    void CalculateSethiUllmanNumbers();
-  };
-
-  typedef RegReductionPriorityQueue<bu_ls_rr_sort>
-    BURegReductionPriorityQueue;
-
-  typedef RegReductionPriorityQueue<td_ls_rr_sort>
-    TDRegReductionPriorityQueue;
-
-  typedef RegReductionPriorityQueue<src_ls_rr_sort>
-    SrcRegReductionPriorityQueue;
-
-  typedef RegReductionPriorityQueue<hybrid_ls_rr_sort>
-    HybridBURRPriorityQueue;
-
-  typedef RegReductionPriorityQueue<ilp_ls_rr_sort>
-    ILPBURRPriorityQueue;
+  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
+    CalcNodeSethiUllmanNumber(&(*SUnits)[i], SethiUllmanNumbers);
 }
+
+void RegReductionPQBase::initNodes(std::vector<SUnit> &sunits) {
+  SUnits = &sunits;
+  // Add pseudo dependency edges for two-address nodes.
+  AddPseudoTwoAddrDeps();
+  // Reroute edges to nodes with multiple uses.
+  PrescheduleNodesWithMultipleUses();
+  // Calculate node priorities.
+  CalculateSethiUllmanNumbers();
+}
+
+void RegReductionPQBase::addNode(const SUnit *SU) {
+  unsigned SUSize = SethiUllmanNumbers.size();
+  if (SUnits->size() > SUSize)
+    SethiUllmanNumbers.resize(SUSize*2, 0);
+  CalcNodeSethiUllmanNumber(SU, SethiUllmanNumbers);
+}
+
+void RegReductionPQBase::updateNode(const SUnit *SU) {
+  SethiUllmanNumbers[SU->NodeNum] = 0;
+  CalcNodeSethiUllmanNumber(SU, SethiUllmanNumbers);
+}
+
+unsigned RegReductionPQBase::getNodePriority(const SUnit *SU) const {
+  assert(SU->NodeNum < SethiUllmanNumbers.size());
+  unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
+  if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
+    // CopyToReg should be close to its uses to facilitate coalescing and
+    // avoid spilling.
+    return 0;
+  if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+      Opc == TargetOpcode::SUBREG_TO_REG ||
+      Opc == TargetOpcode::INSERT_SUBREG)
+    // EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG nodes should be
+    // close to their uses to facilitate coalescing.
+    return 0;
+  if (SU->NumSuccs == 0 && SU->NumPreds != 0)
+    // If SU does not have a register use, i.e. it doesn't produce a value
+    // that would be consumed (e.g. store), then it terminates a chain of
+    // computation.  Give it a large SethiUllman number so it will be
+    // scheduled right before its predecessors that it doesn't lengthen
+    // their live ranges.
+    return 0xffff;
+  if (SU->NumPreds == 0 && SU->NumSuccs != 0)
+    // If SU does not have a register def, schedule it close to its uses
+    // because it does not lengthen any live ranges.
+    return 0;
+  return SethiUllmanNumbers[SU->NodeNum];
+}
+
+//===----------------------------------------------------------------------===//
+//                     Register Pressure Tracking
+//===----------------------------------------------------------------------===//
+
+void RegReductionPQBase::dumpRegPressure() const {
+  for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
+         E = TRI->regclass_end(); I != E; ++I) {
+    const TargetRegisterClass *RC = *I;
+    unsigned Id = RC->getID();
+    unsigned RP = RegPressure[Id];
+    if (!RP) continue;
+    DEBUG(dbgs() << RC->getName() << ": " << RP << " / " << RegLimit[Id]
+          << '\n');
+  }
+}
+
+bool RegReductionPQBase::HighRegPressure(const SUnit *SU) const {
+  if (!TLI)
+    return false;
+
+  for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
+       I != E; ++I) {
+    if (I->isCtrl())
+      continue;
+    SUnit *PredSU = I->getSUnit();
+    const SDNode *PN = PredSU->getNode();
+    if (!PN->isMachineOpcode()) {
+      if (PN->getOpcode() == ISD::CopyFromReg) {
+        EVT VT = PN->getValueType(0);
+        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+        unsigned Cost = TLI->getRepRegClassCostFor(VT);
+        if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
+          return true;
+      }
+      continue;
+    }
+    unsigned POpc = PN->getMachineOpcode();
+    if (POpc == TargetOpcode::IMPLICIT_DEF)
+      continue;
+    if (POpc == TargetOpcode::EXTRACT_SUBREG) {
+      EVT VT = PN->getOperand(0).getValueType();
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      unsigned Cost = TLI->getRepRegClassCostFor(VT);
+      // Check if this increases register pressure of the specific register
+      // class to the point where it would cause spills.
+      if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
+        return true;
+      continue;
+    } else if (POpc == TargetOpcode::INSERT_SUBREG ||
+               POpc == TargetOpcode::SUBREG_TO_REG) {
+      EVT VT = PN->getValueType(0);
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      unsigned Cost = TLI->getRepRegClassCostFor(VT);
+      // Check if this increases register pressure of the specific register
+      // class to the point where it would cause spills.
+      if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
+        return true;
+      continue;
+    }
+    unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
+    for (unsigned i = 0; i != NumDefs; ++i) {
+      EVT VT = PN->getValueType(i);
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      if (RegPressure[RCId] >= RegLimit[RCId])
+        return true; // Reg pressure already high.
+      unsigned Cost = TLI->getRepRegClassCostFor(VT);
+      if (!PN->hasAnyUseOfValue(i))
+        continue;
+      // Check if this increases register pressure of the specific register
+      // class to the point where it would cause spills.
+      if ((RegPressure[RCId] + Cost) >= RegLimit[RCId])
+        return true;
+    }
+  }
+
+  return false;
+}
+
+bool RegReductionPQBase::MayReduceRegPressure(SUnit *SU) {
+  const SDNode *N = SU->getNode();
+
+  if (!N->isMachineOpcode() || !SU->NumSuccs)
+    return false;
+
+  unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
+  for (unsigned i = 0; i != NumDefs; ++i) {
+    EVT VT = N->getValueType(i);
+    if (!N->hasAnyUseOfValue(i))
+      continue;
+    unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+    if (RegPressure[RCId] >= RegLimit[RCId])
+      return true;
+  }
+  return false;
+}
+
+void RegReductionPQBase::ScheduledNode(SUnit *SU) {
+  if (!TracksRegPressure)
+    return;
+
+  const SDNode *N = SU->getNode();
+  if (!N->isMachineOpcode()) {
+    if (N->getOpcode() != ISD::CopyToReg)
+      return;
+  } else {
+    unsigned Opc = N->getMachineOpcode();
+    if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+        Opc == TargetOpcode::INSERT_SUBREG ||
+        Opc == TargetOpcode::SUBREG_TO_REG ||
+        Opc == TargetOpcode::REG_SEQUENCE ||
+        Opc == TargetOpcode::IMPLICIT_DEF)
+      return;
+  }
+
+  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
+    if (I->isCtrl())
+      continue;
+    SUnit *PredSU = I->getSUnit();
+    if (PredSU->NumSuccsLeft != PredSU->NumSuccs)
+      continue;
+    const SDNode *PN = PredSU->getNode();
+    if (!PN->isMachineOpcode()) {
+      if (PN->getOpcode() == ISD::CopyFromReg) {
+        EVT VT = PN->getValueType(0);
+        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+        RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+      }
+      continue;
+    }
+    unsigned POpc = PN->getMachineOpcode();
+    if (POpc == TargetOpcode::IMPLICIT_DEF)
+      continue;
+    if (POpc == TargetOpcode::EXTRACT_SUBREG) {
+      EVT VT = PN->getOperand(0).getValueType();
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+      continue;
+    } else if (POpc == TargetOpcode::INSERT_SUBREG ||
+               POpc == TargetOpcode::SUBREG_TO_REG) {
+      EVT VT = PN->getValueType(0);
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+      continue;
+    }
+    unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
+    for (unsigned i = 0; i != NumDefs; ++i) {
+      EVT VT = PN->getValueType(i);
+      if (!PN->hasAnyUseOfValue(i))
+        continue;
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+    }
+  }
+
+  // Check for isMachineOpcode() as PrescheduleNodesWithMultipleUses()
+  // may transfer data dependencies to CopyToReg.
+  if (SU->NumSuccs && N->isMachineOpcode()) {
+    unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
+    for (unsigned i = 0; i != NumDefs; ++i) {
+      EVT VT = N->getValueType(i);
+      if (!N->hasAnyUseOfValue(i))
+        continue;
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT))
+        // Register pressure tracking is imprecise. This can happen.
+        RegPressure[RCId] = 0;
+      else
+        RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
+    }
+  }
+
+  dumpRegPressure();
+}
+
+void RegReductionPQBase::UnscheduledNode(SUnit *SU) {
+  if (!TracksRegPressure)
+    return;
+
+  const SDNode *N = SU->getNode();
+  if (!N->isMachineOpcode()) {
+    if (N->getOpcode() != ISD::CopyToReg)
+      return;
+  } else {
+    unsigned Opc = N->getMachineOpcode();
+    if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+        Opc == TargetOpcode::INSERT_SUBREG ||
+        Opc == TargetOpcode::SUBREG_TO_REG ||
+        Opc == TargetOpcode::REG_SEQUENCE ||
+        Opc == TargetOpcode::IMPLICIT_DEF)
+      return;
+  }
+
+  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
+    if (I->isCtrl())
+      continue;
+    SUnit *PredSU = I->getSUnit();
+    if (PredSU->NumSuccsLeft != PredSU->NumSuccs)
+      continue;
+    const SDNode *PN = PredSU->getNode();
+    if (!PN->isMachineOpcode()) {
+      if (PN->getOpcode() == ISD::CopyFromReg) {
+        EVT VT = PN->getValueType(0);
+        unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+        RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+      }
+      continue;
+    }
+    unsigned POpc = PN->getMachineOpcode();
+    if (POpc == TargetOpcode::IMPLICIT_DEF)
+      continue;
+    if (POpc == TargetOpcode::EXTRACT_SUBREG) {
+      EVT VT = PN->getOperand(0).getValueType();
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+      continue;
+    } else if (POpc == TargetOpcode::INSERT_SUBREG ||
+               POpc == TargetOpcode::SUBREG_TO_REG) {
+      EVT VT = PN->getValueType(0);
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+      continue;
+    }
+    unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
+    for (unsigned i = 0; i != NumDefs; ++i) {
+      EVT VT = PN->getValueType(i);
+      if (!PN->hasAnyUseOfValue(i))
+        continue;
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      if (RegPressure[RCId] < TLI->getRepRegClassCostFor(VT))
+        // Register pressure tracking is imprecise. This can happen.
+        RegPressure[RCId] = 0;
+      else
+        RegPressure[RCId] -= TLI->getRepRegClassCostFor(VT);
+    }
+  }
+
+  // Check for isMachineOpcode() as PrescheduleNodesWithMultipleUses()
+  // may transfer data dependencies to CopyToReg.
+  if (SU->NumSuccs && N->isMachineOpcode()) {
+    unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
+    for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
+      EVT VT = N->getValueType(i);
+      if (VT == MVT::Glue || VT == MVT::Other)
+        continue;
+      if (!N->hasAnyUseOfValue(i))
+        continue;
+      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
+      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
+    }
+  }
+
+  dumpRegPressure();
+}
+
+//===----------------------------------------------------------------------===//
+//           Dynamic Node Priority for Register Pressure Reduction
+//===----------------------------------------------------------------------===//
 
 /// closestSucc - Returns the scheduled cycle of the successor which is
 /// closest to the current cycle.
@@ -1872,9 +1947,81 @@ static bool UnitsSharePred(const SUnit *left, const SUnit *right) {
   return false;
 }
 
-template <typename RRSort>
-static bool BURRSort(const SUnit *left, const SUnit *right,
-                     const RegReductionPriorityQueue<RRSort> *SPQ) {
+// Check for either a dependence (latency) or resource (hazard) stall.
+//
+// Note: The ScheduleHazardRecognizer interface requires a non-const SU.
+static bool BUHasStall(SUnit *SU, int Height, RegReductionPQBase *SPQ) {
+  if ((int)SPQ->getCurCycle() < Height) return true;
+  if (SPQ->getHazardRec()->getHazardType(SU, 0)
+      != ScheduleHazardRecognizer::NoHazard)
+    return true;
+  return false;
+}
+
+// Return -1 if left has higher priority, 1 if right has higher priority.
+// Return 0 if latency-based priority is equivalent.
+static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
+                            RegReductionPQBase *SPQ) {
+  // If the two nodes share an operand and one of them has a single
+  // use that is a live out copy, favor the one that is live out. Otherwise
+  // it will be difficult to eliminate the copy if the instruction is a
+  // loop induction variable update. e.g.
+  // BB:
+  // sub r1, r3, #1
+  // str r0, [r2, r3]
+  // mov r3, r1
+  // cmp
+  // bne BB
+  bool SharePred = UnitsSharePred(left, right);
+  // FIXME: Only adjust if BB is a loop back edge.
+  // FIXME: What's the cost of a copy?
+  int LBonus = (SharePred && hasOnlyLiveOutUses(left)) ? 1 : 0;
+  int RBonus = (SharePred && hasOnlyLiveOutUses(right)) ? 1 : 0;
+  int LHeight = (int)left->getHeight() - LBonus;
+  int RHeight = (int)right->getHeight() - RBonus;
+
+  bool LStall = (!checkPref || left->SchedulingPref == Sched::Latency) &&
+    BUHasStall(left, LHeight, SPQ);
+  bool RStall = (!checkPref || right->SchedulingPref == Sched::Latency) &&
+    BUHasStall(right, RHeight, SPQ);
+
+  // If scheduling one of the node will cause a pipeline stall, delay it.
+  // If scheduling either one of the node will cause a pipeline stall, sort
+  // them according to their height.
+  if (LStall) {
+    if (!RStall)
+      return 1;
+    if (LHeight != RHeight)
+      return LHeight > RHeight ? 1 : -1;
+  } else if (RStall)
+    return -1;
+
+  // If either node is scheduling for latency, sort them by depth
+  // and latency.
+  if (!checkPref || (left->SchedulingPref == Sched::Latency ||
+                     right->SchedulingPref == Sched::Latency)) {
+    int LDepth = (int)left->getDepth();
+    int RDepth = (int)right->getDepth();
+
+    DEBUG(dbgs() << "  Comparing latency of SU #" << left->NodeNum
+          << " depth " << LDepth << " vs SU #" << right->NodeNum
+          << " depth " << RDepth << "\n");
+
+    if (EnableSchedCycles) {
+      if (LDepth != RDepth)
+        return LDepth < RDepth ? 1 : -1;
+    }
+    else {
+      if (LHeight != RHeight)
+        return LHeight > RHeight ? 1 : -1;
+    }
+    if (left->Latency != right->Latency)
+      return left->Latency > right->Latency ? 1 : -1;
+  }
+  return 0;
+}
+
+static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
   if (LPriority != RPriority)
@@ -1908,12 +2055,18 @@ static bool BURRSort(const SUnit *left, const SUnit *right,
   if (LScratch != RScratch)
     return LScratch > RScratch;
 
-  // Note: with a bottom-up ready filter, the height check may be redundant.
-  if (left->getHeight() != right->getHeight())
-    return left->getHeight() > right->getHeight();
+  if (EnableSchedCycles) {
+    int result = BUCompareLatency(left, right, false /*checkPref*/, SPQ);
+    if (result != 0)
+      return result > 0;
+  }
+  else {
+    if (left->getHeight() != right->getHeight())
+      return left->getHeight() > right->getHeight();
 
-  if (left->getDepth() != right->getDepth())
-    return left->getDepth() < right->getDepth();
+    if (left->getDepth() != right->getDepth())
+      return left->getDepth() < right->getDepth();
+  }
 
   assert(left->NodeQueueId && right->NodeQueueId &&
          "NodeQueueId cannot be zero");
@@ -1921,12 +2074,12 @@ static bool BURRSort(const SUnit *left, const SUnit *right,
 }
 
 // Bottom up
-bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
+bool bu_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   return BURRSort(left, right, SPQ);
 }
 
 // Source order, otherwise bottom up.
-bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
+bool src_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   unsigned LOrder = SPQ->getNodeOrdering(left);
   unsigned ROrder = SPQ->getNodeOrdering(right);
 
@@ -1938,7 +2091,26 @@ bool src_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   return BURRSort(left, right, SPQ);
 }
 
-bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
+// If the time between now and when the instruction will be ready can cover
+// the spill code, then avoid adding it to the ready queue. This gives long
+// stalls highest priority and allows hoisting across calls. It should also
+// speed up processing the available queue.
+bool hybrid_ls_rr_sort::isReady(SUnit *SU, unsigned CurCycle) const {
+  static const unsigned ReadyDelay = 3;
+
+  if (SPQ->MayReduceRegPressure(SU)) return true;
+
+  if (SU->getHeight() > (CurCycle + ReadyDelay)) return false;
+
+  if (SPQ->getHazardRec()->getHazardType(SU, -ReadyDelay)
+      != ScheduleHazardRecognizer::NoHazard)
+    return false;
+
+  return true;
+}
+
+// Return true if right should be scheduled with higher priority than left.
+bool hybrid_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   if (left->isCall || right->isCall)
     // No way to compute latency of calls.
     return BURRSort(left, right, SPQ);
@@ -1952,62 +2124,26 @@ bool hybrid_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const{
   else if (!LHigh && RHigh)
     return false;
   else if (!LHigh && !RHigh) {
-    // If the two nodes share an operand and one of them has a single
-    // use that is a live out copy, favor the one that is live out. Otherwise
-    // it will be difficult to eliminate the copy if the instruction is a
-    // loop induction variable update. e.g.
-    // BB:
-    // sub r1, r3, #1
-    // str r0, [r2, r3]
-    // mov r3, r1
-    // cmp
-    // bne BB
-    bool SharePred = UnitsSharePred(left, right);
-    // FIXME: Only adjust if BB is a loop back edge.
-    // FIXME: What's the cost of a copy?
-    int LBonus = (SharePred && hasOnlyLiveOutUses(left)) ? 1 : 0;
-    int RBonus = (SharePred && hasOnlyLiveOutUses(right)) ? 1 : 0;
-    int LHeight = (int)left->getHeight() - LBonus;
-    int RHeight = (int)right->getHeight() - RBonus;
-
-    // Low register pressure situation, schedule for latency if possible.
-    bool LStall = left->SchedulingPref == Sched::Latency &&
-      (int)SPQ->getCurCycle() < LHeight;
-    bool RStall = right->SchedulingPref == Sched::Latency &&
-      (int)SPQ->getCurCycle() < RHeight;
-    // If scheduling one of the node will cause a pipeline stall, delay it.
-    // If scheduling either one of the node will cause a pipeline stall, sort
-    // them according to their height.
-    if (LStall) {
-      if (!RStall)
-        return true;
-      if (LHeight != RHeight)
-        return LHeight > RHeight;
-    } else if (RStall)
-      return false;
-
-    // If either node is scheduling for latency, sort them by height
-    // and latency.
-    if (left->SchedulingPref == Sched::Latency ||
-        right->SchedulingPref == Sched::Latency) {
-      if (LHeight != RHeight)
-        return LHeight > RHeight;
-      if (left->Latency != right->Latency)
-        return left->Latency > right->Latency;
-    }
+    int result = BUCompareLatency(left, right, true /*checkPref*/, SPQ);
+    if (result != 0)
+      return result > 0;
   }
-
   return BURRSort(left, right, SPQ);
 }
 
 // Schedule as many instructions in each cycle as possible. So don't make an
 // instruction available unless it is ready in the current cycle.
 bool ilp_ls_rr_sort::isReady(SUnit *SU, unsigned CurCycle) const {
+  if (SU->getHeight() > CurCycle) return false;
+
+  if (SPQ->getHazardRec()->getHazardType(SU, 0)
+      != ScheduleHazardRecognizer::NoHazard)
+    return false;
+
   return SU->getHeight() <= CurCycle;
 }
 
-bool ilp_ls_rr_sort::operator()(const SUnit *left,
-                                const SUnit *right) const {
+bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   if (left->isCall || right->isCall)
     // No way to compute latency of calls.
     return BURRSort(left, right, SPQ);
@@ -2032,9 +2168,11 @@ bool ilp_ls_rr_sort::operator()(const SUnit *left,
   return BURRSort(left, right, SPQ);
 }
 
-template<class SF>
-bool
-RegReductionPriorityQueue<SF>::canClobber(const SUnit *SU, const SUnit *Op) {
+//===----------------------------------------------------------------------===//
+//                    Preschedule for Register Pressure
+//===----------------------------------------------------------------------===//
+
+bool RegReductionPQBase::canClobber(const SUnit *SU, const SUnit *Op) {
   if (SU->isTwoAddress) {
     unsigned Opc = SU->getNode()->getMachineOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
@@ -2117,8 +2255,7 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
 /// after N, which shortens the U->N live range, reducing
 /// register pressure.
 ///
-template<class SF>
-void RegReductionPriorityQueue<SF>::PrescheduleNodesWithMultipleUses() {
+void RegReductionPQBase::PrescheduleNodesWithMultipleUses() {
   // Visit all the nodes in topological order, working top-down.
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
     SUnit *SU = &(*SUnits)[i];
@@ -2210,8 +2347,7 @@ void RegReductionPriorityQueue<SF>::PrescheduleNodesWithMultipleUses() {
 /// one that has a CopyToReg use (more likely to be a loop induction update).
 /// If both are two-address, but one is commutable while the other is not
 /// commutable, favor the one that's not commutable.
-template<class SF>
-void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
+void RegReductionPQBase::AddPseudoTwoAddrDeps() {
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
     SUnit *SU = &(*SUnits)[i];
     if (!SU->isTwoAddress)
@@ -2284,16 +2420,6 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       }
     }
   }
-}
-
-/// CalculateSethiUllmanNumbers - Calculate Sethi-Ullman numbers of all
-/// scheduling units.
-template<class SF>
-void RegReductionPriorityQueue<SF>::CalculateSethiUllmanNumbers() {
-  SethiUllmanNumbers.assign(SUnits->size(), 0);
-
-  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    CalcNodeSethiUllmanNumber(&(*SUnits)[i], SethiUllmanNumbers);
 }
 
 /// LimitedSumOfUnscheduledPredsOfSuccs - Compute the sum of the unscheduled
