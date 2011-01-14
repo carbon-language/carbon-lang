@@ -1868,6 +1868,9 @@ def err_pack_expansion_without_parameter_packs : Error<
 def err_pack_expansion_length_conflict : Error<
   "pack expansion contains parameter packs %0 and %1 that have different "
   "lengths (%2 vs. %3)">;
+def err_pack_expansion_length_conflict_multilevel : Error<
+  "pack expansion contains parameter pack %0 that has a different "
+  "length (%1 vs. %2) from outer parameter packs">;
 def err_pack_expansion_member_init : Error<
   "pack expansion for initialization of member %0">;
 

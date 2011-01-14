@@ -1977,7 +1977,8 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
         
         bool Expand = false;
         bool RetainExpansion = false;
-        unsigned NumExpansions = 0;
+        llvm::Optional<unsigned> NumExpansions
+                                          = PackExpansion->getNumExpansions();
         if (SemaRef.CheckParameterPacksForExpansion(New->getLocation(), 
                                                     SourceRange(),
                                                     Unexpanded.data(), 
@@ -1990,7 +1991,8 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                       
         if (!Expand) {
           // We can't expand this pack expansion into separate arguments yet;
-          // just substitute into the argument pack.
+          // just substitute into the pattern and create a new pack expansion 
+          // type.
           Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(SemaRef, -1);
           QualType T = SemaRef.SubstType(PackExpansion->getPattern(), 
                                          TemplateArgs,
@@ -1998,13 +2000,14 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
           if (T.isNull())
             break;
           
+          T = SemaRef.Context.getPackExpansionType(T, NumExpansions);
           Exceptions.push_back(T);
           continue;
         }
         
         // Substitute into the pack expansion pattern for each template
         bool Invalid = false;
-        for (unsigned ArgIdx = 0; ArgIdx != NumExpansions; ++ArgIdx) {
+        for (unsigned ArgIdx = 0; ArgIdx != *NumExpansions; ++ArgIdx) {
           Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(SemaRef, ArgIdx);
           
           QualType T = SemaRef.SubstType(PackExpansion->getPattern(), 
@@ -2384,7 +2387,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       collectUnexpandedParameterPacks(BaseTL, Unexpanded);
       bool ShouldExpand = false;
       bool RetainExpansion = false;
-      unsigned NumExpansions = 0;
+      llvm::Optional<unsigned> NumExpansions;
       if (CheckParameterPacksForExpansion(Init->getEllipsisLoc(), 
                                           BaseTL.getSourceRange(),
                                           Unexpanded.data(), 
@@ -2399,7 +2402,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
       assert(ShouldExpand && "Partial instantiation of base initializer?");
       
       // Loop over all of the arguments in the argument pack(s), 
-      for (unsigned I = 0; I != NumExpansions; ++I) {
+      for (unsigned I = 0; I != *NumExpansions; ++I) {
         Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(*this, I);
 
         // Instantiate the initializer.

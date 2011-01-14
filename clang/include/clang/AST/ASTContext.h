@@ -712,7 +712,8 @@ public:
                                                   unsigned NumArgs,
                                             const TemplateArgument *Args) const;
 
-  QualType getPackExpansionType(QualType Pattern);
+  QualType getPackExpansionType(QualType Pattern,
+                                llvm::Optional<unsigned> NumExpansions);
 
   QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl) const;
 

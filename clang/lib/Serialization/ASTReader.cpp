@@ -2954,8 +2954,10 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     QualType Pattern = GetType(Record[0]);
     if (Pattern.isNull())
       return QualType();
-
-    return Context->getPackExpansionType(Pattern);
+    llvm::Optional<unsigned> NumExpansions;
+    if (Record[1])
+      NumExpansions = Record[1] - 1;
+    return Context->getPackExpansionType(Pattern, NumExpansions);
   }
 
   case TYPE_ELABORATED: {

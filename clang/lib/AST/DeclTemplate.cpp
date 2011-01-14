@@ -319,7 +319,8 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
     if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
       QualType ArgType = Context.getTypeDeclType(TTP);
       if (TTP->isParameterPack())
-        ArgType = Context.getPackExpansionType(ArgType);
+        ArgType = Context.getPackExpansionType(ArgType, 
+                                               llvm::Optional<unsigned>());
       
       Arg = TemplateArgument(ArgType);
     } else if (NonTypeTemplateParmDecl *NTTP =

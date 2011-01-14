@@ -1927,7 +1927,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           << T <<  D.getSourceRange();
         D.setEllipsisLoc(SourceLocation());
       } else {
-        T = Context.getPackExpansionType(T);
+        T = Context.getPackExpansionType(T, llvm::Optional<unsigned>());
       }
       break;
         
@@ -1941,7 +1941,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       // parameter packs in the type of the non-type template parameter, then
       // it expands those parameter packs.
       if (T->containsUnexpandedParameterPack())
-        T = Context.getPackExpansionType(T);
+        T = Context.getPackExpansionType(T, llvm::Optional<unsigned>());
       else if (!getLangOptions().CPlusPlus0x)
         Diag(D.getEllipsisLoc(), diag::err_variadic_templates);
       break;

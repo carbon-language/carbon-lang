@@ -25,6 +25,7 @@
 #include "llvm/Support/type_traits.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
 
@@ -3379,29 +3380,52 @@ class PackExpansionType : public Type, public llvm::FoldingSetNode {
   /// \brief The pattern of the pack expansion.
   QualType Pattern;
 
-  PackExpansionType(QualType Pattern, QualType Canon)
+  /// \brief The number of expansions that this pack expansion will
+  /// generate when substituted (+1), or indicates that 
+  ///
+  /// This field will only have a non-zero value when some of the parameter 
+  /// packs that occur within the pattern have been substituted but others have 
+  /// not.
+  unsigned NumExpansions;
+  
+  PackExpansionType(QualType Pattern, QualType Canon,
+                    llvm::Optional<unsigned> NumExpansions)
     : Type(PackExpansion, Canon, /*Dependent=*/true,
            /*VariableModified=*/Pattern->isVariablyModifiedType(),
            /*ContainsUnexpandedParameterPack=*/false),
-      Pattern(Pattern) { }
+      Pattern(Pattern), 
+      NumExpansions(NumExpansions? *NumExpansions + 1: 0) { }
 
   friend class ASTContext;  // ASTContext creates these
-
+  
 public:
   /// \brief Retrieve the pattern of this pack expansion, which is the
   /// type that will be repeatedly instantiated when instantiating the
   /// pack expansion itself.
   QualType getPattern() const { return Pattern; }
 
+  /// \brief Retrieve the number of expansions that this pack expansion will
+  /// generate, if known.
+  llvm::Optional<unsigned> getNumExpansions() const {
+    if (NumExpansions)
+      return NumExpansions - 1;
+    
+    return llvm::Optional<unsigned>();
+  }
+  
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getPattern());
+    Profile(ID, getPattern(), getNumExpansions());
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType Pattern) {
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Pattern,
+                      llvm::Optional<unsigned> NumExpansions) {
     ID.AddPointer(Pattern.getAsOpaquePtr());
+    ID.AddBoolean(NumExpansions);
+    if (NumExpansions)
+      ID.AddInteger(*NumExpansions);
   }
 
   static bool classof(const Type *T) {

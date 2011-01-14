@@ -2246,9 +2246,10 @@ ASTContext::getDependentTemplateSpecializationType(
   return QualType(T, 0);
 }
 
-QualType ASTContext::getPackExpansionType(QualType Pattern) {
+QualType ASTContext::getPackExpansionType(QualType Pattern,
+                                      llvm::Optional<unsigned> NumExpansions) {
   llvm::FoldingSetNodeID ID;
-  PackExpansionType::Profile(ID, Pattern);
+  PackExpansionType::Profile(ID, Pattern, NumExpansions);
 
   assert(Pattern->containsUnexpandedParameterPack() &&
          "Pack expansions must expand one or more parameter packs");
@@ -2260,13 +2261,13 @@ QualType ASTContext::getPackExpansionType(QualType Pattern) {
 
   QualType Canon;
   if (!Pattern.isCanonical()) {
-    Canon = getPackExpansionType(getCanonicalType(Pattern));
+    Canon = getPackExpansionType(getCanonicalType(Pattern), NumExpansions);
 
     // Find the insert position again.
     PackExpansionTypes.FindNodeOrInsertPos(ID, InsertPos);
   }
 
-  T = new (*this) PackExpansionType(Pattern, Canon);
+  T = new (*this) PackExpansionType(Pattern, Canon, NumExpansions);
   Types.push_back(T);
   PackExpansionTypes.InsertNode(T, InsertPos);
   return QualType(T, 0);  

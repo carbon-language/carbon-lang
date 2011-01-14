@@ -18,16 +18,23 @@ namespace PacksAtDifferentLevels {
 
   template<typename ...Types>
   struct X {
-    template<typename> struct Inner;
+    template<typename> struct Inner {
+      static const unsigned value = 1;
+    };
 
     template<typename ...YTypes>
     struct Inner<tuple<pair<Types, YTypes>...> > {
-      static const unsigned zero = sizeof...(Types) - sizeof...(YTypes);
+      static const unsigned value = sizeof...(Types) - sizeof...(YTypes);
     };
   };
 
   int check0[X<short, int, long>::Inner<tuple<pair<short, unsigned short>,
                                              pair<int, unsigned int>,
                                              pair<long, unsigned long>>
-                                       >::zero == 0? 1 : -1];
+                                       >::value == 0? 1 : -1];
+
+  int check1[X<short, int>::Inner<tuple<pair<short, unsigned short>,
+                                        pair<int, unsigned int>,
+                                        pair<long, unsigned long>>
+                                       >::value == 1? 1 : -1]; 
 }

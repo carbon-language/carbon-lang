@@ -316,6 +316,10 @@ ASTTypeWriter::VisitDependentTemplateSpecializationType(
 
 void ASTTypeWriter::VisitPackExpansionType(const PackExpansionType *T) {
   Writer.AddTypeRef(T->getPattern(), Record);
+  if (llvm::Optional<unsigned> NumExpansions = T->getNumExpansions())
+    Record.push_back(*NumExpansions + 1);
+  else
+    Record.push_back(0);
   Code = TYPE_PACK_EXPANSION;
 }
 

@@ -622,7 +622,7 @@ namespace {
                                  unsigned NumUnexpanded,
                                  bool &ShouldExpand,
                                  bool &RetainExpansion,
-                                 unsigned &NumExpansions) {
+                                 llvm::Optional<unsigned> &NumExpansions) {
       return getSema().CheckParameterPacksForExpansion(EllipsisLoc, 
                                                        PatternRange, Unexpanded,
                                                        NumUnexpanded, 
@@ -1260,7 +1260,9 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
       // We still have unexpanded parameter packs, which means that
       // our function parameter is still a function parameter pack.
       // Therefore, make its type a pack expansion type.
-      NewDI = CheckPackExpansion(NewDI, ExpansionTL.getEllipsisLoc());
+      // FIXME: Variadic templates num expansions.
+      NewDI = CheckPackExpansion(NewDI, ExpansionTL.getEllipsisLoc(),
+                                 llvm::Optional<unsigned>());
     }
   } else {
     NewDI = SubstType(OldDI, TemplateArgs, OldParm->getLocation(), 
@@ -1360,7 +1362,7 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
                                       Unexpanded);
       bool ShouldExpand = false;
       bool RetainExpansion = false;
-      unsigned NumExpansions = 0;
+      llvm::Optional<unsigned> NumExpansions;
       if (CheckParameterPacksForExpansion(Base->getEllipsisLoc(), 
                                           Base->getSourceRange(),
                                           Unexpanded.data(), Unexpanded.size(),
@@ -1373,7 +1375,7 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
       
       // If we should expand this pack expansion now, do so.
       if (ShouldExpand) {
-        for (unsigned I = 0; I != NumExpansions; ++I) {
+        for (unsigned I = 0; I != *NumExpansions; ++I) {
             Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(*this, I);
           
           TypeSourceInfo *BaseTypeLoc = SubstType(Base->getTypeSourceInfo(),
