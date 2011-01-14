@@ -3348,7 +3348,17 @@ public:
   ///
   /// \param EllipsisLoc The location of the ellipsis.
   ExprResult ActOnPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc);
-  
+
+  /// \brief Invoked when parsing an expression followed by an ellipsis, which
+  /// creates a pack expansion.
+  ///
+  /// \param Pattern The expression preceding the ellipsis, which will become
+  /// the pattern of the pack expansion.
+  ///
+  /// \param EllipsisLoc The location of the ellipsis.
+  ExprResult CheckPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc,
+                                llvm::Optional<unsigned> NumExpansions);
+
   /// \brief Determine whether we could expand a pack expansion with the
   /// given set of parameter packs into separate arguments by repeatedly
   /// transforming the pattern.

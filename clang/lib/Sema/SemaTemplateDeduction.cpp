@@ -1463,9 +1463,6 @@ DeduceTemplateArguments(Sema &S,
   unsigned ArgIdx = 0, ParamIdx = 0;
   for (; hasTemplateArgumentForDeduction(Params, ParamIdx, NumParams); 
        ++ParamIdx) {
-    // FIXME: Variadic templates.
-    // What do we do if the argument is a pack expansion?
-    
     if (!Params[ParamIdx].isPackExpansion()) {
       // The simple case: deduce template arguments by matching Pi and Ai.
       

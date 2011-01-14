@@ -2176,8 +2176,8 @@ public:
     switch (Pattern.getArgument().getKind()) {
     case TemplateArgument::Expression: {
       ExprResult Result
-        = getSema().ActOnPackExpansion(Pattern.getSourceExpression(),
-                                       EllipsisLoc);
+        = getSema().CheckPackExpansion(Pattern.getSourceExpression(),
+                                       EllipsisLoc, NumExpansions);
       if (Result.isInvalid())
         return TemplateArgumentLoc();
           
@@ -2217,8 +2217,9 @@ public:
   /// By default, performs semantic analysis to build a new pack expansion
   /// for an expression. Subclasses may override this routine to provide 
   /// different behavior.
-  ExprResult RebuildPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc) {
-    return getSema().ActOnPackExpansion(Pattern, EllipsisLoc);
+  ExprResult RebuildPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc,
+                                  llvm::Optional<unsigned> NumExpansions) {
+    return getSema().CheckPackExpansion(Pattern, EllipsisLoc, NumExpansions);
   }
   
 private:
@@ -2308,7 +2309,9 @@ bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
       // be expanded.
       bool Expand = true;
       bool RetainExpansion = false;
-      llvm::Optional<unsigned> NumExpansions;
+      llvm::Optional<unsigned> OrigNumExpansions
+        = Expansion->getNumExpansions();
+      llvm::Optional<unsigned> NumExpansions = OrigNumExpansions;
       if (getDerived().TryExpandParameterPacks(Expansion->getEllipsisLoc(),
                                                Pattern->getSourceRange(),
                                                Unexpanded.data(),
@@ -2326,9 +2329,9 @@ bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
         if (OutPattern.isInvalid())
           return true;
         
-        // FIXME: Variadic templates NumExpansions
         ExprResult Out = getDerived().RebuildPackExpansion(OutPattern.get(), 
-                                                Expansion->getEllipsisLoc());
+                                                Expansion->getEllipsisLoc(),
+                                                           NumExpansions);
         if (Out.isInvalid())
           return true;
         
@@ -2347,7 +2350,8 @@ bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
           return true;
 
         if (Out.get()->containsUnexpandedParameterPack()) {
-          Out = RebuildPackExpansion(Out.get(), Expansion->getEllipsisLoc());
+          Out = RebuildPackExpansion(Out.get(), Expansion->getEllipsisLoc(),
+                                     OrigNumExpansions);
           if (Out.isInvalid())
             return true;
         }
@@ -6818,7 +6822,8 @@ TreeTransform<Derived>::TransformPackExpansionExpr(PackExpansionExpr *E) {
   if (!getDerived().AlwaysRebuild() && Pattern.get() == E->getPattern())
     return SemaRef.Owned(E);
 
-  return getDerived().RebuildPackExpansion(Pattern.get(), E->getEllipsisLoc());
+  return getDerived().RebuildPackExpansion(Pattern.get(), E->getEllipsisLoc(),
+                                           E->getNumExpansions());
 }
 
 template<typename Derived>

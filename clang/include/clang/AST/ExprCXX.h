@@ -2612,16 +2612,27 @@ public:
 /// or more function arguments to the function object \c f.
 class PackExpansionExpr : public Expr {
   SourceLocation EllipsisLoc;
+  
+  /// \brief The number of expansions that will be produced by this pack
+  /// expansion expression, if known.
+  ///
+  /// When zero, the number of expansions is not known. Otherwise, this value
+  /// is the number of expansions + 1.
+  unsigned NumExpansions;
+  
   Stmt *Pattern;
   
   friend class ASTStmtReader;
+  friend class ASTStmtWriter;
   
 public:
-  PackExpansionExpr(QualType T, Expr *Pattern, SourceLocation EllipsisLoc)
+  PackExpansionExpr(QualType T, Expr *Pattern, SourceLocation EllipsisLoc,
+                    llvm::Optional<unsigned> NumExpansions)
     : Expr(PackExpansionExprClass, T, Pattern->getValueKind(), 
            Pattern->getObjectKind(), /*TypeDependent=*/true, 
            /*ValueDependent=*/true, /*ContainsUnexpandedParameterPack=*/false),
       EllipsisLoc(EllipsisLoc),
+      NumExpansions(NumExpansions? *NumExpansions + 1 : 0),
       Pattern(Pattern) { }
 
   PackExpansionExpr(EmptyShell Empty) : Expr(PackExpansionExprClass, Empty) { }
@@ -2635,6 +2646,15 @@ public:
   /// \brief Retrieve the location of the ellipsis that describes this pack
   /// expansion.
   SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
+  
+  /// \brief Determine the number of expansions that will be produced when 
+  /// this pack expansion is instantiated, if already known.
+  llvm::Optional<unsigned> getNumExpansions() const {
+    if (NumExpansions)
+      return NumExpansions - 1;
+    
+    return llvm::Optional<unsigned>();
+  }
   
   virtual SourceRange getSourceRange() const;
 

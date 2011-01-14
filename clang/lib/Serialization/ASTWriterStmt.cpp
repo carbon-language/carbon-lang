@@ -1301,6 +1301,7 @@ void ASTStmtWriter::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
 void ASTStmtWriter::VisitPackExpansionExpr(PackExpansionExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getEllipsisLoc(), Record);
+  Record.push_back(E->NumExpansions);
   Writer.AddStmt(E->getPattern());
   Code = serialization::EXPR_PACK_EXPANSION;
 }

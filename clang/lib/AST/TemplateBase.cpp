@@ -384,7 +384,7 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
       = cast<PackExpansionExpr>(Argument.getAsExpr());
     Expr *Pattern = Expansion->getPattern();
     Ellipsis = Expansion->getEllipsisLoc();
-    // FIXME: Variadic templates num expansions
+    NumExpansions = Expansion->getNumExpansions();
     return TemplateArgumentLoc(Pattern, Pattern);
   }
 

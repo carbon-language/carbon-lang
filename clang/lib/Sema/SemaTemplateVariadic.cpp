@@ -415,6 +415,11 @@ QualType Sema::CheckPackExpansion(QualType Pattern,
 }
 
 ExprResult Sema::ActOnPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc) {
+  return CheckPackExpansion(Pattern, EllipsisLoc, llvm::Optional<unsigned>());
+}
+
+ExprResult Sema::CheckPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc,
+                                    llvm::Optional<unsigned> NumExpansions) {
   if (!Pattern)
     return ExprError();
   
@@ -430,7 +435,7 @@ ExprResult Sema::ActOnPackExpansion(Expr *Pattern, SourceLocation EllipsisLoc) {
   
   // Create the pack expansion expression and source-location information.
   return Owned(new (Context) PackExpansionExpr(Context.DependentTy, Pattern,
-                                               EllipsisLoc));
+                                               EllipsisLoc, NumExpansions));
 }
 
 /// \brief Retrieve the depth and index of a parameter pack.
@@ -459,10 +464,6 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
   std::pair<IdentifierInfo *, SourceLocation> FirstPack;
   bool HaveFirstPack = false;
   
-  // FIXME: Variadic templates. Even if we don't expand, we'd still like to
-  // return the number of expansions back to the caller, perhaps as an 
-  // llvm::Optional, so that it can be embedded in the pack expansion. This
-  // is important for the multi-level substitution case.
   for (unsigned I = 0; I != NumUnexpanded; ++I) {
     // Compute the depth and index for this parameter pack.
     unsigned Depth;

@@ -37,4 +37,33 @@ namespace PacksAtDifferentLevels {
                                         pair<int, unsigned int>,
                                         pair<long, unsigned long>>
                                        >::value == 1? 1 : -1]; 
+
+  template<unsigned ...Values> struct unsigned_tuple { };
+  template<typename ...Types>
+  struct X1 {
+    template<typename, typename> struct Inner {
+      static const unsigned value = 0;
+    };
+
+    template<typename ...YTypes>
+    struct Inner<tuple<pair<Types, YTypes>...>,
+                 unsigned_tuple<sizeof(Types) + sizeof(YTypes)...>> {
+      static const unsigned value = 1;
+    };
+  };
+
+  int check2[X1<short, int, long>::Inner<tuple<pair<short, unsigned short>,
+                                               pair<int, unsigned int>,
+                                               pair<long, unsigned long>>,
+                      unsigned_tuple<sizeof(short) + sizeof(unsigned short),
+                                     sizeof(int) + sizeof(unsigned int),
+                                     sizeof(long) + sizeof(unsigned long)>
+                                       >::value == 1? 1 : -1];
+  int check3[X1<short, int>::Inner<tuple<pair<short, unsigned short>,
+                                         pair<int, unsigned int>,
+                                         pair<long, unsigned long>>,
+                      unsigned_tuple<sizeof(short) + sizeof(unsigned short),
+                                     sizeof(int) + sizeof(unsigned int),
+                                     sizeof(long) + sizeof(unsigned long)>
+                                       >::value == 0? 1 : -1];
 }

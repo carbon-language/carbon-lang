@@ -332,7 +332,8 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
 
       if (NTTP->isParameterPack())
         E = new (Context) PackExpansionExpr(Context.DependentTy, E,
-                                            NTTP->getLocation());
+                                            NTTP->getLocation(),
+                                            llvm::Optional<unsigned>());
       Arg = TemplateArgument(E);
     } else {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
