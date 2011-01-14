@@ -2143,7 +2143,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
     // external globals.
     return GV->hasUniqueInitializer();
 
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     // Handle a constantexpr gep.
     if (CE->getOpcode() == Instruction::GetElementPtr &&
         isa<GlobalVariable>(CE->getOperand(0)) &&
@@ -2179,6 +2179,8 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
       
       return true;
     }
+  }
+  
   return false;
 }
 
