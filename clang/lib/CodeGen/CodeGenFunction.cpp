@@ -543,15 +543,31 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
   uint64_t Size = TypeInfo.first / 8;
   unsigned Align = TypeInfo.second / 8;
 
-  // Don't bother emitting a zero-byte memset.
-  if (Size == 0)
-    return;
+  llvm::Value *SizeVal;
+  bool vla;
 
-  llvm::ConstantInt *SizeVal = llvm::ConstantInt::get(IntPtrTy, Size);
+  // Don't bother emitting a zero-byte memset.
+  if (Size == 0) {
+    // But note that getTypeInfo returns 0 for a VLA.
+    if (const VariableArrayType *vlaType =
+          dyn_cast_or_null<VariableArrayType>(
+                                          getContext().getAsArrayType(Ty))) {
+      SizeVal = GetVLASize(vlaType);
+      vla = true;
+    } else {
+      return;
+    }
+  } else {
+    SizeVal = llvm::ConstantInt::get(IntPtrTy, Size);
+    vla = false;
+  }
 
   // If the type contains a pointer to data member we can't memset it to zero.
   // Instead, create a null constant and copy it to the destination.
   if (!CGM.getTypes().isZeroInitializable(Ty)) {
+    // FIXME: variable-size types!
+    if (vla) return;
+
     llvm::Constant *NullConstant = CGM.EmitNullConstant(Ty);
 
     llvm::GlobalVariable *NullVariable = 
@@ -562,8 +578,6 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
     llvm::Value *SrcPtr =
       Builder.CreateBitCast(NullVariable, Builder.getInt8PtrTy());
 
-    // FIXME: variable-size types?
-
     // Get and call the appropriate llvm.memcpy overload.
     Builder.CreateMemCpy(DestPtr, SrcPtr, SizeVal, Align, false);
     return;
@@ -572,8 +586,6 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
   // Otherwise, just memset the whole thing to zero.  This is legal
   // because in LLVM, all default initializers (other than the ones we just
   // handled above) are guaranteed to have a bit pattern of all zeros.
-
-  // FIXME: Handle variable sized types.
   Builder.CreateMemSet(DestPtr, Builder.getInt8(0), SizeVal, Align, false);
 }
 
