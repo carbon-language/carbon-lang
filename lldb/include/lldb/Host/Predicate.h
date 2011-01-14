@@ -320,6 +320,38 @@ public:
         return m_value == value;
     }
 
+    bool
+    WaitForValueEqualToAndSetValueTo (T wait_value, T new_value, const TimeValue *abstime = NULL, bool *timed_out = NULL)
+    {
+        int err = 0;
+        // pthread_cond_timedwait() or pthread_cond_wait() will atomically
+        // unlock the mutex and wait for the condition to be set. When either
+        // function returns, they will re-lock the mutex. We use an auto lock/unlock
+        // class (Mutex::Locker) to allow us to return at any point in this
+        // function and not have to worry about unlocking the mutex.
+        Mutex::Locker locker(m_mutex);
+
+#ifdef DB_PTHREAD_LOG_EVENTS
+        printf("%s (value = 0x%8.8x, abstime = %p), m_value = 0x%8.8x", __FUNCTION__, value, abstime, m_value);
+#endif
+        if (timed_out)
+            *timed_out = false;
+
+        while (err == 0 && m_value != wait_value)
+        {
+            err = m_condition.Wait (m_mutex.GetMutex(), abstime, timed_out);
+        }
+
+        if (m_value == wait_value)
+        {
+            m_value = new_value;
+            return true;
+        }
+
+        return false;
+    }
+
+
     //------------------------------------------------------------------
     /// Wait for \a m_value to not be equal to \a value.
     ///
