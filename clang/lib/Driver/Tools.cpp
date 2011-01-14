@@ -901,17 +901,32 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     // Add default argument set.
     if (!Args.hasArg(options::OPT__analyzer_no_default_checks)) {
+      types::ID InputType = Inputs[0].getType();
+
+      // Checks to perform for all language types.
       CmdArgs.push_back("-analyzer-check-dead-stores");
-      // Do not enable the security-syntatic check since it
-      // it needs to be refined (known issues).
-      // CmdArgs.push_back("-analyzer-check-security-syntactic");
-      CmdArgs.push_back("-analyzer-check-objc-mem");
-      CmdArgs.push_back("-analyzer-eagerly-assume");
-      CmdArgs.push_back("-analyzer-check-objc-methodsigs");
-      // Do not enable the missing -dealloc check.
-      // '-analyzer-check-objc-missing-dealloc',
-      CmdArgs.push_back("-analyzer-check-objc-unused-ivars");
-      CmdArgs.push_back("-analyzer-check-idempotent-operations");
+
+      // Checks to perform for Objective-C/Objective-C++.
+      if (types::isObjC(InputType)) {
+        CmdArgs.push_back("-analyzer-check-objc-methodsigs");
+        CmdArgs.push_back("-analyzer-check-objc-unused-ivars");
+        // Do not enable the missing -dealloc check.
+        // '-analyzer-check-objc-missing-dealloc',
+      }
+
+      // Checks to perform for all languages *except* C++.
+      if (!types::isCXX(InputType)) {
+        // Do not enable the security-syntatic check since it
+        // it needs to be refined (known issues).
+        // CmdArgs.push_back("-analyzer-check-security-syntactic");
+
+        // NOTE: Leaving -analyzer-check-objc-mem here is intentional.
+        // It also checks C code.
+        CmdArgs.push_back("-analyzer-check-objc-mem");
+
+        CmdArgs.push_back("-analyzer-eagerly-assume");
+        CmdArgs.push_back("-analyzer-check-idempotent-operations");
+      }
     }
 
     // Set the output format. The default is plist, for (lame) historical
