@@ -108,6 +108,38 @@ private:
   void operator=(const SSAUpdater&); // DO NOT IMPLEMENT
   SSAUpdater(const SSAUpdater&);     // DO NOT IMPLEMENT
 };
+  
+/// LoadAndStorePromoter - This little helper class provides a convenient way to
+/// promote a collection of loads and stores into SSA Form using the SSAUpdater.
+/// This handles complexities that SSAUpdater doesn't, such as multiple loads
+/// and stores in one block.
+///
+/// Clients of this class are expected to subclass this and implement the
+/// virtual methods.
+///
+class LoadAndStorePromoter {
+public:
+  LoadAndStorePromoter() {}
+  virtual ~LoadAndStorePromoter() {}
+  
+  /// run - This does the promotion.  Insts is a list of loads and stores to
+  /// promote, and Name is the basename for the PHIs to insert.  After this is
+  /// complete, the loads and stores are removed from the code.
+  void run(StringRef Name, const SmallVectorImpl<Instruction*> &Insts,
+           SSAUpdater *SSA = 0);
+  
+  
+  /// Return true if the specified instruction is in the Inst list (which was
+  /// passed into the run method).  Clients should implement this with a more
+  /// efficient version if possible.
+  virtual bool isInstInList(Instruction *I,
+                            const SmallVectorImpl<Instruction*> &Insts) const {
+    for (unsigned i = 0, e = Insts.size(); i != e; ++i)
+      if (Insts[i] == I)
+        return true;
+    return false;
+  }
+};
 
 } // End llvm namespace
 
