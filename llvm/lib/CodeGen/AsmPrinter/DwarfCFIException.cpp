@@ -48,7 +48,7 @@ DwarfCFIException::~DwarfCFIException() {}
 /// EndModule - Emit all exception information that should come after the
 /// content.
 void DwarfCFIException::EndModule() {
-  if (Asm->MAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
+  if (!Asm->MAI->isExceptionHandlingDwarf())
     return;
 
   if (!shouldEmitTableModule)

@@ -188,7 +188,15 @@ bool AsmPrinter::doInitialization(Module &M) {
     DD = new DwarfDebug(this, &M);
 
   if (MAI->doesSupportExceptionHandling())
-    DE = new DwarfTableException(this);
+    switch (MAI->getExceptionHandlingType()) {
+    default:
+    case ExceptionHandling::DwarfTable:
+      DE = new DwarfTableException(this);
+      break;
+    case ExceptionHandling::DwarfCFI:
+      DE = new DwarfCFIException(this);
+      break;
+    }
 
   return false;
 }

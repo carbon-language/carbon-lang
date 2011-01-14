@@ -269,8 +269,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
       // instruction between the previous try-range and this one may throw,
       // create a call-site entry with no landing pad for the region between the
       // try-ranges.
-      if (SawPotentiallyThrowing &&
-          Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
+      if (SawPotentiallyThrowing && Asm->MAI->isExceptionHandlingDwarf()) {
         CallSiteEntry Site = { LastLabel, BeginLabel, 0, 0 };
         CallSites.push_back(Site);
         PreviousIsInvoke = false;
@@ -292,8 +291,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         };
 
         // Try to merge with the previous call-site. SJLJ doesn't do this
-        if (PreviousIsInvoke &&
-          Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
+        if (PreviousIsInvoke && Asm->MAI->isExceptionHandlingDwarf()) {
           CallSiteEntry &Prev = CallSites.back();
           if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
             // Extend the range of the previous entry.
@@ -303,7 +301,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         }
 
         // Otherwise, create a new call-site.
-        if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf)
+        if (Asm->MAI->isExceptionHandlingDwarf())
           CallSites.push_back(Site);
         else {
           // SjLj EH must maintain the call sites in the order assigned
@@ -321,8 +319,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   // If some instruction between the previous try-range and the end of the
   // function may throw, create a call-site entry with no landing pad for the
   // region following the try-range.
-  if (SawPotentiallyThrowing &&
-      Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf) {
+  if (SawPotentiallyThrowing && Asm->MAI->isExceptionHandlingDwarf()) {
     CallSiteEntry Site = { LastLabel, 0, 0, 0 };
     CallSites.push_back(Site);
   }
@@ -536,7 +533,7 @@ void DwarfException::EmitExceptionTable() {
     }
   } else {
     // DWARF Exception handling
-    assert(Asm->MAI->getExceptionHandlingType() == ExceptionHandling::Dwarf);
+    assert(Asm->MAI->isExceptionHandlingDwarf());
 
     // The call-site table is a list of all call sites that may throw an
     // exception (including C++ 'throw' statements) in the procedure

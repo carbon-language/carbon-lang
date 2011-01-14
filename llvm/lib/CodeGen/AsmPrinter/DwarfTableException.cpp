@@ -277,7 +277,7 @@ void DwarfTableException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 /// EndModule - Emit all exception information that should come after the
 /// content.
 void DwarfTableException::EndModule() {
-  if (Asm->MAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
+  if (!Asm->MAI->isExceptionHandlingDwarf())
     return;
 
   if (!shouldEmitMovesModule && !shouldEmitTableModule)
