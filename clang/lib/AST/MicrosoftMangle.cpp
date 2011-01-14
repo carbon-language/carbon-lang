@@ -1011,6 +1011,12 @@ void MicrosoftCXXNameMangler::mangleType(const TemplateTypeParmType *T) {
   assert(false && "Don't know how to mangle TemplateTypeParmTypes yet!");
 }
 
+void MicrosoftCXXNameMangler::mangleType(
+                                       const SubstTemplateTypeParmPackType *T) {
+  assert(false && 
+         "Don't know how to mangle SubstTemplateTypeParmPackTypes yet!");
+}
+
 // <type> ::= <pointer-type>
 // <pointer-type> ::= <pointer-cvr-qualifiers> <cvr-qualifiers> <type>
 void MicrosoftCXXNameMangler::mangleType(const PointerType *T) {

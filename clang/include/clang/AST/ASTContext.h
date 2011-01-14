@@ -102,6 +102,8 @@ class ASTContext {
   mutable llvm::FoldingSet<TemplateTypeParmType> TemplateTypeParmTypes;
   mutable llvm::FoldingSet<SubstTemplateTypeParmType>
     SubstTemplateTypeParmTypes;
+  mutable llvm::FoldingSet<SubstTemplateTypeParmPackType>
+    SubstTemplateTypeParmPackTypes;
   mutable llvm::ContextualFoldingSet<TemplateSpecializationType, ASTContext&>
     TemplateSpecializationTypes;
   mutable llvm::FoldingSet<ParenType> ParenTypes;
@@ -664,6 +666,9 @@ public:
 
   QualType getSubstTemplateTypeParmType(const TemplateTypeParmType *Replaced,
                                         QualType Replacement) const;
+  QualType getSubstTemplateTypeParmPackType(
+                                          const TemplateTypeParmType *Replaced,
+                                            const TemplateArgument &ArgPack);
 
   QualType getTemplateTypeParmType(unsigned Depth, unsigned Index,
                                    bool ParameterPack,

@@ -1383,6 +1383,11 @@ void CXXNameMangler::mangleType(const TemplateTypeParmType *T) {
   mangleTemplateParameter(T->getIndex());
 }
 
+// <type>           ::= <template-param>
+void CXXNameMangler::mangleType(const SubstTemplateTypeParmPackType *T) {
+  mangleTemplateParameter(T->getReplacedParameter()->getIndex());
+}
+
 // <type> ::= P <type>   # pointer-to
 void CXXNameMangler::mangleType(const PointerType *T) {
   Out << 'P';

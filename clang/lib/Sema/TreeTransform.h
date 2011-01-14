@@ -3927,6 +3927,13 @@ QualType TreeTransform<Derived>::TransformSubstTemplateTypeParmType(
 }
 
 template<typename Derived>
+QualType TreeTransform<Derived>::TransformSubstTemplateTypeParmPackType(
+                                          TypeLocBuilder &TLB,
+                                          SubstTemplateTypeParmPackTypeLoc TL) {
+  return TransformTypeSpecType(TLB, TL);
+}
+
+template<typename Derived>
 QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
                                                         TypeLocBuilder &TLB,
                                            TemplateSpecializationTypeLoc TL) {

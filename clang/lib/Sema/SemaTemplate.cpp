@@ -2713,6 +2713,11 @@ bool UnnamedLocalNoLinkageFinder::VisitTemplateTypeParmType(
   return false;
 }
 
+bool UnnamedLocalNoLinkageFinder::VisitSubstTemplateTypeParmPackType(
+                                        const SubstTemplateTypeParmPackType *) {
+  return false;
+}
+
 bool UnnamedLocalNoLinkageFinder::VisitTemplateSpecializationType(
                                             const TemplateSpecializationType*) {
   return false;

@@ -1244,6 +1244,34 @@ bool EnumType::classof(const TagType *TT) {
   return isa<EnumDecl>(TT->getDecl());
 }
 
+SubstTemplateTypeParmPackType::
+SubstTemplateTypeParmPackType(const TemplateTypeParmType *Param, 
+                              QualType Canon,
+                              const TemplateArgument &ArgPack)
+  : Type(SubstTemplateTypeParmPack, Canon, true, false, true), Replaced(Param), 
+    Arguments(ArgPack.pack_begin()), NumArguments(ArgPack.pack_size()) 
+{ 
+}
+
+TemplateArgument SubstTemplateTypeParmPackType::getArgumentPack() const {
+  return TemplateArgument(Arguments, NumArguments);
+}
+
+void SubstTemplateTypeParmPackType::Profile(llvm::FoldingSetNodeID &ID) {
+  Profile(ID, getReplacedParameter(), getArgumentPack());
+}
+
+void SubstTemplateTypeParmPackType::Profile(llvm::FoldingSetNodeID &ID,
+                                           const TemplateTypeParmType *Replaced,
+                                            const TemplateArgument &ArgPack) {
+  ID.AddPointer(Replaced);
+  ID.AddInteger(ArgPack.pack_size());
+  for (TemplateArgument::pack_iterator P = ArgPack.pack_begin(), 
+                                    PEnd = ArgPack.pack_end();
+       P != PEnd; ++P)
+    ID.AddPointer(P->getAsType().getAsOpaquePtr());
+}
+
 bool TemplateSpecializationType::
 anyDependentTemplateArguments(const TemplateArgumentListInfo &Args) {
   return anyDependentTemplateArguments(Args.getArgumentArray(), Args.size());

@@ -1932,6 +1932,42 @@ ASTContext::getSubstTemplateTypeParmType(const TemplateTypeParmType *Parm,
   return QualType(SubstParm, 0);
 }
 
+/// \brief Retrieve a 
+QualType ASTContext::getSubstTemplateTypeParmPackType(
+                                          const TemplateTypeParmType *Parm,
+                                              const TemplateArgument &ArgPack) {
+#ifndef NDEBUG
+  for (TemplateArgument::pack_iterator P = ArgPack.pack_begin(), 
+                                    PEnd = ArgPack.pack_end();
+       P != PEnd; ++P) {
+    assert(P->getKind() == TemplateArgument::Type &&"Pack contains a non-type");
+    assert(P->getAsType().isCanonical() && "Pack contains non-canonical type");
+  }
+#endif
+  
+  llvm::FoldingSetNodeID ID;
+  SubstTemplateTypeParmPackType::Profile(ID, Parm, ArgPack);
+  void *InsertPos = 0;
+  if (SubstTemplateTypeParmPackType *SubstParm
+        = SubstTemplateTypeParmPackTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(SubstParm, 0);
+  
+  QualType Canon;
+  if (!Parm->isCanonicalUnqualified()) {
+    Canon = getCanonicalType(QualType(Parm, 0));
+    Canon = getSubstTemplateTypeParmPackType(cast<TemplateTypeParmType>(Canon),
+                                             ArgPack);
+    SubstTemplateTypeParmPackTypes.FindNodeOrInsertPos(ID, InsertPos);
+  }
+
+  SubstTemplateTypeParmPackType *SubstParm
+    = new (*this, TypeAlignment) SubstTemplateTypeParmPackType(Parm, Canon,
+                                                               ArgPack);
+  Types.push_back(SubstParm);
+  SubstTemplateTypeParmTypes.InsertNode(SubstParm, InsertPos);
+  return QualType(SubstParm, 0);  
+}
+
 /// \brief Retrieve the template type parameter type for a template
 /// parameter or parameter pack with the given depth, index, and (optionally)
 /// name.

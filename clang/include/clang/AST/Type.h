@@ -2860,6 +2860,59 @@ public:
   static bool classof(const SubstTemplateTypeParmType *T) { return true; }
 };
 
+/// \brief Represents the result of substituting a set of types for a template
+/// type parameter pack.
+///
+/// When a pack expansion in the source code contains multiple parameter packs
+/// and those parameter packs correspond to different levels of template
+/// parameter lists, this type node is used to represent a template type 
+/// parameter pack from an outer level, which has already had its argument pack
+/// substituted but that still lives within a pack expansion that itself
+/// could not be instantiated. When actually performing a substitution into
+/// that pack expansion (e.g., when all template parameters have corresponding
+/// arguments), this type will be replaced with the \c SubstTemplateTypeParmType
+/// at the current pack substitution index.
+class SubstTemplateTypeParmPackType : public Type, public llvm::FoldingSetNode {
+  /// \brief The original type parameter.
+  const TemplateTypeParmType *Replaced;
+  
+  /// \brief A pointer to the set of template arguments that this
+  /// parameter pack is instantiated with.
+  const TemplateArgument *Arguments;
+  
+  /// \brief The number of template arguments in \c Arguments.
+  unsigned NumArguments;
+  
+  SubstTemplateTypeParmPackType(const TemplateTypeParmType *Param, 
+                                QualType Canon,
+                                const TemplateArgument &ArgPack);
+  
+  friend class ASTContext;
+  
+public:
+  IdentifierInfo *getName() const { return Replaced->getName(); }
+  
+  /// Gets the template parameter that was substituted for.
+  const TemplateTypeParmType *getReplacedParameter() const {
+    return Replaced;
+  }
+  
+  bool isSugared() const { return false; }
+  QualType desugar() const { return QualType(this, 0); }
+  
+  TemplateArgument getArgumentPack() const;
+  
+  void Profile(llvm::FoldingSetNodeID &ID);
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      const TemplateTypeParmType *Replaced,
+                      const TemplateArgument &ArgPack);
+  
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == SubstTemplateTypeParmPack;
+  }
+  static bool classof(const SubstTemplateTypeParmPackType *T) { return true; }
+};
+
 /// \brief Represents the type of a template specialization as written
 /// in the source code.
 ///

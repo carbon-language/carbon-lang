@@ -712,6 +712,12 @@ namespace {
     QualType TransformTemplateTypeParmType(TypeLocBuilder &TLB,
                                            TemplateTypeParmTypeLoc TL);
 
+    /// \brief Transforms an already-substituted template type parameter pack
+    /// into either itself (if we aren't substituting into its pack expansion)
+    /// or the appropriate substituted argument.
+    QualType TransformSubstTemplateTypeParmPackType(TypeLocBuilder &TLB,
+                                           SubstTemplateTypeParmPackTypeLoc TL);
+
     ExprResult TransformCallExpr(CallExpr *CE) {
       getSema().CallsUndergoingInstantiation.push_back(CE);
       ExprResult Result =
@@ -1024,10 +1030,15 @@ TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
              "Missing argument pack");
       
       if (getSema().ArgumentPackSubstitutionIndex == -1) {
-        // FIXME: Variadic templates fun case.
-        getSema().Diag(TL.getSourceRange().getBegin(), 
-                       diag::err_pack_expansion_mismatch_unsupported);
-        return QualType();
+        // We have the template argument pack, but we're not expanding the
+        // enclosing pack expansion yet. Just save the template argument
+        // pack for later substitution.
+        QualType Result
+          = getSema().Context.getSubstTemplateTypeParmPackType(T, Arg);
+        SubstTemplateTypeParmPackTypeLoc NewTL
+          = TLB.push<SubstTemplateTypeParmPackTypeLoc>(Result);
+        NewTL.setNameLoc(TL.getNameLoc());
+        return Result;
       }
       
       assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
@@ -1059,6 +1070,32 @@ TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
                                                 T->isParameterPack(),
                                                 T->getName());
   TemplateTypeParmTypeLoc NewTL = TLB.push<TemplateTypeParmTypeLoc>(Result);
+  NewTL.setNameLoc(TL.getNameLoc());
+  return Result;
+}
+
+QualType 
+TemplateInstantiator::TransformSubstTemplateTypeParmPackType(
+                                                            TypeLocBuilder &TLB,
+                                         SubstTemplateTypeParmPackTypeLoc TL) {
+  if (getSema().ArgumentPackSubstitutionIndex == -1) {
+    // We aren't expanding the parameter pack, so just return ourselves.
+    SubstTemplateTypeParmPackTypeLoc NewTL
+      = TLB.push<SubstTemplateTypeParmPackTypeLoc>(TL.getType());
+    NewTL.setNameLoc(TL.getNameLoc());
+    return TL.getType();
+  }
+  
+  const TemplateArgument &ArgPack = TL.getTypePtr()->getArgumentPack();
+  unsigned Index = (unsigned)getSema().ArgumentPackSubstitutionIndex;
+  assert(Index < ArgPack.pack_size() && "Substitution index out-of-range");
+  
+  QualType Result = ArgPack.pack_begin()[Index].getAsType();
+  Result = getSema().Context.getSubstTemplateTypeParmType(
+                                      TL.getTypePtr()->getReplacedParameter(),
+                                                          Result);
+  SubstTemplateTypeParmTypeLoc NewTL
+    = TLB.push<SubstTemplateTypeParmTypeLoc>(Result);
   NewTL.setNameLoc(TL.getNameLoc());
   return Result;
 }

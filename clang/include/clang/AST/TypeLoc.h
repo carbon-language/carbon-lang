@@ -592,6 +592,13 @@ class SubstTemplateTypeParmTypeLoc :
                                      SubstTemplateTypeParmType> {
 };
 
+  /// \brief Wrapper for substituted template type parameters.
+class SubstTemplateTypeParmPackTypeLoc :
+    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                     SubstTemplateTypeParmPackTypeLoc,
+                                     SubstTemplateTypeParmPackType> {
+};
+
 struct AttributedLocInfo {
   union {
     Expr *ExprOperand;

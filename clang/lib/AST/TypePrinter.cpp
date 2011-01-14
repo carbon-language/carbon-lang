@@ -568,6 +568,12 @@ void TypePrinter::printSubstTemplateTypeParm(const SubstTemplateTypeParmType *T,
   print(T->getReplacementType(), S);
 }
 
+void TypePrinter::printSubstTemplateTypeParmPack(
+                                        const SubstTemplateTypeParmPackType *T, 
+                                             std::string &S) { 
+  printTemplateTypeParm(T->getReplacedParameter(), S);
+}
+
 void TypePrinter::printTemplateSpecialization(
                                             const TemplateSpecializationType *T, 
                                               std::string &S) { 
