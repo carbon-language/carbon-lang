@@ -629,10 +629,12 @@ protected:
                                 Constant *C2);
   static Constant *getSelectTy(const Type *Ty,
                                Constant *C1, Constant *C2, Constant *C3);
+  template<typename IndexTy>
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
-                                      Value* const *Idxs, unsigned NumIdxs);
+                                      IndexTy const *Idxs, unsigned NumIdxs);
+  template<typename IndexTy>
   static Constant *getInBoundsGetElementPtrTy(const Type *Ty, Constant *C,
-                                              Value* const *Idxs,
+                                              IndexTy const *Idxs,
                                               unsigned NumIdxs);
   static Constant *getExtractElementTy(const Type *Ty, Constant *Val,
                                        Constant *Idx);
@@ -645,6 +647,14 @@ protected:
   static Constant *getInsertValueTy(const Type *Ty, Constant *Agg,
                                     Constant *Val,
                                     const unsigned *Idxs, unsigned NumIdxs);
+  template<typename IndexTy>
+  static Constant *getGetElementPtrImpl(Constant *C,
+                                        IndexTy const *IdxList,
+                                        unsigned NumIdx);
+  template<typename IndexTy>
+  static Constant *getInBoundsGetElementPtrImpl(Constant *C,
+                                                IndexTy const *IdxList,
+                                                unsigned NumIdx);
 
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that

@@ -2067,53 +2067,52 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
 
 /// isInBoundsIndices - Test whether the given sequence of *normalized* indices
 /// is "inbounds".
-static bool isInBoundsIndices(Constant *const *Idxs, size_t NumIdx) {
+template<typename IndexTy>
+static bool isInBoundsIndices(IndexTy const *Idxs, size_t NumIdx) {
   // No indices means nothing that could be out of bounds.
   if (NumIdx == 0) return true;
 
   // If the first index is zero, it's in bounds.
-  if (Idxs[0]->isNullValue()) return true;
+  if (cast<Constant>(Idxs[0])->isNullValue()) return true;
 
   // If the first index is one and all the rest are zero, it's in bounds,
   // by the one-past-the-end rule.
   if (!cast<ConstantInt>(Idxs[0])->isOne())
     return false;
   for (unsigned i = 1, e = NumIdx; i != e; ++i)
-    if (!Idxs[i]->isNullValue())
+    if (!cast<Constant>(Idxs[i])->isNullValue())
       return false;
   return true;
 }
 
-Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
-                                          bool inBounds,
-                                          Constant* const *Idxs,
-                                          unsigned NumIdx) {
+template<typename IndexTy>
+static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
+                                               bool inBounds,
+                                               IndexTy const *Idxs,
+                                               unsigned NumIdx) {
+  Constant *Idx0 = cast<Constant>(Idxs[0]);
   if (NumIdx == 0 ||
-      (NumIdx == 1 && Idxs[0]->isNullValue()))
+      (NumIdx == 1 && Idx0->isNullValue()))
     return C;
 
   if (isa<UndefValue>(C)) {
     const PointerType *Ptr = cast<PointerType>(C->getType());
-    const Type *Ty = GetElementPtrInst::getIndexedType(Ptr,
-                                                       (Value **)Idxs,
-                                                       (Value **)Idxs+NumIdx);
+    const Type *Ty = GetElementPtrInst::getIndexedType(Ptr, Idxs, Idxs+NumIdx);
     assert(Ty != 0 && "Invalid indices for GEP!");
     return UndefValue::get(PointerType::get(Ty, Ptr->getAddressSpace()));
   }
 
-  Constant *Idx0 = Idxs[0];
   if (C->isNullValue()) {
     bool isNull = true;
     for (unsigned i = 0, e = NumIdx; i != e; ++i)
-      if (!Idxs[i]->isNullValue()) {
+      if (!cast<Constant>(Idxs[i])->isNullValue()) {
         isNull = false;
         break;
       }
     if (isNull) {
       const PointerType *Ptr = cast<PointerType>(C->getType());
-      const Type *Ty = GetElementPtrInst::getIndexedType(Ptr,
-                                                         (Value**)Idxs,
-                                                         (Value**)Idxs+NumIdx);
+      const Type *Ty = GetElementPtrInst::getIndexedType(Ptr, Idxs,
+                                                         Idxs+NumIdx);
       assert(Ty != 0 && "Invalid indices for GEP!");
       return  ConstantPointerNull::get(
                             PointerType::get(Ty,Ptr->getAddressSpace()));
@@ -2208,7 +2207,7 @@ Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
                                                    ATy->getNumElements());
             NewIdxs[i] = ConstantExpr::getSRem(CI, Factor);
 
-            Constant *PrevIdx = Idxs[i-1];
+            Constant *PrevIdx = cast<Constant>(Idxs[i-1]);
             Constant *Div = ConstantExpr::getSDiv(CI, Factor);
 
             // Before adding, extend both operands to i64 to avoid
@@ -2236,7 +2235,7 @@ Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
   // If we did any factoring, start over with the adjusted indices.
   if (!NewIdxs.empty()) {
     for (unsigned i = 0; i != NumIdx; ++i)
-      if (!NewIdxs[i]) NewIdxs[i] = Idxs[i];
+      if (!NewIdxs[i]) NewIdxs[i] = cast<Constant>(Idxs[i]);
     return inBounds ?
       ConstantExpr::getInBoundsGetElementPtr(C, NewIdxs.data(),
                                              NewIdxs.size()) :
@@ -2250,4 +2249,18 @@ Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
     return ConstantExpr::getInBoundsGetElementPtr(C, Idxs, NumIdx);
 
   return 0;
+}
+
+Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
+                                          bool inBounds,
+                                          Constant* const *Idxs,
+                                          unsigned NumIdx) {
+  return ConstantFoldGetElementPtrImpl(C, inBounds, Idxs, NumIdx);
+}
+
+Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
+                                          bool inBounds,
+                                          Value* const *Idxs,
+                                          unsigned NumIdx) {
+  return ConstantFoldGetElementPtrImpl(C, inBounds, Idxs, NumIdx);
 }

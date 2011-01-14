@@ -458,6 +458,9 @@ public:
                                     Value* const *Idx, unsigned NumIdx);
 
   static const Type *getIndexedType(const Type *Ptr,
+                                    Constant* const *Idx, unsigned NumIdx);
+
+  static const Type *getIndexedType(const Type *Ptr,
                                     uint64_t const *Idx, unsigned NumIdx);
 
   static const Type *getIndexedType(const Type *Ptr, Value *Idx);

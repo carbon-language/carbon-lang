@@ -1174,6 +1174,12 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
 }
 
 const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
+                                              Constant* const *Idxs,
+                                              unsigned NumIdx) {
+  return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
+}
+
+const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
                                               uint64_t const *Idxs,
                                               unsigned NumIdx) {
   return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
