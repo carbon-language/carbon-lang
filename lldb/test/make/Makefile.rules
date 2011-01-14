@@ -175,3 +175,14 @@ ifeq "$(DYLIB_NAME)" ""
 else
 	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(DYLIB_OBJECTS) $(DYLIB_NAME) $(DYLIB_NAME).dSYM
 endif
+
+#----------------------------------------------------------------------
+# From http://blog.melski.net/tag/debugging-makefiles/
+# 
+# Usage: make print-CC print-CXX print-LD
+#----------------------------------------------------------------------
+print-%:
+	@echo '$*=$($*)'
+	@echo '  origin = $(origin $*)'
+	@echo '  flavor = $(flavor $*)'
+	@echo '   value = $(value  $*)'
