@@ -1607,13 +1607,13 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     SDValue N0 = Node->getOperand(0);
     SDValue N1 = Node->getOperand(1);
     
-    unsigned LoReg, HiReg;
+    unsigned LoReg;
     switch (NVT.getSimpleVT().SimpleTy) {
     default: llvm_unreachable("Unsupported VT!");
-    case MVT::i8:  LoReg = X86::AL;  HiReg = X86::AH;  Opc = X86::MUL8r; break;
-    case MVT::i16: LoReg = X86::AX;  HiReg = X86::DX;  Opc = X86::MUL16r; break;
-    case MVT::i32: LoReg = X86::EAX; HiReg = X86::EDX; Opc = X86::MUL32r; break;
-    case MVT::i64: LoReg = X86::RAX; HiReg = X86::RDX; Opc = X86::MUL64r; break;
+    case MVT::i8:  LoReg = X86::AL;  Opc = X86::MUL8r; break;
+    case MVT::i16: LoReg = X86::AX;  Opc = X86::MUL16r; break;
+    case MVT::i32: LoReg = X86::EAX; Opc = X86::MUL32r; break;
+    case MVT::i64: LoReg = X86::RAX; Opc = X86::MUL64r; break;
     }
     
     SDValue InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, LoReg,
