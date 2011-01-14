@@ -3487,7 +3487,13 @@ ClangASTContext::CompleteTagDeclarationDefinition (clang_type_t clang_type)
 #pragma mark Enumeration Types
 
 clang_type_t
-ClangASTContext::CreateEnumerationType (const Declaration &decl, const char *name, clang_type_t integer_qual_type)
+ClangASTContext::CreateEnumerationType 
+(
+    const char *name, 
+    DeclContext *decl_ctx, 
+    const Declaration &decl, 
+    clang_type_t integer_qual_type
+)
 {
     // TODO: Do something intelligent with the Declaration object passed in
     // like maybe filling in the SourceLocation with it...
@@ -3499,7 +3505,7 @@ ClangASTContext::CreateEnumerationType (const Declaration &decl, const char *nam
 //    const bool IsFixed = false;
 
     EnumDecl *enum_decl = EnumDecl::Create (*ast_context,
-                                            ast_context->getTranslationUnitDecl(),
+                                            decl_ctx,
                                             SourceLocation(),
                                             name && name[0] ? &ast_context->Idents.get(name) : NULL,
                                             SourceLocation(),

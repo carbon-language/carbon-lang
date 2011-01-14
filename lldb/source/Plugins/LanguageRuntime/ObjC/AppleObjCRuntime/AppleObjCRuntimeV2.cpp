@@ -124,40 +124,45 @@ AppleObjCRuntimeV2::SetExceptionBreakpoints ()
     }
 }
 
-struct BufStruct {
-    char contents[1024];
-};
-
 ClangUtilityFunction *
 AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
 {
-    std::auto_ptr<BufStruct> buf(new BufStruct);
+    char check_function_code[1024];
     
+    int len = 0;
     if (m_has_object_getClass)
     {
-        assert(snprintf(&buf->contents[0], sizeof(buf->contents),
-                        "extern \"C\" void *gdb_object_getClass(void *);      \n"
-                        "extern \"C\" void                                  \n"
-                        "%s(void *$__lldb_arg_obj)                          \n"
-                        "{                                                  \n"
-                        "   if (!gdb_object_getClass($__lldb_arg_obj))      \n"
-                        "       abort();                                    \n"
-                        "}                                                  \n",
-                        name) < sizeof(buf->contents));
+        len = ::snprintf (check_function_code, 
+                          sizeof(check_function_code),
+                          "extern \"C\" void *gdb_object_getClass(void *);    \n"
+                          "extern \"C\" void                                  \n"
+                          "%s(void *$__lldb_arg_obj)                          \n"
+                          "{                                                  \n"
+                          "   if ($__lldb_arg_obj == (void *)0)               \n"
+                          "       return; // nil is ok                        \n" 
+                          "   if (!gdb_object_getClass($__lldb_arg_obj))      \n"
+                          "       *((volatile int *)0) = 'ocgc';              \n"
+                          "}                                                  \n",
+                          name);
     }
     else
     {
-        assert(snprintf(&buf->contents[0], sizeof(buf->contents), 
-                        "extern \"C\" void *gdb_class_getClass(void *);         \n"
-                        "extern \"C\" void                                    \n"
-                        "%s(void *$__lldb_arg_obj)                            \n"
-                        "{                                                    \n"
-                        "    void **$isa_ptr = (void **)$__lldb_arg_obj;      \n"
-                        "    if (!$isa_ptr || !gdb_class_getClass(*$isa_ptr)) \n"
-                        "        abort();                                     \n"
-                        "}                                                    \n", 
-                        name) < sizeof(buf->contents));
+        len = ::snprintf (check_function_code, 
+                          sizeof(check_function_code), 
+                          "extern \"C\" void *gdb_class_getClass(void *);       \n"
+                          "extern \"C\" void                                    \n"
+                          "%s(void *$__lldb_arg_obj)                            \n"
+                          "{                                                    \n"
+                          "   if ($__lldb_arg_obj == (void *)0)                 \n"
+                          "       return; // nil is ok                          \n" 
+                          "    void **$isa_ptr = (void **)$__lldb_arg_obj;      \n"
+                          "    if (!gdb_class_getClass(*$isa_ptr))              \n"
+                          "       *((volatile int *)0) = 'ocgc';                \n"
+                          "}                                                    \n", 
+                          name);
     }
     
-    return new ClangUtilityFunction(buf->contents, name);
+    assert (len < sizeof(check_function_code));
+
+    return new ClangUtilityFunction(check_function_code, name);
 }

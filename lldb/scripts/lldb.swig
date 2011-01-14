@@ -18,11 +18,11 @@
   if (PyList_Check($input)) {
     int size = PyList_Size($input);
     int i = 0;
-    $1 = (char **) malloc((size+1) * sizeof(char));
+    $1 = (char **) malloc((size+1) * sizeof(char*));
     for (i = 0; i < size; i++) {
       PyObject *o = PyList_GetItem($input,i);
       if (PyString_Check(o))
-        $1[i] = PyString_AsString(PyList_GetItem($input,i));
+        $1[i] = PyString_AsString(o);
       else {
         PyErr_SetString(PyExc_TypeError,"list must contain strings");
         free($1);
@@ -53,6 +53,43 @@
   }
 }
 
+
+
+// typemap for an outgoing buffer
+%typemap(in) (const void *wbuffer, size_t len) {
+   if (!PyString_Check($input)) {
+       PyErr_SetString(PyExc_ValueError, "Expecting a string");
+       return NULL;
+   }
+   $1 = (void *) PyString_AsString($input);
+   $2 = PyString_Size($input);
+}
+
+// typemap for an incoming buffer
+%typemap(in) (void *rbuffer, size_t len) {
+   if (!PyInt_Check($input)) {
+       PyErr_SetString(PyExc_ValueError, "Expecting an integer");
+       return NULL;
+   }
+   $2 = PyInt_AsLong($input);
+   if ($2 < 0) {
+       PyErr_SetString(PyExc_ValueError, "Positive integer expected");
+       return NULL;
+   }
+   $1 = (void *) malloc($2);
+}
+
+// Return the buffer.  Discarding any previous return result
+%typemap(argout) (void *rbuffer, size_t len) {
+   Py_XDECREF($result);   /* Blow away any previous result */
+   if (result < 0) {      /* Check for I/O error */
+       free($1);
+       PyErr_SetFromErrno(PyExc_IOError);
+       return NULL;
+   }
+   $result = PyString_FromStringAndSize($1,result);
+   free($1);
+}
 
 /* The liblldb header files to be included. */
 

@@ -64,9 +64,12 @@ public:
     /// @param[in] type
     ///     The type for \a err.
     //------------------------------------------------------------------
+    Error ();
+    
     explicit
-    Error (ValueType err = 0, lldb::ErrorType type = lldb::eErrorTypeGeneric);
+    Error (ValueType err, lldb::ErrorType type = lldb::eErrorTypeGeneric);
 
+    Error (const Error &rhs);
     //------------------------------------------------------------------
     /// Assignment operator.
     ///

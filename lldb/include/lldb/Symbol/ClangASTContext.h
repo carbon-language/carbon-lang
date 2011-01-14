@@ -506,7 +506,10 @@ public:
     // Enumeration Types
     //------------------------------------------------------------------
     lldb::clang_type_t
-    CreateEnumerationType (const Declaration &decl, const char *name, lldb::clang_type_t integer_qual_type);
+    CreateEnumerationType (const char *name, 
+                           clang::DeclContext *decl_ctx, 
+                           const Declaration &decl, 
+                           lldb::clang_type_t integer_qual_type);
 
     static lldb::clang_type_t
     GetEnumerationIntegerType (lldb::clang_type_t enum_clang_type);

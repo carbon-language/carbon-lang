@@ -27,6 +27,13 @@
 using namespace lldb;
 using namespace lldb_private;
 
+Error::Error ():
+    m_code (0),
+    m_type (eErrorTypeInvalid),
+    m_string ()
+{
+}
+
 //----------------------------------------------------------------------
 // Default constructor
 //----------------------------------------------------------------------
@@ -36,6 +43,14 @@ Error::Error(ValueType err, ErrorType type) :
     m_string ()
 {
 }
+
+Error::Error (const Error &rhs) :
+    m_code (rhs.m_code),
+    m_type (rhs.m_type),
+    m_string (rhs.m_string)
+{
+}
+
 //----------------------------------------------------------------------
 // Assignment operator
 //----------------------------------------------------------------------
