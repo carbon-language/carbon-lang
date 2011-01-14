@@ -125,7 +125,8 @@ namespace llvm {
       PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
     
     // Start of function pass.
-    PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
+    // Break up aggregate allocas, using SSAUpdater.
+    PM->add(createScalarReplAggregatesPass(-1, false));
     PM->add(createEarlyCSEPass());              // Catch trivial redundancies
     if (OptimizeBuiltins)
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
