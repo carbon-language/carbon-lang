@@ -291,10 +291,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
   bool HasFP = hasFP(MF);
 
   // Calculate amount of bytes used for return address storing.
-  int stackGrowth =
-    (TM.getFrameLowering()->getStackGrowthDirection() ==
-     TargetFrameLowering::StackGrowsUp ?
-     TD->getPointerSize() : -TD->getPointerSize());
+  int stackGrowth = -TD->getPointerSize();
 
   // FIXME: This is dirty hack. The code itself is pretty mess right now.
   // It should be rewritten from scratch and generalized sometimes.
@@ -467,7 +464,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
         MachineLocation SPSrc(MachineLocation::VirtualFP, 2 * stackGrowth);
         Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc));
       } else {
-        // FIXME: Verify & implement for FP
         MachineLocation SPDst(StackPtr);
         MachineLocation SPSrc(StackPtr, stackGrowth);
         Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc));
@@ -627,7 +623,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
                               -StackSize + stackGrowth);
         Moves.push_back(MachineMove(Label, SPDst, SPSrc));
       } else {
-        // FIXME: Verify & implement for FP
         MachineLocation SPDst(StackPtr);
         MachineLocation SPSrc(StackPtr, stackGrowth);
         Moves.push_back(MachineMove(Label, SPDst, SPSrc));
