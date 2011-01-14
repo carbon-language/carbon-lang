@@ -557,7 +557,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
     }
 
     const StackFrameContext *SFC = LC->getCurrentStackFrame();
-    CleanedState = StateMgr.RemoveDeadBindings(St, SFC, SymReaper);
+    CleanedState = StateMgr.removeDeadBindings(St, SFC, SymReaper);
   } else {
     CleanedState = EntryNode->getState();
   }

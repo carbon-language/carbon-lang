@@ -153,7 +153,7 @@ public:
   ///  casted and 'CastToTy' the result type of the cast.
   const MemRegion *CastRegion(const MemRegion *region, QualType CastToTy);
 
-  virtual Store RemoveDeadBindings(Store store, const StackFrameContext *LCtx,
+  virtual Store removeDeadBindings(Store store, const StackFrameContext *LCtx,
                                    SymbolReaper& SymReaper,
                       llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 

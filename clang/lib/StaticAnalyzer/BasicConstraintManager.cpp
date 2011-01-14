@@ -90,7 +90,7 @@ public:
   bool isEqual(const GRState* state, SymbolRef sym, const llvm::APSInt& V)
       const;
 
-  const GRState* RemoveDeadBindings(const GRState* state, SymbolReaper& SymReaper);
+  const GRState* removeDeadBindings(const GRState* state, SymbolReaper& SymReaper);
 
   void print(const GRState* state, llvm::raw_ostream& Out,
              const char* nl, const char *sep);
@@ -276,7 +276,7 @@ bool BasicConstraintManager::isEqual(const GRState* state, SymbolRef sym,
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
 /// as marked in LSymbols, mark it as dead in DSymbols.
 const GRState*
-BasicConstraintManager::RemoveDeadBindings(const GRState* state,
+BasicConstraintManager::removeDeadBindings(const GRState* state,
                                            SymbolReaper& SymReaper) {
 
   ConstEqTy CE = state->get<ConstEq>();

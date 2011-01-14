@@ -48,7 +48,7 @@ public:
   virtual bool isEqual(const GRState *state, SymbolRef sym,
                        const llvm::APSInt& V) const = 0;
 
-  virtual const GRState *RemoveDeadBindings(const GRState *state,
+  virtual const GRState *removeDeadBindings(const GRState *state,
                                             SymbolReaper& SymReaper) = 0;
 
   virtual void print(const GRState *state, llvm::raw_ostream& Out,

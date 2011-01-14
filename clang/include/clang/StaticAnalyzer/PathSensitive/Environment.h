@@ -94,7 +94,7 @@ public:
   Environment bindExprAndLocation(Environment Env, const Stmt *S, SVal location,
                                   SVal V);
 
-  Environment RemoveDeadBindings(Environment Env,
+  Environment removeDeadBindings(Environment Env,
                                  SymbolReaper &SymReaper, const GRState *ST,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 };

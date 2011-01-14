@@ -356,9 +356,9 @@ public: // Part of public interface to class.
   // State pruning.
   //===------------------------------------------------------------------===//
 
-  /// RemoveDeadBindings - Scans the RegionStore of 'state' for dead values.
+  /// removeDeadBindings - Scans the RegionStore of 'state' for dead values.
   ///  It returns a new Store with these values removed.
-  Store RemoveDeadBindings(Store store, const StackFrameContext *LCtx,
+  Store removeDeadBindings(Store store, const StackFrameContext *LCtx,
                            SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
@@ -1682,17 +1682,17 @@ RegionBindings RegionStoreManager::removeBinding(RegionBindings B,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class RemoveDeadBindingsWorker :
-  public ClusterAnalysis<RemoveDeadBindingsWorker> {
+class removeDeadBindingsWorker :
+  public ClusterAnalysis<removeDeadBindingsWorker> {
   llvm::SmallVector<const SymbolicRegion*, 12> Postponed;
   SymbolReaper &SymReaper;
   const StackFrameContext *CurrentLCtx;
 
 public:
-  RemoveDeadBindingsWorker(RegionStoreManager &rm, GRStateManager &stateMgr,
+  removeDeadBindingsWorker(RegionStoreManager &rm, GRStateManager &stateMgr,
                            RegionBindings b, SymbolReaper &symReaper,
                            const StackFrameContext *LCtx)
-    : ClusterAnalysis<RemoveDeadBindingsWorker>(rm, stateMgr, b,
+    : ClusterAnalysis<removeDeadBindingsWorker>(rm, stateMgr, b,
                                                 /* includeGlobals = */ false),
       SymReaper(symReaper), CurrentLCtx(LCtx) {}
 
@@ -1706,7 +1706,7 @@ public:
 };
 }
 
-void RemoveDeadBindingsWorker::VisitAddedToCluster(const MemRegion *baseR,
+void removeDeadBindingsWorker::VisitAddedToCluster(const MemRegion *baseR,
                                                    RegionCluster &C) {
 
   if (const VarRegion *VR = dyn_cast<VarRegion>(baseR)) {
@@ -1740,13 +1740,13 @@ void RemoveDeadBindingsWorker::VisitAddedToCluster(const MemRegion *baseR,
   }
 }
 
-void RemoveDeadBindingsWorker::VisitCluster(const MemRegion *baseR,
+void removeDeadBindingsWorker::VisitCluster(const MemRegion *baseR,
                                             BindingKey *I, BindingKey *E) {
   for ( ; I != E; ++I)
     VisitBindingKey(*I);
 }
 
-void RemoveDeadBindingsWorker::VisitBinding(SVal V) {
+void removeDeadBindingsWorker::VisitBinding(SVal V) {
   // Is it a LazyCompoundVal?  All referenced regions are live as well.
   if (const nonloc::LazyCompoundVal *LCS =
       dyn_cast<nonloc::LazyCompoundVal>(&V)) {
@@ -1771,7 +1771,7 @@ void RemoveDeadBindingsWorker::VisitBinding(SVal V) {
     SymReaper.markLive(*SI);
 }
 
-void RemoveDeadBindingsWorker::VisitBindingKey(BindingKey K) {
+void removeDeadBindingsWorker::VisitBindingKey(BindingKey K) {
   const MemRegion *R = K.getRegion();
 
   // Mark this region "live" by adding it to the worklist.  This will cause
@@ -1804,7 +1804,7 @@ void RemoveDeadBindingsWorker::VisitBindingKey(BindingKey K) {
     VisitBinding(*V);
 }
 
-bool RemoveDeadBindingsWorker::UpdatePostponed() {
+bool removeDeadBindingsWorker::UpdatePostponed() {
   // See if any postponed SymbolicRegions are actually live now, after
   // having done a scan.
   bool changed = false;
@@ -1822,13 +1822,13 @@ bool RemoveDeadBindingsWorker::UpdatePostponed() {
   return changed;
 }
 
-Store RegionStoreManager::RemoveDeadBindings(Store store,
+Store RegionStoreManager::removeDeadBindings(Store store,
                                              const StackFrameContext *LCtx,
                                              SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
   RegionBindings B = GetRegionBindings(store);
-  RemoveDeadBindingsWorker W(*this, StateMgr, B, SymReaper, LCtx);
+  removeDeadBindingsWorker W(*this, StateMgr, B, SymReaper, LCtx);
   W.GenerateClusters();
 
   // Enqueue the region roots onto the worklist.

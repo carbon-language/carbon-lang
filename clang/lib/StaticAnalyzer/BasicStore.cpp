@@ -72,9 +72,9 @@ public:
   ///  conversions between arrays and pointers.
   SVal ArrayToPointer(Loc Array) { return Array; }
 
-  /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
+  /// removeDeadBindings - Scans a BasicStore of 'state' for dead values.
   ///  It updatees the GRState object in place with the values removed.
-  Store RemoveDeadBindings(Store store, const StackFrameContext *LCtx,
+  Store removeDeadBindings(Store store, const StackFrameContext *LCtx,
                            SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
@@ -278,7 +278,7 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
   }
 }
 
-Store BasicStoreManager::RemoveDeadBindings(Store store,
+Store BasicStoreManager::removeDeadBindings(Store store,
                                             const StackFrameContext *LCtx,
                                             SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)

@@ -484,7 +484,7 @@ public:
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
   SubEngine& getOwningEngine() { return Eng; }
 
-  const GRState* RemoveDeadBindings(const GRState* St,
+  const GRState* removeDeadBindings(const GRState* St,
                                     const StackFrameContext *LCtx,
                                     SymbolReaper& SymReaper);
 

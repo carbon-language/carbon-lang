@@ -243,7 +243,7 @@ public:
     return i ? *i == V : false;
   }
 
-  const GRState* RemoveDeadBindings(const GRState* St, SymbolReaper& SymReaper);
+  const GRState* removeDeadBindings(const GRState* St, SymbolReaper& SymReaper);
 
   void print(const GRState* St, llvm::raw_ostream& Out,
              const char* nl, const char *sep);
@@ -268,7 +268,7 @@ const llvm::APSInt* RangeConstraintManager::getSymVal(const GRState* St,
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
 /// as marked in LSymbols, mark it as dead in DSymbols.
 const GRState*
-RangeConstraintManager::RemoveDeadBindings(const GRState* state,
+RangeConstraintManager::removeDeadBindings(const GRState* state,
                                            SymbolReaper& SymReaper) {
 
   ConstraintRangeTy CR = state->get<ConstraintRange>();

@@ -140,7 +140,7 @@ static inline bool IsLocation(const Stmt *S) {
   return (bool) (((uintptr_t) S) & 0x1);
 }
 
-// RemoveDeadBindings:
+// removeDeadBindings:
 //  - Remove subexpression bindings.
 //  - Remove dead block expression bindings.
 //  - Keep live block expression bindings:
@@ -148,7 +148,7 @@ static inline bool IsLocation(const Stmt *S) {
 //     see ScanReachableSymbols.
 //   - Mark the region in DRoots if the binding is a loc::MemRegionVal.
 Environment
-EnvironmentManager::RemoveDeadBindings(Environment Env,
+EnvironmentManager::removeDeadBindings(Environment Env,
                                        SymbolReaper &SymReaper,
                                        const GRState *ST,
                               llvm::SmallVectorImpl<const MemRegion*> &DRoots) {

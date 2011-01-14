@@ -36,7 +36,7 @@ GRStateManager::~GRStateManager() {
 }
 
 const GRState*
-GRStateManager::RemoveDeadBindings(const GRState* state,
+GRStateManager::removeDeadBindings(const GRState* state,
                                    const StackFrameContext *LCtx,
                                    SymbolReaper& SymReaper) {
 
@@ -49,14 +49,14 @@ GRStateManager::RemoveDeadBindings(const GRState* state,
   llvm::SmallVector<const MemRegion*, 10> RegionRoots;
   GRState NewState = *state;
 
-  NewState.Env = EnvMgr.RemoveDeadBindings(NewState.Env, SymReaper,
+  NewState.Env = EnvMgr.removeDeadBindings(NewState.Env, SymReaper,
                                            state, RegionRoots);
 
   // Clean up the store.
-  NewState.St = StoreMgr->RemoveDeadBindings(NewState.St, LCtx, 
+  NewState.St = StoreMgr->removeDeadBindings(NewState.St, LCtx, 
                                              SymReaper, RegionRoots);
   state = getPersistentState(NewState);
-  return ConstraintMgr->RemoveDeadBindings(state, SymReaper);
+  return ConstraintMgr->removeDeadBindings(state, SymReaper);
 }
 
 const GRState *GRStateManager::MarshalState(const GRState *state,
