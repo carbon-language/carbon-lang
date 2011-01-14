@@ -82,10 +82,7 @@ namespace llvm {
     if (OptimizationLevel > 0) {
       createStandardAliasAnalysisPasses(PM);
       PM->add(createCFGSimplificationPass());
-      if (OptimizationLevel == 1)
-        PM->add(createPromoteMemoryToRegisterPass());
-      else
-        PM->add(createScalarReplAggregatesPass());
+      PM->add(createScalarReplAggregatesPass());
       PM->add(createInstructionCombiningPass());
     }
   }
