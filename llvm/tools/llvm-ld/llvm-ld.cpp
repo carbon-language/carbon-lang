@@ -178,7 +178,7 @@ static char ** CopyEnv(char ** const envp) {
 
   // Allocate a new environment list.
   char **newenv = new char* [entries];
-  if ((newenv = new char* [entries]) == NULL)
+  if (newenv == NULL)
     return NULL;
 
   // Make a copy of the list.  Don't forget the NULL that ends the list.
