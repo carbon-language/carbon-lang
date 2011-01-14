@@ -186,9 +186,9 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   if (MAI->doesSupportDebugInformation())
     DD = new DwarfDebug(this, &M);
-    
+
   if (MAI->doesSupportExceptionHandling())
-    DE = new DwarfException(this);
+    DE = new DwarfTableException(this);
 
   return false;
 }
