@@ -102,11 +102,11 @@ Test_NSArray ()
     NSArray *array1 = [NSArray arrayWithObjects: @"array1 object1", @"array1 object2", @"array1 object3", nil];
     NSArray *array2 = [NSArray arrayWithObjects: array1, @"array2 object2", @"array2 object3", nil];
     // Expressions to test here for NSArray:
+    // expression [nil_mutable_array count]
     // expression [array1 count]
     // expression array1.count
     // expression [array2 count]
     // expression array2.count
-    // expression [nil_mutable_array count]
     id obj;
     // After each object at index call, use expression and validate object
     obj = [array1 objectAtIndex: 0];

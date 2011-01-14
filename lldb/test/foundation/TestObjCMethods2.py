@@ -106,6 +106,8 @@ class FoundationTestCase2(TestBase):
 
         # Test_NSArray:
         self.runCmd("thread backtrace")
+        self.expect("expression (int)[nil_mutable_array count]",
+            patterns = ["\(int\) \$.* = 0"])
         self.expect("expression (int)[array1 count]",
             patterns = ["\(int\) \$.* = 3"])
         self.expect("expression (int)[array2 count]",
