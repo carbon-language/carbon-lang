@@ -389,7 +389,7 @@ namespace llvm {
     /// frame.
     void EmitFrameMoves(const std::vector<MachineMove> &Moves,
                         MCSymbol *BaseLabel, bool isEH) const;
-
+    void EmitCFIFrameMoves(const std::vector<MachineMove> &Moves) const;
 
     //===------------------------------------------------------------------===//
     // Inline Asm Support
