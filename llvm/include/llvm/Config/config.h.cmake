@@ -1,4 +1,3 @@
-
 /**************************************
 ** Created by Kevin from config.h.in **
 ***************************************/
@@ -6,20 +5,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-/* Define if CBE is enabled for printf %a output */
-#cmakedefine ENABLE_CBE_PRINTF_A ${ENABLE_CBE_PRINTF_A}
-
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR "${CLANG_RESOURCE_DIR}"
-
-/* Directories clang will search for headers */
-#define C_INCLUDE_DIRS "${C_INCLUDE_DIRS}"
-
-/* Directory clang will search for libstdc++ headers */
-#define CXX_INCLUDE_ROOT "${CXX_INCLUDE_ROOT}"
-
-/* Architecture of libstdc++ headers */
-#define CXX_INCLUDE_ARCH "${CXX_INCLUDE_ARCH}"
 
 /* 32 bit multilib directory */
 #define CXX_INCLUDE_32BIT_DIR "${CXX_INCLUDE_32BIT_DIR}"
@@ -27,14 +14,26 @@
 /* 64 bit multilib directory */
 #define CXX_INCLUDE_64BIT_DIR "${CXX_INCLUDE_64BIT_DIR}"
 
+/* Architecture of libstdc++ headers */
+#define CXX_INCLUDE_ARCH "${CXX_INCLUDE_ARCH}"
+
+/* Directory clang will search for libstdc++ headers */
+#define CXX_INCLUDE_ROOT "${CXX_INCLUDE_ROOT}"
+
+/* Directories clang will search for headers */
+#define C_INCLUDE_DIRS "${C_INCLUDE_DIRS}"
+
+/* Define if CBE is enabled for printf %a output */
+#cmakedefine ENABLE_CBE_PRINTF_A ${ENABLE_CBE_PRINTF_A}
+
 /* Define if position independent code is enabled */
 #cmakedefine ENABLE_PIC
 
-/* Define if timestamp information (e.g., __DATE___) is allowed */
-#cmakedefine ENABLE_TIMESTAMPS ${ENABLE_TIMESTAMPS}
-
 /* Define if threads enabled */
 #cmakedefine ENABLE_THREADS ${ENABLE_THREADS}
+
+/* Define if timestamp information (e.g., __DATE___) is allowed */
+#cmakedefine ENABLE_TIMESTAMPS ${ENABLE_TIMESTAMPS}
 
 /* Define to 1 if you have the `argz_append' function. */
 #cmakedefine HAVE_ARGZ_APPEND ${HAVE_ARGZ_APPEND}
@@ -63,9 +62,6 @@
 /* Define to 1 if you have the `bcopy' function. */
 #undef HAVE_BCOPY
 
-/* Does not have bi-directional iterator */
-#undef HAVE_BI_ITERATOR
-
 /* Define to 1 if you have the `ceilf' function. */
 #cmakedefine HAVE_CEILF ${HAVE_CEILF}
 
@@ -74,6 +70,12 @@
 
 /* Define to 1 if you have the `closedir' function. */
 #cmakedefine HAVE_CLOSEDIR ${HAVE_CLOSEDIR}
+
+/* Define to 1 if you have the <CrashReporterClient.h> header file. */
+#undef HAVE_CRASHREPORTERCLIENT_H
+
+/* Define if __crashreporter_info__ exists. */
+#undef HAVE_CRASHREPORTER_INFO
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #cmakedefine HAVE_CTYPE_H ${HAVE_CTYPE_H}
@@ -124,6 +126,18 @@
 /* Define if the neat program is available */
 #cmakedefine HAVE_FDP ${HAVE_FDP}
 
+/* Define to 1 if you have the <fenv.h> header file. */
+#cmakedefine HAVE_FENV_H ${HAVE_FENV_H}
+
+/* Define if libffi is available on this platform. */
+#undef HAVE_FFI_CALL
+
+/* Define to 1 if you have the <ffi/ffi.h> header file. */
+#undef HAVE_FFI_FFI_H
+
+/* Define to 1 if you have the <ffi.h> header file. */
+#undef HAVE_FFI_H
+
 /* Set to 1 if the finite function is found in <ieeefp.h> */
 #cmakedefine HAVE_FINITE_IN_IEEEFP_H ${HAVE_FINITE_IN_IEEEFP_H}
 
@@ -132,9 +146,6 @@
 
 /* Define to 1 if you have the `fmodf' function. */
 #cmakedefine HAVE_FMODF ${HAVE_FMODF}
-
-/* Does not have forward iterator */
-#undef HAVE_FWD_ITERATOR
 
 /* Define to 1 if you have the `getcwd' function. */
 #cmakedefine HAVE_GETCWD ${HAVE_GETCWD}
@@ -150,18 +161,6 @@
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #cmakedefine HAVE_GETTIMEOFDAY ${HAVE_GETTIMEOFDAY}
-
-/* Does not have <hash_map> */
-#undef HAVE_GLOBAL_HASH_MAP
-
-/* Does not have hash_set in global namespace */
-#undef HAVE_GLOBAL_HASH_SET
-
-/* Does not have ext/hash_map */
-#undef HAVE_GNU_EXT_HASH_MAP
-
-/* Does not have hash_set in gnu namespace */
-#undef HAVE_GNU_EXT_HASH_SET
 
 /* Define if the Graphviz program is available */
 #undef HAVE_GRAPHVIZ
@@ -213,6 +212,9 @@
 
 /* Define to 1 if you have the <limits.h> header file. */
 #cmakedefine HAVE_LIMITS_H ${HAVE_LIMITS_H}
+
+/* Define if you can use -Wl,-export-dynamic. */
+#define HAVE_LINK_EXPORT_DYNAMIC 1
 
 /* Define to 1 if you have the <link.h> header file. */
 #cmakedefine HAVE_LINK_H ${HAVE_LINK_H}
@@ -270,9 +272,6 @@
 /* Define if mmap() can map files into memory */
 #undef HAVE_MMAP_FILE
 
-/* define if the compiler implements namespaces */
-#undef HAVE_NAMESPACES
-
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #cmakedefine HAVE_NDIR_H ${HAVE_NDIR_H}
 
@@ -285,11 +284,20 @@
 /* Define to 1 if you have the `opendir' function. */
 #cmakedefine HAVE_OPENDIR ${HAVE_OPENDIR}
 
+/* Define to 1 if you have the `posix_spawn' function. */
+#cmakedefine HAVE_POSIX_SPAWN ${HAVE_POSIX_SPAWN}
+
+/* Define to 1 if you have the `powf' function. */
+#cmakedefine HAVE_POWF ${HAVE_POWF}
+
 /* Define if libtool can extract symbol lists from object files. */
 #undef HAVE_PRELOADED_SYMBOLS
 
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
+
+/* Have pthread_getspecific */
+#cmakedefine HAVE_PTHREAD_GETSPECIFIC ${HAVE_PTHREAD_GETSPECIFIC}
 
 /* Have pthread.h */
 #cmakedefine HAVE_PTHREAD_H ${HAVE_PTHREAD_H}
@@ -299,9 +307,6 @@
 
 /* Have pthread_rwlock_init */
 #cmakedefine HAVE_PTHREAD_RWLOCK_INIT ${HAVE_PTHREAD_RWLOCK_INIT}
-
-/* Have pthread_getspecific */
-#cmakedefine HAVE_PTHREAD_GETSPECIFIC ${HAVE_PTHREAD_GETSPECIFIC}
 
 /* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
 #undef HAVE_RAND48
@@ -318,20 +323,17 @@
 /* Define to 1 if you have the `rintf' function. */
 #undef HAVE_RINTF
 
-/* Define to 1 if you have the `roundf' function. */
-#undef HAVE_ROUNDF
-
 /* Define to 1 if you have the `round' function. */
 #cmakedefine HAVE_ROUND ${HAVE_ROUND}
+
+/* Define to 1 if you have the `roundf' function. */
+#undef HAVE_ROUNDF
 
 /* Define to 1 if you have the `sbrk' function. */
 #cmakedefine HAVE_SBRK ${HAVE_SBRK}
 
 /* Define to 1 if you have the `setenv' function. */
 #cmakedefine HAVE_SETENV ${HAVE_SETENV}
-
-/* Define to 1 if you have the `_chsize_s' function. */
-#cmakedefine HAVE__CHSIZE_S ${HAVE__CHSIZE_S}
 
 /* Define to 1 if you have the `setjmp' function. */
 #undef HAVE_SETJMP
@@ -363,14 +365,14 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #cmakedefine HAVE_STDLIB_H ${HAVE_STDLIB_H}
 
-/* Does not have ext/hash_map> */
-#undef HAVE_STD_EXT_HASH_MAP
-
-/* Does not have hash_set in std namespace */
-#undef HAVE_STD_EXT_HASH_SET
-
 /* Set to 1 if the std::isinf function is found in <cmath> */
 #undef HAVE_STD_ISINF_IN_CMATH
+
+/* Define to 1 if you have the `_chsize_s' function. */
+#cmakedefine HAVE__CHSIZE_S ${HAVE__CHSIZE_S}
+
+/* define if the compiler implements namespaces */
+#undef HAVE_NAMESPACES
 
 /* Set to 1 if the std::isnan function is found in <cmath> */
 #undef HAVE_STD_ISNAN_IN_CMATH
@@ -413,6 +415,30 @@
 
 /* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
+
+/* Does not have forward iterator */
+#undef HAVE_FWD_ITERATOR
+
+/* Does not have bi-directional iterator */
+#undef HAVE_BI_ITERATOR
+
+/* Does not have <hash_map> */
+#undef HAVE_GLOBAL_HASH_MAP
+
+/* Does not have hash_set in global namespace */
+#undef HAVE_GLOBAL_HASH_SET
+
+/* Does not have ext/hash_map */
+#undef HAVE_GNU_EXT_HASH_MAP
+
+/* Does not have hash_set in gnu namespace */
+#undef HAVE_GNU_EXT_HASH_SET
+
+/* Does not have ext/hash_map> */
+#undef HAVE_STD_EXT_HASH_MAP
+
+/* Does not have hash_set in std namespace */
+#undef HAVE_STD_EXT_HASH_SET
 
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */
@@ -469,9 +495,6 @@
 
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 #cmakedefine HAVE_VALGRIND_VALGRIND_H ${HAVE_VALGRIND_VALGRIND_H}
-
-/* Define to 1 if you have the <fenv.h> header file. */
-#cmakedefine HAVE_FENV_H ${HAVE_FENV_H}
 
 /* Define to 1 if you have the <windows.h> header file. */
 #cmakedefine HAVE_WINDOWS_H ${HAVE_WINDOWS_H}
