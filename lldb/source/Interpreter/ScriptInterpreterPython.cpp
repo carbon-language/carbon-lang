@@ -326,17 +326,98 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         
     Mutex::Locker locker (GetPythonMutex());
 
+    // We want to call run_one_line, passing in the dictionary and the command string.  We cannot do this through
+    // PyRun_SimpleString here because the command string may contain escaped characters, and putting it inside
+    // another string to pass to PyRun_SimpleString messes up the escaping.  So we use the following more complicated
+    // method to pass the command string directly down to Python.
+
+
+    bool success = false;
+
     if (command)
     {
-        int success;
+        // Find the correct script interpreter dictionary in the main module.
+        PyObject *main_mod = PyImport_AddModule ("__main__");
+        PyObject *script_interpreter_dict = NULL;
+        if  (main_mod != NULL)
+        {
+            PyObject *main_dict = PyModule_GetDict (main_mod);
+            if ((main_dict != NULL)
+                && PyDict_Check (main_dict))
+            {
+                // Go through the main dictionary looking for the correct python script interpreter dictionary
+                PyObject *key, *value;
+                Py_ssize_t pos = 0;
+                
+                while (PyDict_Next (main_dict, &pos, &key, &value))
+                {
+                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
+                    // them now so that Python's garbage collector doesn't collect them out from under us.
+                    Py_INCREF (key);
+                    Py_INCREF (value);
+                    if (strcmp (PyString_AsString (key), m_dictionary_name.c_str()) == 0)
+                    {
+                        script_interpreter_dict = value;
+                        break;
+                    }
+                }
+            }
+            
+            if (script_interpreter_dict != NULL)
+            {
+                PyObject *pfunc = NULL;
+                PyObject *pmod = PyImport_AddModule ("embedded_interpreter");
+                if (pmod != NULL)
+                {
+                    PyObject *pmod_dict = PyModule_GetDict (pmod);
+                    if ((pmod_dict != NULL)
+                        && PyDict_Check (pmod_dict))
+                    {
+                        PyObject *key, *value;
+                        Py_ssize_t pos = 0;
+                        
+                        while (PyDict_Next (pmod_dict, &pos, &key, &value))
+                        {
+                            Py_INCREF (key);
+                            Py_INCREF (value);
+                            if (strcmp (PyString_AsString (key), "run_one_line") == 0)
+                            {
+                                pfunc = value;
+                                break;
+                            }
+                        }
+                        
+                        PyObject *string_arg = PyString_FromString (command);
+                        if (pfunc && string_arg && PyCallable_Check (pfunc))
+                        {
+                            PyObject *pargs = PyTuple_New (2);
+                            if (pargs != NULL)
+                            {
+                                PyTuple_SetItem (pargs, 0, script_interpreter_dict);
+                                PyTuple_SetItem (pargs, 1, string_arg);
+                                PyObject *pvalue = PyObject_CallObject (pfunc, pargs);
+                                Py_DECREF (pargs);
+                                if (pvalue != NULL)
+                                {
+                                    Py_DECREF (pvalue);
+                                    success = true;
+                                }
+                                else if (PyErr_Occurred ())
+                                {
+                                    PyErr_Print();
+                                    PyErr_Clear();
+                                }
+                            }
+                        }
+                    }
+                }
+                Py_INCREF (script_interpreter_dict);
+            }
+        }
 
-        StreamString sstr;
-        sstr.Printf ("run_one_line (%s, '%s')", m_dictionary_name.c_str(), command);
-        success = PyRun_SimpleString (sstr.GetData());
-        
         LeaveSession ();
         
-        if (success == 0)
+        if (success)
             return true;
 
         // The one-liner failed.  Append the error message.
