@@ -442,6 +442,21 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
         ++AliasOpNo;
         continue;
       }
+      if (ADI->getDef()->getName() == "zero_reg") {
+        if (!Result->getArgName(AliasOpNo).empty())
+          throw TGError(R->getLoc(), "result fixed register argument must "
+                        "not have a name!");
+
+        // Check if this is an optional def.
+        if (!ResultOpRec->isSubClassOf("OptionalDefOperand"))
+          throw TGError(R->getLoc(), "reg0 used for result that is not an "
+                        "OptionalDefOperand!");
+
+        // Now that it is validated, add it.
+        ResultOperands.push_back(ResultOperand(static_cast<Record*>(0)));
+        ++AliasOpNo;
+        continue;
+      }
     }
     
     // If the operand is a record, it must have a name, and the record type must

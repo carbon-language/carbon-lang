@@ -1380,9 +1380,14 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
         break;
       }
       case MatchableInfo::ResOperand::RegOperand: {
-        std::string N = getQualifiedName(OpInfo.Register);
-        CaseOS << "    Inst.addOperand(MCOperand::CreateReg(" << N << "));\n";
-        Signature += "__reg" + OpInfo.Register->getName();
+        if (OpInfo.Register == 0) {
+          CaseOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
+          Signature += "__reg0";
+        } else {
+          std::string N = getQualifiedName(OpInfo.Register);
+          CaseOS << "    Inst.addOperand(MCOperand::CreateReg(" << N << "));\n";
+          Signature += "__reg" + OpInfo.Register->getName();
+        }
       }  
       }
     }
