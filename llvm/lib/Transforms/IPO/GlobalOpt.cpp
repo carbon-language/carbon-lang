@@ -2128,8 +2128,9 @@ isSimpleEnoughValueToCommit(Constant *C,
 
 
 /// isSimpleEnoughPointerToCommit - Return true if this constant is simple
-/// enough for us to understand.  In particular, if it is a cast of something,
-/// we punt.  We basically just support direct accesses to globals and GEP's of
+/// enough for us to understand.  In particular, if it is a cast to anything
+/// other than from one pointer type to another pointer type, we punt.
+/// We basically just support direct accesses to globals and GEP's of
 /// globals.  This should be kept up to date with CommitValueTo.
 static bool isSimpleEnoughPointerToCommit(Constant *C) {
   // Conservatively, avoid aggregate types. This is because we don't
@@ -2163,6 +2164,20 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
         return false;
 
       return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
+    
+    // A constantexpr bitcast from a pointer to another pointer is a no-op,
+    // and we know how to evaluate it by moving the bitcast from the pointer
+    // operand to the value operand.
+    } else if (CE->getOpcode() == Instruction::BitCast &&
+               CE->getType()->isPointerTy() &&
+               CE->getOperand(0)->getType()->isPointerTy()) {
+      GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
+      // Do not allow weak/*_odr/linkonce/dllimport/dllexport linkage or
+      // external globals.
+      if (!GV->hasUniqueInitializer())
+        return false;
+      
+      return true;
     }
   return false;
 }
@@ -2336,6 +2351,38 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       // of one global variable divided by another) then we can't commit it.
       if (!isSimpleEnoughValueToCommit(Val, SimpleConstants))
         return false;
+        
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
+        if (CE->getOpcode() == Instruction::BitCast) {
+          // If we're evaluating a store through a bitcast, then we need
+          // to pull the bitcast off the pointer type and push it onto the
+          // stored value.
+          Ptr = dyn_cast<Constant>(Ptr->getOperand(0));
+          if (!Ptr) return false;
+          
+          const PointerType *Ty = dyn_cast<PointerType>(Ptr->getType());
+          if (!Ty) return false;
+          const Type *NewTy = Ty->getElementType();
+          
+          // A bitcast'd pointer implicitly points to the first field of a
+          // struct.  Insert implicity "gep @x, 0, 0, ..." until we get down
+          // to the first concrete member.
+          // FIXME: This could be extended to work for arrays as well.
+          while (const StructType *STy = dyn_cast<StructType>(NewTy)) {
+            NewTy = STy->getTypeAtIndex(0U);
+            
+            const IntegerType *IdxTy =
+              IntegerType::get(NewTy->getContext(), 32);
+            Constant *IdxZero = ConstantInt::get(IdxTy, 0, false);
+            Constant * const IdxList[] = {IdxZero, IdxZero};
+            
+            Ptr = ConstantExpr::getGetElementPtr(Ptr, IdxList, 2);
+          }
+          
+          if (!isa<PointerType>(NewTy)) return false;
+          Val = ConstantExpr::getBitCast(Val, NewTy);
+        }
+          
       MutatedMemory[Ptr] = Val;
     } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CurInst)) {
       InstResult = ConstantExpr::get(BO->getOpcode(),
