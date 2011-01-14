@@ -788,12 +788,12 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                         if (sc.symbol != NULL)
                             impl_code_address = sc.symbol->GetValue();
                             
-                        lldb::addr_t addr = impl_code_address.GetLoadAddress (exe_ctx.target);
-                        printf ("Getting address for our_utility_function: 0x%llx.\n", addr);
+                        //lldb::addr_t addr = impl_code_address.GetLoadAddress (exe_ctx.target);
+                        //printf ("Getting address for our_utility_function: 0x%llx.\n", addr);
                     }
                     else
                     {
-                        printf ("Could not find implementation function address.\n");
+                        //printf ("Could not find implementation function address.\n");
                         return ret_plan_sp;
                     }
                 }
