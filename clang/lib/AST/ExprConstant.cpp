@@ -404,7 +404,8 @@ bool LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
       break;
   }
 
-  Result.Offset += CharUnits::fromQuantity(RL.getFieldOffset(i) / 8);
+  Result.Offset += 
+      CharUnits::fromQuantity(RL.getFieldOffset(i) / Info.Ctx.getCharWidth());
   return true;
 }
 
