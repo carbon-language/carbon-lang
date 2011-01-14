@@ -684,31 +684,27 @@ Value *llvm::SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
   return ::SimplifyMulInst(Op0, Op1, TD, DT, RecursionLimit);
 }
 
-/// SimplifyShlInst - Given operands for an Shl, see if we can
+/// SimplifyShift - Given operands for an Shl, LShr or AShr, see if we can
 /// fold the result.  If not, this returns null.
-static Value *SimplifyShlInst(Value *Op0, Value *Op1, const TargetData *TD,
-                              const DominatorTree *DT, unsigned MaxRecurse) {
+static Value *SimplifyShift(unsigned Opcode, Value *Op0, Value *Op1,
+                            const TargetData *TD, const DominatorTree *DT,
+                            unsigned MaxRecurse) {
   if (Constant *C0 = dyn_cast<Constant>(Op0)) {
     if (Constant *C1 = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { C0, C1 };
-      return ConstantFoldInstOperands(Instruction::Shl, C0->getType(), Ops, 2,
-                                      TD);
+      return ConstantFoldInstOperands(Opcode, C0->getType(), Ops, 2, TD);
     }
   }
 
-  // 0 << X -> 0
+  // 0 shift by X -> 0
   if (match(Op0, m_Zero()))
     return Op0;
 
-  // X << 0 -> X
+  // X shift by 0 -> X
   if (match(Op1, m_Zero()))
     return Op0;
 
-  // undef << X -> 0
-  if (isa<UndefValue>(Op0))
-    return Constant::getNullValue(Op0->getType());
-
-  // X << undef -> undef because it may shift by the bitwidth.
+  // X shift by undef -> undef because it may shift by the bitwidth.
   if (isa<UndefValue>(Op1))
     return Op1;
 
@@ -717,6 +713,32 @@ static Value *SimplifyShlInst(Value *Op0, Value *Op1, const TargetData *TD,
     if (CI->getValue().getLimitedValue() >=
         Op0->getType()->getScalarSizeInBits())
       return UndefValue::get(Op0->getType());
+
+  // If the operation is with the result of a select instruction, check whether
+  // operating on either branch of the select always yields the same value.
+  if (isa<SelectInst>(Op0) || isa<SelectInst>(Op1))
+    if (Value *V = ThreadBinOpOverSelect(Opcode, Op0, Op1, TD, DT, MaxRecurse))
+      return V;
+
+  // If the operation is with the result of a phi instruction, check whether
+  // operating on all incoming values of the phi always yields the same value.
+  if (isa<PHINode>(Op0) || isa<PHINode>(Op1))
+    if (Value *V = ThreadBinOpOverPHI(Opcode, Op0, Op1, TD, DT, MaxRecurse))
+      return V;
+
+  return 0;
+}
+
+/// SimplifyShlInst - Given operands for an Shl, see if we can
+/// fold the result.  If not, this returns null.
+static Value *SimplifyShlInst(Value *Op0, Value *Op1, const TargetData *TD,
+                              const DominatorTree *DT, unsigned MaxRecurse) {
+  if (Value *V = SimplifyShift(Instruction::Shl, Op0, Op1, TD, DT, MaxRecurse))
+    return V;
+
+  // undef << X -> 0
+  if (isa<UndefValue>(Op0))
+    return Constant::getNullValue(Op0->getType());
 
   return 0;
 }
@@ -730,35 +752,12 @@ Value *llvm::SimplifyShlInst(Value *Op0, Value *Op1, const TargetData *TD,
 /// fold the result.  If not, this returns null.
 static Value *SimplifyLShrInst(Value *Op0, Value *Op1, const TargetData *TD,
                                const DominatorTree *DT, unsigned MaxRecurse) {
-  if (Constant *C0 = dyn_cast<Constant>(Op0)) {
-    if (Constant *C1 = dyn_cast<Constant>(Op1)) {
-      Constant *Ops[] = { C0, C1 };
-      return ConstantFoldInstOperands(Instruction::LShr, C0->getType(), Ops, 2,
-                                      TD);
-    }
-  }
-
-  // 0 >> X -> 0
-  if (match(Op0, m_Zero()))
-    return Op0;
+  if (Value *V = SimplifyShift(Instruction::LShr, Op0, Op1, TD, DT, MaxRecurse))
+    return V;
 
   // undef >>l X -> 0
   if (isa<UndefValue>(Op0))
     return Constant::getNullValue(Op0->getType());
-
-  // X >> 0 -> X
-  if (match(Op1, m_Zero()))
-    return Op0;
-
-  // X >> undef -> undef because it may shift by the bitwidth.
-  if (isa<UndefValue>(Op1))
-    return Op1;
-
-  // Shifting by the bitwidth or more is undefined.
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1))
-    if (CI->getValue().getLimitedValue() >=
-        Op0->getType()->getScalarSizeInBits())
-      return UndefValue::get(Op0->getType());
 
   return 0;
 }
@@ -772,17 +771,8 @@ Value *llvm::SimplifyLShrInst(Value *Op0, Value *Op1, const TargetData *TD,
 /// fold the result.  If not, this returns null.
 static Value *SimplifyAShrInst(Value *Op0, Value *Op1, const TargetData *TD,
                               const DominatorTree *DT, unsigned MaxRecurse) {
-  if (Constant *C0 = dyn_cast<Constant>(Op0)) {
-    if (Constant *C1 = dyn_cast<Constant>(Op1)) {
-      Constant *Ops[] = { C0, C1 };
-      return ConstantFoldInstOperands(Instruction::AShr, C0->getType(), Ops, 2,
-                                      TD);
-    }
-  }
-
-  // 0 >> X -> 0
-  if (match(Op0, m_Zero()))
-    return Op0;
+  if (Value *V = SimplifyShift(Instruction::AShr, Op0, Op1, TD, DT, MaxRecurse))
+    return V;
 
   // all ones >>a X -> all ones
   if (match(Op0, m_AllOnes()))
@@ -791,20 +781,6 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, const TargetData *TD,
   // undef >>a X -> all ones
   if (isa<UndefValue>(Op0))
     return Constant::getAllOnesValue(Op0->getType());
-
-  // X >> 0 -> X
-  if (match(Op1, m_Zero()))
-    return Op0;
-
-  // X >> undef -> undef because it may shift by the bitwidth.
-  if (isa<UndefValue>(Op1))
-    return Op1;
-
-  // Shifting by the bitwidth or more is undefined.
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1))
-    if (CI->getValue().getLimitedValue() >=
-        Op0->getType()->getScalarSizeInBits())
-      return UndefValue::get(Op0->getType());
 
   return 0;
 }
