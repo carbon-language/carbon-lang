@@ -173,6 +173,17 @@ public:
     //------------------------------------------------------------------
     virtual bool
     IsExecutable () const = 0;
+
+    //------------------------------------------------------------------
+    /// Returns the virtual address of the entry point for this object 
+    /// file.
+    ///
+    /// @return
+    ///     The virtual address of the entry point or an invalid address
+    ///     if an entry point is not defined.
+    //------------------------------------------------------------------
+    virtual lldb_private::Address
+    GetEntryPoint () const { return Address(); }
     
     //------------------------------------------------------------------
     /// Returns the offset into a file at which this object resides.
@@ -310,6 +321,22 @@ public:
     //------------------------------------------------------------------
     virtual lldb_private::UnwindTable&
     GetUnwindTable () { return m_unwind_table; }
+
+    //------------------------------------------------------------------
+    /// Similar to Process::GetImageInfoAddress().
+    ///
+    /// Some platforms embed auxiliary structures useful to debuggers in the
+    /// address space of the inferior process.  This method returns the address
+    /// of such a structure if the information can be resolved via entries in
+    /// the object file.  ELF, for example, provides a means to hook into the
+    /// runtime linker so that a debugger may monitor the loading and unloading
+    /// of shared libraries.
+    ///
+    /// @return 
+    ///     The address of any auxiliary tables, or an invalid address if this
+    ///     object file format does not support or contain such information.
+    virtual lldb_private::Address
+    GetImageInfoAddress () { return Address(); }
 
 protected:
     //------------------------------------------------------------------
