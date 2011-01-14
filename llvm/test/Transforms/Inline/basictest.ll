@@ -43,5 +43,5 @@ define i32 @test2(i1 %cond) {
   
 ; CHECK: @test2(
 ; CHECK-NOT: = alloca
-; CHECK: ret i32 42
+; CHECK: ret i32
 }
