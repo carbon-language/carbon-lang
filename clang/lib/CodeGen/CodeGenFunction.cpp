@@ -754,6 +754,10 @@ static llvm::BasicBlock *SimplifyCleanupEntry(CodeGenFunction &CGF,
   // Merge the blocks.
   Pred->getInstList().splice(Pred->end(), Entry->getInstList());
 
+  // Replace all uses of the entry with the predecessor, in case there
+  // are phis in the cleanup.
+  Entry->replaceAllUsesWith(Pred);
+
   // Kill the entry block.
   Entry->eraseFromParent();
 
