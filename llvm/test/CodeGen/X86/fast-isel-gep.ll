@@ -70,20 +70,3 @@ entry:
 ; X64: test4:
 ; X64: 128(%r{{.*}},%r{{.*}},8)
 }
-
-; PR8961 - Make sure the sext for the GEP addressing comes before the load that
-; is folded.
-define i64 @test5(i8* %A, i32 %I, i64 %B) nounwind {
-  %v8 = getelementptr i8* %A, i32 %I
-  %v9 = bitcast i8* %v8 to i64*
-  %v10 = load i64* %v9
-  %v11 = add i64 %B, %v10
-  ret i64 %v11
-; X64: test5:
-; X64: movslq	%esi, %rax
-; X64-NEXT: movq	(%rdi,%rax), %rax
-; X64-NEXT: addq	%rdx, %rax
-; X64-NEXT: ret
-}
-
-
