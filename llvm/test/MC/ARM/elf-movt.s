@@ -25,7 +25,7 @@ barf:                                   @ @barf
 @ OBJ-NEXT:            'sh_info', 0x00000000
 @ OBJ-NEXT:            'sh_addralign', 0x00000004
 @ OBJ-NEXT:            'sh_entsize', 0x00000000
-@ OBJ-NEXT:            '_section_data', 'f00f0fe3 ec0f4fe3'
+@ OBJ-NEXT:            '_section_data', 'f00f0fe3 ff0f4fe3'
 
 @ OBJ:              Relocation 0x00000000
 @ OBJ-NEXT:         'r_offset', 0x00000000

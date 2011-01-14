@@ -353,7 +353,10 @@ namespace macho {
     RIT_ARM_PreboundLazyPointer = 4,
     RIT_ARM_Branch24Bit = 5,
     RIT_ARM_ThumbBranch22Bit = 6,
-    RIT_ARM_ThumbBranch32Bit = 7
+    RIT_ARM_ThumbBranch32Bit = 7,
+    RIT_ARM_Half = 8,
+    RIT_ARM_HalfDifference = 9
+
   };
 
 } // end namespace macho

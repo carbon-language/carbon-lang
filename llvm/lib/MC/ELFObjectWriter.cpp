@@ -1508,6 +1508,14 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
     case ARM::fixup_arm_movw_lo16_pcrel:
       Type = ELF::R_ARM_MOVW_PREL_NC;
       break;
+    case ARM::fixup_t2_movt_hi16:
+    case ARM::fixup_t2_movt_hi16_pcrel:
+      Type = ELF::R_ARM_THM_MOVT_PREL;
+      break;
+    case ARM::fixup_t2_movw_lo16:
+    case ARM::fixup_t2_movw_lo16_pcrel:
+      Type = ELF::R_ARM_THM_MOVW_PREL_NC;
+      break;
     }
   } else {
     switch ((unsigned)Fixup.getKind()) {
@@ -1554,6 +1562,12 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
       break;
     case ARM::fixup_arm_movw_lo16:
       Type = ELF::R_ARM_MOVW_ABS_NC;
+      break;
+    case ARM::fixup_t2_movt_hi16:
+      Type = ELF::R_ARM_THM_MOVT_ABS;
+      break;
+    case ARM::fixup_t2_movw_lo16:
+      Type = ELF::R_ARM_THM_MOVW_ABS_NC;
       break;
     }
   }

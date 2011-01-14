@@ -656,10 +656,10 @@ public:
                                  const MCAsmLayout &Layout,
                                  const MCFragment *Fragment,
                                  const MCFixup &Fixup, MCValue Target,
+                                 unsigned Log2Size,
                                  uint64_t &FixedValue) {
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
     unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
-    unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
     unsigned Type = macho::RIT_Vanilla;
 
     // See <reloc.h>.
@@ -720,10 +720,10 @@ public:
                                     const MCAsmLayout &Layout,
                                     const MCFragment *Fragment,
                                     const MCFixup &Fixup, MCValue Target,
+                                    unsigned Log2Size,
                                     uint64_t &FixedValue) {
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
     unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
-    unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
     unsigned Type = macho::RIT_Vanilla;
 
     // See <reloc.h>.
@@ -769,6 +769,100 @@ public:
     MRE.Word0 = ((FixupOffset <<  0) |
                  (Type        << 24) |
                  (Log2Size    << 28) |
+                 (IsPCRel     << 30) |
+                 macho::RF_Scattered);
+    MRE.Word1 = Value;
+    Relocations[Fragment->getParent()].push_back(MRE);
+  }
+
+  void RecordARMMovwMovtRelocation(const MCAssembler &Asm,
+                                   const MCAsmLayout &Layout,
+                                   const MCFragment *Fragment,
+                                   const MCFixup &Fixup, MCValue Target,
+                                   uint64_t &FixedValue) {
+    uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
+    unsigned IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
+    unsigned Type = macho::RIT_ARM_Half;
+
+    // See <reloc.h>.
+    const MCSymbol *A = &Target.getSymA()->getSymbol();
+    MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+
+    if (!A_SD->getFragment())
+      report_fatal_error("symbol '" + A->getName() +
+                        "' can not be undefined in a subtraction expression");
+
+    uint32_t Value = getSymbolAddress(A_SD, Layout);
+    uint32_t Value2 = 0;
+    uint64_t SecAddr = getSectionAddress(A_SD->getFragment()->getParent());
+    FixedValue += SecAddr;
+
+    if (const MCSymbolRefExpr *B = Target.getSymB()) {
+      MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+
+      if (!B_SD->getFragment())
+        report_fatal_error("symbol '" + B->getSymbol().getName() +
+                          "' can not be undefined in a subtraction expression");
+
+      // Select the appropriate difference relocation type.
+      Type = macho::RIT_ARM_HalfDifference;
+      Value2 = getSymbolAddress(B_SD, Layout);
+      FixedValue -= getSectionAddress(B_SD->getFragment()->getParent());
+    }
+
+    // Relocations are written out in reverse order, so the PAIR comes first.
+    // ARM_RELOC_HALF and ARM_RELOC_HALF_SECTDIFF abuse the r_length field:
+    //
+    // For these two r_type relocations they always have a pair following them
+    // and the r_length bits are used differently.  The encoding of the
+    // r_length is as follows:
+    // low bit of r_length:
+    //  0 - :lower16: for movw instructions
+    //  1 - :upper16: for movt instructions
+    // high bit of r_length:
+    //  0 - arm instructions
+    //  1 - thumb instructions   
+    // the other half of the relocated expression is in the following pair
+    // relocation entry in the the low 16 bits of r_address field.
+    unsigned ThumbBit = 0;
+    unsigned MovtBit = 0;
+    switch (Fixup.getKind()) {
+    default: break;
+    case ARM::fixup_arm_movt_hi16:
+    case ARM::fixup_arm_movt_hi16_pcrel:
+      MovtBit = 1;
+      break;
+    case ARM::fixup_t2_movt_hi16:
+    case ARM::fixup_t2_movt_hi16_pcrel:
+      MovtBit = 1;
+      // Fallthrough
+    case ARM::fixup_t2_movw_lo16:
+    case ARM::fixup_t2_movw_lo16_pcrel:
+      ThumbBit = 1;
+      break;
+    }
+
+
+    if (Type == macho::RIT_ARM_HalfDifference) {
+      uint32_t OtherHalf = MovtBit
+        ? (FixedValue & 0xffff) : ((FixedValue & 0xffff0000) >> 16);
+
+      macho::RelocationEntry MRE;
+      MRE.Word0 = ((OtherHalf       <<  0) |
+                   (macho::RIT_Pair << 24) |
+                   (MovtBit         << 28) |
+                   (ThumbBit        << 29) |
+                   (IsPCRel         << 30) |
+                   macho::RF_Scattered);
+      MRE.Word1 = Value2;
+      Relocations[Fragment->getParent()].push_back(MRE);
+    }
+
+    macho::RelocationEntry MRE;
+    MRE.Word0 = ((FixupOffset <<  0) |
+                 (Type        << 24) |
+                 (MovtBit     << 28) |
+                 (ThumbBit    << 29) |
                  (IsPCRel     << 30) |
                  macho::RF_Scattered);
     MRE.Word1 = Value;
@@ -868,6 +962,24 @@ public:
       // Report as 'long', even though that is not quite accurate.
       Log2Size = llvm::Log2_32(4);
       return true;
+
+    case ARM::fixup_arm_movt_hi16:
+    case ARM::fixup_arm_movt_hi16_pcrel:
+    case ARM::fixup_t2_movt_hi16:
+    case ARM::fixup_t2_movt_hi16_pcrel:
+      RelocType = unsigned(macho::RIT_ARM_HalfDifference);
+      // Report as 'long', even though that is not quite accurate.
+      Log2Size = llvm::Log2_32(4);
+      return true;
+
+    case ARM::fixup_arm_movw_lo16:
+    case ARM::fixup_arm_movw_lo16_pcrel:
+    case ARM::fixup_t2_movw_lo16:
+    case ARM::fixup_t2_movw_lo16_pcrel:
+      RelocType = unsigned(macho::RIT_ARM_Half);
+      // Report as 'long', even though that is not quite accurate.
+      Log2Size = llvm::Log2_32(4);
+      return true;
     }
   }
   void RecordARMRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
@@ -884,9 +996,14 @@ public:
     // If this is a difference or a defined symbol plus an offset, then we need
     // a scattered relocation entry.  Differences always require scattered
     // relocations.
-    if (Target.getSymB())
-        return RecordARMScatteredRelocation(Asm, Layout, Fragment, Fixup,
-                                            Target, FixedValue);
+    if (Target.getSymB()) {
+      if (RelocType == macho::RIT_ARM_Half ||
+          RelocType == macho::RIT_ARM_HalfDifference)
+        return RecordARMMovwMovtRelocation(Asm, Layout, Fragment, Fixup,
+                                           Target, FixedValue);
+      return RecordARMScatteredRelocation(Asm, Layout, Fragment, Fixup,
+                                          Target, Log2Size, FixedValue);
+    }
 
     // Get the symbol data, if any.
     MCSymbolData *SD = 0;
@@ -902,8 +1019,8 @@ public:
     if (IsPCRel && RelocType == macho::RIT_Vanilla)
       Offset += 1 << Log2Size;
     if (Offset && SD && !doesSymbolRequireExternRelocation(SD))
-      return RecordARMScatteredRelocation(Asm, Layout, Fragment, Fixup,
-                                          Target, FixedValue);
+      return RecordARMScatteredRelocation(Asm, Layout, Fragment, Fixup, Target,
+                                          Log2Size, FixedValue);
 
     // See <reloc.h>.
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
@@ -986,7 +1103,7 @@ public:
     // Differences always require scattered relocations.
     if (Target.getSymB())
         return RecordScatteredRelocation(Asm, Layout, Fragment, Fixup,
-                                         Target, FixedValue);
+                                         Target, Log2Size, FixedValue);
 
     // Get the symbol data, if any.
     MCSymbolData *SD = 0;
@@ -1000,7 +1117,7 @@ public:
       Offset += 1 << Log2Size;
     if (Offset && SD && !doesSymbolRequireExternRelocation(SD))
       return RecordScatteredRelocation(Asm, Layout, Fragment, Fixup,
-                                       Target, FixedValue);
+                                       Target, Log2Size, FixedValue);
 
     // See <reloc.h>.
     uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();

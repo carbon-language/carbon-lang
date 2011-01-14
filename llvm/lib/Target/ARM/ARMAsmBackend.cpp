@@ -76,10 +76,15 @@ public:
 { "fixup_arm_thumb_cb",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_cp",      1,             8,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_bcc",     1,             8,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_arm_movt_hi16",     0,            16,  0 },
-{ "fixup_arm_movw_lo16",     0,            16,  0 },
-{ "fixup_arm_movt_hi16_pcrel", 0,          16,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_arm_movw_lo16_pcrel", 0,          16,  MCFixupKindInfo::FKF_IsPCRel },
+// movw / movt: 16-bits immediate but scattered into two chunks 0 - 12, 16 - 19.
+{ "fixup_arm_movt_hi16",     0,            20,  0 },
+{ "fixup_arm_movw_lo16",     0,            20,  0 },
+{ "fixup_t2_movt_hi16",      0,            20,  0 },
+{ "fixup_t2_movw_lo16",      0,            20,  0 },
+{ "fixup_arm_movt_hi16_pcrel", 0,          20,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_movw_lo16_pcrel", 0,          20,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_movt_hi16_pcrel", 0,           20,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_t2_movw_lo16_pcrel", 0,           20,  MCFixupKindInfo::FKF_IsPCRel },
     };
 
     if (Kind < FirstTargetFixupKind)
@@ -158,8 +163,10 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case FK_Data_4:
     return Value;
   case ARM::fixup_arm_movt_hi16:
-  case ARM::fixup_arm_movw_lo16:
   case ARM::fixup_arm_movt_hi16_pcrel:
+    Value >>= 16;
+    // Fallthrough
+  case ARM::fixup_arm_movw_lo16:
   case ARM::fixup_arm_movw_lo16_pcrel: {
     unsigned Hi4 = (Value & 0xF000) >> 12;
     unsigned Lo12 = Value & 0x0FFF;
@@ -167,6 +174,26 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // inst{11-0} = Lo12;
     Value = (Hi4 << 16) | (Lo12);
     return Value;
+  }
+  case ARM::fixup_t2_movt_hi16:
+  case ARM::fixup_t2_movt_hi16_pcrel:
+    Value >>= 16;
+    // Fallthrough
+  case ARM::fixup_t2_movw_lo16:
+  case ARM::fixup_t2_movw_lo16_pcrel: {
+    unsigned Hi4 = (Value & 0xF000) >> 12;
+    unsigned i = (Value & 0x800) >> 11;
+    unsigned Mid3 = (Value & 0x700) >> 8;
+    unsigned Lo8 = Value & 0x0FF;
+    // inst{19-16} = Hi4;
+    // inst{26} = i;
+    // inst{14-12} = Mid3;
+    // inst{7-0} = Lo8;
+    Value = (Hi4 << 16) | (i << 26) | (Mid3 << 12) | (Lo8);
+
+    uint64_t swapped = (Value & 0xFFFF0000) >> 16;
+    swapped |= (Value & 0x0000FFFF) << 16;
+    return swapped;
   }
   case ARM::fixup_arm_ldst_pcrel_12:
     // ARM PC-relative values are offset by 8.
@@ -438,6 +465,14 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_t2_adr_pcrel_12:
   case ARM::fixup_arm_thumb_bl:
   case ARM::fixup_arm_thumb_blx:
+  case ARM::fixup_arm_movt_hi16:
+  case ARM::fixup_arm_movw_lo16:
+  case ARM::fixup_arm_movt_hi16_pcrel:
+  case ARM::fixup_arm_movw_lo16_pcrel:
+  case ARM::fixup_t2_movt_hi16:
+  case ARM::fixup_t2_movw_lo16:
+  case ARM::fixup_t2_movt_hi16_pcrel:
+  case ARM::fixup_t2_movw_lo16_pcrel:
     return 4;
   }
 }
