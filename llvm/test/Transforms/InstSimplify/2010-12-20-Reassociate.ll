@@ -62,3 +62,11 @@ define i32 @xor2(i32 %x, i32 %y) {
   ret i32 %l
 ; CHECK: ret i32 %y
 }
+
+define i32 @sub1(i32 %x, i32 %y) {
+; CHECK: @sub1
+  %d = sub i32 %x, %y
+  %r = sub i32 %x, %d
+  ret i32 %r
+; CHECK: ret i32 %y
+}

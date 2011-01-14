@@ -593,10 +593,24 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
       match(Op0, m_Add(m_Specific(Op1), m_Value(X))))
     return X;
 
-  /// i1 sub -> xor.
+  // i1 sub -> xor.
   if (MaxRecurse && Op0->getType()->isIntegerTy(1))
     if (Value *V = SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1))
       return V;
+
+  // X - (X - Y) -> Y.  More generally Z - (X - Y) -> (Z - X) + Y if everything
+  // simplifies.
+  Value *Y = 0, *Z = Op0;
+  if (MaxRecurse && match(Op1, m_Sub(m_Value(X), m_Value(Y)))) // Z - (X - Y)
+    // See if "V === Z - X" simplifies.
+    if (Value *V = SimplifyBinOp(Instruction::Sub, Z, X, TD, DT, MaxRecurse-1))
+      // It does!  Now see if "W === V + Y" simplifies.
+      if (Value *W = SimplifyBinOp(Instruction::Add, V, Y, TD, DT,
+                                   MaxRecurse-1)) {
+        // It does, we successfully reassociated!
+        ++NumReassoc;
+        return W;
+      }
 
   // Mul distributes over Sub.  Try some generic simplifications based on this.
   if (Value *V = FactorizeBinOp(Instruction::Sub, Op0, Op1, Instruction::Mul,
