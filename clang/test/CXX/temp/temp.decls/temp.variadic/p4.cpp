@@ -34,6 +34,15 @@ void initializer_list_expansion() {
 template void initializer_list_expansion<1, 2, 3, 4, 5>();
 template void initializer_list_expansion<1, 2, 3, 4, 5, 6>(); // expected-note{{in instantiation of function template specialization 'initializer_list_expansion<1, 2, 3, 4, 5, 6>' requested here}}
 
+namespace PR8977 {
+  struct A { };
+  template<typename T, typename... Args> void f(Args... args) {
+    T t(args...);
+  };
+
+  template void f<A>();
+}
+
 // In a base-specifier-list (Clause 10); the pattern is a base-specifier.
 template<typename ...Mixins>
 struct HasMixins : public Mixins... { 
