@@ -1,5 +1,5 @@
 // RUN: %llvmgcc %s -S -o - | opt -std-compile-opts | \
-// RUN:    llvm-dis | grep {@nate.*internal global i32 0}
+// RUN:    llvm-dis | grep {@nate.*internal unnamed_addr global i32 0}
 
 struct X { int *XX; int Y;};
 

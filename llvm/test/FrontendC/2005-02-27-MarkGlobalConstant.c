@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc %s -S -o - | grep {private constant }
+// RUN: %llvmgcc -xc %s -S -o - | grep {private unnamed_addr constant }
 
 // The synthetic global made by the CFE for big initializer should be marked
 // constant.
