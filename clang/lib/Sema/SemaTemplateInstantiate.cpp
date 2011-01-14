@@ -809,11 +809,8 @@ TemplateInstantiator::TransformFirstQualifierInScope(NamedDecl *D,
         assert(Arg.getKind() == TemplateArgument::Pack && 
                "Missing argument pack");
         
-        if (getSema().ArgumentPackSubstitutionIndex == -1) {
-          // FIXME: Variadic templates fun case.
-          getSema().Diag(Loc, diag::err_pack_expansion_mismatch_unsupported);
+        if (getSema().ArgumentPackSubstitutionIndex == -1)
           return 0;
-        }
         
         assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
         Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];

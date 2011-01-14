@@ -3231,8 +3231,14 @@ void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg,
     AddTypeRef(Arg.getIntegralType(), Record);
     break;
   case TemplateArgument::Template:
+    AddTemplateName(Arg.getAsTemplateOrTemplatePattern(), Record);
+    break;
   case TemplateArgument::TemplateExpansion:
     AddTemplateName(Arg.getAsTemplateOrTemplatePattern(), Record);
+    if (llvm::Optional<unsigned> NumExpansions = Arg.getNumTemplateExpansions())
+      Record.push_back(*NumExpansions + 1);
+    else
+      Record.push_back(0);
     break;
   case TemplateArgument::Expression:
     AddStmt(Arg.getAsExpr());

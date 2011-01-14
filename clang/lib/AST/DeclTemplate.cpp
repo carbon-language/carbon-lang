@@ -337,7 +337,10 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
       Arg = TemplateArgument(E);
     } else {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
-      Arg = TemplateArgument(TemplateName(TTP), TTP->isParameterPack());
+      if (TTP->isParameterPack())
+        Arg = TemplateArgument(TemplateName(TTP), llvm::Optional<unsigned>());
+      else
+        Arg = TemplateArgument(TemplateName(TTP));
     }
     
     if ((*Param)->isTemplateParameterPack())

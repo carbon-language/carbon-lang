@@ -135,6 +135,14 @@ bool TemplateArgument::containsUnexpandedParameterPack() const {
   return false;
 }
 
+llvm::Optional<unsigned> TemplateArgument::getNumTemplateExpansions() const {
+  assert(Kind == TemplateExpansion);
+  if (TemplateArg.NumExpansions)
+    return TemplateArg.NumExpansions - 1;
+  
+  return llvm::Optional<unsigned>();
+}
+
 void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
                                const ASTContext &Context) const {
   ID.AddInteger(Kind);
@@ -223,7 +231,7 @@ TemplateArgument TemplateArgument::getPackExpansionPattern() const {
     return cast<PackExpansionExpr>(getAsExpr())->getPattern();
     
   case TemplateExpansion:
-    return TemplateArgument(getAsTemplateOrTemplatePattern(), false);
+    return TemplateArgument(getAsTemplateOrTemplatePattern());
     
   case Declaration:
   case Integral:
@@ -389,8 +397,8 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
   }
 
   case TemplateArgument::TemplateExpansion:
-    // FIXME: Variadic templates num expansions
     Ellipsis = getTemplateEllipsisLoc();
+    NumExpansions = Argument.getNumTemplateExpansions();
     return TemplateArgumentLoc(Argument.getPackExpansionPattern(),
                                getTemplateQualifierRange(),
                                getTemplateNameLoc());

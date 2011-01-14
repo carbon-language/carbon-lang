@@ -2768,7 +2768,7 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) const {
     case TemplateArgument::TemplateExpansion:
       return TemplateArgument(getCanonicalTemplateName(
                                          Arg.getAsTemplateOrTemplatePattern()),
-                              true);
+                              Arg.getNumTemplateExpansions());
 
     case TemplateArgument::Integral:
       return TemplateArgument(*Arg.getAsIntegral(),

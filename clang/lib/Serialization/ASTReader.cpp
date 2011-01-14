@@ -4290,9 +4290,13 @@ ASTReader::ReadTemplateArgument(PerFileData &F,
     return TemplateArgument(Value, T);
   }
   case TemplateArgument::Template: 
+    return TemplateArgument(ReadTemplateName(Record, Idx));
   case TemplateArgument::TemplateExpansion: {
     TemplateName Name = ReadTemplateName(Record, Idx);
-    return TemplateArgument(Name, Kind == TemplateArgument::TemplateExpansion);
+    llvm::Optional<unsigned> NumTemplateExpansions;
+    if (unsigned NumExpansions = Record[Idx++])
+      NumTemplateExpansions = NumExpansions - 1;
+    return TemplateArgument(Name, NumTemplateExpansions);
   }
   case TemplateArgument::Expression:
     return TemplateArgument(ReadExpr(F));

@@ -1823,7 +1823,7 @@ ASTNodeImporter::ImportTemplateArgument(const TemplateArgument &From) {
     if (ToTemplate.isNull())
       return TemplateArgument();
     
-    return TemplateArgument(ToTemplate, true);
+    return TemplateArgument(ToTemplate, From.getNumTemplateExpansions());
   }
 
   case TemplateArgument::Expression:

@@ -467,8 +467,12 @@ static TemplateArgumentLoc translateTemplateArgument(Sema &SemaRef,
     
   case ParsedTemplateArgument::Template: {
     TemplateName Template = Arg.getAsTemplate().get();
-    return TemplateArgumentLoc(TemplateArgument(Template,
-                                                Arg.getEllipsisLoc().isValid()),
+    TemplateArgument TArg;
+    if (Arg.getEllipsisLoc().isValid())
+      TArg = TemplateArgument(Template, llvm::Optional<unsigned int>());
+    else
+      TArg = Template;
+    return TemplateArgumentLoc(TArg,
                                Arg.getScopeSpec().getRange(),
                                Arg.getLocation(),
                                Arg.getEllipsisLoc());

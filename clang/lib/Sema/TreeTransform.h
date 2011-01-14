@@ -2188,7 +2188,7 @@ public:
     case TemplateArgument::Template:
       return TemplateArgumentLoc(TemplateArgument(
                                           Pattern.getArgument().getAsTemplate(),
-                                                  true),
+                                                  NumExpansions),
                                  Pattern.getTemplateQualifierRange(),
                                  Pattern.getTemplateNameLoc(),
                                  EllipsisLoc);

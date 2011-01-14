@@ -88,4 +88,42 @@ namespace PacksAtDifferentLevels {
                                        pair<int, unsigned int>,
                                        pair<long, unsigned long>)
                                      >::value == 1? 1 : -1]; 
+
+  template<typename T, typename U>
+  struct some_function_object {
+    template<typename>
+    struct result_of;
+  };
+
+  template<template<class> class...> struct metafun_tuple { };
+
+  template<typename ...Types1>
+  struct X3 {
+    template<typename, typename> struct Inner {
+      static const unsigned value = 0;
+    };
+
+    template<typename ...Types2>
+    struct Inner<tuple<pair<Types1, Types2>...>,
+                 metafun_tuple<some_function_object<Types1, Types2>::template result_of...> > {
+      static const unsigned value = 1;
+    };
+  };
+
+  int check6[X3<short, int, long>::Inner<tuple<pair<short, unsigned short>,
+                                               pair<int, unsigned int>,
+                                               pair<long, unsigned long>>,
+                                 metafun_tuple<
+                         some_function_object<short, unsigned short>::result_of,
+                         some_function_object<int, unsigned int>::result_of,
+                         some_function_object<long, unsigned long>::result_of>
+                                     >::value == 1? 1 : -1];
+  int check7[X3<short, int>::Inner<tuple<pair<short, unsigned short>,
+                                               pair<int, unsigned int>,
+                                               pair<long, unsigned long>>,
+                                 metafun_tuple<
+                         some_function_object<short, unsigned short>::result_of,
+                         some_function_object<int, unsigned int>::result_of,
+                         some_function_object<long, unsigned long>::result_of>
+                                     >::value == 0? 1 : -1];
 }
