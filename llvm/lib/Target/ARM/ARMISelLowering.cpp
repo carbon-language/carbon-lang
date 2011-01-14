@@ -3652,7 +3652,8 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
 
 // Gather data to see if the operation can be modelled as a
 // shuffle in combination with VEXTs. 
-SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op, SelectionDAG &DAG) const {
+SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
+                                              SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
   unsigned NumElts = VT.getVectorNumElements();
@@ -3729,19 +3730,23 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op, SelectionDAG &DAG) con
     if (MinElts[i] >= NumElts) {
       // The extraction can just take the second half
       VEXTOffsets[i] = NumElts;
-      ShuffleSrcs[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, SourceVecs[i],
+      ShuffleSrcs[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT,
+                                   SourceVecs[i],
                                    DAG.getIntPtrConstant(NumElts));
     } else if (MaxElts[i] < NumElts) {
       // The extraction can just take the first half
       VEXTOffsets[i] = 0;
-      ShuffleSrcs[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, SourceVecs[i],
+      ShuffleSrcs[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT,
+                                   SourceVecs[i],
                                    DAG.getIntPtrConstant(0));
     } else {
       // An actual VEXT is needed
       VEXTOffsets[i] = MinElts[i];
-      SDValue VEXTSrc1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, SourceVecs[i],
+      SDValue VEXTSrc1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT,
+                                     SourceVecs[i],
                                      DAG.getIntPtrConstant(0));
-      SDValue VEXTSrc2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, SourceVecs[i],
+      SDValue VEXTSrc2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT,
+                                     SourceVecs[i],
                                      DAG.getIntPtrConstant(NumElts));
       ShuffleSrcs[i] = DAG.getNode(ARMISD::VEXT, dl, VT, VEXTSrc1, VEXTSrc2,
                                    DAG.getConstant(VEXTOffsets[i], MVT::i32));
@@ -3758,7 +3763,8 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op, SelectionDAG &DAG) con
     }
       
     SDValue ExtractVec = Entry.getOperand(0);
-    int ExtractElt = cast<ConstantSDNode>(Op.getOperand(i).getOperand(1))->getSExtValue();
+    int ExtractElt = cast<ConstantSDNode>(Op.getOperand(i)
+                                          .getOperand(1))->getSExtValue();
     if (ExtractVec == SourceVecs[0]) {
       Mask.push_back(ExtractElt - VEXTOffsets[0]);
     } else {
@@ -3768,7 +3774,8 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op, SelectionDAG &DAG) con
   
   // Final check before we try to produce nonsense...
   if (isShuffleMaskLegal(Mask, VT))
-    return DAG.getVectorShuffle(VT, dl, ShuffleSrcs[0], ShuffleSrcs[1], &Mask[0]);
+    return DAG.getVectorShuffle(VT, dl, ShuffleSrcs[0], ShuffleSrcs[1],
+                                &Mask[0]);
   
   return SDValue();
 }
