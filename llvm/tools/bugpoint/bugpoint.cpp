@@ -28,8 +28,8 @@
 #include "llvm/Support/Valgrind.h"
 #include "llvm/LinkAllVMCore.h"
 
-// Enable this macro to debug bugpoint itself.
-#define DEBUG_BUGPOINT 0
+//Enable this macro to debug bugpoint itself.
+//#define DEBUG_BUGPOINT 1
 
 using namespace llvm;
 
