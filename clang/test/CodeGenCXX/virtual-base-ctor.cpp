@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -O2 | FileCheck %s
+// XFAIL: *
 
 struct B;
 extern B x;
