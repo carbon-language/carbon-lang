@@ -52,6 +52,7 @@ extern "C" bool
 LLDBSWIGPythonBreakpointCallbackFunction 
 (
     const char *python_function_name,
+    const char *session_dictionary_name,
     lldb::SBFrame& sb_frame, 
     lldb::SBBreakpointLocation& sb_bp_loc
 );
@@ -146,10 +147,22 @@ class SimpleREPL(code.InteractiveConsole):\n\
            if not more:\n\
                break\n\
 \n\
+   def one_line (self, input):\n\
+      line = self.process_input (input)\n\
+      more = self.push(line)\n\
+      if more:\n\
+         self.write (\"Input not a complete line.\")\n\
+         self.resetbuffer()\n\
+         more = 0\n\
+\n\
 def run_python_interpreter (dict):\n\
    # Pass in the dictionary, for continuity from one session to the next.\n\
    repl = SimpleREPL('>>> ', dict)\n\
-   repl.interact()\n";
+   repl.interact()\n\
+\n\
+def run_one_line (dict, input_string):\n\
+   repl = SimpleREPL ('', dict)\n\
+   repl.one_line (input_string)\n";
 
 static int
 _check_and_flush (FILE *stream)
@@ -158,146 +171,171 @@ _check_and_flush (FILE *stream)
   return fflush (stream) || prev_fail ? EOF : 0;
 }
 
+static Mutex &
+GetPythonMutex ()
+{
+    static Mutex g_python_mutex (Mutex::eMutexTypeRecursive);
+    return g_python_mutex;
+}
+
 ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interpreter) :
     ScriptInterpreter (interpreter, eScriptLanguagePython),
-    m_compiled_module (NULL),
+    m_embedded_python_pty (),
+    m_embedded_thread_input_reader_sp (),
+    m_dbg_stdout (interpreter.GetDebugger().GetOutputFileHandle()),
+    m_new_sysout (NULL),
+    m_dictionary_name (interpreter.GetDebugger().GetInstanceName().AsCString()),
     m_termios (),
     m_termios_valid (false),
-    m_embedded_python_pty (),
-    m_embedded_thread_input_reader_sp ()
+    m_session_is_active (false),
+    m_pty_slave_is_open (false),
+    m_valid_session (true)
 {
+    Mutex::Locker locker (GetPythonMutex());
 
-    Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
+    m_dictionary_name.append("_dict");
+    StreamString run_string;
+    run_string.Printf ("%s = dict()", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
 
-    // Save terminal settings if we can
-    int input_fd;
-    FILE *input_fh = m_interpreter.GetDebugger().GetInputFileHandle();
-    if (input_fh != NULL)
-        input_fd = ::fileno (input_fh);
-    else
-        input_fd = STDIN_FILENO;
+    run_string.Clear();
+    run_string.Printf ("run_one_line (%s, 'import sys')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
+
+    // Importing 'lldb' module calls SBDebugger::Initialize, which calls Debugger::Initialize, which increments a
+    // global debugger ref-count; therefore we need to check the ref-count before and after importing lldb, and if the
+    // ref-count increased we need to call Debugger::Terminate here to decrement the ref-count so that when the final 
+    // call to Debugger::Terminate is made, the ref-count has the correct value. 
+    //
+    // Bonus question:  Why doesn't the ref-count always increase?  Because sometimes lldb has already been imported, in
+    // which case the code inside it, including the call to SBDebugger::Initialize(), does not get executed.
     
-    m_termios_valid = ::tcgetattr (input_fd, &m_termios) == 0;
-            
-    // Find the module that owns this code and use that path we get to
-    // set the PYTHONPATH appropriately.
+    int old_count = Debugger::TestDebuggerRefCount();
 
-    FileSpec file_spec;
-    char python_dir_path[PATH_MAX];
-    if (Host::GetLLDBPath (ePathTypePythonDir, file_spec))
-    {
-        std::string python_path;
-        const char *curr_python_path = ::getenv ("PYTHONPATH");
-        if (curr_python_path)
-        {
-            // We have a current value for PYTHONPATH, so lets append to it
-            python_path.append (curr_python_path);
-        }
+    run_string.Clear();
+    run_string.Printf ("run_one_line (%s, 'import lldb')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
 
-        if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
-        {
-            if (!python_path.empty())
-                python_path.append (1, ':');
-            python_path.append (python_dir_path);
-        }
-        
-        if (Host::GetLLDBPath (ePathTypeLLDBShlibDir, file_spec))
-        {
-            if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
-            {
-                if (!python_path.empty())
-                    python_path.append (1, ':');
-                python_path.append (python_dir_path);
-            }
-        }
-        const char *pathon_path_env_cstr = python_path.c_str();
-        ::setenv ("PYTHONPATH", pathon_path_env_cstr, 1);
-    }
-
-    Py_Initialize ();
-
-    PyObject *compiled_module = Py_CompileString (embedded_interpreter_string, 
-                                                  "embedded_interpreter.py",
-                                                  Py_file_input);
-
-    m_compiled_module = static_cast<void*>(compiled_module);
-
-    // This function is in the C++ output file generated by SWIG after it is 
-    // run on all of the headers in "lldb/API/SB*.h"
-    init_lldb ();
-
-    // Update the path python uses to search for modules to include the current directory.
-
-    int success = PyRun_SimpleString ("import sys");
-    success = PyRun_SimpleString ("sys.path.append ('.')");
-    if (success == 0)
-    {
-        // Import the Script Bridge module.
-        success =  PyRun_SimpleString ("import lldb");
-    }
-
-    const char *pty_slave_name = GetScriptInterpreterPtyName ();
-    FILE *out_fh = interpreter.GetDebugger().GetOutputFileHandle();
+    int new_count = Debugger::TestDebuggerRefCount();
     
-    PyObject *pmod = PyImport_ExecCodeModule (const_cast<char*> ("embedded_interpreter"),
-                                              static_cast<PyObject*>(m_compiled_module));
+    if (new_count > old_count)
+        Debugger::Terminate();
 
-    if (pmod != NULL)
+    run_string.Clear();
+    run_string.Printf ("run_one_line (%s, 'import copy')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
+
+    run_string.Clear();
+    run_string.Printf ("run_one_line (%s, 'lldb.debugger_unique_id = %d')", m_dictionary_name.c_str(),
+                       interpreter.GetDebugger().GetID());
+    PyRun_SimpleString (run_string.GetData());
+    
+    if (m_dbg_stdout != NULL)
     {
-        PyRun_SimpleString ("ConsoleDict = locals()");
-        PyRun_SimpleString ("from embedded_interpreter import run_python_interpreter");
-        PyRun_SimpleString ("import sys");
-        PyRun_SimpleString ("from termios import *");
-      
-        if (out_fh != NULL)
-        {
-            PyObject *new_sysout = PyFile_FromFile (out_fh, (char *) "", (char *) "w", 
-                                                        _check_and_flush);
-            PyObject *sysmod = PyImport_AddModule ("sys");
-            PyObject *sysdict = PyModule_GetDict (sysmod);
-
-            if ((new_sysout != NULL)
-                && (sysmod != NULL)
-                && (sysdict != NULL))
-            {
-                PyDict_SetItemString (sysdict, "stdout", new_sysout);
-            }
-
-            if (PyErr_Occurred())
-                PyErr_Clear();
-        }
-
-        StreamString run_string;
-        run_string.Printf ("new_stdin = open('%s', 'r')", pty_slave_name);
-        PyRun_SimpleString (run_string.GetData());
-        PyRun_SimpleString ("sys.stdin = new_stdin");
-
-        run_string.Clear();
-        run_string.Printf ("lldb.debugger_unique_id = %d", interpreter.GetDebugger().GetID());
-        PyRun_SimpleString (run_string.GetData());
-    }
-
-
-    // Restore terminal settings if they were validly saved
-    if (m_termios_valid)
-    {
-        ::tcsetattr (input_fd, TCSANOW, &m_termios);
+        m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
     }
 }
 
 ScriptInterpreterPython::~ScriptInterpreterPython ()
 {
-    Py_Finalize ();
+    Debugger &debugger = GetCommandInterpreter().GetDebugger();
+
+    if (m_embedded_thread_input_reader_sp.get() != NULL)
+    {
+        m_embedded_thread_input_reader_sp->SetIsDone (true);
+        m_embedded_python_pty.CloseSlaveFileDescriptor();
+        m_pty_slave_is_open = false;
+        const InputReaderSP reader_sp = m_embedded_thread_input_reader_sp;
+        m_embedded_thread_input_reader_sp.reset();
+        debugger.PopInputReader (reader_sp);
+    }
+    
+    if (m_new_sysout)
+    {
+        Mutex::Locker locker(GetPythonMutex());
+        Py_DECREF (m_new_sysout);
+    }
 }
+
+void
+ScriptInterpreterPython::ResetOutputFileHandle (FILE *fh)
+{
+    if (fh == NULL)
+        return;
+        
+    m_dbg_stdout = fh;
+    Mutex::Locker locker (GetPythonMutex());
+
+    EnterSession ();
+    m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
+    LeaveSession ();
+}
+
+void
+ScriptInterpreterPython::LeaveSession ()
+{
+    m_session_is_active = false;
+}
+
+void
+ScriptInterpreterPython::EnterSession ()
+{
+    // If we have already entered the session, without having officially 'left' it, then there is no need to 
+    // 'enter' it again.
+    
+    if (m_session_is_active)
+        return;
+
+    m_session_is_active = true;
+
+    Mutex::Locker locker (GetPythonMutex());
+
+    PyObject *sysmod = PyImport_AddModule ("sys");
+    PyObject *sysdict = PyModule_GetDict (sysmod);
+    
+    if ((m_new_sysout != NULL)
+        && (sysmod != NULL)
+        && (sysdict != NULL))
+            PyDict_SetItemString (sysdict, "stdout", m_new_sysout);
+            
+    if (PyErr_Occurred())
+        PyErr_Clear ();
+        
+    StreamString run_string;
+    if (!m_pty_slave_is_open)
+    {
+        run_string.Printf ("run_one_line (%s, \"new_stdin = open('%s', 'r')\")", m_dictionary_name.c_str(),
+                           m_pty_slave_name.c_str());
+        PyRun_SimpleString (run_string.GetData());
+        m_pty_slave_is_open = true;
+        
+        run_string.Clear();
+        run_string.Printf ("run_one_line (%s, 'sys.stdin = new_stdin')", m_dictionary_name.c_str());
+        PyRun_SimpleString (run_string.GetData());
+    }
+}   
+
 
 bool
 ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result)
 {
+    if (!m_valid_session)
+        return false;
+        
+    EnterSession ();
+        
+    Mutex::Locker locker (GetPythonMutex());
+
     if (command)
     {
         int success;
 
-        success = PyRun_SimpleString (command);
+        StreamString sstr;
+        sstr.Printf ("run_one_line (%s, '%s')", m_dictionary_name.c_str(), command);
+        success = PyRun_SimpleString (sstr.GetData());
+        
+        LeaveSession ();
+        
         if (success == 0)
             return true;
 
@@ -307,6 +345,7 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         return false;
     }
 
+    LeaveSession ();
     if (result)
         result->AppendError ("empty command passed to python\n");
     return false;
@@ -329,12 +368,16 @@ ScriptInterpreterPython::InputReaderCallback
 
     if (baton == NULL)
         return 0;
-
+        
+    ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;
+        
+    if (script_interpreter->m_script_lang != eScriptLanguagePython)
+        return 0;
+    
     FILE *out_fh = reader.GetDebugger().GetOutputFileHandle ();
     if (out_fh == NULL)
         out_fh = stdout;
 
-    ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;            
     switch (notification)
     {
     case eInputReaderActivate:
@@ -384,14 +427,17 @@ ScriptInterpreterPython::InputReaderCallback
                     log->Printf ("ScriptInterpreterPython::InputReaderCallback, Activate, failed to open master pty ");
                 reader.SetIsDone (true);
             }
+            script_interpreter->EnterSession ();
 
         }
         break;
 
     case eInputReaderDeactivate:
+        script_interpreter->LeaveSession ();
         break;
 
     case eInputReaderReactivate:
+        script_interpreter->EnterSession ();
         break;
         
     case eInputReaderInterrupt:
@@ -429,10 +475,8 @@ ScriptInterpreterPython::InputReaderCallback
         break;
         
     case eInputReaderDone:
-        // Send a control D to the script interpreter
-        //::write (interpreter->GetMasterFileDescriptor(), "\nquit()\n", strlen("\nquit()\n"));
-        // Write a newline out to the reader output
-        //::fwrite ("\n", 1, 1, out_fh);
+        script_interpreter->LeaveSession ();
+
         // Restore terminal settings if they were validly saved
         if (log)
             log->Printf ("ScriptInterpreterPython::InputReaderCallback, Done, closing down input reader.");
@@ -460,7 +504,7 @@ ScriptInterpreterPython::ExecuteInterpreterLoop ()
 {
     Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
 
-    Debugger &debugger = m_interpreter.GetDebugger();
+    Debugger &debugger = GetCommandInterpreter().GetDebugger();
 
     // At the moment, the only time the debugger does not have an input file handle is when this is called
     // directly from Python, in which case it is both dangerous and unnecessary (not to mention confusing) to
@@ -493,14 +537,54 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                                                    ScriptInterpreter::ReturnType return_type,
                                                    void *ret_value)
 {
+    EnterSession ();
+
+    Mutex::Locker locker (GetPythonMutex());
+
     PyObject *py_return = NULL;
     PyObject *mainmod = PyImport_AddModule ("__main__");
     PyObject *globals = PyModule_GetDict (mainmod);
-    PyObject *locals = globals;
+    PyObject *locals = NULL;
     PyObject *py_error = NULL;
     bool ret_success;
+    bool should_decrement_locals = false;
     int success;
+    
+    if (PyDict_Check (globals))
+    {
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        
+        int i = 0;
+        while (PyDict_Next (globals, &pos, &key, &value))
+        {
+            // We have stolen references to the key and value objects in the dictionary; we need to increment them now
+            // so that Python's garbage collector doesn't collect them out from under us.
+            Py_INCREF (key);
+            Py_INCREF (value);
+            char *c_str = PyString_AsString (key);
+            if (strcmp (c_str, m_dictionary_name.c_str()) == 0)
+                locals = value;
+            ++i;
+        }
+    }
 
+    if (locals == NULL)
+    {
+        locals = PyObject_GetAttrString (globals, m_dictionary_name.c_str());
+        should_decrement_locals = true;
+    }
+        
+    if (locals == NULL)
+    {
+        locals = globals;
+        should_decrement_locals = false;
+    }
+
+    py_error = PyErr_Occurred();
+    if (py_error != NULL)
+        PyErr_Clear();
+    
     if (in_string != NULL)
     {
         py_return = PyRun_String (in_string, Py_eval_input, globals, locals);
@@ -512,6 +596,10 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
 
             py_return = PyRun_String (in_string, Py_single_input, globals, locals);
         }
+
+        if (locals != NULL
+            && should_decrement_locals)
+            Py_DECREF (locals);
 
         if (py_return != NULL)
         {
@@ -614,6 +702,8 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
         PyErr_Clear();
         ret_success = false;
     }
+    
+    LeaveSession ();
 
     return ret_success;
 }
@@ -621,13 +711,50 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
 bool
 ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string)
 {
+    EnterSession ();
+
+    Mutex::Locker locker (GetPythonMutex());
+
     bool success = false;
     PyObject *py_return = NULL;
     PyObject *mainmod = PyImport_AddModule ("__main__");
     PyObject *globals = PyModule_GetDict (mainmod);
-    PyObject *locals = globals;
+    PyObject *locals = NULL;
     PyObject *py_error = NULL;
+    bool should_decrement_locals = false;
 
+    if (PyDict_Check (globals))
+    {
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        
+        while (PyDict_Next (globals, &pos, &key, &value))
+        {
+            // We have stolen references to the key and value objects in the dictionary; we need to increment them now
+            // so that Python's garbage collector doesn't collect them out from under us.
+            Py_INCREF (key);
+            Py_INCREF (value);
+            if (strcmp (PyString_AsString (key), m_dictionary_name.c_str()) == 0)
+                locals = value;
+        }
+    }
+
+    if (locals == NULL)
+    {
+        locals = PyObject_GetAttrString (globals, m_dictionary_name.c_str());
+        should_decrement_locals = true;
+    }
+
+    if (locals == NULL)
+    {
+        locals = globals;
+        should_decrement_locals = false;
+    }
+
+    py_error = PyErr_Occurred();
+    if (py_error != NULL)
+        PyErr_Clear();
+    
     if (in_string != NULL)
     {
         struct _node *compiled_node = PyParser_SimpleParseString (in_string, Py_file_input);
@@ -642,6 +769,8 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string)
                     success = true;
                     Py_DECREF (py_return);
                 }
+                if (locals && should_decrement_locals)
+                    Py_DECREF (locals);
             }
         }
     }
@@ -654,6 +783,8 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string)
         PyErr_Clear();
         success = false;
     }
+
+    LeaveSession ();
 
     return success;
 }
@@ -764,7 +895,8 @@ void
 ScriptInterpreterPython::CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
                                                                   CommandReturnObject &result)
 {
-    Debugger &debugger = m_interpreter.GetDebugger();
+    Debugger &debugger = GetCommandInterpreter().GetDebugger();
+    
     InputReaderSP reader_sp (new InputReader (debugger));
 
     if (reader_sp)
@@ -861,8 +993,16 @@ ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user
 
     // Create the function name & definition string.
 
-    sstr.Printf ("def %s (frame, bp_loc):", auto_generated_function_name.c_str());
+    sstr.Printf ("def %s (frame, bp_loc, dict):", auto_generated_function_name.c_str());
     auto_generated_function.AppendString (sstr.GetData());
+    
+    // Pre-pend code for setting up the session dictionary.
+    
+    auto_generated_function.AppendString ("     global_dict = globals()");   // Grab the global dictionary
+    auto_generated_function.AppendString ("     new_keys = dict.keys()");    // Make a list of keys in the session dict
+    auto_generated_function.AppendString ("     old_keys = global_dict.keys()"); // Save list of keys in global dict
+    auto_generated_function.AppendString ("     global_dict.update (dict)"); // Add the session dictionary to the 
+                                                                             // global dictionary.
 
     // Wrap everything up inside the function, increasing the indentation.
 
@@ -872,6 +1012,14 @@ ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user
         sstr.Printf ("     %s", user_input.GetStringAtIndex (i));
         auto_generated_function.AppendString (sstr.GetData());
     }
+
+    // Append code to clean up the global dictionary and update the session dictionary (all updates in the function
+    // got written to the values in the global dictionary, not the session dictionary).
+    
+    auto_generated_function.AppendString ("     for key in new_keys:");  // Iterate over all the keys from session dict
+    auto_generated_function.AppendString ("         dict[key] = global_dict[key]");  // Update session dict values
+    auto_generated_function.AppendString ("         if key not in old_keys:");       // If key was not originally in global dict
+    auto_generated_function.AppendString ("             del global_dict[key]");      //  ...then remove key/value from global dict
 
     // Verify that the results are valid Python.
 
@@ -897,6 +1045,21 @@ ScriptInterpreterPython::BreakpointCallbackFunction
 {
     BreakpointOptions::CommandData *bp_option_data = (BreakpointOptions::CommandData *) baton;
     const char *python_function_name = bp_option_data->script_source.GetStringAtIndex (0);
+
+    if (!context)
+        return true;
+        
+    Target *target = context->exe_ctx.target;
+    
+    if (!target)
+        return true;
+        
+    Debugger &debugger = target->GetDebugger();
+    ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
+    ScriptInterpreterPython *python_interpreter = (ScriptInterpreterPython *) script_interpreter;
+    
+    if (!script_interpreter)
+        return true;
     
     if (python_function_name != NULL 
         && python_function_name[0] != '\0')
@@ -911,7 +1074,15 @@ ScriptInterpreterPython::BreakpointCallbackFunction
         SBBreakpointLocation sb_bp_loc (bp_loc_sp);
         
         if (sb_bp_loc.IsValid() || sb_frame.IsValid())
-            return LLDBSWIGPythonBreakpointCallbackFunction (python_function_name, sb_frame, sb_bp_loc);
+        {
+            python_interpreter->EnterSession ();
+            Mutex::Locker locker (GetPythonMutex());
+            bool ret_val = LLDBSWIGPythonBreakpointCallbackFunction(python_function_name, 
+                                                                    python_interpreter->m_dictionary_name.c_str(),
+                                                                    sb_frame, sb_bp_loc);
+            python_interpreter->LeaveSession ();
+            return ret_val;
+        }
     }
     // We currently always true so we stop in case anything goes wrong when
     // trying to call the script function
@@ -923,6 +1094,8 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
 {
     ScriptInterpreterPython *script_interpreter = (ScriptInterpreterPython *) baton;
     
+    script_interpreter->EnterSession ();
+    
     LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
     
     if (log)
@@ -932,39 +1105,172 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
     const char *pty_slave_name = script_interpreter->m_embedded_python_pty.GetSlaveName (error_str, sizeof (error_str));
     if (pty_slave_name != NULL)
     {
+        Mutex::Locker locker (GetPythonMutex());
+
         StreamString run_string;
-        PyRun_SimpleString ("save_stderr = sys.stderr");
-        PyRun_SimpleString ("sys.stderr = sys.stdout");
-        PyRun_SimpleString ("save_stdin = sys.stdin");
-        run_string.Printf ("sys.stdin = open ('%s', 'r')", pty_slave_name);
-        PyRun_SimpleString (run_string.GetData());
         
+        run_string.Printf ("run_one_line (%s, 'save_stderr = sys.stderr')", script_interpreter->m_dictionary_name.c_str());
+        PyRun_SimpleString (run_string.GetData());
+        run_string.Clear ();
+        
+        run_string.Printf ("run_one_line (%s, 'sys.stderr = sys.stdout')", script_interpreter->m_dictionary_name.c_str());
+        PyRun_SimpleString (run_string.GetData());
+        run_string.Clear ();
+        
+        run_string.Printf ("run_one_line (%s, 'save_stdin = sys.stdin')", script_interpreter->m_dictionary_name.c_str());
+        PyRun_SimpleString (run_string.GetData());
+        run_string.Clear ();
+        
+        run_string.Printf ("run_one_line (%s, \"sys.stdin = open ('%s', 'r')\")", script_interpreter->m_dictionary_name.c_str(),
+                           pty_slave_name);
+        PyRun_SimpleString (run_string.GetData());
+        run_string.Clear ();
+
 	    // The following call drops into the embedded interpreter loop and stays there until the
 	    // user chooses to exit from the Python interpreter.
-        script_interpreter->ExecuteOneLine ("run_python_interpreter(ConsoleDict)", NULL);
+
+        run_string.Printf ("run_python_interpreter (%s)", script_interpreter->m_dictionary_name.c_str());
+        PyRun_SimpleString (run_string.GetData());
+        run_string.Clear ();
         
-        PyRun_SimpleString ("sys.stdin = save_stdin");
-        PyRun_SimpleString ("sys.stderr = save_stderr");
+        run_string.Printf ("run_one_line (%s, 'sys.stdin = save_stdin')", script_interpreter->m_dictionary_name.c_str());
+        PyRun_SimpleString (run_string.GetData());
+        run_string.Clear();
+        
+        run_string.Printf ("run_one_line (%s, 'sys.stderr = save_stderr')", script_interpreter->m_dictionary_name.c_str());
+        PyRun_SimpleString (run_string.GetData());
+        run_string.Clear();
     }
     
     if (script_interpreter->m_embedded_thread_input_reader_sp)
         script_interpreter->m_embedded_thread_input_reader_sp->SetIsDone (true);
     
     script_interpreter->m_embedded_python_pty.CloseSlaveFileDescriptor();
+
+    script_interpreter->m_pty_slave_is_open = false;
     
     log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT);
     if (log)
         log->Printf ("%p ScriptInterpreterPython::RunEmbeddedPythonInterpreter () thread exiting...", baton);
     
 
-	// Clean up the input reader and make the debugger pop it off the stack.    
-    Debugger &debugger = script_interpreter->m_interpreter.GetDebugger();
+	// Clean up the input reader and make the debugger pop it off the stack.
+    Debugger &debugger = script_interpreter->GetCommandInterpreter().GetDebugger();
     const InputReaderSP reader_sp = script_interpreter->m_embedded_thread_input_reader_sp;
     script_interpreter->m_embedded_thread_input_reader_sp.reset();
     debugger.PopInputReader (reader_sp);
+    
+    script_interpreter->LeaveSession ();
         
     return NULL;
 }
 
 
+void
+ScriptInterpreterPython::Initialize ()
+{
 
+    Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
+
+    int input_fd = STDIN_FILENO;
+
+    struct termios stdin_termios;
+    bool valid_termios = ::tcgetattr (input_fd, &stdin_termios) == 0;
+
+    // Find the module that owns this code and use that path we get to
+    // set the PYTHONPATH appropriately.
+
+    FileSpec file_spec;
+    char python_dir_path[PATH_MAX];
+    if (Host::GetLLDBPath (ePathTypePythonDir, file_spec))
+    {
+        std::string python_path;
+        const char *curr_python_path = ::getenv ("PYTHONPATH");
+        if (curr_python_path)
+        {
+            // We have a current value for PYTHONPATH, so lets append to it
+            python_path.append (curr_python_path);
+        }
+
+        if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
+        {
+            if (!python_path.empty())
+                python_path.append (1, ':');
+            python_path.append (python_dir_path);
+        }
+        
+        if (Host::GetLLDBPath (ePathTypeLLDBShlibDir, file_spec))
+        {
+            if (file_spec.GetPath(python_dir_path, sizeof (python_dir_path)))
+            {
+                if (!python_path.empty())
+                    python_path.append (1, ':');
+                python_path.append (python_dir_path);
+            }
+        }
+        const char *pathon_path_env_cstr = python_path.c_str();
+        ::setenv ("PYTHONPATH", pathon_path_env_cstr, 1);
+    }
+
+    Py_Initialize ();
+
+    PyObject *compiled_module = Py_CompileString (embedded_interpreter_string, 
+                                                  "embedded_interpreter.py",
+                                                  Py_file_input);
+                                                  
+    PyObject *py_error = PyErr_Occurred ();
+    if (py_error != NULL)
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    
+
+    // This function is in the C++ output file generated by SWIG after it is 
+    // run on all of the headers in "lldb/API/SB*.h"
+    init_lldb ();
+
+    // Update the path python uses to search for modules to include the current directory.
+
+    int success = PyRun_SimpleString ("import sys");
+    success = PyRun_SimpleString ("sys.path.append ('.')");
+
+    PyObject *pmod = NULL;
+    
+     if (compiled_module)
+     {
+        pmod = PyImport_ExecCodeModule (const_cast<char*> ("embedded_interpreter"),
+                                        compiled_module);
+        Py_DECREF (compiled_module);
+    }
+
+    if (pmod != NULL)
+    {
+        PyRun_SimpleString ("from embedded_interpreter import run_python_interpreter");
+        PyRun_SimpleString ("from embedded_interpreter import run_one_line");
+        PyRun_SimpleString ("import sys");
+        PyRun_SimpleString ("from termios import *");
+        Py_DECREF (pmod);
+    }
+    
+    if (valid_termios)
+        ::tcsetattr (input_fd, TCSANOW, &stdin_termios);
+}
+
+void
+ScriptInterpreterPython::Terminate ()
+{
+    // We are intentionally NOT calling Py_Finalize here (this would be the logical place to call it).  Calling
+    // Py_Finalize here causes test suite runs to seg fault:  The test suite runs in Python.  It registers 
+    // SBDebugger::Terminate to be called 'at_exit'.  When the test suite Python harness finishes up, it calls 
+    // Py_Finalize, which calls all the 'at_exit' registered functions.  SBDebugger::Terminate calls Debugger::Terminate,
+    // which calls lldb::Terminate, which calls ScriptInterpreter::Terminate, which calls 
+    // ScriptInterpreterPython::Terminate.  So if we call Py_Finalize here, we end up with Py_Finalize being called from
+    // within Py_Finalize, which results in a seg fault.
+    //
+    // Since this function only gets called when lldb is shutting down and going away anyway, the fact that we don't
+    // actually call Py_Finalize should not cause any problems (everything should shut down/go away anyway when the
+    // process exits).
+    //
+//    Py_Finalize ();
+}

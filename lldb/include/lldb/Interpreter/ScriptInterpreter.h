@@ -90,16 +90,23 @@ public:
     int
     GetMasterFileDescriptor ();
 
-    CommandInterpreter *
-    GetCommandInterpreter ();
+	CommandInterpreter &
+	GetCommandInterpreter ();
 
-    static std::string
-    LanguageToString (lldb::ScriptLanguage);
+     static std::string
+    LanguageToString (lldb::ScriptLanguage language);
+    
+    static void
+    Initialize ();
+
+    static void
+    Terminate ();
+
+    virtual void
+    ResetOutputFileHandle (FILE *new_fh) { } //By default, do nothing.
 
 protected:
     CommandInterpreter &m_interpreter;
-
-private:
     lldb::ScriptLanguage m_script_lang;
 
     // Scripting languages may need to use stdin for their interactive loops;
@@ -108,8 +115,11 @@ private:
     // embedded scripting loops.  Therefore we need to set up a pseudoterminal and use that
     // as stdin for the script interpreter interactive loops/prompts.
 
-    lldb_utility::PseudoTerminal m_interpreter_pty;
-    std::string m_pty_slave_name;
+    lldb_utility::PseudoTerminal m_interpreter_pty; // m_session_pty
+    std::string m_pty_slave_name;                   //m_session_pty_slave_name
+
+private:
+
 };
 
 } // namespace lldb_private

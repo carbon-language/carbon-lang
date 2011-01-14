@@ -42,12 +42,8 @@ public:
     Execute (Args& command,
              CommandReturnObject &result);
 
-    ScriptInterpreter *
-    GetInterpreter ();
-
 private:
     lldb::ScriptLanguage m_script_lang;
-    std::auto_ptr<ScriptInterpreter> m_interpreter_ap;
 };
 
 } // namespace lldb_private

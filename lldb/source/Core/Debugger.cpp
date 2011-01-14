@@ -59,6 +59,12 @@ Debugger::GetSettingsController ()
     return g_settings_controller;
 }
 
+int
+Debugger::TestDebuggerRefCount ()
+{
+    return g_shared_debugger_refcount;
+}
+
 void
 Debugger::Initialize ()
 {
@@ -252,6 +258,8 @@ Debugger::SetOutputFileHandle (FILE *fh, bool tranfer_ownership)
     m_output_file.SetFileHandle (fh, tranfer_ownership);
     if (m_output_file.GetFileHandle() == NULL)
         m_output_file.SetFileHandle (stdin, false);
+    
+    GetCommandInterpreter().GetScriptInterpreter()->ResetOutputFileHandle (fh);
 }
 
 FILE *

@@ -11,6 +11,12 @@
 #ifndef liblldb_ScriptInterpreterPython_h_
 #define liblldb_ScriptInterpreterPython_h_
 
+#if defined (__APPLE__)
+#include <Python/Python.h>
+#else
+#include <Python.h>
+#endif
+
 #include "lldb/lldb-private.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Core/InputReader.h"
@@ -70,9 +76,26 @@ public:
     StringList
     ReadCommandInputFromUser (FILE *in_file);
     
+    virtual void
+    ResetOutputFileHandle (FILE *new_fh);
+    
     static lldb::thread_result_t
     RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton);
 
+    static void
+    Initialize ();
+    
+    static void
+    Terminate ();
+
+protected:
+
+    void
+    EnterSession ();
+    
+    void
+    LeaveSession ();
+    
 private:
 
     static size_t
@@ -81,12 +104,19 @@ private:
                          lldb::InputReaderAction notification,
                          const char *bytes, 
                          size_t bytes_len);
-                         
-    void *m_compiled_module;
-    struct termios m_termios;
-    bool m_termios_valid;
+
+
     lldb_utility::PseudoTerminal m_embedded_python_pty;
     lldb::InputReaderSP m_embedded_thread_input_reader_sp;
+    FILE *m_dbg_stdout;
+    PyObject *m_new_sysout;
+    std::string m_dictionary_name;
+    struct termios m_termios;
+    bool m_termios_valid;
+    bool m_session_is_active;
+    bool m_pty_slave_is_open;
+    bool m_valid_session;
+                         
 };
 
 } // namespace lldb_private

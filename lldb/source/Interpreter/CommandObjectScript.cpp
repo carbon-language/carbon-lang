@@ -17,8 +17,7 @@
 
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
-#include "lldb/Interpreter/ScriptInterpreterNone.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -32,8 +31,7 @@ CommandObjectScript::CommandObjectScript (CommandInterpreter &interpreter, Scrip
                    "script",
                    "Pass an expression to the script interpreter for evaluation and return the results. Drop into the interactive interpreter if no expression is given.",
                    "script [<script-expression-for-evaluation>]"),
-    m_script_lang (script_lang),
-    m_interpreter_ap ()
+    m_script_lang (script_lang)
 {
 }
 
@@ -48,7 +46,7 @@ CommandObjectScript::ExecuteRawCommandString
     CommandReturnObject &result
 )
 {
-    ScriptInterpreter *script_interpreter = GetInterpreter ();
+    ScriptInterpreter *script_interpreter = m_interpreter.GetScriptInterpreter ();
 
     if (script_interpreter == NULL)
     {
@@ -88,22 +86,3 @@ CommandObjectScript::Execute
     return false;
 }
 
-
-ScriptInterpreter *
-CommandObjectScript::GetInterpreter ()
-{
-    if (m_interpreter_ap.get() == NULL)
-    {
-        switch (m_script_lang)
-        {
-        case eScriptLanguagePython:
-            m_interpreter_ap.reset (new ScriptInterpreterPython (m_interpreter));
-            break;
-
-        case eScriptLanguageNone:
-            m_interpreter_ap.reset (new ScriptInterpreterNone (m_interpreter));
-            break;
-        }
-    }
-    return m_interpreter_ap.get();
-}

@@ -17,15 +17,17 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-ScriptInterpreter::ScriptInterpreter (CommandInterpreter &interpreter, ScriptLanguage script_lang) :
+ScriptInterpreter::ScriptInterpreter (CommandInterpreter &interpreter, lldb::ScriptLanguage script_lang) :
     m_interpreter (interpreter),
     m_script_lang (script_lang),
-    m_interpreter_pty ()
+    m_interpreter_pty (),
+    m_pty_slave_name ()
 {
     if (m_interpreter_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, NULL, 0))
     {
@@ -38,6 +40,12 @@ ScriptInterpreter::ScriptInterpreter (CommandInterpreter &interpreter, ScriptLan
 ScriptInterpreter::~ScriptInterpreter ()
 {
     m_interpreter_pty.CloseMasterFileDescriptor();
+}
+
+CommandInterpreter &
+ScriptInterpreter::GetCommandInterpreter ()
+{
+    return m_interpreter;
 }
 
 const char *
@@ -81,3 +89,16 @@ ScriptInterpreter::LanguageToString (lldb::ScriptLanguage language)
 
     return return_value;
 }
+
+void
+ScriptInterpreter::Initialize ()
+{
+    ScriptInterpreterPython::Initialize ();
+}
+
+void
+ScriptInterpreter::Terminate ()
+{
+    ScriptInterpreterPython::Terminate ();
+}
+

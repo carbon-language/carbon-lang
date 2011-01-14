@@ -84,7 +84,20 @@ class SimpleREPL(code.InteractiveConsole):
            if not more:
                break
 
+   def one_line (self, input):
+      line = self.process_input (input)
+      more = self.push(line)
+      if more:
+         self.write ("Input not a complete line.")
+         self.resetbuffer()
+         more = 0
+
 def run_python_interpreter (dict):
    # Pass in the dictionary, for continuity from one session to the next.
    repl = SimpleREPL('>>> ', dict)
    repl.interact()
+
+def run_one_line (dict, input_string):
+   repl = SimpleREPL ('', dict)
+   repl.one_line (input_string)
+

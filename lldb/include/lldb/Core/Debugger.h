@@ -166,7 +166,6 @@ public:
         m_auto_confirm_on = auto_confirm_on;
     }
         
-
 protected:
 
     void
@@ -374,6 +373,9 @@ public:
 
     void
     CleanUpInputReaders ();
+
+    static int
+    TestDebuggerRefCount ();
 
 protected:
 
