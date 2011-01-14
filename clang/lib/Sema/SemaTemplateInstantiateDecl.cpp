@@ -1425,7 +1425,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
 }
 
 ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
-  return SemaRef.SubstParmVarDecl(D, TemplateArgs);
+  return SemaRef.SubstParmVarDecl(D, TemplateArgs, llvm::Optional<unsigned>());
 }
 
 Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(

@@ -705,7 +705,8 @@ namespace {
 
     QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
                                         FunctionProtoTypeLoc TL);
-    ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm);
+    ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm,
+                                      llvm::Optional<unsigned> NumExpansions);
 
     /// \brief Transforms a template type parameter type by performing
     /// substitution of the corresponding template type argument.
@@ -1000,8 +1001,10 @@ QualType TemplateInstantiator::TransformFunctionProtoType(TypeLocBuilder &TLB,
 }
 
 ParmVarDecl *
-TemplateInstantiator::TransformFunctionTypeParam(ParmVarDecl *OldParm) {
-  return SemaRef.SubstParmVarDecl(OldParm, TemplateArgs);
+TemplateInstantiator::TransformFunctionTypeParam(ParmVarDecl *OldParm,
+                                       llvm::Optional<unsigned> NumExpansions) {
+  return SemaRef.SubstParmVarDecl(OldParm, TemplateArgs,
+                                  NumExpansions);
 }
 
 QualType
@@ -1241,7 +1244,8 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
 }
 
 ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm, 
-                          const MultiLevelTemplateArgumentList &TemplateArgs) {
+                            const MultiLevelTemplateArgumentList &TemplateArgs,
+                                    llvm::Optional<unsigned> NumExpansions) {
   TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
   TypeSourceInfo *NewDI = 0;
   
@@ -1260,9 +1264,8 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
       // We still have unexpanded parameter packs, which means that
       // our function parameter is still a function parameter pack.
       // Therefore, make its type a pack expansion type.
-      // FIXME: Variadic templates num expansions.
       NewDI = CheckPackExpansion(NewDI, ExpansionTL.getEllipsisLoc(),
-                                 llvm::Optional<unsigned>());
+                                 NumExpansions);
     }
   } else {
     NewDI = SubstType(OldDI, TemplateArgs, OldParm->getLocation(), 

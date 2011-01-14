@@ -3935,7 +3935,8 @@ public:
                                         SourceLocation Loc,
                                         DeclarationName Entity);
   ParmVarDecl *SubstParmVarDecl(ParmVarDecl *D,
-                            const MultiLevelTemplateArgumentList &TemplateArgs);
+                            const MultiLevelTemplateArgumentList &TemplateArgs,
+                                llvm::Optional<unsigned> NumExpansions);
   bool SubstParmTypes(SourceLocation Loc, 
                       ParmVarDecl **Params, unsigned NumParams,
                       const MultiLevelTemplateArgumentList &TemplateArgs,

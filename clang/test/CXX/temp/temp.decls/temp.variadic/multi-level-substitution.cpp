@@ -66,4 +66,26 @@ namespace PacksAtDifferentLevels {
                                      sizeof(int) + sizeof(unsigned int),
                                      sizeof(long) + sizeof(unsigned long)>
                                        >::value == 0? 1 : -1];
+
+  template<typename ...Types>
+  struct X2 {
+    template<typename> struct Inner {
+      static const unsigned value = 1;
+    };
+
+    template<typename R, typename ...YTypes>
+    struct Inner<R(pair<Types, YTypes>...)> {
+      static const unsigned value = sizeof...(Types) - sizeof...(YTypes);
+    };
+  };
+
+  int check4[X2<short, int, long>::Inner<int(pair<short, unsigned short>,
+                                            pair<int, unsigned int>,
+                                            pair<long, unsigned long>)
+                                     >::value == 0? 1 : -1];
+
+  int check5[X2<short, int>::Inner<int(pair<short, unsigned short>,
+                                       pair<int, unsigned int>,
+                                       pair<long, unsigned long>)
+                                     >::value == 1? 1 : -1]; 
 }
