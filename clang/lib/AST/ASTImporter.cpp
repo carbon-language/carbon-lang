@@ -642,6 +642,21 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     break;
   }
 
+  case Type::SubstTemplateTypeParmPack: {
+    const SubstTemplateTypeParmPackType *Subst1
+      = cast<SubstTemplateTypeParmPackType>(T1);
+    const SubstTemplateTypeParmPackType *Subst2
+      = cast<SubstTemplateTypeParmPackType>(T2);
+    if (!IsStructurallyEquivalent(Context,
+                                  QualType(Subst1->getReplacedParameter(), 0),
+                                  QualType(Subst2->getReplacedParameter(), 0)))
+      return false;
+    if (!IsStructurallyEquivalent(Context, 
+                                  Subst1->getArgumentPack(),
+                                  Subst2->getArgumentPack()))
+      return false;
+    break;
+  }
   case Type::TemplateSpecialization: {
     const TemplateSpecializationType *Spec1
       = cast<TemplateSpecializationType>(T1);

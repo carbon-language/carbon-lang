@@ -950,6 +950,13 @@ DeduceTemplateArguments(Sema &S,
   Info.FirstArg = TemplateArgument(ParamIn);
   Info.SecondArg = TemplateArgument(ArgIn);
 
+  // If the parameter is an already-substituted template parameter
+  // pack, do nothing: we don't know which of its arguments to look
+  // at, so we have to wait until all of the parameter packs in this
+  // expansion have arguments.
+  if (isa<SubstTemplateTypeParmPackType>(Param))
+    return Sema::TDK_Success;
+
   // Check the cv-qualifiers on the parameter and argument types.
   if (!(TDF & TDF_IgnoreQualifiers)) {
     if (TDF & TDF_ParamWithReferenceType) {
@@ -3524,6 +3531,17 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
     const TemplateTypeParmType *TTP = cast<TemplateTypeParmType>(T);
     if (TTP->getDepth() == Depth)
       Used[TTP->getIndex()] = true;
+    break;
+  }
+
+  case Type::SubstTemplateTypeParmPack: {
+    const SubstTemplateTypeParmPackType *Subst
+      = cast<SubstTemplateTypeParmPackType>(T);
+    MarkUsedTemplateParameters(SemaRef, 
+                               QualType(Subst->getReplacedParameter(), 0),
+                               OnlyDeduced, Depth, Used);
+    MarkUsedTemplateParameters(SemaRef, Subst->getArgumentPack(),
+                               OnlyDeduced, Depth, Used);
     break;
   }
 
