@@ -19,6 +19,9 @@ endif
 
 #----------------------------------------------------------------------
 # CC defaults to gcc.
+# See also these functions:
+#   o cxx_compiler
+#   o cxx_linker
 #----------------------------------------------------------------------
 CC ?= gcc
 ifeq "$(CC)" "cc"
