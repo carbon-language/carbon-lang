@@ -703,6 +703,16 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
   return success;
 }
 
+error_code identify_magic(const Twine &path, LLVMFileType &result) {
+  SmallString<32> Magic;
+  error_code ec = get_magic(path, Magic.capacity(), Magic);
+  if (ec && ec != errc::value_too_large)
+    return ec;
+
+  result = IdentifyFileType(Magic.data(), Magic.size());
+  return success;
+}
+
 namespace {
 error_code remove_all_r(StringRef path, file_type ft, uint32_t &count) {
   if (ft == file_type::directory_file) {

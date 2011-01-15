@@ -30,6 +30,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/system_error.h"
 #include <ctime>
 #include <iterator>
@@ -462,6 +463,14 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result);
 ///          \a path, otherwise a platform specific error_code.
 error_code get_magic(const Twine &path, uint32_t len,
                      SmallVectorImpl<char> &result);
+
+/// @brief Get and identify \a path's type based on its content.
+///
+/// @param path Input path.
+/// @param result Set to the type of file, or LLVMFileType::Unknown_FileType.
+/// @results errc::success if result has been successfully set, otherwise a
+///          platform specific error_code.
+error_code identify_magic(const Twine &path, LLVMFileType &result);
 
 /// @brief Is file bitcode?
 ///

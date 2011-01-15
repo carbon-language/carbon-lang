@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Path.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/FileSystem.h"
 #include <cassert>
@@ -141,42 +142,33 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
 
 bool
 Path::isArchive() const {
-  std::string Magic;
-  if (getMagicNumber(Magic, 8))
-    if (IdentifyFileType(Magic.c_str(), Magic.length()) == Archive_FileType)
-      return true;
-  return false;
+  LLVMFileType type;
+  if (fs::identify_magic(str(), type))
+    return false;
+  return type == Archive_FileType;
 }
 
 bool
 Path::isDynamicLibrary() const {
-  std::string Magic;
-  if (getMagicNumber(Magic, 64))
-    switch (IdentifyFileType(Magic.c_str(),
-                             static_cast<unsigned>(Magic.length()))) {
-      default: return false;
-      case Mach_O_FixedVirtualMemorySharedLib_FileType:
-      case Mach_O_DynamicallyLinkedSharedLib_FileType:
-      case Mach_O_DynamicallyLinkedSharedLibStub_FileType:
-      case ELF_SharedObject_FileType:
-      case COFF_FileType:  return true;
-    }
-
-  return false;
+  LLVMFileType type;
+  if (fs::identify_magic(str(), type))
+    return false;
+  switch (type) {
+    default: return false;
+    case Mach_O_FixedVirtualMemorySharedLib_FileType:
+    case Mach_O_DynamicallyLinkedSharedLib_FileType:
+    case Mach_O_DynamicallyLinkedSharedLibStub_FileType:
+    case ELF_SharedObject_FileType:
+    case COFF_FileType:  return true;
+  }
 }
 
 bool
 Path::isObjectFile() const {
-  std::string Magic;
-  if (getMagicNumber(Magic, 64))
-    if (IdentifyFileType(Magic.c_str(),
-                         static_cast<unsigned>(Magic.length()))
-        != Unknown_FileType) {
-      // Everything in LLVMFileType is currently an object file.
-      return true;
-    }
-
-  return false;
+  LLVMFileType type;
+  if (fs::identify_magic(str(), type) || type == Unknown_FileType)
+    return false;
+  return true;
 }
 
 Path
@@ -210,13 +202,10 @@ Path::appendSuffix(StringRef suffix) {
 
 bool
 Path::isBitcodeFile() const {
-  std::string actualMagic;
-  if (!getMagicNumber(actualMagic, 4))
+  LLVMFileType type;
+  if (fs::identify_magic(str(), type))
     return false;
-  LLVMFileType FT =
-    IdentifyFileType(actualMagic.c_str(),
-                     static_cast<unsigned>(actualMagic.length()));
-  return FT == Bitcode_FileType;
+  return type == Bitcode_FileType;
 }
 
 bool Path::hasMagicNumber(StringRef Magic) const {
