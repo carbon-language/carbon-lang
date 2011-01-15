@@ -79,6 +79,7 @@ _system_error_category::default_error_condition(int ev) const {
   MAP_ERR_TO_COND(ERROR_FILE_EXISTS,         file_exists);
   MAP_ERR_TO_COND(ERROR_FILE_NOT_FOUND,      no_such_file_or_directory);
   MAP_ERR_TO_COND(ERROR_HANDLE_DISK_FULL,    no_space_on_device);
+  MAP_ERR_TO_COND(ERROR_HANDLE_EOF,          value_too_large);
   MAP_ERR_TO_COND(ERROR_INVALID_ACCESS,      permission_denied);
   MAP_ERR_TO_COND(ERROR_INVALID_DRIVE,       no_such_device);
   MAP_ERR_TO_COND(ERROR_INVALID_FUNCTION,    function_not_supported);

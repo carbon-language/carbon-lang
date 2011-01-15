@@ -462,6 +462,37 @@ error_code directory_iterator_increment(directory_iterator& it) {
   return success;
 }
 
+error_code get_magic(const Twine &path, uint32_t len,
+                     SmallVectorImpl<char> &result) {
+  SmallString<128> PathStorage;
+  StringRef Path = path.toNullTerminatedStringRef(PathStorage);
+  result.set_size(0);
+
+  // Open path.
+  std::FILE *file = std::fopen(Path.data(), "rb");
+  if (file == 0)
+    return error_code(errno, system_category());
+
+  // Reserve storage.
+  result.reserve(len);
+
+  // Read magic!
+  size_t size = std::fread(result.data(), 1, len, file);
+  if (std::ferror(file) != 0) {
+    std::fclose(file);
+    return error_code(errno, system_category());
+  } else if (size != result.size()) {
+    if (std::feof(file) != 0) {
+      std::fclose(file);
+      result.set_size(size);
+      return make_error_code(errc::value_too_large);
+    }
+  }
+  std::fclose(file);
+  result.set_size(len);
+  return success;
+}
+
 } // end namespace fs
 } // end namespace sys
 } // end namespace llvm
