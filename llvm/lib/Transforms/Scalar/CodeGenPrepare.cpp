@@ -42,6 +42,7 @@
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/ValueHandle.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -634,8 +635,18 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
     bool Min = (cast<ConstantInt>(II->getArgOperand(1))->getZExtValue() == 1);
     const Type *ReturnTy = CI->getType();
     Constant *RetVal = ConstantInt::get(ReturnTy, Min ? 0 : -1ULL);    
-    CI->replaceAllUsesWith(RetVal);
-    CI->eraseFromParent();
+    
+    // Substituting this can cause recursive simplifications, which can
+    // invalidate our iterator.  Use a WeakVH to hold onto it in case this
+    // happens.
+    WeakVH IterHandle(CurInstIterator);
+    
+    ReplaceAndSimplifyAllUses(CI, RetVal, TLI ? TLI->getTargetData() : 0, DT);
+
+    // If the iterator instruction was recursively deleted, start over at the
+    // start of the block.
+    if (IterHandle != CurInstIterator)
+      CurInstIterator = BB->begin();
     return true;
   }
 
@@ -653,6 +664,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
   CodeGenPrepareFortifiedLibCalls Simplifier;
   return Simplifier.fold(CI, TD);
 }
+
 //===----------------------------------------------------------------------===//
 // Memory Optimization
 //===----------------------------------------------------------------------===//
@@ -1076,14 +1088,8 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
   SunkAddrs.clear();
 
   CurInstIterator = BB.begin();
-  for (BasicBlock::iterator E = BB.end(); CurInstIterator != E; ) {
-    Instruction *I = CurInstIterator++;
-
-    if (CallInst *CI = dyn_cast<CallInst>(I))
-      MadeChange |= OptimizeCallInst(CI);
-    else
-      MadeChange |= OptimizeInst(I);
-  }
+  for (BasicBlock::iterator E = BB.end(); CurInstIterator != E; )
+    MadeChange |= OptimizeInst(CurInstIterator++);
 
   return MadeChange;
 }
