@@ -207,7 +207,15 @@ ClangExpressionParser::ClangExpressionParser(const char *target_triple,
     // Parse expressions as Objective C++ regardless of context.
     // Our hook into Clang's lookup mechanism only works in C++.
     m_compiler->getLangOpts().CPlusPlus = true;
+    
+    // Setup objective C
     m_compiler->getLangOpts().ObjC1 = true;
+    m_compiler->getLangOpts().ObjC2 = true;
+    // We need to enable the fragile ABI for things target triples that
+    // support it. 
+//    m_compiler->getLangOpts().ObjCNonFragileABI = true;     // NOT i386
+//    m_compiler->getLangOpts().ObjCNonFragileABI2 = true;    // NOT i386
+
     m_compiler->getLangOpts().ThreadsafeStatics = false;
     m_compiler->getLangOpts().AccessControl = false; // Debuggers get universal access
     m_compiler->getLangOpts().DollarIdents = true; // $ indicates a persistent variable name
