@@ -815,6 +815,8 @@ def note_uninit_reference_member : Note<
   "uninitialized reference member is here">;
 def warn_field_is_uninit : Warning<"field is uninitialized when used here">,
   InGroup<DiagGroup<"uninitialized">>;
+def warn_var_is_uninit : Warning<"use of uninitialized variable %0">,
+  InGroup<DiagGroup<"uninitialized-experimental">>, DefaultIgnore;
 def err_init_incomplete_type : Error<"initialization of incomplete type %0">;
 
 def err_temp_copy_no_viable : Error<
