@@ -97,3 +97,23 @@ define i64 @test8(i32 %A, i32 %B) {
 ; CHECK:   ret i64 %ins35
 }
 
+define i8 @test9(i32 %X) {
+  %Y = and i32 %X, 42
+  %Z = trunc i32 %Y to i8
+  ret i8 %Z
+; CHECK: @test9
+; CHECK: trunc
+; CHECK: and
+; CHECK: ret
+}
+
+; rdar://8808586
+define i8 @test10(i32 %X) {
+  %Y = trunc i32 %X to i8
+  %Z = and i8 %Y, 42
+  ret i8 %Z
+; CHECK: @test10
+; CHECK: trunc
+; CHECK: and
+; CHECK: ret
+}
