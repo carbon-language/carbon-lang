@@ -144,7 +144,7 @@ public:
   std::string getStringRepresentation() const;
   
   /// isLegalInteger - This function returns true if the specified type is
-  /// known tobe a native integer type supported by the CPU.  For example,
+  /// known to be a native integer type supported by the CPU.  For example,
   /// i64 is not native on most 32-bit CPUs and i37 is not native on any known
   /// one.  This returns false if the integer width is not legal.
   ///
