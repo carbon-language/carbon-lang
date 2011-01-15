@@ -140,7 +140,7 @@ private:
     lldb::pid_t m_pid;
     int m_terminal_fd;
 
-    uint32_t m_monitor_thread;
+    lldb::thread_t m_monitor_thread;
 
     lldb_private::Mutex m_server_mutex;
     int m_client_fd;
