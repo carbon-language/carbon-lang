@@ -149,6 +149,19 @@ ProcessLinux::DoResume()
     return Error();
 }
 
+addr_t
+ProcessLinux::GetImageInfoAddress()
+{
+    Target *target = &GetTarget();
+    ObjectFile *obj_file = target->GetExecutableModule()->GetObjectFile();
+    Address addr = obj_file->GetImageInfoAddress();
+
+    if (addr.IsValid()) 
+        return addr.GetLoadAddress(target);
+    else
+        return LLDB_INVALID_ADDRESS;
+}
+
 Error
 ProcessLinux::DoHalt(bool &caused_stop)
 {

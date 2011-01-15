@@ -128,6 +128,9 @@ public:
     virtual lldb::ByteOrder
     GetByteOrder() const;
 
+    virtual lldb::addr_t
+    GetImageInfoAddress();
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
