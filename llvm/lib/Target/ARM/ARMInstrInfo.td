@@ -1175,7 +1175,8 @@ def PICSTR  : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
       Size4Bytes, IIC_iStore_r, [(store GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRH : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-      Size4Bytes, IIC_iStore_bh_r, [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
+      Size4Bytes, IIC_iStore_bh_r, [(truncstorei16 GPR:$src,
+                                                   addrmodepc:$addr)]>;
 
 def PICSTRB : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
       Size4Bytes, IIC_iStore_bh_r, [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
@@ -2517,7 +2518,8 @@ class AsMul1I64<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
 
 let isCommutable = 1 in {
 let Constraints = "@earlyclobber $Rd" in
-def MULv5: PseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+def MULv5: PseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
+                                       pred:$p, cc_out:$s),
                       IIC_iMUL32, [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>,
                       Requires<[IsARM, NoV6]>;
 
