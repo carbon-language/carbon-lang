@@ -2389,6 +2389,7 @@ SDValue SelectionDAGLegalize::ExpandBSWAP(SDValue Op, DebugLoc dl) {
 }
 
 /// SplatByte - Distribute ByteVal over NumBits bits.
+// FIXME: Move this helper to a common place.
 static APInt SplatByte(unsigned NumBits, uint8_t ByteVal) {
   APInt Val = APInt(NumBits, ByteVal);
   unsigned Shift = 8;
@@ -2409,6 +2410,9 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     EVT VT = Op.getValueType();
     EVT ShVT = TLI.getShiftAmountTy();
     unsigned Len = VT.getSizeInBits();
+
+    assert(VT.isInteger() && Len <= 128 && Len % 8 == 0 &&
+           "CTPOP not implemented for this type.");
 
     // This is the "best" algorithm from
     // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
