@@ -2284,11 +2284,15 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     }
   }
   
-  // ~x < ~y --> y < x
   { Value *A, *B;
-    if (match(Op0, m_Not(m_Value(A))) &&
-        match(Op1, m_Not(m_Value(B))))
-      return new ICmpInst(I.getPredicate(), B, A);
+    // ~x < ~y --> y < x
+    // ~x < cst --> ~cst < x
+    if (match(Op0, m_Not(m_Value(A)))) {
+      if (match(Op1, m_Not(m_Value(B))))
+        return new ICmpInst(I.getPredicate(), B, A);
+      if (ConstantInt *RHSC = dyn_cast<ConstantInt>(B))
+        return new ICmpInst(I.getPredicate(), ConstantExpr::getNot(RHSC), A);
+    }
 
     // (a+b) <u a  --> llvm.uadd.with.overflow.
     // (a+b) <u b  --> llvm.uadd.with.overflow.
