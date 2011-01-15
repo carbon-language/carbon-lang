@@ -159,7 +159,7 @@ ObjectFileELF::~ObjectFileELF()
 bool
 ObjectFileELF::IsExecutable() const
 {
-    return m_header.e_type == ET_EXEC;
+    return m_header.e_entry != 0;
 }
 
 Address
