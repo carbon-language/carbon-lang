@@ -101,14 +101,17 @@ bool ConstantMerge::runOnModule(Module &M) {
         continue;
       }
       
-      // Only process constants with initializers in the default addres space.
+      // Only process constants with initializers in the default address space.
       if (!GV->isConstant() ||!GV->hasDefinitiveInitializer() ||
-          GV->getType()->getAddressSpace() != 0 || !GV->getSection().empty() ||
+          GV->getType()->getAddressSpace() != 0 || GV->hasSection() ||
           // Don't touch values marked with attribute(used).
           UsedGlobals.count(GV))
         continue;
       
-      
+      // Start by filling slots with only the globals we aren't allowed to
+      // delete because they're externally visible.
+      if (GV->hasLocalLinkage())
+        continue;
       
       Constant *Init = GV->getInitializer();
 
@@ -117,7 +120,32 @@ bool ConstantMerge::runOnModule(Module &M) {
 
       if (Slot == 0) {    // Nope, add it to the map.
         Slot = GV;
-      } else if (GV->hasLocalLinkage()) {    // Yup, this is a duplicate!
+      }
+    }
+
+    for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
+         GVI != E; ) {
+      GlobalVariable *GV = GVI++;
+
+      // Only process constants with initializers in the default address space.
+      if (!GV->isConstant() ||!GV->hasDefinitiveInitializer() ||
+          GV->getType()->getAddressSpace() != 0 || GV->hasSection() ||
+          // Don't touch values marked with attribute(used).
+          UsedGlobals.count(GV))
+        continue;
+
+      // Only look at the remaining globals now.
+      if (!GV->hasLocalLinkage())
+        continue;
+
+      Constant *Init = GV->getInitializer();
+
+      // Check to see if the initializer is already known.
+      GlobalVariable *&Slot = CMap[Init];
+
+      if (Slot == 0) {    // Nope, add it to the map.
+        Slot = GV;
+      } else {            // Yup, this is a duplicate!
         // Make all uses of the duplicate constant use the canonical version.
         Replacements.push_back(std::make_pair(GV, Slot));
       }
@@ -135,6 +163,8 @@ bool ConstantMerge::runOnModule(Module &M) {
       Replacements[i].first->replaceAllUsesWith(Replacements[i].second);
 
       // Delete the global value from the module.
+      assert(Replacements[i].first->hasLocalLinkage() &&
+             "Refusing to delete an externally visible global variable.");
       Replacements[i].first->eraseFromParent();
     }
 
