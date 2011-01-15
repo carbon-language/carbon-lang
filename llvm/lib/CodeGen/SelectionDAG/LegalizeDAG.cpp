@@ -2388,6 +2388,17 @@ SDValue SelectionDAGLegalize::ExpandBSWAP(SDValue Op, DebugLoc dl) {
   }
 }
 
+/// SplatByte - Distribute ByteVal over NumBits bits.
+static APInt SplatByte(unsigned NumBits, uint8_t ByteVal) {
+  APInt Val = APInt(NumBits, ByteVal);
+  unsigned Shift = 8;
+  for (unsigned i = NumBits; i > 8; i >>= 1) {
+    Val = (Val << Shift) | Val;
+    Shift <<= 1;
+  }
+  return Val;
+}
+
 /// ExpandBitCount - Expand the specified bitcount instruction into operations.
 ///
 SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
@@ -2395,26 +2406,42 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
   switch (Opc) {
   default: assert(0 && "Cannot expand this yet!");
   case ISD::CTPOP: {
-    static const uint64_t mask[6] = {
-      0x5555555555555555ULL, 0x3333333333333333ULL,
-      0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL,
-      0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL
-    };
     EVT VT = Op.getValueType();
     EVT ShVT = TLI.getShiftAmountTy();
-    unsigned len = VT.getSizeInBits();
-    for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
-      //x = (x & mask[i][len/8]) + (x >> (1 << i) & mask[i][len/8])
-      unsigned EltSize = VT.isVector() ?
-        VT.getVectorElementType().getSizeInBits() : len;
-      SDValue Tmp2 = DAG.getConstant(APInt(EltSize, mask[i]), VT);
-      SDValue Tmp3 = DAG.getConstant(1ULL << i, ShVT);
-      Op = DAG.getNode(ISD::ADD, dl, VT,
-                       DAG.getNode(ISD::AND, dl, VT, Op, Tmp2),
-                       DAG.getNode(ISD::AND, dl, VT,
-                                   DAG.getNode(ISD::SRL, dl, VT, Op, Tmp3),
-                                   Tmp2));
-    }
+    unsigned Len = VT.getSizeInBits();
+
+    // This is the "best" algorithm from
+    // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+
+    SDValue Mask55 = DAG.getConstant(SplatByte(Len, 0x55), VT);
+    SDValue Mask33 = DAG.getConstant(SplatByte(Len, 0x33), VT);
+    SDValue Mask0F = DAG.getConstant(SplatByte(Len, 0x0F), VT);
+    SDValue Mask01 = DAG.getConstant(SplatByte(Len, 0x01), VT);
+
+    // v = v - ((v >> 1) & 0x55555555...)
+    Op = DAG.getNode(ISD::SUB, dl, VT, Op,
+                     DAG.getNode(ISD::AND, dl, VT,
+                                 DAG.getNode(ISD::SRL, dl, VT, Op,
+                                             DAG.getConstant(1, ShVT)),
+                                 Mask55));
+    // v = (v & 0x33333333...) + ((v >> 2) & 0x33333333...)
+    Op = DAG.getNode(ISD::ADD, dl, VT,
+                     DAG.getNode(ISD::AND, dl, VT, Op, Mask33),
+                     DAG.getNode(ISD::AND, dl, VT,
+                                 DAG.getNode(ISD::SRL, dl, VT, Op,
+                                             DAG.getConstant(2, ShVT)),
+                                 Mask33));
+    // v = (v + (v >> 4)) & 0x0F0F0F0F...
+    Op = DAG.getNode(ISD::AND, dl, VT,
+                     DAG.getNode(ISD::ADD, dl, VT, Op,
+                                 DAG.getNode(ISD::SRL, dl, VT, Op,
+                                             DAG.getConstant(4, ShVT))),
+                     Mask0F);
+    // v = (v * 0x01010101...) >> (Len - 8)
+    Op = DAG.getNode(ISD::SRL, dl, VT,
+                     DAG.getNode(ISD::MUL, dl, VT, Op, Mask01),
+                     DAG.getConstant(Len - 8, ShVT));
+    
     return Op;
   }
   case ISD::CTLZ: {
