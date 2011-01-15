@@ -576,9 +576,9 @@ static bool HasAttribute(const IdentifierInfo *II) {
 /// EvaluateHasIncludeCommon - Process a '__has_include("path")'
 /// or '__has_include_next("path")' expression.
 /// Returns true if successful.
-static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
-        IdentifierInfo *II, Preprocessor &PP,
-        const DirectoryLookup *LookupFrom) {
+static bool EvaluateHasIncludeCommon(Token &Tok,
+                                     IdentifierInfo *II, Preprocessor &PP,
+                                     const DirectoryLookup *LookupFrom) {
   SourceLocation LParenLoc;
 
   // Get '('.
@@ -639,7 +639,7 @@ static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
   const FileEntry *File = PP.LookupFile(Filename, isAngled, LookupFrom, CurDir);
 
   // Get the result value.  Result = true means the file exists.
-  Result = File != 0;
+  bool Result = File != 0;
 
   // Get ')'.
   PP.LexNonComment(Tok);
@@ -651,19 +651,19 @@ static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
     return false;
   }
 
-  return true;
+  return Result;
 }
 
 /// EvaluateHasInclude - Process a '__has_include("path")' expression.
 /// Returns true if successful.
-static bool EvaluateHasInclude(bool &Result, Token &Tok, IdentifierInfo *II,
+static bool EvaluateHasInclude(Token &Tok, IdentifierInfo *II,
                                Preprocessor &PP) {
-  return(EvaluateHasIncludeCommon(Result, Tok, II, PP, NULL));
+  return EvaluateHasIncludeCommon(Tok, II, PP, NULL);
 }
 
 /// EvaluateHasIncludeNext - Process '__has_include_next("path")' expression.
 /// Returns true if successful.
-static bool EvaluateHasIncludeNext(bool &Result, Token &Tok,
+static bool EvaluateHasIncludeNext(Token &Tok,
                                    IdentifierInfo *II, Preprocessor &PP) {
   // __has_include_next is like __has_include, except that we start
   // searching after the current found directory.  If we can't do this,
@@ -679,7 +679,7 @@ static bool EvaluateHasIncludeNext(bool &Result, Token &Tok,
     ++Lookup;
   }
 
-  return(EvaluateHasIncludeCommon(Result, Tok, II, PP, Lookup));
+  return EvaluateHasIncludeCommon(Tok, II, PP, Lookup);
 }
 
 /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
@@ -856,12 +856,11 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     // The argument to these two builtins should be a parenthesized
     // file name string literal using angle brackets (<>) or
     // double-quotes ("").
-    bool Value = false;
-    bool IsValid;
+    bool Value;
     if (II == Ident__has_include)
-      IsValid = EvaluateHasInclude(Value, Tok, II, *this);
+      Value = EvaluateHasInclude(Tok, II, *this);
     else
-      IsValid = EvaluateHasIncludeNext(Value, Tok, II, *this);
+      Value = EvaluateHasIncludeNext(Tok, II, *this);
     OS << (int)Value;
     Tok.setKind(tok::numeric_constant);
   } else {
