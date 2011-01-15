@@ -8,16 +8,16 @@
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR "${CLANG_RESOURCE_DIR}"
 
-/* 32 bit multilib directory */
+/* 32 bit multilib directory. */
 #define CXX_INCLUDE_32BIT_DIR "${CXX_INCLUDE_32BIT_DIR}"
 
-/* 64 bit multilib directory */
+/* 64 bit multilib directory. */
 #define CXX_INCLUDE_64BIT_DIR "${CXX_INCLUDE_64BIT_DIR}"
 
-/* Architecture of libstdc++ headers */
+/* Arch the libstdc++ headers. */
 #define CXX_INCLUDE_ARCH "${CXX_INCLUDE_ARCH}"
 
-/* Directory clang will search for libstdc++ headers */
+/* Directory with the libstdc++ headers. */
 #define CXX_INCLUDE_ROOT "${CXX_INCLUDE_ROOT}"
 
 /* Directories clang will search for headers */
@@ -299,7 +299,7 @@
 /* Have pthread_getspecific */
 #cmakedefine HAVE_PTHREAD_GETSPECIFIC ${HAVE_PTHREAD_GETSPECIFIC}
 
-/* Have pthread.h */
+/* Define to 1 if you have the <pthread.h> header file. */
 #cmakedefine HAVE_PTHREAD_H ${HAVE_PTHREAD_H}
 
 /* Have pthread_mutex_lock */
@@ -368,17 +368,8 @@
 /* Set to 1 if the std::isinf function is found in <cmath> */
 #undef HAVE_STD_ISINF_IN_CMATH
 
-/* Define to 1 if you have the `_chsize_s' function. */
-#cmakedefine HAVE__CHSIZE_S ${HAVE__CHSIZE_S}
-
-/* define if the compiler implements namespaces */
-#undef HAVE_NAMESPACES
-
 /* Set to 1 if the std::isnan function is found in <cmath> */
 #undef HAVE_STD_ISNAN_IN_CMATH
-
-/* Does not have std namespace iterator */
-#undef HAVE_STD_ITERATOR
 
 /* Define to 1 if you have the `strchr' function. */
 #undef HAVE_STRCHR
@@ -407,6 +398,9 @@
 /* Define to 1 if you have the `strrchr' function. */
 #undef HAVE_STRRCHR
 
+/* Define to 1 if you have the `strtof' function. */
+#cmakedefine HAVE_STRTOF ${HAVE_STRTOF}
+
 /* Define to 1 if you have the `strtoll' function. */
 #cmakedefine HAVE_STRTOLL ${HAVE_STRTOLL}
 
@@ -415,30 +409,6 @@
 
 /* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
-
-/* Does not have forward iterator */
-#undef HAVE_FWD_ITERATOR
-
-/* Does not have bi-directional iterator */
-#undef HAVE_BI_ITERATOR
-
-/* Does not have <hash_map> */
-#undef HAVE_GLOBAL_HASH_MAP
-
-/* Does not have hash_set in global namespace */
-#undef HAVE_GLOBAL_HASH_SET
-
-/* Does not have ext/hash_map */
-#undef HAVE_GNU_EXT_HASH_MAP
-
-/* Does not have hash_set in gnu namespace */
-#undef HAVE_GNU_EXT_HASH_SET
-
-/* Does not have ext/hash_map> */
-#undef HAVE_STD_EXT_HASH_MAP
-
-/* Does not have hash_set in std namespace */
-#undef HAVE_STD_EXT_HASH_SET
 
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */
@@ -475,12 +445,6 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #cmakedefine HAVE_SYS_WAIT_H ${HAVE_SYS_WAIT_H}
 
-/* Define if the neat program is available */
-#cmakedefine HAVE_TWOPI ${HAVE_TWOPI}
-
-/* Define to 1 if the system has the type `uint64_t'. */
-#cmakedefine HAVE_UINT64_T ${HAVE_UINT64_T}
-
 /* Define to 1 if you have the <termios.h> header file. */
 #cmakedefine HAVE_TERMIOS_H ${HAVE_TERMIOS_H}
 
@@ -499,6 +463,15 @@
 /* Define to 1 if you have the <windows.h> header file. */
 #cmakedefine HAVE_WINDOWS_H ${HAVE_WINDOWS_H}
 
+/* Define if the xdot.py program is available */
+#undef HAVE_XDOT_PY
+
+/* Define to 1 if you have the `__dso_handle' function. */
+#undef HAVE___DSO_HANDLE
+
+/* Linker version detected at compile time. */
+#undef HOST_LINK_VERSION
+
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
 
@@ -507,6 +480,9 @@
 
 /* Installation directory for documentation */
 #undef LLVM_DATADIR
+
+/* Installation directory for documentation */
+#undef LLVM_DOCSDIR
 
 /* Installation directory for config files */
 #undef LLVM_ETCDIR
@@ -529,14 +505,23 @@
 /* Build multithreading support into LLVM */
 #cmakedefine LLVM_MULTITHREADED ${LLVM_MULTITHREADED}
 
+/* LLVM architecture name for the native architecture, if available */
+#cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}
+
+/* LLVM name for the native AsmPrinter init function, if available */
+#cmakedefine LLVM_NATIVE_ASMPRINTER LLVMInitialize${LLVM_NATIVE_ARCH}AsmPrinter
+
+/* LLVM name for the native Target init function, if available */
+#cmakedefine LLVM_NATIVE_TARGET LLVMInitialize${LLVM_NATIVE_ARCH}Target
+
+/* LLVM name for the native TargetInfo init function, if available */
+#cmakedefine LLVM_NATIVE_TARGETINFO LLVMInitialize${LLVM_NATIVE_ARCH}TargetInfo
+
 /* Define if this is Unixish platform */
 #cmakedefine LLVM_ON_UNIX ${LLVM_ON_UNIX}
 
 /* Define if this is Win32ish platform */
 #cmakedefine LLVM_ON_WIN32 ${LLVM_ON_WIN32}
-
-/* Added by Kevin -- Maximum path length */
-#cmakedefine MAXPATHLEN ${MAXPATHLEN}
 
 /* Define to path to circo program if found or 'echo circo' otherwise */
 #cmakedefine LLVM_PATH_CIRCO "${LLVM_PATH_CIRCO}"
@@ -561,6 +546,9 @@
 
 /* Define to path to twopi program if found or 'echo twopi' otherwise */
 #cmakedefine LLVM_PATH_TWOPI "${LLVM_PATH_TWOPI}"
+
+/* Define to path to xdot.py program if found or 'echo xdot.py' otherwise */
+#undef LLVM_PATH_XDOT_PY
 
 /* Installation prefix directory */
 #cmakedefine LLVM_PREFIX "${LLVM_PREFIX}"
@@ -607,6 +595,9 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #cmakedefine RETSIGTYPE ${RETSIGTYPE}
 
+/* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
+#undef STAT_MACROS_BROKEN
+
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at runtime.
@@ -627,12 +618,11 @@
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
+/* Define if we have the oprofile JIT-support library */
+#undef USE_OPROFILE
+
 /* Define if use udis86 library */
 #undef USE_UDIS86
-
-/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
-   `char[]'. */
-#undef YYTEXT_POINTER
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
@@ -640,14 +630,24 @@
 /* Define to a type to use for `error_t' if it is not otherwise available. */
 #cmakedefine error_t ${error_t}
 
-/* Define to a type to use for `mode_t' if it is not otherwise available. */
-#cmakedefine mode_t ${mode_t}
-
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
+
+/* Define if the neat program is available */
+#cmakedefine HAVE_TWOPI ${HAVE_TWOPI}
+
+/* Define to 1 if the system has the type `uint64_t'. */
+#cmakedefine HAVE_UINT64_T ${HAVE_UINT64_T}
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
+
+/* Define to a type to use for `mode_t' if it is not otherwise available. */
+#cmakedefine mode_t ${mode_t}
 
 /* Define to a function replacing strtoll */
 #cmakedefine strtoll ${strtoll}
@@ -661,16 +661,40 @@
 /* Define to a function implementing strdup */
 #cmakedefine strdup ${strdup}
 
-/* LLVM architecture name for the native architecture, if available */
-#cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}
-  
-/* LLVM name for the native Target init function, if available */
-#cmakedefine LLVM_NATIVE_TARGET LLVMInitialize${LLVM_NATIVE_ARCH}Target
- 
-/* LLVM name for the native TargetInfo init function, if available */
-#cmakedefine LLVM_NATIVE_TARGETINFO LLVMInitialize${LLVM_NATIVE_ARCH}TargetInfo
- 
-/* LLVM name for the native AsmPrinter init function, if available */
-#cmakedefine LLVM_NATIVE_ASMPRINTER LLVMInitialize${LLVM_NATIVE_ARCH}AsmPrinter
+/* Define to 1 if you have the `_chsize_s' function. */
+#cmakedefine HAVE__CHSIZE_S ${HAVE__CHSIZE_S}
+
+/* define if the compiler implements namespaces */
+#undef HAVE_NAMESPACES
+
+/* Does not have std namespace iterator */
+#undef HAVE_STD_ITERATOR
+
+/* Does not have forward iterator */
+#undef HAVE_FWD_ITERATOR
+
+/* Does not have bi-directional iterator */
+#undef HAVE_BI_ITERATOR
+
+/* Does not have <hash_map> */
+#undef HAVE_GLOBAL_HASH_MAP
+
+/* Does not have hash_set in global namespace */
+#undef HAVE_GLOBAL_HASH_SET
+
+/* Does not have ext/hash_map */
+#undef HAVE_GNU_EXT_HASH_MAP
+
+/* Does not have hash_set in gnu namespace */
+#undef HAVE_GNU_EXT_HASH_SET
+
+/* Does not have ext/hash_map> */
+#undef HAVE_STD_EXT_HASH_MAP
+
+/* Does not have hash_set in std namespace */
+#undef HAVE_STD_EXT_HASH_SET
+
+/* Added by Kevin -- Maximum path length */
+#cmakedefine MAXPATHLEN ${MAXPATHLEN}
 
 #endif

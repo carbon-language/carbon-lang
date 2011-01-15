@@ -179,7 +179,11 @@ llvm_find_program(dotty)
 # Define LLVM_MULTITHREADED if gcc atomic builtins exists.
 include(CheckAtomic)
 
-set(ENABLE_PIC ${LLVM_ENABLE_PIC})
+if( LLVM_ENABLE_PIC )
+  set(ENABLE_PIC 1)
+else()
+  set(ENABLE_PIC 0)
+endif()
 
 include(CheckCXXCompilerFlag)
 
