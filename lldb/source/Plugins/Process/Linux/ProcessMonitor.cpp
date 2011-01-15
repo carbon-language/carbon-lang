@@ -463,8 +463,10 @@ ProcessMonitor::ProcessMonitor(ProcessLinux *process,
       m_client_fd(-1),
       m_server_fd(-1)
 {
-    LaunchArgs args(this, module, argv, envp,
-                    stdin_path, stdout_path, stderr_path);
+    std::auto_ptr<LaunchArgs> args;
+
+    args.reset(new LaunchArgs(this, module, argv, envp,
+                              stdin_path, stdout_path, stderr_path));
 
     // Server/client descriptors.
     if (!EnableIPC())
@@ -473,13 +475,13 @@ ProcessMonitor::ProcessMonitor(ProcessLinux *process,
         error.SetErrorString("Monitor failed to initialize.");
     }
 
-    StartOperationThread(&args, error);
+    StartOperationThread(args.get(), error);
     if (!error.Success())
         return;
 
 WAIT_AGAIN:
     // Wait for the operation thread to initialize.
-    if (sem_wait(&args.m_semaphore))
+    if (sem_wait(&args->m_semaphore))
     {
         if (errno == EINTR)
             goto WAIT_AGAIN;
@@ -491,16 +493,17 @@ WAIT_AGAIN:
     }
 
     // Check that the launch was a success.
-    if (!args.m_error.Success())
+    if (!args->m_error.Success())
     {
         StopOperationThread();
-        error = args.m_error;
+        error = args->m_error;
         return;
     }
 
     // Finally, start monitoring the child process for change in state.
-    if (!(m_monitor_thread = Host::StartMonitoringChildProcess(
-              ProcessMonitor::MonitorCallback, this, GetPID(), true)))
+    m_monitor_thread = Host::StartMonitoringChildProcess(
+        ProcessMonitor::MonitorCallback, this, GetPID(), true);
+    if (m_monitor_thread == LLDB_INVALID_HOST_THREAD)
     {
         error.SetErrorToGenericError();
         error.SetErrorString("Process launch failed.");
@@ -573,6 +576,10 @@ ProcessMonitor::Launch(LaunchArgs *args)
     lldb::pid_t pid;
 
     lldb::ThreadSP inferior;
+
+    // Propagate the environment if one is not supplied.
+    if (envp == NULL || envp[0] == NULL)
+        envp = const_cast<const char **>(environ);
 
     // Pseudo terminal setup.
     if (!terminal.OpenFirstAvailableMaster(O_RDWR | O_NOCTTY, err_str, err_len))
