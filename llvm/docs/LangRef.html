@@ -848,7 +848,10 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 
 <p>Global variables can be marked with <tt>unnamed_addr</tt> which indicates
   that the address is not significant, only the content. Constants marked
-  like this can be merged if they have the same content.</p>
+  like this can be merged with other constants if they have the same
+  initializer. Note that a constant with significant address <em>can</em>
+  be merged with a <tt>unnamed_addr</tt> constant, the result being a
+  constant whose address is significant.</p>
 
 <p>A global variable may be declared to reside in a target-specific numbered
    address space. For targets that support them, address spaces may affect how
