@@ -108,8 +108,7 @@ namespace {
     void EliminateMostlyEmptyBlock(BasicBlock *BB);
     bool OptimizeBlock(BasicBlock &BB);
     bool OptimizeInst(Instruction *I);
-    bool OptimizeMemoryInst(Instruction *I, Value *Addr, const Type *AccessTy,
-                            DenseMap<Value*,Value*> &SunkAddrs);
+    bool OptimizeMemoryInst(Instruction *I, Value *Addr, const Type *AccessTy);
     bool OptimizeInlineAsmInst(CallInst *CS);
     bool OptimizeCallInst(CallInst *CI);
     bool MoveExtToFormExtLoad(Instruction *I);
@@ -687,8 +686,7 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
 /// This method is used to optimize both load/store and inline asms with memory
 /// operands.
 bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
-                                        const Type *AccessTy,
-                                        DenseMap<Value*,Value*> &SunkAddrs) {
+                                        const Type *AccessTy) {
   Value *Repl = Addr;
   
   // Try to collapse single-value PHI nodes.  This is necessary to undo 
@@ -883,7 +881,7 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(CallInst *CS) {
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         OpInfo.isIndirect) {
       Value *OpVal = CS->getArgOperand(ArgNo++);
-      MadeChange |= OptimizeMemoryInst(CS, OpVal, OpVal->getType(), SunkAddrs);
+      MadeChange |= OptimizeMemoryInst(CS, OpVal, OpVal->getType());
     } else if (OpInfo.Type == InlineAsm::isInput)
       ArgNo++;
   }
@@ -1007,8 +1005,6 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
 }
 
 bool CodeGenPrepare::OptimizeInst(Instruction *I) {
-  bool MadeChange = false;
-
   if (PHINode *P = dyn_cast<PHINode>(I)) {
     // It is possible for very late stage optimizations (such as SimplifyCFG)
     // to introduce PHI nodes too late to be cleaned up.  If we detect such a
@@ -1017,8 +1013,12 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
       P->replaceAllUsesWith(V);
       P->eraseFromParent();
       ++NumPHIsElim;
+      return true;
     }
-  } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
+    return false;
+  }
+  
+  if (CastInst *CI = dyn_cast<CastInst>(I)) {
     // If the source of the cast is a constant, then this should have
     // already been constant folded.  The only reason NOT to constant fold
     // it is if something (e.g. LSR) was careful to place the constant
@@ -1028,28 +1028,33 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
     if (isa<Constant>(CI->getOperand(0)))
       return false;
 
-    bool Change = false;
-    if (TLI) {
-      Change = OptimizeNoopCopyExpression(CI, *TLI);
-      MadeChange |= Change;
-    }
+    if (TLI && OptimizeNoopCopyExpression(CI, *TLI))
+      return true;
 
-    if (!Change && (isa<ZExtInst>(I) || isa<SExtInst>(I))) {
-      MadeChange |= MoveExtToFormExtLoad(I);
-      MadeChange |= OptimizeExtUses(I);
+    if (isa<ZExtInst>(I) || isa<SExtInst>(I)) {
+      bool MadeChange = MoveExtToFormExtLoad(I);
+      return MadeChange | OptimizeExtUses(I);
     }
-  } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
-    MadeChange |= OptimizeCmpExpression(CI);
-  } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+    return false;
+  }
+  
+  if (CmpInst *CI = dyn_cast<CmpInst>(I))
+    return OptimizeCmpExpression(CI);
+  
+  if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (TLI)
-      MadeChange |= OptimizeMemoryInst(I, I->getOperand(0), LI->getType(),
-                                       SunkAddrs);
-  } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+      return OptimizeMemoryInst(I, I->getOperand(0), LI->getType());
+    return false;
+  }
+  
+  if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     if (TLI)
-      MadeChange |= OptimizeMemoryInst(I, SI->getOperand(1),
-                                       SI->getOperand(0)->getType(),
-                                       SunkAddrs);
-  } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
+      return OptimizeMemoryInst(I, SI->getOperand(1),
+                                SI->getOperand(0)->getType());
+    return false;
+  }
+  
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
     if (GEPI->hasAllZeroIndices()) {
       /// The GEP operand must be a pointer, so must its result -> BitCast
       Instruction *NC = new BitCastInst(GEPI->getOperand(0), GEPI->getType(),
@@ -1057,14 +1062,16 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
       GEPI->replaceAllUsesWith(NC);
       GEPI->eraseFromParent();
       ++NumGEPsElim;
-      MadeChange = true;
       OptimizeInst(NC);
+      return true;
     }
-  } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
-    MadeChange |= OptimizeCallInst(CI);
+    return false;
   }
+  
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    return OptimizeCallInst(CI);
 
-  return MadeChange;
+  return false;
 }
 
 // In this pass we look for GEP and cast instructions that are used
