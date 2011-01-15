@@ -4,13 +4,16 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin10.0.0"
 
 ; CHECK: @test1
+; objectsize should fold to a constant, which causes the branch to fold to an
+; uncond branch.
+; rdar://8785296
 define i32 @test1(i8* %ptr) nounwind ssp noredzone align 2 {
 entry:
   %0 = tail call i64 @llvm.objectsize.i64(i8* %ptr, i1 false)
   %1 = icmp ugt i64 %0, 3
   br i1 %1, label %T, label %trap
 
-; CHECK: br i1 true, label
+; CHECK: br label %T
 trap:                                             ; preds = %0, %entry
   tail call void @llvm.trap() noreturn nounwind
   unreachable
