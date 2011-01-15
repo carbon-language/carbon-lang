@@ -177,10 +177,22 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
     case clang::Type::LValueReference:
     case clang::Type::RValueReference:
     case clang::Type::MemberPointer:            return lldb::eEncodingUint;
-    // Complex numbers are made up of floats
     case clang::Type::Complex:
-        count = 2;
-        return lldb::eEncodingIEEE754;
+        {
+            lldb::Encoding encoding = lldb::eEncodingIEEE754;
+            if (qual_type->isComplexType())
+                encoding = lldb::eEncodingIEEE754;
+            else
+            {
+                const clang::ComplexType *complex_type = qual_type->getAsComplexIntegerType();
+                if (complex_type)
+                    encoding = GetEncoding (complex_type->getElementType().getAsOpaquePtr(), count);
+                else 
+                    encoding = lldb::eEncodingSint;
+            }
+            count = 2;
+            return encoding;
+        }
 
     case clang::Type::ObjCInterface:            break;
     case clang::Type::Record:                   break;
@@ -270,7 +282,13 @@ ClangASTType::GetFormat (clang_type_t clang_type)
     case clang::Type::LValueReference:
     case clang::Type::RValueReference:          return lldb::eFormatHex;
     case clang::Type::MemberPointer:            break;
-    case clang::Type::Complex:                  return lldb::eFormatComplex;
+    case clang::Type::Complex:
+        {
+            if (qual_type->isComplexType())
+                return lldb::eFormatComplex;
+            else
+                return lldb::eFormatComplexInteger;
+        }
     case clang::Type::ObjCInterface:            break;
     case clang::Type::Record:                   break;
     case clang::Type::Enum:                     return lldb::eFormatEnum;

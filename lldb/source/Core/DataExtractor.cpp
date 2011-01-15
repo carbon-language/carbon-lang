@@ -1390,6 +1390,19 @@ DataExtractor::Dump
             s->Address(GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset), sizeof (addr_t));
             break;
 
+
+        case eFormatComplexInteger:
+            {
+                uint32_t complex_int_byte_size = item_byte_size / 2;
+                
+                if (complex_int_byte_size <= 8)
+                {
+                    s->Printf("%llu", GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
+                    s->Printf(" + %llui", GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
+                }
+            }
+            break;
+
         case eFormatComplex:
             if (sizeof(float) * 2 == item_byte_size)
             {
@@ -1414,9 +1427,12 @@ DataExtractor::Dump
                 s->Printf ("%Lg + %Lgi", ld64_1, ld64_2);
                 break;
             }
-            
-            // Fall through to hex for any other sizes
-            item_format = eFormatHex;
+            else
+            {
+                s->Printf ("unsupported complex float byte size %u", item_byte_size);
+                return start_offset;
+            }
+            break;
 
         default:
         case eFormatDefault:

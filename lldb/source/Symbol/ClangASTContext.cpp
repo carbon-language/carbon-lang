@@ -548,13 +548,27 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
                 return ast_context->UnsignedIntTy.getAsOpaquePtr();
             break;
 
+        case DW_ATE_lo_user:
+            // This has been seen to mean DW_AT_complex_integer
+            if (strcmp(type_name, "complex") == 0)
+            {
+                clang_type_t complex_int_clang_type = GetBuiltinTypeForDWARFEncodingAndBitSize ("int", DW_ATE_signed, bit_size/2);
+                return ast_context->getComplexType (QualType::getFromOpaquePtr(complex_int_clang_type)).getAsOpaquePtr();
+            }
+            break;
+            
         case DW_ATE_complex_float:
             if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->FloatComplexTy))
                 return ast_context->FloatComplexTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->DoubleComplexTy))
+            else if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->DoubleComplexTy))
                 return ast_context->DoubleComplexTy.getAsOpaquePtr();
-            if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->LongDoubleComplexTy))
+            else if (QualTypeMatchesBitSize (bit_size, ast_context, ast_context->LongDoubleComplexTy))
                 return ast_context->LongDoubleComplexTy.getAsOpaquePtr();
+            else 
+            {
+                clang_type_t complex_float_clang_type = GetBuiltinTypeForDWARFEncodingAndBitSize ("float", DW_ATE_float, bit_size/2);
+                return ast_context->getComplexType (QualType::getFromOpaquePtr(complex_float_clang_type)).getAsOpaquePtr();
+            }
             break;
 
         case DW_ATE_float:
@@ -1773,7 +1787,7 @@ ClangASTContext::GetTypeInfo
             *pointee_or_element_clang_type = qual_type->getPointeeType().getAsOpaquePtr();
         return eTypeIsPointer | eTypeHasChildren | eTypeIsBlock;
 
-    case clang::Type::Complex:                          return eTypeHasChildren | eTypeIsBuiltIn | eTypeHasValue;
+    case clang::Type::Complex:                          return eTypeIsBuiltIn | eTypeHasValue;
 
     case clang::Type::ConstantArray:
     case clang::Type::DependentSizedArray:
@@ -1902,8 +1916,7 @@ ClangASTContext::GetNumChildren (clang_type_t clang_qual_type, bool omit_empty_b
         }
         break;
 
-    case clang::Type::Complex:
-        return 2;
+    case clang::Type::Complex: return 0;
 
     case clang::Type::Record:
         if (ClangASTType::IsDefined (clang_qual_type))
@@ -2090,7 +2103,7 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
         }
         break;
 
-    case clang::Type::Complex:                  return 2;
+    case clang::Type::Complex:                  return 1;
     case clang::Type::Pointer:                  return 1;
     case clang::Type::BlockPointer:             return 0;   // If block pointers don't have debug info, then no children for them
     case clang::Type::LValueReference:          return 1;
