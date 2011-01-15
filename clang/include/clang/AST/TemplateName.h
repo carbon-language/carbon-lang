@@ -38,18 +38,18 @@ class TemplateDecl;
 class OverloadedTemplateStorage {
   union {
     unsigned Size;
-    NamedDecl *Storage[1];
+    void *PointerAlignment;
   };
-
+  
   friend class ASTContext;
 
   OverloadedTemplateStorage(unsigned Size) : Size(Size) {}
 
   NamedDecl **getStorage() {
-    return &Storage[1];
+    return reinterpret_cast<NamedDecl **>(this + 1);
   }
   NamedDecl * const *getStorage() const {
-    return &Storage[1];
+    return reinterpret_cast<NamedDecl *const *>(this + 1);
   }
 
 public:
