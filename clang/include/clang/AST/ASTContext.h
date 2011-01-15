@@ -119,7 +119,9 @@ class ASTContext {
 
   mutable llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
   mutable llvm::FoldingSet<DependentTemplateName> DependentTemplateNames;
-
+  mutable llvm::FoldingSet<SubstTemplateTemplateParmPackStorage> 
+    SubstTemplateTemplateParmPacks;
+  
   /// \brief The set of nested name specifiers.
   ///
   /// This set is managed by the NestedNameSpecifier class.
@@ -936,7 +938,9 @@ public:
                                         const IdentifierInfo *Name) const;
   TemplateName getDependentTemplateName(NestedNameSpecifier *NNS,
                                         OverloadedOperatorKind Operator) const;
-
+  TemplateName getSubstTemplateTemplateParmPack(TemplateTemplateParmDecl *Param,
+                                        const TemplateArgument &ArgPack) const;
+  
   enum GetBuiltinTypeError {
     GE_None,              //< No error
     GE_Missing_stdio,     //< Missing a type from <stdio.h>

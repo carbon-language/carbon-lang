@@ -23,27 +23,67 @@ namespace llvm {
 }
 
 namespace clang {
-
+  
+class ASTContext;
 class DependentTemplateName;
 class DiagnosticBuilder;
 class IdentifierInfo;
 class NestedNameSpecifier;
+class OverloadedTemplateStorage;
 struct PrintingPolicy;
 class QualifiedTemplateName;
 class NamedDecl;
+class SubstTemplateTemplateParmPackStorage;
+class TemplateArgument;
 class TemplateDecl;
-
-/// \brief A structure for storing the information associated with an
-/// overloaded template name.
-class OverloadedTemplateStorage {
+class TemplateTemplateParmDecl;
+  
+/// \brief Implementation class used to describe either a set of overloaded
+/// template names or an already-substituted template template parameter pack.
+class UncommonTemplateNameStorage {
+protected:
   union {
-    unsigned Size;
+    struct {
+      /// \brief If true, this is an OverloadedTemplateStorage instance; 
+      /// otherwise, it's a SubstTemplateTemplateParmPackStorage instance.
+      unsigned IsOverloadedStorage : 1;
+      
+      /// \brief The number of stored templates or template arguments,
+      /// depending on which subclass we have.
+      unsigned Size : 31;
+    } Bits;
+    
     void *PointerAlignment;
   };
   
+  UncommonTemplateNameStorage(unsigned Size, bool OverloadedStorage) {
+    Bits.IsOverloadedStorage = OverloadedStorage;
+    Bits.Size = Size;
+  }
+  
+public:
+  unsigned size() const { return Bits.Size; }
+  
+  OverloadedTemplateStorage *getAsOverloadedStorage()  {
+    return Bits.IsOverloadedStorage
+             ? reinterpret_cast<OverloadedTemplateStorage *>(this) 
+             : 0;
+  }
+  
+  SubstTemplateTemplateParmPackStorage *getAsSubstTemplateTemplateParmPack() {
+    return Bits.IsOverloadedStorage
+             ? 0
+             : reinterpret_cast<SubstTemplateTemplateParmPackStorage *>(this) ;
+  }
+};
+  
+/// \brief A structure for storing the information associated with an
+/// overloaded template name.
+class OverloadedTemplateStorage : public UncommonTemplateNameStorage {
   friend class ASTContext;
 
-  OverloadedTemplateStorage(unsigned Size) : Size(Size) {}
+  OverloadedTemplateStorage(unsigned Size) 
+    : UncommonTemplateNameStorage(Size, true) { }
 
   NamedDecl **getStorage() {
     return reinterpret_cast<NamedDecl **>(this + 1);
@@ -55,10 +95,46 @@ class OverloadedTemplateStorage {
 public:
   typedef NamedDecl *const *iterator;
 
-  unsigned size() const { return Size; }
-
   iterator begin() const { return getStorage(); }
   iterator end() const { return getStorage() + size(); }
+};
+  
+  
+/// \brief A structure for storing an already-substituted template template
+/// parameter pack.
+///
+/// This kind of template names occurs when the parameter pack has been 
+/// provided with a template template argument pack in a context where its
+/// enclosing pack expansion could not be fully expanded.
+class SubstTemplateTemplateParmPackStorage
+  : public UncommonTemplateNameStorage, public llvm::FoldingSetNode
+{
+  ASTContext &Context;
+  TemplateTemplateParmDecl *Parameter;
+  const TemplateArgument *Arguments;
+  
+public:
+  SubstTemplateTemplateParmPackStorage(ASTContext &Context,
+                                       TemplateTemplateParmDecl *Parameter,
+                                       unsigned Size, 
+                                       const TemplateArgument *Arguments)
+    : UncommonTemplateNameStorage(Size, false), Context(Context),
+      Parameter(Parameter), Arguments(Arguments) { }
+  
+  /// \brief Retrieve the template template parameter pack being substituted.
+  TemplateTemplateParmDecl *getParameterPack() const {
+    return Parameter;
+  }
+  
+  /// \brief Retrieve the template template argument pack with which this
+  /// parameter was substituted.
+  TemplateArgument getArgumentPack() const;
+  
+  void Profile(llvm::FoldingSetNodeID &ID);
+  
+  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+                      TemplateTemplateParmDecl *Parameter,
+                      const TemplateArgument &ArgPack);
 };
 
 /// \brief Represents a C++ template name within the type system.
@@ -90,7 +166,7 @@ public:
 /// only be understood in the context of
 class TemplateName {
   typedef llvm::PointerUnion4<TemplateDecl *,
-                              OverloadedTemplateStorage *,
+                              UncommonTemplateNameStorage *,
                               QualifiedTemplateName *,
                               DependentTemplateName *> StorageType;
 
@@ -103,15 +179,27 @@ class TemplateName {
 public:
   // \brief Kind of name that is actually stored.
   enum NameKind {
+    /// \brief A single template declaration.
     Template,
+    /// \brief A set of overloaded template declarations.
     OverloadedTemplate,
+    /// \brief A qualified template name, where the qualification is kept 
+    /// to describe the source code as written.
     QualifiedTemplate,
-    DependentTemplate
+    /// \brief A dependent template name that has not been resolved to a 
+    /// template (or set of templates).
+    DependentTemplate,
+    /// \brief A template template parameter pack that has been substituted for 
+    /// a template template argument pack, but has not yet been expanded into
+    /// individual arguments.
+    SubstTemplateTemplateParmPack
   };
 
   TemplateName() : Storage() { }
   explicit TemplateName(TemplateDecl *Template) : Storage(Template) { }
   explicit TemplateName(OverloadedTemplateStorage *Storage)
+    : Storage(Storage) { }
+  explicit TemplateName(SubstTemplateTemplateParmPackStorage *Storage)
     : Storage(Storage) { }
   explicit TemplateName(QualifiedTemplateName *Qual) : Storage(Qual) { }
   explicit TemplateName(DependentTemplateName *Dep) : Storage(Dep) { }
@@ -122,7 +210,7 @@ public:
   // \brief Get the kind of name that is actually stored.
   NameKind getKind() const;
 
-  /// \brief Retrieve the the underlying template declaration that
+  /// \brief Retrieve the underlying template declaration that
   /// this template name refers to, if known.
   ///
   /// \returns The template declaration that this template name refers
@@ -131,7 +219,7 @@ public:
   /// set of function templates, returns NULL.
   TemplateDecl *getAsTemplateDecl() const;
 
-  /// \brief Retrieve the the underlying, overloaded function template
+  /// \brief Retrieve the underlying, overloaded function template
   // declarations that this template name refers to, if known.
   ///
   /// \returns The set of overloaded function templates that this template
@@ -139,7 +227,25 @@ public:
   /// specific set of function templates because it is a dependent name or
   /// refers to a single template, returns NULL.
   OverloadedTemplateStorage *getAsOverloadedTemplate() const {
-    return Storage.dyn_cast<OverloadedTemplateStorage *>();
+    if (UncommonTemplateNameStorage *Uncommon = 
+                              Storage.dyn_cast<UncommonTemplateNameStorage *>())
+      return Uncommon->getAsOverloadedStorage();
+    
+    return 0;
+  }
+
+  /// \brief Retrieve the substituted template template parameter pack, if 
+  /// known.
+  ///
+  /// \returns The storage for the substituted template template parameter pack,
+  /// if known. Otherwise, returns NULL.
+  SubstTemplateTemplateParmPackStorage *
+  getAsSubstTemplateTemplateParmPack() const {
+    if (UncommonTemplateNameStorage *Uncommon = 
+        Storage.dyn_cast<UncommonTemplateNameStorage *>())
+      return Uncommon->getAsSubstTemplateTemplateParmPack();
+    
+    return 0;
   }
 
   /// \brief Retrieve the underlying qualified template name

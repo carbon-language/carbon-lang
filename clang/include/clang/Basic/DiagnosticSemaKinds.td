@@ -1885,10 +1885,6 @@ def err_ellipsis_in_declarator_not_parameter : Error<
 def err_sizeof_pack_no_pack_name : Error<
   "%0 does not refer to the name of a parameter pack">;
 
-// Unsupported variadic templates features
-def err_pack_expansion_mismatch_unsupported : Error<
-  "clang cannot yet instantiate pack expansions with mismatched pack levels">;
-
 def err_unexpected_typedef : Error<
   "unexpected type name %0: expected expression">;
 def err_unexpected_namespace : Error<

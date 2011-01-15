@@ -2737,6 +2737,15 @@ TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) const {
     return TemplateName(cast<TemplateDecl>(Template->getCanonicalDecl()));
   }
 
+  if (SubstTemplateTemplateParmPackStorage *SubstPack
+                                  = Name.getAsSubstTemplateTemplateParmPack()) {
+    TemplateTemplateParmDecl *CanonParam
+      = getCanonicalTemplateTemplateParmDecl(SubstPack->getParameterPack());
+    TemplateArgument CanonArgPack
+      = getCanonicalTemplateArgument(SubstPack->getArgumentPack());
+    return getSubstTemplateTemplateParmPack(CanonParam, CanonArgPack);
+  }
+      
   assert(!Name.getAsOverloadedTemplate());
 
   DependentTemplateName *DTN = Name.getAsDependentTemplateName();
@@ -4342,6 +4351,27 @@ ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS,
   
   DependentTemplateNames.InsertNode(QTN, InsertPos);
   return TemplateName(QTN);
+}
+
+TemplateName 
+ASTContext::getSubstTemplateTemplateParmPack(TemplateTemplateParmDecl *Param,
+                                       const TemplateArgument &ArgPack) const {
+  ASTContext &Self = const_cast<ASTContext &>(*this);
+  llvm::FoldingSetNodeID ID;
+  SubstTemplateTemplateParmPackStorage::Profile(ID, Self, Param, ArgPack);
+  
+  void *InsertPos = 0;
+  SubstTemplateTemplateParmPackStorage *Subst
+    = SubstTemplateTemplateParmPacks.FindNodeOrInsertPos(ID, InsertPos);
+  
+  if (!Subst) {
+    Subst = new (*this) SubstTemplateTemplateParmPackStorage(Self, Param, 
+                                                           ArgPack.pack_size(),
+                                                         ArgPack.pack_begin());
+    SubstTemplateTemplateParmPacks.InsertNode(Subst, InsertPos);
+  }
+
+  return TemplateName(Subst);
 }
 
 /// getFromTargetType - Given one of the integer types provided by

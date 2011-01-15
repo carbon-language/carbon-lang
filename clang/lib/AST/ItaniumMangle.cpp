@@ -1017,6 +1017,12 @@ void CXXNameMangler::mangleType(TemplateName TN) {
     break;
   }
 
+  case TemplateName::SubstTemplateTemplateParmPack: {
+    SubstTemplateTemplateParmPackStorage *SubstPack
+      = TN.getAsSubstTemplateTemplateParmPack();
+    mangleTemplateParameter(SubstPack->getParameterPack()->getIndex());
+    break;
+  }
   }
 
   addSubstitution(TN);

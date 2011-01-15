@@ -149,4 +149,30 @@ namespace PacksAtDifferentLevels {
                                    unsigned_pair<3, 4>,
                                    unsigned_pair<5, 6>>
                              >::value == 0? 1 : -1];
+
+  template<class> struct add_reference;
+  template<class> struct add_pointer;
+  template<class> struct add_const;
+
+  template<template<class> class ...Templates>
+  struct X5 {
+    template<typename> struct Inner {
+      static const unsigned value = 0;
+    };
+
+    template<typename ...Types>
+    struct Inner<tuple<Templates<Types>...>> {
+      static const unsigned value = 1;
+    };
+  };
+
+  int check10[X5<add_reference, add_pointer, add_const>
+                ::Inner<tuple<add_reference<int>,
+                              add_pointer<float>,
+                              add_const<double>>>::value == 1? 1 : -1];
+  int check11[X5<add_reference, add_pointer>
+                ::Inner<tuple<add_reference<int>,
+                              add_pointer<float>,
+                              add_const<double>>>::value == 0? 1 : -1];
+
 }

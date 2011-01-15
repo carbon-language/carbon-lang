@@ -1073,7 +1073,8 @@ public:
                                                unsigned &Idx);
 
   /// \brief Read a template name.
-  TemplateName ReadTemplateName(const RecordData &Record, unsigned &Idx);
+  TemplateName ReadTemplateName(PerFileData &F, const RecordData &Record, 
+                                unsigned &Idx);
 
   /// \brief Read a template argument.
   TemplateArgument ReadTemplateArgument(PerFileData &F,

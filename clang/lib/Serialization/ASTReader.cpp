@@ -3082,7 +3082,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   case TYPE_TEMPLATE_SPECIALIZATION: {
     unsigned Idx = 0;
     bool IsDependent = Record[Idx++];
-    TemplateName Name = ReadTemplateName(Record, Idx);
+    TemplateName Name = ReadTemplateName(*Loc.F, Record, Idx);
     llvm::SmallVector<TemplateArgument, 8> Args;
     ReadTemplateArgumentList(Args, *Loc.F, Record, Idx);
     QualType Canon = GetType(Record[Idx++]);
@@ -4238,7 +4238,8 @@ void ASTReader::ReadQualifierInfo(PerFileData &F, QualifierInfo &Info,
 }
 
 TemplateName
-ASTReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
+ASTReader::ReadTemplateName(PerFileData &F, const RecordData &Record, 
+                            unsigned &Idx) {
   TemplateName::NameKind Kind = (TemplateName::NameKind)Record[Idx++];
   switch (Kind) {
   case TemplateName::Template:
@@ -4268,6 +4269,19 @@ ASTReader::ReadTemplateName(const RecordData &Record, unsigned &Idx) {
     return Context->getDependentTemplateName(NNS,
                                          (OverloadedOperatorKind)Record[Idx++]);
   }
+      
+  case TemplateName::SubstTemplateTemplateParmPack: {
+    TemplateTemplateParmDecl *Param 
+      = cast_or_null<TemplateTemplateParmDecl>(GetDecl(Record[Idx++]));
+    if (!Param)
+      return TemplateName();
+    
+    TemplateArgument ArgPack = ReadTemplateArgument(F, Record, Idx);
+    if (ArgPack.getKind() != TemplateArgument::Pack)
+      return TemplateName();
+    
+    return Context->getSubstTemplateTemplateParmPack(Param, ArgPack);
+  }
   }
 
   assert(0 && "Unhandled template name kind!");
@@ -4291,9 +4305,9 @@ ASTReader::ReadTemplateArgument(PerFileData &F,
     return TemplateArgument(Value, T);
   }
   case TemplateArgument::Template: 
-    return TemplateArgument(ReadTemplateName(Record, Idx));
+    return TemplateArgument(ReadTemplateName(F, Record, Idx));
   case TemplateArgument::TemplateExpansion: {
-    TemplateName Name = ReadTemplateName(Record, Idx);
+    TemplateName Name = ReadTemplateName(F, Record, Idx);
     llvm::Optional<unsigned> NumTemplateExpansions;
     if (unsigned NumExpansions = Record[Idx++])
       NumTemplateExpansions = NumExpansions - 1;

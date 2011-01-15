@@ -891,7 +891,19 @@ public:
   TemplateName RebuildTemplateName(NestedNameSpecifier *Qualifier,
                                    OverloadedOperatorKind Operator,
                                    QualType ObjectType);
-  
+
+  /// \brief Build a new template name given a template template parameter pack
+  /// and the 
+  ///
+  /// By default, performs semantic analysis to determine whether the name can
+  /// be resolved to a specific template, then builds the appropriate kind of
+  /// template name. Subclasses may override this routine to provide different
+  /// behavior.
+  TemplateName RebuildTemplateName(TemplateTemplateParmDecl *Param,
+                                   const TemplateArgument &ArgPack) {
+    return getSema().Context.getSubstTemplateTemplateParmPack(Param, ArgPack);
+  }
+
   /// \brief Build a new compound statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -2590,6 +2602,22 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
     return TemplateName(TransTemplate);
   }
 
+  if (SubstTemplateTemplateParmPackStorage *SubstPack
+                                 = Name.getAsSubstTemplateTemplateParmPack()) {
+    TemplateTemplateParmDecl *TransParam
+      = cast_or_null<TemplateTemplateParmDecl>(
+               getDerived().TransformDecl(Loc, SubstPack->getParameterPack()));
+    if (!TransParam)
+      return TemplateName();
+    
+    if (!getDerived().AlwaysRebuild() &&
+        TransParam == SubstPack->getParameterPack())
+      return Name;
+    
+    return getDerived().RebuildTemplateName(TransParam, 
+                                            SubstPack->getArgumentPack());
+  }
+  
   // These should be getting filtered out before they reach the AST.
   llvm_unreachable("overloaded function decl survived to here");
   return TemplateName();

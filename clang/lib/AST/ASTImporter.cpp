@@ -4079,6 +4079,24 @@ TemplateName ASTImporter::Import(TemplateName From) {
     
     return ToContext.getDependentTemplateName(Qualifier, DTN->getOperator());
   }
+      
+  case TemplateName::SubstTemplateTemplateParmPack: {
+    SubstTemplateTemplateParmPackStorage *SubstPack
+      = From.getAsSubstTemplateTemplateParmPack();
+    TemplateTemplateParmDecl *Param
+      = cast_or_null<TemplateTemplateParmDecl>(
+                                        Import(SubstPack->getParameterPack()));
+    if (!Param)
+      return TemplateName();
+    
+    ASTNodeImporter Importer(*this);
+    TemplateArgument ArgPack 
+      = Importer.ImportTemplateArgument(SubstPack->getArgumentPack());
+    if (ArgPack.isNull())
+      return TemplateName();
+    
+    return ToContext.getSubstTemplateTemplateParmPack(Param, ArgPack);
+  }
   }
   
   llvm_unreachable("Invalid template name kind");

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/TemplateName.h"
+#include "clang/AST/TemplateBase.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
@@ -21,15 +22,33 @@
 using namespace clang;
 using namespace llvm;
 
+TemplateArgument 
+SubstTemplateTemplateParmPackStorage::getArgumentPack() const {
+  return TemplateArgument(Arguments, size());
+}
+
+void SubstTemplateTemplateParmPackStorage::Profile(llvm::FoldingSetNodeID &ID) {
+  Profile(ID, Context, Parameter, TemplateArgument(Arguments, size()));
+}
+
+void SubstTemplateTemplateParmPackStorage::Profile(llvm::FoldingSetNodeID &ID, 
+                                                   ASTContext &Context,
+                                           TemplateTemplateParmDecl *Parameter,
+                                             const TemplateArgument &ArgPack) {
+  ID.AddPointer(Parameter);
+  ArgPack.Profile(ID, Context);
+}
+
 TemplateName::NameKind TemplateName::getKind() const {
   if (Storage.is<TemplateDecl *>())
     return Template;
-  if (Storage.is<OverloadedTemplateStorage *>())
-    return OverloadedTemplate;
+  if (Storage.is<DependentTemplateName *>())
+    return DependentTemplate;
   if (Storage.is<QualifiedTemplateName *>())
     return QualifiedTemplate;
-  assert(Storage.is<DependentTemplateName *>() && "There's a case unhandled!");
-  return DependentTemplate;
+  
+  return getAsOverloadedTemplate()? OverloadedTemplate
+                                  : SubstTemplateTemplateParmPack;
 }
 
 TemplateDecl *TemplateName::getAsTemplateDecl() const {
@@ -73,7 +92,7 @@ bool TemplateName::containsUnexpandedParameterPack() const {
     return DTN->getQualifier() && 
       DTN->getQualifier()->containsUnexpandedParameterPack();
 
-  return false;
+  return getAsSubstTemplateTemplateParmPack() != 0;
 }
 
 void
@@ -96,7 +115,9 @@ TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
       OS << DTN->getIdentifier()->getName();
     else
       OS << "operator " << getOperatorSpelling(DTN->getOperator());
-  }
+  } else if (SubstTemplateTemplateParmPackStorage *SubstPack
+                                        = getAsSubstTemplateTemplateParmPack())
+    OS << SubstPack->getParameterPack()->getNameAsString();
 }
 
 const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,

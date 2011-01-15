@@ -3214,6 +3214,14 @@ void ASTWriter::AddTemplateName(TemplateName Name, RecordDataImpl &Record) {
       Record.push_back(DepT->getOperator());
     break;
   }
+      
+  case TemplateName::SubstTemplateTemplateParmPack: {
+    SubstTemplateTemplateParmPackStorage *SubstPack
+      = Name.getAsSubstTemplateTemplateParmPack();
+    AddDeclRef(SubstPack->getParameterPack(), Record);
+    AddTemplateArgument(SubstPack->getArgumentPack(), Record);
+    break;
+  }
   }
 }
 
