@@ -1071,9 +1071,6 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
   if (CallInst *CI = dyn_cast<CallInst>(I))
     return OptimizeCallInst(CI);
 
-  if (isa<TerminatorInst>(I))
-    return ConstantFoldTerminator(I->getParent());
-  
   return false;
 }
 

@@ -13,7 +13,9 @@ entry:
   %1 = icmp ugt i64 %0, 3
   br i1 %1, label %T, label %trap
 
-; CHECK: br label %T
+; CHECK: entry:
+; HECK-NEXT: ret i32 4
+
 trap:                                             ; preds = %0, %entry
   tail call void @llvm.trap() noreturn nounwind
   unreachable
