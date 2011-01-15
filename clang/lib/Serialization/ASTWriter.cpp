@@ -941,6 +941,9 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.CharIsSigned); // Whether char is a signed or
                                            // unsigned type
   Record.push_back(LangOpts.ShortWChar);  // force wchar_t to be unsigned short
+  Record.push_back(LangOpts.ShortEnums);  // Should the enum type be equivalent
+                                          // to the smallest integer type with
+                                          // enough room.
   Record.push_back(LangOpts.getGCMode());
   Record.push_back(LangOpts.getVisibilityMode());
   Record.push_back(LangOpts.getStackProtectorMode());
