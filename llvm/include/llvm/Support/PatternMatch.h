@@ -521,8 +521,6 @@ struct not_match {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       if (CE->getOpcode() == Instruction::Xor)
         return matchIfNot(CE->getOperand(0), CE->getOperand(1));
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return L.match(ConstantExpr::getNot(CI));
     return false;
   }
 private:
@@ -557,8 +555,6 @@ struct neg_match {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       if (CE->getOpcode() == Instruction::Sub)
         return matchIfNeg(CE->getOperand(0), CE->getOperand(1));
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return L.match(ConstantExpr::getNeg(CI));
     return false;
   }
 private:
