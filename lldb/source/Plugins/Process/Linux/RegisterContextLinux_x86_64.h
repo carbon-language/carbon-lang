@@ -26,6 +26,9 @@ public:
     void
     Invalidate();
 
+    void
+    InvalidateAllRegisters();
+
     size_t
     GetRegisterCount();
 

@@ -423,6 +423,11 @@ RegisterContextLinux_x86_64::Invalidate()
 {
 }
 
+void
+RegisterContextLinux_x86_64::InvalidateAllRegisters()
+{
+}
+
 size_t
 RegisterContextLinux_x86_64::GetRegisterCount()
 {
