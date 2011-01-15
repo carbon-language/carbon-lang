@@ -592,14 +592,14 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
     }
   }
 
-  return CharUnits::fromQuantity(Align / Target.getCharWidth());
+  return toCharUnitsFromBits(Align);
 }
 
 std::pair<CharUnits, CharUnits>
 ASTContext::getTypeInfoInChars(const Type *T) {
   std::pair<uint64_t, unsigned> Info = getTypeInfo(T);
-  return std::make_pair(CharUnits::fromQuantity(Info.first / getCharWidth()),
-                        CharUnits::fromQuantity(Info.second / getCharWidth()));
+  return std::make_pair(toCharUnitsFromBits(Info.first),
+                        toCharUnitsFromBits(Info.second));
 }
 
 std::pair<CharUnits, CharUnits>
@@ -862,22 +862,27 @@ ASTContext::getTypeInfo(const Type *T) const {
   return std::make_pair(Width, Align);
 }
 
+/// toCharUnitsFromBits - Convert a size in bits to a size in characters.
+CharUnits ASTContext::toCharUnitsFromBits(int64_t BitSize) const {
+  return CharUnits::fromQuantity(BitSize / getCharWidth());
+}
+
 /// getTypeSizeInChars - Return the size of the specified type, in characters.
 /// This method does not work on incomplete types.
 CharUnits ASTContext::getTypeSizeInChars(QualType T) const {
-  return CharUnits::fromQuantity(getTypeSize(T) / getCharWidth());
+  return toCharUnitsFromBits(getTypeSize(T));
 }
 CharUnits ASTContext::getTypeSizeInChars(const Type *T) const {
-  return CharUnits::fromQuantity(getTypeSize(T) / getCharWidth());
+  return toCharUnitsFromBits(getTypeSize(T));
 }
 
 /// getTypeAlignInChars - Return the ABI-specified alignment of a type, in 
 /// characters. This method does not work on incomplete types.
 CharUnits ASTContext::getTypeAlignInChars(QualType T) const {
-  return CharUnits::fromQuantity(getTypeAlign(T) / getCharWidth());
+  return toCharUnitsFromBits(getTypeAlign(T));
 }
 CharUnits ASTContext::getTypeAlignInChars(const Type *T) const {
-  return CharUnits::fromQuantity(getTypeAlign(T) / getCharWidth());
+  return toCharUnitsFromBits(getTypeAlign(T));
 }
 
 /// getPreferredTypeAlign - Return the "preferred" alignment of the specified

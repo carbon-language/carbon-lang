@@ -1006,6 +1006,9 @@ public:
     return getTypeSize(CharTy);
   }
   
+  /// toCharUnitsFromBits - Convert a size in bits to a size in characters.
+  CharUnits toCharUnitsFromBits(int64_t BitSize) const;
+
   /// getTypeSizeInChars - Return the size of the specified type, in characters.
   /// This method does not work on incomplete types.
   CharUnits getTypeSizeInChars(QualType T) const;
