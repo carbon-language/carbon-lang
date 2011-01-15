@@ -139,6 +139,10 @@ namespace llvm {
       return !getVolatileCst()->isZero();
     }
 
+    unsigned getAddressSpace() const {
+      return cast<PointerType>(getRawDest()->getType())->getAddressSpace();
+    }
+
     /// getDest - This is just like getRawDest, but it strips off any cast
     /// instructions that feed it, giving the original input.  The returned
     /// value is guaranteed to be a pointer.

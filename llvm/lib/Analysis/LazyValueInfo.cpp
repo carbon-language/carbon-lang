@@ -17,6 +17,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CFG.h"
@@ -544,6 +545,11 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
     return ODCacheUpdater.markResult(solveBlockValuePHINode(BBLV, PN, BB));
   }
 
+  if (AllocaInst *AI = dyn_cast<AllocaInst>(BBI)) {
+    BBLV = LVILatticeVal::getNot(ConstantPointerNull::get(AI->getType()));
+    return ODCacheUpdater.markResult(true);
+  }
+
   // We can only analyze the definitions of certain classes of instructions
   // (integral binops and casts at the moment), so bail if this isn't one.
   LVILatticeVal Result;
@@ -580,7 +586,19 @@ static bool InstructionDereferencesPointer(Instruction *I, Value *Ptr) {
         GetUnderlyingObject(S->getPointerOperand()) ==
         GetUnderlyingObject(Ptr);
   }
-  // FIXME: llvm.memset, etc.
+  if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I)) {
+    if (MI->isVolatile()) return false;
+    if (MI->getAddressSpace() != 0) return false;
+
+    // FIXME: check whether it has a valuerange that excludes zero?
+    ConstantInt *Len = dyn_cast<ConstantInt>(MI->getLength());
+    if (!Len || Len->isZero()) return false;
+
+    if (MI->getRawDest() == Ptr || MI->getDest() == Ptr)
+      return true;
+    if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(MI))
+      return MTI->getRawSource() == Ptr || MTI->getSource() == Ptr;
+  }
   return false;
 }
 
@@ -592,10 +610,14 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(LVILatticeVal &BBLV,
   // then we know that the pointer can't be NULL.
   bool NotNull = false;
   if (Val->getType()->isPointerTy()) {
-    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();BI != BE;++BI){
-      if (InstructionDereferencesPointer(BI, Val)) {
-        NotNull = true;
-        break;
+    if (isa<AllocaInst>(Val)) {
+      NotNull = true;
+    } else {
+      for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();BI != BE;++BI){
+        if (InstructionDereferencesPointer(BI, Val)) {
+          NotNull = true;
+          break;
+        }
       }
     }
   }
