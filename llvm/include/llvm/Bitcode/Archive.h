@@ -83,7 +83,7 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     unsigned getGroup() const            { return info.getGroup(); }
 
     /// The "mode" specifies the access permissions for the file per Unix
-    /// security. This may not have any applicabiity on non-Unix systems but is
+    /// security. This may not have any applicability on non-Unix systems but is
     /// a required component of the "ar" file format.
     /// @brief Get the permission mode associated with this archive member.
     unsigned getMode() const             { return info.getMode(); }
@@ -145,7 +145,7 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// allowed that doesn't have this restriction. This method determines if
     /// that "long format" is used for this member.
     /// @returns true iff the file name uses the long form
-    /// @brief Determin if the member has a long file name
+    /// @brief Determine if the member has a long file name
     bool hasLongFilename() const { return flags&HasLongFilenameFlag; }
 
     /// This method returns the status info (like Unix stat(2)) for the archive
@@ -403,7 +403,7 @@ class Archive {
     /// bitcode archive.  It first makes sure the symbol table has been loaded
     /// and has a non-zero size.  If it does, then it is an archive.  If not,
     /// then it tries to load all the bitcode modules of the archive.  Finally,
-    /// it returns whether it was successfull.
+    /// it returns whether it was successful.
     /// @returns true if the archive is a proper llvm bitcode archive
     /// @brief Determine whether the archive is a proper llvm bitcode archive.
     bool isBitcodeArchive();
