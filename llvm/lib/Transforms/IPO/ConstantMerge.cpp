@@ -102,7 +102,7 @@ bool ConstantMerge::runOnModule(Module &M) {
       }
       
       // Only process constants with initializers in the default address space.
-      if (!GV->isConstant() ||!GV->hasDefinitiveInitializer() ||
+      if (!GV->isConstant() || !GV->hasDefinitiveInitializer() ||
           GV->getType()->getAddressSpace() != 0 || GV->hasSection() ||
           // Don't touch values marked with attribute(used).
           UsedGlobals.count(GV))
@@ -128,7 +128,7 @@ bool ConstantMerge::runOnModule(Module &M) {
       GlobalVariable *GV = GVI++;
 
       // Only process constants with initializers in the default address space.
-      if (!GV->isConstant() ||!GV->hasDefinitiveInitializer() ||
+      if (!GV->isConstant() || !GV->hasDefinitiveInitializer() ||
           GV->getType()->getAddressSpace() != 0 || GV->hasSection() ||
           // Don't touch values marked with attribute(used).
           UsedGlobals.count(GV))
