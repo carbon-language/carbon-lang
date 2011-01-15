@@ -2290,7 +2290,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if (match(Op0, m_Not(m_Value(A)))) {
       if (match(Op1, m_Not(m_Value(B))))
         return new ICmpInst(I.getPredicate(), B, A);
-      if (ConstantInt *RHSC = dyn_cast<ConstantInt>(B))
+      if (ConstantInt *RHSC = dyn_cast<ConstantInt>(Op1))
         return new ICmpInst(I.getPredicate(), ConstantExpr::getNot(RHSC), A);
     }
 
