@@ -22,8 +22,8 @@
 
 namespace llvm {
 
-/// ARMFunctionInfo - This class is derived from MachineFunction private
-/// ARM target-specific information for each MachineFunction.
+/// ARMFunctionInfo - This class is derived from MachineFunctionInfo and
+/// contains private ARM-specific information for each MachineFunction.
 class ARMFunctionInfo : public MachineFunctionInfo {
 
   /// isThumb - True if this function is compiled under Thumb mode.
