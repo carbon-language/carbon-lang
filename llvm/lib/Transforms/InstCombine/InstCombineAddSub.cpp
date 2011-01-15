@@ -672,6 +672,15 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         Value *NewMul = Builder->CreateMul(A, B);
         return BinaryOperator::CreateAdd(Op0, NewMul);
       }
+      
+      // X - A*Cst -> X + A*-Cst
+      // X - Cst*A -> X + A*-Cst
+      ConstantInt *BCst;
+      if (match(Op1I, m_Mul(m_Value(A), m_ConstantInt(BCst))) ||
+          match(Op1I, m_Mul(m_ConstantInt(BCst), m_Value(A)))) {
+        Value *NewMul = Builder->CreateMul(A, ConstantExpr::getNeg(BCst));
+        return BinaryOperator::CreateAdd(Op0, NewMul);
+      }
     }
   }
 
