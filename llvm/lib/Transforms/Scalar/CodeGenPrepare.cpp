@@ -69,6 +69,11 @@ namespace {
     const TargetLowering *TLI;
     DominatorTree *DT;
     ProfileInfo *PFI;
+    
+    /// CurInstIterator - As we scan instructions optimizing them, this is the
+    /// next instruction to optimize.  Xforms that can invalidate this should
+    /// update it.
+    BasicBlock::iterator CurInstIterator;
 
     /// BackEdges - Keep a set of all the loop back edges.
     ///
@@ -104,8 +109,7 @@ namespace {
     bool OptimizeInst(Instruction *I);
     bool OptimizeMemoryInst(Instruction *I, Value *Addr, const Type *AccessTy,
                             DenseMap<Value*,Value*> &SunkAddrs);
-    bool OptimizeInlineAsmInst(Instruction *I, CallSite CS,
-                               DenseMap<Value*,Value*> &SunkAddrs);
+    bool OptimizeInlineAsmInst(CallInst *CS);
     bool OptimizeCallInst(CallInst *CI);
     bool MoveExtToFormExtLoad(Instruction *I);
     bool OptimizeExtUses(Instruction *I);
@@ -605,6 +609,25 @@ protected:
 } // end anonymous namespace
 
 bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
+  BasicBlock *BB = CI->getParent();
+  
+  // Lower inline assembly if we can.
+  // If we found an inline asm expession, and if the target knows how to
+  // lower it to normal LLVM code, do so now.
+  if (TLI && isa<InlineAsm>(CI->getCalledValue())) {
+    if (TLI->ExpandInlineAsm(CI)) {
+      // Avoid invalidating the iterator.
+      CurInstIterator = BB->begin();
+      // Avoid processing instructions out of order, which could cause
+      // reuse before a value is defined.
+      SunkAddrs.clear();
+      return true;
+    }
+    // Sink address computing for memory operands into the block.
+    if (OptimizeInlineAsmInst(CI))
+      return true;
+  }
+  
   // Lower all uses of llvm.objectsize.*
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI);
   if (II && II->getIntrinsicID() == Intrinsic::objectsize) {
@@ -833,11 +856,11 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 /// OptimizeInlineAsmInst - If there are any memory operands, use
 /// OptimizeMemoryInst to sink their address computing into the block when
 /// possible / profitable.
-bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
-                                           DenseMap<Value*,Value*> &SunkAddrs) {
+bool CodeGenPrepare::OptimizeInlineAsmInst(CallInst *CS) {
   bool MadeChange = false;
 
-  TargetLowering::AsmOperandInfoVector TargetConstraints = TLI->ParseConstraints(CS);
+  TargetLowering::AsmOperandInfoVector 
+    TargetConstraints = TLI->ParseConstraints(CS);
   unsigned ArgNo = 0;
   for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
     TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];
@@ -847,8 +870,8 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
 
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         OpInfo.isIndirect) {
-      Value *OpVal = const_cast<Value *>(CS.getArgument(ArgNo++));
-      MadeChange |= OptimizeMemoryInst(I, OpVal, OpVal->getType(), SunkAddrs);
+      Value *OpVal = CS->getArgOperand(ArgNo++);
+      MadeChange |= OptimizeMemoryInst(CS, OpVal, OpVal->getType(), SunkAddrs);
     } else if (OpInfo.Type == InlineAsm::isInput)
       ArgNo++;
   }
@@ -1026,12 +1049,7 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
       OptimizeInst(NC);
     }
   } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
-    if (TLI && isa<InlineAsm>(CI->getCalledValue())) {
-      // Sink address computing for memory operands into the block.
-      MadeChange |= OptimizeInlineAsmInst(I, &(*CI), SunkAddrs);
-    } else {
-      MadeChange |= OptimizeCallInst(CI);
-    }
+    MadeChange |= OptimizeCallInst(CI);
   }
 
   return MadeChange;
@@ -1057,29 +1075,14 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
 
   SunkAddrs.clear();
 
-  for (BasicBlock::iterator BBI = BB.begin(), E = BB.end(); BBI != E; ) {
-    Instruction *I = BBI++;
+  CurInstIterator = BB.begin();
+  for (BasicBlock::iterator E = BB.end(); CurInstIterator != E; ) {
+    Instruction *I = CurInstIterator++;
 
-    if (CallInst *CI = dyn_cast<CallInst>(I)) {
-      // If we found an inline asm expession, and if the target knows how to
-      // lower it to normal LLVM code, do so now.
-      if (TLI && isa<InlineAsm>(CI->getCalledValue())) {
-        if (TLI->ExpandInlineAsm(CI)) {
-          BBI = BB.begin();
-          // Avoid processing instructions out of order, which could cause
-          // reuse before a value is defined.
-          SunkAddrs.clear();
-        } else
-          // Sink address computing for memory operands into the block.
-          MadeChange |= OptimizeInlineAsmInst(I, &(*CI), SunkAddrs);
-      } else {
-        // Other CallInst optimizations that don't need to muck with the
-        // enclosing iterator here.
-        MadeChange |= OptimizeCallInst(CI);
-      }
-    } else {
+    if (CallInst *CI = dyn_cast<CallInst>(I))
+      MadeChange |= OptimizeCallInst(CI);
+    else
       MadeChange |= OptimizeInst(I);
-    }
   }
 
   return MadeChange;
