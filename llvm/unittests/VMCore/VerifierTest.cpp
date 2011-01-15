@@ -60,32 +60,5 @@ TEST(VerifierTest, AliasUnnamedAddr) {
   EXPECT_TRUE(verifyModule(M, ReturnStatusAction, &Error));
   EXPECT_TRUE(StringRef(Error).startswith("Alias cannot have unnamed_addr"));
 }
-
-TEST(VerifierTest, ExternalUnnamedAddr) {
-  LLVMContext &C = getGlobalContext();
-  Module M("M", C);
-  const Type *Ty = Type::getInt8Ty(C);
-  GlobalVariable *GV = new GlobalVariable(M, Ty, true,
-                                          GlobalValue::ExternalLinkage,
-                                          NULL, "foo");
-  GV->setUnnamedAddr(true);
-  std::string Error;
-  EXPECT_TRUE(verifyModule(M, ReturnStatusAction, &Error));
-  EXPECT_TRUE(StringRef(Error)
-              .startswith("only definitions can have unnamed_addr"));
-}
-
-TEST(VerifierTest, DeclarationUnnamedAddr) {
-  LLVMContext &C = getGlobalContext();
-  Module M("M", C);
-  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C), /*isVarArg=*/false);
-  Function *F = Function::Create(FTy, GlobalValue::ExternalLinkage,
-                                 "foo", &M);
-  F->setUnnamedAddr(true);
-  std::string Error;
-  EXPECT_TRUE(verifyModule(M, ReturnStatusAction, &Error));
-  EXPECT_TRUE(StringRef(Error)
-              .startswith("only definitions can have unnamed_addr"));
-}
 }
 }

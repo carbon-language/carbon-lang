@@ -352,8 +352,6 @@ static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
   unsigned Alignment = std::max(DestGV->getAlignment(), SrcGV->getAlignment());
   DestGV->copyAttributesFrom(SrcGV);
   DestGV->setAlignment(Alignment);
-  if (SrcGV->hasUnnamedAddr())
-    DestGV->setUnnamedAddr(true);
 }
 
 /// GetLinkageResult - This analyzes the two global values and determines what
@@ -521,6 +519,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       continue;
     }
 
+    bool HasUnnamedAddr = SGV->hasUnnamedAddr() && DGV->hasUnnamedAddr();
+
     // If the visibilities of the symbols disagree and the destination is a
     // prototype, take the visibility of its input.
     if (DGV->isDeclaration())
@@ -564,6 +564,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                            SGV->isConstant(), NewLinkage, /*init*/0,
                            DGV->getName(), 0, false,
                            SGV->getType()->getAddressSpace());
+
+      // Set the unnamed_addr.
+      NewDGV->setUnnamedAddr(HasUnnamedAddr);
 
       // Propagate alignment, section, and visibility info.
       CopyGVAttributes(NewDGV, SGV);
@@ -609,8 +612,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                      "': symbol multiple defined");
     }
 
-    // Set calculated linkage
+    // Set calculated linkage and unnamed_addr
     DGV->setLinkage(NewLinkage);
+    DGV->setUnnamedAddr(HasUnnamedAddr);
 
     // Make sure to remember this mapping...
     ValueMap[SGV] = ConstantExpr::getBitCast(DGV, SGV->getType());

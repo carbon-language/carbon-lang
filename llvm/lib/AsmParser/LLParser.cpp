@@ -716,9 +716,6 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
       return true;
   }
 
-  if (!Init && UnnamedAddr)
-    return Error(UnnamedAddrLoc, "only definitions can have unnamed_addr");
-
   if (Ty->isFunctionTy() || Ty->isLabelTy())
     return Error(TyLoc, "invalid type for global variable");
 
@@ -2686,9 +2683,6 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
                          &UnnamedAddrLoc) ||
       ParseType(RetType, RetTypeLoc, true /*void allowed*/))
     return true;
-
-  if (!isDefine && UnnamedAddr)
-    return Error(UnnamedAddrLoc, "only definitions can have unnamed_addr");
 
   // Verify that the linkage is ok.
   switch ((GlobalValue::LinkageTypes)Linkage) {
