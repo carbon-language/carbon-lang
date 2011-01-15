@@ -2169,6 +2169,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
     // and we know how to evaluate it by moving the bitcast from the pointer
     // operand to the value operand.
     } else if (CE->getOpcode() == Instruction::BitCast &&
+               isa<GlobalVariable>(CE->getOperand(0)) &&
                CE->getType()->isPointerTy() &&
                CE->getOperand(0)->getType()->isPointerTy()) {
       GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
