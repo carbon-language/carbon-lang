@@ -26,6 +26,7 @@ using namespace lldb_private;
 LinuxThread::LinuxThread(Process &process, lldb::tid_t tid)
     : Thread(process, tid),
       m_frame_ap(0),
+      m_stop_info_id(0),
       m_note(eNone)
 {
 }
@@ -40,6 +41,7 @@ LinuxThread::GetMonitor()
 void
 LinuxThread::RefreshStateAfterStop()
 {
+    RefreshPrivateStopReason();
 }
 
 const char *
@@ -101,24 +103,11 @@ LinuxThread::CreateRegisterContextForFrame (lldb_private::StackFrame *frame)
 lldb::StopInfoSP
 LinuxThread::GetPrivateStopReason()
 {
-    lldb::StopInfoSP stop_info;
+    const uint32_t process_stop_id = GetProcess().GetStopID();
 
-    switch (m_note)
-    {
-    default:
-        break;
-
-    case eBreak:
-        stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(
-            *this, m_breakpoint->GetID());
-        break;
-
-    case eTrace:
-        stop_info = StopInfo::CreateStopReasonToTrace(*this);
-        break;
-    }
-
-    return stop_info;
+    if (m_stop_info_id != process_stop_id || !m_stop_info || !m_stop_info->IsValid())
+        RefreshPrivateStopReason();
+    return m_stop_info;
 }
 
 Unwind *
@@ -195,4 +184,31 @@ void
 LinuxThread::ExitNotify()
 {
     m_note = eExit;
+}
+
+void
+LinuxThread::RefreshPrivateStopReason()
+{
+    m_stop_info_id = GetProcess().GetStopID();
+
+    switch (m_note) {
+
+    default:
+    case eNone:
+        m_stop_info.reset();
+        break;
+
+    case eBreak:
+        m_stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(
+            *this, m_breakpoint->GetID());
+        break;
+
+    case eTrace:
+        m_stop_info = StopInfo::CreateStopReasonToTrace(*this);
+        break;
+
+    case eExit:
+        m_stop_info = StopInfo::CreateStopReasonWithSignal(*this, SIGCHLD);
+        break;
+    }
 }
