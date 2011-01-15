@@ -12,6 +12,7 @@
 #include <cassert>
 #include <algorithm>
 
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/FileSpecList.h"
@@ -70,14 +71,24 @@ ObjectFileELF::CreateInstance(Module *module,
             unsigned address_size = ELFHeader::AddressSizeInBytes(magic);
             if (address_size == 4 || address_size == 8)
             {
-                std::auto_ptr<ObjectFile> objfile_ap(
+                std::auto_ptr<ObjectFileELF> objfile_ap(
                     new ObjectFileELF(module, data_sp, file, offset, length));
-                if (objfile_ap->ParseHeader())
+                ArchSpec spec = objfile_ap->GetArchitecture();
+                if (spec.IsValid() && objfile_ap->SetModulesArchitecture(spec))
                     return objfile_ap.release();
             }
         }
     }
     return NULL;
+}
+
+ArchSpec
+ObjectFileELF::GetArchitecture()
+{
+    if (!ParseHeader())
+        return ArchSpec();
+
+    return ArchSpec(eArchTypeELF, m_header.e_machine, m_header.e_flags);
 }
 
 //------------------------------------------------------------------
@@ -151,6 +162,15 @@ ObjectFileELF::IsExecutable() const
     return m_header.e_type == ET_EXEC;
 }
 
+Address
+ObjectFileELF::GetEntryPoint() const
+{
+    if (m_header.e_entry)
+        return Address(NULL, m_header.e_entry);
+    else
+        return Address();
+}
+
 ByteOrder
 ObjectFileELF::GetByteOrder() const
 {
@@ -206,6 +226,60 @@ ObjectFileELF::GetDependentModules(FileSpecList &files)
     }
 
     return num_specs;
+}
+
+Address
+ObjectFileELF::GetImageInfoAddress()
+{
+    if (!ParseSectionHeaders())
+        return Address();
+
+    user_id_t dynsym_id = 0;
+    for (SectionHeaderCollIter sh_pos = m_section_headers.begin();
+         sh_pos != m_section_headers.end(); ++sh_pos) 
+    {
+        if (sh_pos->sh_type == SHT_DYNAMIC)
+        {
+            dynsym_id = SectionIndex(sh_pos);
+            break;
+        }
+    }
+
+    if (!dynsym_id)
+        return Address();
+
+    SectionList *section_list = GetSectionList();
+    if (!section_list)
+        return Address();
+
+    // Resolve the dynamic table entries.
+    Section *dynsym = section_list->FindSectionByID(dynsym_id).get();
+    if (!dynsym)
+        return Address();
+
+    DataExtractor dynsym_data;
+    if (dynsym->ReadSectionDataFromObjectFile(this, dynsym_data))
+    {
+        ELFDynamic symbol;
+        const unsigned section_size = dynsym_data.GetByteSize();
+        unsigned offset = 0;
+        unsigned cursor = 0;
+
+        // Look for a DT_DEBUG entry.
+        while (cursor < section_size)
+        {
+            offset = cursor;
+            if (!symbol.Parse(dynsym_data, &cursor))
+                break;
+
+            if (symbol.d_tag != DT_DEBUG)
+                continue;
+
+            return Address(dynsym, offset + sizeof(symbol.d_tag));
+        }
+    }
+
+    return Address();
 }
 
 //----------------------------------------------------------------------

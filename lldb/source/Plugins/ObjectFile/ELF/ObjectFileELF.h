@@ -89,6 +89,9 @@ public:
     virtual bool
     IsExecutable () const;
 
+    virtual lldb_private::Address
+    GetEntryPoint() const;
+
     virtual size_t
     GetAddressByteSize() const;
 
@@ -109,6 +112,12 @@ public:
 
     virtual uint32_t
     GetDependentModules(lldb_private::FileSpecList& files);
+
+    virtual lldb_private::Address
+    GetImageInfoAddress();
+
+    lldb_private::ArchSpec 
+    GetArchitecture();
 
 private:
     ObjectFileELF(lldb_private::Module* module,
