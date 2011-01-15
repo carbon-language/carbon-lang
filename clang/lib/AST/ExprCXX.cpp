@@ -1056,3 +1056,31 @@ Stmt::child_iterator SizeOfPackExpr::child_begin() {
 Stmt::child_iterator SizeOfPackExpr::child_end() {
   return child_iterator();
 }
+
+SubstNonTypeTemplateParmPackExpr::
+SubstNonTypeTemplateParmPackExpr(QualType T, 
+                                 NonTypeTemplateParmDecl *Param,
+                                 SourceLocation NameLoc,
+                                 const TemplateArgument &ArgPack)
+  : Expr(SubstNonTypeTemplateParmPackExprClass, T, VK_RValue, OK_Ordinary, 
+         true, false, true),
+    Param(Param), Arguments(ArgPack.pack_begin()), 
+    NumArguments(ArgPack.pack_size()), NameLoc(NameLoc) { }
+
+TemplateArgument SubstNonTypeTemplateParmPackExpr::getArgumentPack() const {
+  return TemplateArgument(Arguments, NumArguments);
+}
+
+SourceRange SubstNonTypeTemplateParmPackExpr::getSourceRange() const {
+  return NameLoc;
+}
+
+Stmt::child_iterator SubstNonTypeTemplateParmPackExpr::child_begin() {
+  return child_iterator();
+}
+
+Stmt::child_iterator SubstNonTypeTemplateParmPackExpr::child_end() {
+  return child_iterator();
+}
+
+

@@ -14,6 +14,7 @@
 
 #include "clang/Serialization/ASTReader.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
 using namespace clang;
 using namespace clang::serialization;
@@ -178,7 +179,8 @@ namespace clang {
     void VisitCXXNoexceptExpr(CXXNoexceptExpr *E);
     void VisitPackExpansionExpr(PackExpansionExpr *E);
     void VisitSizeOfPackExpr(SizeOfPackExpr *E);
-    
+    void VisitSubstNonTypeTemplateParmPackExpr(
+                                           SubstNonTypeTemplateParmPackExpr *E);
     void VisitOpaqueValueExpr(OpaqueValueExpr *E);
   };
 }
@@ -1307,6 +1309,20 @@ void ASTStmtReader::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
   E->Pack = cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++]));
 }
 
+void ASTStmtReader::VisitSubstNonTypeTemplateParmPackExpr(
+                                          SubstNonTypeTemplateParmPackExpr *E) {
+  VisitExpr(E);
+  E->Param
+    = cast_or_null<NonTypeTemplateParmDecl>(Reader.GetDecl(Record[Idx++]));
+  TemplateArgument ArgPack = Reader.ReadTemplateArgument(F, Record, Idx);
+  if (ArgPack.getKind() != TemplateArgument::Pack)
+    return;
+  
+  E->Arguments = ArgPack.pack_begin();
+  E->NumArguments = ArgPack.pack_size();
+  E->NameLoc = ReadSourceLocation(Record, Idx);
+}
+
 void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
 }
@@ -1835,6 +1851,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
         
     case EXPR_SIZEOF_PACK:
       S = new (Context) SizeOfPackExpr(Empty);
+      break;
+        
+    case EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK:
+      S = new (Context) SubstNonTypeTemplateParmPackExpr(Empty);
       break;
         
     case EXPR_OPAQUE_VALUE:

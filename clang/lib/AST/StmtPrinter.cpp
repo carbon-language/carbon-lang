@@ -15,6 +15,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "llvm/Support/Format.h"
 #include "clang/AST/Expr.h"
@@ -1253,6 +1254,11 @@ void StmtPrinter::VisitPackExpansionExpr(PackExpansionExpr *E) {
 
 void StmtPrinter::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
   OS << "sizeof...(" << E->getPack()->getNameAsString() << ")";
+}
+
+void StmtPrinter::VisitSubstNonTypeTemplateParmPackExpr(
+                                       SubstNonTypeTemplateParmPackExpr *Node) {
+  OS << Node->getParameterPack()->getNameAsString();
 }
 
 // Obj-C

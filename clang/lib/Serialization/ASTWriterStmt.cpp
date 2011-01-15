@@ -14,6 +14,7 @@
 #include "clang/Serialization/ASTWriter.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 using namespace clang;
@@ -152,6 +153,8 @@ namespace clang {
     void VisitCXXNoexceptExpr(CXXNoexceptExpr *E);
     void VisitPackExpansionExpr(PackExpansionExpr *E);
     void VisitSizeOfPackExpr(SizeOfPackExpr *E);
+    void VisitSubstNonTypeTemplateParmPackExpr(
+                                           SubstNonTypeTemplateParmPackExpr *E);
     void VisitOpaqueValueExpr(OpaqueValueExpr *E);
   };
 }
@@ -1314,6 +1317,15 @@ void ASTStmtWriter::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
   Record.push_back(E->Length);
   Writer.AddDeclRef(E->Pack, Record);
   Code = serialization::EXPR_SIZEOF_PACK;
+}
+
+void ASTStmtWriter::VisitSubstNonTypeTemplateParmPackExpr(
+                                          SubstNonTypeTemplateParmPackExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->Param, Record);
+  Writer.AddTemplateArgument(E->getArgumentPack(), Record);
+  Writer.AddSourceLocation(E->NameLoc, Record);
+  Code = serialization::EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK;
 }
 
 void ASTStmtWriter::VisitOpaqueValueExpr(OpaqueValueExpr *E) {

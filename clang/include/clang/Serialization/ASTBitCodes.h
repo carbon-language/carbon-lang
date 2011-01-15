@@ -936,7 +936,8 @@ namespace clang {
       EXPR_BINARY_TYPE_TRAIT,     // BinaryTypeTraitExpr
       
       EXPR_PACK_EXPANSION,        // PackExpansionExpr
-      EXPR_SIZEOF_PACK            // SizeOfPackExpr
+      EXPR_SIZEOF_PACK,           // SizeOfPackExpr
+      EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK // SubstNonTypeTemplateParmPackExpr
     };
 
     /// \brief The kinds of designators that can occur in a

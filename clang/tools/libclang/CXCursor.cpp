@@ -171,6 +171,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
       
   case Stmt::DeclRefExprClass:           
   case Stmt::BlockDeclRefExprClass:
+  case Stmt::SubstNonTypeTemplateParmPackExprClass:
     // FIXME: UnresolvedLookupExpr?
     // FIXME: DependentScopeDeclRefExpr?
     K = CXCursor_DeclRefExpr;

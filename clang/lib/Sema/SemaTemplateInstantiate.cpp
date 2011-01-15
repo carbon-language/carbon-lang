@@ -702,7 +702,9 @@ namespace {
     ExprResult TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E);
     ExprResult TransformTemplateParmRefExpr(DeclRefExpr *E,
                                             NonTypeTemplateParmDecl *D);
-
+    ExprResult TransformSubstNonTypeTemplateParmPackExpr(
+                                           SubstNonTypeTemplateParmPackExpr *E);
+    
     QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
                                         FunctionProtoTypeLoc TL);
     ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm,
@@ -924,9 +926,19 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
            "Missing argument pack");
     
     if (getSema().ArgumentPackSubstitutionIndex == -1) {
-      // FIXME: Variadic templates fun case.
-      getSema().Diag(Loc, diag::err_pack_expansion_mismatch_unsupported);
-      return ExprError();
+      // We have an argument pack, but we can't select a particular argument
+      // out of it yet. Therefore, we'll build an expression to hold on to that
+      // argument pack.
+      QualType TargetType = SemaRef.SubstType(NTTP->getType(), TemplateArgs,
+                                              E->getLocation(), 
+                                              NTTP->getDeclName());
+      if (TargetType.isNull())
+        return ExprError();
+      
+      return new (SemaRef.Context) SubstNonTypeTemplateParmPackExpr(TargetType,
+                                                                    NTTP, 
+                                                              E->getLocation(),
+                                                                    Arg);
     }
     
     assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
@@ -965,6 +977,42 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
                                                 E->getSourceRange().getBegin());
 }
                                                    
+ExprResult 
+TemplateInstantiator::TransformSubstNonTypeTemplateParmPackExpr(
+                                          SubstNonTypeTemplateParmPackExpr *E) {
+  if (getSema().ArgumentPackSubstitutionIndex == -1) {
+    // We aren't expanding the parameter pack, so just return ourselves.
+    return getSema().Owned(E);
+  }
+  
+  // FIXME: Variadic templates select Nth from type?  
+  const TemplateArgument &ArgPack = E->getArgumentPack();
+  unsigned Index = (unsigned)getSema().ArgumentPackSubstitutionIndex;
+  assert(Index < ArgPack.pack_size() && "Substitution index out-of-range");
+  
+  const TemplateArgument &Arg = ArgPack.pack_begin()[Index];
+  if (Arg.getKind() == TemplateArgument::Expression)
+    return SemaRef.Owned(Arg.getAsExpr());
+  
+  if (Arg.getKind() == TemplateArgument::Declaration) {
+    ValueDecl *VD = cast<ValueDecl>(Arg.getAsDecl());
+    
+    // Find the instantiation of the template argument.  This is
+    // required for nested templates.
+    VD = cast_or_null<ValueDecl>(
+                   getSema().FindInstantiatedDecl(E->getParameterPackLocation(),
+                                                  VD, TemplateArgs));
+    if (!VD)
+      return ExprError();
+
+    return SemaRef.BuildExpressionFromDeclTemplateArgument(Arg,
+                                                           E->getType(),
+                                                 E->getParameterPackLocation());
+  }
+    
+  return SemaRef.BuildExpressionFromIntegralTemplateArgument(Arg, 
+                                                 E->getParameterPackLocation());
+}
 
 ExprResult
 TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {

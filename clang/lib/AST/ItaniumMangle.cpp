@@ -1948,6 +1948,11 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     break;
   }
 
+  case Expr::SubstNonTypeTemplateParmPackExprClass:
+    mangleTemplateParameter(
+     cast<SubstNonTypeTemplateParmPackExpr>(E)->getParameterPack()->getIndex());
+    break;
+      
   case Expr::DependentScopeDeclRefExprClass: {
     const DependentScopeDeclRefExpr *DRE = cast<DependentScopeDeclRefExpr>(E);
     NestedNameSpecifier *NNS = DRE->getQualifier();

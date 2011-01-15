@@ -2649,6 +2649,9 @@ static Decl *getDeclFromExpr(Stmt *E) {
 
   if (ObjCProtocolExpr *PE = dyn_cast<ObjCProtocolExpr>(E))
     return PE->getProtocol();
+  if (SubstNonTypeTemplateParmPackExpr *NTTP 
+                              = dyn_cast<SubstNonTypeTemplateParmPackExpr>(E))
+    return NTTP->getParameterPack();
   
   return 0;
 }

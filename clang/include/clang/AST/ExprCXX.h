@@ -2746,7 +2746,8 @@ public:
   
   /// \brief Retrieve the length of the parameter pack.
   ///
-  /// This routine may only be invoked when 
+  /// This routine may only be invoked when the expression is not 
+  /// value-dependent.
   unsigned getPackLength() const {
     assert(!isValueDependent() && 
            "Cannot get the length of a value-dependent pack size expression");
@@ -2759,6 +2760,68 @@ public:
     return T->getStmtClass() == SizeOfPackExprClass;
   }
   static bool classof(const SizeOfPackExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
+/// \brief Represents a reference to a non-type template parameter pack that
+/// has been substituted with a non-template argument pack.
+///
+/// When a pack expansion in the source code contains multiple parameter packs
+/// and those parameter packs correspond to different levels of template
+/// parameter lists, this node node is used to represent a non-type template 
+/// parameter pack from an outer level, which has already had its argument pack
+/// substituted but that still lives within a pack expansion that itself
+/// could not be instantiated. When actually performing a substitution into
+/// that pack expansion (e.g., when all template parameters have corresponding
+/// arguments), this type will be replaced with the appropriate underlying
+/// expression at the current pack substitution index.
+class SubstNonTypeTemplateParmPackExpr : public Expr {
+  /// \brief The non-type template parameter pack itself.
+  NonTypeTemplateParmDecl *Param;
+  
+  /// \brief A pointer to the set of template arguments that this
+  /// parameter pack is instantiated with.
+  const TemplateArgument *Arguments;
+  
+  /// \brief The number of template arguments in \c Arguments.
+  unsigned NumArguments;
+  
+  /// \brief The location of the non-type template parameter pack reference.
+  SourceLocation NameLoc;
+  
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
+  
+public:
+  SubstNonTypeTemplateParmPackExpr(QualType T, 
+                                   NonTypeTemplateParmDecl *Param,
+                                   SourceLocation NameLoc,
+                                   const TemplateArgument &ArgPack);
+  
+  SubstNonTypeTemplateParmPackExpr(EmptyShell Empty) 
+    : Expr(SubstNonTypeTemplateParmPackExprClass, Empty) { }
+  
+  /// \brief Retrieve the non-type template parameter pack being substituted.
+  NonTypeTemplateParmDecl *getParameterPack() const { return Param; }
+
+  /// \brief Retrieve the location of the parameter pack name.
+  SourceLocation getParameterPackLocation() const { return NameLoc; }
+  
+  /// \brief Retrieve the template argument pack containing the substituted
+  /// template arguments.
+  TemplateArgument getArgumentPack() const;
+
+  virtual SourceRange getSourceRange() const;
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == SubstNonTypeTemplateParmPackExprClass;
+  }
+  static bool classof(const SubstNonTypeTemplateParmPackExpr *) { 
+    return true; 
+  }
   
   // Iterators
   virtual child_iterator child_begin();

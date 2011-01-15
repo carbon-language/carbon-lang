@@ -841,6 +841,13 @@ void StmtProfiler::VisitSizeOfPackExpr(SizeOfPackExpr *S) {
   VisitDecl(S->getPack());
 }
 
+void StmtProfiler::VisitSubstNonTypeTemplateParmPackExpr(
+                                         SubstNonTypeTemplateParmPackExpr *S) {
+  VisitExpr(S);
+  VisitDecl(S->getParameterPack());
+  VisitTemplateArgument(S->getArgumentPack());
+}
+
 void StmtProfiler::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);  
 }

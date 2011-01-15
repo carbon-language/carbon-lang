@@ -126,4 +126,27 @@ namespace PacksAtDifferentLevels {
                          some_function_object<int, unsigned int>::result_of,
                          some_function_object<long, unsigned long>::result_of>
                                      >::value == 0? 1 : -1];
+
+  template<unsigned I, unsigned J> struct unsigned_pair { };
+
+  template<unsigned ...Values1>
+  struct X4 {
+    template<typename> struct Inner {
+      static const unsigned value = 0;
+    };
+
+    template<unsigned ...Values2>
+    struct Inner<tuple<unsigned_pair<Values1, Values2>...>> {
+      static const unsigned value = 1;
+    };
+  };
+
+  int check8[X4<1, 3, 5>::Inner<tuple<unsigned_pair<1, 2>,
+                                      unsigned_pair<3, 4>,
+                                      unsigned_pair<5, 6>>
+                                >::value == 1? 1 : -1];
+  int check9[X4<1, 3>::Inner<tuple<unsigned_pair<1, 2>,
+                                   unsigned_pair<3, 4>,
+                                   unsigned_pair<5, 6>>
+                             >::value == 0? 1 : -1];
 }
