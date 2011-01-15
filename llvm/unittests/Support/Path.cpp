@@ -230,7 +230,7 @@ TEST_F(FileSystemTest, Magic) {
     ASSERT_FALSE(file.has_error());
     StringRef magic(i->magic_str, i->magic_str_len);
     file << magic;
-    file.flush();
+    file.close();
     bool res = false;
     ASSERT_NO_ERROR(fs::has_magic(file_pathname.c_str(), magic, res));
     EXPECT_TRUE(res);
