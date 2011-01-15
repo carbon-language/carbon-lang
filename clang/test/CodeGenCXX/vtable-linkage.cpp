@@ -99,7 +99,7 @@ void use_F() {
 
 // B has a key function that is not defined in this translation unit so its vtable
 // has external linkage.
-// CHECK-1: @_ZTV1B = external constant
+// CHECK-1: @_ZTV1B = external unnamed_addr constant
 
 // C has no key function, so its vtable should have weak_odr linkage
 // and hidden visibility (rdar://problem/7523229).
@@ -157,12 +157,12 @@ void use_F() {
 
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have external linkage.
-// CHECK-9: @_ZTV1FIiE = external constant
+// CHECK-9: @_ZTV1FIiE = external unnamed_addr constant
 
 // E<int> is an explicit template instantiation declaration. It has a
 // key function that is not instantiated, so we should only reference
 // its vtable, not define it.
-// CHECK-10: @_ZTV1EIiE = external constant
+// CHECK-10: @_ZTV1EIiE = external unnamed_addr constant
 
 // The anonymous struct for e has no linkage, so the vtable should have
 // internal linkage.
