@@ -624,7 +624,10 @@ public:
     operator unsigned() const { assert(Idx >=0); return (unsigned) Idx; }
   };
 
-  bool          isBlkExpr(const Stmt* S) { return getBlkExprNum(S); }
+  bool isBlkExpr(const Stmt* S) { return getBlkExprNum(S); }
+  bool isBlkExpr(const Stmt *S) const {
+    return const_cast<CFG*>(this)->isBlkExpr(S);
+  }
   BlkExprNumTy  getBlkExprNum(const Stmt* S);
   unsigned      getNumBlkExprs();
 
