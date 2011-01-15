@@ -124,6 +124,7 @@ ProcessLinux::DoLaunch(Module *module,
     if (!error.Success())
         return error;
 
+    SetID(m_monitor->GetPID());
     return error;
 }
 
