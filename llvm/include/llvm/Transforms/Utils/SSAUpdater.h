@@ -118,15 +118,17 @@ private:
 /// virtual methods.
 ///
 class LoadAndStorePromoter {
+protected:
+  SSAUpdater &SSA;
 public:
-  LoadAndStorePromoter() {}
+  LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
+                       SSAUpdater &S, StringRef Name = StringRef());
   virtual ~LoadAndStorePromoter() {}
   
   /// run - This does the promotion.  Insts is a list of loads and stores to
   /// promote, and Name is the basename for the PHIs to insert.  After this is
   /// complete, the loads and stores are removed from the code.
-  void run(StringRef Name, const SmallVectorImpl<Instruction*> &Insts,
-           SSAUpdater *SSA = 0);
+  void run(const SmallVectorImpl<Instruction*> &Insts) const;
   
   
   /// Return true if the specified instruction is in the Inst list (which was
@@ -139,6 +141,21 @@ public:
         return true;
     return false;
   }
+  
+  /// doExtraRewritesBeforeFinalDeletion - This hook is invoked after all the
+  /// stores are found and inserted as available values, but 
+  virtual void doExtraRewritesBeforeFinalDeletion() const {
+  }
+  
+  /// replaceLoadWithValue - Clients can choose to implement this to get
+  /// notified right before a load is RAUW'd another value.
+  virtual void replaceLoadWithValue(LoadInst *LI, Value *V) const {
+  }
+
+  /// This is called before each instruction is deleted.
+  virtual void instructionDeleted(Instruction *I) const {
+  }
+
 };
 
 } // End llvm namespace

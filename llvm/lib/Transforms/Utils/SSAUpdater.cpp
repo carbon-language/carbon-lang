@@ -348,23 +348,25 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
 // LoadAndStorePromoter Implementation
 //===----------------------------------------------------------------------===//
 
-void LoadAndStorePromoter::run(StringRef BaseName,
-                               const SmallVectorImpl<Instruction*> &Insts,
-                               SSAUpdater *SSA) {
+LoadAndStorePromoter::
+LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
+                     SSAUpdater &S, StringRef BaseName) : SSA(S) {
   if (Insts.empty()) return;
   
-  // If no SSAUpdater was provided, use a default one.  This allows the client
-  // to capture inserted PHI nodes etc if they want.
-  SSAUpdater DefaultSSA;
-  if (SSA == 0) SSA = &DefaultSSA;
-  
-  const Type *ValTy;
+  Value *SomeVal;
   if (LoadInst *LI = dyn_cast<LoadInst>(Insts[0]))
-    ValTy = LI->getType();
+    SomeVal = LI;
   else
-    ValTy = cast<StoreInst>(Insts[0])->getOperand(0)->getType();
-    
-  SSA->Initialize(ValTy, BaseName);
+    SomeVal = cast<StoreInst>(Insts[0])->getOperand(0);
+
+  if (BaseName.empty())
+    BaseName = SomeVal->getName();
+  SSA.Initialize(SomeVal->getType(), BaseName);
+}
+
+
+void LoadAndStorePromoter::
+run(const SmallVectorImpl<Instruction*> &Insts) const {
   
   // First step: bucket up uses of the alloca by the block they occur in.
   // This is important because we have to handle multiple defs/uses in a block
@@ -396,7 +398,7 @@ void LoadAndStorePromoter::run(StringRef BaseName,
     if (BlockUses.size() == 1) {
       // If it is a store, it is a trivial def of the value in the block.
       if (StoreInst *SI = dyn_cast<StoreInst>(User))
-        SSA->AddAvailableValue(BB, SI->getOperand(0));
+        SSA.AddAvailableValue(BB, SI->getOperand(0));
       else 
         // Otherwise it is a load, queue it to rewrite as a live-in load.
         LiveInLoads.push_back(cast<LoadInst>(User));
@@ -437,6 +439,7 @@ void LoadAndStorePromoter::run(StringRef BaseName,
         // If we haven't seen a store yet, this is a live in use, otherwise
         // use the stored value.
         if (StoredValue) {
+          replaceLoadWithValue(L, StoredValue);
           L->replaceAllUsesWith(StoredValue);
           ReplacedLoads[L] = StoredValue;
         } else {
@@ -456,7 +459,7 @@ void LoadAndStorePromoter::run(StringRef BaseName,
     
     // The last stored value that happened is the live-out for the block.
     assert(StoredValue && "Already checked that there is a store in block");
-    SSA->AddAvailableValue(BB, StoredValue);
+    SSA.AddAvailableValue(BB, StoredValue);
     BlockUses.clear();
   }
   
@@ -464,10 +467,14 @@ void LoadAndStorePromoter::run(StringRef BaseName,
   // inserting PHI nodes as necessary.
   for (unsigned i = 0, e = LiveInLoads.size(); i != e; ++i) {
     LoadInst *ALoad = LiveInLoads[i];
-    Value *NewVal = SSA->GetValueInMiddleOfBlock(ALoad->getParent());
+    Value *NewVal = SSA.GetValueInMiddleOfBlock(ALoad->getParent());
+    replaceLoadWithValue(ALoad, NewVal);
     ALoad->replaceAllUsesWith(NewVal);
     ReplacedLoads[ALoad] = NewVal;
   }
+  
+  // Allow the client to do stuff before we start nuking things.
+  doExtraRewritesBeforeFinalDeletion();
   
   // Now that everything is rewritten, delete the old instructions from the
   // function.  They should all be dead now.
@@ -491,9 +498,11 @@ void LoadAndStorePromoter::run(StringRef BaseName,
         RLI = ReplacedLoads.find(NewVal);
       }
       
+      replaceLoadWithValue(cast<LoadInst>(User), NewVal);
       User->replaceAllUsesWith(NewVal);
     }
     
+    instructionDeleted(User);
     User->eraseFromParent();
   }
 }

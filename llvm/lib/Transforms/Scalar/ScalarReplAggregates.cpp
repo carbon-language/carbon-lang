@@ -844,20 +844,13 @@ namespace {
 class AllocaPromoter : public LoadAndStorePromoter {
   AllocaInst *AI;
 public:
-  AllocaPromoter() : AI(0) {}
+  AllocaPromoter(const SmallVectorImpl<Instruction*> &Insts, SSAUpdater &S)
+    : LoadAndStorePromoter(Insts, S), AI(0) {}
   
-  void run(AllocaInst *AI, SSAUpdater &SSA) {
+  void run(AllocaInst *AI, const SmallVectorImpl<Instruction*> &Insts) {
     // Remember which alloca we're promoting (for isInstInList).
     this->AI = AI;
-
-    // Build the list of instructions to promote.
-    SmallVector<Instruction*, 64> Insts;
-    for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-         UI != E; ++UI)
-      Insts.push_back(cast<Instruction>(*UI));
-    
-    LoadAndStorePromoter::run(AI->getName(), Insts, &SSA);
-    
+    LoadAndStorePromoter::run(Insts);
     AI->eraseFromParent();
   }
   
@@ -882,7 +875,7 @@ bool SROA::performPromotion(Function &F) {
   BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
 
   bool Changed = false;
-
+  SmallVector<Instruction*, 64> Insts;
   while (1) {
     Allocas.clear();
 
@@ -899,9 +892,17 @@ bool SROA::performPromotion(Function &F) {
       PromoteMemToReg(Allocas, *DT, *DF);
     else {
       SSAUpdater SSA;
-      AllocaPromoter Promoter;
-      for (unsigned i = 0, e = Allocas.size(); i != e; ++i)
-        Promoter.run(Allocas[i], SSA);
+      for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {
+        AllocaInst *AI = Allocas[i];
+        
+        // Build list of instructions to promote.
+        for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
+             UI != E; ++UI)
+          Insts.push_back(cast<Instruction>(*UI));
+        
+        AllocaPromoter(Insts, SSA).run(AI, Insts);
+        Insts.clear();
+      }
     }
     NumPromoted += Allocas.size();
     Changed = true;
