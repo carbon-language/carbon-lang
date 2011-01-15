@@ -94,7 +94,7 @@ CFGBlockValues::CFGBlockValues(const CFG &c) : cfg(c), vals(0) {
   if (!n)
     return;
   vals = new llvm::BitVector*[n];
-  bzero(vals, sizeof(*vals) * n);
+  memset(vals, 0, sizeof(*vals) * n);
 }
 
 CFGBlockValues::~CFGBlockValues() {
