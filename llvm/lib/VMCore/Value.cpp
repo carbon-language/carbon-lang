@@ -634,26 +634,3 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
 /// ~CallbackVH. Empty, but defined here to avoid emitting the vtable
 /// more than once.
 CallbackVH::~CallbackVH() {}
-
-
-//===----------------------------------------------------------------------===//
-//                                 User Class
-//===----------------------------------------------------------------------===//
-
-// replaceUsesOfWith - Replaces all references to the "From" definition with
-// references to the "To" definition.
-//
-void User::replaceUsesOfWith(Value *From, Value *To) {
-  if (From == To) return;   // Duh what?
-
-  assert((!isa<Constant>(this) || isa<GlobalValue>(this)) &&
-         "Cannot call User::replaceUsesOfWith on a constant!");
-
-  for (unsigned i = 0, E = getNumOperands(); i != E; ++i)
-    if (getOperand(i) == From) {  // Is This operand is pointing to oldval?
-      // The side effects of this setOperand call include linking to
-      // "To", adding "this" to the uses list of To, and
-      // most importantly, removing "this" from the use list of "From".
-      setOperand(i, To); // Fix it now...
-    }
-}

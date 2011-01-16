@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/User.h"
+#include "llvm/Value.h"
 
 namespace llvm {
 
@@ -138,16 +138,6 @@ void Use::zap(Use *Start, const Use *Stop, bool del) {
 }
 
 //===----------------------------------------------------------------------===//
-//                         AugmentedUse layout struct
-//===----------------------------------------------------------------------===//
-
-struct AugmentedUse : public Use {
-  PointerIntPair<User*, 1, Tag> ref;
-  AugmentedUse(); // not implemented
-};
-
-
-//===----------------------------------------------------------------------===//
 //                         Use getUser Implementation
 //===----------------------------------------------------------------------===//
 
@@ -159,55 +149,6 @@ User *Use::getUser() const {
   return ref.getInt()
     ? She
     : (User*)End;
-}
-
-//===----------------------------------------------------------------------===//
-//                         User allocHungoffUses Implementation
-//===----------------------------------------------------------------------===//
-
-Use *User::allocHungoffUses(unsigned N) const {
-  Use *Begin = static_cast<Use*>(::operator new(sizeof(Use) * N
-                                                + sizeof(AugmentedUse)
-                                                - sizeof(Use)));
-  Use *End = Begin + N;
-  PointerIntPair<User*, 1, Tag>& ref(static_cast<AugmentedUse&>(End[-1]).ref);
-  ref.setPointer(const_cast<User*>(this));
-  ref.setInt(tagOne);
-  return Use::initTags(Begin, End);
-}
-
-//===----------------------------------------------------------------------===//
-//                         User operator new Implementations
-//===----------------------------------------------------------------------===//
-
-void *User::operator new(size_t s, unsigned Us) {
-  void *Storage = ::operator new(s + sizeof(Use) * Us);
-  Use *Start = static_cast<Use*>(Storage);
-  Use *End = Start + Us;
-  User *Obj = reinterpret_cast<User*>(End);
-  Obj->OperandList = Start;
-  Obj->NumOperands = Us;
-  Use::initTags(Start, End);
-  return Obj;
-}
-
-//===----------------------------------------------------------------------===//
-//                         User operator delete Implementation
-//===----------------------------------------------------------------------===//
-
-void User::operator delete(void *Usr) {
-  User *Start = static_cast<User*>(Usr);
-  Use *Storage = static_cast<Use*>(Usr) - Start->NumOperands;
-  //
-  // look for a variadic User
-  if (Storage == Start->OperandList) {
-    ::operator delete(Storage);
-    return;
-  }
-  //
-  // in all other cases just delete the nullary User (covers hung-off
-  // uses also
-  ::operator delete(Usr);
 }
 
 } // End llvm namespace

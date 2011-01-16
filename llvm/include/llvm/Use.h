@@ -208,6 +208,15 @@ public:
   unsigned getOperandNo() const;
 };
 
+//===----------------------------------------------------------------------===//
+//                         AugmentedUse layout struct
+//===----------------------------------------------------------------------===//
+
+struct AugmentedUse : public Use {
+  PointerIntPair<User*, 1, Tag> ref;
+  AugmentedUse(); // not implemented
+};
+
 } // End llvm namespace
 
 #endif
