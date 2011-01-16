@@ -25,6 +25,7 @@
 
 namespace llvm {
   class MemoryBuffer;
+  class raw_ostream;
 
 // Forward declare classes
 class Module;              // From VMCore
@@ -482,7 +483,7 @@ class Archive {
     bool loadSymbolTable(std::string* ErrMessage);
 
     /// @brief Write the symbol table to an ofstream.
-    void writeSymbolTable(std::ofstream& ARFile);
+    void writeSymbolTable(raw_ostream& ARFile);
 
     /// Writes one ArchiveMember to an ofstream. If an error occurs, returns
     /// false, otherwise true. If an error occurs and error is non-null then
@@ -491,7 +492,7 @@ class Archive {
     /// @returns true Writing member failed, \p error set to error message
     bool writeMember(
       const ArchiveMember& member, ///< The member to be written
-      std::ofstream& ARFile,       ///< The file to write member onto
+      raw_ostream& ARFile,       ///< The file to write member onto
       bool CreateSymbolTable,      ///< Should symbol table be created?
       bool TruncateNames,          ///< Should names be truncated to 11 chars?
       bool ShouldCompress,         ///< Should the member be compressed?
