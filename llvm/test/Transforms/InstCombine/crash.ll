@@ -341,3 +341,15 @@ define double @test16(i32 %a) nounwind {
   %select = select i1 %cmp, double 2.000000e+00, double 3.141592e+00
   ret double %select
 }
+
+
+; PR8983
+%struct.basic_ios = type { i8 }
+
+define %struct.basic_ios *@test17() ssp {
+entry:
+  %add.ptr.i = getelementptr i8* null, i64 undef
+  %0 = bitcast i8* %add.ptr.i to %struct.basic_ios*
+  ret %struct.basic_ios* %0
+}
+

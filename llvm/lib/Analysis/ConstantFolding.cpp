@@ -581,7 +581,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
       if (NumOps == 2 &&
           cast<PointerType>(ResultTy)->getElementType()->isIntegerTy(8)) {
         ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[1]);
-        assert(CE->getType() == IntPtrTy &&
+        assert((CE == 0 || CE->getType() == IntPtrTy) &&
                "CastGEPIndices didn't canonicalize index types!");
         if (CE && CE->getOpcode() == Instruction::Sub &&
             CE->getOperand(0)->isNullValue()) {
