@@ -512,12 +512,7 @@ Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
 /// has a PHI node as operand #0, see if we can fold the instruction into the
 /// PHI (which is only possible if all operands to the PHI are constants).
 ///
-/// If AllowAggressive is true, FoldOpIntoPhi will allow certain transforms
-/// that would normally be unprofitable because they strongly encourage jump
-/// threading.
-Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
-                                         bool AllowAggressive) {
-  AllowAggressive = false;
+Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   PHINode *PN = cast<PHINode>(I.getOperand(0));
   unsigned NumPHIValues = PN->getNumIncomingValues();
   if (NumPHIValues == 0)
@@ -525,7 +520,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
   
   // We normally only transform phis with a single use, unless we're trying
   // hard to make jump threading happen.
-  if (!PN->hasOneUse() && !AllowAggressive)
+  if (!PN->hasOneUse())
     return 0;
   
   // Check to see if all of the operands of the PHI are simple constants
@@ -560,7 +555,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
   // operation in that block.  However, if this is a critical edge, we would be
   // inserting the computation one some other paths (e.g. inside a loop).  Only
   // do this if the pred block is unconditionally branching into the phi block.
-  if (NonConstBB != 0 && !AllowAggressive) {
+  if (NonConstBB != 0) {
     BranchInst *BI = dyn_cast<BranchInst>(NonConstBB->getTerminator());
     if (!BI || !BI->isUnconditional()) return 0;
   }

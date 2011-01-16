@@ -2125,7 +2125,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         // block.  If in the same block, we're encouraging jump threading.  If
         // not, we are just pessimizing the code by making an i1 phi.
         if (LHSI->getParent() == I.getParent())
-          if (Instruction *NV = FoldOpIntoPhi(I, true))
+          if (Instruction *NV = FoldOpIntoPhi(I))
             return NV;
         break;
       case Instruction::Select: {
@@ -2648,7 +2648,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         // block.  If in the same block, we're encouraging jump threading.  If
         // not, we are just pessimizing the code by making an i1 phi.
         if (LHSI->getParent() == I.getParent())
-          if (Instruction *NV = FoldOpIntoPhi(I, true))
+          if (Instruction *NV = FoldOpIntoPhi(I))
             return NV;
         break;
       case Instruction::SIToFP:

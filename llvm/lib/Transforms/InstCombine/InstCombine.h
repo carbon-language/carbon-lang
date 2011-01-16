@@ -319,10 +319,7 @@ private:
   // into the PHI (which is only possible if all operands to the PHI are
   // constants).
   //
-  // If AllowAggressive is true, FoldOpIntoPhi will allow certain transforms
-  // that would normally be unprofitable because they strongly encourage jump
-  // threading.
-  Instruction *FoldOpIntoPhi(Instruction &I, bool AllowAggressive = false);
+  Instruction *FoldOpIntoPhi(Instruction &I);
 
   // FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
   // operator and they all are only used by the PHI, PHI together their
