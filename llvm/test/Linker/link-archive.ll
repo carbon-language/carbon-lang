@@ -1,5 +1,4 @@
 ; Test linking of a bc file to an archive via llvm-ld. 
-; XFAIL: *
 ; PR1434
 ; RUN: llvm-as %s -o %t.bar.bc
 ; RUN: echo {define i32* @foo(i32 %x) \{ ret i32* @baz \} \
