@@ -771,8 +771,16 @@ bool SelectionDAGISel::TryToFoldFastISelLoad(const LoadInst *LI,
   assert(RI.getOperand().isUse() &&
          "The only use of the vreg must be a use, we haven't emitted the def!");
 
+  MachineInstr *User = &*RI;
+  
+  // Set the insertion point properly.  Folding the load can cause generation of
+  // other random instructions (like sign extends) for addressing modes, make
+  // sure they get inserted in a logical place before the new instruction.
+  FuncInfo->InsertPt = User;
+  FuncInfo->MBB = User->getParent();
+
   // Ask the target to try folding the load.
-  return FastIS->TryToFoldLoad(&*RI, RI.getOperandNo(), LI);
+  return FastIS->TryToFoldLoad(User, RI.getOperandNo(), LI);
 }
 
 #ifndef NDEBUG
@@ -890,11 +898,9 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           if (Inst != Begin)
             BeforeInst = llvm::prior(llvm::prior(BI));
           if (BeforeInst && isa<LoadInst>(BeforeInst) &&
-              BeforeInst->hasOneUse() && *BeforeInst->use_begin() == Inst) {
-            FastIS->recomputeInsertPt();
-            if (TryToFoldFastISelLoad(cast<LoadInst>(BeforeInst), FastIS))
-              --BI; // If we succeeded, don't re-select the load.
-          }
+              BeforeInst->hasOneUse() && *BeforeInst->use_begin() == Inst &&
+              TryToFoldFastISelLoad(cast<LoadInst>(BeforeInst), FastIS))
+            --BI; // If we succeeded, don't re-select the load.
           continue;
         }
 
