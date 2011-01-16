@@ -2,29 +2,6 @@ Target Independent Opportunities:
 
 //===---------------------------------------------------------------------===//
 
-Dead argument elimination should be enhanced to handle cases when an argument is
-dead to an externally visible function.  Though the argument can't be removed
-from the externally visible function, the caller doesn't need to pass it in.
-For example in this testcase:
-
-  void foo(int X) __attribute__((noinline));
-  void foo(int X) { sideeffect(); }
-  void bar(int A) { foo(A+1); }
-
-We compile bar to:
-
-define void @bar(i32 %A) nounwind ssp {
-  %0 = add nsw i32 %A, 1                          ; <i32> [#uses=1]
-  tail call void @foo(i32 %0) nounwind noinline ssp
-  ret void
-}
-
-The add is dead, we could pass in 'i32 undef' instead.  This occurs for C++
-templates etc, which usually have linkonce_odr/weak_odr linkage, not internal
-linkage.
-
-//===---------------------------------------------------------------------===//
-
 With the recent changes to make the implicit def/use set explicit in
 machineinstrs, we should change the target descriptions for 'call' instructions
 so that the .td files don't list all the call-clobbered registers as implicit
