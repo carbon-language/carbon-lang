@@ -86,6 +86,10 @@ CFG *AnalysisContext::getUnoptimizedCFG() {
   return completeCFG;
 }
 
+void AnalysisContext::dumpCFG() {
+    getCFG()->dump(getASTContext().getLangOptions());
+}
+
 ParentMap &AnalysisContext::getParentMap() {
   if (!PM)
     PM = new ParentMap(getBody());

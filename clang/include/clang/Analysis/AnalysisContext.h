@@ -91,9 +91,11 @@ public:
 
   Stmt *getBody();
   CFG *getCFG();
-  
+
   /// Return a version of the CFG without any edges pruned.
   CFG *getUnoptimizedCFG();
+
+  void dumpCFG();
 
   ParentMap &getParentMap();
   PseudoConstantAnalysis *getPseudoConstantAnalysis();
