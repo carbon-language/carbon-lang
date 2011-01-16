@@ -181,11 +181,9 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where,
     flags |= ArchiveMember::HasPathFlag;
   if (hasSlash || filePath.str().length() > 15)
     flags |= ArchiveMember::HasLongFilenameFlag;
-
-  sys::LLVMFileType type;
-  if (sys::fs::identify_magic(mbr->path.str(), type))
-    type = sys::Unknown_FileType;
-  switch (type) {
+  std::string magic;
+  mbr->path.getMagicNumber(magic,4);
+  switch (sys::IdentifyFileType(magic.c_str(),4)) {
     case sys::Bitcode_FileType:
       flags |= ArchiveMember::BitcodeFlag;
       break;

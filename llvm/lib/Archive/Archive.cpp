@@ -116,10 +116,11 @@ bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
 
   // Get the signature and status info
   const char* signature = (const char*) data;
-  SmallString<4> magic;
+  std::string magic;
   if (!signature) {
-    sys::fs::get_magic(path.str(), magic.capacity(), magic);
+    path.getMagicNumber(magic,4);
     signature = magic.c_str();
+    std::string err;
     const sys::FileStatus *FSinfo = path.getFileStatus(false, ErrMsg);
     if (FSinfo)
       info = *FSinfo;
