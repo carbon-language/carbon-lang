@@ -552,11 +552,6 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(InVal))
       if (II->getParent() == NonConstBB)
         return 0;
-    
-    // If the incoming non-constant value is in I's block, we have an infinite
-    // loop.
-    if (NonConstBB == I.getParent())
-      return 0;
   }
   
   // If there is exactly one non-constant value, we can insert a copy of the
