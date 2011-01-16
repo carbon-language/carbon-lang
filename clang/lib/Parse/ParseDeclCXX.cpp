@@ -1261,6 +1261,39 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
   }
 }
 
+/// isCXX0XVirtSpecifier - Determine whether the next token is a C++0x
+/// virt-specifier.
+///
+///       virt-specifier:
+///         override
+///         final
+///         new
+bool Parser::isCXX0XVirtSpecifier() const {
+  if (Tok.is(tok::kw_new))
+    return true;
+
+  if (Tok.isNot(tok::identifier))
+    return false;
+
+  const IdentifierInfo *II = Tok.getIdentifierInfo();
+  return II == Ident_override || II == Ident_final;
+}
+
+/// ParseOptionalCXX0XVirtSpecifierSeq - Parse a virt-specifier-seq.
+///
+///       virt-specifier-seq:
+///         virt-specifier
+///         virt-specifier-seq virt-specifier
+void Parser::ParseOptionalCXX0XVirtSpecifierSeq() {
+  if (!getLang().CPlusPlus0x)
+    return;
+
+  while (isCXX0XVirtSpecifier()) {
+    // FIXME: Actually do something with the specifier.
+    ConsumeToken();
+  }
+}
+
 /// ParseCXXClassMemberDeclaration - Parse a C++ class member declaration.
 ///
 ///       member-declaration:
@@ -1277,10 +1310,19 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
 ///         member-declarator-list ',' member-declarator
 ///
 ///       member-declarator:
-///         declarator pure-specifier[opt]
+///         declarator virt-specifier-seq[opt] pure-specifier[opt]
 ///         declarator constant-initializer[opt]
 ///         identifier[opt] ':' constant-expression
 ///
+///       virt-specifier-seq:
+///         virt-specifier
+///         virt-specifier-seq virt-specifier
+///
+///       virt-specifier:
+///         override
+///         final
+///         new
+/// 
 ///       pure-specifier:
 ///         '= 0'
 ///
@@ -1469,6 +1511,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       if (BitfieldSize.isInvalid())
         SkipUntil(tok::comma, true, true);
     }
+
+    ParseOptionalCXX0XVirtSpecifierSeq();
 
     // pure-specifier:
     //   '= 0'

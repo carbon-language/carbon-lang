@@ -387,6 +387,12 @@ void Parser::Initialize() {
     ObjCTypeQuals[objc_byref] = &PP.getIdentifierTable().get("byref");
   }
 
+  // Initialize C++0x contextual keywords.
+  if (getLang().CPlusPlus0x) {
+    Ident_final = &PP.getIdentifierTable().get("final");
+    Ident_override = &PP.getIdentifierTable().get("override");
+  }
+
   Ident_super = &PP.getIdentifierTable().get("super");
 
   if (getLang().AltiVec) {

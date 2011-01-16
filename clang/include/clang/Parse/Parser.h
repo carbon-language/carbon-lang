@@ -112,6 +112,10 @@ class Parser : public CodeCompletionHandler {
   IdentifierInfo *Ident_vector;
   IdentifierInfo *Ident_pixel;
 
+  /// C++0x contextual keywords. 
+  IdentifierInfo *Ident_final;
+  IdentifierInfo *Ident_override;
+
   llvm::OwningPtr<PragmaHandler> AlignHandler;
   llvm::OwningPtr<PragmaHandler> GCCVisibilityHandler;
   llvm::OwningPtr<PragmaHandler> OptionsHandler;
@@ -1520,6 +1524,9 @@ private:
   void ParseDecltypeSpecifier(DeclSpec &DS);
   
   ExprResult ParseCXX0XAlignArgument(SourceLocation Start);
+
+  bool isCXX0XVirtSpecifier() const;
+  void ParseOptionalCXX0XVirtSpecifierSeq();
 
   /// DeclaratorScopeObj - RAII object used in Parser::ParseDirectDeclarator to
   /// enter a new C++ declarator scope and exit it when the function is
