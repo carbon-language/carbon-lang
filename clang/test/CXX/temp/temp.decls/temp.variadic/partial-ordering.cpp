@@ -31,16 +31,14 @@ int check4[X1<tuple<int&, int&>>::value == 3? 1 : -1];
 
 // Partial ordering of function templates.
 template<typename T1, typename T2, typename ...Rest>
-int &f0(T1, T2, Rest...); // expected-note{{candidate function [with T1 = int, T2 = double, Rest = <>]}}
+int &f0(T1, T2, Rest...);
 
 template<typename T1, typename T2>
-float &f0(T1, T2); // expected-note{{candidate function [with T1 = int, T2 = double]}}
+float &f0(T1, T2);
 
-// FIXME: this is currently ambiguous, based on the proposed resolution
-// to core issue 692.
 void test_f0() {
   int &ir1 = f0(1, 2.0, 'a');
-  float &fr1 = f0(1, 2.0); // expected-error{{call to 'f0' is ambiguous}}
+  float &fr1 = f0(1, 2.0);
 }
 
 template<typename T1, typename T2, typename ...Rest>
