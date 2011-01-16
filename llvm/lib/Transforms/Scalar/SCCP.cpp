@@ -487,15 +487,11 @@ private:
   /// exponential growth of the table in rare cases.)
   void InsertInOverdefinedPHIs(Instruction *I, PHINode *PN) {
     std::multimap<PHINode*, Instruction*>::iterator J, E;
-    bool found = false;
     tie(J, E) = UsersOfOverdefinedPHIs.equal_range(PN);
     for (; J != E; ++J)
-      if (J->second == I) {
-        found = true;
-        break;
-      }
-    if (!found)
-      UsersOfOverdefinedPHIs.insert(std::make_pair(PN, I));
+      if (J->second == I)
+        return;
+    UsersOfOverdefinedPHIs.insert(std::make_pair(PN, I));
   }
 
 private:
