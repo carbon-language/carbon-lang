@@ -88,8 +88,19 @@ namespace {
       /// isMemCpyDst - This is true if this aggregate is memcpy'd into.
       bool isMemCpyDst : 1;
 
+      /// hasSubelementAccess - This is true if a subelement of the alloca is
+      /// ever accessed, or false if the alloca is only accessed with mem
+      /// intrinsics or load/store that only access the entire alloca at once.
+      bool hasSubelementAccess : 1;
+      
+      /// hasALoadOrStore - This is true if there are any loads or stores to it.
+      /// The alloca may just be accessed with memcpy, for example, which would
+      /// not set this.
+      bool hasALoadOrStore : 1;
+      
       AllocaInfo()
-        : isUnsafe(false), isMemCpySrc(false), isMemCpyDst(false) {}
+        : isUnsafe(false), isMemCpySrc(false), isMemCpyDst(false),
+          hasSubelementAccess(false), hasALoadOrStore(false) {}
     };
 
     unsigned SRThreshold;
@@ -1103,6 +1114,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
         const Type *LIType = LI->getType();
         isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(LIType),
                         LIType, false, Info);
+        Info.hasALoadOrStore = true;
       } else
         MarkUnsafe(Info);
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
@@ -1111,6 +1123,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
         const Type *SIType = SI->getOperand(0)->getType();
         isSafeMemAccess(AI, Offset, TD->getTypeAllocSize(SIType),
                         SIType, true, Info);
+        Info.hasALoadOrStore = true;
       } else
         MarkUnsafe(Info);
     } else {
@@ -1217,13 +1230,17 @@ void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
     // This is also safe for references using a type that is compatible with
     // the type of the alloca, so that loads/stores can be rewritten using
     // insertvalue/extractvalue.
-    if (isCompatibleAggregate(MemOpType, AI->getAllocatedType()))
+    if (isCompatibleAggregate(MemOpType, AI->getAllocatedType())) {
+      Info.hasSubelementAccess = true;
       return;
+    }
   }
   // Check if the offset/size correspond to a component within the alloca type.
   const Type *T = AI->getAllocatedType();
-  if (TypeHasComponent(T, Offset, MemSize))
+  if (TypeHasComponent(T, Offset, MemSize)) {
+    Info.hasSubelementAccess = true;
     return;
+  }
 
   return MarkUnsafe(Info);
 }
@@ -1851,6 +1868,19 @@ bool SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
       HasPadding(AI->getAllocatedType(), *TD))
     return false;
 
+  // If the alloca is never has an access to just *part* of it, but is accessed
+  // with loads and stores, then we should use ConvertToScalarInfo to promote
+  // the alloca instead of promoting each piece at a time and inserting fission
+  // and fusion code.
+  if (!Info.hasSubelementAccess && Info.hasALoadOrStore) {
+    // If the struct/array just has one element, use basic SRoA.
+    if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
+      if (ST->getNumElements() > 1) return false;
+    } else {
+      if (cast<ArrayType>(AI->getAllocatedType())->getNumElements() > 1)
+        return false;
+    }
+  }
   return true;
 }
 
