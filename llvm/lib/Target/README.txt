@@ -2155,8 +2155,12 @@ _ZNSt12_Vector_baseIiSaIiEEC2EmRKS0_.exit.i.i:    ; preds = %cond.true.i.i.i.i
   br label %_ZNSt6vectorIiSaIiEEC1EmRKiRKS0_.exit
 
 This is just the handling the construction of the vector. Most surprising here
-is the fact that all three null stores in %entry are dead, but not eliminated.
+is the fact that all three null stores in %entry are dead (because we do no
+cross-block DSE).
+
 Also surprising is that %conv isn't simplified to 0 in %....exit.thread.i.i.
+This is a because the client of LazyValueInfo doesn't simplify all instruction
+operands, just selected ones.
 
 //===---------------------------------------------------------------------===//
 
@@ -2192,6 +2196,9 @@ This shouldn't need the ((zext (%n - 1)) + 1) game, and it should ideally fold
 the two memset's together. The issue with %n seems to stem from poor handling
 of the original loop.
 
+To simplify this, we need SCEV to know that "n != 0" because of the dominating
+conditional.  That would turn the second memset into a simple memset of 'n'.
+
 //===---------------------------------------------------------------------===//
 
 clang -O3 -fno-exceptions currently compiles this code:
@@ -2210,6 +2217,12 @@ into poor code for zero-initializing 'v' when N is >0. The problem is that
 S is only 6 bytes, but each element is 8 byte-aligned. We generate a loop and
 4 stores on each iteration. If the struct were 8 bytes, this gets turned into
 a memset.
+
+In order to handle this we have to:
+  A) Teach clang to generate metadata for memsets of structs that have holes in
+     them.
+  B) Teach clang to use such a memset for zero init of this struct (since it has
+     a hole), instead of doing elementwise zeroing.
 
 //===---------------------------------------------------------------------===//
 
