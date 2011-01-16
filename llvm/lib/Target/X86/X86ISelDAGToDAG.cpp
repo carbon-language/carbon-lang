@@ -933,24 +933,18 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     // Add an artificial use to this node so that we can keep track of
     // it if it gets CSE'd with a different node.
     HandleSDNode Handle(N);
-    SDValue LHS = Handle.getValue().getNode()->getOperand(0);
-    SDValue RHS = Handle.getValue().getNode()->getOperand(1);
 
     X86ISelAddressMode Backup = AM;
-    if (!MatchAddressRecursively(LHS, AM, Depth+1) &&
-        !MatchAddressRecursively(RHS, AM, Depth+1))
+    if (!MatchAddressRecursively(N.getOperand(0), AM, Depth+1) &&
+        !MatchAddressRecursively(Handle.getValue().getOperand(1), AM, Depth+1))
       return false;
     AM = Backup;
-    LHS = Handle.getValue().getNode()->getOperand(0);
-    RHS = Handle.getValue().getNode()->getOperand(1);
-
+    
     // Try again after commuting the operands.
-    if (!MatchAddressRecursively(RHS, AM, Depth+1) &&
-        !MatchAddressRecursively(LHS, AM, Depth+1))
+    if (!MatchAddressRecursively(Handle.getValue().getOperand(1), AM, Depth+1)&&
+        !MatchAddressRecursively(Handle.getValue().getOperand(0), AM, Depth+1))
       return false;
     AM = Backup;
-    LHS = Handle.getValue().getNode()->getOperand(0);
-    RHS = Handle.getValue().getNode()->getOperand(1);
 
     // If we couldn't fold both operands into the address at the same time,
     // see if we can just put each operand into a register and fold at least
@@ -958,11 +952,13 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     if (AM.BaseType == X86ISelAddressMode::RegBase &&
         !AM.Base_Reg.getNode() &&
         !AM.IndexReg.getNode()) {
-      AM.Base_Reg = LHS;
-      AM.IndexReg = RHS;
+      N = Handle.getValue();
+      AM.Base_Reg = N.getOperand(0);
+      AM.IndexReg = N.getOperand(1);
       AM.Scale = 1;
       return false;
     }
+    N = Handle.getValue();
     break;
   }
 

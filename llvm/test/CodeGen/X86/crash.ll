@@ -151,3 +151,39 @@ entry:
   ret i32 %cond
 }
 
+
+; PR8514 - Crash in match address do to "heroics" turning and-of-shift into
+; shift of and.
+%struct.S0 = type { i8, [2 x i8], i8 }
+
+define void @func_59(i32 %p_63) noreturn nounwind {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.inc44, %entry
+  %p_63.addr.1 = phi i32 [ %p_63, %entry ], [ 0, %for.inc44 ]
+  %l_74.0 = phi i32 [ 0, %entry ], [ %add46, %for.inc44 ]
+  br i1 undef, label %for.inc44, label %bb.nph81
+
+bb.nph81:                                         ; preds = %for.body
+  %tmp98 = add i32 %p_63.addr.1, 0
+  br label %for.body22
+
+for.body22:                                       ; preds = %for.body22, %bb.nph81
+  %l_75.077 = phi i64 [ %ins, %for.body22 ], [ undef, %bb.nph81 ]
+  %tmp110 = trunc i64 %l_75.077 to i32
+  %tmp111 = and i32 %tmp110, 65535
+  %arrayidx32.0 = getelementptr [9 x [5 x [2 x %struct.S0]]]* undef, i32 0, i32 %l_74.0, i32 %tmp98, i32 %tmp111, i32 0
+  store i8 1, i8* %arrayidx32.0, align 4
+  %tmp106 = shl i32 %tmp110, 2
+  %tmp107 = and i32 %tmp106, 262140
+  %scevgep99.sum114 = or i32 %tmp107, 1
+  %arrayidx32.1.1 = getelementptr [9 x [5 x [2 x %struct.S0]]]* undef, i32 0, i32 %l_74.0, i32 %tmp98, i32 0, i32 1, i32 %scevgep99.sum114
+  store i8 0, i8* %arrayidx32.1.1, align 1
+  %ins = or i64 undef, undef
+  br label %for.body22
+
+for.inc44:                                        ; preds = %for.body
+  %add46 = add i32 %l_74.0, 1
+  br label %for.body
+}
