@@ -1964,7 +1964,7 @@ const char *darwin::CC1::getBaseInputStem(const ArgList &Args,
                                           const InputInfoList &Inputs) {
   const char *Str = getBaseInputName(Args, Inputs);
 
-  if (const char *End = strchr(Str, '.'))
+  if (const char *End = strrchr(Str, '.'))
     return Args.MakeArgString(std::string(Str, End));
 
   return Str;
