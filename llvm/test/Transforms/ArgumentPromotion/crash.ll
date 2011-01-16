@@ -36,3 +36,24 @@ entry:
   ret i1 undef
 }
 
+
+; PR8932 - infinite promotion.
+%0 = type { %0* }
+
+define i32 @test2(i32 %a) {
+init:
+  %0 = alloca %0
+  %1 = alloca %0
+  %2 = call i32 @"clay_assign(Chain, Chain)"(%0* %0, %0* %1)
+  ret i32 0
+}
+
+define internal i32 @"clay_assign(Chain, Chain)"(%0* %c, %0* %d) {
+init:
+  %0 = getelementptr %0* %d, i32 0, i32 0
+  %1 = load %0** %0
+  %2 = getelementptr %0* %c, i32 0, i32 0
+  %3 = load %0** %2
+  %4 = call i32 @"clay_assign(Chain, Chain)"(%0* %3, %0* %1)
+  ret i32 0
+}
