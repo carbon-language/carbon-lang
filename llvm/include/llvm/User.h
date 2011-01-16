@@ -29,16 +29,6 @@ namespace llvm {
 template <class>
 struct OperandTraits;
 
-class User;
-
-/// OperandTraits<User> - specialization to User
-template <>
-struct OperandTraits<User> {
-  static inline Use *op_begin(User*);
-  static inline Use *op_end(User*);
-  static inline unsigned operands(const User*);
-};
-
 class User : public Value {
   User(const User &);             // Do not implement
   void *operator new(size_t);     // Do not implement
@@ -151,18 +141,6 @@ public:
     return isa<Instruction>(V) || isa<Constant>(V);
   }
 };
-
-inline Use *OperandTraits<User>::op_begin(User *U) {
-  return U->op_begin();
-}
-
-inline Use *OperandTraits<User>::op_end(User *U) {
-  return U->op_end();
-}
-
-inline unsigned OperandTraits<User>::operands(const User *U) {
-  return U->getNumOperands();
-}
 
 template<> struct simplify_type<User::op_iterator> {
   typedef Value* SimpleType;
