@@ -2358,21 +2358,31 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
           
           const Type *NewTy=cast<PointerType>(Ptr->getType())->getElementType();
           
-          // A bitcast'd pointer implicitly points to the first field of a
-          // struct.  Insert implicity "gep @x, 0, 0, ..." until we get down
-          // to the first concrete member.
-          // FIXME: This could be extended to work for arrays as well.
-          while (const StructType *STy = dyn_cast<StructType>(NewTy)) {
-            NewTy = STy->getTypeAtIndex(0U);
+          // In order to push the bitcast onto the stored value, a bitcast
+          // from NewTy to Val's type must be legal.  If it's not, we can try
+          // introspecting NewTy to find a legal conversion.
+          while (!Val->getType()->canLosslesslyBitCastTo(NewTy)) {
+            // If NewTy is a struct, we can convert the pointer to the struct
+            // into a pointer to its first member.
+            // FIXME: This could be extended to support arrays as well.
+            if (const StructType *STy = dyn_cast<StructType>(NewTy)) {
+              NewTy = STy->getTypeAtIndex(0U);
+
+              const IntegerType *IdxTy =IntegerType::get(NewTy->getContext(), 32);
+              Constant *IdxZero = ConstantInt::get(IdxTy, 0, false);
+              Constant * const IdxList[] = {IdxZero, IdxZero};
+
+              Ptr = ConstantExpr::getGetElementPtr(Ptr, IdxList, 2);
             
-            const IntegerType *IdxTy =IntegerType::get(NewTy->getContext(), 32);
-            Constant *IdxZero = ConstantInt::get(IdxTy, 0, false);
-            Constant * const IdxList[] = {IdxZero, IdxZero};
-            
-            Ptr = ConstantExpr::getGetElementPtr(Ptr, IdxList, 2);
+            // If we can't improve the situation by introspecting NewTy,
+            // we have to give up.
+            } else {
+              return 0;
+            }
           }
           
-          if (!isa<PointerType>(NewTy)) return false;
+          // If we found compatible types, go ahead and push the bitcast
+          // onto the stored value.
           Val = ConstantExpr::getBitCast(Val, NewTy);
         }
           
