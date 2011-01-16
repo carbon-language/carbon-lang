@@ -65,6 +65,18 @@ static void FindUsedValues(GlobalVariable *LLVMUsed,
       UsedValues.insert(GV);
 }
 
+// True if A is better than B.
+static bool IsBetterCannonical(const GlobalVariable &A,
+                               const GlobalVariable &B) {
+  if (!A.hasLocalLinkage() && B.hasLocalLinkage())
+    return true;
+
+  if (A.hasLocalLinkage() && !B.hasLocalLinkage())
+    return false;
+
+  return A.hasUnnamedAddr();
+}
+
 bool ConstantMerge::runOnModule(Module &M) {
   // Find all the globals that are marked "used".  These cannot be merged.
   SmallPtrSet<const GlobalValue*, 8> UsedGlobals;
@@ -85,44 +97,43 @@ bool ConstantMerge::runOnModule(Module &M) {
   // second level constants have initializers which point to the globals that
   // were just merged.
   while (1) {
-    // First pass: identify all globals that can be merged together, filling in
-    // the Replacements vector.  We cannot do the replacement in this pass
-    // because doing so may cause initializers of other globals to be rewritten,
-    // invalidating the Constant* pointers in CMap.
-    //
+
+    // First: Find the canonical constants others will be merged with.
     for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
          GVI != E; ) {
       GlobalVariable *GV = GVI++;
-      
+
       // If this GV is dead, remove it.
       GV->removeDeadConstantUsers();
       if (GV->use_empty() && GV->hasLocalLinkage()) {
         GV->eraseFromParent();
         continue;
       }
-      
+
       // Only process constants with initializers in the default address space.
       if (!GV->isConstant() || !GV->hasDefinitiveInitializer() ||
           GV->getType()->getAddressSpace() != 0 || GV->hasSection() ||
           // Don't touch values marked with attribute(used).
           UsedGlobals.count(GV))
         continue;
-      
-      // Start by filling slots with only the globals we aren't allowed to
-      // delete because they're externally visible.
-      if (GV->hasLocalLinkage())
-        continue;
-      
+
       Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known.
       GlobalVariable *&Slot = CMap[Init];
 
-      if (Slot == 0) {    // Nope, add it to the map.
+      // If this is the first constant we find or if the old on is local,
+      // replace with the current one. It the current is externally visible
+      // it cannot be replace, but can be the canonical constant we merge with.
+      if (Slot == 0 || IsBetterCannonical(*GV, *Slot)) {
         Slot = GV;
       }
     }
 
+    // Second: identify all globals that can be merged together, filling in
+    // the Replacements vector.  We cannot do the replacement in this pass
+    // because doing so may cause initializers of other globals to be rewritten,
+    // invalidating the Constant* pointers in CMap.
     for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
          GVI != E; ) {
       GlobalVariable *GV = GVI++;
@@ -134,21 +145,26 @@ bool ConstantMerge::runOnModule(Module &M) {
           UsedGlobals.count(GV))
         continue;
 
-      // Only look at the remaining globals now.
+      // We can only replace constant with local linkage.
       if (!GV->hasLocalLinkage())
         continue;
 
       Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known.
-      GlobalVariable *&Slot = CMap[Init];
+      GlobalVariable *Slot = CMap[Init];
 
-      if (Slot == 0) {    // Nope, add it to the map.
-        Slot = GV;
-      } else {            // Yup, this is a duplicate!
-        // Make all uses of the duplicate constant use the canonical version.
-        Replacements.push_back(std::make_pair(GV, Slot));
-      }
+      if (!Slot || Slot == GV)
+        continue;
+
+      if (!Slot->hasUnnamedAddr() && !GV->hasUnnamedAddr())
+        continue;
+
+      if (!GV->hasUnnamedAddr())
+        Slot->setUnnamedAddr(false);
+
+      // Make all uses of the duplicate constant use the canonical version.
+      Replacements.push_back(std::make_pair(GV, Slot));
     }
 
     if (Replacements.empty())
