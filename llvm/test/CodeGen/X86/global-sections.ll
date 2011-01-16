@@ -15,7 +15,7 @@
 
 
 ; const int G2 __attribute__((weak)) = 42;
-@G2 = weak_odr constant i32 42	
+@G2 = weak_odr unnamed_addr constant i32 42	
 
 
 ; TODO: linux drops this into .rodata, we drop it into ".gnu.linkonce.r.G2"
@@ -26,7 +26,7 @@
 
 
 ; int * const G3 = &G1;
-@G3 = constant i32* @G1
+@G3 = unnamed_addr constant i32* @G1
 
 ; DARWIN: .section        __DATA,__const
 ; DARWIN: .globl _G3
@@ -41,7 +41,7 @@
 
 
 ; _Complex long long const G4 = 34;
-@G4 = constant {i64,i64} { i64 34, i64 0 }
+@G4 = unnamed_addr constant {i64,i64} { i64 34, i64 0 }
 
 ; DARWIN: .section        __TEXT,__const
 ; DARWIN: _G4:
@@ -76,7 +76,7 @@
 ; DARWIN: "_foo bar":
 
 ; PR4650
-@G6 = weak_odr constant [1 x i8] c"\01"
+@G6 = weak_odr unnamed_addr constant [1 x i8] c"\01"
 
 ; LINUX:   .type	G6,@object
 ; LINUX:   .section	.gnu.linkonce.r.G6,"a",@progbits
@@ -92,7 +92,7 @@
 ; DARWIN:  .byte 1
 
 
-@G7 = constant [10 x i8] c"abcdefghi\00"
+@G7 = unnamed_addr constant [10 x i8] c"abcdefghi\00"
 
 ; DARWIN:	__TEXT,__cstring,cstring_literals
 ; DARWIN:	.globl _G7
@@ -108,7 +108,7 @@
 ; LINUX-SECTIONS:	.globl G7
 
 
-@G8 = constant [4 x i16] [ i16 1, i16 2, i16 3, i16 0 ]
+@G8 = unnamed_addr constant [4 x i16] [ i16 1, i16 2, i16 3, i16 0 ]
 
 ; DARWIN:	.section	__TEXT,__const
 ; DARWIN:	.globl _G8
@@ -118,7 +118,7 @@
 ; LINUX:	.globl G8
 ; LINUX:G8:
 
-@G9 = constant [4 x i32] [ i32 1, i32 2, i32 3, i32 0 ]
+@G9 = unnamed_addr constant [4 x i32] [ i32 1, i32 2, i32 3, i32 0 ]
 
 ; DARWIN:	.globl _G9
 ; DARWIN: _G9:

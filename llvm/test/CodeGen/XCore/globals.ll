@@ -67,7 +67,7 @@ entry:
 ; CHECK: .section .dp.bss,"awd",@nobits
 ; CHECK: G2:
 
-@G3 = constant i32 9401
+@G3 = unnamed_addr constant i32 9401
 ; CHECK: .section .cp.rodata.cst4,"aMc",@progbits,4
 ; CHECK: G3:
 
@@ -75,7 +75,7 @@ entry:
 ; CHECK: .section .dp.data,"awd",@progbits
 ; CHECK: G4:
 
-@G5 = constant i32* @G1
+@G5 = unnamed_addr constant i32* @G1
 ; CHECK: .section .cp.rodata,"ac",@progbits
 ; CHECK: G5:
 
@@ -83,7 +83,7 @@ entry:
 ; CHECK: .section .dp.data,"awd",@progbits
 ; CHECK: G6:
 
-@G7 = constant i32* @G8
+@G7 = unnamed_addr constant i32* @G8
 ; CHECK: .section .cp.rodata,"ac",@progbits
 ; CHECK: G7:
 
