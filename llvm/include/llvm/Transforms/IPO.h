@@ -189,12 +189,6 @@ ModulePass *createBlockExtractorPass();
 ModulePass *createStripDeadPrototypesPass();
 
 //===----------------------------------------------------------------------===//
-/// createPartialSpecializationPass - This pass specializes functions for
-/// constant arguments.
-///
-ModulePass *createPartialSpecializationPass();
-
-//===----------------------------------------------------------------------===//
 /// createFunctionAttrsPass - This pass discovers functions that do not access
 /// memory, or only read memory, and gives them the readnone/readonly attribute.
 /// It also discovers function arguments that are not captured by the function

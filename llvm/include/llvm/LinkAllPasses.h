@@ -135,7 +135,6 @@ namespace {
       (void) llvm::createPostDomTree();
       (void) llvm::createPostDomFrontier();
       (void) llvm::createInstructionNamerPass();
-      (void) llvm::createPartialSpecializationPass();
       (void) llvm::createFunctionAttrsPass();
       (void) llvm::createMergeFunctionsPass();
       (void) llvm::createPrintModulePass(0);

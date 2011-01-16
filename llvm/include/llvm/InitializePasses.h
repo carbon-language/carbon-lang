@@ -161,7 +161,6 @@ void initializeOptimalEdgeProfilerPass(PassRegistry&);
 void initializeOptimizePHIsPass(PassRegistry&);
 void initializePEIPass(PassRegistry&);
 void initializePHIEliminationPass(PassRegistry&);
-void initializePartSpecPass(PassRegistry&);
 void initializePartialInlinerPass(PassRegistry&);
 void initializePeepholeOptimizerPass(PassRegistry&);
 void initializePostDomOnlyPrinterPass(PassRegistry&);

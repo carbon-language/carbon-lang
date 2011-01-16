@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements various weight measurements for a function, helping
-// the Inliner and PartialSpecialization decide whether to duplicate its
-// contents.
+// This file implements various weight measurements for code, helping
+// the Inliner and other passes decide whether to duplicate its contents.
 //
 //===----------------------------------------------------------------------===//
 
