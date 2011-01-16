@@ -29,6 +29,8 @@ class LinuxThread
 public:
     LinuxThread(lldb_private::Process &process, lldb::tid_t tid);
 
+    virtual ~LinuxThread();
+
     void
     RefreshStateAfterStop();
 
