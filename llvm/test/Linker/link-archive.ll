@@ -1,6 +1,6 @@
 ; Test linking of a bc file to an archive via llvm-ld. 
 ; PR1434
-; RUN: rm %t.bar.a %t.foo.a
+; RUN: rm -f %t.bar.a %t.foo.a
 ; RUN: llvm-as %s -o %t.bar.bc
 ; RUN: echo {define i32* @foo(i32 %x) \{ ret i32* @baz \} \
 ; RUN:   @baz = external global i32 } | llvm-as -o %t.foo.bc
