@@ -60,6 +60,9 @@ public:
     CanDebug(lldb_private::Target &target);
 
     virtual lldb_private::Error
+    WillLaunch(lldb_private::Module *module);
+
+    virtual lldb_private::Error
     DoAttachToProcessWithID(lldb::pid_t pid);
 
     virtual lldb_private::Error
@@ -70,6 +73,9 @@ public:
              const char *stdin_path,
              const char *stdout_path,
              const char *stderr_path);
+
+    virtual void
+    DidLaunch();
 
     virtual lldb_private::Error
     DoResume();
@@ -131,6 +137,9 @@ public:
     virtual lldb::addr_t
     GetImageInfoAddress();
 
+    virtual lldb_private::DynamicLoader *
+    GetDynamicLoader();
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
@@ -175,6 +184,9 @@ private:
     /// Message queue notifying this instance of inferior process state changes.
     lldb_private::Mutex m_message_mutex;
     std::queue<ProcessMessage> m_message_queue;
+
+    /// Dynamic loader plugin associated with this process.
+    std::auto_ptr<lldb_private::DynamicLoader> m_dyld_ap;
 
     /// Updates the loaded sections provided by the executable.
     ///

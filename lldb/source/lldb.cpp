@@ -44,6 +44,7 @@
 
 #ifdef __linux__
 #include "Plugins/Process/Linux/ProcessLinux.h"
+#include "Plugins/DynamicLoader/Linux-DYLD/DynamicLoaderLinuxDYLD.h"
 #endif
 
 using namespace lldb;
@@ -94,6 +95,7 @@ lldb_private::Initialize ()
 #endif
 #ifdef __linux__
         ProcessLinux::Initialize();
+        DynamicLoaderLinuxDYLD::Initialize();
 #endif
     }
 }
@@ -137,6 +139,7 @@ lldb_private::Terminate ()
 
 #ifdef __linux__
     ProcessLinux::Terminate();
+    DynamicLoaderLinuxDYLD::Terminate();
 #endif
 
     Log::Terminate();

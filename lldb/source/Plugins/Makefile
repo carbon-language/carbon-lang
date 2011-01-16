@@ -23,7 +23,7 @@ DIRS += DynamicLoader/MacOSX-DYLD ObjectContainer/Universal-Mach-O \
 endif
 
 ifeq ($(HOST_OS),Linux)
-DIRS += Process/Linux
+DIRS += Process/Linux DynamicLoader/Linux-DYLD
 endif
 
 include $(LLDB_LEVEL)/Makefile

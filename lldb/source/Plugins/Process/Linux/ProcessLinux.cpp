@@ -13,6 +13,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/Target.h"
 
 #include "ProcessLinux.h"
@@ -102,6 +103,19 @@ ProcessLinux::DoAttachToProcessWithID(lldb::pid_t pid)
 }
 
 Error
+ProcessLinux::WillLaunch(Module* module)
+{
+    Error error;
+
+    m_dyld_ap.reset(DynamicLoader::FindPlugin(this, "dynamic-loader.linux-dyld"));
+    if (m_dyld_ap.get() == NULL)
+        error.SetErrorString("unable to find the dynamic loader named "
+                             "'dynamic-loader.linux-dyld'");
+
+    return error;
+}
+
+Error
 ProcessLinux::DoLaunch(Module *module,
                        char const *argv[],
                        char const *envp[],
@@ -126,6 +140,13 @@ ProcessLinux::DoLaunch(Module *module,
 
     SetID(m_monitor->GetPID());
     return error;
+}
+
+void
+ProcessLinux::DidLaunch()
+{
+    if (m_dyld_ap.get() != NULL)
+        m_dyld_ap->DidLaunch();
 }
 
 Error
@@ -369,6 +390,12 @@ ProcessLinux::GetByteOrder() const
     // FIXME: We should be able to extract this value directly.  See comment in
     // ProcessLinux().
     return m_byte_order;
+}
+
+DynamicLoader *
+ProcessLinux::GetDynamicLoader()
+{
+    return m_dyld_ap.get();
 }
 
 //------------------------------------------------------------------------------

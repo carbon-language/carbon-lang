@@ -67,7 +67,8 @@ ifeq ($(HOST_OS),Darwin)
 endif
 
 ifeq ($(HOST_OS),Linux)
-  USEDLIBS += lldbPluginProcessLinux.a
+  USEDLIBS += lldbPluginProcessLinux.a \
+              lldbPluginDynamicLoaderLinux.a
 endif
 
 include $(LEVEL)/Makefile.common
