@@ -520,12 +520,13 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
   AllowAggressive = false;
   PHINode *PN = cast<PHINode>(I.getOperand(0));
   unsigned NumPHIValues = PN->getNumIncomingValues();
-  if (NumPHIValues == 0 ||
-      // We normally only transform phis with a single use, unless we're trying
-      // hard to make jump threading happen.
-      (!PN->hasOneUse() && !AllowAggressive))
+  if (NumPHIValues == 0)
     return 0;
   
+  // We normally only transform phis with a single use, unless we're trying
+  // hard to make jump threading happen.
+  if (!PN->hasOneUse() && !AllowAggressive)
+    return 0;
   
   // Check to see if all of the operands of the PHI are simple constants
   // (constantint/constantfp/undef).  If there is one non-constant value,
@@ -533,18 +534,21 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
   // bail out.  We don't do arbitrary constant expressions here because moving
   // their computation can be expensive without a cost model.
   BasicBlock *NonConstBB = 0;
-  for (unsigned i = 0; i != NumPHIValues; ++i)
-    if (!isa<Constant>(PN->getIncomingValue(i)) ||
-        isa<ConstantExpr>(PN->getIncomingValue(i))) {
-      if (NonConstBB) return 0;  // More than one non-const value.
-      if (isa<PHINode>(PN->getIncomingValue(i))) return 0;  // Itself a phi.
-      NonConstBB = PN->getIncomingBlock(i);
-      
-      // If the incoming non-constant value is in I's block, we have an infinite
-      // loop.
-      if (NonConstBB == I.getParent())
-        return 0;
-    }
+  for (unsigned i = 0; i != NumPHIValues; ++i) {
+    Value *InVal = PN->getIncomingValue(i);
+    if (isa<Constant>(InVal) && !isa<ConstantExpr>(InVal))
+      continue;
+
+    if (isa<PHINode>(InVal)) return 0;  // Itself a phi.
+    if (NonConstBB) return 0;  // More than one non-const value.
+    
+    NonConstBB = PN->getIncomingBlock(i);
+    
+    // If the incoming non-constant value is in I's block, we have an infinite
+    // loop.
+    if (NonConstBB == I.getParent())
+      return 0;
+  }
   
   // If there is exactly one non-constant value, we can insert a copy of the
   // operation in that block.  However, if this is a critical edge, we would be
