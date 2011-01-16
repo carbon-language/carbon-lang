@@ -2169,16 +2169,10 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
     // and we know how to evaluate it by moving the bitcast from the pointer
     // operand to the value operand.
     } else if (CE->getOpcode() == Instruction::BitCast &&
-               isa<GlobalVariable>(CE->getOperand(0)) &&
-               CE->getType()->isPointerTy() &&
-               CE->getOperand(0)->getType()->isPointerTy()) {
-      GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
+               isa<GlobalVariable>(CE->getOperand(0))) {
       // Do not allow weak/*_odr/linkonce/dllimport/dllexport linkage or
       // external globals.
-      if (!GV->hasUniqueInitializer())
-        return false;
-      
-      return true;
+      return cast<GlobalVariable>(CE->getOperand(0))->hasUniqueInitializer();
     }
   }
   
@@ -2360,12 +2354,9 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
           // If we're evaluating a store through a bitcast, then we need
           // to pull the bitcast off the pointer type and push it onto the
           // stored value.
-          Ptr = dyn_cast<Constant>(Ptr->getOperand(0));
-          if (!Ptr) return false;
+          Ptr = CE->getOperand(0);
           
-          const PointerType *Ty = dyn_cast<PointerType>(Ptr->getType());
-          if (!Ty) return false;
-          const Type *NewTy = Ty->getElementType();
+          const Type *NewTy=cast<PointerType>(Ptr->getType())->getElementType();
           
           // A bitcast'd pointer implicitly points to the first field of a
           // struct.  Insert implicity "gep @x, 0, 0, ..." until we get down
@@ -2374,8 +2365,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
           while (const StructType *STy = dyn_cast<StructType>(NewTy)) {
             NewTy = STy->getTypeAtIndex(0U);
             
-            const IntegerType *IdxTy =
-              IntegerType::get(NewTy->getContext(), 32);
+            const IntegerType *IdxTy =IntegerType::get(NewTy->getContext(), 32);
             Constant *IdxZero = ConstantInt::get(IdxTy, 0, false);
             Constant * const IdxList[] = {IdxZero, IdxZero};
             
