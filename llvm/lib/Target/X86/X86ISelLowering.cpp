@@ -11560,7 +11560,8 @@ static SDValue OptimizeConditonalInDecrement(SDNode *N, SelectionDAG &DAG) {
 
   SDValue Cmp = SetCC.getOperand(1);
   if (Cmp.getOpcode() != X86ISD::CMP || !Cmp.hasOneUse() ||
-      !X86::isZeroNode(Cmp.getOperand(1)))
+      !X86::isZeroNode(Cmp.getOperand(1)) ||
+      !Cmp.getOperand(0).getValueType().isInteger())
     return SDValue();
 
   SDValue CmpOp0 = Cmp.getOperand(0);

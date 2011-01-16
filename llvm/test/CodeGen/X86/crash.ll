@@ -141,3 +141,13 @@ entry:
   call void asm sideeffect "outb $0, ${1:w}", "{ax},N{dx},~{dirflag},~{fpsr},~{flags}"(i8 %conv4.i, i32 1017) nounwind
   unreachable
 }
+
+; Crash trying to form conditional increment with fp value.
+; PR8981
+define i32 @test9(double %X) ssp align 2 {
+entry:
+  %0 = fcmp one double %X, 0.000000e+00
+  %cond = select i1 %0, i32 1, i32 2
+  ret i32 %cond
+}
+
