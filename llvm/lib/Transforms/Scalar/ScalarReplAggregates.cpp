@@ -1868,8 +1868,8 @@ bool SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
       HasPadding(AI->getAllocatedType(), *TD))
     return false;
 
-  // If the alloca is never has an access to just *part* of it, but is accessed
-  // with loads and stores, then we should use ConvertToScalarInfo to promote
+  // If the alloca never has an access to just *part* of it, but is accessed
+  // via loads and stores, then we should use ConvertToScalarInfo to promote
   // the alloca instead of promoting each piece at a time and inserting fission
   // and fusion code.
   if (!Info.hasSubelementAccess && Info.hasALoadOrStore) {
