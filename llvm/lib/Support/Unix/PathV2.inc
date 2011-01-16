@@ -230,8 +230,17 @@ error_code rename(const Twine &from, const Twine &to) {
   StringRef f = from.toNullTerminatedStringRef(from_storage);
   StringRef t = to.toNullTerminatedStringRef(to_storage);
 
-  if (::rename(f.begin(), t.begin()) == -1)
-    return error_code(errno, system_category());
+  if (::rename(f.begin(), t.begin()) == -1) {
+    // If it's a cross device link, copy then delete, otherwise return the error
+    if (errno == EXDEV) {
+      if (error_code ec = copy_file(from, to, copy_option::overwrite_if_exists))
+        return ec;
+      bool Existed;
+      if (error_code ec = remove(from, Existed))
+        return ec;
+    } else
+      return error_code(errno, system_category());
+  }
 
   return success;
 }
