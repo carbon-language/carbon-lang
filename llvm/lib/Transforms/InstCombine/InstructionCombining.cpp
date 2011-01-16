@@ -519,9 +519,17 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     return 0;
   
   // We normally only transform phis with a single use, unless we're trying
-  // hard to make jump threading happen.
-  if (!PN->hasOneUse())
-    return 0;
+  // hard to make jump threading happen.  However, if a PHI has multiple uses
+  // and they are all the same operation, we can fold *all* of the uses into the
+  // PHI.
+  if (!PN->hasOneUse()) {
+    // Walk the use list for the instruction, comparing them to I.
+    for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
+         UI != E; ++UI)
+      if (!I.isIdenticalTo(cast<Instruction>(*UI))) 
+        return 0;
+    // Otherwise, we can replace *all* users with the new PHI we form.
+  }
   
   // Check to see if all of the operands of the PHI are simple constants
   // (constantint/constantfp/undef).  If there is one non-constant value,
@@ -627,6 +635,14 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
                                 PN->getIncomingValue(i), I.getType(), "phitmp");
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
+  }
+  
+  for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
+       UI != E; ) {
+    Instruction *User = cast<Instruction>(*UI++);
+    if (User == &I) continue;
+    ReplaceInstUsesWith(*User, NewPN);
+    EraseInstFromFunction(*User);
   }
   return ReplaceInstUsesWith(I, NewPN);
 }

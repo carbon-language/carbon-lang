@@ -503,3 +503,25 @@ loop:
 ret:
   ret void
 }
+
+define i32 @test23(i32 %A, i1 %b, i32 * %P) {
+BB0:
+        br label %Loop
+
+Loop:           ; preds = %Loop, %BB0
+        ; PHI has same value always.
+        %B = phi i32 [ %A, %BB0 ], [ 42, %Loop ]
+        %D = add i32 %B, 19
+        store i32 %D, i32* %P
+        br i1 %b, label %Loop, label %Exit
+
+Exit:           ; preds = %Loop
+        %E = add i32 %B, 19
+        ret i32 %E
+; CHECK: @test23
+; CHECK: %phitmp = add i32 %A, 19
+; CHECK: Loop:
+; CHECK-NEXT: %B = phi i32 [ %phitmp, %BB0 ], [ 61, %Loop ]
+; CHECK: Exit:
+; CHECK-NEXT: ret i32 %B
+}
