@@ -50,3 +50,20 @@ void f_R7880658(R7880658 f, R7880658 l) {  // no-warning
   for (; f != l; ++f) {
   }
 }
+
+namespace test2 {
+
+  bool g();
+  void *h() __attribute__((noreturn));
+  void *j();
+
+  struct A {
+    void *f;
+
+    A() : f(0) { }
+    A(int) : f(h()) { } // expected-warning {{function could be attribute 'noreturn'}}
+    A(char) : f(j()) { }
+    A(bool b) : f(b ? h() : j()) { }
+  };
+
+}
