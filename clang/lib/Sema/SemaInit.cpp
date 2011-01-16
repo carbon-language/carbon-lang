@@ -1913,6 +1913,11 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
                                  Designators.data(), Designators.size(),
                                  InitExpressions.data(), InitExpressions.size(),
                                  Loc, GNUSyntax, Init.takeAs<Expr>());
+  
+  if (getLangOptions().CPlusPlus)
+    Diag(DIE->getLocStart(), diag::ext_designated_init)
+      << DIE->getSourceRange();
+  
   return Owned(DIE);
 }
 

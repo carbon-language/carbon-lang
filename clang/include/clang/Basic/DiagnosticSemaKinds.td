@@ -56,6 +56,8 @@ def err_variably_modified_new_type : Error<
   "'new' cannot allocate object of variably modified type %0">;
 
 // C99 Designated Initializers
+def ext_designated_init : Extension<
+  "designated initializers are a C99 feature, accepted in C++ as an extension">;
 def err_array_designator_negative : Error<
   "array designator value '%0' is negative">;
 def err_array_designator_empty_range : Error<
