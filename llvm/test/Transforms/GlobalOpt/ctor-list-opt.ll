@@ -1,5 +1,5 @@
 ; RUN: opt < %s -globalopt -S | not grep CTOR
-@llvm.global_ctors = appending global [10 x { i32, void ()* }] [ { i32, void ()* } { i32 65535, void ()* @CTOR1 }, { i32, void ()* } { i32 65535, void ()* @CTOR1 }, { i32, void ()* } { i32 65535, void ()* @CTOR2 }, { i32, void ()* } { i32 65535, void ()* @CTOR3 }, { i32, void ()* } { i32 65535, void ()* @CTOR4 }, { i32, void ()* } { i32 65535, void ()* @CTOR5 }, { i32, void ()* } { i32 65535, void ()* @CTOR6 }, { i32, void ()* } { i32 65535, void ()* @CTOR7 }, { i32, void ()* } { i32 65535, void ()* @CTOR8 }, { i32, void ()* } { i32 2147483647, void ()* null } ]		; <[10 x { i32, void ()* }]*> [#uses=0]
+@llvm.global_ctors = appending global [11 x { i32, void ()* }] [ { i32, void ()* } { i32 65535, void ()* @CTOR1 }, { i32, void ()* } { i32 65535, void ()* @CTOR1 }, { i32, void ()* } { i32 65535, void ()* @CTOR2 }, { i32, void ()* } { i32 65535, void ()* @CTOR3 }, { i32, void ()* } { i32 65535, void ()* @CTOR4 }, { i32, void ()* } { i32 65535, void ()* @CTOR5 }, { i32, void ()* } { i32 65535, void ()* @CTOR6 }, { i32, void ()* } { i32 65535, void ()* @CTOR7 }, { i32, void ()* } { i32 65535, void ()* @CTOR8 }, { i32, void ()* } { i32 65535, void ()* @CTOR9 }, { i32, void ()* } { i32 2147483647, void ()* null } ]		; <[10 x { i32, void ()* }]*> [#uses=0]
 @G = global i32 0		; <i32*> [#uses=1]
 @G2 = global i32 0		; <i32*> [#uses=1]
 @G3 = global i32 -123		; <i32*> [#uses=2]
@@ -82,4 +82,19 @@ define internal void @CTOR8() {
 define i1 @accessor() {
 	%V = load i1* @CTORGV		; <i1> [#uses=1]
 	ret i1 %V
+}
+
+%struct.A = type { i32 }
+%struct.B = type { i32 (...)**, i8*, [4 x i8] }
+@GV1 = global %struct.B zeroinitializer, align 8
+@GV2 =  constant [3 x i8*] [i8* inttoptr (i64 16 to i8*), i8* null, i8* bitcast ({ i8*, i8*, i32, i32, i8*, i64 }* null to i8*)]
+; CHECK-NOT: CTOR9
+define internal void @CTOR9() {
+entry:
+  %0 = bitcast %struct.B* @GV1 to i8*
+  %1 = getelementptr inbounds i8* %0, i64 16
+  %2 = bitcast i8* %1 to %struct.A*
+  %3 = bitcast %struct.B* @GV1 to i8***
+  store i8** getelementptr inbounds ([3 x i8*]* @GV2, i64 1, i64 0), i8*** %3
+  ret void
 }
