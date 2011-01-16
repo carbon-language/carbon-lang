@@ -85,7 +85,8 @@ const Use *Use::getImpliedUser() const {
 //                         Use initTags Implementation
 //===----------------------------------------------------------------------===//
 
-Use *Use::initTags(Use * const Start, Use *Stop, ptrdiff_t Done) {
+Use *Use::initTags(Use * const Start, Use *Stop) {
+  ptrdiff_t Done = 0;
   while (Done < 20) {
     if (Start == Stop--)
       return Start;
@@ -97,20 +98,18 @@ Use *Use::initTags(Use * const Start, Use *Stop, ptrdiff_t Done) {
                                          oneDigitTag, oneDigitTag, oneDigitTag,
                                          oneDigitTag, stopTag
                                        };
-    Stop->Prev.setFromOpaqueValue(reinterpret_cast<Use**>(tags[Done++]));
-    Stop->Val = 0;
+    new(Stop) Use(tags[Done++]);
   }
 
   ptrdiff_t Count = Done;
   while (Start != Stop) {
     --Stop;
-    Stop->Val = 0;
     if (!Count) {
-      Stop->Prev.setFromOpaqueValue(reinterpret_cast<Use**>(stopTag));
+      new(Stop) Use(stopTag);
       ++Done;
       Count = Done;
     } else {
-      Stop->Prev.setFromOpaqueValue(reinterpret_cast<Use**>(Count & 1));
+      new(Stop) Use(PrevPtrTag(Count & 1));
       Count >>= 1;
       ++Done;
     }
@@ -124,17 +123,10 @@ Use *Use::initTags(Use * const Start, Use *Stop, ptrdiff_t Done) {
 //===----------------------------------------------------------------------===//
 
 void Use::zap(Use *Start, const Use *Stop, bool del) {
-  if (del) {
-    while (Start != Stop) {
-      (--Stop)->~Use();
-    }
+  while (Start != Stop)
+    (--Stop)->~Use();
+  if (del)
     ::operator delete(Start);
-    return;
-  }
-
-  while (Start != Stop) {
-    (Start++)->set(0);
-  }
 }
 
 //===----------------------------------------------------------------------===//

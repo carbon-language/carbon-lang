@@ -50,12 +50,10 @@ protected:
   User(const Type *ty, unsigned vty, Use *OpList, unsigned NumOps)
     : Value(ty, vty), OperandList(OpList), NumOperands(NumOps) {}
   Use *allocHungoffUses(unsigned) const;
-  void dropHungoffUses(Use *U) {
-    if (OperandList == U) {
-      OperandList = 0;
-      NumOperands = 0;
-    }
-    Use::zap(U, U->getImpliedUser(), true);
+  void dropHungoffUses() {
+    Use::zap(OperandList, OperandList + NumOperands, true);
+    OperandList = 0;
+    NumOperands = 0;
   }
 public:
   ~User() {

@@ -96,8 +96,7 @@ PHINode::PHINode(const PHINode &PN)
 }
 
 PHINode::~PHINode() {
-  if (OperandList)
-    dropHungoffUses(OperandList);
+  dropHungoffUses();
 }
 
 // removeIncomingValue - Remove an incoming value.  This is useful if a
@@ -158,7 +157,7 @@ void PHINode::resizeOperands(unsigned NumOps) {
   Use *NewOps = allocHungoffUses(NumOps);
   std::copy(OldOps, OldOps + e, NewOps);
   OperandList = NewOps;
-  if (OldOps) Use::zap(OldOps, OldOps + e, true);
+  Use::zap(OldOps, OldOps + e, true);
 }
 
 /// hasConstantValue - If the specified PHI node always merges together the same
@@ -2982,7 +2981,7 @@ SwitchInst::SwitchInst(const SwitchInst &SI)
 }
 
 SwitchInst::~SwitchInst() {
-  dropHungoffUses(OperandList);
+  dropHungoffUses();
 }
 
 
@@ -3053,7 +3052,7 @@ void SwitchInst::resizeOperands(unsigned NumOps) {
       NewOps[i] = OldOps[i];
   }
   OperandList = NewOps;
-  if (OldOps) Use::zap(OldOps, OldOps + e, true);
+  Use::zap(OldOps, OldOps + e, true);
 }
 
 
@@ -3068,7 +3067,7 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 }
 
 //===----------------------------------------------------------------------===//
-//                        SwitchInst Implementation
+//                        IndirectBrInst Implementation
 //===----------------------------------------------------------------------===//
 
 void IndirectBrInst::init(Value *Address, unsigned NumDests) {
@@ -3108,7 +3107,7 @@ void IndirectBrInst::resizeOperands(unsigned NumOps) {
   for (unsigned i = 0; i != e; ++i)
     NewOps[i] = OldOps[i];
   OperandList = NewOps;
-  if (OldOps) Use::zap(OldOps, OldOps + e, true);
+  Use::zap(OldOps, OldOps + e, true);
 }
 
 IndirectBrInst::IndirectBrInst(Value *Address, unsigned NumCases,
@@ -3136,7 +3135,7 @@ IndirectBrInst::IndirectBrInst(const IndirectBrInst &IBI)
 }
 
 IndirectBrInst::~IndirectBrInst() {
-  dropHungoffUses(OperandList);
+  dropHungoffUses();
 }
 
 /// addDestination - Add a destination.

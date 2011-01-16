@@ -67,17 +67,19 @@ private:
   Use(const Use &U);
 
   /// Destructor - Only for zap()
-  inline ~Use() {
+  ~Use() {
     if (Val) removeFromList();
   }
 
-  /// Default ctor - This leaves the Use completely uninitialized.  The only
-  /// thing that is valid to do with this use is to call the "init" method.
-  inline Use() {}
   enum PrevPtrTag { zeroDigitTag = noTag
                   , oneDigitTag = tagOne
                   , stopTag = tagTwo
                   , fullStopTag = tagThree };
+
+  /// Constructor
+  Use(PrevPtrTag tag) : Val(0) {
+    Prev.setInt(tag);
+  }
 
 public:
   /// Normally Use will just implicitly convert to a Value* that it holds.
@@ -114,7 +116,7 @@ public:
 
 private:
   const Use* getImpliedUser() const;
-  static Use *initTags(Use *Start, Use *Stop, ptrdiff_t Done = 0);
+  static Use *initTags(Use *Start, Use *Stop);
   
   Value *Val;
   Use *Next;
