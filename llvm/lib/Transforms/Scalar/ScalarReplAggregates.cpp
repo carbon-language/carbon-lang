@@ -1601,11 +1601,12 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
   const Type *AllocaEltTy = AI->getAllocatedType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
 
+  IRBuilder<> Builder(SI);
+  
   // Handle tail padding by extending the operand
   if (TD->getTypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
-    SrcVal = new ZExtInst(SrcVal,
-                          IntegerType::get(SI->getContext(), AllocaSizeBits),
-                          "", SI);
+    SrcVal = Builder.CreateZExt(SrcVal,
+                            IntegerType::get(SI->getContext(), AllocaSizeBits));
 
   DEBUG(dbgs() << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << '\n' << *SI
                << '\n');
@@ -1626,8 +1627,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
       Value *EltVal = SrcVal;
       if (Shift) {
         Value *ShiftVal = ConstantInt::get(EltVal->getType(), Shift);
-        EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
-                                            "sroa.store.elt", SI);
+        EltVal = Builder.CreateLShr(EltVal, ShiftVal, "sroa.store.elt");
       }
 
       // Truncate down to an integer of the right size.
@@ -1637,20 +1637,18 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
       if (FieldSizeBits == 0) continue;
 
       if (FieldSizeBits != AllocaSizeBits)
-        EltVal = new TruncInst(EltVal,
-                             IntegerType::get(SI->getContext(), FieldSizeBits),
-                              "", SI);
+        EltVal = Builder.CreateTrunc(EltVal,
+                             IntegerType::get(SI->getContext(), FieldSizeBits));
       Value *DestField = NewElts[i];
       if (EltVal->getType() == FieldTy) {
         // Storing to an integer field of this size, just do it.
       } else if (FieldTy->isFloatingPointTy() || FieldTy->isVectorTy()) {
         // Bitcast to the right element type (for fp/vector values).
-        EltVal = new BitCastInst(EltVal, FieldTy, "", SI);
+        EltVal = Builder.CreateBitCast(EltVal, FieldTy);
       } else {
         // Otherwise, bitcast the dest pointer (for aggregates).
-        DestField = new BitCastInst(DestField,
-                              PointerType::getUnqual(EltVal->getType()),
-                                    "", SI);
+        DestField = Builder.CreateBitCast(DestField,
+                                     PointerType::getUnqual(EltVal->getType()));
       }
       new StoreInst(EltVal, DestField, SI);
     }
@@ -1675,27 +1673,25 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
       Value *EltVal = SrcVal;
       if (Shift) {
         Value *ShiftVal = ConstantInt::get(EltVal->getType(), Shift);
-        EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
-                                            "sroa.store.elt", SI);
+        EltVal = Builder.CreateLShr(EltVal, ShiftVal, "sroa.store.elt");
       }
 
       // Truncate down to an integer of the right size.
       if (ElementSizeBits != AllocaSizeBits)
-        EltVal = new TruncInst(EltVal,
-                               IntegerType::get(SI->getContext(),
-                                                ElementSizeBits), "", SI);
+        EltVal = Builder.CreateTrunc(EltVal,
+                                     IntegerType::get(SI->getContext(),
+                                                      ElementSizeBits));
       Value *DestField = NewElts[i];
       if (EltVal->getType() == ArrayEltTy) {
         // Storing to an integer field of this size, just do it.
       } else if (ArrayEltTy->isFloatingPointTy() ||
                  ArrayEltTy->isVectorTy()) {
         // Bitcast to the right element type (for fp/vector values).
-        EltVal = new BitCastInst(EltVal, ArrayEltTy, "", SI);
+        EltVal = Builder.CreateBitCast(EltVal, ArrayEltTy);
       } else {
         // Otherwise, bitcast the dest pointer (for aggregates).
-        DestField = new BitCastInst(DestField,
-                              PointerType::getUnqual(EltVal->getType()),
-                                    "", SI);
+        DestField = Builder.CreateBitCast(DestField,
+                                     PointerType::getUnqual(EltVal->getType()));
       }
       new StoreInst(EltVal, DestField, SI);
 
