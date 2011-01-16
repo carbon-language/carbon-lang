@@ -2162,37 +2162,35 @@ Also surprising is that %conv isn't simplified to 0 in %....exit.thread.i.i.
 
 clang -O3 -fno-exceptions currently compiles this code:
 
-void f(int N) {
-  std::vector<int> v(N);
-  for (int k = 0; k < N; ++k)
-    v[k] = 0;
-
-  extern void sink(void*); sink(&v);
+void f(char* a, int n) {
+  __builtin_memset(a, 0, n);
+  for (int i = 0; i < n; ++i)
+    a[i] = 0;
 }
 
-into almost the same as the previous note, but replace its final BB with:
+into:
 
-for.body.lr.ph:                                   ; preds = %cond.true.i.i.i.i
-  %mul.i.i.i.i.i = shl i64 %conv, 2
-  %call3.i.i.i.i.i = call noalias i8* @_Znwm(i64 %mul.i.i.i.i.i) nounwind
-  %0 = bitcast i8* %call3.i.i.i.i.i to i32*
-  store i32* %0, i32** %v8.sub, align 8, !tbaa !0
-  %add.ptr.i.i.i = getelementptr inbounds i32* %0, i64 %conv
-  store i32* %add.ptr.i.i.i, i32** %tmp4.i.i.i.i.i, align 8, !tbaa !0
-  call void @llvm.memset.p0i8.i64(i8* %call3.i.i.i.i.i, i8 0, i64 %mul.i.i.i.i.i, i32 4, i1 false)
-  store i32* %add.ptr.i.i.i, i32** %tmp3.i.i.i.i.i, align 8, !tbaa !0
-  %tmp18 = add i32 %N, -1
-  %tmp19 = zext i32 %tmp18 to i64
-  %tmp20 = shl i64 %tmp19, 2
-  %tmp21 = add i64 %tmp20, 4
-  call void @llvm.memset.p0i8.i64(i8* %call3.i.i.i.i.i, i8 0, i64 %tmp21, i32 4, i1 false)
-  br label %for.end
+define void @_Z1fPci(i8* nocapture %a, i32 %n) nounwind {
+entry:
+  %conv = sext i32 %n to i64
+  tail call void @llvm.memset.p0i8.i64(i8* %a, i8 0, i64 %conv, i32 1, i1 false)
+  %cmp8 = icmp sgt i32 %n, 0
+  br i1 %cmp8, label %for.body.lr.ph, label %for.end
 
-First off, why (((zext %N - 1) << 2) + 4) instead of the ((sext %N) << 2) done
-previously? (or better yet, re-use that one?)
+for.body.lr.ph:                                   ; preds = %entry
+  %tmp10 = add i32 %n, -1
+  %tmp11 = zext i32 %tmp10 to i64
+  %tmp12 = add i64 %tmp11, 1
+  call void @llvm.memset.p0i8.i64(i8* %a, i8 0, i64 %tmp12, i32 1, i1 false)
+  ret void
 
-Then, the really painful one is the second memset, of the same memory, to the
-same value.
+for.end:                                          ; preds = %entry
+  ret void
+}
+
+This shouldn't need the ((zext (%n - 1)) + 1) game, and it should ideally fold
+the two memset's together. The issue with %n seems to stem from poor handling
+of the original loop.
 
 //===---------------------------------------------------------------------===//
 
