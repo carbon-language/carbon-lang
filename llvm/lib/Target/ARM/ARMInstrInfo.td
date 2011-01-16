@@ -2518,10 +2518,11 @@ class AsMul1I64<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
 
 let isCommutable = 1 in {
 let Constraints = "@earlyclobber $Rd" in
-def MULv5: PseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
-                                       pred:$p, cc_out:$s),
-                      IIC_iMUL32, [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>,
-                      Requires<[IsARM, NoV6]>;
+def MULv5: ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
+                                          pred:$p, cc_out:$s),
+                          Size4Bytes, IIC_iMUL32,
+                         [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>,
+                        Requires<[IsARM, NoV6]>;
 
 def MUL  : AsMul1I32<0b0000000, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                    IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm",
@@ -2530,11 +2531,11 @@ def MUL  : AsMul1I32<0b0000000, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
 }
 
 let Constraints = "@earlyclobber $Rd" in
-def MLAv5: PseudoInst<(outs GPR:$Rd),
-                      (ins GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s),
-                      IIC_iMAC32, [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm),
-                                                      GPR:$Ra))]>, 
-                      Requires<[IsARM, NoV6]> {
+def MLAv5: ARMPseudoInst<(outs GPR:$Rd),
+                         (ins GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s),
+                         Size4Bytes, IIC_iMAC32, 
+                         [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]>, 
+                        Requires<[IsARM, NoV6]> {
   bits<4> Ra;
   let Inst{15-12} = Ra;
 }
@@ -2565,15 +2566,15 @@ def MLS  : AMul1I<0b0000011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
 let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
 let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
-def SMULLv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
-                         IIC_iMUL64, []>,
-                         Requires<[IsARM, NoV6]>;
+def SMULLv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                            Size4Bytes, IIC_iMUL64, []>,
+                           Requires<[IsARM, NoV6]>;
 
-def UMULLv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                         IIC_iMUL64, []>,
-                         Requires<[IsARM, NoV6]>;
+def UMULLv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+                            Size4Bytes, IIC_iMUL64, []>,
+                           Requires<[IsARM, NoV6]>;
 }
 
 def SMULL : AsMul1I64<0b0000110, (outs GPR:$RdLo, GPR:$RdHi),
@@ -2589,18 +2590,18 @@ def UMULL : AsMul1I64<0b0000100, (outs GPR:$RdLo, GPR:$RdHi),
 
 // Multiply + accumulate
 let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
-def SMLALv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
-                         IIC_iMAC64, []>,
-                         Requires<[IsARM, NoV6]>;
-def UMLALv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
-                         IIC_iMAC64, []>,
-                         Requires<[IsARM, NoV6]>;
-def UMAALv5 : PseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                         (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
-                         IIC_iMAC64, []>,
-                         Requires<[IsARM, NoV6]>;
+def SMLALv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                            Size4Bytes, IIC_iMAC64, []>,
+                           Requires<[IsARM, NoV6]>;
+def UMLALv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                            Size4Bytes, IIC_iMAC64, []>,
+                           Requires<[IsARM, NoV6]>;
+def UMAALv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                            Size4Bytes, IIC_iMAC64, []>,
+                           Requires<[IsARM, NoV6]>;
 
 }
 
