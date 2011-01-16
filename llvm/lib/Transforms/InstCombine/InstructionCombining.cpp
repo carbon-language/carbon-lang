@@ -543,6 +543,12 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
     if (NonConstBB) return 0;  // More than one non-const value.
     
     NonConstBB = PN->getIncomingBlock(i);
+
+    // If the InVal is an invoke at the end of the pred block, then we can't
+    // insert a computation after it without breaking the edge.
+    if (InvokeInst *II = dyn_cast<InvokeInst>(InVal))
+      if (II->getParent() == NonConstBB)
+        return 0;
     
     // If the incoming non-constant value is in I's block, we have an infinite
     // loop.
@@ -564,7 +570,12 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
   NewPN->reserveOperandSpace(PN->getNumOperands()/2);
   InsertNewInstBefore(NewPN, *PN);
   NewPN->takeName(PN);
-
+  
+  // If we are going to have to insert a new computation, do so right before the
+  // predecessors terminator.
+  if (NonConstBB)
+    Builder->SetInsertPoint(NonConstBB->getTerminator());
+  
   // Next, add all of the operands to the PHI.
   if (SelectInst *SI = dyn_cast<SelectInst>(&I)) {
     // We only currently try to fold the condition of a select when it is a phi,
@@ -577,42 +588,36 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
       Value *TrueVInPred = TrueV->DoPHITranslation(PhiTransBB, ThisBB);
       Value *FalseVInPred = FalseV->DoPHITranslation(PhiTransBB, ThisBB);
       Value *InV = 0;
-      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
+      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i)))
         InV = InC->isNullValue() ? FalseVInPred : TrueVInPred;
-      } else {
-        assert(PN->getIncomingBlock(i) == NonConstBB);
-        InV = SelectInst::Create(PN->getIncomingValue(i), TrueVInPred,
-                                 FalseVInPred,
-                                 "phitmp", NonConstBB->getTerminator());
-        Worklist.Add(cast<Instruction>(InV));
-      }
+      else
+        InV = Builder->CreateSelect(PN->getIncomingValue(i),
+                                    TrueVInPred, FalseVInPred, "phitmp");
       NewPN->addIncoming(InV, ThisBB);
+    }
+  } else if (CmpInst *CI = dyn_cast<CmpInst>(&I)) {
+    Constant *C = cast<Constant>(I.getOperand(1));
+    for (unsigned i = 0; i != NumPHIValues; ++i) {
+      Value *InV = 0;
+      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i)))
+        InV = ConstantExpr::getCompare(CI->getPredicate(), InC, C);
+      else if (isa<ICmpInst>(CI))
+        InV = Builder->CreateICmp(CI->getPredicate(), PN->getIncomingValue(i),
+                                  C, "phitmp");
+      else
+        InV = Builder->CreateFCmp(CI->getPredicate(), PN->getIncomingValue(i),
+                                  C, "phitmp");
+      NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
   } else if (I.getNumOperands() == 2) {
     Constant *C = cast<Constant>(I.getOperand(1));
     for (unsigned i = 0; i != NumPHIValues; ++i) {
       Value *InV = 0;
-      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
-        if (CmpInst *CI = dyn_cast<CmpInst>(&I))
-          InV = ConstantExpr::getCompare(CI->getPredicate(), InC, C);
-        else
-          InV = ConstantExpr::get(I.getOpcode(), InC, C);
-      } else {
-        assert(PN->getIncomingBlock(i) == NonConstBB);
-        if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I)) 
-          InV = BinaryOperator::Create(BO->getOpcode(),
-                                       PN->getIncomingValue(i), C, "phitmp",
-                                       NonConstBB->getTerminator());
-        else if (CmpInst *CI = dyn_cast<CmpInst>(&I))
-          InV = CmpInst::Create(CI->getOpcode(),
-                                CI->getPredicate(),
-                                PN->getIncomingValue(i), C, "phitmp",
-                                NonConstBB->getTerminator());
-        else
-          llvm_unreachable("Unknown binop!");
-        
-        Worklist.Add(cast<Instruction>(InV));
-      }
+      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i)))
+        InV = ConstantExpr::get(I.getOpcode(), InC, C);
+      else
+        InV = Builder->CreateBinOp(cast<BinaryOperator>(I).getOpcode(),
+                                   PN->getIncomingValue(i), C, "phitmp");
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
   } else { 
@@ -620,15 +625,11 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
     const Type *RetTy = CI->getType();
     for (unsigned i = 0; i != NumPHIValues; ++i) {
       Value *InV;
-      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
+      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i)))
         InV = ConstantExpr::getCast(CI->getOpcode(), InC, RetTy);
-      } else {
-        assert(PN->getIncomingBlock(i) == NonConstBB);
-        InV = CastInst::Create(CI->getOpcode(), PN->getIncomingValue(i), 
-                               I.getType(), "phitmp", 
-                               NonConstBB->getTerminator());
-        Worklist.Add(cast<Instruction>(InV));
-      }
+      else 
+        InV = Builder->CreateCast(CI->getOpcode(),
+                                PN->getIncomingValue(i), I.getType(), "phitmp");
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
   }
