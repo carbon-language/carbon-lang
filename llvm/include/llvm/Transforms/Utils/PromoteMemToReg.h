@@ -38,7 +38,8 @@ bool isAllocaPromotable(const AllocaInst *AI);
 /// made to the IR.
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                     DominatorTree &DT, AliasSetTracker *AST = 0);
+                     DominatorTree &DT, DominanceFrontier &DF,
+                     AliasSetTracker *AST = 0);
 
 } // End llvm namespace
 

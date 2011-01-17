@@ -152,6 +152,7 @@ namespace {
     // will not alter the CFG, so say so.
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominatorTree>();
+      AU.addRequired<DominanceFrontier>();
       AU.setPreservesCFG();
     }
   };
@@ -179,6 +180,7 @@ char SROA_SSAUp::ID = 0;
 INITIALIZE_PASS_BEGIN(SROA_DF, "scalarrepl",
                 "Scalar Replacement of Aggregates (DF)", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
 INITIALIZE_PASS_END(SROA_DF, "scalarrepl",
                 "Scalar Replacement of Aggregates (DF)", false, false)
 
@@ -875,8 +877,11 @@ public:
 bool SROA::performPromotion(Function &F) {
   std::vector<AllocaInst*> Allocas;
   DominatorTree *DT = 0;
-  if (HasDomFrontiers)
+  DominanceFrontier *DF = 0;
+  if (HasDomFrontiers) {
     DT = &getAnalysis<DominatorTree>();
+    DF = &getAnalysis<DominanceFrontier>();
+  }
 
   BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
 
@@ -895,7 +900,7 @@ bool SROA::performPromotion(Function &F) {
     if (Allocas.empty()) break;
 
     if (HasDomFrontiers)
-      PromoteMemToReg(Allocas, *DT);
+      PromoteMemToReg(Allocas, *DT, *DF);
     else {
       SSAUpdater SSA;
       for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {

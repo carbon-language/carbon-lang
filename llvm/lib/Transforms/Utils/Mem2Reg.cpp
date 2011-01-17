@@ -40,6 +40,7 @@ namespace {
     //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominatorTree>();
+      AU.addRequired<DominanceFrontier>();
       AU.setPreservesCFG();
       // This is a cluster of orthogonal Transforms
       AU.addPreserved<UnifyFunctionExitNodes>();
@@ -53,6 +54,7 @@ char PromotePass::ID = 0;
 INITIALIZE_PASS_BEGIN(PromotePass, "mem2reg", "Promote Memory to Register",
                 false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(DominanceFrontier)
 INITIALIZE_PASS_END(PromotePass, "mem2reg", "Promote Memory to Register",
                 false, false)
 
@@ -64,6 +66,7 @@ bool PromotePass::runOnFunction(Function &F) {
   bool Changed  = false;
 
   DominatorTree &DT = getAnalysis<DominatorTree>();
+  DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
 
   while (1) {
     Allocas.clear();
@@ -77,7 +80,7 @@ bool PromotePass::runOnFunction(Function &F) {
 
     if (Allocas.empty()) break;
 
-    PromoteMemToReg(Allocas, DT);
+    PromoteMemToReg(Allocas, DT, DF);
     NumPromoted += Allocas.size();
     Changed = true;
   }
