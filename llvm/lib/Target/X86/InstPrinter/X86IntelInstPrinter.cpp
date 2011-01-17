@@ -21,6 +21,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "X86GenInstrNames.inc"
+#include <cctype>
 using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
