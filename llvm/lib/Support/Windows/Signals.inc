@@ -112,6 +112,9 @@ static void RegisterHandler() {
 #ifdef _MSC_VER
     _CrtSetReportHook(CRTReportHook);
 #endif
+    SetErrorMode(SEM_FAILCRITICALERRORS |
+                 SEM_NOGPFAULTERRORBOX |
+                 SEM_NOOPENFILEERRORBOX);
     ExitOnUnhandledExceptions = true;
   }
 
