@@ -451,29 +451,24 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                             DataExtractor data;
                             size_t bytes_read = 0;
                             std::vector<char> data_buffer;
-                            std::vector<char> cstr_buffer;
-                            size_t cstr_length;
                             Error error;
                             if (cstr_len > 0)
                             {
                                 data_buffer.resize(cstr_len);
-                                // Resize the formatted buffer in case every character
-                                // uses the "\xXX" format and one extra byte for a NULL
-                                cstr_buffer.resize(data_buffer.size() * 4 + 1);
                                 data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
                                 bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), cstr_len, error);
                                 if (bytes_read > 0)
                                 {
                                     sstr << '"';
-                                    cstr_length = data.Dump (&sstr,
-                                                             0,                 // Start offset in "data"
-                                                             eFormatChar,       // Print as characters
-                                                             1,                 // Size of item (1 byte for a char!)
-                                                             bytes_read,        // How many bytes to print?
-                                                             UINT32_MAX,        // num per line
-                                                             LLDB_INVALID_ADDRESS,// base address
-                                                             0,                 // bitfield bit size
-                                                             0);                // bitfield bit offset
+                                    data.Dump (&sstr,
+                                               0,                 // Start offset in "data"
+                                               eFormatChar,       // Print as characters
+                                               1,                 // Size of item (1 byte for a char!)
+                                               bytes_read,        // How many bytes to print?
+                                               UINT32_MAX,        // num per line
+                                               LLDB_INVALID_ADDRESS,// base address
+                                               0,                 // bitfield bit size
+                                               0);                // bitfield bit offset
                                     sstr << '"';
                                 }
                             }
@@ -483,13 +478,10 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                                 data_buffer.resize (k_max_buf_size + 1);
                                 // NULL terminate in case we don't get the entire C string
                                 data_buffer.back() = '\0';
-                                // Make a formatted buffer that can contain take 4
-                                // bytes per character in case each byte uses the
-                                // "\xXX" format and one extra byte for a NULL
-                                cstr_buffer.resize (k_max_buf_size * 4 + 1);
+
+                                sstr << '"';
 
                                 data.SetData (&data_buffer.front(), data_buffer.size(), eByteOrderHost);
-                                size_t total_cstr_len = 0;
                                 while ((bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), k_max_buf_size, error)) > 0)
                                 {
                                     size_t len = strlen(&data_buffer.front());
@@ -497,25 +489,22 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                                         break;
                                     if (len > bytes_read)
                                         len = bytes_read;
-                                    if (sstr.GetSize() == 0)
-                                        sstr << '"';
 
-                                    cstr_length = data.Dump (&sstr,
-                                                             0,                 // Start offset in "data"
-                                                             eFormatChar,       // Print as characters
-                                                             1,                 // Size of item (1 byte for a char!)
-                                                             len,               // How many bytes to print?
-                                                             UINT32_MAX,        // num per line
-                                                             LLDB_INVALID_ADDRESS,// base address
-                                                             0,                 // bitfield bit size
-                                                             0);                // bitfield bit offset
-
+                                    data.Dump (&sstr,
+                                               0,                 // Start offset in "data"
+                                               eFormatChar,       // Print as characters
+                                               1,                 // Size of item (1 byte for a char!)
+                                               len,               // How many bytes to print?
+                                               UINT32_MAX,        // num per line
+                                               LLDB_INVALID_ADDRESS,// base address
+                                               0,                 // bitfield bit size
+                                               0);                // bitfield bit offset
+                                    
                                     if (len < k_max_buf_size)
                                         break;
-                                    cstr_address += total_cstr_len;
+                                    cstr_address += k_max_buf_size;
                                 }
-                                if (sstr.GetSize() > 0)
-                                    sstr << '"';
+                                sstr << '"';
                             }
                         }
                     }
