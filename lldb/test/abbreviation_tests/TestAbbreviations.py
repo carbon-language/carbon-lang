@@ -146,7 +146,10 @@ class AbbreviationsTestCase(TestBase):
                                 '/usr/lib/libSystem.B.dylib',
                                 '/usr/lib/system/libmathCommon.A.dylib'])
 
-
+        # Terminate the current process being debugged.
+        # The test framework was relying on detecting either "run" or
+        # "process launch" command to automatically kill the inferior.
+        self.runCmd("process kill")
 
 
 if __name__ == '__main__':
