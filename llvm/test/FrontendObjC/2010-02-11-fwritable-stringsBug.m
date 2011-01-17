@@ -1,6 +1,6 @@
 // RUN: %llvmgcc -x objective-c -fwritable-strings -S %s -o - | FileCheck %s
-// CHECK: @.str = private constant
-// CHECK: @.str1 = internal global
+// CHECK: @.str = private unnamed_addr constant
+// CHECK: @.str1 = internal unnamed_addr global
 
 // rdar://7634471
 
