@@ -72,7 +72,7 @@ public:
     GetStartPC (lldb::addr_t& start_pc);
 
     bool
-    GetPC (lldb::addr_t& start_pc);
+    ReadPC (lldb::addr_t& start_pc);
 
 private:
 

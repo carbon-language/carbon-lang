@@ -76,7 +76,7 @@ UnwindLLDB::AddFirstFrame ()
     if (!first_register_ctx_ap->GetCFA (first_cursor_sp->cfa))
         return false;
 
-    if (!first_register_ctx_ap->GetPC (first_cursor_sp->start_pc))
+    if (!first_register_ctx_ap->ReadPC (first_cursor_sp->start_pc))
         return false;
 
     // Everything checks out, so release the auto pointer value and let the
@@ -132,7 +132,7 @@ UnwindLLDB::AddOneMoreFrame ()
         }
         return false;
     }
-    if (!register_ctx_ap->GetPC (cursor_sp->start_pc))
+    if (!register_ctx_ap->ReadPC (cursor_sp->start_pc))
     {
         if (log)
         {
@@ -140,6 +140,15 @@ UnwindLLDB::AddOneMoreFrame ()
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
         }
         return false;
+    }
+    if (!m_frames.empty())
+    {
+        if ((m_frames.back()->start_pc == cursor_sp->start_pc) &&
+            (m_frames.back()->cfa      == cursor_sp->cfa))
+        {
+            // Infinite loop where the current cursor is the same as the previous one...
+            return false;
+        }
     }
     RegisterContextSP register_ctx_sp(register_ctx_ap.release());
     cursor_sp->reg_ctx = register_ctx_sp;

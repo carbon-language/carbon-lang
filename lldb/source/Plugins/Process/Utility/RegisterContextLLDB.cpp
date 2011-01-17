@@ -1246,7 +1246,7 @@ RegisterContextLLDB::GetStartPC (addr_t& start_pc)
         return false;
     if (!m_start_pc.IsValid())
     {
-        return GetPC (start_pc); 
+        return ReadPC (start_pc); 
     }
     start_pc = m_start_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget());
     return true;
@@ -1255,7 +1255,7 @@ RegisterContextLLDB::GetStartPC (addr_t& start_pc)
 // Retrieve the current pc value for THIS frame, as saved by the NEXT frame.
 
 bool
-RegisterContextLLDB::GetPC (addr_t& pc)
+RegisterContextLLDB::ReadPC (addr_t& pc)
 {
     if (!IsValid())
         return false;
