@@ -91,13 +91,13 @@
 #cmakedefine HAVE_DLD_H ${HAVE_DLD_H}
 
 /* Define to 1 if you have the `dlerror' function. */
-#undef HAVE_DLERROR
+#cmakedefine HAVE_DLERROR ${HAVE_DLERROR}
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #cmakedefine HAVE_DLFCN_H ${HAVE_DLFCN_H}
 
 /* Define if dlopen() is available on this platform. */
-#undef HAVE_DLOPEN
+#cmakedefine HAVE_DLOPEN ${HAVE_DLOPEN}
 
 /* Define to 1 if you have the <dl.h> header file. */
 #cmakedefine HAVE_DL_H ${HAVE_DL_H}
@@ -115,7 +115,7 @@
 #cmakedefine HAVE_ERRNO_H ${HAVE_ERRNO_H}
 
 /* Define to 1 if the system has the type `error_t'. */
-#undef HAVE_ERROR_T
+#cmakedefine HAVE_ERROR_T ${HAVE_ERROR_T}
 
 /* Define to 1 if you have the <execinfo.h> header file. */
 #cmakedefine HAVE_EXECINFO_H ${HAVE_EXECINFO_H}
@@ -193,7 +193,7 @@
 #cmakedefine HAVE_ISNAN_IN_MATH_H ${HAVE_ISNAN_IN_MATH_H}
 
 /* Define if you have the libdl library or equivalent. */
-#undef HAVE_LIBDL
+#cmakedefine HAVE_LIBDL ${HAVE_LIBDL}
 
 /* Define to 1 if you have the `imagehlp' library (-limagehlp). */
 #cmakedefine HAVE_LIBIMAGEHLP ${HAVE_LIBIMAGEHLP}
@@ -227,10 +227,10 @@
 #undef HAVE_LONGJMP
 
 /* Define to 1 if you have the <mach/mach.h> header file. */
-#undef HAVE_MACH_MACH_H
+#cmakedefine HAVE_MACH_MACH_H ${HAVE_MACH_MACH_H}
 
 /* Define to 1 if you have the <mach-o/dyld.h> header file. */
-#undef HAVE_MACH_O_DYLD_H
+#cmakedefine HAVE_MACH_O_DYLD_H ${HAVE_MACH_O_DYLD_H}
 
 /* Define if mallinfo() is available on this platform. */
 #cmakedefine HAVE_MALLINFO ${HAVE_MALLINFO}
@@ -372,13 +372,13 @@
 #undef HAVE_STD_ISNAN_IN_CMATH
 
 /* Define to 1 if you have the `strchr' function. */
-#undef HAVE_STRCHR
+#cmakedefine HAVE_STRCHR ${HAVE_STRCHR}
 
 /* Define to 1 if you have the `strcmp' function. */
-#undef HAVE_STRCMP
+#cmakedefine HAVE_STRCMP ${HAVE_STRCMP}
 
 /* Define to 1 if you have the `strdup' function. */
-#undef HAVE_STRDUP
+#cmakedefine HAVE_STRDUP ${HAVE_STRDUP}
 
 /* Define to 1 if you have the `strerror' function. */
 #cmakedefine HAVE_STRERROR ${HAVE_STRERROR}
@@ -390,13 +390,13 @@
 #cmakedefine HAVE_STRERROR_S ${HAVE_STRERROR_S}
 
 /* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
+#cmakedefine HAVE_STRINGS_H ${HAVE_STRINGS_H}
 
 /* Define to 1 if you have the <string.h> header file. */
 #cmakedefine HAVE_STRING_H ${HAVE_STRING_H}
 
 /* Define to 1 if you have the `strrchr' function. */
-#undef HAVE_STRRCHR
+#cmakedefine HAVE_STRRCHR ${HAVE_STRRCHR}
 
 /* Define to 1 if you have the `strtof' function. */
 #cmakedefine HAVE_STRTOF ${HAVE_STRTOF}

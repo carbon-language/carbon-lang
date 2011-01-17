@@ -1,4 +1,4 @@
-##===- tools/ed/Makefile -----------------------------------*- Makefile -*-===##
+##===- tools/edis/Makefile -----------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -26,7 +26,7 @@ ifneq ($(filter $(TARGETS_TO_BUILD), X86),)
 LINK_COMPONENTS += x86asmprinter x86disassembler
 endif
 
-# If the X86 target is enabled, link in the asmprinter and disassembler.
+# If the ARM target is enabled, link in the asmprinter and disassembler.
 ifneq ($(filter $(TARGETS_TO_BUILD), ARM),)
 LINK_COMPONENTS += armasmprinter armdisassembler
 endif
