@@ -94,11 +94,12 @@ Debugger::Terminate ()
             UserSettingsControllerSP &usc = GetSettingsController();
             UserSettingsController::FinalizeSettingsController (usc);
             usc.reset();
+
+            // Clear our master list of debugger objects
+            Mutex::Locker locker (GetDebuggerListMutex ());
+            GetDebuggerList().clear();
         }
     }
-    // Clear our master list of debugger objects
-    Mutex::Locker locker (GetDebuggerListMutex ());
-    GetDebuggerList().clear();
 }
 
 DebuggerSP
