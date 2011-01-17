@@ -1876,7 +1876,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
       CTPOP = N0.getOperand(0);
 
     if (CTPOP.hasOneUse() && CTPOP.getOpcode() == ISD::CTPOP &&
-        (N0 == CTPOP || N0.getValueType().getSizeInBits() >=
+        (N0 == CTPOP || N0.getValueType().getSizeInBits() >
                         Log2_32_Ceil(CTPOP.getValueType().getSizeInBits()))) {
       EVT CTVT = CTPOP.getValueType();
       SDValue CTOp = CTPOP.getOperand(0);
