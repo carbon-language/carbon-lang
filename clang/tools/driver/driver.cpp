@@ -35,6 +35,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
+#include <cctype>
 using namespace clang;
 using namespace clang::driver;
 
