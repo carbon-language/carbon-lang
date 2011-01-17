@@ -156,7 +156,7 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
                           "   if ($__lldb_arg_obj == (void *)0)                 \n"
                           "       return; // nil is ok                          \n" 
                           "    void **$isa_ptr = (void **)$__lldb_arg_obj;      \n"
-                          "    if (*$isa_ptr == NULL || !gdb_class_getClass(*$isa_ptr)) \n"
+                          "    if (*$isa_ptr == (void *)0 || !gdb_class_getClass(*$isa_ptr)) \n"
                           "       *((volatile int *)0) = 'ocgc';                \n"
                           "}                                                    \n", 
                           name);
