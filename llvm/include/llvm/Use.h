@@ -25,9 +25,7 @@
 #ifndef LLVM_USE_H
 #define LLVM_USE_H
 
-#include "llvm/Support/Casting.h"
 #include "llvm/ADT/PointerIntPair.h"
-#include <cstddef>
 #include <iterator>
 
 namespace llvm {
@@ -35,9 +33,6 @@ namespace llvm {
 class Value;
 class User;
 class Use;
-
-/// Tag - generic tag type for (at least 32 bit) pointers
-enum Tag { noTag, tagOne, tagTwo, tagThree };
 
 // Use** is only 4-byte aligned.
 template<>
@@ -71,10 +66,10 @@ private:
     if (Val) removeFromList();
   }
 
-  enum PrevPtrTag { zeroDigitTag = noTag
-                  , oneDigitTag = tagOne
-                  , stopTag = tagTwo
-                  , fullStopTag = tagThree };
+  enum PrevPtrTag { zeroDigitTag
+                  , oneDigitTag
+                  , stopTag
+                  , fullStopTag };
 
   /// Constructor
   Use(PrevPtrTag tag) : Val(0) {
@@ -215,7 +210,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 struct AugmentedUse : public Use {
-  PointerIntPair<User*, 1, Tag> ref;
+  PointerIntPair<User*, 1, unsigned> ref;
   AugmentedUse(); // not implemented
 };
 

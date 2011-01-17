@@ -44,9 +44,10 @@ Use *User::allocHungoffUses(unsigned N) const {
                                                 + sizeof(AugmentedUse)
                                                 - sizeof(Use)));
   Use *End = Begin + N;
-  PointerIntPair<User*, 1, Tag>& ref(static_cast<AugmentedUse&>(End[-1]).ref);
+  PointerIntPair<User*, 1, unsigned>&
+    ref(static_cast<AugmentedUse&>(End[-1]).ref);
   ref.setPointer(const_cast<User*>(this));
-  ref.setInt(tagOne);
+  ref.setInt(1);
   return Use::initTags(Begin, End);
 }
 
