@@ -1969,7 +1969,7 @@ defm EQV: BitEquivalence;
 
 class SHUFBInst<dag OOL, dag IOL, list<dag> pattern>:
     RRRForm<0b1000, OOL, IOL, "shufb\t$rT, $rA, $rB, $rC",
-            IntegerOp, pattern>;
+            ShuffleOp, pattern>;
 
 class SHUFBVecInst<ValueType resultvec, ValueType maskvec>:
     SHUFBInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
@@ -2010,7 +2010,7 @@ defm SHUFB : ShuffleBytes;
 
 class SHLHInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b11111010000, OOL, IOL, "shlh\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftVec, pattern>;
 
 class SHLHVecInst<ValueType vectype>:
     SHLHInst<(outs VECREG:$rT), (ins VECREG:$rA, R16C:$rB),
@@ -2032,7 +2032,7 @@ defm SHLH : ShiftLeftHalfword;
 
 class SHLHIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b11111010000, OOL, IOL, "shlhi\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftVec, pattern>;
 
 class SHLHIVecInst<ValueType vectype>:
     SHLHIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
@@ -2058,7 +2058,7 @@ def : Pat<(shl R16C:$rA, (i32 uimm7:$val)),
 
 class SHLInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b11111010000, OOL, IOL, "shl\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftVec, pattern>;
 
 multiclass ShiftLeftWord
 {
@@ -2077,7 +2077,7 @@ defm SHL: ShiftLeftWord;
 
 class SHLIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b11111010000, OOL, IOL, "shli\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftVec, pattern>;
 
 multiclass ShiftLeftWordImm
 {
@@ -2106,7 +2106,7 @@ defm SHLI : ShiftLeftWordImm;
 
 class SHLQBIInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b11011011100, OOL, IOL, "shlqbi\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftQuad, pattern>;
 
 class SHLQBIVecInst<ValueType vectype>:
     SHLQBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2135,7 +2135,7 @@ defm SHLQBI : ShiftLeftQuadByBits;
 // enforcement, whereas with SHLQBI, we have to "take it on faith."
 class SHLQBIIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b11011111100, OOL, IOL, "shlqbii\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftQuad, pattern>;
 
 class SHLQBIIVecInst<ValueType vectype>:
     SHLQBIIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm_i32:$val),
@@ -2159,7 +2159,7 @@ defm SHLQBII : ShiftLeftQuadByBitsImm;
 
 class SHLQBYInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b11111011100, OOL, IOL, "shlqby\t$rT, $rA, $rB",
-            RotateShift, pattern>;
+            RotShiftQuad, pattern>;
 
 class SHLQBYVecInst<ValueType vectype>:
     SHLQBYInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2182,7 +2182,7 @@ defm SHLQBY: ShiftLeftQuadBytes;
 
 class SHLQBYIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b11111111100, OOL, IOL, "shlqbyi\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftQuad, pattern>;
 
 class SHLQBYIVecInst<ValueType vectype>:
     SHLQBYIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm_i32:$val),
@@ -2206,7 +2206,7 @@ defm SHLQBYI : ShiftLeftQuadBytesImm;
 
 class SHLQBYBIInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b00111001111, OOL, IOL, "shlqbybi\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftQuad, pattern>;
 
 class SHLQBYBIVecInst<ValueType vectype>:
     SHLQBYBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2235,7 +2235,7 @@ defm SHLQBYBI : ShiftLeftQuadBytesBitCount;
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 class ROTHInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b00111010000, OOL, IOL, "roth\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftVec, pattern>;
 
 class ROTHVecInst<ValueType vectype>:
     ROTHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
@@ -2262,7 +2262,7 @@ def ROTHr16_r32: ROTHInst<(outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
 //-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~
 class ROTHIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b00111110000, OOL, IOL, "rothi\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftVec, pattern>;
 
 class ROTHIVecInst<ValueType vectype>:
     ROTHIInst<(outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
@@ -2289,7 +2289,7 @@ def : Pat<(SPUvec_rotl (v8i16 VECREG:$rA), (i32 uimm7:$val)),
 
 class ROTInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b00011010000, OOL, IOL, "rot\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftVec, pattern>;
 
 class ROTVecInst<ValueType vectype>:
     ROTInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2337,7 +2337,7 @@ def : Pat<(rotl R32C:$rA, (i32 (sext R8C:$rB))),
 
 class ROTIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b00011110000, OOL, IOL, "roti\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftVec, pattern>;
 
 class ROTIVecInst<ValueType vectype, Operand optype, ValueType inttype, PatLeaf pred>:
     ROTIInst<(outs VECREG:$rT), (ins VECREG:$rA, optype:$val),
@@ -2367,7 +2367,7 @@ defm ROTI : RotateLeftWordImm;
 
 class ROTQBYInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b00111011100, OOL, IOL, "rotqby\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftQuad, pattern>;
 
 class ROTQBYGenInst<ValueType type, RegisterClass rc>:
     ROTQBYInst<(outs rc:$rT), (ins rc:$rA, R32C:$rB),
@@ -2396,7 +2396,7 @@ defm ROTQBY: RotateQuadLeftByBytes;
 
 class ROTQBYIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b00111111100, OOL, IOL, "rotqbyi\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftQuad, pattern>;
 
 class ROTQBYIGenInst<ValueType type, RegisterClass rclass>:
     ROTQBYIInst<(outs rclass:$rT), (ins rclass:$rA, u7imm:$val),
@@ -2423,7 +2423,7 @@ defm ROTQBYI: RotateQuadByBytesImm;
 class ROTQBYBIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b00110011100, OOL, IOL,
       "rotqbybi\t$rT, $rA, $shift",
-      RotateShift, pattern>;
+      RotShiftQuad, pattern>;
 
 class ROTQBYBIVecInst<ValueType vectype, RegisterClass rclass>:
     ROTQBYBIInst<(outs VECREG:$rT), (ins VECREG:$rA, rclass:$shift),
@@ -2448,7 +2448,7 @@ defm ROTQBYBI : RotateQuadByBytesByBitshift;
 
 class ROTQBIInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b00011011100, OOL, IOL, "rotqbi\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftQuad, pattern>;
 
 class ROTQBIVecInst<ValueType vectype>:
     ROTQBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2473,7 +2473,7 @@ defm ROTQBI: RotateQuadByBitCount;
 
 class ROTQBIIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b00011111100, OOL, IOL, "rotqbii\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftQuad, pattern>;
 
 class ROTQBIIVecInst<ValueType vectype, Operand optype, ValueType inttype,
                      PatLeaf pred>:
@@ -2508,7 +2508,7 @@ defm ROTQBII : RotateQuadByBitCountImm;
 
 class ROTHMInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b10111010000, OOL, IOL, "rothm\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftVec, pattern>;
 
 def ROTHMv8i16:
     ROTHMInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2550,7 +2550,7 @@ def : Pat<(srl R16C:$rA, R8C:$rB),
 
 class ROTHMIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b10111110000, OOL, IOL, "rothmi\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftVec, pattern>;
 
 def ROTHMIv8i16:
     ROTHMIInst<(outs VECREG:$rT), (ins VECREG:$rA, rothNeg7imm:$val),
@@ -2581,7 +2581,7 @@ def: Pat<(srl R16C:$rA, (i8 uimm7:$val)),
 // ROTM v4i32 form: See the ROTHM v8i16 comments.
 class ROTMInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b10011010000, OOL, IOL, "rotm\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftVec, pattern>;
 
 def ROTMv4i32:
     ROTMInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2616,7 +2616,7 @@ def : Pat<(srl R32C:$rA, R8C:$rB),
 // ROTMI v4i32 form: See the comment for ROTHM v8i16.
 def ROTMIv4i32:
     RI7Form<0b10011110000, (outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
-      "rotmi\t$rT, $rA, $val", RotateShift,
+      "rotmi\t$rT, $rA, $val", RotShiftVec,
       [(set (v4i32 VECREG:$rT),
             (SPUvec_srl VECREG:$rA, (i32 uimm7:$val)))]>;
 
@@ -2629,7 +2629,7 @@ def : Pat<(SPUvec_srl (v4i32 VECREG:$rA), (i8 uimm7:$val)),
 // ROTMI r32 form: know how to complement the immediate value.
 def ROTMIr32:
     RI7Form<0b10011110000, (outs R32C:$rT), (ins R32C:$rA, rotNeg7imm:$val),
-      "rotmi\t$rT, $rA, $val", RotateShift,
+      "rotmi\t$rT, $rA, $val", RotShiftVec,
       [(set R32C:$rT, (srl R32C:$rA, (i32 uimm7:$val)))]>;
 
 def : Pat<(srl R32C:$rA, (i16 imm:$val)),
@@ -2646,7 +2646,7 @@ def : Pat<(srl R32C:$rA, (i8 imm:$val)),
 
 class ROTQMBYInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b10111011100, OOL, IOL, "rotqmby\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftQuad, pattern>;
 
 class ROTQMBYVecInst<ValueType vectype>:
     ROTQMBYInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2675,7 +2675,7 @@ def : Pat<(SPUsrl_bytes GPRC:$rA, R32C:$rB),
 
 class ROTQMBYIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b10111111100, OOL, IOL, "rotqmbyi\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftQuad, pattern>;
 
 class ROTQMBYIVecInst<ValueType vectype>:
     ROTQMBYIInst<(outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
@@ -2715,7 +2715,7 @@ defm ROTQMBYI : RotateQuadBytesImm;
 
 class ROTQMBYBIInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b10110011100, OOL, IOL, "rotqmbybi\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftQuad, pattern>;
 
 class ROTQMBYBIVecInst<ValueType vectype>:
     ROTQMBYBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2740,7 +2740,7 @@ defm ROTQMBYBI: RotateMaskQuadByBitCount;
 
 class ROTQMBIInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b10011011100, OOL, IOL, "rotqmbi\t$rT, $rA, $rB",
-           RotateShift, pattern>;
+           RotShiftQuad, pattern>;
 
 class ROTQMBIVecInst<ValueType vectype>:
     ROTQMBIInst<(outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
@@ -2775,7 +2775,7 @@ def : Pat<(srl GPRC:$rA, R32C:$rB),
 
 class ROTQMBIIInst<dag OOL, dag IOL, list<dag> pattern>:
     RI7Form<0b10011111100, OOL, IOL, "rotqmbii\t$rT, $rA, $val",
-            RotateShift, pattern>;
+            RotShiftQuad, pattern>;
 
 class ROTQMBIIVecInst<ValueType vectype>:
    ROTQMBIIInst<(outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
@@ -2803,7 +2803,7 @@ defm ROTQMBII: RotateMaskQuadByBitsImm;
 
 def ROTMAHv8i16:
     RRForm<0b01111010000, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
-      "rotmah\t$rT, $rA, $rB", RotateShift,
+      "rotmah\t$rT, $rA, $rB", RotShiftVec,
       [/* see patterns below - $rB must be negated */]>;
 
 def : Pat<(SPUvec_sra (v8i16 VECREG:$rA), R32C:$rB),
@@ -2819,7 +2819,7 @@ def : Pat<(SPUvec_sra (v8i16 VECREG:$rA), R8C:$rB),
 
 def ROTMAHr16:
     RRForm<0b01111010000, (outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
-      "rotmah\t$rT, $rA, $rB", RotateShift,
+      "rotmah\t$rT, $rA, $rB", RotShiftVec,
       [/* see patterns below - $rB must be negated */]>;
 
 def : Pat<(sra R16C:$rA, R32C:$rB),
@@ -2835,7 +2835,7 @@ def : Pat<(sra R16C:$rA, R8C:$rB),
 
 def ROTMAHIv8i16:
     RRForm<0b01111110000, (outs VECREG:$rT), (ins VECREG:$rA, rothNeg7imm:$val),
-      "rotmahi\t$rT, $rA, $val", RotateShift,
+      "rotmahi\t$rT, $rA, $val", RotShiftVec,
       [(set (v8i16 VECREG:$rT),
             (SPUvec_sra (v8i16 VECREG:$rA), (i32 uimm7:$val)))]>;
 
@@ -2847,7 +2847,7 @@ def : Pat<(SPUvec_sra (v8i16 VECREG:$rA), (i8 uimm7:$val)),
 
 def ROTMAHIr16:
     RRForm<0b01111110000, (outs R16C:$rT), (ins R16C:$rA, rothNeg7imm_i16:$val),
-      "rotmahi\t$rT, $rA, $val", RotateShift,
+      "rotmahi\t$rT, $rA, $val", RotShiftVec,
       [(set R16C:$rT, (sra R16C:$rA, (i16 uimm7:$val)))]>;
 
 def : Pat<(sra R16C:$rA, (i32 imm:$val)),
@@ -2858,7 +2858,7 @@ def : Pat<(sra R16C:$rA, (i8 imm:$val)),
 
 def ROTMAv4i32:
     RRForm<0b01011010000, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
-      "rotma\t$rT, $rA, $rB", RotateShift,
+      "rotma\t$rT, $rA, $rB", RotShiftVec,
       [/* see patterns below - $rB must be negated */]>;
 
 def : Pat<(SPUvec_sra (v4i32 VECREG:$rA), R32C:$rB),
@@ -2874,7 +2874,7 @@ def : Pat<(SPUvec_sra (v4i32 VECREG:$rA), R8C:$rB),
 
 def ROTMAr32:
     RRForm<0b01011010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
-      "rotma\t$rT, $rA, $rB", RotateShift,
+      "rotma\t$rT, $rA, $rB", RotShiftVec,
       [/* see patterns below - $rB must be negated */]>;
 
 def : Pat<(sra R32C:$rA, R32C:$rB),
@@ -2891,7 +2891,7 @@ def : Pat<(sra R32C:$rA, R8C:$rB),
 class ROTMAIInst<dag OOL, dag IOL, list<dag> pattern>:
     RRForm<0b01011110000, OOL, IOL,
       "rotmai\t$rT, $rA, $val",
-      RotateShift, pattern>;
+      RotShiftVec, pattern>;
 
 class ROTMAIVecInst<ValueType vectype, Operand intop, ValueType inttype>:
     ROTMAIInst<(outs VECREG:$rT), (ins VECREG:$rA, intop:$val),

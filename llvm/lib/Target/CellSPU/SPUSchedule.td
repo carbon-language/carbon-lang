@@ -32,7 +32,8 @@ def FPInt        : InstrItinClass;              // EVEN_UNIT (FP<->integer)
 def ByteOp       : InstrItinClass;              // EVEN_UNIT
 def IntegerOp    : InstrItinClass;              // EVEN_UNIT
 def IntegerMulDiv: InstrItinClass;              // EVEN_UNIT
-def RotateShift  : InstrItinClass;              // EVEN_UNIT
+def RotShiftVec  : InstrItinClass;              // EVEN_UNIT Inter vector
+def RotShiftQuad : InstrItinClass;              // ODD_UNIT Entire quad
 def ImmLoad      : InstrItinClass;              // EVEN_UNIT
 
 /* Note: The itinerary for the Cell SPU is somewhat contrived... */
@@ -51,7 +52,8 @@ def SPUItineraries : ProcessorItineraries<[ODD_UNIT, EVEN_UNIT], [], [
   InstrItinData<FPInt       , [InstrStage<2,  [EVEN_UNIT]>]>,
   InstrItinData<ByteOp      , [InstrStage<4,  [EVEN_UNIT]>]>,
   InstrItinData<IntegerOp   , [InstrStage<2,  [EVEN_UNIT]>]>,
-  InstrItinData<RotateShift , [InstrStage<4,  [EVEN_UNIT]>]>,
+  InstrItinData<RotShiftVec , [InstrStage<4,  [EVEN_UNIT]>]>, 
+  InstrItinData<RotShiftQuad, [InstrStage<4,  [ODD_UNIT]>]>,
   InstrItinData<IntegerMulDiv,[InstrStage<7,  [EVEN_UNIT]>]>,
   InstrItinData<ImmLoad     , [InstrStage<2,  [EVEN_UNIT]>]>
   ]>;
