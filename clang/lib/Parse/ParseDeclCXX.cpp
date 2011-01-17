@@ -1309,11 +1309,6 @@ void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
 
     ConsumeToken();
   }
-
-  while (isCXX0XVirtSpecifier()) {
-    // FIXME: Actually do something with the specifier.
-    ConsumeToken();
-  }
 }
 
 /// ParseCXXClassMemberDeclaration - Parse a C++ class member declaration.
