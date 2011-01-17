@@ -84,16 +84,15 @@ class CGDebugInfo {
   llvm::DIType CreateType(const PointerType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const BlockPointerType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const FunctionType *Ty, llvm::DIFile F);
-  llvm::DIType CreateType(const TagType *Ty, llvm::DIFile F);
-  llvm::DIType CreateType(const RecordType *Ty, llvm::DIFile F);
+  llvm::DIType CreateType(const TagType *Ty);
+  llvm::DIType CreateType(const RecordType *Ty);
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ObjCObjectType *Ty, llvm::DIFile F);
-  llvm::DIType CreateType(const EnumType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const VectorType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const LValueReferenceType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const MemberPointerType *Ty, llvm::DIFile F);
-  llvm::DIType CreateEnumType(const EnumDecl *ED, llvm::DIFile Unit);
+  llvm::DIType CreateEnumType(const EnumDecl *ED);
   llvm::DIType getOrCreateMethodType(const CXXMethodDecl *Method,
                                      llvm::DIFile F);
   llvm::DIType getOrCreateVTablePtrType(llvm::DIFile F);

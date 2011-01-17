@@ -879,9 +879,9 @@ llvm::DIType CGDebugInfo::getOrCreateRecordType(QualType RTy,
 }
 
 /// CreateType - get structure or union type.
-llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
-                                     llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   RecordDecl *RD = Ty->getDecl();
+  llvm::DIFile Unit = getOrCreateFile(RD->getLocation());
 
   // Get overall information about the record type for the debug info.
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
@@ -1146,18 +1146,11 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   return RealDecl;
 }
 
-llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
-                                     llvm::DIFile Unit) {
-  return CreateEnumType(Ty->getDecl(), Unit);
-
-}
-
-llvm::DIType CGDebugInfo::CreateType(const TagType *Ty,
-                                     llvm::DIFile Unit) {
+llvm::DIType CGDebugInfo::CreateType(const TagType *Ty) {
   if (const RecordType *RT = dyn_cast<RecordType>(Ty))
-    return CreateType(RT, Unit);
+    return CreateType(RT);
   else if (const EnumType *ET = dyn_cast<EnumType>(Ty))
-    return CreateType(ET, Unit);
+    return CreateEnumType(ET->getDecl());
 
   return llvm::DIType();
 }
@@ -1272,7 +1265,8 @@ llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty,
 }
 
 /// CreateEnumType - get enumeration type.
-llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED, llvm::DIFile Unit){
+llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED) {
+  llvm::DIFile Unit = getOrCreateFile(ED->getLocation());
   llvm::SmallVector<llvm::Value *, 16> Enumerators;
 
   // Create DIEnumerator elements for each enumerator.
@@ -1410,7 +1404,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::Typedef: return CreateType(cast<TypedefType>(Ty), Unit);
   case Type::Record:
   case Type::Enum:
-    return CreateType(cast<TagType>(Ty), Unit);
+    return CreateType(cast<TagType>(Ty));
   case Type::FunctionProto:
   case Type::FunctionNoProto:
     return CreateType(cast<FunctionType>(Ty), Unit);
@@ -1958,7 +1952,7 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
   llvm::DIType Ty = getOrCreateType(VD->getType(), Unit);
   if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(VD)) {
     if (const EnumDecl *ED = dyn_cast<EnumDecl>(ECD->getDeclContext()))
-      Ty = CreateEnumType(ED, Unit);
+      Ty = CreateEnumType(ED);
   }
   // Do not use DIGlobalVariable for enums.
   if (Ty.getTag() == llvm::dwarf::DW_TAG_enumeration_type)
