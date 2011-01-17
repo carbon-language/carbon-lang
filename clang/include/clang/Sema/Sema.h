@@ -4299,11 +4299,9 @@ public:
                        SourceLocation RParenLoc);
 
   /// ActOnPragmaUnused - Called on well-formed '#pragma unused'.
-  void ActOnPragmaUnused(const Token *Identifiers,
-                         unsigned NumIdentifiers, Scope *curScope,
-                         SourceLocation PragmaLoc,
-                         SourceLocation LParenLoc,
-                         SourceLocation RParenLoc);
+  void ActOnPragmaUnused(const Token &Identifier,
+                         Scope *curScope,
+                         SourceLocation PragmaLoc);
 
   /// ActOnPragmaVisibility - Called on well formed #pragma GCC visibility... .
   void ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,

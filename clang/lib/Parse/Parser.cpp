@@ -404,6 +404,10 @@ void Parser::Initialize() {
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
 /// action tells us to.  This returns true if the EOF was encountered.
 bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
+
+  while (Tok.is(tok::annot_pragma_unused))
+    HandlePragmaUnused();
+
   Result = DeclGroupPtrTy();
   if (Tok.is(tok::eof)) {
     Actions.ActOnEndOfTranslationUnit();

@@ -263,37 +263,31 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
   }
 }
 
-void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
-                             Scope *curScope,
-                             SourceLocation PragmaLoc,
-                             SourceLocation LParenLoc,
-                             SourceLocation RParenLoc) {
+void Sema::ActOnPragmaUnused(const Token &IdTok, Scope *curScope,
+                             SourceLocation PragmaLoc) {
 
-  for (unsigned i = 0; i < NumIdentifiers; ++i) {
-    const Token &Tok = Identifiers[i];
-    IdentifierInfo *Name = Tok.getIdentifierInfo();
-    LookupResult Lookup(*this, Name, Tok.getLocation(), LookupOrdinaryName);
-    LookupParsedName(Lookup, curScope, NULL, true);
+  IdentifierInfo *Name = IdTok.getIdentifierInfo();
+  LookupResult Lookup(*this, Name, IdTok.getLocation(), LookupOrdinaryName);
+  LookupParsedName(Lookup, curScope, NULL, true);
 
-    if (Lookup.empty()) {
-      Diag(PragmaLoc, diag::warn_pragma_unused_undeclared_var)
-        << Name << SourceRange(Tok.getLocation());
-      continue;
-    }
-
-    VarDecl *VD = Lookup.getAsSingle<VarDecl>();
-    if (!VD || !(VD->hasLocalStorage() || VD->isStaticLocal())) {
-      Diag(PragmaLoc, diag::warn_pragma_unused_expected_localvar)
-        << Name << SourceRange(Tok.getLocation());
-      continue;
-    }
-
-    // Warn if this was used before being marked unused.
-    if (VD->isUsed())
-      Diag(PragmaLoc, diag::warn_used_but_marked_unused) << Name;
-
-    VD->addAttr(::new (Context) UnusedAttr(Tok.getLocation(), Context));
+  if (Lookup.empty()) {
+    Diag(PragmaLoc, diag::warn_pragma_unused_undeclared_var)
+      << Name << SourceRange(IdTok.getLocation());
+    return;
   }
+
+  VarDecl *VD = Lookup.getAsSingle<VarDecl>();
+  if (!VD || !(VD->hasLocalStorage() || VD->isStaticLocal())) {
+    Diag(PragmaLoc, diag::warn_pragma_unused_expected_localvar)
+      << Name << SourceRange(IdTok.getLocation());
+    return;
+  }
+
+  // Warn if this was used before being marked unused.
+  if (VD->isUsed())
+    Diag(PragmaLoc, diag::warn_used_but_marked_unused) << Name;
+
+  VD->addAttr(::new (Context) UnusedAttr(IdTok.getLocation(), Context));
 }
 
 typedef std::vector<std::pair<unsigned, SourceLocation> > VisStack;

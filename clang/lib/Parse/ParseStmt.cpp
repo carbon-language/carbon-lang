@@ -465,6 +465,12 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 
   StmtVector Stmts(Actions);
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+
+    if (Tok.is(tok::annot_pragma_unused)) {
+      HandlePragmaUnused();
+      continue;
+    }
+
     StmtResult R;
     if (Tok.isNot(tok::kw___extension__)) {
       R = ParseStatementOrDeclaration(Stmts, false);

@@ -17,6 +17,17 @@
 #include "clang/Lex/Preprocessor.h"
 using namespace clang;
 
+/// \brief Handle the annotation token produced for #pragma unused(...)
+///
+/// Each annot_pragma_unused is followed by the argument token so e.g.
+/// "#pragma unused(x,y)" becomes:
+/// annot_pragma_unused 'x' annot_pragma_unused 'y'
+void Parser::HandlePragmaUnused() {
+  assert(Tok.is(tok::annot_pragma_unused));
+  SourceLocation UnusedLoc = ConsumeToken();
+  Actions.ActOnPragmaUnused(Tok, getCurScope(), UnusedLoc);
+  ConsumeToken(); // The argument token.
+}
 
 // #pragma GCC visibility comes in two variants:
 //   'push' '(' [visibility] ')'
@@ -301,9 +312,20 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP,
   assert(RParenLoc.isValid() && "Valid '#pragma unused' must have ')'");
   assert(!Identifiers.empty() && "Valid '#pragma unused' must have arguments");
 
-  // Perform the action to handle the pragma.
-  Actions.ActOnPragmaUnused(Identifiers.data(), Identifiers.size(),
-                            parser.getCurScope(), UnusedLoc, LParenLoc, RParenLoc);
+  // For each identifier token, insert into the token stream a
+  // annot_pragma_unused token followed by the identifier token.
+  // This allows us to cache a "#pragma unused" that occurs inside an inline
+  // C++ member function.
+
+  Token *Toks = new Token[2*Identifiers.size()];
+  for (unsigned i=0; i != Identifiers.size(); i++) {
+    Token &pragmaUnusedTok = Toks[2*i], &idTok = Toks[2*i+1];
+    pragmaUnusedTok.startToken();
+    pragmaUnusedTok.setKind(tok::annot_pragma_unused);
+    pragmaUnusedTok.setLocation(UnusedLoc);
+    idTok = Identifiers[i];
+  }
+  PP.EnterTokenStream(Toks, 2*Identifiers.size(), /*DisableMacroExpansion=*/true, /*OwnsTokens=*/true);
 }
 
 // #pragma weak identifier
