@@ -1070,6 +1070,44 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
 }
 
 bool
+IRForTarget::HandleSymbol (Module &llvm_module,
+                           Value *symbol)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    lldb_private::ConstString name(symbol->getName().str().c_str());
+    
+    uint64_t symbol_addr;
+    
+    if (!m_decl_map->GetSymbolAddress (name, symbol_addr))
+    {
+        if (log)
+            log->Printf ("Symbol \"%s\" had no address", name.GetCString());
+        
+        return false;
+    }
+
+    if (log)
+        log->Printf("Found \"%s\" at 0x%llx", name.GetCString(), symbol_addr);
+    
+    const Type *symbol_type = symbol->getType();
+    
+    const IntegerType *intptr_ty = Type::getIntNTy(llvm_module.getContext(),
+                                                   (llvm_module.getPointerSize() == Module::Pointer64) ? 64 : 32);
+    
+    Constant *symbol_addr_int = ConstantInt::get(intptr_ty, symbol_addr, false);
+    
+    Value *symbol_addr_ptr = ConstantExpr::getIntToPtr(symbol_addr_int, symbol_type);
+    
+    if (log)
+        log->Printf("Replacing %s with %s", PrintValue(symbol).c_str(), PrintValue(symbol_addr_ptr).c_str());
+    
+    symbol->replaceAllUsesWith(symbol_addr_ptr);
+    
+    return true;
+}
+
+bool
 IRForTarget::MaybeHandleCallArguments (Module &llvm_module, CallInst *Old)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -1250,9 +1288,16 @@ IRForTarget::ResolveExternals (Module &llvm_module, Function &llvm_function)
                         (*global).getName().str().c_str(),
                         DeclForGlobalValue(llvm_module, global));
     
-        if (DeclForGlobalValue(llvm_module, global) &&
-            !MaybeHandleVariable (llvm_module, global))
-            return false;
+        if ((*global).getName().str().find("OBJC_IVAR") == 0)
+        {
+            if (!HandleSymbol(llvm_module, global))
+                return false;
+        }
+        else if (DeclForGlobalValue(llvm_module, global))
+        {
+            if (!MaybeHandleVariable (llvm_module, global))
+                return false;
+        }
     }
         
     return true;

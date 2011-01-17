@@ -452,6 +452,36 @@ ClangExpressionDeclMap::GetFunctionAddress
     return true;
 }
 
+bool 
+ClangExpressionDeclMap::GetSymbolAddress
+(
+    const ConstString &name,
+    uint64_t &ptr
+)
+{
+    assert (m_parser_vars.get());
+    
+    // Back out in all cases where we're not fully initialized
+    if (m_parser_vars->m_exe_ctx->target == NULL)
+        return false;
+    
+    SymbolContextList sc_list;
+    
+    m_parser_vars->m_exe_ctx->target->GetImages().FindSymbolsWithNameAndType(name, lldb::eSymbolTypeAny, sc_list);
+    
+    if (!sc_list.GetSize())
+        return false;
+    
+    SymbolContext sym_ctx;
+    sc_list.GetContextAtIndex(0, sym_ctx);
+    
+    const Address *sym_address = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
+    
+    ptr = sym_address->GetLoadAddress (m_parser_vars->m_exe_ctx->target);
+    
+    return true;
+}
+
 // Interface for CommandObjectExpression
 
 bool 

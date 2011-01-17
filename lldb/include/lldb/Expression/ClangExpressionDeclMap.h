@@ -290,6 +290,23 @@ public:
                         uint64_t &ptr);
     
     //------------------------------------------------------------------
+    /// [Used by IRForTarget] Get the address of a symbol given nothing
+    /// but its name.
+    ///
+    /// @param[in] name
+    ///     The name of the symbol.  
+    ///
+    /// @param[out] ptr
+    ///     The absolute address of the function in the target.
+    ///
+    /// @return
+    ///     True if the address could be retrieved; false otherwise.
+    //------------------------------------------------------------------
+    bool 
+    GetSymbolAddress (const ConstString &name,
+                      uint64_t &ptr);
+    
+    //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Materialize the entire struct
     /// at a given address, which should be aligned as specified by 
     /// GetStructInfo().

@@ -214,7 +214,7 @@ ClangFunction::CompileFunction (Stream &errors)
         
     // Okay, now compile this expression
     
-    m_parser.reset(new ClangExpressionParser(m_target_triple.c_str(), *this));
+    m_parser.reset(new ClangExpressionParser(m_target_triple.c_str(), NULL, *this));
     
     num_errors = m_parser->Parse (errors);
     

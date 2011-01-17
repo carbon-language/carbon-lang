@@ -25,6 +25,7 @@ namespace llvm
 namespace lldb_private
 {
 
+class Process;
 class RecordingMemoryManager;
     
 //----------------------------------------------------------------------
@@ -49,10 +50,15 @@ public:
     ///     The LLVM-friendly target triple for use in initializing the
     ///     compiler.
     ///
+    /// @param[in process
+    ///     If non-NULL, the process to customize the expression for
+    ///     (e.g., by tuning Objective-C runtime support).  May be NULL.
+    ///
     /// @param[in] expr
     ///     The expression to be parsed.
     //------------------------------------------------------------------
     ClangExpressionParser (const char *target_triple,
+                           Process *process,
                            ClangExpression &expr);
     
     //------------------------------------------------------------------

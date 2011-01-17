@@ -322,11 +322,8 @@ private:
     /// @param[in] llvm_module
     ///     The module currently being processed.
     ///
-    /// @param[in] V
+    /// @param[in] value
     ///     The variable.
-    ///
-    /// @param[in] Store
-    ///     True if the access is a store.
     ///
     /// @return
     ///     True on success; false otherwise
@@ -335,6 +332,22 @@ private:
     MaybeHandleVariable (llvm::Module &llvm_module, 
                          llvm::Value *value);
     
+    //------------------------------------------------------------------
+    /// Handle a single externally-defined symbol
+    ///
+    /// @param[in] llvm_module
+    ///     The module currently being processed.
+    ///
+    /// @param[in] symbol
+    ///     The symbol.
+    ///
+    /// @return
+    ///     True on success; false otherwise
+    //------------------------------------------------------------------
+    bool
+    HandleSymbol (llvm::Module &llvm_module,
+                  llvm::Value *symbol);
+
     //------------------------------------------------------------------
     /// Handle all the arguments to a function call
     ///

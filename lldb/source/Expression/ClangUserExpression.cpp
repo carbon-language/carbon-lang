@@ -253,7 +253,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     m_expr_decl_map->WillParse(exe_ctx);
     
-    ClangExpressionParser parser(target_triple.GetCString(), *this);
+    ClangExpressionParser parser(target_triple.GetCString(), exe_ctx.process, *this);
     
     unsigned num_errors = parser.Parse (error_stream);
     
