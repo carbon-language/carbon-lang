@@ -23,7 +23,7 @@ namespace llvm {
   namespace MachO {
     // Enums from <mach-o/loader.h>
     enum {
-      // Constants for the "magic" field in llvm::MachO::mach_header and 
+      // Constants for the "magic" field in llvm::MachO::mach_header and
       // llvm::MachO::mach_header_64
       HeaderMagic32         = 0xFEEDFACEu, // MH_MAGIC
       HeaderMagic32Swapped  = 0xCEFAEDFEu, // MH_CIGAM
@@ -71,7 +71,7 @@ namespace llvm {
       HeaderFlagBitNoReexportedDylibs     = 0x00100000u, // MH_NO_REEXPORTED_DYLIBS
       HeaderFlagBitPIE                    = 0x00200000u, // MH_PIE
       HeaderFlagBitDeadStrippableDylib    = 0x00400000u, // MH_DEAD_STRIPPABLE_DYLIB
-      
+
       // Constants for the "cmd" field in llvm::MachO::load_command
       LoadCommandDynamicLinkerRequired    = 0x80000000u, // LC_REQ_DYLD
       LoadCommandSegment32                = 0x00000001u, // LC_SEGMENT
@@ -110,7 +110,7 @@ namespace llvm {
       LoadCommandDynamicLinkerInfo        = 0x00000022u, // LC_DYLD_INFO
       LoadCommandDynamicLinkerInfoOnly    = 0x80000022u, // LC_DYLD_INFO_ONLY
       LoadCommandDylibLoadUpward          = 0x80000023u, // LC_LOAD_UPWARD_DYLIB
-      
+
       // Constant bits for the "flags" field in llvm::MachO::segment_command
       SegmentCommandFlagBitHighVM             = 0x1u, // SG_HIGHVM
       SegmentCommandFlagBitFixedVMLibrary     = 0x2u, // SG_FVMLIB
@@ -243,20 +243,20 @@ namespace llvm {
       StabFunction              = 0x24u,  // N_FUN	
       StabStaticSymbol          = 0x26u,  // N_STSYM	
       StabLocalCommon           = 0x28u,  // N_LCSYM	
-      StabBeginSymbol           = 0x2Eu,  // N_BNSYM   
+      StabBeginSymbol           = 0x2Eu,  // N_BNSYM
       StabSourceFileOptions     = 0x3Cu,  // N_OPT	
       StabRegisterSymbol        = 0x40u,  // N_RSYM	
       StabSourceLine            = 0x44u,  // N_SLINE	
-      StabEndSymbol             = 0x4Eu,  // N_ENSYM   
+      StabEndSymbol             = 0x4Eu,  // N_ENSYM
       StabStructureType         = 0x60u,  // N_SSYM	
       StabSourceFileName        = 0x64u,  // N_SO	
       StabObjectFileName        = 0x66u,  // N_OSO	
       StabLocalSymbol           = 0x80u,  // N_LSYM	
       StabBeginIncludeFileName  = 0x82u,  // N_BINCL	
       StabIncludeFileName       = 0x84u,  // N_SOL	
-      StabCompilerParameters    = 0x86u,  // N_PARAMS  
-      StabCompilerVersion       = 0x88u,  // N_VERSION 
-      StabCompilerOptLevel      = 0x8Au,  // N_OLEVEL  
+      StabCompilerParameters    = 0x86u,  // N_PARAMS
+      StabCompilerVersion       = 0x88u,  // N_VERSION
+      StabCompilerOptLevel      = 0x8Au,  // N_OLEVEL
       StabParameter             = 0xA0u,  // N_PSYM	
       StabEndIncludeFile        = 0xA2u,  // N_EINCL	
       StabAlternateEntry        = 0xA4u,  // N_ENTRY	
@@ -269,9 +269,9 @@ namespace llvm {
       StabLength                = 0xFEu   // N_LENG	
 
     };
-    
+
     // Structs from <mach-o/loader.h>
-    
+
     struct mach_header {
       uint32_t magic;
       uint32_t cputype;
@@ -636,12 +636,12 @@ namespace llvm {
     };
 
     // Get/Set functions from <mach-o/nlist.h>
-    
+
     static inline uint16_t GET_LIBRARY_ORDINAL(uint16_t n_desc)
     {
       return (((n_desc) >> 8u) & 0xffu);
     }
-      
+
     static inline void SET_LIBRARY_ORDINAL(uint16_t &n_desc, uint8_t ordinal)
     {
       n_desc = (((n_desc) & 0x00ff) | (((ordinal) & 0xff) << 8));
@@ -651,7 +651,7 @@ namespace llvm {
     {
       return (n_desc >> 8u) & 0x0fu;
     }
-    
+
     static inline void SET_COMM_ALIGN (uint16_t &n_desc, uint8_t align)
     {
       n_desc = ((n_desc & 0xf0ffu) | ((align & 0x0fu) << 8u));
@@ -662,7 +662,7 @@ namespace llvm {
       // Capability bits used in the definition of cpu_type.
       CPUArchMask = 0xff000000,   // Mask for architecture bits
       CPUArchABI64 = 0x01000000,  // 64 bit ABI
-      
+
       // Constants for the cputype field.
       CPUTypeI386      = 7,
       CPUTypeX86_64    = CPUTypeI386 | CPUArchABI64,
@@ -673,11 +673,11 @@ namespace llvm {
 
 
       // Constants for the cpusubtype field.
-      
+
       // X86
       CPUSubType_I386_ALL    = 3,
       CPUSubType_X86_64_ALL  = 3,
-      
+
       // ARM
       CPUSubType_ARM_ALL     = 0,
       CPUSubType_ARM_V4T     = 5,
@@ -687,7 +687,7 @@ namespace llvm {
 
       // PowerPC
       CPUSubType_POWERPC_ALL = 0,
-      
+
       CPUSubType_SPARC_ALL   = 0
     };
   } // end namespace MachO
