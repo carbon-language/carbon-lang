@@ -65,5 +65,20 @@ namespace test2 {
     A(char) : f(j()) { }
     A(bool b) : f(b ? h() : j()) { }
   };
+}
 
+namespace test3 {
+  struct A {
+    ~A();
+  };
+
+  struct B {
+    ~B() { }
+
+    A a;
+  };
+
+  struct C : A { 
+    ~C() { }
+  };
 }

@@ -136,7 +136,16 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
       HasPlainEdge = true;
       continue;
     }
-
+    if (CFGMemberDtor MD = CE.getAs<CFGMemberDtor>()) {
+      // A member destructor.
+      HasPlainEdge = true;
+      continue;
+    }
+    if (CFGBaseDtor BD = CE.getAs<CFGBaseDtor>()) {
+      // A base destructor.
+      HasPlainEdge = true;
+      continue;
+    }
     CFGStmt CS = CE.getAs<CFGStmt>();
     if (!CS.isValid())
       continue;
