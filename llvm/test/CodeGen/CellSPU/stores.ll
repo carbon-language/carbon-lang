@@ -162,3 +162,12 @@ define void @store_misaligned( i32 %val, i32* %ptr) {
 	store i32 %val, i32*%ptr, align 2
 	ret void
 }
+
+define void @store_v8( <8 x float> %val, <8 x float>* %ptr )
+{
+;CHECK: stq
+;CHECK: stq
+;CHECK: bi $lr
+	store <8 x float> %val, <8 x float>* %ptr
+	ret void
+}

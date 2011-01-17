@@ -560,7 +560,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   assert( LN->getAddressingMode() == ISD::UNINDEXED
           && "we should get only UNINDEXED adresses");
   // clean aligned loads can be selected as-is
-  if (InVT.getSizeInBits() == 128 && alignment == 16)
+  if (InVT.getSizeInBits() == 128 && (alignment%16) == 0)
     return SDValue();
 
   // Get pointerinfos to the memory chunk(s) that contain the data to load
@@ -573,7 +573,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   SDValue basePtr = LN->getBasePtr();
   SDValue rotate;
 
-  if (alignment == 16) {
+  if ((alignment%16) == 0) {
     ConstantSDNode *CN;
 
     // Special cases for a known aligned load to simplify the base pointer
@@ -777,7 +777,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   assert( SN->getAddressingMode() == ISD::UNINDEXED
           && "we should get only UNINDEXED adresses");
   // clean aligned loads can be selected as-is
-  if (StVT.getSizeInBits() == 128 && alignment == 16)
+  if (StVT.getSizeInBits() == 128 && (alignment%16) == 0)
     return SDValue();
 
   SDValue alignLoadVec;
@@ -785,7 +785,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   SDValue the_chain = SN->getChain();
   SDValue insertEltOffs;
 
-  if (alignment == 16) {
+  if ((alignment%16) == 0) {
     ConstantSDNode *CN;
     // Special cases for a known aligned load to simplify the base pointer
     // and insertion byte:
