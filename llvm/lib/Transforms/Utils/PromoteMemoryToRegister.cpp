@@ -9,10 +9,19 @@
 //
 // This file promotes memory references to be register references.  It promotes
 // alloca instructions which only have loads and stores as uses.  An alloca is
-// transformed by using dominator frontiers to place PHI nodes, then traversing
-// the function in depth-first order to rewrite loads and stores as appropriate.
-// This is just the standard SSA construction algorithm to construct "pruned"
-// SSA form.
+// transformed by using iterated dominator frontiers to place PHI nodes, then
+// traversing the function in depth-first order to rewrite loads and stores as
+// appropriate.
+//
+// The algorithm used here is based on:
+//
+//   Sreedhar and Gao. A linear time algorithm for placing phi-nodes.
+//   In Proceedings of the 22nd ACM SIGPLAN-SIGACT Symposium on Principles of
+//   Programming Languages
+//   POPL '95. ACM, New York, NY, 62-73.
+//
+// It has been modified to not explicitly use the DJ graph data structure and to
+// directly compute pruned SSA using per-variable liveness information.
 //
 //===----------------------------------------------------------------------===//
 
@@ -35,6 +44,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
+#include <queue>
 using namespace llvm;
 
 STATISTIC(NumLocalPromoted, "Number of alloca's promoted within one block");
@@ -179,7 +189,6 @@ namespace {
     ///
     std::vector<AllocaInst*> Allocas;
     DominatorTree &DT;
-    DominanceFrontier &DF;
     DIFactory *DIF;
 
     /// AST - An AliasSetTracker object to update.  If null, don't update it.
@@ -217,12 +226,15 @@ namespace {
     /// non-determinstic behavior.
     DenseMap<BasicBlock*, unsigned> BBNumbers;
 
+    /// DomLevels - Maps DomTreeNodes to their level in the dominator tree.
+    DenseMap<DomTreeNode*, unsigned> DomLevels;
+
     /// BBNumPreds - Lazily compute the number of predecessors a block has.
     DenseMap<const BasicBlock*, unsigned> BBNumPreds;
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
-                   DominanceFrontier &df, AliasSetTracker *ast)
-      : Allocas(A), DT(dt), DF(df), DIF(0), AST(ast) {}
+                   AliasSetTracker *ast)
+      : Allocas(A), DT(dt), DIF(0), AST(ast) {}
     ~PromoteMem2Reg() {
       delete DIF;
     }
@@ -325,11 +337,19 @@ namespace {
       DbgDeclare = FindAllocaDbgDeclare(AI);
     }
   };
+
+  typedef std::pair<DomTreeNode*, unsigned> DomTreeNodePair;
+
+  struct DomTreeNodeCompare {
+    bool operator()(const DomTreeNodePair &LHS, const DomTreeNodePair &RHS) {
+      return LHS.second < RHS.second;
+    }
+  };
 }  // end of anonymous namespace
 
 
 void PromoteMem2Reg::run() {
-  Function &F = *DF.getRoot()->getParent();
+  Function &F = *DT.getRoot()->getParent();
 
   if (AST) PointerAllocaValues.resize(Allocas.size());
   AllocaDbgDeclares.resize(Allocas.size());
@@ -422,7 +442,26 @@ void PromoteMem2Reg::run() {
         continue;
       }
     }
-    
+
+    // If we haven't computed dominator tree levels, do so now.
+    if (DomLevels.empty()) {
+      SmallVector<DomTreeNode*, 32> Worklist;
+
+      DomTreeNode *Root = DT.getRootNode();
+      DomLevels[Root] = 0;
+      Worklist.push_back(Root);
+
+      while (!Worklist.empty()) {
+        DomTreeNode *Node = Worklist.pop_back_val();
+        unsigned ChildLevel = DomLevels[Node] + 1;
+        for (DomTreeNode::iterator CI = Node->begin(), CE = Node->end();
+             CI != CE; ++CI) {
+          DomLevels[*CI] = ChildLevel;
+          Worklist.push_back(*CI);
+        }
+      }
+    }
+
     // If we haven't computed a numbering for the BB's in the function, do so
     // now.
     if (BBNumbers.empty()) {
@@ -663,7 +702,6 @@ ComputeLiveInBlocks(AllocaInst *AI, AllocaInfo &Info,
 /// avoiding insertion of dead phi nodes.
 void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
                                              AllocaInfo &Info) {
-
   // Unique the set of defining blocks for efficient lookup.
   SmallPtrSet<BasicBlock*, 32> DefBlocks;
   DefBlocks.insert(Info.DefiningBlocks.begin(), Info.DefiningBlocks.end());
@@ -673,46 +711,78 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
   SmallPtrSet<BasicBlock*, 32> LiveInBlocks;
   ComputeLiveInBlocks(AI, Info, DefBlocks, LiveInBlocks);
 
-  // Compute the locations where PhiNodes need to be inserted.  Look at the
-  // dominance frontier of EACH basic-block we have a write in.
-  unsigned CurrentVersion = 0;
-  std::vector<std::pair<unsigned, BasicBlock*> > DFBlocks;
-  while (!Info.DefiningBlocks.empty()) {
-    BasicBlock *BB = Info.DefiningBlocks.back();
-    Info.DefiningBlocks.pop_back();
-    
-    // Look up the DF for this write, add it to defining blocks.
-    DominanceFrontier::const_iterator it = DF.find(BB);
-    if (it == DF.end()) continue;
-    
-    const DominanceFrontier::DomSetType &S = it->second;
-    
-    // In theory we don't need the indirection through the DFBlocks vector.
-    // In practice, the order of calling QueuePhiNode would depend on the
-    // (unspecified) ordering of basic blocks in the dominance frontier,
-    // which would give PHI nodes non-determinstic subscripts.  Fix this by
-    // processing blocks in order of the occurance in the function.
-    for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
-         PE = S.end(); P != PE; ++P) {
-      // If the frontier block is not in the live-in set for the alloca, don't
-      // bother processing it.
-      if (!LiveInBlocks.count(*P))
-        continue;
-      
-      DFBlocks.push_back(std::make_pair(BBNumbers[*P], *P));
-    }
-    
-    // Sort by which the block ordering in the function.
-    if (DFBlocks.size() > 1)
-      std::sort(DFBlocks.begin(), DFBlocks.end());
-    
-    for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
-      BasicBlock *BB = DFBlocks[i].second;
-      if (QueuePhiNode(BB, AllocaNum, CurrentVersion))
-        Info.DefiningBlocks.push_back(BB);
-    }
-    DFBlocks.clear();
+  // Use a priority queue keyed on dominator tree level so that inserted nodes
+  // are handled from the bottom of the dominator tree upwards.
+  typedef std::priority_queue<DomTreeNodePair, SmallVector<DomTreeNodePair, 32>,
+                              DomTreeNodeCompare> IDFPriorityQueue;
+  IDFPriorityQueue PQ;
+
+  for (SmallPtrSet<BasicBlock*, 32>::const_iterator I = DefBlocks.begin(),
+       E = DefBlocks.end(); I != E; ++I) {
+    if (DomTreeNode *Node = DT.getNode(*I))
+      PQ.push(std::make_pair(Node, DomLevels[Node]));
   }
+
+  std::vector<std::pair<unsigned, BasicBlock*> > DFBlocks;
+  SmallPtrSet<DomTreeNode*, 32> Visited;
+  SmallVector<DomTreeNode*, 32> Worklist;
+  while (!PQ.empty()) {
+    DomTreeNodePair RootPair = PQ.top();
+    PQ.pop();
+    DomTreeNode *Root = RootPair.first;
+    unsigned RootLevel = RootPair.second;
+
+    // Walk all dominator tree children of Root, inspecting their CFG edges with
+    // targets elsewhere on the dominator tree. Only targets whose level is at
+    // most Root's level are added to the iterated dominance frontier of the
+    // definition set.
+
+    Worklist.clear();
+    Worklist.push_back(Root);
+
+    while (!Worklist.empty()) {
+      DomTreeNode *Node = Worklist.pop_back_val();
+      BasicBlock *BB = Node->getBlock();
+
+      for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE;
+           ++SI) {
+        DomTreeNode *SuccNode = DT.getNode(*SI);
+
+        // Quickly skip all CFG edges that are also dominator tree edges instead
+        // of catching them below.
+        if (SuccNode->getIDom() == Node)
+          continue;
+
+        unsigned SuccLevel = DomLevels[SuccNode];
+        if (SuccLevel > RootLevel)
+          continue;
+
+        if (!Visited.insert(SuccNode))
+          continue;
+
+        BasicBlock *SuccBB = SuccNode->getBlock();
+        if (!LiveInBlocks.count(SuccBB))
+          continue;
+
+        DFBlocks.push_back(std::make_pair(BBNumbers[SuccBB], SuccBB));
+        if (!DefBlocks.count(SuccBB))
+          PQ.push(std::make_pair(SuccNode, SuccLevel));
+      }
+
+      for (DomTreeNode::iterator CI = Node->begin(), CE = Node->end(); CI != CE;
+           ++CI) {
+        if (!Visited.count(*CI))
+          Worklist.push_back(*CI);
+      }
+    }
+  }
+
+  if (DFBlocks.size() > 1)
+    std::sort(DFBlocks.begin(), DFBlocks.end());
+
+  unsigned CurrentVersion = 0;
+  for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i)
+    QueuePhiNode(DFBlocks[i].second, AllocaNum, CurrentVersion);
 }
 
 /// RewriteSingleStoreAlloca - If there is only a single store to this value,
@@ -1040,10 +1110,9 @@ NextIteration:
 /// made to the IR.
 ///
 void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                           DominatorTree &DT, DominanceFrontier &DF,
-                           AliasSetTracker *AST) {
+                           DominatorTree &DT, AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
 
-  PromoteMem2Reg(Allocas, DT, DF, AST).run();
+  PromoteMem2Reg(Allocas, DT, AST).run();
 }
