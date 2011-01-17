@@ -31,3 +31,9 @@ int main() {
 
 // CHECK-FRAGILE: @_NSConstantStringClassReference = external global
 // CHECK-NONFRAGILE: @"OBJC_CLASS_$_NSConstantString" = external global
+
+// CHECK-FRAGILE: @.str = private unnamed_addr constant [6 x i8] c"MyApp\00"
+// CHECK-FRAGILE: @.str1 = private unnamed_addr constant [7 x i8] c"MyApp1\00"
+
+// CHECK-NONFRAGILE: @.str = private unnamed_addr constant [6 x i8] c"MyApp\00"
+// CHECK-NONFRAGILE: @.str1 = private unnamed_addr constant [7 x i8] c"MyApp1\00"
