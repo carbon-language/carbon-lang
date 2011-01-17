@@ -525,7 +525,7 @@ error_code unique_file(const Twine &model, int &result_fd,
                               NULL,
                               NULL,
                               PROV_RSA_FULL,
-                              0))
+                              CRYPT_VERIFYCONTEXT))
     return windows_error(::GetLastError());
   ScopedCryptContext CryptoProvider(HCPC);
 
