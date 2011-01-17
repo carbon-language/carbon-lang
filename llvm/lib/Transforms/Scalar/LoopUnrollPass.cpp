@@ -99,21 +99,6 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls) {
   
   unsigned LoopSize = Metrics.NumInsts;
   
-  // If we can identify the induction variable, we know that it will become
-  // constant when we unroll the loop, so factor that into our loop size 
-  // estimate.
-  // FIXME: We have to divide by InlineConstants::InstrCost because the
-  // measure returned by CountCodeReductionForConstant is not an instruction
-  // count, but rather a weight as defined by InlineConstants.  It would 
-  // probably be a good idea to standardize on a single weighting scheme by
-  // pushing more of the logic for weighting into CodeMetrics.
-  if (PHINode *IndVar = L->getCanonicalInductionVariable()) {
-    unsigned SizeDecrease = Metrics.CountCodeReductionForConstant(IndVar);
-    // NOTE: Because SizeDecrease is a fuzzy estimate, we don't want to allow
-    // it to totally negate the cost of unrolling a loop.
-    SizeDecrease = SizeDecrease > LoopSize / 2 ? LoopSize / 2 : SizeDecrease;
-  }
-  
   // Don't allow an estimate of size zero.  This would allows unrolling of loops
   // with huge iteration counts, which is a compile time problem even if it's
   // not a problem for code quality.
