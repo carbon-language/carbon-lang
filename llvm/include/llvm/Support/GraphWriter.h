@@ -24,7 +24,6 @@
 #define LLVM_SUPPORT_GRAPHWRITER_H
 
 #include "llvm/Support/DOTGraphTraits.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Support/Path.h"
@@ -310,21 +309,32 @@ raw_ostream &WriteGraph(raw_ostream &O, const GraphType &G,
 template<typename GraphType>
 sys::Path WriteGraph(const GraphType &G, const std::string &Name,
                      bool ShortNames = false, const std::string &Title = "") {
-  SmallString<128> FilePath;
-
-  int FileFD;
-  if (error_code ec = sys::fs::unique_file("graph-" + Name + "-%%-%%-%%-%%.dot",
-                                           FileFD, FilePath)) {
-    errs() << "Error creating output file: " << ec.message() << '\n';
+  std::string ErrMsg;
+  sys::Path Filename = sys::Path::GetTemporaryDirectory(&ErrMsg);
+  if (Filename.isEmpty()) {
+    errs() << "Error: " << ErrMsg << "\n";
+    return Filename;
+  }
+  Filename.appendComponent(Name + ".dot");
+  if (Filename.makeUnique(true,&ErrMsg)) {
+    errs() << "Error: " << ErrMsg << "\n";
     return sys::Path();
   }
 
-  errs() << "Writing '" << FilePath << "'... ";
-  raw_fd_ostream O(FileFD, true);
-  llvm::WriteGraph(O, G, ShortNames, Title);
-  errs() << " done. \n";
+  errs() << "Writing '" << Filename.str() << "'... ";
 
-  return sys::Path(FilePath.str());
+  std::string ErrorInfo;
+  raw_fd_ostream O(Filename.c_str(), ErrorInfo);
+
+  if (ErrorInfo.empty()) {
+    llvm::WriteGraph(O, G, ShortNames, Title);
+    errs() << " done. \n";
+  } else {
+    errs() << "error opening file '" << Filename.str() << "' for writing!\n";
+    Filename.clear();
+  }
+
+  return Filename;
 }
 
 /// ViewGraph - Emit a dot graph, run 'dot', run gv on the postscript file,
