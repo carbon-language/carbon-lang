@@ -1711,8 +1711,8 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             log->PutCString (strm.GetData());
         }
 
-        TypeFromUser user_type(type_sp->GetClangType(),
-                                   type_sp->GetClangAST());
+        TypeFromUser user_type (type_sp->GetClangType(),
+                                type_sp->GetClangAST());
             
         AddOneType(context, user_type, false);
     }
@@ -1748,18 +1748,9 @@ ClangExpressionDeclMap::GetVariableValue
         return NULL;
     }
     
-    TypeList *type_list = var_type->GetTypeList();
+    clang::ASTContext *ast = var_type->GetClangASTContext().getASTContext();
     
-    if (!type_list)
-    {
-        if (log)
-            log->PutCString("Skipped a definition because the type has no associated type list");
-        return NULL;
-    }
-    
-    clang::ASTContext *exe_ast_ctx = type_list->GetClangASTContext().getASTContext();
-    
-    if (!exe_ast_ctx)
+    if (!ast)
     {
         if (log)
             log->PutCString("There is no AST context for the current execution context");
@@ -1780,20 +1771,18 @@ ClangExpressionDeclMap::GetVariableValue
     }
     Error err;
     
-    if (!var_location_expr.Evaluate(&exe_ctx, exe_ast_ctx, NULL, loclist_base_load_addr, NULL, *var_location.get(), &err))
+    if (!var_location_expr.Evaluate(&exe_ctx, ast, NULL, loclist_base_load_addr, NULL, *var_location.get(), &err))
     {
         if (log)
             log->Printf("Error evaluating location: %s", err.AsCString());
         return NULL;
     }
-    
-    clang::ASTContext *var_ast_context = type_list->GetClangASTContext().getASTContext();
-    
+        
     void *type_to_use;
     
     if (parser_ast_context)
     {
-        type_to_use = GuardedCopyType(parser_ast_context, var_ast_context, var_opaque_type);
+        type_to_use = GuardedCopyType(parser_ast_context, ast, var_opaque_type);
         
         if (!type_to_use)
         {
@@ -1834,14 +1823,13 @@ ClangExpressionDeclMap::GetVariableValue
     }
     
     if (user_type)
-        *user_type = TypeFromUser(var_opaque_type, var_ast_context);
+        *user_type = TypeFromUser(var_opaque_type, ast);
     
     return var_location.release();
 }
 
 void
-ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
-                                       Variable* var)
+ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, Variable* var)
 {
     assert (m_parser_vars.get());
     
@@ -1965,7 +1953,6 @@ ClangExpressionDeclMap::AddNamespace (NameSearchContext &context, const ClangNam
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    
     clang::Decl *copied_decl = ClangASTContext::CopyDecl (context.GetASTContext(),
                                                           namespace_decl.GetASTContext(),
                                                           namespace_decl.GetNamespaceDecl());
@@ -2012,8 +1999,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
         
         fun_address = &fun->GetAddressRange().GetBaseAddress();
         
-        TypeList *type_list = fun_type->GetTypeList();
-        fun_ast_context = type_list->GetClangASTContext().getASTContext();
+        fun_ast_context = fun_type->GetClangASTContext().getASTContext();
         void *copied_type = GuardedCopyType(context.GetASTContext(), fun_ast_context, fun_opaque_type);
         
         fun_decl = context.AddFunDecl(copied_type);

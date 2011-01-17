@@ -96,7 +96,9 @@ uint64_t
 SBType::GetNumberChildren (bool omit_empty_base_classes)
 {
     if (IsValid ())
-        return ClangASTContext::GetNumChildren(m_type, omit_empty_base_classes);
+        return ClangASTContext::GetNumChildren (static_cast<clang::ASTContext *>(m_ast),
+                                                m_type, 
+                                                omit_empty_base_classes);
     return 0;
 }
 

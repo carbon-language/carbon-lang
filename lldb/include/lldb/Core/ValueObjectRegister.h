@@ -37,7 +37,7 @@ public:
     virtual clang::ASTContext *
     GetClangAST ();
 
-    virtual void *
+    virtual lldb::clang_type_t
     GetClangType ();
 
     virtual lldb::ValueType
@@ -82,7 +82,7 @@ public:
     virtual clang::ASTContext *
     GetClangAST ();
 
-    virtual void *
+    virtual lldb::clang_type_t
     GetClangType ();
 
     virtual lldb::ValueType
@@ -130,7 +130,7 @@ public:
     virtual clang::ASTContext *
     GetClangAST ();
 
-    virtual void *
+    virtual lldb::clang_type_t
     GetClangType ();
 
     virtual lldb::ValueType

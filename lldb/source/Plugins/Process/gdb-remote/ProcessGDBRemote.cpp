@@ -574,12 +574,6 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 
         m_byte_order = m_gdb_comm.GetByteOrder();
 
-        Module * exe_module = GetTarget().GetExecutableModule().get();        
-        assert(exe_module);
-
-        ObjectFile *exe_objfile = exe_module->GetObjectFile();
-        assert(exe_objfile);
-
         StreamString strm;
 
         ArchSpec inferior_arch;

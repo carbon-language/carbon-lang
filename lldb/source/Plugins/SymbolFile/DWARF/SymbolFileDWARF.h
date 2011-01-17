@@ -26,7 +26,6 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/UniqueCStringMap.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 
@@ -81,6 +80,7 @@ public:
     virtual                 ~SymbolFileDWARF();
 
     virtual uint32_t        GetAbilities ();
+    virtual void            InitializeObject();
 
     //------------------------------------------------------------------
     // Compile Unit function calls
@@ -108,11 +108,24 @@ public:
     virtual uint32_t        FindFunctions(const lldb_private::ConstString &name, uint32_t name_type_mask, bool append, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindFunctions(const lldb_private::RegularExpression& regex, bool append, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, bool append, uint32_t max_matches, lldb_private::TypeList& types);
-//  virtual uint32_t        FindTypes(const lldb_private::SymbolContext& sc, const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb::Type::Encoding encoding, lldb::user_id_t udt_uid, lldb_private::TypeList& types);
-    virtual lldb_private::TypeList *GetTypeList ();
+    virtual lldb_private::TypeList *
+                            GetTypeList ();
+    virtual lldb_private::ClangASTContext &
+                            GetClangASTContext ();
+
     virtual lldb_private::ClangNamespaceDecl
             FindNamespace (const lldb_private::SymbolContext& sc, 
                            const lldb_private::ConstString &name);
+
+
+    //------------------------------------------------------------------
+    // ClangASTContext callbacks for external source lookups.
+    //------------------------------------------------------------------
+    static void
+    CompleteTagDecl (void *baton, clang::TagDecl *);
+    
+    static void
+    CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *);
 
     //------------------------------------------------------------------
     // PluginInterface protocol
@@ -185,6 +198,9 @@ public:
     {
         return m_flags;
     }
+
+    bool
+    HasForwardDeclForClangType (lldb::clang_type_t clang_type);
 
 protected:
 
@@ -301,9 +317,6 @@ protected:
                                 m_debug_map_symfile = debug_map_symfile;
                             }
 
-    lldb_private::ClangASTContext &
-    GetClangASTContext();
-
     clang::NamespaceDecl *
     ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die);
     
@@ -333,7 +346,8 @@ protected:
     NameToDIE                           m_global_index;                 // Global and static variables
     NameToDIE                           m_type_index;                  // All type DIE offsets
     NameToDIE                           m_namespace_index;              // All type DIE offsets
-    bool m_indexed;
+    bool m_indexed:1,
+         m_is_external_ast_source:1;
 
     std::auto_ptr<DWARFDebugRanges>     m_ranges;
 

@@ -15,6 +15,8 @@
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/Timer.h"
+
+#include "lldb/Symbol/ClangExternalASTSourceCallbacks.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
@@ -72,11 +74,19 @@ SymbolFileDWARFDebugMap::~SymbolFileDWARFDebugMap()
 {
 }
 
-lldb_private::ClangASTContext &       
-SymbolFileDWARFDebugMap::GetClangASTContext ()
+void
+SymbolFileDWARFDebugMap::InitializeObject()
 {
-    return GetTypeList()->GetClangASTContext();
+    // Install our external AST source callbacks so we can complete Clang types.
+    llvm::OwningPtr<clang::ExternalASTSource> ast_source_ap (
+        new ClangExternalASTSourceCallbacks (SymbolFileDWARFDebugMap::CompleteTagDecl,
+                                             SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl,
+                                             this));
+
+    GetClangASTContext().SetExternalSource (ast_source_ap);
 }
+
+
 
 void
 SymbolFileDWARFDebugMap::InitOSO ()
@@ -1088,6 +1098,47 @@ SymbolFileDWARFDebugMap::SetCompileUnit (SymbolFileDWARF *oso_dwarf, const CompU
             else
             {
                 m_compile_unit_infos[i].oso_compile_unit_sp = cu_sp;
+            }
+        }
+    }
+}
+
+
+void
+SymbolFileDWARFDebugMap::CompleteTagDecl (void *baton, clang::TagDecl *decl)
+{
+    SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
+    clang_type_t clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
+    if (clang_type)
+    {
+        SymbolFileDWARF *oso_dwarf;
+
+        for (uint32_t oso_idx = 0; ((oso_dwarf = symbol_file_dwarf->GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
+        {
+            if (oso_dwarf->HasForwardDeclForClangType (clang_type))
+            {
+                oso_dwarf->ResolveClangOpaqueTypeDefinition (clang_type);
+                return;
+            }
+        }
+    }
+}
+
+void
+SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *decl)
+{
+    SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
+    clang_type_t clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
+    if (clang_type)
+    {
+        SymbolFileDWARF *oso_dwarf;
+
+        for (uint32_t oso_idx = 0; ((oso_dwarf = symbol_file_dwarf->GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
+        {
+            if (oso_dwarf->HasForwardDeclForClangType (clang_type))
+            {
+                oso_dwarf->ResolveClangOpaqueTypeDefinition (clang_type);
+                return;
             }
         }
     }

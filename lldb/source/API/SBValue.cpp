@@ -457,7 +457,18 @@ SBValue::GetExpressionPath (SBStream &description)
 {
     if (m_opaque_sp)
     {
-        m_opaque_sp->GetExpressionPath (description.ref());
+        m_opaque_sp->GetExpressionPath (description.ref(), false);
+        return true;
+    }
+    return false;
+}
+
+bool
+SBValue::GetExpressionPath (SBStream &description, bool qualify_cxx_base_classes)
+{
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->GetExpressionPath (description.ref(), qualify_cxx_base_classes);
         return true;
     }
     return false;

@@ -139,7 +139,7 @@ ValueObjectConstResult::~ValueObjectConstResult()
 {
 }
 
-void *
+lldb::clang_type_t
 ValueObjectConstResult::GetClangType()
 {
     return m_value.GetClangType();
@@ -171,7 +171,7 @@ ValueObjectConstResult::SetByteSize (size_t size)
 uint32_t
 ValueObjectConstResult::CalculateNumChildren()
 {
-    return ClangASTContext::GetNumChildren (GetClangType(), true);
+    return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);
 }
 
 clang::ASTContext *

@@ -226,6 +226,21 @@ public:
     uint32_t
     GetEncodingMask ();
 
+    void *
+    CreateClangPointerType (Type *type);
+
+    void *
+    CreateClangTypedefType (Type *typedef_type, Type *base_type);
+
+    // For C++98 references (&)
+    void *
+    CreateClangLValueReferenceType (Type *type);
+
+    // For C++0x references (&&)
+    void *
+    CreateClangRValueReferenceType (Type *type);
+
+
 protected:
     ConstString m_name;
     SymbolFile *m_symbol_file;

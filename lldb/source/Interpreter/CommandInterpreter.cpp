@@ -186,6 +186,7 @@ CommandInterpreter::LoadCommandDictionary ()
             break_regex_cmd_ap->AddRegexCommand("^[\"']?([-+]\\[.*\\])[\"']?[[:space:]]*$", "breakpoint set --name '%1'") &&
             break_regex_cmd_ap->AddRegexCommand("^$", "breakpoint list") &&
             break_regex_cmd_ap->AddRegexCommand("^(-.*)$", "breakpoint set %1") &&
+            break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])`(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%2' --shlib '%1'") &&
             break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1'"))
         {
             CommandObjectSP break_regex_cmd_sp(break_regex_cmd_ap.release());

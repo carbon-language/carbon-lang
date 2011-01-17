@@ -16,6 +16,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Symtab.h"
@@ -561,6 +562,9 @@ public:
         m_is_dynamic_loader_module = b;
     }
     
+    ClangASTContext &
+    GetClangASTContext ();
+
 protected:
     //------------------------------------------------------------------
     // Member Variables
@@ -573,9 +577,11 @@ protected:
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
     std::auto_ptr<ObjectFile>   m_objfile_ap;   ///< A pointer to the object file parser for this module.
     std::auto_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
+    ClangASTContext             m_ast;          ///< The AST context for this module.
     bool                        m_did_load_objfile:1,
                                 m_did_load_symbol_vendor:1,
                                 m_did_parse_uuid:1,
+                                m_did_init_ast:1,
                                 m_is_dynamic_loader_module:1;
     
     //------------------------------------------------------------------

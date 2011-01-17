@@ -13,7 +13,7 @@
 #include <set>
 
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Sema/ExternalSemaSource.h"
+#include "clang/AST/ExternalASTSource.h"
 
 namespace lldb_private {
     
@@ -30,7 +30,7 @@ class ClangExpressionDeclMap;
 /// to Clang for these names, consulting the ClangExpressionDeclMap to do
 /// the actual lookups.
 //----------------------------------------------------------------------
-class ClangASTSource : public clang::ExternalSemaSource 
+class ClangASTSource : public clang::ExternalASTSource 
 {
 public:
     //------------------------------------------------------------------
@@ -44,8 +44,8 @@ public:
     /// @param[in] declMap
     ///     A reference to the LLDB object that handles entity lookup.
     //------------------------------------------------------------------
-	ClangASTSource(clang::ASTContext &context,
-                   ClangExpressionDeclMap &decl_map) : 
+	ClangASTSource (clang::ASTContext &context,
+                    ClangExpressionDeclMap &decl_map) : 
         m_ast_context (context),
         m_decl_map (decl_map),
         m_active_lookups ()
@@ -60,27 +60,59 @@ public:
     //------------------------------------------------------------------
     /// Interface stub that returns NULL.
     //------------------------------------------------------------------
-    clang::Decl *GetExternalDecl(uint32_t);
+    virtual clang::Decl *
+    GetExternalDecl(uint32_t)
+    {
+        // These are only required for AST source that want to lazily load
+        // the declarations (or parts thereof) that they return.
+        return NULL;
+    }
     
     //------------------------------------------------------------------
     /// Interface stub that returns NULL.
     //------------------------------------------------------------------
-    clang::Stmt *GetExternalDeclStmt(uint64_t);
+    virtual clang::Stmt *
+    GetExternalDeclStmt(uint64_t)
+    {
+        // These are only required for AST source that want to lazily load
+        // the declarations (or parts thereof) that they return.
+        return NULL;
+    }
 	
     //------------------------------------------------------------------
     /// Interface stub that returns an undifferentiated Selector.
     //------------------------------------------------------------------
-    clang::Selector GetExternalSelector(uint32_t);
+    virtual clang::Selector 
+    GetExternalSelector(uint32_t)
+    {
+        // These are also optional, although it might help with ObjC
+        // debugging if we have respectable signatures.  But a more
+        // efficient interface (that didn't require scanning all files
+        // for method signatures!) might help.
+        return clang::Selector();
+    }
     
     //------------------------------------------------------------------
     /// Interface stub that returns 0.
     //------------------------------------------------------------------
-	uint32_t GetNumExternalSelectors();
+	virtual uint32_t
+    GetNumExternalSelectors()
+    {
+        // These are also optional, although it might help with ObjC
+        // debugging if we have respectable signatures.  But a more
+        // efficient interface (that didn't require scanning all files
+        // for method signatures!) might help.
+        return 0;
+    }
     
     //------------------------------------------------------------------
     /// Interface stub that returns NULL.
     //------------------------------------------------------------------
-    clang::CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
+    virtual clang::CXXBaseSpecifier *
+    GetExternalCXXBaseSpecifiers(uint64_t Offset)
+    {
+        return NULL;
+    }
 	
     //------------------------------------------------------------------
     /// Look up all Decls that match a particular name.  Only handles
@@ -96,22 +128,31 @@ public:
     /// @return
     ///     Whatever SetExternalVisibleDeclsForName returns.
     //------------------------------------------------------------------
-    clang::DeclContextLookupResult 
+    virtual clang::DeclContextLookupResult 
     FindExternalVisibleDeclsByName (const clang::DeclContext *DC,
                                     clang::DeclarationName Name);
     
     //------------------------------------------------------------------
     /// Interface stub.
     //------------------------------------------------------------------
-    void MaterializeVisibleDecls (const clang::DeclContext *DC);
+    virtual void 
+    MaterializeVisibleDecls (const clang::DeclContext *DC);
 	
     //------------------------------------------------------------------
     /// Interface stub that returns true.
     //------------------------------------------------------------------
-	bool FindExternalLexicalDecls (const clang::DeclContext *DC,
-                                   bool (*isKindWeWant)(clang::Decl::Kind),
-                                   llvm::SmallVectorImpl<clang::Decl*> &Decls);
+	virtual bool 
+    FindExternalLexicalDecls (const clang::DeclContext *DC,
+                              bool (*isKindWeWant)(clang::Decl::Kind),
+                              llvm::SmallVectorImpl<clang::Decl*> &Decls);
     
+    
+    virtual void
+    CompleteType (clang::TagDecl *Tag);
+    
+    virtual void 
+    CompleteType (clang::ObjCInterfaceDecl *Class);
+
     //------------------------------------------------------------------
     /// Called on entering a translation unit.  Tells Clang by calling
     /// setHasExternalVisibleStorage() and setHasExternalLexicalStorage()

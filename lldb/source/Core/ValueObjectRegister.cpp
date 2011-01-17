@@ -42,7 +42,7 @@ ValueObjectRegisterContext::~ValueObjectRegisterContext()
 {
 }
 
-void *
+lldb::clang_type_t
 ValueObjectRegisterContext::GetClangType ()
 {
     return NULL;
@@ -119,7 +119,7 @@ ValueObjectRegisterSet::~ValueObjectRegisterSet()
 {
 }
 
-void *
+lldb::clang_type_t
 ValueObjectRegisterSet::GetClangType ()
 {
     return NULL;
@@ -227,7 +227,7 @@ ValueObjectRegister::~ValueObjectRegister()
 {
 }
 
-void *
+lldb::clang_type_t
 ValueObjectRegister::GetClangType ()
 {
     if (m_clang_type == NULL && m_reg_info)
@@ -238,9 +238,7 @@ ValueObjectRegister::GetClangType ()
             Module *exe_module = process->GetTarget().GetExecutableModule ().get();
             if (exe_module)
             {
-                TypeList *type_list = exe_module->GetTypeList();
-                if (type_list)
-                    m_clang_type = type_list->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize (m_reg_info->encoding, m_reg_info->byte_size * 8);
+                m_clang_type = exe_module->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize (m_reg_info->encoding, m_reg_info->byte_size * 8);
             }
         }
     }
@@ -269,11 +267,7 @@ ValueObjectRegister::GetClangAST ()
     {
         Module *exe_module = process->GetTarget().GetExecutableModule ().get();
         if (exe_module)
-        {
-            TypeList *type_list = exe_module->GetTypeList();
-            if (type_list)
-                return type_list->GetClangASTContext().getASTContext();
-        }
+            return exe_module->GetClangASTContext().getASTContext();
     }
     return NULL;
 }

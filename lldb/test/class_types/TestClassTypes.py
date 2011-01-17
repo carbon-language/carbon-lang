@@ -180,7 +180,7 @@ class ClassTypesTestCase(TestBase):
 
         # Verify that 'frame variable this' gets the data type correct.
         self.expect("frame variable this",VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['class C *'])
+            substrs = ['C *'])
 
         # Verify that frame variable -t this->m_c_int behaves correctly.
         self.expect("frame variable -t this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
@@ -188,7 +188,7 @@ class ClassTypesTestCase(TestBase):
 
         # Verify that 'expression this' gets the data type correct.
         self.expect("expression this", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['class C *'])
+            substrs = ['C *'])
 
         # rdar://problem/8430916
         # expr this->m_c_int returns an incorrect value

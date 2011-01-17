@@ -20,6 +20,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "llvm/ADT/DenseMap.h"
+#include "lldb/lldb-include.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
@@ -27,19 +28,7 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ExecutionContext.h"
 
-namespace llvm {
-    class Type;
-    class Value;
-}
-
 namespace lldb_private {
-
-class ClangExpressionVariables;
-class ClangPersistentVariables;
-class Error;
-class Function;
-class NameSearchContext;
-class Variable;
 
 //----------------------------------------------------------------------
 /// @class ClangExpressionDeclMap ClangExpressionDeclMap.h "lldb/Expression/ClangExpressionDeclMap.h"
@@ -430,10 +419,18 @@ public:
     ///     True if a $__lldb variable has been found.
     //------------------------------------------------------------------
     bool
-    GetLookupsEnabled ()
+    GetLookupsEnabled () const
     {
         assert(m_parser_vars.get());
         return m_parser_vars->m_enable_lookups;
+    }
+
+    bool
+    GetImportInProgress () const
+    {
+        if (m_parser_vars.get())
+            return m_parser_vars->m_ignore_lookups;
+        return false;
     }
     
     //------------------------------------------------------------------

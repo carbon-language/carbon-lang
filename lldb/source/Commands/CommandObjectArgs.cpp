@@ -156,15 +156,7 @@ CommandObjectArgs::Execute
         return false;
     }
     
-    TypeList *thread_type_list = thread_module->GetTypeList ();
-    if (!thread_type_list)
-    {
-        result.AppendError ("The module has no type list.");
-        result.SetStatus (eReturnStatusFailed);
-        return false;
-    }
-    
-    ClangASTContext &ast_context = thread_type_list->GetClangASTContext();
+    ClangASTContext &ast_context = thread_module->GetClangASTContext();
     
     ValueList value_list;
     

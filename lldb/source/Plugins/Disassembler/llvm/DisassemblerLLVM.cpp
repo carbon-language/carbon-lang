@@ -25,8 +25,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
 
-#include <memory>
-#include <string>
+#include <assert.h>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -380,12 +379,14 @@ DisassemblerLLVM::CreateInstance(const ArchSpec &arch)
 }
 
 DisassemblerLLVM::DisassemblerLLVM(const ArchSpec &arch) :
-    Disassembler(arch)
+    Disassembler (arch),
+    m_disassembler (NULL)
 {
     char triple[256];
     if (TripleForArchSpec (arch, triple, sizeof(triple)))
     {
-        assert(!EDGetDisassembler(&m_disassembler, triple, SyntaxForArchSpec (arch)) && "No disassembler created!");
+        int err = EDGetDisassembler(&m_disassembler, triple, SyntaxForArchSpec (arch));
+        assert (err == 0);
     }
 }
 
@@ -402,6 +403,9 @@ DisassemblerLLVM::DecodeInstructions
     uint32_t num_instructions
 )
 {
+    if (m_disassembler == NULL)
+        return 0;
+
     size_t total_inst_byte_size = 0;
 
     m_instruction_list.Clear();

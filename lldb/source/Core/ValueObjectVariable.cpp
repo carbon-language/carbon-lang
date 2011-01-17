@@ -45,12 +45,12 @@ ValueObjectVariable::~ValueObjectVariable()
 {
 }
 
-void *
+lldb::clang_type_t
 ValueObjectVariable::GetClangType ()
 {
     Type *var_type = m_variable_sp->GetType();
     if (var_type)
-        return var_type->GetClangType();
+        return var_type->GetClangForwardType();
     return NULL;
 }
 

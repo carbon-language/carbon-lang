@@ -29,9 +29,11 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
     m_object_name (),
     m_objfile_ap (),
     m_symfile_ap (),
+    m_ast (),
     m_did_load_objfile (false),
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
+    m_did_init_ast (false),
     m_is_dynamic_loader_module (false)
 {
     if (object_name)
@@ -60,6 +62,13 @@ Module::~Module()
                      m_object_name.IsEmpty() ? "" : "(",
                      m_object_name.IsEmpty() ? "" : m_object_name.AsCString(""),
                      m_object_name.IsEmpty() ? "" : ")");
+    // Release any auto pointers before we start tearing down our member 
+    // variables since the object file and symbol files might need to make
+    // function calls back into this module object. The ordering is important
+    // here because symbol files can require the module object file. So we tear
+    // down the symbol file first, then the object file.
+    m_symfile_ap.reset();
+    m_objfile_ap.reset();
 }
 
 
@@ -84,6 +93,23 @@ Module::GetUUID()
         }
     }
     return m_uuid;
+}
+
+ClangASTContext &
+Module::GetClangASTContext ()
+{
+    Mutex::Locker locker (m_mutex);
+    if (m_did_init_ast == false)
+    {
+        ObjectFile * objfile = GetObjectFile();
+        ConstString target_triple;
+        if (objfile && objfile->GetTargetTriple(target_triple))
+        {
+            m_did_init_ast = true;
+            m_ast.SetTargetTriple (target_triple.AsCString());
+        }
+    }
+    return m_ast;
 }
 
 void

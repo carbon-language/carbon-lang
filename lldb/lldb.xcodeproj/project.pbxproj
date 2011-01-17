@@ -305,6 +305,8 @@
 		26DE20611161902700A093E2 /* SBBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20601161902600A093E2 /* SBBlock.cpp */; };
 		26DE20631161904200A093E2 /* SBLineEntry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20621161904200A093E2 /* SBLineEntry.cpp */; };
 		26DE20651161904E00A093E2 /* SBSymbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20641161904E00A093E2 /* SBSymbol.cpp */; };
+		26E6902F129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h in Headers */ = {isa = PBXBuildFile; fileRef = 26E6902E129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h */; };
+		26E69031129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E69030129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp */; };
 		26F5C27710F3D9E4009D5894 /* Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27310F3D9E4009D5894 /* Driver.cpp */; };
 		26F5C27810F3D9E4009D5894 /* IOChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27510F3D9E4009D5894 /* IOChannel.cpp */; };
 		26F5C32510F3DF23009D5894 /* libpython.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32410F3DF23009D5894 /* libpython.dylib */; };
@@ -896,6 +898,8 @@
 		26E3EEE411A9901300FBADB6 /* UnwindMacOSXFrameBackchain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindMacOSXFrameBackchain.h; path = Utility/UnwindMacOSXFrameBackchain.h; sourceTree = "<group>"; };
 		26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextMacOSXFrameBackchain.cpp; path = Utility/RegisterContextMacOSXFrameBackchain.cpp; sourceTree = "<group>"; };
 		26E3EEF811A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextMacOSXFrameBackchain.h; path = Utility/RegisterContextMacOSXFrameBackchain.h; sourceTree = "<group>"; };
+		26E6902E129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExternalASTSourceCallbacks.h; path = include/lldb/Symbol/ClangExternalASTSourceCallbacks.h; sourceTree = "<group>"; };
+		26E69030129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExternalASTSourceCallbacks.cpp; path = source/Symbol/ClangExternalASTSourceCallbacks.cpp; sourceTree = "<group>"; };
 		26F5C26A10F3D9A4009D5894 /* lldb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lldb; sourceTree = BUILT_PRODUCTS_DIR; };
 		26F5C27210F3D9E4009D5894 /* lldb-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "lldb-Info.plist"; path = "tools/driver/lldb-Info.plist"; sourceTree = "<group>"; };
 		26F5C27310F3D9E4009D5894 /* Driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Driver.cpp; path = tools/driver/Driver.cpp; sourceTree = "<group>"; };
@@ -1750,6 +1754,8 @@
 				26BC7F1410F1B8EC00F91463 /* ClangASTContext.cpp */,
 				49E45FA911F660DC008F7B28 /* ClangASTType.h */,
 				49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */,
+				26E6902E129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h */,
+				26E69030129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp */,
 				266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */,
 				266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */,
 				26BC7C5710F1B6E900F91463 /* CompileUnit.h */,
@@ -2291,6 +2297,7 @@
 				4C61978F12823D4300FAFFCC /* AppleObjCRuntimeV1.h in Headers */,
 				4CC2A14D128C7409001531C4 /* ThreadPlanTracer.h in Headers */,
 				266A42D8128E40040090CF7C /* ClangNamespaceDecl.h in Headers */,
+				26E6902F129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h in Headers */,
 				4C7CF7E41295E10E00B4FBB5 /* ThreadPlanCallUserExpression.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2790,6 +2797,7 @@
 				4C61978E12823D4300FAFFCC /* AppleObjCRuntimeV1.cpp in Sources */,
 				4CC2A149128C73ED001531C4 /* ThreadPlanTracer.cpp in Sources */,
 				266A42D6128E3FFB0090CF7C /* ClangNamespaceDecl.cpp in Sources */,
+				26E69031129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp in Sources */,
 				4C7CF7E61295E12B00B4FBB5 /* ThreadPlanCallUserExpression.cpp in Sources */,
 				B296983712C2FB98002D92C3 /* CommandObjectVersion.cpp in Sources */,
 			);
@@ -2939,6 +2947,11 @@
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					__STDC_CONSTANT_MACROS,
+					__STDC_LIMIT_MACROS,
+					LLDB_CONFIGURATION_DEBUG,
+				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
@@ -2948,7 +2961,7 @@
 					"$(LLVM_BUILD_DIR)",
 				);
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = "Debug+Asserts";
+				LLVM_CONFIGURATION = Release;
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
@@ -2991,6 +3004,11 @@
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					__STDC_CONSTANT_MACROS,
+					__STDC_LIMIT_MACROS,
+					LLDB_CONFIGURATION_RELEASE,
+				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = /Developer/Library/PrivateFrameworks;
@@ -3100,6 +3118,11 @@
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					__STDC_CONSTANT_MACROS,
+					__STDC_LIMIT_MACROS,
+					LLDB_CONFIGURATION_BUILD_AND_INTEGRATION,
+				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
 				INSTALL_PATH = /Developer/Library/PrivateFrameworks;

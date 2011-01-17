@@ -562,7 +562,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool c
                                 {
                                     // Incorrect use of "." with a pointer, or "->" with
                                     // a class/union/struct instance or reference.
-                                    valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                    valobj_sp->GetExpressionPath (var_expr_path_strm, false);
                                     if (actual_is_ptr)
                                         error.SetErrorStringWithFormat ("\"%s\" is a pointer and . was used to attempt to access \"%s\". Did you mean \"%s->%s\"?", 
                                                                         var_expr_path_strm.GetString().c_str(), 
@@ -583,7 +583,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool c
                             if (!child_valobj_sp)
                             {
                                 // No child member with name "child_name"
-                                valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                valobj_sp->GetExpressionPath (var_expr_path_strm, false);
                                 if (child_name)
                                 {
                                     error.SetErrorStringWithFormat ("\"%s\" is not a member of \"(%s) %s\"", 
@@ -619,7 +619,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool c
                                     child_valobj_sp = valobj_sp->GetSyntheticArrayMemberFromPointer (child_index, true);
                                     if (!child_valobj_sp)
                                     {
-                                        valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                        valobj_sp->GetExpressionPath (var_expr_path_strm, false);
                                         error.SetErrorStringWithFormat ("failed to use pointer as array for index %i for \"(%s) %s\"", 
                                                                         child_index, 
                                                                         valobj_sp->GetTypeName().AsCString("<invalid type>"),
@@ -631,7 +631,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool c
                                     child_valobj_sp = valobj_sp->GetChildAtIndex (child_index, true);
                                     if (!child_valobj_sp)
                                     {
-                                        valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                        valobj_sp->GetExpressionPath (var_expr_path_strm, false);
                                         error.SetErrorStringWithFormat ("array index %i is not valid for \"(%s) %s\"", 
                                                                         child_index, 
                                                                         valobj_sp->GetTypeName().AsCString("<invalid type>"),
@@ -640,7 +640,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool c
                                 }
                                 else
                                 {
-                                    valobj_sp->GetExpressionPath (var_expr_path_strm);
+                                    valobj_sp->GetExpressionPath (var_expr_path_strm, false);
                                     error.SetErrorStringWithFormat ("\"(%s) %s\" is not an array type", 
                                                                     valobj_sp->GetTypeName().AsCString("<invalid type>"),
                                                                     var_expr_path_strm.GetString().c_str());
@@ -667,7 +667,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool c
                     default:
                         // Failure...
                         {
-                            valobj_sp->GetExpressionPath (var_expr_path_strm);
+                            valobj_sp->GetExpressionPath (var_expr_path_strm, false);
                             error.SetErrorStringWithFormat ("unexpected char '%c' encountered after \"%s\" in \"%s\"", 
                                                             separator_type,
                                                             var_expr_path_strm.GetString().c_str(),

@@ -61,7 +61,7 @@ ValueObjectChild::GetValueType() const
 uint32_t
 ValueObjectChild::CalculateNumChildren()
 {
-    return ClangASTContext::GetNumChildren (m_clang_type, true);
+    return ClangASTContext::GetNumChildren (GetClangAST (), m_clang_type, true);
 }
 
 ConstString

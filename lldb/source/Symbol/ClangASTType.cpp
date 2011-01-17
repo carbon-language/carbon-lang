@@ -363,6 +363,7 @@ ClangASTType::DumpValue
     switch (qual_type->getTypeClass())
     {
     case clang::Type::Record:
+        if (ClangASTContext::GetCompleteType (ast_context, clang_type))
         {
             const clang::RecordType *record_type = cast<clang::RecordType>(qual_type.getTypePtr());
             const clang::RecordDecl *record_decl = record_type->getDecl();
@@ -491,6 +492,7 @@ ClangASTType::DumpValue
         return;
 
     case clang::Type::Enum:
+        if (ClangASTContext::GetCompleteType (ast_context, clang_type))
         {
             const clang::EnumType *enum_type = cast<clang::EnumType>(qual_type.getTypePtr());
             const clang::EnumDecl *enum_decl = enum_type->getDecl();
@@ -690,7 +692,7 @@ ClangASTType::DumpTypeValue
         case clang::Type::Enum:
             // If our format is enum or default, show the enumeration value as
             // its enumeration string value, else just display it as requested.
-            if (format == eFormatEnum || format == eFormatDefault)
+            if ((format == eFormatEnum || format == eFormatDefault) && ClangASTContext::GetCompleteType (ast_context, clang_type))
             {
                 const clang::EnumType *enum_type = cast<clang::EnumType>(qual_type.getTypePtr());
                 const clang::EnumDecl *enum_decl = enum_type->getDecl();

@@ -106,6 +106,9 @@ public:
 
     bool
     GetExpressionPath (lldb::SBStream &description);
+    
+    bool
+    GetExpressionPath (lldb::SBStream &description, bool qualify_cxx_base_classes);
 
 protected:
     friend class SBValueList;

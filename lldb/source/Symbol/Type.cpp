@@ -284,7 +284,7 @@ lldb_private::Type::GetByteSize()
         case eEncodingIsPointerUID:
         case eEncodingIsLValueReferenceUID:
         case eEncodingIsRValueReferenceUID:
-            m_byte_size = GetTypeList()->GetClangASTContext().GetPointerBitSize() / 8;
+            m_byte_size = m_symbol_file->GetClangASTContext().GetPointerBitSize() / 8;
             break;
         }
     }
@@ -295,10 +295,13 @@ lldb_private::Type::GetByteSize()
 uint32_t
 lldb_private::Type::GetNumChildren (bool omit_empty_base_classes)
 {
-    if (!ResolveClangType(eResolveStateFull))
-        return 0;
-    return ClangASTContext::GetNumChildren (m_clang_type, omit_empty_base_classes);
-
+    if (ResolveClangType(eResolveStateForward))
+    {
+        return ClangASTContext::GetNumChildren (m_symbol_file->GetClangASTContext().getASTContext(),
+                                                m_clang_type, 
+                                                omit_empty_base_classes);
+    }
+    return 0;
 }
 
 bool
@@ -422,7 +425,6 @@ lldb_private::Type::ResolveClangType (ResolveState clang_type_resolve_state)
     Type *encoding_type = NULL;
     if (m_clang_type == NULL)
     {
-        TypeList *type_list = GetTypeList();
         encoding_type = GetEncodingType();
         if (encoding_type)
         {
@@ -449,22 +451,22 @@ lldb_private::Type::ResolveClangType (ResolveState clang_type_resolve_state)
                 break;
 
             case eEncodingIsTypedefUID:
-                m_clang_type = type_list->CreateClangTypedefType (this, encoding_type);
+                m_clang_type = CreateClangTypedefType (this, encoding_type);
                 // Clear the name so it can get fully qualified in case the
                 // typedef is in a namespace.
                 m_name.Clear();
                 break;
 
             case eEncodingIsPointerUID:
-                m_clang_type = type_list->CreateClangPointerType (encoding_type);
+                m_clang_type = CreateClangPointerType (encoding_type);
                 break;
 
             case eEncodingIsLValueReferenceUID:
-                m_clang_type = type_list->CreateClangLValueReferenceType (encoding_type);
+                m_clang_type = CreateClangLValueReferenceType (encoding_type);
                 break;
 
             case eEncodingIsRValueReferenceUID:
-                m_clang_type = type_list->CreateClangRValueReferenceType (encoding_type);
+                m_clang_type = CreateClangRValueReferenceType (encoding_type);
                 break;
 
             default:
@@ -475,7 +477,7 @@ lldb_private::Type::ResolveClangType (ResolveState clang_type_resolve_state)
         else
         {
             // We have no encoding type, return void?
-            clang_type_t void_clang_type = type_list->GetClangASTContext().GetBuiltInType_void();
+            clang_type_t void_clang_type = GetClangASTContext().GetBuiltInType_void();
             switch (m_encoding_uid_type)
             {
             case eEncodingIsUID:
@@ -495,19 +497,19 @@ lldb_private::Type::ResolveClangType (ResolveState clang_type_resolve_state)
                 break;
 
             case eEncodingIsTypedefUID:
-                m_clang_type = type_list->GetClangASTContext().CreateTypedefType (m_name.AsCString(), void_clang_type, NULL);
+                m_clang_type = GetClangASTContext().CreateTypedefType (m_name.AsCString(), void_clang_type, NULL);
                 break;
 
             case eEncodingIsPointerUID:
-                m_clang_type = type_list->GetClangASTContext().CreatePointerType (void_clang_type);
+                m_clang_type = GetClangASTContext().CreatePointerType (void_clang_type);
                 break;
 
             case eEncodingIsLValueReferenceUID:
-                m_clang_type = type_list->GetClangASTContext().CreateLValueReferenceType (void_clang_type);
+                m_clang_type = GetClangASTContext().CreateLValueReferenceType (void_clang_type);
                 break;
 
             case eEncodingIsRValueReferenceUID:
-                m_clang_type = type_list->GetClangASTContext().CreateRValueReferenceType (void_clang_type);
+                m_clang_type = GetClangASTContext().CreateRValueReferenceType (void_clang_type);
                 break;
 
             default:
@@ -636,16 +638,13 @@ lldb_private::Type::GetClangForwardType ()
 clang::ASTContext *
 lldb_private::Type::GetClangAST ()
 {
-    TypeList *type_list = GetTypeList();
-    if (type_list)
-        return type_list->GetClangASTContext().getASTContext();
-    return NULL;
+    return GetClangASTContext().getASTContext();
 }
 
 lldb_private::ClangASTContext &
 lldb_private::Type::GetClangASTContext ()
 {
-    return GetTypeList()->GetClangASTContext();
+    return m_symbol_file->GetClangASTContext();
 }
 
 int
@@ -662,4 +661,36 @@ lldb_private::Type::Compare(const Type &a, const Type &b)
 //  if (a.getQualType() == b.getQualType())
 //      return 0;
 }
+
+
+void *
+lldb_private::Type::CreateClangPointerType (lldb_private::Type *type)
+{
+    assert(type);
+    return GetClangASTContext().CreatePointerType(type->GetClangForwardType());
+}
+
+void *
+lldb_private::Type::CreateClangTypedefType (lldb_private::Type *typedef_type, lldb_private::Type *base_type)
+{
+    assert(typedef_type && base_type);
+    return GetClangASTContext().CreateTypedefType (typedef_type->GetName().AsCString(), 
+                                                   base_type->GetClangForwardType(), 
+                                                   typedef_type->GetSymbolFile()->GetClangDeclContextForTypeUID(typedef_type->GetID()));
+}
+
+void *
+lldb_private::Type::CreateClangLValueReferenceType (lldb_private::Type *type)
+{
+    assert(type);
+    return GetClangASTContext().CreateLValueReferenceType(type->GetClangForwardType());
+}
+
+void *
+lldb_private::Type::CreateClangRValueReferenceType (lldb_private::Type *type)
+{
+    assert(type);
+    return GetClangASTContext().CreateRValueReferenceType (type->GetClangForwardType());
+}
+
 

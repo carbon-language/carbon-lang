@@ -69,12 +69,6 @@ SymbolVendor::SymbolVendor(Module *module) :
     m_compile_units(),
     m_sym_file_ap()
 {
-    ObjectFile * objfile = module->GetObjectFile();
-    ConstString target_triple;
-    if (objfile && objfile->GetTargetTriple(target_triple))
-    {
-        m_type_list.GetClangASTContext().SetTargetTriple (target_triple.AsCString());
-    }
 }
 
 //----------------------------------------------------------------------

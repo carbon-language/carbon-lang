@@ -67,7 +67,7 @@ public:
         return m_clang_ast;
     }
 
-    virtual void *
+    virtual lldb::clang_type_t
     GetClangType ()
     {
         return m_clang_type;

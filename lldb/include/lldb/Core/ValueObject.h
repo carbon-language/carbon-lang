@@ -44,7 +44,7 @@ public:
     virtual clang::ASTContext *
     GetClangAST () = 0;
 
-    virtual void *
+    virtual lldb::clang_type_t
     GetClangType () = 0;
 
     virtual lldb::ValueType
@@ -88,7 +88,7 @@ public:
     }
 
     virtual void
-    GetExpressionPath (Stream &s);
+    GetExpressionPath (Stream &s, bool qualify_cxx_base_classes);
 
     virtual bool
     IsInScope (StackFrame *frame)

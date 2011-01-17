@@ -11,7 +11,6 @@
 #define liblldb_TypeList_h_
 
 #include "lldb/lldb-private.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Type.h"
 #include <map>
 
@@ -23,7 +22,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    TypeList(const char *target_triple = NULL);
+    TypeList();
 
     virtual
     ~TypeList();
@@ -52,31 +51,10 @@ public:
     lldb::TypeSP
     GetTypeAtIndex(uint32_t idx);
 
-    //------------------------------------------------------------------
-    // Classes that inherit from TypeList can see and modify these
-    //------------------------------------------------------------------
-    ClangASTContext &
-    GetClangASTContext ();
-
-    void *
-    CreateClangPointerType (Type *type);
-
-    void *
-    CreateClangTypedefType (Type *typedef_type, Type *base_type);
-
-    // For C++98 references (&)
-    void *
-    CreateClangLValueReferenceType (Type *type);
-
-    // For C++0x references (&&)
-    void *
-    CreateClangRValueReferenceType (Type *type);
-
 private:
     typedef std::multimap<lldb::user_id_t, lldb::TypeSP> collection;
     typedef collection::iterator iterator;
     typedef collection::const_iterator const_iterator;
-    ClangASTContext m_ast; ///< The type abtract syntax tree.
 
     collection m_types;
 

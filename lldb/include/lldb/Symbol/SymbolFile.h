@@ -56,7 +56,47 @@ public:
     {
     }
 
+    //------------------------------------------------------------------
+    /// Get a mask of what this symbol file supports for the object file
+    /// that it was constructed with.
+    ///
+    /// Each symbol file gets to respond with a mask of abilities that
+    /// it supports for each object file. This happens when we are
+    /// trying to figure out which symbol file plug-in will get used
+    /// for a given object file. The plug-in that resoonds with the 
+    /// best mix of "SymbolFile::Abilities" bits set, will get chosen to
+    /// be the symbol file parser. This allows each plug-in to check for
+    /// sections that contain data a symbol file plug-in would need. For
+    /// example the DWARF plug-in requires DWARF sections in a file that
+    /// contain debug information. If the DWARF plug-in doesn't find
+    /// these sections, it won't respond with many ability bits set, and
+    /// we will probably fall back to the symbol table SymbolFile plug-in
+    /// which uses any information in the symbol table. Also, plug-ins 
+    /// might check for some specific symbols in a symbol table in the
+    /// case where the symbol table contains debug information (STABS
+    /// and COFF). Not a lot of work should happen in these functions
+    /// as the plug-in might not get selected due to another plug-in
+    /// having more abilities. Any initialization work should be saved
+    /// for "void SymbolFile::InitializeObject()" which will get called
+    /// on the SymbolFile object with the best set of abilities.
+    ///
+    /// @return
+    ///     A uint32_t mask containing bits from the SymbolFile::Abilities
+    ///     enumeration. Any bits that are set represent an ability that
+    ///     this symbol plug-in can parse from the object file.
+    ///------------------------------------------------------------------
     virtual uint32_t        GetAbilities () = 0;
+    
+    //------------------------------------------------------------------
+    /// Initialize the SymbolFile object.
+    ///
+    /// The SymbolFile object with the best set of abilities (detected
+    /// in "uint32_t SymbolFile::GetAbilities()) will have this function
+    /// called if it is chosen to parse an object file. More complete
+    /// initialization can happen in this function which will get called
+    /// prior to any other functions in the SymbolFile protocol.
+    //------------------------------------------------------------------    
+    virtual void            InitializeObject() {}
 
     //------------------------------------------------------------------
     // Compile Unit function calls
@@ -83,6 +123,8 @@ public:
     virtual uint32_t        FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types) = 0;
 //  virtual uint32_t        FindTypes (const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, TypeList& types) = 0;
     virtual TypeList *      GetTypeList ();
+    virtual ClangASTContext &
+                            GetClangASTContext ();
     virtual ClangNamespaceDecl
                             FindNamespace (const SymbolContext& sc, 
                                            const ConstString &name) = 0;
@@ -90,7 +132,7 @@ public:
     ObjectFile*             GetObjectFile() { return m_obj_file; }
     const ObjectFile*       GetObjectFile() const { return m_obj_file; }
 protected:
-    ObjectFile*         m_obj_file; // The object file that symbols can be extracted from.
+    ObjectFile*             m_obj_file; // The object file that symbols can be extracted from.
 
 private:
     DISALLOW_COPY_AND_ASSIGN (SymbolFile);

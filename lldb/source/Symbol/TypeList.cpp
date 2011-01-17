@@ -29,7 +29,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 // Project includes
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/Type.h"
@@ -39,8 +38,7 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace clang;
 
-TypeList::TypeList(const char *target_triple) :
-    m_ast (target_triple),
+TypeList::TypeList() :
     m_types ()
 {
 }
@@ -94,18 +92,18 @@ TypeList::FindType(lldb::user_id_t uid)
 //----------------------------------------------------------------------
 // Find a type by name.
 //----------------------------------------------------------------------
-TypeList
-TypeList::FindTypes (const ConstString &name)
-{
-    // Do we ever need to make a lookup by name map? Here we are doing
-    // a linear search which isn't going to be fast.
-    TypeList types(m_ast.getTargetInfo()->getTriple().getTriple().c_str());
-    iterator pos, end;
-    for (pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
-        if (pos->second->GetName() == name)
-            types.Insert (pos->second);
-    return types;
-}
+//TypeList
+//TypeList::FindTypes (const ConstString &name)
+//{
+//    // Do we ever need to make a lookup by name map? Here we are doing
+//    // a linear search which isn't going to be fast.
+//    TypeList types(m_ast.getTargetInfo()->getTriple().getTriple().c_str());
+//    iterator pos, end;
+//    for (pos = m_types.begin(), end = m_types.end(); pos != end; ++pos)
+//        if (pos->second->GetName() == name)
+//            types.Insert (pos->second);
+//    return types;
+//}
 
 void
 TypeList::Clear()
@@ -146,42 +144,35 @@ TypeList::Dump(Stream *s, bool show_context)
     }
 }
 
-
-ClangASTContext &
-TypeList::GetClangASTContext ()
-{
-    return m_ast;
-}
-
-void *
-TypeList::CreateClangPointerType (Type *type)
-{
-    assert(type);
-    return m_ast.CreatePointerType(type->GetClangForwardType());
-}
-
-void *
-TypeList::CreateClangTypedefType (Type *typedef_type, Type *base_type)
-{
-    assert(typedef_type && base_type);
-    return m_ast.CreateTypedefType (typedef_type->GetName().AsCString(), 
-                                    base_type->GetClangForwardType(), 
-                                    typedef_type->GetSymbolFile()->GetClangDeclContextForTypeUID(typedef_type->GetID()));
-}
-
-void *
-TypeList::CreateClangLValueReferenceType (Type *type)
-{
-    assert(type);
-    return m_ast.CreateLValueReferenceType(type->GetClangForwardType());
-}
-
-void *
-TypeList::CreateClangRValueReferenceType (Type *type)
-{
-    assert(type);
-    return m_ast.CreateRValueReferenceType (type->GetClangForwardType());
-}
-
+//void *
+//TypeList::CreateClangPointerType (Type *type)
+//{
+//    assert(type);
+//    return m_ast.CreatePointerType(type->GetClangForwardType());
+//}
+//
+//void *
+//TypeList::CreateClangTypedefType (Type *typedef_type, Type *base_type)
+//{
+//    assert(typedef_type && base_type);
+//    return m_ast.CreateTypedefType (typedef_type->GetName().AsCString(), 
+//                                    base_type->GetClangForwardType(), 
+//                                    typedef_type->GetSymbolFile()->GetClangDeclContextForTypeUID(typedef_type->GetID()));
+//}
+//
+//void *
+//TypeList::CreateClangLValueReferenceType (Type *type)
+//{
+//    assert(type);
+//    return m_ast.CreateLValueReferenceType(type->GetClangForwardType());
+//}
+//
+//void *
+//TypeList::CreateClangRValueReferenceType (Type *type)
+//{
+//    assert(type);
+//    return m_ast.CreateRValueReferenceType (type->GetClangForwardType());
+//}
+//
 
 

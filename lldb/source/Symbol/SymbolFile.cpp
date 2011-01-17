@@ -18,7 +18,7 @@ using namespace lldb_private;
 SymbolFile*
 SymbolFile::FindPlugin (ObjectFile* obj_file)
 {
-    std::auto_ptr<SymbolFile> best_sym_file_ap;
+    std::auto_ptr<SymbolFile> best_symfile_ap;
     if (obj_file != NULL)
     {
         // TODO: Load any plug-ins in the appropriate plug-in search paths and
@@ -27,7 +27,6 @@ SymbolFile::FindPlugin (ObjectFile* obj_file)
         //----------------------------------------------------------------------
         // We currently only have one debug symbol parser...
         //----------------------------------------------------------------------
-        std::auto_ptr<SymbolFile> best_symfile_ap;
         uint32_t best_symfile_abilities = 0;
 
         SymbolFileCreateInstance create_callback;
@@ -41,16 +40,31 @@ SymbolFile::FindPlugin (ObjectFile* obj_file)
                 if (sym_file_abilities > best_symfile_abilities)
                 {
                     best_symfile_abilities = sym_file_abilities;
-                    best_sym_file_ap = curr_symfile_ap;
+                    best_symfile_ap = curr_symfile_ap;
                 }
             }
         }
+        if (best_symfile_ap.get())
+        {
+            // Let the winning symbol file parser initialize itself more 
+            // completely now that it has been chosen
+            best_symfile_ap->InitializeObject();
+        }
     }
-    return best_sym_file_ap.release();
+    return best_symfile_ap.release();
 }
 
 TypeList *
 SymbolFile::GetTypeList ()
 {
-    return m_obj_file->GetModule()->GetTypeList();
+    if (m_obj_file)
+        return m_obj_file->GetModule()->GetTypeList();
+    return NULL;
 }
+
+lldb_private::ClangASTContext &       
+SymbolFile::GetClangASTContext ()
+{
+    return m_obj_file->GetModule()->GetClangASTContext();
+}
+

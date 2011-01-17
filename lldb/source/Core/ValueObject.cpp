@@ -944,11 +944,11 @@ ValueObject::SetDynamicValue ()
 
 
 void
-ValueObject::GetExpressionPath (Stream &s)
+ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes)
 {
     if (m_parent)
     {
-        m_parent->GetExpressionPath (s);
+        m_parent->GetExpressionPath (s, qualify_cxx_base_classes);
         clang_type_t parent_clang_type = m_parent->GetClangType();
         if (parent_clang_type)
         {
@@ -967,11 +967,14 @@ ValueObject::GetExpressionPath (Stream &s)
     
     if (IsBaseClass())
     {
-        clang_type_t clang_type = GetClangType();
-        std::string cxx_class_name;
-        if (ClangASTContext::GetCXXClassName (clang_type, cxx_class_name))
+        if (qualify_cxx_base_classes)
         {
-            s << cxx_class_name.c_str() << "::";
+            clang_type_t clang_type = GetClangType();
+            std::string cxx_class_name;
+            if (ClangASTContext::GetCXXClassName (clang_type, cxx_class_name))
+            {
+                s << cxx_class_name.c_str() << "::";
+            }
         }
     }
     else
@@ -1026,7 +1029,9 @@ ValueObject::DumpValueObject
 
             if (flat_output)
             {
-                valobj->GetExpressionPath(s);
+                // If we are showing types, also qualify the C++ base classes 
+                const bool qualify_cxx_base_classes = show_types;
+                valobj->GetExpressionPath(s, qualify_cxx_base_classes);
                 s.PutCString(" =");
             }
             else
@@ -1270,7 +1275,7 @@ ValueObject::Dereference (Error &error)
     else
     {
         StreamString strm;
-        GetExpressionPath(strm);
+        GetExpressionPath(strm, true);
 
         if (is_pointer_type)
             error.SetErrorStringWithFormat("dereference failed: (%s) %s", GetTypeName().AsCString("<invalid type>"), strm.GetString().c_str());
@@ -1297,7 +1302,7 @@ ValueObject::AddressOf (Error &error)
         case eAddressTypeInvalid:
             {
                 StreamString expr_path_strm;
-                GetExpressionPath(expr_path_strm);
+                GetExpressionPath(expr_path_strm, true);
                 error.SetErrorStringWithFormat("'%s' is not in memory", expr_path_strm.GetString().c_str());
             }
             break;
