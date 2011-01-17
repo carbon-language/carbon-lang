@@ -1586,6 +1586,9 @@ public:
     WindowsTargetInfo<X86_64TargetInfo>::getTargetDefines(Opts, Builder);
     Builder.defineMacro("_WIN64");
   }
+  virtual const char *getVAListDeclaration() const {
+    return "typedef char* __builtin_va_list;";
+  }
 };
 } // end anonymous namespace
 
@@ -1602,9 +1605,6 @@ public:
     WindowsX86_64TargetInfo::getVisualStudioDefines(Opts, Builder);
     Builder.defineMacro("_M_X64");
     Builder.defineMacro("_M_AMD64");
-  }
-  virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
   }
 };
 } // end anonymous namespace
