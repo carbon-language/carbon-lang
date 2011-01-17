@@ -859,9 +859,14 @@ public:
 };
 
 /// WinX86_64ABIInfo - The Windows X86_64 ABI information.
-class WinX86_64ABIInfo : public X86_64ABIInfo {
+class WinX86_64ABIInfo : public ABIInfo {
+
+  ABIArgInfo classify(QualType Ty) const;
+
 public:
-  WinX86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : X86_64ABIInfo(CGT) {}
+  WinX86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
+
+  virtual void computeInfo(CGFunctionInfo &FI) const;
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
@@ -2061,6 +2066,48 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   ResAddr->addIncoming(RegAddr, InRegBlock);
   ResAddr->addIncoming(MemAddr, InMemBlock);
   return ResAddr;
+}
+
+ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty) const {
+
+  if (Ty->isVoidType())
+    return ABIArgInfo::getIgnore();
+
+  if (const EnumType *EnumTy = Ty->getAs<EnumType>())
+    Ty = EnumTy->getDecl()->getIntegerType();
+
+  uint64_t Size = getContext().getTypeSize(Ty);
+
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    if (hasNonTrivialDestructorOrCopyConstructor(RT)
+        || RT->getDecl()->hasFlexibleArrayMember())
+      return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+
+    // FIXME: mingw64-gcc emits 128-bit struct as i128
+    if (Size <= 128
+        && (Size & (Size - 1)) == 0)
+      return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
+                                                          Size));
+
+    return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+  }
+
+  if (Ty->isPromotableIntegerType())
+    return ABIArgInfo::getExtend();
+
+  return ABIArgInfo::getDirect();
+}
+
+void WinX86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
+
+  QualType RetTy = FI.getReturnType();
+  FI.getReturnInfo() = classify(RetTy);
+
+  // AMD64-ABI 3.2.3p3: Once arguments are classified, the registers
+  // get assigned (in left-to-right order) for passing as follows...
+  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+       it != ie; ++it)
+    it->info = classify(it->type);
 }
 
 llvm::Value *WinX86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
