@@ -310,7 +310,8 @@ error_code rename(const Twine &from, const Twine &to) {
   if (error_code ec = UTF8ToUTF16(f, wide_from)) return ec;
   if (error_code ec = UTF8ToUTF16(t, wide_to)) return ec;
 
-  if (!::MoveFileW(wide_from.begin(), wide_to.begin()))
+  if (!::MoveFileExW(wide_from.begin(), wide_to.begin(),
+                     MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING))
     return windows_error(::GetLastError());
 
   return success;
