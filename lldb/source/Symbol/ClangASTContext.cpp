@@ -1083,8 +1083,6 @@ ClangASTContext::SetHasExternalStorage (clang_type_t clang_type, bool has_extern
             
                 if (class_interface_decl)
                 {
-                    //if (has_extern)
-                    //    class_interface_decl->setExternallyCompleted();
                     class_interface_decl->setHasExternalLexicalStorage (has_extern);
                     //class_interface_decl->setHasExternalVisibleStorage (has_extern);
                     return true;
