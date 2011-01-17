@@ -1268,15 +1268,21 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
 ///         override
 ///         final
 ///         new
-bool Parser::isCXX0XVirtSpecifier() const {
+VirtSpecifiers::VirtSpecifier Parser::isCXX0XVirtSpecifier() const {
   if (Tok.is(tok::kw_new))
-    return true;
+    return VirtSpecifiers::VS_New;
 
-  if (Tok.isNot(tok::identifier))
-    return false;
+  if (Tok.is(tok::identifier)) {
+    IdentifierInfo *II = Tok.getIdentifierInfo();
 
-  const IdentifierInfo *II = Tok.getIdentifierInfo();
-  return II == Ident_override || II == Ident_final;
+    if (II == Ident_override)
+      return VirtSpecifiers::VS_Override;
+
+    if (II == Ident_final)
+      return VirtSpecifiers::VS_Final;
+  }
+
+  return VirtSpecifiers::VS_None;
 }
 
 /// ParseOptionalCXX0XVirtSpecifierSeq - Parse a virt-specifier-seq.
@@ -1284,9 +1290,25 @@ bool Parser::isCXX0XVirtSpecifier() const {
 ///       virt-specifier-seq:
 ///         virt-specifier
 ///         virt-specifier-seq virt-specifier
-void Parser::ParseOptionalCXX0XVirtSpecifierSeq() {
+void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS) {
   if (!getLang().CPlusPlus0x)
     return;
+
+  while (true) {
+    VirtSpecifiers::VirtSpecifier Specifier = isCXX0XVirtSpecifier();
+    if (Specifier == VirtSpecifiers::VS_None)
+      return;
+
+    // C++ [class.mem]p8:
+    //   A virt-specifier-seq shall contain at most one of each virt-specifier.
+    const char* PrevSpec = 0;
+    if (VS.SetVirtSpecifier(Specifier, Tok.getLocation(), PrevSpec))
+      Diag(Tok.getLocation(), diag::err_duplicate_virt_specifier)
+        << PrevSpec
+        << FixItHint::CreateRemoval(Tok.getLocation());
+
+    ConsumeToken();
+  }
 
   while (isCXX0XVirtSpecifier()) {
     // FIXME: Actually do something with the specifier.
@@ -1512,7 +1534,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         SkipUntil(tok::comma, true, true);
     }
 
-    ParseOptionalCXX0XVirtSpecifierSeq();
+    VirtSpecifiers VS;
+    ParseOptionalCXX0XVirtSpecifierSeq(VS);
 
     // pure-specifier:
     //   '= 0'

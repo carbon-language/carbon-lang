@@ -389,6 +389,10 @@ def err_friend_decl_defines_class : Error<
 def warn_deleted_function_accepted_as_extension: ExtWarn<
   "deleted function definition accepted as a C++0x extension">, InGroup<CXX0x>;
 
+// C++0x override control
+def err_duplicate_virt_specifier : Error<
+  "member function already marked '%0'">;
+
 def err_scoped_enum_missing_identifier : Error<
   "scoped enumeration requires a name">;
 
