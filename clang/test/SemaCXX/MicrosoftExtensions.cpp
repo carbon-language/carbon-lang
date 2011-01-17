@@ -97,3 +97,15 @@ enum ENUM2 {
 	ENUM2_b = 0x9FFFFFFF, // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
 	ENUM2_c = 0x100000000 // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
 };
+
+
+void f(long long);
+void f(int);
+ 
+int main()
+{
+  // This is an ambiguous call in standard C++.
+  // This calls f(long long) in Microsoft mode because LL is always signed.
+  f(0xffffffffffffffffLL);
+  f(0xffffffffffffffffi64);
+}
