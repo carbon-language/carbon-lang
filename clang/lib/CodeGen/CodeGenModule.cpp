@@ -630,6 +630,7 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
     new llvm::GlobalVariable(*M, unit->getType(), false,
                              llvm::GlobalValue::PrivateLinkage, unit,
                              ".str");
+  unitGV->setUnnamedAddr(true);
 
   // Create the ConstantStruct for the global annotation.
   llvm::Constant *Fields[4] = {

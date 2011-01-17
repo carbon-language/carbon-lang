@@ -5,4 +5,6 @@ void a(char *a) {
   __attribute__((annotate("bar"))) static char bar;
 }
 
+// CHECK: private unnamed_addr global
+// CHECK: private unnamed_addr global
 // CHECK: @llvm.global.annotations = appending global [2 x %0]
