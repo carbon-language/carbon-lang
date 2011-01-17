@@ -433,6 +433,13 @@ raw_fd_ostream::raw_fd_ostream(int fd, bool shouldClose, bool unbuffered)
   if (fd == STDOUT_FILENO || fd == STDERR_FILENO)
     setmode(fd, O_BINARY);
 #endif
+
+  // Get the starting position.
+  off_t loc = ::lseek(FD, 0, SEEK_CUR);
+  if (loc == (off_t)-1)
+    pos = 0;
+  else
+    pos = static_cast<uint64_t>(loc);
 }
 
 raw_fd_ostream::~raw_fd_ostream() {
