@@ -64,6 +64,12 @@ public:
     
     virtual void
     SetExceptionBreakpoints ();
+
+    virtual lldb::ObjCRuntimeVersions
+    GetRuntimeVersion ()
+    {
+        return lldb::eAppleObjC_V2;
+    }
     
 protected:
     

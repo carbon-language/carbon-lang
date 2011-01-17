@@ -58,6 +58,12 @@ public:
     virtual ClangUtilityFunction *
     CreateObjectChecker (const char *) = 0;
     
+    virtual lldb::ObjCRuntimeVersions
+    GetRuntimeVersion ()
+    {
+        return lldb::eObjC_VersionUnknown;
+    }
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ObjCLanguageRuntime can see and modify these

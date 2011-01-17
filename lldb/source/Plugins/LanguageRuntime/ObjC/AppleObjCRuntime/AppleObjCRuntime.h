@@ -27,12 +27,6 @@ class AppleObjCRuntime :
         public lldb_private::ObjCLanguageRuntime
 {
 public:
-
-    enum RuntimeVersions {
-        eObjC_VersionUnknown = 0,
-        eObjC_V1 = 1,
-        eObjC_V2 = 2
-    };
     
     ~AppleObjCRuntime() { }
     
@@ -73,7 +67,7 @@ protected:
     static bool
     AppleIsModuleObjCLibrary (const lldb::ModuleSP &module_sp);
 
-    static enum AppleObjCRuntime::RuntimeVersions
+    static enum lldb::ObjCRuntimeVersions
     GetObjCVersion (Process *process, ModuleSP &objc_module_sp);
 
     //------------------------------------------------------------------
