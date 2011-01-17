@@ -127,8 +127,7 @@ public:
                        SDValue &Offset);
   bool SelectAddrMode6(SDNode *Parent, SDValue N, SDValue &Addr,SDValue &Align);
 
-  bool SelectAddrModePC(SDValue N, SDValue &Offset,
-                        SDValue &Label);
+  bool SelectAddrModePC(SDValue N, SDValue &Offset, SDValue &Label);
 
   // Thumb Addressing Modes:
   bool SelectThumbAddrModeRR(SDValue N, SDValue &Base, SDValue &Offset);

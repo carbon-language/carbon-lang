@@ -101,6 +101,8 @@ public:
 
   MCSymbol *GetARMSJLJEHLabel(void) const;
 
+  MCSymbol *GetARMGVSymbol(const GlobalValue *GV);
+  
   /// EmitMachineConstantPoolValue - Print a machine constantpool value to
   /// the .s file.
   virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);

@@ -70,6 +70,7 @@ def SDT_ARMBFI : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
+def ARMWrapperPIC    : SDNode<"ARMISD::WrapperPIC",  SDTIntBinOp>;
 
 def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeqStart,
                               [SDNPHasChain, SDNPOutGlue]>;
@@ -1930,7 +1931,10 @@ def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins i32imm_hilo16:$imm),
   let Inst{25} = 1;
 }
 
-let Constraints = "$src = $Rd" in
+def MOVi16_pic_ga : PseudoInst<(outs GPR:$Rd),
+                               (ins i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
+
+let Constraints = "$src = $Rd" in {
 def MOVTi16 : AI1<0b1010, (outs GPR:$Rd), (ins GPR:$src, i32imm_hilo16:$imm),
                   DPFrm, IIC_iMOVi,
                   "movt", "\t$Rd, $imm",
@@ -1946,6 +1950,11 @@ def MOVTi16 : AI1<0b1010, (outs GPR:$Rd), (ins GPR:$src, i32imm_hilo16:$imm),
   let Inst{20} = 0;
   let Inst{25} = 1;
 }
+
+def MOVTi16_pic_ga : PseudoInst<(outs GPR:$Rd),
+                     (ins GPR:$src, i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
+
+} // Constraints
 
 def : ARMPat<(or GPR:$src, 0xffff0000), (MOVTi16 GPR:$src, 0xffff)>,
       Requires<[IsARM, HasV6T2]>;
@@ -3363,10 +3372,16 @@ def Int_eh_sjlj_dispatchsetup :
 // This is a single pseudo instruction, the benefit is that it can be remat'd
 // as a single unit instead of having to handle reg inputs.
 // FIXME: Remove this when we can do generalized remat.
-let isReMaterializable = 1, isMoveImm = 1 in
+let isReMaterializable = 1, isMoveImm = 1 in {
 def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                            [(set GPR:$dst, (arm_i32imm:$src))]>,
                            Requires<[IsARM]>;
+
+def MOV_pic_ga : PseudoInst<(outs GPR:$dst),
+                            (ins i32imm:$addr, pclabel:$id), IIC_iMOVix2,
+                 [(set GPR:$dst, (ARMWrapperPIC tglobaladdr:$addr, imm:$id))]>,
+                 Requires<[IsARM, UseMovt]>;
+} // isReMaterializable = 1, isMoveImm = 1 in
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>,

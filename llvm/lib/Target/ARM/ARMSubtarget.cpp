@@ -25,8 +25,7 @@ ReserveR9("arm-reserve-r9", cl::Hidden,
           cl::desc("Reserve R9, making it unavailable as GPR"));
 
 static cl::opt<bool>
-UseMOVT("arm-use-movt",
-        cl::init(true), cl::Hidden);
+UseMOVT("arm-darwin-use-movt", cl::init(false), cl::Hidden);
 
 static cl::opt<bool>
 StrictAlign("arm-strict-align", cl::Hidden,
@@ -45,7 +44,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , NoARM(false)
   , PostRAScheduler(false)
   , IsR9Reserved(ReserveR9)
-  , UseMovt(UseMOVT)
+  , UseMovt(false)
   , HasFP16(false)
   , HasD16(false)
   , HasHardwareDivide(false)
@@ -147,8 +146,16 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   if (isAAPCS_ABI())
     stackAlignment = 8;
 
-  if (isTargetDarwin())
+  if (!isTargetDarwin())
+    UseMovt = hasV6T2Ops();
+  else {
     IsR9Reserved = ReserveR9 | (ARMArchVersion < V6);
+    if (UseMOVT && hasV6T2Ops()) {
+      unsigned Maj, Min, Rev;
+      TargetTriple.getDarwinNumber(Maj, Min, Rev);
+      UseMovt = (Maj > 4 || Min > 2);
+    }
+  }
 
   if (!isThumb() || hasThumb2())
     PostRAScheduler = true;

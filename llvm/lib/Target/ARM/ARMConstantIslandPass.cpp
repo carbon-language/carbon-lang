@@ -316,7 +316,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   }
 
   /// The next UID to take is the first unused one.
-  AFI->initConstPoolEntryUId(CPEMIs.size());
+  AFI->initPICLabelUId(CPEMIs.size());
 
   // Do the initial scan of the function, building up information about the
   // sizes of each block, the location of all the water, and finding all of the
@@ -1245,7 +1245,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
 
   // No existing clone of this CPE is within range.
   // We will be generating a new clone.  Get a UID for it.
-  unsigned ID = AFI->createConstPoolEntryUId();
+  unsigned ID = AFI->createPICLabelUId();
 
   // Look for water where we can place this CPE.
   MachineBasicBlock *NewIsland = MF.CreateMachineBasicBlock();

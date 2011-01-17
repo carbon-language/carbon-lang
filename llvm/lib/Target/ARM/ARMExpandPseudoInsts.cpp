@@ -765,13 +765,16 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
 
     case ARM::MOVi32imm:
     case ARM::MOVCCi32imm:
+    case ARM::MOV_pic_ga:
     case ARM::t2MOVi32imm:
-    case ARM::t2MOVCCi32imm: {
+    case ARM::t2MOVCCi32imm:
+    case ARM::t2MOV_pic_ga: {
       unsigned PredReg = 0;
       ARMCC::CondCodes Pred = llvm::getInstrPredicate(&MI, PredReg);
       unsigned DstReg = MI.getOperand(0).getReg();
       bool DstIsDead = MI.getOperand(0).isDead();
       bool isCC = Opcode == ARM::MOVCCi32imm || Opcode == ARM::t2MOVCCi32imm;
+      bool isPIC_GA = (Opcode == ARM::t2MOV_pic_ga || Opcode == ARM::MOV_pic_ga);
       const MachineOperand &MO = MI.getOperand(isCC ? 2 : 1);
       MachineInstrBuilder LO16, HI16;
 
@@ -798,14 +801,24 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         break;
       }
 
-      bool isThumb =
-        (Opcode == ARM::t2MOVi32imm || Opcode == ARM::t2MOVCCi32imm);
+      unsigned LO16Opc = 0;
+      unsigned HI16Opc = 0;
+      if (Opcode == ARM::t2MOVi32imm || Opcode == ARM::t2MOVCCi32imm) {
+        LO16Opc = ARM::t2MOVi16;
+        HI16Opc = ARM::t2MOVTi16;
+      } else if (Opcode == ARM::MOV_pic_ga) {
+        LO16Opc = ARM::MOVi16_pic_ga;
+        HI16Opc = ARM::MOVTi16_pic_ga;
+      } else if (Opcode == ARM::t2MOV_pic_ga) {
+        LO16Opc = ARM::t2MOVi16_pic_ga;
+        HI16Opc = ARM::t2MOVTi16_pic_ga;
+      } else {
+        LO16Opc = ARM::MOVi16;
+        HI16Opc = ARM::MOVTi16;
+      }
 
-      LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                     TII->get(isThumb ? ARM::t2MOVi16 : ARM::MOVi16),
-                     DstReg);
-      HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                     TII->get(isThumb ? ARM::t2MOVTi16 : ARM::MOVTi16))
+      LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(LO16Opc), DstReg);
+      HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(HI16Opc))
         .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
         .addReg(DstReg);
 
@@ -815,16 +828,30 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
         unsigned Hi16 = (Imm >> 16) & 0xffff;
         LO16 = LO16.addImm(Lo16);
         HI16 = HI16.addImm(Hi16);
+      } else if (isPIC_GA) {
+        unsigned LabelId = MI.getOperand(2).getImm();
+        const GlobalValue *GV = MO.getGlobal();
+        unsigned TF = MO.getTargetFlags();
+        LO16 = LO16.addGlobalAddress(GV, MO.getOffset(),
+                                     TF | ARMII::MO_LO16_NONLAZY_PIC)
+          .addImm(LabelId);
+        HI16 = HI16.addGlobalAddress(GV, MO.getOffset(),
+                                     TF | ARMII::MO_HI16_NONLAZY_PIC)
+          .addImm(LabelId);
       } else {
         const GlobalValue *GV = MO.getGlobal();
         unsigned TF = MO.getTargetFlags();
         LO16 = LO16.addGlobalAddress(GV, MO.getOffset(), TF | ARMII::MO_LO16);
         HI16 = HI16.addGlobalAddress(GV, MO.getOffset(), TF | ARMII::MO_HI16);
       }
+
       (*LO16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       (*HI16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
-      LO16.addImm(Pred).addReg(PredReg);
-      HI16.addImm(Pred).addReg(PredReg);
+
+      if (!isPIC_GA) {
+        LO16.addImm(Pred).addReg(PredReg);
+        HI16.addImm(Pred).addReg(PredReg);
+      }
       TransferImpOps(MI, LO16, HI16);
       MI.eraseFromParent();
       break;

@@ -1696,7 +1696,10 @@ def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm_hilo16:$imm), IIC_iMOVi,
   let Inst{7-0}   = imm{7-0};
 }
 
-let Constraints = "$src = $Rd" in
+def t2MOVi16_pic_ga : PseudoInst<(outs rGPR:$Rd),
+                                (ins i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
+
+let Constraints = "$src = $Rd" in {
 def t2MOVTi16 : T2I<(outs rGPR:$Rd),
                     (ins rGPR:$src, i32imm_hilo16:$imm), IIC_iMOVi,
                     "movt", "\t$Rd, $imm",
@@ -1717,6 +1720,10 @@ def t2MOVTi16 : T2I<(outs rGPR:$Rd),
   let Inst{14-12} = imm{10-8};
   let Inst{7-0}   = imm{7-0};
 }
+
+def t2MOVTi16_pic_ga : PseudoInst<(outs rGPR:$Rd),
+                     (ins rGPR:$src, i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
+} // Constraints
 
 def : T2Pat<(or rGPR:$src, 0xffff0000), (t2MOVTi16 rGPR:$src, 0xffff)>;
 
@@ -3209,10 +3216,16 @@ def t2RFEIA  : T2RFE<0b111010011001,
 // 32-bit immediate using movw + movt.
 // This is a single pseudo instruction to make it re-materializable.
 // FIXME: Remove this when we can do generalized remat.
-let isReMaterializable = 1, isMoveImm = 1 in
+let isReMaterializable = 1, isMoveImm = 1 in {
 def t2MOVi32imm : PseudoInst<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                             [(set rGPR:$dst, (i32 imm:$src))]>,
                             Requires<[IsThumb, HasV6T2]>;
+
+def t2MOV_pic_ga : PseudoInst<(outs rGPR:$dst),
+                              (ins i32imm:$addr, pclabel:$id), IIC_iMOVix2,
+                 [(set rGPR:$dst, (ARMWrapperPIC tglobaladdr:$addr, imm:$id))]>,
+                 Requires<[IsThumb2, UseMovt]>;
+} // isReMaterializable = 1, isMoveImm = 1 in
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>,

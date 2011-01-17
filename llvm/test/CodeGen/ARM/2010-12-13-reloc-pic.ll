@@ -1,4 +1,4 @@
-; RUN: llc  %s -mtriple=armv7-linux-gnueabi -arm-use-movt -relocation-model=pic -filetype=obj -o - | \
+; RUN: llc  %s -mtriple=armv7-linux-gnueabi -relocation-model=pic -filetype=obj -o - | \
 ; RUN:    elf-dump --dump-section-data | FileCheck  -check-prefix=PIC01 %s
 
 ;; FIXME: Reduce this test further, or even better,

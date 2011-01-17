@@ -561,8 +561,14 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   case ARMII::Size2Bytes: return 2;          // Thumb1 instruction.
   case ARMII::SizeSpecial: {
     switch (Opc) {
+    case ARM::MOVi16_pic_ga:
+    case ARM::MOVTi16_pic_ga:
+    case ARM::t2MOVi16_pic_ga:
+    case ARM::t2MOVTi16_pic_ga:
+      return 4;
     case ARM::MOVi32imm:
     case ARM::t2MOVi32imm:
+    case ARM::MOV_pic_ga:
       return 8;
     case ARM::CONSTPOOL_ENTRY:
       // If this machine instr is a constant pool entry, its size is recorded as
@@ -977,7 +983,7 @@ static unsigned duplicateCPV(MachineFunction &MF, unsigned &CPI) {
   ARMConstantPoolValue *ACPV =
     static_cast<ARMConstantPoolValue*>(MCPE.Val.MachineCPVal);
 
-  unsigned PCLabelId = AFI->createConstPoolEntryUId();
+  unsigned PCLabelId = AFI->createPICLabelUId();
   ARMConstantPoolValue *NewCPV = 0;
   // FIXME: The below assumes PIC relocation model and that the function
   // is Thumb mode (t1 or t2). PCAdjustment would be 8 for ARM mode PIC, and

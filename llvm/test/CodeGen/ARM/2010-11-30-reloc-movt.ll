@@ -1,4 +1,4 @@
-; RUN: llc  %s -mtriple=armv7-linux-gnueabi -arm-use-movt -filetype=obj -o - | \
+; RUN: llc  %s -mtriple=armv7-linux-gnueabi -filetype=obj -o - | \
 ; RUN:    elf-dump --dump-section-data | FileCheck  -check-prefix=OBJ %s
 
 target triple = "armv7-none-linux-gnueabi"

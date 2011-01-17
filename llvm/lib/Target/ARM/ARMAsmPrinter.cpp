@@ -20,6 +20,7 @@
 #include "ARMBaseRegisterInfo.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMMachineFunctionInfo.h"
+#include "ARMMCExpr.h"
 #include "ARMTargetMachine.h"
 #include "ARMTargetObjectFile.h"
 #include "InstPrinter/ARMInstPrinter.h"
@@ -537,6 +538,25 @@ getModifierVariantKind(ARMCP::ARMCPModifier Modifier) {
   return MCSymbolRefExpr::VK_None;
 }
 
+MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV) {
+  bool isIndirect = Subtarget->isTargetDarwin() &&
+    Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
+  if (!isIndirect)
+    return Mang->getSymbol(GV);
+
+  // FIXME: Remove this when Darwin transition to @GOT like syntax.
+  MCSymbol *MCSym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+  MachineModuleInfoMachO &MMIMachO =
+    MMI->getObjFileInfo<MachineModuleInfoMachO>();
+  MachineModuleInfoImpl::StubValueTy &StubSym =
+    GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(MCSym) :
+    MMIMachO.getGVStubEntry(MCSym);
+  if (StubSym.getPointer() == 0)
+    StubSym = MachineModuleInfoImpl::
+      StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
+  return MCSym;
+}
+
 void ARMAsmPrinter::
 EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   int Size = TM.getTargetData()->getTypeAllocSize(MCPV->getType());
@@ -553,23 +573,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
     MCSym = GetBlockAddressSymbol(ACPV->getBlockAddress());
   } else if (ACPV->isGlobalValue()) {
     const GlobalValue *GV = ACPV->getGV();
-    bool isIndirect = Subtarget->isTargetDarwin() &&
-      Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
-    if (!isIndirect)
-      MCSym = Mang->getSymbol(GV);
-    else {
-      // FIXME: Remove this when Darwin transition to @GOT like syntax.
-      MCSym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-
-      MachineModuleInfoMachO &MMIMachO =
-        MMI->getObjFileInfo<MachineModuleInfoMachO>();
-      MachineModuleInfoImpl::StubValueTy &StubSym =
-        GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(MCSym) :
-        MMIMachO.getGVStubEntry(MCSym);
-      if (StubSym.getPointer() == 0)
-        StubSym = MachineModuleInfoImpl::
-          StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
-    }
+    MCSym = GetARMGVSymbol(GV);
   } else {
     assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
     MCSym = GetExternalSymbolSymbol(ACPV->getSymbol());
@@ -737,7 +741,8 @@ void ARMAsmPrinter::EmitPatchedInstruction(const MachineInstr *MI,
 }
 
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  switch (MI->getOpcode()) {
+  unsigned Opc = MI->getOpcode();
+  switch (Opc) {
   default: break;
   case ARM::t2ADDrSPi:
   case ARM::t2ADDrSPi12:
@@ -856,6 +861,61 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       TmpInst.addOperand(MCOperand::CreateReg(0));
       OutStreamer.EmitInstruction(TmpInst);
     }
+    return;
+  }
+  case ARM::MOVi16_pic_ga:
+  case ARM::t2MOVi16_pic_ga: {
+    MCInst TmpInst;
+    TmpInst.setOpcode(Opc == ARM::MOVi16_pic_ga ? ARM::MOVi16 : ARM::t2MOVi16);
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+
+    const GlobalValue *GV = MI->getOperand(1).getGlobal();
+    MCSymbol *GVSym = GetARMGVSymbol(GV);
+    const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
+    MCSymbol *LabelSym = getPICLabel(MAI->getPrivateGlobalPrefix(),
+                                getFunctionNumber(), MI->getOperand(2).getImm(),
+                                     OutContext);
+    const MCExpr *LabelSymExpr = MCSymbolRefExpr::Create(LabelSym, OutContext);
+    const MCExpr *PCRelExpr =
+      ARMMCExpr::CreateLower16(MCBinaryExpr::CreateSub(GVSymExpr,
+                                      MCBinaryExpr::CreateAdd(LabelSymExpr,
+                                        MCConstantExpr::Create(4, OutContext),
+                                          OutContext), OutContext), OutContext);
+    TmpInst.addOperand(MCOperand::CreateExpr(PCRelExpr));
+    // Add predicate operands.
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    // Add 's' bit operand (always reg0 for this)
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
+  case ARM::MOVTi16_pic_ga:
+  case ARM::t2MOVTi16_pic_ga: {
+    MCInst TmpInst;
+    TmpInst.setOpcode(Opc==ARM::MOVTi16_pic_ga ? ARM::MOVTi16 : ARM::t2MOVTi16);
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
+
+    const GlobalValue *GV = MI->getOperand(2).getGlobal();
+    MCSymbol *GVSym = GetARMGVSymbol(GV);
+    const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
+    MCSymbol *LabelSym = getPICLabel(MAI->getPrivateGlobalPrefix(),
+                                getFunctionNumber(), MI->getOperand(3).getImm(),
+                                     OutContext);
+    const MCExpr *LabelSymExpr = MCSymbolRefExpr::Create(LabelSym, OutContext);
+    const MCExpr *PCRelExpr =
+      ARMMCExpr::CreateUpper16(MCBinaryExpr::CreateSub(GVSymExpr,
+                                      MCBinaryExpr::CreateAdd(LabelSymExpr,
+                                        MCConstantExpr::Create(4, OutContext),
+                                          OutContext), OutContext), OutContext);
+    TmpInst.addOperand(MCOperand::CreateExpr(PCRelExpr));
+    // Add predicate operands.
+    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    // Add 's' bit operand (always reg0 for this)
+    TmpInst.addOperand(MCOperand::CreateReg(0));
+    OutStreamer.EmitInstruction(TmpInst);
     return;
   }
   case ARM::tPICADD: {

@@ -185,6 +185,18 @@ namespace ARMII {
     /// higher 16 bit of the address. Used only via movt instruction.
     MO_HI16,
 
+    /// MO_LO16_NONLAZY_PIC - On a symbol operand "FOO", this represents a
+    /// relocation containing lower 16 bit of the PC relative address of the
+    /// non-lazy-ptr indirect symbol, i.e. "FOO$non_lazy_ptr - LABEL".
+    /// Used only via movw instruction.
+    MO_LO16_NONLAZY_PIC,
+
+    /// MO_HI16_NONLAZY_PIC - On a symbol operand "FOO", this represents a
+    /// relocation containing lower 16 bit of the PC relative address of the
+    /// non-lazy-ptr indirect symbol, i.e. "FOO$non_lazy_ptr - LABEL".
+    /// Used only via movt instruction.
+    MO_HI16_NONLAZY_PIC,
+
     /// MO_PLT - On a symbol operand, this represents an ELF PLT reference on a
     /// call operand.
     MO_PLT

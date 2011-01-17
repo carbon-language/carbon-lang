@@ -87,7 +87,7 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   ///
   unsigned JumpTableUId;
 
-  unsigned ConstPoolEntryUId;
+  unsigned PICLabelUId;
 
   /// VarArgsFrameIndex - FrameIndex for start of varargs area.
   int VarArgsFrameIndex;
@@ -104,8 +104,8 @@ public:
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
     GPRCS1Frames(0), GPRCS2Frames(0), DPRCSFrames(0),
-    JumpTableUId(0), ConstPoolEntryUId(0), VarArgsFrameIndex(0),
-    HasITBlocks(false) {}
+    JumpTableUId(0), PICLabelUId(0),
+    VarArgsFrameIndex(0), HasITBlocks(false) {}
 
   explicit ARMFunctionInfo(MachineFunction &MF) :
     isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
@@ -116,8 +116,8 @@ public:
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
     GPRCS1Frames(32), GPRCS2Frames(32), DPRCSFrames(32),
     SpilledCSRegs(MF.getTarget().getRegisterInfo()->getNumRegs()),
-    JumpTableUId(0), ConstPoolEntryUId(0), VarArgsFrameIndex(0),
-    HasITBlocks(false) {}
+    JumpTableUId(0), PICLabelUId(0),
+    VarArgsFrameIndex(0), HasITBlocks(false) {}
 
   bool isThumbFunction() const { return isThumb; }
   bool isThumb1OnlyFunction() const { return isThumb && !hasThumb2; }
@@ -227,16 +227,16 @@ public:
     return JumpTableUId;
   }
 
-  void initConstPoolEntryUId(unsigned UId) {
-    ConstPoolEntryUId = UId;
+  void initPICLabelUId(unsigned UId) {
+    PICLabelUId = UId;
   }
 
-  unsigned getNumConstPoolEntries() const {
-    return ConstPoolEntryUId;
+  unsigned getNumPICLabels() const {
+    return PICLabelUId;
   }
 
-  unsigned createConstPoolEntryUId() {
-    return ConstPoolEntryUId++;
+  unsigned createPICLabelUId() {
+    return PICLabelUId++;
   }
 
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
