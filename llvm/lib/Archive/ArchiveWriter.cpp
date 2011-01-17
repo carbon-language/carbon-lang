@@ -364,8 +364,9 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
   // Create a temporary file to store the archive in
   SmallString<128> TempArchivePath;
   int ArchFD;
-  if (error_code ec = sys::fs::unique_file("%%-%%-%%-%%" + archPath.str(),
-                                                 ArchFD, TempArchivePath)) {
+  if (error_code ec =
+      sys::fs::unique_file("%%-%%-%%-%%-" + sys::path::filename(archPath.str()),
+                           ArchFD, TempArchivePath)) {
     if (ErrMsg) *ErrMsg = ec.message();
     return true;
   }
@@ -421,8 +422,9 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
 
     // Open another temporary file in order to avoid invalidating the
     // mmapped data
-    if (error_code ec = sys::fs::unique_file("%%-%%-%%-%%" + archPath.str(),
-                                      ArchFD, TempArchiveWithSymbolTablePath)) {
+    if (error_code ec =
+      sys::fs::unique_file("%%-%%-%%-%%-" + sys::path::filename(archPath.str()),
+                           ArchFD, TempArchiveWithSymbolTablePath)) {
       if (ErrMsg) *ErrMsg = ec.message();
       return true;
     }
