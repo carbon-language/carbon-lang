@@ -129,6 +129,7 @@ def t2addrmode_imm12 : Operand<i32>,
   let PrintMethod = "printAddrModeImm12Operand";
   let EncoderMethod = "getAddrModeImm12OpValue";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+  let ParserMatchClass = MemMode5AsmOperand;
 }
 
 // ADR instruction labels.
@@ -143,6 +144,7 @@ def t2addrmode_imm8 : Operand<i32>,
   let PrintMethod = "printT2AddrModeImm8Operand";
   let EncoderMethod = "getT2AddrModeImm8OpValue";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+  let ParserMatchClass = MemMode5AsmOperand;
 }
 
 def t2am_imm8_offset : Operand<i32>,
@@ -150,6 +152,7 @@ def t2am_imm8_offset : Operand<i32>,
                                       [], [SDNPWantRoot]> {
   let PrintMethod = "printT2AddrModeImm8OffsetOperand";
   let EncoderMethod = "getT2AddrModeImm8OffsetOpValue";
+  let ParserMatchClass = MemMode5AsmOperand;
 }
 
 // t2addrmode_imm8s4  := reg +/- (imm8 << 2)
@@ -157,6 +160,7 @@ def t2addrmode_imm8s4 : Operand<i32> {
   let PrintMethod = "printT2AddrModeImm8s4Operand";
   let EncoderMethod = "getT2AddrModeImm8s4OpValue";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+  let ParserMatchClass = MemMode5AsmOperand;
 }
 
 def t2am_imm8s4_offset : Operand<i32> {
@@ -169,6 +173,7 @@ def t2addrmode_so_reg : Operand<i32>,
   let PrintMethod = "printT2AddrModeSoRegOperand";
   let EncoderMethod = "getT2AddrModeSORegOpValue";
   let MIOperandInfo = (ops GPR:$base, rGPR:$offsreg, i32imm:$offsimm);
+  let ParserMatchClass = MemMode5AsmOperand;
 }
 
 
