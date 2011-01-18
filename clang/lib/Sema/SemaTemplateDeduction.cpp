@@ -476,6 +476,7 @@ static bool IsPossiblyOpaquelyQualifiedType(QualType T) {
   case Type::DependentName:
   case Type::Decltype:
   case Type::UnresolvedUsing:
+  case Type::TemplateTypeParm:
     return true;
 
   case Type::ConstantArray:
@@ -876,7 +877,7 @@ DeduceTemplateArguments(Sema &S,
       Qualifiers Quals;
       QualType UnqualParam = S.Context.getUnqualifiedArrayType(Param, Quals);
       Quals.setCVRQualifiers(Quals.getCVRQualifiers() &
-                             Arg.getCVRQualifiersThroughArrayTypes());
+                             Arg.getCVRQualifiers());
       Param = S.Context.getQualifiedType(UnqualParam, Quals);
     }
   }

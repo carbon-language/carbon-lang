@@ -2626,30 +2626,50 @@ CanQualType ASTContext::getCanonicalType(QualType T) const {
                                                      VAT->getBracketsRange()));
 }
 
-QualType ASTContext::getUnqualifiedArrayType(QualType T,
-                                             Qualifiers &Quals) {
-  Quals = T.getQualifiers();
-  const ArrayType *AT = getAsArrayType(T);
+QualType ASTContext::getUnqualifiedArrayType(QualType type,
+                                             Qualifiers &quals) {
+  SplitQualType splitType = type.getSplitUnqualifiedType();
+
+  // FIXME: getSplitUnqualifiedType() actually walks all the way to
+  // the unqualified desugared type and then drops it on the floor.
+  // We then have to strip that sugar back off with
+  // getUnqualifiedDesugaredType(), which is silly.
+  const ArrayType *AT =
+    dyn_cast<ArrayType>(splitType.first->getUnqualifiedDesugaredType());
+
+  // If we don't have an array, just use the results in splitType.
   if (!AT) {
-    return T.getUnqualifiedType();
+    quals = splitType.second;
+    return QualType(splitType.first, 0);
   }
 
-  QualType Elt = AT->getElementType();
-  QualType UnqualElt = getUnqualifiedArrayType(Elt, Quals);
-  if (Elt == UnqualElt)
-    return T;
+  // Otherwise, recurse on the array's element type.
+  QualType elementType = AT->getElementType();
+  QualType unqualElementType = getUnqualifiedArrayType(elementType, quals);
+
+  // If that didn't change the element type, AT has no qualifiers, so we
+  // can just use the results in splitType.
+  if (elementType == unqualElementType) {
+    assert(quals.empty()); // from the recursive call
+    quals = splitType.second;
+    return QualType(splitType.first, 0);
+  }
+
+  // Otherwise, add in the qualifiers from the outermost type, then
+  // build the type back up.
+  quals.addConsistentQualifiers(splitType.second);
 
   if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
-    return getConstantArrayType(UnqualElt, CAT->getSize(),
+    return getConstantArrayType(unqualElementType, CAT->getSize(),
                                 CAT->getSizeModifier(), 0);
   }
 
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
-    return getIncompleteArrayType(UnqualElt, IAT->getSizeModifier(), 0);
+    return getIncompleteArrayType(unqualElementType, IAT->getSizeModifier(), 0);
   }
 
   if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(AT)) {
-    return getVariableArrayType(UnqualElt,
+    return getVariableArrayType(unqualElementType,
                                 VAT->getSizeExpr(),
                                 VAT->getSizeModifier(),
                                 VAT->getIndexTypeCVRQualifiers(),
@@ -2657,7 +2677,7 @@ QualType ASTContext::getUnqualifiedArrayType(QualType T,
   }
 
   const DependentSizedArrayType *DSAT = cast<DependentSizedArrayType>(AT);
-  return getDependentSizedArrayType(UnqualElt, DSAT->getSizeExpr(),
+  return getDependentSizedArrayType(unqualElementType, DSAT->getSizeExpr(),
                                     DSAT->getSizeModifier(), 0,
                                     SourceRange());
 }

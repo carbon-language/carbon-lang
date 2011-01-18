@@ -150,44 +150,6 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
     ->getElementType().getTypePtr();
 }
 
-/// \brief Retrieve the unqualified variant of the given type, removing as
-/// little sugar as possible.
-///
-/// This routine looks through various kinds of sugar to find the 
-/// least-desuraged type that is unqualified. For example, given:
-///
-/// \code
-/// typedef int Integer;
-/// typedef const Integer CInteger;
-/// typedef CInteger DifferenceType;
-/// \endcode
-///
-/// Executing \c getUnqualifiedTypeSlow() on the type \c DifferenceType will
-/// desugar until we hit the type \c Integer, which has no qualifiers on it.
-QualType QualType::getUnqualifiedTypeSlow() const {
-  QualType Cur = *this;
-  while (true) {
-    if (!Cur.hasQualifiers())
-      return Cur;
-    
-    const Type *CurTy = Cur.getTypePtr();
-    switch (CurTy->getTypeClass()) {
-#define ABSTRACT_TYPE(Class, Parent)
-#define TYPE(Class, Parent)                                  \
-    case Type::Class: {                                      \
-      const Class##Type *Ty = cast<Class##Type>(CurTy);      \
-      if (!Ty->isSugared())                                  \
-        return Cur.getLocalUnqualifiedType();                \
-      Cur = Ty->desugar();                                   \
-      break;                                                 \
-    }
-#include "clang/AST/TypeNodes.def"
-    }
-  }
-  
-  return Cur.getUnqualifiedType();
-}
-
 /// getDesugaredType - Return the specified type with any "sugar" removed from
 /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
 /// the type is already concrete, it returns it unmodified.  This is similar
@@ -220,7 +182,47 @@ SplitQualType QualType::getSplitDesugaredType(QualType T) {
   }
 }
 
+SplitQualType QualType::getSplitUnqualifiedTypeImpl(QualType type) {
+  SplitQualType split = type.split();
+
+  // All the qualifiers we've seen so far.
+  Qualifiers quals = split.second;
+
+  // The last type node we saw with any nodes inside it.
+  const Type *lastTypeWithQuals = split.first;
+
+  while (true) {
+    QualType next;
+
+    // Do a single-step desugar, aborting the loop if the type isn't
+    // sugared.
+    switch (split.first->getTypeClass()) {
+#define ABSTRACT_TYPE(Class, Parent)
+#define TYPE(Class, Parent) \
+    case Type::Class: { \
+      const Class##Type *ty = cast<Class##Type>(split.first); \
+      if (!ty->isSugared()) goto done; \
+      next = ty->desugar(); \
+      break; \
+    }
+#include "clang/AST/TypeNodes.def"
+    }
+
+    // Otherwise, split the underlying type.  If that yields qualifiers,
+    // update the information.
+    split = next.split();
+    if (!split.second.empty()) {
+      lastTypeWithQuals = split.first;
+      quals.addConsistentQualifiers(split.second);
+    }
+  }
+
+ done:
+  return SplitQualType(lastTypeWithQuals, quals);
+}
+
 QualType QualType::IgnoreParens(QualType T) {
+  // FIXME: this seems inherently un-qualifiers-safe.
   while (const ParenType *PT = T->getAs<ParenType>())
     T = PT->getInnerType();
   return T;

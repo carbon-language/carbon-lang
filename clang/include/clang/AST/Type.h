@@ -272,6 +272,25 @@ public:
     }
   }
 
+  /// \brief Add the qualifiers from the given set to this set, given that
+  /// they don't conflict.
+  void addConsistentQualifiers(Qualifiers qs) {
+    assert(getAddressSpace() == qs.getAddressSpace() ||
+           !hasAddressSpace() || !qs.hasAddressSpace());
+    assert(getObjCGCAttr() == qs.getObjCGCAttr() ||
+           !hasObjCGCAttr() || !qs.hasObjCGCAttr());
+    Mask |= qs.Mask;
+  }
+
+  /// \brief Determines if these qualifiers compatibly include another set.
+  /// Generally this answers the question of whether an object with the other
+  /// qualifiers can be safely used as an object with these qualifiers.
+  bool compatiblyIncludes(Qualifiers other) const {
+    // Non-CVR qualifiers must match exactly.  CVR qualifiers may subset.
+    return ((Mask & ~CVRMask) == (other.Mask & ~CVRMask)) &&
+           (((Mask & CVRMask) | (other.Mask & CVRMask)) == (Mask & CVRMask));
+  }
+
   bool isSupersetOf(Qualifiers Other) const;
 
   bool operator==(Qualifiers Other) const { return Mask == Other.Mask; }
@@ -442,8 +461,6 @@ class QualType {
     return Value.getPointer().get<const Type*>();
   }
 
-  QualType getUnqualifiedTypeSlow() const;
-  
   friend class QualifierCollector;
 public:
   QualType() {}
@@ -588,11 +605,6 @@ public:
   /// applied to this type.
   unsigned getCVRQualifiers() const;
 
-  /// \brief Retrieve the set of CVR (const-volatile-restrict) qualifiers
-  /// applied to this type, looking through any number of unqualified array
-  /// types to their element types' qualifiers.
-  unsigned getCVRQualifiersThroughArrayTypes() const;
-
   bool isConstant(ASTContext& Ctx) const {
     return QualType::isConstant(*this, Ctx);
   }
@@ -651,15 +663,36 @@ public:
   /// through typedefs.
   QualType getLocalUnqualifiedType() const { return QualType(getTypePtr(), 0); }
 
-  /// \brief Return the unqualified form of the given type, which might be
-  /// desugared to eliminate qualifiers introduced via typedefs.
-  QualType getUnqualifiedType() const {
-    QualType T = getLocalUnqualifiedType();
-    if (!T.hasQualifiers())
-      return T;
-    
-    return getUnqualifiedTypeSlow();
-  }
+  /// \brief Retrieve the unqualified variant of the given type,
+  /// removing as little sugar as possible.
+  ///
+  /// This routine looks through various kinds of sugar to find the
+  /// least-desugared type that is unqualified. For example, given:
+  ///
+  /// \code
+  /// typedef int Integer;
+  /// typedef const Integer CInteger;
+  /// typedef CInteger DifferenceType;
+  /// \endcode
+  ///
+  /// Executing \c getUnqualifiedType() on the type \c DifferenceType will
+  /// desugar until we hit the type \c Integer, which has no qualifiers on it.
+  ///
+  /// The resulting type might still be qualified if it's an array
+  /// type.  To strip qualifiers even from within an array type, use
+  /// ASTContext::getUnqualifiedArrayType.
+  inline QualType getUnqualifiedType() const;
+
+  /// getSplitUnqualifiedType - Retrieve the unqualified variant of the
+  /// given type, removing as little sugar as possible.
+  ///
+  /// Like getUnqualifiedType(), but also returns the set of
+  /// qualifiers that were built up.
+  ///
+  /// The resulting type might still be qualified if it's an array
+  /// type.  To strip qualifiers even from within an array type, use
+  /// ASTContext::getUnqualifiedArrayType.
+  inline SplitQualType getSplitUnqualifiedType() const;
   
   bool isMoreQualifiedThan(QualType Other) const;
   bool isAtLeastAsQualifiedAs(QualType Other) const;
@@ -762,6 +795,7 @@ private:
   static bool isConstant(QualType T, ASTContext& Ctx);
   static QualType getDesugaredType(QualType T, const ASTContext &Context);
   static SplitQualType getSplitDesugaredType(QualType T);
+  static SplitQualType getSplitUnqualifiedTypeImpl(QualType type);
   static QualType IgnoreParens(QualType T);
 };
 
@@ -3826,30 +3860,46 @@ inline bool QualType::hasQualifiers() const {
   return hasLocalQualifiers() ||
                   getTypePtr()->getCanonicalTypeInternal().hasLocalQualifiers();
 }
-  
-inline Qualifiers QualType::getQualifiers() const {
-  Qualifiers Quals = getLocalQualifiers();
-  Quals.addQualifiers(
-                 getTypePtr()->getCanonicalTypeInternal().getLocalQualifiers());
-  return Quals;
-}
-  
-inline unsigned QualType::getCVRQualifiers() const {
-  return getLocalCVRQualifiers() | 
-              getTypePtr()->getCanonicalTypeInternal().getLocalCVRQualifiers();
+
+inline QualType QualType::getUnqualifiedType() const {
+  if (!getTypePtr()->getCanonicalTypeInternal().hasLocalQualifiers())
+    return QualType(getTypePtr(), 0);
+
+  return QualType(getSplitUnqualifiedTypeImpl(*this).first, 0);
 }
 
-/// getCVRQualifiersThroughArrayTypes - If there are CVR qualifiers for this
-/// type, returns them. Otherwise, if this is an array type, recurses
-/// on the element type until some qualifiers have been found or a non-array
-/// type reached.
-inline unsigned QualType::getCVRQualifiersThroughArrayTypes() const {
-  if (unsigned Quals = getCVRQualifiers())
-    return Quals;
-  QualType CT = getTypePtr()->getCanonicalTypeInternal();
-  if (const ArrayType *AT = dyn_cast<ArrayType>(CT))
-    return AT->getElementType().getCVRQualifiersThroughArrayTypes();
-  return 0;
+inline SplitQualType QualType::getSplitUnqualifiedType() const {
+  if (!getTypePtr()->getCanonicalTypeInternal().hasLocalQualifiers())
+    return split();
+
+  return getSplitUnqualifiedTypeImpl(*this);
+}
+  
+inline Qualifiers QualType::getQualifiers() const {
+  // Split this type and collect the local qualifiers.
+  SplitQualType splitNonCanon = split();
+  Qualifiers quals = splitNonCanon.second;
+
+  // Now split the canonical type and collect the local qualifiers there.
+  SplitQualType splitCanon = splitNonCanon.first->getCanonicalTypeInternal().split();
+  quals.addConsistentQualifiers(splitCanon.second);
+
+  // If the canonical type is an array, recurse on its element type.
+  if (const ArrayType *array = dyn_cast<ArrayType>(splitCanon.first))
+    quals.addConsistentQualifiers(array->getElementType().getQualifiers());
+
+  return quals;
+}
+
+inline unsigned QualType::getCVRQualifiers() const {
+  // This is basically getQualifiers() but optimized to avoid split();
+  // there should be exactly one conditional branch in this function.
+  unsigned cvr = getLocalCVRQualifiers();
+  QualType type = getTypePtr()->getCanonicalTypeInternal();
+  cvr |= type.getLocalCVRQualifiers();
+  if (const ArrayType *array = dyn_cast<ArrayType>(type.getTypePtr()))
+    cvr |= array->getElementType().getCVRQualifiers();
+  return cvr;
 }
 
 inline void QualType::removeLocalConst() {
@@ -3937,26 +3987,18 @@ inline bool Qualifiers::isSupersetOf(Qualifiers Other) const {
 /// is more qualified than "const int", "volatile int", and
 /// "int". However, it is not more qualified than "const volatile
 /// int".
-inline bool QualType::isMoreQualifiedThan(QualType Other) const {
-  // FIXME: work on arbitrary qualifiers
-  unsigned MyQuals = this->getCVRQualifiersThroughArrayTypes();
-  unsigned OtherQuals = Other.getCVRQualifiersThroughArrayTypes();
-  if (getAddressSpace() != Other.getAddressSpace())
-    return false;
-  return MyQuals != OtherQuals && (MyQuals | OtherQuals) == MyQuals;
+inline bool QualType::isMoreQualifiedThan(QualType other) const {
+  Qualifiers myQuals = getQualifiers();
+  Qualifiers otherQuals = other.getQualifiers();
+  return (myQuals != otherQuals && myQuals.compatiblyIncludes(otherQuals));
 }
 
 /// isAtLeastAsQualifiedAs - Determine whether this type is at last
 /// as qualified as the Other type. For example, "const volatile
 /// int" is at least as qualified as "const int", "volatile int",
 /// "int", and "const volatile int".
-inline bool QualType::isAtLeastAsQualifiedAs(QualType Other) const {
-  // FIXME: work on arbitrary qualifiers
-  unsigned MyQuals = this->getCVRQualifiersThroughArrayTypes();
-  unsigned OtherQuals = Other.getCVRQualifiersThroughArrayTypes();
-  if (getAddressSpace() != Other.getAddressSpace())
-    return false;
-  return (MyQuals | OtherQuals) == MyQuals;
+inline bool QualType::isAtLeastAsQualifiedAs(QualType other) const {
+  return getQualifiers().compatiblyIncludes(other.getQualifiers());
 }
 
 /// getNonReferenceType - If Type is a reference type (e.g., const
