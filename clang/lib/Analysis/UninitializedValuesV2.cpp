@@ -242,11 +242,13 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
   for (DeclStmt::decl_iterator DI = ds->decl_begin(), DE = ds->decl_end();
        DI != DE; ++DI) {
     if (VarDecl *vd = dyn_cast<VarDecl>(*DI)) {
-      if (isTrackedVar(vd))
+      if (isTrackedVar(vd)) {
+        vals[vd] = Uninitialized;
         if (Stmt *init = vd->getInit()) {
           Visit(init);
           vals[vd] = Initialized;
         }
+      }
     }
   }
 }

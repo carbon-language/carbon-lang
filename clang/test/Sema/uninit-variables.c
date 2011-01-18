@@ -1,4 +1,4 @@
-// RUN: %clang -Wuninitialized-experimental -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only -Wuninitialized-experimental -fsyntax-only %s -verify
 
 int test1() {
   int x;
