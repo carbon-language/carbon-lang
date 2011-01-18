@@ -88,7 +88,7 @@ ThreadPlanStepRange::ShouldReportStop (Event *event_ptr)
 
     const Vote vote = IsPlanComplete() ? eVoteYes : eVoteNo;
     if (log)
-        log->Printf ("ThreadPlanStepRange::ShouldReportStop() returning vote %i\n", eVoteYes);
+        log->Printf ("ThreadPlanStepRange::ShouldReportStop() returning vote %i\n", vote);
     return vote;
 }
 
