@@ -175,8 +175,6 @@ public:
     return false;
   }
 
-  virtual void verifyAnalysis() const;
-
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
     AU.addRequired<DominatorTree>();

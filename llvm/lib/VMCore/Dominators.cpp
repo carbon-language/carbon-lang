@@ -120,17 +120,6 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_END(DominanceFrontier, "domfrontier",
                 "Dominance Frontier Construction", true, true)
 
-void DominanceFrontier::verifyAnalysis() const {
-  if (!VerifyDomInfo) return;
-
-  DominatorTree &DT = getAnalysis<DominatorTree>();
-
-  DominanceFrontier OtherDF;
-  const std::vector<BasicBlock*> &DTRoots = DT.getRoots();
-  OtherDF.calculate(DT, DT.getNode(DTRoots[0]));
-  assert(!compare(OtherDF) && "Invalid DominanceFrontier info!");
-}
-
 namespace {
   class DFCalculateWorkObject {
   public:
