@@ -156,7 +156,7 @@ typedef enum Format
     eFormatHex,
     eFormatFloat,
     eFormatOctal,
-    eFormatOSType,      // OS character codes encoded into an integer 'PICT' 'text' etc...
+    eFormatOSType,          // OS character codes encoded into an integer 'PICT' 'text' etc...
     eFormatUnicode16,
     eFormatUnicode32,
     eFormatUnsigned,
@@ -173,7 +173,7 @@ typedef enum Format
     eFormatVectorOfFloat32,
     eFormatVectorOfFloat64,
     eFormatVectorOfUInt128,
-    eFormatComplexInteger,  // Integer complex type
+    eFormatComplexInteger   // Integer complex type
 
 } Format;
 
@@ -318,7 +318,7 @@ typedef enum ValueType
     eValueTypeVariableLocal     = 4,    // function local variables
     eValueTypeRegister          = 5,    // stack frame register value
     eValueTypeRegisterSet       = 6,    // A collection of stack frame register values
-    eValueTypeConstResult       = 7,    // constant result variables
+    eValueTypeConstResult       = 7     // constant result variables
 } ValueType;
 
 //----------------------------------------------------------------------
@@ -430,7 +430,7 @@ typedef enum FunctionNameType
     eFunctionNameTypeBase       = (1u << 3),    // The function name only, no namespaces or arguments and no class 
                                                 // methods or selectors will be searched.
     eFunctionNameTypeMethod     = (1u << 4),    // Find function by method name (C++) with no namespace or arguments
-    eFunctionNameTypeSelector   = (1u << 5),    // Find function by selector name (ObjC) names
+    eFunctionNameTypeSelector   = (1u << 5)     // Find function by selector name (ObjC) names
 } FunctionNameType;
 
 
@@ -602,7 +602,7 @@ typedef enum SortOrder
 {
     eSortOrderNone,
     eSortOrderByAddress,
-    eSortOrderByName,
+    eSortOrderByName
 } SortOrder;
 
 
