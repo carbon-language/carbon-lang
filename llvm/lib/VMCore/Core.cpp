@@ -37,7 +37,6 @@ using namespace llvm;
 
 void llvm::initializeCore(PassRegistry &Registry) {
   initializeDominatorTreePass(Registry);
-  initializeDominanceFrontierPass(Registry);
   initializePrintModulePassPass(Registry);
   initializePrintFunctionPassPass(Registry);
   initializeVerifierPass(Registry);

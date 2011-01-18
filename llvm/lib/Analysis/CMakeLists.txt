@@ -12,6 +12,7 @@ add_llvm_library(LLVMAnalysis
   DbgInfoPrinter.cpp
   DebugInfo.cpp
   DIBuilder.cpp
+  DominanceFrontier.cpp
   DomPrinter.cpp
   IVUsers.cpp
   InlineCost.cpp
