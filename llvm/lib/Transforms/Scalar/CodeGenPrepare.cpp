@@ -644,8 +644,10 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
 
     // If the iterator instruction was recursively deleted, start over at the
     // start of the block.
-    if (IterHandle != CurInstIterator)
+    if (IterHandle != CurInstIterator) {
       CurInstIterator = BB->begin();
+      SunkAddrs.clear();
+    }
     return true;
   }
 
