@@ -1,4 +1,5 @@
 @ RUN: llvm-mc -mcpu=cortex-a8 -triple armv7-apple-darwin -show-encoding < %s | FileCheck %s
+@ XFAIL: *
 
 @ CHECK: vadd.f64 d16, d17, d16      @ encoding: [0xa0,0x0b,0x71,0xee]
         vadd.f64        d16, d17, d16

@@ -1475,14 +1475,42 @@ static void EmitClassifyOperand(AsmMatcherInfo &Info,
   OS << "    }\n";
   OS << "  }\n\n";
 
-  // Classify user defined operands.
+  // Classify user defined operands.  To do so, we need to perform a topological
+  // sort of the superclass relationship graph so that we always match the 
+  // narrowest type first.
+  
+  // Collect the incoming edge counts for each class.
+  std::map<ClassInfo*, unsigned> IncomingEdges;
   for (std::vector<ClassInfo*>::iterator it = Info.Classes.begin(),
          ie = Info.Classes.end(); it != ie; ++it) {
     ClassInfo &CI = **it;
 
     if (!CI.isUserClass())
       continue;
-
+    
+    for (std::vector<ClassInfo*>::iterator SI = CI.SuperClasses.begin(),
+         SE = CI.SuperClasses.end(); SI != SE; ++SI)
+      ++IncomingEdges[*SI];
+  }
+  
+  // Initialize a worklist of classes with no incoming edges.
+  std::vector<ClassInfo*> LeafClasses;
+  for (std::vector<ClassInfo*>::iterator it = Info.Classes.begin(),
+         ie = Info.Classes.end(); it != ie; ++it) {
+    if (!IncomingEdges[*it])
+      LeafClasses.push_back(*it);
+  }
+  
+  // Iteratively pop the list, process that class, and update the incoming
+  // edge counts for its super classes.  When a superclass reaches zero
+  // incoming edges, push it onto the worklist for processing.
+  while (!LeafClasses.empty()) {
+    ClassInfo &CI = *LeafClasses.back();
+    LeafClasses.pop_back();
+    
+    if (!CI.isUserClass())
+      continue;
+    
     OS << "  // '" << CI.ClassName << "' class";
     if (!CI.SuperClasses.empty()) {
       OS << ", subclass of ";
@@ -1490,6 +1518,10 @@ static void EmitClassifyOperand(AsmMatcherInfo &Info,
         if (i) OS << ", ";
         OS << "'" << CI.SuperClasses[i]->ClassName << "'";
         assert(CI < *CI.SuperClasses[i] && "Invalid class relation!");
+        
+        --IncomingEdges[CI.SuperClasses[i]];
+        if (!IncomingEdges[CI.SuperClasses[i]])
+          LeafClasses.push_back(CI.SuperClasses[i]);
       }
     }
     OS << "\n";
@@ -1502,10 +1534,11 @@ static void EmitClassifyOperand(AsmMatcherInfo &Info,
         OS << "    assert(Operand." << CI.SuperClasses[i]->PredicateMethod
            << "() && \"Invalid class relationship!\");\n";
     }
-
+    
     OS << "    return " << CI.Name << ";\n";
     OS << "  }\n\n";
   }
+  
   OS << "  return InvalidMatchClass;\n";
   OS << "}\n\n";
 }
