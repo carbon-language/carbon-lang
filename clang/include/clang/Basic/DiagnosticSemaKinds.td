@@ -738,6 +738,8 @@ def warn_no_constructor_for_refconst : Warning<
   "initialize its non-modifiable members">;
 def note_refconst_member_not_initialized : Note<
   "%select{const|reference}0 member %1 will never be initialized">;
+def ext_ms_explicit_constructor_call : ExtWarn<
+  "explicit constructor calls are a Microsoft extension">, InGroup<Microsoft>;
 
 // C++ destructors
 def err_destructor_not_member : Error<

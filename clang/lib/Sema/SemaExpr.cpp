@@ -3902,6 +3902,12 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
   if (SS.isSet() && SS.isInvalid())
     return ExprError();
 
+  // Warn about the explicit constructor calls Microsoft extension.
+  if (getLangOptions().Microsoft &&
+      Id.getKind() == UnqualifiedId::IK_ConstructorName)
+    Diag(Id.getSourceRange().getBegin(),
+         diag::ext_ms_explicit_constructor_call);
+
   TemplateArgumentListInfo TemplateArgsBuffer;
 
   // Decompose the name into its component parts.

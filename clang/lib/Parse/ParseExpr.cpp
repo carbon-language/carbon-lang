@@ -1171,11 +1171,13 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       // expression), or we didn't see a '~' in the right place. We
       // can still parse a destructor name here, but in that case it
       // names a real destructor.
+      // Allow explicit constructor calls in Microsoft mode.
+      // FIXME: Add support for explicit call of template constructor.
       UnqualifiedId Name;
       if (ParseUnqualifiedId(SS, 
                              /*EnteringContext=*/false, 
                              /*AllowDestructorName=*/true,
-                             /*AllowConstructorName=*/false, 
+                             /*AllowConstructorName=*/ getLang().Microsoft, 
                              ObjectType,
                              Name))
         LHS = ExprError();

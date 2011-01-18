@@ -93,6 +93,8 @@ static bool canDevirtualizeMemberFunctionCalls(const Expr *Base,
   return false;
 }
 
+// Note: This function also emit constructor calls to support a MSVC
+// extensions allowing explicit constructor function call.
 RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
                                               ReturnValueSlot ReturnValue) {
   if (isa<BinaryOperator>(CE->getCallee()->IgnoreParens())) 
@@ -127,25 +129,42 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
 
   if (MD->isTrivial()) {
     if (isa<CXXDestructorDecl>(MD)) return RValue::get(0);
+    if (isa<CXXConstructorDecl>(MD) && 
+        cast<CXXConstructorDecl>(MD)->isDefaultConstructor())
+      return RValue::get(0);
 
-    assert(MD->isCopyAssignmentOperator() && "unknown trivial member function");
-    // We don't like to generate the trivial copy assignment operator when
-    // it isn't necessary; just produce the proper effect here.
-    llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
-    EmitAggregateCopy(This, RHS, CE->getType());
-    return RValue::get(This);
+    if (MD->isCopyAssignmentOperator()) {
+      // We don't like to generate the trivial copy assignment operator when
+      // it isn't necessary; just produce the proper effect here.
+      llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
+      EmitAggregateCopy(This, RHS, CE->getType());
+      return RValue::get(This);
+    }
+    
+    if (isa<CXXConstructorDecl>(MD) && 
+        cast<CXXConstructorDecl>(MD)->isCopyConstructor()) {
+      llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
+      EmitSynthesizedCXXCopyCtorCall(cast<CXXConstructorDecl>(MD), This, RHS,
+                                     CE->arg_begin(), CE->arg_end());
+      return RValue::get(This);
+    }
+    llvm_unreachable("unknown trivial member function");
   }
 
   // Compute the function type we're calling.
-  const CGFunctionInfo &FInfo =
-    (isa<CXXDestructorDecl>(MD)
-     ? CGM.getTypes().getFunctionInfo(cast<CXXDestructorDecl>(MD),
-                                      Dtor_Complete)
-     : CGM.getTypes().getFunctionInfo(MD));
+  const CGFunctionInfo *FInfo = 0;
+  if (isa<CXXDestructorDecl>(MD))
+    FInfo = &CGM.getTypes().getFunctionInfo(cast<CXXDestructorDecl>(MD),
+                                           Dtor_Complete);
+  else if (isa<CXXConstructorDecl>(MD))
+    FInfo = &CGM.getTypes().getFunctionInfo(cast<CXXConstructorDecl>(MD),
+                                            Ctor_Complete);
+  else
+    FInfo = &CGM.getTypes().getFunctionInfo(MD);
 
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   const llvm::Type *Ty
-    = CGM.getTypes().GetFunctionType(FInfo, FPT->isVariadic());
+    = CGM.getTypes().GetFunctionType(*FInfo, FPT->isVariadic());
 
   // C++ [class.virtual]p12:
   //   Explicit qualification with the scope operator (5.1) suppresses the
@@ -163,6 +182,9 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     } else {
       Callee = CGM.GetAddrOfFunction(GlobalDecl(Dtor, Dtor_Complete), Ty);
     }
+  } else if (const CXXConstructorDecl *Ctor =
+               dyn_cast<CXXConstructorDecl>(MD)) {
+    Callee = CGM.GetAddrOfFunction(GlobalDecl(Ctor, Ctor_Complete), Ty);
   } else if (UseVirtualCall) {
     Callee = BuildVirtualCall(MD, This, Ty); 
   } else {

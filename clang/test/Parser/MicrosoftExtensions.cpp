@@ -85,3 +85,21 @@ void template_uuid()
    __uuidof(T);
    __uuidof(expr);
 }
+
+
+
+class CtorCall { 
+public:
+  CtorCall& operator=(const CtorCall& that);
+
+  int a;
+};
+
+CtorCall& CtorCall::operator=(const CtorCall& that)
+{
+    if (this != &that) {
+        this->CtorCall::~CtorCall();
+        this->CtorCall::CtorCall(that); // expected-warning {{explicit constructor calls are a Microsoft extension}}
+    }
+    return *this;
+}

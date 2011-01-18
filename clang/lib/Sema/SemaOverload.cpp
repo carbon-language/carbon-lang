@@ -7904,7 +7904,11 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       if (isa<UsingShadowDecl>(Func))
         Func = cast<UsingShadowDecl>(Func)->getTargetDecl();
 
-      if ((Method = dyn_cast<CXXMethodDecl>(Func))) {
+      // Microsoft supports direct constructor calls.
+      if (getLangOptions().Microsoft && isa<CXXConstructorDecl>(Func)) {
+        AddOverloadCandidate(cast<CXXConstructorDecl>(Func), I.getPair(), Args, NumArgs,
+                             CandidateSet);
+      } else if ((Method = dyn_cast<CXXMethodDecl>(Func))) {
         // If explicit template arguments were provided, we can't call a
         // non-template member function.
         if (TemplateArgs)
