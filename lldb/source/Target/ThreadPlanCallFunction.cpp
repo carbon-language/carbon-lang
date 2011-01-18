@@ -129,6 +129,13 @@ ThreadPlanCallFunction::DoTakedown ()
 }
 
 void
+ThreadPlanCallFunction::WillPop ()
+{
+    if (m_valid && !IsPlanComplete())
+        DoTakedown();
+}
+
+void
 ThreadPlanCallFunction::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     if (level == lldb::eDescriptionLevelBrief)

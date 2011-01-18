@@ -69,6 +69,9 @@ public:
     {
         return true;
     }
+    
+    virtual void
+    WillPop ();
 
 protected:
 private:
