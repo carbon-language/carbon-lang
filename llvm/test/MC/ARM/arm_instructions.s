@@ -133,3 +133,5 @@
 
 @ CHECK: isb @ encoding: [0x6f,0xf0,0x7f,0xf5]
         isb
+@ CHECK: mrs  r8, cpsr @ encoding: [0x00,0x80,0x0f,0xe1]
+        mrs  r8, cpsr

@@ -166,4 +166,5 @@
   bfi  r0, r0, #5, #7
 @ CHECK: isb @ encoding: [0xbf,0xf3,0x6f,0x8f]
   isb
-
+@ CHECK: mrs  r0, cpsr @ encoding: [0xef,0xf3,0x00,0x80]
+  mrs  r0, cpsr

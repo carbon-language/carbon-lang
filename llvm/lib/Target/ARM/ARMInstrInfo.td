@@ -3827,15 +3827,19 @@ def MRRC2 : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc,
 // Move between special register and ARM core register -- for disassembly only
 //
 
-def MRS : ABI<0b0001,(outs GPR:$dst),(ins), NoItinerary, "mrs", "\t$dst, cpsr",
+def MRS : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, cpsr",
               [/* For disassembly only; pattern left blank */]> {
-  let Inst{23-20} = 0b0000;
+  bits<4> Rd;
+  let Inst{23-16} = 0b00001111;
+  let Inst{15-12} = Rd;
   let Inst{7-4} = 0b0000;
 }
 
-def MRSsys : ABI<0b0001,(outs GPR:$dst),(ins), NoItinerary,"mrs","\t$dst, spsr",
+def MRSsys : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary,"mrs","\t$Rd, spsr",
               [/* For disassembly only; pattern left blank */]> {
-  let Inst{23-20} = 0b0100;
+  bits<4> Rd;
+  let Inst{23-16} = 0b01001111;
+  let Inst{15-12} = Rd;
   let Inst{7-4} = 0b0000;
 }
 

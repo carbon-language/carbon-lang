@@ -3290,6 +3290,7 @@ class T2MRS<bits<12> op31_20, bits<2> op15_14, bits<1> op12,
   : T2SpecialReg<op31_20, op15_14, op12, oops, iops, itin, opc, asm, pattern> {
   bits<4> Rd;
   let Inst{11-8} = Rd;
+  let Inst{19-16} = 0b1111;
 }
 
 def t2MRS : T2MRS<0b111100111110, 0b10, 0,
