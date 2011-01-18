@@ -2295,3 +2295,23 @@ avoids partial register stalls in some important cases.
 
 //===---------------------------------------------------------------------===//
 
+We miss an optzn when lowering divide by some constants.  For example:
+  int test(int x) { return x/10; }
+
+We produce:
+
+_test:                                  ## @test
+## BB#0:                                ## %entry
+	movslq	%edi, %rax
+	imulq	$1717986919, %rax, %rax ## imm = 0x66666667
+	movq	%rax, %rcx
+	shrq	$63, %rcx
+**	shrq	$32, %rax
+**      sarl	$2, %eax
+	addl	%ecx, %eax
+	ret
+
+The two starred instructions could be replaced with a "sarl $34, %rax".  This
+occurs in 186.crafty very frequently.
+
+//===---------------------------------------------------------------------===//
