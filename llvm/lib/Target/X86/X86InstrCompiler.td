@@ -283,7 +283,7 @@ def TLS_addr64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
 // For i386, the address of the thunk is passed on the stack, on return the
 // address of the variable is in %eax.  %ecx is trashed during the function
 // call.  All other registers are preserved.
-let Defs = [EAX, ECX],
+let Defs = [EAX, ECX, EFLAGS],
     Uses = [ESP],
     usesCustomInserter = 1 in
 def TLSCall_32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
@@ -293,7 +293,7 @@ def TLSCall_32 : I<0, Pseudo, (outs), (ins i32mem:$sym),
 
 // For x86_64, the address of the thunk is passed in %rdi, on return
 // the address of the variable is in %rax.  All other registers are preserved.
-let Defs = [RAX],
+let Defs = [RAX, EFLAGS],
     Uses = [RSP, RDI],
     usesCustomInserter = 1 in
 def TLSCall_64 : I<0, Pseudo, (outs), (ins i64mem:$sym),
