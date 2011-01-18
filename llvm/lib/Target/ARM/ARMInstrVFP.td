@@ -870,38 +870,19 @@ def VNEGScc  : ASuI<0b11101, 0b11, 0b0001, 0b01, 0,
 } // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
-// Misc.
+// Move from VFP System Register to ARM core register.
 //
 
-// APSR is the application level alias of CPSR. This FPSCR N, Z, C, V flags
-// to APSR.
-let Defs = [CPSR], Uses = [FPSCR] in
-def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT,
-                   "vmrs", "\tapsr_nzcv, fpscr",
-                   [(arm_fmstat)]> {
-  let Inst{27-20} = 0b11101111;
-  let Inst{19-16} = 0b0001;
-  let Inst{15-12} = 0b1111;
-  let Inst{11-8}  = 0b1010;
-  let Inst{7}     = 0;
-  let Inst{6-5}   = 0b00;
-  let Inst{4}     = 1;
-  let Inst{3-0}   = 0b0000;
-}
+class MovFromVFP<bits<4> opc19_16, dag oops, dag iops, string opc, string asm,
+                 list<dag> pattern>:
+  VFPAI<oops, iops, VFPMiscFrm, IIC_fpSTAT, opc, asm, pattern> {
 
-// FPSCR <-> GPR
-let hasSideEffects = 1, Uses = [FPSCR] in
-def VMRS : VFPAI<(outs GPR:$Rt), (ins), VFPMiscFrm, IIC_fpSTAT,
-                 "vmrs", "\t$Rt, fpscr",
-                 [(set GPR:$Rt, (int_arm_get_fpscr))]> {
   // Instruction operand.
   bits<4> Rt;
 
-  // Encode instruction operand.
-  let Inst{15-12} = Rt;
-
   let Inst{27-20} = 0b11101111;
-  let Inst{19-16} = 0b0001;
+  let Inst{19-16} = opc19_16;
+  let Inst{15-12} = Rt;
   let Inst{11-8}  = 0b1010;
   let Inst{7}     = 0;
   let Inst{6-5}   = 0b00;
@@ -909,10 +890,34 @@ def VMRS : VFPAI<(outs GPR:$Rt), (ins), VFPMiscFrm, IIC_fpSTAT,
   let Inst{3-0}   = 0b0000;
 }
 
-let Defs = [FPSCR] in 
-def VMSR : VFPAI<(outs), (ins GPR:$src), VFPMiscFrm, IIC_fpSTAT, 
-                 "vmsr", "\tfpscr, $src",
-                 [(int_arm_set_fpscr GPR:$src)]> {
+// APSR is the application level alias of CPSR. This FPSCR N, Z, C, V flags
+// to APSR.
+let Defs = [CPSR], Uses = [FPSCR], Rt = 0b1111 /* apsr_nzcv */ in
+def FMSTAT : MovFromVFP<0b0001 /* fpscr */, (outs), (ins),
+                        "vmrs", "\tapsr_nzcv, fpscr", [(arm_fmstat)]>;
+
+// Application level FPSCR -> GPR
+let hasSideEffects = 1, Uses = [FPSCR] in
+def VMRS : MovFromVFP<0b0001 /* fpscr */, (outs GPR:$Rt), (ins),
+                      "vmrs", "\t$Rt, fpscr",
+                      [(set GPR:$Rt, (int_arm_get_fpscr))]>;
+
+// System level FPEXC, FPSID -> GPR
+let Uses = [FPSCR] in {
+  def VMRS_FPEXC : MovFromVFP<0b1000 /* fpexc */, (outs GPR:$Rt), (ins),
+                              "vmrs", "\t$Rt, fpexc", []>;
+  def VMRS_FPSID : MovFromVFP<0b0000 /* fpsid */, (outs GPR:$Rt), (ins),
+                              "vmrs", "\t$Rt, fpsid", []>;
+}
+
+//===----------------------------------------------------------------------===//
+// Move from ARM core register to VFP System Register.
+//
+
+class MovToVFP<bits<4> opc19_16, dag oops, dag iops, string opc, string asm,
+               list<dag> pattern>:
+  VFPAI<oops, iops, VFPMiscFrm, IIC_fpSTAT, opc, asm, pattern> {
+
   // Instruction operand.
   bits<4> src;
 
@@ -920,11 +925,27 @@ def VMSR : VFPAI<(outs), (ins GPR:$src), VFPMiscFrm, IIC_fpSTAT,
   let Inst{15-12} = src;
 
   let Inst{27-20} = 0b11101110;
-  let Inst{19-16} = 0b0001;
+  let Inst{19-16} = opc19_16;
   let Inst{11-8}  = 0b1010;
   let Inst{7}     = 0;
   let Inst{4}     = 1;
 }
+
+let Defs = [FPSCR] in {
+  // Application level GPR -> FPSCR
+  def VMSR : MovToVFP<0b0001 /* fpscr */, (outs), (ins GPR:$src),
+                      "vmsr", "\tfpscr, $src", [(int_arm_set_fpscr GPR:$src)]>;
+  // System level GPR -> FPEXC
+  def VMSR_FPEXC : MovToVFP<0b1000 /* fpexc */, (outs), (ins GPR:$src),
+                      "vmsr", "\tfpexc, $src", []>;
+  // System level GPR -> FPSID
+  def VMSR_FPSID : MovToVFP<0b0000 /* fpsid */, (outs), (ins GPR:$src),
+                      "vmsr", "\tfpsid, $src", []>;
+}
+
+//===----------------------------------------------------------------------===//
+// Misc.
+//
 
 // Materialize FP immediates. VFP3 only.
 let isReMaterializable = 1 in {

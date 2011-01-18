@@ -127,9 +127,17 @@
 
 @ CHECK: vmrs r0, fpscr              @ encoding: [0x10,0x0a,0xf1,0xee]
         vmrs    r0, fpscr
+@ CHECK: vmrs  r0, fpexc             @ encoding: [0x10,0x0a,0xf8,0xee]
+        vmrs  r0, fpexc
+@ CHECK: vmrs  r0, fpsid             @ encoding: [0x10,0x0a,0xf0,0xee]
+        vmrs  r0, fpsid
 
 @ CHECK: vmsr fpscr, r0              @ encoding: [0x10,0x0a,0xe1,0xee]
         vmsr    fpscr, r0
+@ CHECK: vmsr  fpexc, r0             @ encoding: [0x10,0x0a,0xe8,0xee]
+        vmsr  fpexc, r0
+@ CHECK: vmsr  fpsid, r0             @ encoding: [0x10,0x0a,0xe0,0xee]
+        vmsr  fpsid, r0
 
 @ FIXME: vmov.f64 d16, #3.000000e+00 @ encoding: [0x08,0x0b,0xf0,0xee]
 @        vmov.f64        d16, #3.000000e+00

@@ -168,3 +168,16 @@
   isb
 @ CHECK: mrs  r0, cpsr @ encoding: [0xef,0xf3,0x00,0x80]
   mrs  r0, cpsr
+@ CHECK: vmrs  r0, fpscr @ encoding: [0xf1,0xee,0x10,0x0a]
+  vmrs  r0, fpscr
+@ CHECK: vmrs  r0, fpexc @ encoding: [0xf8,0xee,0x10,0x0a]
+  vmrs  r0, fpexc
+@ CHECK: vmrs  r0, fpsid @ encoding: [0xf0,0xee,0x10,0x0a]
+  vmrs  r0, fpsid
+
+@ CHECK: vmsr  fpscr, r0 @ encoding: [0xe1,0xee,0x10,0x0a]
+  vmsr  fpscr, r0
+@ CHECK: vmsr  fpexc, r0 @ encoding: [0xe8,0xee,0x10,0x0a]
+  vmsr  fpexc, r0
+@ CHECK: vmsr  fpsid, r0 @ encoding: [0xe0,0xee,0x10,0x0a]
+  vmsr  fpsid, r0

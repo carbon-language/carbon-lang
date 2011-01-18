@@ -201,6 +201,10 @@ def CPSR    : ARMReg<0, "cpsr">;
 def FPSCR   : ARMReg<1, "fpscr">;
 def ITSTATE : ARMReg<2, "itstate">;
 
+// Special Registers - only available in privileged mode.
+def FPSID   : ARMReg<0, "fpsid">;
+def FPEXC   : ARMReg<8, "fpexc">;
+
 // Register classes.
 //
 // pc  == Program Counter
