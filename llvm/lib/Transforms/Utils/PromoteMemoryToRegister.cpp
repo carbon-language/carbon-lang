@@ -198,7 +198,7 @@ namespace {
     
     /// AllocaLookup - Reverse mapping of Allocas.
     ///
-    std::map<AllocaInst*, unsigned>  AllocaLookup;
+    DenseMap<AllocaInst*, unsigned>  AllocaLookup;
 
     /// NewPhiNodes - The PhiNodes we're adding.
     ///
@@ -1052,7 +1052,7 @@ NextIteration:
       AllocaInst *Src = dyn_cast<AllocaInst>(LI->getPointerOperand());
       if (!Src) continue;
   
-      std::map<AllocaInst*, unsigned>::iterator AI = AllocaLookup.find(Src);
+      DenseMap<AllocaInst*, unsigned>::iterator AI = AllocaLookup.find(Src);
       if (AI == AllocaLookup.end()) continue;
 
       Value *V = IncomingVals[AI->second];
@@ -1068,7 +1068,7 @@ NextIteration:
       AllocaInst *Dest = dyn_cast<AllocaInst>(SI->getPointerOperand());
       if (!Dest) continue;
       
-      std::map<AllocaInst *, unsigned>::iterator ai = AllocaLookup.find(Dest);
+      DenseMap<AllocaInst *, unsigned>::iterator ai = AllocaLookup.find(Dest);
       if (ai == AllocaLookup.end())
         continue;
       
