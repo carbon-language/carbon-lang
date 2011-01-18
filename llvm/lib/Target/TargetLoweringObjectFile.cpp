@@ -162,13 +162,19 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
 
   // If the global is marked constant, we can put it into a mergable section,
   // a mergable string section, or general .data if it contains relocations.
-  if (GVar->isConstant() && GVar->hasUnnamedAddr()) {
+  if (GVar->isConstant()) {
     // If the initializer for the global contains something that requires a
     // relocation, then we may have to drop this into a wriable data section
     // even though it is marked const.
     switch (C->getRelocationInfo()) {
     default: assert(0 && "unknown relocation info kind");
     case Constant::NoRelocation:
+      // If the global is required to have a unique address, it can't be put
+      // into a mergable section: just drop it into the general read-only
+      // section instead.
+      if (!GVar->hasUnnamedAddr())
+        return SectionKind::getReadOnly();
+        
       // If initializer is a null-terminated string, put it in a "cstring"
       // section of the right width.
       if (const ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
