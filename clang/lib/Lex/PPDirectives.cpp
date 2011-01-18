@@ -1527,7 +1527,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
     // then don't bother calling MacroInfo::isIdenticalTo.
     if (!getDiagnostics().getSuppressSystemWarnings() ||
         !SourceMgr.isInSystemHeader(DefineTok.getLocation())) {
-      if (!OtherMI->isUsed())
+      if (!OtherMI->isUsed() && OtherMI->isWarnIfUnused())
         Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
 
       // Macros must be identical.  This means all tokens and whitespace
@@ -1539,6 +1539,8 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
         Diag(OtherMI->getDefinitionLoc(), diag::note_previous_definition);
       }
     }
+    if (OtherMI->isWarnIfUnused())
+      WarnUnusedMacroLocs.erase(OtherMI->getDefinitionLoc());
     ReleaseMacroInfo(OtherMI);
   }
 
