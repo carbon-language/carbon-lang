@@ -723,7 +723,7 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
       PQ.push(std::make_pair(Node, DomLevels[Node]));
   }
 
-  std::vector<std::pair<unsigned, BasicBlock*> > DFBlocks;
+  SmallVector<std::pair<unsigned, BasicBlock*>, 32> DFBlocks;
   SmallPtrSet<DomTreeNode*, 32> Visited;
   SmallVector<DomTreeNode*, 32> Worklist;
   while (!PQ.empty()) {
