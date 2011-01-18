@@ -74,7 +74,7 @@ FunctionPass *createAggressiveDCEPass();
 // if possible.
 //
 FunctionPass *createScalarReplAggregatesPass(signed Threshold = -1,
-                                             bool UseDomFrontier = true);
+                                             bool UseDomTree = true);
 
 //===----------------------------------------------------------------------===//
 //

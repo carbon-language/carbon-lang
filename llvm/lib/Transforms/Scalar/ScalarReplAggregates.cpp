@@ -30,7 +30,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
@@ -54,8 +54,8 @@ STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 
 namespace {
   struct SROA : public FunctionPass {
-    SROA(int T, bool hasDF, char &ID)
-      : FunctionPass(ID), HasDomFrontiers(hasDF) {
+    SROA(int T, bool hasDT, char &ID)
+      : FunctionPass(ID), HasDomTree(hasDT) {
       if (T == -1)
         SRThreshold = 128;
       else
@@ -68,7 +68,7 @@ namespace {
     bool performPromotion(Function &F);
 
   private:
-    bool HasDomFrontiers;
+    bool HasDomTree;
     TargetData *TD;
 
     /// DeadInsts - Keep track of instructions we have made dead, so that
@@ -140,12 +140,12 @@ namespace {
     static MemTransferInst *isOnlyCopiedFromConstantGlobal(AllocaInst *AI);
   };
   
-  // SROA_DF - SROA that uses DominanceFrontier.
-  struct SROA_DF : public SROA {
+  // SROA_DT - SROA that uses DominatorTree.
+  struct SROA_DT : public SROA {
     static char ID;
   public:
-    SROA_DF(int T = -1) : SROA(T, true, ID) {
-      initializeSROA_DFPass(*PassRegistry::getPassRegistry());
+    SROA_DT(int T = -1) : SROA(T, true, ID) {
+      initializeSROA_DTPass(*PassRegistry::getPassRegistry());
     }
     
     // getAnalysisUsage - This pass does not require any passes, but we know it
@@ -173,14 +173,14 @@ namespace {
   
 }
 
-char SROA_DF::ID = 0;
+char SROA_DT::ID = 0;
 char SROA_SSAUp::ID = 0;
 
-INITIALIZE_PASS_BEGIN(SROA_DF, "scalarrepl",
-                "Scalar Replacement of Aggregates (DF)", false, false)
+INITIALIZE_PASS_BEGIN(SROA_DT, "scalarrepl",
+                "Scalar Replacement of Aggregates (DT)", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
-INITIALIZE_PASS_END(SROA_DF, "scalarrepl",
-                "Scalar Replacement of Aggregates (DF)", false, false)
+INITIALIZE_PASS_END(SROA_DT, "scalarrepl",
+                "Scalar Replacement of Aggregates (DT)", false, false)
 
 INITIALIZE_PASS_BEGIN(SROA_SSAUp, "scalarrepl-ssa",
                       "Scalar Replacement of Aggregates (SSAUp)", false, false)
@@ -189,9 +189,9 @@ INITIALIZE_PASS_END(SROA_SSAUp, "scalarrepl-ssa",
 
 // Public interface to the ScalarReplAggregates pass
 FunctionPass *llvm::createScalarReplAggregatesPass(int Threshold,
-                                                   bool UseDomFrontier) {
-  if (UseDomFrontier)
-    return new SROA_DF(Threshold);
+                                                   bool UseDomTree) {
+  if (UseDomTree)
+    return new SROA_DT(Threshold);
   return new SROA_SSAUp(Threshold);
 }
 
@@ -875,7 +875,7 @@ public:
 bool SROA::performPromotion(Function &F) {
   std::vector<AllocaInst*> Allocas;
   DominatorTree *DT = 0;
-  if (HasDomFrontiers)
+  if (HasDomTree)
     DT = &getAnalysis<DominatorTree>();
 
   BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
@@ -894,7 +894,7 @@ bool SROA::performPromotion(Function &F) {
 
     if (Allocas.empty()) break;
 
-    if (HasDomFrontiers)
+    if (HasDomTree)
       PromoteMemToReg(Allocas, *DT);
     else {
       SSAUpdater SSA;

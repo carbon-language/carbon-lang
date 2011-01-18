@@ -16,7 +16,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
-#include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
@@ -36,8 +36,6 @@ namespace {
     //
     virtual bool runOnFunction(Function &F);
 
-    // getAnalysisUsage - We need dominance frontiers
-    //
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominatorTree>();
       AU.setPreservesCFG();

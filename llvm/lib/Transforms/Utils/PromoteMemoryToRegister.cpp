@@ -35,7 +35,7 @@
 #include "llvm/Metadata.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/DebugInfo.h"
-#include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -44,6 +44,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
+#include <map>
 #include <queue>
 using namespace llvm;
 
@@ -523,9 +524,8 @@ void PromoteMem2Reg::run() {
     Instruction *A = Allocas[i];
 
     // If there are any uses of the alloca instructions left, they must be in
-    // sections of dead code that were not processed on the dominance frontier.
-    // Just delete the users now.
-    //
+    // unreachable basic blocks that were not processed by walking the dominator
+    // tree. Just delete the users now.
     if (!A->use_empty())
       A->replaceAllUsesWith(UndefValue::get(A->getType()));
     if (AST) AST->deleteValue(A);
@@ -1102,9 +1102,9 @@ NextIteration:
 }
 
 /// PromoteMemToReg - Promote the specified list of alloca instructions into
-/// scalar registers, inserting PHI nodes as appropriate.  This function makes
-/// use of DominanceFrontier information.  This function does not modify the CFG
-/// of the function at all.  All allocas must be from the same function.
+/// scalar registers, inserting PHI nodes as appropriate.  This function does
+/// not modify the CFG of the function at all.  All allocas must be from the
+/// same function.
 ///
 /// If AST is specified, the specified tracker is updated to reflect changes
 /// made to the IR.
