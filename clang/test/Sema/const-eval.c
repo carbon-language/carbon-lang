@@ -80,3 +80,9 @@ EVAL_EXPR(38, __builtin_expect(1,1) == 1 ? 1 : -1)
 // PR7884
 EVAL_EXPR(39, __real__(1.f) == 1 ? 1 : -1)
 EVAL_EXPR(40, __imag__(1.f) == 0 ? 1 : -1)
+
+// rdar://8875946
+void rdar8875946() {
+  double _Complex  P;
+  float _Complex  P2 = 3.3f + P;
+}

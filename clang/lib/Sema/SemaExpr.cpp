@@ -528,7 +528,8 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     if (order < 0) { // RHS is wider
       // float -> _Complex double
       if (!isCompAssign) {
-        ImpCastExprToType(lhsExpr, rhs, CK_FloatingCast);
+        QualType fp = cast<ComplexType>(rhs)->getElementType();
+        ImpCastExprToType(lhsExpr, fp, CK_FloatingCast);
         ImpCastExprToType(lhsExpr, rhs, CK_FloatingRealToComplex);
       }
       return rhs;
