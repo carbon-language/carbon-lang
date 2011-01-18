@@ -720,17 +720,19 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   bool OffsetIsReg = false;
   bool Negative = false;
   bool Writeback = false;
+  ARMOperand *WBOp = 0;
+  int OffsetRegNum = -1;
+  bool OffsetRegShifted = false;
+  enum ShiftType ShiftType = Lsl;
+  const MCExpr *ShiftAmount = 0;
+  const MCExpr *Offset = 0;
 
   // First look for preindexed address forms, that is after the "[Rn" we now
   // have to see if the next token is a comma.
   if (Tok.is(AsmToken::Comma)) {
     Preindexed = true;
     Parser.Lex(); // Eat comma token.
-    int OffsetRegNum;
-    bool OffsetRegShifted;
-    enum ShiftType ShiftType;
-    const MCExpr *ShiftAmount = 0;
-    const MCExpr *Offset = 0;
+
     if (ParseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType, ShiftAmount,
                              Offset, OffsetIsReg, OffsetRegNum, E))
       return true;
@@ -743,29 +745,12 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Parser.Lex(); // Eat right bracket token.
 
     const AsmToken &ExclaimTok = Parser.getTok();
-    ARMOperand *WBOp = 0;
     if (ExclaimTok.is(AsmToken::Exclaim)) {
       WBOp = ARMOperand::CreateToken(ExclaimTok.getString(),
                                      ExclaimTok.getLoc());
       Writeback = true;
       Parser.Lex(); // Eat exclaim token
     }
-
-    // Force Offset to exist if used.
-    if (!OffsetIsReg) {
-      if (!Offset)
-        Offset = MCConstantExpr::Create(0, getContext());
-    }
-      
-    Operands.push_back(ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset,
-                                             OffsetRegNum, OffsetRegShifted,
-                                             ShiftType, ShiftAmount, Preindexed,
-                                             Postindexed, Negative, Writeback,
-                                             S, E));
-    if (WBOp)
-      Operands.push_back(WBOp);
-
-    return false;
   } else {
     // The "[Rn" we have so far was not followed by a comma.
 
@@ -773,12 +758,6 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     // addressing form.
     E = Tok.getLoc();
     Parser.Lex(); // Eat right bracket token.
-
-    int OffsetRegNum = -1;
-    bool OffsetRegShifted = false;
-    enum ShiftType ShiftType = Lsl;
-    const MCExpr *ShiftAmount = 0;
-    const MCExpr *Offset = 0;
 
     const AsmToken &NextTok = Parser.getTok();
 
@@ -798,20 +777,23 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
                                E))
         return true;
     }
-
-    // Force Offset to exist if used.
-    if (!OffsetIsReg) {
-      if (!Offset)
-        Offset = MCConstantExpr::Create(0, getContext());
-    }
-
-    Operands.push_back(ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset,
-                                             OffsetRegNum, OffsetRegShifted,
-                                             ShiftType, ShiftAmount, Preindexed,
-                                             Postindexed, Negative, Writeback,
-                                             S, E));
-    return false;
   }
+
+  // Force Offset to exist if used.
+  if (!OffsetIsReg) {
+    if (!Offset)
+      Offset = MCConstantExpr::Create(0, getContext());
+  }
+
+  Operands.push_back(ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset,
+                                           OffsetRegNum, OffsetRegShifted,
+                                           ShiftType, ShiftAmount, Preindexed,
+                                           Postindexed, Negative, Writeback,
+                                           S, E));
+  if (WBOp)
+    Operands.push_back(WBOp);
+
+  return false;
 }
 
 /// Parse the offset of a memory operand after we have seen "[Rn," or "[Rn],"
