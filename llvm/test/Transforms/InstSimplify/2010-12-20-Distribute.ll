@@ -31,6 +31,26 @@ define i32 @factorize3(i32 %x, i32 %a, i32 %b) {
 ; CHECK: ret i32 %r
 }
 
+define i32 @factorize4(i32 %x, i32 %y) {
+; CHECK: @factorize4
+  %sh = shl i32 %y, 1
+  %ml = mul i32 %sh, %x
+  %mr = mul i32 %x, %y
+  %s = sub i32 %ml, %mr
+  ret i32 %s
+; CHECK: ret i32 %mr
+}
+
+define i32 @factorize5(i32 %x, i32 %y) {
+; CHECK: @factorize5
+  %sh = mul i32 %y, 2
+  %ml = mul i32 %sh, %x
+  %mr = mul i32 %x, %y
+  %s = sub i32 %ml, %mr
+  ret i32 %s
+; CHECK: ret i32 %mr
+}
+
 define i32 @expand(i32 %x) {
 ; CHECK: @expand
 ; ((X & 1) | 2) & 1 -> ((X & 1) & 1) | (2 & 1) -> (X & 1) | 0 -> X & 1

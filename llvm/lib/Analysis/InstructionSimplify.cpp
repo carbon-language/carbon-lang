@@ -593,6 +593,12 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
       match(Op0, m_Add(m_Specific(Op1), m_Value(X))))
     return X;
 
+  // (X*2) - X -> X
+  // (X<<1) - X -> X
+  if (match(Op0, m_Mul(m_Specific(Op1), m_ConstantInt<2>())) ||
+      match(Op0, m_Shl(m_Specific(Op1), m_One())))
+    return Op1;
+
   // i1 sub -> xor.
   if (MaxRecurse && Op0->getType()->isIntegerTy(1))
     if (Value *V = SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1))
