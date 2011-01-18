@@ -18,6 +18,7 @@
 #include "LiveRangeEdit.h"
 #include "RegAllocBase.h"
 #include "Spiller.h"
+#include "SpillPlacement.h"
 #include "SplitKit.h"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
@@ -25,6 +26,7 @@
 #include "llvm/Function.h"
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
+#include "llvm/CodeGen/EdgeBundles.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -53,14 +55,52 @@ class RAGreedy : public MachineFunctionPass, public RegAllocBase {
   BitVector ReservedRegs;
 
   // analyses
+  SlotIndexes *Indexes;
   LiveStacks *LS;
   MachineDominatorTree *DomTree;
   MachineLoopInfo *Loops;
   MachineLoopRanges *LoopRanges;
+  EdgeBundles *Bundles;
+  SpillPlacement *SpillPlacer;
 
   // state
   std::auto_ptr<Spiller> SpillerInstance;
   std::auto_ptr<SplitAnalysis> SA;
+
+  // splitting state.
+
+  /// All basic blocks where the current register is live.
+  SmallVector<SpillPlacement::BlockConstraint, 8> SpillConstraints;
+
+  /// Additional information about basic blocks where the current variable is
+  /// live. Such a block will look like one of these templates:
+  ///
+  ///  1. |   o---x   | Internal to block. Variable is only live in this block.
+  ///  2. |---x       | Live-in, kill.
+  ///  3. |       o---| Def, live-out.
+  ///  4. |---x   o---| Live-in, kill, def, live-out.
+  ///  5. |---o---o---| Live-through with uses or defs.
+  ///  6. |-----------| Live-through without uses. Transparent.
+  ///
+  struct BlockInfo {
+    const MachineBasicBlock *MBB;
+    SlotIndex FirstUse;   ///< First instr using current reg.
+    SlotIndex LastUse;    ///< Last instr using current reg.
+    SlotIndex Kill;       ///< Interval end point inside block.
+    SlotIndex Def;        ///< Interval start point inside block.
+    bool Uses;            ///< Current reg has uses or defs in block.
+    bool LiveThrough;     ///< Live in whole block (Templ 5. or 6. above).
+    bool LiveIn;          ///< Current reg is live in.
+    bool LiveOut;         ///< Current reg is live out.
+
+    // Per-interference pattern scratch data.
+    bool OverlapEntry;    ///< Interference overlaps entering interval.
+    bool OverlapExit;     ///< Interference overlaps exiting interval.
+  };
+
+  /// Basic blocks where var is live. This array is parallel to
+  /// SpillConstraints.
+  SmallVector<BlockInfo, 8> LiveBlocks;
 
 public:
   RAGreedy();
@@ -95,8 +135,13 @@ private:
   unsigned findInterferenceFreeReg(MachineLoopRange*,
                                    LiveInterval&, AllocationOrder&);
   float calcInterferenceWeight(LiveInterval&, unsigned);
+  void calcLiveBlockInfo(LiveInterval&);
+  float calcInterferenceInfo(LiveInterval&, unsigned);
+  float calcGlobalSplitCost(const BitVector&);
 
   unsigned tryReassign(LiveInterval&, AllocationOrder&);
+  unsigned tryRegionSplit(LiveInterval&, AllocationOrder&,
+                          SmallVectorImpl<LiveInterval*>&);
   unsigned trySplit(LiveInterval&, AllocationOrder&,
                     SmallVectorImpl<LiveInterval*>&);
   unsigned trySpillInterferences(LiveInterval&, AllocationOrder&,
@@ -111,6 +156,7 @@ FunctionPass* llvm::createGreedyRegisterAllocator() {
 }
 
 RAGreedy::RAGreedy(): MachineFunctionPass(ID) {
+  initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
   initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
   initializeStrongPHIEliminationPass(*PassRegistry::getPassRegistry());
@@ -121,6 +167,8 @@ RAGreedy::RAGreedy(): MachineFunctionPass(ID) {
   initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
   initializeMachineLoopRangesPass(*PassRegistry::getPassRegistry());
   initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
+  initializeEdgeBundlesPass(*PassRegistry::getPassRegistry());
+  initializeSpillPlacementPass(*PassRegistry::getPassRegistry());
 }
 
 void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -128,6 +176,7 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
   AU.addPreserved<AliasAnalysis>();
   AU.addRequired<LiveIntervals>();
+  AU.addRequired<SlotIndexes>();
   AU.addPreserved<SlotIndexes>();
   if (StrongPHIElim)
     AU.addRequiredID(StrongPHIEliminationID);
@@ -143,6 +192,8 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<MachineLoopRanges>();
   AU.addRequired<VirtRegMap>();
   AU.addPreserved<VirtRegMap>();
+  AU.addRequired<EdgeBundles>();
+  AU.addRequired<SpillPlacement>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -302,6 +353,10 @@ unsigned RAGreedy::findInterferenceFreeReg(MachineLoopRange *Loop,
 /// @return Physreg when VirtReg may be assigned and/or new SplitVRegs.
 unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
                             SmallVectorImpl<LiveInterval*>&SplitVRegs) {
+  // Don't attempt splitting on local intervals for now.
+  if (LIS->intervalIsInOneMBB(VirtReg))
+    return 0;
+
   NamedRegionTimer T("Splitter", TimerGroupName, TimePassesIsEnabled);
   SA->analyze(&VirtReg);
 
@@ -351,6 +406,287 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   return 0;
 }
 
+
+//===----------------------------------------------------------------------===//
+//                              Region Splitting
+//===----------------------------------------------------------------------===//
+
+/// calcLiveBlockInfo - Fill the LiveBlocks array with information about blocks
+/// where VirtReg is live.
+/// The SpillConstraints array is minimally initialized with MBB->getNumber().
+void RAGreedy::calcLiveBlockInfo(LiveInterval &VirtReg) {
+  LiveBlocks.clear();
+  SpillConstraints.clear();
+
+  assert(!VirtReg.empty() && "Cannot allocate an empty interval");
+  LiveInterval::const_iterator LVI = VirtReg.begin();
+  LiveInterval::const_iterator LVE = VirtReg.end();
+
+  SmallVectorImpl<SlotIndex>::const_iterator UseI, UseE;
+  UseI = SA->UseSlots.begin();
+  UseE = SA->UseSlots.end();
+
+  // Loop over basic blocks where VirtReg is live.
+  MachineFunction::const_iterator MFI = Indexes->getMBBFromIndex(LVI->start);
+  for (;;) {
+    // Block constraints depend on the interference pattern.
+    // Just allocate them here, don't compute anything.
+    SpillPlacement::BlockConstraint BC;
+    BC.Number = MFI->getNumber();
+    SpillConstraints.push_back(BC);
+
+    BlockInfo BI;
+    BI.MBB = MFI;
+    SlotIndex Start, Stop;
+    tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
+
+    // LVI is the first live segment overlapping MBB.
+    BI.LiveIn = LVI->start <= Start;
+    if (!BI.LiveIn)
+      BI.Def = LVI->start;
+
+    // Find the first and last uses in the block.
+    BI.Uses = SA->hasUses(MFI);
+    if (BI.Uses && UseI != UseE) {
+      BI.FirstUse = *UseI;
+      assert(BI.FirstUse >= Start);
+      do ++UseI;
+      while (UseI != UseE && *UseI < Stop);
+      BI.LastUse = UseI[-1];
+      assert(BI.LastUse < Stop);
+    }
+
+    // Look for gaps in the live range.
+    bool hasGap = false;
+    BI.LiveOut = true;
+    while (LVI->end < Stop) {
+      SlotIndex LastStop = LVI->end;
+      if (++LVI == LVE || LVI->start >= Stop) {
+        BI.Kill = LastStop;
+        BI.LiveOut = false;
+        break;
+      }
+      if (LastStop < LVI->start) {
+        hasGap = true;
+        BI.Kill = LastStop;
+        BI.Def = LVI->start;
+      }
+    }
+
+    // Don't set LiveThrough when the block has a gap.
+    BI.LiveThrough = !hasGap && BI.LiveIn && BI.LiveOut;
+    LiveBlocks.push_back(BI);
+
+    // LVI is now at LVE or LVI->end >= Stop.
+    if (LVI == LVE)
+      break;
+
+    // Live segment ends exactly at Stop. Move to the next segment.
+    if (LVI->end == Stop && ++LVI == LVE)
+      break;
+
+    // Pick the next basic block.
+    if (LVI->start < Stop)
+      ++MFI;
+    else
+      MFI = Indexes->getMBBFromIndex(LVI->start);
+  }
+}
+
+/// calcInterferenceInfo - Compute per-block outgoing and ingoing constraints
+/// when considering interference from PhysReg. Also compute an optimistic local
+/// cost of this interference pattern.
+///
+/// The final cost of a split is the local cost + global cost of preferences
+/// broken by SpillPlacement.
+///
+float RAGreedy::calcInterferenceInfo(LiveInterval &VirtReg, unsigned PhysReg) {
+  // Reset interference dependent info.
+  for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
+    BlockInfo &BI = LiveBlocks[i];
+    SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
+    BC.Entry = (BI.Uses && BI.LiveIn) ?
+      SpillPlacement::PrefReg : SpillPlacement::DontCare;
+    BC.Exit = (BI.Uses && BI.LiveOut) ?
+      SpillPlacement::PrefReg : SpillPlacement::DontCare;
+    BI.OverlapEntry = BI.OverlapExit = false;
+  }
+
+  // Add interference info from each PhysReg alias.
+  for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
+    if (!query(VirtReg, *AI).checkInterference())
+      continue;
+    DEBUG(PhysReg2LiveUnion[*AI].print(dbgs(), TRI));
+    LiveIntervalUnion::SegmentIter IntI =
+      PhysReg2LiveUnion[*AI].find(VirtReg.beginIndex());
+    if (!IntI.valid())
+      continue;
+
+    for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
+      BlockInfo &BI = LiveBlocks[i];
+      SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
+      SlotIndex Start, Stop;
+      tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
+
+      // Skip interference-free blocks.
+      if (IntI.start() >= Stop)
+        continue;
+
+      // Handle transparent blocks with interference separately.
+      // Transparent blocks never incur any fixed cost.
+      if (BI.LiveThrough && !BI.Uses) {
+        // Check if interference is live-in - force spill.
+        if (BC.Entry != SpillPlacement::MustSpill) {
+          BC.Entry = SpillPlacement::PrefSpill;
+          IntI.advanceTo(Start);
+          if (IntI.valid() && IntI.start() <= Start)
+            BC.Entry = SpillPlacement::MustSpill;
+        }
+
+        // Check if interference is live-out - force spill.
+        if (BC.Exit != SpillPlacement::MustSpill) {
+          BC.Exit = SpillPlacement::PrefSpill;
+          IntI.advanceTo(Stop);
+          if (IntI.valid() && IntI.start() < Stop)
+            BC.Exit = SpillPlacement::MustSpill;
+        }
+
+        // Nothing more to do for this transparent block.
+        if (!IntI.valid())
+          break;
+        continue;
+      }
+
+      // Now we only have blocks with uses left.
+      // Check if the interference overlaps the uses.
+      assert(BI.Uses && "Non-transparent block without any uses");
+
+      // Check interference on entry.
+      if (BI.LiveIn && BC.Entry != SpillPlacement::MustSpill) {
+        IntI.advanceTo(Start);
+        if (!IntI.valid())
+          break;
+
+        // Interference is live-in - force spill.
+        if (IntI.start() <= Start)
+          BC.Entry = SpillPlacement::MustSpill;
+        // Not live in, but before the first use.
+        else if (IntI.start() < BI.FirstUse)
+          BC.Entry = SpillPlacement::PrefSpill;
+      }
+
+      // Does interference overlap the uses in the entry segment
+      // [FirstUse;Kill)?
+      if (BI.LiveIn && !BI.OverlapEntry) {
+        IntI.advanceTo(BI.FirstUse);
+        if (!IntI.valid())
+          break;
+        // A live-through interval has no kill.
+        // Check [FirstUse;LastUse) instead.
+        if (IntI.start() < (BI.LiveThrough ? BI.LastUse : BI.Kill))
+          BI.OverlapEntry = true;
+      }
+
+      // Does interference overlap the uses in the exit segment [Def;LastUse)?
+      if (BI.LiveOut && !BI.LiveThrough && !BI.OverlapExit) {
+        IntI.advanceTo(BI.Def);
+        if (!IntI.valid())
+          break;
+        if (IntI.start() < BI.LastUse)
+          BI.OverlapExit = true;
+      }
+
+      // Check interference on exit.
+      if (BI.LiveOut && BC.Exit != SpillPlacement::MustSpill) {
+        // Check interference between LastUse and Stop.
+        if (BC.Exit != SpillPlacement::PrefSpill) {
+          IntI.advanceTo(BI.LastUse);
+          if (!IntI.valid())
+            break;
+          if (IntI.start() < Stop)
+            BC.Exit = SpillPlacement::PrefSpill;
+        }
+        // Is the interference live-out?
+        IntI.advanceTo(Stop);
+        if (!IntI.valid())
+          break;
+        if (IntI.start() < Stop)
+          BC.Exit = SpillPlacement::MustSpill;
+      }
+    }
+  }
+
+  // Accumulate a local cost of this interference pattern.
+  float LocalCost = 0;
+  for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
+    BlockInfo &BI = LiveBlocks[i];
+    if (!BI.Uses)
+      continue;
+    SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
+    unsigned Inserts = 0;
+
+    // Do we need spill code for the entry segment?
+    if (BI.LiveIn)
+      Inserts += BI.OverlapEntry || BC.Entry != SpillPlacement::PrefReg;
+
+    // For the exit segment?
+    if (BI.LiveOut)
+      Inserts += BI.OverlapExit || BC.Exit != SpillPlacement::PrefReg;
+
+    // The local cost of spill code in this block is the block frequency times
+    // the number of spill instructions inserted.
+    if (Inserts)
+      LocalCost += Inserts * SpillPlacer->getBlockFrequency(BI.MBB);
+  }
+  DEBUG(dbgs() << "Local cost of " << PrintReg(PhysReg, TRI) << " = "
+               << LocalCost << '\n');
+  return LocalCost;
+}
+
+/// calcGlobalSplitCost - Return the global split cost of following the split
+/// pattern in LiveBundles. This cost should be added to the local cost of the
+/// interference pattern in SpillConstraints.
+///
+float RAGreedy::calcGlobalSplitCost(const BitVector &LiveBundles) {
+  float GlobalCost = 0;
+  for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
+    SpillPlacement::BlockConstraint &BC = SpillConstraints[i];
+    unsigned Inserts = 0;
+    // Broken entry preference?
+    Inserts += LiveBundles[Bundles->getBundle(BC.Number, 0)] !=
+                 (BC.Entry == SpillPlacement::PrefReg);
+    // Broken exit preference?
+    Inserts += LiveBundles[Bundles->getBundle(BC.Number, 1)] !=
+                 (BC.Exit == SpillPlacement::PrefReg);
+    if (Inserts)
+      GlobalCost += Inserts * SpillPlacer->getBlockFrequency(LiveBlocks[i].MBB);
+  }
+  DEBUG(dbgs() << "Global cost = " << GlobalCost << '\n');
+  return GlobalCost;
+}
+
+unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
+                                  SmallVectorImpl<LiveInterval*> &NewVRegs) {
+  calcLiveBlockInfo(VirtReg);
+  BitVector LiveBundles, BestBundles;
+  float BestCost = 0;
+  unsigned BestReg = 0;
+  Order.rewind();
+  while (unsigned PhysReg = Order.next()) {
+    float Cost = calcInterferenceInfo(VirtReg, PhysReg);
+    if (BestReg && Cost >= BestCost)
+      continue;
+    if (!SpillPlacer->placeSpills(SpillConstraints, LiveBundles))
+      Cost += calcGlobalSplitCost(LiveBundles);
+    if (!BestReg || Cost < BestCost) {
+      BestReg = PhysReg;
+      BestCost = Cost;
+      BestBundles.swap(LiveBundles);
+    }
+  }
+  // FIXME: Actually execute the split.
+  return 0;
+}
 
 //===----------------------------------------------------------------------===//
 //                                Spilling
@@ -462,11 +798,15 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
     MF->verify(this, "Before greedy register allocator");
 
   RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
+  Indexes = &getAnalysis<SlotIndexes>();
   DomTree = &getAnalysis<MachineDominatorTree>();
   ReservedRegs = TRI->getReservedRegs(*MF);
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
   Loops = &getAnalysis<MachineLoopInfo>();
   LoopRanges = &getAnalysis<MachineLoopRanges>();
+  Bundles = &getAnalysis<EdgeBundles>();
+  SpillPlacer = &getAnalysis<SpillPlacement>();
+
   SA.reset(new SplitAnalysis(*MF, *LIS, *Loops));
 
   allocatePhysRegs();

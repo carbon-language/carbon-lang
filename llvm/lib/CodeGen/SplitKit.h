@@ -50,6 +50,9 @@ public:
   typedef SmallPtrSet<const MachineInstr*, 16> InstrPtrSet;
   InstrPtrSet usingInstrs_;
 
+  // Sorted slot indexes of using instructions.
+  SmallVector<SlotIndex, 8> UseSlots;
+
   // The number of instructions using curli in each basic block.
   typedef DenseMap<const MachineBasicBlock*, unsigned> BlockCountMap;
   BlockCountMap usingBlocks_;
@@ -80,6 +83,11 @@ public:
   /// clear - clear all data structures so SplitAnalysis is ready to analyze a
   /// new interval.
   void clear();
+
+  /// hasUses - Return true if MBB has any uses of curli.
+  bool hasUses(const MachineBasicBlock *MBB) const {
+    return usingBlocks_.lookup(MBB);
+  }
 
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
   typedef SmallPtrSet<const MachineLoop*, 16> LoopPtrSet;

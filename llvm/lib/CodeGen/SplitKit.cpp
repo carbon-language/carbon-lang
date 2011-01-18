@@ -48,6 +48,7 @@ SplitAnalysis::SplitAnalysis(const MachineFunction &mf,
     curli_(0) {}
 
 void SplitAnalysis::clear() {
+  UseSlots.clear();
   usingInstrs_.clear();
   usingBlocks_.clear();
   usingLoops_.clear();
@@ -67,6 +68,7 @@ void SplitAnalysis::analyzeUses() {
        MachineInstr *MI = I.skipInstruction();) {
     if (MI->isDebugValue() || !usingInstrs_.insert(MI))
       continue;
+    UseSlots.push_back(lis_.getInstructionIndex(MI).getDefIndex());
     MachineBasicBlock *MBB = MI->getParent();
     if (usingBlocks_[MBB]++)
       continue;
@@ -74,6 +76,7 @@ void SplitAnalysis::analyzeUses() {
          Loop = Loop->getParentLoop())
       usingLoops_[Loop]++;
   }
+  array_pod_sort(UseSlots.begin(), UseSlots.end());
   DEBUG(dbgs() << "  counted "
                << usingInstrs_.size() << " instrs, "
                << usingBlocks_.size() << " blocks, "

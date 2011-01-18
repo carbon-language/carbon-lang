@@ -89,13 +89,16 @@ public:
   bool placeSpills(const SmallVectorImpl<BlockConstraint> &LiveBlocks,
                    BitVector &RegBundles);
 
+  /// getBlockFrequency - Return the estimated block execution frequency per
+  /// function invocation.
+  float getBlockFrequency(const MachineBasicBlock*);
+
 private:
   virtual bool runOnMachineFunction(MachineFunction&);
   virtual void getAnalysisUsage(AnalysisUsage&) const;
   virtual void releaseMemory();
 
   void activate(unsigned);
-  float getBlockFrequency(const MachineBasicBlock*);
   void prepareNodes(const SmallVectorImpl<BlockConstraint>&);
   void iterate(const SmallVectorImpl<unsigned>&);
 };
