@@ -70,3 +70,23 @@ define i32 @sub1(i32 %x, i32 %y) {
   ret i32 %r
 ; CHECK: ret i32 %y
 }
+
+define i32 @sub2(i32 %x) {
+; CHECK: @sub2
+; X - (X + 1) -> -1
+  %xp1 = add i32 %x, 1
+  %r = sub i32 %x, %xp1
+  ret i32 %r
+; CHECK: ret i32 -1
+}
+
+define i32 @sub3(i32 %x, i32 %y) {
+; CHECK: @sub3
+; ((X + 1) + Y) - (Y + 1) -> X
+  %xp1 = add i32 %x, 1
+  %lhs = add i32 %xp1, %y
+  %rhs = add i32 %y, 1
+  %r = sub i32 %lhs, %rhs
+  ret i32 %r
+; CHECK: ret i32 %x
+}

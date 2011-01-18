@@ -586,31 +586,68 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   if (Op0 == Op1)
     return Constant::getNullValue(Op0->getType());
 
-  // (X + Y) - Y -> X
-  // (Y + X) - Y -> X
-  Value *X = 0;
-  if (match(Op0, m_Add(m_Value(X), m_Specific(Op1))) ||
-      match(Op0, m_Add(m_Specific(Op1), m_Value(X))))
-    return X;
-
   // (X*2) - X -> X
   // (X<<1) - X -> X
+  Value *X = 0;
   if (match(Op0, m_Mul(m_Specific(Op1), m_ConstantInt<2>())) ||
       match(Op0, m_Shl(m_Specific(Op1), m_One())))
     return Op1;
 
-  // i1 sub -> xor.
-  if (MaxRecurse && Op0->getType()->isIntegerTy(1))
-    if (Value *V = SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1))
-      return V;
+  // (X + Y) - Z -> X + (Y - Z) or Y + (X - Z) if everything simplifies.
+  // For example, (X + Y) - Y -> X; (Y + X) - Y -> X
+  Value *Y = 0, *Z = Op1;
+  if (MaxRecurse && match(Op0, m_Add(m_Value(X), m_Value(Y)))) { // (X + Y) - Z
+    // See if "V === Y - Z" simplifies.
+    if (Value *V = SimplifyBinOp(Instruction::Sub, Y, Z, TD, DT, MaxRecurse-1))
+      // It does!  Now see if "X + V" simplifies.
+      if (Value *W = SimplifyBinOp(Instruction::Add, X, V, TD, DT,
+                                   MaxRecurse-1)) {
+        // It does, we successfully reassociated!
+        ++NumReassoc;
+        return W;
+      }
+    // See if "V === X - Z" simplifies.
+    if (Value *V = SimplifyBinOp(Instruction::Sub, X, Z, TD, DT, MaxRecurse-1))
+      // It does!  Now see if "Y + V" simplifies.
+      if (Value *W = SimplifyBinOp(Instruction::Add, Y, V, TD, DT,
+                                   MaxRecurse-1)) {
+        // It does, we successfully reassociated!
+        ++NumReassoc;
+        return W;
+      }
+  }
 
-  // X - (X - Y) -> Y.  More generally Z - (X - Y) -> (Z - X) + Y if everything
-  // simplifies.
-  Value *Y = 0, *Z = Op0;
+  // X - (Y + Z) -> (X - Y) - Z or (X - Z) - Y if everything simplifies.
+  // For example, X - (X + 1) -> -1
+  X = Op0;
+  if (MaxRecurse && match(Op1, m_Add(m_Value(Y), m_Value(Z)))) { // X - (Y + Z)
+    // See if "V === X - Y" simplifies.
+    if (Value *V = SimplifyBinOp(Instruction::Sub, X, Y, TD, DT, MaxRecurse-1))
+      // It does!  Now see if "V - Z" simplifies.
+      if (Value *W = SimplifyBinOp(Instruction::Sub, V, Z, TD, DT,
+                                   MaxRecurse-1)) {
+        // It does, we successfully reassociated!
+        ++NumReassoc;
+        return W;
+      }
+    // See if "V === X - Z" simplifies.
+    if (Value *V = SimplifyBinOp(Instruction::Sub, X, Z, TD, DT, MaxRecurse-1))
+      // It does!  Now see if "V - Y" simplifies.
+      if (Value *W = SimplifyBinOp(Instruction::Sub, V, Y, TD, DT,
+                                   MaxRecurse-1)) {
+        // It does, we successfully reassociated!
+        ++NumReassoc;
+        return W;
+      }
+  }
+
+  // Z - (X - Y) -> (Z - X) + Y if everything simplifies.
+  // For example, X - (X - Y) -> Y.
+  Z = Op0;
   if (MaxRecurse && match(Op1, m_Sub(m_Value(X), m_Value(Y)))) // Z - (X - Y)
     // See if "V === Z - X" simplifies.
     if (Value *V = SimplifyBinOp(Instruction::Sub, Z, X, TD, DT, MaxRecurse-1))
-      // It does!  Now see if "W === V + Y" simplifies.
+      // It does!  Now see if "V + Y" simplifies.
       if (Value *W = SimplifyBinOp(Instruction::Add, V, Y, TD, DT,
                                    MaxRecurse-1)) {
         // It does, we successfully reassociated!
@@ -622,6 +659,11 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   if (Value *V = FactorizeBinOp(Instruction::Sub, Op0, Op1, Instruction::Mul,
                                 TD, DT, MaxRecurse))
     return V;
+
+  // i1 sub -> xor.
+  if (MaxRecurse && Op0->getType()->isIntegerTy(1))
+    if (Value *V = SimplifyXorInst(Op0, Op1, TD, DT, MaxRecurse-1))
+      return V;
 
   // Threading Sub over selects and phi nodes is pointless, so don't bother.
   // Threading over the select in "A - select(cond, B, C)" means evaluating
