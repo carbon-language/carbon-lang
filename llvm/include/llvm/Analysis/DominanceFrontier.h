@@ -182,33 +182,6 @@ public:
     AU.addRequired<DominatorTree>();
   }
 
-  /// splitBlock - BB is split and now it has one successor. Update dominance
-  /// frontier to reflect this change.
-  void splitBlock(BasicBlock *BB);
-
-  /// BasicBlock BB's new dominator is NewBB. Update BB's dominance frontier
-  /// to reflect this change.
-  void changeImmediateDominator(BasicBlock *BB, BasicBlock *NewBB,
-                                DominatorTree *DT) {
-    // NewBB is now dominating BB. Which means BB's dominance
-    // frontier is now part of NewBB's dominance frontier. However, BB
-    // itself is not member of NewBB's dominance frontier.
-    DominanceFrontier::iterator NewDFI = find(NewBB);
-    DominanceFrontier::iterator DFI = find(BB);
-    // If BB was an entry block then its frontier is empty.
-    if (DFI == end())
-      return;
-    DominanceFrontier::DomSetType BBSet = DFI->second;
-    for (DominanceFrontier::DomSetType::iterator BBSetI = BBSet.begin(),
-           BBSetE = BBSet.end(); BBSetI != BBSetE; ++BBSetI) {
-      BasicBlock *DFMember = *BBSetI;
-      // Insert only if NewBB dominates DFMember.
-      if (!DT->dominates(NewBB, DFMember))
-        NewDFI->second.insert(DFMember);
-    }
-    NewDFI->second.erase(BB);
-  }
-
   const DomSetType &calculate(const DominatorTree &DT,
                               const DomTreeNode *Node);
 };
