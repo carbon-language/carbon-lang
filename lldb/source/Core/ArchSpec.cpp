@@ -1807,15 +1807,15 @@ ArchSpec::SetCPUSubtype (uint32_t subtype)
 ByteOrder
 ArchSpec::GetDefaultEndian () const
 {
-    switch (m_cpu)
+    switch (GetGenericCPUType ())
     {
-    case llvm::MachO::CPUTypePowerPC:
-    case llvm::MachO::CPUTypePowerPC64:
+    case eCPU_ppc:
+    case eCPU_ppc64:
         return eByteOrderBig;
 
-    case llvm::MachO::CPUTypeARM:
-    case llvm::MachO::CPUTypeI386:
-    case llvm::MachO::CPUTypeX86_64:
+    case eCPU_arm:
+    case eCPU_i386:
+    case eCPU_x86_64:
         return eByteOrderLittle;
 
     default:
