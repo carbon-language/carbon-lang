@@ -225,16 +225,14 @@ NameSearchContext::AddFunDecl (void *type)
 clang::NamedDecl *
 NameSearchContext::AddGenericFunDecl()
 {
+    FunctionProtoType::ExtProtoInfo proto_info;
+    
+    proto_info.Variadic = true;
+    
     QualType generic_function_type(m_ast_source.m_ast_context.getFunctionType (m_ast_source.m_ast_context.getSizeType(),   // result
-                                                                               NULL,                              // argument types
-                                                                               0,                                 // number of arguments
-                                                                               true,                              // variadic?
-                                                                               0,                                 // type qualifiers
-                                                                               false,                             // has exception specification?
-                                                                               false,                             // has any exception specification?
-                                                                               0,                                 // number of exceptions
-                                                                               NULL,                              // exceptions
-                                                                               FunctionType::ExtInfo()));         // defaults for noreturn, regparm, calling convention
+                                                                               NULL,                                // argument types
+                                                                               0,                                   // number of arguments
+                                                                               proto_info));
     
     return AddFunDecl(generic_function_type.getAsOpaquePtr());
 }

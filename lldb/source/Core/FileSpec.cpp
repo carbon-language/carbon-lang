@@ -499,7 +499,9 @@ FileSpec::ResolveExecutableLocation ()
     {
         const std::string file_str (m_filename.AsCString());
         llvm::sys::Path path = llvm::sys::Program::FindProgramByName (file_str);
-        llvm::StringRef dir_ref = path.getDirname();
+        const std::string &path_str = path.str();
+        llvm::StringRef dir_ref = llvm::sys::path::parent_path(path_str);
+        //llvm::StringRef dir_ref = path.getDirname();
         if (! dir_ref.empty())
         {
             // FindProgramByName returns "." if it can't find the file.

@@ -30,7 +30,6 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
-#include "clang/Checker/FrontendActions.h"
 #include "clang/CodeGen/CodeGenAction.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Driver/CC1Options.h"
@@ -47,6 +46,7 @@
 #include "clang/Parse/ParseAST.h"
 #include "clang/Rewrite/FrontendActions.h"
 #include "clang/Sema/SemaConsumer.h"
+#include "clang/StaticAnalyzer/FrontendActions.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
@@ -153,7 +153,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
         case RewriteMacros:          return new RewriteMacrosAction();
         case RewriteObjC:            return new RewriteObjCAction();
         case RewriteTest:            return new RewriteTestAction();
-        case RunAnalysis:            return new AnalysisAction();
+        //case RunAnalysis:            return new AnalysisAction();
         case RunPreprocessorOnly:    return new PreprocessOnlyAction();
     }
 }

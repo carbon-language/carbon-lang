@@ -912,7 +912,8 @@ ClangASTContext::CopyType (ASTContext *dst_ast,
     FileSystemOptions file_system_options;
     FileManager file_manager (file_system_options);
     ASTImporter importer(*dst_ast, file_manager,
-                         *src_ast, file_manager);
+                         *src_ast, file_manager,
+                         false);
     
     QualType src (QualType::getFromOpaquePtr(clang_type));
     QualType dst (importer.Import(src));
@@ -929,7 +930,8 @@ ClangASTContext::CopyDecl (ASTContext *dst_ast,
     FileSystemOptions file_system_options;
     FileManager file_manager (file_system_options);
     ASTImporter importer(*dst_ast, file_manager,
-                         *src_ast, file_manager);
+                         *src_ast, file_manager,
+                         false);
     
     return importer.Import(source_decl);
 }
@@ -1629,7 +1631,8 @@ ClangASTContext::CreateBaseClassSpecifier (clang_type_t base_class_type, AccessT
                                      is_virtual, 
                                      base_of_class, 
                                      ConvertAccessTypeToAccessSpecifier (access), 
-                                     getASTContext()->CreateTypeSourceInfo (QualType::getFromOpaquePtr(base_class_type)));
+                                     getASTContext()->CreateTypeSourceInfo (QualType::getFromOpaquePtr(base_class_type)),
+                                     SourceLocation());
     return NULL;
 }
 
@@ -2278,6 +2281,7 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
         case clang::BuiltinType::Bool:
         case clang::BuiltinType::Char_U:
         case clang::BuiltinType::UChar:
+        case clang::BuiltinType::WChar_U:
         case clang::BuiltinType::Char16:
         case clang::BuiltinType::Char32:
         case clang::BuiltinType::UShort:
@@ -2287,7 +2291,7 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
         case clang::BuiltinType::UInt128:
         case clang::BuiltinType::Char_S:
         case clang::BuiltinType::SChar:
-        case clang::BuiltinType::WChar:
+        case clang::BuiltinType::WChar_S:
         case clang::BuiltinType::Short:
         case clang::BuiltinType::Int:
         case clang::BuiltinType::Long:
@@ -3562,16 +3566,18 @@ ClangASTContext::CreateFunctionType (ASTContext *ast,
         qual_type_args.push_back (QualType::getFromOpaquePtr(args[i]));
 
     // TODO: Detect calling convention in DWARF?
+    FunctionProtoType::ExtProtoInfo proto_info;
+    proto_info.Variadic = is_variadic;
+    proto_info.HasExceptionSpec = false;
+    proto_info.HasAnyExceptionSpec = false;
+    proto_info.TypeQuals = type_quals;
+    proto_info.NumExceptions = 0;
+    proto_info.Exceptions = NULL;
+    
     return ast->getFunctionType(QualType::getFromOpaquePtr(result_type),
                                         qual_type_args.empty() ? NULL : &qual_type_args.front(),
                                         qual_type_args.size(),
-                                        is_variadic,
-                                        type_quals,
-                                        false,  // hasExceptionSpec
-                                        false,  // hasAnyExceptionSpec,
-                                        0,      // NumExs
-                                        0,      // const QualType *ExArray
-                                        FunctionType::ExtInfo ()).getAsOpaquePtr();    // NoReturn);
+                                        proto_info).getAsOpaquePtr();    // NoReturn);
 }
 
 ParmVarDecl *

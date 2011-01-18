@@ -25,7 +25,7 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "121655";
+our $llvm_revision = "123723";
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our $cc = "$ENV{DEVELOPER_BIN_DIR}/gcc-4.2";
 our $cxx = "$ENV{DEVELOPER_BIN_DIR}/g++-4.2";
@@ -74,7 +74,6 @@ our @archive_files = (
 	"$llvm_configuration/lib/libLLVMScalarOpts.a",
 	"$llvm_configuration/lib/libLLVMSelectionDAG.a",
 	"$llvm_configuration/lib/libLLVMSupport.a",
-	"$llvm_configuration/lib/libLLVMSystem.a",
 	"$llvm_configuration/lib/libLLVMTarget.a",
 	"$llvm_configuration/lib/libLLVMTransformUtils.a",
 	"$llvm_configuration/lib/libLLVMX86AsmParser.a",
@@ -82,7 +81,6 @@ our @archive_files = (
 	"$llvm_configuration/lib/libLLVMX86CodeGen.a",
 	"$llvm_configuration/lib/libLLVMX86Disassembler.a",
 	"$llvm_configuration/lib/libLLVMX86Info.a",
-	"$llvm_configuration/lib/libclangChecker.a"
 );
 
 if (-l $llvm_dstroot)

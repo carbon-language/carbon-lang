@@ -140,7 +140,7 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
         case clang::BuiltinType::Bool:
         case clang::BuiltinType::Char_S:
         case clang::BuiltinType::SChar:
-        case clang::BuiltinType::WChar:
+        case clang::BuiltinType::WChar_S:
         case clang::BuiltinType::Char16:
         case clang::BuiltinType::Char32:
         case clang::BuiltinType::Short:
@@ -151,6 +151,7 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
 
         case clang::BuiltinType::Char_U:
         case clang::BuiltinType::UChar:
+        case clang::BuiltinType::WChar_U:
         case clang::BuiltinType::UShort:
         case clang::BuiltinType::UInt:
         case clang::BuiltinType::ULong:
@@ -249,9 +250,10 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         case clang::BuiltinType::Bool:          return lldb::eFormatBoolean;
         case clang::BuiltinType::Char_S:
         case clang::BuiltinType::SChar:
+        case clang::BuiltinType::WChar_S:
         case clang::BuiltinType::Char_U:
         case clang::BuiltinType::UChar:
-        case clang::BuiltinType::WChar:         return lldb::eFormatChar;
+        case clang::BuiltinType::WChar_U:       return lldb::eFormatChar;
         case clang::BuiltinType::Char16:        return lldb::eFormatUnicode16;
         case clang::BuiltinType::Char32:        return lldb::eFormatUnicode32;
         case clang::BuiltinType::UShort:        return lldb::eFormatUnsigned;
