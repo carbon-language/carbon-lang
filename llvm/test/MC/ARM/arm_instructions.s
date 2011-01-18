@@ -124,3 +124,6 @@
 @ may depend on flags.
 @ CHECK-FIXME:: mlas	r1, r2, r3, r4 @ encoding: [0x92,0x43,0x31,0xe0]
 @        mlas r1,r2,r3,r4
+
+@ CHECK: bfi  r0, r0, #5, #7 @ encoding: [0x90,0x02,0xcb,0xe7]
+        bfi  r0, r0, #5, #7

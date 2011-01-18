@@ -2152,20 +2152,39 @@ def t2UBFX: T2TwoRegBitFI<
 }
 
 // A8.6.18  BFI - Bitfield insert (Encoding T1)
-let Constraints = "$src = $Rd" in
-def t2BFI : T2TwoRegBitFI<(outs rGPR:$Rd),
-                (ins rGPR:$src, rGPR:$Rn, bf_inv_mask_imm:$imm),
-                IIC_iBITi, "bfi", "\t$Rd, $Rn, $imm",
-                [(set rGPR:$Rd, (ARMbfi rGPR:$src, rGPR:$Rn,
-                                 bf_inv_mask_imm:$imm))]> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25} = 1;
-  let Inst{24-20} = 0b10110;
-  let Inst{15} = 0;
+let Constraints = "$src = $Rd" in {
+  def t2BFI : T2TwoRegBitFI<(outs rGPR:$Rd),
+                  (ins rGPR:$src, rGPR:$Rn, bf_inv_mask_imm:$imm),
+                  IIC_iBITi, "bfi", "\t$Rd, $Rn, $imm",
+                  [(set rGPR:$Rd, (ARMbfi rGPR:$src, rGPR:$Rn,
+                                   bf_inv_mask_imm:$imm))]> {
+    let Inst{31-27} = 0b11110;
+    let Inst{25} = 1;
+    let Inst{24-20} = 0b10110;
+    let Inst{15} = 0;
 
-  bits<10> imm;
-  let msb{4-0} = imm{9-5};
-  let lsb{4-0} = imm{4-0};
+    bits<10> imm;
+    let msb{4-0} = imm{9-5};
+    let lsb{4-0} = imm{4-0};
+  }
+
+  // GNU as only supports this form of bfi (w/ 4 arguments)
+  let isAsmParserOnly = 1 in
+  def t2BFI4p : T2TwoRegBitFI<(outs rGPR:$Rd),
+                  (ins rGPR:$src, rGPR:$Rn, lsb_pos_imm:$lsbit,
+                       width_imm:$width),
+                  IIC_iBITi, "bfi", "\t$Rd, $Rn, $lsbit, $width",
+                  []> {
+    let Inst{31-27} = 0b11110;
+    let Inst{25} = 1;
+    let Inst{24-20} = 0b10110;
+    let Inst{15} = 0;
+
+    bits<5> lsbit;
+    bits<5> width;
+    let msb{4-0} = width; // Custom encoder => lsb+width-1
+    let lsb{4-0} = lsbit;
+  }
 }
 
 defm t2ORN  : T2I_bin_irs<0b0011, "orn",

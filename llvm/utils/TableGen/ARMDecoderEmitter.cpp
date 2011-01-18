@@ -1560,6 +1560,10 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
   // which is a better design and less fragile than the name matchings.
   if (Bits.allInComplete()) return false;
 
+  // Ignore "asm parser only" instructions.
+  if (Def.getValueAsBit("isAsmParserOnly"))
+    return false;
+
   if (TN == TARGET_ARM) {
     // FIXME: what about Int_MemBarrierV6 and Int_SyncBarrierV6?
     if ((Name != "Int_MemBarrierV7" && Name != "Int_SyncBarrierV7") &&

@@ -162,3 +162,6 @@
   ldrsb.w	r0, [r0]
 @ CHECK: ldrsh.w	r0, [r0]                @ encoding: [0x00,0x00,0xb0,0xf9]
   ldrsh.w	r0, [r0]
+@ CHECK: bfi  r0, r0, #5, #7 @ encoding: [0x60,0xf3,0x4b,0x10]
+  bfi  r0, r0, #5, #7
+

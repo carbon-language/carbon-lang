@@ -443,6 +443,18 @@ def bf_inv_mask_imm : Operand<i32>,
   let PrintMethod = "printBitfieldInvMaskImmOperand";
 }
 
+/// lsb_pos_imm - position of the lsb bit, used by BFI4p and t2BFI4p
+def lsb_pos_imm : Operand<i32>, PatLeaf<(imm), [{
+  return isInt<5>(N->getSExtValue());
+}]>;
+
+/// width_imm - number of bits to be copied, used by BFI4p and t2BFI4p
+def width_imm : Operand<i32>, PatLeaf<(imm), [{
+  return N->getSExtValue() > 0 &&  N->getSExtValue() <= 32;
+}] > {
+  let EncoderMethod = "getMsbOpValue";
+}
+
 // Define ARM specific addressing modes.
 
 
@@ -2460,6 +2472,25 @@ def BFI    : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
   let Inst{15-12} = Rd;
   let Inst{11-7}  = imm{4-0}; // lsb
   let Inst{20-16} = imm{9-5}; // width
+  let Inst{3-0}   = Rn;
+}
+
+// GNU as only supports this form of bfi (w/ 4 arguments)
+let isAsmParserOnly = 1 in
+def BFI4p : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn,
+                                   lsb_pos_imm:$lsb, width_imm:$width),
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
+               "bfi", "\t$Rd, $Rn, $lsb, $width", "$src = $Rd",
+               []>, Requires<[IsARM, HasV6T2]> {
+  bits<4> Rd;
+  bits<4> Rn;
+  bits<5> lsb;
+  bits<5> width;
+  let Inst{27-21} = 0b0111110;
+  let Inst{6-4}   = 0b001; // Rn: Inst{3-0} != 15
+  let Inst{15-12} = Rd;
+  let Inst{11-7}  = lsb;
+  let Inst{20-16} = width; // Custom encoder => lsb+width-1
   let Inst{3-0}   = Rn;
 }
 
