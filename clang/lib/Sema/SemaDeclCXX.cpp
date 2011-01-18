@@ -4995,10 +4995,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     // Form the assignment:
     //   static_cast<Base*>(this)->Base::operator=(static_cast<Base&>(other));
     QualType BaseType = Base->getType().getUnqualifiedType();
-    CXXRecordDecl *BaseClassDecl = 0;
-    if (const RecordType *BaseRecordT = BaseType->getAs<RecordType>())
-      BaseClassDecl = cast<CXXRecordDecl>(BaseRecordT->getDecl());
-    else {
+    if (!BaseType->isRecordType()) {
       Invalid = true;
       continue;
     }
@@ -6219,8 +6216,6 @@ Decl *Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
                                              D.getIdentifierLoc());
     Invalid = true;
   }
-
-  QualType ExDeclType = TInfo->getType();
 
   IdentifierInfo *II = D.getIdentifier();
   if (NamedDecl *PrevDecl = LookupSingleName(S, II, D.getIdentifierLoc(),

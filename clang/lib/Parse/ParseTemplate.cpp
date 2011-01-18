@@ -531,7 +531,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
       << PP.getSpelling(Tok);
     return 0;
   }
-  SourceLocation ClassLoc = ConsumeToken();
+  ConsumeToken();
 
   // Parse the ellipsis, if given.
   SourceLocation EllipsisLoc;
@@ -595,8 +595,6 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
 ///         parameter-declaration
 Decl *
 Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
-  SourceLocation StartLoc = Tok.getLocation();
-
   // Parse the declaration-specifiers (i.e., the type).
   // FIXME: The type should probably be restricted in some way... Not all
   // declarators (parts of declarators?) are accepted for parameters.

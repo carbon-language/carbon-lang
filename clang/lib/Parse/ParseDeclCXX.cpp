@@ -1443,7 +1443,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     return;
   }
 
-  SourceLocation DSStart = Tok.getLocation();
   // decl-specifier-seq:
   // Parse the common declaration-specifiers piece.
   ParsingDeclSpec DS(*this, TemplateDiags);
@@ -1931,7 +1930,7 @@ bool Parser::ParseExceptionSpecification(SourceLocation &EndLoc,
                                          bool &hasAnyExceptionSpec) {
   assert(Tok.is(tok::kw_throw) && "expected throw");
 
-  SourceLocation ThrowLoc = ConsumeToken();
+  ConsumeToken();
 
   if (!Tok.is(tok::l_paren)) {
     return Diag(Tok, diag::err_expected_lparen_after) << "throw";

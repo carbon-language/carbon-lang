@@ -2019,11 +2019,9 @@ Sema::SubstituteExplicitTemplateArguments(
   // note that the template argument pack is partially substituted and record
   // the explicit template arguments. They'll be used as part of deduction
   // for this template parameter pack.
-  bool HasPartiallySubstitutedPack = false;
   for (unsigned I = 0, N = Builder.size(); I != N; ++I) {
     const TemplateArgument &Arg = Builder[I];
     if (Arg.getKind() == TemplateArgument::Pack) {
-      HasPartiallySubstitutedPack = true;
       CurrentInstantiationScope->SetPartiallySubstitutedPack(
                                                  TemplateParams->getParam(I), 
                                                              Arg.pack_begin(),
@@ -2438,7 +2436,6 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
     else {
       // - If A is a cv-qualified type, the top level cv-qualifiers of A’s
       //   type are ignored for type deduction.
-      QualType CanonArgType = S.Context.getCanonicalType(ArgType);
       if (ArgType.getCVRQualifiers())
         ArgType = ArgType.getUnqualifiedType();
     }

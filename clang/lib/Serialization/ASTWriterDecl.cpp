@@ -661,7 +661,6 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     if (Map) {
       for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
            D != DEnd; ++D) {
-        DeclarationName Name = D->first;
         DeclContext::lookup_result Result = D->second.getLookupResult();
         while (Result.first != Result.second) {
           Writer.GetDeclRef(*Result.first);

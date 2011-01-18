@@ -8531,7 +8531,7 @@ ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
                                         Expr *expr, ParsedType type,
                                         SourceLocation RPLoc) {
   TypeSourceInfo *TInfo;
-  QualType T = GetTypeFromParser(type, &TInfo);
+  GetTypeFromParser(type, &TInfo);
   return BuildVAArgExpr(BuiltinLoc, expr, TInfo, RPLoc);
 }
 

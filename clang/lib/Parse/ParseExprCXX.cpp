@@ -824,7 +824,7 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
   // '=' assignment-expression
   if (isTokenEqualOrMistypedEqualEqual(
                                diag::err_invalid_equalequal_after_declarator)) {
-    SourceLocation EqualLoc = ConsumeToken();
+    ConsumeToken();
     ExprResult AssignExpr(ParseAssignmentExpression());
     if (!AssignExpr.isInvalid()) 
       Actions.AddInitializerToDecl(DeclOut, AssignExpr.take());

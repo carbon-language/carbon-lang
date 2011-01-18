@@ -538,7 +538,7 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
                          ComplexPairTy &Val) {
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
-  QualType LHSTy = E->getLHS()->getType(), RHSTy = E->getRHS()->getType();
+  QualType LHSTy = E->getLHS()->getType();
 
   BinOpInfo OpInfo;
 

@@ -6128,4 +6128,3 @@ Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
   Out << ']';
   return Out.str();
 }
-

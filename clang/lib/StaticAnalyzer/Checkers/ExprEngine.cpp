@@ -3168,8 +3168,6 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
       if (Op == BO_Assign) {
         // EXPERIMENTAL: "Conjured" symbols.
         // FIXME: Handle structs.
-        QualType T = RHS->getType();
-
         if (RightV.isUnknown() ||!getConstraintManager().canReasonAbout(RightV))
         {
           unsigned Count = Builder->getCurrentBlockCount();
@@ -3238,7 +3236,6 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         CLHSTy = getContext().getCanonicalType(CLHSTy);
 
         QualType LTy = getContext().getCanonicalType(LHS->getType());
-        QualType RTy = getContext().getCanonicalType(RHS->getType());
 
         // Promote LHS.
         V = svalBuilder.evalCast(V, CLHSTy, LTy);

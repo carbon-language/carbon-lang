@@ -1724,7 +1724,6 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
   }
 
   // Parse the common specifier-qualifiers-list piece.
-  SourceLocation DSStart = Tok.getLocation();
   ParseSpecifierQualifierList(DS);
 
   // If there are no declarators, this is a free-standing declaration

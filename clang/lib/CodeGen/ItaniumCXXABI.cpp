@@ -349,11 +349,11 @@ ItaniumCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   bool DerivedToBase =
     E->getCastKind() == CK_DerivedToBaseMemberPointer;
 
-  const CXXRecordDecl *BaseDecl, *DerivedDecl;
+  const CXXRecordDecl *DerivedDecl;
   if (DerivedToBase)
-    DerivedDecl = SrcDecl, BaseDecl = DestDecl;
+    DerivedDecl = SrcDecl;
   else
-    BaseDecl = SrcDecl, DerivedDecl = DestDecl;
+    DerivedDecl = DestDecl;
 
   llvm::Constant *Adj = 
     CGF.CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
@@ -1000,7 +1000,6 @@ void ARMCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
   
   // The cookie size is always 2 * sizeof(size_t).
   CookieSize = 2 * SizeSize;
-  CharUnits NumElementsOffset = CookieSize - SizeSize;
 
   // The allocated pointer is the input ptr, minus that amount.
   AllocPtr = CGF.Builder.CreateBitCast(Ptr, CharPtrTy);

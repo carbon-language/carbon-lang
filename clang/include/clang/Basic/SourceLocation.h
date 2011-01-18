@@ -130,6 +130,22 @@ public:
     return X;
   }
 
+  /// getPtrEncoding - When a SourceLocation itself cannot be used, this returns
+  /// an (opaque) pointer encoding for it.  This should only be passed
+  /// to SourceLocation::getFromPtrEncoding, it should not be inspected
+  /// directly.
+  void* getPtrEncoding() const {
+    // Double cast to avoid a warning "cast to pointer from integer of different
+    // size".
+    return (void*)(uintptr_t)getRawEncoding();
+  }
+
+  /// getFromPtrEncoding - Turn a pointer encoding of a SourceLocation object
+  /// into a real SourceLocation.
+  static SourceLocation getFromPtrEncoding(void *Encoding) {
+    return getFromRawEncoding((unsigned)(uintptr_t)Encoding);
+  }
+
   void print(llvm::raw_ostream &OS, const SourceManager &SM) const;
   void dump(const SourceManager &SM) const;
 };
@@ -369,7 +385,7 @@ namespace llvm {
   class PointerLikeTypeTraits<clang::SourceLocation> {
   public:
     static inline void *getAsVoidPointer(clang::SourceLocation L) {
-      return (void*)L.getRawEncoding();
+      return L.getPtrEncoding();
     }
     static inline clang::SourceLocation getFromVoidPointer(void *P) {
       return clang::SourceLocation::getFromRawEncoding((unsigned)(uintptr_t)P);

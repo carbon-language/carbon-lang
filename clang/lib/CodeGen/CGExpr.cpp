@@ -2081,7 +2081,6 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
 
   const FunctionType *FnType
     = cast<FunctionType>(cast<PointerType>(CalleeType)->getPointeeType());
-  QualType ResultType = FnType->getResultType();
 
   CallArgList Args;
   EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), ArgBeg, ArgEnd);
@@ -2108,4 +2107,3 @@ EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E) {
 
   return MakeAddrLValue(AddV, MPT->getPointeeType());
 }
-

@@ -545,12 +545,9 @@ bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
                                        Decl *&DeclResult,
                                        SourceLocation Loc,
                                        bool ConvertToBoolean) {
-  bool ParseError = false;
-  
   SourceLocation LParenLoc = ConsumeParen();
   if (getLang().CPlusPlus) 
-    ParseError = ParseCXXCondition(ExprResult, DeclResult, Loc, 
-                                   ConvertToBoolean);
+    ParseCXXCondition(ExprResult, DeclResult, Loc, ConvertToBoolean);
   else {
     ExprResult = ParseExpression();
     DeclResult = 0;

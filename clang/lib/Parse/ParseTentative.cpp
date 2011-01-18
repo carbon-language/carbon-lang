@@ -111,10 +111,7 @@ bool Parser::isCXXSimpleDeclaration() {
   // We need tentative parsing...
 
   TentativeParsingAction PA(*this);
-
   TPR = TryParseSimpleDeclaration();
-  SourceLocation TentativeParseLoc = Tok.getLocation();
-
   PA.Revert();
 
   // In case of an error, let the declaration parsing code handle it.

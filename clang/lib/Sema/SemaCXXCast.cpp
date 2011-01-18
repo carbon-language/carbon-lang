@@ -601,8 +601,6 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   // In the CStyle case, the earlier attempt to const_cast should have taken
   // care of reverse qualification conversions.
 
-  QualType OrigSrcType = SrcExpr->getType();
-
   QualType SrcType = Self.Context.getCanonicalType(SrcExpr->getType());
 
   // C++0x 5.2.9p9: A value of a scoped enumeration type can be explicitly

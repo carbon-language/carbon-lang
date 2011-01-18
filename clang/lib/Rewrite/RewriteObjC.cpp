@@ -1952,7 +1952,6 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     buf += "}";
     ReplaceText(lastCurlyLoc, 1, buf);
   }
-  bool sawIdTypedCatch = false;
   Stmt *lastCatchBody = 0;
   for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
     ObjCAtCatchStmt *Catch = S->getCatchStmt(I);
@@ -1985,7 +1984,6 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       if (t == Context->getObjCIdType()) {
         buf += "1) { ";
         ReplaceText(startLoc, lParenLoc-startBuf+1, buf);
-        sawIdTypedCatch = true;
       } else if (const ObjCObjectPointerType *Ptr =
                    t->getAs<ObjCObjectPointerType>()) {
         // Should be a pointer to a class.

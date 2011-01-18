@@ -434,7 +434,6 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
     for (unsigned I = 0, E = IvarInitializers.size(); I != E; ++I) {
       CXXCtorInitializer *IvarInit = IvarInitializers[I];
       FieldDecl *Field = IvarInit->getAnyMember();
-      QualType FieldType = Field->getType();
       ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
       LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
                                     LoadObjCSelf(), Ivar, 0);
@@ -860,5 +859,3 @@ void CodeGenFunction::EmitObjCAtSynchronizedStmt(
 }
 
 CGObjCRuntime::~CGObjCRuntime() {}
-
-

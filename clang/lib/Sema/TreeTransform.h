@@ -7126,7 +7126,6 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
     ParmVarDecl *OldParm = (*P);
     ParmVarDecl *NewParm = getDerived().TransformFunctionTypeParam(OldParm,
                                                    llvm::Optional<unsigned>());
-    QualType NewType = NewParm->getType();
     Params.push_back(NewParm);
     ParamTypes.push_back(NewParm->getType());
   }

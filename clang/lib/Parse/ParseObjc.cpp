@@ -150,7 +150,9 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
   SourceLocation nameLoc = ConsumeToken();
   if (Tok.is(tok::l_paren) && 
       !isKnownToBeTypeSpecifier(GetLookAheadToken(1))) { // we have a category.
-    SourceLocation lparenLoc = ConsumeParen();
+    // TODO(dgregor): Use the return value from the next line to provide better
+    // recovery.
+    ConsumeParen();
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
     if (Tok.is(tok::code_completion)) {
@@ -1298,7 +1300,7 @@ Decl *Parser::ParseObjCAtImplementationDeclaration(
 
   if (Tok.is(tok::l_paren)) {
     // we have a category implementation.
-    SourceLocation lparenLoc = ConsumeParen();
+    ConsumeParen();
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
 
@@ -1418,7 +1420,7 @@ Decl *Parser::ParseObjCAtAliasDeclaration(SourceLocation atLoc) {
 Decl *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_synthesize) &&
          "ParseObjCPropertyDynamic(): Expected '@synthesize'");
-  SourceLocation loc = ConsumeToken(); // consume synthesize
+  ConsumeToken(); // consume synthesize
 
   while (true) {
     if (Tok.is(tok::code_completion)) {
@@ -1473,7 +1475,7 @@ Decl *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
 Decl *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_dynamic) &&
          "ParseObjCPropertyDynamic(): Expected '@dynamic'");
-  SourceLocation loc = ConsumeToken(); // consume dynamic
+  ConsumeToken(); // consume dynamic
   while (true) {
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCPropertyDefinition(getCurScope(), ObjCImpDecl);

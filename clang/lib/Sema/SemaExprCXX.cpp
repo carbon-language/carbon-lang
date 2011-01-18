@@ -718,7 +718,6 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (!TInfo)
     TInfo = Context.getTrivialTypeSourceInfo(AllocType);
     
-  SourceRange R = TInfo->getTypeLoc().getSourceRange();    
   return BuildCXXNew(StartLoc, UseGlobal,
                      PlacementLParen,
                      move(PlacementArgs),
