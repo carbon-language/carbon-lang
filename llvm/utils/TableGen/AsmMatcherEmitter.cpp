@@ -1742,7 +1742,7 @@ static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
   
   
   StringMatcher("Mnemonic", Cases, OS).Emit();
-  OS << "}\n";
+  OS << "}\n\n";
   
   return true;
 }
