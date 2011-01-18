@@ -1276,9 +1276,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
           unsigned Reg2 = AddLiveIn(DAG.getMachineFunction(),
                                     VA.getLocReg()+1, RC);
           SDValue ArgValue2 = DAG.getCopyFromReg(Chain, dl, Reg2, RegVT);
-          SDValue Hi = DAG.getNode(ISD::BITCAST, dl, MVT::f32, ArgValue);
-          SDValue Lo = DAG.getNode(ISD::BITCAST, dl, MVT::f32, ArgValue2);
-          ArgValue = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::f64, Lo, Hi);
+          SDValue Pair = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, ArgValue2, ArgValue);
+          ArgValue = DAG.getNode(ISD::BITCAST, dl, MVT::f64, Pair);
         }
       }
 
