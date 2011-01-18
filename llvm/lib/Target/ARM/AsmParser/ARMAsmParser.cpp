@@ -234,9 +234,6 @@ public:
         Mem.Writeback || Mem.Negative)
       return false;
 
-    // If there is an offset expression, make sure it's valid.
-    if (!Mem.Offset) return true;
-
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
     if (!CE) return false;
 
@@ -245,15 +242,13 @@ public:
     return ((Value & 0x3) == 0 && Value <= 1020 && Value >= -1020);
   }
   bool isMemModeRegThumb() const {
-    if (!isMemory() || (!Mem.OffsetIsReg && !Mem.Offset) || Mem.Writeback)
+    if (!isMemory() || !Mem.OffsetIsReg || Mem.Writeback)
       return false;
-    return !Mem.Offset || !isa<MCConstantExpr>(Mem.Offset);
+    return true;
   }
   bool isMemModeImmThumb() const {
-    if (!isMemory() || (!Mem.OffsetIsReg && !Mem.Offset) || Mem.Writeback)
+    if (!isMemory() || Mem.OffsetIsReg || Mem.Writeback)
       return false;
-
-    if (!Mem.Offset) return false;
 
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
     if (!CE) return false;
@@ -319,22 +314,18 @@ public:
 
     // FIXME: #-0 is encoded differently than #0. Does the parser preserve
     // the difference?
-    if (Mem.Offset) {
-      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
-      assert(CE && "Non-constant mode 5 offset operand!");
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+    assert(CE && "Non-constant mode 5 offset operand!");
 
-      // The MCInst offset operand doesn't include the low two bits (like
-      // the instruction encoding).
-      int64_t Offset = CE->getValue() / 4;
-      if (Offset >= 0)
-        Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(ARM_AM::add,
-                                                               Offset)));
-      else
-        Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(ARM_AM::sub,
-                                                               -Offset)));
-    } else {
-      Inst.addOperand(MCOperand::CreateImm(0));
-    }
+    // The MCInst offset operand doesn't include the low two bits (like
+    // the instruction encoding).
+    int64_t Offset = CE->getValue() / 4;
+    if (Offset >= 0)
+      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(ARM_AM::add,
+                                                             Offset)));
+    else
+      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(ARM_AM::sub,
+                                                             -Offset)));
   }
 
   void addMemModeRegThumbOperands(MCInst &Inst, unsigned N) const {
@@ -424,6 +415,8 @@ public:
            "OffsetRegNum must imply OffsetIsReg!");
     assert((!OffsetRegShifted || OffsetIsReg) &&
            "OffsetRegShifted must imply OffsetIsReg!");
+    assert((Offset || OffsetIsReg) &&
+           "Offset must exists unless register offset is used!");
     assert((!ShiftAmount || (OffsetIsReg && OffsetRegShifted)) &&
            "Cannot have shift amount without shifted register offset!");
     assert((!Offset || !OffsetIsReg) &&
@@ -755,6 +748,12 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       Parser.Lex(); // Eat exclaim token
     }
 
+    // Force Offset to exist if used.
+    if (!OffsetIsReg) {
+      if (!Offset)
+        Offset = MCConstantExpr::Create(0, getContext());
+    }
+      
     Operands.push_back(ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset,
                                              OffsetRegNum, OffsetRegShifted,
                                              ShiftType, ShiftAmount, Preindexed,
@@ -795,6 +794,12 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
                                ShiftAmount, Offset, OffsetIsReg, OffsetRegNum,
                                E))
         return true;
+    }
+
+    // Force Offset to exist if used.
+    if (!OffsetIsReg) {
+      if (!Offset)
+        Offset = MCConstantExpr::Create(0, getContext());
     }
 
     Operands.push_back(ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset,
