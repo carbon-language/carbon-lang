@@ -46,6 +46,9 @@ namespace clang {
     /// \brief The file managers we're importing to and from.
     FileManager &ToFileManager, &FromFileManager;
 
+    /// \brief Whether to perform a minimal import.
+    bool Minimal;
+    
     /// \brief Mapping from the already-imported types in the "from" context
     /// to the corresponding types in the "to" context.
     llvm::DenseMap<Type *, Type *> ImportedTypes;
@@ -71,10 +74,28 @@ namespace clang {
     NonEquivalentDeclSet NonEquivalentDecls;
     
   public:
+    /// \brief Create a new AST importer.
+    ///
+    /// \param ToContext The context we'll be importing into.
+    ///
+    /// \param ToFileManager The file manager we'll be importing into.
+    ///
+    /// \param FromContext The context we'll be importing from.
+    ///
+    /// \param FromFileManager The file manager we'll be importing into.
+    ///
+    /// \param MinimalImport If true, the importer will attempt to import
+    /// as little as it can, e.g., by importing declarations as forward
+    /// declarations that can be completed at a later point.
     ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
-                ASTContext &FromContext, FileManager &FromFileManager);
+                ASTContext &FromContext, FileManager &FromFileManager,
+                bool MinimalImport);
     
     virtual ~ASTImporter();
+    
+    /// \brief Whether the importer will perform a minimal import, creating
+    /// to-be-completed forward declarations when possible.
+    bool isMinimalImport() const { return Minimal; }
     
     /// \brief Import the given type from the "from" context into the "to"
     /// context.
@@ -169,6 +190,12 @@ namespace clang {
     /// context.
     FileID Import(FileID);
     
+    /// \brief Import the definition of the given declaration, including all of
+    /// the declarations it contains.
+    ///
+    /// This routine is intended to be used 
+    void ImportDefinition(Decl *From);
+
     /// \brief Cope with a name conflict when importing a declaration into the
     /// given context.
     ///
@@ -225,12 +252,13 @@ namespace clang {
     /// \brief Note that we have imported the "from" declaration by mapping it
     /// to the (potentially-newly-created) "to" declaration.
     ///
-    /// \returns \p To
-    Decl *Imported(Decl *From, Decl *To);
+    /// Subclasses can override this function to observe all of the \c From ->
+    /// \c To declaration mappings as they are imported.
+    virtual Decl *Imported(Decl *From, Decl *To);
     
     /// \brief Determine whether the given types are structurally
     /// equivalent.
-    bool IsStructurallyEquivalent(QualType From, QualType To);
+    bool IsStructurallyEquivalent(QualType From, QualType To);    
   };
 }
 

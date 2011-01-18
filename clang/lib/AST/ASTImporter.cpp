@@ -83,7 +83,7 @@ namespace {
                          SourceLocation &Loc);
     void ImportDeclarationNameLoc(const DeclarationNameInfo &From,
                                   DeclarationNameInfo& To);
-    void ImportDeclContext(DeclContext *FromDC);
+    void ImportDeclContext(DeclContext *FromDC, bool ForceImport = false);
     bool ImportDefinition(RecordDecl *From, RecordDecl *To);
     TemplateParameterList *ImportTemplateParameterList(
                                                  TemplateParameterList *Params);
@@ -1713,7 +1713,15 @@ ASTNodeImporter::ImportDeclarationNameLoc(const DeclarationNameInfo &From,
   }
 }
 
-void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC) {
+void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC, bool ForceImport) {
+  if (Importer.isMinimalImport() && !ForceImport) {
+    if (DeclContext *ToDC = Importer.ImportContext(FromDC)) {
+      ToDC->setHasExternalLexicalStorage();
+      ToDC->setHasExternalVisibleStorage();
+    }
+    return;
+  }
+  
   for (DeclContext::decl_iterator From = FromDC->decls_begin(),
                                FromEnd = FromDC->decls_end();
        From != FromEnd;
@@ -3897,9 +3905,12 @@ Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {
 }
 
 ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
-                         ASTContext &FromContext, FileManager &FromFileManager)
+                         ASTContext &FromContext, FileManager &FromFileManager,
+                         bool MinimalImport)
   : ToContext(ToContext), FromContext(FromContext),
-    ToFileManager(ToFileManager), FromFileManager(FromFileManager) {
+    ToFileManager(ToFileManager), FromFileManager(FromFileManager),
+    Minimal(MinimalImport) 
+{
   ImportedDecls[FromContext.getTranslationUnitDecl()]
     = ToContext.getTranslationUnitDecl();
 }
@@ -4161,6 +4172,17 @@ FileID ASTImporter::Import(FileID FromID) {
   
   ImportedFileIDs[FromID] = ToID;
   return ToID;
+}
+
+void ASTImporter::ImportDefinition(Decl *From) {
+  Decl *To = Import(From);
+  if (!To)
+    return;
+  
+  if (DeclContext *FromDC = cast<DeclContext>(From)) {
+    ASTNodeImporter Importer(*this);
+    Importer.ImportDeclContext(FromDC, true);
+  }
 }
 
 DeclarationName ASTImporter::Import(DeclarationName FromName) {
