@@ -35,3 +35,6 @@
 
 @ CHECK: ldr	r3, [r1, r2]         @ encoding: [0x8b,0x58]
 	ldr	r3, [r1, r2]
+
+@ CHECK: bkpt  #2                  @ encoding: [0x02,0xbe]
+         bkpt  #2

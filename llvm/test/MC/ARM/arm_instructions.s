@@ -127,3 +127,6 @@
 
 @ CHECK: bfi  r0, r0, #5, #7 @ encoding: [0x90,0x02,0xcb,0xe7]
         bfi  r0, r0, #5, #7
+
+@ CHECK: bkpt  #10 @ encoding: [0x7a,0x00,0x20,0xe1]
+        bkpt  #10

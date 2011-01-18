@@ -81,6 +81,8 @@ class ARMAsmParser : public TargetAsmParser {
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
+  void GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
+                             bool &CanAcceptPredicationCode);
 
   /// @name Auto-generated Match Functions
   /// {
@@ -1169,8 +1171,11 @@ static StringRef SplitMnemonicAndCC(StringRef Mnemonic,
 /// inclusion of carry set or predication code operands.
 //
 // FIXME: It would be nice to autogen this.
-static void GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
-                                  bool &CanAcceptPredicationCode) {
+void ARMAsmParser::
+GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
+                      bool &CanAcceptPredicationCode) {
+  bool isThumb = TM.getSubtarget<ARMSubtarget>().isThumb();
+
   if (Mnemonic == "and" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
       Mnemonic == "rrx" || Mnemonic == "ror" || Mnemonic == "sub" ||
       Mnemonic == "smull" || Mnemonic == "add" || Mnemonic == "adc" ||
@@ -1188,7 +1193,8 @@ static void GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "cps" || Mnemonic == "mcr2" || Mnemonic == "it" ||
       Mnemonic == "mcrr2" || Mnemonic == "cbz" || Mnemonic == "cdp2" ||
       Mnemonic == "trap" || Mnemonic == "mrc2" || Mnemonic == "mrrc2" ||
-      Mnemonic == "dsb" || Mnemonic == "movs") {
+      Mnemonic == "dsb" || Mnemonic == "movs" ||
+      (isThumb && Mnemonic == "bkpt")) {
     CanAcceptPredicationCode = false;
   } else {
     CanAcceptPredicationCode = true;
