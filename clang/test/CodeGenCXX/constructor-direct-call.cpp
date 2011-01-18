@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -Wmicrosoft %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i686-pc-win32 -fms-extensions -Wmicrosoft %s -emit-llvm -o - | FileCheck %s
 
 class Test1 {
 public:
