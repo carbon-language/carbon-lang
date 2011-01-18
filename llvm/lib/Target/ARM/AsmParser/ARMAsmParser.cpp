@@ -415,11 +415,20 @@ public:
   }
 
   static ARMOperand *CreateMem(unsigned BaseRegNum, bool OffsetIsReg,
-                               const MCExpr *Offset, unsigned OffsetRegNum,
+                               const MCExpr *Offset, int OffsetRegNum,
                                bool OffsetRegShifted, enum ShiftType ShiftType,
                                const MCExpr *ShiftAmount, bool Preindexed,
                                bool Postindexed, bool Negative, bool Writeback,
                                SMLoc S, SMLoc E) {
+    assert((OffsetRegNum == -1 || OffsetIsReg) &&
+           "OffsetRegNum must imply OffsetIsReg!");
+    assert((!OffsetRegShifted || OffsetIsReg) &&
+           "OffsetRegShifted must imply OffsetIsReg!");
+    assert((!ShiftAmount || (OffsetIsReg && OffsetRegShifted)) &&
+           "Cannot have shift amount without shifted register offset!");
+    assert((!Offset || !OffsetIsReg) &&
+           "Cannot have expression offset and register offset!");
+
     ARMOperand *Op = new ARMOperand(Memory);
     Op->Mem.BaseRegNum = BaseRegNum;
     Op->Mem.OffsetIsReg = OffsetIsReg;
