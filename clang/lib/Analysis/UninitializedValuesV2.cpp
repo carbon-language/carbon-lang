@@ -22,6 +22,11 @@
 
 using namespace clang;
 
+static bool isTrackedVar(const VarDecl *vd) {
+  return vd->isLocalVarDecl() && !vd->hasGlobalStorage() && 
+         vd->getType()->isScalarType();
+}
+
 //------------------------------------------------------------------------====//
 // DeclToBit: a mapping from Decls we track to bitvector indices.
 //====------------------------------------------------------------------------//
@@ -49,7 +54,7 @@ void DeclToBit::computeMap(const DeclContext &dc) {
                                                E(dc.decls_end());
   for ( ; I != E; ++I) {
     const VarDecl *vd = *I;
-    if (vd->isLocalVarDecl() && !vd->hasGlobalStorage())
+    if (isTrackedVar(vd))
       map[vd] = count++;
   }
 }
@@ -126,7 +131,7 @@ void CFGBlockValues::mergeIntoScratch(llvm::BitVector const &source,
   if (isFirst)
     scratch = source;
   else
-    scratch &= source;  
+    scratch |= source;  
 }
 
 bool CFGBlockValues::updateBitVectorWithScratch(const CFGBlock *block) {
@@ -166,6 +171,8 @@ public:
 }
 
 void DataflowWorklist::enqueue(const CFGBlock *block) {
+  if (!block)
+    return;
   unsigned idx = block->getBlockID();
   if (enqueuedBlocks[idx])
     return;
@@ -193,8 +200,8 @@ const CFGBlock *DataflowWorklist::dequeue() {
 // Transfer function for uninitialized values analysis.
 //====------------------------------------------------------------------------//
 
-static const bool Initialized = true;
-static const bool Uninitialized = false;
+static const bool Initialized = false;
+static const bool Uninitialized = true;
 
 namespace {
 class FindVarResult {
@@ -235,12 +242,11 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
   for (DeclStmt::decl_iterator DI = ds->decl_begin(), DE = ds->decl_end();
        DI != DE; ++DI) {
     if (VarDecl *vd = dyn_cast<VarDecl>(*DI)) {
-      if (vd->isLocalVarDecl() && !vd->hasGlobalStorage()) {
+      if (isTrackedVar(vd))
         if (Stmt *init = vd->getInit()) {
-          vals[vd] = Initialized;
           Visit(init);
+          vals[vd] = Initialized;
         }
-      }
     }
   }
 }
@@ -248,7 +254,7 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
 static FindVarResult findBlockVarDecl(Expr* ex) {
   if (DeclRefExpr* dr = dyn_cast<DeclRefExpr>(ex->IgnoreParenCasts()))
     if (VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl()))
-      if (vd->isLocalVarDecl() && !vd->hasGlobalStorage())
+      if (isTrackedVar(vd))
         return FindVarResult(vd, dr);
 
   return FindVarResult(0, 0);
