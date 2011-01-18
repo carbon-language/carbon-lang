@@ -2808,7 +2808,7 @@ def t2DSB : AInoP<(outs), (ins memb_opt:$opt), ThumbFrm, NoItinerary,
 }
 
 // ISB has only full system option -- for disassembly only
-def t2ISB : T2I<(outs), (ins), NoItinerary, "isb", "",
+def t2ISB : AInoP<(outs), (ins), ThumbFrm, NoItinerary, "isb", "",
                   [/* For disassembly only; pattern left blank */]>,
                   Requires<[IsThumb2, HasV7]> {
   let Inst{31-4} = 0xf3bf8f6;
