@@ -33,6 +33,34 @@ using namespace llvm;
 // Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
+static bool CC_Sparc_Assign_f64(unsigned &ValNo, MVT &ValVT,
+                                MVT &LocVT, CCValAssign::LocInfo &LocInfo,
+                                ISD::ArgFlagsTy &ArgFlags, CCState &State)
+{
+  static const unsigned RegList[] = {
+    SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
+  };
+  //Try to get first reg
+  if (unsigned Reg = State.AllocateReg(RegList, 6)) {
+    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+  } else {
+    //Assign whole thing in stack
+    State.addLoc(CCValAssign::getCustomMem(ValNo, ValVT,
+                                           State.AllocateStack(8,4),
+                                           LocVT, LocInfo));
+    return true;
+  }
+
+  //Try to get second reg
+  if (unsigned Reg = State.AllocateReg(RegList, 6))
+    State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+  else
+    State.addLoc(CCValAssign::getCustomMem(ValNo, ValVT,
+                                           State.AllocateStack(4,4),
+                                           LocVT, LocInfo));
+  return true;
+}
+
 #include "SparcGenCallingConv.inc"
 
 SDValue
@@ -101,136 +129,136 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
                  ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Ins, CC_Sparc32);
 
-  static const unsigned ArgRegs[] = {
-    SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
-  };
-  const unsigned *CurArgReg = ArgRegs, *ArgRegEnd = ArgRegs+6;
-  unsigned ArgOffset = 68;
+  const unsigned StackOffset = 92;
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
-    SDValue ArgValue;
     CCValAssign &VA = ArgLocs[i];
-    // FIXME: We ignore the register assignments of AnalyzeFormalArguments
-    // because it doesn't know how to split a double into two i32 registers.
-    EVT ObjectVT = VA.getValVT();
-    switch (ObjectVT.getSimpleVT().SimpleTy) {
-    default: llvm_unreachable("Unhandled argument type!");
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-      if (!Ins[i].Used) {                  // Argument is dead.
-        if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        InVals.push_back(DAG.getUNDEF(ObjectVT));
-      } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
-        unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
-        MF.getRegInfo().addLiveIn(*CurArgReg++, VReg);
-        SDValue Arg = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
-        if (ObjectVT != MVT::i32) {
-          unsigned AssertOp = ISD::AssertSext;
-          Arg = DAG.getNode(AssertOp, dl, MVT::i32, Arg,
-                            DAG.getValueType(ObjectVT));
-          Arg = DAG.getNode(ISD::TRUNCATE, dl, ObjectVT, Arg);
-        }
-        InVals.push_back(Arg);
-      } else {
-        int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset,
-                                                            true);
-        SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-        SDValue Load;
-        if (ObjectVT == MVT::i32) {
-          Load = DAG.getLoad(MVT::i32, dl, Chain, FIPtr, MachinePointerInfo(),
-                             false, false, 0);
-        } else {
-          ISD::LoadExtType LoadOp = ISD::SEXTLOAD;
 
-          // Sparc is big endian, so add an offset based on the ObjectVT.
-          unsigned Offset = 4-std::max(1U, ObjectVT.getSizeInBits()/8);
-          FIPtr = DAG.getNode(ISD::ADD, dl, MVT::i32, FIPtr,
-                              DAG.getConstant(Offset, MVT::i32));
-          Load = DAG.getExtLoad(LoadOp, MVT::i32, dl, Chain, FIPtr,
-                                MachinePointerInfo(), ObjectVT, false, false,0);
-          Load = DAG.getNode(ISD::TRUNCATE, dl, ObjectVT, Load);
-        }
-        InVals.push_back(Load);
-      }
+    if (VA.isRegLoc()) {
+      EVT RegVT = VA.getLocVT();
 
-      ArgOffset += 4;
-      break;
-    case MVT::f32:
-      if (!Ins[i].Used) {                  // Argument is dead.
-        if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        InVals.push_back(DAG.getUNDEF(ObjectVT));
-      } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
-        // FP value is passed in an integer register.
-        unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
-        MF.getRegInfo().addLiveIn(*CurArgReg++, VReg);
-        SDValue Arg = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
+      if (VA.needsCustom()) {
+        assert(VA.getLocVT() == MVT::f64);
+        unsigned VRegHi = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
+        MF.getRegInfo().addLiveIn(VA.getLocReg(), VRegHi);
+        SDValue HiVal = DAG.getCopyFromReg(Chain, dl, VRegHi, MVT::i32);
 
-        Arg = DAG.getNode(ISD::BITCAST, dl, MVT::f32, Arg);
-        InVals.push_back(Arg);
-      } else {
-        int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset,
-                                                            true);
-        SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-        SDValue Load = DAG.getLoad(MVT::f32, dl, Chain, FIPtr,
-                                   MachinePointerInfo(),
-                                   false, false, 0);
-        InVals.push_back(Load);
-      }
-      ArgOffset += 4;
-      break;
-
-    case MVT::i64:
-    case MVT::f64:
-      if (!Ins[i].Used) {                // Argument is dead.
-        if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        InVals.push_back(DAG.getUNDEF(ObjectVT));
-      } else {
-        SDValue HiVal;
-        if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
-          unsigned VRegHi = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
-          MF.getRegInfo().addLiveIn(*CurArgReg++, VRegHi);
-          HiVal = DAG.getCopyFromReg(Chain, dl, VRegHi, MVT::i32);
-        } else {
-          int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset,
-                                                              true);
-          SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-          HiVal = DAG.getLoad(MVT::i32, dl, Chain, FIPtr, MachinePointerInfo(),
-                              false, false, 0);
-        }
+        assert(i+1 < e);
+        CCValAssign &NextVA = ArgLocs[++i];
 
         SDValue LoVal;
-        if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
-          unsigned VRegLo = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
-          MF.getRegInfo().addLiveIn(*CurArgReg++, VRegLo);
-          LoVal = DAG.getCopyFromReg(Chain, dl, VRegLo, MVT::i32);
-        } else {
-          int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset+4,
-                                                              true);
+        if (NextVA.isMemLoc()) {
+          int FrameIdx = MF.getFrameInfo()->
+            CreateFixedObject(4, StackOffset+NextVA.getLocMemOffset(),true);
           SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-          LoVal = DAG.getLoad(MVT::i32, dl, Chain, FIPtr, MachinePointerInfo(),
+          LoVal = DAG.getLoad(MVT::i32, dl, Chain, FIPtr,
+                              MachinePointerInfo(),
                               false, false, 0);
+        } else {
+          unsigned loReg = MF.addLiveIn(NextVA.getLocReg(),
+                                        &SP::IntRegsRegClass);
+          LoVal = DAG.getCopyFromReg(Chain, dl, loReg, MVT::i32);
         }
-
-        // Compose the two halves together into an i64 unit.
         SDValue WholeValue =
           DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, LoVal, HiVal);
-
-        // If we want a double, do a bit convert.
-        if (ObjectVT == MVT::f64)
-          WholeValue = DAG.getNode(ISD::BITCAST, dl, MVT::f64, WholeValue);
-
+        WholeValue = DAG.getNode(ISD::BITCAST, dl, MVT::f64, WholeValue);
         InVals.push_back(WholeValue);
+        continue;
       }
-      ArgOffset += 8;
-      break;
+      unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
+      MF.getRegInfo().addLiveIn(VA.getLocReg(), VReg);
+      SDValue Arg = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
+      if (VA.getLocVT() == MVT::f32)
+        Arg = DAG.getNode(ISD::BITCAST, dl, MVT::f32, Arg);
+      else if (VA.getLocVT() != MVT::i32) {
+        Arg = DAG.getNode(ISD::AssertSext, dl, MVT::i32, Arg,
+                          DAG.getValueType(VA.getLocVT()));
+        Arg = DAG.getNode(ISD::TRUNCATE, dl, VA.getLocVT(), Arg);
+      }
+      InVals.push_back(Arg);
+      continue;
     }
+
+    assert(VA.isMemLoc());
+
+    unsigned Offset = VA.getLocMemOffset()+StackOffset;
+
+    if (VA.needsCustom()) {
+      assert(VA.getValVT() == MVT::f64);
+      //If it is double-word aligned, just load.
+      if (Offset % 8 == 0) {
+        int FI = MF.getFrameInfo()->CreateFixedObject(8,
+                                                      Offset,
+                                                      true);
+        SDValue FIPtr = DAG.getFrameIndex(FI, getPointerTy());
+        SDValue Load = DAG.getLoad(VA.getValVT(), dl, Chain, FIPtr,
+                                   MachinePointerInfo(),
+                                   false,false, 0);
+        InVals.push_back(Load);
+        continue;
+      }
+
+      int FI = MF.getFrameInfo()->CreateFixedObject(4,
+                                                    Offset,
+                                                    true);
+      SDValue FIPtr = DAG.getFrameIndex(FI, getPointerTy());
+      SDValue HiVal = DAG.getLoad(MVT::i32, dl, Chain, FIPtr,
+                                  MachinePointerInfo(),
+                                  false, false, 0);
+      int FI2 = MF.getFrameInfo()->CreateFixedObject(4,
+                                                     Offset+4,
+                                                     true);
+      SDValue FIPtr2 = DAG.getFrameIndex(FI2, getPointerTy());
+
+      SDValue LoVal = DAG.getLoad(MVT::i32, dl, Chain, FIPtr2,
+                                  MachinePointerInfo(),
+                                  false, false, 0);
+
+      SDValue WholeValue =
+        DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, LoVal, HiVal);
+      WholeValue = DAG.getNode(ISD::BITCAST, dl, MVT::f64, WholeValue);
+      InVals.push_back(WholeValue);
+      continue;
+    }
+
+    int FI = MF.getFrameInfo()->CreateFixedObject(4,
+                                                  Offset,
+                                                  true);
+    SDValue FIPtr = DAG.getFrameIndex(FI, getPointerTy());
+    SDValue Load ;
+    if (VA.getValVT() == MVT::i32 || VA.getValVT() == MVT::f32) {
+      Load = DAG.getLoad(VA.getValVT(), dl, Chain, FIPtr,
+                         MachinePointerInfo(),
+                         false, false, 0);
+    } else {
+      ISD::LoadExtType LoadOp = ISD::SEXTLOAD;
+      // Sparc is big endian, so add an offset based on the ObjectVT.
+      unsigned Offset = 4-std::max(1U, VA.getValVT().getSizeInBits()/8);
+      FIPtr = DAG.getNode(ISD::ADD, dl, MVT::i32, FIPtr,
+                          DAG.getConstant(Offset, MVT::i32));
+      Load = DAG.getExtLoad(LoadOp, MVT::i32, dl, Chain, FIPtr,
+                            MachinePointerInfo(),
+                            VA.getValVT(), false, false,0);
+      Load = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), Load);
+    }
+    InVals.push_back(Load);
   }
 
   // Store remaining ArgRegs to the stack if this is a varargs function.
   if (isVarArg) {
+    static const unsigned ArgRegs[] = {
+      SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
+    };
+    unsigned NumAllocated = CCInfo.getFirstUnallocated(ArgRegs, 6);
+    const unsigned *CurArgReg = ArgRegs+NumAllocated, *ArgRegEnd = ArgRegs+6;
+    unsigned ArgOffset = CCInfo.getNextStackOffset();
+    if (NumAllocated == 6)
+      ArgOffset += StackOffset;
+    else {
+      assert(!ArgOffset);
+      ArgOffset = 68+4*NumAllocated;
+    }
+
     // Remember the vararg offset for the va_start implementation.
     FuncInfo->setVarArgsFrameOffset(ArgOffset);
 
@@ -273,41 +301,14 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Sparc target does not yet support tail call optimization.
   isTailCall = false;
 
-#if 0
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getTarget(), ArgLocs);
+  CCState CCInfo(CallConv, isVarArg, DAG.getTarget(), ArgLocs,
+                 *DAG.getContext());
   CCInfo.AnalyzeCallOperands(Outs, CC_Sparc32);
 
   // Get the size of the outgoing arguments stack space requirement.
   unsigned ArgsSize = CCInfo.getNextStackOffset();
-  // FIXME: We can't use this until f64 is known to take two GPRs.
-#else
-  (void)CC_Sparc32;
-
-  // Count the size of the outgoing arguments.
-  unsigned ArgsSize = 0;
-  for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
-    switch (Outs[i].VT.SimpleTy) {
-      default: llvm_unreachable("Unknown value type!");
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
-      case MVT::i32:
-      case MVT::f32:
-        ArgsSize += 4;
-        break;
-      case MVT::i64:
-      case MVT::f64:
-        ArgsSize += 8;
-        break;
-    }
-  }
-  if (ArgsSize > 4*6)
-    ArgsSize -= 4*6;    // Space for first 6 arguments is prereserved.
-  else
-    ArgsSize = 0;
-#endif
 
   // Keep stack frames 8-byte aligned.
   ArgsSize = (ArgsSize+7) & ~7;
@@ -317,96 +318,52 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
 
-#if 0
+  const unsigned StackOffset = 92;
   // Walk the register/memloc assignments, inserting copies/loads.
-  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+  for (unsigned i = 0, realArgIdx = 0, e = ArgLocs.size();
+       i != e;
+       ++i, ++realArgIdx) {
     CCValAssign &VA = ArgLocs[i];
-    SDValue Arg = OutVals[i];
+    SDValue Arg = OutVals[realArgIdx];
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
     default: llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full: break;
     case CCValAssign::SExt:
-      Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
+      Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
       break;
     case CCValAssign::ZExt:
-      Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
+      Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
       break;
     case CCValAssign::AExt:
-      Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
+      Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::BCvt:
+      Arg = DAG.getNode(ISD::BITCAST, dl, VA.getLocVT(), Arg);
       break;
     }
 
-    // Arguments that can be passed on register must be kept at
-    // RegsToPass vector
-    if (VA.isRegLoc()) {
-      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-      continue;
-    }
+    if (VA.needsCustom()) {
+      assert(VA.getLocVT() == MVT::f64);
 
-    assert(VA.isMemLoc());
-
-    // Create a store off the stack pointer for this argument.
-    SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
-    // FIXME: VERIFY THAT 68 IS RIGHT.
-    SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset()+68);
-    PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
-    MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, MachinePointerInfo(),
-                                       false, false, 0));
-  }
-
-#else
-  static const unsigned ArgRegs[] = {
-    SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
-  };
-  unsigned ArgOffset = 68;
-
-  for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
-    SDValue Val = OutVals[i];
-    EVT ObjectVT = Outs[i].VT;
-    SDValue ValToStore(0, 0);
-    SDValue ValToStore2(0, 0);
-    unsigned ArgOffset1 = 0, ArgOffset2 = 0;
-    switch (ObjectVT.getSimpleVT().SimpleTy) {
-    default: llvm_unreachable("Unhandled argument type!");
-    case MVT::i32:
-      ArgOffset1 = ArgOffset;
-      ArgOffset += 4;
-
-      if (RegsToPass.size() >= 6) {
-        ValToStore = Val;
-      } else {
-        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Val));
-      }
-
-      break;
-    case MVT::f32:
-      ArgOffset1 = ArgOffset;
-      ArgOffset += 4;
-      if (RegsToPass.size() >= 6) {
-        ValToStore = Val;
-      } else {
-        // Convert this to a FP value in an int reg.
-        Val = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Val);
-        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Val));
-      }
-      break;
-    case MVT::f64: {
-
-      if (RegsToPass.size() >= 6) {
-        if (ArgOffset % 8 == 0) {
-          ArgOffset1 = ArgOffset;
-          ArgOffset += 8;
-          ValToStore = Val;    // Whole thing is passed in memory.
-          break;
+      if (VA.isMemLoc()) {
+        unsigned Offset = VA.getLocMemOffset() + StackOffset;
+        //if it is double-word aligned, just store.
+        if (Offset % 8 == 0) {
+          SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
+          SDValue PtrOff = DAG.getIntPtrConstant(Offset);
+          PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
+          MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
+                                             MachinePointerInfo(),
+                                             false, false, 0));
+          continue;
         }
       }
-      // Break into top and bottom parts by storing to the stack and loading
-      // out the parts as integers.
+
       SDValue StackPtr = DAG.CreateStackTemporary(MVT::f64, MVT::i32);
       SDValue Store = DAG.getStore(DAG.getEntryNode(), dl,
-                                   Val, StackPtr, MachinePointerInfo(),
+                                   Arg, StackPtr, MachinePointerInfo(),
                                    false, false, 0);
       // Sparc is big-endian, so the high part comes first.
       SDValue Hi = DAG.getLoad(MVT::i32, dl, Store, StackPtr,
@@ -418,74 +375,64 @@ SparcTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       SDValue Lo = DAG.getLoad(MVT::i32, dl, Store, StackPtr,
                                MachinePointerInfo(), false, false, 0);
 
-      if (RegsToPass.size() >= 6) {
-        ArgOffset1 = ArgOffset;
-        ValToStore = Hi;
-      } else {
-        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
-      }
-      ArgOffset += 4;
-      if (RegsToPass.size() >= 6) {
-        ArgOffset2 = ArgOffset;
-        ValToStore2 = Lo;
-      } else {
-        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Lo));
-      }
-      ArgOffset += 4;
-      break;
-    }
-    case MVT::i64: {
-
-      if (RegsToPass.size() >= 6) {
-        if (ArgOffset % 8 == 0) {
-          ArgOffset1 = ArgOffset;
-          ArgOffset += 8;
-          ValToStore = Val;    // Whole thing is passed in memory.
-          break;
+      if (VA.isRegLoc()) {
+        RegsToPass.push_back(std::make_pair(VA.getLocReg(), Hi));
+        assert(i+1 != e);
+        CCValAssign &NextVA = ArgLocs[++i];
+        if (NextVA.isRegLoc()) {
+          RegsToPass.push_back(std::make_pair(NextVA.getLocReg(), Lo));
+        } else {
+          //Store the low part in stack.
+          unsigned Offset = NextVA.getLocMemOffset() + StackOffset;
+          SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
+          SDValue PtrOff = DAG.getIntPtrConstant(Offset);
+          PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
+          MemOpChains.push_back(DAG.getStore(Chain, dl, Lo, PtrOff,
+                                             MachinePointerInfo(),
+                                             false, false, 0));
         }
-      }
-
-      // Split the value into top and bottom part.  Top part goes in a reg.
-      SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Val,
-                                 DAG.getConstant(1, MVT::i32));
-      SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Val,
-                                 DAG.getConstant(0, MVT::i32));
-      if (RegsToPass.size() >= 6) {
-        ArgOffset1 = ArgOffset;
-        ValToStore = Hi;
       } else {
-        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Hi));
+        unsigned Offset = VA.getLocMemOffset() + StackOffset;
+        // Store the high part.
+        SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
+        SDValue PtrOff = DAG.getIntPtrConstant(Offset);
+        PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
+        MemOpChains.push_back(DAG.getStore(Chain, dl, Hi, PtrOff,
+                                           MachinePointerInfo(),
+                                           false, false, 0));
+        // Store the low part.
+        PtrOff = DAG.getIntPtrConstant(Offset+4);
+        PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
+        MemOpChains.push_back(DAG.getStore(Chain, dl, Lo, PtrOff,
+                                           MachinePointerInfo(),
+                                           false, false, 0));
       }
-      ArgOffset += 4;
-      if (RegsToPass.size() >= 6) {
-        ArgOffset2 = ArgOffset;
-        ValToStore2 = Lo;
-      } else {
-        RegsToPass.push_back(std::make_pair(ArgRegs[RegsToPass.size()], Lo));
-      }
-      ArgOffset += 4;
-      break;
-    }
+      continue;
     }
 
-    if (ValToStore.getNode()) {
-      SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
-      SDValue PtrOff = DAG.getConstant(ArgOffset1, MVT::i32);
-      PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
-      MemOpChains.push_back(DAG.getStore(Chain, dl, ValToStore,
-                                         PtrOff, MachinePointerInfo(),
-                                         false, false, 0));
+    // Arguments that can be passed on register must be kept at
+    // RegsToPass vector
+    if (VA.isRegLoc()) {
+      if (VA.getLocVT() != MVT::f32) {
+        RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+        continue;
+      }
+      Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+      continue;
     }
-    if (ValToStore2.getNode()) {
-      SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
-      SDValue PtrOff = DAG.getConstant(ArgOffset2, MVT::i32);
-      PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
-      MemOpChains.push_back(DAG.getStore(Chain, dl, ValToStore2,
-                                         PtrOff, MachinePointerInfo(),
-                                         false, false, 0));
-    }
+
+    assert(VA.isMemLoc());
+
+    // Create a store off the stack pointer for this argument.
+    SDValue StackPtr = DAG.getRegister(SP::O6, MVT::i32);
+    SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset()+StackOffset);
+    PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
+    MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
+                                       MachinePointerInfo(),
+                                       false, false, 0));
   }
-#endif
+
 
   // Emit all stores, make sure the occur before any copies into physregs.
   if (!MemOpChains.empty())
