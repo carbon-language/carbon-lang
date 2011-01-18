@@ -208,7 +208,7 @@ ClangFunction::CompileFunction (Stream &errors)
     m_wrapper_function_text.append (args_list_buffer);
     m_wrapper_function_text.append (");\n}\n");
 
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     if (log)
         log->Printf ("Expression: \n\n%s\n\n", m_wrapper_function_text.c_str());
         

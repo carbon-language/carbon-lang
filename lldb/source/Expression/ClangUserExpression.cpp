@@ -472,7 +472,9 @@ ClangUserExpression::Execute (Stream &error_stream,
                               ClangUserExpression::ClangUserExpressionSP &shared_ptr_to_me,
                               lldb::ClangExpressionVariableSP &result)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    // The expression log is quite verbose, and if you're just tracking the execution of the
+    // expression, it's quite convenient to have these logs come out with the STEP log as well.
+    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
     if (m_dwarf_opcodes.get())
     {
@@ -570,7 +572,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp)
 {
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
     Error error;
     lldb::ExecutionResults execution_results = lldb::eExecutionSetupError;
