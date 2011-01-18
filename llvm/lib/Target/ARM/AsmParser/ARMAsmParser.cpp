@@ -222,6 +222,40 @@ public:
     return Imm.Val;
   }
 
+  /// @name Memory Operand Accessors
+  /// @{
+
+  unsigned getMemBaseRegNum() const {
+    return Mem.BaseRegNum;
+  }
+  unsigned getMemOffsetRegNum() const {
+    assert(Mem.OffsetIsReg && "Invalid access!");
+    return Mem.Offset.RegNum;
+  }
+  const MCExpr *getMemOffset() const {
+    assert(!Mem.OffsetIsReg && "Invalid access!");
+    return Mem.Offset.Value;
+  }
+  unsigned getMemOffsetRegShifted() const {
+    assert(Mem.OffsetIsReg && "Invalid access!");
+    return Mem.OffsetRegShifted;
+  }
+  const MCExpr *getMemShiftAmount() const {
+    assert(Mem.OffsetIsReg && Mem.OffsetRegShifted && "Invalid access!");
+    return Mem.ShiftAmount;
+  }
+  enum ShiftType getMemShiftType() const {
+    assert(Mem.OffsetIsReg && Mem.OffsetRegShifted && "Invalid access!");
+    return Mem.ShiftType;
+  }
+  bool getMemPreindexed() const { return Mem.Preindexed; }
+  bool getMemPostindexed() const { return Mem.Postindexed; }
+  bool getMemOffsetIsReg() const { return Mem.OffsetIsReg; }
+  bool getMemNegative() const { return Mem.Negative; }
+  bool getMemWriteback() const { return Mem.Writeback; }
+
+  /// @}
+
   bool isCondCode() const { return Kind == CondCode; }
   bool isCCOut() const { return Kind == CCOut; }
   bool isImm() const { return Kind == Immediate; }
@@ -459,7 +493,28 @@ void ARMOperand::dump(raw_ostream &OS) const {
     getImm()->print(OS);
     break;
   case Memory:
-    OS << "<memory>";
+    OS << "<memory "
+       << "base:" << getMemBaseRegNum();
+    if (getMemOffsetIsReg()) {
+      OS << " offset:<register " << getMemOffsetRegNum();
+      if (getMemOffsetRegShifted()) {
+        OS << " offset-shift-type:" << getMemShiftType();
+        OS << " offset-shift-amount:" << *getMemShiftAmount();
+      }
+    } else {
+      OS << " offset:" << *getMemOffset();
+    }
+    if (getMemOffsetIsReg())
+      OS << " (offset-is-reg)";
+    if (getMemPreindexed())
+      OS << " (pre-indexed)";
+    if (getMemPostindexed())
+      OS << " (post-indexed)";
+    if (getMemNegative())
+      OS << " (negative)";
+    if (getMemWriteback())
+      OS << " (writeback)";
+    OS << ">";
     break;
   case Register:
     OS << "<register " << getReg() << ">";
