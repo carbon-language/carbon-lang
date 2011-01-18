@@ -26,6 +26,11 @@ def SDT_MipsCMov         : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>,
                                          SDTCisInt<4>]>;
 def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def SDT_MipsMAddMSub     : SDTypeProfile<0, 4, 
+                                         [SDTCisVT<0, i32>, SDTCisSameAs<0, 1>,
+                                          SDTCisSameAs<1, 2>, 
+                                          SDTCisSameAs<2, 3>]>;
+
 
 // Call
 def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink,
@@ -51,6 +56,16 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
 
 // Select Condition Code
 def MipsSelectCC  : SDNode<"MipsISD::SelectCC", SDT_MipsSelectCC>;
+
+// MAdd*/MSub* nodes
+def MipsMAdd      : SDNode<"MipsISD::MAdd", SDT_MipsMAddMSub,
+                           [SDNPOptInGlue, SDNPOutGlue]>;
+def MipsMAddu     : SDNode<"MipsISD::MAddu", SDT_MipsMAddMSub,
+                           [SDNPOptInGlue, SDNPOutGlue]>;
+def MipsMSub      : SDNode<"MipsISD::MSub", SDT_MipsMAddMSub,
+                           [SDNPOptInGlue, SDNPOutGlue]>;
+def MipsMSubu     : SDNode<"MipsISD::MSubu", SDT_MipsMAddMSub,
+                           [SDNPOptInGlue, SDNPOutGlue]>;
 
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
@@ -147,10 +162,11 @@ class ArithOverflowI<bits<6> op, string instr_asm, SDNode OpNode,
      !strconcat(instr_asm, "\t$dst, $b, $c"), [], IIAlu>;
 
 // Arithmetic Multiply ADD/SUB
-let rd=0 in
-class MArithR<bits<6> func, string instr_asm> :
-  FR<0x1c, func, (outs CPURegs:$rs), (ins CPURegs:$rt),
-     !strconcat(instr_asm, "\t$rs, $rt"), [], IIImul>;
+let rd = 0, shamt = 0, Defs = [HI, LO], Uses = [HI, LO] in
+class MArithR<bits<6> func, string instr_asm, SDNode op> :
+  FR<0x1c, func, (outs), (ins CPURegs:$rs, CPURegs:$rt),
+     !strconcat(instr_asm, "\t$rs, $rt"), 
+     [(op CPURegs:$rs, CPURegs:$rt, LO, HI)], IIImul>;
 
 //  Logical
 class LogicR<bits<6> func, string instr_asm, SDNode OpNode>:
@@ -488,11 +504,11 @@ let addr=0 in
 // can be matched. It's similar to Sparc LEA_ADDRi
 def LEA_ADDiu : EffectiveAddress<"addiu\t$dst, ${addr:stackloc}">;
 
-// MADD*/MSUB* are not part of MipsI either.
-//def MADD    : MArithR<0x00, "madd">;
-//def MADDU   : MArithR<0x01, "maddu">;
-//def MSUB    : MArithR<0x04, "msub">;
-//def MSUBU   : MArithR<0x05, "msubu">;
+// MADD*/MSUB*
+def MADD  : MArithR<0, "madd", MipsMAdd>;
+def MADDU : MArithR<1, "maddu", MipsMAddu>;
+def MSUB  : MArithR<4, "msub", MipsMSub>;
+def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 
 // MUL is a assembly macro in the current used ISAs. In recent ISA's
 // it is a real instruction.

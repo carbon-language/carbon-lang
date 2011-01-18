@@ -56,7 +56,13 @@ namespace llvm {
       FPRound,
 
       // Return 
-      Ret
+      Ret,
+
+      // MAdd/Sub nodes
+      MAdd,
+      MAddu,
+      MSub,
+      MSubu
     };
   }
 
@@ -80,6 +86,8 @@ namespace llvm {
 
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
+
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const; 
   private:
     // Subtarget Info
     const MipsSubtarget *Subtarget;
