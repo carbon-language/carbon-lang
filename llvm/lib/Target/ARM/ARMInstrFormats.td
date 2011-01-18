@@ -84,6 +84,7 @@ class Xform16Bit { bit canXformTo16Bit = 1; }
 // ARM Instruction flags.  These need to match ARMBaseInstrInfo.h.
 //
 
+// FIXME: Once the JIT is MC-ized, these can go away.
 // Addressing mode.
 class AddrMode<bits<5> val> {
   bits<5> Value = val;
