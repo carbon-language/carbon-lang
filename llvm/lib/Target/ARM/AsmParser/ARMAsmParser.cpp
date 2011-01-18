@@ -763,7 +763,7 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     E = Tok.getLoc();
     Parser.Lex(); // Eat right bracket token.
 
-    int OffsetRegNum = 0;
+    int OffsetRegNum = -1;
     bool OffsetRegShifted = false;
     enum ShiftType ShiftType = Lsl;
     const MCExpr *ShiftAmount = 0;
