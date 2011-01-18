@@ -305,3 +305,10 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
       .addReg(Mips::SP).addImm(NumBytes);
   }
 }
+
+void MipsFrameLowering::
+processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
+  const MipsRegisterInfo *RegInfo =
+    static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
+  RegInfo->processFunctionBeforeFrameFinalized(MF);
+}

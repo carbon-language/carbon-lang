@@ -39,6 +39,8 @@ public:
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
   bool hasFP(const MachineFunction &MF) const;
+
+  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 };
 
 } // End llvm namespace
