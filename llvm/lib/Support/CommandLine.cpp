@@ -180,6 +180,34 @@ static Option *LookupOption(StringRef &Arg, StringRef &Value,
   return I->second;
 }
 
+/// LookupNearestOption - Lookup the closest match to the option specified by
+/// the specified option on the command line.  If there is a value specified
+/// (after an equal sign) return that as well.  This assumes that leading dashes
+/// have already been stripped.
+static Option *LookupNearestOption(StringRef Arg,
+                                   const StringMap<Option*> &OptionsMap) {
+  // Reject all dashes.
+  if (Arg.empty()) return 0;
+
+  // Split on any equal sign.
+  StringRef LHS = Arg.split('=').first;
+
+  // Find the closest match.
+  Option *Best = 0;
+  unsigned BestDistance = 0;
+  for (StringMap<Option*>::const_iterator it = OptionsMap.begin(),
+         ie = OptionsMap.end(); it != ie; ++it) {
+    unsigned Distance = StringRef(it->second->ArgStr).edit_distance(
+      Arg, /*AllowReplacements=*/true, /*MaxEditDistance=*/BestDistance);
+    if (!Best || Distance < BestDistance) {
+      Best = it->second;
+      BestDistance = Distance;
+    }
+  }
+
+  return Best;
+}
+
 /// CommaSeparateAndAddOccurence - A wrapper around Handler->addOccurence() that
 /// does special handling of cl::CommaSeparated options.
 static bool CommaSeparateAndAddOccurence(Option *Handler, unsigned pos,
@@ -571,6 +599,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   bool DashDashFound = false;  // Have we read '--'?
   for (int i = 1; i < argc; ++i) {
     Option *Handler = 0;
+    Option *NearestHandler = 0;
     StringRef Value;
     StringRef ArgName = "";
 
@@ -644,12 +673,22 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
       if (Handler == 0)
         Handler = HandlePrefixedOrGroupedOption(ArgName, Value,
                                                 ErrorParsing, Opts);
+
+      // Otherwise, look for the closest available option to report to the user
+      // in the upcoming error.
+      if (Handler == 0 && SinkOpts.empty())
+        NearestHandler = LookupNearestOption(ArgName, Opts);
     }
 
     if (Handler == 0) {
       if (SinkOpts.empty()) {
         errs() << ProgramName << ": Unknown command line argument '"
              << argv[i] << "'.  Try: '" << argv[0] << " -help'\n";
+
+        // If we know a near match, report it as well.
+        errs() << ProgramName << ": Did you mean '-"
+               << NearestHandler->ArgStr << "'?\n";
+
         ErrorParsing = true;
       } else {
         for (SmallVectorImpl<Option*>::iterator I = SinkOpts.begin(),
