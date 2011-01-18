@@ -46,7 +46,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -90,7 +90,6 @@ namespace {
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<ScalarEvolution>();
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
-      AU.addPreserved<DominanceFrontier>();
     }
 
     /// verifyAnalysis() - Verify LoopSimplifyForm's guarantees.
@@ -322,7 +321,7 @@ ReprocessLoop:
       if (!FoldBranchToCommonDest(BI)) continue;
 
       // Success. The block is now dead, so remove it from the loop,
-      // update the dominator tree and dominance frontier, and delete it.
+      // update the dominator tree and delete it.
       DEBUG(dbgs() << "LoopSimplify: Eliminating exiting block "
                    << ExitingBlock->getName() << "\n");
 
@@ -330,19 +329,14 @@ ReprocessLoop:
       Changed = true;
       LI->removeBlock(ExitingBlock);
 
-      DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>();
       DomTreeNode *Node = DT->getNode(ExitingBlock);
       const std::vector<DomTreeNodeBase<BasicBlock> *> &Children =
         Node->getChildren();
       while (!Children.empty()) {
         DomTreeNode *Child = Children.front();
         DT->changeImmediateDominator(Child, Node->getIDom());
-        if (DF) DF->changeImmediateDominator(Child->getBlock(),
-                                             Node->getIDom()->getBlock(),
-                                             DT);
       }
       DT->eraseNode(ExitingBlock);
-      if (DF) DF->removeBlock(ExitingBlock);
 
       BI->getSuccessor(0)->removePredecessor(ExitingBlock);
       BI->getSuccessor(1)->removePredecessor(ExitingBlock);
@@ -720,8 +714,6 @@ LoopSimplify::InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader) {
 
   // Update dominator information
   DT->splitBlock(BEBlock);
-  if (DominanceFrontier *DF = getAnalysisIfAvailable<DominanceFrontier>())
-    DF->splitBlock(BEBlock);
 
   return BEBlock;
 }

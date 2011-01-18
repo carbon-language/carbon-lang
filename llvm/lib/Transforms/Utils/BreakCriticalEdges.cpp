@@ -11,15 +11,14 @@
 // inserting a dummy basic block.  This pass may be "required" by passes that
 // cannot deal with critical edges.  For this usage, the structure type is
 // forward declared.  This pass obviously invalidates the CFG, but can update
-// forward dominator (set, immediate dominators, tree, and frontier)
-// information.
+// dominator trees.
 //
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "break-crit-edges"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Function.h"
@@ -44,7 +43,6 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorTree>();
-      AU.addPreserved<DominanceFrontier>();
       AU.addPreserved<LoopInfo>();
       AU.addPreserved<ProfileInfo>();
 
@@ -152,10 +150,9 @@ static void CreatePHIsForSplitLoopExit(SmallVectorImpl<BasicBlock *> &Preds,
 }
 
 /// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
-/// split the critical edge.  This will update DominatorTree and
-/// DominatorFrontier information if it is available, thus calling this pass
-/// will not invalidate either of them. This returns the new block if the edge
-/// was split, null otherwise.
+/// split the critical edge.  This will update DominatorTree information if it
+/// is available, thus calling this pass will not invalidate either of them.
+/// This returns the new block if the edge was split, null otherwise.
 ///
 /// If MergeIdenticalEdges is true (not the default), *all* edges from TI to the
 /// specified successor will be merged into the same critical edge block.  
@@ -257,12 +254,11 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
   if (P == 0) return NewBB;
   
   DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
-  DominanceFrontier *DF = P->getAnalysisIfAvailable<DominanceFrontier>();
   LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
   ProfileInfo *PI = P->getAnalysisIfAvailable<ProfileInfo>();
   
   // If we have nothing to update, just return.
-  if (DT == 0 && DF == 0 && LI == 0 && PI == 0)
+  if (DT == 0 && LI == 0 && PI == 0)
     return NewBB;
 
   // Now update analysis information.  Since the only predecessor of NewBB is
@@ -320,40 +316,6 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
     }
   }
 
-  // Should we update DominanceFrontier information?
-  if (DF) {
-    // If NewBBDominatesDestBB hasn't been computed yet, do so with DF.
-    if (!OtherPreds.empty()) {
-      // FIXME: IMPLEMENT THIS!
-      llvm_unreachable("Requiring domfrontiers but not idom/domtree/domset."
-                       " not implemented yet!");
-    }
-    
-    // Since the new block is dominated by its only predecessor TIBB,
-    // it cannot be in any block's dominance frontier.  If NewBB dominates
-    // DestBB, its dominance frontier is the same as DestBB's, otherwise it is
-    // just {DestBB}.
-    DominanceFrontier::DomSetType NewDFSet;
-    if (NewBBDominatesDestBB) {
-      DominanceFrontier::iterator I = DF->find(DestBB);
-      if (I != DF->end()) {
-        DF->addBasicBlock(NewBB, I->second);
-        
-        if (I->second.count(DestBB)) {
-          // However NewBB's frontier does not include DestBB.
-          DominanceFrontier::iterator NF = DF->find(NewBB);
-          DF->removeFromFrontier(NF, DestBB);
-        }
-      }
-      else
-        DF->addBasicBlock(NewBB, DominanceFrontier::DomSetType());
-    } else {
-      DominanceFrontier::DomSetType NewDFSet;
-      NewDFSet.insert(DestBB);
-      DF->addBasicBlock(NewBB, NewDFSet);
-    }
-  }
-  
   // Update LoopInfo if it is around.
   if (LI) {
     if (Loop *TIL = LI->getLoopFor(TIBB)) {

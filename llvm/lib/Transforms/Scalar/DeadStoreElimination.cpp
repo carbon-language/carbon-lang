@@ -69,10 +69,7 @@ namespace {
     bool handleEndBlock(BasicBlock &BB);
     void RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
                                SmallPtrSet<Value*, 16> &DeadStackObjects);
-    
 
-    // getAnalysisUsage - We require post dominance frontiers (aka Control
-    // Dependence Graph)
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<DominatorTree>();

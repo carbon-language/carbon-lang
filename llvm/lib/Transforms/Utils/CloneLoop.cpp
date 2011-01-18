@@ -14,17 +14,16 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/Dominators.h"
 
 
 using namespace llvm;
 
-/// CloneDominatorInfo - Clone basicblock's dominator tree and, if available,
-/// dominance info. It is expected that basic block is already cloned.
+/// CloneDominatorInfo - Clone a basic block's dominator tree. It is expected
+/// that the basic block is already cloned.
 static void CloneDominatorInfo(BasicBlock *BB, 
                                ValueToValueMapTy &VMap,
-                               DominatorTree *DT,
-                               DominanceFrontier *DF) {
+                               DominatorTree *DT) {
 
   assert (DT && "DominatorTree is not available");
   ValueToValueMapTy::iterator BI = VMap.find(BB);
@@ -46,28 +45,9 @@ static void CloneDominatorInfo(BasicBlock *BB,
   if (BBDomI != VMap.end()) {
     NewBBDom = cast<BasicBlock>(BBDomI->second);
     if (!DT->getNode(NewBBDom))
-      CloneDominatorInfo(BBDom, VMap, DT, DF);
+      CloneDominatorInfo(BBDom, VMap, DT);
   }
   DT->addNewBlock(NewBB, NewBBDom);
-
-  // Copy cloned dominance frontiner set
-  if (DF) {
-    DominanceFrontier::DomSetType NewDFSet;
-    DominanceFrontier::iterator DFI = DF->find(BB);
-    if ( DFI != DF->end()) {
-      DominanceFrontier::DomSetType S = DFI->second;
-        for (DominanceFrontier::DomSetType::iterator I = S.begin(), E = S.end();
-             I != E; ++I) {
-          BasicBlock *DB = *I;
-          ValueToValueMapTy::iterator IDM = VMap.find(DB);
-          if (IDM != VMap.end())
-            NewDFSet.insert(cast<BasicBlock>(IDM->second));
-          else
-            NewDFSet.insert(DB);
-        }
-    }
-    DF->addBasicBlock(NewBB, NewDFSet);
-  }
 }
 
 /// CloneLoop - Clone Loop. Clone dominator info. Populate VMap
@@ -76,11 +56,8 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
                       ValueToValueMapTy &VMap, Pass *P) {
   
   DominatorTree *DT = NULL;
-  DominanceFrontier *DF = NULL;
-  if (P) {
+  if (P)
     DT = P->getAnalysisIfAvailable<DominatorTree>();
-    DF = P->getAnalysisIfAvailable<DominanceFrontier>();
-  }
 
   SmallVector<BasicBlock *, 16> NewBlocks;
 
@@ -116,7 +93,7 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
       for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
            I != E; ++I) {
         BasicBlock *BB = *I;
-        CloneDominatorInfo(BB, VMap, DT, DF);
+        CloneDominatorInfo(BB, VMap, DT);
       }
 
     // Process sub loops
