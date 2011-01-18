@@ -1017,21 +1017,17 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
         return false;
 
       unsigned CmpOpc;
-      unsigned CondReg;
       switch (VT.SimpleTy) {
         default: return false;
         // TODO: Verify compares.
         case MVT::f32:
           CmpOpc = ARM::VCMPES;
-          CondReg = ARM::FPSCR;
           break;
         case MVT::f64:
           CmpOpc = ARM::VCMPED;
-          CondReg = ARM::FPSCR;
           break;
         case MVT::i32:
           CmpOpc = isThumb ? ARM::t2CMPrr : ARM::CMPrr;
-          CondReg = ARM::CPSR;
           break;
       }
 

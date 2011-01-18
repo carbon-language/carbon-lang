@@ -682,10 +682,6 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // storage position offset from lower 16 byte aligned memory chunk
     SDValue offset = DAG.getNode(ISD::AND, dl, MVT::i32,
                                   basePtr, DAG.getConstant( 0xf, MVT::i32 ) );
-    // 16 - offset
-    SDValue offset_compl = DAG.getNode(ISD::SUB, dl, MVT::i32,
-                                        DAG.getConstant( 16, MVT::i32),
-                                        offset );
     // get a registerfull of ones. (this implementation is a workaround: LLVM
     // cannot handle 128 bit signed int constants)
     SDValue ones = DAG.getConstant(-1, MVT::v4i32 );
@@ -910,10 +906,6 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     SDValue offset_compl = DAG.getNode(ISD::SUB, dl, MVT::i32,
                                            DAG.getConstant( 16, MVT::i32),
                                            offset);
-    SDValue hi_shift = DAG.getNode(ISD::SUB, dl, MVT::i32,
-                                      DAG.getConstant( VT.getSizeInBits()/8,
-                                                       MVT::i32),
-                                      offset_compl);
     // 16 - sizeof(Value)
     SDValue surplus = DAG.getNode(ISD::SUB, dl, MVT::i32,
                                      DAG.getConstant( 16, MVT::i32),
@@ -3259,4 +3251,3 @@ SPUTargetLowering::isLegalAddressingMode(const AddrMode &AM,
 
   return false;
 }
-
