@@ -3734,10 +3734,15 @@ ClangASTContext::CreateEnumerationType
                                             false,  // IsScoped
                                             false,  // IsScopedUsingClassTag
                                             false); // IsFixed
+    
+    
     if (enum_decl)
     {
         // TODO: check if we should be setting the promotion type too?
         enum_decl->setIntegerType(QualType::getFromOpaquePtr (integer_qual_type));
+        
+        enum_decl->setAccess(AS_public); // TODO respect what's in the debug info
+        
         return ast->getTagDeclType(enum_decl).getAsOpaquePtr();
     }
     return NULL;
@@ -4216,6 +4221,8 @@ ClangASTContext::CreateTypedefType (const char *name, clang_type_t clang_type, D
                                                  SourceLocation(),
                                                  name ? &identifier_table->get(name) : NULL, // Identifier
                                                  ast->CreateTypeSourceInfo(qual_type));
+        
+        decl->setAccess(AS_public); // TODO respect proper access specifier
 
         // Get a uniqued QualType for the typedef decl type
         return ast->getTypedefType (decl).getAsOpaquePtr();
