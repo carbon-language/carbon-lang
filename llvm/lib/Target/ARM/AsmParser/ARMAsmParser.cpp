@@ -710,6 +710,11 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return true;
   }
 
+  // The next token must either be a comma or a closing bracket.
+  const AsmToken &Tok = Parser.getTok();
+  if (!Tok.is(AsmToken::Comma) && !Tok.is(AsmToken::RBrac))
+    return true;
+
   bool Preindexed = false;
   bool Postindexed = false;
   bool OffsetIsReg = false;
@@ -718,7 +723,6 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   // First look for preindexed address forms, that is after the "[Rn" we now
   // have to see if the next token is a comma.
-  const AsmToken &Tok = Parser.getTok();
   if (Tok.is(AsmToken::Comma)) {
     Preindexed = true;
     Parser.Lex(); // Eat comma token.
@@ -737,7 +741,6 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     }
     E = RBracTok.getLoc();
     Parser.Lex(); // Eat right bracket token.
-
 
     const AsmToken &ExclaimTok = Parser.getTok();
     ARMOperand *WBOp = 0;
@@ -763,9 +766,9 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       Operands.push_back(WBOp);
 
     return false;
-  }
-  // The "[Rn" we have so far was not followed by a comma.
-  else if (Tok.is(AsmToken::RBrac)) {
+  } else {
+    // The "[Rn" we have so far was not followed by a comma.
+
     // If there's anything other than the right brace, this is a post indexing
     // addressing form.
     E = Tok.getLoc();
@@ -809,8 +812,6 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
                                              S, E));
     return false;
   }
-
-  return true;
 }
 
 /// Parse the offset of a memory operand after we have seen "[Rn," or "[Rn],"
