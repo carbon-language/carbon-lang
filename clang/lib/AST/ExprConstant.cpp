@@ -404,8 +404,7 @@ bool LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
       break;
   }
 
-  Result.Offset += 
-      CharUnits::fromQuantity(RL.getFieldOffset(i) / Info.Ctx.getCharWidth());
+  Result.Offset += Info.Ctx.toCharUnitsFromBits(RL.getFieldOffset(i));
   return true;
 }
 
@@ -574,7 +573,7 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
 
     Result.Base = BaseLV.getLValueBase();
     Result.Offset = BaseLV.getLValueOffset() + 
-      CharUnits::fromQuantity(Offset / Info.Ctx.getCharWidth());
+      Info.Ctx.toCharUnitsFromBits(Offset);
     return true;
   }
 
@@ -1481,12 +1480,9 @@ CharUnits IntExprEvaluator::GetAlignOfType(QualType T) {
   if (const ReferenceType *Ref = T->getAs<ReferenceType>())
     T = Ref->getPointeeType();
 
-  // Get information about the alignment.
-  unsigned CharSize = Info.Ctx.Target.getCharWidth();
-
   // __alignof is defined to return the preferred alignment.
-  return CharUnits::fromQuantity(
-      Info.Ctx.getPreferredTypeAlign(T.getTypePtr()) / CharSize);
+  return Info.Ctx.toCharUnitsFromBits(
+    Info.Ctx.getPreferredTypeAlign(T.getTypePtr()));
 }
 
 CharUnits IntExprEvaluator::GetAlignOfExpr(const Expr *E) {
@@ -1578,8 +1574,7 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *E) {
           break;
       }
       assert(i < RL.getFieldCount() && "offsetof field in wrong type");
-      Result += CharUnits::fromQuantity(
-                           RL.getFieldOffset(i) / Info.Ctx.getCharWidth());
+      Result += Info.Ctx.toCharUnitsFromBits(RL.getFieldOffset(i));
       CurrentType = MemberDecl->getType().getNonReferenceType();
       break;
     }
@@ -1607,9 +1602,9 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *E) {
         return false;
       
       // Add the offset to the base.
-      Result += CharUnits::fromQuantity(
-             RL.getBaseClassOffsetInBits(cast<CXXRecordDecl>(BaseRT->getDecl()))
-                                        / Info.Ctx.getCharWidth());
+      Result += Info.Ctx.toCharUnitsFromBits(
+             RL.getBaseClassOffsetInBits(
+               cast<CXXRecordDecl>(BaseRT->getDecl())));
       break;
     }
     }

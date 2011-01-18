@@ -98,7 +98,7 @@ class EmptySubobjectMap {
     assert(FieldOffset % CharWidth == 0 && 
            "Field offset not at char boundary!");
 
-    return CharUnits::fromQuantity(FieldOffset / CharWidth);
+    return toCharUnits(FieldOffset);
   }
 
   // FIXME: Remove this.
@@ -623,7 +623,7 @@ protected:
 
   // FIXME: Remove these.
   CharUnits toCharUnits(uint64_t Offset) const {
-    return CharUnits::fromQuantity(Offset / Context.getCharWidth());
+    return Context.toCharUnitsFromBits(Offset);
   }
   uint64_t toOffset(CharUnits Offset) const {
     return Offset.getQuantity() * Context.getCharWidth();
@@ -1806,8 +1806,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
          E = RD->field_end(); I != E; ++I, ++FieldNo) {
     const FieldDecl *Field = *I;
     CharUnits FieldOffset = Offset + 
-      CharUnits::fromQuantity(Layout.getFieldOffset(FieldNo) / 
-                              C.getCharWidth());
+      C.toCharUnitsFromBits(Layout.getFieldOffset(FieldNo));
 
     if (const RecordType *RT = Field->getType()->getAs<RecordType>()) {
       if (const CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
