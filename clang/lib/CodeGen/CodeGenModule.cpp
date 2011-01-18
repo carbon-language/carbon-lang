@@ -1086,8 +1086,8 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
 }
 
 CharUnits CodeGenModule::GetTargetTypeStoreSize(const llvm::Type *Ty) const {
-    return CharUnits::fromQuantity(
-      TheTargetData.getTypeStoreSizeInBits(Ty) / Context.getCharWidth());
+    return Context.toCharUnitsFromBits(
+      TheTargetData.getTypeStoreSizeInBits(Ty));
 }
 
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {

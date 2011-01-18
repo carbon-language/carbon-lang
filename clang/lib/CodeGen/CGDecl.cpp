@@ -355,7 +355,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
 
   bool Packed = false;
   CharUnits Align = getContext().getDeclAlign(D);
-  if (Align > CharUnits::fromQuantity(Target.getPointerAlign(0) / 8)) {
+  if (Align > getContext().toCharUnitsFromBits(Target.getPointerAlign(0))) {
     // We have to insert padding.
     
     // The struct above has 2 32-bit integers.
@@ -657,7 +657,7 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D,
         Align = getContext().getDeclAlign(&D);
         if (isByRef)
           Align = std::max(Align, 
-              CharUnits::fromQuantity(Target.getPointerAlign(0) / 8));
+              getContext().toCharUnitsFromBits(Target.getPointerAlign(0)));
         Alloc->setAlignment(Align.getQuantity());
         DeclPtr = Alloc;
       }
