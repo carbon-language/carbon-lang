@@ -588,7 +588,7 @@ bool
 SBThread::IsSuspended()
 {
     if (m_opaque_sp)
-        m_opaque_sp->GetResumeState () == eStateSuspended;
+        return m_opaque_sp->GetResumeState () == eStateSuspended;
     return false;
 }
 
