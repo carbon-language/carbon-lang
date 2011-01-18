@@ -266,11 +266,11 @@ public:
   bool isToken() const { return Kind == Token; }
   bool isMemory() const { return Kind == Memory; }
   bool isMemMode5() const {
-    if (!isMemory() || Mem.OffsetIsReg || Mem.OffsetRegShifted ||
-        Mem.Writeback || Mem.Negative)
+    if (!isMemory() || getMemOffsetIsReg() || getMemWriteback() ||
+        getMemNegative())
       return false;
 
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset.Value);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
     if (!CE) return false;
 
     // The offset must be a multiple of 4 in the range 0-1020.
@@ -278,15 +278,15 @@ public:
     return ((Value & 0x3) == 0 && Value <= 1020 && Value >= -1020);
   }
   bool isMemModeRegThumb() const {
-    if (!isMemory() || !Mem.OffsetIsReg || Mem.Writeback)
+    if (!isMemory() || !getMemOffsetIsReg() || getMemWriteback())
       return false;
     return true;
   }
   bool isMemModeImmThumb() const {
-    if (!isMemory() || Mem.OffsetIsReg || Mem.Writeback)
+    if (!isMemory() || getMemOffsetIsReg() || getMemWriteback())
       return false;
 
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset.Value);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
     if (!CE) return false;
 
     // The offset must be a multiple of 4 in the range 0-124.
@@ -345,12 +345,12 @@ public:
   void addMemMode5Operands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && isMemMode5() && "Invalid number of operands!");
 
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    assert(!Mem.OffsetIsReg && "Invalid mode 5 operand");
+    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
+    assert(!getMemOffsetIsReg() && "Invalid mode 5 operand");
 
     // FIXME: #-0 is encoded differently than #0. Does the parser preserve
     // the difference?
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset.Value);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
     assert(CE && "Non-constant mode 5 offset operand!");
 
     // The MCInst offset operand doesn't include the low two bits (like
@@ -366,14 +366,14 @@ public:
 
   void addMemModeRegThumbOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && isMemModeRegThumb() && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.Offset.RegNum));
+    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
+    Inst.addOperand(MCOperand::CreateReg(getMemOffsetRegNum()));
   }
 
   void addMemModeImmThumbOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && isMemModeImmThumb() && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset.Value);
+    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
     assert(CE && "Non-constant mode offset operand!");
     Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
   }
