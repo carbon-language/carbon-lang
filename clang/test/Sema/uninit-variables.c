@@ -102,3 +102,12 @@ void test16() {
   for (unsigned i = 0 ; i < 100 ; i++)
     p[i] = 'a'; // no-warning
 }
+
+void test17() {
+  // Don't warn multiple times about the same uninitialized variable
+  // along the same path.
+  int *x;
+  *x = 1; // expected-warning{{use of uninitialized variable 'x'}}
+  *x = 1; // no-warning
+}
+  

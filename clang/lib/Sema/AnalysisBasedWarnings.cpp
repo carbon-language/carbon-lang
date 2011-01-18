@@ -442,13 +442,9 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   
   if (Diags.getDiagnosticLevel(diag::warn_var_is_uninit, D->getLocStart())
       != Diagnostic::Ignored) {
-    if (!S.getLangOptions().CPlusPlus) {
-      CFG *cfg = AC.getCFG();
-      if (cfg) {
-        UninitValsDiagReporter reporter(S);
-        runUninitializedVariablesAnalysis(*cast<DeclContext>(D), *cfg,
-                                          reporter);
-      }
+    if (CFG *cfg = AC.getCFG()) {
+      UninitValsDiagReporter reporter(S);
+      runUninitializedVariablesAnalysis(*cast<DeclContext>(D), *cfg, reporter);
     }
   }
 }

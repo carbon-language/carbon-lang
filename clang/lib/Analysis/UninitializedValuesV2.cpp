@@ -19,6 +19,7 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/Analyses/UninitializedValuesV2.h"
+#include "clang/Analysis/Support/SaveAndRestore.h"
 
 using namespace clang;
 
@@ -218,15 +219,17 @@ class TransferFunctions : public CFGRecStmtVisitor<TransferFunctions> {
   CFGBlockValues &vals;
   const CFG &cfg;
   UninitVariablesHandler *handler;
+  const DeclRefExpr *currentDR;
 public:
   TransferFunctions(CFGBlockValues &vals, const CFG &cfg,
                     UninitVariablesHandler *handler)
-    : vals(vals), cfg(cfg), handler(handler) {}
+    : vals(vals), cfg(cfg), handler(handler), currentDR(0) {}
   
   const CFG &getCFG() { return cfg; }
   void reportUninit(const DeclRefExpr *ex, const VarDecl *vd);
   
   void VisitDeclStmt(DeclStmt *ds);
+  void VisitDeclRefExpr(DeclRefExpr *dr);
   void VisitUnaryOperator(UnaryOperator *uo);
   void VisitBinaryOperator(BinaryOperator *bo);
   void VisitCastExpr(CastExpr *ce);
@@ -249,8 +252,26 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
           vals[vd] = Initialized;
         }
       }
+      else if (Stmt *init = vd->getInit()) {
+        Visit(init);
+      }
     }
   }
+}
+
+void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *dr) {
+  // We assume that DeclRefExprs wrapped in an lvalue-to-rvalue cast
+  // cannot be block-level expressions.  Therefore, we determine if
+  // a DeclRefExpr is involved in a "load" by comparing it to the current
+  // DeclRefExpr found when analyzing the last lvalue-to-rvalue CastExpr.
+  // If a DeclRefExpr is not involved in a load, we are essentially computing
+  // its address, either for assignment to a reference or via the '&' operator.
+  // In such cases, treat the variable as being initialized, since this
+  // analysis isn't powerful enough to do alias tracking.
+  if (dr != currentDR)
+    if (const VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl()))
+      if (isTrackedVar(vd))
+        vals[vd] = Initialized;
 }
 
 static FindVarResult findBlockVarDecl(Expr* ex) {
@@ -263,55 +284,86 @@ static FindVarResult findBlockVarDecl(Expr* ex) {
 }
 
 void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
-  Visit(bo->getRHS());
-  Visit(bo->getLHS());
   if (bo->isAssignmentOp()) {
     const FindVarResult &res = findBlockVarDecl(bo->getLHS());
     if (const VarDecl* vd = res.getDecl()) {
+      // We assume that DeclRefExprs wrapped in a BinaryOperator "assignment"
+      // cannot be block-level expressions.  Therefore, we determine if
+      // a DeclRefExpr is involved in a "load" by comparing it to the current
+      // DeclRefExpr found when analyzing the last lvalue-to-rvalue CastExpr.
+      SaveAndRestore<const DeclRefExpr*> lastDR(currentDR, 
+                                                res.getDeclRefExpr());
+      Visit(bo->getRHS());
+      Visit(bo->getLHS());
+
       llvm::BitVector::reference bit = vals[vd];
       if (bit == Uninitialized) {
         if (bo->getOpcode() != BO_Assign)
           reportUninit(res.getDeclRefExpr(), vd);
         bit = Initialized;
       }
+      return;
     }
   }
+  Visit(bo->getRHS());
+  Visit(bo->getLHS());
 }
 
 void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
-  Visit(uo->getSubExpr());
   switch (uo->getOpcode()) {
-    case clang::UO_AddrOf:
-      if (const VarDecl *vd = findBlockVarDecl(uo->getSubExpr()).getDecl())
-        vals[vd] = Initialized;
-      break;
     case clang::UO_PostDec:
     case clang::UO_PostInc:
     case clang::UO_PreDec:
     case clang::UO_PreInc: {
       const FindVarResult &res = findBlockVarDecl(uo->getSubExpr());
       if (const VarDecl *vd = res.getDecl()) {
+        // We assume that DeclRefExprs wrapped in a unary operator ++/--
+        // cannot be block-level expressions.  Therefore, we determine if
+        // a DeclRefExpr is involved in a "load" by comparing it to the current
+        // DeclRefExpr found when analyzing the last lvalue-to-rvalue CastExpr.
+        SaveAndRestore<const DeclRefExpr*> lastDR(currentDR, 
+                                                  res.getDeclRefExpr());
+        Visit(uo->getSubExpr());
+
         llvm::BitVector::reference bit = vals[vd];
         if (bit == Uninitialized) {
           reportUninit(res.getDeclRefExpr(), vd);
           bit = Initialized;
         }
+        return;
       }
       break;
     }
     default:
       break;
   }
+  Visit(uo->getSubExpr());
 }
 
 void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
-  Visit(ce->getSubExpr());
   if (ce->getCastKind() == CK_LValueToRValue) {
     const FindVarResult &res = findBlockVarDecl(ce->getSubExpr());
-    if (const VarDecl *vd = res.getDecl())
-      if (vals[vd] == Uninitialized)
+    if (const VarDecl *vd = res.getDecl()) {
+      // We assume that DeclRefExprs wrapped in an lvalue-to-rvalue cast
+      // cannot be block-level expressions.  Therefore, we determine if
+      // a DeclRefExpr is involved in a "load" by comparing it to the current
+      // DeclRefExpr found when analyzing the last lvalue-to-rvalue CastExpr.
+      // Here we update 'currentDR' to be the one associated with this
+      // lvalue-to-rvalue cast.  Then, when we analyze the DeclRefExpr, we
+      // will know that we are not computing its lvalue for other purposes
+      // than to perform a load.
+      SaveAndRestore<const DeclRefExpr*> lastDR(currentDR, 
+                                                res.getDeclRefExpr());
+      Visit(ce->getSubExpr());
+      if (vals[vd] == Uninitialized) {
         reportUninit(res.getDeclRefExpr(), vd);
-  }
+        // Don't cascade warnings.
+        vals[vd] = Initialized;
+      }
+      return;
+    }
+  }  
+  Visit(ce->getSubExpr());
 }
 
 //------------------------------------------------------------------------====//
