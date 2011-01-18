@@ -1570,5 +1570,7 @@ MipsTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 bool MipsTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
   if (VT != MVT::f32 && VT != MVT::f64)
     return false;
+  if (Imm.isNegZero())
+    return false;
   return Imm.isZero();
 }
