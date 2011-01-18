@@ -20,6 +20,7 @@
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ASTResultSynthesizer.h"
@@ -365,6 +366,12 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             error_stream.Printf("Couldn't materialize struct: %s\n", materialize_error.AsCString());
             return false;
         }
+
+#if 0
+		// jingham: look here
+        StreamFile logfile ("/tmp/exprs.txt", "a");
+        logfile.Printf("0x%16.16llx: thread = 0x%4.4x, expr = '%s'\n", m_jit_addr, exe_ctx.thread ? exe_ctx.thread->GetID() : -1, m_expr_text.c_str());
+#endif
         
         if (log)
         {

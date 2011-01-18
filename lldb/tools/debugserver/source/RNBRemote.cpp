@@ -76,6 +76,7 @@ RNBRemote::RNBRemote (bool use_native_regs, const char *arch) :
     m_max_payload_size(DEFAULT_GDB_REMOTE_PROTOCOL_BUFSIZE - 4),
     m_extended_mode(false),
     m_noack_mode(false),
+    m_thread_suffix_supported (false),
     m_use_native_regs (use_native_regs)
 {
     DNBLogThreadedIf (LOG_RNB_REMOTE, "%s", __PRETTY_FUNCTION__);
@@ -170,12 +171,13 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (query_step_packet_supported,   &RNBRemote::HandlePacket_qStepPacketSupported,NULL, "qStepPacketSupported", "Replys with OK if the 's' packet is supported."));
     t.push_back (Packet (query_host_info,               &RNBRemote::HandlePacket_qHostInfo,     NULL, "qHostInfo", "Replies with multiple 'key:value;' tuples appended to each other."));
 //  t.push_back (Packet (query_symbol_lookup,           &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qSymbol", "Notify that host debugger is ready to do symbol lookups"));
-    t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_Q            , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
-    t.push_back (Packet (set_logging_mode,              &RNBRemote::HandlePacket_Q            , NULL, "QSetLogging:", "Request that the " DEBUGSERVER_PROGRAM_NAME " set its logging mode bits"));
-    t.push_back (Packet (set_max_packet_size,           &RNBRemote::HandlePacket_Q            , NULL, "QSetMaxPacketSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized packet gdb can handle"));
-    t.push_back (Packet (set_max_payload_size,          &RNBRemote::HandlePacket_Q            , NULL, "QSetMaxPayloadSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized payload gdb can handle"));
-    t.push_back (Packet (set_environment_variable,      &RNBRemote::HandlePacket_Q            , NULL, "QEnvironment:", "Add an environment variable to the inferior's environment"));
-    t.push_back (Packet (set_disable_aslr,              &RNBRemote::HandlePacket_Q            , NULL, "QSetDisableASLR:", "Set wether to disable ASLR when launching the process with the set argv ('A') packet"));
+    t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_QStartNoAckMode        , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
+    t.push_back (Packet (prefix_reg_packets_with_tid,   &RNBRemote::HandlePacket_QThreadSuffixSupported , NULL, "QThreadSuffixSupported", "Check if thread specifc packets (register packets 'g', 'G', 'p', and 'P') support having the thread ID appended to the end of the command"));
+    t.push_back (Packet (set_logging_mode,              &RNBRemote::HandlePacket_QSetLogging            , NULL, "QSetLogging:", "Check if register packets ('g', 'G', 'p', and 'P' support having the thread ID prefix"));
+    t.push_back (Packet (set_max_packet_size,           &RNBRemote::HandlePacket_QSetMaxPacketSize      , NULL, "QSetMaxPacketSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized packet gdb can handle"));
+    t.push_back (Packet (set_max_payload_size,          &RNBRemote::HandlePacket_QSetMaxPayloadSize     , NULL, "QSetMaxPayloadSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized payload gdb can handle"));
+    t.push_back (Packet (set_environment_variable,      &RNBRemote::HandlePacket_QEnvironment           , NULL, "QEnvironment:", "Add an environment variable to the inferior's environment"));
+    t.push_back (Packet (set_disable_aslr,              &RNBRemote::HandlePacket_QSetDisableASLR        , NULL, "QSetDisableASLR:", "Set wether to disable ASLR when launching the process with the set argv ('A') packet"));
 //  t.push_back (Packet (pass_signals_to_inferior,      &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "QPassSignals:", "Specify which signals are passed to the inferior"));
     t.push_back (Packet (allocate_memory,               &RNBRemote::HandlePacket_AllocateMemory, NULL, "_M", "Allocate memory in the inferior process."));
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
@@ -1702,104 +1704,105 @@ set_logging (const char *p)
     return rnb_success;
 }
 
+rnb_err_t
+RNBRemote::HandlePacket_QThreadSuffixSupported (const char *p)
+{
+    m_thread_suffix_supported = true;
+    return SendPacket ("OK");
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_QStartNoAckMode (const char *p)
+{
+    // Send the OK packet first so the correct checksum is appended...
+    rnb_err_t result = SendPacket ("OK");
+    m_noack_mode = true;
+    return result;
+}
 
 
 rnb_err_t
-RNBRemote::HandlePacket_Q (const char *p)
+RNBRemote::HandlePacket_QSetLogging (const char *p)
 {
-    if (p == NULL || strlen (p) <= 1)
-    {
-        return HandlePacket_ILLFORMED ("No subtype specified in Q packet");
-    }
-
-    /* Switch to no-ack protocol mode after the "OK" packet is sent
-     and the ack for that comes back from gdb.  */
-
-    if (strcmp (p, "QStartNoAckMode") == 0)
-    {
-        rnb_err_t result = SendPacket ("OK");
-        m_noack_mode = true;
-        return result;
-    }
-
-    if (strncmp (p, "QSetLogging:", sizeof ("QSetLogging:") - 1) == 0)
-    {
-        p += sizeof ("QSetLogging:") - 1;
-        rnb_err_t result = set_logging (p);
-        if (result == rnb_success)
-            return SendPacket ("OK");
-        else
-            return SendPacket ("E35");
-    }
-
-    if (strncmp (p, "QSetDisableASLR:", sizeof ("QSetDisableASLR:") - 1) == 0)
-    {
-        extern int g_disable_aslr;
-        p += sizeof ("QSetDisableASLR:") - 1;
-        switch (*p)
-        {
-        case '0': g_disable_aslr = 0; break;
-        case '1': g_disable_aslr = 1; break;
-        default:
-            return SendPacket ("E56");
-        }
+    p += sizeof ("QSetLogging:") - 1;
+    rnb_err_t result = set_logging (p);
+    if (result == rnb_success)
         return SendPacket ("OK");
-    }
+    else
+        return SendPacket ("E35");
+}
 
+rnb_err_t
+RNBRemote::HandlePacket_QSetDisableASLR (const char *p)
+{
+    extern int g_disable_aslr;
+    p += sizeof ("QSetDisableASLR:") - 1;
+    switch (*p)
+    {
+    case '0': g_disable_aslr = 0; break;
+    case '1': g_disable_aslr = 1; break;
+    default:
+        return SendPacket ("E56");
+    }
+    return SendPacket ("OK");
+}
+
+
+rnb_err_t
+RNBRemote::HandlePacket_QSetMaxPayloadSize (const char *p)
+{
     /* The number of characters in a packet payload that gdb is
      prepared to accept.  The packet-start char, packet-end char,
      2 checksum chars and terminating null character are not included
      in this size.  */
-    if (strncmp (p, "QSetMaxPayloadSize:", sizeof ("QSetMaxPayloadSize:") - 1) == 0)
+    p += sizeof ("QSetMaxPayloadSize:") - 1;
+    errno = 0;
+    uint32_t size = strtoul (p, NULL, 16);
+    if (errno != 0 && size == 0)
     {
-        p += sizeof ("QSetMaxPayloadSize:") - 1;
-        errno = 0;
-        uint32_t size = strtoul (p, NULL, 16);
-        if (errno != 0 && size == 0)
-        {
-            return HandlePacket_ILLFORMED ("Invalid length in QSetMaxPayloadSize packet");
-        }
-        m_max_payload_size = size;
-        return SendPacket ("OK");
+        return HandlePacket_ILLFORMED ("Invalid length in QSetMaxPayloadSize packet");
     }
+    m_max_payload_size = size;
+    return SendPacket ("OK");
+}
 
+rnb_err_t
+RNBRemote::HandlePacket_QSetMaxPacketSize (const char *p)
+{
     /* This tells us the largest packet that gdb can handle.
      i.e. the size of gdb's packet-reading buffer.
      QSetMaxPayloadSize is preferred because it is less ambiguous.  */
-
-    if (strncmp (p, "QSetMaxPacketSize:", sizeof ("QSetMaxPacketSize:") - 1) == 0)
+    p += sizeof ("QSetMaxPacketSize:") - 1;
+    errno = 0;
+    uint32_t size = strtoul (p, NULL, 16);
+    if (errno != 0 && size == 0)
     {
-        p += sizeof ("QSetMaxPacketSize:") - 1;
-        errno = 0;
-        uint32_t size = strtoul (p, NULL, 16);
-        if (errno != 0 && size == 0)
-        {
-            return HandlePacket_ILLFORMED ("Invalid length in QSetMaxPacketSize packet");
-        }
-        m_max_payload_size = size - 5;
-        return SendPacket ("OK");
+        return HandlePacket_ILLFORMED ("Invalid length in QSetMaxPacketSize packet");
     }
+    m_max_payload_size = size - 5;
+    return SendPacket ("OK");
+}
 
+
+
+
+rnb_err_t
+RNBRemote::HandlePacket_QEnvironment (const char *p)
+{
     /* This sets the environment for the target program.  The packet is of the form:
 
      QEnvironment:VARIABLE=VALUE
 
      */
 
-    if (strncmp (p, "QEnvironment:", sizeof ("QEnvironment:") - 1) == 0)
-    {
-        DNBLogThreadedIf (LOG_RNB_REMOTE, "%8u RNBRemote::%s Handling QEnvironment: \"%s\"",
-                          (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true), __FUNCTION__, p);
+    DNBLogThreadedIf (LOG_RNB_REMOTE, "%8u RNBRemote::%s Handling QEnvironment: \"%s\"",
+                      (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true), __FUNCTION__, p);
 
-        p += sizeof ("QEnvironment:") - 1;
-        RNBContext& ctx = Context();
+    p += sizeof ("QEnvironment:") - 1;
+    RNBContext& ctx = Context();
 
-        ctx.PushEnvironment (p);
-        return SendPacket ("OK");
-    }
-
-    // Unrecognized Q packet
-    return SendPacket ("");
+    ctx.PushEnvironment (p);
+    return SendPacket ("OK");
 }
 
 void
@@ -2245,7 +2248,9 @@ RNBRemote::HandlePacket_g (const char *p)
         InitializeRegisters ();
 
     nub_process_t pid = m_ctx.ProcessID ();
-    nub_thread_t tid = GetCurrentThread();
+    nub_thread_t tid = ExtractThreadIDFromThreadSuffix (p + 1);
+    if (tid == INVALID_NUB_THREAD)
+        return HandlePacket_ILLFORMED ("No thread specified in p packet");
 
     if (m_use_native_regs)
     {
@@ -2291,7 +2296,9 @@ RNBRemote::HandlePacket_G (const char *p)
     packet.SetFilePos(1); // Skip the 'G'
     
     nub_process_t pid = m_ctx.ProcessID();
-    nub_thread_t tid = GetCurrentThread();
+    nub_thread_t tid = ExtractThreadIDFromThreadSuffix (p);
+    if (tid == INVALID_NUB_THREAD)
+        return HandlePacket_ILLFORMED ("No thread specified in p packet");
 
     if (m_use_native_regs)
     {
@@ -2870,6 +2877,30 @@ RNBRemote::HandlePacket_z (const char *p)
     return HandlePacket_UNIMPLEMENTED(p);
 }
 
+// Extract the thread number from the thread suffix that might be appended to
+// thread specific packets. This will only be enabled if m_thread_suffix_supported
+// is true.
+nub_thread_t
+RNBRemote::ExtractThreadIDFromThreadSuffix (const char *p)
+{
+    if (m_thread_suffix_supported)
+    {
+        nub_thread_t tid = INVALID_NUB_THREAD;
+        if (p)
+        {
+            const char *tid_cstr = strstr (p, "thread:");
+            if (tid_cstr)
+            {
+                tid_cstr += strlen ("thread:");
+                tid = strtoul(tid_cstr, NULL, 16);
+            }
+            DNBLogThreadedIf (LOG_RNB_PACKETS, "RNBRemote::ExtractThreadIDFromThreadSuffix(%s) got thread 0x%4.4x", p, tid);
+        }
+    }
+    return GetCurrentThread();
+
+}
+
 /* `p XX'
  print the contents of register X */
 
@@ -2889,11 +2920,16 @@ RNBRemote::HandlePacket_p (const char *p)
     }
     nub_process_t pid = m_ctx.ProcessID();
     errno = 0;
-    uint32_t reg = strtoul (p + 1, NULL, 16);
+    char *tid_cstr = NULL;
+    uint32_t reg = strtoul (p + 1, &tid_cstr, 16);
     if (errno != 0 && reg == 0)
     {
-        return HandlePacket_ILLFORMED ("Could not parse thread number in p packet");
+        return HandlePacket_ILLFORMED ("Could not parse register number in p packet");
     }
+
+    nub_thread_t tid = ExtractThreadIDFromThreadSuffix (tid_cstr);
+    if (tid == INVALID_NUB_THREAD)
+        return HandlePacket_ILLFORMED ("No thread specified in p packet");
 
     const register_map_entry_t *reg_entry;
 
@@ -2925,7 +2961,6 @@ RNBRemote::HandlePacket_p (const char *p)
     }
     else
     {
-        nub_thread_t tid = GetCurrentThread();
         register_value_in_hex_fixed_width (ostrm, pid, tid, reg_entry);
     }
     return SendPacket (ostrm.str());
@@ -2985,8 +3020,9 @@ RNBRemote::HandlePacket_P (const char *p)
     reg_value.info = reg_entry->nub_info;
     packet.GetHexBytes (reg_value.value.v_sint8, reg_entry->gdb_size, 0xcc);
 
-    nub_thread_t tid;
-    tid = GetCurrentThread ();
+    nub_thread_t tid = ExtractThreadIDFromThreadSuffix (p);
+    if (tid == INVALID_NUB_THREAD)
+        return HandlePacket_ILLFORMED ("No thread specified in p packet");
 
     if (!DNBThreadSetRegisterValueByID (pid, tid, reg_entry->nub_info.set, reg_entry->nub_info.reg, &reg_value))
     {

@@ -554,6 +554,13 @@ ProcessGDBRemote::ConnectToDebugserver (const char *host_port)
             if (response.IsOKPacket())
                 m_gdb_comm.SetAckMode (false);
         }
+
+        if (m_gdb_comm.SendPacketAndWaitForResponse("QThreadSuffixSupported", response, 1, false))
+        {
+            if (response.IsOKPacket())
+                m_gdb_comm.SetThreadSuffixSupported (true);
+        }
+
     }
     return error;
 }
@@ -2021,7 +2028,7 @@ ProcessGDBRemote::SetCurrentGDBRemoteThreadForRun (int tid)
         return true;
 
     char packet[32];
-    const int packet_len = ::snprintf (packet, sizeof(packet), "Hg%x", tid);
+    const int packet_len = ::snprintf (packet, sizeof(packet), "Hc%x", tid);
     assert (packet_len + 1 < sizeof(packet));
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 2, false))

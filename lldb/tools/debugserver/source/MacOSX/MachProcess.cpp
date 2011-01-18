@@ -101,6 +101,7 @@ MachProcess::MachProcess() :
     m_stdio_thread      (0),
     m_stdio_mutex       (PTHREAD_MUTEX_RECURSIVE),
     m_stdout_data       (),
+    m_thread_actions    (),
     m_thread_list        (),
     m_exception_messages (),
     m_exception_messages_mutex (PTHREAD_MUTEX_RECURSIVE),
@@ -314,7 +315,8 @@ MachProcess::Resume (const DNBThreadResumeActions& thread_actions)
 
     if (CanResume(state))
     {
-        PrivateResume(thread_actions);
+        m_thread_actions = thread_actions;
+        PrivateResume();
         return true;
     }
     else if (state == eStateRunning)
@@ -337,7 +339,8 @@ MachProcess::Kill (const struct timespec *timeout_abstime)
     DNBError err;
     err.SetErrorToErrno();
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill() DoSIGSTOP() ::ptrace (PT_KILL, pid=%u, 0, 0) => 0x%8.8x (%s)", err.Error(), err.AsString());
-    PrivateResume (DNBThreadResumeActions (eStateRunning, 0));
+    m_thread_actions = DNBThreadResumeActions (eStateRunning, 0);
+    PrivateResume ();
     return true;
 }
 
@@ -392,7 +395,8 @@ MachProcess::DoSIGSTOP (bool clear_bps_and_wps, uint32_t *thread_idx_ptr)
         // No threads were stopped with a SIGSTOP, we need to run and halt the
         // process with a signal
         DNBLogThreadedIf(LOG_PROCESS, "MachProcess::DoSIGSTOP() state = %s -- resuming process", DNBStateAsString (state));
-        PrivateResume (DNBThreadResumeActions (eStateRunning, 0));
+        m_thread_actions = DNBThreadResumeActions (eStateRunning, 0);
+        PrivateResume ();
 
         // Reset the event that says we were indeed running
         m_events.ResetEvents(eEventProcessRunningStateChanged);
@@ -428,20 +432,19 @@ MachProcess::Detach()
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Detach() DoSIGSTOP() returned %s", DNBStateAsString(state));
 
     {
-        DNBThreadResumeActions thread_actions;
+        m_thread_actions.Clear();
         DNBThreadResumeAction thread_action;
         thread_action.tid = m_thread_list.ThreadIDAtIndex (thread_idx);
         thread_action.state = eStateRunning;
         thread_action.signal = -1;
         thread_action.addr = INVALID_NUB_ADDRESS;
         
-        thread_actions.Append (thread_action);
-        
-        thread_actions.SetDefaultThreadActionIfNeeded (eStateRunning, 0);
+        m_thread_actions.Append (thread_action);
+        m_thread_actions.SetDefaultThreadActionIfNeeded (eStateRunning, 0);
         
         PTHREAD_MUTEX_LOCKER (locker, m_exception_messages_mutex);
 
-        ReplyToAllExceptions (thread_actions);
+        ReplyToAllExceptions ();
 
     }
 
@@ -597,7 +600,7 @@ MachProcess::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
 
 
 void
-MachProcess::ReplyToAllExceptions (const DNBThreadResumeActions& thread_actions)
+MachProcess::ReplyToAllExceptions ()
 {
     PTHREAD_MUTEX_LOCKER(locker, m_exception_messages_mutex);
     if (m_exception_messages.empty() == false)
@@ -610,13 +613,13 @@ MachProcess::ReplyToAllExceptions (const DNBThreadResumeActions& thread_actions)
             DNBLogThreadedIf(LOG_EXCEPTIONS, "Replying to exception %d...", std::distance(begin, pos));
             int thread_reply_signal = 0;
 
-            const DNBThreadResumeAction *action = thread_actions.GetActionForThread (pos->state.thread_port, false);
+            const DNBThreadResumeAction *action = m_thread_actions.GetActionForThread (pos->state.thread_port, false);
 
             if (action)
             {
                 thread_reply_signal = action->signal;
                 if (thread_reply_signal)
-                    thread_actions.SetSignalHandledForThread (pos->state.thread_port);
+                    m_thread_actions.SetSignalHandledForThread (pos->state.thread_port);
             }
 
             DNBError err (pos->Reply(this, thread_reply_signal));
@@ -630,20 +633,20 @@ MachProcess::ReplyToAllExceptions (const DNBThreadResumeActions& thread_actions)
     }
 }
 void
-MachProcess::PrivateResume (const DNBThreadResumeActions& thread_actions)
+MachProcess::PrivateResume ()
 {
     PTHREAD_MUTEX_LOCKER (locker, m_exception_messages_mutex);
 
-    ReplyToAllExceptions (thread_actions);
+    ReplyToAllExceptions ();
 //    bool stepOverBreakInstruction = step;
 
     // Let the thread prepare to resume and see if any threads want us to
     // step over a breakpoint instruction (ProcessWillResume will modify
     // the value of stepOverBreakInstruction).
-    m_thread_list.ProcessWillResume (this, thread_actions);
+    m_thread_list.ProcessWillResume (this, m_thread_actions);
 
     // Set our state accordingly
-    if (thread_actions.NumActionsWithState(eStateStepping))
+    if (m_thread_actions.NumActionsWithState(eStateStepping))
         SetState (eStateStepping);
     else
         SetState (eStateRunning);
@@ -1100,7 +1103,7 @@ MachProcess::ExceptionMessageBundleComplete()
         else
         {
             // Resume without checking our current state.
-            PrivateResume (DNBThreadResumeActions (eStateRunning, 0));
+            PrivateResume ();
         }
     }
     else

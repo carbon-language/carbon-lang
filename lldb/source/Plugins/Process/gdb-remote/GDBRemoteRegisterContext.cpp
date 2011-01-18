@@ -217,15 +217,19 @@ GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
         Mutex::Locker locker;
         if (gdb_comm.GetSequenceMutex (locker))
         {
-            if (GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
+            const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
+            if (thread_suffix_supported || GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
             {
-                char packet[32];
+                char packet[64];
                 StringExtractorGDBRemote response;
-                int packet_len;
+                int packet_len = 0;
                 if (m_read_all_at_once)
                 {
                     // Get all registers in one packet
-                    packet_len = ::snprintf (packet, sizeof(packet), "g");
+                    if (thread_suffix_supported)
+                        packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4x;", m_thread.GetID());
+                    else
+                        packet_len = ::snprintf (packet, sizeof(packet), "g");
                     assert (packet_len < (sizeof(packet) - 1));
                     if (gdb_comm.SendPacketAndWaitForResponse(packet, response, 1, false))
                     {
@@ -237,7 +241,10 @@ GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
                 else
                 {
                     // Get each register individually
-                    packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
+                    if (thread_suffix_supported)
+                        packet_len = ::snprintf (packet, sizeof(packet), "p%x;thread:%4.4x;", reg, m_thread.GetID());
+                    else
+                        packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
                     assert (packet_len < (sizeof(packet) - 1));
                     if (gdb_comm.SendPacketAndWaitForResponse(packet, response, 1, false))
                         PrivateSetRegisterValue (reg, response);
@@ -319,7 +326,8 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
         Mutex::Locker locker;
         if (gdb_comm.GetSequenceMutex (locker))
         {
-            if (GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
+            const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
+            if (thread_suffix_supported || GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
             {
                 uint32_t offset, end_offset;
                 StreamString packet;
@@ -336,6 +344,9 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
                                               eByteOrderHost,
                                               eByteOrderHost);
                     
+                    if (thread_suffix_supported)
+                        packet.Printf (";thread:%4.4x;", m_thread.GetID());
+
                     // Invalidate all register values
                     InvalidateIfNeeded (true);
 
@@ -360,6 +371,9 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
                                               reg_info->byte_size,
                                               eByteOrderHost,
                                               eByteOrderHost);
+
+                    if (thread_suffix_supported)
+                        packet.Printf (";thread:%4.4x;", m_thread.GetID());
 
                     // Invalidate just this register
                     m_reg_valid[reg] = false;
@@ -391,16 +405,31 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
     Mutex::Locker locker;
     if (gdb_comm.GetSequenceMutex (locker))
     {
-        if (GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
+        char packet[32];
+        const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
+        if (thread_suffix_supported || GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
         {
-            if (gdb_comm.SendPacketAndWaitForResponse("g", response, 1, false))
+            int packet_len = 0;
+            if (thread_suffix_supported)
+                packet_len = ::snprintf (packet, sizeof(packet), "g;thread:%4.4x", m_thread.GetID());
+            else
+                packet_len = ::snprintf (packet, sizeof(packet), "g");
+            assert (packet_len < (sizeof(packet) - 1));
+
+            if (gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, 1, false))
             {
                 if (response.IsErrorPacket())
                     return false;
-                    
+                
                 response.GetStringRef().insert(0, 1, 'G');
-                data_sp.reset (new DataBufferHeap(response.GetStringRef().c_str(), 
-                                                  response.GetStringRef().size()));
+                if (thread_suffix_supported)
+                {
+                    char thread_id_cstr[64];
+                    ::snprintf (thread_id_cstr, sizeof(thread_id_cstr), ";thread:%4.4x;", m_thread.GetID());
+                    response.GetStringRef().append (thread_id_cstr);
+                }
+                data_sp.reset (new DataBufferHeap (response.GetStringRef().c_str(), 
+                                                   response.GetStringRef().size()));
                 return true;
             }
         }
@@ -419,7 +448,8 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
     Mutex::Locker locker;
     if (gdb_comm.GetSequenceMutex (locker))
     {
-        if (GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
+        const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
+        if (thread_suffix_supported || GetGDBProcess().SetCurrentGDBRemoteThread(m_thread.GetID()))
         {
             if (gdb_comm.SendPacketAndWaitForResponse((const char *)data_sp->GetBytes(), 
                                                       data_sp->GetByteSize(), 

@@ -85,6 +85,13 @@ public:
     {
         return m_actions.size();
     }
+    
+    void
+    Clear()
+    {
+        m_actions.clear();
+        m_signal_handled.clear();
+    }
 
 protected:
     std::vector<DNBThreadResumeAction> m_actions;

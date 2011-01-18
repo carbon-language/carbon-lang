@@ -340,6 +340,7 @@ ThreadList::ShouldReportRun (Event *event_ptr)
 void
 ThreadList::Clear()
 {
+    Mutex::Locker locker(m_threads_mutex);
     m_stop_id = 0;
     m_threads.clear();
     m_selected_tid = LLDB_INVALID_THREAD_ID;
@@ -504,6 +505,7 @@ ThreadList::WillResume ()
 void
 ThreadList::DidResume ()
 {
+    Mutex::Locker locker(m_threads_mutex);
     collection::iterator pos, end = m_threads.end();
     for (pos = m_threads.begin(); pos != end; ++pos)
     {

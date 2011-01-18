@@ -93,6 +93,7 @@ public:
         query_host_info,                // 'qHostInfo'
         pass_signals_to_inferior,       // 'QPassSignals'
         start_noack_mode,               // 'QStartNoAckMode'
+        prefix_reg_packets_with_tid,    // 'QPrefixRegisterPacketsWithThreadID
         set_logging_mode,               // 'QSetLogging:'
         set_max_packet_size,            // 'QSetMaxPacketSize:'
         set_max_payload_size,           // 'QSetMaxPayloadSize:'
@@ -156,7 +157,14 @@ public:
     rnb_err_t HandlePacket_qThreadExtraInfo (const char *p);
     rnb_err_t HandlePacket_qThreadStopInfo (const char *p);
     rnb_err_t HandlePacket_qHostInfo (const char *p);
-    rnb_err_t HandlePacket_Q (const char *p);
+    rnb_err_t HandlePacket_QStartNoAckMode (const char *p);
+    rnb_err_t HandlePacket_QThreadSuffixSupported (const char *p);
+    rnb_err_t HandlePacket_QSetLogging (const char *p);
+    rnb_err_t HandlePacket_QSetDisableASLR (const char *p);
+    rnb_err_t HandlePacket_QSetMaxPayloadSize (const char *p);
+    rnb_err_t HandlePacket_QSetMaxPacketSize (const char *p);
+    rnb_err_t HandlePacket_QEnvironment (const char *p);
+    rnb_err_t HandlePacket_QPrefixRegisterPacketsWithThreadID (const char *p);
     rnb_err_t HandlePacket_last_signal (const char *p);
     rnb_err_t HandlePacket_m (const char *p);
     rnb_err_t HandlePacket_M (const char *p);
@@ -237,6 +245,9 @@ protected:
     void CreatePacketTable ();
     rnb_err_t GetPacketPayload (std::string &);
 
+    nub_thread_t
+    ExtractThreadIDFromThreadSuffix (const char *p);
+
     // gdb can send multiple Z/z packets for the same address and
     // these calls must be ref counted.
     struct Breakpoint
@@ -286,7 +297,13 @@ protected:
     uint32_t        m_max_payload_size;  // the maximum sized payload we should send to gdb
     bool            m_extended_mode:1,   // are we in extended mode?
                     m_noack_mode:1,      // are we in no-ack mode?
-                    m_use_native_regs:1; // Use native registers by querying DNB layer for register definitions?
+                    m_noack_mode_just_enabled:1, // Did we just enable this and need to compute one more checksum?
+                    m_use_native_regs:1, // Use native registers by querying DNB layer for register definitions?
+                    m_thread_suffix_supported:1; // Set to true if the 'p', 'P', 'g', and 'G' packets should be prefixed with the thread ID and colon:
+                                                                // "$pRR;thread:TTTT;" instead of "$pRR"
+                                                                // "$PRR=VVVVVVVV;thread:TTTT;" instead of "$PRR=VVVVVVVV"
+                                                                // "$g;thread:TTTT" instead of "$g"
+                                                                // "$GVVVVVVVVVVVVVV;thread:TTTT;#00 instead of "$GVVVVVVVVVVVVVV"
 };
 
 /* We translate the /usr/include/mach/exception_types.h exception types

@@ -17,6 +17,7 @@
 #include "DNBDefs.h"
 #include "DNBBreakpoint.h"
 #include "DNBError.h"
+#include "DNBThreadResumeActions.h"
 //#include "MachDYLD.h"
 #include "MachException.h"
 #include "MachVMMemory.h"
@@ -219,8 +220,8 @@ private:
         eMachProcessFlagsUsingSBS = (1 << 1)
     };
     void                    Clear ();
-    void                    ReplyToAllExceptions (const DNBThreadResumeActions& thread_actions);
-    void                    PrivateResume (const DNBThreadResumeActions& thread_actions);
+    void                    ReplyToAllExceptions ();
+    void                    PrivateResume ();
     nub_size_t              RemoveTrapsFromBuffer (nub_addr_t addr, nub_size_t size, uint8_t *buf) const;
 
     uint32_t                Flags () const { return m_flags; }
@@ -239,6 +240,7 @@ private:
     pthread_t                   m_stdio_thread;             // Thread ID for the thread that watches for child process stdio
     PThreadMutex                m_stdio_mutex;              // Multithreaded protection for stdio
     std::string                 m_stdout_data;
+    DNBThreadResumeActions      m_thread_actions;           // The thread actions for the current MachProcess::Resume() call
     MachException::Message::collection
                                 m_exception_messages;       // A collection of exception messages caught when listening to the exception port
     PThreadMutex                m_exception_messages_mutex; // Multithreaded protection for m_exception_messages

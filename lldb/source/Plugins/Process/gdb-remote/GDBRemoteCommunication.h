@@ -100,6 +100,18 @@ public:
     }
 
     bool
+    GetThreadSuffixSupported () const
+    {
+        return m_thread_suffix_supported;
+    }
+    
+    void
+    SetThreadSuffixSupported (bool enabled)
+    {
+        m_thread_suffix_supported = enabled;
+    }
+
+    bool
     SendAsyncSignal (int signo);
 
     bool
@@ -244,7 +256,8 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteCommunication can see and modify these
     //------------------------------------------------------------------
-    bool m_send_acks;
+    bool m_send_acks:1,
+         m_thread_suffix_supported:1;
     lldb_private::Listener m_rx_packet_listener;
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
     lldb_private::Predicate<bool> m_is_running;

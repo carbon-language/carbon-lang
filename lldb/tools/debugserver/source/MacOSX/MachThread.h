@@ -60,8 +60,7 @@ public:
     bool            SetPC(uint64_t value);                              // Set program counter
     uint64_t        GetSP(uint64_t failValue = INVALID_NUB_ADDRESS);    // Get stack pointer
 
-    nub_break_t     CurrentBreakpoint() const { return m_breakID; }
-    void            SetCurrentBreakpoint(nub_break_t breakID) { m_breakID = breakID; }
+    nub_break_t     CurrentBreakpoint();
     uint32_t        EnableHardwareBreakpoint (const DNBBreakpoint *breakpoint);
     uint32_t        EnableHardwareWatchpoint (const DNBBreakpoint *watchpoint);
     bool            DisableHardwareBreakpoint (const DNBBreakpoint *breakpoint);
@@ -88,7 +87,9 @@ public:
     bool            SetRegisterValue ( uint32_t reg_set_idx, uint32_t reg_idx, const DNBRegisterValue *reg_value );
     nub_size_t      GetRegisterContext (void *buf, nub_size_t buf_len);
     nub_size_t      SetRegisterContext (const void *buf, nub_size_t buf_len);
-    void            NotifyBreakpointChanged (const DNBBreakpoint *bp);
+    void            NotifyBreakpointChanged (const DNBBreakpoint *bp)
+                    {
+                    }
 
     bool            IsUserReady();
     struct thread_basic_info *

@@ -355,8 +355,6 @@ DNBArchImplX86_64::NotifyException(MachException::Data& exc)
                             // Write the new PC back out
                             SetGPRState ();
                         }
-                        
-                        m_thread->SetCurrentBreakpoint(breakID);
                     }
                     return true;
                 }

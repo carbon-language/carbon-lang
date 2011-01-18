@@ -339,6 +339,12 @@ MachThread::ThreadWillResume(const DNBThreadResumeAction *thread_action)
     m_stop_exception.Clear();
 }
 
+nub_break_t
+MachThread::CurrentBreakpoint()
+{
+    return m_process->Breakpoints().FindIDByAddress(GetPC());
+}
+
 bool
 MachThread::ShouldStop(bool &step_more)
 {
@@ -394,14 +400,18 @@ MachThread::ShouldStop(bool &step_more)
 bool
 MachThread::IsStepping()
 {
+#if ENABLE_AUTO_STEPPING_OVER_BP
     // Return true if this thread is currently being stepped.
     // MachThread::ThreadWillResume currently determines this by looking if we
     // have been asked to single step, or if we are at a breakpoint instruction
     // and have been asked to resume. In the latter case we need to disable the
     // breakpoint we are at, single step, re-enable and continue.
     nub_state_t state = GetState();
-    return    (state == eStateStepping) ||
-            (state == eStateRunning && NUB_BREAK_ID_IS_VALID(CurrentBreakpoint()));
+    return ((state == eStateStepping) ||
+            (state == eStateRunning && NUB_BREAK_ID_IS_VALID(CurrentBreakpoint())));
+#else
+    return GetState() == eStateStepping;
+#endif
 }
 
 
@@ -430,6 +440,7 @@ MachThread::ThreadDidStop()
     // Update the basic information for a thread
     MachThread::GetBasicInfo(m_tid, &m_basicInfo);
 
+#if ENABLE_AUTO_STEPPING_OVER_BP
     // See if we were at a breakpoint when we last resumed that we disabled,
     // re-enable it.
     nub_break_t breakID = CurrentBreakpoint();
@@ -469,10 +480,12 @@ MachThread::ThreadDidStop()
             SetState(eStateStopped);
         }
     }
-
-
-    SetCurrentBreakpoint(INVALID_NUB_BREAK_ID);
-
+#else
+    if (m_basicInfo.suspend_count > 0)
+        SetState(eStateSuspended);
+    else
+        SetState(eStateStopped);
+#endif
     return true;
 }
 
@@ -496,30 +509,27 @@ MachThread::NotifyException(MachException::Data& exc)
     if (!handled)
     {
         handled = true;
-        nub_addr_t pc = GetPC();
-        nub_break_t breakID = m_process->Breakpoints().FindIDByAddress(pc);
-        SetCurrentBreakpoint(breakID);
-        switch (exc.exc_type)
-        {
-        case EXC_BAD_ACCESS:
-            break;
-        case EXC_BAD_INSTRUCTION:
-            break;
-        case EXC_ARITHMETIC:
-            break;
-        case EXC_EMULATION:
-            break;
-        case EXC_SOFTWARE:
-            break;
-        case EXC_BREAKPOINT:
-            break;
-        case EXC_SYSCALL:
-            break;
-        case EXC_MACH_SYSCALL:
-            break;
-        case EXC_RPC_ALERT:
-            break;
-        }
+//        switch (exc.exc_type)
+//        {
+//        case EXC_BAD_ACCESS:
+//            break;
+//        case EXC_BAD_INSTRUCTION:
+//            break;
+//        case EXC_ARITHMETIC:
+//            break;
+//        case EXC_EMULATION:
+//            break;
+//        case EXC_SOFTWARE:
+//            break;
+//        case EXC_BREAKPOINT:
+//            break;
+//        case EXC_SYSCALL:
+//            break;
+//        case EXC_MACH_SYSCALL:
+//            break;
+//        case EXC_RPC_ALERT:
+//            break;
+//        }
     }
     return handled;
 }
@@ -656,27 +666,6 @@ MachThread::DisableHardwareWatchpoint (const DNBBreakpoint *wp)
     if (wp != NULL && wp->IsHardware())
         return m_arch_ap->DisableHardwareWatchpoint(wp->GetHardwareIndex());
     return false;
-}
-
-
-void
-MachThread::NotifyBreakpointChanged (const DNBBreakpoint *bp)
-{
-    nub_break_t breakID = bp->GetID();
-    if (bp->IsEnabled())
-    {
-        if (bp->Address() == GetPC())
-        {
-            SetCurrentBreakpoint(breakID);
-        }
-    }
-    else
-    {
-        if (CurrentBreakpoint() == breakID)
-        {
-            SetCurrentBreakpoint(INVALID_NUB_BREAK_ID);
-        }
-    }
 }
 
 bool

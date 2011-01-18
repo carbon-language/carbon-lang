@@ -17,6 +17,7 @@
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/StreamFile.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
@@ -124,6 +125,15 @@ ClangUtilityFunction::Install (Stream &error_stream,
         
     Error jit_error = parser.MakeJIT (m_jit_begin, m_jit_end, exe_ctx);
     
+#if 0
+	// jingham: look here
+    StreamFile logfile ("/tmp/exprs.txt", "a");
+    logfile.Printf ("0x%16.16llx: func = %s, source =\n%s\n", 
+                    m_jit_begin, 
+                    m_function_name.c_str(), 
+                    m_function_text.c_str());
+#endif
+
     m_expr_decl_map->DidParse();
     
     m_expr_decl_map.reset();
