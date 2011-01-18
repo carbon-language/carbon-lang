@@ -922,7 +922,8 @@ static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D) {
 llvm::Constant *
 CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
                                      const llvm::PointerType *Ty,
-                                     const VarDecl *D) {
+                                     const VarDecl *D,
+                                     bool UnnamedAddr) {
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
@@ -932,6 +933,9 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
 
       WeakRefReferences.erase(Entry);
     }
+
+    if (UnnamedAddr)
+      Entry->setUnnamedAddr(true);
 
     if (Entry->getType() == Ty)
       return Entry;
@@ -1008,7 +1012,8 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
 llvm::Constant *
 CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
                                      llvm::StringRef Name) {
-  return GetOrCreateLLVMGlobal(Name, llvm::PointerType::getUnqual(Ty), 0);
+  return GetOrCreateLLVMGlobal(Name,  llvm::PointerType::getUnqual(Ty), 0,
+                               true);
 }
 
 void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
