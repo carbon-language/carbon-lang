@@ -145,8 +145,10 @@ class ARMOperand : public MCParsedAsmOperand {
     /// Combined record for all forms of ARM address expressions.
     struct {
       unsigned BaseRegNum;
-      unsigned OffsetRegNum;         // used when OffsetIsReg is true
-      const MCExpr *Offset;          // used when OffsetIsReg is false
+      union {
+        unsigned RegNum;     ///< Offset register num, when OffsetIsReg.
+        const MCExpr *Value; ///< Offset value, when !OffsetIsReg.
+      } Offset;
       const MCExpr *ShiftAmount;     // used when OffsetRegShifted is true
       enum ShiftType ShiftType;      // used when OffsetRegShifted is true
       unsigned OffsetRegShifted : 1; // only used when OffsetIsReg is true
@@ -234,7 +236,7 @@ public:
         Mem.Writeback || Mem.Negative)
       return false;
 
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset.Value);
     if (!CE) return false;
 
     // The offset must be a multiple of 4 in the range 0-1020.
@@ -250,7 +252,7 @@ public:
     if (!isMemory() || Mem.OffsetIsReg || Mem.Writeback)
       return false;
 
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset.Value);
     if (!CE) return false;
 
     // The offset must be a multiple of 4 in the range 0-124.
@@ -314,7 +316,7 @@ public:
 
     // FIXME: #-0 is encoded differently than #0. Does the parser preserve
     // the difference?
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset.Value);
     assert(CE && "Non-constant mode 5 offset operand!");
 
     // The MCInst offset operand doesn't include the low two bits (like
@@ -331,13 +333,13 @@ public:
   void addMemModeRegThumbOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && isMemModeRegThumb() && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Mem.Offset.RegNum));
   }
 
   void addMemModeImmThumbOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && isMemModeImmThumb() && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Mem.Offset.Value);
     assert(CE && "Non-constant mode offset operand!");
     Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
   }
@@ -425,8 +427,10 @@ public:
     ARMOperand *Op = new ARMOperand(Memory);
     Op->Mem.BaseRegNum = BaseRegNum;
     Op->Mem.OffsetIsReg = OffsetIsReg;
-    Op->Mem.Offset = Offset;
-    Op->Mem.OffsetRegNum = OffsetRegNum;
+    if (OffsetIsReg)
+      Op->Mem.Offset.RegNum = OffsetRegNum;
+    else
+      Op->Mem.Offset.Value = Offset;
     Op->Mem.OffsetRegShifted = OffsetRegShifted;
     Op->Mem.ShiftType = ShiftType;
     Op->Mem.ShiftAmount = ShiftAmount;
