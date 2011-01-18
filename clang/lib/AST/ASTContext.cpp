@@ -1414,53 +1414,129 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   return QualType(New, 0);
 }
 
-/// getIncompleteArrayType - Returns a unique reference to the type for a
-/// incomplete array of the specified element type.
-QualType ASTContext::getUnknownSizeVariableArrayType(QualType Ty) const {
-  QualType ElemTy = getBaseElementType(Ty);
-  DeclarationName Name;
-  llvm::SmallVector<QualType, 8> ATypes;
-  QualType ATy = Ty;
-  while (const ArrayType *AT = getAsArrayType(ATy)) {
-    ATypes.push_back(ATy);
-    ATy = AT->getElementType();
-  }
-  for (int i = ATypes.size() - 1; i >= 0; i--) {
-    if (const VariableArrayType *VAT = getAsVariableArrayType(ATypes[i])) {
-      ElemTy = getVariableArrayType(ElemTy, /*ArraySize*/0, ArrayType::Star,
-                                    0, VAT->getBracketsRange());
-    }
-    else if (const ConstantArrayType *CAT = getAsConstantArrayType(ATypes[i])) {
-      llvm::APSInt ConstVal(CAT->getSize());
-      ElemTy = getConstantArrayType(ElemTy, ConstVal, ArrayType::Normal, 0);
-    }
-    else if (getAsIncompleteArrayType(ATypes[i])) {
-      ElemTy = getVariableArrayType(ElemTy, /*ArraySize*/0, ArrayType::Normal,
-                                    0, SourceRange());
-    }
-    else
-      assert(false && "DependentArrayType is seen");
-  }
-  return ElemTy;
-}
+/// getVariableArrayDecayedType - Turns the given type, which may be
+/// variably-modified, into the corresponding type with all the known
+/// sizes replaced with [*].
+QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
+  // Vastly most common case.
+  if (!type->isVariablyModifiedType()) return type;
 
-/// getVariableArrayDecayedType - Returns a vla type where known sizes
-/// are replaced with [*]
-QualType ASTContext::getVariableArrayDecayedType(QualType Ty) const {
-  if (Ty->isPointerType()) {
-    QualType BaseType = Ty->getAs<PointerType>()->getPointeeType();
-    if (isa<VariableArrayType>(BaseType)) {
-      ArrayType *AT = dyn_cast<ArrayType>(BaseType);
-      VariableArrayType *VAT = cast<VariableArrayType>(AT);
-      if (VAT->getSizeExpr()) {
-        Ty = getUnknownSizeVariableArrayType(BaseType);
-        Ty = getPointerType(Ty);
-      }
-    }
-  }
-  return Ty;
-}
+  QualType result;
 
+  SplitQualType split = type.getSplitDesugaredType();
+  const Type *ty = split.first;
+  switch (ty->getTypeClass()) {
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+    llvm_unreachable("didn't desugar past all non-canonical types?");
+
+  // These types should never be variably-modified.
+  case Type::Builtin:
+  case Type::Complex:
+  case Type::Vector:
+  case Type::ExtVector:
+  case Type::DependentSizedExtVector:
+  case Type::ObjCObject:
+  case Type::ObjCInterface:
+  case Type::ObjCObjectPointer:
+  case Type::Record:
+  case Type::Enum:
+  case Type::UnresolvedUsing:
+  case Type::TypeOfExpr:
+  case Type::TypeOf:
+  case Type::Decltype:
+  case Type::DependentName:
+  case Type::InjectedClassName:
+  case Type::TemplateSpecialization:
+  case Type::DependentTemplateSpecialization:
+  case Type::TemplateTypeParm:
+  case Type::SubstTemplateTypeParmPack:
+  case Type::PackExpansion:
+    llvm_unreachable("type should never be variably-modified");
+
+  // These types can be variably-modified but should never need to
+  // further decay.
+  case Type::FunctionNoProto:
+  case Type::FunctionProto:
+  case Type::BlockPointer:
+  case Type::MemberPointer:
+    return type;
+
+  // These types can be variably-modified.  All these modifications
+  // preserve structure except as noted by comments.
+  // TODO: if we ever care about optimizing VLAs, there are no-op
+  // optimizations available here.
+  case Type::Pointer:
+    result = getPointerType(getVariableArrayDecayedType(
+                              cast<PointerType>(ty)->getPointeeType()));
+    break;
+
+  case Type::LValueReference: {
+    const LValueReferenceType *lv = cast<LValueReferenceType>(ty);
+    result = getLValueReferenceType(
+                 getVariableArrayDecayedType(lv->getPointeeType()),
+                                    lv->isSpelledAsLValue());
+    break;
+  }
+
+  case Type::RValueReference: {
+    const RValueReferenceType *lv = cast<RValueReferenceType>(ty);
+    result = getRValueReferenceType(
+                 getVariableArrayDecayedType(lv->getPointeeType()));
+    break;
+  }
+
+  case Type::ConstantArray: {
+    const ConstantArrayType *cat = cast<ConstantArrayType>(ty);
+    result = getConstantArrayType(
+                 getVariableArrayDecayedType(cat->getElementType()),
+                                  cat->getSize(),
+                                  cat->getSizeModifier(),
+                                  cat->getIndexTypeCVRQualifiers());
+    break;
+  }
+
+  case Type::DependentSizedArray: {
+    const DependentSizedArrayType *dat = cast<DependentSizedArrayType>(ty);
+    result = getDependentSizedArrayType(
+                 getVariableArrayDecayedType(dat->getElementType()),
+                                        dat->getSizeExpr(),
+                                        dat->getSizeModifier(),
+                                        dat->getIndexTypeCVRQualifiers(),
+                                        dat->getBracketsRange());
+    break;
+  }
+
+  // Turn incomplete types into [*] types.
+  case Type::IncompleteArray: {
+    const IncompleteArrayType *iat = cast<IncompleteArrayType>(ty);
+    result = getVariableArrayType(
+                 getVariableArrayDecayedType(iat->getElementType()),
+                                  /*size*/ 0,
+                                  ArrayType::Normal,
+                                  iat->getIndexTypeCVRQualifiers(),
+                                  SourceRange());
+    break;
+  }
+
+  // Turn VLA types into [*] types.
+  case Type::VariableArray: {
+    const VariableArrayType *vat = cast<VariableArrayType>(ty);
+    result = getVariableArrayType(
+                 getVariableArrayDecayedType(vat->getElementType()),
+                                  /*size*/ 0,
+                                  ArrayType::Star,
+                                  vat->getIndexTypeCVRQualifiers(),
+                                  vat->getBracketsRange());
+    break;
+  }
+  }
+
+  // Apply the top-level qualifiers from the original.
+  return getQualifiedType(result, split.second);
+}
 
 /// getVariableArrayType - Returns a non-unique reference to the type for a
 /// variable array of the specified element type.

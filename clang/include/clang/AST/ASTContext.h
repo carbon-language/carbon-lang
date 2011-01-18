@@ -594,12 +594,8 @@ public:
                                 ArrayType::ArraySizeModifier ASM,
                                 unsigned EltTypeQuals) const;
   
-  /// getUnknownSizeVariableArrayType - Return a variable array type with
-  /// all variable indices replaced with unknow [*] size.
-  QualType getUnknownSizeVariableArrayType(QualType Ty) const;
-  
   /// getVariableArrayDecayedType - Returns a vla type where known sizes
-  /// are replaced with [*]
+  /// are replaced with [*].
   QualType getVariableArrayDecayedType(QualType Ty) const;
 
   /// getVectorType - Return the unique reference to a vector type of
