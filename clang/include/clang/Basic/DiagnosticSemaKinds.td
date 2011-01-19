@@ -2796,6 +2796,8 @@ def warn_condition_is_idiomatic_assignment : Warning<"using the result "
   InGroup<DiagGroup<"idiomatic-parentheses">>, DefaultIgnore;
 def note_condition_assign_to_comparison : Note<
   "use '==' to turn this assignment into an equality comparison">;
+def note_condition_or_assign_to_comparison : Note<
+  "use '!=' to turn this compound assignment into an inequality comparison">;
 def note_condition_assign_silence : Note<
   "place parentheses around the assignment to silence this warning">;
 

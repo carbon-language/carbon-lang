@@ -9118,17 +9118,20 @@ bool Sema::CheckCallReturnType(QualType ReturnType, SourceLocation Loc,
   return false;
 }
 
-// Diagnose the common s/=/==/ typo.  Note that adding parentheses
+// Diagnose the s/=/==/ and s/\|=/!=/ typos. Note that adding parentheses
 // will prevent this condition from triggering, which is what we want.
 void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
   SourceLocation Loc;
 
   unsigned diagnostic = diag::warn_condition_is_assignment;
+  bool IsOrAssign = false;
 
   if (isa<BinaryOperator>(E)) {
     BinaryOperator *Op = cast<BinaryOperator>(E);
-    if (Op->getOpcode() != BO_Assign)
+    if (Op->getOpcode() != BO_Assign && Op->getOpcode() != BO_OrAssign)
       return;
+
+    IsOrAssign = Op->getOpcode() == BO_OrAssign;
 
     // Greylist some idioms by putting them into a warning subcategory.
     if (ObjCMessageExpr *ME
@@ -9149,9 +9152,10 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
     Loc = Op->getOperatorLoc();
   } else if (isa<CXXOperatorCallExpr>(E)) {
     CXXOperatorCallExpr *Op = cast<CXXOperatorCallExpr>(E);
-    if (Op->getOperator() != OO_Equal)
+    if (Op->getOperator() != OO_Equal && Op->getOperator() != OO_PipeEqual)
       return;
 
+    IsOrAssign = Op->getOperator() == OO_PipeEqual;
     Loc = Op->getOperatorLoc();
   } else {
     // Not an assignment.
@@ -9162,8 +9166,14 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
   SourceLocation Close = PP.getLocForEndOfToken(E->getSourceRange().getEnd());
 
   Diag(Loc, diagnostic) << E->getSourceRange();
-  Diag(Loc, diag::note_condition_assign_to_comparison)
-    << FixItHint::CreateReplacement(Loc, "==");
+
+  if (IsOrAssign)
+    Diag(Loc, diag::note_condition_or_assign_to_comparison)
+      << FixItHint::CreateReplacement(Loc, "!=");
+  else
+    Diag(Loc, diag::note_condition_assign_to_comparison)
+      << FixItHint::CreateReplacement(Loc, "==");
+
   Diag(Loc, diag::note_condition_assign_silence)
     << FixItHint::CreateInsertion(Open, "(")
     << FixItHint::CreateInsertion(Close, ")");
