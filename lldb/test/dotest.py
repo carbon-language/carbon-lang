@@ -607,6 +607,12 @@ def lldbLoggings():
         if not res.Succeeded():
             raise Exception('log enable failed (check GDB_REMOTE_LOG env variable.')
 
+def getMyCommandLine():
+    import subprocess
+    ps = subprocess.Popen(['ps', '-o', "command=CMD", str(os.getpid())], stdout=subprocess.PIPE).communicate()[0]
+    lines = ps.split('\n')
+    cmd_line = lines[1]
+    return cmd_line
 
 # ======================================== #
 #                                          #
@@ -679,7 +685,9 @@ if not sdir_name:
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
     sdir_name = timestamp
 os.environ["LLDB_SESSION_DIRNAME"] = sdir_name
+
 sys.stderr.write("\nSession logs for test failures/errors will go into directory '%s'\n" % sdir_name)
+sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
 
 #
 # Invoke the default TextTestRunner to run the test suite, possibly iterating
