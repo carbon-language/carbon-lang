@@ -54,6 +54,7 @@
 using namespace llvm;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
+STATISTIC(NumMovwMovt, "Number of GAs materialized with movw + movt");
 
 // This option should go away when tail calls fully work.
 static cl::opt<bool>
@@ -1955,6 +1956,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
   // If we have T2 ops, we can materialize the address directly via movt/movw
   // pair. This is always cheaper.
   if (Subtarget->useMovt()) {
+    ++NumMovwMovt;
     // FIXME: Once remat is capable of dealing with instructions with register
     // operands, expand this into two nodes.
     return DAG.getNode(ARMISD::Wrapper, dl, PtrVT,
@@ -1978,6 +1980,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
   if (Subtarget->useMovt()) {
+    ++NumMovwMovt;
     // FIXME: Once remat is capable of dealing with instructions with register
     // operands, expand this into two nodes.
     if (RelocM != Reloc::PIC_)
@@ -1990,7 +1993,11 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
     SDValue Result = DAG.getNode(ARMISD::WrapperPIC, dl, PtrVT,
                                  DAG.getTargetGlobalAddress(GV, dl, PtrVT),
                                  PICLabel);
-    return DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);    
+    Result = DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
+    if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
+      Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,
+                           MachinePointerInfo::getGOT(), false, false, 0);
+    return Result;
   }
 
   unsigned ARMPCLabelIndex = 0;

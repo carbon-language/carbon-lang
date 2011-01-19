@@ -153,7 +153,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
     if (UseMOVT && hasV6T2Ops()) {
       unsigned Maj, Min, Rev;
       TargetTriple.getDarwinNumber(Maj, Min, Rev);
-      UseMovt = (Maj > 4 || Min > 2);
+      UseMovt = Maj > 4;
     }
   }
 

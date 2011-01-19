@@ -3403,16 +3403,16 @@ def Int_eh_sjlj_dispatchsetup :
 // This is a single pseudo instruction, the benefit is that it can be remat'd
 // as a single unit instead of having to handle reg inputs.
 // FIXME: Remove this when we can do generalized remat.
-let isReMaterializable = 1, isMoveImm = 1 in {
+let isReMaterializable = 1, isMoveImm = 1 in
 def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                            [(set GPR:$dst, (arm_i32imm:$src))]>,
                            Requires<[IsARM]>;
 
+let isReMaterializable = 1 in
 def MOV_pic_ga : PseudoInst<(outs GPR:$dst),
                             (ins i32imm:$addr, pclabel:$id), IIC_iMOVix2,
                  [(set GPR:$dst, (ARMWrapperPIC tglobaladdr:$addr, imm:$id))]>,
                  Requires<[IsARM, UseMovt]>;
-} // isReMaterializable = 1, isMoveImm = 1 in
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>,
