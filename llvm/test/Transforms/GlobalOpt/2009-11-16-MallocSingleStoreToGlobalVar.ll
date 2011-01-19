@@ -8,7 +8,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin10.0"
 
 @TOP = internal global i64* null                    ; <i64**> [#uses=2]
-; CHECK: @TOP = internal global i64* null
+; CHECK: @TOP = internal unnamed_addr global i64* null
 @channelColumns = internal global i64 0             ; <i64*> [#uses=2]
 
 ; Derived from @DescribeChannel() in yacr2

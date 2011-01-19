@@ -40,6 +40,7 @@
 using namespace llvm;
 
 STATISTIC(NumMarked    , "Number of globals marked constant");
+STATISTIC(NumUnnamed   , "Number of globals marked unnamed_addr");
 STATISTIC(NumSRA       , "Number of aggregate globals broken into scalars");
 STATISTIC(NumHeapSRA   , "Number of heap objects SRA'd");
 STATISTIC(NumSubstitute,"Number of globals with initializers stored into them");
@@ -55,6 +56,7 @@ STATISTIC(NumAliasesResolved, "Number of global aliases resolved");
 STATISTIC(NumAliasesRemoved, "Number of global aliases eliminated");
 
 namespace {
+  struct GlobalStatus;
   struct GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     }
@@ -71,7 +73,10 @@ namespace {
     bool OptimizeGlobalVars(Module &M);
     bool OptimizeGlobalAliases(Module &M);
     bool OptimizeGlobalCtorsList(GlobalVariable *&GCL);
-    bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI);
+    bool ProcessGlobal(GlobalVariable *GV,Module::global_iterator &GVI);
+    bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI,
+                               const SmallPtrSet<const PHINode*, 16> &PHIUsers,
+                               const GlobalStatus &GS);
   };
 }
 
@@ -87,6 +92,9 @@ namespace {
 /// about it.  If we find out that the address of the global is taken, none of
 /// this info will be accurate.
 struct GlobalStatus {
+  /// isCompared - True if the global's address is used in a comparison.
+  bool isCompared;
+
   /// isLoaded - True if the global is ever loaded.  If the global isn't ever
   /// loaded it can be deleted.
   bool isLoaded;
@@ -132,9 +140,10 @@ struct GlobalStatus {
   /// HasPHIUser - Set to true if this global has a user that is a PHI node.
   bool HasPHIUser;
 
-  GlobalStatus() : isLoaded(false), StoredType(NotStored), StoredOnceValue(0),
-                   AccessingFunction(0), HasMultipleAccessingFunctions(false),
-                   HasNonInstructionUser(false), HasPHIUser(false) {}
+  GlobalStatus() : isCompared(false), isLoaded(false), StoredType(NotStored),
+                   StoredOnceValue(0), AccessingFunction(0),
+                   HasMultipleAccessingFunctions(false), HasNonInstructionUser(false),
+                   HasPHIUser(false) {}
 };
 
 }
@@ -228,7 +237,7 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
           if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
         GS.HasPHIUser = true;
       } else if (isa<CmpInst>(I)) {
-        // Nothing to analyse.
+        GS.isCompared = true;
       } else if (isa<MemTransferInst>(I)) {
         const MemTransferInst *MTI = cast<MemTransferInst>(I);
         if (MTI->getArgOperand(0) == V)
@@ -1691,10 +1700,12 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
 
 /// ProcessInternalGlobal - Analyze the specified global variable and optimize
 /// it if possible.  If we make a change, return true.
-bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
-                                      Module::global_iterator &GVI) {
-  SmallPtrSet<const PHINode*, 16> PHIUsers;
-  GlobalStatus GS;
+bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
+                              Module::global_iterator &GVI) {
+  if (!GV->hasLocalLinkage())
+    return false;
+
+  // Do more involved optimizations if the global is internal.
   GV->removeDeadConstantUsers();
 
   if (GV->use_empty()) {
@@ -1704,9 +1715,29 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     return true;
   }
 
+  SmallPtrSet<const PHINode*, 16> PHIUsers;
+  GlobalStatus GS;
+
   if (AnalyzeGlobal(GV, GS, PHIUsers))
     return false;
 
+  if (!GS.isCompared && !GV->hasUnnamedAddr()) {
+    GV->setUnnamedAddr(true);
+    NumUnnamed++;
+  }
+
+  if (GV->isConstant() || !GV->hasInitializer())
+    return false;
+
+  return ProcessInternalGlobal(GV, GVI, PHIUsers, GS);
+}
+
+/// ProcessInternalGlobal - Analyze the specified global variable and optimize
+/// it if possible.  If we make a change, return true.
+bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
+                                      Module::global_iterator &GVI,
+                                      const SmallPtrSet<const PHINode*, 16> &PHIUsers,
+                                      const GlobalStatus &GS) {
   // If this is a first class global and has only one accessing function
   // and this function is main (which we know is not recursive we can make
   // this global a local variable) we replace the global with a local alloca
@@ -1903,10 +1934,8 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
         if (New && New != CE)
           GV->setInitializer(New);
       }
-    // Do more involved optimizations if the global is internal.
-    if (!GV->isConstant() && GV->hasLocalLinkage() &&
-        GV->hasInitializer())
-      Changed |= ProcessInternalGlobal(GV, GVI);
+
+    Changed |= ProcessGlobal(GV, GVI);
   }
   return Changed;
 }
