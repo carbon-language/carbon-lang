@@ -138,7 +138,7 @@ namespace {
                     clEnumValN(GenClangDiagGroups, "gen-clang-diag-groups",
                                "Generate Clang diagnostic groups"),
                     clEnumValN(GenClangDeclNodes, "gen-clang-decl-nodes",
-                               "Generate Clang AST statement nodes"),
+                               "Generate Clang AST declaration nodes"),
                     clEnumValN(GenClangStmtNodes, "gen-clang-stmt-nodes",
                                "Generate Clang AST statement nodes"),
                     clEnumValN(GenLLVMCConf, "gen-llvmc",
