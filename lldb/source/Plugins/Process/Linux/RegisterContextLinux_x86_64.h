@@ -153,6 +153,9 @@ private:
     UserArea user;
 
     ProcessMonitor &GetMonitor();
+
+    bool ReadGPR();
+    bool ReadFPR();
 };
 
 #endif // #ifndef liblldb_RegisterContextLinux_x86_64_H_

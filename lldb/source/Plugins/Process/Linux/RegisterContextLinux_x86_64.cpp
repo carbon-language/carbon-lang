@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <stdint.h>
 
+#include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Target/Thread.h"
 
@@ -24,7 +25,8 @@ using namespace lldb;
 // Internal codes for all x86_64 registers.
 enum
 {
-    gpr_rax = 0,
+    k_first_gpr,
+    gpr_rax = k_first_gpr,
     gpr_rbx,
     gpr_rcx,
     gpr_rdx,
@@ -48,11 +50,10 @@ enum
     gpr_ss,
     gpr_ds,
     gpr_es,
+    k_last_gpr = gpr_es,
 
-    // Number of GPR's.
-    k_num_gpr_registers,
-
-    fpu_fcw = k_num_gpr_registers,
+    k_first_fpr,
+    fpu_fcw = k_first_fpr,
     fpu_fsw,
     fpu_ftw,
     fpu_fop,
@@ -86,12 +87,11 @@ enum
     fpu_xmm13,
     fpu_xmm14,
     fpu_xmm15,
+    k_last_fpr = fpu_xmm15,
 
-    // Total number of registers.
     k_num_registers,
-
-    // Number of FPR's.
-    k_num_fpu_registers = k_num_registers - k_num_gpr_registers
+    k_num_gpr_registers = k_last_gpr - k_first_gpr + 1,
+    k_num_fpu_registers = k_last_fpr - k_first_fpr + 1
 };
 
 // Number of register sets provided by this context.
@@ -401,6 +401,22 @@ static unsigned GetRegOffset(unsigned reg)
     return g_register_infos[reg].byte_offset;
 }
 
+static unsigned GetRegSize(unsigned reg)
+{
+    assert(reg < k_num_registers && "Invalid register number.");
+    return g_register_infos[reg].byte_size;
+}
+
+static bool IsGPR(unsigned reg)
+{
+    return reg <= k_last_gpr;   // GPR's come first.
+}
+
+static bool IsFPR(unsigned reg)
+{
+    return (k_first_fpr <= reg && reg <= k_last_fpr);
+}
+
 RegisterContextLinux_x86_64::RegisterContextLinux_x86_64(Thread &thread,
                                                          uint32_t concrete_frame_idx)
     : RegisterContextLinux(thread, concrete_frame_idx)
@@ -470,7 +486,23 @@ bool
 RegisterContextLinux_x86_64::ReadRegisterBytes(uint32_t reg,
                                                DataExtractor &data)
 {
-    return false;
+    uint8_t *buf = reinterpret_cast<uint8_t*>(&user);
+    bool status;
+
+    if (IsGPR(reg))
+        status = ReadGPR();
+    else if (IsFPR(reg))
+        status = ReadFPR();
+    else 
+    {
+        assert(false && "invalid register number");
+        status = false;
+    }
+
+    if (status)
+        data.SetData(buf + GetRegOffset(reg), GetRegSize(reg), eByteOrderHost);
+
+    return status;
 }
 
 bool
@@ -659,4 +691,18 @@ bool
 RegisterContextLinux_x86_64::HardwareSingleStep(bool enable)
 {
     return GetMonitor().SingleStep(GetThreadID());
+}
+
+bool
+RegisterContextLinux_x86_64::ReadGPR()
+{
+     ProcessMonitor &monitor = GetMonitor();
+     return monitor.ReadGPR(&user.regs);
+}
+
+bool
+RegisterContextLinux_x86_64::ReadFPR()
+{
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.ReadFPR(&user.i387);
 }
