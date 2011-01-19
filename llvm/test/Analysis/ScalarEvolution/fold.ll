@@ -14,3 +14,11 @@ define i8 @test2(i8 %x) {
 ; CHECK: (1 + %x)
   ret i8 %C
 }
+
+define i8 @test3(i8 %x) {
+  %A = zext i8 %x to i16
+  %B = mul i16 %A, 1027
+  %C = trunc i16 %B to i8
+; CHECK: (3 * %x)
+  ret i8 %C
+}
