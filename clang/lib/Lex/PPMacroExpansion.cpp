@@ -556,7 +556,6 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("ownership_returns", true)
            .Case("ownership_takes", true)
            .Case("cxx_inline_namespaces", true)
-         //.Case("cxx_concepts", false)
          //.Case("cxx_lambdas", false)
          //.Case("cxx_nullptr", false)
          //.Case("cxx_rvalue_references", false)

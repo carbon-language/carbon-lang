@@ -21,16 +21,6 @@ int no_nullptr();
 // CHECK-NO-0X: no_nullptr
 
 
-#if __has_feature(cxx_concepts)
-int concepts();
-#else
-int no_concepts();
-#endif
-
-// CHECK-0X: no_concepts
-// CHECK-NO-0X: no_concepts
-
-
 #if __has_feature(cxx_decltype)
 int has_decltype();
 #else

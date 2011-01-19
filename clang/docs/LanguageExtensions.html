@@ -385,11 +385,6 @@ attribute parsing with C++0x's square bracket notation is enabled.</p>
 <p>Use <tt>__has_feature(cxx_deleted_functions)</tt> to determine if support for
 deleted function definitions (with <tt>= delete</tt>) is enabled.</p>
 
-<h3 id="cxx_concepts">C++ TR concepts</h3>
-
-<p>Use <tt>__has_feature(cxx_concepts)</tt> to determine if support for
-concepts is enabled. clang does not currently implement this feature.</p>
-
 <h3 id="cxx_lambdas">C++0x lambdas</h3>
 
 <p>Use <tt>__has_feature(cxx_lambdas)</tt> to determine if support for
@@ -421,8 +416,7 @@ is supported using the <tt>auto</tt> specifier. If this is disabled,
 <h3 id="cxx_variadic_templates">C++0x variadic templates</h3>
 
 <p>Use <tt>__has_feature(cxx_variadic_templates)</tt> to determine if support
-for templates taking any number of arguments with the ellipsis notation is
-enabled. clang does not yet fully implement this feature.</p>
+for variadic templates is enabled.</p>
 
 <h3 id="cxx_inline_namespaces">C++0x inline namespaces</h3>
 
