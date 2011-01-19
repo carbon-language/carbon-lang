@@ -757,7 +757,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       }
       if (!BI.LiveThrough) {
         DEBUG(dbgs() << ", killed in block.\n");
-        SE.useIntv(Start, BI.Kill);
+        SE.useIntv(Start, BI.Kill.getBoundaryIndex());
         SE.leaveIntvAfter(BI.Kill);
         continue;
       }
@@ -765,7 +765,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         // Block is live-through, but exit bundle is on the stack.
         // Spill immediately after the last use.
         DEBUG(dbgs() << ", uses, stack-out.\n");
-        SE.useIntv(Start, BI.LastUse);
+        SE.useIntv(Start, BI.LastUse.getBoundaryIndex());
         SE.leaveIntvAfter(BI.LastUse);
         continue;
       }
@@ -789,6 +789,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       SlotIndex Use = std::lower_bound(SA->UseSlots.begin(), SA->UseSlots.end(),
                                        IP.second)[-1];
       DEBUG(dbgs() << ", free use at " << Use << ".\n");
+      Use = Use.getBoundaryIndex();
       assert(Use >= BI.FirstUse && Use < IP.first);
       SE.useIntv(Start, Use);
       SE.leaveIntvAfter(Use);
