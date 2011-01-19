@@ -141,7 +141,7 @@ public:
               ExplicitTemplateArgsVisitKind,
               NestedNameSpecifierVisitKind,
               DeclarationNameInfoVisitKind,
-              MemberRefVisitKind };
+              MemberRefVisitKind, SizeOfPackExprPartsKind };
 protected:
   void *data[3];
   CXCursor parent;
@@ -1497,6 +1497,7 @@ DEF_JOB(DeclRefExprParts, DeclRefExpr, DeclRefExprPartsKind)
 DEF_JOB(OverloadExprParts, OverloadExpr, OverloadExprPartsKind)
 DEF_JOB(ExplicitTemplateArgsVisit, ExplicitTemplateArgumentList, 
         ExplicitTemplateArgsVisitKind)
+DEF_JOB(SizeOfPackExprParts, SizeOfPackExpr, SizeOfPackExprPartsKind)
 #undef DEF_JOB
 
 class DeclVisit : public VisitorJob {
@@ -1637,7 +1638,7 @@ public:
   void VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E);
   void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U);
   void VisitVAArgExpr(VAArgExpr *E);
-  // FIXME: Variadic templates SizeOfPackExpr!
+  void VisitSizeOfPackExpr(SizeOfPackExpr *E);
   
 private:
   void AddDeclarationNameInfo(Stmt *S);
@@ -1929,6 +1930,9 @@ void EnqueueVisitor::VisitVAArgExpr(VAArgExpr *E) {
   AddStmt(E->getSubExpr());
   AddTypeLoc(E->getWrittenTypeInfo());
 }
+void EnqueueVisitor::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
+  WL.push_back(SizeOfPackExprParts(E, Parent));
+}
 
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, Stmt *S) {
   EnqueueVisitor(WL, MakeCXCursor(S, StmtParent, TU)).Visit(S);
@@ -2072,6 +2076,29 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         // Visit the overloaded declaration reference.
         if (Visit(MakeCursorOverloadedDeclRef(O, TU)))
           return true;
+        continue;
+      }
+      case VisitorJob::SizeOfPackExprPartsKind: {
+        SizeOfPackExpr *E = cast<SizeOfPackExprParts>(&LI)->get();
+        NamedDecl *Pack = E->getPack();
+        if (isa<TemplateTypeParmDecl>(Pack)) {
+          if (Visit(MakeCursorTypeRef(cast<TemplateTypeParmDecl>(Pack),
+                                      E->getPackLoc(), TU)))
+            return true;
+          
+          continue;
+        }
+          
+        if (isa<TemplateTemplateParmDecl>(Pack)) {
+          if (Visit(MakeCursorTemplateRef(cast<TemplateTemplateParmDecl>(Pack),
+                                          E->getPackLoc(), TU)))
+            return true;
+          
+          continue;
+        }
+        
+        // Non-type template parameter packs and function parameter packs are
+        // treated like DeclRefExpr cursors.
         continue;
       }
     }
@@ -2658,6 +2685,10 @@ static Decl *getDeclFromExpr(Stmt *E) {
   if (SubstNonTypeTemplateParmPackExpr *NTTP 
                               = dyn_cast<SubstNonTypeTemplateParmPackExpr>(E))
     return NTTP->getParameterPack();
+  if (SizeOfPackExpr *SizeOfPack = dyn_cast<SizeOfPackExpr>(E))
+    if (isa<NonTypeTemplateParmDecl>(SizeOfPack->getPack()) || 
+        isa<ParmVarDecl>(SizeOfPack->getPack()))
+      return SizeOfPack->getPack();
   
   return 0;
 }
@@ -2673,6 +2704,9 @@ static SourceLocation getLocationFromExpr(Expr *E) {
     return Member->getMemberLoc();
   if (ObjCIvarRefExpr *Ivar = dyn_cast<ObjCIvarRefExpr>(E))
     return Ivar->getLocation();
+  if (SizeOfPackExpr *SizeOfPack = dyn_cast<SizeOfPackExpr>(E))
+    return SizeOfPack->getPackLoc();
+  
   return E->getLocStart();
 }
 
