@@ -145,11 +145,14 @@ std::size_t ExplicitTemplateArgumentList::sizeFor(
   return sizeFor(Info.size());
 }
 
-void DeclRefExpr::computeDependence() {
-  ExprBits.TypeDependent = false;
-  ExprBits.ValueDependent = false;
+/// \brief Compute the type- and value-dependence of a declaration reference
+/// based on the declaration being referenced.
+static void computeDeclRefDependence(NamedDecl *D, QualType T,
+                                     bool &TypeDependent,
+                                     bool &ValueDependent) {
+  TypeDependent = false;
+  ValueDependent = false;
   
-  NamedDecl *D = getDecl();
 
   // (TD) C++ [temp.dep.expr]p3:
   //   An id-expression is type-dependent if it contains:
@@ -158,60 +161,84 @@ void DeclRefExpr::computeDependence() {
   //
   // (VD) C++ [temp.dep.constexpr]p2:
   //  An identifier is value-dependent if it is:
-
+  
   //  (TD)  - an identifier that was declared with dependent type
   //  (VD)  - a name declared with a dependent type,
-  if (getType()->isDependentType()) {
-    ExprBits.TypeDependent = true;
-    ExprBits.ValueDependent = true;
+  if (T->isDependentType()) {
+    TypeDependent = true;
+    ValueDependent = true;
+    return;
   }
+  
   //  (TD)  - a conversion-function-id that specifies a dependent type
-  else if (D->getDeclName().getNameKind() 
-                               == DeclarationName::CXXConversionFunctionName &&
+  if (D->getDeclName().getNameKind() 
+           == DeclarationName::CXXConversionFunctionName &&
            D->getDeclName().getCXXNameType()->isDependentType()) {
-    ExprBits.TypeDependent = true;
-    ExprBits.ValueDependent = true;
-  }
-  //  (TD)  - a template-id that is dependent,
-  else if (hasExplicitTemplateArgs() && 
-           TemplateSpecializationType::anyDependentTemplateArguments(
-                                                       getTemplateArgs(), 
-                                                       getNumTemplateArgs())) {
-    ExprBits.TypeDependent = true;
-    ExprBits.ValueDependent = true;
+    TypeDependent = true;
+    ValueDependent = true;
+    return;
   }
   //  (VD)  - the name of a non-type template parameter,
-  else if (isa<NonTypeTemplateParmDecl>(D))
-    ExprBits.ValueDependent = true;
+  if (isa<NonTypeTemplateParmDecl>(D)) {
+    ValueDependent = true;
+    return;
+  }
+  
   //  (VD) - a constant with integral or enumeration type and is
   //         initialized with an expression that is value-dependent.
-  else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+  if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
     if (Var->getType()->isIntegralOrEnumerationType() &&
         Var->getType().getCVRQualifiers() == Qualifiers::Const) {
       if (const Expr *Init = Var->getAnyInitializer())
         if (Init->isValueDependent())
-          ExprBits.ValueDependent = true;
+          ValueDependent = true;
     } 
+    
     // (VD) - FIXME: Missing from the standard: 
     //      -  a member function or a static data member of the current 
     //         instantiation
     else if (Var->isStaticDataMember() && 
              Var->getDeclContext()->isDependentContext())
-      ExprBits.ValueDependent = true;
-  } 
+      ValueDependent = true;
+    
+    return;
+  }
+  
   // (VD) - FIXME: Missing from the standard: 
   //      -  a member function or a static data member of the current 
   //         instantiation
-  else if (isa<CXXMethodDecl>(D) && D->getDeclContext()->isDependentContext())
-    ExprBits.ValueDependent = true;
-  //  (TD)  - a nested-name-specifier or a qualified-id that names a
-  //          member of an unknown specialization.
-  //        (handled by DependentScopeDeclRefExpr)
+  if (isa<CXXMethodDecl>(D) && D->getDeclContext()->isDependentContext()) {
+    ValueDependent = true;
+    return;
+  }  
+}
 
-  // Determine whether this expression contains any unexpanded parameter
-  // packs.
+void DeclRefExpr::computeDependence() {
+  bool TypeDependent = false;
+  bool ValueDependent = false;
+  computeDeclRefDependence(getDecl(), getType(), TypeDependent, ValueDependent);
+  
+  // (TD) C++ [temp.dep.expr]p3:
+  //   An id-expression is type-dependent if it contains:
+  //
+  // and 
+  //
+  // (VD) C++ [temp.dep.constexpr]p2:
+  //  An identifier is value-dependent if it is:
+  if (!TypeDependent && !ValueDependent &&
+      hasExplicitTemplateArgs() && 
+      TemplateSpecializationType::anyDependentTemplateArguments(
+                                                            getTemplateArgs(), 
+                                                       getNumTemplateArgs())) {
+    TypeDependent = true;
+    ValueDependent = true;
+  }
+  
+  ExprBits.TypeDependent = TypeDependent;
+  ExprBits.ValueDependent = ValueDependent;
+  
   // Is the declaration a parameter pack?
-  if (D->isParameterPack())
+  if (getDecl()->isParameterPack())
     ExprBits.ContainsUnexpandedParameterPack = true;
 }
 
@@ -2935,13 +2962,16 @@ Stmt::child_iterator ObjCMessageExpr::child_end() {
 BlockDeclRefExpr::BlockDeclRefExpr(ValueDecl *d, QualType t, ExprValueKind VK,
                                    SourceLocation l, bool ByRef, 
                                    bool constAdded, Stmt *copyConstructorVal)
-  : Expr(BlockDeclRefExprClass, t, VK, OK_Ordinary,
-         (!t.isNull() && t->isDependentType()), false,
+  : Expr(BlockDeclRefExprClass, t, VK, OK_Ordinary, false, false,
          d->isParameterPack()),
     D(d), Loc(l), IsByRef(ByRef),
     ConstQualAdded(constAdded),  CopyConstructorVal(copyConstructorVal) 
 {
-  // FIXME: Compute type/value dependence.
+  bool TypeDependent = false;
+  bool ValueDependent = false;
+  computeDeclRefDependence(D, getType(), TypeDependent, ValueDependent);
+  ExprBits.TypeDependent = TypeDependent;
+  ExprBits.ValueDependent = ValueDependent;
 }
 
 Stmt::child_iterator BlockExpr::child_begin() { return child_iterator(); }

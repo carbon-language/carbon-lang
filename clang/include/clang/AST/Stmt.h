@@ -143,6 +143,7 @@ protected:
     friend class DeclRefExpr; // computeDependence
     friend class InitListExpr; // ctor
     friend class DesignatedInitExpr; // ctor
+    friend class BlockDeclRefExpr; // ctor
     friend class ASTStmtReader; // deserialization
     friend class CXXNewExpr; // ctor
     friend class DependentScopeDeclRefExpr; // ctor

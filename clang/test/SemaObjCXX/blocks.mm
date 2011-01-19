@@ -94,3 +94,13 @@ namespace N2 {
   }
   template void test2<2>();
 }
+
+// Handle value-dependent block declaration references.
+namespace N3 {
+  template<int N> struct X { };
+
+  template<int N>
+  void f() {
+    X<N> xN = ^() { return X<N>(); }();
+  }
+}
