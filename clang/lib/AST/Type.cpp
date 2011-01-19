@@ -1414,8 +1414,8 @@ public:
 
     // If this type is non-canonical, ask its canonical type for the
     // relevant information.
-    if (QualType(T, 0) != T->CanonicalType) {
-      const Type *CT = T->CanonicalType.getTypePtr();
+    if (!T->isCanonicalUnqualified()) {
+      const Type *CT = T->getCanonicalTypeInternal().getTypePtr();
       ensure(CT);
       T->TypeBits.CacheValidAndVisibility =
         CT->TypeBits.CacheValidAndVisibility;
@@ -1555,4 +1555,22 @@ void Type::ClearLinkageCache() {
   TypeBits.CacheValidAndVisibility = 0;
   if (QualType(this, 0) != CanonicalType)
     CanonicalType->TypeBits.CacheValidAndVisibility = 0;
+}
+
+bool Type::hasSizedVLAType() const {
+  if (!isVariablyModifiedType()) return false;
+
+  if (const PointerType *ptr = getAs<PointerType>())
+    return ptr->getPointeeType()->hasSizedVLAType();
+  if (const ReferenceType *ref = getAs<ReferenceType>())
+    return ref->getPointeeType()->hasSizedVLAType();
+  if (const ArrayType *arr = getAsArrayTypeUnsafe()) {
+    if (isa<VariableArrayType>(arr) && 
+        cast<VariableArrayType>(arr)->getSizeExpr())
+      return true;
+
+    return arr->getElementType()->hasSizedVLAType();
+  }
+
+  return false;
 }

@@ -24,15 +24,3 @@ int test4(const a y) {
   y[0] = 10; // expected-error {{read-only variable is not assignable}}
 }
 
-// PR2189
-int test5() {
-  const int s[5]; int t[5]; 
-  return &s == &t;   // expected-warning {{comparison of distinct pointer types}}
-}
-
-int test6() {
-  const a s; 
-  a t; 
-  return &s == &t;   // expected-warning {{comparison of distinct pointer types}}
-}
-

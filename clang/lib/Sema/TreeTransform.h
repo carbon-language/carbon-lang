@@ -3380,33 +3380,36 @@ TreeTransform<Derived>::TransformDependentSizedArrayType(TypeLocBuilder &TLB,
   // Array bounds are not potentially evaluated contexts
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
 
-  ExprResult SizeResult
-    = getDerived().TransformExpr(T->getSizeExpr());
-  if (SizeResult.isInvalid())
+  // Prefer the expression from the TypeLoc;  the other may have been uniqued.
+  Expr *origSize = TL.getSizeExpr();
+  if (!origSize) origSize = T->getSizeExpr();
+
+  ExprResult sizeResult
+    = getDerived().TransformExpr(origSize);
+  if (sizeResult.isInvalid())
     return QualType();
 
-  Expr *Size = static_cast<Expr*>(SizeResult.get());
+  Expr *size = sizeResult.get();
 
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
       ElementType != T->getElementType() ||
-      Size != T->getSizeExpr()) {
+      size != origSize) {
     Result = getDerived().RebuildDependentSizedArrayType(ElementType,
                                                          T->getSizeModifier(),
-                                                         Size,
+                                                         size,
                                                 T->getIndexTypeCVRQualifiers(),
                                                         TL.getBracketsRange());
     if (Result.isNull())
       return QualType();
   }
-  else SizeResult.take();
 
   // We might have any sort of array type now, but fortunately they
   // all have the same location layout.
   ArrayTypeLoc NewTL = TLB.push<ArrayTypeLoc>(Result);
   NewTL.setLBracketLoc(TL.getLBracketLoc());
   NewTL.setRBracketLoc(TL.getRBracketLoc());
-  NewTL.setSizeExpr(Size);
+  NewTL.setSizeExpr(size);
 
   return Result;
 }

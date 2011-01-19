@@ -1091,7 +1091,9 @@ public:
   /// include typedefs, 'typeof' operators, etc. The returned type is guaranteed
   /// to be free of any of these, allowing two canonical types to be compared
   /// for exact equality with a simple pointer comparison.
-  CanQualType getCanonicalType(QualType T) const;
+  CanQualType getCanonicalType(QualType T) const {
+    return CanQualType::CreateUnsafe(T.getCanonicalType());
+  }
 
   const Type *getCanonicalType(const Type *T) const {
     return T->getCanonicalTypeInternal().getTypePtr();
@@ -1125,13 +1127,8 @@ public:
   /// \brief Determine whether the given types are equivalent after
   /// cvr-qualifiers have been removed.
   bool hasSameUnqualifiedType(QualType T1, QualType T2) {
-    CanQualType CT1 = getCanonicalType(T1);
-    CanQualType CT2 = getCanonicalType(T2);
-
-    Qualifiers Quals;
-    QualType UnqualT1 = getUnqualifiedArrayType(CT1, Quals);
-    QualType UnqualT2 = getUnqualifiedArrayType(CT2, Quals);
-    return UnqualT1 == UnqualT2;
+    return getCanonicalType(T1).getTypePtr() ==
+           getCanonicalType(T2).getTypePtr();
   }
 
   bool UnwrapSimilarPointerTypes(QualType &T1, QualType &T2);

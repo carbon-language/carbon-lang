@@ -4461,16 +4461,16 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
   if (const ReferenceType *RefTy = Ty->getAs<ReferenceType>())
     Ty = RefTy->getPointeeType();
 
-  // We don't care about qualifiers on the type.
+  // If we're dealing with an array type, decay to the pointer.
+  if (Ty->isArrayType())
+    Ty = SemaRef.Context.getArrayDecayedType(Ty);
+
+  // Otherwise, we don't care about qualifiers on the type.
   Ty = Ty.getLocalUnqualifiedType();
 
   // Flag if we ever add a non-record type.
   const RecordType *TyRec = Ty->getAs<RecordType>();
   HasNonRecordTypes = HasNonRecordTypes || !TyRec;
-
-  // If we're dealing with an array type, decay to the pointer.
-  if (Ty->isArrayType())
-    Ty = SemaRef.Context.getArrayDecayedType(Ty);
 
   // Flag if we encounter an arithmetic type.
   HasArithmeticOrEnumeralTypes =
