@@ -467,7 +467,7 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
     EllipsisLoc = ConsumeToken();
 
     if (!getLang().CPlusPlus0x)
-      Diag(EllipsisLoc, diag::err_variadic_templates);
+      Diag(EllipsisLoc, diag::ext_variadic_templates);
   }
 
   // Grab the template parameter name (if given)
@@ -539,7 +539,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     EllipsisLoc = ConsumeToken();
     
     if (!getLang().CPlusPlus0x)
-      Diag(EllipsisLoc, diag::err_variadic_templates);
+      Diag(EllipsisLoc, diag::ext_variadic_templates);
   }
       
   // Get the identifier, if given.

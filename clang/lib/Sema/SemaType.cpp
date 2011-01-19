@@ -1943,7 +1943,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       if (T->containsUnexpandedParameterPack())
         T = Context.getPackExpansionType(T, llvm::Optional<unsigned>());
       else if (!getLangOptions().CPlusPlus0x)
-        Diag(D.getEllipsisLoc(), diag::err_variadic_templates);
+        Diag(D.getEllipsisLoc(), diag::ext_variadic_templates);
       break;
     
     case Declarator::FileContext:

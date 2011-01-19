@@ -1825,8 +1825,6 @@ def ext_template_outside_of_template : ExtWarn<
   "'template' keyword outside of a template">, InGroup<CXX0x>;
 
 // C++0x Variadic Templates
-def err_variadic_templates_unsupported : Error<
-  "variadic templates are not yet implemented">;
 def err_template_param_pack_default_arg : Error<
   "template parameter pack cannot have a default argument">;
 def err_template_param_pack_must_be_last_template_parameter : Error<
