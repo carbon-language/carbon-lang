@@ -197,7 +197,7 @@ private:
     EnableIPC();
 
     static void
-    ServeOperation(ProcessMonitor *monitor);
+    ServeOperation(LaunchArgs *args);
 
     static bool
     DupDescriptor(const char *path, int fd, int flags);

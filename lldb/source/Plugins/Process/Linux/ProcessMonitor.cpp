@@ -607,7 +607,7 @@ ProcessMonitor::OperationThread(void *arg)
     if (!Launch(args))
         return NULL;
 
-    ServeOperation(args->m_monitor);
+    ServeOperation(args);
     return NULL;
 }
 
@@ -716,8 +716,6 @@ ProcessMonitor::Launch(LaunchArgs *args)
     process.SendMessage(ProcessMessage::Trace(pid));
 
 FINISH:
-    // Sync with our parent thread now that the launch operation is complete.
-    sem_post(&args->m_semaphore);
     return args->m_error.Success();
 }
 
@@ -819,14 +817,19 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor, lldb::pid_t pid)
 }
 
 void
-ProcessMonitor::ServeOperation(ProcessMonitor *monitor)
+ProcessMonitor::ServeOperation(LaunchArgs *args)
 {
     int status;
     pollfd fdset;
+    ProcessMonitor *monitor = args->m_monitor;
 
     fdset.fd = monitor->m_server_fd;
     fdset.events = POLLIN | POLLPRI;
     fdset.revents = 0;
+
+    // We are finised with the arguments and are ready to go.  Sync with the
+    // parent thread and start serving operations on the inferior.
+    sem_post(&args->m_semaphore);
 
     for (;;)
     {
