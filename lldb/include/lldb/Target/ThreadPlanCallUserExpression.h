@@ -43,6 +43,7 @@ public:
     virtual void
     WillPop ()
     {
+        ThreadPlanCallFunction::WillPop();
         if (m_user_expression_sp)
             m_user_expression_sp.reset();
     }

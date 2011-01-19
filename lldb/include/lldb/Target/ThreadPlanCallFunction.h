@@ -70,6 +70,9 @@ public:
         return true;
     }
     
+    // Classes that derive from ClangFunction, and implement
+    // their own WillPop methods should call this so that the
+    // thread state gets restored if the plan gets discarded.
     virtual void
     WillPop ();
 
