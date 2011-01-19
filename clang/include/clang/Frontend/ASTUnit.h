@@ -231,6 +231,7 @@ private:
   bool ShouldCacheCodeCompletionResults;
   
   static void ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
+                             const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics);
 
 public:

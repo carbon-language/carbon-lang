@@ -2211,7 +2211,8 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
-  Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
+  Diags = CompilerInstance::createDiagnostics(DiagOpts, num_command_line_args, 
+                                              command_line_args);
 
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {

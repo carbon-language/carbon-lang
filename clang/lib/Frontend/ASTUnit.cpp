@@ -465,6 +465,7 @@ llvm::MemoryBuffer *ASTUnit::getBufferForFile(llvm::StringRef Filename,
 
 /// \brief Configure the diagnostics object for use with ASTUnit.
 void ASTUnit::ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
+                             const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
@@ -473,7 +474,8 @@ void ASTUnit::ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
     DiagnosticClient *Client = 0;
     if (CaptureDiagnostics)
       Client = new StoredDiagnosticClient(AST.StoredDiagnostics);
-    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0, Client);
+    Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgEnd- ArgBegin, 
+                                                ArgBegin, Client);
   } else if (CaptureDiagnostics) {
     Diags->setClient(new StoredDiagnosticClient(AST.StoredDiagnostics));
   }
@@ -487,7 +489,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   unsigned NumRemappedFiles,
                                   bool CaptureDiagnostics) {
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
-  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
+  ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
 
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CaptureDiagnostics = CaptureDiagnostics;
@@ -1414,6 +1416,7 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   // We'll manage file buffers ourselves.
   Invocation->getPreprocessorOpts().RetainRemappedFileBuffers = true;
   Invocation->getFrontendOpts().DisableFree = false;
+  ProcessWarningOptions(getDiagnostics(), Invocation->getDiagnosticOpts());
 
   llvm::MemoryBuffer *OverrideMainBuffer = 0;
   if (PrecompilePreamble) {
@@ -1438,7 +1441,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   // Create the AST unit.
   llvm::OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
-  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
+  ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->CaptureDiagnostics = CaptureDiagnostics;
@@ -1467,7 +1470,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
     DiagnosticOptions DiagOpts;
-    Diags = CompilerInstance::createDiagnostics(DiagOpts, 0, 0);
+    Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgEnd - ArgBegin, 
+                                                ArgBegin);
   }
   
   llvm::SmallVector<const char *, 16> Args;
@@ -1543,7 +1547,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   // Create the AST unit.
   llvm::OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
-  ConfigureDiags(Diags, *AST, CaptureDiagnostics);
+  ConfigureDiags(Diags, ArgBegin, ArgEnd, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
   
   AST->FileMgr.reset(new FileManager(FileSystemOptions()));
