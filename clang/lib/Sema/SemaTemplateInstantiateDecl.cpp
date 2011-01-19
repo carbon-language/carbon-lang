@@ -1456,18 +1456,12 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
                                                  NonTypeTemplateParmDecl *D) {
   // Substitute into the type of the non-type template parameter.
   QualType T;
-  TypeSourceInfo *DI = D->getTypeSourceInfo();
-  if (DI) {
-    DI = SemaRef.SubstType(DI, TemplateArgs, D->getLocation(),
+  TypeSourceInfo *DI = SemaRef.SubstType(D->getTypeSourceInfo(), TemplateArgs, D->getLocation(),
                            D->getDeclName());
-    if (DI) T = DI->getType();
-  } else {
-    T = SemaRef.SubstType(D->getType(), TemplateArgs, D->getLocation(),
-                          D->getDeclName());
-    DI = 0;
-  }
-  if (T.isNull())
+  if (!DI)
     return 0;
+  
+  T = DI->getType();
   
   // Check that this type is acceptable for a non-type template parameter.
   bool Invalid = false;
