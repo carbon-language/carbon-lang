@@ -439,7 +439,10 @@ def setupSysPath():
     global testdirs
 
     # Get the directory containing the current script.
-    scriptPath = sys.path[0]
+    if "DOTEST_PROFILE" in os.environ and "DOTEST_SCRIPT_DIR" in os.environ:
+        scriptPath = os.environ["DOTEST_SCRIPT_DIR"]
+    else:
+        scriptPath = sys.path[0]
     if not scriptPath.endswith('test'):
         print "This script expects to reside in lldb's test directory."
         sys.exit(-1)

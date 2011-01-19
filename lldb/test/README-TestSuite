@@ -90,3 +90,12 @@ o dotest.pl
   suite become more reliable, we don't expect to be using 'dotest.pl' anymore.
 
   Note: dotest.pl has been moved to the attic directory.
+
+o Profiling dotest.py runs
+
+  I used the following command line thingy to do the profiling on a SnowLeopard
+  machine:
+
+$ DOTEST_PROFILE=YES DOTEST_SCRIPT_DIR=/Volumes/data/lldb/svn/trunk/test /System/Library/Frameworks/Python.framework/Versions/Current/lib/python2.6/cProfile.py -o my.profile ./dotest.py -v -w 2> ~/Developer/Log/lldbtest.log
+
+  After that, I used the pstats.py module to browse the statistics.
