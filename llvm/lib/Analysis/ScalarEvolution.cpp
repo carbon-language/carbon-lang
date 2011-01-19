@@ -819,6 +819,20 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
   if (const SCEVZeroExtendExpr *SZ = dyn_cast<SCEVZeroExtendExpr>(Op))
     return getTruncateOrZeroExtend(SZ->getOperand(), Ty);
 
+  // trunc(x1+x2+...+xN) --> trunc(x1)+trunc(x2)+...+trunc(xN) if we can
+  // eliminate all the truncates.
+  if (const SCEVAddExpr *SA = dyn_cast<SCEVAddExpr>(Op)) {
+    SmallVector<const SCEV *, 4> Operands;
+    bool hasTrunc = false;
+    for (unsigned i = 0, e = SA->getNumOperands(); i != e && !hasTrunc; ++i) {
+      const SCEV *S = getTruncateExpr(SA->getOperand(i), Ty);
+      hasTrunc = isa<SCEVTruncateExpr>(S);
+      Operands.push_back(S);
+    }
+    if (!hasTrunc)
+      return getAddExpr(Operands, false, false);
+  }
+
   // If the input value is a chrec scev, truncate the chrec's operands.
   if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(Op)) {
     SmallVector<const SCEV *, 4> Operands;
