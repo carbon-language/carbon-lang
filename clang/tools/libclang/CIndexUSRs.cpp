@@ -523,6 +523,11 @@ void USRGenerator::VisitType(QualType T) {
 
     // Mangle in ObjC GC qualifiers?
 
+    if (const PackExpansionType *Expansion = T->getAs<PackExpansionType>()) {
+      Out << 'P';
+      T = Expansion->getPattern();
+    }
+    
     if (const BuiltinType *BT = T->getAs<BuiltinType>()) {
       unsigned char c = '\0';
       switch (BT->getKind()) {
@@ -666,17 +671,23 @@ void USRGenerator::VisitTemplateParameterList(
        P != PEnd; ++P) {
     Out << '#';
     if (isa<TemplateTypeParmDecl>(*P)) {
+      if (cast<TemplateTypeParmDecl>(*P)->isParameterPack())
+        Out<< 'p';
       Out << 'T';
       continue;
     }
     
     if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
+      if (NTTP->isParameterPack())
+        Out << 'p';
       Out << 'N';
       VisitType(NTTP->getType());
       continue;
     }
     
     TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*P);
+    if (TTP->isParameterPack())
+      Out << 'p';
     Out << 't';
     VisitTemplateParameterList(TTP->getTemplateParameters());
   }
@@ -707,9 +718,10 @@ void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
       Visit(D);
     break;
       
-  case TemplateArgument::Template:
   case TemplateArgument::TemplateExpansion:
-      // FIXME: variadic templates
+    Out << 'P'; // pack expansion of...
+    // Fall through
+  case TemplateArgument::Template:
     VisitTemplateName(Arg.getAsTemplateOrTemplatePattern());
     break;
       
@@ -718,7 +730,10 @@ void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
     break;
       
   case TemplateArgument::Pack:
-    // FIXME: Variadic templates
+    Out << 'p' << Arg.pack_size();
+    for (TemplateArgument::pack_iterator P = Arg.pack_begin(), PEnd = Arg.pack_end();
+         P != PEnd; ++P)
+      VisitTemplateArgument(*P);
     break;
       
   case TemplateArgument::Type:
