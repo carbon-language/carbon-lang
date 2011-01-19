@@ -108,6 +108,14 @@ public:
     bool
     WriteRegisterValue(unsigned offset, const lldb_private::Scalar &value);
 
+    /// Reads all general purpose registers into the specified buffer.
+    bool
+    ReadGPR(void *buf);
+
+    /// Reads all floating point registers into the specified buffer.
+    bool
+    ReadFPR(void *buf);
+
     /// Writes a siginfo_t structure corresponding to the given thread ID to the
     /// memory region pointed to by @p siginfo.
     bool

@@ -260,6 +260,58 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
+/// @class ReadGPROperation
+/// @brief Implements ProcessMonitor::ReadGPR.
+class ReadGPROperation : public Operation
+{
+public:
+    ReadGPROperation(void *buf, bool &result)
+        : m_buf(buf), m_result(result)
+        { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    void *m_buf;
+    bool &m_result;
+};
+
+void
+ReadGPROperation::Execute(ProcessMonitor *monitor)
+{
+    if (ptrace(PTRACE_GETREGS, monitor->GetPID(), NULL, m_buf) < 0)
+        m_result = false;
+    else
+        m_result = true;
+}
+
+//------------------------------------------------------------------------------
+/// @class ReadFPROperation
+/// @brief Implements ProcessMonitor::ReadFPR.
+class ReadFPROperation : public Operation
+{
+public:
+    ReadFPROperation(void *buf, bool &result)
+        : m_buf(buf), m_result(result)
+        { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    void *m_buf;
+    bool &m_result;
+};
+
+void
+ReadFPROperation::Execute(ProcessMonitor *monitor)
+{
+    if (ptrace(PTRACE_GETFPREGS, monitor->GetPID(), NULL, m_buf) < 0)
+        m_result = false;
+    else
+        m_result = true;
+}
+
+//------------------------------------------------------------------------------
 /// @class ResumeOperation
 /// @brief Implements ProcessMonitor::Resume.
 class ResumeOperation : public Operation
@@ -871,6 +923,24 @@ ProcessMonitor::WriteRegisterValue(unsigned offset, const Scalar &value)
 {
     bool result;
     WriteRegOperation op(offset, value, result);
+    DoOperation(&op);
+    return result;
+}
+
+bool
+ProcessMonitor::ReadGPR(void *buf)
+{
+    bool result;
+    ReadGPROperation op(buf, result);
+    DoOperation(&op);
+    return result;
+}
+
+bool
+ProcessMonitor::ReadFPR(void *buf)
+{
+    bool result;
+    ReadFPROperation op(buf, result);
     DoOperation(&op);
     return result;
 }
