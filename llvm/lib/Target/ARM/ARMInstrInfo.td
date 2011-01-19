@@ -3745,28 +3745,28 @@ def MRC2 : ABXI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{19-16} = CRn;
 }
 
-def MCRR : ABI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc,
+def MCRR : ABI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
                GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-               NoItinerary, "mcrr", "\t$cop, $opc, $Rt, $Rt2, $CRm",
+               NoItinerary, "mcrr", "\t$cop, $opc1, $Rt, $Rt2, $CRm",
                [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0100;
   
   bits<4> Rt;
   bits<4> Rt2;
   bits<4> cop;
-  bits<3> opc1;
+  bits<4> opc1;
   bits<4> CRm;
   
   let Inst{15-12} = Rt;
   let Inst{19-16} = Rt2;
   let Inst{11-8}  = cop;
-  let Inst{7-5}   = opc1;
+  let Inst{7-4}   = opc1;
   let Inst{3-0}   = CRm;
 }
 
-def MCRR2 : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc,
+def MCRR2 : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
                  GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-                 NoItinerary, "mcrr2\t$cop, $opc, $Rt, $Rt2, $CRm",
+                 NoItinerary, "mcrr2\t$cop, $opc1, $Rt, $Rt2, $CRm",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{23-20} = 0b0100;
@@ -3774,38 +3774,38 @@ def MCRR2 : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc,
   bits<4> Rt;
   bits<4> Rt2;
   bits<4> cop;
-  bits<3> opc1;
+  bits<4> opc1;
   bits<4> CRm;
   
   let Inst{15-12} = Rt;
   let Inst{19-16} = Rt2;
   let Inst{11-8}  = cop;
-  let Inst{7-5}   = opc1;
+  let Inst{7-4}   = opc1;
   let Inst{3-0}   = CRm;
 }
 
-def MRRC : ABI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc,
+def MRRC : ABI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
                GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-               NoItinerary, "mrrc", "\t$cop, $opc, $Rt, $Rt2, $CRm",
+               NoItinerary, "mrrc", "\t$cop, $opc1, $Rt, $Rt2, $CRm",
                [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0101;
   
   bits<4> Rt;
   bits<4> Rt2;
   bits<4> cop;
-  bits<3> opc1;
+  bits<4> opc1;
   bits<4> CRm;
   
   let Inst{15-12} = Rt;
   let Inst{19-16} = Rt2;
   let Inst{11-8}  = cop;
-  let Inst{7-5}   = opc1;
+  let Inst{7-4}   = opc1;
   let Inst{3-0}   = CRm;
 }
 
-def MRRC2 : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc,
+def MRRC2 : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
                  GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-                 NoItinerary, "mrrc2\t$cop, $opc, $Rt, $Rt2, $CRm",
+                 NoItinerary, "mrrc2\t$cop, $opc1, $Rt, $Rt2, $CRm",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{23-20} = 0b0101;
@@ -3813,13 +3813,13 @@ def MRRC2 : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc,
   bits<4> Rt;
   bits<4> Rt2;
   bits<4> cop;
-  bits<3> opc1;
+  bits<4> opc1;
   bits<4> CRm;
   
   let Inst{15-12} = Rt;
   let Inst{19-16} = Rt2;
   let Inst{11-8}  = cop;
-  let Inst{7-5}   = opc1;
+  let Inst{7-4}   = opc1;
   let Inst{3-0}   = CRm;
 }
 
