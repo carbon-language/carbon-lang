@@ -291,7 +291,6 @@ private:
     std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
     std::auto_ptr<ClangExpressionVariableList> m_local_variables;      ///< The local expression variables, if the expression is DWARF.
     std::auto_ptr<StreamString>                 m_dwarf_opcodes;        ///< The DWARF opcodes for the expression.  May be NULL.
-    lldb::addr_t                                m_jit_addr;             ///< The address of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
     
     bool                                        m_cplusplus;            ///< True if the expression is compiled as a C++ member function (true if it was parsed when exe_ctx was in a C++ method).
     bool                                        m_objectivec;           ///< True if the expression is compiled as an Objective-C method (true if it was parsed when exe_ctx was in an Objective-C method).

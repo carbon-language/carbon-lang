@@ -61,7 +61,6 @@ ClangFunction::ClangFunction
     m_clang_ast_context (ast_context),
     m_wrapper_function_name ("__lldb_caller_function"),
     m_wrapper_struct_name ("__lldb_caller_struct"),
-    m_wrapper_function_addr (),
     m_wrapper_args_addrs (),
     m_arg_values (arg_value_list),
     m_compiled (false),
@@ -83,7 +82,6 @@ ClangFunction::ClangFunction
     m_clang_ast_context (ast_context),
     m_wrapper_function_name ("__lldb_function_caller"),
     m_wrapper_struct_name ("__lldb_caller_struct"),
-    m_wrapper_function_addr (),
     m_wrapper_args_addrs (),
     m_arg_values (arg_value_list),
     m_compiled (false),
@@ -240,12 +238,12 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     if (m_JITted)
         return true;
     
-    lldb::addr_t wrapper_function_end;
-    
-    Error jit_error = m_parser->MakeJIT(m_wrapper_function_addr, wrapper_function_end, exe_ctx);
+    Error jit_error (m_parser->MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx));
     
     if (!jit_error.Success())
         return false;
+    if (exe_ctx.process && m_jit_alloc != LLDB_INVALID_ADDRESS)
+        m_jit_process_sp = exe_ctx.process->GetSP();
 
     return true;
 }
@@ -360,7 +358,7 @@ ClangFunction::InsertFunction (ExecutionContext &exe_ctx, lldb::addr_t &args_add
 
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
-        log->Printf ("Call Address: 0x%llx Struct Address: 0x%llx.\n", m_wrapper_function_addr, args_addr_ref);
+        log->Printf ("Call Address: 0x%llx Struct Address: 0x%llx.\n", m_jit_start_addr, args_addr_ref);
         
     return true;
 }
@@ -524,8 +522,14 @@ ClangFunction::ExecuteFunction(
             return lldb::eExecutionSetupError;
     }
     
-    return_value = ClangFunction::ExecuteFunction(exe_ctx, m_wrapper_function_addr, args_addr, stop_others, 
-                                                  try_all_threads, discard_on_error, single_thread_timeout_usec, errors);
+    return_value = ClangFunction::ExecuteFunction (exe_ctx, 
+                                                   m_jit_start_addr, 
+                                                   args_addr, 
+                                                   stop_others, 
+                                                   try_all_threads, 
+                                                   discard_on_error, 
+                                                   single_thread_timeout_usec, 
+                                                   errors);
 
     if (args_addr_ptr != NULL)
         *args_addr_ptr = args_addr;

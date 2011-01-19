@@ -26,13 +26,13 @@ class ThreadPlanCallUserExpression : public ThreadPlanCallFunction
 {
 public:
     ThreadPlanCallUserExpression (Thread &thread,
-                            Address &function,
-                            lldb::addr_t arg,
-                            bool stop_other_threads,
-                            bool discard_on_error,
-                            lldb::addr_t *this_arg,
-                            lldb::addr_t *cmd_arg,
-                            ClangUserExpression::ClangUserExpressionSP &user_expression_sp);
+                                  Address &function,
+                                  lldb::addr_t arg,
+                                  bool stop_other_threads,
+                                  bool discard_on_error,
+                                  lldb::addr_t *this_arg,
+                                  lldb::addr_t *cmd_arg,
+                                  ClangUserExpression::ClangUserExpressionSP &user_expression_sp);
     
     virtual
     ~ThreadPlanCallUserExpression ();
@@ -50,9 +50,9 @@ public:
 
 protected:
 private:
-    ClangUserExpression::ClangUserExpressionSP m_user_expression_sp;  // This is currently just used to ensure the
-                                                          // User expression the initiated this ThreadPlan
-                                                          // lives as long as the thread plan does.
+    ClangUserExpression::ClangUserExpressionSP m_user_expression_sp;    // This is currently just used to ensure the
+                                                                        // User expression the initiated this ThreadPlan
+                                                                        // lives as long as the thread plan does.
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallUserExpression);
 };
 

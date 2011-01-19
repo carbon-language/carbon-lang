@@ -52,11 +52,6 @@ namespace lldb_private {
 //----------------------------------------------------------------------
 class RecordingMemoryManager : public llvm::JITMemoryManager
 {
-friend Error ClangExpressionParser::MakeJIT (uint64_t &, 
-                                             uint64_t&, 
-                                             ExecutionContext &,
-                                             lldb::ClangExpressionVariableSP *);
-
 public:
     //------------------------------------------------------------------
     /// Constructor
@@ -329,6 +324,8 @@ private:
     AddToLocalToRemoteMap (lldb::addr_t lstart, size_t size, lldb::addr_t rstart);
 
     std::vector<LocalToRemoteAddressRange> m_address_map;   ///< The base address of the remote allocation
+    
+    friend class ClangExpressionParser;
 };
 
 } // namespace lldb_private

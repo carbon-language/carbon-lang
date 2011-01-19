@@ -17,15 +17,9 @@
 #include <string>
 #include <vector>
 
-namespace llvm
-{
-    class ExecutionEngine;
-}
-
 namespace lldb_private
 {
 
-class Process;
 class RecordingMemoryManager;
     
 //----------------------------------------------------------------------
@@ -96,6 +90,10 @@ public:
     //------------------------------------------------------------------
     /// JIT-compile the IR for an already-parsed expression.
     ///
+    /// @param[out] func_allocation_addr
+    ///     The address which can be used to deallocate the code for this
+    ///     JIT'ed function
+    ///
     /// @param[out] func_addr
     ///     The address to which the function has been written.
     ///
@@ -117,7 +115,8 @@ public:
     ///     Test with Success().
     //------------------------------------------------------------------
     Error
-    MakeJIT (lldb::addr_t &func_addr,
+    MakeJIT (lldb::addr_t &func_allocation_addr, 
+             lldb::addr_t &func_addr,
              lldb::addr_t &func_end,
              ExecutionContext &exe_ctx,
              lldb::ClangExpressionVariableSP *const_result = NULL);
@@ -136,7 +135,9 @@ public:
     ///     The error generated.  If .Success() is true, disassembly succeeded.
     //------------------------------------------------------------------
     Error
-    DisassembleFunction (Stream &stream, ExecutionContext &exc_context);
+    DisassembleFunction (Stream &stream, 
+                         ExecutionContext &exe_ctx,
+                         RecordingMemoryManager *jit_memory_manager);
     
 private:
     //----------------------------------------------------------------------
@@ -187,7 +188,6 @@ private:
     std::auto_ptr<clang::SelectorTable>         m_selector_table;       ///< Selector table for Objective-C methods
     std::auto_ptr<clang::ASTContext>            m_ast_context;          ///< The AST context used to hold types and names for the parser
     std::auto_ptr<clang::CodeGenerator>         m_code_generator;       ///< [owned by the Execution Engine] The Clang object that generates IR
-    RecordingMemoryManager                     *m_jit_mm;               ///< The memory manager for the LLVM JIT
     std::auto_ptr<llvm::ExecutionEngine>        m_execution_engine;     ///< The LLVM JIT
     std::vector<JittedFunction>                 m_jitted_functions;     ///< A vector of all functions that have been JITted into machine code (just one, if ParseExpression() was called)
 };

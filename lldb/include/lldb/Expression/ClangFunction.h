@@ -477,7 +477,7 @@ public:
                                  bool discard_on_error = true)
     {
         return ClangFunction::GetThreadPlanToCallFunction (exe_ctx, 
-                                                           m_wrapper_function_addr, 
+                                                           m_jit_start_addr, 
                                                            args_addr_ref, 
                                                            errors, 
                                                            stop_others, 
@@ -618,7 +618,6 @@ private:
     std::string                     m_wrapper_function_name;        ///< The name of the wrapper function.
     std::string                     m_wrapper_function_text;        ///< The contents of the wrapper function.
     std::string                     m_wrapper_struct_name;          ///< The name of the struct that contains the target function address, arguments, and result.
-    lldb::addr_t                    m_wrapper_function_addr;        ///< The address of the wrapper function.
     std::list<lldb::addr_t>         m_wrapper_args_addrs;           ///< The addresses of the arguments to the wrapper function.
     
     bool                            m_struct_valid;                 ///< True if the ASTStructExtractor has populated the variables below.

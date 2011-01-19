@@ -38,10 +38,9 @@ using namespace lldb_private;
 //------------------------------------------------------------------
 ClangUtilityFunction::ClangUtilityFunction (const char *text, 
                                             const char *name) :
-    m_function_text(text),
-    m_function_name(name),
-    m_jit_begin(LLDB_INVALID_ADDRESS),
-    m_jit_end(LLDB_INVALID_ADDRESS)
+    ClangExpression (),
+    m_function_text (text),
+    m_function_name (name)
 {
 }
 
@@ -65,7 +64,7 @@ bool
 ClangUtilityFunction::Install (Stream &error_stream,
                                ExecutionContext &exe_ctx)
 {
-    if (m_jit_begin != LLDB_INVALID_ADDRESS)
+    if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
         error_stream.PutCString("error: already installed\n");
         return false;
@@ -123,13 +122,16 @@ ClangUtilityFunction::Install (Stream &error_stream,
     // JIT the output of the parser
     //
         
-    Error jit_error = parser.MakeJIT (m_jit_begin, m_jit_end, exe_ctx);
+    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx);
+    
+    if (exe_ctx.process && m_jit_start_addr != LLDB_INVALID_ADDRESS)
+        m_jit_process_sp = exe_ctx.process->GetSP();
     
 #if 0
 	// jingham: look here
     StreamFile logfile ("/tmp/exprs.txt", "a");
     logfile.Printf ("0x%16.16llx: func = %s, source =\n%s\n", 
-                    m_jit_begin, 
+                    m_jit_start_addr, 
                     m_function_name.c_str(), 
                     m_function_text.c_str());
 #endif

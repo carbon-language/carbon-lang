@@ -45,6 +45,7 @@ class   ClangASTType;
 class   ClangNamespaceDecl;
 class   ClangExpression;
 class   ClangExpressionDeclMap;
+class   ClangExpressionParser;
 class   ClangExpressionVariable;
 class   ClangExpressionVariableList;
 class   ClangExpressionVariableList;

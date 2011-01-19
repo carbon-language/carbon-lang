@@ -118,5 +118,10 @@ namespace clang
     struct PrintingPolicy;
 }
 
+namespace llvm
+{
+    class ExecutionEngine;
+}
+
 #endif  // #if defined(__cplusplus)
 #endif  // liblldb_ClangForward_h_

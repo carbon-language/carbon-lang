@@ -41,15 +41,15 @@ using namespace lldb_private;
 
 ClangUserExpression::ClangUserExpression (const char *expr,
                                           const char *expr_prefix) :
-    m_expr_text(expr),
-    m_expr_prefix(expr_prefix ? expr_prefix : ""),
-    m_transformed_text(),
-    m_jit_addr(LLDB_INVALID_ADDRESS),
-    m_cplusplus(false),
-    m_objectivec(false),
-    m_needs_object_ptr(false),
-    m_const_object(false),
-    m_desired_type(NULL, NULL)
+    ClangExpression (),
+    m_expr_text (expr),
+    m_expr_prefix (expr_prefix ? expr_prefix : ""),
+    m_transformed_text (),
+    m_cplusplus (false),
+    m_objectivec (false),
+    m_needs_object_ptr (false),
+    m_const_object (false),
+    m_desired_type (NULL, NULL)
 {
 }
 
@@ -295,14 +295,14 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     m_dwarf_opcodes.reset();
     
-    lldb::addr_t jit_end;
-        
-    Error jit_error = parser.MakeJIT (m_jit_addr, jit_end, exe_ctx, const_result);
+    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, const_result);
     
     m_expr_decl_map->DidParse();
     
     if (jit_error.Success())
     {
+        if (exe_ctx.process && m_jit_alloc != LLDB_INVALID_ADDRESS)
+            m_jit_process_sp = exe_ctx.process->GetSP();        
         return true;
     }
     else
@@ -321,7 +321,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    if (m_jit_addr != LLDB_INVALID_ADDRESS)
+    if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
         Error materialize_error;
         
@@ -370,14 +370,14 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
 #if 0
 		// jingham: look here
         StreamFile logfile ("/tmp/exprs.txt", "a");
-        logfile.Printf("0x%16.16llx: thread = 0x%4.4x, expr = '%s'\n", m_jit_addr, exe_ctx.thread ? exe_ctx.thread->GetID() : -1, m_expr_text.c_str());
+        logfile.Printf("0x%16.16llx: thread = 0x%4.4x, expr = '%s'\n", m_jit_start_addr, exe_ctx.thread ? exe_ctx.thread->GetID() : -1, m_expr_text.c_str());
 #endif
         
         if (log)
         {
             log->Printf("-- [ClangUserExpression::PrepareToExecuteJITExpression] Materializing for execution --");
             
-            log->Printf("  Function address  : 0x%llx", (uint64_t)m_jit_addr);
+            log->Printf("  Function address  : 0x%llx", (uint64_t)m_jit_start_addr);
             
             if (m_needs_object_ptr)
                 log->Printf("  Object pointer    : 0x%llx", (uint64_t)object_ptr);
@@ -420,7 +420,7 @@ ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
     // forcing unwind_on_error to be true here, in practical terms that can't happen.
     
     return ClangFunction::GetThreadPlanToCallFunction (exe_ctx, 
-                                                       m_jit_addr, 
+                                                       m_jit_start_addr, 
                                                        struct_address, 
                                                        error_stream,
                                                        true,
@@ -484,7 +484,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         return lldb::eExecutionSetupError;
     }
-    else if (m_jit_addr != LLDB_INVALID_ADDRESS)
+    else if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
         lldb::addr_t struct_address;
                 
@@ -497,7 +497,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         const bool stop_others = true;
         const bool try_all_threads = true;
         
-        Address wrapper_address (NULL, m_jit_addr);
+        Address wrapper_address (NULL, m_jit_start_addr);
         lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (*(exe_ctx.thread), 
                                                                           wrapper_address, 
                                                                           struct_address, 

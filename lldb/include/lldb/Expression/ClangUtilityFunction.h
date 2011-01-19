@@ -88,18 +88,9 @@ public:
     {
         // nothing is both >= LLDB_INVALID_ADDRESS and < LLDB_INVALID_ADDRESS,
         // so this always returns false if the function is not JIT compiled yet
-        return (address >= m_jit_begin && address < m_jit_end);
+        return (address >= m_jit_start_addr && address < m_jit_end_addr);
     }
     
-    //------------------------------------------------------------------
-    /// Return the address of the function's JIT-compiled code, or
-    /// LLDB_INVALID_ADDRESS if the function is not JIT compiled
-    //------------------------------------------------------------------
-    lldb::addr_t
-    StartAddress ()
-    {
-        return m_jit_begin;
-    }
     
     //------------------------------------------------------------------
     /// Return the string that the parser should parse.  Must be a full
@@ -191,9 +182,6 @@ private:
     
     std::string                             m_function_text;    ///< The text of the function.  Must be a well-formed translation unit.
     std::string                             m_function_name;    ///< The name of the function.
-    
-    lldb::addr_t                            m_jit_begin;        ///< The address of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
-    lldb::addr_t                            m_jit_end;          ///< The end of the JITted code.  LLDB_INVALID_ADDRESS if invalid.
 };
 
 } // namespace lldb_private

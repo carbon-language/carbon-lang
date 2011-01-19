@@ -425,11 +425,15 @@ ClangExpressionParser::MakeDWARF ()
 }
 
 Error
-ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr, 
+ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr, 
+                                lldb::addr_t &func_addr, 
                                 lldb::addr_t &func_end, 
                                 ExecutionContext &exe_ctx,
                                 lldb::ClangExpressionVariableSP *const_result)
 {
+    func_allocation_addr = LLDB_INVALID_ADDRESS;
+	func_addr = LLDB_INVALID_ADDRESS;
+	func_end = LLDB_INVALID_ADDRESS;
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     Error err;
@@ -488,7 +492,9 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
         }
     }
     
-    m_jit_mm = new RecordingMemoryManager();
+    // llvm will own this pointer when llvm::ExecutionEngine::createJIT is called 
+    // below so we don't need to free it.
+    RecordingMemoryManager *jit_memory_manager = new RecordingMemoryManager();
     
     std::string error_string;
         
@@ -496,7 +502,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
     
     m_execution_engine.reset(llvm::ExecutionEngine::createJIT (module, 
                                                                &error_string, 
-                                                               m_jit_mm,
+                                                               jit_memory_manager,
                                                                CodeGenOpt::Less,
                                                                true,
                                                                CodeModel::Small));
@@ -544,25 +550,27 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
     
     size_t alloc_size = 0;
     
-    std::map<uint8_t *, uint8_t *>::iterator fun_pos = m_jit_mm->m_functions.begin();
-    std::map<uint8_t *, uint8_t *>::iterator fun_end = m_jit_mm->m_functions.end();
+    std::map<uint8_t *, uint8_t *>::iterator fun_pos = jit_memory_manager->m_functions.begin();
+    std::map<uint8_t *, uint8_t *>::iterator fun_end = jit_memory_manager->m_functions.end();
     
     for (; fun_pos != fun_end; ++fun_pos)
         alloc_size += (*fun_pos).second - (*fun_pos).first;
     
     Error alloc_error;
-    lldb::addr_t target_addr = exc_context.process->AllocateMemory (alloc_size, lldb::ePermissionsReadable|lldb::ePermissionsExecutable, alloc_error);
+    func_allocation_addr = exc_context.process->AllocateMemory (alloc_size, 
+                                                                lldb::ePermissionsReadable|lldb::ePermissionsExecutable, 
+                                                                alloc_error);
     
-    if (target_addr == LLDB_INVALID_ADDRESS)
+    if (func_allocation_addr == LLDB_INVALID_ADDRESS)
     {
         err.SetErrorToGenericError();
         err.SetErrorStringWithFormat("Couldn't allocate memory for the JITted function: %s", alloc_error.AsCString("unknown error"));
         return err;
     }
     
-    lldb::addr_t cursor = target_addr;
+    lldb::addr_t cursor = func_allocation_addr;
         
-    for (fun_pos = m_jit_mm->m_functions.begin(); fun_pos != fun_end; fun_pos++)
+    for (fun_pos = jit_memory_manager->m_functions.begin(); fun_pos != fun_end; fun_pos++)
     {
         lldb::addr_t lstart = (lldb::addr_t) (*fun_pos).first;
         lldb::addr_t lend = (lldb::addr_t) (*fun_pos).second;
@@ -577,7 +585,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
             return err;
         }
             
-        m_jit_mm->AddToLocalToRemoteMap (lstart, size, cursor);
+        jit_memory_manager->AddToLocalToRemoteMap (lstart, size, cursor);
         cursor += size;
     }
     
@@ -585,11 +593,11 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
     
     for (pos = m_jitted_functions.begin(); pos != end; pos++)
     {
-        (*pos).m_remote_addr = m_jit_mm->GetRemoteAddressForLocal ((*pos).m_local_addr);
+        (*pos).m_remote_addr = jit_memory_manager->GetRemoteAddressForLocal ((*pos).m_local_addr);
     
         if (!(*pos).m_name.compare(function_name.c_str()))
         {
-            func_end = m_jit_mm->GetRemoteRangeForLocal ((*pos).m_local_addr).second;
+            func_end = jit_memory_manager->GetRemoteRangeForLocal ((*pos).m_local_addr).second;
             func_addr = (*pos).m_remote_addr;
         }
     }
@@ -600,7 +608,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
         
         StreamString disassembly_stream;
         
-        Error err = DisassembleFunction(disassembly_stream, exe_ctx);
+        Error err = DisassembleFunction(disassembly_stream, exe_ctx, jit_memory_manager);
         
         if (!err.Success())
         {
@@ -617,7 +625,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_addr,
 }
 
 Error
-ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx)
+ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &exe_ctx, RecordingMemoryManager *jit_memory_manager)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -653,7 +661,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     
     std::pair <lldb::addr_t, lldb::addr_t> func_range;
     
-    func_range = m_jit_mm->GetRemoteRangeForLocal(func_local_addr);
+    func_range = jit_memory_manager->GetRemoteRangeForLocal(func_local_addr);
     
     if (func_range.first == 0 && func_range.second == 0)
     {

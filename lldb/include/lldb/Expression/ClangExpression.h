@@ -23,7 +23,7 @@
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
+#include "lldb/Target/Process.h"
 
 namespace lldb_private {
 
@@ -41,11 +41,20 @@ class RecordingMemoryManager;
 class ClangExpression
 {
 public:
+    ClangExpression () :
+        m_jit_process_sp(),
+        m_jit_alloc (LLDB_INVALID_ADDRESS),
+        m_jit_start_addr (LLDB_INVALID_ADDRESS),
+        m_jit_end_addr (LLDB_INVALID_ADDRESS)
+    {
+    }
+
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
     virtual ~ClangExpression ()
     {
+        DeallocateJITFunction ();
     }
     
     //------------------------------------------------------------------
@@ -112,6 +121,38 @@ public:
     //------------------------------------------------------------------
     virtual bool
     NeedsVariableResolution () = 0;
+
+    void
+    DeallocateJITFunction ()
+    {
+        if (m_jit_process_sp && m_jit_alloc != LLDB_INVALID_ADDRESS)
+        {
+            m_jit_process_sp->DeallocateMemory (m_jit_alloc);
+            // If this process is ever used for anything else, we can not clear it 
+            // here. For now it is only used in order to deallocate any code if
+            // m_jit_alloc is a valid address.
+            m_jit_process_sp.reset(); 
+            m_jit_alloc = LLDB_INVALID_ADDRESS;
+        }
+    }
+
+    //------------------------------------------------------------------
+    /// Return the address of the function's JIT-compiled code, or
+    /// LLDB_INVALID_ADDRESS if the function is not JIT compiled
+    //------------------------------------------------------------------
+    lldb::addr_t
+    StartAddress ()
+    {
+        return m_jit_start_addr;
+    }
+
+protected:
+
+    lldb::ProcessSP m_jit_process_sp;
+    lldb::addr_t    m_jit_alloc;            ///< The address of the block containing JITted code.  LLDB_INVALID_ADDRESS if invalid.
+    lldb::addr_t    m_jit_start_addr;       ///< The address of the JITted function within the JIT allocation.  LLDB_INVALID_ADDRESS if invalid.
+    lldb::addr_t    m_jit_end_addr;         ///< The address of the JITted function within the JIT allocation.  LLDB_INVALID_ADDRESS if invalid.
+
 };
 
 } // namespace lldb_private
