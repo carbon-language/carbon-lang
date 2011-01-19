@@ -640,8 +640,9 @@ static void EmitZeroMemSet(CodeGenFunction &CGF, QualType T,
   if (NewPtr->getType() != BP)
     NewPtr = CGF.Builder.CreateBitCast(NewPtr, BP, "tmp");
 
+  CharUnits Alignment = CGF.getContext().getTypeAlignInChars(T);
   CGF.Builder.CreateMemSet(NewPtr, CGF.Builder.getInt8(0), Size,
-                           CGF.getContext().getTypeAlign(T)/8, false);
+                           Alignment.getQuantity(), false);
 }
                        
 static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,

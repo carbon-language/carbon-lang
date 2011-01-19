@@ -1245,10 +1245,10 @@ EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
       if (const ObjCObjectType *OIT = PTEE->getAs<ObjCObjectType>()) {
         // Handle interface types, which are not represented with a concrete
         // type.
-        int size = CGF.getContext().getTypeSize(OIT) / 8;
+        CharUnits size = CGF.getContext().getTypeSizeInChars(OIT);
         if (!isInc)
           size = -size;
-        Inc = llvm::ConstantInt::get(Inc->getType(), size);
+        Inc = llvm::ConstantInt::get(Inc->getType(), size.getQuantity());
         const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
         InVal = Builder.CreateBitCast(InVal, i8Ty);
         NextVal = Builder.CreateGEP(InVal, Inc, "add.ptr");

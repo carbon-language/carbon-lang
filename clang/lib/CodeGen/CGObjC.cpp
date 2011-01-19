@@ -241,9 +241,10 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                     Types.ConvertType(getContext().VoidPtrTy)));
         Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
         // sizeof (Type of Ivar)
-        uint64_t Size =  getContext().getTypeSize(Ivar->getType()) / 8;
+        CharUnits Size =  getContext().getTypeSizeInChars(Ivar->getType());
         llvm::Value *SizeVal =
-          llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), Size);
+          llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), 
+                                 Size.getQuantity());
         Args.push_back(std::make_pair(RValue::get(SizeVal),
                                       getContext().LongTy));
         llvm::Value *isAtomic =
@@ -374,9 +375,10 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     RV = RValue::get(ArgAsPtrTy);
     Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
     // sizeof (Type of Ivar)
-    uint64_t Size =  getContext().getTypeSize(Ivar->getType()) / 8;
+    CharUnits Size =  getContext().getTypeSizeInChars(Ivar->getType());
     llvm::Value *SizeVal =
-      llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), Size);
+      llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), 
+                             Size.getQuantity());
     Args.push_back(std::make_pair(RValue::get(SizeVal),
                                   getContext().LongTy));
     llvm::Value *True =

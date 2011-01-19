@@ -879,18 +879,19 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           // FIXME: We should have a common utility for generating an aggregate
           // copy.
           const llvm::Type *I8PtrTy = Builder.getInt8PtrTy();
-          unsigned Size = getContext().getTypeSize(Ty) / 8;
+          CharUnits Size = getContext().getTypeSizeInChars(Ty);
           Builder.CreateMemCpy(Builder.CreateBitCast(AlignedTemp, I8PtrTy),
                                Builder.CreateBitCast(V, I8PtrTy),
-                               llvm::ConstantInt::get(IntPtrTy, Size),
+                               llvm::ConstantInt::get(IntPtrTy, 
+                                                      Size.getQuantity()),
                                ArgI.getIndirectAlign(),
                                false);
           V = AlignedTemp;
         }
       } else {
         // Load scalar value from indirect argument.
-        unsigned Alignment = getContext().getTypeAlignInChars(Ty).getQuantity();
-        V = EmitLoadOfScalar(V, false, Alignment, Ty);
+        CharUnits Alignment = getContext().getTypeAlignInChars(Ty);
+        V = EmitLoadOfScalar(V, false, Alignment.getQuantity(), Ty);
         if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
           // This must be a promotion, for something like
           // "void a(x) short x; {..."

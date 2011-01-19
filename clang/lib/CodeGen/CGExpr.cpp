@@ -475,7 +475,8 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
 LValue CodeGenFunction::EmitCheckedLValue(const Expr *E) {
   LValue LV = EmitLValue(E);
   if (!isa<DeclRefExpr>(E) && !LV.isBitField() && LV.isSimple())
-    EmitCheck(LV.getAddress(), getContext().getTypeSize(E->getType()) / 8);
+    EmitCheck(LV.getAddress(), 
+              getContext().getTypeSizeInChars(E->getType()).getQuantity());
   return LV;
 }
 
