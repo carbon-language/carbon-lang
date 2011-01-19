@@ -549,6 +549,10 @@ namespace clang {
     /// Actually an OverloadFailureKind.
     unsigned char FailureKind;
 
+    /// \brief The number of call arguments that were explicitly provided,
+    /// to be used while performing partial ordering of function templates.
+    unsigned ExplicitCallArguments;
+    
     /// A structure used to record information about a failed
     /// template argument deduction.
     struct DeductionFailureInfo {

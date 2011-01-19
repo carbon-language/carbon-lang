@@ -3551,7 +3551,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   Candidate.Viable = true;
   Candidate.IsSurrogate = false;
   Candidate.IgnoreObjectArgument = false;
-
+  Candidate.ExplicitCallArguments = NumArgs;
+  
   unsigned NumArgsInProto = Proto->getNumArgs();
 
   // (C++ 13.3.2p2): A candidate function having fewer than m
@@ -3701,6 +3702,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
   Candidate.Function = Method;
   Candidate.IsSurrogate = false;
   Candidate.IgnoreObjectArgument = false;
+  Candidate.ExplicitCallArguments = NumArgs;
 
   unsigned NumArgsInProto = Proto->getNumArgs();
 
@@ -3809,6 +3811,7 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
     Candidate.FailureKind = ovl_fail_bad_deduction;
     Candidate.IsSurrogate = false;
     Candidate.IgnoreObjectArgument = false;
+    Candidate.ExplicitCallArguments = NumArgs;
     Candidate.DeductionFailure = MakeDeductionFailureInfo(Context, Result, 
                                                           Info);
     return;
@@ -3859,6 +3862,7 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
     Candidate.FailureKind = ovl_fail_bad_deduction;
     Candidate.IsSurrogate = false;
     Candidate.IgnoreObjectArgument = false;
+    Candidate.ExplicitCallArguments = NumArgs;
     Candidate.DeductionFailure = MakeDeductionFailureInfo(Context, Result, 
                                                           Info);
     return;
@@ -3904,6 +3908,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   Candidate.FinalConversion.setAllToTypes(ToType);
   Candidate.Viable = true;
   Candidate.Conversions.resize(1);
+  Candidate.ExplicitCallArguments = 1;
 
   // C++ [over.match.funcs]p4:
   //   For conversion functions, the function is considered to be a member of 
@@ -4032,6 +4037,7 @@ Sema::AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
     Candidate.FailureKind = ovl_fail_bad_deduction;
     Candidate.IsSurrogate = false;
     Candidate.IgnoreObjectArgument = false;
+    Candidate.ExplicitCallArguments = 1;
     Candidate.DeductionFailure = MakeDeductionFailureInfo(Context, Result, 
                                                           Info);
     return;
@@ -4071,6 +4077,7 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   Candidate.IsSurrogate = true;
   Candidate.IgnoreObjectArgument = false;
   Candidate.Conversions.resize(NumArgs + 1);
+  Candidate.ExplicitCallArguments = NumArgs;
 
   // Determine the implicit conversion sequence for the implicit
   // object parameter.
@@ -4222,6 +4229,7 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
   // arguments.
   Candidate.Viable = true;
   Candidate.Conversions.resize(NumArgs);
+  Candidate.ExplicitCallArguments = NumArgs;
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
     // C++ [over.match.oper]p4:
     //   For the built-in assignment operators, conversions of the
@@ -5891,16 +5899,17 @@ isBetterOverloadCandidate(Sema &S,
   //      according to the partial ordering rules described in 14.5.5.2, or,
   //      if not that,
   if (Cand1.Function && Cand1.Function->getPrimaryTemplate() &&
-      Cand2.Function && Cand2.Function->getPrimaryTemplate())
+      Cand2.Function && Cand2.Function->getPrimaryTemplate()) {
     if (FunctionTemplateDecl *BetterTemplate
           = S.getMoreSpecializedTemplate(Cand1.Function->getPrimaryTemplate(),
                                          Cand2.Function->getPrimaryTemplate(),
                                          Loc,
                        isa<CXXConversionDecl>(Cand1.Function)? TPOC_Conversion 
                                                              : TPOC_Call,
-                                         NumArgs))
+                                         Cand1.ExplicitCallArguments))
       return BetterTemplate == Cand1.Function->getPrimaryTemplate();
-
+  }
+  
   //   -- the context is an initialization by user-defined conversion
   //      (see 8.5, 13.3.1.5) and the standard conversion sequence
   //      from the return type of F1 to the destination type (i.e.,

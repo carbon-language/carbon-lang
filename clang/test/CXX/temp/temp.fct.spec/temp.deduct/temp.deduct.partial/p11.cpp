@@ -31,3 +31,17 @@ void g3() {
    f3<int>( 42 );                  // expected-error{{call to 'f3' is ambiguous}}
    
 }
+
+namespace PR9006 {
+  struct X {
+    template <class Get>
+    int &f(char const* name, Get fget, char const* docstr = 0);
+  
+    template <class Get, class Set>
+    float &f(char const* name, Get fget, Set fset, char const* docstr = 0);
+  };
+
+  void test(X x) {
+    int &ir = x.f("blah", 0, "blah");
+  }
+}
