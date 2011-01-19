@@ -701,13 +701,11 @@ class TestBase(unittest2.TestCase):
                     print >> sbuf, "runCmd failed!"
                     print >> sbuf, self.res.GetError()
 
-            if running:
-                # For process launch, wait some time before possible next try.
-                time.sleep(self.timeWaitNextLaunch)
-
             if self.res.Succeeded():
                 break
             elif running:
+                # For process launch, wait some time before possible next try.
+                time.sleep(self.timeWaitNextLaunch)
                 with recording(self, True) as sbuf:
                     print >> sbuf, "Command '" + cmd + "' failed!"
 
