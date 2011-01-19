@@ -48,7 +48,7 @@ def err_invalid_storage_class_in_func_decl : Error<
   "invalid storage class specifier in function declarator">;
 def err_expected_namespace_name : Error<"expected namespace name">;
 def ext_variadic_templates : ExtWarn<
-  "variadic templates are a C++0x extension">;
+  "variadic templates are a C++0x extension">, InGroup<CXX0x>;
 
 // Sema && Lex
 def ext_longlong : Extension<
