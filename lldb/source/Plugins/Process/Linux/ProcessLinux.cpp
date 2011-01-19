@@ -244,13 +244,15 @@ void
 ProcessLinux::SendMessage(const ProcessMessage &message)
 {
     Mutex::Locker lock(m_message_mutex);
-    m_message_queue.push(message);
 
     switch (message.GetKind())
     {
     default:
         SetPrivateState(eStateStopped);
         break;
+
+    case ProcessMessage::eInvalidMessage:
+        return;
 
     case ProcessMessage::eExitMessage:
         SetExitStatus(message.GetExitStatus(), NULL);
@@ -260,6 +262,8 @@ ProcessLinux::SendMessage(const ProcessMessage &message)
         SetExitStatus(-1, NULL);
         break;
     }
+
+    m_message_queue.push(message);
 }
 
 void
