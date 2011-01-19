@@ -3028,6 +3028,7 @@ public:
                              NamedDecl *Template,
                              SourceLocation TemplateLoc,
                              SourceLocation RAngleLoc,
+                             unsigned ArgumentPackIndex,
                            llvm::SmallVectorImpl<TemplateArgument> &Converted,
                              CheckTemplateArgumentKind CTAK = CTAK_Specified);
 

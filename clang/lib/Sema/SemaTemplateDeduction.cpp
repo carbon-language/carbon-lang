@@ -1705,6 +1705,7 @@ static bool ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
                                            DeducedTemplateArgument Arg,
                                            NamedDecl *Template, 
                                            QualType NTTPType, 
+                                           unsigned ArgumentPackIndex,
                                            TemplateDeductionInfo &Info,
                                            bool InFunctionTemplate,
                              llvm::SmallVectorImpl<TemplateArgument> &Output) {
@@ -1721,8 +1722,8 @@ static bool ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
       DeducedTemplateArgument InnerArg(*PA);
       InnerArg.setDeducedFromArrayBound(Arg.wasDeducedFromArrayBound());
       if (ConvertDeducedTemplateArgument(S, Param, InnerArg, Template, 
-                                         NTTPType, Info, 
-                                         InFunctionTemplate, Output))
+                                         NTTPType, PackedArgsBuilder.size(),
+                                         Info, InFunctionTemplate, Output))
         return true;
       
       // Move the converted template argument into our argument pack.
@@ -1748,6 +1749,7 @@ static bool ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
                                  Template,
                                  Template->getLocation(),
                                  Template->getSourceRange().getEnd(),
+                                 ArgumentPackIndex,
                                  Output,
                                  InFunctionTemplate
                                   ? (Arg.wasDeducedFromArrayBound()
@@ -1810,7 +1812,7 @@ FinishTemplateArgumentDeduction(Sema &S,
     }
 
     if (ConvertDeducedTemplateArgument(S, Param, Deduced[I],
-                                       Partial, NTTPType, Info, false,
+                                       Partial, NTTPType, 0, Info, false,
                                        Builder)) {
       Info.Param = makeTemplateParameter(Param);
       // FIXME: These template arguments are temporary. Free them!
@@ -2160,7 +2162,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
       }
 
       if (ConvertDeducedTemplateArgument(*this, Param, Deduced[I],
-                                         FunctionTemplate, NTTPType, Info,
+                                         FunctionTemplate, NTTPType, 0, Info,
                                          true, Builder)) {
         Info.Param = makeTemplateParameter(Param);
         // FIXME: These template arguments are temporary. Free them!
@@ -2212,7 +2214,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
                               FunctionTemplate,
                               FunctionTemplate->getLocation(),
                               FunctionTemplate->getSourceRange().getEnd(),
-                              Builder,
+                              0, Builder,
                               CTAK_Deduced)) {
       Info.Param = makeTemplateParameter(
                          const_cast<NamedDecl *>(TemplateParams->getParam(I)));

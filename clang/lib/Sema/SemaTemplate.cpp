@@ -2197,11 +2197,36 @@ Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
 
 /// \brief Check that the given template argument corresponds to the given
 /// template parameter.
+///
+/// \param Param The template parameter against which the argument will be 
+/// checked.
+///
+/// \param Arg The template argument.
+///
+/// \param Template The template in which the template argument resides.
+///
+/// \param TemplateLoc The location of the template name for the template
+/// whose argument list we're matching.
+///
+/// \param RAngleLoc The location of the right angle bracket ('>') that closes
+/// the template argument list.
+///
+/// \param ArgumentPackIndex The index into the argument pack where this
+/// argument will be placed. Only valid if the parameter is a parameter pack.
+///
+/// \param Converted The checked, converted argument will be added to the
+/// end of this small vector.
+///
+/// \param CTAK Describes how we arrived at this particular template argument:
+/// explicitly written, deduced, etc.
+///
+/// \returns true on error, false otherwise.
 bool Sema::CheckTemplateArgument(NamedDecl *Param,
                                  const TemplateArgumentLoc &Arg,
                                  NamedDecl *Template,
                                  SourceLocation TemplateLoc,
                                  SourceLocation RAngleLoc,
+                                 unsigned ArgumentPackIndex,
                             llvm::SmallVectorImpl<TemplateArgument> &Converted,
                                  CheckTemplateArgumentKind CTAK) {
   // Check template type parameters.
@@ -2214,6 +2239,9 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     // with the template arguments we've seen thus far.  But if the
     // template has a dependent context then we cannot substitute yet.
     QualType NTTPType = NTTP->getType();
+    if (NTTP->isParameterPack() && NTTP->isExpandedParameterPack())
+      NTTPType = NTTP->getExpansionType(ArgumentPackIndex);
+    
     if (NTTPType->isDependentType() &&
         !isa<TemplateTemplateParmDecl>(Template) &&
         !Template->getDeclContext()->isDependentContext()) {
@@ -2447,9 +2475,28 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       break;
 
     if (ArgIdx < NumArgs) {
+      // If we have an expanded parameter pack, make sure we don't have too
+      // many arguments.
+      if (NonTypeTemplateParmDecl *NTTP 
+                                = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
+        if (NTTP->isExpandedParameterPack() && 
+            ArgumentPack.size() >= NTTP->getNumExpansionTypes()) {
+          Diag(TemplateLoc, diag::err_template_arg_list_different_arity)
+            << true
+            << (isa<ClassTemplateDecl>(Template)? 0 :
+                isa<FunctionTemplateDecl>(Template)? 1 :
+                isa<TemplateTemplateParmDecl>(Template)? 2 : 3)
+            << Template;
+          Diag(Template->getLocation(), diag::note_template_decl_here)
+            << Params->getSourceRange();
+          return true;
+        }
+      }
+      
       // Check the template argument we were given.
       if (CheckTemplateArgument(*Param, TemplateArgs[ArgIdx], Template, 
-                                TemplateLoc, RAngleLoc, Converted))
+                                TemplateLoc, RAngleLoc, 
+                                ArgumentPack.size(), Converted))
         return true;
       
       if ((*Param)->isTemplateParameterPack()) {
@@ -2544,7 +2591,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     
     // Check the default template argument.
     if (CheckTemplateArgument(*Param, Arg, Template, TemplateLoc,
-                              RAngleLoc, Converted))
+                              RAngleLoc, 0, Converted))
       return true;
     
     // Move to the next template parameter and argument.

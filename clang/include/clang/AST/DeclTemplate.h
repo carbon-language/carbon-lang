@@ -996,13 +996,29 @@ class NonTypeTemplateParmDecl
   /// \brief Whether this non-type template parameter is a parameter pack.
   bool ParameterPack;
     
+  /// \brief Whether this non-type template parameter is an "expanded" 
+  /// parameter pack, meaning that its type is a pack expansion and we
+  /// already know the set of types that expansion expands to.
+  bool ExpandedParameterPack;
+    
+  /// \brief The number of types in an expanded parameter pack.
+  unsigned NumExpandedTypes;
+    
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
                           unsigned P, IdentifierInfo *Id, QualType T,
                           bool ParameterPack, TypeSourceInfo *TInfo)
     : VarDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo, SC_None, SC_None),
       TemplateParmPosition(D, P), DefaultArgumentAndInherited(0, false),
-      ParameterPack(ParameterPack)
+      ParameterPack(ParameterPack), ExpandedParameterPack(false),
+      NumExpandedTypes(0)
   { }
+
+  NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation L, unsigned D,
+                          unsigned P, IdentifierInfo *Id, QualType T,
+                          TypeSourceInfo *TInfo,
+                          const QualType *ExpandedTypes,
+                          unsigned NumExpandedTypes,
+                          TypeSourceInfo **ExpandedTInfos);
 
   friend class ASTDeclReader;
     
@@ -1011,6 +1027,12 @@ public:
   Create(const ASTContext &C, DeclContext *DC, SourceLocation L, unsigned D,
          unsigned P, IdentifierInfo *Id, QualType T, bool ParameterPack, 
          TypeSourceInfo *TInfo);
+
+  static NonTypeTemplateParmDecl *
+  Create(const ASTContext &C, DeclContext *DC, SourceLocation L, unsigned D,
+         unsigned P, IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
+         const QualType *ExpandedTypes, unsigned NumExpandedTypes,
+         TypeSourceInfo **ExpandedTInfos);
 
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::setDepth;
@@ -1063,6 +1085,54 @@ public:
   /// \endcode
   bool isParameterPack() const { return ParameterPack; }
     
+  /// \brief Whether this parameter is a non-type template parameter pack
+  /// that has different types at different positions.
+  ///
+  /// A parameter pack is an expanded parameter pack when the original
+  /// parameter pack's type was itself a pack expansion, and that expansion
+  /// has already been expanded. For example, given:
+  ///
+  /// \code
+  /// template<typename ...Types>
+  /// struct X {
+  ///   template<Types ...Values>
+  ///   struct Y { /* ... */ };
+  /// };
+  /// \endcode
+  /// 
+  /// The parameter pack \c Values has a \c PackExpansionType as its type,
+  /// which expands \c Types. When \c Types is supplied with template arguments
+  /// by instantiating \c X, the instantiation of \c Values becomes an 
+  /// expanded parameter pack. For example, instantiating 
+  /// \c X<int, unsigned int> results in \c Values being an expanded parameter
+  /// pack with expansion types \c int and \c unsigned int.
+  ///
+  /// The \c getExpansionType() and \c getExpansionTypeSourceInfo() functions 
+  /// return the expansion types.
+  bool isExpandedParameterPack() const { return ExpandedParameterPack; }
+    
+  /// \brief Retrieves the number of expansion types in an expanded parameter pack.
+  unsigned getNumExpansionTypes() const {
+    assert(ExpandedParameterPack && "Not an expansion parameter pack");
+    return NumExpandedTypes;
+  }
+
+  /// \brief Retrieve a particular expansion type within an expanded parameter 
+  /// pack.
+  QualType getExpansionType(unsigned I) const {
+    assert(I < NumExpandedTypes && "Out-of-range expansion type index");
+    void * const *TypesAndInfos = reinterpret_cast<void * const*>(this + 1);
+    return QualType::getFromOpaquePtr(TypesAndInfos[2*I]);
+  }
+
+  /// \brief Retrieve a particular expansion type source info within an 
+  /// expanded parameter pack.
+  TypeSourceInfo *getExpansionTypeSourceInfo(unsigned I) const {
+    assert(I < NumExpandedTypes && "Out-of-range expansion type index");
+    void * const *TypesAndInfos = reinterpret_cast<void * const*>(this + 1);
+    return static_cast<TypeSourceInfo *>(TypesAndInfos[2*I+1]);
+  }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const NonTypeTemplateParmDecl *D) { return true; }

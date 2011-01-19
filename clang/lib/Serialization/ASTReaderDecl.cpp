@@ -1155,13 +1155,21 @@ void ASTDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   // TemplateParmPosition.
   D->setDepth(Record[Idx++]);
   D->setPosition(Record[Idx++]);
-  // Rest of NonTypeTemplateParmDecl.
-  D->ParameterPack = Record[Idx++];
-  if (Record[Idx++]) {
-    Expr *DefArg = Reader.ReadExpr(F);
-    bool Inherited = Record[Idx++];
-    D->setDefaultArgument(DefArg, Inherited);
- }
+  if (D->isExpandedParameterPack()) {
+    void **Data = reinterpret_cast<void **>(D + 1);
+    for (unsigned I = 0, N = D->getNumExpansionTypes(); I != N; ++I) {
+      Data[2*I] = Reader.GetType(Record[Idx++]).getAsOpaquePtr();
+      Data[2*I + 1] = GetTypeSourceInfo(Record, Idx);
+    }
+  } else {
+    // Rest of NonTypeTemplateParmDecl.
+    D->ParameterPack = Record[Idx++];
+    if (Record[Idx++]) {
+      Expr *DefArg = Reader.ReadExpr(F);
+      bool Inherited = Record[Idx++];
+      D->setDefaultArgument(DefArg, Inherited);
+   }
+  }
 }
 
 void ASTDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
@@ -1432,6 +1440,11 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   case DECL_NON_TYPE_TEMPLATE_PARM:
     D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0,0,0,
                                         QualType(), false, 0);
+    break;
+  case DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK:
+    D = NonTypeTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0, 0,
+                                        0, QualType(), 0, 0, Record[Idx++],
+                                        0);
     break;
   case DECL_TEMPLATE_TEMPLATE_PARM:
     D = TemplateTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0, 0,

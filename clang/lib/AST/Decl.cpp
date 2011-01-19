@@ -133,11 +133,21 @@ getLVForTemplateParameterList(const TemplateParameterList *Params) {
   for (TemplateParameterList::const_iterator P = Params->begin(),
                                           PEnd = Params->end();
        P != PEnd; ++P) {
-    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P))
+    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
+      if (NTTP->isExpandedParameterPack()) {
+        for (unsigned I = 0, N = NTTP->getNumExpansionTypes(); I != N; ++I) {
+          QualType T = NTTP->getExpansionType(I);
+          if (!T->isDependentType())
+            LV = merge(LV, T->getLinkageAndVisibility());
+        }
+        continue;
+      }
+      
       if (!NTTP->getType()->isDependentType()) {
         LV = merge(LV, NTTP->getType()->getLinkageAndVisibility());
         continue;
       }
+    }
 
     if (TemplateTemplateParmDecl *TTP
                                    = dyn_cast<TemplateTemplateParmDecl>(*P)) {

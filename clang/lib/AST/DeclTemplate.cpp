@@ -50,24 +50,33 @@ TemplateParameterList::Create(const ASTContext &C, SourceLocation TemplateLoc,
 }
 
 unsigned TemplateParameterList::getMinRequiredArguments() const {
-  unsigned NumRequiredArgs = size();
-  iterator Param = const_cast<TemplateParameterList *>(this)->end(),
-      ParamBegin = const_cast<TemplateParameterList *>(this)->begin();
-  while (Param != ParamBegin) {
-    --Param;
-
-    if (!(*Param)->isTemplateParameterPack() &&
-        !(isa<TemplateTypeParmDecl>(*Param) &&
-          cast<TemplateTypeParmDecl>(*Param)->hasDefaultArgument()) &&
-        !(isa<NonTypeTemplateParmDecl>(*Param) &&
-          cast<NonTypeTemplateParmDecl>(*Param)->hasDefaultArgument()) &&
-        !(isa<TemplateTemplateParmDecl>(*Param) &&
-          cast<TemplateTemplateParmDecl>(*Param)->hasDefaultArgument()))
+  unsigned NumRequiredArgs = 0;
+  for (iterator P = const_cast<TemplateParameterList *>(this)->begin(), 
+             PEnd = const_cast<TemplateParameterList *>(this)->end(); 
+       P != PEnd; ++P) {
+    if ((*P)->isTemplateParameterPack()) {
+      if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P))
+        if (NTTP->isExpandedParameterPack()) {
+          NumRequiredArgs += NTTP->getNumExpansionTypes();
+          continue;
+        }
+      
       break;
-
-    --NumRequiredArgs;
+    }
+  
+    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*P)) {
+      if (TTP->hasDefaultArgument())
+        break;
+    } else if (NonTypeTemplateParmDecl *NTTP 
+                                    = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
+      if (NTTP->hasDefaultArgument())
+        break;
+    } else if (cast<TemplateTemplateParmDecl>(*P)->hasDefaultArgument())
+      break;
+    
+    ++NumRequiredArgs;
   }
-
+  
   return NumRequiredArgs;
 }
 
@@ -391,6 +400,28 @@ unsigned TemplateTypeParmDecl::getIndex() const {
 // NonTypeTemplateParmDecl Method Implementations
 //===----------------------------------------------------------------------===//
 
+NonTypeTemplateParmDecl::NonTypeTemplateParmDecl(DeclContext *DC, 
+                                                 SourceLocation L, unsigned D,
+                                                 unsigned P, IdentifierInfo *Id, 
+                                                 QualType T, 
+                                                 TypeSourceInfo *TInfo,
+                                                 const QualType *ExpandedTypes,
+                                                 unsigned NumExpandedTypes,
+                                                TypeSourceInfo **ExpandedTInfos)
+  : VarDecl(NonTypeTemplateParm, DC, L, Id, T, TInfo, SC_None, SC_None),
+    TemplateParmPosition(D, P), DefaultArgumentAndInherited(0, false),
+    ParameterPack(true), ExpandedParameterPack(true),
+    NumExpandedTypes(NumExpandedTypes)
+{
+  if (ExpandedTypes && ExpandedTInfos) {
+    void **TypesAndInfos = reinterpret_cast<void **>(this + 1);
+    for (unsigned I = 0; I != NumExpandedTypes; ++I) {
+      TypesAndInfos[2*I] = ExpandedTypes[I].getAsOpaquePtr();
+      TypesAndInfos[2*I + 1] = ExpandedTInfos[I];
+    }
+  }
+}
+
 NonTypeTemplateParmDecl *
 NonTypeTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC,
                                 SourceLocation L, unsigned D, unsigned P,
@@ -398,6 +429,22 @@ NonTypeTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC,
                                 bool ParameterPack, TypeSourceInfo *TInfo) {
   return new (C) NonTypeTemplateParmDecl(DC, L, D, P, Id, T, ParameterPack,
                                          TInfo);
+}
+
+NonTypeTemplateParmDecl *
+NonTypeTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC, 
+                                SourceLocation L, unsigned D, unsigned P, 
+                                IdentifierInfo *Id, QualType T, 
+                                TypeSourceInfo *TInfo,
+                                const QualType *ExpandedTypes, 
+                                unsigned NumExpandedTypes,
+                                TypeSourceInfo **ExpandedTInfos) {
+  unsigned Size = sizeof(NonTypeTemplateParmDecl) 
+                + NumExpandedTypes * 2 * sizeof(void*);
+  void *Mem = C.Allocate(Size);
+  return new (Mem) NonTypeTemplateParmDecl(DC, L, D, P, Id, T, TInfo, 
+                                           ExpandedTypes, NumExpandedTypes, 
+                                           ExpandedTInfos);
 }
 
 SourceLocation NonTypeTemplateParmDecl::getDefaultArgumentLoc() const {

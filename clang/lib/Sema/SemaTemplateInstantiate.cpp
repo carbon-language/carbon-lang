@@ -1016,9 +1016,19 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
 
     // Derive the type we want the substituted decl to have.  This had
     // better be non-dependent, or these checks will have serious problems.
-    QualType TargetType = SemaRef.SubstType(NTTP->getType(), TemplateArgs,
-                                            E->getLocation(), 
-                                            DeclarationName());
+    QualType TargetType;
+    if (NTTP->isExpandedParameterPack())
+      TargetType = NTTP->getExpansionType(
+                                      getSema().ArgumentPackSubstitutionIndex);
+    else if (NTTP->isParameterPack() && 
+             isa<PackExpansionType>(NTTP->getType())) {
+      TargetType = SemaRef.SubstType(
+                        cast<PackExpansionType>(NTTP->getType())->getPattern(),
+                                     TemplateArgs, E->getLocation(), 
+                                     NTTP->getDeclName());
+    } else
+      TargetType = SemaRef.SubstType(NTTP->getType(), TemplateArgs, 
+                                     E->getLocation(), NTTP->getDeclName());
     assert(!TargetType.isNull() && "type substitution failed for param type");
     assert(!TargetType->isDependentType() && "param type still dependent");
     return SemaRef.BuildExpressionFromDeclTemplateArgument(Arg,
@@ -1038,7 +1048,6 @@ TemplateInstantiator::TransformSubstNonTypeTemplateParmPackExpr(
     return getSema().Owned(E);
   }
   
-  // FIXME: Variadic templates select Nth from type?  
   const TemplateArgument &ArgPack = E->getArgumentPack();
   unsigned Index = (unsigned)getSema().ArgumentPackSubstitutionIndex;
   assert(Index < ArgPack.pack_size() && "Substitution index out-of-range");
@@ -1058,8 +1067,17 @@ TemplateInstantiator::TransformSubstNonTypeTemplateParmPackExpr(
     if (!VD)
       return ExprError();
 
-    return SemaRef.BuildExpressionFromDeclTemplateArgument(Arg,
-                                                           E->getType(),
+    QualType T;
+    NonTypeTemplateParmDecl *NTTP = E->getParameterPack();
+    if (NTTP->isExpandedParameterPack())
+      T = NTTP->getExpansionType(getSema().ArgumentPackSubstitutionIndex);
+    else if (const PackExpansionType *Expansion 
+                                = dyn_cast<PackExpansionType>(NTTP->getType()))
+      T = SemaRef.SubstType(Expansion->getPattern(), TemplateArgs, 
+                            E->getParameterPackLocation(), NTTP->getDeclName());
+    else
+      T = E->getType();
+    return SemaRef.BuildExpressionFromDeclTemplateArgument(Arg, T,
                                                  E->getParameterPackLocation());
   }
     
@@ -1778,6 +1796,11 @@ Sema::InstantiateClassTemplateSpecialization(
     }
   }
 
+  // If we're dealing with a member template where the template parameters
+  // have been instantiated, this provides the original template parameters
+  // from which the member template's parameters were instantiated.
+  llvm::SmallVector<const NamedDecl *, 4> InstantiatedTemplateParameters;
+  
   if (Matched.size() >= 1) {
     llvm::SmallVector<MatchResult, 4>::iterator Best = Matched.begin();
     if (Matched.size() == 1) {

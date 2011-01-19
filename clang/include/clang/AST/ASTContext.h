@@ -1411,7 +1411,8 @@ public:
   /// initialized to a given location, which defaults to the empty
   /// location.
   TypeSourceInfo *
-  getTrivialTypeSourceInfo(QualType T, SourceLocation Loc = SourceLocation());
+  getTrivialTypeSourceInfo(QualType T, 
+                           SourceLocation Loc = SourceLocation()) const;
 
   TypeSourceInfo *getNullTypeSourceInfo() { return &NullTypeSourceInfo; }
 

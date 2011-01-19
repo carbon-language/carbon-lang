@@ -1455,28 +1455,140 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
 Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
                                                  NonTypeTemplateParmDecl *D) {
   // Substitute into the type of the non-type template parameter.
+  TypeLoc TL = D->getTypeSourceInfo()->getTypeLoc();
+  llvm::SmallVector<TypeSourceInfo *, 4> ExpandedParameterPackTypesAsWritten;
+  llvm::SmallVector<QualType, 4> ExpandedParameterPackTypes;
+  bool IsExpandedParameterPack = false;
+  TypeSourceInfo *DI;  
   QualType T;
-  TypeSourceInfo *DI = SemaRef.SubstType(D->getTypeSourceInfo(), TemplateArgs, D->getLocation(),
-                           D->getDeclName());
-  if (!DI)
-    return 0;
-  
-  T = DI->getType();
-  
-  // Check that this type is acceptable for a non-type template parameter.
   bool Invalid = false;
-  T = SemaRef.CheckNonTypeTemplateParameterType(T, D->getLocation());
-  if (T.isNull()) {
-    T = SemaRef.Context.IntTy;
-    Invalid = true;
+
+  if (D->isExpandedParameterPack()) {
+    // The non-type template parameter pack is an already-expanded pack 
+    // expansion of types. Substitute into each of the expanded types.
+    ExpandedParameterPackTypes.reserve(D->getNumExpansionTypes());
+    ExpandedParameterPackTypesAsWritten.reserve(D->getNumExpansionTypes());
+    for (unsigned I = 0, N = D->getNumExpansionTypes(); I != N; ++I) {
+      TypeSourceInfo *NewDI =SemaRef.SubstType(D->getExpansionTypeSourceInfo(I),
+                                               TemplateArgs,
+                                               D->getLocation(), 
+                                               D->getDeclName());
+      if (!NewDI)
+        return 0;
+      
+      ExpandedParameterPackTypesAsWritten.push_back(NewDI);
+      QualType NewT =SemaRef.CheckNonTypeTemplateParameterType(NewDI->getType(),
+                                                              D->getLocation());
+      if (NewT.isNull())
+        return 0;
+      ExpandedParameterPackTypes.push_back(NewT);
+    }
+    
+    IsExpandedParameterPack = true;
+    DI = D->getTypeSourceInfo();
+    T = DI->getType();
+  } else if (isa<PackExpansionTypeLoc>(TL)) {
+    // The non-type template parameter pack's type is a pack expansion of types.
+    // Determine whether we need to expand this parameter pack into separate
+    // types.
+    PackExpansionTypeLoc Expansion = cast<PackExpansionTypeLoc>(TL);
+    TypeLoc Pattern = Expansion.getPatternLoc();
+    llvm::SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+    SemaRef.collectUnexpandedParameterPacks(Pattern, Unexpanded);
+    
+    // Determine whether the set of unexpanded parameter packs can and should
+    // be expanded.
+    bool Expand = true;
+    bool RetainExpansion = false;
+    llvm::Optional<unsigned> OrigNumExpansions
+      = Expansion.getTypePtr()->getNumExpansions();
+    llvm::Optional<unsigned> NumExpansions = OrigNumExpansions;
+    if (SemaRef.CheckParameterPacksForExpansion(Expansion.getEllipsisLoc(),
+                                                Pattern.getSourceRange(),
+                                                Unexpanded.data(),
+                                                Unexpanded.size(),
+                                                TemplateArgs,
+                                                Expand, RetainExpansion, 
+                                                NumExpansions))
+      return 0;
+    
+    if (Expand) {
+      for (unsigned I = 0; I != *NumExpansions; ++I) {
+        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(SemaRef, I);
+        TypeSourceInfo *NewDI = SemaRef.SubstType(Pattern, TemplateArgs,
+                                                  D->getLocation(), 
+                                                  D->getDeclName());
+        if (!NewDI)
+          return 0;
+        
+        ExpandedParameterPackTypesAsWritten.push_back(NewDI);
+        QualType NewT = SemaRef.CheckNonTypeTemplateParameterType(
+                                                              NewDI->getType(),
+                                                              D->getLocation());
+        if (NewT.isNull())
+          return 0;
+        ExpandedParameterPackTypes.push_back(NewT);
+      }
+      
+      // Note that we have an expanded parameter pack. The "type" of this
+      // expanded parameter pack is the original expansion type, but callers
+      // will end up using the expanded parameter pack types for type-checking.
+      IsExpandedParameterPack = true;
+      DI = D->getTypeSourceInfo();
+      T = DI->getType();
+    } else {
+      // We cannot fully expand the pack expansion now, so substitute into the
+      // pattern and create a new pack expansion type.
+      Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(SemaRef, -1);
+      TypeSourceInfo *NewPattern = SemaRef.SubstType(Pattern, TemplateArgs,
+                                                     D->getLocation(), 
+                                                     D->getDeclName());
+      if (!NewPattern)
+        return 0;
+      
+      DI = SemaRef.CheckPackExpansion(NewPattern, Expansion.getEllipsisLoc(),
+                                      NumExpansions);
+      if (!DI)
+        return 0;
+      
+      T = DI->getType();
+    }
+  } else {
+    // Simple case: substitution into a parameter that is not a parameter pack.
+    DI = SemaRef.SubstType(D->getTypeSourceInfo(), TemplateArgs, 
+                           D->getLocation(), D->getDeclName());
+    if (!DI)
+      return 0;
+    
+    // Check that this type is acceptable for a non-type template parameter.
+    bool Invalid = false;
+    T = SemaRef.CheckNonTypeTemplateParameterType(DI->getType(), 
+                                                  D->getLocation());
+    if (T.isNull()) {
+      T = SemaRef.Context.IntTy;
+      Invalid = true;
+    }
   }
   
-  // FIXME: Variadic templates.
-  NonTypeTemplateParmDecl *Param
-    = NonTypeTemplateParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+  NonTypeTemplateParmDecl *Param;
+  if (IsExpandedParameterPack)
+    Param = NonTypeTemplateParmDecl::Create(SemaRef.Context, Owner, 
+                                            D->getLocation(), 
                                     D->getDepth() - TemplateArgs.getNumLevels(), 
-                                      D->getPosition(), D->getIdentifier(), T, 
-                                      D->isParameterPack(), DI);
+                                            D->getPosition(), 
+                                            D->getIdentifier(), T,
+                                            DI,
+                                            ExpandedParameterPackTypes.data(),
+                                            ExpandedParameterPackTypes.size(),
+                                    ExpandedParameterPackTypesAsWritten.data());
+  else
+    Param = NonTypeTemplateParmDecl::Create(SemaRef.Context, Owner, 
+                                            D->getLocation(),
+                                    D->getDepth() - TemplateArgs.getNumLevels(), 
+                                            D->getPosition(), 
+                                            D->getIdentifier(), T, 
+                                            D->isParameterPack(), DI);
+  
   if (Invalid)
     Param->setInvalidDecl();
   

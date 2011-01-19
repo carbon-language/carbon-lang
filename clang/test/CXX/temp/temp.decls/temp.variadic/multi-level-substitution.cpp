@@ -1,6 +1,20 @@
 // RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
 
 template<typename T, T ...Values> struct value_tuple {};
+template<typename...> struct tuple { };
+template<typename T, typename U> struct pair { };
+
+template<typename T, T Value> struct value_c;
+
+template<typename T, typename U>
+struct is_same {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_same<T, T> {
+  static const bool value = true;
+};
 
 template<typename T>
 struct X0 {
@@ -13,8 +27,6 @@ void test_X0() {
 }
 
 namespace PacksAtDifferentLevels {
-  template<typename...> struct tuple { };
-  template<typename T, typename U> struct pair { };
 
   template<typename ...Types>
   struct X {
@@ -175,4 +187,32 @@ namespace PacksAtDifferentLevels {
                               add_pointer<float>,
                               add_const<double>>>::value == 0? 1 : -1];
 
+}
+
+namespace ExpandingNonTypeTemplateParameters {
+  template<typename ...Types>
+  struct tuple_of_values {
+    template<Types ...Values> // expected-error{{a non-type template parameter cannot have type 'float'}} \
+    // expected-note{{template parameter is declared here}}
+    struct apply { // expected-note 2{{template is declared here}}
+      typedef tuple<value_c<Types, Values>...> type;
+    };
+  };
+
+  int i;
+  float f;
+  int check_tuple_of_values_1[
+        is_same<tuple_of_values<int&, float&, char, int>::apply<i, f, 'a', 17>
+                  ::type,
+                tuple<value_c<int&, i>, value_c<float&, f>, value_c<char, 'a'>,
+                      value_c<int, 17>>
+                >::value? 1 : -1];
+
+  tuple_of_values<int, float> tv1; // expected-note{{in instantiation of template class 'ExpandingNonTypeTemplateParameters::tuple_of_values<int, float>' requested here}}
+
+  tuple_of_values<int&, float&>::apply<i, i>::type tv2; // expected-error{{non-type template parameter of reference type 'float &' cannot bind to template argument of type 'int'}}
+
+  tuple_of_values<int&, float&>::apply<i>::type tv3; // expected-error{{too few template arguments for class template 'apply'}}
+
+  tuple_of_values<int&, float&>::apply<i, f, i>::type tv4; // expected-error{{too many template arguments for class template 'apply'}}
 }

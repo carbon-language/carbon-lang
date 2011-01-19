@@ -69,6 +69,13 @@ ASTContext::CanonicalTemplateTemplateParm::Profile(llvm::FoldingSetNodeID &ID,
       ID.AddInteger(1);
       ID.AddBoolean(NTTP->isParameterPack());
       ID.AddPointer(NTTP->getType().getAsOpaquePtr());
+      if (NTTP->isExpandedParameterPack()) {
+        ID.AddBoolean(true);
+        ID.AddInteger(NTTP->getNumExpansionTypes());
+        for (unsigned I = 0, N = NTTP->getNumExpansionTypes(); I != N; ++I)
+          ID.AddPointer(NTTP->getExpansionType(I).getAsOpaquePtr());
+      } else 
+        ID.AddBoolean(false);
       continue;
     }
     
@@ -104,15 +111,40 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
                                                TTP->getIndex(), 0, false,
                                                TTP->isParameterPack()));
     else if (NonTypeTemplateParmDecl *NTTP
-             = dyn_cast<NonTypeTemplateParmDecl>(*P))
-      CanonParams.push_back(
-            NonTypeTemplateParmDecl::Create(*this, getTranslationUnitDecl(),
-                                            SourceLocation(), NTTP->getDepth(),
-                                            NTTP->getPosition(), 0, 
-                                            getCanonicalType(NTTP->getType()),
-                                            NTTP->isParameterPack(),
-                                            0));
-    else
+             = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
+      QualType T = getCanonicalType(NTTP->getType());
+      TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(T);
+      NonTypeTemplateParmDecl *Param;
+      if (NTTP->isExpandedParameterPack()) {
+        llvm::SmallVector<QualType, 2> ExpandedTypes;
+        llvm::SmallVector<TypeSourceInfo *, 2> ExpandedTInfos;
+        for (unsigned I = 0, N = NTTP->getNumExpansionTypes(); I != N; ++I) {
+          ExpandedTypes.push_back(getCanonicalType(NTTP->getExpansionType(I)));
+          ExpandedTInfos.push_back(
+                                getTrivialTypeSourceInfo(ExpandedTypes.back()));
+        }
+        
+        Param = NonTypeTemplateParmDecl::Create(*this, getTranslationUnitDecl(),
+                                                SourceLocation(), 
+                                                NTTP->getDepth(),
+                                                NTTP->getPosition(), 0, 
+                                                T,
+                                                TInfo,
+                                                ExpandedTypes.data(),
+                                                ExpandedTypes.size(),
+                                                ExpandedTInfos.data());
+      } else {
+        Param = NonTypeTemplateParmDecl::Create(*this, getTranslationUnitDecl(),
+                                                SourceLocation(), 
+                                                NTTP->getDepth(),
+                                                NTTP->getPosition(), 0, 
+                                                T,
+                                                NTTP->isParameterPack(),
+                                                TInfo);
+      }
+      CanonParams.push_back(Param);
+
+    } else
       CanonParams.push_back(getCanonicalTemplateTemplateParmDecl(
                                            cast<TemplateTemplateParmDecl>(*P)));
   }
@@ -1071,7 +1103,7 @@ TypeSourceInfo *ASTContext::CreateTypeSourceInfo(QualType T,
 }
 
 TypeSourceInfo *ASTContext::getTrivialTypeSourceInfo(QualType T,
-                                                     SourceLocation L) {
+                                                     SourceLocation L) const {
   TypeSourceInfo *DI = CreateTypeSourceInfo(T);
   DI->getTypeLoc().initialize(L);
   return DI;
