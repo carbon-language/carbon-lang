@@ -626,8 +626,7 @@ void DwarfDebug::addComplexAddress(DbgVariable *&DV, DIE *Die,
     if (Reg < 32) {
       addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_reg0 + Reg);
     } else {
-      Reg = Reg - dwarf::DW_OP_reg0;
-      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_breg0 + Reg);
+      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_regx);
       addUInt(Block, 0, dwarf::DW_FORM_udata, Reg);
     }
   } else {
@@ -766,8 +765,7 @@ void DwarfDebug::addBlockByrefAddress(DbgVariable *&DV, DIE *Die,
     if (Reg < 32)
       addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_reg0 + Reg);
     else {
-      Reg = Reg - dwarf::DW_OP_reg0;
-      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_breg0 + Reg);
+      addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_regx);
       addUInt(Block, 0, dwarf::DW_FORM_udata, Reg);
     }
   } else {
