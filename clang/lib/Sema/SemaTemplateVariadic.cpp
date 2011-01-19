@@ -64,9 +64,18 @@ namespace {
       return true;
     }
 
-    /// \brief Record occurrences of (FIXME: function and) non-type template
+    /// \brief Record occurrences of function and non-type template
     /// parameter packs in an expression.
     bool VisitDeclRefExpr(DeclRefExpr *E) {
+      if (E->getDecl()->isParameterPack())
+        Unexpanded.push_back(std::make_pair(E->getDecl(), E->getLocation()));
+      
+      return true;
+    }
+    
+    // \brief Record occurrences of function and non-type template parameter
+    // packs in a block-captured expression.
+    bool VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
       if (E->getDecl()->isParameterPack())
         Unexpanded.push_back(std::make_pair(E->getDecl(), E->getLocation()));
       

@@ -3572,15 +3572,9 @@ class BlockDeclRefExpr : public Expr {
   bool ConstQualAdded : 1;
   Stmt *CopyConstructorVal;
 public:
-  // FIXME: Fix type/value dependence!
-  // FIXME: Variadic templates.
   BlockDeclRefExpr(ValueDecl *d, QualType t, ExprValueKind VK,
                    SourceLocation l, bool ByRef, bool constAdded = false,
-                   Stmt *copyConstructorVal = 0)
-    : Expr(BlockDeclRefExprClass, t, VK, OK_Ordinary,
-           (!t.isNull() && t->isDependentType()), false, false),
-    D(d), Loc(l), IsByRef(ByRef),
-    ConstQualAdded(constAdded),  CopyConstructorVal(copyConstructorVal) {}
+                   Stmt *copyConstructorVal = 0);
 
   // \brief Build an empty reference to a declared variable in a
   // block.

@@ -7122,16 +7122,13 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   llvm::SmallVector<QualType, 4> ParamTypes;
   
   // Parameter substitution.
-  // FIXME: Variadic templates
-  const BlockDecl *BD = E->getBlockDecl();
-  for (BlockDecl::param_const_iterator P = BD->param_begin(),
-       EN = BD->param_end(); P != EN; ++P) {
-    ParmVarDecl *OldParm = (*P);
-    ParmVarDecl *NewParm = getDerived().TransformFunctionTypeParam(OldParm,
-                                                   llvm::Optional<unsigned>());
-    Params.push_back(NewParm);
-    ParamTypes.push_back(NewParm->getType());
-  }
+  BlockDecl *BD = E->getBlockDecl();
+  if (getDerived().TransformFunctionTypeParams(E->getLocStart(), 
+                                               BD->param_begin(),
+                                               BD->param_size(), 0, ParamTypes,
+                                               &Params))
+    return true;
+  
   
   const FunctionType *BExprFunctionType = E->getFunctionType();
   QualType BExprResultType = BExprFunctionType->getResultType();
@@ -7140,6 +7137,19 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
       CurBlock->ReturnType = BExprResultType;
     else if (BExprResultType != SemaRef.Context.DependentTy)
       CurBlock->ReturnType = getDerived().TransformType(BExprResultType);
+  }
+  
+  // If the return type has not been determined yet, leave it as a dependent
+  // type; it'll get set when we process the body.
+  if (CurBlock->ReturnType.isNull())
+    CurBlock->ReturnType = getSema().Context.DependentTy;
+
+  // Don't allow returning a objc interface by value.
+  if (CurBlock->ReturnType->isObjCObjectType()) {
+    getSema().Diag(E->getLocStart(), 
+                   diag::err_object_cannot_be_passed_returned_by_value) 
+      << 0 << CurBlock->ReturnType;
+    return ExprError();
   }
 
   QualType FunctionType = getDerived().RebuildFunctionProtoType(
@@ -7154,7 +7164,13 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   // Set the parameters on the block decl.
   if (!Params.empty())
     CurBlock->TheDecl->setParams(Params.data(), Params.size());
-    
+  
+  // If the return type wasn't explicitly set, it will have been marked as a 
+  // dependent type (DependentTy); clear out the return type setting so 
+  // we will deduce the return type when type-checking the block's body.
+  if (CurBlock->ReturnType == getSema().Context.DependentTy)
+    CurBlock->ReturnType = QualType();
+  
   // Transform the body
   StmtResult Body = getDerived().TransformStmt(E->getBody());
   if (Body.isInvalid())

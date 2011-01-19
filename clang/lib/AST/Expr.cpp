@@ -2932,6 +2932,18 @@ Stmt::child_iterator ObjCMessageExpr::child_end() {
 }
 
 // Blocks
+BlockDeclRefExpr::BlockDeclRefExpr(ValueDecl *d, QualType t, ExprValueKind VK,
+                                   SourceLocation l, bool ByRef, 
+                                   bool constAdded, Stmt *copyConstructorVal)
+  : Expr(BlockDeclRefExprClass, t, VK, OK_Ordinary,
+         (!t.isNull() && t->isDependentType()), false,
+         d->isParameterPack()),
+    D(d), Loc(l), IsByRef(ByRef),
+    ConstQualAdded(constAdded),  CopyConstructorVal(copyConstructorVal) 
+{
+  // FIXME: Compute type/value dependence.
+}
+
 Stmt::child_iterator BlockExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator BlockExpr::child_end() { return child_iterator(); }
 
