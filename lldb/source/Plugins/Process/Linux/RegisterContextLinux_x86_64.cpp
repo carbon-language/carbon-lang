@@ -690,7 +690,28 @@ RegisterContextLinux_x86_64::ConvertRegisterKindToRegisterNumber(uint32_t kind,
 bool
 RegisterContextLinux_x86_64::HardwareSingleStep(bool enable)
 {
-    return GetMonitor().SingleStep(GetThreadID());
+    enum { TRACE_BIT = 0x100 };
+    uint64_t rflags;
+
+    if ((rflags = ReadRegisterAsUnsigned(gpr_rflags, -1UL)) == -1UL)
+        return false;
+    
+    if (enable)
+    {
+        if (rflags & TRACE_BIT)
+            return true;
+
+        rflags |= TRACE_BIT;
+    }
+    else
+    {
+        if (!(rflags & TRACE_BIT))
+            return false;
+
+        rflags &= ~TRACE_BIT;
+    }
+
+    return WriteRegisterFromUnsigned(gpr_rflags, rflags);
 }
 
 bool
