@@ -223,20 +223,28 @@ ProcessLinux::DoDestroy()
             return error;
         }
 
-        // Wait for the event to arrive.  This guaranteed to be an exit event.
+        // Wait for the event to arrive.  This is guaranteed to be an exit event.
         StateType state;
         EventSP event;
         do {
-            state = WaitForStateChangedEventsPrivate(NULL, event);
-        } while (state != eStateExited);
+            TimeValue timeout_time;
+            timeout_time = TimeValue::Now();
+            timeout_time.OffsetWithSeconds(2);
+            state = WaitForStateChangedEventsPrivate(&timeout_time, event);
+        } while (state != eStateExited && state != eStateInvalid);
+
+        // Check if we timed out waiting for the exit event to arrive.
+        if (state == eStateInvalid)
+            error.SetErrorString("ProcessLinux::DoDestroy timed out.");
 
         // Restart standard event handling and send the process the final kill,
         // driving it out of limbo.
         ResumePrivateStateThread();
     }
 
-    if (kill(m_monitor->GetPID(), SIGKILL))
+    if (kill(m_monitor->GetPID(), SIGKILL) && error.Success())
         error.SetErrorToErrno();
+
     return error;
 }
 
