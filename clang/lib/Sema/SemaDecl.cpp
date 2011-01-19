@@ -3056,26 +3056,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (isExplicitSpecialization && !NewVD->isInvalidDecl() &&
         CheckMemberSpecialization(NewVD, Previous))
       NewVD->setInvalidDecl();
-    // For variables declared as __block which require copy construction,
-    // must capture copy initialization expression here.
-    if (!NewVD->isInvalidDecl() && NewVD->hasAttr<BlocksAttr>()) {
-      QualType T = NewVD->getType();
-      if (!T->isDependentType() && !T->isReferenceType() &&
-          T->getAs<RecordType>() && !T->isUnionType()) {
-        Expr *E = new (Context) DeclRefExpr(NewVD, T,
-                                            VK_LValue, SourceLocation());
-        ExprResult Res = PerformCopyInitialization(
-                InitializedEntity::InitializeBlock(NewVD->getLocation(), 
-                                                   T, false),
-                SourceLocation(),
-                Owned(E));
-        if (!Res.isInvalid()) {
-          Res = MaybeCreateExprWithCleanups(Res);
-          Expr *Init = Res.takeAs<Expr>();
-          Context.setBlockVarCopyInits(NewVD, Init);
-        }
-      }
-    }
   }
   
   // attributes declared post-definition are currently ignored
@@ -4712,24 +4692,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init, bool DirectInit) {
   // Attach the initializer to the decl.
   VDecl->setInit(Init);
 
-  if (getLangOptions().CPlusPlus) {
-    if (!VDecl->isInvalidDecl() &&
-        !VDecl->getDeclContext()->isDependentContext() &&
-        VDecl->hasGlobalStorage() && !VDecl->isStaticLocal() &&
-        !Init->isConstantInitializer(Context,
-                                     VDecl->getType()->isReferenceType()))
-      Diag(VDecl->getLocation(), diag::warn_global_constructor)
-        << Init->getSourceRange();
-
-    // Make sure we mark the destructor as used if necessary.
-    QualType InitType = VDecl->getType();
-    while (const ArrayType *Array = Context.getAsArrayType(InitType))
-      InitType = Context.getBaseElementType(Array);
-    if (const RecordType *Record = InitType->getAs<RecordType>())
-      FinalizeVarWithDestructor(VDecl, Record);
-  }
-
-  return;
+  CheckCompleteVariableDeclaration(VDecl);
 }
 
 /// ActOnInitializerError - Given that there was an error parsing an
@@ -4923,20 +4886,60 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
                                         MultiExprArg(*this, 0, 0));
       if (Init.isInvalid())
         Var->setInvalidDecl();
-      else if (Init.get()) {
+      else if (Init.get())
         Var->setInit(MaybeCreateExprWithCleanups(Init.get()));
-
-        if (getLangOptions().CPlusPlus && !Var->isInvalidDecl() && 
-            Var->hasGlobalStorage() && !Var->isStaticLocal() &&
-            !Var->getDeclContext()->isDependentContext() &&
-            !Var->getInit()->isConstantInitializer(Context, false))
-          Diag(Var->getLocation(), diag::warn_global_constructor);
-      }
     }
 
-    if (!Var->isInvalidDecl() && getLangOptions().CPlusPlus && Record)
-      FinalizeVarWithDestructor(Var, Record);
+    CheckCompleteVariableDeclaration(Var);
   }
+}
+
+void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
+  if (var->isInvalidDecl()) return;
+
+  // All the following checks are C++ only.
+  if (!getLangOptions().CPlusPlus) return;
+
+  QualType baseType = Context.getBaseElementType(var->getType());
+  if (baseType->isDependentType()) return;
+
+  // __block variables might require us to capture a copy-initializer.
+  if (var->hasAttr<BlocksAttr>()) {
+    // It's currently invalid to ever have a __block variable with an
+    // array type; should we diagnose that here?
+
+    // Regardless, we don't want to ignore array nesting when
+    // constructing this copy.
+    QualType type = var->getType();
+
+    if (type->isStructureOrClassType()) {
+      SourceLocation poi = var->getLocation();
+      Expr *varRef = new (Context) DeclRefExpr(var, type, VK_LValue, poi);
+      ExprResult result =
+        PerformCopyInitialization(
+                        InitializedEntity::InitializeBlock(poi, type, false),
+                                  poi, Owned(varRef));
+      if (!result.isInvalid()) {
+        result = MaybeCreateExprWithCleanups(result);
+        Expr *init = result.takeAs<Expr>();
+        Context.setBlockVarCopyInits(var, init);
+      }
+    }
+  }
+
+  // Check for global constructors.
+  if (!var->getDeclContext()->isDependentContext() &&
+      var->hasGlobalStorage() &&
+      !var->isStaticLocal() &&
+      var->getInit() &&
+      !var->getInit()->isConstantInitializer(Context,
+                                             baseType->isReferenceType()))
+    Diag(var->getLocation(), diag::warn_global_constructor)
+      << var->getInit()->getSourceRange();
+
+  // Require the destructor.
+  if (const RecordType *recordType = baseType->getAs<RecordType>())
+    FinalizeVarWithDestructor(var, recordType);
 }
 
 Sema::DeclGroupPtrTy

@@ -5641,16 +5641,7 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
   VDecl->setInit(Result.takeAs<Expr>());
   VDecl->setCXXDirectInitializer(true);
 
-    if (!VDecl->isInvalidDecl() &&
-        !VDecl->getDeclContext()->isDependentContext() &&
-        VDecl->hasGlobalStorage() && !VDecl->isStaticLocal() &&
-        !VDecl->getInit()->isConstantInitializer(Context,
-                                        VDecl->getType()->isReferenceType()))
-      Diag(VDecl->getLocation(), diag::warn_global_constructor)
-        << VDecl->getInit()->getSourceRange();
-
-  if (const RecordType *Record = VDecl->getType()->getAs<RecordType>())
-    FinalizeVarWithDestructor(VDecl, Record);
+  CheckCompleteVariableDeclaration(VDecl);
 }
 
 /// \brief Given a constructor and the set of arguments provided for the

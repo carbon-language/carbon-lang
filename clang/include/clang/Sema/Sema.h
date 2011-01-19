@@ -716,6 +716,7 @@ public:
                                      bool &Redeclaration);
   void CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous,
                                 bool &Redeclaration);
+  void CheckCompleteVariableDeclaration(VarDecl *var);
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, TypeSourceInfo *TInfo,
                                      LookupResult &Previous,
