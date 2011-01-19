@@ -287,6 +287,28 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
          isInt32Immediate(N->getOperand(1).getNode(), Imm);
 }
 
+/// \brief Check whether a particular node is a constant value representable as
+/// (N * Scale) where (N in [\arg RangeMin, \arg RangeMax).
+///
+/// \param ScaledConstant [out] - On success, the pre-scaled constant value.
+static bool isScaledConstantInRange(SDValue Node, unsigned Scale,
+                                    int RangeMin, int RangeMax,
+                                    int &ScaledConstant) {
+  assert(Scale && "Invalid scale!");
+
+  // Check that this is a constant.
+  const ConstantSDNode *C = dyn_cast<ConstantSDNode>(Node);
+  if (!C)
+    return false;
+
+  ScaledConstant = (int) C->getZExtValue();
+  if ((ScaledConstant % Scale) != 0)
+    return false;
+
+  ScaledConstant /= Scale;
+  return ScaledConstant >= RangeMin && ScaledConstant < RangeMax;
+}
+
 /// hasNoVMLxHazardUse - Return true if it's desirable to select a FP MLA / MLS
 /// node. VFP / NEON fp VMLA / VMLS instructions have special RAW hazards (at
 /// least on current ARM implementations) which should be avoidded.
@@ -473,12 +495,10 @@ bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
 
   // Leave simple R +/- imm12 operands for LDRi12
   if (N.getOpcode() == ISD::ADD) {
-    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      int RHSC = (int)RHS->getZExtValue();
-      if ((RHSC >= 0 && RHSC < 0x1000) ||
-          (RHSC < 0 && RHSC > -0x1000)) // 12 bits.
-        return false;
-    }
+    int RHSC;
+    if (isScaledConstantInRange(N.getOperand(1), /*Scale=*/1,
+                                -0x1000+1, 0x1000, RHSC)) // 12 bits.
+      return false;
   }
 
   if (Subtarget->isCortexA9() && !N.hasOneUse())
@@ -592,27 +612,25 @@ AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
 
   // Match simple R +/- imm12 operands.
   if (N.getOpcode() == ISD::ADD) {
-    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      int RHSC = (int)RHS->getZExtValue();
-      if ((RHSC >= 0 && RHSC < 0x1000) ||
-          (RHSC < 0 && RHSC > -0x1000)) { // 12 bits.
-        Base = N.getOperand(0);
-        if (Base.getOpcode() == ISD::FrameIndex) {
-          int FI = cast<FrameIndexSDNode>(Base)->getIndex();
-          Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-        }
-        Offset = CurDAG->getRegister(0, MVT::i32);
-
-        ARM_AM::AddrOpc AddSub = ARM_AM::add;
-        if (RHSC < 0) {
-          AddSub = ARM_AM::sub;
-          RHSC = - RHSC;
-        }
-        Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, RHSC,
-                                                          ARM_AM::no_shift),
-                                        MVT::i32);
-        return AM2_BASE;
+    int RHSC;
+    if (isScaledConstantInRange(N.getOperand(1), /*Scale=*/1,
+                                -0x1000+1, 0x1000, RHSC)) { // 12 bits.
+      Base = N.getOperand(0);
+      if (Base.getOpcode() == ISD::FrameIndex) {
+        int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+        Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
       }
+      Offset = CurDAG->getRegister(0, MVT::i32);
+
+      ARM_AM::AddrOpc AddSub = ARM_AM::add;
+      if (RHSC < 0) {
+        AddSub = ARM_AM::sub;
+        RHSC = - RHSC;
+      }
+      Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, RHSC,
+                                                        ARM_AM::no_shift),
+                                      MVT::i32);
+      return AM2_BASE;
     }
   }
 
@@ -689,15 +707,13 @@ bool ARMDAGToDAGISel::SelectAddrMode2Offset(SDNode *Op, SDValue N,
     : cast<StoreSDNode>(Op)->getAddressingMode();
   ARM_AM::AddrOpc AddSub = (AM == ISD::PRE_INC || AM == ISD::POST_INC)
     ? ARM_AM::add : ARM_AM::sub;
-  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N)) {
-    int Val = (int)C->getZExtValue();
-    if (Val >= 0 && Val < 0x1000) { // 12 bits.
-      Offset = CurDAG->getRegister(0, MVT::i32);
-      Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, Val,
-                                                        ARM_AM::no_shift),
-                                      MVT::i32);
-      return true;
-    }
+  int Val;
+  if (isScaledConstantInRange(N, /*Scale=*/1, 0, 0x1000, Val)) { // 12 bits.
+    Offset = CurDAG->getRegister(0, MVT::i32);
+    Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, Val,
+                                                      ARM_AM::no_shift),
+                                    MVT::i32);
+    return true;
   }
 
   Offset = N;
@@ -748,25 +764,23 @@ bool ARMDAGToDAGISel::SelectAddrMode3(SDValue N,
   }
 
   // If the RHS is +/- imm8, fold into addr mode.
-  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    int RHSC = (int)RHS->getZExtValue();
-    if ((RHSC >= 0 && RHSC < 256) ||
-        (RHSC < 0 && RHSC > -256)) { // note -256 itself isn't allowed.
-      Base = N.getOperand(0);
-      if (Base.getOpcode() == ISD::FrameIndex) {
-        int FI = cast<FrameIndexSDNode>(Base)->getIndex();
-        Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-      }
-      Offset = CurDAG->getRegister(0, MVT::i32);
-
-      ARM_AM::AddrOpc AddSub = ARM_AM::add;
-      if (RHSC < 0) {
-        AddSub = ARM_AM::sub;
-        RHSC = - RHSC;
-      }
-      Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(AddSub, RHSC),MVT::i32);
-      return true;
+  int RHSC;
+  if (isScaledConstantInRange(N.getOperand(1), /*Scale=*/1,
+                              -256 + 1, 256, RHSC)) { // 8 bits.
+    Base = N.getOperand(0);
+    if (Base.getOpcode() == ISD::FrameIndex) {
+      int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+      Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
     }
+    Offset = CurDAG->getRegister(0, MVT::i32);
+
+    ARM_AM::AddrOpc AddSub = ARM_AM::add;
+    if (RHSC < 0) {
+      AddSub = ARM_AM::sub;
+      RHSC = - RHSC;
+    }
+    Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(AddSub, RHSC),MVT::i32);
+    return true;
   }
 
   Base = N.getOperand(0);
@@ -783,13 +797,11 @@ bool ARMDAGToDAGISel::SelectAddrMode3Offset(SDNode *Op, SDValue N,
     : cast<StoreSDNode>(Op)->getAddressingMode();
   ARM_AM::AddrOpc AddSub = (AM == ISD::PRE_INC || AM == ISD::POST_INC)
     ? ARM_AM::add : ARM_AM::sub;
-  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N)) {
-    int Val = (int)C->getZExtValue();
-    if (Val >= 0 && Val < 256) {
-      Offset = CurDAG->getRegister(0, MVT::i32);
-      Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(AddSub, Val), MVT::i32);
-      return true;
-    }
+  int Val;
+  if (isScaledConstantInRange(N, /*Scale=*/1, 0, 256, Val)) { // 12 bits.
+    Offset = CurDAG->getRegister(0, MVT::i32);
+    Opc = CurDAG->getTargetConstant(ARM_AM::getAM3Opc(AddSub, Val), MVT::i32);
+    return true;
   }
 
   Offset = N;
@@ -815,28 +827,23 @@ bool ARMDAGToDAGISel::SelectAddrMode5(SDValue N,
   }
 
   // If the RHS is +/- imm8, fold into addr mode.
-  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    int RHSC = (int)RHS->getZExtValue();
-    if ((RHSC & 3) == 0) {  // The constant is implicitly multiplied by 4.
-      RHSC >>= 2;
-      if ((RHSC >= 0 && RHSC < 256) ||
-          (RHSC < 0 && RHSC > -256)) { // note -256 itself isn't allowed.
-        Base = N.getOperand(0);
-        if (Base.getOpcode() == ISD::FrameIndex) {
-          int FI = cast<FrameIndexSDNode>(Base)->getIndex();
-          Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-        }
-
-        ARM_AM::AddrOpc AddSub = ARM_AM::add;
-        if (RHSC < 0) {
-          AddSub = ARM_AM::sub;
-          RHSC = - RHSC;
-        }
-        Offset = CurDAG->getTargetConstant(ARM_AM::getAM5Opc(AddSub, RHSC),
-                                           MVT::i32);
-        return true;
-      }
+  int RHSC;
+  if (isScaledConstantInRange(N.getOperand(1), /*Scale=*/4,
+                              -256 + 1, 256, RHSC)) {
+    Base = N.getOperand(0);
+    if (Base.getOpcode() == ISD::FrameIndex) {
+      int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+      Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
     }
+
+    ARM_AM::AddrOpc AddSub = ARM_AM::add;
+    if (RHSC < 0) {
+      AddSub = ARM_AM::sub;
+      RHSC = - RHSC;
+    }
+    Offset = CurDAG->getTargetConstant(ARM_AM::getAM5Opc(AddSub, RHSC),
+                                       MVT::i32);
+    return true;
   }
 
   Base = N;
@@ -886,7 +893,6 @@ bool ARMDAGToDAGISel::SelectAddrModePC(SDValue N,
 //                         Thumb Addressing Modes
 //===----------------------------------------------------------------------===//
 
-
 bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDValue N,
                                             SDValue &Base, SDValue &Offset){
   // FIXME dl should come from the parent load or store, not the address
@@ -927,16 +933,12 @@ ARMDAGToDAGISel::SelectThumbAddrModeRI(SDValue N, SDValue &Base,
       (RHSR && RHSR->getReg() == ARM::SP))
     return false;
 
-  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    int RHSC = (int)RHS->getZExtValue();
-
-    if ((RHSC & (Scale - 1)) == 0) { // The constant is implicitly multiplied.
-      RHSC /= Scale;
-
-      if (RHSC >= 0 && RHSC < 32)
-        return false;
-    }
-  }
+  // FIXME: Why do we explicitly check for a match here and then return false?
+  // Presumably to allow something else to match, but shouldn't this be
+  // documented?
+  int RHSC;
+  if (isScaledConstantInRange(N.getOperand(1), Scale, 0, 32, RHSC))
+    return false;
 
   Base = N.getOperand(0);
   Offset = N.getOperand(1);
@@ -1008,18 +1010,11 @@ ARMDAGToDAGISel::SelectThumbAddrModeImm5S(SDValue N, unsigned Scale,
   }
 
   // If the RHS is + imm5 * scale, fold into addr mode.
-  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    int RHSC = (int)RHS->getZExtValue();
-
-    if ((RHSC & (Scale - 1)) == 0) { // The constant is implicitly multiplied.
-      RHSC /= Scale;
-
-      if (RHSC >= 0 && RHSC < 32) {
-        Base = N.getOperand(0);
-        OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
-        return true;
-      }
-    }
+  int RHSC;
+  if (isScaledConstantInRange(N.getOperand(1), Scale, 0, 32, RHSC)) {
+    Base = N.getOperand(0);
+    OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
+    return true;
   }
 
   Base = N.getOperand(0);
@@ -1061,20 +1056,15 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue N,
   if (N.getOperand(0).getOpcode() == ISD::FrameIndex ||
       (LHSR && LHSR->getReg() == ARM::SP)) {
     // If the RHS is + imm8 * scale, fold into addr mode.
-    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      int RHSC = (int)RHS->getZExtValue();
-      if ((RHSC & 3) == 0) {  // The constant is implicitly multiplied.
-        RHSC >>= 2;
-        if (RHSC >= 0 && RHSC < 256) {
-          Base = N.getOperand(0);
-          if (Base.getOpcode() == ISD::FrameIndex) {
-            int FI = cast<FrameIndexSDNode>(Base)->getIndex();
-            Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-          }
-          OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
-          return true;
-        }
+    int RHSC;
+    if (isScaledConstantInRange(N.getOperand(1), /*Scale=*/4, 0, 256, RHSC)) {
+      Base = N.getOperand(0);
+      if (Base.getOpcode() == ISD::FrameIndex) {
+        int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+        Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
       }
+      OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
+      return true;
     }
   }
 
@@ -1189,14 +1179,12 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm8Offset(SDNode *Op, SDValue N,
   ISD::MemIndexedMode AM = (Opcode == ISD::LOAD)
     ? cast<LoadSDNode>(Op)->getAddressingMode()
     : cast<StoreSDNode>(Op)->getAddressingMode();
-  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N)) {
-    int RHSC = (int)RHS->getZExtValue();
-    if (RHSC >= 0 && RHSC < 0x100) { // 8 bits.
-      OffImm = ((AM == ISD::PRE_INC) || (AM == ISD::POST_INC))
-        ? CurDAG->getTargetConstant(RHSC, MVT::i32)
-        : CurDAG->getTargetConstant(-RHSC, MVT::i32);
-      return true;
-    }
+  int RHSC;
+  if (isScaledConstantInRange(N, /*Scale=*/1, 0, 0x100, RHSC)) { // 8 bits.
+    OffImm = ((AM == ISD::PRE_INC) || (AM == ISD::POST_INC))
+      ? CurDAG->getTargetConstant(RHSC, MVT::i32)
+      : CurDAG->getTargetConstant(-RHSC, MVT::i32);
+    return true;
   }
 
   return false;
