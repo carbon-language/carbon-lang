@@ -8582,10 +8582,17 @@ ExprResult Sema::ActOnGNUNullExpr(SourceLocation TokenLoc) {
   // The type of __null will be int or long, depending on the size of
   // pointers on the target.
   QualType Ty;
-  if (Context.Target.getPointerWidth(0) == Context.Target.getIntWidth())
+  unsigned pw = Context.Target.getPointerWidth(0);
+  if (pw == Context.Target.getIntWidth())
     Ty = Context.IntTy;
-  else
+  else if (pw == Context.Target.getLongWidth())
     Ty = Context.LongTy;
+  else if (pw == Context.Target.getLongLongWidth())
+    Ty = Context.LongLongTy;
+  else {
+    assert(!"I don't know size of pointer!");
+    Ty = Context.IntTy;
+  }
 
   return Owned(new (Context) GNUNullExpr(Ty, TokenLoc));
 }
