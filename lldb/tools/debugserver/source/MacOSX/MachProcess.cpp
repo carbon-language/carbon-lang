@@ -170,12 +170,6 @@ MachProcess::GetThreadAtIndex (nub_size_t thread_idx) const
     return m_thread_list.ThreadIDAtIndex(thread_idx);
 }
 
-uint32_t
-MachProcess::GetThreadIndexFromThreadID (nub_thread_t tid)
-{
-    return m_thread_list.GetThreadIndexByID(tid);
-}
-
 nub_thread_t
 MachProcess::GetCurrentThread ()
 {
@@ -207,12 +201,12 @@ MachProcess::GetThreadInfo(nub_thread_t tid) const
 }
 
 const DNBRegisterSetInfo *
-MachProcess::GetRegisterSetInfo(nub_thread_t tid, nub_size_t *num_reg_sets ) const
+MachProcess::GetRegisterSetInfo (nub_thread_t tid, nub_size_t *num_reg_sets) const
 {
-    MachThread *thread = m_thread_list.GetThreadByID (tid);
-    if (thread)
+    MachThreadSP thread_sp (m_thread_list.GetThreadByID (tid));
+    if (thread_sp)
     {
-        DNBArchProtocol *arch = thread->GetArchProtocol();
+        DNBArchProtocol *arch = thread_sp->GetArchProtocol();
         if (arch)
             return arch->GetRegisterSetInfo (num_reg_sets);
     }

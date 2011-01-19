@@ -29,47 +29,33 @@ MachThreadList::~MachThreadList()
 {
 }
 
-// Not thread safe, must lock m_threads_mutex prior to using this function.
-uint32_t
-MachThreadList::GetThreadIndexByID(thread_t tid) const
-{
-    uint32_t idx = 0;
-    const uint32_t num_threads = m_threads.size();
-    for (idx = 0; idx < num_threads; ++idx)
-    {
-        if (m_threads[idx]->ThreadID() == tid)
-            return idx;
-    }
-    return ~((uint32_t)0);
-}
-
 nub_state_t
 MachThreadList::GetState(thread_t tid)
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        return m_threads[idx]->GetState();
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetState();
     return eStateInvalid;
 }
 
 const char *
 MachThreadList::GetName (thread_t tid)
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        return m_threads[idx]->GetName();
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetName();
     return NULL;
 }
 
 nub_thread_t
 MachThreadList::SetCurrentThread(thread_t tid)
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        m_current_thread = m_threads[idx];
-
-    if (m_current_thread.get())
-        return m_current_thread->ThreadID();
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+    {
+        m_current_thread = thread_sp;
+        return tid;
+    }
     return INVALID_NUB_THREAD;
 }
 
@@ -77,9 +63,9 @@ MachThreadList::SetCurrentThread(thread_t tid)
 bool
 MachThreadList::GetThreadStoppedReason(nub_thread_t tid, struct DNBThreadStopInfo *stop_info) const
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        return m_threads[idx]->GetStopException().GetStopInfo(stop_info);
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetStopException().GetStopInfo(stop_info);
     return false;
 }
 
@@ -91,37 +77,45 @@ MachThreadList::GetIdentifierInfo (nub_thread_t tid, thread_identifier_info_data
 }
 
 void
-MachThreadList::DumpThreadStoppedReason(nub_thread_t tid) const
+MachThreadList::DumpThreadStoppedReason (nub_thread_t tid) const
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        m_threads[idx]->GetStopException().DumpStopReason();
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        thread_sp->GetStopException().DumpStopReason();
 }
 
 const char *
-MachThreadList::GetThreadInfo(nub_thread_t tid) const
+MachThreadList::GetThreadInfo (nub_thread_t tid) const
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        return m_threads[idx]->GetBasicInfoAsString();
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetBasicInfoAsString();
     return NULL;
 }
 
-MachThread *
+MachThreadSP
 MachThreadList::GetThreadByID (nub_thread_t tid) const
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        return m_threads[idx].get();
-    return NULL;
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
+    MachThreadSP thread_sp;
+    const size_t num_threads = m_threads.size();
+    for (size_t idx = 0; idx < num_threads; ++idx)
+    {
+        if (m_threads[idx]->ThreadID() == tid)
+        {
+            thread_sp = m_threads[idx];
+            break;
+        }
+    }
+    return thread_sp;
 }
 
 bool
 MachThreadList::GetRegisterValue ( nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, DNBRegisterValue *reg_value ) const
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        return m_threads[idx]->GetRegisterValue(reg_set_idx, reg_idx, reg_value);
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetRegisterValue(reg_set_idx, reg_idx, reg_value);
 
     return false;
 }
@@ -129,9 +123,9 @@ MachThreadList::GetRegisterValue ( nub_thread_t tid, uint32_t reg_set_idx, uint3
 bool
 MachThreadList::SetRegisterValue ( nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, const DNBRegisterValue *reg_value ) const
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        return m_threads[idx]->SetRegisterValue(reg_set_idx, reg_idx, reg_value);
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->SetRegisterValue(reg_set_idx, reg_idx, reg_value);
 
     return false;
 }
@@ -139,30 +133,32 @@ MachThreadList::SetRegisterValue ( nub_thread_t tid, uint32_t reg_set_idx, uint3
 nub_size_t
 MachThreadList::GetRegisterContext (nub_thread_t tid, void *buf, size_t buf_len)
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        return m_threads[idx]->GetRegisterContext (buf, buf_len);
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->GetRegisterContext (buf, buf_len);
     return 0;
 }
 
 nub_size_t
 MachThreadList::SetRegisterContext (nub_thread_t tid, const void *buf, size_t buf_len)
 {
-    uint32_t idx = GetThreadIndexByID(tid);
-    if (idx < m_threads.size())
-        return m_threads[idx]->SetRegisterContext (buf, buf_len);
+    MachThreadSP thread_sp (GetThreadByID (tid));
+    if (thread_sp)
+        return thread_sp->SetRegisterContext (buf, buf_len);
     return 0;
 }
 
 nub_size_t
-MachThreadList::NumThreads() const
+MachThreadList::NumThreads () const
 {
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     return m_threads.size();
 }
 
 nub_thread_t
-MachThreadList::ThreadIDAtIndex(nub_size_t idx) const
+MachThreadList::ThreadIDAtIndex (nub_size_t idx) const
 {
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     if (idx < m_threads.size())
         return m_threads[idx]->ThreadID();
     return INVALID_NUB_THREAD;
@@ -171,42 +167,29 @@ MachThreadList::ThreadIDAtIndex(nub_size_t idx) const
 nub_thread_t
 MachThreadList::CurrentThreadID ( )
 {
-    MachThreadSP threadSP;
-    CurrentThread(threadSP);
-    if (threadSP.get())
-        return threadSP->ThreadID();
+    MachThreadSP thread_sp;
+    CurrentThread(thread_sp);
+    if (thread_sp.get())
+        return thread_sp->ThreadID();
     return INVALID_NUB_THREAD;
 }
 
 bool
 MachThreadList::NotifyException(MachException::Data& exc)
 {
-    uint32_t idx = GetThreadIndexByID(exc.thread_port);
-    if (idx < m_threads.size())
+    MachThreadSP thread_sp (GetThreadByID (exc.thread_port));
+    if (thread_sp)
     {
-        m_threads[idx]->NotifyException(exc);
+        thread_sp->NotifyException(exc);
         return true;
     }
     return false;
 }
 
-/*
-MachThreadList::const_iterator
-MachThreadList::FindThreadByID(thread_t tid) const
-{
-    const_iterator pos;
-    const_iterator end = m_threads.end();
-    for (pos = m_threads.begin(); pos != end; ++pos)
-    {
-        if (pos->ThreadID() == tid)
-            return pos;
-    }
-    return NULL;
-}
-*/
 void
 MachThreadList::Clear()
 {
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     m_threads.clear();
 }
 
@@ -249,29 +232,28 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update)
         if (err.Error() == KERN_SUCCESS && thread_list_count > 0)
         {
             MachThreadList::collection currThreads;
-            const size_t numOldThreads = m_threads.size();
             size_t idx;
             // Iterator through the current thread list and see which threads
             // we already have in our list (keep them), which ones we don't
             // (add them), and which ones are not around anymore (remove them).
             for (idx = 0; idx < thread_list_count; ++idx)
             {
-                uint32_t existing_idx = 0;
-                if (numOldThreads > 0)
-                    existing_idx = GetThreadIndexByID(thread_list[idx]);
-                if (existing_idx < numOldThreads)
+                const thread_t tid = thread_list[idx];
+                
+                MachThreadSP thread_sp (GetThreadByID (tid));
+                if (thread_sp)
                 {
                     // Keep the existing thread class
-                    currThreads.push_back(m_threads[existing_idx]);
+                    currThreads.push_back(thread_sp);
                 }
                 else
                 {
                     // We don't have this thread, lets add it.
-                    MachThreadSP threadSP(new MachThread(process, thread_list[idx]));
+                    thread_sp.reset(new MachThread(process, tid));
                     // Make sure the thread is ready to be displayed and shown to users
                     // before we add this thread to our list...
-                    if (threadSP->IsUserReady())
-                        currThreads.push_back(threadSP);
+                    if (thread_sp->IsUserReady())
+                        currThreads.push_back(thread_sp);
                 }
             }
 
@@ -290,7 +272,7 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update)
 
 
 void
-MachThreadList::CurrentThread(MachThreadSP& threadSP)
+MachThreadList::CurrentThread (MachThreadSP& thread_sp)
 {
     // locker will keep a mutex locked until it goes out of scope
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
@@ -299,49 +281,25 @@ MachThreadList::CurrentThread(MachThreadSP& threadSP)
         // Figure out which thread is going to be our current thread.
         // This is currently done by finding the first thread in the list
         // that has a valid exception.
-        const size_t num_threads = m_threads.size();
-        size_t idx;
-        for (idx = 0; idx < num_threads; ++idx)
+        const uint32_t num_threads = m_threads.size();
+        for (uint32_t idx = 0; idx < num_threads; ++idx)
         {
-            MachThread *thread = m_threads[idx].get();
-            if (thread->GetStopException().IsValid())
+            if (m_threads[idx]->GetStopException().IsValid())
             {
                 m_current_thread = m_threads[idx];
                 break;
             }
         }
     }
-    threadSP = m_current_thread;
-}
-
-void
-MachThreadList::GetRegisterState(int flavor, bool force)
-{
-    uint32_t idx = 0;
-    const uint32_t num_threads = m_threads.size();
-    for (idx = 0; idx < num_threads; ++idx)
-    {
-        m_threads[idx]->GetRegisterState(flavor, force);
-    }
-}
-
-void
-MachThreadList::SetRegisterState(int flavor)
-{
-    uint32_t idx = 0;
-    const uint32_t num_threads = m_threads.size();
-    for (idx = 0; idx < num_threads; ++idx)
-    {
-        m_threads[idx]->SetRegisterState(flavor);
-    }
+    thread_sp = m_current_thread;
 }
 
 void
 MachThreadList::Dump() const
 {
-    uint32_t idx = 0;
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     const uint32_t num_threads = m_threads.size();
-    for (idx = 0; idx < num_threads; ++idx)
+    for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
         m_threads[idx]->Dump(idx);
     }
@@ -351,10 +309,9 @@ MachThreadList::Dump() const
 void
 MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeActions &thread_actions)
 {
-    uint32_t idx = 0;
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     const uint32_t num_threads = m_threads.size();
-
-    for (idx = 0; idx < num_threads; ++idx)
+    for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
         MachThread *thread = m_threads[idx].get();
 
@@ -368,10 +325,10 @@ MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeAct
 uint32_t
 MachThreadList::ProcessDidStop(MachProcess *process)
 {
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     // Update our thread list
     const uint32_t num_threads = UpdateThreadList(process, true);
-    uint32_t idx = 0;
-    for (idx = 0; idx < num_threads; ++idx)
+    for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
         m_threads[idx]->ThreadDidStop();
     }
@@ -392,10 +349,10 @@ MachThreadList::ProcessDidStop(MachProcess *process)
 bool
 MachThreadList::ShouldStop(bool &step_more)
 {
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     uint32_t should_stop = false;
     const uint32_t num_threads = m_threads.size();
-    uint32_t idx = 0;
-    for (idx = 0; !should_stop && idx < num_threads; ++idx)
+    for (uint32_t idx = 0; !should_stop && idx < num_threads; ++idx)
     {
         should_stop = m_threads[idx]->ShouldStop(step_more);
     }
@@ -406,9 +363,9 @@ MachThreadList::ShouldStop(bool &step_more)
 void
 MachThreadList::NotifyBreakpointChanged (const DNBBreakpoint *bp)
 {
-    uint32_t idx = 0;
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     const uint32_t num_threads = m_threads.size();
-    for (idx = 0; idx < num_threads; ++idx)
+    for (uint32_t idx = 0; idx < num_threads; ++idx)
     {
         m_threads[idx]->NotifyBreakpointChanged(bp);
     }
@@ -420,9 +377,9 @@ MachThreadList::EnableHardwareBreakpoint (const DNBBreakpoint* bp) const
 {
     if (bp != NULL)
     {
-        uint32_t idx = GetThreadIndexByID(bp->ThreadID());
-        if (idx < m_threads.size())
-            return m_threads[idx]->EnableHardwareBreakpoint(bp);
+        MachThreadSP thread_sp (GetThreadByID (bp->ThreadID()));
+        if (thread_sp)
+            return thread_sp->EnableHardwareBreakpoint(bp);
     }
     return INVALID_NUB_HW_INDEX;
 }
@@ -432,9 +389,9 @@ MachThreadList::DisableHardwareBreakpoint (const DNBBreakpoint* bp) const
 {
     if (bp != NULL)
     {
-        uint32_t idx = GetThreadIndexByID(bp->ThreadID());
-        if (idx < m_threads.size())
-            return m_threads[idx]->DisableHardwareBreakpoint(bp);
+        MachThreadSP thread_sp (GetThreadByID (bp->ThreadID()));
+        if (thread_sp)
+            return thread_sp->DisableHardwareBreakpoint(bp);
     }
     return false;
 }
@@ -444,9 +401,9 @@ MachThreadList::EnableHardwareWatchpoint (const DNBBreakpoint* wp) const
 {
     if (wp != NULL)
     {
-        uint32_t idx = GetThreadIndexByID(wp->ThreadID());
-        if (idx < m_threads.size())
-            return m_threads[idx]->EnableHardwareWatchpoint(wp);
+        MachThreadSP thread_sp (GetThreadByID (wp->ThreadID()));
+        if (thread_sp)
+            return thread_sp->EnableHardwareWatchpoint(wp);
     }
     return INVALID_NUB_HW_INDEX;
 }
@@ -456,9 +413,9 @@ MachThreadList::DisableHardwareWatchpoint (const DNBBreakpoint* wp) const
 {
     if (wp != NULL)
     {
-        uint32_t idx = GetThreadIndexByID(wp->ThreadID());
-        if (idx < m_threads.size())
-            return m_threads[idx]->DisableHardwareWatchpoint(wp);
+        MachThreadSP thread_sp (GetThreadByID (wp->ThreadID()));
+        if (thread_sp)
+            return thread_sp->DisableHardwareWatchpoint(wp);
     }
     return false;
 }
@@ -466,10 +423,10 @@ MachThreadList::DisableHardwareWatchpoint (const DNBBreakpoint* wp) const
 uint32_t
 MachThreadList::GetThreadIndexForThreadStoppedWithSignal (const int signo) const
 {
+    PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
     uint32_t should_stop = false;
     const uint32_t num_threads = m_threads.size();
-    uint32_t idx = 0;
-    for (idx = 0; !should_stop && idx < num_threads; ++idx)
+    for (uint32_t idx = 0; !should_stop && idx < num_threads; ++idx)
     {
         if (m_threads[idx]->GetStopException().SoftSignal () == signo)
             return idx;

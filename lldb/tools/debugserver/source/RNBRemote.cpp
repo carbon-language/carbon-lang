@@ -2894,8 +2894,8 @@ RNBRemote::ExtractThreadIDFromThreadSuffix (const char *p)
                 tid_cstr += strlen ("thread:");
                 tid = strtoul(tid_cstr, NULL, 16);
             }
-            DNBLogThreadedIf (LOG_RNB_PACKETS, "RNBRemote::ExtractThreadIDFromThreadSuffix(%s) got thread 0x%4.4x", p, tid);
         }
+        return tid;
     }
     return GetCurrentThread();
 

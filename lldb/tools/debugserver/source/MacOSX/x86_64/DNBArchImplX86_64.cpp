@@ -19,6 +19,7 @@
 #include "DNBLog.h"
 #include "MachThread.h"
 #include "MachProcess.h"
+#include <mach/mach.h>
 
 uint64_t
 DNBArchImplX86_64::GetPC(uint64_t failValue)
@@ -59,6 +60,9 @@ DNBArchImplX86_64::GetGPRState(bool force)
 {
     if (force || m_state.GetError(e_regSetGPR, Read))
     {
+        kern_return_t kret = ::thread_abort_safely(m_thread->ThreadID());
+        DNBLogThreaded("thread = 0x%4.4x calling thread_abort_safely (tid) => %u (GetGPRState() for stop_count = %u)", m_thread->ThreadID(), kret, m_thread->Process()->StopCount());    
+
 #if DEBUG_GPR_VALUES
         m_state.context.gpr.__rax = ('a' << 8) + 'x';
         m_state.context.gpr.__rbx = ('b' << 8) + 'x';
@@ -247,6 +251,9 @@ DNBArchImplX86_64::GetEXCState(bool force)
 kern_return_t
 DNBArchImplX86_64::SetGPRState()
 {
+    kern_return_t kret = ::thread_abort_safely(m_thread->ThreadID());
+    DNBLogThreaded("thread = 0x%4.4x calling thread_abort_safely (tid) => %u (SetGPRState() for stop_count = %u)", m_thread->ThreadID(), kret, m_thread->Process()->StopCount());    
+
     m_state.SetError(e_regSetGPR, Write, ::thread_set_state(m_thread->ThreadID(), x86_THREAD_STATE64, (thread_state_t)&m_state.context.gpr, x86_THREAD_STATE64_COUNT));
     DNBLogThreadedIf (LOG_THREAD, "::thread_set_state (0x%4.4x, %u, &gpr, %u) => 0x%8.8x"
                       "\n\trax = %16.16llx rbx = %16.16llx rcx = %16.16llx rdx = %16.16llx"

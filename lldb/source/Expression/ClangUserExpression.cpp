@@ -512,7 +512,7 @@ ClangUserExpression::Execute (Stream &error_stream,
     
         call_plan_sp->SetPrivate(true);
     
-        uint32_t single_thread_timeout_usec = 10000000;
+        uint32_t single_thread_timeout_usec = 500000;
         
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression begins --");

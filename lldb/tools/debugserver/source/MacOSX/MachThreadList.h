@@ -26,8 +26,6 @@ public:
 
     void            Clear ();
     void            Dump () const;
-    void            GetRegisterState (int flavor, bool force);
-    void            SetRegisterState (int flavor);
     bool            GetRegisterValue (nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, DNBRegisterValue *reg_value) const;
     bool            SetRegisterValue (nub_thread_t tid, uint32_t reg_set_idx, uint32_t reg_idx, const DNBRegisterValue *reg_value) const;
     nub_size_t      GetRegisterContext (nub_thread_t tid, void *buf, size_t buf_len);
@@ -46,7 +44,6 @@ public:
     nub_size_t      NumThreads () const;
     nub_thread_t    ThreadIDAtIndex (nub_size_t idx) const;
     nub_thread_t    CurrentThreadID ();
-    uint32_t        GetThreadIndexByID (thread_t tid) const;
     void            CurrentThread (MachThreadSP& threadSP);
     void            NotifyBreakpointChanged (const DNBBreakpoint *bp);
     uint32_t        EnableHardwareBreakpoint (const DNBBreakpoint *bp) const;
@@ -55,7 +52,7 @@ public:
     bool            DisableHardwareWatchpoint (const DNBBreakpoint *wp) const;
     uint32_t        GetThreadIndexForThreadStoppedWithSignal (const int signo) const;
 
-    MachThread *    GetThreadByID (nub_thread_t tid) const;
+    MachThreadSP    GetThreadByID (nub_thread_t tid) const;
 
 protected:
     typedef std::vector<MachThreadSP>   collection;
@@ -66,7 +63,7 @@ protected:
 //  const_iterator  FindThreadByID (thread_t tid) const;
 
     collection      m_threads;
-    PThreadMutex    m_threads_mutex;
+    mutable PThreadMutex m_threads_mutex;
     MachThreadSP    m_current_thread;
 };
 

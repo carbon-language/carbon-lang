@@ -148,10 +148,10 @@ DNBBreakpointList::FindIDByAddress (nub_addr_t addr)
     DNBBreakpoint *bp = FindByAddress (addr);
     if (bp)
     {
-        DNBLogThreadedIf(LOG_BREAKPOINTS, "DNBBreakpointList::%s ( addr = 0x%8.8llx ) => %u", __FUNCTION__, (uint64_t)addr, bp->GetID());
+        DNBLogThreadedIf(LOG_BREAKPOINTS, "DNBBreakpointList::%s ( addr = 0x%16.16llx ) => %u", __FUNCTION__, (uint64_t)addr, bp->GetID());
         return bp->GetID();
     }
-    DNBLogThreadedIf(LOG_BREAKPOINTS, "DNBBreakpointList::%s ( addr = 0x%8.8llx ) => NONE", __FUNCTION__, (uint64_t)addr);
+    DNBLogThreadedIf(LOG_BREAKPOINTS, "DNBBreakpointList::%s ( addr = 0x%16.16llx ) => NONE", __FUNCTION__, (uint64_t)addr);
     return INVALID_NUB_BREAK_ID;
 }
 

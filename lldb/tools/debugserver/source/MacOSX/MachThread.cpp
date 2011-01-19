@@ -297,14 +297,14 @@ MachThread::Dump(uint32_t index)
     default:                        thread_run_state = "???"; break;
     }
 
-    DNBLogThreaded("thread[%u] %4.4x (%u): pc: 0x%8.8llx sp: 0x%8.8llx breakID: %d  user: %d.%06.6d  system: %d.%06.6d  cpu: %d  policy: %d  run_state: %d (%s)  flags: %d suspend_count: %d (current %d) sleep_time: %d",
+    DNBLogThreaded("[%3u] #%3u tid: 0x%4.4x, pc: 0x%16.16llx, sp: 0x%16.16llx, breakID: %3d, user: %d.%06.6d, system: %d.%06.6d, cpu: %2d, policy: %2d, run_state: %2d (%s), flags: %2d, suspend_count: %2d (current %2d), sleep_time: %d",
         index,
-        m_tid,
         m_seq_id,
+        m_tid,
         GetPC(INVALID_NUB_ADDRESS),
         GetSP(INVALID_NUB_ADDRESS),
         m_breakID,
-        m_basicInfo.user_time.seconds,        m_basicInfo.user_time.microseconds,
+        m_basicInfo.user_time.seconds,      m_basicInfo.user_time.microseconds,
         m_basicInfo.system_time.seconds,    m_basicInfo.system_time.microseconds,
         m_basicInfo.cpu_usage,
         m_basicInfo.policy,

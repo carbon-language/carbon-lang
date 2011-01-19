@@ -139,7 +139,6 @@ public:
     nub_state_t             ThreadGetState (nub_thread_t tid);
     nub_size_t              GetNumThreads () const;
     nub_thread_t            GetThreadAtIndex (nub_size_t thread_idx) const;
-    uint32_t                GetThreadIndexFromThreadID (nub_thread_t tid);
     nub_thread_t            GetCurrentThread ();
     nub_thread_t            SetCurrentThread (nub_thread_t tid);
     MachThreadList &        GetThreadList() { return m_thread_list; }
