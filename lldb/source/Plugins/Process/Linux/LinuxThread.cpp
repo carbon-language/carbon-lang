@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
 #include <errno.h>
 
-// C Includes
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Target/Process.h"
@@ -20,6 +20,7 @@
 #include "ProcessLinux.h"
 #include "ProcessMonitor.h"
 #include "RegisterContextLinux_x86_64.h"
+#include "UnwindLLDB.h"
 
 using namespace lldb_private;
 
@@ -91,17 +92,19 @@ LinuxThread::RestoreSaveFrameZero(const RegisterCheckpoint &checkpoint)
 }
 
 lldb::RegisterContextSP
-LinuxThread::CreateRegisterContextForFrame (lldb_private::StackFrame *frame)
+LinuxThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
 {
     lldb::RegisterContextSP reg_ctx_sp;
     uint32_t concrete_frame_idx = 0;
+
     if (frame)
         concrete_frame_idx = frame->GetConcreteFrameIndex();
         
     if (concrete_frame_idx == 0)
         reg_ctx_sp = GetRegisterContext();
     else
-        reg_ctx_sp.reset (new RegisterContextLinux_x86_64(*this, frame->GetConcreteFrameIndex()));
+        reg_ctx_sp = GetUnwinder()->CreateRegisterContextForFrame(frame);
+
     return reg_ctx_sp;
 }
 
@@ -118,6 +121,9 @@ LinuxThread::GetPrivateStopReason()
 Unwind *
 LinuxThread::GetUnwinder()
 {
+    if (m_unwinder_ap.get() == NULL)
+        m_unwinder_ap.reset(new UnwindLLDB(*this));
+
     return m_unwinder_ap.get();
 }
 
@@ -125,6 +131,11 @@ bool
 LinuxThread::WillResume(lldb::StateType resume_state)
 {
     SetResumeState(resume_state);
+
+    ClearStackFrames();
+    if (m_unwinder_ap.get())
+        m_unwinder_ap->Clear();
+
     return Thread::WillResume(resume_state);
 }
 
