@@ -132,6 +132,10 @@ namespace clang {
       CharUnits operator- (const CharUnits &Other) const {
         return CharUnits(Quantity - Other.Quantity);
       }
+      CharUnits operator- () const {
+        return CharUnits(-Quantity);
+      }
+
       
       // Conversions.
 
