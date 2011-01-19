@@ -523,7 +523,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
       Variant = MCSymbolRefExpr::getVariantKindForName(Split.second);
       if (Variant == MCSymbolRefExpr::VK_Invalid) {
         Variant = MCSymbolRefExpr::VK_None;
-        TokError("invalid variant '" + Split.second + "'");
+        return TokError("invalid variant '" + Split.second + "'");
       }
     }
 
