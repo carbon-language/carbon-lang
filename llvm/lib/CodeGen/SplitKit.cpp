@@ -867,9 +867,7 @@ void SplitEditor::leaveIntvAtTop(MachineBasicBlock &MBB) {
 /// LiveInterval, and ranges can be trimmed.
 void SplitEditor::closeIntv() {
   assert(openli_.getLI() && "openIntv not called before closeIntv");
-
-  DEBUG(dbgs() << "    closeIntv cleaning up\n");
-  DEBUG(dbgs() << "    open " << *openli_.getLI() << '\n');
+  DEBUG(dbgs() << "    closeIntv " << *openli_.getLI() << '\n');
   openli_.reset(0);
 }
 
@@ -965,6 +963,8 @@ void SplitEditor::computeRemainder() {
   // If values were fully rematted, they should be omitted.
   // FIXME: If a single value is redefined, just move the def and truncate.
   LiveInterval &parent = edit_.getParent();
+
+  DEBUG(dbgs() << "computeRemainder from " << parent << '\n');
 
   // Values that are fully contained in the split intervals.
   SmallPtrSet<const VNInfo*, 8> deadValues;

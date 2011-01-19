@@ -650,7 +650,9 @@ void LiveRange::dump() const {
 }
 
 void LiveInterval::print(raw_ostream &OS, const TargetRegisterInfo *TRI) const {
-  OS << PrintReg(reg, TRI) << ',' << weight;
+  OS << PrintReg(reg, TRI);
+  if (weight != 0)
+    OS << ',' << weight;
 
   if (empty())
     OS << " EMPTY";
