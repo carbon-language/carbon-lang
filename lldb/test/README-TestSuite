@@ -98,4 +98,6 @@ o Profiling dotest.py runs
 
 $ DOTEST_PROFILE=YES DOTEST_SCRIPT_DIR=/Volumes/data/lldb/svn/trunk/test /System/Library/Frameworks/Python.framework/Versions/Current/lib/python2.6/cProfile.py -o my.profile ./dotest.py -v -w 2> ~/Developer/Log/lldbtest.log
 
-  After that, I used the pstats.py module to browse the statistics.
+  After that, I used the pstats.py module to browse the statistics:
+
+$ python /System/Library/Frameworks/Python.framework/Versions/Current/lib/python2.6/pstats.py my.profile 
