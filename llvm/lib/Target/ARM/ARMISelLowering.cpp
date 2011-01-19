@@ -3678,7 +3678,7 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
 }
 
 // Gather data to see if the operation can be modelled as a
-// shuffle in combination with VEXTs. 
+// shuffle in combination with VEXTs.
 SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
                                               SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
@@ -3688,7 +3688,7 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
   SmallVector<SDValue, 2> SourceVecs;
   SmallVector<unsigned, 2> MinElts;
   SmallVector<unsigned, 2> MaxElts;
-    
+
   for (unsigned i = 0; i < NumElts; ++i) {
     SDValue V = Op.getOperand(i);
     if (V.getOpcode() == ISD::UNDEF)
@@ -3698,7 +3698,7 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
       // elements of other vectors.
       return SDValue();
     }
-      
+
     // Record this extraction against the appropriate vector if possible...
     SDValue SourceVec = V.getOperand(0);
     unsigned EltNo = cast<ConstantSDNode>(V.getOperand(1))->getZExtValue();
@@ -3713,7 +3713,7 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
         break;
       }
     }
-      
+
     // Or record a new source if not...
     if (!FoundSource) {
       SourceVecs.push_back(SourceVec);
@@ -3721,7 +3721,7 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
       MaxElts.push_back(EltNo);
     }
   }
-    
+
   // Currently only do something sane when at most two source vectors
   // involved.
   if (SourceVecs.size() > 2)
@@ -3729,7 +3729,7 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
 
   SDValue ShuffleSrcs[2] = {DAG.getUNDEF(VT), DAG.getUNDEF(VT) };
   int VEXTOffsets[2] = {0, 0};
-      
+
   // This loop extracts the usage patterns of the source vectors
   // and prepares appropriate SDValues for a shuffle if possible.
   for (unsigned i = 0; i < SourceVecs.size(); ++i) {
@@ -3743,17 +3743,17 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
       // break it down again in a shuffle.
       return SDValue();
     }
-    
+
     // Since only 64-bit and 128-bit vectors are legal on ARM and
     // we've eliminated the other cases...
     assert(SourceVecs[i].getValueType().getVectorNumElements() == 2*NumElts &&
            "unexpected vector sizes in ReconstructShuffle");
-    
+
     if (MaxElts[i] - MinElts[i] >= NumElts) {
       // Span too large for a VEXT to cope
       return SDValue();
-    } 
-    
+    }
+
     if (MinElts[i] >= NumElts) {
       // The extraction can just take the second half
       VEXTOffsets[i] = NumElts;
@@ -3779,16 +3779,16 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
                                    DAG.getConstant(VEXTOffsets[i], MVT::i32));
     }
   }
-      
+
   SmallVector<int, 8> Mask;
-  
+
   for (unsigned i = 0; i < NumElts; ++i) {
     SDValue Entry = Op.getOperand(i);
     if (Entry.getOpcode() == ISD::UNDEF) {
       Mask.push_back(-1);
       continue;
     }
-      
+
     SDValue ExtractVec = Entry.getOperand(0);
     int ExtractElt = cast<ConstantSDNode>(Op.getOperand(i)
                                           .getOperand(1))->getSExtValue();
@@ -3798,12 +3798,12 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
       Mask.push_back(ExtractElt + NumElts - VEXTOffsets[1]);
     }
   }
-  
+
   // Final check before we try to produce nonsense...
   if (isShuffleMaskLegal(Mask, VT))
     return DAG.getVectorShuffle(VT, dl, ShuffleSrcs[0], ShuffleSrcs[1],
                                 &Mask[0]);
-  
+
   return SDValue();
 }
 
@@ -4603,7 +4603,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case ARM::BCCZi64: {
     // If there is an unconditional branch to the other successor, remove it.
     BB->erase(llvm::next(MachineBasicBlock::iterator(MI)), BB->end());
-    
+
     // Compare both parts that make up the double comparison separately for
     // equality.
     bool RHSisZero = MI->getOpcode() == ARM::BCCZi64;
