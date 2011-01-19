@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
 class C;
 class C {
 public:
@@ -14,7 +14,11 @@ protected:
 public:
   void m() {
     int l = 2;
-  }
+  };
+
+  template<typename T> void mt(T) { };
+  ; // expected-warning{{extra ';' inside a class}}
+
   virtual int vf() const volatile = 0;
   
 private:

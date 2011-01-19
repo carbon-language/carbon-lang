@@ -1489,6 +1489,10 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         Diag(Tok, diag::err_func_def_no_params);
         ConsumeBrace();
         SkipUntil(tok::r_brace, true);
+        
+        // Consume the optional ';'
+        if (Tok.is(tok::semi))
+          ConsumeToken();
         return;
       }
 
@@ -1499,10 +1503,18 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         // assumes the declarator represents a function, not a typedef.
         ConsumeBrace();
         SkipUntil(tok::r_brace, true);
+
+        // Consume the optional ';'
+        if (Tok.is(tok::semi))
+          ConsumeToken();
         return;
       }
 
       ParseCXXInlineMethodDef(AS, DeclaratorInfo, TemplateInfo);
+      // Consume the optional ';'
+      if (Tok.is(tok::semi))
+        ConsumeToken();
+
       return;
     }
   }
