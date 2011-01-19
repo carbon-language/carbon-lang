@@ -153,7 +153,7 @@ LinuxThread::Resume()
 
     case lldb::eStateStepping:
         SetState(resume_state);
-        status = GetRegisterContext()->HardwareSingleStep(true);
+        status = monitor.SingleStep(GetID());
         break;
     }
 
