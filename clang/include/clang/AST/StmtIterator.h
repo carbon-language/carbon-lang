@@ -51,11 +51,11 @@ protected:
     return (RawVAPtr & Flags) == 0;
   }
 
-  VariableArrayType* getVAPtr() const {
-    return reinterpret_cast<VariableArrayType*>(RawVAPtr & ~Flags);
+  const VariableArrayType *getVAPtr() const {
+    return reinterpret_cast<const VariableArrayType*>(RawVAPtr & ~Flags);
   }
 
-  void setVAPtr(VariableArrayType* P) {
+  void setVAPtr(const VariableArrayType *P) {
     assert (inDecl() || inDeclGroup() || inSizeOfTypeVA());
     RawVAPtr = reinterpret_cast<uintptr_t>(P) | (RawVAPtr & Flags);
   }
@@ -68,7 +68,7 @@ protected:
 
   StmtIteratorBase(Stmt **s) : stmt(s), decl(0), RawVAPtr(0) {}
   StmtIteratorBase(Decl *d, Stmt **s);
-  StmtIteratorBase(VariableArrayType *t);
+  StmtIteratorBase(const VariableArrayType *t);
   StmtIteratorBase(Decl **dgi, Decl **dge);
   StmtIteratorBase() : stmt(0), decl(0), RawVAPtr(0) {}
 };
@@ -86,7 +86,7 @@ public:
   StmtIteratorImpl(Stmt **s) : StmtIteratorBase(s) {}
   StmtIteratorImpl(Decl **dgi, Decl **dge) : StmtIteratorBase(dgi, dge) {}
   StmtIteratorImpl(Decl *d, Stmt **s) : StmtIteratorBase(d, s) {}
-  StmtIteratorImpl(VariableArrayType* t) : StmtIteratorBase(t) {}
+  StmtIteratorImpl(const VariableArrayType *t) : StmtIteratorBase(t) {}
 
   DERIVED& operator++() {
     if (inDecl() || inDeclGroup()) {
@@ -130,7 +130,7 @@ struct StmtIterator : public StmtIteratorImpl<StmtIterator,Stmt*&> {
   StmtIterator(Decl** dgi, Decl** dge)
    : StmtIteratorImpl<StmtIterator,Stmt*&>(dgi, dge) {}
 
-  StmtIterator(VariableArrayType* t)
+  StmtIterator(const VariableArrayType *t)
     : StmtIteratorImpl<StmtIterator,Stmt*&>(t) {}
 
   StmtIterator(Decl* D, Stmt **s = 0)

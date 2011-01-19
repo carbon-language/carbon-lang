@@ -41,41 +41,41 @@ namespace {
     using StmtVisitor<ASTNodeImporter, Stmt *>::Visit;
 
     // Importing types
-    QualType VisitType(Type *T);
-    QualType VisitBuiltinType(BuiltinType *T);
-    QualType VisitComplexType(ComplexType *T);
-    QualType VisitPointerType(PointerType *T);
-    QualType VisitBlockPointerType(BlockPointerType *T);
-    QualType VisitLValueReferenceType(LValueReferenceType *T);
-    QualType VisitRValueReferenceType(RValueReferenceType *T);
-    QualType VisitMemberPointerType(MemberPointerType *T);
-    QualType VisitConstantArrayType(ConstantArrayType *T);
-    QualType VisitIncompleteArrayType(IncompleteArrayType *T);
-    QualType VisitVariableArrayType(VariableArrayType *T);
+    QualType VisitType(const Type *T);
+    QualType VisitBuiltinType(const BuiltinType *T);
+    QualType VisitComplexType(const ComplexType *T);
+    QualType VisitPointerType(const PointerType *T);
+    QualType VisitBlockPointerType(const BlockPointerType *T);
+    QualType VisitLValueReferenceType(const LValueReferenceType *T);
+    QualType VisitRValueReferenceType(const RValueReferenceType *T);
+    QualType VisitMemberPointerType(const MemberPointerType *T);
+    QualType VisitConstantArrayType(const ConstantArrayType *T);
+    QualType VisitIncompleteArrayType(const IncompleteArrayType *T);
+    QualType VisitVariableArrayType(const VariableArrayType *T);
     // FIXME: DependentSizedArrayType
     // FIXME: DependentSizedExtVectorType
-    QualType VisitVectorType(VectorType *T);
-    QualType VisitExtVectorType(ExtVectorType *T);
-    QualType VisitFunctionNoProtoType(FunctionNoProtoType *T);
-    QualType VisitFunctionProtoType(FunctionProtoType *T);
+    QualType VisitVectorType(const VectorType *T);
+    QualType VisitExtVectorType(const ExtVectorType *T);
+    QualType VisitFunctionNoProtoType(const FunctionNoProtoType *T);
+    QualType VisitFunctionProtoType(const FunctionProtoType *T);
     // FIXME: UnresolvedUsingType
-    QualType VisitTypedefType(TypedefType *T);
-    QualType VisitTypeOfExprType(TypeOfExprType *T);
+    QualType VisitTypedefType(const TypedefType *T);
+    QualType VisitTypeOfExprType(const TypeOfExprType *T);
     // FIXME: DependentTypeOfExprType
-    QualType VisitTypeOfType(TypeOfType *T);
-    QualType VisitDecltypeType(DecltypeType *T);
+    QualType VisitTypeOfType(const TypeOfType *T);
+    QualType VisitDecltypeType(const DecltypeType *T);
     // FIXME: DependentDecltypeType
-    QualType VisitRecordType(RecordType *T);
-    QualType VisitEnumType(EnumType *T);
+    QualType VisitRecordType(const RecordType *T);
+    QualType VisitEnumType(const EnumType *T);
     // FIXME: TemplateTypeParmType
     // FIXME: SubstTemplateTypeParmType
-    QualType VisitTemplateSpecializationType(TemplateSpecializationType *T);
-    QualType VisitElaboratedType(ElaboratedType *T);
+    QualType VisitTemplateSpecializationType(const TemplateSpecializationType *T);
+    QualType VisitElaboratedType(const ElaboratedType *T);
     // FIXME: DependentNameType
     // FIXME: DependentTemplateSpecializationType
-    QualType VisitObjCInterfaceType(ObjCInterfaceType *T);
-    QualType VisitObjCObjectType(ObjCObjectType *T);
-    QualType VisitObjCObjectPointerType(ObjCObjectPointerType *T);
+    QualType VisitObjCInterfaceType(const ObjCInterfaceType *T);
+    QualType VisitObjCObjectType(const ObjCObjectType *T);
+    QualType VisitObjCObjectPointerType(const ObjCObjectPointerType *T);
                             
     // Importing declarations
     bool ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
@@ -1279,13 +1279,13 @@ bool StructuralEquivalenceContext::Finish() {
 // Import Types
 //----------------------------------------------------------------------------
 
-QualType ASTNodeImporter::VisitType(Type *T) {
+QualType ASTNodeImporter::VisitType(const Type *T) {
   Importer.FromDiag(SourceLocation(), diag::err_unsupported_ast_node)
     << T->getTypeClassName();
   return QualType();
 }
 
-QualType ASTNodeImporter::VisitBuiltinType(BuiltinType *T) {
+QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
   switch (T->getKind()) {
   case BuiltinType::Void: return Importer.getToContext().VoidTy;
   case BuiltinType::Bool: return Importer.getToContext().BoolTy;
@@ -1365,7 +1365,7 @@ QualType ASTNodeImporter::VisitBuiltinType(BuiltinType *T) {
   return QualType();
 }
 
-QualType ASTNodeImporter::VisitComplexType(ComplexType *T) {
+QualType ASTNodeImporter::VisitComplexType(const ComplexType *T) {
   QualType ToElementType = Importer.Import(T->getElementType());
   if (ToElementType.isNull())
     return QualType();
@@ -1373,7 +1373,7 @@ QualType ASTNodeImporter::VisitComplexType(ComplexType *T) {
   return Importer.getToContext().getComplexType(ToElementType);
 }
 
-QualType ASTNodeImporter::VisitPointerType(PointerType *T) {
+QualType ASTNodeImporter::VisitPointerType(const PointerType *T) {
   QualType ToPointeeType = Importer.Import(T->getPointeeType());
   if (ToPointeeType.isNull())
     return QualType();
@@ -1381,7 +1381,7 @@ QualType ASTNodeImporter::VisitPointerType(PointerType *T) {
   return Importer.getToContext().getPointerType(ToPointeeType);
 }
 
-QualType ASTNodeImporter::VisitBlockPointerType(BlockPointerType *T) {
+QualType ASTNodeImporter::VisitBlockPointerType(const BlockPointerType *T) {
   // FIXME: Check for blocks support in "to" context.
   QualType ToPointeeType = Importer.Import(T->getPointeeType());
   if (ToPointeeType.isNull())
@@ -1390,7 +1390,8 @@ QualType ASTNodeImporter::VisitBlockPointerType(BlockPointerType *T) {
   return Importer.getToContext().getBlockPointerType(ToPointeeType);
 }
 
-QualType ASTNodeImporter::VisitLValueReferenceType(LValueReferenceType *T) {
+QualType
+ASTNodeImporter::VisitLValueReferenceType(const LValueReferenceType *T) {
   // FIXME: Check for C++ support in "to" context.
   QualType ToPointeeType = Importer.Import(T->getPointeeTypeAsWritten());
   if (ToPointeeType.isNull())
@@ -1399,7 +1400,8 @@ QualType ASTNodeImporter::VisitLValueReferenceType(LValueReferenceType *T) {
   return Importer.getToContext().getLValueReferenceType(ToPointeeType);
 }
 
-QualType ASTNodeImporter::VisitRValueReferenceType(RValueReferenceType *T) {
+QualType
+ASTNodeImporter::VisitRValueReferenceType(const RValueReferenceType *T) {
   // FIXME: Check for C++0x support in "to" context.
   QualType ToPointeeType = Importer.Import(T->getPointeeTypeAsWritten());
   if (ToPointeeType.isNull())
@@ -1408,7 +1410,7 @@ QualType ASTNodeImporter::VisitRValueReferenceType(RValueReferenceType *T) {
   return Importer.getToContext().getRValueReferenceType(ToPointeeType);  
 }
 
-QualType ASTNodeImporter::VisitMemberPointerType(MemberPointerType *T) {
+QualType ASTNodeImporter::VisitMemberPointerType(const MemberPointerType *T) {
   // FIXME: Check for C++ support in "to" context.
   QualType ToPointeeType = Importer.Import(T->getPointeeType());
   if (ToPointeeType.isNull())
@@ -1419,7 +1421,7 @@ QualType ASTNodeImporter::VisitMemberPointerType(MemberPointerType *T) {
                                                       ClassType.getTypePtr());
 }
 
-QualType ASTNodeImporter::VisitConstantArrayType(ConstantArrayType *T) {
+QualType ASTNodeImporter::VisitConstantArrayType(const ConstantArrayType *T) {
   QualType ToElementType = Importer.Import(T->getElementType());
   if (ToElementType.isNull())
     return QualType();
@@ -1430,7 +1432,8 @@ QualType ASTNodeImporter::VisitConstantArrayType(ConstantArrayType *T) {
                                                T->getIndexTypeCVRQualifiers());
 }
 
-QualType ASTNodeImporter::VisitIncompleteArrayType(IncompleteArrayType *T) {
+QualType
+ASTNodeImporter::VisitIncompleteArrayType(const IncompleteArrayType *T) {
   QualType ToElementType = Importer.Import(T->getElementType());
   if (ToElementType.isNull())
     return QualType();
@@ -1440,7 +1443,7 @@ QualType ASTNodeImporter::VisitIncompleteArrayType(IncompleteArrayType *T) {
                                                 T->getIndexTypeCVRQualifiers());
 }
 
-QualType ASTNodeImporter::VisitVariableArrayType(VariableArrayType *T) {
+QualType ASTNodeImporter::VisitVariableArrayType(const VariableArrayType *T) {
   QualType ToElementType = Importer.Import(T->getElementType());
   if (ToElementType.isNull())
     return QualType();
@@ -1456,7 +1459,7 @@ QualType ASTNodeImporter::VisitVariableArrayType(VariableArrayType *T) {
                                                       Brackets);
 }
 
-QualType ASTNodeImporter::VisitVectorType(VectorType *T) {
+QualType ASTNodeImporter::VisitVectorType(const VectorType *T) {
   QualType ToElementType = Importer.Import(T->getElementType());
   if (ToElementType.isNull())
     return QualType();
@@ -1466,7 +1469,7 @@ QualType ASTNodeImporter::VisitVectorType(VectorType *T) {
                                                T->getVectorKind());
 }
 
-QualType ASTNodeImporter::VisitExtVectorType(ExtVectorType *T) {
+QualType ASTNodeImporter::VisitExtVectorType(const ExtVectorType *T) {
   QualType ToElementType = Importer.Import(T->getElementType());
   if (ToElementType.isNull())
     return QualType();
@@ -1475,7 +1478,8 @@ QualType ASTNodeImporter::VisitExtVectorType(ExtVectorType *T) {
                                                   T->getNumElements());
 }
 
-QualType ASTNodeImporter::VisitFunctionNoProtoType(FunctionNoProtoType *T) {
+QualType
+ASTNodeImporter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
   // FIXME: What happens if we're importing a function without a prototype 
   // into C++? Should we make it variadic?
   QualType ToResultType = Importer.Import(T->getResultType());
@@ -1486,7 +1490,7 @@ QualType ASTNodeImporter::VisitFunctionNoProtoType(FunctionNoProtoType *T) {
                                                         T->getExtInfo());
 }
 
-QualType ASTNodeImporter::VisitFunctionProtoType(FunctionProtoType *T) {
+QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
   QualType ToResultType = Importer.Import(T->getResultType());
   if (ToResultType.isNull())
     return QualType();
@@ -1520,7 +1524,7 @@ QualType ASTNodeImporter::VisitFunctionProtoType(FunctionProtoType *T) {
                                                  ArgTypes.size(), EPI);
 }
 
-QualType ASTNodeImporter::VisitTypedefType(TypedefType *T) {
+QualType ASTNodeImporter::VisitTypedefType(const TypedefType *T) {
   TypedefDecl *ToDecl
                  = dyn_cast_or_null<TypedefDecl>(Importer.Import(T->getDecl()));
   if (!ToDecl)
@@ -1529,7 +1533,7 @@ QualType ASTNodeImporter::VisitTypedefType(TypedefType *T) {
   return Importer.getToContext().getTypeDeclType(ToDecl);
 }
 
-QualType ASTNodeImporter::VisitTypeOfExprType(TypeOfExprType *T) {
+QualType ASTNodeImporter::VisitTypeOfExprType(const TypeOfExprType *T) {
   Expr *ToExpr = Importer.Import(T->getUnderlyingExpr());
   if (!ToExpr)
     return QualType();
@@ -1537,7 +1541,7 @@ QualType ASTNodeImporter::VisitTypeOfExprType(TypeOfExprType *T) {
   return Importer.getToContext().getTypeOfExprType(ToExpr);
 }
 
-QualType ASTNodeImporter::VisitTypeOfType(TypeOfType *T) {
+QualType ASTNodeImporter::VisitTypeOfType(const TypeOfType *T) {
   QualType ToUnderlyingType = Importer.Import(T->getUnderlyingType());
   if (ToUnderlyingType.isNull())
     return QualType();
@@ -1545,7 +1549,7 @@ QualType ASTNodeImporter::VisitTypeOfType(TypeOfType *T) {
   return Importer.getToContext().getTypeOfType(ToUnderlyingType);
 }
 
-QualType ASTNodeImporter::VisitDecltypeType(DecltypeType *T) {
+QualType ASTNodeImporter::VisitDecltypeType(const DecltypeType *T) {
   Expr *ToExpr = Importer.Import(T->getUnderlyingExpr());
   if (!ToExpr)
     return QualType();
@@ -1553,7 +1557,7 @@ QualType ASTNodeImporter::VisitDecltypeType(DecltypeType *T) {
   return Importer.getToContext().getDecltypeType(ToExpr);
 }
 
-QualType ASTNodeImporter::VisitRecordType(RecordType *T) {
+QualType ASTNodeImporter::VisitRecordType(const RecordType *T) {
   RecordDecl *ToDecl
     = dyn_cast_or_null<RecordDecl>(Importer.Import(T->getDecl()));
   if (!ToDecl)
@@ -1562,7 +1566,7 @@ QualType ASTNodeImporter::VisitRecordType(RecordType *T) {
   return Importer.getToContext().getTagDeclType(ToDecl);
 }
 
-QualType ASTNodeImporter::VisitEnumType(EnumType *T) {
+QualType ASTNodeImporter::VisitEnumType(const EnumType *T) {
   EnumDecl *ToDecl
     = dyn_cast_or_null<EnumDecl>(Importer.Import(T->getDecl()));
   if (!ToDecl)
@@ -1572,7 +1576,7 @@ QualType ASTNodeImporter::VisitEnumType(EnumType *T) {
 }
 
 QualType ASTNodeImporter::VisitTemplateSpecializationType(
-                                                TemplateSpecializationType *T) {
+                                       const TemplateSpecializationType *T) {
   TemplateName ToTemplate = Importer.Import(T->getTemplateName());
   if (ToTemplate.isNull())
     return QualType();
@@ -1595,7 +1599,7 @@ QualType ASTNodeImporter::VisitTemplateSpecializationType(
                                                                ToCanonType);
 }
 
-QualType ASTNodeImporter::VisitElaboratedType(ElaboratedType *T) {
+QualType ASTNodeImporter::VisitElaboratedType(const ElaboratedType *T) {
   NestedNameSpecifier *ToQualifier = 0;
   // Note: the qualifier in an ElaboratedType is optional.
   if (T->getQualifier()) {
@@ -1612,7 +1616,7 @@ QualType ASTNodeImporter::VisitElaboratedType(ElaboratedType *T) {
                                                    ToQualifier, ToNamedType);
 }
 
-QualType ASTNodeImporter::VisitObjCInterfaceType(ObjCInterfaceType *T) {
+QualType ASTNodeImporter::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
   ObjCInterfaceDecl *Class
     = dyn_cast_or_null<ObjCInterfaceDecl>(Importer.Import(T->getDecl()));
   if (!Class)
@@ -1621,7 +1625,7 @@ QualType ASTNodeImporter::VisitObjCInterfaceType(ObjCInterfaceType *T) {
   return Importer.getToContext().getObjCInterfaceType(Class);
 }
 
-QualType ASTNodeImporter::VisitObjCObjectType(ObjCObjectType *T) {
+QualType ASTNodeImporter::VisitObjCObjectType(const ObjCObjectType *T) {
   QualType ToBaseType = Importer.Import(T->getBaseType());
   if (ToBaseType.isNull())
     return QualType();
@@ -1642,7 +1646,8 @@ QualType ASTNodeImporter::VisitObjCObjectType(ObjCObjectType *T) {
                                                    Protocols.size());
 }
 
-QualType ASTNodeImporter::VisitObjCObjectPointerType(ObjCObjectPointerType *T) {
+QualType
+ASTNodeImporter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
   QualType ToPointeeType = Importer.Import(T->getPointeeType());
   if (ToPointeeType.isNull())
     return QualType();
@@ -3920,23 +3925,25 @@ ASTImporter::~ASTImporter() { }
 QualType ASTImporter::Import(QualType FromT) {
   if (FromT.isNull())
     return QualType();
+
+  const Type *fromTy = FromT.getTypePtr();
   
   // Check whether we've already imported this type.  
-  llvm::DenseMap<Type *, Type *>::iterator Pos
-    = ImportedTypes.find(FromT.getTypePtr());
+  llvm::DenseMap<const Type *, const Type *>::iterator Pos
+    = ImportedTypes.find(fromTy);
   if (Pos != ImportedTypes.end())
-    return ToContext.getQualifiedType(Pos->second, FromT.getQualifiers());
+    return ToContext.getQualifiedType(Pos->second, FromT.getLocalQualifiers());
   
   // Import the type
   ASTNodeImporter Importer(*this);
-  QualType ToT = Importer.Visit(FromT.getTypePtr());
+  QualType ToT = Importer.Visit(fromTy);
   if (ToT.isNull())
     return ToT;
   
   // Record the imported type.
-  ImportedTypes[FromT.getTypePtr()] = ToT.getTypePtr();
+  ImportedTypes[fromTy] = ToT.getTypePtr();
   
-  return ToContext.getQualifiedType(ToT, FromT.getQualifiers());
+  return ToContext.getQualifiedType(ToT, FromT.getLocalQualifiers());
 }
 
 TypeSourceInfo *ASTImporter::Import(TypeSourceInfo *FromTSI) {
@@ -4282,7 +4289,7 @@ Decl *ASTImporter::Imported(Decl *From, Decl *To) {
 }
 
 bool ASTImporter::IsStructurallyEquivalent(QualType From, QualType To) {
-  llvm::DenseMap<Type *, Type *>::iterator Pos
+  llvm::DenseMap<const Type *, const Type *>::iterator Pos
    = ImportedTypes.find(From.getTypePtr());
   if (Pos != ImportedTypes.end() && ToContext.hasSameType(Import(From), To))
     return true;

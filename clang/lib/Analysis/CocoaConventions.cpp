@@ -118,7 +118,7 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S,
 bool cocoa::isRefType(QualType RetTy, llvm::StringRef Prefix,
                       llvm::StringRef Name) {
   // Recursively walk the typedef stack, allowing typedefs of reference types.
-  while (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
+  while (const TypedefType *TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
     llvm::StringRef TDName = TD->getDecl()->getIdentifier()->getName();
     if (TDName.startswith(Prefix) && TDName.endswith("Ref"))
       return true;

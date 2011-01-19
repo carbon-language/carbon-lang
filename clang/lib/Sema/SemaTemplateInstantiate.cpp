@@ -1108,7 +1108,7 @@ TemplateInstantiator::TransformFunctionTypeParam(ParmVarDecl *OldParm,
 QualType
 TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
                                                 TemplateTypeParmTypeLoc TL) {
-  TemplateTypeParmType *T = TL.getTypePtr();
+  const TemplateTypeParmType *T = TL.getTypePtr();
   if (T->getDepth() < TemplateArgs.getNumLevels()) {
     // Replace the template type parameter with its corresponding
     // template argument.

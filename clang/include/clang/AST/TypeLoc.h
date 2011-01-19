@@ -38,7 +38,7 @@ class TypeLoc {
 protected:
   // The correctness of this relies on the property that, for Type *Ty,
   //   QualType(Ty, 0).getAsOpaquePtr() == (void*) Ty
-  void *Ty;
+  const void *Ty;
   void *Data;
 
 public:
@@ -56,7 +56,7 @@ public:
   TypeLoc() : Ty(0), Data(0) { }
   TypeLoc(QualType ty, void *opaqueData)
     : Ty(ty.getAsOpaquePtr()), Data(opaqueData) { }
-  TypeLoc(Type *ty, void *opaqueData)
+  TypeLoc(const Type *ty, void *opaqueData)
     : Ty(ty), Data(opaqueData) { }
 
   TypeLocClass getTypeLocClass() const {
@@ -76,7 +76,7 @@ public:
     return QualType::getFromOpaquePtr(Ty);
   }
 
-  Type *getTypePtr() const {
+  const Type *getTypePtr() const {
     return QualType::getFromOpaquePtr(Ty).getTypePtr();
   }
 
@@ -174,10 +174,10 @@ inline TypeLoc TypeSourceInfo::getTypeLoc() const {
 class UnqualTypeLoc : public TypeLoc {
 public:
   UnqualTypeLoc() {}
-  UnqualTypeLoc(Type *Ty, void *Data) : TypeLoc(Ty, Data) {}
+  UnqualTypeLoc(const Type *Ty, void *Data) : TypeLoc(Ty, Data) {}
 
-  Type *getTypePtr() const {
-    return reinterpret_cast<Type*>(Ty);
+  const Type *getTypePtr() const {
+    return reinterpret_cast<const Type*>(Ty);
   }
 
   TypeLocClass getTypeLocClass() const {
@@ -306,7 +306,7 @@ public:
     return getNextTypeLoc(asDerived()->getInnerType());
   }
 
-  TypeClass *getTypePtr() const {
+  const TypeClass *getTypePtr() const {
     return cast<TypeClass>(Base::getTypePtr());
   }
 
@@ -379,7 +379,7 @@ public:
     return true;
   }
 
-  TypeClass *getTypePtr() const {
+  const TypeClass *getTypePtr() const {
     return cast<TypeClass>(Base::getTypePtr());
   }
 };

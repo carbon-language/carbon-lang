@@ -821,7 +821,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD, const BlockExpr *BExpr,
                                      SC_Static,
                                      SC_None,
                                      false, HasPrototype);
-  if (FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FnType)) {
+  if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FnType)) {
     const FunctionDecl *CFD = dyn_cast<FunctionDecl>(CurCodeDecl);
     FunctionDecl *FD = const_cast<FunctionDecl *>(CFD);
     llvm::SmallVector<ParmVarDecl*, 16> Params;

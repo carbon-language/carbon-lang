@@ -18,9 +18,9 @@ using namespace clang;
 
 // FIXME: Add support for dependent-sized array types in C++?
 // Does it even make sense to build a CFG for an uninstantiated template?
-static inline VariableArrayType* FindVA(Type* t) {
-  while (ArrayType* vt = dyn_cast<ArrayType>(t)) {
-    if (VariableArrayType* vat = dyn_cast<VariableArrayType>(vt))
+static inline const VariableArrayType *FindVA(const Type* t) {
+  while (const ArrayType *vt = dyn_cast<ArrayType>(t)) {
+    if (const VariableArrayType *vat = dyn_cast<VariableArrayType>(vt))
       if (vat->getSizeExpr())
         return vat;
 
@@ -33,7 +33,7 @@ static inline VariableArrayType* FindVA(Type* t) {
 void StmtIteratorBase::NextVA() {
   assert (getVAPtr());
 
-  VariableArrayType* p = getVAPtr();
+  const VariableArrayType *p = getVAPtr();
   p = FindVA(p->getElementType().getTypePtr());
   setVAPtr(p);
 
@@ -90,7 +90,7 @@ void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
 bool StmtIteratorBase::HandleDecl(Decl* D) {
 
   if (VarDecl* VD = dyn_cast<VarDecl>(D)) {
-    if (VariableArrayType* VAPtr = FindVA(VD->getType().getTypePtr())) {
+    if (const VariableArrayType* VAPtr = FindVA(VD->getType().getTypePtr())) {
       setVAPtr(VAPtr);
       return true;
     }
@@ -99,7 +99,7 @@ bool StmtIteratorBase::HandleDecl(Decl* D) {
       return true;
   }
   else if (TypedefDecl* TD = dyn_cast<TypedefDecl>(D)) {
-    if (VariableArrayType* VAPtr =
+    if (const VariableArrayType* VAPtr =
         FindVA(TD->getUnderlyingType().getTypePtr())) {
       setVAPtr(VAPtr);
       return true;
@@ -124,16 +124,16 @@ StmtIteratorBase::StmtIteratorBase(Decl** dgi, Decl** dge)
   NextDecl(false);
 }
 
-StmtIteratorBase::StmtIteratorBase(VariableArrayType* t)
+StmtIteratorBase::StmtIteratorBase(const VariableArrayType* t)
   : stmt(0), decl(0), RawVAPtr(SizeOfTypeVAMode) {
   RawVAPtr |= reinterpret_cast<uintptr_t>(t);
 }
 
 Stmt*& StmtIteratorBase::GetDeclExpr() const {
 
-  if (VariableArrayType* VAPtr = getVAPtr()) {
+  if (const VariableArrayType* VAPtr = getVAPtr()) {
     assert (VAPtr->SizeExpr);
-    return VAPtr->SizeExpr;
+    return const_cast<Stmt*&>(VAPtr->SizeExpr);
   }
 
   assert (inDecl() || inDeclGroup());

@@ -238,7 +238,7 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
     Out << 'A';
   } else if (Ty->isArrayType()) {
     // Global arrays are funny, too.
-    mangleType(static_cast<ArrayType *>(Ty.getTypePtr()), true);
+    mangleType(cast<ArrayType>(Ty.getTypePtr()), true);
     Out << 'A';
   } else {
     mangleType(Ty.getLocalUnqualifiedType());

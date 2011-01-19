@@ -518,7 +518,6 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
     // a declaration context.
     if (NamespaceAliasDecl *Alias = dyn_cast<NamespaceAliasDecl>(SD))
       return NestedNameSpecifier::Create(Context, Prefix,
-
                                          Alias->getNamespace());
 
     QualType T = Context.getTypeDeclType(cast<TypeDecl>(SD));

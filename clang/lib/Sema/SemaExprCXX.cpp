@@ -375,7 +375,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
 /// Retrieve the UuidAttr associated with QT.
 static UuidAttr *GetUuidAttrOfType(QualType QT) {
   // Optionally remove one level of pointer, reference or array indirection.
-  Type *Ty = QT.getTypePtr();;
+  const Type *Ty = QT.getTypePtr();;
   if (QT->isPointerType() || QT->isReferenceType())
     Ty = QT->getPointeeType().getTypePtr();
   else if (QT->isArrayType())

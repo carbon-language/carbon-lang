@@ -1891,7 +1891,7 @@ TagDecl* TagDecl::getCanonicalDecl() {
 void TagDecl::setTypedefForAnonDecl(TypedefDecl *TDD) { 
   TypedefDeclOrQualifier = TDD; 
   if (TypeForDecl)
-    TypeForDecl->ClearLinkageCache();
+    const_cast<Type*>(TypeForDecl)->ClearLinkageCache();
   ClearLinkageCache();
 }
 

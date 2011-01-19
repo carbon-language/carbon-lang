@@ -100,7 +100,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   if (TypeHasMayAlias(QTy))
     return getChar();
 
-  Type *Ty = Context.getCanonicalType(QTy).getTypePtr();
+  const Type *Ty = Context.getCanonicalType(QTy).getTypePtr();
 
   if (llvm::MDNode *N = MetadataCache[Ty])
     return N;

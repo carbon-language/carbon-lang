@@ -43,8 +43,8 @@ void CastToStructChecker::PreVisitCastExpr(CheckerContext &C,
   QualType OrigTy = Ctx.getCanonicalType(E->getType());
   QualType ToTy = Ctx.getCanonicalType(CE->getType());
 
-  PointerType *OrigPTy = dyn_cast<PointerType>(OrigTy.getTypePtr());
-  PointerType *ToPTy = dyn_cast<PointerType>(ToTy.getTypePtr());
+  const PointerType *OrigPTy = dyn_cast<PointerType>(OrigTy.getTypePtr());
+  const PointerType *ToPTy = dyn_cast<PointerType>(ToTy.getTypePtr());
 
   if (!ToPTy || !OrigPTy)
     return;

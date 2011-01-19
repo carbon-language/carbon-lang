@@ -2922,7 +2922,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     }
     bool IsDependent = Record[0];
     QualType T = Context->getRecordType(cast<RecordDecl>(GetDecl(Record[1])));
-    T->setDependent(IsDependent);
+    const_cast<Type*>(T.getTypePtr())->setDependent(IsDependent);
     return T;
   }
 
@@ -2933,7 +2933,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     }
     bool IsDependent = Record[0];
     QualType T = Context->getEnumType(cast<EnumDecl>(GetDecl(Record[1])));
-    T->setDependent(IsDependent);
+    const_cast<Type*>(T.getTypePtr())->setDependent(IsDependent);
     return T;
   }
 
@@ -3093,7 +3093,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     else
       T = Context->getTemplateSpecializationType(Name, Args.data(),
                                                  Args.size(), Canon);
-    T->setDependent(IsDependent);
+    const_cast<Type*>(T.getTypePtr())->setDependent(IsDependent);
     return T;
   }
   }
@@ -4475,7 +4475,7 @@ ASTReader::ReadNestedNameSpecifier(const RecordData &Record, unsigned &Idx) {
 
     case NestedNameSpecifier::TypeSpec:
     case NestedNameSpecifier::TypeSpecWithTemplate: {
-      Type *T = GetType(Record[Idx++]).getTypePtrOrNull();
+      const Type *T = GetType(Record[Idx++]).getTypePtrOrNull();
       if (!T)
         return 0;
       

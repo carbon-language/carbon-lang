@@ -63,7 +63,7 @@ void ExprEngine::evalArguments(ConstExprIterator AI, ConstExprIterator AE,
 
 const CXXThisRegion *ExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
                                                  const StackFrameContext *SFC) {
-  Type *T = D->getTypeForDecl();
+  const Type *T = D->getTypeForDecl();
   QualType PT = getContext().getPointerType(QualType(T, 0));
   return svalBuilder.getRegionManager().getCXXThisRegion(PT, SFC);
 }

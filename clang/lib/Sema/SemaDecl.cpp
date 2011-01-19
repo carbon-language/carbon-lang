@@ -827,7 +827,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 
   // Create Decl objects for each parameter, adding them to the
   // FunctionDecl.
-  if (FunctionProtoType *FT = dyn_cast<FunctionProtoType>(R)) {
+  if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(R)) {
     llvm::SmallVector<ParmVarDecl*, 16> Params;
     for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
       Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
@@ -6143,7 +6143,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
             } else {
               // If the type is currently being defined, complain
               // about a nested redefinition.
-              TagType *Tag = cast<TagType>(Context.getTagDeclType(PrevTagDecl));
+              const TagType *Tag
+                = cast<TagType>(Context.getTagDeclType(PrevTagDecl));
               if (Tag->isBeingDefined()) {
                 Diag(NameLoc, diag::err_nested_redefinition) << Name;
                 Diag(PrevTagDecl->getLocation(),
@@ -7108,7 +7109,7 @@ void Sema::ActOnFields(Scope* S,
     FieldDecl *FD = cast<FieldDecl>(Fields[i]);
 
     // Get the type for the field.
-    Type *FDTy = FD->getType().getTypePtr();
+    const Type *FDTy = FD->getType().getTypePtr();
 
     if (!FD->isAnonymousStructOrUnion()) {
       // Remember all fields written by the user.

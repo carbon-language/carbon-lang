@@ -7986,7 +7986,7 @@ ExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
 
 // Unary Operators.  'Tok' is the token for the operator.
 ExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
-                                            tok::TokenKind Op, Expr *Input) {
+                              tok::TokenKind Op, Expr *Input) {
   return BuildUnaryOp(S, OpLoc, ConvertTokenKindToUnaryOpcode(Op), Input);
 }
 

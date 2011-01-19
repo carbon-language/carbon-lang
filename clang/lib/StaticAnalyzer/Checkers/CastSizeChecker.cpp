@@ -38,7 +38,7 @@ void CastSizeChecker::PreVisitCastExpr(CheckerContext &C, const CastExpr *CE) {
   const Expr *E = CE->getSubExpr();
   ASTContext &Ctx = C.getASTContext();
   QualType ToTy = Ctx.getCanonicalType(CE->getType());
-  PointerType *ToPTy = dyn_cast<PointerType>(ToTy.getTypePtr());
+  const PointerType *ToPTy = dyn_cast<PointerType>(ToTy.getTypePtr());
 
   if (!ToPTy)
     return;

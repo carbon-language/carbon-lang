@@ -3237,7 +3237,7 @@ template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformMemberPointerType(TypeLocBuilder &TLB,
                                                    MemberPointerTypeLoc TL) {
-  MemberPointerType *T = TL.getTypePtr();
+  const MemberPointerType *T = TL.getTypePtr();
 
   QualType PointeeType = getDerived().TransformType(TLB, TL.getPointeeLoc());
   if (PointeeType.isNull())
@@ -3269,7 +3269,7 @@ template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformConstantArrayType(TypeLocBuilder &TLB,
                                                    ConstantArrayTypeLoc TL) {
-  ConstantArrayType *T = TL.getTypePtr();
+  const ConstantArrayType *T = TL.getTypePtr();
   QualType ElementType = getDerived().TransformType(TLB, TL.getElementLoc());
   if (ElementType.isNull())
     return QualType();
@@ -3304,7 +3304,7 @@ template<typename Derived>
 QualType TreeTransform<Derived>::TransformIncompleteArrayType(
                                               TypeLocBuilder &TLB,
                                               IncompleteArrayTypeLoc TL) {
-  IncompleteArrayType *T = TL.getTypePtr();
+  const IncompleteArrayType *T = TL.getTypePtr();
   QualType ElementType = getDerived().TransformType(TLB, TL.getElementLoc());
   if (ElementType.isNull())
     return QualType();
@@ -3332,7 +3332,7 @@ template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformVariableArrayType(TypeLocBuilder &TLB,
                                                    VariableArrayTypeLoc TL) {
-  VariableArrayType *T = TL.getTypePtr();
+  const VariableArrayType *T = TL.getTypePtr();
   QualType ElementType = getDerived().TransformType(TLB, TL.getElementLoc());
   if (ElementType.isNull())
     return QualType();
@@ -3372,7 +3372,7 @@ template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformDependentSizedArrayType(TypeLocBuilder &TLB,
                                              DependentSizedArrayTypeLoc TL) {
-  DependentSizedArrayType *T = TL.getTypePtr();
+  const DependentSizedArrayType *T = TL.getTypePtr();
   QualType ElementType = getDerived().TransformType(TLB, TL.getElementLoc());
   if (ElementType.isNull())
     return QualType();
@@ -3415,7 +3415,7 @@ template<typename Derived>
 QualType TreeTransform<Derived>::TransformDependentSizedExtVectorType(
                                       TypeLocBuilder &TLB,
                                       DependentSizedExtVectorTypeLoc TL) {
-  DependentSizedExtVectorType *T = TL.getTypePtr();
+  const DependentSizedExtVectorType *T = TL.getTypePtr();
 
   // FIXME: ext vector locs should be nested
   QualType ElementType = getDerived().TransformType(T->getElementType());
@@ -3456,7 +3456,7 @@ QualType TreeTransform<Derived>::TransformDependentSizedExtVectorType(
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformVectorType(TypeLocBuilder &TLB,
                                                      VectorTypeLoc TL) {
-  VectorType *T = TL.getTypePtr();
+  const VectorType *T = TL.getTypePtr();
   QualType ElementType = getDerived().TransformType(T->getElementType());
   if (ElementType.isNull())
     return QualType();
@@ -3479,7 +3479,7 @@ QualType TreeTransform<Derived>::TransformVectorType(TypeLocBuilder &TLB,
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformExtVectorType(TypeLocBuilder &TLB,
                                                         ExtVectorTypeLoc TL) {
-  VectorType *T = TL.getTypePtr();
+  const VectorType *T = TL.getTypePtr();
   QualType ElementType = getDerived().TransformType(T->getElementType());
   if (ElementType.isNull())
     return QualType();
@@ -3733,7 +3733,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
   //
   llvm::SmallVector<QualType, 4> ParamTypes;
   llvm::SmallVector<ParmVarDecl*, 4> ParamDecls;
-  FunctionProtoType *T = TL.getTypePtr();
+  const FunctionProtoType *T = TL.getTypePtr();
 
   QualType ResultType;
 
@@ -3791,7 +3791,7 @@ template<typename Derived>
 QualType TreeTransform<Derived>::TransformFunctionNoProtoType(
                                                  TypeLocBuilder &TLB,
                                                  FunctionNoProtoTypeLoc TL) {
-  FunctionNoProtoType *T = TL.getTypePtr();
+  const FunctionNoProtoType *T = TL.getTypePtr();
   QualType ResultType = getDerived().TransformType(TLB, TL.getResultLoc());
   if (ResultType.isNull())
     return QualType();
@@ -3812,7 +3812,7 @@ QualType TreeTransform<Derived>::TransformFunctionNoProtoType(
 template<typename Derived> QualType
 TreeTransform<Derived>::TransformUnresolvedUsingType(TypeLocBuilder &TLB,
                                                  UnresolvedUsingTypeLoc TL) {
-  UnresolvedUsingType *T = TL.getTypePtr();
+  const UnresolvedUsingType *T = TL.getTypePtr();
   Decl *D = getDerived().TransformDecl(TL.getNameLoc(), T->getDecl());
   if (!D)
     return QualType();
@@ -3835,7 +3835,7 @@ TreeTransform<Derived>::TransformUnresolvedUsingType(TypeLocBuilder &TLB,
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformTypedefType(TypeLocBuilder &TLB,
                                                       TypedefTypeLoc TL) {
-  TypedefType *T = TL.getTypePtr();
+  const TypedefType *T = TL.getTypePtr();
   TypedefDecl *Typedef
     = cast_or_null<TypedefDecl>(getDerived().TransformDecl(TL.getNameLoc(),
                                                            T->getDecl()));
@@ -3910,7 +3910,7 @@ QualType TreeTransform<Derived>::TransformTypeOfType(TypeLocBuilder &TLB,
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformDecltypeType(TypeLocBuilder &TLB,
                                                        DecltypeTypeLoc TL) {
-  DecltypeType *T = TL.getTypePtr();
+  const DecltypeType *T = TL.getTypePtr();
 
   // decltype expressions are not potentially evaluated contexts
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
@@ -3937,7 +3937,7 @@ QualType TreeTransform<Derived>::TransformDecltypeType(TypeLocBuilder &TLB,
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformRecordType(TypeLocBuilder &TLB,
                                                      RecordTypeLoc TL) {
-  RecordType *T = TL.getTypePtr();
+  const RecordType *T = TL.getTypePtr();
   RecordDecl *Record
     = cast_or_null<RecordDecl>(getDerived().TransformDecl(TL.getNameLoc(),
                                                           T->getDecl()));
@@ -3961,7 +3961,7 @@ QualType TreeTransform<Derived>::TransformRecordType(TypeLocBuilder &TLB,
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformEnumType(TypeLocBuilder &TLB,
                                                    EnumTypeLoc TL) {
-  EnumType *T = TL.getTypePtr();
+  const EnumType *T = TL.getTypePtr();
   EnumDecl *Enum
     = cast_or_null<EnumDecl>(getDerived().TransformDecl(TL.getNameLoc(),
                                                         T->getDecl()));
@@ -4136,7 +4136,7 @@ template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
                                                 ElaboratedTypeLoc TL) {
-  ElaboratedType *T = TL.getTypePtr();
+  const ElaboratedType *T = TL.getTypePtr();
 
   NestedNameSpecifier *NNS = 0;
   // NOTE: the qualifier in an ElaboratedType is optional.
@@ -4230,7 +4230,7 @@ TreeTransform<Derived>::TransformParenType(TypeLocBuilder &TLB,
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformDependentNameType(TypeLocBuilder &TLB,
                                                       DependentNameTypeLoc TL) {
-  DependentNameType *T = TL.getTypePtr();
+  const DependentNameType *T = TL.getTypePtr();
 
   NestedNameSpecifier *NNS
     = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
@@ -4267,7 +4267,7 @@ template<typename Derived>
 QualType TreeTransform<Derived>::
           TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
                                  DependentTemplateSpecializationTypeLoc TL) {
-  DependentTemplateSpecializationType *T = TL.getTypePtr();
+  const DependentTemplateSpecializationType *T = TL.getTypePtr();
 
   NestedNameSpecifier *NNS
     = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
@@ -4284,7 +4284,7 @@ QualType TreeTransform<Derived>::
           TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
                                  DependentTemplateSpecializationTypeLoc TL,
                                                   NestedNameSpecifier *NNS) {
-  DependentTemplateSpecializationType *T = TL.getTypePtr();
+  const DependentTemplateSpecializationType *T = TL.getTypePtr();
 
   TemplateArgumentListInfo NewTemplateArgs;
   NewTemplateArgs.setLAngleLoc(TL.getLAngleLoc());

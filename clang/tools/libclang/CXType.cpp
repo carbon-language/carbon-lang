@@ -64,7 +64,7 @@ static CXTypeKind GetBuiltinTypeKind(const BuiltinType *BT) {
 }
 
 static CXTypeKind GetTypeKind(QualType T) {
-  Type *TP = T.getTypePtrOrNull();
+  const Type *TP = T.getTypePtrOrNull();
   if (!TP)
     return CXType_Invalid;
 
@@ -187,7 +187,7 @@ CXType clang_getCanonicalType(CXType CT) {
 
 CXType clang_getPointeeType(CXType CT) {
   QualType T = GetQualType(CT);
-  Type *TP = T.getTypePtrOrNull();
+  const Type *TP = T.getTypePtrOrNull();
   
   if (!TP)
     return MakeCXType(QualType(), GetTU(CT));
@@ -218,7 +218,7 @@ CXCursor clang_getTypeDeclaration(CXType CT) {
     return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);
 
   QualType T = GetQualType(CT);
-  Type *TP = T.getTypePtrOrNull();
+  const Type *TP = T.getTypePtrOrNull();
 
   if (!TP)
     return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);

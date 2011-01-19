@@ -995,7 +995,7 @@ CXXRecordDecl *UnresolvedMemberExpr::getNamingClass() const {
   // lookup.
   CXXRecordDecl *Record = 0;
   if (getQualifier()) {
-    Type *T = getQualifier()->getAsType();
+    const Type *T = getQualifier()->getAsType();
     assert(T && "qualifier in member expression does not name type");
     Record = T->getAsCXXRecordDecl();
     assert(Record && "qualifier in member expression does not name record");

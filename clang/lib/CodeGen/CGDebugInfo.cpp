@@ -1307,11 +1307,9 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
     case Type::TemplateSpecialization:
       T = cast<TemplateSpecializationType>(T)->desugar();
       break;
-    case Type::TypeOfExpr: {
-      TypeOfExprType *Ty = cast<TypeOfExprType>(T);
-      T = Ty->getUnderlyingExpr()->getType();
+    case Type::TypeOfExpr:
+      T = cast<TypeOfExprType>(T)->getUnderlyingExpr()->getType();
       break;
-    }
     case Type::TypeOf:
       T = cast<TypeOfType>(T)->getUnderlyingType();
       break;

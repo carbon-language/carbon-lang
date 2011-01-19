@@ -19,12 +19,13 @@
 namespace clang {
 
 #define DISPATCH(CLASS) \
-  return static_cast<ImplClass*>(this)->Visit ## CLASS(static_cast<CLASS*>(T))
+  return static_cast<ImplClass*>(this)-> \
+           Visit##CLASS(static_cast<const CLASS*>(T))
 
 template<typename ImplClass, typename RetTy=void>
 class TypeVisitor {
 public:
-  RetTy Visit(Type *T) {
+  RetTy Visit(const Type *T) {
     // Top switch stmt: dispatch to VisitFooType for each FooType.
     switch (T->getTypeClass()) {
     default: assert(0 && "Unknown type class!");
@@ -36,13 +37,13 @@ public:
 
   // If the implementation chooses not to implement a certain visit method, fall
   // back on superclass.
-#define TYPE(CLASS, PARENT) RetTy Visit##CLASS##Type(CLASS##Type *T) {       \
+#define TYPE(CLASS, PARENT) RetTy Visit##CLASS##Type(const CLASS##Type *T) { \
   DISPATCH(PARENT);                                                          \
 }
 #include "clang/AST/TypeNodes.def"
 
   // Base case, ignore it. :)
-  RetTy VisitType(Type*) { return RetTy(); }
+  RetTy VisitType(const Type*) { return RetTy(); }
 };
 
 #undef DISPATCH

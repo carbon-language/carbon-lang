@@ -368,7 +368,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
   std::string Proto = D->getNameInfo().getAsString();
 
   QualType Ty = D->getType();
-  while (ParenType* PT = dyn_cast<ParenType>(Ty)) {
+  while (const ParenType *PT = dyn_cast<ParenType>(Ty)) {
     Proto = '(' + Proto + ')';
     Ty = PT->getInnerType();
   }

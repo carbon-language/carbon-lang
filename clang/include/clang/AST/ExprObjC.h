@@ -245,7 +245,7 @@ private:
   /// the location of the 'super' keyword.  When it's an interface,
   /// this is that interface.
   SourceLocation ReceiverLoc;
-  llvm::PointerUnion3<Stmt*, Type*, ObjCInterfaceDecl*> Receiver;
+  llvm::PointerUnion3<Stmt*, const Type*, ObjCInterfaceDecl*> Receiver;
   
 public:
   ObjCPropertyRefExpr(ObjCPropertyDecl *PD, QualType t,
@@ -340,13 +340,13 @@ public:
   
   SourceLocation getReceiverLocation() const { return ReceiverLoc; }
   QualType getSuperReceiverType() const { 
-    return QualType(Receiver.get<Type*>(), 0); 
+    return QualType(Receiver.get<const Type*>(), 0); 
   }
   ObjCInterfaceDecl *getClassReceiver() const {
     return Receiver.get<ObjCInterfaceDecl*>();
   }
   bool isObjectReceiver() const { return Receiver.is<Stmt*>(); }
-  bool isSuperReceiver() const { return Receiver.is<Type*>(); }
+  bool isSuperReceiver() const { return Receiver.is<const Type*>(); }
   bool isClassReceiver() const { return Receiver.is<ObjCInterfaceDecl*>(); }
 
   virtual SourceRange getSourceRange() const {

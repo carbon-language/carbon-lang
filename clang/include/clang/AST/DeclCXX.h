@@ -1220,7 +1220,6 @@ public:
   /// If this is a base class initializer, returns the type of the base class.
   /// Otherwise, returns NULL.
   const Type *getBaseClass() const;
-  Type *getBaseClass();
 
   /// Returns whether the base is virtual or not.
   bool isBaseVirtual() const {

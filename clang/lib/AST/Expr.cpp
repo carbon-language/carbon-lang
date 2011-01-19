@@ -2768,7 +2768,7 @@ Stmt::child_iterator SizeOfAlignOfExpr::child_begin() {
   // size expression of the VLA needs to be treated as an executable expression.
   // Why isn't this weirdness documented better in StmtIterator?
   if (isArgumentType()) {
-    if (VariableArrayType* T = dyn_cast<VariableArrayType>(
+    if (const VariableArrayType* T = dyn_cast<VariableArrayType>(
                                    getArgumentType().getTypePtr()))
       return child_iterator(T);
     return child_iterator();

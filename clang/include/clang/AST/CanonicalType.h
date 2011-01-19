@@ -68,12 +68,12 @@ public:
   /// canonical type.
   ///
   /// The underlying pointer must not be NULL.
-  T *getTypePtr() const { return cast<T>(Stored.getTypePtr()); }
+  const T *getTypePtr() const { return cast<T>(Stored.getTypePtr()); }
 
   /// \brief Retrieve the underlying type pointer, which refers to a
   /// canonical type, or NULL.
   ///
-  T *getTypePtrOrNull() const { 
+  const T *getTypePtrOrNull() const { 
     return cast_or_null<T>(Stored.getTypePtrOrNull()); 
   }
 
@@ -86,6 +86,8 @@ public:
   bool isNull() const {
     return Stored.isNull();
   }
+
+  SplitQualType split() const { return Stored.split(); }
 
   /// \brief Retrieve a canonical type pointer with a different static type,
   /// upcasting or downcasting as needed.
@@ -225,7 +227,7 @@ protected:
 
 public:
   /// \brief Retrieve the pointer to the underlying Type
-  T* getTypePtr() const { return Stored.getTypePtr(); }
+  const T *getTypePtr() const { return Stored.getTypePtr(); }
 
   /// \brief Implicit conversion to the underlying pointer.
   ///
@@ -345,7 +347,7 @@ namespace llvm {
 /// to return smart pointer (proxies?).
 template<typename T>
 struct simplify_type<const ::clang::CanQual<T> > {
-  typedef T* SimpleType;
+  typedef const T *SimpleType;
   static SimpleType getSimplifiedValue(const ::clang::CanQual<T> &Val) {
     return Val.getTypePtr();
   }

@@ -419,9 +419,9 @@ private:
 
 // FIXME: Add support for dependent-sized array types in C++?
 // Does it even make sense to build a CFG for an uninstantiated template?
-static VariableArrayType* FindVA(Type* t) {
-  while (ArrayType* vt = dyn_cast<ArrayType>(t)) {
-    if (VariableArrayType* vat = dyn_cast<VariableArrayType>(vt))
+static const VariableArrayType *FindVA(const Type *t) {
+  while (const ArrayType *vt = dyn_cast<ArrayType>(t)) {
+    if (const VariableArrayType *vat = dyn_cast<VariableArrayType>(vt))
       if (vat->getSizeExpr())
         return vat;
 
@@ -1309,8 +1309,8 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt* DS) {
   }
 
   // If the type of VD is a VLA, then we must process its size expressions.
-  for (VariableArrayType* VA = FindVA(VD->getType().getTypePtr()); VA != 0;
-       VA = FindVA(VA->getElementType().getTypePtr()))
+  for (const VariableArrayType* VA = FindVA(VD->getType().getTypePtr());
+       VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
     Block = addStmt(VA->getSizeExpr());
 
   // Remove variable from local scope.
@@ -2100,7 +2100,7 @@ CFGBlock *CFGBuilder::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E,
 
   // VLA types have expressions that must be evaluated.
   if (E->isArgumentType()) {
-    for (VariableArrayType* VA = FindVA(E->getArgumentType().getTypePtr());
+    for (const VariableArrayType *VA =FindVA(E->getArgumentType().getTypePtr());
          VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
       addStmt(VA->getSizeExpr());
   }

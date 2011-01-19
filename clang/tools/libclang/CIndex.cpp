@@ -1172,7 +1172,7 @@ bool CursorVisitor::VisitNestedNameSpecifier(NestedNameSpecifier *NNS,
     // If the type has a form where we know that the beginning of the source
     // range matches up with a reference cursor. Visit the appropriate reference
     // cursor.
-    Type *T = NNS->getAsType();
+    const Type *T = NNS->getAsType();
     if (const TypedefType *Typedef = dyn_cast<TypedefType>(T))
       return Visit(MakeCursorTypeRef(Typedef->getDecl(), Range.getBegin(), TU));
     if (const TagType *Tag = dyn_cast<TagType>(T))

@@ -801,7 +801,7 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
 
   // Strip off typedefs from the ArrayRegion's ValueType.
   QualType T = ArrayR->getValueType().getDesugaredType(Ctx);
-  ArrayType *AT = cast<ArrayType>(T);
+  const ArrayType *AT = cast<ArrayType>(T);
   T = AT->getElementType();
 
   NonLoc ZeroIdx = svalBuilder.makeZeroArrayIndex();

@@ -51,7 +51,7 @@ namespace clang {
     
     /// \brief Mapping from the already-imported types in the "from" context
     /// to the corresponding types in the "to" context.
-    llvm::DenseMap<Type *, Type *> ImportedTypes;
+    llvm::DenseMap<const Type *, const Type *> ImportedTypes;
     
     /// \brief Mapping from the already-imported declarations in the "from"
     /// context to the corresponding declarations in the "to" context.

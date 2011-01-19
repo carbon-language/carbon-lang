@@ -437,7 +437,7 @@ public:
 class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
-  mutable Type *TypeForDecl;
+  mutable const Type *TypeForDecl;
   friend class ASTContext;
 
   /// Class's super class.
@@ -665,8 +665,8 @@ public:
                                bool RHSIsQualifiedID = false);
 
   // Low-level accessor
-  Type *getTypeForDecl() const { return TypeForDecl; }
-  void setTypeForDecl(Type *TD) const { TypeForDecl = TD; }
+  const Type *getTypeForDecl() const { return TypeForDecl; }
+  void setTypeForDecl(const Type *TD) const { TypeForDecl = TD; }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }

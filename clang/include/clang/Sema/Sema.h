@@ -1007,8 +1007,8 @@ public:
                            QualType& ConvertedType, bool &IncompatibleObjC);
   bool isObjCPointerConversion(QualType FromType, QualType ToType,
                                QualType& ConvertedType, bool &IncompatibleObjC);
-  bool FunctionArgTypesAreEqual (FunctionProtoType* OldType, 
-                                 FunctionProtoType* NewType);
+  bool FunctionArgTypesAreEqual(const FunctionProtoType *OldType, 
+                                const FunctionProtoType *NewType);
   
   bool CheckPointerConversion(Expr *From, QualType ToType,
                               CastKind &Kind,

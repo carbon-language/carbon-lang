@@ -85,7 +85,7 @@ const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
   T = Context.getCanonicalType(T);
 
   // See if type is already cached.
-  llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
+  llvm::DenseMap<const Type *, llvm::PATypeHolder>::iterator
     I = TypeCache.find(T.getTypePtr());
   // If type is found in map and this is not a definition for a opaque
   // place holder type then use it. Otherwise, convert type T.

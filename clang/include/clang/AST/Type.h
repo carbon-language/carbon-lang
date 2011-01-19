@@ -479,7 +479,7 @@ public:
   ///
   /// This function requires that the type not be NULL. If the type might be
   /// NULL, use the (slightly less efficient) \c getTypePtrOrNull().
-  Type *getTypePtr() const {
+  const Type *getTypePtr() const {
     assert(!isNull() && "Cannot retrieve a NULL type pointer");
     uintptr_t CommonPtrVal
       = reinterpret_cast<uintptr_t>(Value.getOpaqueValue());
@@ -489,12 +489,12 @@ public:
     return const_cast<Type *>(CommonPtr->BaseType);
   }
   
-  Type *getTypePtrOrNull() const {
+  const Type *getTypePtrOrNull() const {
     uintptr_t TypePtrPtrVal
       = reinterpret_cast<uintptr_t>(Value.getOpaqueValue());
     TypePtrPtrVal &= ~(uintptr_t)((1 << TypeAlignmentInBits) - 1);
     Type **TypePtrPtr = reinterpret_cast<Type**>(TypePtrPtrVal);
-    return TypePtrPtr? *TypePtrPtr : 0;
+    return TypePtrPtr ? *TypePtrPtr : 0;
   }
 
   /// Divides a QualType into its unqualified type and a set of local
@@ -511,17 +511,17 @@ public:
   }
 
   void *getAsOpaquePtr() const { return Value.getOpaqueValue(); }
-  static QualType getFromOpaquePtr(void *Ptr) {
+  static QualType getFromOpaquePtr(const void *Ptr) {
     QualType T;
-    T.Value.setFromOpaqueValue(Ptr);
+    T.Value.setFromOpaqueValue(const_cast<void*>(Ptr));
     return T;
   }
 
-  Type &operator*() const {
+  const Type &operator*() const {
     return *getTypePtr();
   }
 
-  Type *operator->() const {
+  const Type *operator->() const {
     return getTypePtr();
   }
 
@@ -805,7 +805,7 @@ namespace llvm {
 /// Implement simplify_type for QualType, so that we can dyn_cast from QualType
 /// to a specific Type class.
 template<> struct simplify_type<const ::clang::QualType> {
-  typedef ::clang::Type* SimpleType;
+  typedef const ::clang::Type *SimpleType;
   static SimpleType getSimplifiedValue(const ::clang::QualType &Val) {
     return Val.getTypePtr();
   }
@@ -3830,8 +3830,8 @@ inline bool QualType::isCanonicalAsParam() const {
   if ((*this)->isPointerType()) {
     QualType BaseType = (*this)->getAs<PointerType>()->getPointeeType();
     if (isa<VariableArrayType>(BaseType)) {
-      ArrayType *AT = dyn_cast<ArrayType>(BaseType);
-      VariableArrayType *VAT = cast<VariableArrayType>(AT);
+      const ArrayType *AT = dyn_cast<ArrayType>(BaseType);
+      const VariableArrayType *VAT = cast<VariableArrayType>(AT);
       if (VAT->getSizeExpr())
         T = BaseType.getTypePtr();
     }

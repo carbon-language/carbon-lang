@@ -1068,13 +1068,6 @@ TypeLoc CXXCtorInitializer::getBaseClassLoc() const {
     return TypeLoc();
 }
 
-Type *CXXCtorInitializer::getBaseClass() {
-  if (isBaseInitializer())
-    return Initializee.get<TypeSourceInfo*>()->getType().getTypePtr();
-  else
-    return 0;
-}
-
 const Type *CXXCtorInitializer::getBaseClass() const {
   if (isBaseInitializer())
     return Initializee.get<TypeSourceInfo*>()->getType().getTypePtr();

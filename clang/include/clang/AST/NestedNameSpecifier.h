@@ -111,7 +111,7 @@ public:
   /// \brief Builds a nested name specifier that names a type.
   static NestedNameSpecifier *Create(const ASTContext &Context,
                                      NestedNameSpecifier *Prefix,
-                                     bool Template, Type *T);
+                                     bool Template, const Type *T);
 
   /// \brief Builds a specifier that consists of just an identifier.
   ///
@@ -161,10 +161,10 @@ public:
   }
 
   /// \brief Retrieve the type stored in this nested name specifier.
-  Type *getAsType() const {
+  const Type *getAsType() const {
     if (Prefix.getInt() == TypeSpec ||
         Prefix.getInt() == TypeSpecWithTemplate)
-      return (Type *)Specifier;
+      return (const Type *)Specifier;
 
     return 0;
   }

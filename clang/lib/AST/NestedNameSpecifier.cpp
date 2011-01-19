@@ -68,12 +68,12 @@ NestedNameSpecifier::Create(const ASTContext &Context,
 NestedNameSpecifier *
 NestedNameSpecifier::Create(const ASTContext &Context,
                             NestedNameSpecifier *Prefix,
-                            bool Template, Type *T) {
+                            bool Template, const Type *T) {
   assert(T && "Type cannot be NULL");
   NestedNameSpecifier Mockup;
   Mockup.Prefix.setPointer(Prefix);
   Mockup.Prefix.setInt(Template? TypeSpecWithTemplate : TypeSpec);
-  Mockup.Specifier = T;
+  Mockup.Specifier = const_cast<Type*>(T);
   return FindOrInsert(Context, Mockup);
 }
 
@@ -159,7 +159,7 @@ NestedNameSpecifier::print(llvm::raw_ostream &OS,
 
   case TypeSpec: {
     std::string TypeStr;
-    Type *T = getAsType();
+    const Type *T = getAsType();
 
     PrintingPolicy InnerPolicy(Policy);
     InnerPolicy.SuppressScope = true;

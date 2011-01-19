@@ -1850,7 +1850,7 @@ class TypeDecl : public NamedDecl {
   /// this TypeDecl.  It is a cache maintained by
   /// ASTContext::getTypedefType, ASTContext::getTagDeclType, and
   /// ASTContext::getTemplateTypeParmType, and TemplateTypeParmDecl.
-  mutable Type *TypeForDecl;
+  mutable const Type *TypeForDecl;
   friend class ASTContext;
   friend class DeclContext;
   friend class TagDecl;
@@ -1864,8 +1864,8 @@ protected:
 
 public:
   // Low-level accessor
-  Type *getTypeForDecl() const { return TypeForDecl; }
-  void setTypeForDecl(Type *TD) { TypeForDecl = TD; }
+  const Type *getTypeForDecl() const { return TypeForDecl; }
+  void setTypeForDecl(const Type *TD) { TypeForDecl = TD; }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

@@ -5192,7 +5192,7 @@ static bool ScopeSpecifierHasTemplateId(const CXXScopeSpec &SS) {
   // C++98 has the same restriction, just worded differently.
   for (NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
        NNS; NNS = NNS->getPrefix())
-    if (Type *T = NNS->getAsType())
+    if (const Type *T = NNS->getAsType())
       if (isa<TemplateSpecializationType>(T))
         return true;
 
@@ -5867,7 +5867,7 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
 
   // TODO: it's really silly that we make a template specialization
   // type earlier only to drop it again here.
-  TemplateSpecializationType *TST = cast<TemplateSpecializationType>(T);
+  const TemplateSpecializationType *TST = cast<TemplateSpecializationType>(T);
   DependentTemplateName *DTN =
     TST->getTemplateName().getAsDependentTemplateName();
   assert(DTN && "dependent template has non-dependent name?");

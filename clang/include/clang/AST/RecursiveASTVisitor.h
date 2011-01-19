@@ -442,7 +442,8 @@ bool RecursiveASTVisitor<Derived>::TraverseType(QualType T) {
   switch (T->getTypeClass()) {
 #define ABSTRACT_TYPE(CLASS, BASE)
 #define TYPE(CLASS, BASE) \
-  case Type::CLASS: DISPATCH(CLASS##Type, CLASS##Type, T.getTypePtr());
+  case Type::CLASS: DISPATCH(CLASS##Type, CLASS##Type, \
+                             const_cast<Type*>(T.getTypePtr()));
 #include "clang/AST/TypeNodes.def"
   }
 
@@ -781,7 +782,7 @@ DEF_TRAVERSE_TYPE(ObjCObjectPointerType, {
   template<typename Derived>                                            \
   bool RecursiveASTVisitor<Derived>::Traverse##TYPE##Loc(TYPE##Loc TL) { \
     if (getDerived().shouldWalkTypesOfTypeLocs())                       \
-      TRY_TO(WalkUpFrom##TYPE(TL.getTypePtr()));                        \
+      TRY_TO(WalkUpFrom##TYPE(const_cast<TYPE*>(TL.getTypePtr())));     \
     TRY_TO(WalkUpFrom##TYPE##Loc(TL));                                  \
     { CODE; }                                                           \
     return true;                                                        \
@@ -893,7 +894,7 @@ DEF_TRAVERSE_TYPELOC(FunctionNoProtoType, {
 DEF_TRAVERSE_TYPELOC(FunctionProtoType, {
     TRY_TO(TraverseTypeLoc(TL.getResultLoc()));
 
-    FunctionProtoType *T = TL.getTypePtr();
+    const FunctionProtoType *T = TL.getTypePtr();
 
     for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I) {
       TRY_TO(TraverseDecl(TL.getArg(I)));

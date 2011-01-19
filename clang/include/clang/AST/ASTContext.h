@@ -1092,6 +1092,7 @@ public:
   /// to be free of any of these, allowing two canonical types to be compared
   /// for exact equality with a simple pointer comparison.
   CanQualType getCanonicalType(QualType T) const;
+
   const Type *getCanonicalType(const Type *T) const {
     return T->getCanonicalTypeInternal().getTypePtr();
   }
@@ -1281,7 +1282,7 @@ public:
 
 private:
   // Helper for integer ordering
-  unsigned getIntegerRank(Type* T) const;
+  unsigned getIntegerRank(const Type *T) const;
 
 public:
 

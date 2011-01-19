@@ -29,7 +29,7 @@ public:
   TypeWriter(DocumentXML& doc) : Doc(doc) {}
 
 #define NODE_XML( CLASS, NAME )          \
-  void Visit##CLASS(CLASS* T) {          \
+  void Visit##CLASS(const CLASS* T) {          \
     Doc.addSubNode(NAME);
 
 #define ID_ATTRIBUTE_XML                // done by the Document class itself
@@ -82,7 +82,7 @@ public:
   TypeAdder(DocumentXML& doc) : Doc(doc) {}
 
 #define NODE_XML( CLASS, NAME )          \
-  void Visit##CLASS(CLASS* T)            \
+  void Visit##CLASS(const CLASS* T) \
   {
 
 #define ID_ATTRIBUTE_XML
@@ -101,7 +101,7 @@ public:
 
 //---------------------------------------------------------
 void DocumentXML::addParentTypes(const Type* pType) {
-  TypeAdder(*this).Visit(const_cast<Type*>(pType));
+  TypeAdder(*this).Visit(pType);
 }
 
 //---------------------------------------------------------

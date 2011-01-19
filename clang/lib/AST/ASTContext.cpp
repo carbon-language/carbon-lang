@@ -573,7 +573,7 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
       unsigned ArrayAlign = Target.getLargeArrayAlign();
       if (isa<VariableArrayType>(T) && MinWidth != 0)
         Align = std::max(Align, ArrayAlign);
-      if (ConstantArrayType *CT = dyn_cast<ConstantArrayType>(T)) {
+      if (const ConstantArrayType *CT = dyn_cast<ConstantArrayType>(T)) {
         unsigned Size = getTypeSize(CT);
         if (MinWidth != 0 && MinWidth <= Size)
           Align = std::max(Align, ArrayAlign);
@@ -1661,7 +1661,7 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
 /// the specified element type and size. VectorType must be a built-in type.
 QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
                                    VectorType::VectorKind VecKind) const {
-  BuiltinType *BaseType;
+  const BuiltinType *BaseType;
 
   BaseType = dyn_cast<BuiltinType>(getCanonicalType(vecType).getTypePtr());
   assert(BaseType != 0 && "getVectorType(): Expecting a built-in type");
@@ -1695,7 +1695,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
 /// the specified element type and size. VectorType must be a built-in type.
 QualType
 ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) const {
-  BuiltinType *baseType;
+  const BuiltinType *baseType;
 
   baseType = dyn_cast<BuiltinType>(getCanonicalType(vecType).getTypePtr());
   assert(baseType != 0 && "getExtVectorType(): Expecting a built-in type");
@@ -1893,9 +1893,10 @@ QualType ASTContext::getInjectedClassNameType(CXXRecordDecl *Decl,
     Decl->TypeForDecl = PrevDecl->TypeForDecl;
     assert(isa<InjectedClassNameType>(Decl->TypeForDecl));
   } else {
-    Decl->TypeForDecl =
+    Type *newType =
       new (*this, TypeAlignment) InjectedClassNameType(Decl, TST);
-    Types.push_back(Decl->TypeForDecl);
+    Decl->TypeForDecl = newType;
+    Types.push_back(newType);
   }
   return QualType(Decl->TypeForDecl, 0);
 }
@@ -1923,11 +1924,12 @@ QualType ASTContext::getTypeDeclTypeSlow(const TypeDecl *Decl) const {
     return getEnumType(Enum);
   } else if (const UnresolvedUsingTypenameDecl *Using =
                dyn_cast<UnresolvedUsingTypenameDecl>(Decl)) {
-    Decl->TypeForDecl = new (*this, TypeAlignment) UnresolvedUsingType(Using);
+    Type *newType = new (*this, TypeAlignment) UnresolvedUsingType(Using);
+    Decl->TypeForDecl = newType;
+    Types.push_back(newType);
   } else
     llvm_unreachable("TypeDecl without a type?");
 
-  Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }
 
@@ -1939,10 +1941,11 @@ ASTContext::getTypedefType(const TypedefDecl *Decl, QualType Canonical) const {
 
   if (Canonical.isNull())
     Canonical = getCanonicalType(Decl->getUnderlyingType());
-  Decl->TypeForDecl = new(*this, TypeAlignment)
+  TypedefType *newType = new(*this, TypeAlignment)
     TypedefType(Type::Typedef, Decl, Canonical);
-  Types.push_back(Decl->TypeForDecl);
-  return QualType(Decl->TypeForDecl, 0);
+  Decl->TypeForDecl = newType;
+  Types.push_back(newType);
+  return QualType(newType, 0);
 }
 
 QualType ASTContext::getRecordType(const RecordDecl *Decl) const {
@@ -1952,9 +1955,10 @@ QualType ASTContext::getRecordType(const RecordDecl *Decl) const {
     if (PrevDecl->TypeForDecl)
       return QualType(Decl->TypeForDecl = PrevDecl->TypeForDecl, 0); 
 
-  Decl->TypeForDecl = new (*this, TypeAlignment) RecordType(Decl);
-  Types.push_back(Decl->TypeForDecl);
-  return QualType(Decl->TypeForDecl, 0);
+  RecordType *newType = new (*this, TypeAlignment) RecordType(Decl);
+  Decl->TypeForDecl = newType;
+  Types.push_back(newType);
+  return QualType(newType, 0);
 }
 
 QualType ASTContext::getEnumType(const EnumDecl *Decl) const {
@@ -1964,9 +1968,10 @@ QualType ASTContext::getEnumType(const EnumDecl *Decl) const {
     if (PrevDecl->TypeForDecl)
       return QualType(Decl->TypeForDecl = PrevDecl->TypeForDecl, 0); 
 
-  Decl->TypeForDecl = new (*this, TypeAlignment) EnumType(Decl);
-  Types.push_back(Decl->TypeForDecl);
-  return QualType(Decl->TypeForDecl, 0);
+  EnumType *newType = new (*this, TypeAlignment) EnumType(Decl);
+  Decl->TypeForDecl = newType;
+  Types.push_back(newType);
+  return QualType(newType, 0);
 }
 
 QualType ASTContext::getAttributedType(AttributedType::Kind attrKind,
@@ -2667,7 +2672,7 @@ CanQualType ASTContext::getCanonicalType(QualType T) const {
   // If the type qualifiers are on an array type, get the canonical
   // type of the array with the qualifiers applied to the element
   // type.
-  ArrayType *AT = dyn_cast<ArrayType>(CanType);
+  const ArrayType *AT = dyn_cast<ArrayType>(CanType);
   if (!AT)
     return CanQualType::CreateUnsafe(getQualifiedType(CanType, Quals));
 
@@ -2676,17 +2681,17 @@ CanQualType ASTContext::getCanonicalType(QualType T) const {
   QualType NewEltTy = getQualifiedType(AT->getElementType(), Quals);
   NewEltTy = getCanonicalType(NewEltTy);
 
-  if (ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
     return CanQualType::CreateUnsafe(
              getConstantArrayType(NewEltTy, CAT->getSize(),
                                   CAT->getSizeModifier(),
                                   CAT->getIndexTypeCVRQualifiers()));
-  if (IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT))
+  if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT))
     return CanQualType::CreateUnsafe(
              getIncompleteArrayType(NewEltTy, IAT->getSizeModifier(),
                                     IAT->getIndexTypeCVRQualifiers()));
 
-  if (DependentSizedArrayType *DSAT = dyn_cast<DependentSizedArrayType>(AT))
+  if (const DependentSizedArrayType *DSAT = dyn_cast<DependentSizedArrayType>(AT))
     return CanQualType::CreateUnsafe(
              getDependentSizedArrayType(NewEltTy,
                                         DSAT->getSizeExpr(),
@@ -2694,7 +2699,7 @@ CanQualType ASTContext::getCanonicalType(QualType T) const {
                                         DSAT->getIndexTypeCVRQualifiers(),
                         DSAT->getBracketsRange())->getCanonicalTypeInternal());
 
-  VariableArrayType *VAT = cast<VariableArrayType>(AT);
+  const VariableArrayType *VAT = cast<VariableArrayType>(AT);
   return CanQualType::CreateUnsafe(getVariableArrayType(NewEltTy,
                                                         VAT->getSizeExpr(),
                                                         VAT->getSizeModifier(),
@@ -3134,9 +3139,9 @@ int ASTContext::getFloatingTypeOrder(QualType LHS, QualType RHS) const {
 /// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1). This
 /// routine will assert if passed a built-in type that isn't an integer or enum,
 /// or if it is not canonicalized.
-unsigned ASTContext::getIntegerRank(Type *T) const {
+unsigned ASTContext::getIntegerRank(const Type *T) const {
   assert(T->isCanonicalUnqualified() && "T should be canonicalized");
-  if (EnumType* ET = dyn_cast<EnumType>(T))
+  if (const EnumType* ET = dyn_cast<EnumType>(T))
     T = ET->getDecl()->getPromotionType().getTypePtr();
 
   if (T->isSpecificBuiltinType(BuiltinType::WChar_S) ||
@@ -3230,8 +3235,8 @@ QualType ASTContext::getPromotedIntegerType(QualType Promotable) const {
 /// C99 6.3.1.8p1.  If LHS > RHS, return 1.  If LHS == RHS, return 0. If
 /// LHS < RHS, return -1.
 int ASTContext::getIntegerTypeOrder(QualType LHS, QualType RHS) const {
-  Type *LHSC = getCanonicalType(LHS).getTypePtr();
-  Type *RHSC = getCanonicalType(RHS).getTypePtr();
+  const Type *LHSC = getCanonicalType(LHS).getTypePtr();
+  const Type *RHSC = getCanonicalType(RHS).getTypePtr();
   if (LHSC == RHSC) return 0;
 
   bool LHSUnsigned = LHSC->isUnsignedIntegerType();
@@ -4505,7 +4510,7 @@ CanQualType ASTContext::getFromTargetType(unsigned Type) const {
 /// FIXME: Move to Type.
 ///
 bool ASTContext::isObjCNSObjectType(QualType Ty) const {
-  if (TypedefType *TDT = dyn_cast<TypedefType>(Ty)) {
+  if (const TypedefType *TDT = dyn_cast<TypedefType>(Ty)) {
     if (TypedefDecl *TD = TDT->getDecl())
       if (TD->getAttr<ObjCNSObjectAttr>())
         return true;
@@ -5513,7 +5518,7 @@ QualType ASTContext::mergeObjCGCQualifiers(QualType LHS, QualType RHS) {
 //===----------------------------------------------------------------------===//
 
 unsigned ASTContext::getIntWidth(QualType T) const {
-  if (EnumType *ET = dyn_cast<EnumType>(T))
+  if (const EnumType *ET = dyn_cast<EnumType>(T))
     T = ET->getDecl()->getIntegerType();
   if (T->isBooleanType())
     return 1;

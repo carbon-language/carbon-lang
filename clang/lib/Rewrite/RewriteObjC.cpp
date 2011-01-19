@@ -472,7 +472,7 @@ namespace {
 
 void RewriteObjC::RewriteBlocksInFunctionProtoType(QualType funcType,
                                                    NamedDecl *D) {
-  if (FunctionProtoType *fproto
+  if (const FunctionProtoType *fproto
       = dyn_cast<FunctionProtoType>(funcType.IgnoreParens())) {
     for (FunctionProtoType::arg_type_iterator I = fproto->arg_type_begin(),
          E = fproto->arg_type_end(); I && (I != E); ++I)
@@ -1410,7 +1410,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
   const Expr *BaseExpr = IV->getBase();
   if (CurMethodDef) {
     if (BaseExpr->getType()->isObjCObjectPointerType()) {
-      ObjCInterfaceType *iFaceDecl =
+      const ObjCInterfaceType *iFaceDecl =
         dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
       assert(iFaceDecl && "RewriteObjCIvarRefExpr - iFaceDecl is null");
       // lookup which class implements the instance variable.
@@ -1457,7 +1457,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
     // Explicit ivar refs need to have a cast inserted.
     // FIXME: consider sharing some of this code with the code above.
     if (BaseExpr->getType()->isObjCObjectPointerType()) {
-      ObjCInterfaceType *iFaceDecl =
+      const ObjCInterfaceType *iFaceDecl =
         dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
       // lookup which class implements the instance variable.
       ObjCInterfaceDecl *clsDeclared = 0;

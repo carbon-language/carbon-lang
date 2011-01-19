@@ -381,7 +381,8 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
 
   // Do the canonicalization out here because parameter types can
   // undergo additional canonicalization (e.g. array decay).
-  FunctionType *FT = cast<FunctionType>(Context.getASTContext()
+  const FunctionType *FT
+    = cast<FunctionType>(Context.getASTContext()
                                           .getCanonicalType(FD->getType()));
 
   mangleBareFunctionType(FT, MangleReturnType);

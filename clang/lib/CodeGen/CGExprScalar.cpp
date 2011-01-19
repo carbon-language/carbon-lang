@@ -2065,8 +2065,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
             *SecondVecArg = RHS;
 
       QualType ElTy = LHSTy->getAs<VectorType>()->getElementType();
-      Type *Ty = CGF.getContext().getCanonicalType(ElTy).getTypePtr();
-      const BuiltinType *BTy = dyn_cast<BuiltinType>(Ty);
+      const BuiltinType *BTy = ElTy->getAs<BuiltinType>();
       BuiltinType::Kind ElementKind = BTy->getKind();
 
       switch(E->getOpcode()) {
