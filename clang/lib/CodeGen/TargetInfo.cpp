@@ -2079,13 +2079,13 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty) const {
   uint64_t Size = getContext().getTypeSize(Ty);
 
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    if (hasNonTrivialDestructorOrCopyConstructor(RT)
-        || RT->getDecl()->hasFlexibleArrayMember())
+    if (hasNonTrivialDestructorOrCopyConstructor(RT) ||
+        RT->getDecl()->hasFlexibleArrayMember())
       return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
     // FIXME: mingw64-gcc emits 128-bit struct as i128
-    if (Size <= 128
-        && (Size & (Size - 1)) == 0)
+    if (Size <= 128 &&
+        (Size & (Size - 1)) == 0)
       return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
                                                           Size));
 
@@ -2103,8 +2103,6 @@ void WinX86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   QualType RetTy = FI.getReturnType();
   FI.getReturnInfo() = classify(RetTy);
 
-  // AMD64-ABI 3.2.3p3: Once arguments are classified, the registers
-  // get assigned (in left-to-right order) for passing as follows...
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it)
     it->info = classify(it->type);
