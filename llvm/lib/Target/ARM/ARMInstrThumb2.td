@@ -3351,8 +3351,8 @@ class t2MovRCopro<string opc, bit direction>
   let Inst{19-16} = CRn;
 }
 
-def t2MCR : t2MovRCopro<"mcr2", 0 /* from ARM core register to coprocessor */>;
-def t2MRC : t2MovRCopro<"mrc2", 1 /* from coprocessor to ARM core register */>;
+def t2MCR2 : t2MovRCopro<"mcr2", 0 /* from ARM core register to coprocessor */>;
+def t2MRC2 : t2MovRCopro<"mrc2", 1 /* from coprocessor to ARM core register */>;
 
 class t2MovRRCopro<string opc, bit direction>
   : T2Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
@@ -3375,8 +3375,10 @@ class t2MovRRCopro<string opc, bit direction>
   let Inst{3-0}   = CRm;
 }
 
-def t2MCRR : t2MovRRCopro<"mcrr2",0/* from ARM core register to coprocessor */>;
-def t2MRRC : t2MovRRCopro<"mrrc2",1/* from coprocessor to ARM core register */>;
+def t2MCRR2 : t2MovRRCopro<"mcrr2",
+                           0 /* from ARM core register to coprocessor */>;
+def t2MRRC2 : t2MovRRCopro<"mrrc2",
+                           1 /* from coprocessor to ARM core register */>;
 
 //===----------------------------------------------------------------------===//
 // Other Coprocessor Instructions.  For disassembly only.
