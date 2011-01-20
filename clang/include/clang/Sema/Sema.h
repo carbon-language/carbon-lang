@@ -2724,6 +2724,9 @@ public:
 
   bool CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange);
 
+  /// CheckOverrideControl - Check C++0x override control semantics.
+  void CheckOverrideControl(const Decl *D);
+
   //===--------------------------------------------------------------------===//
   // C++ Access Control
   //

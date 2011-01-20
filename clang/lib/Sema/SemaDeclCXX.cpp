@@ -853,8 +853,7 @@ Decl *Sema::ActOnAccessSpecifier(AccessSpecifier Access,
 }
 
 /// CheckOverrideControl - Check C++0x override control semantics.
-static void 
-CheckOverrideControl(Sema& SemaRef, const Decl *D) {
+void Sema::CheckOverrideControl(const Decl *D) {
   const CXXMethodDecl *MD = llvm::dyn_cast<CXXMethodDecl>(D);
   if (!MD || !MD->isVirtual())
     return;
@@ -866,7 +865,7 @@ CheckOverrideControl(Sema& SemaRef, const Decl *D) {
   bool HasOverriddenMethods = 
     MD->begin_overridden_methods() != MD->end_overridden_methods();
   if (MD->isMarkedOverride() && !HasOverriddenMethods) {
-    SemaRef.Diag(MD->getLocation(), 
+    Diag(MD->getLocation(), 
                  diag::err_function_marked_override_not_overriding)
       << MD->getDeclName();
     return;
@@ -1029,7 +1028,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       MD->setIsMarkedFinal(true);
   }
 
-  CheckOverrideControl(*this, Member);
+  CheckOverrideControl(Member);
 
   assert((Name || isInstField) && "No identifier for non-field ?");
 
