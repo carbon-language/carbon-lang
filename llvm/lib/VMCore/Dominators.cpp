@@ -44,7 +44,7 @@ VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),
 //===----------------------------------------------------------------------===//
 //
 // Provide public access to DominatorTree information.  Implementation details
-// can be found in DominatorCalculation.h.
+// can be found in DominatorInternals.h.
 //
 //===----------------------------------------------------------------------===//
 
