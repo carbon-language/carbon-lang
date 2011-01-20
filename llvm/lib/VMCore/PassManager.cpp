@@ -500,6 +500,10 @@ PMTopLevelManager::PMTopLevelManager(PMDataManager *PMDM) {
 void
 PMTopLevelManager::setLastUser(const SmallVectorImpl<Pass *> &AnalysisPasses,
                                Pass *P) {
+  unsigned PDepth = 0;
+  if (P->getResolver())
+    PDepth = P->getResolver()->getPMDataManager().getDepth();
+
   for (SmallVectorImpl<Pass *>::const_iterator I = AnalysisPasses.begin(),
          E = AnalysisPasses.end(); I != E; ++I) {
     Pass *AP = *I;
@@ -508,13 +512,40 @@ PMTopLevelManager::setLastUser(const SmallVectorImpl<Pass *> &AnalysisPasses,
     if (P == AP)
       continue;
 
+    // Update the last users of passes that are required transitive by AP.
+    AnalysisUsage *AnUsage = findAnalysisUsage(AP);
+    const AnalysisUsage::VectorType &IDs = AnUsage->getRequiredTransitiveSet();
+    SmallVector<Pass *, 12> LastUses;
+    SmallVector<Pass *, 12> LastPMUses;
+    for (AnalysisUsage::VectorType::const_iterator I = IDs.begin(),
+         E = IDs.end(); I != E; ++I) {
+      Pass *AnalysisPass = findAnalysisPass(*I);
+      assert(AnalysisPass && "Expected analysis pass to exist.");
+      AnalysisResolver *AR = AnalysisPass->getResolver();
+      assert(AR && "Expected analysis resolver to exist.");
+      unsigned APDepth = AR->getPMDataManager().getDepth();
+
+      if (PDepth == APDepth)
+        LastUses.push_back(AnalysisPass);
+      else if (PDepth > APDepth)
+        LastPMUses.push_back(AnalysisPass);
+    }
+
+    setLastUser(LastUses, P);
+
+    // If this pass has a corresponding pass manager, push higher level
+    // analysis to this pass manager.
+    if (P->getResolver())
+      setLastUser(LastPMUses, P->getResolver()->getPMDataManager().getAsPass());
+
+
     // If AP is the last user of other passes then make P last user of
     // such passes.
     for (DenseMap<Pass *, Pass *>::iterator LUI = LastUser.begin(),
            LUE = LastUser.end(); LUI != LUE; ++LUI) {
       if (LUI->second == AP)
         // DenseMap iterator is not invalidated here because
-        // this is just updating exisitng entry.
+        // this is just updating existing entries.
         LastUser[LUI->first] = P;
     }
   }
