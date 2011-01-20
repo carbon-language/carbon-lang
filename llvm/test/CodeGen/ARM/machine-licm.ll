@@ -1,7 +1,9 @@
 ; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s -check-prefix=THUMB
 ; RUN: llc < %s -mtriple=arm-apple-darwin -relocation-model=pic -disable-fp-elim   | FileCheck %s -check-prefix=ARM
+; RUN: llc < %s -mtriple=armv7-apple-darwin10 -relocation-model=pic -disable-fp-elim -arm-darwin-use-movt | FileCheck %s -check-prefix=MOVT
 ; rdar://7353541
 ; rdar://7354376
+; rdar://8887598
 
 ; The generated code is no where near ideal. It's not recognizing the two
 ; constantpool entries being loaded can be merged into one.
@@ -16,6 +18,13 @@ entry:
 ; ARM: LPC0_0:
 ; ARM: ldr r{{[0-9]+}}, [pc, [[REGISTER_1]]]
 ; ARM: ldr r{{[0-9]+}}, [r{{[0-9]+}}]
+
+; MOVT: t:
+; MOVT: movw [[REGISTER_2:r[0-9]+]], :lower16:(L_GV$non_lazy_ptr-(LPC0_0+4))
+; MOVT: movt [[REGISTER_2]], :upper16:(L_GV$non_lazy_ptr-(LPC0_0+4))
+; MOVT: LPC0_0:
+; MOVT: ldr r{{[0-9]+}}, [pc, [[REGISTER_2]]]
+; MOVT: ldr r{{[0-9]+}}, [r{{[0-9]+}}]
 
 ; THUMB: t:
   %0 = icmp eq i32 %c, 0                          ; <i1> [#uses=1]
