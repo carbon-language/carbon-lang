@@ -1685,9 +1685,11 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
           DoDelete = false;
         
         if (MI->allDefsAreDead()) {
-          LiveInterval &li = li_->getInterval(SrcReg);
-          if (!ShortenDeadCopySrcLiveRange(li, MI))
-            ShortenDeadCopyLiveRange(li, MI);
+          if (li_->hasInterval(SrcReg)) {
+            LiveInterval &li = li_->getInterval(SrcReg);
+            if (!ShortenDeadCopySrcLiveRange(li, MI))
+              ShortenDeadCopyLiveRange(li, MI);
+          }
           DoDelete = true;
         }
         if (!DoDelete) {
