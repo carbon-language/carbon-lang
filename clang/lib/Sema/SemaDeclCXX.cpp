@@ -858,6 +858,9 @@ void Sema::CheckOverrideControl(const Decl *D) {
   if (!MD || !MD->isVirtual())
     return;
 
+  if (MD->isDependentContext())
+    return;
+
   // C++0x [class.virtual]p3:
   //   If a virtual function is marked with the virt-specifier override and does
   //   not override a member function of a base class, 
