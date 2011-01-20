@@ -289,6 +289,9 @@ let usesCustomInserter = 1, Uses = [FCC] in {
 let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
   let rd = O7.Num, rs1 = G0.Num, simm13 = 8 in
     def RETL: F3_2<2, 0b111000, (outs), (ins), "retl", [(retflag)]>;
+
+  let rd = I7.Num, rs1 = G0.Num, simm13 = 8 in
+    def RET: F3_2<2, 0b111000, (outs), (ins), "ret", []>;
 }
 
 // Section B.1 - Load Integer Instructions, p. 90
@@ -530,7 +533,8 @@ let Uses = [FCC] in
 let Uses = [O6],
     hasDelaySlot = 1, isCall = 1,
     Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
-    D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in { 
+    D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15,
+        ICC, FCC, Y] in {
   def CALL : InstSP<(outs), (ins calltarget:$dst, variable_ops),
                     "call $dst", []> {
     bits<30> disp;
