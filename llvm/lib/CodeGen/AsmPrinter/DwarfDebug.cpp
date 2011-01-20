@@ -16,6 +16,7 @@
 #include "DIE.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
+#include "llvm/Instructions.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -1922,6 +1923,32 @@ static bool isUnsignedDIType(DIType Ty) {
   return false;
 }
 
+// Return const exprssion if value is a GEP to access merged global
+// constant. e.g.
+// i8* getelementptr ({ i8, i8, i8, i8 }* @_MergedGlobals, i32 0, i32 0)
+static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
+  const ConstantExpr *CE = dyn_cast_or_null<ConstantExpr>(V);
+  if (!CE || CE->getNumOperands() != 3 ||
+      CE->getOpcode() != Instruction::GetElementPtr)
+    return NULL;
+
+  // First operand points to a global value.
+  if (!isa<GlobalValue>(CE->getOperand(0)))
+    return NULL;
+
+  // Second operand is zero.
+  const ConstantInt *CI = 
+    dyn_cast_or_null<ConstantInt>(CE->getOperand(1));
+  if (!CI || !CI->isZero())
+    return NULL;
+
+  // Third operand is offset.
+  if (!isa<ConstantInt>(CE->getOperand(2)))
+    return NULL;
+
+  return CE;
+}
+
 /// constructGlobalVariableDIE - Construct global variable DIE.
 void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
   DIGlobalVariable GV(N);
@@ -1991,6 +2018,18 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
   } else if (ConstantInt *CI = 
              dyn_cast_or_null<ConstantInt>(GV.getConstant()))
     addConstantValue(VariableDIE, CI, isUnsignedDIType(GTy));
+  else if (const ConstantExpr *CE = getMergedGlobalExpr(N->getOperand(11))) {
+    // GV is a merged global.
+    DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
+    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
+    addLabel(Block, 0, dwarf::DW_FORM_udata,
+             Asm->Mang->getSymbol(cast<GlobalValue>(CE->getOperand(0))));
+    ConstantInt *CII = cast<ConstantInt>(CE->getOperand(2));
+    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
+    addUInt(Block, 0, dwarf::DW_FORM_udata, CII->getZExtValue());
+    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
+    addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
+  }
 
   return;
 }
