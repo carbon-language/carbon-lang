@@ -1,6 +1,6 @@
-# NOTE: The tools are organized into five groups of four consisting of one
-# large and three small executables. This is done to minimize memory load
-# in parallel builds.  Please retain this ordering.
+# NOTE: The tools are organized into groups of four consisting of one large and
+# three small executables. This is done to minimize memory load in parallel
+# builds.  Please retain this ordering.
 
 # If polly exists and is not disabled compile it and add it to the LLVM tools.
 option(LLVM_BUILD_POLLY "Compile polly" ON)
@@ -37,6 +37,7 @@ add_subdirectory(lli)
 add_subdirectory(llvm-extract)
 add_subdirectory(llvm-diff)
 add_subdirectory(macho-dump)
+add_subdirectory(llvm-objdump)
 
 add_subdirectory(bugpoint)
 add_subdirectory(bugpoint-passes)
