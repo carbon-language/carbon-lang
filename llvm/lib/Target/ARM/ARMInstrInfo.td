@@ -3666,20 +3666,25 @@ defm LDC2 : LdStCop<0b1111,    1, "ldc2">;
 defm STC  : LdStCop<{?,?,?,?}, 0, "stc">;
 defm STC2 : LdStCop<0b1111,    0, "stc2">;
 
-def MCR : ABI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
-              GPR:$Rt, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
-              NoItinerary, "mcr", "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2",
-              [/* For disassembly only; pattern left blank */]> {
-  let Inst{20} = 0;
+//===----------------------------------------------------------------------===//
+// Move between coprocessor and ARM core register -- for disassembly only
+//
+
+class MovRCopro<string opc, bit direction>
+  : ABI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
+        GPR:$Rt, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+        NoItinerary, opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2",
+        [/* For disassembly only; pattern left blank */]> {
+  let Inst{20} = direction;
   let Inst{4} = 1;
-  
+
   bits<4> Rt;
   bits<4> cop;
   bits<3> opc1;
   bits<3> opc2;
   bits<4> CRm;
   bits<4> CRn;
-  
+
   let Inst{15-12} = Rt;
   let Inst{11-8}  = cop;
   let Inst{23-21} = opc1;
@@ -3688,21 +3693,25 @@ def MCR : ABI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{19-16} = CRn;
 }
 
-def MCR2 : ABXI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
-                GPR:$Rt, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
-                NoItinerary, "mcr2\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2",
-                [/* For disassembly only; pattern left blank */]> {
+def MCR : MovRCopro<"mcr", 0 /* from ARM core register to coprocessor */>;
+def MRC : MovRCopro<"mrc", 1 /* from coprocessor to ARM core register */>;
+
+class MovRCopro2<string opc, bit direction>
+  : ABXI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
+         GPR:$Rt, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+         NoItinerary, !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
+         [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
-  let Inst{20} = 0;
+  let Inst{20} = direction;
   let Inst{4} = 1;
-  
+
   bits<4> Rt;
   bits<4> cop;
   bits<3> opc1;
   bits<3> opc2;
   bits<4> CRm;
   bits<4> CRn;
-  
+
   let Inst{15-12} = Rt;
   let Inst{11-8}  = cop;
   let Inst{23-21} = opc1;
@@ -3711,63 +3720,48 @@ def MCR2 : ABXI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{19-16} = CRn;
 }
 
-def MRC : ABI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
-              GPR:$Rt, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
-              NoItinerary, "mrc", "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2",
-              [/* For disassembly only; pattern left blank */]> {
-  let Inst{20} = 1;
-  let Inst{4} = 1;
-  
+def MCR2 : MovRCopro2<"mcr2", 0 /* from ARM core register to coprocessor */>;
+def MRC2 : MovRCopro2<"mrc2", 1 /* from coprocessor to ARM core register */>;
+
+class MovRRCopro<string opc, bit direction>
+  : ABI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
+        GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+        NoItinerary, opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm",
+        [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-21} = 0b010;
+  let Inst{20} = direction;
+
   bits<4> Rt;
+  bits<4> Rt2;
   bits<4> cop;
-  bits<3> opc1;
-  bits<3> opc2;
+  bits<4> opc1;
   bits<4> CRm;
-  bits<4> CRn;
-  
+
   let Inst{15-12} = Rt;
+  let Inst{19-16} = Rt2;
   let Inst{11-8}  = cop;
-  let Inst{23-21} = opc1;
-  let Inst{7-5}   = opc2;
+  let Inst{7-4}   = opc1;
   let Inst{3-0}   = CRm;
-  let Inst{19-16} = CRn;
 }
 
-def MRC2 : ABXI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
-                GPR:$Rt, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
-                NoItinerary, "mrc2\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2",
-                [/* For disassembly only; pattern left blank */]> {
+def MCRR : MovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */>;
+def MRRC : MovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
+
+class MovRRCopro2<string opc, bit direction>
+  : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
+         GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+         NoItinerary, !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"),
+         [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
-  let Inst{20} = 1;
-  let Inst{4} = 1;
-  
-  bits<4> Rt;
-  bits<4> cop;
-  bits<3> opc1;
-  bits<3> opc2;
-  bits<4> CRm;
-  bits<4> CRn;
-  
-  let Inst{15-12} = Rt;
-  let Inst{11-8}  = cop;
-  let Inst{23-21} = opc1;
-  let Inst{7-5}   = opc2;
-  let Inst{3-0}   = CRm;
-  let Inst{19-16} = CRn;
-}
+  let Inst{23-21} = 0b010;
+  let Inst{20} = direction;
 
-def MCRR : ABI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
-               GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-               NoItinerary, "mcrr", "\t$cop, $opc1, $Rt, $Rt2, $CRm",
-               [/* For disassembly only; pattern left blank */]> {
-  let Inst{23-20} = 0b0100;
-  
   bits<4> Rt;
   bits<4> Rt2;
   bits<4> cop;
   bits<4> opc1;
   bits<4> CRm;
-  
+
   let Inst{15-12} = Rt;
   let Inst{19-16} = Rt2;
   let Inst{11-8}  = cop;
@@ -3775,64 +3769,8 @@ def MCRR : ABI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{3-0}   = CRm;
 }
 
-def MCRR2 : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
-                 GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-                 NoItinerary, "mcrr2\t$cop, $opc1, $Rt, $Rt2, $CRm",
-                 [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-28} = 0b1111;
-  let Inst{23-20} = 0b0100;
-  
-  bits<4> Rt;
-  bits<4> Rt2;
-  bits<4> cop;
-  bits<4> opc1;
-  bits<4> CRm;
-  
-  let Inst{15-12} = Rt;
-  let Inst{19-16} = Rt2;
-  let Inst{11-8}  = cop;
-  let Inst{7-4}   = opc1;
-  let Inst{3-0}   = CRm;
-}
-
-def MRRC : ABI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
-               GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-               NoItinerary, "mrrc", "\t$cop, $opc1, $Rt, $Rt2, $CRm",
-               [/* For disassembly only; pattern left blank */]> {
-  let Inst{23-20} = 0b0101;
-  
-  bits<4> Rt;
-  bits<4> Rt2;
-  bits<4> cop;
-  bits<4> opc1;
-  bits<4> CRm;
-  
-  let Inst{15-12} = Rt;
-  let Inst{19-16} = Rt2;
-  let Inst{11-8}  = cop;
-  let Inst{7-4}   = opc1;
-  let Inst{3-0}   = CRm;
-}
-
-def MRRC2 : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
-                 GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-                 NoItinerary, "mrrc2\t$cop, $opc1, $Rt, $Rt2, $CRm",
-                 [/* For disassembly only; pattern left blank */]> {
-  let Inst{31-28} = 0b1111;
-  let Inst{23-20} = 0b0101;
-  
-  bits<4> Rt;
-  bits<4> Rt2;
-  bits<4> cop;
-  bits<4> opc1;
-  bits<4> CRm;
-  
-  let Inst{15-12} = Rt;
-  let Inst{19-16} = Rt2;
-  let Inst{11-8}  = cop;
-  let Inst{7-4}   = opc1;
-  let Inst{3-0}   = CRm;
-}
+def MCRR2 : MovRRCopro2<"mcrr2", 0 /* from ARM core register to coprocessor */>;
+def MRRC2 : MovRRCopro2<"mrrc2", 1 /* from coprocessor to ARM core register */>;
 
 //===----------------------------------------------------------------------===//
 // Move between special register and ARM core register -- for disassembly only
