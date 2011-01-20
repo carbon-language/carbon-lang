@@ -41,6 +41,12 @@ StopInfo::IsValid () const
     return m_thread.GetProcess().GetStopID() == m_stop_id;
 }
 
+void
+StopInfo::MakeStopInfoValid ()
+{
+    m_stop_id = m_thread.GetProcess().GetStopID();
+}
+
 //----------------------------------------------------------------------
 // StopInfoBreakpoint
 //----------------------------------------------------------------------

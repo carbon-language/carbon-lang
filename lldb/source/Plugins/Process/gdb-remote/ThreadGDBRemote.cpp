@@ -37,8 +37,7 @@ ThreadGDBRemote::ThreadGDBRemote (ProcessGDBRemote &process, lldb::tid_t tid) :
     Thread(process, tid),
     m_thread_name (),
     m_dispatch_queue_name (),
-    m_thread_dispatch_qaddr (LLDB_INVALID_ADDRESS),
-    m_thread_stop_reason_stop_id (0)
+    m_thread_dispatch_qaddr (LLDB_INVALID_ADDRESS)
 {
 //    ProcessGDBRemoteLog::LogIf(GDBR_LOG_THREAD | GDBR_LOG_VERBOSE, "ThreadGDBRemote::ThreadGDBRemote ( pid = %i, tid = 0x%4.4x, )", m_process.GetID(), GetID());
     ProcessGDBRemoteLog::LogIf(GDBR_LOG_THREAD, "%p: ThreadGDBRemote::ThreadGDBRemote (pid = %i, tid = 0x%4.4x)", this, m_process.GetID(), GetID());

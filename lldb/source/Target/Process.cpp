@@ -2567,6 +2567,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 {
     ExecutionResults return_value = eExecutionSetupError;
     
+    if (thread_plan_sp.get() == NULL)
+    {
+        errors.Printf("RunThreadPlan called with empty thread plan.");
+        return lldb::eExecutionSetupError;
+    }
+    
     // Save this value for restoration of the execution context after we run
     uint32_t tid = exe_ctx.thread->GetIndexID();
 
@@ -2592,6 +2598,14 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     Listener listener("ClangFunction temporary listener");
     exe_ctx.process->HijackProcessEvents(&listener);
     
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    if (log)
+    {
+        StreamString s;
+        thread_plan_sp->GetDescription(&s, lldb::eDescriptionLevelVerbose);
+        log->Printf ("Resuming thread 0x%x to run thread plan \"%s\".", tid, s.GetData());
+    }
+    
     Error resume_error = exe_ctx.process->Resume ();
     if (!resume_error.Success())
     {
@@ -2616,7 +2630,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         timeout_ptr = &real_timeout;
     }
     
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     while (1)
     {
         lldb::EventSP event_sp;

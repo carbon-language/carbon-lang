@@ -45,12 +45,6 @@ public:
     virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
-    virtual bool
-    SaveFrameZeroState (RegisterCheckpoint &checkpoint);
-
-    virtual bool
-    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
-
     virtual void
     ClearStackFrames ();
 
@@ -124,6 +118,12 @@ public:
     GetPrivateStopReason ();
 
 protected:
+    virtual bool
+    SaveFrameZeroState (RegisterCheckpoint &checkpoint);
+
+    virtual bool
+    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
+
     bool
     GetIdentifierInfo ();
 

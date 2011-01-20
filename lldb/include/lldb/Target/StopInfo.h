@@ -119,9 +119,16 @@ protected:
     // Classes that inherit from StackID can see and modify these
     //------------------------------------------------------------------
     Thread &        m_thread;   // The thread corresponding to the stop reason.
-    const uint32_t  m_stop_id;  // The process stop ID for which this stop info is valid
+    uint32_t        m_stop_id;  // The process stop ID for which this stop info is valid
     uint64_t        m_value;    // A generic value that can be used for things pertaining to this stop info
 private:
+    friend class Thread;
+    
+    // MakeStopInfoValid is necessary to allow saved stop infos to resurrect themselves as valid.  It should
+    // only need to be called by Thread::RestoreThreadStateFromCheckpoint.
+    void
+    MakeStopInfoValid ();
+    
     DISALLOW_COPY_AND_ASSIGN (StopInfo);
 };
 

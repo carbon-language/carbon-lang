@@ -47,12 +47,6 @@ public:
     virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
-    virtual bool
-    SaveFrameZeroState (RegisterCheckpoint &checkpoint);
-
-    virtual bool
-    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
-
     virtual void
     ClearStackFrames ();
 
@@ -81,12 +75,6 @@ public:
     GetBasicInfoAsString ();
 
     void
-    SetStopInfo (const lldb::StopInfoSP &stop_info)
-    {
-        m_actual_stop_info_sp = stop_info;
-    }
-
-    void
     SetName (const char *name)
     {
         if (name && name[0])
@@ -111,6 +99,12 @@ protected:
     
     friend class ProcessGDBRemote;
 
+    virtual bool
+    SaveFrameZeroState (RegisterCheckpoint &checkpoint);
+
+    virtual bool
+    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
+
     void
     PrivateSetRegisterValue (uint32_t reg, 
                              StringExtractor &response);
@@ -121,7 +115,6 @@ protected:
     std::string m_thread_name;
     std::string m_dispatch_queue_name;
     lldb::addr_t m_thread_dispatch_qaddr;
-    uint32_t m_thread_stop_reason_stop_id;
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------

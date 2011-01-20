@@ -55,7 +55,8 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_resume_signal (LLDB_INVALID_SIGNAL_NUMBER),
     m_resume_state (eStateRunning),
     m_unwinder_ap (),
-    m_destroy_called (false)
+    m_destroy_called (false),
+    m_thread_stop_reason_stop_id (0)
 
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
@@ -95,10 +96,46 @@ Thread::GetStopInfo ()
         return GetPrivateStopReason ();
 }
 
+void
+Thread::SetStopInfo (const lldb::StopInfoSP &stop_info_sp)
+{
+    m_actual_stop_info_sp = stop_info_sp;
+    m_thread_stop_reason_stop_id = GetProcess().GetStopID();
+}
+
+void
+Thread::SetStopInfoToNothing()
+{
+    // Note, we can't just NULL out the private reason, or the native thread implementation will try to
+    // go calculate it again.  For now, just set it to a Unix Signal with an invalid signal number.
+    SetStopInfo (StopInfo::CreateStopReasonWithSignal (*this,  LLDB_INVALID_SIGNAL_NUMBER));
+}
+
 bool
 Thread::ThreadStoppedForAReason (void)
 {
     return GetPrivateStopReason () != NULL;
+}
+
+bool
+Thread::CheckpointThreadState (ThreadStateCheckpoint &saved_state)
+{
+    if (!SaveFrameZeroState(saved_state.register_backup))
+        return false;
+
+    saved_state.stop_info_sp = GetStopInfo();
+    saved_state.orig_stop_id = GetProcess().GetStopID();
+
+    return true;
+}
+
+bool
+Thread::RestoreThreadStateFromCheckpoint (ThreadStateCheckpoint &saved_state)
+{
+    RestoreSaveFrameZero(saved_state.register_backup);
+    saved_state.stop_info_sp->MakeStopInfoValid();
+    SetStopInfo(saved_state.stop_info_sp);
+    return true;
 }
 
 StateType

@@ -66,9 +66,21 @@ namespace lldb_private {
 //  its job, but it doesn't want that sub-plan to be the one that sets the StopInfo, then call SetPrivate on the
 //  sub-plan when you create it, and the Thread will pass over that plan in reporting the reason for the stop.
 //
-//  When the plan is moved from the plan stack to the completed plan stack its DidPop method is called.  You should
-//  undo anything that affects target state in this method so the target state is clear for new plans.
-//  But be sure to leave whatever state might be needed to correctly fill the StopInfo.
+//  Discarded plans:
+//
+//  Your plan may also get discarded, i.e. moved from the plan stack to the "discarded plan stack".  This can
+//  happen, for instance, if the plan is calling a function and the function call crashes and you want
+//  to unwind the attempt to call.  So don't assume that your plan will always successfully stop.  Which leads to:
+//
+//  Cleaning up after your plans:
+//
+//  When the plan is moved from the plan stack its WillPop method is always called, no matter why.  Once it is
+//  moved off the plan stack it is done, and won't get a chance to run again.  So you should
+//  undo anything that affects target state in this method.  But be sure to leave the plan able to correctly 
+//  fill the StopInfo, however.
+//  N.B. Don't wait to do clean up target state till the destructor, since that will usually get called when 
+//  the target resumes, and you want to leave the target state correct for new plans in the time between when
+//  your plan gets unshipped and the next resume.
 //
 //  Over the lifetime of the plan, various methods of the ThreadPlan are then called in response to changes of state in
 //  the process we are debugging as follows:

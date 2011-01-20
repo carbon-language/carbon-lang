@@ -115,6 +115,8 @@ public:
         DISALLOW_COPY_AND_ASSIGN (SettingsController);
     };
 
+    // TODO: You shouldn't just checkpoint the register state alone, so this should get 
+    // moved to protected.  To do that ThreadStateCheckpoint needs to be returned as a token...
     class RegisterCheckpoint
     {
     public:
@@ -135,6 +137,23 @@ public:
         {
         }
 
+        const RegisterCheckpoint&
+        operator= (const RegisterCheckpoint &rhs)
+        {
+            if (this != &rhs)
+            {
+                this->m_stack_id = rhs.m_stack_id;
+                this->m_data_sp  = rhs.m_data_sp;
+            }
+            return *this;
+        }
+        
+        RegisterCheckpoint (const RegisterCheckpoint &rhs) :
+            m_stack_id (rhs.m_stack_id),
+            m_data_sp (rhs.m_data_sp)
+        {
+        }
+        
         const StackID &
         GetStackID()
         {
@@ -162,6 +181,13 @@ public:
     protected:
         StackID m_stack_id;
         lldb::DataBufferSP m_data_sp;
+    };
+
+    struct ThreadStateCheckpoint
+    {
+        uint32_t           orig_stop_id;  // Dunno if I need this yet but it is an interesting bit of data.
+        lldb::StopInfoSP   stop_info_sp;  // You have to restore the stop info or you might continue with the wrong signals.
+        RegisterCheckpoint register_backup;  // You need to restore the registers, of course...
     };
 
     void
@@ -261,6 +287,11 @@ public:
     lldb::StopInfoSP
     GetStopInfo ();
 
+    // This sets the stop reason to a "blank" stop reason, so you can call functions on the thread
+    // without having the called function run with whatever stop reason you stopped with.
+    void
+    SetStopInfoToNothing();
+    
     bool
     ThreadStoppedForAReason ();
 
@@ -308,12 +339,6 @@ public:
 
     virtual lldb::RegisterContextSP
     GetRegisterContext () = 0;
-
-    virtual bool
-    SaveFrameZeroState (RegisterCheckpoint &checkpoint) = 0;
-
-    virtual bool
-    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint) = 0;
 
     virtual lldb::RegisterContextSP
     CreateRegisterContextForFrame (StackFrame *frame) = 0;
@@ -609,6 +634,12 @@ public:
     void
     DumpThreadPlans (Stream *s) const;
     
+    virtual bool
+    CheckpointThreadState (ThreadStateCheckpoint &saved_state);
+    
+    virtual bool
+    RestoreThreadStateFromCheckpoint (ThreadStateCheckpoint &saved_state);
+    
     void
     EnableTracer (bool value, bool single_step);
     
@@ -678,22 +709,35 @@ protected:
 
     ThreadPlan *GetPreviousPlan (ThreadPlan *plan);
 
+    // When you implement this method, make sure you don't overwrite the m_actual_stop_info if it claims to be
+    // valid.  The stop info may be a "checkpointed and restored" stop info, so if it is still around it is right
+    // even if you have not calculated this yourself, or if it disagrees with what you might have calculated.
     virtual lldb::StopInfoSP
     GetPrivateStopReason () = 0;
 
     typedef std::vector<lldb::ThreadPlanSP> plan_stack;
+
+    void
+    SetStopInfo (const lldb::StopInfoSP &stop_info_sp);
+
+    virtual bool
+    SaveFrameZeroState (RegisterCheckpoint &checkpoint) = 0;
+
+    virtual bool
+    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint) = 0;
 
     virtual lldb_private::Unwind *
     GetUnwinder () = 0;
 
     StackFrameList &
     GetStackFrameList ();
-
-    void
-    SetStopInfo (lldb::StopInfoSP stop_info_sp)
+    
+    struct ThreadState
     {
-        m_actual_stop_info_sp = stop_info_sp;
-    }
+        uint32_t           orig_stop_id;
+        lldb::StopInfoSP   stop_info_sp;
+        RegisterCheckpoint register_backup;
+    };
 
     //------------------------------------------------------------------
     // Classes that inherit from Process can see and modify these
@@ -713,10 +757,14 @@ protected:
     lldb::StateType     m_resume_state;     ///< The state that indicates what this thread should do when the process is resumed.
     std::auto_ptr<lldb_private::Unwind> m_unwinder_ap;
     bool                m_destroy_called;    // This is used internally to make sure derived Thread classes call DestroyThread.
+    uint32_t m_thread_stop_reason_stop_id;   // This is the stop id for which the StopInfo is valid.  Can use this so you know that
+                                             // the thread's m_actual_stop_info_sp is current and you don't have to fetch it again
+
 private:
     //------------------------------------------------------------------
     // For Thread only
     //------------------------------------------------------------------
+
     DISALLOW_COPY_AND_ASSIGN (Thread);
 
 };

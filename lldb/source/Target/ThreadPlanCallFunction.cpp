@@ -59,6 +59,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     if (!abi)
         return;
     
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    
     SetBreakpoints();
     
     lldb::addr_t spBelowRedZone = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
@@ -76,9 +78,16 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_start_addr = context.symbol->GetValue();
     lldb::addr_t StartLoadAddr = m_start_addr.GetLoadAddress(&target);
 
-    if (!thread.SaveFrameZeroState(m_register_backup))
+    // Checkpoint the thread state so we can restore it later.
+    if (!thread.CheckpointThreadState (m_stored_thread_state))
+    {
+        if (log)
+            log->Printf ("Setting up ThreadPlanCallFunction, failed to checkpoint thread state.");
         return;
-
+    }
+    // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
+    thread.SetStopInfoToNothing();
+    
     m_function_addr = function;
     lldb::addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&target);
         
@@ -90,8 +99,6 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                  this_arg,
                                  cmd_arg))
         return;
-    
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     if (log)
     {
@@ -115,24 +122,24 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 
 ThreadPlanCallFunction::~ThreadPlanCallFunction ()
 {
-    if (m_valid && !IsPlanComplete())
         DoTakedown();
 }
 
 void
 ThreadPlanCallFunction::DoTakedown ()
 {
-    m_thread.RestoreSaveFrameZero(m_register_backup);
-    m_thread.ClearStackFrames();
-    SetPlanComplete();
-    ClearBreakpoints();
+    if (m_valid && !IsPlanComplete())
+    {
+        m_thread.RestoreThreadStateFromCheckpoint(m_stored_thread_state);
+        SetPlanComplete();
+        ClearBreakpoints();
+    }
 }
 
 void
 ThreadPlanCallFunction::WillPop ()
 {
-    if (m_valid && !IsPlanComplete())
-        DoTakedown();
+    DoTakedown();
 }
 
 void
@@ -278,6 +285,7 @@ ThreadPlanCallFunction::DidPush ()
     m_subplan_sp.reset(new ThreadPlanRunToAddress(m_thread, m_start_addr, m_stop_other_threads));
     
     m_thread.QueueThreadPlan(m_subplan_sp, false);
+    m_subplan_sp->SetPrivate (true);
 #endif
 }
 

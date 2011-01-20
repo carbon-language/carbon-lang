@@ -103,6 +103,7 @@ private:
     lldb::ThreadPlanSP                              m_subplan_sp;
     LanguageRuntime                                *m_cxx_language_runtime;
     LanguageRuntime                                *m_objc_language_runtime;
+    Thread::ThreadStateCheckpoint                   m_stored_thread_state;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);
 };
