@@ -76,10 +76,10 @@ namespace {
 static const Target *GetTarget(const ObjectFile *Obj = NULL) {
   // Figure out the target triple.
   llvm::Triple TT("unknown-unknown-unknown");
-  if (TripleName.empty())
+  if (TripleName.empty()) {
     if (Obj)
       TT.setArch(Triple::ArchType(Obj->getArch()));
-  else
+  } else
     TT.setTriple(Triple::normalize(TripleName));
 
   if (!ArchName.empty())
