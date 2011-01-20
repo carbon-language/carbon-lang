@@ -3251,7 +3251,7 @@ def t2MOVi32imm : PseudoInst<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
 // can properly the instructions.
 let isReMaterializable = 1 in
 def t2MOV_pic_ga_add_pc : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr),
-                                     IIC_iMOVix2,
+                                     IIC_iMOVix2addpc,
                           [(set rGPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
                           Requires<[IsThumb2, UseMovt]>;
 
