@@ -1483,6 +1483,15 @@ public:
   bool SetVirtSpecifier(VirtSpecifier VS, SourceLocation Loc, 
                         const char *&PrevSpec);
 
+  bool isOverrideSpecified() const { return Specifiers & VS_Override; }
+  SourceLocation getOverrideLoc() const { return VS_overrideLoc; }
+
+  bool isFinalSpecified() const { return Specifiers & VS_Final; }
+  SourceLocation getFinalLoc() const { return VS_finalLoc; }
+
+  bool isNewSpecified() const { return Specifiers & VS_New; }
+  SourceLocation getNewLoc() const { return VS_newLoc; }
+
 private:
   unsigned Specifiers;
 

@@ -870,6 +870,10 @@ def err_trailing_return_without_auto : Error<
 // C++0x attributes
 def err_repeat_attribute : Error<"'%0' attribute cannot be repeated">;
 
+// C++0x override control
+def override_keyword_only_allowed_on_virtual_member_functions : Error<
+  "only virtual member functions can be marked '%0'">;
+
 // C++0x [[final]]
 def err_final_function_overridden : Error<
   "declaration of %0 overrides a 'final' function">;

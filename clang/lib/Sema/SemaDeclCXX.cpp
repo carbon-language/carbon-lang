@@ -989,6 +989,22 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       FunTmpl->getTemplatedDecl()->setAccess(AS);
   }
 
+  if (VS.isOverrideSpecified()) {
+    CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member);
+    if (!MD || !MD->isVirtual()) {
+      Diag(Member->getLocStart(), 
+           diag::override_keyword_only_allowed_on_virtual_member_functions)
+        << "override" << FixItHint::CreateRemoval(VS.getOverrideLoc());
+    }
+  }
+  if (VS.isFinalSpecified()) {
+    CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Member);
+    if (!MD || !MD->isVirtual()) {
+      Diag(Member->getLocStart(), 
+           diag::override_keyword_only_allowed_on_virtual_member_functions)
+      << "final" << FixItHint::CreateRemoval(VS.getFinalLoc());
+    }    
+  }
   assert((Name || isInstField) && "No identifier for non-field ?");
 
   if (Init)
