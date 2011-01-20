@@ -1055,8 +1055,7 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
                                         const MachineInstr *MI1,
                                         const MachineRegisterInfo *MRI) const {
   int Opcode = MI0->getOpcode();
-  if (Opcode == ARM::LDRi12 ||
-      Opcode == ARM::t2LDRpci ||
+  if (Opcode == ARM::t2LDRpci ||
       Opcode == ARM::t2LDRpci_pic ||
       Opcode == ARM::tLDRpci ||
       Opcode == ARM::tLDRpci_pic ||
@@ -1069,9 +1068,6 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
 
     const MachineOperand &MO0 = MI0->getOperand(1);
     const MachineOperand &MO1 = MI1->getOperand(1);
-    if (Opcode == ARM::LDRi12 && (!MO0.isCPI() || !MO1.isCPI()))
-      return false;
-
     if (MO0.getOffset() != MO1.getOffset())
       return false;
 

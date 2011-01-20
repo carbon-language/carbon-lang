@@ -14,7 +14,11 @@ define void @t(i32* nocapture %vals, i32 %c) nounwind {
 entry:
 ; ARM: t:
 ; ARM: ldr [[REGISTER_1:r[0-9]+]], LCPI0_0
-; ARM-NOT: ldr r{{[0-9]+}}, LCPI0_1
+; Unfortunately currently ARM codegen doesn't cse the ldr from constantpool.
+; The issue is it can be read by an "add pc" or a "ldr [pc]" so it's messy
+; to add the pseudo instructions to make sure they are CSE'ed at the same
+; time as the "ldr cp".
+; ARM: ldr r{{[0-9]+}}, LCPI0_1
 ; ARM: LPC0_0:
 ; ARM: ldr r{{[0-9]+}}, [pc, [[REGISTER_1]]]
 ; ARM: ldr r{{[0-9]+}}, [r{{[0-9]+}}]
@@ -32,7 +36,7 @@ entry:
 
 bb.nph:                                           ; preds = %entry
 ; ARM: LCPI0_0:
-; ARM-NOT: LCPI0_1:
+; ARM: LCPI0_1:
 ; ARM: .section
 
 ; THUMB: BB#1
