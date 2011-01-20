@@ -1057,6 +1057,8 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::SSUBO: ExpandIntRes_SADDSUBO(N, Lo, Hi); break;
   case ISD::UADDO:
   case ISD::USUBO: ExpandIntRes_UADDSUBO(N, Lo, Hi); break;
+  case ISD::UMULO:
+  case ISD::SMULO: ExpandIntRes_UMULSMULO(N, Lo, Hi); break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -2129,6 +2131,31 @@ void DAGTypeLegalizer::ExpandIntRes_UADDSUBO(SDNode *N,
                              ISD::SETULT : ISD::SETUGT);
 
   // Use the calculated overflow everywhere.
+  ReplaceValueWith(SDValue(N, 1), Ofl);
+}
+
+void DAGTypeLegalizer::ExpandIntRes_UMULSMULO(SDNode *N,
+                                              SDValue &Lo, SDValue &Hi) {
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  DebugLoc dl = N->getDebugLoc();
+  EVT VT = N->getValueType(0);
+  EVT HalfVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits() / 2);
+  // Expand the result by simply replacing it with the equivalent
+  // non-overflow-checking operation.
+  SDValue Ret = DAG.getNode(ISD::MUL, dl, LHS.getValueType(), LHS, RHS);
+  SplitInteger(Ret, Lo, Hi);
+  
+  // Now calculate overflow.
+  SDValue Ofl;
+  if (N->getOpcode() == ISD::UMULO)
+    Ofl = DAG.getSetCC(dl, N->getValueType(1), Hi,
+                       DAG.getConstant(0, VT), ISD::SETNE);
+  else {
+    SDValue Tmp = DAG.getConstant(VT.getSizeInBits() - 1, HalfVT);
+    Tmp = DAG.getNode(ISD::SRA, dl, HalfVT, Lo, Tmp);
+    Ofl = DAG.getSetCC(dl, N->getValueType(1), Hi, Tmp, ISD::SETNE);
+  }
   ReplaceValueWith(SDValue(N, 1), Ofl);
 }
 
