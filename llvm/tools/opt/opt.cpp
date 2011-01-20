@@ -282,7 +282,7 @@ struct RegionPassPrinter : public RegionPass {
   RegionPassPrinter(const PassInfo *PI, raw_ostream &out) : RegionPass(ID),
     PassToPrint(PI), Out(out) {
     std::string PassToPrintName =  PassToPrint->getPassName();
-    PassName = "LoopPass Printer: " + PassToPrintName;
+    PassName = "RegionPass Printer: " + PassToPrintName;
   }
 
   virtual bool runOnRegion(Region *R, RGPassManager &RGM) {
@@ -297,7 +297,7 @@ struct RegionPassPrinter : public RegionPass {
     return false;
   }
 
-  virtual const char *getPassName() const { return "'Pass' Printer"; }
+  virtual const char *getPassName() const { return PassName.c_str(); }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequiredID(PassToPrint->getTypeInfo());
