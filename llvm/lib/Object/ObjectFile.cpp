@@ -57,7 +57,7 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
     case sys::Mach_O_DynamicallyLinkedSharedLibStub_FileType:
       return 0;
     case sys::COFF_FileType:
-      return 0;
+      return createCOFFObjectFile(Object);
     default:
       llvm_unreachable("Unknown Object File Type");
   }
