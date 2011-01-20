@@ -3210,8 +3210,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       LHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, LHS);
       RHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, RHS);
       
-      SDValue Ops[2] = { LHS, RHS };
-      SDValue Ret = ExpandLibCall(LC, Node, Ops);
+      SDValue Ret = ExpandLibCall(LC, Node, isSigned);
       BottomHalf = DAG.getNode(ISD::TRUNCATE, dl, VT, Ret);
       TopHalf = DAG.getNode(ISD::SRL, dl, Ret.getValueType(), Ret,
                        DAG.getConstant(VT.getSizeInBits(), TLI.getPointerTy()));
