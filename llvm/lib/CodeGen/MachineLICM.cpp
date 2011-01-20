@@ -208,10 +208,6 @@ namespace {
     /// specified instruction.
     void UpdateRegPressure(const MachineInstr *MI);
 
-    /// isLoadFromConstantMemory - Return true if the given instruction is a
-    /// load from constant memory.
-    bool isLoadFromConstantMemory(MachineInstr *MI);
-
     /// ExtractHoistableLoad - Unfold a load from the given machineinstr if
     /// the load itself could be hoisted. Return the unfolded and hoistable
     /// load, or null if the load couldn't be unfolded or if it wouldn't
@@ -773,25 +769,6 @@ static bool HasPHIUses(unsigned Reg, MachineRegisterInfo *MRI) {
   return false;
 }
 
-/// isLoadFromConstantMemory - Return true if the given instruction is a
-/// load from constant memory. Machine LICM will hoist these even if they are
-/// not re-materializable.
-bool MachineLICM::isLoadFromConstantMemory(MachineInstr *MI) {
-  if (!MI->getDesc().mayLoad()) return false;
-  if (!MI->hasOneMemOperand()) return false;
-  MachineMemOperand *MMO = *MI->memoperands_begin();
-  if (MMO->isVolatile()) return false;
-  if (!MMO->getValue()) return false;
-  const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(MMO->getValue());
-  if (PSV) {
-    MachineFunction &MF = *MI->getParent()->getParent();
-    return PSV->isConstant(MF.getFrameInfo());
-  } else {
-    return AA->pointsToConstantMemory(AliasAnalysis::Location(MMO->getValue(),
-                                                              MMO->getSize(),
-                                                              MMO->getTBAAInfo()));
-  }
-}
 
 /// HasHighOperandLatency - Compute operand latency between a def of 'Reg'
 /// and an use in the current loop, return true if the target considered
@@ -995,7 +972,7 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
     // High register pressure situation, only hoist if the instruction is going to
     // be remat'ed.
     if (!TII->isTriviallyReMaterializable(&MI, AA) &&
-        !isLoadFromConstantMemory(&MI))
+        !MI.isInvariantLoad(AA))
       return false;
   }
 
@@ -1021,7 +998,7 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   // If not, we may be able to unfold a load and hoist that.
   // First test whether the instruction is loading from an amenable
   // memory location.
-  if (!isLoadFromConstantMemory(MI))
+  if (!MI->isInvariantLoad(AA))
     return 0;
 
   // Next determine the register class for a temporary register.
@@ -1072,20 +1049,15 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
 void MachineLICM::InitCSEMap(MachineBasicBlock *BB) {
   for (MachineBasicBlock::iterator I = BB->begin(),E = BB->end(); I != E; ++I) {
     const MachineInstr *MI = &*I;
-    // FIXME: For now, only hoist re-materilizable instructions. LICM will
-    // increase register pressure. We want to make sure it doesn't increase
-    // spilling.
-    if (TII->isTriviallyReMaterializable(MI, AA)) {
-      unsigned Opcode = MI->getOpcode();
-      DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator
-        CI = CSEMap.find(Opcode);
-      if (CI != CSEMap.end())
-        CI->second.push_back(MI);
-      else {
-        std::vector<const MachineInstr*> CSEMIs;
-        CSEMIs.push_back(MI);
-        CSEMap.insert(std::make_pair(Opcode, CSEMIs));
-      }
+    unsigned Opcode = MI->getOpcode();
+    DenseMap<unsigned, std::vector<const MachineInstr*> >::iterator
+      CI = CSEMap.find(Opcode);
+    if (CI != CSEMap.end())
+      CI->second.push_back(MI);
+    else {
+      std::vector<const MachineInstr*> CSEMIs;
+      CSEMIs.push_back(MI);
+      CSEMap.insert(std::make_pair(Opcode, CSEMIs));
     }
   }
 }
@@ -1095,7 +1067,7 @@ MachineLICM::LookForDuplicate(const MachineInstr *MI,
                               std::vector<const MachineInstr*> &PrevMIs) {
   for (unsigned i = 0, e = PrevMIs.size(); i != e; ++i) {
     const MachineInstr *PrevMI = PrevMIs[i];
-    if (TII->produceSameValue(MI, PrevMI))
+    if (TII->produceSameValue(MI, PrevMI, (PreRegAlloc ? MRI : 0)))
       return PrevMI;
   }
   return 0;

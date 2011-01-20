@@ -568,7 +568,6 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       return 4;
     case ARM::MOVi32imm:
     case ARM::t2MOVi32imm:
-    case ARM::MOV_pic_ga:
       return 8;
     case ARM::CONSTPOOL_ENTRY:
       // If this machine instr is a constant pool entry, its size is recorded as
@@ -1053,12 +1052,16 @@ ARMBaseInstrInfo::duplicate(MachineInstr *Orig, MachineFunction &MF) const {
 }
 
 bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
-                                        const MachineInstr *MI1) const {
+                                        const MachineInstr *MI1,
+                                        const MachineRegisterInfo *MRI) const {
   int Opcode = MI0->getOpcode();
-  if (Opcode == ARM::t2LDRpci ||
+  if (Opcode == ARM::LDRi12 ||
+      Opcode == ARM::t2LDRpci ||
       Opcode == ARM::t2LDRpci_pic ||
       Opcode == ARM::tLDRpci ||
-      Opcode == ARM::tLDRpci_pic) {
+      Opcode == ARM::tLDRpci_pic ||
+      Opcode == ARM::MOV_pic_ga_add_pc ||
+      Opcode == ARM::t2MOV_pic_ga_add_pc) {
     if (MI1->getOpcode() != Opcode)
       return false;
     if (MI0->getNumOperands() != MI1->getNumOperands())
@@ -1066,8 +1069,16 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
 
     const MachineOperand &MO0 = MI0->getOperand(1);
     const MachineOperand &MO1 = MI1->getOperand(1);
+    if (Opcode == ARM::LDRi12 && (!MO0.isCPI() || !MO1.isCPI()))
+      return false;
+
     if (MO0.getOffset() != MO1.getOffset())
       return false;
+
+    if (Opcode == ARM::MOV_pic_ga_add_pc ||
+        Opcode == ARM::t2MOV_pic_ga_add_pc)
+      // Ignore the PC labels.
+      return MO0.getGlobal() == MO1.getGlobal();
 
     const MachineFunction *MF = MI0->getParent()->getParent();
     const MachineConstantPool *MCP = MF->getConstantPool();
@@ -1080,6 +1091,37 @@ bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
     ARMConstantPoolValue *ACPV1 =
       static_cast<ARMConstantPoolValue*>(MCPE1.Val.MachineCPVal);
     return ACPV0->hasSameValue(ACPV1);
+  } else if (Opcode == ARM::PICLDR) {
+    if (MI1->getOpcode() != Opcode)
+      return false;
+    if (MI0->getNumOperands() != MI1->getNumOperands())
+      return false;
+
+    unsigned Addr0 = MI0->getOperand(1).getReg();
+    unsigned Addr1 = MI1->getOperand(1).getReg();
+    if (Addr0 != Addr1) {
+      if (!MRI ||
+          !TargetRegisterInfo::isVirtualRegister(Addr0) ||
+          !TargetRegisterInfo::isVirtualRegister(Addr1))
+        return false;
+
+      // This assumes SSA form.
+      MachineInstr *Def0 = MRI->getVRegDef(Addr0);
+      MachineInstr *Def1 = MRI->getVRegDef(Addr1);
+      // Check if the loaded value, e.g. a constantpool of a global address, are
+      // the same.
+      if (!produceSameValue(Def0, Def1, MRI))
+        return false;
+    }
+
+    for (unsigned i = 3, e = MI0->getNumOperands(); i != e; ++i) {
+      // %vreg12<def> = PICLDR %vreg11, 0, pred:14, pred:%noreg
+      const MachineOperand &MO0 = MI0->getOperand(i);
+      const MachineOperand &MO1 = MI1->getOperand(i);
+      if (!MO0.isIdenticalTo(MO1))
+        return false;
+    }
+    return true;
   }
 
   return MI0->isIdenticalTo(MI1, MachineInstr::IgnoreVRegDefs);

@@ -298,7 +298,8 @@ public:
   MachineInstr *duplicate(MachineInstr *Orig, MachineFunction &MF) const;
 
   virtual bool produceSameValue(const MachineInstr *MI0,
-                                const MachineInstr *MI1) const;
+                                const MachineInstr *MI1,
+                                const MachineRegisterInfo *MRI) const;
 
   /// areLoadsFromSameBasePtr - This is used by the pre-regalloc scheduler to
   /// determine if two loads are loading from the same base address. It should

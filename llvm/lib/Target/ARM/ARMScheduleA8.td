@@ -71,6 +71,12 @@ def CortexA8Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iMOVsr, [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [1, 1, 1]>,
   InstrItinData<IIC_iMOVix2,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
                              InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,
+  InstrItinData<IIC_iMOVix2addpc,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                                  InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                                  InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [3]>,
+  InstrItinData<IIC_iMOVix2ld,[InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<1, [A8_Pipe0, A8_Pipe1]>,
+                               InstrStage<1, [A8_LSPipe]>], [5]>,
   //
   // Move instructions, conditional
   InstrItinData<IIC_iCMOVi , [InstrStage<1, [A8_Pipe0, A8_Pipe1]>], [2]>,

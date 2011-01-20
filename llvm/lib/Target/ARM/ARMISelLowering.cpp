@@ -2003,13 +2003,8 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
       return DAG.getNode(ARMISD::Wrapper, dl, PtrVT,
                                  DAG.getTargetGlobalAddress(GV, dl, PtrVT));
 
-    // FIXME: Not a constant pool!
-    unsigned PICLabelIndex = AFI->createPICLabelUId();
-    SDValue PICLabel = DAG.getConstant(PICLabelIndex, MVT::i32);
     SDValue Result = DAG.getNode(ARMISD::WrapperPIC, dl, PtrVT,
-                                 DAG.getTargetGlobalAddress(GV, dl, PtrVT),
-                                 PICLabel);
-    Result = DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
+                                 DAG.getTargetGlobalAddress(GV, dl, PtrVT));
     if (Subtarget->GVIsIndirectSymbol(GV, RelocM))
       Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,
                            MachinePointerInfo::getGOT(), false, false, 0);

@@ -3245,12 +3245,15 @@ def t2MOVi32imm : PseudoInst<(outs rGPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                             [(set rGPR:$dst, (i32 imm:$src))]>,
                             Requires<[IsThumb, HasV6T2]>;
 
-// Materialize GA with movw + movt.
+// Pseudo instruction that combines movw + movt + add pc.
+// It also makes it possible to rematerialize the instructions.
+// FIXME: Remove this when we can do generalized remat and when machine licm
+// can properly the instructions.
 let isReMaterializable = 1 in
-def t2MOV_pic_ga : PseudoInst<(outs rGPR:$dst),
-                              (ins i32imm:$addr, pclabel:$id), IIC_iMOVix2,
-                 [(set rGPR:$dst, (ARMWrapperPIC tglobaladdr:$addr, imm:$id))]>,
-                 Requires<[IsThumb2, UseMovt]>;
+def t2MOV_pic_ga_add_pc : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr),
+                                     IIC_iMOVix2,
+                          [(set rGPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
+                          Requires<[IsThumb2, UseMovt]>;
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>,
@@ -3266,9 +3269,9 @@ def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 // be expanded into two instructions late to allow if-conversion and
 // scheduling.
 let canFoldAsLoad = 1, isReMaterializable = 1 in
-def t2LDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
+def t2LDRpci_pic : PseudoInst<(outs rGPR:$dst), (ins i32imm:$addr, pclabel:$cp),
                    IIC_iLoadiALU,
-               [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
+              [(set rGPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
                Requires<[IsThumb2]>;
 

@@ -166,8 +166,10 @@ void TargetInstrInfoImpl::reMaterialize(MachineBasicBlock &MBB,
   MBB.insert(I, MI);
 }
 
-bool TargetInstrInfoImpl::produceSameValue(const MachineInstr *MI0,
-                                           const MachineInstr *MI1) const {
+bool
+TargetInstrInfoImpl::produceSameValue(const MachineInstr *MI0,
+                                      const MachineInstr *MI1,
+                                      const MachineRegisterInfo *MRI) const {
   return MI0->isIdenticalTo(MI1, MachineInstr::IgnoreVRegDefs);
 }
 

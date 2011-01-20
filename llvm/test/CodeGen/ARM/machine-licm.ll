@@ -1,4 +1,5 @@
-; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s
+; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s -check-prefix=THUMB
+; RUN: llc < %s -mtriple=arm-apple-darwin -relocation-model=pic -disable-fp-elim   | FileCheck %s -check-prefix=ARM
 ; rdar://7353541
 ; rdar://7354376
 
@@ -9,19 +10,30 @@
 
 define void @t(i32* nocapture %vals, i32 %c) nounwind {
 entry:
-; CHECK: t:
+; ARM: t:
+; ARM: ldr [[REGISTER_1:r[0-9]+]], LCPI0_0
+; ARM-NOT: ldr r{{[0-9]+}}, LCPI0_1
+; ARM: LPC0_0:
+; ARM: ldr r{{[0-9]+}}, [pc, [[REGISTER_1]]]
+; ARM: ldr r{{[0-9]+}}, [r{{[0-9]+}}]
+
+; THUMB: t:
   %0 = icmp eq i32 %c, 0                          ; <i1> [#uses=1]
   br i1 %0, label %return, label %bb.nph
 
 bb.nph:                                           ; preds = %entry
-; CHECK: BB#1
-; CHECK: ldr.n r2, LCPI0_0
-; CHECK: add r2, pc
-; CHECK: ldr r{{[0-9]+}}, [r2]
-; CHECK: LBB0_2
-; CHECK: LCPI0_0:
-; CHECK-NOT: LCPI0_1:
-; CHECK: .section
+; ARM: LCPI0_0:
+; ARM-NOT: LCPI0_1:
+; ARM: .section
+
+; THUMB: BB#1
+; THUMB: ldr.n r2, LCPI0_0
+; THUMB: add r2, pc
+; THUMB: ldr r{{[0-9]+}}, [r2]
+; THUMB: LBB0_2
+; THUMB: LCPI0_0:
+; THUMB-NOT: LCPI0_1:
+; THUMB: .section
   %.pre = load i32* @GV, align 4                  ; <i32> [#uses=1]
   br label %bb
 

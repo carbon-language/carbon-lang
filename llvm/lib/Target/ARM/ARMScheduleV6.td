@@ -64,6 +64,12 @@ def ARMV6Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iMOVsr   , [InstrStage<2, [V6_Pipe]>], [3, 2, 1]>,
   InstrItinData<IIC_iMOVix2  , [InstrStage<1, [V6_Pipe]>,
                                 InstrStage<1, [V6_Pipe]>], [2]>,
+  InstrItinData<IIC_iMOVix2addpc,[InstrStage<1, [V6_Pipe]>,
+                                  InstrStage<1, [V6_Pipe]>,
+                                  InstrStage<1, [V6_Pipe]>], [3]>,
+  InstrItinData<IIC_iMOVix2ld , [InstrStage<1, [V6_Pipe]>,
+                                 InstrStage<1, [V6_Pipe]>,
+                                 InstrStage<1, [V6_Pipe]>], [5]>,
   //
   // Move instructions, conditional
   InstrItinData<IIC_iCMOVi   , [InstrStage<1, [V6_Pipe]>], [3]>,

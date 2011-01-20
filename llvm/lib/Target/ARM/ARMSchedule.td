@@ -38,6 +38,8 @@ def IIC_iMOVr      : InstrItinClass;
 def IIC_iMOVsi     : InstrItinClass;
 def IIC_iMOVsr     : InstrItinClass;
 def IIC_iMOVix2    : InstrItinClass;
+def IIC_iMOVix2addpc : InstrItinClass;
+def IIC_iMOVix2ld  : InstrItinClass;
 def IIC_iMVNi      : InstrItinClass;
 def IIC_iMVNr      : InstrItinClass;
 def IIC_iMVNsi     : InstrItinClass;

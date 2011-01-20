@@ -50,6 +50,16 @@ def CortexA9Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iMOVix2 , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_ALU0, A9_ALU1]>,
                                InstrStage<1, [A9_ALU0, A9_ALU1]>], [2]>,
+  InstrItinData<IIC_iMOVix2addpc,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                                  InstrStage<1, [A9_ALU0, A9_ALU1]>,
+                                  InstrStage<1, [A9_ALU0, A9_ALU1]>,
+                                  InstrStage<1, [A9_ALU0, A9_ALU1]>], [3]>,
+  InstrItinData<IIC_iMOVix2ld,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>,
+                               InstrStage<1, [A9_ALU0, A9_ALU1]>,
+                               InstrStage<1, [A9_MUX0], 0>,
+                               InstrStage<1, [A9_AGU], 0>,
+                               InstrStage<1, [A9_LSUnit]>], [5]>,
   //
   // MVN instructions
   InstrItinData<IIC_iMVNi   , [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,

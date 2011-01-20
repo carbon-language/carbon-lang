@@ -70,7 +70,7 @@ def SDT_ARMBFI : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
-def ARMWrapperPIC    : SDNode<"ARMISD::WrapperPIC",  SDTIntBinOp>;
+def ARMWrapperPIC    : SDNode<"ARMISD::WrapperPIC",  SDTIntUnaryOp>;
 
 def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeqStart,
                               [SDNPHasChain, SDNPOutGlue]>;
@@ -3408,11 +3408,22 @@ def MOVi32imm : PseudoInst<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVix2,
                            [(set GPR:$dst, (arm_i32imm:$src))]>,
                            Requires<[IsARM]>;
 
-let isReMaterializable = 1 in
-def MOV_pic_ga : PseudoInst<(outs GPR:$dst),
-                            (ins i32imm:$addr, pclabel:$id), IIC_iMOVix2,
-                 [(set GPR:$dst, (ARMWrapperPIC tglobaladdr:$addr, imm:$id))]>,
-                 Requires<[IsARM, UseMovt]>;
+// Pseudo instruction that combines movw + movt + add pc.
+// It also makes it possible to rematerialize the instructions.
+// FIXME: Remove this when we can do generalized remat and when machine licm
+// can properly the instructions.
+let isReMaterializable = 1 in {
+def MOV_pic_ga_add_pc : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+                                   IIC_iMOVix2addpc,
+                        [(set GPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
+                        Requires<[IsARM, UseMovt]>;
+
+let AddedComplexity = 10 in
+def MOV_pic_ga_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
+                                IIC_iMOVix2ld,
+                    [(set GPR:$dst, (load (ARMWrapperPIC tglobaladdr:$addr)))]>,
+                    Requires<[IsARM, UseMovt]>;
+} // isReMaterializable
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (LEApcrel tglobaladdr :$dst)>,

@@ -228,9 +228,12 @@ public:
 
   /// produceSameValue - Return true if two machine instructions would produce
   /// identical values. By default, this is only true when the two instructions
-  /// are deemed identical except for defs.
+  /// are deemed identical except for defs. If this function is called when the
+  /// IR is still in SSA form, the caller can pass the MachineRegisterInfo for
+  /// aggressive checks.
   virtual bool produceSameValue(const MachineInstr *MI0,
-                                const MachineInstr *MI1) const = 0;
+                                const MachineInstr *MI1,
+                                const MachineRegisterInfo *MRI = 0) const = 0;
 
   /// AnalyzeBranch - Analyze the branching code at the end of MBB, returning
   /// true if it cannot be understood (e.g. it's a switch dispatch or isn't
@@ -677,7 +680,8 @@ public:
   virtual MachineInstr *duplicate(MachineInstr *Orig,
                                   MachineFunction &MF) const;
   virtual bool produceSameValue(const MachineInstr *MI0,
-                                const MachineInstr *MI1) const;
+                                const MachineInstr *MI1,
+                                const MachineRegisterInfo *MRI) const;
   virtual bool isSchedulingBoundary(const MachineInstr *MI,
                                     const MachineBasicBlock *MBB,
                                     const MachineFunction &MF) const;
