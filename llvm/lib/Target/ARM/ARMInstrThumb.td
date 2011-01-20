@@ -1323,6 +1323,61 @@ def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
                               Size2Bytes, IIC_iALUi, []>;
 
 //===----------------------------------------------------------------------===//
+// Move between coprocessor and ARM core register -- for disassembly only
+//
+
+class tMovRCopro<string opc, bit direction>
+  : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
+                       GPR:$Rt, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+          !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
+          [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-24} = 0b1110;
+  let Inst{20} = direction;
+  let Inst{4} = 1;
+
+  bits<4> Rt;
+  bits<4> cop;
+  bits<3> opc1;
+  bits<3> opc2;
+  bits<4> CRm;
+  bits<4> CRn;
+
+  let Inst{15-12} = Rt;
+  let Inst{11-8}  = cop;
+  let Inst{23-21} = opc1;
+  let Inst{7-5}   = opc2;
+  let Inst{3-0}   = CRm;
+  let Inst{19-16} = CRn;
+}
+
+def tMCR : tMovRCopro<"mcr", 0 /* from ARM core register to coprocessor */>;
+def tMRC : tMovRCopro<"mrc", 1 /* from coprocessor to ARM core register */>;
+
+class tMovRRCopro<string opc, bit direction>
+  : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"),
+          [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-24} = 0b1100;
+  let Inst{23-21} = 0b010;
+  let Inst{20} = direction;
+
+  bits<4> Rt;
+  bits<4> Rt2;
+  bits<4> cop;
+  bits<4> opc1;
+  bits<4> CRm;
+
+  let Inst{15-12} = Rt;
+  let Inst{19-16} = Rt2;
+  let Inst{11-8}  = cop;
+  let Inst{7-4}   = opc1;
+  let Inst{3-0}   = CRm;
+}
+
+def tMCRR : tMovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */>;
+def tMRRC : tMovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
+
+//===----------------------------------------------------------------------===//
 // TLS Instructions
 //
 
