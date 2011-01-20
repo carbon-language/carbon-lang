@@ -1601,7 +1601,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   DeclaratorInfo,
                                                   move(TemplateParams),
                                                   BitfieldSize.release(),
-                                                  Init.release(),
+                                                  VS, Init.release(),
                                                   /*IsDefinition*/Deleted,
                                                   Deleted);
     }

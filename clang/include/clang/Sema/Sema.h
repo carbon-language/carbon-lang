@@ -2538,7 +2538,7 @@ public:
   Decl *ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
                                  Declarator &D,
                                  MultiTemplateParamsArg TemplateParameterLists,
-                                 Expr *BitfieldWidth,
+                                 Expr *BitfieldWidth, const VirtSpecifiers &VS,
                                  Expr *Init, bool IsDefinition,
                                  bool Deleted = false);
 

@@ -37,7 +37,8 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
                                           move(TemplateParams));
   else // FIXME: pass template information through
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
-                                           move(TemplateParams), 0, 0,
+                                           move(TemplateParams), 0, 
+                                           VirtSpecifiers(), 0,
                                            /*IsDefinition*/true);
 
   HandleMemberFunctionDefaultArgs(D, FnD);

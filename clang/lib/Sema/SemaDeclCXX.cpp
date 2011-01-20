@@ -859,7 +859,8 @@ Decl *Sema::ActOnAccessSpecifier(AccessSpecifier Access,
 Decl *
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                MultiTemplateParamsArg TemplateParameterLists,
-                               ExprTy *BW, ExprTy *InitExpr, bool IsDefinition,
+                               ExprTy *BW, const VirtSpecifiers &VS,
+                               ExprTy *InitExpr, bool IsDefinition,
                                bool Deleted) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
