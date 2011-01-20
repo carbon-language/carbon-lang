@@ -306,6 +306,35 @@ CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
   return ::BuildVirtualCall(*this, VTableIndex, This, Ty);
 }
 
+/// BuildVirtualCall - This routine is to support gcc's kext ABI making
+/// indirect call to virtual functions. It makes the call through indexing
+/// into the vtable.
+llvm::Value *
+CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD, 
+                                  NestedNameSpecifier *Qual,
+                                  llvm::Value *This,
+                                  const llvm::Type *Ty) {
+  llvm::Value *VTable = 0;
+  assert((Qual->getKind() == NestedNameSpecifier::TypeSpec) &&
+         "BuildAppleKextVirtualCall - bad Qual kind");
+  
+  const Type *QTy = Qual->getAsType();
+  QualType T = QualType(QTy, 0);
+  const RecordType *RT = T->getAs<RecordType>();
+  assert(RT && "BuildAppleKextVirtualCall - Qual type must be record");
+  const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+  VTable = CGM.getVTables().GetAddrOfVTable(RD);
+  Ty = Ty->getPointerTo()->getPointerTo();
+  VTable = Builder.CreateBitCast(VTable, Ty);
+  assert(VTable && "BuildVirtualCall = kext vtbl pointer is null");
+  MD = MD->getCanonicalDecl();
+  uint64_t VTableIndex = CGM.getVTables().getMethodVTableIndex(MD);
+  VTableIndex += 2;
+  llvm::Value *VFuncPtr = 
+    CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
+  return CGF.Builder.CreateLoad(VFuncPtr);
+}
+
 llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type, 
                                   llvm::Value *This, const llvm::Type *Ty) {

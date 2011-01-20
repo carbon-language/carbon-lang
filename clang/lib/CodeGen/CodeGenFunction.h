@@ -1500,6 +1500,10 @@ public:
                                 const llvm::Type *Ty);
   llvm::Value *BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
                                 llvm::Value *This, const llvm::Type *Ty);
+  llvm::Value *BuildAppleKextVirtualCall(const CXXMethodDecl *MD, 
+                                         NestedNameSpecifier *Qual,
+                                         llvm::Value *This,
+                                         const llvm::Type *Ty);
 
   RValue EmitCXXMemberCall(const CXXMethodDecl *MD,
                            llvm::Value *Callee,
