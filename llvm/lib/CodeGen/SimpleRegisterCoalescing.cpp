@@ -65,6 +65,11 @@ DisablePhysicalJoin("disable-physical-join",
                cl::desc("Avoid coalescing physical register copies"),
                cl::init(false), cl::Hidden);
 
+static cl::opt<bool>
+VerifyCoalescing("verify-coalescing",
+         cl::desc("Verify machine instrs before and after register coalescing"),
+         cl::Hidden);
+
 INITIALIZE_AG_PASS_BEGIN(SimpleRegisterCoalescing, RegisterCoalescer,
                 "simple-register-coalescing", "Simple Register Coalescing", 
                 false, false, true)
@@ -1635,6 +1640,9 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
                << "********** Function: "
                << ((Value*)mf_->getFunction())->getName() << '\n');
 
+  if (VerifyCoalescing)
+    mf_->verify(this, "Before register coalescing");
+
   for (TargetRegisterInfo::regclass_iterator I = tri_->regclass_begin(),
          E = tri_->regclass_end(); I != E; ++I)
     allocatableRCRegs_.insert(std::make_pair(*I,
@@ -1777,6 +1785,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
   DEBUG(dump());
   DEBUG(ldv_->dump());
+  if (VerifyCoalescing)
+    mf_->verify(this, "After register coalescing");
   return true;
 }
 
