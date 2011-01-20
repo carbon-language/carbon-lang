@@ -1,11 +1,20 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++0x -verify %s 
-struct A {
+
+struct Base1 { 
+  virtual void g();
+};
+
+struct A : Base1 {
   virtual void f() new new; // expected-error {{class member already marked 'new'}}
   virtual void g() override override; // expected-error {{class member already marked 'override'}}
   virtual void h() final final; // expected-error {{class member already marked 'final'}}
 };
 
-struct B {
+struct Base2 { 
+  virtual void f();
+};
+
+struct B : Base2 {
   virtual void f() override;
   void g() override; // expected-error {{only virtual member functions can be marked 'override'}}
   int h override; // expected-error {{only virtual member functions can be marked 'override'}}
