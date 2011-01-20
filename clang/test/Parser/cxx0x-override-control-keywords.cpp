@@ -11,3 +11,8 @@ struct T {
   // virt-specifier-seq is only valid in member-declarators, and a function definition is not a member-declarator.
   virtual void f() const override { } // expected-error {{expected ';' at end of declaration list}}
 };
+
+struct override;
+struct A {
+  virtual override override(int override) override;
+};
