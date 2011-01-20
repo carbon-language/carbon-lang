@@ -216,6 +216,9 @@ class LiveIntervalMap {
   // The cache is also used as a visiteed set by mapValue().
   LiveOutMap liveOutCache_;
 
+  // Dump the live-out cache to dbgs().
+  void dumpCache();
+
 public:
   LiveIntervalMap(LiveIntervals &lis,
                   MachineDominatorTree &mdt,

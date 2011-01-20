@@ -449,6 +449,7 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
   // VNInfo. Insert phi-def VNInfos along the path back to IdxMBB.
   DEBUG(dbgs() << "\n  Reaching defs for BB#" << IdxMBB->getNumber()
                << " at " << Idx << " in " << *li_ << '\n');
+  DEBUG(dumpCache());
 
   // Blocks where li_ should be live-in.
   SmallVector<MachineDomTreeNode*, 16> LiveIn;
@@ -586,6 +587,7 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
   assert(IdxVNI && "Didn't find value for Idx");
 
 #ifndef NDEBUG
+  DEBUG(dumpCache());
   // Check the liveOutCache_ invariants.
   for (LiveOutMap::iterator I = liveOutCache_.begin(), E = liveOutCache_.end();
          I != E; ++I) {
@@ -619,6 +621,25 @@ VNInfo *LiveIntervalMap::mapValue(const VNInfo *ParentVNI, SlotIndex Idx,
 
   return IdxVNI;
 }
+
+#ifndef NDEBUG
+void LiveIntervalMap::dumpCache() {
+  for (LiveOutMap::iterator I = liveOutCache_.begin(), E = liveOutCache_.end();
+         I != E; ++I) {
+    assert(I->first && "Null MBB entry in cache");
+    assert(I->second.first && "Null VNInfo in cache");
+    assert(I->second.second && "Null DomTreeNode in cache");
+    dbgs() << "    cache: BB#" << I->first->getNumber()
+           << " has valno #" << I->second.first->id << " from BB#"
+           << I->second.second->getBlock()->getNumber() << ", preds";
+    for (MachineBasicBlock::pred_iterator PI = I->first->pred_begin(),
+           PE = I->first->pred_end(); PI != PE; ++PI)
+      dbgs() << " BB#" << (*PI)->getNumber();
+    dbgs() << '\n';
+  }
+  dbgs() << "    cache: " << liveOutCache_.size() << " entries.\n";
+}
+#endif
 
 // extendTo - Find the last li_ value defined in MBB at or before Idx. The
 // parentli_ is assumed to be live at Idx. Extend the live range to Idx.
