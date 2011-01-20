@@ -532,14 +532,16 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
     //   Template argument deduction can extend the sequence of template 
     //   arguments corresponding to a template parameter pack, even when the
     //   sequence contains explicitly specified template arguments.
-    if (NamedDecl *PartialPack 
-                  = CurrentInstantiationScope->getPartiallySubstitutedPack()) {
-      unsigned PartialDepth, PartialIndex;
-      llvm::tie(PartialDepth, PartialIndex) = getDepthAndIndex(PartialPack);
-      if (PartialDepth == Depth && PartialIndex == Index)
-        RetainExpansion = true;
+    if (!IsFunctionParameterPack) {
+      if (NamedDecl *PartialPack 
+                    = CurrentInstantiationScope->getPartiallySubstitutedPack()){
+        unsigned PartialDepth, PartialIndex;
+        llvm::tie(PartialDepth, PartialIndex) = getDepthAndIndex(PartialPack);
+        if (PartialDepth == Depth && PartialIndex == Index)
+          RetainExpansion = true;
+      }
     }
-
+    
     if (!NumExpansions) {
       // The is the first pack we've seen for which we have an argument. 
       // Record it.
