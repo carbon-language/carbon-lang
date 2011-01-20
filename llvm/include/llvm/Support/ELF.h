@@ -146,6 +146,7 @@ enum {
 
 // Object file classes.
 enum {
+  ELFCLASSNONE = 0,
   ELFCLASS32 = 1, // 32-bit object file
   ELFCLASS64 = 2  // 64-bit object file
 };
@@ -510,6 +511,8 @@ enum {
   SHF_WRITE     = 0x1, // Section data should be writable during execution.
   SHF_ALLOC     = 0x2, // Section occupies memory during program execution.
   SHF_EXECINSTR = 0x4, // Section contains executable machine instructions.
+  SHF_MERGE     = 0x10, // The data in this section may be merged.
+  SHF_STRINGS	  = 0x20, // The data in this section is null-terminated strings.
   SHF_MASKPROC  = 0xf0000000 // Bits indicating processor-specific flags.
 };
 

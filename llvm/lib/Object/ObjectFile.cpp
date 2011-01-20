@@ -45,7 +45,7 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
     case sys::ELF_Executable_FileType:
     case sys::ELF_SharedObject_FileType:
     case sys::ELF_Core_FileType:
-        return 0;
+      return createELFObjectFile(Object);
     case sys::Mach_O_Object_FileType:
     case sys::Mach_O_Executable_FileType:
     case sys::Mach_O_FixedVirtualMemorySharedLib_FileType:
