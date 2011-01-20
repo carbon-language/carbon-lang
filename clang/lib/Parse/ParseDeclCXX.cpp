@@ -1275,6 +1275,12 @@ VirtSpecifiers::VirtSpecifier Parser::isCXX0XVirtSpecifier() const {
   if (Tok.is(tok::identifier)) {
     IdentifierInfo *II = Tok.getIdentifierInfo();
 
+    // Initialize the contextual keywords.
+    if (!Ident_final) {
+      Ident_final = &PP.getIdentifierTable().get("final");
+      Ident_override = &PP.getIdentifierTable().get("override");
+    }
+
     if (II == Ident_override)
       return VirtSpecifiers::VS_Override;
 

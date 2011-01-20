@@ -113,8 +113,8 @@ class Parser : public CodeCompletionHandler {
   IdentifierInfo *Ident_pixel;
 
   /// C++0x contextual keywords. 
-  IdentifierInfo *Ident_final;
-  IdentifierInfo *Ident_override;
+  mutable IdentifierInfo *Ident_final;
+  mutable IdentifierInfo *Ident_override;
 
   llvm::OwningPtr<PragmaHandler> AlignHandler;
   llvm::OwningPtr<PragmaHandler> GCCVisibilityHandler;
