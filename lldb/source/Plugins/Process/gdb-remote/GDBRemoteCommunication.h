@@ -215,7 +215,7 @@ public:
     bool
     IsRunning() const
     {
-        return m_is_running.GetValue();
+        return m_public_is_running.GetValue();
     }
     
     bool
@@ -260,7 +260,8 @@ protected:
          m_thread_suffix_supported:1;
     lldb_private::Listener m_rx_packet_listener;
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
-    lldb_private::Predicate<bool> m_is_running;
+    lldb_private::Predicate<bool> m_public_is_running;
+    lldb_private::Predicate<bool> m_private_is_running;
 
     // If we need to send a packet while the target is running, the m_async_XXX
     // member variables take care of making this happen.

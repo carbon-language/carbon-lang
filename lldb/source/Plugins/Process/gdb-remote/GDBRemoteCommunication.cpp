@@ -37,7 +37,8 @@ GDBRemoteCommunication::GDBRemoteCommunication() :
     m_thread_suffix_supported (false),
     m_rx_packet_listener ("gdbremote.rx_packet"),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
-    m_is_running (false),
+    m_public_is_running (false),
+    m_private_is_running (false),
     m_async_mutex (Mutex::eMutexTypeRecursive),
     m_async_packet_predicate (false),
     m_async_packet (),
@@ -206,7 +207,8 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
         state = eStateInvalid;
 
     BroadcastEvent(eBroadcastBitRunPacketSent, NULL);
-    m_is_running.SetValue (true, eBroadcastNever);
+    m_public_is_running.SetValue (true, eBroadcastNever);
+    m_private_is_running.SetValue (true, eBroadcastNever);
 
     while (state == eStateRunning)
     {
@@ -229,6 +231,11 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                 {
                 case 'T':
                 case 'S':
+                    // Privately notify any internal threads that we have stopped
+                    // in case we wanted to interrupt our process, yet we might
+                    // send a packet and continue without returning control to the
+                    // user.
+                    m_private_is_running.SetValue (false, eBroadcastAlways);
                     if (m_async_signal != -1)
                     {
                         if (async_log) 
@@ -272,11 +279,14 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                                 if (async_log) 
                                     async_log->Printf ("async: error: failed to resume with %s", 
                                                        Host::GetSignalAsCString (async_signal));
-                                state = eStateInvalid;
+                                state = eStateExited;
                                 break;
                             }
                             else
+                            {
+                                m_private_is_running.SetValue (true, eBroadcastNever);
                                 continue;
+                            }
                         }
                     }
                     else if (m_async_packet_predicate.GetValue())
@@ -307,11 +317,15 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
                         // Continue again
                         if (SendPacket("c", 1) == 0)
                         {
-                            state = eStateInvalid;
+                            // Failed to send the continue packet
+                            state = eStateExited;
                             break;
                         }
                         else
+                        {
+                            m_private_is_running.SetValue (true, eBroadcastNever);
                             continue;
+                        }
                     }
                     // Stop with signal and thread info
                     state = eStateStopped;
@@ -358,7 +372,8 @@ GDBRemoteCommunication::SendContinuePacketAndWaitForResponse
     if (log)
         log->Printf ("GDBRemoteCommunication::%s () => %s", __FUNCTION__, StateAsCString(state));
     response.SetFilePos(0);
-    m_is_running.SetValue (false, eBroadcastAlways);
+    m_private_is_running.SetValue (false, eBroadcastAlways);
+    m_public_is_running.SetValue (false, eBroadcastAlways);
     return state;
 }
 
@@ -470,7 +485,7 @@ GDBRemoteCommunication::SendInterrupt (Mutex::Locker& locker, uint32_t seconds_t
             if (Write (&ctrl_c, 1, status, NULL) > 0)
             {
                 if (seconds_to_wait_for_stop)
-                    m_is_running.WaitForValueEqualTo (false, &timeout, timed_out);
+                    m_private_is_running.WaitForValueEqualTo (false, &timeout, timed_out);
                 return true;
             }
         }
@@ -481,6 +496,7 @@ GDBRemoteCommunication::SendInterrupt (Mutex::Locker& locker, uint32_t seconds_t
 size_t
 GDBRemoteCommunication::WaitForPacket (StringExtractorGDBRemote &response, uint32_t timeout_seconds)
 {
+    Mutex::Locker locker(m_sequence_mutex);
     TimeValue timeout_time;
     timeout_time = TimeValue::Now();
     timeout_time.OffsetWithSeconds (timeout_seconds);
