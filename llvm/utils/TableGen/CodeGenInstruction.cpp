@@ -483,6 +483,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
                       Result->getArgName(AliasOpNo) +
                       " is both " + Entry->getName() + " and " +
                       ADI->getDef()->getName() + "!");
+      Entry = ADI->getDef();
       
       // Now that it is validated, add it.
       ResultOperands.push_back(ResultOperand(Result->getArgName(AliasOpNo),
