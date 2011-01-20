@@ -1540,46 +1540,25 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 
   // The re-extended constant changed so the constant cannot be represented 
   // in the shorter type. Consequently, we cannot emit a simple comparison.
+  // All the cases that fold to true or false will have already been handled
+  // by SimplifyICmpInst, so only deal with the tricky case.
 
-  // First, handle some easy cases. We know the result cannot be equal at this
-  // point so handle the ICI.isEquality() cases
-  if (ICI.getPredicate() == ICmpInst::ICMP_EQ)
-    return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(ICI.getContext()));
-  if (ICI.getPredicate() == ICmpInst::ICMP_NE)
-    return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(ICI.getContext()));
+  if (isSignedCmp || !isSignedExt)
+    return 0;
 
   // Evaluate the comparison for LT (we invert for GT below). LE and GE cases
   // should have been folded away previously and not enter in here.
-  Value *Result;
-  if (isSignedCmp) {
-    // We're performing a signed comparison.
-    if (cast<ConstantInt>(CI)->getValue().isNegative())
-      Result = ConstantInt::getFalse(ICI.getContext()); // X < (small) --> false
-    else
-      Result = ConstantInt::getTrue(ICI.getContext());  // X < (large) --> true
-  } else {
-    // We're performing an unsigned comparison.
-    if (isSignedExt) {
-      // We're performing an unsigned comp with a sign extended value.
-      // This is true if the input is >= 0. [aka >s -1]
-      Constant *NegOne = Constant::getAllOnesValue(SrcTy);
-      Result = Builder->CreateICmpSGT(LHSCIOp, NegOne, ICI.getName());
-    } else {
-      // Unsigned extend & unsigned compare -> always true.
-      Result = ConstantInt::getTrue(ICI.getContext());
-    }
-  }
+
+  // We're performing an unsigned comp with a sign extended value.
+  // This is true if the input is >= 0. [aka >s -1]
+  Constant *NegOne = Constant::getAllOnesValue(SrcTy);
+  Value *Result = Builder->CreateICmpSGT(LHSCIOp, NegOne, ICI.getName());
 
   // Finally, return the value computed.
-  if (ICI.getPredicate() == ICmpInst::ICMP_ULT ||
-      ICI.getPredicate() == ICmpInst::ICMP_SLT)
+  if (ICI.getPredicate() == ICmpInst::ICMP_ULT)
     return ReplaceInstUsesWith(ICI, Result);
 
-  assert((ICI.getPredicate()==ICmpInst::ICMP_UGT || 
-          ICI.getPredicate()==ICmpInst::ICMP_SGT) &&
-         "ICmp should be folded!");
-  if (Constant *CI = dyn_cast<Constant>(Result))
-    return ReplaceInstUsesWith(ICI, ConstantExpr::getNot(CI));
+  assert(ICI.getPredicate() == ICmpInst::ICMP_UGT && "ICmp should be folded!");
   return BinaryOperator::CreateNot(Result);
 }
 
