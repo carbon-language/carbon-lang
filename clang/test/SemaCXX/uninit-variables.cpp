@@ -13,3 +13,31 @@ int test2_aux() {
   return x; // no-warning
 }
 
+// Handle cases where the CFG may constant fold some branches, thus
+// mitigating the need for some path-sensitivity in the analysis.
+unsigned test3_aux();
+unsigned test3() {
+  unsigned x = 0;
+  const bool flag = true;
+  if (flag && (x = test3_aux()) == 0) {
+    return x;
+  }
+  return x;
+}
+unsigned test3_b() {
+  unsigned x ;
+  const bool flag = true;
+  if (flag && (x = test3_aux()) == 0) {
+    x = 1;
+  }
+  return x; // no-warning
+}
+unsigned test3_c() {
+  unsigned x ;
+  const bool flag = false;
+  if (flag && (x = test3_aux()) == 0) {
+    x = 1;
+  }
+  return x; // expected-warning{{use of uninitialized variable 'x'}}
+}
+

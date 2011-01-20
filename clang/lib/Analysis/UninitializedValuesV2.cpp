@@ -156,7 +156,7 @@ static BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
 llvm::BitVector &CFGBlockValues::getBitVector(const CFGBlock *block,
                                               const CFGBlock *dstBlock) {
   unsigned idx = block->getBlockID();
-  if (dstBlock && block->succ_size() == 2) {
+  if (dstBlock && block->succ_size() == 2 && block->pred_size() == 2) {
     assert(block->getTerminator());
     if (getLogicalOperatorInChain(block)) {
       if (*block->succ_begin() == dstBlock)
@@ -460,20 +460,19 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
                        UninitVariablesHandler *handler = 0) {
   
   if (const BinaryOperator *b = getLogicalOperatorInChain(block)) {
-    assert(block->pred_size() == 2);
-    assert(block->succ_size() == 2);
-    assert(block->getTerminatorCondition() == b);
-    
-    BVPair valsAB = vals.getPredBitVectors(block);
-    vals.mergeIntoScratch(*valsAB.first, true);
-    vals.mergeIntoScratch(*valsAB.second, false);
-    valsAB.second = &vals.getScratch();
-    if (b->getOpcode() == BO_LOr) {
-      // Ensure the invariant that 'first' corresponds to the true
-      // branch and 'second' to the false.
-      std::swap(valsAB.first, valsAB.second);
+    if (block->pred_size() == 2 && block->succ_size() == 2) {
+      assert(block->getTerminatorCondition() == b);    
+      BVPair valsAB = vals.getPredBitVectors(block);
+      vals.mergeIntoScratch(*valsAB.first, true);
+      vals.mergeIntoScratch(*valsAB.second, false);
+      valsAB.second = &vals.getScratch();
+      if (b->getOpcode() == BO_LOr) {
+        // Ensure the invariant that 'first' corresponds to the true
+        // branch and 'second' to the false.
+        std::swap(valsAB.first, valsAB.second);
+      }
+      return vals.updateBitVectors(block, valsAB);
     }
-    return vals.updateBitVectors(block, valsAB);
   }
 
   // Default behavior: merge in values of predecessor blocks.    
