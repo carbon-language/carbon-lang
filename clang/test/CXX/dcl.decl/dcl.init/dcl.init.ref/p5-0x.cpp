@@ -15,6 +15,11 @@ struct HasArray {
 
 int f(int);
 
+template<typename T>
+struct ConvertsTo {
+  operator T();
+};
+
 void test_rvalue_refs() {
   // If the initializer expression...
 
@@ -35,6 +40,23 @@ void test_rvalue_refs() {
 
   // function lvalue case
   int (&&function0)(int) = f;
+
+  //   - has a class type (i.e., T2 is a class type), where T1 is not
+  //     reference-related to T2, and can be implicitly converted to
+  //     an xvalue, class prvalue, or function lvalue of type "cv3
+  //     T3", where "cv1 T1" is reference-compatible with "cv3 T3",
+
+  // xvalue
+  Base&& base4 = ConvertsTo<Base&&>();
+  Base&& base5 = ConvertsTo<Derived&&>();
+  int && int1 = ConvertsTo<int&&>();
+
+  // class prvalue
+  Base&& base6 = ConvertsTo<Base>();
+  Base&& base7 = ConvertsTo<Derived>();
+  
+  // FIXME: function lvalue
+  //  int (&&function1)(int) = ConvertsTo<int(&)(int)>();
 }
 
 class NonCopyable {
@@ -45,6 +67,7 @@ class NonCopyableDerived : public NonCopyable {
   NonCopyableDerived(const NonCopyableDerived&);
 };
 
+// Make sure we get direct bindings with no copies.
 void test_direct_binding() {
   NonCopyable &&nc0 = prvalue<NonCopyable>();
   NonCopyable &&nc1 = prvalue<NonCopyableDerived>();
@@ -54,4 +77,8 @@ void test_direct_binding() {
   const NonCopyable &nc5 = prvalue<NonCopyableDerived>();
   const NonCopyable &nc6 = xvalue<NonCopyable>();
   const NonCopyable &nc7 = xvalue<NonCopyableDerived>();
+  NonCopyable &&nc8 = ConvertsTo<NonCopyable&&>();
+  NonCopyable &&nc9 = ConvertsTo<NonCopyableDerived&&>();
+  const NonCopyable &nc10 = ConvertsTo<NonCopyable&&>();
+  const NonCopyable &nc11 = ConvertsTo<NonCopyableDerived&&>();
 }
