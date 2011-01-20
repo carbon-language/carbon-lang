@@ -1001,13 +1001,13 @@ QualType Sema::BuildPointerType(QualType T,
 QualType Sema::BuildReferenceType(QualType T, bool SpelledAsLValue,
                                   SourceLocation Loc,
                                   DeclarationName Entity) {
+  // C++0x [dcl.ref]p6:
+  //   If a typedef (7.1.3), a type template-parameter (14.3.1), or a 
+  //   decltype-specifier (7.1.6.2) denotes a type TR that is a reference to a 
+  //   type T, an attempt to create the type "lvalue reference to cv TR" creates 
+  //   the type "lvalue reference to T", while an attempt to create the type 
+  //   "rvalue reference to cv TR" creates the type TR.
   bool LValueRef = SpelledAsLValue || T->getAs<LValueReferenceType>();
-
-  // C++0x [dcl.typedef]p9: If a typedef TD names a type that is a
-  //   reference to a type T, and attempt to create the type "lvalue
-  //   reference to cv TD" creates the type "lvalue reference to T".
-  // We use the qualifiers (restrict or none) of the original reference,
-  // not the new ones. This is consistent with GCC.
 
   // C++ [dcl.ref]p4: There shall be no references to references.
   //
@@ -1020,8 +1020,8 @@ QualType Sema::BuildReferenceType(QualType T, bool SpelledAsLValue,
   //
   // Parser::ParseDeclaratorInternal diagnoses the case where
   // references are written directly; here, we handle the
-  // collapsing of references-to-references as described in C++
-  // DR 106 and amended by C++ DR 540.
+  // collapsing of references-to-references as described in C++0x.
+  // DR 106 and 540 introduce reference-collapsing into C++98/03.
 
   // C++ [dcl.ref]p1:
   //   A declarator that specifies the type "reference to cv void"

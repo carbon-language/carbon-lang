@@ -2575,9 +2575,7 @@ static void TryReferenceInitialization(Sema &S,
 
   //     - Otherwise, the reference shall be an lvalue reference to a 
   //       non-volatile const type (i.e., cv1 shall be const), or the reference
-  //       shall be an rvalue reference and the initializer expression shall 
-  //       be an rvalue or have a function type.
-  // We handled the function type stuff above.
+  //       shall be an rvalue reference.
   if (!((isLValueRef && T1Quals.hasConst() && !T1Quals.hasVolatile()) ||
         (isRValueRef && InitCategory.isRValue()))) {
     if (S.Context.getCanonicalType(T2) == S.Context.OverloadTy)

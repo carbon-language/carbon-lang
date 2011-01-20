@@ -103,6 +103,9 @@ break; \
   } else if (const LValueReferenceType *Ty = QT->getAs<LValueReferenceType>()) {
     QT = Context.getLValueReferenceType(Desugar(Context, Ty->getPointeeType(),
                                                 ShouldAKA));
+  } else if (const RValueReferenceType *Ty = QT->getAs<RValueReferenceType>()) {
+    QT = Context.getRValueReferenceType(Desugar(Context, Ty->getPointeeType(),
+                                                ShouldAKA));
   }
 
   return QC.apply(Context, QT);
