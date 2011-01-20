@@ -1195,6 +1195,8 @@ private:
   bool IsDeleted : 1;
   bool IsTrivial : 1; // sunk from CXXMethodDecl
   bool HasImplicitReturnZero : 1;
+  bool IsMarkedOverride : 1; // sunk from CXXMethodDecl
+  bool IsMarkedFinal : 1; // sunk from CXXMethodDecl
 
   /// \brief End part of this FunctionDecl's source range.
   ///
@@ -1274,8 +1276,8 @@ protected:
       IsInline(isInlineSpecified), IsInlineSpecified(isInlineSpecified),
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false),
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
-      HasImplicitReturnZero(false),
-      EndRangeLoc(NameInfo.getEndLoc()),
+      HasImplicitReturnZero(false), IsMarkedOverride(false), 
+      IsMarkedFinal(false), EndRangeLoc(NameInfo.getEndLoc()),
       TemplateOrSpecialization(),
       DNLoc(NameInfo.getInfo()) {}
 
@@ -1387,6 +1389,16 @@ public:
   /// should synthesize the appropriate return statements.
   bool hasImplicitReturnZero() const { return HasImplicitReturnZero; }
   void setHasImplicitReturnZero(bool IRZ) { HasImplicitReturnZero = IRZ; }
+
+  /// \brief Whether this member function is marked with the 'override' keyword,
+  /// C++0x [class.mem]p8.
+  bool isMarkedOverride() const { return IsMarkedOverride; }
+  void setIsMarkedOverride(bool IMO) { IsMarkedOverride = IMO; }
+
+  /// \brief Whether this member function is marked with the 'final' keyword,
+  /// C++0x [class.mem]p8.
+  bool isMarkedFinal() const { return IsMarkedFinal; }
+  void setIsMarkedFinal(bool IMF) { IsMarkedFinal = IMF; }
 
   /// \brief Whether this function has a prototype, either because one
   /// was explicitly written or because it was "inherited" by merging

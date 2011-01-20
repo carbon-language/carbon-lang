@@ -395,6 +395,9 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->IsDeleted = Record[Idx++];
   FD->IsTrivial = Record[Idx++];
   FD->HasImplicitReturnZero = Record[Idx++];
+  FD->IsMarkedOverride = Record[Idx++];
+  FD->IsMarkedFinal = Record[Idx++];
+
   FD->EndRangeLoc = ReadSourceLocation(Record, Idx);
 
   // Read in the parameters.

@@ -312,6 +312,8 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->isDeleted());
   Record.push_back(D->isTrivial());
   Record.push_back(D->hasImplicitReturnZero());
+  Record.push_back(D->isMarkedOverride());
+  Record.push_back(D->isMarkedFinal());
   Writer.AddSourceLocation(D->getLocEnd(), Record);
 
   Record.push_back(D->param_size());
