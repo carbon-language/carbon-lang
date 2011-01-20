@@ -403,6 +403,20 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
   // NameClass - If argument names are repeated, we need to verify they have
   // the same class.
   StringMap<Record*> NameClass;
+  for (unsigned i = 0, e = Result->getNumArgs(); i != e; ++i) {
+    DefInit *ADI = dynamic_cast<DefInit*>(Result->getArg(i));
+    if (!ADI || Result->getArgName(i).empty())
+      continue;
+    // Verify we don't have something like: (someinst GR16:$foo, GR32:$foo)
+    // $foo can exist multiple times in the result list, but it must have the
+    // same type.
+    Record *&Entry = NameClass[Result->getArgName(i)];
+    if (Entry && Entry != ADI->getDef())
+      throw TGError(R->getLoc(), "result value $" + Result->getArgName(i) +
+                    " is both " + Entry->getName() + " and " +
+                    ADI->getDef()->getName() + "!");
+    Entry = ADI->getDef();
+  }
     
   // Decode and validate the arguments of the result.
   unsigned AliasOpNo = 0;
@@ -473,17 +487,6 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
                       " declared with class " + ADI->getDef()->getName() +
                       ", instruction operand is class " + 
                       ResultOpRec->getName());
-      
-      // Verify we don't have something like: (someinst GR16:$foo, GR32:$foo)
-      // $foo can exist multiple times in the result list, but it must have the
-      // same type.
-      Record *&Entry = NameClass[Result->getArgName(AliasOpNo)];
-      if (Entry && Entry != ADI->getDef())
-        throw TGError(R->getLoc(), "result value $" +
-                      Result->getArgName(AliasOpNo) +
-                      " is both " + Entry->getName() + " and " +
-                      ADI->getDef()->getName() + "!");
-      Entry = ADI->getDef();
       
       // Now that it is validated, add it.
       ResultOperands.push_back(ResultOperand(Result->getArgName(AliasOpNo),
