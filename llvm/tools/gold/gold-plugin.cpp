@@ -29,6 +29,13 @@
 #include <list>
 #include <vector>
 
+// Support Windows/MinGW crazyness.
+#ifdef _WIN32
+# include <io.h>
+# define lseek _lseek
+# define read _read
+#endif
+
 using namespace llvm;
 
 namespace {
