@@ -68,3 +68,12 @@ void f()
     callback<void(const int&)> op;
 }
 }
+
+namespace PR9007 {
+  struct bar {
+    enum xxx {
+      yyy = sizeof(struct foo*)
+    };
+    foo *xxx();
+};
+}
