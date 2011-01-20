@@ -588,8 +588,8 @@ public:
                         else
                         {
                             Error error;
-                            const bool check_ptr_vs_member = true;
-                            valobj_sp = exe_ctx.frame->GetValueForVariableExpressionPath (name_cstr, check_ptr_vs_member, error);
+                            const uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember;
+                            valobj_sp = exe_ctx.frame->GetValueForVariableExpressionPath (name_cstr, expr_path_options, error);
                             if (valobj_sp)
                             {
                                 if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())

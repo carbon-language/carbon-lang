@@ -30,6 +30,11 @@ class StackFrame :
     public ExecutionContextScope
 {
 public:
+    typedef enum ExpressionPathOption
+    {
+        eExpressionPathOptionCheckPtrVsMember   = (1u << 0),
+        eExpressionPathOptionsNoFragileObjcIvar = (1u << 1)
+    };
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -96,8 +101,9 @@ public:
     VariableList *
     GetVariableList (bool get_file_globals);
 
+    // See ExpressionPathOption enumeration for "options" values
     lldb::ValueObjectSP
-    GetValueForVariableExpressionPath (const char *var_expr, bool check_ptr_vs_member, Error &error);
+    GetValueForVariableExpressionPath (const char *var_expr, uint32_t options, Error &error);
 
     bool
     HasDebugInformation ();

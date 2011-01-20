@@ -480,11 +480,13 @@ StackFrame::GetVariableList (bool get_file_globals)
 }
 
 ValueObjectSP
-StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool check_ptr_vs_member, Error &error)
+StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, uint32_t options, Error &error)
 {
 
     if (var_expr_cstr && var_expr_cstr[0])
     {
+        const bool check_ptr_vs_member = (options & eExpressionPathOptionCheckPtrVsMember) != 0;
+        const bool no_fragile_ivar = (options & eExpressionPathOptionsNoFragileObjcIvar) != 0;
         error.Clear();
         bool deref = false;
         bool address_of = false;
@@ -536,6 +538,20 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, bool c
                         if (var_path.size() >= 2 && var_path[1] != '>')
                             return ValueObjectSP();
 
+                        if (no_fragile_ivar)
+                        {
+                            // Make sure we aren't trying to deref an objective
+                            // C ivar if this is not allowed
+                            const uint32_t pointer_type_flags = ClangASTContext::GetTypeInfo (valobj_sp->GetClangType(), NULL, NULL);
+                            if ((pointer_type_flags & ClangASTContext::eTypeIsObjC) &&
+                                (pointer_type_flags & ClangASTContext::eTypeIsPointer))
+                            {
+                                // This was an objective C object pointer and 
+                                // it was requested we skip any fragile ivars
+                                // so return nothing here
+                                return ValueObjectSP();
+                            }
+                        }
                         var_path.erase (0, 1); // Remove the '-'
                         // Fall through
                     case '.':
