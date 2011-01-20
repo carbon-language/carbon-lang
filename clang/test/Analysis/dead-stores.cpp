@@ -100,3 +100,15 @@ static void test_new(unsigned n) {
   char **p = new char* [n]; // expected-warning{{never read}}
 }
 
+//===----------------------------------------------------------------------===//
+// Dead stores in namespaces.
+//===----------------------------------------------------------------------===//
+
+namespace foo {
+  int test_4(int x) {
+    x = 2; // expected-warning{{Value stored to 'x' is never read}}
+    x = 2;
+    return x;
+  }
+}
+

@@ -198,6 +198,8 @@ public:
   }
 
   virtual void HandleTranslationUnit(ASTContext &C);
+  void HandleDeclContext(ASTContext &C, DeclContext *dc);
+
   void HandleCode(Decl *D, Actions& actions);
 };
 } // end anonymous namespace
@@ -206,55 +208,61 @@ public:
 // AnalysisConsumer implementation.
 //===----------------------------------------------------------------------===//
 
-void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
-
-  TranslationUnitDecl *TU = C.getTranslationUnitDecl();
-
-  for (DeclContext::decl_iterator I = TU->decls_begin(), E = TU->decls_end();
+void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
+  for (DeclContext::decl_iterator I = dc->decls_begin(), E = dc->decls_end();
        I != E; ++I) {
     Decl *D = *I;
-
+    
     switch (D->getKind()) {
-    case Decl::CXXConstructor:
-    case Decl::CXXDestructor:
-    case Decl::CXXConversion:
-    case Decl::CXXMethod:
-    case Decl::Function: {
-      FunctionDecl* FD = cast<FunctionDecl>(D);
-      // We skip function template definitions, as their semantics is
-      // only determined when they are instantiated.
-      if (FD->isThisDeclarationADefinition() &&
-          !FD->isDependentContext()) {
-        if (!Opts.AnalyzeSpecificFunction.empty() &&
-            FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
-          break;
-        DisplayFunction(FD);
-        HandleCode(FD, FunctionActions);
+      case Decl::Namespace: {
+        HandleDeclContext(C, cast<NamespaceDecl>(D));
+        break;
       }
-      break;
-    }
-
-    case Decl::ObjCImplementation: {
-      ObjCImplementationDecl* ID = cast<ObjCImplementationDecl>(*I);
-      HandleCode(ID, ObjCImplementationActions);
-
-      for (ObjCImplementationDecl::method_iterator MI = ID->meth_begin(), 
-             ME = ID->meth_end(); MI != ME; ++MI) {
-        if ((*MI)->isThisDeclarationADefinition()) {
+      case Decl::CXXConstructor:
+      case Decl::CXXDestructor:
+      case Decl::CXXConversion:
+      case Decl::CXXMethod:
+      case Decl::Function: {
+        FunctionDecl* FD = cast<FunctionDecl>(D);
+        // We skip function template definitions, as their semantics is
+        // only determined when they are instantiated.
+        if (FD->isThisDeclarationADefinition() &&
+            !FD->isDependentContext()) {
           if (!Opts.AnalyzeSpecificFunction.empty() &&
-             Opts.AnalyzeSpecificFunction != (*MI)->getSelector().getAsString())
+              FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
             break;
-          DisplayFunction(*MI);
-          HandleCode(*MI, ObjCMethodActions);
+          DisplayFunction(FD);
+          HandleCode(FD, FunctionActions);
         }
+        break;
       }
-      break;
+        
+      case Decl::ObjCImplementation: {
+        ObjCImplementationDecl* ID = cast<ObjCImplementationDecl>(*I);
+        HandleCode(ID, ObjCImplementationActions);
+        
+        for (ObjCImplementationDecl::method_iterator MI = ID->meth_begin(), 
+             ME = ID->meth_end(); MI != ME; ++MI) {
+          if ((*MI)->isThisDeclarationADefinition()) {
+            if (!Opts.AnalyzeSpecificFunction.empty() &&
+                Opts.AnalyzeSpecificFunction != (*MI)->getSelector().getAsString())
+              break;
+            DisplayFunction(*MI);
+            HandleCode(*MI, ObjCMethodActions);
+          }
+        }
+        break;
+      }
+        
+      default:
+        break;
     }
+  }  
+}
 
-    default:
-      break;
-    }
-  }
+void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
+  TranslationUnitDecl *TU = C.getTranslationUnitDecl();
+  HandleDeclContext(C, TU);
 
   for (TUActions::iterator I = TranslationUnitActions.begin(),
                            E = TranslationUnitActions.end(); I != E; ++I) {
