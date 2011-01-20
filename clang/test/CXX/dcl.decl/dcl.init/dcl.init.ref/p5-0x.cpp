@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify -pedantic %s
 
 // Test the C++0x-specific reference initialization rules, e.g., the
 // rules for rvalue references.
@@ -30,9 +30,28 @@ void test_rvalue_refs() {
   Base&& base2 = prvalue<Base>();
   Base&& base3 = prvalue<Derived>();
 
-  // FIXME: array prvalue case
-  //  int (&&array0)[5] = HasArray().array;
+  // array prvalue case
+  int (&&array0)[5] = HasArray().array;
 
   // function lvalue case
   int (&&function0)(int) = f;
+}
+
+class NonCopyable {
+  NonCopyable(const NonCopyable&);
+};
+
+class NonCopyableDerived : public NonCopyable {
+  NonCopyableDerived(const NonCopyableDerived&);
+};
+
+void test_direct_binding() {
+  NonCopyable &&nc0 = prvalue<NonCopyable>();
+  NonCopyable &&nc1 = prvalue<NonCopyableDerived>();
+  NonCopyable &&nc2 = xvalue<NonCopyable>();
+  NonCopyable &&nc3 = xvalue<NonCopyableDerived>();
+  const NonCopyable &nc4 = prvalue<NonCopyable>();
+  const NonCopyable &nc5 = prvalue<NonCopyableDerived>();
+  const NonCopyable &nc6 = xvalue<NonCopyable>();
+  const NonCopyable &nc7 = xvalue<NonCopyableDerived>();
 }
