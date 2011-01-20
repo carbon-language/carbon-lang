@@ -3347,7 +3347,7 @@ bool Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
       if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
         if (!CheckOverridingFunctionReturnType(MD, OldMD) &&
             !CheckOverridingFunctionExceptionSpec(MD, OldMD) &&
-            !CheckOverridingFunctionAttributes(MD, OldMD)) {
+            !CheckIfOverriddenFunctionIsMarkedFinal(MD, OldMD)) {
           MD->addOverriddenMethod(OldMD->getCanonicalDecl());
           AddedAny = true;
         }

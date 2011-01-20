@@ -2717,15 +2717,17 @@ public:
   bool CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
                                             const CXXMethodDecl *Old);
 
-  /// CheckOverridingFunctionAttributes - Checks whether attributes are
-  /// incompatible or prevent overriding.
-  bool CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
-                                         const CXXMethodDecl *Old);
-
   bool CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange);
 
   /// CheckOverrideControl - Check C++0x override control semantics.
   void CheckOverrideControl(const Decl *D);
+
+  /// CheckForFunctionMarkedFinal - Checks whether a virtual member function
+  /// overrides a virtual member function marked 'final', according to
+  /// C++0x [class.virtual]p3.
+  bool CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
+                                              const CXXMethodDecl *Old);
+  
 
   //===--------------------------------------------------------------------===//
   // C++ Access Control

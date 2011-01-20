@@ -875,6 +875,22 @@ void Sema::CheckOverrideControl(const Decl *D) {
   }
 }
 
+/// CheckIfOverriddenFunctionIsMarkedFinal - Checks whether a virtual member 
+/// function overrides a virtual member function marked 'final', according to
+/// C++0x [class.virtual]p3.
+bool Sema::CheckIfOverriddenFunctionIsMarkedFinal(const CXXMethodDecl *New,
+                                                  const CXXMethodDecl *Old) {
+  // FIXME: Get rid of FinalAttr here.
+  if (Old->hasAttr<FinalAttr>() || Old->isMarkedFinal()) {
+    Diag(New->getLocation(), diag::err_final_function_overridden)
+      << New->getDeclName();
+    Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+    return true;
+  }
+  
+  return false;
+}
+
 /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
 /// declarator is parsed. 'AS' is the access specifier, 'BW' specifies the
 /// bitfield width if there is one and 'InitExpr' specifies the initializer if
@@ -6914,19 +6930,6 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
     Diag(Old->getLocation(), diag::note_overridden_virtual_function);
     return true;
   };
-
-  return false;
-}
-
-bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
-                                             const CXXMethodDecl *Old)
-{
-  if (Old->hasAttr<FinalAttr>()) {
-    Diag(New->getLocation(), diag::err_final_function_overridden)
-      << New->getDeclName();
-    Diag(Old->getLocation(), diag::note_overridden_virtual_function);
-    return true;
-  }
 
   return false;
 }

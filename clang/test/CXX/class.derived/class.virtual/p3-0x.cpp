@@ -40,3 +40,14 @@ template struct B<int, char, int>;
 template struct B<int>; // expected-note {{in instantiation of template class 'Test3::B<int>' requested here}}
 
 }
+
+namespace Test4 {
+struct B {
+  virtual void f() const final; // expected-note {{overridden virtual function is here}}
+};
+
+struct D : B {
+  void f() const; // expected-error {{declaration of 'f' overrides a 'final' function}}
+};
+
+}
