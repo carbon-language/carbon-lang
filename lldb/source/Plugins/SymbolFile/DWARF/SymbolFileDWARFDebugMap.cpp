@@ -103,18 +103,29 @@ SymbolFileDWARFDebugMap::InitOSO ()
     Symtab* symtab = m_obj_file->GetSymtab();
     if (symtab)
     {
-        //StreamFile s(0, 4, eByteOrderHost, stdout);
         std::vector<uint32_t> oso_indexes;
-        const uint32_t oso_index_count = symtab->AppendSymbolIndexesWithType(eSymbolTypeObjectFile, oso_indexes);
+//      StreamFile s(stdout);
+//      symtab->Dump(&s, NULL, eSortOrderNone);
 
-        symtab->AppendSymbolIndexesWithType (eSymbolTypeCode, Symtab::eDebugYes, Symtab::eVisibilityAny, m_func_indexes);
-        symtab->AppendSymbolIndexesWithType (eSymbolTypeData, Symtab::eDebugYes, Symtab::eVisibilityAny, m_glob_indexes);
+        // When a mach-o symbol is encoded, the n_type field is encoded in bits
+        // 23:16, and the n_desc field is encoded in bits 15:0.
+        // 
+        // To find all N_OSO entries that are part of the DWARF + debug map
+        // we find only object file symbols with the flags value as follows:
+        // bits 23:16 == 0x66 (N_OSO)
+        // bits 15: 0 == 0x0001 (specifies this is a debug map object file)
+        const uint32_t k_oso_symbol_flags_value = 0x660001u;
 
-        symtab->SortSymbolIndexesByValue(m_func_indexes, true);
-        symtab->SortSymbolIndexesByValue(m_glob_indexes, true);
+        const uint32_t oso_index_count = symtab->AppendSymbolIndexesWithTypeAndFlagsValue(eSymbolTypeObjectFile, k_oso_symbol_flags_value, oso_indexes);
 
         if (oso_index_count > 0)
         {
+            symtab->AppendSymbolIndexesWithType (eSymbolTypeCode, Symtab::eDebugYes, Symtab::eVisibilityAny, m_func_indexes);
+            symtab->AppendSymbolIndexesWithType (eSymbolTypeData, Symtab::eDebugYes, Symtab::eVisibilityAny, m_glob_indexes);
+
+            symtab->SortSymbolIndexesByValue(m_func_indexes, true);
+            symtab->SortSymbolIndexesByValue(m_glob_indexes, true);
+
             m_compile_unit_infos.resize(oso_index_count);
 //          s.Printf("%s N_OSO symbols:\n", __PRETTY_FUNCTION__);
 //          symtab->Dump(&s, oso_indexes);

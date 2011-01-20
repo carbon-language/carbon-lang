@@ -332,6 +332,24 @@ Symtab::AppendSymbolIndexesWithType (SymbolType symbol_type, std::vector<uint32_
 }
 
 uint32_t
+Symtab::AppendSymbolIndexesWithTypeAndFlagsValue (SymbolType symbol_type, uint32_t flags_value, std::vector<uint32_t>& indexes, uint32_t start_idx, uint32_t end_index) const
+{
+    Mutex::Locker locker (m_mutex);
+
+    uint32_t prev_size = indexes.size();
+
+    const uint32_t count = std::min<uint32_t> (m_symbols.size(), end_index);
+
+    for (uint32_t i = start_idx; i < count; ++i)
+    {
+        if ((symbol_type == eSymbolTypeAny || m_symbols[i].GetType() == symbol_type) && m_symbols[i].GetFlags() == flags_value)
+            indexes.push_back(i);
+    }
+
+    return indexes.size() - prev_size;
+}
+
+uint32_t
 Symtab::AppendSymbolIndexesWithType (SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& indexes, uint32_t start_idx, uint32_t end_index) const
 {
     Mutex::Locker locker (m_mutex);

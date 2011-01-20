@@ -55,6 +55,7 @@ public:
             Symbol *    FindSymbolWithType (lldb::SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, uint32_t &start_idx);
 //    const   Symbol *    FindSymbolWithType (lldb::SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, uint32_t &start_idx) const;
             uint32_t    AppendSymbolIndexesWithType (lldb::SymbolType symbol_type, std::vector<uint32_t>& indexes, uint32_t start_idx = 0, uint32_t end_index = UINT32_MAX) const;
+            uint32_t    AppendSymbolIndexesWithTypeAndFlagsValue (lldb::SymbolType symbol_type, uint32_t flags_value, std::vector<uint32_t>& indexes, uint32_t start_idx = 0, uint32_t end_index = UINT32_MAX) const;
             uint32_t    AppendSymbolIndexesWithType (lldb::SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& matches, uint32_t start_idx = 0, uint32_t end_index = UINT32_MAX) const;
             uint32_t    AppendSymbolIndexesWithName (const ConstString& symbol_name, std::vector<uint32_t>& matches);
             uint32_t    AppendSymbolIndexesWithName (const ConstString& symbol_name, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& matches);
