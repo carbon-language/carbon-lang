@@ -20,18 +20,23 @@
 #include "llvm/Module.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bitcode/Archive.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/system_error.h"
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
 #include <cstring>
+#include <vector>
 using namespace llvm;
+using namespace object;
 
 namespace {
   enum OutputFormatTy { bsd, sysv, posix };
@@ -65,9 +70,146 @@ namespace {
   cl::opt<bool> BSDFormat("B", cl::desc("Alias for --format=bsd"));
   cl::opt<bool> POSIXFormat("P", cl::desc("Alias for --format=posix"));
 
+  cl::opt<bool> PrintFileName("print-file-name",
+    cl::desc("Precede each symbol with the object file it came from"));
+
+  cl::alias PrintFileNameA("A", cl::desc("Alias for --print-file-name"),
+                                cl::aliasopt(PrintFileName));
+  cl::alias PrintFileNameo("o", cl::desc("Alias for --print-file-name"),
+                                cl::aliasopt(PrintFileName));
+
+  cl::opt<bool> DebugSyms("debug-syms",
+    cl::desc("Show all symbols, even debugger only"));
+  cl::alias DebugSymsa("a", cl::desc("Alias for --debug-syms"),
+                            cl::aliasopt(DebugSyms));
+
+  cl::opt<bool> NumericSort("numeric-sort",
+    cl::desc("Sort symbols by address"));
+  cl::alias NumericSortn("n", cl::desc("Alias for --numeric-sort"),
+                              cl::aliasopt(NumericSort));
+  cl::alias NumericSortv("v", cl::desc("Alias for --numeric-sort"),
+                              cl::aliasopt(NumericSort));
+
+  cl::opt<bool> NoSort("no-sort",
+    cl::desc("Show symbols in order encountered"));
+  cl::alias NoSortp("p", cl::desc("Alias for --no-sort"),
+                         cl::aliasopt(NoSort));
+
+  cl::opt<bool> PrintSize("print-size",
+    cl::desc("Show symbol size instead of address"));
+  cl::alias PrintSizeS("S", cl::desc("Alias for --print-size"),
+                            cl::aliasopt(PrintSize));
+
+  cl::opt<bool> SizeSort("size-sort", cl::desc("Sort symbols by size"));
+
+  bool PrintAddress = true;
+
   bool MultipleFiles = false;
 
   std::string ToolName;
+}
+
+namespace {
+  struct NMSymbol {
+    uint64_t  Address;
+    uint64_t  Size;
+    char      TypeChar;
+    StringRef Name;
+  };
+
+  static bool CompareSymbolAddress(const NMSymbol &a, const NMSymbol &b) {
+    if (a.Address < b.Address)
+      return true;
+    else if (a.Address == b.Address && a.Name < b.Name)
+      return true;
+    else
+      return false;
+
+  }
+
+  static bool CompareSymbolSize(const NMSymbol &a, const NMSymbol &b) {
+    if (a.Size < b.Size)
+      return true;
+    else if (a.Size == b.Size && a.Name < b.Name)
+      return true;
+    else
+      return false;
+  }
+
+  static bool CompareSymbolName(const NMSymbol &a, const NMSymbol &b) {
+    return a.Name < b.Name;
+  }
+
+  StringRef CurrentFilename;
+  typedef std::vector<NMSymbol> SymbolListT;
+  SymbolListT SymbolList;
+}
+
+static void SortAndPrintSymbolList() {
+  if (!NoSort) {
+    if (NumericSort)
+      std::sort(SymbolList.begin(), SymbolList.end(), CompareSymbolAddress);
+    else if (SizeSort)
+      std::sort(SymbolList.begin(), SymbolList.end(), CompareSymbolSize);
+    else
+      std::sort(SymbolList.begin(), SymbolList.end(), CompareSymbolName);
+  }
+
+  if (OutputFormat == posix && MultipleFiles) {
+    outs() << '\n' << CurrentFilename << ":\n";
+  } else if (OutputFormat == bsd && MultipleFiles) {
+    outs() << "\n" << CurrentFilename << ":\n";
+  } else if (OutputFormat == sysv) {
+    outs() << "\n\nSymbols from " << CurrentFilename << ":\n\n"
+           << "Name                  Value   Class        Type"
+           << "         Size   Line  Section\n";
+  }
+
+  for (SymbolListT::iterator i = SymbolList.begin(),
+                             e = SymbolList.end(); i != e; ++i) {
+    if ((i->TypeChar != 'U') && UndefinedOnly)
+      continue;
+    if ((i->TypeChar == 'U') && DefinedOnly)
+      continue;
+    if (SizeSort && !PrintAddress && i->Size == UnknownAddressOrSize)
+      continue;
+
+    char SymbolAddrStr[10] = "";
+    char SymbolSizeStr[10] = "";
+
+    if (OutputFormat == sysv || i->Address == object::UnknownAddressOrSize)
+      strcpy(SymbolAddrStr, "        ");
+    if (OutputFormat == sysv)
+      strcpy(SymbolSizeStr, "        ");
+
+    if (i->Address != object::UnknownAddressOrSize)
+      format("%08x", i->Address).print(SymbolAddrStr, sizeof(SymbolAddrStr));
+    if (i->Size != object::UnknownAddressOrSize)
+      format("%08x", i->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
+
+    if (OutputFormat == posix) {
+      outs() << i->Name << " " << i->TypeChar << " "
+             << SymbolAddrStr << SymbolSizeStr << "\n";
+    } else if (OutputFormat == bsd) {
+      if (PrintAddress)
+        outs() << SymbolAddrStr << ' ';
+      if (PrintSize) {
+        outs() << SymbolSizeStr;
+        if (i->Size != object::UnknownAddressOrSize)
+          outs() << ' ';
+      }
+      outs() << i->TypeChar << " " << i->Name  << "\n";
+    } else if (OutputFormat == sysv) {
+      std::string PaddedName (i->Name);
+      while (PaddedName.length () < 20)
+        PaddedName += " ";
+      outs() << PaddedName << "|" << SymbolAddrStr << "|   "
+             << i->TypeChar
+             << "  |                  |" << SymbolSizeStr << "|     |\n";
+    }
+  }
+
+  SymbolList.clear();
 }
 
 static char TypeCharForSymbol(GlobalValue &GV) {
@@ -95,53 +237,57 @@ static void DumpSymbolNameForGlobalValue(GlobalValue &GV) {
       GV.hasLinkerPrivateWeakDefAutoLinkage() ||
       GV.hasAvailableExternallyLinkage())
     return;
-
-  const std::string SymbolAddrStr = "        "; // Not used yet...
   char TypeChar = TypeCharForSymbol(GV);
-  if ((TypeChar != 'U') && UndefinedOnly)
-    return;
-  if ((TypeChar == 'U') && DefinedOnly)
-    return;
   if (GV.hasLocalLinkage () && ExternalOnly)
     return;
-  if (OutputFormat == posix) {
-    outs() << GV.getName () << " " << TypeCharForSymbol(GV) << " "
-           << SymbolAddrStr << "\n";
-  } else if (OutputFormat == bsd) {
-    outs() << SymbolAddrStr << " " << TypeCharForSymbol(GV) << " "
-           << GV.getName () << "\n";
-  } else if (OutputFormat == sysv) {
-    std::string PaddedName (GV.getName ());
-    while (PaddedName.length () < 20)
-      PaddedName += " ";
-    outs() << PaddedName << "|" << SymbolAddrStr << "|   "
-           << TypeCharForSymbol(GV)
-           << "  |                  |      |     |\n";
-  }
+
+  NMSymbol s;
+  s.Address = object::UnknownAddressOrSize;
+  s.Size = object::UnknownAddressOrSize;
+  s.TypeChar = TypeChar;
+  s.Name     = GV.getName();
+  SymbolList.push_back(s);
 }
 
 static void DumpSymbolNamesFromModule(Module *M) {
-  const std::string &Filename = M->getModuleIdentifier ();
-  if (OutputFormat == posix && MultipleFiles) {
-    outs() << Filename << ":\n";
-  } else if (OutputFormat == bsd && MultipleFiles) {
-    outs() << "\n" << Filename << ":\n";
-  } else if (OutputFormat == sysv) {
-    outs() << "\n\nSymbols from " << Filename << ":\n\n"
-           << "Name                  Value   Class        Type"
-           << "         Size   Line  Section\n";
-  }
+  CurrentFilename = M->getModuleIdentifier();
   std::for_each (M->begin(), M->end(), DumpSymbolNameForGlobalValue);
   std::for_each (M->global_begin(), M->global_end(),
                  DumpSymbolNameForGlobalValue);
   std::for_each (M->alias_begin(), M->alias_end(),
                  DumpSymbolNameForGlobalValue);
+
+  SortAndPrintSymbolList();
+}
+
+static void DumpSymbolNamesFromObject(ObjectFile *obj) {
+  for (ObjectFile::symbol_iterator i = obj->begin_symbols(),
+                                   e = obj->end_symbols(); i != e; ++i) {
+    if (!DebugSyms && i->isInternal())
+      continue;
+    NMSymbol s;
+    s.Size = object::UnknownAddressOrSize;
+    s.Address = object::UnknownAddressOrSize;
+    if (PrintSize || SizeSort)
+      s.Size = i->getSize();
+    if (PrintAddress)
+      s.Address = i->getAddress();
+    s.TypeChar = i->getNMTypeChar();
+    s.Name     = i->getName();
+    SymbolList.push_back(s);
+  }
+
+  CurrentFilename = obj->getFilename();
+  SortAndPrintSymbolList();
 }
 
 static void DumpSymbolNamesFromFile(std::string &Filename) {
   LLVMContext &Context = getGlobalContext();
   std::string ErrorMessage;
   sys::Path aPath(Filename);
+  bool exists;
+  if (sys::fs::exists(aPath.str(), exists) || !exists)
+    errs() << ToolName << ": '" << Filename << "': " << "No such file\n";
   // Note: Currently we do not support reading an archive from stdin.
   if (Filename == "-" || aPath.isBitcodeFile()) {
     OwningPtr<MemoryBuffer> Buffer;
@@ -170,6 +316,14 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
     }
     MultipleFiles = true;
     std::for_each (Modules.begin(), Modules.end(), DumpSymbolNamesFromModule);
+  } else if (aPath.isObjectFile()) {
+    std::auto_ptr<ObjectFile> obj(ObjectFile::createObjectFile(aPath.str()));
+    if (!obj.get()) {
+      errs() << ToolName << ": " << Filename << ": "
+             << "Failed to open object file\n";
+      return;
+    }
+    DumpSymbolNamesFromObject(obj.get());
   } else {
     errs() << ToolName << ": " << Filename << ": "
            << "unrecognizable file type\n";
@@ -188,6 +342,12 @@ int main(int argc, char **argv) {
   ToolName = argv[0];
   if (BSDFormat) OutputFormat = bsd;
   if (POSIXFormat) OutputFormat = posix;
+
+  // The relative order of these is important. If you pass --size-sort it should
+  // only print out the size. However, if you pass -S --size-sort, it should
+  // print out both the size and address.
+  if (SizeSort && !PrintSize) PrintAddress = false;
+  if (OutputFormat == sysv || SizeSort) PrintSize = true;
 
   switch (InputFilenames.size()) {
   case 0: InputFilenames.push_back("-");
