@@ -57,3 +57,11 @@ namespace test1 {
   }
 }
 
+namespace rdar8876150 {
+  struct A { operator bool(); };
+  struct B : A { };
+  struct C : A { };
+  struct D : B, C { };
+
+  bool f(D d) { return !d; } // expected-error{{ambiguous conversion from derived class 'rdar8876150::D' to base class 'rdar8876150::A':}}
+}

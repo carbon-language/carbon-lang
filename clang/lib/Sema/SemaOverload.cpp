@@ -3438,7 +3438,11 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
         return ExprError();
       
       CheckMemberOperatorAccess(From->getExprLoc(), From, 0, Found);
-      From = BuildCXXMemberCallExpr(From, Found, Conversion);
+      ExprResult Result = BuildCXXMemberCallExpr(From, Found, Conversion);
+      if (Result.isInvalid())
+        return ExprError();
+      
+      From = Result.get();
     }
     
     // We'll complain below about a non-integral condition type.
@@ -3461,8 +3465,12 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
         << T << ConvTy->isEnumeralType() << ConvTy << From->getSourceRange();
     }
     
-    From = BuildCXXMemberCallExpr(From, Found,
+    ExprResult Result = BuildCXXMemberCallExpr(From, Found,
                           cast<CXXConversionDecl>(Found->getUnderlyingDecl()));
+    if (Result.isInvalid())
+      return ExprError();
+    
+    From = Result.get();
     break;
   }
     
@@ -8162,10 +8170,11 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     
     // Create an implicit member expr to refer to the conversion operator.
     // and then call it.
-    CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(Object, Best->FoundDecl,
-                                                   Conv);
-      
-    return ActOnCallExpr(S, CE, LParenLoc, MultiExprArg(Args, NumArgs),
+    ExprResult Call = BuildCXXMemberCallExpr(Object, Best->FoundDecl, Conv);
+    if (Call.isInvalid())
+      return ExprError();
+    
+    return ActOnCallExpr(S, Call.get(), LParenLoc, MultiExprArg(Args, NumArgs),
                          RParenLoc);
   }
 

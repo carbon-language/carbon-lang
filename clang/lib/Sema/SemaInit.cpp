@@ -3788,8 +3788,7 @@ InitializationSequence::Perform(Sema &S,
         CurInit.release();
         
         // Build the actual call to the conversion function.
-        CurInit = S.Owned(S.BuildCXXMemberCallExpr(CurInitExpr, FoundFn,
-                                                   Conversion));
+        CurInit = S.BuildCXXMemberCallExpr(CurInitExpr, FoundFn, Conversion);
         if (CurInit.isInvalid() || !CurInit.get())
           return ExprError();
         
