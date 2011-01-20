@@ -1202,7 +1202,7 @@ GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
 
   if (isThumb)
     if (Mnemonic == "bkpt" || Mnemonic == "mcr" || Mnemonic == "mcrr" ||
-        Mnemonic == "mrc" || Mnemonic == "mrrc")
+        Mnemonic == "mrc" || Mnemonic == "mrrc" || Mnemonic == "cdp")
       CanAcceptPredicationCode = false;
 }
 

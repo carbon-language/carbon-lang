@@ -194,3 +194,6 @@
 @ CHECK: mrrc2  p7, #1, r5, r4, c1 @ encoding: [0x54,0xfc,0x11,0x57]
         mrrc2  p7, #1, r5, r4, c1
 
+@ CHECK: cdp2  p7, #1, c1, c1, c1, #4 @ encoding: [0x11,0xfe,0x81,0x17]
+        cdp2  p7, #1, c1, c1, c1, #4
+

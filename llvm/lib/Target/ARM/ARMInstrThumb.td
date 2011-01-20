@@ -1378,6 +1378,31 @@ def tMCRR : tMovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */>;
 def tMRRC : tMovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
 
 //===----------------------------------------------------------------------===//
+// Other Coprocessor Instructions.  For disassembly only.
+//
+def tCDP : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
+                 c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+                 "cdp\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-24} = 0b1110;
+
+  bits<4> opc1;
+  bits<4> CRn;
+  bits<4> CRd;
+  bits<4> cop;
+  bits<3> opc2;
+  bits<4> CRm;
+
+  let Inst{3-0}   = CRm;
+  let Inst{4}     = 0;
+  let Inst{7-5}   = opc2;
+  let Inst{11-8}  = cop;
+  let Inst{15-12} = CRd;
+  let Inst{19-16} = CRn;
+  let Inst{23-20} = opc1;
+}
+
+//===----------------------------------------------------------------------===//
 // TLS Instructions
 //
 

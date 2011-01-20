@@ -51,3 +51,6 @@
 @ CHECK: mrrc  p7, #1, r5, r4, c1 @ encoding: [0x54,0xec,0x11,0x57]
         mrrc  p7, #1, r5, r4, c1
 
+@ CHECK: cdp  p7, #1, c1, c1, c1, #4 @ encoding: [0x11,0xee,0x81,0x17]
+        cdp  p7, #1, c1, c1, c1, #4
+
