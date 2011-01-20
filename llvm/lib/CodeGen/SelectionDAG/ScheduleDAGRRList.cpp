@@ -1589,6 +1589,8 @@ void RegReductionPQBase::updateNode(const SUnit *SU) {
   CalcNodeSethiUllmanNumber(SU, SethiUllmanNumbers);
 }
 
+// Lower priority means schedule further down. For bottom-up scheduling, lower
+// priority SUs are scheduled before higher priority SUs.
 unsigned RegReductionPQBase::getNodePriority(const SUnit *SU) const {
   assert(SU->NodeNum < SethiUllmanNumbers.size());
   unsigned Opc = SU->getNode() ? SU->getNode()->getOpcode() : 0;
@@ -1641,6 +1643,14 @@ bool RegReductionPQBase::HighRegPressure(const SUnit *SU) const {
     if (I->isCtrl())
       continue;
     SUnit *PredSU = I->getSUnit();
+    // NumSuccsLeft counts all deps. Don't compare it with NumSuccs which only
+    // counts data deps.  To be more precise, we could maintain a
+    // NumDataSuccsLeft count.
+    if (PredSU->NumSuccsLeft != PredSU->Succs.size()) {
+      DEBUG(dbgs() << "  SU(" << PredSU->NodeNum << ") live across SU("
+            << SU->NodeNum << ")\n");
+      continue;
+    }
     const SDNode *PN = PredSU->getNode();
     if (!PN->isMachineOpcode()) {
       if (PN->getOpcode() == ISD::CopyFromReg) {
@@ -1735,7 +1745,9 @@ void RegReductionPQBase::ScheduledNode(SUnit *SU) {
     if (I->isCtrl())
       continue;
     SUnit *PredSU = I->getSUnit();
-    if (PredSU->NumSuccsLeft != PredSU->NumSuccs)
+    // NumSuccsLeft counts all deps. Don't compare it with NumSuccs which only
+    // counts data deps.
+    if (PredSU->NumSuccsLeft != PredSU->Succs.size())
       continue;
     const SDNode *PN = PredSU->getNode();
     if (!PN->isMachineOpcode()) {
@@ -1814,7 +1826,9 @@ void RegReductionPQBase::UnscheduledNode(SUnit *SU) {
     if (I->isCtrl())
       continue;
     SUnit *PredSU = I->getSUnit();
-    if (PredSU->NumSuccsLeft != PredSU->NumSuccs)
+    // NumSuccsLeft counts all deps. Don't compare it with NumSuccs which only
+    // counts data deps.
+    if (PredSU->NumSuccsLeft != PredSU->Succs.size())
       continue;
     const SDNode *PN = PredSU->getNode();
     if (!PN->isMachineOpcode()) {
@@ -2003,12 +2017,11 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
     int LDepth = (int)left->getDepth();
     int RDepth = (int)right->getDepth();
 
-    DEBUG(dbgs() << "  Comparing latency of SU #" << left->NodeNum
-          << " depth " << LDepth << " vs SU #" << right->NodeNum
-          << " depth " << RDepth << "\n");
-
     if (EnableSchedCycles) {
       if (LDepth != RDepth)
+        DEBUG(dbgs() << "  Comparing latency of SU (" << left->NodeNum
+              << ") depth " << LDepth << " vs SU (" << right->NodeNum
+              << ") depth " << RDepth << ")\n");
         return LDepth < RDepth ? 1 : -1;
     }
     else {
@@ -2119,10 +2132,16 @@ bool hybrid_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   bool RHigh = SPQ->HighRegPressure(right);
   // Avoid causing spills. If register pressure is high, schedule for
   // register pressure reduction.
-  if (LHigh && !RHigh)
+  if (LHigh && !RHigh) {
+    DEBUG(dbgs() << "  pressure SU(" << left->NodeNum << ") > SU("
+          << right->NodeNum << ")\n");
     return true;
-  else if (!LHigh && RHigh)
+  }
+  else if (!LHigh && RHigh) {
+    DEBUG(dbgs() << "  pressure SU(" << right->NodeNum << ") > SU("
+          << left->NodeNum << ")\n");
     return false;
+  }
   else if (!LHigh && !RHigh) {
     int result = BUCompareLatency(left, right, true /*checkPref*/, SPQ);
     if (result != 0)
