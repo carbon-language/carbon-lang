@@ -1194,7 +1194,8 @@ GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "cps" || Mnemonic == "mcr2" || Mnemonic == "it" ||
       Mnemonic == "mcrr2" || Mnemonic == "cbz" || Mnemonic == "cdp2" ||
       Mnemonic == "trap" || Mnemonic == "mrc2" || Mnemonic == "mrrc2" ||
-      Mnemonic == "dsb" || Mnemonic == "movs" || Mnemonic == "isb") {
+      Mnemonic == "dsb" || Mnemonic == "movs" || Mnemonic == "isb" ||
+      Mnemonic == "clrex") {
     CanAcceptPredicationCode = false;
   } else {
     CanAcceptPredicationCode = true;

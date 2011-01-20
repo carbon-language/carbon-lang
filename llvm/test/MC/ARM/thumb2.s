@@ -197,3 +197,5 @@
 @ CHECK: cdp2  p7, #1, c1, c1, c1, #4 @ encoding: [0x11,0xfe,0x81,0x17]
         cdp2  p7, #1, c1, c1, c1, #4
 
+@ CHECK: clrex @ encoding: [0xbf,0xf3,0x2f,0x8f]
+        clrex
