@@ -48,3 +48,24 @@ entry:
 }
 
 declare i32 @myfunc(float)
+
+define i128 @func1(i8 %u) {
+entry:
+; CHECK: xsbh
+; CHECK: xshw
+; CHECK: rotmai
+; CHECK: shufb
+; CHECK: bi $lr
+      %0 = sext i8 %u to i128
+      ret i128 %0
+}
+
+define i128 @func2(i16 %u) {
+entry:
+; CHECK: xshw
+; CHECK: rotmai
+; CHECK: shufb
+; CHECK: bi $lr
+      %0 = sext i16 %u to i128
+      ret i128 %0
+}

@@ -2719,6 +2719,12 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG)
   SDValue Op0 = Op.getOperand(0);
   MVT Op0VT = Op0.getValueType().getSimpleVT();
 
+  // extend i8 & i16 via i32
+  if (Op0VT == MVT::i8 || Op0VT == MVT::i16) {
+    Op0 = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i32, Op0);
+    Op0VT = MVT::i32;
+  }
+
   // The type to extend to needs to be a i128 and
   // the type to extend from needs to be i64 or i32.
   assert((OpVT == MVT::i128 && (Op0VT == MVT::i64 || Op0VT == MVT::i32)) &&

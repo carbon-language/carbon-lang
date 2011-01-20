@@ -55,7 +55,7 @@ TODO:
 * i128 support:
 
   * zero extension, any extension: done
-  * sign extension: needed
+  * sign extension: done
   * arithmetic operators (add, sub, mul, div): needed
   * logical operations (and, or, shl, srl, sra, xor, nor, nand): needed
 
