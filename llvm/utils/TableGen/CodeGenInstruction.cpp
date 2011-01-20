@@ -439,6 +439,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
                                                                               
         // Now that it is validated, add it.
         ResultOperands.push_back(ResultOperand(ADI->getDef()));
+        ResultInstOperandIndex.push_back(i);
         ++AliasOpNo;
         continue;
       }
@@ -454,6 +455,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
 
         // Now that it is validated, add it.
         ResultOperands.push_back(ResultOperand(static_cast<Record*>(0)));
+        ResultInstOperandIndex.push_back(i);
         ++AliasOpNo;
         continue;
       }
@@ -485,6 +487,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
       // Now that it is validated, add it.
       ResultOperands.push_back(ResultOperand(Result->getArgName(AliasOpNo),
                                              ADI->getDef()));
+      ResultInstOperandIndex.push_back(i);
       ++AliasOpNo;
       continue;
     }
@@ -500,6 +503,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
                       ResultOpRec->getName() +
                       " for integer result operand!");
       ResultOperands.push_back(ResultOperand(II->getValue()));
+      ResultInstOperandIndex.push_back(i);
       ++AliasOpNo;
       continue;
     }
@@ -512,22 +516,4 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
                   " arguments, but " + ResultInst->TheDef->getName() +
                   " instruction expects " + utostr(ResultInst->Operands.size())+
                   " operands!");
-}
-
-/// getResultInstOperandIndexForResultOperandIndex - Given an index into the
-/// ResultOperands array, translate it to a valid index in ResultInst's
-/// operand list.
-unsigned CodeGenInstAlias::
-getResultInstOperandIndexForResultOperandIndex(unsigned OpNo) const {
-  unsigned OpIdx = 0;
-  
-  for (unsigned i = 0;; ++i) {
-    assert(i != ResultInst->Operands.size() && "Didn't find entry");
-    if (ResultInst->Operands[i].getTiedRegister() != -1)
-      continue;
-
-    if (OpIdx == OpNo) return i;
-
-    ++OpIdx;
-  }
 }

@@ -296,13 +296,12 @@ namespace llvm {
     
     /// ResultOperands - The decoded operands for the result instruction.
     std::vector<ResultOperand> ResultOperands;
+
+    /// ResultInstOperandIndex - For each operand, this vector holds the
+    /// corresponding index of an operand in the result instruction.
+    std::vector<unsigned> ResultInstOperandIndex;
     
     CodeGenInstAlias(Record *R, CodeGenTarget &T);
-    
-    /// getResultInstOperandIndexForResultOperandIndex - Given an index into the
-    /// ResultOperands array, translate it to a valid index in ResultInst's
-    /// operand list.
-    unsigned getResultInstOperandIndexForResultOperandIndex(unsigned i) const;
   };    
 }
 

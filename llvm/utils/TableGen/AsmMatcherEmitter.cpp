@@ -1213,7 +1213,7 @@ void AsmMatcherInfo::BuildAliasOperandReference(MatchableInfo *II,
         CGA.ResultOperands[i].getName() == OperandName) {
       // It's safe to go with the first one we find, because CodeGenInstAlias
       // validates that all operands with the same name have the same record.
-      unsigned ResultIdx =CGA.getResultInstOperandIndexForResultOperandIndex(i);
+      unsigned ResultIdx = CGA.ResultInstOperandIndex[i];
       Op.Class = getOperandClass(CGA.ResultInst->Operands[ResultIdx]);
       Op.SrcOpName = OperandName;
       return;
